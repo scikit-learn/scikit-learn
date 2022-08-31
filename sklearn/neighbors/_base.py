@@ -25,8 +25,8 @@ from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..metrics._pairwise_distances_reduction import (
-    PairwiseDistancesArgKmin,
-    PairwiseDistancesRadiusNeighborhood,
+    ArgKmin,
+    RadiusNeighbors,
 )
 from ..utils import (
     check_array,
@@ -377,7 +377,7 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
 class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for nearest neighbors estimators."""
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_neighbors": [Interval(Integral, 1, None, closed="left"), None],
         "radius": [Interval(Real, 0, None, closed="both"), None],
         "algorithm": [StrOptions({"auto", "ball_tree", "kd_tree", "brute"})],
@@ -794,12 +794,12 @@ class KNeighborsMixin:
         chunked_results = None
         use_pairwise_distances_reductions = (
             self._fit_method == "brute"
-            and PairwiseDistancesArgKmin.is_usable_for(
+            and ArgKmin.is_usable_for(
                 X if X is not None else self._fit_X, self._fit_X, self.effective_metric_
             )
         )
         if use_pairwise_distances_reductions:
-            results = PairwiseDistancesArgKmin.compute(
+            results = ArgKmin.compute(
                 X=X,
                 Y=self._fit_X,
                 k=n_neighbors,
@@ -817,7 +817,7 @@ class KNeighborsMixin:
             )
 
         elif self._fit_method == "brute":
-            # TODO: should no longer be needed once PairwiseDistancesArgKmin
+            # TODO: should no longer be needed once ArgKmin
             # is extended to accept sparse and/or float32 inputs.
 
             reduce_func = partial(
@@ -1127,13 +1127,13 @@ class RadiusNeighborsMixin:
 
         use_pairwise_distances_reductions = (
             self._fit_method == "brute"
-            and PairwiseDistancesRadiusNeighborhood.is_usable_for(
+            and RadiusNeighbors.is_usable_for(
                 X if X is not None else self._fit_X, self._fit_X, self.effective_metric_
             )
         )
 
         if use_pairwise_distances_reductions:
-            results = PairwiseDistancesRadiusNeighborhood.compute(
+            results = RadiusNeighbors.compute(
                 X=X,
                 Y=self._fit_X,
                 radius=radius,
