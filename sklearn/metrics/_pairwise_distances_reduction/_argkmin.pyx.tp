@@ -147,7 +147,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
 
         # Main heaps which will be returned as results by `ArgKmin{{name_suffix}}.compute`.
         self.argkmin_indices = np.full((self.n_samples_X, self.k), 0, dtype=np.intp)
-        self.argkmin_distances = np.full((self.n_samples_X, self.k), DBL_MAX, dtype=np.intp)
+        self.argkmin_distances = np.full((self.n_samples_X, self.k), DBL_MAX, dtype=np.float64)
 
     def __dealloc__(self):
         if self.heaps_indices_chunks is not NULL:
