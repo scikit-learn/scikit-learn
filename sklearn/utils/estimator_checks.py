@@ -2159,7 +2159,6 @@ def check_classifiers_one_label_sample_weights(name, classifier_orig):
                 # ValueError was raised with proper error message
                 return
             # Test that predict won't raise an unexpected exception
-            print(name)
             assert_array_equal(
                 classifier.predict(X_test), np.ones(10), err_msg=error_predict
             )

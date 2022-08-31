@@ -361,9 +361,11 @@ class OneClassSampleErrorClassifierPredict(BaseBadClassifier):
             if nb_cls < 2:
                 self.flag = True
 
+        self.flag_ = self.flag
         return self
 
     def predict(self, X):
+        check_is_fitted(self)
         X = check_array(X)
         if self.flag:
             return np.zeros(X.shape[0])
@@ -619,8 +621,7 @@ def test_check_estimator():
     # check for predictions for classifiers reducing to
     # less than two classes via sample weights
     name = OneClassSampleErrorClassifierPredict.__name__
-    msg = f"{name} prediction results should only output the remaining class."
-    with raises(AssertionError, match=msg):
+    with raises(AssertionError):
         check_estimator(OneClassSampleErrorClassifierPredict())
 
     # Large indices test on bad estimator
