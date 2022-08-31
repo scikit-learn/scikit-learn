@@ -11,7 +11,7 @@ from ._base import _get_feature_importances
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted, check_scalar, _num_features
-from ..utils._param_validation import Interval, Options
+from ..utils._param_validation import HasMethods, Interval, Options
 
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import available_if
@@ -231,15 +231,15 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     """
 
     _parameter_constraints: dict = {
-        "estimator": [BaseEstimator],
+        "estimator": [HasMethods("fit")],
         "threshold": [Interval(Real, None, None, closed="both"), str, None],
         "prefit": ["boolean"],
         "norm_order": [
-            Interval(Integral, None, 0, closed="neither"),
-            Interval(Integral, 0, None, closed="neither"),
+            Interval(Integral, None, -1, closed="right"),
+            Interval(Integral, 1, None, closed="left"),
             Options(Real, {np.inf, -np.inf}),
         ],
-        "max_features": [Interval(Integral, 1, None, closed="left"), callable, None],
+        "max_features": [Interval(Integral, 0, None, closed="left"), callable, None],
         "importance_getter": [str, callable],
     }
 
