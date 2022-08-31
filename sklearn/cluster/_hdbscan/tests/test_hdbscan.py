@@ -126,8 +126,10 @@ def test_hdbscan_feature_vector():
 @pytest.mark.parametrize(
     "algo",
     [
-        "kdtree",
-        "balltree",
+        "prims_kdtree",
+        "prims_balltree",
+        "boruvka_kdtree",
+        "boruvka_balltree",
         "brute",
         "auto",
     ],
@@ -143,8 +145,10 @@ def test_hdbscan_algorithms(algo, metric):
     assert n_clusters_2 == n_clusters
 
     ALGOS_TREES = {
-        "kdtree": KDTree,
-        "balltree": BallTree,
+        "prims_kdtree": KDTree,
+        "prims_balltree": BallTree,
+        "boruvka_kdtree": KDTree,
+        "boruvka_balltree": BallTree,
     }
     METRIC_PARAMS = {
         "mahalanobis": {"V": np.eye(X.shape[1])},
@@ -260,11 +264,32 @@ def test_hdbscan_input_lists():
     HDBSCAN(min_samples=1).fit(X)
 
 
+@pytest.mark.parametrize("tree", ["kdtree", "balltree"])
+def test_hdbscan_boruvka_matches(tree):
+
+    data = generate_noisy_data()
+
+    labels_prims = hdbscan(data, algorithm="brute")[0]
+    labels_boruvka = hdbscan(data, algorithm=f"boruvka_{tree}")[0]
+
+    num_mismatches = homogeneity(labels_prims, labels_boruvka)
+
+    assert (num_mismatches / float(data.shape[0])) < 0.15
+
+    labels_prims = HDBSCAN(algorithm="brute").fit_predict(data)
+    labels_boruvka = HDBSCAN(algorithm=f"boruvka_{tree}").fit_predict(data)
+
+    num_mismatches = homogeneity(labels_prims, labels_boruvka)
+
+    assert (num_mismatches / float(data.shape[0])) < 0.15
+
+
+@pytest.mark.parametrize("strategy", ["prims", "boruvka"])
 @pytest.mark.parametrize("tree", ["kd", "ball"])
-def test_hdbscan_precomputed_non_brute(tree):
-    hdb = HDBSCAN(metric="precomputed", algorithm=f"prims_{tree}tree")
+def test_hdbscan_precomputed_non_brute(strategy, tree):
+    hdb = HDBSCAN(metric="precomputed", algorithm=f"{strategy}_{tree}tree")
     with pytest.raises(ValueError):
-        hdbscan(X, metric="precomputed", algorithm=f"prims_{tree}tree")
+        hdbscan(X, metric="precomputed", algorithm=f"{strategy}_{tree}tree")
     with pytest.raises(ValueError):
         hdb.fit(X)
 
@@ -285,9 +310,9 @@ def test_hdbscan_sparse():
 
     msg = "Sparse data matrices only support algorithm `brute`."
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(metric="euclidean", algorithm="balltree").fit(sparse_X)
+        HDBSCAN(metric="euclidean", algorithm="boruvka_balltree").fit(sparse_X)
     with pytest.raises(ValueError, match=msg):
-        hdbscan(sparse_X, metric="euclidean", algorithm="balltree")
+        hdbscan(sparse_X, metric="euclidean", algorithm="boruvka_balltree")
 
 
 def test_hdbscan_caching(tmp_path):
@@ -334,16 +359,15 @@ def test_hdbscan_allow_single_cluster_with_epsilon():
     assert len(unique_labels) == 2
 
     # Arbitrary heuristic. Would prefer something more precise.
-    assert counts[unique_labels == -1] > 30
+    assert counts[unique_labels == -1] == 46
 
-    # for this random seed an epsilon of 0.18 will produce exactly 2 noise
+    # for this random seed an epsilon of 0.2 will produce exactly 2 noise
     # points at that cut in single linkage.
     labels = HDBSCAN(
         min_cluster_size=5,
-        cluster_selection_epsilon=0.18,
+        cluster_selection_epsilon=0.2,
         cluster_selection_method="eom",
         allow_single_cluster=True,
-        algorithm="kdtree",
     ).fit_predict(no_structure)
     unique_labels, counts = np.unique(labels, return_counts=True)
     assert len(unique_labels) == 2
@@ -380,6 +404,17 @@ def test_hdbscan_unfit_centers_errors():
 def test_hdbscan_precomputed_array_like():
     X = np.array([[1, np.inf], [np.inf, 1]])
     hdbscan(X, metric="precomputed")
+
+
+@pytest.mark.parametrize("algo", ["boruvka_kdtree", "boruvka_balltree"])
+def test_hdbscan_min_samples_less_than_total(algo):
+    X = np.array([[1, 2], [2, 1]])
+
+    msg = "Expected min_samples"
+    with pytest.raises(ValueError, match=msg):
+        hdbscan(X, algorithm=algo, min_samples=3)
+    with pytest.raises(ValueError, match=msg):
+        HDBSCAN(algorithm=algo, min_samples=3).fit(X)
 
 
 def test_hdbscan_sparse_distances_too_few_nonzero():

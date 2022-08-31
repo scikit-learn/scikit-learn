@@ -13,7 +13,7 @@ from pathlib import Path
 from warnings import warn
 
 import numpy as np
-from joblib import Memory
+from joblib import Memory, effective_n_jobs
 from scipy.sparse import csgraph, issparse
 
 from sklearn.base import BaseEstimator, ClusterMixin
@@ -223,7 +223,7 @@ def _hdbscan_boruvka(
     min_samples=5,
     metric="euclidean",
     leaf_size=40,
-    n_jobs=4,
+    n_jobs=None,
     **metric_params,
 ):
     leaf_size = max(leaf_size, 3)
@@ -236,7 +236,7 @@ def _hdbscan_boruvka(
             "Expected min_samples + 1 <= n_samples, "
             f" but {min_samples+1=}, {n_samples=}"
         )
-
+    n_jobs = effective_n_jobs(n_jobs)
     out = BoruvkaAlgorithm(
         tree=tree,
         min_samples=min_samples,
