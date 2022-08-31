@@ -484,7 +484,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "SelectFromModel",
     "SpectralBiclustering",
     "SpectralCoclustering",
-    "SpectralEmbedding",
 ]
 
 
