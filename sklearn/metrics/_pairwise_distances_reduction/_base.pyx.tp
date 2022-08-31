@@ -103,8 +103,15 @@ cpdef cnp.float64_t[::1] _sqeuclidean_row_norms32(
 
 from ._datasets_pair cimport DatasetsPair{{name_suffix}}
 
-cdef class PairwiseDistancesReduction{{name_suffix}}:
-    """Base {{name_suffix}}bit implementation of PairwiseDistancesReduction."""
+cdef class BaseDistanceReducer{{name_suffix}}:
+    """
+    Base {{name_suffix}}bit implementation template of the pairwise-distances reduction
+    backend.
+
+    Implementations inherit from this template and may override the several
+    defined hooks as needed in order to easily extend functionality with
+    minimal redundant code.
+    """
 
     def __init__(
         self,
@@ -167,7 +174,7 @@ cdef class PairwiseDistancesReduction{{name_suffix}}:
                 strategy = 'parallel_on_X'
             elif 4 * self.chunk_size * self.effective_n_threads < self.n_samples_X:
                 # If Y is larger than X, but X is still large enough to allow for
-                # parallelism, we might still want to favor parallelizing on X. 
+                # parallelism, we might still want to favor parallelizing on X.
                 strategy = 'parallel_on_X'
             else:
                 strategy = 'parallel_on_Y'
@@ -182,15 +189,15 @@ cdef class PairwiseDistancesReduction{{name_suffix}}:
 
     @final
     cdef void _parallel_on_X(self) nogil:
-        """Compute the pairwise distances of each row vector of X on Y
-        by parallelizing computation on the outer loop on chunks of X
-        and reduce them.
+        """Perform computation and reduction in parallel on chunks of X.
 
-        This strategy dispatches chunks of Y uniformly on threads.
-        Each thread processes all the chunks of X in turn. This strategy is
-        a sequence of embarrassingly parallel subtasks (the inner loop on Y
-        chunks) with intermediate datastructures synchronisation at each
-        iteration of the sequential outer loop on X chunks.
+        This strategy dispatches tasks statically on threads. Each task
+        processes exactly only one chunk of X, computing and reducing
+        distances matrices between vectors of this chunk and vectors of all
+        chunks of Y, one chunk of Y at a time.
+
+        This strategy is embarrassingly parallel with no intermediate data
+        structures synchronization at all.
 
         Private datastructures are modified internally by threads.
 
@@ -251,15 +258,17 @@ cdef class PairwiseDistancesReduction{{name_suffix}}:
 
     @final
     cdef void _parallel_on_Y(self) nogil:
-        """Compute the pairwise distances of each row vector of X on Y
-        by parallelizing computation on the inner loop on chunks of Y
-        and reduce them.
+        """Perform computation and reduction in parallel on chunks of Y.
 
-        This strategy dispatches chunks of Y uniformly on threads.
-        Each thread processes all the chunks of X in turn. This strategy is
-        a sequence of embarrassingly parallel subtasks (the inner loop on Y
-        chunks) with intermediate datastructures synchronisation at each
-        iteration of the sequential outer loop on X chunks.
+        This strategy is a sequence of embarrassingly parallel subtasks:
+        chunks of X are iterated over sequentially, and for each chunk of X,
+        tasks are dispatched statically on threads. Each task processes one
+        and only one chunk of Y, computing and reducing distances matrices
+        between vectors of the chunk of X and vectors of the Y.
+
+        It comes with lock-free and parallelized intermediate data structures
+        that synchronize at each iteration of the sequential outer loop on X
+        chunks.
 
         Private datastructures are modified internally by threads.
 
@@ -308,9 +317,6 @@ cdef class PairwiseDistancesReduction{{name_suffix}}:
                     )
                 # end: prange
 
-                # Note: we don't need a _parallel_on_Y_finalize similarly.
-                # This can be introduced if needed.
-
             # end: with nogil, parallel
 
             # Synchronizing the thread datastructures with the main ones
@@ -333,7 +339,7 @@ cdef class PairwiseDistancesReduction{{name_suffix}}:
     ) nogil:
         """Compute the pairwise distances on two chunks of X and Y and reduce them.
 
-        This is THE core computational method of PairwiseDistanceReductions{{name_suffix}}.
+        This is THE core computational method of BaseDistanceReducer{{name_suffix}}.
         This must be implemented in subclasses agnostically from the parallelization
         strategies.
         """
@@ -365,7 +371,7 @@ cdef class PairwiseDistancesReduction{{name_suffix}}:
         cnp.intp_t X_start,
         cnp.intp_t X_end,
     ) nogil:
-        """Initialise datastructures used in a thread given its number."""
+        """Initialize datastructures used in a thread given its number."""
         return
 
     cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
@@ -376,7 +382,7 @@ cdef class PairwiseDistancesReduction{{name_suffix}}:
         cnp.intp_t Y_end,
         cnp.intp_t thread_num,
     ) nogil:
-        """Initialise datastructures just before the _compute_and_reduce_distances_on_chunks.
+        """Initialize datastructures just before the _compute_and_reduce_distances_on_chunks.
 
         This is eventually used to upcast X[X_start:X_end] to 64bit.
         """
@@ -410,7 +416,7 @@ cdef class PairwiseDistancesReduction{{name_suffix}}:
         cnp.intp_t X_start,
         cnp.intp_t X_end,
     ) nogil:
-        """Initialise datastructures used in a thread given its number."""
+        """Initialize datastructures used in a thread given its number."""
         return
 
     cdef void _parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
@@ -421,7 +427,7 @@ cdef class PairwiseDistancesReduction{{name_suffix}}:
         cnp.intp_t Y_end,
         cnp.intp_t thread_num,
     ) nogil:
-        """Initialise datastructures just before the _compute_and_reduce_distances_on_chunks.
+        """Initialize datastructures just before the _compute_and_reduce_distances_on_chunks.
 
         This is eventually used to upcast Y[Y_start:Y_end] to 64bit.
         """

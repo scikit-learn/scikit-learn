@@ -927,7 +927,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     array([1])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "estimator": [
             HasMethods(["fit", "decision_function"]),
             HasMethods(["fit", "predict_proba"]),
