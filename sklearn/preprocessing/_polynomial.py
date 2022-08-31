@@ -926,7 +926,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             spl = self.bsplines_[i]
 
             if self.extrapolation in ("continue", "error", "periodic"):
-
                 if self.extrapolation == "periodic":
                     # With periodic extrapolation we map x to the segment
                     # [spl.t[k], spl.t[n]].
