@@ -263,6 +263,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         "n_jobs": [None, Integral],
         "random_state": ["random_state"],
         "verbose": ["verbose"],
+        "base_estimator": "no_validation",
     }
 
     @abstractmethod
