@@ -480,8 +480,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "RidgeCV",
     "RidgeClassifierCV",
     "SelectFromModel",
-    "SpectralBiclustering",
-    "SpectralCoclustering",
 ]
 
 
