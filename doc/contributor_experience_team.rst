@@ -14,6 +14,10 @@
     <p>Lucy Liu</p>
     </div>
     <div>
+    <a href='https://github.com/MaxwellLZH'><img src='https://avatars.githubusercontent.com/u/16646940?v=4' class='avatar' /></a> <br />
+    <p>Maxwell Liu</p>
+    </div>
+    <div>
     <a href='https://github.com/jmloyola'><img src='https://avatars.githubusercontent.com/u/2133361?v=4' class='avatar' /></a> <br />
     <p>Juan Martin Loyola</p>
     </div>
