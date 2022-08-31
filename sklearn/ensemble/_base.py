@@ -94,7 +94,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     Parameters
     ----------
-    base_estimator : object
+    estimator : object
         The base estimator from which the ensemble is built.
 
     n_estimators : int, default=10
@@ -103,6 +103,13 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     estimator_params : list of str, default=tuple()
         The list of attributes to use as parameters when instantiating a
         new base estimator. If none are given, default parameters are used.
+
+    base_estimator : object, default="deprecated"
+        Use `estimator` instead.
+
+        .. deprecated:: 1.2
+            `base_estimator` is deprecated and will be removed in 1.4.
+            Use `estimator` instead.
 
     Attributes
     ----------
