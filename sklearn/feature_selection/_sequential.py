@@ -68,7 +68,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         A single str (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
-        NOTE that when using custom scorers, each scorer should return a single
+        NOTE that when using a custom scorer, it should return a single
         value.
 
         If None, the estimator's score method is used.
