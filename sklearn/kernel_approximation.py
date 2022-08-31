@@ -119,6 +119,14 @@ class PolynomialCountSketch(
     1.0
     """
 
+    _parameter_constraints: dict = {
+        "gamma": [Interval(Real, 0, None, closed="left")],
+        "degree": [Interval(Integral, 1, None, closed="left")],
+        "coef0": [Interval(Real, None, None, closed="neither")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self, *, gamma=1.0, degree=2, coef0=0, n_components=100, random_state=None
     ):
@@ -149,8 +157,7 @@ class PolynomialCountSketch(
         self : object
             Returns the instance itself.
         """
-        if not self.degree >= 1:
-            raise ValueError(f"degree={self.degree} should be >=1.")
+        self._validate_params()
 
         X = self._validate_data(X, accept_sparse="csc")
         random_state = check_random_state(self.random_state)
