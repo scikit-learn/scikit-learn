@@ -192,8 +192,7 @@ def _hdbscan_prims(
     **metric_params,
 ):
     # The Cython routines used require contiguous arrays
-    if not X.flags["C_CONTIGUOUS"]:
-        X = np.array(X, order="C")
+    X = np.asarray(X, order="C")
 
     # Get distance to kth nearest neighbour
     nbrs = NearestNeighbors(
@@ -207,8 +206,7 @@ def _hdbscan_prims(
     ).fit(X)
 
     n_samples = X.shape[0]
-    core_distances = np.empty(n_samples)
-    core_distances.fill(np.nan)
+    core_distances = np.full(n_samples, fill_value=np.nan, dtype=np.float64)
 
     chunk_n_rows = get_chunk_n_rows(row_bytes=16 * min_samples, max_n_rows=n_samples)
     slices = gen_batches(n_samples, chunk_n_rows)

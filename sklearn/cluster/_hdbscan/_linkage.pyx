@@ -7,7 +7,6 @@ cimport numpy as cnp
 import cython
 
 from libc.float cimport DBL_MAX
-from libc.stdio cimport printf
 
 from sklearn.metrics._dist_metrics cimport DistanceMetric
 
