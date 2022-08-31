@@ -69,8 +69,7 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
         NOTE that when using custom scorers, each scorer should return a single
-        value. Metric functions returning a list/array of values can be wrapped
-        into multiple scorers that return one value each.
+        value.
 
         If None, the estimator's score method is used.
 
