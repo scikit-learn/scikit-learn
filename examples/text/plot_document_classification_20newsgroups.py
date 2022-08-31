@@ -362,7 +362,7 @@ def benchmark(clf, custom_name=False):
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
-from sklearn.naive_bayes import ComplementNB
+from sklearn.naive_bayes import ComplementNB, HybridNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import NearestCentroid
 from sklearn.ensemble import RandomForestClassifier
@@ -387,6 +387,7 @@ for clf, name in (
     (NearestCentroid(), "NearestCentroid"),
     # Sparse naive Bayes classifier
     (ComplementNB(alpha=0.1), "Complement naive Bayes"),
+    (HybridNB(alpha=0.1), "Hybrid naive Bayes"),
 ):
     print("=" * 80)
     print(name)
