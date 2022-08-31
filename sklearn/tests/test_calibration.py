@@ -118,16 +118,6 @@ def test_calibration(data, method, ensemble):
 
 
 @pytest.mark.parametrize("ensemble", [True, False])
-def test_calibration_bad_method(data, ensemble):
-    # Check only "isotonic" and "sigmoid" are accepted as methods
-    X, y = data
-    clf = LinearSVC()
-    clf_invalid_method = CalibratedClassifierCV(clf, method="foo", ensemble=ensemble)
-    with pytest.raises(ValueError):
-        clf_invalid_method.fit(X, y)
-
-
-@pytest.mark.parametrize("ensemble", [True, False])
 def test_calibration_regressor(data, ensemble):
     # `base-estimator` should provide either decision_function or
     # predict_proba (most regressors, for instance, should fail)

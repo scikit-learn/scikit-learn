@@ -20,8 +20,6 @@ from scipy.special import expit
 from scipy.special import xlogy
 from scipy.optimize import fmin_bfgs
 
-from .utils._param_validation import StrOptions
-
 from .base import (
     BaseEstimator,
     ClassifierMixin,
@@ -39,6 +37,7 @@ from .utils import (
 
 from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
+from .utils._param_validation import StrOptions, HasMethods, Hidden
 from .utils.validation import (
     _check_fit_params,
     _check_sample_weight,
@@ -246,12 +245,16 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     """
 
     _parameter_constraints = {
-        "estimator": [BaseEstimator, None],
-        "method": [StrOptions({"isotonic", "sigmoid"}), None],
-        "cv": ["cv_object", StrOptions({"prefit"}), None],
+        "estimator": [HasMethods(["fit"]), None],
+        "method": [StrOptions({"isotonic", "sigmoid"})],
+        "cv": ["cv_object", StrOptions({"prefit"})],
         "n_jobs": [Integral, None],
         "ensemble": ["boolean"],
-        "base_estimator": "no_validation",
+        "base_estimator": [
+            HasMethods(["fit"]),
+            None,
+            Hidden(StrOptions({"deprecated"})),
+        ],
     }
 
     def __init__(
@@ -687,12 +690,8 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
     for class_idx, this_pred in zip(pos_class_indices, predictions.T):
         if method == "isotonic":
             calibrator = IsotonicRegression(out_of_bounds="clip")
-        elif method == "sigmoid":
+        else:  # "sigmoid"
             calibrator = _SigmoidCalibration()
-        else:
-            raise ValueError(
-                f"'method' should be one of: 'sigmoid' or 'isotonic'. Got {method}."
-            )
         calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
         calibrators.append(calibrator)
 
