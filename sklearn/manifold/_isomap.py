@@ -162,17 +162,17 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     (100, 2)
     """
 
-    _parameter_constraints = {
-        "n_neighbors": [Interval(Integral, 0, None, closed="left"), None],
+    _parameter_constraints: dict = {
+        "n_neighbors": [Interval(Integral, 1, None, closed="left"), None],
         "radius": [Interval(Real, 0, None, closed="both"), None],
-        "n_components": [Interval(Integral, 0, None, closed="left")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
         "eigen_solver": [StrOptions({"auto", "arpack", "dense"})],
-        "tol": [Interval(Real, 0, None, closed="left"), None],
-        "max_iter": [Interval(Integral, 0, None, closed="left"), None],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left"), None],
         "path_method": [StrOptions({"auto", "FW", "D"})],
         "neighbors_algorithm": [StrOptions({"auto", "brute", "kd_tree", "ball_tree"})],
         "n_jobs": [Integral, None],
-        "p": [Interval(Real, 0.0, None, closed="left"), None],
+        "p": [Interval(Real, 1, None, closed="left")],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
         "metric_params": [dict, None],
     }
@@ -391,7 +391,6 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         X_new : array-like, shape (n_queries, n_components)
             X transformed in the new space.
         """
-        self._validate_params()
         check_is_fitted(self)
         if self.n_neighbors is not None:
             distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
