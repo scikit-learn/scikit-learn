@@ -114,9 +114,9 @@ class BaseSpectral(BiclusterMixin, BaseEstimator, metaclass=ABCMeta):
         self.n_init = n_init
         self.random_state = random_state
 
+    @abstractmethod
     def _check_parameters(self, n_samples):
         """Validate parameters depending on the input data."""
-        pass
 
     def fit(self, X, y=None):
         """Create a biclustering for X.
@@ -346,7 +346,7 @@ class SpectralCoclustering(BaseSpectral):
         if self.n_clusters > n_samples:
             raise ValueError(
                 f"n_clusters should be <= n_samples={n_samples}. Got"
-                f" {self.n_cluster} instead."
+                f" {self.n_clusters} instead."
             )
 
     def _fit(self, X):
@@ -526,7 +526,7 @@ class SpectralBiclustering(BaseSpectral):
             if self.n_clusters > n_samples:
                 raise ValueError(
                     f"n_clusters should be <= n_samples={n_samples}. Got"
-                    f" {self.n_cluster} instead."
+                    f" {self.n_clusters} instead."
                 )
         else:  # tuple
             try:

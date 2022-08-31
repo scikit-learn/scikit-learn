@@ -222,6 +222,21 @@ def test_perfect_checkerboard(global_random_seed):
     "params, type_err, err_msg",
     [
         (
+            {"n_clusters": 6},
+            ValueError,
+            "n_clusters should be <= n_samples=5",
+        ),
+        (
+            {"n_clusters": (3, 3, 3)},
+            ValueError,
+            "Incorrect parameter n_clusters",
+        ),
+        (
+            {"n_clusters": (3, 6)},
+            ValueError,
+            "Incorrect parameter n_clusters",
+        ),
+        (
             {"n_components": 3, "n_best": 4},
             ValueError,
             "n_best=4 must be <= n_components=3",
