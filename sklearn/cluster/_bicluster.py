@@ -529,12 +529,31 @@ class SpectralBiclustering(BaseSpectral):
                     f" {self.n_cluster} instead."
                 )
         else:  # tuple
-            if len(self.n_clusters) != 2 or any(x > n_samples for x in self.n_clusters):
-                raise ValueError(
-                    "When n_clusters is an iterable, it should contains two integers:"
-                    " (n_row_clusters, n_column_clusters), and both values should be in"
-                    " the range [1, n_samples]."
+            try:
+                n_row_clusters, n_column_clusters = self.n_clusters
+                check_scalar(
+                    n_row_clusters,
+                    "n_row_clusters",
+                    target_type=Integral,
+                    min_val=1,
+                    max_val=n_samples,
                 )
+                check_scalar(
+                    n_column_clusters,
+                    "n_column_clusters",
+                    target_type=Integral,
+                    min_val=1,
+                    max_val=n_samples,
+                )
+            except (ValueError, TypeError) as e:
+                raise ValueError(
+                    "Incorrect parameter n_clusters has value:"
+                    f" {self.n_clusters}. It should either be a single integer"
+                    " or an iterable with two integers:"
+                    " (n_row_clusters, n_column_clusters)"
+                    " And the values are should be in the"
+                    " range: (1, n_samples)"
+                ) from e
 
         if self.n_best > self.n_components:
             raise ValueError(
