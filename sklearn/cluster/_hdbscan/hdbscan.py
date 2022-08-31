@@ -20,18 +20,13 @@ from sklearn.base import BaseEstimator, ClusterMixin
 from sklearn.metrics import pairwise_distances
 from sklearn.metrics._dist_metrics import DistanceMetric
 from sklearn.neighbors import BallTree, KDTree, NearestNeighbors
-from sklearn.utils import check_array, gen_batches, get_chunk_n_rows
+from sklearn.utils import check_array
 from sklearn.utils._param_validation import Interval, StrOptions, validate_params
 
 from ._boruvka import BoruvkaAlgorithm
 from ._linkage import label, mst_linkage_core, mst_linkage_core_vector
 from ._reachability import mutual_reachability, sparse_mutual_reachability
-from ._tree import (
-    compute_stability,
-    condense_tree,
-    get_clusters,
-    labelling_at_cut,
-)
+from ._tree import compute_stability, condense_tree, get_clusters, labelling_at_cut
 
 FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics
 _PARAM_CONSTRAINTS = {
@@ -55,7 +50,7 @@ _PARAM_CONSTRAINTS = {
     ],
     "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
     "memory": [str, None, Path],
-    "n_jobs": [int],
+    "n_jobs": [Integral, None],
     "cluster_selection_method": [StrOptions({"eom", "leaf"})],
     "allow_single_cluster": ["boolean"],
     "metric_params": [dict, None],
@@ -100,6 +95,7 @@ def _hdbscan_brute(
     min_samples=5,
     alpha=1.0,
     metric="euclidean",
+    n_jobs=None,
     **metric_params,
 ):
     if metric == "precomputed":
@@ -109,7 +105,9 @@ def _hdbscan_brute(
         # matrix to indicate missing distance information.
         distance_matrix = X
     else:
-        distance_matrix = pairwise_distances(X, metric=metric, **metric_params)
+        distance_matrix = pairwise_distances(
+            X, metric=metric, n_jobs=n_jobs, **metric_params
+        )
 
     if issparse(distance_matrix):
         return _hdbscan_sparse_distance_matrix(
@@ -191,12 +189,11 @@ def _hdbscan_prims(
     alpha=1.0,
     metric="euclidean",
     leaf_size=40,
-    n_jobs=4,
+    n_jobs=None,
     **metric_params,
 ):
     # The Cython routines used require contiguous arrays
-    if not X.flags["C_CONTIGUOUS"]:
-        X = np.array(X, order="C")
+    X = np.asarray(X, order="C")
 
     # Get distance to kth nearest neighbour
     nbrs = NearestNeighbors(
@@ -210,14 +207,8 @@ def _hdbscan_prims(
     ).fit(X)
 
     n_samples = X.shape[0]
-    core_distances = np.empty(n_samples)
-    core_distances.fill(np.nan)
-
-    chunk_n_rows = get_chunk_n_rows(row_bytes=16 * min_samples, max_n_rows=n_samples)
-    slices = gen_batches(n_samples, chunk_n_rows)
-    for sl in slices:
-        core_distances[sl] = nbrs.kneighbors(X[sl], min_samples)[0][:, -1]
-
+    core_distances = np.empty(n_samples, dtype=np.float64)
+    core_distances[:] = nbrs.kneighbors(X, min_samples)[0][:, -1]
     dist_metric = DistanceMetric.get_metric(metric, **metric_params)
 
     # Mutual reachability distance is implicit in mst_linkage_core_vector
@@ -330,12 +321,14 @@ def hdbscan(
     leaf_size=40,
     algorithm="auto",
     memory=None,
-    n_jobs=4,
+    n_jobs=None,
     cluster_selection_method="eom",
     allow_single_cluster=False,
     metric_params=None,
 ):
     """Perform HDBSCAN clustering from a vector array or distance matrix.
+
+    ..versionadded:: 1.2
 
     Parameters
     ----------
@@ -408,10 +401,11 @@ def hdbscan(
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    n_jobs : int, default=4
-        Number of parallel jobs to run in core distance computations (if
-        supported by the specific algorithm). For `n_jobs<0`,
-        `(n_cpus + n_jobs + 1)` are used.
+    n_jobs : int, default=None
+        Number of jobs to run in parallel to calculate distances.
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     cluster_selection_method : str, default='eom'
         The method used to select clusters from the condensed tree. The
@@ -464,7 +458,9 @@ def hdbscan(
 
     # Checks input and converts to an nd-array where possible
     if metric != "precomputed" or issparse(X):
-        X = check_array(X, accept_sparse="csr", force_all_finite=False)
+        X = check_array(
+            X, accept_sparse="csr", force_all_finite=False, dtype=np.float64
+        )
     elif isinstance(X, np.ndarray):
         # Only non-sparse, precomputed distance matrices are handled here
         # and thereby allowed to contain numpy.inf for missing distances
@@ -564,6 +560,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     This allows HDBSCAN to find clusters of varying densities (unlike DBSCAN),
     and be more robust to parameter selection.
 
+    ..versionadded:: 1.2
+
     Parameters
     ----------
     min_cluster_size : int, default=5
@@ -631,10 +629,11 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    n_jobs : int, default=4
-        Number of parallel jobs to run in core distance computations (if
-        supported by the specific algorithm). For `n_jobs<0`,
-        `(n_cpus + n_jobs + 1)` are used.
+    n_jobs : int, default=None
+        Number of jobs to run in parallel to calculate distances.
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     cluster_selection_method : str, default='eom'
         The method used to select clusters from the condensed tree. The

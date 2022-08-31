@@ -126,8 +126,8 @@ def test_hdbscan_feature_vector():
 @pytest.mark.parametrize(
     "algo",
     [
-        "prims_kdtree",
-        "prims_balltree",
+        "kdtree",
+        "balltree",
         "brute",
         "auto",
     ],
@@ -143,8 +143,8 @@ def test_hdbscan_algorithms(algo, metric):
     assert n_clusters_2 == n_clusters
 
     ALGOS_TREES = {
-        "prims_kdtree": KDTree,
-        "prims_balltree": BallTree,
+        "kdtree": KDTree,
+        "balltree": BallTree,
     }
     METRIC_PARAMS = {
         "mahalanobis": {"V": np.eye(X.shape[1])},
@@ -285,9 +285,9 @@ def test_hdbscan_sparse():
 
     msg = "Sparse data matrices only support algorithm `brute`."
     with pytest.raises(ValueError, match=msg):
-        HDBSCAN(metric="euclidean", algorithm="prims_balltree").fit(sparse_X)
+        HDBSCAN(metric="euclidean", algorithm="balltree").fit(sparse_X)
     with pytest.raises(ValueError, match=msg):
-        hdbscan(sparse_X, metric="euclidean", algorithm="prims_balltree")
+        hdbscan(sparse_X, metric="euclidean", algorithm="balltree")
 
 
 def test_hdbscan_caching(tmp_path):
@@ -332,15 +332,18 @@ def test_hdbscan_allow_single_cluster_with_epsilon():
     ).fit_predict(no_structure)
     unique_labels, counts = np.unique(labels, return_counts=True)
     assert len(unique_labels) == 2
-    assert counts[unique_labels == -1] == 46
 
-    # for this random seed an epsilon of 0.2 will produce exactly 2 noise
+    # Arbitrary heuristic. Would prefer something more precise.
+    assert counts[unique_labels == -1] > 30
+
+    # for this random seed an epsilon of 0.18 will produce exactly 2 noise
     # points at that cut in single linkage.
     labels = HDBSCAN(
         min_cluster_size=5,
-        cluster_selection_epsilon=0.2,
+        cluster_selection_epsilon=0.18,
         cluster_selection_method="eom",
         allow_single_cluster=True,
+        algorithm="kdtree",
     ).fit_predict(no_structure)
     unique_labels, counts = np.unique(labels, return_counts=True)
     assert len(unique_labels) == 2
