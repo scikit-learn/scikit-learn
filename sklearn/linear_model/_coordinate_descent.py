@@ -843,7 +843,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     [1.451...]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0, None, closed="left")],
         "l1_ratio": [Interval(Real, 0, 1, closed="both")],
         "fit_intercept": ["boolean"],
@@ -1268,7 +1268,7 @@ class Lasso(ElasticNet):
     0.15...
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **ElasticNet._parameter_constraints,
     }
     _parameter_constraints.pop("l1_ratio")
@@ -1461,7 +1461,7 @@ def _path_residuals(
 class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
     """Base class for iterative model fitting along a regularization path."""
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "eps": [Interval(Real, 0, None, closed="neither")],
         "n_alphas": [Interval(Integral, 1, None, closed="left")],
         "alphas": ["array-like", None],
@@ -2216,7 +2216,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     [0.398...]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **LinearModelCV._parameter_constraints,
         "l1_ratio": [Interval(Real, 0, 1, closed="both"), "array-like"],
     }
@@ -2871,7 +2871,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     [0.00166409 0.00166409]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **LinearModelCV._parameter_constraints,
         "l1_ratio": [Interval(Real, 0, 1, closed="both"), "array-like"],
     }
@@ -3114,7 +3114,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     array([[153.7971...,  94.9015...]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **LinearModelCV._parameter_constraints,
     }
     _parameter_constraints.pop("precompute")

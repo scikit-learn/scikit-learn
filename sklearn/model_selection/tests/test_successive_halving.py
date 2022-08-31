@@ -30,7 +30,7 @@ class FastClassifier(DummyClassifier):
     grid searching."""
 
     # update the constraints such that we accept all parameters from a to z
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **DummyClassifier._parameter_constraints,
         **{
             chr(key): "no_validation"  # type: ignore

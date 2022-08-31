@@ -832,7 +832,7 @@ class _BaseKMeans(
 ):
     """Base class for KMeans and MiniBatchKMeans"""
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_clusters": [Interval(Integral, 1, None, closed="left")],
         "init": [StrOptions({"k-means++", "random"}), callable, "array-like"],
         "n_init": [
@@ -1336,7 +1336,7 @@ class KMeans(_BaseKMeans):
            [ 1.,  2.]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseKMeans._parameter_constraints,
         "copy_x": ["boolean"],
         "algorithm": [
@@ -1841,7 +1841,7 @@ class MiniBatchKMeans(_BaseKMeans):
     array([1, 0], dtype=int32)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseKMeans._parameter_constraints,
         "batch_size": [Interval(Integral, 1, None, closed="left")],
         "compute_labels": ["boolean"],

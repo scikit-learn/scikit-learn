@@ -299,7 +299,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     DBSCAN(eps=3, min_samples=2)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "eps": [Interval(Real, 0.0, None, closed="neither")],
         "min_samples": [Interval(Integral, 1, None, closed="left")],
         "metric": [
