@@ -238,11 +238,11 @@ class IterativeImputer(_BaseImputer):
 
     _parameter_constraints: dict = {
         **_BaseImputer._parameter_constraints,
-        "estimator": [None, HasMethods(["predict"])],
+        "estimator": [None, HasMethods(["fit", "predict"])],
         "sample_posterior": ["boolean"],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
-        "tol": [Interval(Real, 0, None, closed="both")],
-        "n_nearest_features": [None, Interval(Integral, 0, None, closed="neither")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "n_nearest_features": [None, Interval(Integral, 1, None, closed="left")],
         "initial_strategy": [
             StrOptions({"mean", "median", "most_frequent", "constant"})
         ],
@@ -250,8 +250,8 @@ class IterativeImputer(_BaseImputer):
             StrOptions({"ascending", "descending", "roman", "arabic", "random"})
         ],
         "skip_complete": ["boolean"],
-        "min_value": [None, Real, "array-like"],
-        "max_value": [None, Real, "array-like"],
+        "min_value": [None, Interval(Real, None, None, closed="both"), "array-like"],
+        "max_value": [None, Interval(Real, None, None, closed="both"), "array-like"],
         "verbose": ["verbose"],
         "random_state": ["random_state"],
     }
