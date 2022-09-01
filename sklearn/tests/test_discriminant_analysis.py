@@ -11,11 +11,8 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
-<<<<<<< HEAD
 from sklearn.utils._array_api import _convert_to_numpy
-=======
 from sklearn.utils._testing import _convert_container
->>>>>>> upstream/main
 
 from sklearn.datasets import make_blobs
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
