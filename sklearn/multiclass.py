@@ -573,8 +573,10 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing :term:`fit` and one of
-        :term:`decision_function` or :term:`predict_proba`.
+        An estimator object implementing :term:`fit`. The check for
+        decision_function or predict_proba is left out because the
+        estimator can be from the regressors which do not have either
+        of these methods.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation: the `n_classes * (
@@ -630,10 +632,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "estimator": [
-            HasMethods(["fit", "decision_function"]),
-            HasMethods(["fit", "predict_proba"]),
-        ],
+        "estimator": [HasMethods(["fit"])],
         "n_jobs": [Integral, None],
     }
 
