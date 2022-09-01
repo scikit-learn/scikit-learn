@@ -663,7 +663,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         will be removed from the resulting tokens.
         Only applies if ``analyzer == 'word'``.
 
-    token_pattern : str, default=r"(?u)\\b\\w\\w+\\b"
+    token_pattern : str or None, default=r"(?u)\\b\\w\\w+\\b"
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
@@ -751,7 +751,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         "token_pattern": [str, None],
         "ngram_range": [tuple],
         "analyzer": [StrOptions({"word", "char", "char_wb"}), callable],
-        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, np.iinfo(np.int32).max, closed="left")],
         "binary": ["boolean"],
         "norm": [StrOptions({"l1", "l2"}), None],
         "alternate_sign": ["boolean"],
@@ -814,7 +814,6 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         self : object
             HashingVectorizer instance.
         """
-        self._validate_params()
         return self
 
     def fit(self, X, y=None):
@@ -833,13 +832,14 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         self : object
             HashingVectorizer instance.
         """
+        self._validate_params()
+
         # triggers a parameter validation
         if isinstance(X, str):
             raise ValueError(
                 "Iterable over raw text documents expected, string object received."
             )
 
-        self._validate_params()
         self._warn_for_unused_params()
         self._validate_ngram_range()
 
@@ -866,7 +866,6 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
                 "Iterable over raw text documents expected, string object received."
             )
 
-        self._validate_params()
         self._validate_ngram_range()
 
         analyzer = self.build_analyzer()
