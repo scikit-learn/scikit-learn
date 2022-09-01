@@ -694,15 +694,6 @@ def test_minibatch_dict_learning_partial_fit_iter_offset_deprecated():
         est.partial_fit(X, iter_offset=0)
 
 
-# default value of batch_size changed. FIXME: remove in 1.3
-@pytest.mark.filterwarnings("ignore:The default value of batch_size will change")
-@pytest.mark.parametrize("Estimator", [DictionaryLearning, MiniBatchDictionaryLearning])
-def test_warning_default_transform_alpha(Estimator):
-    dl = Estimator(alpha=0.1, max_iter=5)
-    with pytest.warns(FutureWarning, match="default transform_alpha"):
-        dl.fit_transform(X)
-
-
 def test_minibatch_dict_learning_n_iter_deprecated():
     # check the deprecation warning of n_iter
     # FIXME: remove in 1.3
@@ -773,6 +764,15 @@ def test_update_dict():
     _update_dict(newd_online, X, code, A, B)
 
     assert_allclose(newd_batch, newd_online)
+
+
+# default value of batch_size changed. FIXME: remove in 1.3
+@pytest.mark.filterwarnings("ignore:The default value of batch_size will change")
+@pytest.mark.parametrize("Estimator", [DictionaryLearning, MiniBatchDictionaryLearning])
+def test_warning_default_transform_alpha(Estimator):
+    dl = Estimator(alpha=0.1, max_iter=5)
+    with pytest.warns(FutureWarning, match="default transform_alpha"):
+        dl.fit_transform(X)
 
 
 # FIXME: remove in 1.3
