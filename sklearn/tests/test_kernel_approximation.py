@@ -25,13 +25,6 @@ X /= X.sum(axis=1)[:, np.newaxis]
 Y /= Y.sum(axis=1)[:, np.newaxis]
 
 
-@pytest.mark.parametrize("degree", [-1, 0])
-def test_polynomial_count_sketch_raises_if_degree_lower_than_one(degree):
-    with pytest.raises(ValueError, match=f"degree={degree} should be >=1."):
-        ps_transform = PolynomialCountSketch(degree=degree)
-        ps_transform.fit(X, Y)
-
-
 @pytest.mark.parametrize("gamma", [0.1, 1, 2.5])
 @pytest.mark.parametrize("degree, n_components", [(1, 500), (2, 500), (3, 5000)])
 @pytest.mark.parametrize("coef0", [0, 2.5])
