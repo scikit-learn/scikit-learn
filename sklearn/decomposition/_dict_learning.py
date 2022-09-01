@@ -1652,7 +1652,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         "code_init": ["array-like", None],
         "dict_init": ["array-like", None],
         "verbose": ["verbose"],
-        "split_sign": [Interval(Integral, 0, 1, closed="both"), "boolean"],
+        "split_sign": ["boolean"],
         "random_state": ["random_state"],
         "positive_code": ["boolean"],
         "positive_dict": ["boolean"],

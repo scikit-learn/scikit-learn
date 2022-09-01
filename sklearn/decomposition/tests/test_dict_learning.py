@@ -63,63 +63,6 @@ def test_dict_learning_overcomplete():
     assert dico.components_.shape == (n_components, n_features)
 
 
-def test_max_iter():
-    def ricker_function(resolution, center, width):
-        """Discrete sub-sampled Ricker (Mexican hat) wavelet"""
-        x = np.linspace(0, resolution - 1, resolution)
-        x = (
-            (2 / (np.sqrt(3 * width) * np.pi**0.25))
-            * (1 - (x - center) ** 2 / width**2)
-            * np.exp(-((x - center) ** 2) / (2 * width**2))
-        )
-        return x
-
-    def ricker_matrix(width, resolution, n_components):
-        """Dictionary of Ricker (Mexican hat) wavelets"""
-        centers = np.linspace(0, resolution - 1, n_components)
-        D = np.empty((n_components, resolution))
-        for i, center in enumerate(centers):
-            D[i] = ricker_function(resolution, center, width)
-        D /= np.sqrt(np.sum(D**2, axis=1))[:, np.newaxis]
-        return D
-
-    transform_algorithm = "lasso_cd"
-    resolution = 1024
-    subsampling = 3  # subsampling factor
-    n_components = resolution // subsampling
-
-    # Compute a wavelet dictionary
-    D_multi = np.r_[
-        tuple(
-            ricker_matrix(
-                width=w, resolution=resolution, n_components=n_components // 5
-            )
-            for w in (10, 50, 100, 500, 1000)
-        )
-    ]
-
-    X = np.linspace(0, resolution - 1, resolution)
-    first_quarter = X < resolution / 4
-    X[first_quarter] = 3.0
-    X[np.logical_not(first_quarter)] = -1.0
-    X = X.reshape(1, -1)
-
-    # check that the underlying model fails to converge
-    with pytest.warns(ConvergenceWarning):
-        model = SparseCoder(
-            D_multi, transform_algorithm=transform_algorithm, transform_max_iter=1
-        )
-        model.fit_transform(X)
-
-    # check that the underlying model converges w/o warnings
-    with warnings.catch_warnings():
-        warnings.simplefilter("error", ConvergenceWarning)
-        model = SparseCoder(
-            D_multi, transform_algorithm=transform_algorithm, transform_max_iter=2000
-        )
-        model.fit_transform(X)
-
-
 def test_dict_learning_lars_positive_parameter():
     n_components = 5
     alpha = 1
@@ -242,29 +185,6 @@ def test_dict_learning_lassocd_readonly_data():
         assert_array_almost_equal(
             np.dot(code, dico.components_), X_read_only, decimal=2
         )
-
-
-def test_dict_learning_nonzero_coefs():
-    n_components = 4
-    dico = DictionaryLearning(
-        n_components,
-        transform_algorithm="lars",
-        transform_n_nonzero_coefs=3,
-        random_state=0,
-    )
-    code = dico.fit(X).transform(X[np.newaxis, 1])
-    assert len(np.flatnonzero(code)) == 3
-
-    dico.set_params(transform_algorithm="omp")
-    code = dico.transform(X[np.newaxis, 1])
-    assert len(np.flatnonzero(code)) == 3
-
-
-def test_dict_learning_unknown_fit_algorithm():
-    n_components = 5
-    dico = DictionaryLearning(n_components, fit_algorithm="<unknown>")
-    with pytest.raises(ValueError):
-        dico.fit(X)
 
 
 def test_dict_learning_split():
@@ -787,15 +707,6 @@ def test_update_dict():
     _update_dict(newd_online, X, code, A, B)
 
     assert_allclose(newd_batch, newd_online)
-
-
-# default value of batch_size changed. FIXME: remove in 1.3
-@pytest.mark.filterwarnings("ignore:The default value of batch_size will change")
-@pytest.mark.parametrize("Estimator", [DictionaryLearning, MiniBatchDictionaryLearning])
-def test_warning_default_transform_alpha(Estimator):
-    dl = Estimator(alpha=0.1, max_iter=5)
-    with pytest.warns(FutureWarning, match="default transform_alpha"):
-        dl.fit_transform(X)
 
 
 # FIXME: remove in 1.3
