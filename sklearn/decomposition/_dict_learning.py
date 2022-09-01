@@ -13,6 +13,7 @@ from math import ceil
 import numpy as np
 from scipy import linalg
 from joblib import Parallel, effective_n_jobs
+
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils import deprecated
@@ -1526,11 +1527,11 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    code_init : ndarray of shape (n_samples, n_components), default=None
+    code_init : array-like of shape (n_samples, n_components), default=None
         Initial value for the code, for warm restart. Only used if `code_init`
         and `dict_init` are not None.
 
-    dict_init : ndarray of shape (n_components, n_features), default=None
+    dict_init : array-like of shape (n_components, n_features), default=None
         Initial values for the dictionary, for warm restart. Only used if
         `code_init` and `dict_init` are not None.
 
@@ -1633,8 +1634,8 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     _parameter_constraints = {
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
-        "alpha": [Interval(Real, 0, 1, closed="left")],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "fit_algorithm": [StrOptions(
             {"lars", "cd"})
@@ -1643,19 +1644,19 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
             StrOptions({"lasso_lars", "lasso_cd", "lars", "omp", "threshold"})
         ],
         "transform_n_nonzero_coefs": [
-            Interval(Integral, 0, None, closed="left"),
+            Interval(Integral, 1, None, closed="left"),
             None
         ],
-        "transform_alpha": [Interval(Real, 0, 1, closed="both"), None],
-        "n_jobs": [Interval(Integral, -1, None, closed="left"), None],
+        "transform_alpha": [Interval(Real, 0, None, closed="left"), None],
+        "n_jobs": [Integral, None],
         "code_init": ["array-like", None],
         "dict_init": ["array-like", None],
         "verbose": ["verbose"],
         "split_sign": [Interval(Integral, 0, 1, closed="both"), "boolean"],
         "random_state": ["random_state"],
-        "positive_code": [Interval(Integral, 0, 1, closed="both"), "boolean"],
-        "positive_dict": [Interval(Integral, 0, 1, closed="both"), "boolean"],
-        "transform_max_iter": [Interval(Integral, 1, None, closed="left")],
+        "positive_code": ["boolean"],
+        "positive_dict": ["boolean"],
+        "transform_max_iter": [Interval(Integral, 0, None, closed="left")],
     }
 
     def __init__(
