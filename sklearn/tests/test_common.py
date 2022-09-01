@@ -464,15 +464,8 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
 
 
 PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
-    "CalibratedClassifierCV",
-    "ClassifierChain",
     "DictionaryLearning",
     "HashingVectorizer",
-    "Isomap",
-    "IterativeImputer",
-    "LabelPropagation",
-    "LabelSpreading",
-    "LatentDirichletAllocation",
     "MiniBatchDictionaryLearning",
     "MultiTaskElasticNet",
     "MultiTaskLasso",
@@ -483,15 +476,9 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "OneVsOneClassifier",
     "OneVsRestClassifier",
     "PatchExtractor",
-    "PolynomialCountSketch",
     "RANSACRegressor",
-    "RBFSampler",
-    "RegressorChain",
     "RidgeCV",
     "RidgeClassifierCV",
-    "SpectralBiclustering",
-    "SpectralCoclustering",
-    "SpectralEmbedding",
 ]
 
 
