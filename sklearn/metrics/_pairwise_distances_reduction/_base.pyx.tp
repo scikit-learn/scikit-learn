@@ -169,7 +169,7 @@ cdef class PairwiseDistancesReduction{{name_suffix}}:
                 strategy = 'parallel_on_X'
             elif 4 * self.chunk_size * self.effective_n_threads < self.n_samples_X:
                 # If Y is larger than X, but X is still large enough to allow for
-                # parallelism, we might still want to favor parallelizing on X.
+                # parallelism, we might still want to favor parallelizing on X. 
                 strategy = 'parallel_on_X'
             else:
                 strategy = 'parallel_on_Y'
