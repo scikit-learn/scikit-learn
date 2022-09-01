@@ -1637,16 +1637,11 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         "alpha": [Interval(Real, 0, None, closed="left")],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "fit_algorithm": [StrOptions(
-            {"lars", "cd"})
-        ],
+        "fit_algorithm": [StrOptions({"lars", "cd"})],
         "transform_algorithm": [
             StrOptions({"lasso_lars", "lasso_cd", "lars", "omp", "threshold"})
         ],
-        "transform_n_nonzero_coefs": [
-            Interval(Integral, 1, None, closed="left"),
-            None
-        ],
+        "transform_n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
         "transform_alpha": [Interval(Real, 0, None, closed="left"), None],
         "n_jobs": [Integral, None],
         "code_init": ["array-like", None],
