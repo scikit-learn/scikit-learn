@@ -243,7 +243,7 @@ jobs:
 - template: build_tools/azure/posix.yml
   parameters:
     name: macOS
-    vmImage: macOS-10.15
+    vmImage: macOS-11
     dependsOn: [linting, git_commit]
     condition: |
       and(
