@@ -81,7 +81,7 @@ def test_lle_simple_grid(global_dtype):
     assert linalg.norm(X_reembedded - clf.embedding_) < tol
 
 
-@pytest.mark.parametrize("method", ["standard", "hessian", "modified", "ltsa"])
+@pytest.mark.parametrize("method", ["standard", "hessian", "modified", "neml", "ltsa"])
 @pytest.mark.parametrize("solver", eigen_solvers)
 def test_lle_manifold(global_dtype, method, solver):
     rng = np.random.RandomState(0)
@@ -153,7 +153,7 @@ def test_integer_input():
     rand = np.random.RandomState(0)
     X = rand.randint(0, 100, size=(20, 3))
 
-    for method in ["standard", "hessian", "modified", "ltsa"]:
+    for method in ["standard", "hessian", "modified", "neml", "ltsa"]:
         clf = manifold.LocallyLinearEmbedding(method=method, n_neighbors=10)
         clf.fit(X)  # this previously raised a TypeError
 

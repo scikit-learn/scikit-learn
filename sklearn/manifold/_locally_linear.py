@@ -2,6 +2,7 @@
 
 # Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
 #         Jake Vanderplas  -- <vanderplas@astro.washington.edu>
+#         Markus Wnuk      -- <markuswnuk@gmx.de>
 # License: BSD 3 clause (C) INRIA 2011
 
 from numbers import Integral, Real
@@ -10,6 +11,7 @@ import numpy as np
 from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
 from scipy.sparse.linalg import eigsh
+from scipy.linalg import schur
 
 from ..base import (
     BaseEstimator,
@@ -254,7 +256,7 @@ def locally_linear_embedding(
     max_iter : int, default=100
         maximum number of iterations for the arpack solver.
 
-    method : {'standard', 'hessian', 'modified', 'ltsa'}, default='standard'
+    method : {'standard', 'hessian', 'modified', 'neml', 'ltsa'}, default='standard'
         standard : use the standard locally linear embedding algorithm.
                    see reference [1]_
         hessian  : use the Hessian eigenmap method.  This method requires
@@ -262,6 +264,8 @@ def locally_linear_embedding(
                    see reference [2]_
         modified : use the modified locally linear embedding algorithm.
                    see reference [3]_
+        neml :     use the nonlinear embedding preserving multiple local-linearities algorithm.
+                   see reference [5]_
         ltsa     : use local tangent space alignment algorithm
                    see reference [4]_
 
@@ -271,7 +275,7 @@ def locally_linear_embedding(
 
     modified_tol : float, default=1e-12
         Tolerance for modified LLE method.
-        Only used if method == 'modified'
+        Only used if method == 'modified' or method == 'neml'
 
     random_state : int, RandomState instance, default=None
         Determines the random number generator when ``solver`` == 'arpack'.
@@ -307,11 +311,13 @@ def locally_linear_embedding(
     .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
+    .. [5] Wang J., Z. & Zhang, Z. Nonlinear embedding preserving muliple local-linearities.
+        Pattern Recognition.  43 (2010)
     """
     if eigen_solver not in ("auto", "arpack", "dense"):
         raise ValueError("unrecognized eigen_solver '%s'" % eigen_solver)
 
-    if method not in ("standard", "hessian", "modified", "ltsa"):
+    if method not in ("standard", "hessian", "modified", "neml", "ltsa"):
         raise ValueError("unrecognized method '%s'" % method)
 
     nbrs = NearestNeighbors(n_neighbors=n_neighbors + 1, n_jobs=n_jobs)
@@ -508,6 +514,90 @@ def locally_linear_embedding(
         if M_sparse:
             M = csr_matrix(M)
 
+    elif method == "neml": # implementation according to [5]
+        reg = 1e-3
+        roh = np.zeros((N))
+        eigenValues = []
+        eigenVectors = []
+        WOpti = []
+
+        if n_neighbors < n_components:
+            raise ValueError("method neml requires n_neighbors >= n_components")
+
+            # step 1
+        J = nbrs.kneighbors(
+            X, n_neighbors=n_neighbors + 1, return_distance=False
+        )
+
+        for i in range(N):
+            # step 1.1
+            xi = X[i, :]
+            Ji = J[i, 1:]  # neighbrhood of xi without xi itself.
+
+            # step 1.2
+            Gi = X[Ji, :] - xi
+            C = Gi @ Gi.transpose()
+            C_tilde = C + np.eye(n_neighbors, n_neighbors) * reg * np.trace(C)
+            wiOpt = np.linalg.solve(C_tilde, np.ones((n_neighbors, 1)))
+            wiOpt = wiOpt / np.sum(wiOpt)  # regularization as suggested at p.3
+
+            # step 1.3
+            [S, V] = schur(C, output="real")
+            ei = np.sort(np.diag(S))
+            ei = ei[::-1]
+            ei[ei <= np.finfo(float).eps] = 0
+            JIi = np.argsort(np.diag(S))
+            JIi = JIi[::-1]
+            roh[i] = np.sum(ei[n_components : n_neighbors]) / np.sum(ei[0 : n_components])
+
+            # save eigenvalues and vectors for next steps
+            eigenValues.append(ei)
+            eigenVectors.append(V[:, JIi])
+            WOpti.append(wiOpt)
+
+        # step 2
+        rohSorted = np.sort(roh)
+        eta = rohSorted[int(np.ceil(N / 2))]
+        s = np.zeros(N)
+        for i in range(N):
+            l = n_neighbors - n_components
+            lambdas = eigenValues[i]
+            while (
+                np.sum(lambdas[n_neighbors - l :]) / np.sum(lambdas[: n_neighbors - l]) > eta
+                and l > 1
+            ):
+                l = l - 1
+
+            s[i] = l
+
+        # step 3
+        M = np.zeros((N, N))
+        for i in range(N):
+            Ji = J[i, 1:]
+            Vi = eigenVectors[i]
+            Vhat = Vi[:, int(n_neighbors - s[i]) :]
+            vi = np.sum(Vhat, 0)  # equivalent to Vhat.transpose() @ np.ones(k, 1)
+            alphai = np.linalg.norm(vi) / np.sqrt(s[i])
+            ui = np.ones((int(s[i]))) * alphai - vi
+            uiNorm = np.linalg.norm(ui)
+            if uiNorm > 1e-5:
+                ui = ui / uiNorm
+            else:
+                ui = np.zeros((int(s[i]), 1))
+            Hi = np.eye(int(s[i])) - 2 * np.outer(ui, ui)
+            Wi = (1 - alphai) ** 2 * WOpti[i] @ np.ones((1, int(s[i]))) + (
+                2 - alphai
+            ) * Vhat @ Hi
+
+            # build Alignment Matrix
+            M[i, i] = M[i, i] + s[i]
+            M[np.ix_(Ji, Ji)] = M[np.ix_(Ji, Ji)] + Wi @ Wi.transpose()
+            M[Ji, i] = M[Ji, i] - np.sum(Wi, 1)
+            M[i, Ji] = M[Ji, i]
+
+        if M_sparse:
+            M = csr_matrix(M)
+
     elif method == "ltsa":
         neighbors = nbrs.kneighbors(
             X, n_neighbors=n_neighbors + 1, return_distance=False
@@ -596,7 +686,7 @@ class LocallyLinearEmbedding(
         Maximum number of iterations for the arpack solver.
         Not used if eigen_solver=='dense'.
 
-    method : {'standard', 'hessian', 'modified', 'ltsa'}, default='standard'
+    method : {'standard', 'hessian', 'modified', 'neml', 'ltsa'}, default='standard'
         - `standard`: use the standard locally linear embedding algorithm. see
           reference [1]_
         - `hessian`: use the Hessian eigenmap method. This method requires
@@ -604,6 +694,8 @@ class LocallyLinearEmbedding(
           reference [2]_
         - `modified`: use the modified locally linear embedding algorithm.
           see reference [3]_
+        - `neml`: use the onlinear embedding preserving multiple local-linearities algorithm.
+          see reference [5]_
         - `ltsa`: use local tangent space alignment algorithm. see
           reference [4]_
 
@@ -613,7 +705,7 @@ class LocallyLinearEmbedding(
 
     modified_tol : float, default=1e-12
         Tolerance for modified LLE method.
-        Only used if ``method == 'modified'``.
+        Only used if ``method == 'modified'`` or ``method == 'neml'``.
 
     neighbors_algorithm : {'auto', 'brute', 'kd_tree', 'ball_tree'}, \
                           default='auto'
@@ -674,6 +766,8 @@ class LocallyLinearEmbedding(
     .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
+    .. [5] Wang J., Z. & Zhang, Z. Nonlinear embedding preserving muliple local-linearities.
+        Pattern Recognition.  43 (2010)
 
     Examples
     --------
@@ -695,7 +789,7 @@ class LocallyLinearEmbedding(
         "eigen_solver": [StrOptions({"auto", "arpack", "dense"})],
         "tol": [Interval(Real, 0, None, closed="left")],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "method": [StrOptions({"standard", "hessian", "modified", "ltsa"})],
+        "method": [StrOptions({"standard", "hessian", "modified", "neml", "ltsa"})],
         "hessian_tol": [Interval(Real, 0, None, closed="left")],
         "modified_tol": [Interval(Real, 0, None, closed="left")],
         "neighbors_algorithm": [StrOptions({"auto", "brute", "kd_tree", "ball_tree"})],

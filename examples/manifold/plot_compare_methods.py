@@ -21,6 +21,7 @@ representation of the data in the low-dimensional space.
 """
 
 # Author: Jake Vanderplas -- <vanderplas@astro.washington.edu>
+# edited: Markus Wnuk -- <markuswnuk@gmx.de>
 
 # %%
 # Dataset preparation
@@ -81,6 +82,14 @@ def add_2d_scatter(ax, points, points_color, title=None):
     ax.xaxis.set_major_formatter(ticker.NullFormatter())
     ax.yaxis.set_major_formatter(ticker.NullFormatter())
 
+def add_3d_scatter(ax, points, points_color, title=None):
+    x, y, z = points.T
+    ax.scatter(x, y, z, c=points_color, s=50, alpha=0.8)
+    ax.set_title(title)
+    ax.view_init(azim=-60, elev=9)
+    ax.xaxis.set_major_locator(ticker.MultipleLocator(1))
+    ax.yaxis.set_major_locator(ticker.MultipleLocator(1))
+    ax.zaxis.set_major_locator(ticker.MultipleLocator(1))
 
 plot_3d(S_points, S_color, "Original S-curve samples")
 
@@ -125,19 +134,36 @@ S_hessian = lle_hessian.fit_transform(S_points)
 lle_mod = manifold.LocallyLinearEmbedding(method="modified", modified_tol=0.8, **params)
 S_mod = lle_mod.fit_transform(S_points)
 
+lle_neml = manifold.LocallyLinearEmbedding(method="neml", **params)
+S_neml = lle_neml.fit_transform(S_points)
 # %%
-fig, axs = plt.subplots(
-    nrows=2, ncols=2, figsize=(7, 7), facecolor="white", constrained_layout=True
-)
-fig.suptitle("Locally Linear Embeddings", size=16)
+# fig, axs = plt.subplots(
+#     nrows=2, ncols=2, figsize=(7, 7), facecolor="white", constrained_layout=True
+# )
+# fig.suptitle("Locally Linear Embeddings", size=16)
 
 lle_methods = [
     ("Standard locally linear embedding", S_standard),
     ("Local tangent space alignment", S_ltsa),
     ("Hessian eigenmap", S_hessian),
-    ("Modified locally linear embedding", S_mod),
+    ("Modified locally linear embedding \n (MLLE)", S_mod),
+    ("Nonlinear embedding preserving multiple local-linearities \n (NEML)", S_neml),
 ]
-for ax, method in zip(axs.flat, lle_methods):
+# for ax, method in zip(axs.flat, lle_methods):
+#     name, points = method
+#     add_2d_scatter(ax, points, S_color, name)
+nrows=2
+ncols=3
+fig = plt.figure(figsize=(20, 9))
+fig.suptitle("Locally Linear Embeddings", size=16)
+
+# fig, axs = plt.subplots(
+#     nrows=2, ncols=3, figsize=(9, 7), facecolor="white", constrained_layout=True
+# )
+ax = fig.add_subplot(nrows, ncols, 1,projection='3d')
+add_3d_scatter(ax,S_points, S_color,"Original S-curve samples")
+for i, method in enumerate(lle_methods):
+    ax = fig.add_subplot(nrows, ncols, i+2)
     name, points = method
     add_2d_scatter(ax, points, S_color, name)
 

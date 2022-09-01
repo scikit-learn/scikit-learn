@@ -216,7 +216,7 @@ The overall complexity of standard LLE is
      Roweis, S. & Saul, L.  Science 290:2323 (2000)
 
 
-Modified Locally Linear Embedding
+Multiple Local Weights
 =================================
 
 One well-known issue with LLE is the regularization problem.  When the number
@@ -228,6 +228,9 @@ formally that as :math:`r \to 0`, the solution converges to the desired
 embedding, there is no guarantee that the optimal solution will be found
 for :math:`r > 0`.  This problem manifests itself in embeddings which distort
 the underlying geometry of the manifold.
+
+Modified Locally Linear Embedding
+---------------------------------
 
 One method to address the regularization problem is to use multiple weight
 vectors in each neighborhood.  This is the essence of *modified locally
@@ -241,10 +244,17 @@ It requires ``n_neighbors > n_components``.
    :align: center
    :scale: 50
 
+Nonlinear embedding preserving multiple local-linearities
+---------------------------------------------------------
+
+An alternative implementation of MLLE is given in :class:`LocallyLinearEmbedding`, with the keyword ``method = 'neml'``.
+It follows the same idea as MLLE but is based on a subsequent publication introducing a Nonlinear embedding preserving multiple local-linearities (NEML).
+
+
 Complexity
 ----------
 
-The MLLE algorithm comprises three stages:
+The MLLE and NEML algorithm comprise three stages:
 
 1. **Nearest Neighbors Search**.  Same as standard LLE
 
@@ -257,7 +267,7 @@ The MLLE algorithm comprises three stages:
 
 3. **Partial Eigenvalue Decomposition**. Same as standard LLE
 
-The overall complexity of MLLE is
+The overall complexity of MLLE and NEML is
 :math:`O[D \log(k) N \log(N)] + O[D N k^3] + O[N (k-D) k^2] + O[d N^2]`.
 
 * :math:`N` : number of training data points
@@ -270,6 +280,11 @@ The overall complexity of MLLE is
    * `"MLLE: Modified Locally Linear Embedding Using Multiple Weights"
      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382>`_
      Zhang, Z. & Wang, J.
+   
+   * `"Nonlinear embedding preserving multiple local-linearities"
+     <https://dl.acm.org/doi/10.1016/j.patcog.2009.09.014>`_
+     Wang, J. & Zhang, Z.
+
 
 
 Hessian Eigenmapping
