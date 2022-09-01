@@ -11,7 +11,7 @@ from tempfile import NamedTemporaryFile
 import pytest
 
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal, assert_allclose
 from sklearn.utils._testing import fails_if_pypy
 
 import sklearn
