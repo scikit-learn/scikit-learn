@@ -814,6 +814,8 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         self : object
             HashingVectorizer instance.
         """
+        # TODO: only validate during the first call
+        self._validate_params()
         return self
 
     def fit(self, X, y=None):
