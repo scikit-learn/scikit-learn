@@ -140,7 +140,7 @@ struct problem * set_problem(char *X, int double_precision_X, int n_samples,
                         n_nonzero, bias);
     problem->bias = bias;
 
-    if (problem->x == NULL) { 
+    if (problem->x == NULL) {
         free(problem);
         return NULL;
     }
@@ -175,7 +175,7 @@ struct problem * csr_set_problem (char *X, int double_precision_X,
 /* Create a parameter struct with and return it */
 struct parameter *set_parameter(int solver_type, double eps, double C,
                                 npy_intp nr_weight, char *weight_label,
-                                char *weight, int max_iter, unsigned seed, 
+                                char *weight, int max_iter, unsigned seed,
                                 double epsilon)
 {
     struct parameter *param = malloc(sizeof(struct parameter));
@@ -196,7 +196,7 @@ struct parameter *set_parameter(int solver_type, double eps, double C,
 
 void copy_w(void *data, struct model *model, int len)
 {
-    memcpy(data, model->w, len * sizeof(double)); 
+    memcpy(data, model->w, len * sizeof(double));
 }
 
 double get_bias(struct model *model)
