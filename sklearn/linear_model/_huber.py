@@ -247,7 +247,7 @@ class HuberRegressor(LinearModel, RegressorMixin, BaseEstimator):
     Linear Regression coefficients: [-1.9221...  7.0226...]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "epsilon": [Interval(Real, 1.0, None, closed="left")],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "alpha": [Interval(Real, 0, None, closed="left")],

@@ -197,7 +197,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
     array([ 1,  1, -1])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "max_samples": [
             StrOptions({"auto"}),

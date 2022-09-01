@@ -779,9 +779,9 @@ divisive hierarchical clustering. Instead of creating all centroids at once, cen
 are picked progressively based on a previous clustering: a cluster is split into two
 new clusters repeatedly until the target number of clusters is reached.
 
-:class:`BisectingKMeans` is more efficient than :class:`KMeans` when the number the
-number of clusters is large since it only works on a subset of the data at each
-bisection while :class:`KMeans` always works on the entire dataset.
+:class:`BisectingKMeans` is more efficient than :class:`KMeans` when the number of
+clusters is large since it only works on a subset of the data at each bisection
+while :class:`KMeans` always works on the entire dataset.
 
 Although :class:`BisectingKMeans` can't benefit from the advantages of the `"k-means++"`
 initialization by design, it will still produce comparable results than

@@ -479,7 +479,7 @@ class Birch(
     array([0, 0, 0, 1, 1, 1])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "threshold": [Interval(Real, 0.0, None, closed="neither")],
         "branching_factor": [Interval(Integral, 1, None, closed="neither")],
         "n_clusters": [None, ClusterMixin, Interval(Integral, 1, None, closed="left")],

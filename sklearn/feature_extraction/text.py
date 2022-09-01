@@ -122,7 +122,7 @@ def _analyze(
 
 
 def strip_accents_unicode(s):
-    """Transform accentuated unicode symbols into their simple counterpart
+    """Transform accentuated unicode symbols into their simple counterpart.
 
     Warning: the python-level loop and join operations make this
     implementation 20 times slower than the strip_accents_ascii basic
@@ -130,8 +130,13 @@ def strip_accents_unicode(s):
 
     Parameters
     ----------
-    s : string
-        The string to strip
+    s : str
+        The string to strip.
+
+    Returns
+    -------
+    s : str
+        The stripped string.
 
     See Also
     --------
@@ -1097,7 +1102,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
      [0 0 1 0 1 0 1 0 0 0 0 0 1]]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "input": [StrOptions({"filename", "file", "content"})],
         "encoding": [str],
         "decode_error": [StrOptions({"strict", "ignore", "replace"})],
@@ -1607,7 +1612,7 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     (4, 8)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "norm": [StrOptions({"l1", "l2"}), None],
         "use_idf": ["boolean"],
         "smooth_idf": ["boolean"],
@@ -1945,7 +1950,7 @@ class TfidfVectorizer(CountVectorizer):
     (4, 9)
     """
 
-    _parameter_constraints = {**CountVectorizer._parameter_constraints}
+    _parameter_constraints: dict = {**CountVectorizer._parameter_constraints}
     _parameter_constraints.update(
         {
             "norm": [StrOptions({"l1", "l2"}), None],

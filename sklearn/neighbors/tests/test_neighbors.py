@@ -1654,7 +1654,7 @@ def test_kneighbors_brute_backend(
                     X_test, return_distance=True
                 )
             with config_context(enable_cython_pairwise_dist=True):
-                # Use the PairwiseDistancesReduction as a backend for brute
+                # Use the pairwise-distances reduction backend for brute
                 pdr_brute_dst, pdr_brute_idx = neigh.kneighbors(
                     X_test, return_distance=True
                 )
@@ -2184,7 +2184,7 @@ def test_radius_neighbors_brute_backend(
                     X_test, return_distance=True
                 )
             with config_context(enable_cython_pairwise_dist=True):
-                # Use the PairwiseDistancesReduction as a backend for brute
+                # Use the pairwise-distances reduction backend for brute
                 pdr_brute_dst, pdr_brute_idx = neigh.radius_neighbors(
                     X_test, return_distance=True
                 )
