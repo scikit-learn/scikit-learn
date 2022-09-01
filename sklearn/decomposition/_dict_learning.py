@@ -1632,9 +1632,9 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     """
 
     _parameter_constraints = {
-        "n_components": [Interval(Integral, 0, None, closed="neither"), None],
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "alpha": [Interval(Real, 0, 1, closed="left")],
-        "max_iter": [Interval(Integral, 1, None, closed="neither")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "fit_algorithm": [StrOptions(
             {"lars", "cd"})
@@ -1643,19 +1643,19 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
             StrOptions({"lasso_lars", "lasso_cd", "lars", "omp", "threshold"})
         ],
         "transform_n_nonzero_coefs": [
-            Interval(Integral, 0, None, closed="neither"),
+            Interval(Integral, 0, None, closed="left"),
             None
         ],
-        "transform_alpha": [Interval(Real, 0, 1, closed="left"), None],
-        "n_jobs": [Interval(Integral, -1, None, closed="neither"), None],
+        "transform_alpha": [Interval(Real, 0, 1, closed="both"), None],
+        "n_jobs": [Interval(Integral, -1, None, closed="left"), None],
         "code_init": ["array-like", None],
         "dict_init": ["array-like", None],
         "verbose": ["verbose"],
-        "split_sign": [Interval(Integral, 0, 1, closed="neither"), "boolean"],
+        "split_sign": [Interval(Integral, 0, 1, closed="both"), "boolean"],
         "random_state": ["random_state"],
-        "positive_code": [Interval(Integral, 0, 1, closed="neither"), "boolean"],
-        "positive_dict": [Interval(Integral, 0, 1, closed="neither"), "boolean"],
-        "transform_max_iter": [Interval(Integral, 1, None, closed="neither")],
+        "positive_code": [Interval(Integral, 0, 1, closed="both"), "boolean"],
+        "positive_dict": [Interval(Integral, 0, 1, closed="both"), "boolean"],
+        "transform_max_iter": [Interval(Integral, 1, None, closed="left")],
     }
 
     def __init__(
