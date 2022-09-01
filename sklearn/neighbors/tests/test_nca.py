@@ -121,7 +121,6 @@ def test_params_validation():
     NCA = NeighborhoodComponentsAnalysis
     rng = np.random.RandomState(42)
 
-    # ValueError
     init = rng.rand(5, 3)
     msg = (
         f"The output dimensionality ({init.shape[0]}) "

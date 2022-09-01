@@ -177,7 +177,7 @@ class NeighborhoodComponentsAnalysis(
     0.961904...
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [
             Interval(Integral, 1, None, closed="left"),
             None,
