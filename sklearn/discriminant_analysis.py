@@ -318,7 +318,7 @@ class LinearDiscriminantAnalysis(
     [1]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "solver": [StrOptions({"svd", "lsqr", "eigen"})],
         "shrinkage": [StrOptions({"auto"}), Interval(Real, 0, 1, closed="both"), None],
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
@@ -843,7 +843,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     [1]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "priors": ["array-like", None],
         "reg_param": [Interval(Real, 0, 1, closed="both")],
         "store_covariance": ["boolean"],

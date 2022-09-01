@@ -87,7 +87,7 @@ def _update_leaves_values(loss, grower, y_true, raw_prediction, sample_weight):
 class BaseHistGradientBoosting(BaseEstimator, ABC):
     """Base class for histogram-based gradient boosting estimators."""
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "loss": [BaseLoss],
         "learning_rate": [Interval(Real, 0, None, closed="neither")],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
@@ -1295,8 +1295,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     """
 
     # TODO(1.2): remove "least_absolute_deviation"
-    _parameter_constraints = {
-        **BaseHistGradientBoosting._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **BaseHistGradientBoosting._parameter_constraints,
         "loss": [
             StrOptions(
                 {
@@ -1636,8 +1636,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
     """
 
     # TODO(1.3): Remove "binary_crossentropy", "categorical_crossentropy", "auto"
-    _parameter_constraints = {
-        **BaseHistGradientBoosting._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **BaseHistGradientBoosting._parameter_constraints,
         "loss": [
             StrOptions(
                 {

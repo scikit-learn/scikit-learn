@@ -98,7 +98,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     Use derived classes instead.
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "splitter": [StrOptions({"best", "random"})],
         "max_depth": [Interval(Integral, 1, None, closed="left"), None],
         "min_samples_split": [
@@ -845,7 +845,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
         "criterion": [StrOptions({"gini", "entropy", "log_loss"}), Hidden(Criterion)],
         "class_weight": [dict, list, StrOptions({"balanced"}), None],
@@ -1227,7 +1227,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
            0.16...,  0.11..., -0.73..., -0.30..., -0.00...])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
         "criterion": [
             StrOptions(

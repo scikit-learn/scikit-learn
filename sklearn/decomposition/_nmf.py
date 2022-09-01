@@ -1188,7 +1188,7 @@ def non_negative_factorization(
 class _BaseNMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator, ABC):
     """Base class for NMF and MiniBatchNMF."""
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "init": [
             StrOptions({"random", "nndsvd", "nndsvda", "nndsvdar", "custom"}),
@@ -1575,7 +1575,7 @@ class NMF(_BaseNMF):
     >>> H = model.components_
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseNMF._parameter_constraints,
         "solver": [StrOptions({"mu", "cd"})],
         "alpha": [
@@ -2043,7 +2043,7 @@ class MiniBatchNMF(_BaseNMF):
     >>> H = model.components_
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseNMF._parameter_constraints,
         "max_no_improvement": [Interval(Integral, 1, None, closed="left"), None],
         "batch_size": [Interval(Integral, 1, None, closed="left")],

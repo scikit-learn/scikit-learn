@@ -101,7 +101,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     [1]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "metric": [
             StrOptions(
                 set(_VALID_METRICS) - {"mahalanobis", "seuclidean", "wminkowski"}
