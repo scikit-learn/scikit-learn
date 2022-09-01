@@ -469,7 +469,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "MiniBatchDictionaryLearning",
     "MultiTaskElasticNet",
     "MultiTaskLasso",
-    "NeighborhoodComponentsAnalysis",
     "Nystroem",
     "OAS",
     "OPTICS",
