@@ -6,7 +6,6 @@ Testing for the base module (sklearn.ensemble.base).
 # License: BSD 3 clause
 
 import numpy as np
-import pytest
 
 from sklearn.datasets import load_iris
 from sklearn.ensemble import BaggingClassifier
