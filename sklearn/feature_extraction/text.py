@@ -1102,7 +1102,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
      [0 0 1 0 1 0 1 0 0 0 0 0 1]]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "input": [StrOptions({"filename", "file", "content"})],
         "encoding": [str],
         "decode_error": [StrOptions({"strict", "ignore", "replace"})],
@@ -1612,7 +1612,7 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     (4, 8)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "norm": [StrOptions({"l1", "l2"}), None],
         "use_idf": ["boolean"],
         "smooth_idf": ["boolean"],
@@ -1950,7 +1950,7 @@ class TfidfVectorizer(CountVectorizer):
     (4, 9)
     """
 
-    _parameter_constraints = {**CountVectorizer._parameter_constraints}
+    _parameter_constraints: dict = {**CountVectorizer._parameter_constraints}
     _parameter_constraints.update(
         {
             "norm": [StrOptions({"l1", "l2"}), None],
