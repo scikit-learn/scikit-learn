@@ -11,7 +11,7 @@ import numpy.ma as ma
 from scipy import sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils._param_validation import StrOptions
+from ..utils._param_validation import StrOptions, Hidden
 from ..utils.fixes import _mode
 from ..utils.sparsefuncs import _get_median
 from ..utils.validation import check_is_fitted
@@ -78,7 +78,7 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
     """
 
     _parameter_constraints: dict = {
-        "missing_values": [numbers.Real, numbers.Integral, str, None],
+        "missing_values": ["missing_values"],
         "add_indicator": ["boolean"],
     }
 
@@ -256,6 +256,14 @@ class SimpleImputer(_BaseImputer):
      [10.   3.5  9. ]]
     """
 
+    _parameter_constraints: dict = {
+        **_BaseImputer._parameter_constraints,
+        "strategy": [StrOptions({"mean", "median", "most_frequent", "constant"})],
+        "fill_value": "no_validation",  # any object is valid
+        "verbose": ["verbose", Hidden(StrOptions({"deprecated"}))],
+        "copy": ["boolean"],
+    }
+
     def __init__(
         self,
         *,
@@ -273,13 +281,6 @@ class SimpleImputer(_BaseImputer):
         self.copy = copy
 
     def _validate_input(self, X, in_fit):
-        allowed_strategies = ["mean", "median", "most_frequent", "constant"]
-        if self.strategy not in allowed_strategies:
-            raise ValueError(
-                "Can only use these strategies: {0}  got strategy={1}".format(
-                    allowed_strategies, self.strategy
-                )
-            )
 
         if self.strategy in ("most_frequent", "constant"):
             # If input is a list of strings, dtype = object.
@@ -358,6 +359,7 @@ class SimpleImputer(_BaseImputer):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
         if self.verbose != "deprecated":
             warnings.warn(
                 "The 'verbose' parameter was deprecated in version "
