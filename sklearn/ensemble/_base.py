@@ -127,7 +127,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # self.estimators_ needs to be filled by the derived classes in fit.
 
     def _validate_estimator(self, default=None):
-        """Check the estimator.
+        """Check the base estimator.
 
         Sets the base_estimator_` attributes.
         """
