@@ -205,6 +205,12 @@ Changelog
 :mod:`sklearn.feature_selection`
 ................................
 
+:mod:`sklearn.kernel_approximation`
+...................................
+
+- |Enhancement| :class:`kernel_approximation.RBFSampler` now preserves
+  dtype for `numpy.float32` inputs. :pr:`24317` by `Tim Head <betatim>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
