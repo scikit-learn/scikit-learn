@@ -504,11 +504,11 @@ class PatchExtractor(BaseEstimator):
     """
 
     _parameter_constraints: dict = {
-        "patch_size": ["array-like", tuple, None],
+        "patch_size": [tuple, None],
         "max_patches": [
             None,
             Interval(Real, 0, 1, closed="neither"),
-            Interval(Integral, 0, None, closed="neither"),
+            Interval(Integral, 1, None, closed="left"),
         ],
         "random_state": ["random_state"],
     }
@@ -559,7 +559,6 @@ class PatchExtractor(BaseEstimator):
              `n_patches` is either `n_samples * max_patches` or the total
              number of patches that can be extracted.
         """
-        self._validate_params()
         self.random_state = check_random_state(self.random_state)
         n_images, i_h, i_w = X.shape[:3]
         X = np.reshape(X, (n_images, i_h, i_w, -1))
