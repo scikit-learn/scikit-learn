@@ -344,6 +344,7 @@ class RANSACRegressor(
         # Need to validate separately here. We can't pass multi_output=True
         # because that would allow y to be csr. Delay expensive finiteness
         # check to the estimator's own input validation.
+        self._validate_params()
         check_X_params = dict(accept_sparse="csr", force_all_finite=False)
         check_y_params = dict(ensure_2d=False)
         X, y = self._validate_data(
@@ -377,20 +378,11 @@ class RANSACRegressor(
             min_samples = X.shape[1] + 1
         elif 0 < self.min_samples < 1:
             min_samples = np.ceil(self.min_samples * X.shape[0])
-        elif self.min_samples >= 1:
-            if self.min_samples % 1 != 0:
-                raise ValueError("Absolute number of samples must be an integer value.")
-            min_samples = self.min_samples
-        else:
-            raise ValueError("Value for `min_samples` must be scalar and positive.")
         if min_samples > X.shape[0]:
             raise ValueError(
                 "`min_samples` may not be larger than number "
                 "of samples: n_samples = %d." % (X.shape[0])
             )
-
-        if self.stop_probability < 0 or self.stop_probability > 1:
-            raise ValueError("`stop_probability` must be in range [0, 1].")
 
         if self.residual_threshold is None:
             # MAD (median absolute deviation)
@@ -431,13 +423,6 @@ class RANSACRegressor(
 
         elif callable(self.loss):
             loss_function = self.loss
-
-        else:
-            raise ValueError(
-                "loss should be 'absolute_error', 'squared_error' or a "
-                "callable. Got %s. "
-                % self.loss
-            )
 
         random_state = check_random_state(self.random_state)
 
