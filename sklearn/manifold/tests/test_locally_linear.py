@@ -226,3 +226,27 @@ def test_fit_preserves_dtype(method, solver, data_type, expected_type):
     X_trans = clf.transform(X)
 
     assert X_trans.dtype == expected_type
+
+
+@pytest.mark.parametrize("method", ["standard", "hessian", "modified", "ltsa"])
+@pytest.mark.parametrize("solver", eigen_solvers)
+def test_fit_transform_numerical_consistency(method, solver):
+    rtol = 1e-3
+    rng = np.random.RandomState(42)
+    X = np.array(list(product(range(5), repeat=2)))
+    X = X + 1e-10 * rng.uniform(size=X.shape)
+    n_components = 2
+
+    model_32 = manifold.LocallyLinearEmbedding(
+        n_neighbors=6, n_components=n_components, method=method, random_state=0
+    )
+    model_32.set_params(eigen_solver=solver)
+    X_trans_32 = model_32.fit_transform(X.astype(np.float32))
+
+    model_64 = manifold.LocallyLinearEmbedding(
+        n_neighbors=6, n_components=n_components, method=method, random_state=0
+    )
+    model_64.set_params(eigen_solver=solver)
+    X_trans_64 = model_64.fit_transform(X.astype(np.float32))
+
+    assert_allclose(X_trans_32, X_trans_64, rtol=rtol)
