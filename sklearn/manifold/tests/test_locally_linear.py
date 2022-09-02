@@ -169,3 +169,29 @@ def test_get_feature_names_out():
     assert_array_equal(
         [f"locallylinearembedding{i}" for i in range(n_components)], names
     )
+
+
+@pytest.mark.parametrize("method", ["standard", "hessian", "modified", "ltsa"])
+@pytest.mark.parametrize("solver", eigen_solvers)
+@pytest.mark.parametrize(
+    "data_type, expected_type",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+    ),
+)
+def test_fit_transform_preserves_dtype(method, solver, data_type, expected_type):
+    rng = np.random.RandomState(42)
+    X = np.array(list(product(range(5), repeat=2)))
+    X = X + 1e-10 * rng.uniform(size=X.shape)
+    X = X.astype(data_type, copy=False)
+    n_components = 2
+
+    clf = manifold.LocallyLinearEmbedding(
+        n_neighbors=6, n_components=n_components, method=method, random_state=0
+    )
+
+    clf.set_params(eigen_solver=solver)
+    X_trans = clf.fit_transform(X)
+
+    assert X_trans.dtype == expected_type

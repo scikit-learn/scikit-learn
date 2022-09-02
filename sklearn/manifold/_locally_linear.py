@@ -539,6 +539,8 @@ def locally_linear_embedding(
             M[nbrs_x, nbrs_y] -= GiGiT
             M[neighbors[i], neighbors[i]] += 1
 
+    M = M.astype(X.dtype)
+
     return null_space(
         M,
         n_components,
@@ -703,6 +705,9 @@ class LocallyLinearEmbedding(
         "n_jobs": [None, Integral],
     }
 
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
+
     def __init__(
         self,
         *,
@@ -740,7 +745,7 @@ class LocallyLinearEmbedding(
         )
 
         random_state = check_random_state(self.random_state)
-        X = self._validate_data(X, dtype=float)
+        X = self._validate_data(X, dtype=[np.float64, np.float32])
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = locally_linear_embedding(
             X=self.nbrs_,
