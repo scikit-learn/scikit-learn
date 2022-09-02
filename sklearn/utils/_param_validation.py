@@ -71,7 +71,13 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
 
         constraints = [make_constraint(constraint) for constraint in constraints]
 
+        error = TypeError
+
         for constraint in constraints:
+            if constraint.is_correct_type(param_val):
+                # We have at least one correct type, so we raise a ValueError
+                error = ValueError
+
             if constraint.is_satisfied_by(param_val):
                 # this constraint is satisfied, no need to check further.
                 break
@@ -92,7 +98,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
                     f" {constraints[-1]}"
                 )
 
-            raise ValueError(
+            raise error(
                 f"The {param_name!r} parameter of {caller_name} must be"
                 f" {constraints_str}. Got {param_val!r} instead."
             )
@@ -211,7 +217,6 @@ class _Constraint(ABC):
     def __init__(self):
         self.hidden = False
 
-    @abstractmethod
     def is_satisfied_by(self, val):
         """Whether or not a value satisfies the constraint.
 
@@ -225,6 +230,24 @@ class _Constraint(ABC):
         is_satisfied : bool
             Whether or not the constraint is satisfied by this value.
         """
+        return self.is_correct_type(val)
+
+    @abstractmethod
+    def is_correct_type(self, val):
+        """Whether or not the type of a value satisfies the constraint.
+
+        Parameters
+        ----------
+        val : object
+            The value to check.
+
+        Returns
+        -------
+        is_satisfied : bool
+            Whether or not the type of the constraint is satisfied by the
+            type of this value.
+        """
+        pass
 
     @abstractmethod
     def __str__(self):
@@ -244,7 +267,7 @@ class _InstancesOf(_Constraint):
         super().__init__()
         self.type = type
 
-    def is_satisfied_by(self, val):
+    def is_correct_type(self, val):
         return isinstance(val, self.type)
 
     def __str__(self):
@@ -254,7 +277,7 @@ class _InstancesOf(_Constraint):
 class _NoneConstraint(_Constraint):
     """Constraint representing the None singleton."""
 
-    def is_satisfied_by(self, val):
+    def is_correct_type(self, val):
         return val is None
 
     def __str__(self):
@@ -264,8 +287,11 @@ class _NoneConstraint(_Constraint):
 class _NanConstraint(_Constraint):
     """Constraint representing the indicator `np.nan`."""
 
+    def is_correct_type(self, val):
+        return isinstance(val, Real)
+
     def is_satisfied_by(self, val):
-        return isinstance(val, Real) and math.isnan(val)
+        return self.is_correct_type(val) and math.isnan(val)
 
     def __str__(self):
         return "numpy.nan"
@@ -274,11 +300,19 @@ class _NanConstraint(_Constraint):
 class _PandasNAConstraint(_Constraint):
     """Constraint representing the indicator `pd.NA`."""
 
+    def is_correct_type(self, val):
+        try:
+            import pandas as pd
+
+            return isinstance(val, type(pd.NA))
+        except ImportError:
+            return False
+
     def is_satisfied_by(self, val):
         try:
             import pandas as pd
 
-            return isinstance(val, type(pd.NA)) and pd.isna(val)
+            return self.is_correct_type(val) and pd.isna(val)
         except ImportError:
             return False
 
@@ -310,8 +344,11 @@ class Options(_Constraint):
         if self.deprecated - self.options:
             raise ValueError("The deprecated options must be a subset of the options.")
 
+    def is_correct_type(self, val):
+        return isinstance(val, self.type)
+
     def is_satisfied_by(self, val):
-        return isinstance(val, self.type) and val in self.options
+        return self.is_correct_type(val) and val in self.options
 
     def _mark_if_deprecated(self, option):
         """Add a deprecated mark to an option if needed."""
@@ -432,11 +469,11 @@ class Interval(_Constraint):
             return False
         return True
 
-    def is_satisfied_by(self, val):
-        if not isinstance(val, self.type):
-            return False
+    def is_correct_type(self, val):
+        return isinstance(val, self.type)
 
-        return val in self
+    def is_satisfied_by(self, val):
+        return self.is_correct_type(val) and val in self
 
     def __str__(self):
         type_str = "an int" if self.type is Integral else "a float"
@@ -453,7 +490,7 @@ class Interval(_Constraint):
 class _ArrayLikes(_Constraint):
     """Constraint representing array-likes"""
 
-    def is_satisfied_by(self, val):
+    def is_correct_type(self, val):
         return _is_arraylike_not_scalar(val)
 
     def __str__(self):
@@ -463,7 +500,7 @@ class _ArrayLikes(_Constraint):
 class _SparseMatrices(_Constraint):
     """Constraint representing sparse matrices."""
 
-    def is_satisfied_by(self, val):
+    def is_correct_type(self, val):
         return issparse(val)
 
     def __str__(self):
@@ -473,7 +510,7 @@ class _SparseMatrices(_Constraint):
 class _Callables(_Constraint):
     """Constraint representing callables."""
 
-    def is_satisfied_by(self, val):
+    def is_correct_type(self, val):
         return callable(val)
 
     def __str__(self):
@@ -494,6 +531,9 @@ class _RandomStates(_Constraint):
             _InstancesOf(np.random.RandomState),
             _NoneConstraint(),
         ]
+
+    def is_correct_type(self, val):
+        return any(c.is_correct_type(val) for c in self._constraints)
 
     def is_satisfied_by(self, val):
         return any(c.is_satisfied_by(val) for c in self._constraints)
@@ -519,6 +559,9 @@ class _Booleans(_Constraint):
             _InstancesOf(np.bool_),
             _InstancesOf(Integral),
         ]
+
+    def is_correct_type(self, val):
+        return any(c.is_correct_type(val) for c in self._constraints)
 
     def is_satisfied_by(self, val):
         # TODO(1.4) remove support for Integral.
@@ -552,6 +595,9 @@ class _VerboseHelper(_Constraint):
             _InstancesOf(bool),
             _InstancesOf(np.bool_),
         ]
+
+    def is_correct_type(self, val):
+        return any(c.is_correct_type(val) for c in self._constraints)
 
     def is_satisfied_by(self, val):
         return any(c.is_satisfied_by(val) for c in self._constraints)
@@ -589,6 +635,9 @@ class _MissingValues(_Constraint):
             _PandasNAConstraint(),
         ]
 
+    def is_correct_type(self, val):
+        return any(c.is_correct_type(val) for c in self._constraints)
+
     def is_satisfied_by(self, val):
         return any(c.is_satisfied_by(val) for c in self._constraints)
 
@@ -618,7 +667,7 @@ class HasMethods(_Constraint):
             methods = [methods]
         self.methods = methods
 
-    def is_satisfied_by(self, val):
+    def is_correct_type(self, val):
         return all(callable(getattr(val, method, None)) for method in self.methods)
 
     def __str__(self):
@@ -635,7 +684,7 @@ class HasMethods(_Constraint):
 class _IterablesNotString(_Constraint):
     """Constraint representing iterables that are not strings."""
 
-    def is_satisfied_by(self, val):
+    def is_correct_type(self, val):
         return isinstance(val, Iterable) and not isinstance(val, str)
 
     def __str__(self):
@@ -662,6 +711,9 @@ class _CVObjects(_Constraint):
             _IterablesNotString(),
             _NoneConstraint(),
         ]
+
+    def is_correct_type(self, val):
+        return any(c.is_correct_type(val) for c in self._constraints)
 
     def is_satisfied_by(self, val):
         return any(c.is_satisfied_by(val) for c in self._constraints)
@@ -710,20 +762,20 @@ def generate_invalid_param_val(constraint, constraints=None):
     if isinstance(constraint, StrOptions):
         return f"not {' or '.join(constraint.options)}"
 
-    if isinstance(constraint, _MissingValues):
-        return np.array([1, 2, 3])
+    # if isinstance(constraint, _MissingValues):
+    #     return np.array([1, 2, 3])
 
     if isinstance(constraint, _VerboseHelper):
         return -1
 
-    if isinstance(constraint, HasMethods):
-        return type("HasNotMethods", (), {})()
+    # if isinstance(constraint, HasMethods):
+    #     return type("HasNotMethods", (), {})()
 
     if isinstance(constraint, _IterablesNotString):
         return "a string"
 
     if isinstance(constraint, _CVObjects):
-        return "not a cv object"
+        return 1
 
     if not isinstance(constraint, Interval):
         raise NotImplementedError
