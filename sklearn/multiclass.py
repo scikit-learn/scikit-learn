@@ -57,7 +57,6 @@ from .utils.multiclass import (
 )
 from .utils.metaestimators import _safe_split, available_if
 from .utils.fixes import delayed
-from .utils._param_validation import Interval
 
 from joblib import Parallel
 
