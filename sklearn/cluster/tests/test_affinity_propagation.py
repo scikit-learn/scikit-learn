@@ -53,11 +53,11 @@ def test_affinity_propagation_precomputed():
     S = -euclidean_distances(X, squared=True)
     preference = np.median(S) * 10
     af = AffinityPropagation(
-        preference=preference, affinity="precomputed", random_state=0
+        preference=preference, affinity="precomputed", random_state=28
     )
     labels_precomputed = af.fit(S).labels_
 
-    af = AffinityPropagation(preference=preference, verbose=True, random_state=0)
+    af = AffinityPropagation(preference=preference, verbose=True, random_state=37)
     labels = af.fit(X).labels_
 
     assert_array_equal(labels, labels_precomputed)
@@ -78,11 +78,11 @@ def test_affinity_propagation_no_copy():
     preference = np.median(S) * 10
     assert not np.allclose(S.diagonal(), preference)
 
-    # once copy=True S should not be modified
+    # with copy=True S should not be modified
     affinity_propagation(S, preference=preference, copy=True, random_state=0)
     assert_allclose(S, S_original)
 
-    # once copy=False S will be modified inplace
+    # with copy=False S will be modified inplace
     affinity_propagation(S, preference=preference, copy=False, random_state=0)
     assert_allclose(S.diagonal(), preference)
 
@@ -92,7 +92,7 @@ def test_affinity_propagation_no_copy():
 
     labels = af.fit(X).labels_
     _, labels_no_copy = affinity_propagation(
-        S, preference=preference, copy=False, random_state=0
+        S, preference=preference, copy=False, random_state=74
     )
     assert_array_equal(labels, labels_no_copy)
 
@@ -250,7 +250,7 @@ def test_affinity_propagation_random_state():
     ap = AffinityPropagation(convergence_iter=1, max_iter=2, random_state=76)
     ap.fit(X)
     centers76 = ap.cluster_centers_
-    # check that the center didn't yet convert to the same solution
+    # check that the centers have not yet converged to the same solution
     assert np.mean((centers0 - centers76) ** 2) > 0.5
 
 
@@ -260,7 +260,7 @@ def test_affinity_propagation_convergence_warning_dense_sparse(centers):
     rng = np.random.RandomState(42)
     X = rng.rand(40, 10)
     y = (4 * rng.rand(40)).astype(int)
-    ap = AffinityPropagation(random_state=42)
+    ap = AffinityPropagation(random_state=46)
     ap.fit(X, y)
     ap.cluster_centers_ = centers
     with warnings.catch_warnings():
