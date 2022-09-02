@@ -72,7 +72,7 @@ the continued development of the project through ongoing engagement with the
 community. They have shown they can be trusted to maintain scikit-learn with
 care. Being a core developer allows contributors to more easily carry on
 with their project related activities by giving them direct access to the
-project’s repository and is represented as being an organization member on the
+project's repository and is represented as being an organization member on the
 scikit-learn `GitHub organization <https://github.com/orgs/scikit-learn/people>`_.
 Core developers are expected to review code
 contributions, can merge approved pull requests, can cast votes for and against
@@ -120,7 +120,7 @@ Decision Making Process
 =======================
 Decisions about the future of the project are made through discussion with all
 members of the community. All non-sensitive project management discussion takes
-place on the project contributors’ `mailing list <mailto:scikit-learn@python.org>`_
+place on the project contributors' `mailing list <mailto:scikit-learn@python.org>`_
 and the `issue tracker <https://github.com/scikit-learn/scikit-learn/issues>`_.
 Occasionally, sensitive discussion occurs on a private list.
 
@@ -142,7 +142,7 @@ are made according to the following rules:
   page: Requires +1 by a core developer, no -1 by a core developer (lazy
   consensus), happens on the issue or pull request page. Core developers are
   expected to give “reasonable time” to others to give their opinion on the pull
-  request if they’re not confident others would agree.
+  request if they're not confident others would agree.
 
 * **Code changes and major documentation changes**
   require +1 by two core developers, no -1 by a core developer (lazy
@@ -164,7 +164,7 @@ Enhancement proposals (SLEPs)
 ==============================
 For all votes, a proposal must have been made public and discussed before the
 vote. Such proposal must be a consolidated document, in the form of a
-‘Scikit-Learn Enhancement Proposal’ (SLEP), rather than a long discussion on an
+"Scikit-Learn Enhancement Proposal" (SLEP), rather than a long discussion on an
 issue. A SLEP must be submitted as a pull-request to
 `enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_
 using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_.

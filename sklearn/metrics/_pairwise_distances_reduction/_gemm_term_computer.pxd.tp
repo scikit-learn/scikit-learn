@@ -1,11 +1,29 @@
+{{py:
+
+implementation_specific_values = [
+    # Values are the following ones:
+    #
+    #       name_suffix, upcast_to_float64, INPUT_DTYPE_t, INPUT_DTYPE
+    #
+    # We also use the float64 dtype and C-type names as defined in
+    # `sklearn.utils._typedefs` to maintain consistency.
+    #
+    ('64', False, 'DTYPE_t', 'DTYPE'),
+    ('32', True, 'cnp.float32_t', 'np.float32')
+]
+
+}}
+cimport numpy as cnp
+
 from ...utils._typedefs cimport DTYPE_t, ITYPE_t
 from libcpp.vector cimport vector
 
+{{for name_suffix, upcast_to_float64, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
-cdef class GEMMTermComputer64:
+cdef class GEMMTermComputer{{name_suffix}}:
     cdef:
-        const DTYPE_t[:, ::1] X
-        const DTYPE_t[:, ::1] Y
+        const {{INPUT_DTYPE_t}}[:, ::1] X
+        const {{INPUT_DTYPE_t}}[:, ::1] Y
 
         ITYPE_t effective_n_threads
         ITYPE_t chunks_n_threads
@@ -15,6 +33,12 @@ cdef class GEMMTermComputer64:
 
         # Buffers for the `-2 * X_c @ Y_c.T` term computed via GEMM
         vector[vector[DTYPE_t]] dist_middle_terms_chunks
+
+{{if upcast_to_float64}}
+        # Buffers for upcasting chunks of X and Y from 32bit to 64bit
+        vector[vector[DTYPE_t]] X_c_upcast
+        vector[vector[DTYPE_t]] Y_c_upcast
+{{endif}}
 
     cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
         self,
@@ -60,3 +84,5 @@ cdef class GEMMTermComputer64:
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil
+
+{{endfor}}

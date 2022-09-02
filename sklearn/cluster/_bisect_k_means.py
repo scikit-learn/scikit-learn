@@ -183,7 +183,7 @@ class BisectingKMeans(_BaseKMeans):
 
     Notes
     -----
-    It might be inefficient when n_cluster is less than 3, due to unnecassary
+    It might be inefficient when n_cluster is less than 3, due to unnecessary
     calculations for that case.
 
     Examples
@@ -204,7 +204,7 @@ class BisectingKMeans(_BaseKMeans):
            [ 1., 2.]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseKMeans._parameter_constraints,
         "init": [StrOptions({"k-means++", "random"}), callable],
         "copy_x": ["boolean"],
