@@ -201,10 +201,10 @@ try:
 
             for ext in self.extensions:
                 if ext.name in USE_NEWEST_NUMPY_C_API:
-                    print(f"Use newest NumPy C API for extension {ext.name}")
+                    print(f"Using newest NumPy C API for extension {ext.name}")
                     ext.define_macros.append(DEFINE_MACRO_NUMPY_C_API)
                 else:
-                    print(f"Use old NumPy C API (version 1.7) for extension {ext.name}")
+                    print(f"Using old NumPy C API (version 1.7) for extension {ext.name}")
 
             if sklearn._OPENMP_SUPPORTED:
                 openmp_flag = get_openmp_flag(self.compiler)
