@@ -20,9 +20,9 @@ from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 
 
-def test_n_samples_leaves_roots():
+def test_n_samples_leaves_roots(global_random_seed):
     # Sanity check for the number of samples in leaves and roots
-    X, y = make_blobs(n_samples=10)
+    X, y = make_blobs(n_samples=10, random_state=global_random_seed)
     brc = Birch()
     brc.fit(X)
     n_samples_root = sum([sc.n_samples_ for sc in brc.root_.subclusters_])
@@ -33,9 +33,9 @@ def test_n_samples_leaves_roots():
     assert n_samples_root == X.shape[0]
 
 
-def test_partial_fit():
+def test_partial_fit(global_random_seed):
     # Test that fit is equivalent to calling partial_fit multiple times
-    X, y = make_blobs(n_samples=100)
+    X, y = make_blobs(n_samples=100, random_state=global_random_seed)
     brc = Birch(n_clusters=3)
     brc.fit(X)
     brc_partial = Birch(n_clusters=None)
@@ -67,9 +67,9 @@ def test_birch_predict(global_random_seed):
     assert_almost_equal(v_measure_score(nearest_centroid, brc.labels_), 1.0)
 
 
-def test_n_clusters():
+def test_n_clusters(global_random_seed):
     # Test that n_clusters param works properly
-    X, y = make_blobs(n_samples=100, centers=10)
+    X, y = make_blobs(n_samples=100, centers=10, random_state=global_random_seed)
     brc1 = Birch(n_clusters=10)
     brc1.fit(X)
     assert len(brc1.subcluster_centers_) > 10
@@ -96,9 +96,9 @@ def test_n_clusters():
         brc4.fit(X)
 
 
-def test_sparse_X():
+def test_sparse_X(global_random_seed):
     # Test that sparse and dense data give same results
-    X, y = make_blobs(n_samples=100, centers=10)
+    X, y = make_blobs(n_samples=100, centers=10, random_state=global_random_seed)
     brc = Birch(n_clusters=10)
     brc.fit(X)
 
