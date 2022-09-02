@@ -899,7 +899,10 @@ class Nystroem(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
     """
 
     _parameter_constraints: dict = {
-        "kernel": [StrOptions(set(PAIRWISE_KERNEL_FUNCTIONS.keys())), callable],
+        "kernel": [
+            StrOptions(set(PAIRWISE_KERNEL_FUNCTIONS.keys()) | {"precomputed"}),
+            callable,
+        ],
         "gamma": [Interval(Real, 0, None, closed="left"), None],
         "coef0": [Interval(Real, None, None, closed="neither"), None],
         "degree": [Interval(Real, 1, None, closed="left"), None],
