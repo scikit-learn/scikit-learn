@@ -1147,13 +1147,13 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     Returns
     -------
     coverage_error : float
+        The coverage error.
 
     References
     ----------
     .. [1] Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010).
            Mining multi-label data. In Data mining and knowledge discovery
            handbook (pp. 667-685). Springer US.
-
     """
     y_true = check_array(y_true, ensure_2d=True)
     y_score = check_array(y_score, ensure_2d=True)
