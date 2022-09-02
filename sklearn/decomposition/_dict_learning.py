@@ -6,6 +6,7 @@
 import time
 import sys
 import itertools
+from numbers import Integral, Real
 import warnings
 
 from math import ceil
@@ -18,7 +19,6 @@ from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutM
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils import deprecated
 from ..utils._param_validation import Interval, StrOptions
-from numbers import Integral, Real
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_scalar
@@ -1528,11 +1528,11 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    code_init : array-like of shape (n_samples, n_components), default=None
+    code_init : ndarray of shape (n_samples, n_components), default=None
         Initial value for the code, for warm restart. Only used if `code_init`
         and `dict_init` are not None.
 
-    dict_init : array-like of shape (n_components, n_features), default=None
+    dict_init : ndarray of shape (n_components, n_features), default=None
         Initial values for the dictionary, for warm restart. Only used if
         `code_init` and `dict_init` are not None.
 
@@ -1645,8 +1645,8 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         "transform_n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
         "transform_alpha": [Interval(Real, 0, None, closed="left"), None],
         "n_jobs": [Integral, None],
-        "code_init": ["array-like", None],
-        "dict_init": ["array-like", None],
+        "code_init": [np.ndarray, None],
+        "dict_init": [np.ndarray, None],
         "verbose": ["verbose"],
         "split_sign": ["boolean"],
         "random_state": ["random_state"],
