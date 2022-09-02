@@ -965,9 +965,13 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             results["std_%s" % key_name] = array_stds
 
             if rank:
-                results["rank_%s" % key_name] = np.asarray(
-                    rankdata(-array_means, method="min"), dtype=np.int32
-                )
+                rank_result = rankdata(-array_means, method="min")
+                # when input is nan, scipy >= 1.10 rankdata returns nan. To
+                # keep previous behaviour nans are set to the
+                # maximum possible rank
+                rank_result[np.isnan(rank_result)] = len(rank_result)
+                rank_result = np.asarray(rank_result, dtype=np.int32)
+                results["rank_%s" % key_name] = rank_result
 
         _store("fit_time", out["fit_time"])
         _store("score_time", out["score_time"])
@@ -1100,6 +1104,10 @@ class GridSearchCV(BaseSearchCV):
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
+
+        See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
+        to see how to design a custom selection strategy using a callable
+        via `refit`.
 
         .. versionchanged:: 0.20
             Support for callable added.

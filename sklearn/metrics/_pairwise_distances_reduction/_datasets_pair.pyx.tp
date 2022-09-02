@@ -1,3 +1,18 @@
+{{py:
+
+implementation_specific_values = [
+    # Values are the following ones:
+    #
+    #       name_suffix, DistanceMetric, INPUT_DTYPE_t, INPUT_DTYPE
+    #
+    # We also use the float64 dtype and C-type names as defined in
+    # `sklearn.utils._typedefs` to maintain consistency.
+    #
+    ('64', 'DistanceMetric', 'DTYPE_t', 'DTYPE'),
+    ('32', 'DistanceMetric32', 'cnp.float32_t', 'np.float32')
+]
+
+}}
 import numpy as np
 cimport numpy as cnp
 
@@ -7,9 +22,9 @@ from scipy.sparse import issparse
 from ...utils._typedefs cimport DTYPE_t, ITYPE_t
 from ...metrics._dist_metrics cimport DistanceMetric
 
-cnp.import_array()
+{{for name_suffix, DistanceMetric, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
-cdef class DatasetsPair:
+cdef class DatasetsPair{{name_suffix}}:
     """Abstract class which wraps a pair of datasets (X, Y).
 
     This class allows computing distances between a single pair of rows of
@@ -18,11 +33,10 @@ cdef class DatasetsPair:
 
     The handling of parallelization over chunks to compute the distances
     and aggregation for several rows at a time is done in dedicated
-    subclasses of PairwiseDistancesReduction that in-turn rely on
-    subclasses of DatasetsPair for each pair of rows in the data. The goal
-    is to make it possible to decouple the generic parallelization and
-    aggregation logic from metric-specific computation as much as
-    possible.
+    subclasses of :class:`BaseDistanceReductionDispatcher` that in-turn rely on
+    subclasses of :class:`DatasetsPair` for each pair of rows in the data. The
+    goal is to make it possible to decouple the generic parallelization and
+    aggregation logic from metric-specific computation as much as possible.
 
     X and Y can be stored as C-contiguous np.ndarrays or CSR matrices
     in subclasses.
@@ -34,7 +48,7 @@ cdef class DatasetsPair:
 
     Parameters
     ----------
-    distance_metric: DistanceMetric
+    distance_metric: DistanceMetric{{name_suffix}}
         The distance metric responsible for computing distances
         between two vectors of (X, Y).
     """
@@ -46,7 +60,7 @@ cdef class DatasetsPair:
         Y,
         str metric="euclidean",
         dict metric_kwargs=None,
-    ) -> DatasetsPair:
+    ) -> DatasetsPair{{name_suffix}}:
         """Return the DatasetsPair implementation for the given arguments.
 
         Parameters
@@ -72,19 +86,13 @@ cdef class DatasetsPair:
 
         Returns
         -------
-        datasets_pair: DatasetsPair
-            The suited DatasetsPair implementation.
+        datasets_pair: DatasetsPair{{name_suffix}}
+            The suited DatasetsPair{{name_suffix}} implementation.
         """
         cdef:
-            DistanceMetric distance_metric = DistanceMetric.get_metric(
+            {{DistanceMetric}} distance_metric = {{DistanceMetric}}.get_metric(
                 metric,
                 **(metric_kwargs or {})
-            )
-
-        if not(X.dtype == Y.dtype == np.float64):
-            raise ValueError(
-                f"Only 64bit float datasets are supported at this time, "
-                f"got: X.dtype={X.dtype} and Y.dtype={Y.dtype}."
             )
 
         # Metric-specific checks that do not replace nor duplicate `check_array`.
@@ -95,9 +103,9 @@ cdef class DatasetsPair:
         if issparse(X) or issparse(Y):
             raise ValueError("Only dense datasets are supported for X and Y.")
 
-        return DenseDenseDatasetsPair(X, Y, distance_metric)
+        return DenseDenseDatasetsPair{{name_suffix}}(X, Y, distance_metric)
 
-    def __init__(self, DistanceMetric distance_metric):
+    def __init__(self, {{DistanceMetric}} distance_metric):
         self.distance_metric = distance_metric
 
     cdef ITYPE_t n_samples_X(self) nogil:
@@ -124,7 +132,7 @@ cdef class DatasetsPair:
         return -1
 
 @final
-cdef class DenseDenseDatasetsPair(DatasetsPair):
+cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     """Compute distances between row vectors of two arrays.
 
     Parameters
@@ -140,7 +148,7 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
         between two row vectors of (X, Y).
     """
 
-    def __init__(self, X, Y, DistanceMetric distance_metric):
+    def __init__(self, X, Y, {{DistanceMetric}} distance_metric):
         super().__init__(distance_metric)
         # Arrays have already been checked
         self.X = X
@@ -162,3 +170,4 @@ cdef class DenseDenseDatasetsPair(DatasetsPair):
     @final
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
         return self.distance_metric.dist(&self.X[i, 0], &self.Y[j, 0], self.d)
+{{endfor}}

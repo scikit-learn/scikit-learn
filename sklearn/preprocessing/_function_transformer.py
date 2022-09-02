@@ -9,6 +9,7 @@ from ..utils.validation import (
     _check_feature_names_in,
     check_array,
 )
+from ..utils._param_validation import StrOptions
 
 
 def _identity(X):
@@ -126,6 +127,17 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
            [1.0986..., 1.3862...]])
     """
 
+    _parameter_constraints: dict = {
+        "func": [callable, None],
+        "inverse_func": [callable, None],
+        "validate": ["boolean"],
+        "accept_sparse": ["boolean"],
+        "check_inverse": ["boolean"],
+        "feature_names_out": [callable, StrOptions({"one-to-one"}), None],
+        "kw_args": [dict, None],
+        "inv_kw_args": [dict, None],
+    }
+
     def __init__(
         self,
         func=None,
@@ -190,6 +202,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         self : object
             FunctionTransformer class instance.
         """
+        self._validate_params()
         X = self._check_input(X, reset=True)
         if self.check_inverse and not (self.func is None or self.inverse_func is None):
             self._check_inverse_transform(X)

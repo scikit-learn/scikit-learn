@@ -801,15 +801,15 @@ def test_check_is_fitted():
         assert False, "check_is_fitted failed with ValueError"
 
     # NotFittedError is a subclass of both ValueError and AttributeError
-    try:
-        check_is_fitted(ard, msg="Random message %(name)s, %(name)s")
-    except ValueError as e:
-        assert str(e) == "Random message ARDRegression, ARDRegression"
+    msg = "Random message %(name)s, %(name)s"
+    match = "Random message ARDRegression, ARDRegression"
+    with pytest.raises(ValueError, match=match):
+        check_is_fitted(ard, msg=msg)
 
-    try:
-        check_is_fitted(svr, msg="Another message %(name)s, %(name)s")
-    except AttributeError as e:
-        assert str(e) == "Another message SVR, SVR"
+    msg = "Another message %(name)s, %(name)s"
+    match = "Another message SVR, SVR"
+    with pytest.raises(AttributeError, match=match):
+        check_is_fitted(svr, msg=msg)
 
     ard.fit(*make_blobs())
     svr.fit(*make_blobs())

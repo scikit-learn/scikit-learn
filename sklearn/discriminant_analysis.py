@@ -23,7 +23,7 @@ from .utils.multiclass import unique_labels
 from .utils.validation import check_is_fitted
 from .utils.multiclass import check_classification_targets
 from .utils.extmath import softmax
-from .utils._param_validation import StrOptions, Interval
+from .utils._param_validation import StrOptions, Interval, HasMethods
 from .preprocessing import StandardScaler
 
 
@@ -309,14 +309,14 @@ class LinearDiscriminantAnalysis(
     [1]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "solver": [StrOptions({"svd", "lsqr", "eigen"})],
         "shrinkage": [StrOptions({"auto"}), Interval(Real, 0, 1, closed="both"), None],
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "priors": ["array-like", None],
         "store_covariance": ["boolean"],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "covariance_estimator": "no_validation",
+        "covariance_estimator": [HasMethods("fit"), None],
     }
 
     def __init__(
@@ -734,7 +734,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
 
     Parameters
     ----------
-    priors : ndarray of shape (n_classes,), default=None
+    priors : array-like of shape (n_classes,), default=None
         Class priors. By default, the class proportions are inferred from the
         training data.
 
@@ -819,10 +819,17 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     [1]
     """
 
+    _parameter_constraints: dict = {
+        "priors": ["array-like", None],
+        "reg_param": [Interval(Real, 0, 1, closed="both")],
+        "store_covariance": ["boolean"],
+        "tol": [Interval(Real, 0, None, closed="left")],
+    }
+
     def __init__(
         self, *, priors=None, reg_param=0.0, store_covariance=False, tol=1.0e-4
     ):
-        self.priors = np.asarray(priors) if priors is not None else None
+        self.priors = priors
         self.reg_param = reg_param
         self.store_covariance = store_covariance
         self.tol = tol
@@ -851,6 +858,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
         X, y = self._validate_data(X, y)
         check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)
@@ -864,7 +872,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         if self.priors is None:
             self.priors_ = np.bincount(y) / float(n_samples)
         else:
-            self.priors_ = self.priors
+            self.priors_ = np.array(self.priors)
 
         cov = None
         store_covariance = self.store_covariance

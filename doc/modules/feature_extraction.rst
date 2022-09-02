@@ -33,7 +33,7 @@ need not be stored) and storing feature names in addition to values.
 :class:`DictVectorizer` implements what is called one-of-K or "one-hot"
 coding for categorical (aka nominal, discrete) features. Categorical
 features are "attribute-value" pairs where the value is restricted
-to a list of discrete of possibilities without ordering (e.g. topic
+to a list of discrete possibilities without ordering (e.g. topic
 identifiers, types of objects, tags, names...).
 
 In the following, "city" is a categorical attribute while "temperature"
@@ -995,7 +995,7 @@ Patch extraction
 The :func:`extract_patches_2d` function extracts patches from an image stored
 as a two-dimensional array, or three-dimensional with color information along
 the third axis. For rebuilding an image from all its patches, use
-:func:`reconstruct_from_patches_2d`. For example let use generate a 4x4 pixel
+:func:`reconstruct_from_patches_2d`. For example let us generate a 4x4 pixel
 picture with 3 color channels (e.g. in RGB format)::
 
     >>> import numpy as np

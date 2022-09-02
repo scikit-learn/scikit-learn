@@ -346,7 +346,7 @@ def load_gzip_compressed_csv_data(
     encoding="utf-8",
     **kwargs,
 ):
-    """Loads gzip-compressed `data_file_name` from `data_module` with `importlib.resources`.
+    """Loads gzip-compressed with `importlib.resources`.
 
     1) Open resource file with `importlib.resources.open_binary`
     2) Decompress file obj with `gzip.open`

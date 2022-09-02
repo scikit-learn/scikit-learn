@@ -832,7 +832,7 @@ class _BaseKMeans(
 ):
     """Base class for KMeans and MiniBatchKMeans"""
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_clusters": [Interval(Integral, 1, None, closed="left")],
         "init": [StrOptions({"k-means++", "random"}), callable, "array-like"],
         "n_init": [
@@ -1336,7 +1336,7 @@ class KMeans(_BaseKMeans):
            [ 1.,  2.]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseKMeans._parameter_constraints,
         "copy_x": ["boolean"],
         "algorithm": [
@@ -1802,6 +1802,12 @@ class MiniBatchKMeans(_BaseKMeans):
     -----
     See https://www.eecs.tufts.edu/~dsculley/papers/fastkmeans.pdf
 
+    When there are too few points in the dataset, some centers may be
+    duplicated, which means that a proper clustering in terms of the number
+    of requesting clusters and the number of returned clusters will not
+    always match. One solution is to set `reassignment_ratio=0`, which
+    prevents reassignments of clusters that are too small.
+
     Examples
     --------
     >>> from sklearn.cluster import MiniBatchKMeans
@@ -1835,7 +1841,7 @@ class MiniBatchKMeans(_BaseKMeans):
     array([1, 0], dtype=int32)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseKMeans._parameter_constraints,
         "batch_size": [Interval(Integral, 1, None, closed="left")],
         "compute_labels": ["boolean"],
