@@ -106,7 +106,6 @@ cdef class PairwiseDistances64(BaseDistanceReducer64):
             pdr = PairwiseDistances64(
                 datasets_pair=DatasetsPair64.get_for(X, Y, metric, metric_kwargs),
                 chunk_size=chunk_size,
-                metric_kwargs=metric_kwargs,
                 strategy=strategy,
             )
 
@@ -127,7 +126,6 @@ cdef class PairwiseDistances64(BaseDistanceReducer64):
         chunk_size=None,
         strategy=None,
         sort_results=False,
-        metric_kwargs=None,
     ):
         super().__init__(
             datasets_pair=datasets_pair,
@@ -203,7 +201,6 @@ cdef class EuclideanPairwiseDistances64(PairwiseDistances64):
             datasets_pair=DatasetsPair64.get_for(X, Y, metric="euclidean"),
             chunk_size=chunk_size,
             strategy=strategy,
-            metric_kwargs=metric_kwargs,
         )
         # X and Y are checked by the DatasetsPair64 implemented as a DenseDenseDatasetsPair64
         cdef:
