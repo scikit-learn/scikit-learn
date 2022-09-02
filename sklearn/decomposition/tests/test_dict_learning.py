@@ -259,6 +259,7 @@ def test_dict_learning_nonzero_coefs():
     code = dico.transform(X[np.newaxis, 1])
     assert len(np.flatnonzero(code)) == 3
 
+
 def test_dict_learning_split():
     n_components = 5
     dico = DictionaryLearning(
