@@ -2,11 +2,10 @@
 #
 # License: BSD 3 clause
 
-from enum import IntEnum
-import numpy as np
+from numbers import Integral, Real
 import warnings
 
-from numbers import Integral, Real
+import numpy as np
 
 from ..base import BaseEstimator, MetaEstimatorMixin, RegressorMixin, clone
 from ..base import MultiOutputMixin
@@ -15,13 +14,8 @@ from ..utils.random import sample_without_replacement
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ._base import LinearRegression
 from ..utils.validation import has_fit_parameter
-from ..utils._param_validation import Interval
-from ..utils._param_validation import Options
-from ..utils._param_validation import StrOptions
-from ..utils._param_validation import HasMethods
-from ..utils._param_validation import Hidden
+from ..utils._param_validation import Interval, Options, StrOptions, HasMethods, Hidden
 from ..exceptions import ConvergenceWarning
-
 
 _EPSILON = np.spacing(1)
 
@@ -309,6 +303,7 @@ class RANSACRegressor(
         random_state=None,
         base_estimator="deprecated",
     ):
+
         self.estimator = estimator
         self.min_samples = min_samples
         self.residual_threshold = residual_threshold

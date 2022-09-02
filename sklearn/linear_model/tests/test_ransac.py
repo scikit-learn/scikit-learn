@@ -29,6 +29,7 @@ y = data[:, 1]
 
 
 def test_ransac_inliers_outliers():
+
     estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
         estimator, min_samples=2, residual_threshold=5, random_state=0
@@ -293,6 +294,7 @@ def test_ransac_sparse_csc():
 
 
 def test_ransac_none_estimator():
+
     estimator = LinearRegression()
 
     ransac_estimator = RANSACRegressor(
@@ -357,6 +359,7 @@ def test_ransac_min_n_samples():
 
 
 def test_ransac_multi_dimensional_targets():
+
     estimator = LinearRegression()
     ransac_estimator = RANSACRegressor(
         estimator, min_samples=2, residual_threshold=5, random_state=0
