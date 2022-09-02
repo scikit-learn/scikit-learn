@@ -612,9 +612,11 @@ def dict_learning(
 
     See Also
     --------
-    dict_learning_online : Solve a dictionary learning matrix factorization problem online.
+    dict_learning_online : Solve a dictionary learning matrix factorization
+        problem online.
     DictionaryLearning : Find a dictionary that sparsely encodes data.
-    MiniBatchDictionaryLearning : A faster, less accurate version of the dictionary learning algorithm.
+    MiniBatchDictionaryLearning : A faster, less accurate version
+        of the dictionary learning algorithm.
     SparsePCA : Sparse Principal Components Analysis.
     MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
     """
