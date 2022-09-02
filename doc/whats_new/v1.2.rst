@@ -138,6 +138,9 @@ Changelog
   :class:`cluster.AgglomerativeClustering` and will be renamed to `metric` in v1.4.
   :pr:`23470` by :user:`Meekail Zain <micky774>`.
 
+- |Fix| :class:`cluster.KMeans` now supports readonly attributes when predicting.
+  :pr:`24258` by `Thomas Fan`_
+
 :mod:`sklearn.datasets`
 .......................
 
