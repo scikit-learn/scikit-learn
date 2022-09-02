@@ -178,6 +178,8 @@ def test_get_feature_names_out():
     (
         (np.float32, np.float32),
         (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
     ),
 )
 def test_fit_transform_preserves_dtype(method, solver, data_type, expected_type):
@@ -204,6 +206,8 @@ def test_fit_transform_preserves_dtype(method, solver, data_type, expected_type)
     (
         (np.float32, np.float32),
         (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
     ),
 )
 def test_fit_preserves_dtype(method, solver, data_type, expected_type):
