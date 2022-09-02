@@ -213,7 +213,7 @@ predictive.  These are described in more detail in the :ref:`glossary`.
 Type casting
 ~~~~~~~~~~~~
 
-Where possible, input of type ``float32`` will maintain its dtype. Otherwise
+Where possible, input of type ``float32`` will maintain its data type. Otherwise
 input will be cast to ``float64``::
 
   >>> import numpy as np
@@ -232,7 +232,7 @@ input will be cast to ``float64``::
 
 In this example, ``X`` is ``float32``, and is unchanged by ``fit_transform(X)``.
 
-Using `float32`-typed training (or testing) data is often more 
+Using `float32`-typed training (or testing) data is often more
 efficient than using the usual ``float64`` ``dtype``: it allows to
 reduce the memory usage and sometimes also reduces processing time
 by leveraging the vector instructions of the CPU. However it can
