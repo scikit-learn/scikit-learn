@@ -242,6 +242,9 @@ Changelog
   `eigen_tol="auto"` in version 1.3.
   :pr:`23210` by :user:`Meekail Zain <micky774>`.
 
+- |Enhancement| :class:`manifold.LocallyLinearEmbedding` preserves dtype for
+  `numpy.float32`. :pr:`24337` by :user:`Misa Ogura <MisaOgura>`.
+
 :mod:`sklearn.metrics`
 ......................
 
