@@ -14,6 +14,8 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.decomposition._dict_learning.dict_learning",
     "sklearn.externals._packaging.version.parse",
+    # sklearn.deprecation._update_doc is updating the doc against the numpydoc.
+    # This will be fixed in future PRs.
     "sklearn.inspection._plot.partial_dependence.plot_partial_dependence",
     "sklearn.linear_model._least_angle.lars_path_gram",
     "sklearn.linear_model._omp.orthogonal_mp_gram",
