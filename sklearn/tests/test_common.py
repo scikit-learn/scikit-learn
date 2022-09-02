@@ -471,8 +471,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "OneVsOneClassifier",
     "OneVsRestClassifier",
     "RANSACRegressor",
-    "RidgeCV",
-    "RidgeClassifierCV",
 ]
 
 
