@@ -824,12 +824,12 @@ class LocallyLinearEmbedding(
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = self._validate_data(X, reset=False, dtype=[np.float64, np.float32])
         ind = self.nbrs_.kneighbors(
             X, n_neighbors=self.n_neighbors, return_distance=False
         )
         weights = barycenter_weights(X, self.nbrs_._fit_X, ind, reg=self.reg)
-        X_new = np.empty((X.shape[0], self.n_components))
+        X_new = np.empty((X.shape[0], self.n_components), dtype=X.dtype)
         for i in range(X.shape[0]):
             X_new[i] = np.dot(self.embedding_[ind[i]].T, weights[i])
         return X_new
