@@ -161,6 +161,9 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
     (1797, 7)
     """
 
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
+
     _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 0, None, closed="left"), None],
         "tol": [Interval(Real, 0.0, None, closed="left")],
@@ -215,7 +218,7 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
         """
         self._validate_params()
 
-        X = self._validate_data(X, copy=self.copy, dtype=np.float64)
+        X = self._validate_data(X, copy=self.copy, dtype=[np.float64, np.float32])
 
         n_samples, n_features = X.shape
         n_components = self.n_components
@@ -323,8 +326,8 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
-        Ih = np.eye(len(self.components_))
+        X = self._validate_data(X, reset=False, dtype=[np.float64, np.float32])
+        Ih = np.eye(len(self.components_), dtype=X.dtype)
 
         X_transformed = X - self.mean_
 
