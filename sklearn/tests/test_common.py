@@ -472,7 +472,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "NeighborhoodComponentsAnalysis",
     "Nystroem",
     "OAS",
-    "OPTICS",
     "OneVsOneClassifier",
     "OneVsRestClassifier",
     "PatchExtractor",
