@@ -316,6 +316,8 @@ Recommendation Engine packages
 Domain specific packages
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+- `scikit-network <https://scikit-network.readthedocs.io/>`_ Machine learning on graphs.
+
 - `scikit-image <https://scikit-image.org/>`_ Image processing and computer
   vision in python.
 
