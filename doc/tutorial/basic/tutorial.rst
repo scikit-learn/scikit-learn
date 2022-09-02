@@ -213,7 +213,8 @@ predictive.  These are described in more detail in the :ref:`glossary`.
 Type casting
 ~~~~~~~~~~~~
 
-Unless otherwise specified, input will be cast to ``float64``::
+Where possible, input of type ``float32`` will maintain its dtype. Otherwise
+input will be cast to ``float64``::
 
   >>> import numpy as np
   >>> from sklearn import kernel_approximation
@@ -227,10 +228,9 @@ Unless otherwise specified, input will be cast to ``float64``::
   >>> transformer = kernel_approximation.RBFSampler()
   >>> X_new = transformer.fit_transform(X)
   >>> X_new.dtype
-  dtype('float64')
+  dtype('float32')
 
-In this example, ``X`` is ``float32``, which is cast to ``float64`` by
-``fit_transform(X)``.
+In this example, ``X`` is ``float32``, and is unchanged by ``fit_transform(X)``.
 
 Regression targets are cast to ``float64`` and classification targets are
 maintained::
