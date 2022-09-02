@@ -6,6 +6,7 @@
 import time
 import sys
 import itertools
+from numbers import Integral, Real
 import warnings
 
 from math import ceil
@@ -1632,6 +1633,28 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     0.07...
     """
 
+    _parameter_constraints = {
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "fit_algorithm": [StrOptions({"lars", "cd"})],
+        "transform_algorithm": [
+            StrOptions({"lasso_lars", "lasso_cd", "lars", "omp", "threshold"})
+        ],
+        "transform_n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
+        "transform_alpha": [Interval(Real, 0, None, closed="left"), None],
+        "n_jobs": [Integral, None],
+        "code_init": [np.ndarray, None],
+        "dict_init": [np.ndarray, None],
+        "verbose": ["verbose"],
+        "split_sign": ["boolean"],
+        "random_state": ["random_state"],
+        "positive_code": ["boolean"],
+        "positive_dict": ["boolean"],
+        "transform_max_iter": [Interval(Integral, 0, None, closed="left")],
+    }
+
     def __init__(
         self,
         n_components=None,
@@ -1691,6 +1714,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X)
         if self.n_components is None:

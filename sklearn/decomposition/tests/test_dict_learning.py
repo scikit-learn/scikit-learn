@@ -260,13 +260,6 @@ def test_dict_learning_nonzero_coefs():
     assert len(np.flatnonzero(code)) == 3
 
 
-def test_dict_learning_unknown_fit_algorithm():
-    n_components = 5
-    dico = DictionaryLearning(n_components, fit_algorithm="<unknown>")
-    with pytest.raises(ValueError):
-        dico.fit(X)
-
-
 def test_dict_learning_split():
     n_components = 5
     dico = DictionaryLearning(
