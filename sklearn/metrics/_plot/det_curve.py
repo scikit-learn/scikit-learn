@@ -351,10 +351,10 @@ class DetCurveDisplay:
 
 
 @deprecated(
-   "Function plot_det_curve is deprecated in 1.0 and will be "
-   "removed in 1.2. Use one of the class methods: "
-   "DetCurveDisplay.from_predictions or "
-   "DetCurveDisplay.from_estimator."
+    "Function plot_det_curve is deprecated in 1.0 and will be "
+    "removed in 1.2. Use one of the class methods: "
+    "DetCurveDisplay.from_predictions or "
+    "DetCurveDisplay.from_estimator."
 )
 def plot_det_curve(
     estimator,
