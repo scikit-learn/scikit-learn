@@ -1633,7 +1633,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     0.07...
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
@@ -1715,6 +1715,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
             Returns the instance itself.
         """
         self._validate_params()
+
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X)
         if self.n_components is None:
@@ -2277,6 +2278,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             Returns the instance itself.
         """
         self._validate_params()
+
         self._batch_size = self.batch_size
         if self.batch_size == "warn":
             warnings.warn(
@@ -2408,8 +2410,10 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Return the instance itself.
         """
-        self._validate_params()
         has_components = hasattr(self, "components_")
+
+        if not has_components:
+            self._validate_params()
 
         X = self._validate_data(
             X, dtype=[np.float64, np.float32], order="C", reset=not has_components
