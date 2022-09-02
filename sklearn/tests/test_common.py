@@ -466,17 +466,12 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
 PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "DictionaryLearning",
     "MiniBatchDictionaryLearning",
-    "MultiTaskElasticNet",
-    "MultiTaskLasso",
     "Nystroem",
     "OAS",
     "OPTICS",
     "OneVsOneClassifier",
     "OneVsRestClassifier",
-    "PatchExtractor",
     "RANSACRegressor",
-    "RidgeCV",
-    "RidgeClassifierCV",
 ]
 
 
