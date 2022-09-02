@@ -232,6 +232,19 @@ input will be cast to ``float64``::
 
 In this example, ``X`` is ``float32``, and is unchanged by ``fit_transform(X)``.
 
+Using `float32`-typed training (or testing) data is often more 
+efficient than using the usual ``float64`` ``dtype``: it allows to
+reduce the memory usage and sometimes also reduces processing time
+by leveraging the vector instructions of the CPU. However it can
+sometimes lead to numerical stability problems causing the algorithm
+to be more sensitive to the scale of the values and :ref:`require
+adequate preprocessing<preprocessing_scaler>`.
+
+Keep in mind however that not all scikit-learn estimators attempt to
+work in `float32` mode. For instance, some transformers will always
+cast there input to `float64` and return `float64` transformed
+values as a result.
+
 Regression targets are cast to ``float64`` and classification targets are
 maintained::
 
