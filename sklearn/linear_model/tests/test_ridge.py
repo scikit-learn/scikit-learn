@@ -921,16 +921,6 @@ def test_ridge_gcv_sample_weights(
     assert_allclose(gcv_ridge.intercept_, kfold.intercept_, rtol=1e-3)
 
 
-@pytest.mark.parametrize("mode", [True, 1, 5, "bad", "gcv"])
-def test_check_gcv_mode_error(mode):
-    X, y = make_regression(n_samples=5, n_features=2)
-    gcv = RidgeCV(gcv_mode=mode)
-    with pytest.raises(ValueError, match="Unknown value for 'gcv_mode'"):
-        gcv.fit(X, y)
-    with pytest.raises(ValueError, match="Unknown value for 'gcv_mode'"):
-        _check_gcv_mode(X, mode)
-
-
 @pytest.mark.parametrize("sparse", [True, False])
 @pytest.mark.parametrize(
     "mode, mode_n_greater_than_p, mode_p_greater_than_n",
@@ -1503,6 +1493,35 @@ def test_ridgecv_int_alphas():
     # Integers
     ridge = RidgeCV(alphas=(1, 10, 100))
     ridge.fit(X, y)
+
+
+@pytest.mark.parametrize("Estimator", [RidgeCV, RidgeClassifierCV])
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"alphas": (1, -1, -100)}, ValueError, r"alphas\[1\] == -1, must be > 0.0"),
+        (
+            {"alphas": (-0.1, -1.0, -10.0)},
+            ValueError,
+            r"alphas\[0\] == -0.1, must be > 0.0",
+        ),
+        (
+            {"alphas": (1, 1.0, "1")},
+            TypeError,
+            r"alphas\[2\] must be an instance of float, not str",
+        ),
+    ],
+)
+def test_ridgecv_alphas_validation(Estimator, params, err_type, err_msg):
+    """Check the `alphas` validation in RidgeCV and RidgeClassifierCV."""
+
+    n_samples, n_features = 5, 5
+    X = rng.randn(n_samples, n_features)
+    y = rng.randint(0, 2, n_samples)
+
+    with pytest.raises(err_type, match=err_msg):
+        Estimator(**params).fit(X, y)
+
 
 @pytest.mark.parametrize("Estimator", [RidgeCV, RidgeClassifierCV])
 def test_ridgecv_alphas_scalar(Estimator):
