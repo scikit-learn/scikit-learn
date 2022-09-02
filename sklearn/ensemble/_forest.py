@@ -197,7 +197,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     instead.
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "bootstrap": ["boolean"],
         "oob_score": ["boolean"],
@@ -1385,7 +1385,7 @@ class RandomForestClassifier(ForestClassifier):
     [1]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **ForestClassifier._parameter_constraints,
         **DecisionTreeClassifier._parameter_constraints,
         "class_weight": [
@@ -1733,7 +1733,7 @@ class RandomForestRegressor(ForestRegressor):
     [-8.32987858]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **ForestRegressor._parameter_constraints,
         **DecisionTreeRegressor._parameter_constraints,
     }
@@ -2074,7 +2074,7 @@ class ExtraTreesClassifier(ForestClassifier):
     array([1])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **ForestClassifier._parameter_constraints,
         **DecisionTreeClassifier._parameter_constraints,
         "class_weight": [
@@ -2409,7 +2409,7 @@ class ExtraTreesRegressor(ForestRegressor):
     0.2727...
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **ForestRegressor._parameter_constraints,
         **DecisionTreeRegressor._parameter_constraints,
     }
@@ -2649,7 +2649,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
            [0., 1., 1., 0., 1., 0., 0., 1., 1., 0.]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "n_jobs": [Integral, None],
         "verbose": ["verbose"],
