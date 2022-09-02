@@ -636,6 +636,8 @@ def _multiclass_roc_auc_score(
 
     # validation for multiclass parameter specifications
     average_options = ("macro", "weighted", None)
+    if multi_class == "ovr":
+        average_options += ("micro",)
     if average not in average_options:
         raise ValueError(
             "average must be one of {0} for multiclass problems".format(average_options)
