@@ -29,6 +29,7 @@ from sklearn.cluster._k_means_common import _euclidean_sparse_dense_wrapper
 from sklearn.cluster._k_means_common import _inertia_dense
 from sklearn.cluster._k_means_common import _inertia_sparse
 from sklearn.cluster._k_means_common import _is_same_clustering
+from sklearn.utils._testing import create_memmap_backed_data
 from sklearn.datasets import make_blobs
 from io import StringIO
 
@@ -1213,3 +1214,23 @@ def test_feature_names_out(Klass, method):
 
     names_out = kmeans.get_feature_names_out()
     assert_array_equal([f"{class_name}{i}" for i in range(n_clusters)], names_out)
+
+
+@pytest.mark.parametrize("is_sparse", [True, False])
+def test_predict_does_not_change_cluster_centers(is_sparse):
+    """Check that predict does not change cluster centers.
+
+    Non-regression test for gh-24253.
+    """
+    X, _ = make_blobs(n_samples=200, n_features=10, centers=10, random_state=0)
+    if is_sparse:
+        X = sp.csr_matrix(X)
+
+    kmeans = KMeans()
+    y_pred1 = kmeans.fit_predict(X)
+    # Make cluster_centers readonly
+    kmeans.cluster_centers_ = create_memmap_backed_data(kmeans.cluster_centers_)
+    kmeans.labels_ = create_memmap_backed_data(kmeans.labels_)
+
+    y_pred2 = kmeans.predict(X)
+    assert_array_equal(y_pred1, y_pred2)
