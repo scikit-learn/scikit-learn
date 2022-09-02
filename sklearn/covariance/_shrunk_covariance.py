@@ -683,6 +683,8 @@ class OAS(EmpiricalCovariance):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
+
         X = self._validate_data(X)
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
