@@ -141,7 +141,7 @@ cdef class PairwiseDistances64(BaseDistanceReducer64):
         )
 
     def _finalize_results(self):
-        # If Y is X, then catastrophic cancellation might
+        # If X is Y, then catastrophic cancellation might
         # have occurred for computations of term on the diagonal
         # which must be null. We enforce nullity of those term
         # by zeroing the diagonal.
@@ -166,7 +166,7 @@ cdef class PairwiseDistances64(BaseDistanceReducer64):
         for i in range(X_start, X_end):
             for j in range(Y_start, Y_end):
                 dist_i_j = self.datasets_pair.dist(i, j)
-                self.pairwise_distances_matrix[X_start + i, Y_start + j] = dist_i_j
+                self.pairwise_distances_matrix[i, j] = dist_i_j
 
 
 cdef class EuclideanPairwiseDistances64(PairwiseDistances64):
@@ -332,10 +332,10 @@ cdef class EuclideanPairwiseDistances64(PairwiseDistances64):
                 #
                 #             ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
                 #
-                self.pairwise_distances_matrix[i + X_start, j + Y_start] = (
-                    self.X_norm_squared[i + X_start]
+                self.pairwise_distances_matrix[i, j] = (
+                    self.X_norm_squared[i]
                     + dist_middle_terms[i * n_Y + j]
-                    + self.Y_norm_squared[j + Y_start]
+                    + self.Y_norm_squared[j]
                 )
 
     def _finalize_results(self):
