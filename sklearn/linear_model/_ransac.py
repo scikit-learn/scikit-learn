@@ -5,10 +5,13 @@
 import numpy as np
 import warnings
 
+from numbers import Integral, Real
+
 from ..base import BaseEstimator, MetaEstimatorMixin, RegressorMixin, clone
 from ..base import MultiOutputMixin
 from ..utils import check_random_state, check_consistent_length
 from ..utils.random import sample_without_replacement
+from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ._base import LinearRegression
 from ..utils.validation import has_fit_parameter
@@ -243,6 +246,38 @@ class RANSACRegressor(
     >>> reg.predict(X[:1,])
     array([-31.9417...])
     """  # noqa: E501
+
+    _parameter_constraints: dict = {
+        "estimator": [HasMethods(["fit", "score", "predict"]), None],
+        "min_samples": [
+            Interval(Integral, 1, None, closed="left"),
+            Interval(Real, 0, 1, closed="both"),
+            None,
+        ],
+        "residual_threshold": [Interval(Real, None, None, "neither"), None],
+        "is_data_valid": [callable, None],
+        "is_model_valid": [callable, None],
+        "max_trials": [Interval(Integral, 1, None, closed="left")],
+        "max_skips": [Interval(Integral, 0, None, closed="both")],
+        "stop_n_inliers": [Interval(Integral, 0, None, closed="both")],
+        "stop_score": [Interval(Real, None, None, "both")],
+        "stop_probability": [Interval(Real, 0.0, 1.0, "both")],
+        "loss": [
+            callable,
+            StrOptions(
+                options=set(
+                    ["absolute_error", "absolute_loss", "squared_error", "squared_loss"]
+                ),
+                deprecated=set(["absolute_loss", "squared_loss"]),
+            ),
+        ],
+        "random_state": ["random_state"],
+        "base_estimator": [
+            HasMethods(["fit", "score", "predict"]),
+            StrOptions(options=set(["deprecated"])),
+            None,
+        ],
+    }
 
     def __init__(
         self,
