@@ -2410,9 +2410,11 @@ class MultiTaskElasticNet(Lasso):
     [0.0872422 0.0872422]
     """
 
-    _parameter_constraints = {**ElasticNet._parameter_constraints}
-    _parameter_constraints.pop("precompute")
-    _parameter_constraints.pop("positive")
+    _parameter_constraints: dict = {
+        **ElasticNet._parameter_constraints,
+    }
+    for param in ("precompute", "positive"):
+        _parameter_constraints.pop(param)
 
     def __init__(
         self,
@@ -2464,6 +2466,7 @@ class MultiTaskElasticNet(Lasso):
         initial data in memory directly using that format.
         """
         self._validate_params()
+
         _normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
@@ -2663,7 +2666,9 @@ class MultiTaskLasso(MultiTaskElasticNet):
     [-0.41888636 -0.87382323]
     """
 
-    _parameter_constraints = {**MultiTaskElasticNet._parameter_constraints}
+    _parameter_constraints: dict = {
+        **MultiTaskElasticNet._parameter_constraints,
+    }
     _parameter_constraints.pop("l1_ratio")
 
     def __init__(
