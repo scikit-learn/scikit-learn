@@ -59,7 +59,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
     instead.
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "base_estimator": "no_validation",  # TODO create an estimator-like constraint ?
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "learning_rate": [Interval(Real, 0, None, closed="neither")],
@@ -146,8 +146,15 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         # Initialization of the random number instance that will be used to
         # generate a seed at each iteration
         random_state = check_random_state(self.random_state)
+        epsilon = np.finfo(sample_weight.dtype).eps
 
+        zero_weight_mask = sample_weight == 0.0
         for iboost in range(self.n_estimators):
+            # avoid extremely small sample weight, for details see issue #20320
+            sample_weight = np.clip(sample_weight, a_min=epsilon, a_max=None)
+            # do not clip sample weights that were exactly zero originally
+            sample_weight[zero_weight_mask] = 0.0
+
             # Boosting step
             sample_weight, estimator_weight, estimator_error = self._boost(
                 iboost, X, y, sample_weight, random_state
@@ -447,8 +454,8 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     0.983...
     """
 
-    _parameter_constraints = {
-        **BaseWeightBoosting._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **BaseWeightBoosting._parameter_constraints,
         "algorithm": [StrOptions({"SAMME", "SAMME.R"})],
     }
 
@@ -635,7 +642,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
             np.log((1.0 - estimator_error) / estimator_error) + np.log(n_classes - 1.0)
         )
 
-        # Only boost the weights if I will fit again
+        # Only boost the weights if it will fit again
         if not iboost == self.n_estimators - 1:
             # Only boost positive weights
             sample_weight = np.exp(
@@ -1004,8 +1011,8 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     0.9771...
     """
 
-    _parameter_constraints = {
-        **BaseWeightBoosting._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **BaseWeightBoosting._parameter_constraints,
         "loss": [StrOptions({"linear", "square", "exponential"})],
     }
 

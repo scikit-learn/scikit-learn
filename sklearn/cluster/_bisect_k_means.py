@@ -204,7 +204,7 @@ class BisectingKMeans(_BaseKMeans):
            [ 1., 2.]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseKMeans._parameter_constraints,
         "init": [StrOptions({"k-means++", "random"}), callable],
         "copy_x": ["boolean"],
