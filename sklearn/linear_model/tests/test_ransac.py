@@ -363,15 +363,12 @@ def test_ransac_min_n_samples():
 
     ransac_estimator1.fit(X, y)
     ransac_estimator2.fit(X, y)
-    ransac_estimator5.fit(X, y)
     ransac_estimator6.fit(X, y)
 
     assert_array_almost_equal(
         ransac_estimator1.predict(X), ransac_estimator2.predict(X)
     )
-    assert_array_almost_equal(
-        ransac_estimator1.predict(X), ransac_estimator5.predict(X)
-    )
+
     assert_array_almost_equal(
         ransac_estimator1.predict(X), ransac_estimator6.predict(X)
     )
@@ -381,6 +378,9 @@ def test_ransac_min_n_samples():
 
     with pytest.raises(ValueError):
         ransac_estimator4.fit(X, y)
+
+    with pytest.raises(ValueError):
+        ransac_estimator5.fit(X, y)
 
     with pytest.raises(ValueError):
         ransac_estimator7.fit(X, y)

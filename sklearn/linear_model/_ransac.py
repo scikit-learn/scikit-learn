@@ -254,7 +254,11 @@ class RANSACRegressor(
             Interval(Real, 0, 1, closed="both"),
             None,
         ],
-        "residual_threshold": [Interval(Real, None, None, closed="neither"), None],
+        "residual_threshold": [
+            Interval(Real, None, None, closed="neither"),
+            None,
+            "missing_values",
+        ],
         "is_data_valid": [callable, None],
         "is_model_valid": [callable, None],
         "max_trials": [Interval(Integral, 1, None, closed="left")],
@@ -378,6 +382,8 @@ class RANSACRegressor(
             min_samples = X.shape[1] + 1
         elif 0 < self.min_samples < 1:
             min_samples = np.ceil(self.min_samples * X.shape[0])
+        else:
+            min_samples = self.min_samples
         if min_samples > X.shape[0]:
             raise ValueError(
                 "`min_samples` may not be larger than number "
