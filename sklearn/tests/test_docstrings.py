@@ -24,7 +24,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._ranking.coverage_error",
     "sklearn.metrics._ranking.dcg_score",
     "sklearn.metrics._ranking.roc_curve",
-    "sklearn.metrics._regression.mean_pinball_loss",
     "sklearn.metrics.cluster._bicluster.consensus_score",
     "sklearn.metrics.cluster._supervised.adjusted_mutual_info_score",
     "sklearn.metrics.cluster._supervised.adjusted_rand_score",
