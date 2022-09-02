@@ -322,6 +322,9 @@ class RBFSampler(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimat
         "random_state": ["random_state"],
     }
 
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
+
     def __init__(self, *, gamma=1.0, n_components=100, random_state=None):
         self.gamma = gamma
         self.n_components = n_components
@@ -358,6 +361,12 @@ class RBFSampler(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimat
         )
 
         self.random_offset_ = random_state.uniform(0, 2 * np.pi, size=self.n_components)
+
+        # With this we preserve the dtype of X in transform() later
+        if X.dtype == np.float32:
+            self.random_weights_ = self.random_weights_.astype(X.dtype, copy=False)
+            self.random_offset_ = self.random_offset_.astype(X.dtype, copy=False)
+
         self._n_features_out = self.n_components
         return self
 
@@ -908,7 +917,6 @@ class Nystroem(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         random_state=None,
         n_jobs=None,
     ):
-
         self.kernel = kernel
         self.gamma = gamma
         self.coef0 = coef0
