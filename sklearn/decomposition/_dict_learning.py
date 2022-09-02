@@ -14,7 +14,6 @@ from math import ceil
 import numpy as np
 from scipy import linalg
 from joblib import Parallel, effective_n_jobs
-from numbers import Integral, Real
 
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
