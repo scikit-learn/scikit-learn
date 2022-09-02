@@ -144,7 +144,7 @@ def test_agglomerative_clustering_wrong_arg_memory():
     X = rng.randn(n_samples, 50)
     memory = 5
     clustering = AgglomerativeClustering(memory=memory)
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         clustering.fit(X)
 
 

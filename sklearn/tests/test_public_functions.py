@@ -70,7 +70,7 @@ def test_function_param_validation(func_module):
         )
 
         # First, check that the error is raised if param doesn't match any valid type.
-        with pytest.raises(ValueError, match=match):
+        with pytest.raises(TypeError, match=match):
             func(**{**valid_required_params, param_name: param_with_bad_type})
 
         # Then, for constraints that are more than a type constraint, check that the

@@ -464,7 +464,7 @@ def test_callback(capsys):
     y = iris_target
 
     nca = NeighborhoodComponentsAnalysis(callback="my_cb")
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         nca.fit(X, y)
 
     max_iter = 10

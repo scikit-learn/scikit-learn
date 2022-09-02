@@ -886,9 +886,9 @@ def test_wrong_class_weight_label(klass):
 
 @pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
 def test_wrong_class_weight_format(klass):
-    # ValueError due to wrong class_weight argument type.
+    # TypeError due to wrong class_weight argument type.
     clf = klass(alpha=0.1, max_iter=1000, class_weight=[0.5])
-    with pytest.raises(ValueError):
+    with pytest.raises(TypeError):
         clf.fit(X, Y)
 
 

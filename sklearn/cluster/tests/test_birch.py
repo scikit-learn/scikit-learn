@@ -87,7 +87,7 @@ def test_n_clusters():
     clf = ElasticNet()
     brc3 = Birch(n_clusters=clf)
     msg = r"The 'n_clusters' parameter of Birch must be .* Got .* instead."
-    with pytest.raises(ValueError, match=msg):
+    with pytest.raises(TypeError, match=msg):
         brc3.fit(X)
 
     # Test that a small number of clusters raises a warning.
