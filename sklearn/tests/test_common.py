@@ -473,11 +473,9 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "OPTICS",
     "OneVsOneClassifier",
     "OneVsRestClassifier",
-    "PatchExtractor",
     "RANSACRegressor",
     "RidgeCV",
     "RidgeClassifierCV",
-    "SelectFromModel",
 ]
 
 
