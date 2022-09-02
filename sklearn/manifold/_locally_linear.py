@@ -119,7 +119,11 @@ def barycenter_kneighbors_graph(X, n_neighbors, reg=1e-3, n_jobs=None):
     ind = knn.kneighbors(X, return_distance=False)[:, 1:]
     data = barycenter_weights(X, X, ind, reg=reg)
     indptr = np.arange(0, n_samples * n_neighbors + 1, n_neighbors)
-    return csr_matrix((data.ravel(), ind.ravel(), indptr), shape=(n_samples, n_samples))
+    return csr_matrix(
+        (data.ravel(), ind.ravel(), indptr),
+        shape=(n_samples, n_samples),
+        dtype=X.dtype,
+    )
 
 
 def null_space(
@@ -343,7 +347,7 @@ def locally_linear_embedding(
         # we'll compute M = (I-W)'(I-W)
         # depending on the solver, we'll do this differently
         if M_sparse:
-            M = eye(*W.shape, format=W.format) - W
+            M = eye(*W.shape, format=W.format, dtype=X.dtype) - W
             M = (M.T * M).tocsr()
         else:
             M = (W.T * W - W.T - W).toarray()
@@ -364,10 +368,10 @@ def locally_linear_embedding(
         )
         neighbors = neighbors[:, 1:]
 
-        Yi = np.empty((n_neighbors, 1 + n_components + dp), dtype=np.float64)
+        Yi = np.empty((n_neighbors, 1 + n_components + dp), dtype=X.dtype)
         Yi[:, 0] = 1
 
-        M = np.zeros((N, N), dtype=np.float64)
+        M = np.zeros((N, N), dtype=X.dtype)
 
         use_svd = n_neighbors > d_in
 
@@ -415,9 +419,9 @@ def locally_linear_embedding(
         # find the eigenvectors and eigenvalues of each local covariance
         # matrix. We want V[i] to be a [n_neighbors x n_neighbors] matrix,
         # where the columns are eigenvectors
-        V = np.zeros((N, n_neighbors, n_neighbors))
+        V = np.zeros((N, n_neighbors, n_neighbors), dtype=X.dtype)
         nev = min(d_in, n_neighbors)
-        evals = np.zeros([N, nev])
+        evals = np.zeros([N, nev], dtype=X.dtype)
 
         # choose the most efficient way to find the eigenvectors
         use_svd = n_neighbors > d_in
@@ -466,7 +470,7 @@ def locally_linear_embedding(
 
         # Now calculate M.
         # This is the [N x N] matrix whose null space is the desired embedding
-        M = np.zeros((N, N), dtype=np.float64)
+        M = np.zeros((N, N), dtype=X.dtype)
         for i in range(N):
             s_i = s_range[i]
 
@@ -514,7 +518,7 @@ def locally_linear_embedding(
         )
         neighbors = neighbors[:, 1:]
 
-        M = np.zeros((N, N))
+        M = np.zeros((N, N), dtype=X.dtype)
 
         use_svd = n_neighbors > d_in
 
@@ -538,8 +542,6 @@ def locally_linear_embedding(
             nbrs_x, nbrs_y = np.meshgrid(neighbors[i], neighbors[i])
             M[nbrs_x, nbrs_y] -= GiGiT
             M[neighbors[i], neighbors[i]] += 1
-
-    M = M.astype(X.dtype)
 
     return null_space(
         M,
