@@ -469,7 +469,6 @@ PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
     "MultiTaskElasticNet",
     "MultiTaskLasso",
     "Nystroem",
-    "OAS",
     "OPTICS",
     "OneVsOneClassifier",
     "OneVsRestClassifier",
