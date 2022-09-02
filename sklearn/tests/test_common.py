@@ -463,21 +463,11 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
         est.set_params(**new_params)
 
 
-PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
-    "OPTICS",
-]
-
-
 @pytest.mark.parametrize(
     "estimator", _tested_estimators(), ids=_get_check_estimator_ids
 )
 def test_check_param_validation(estimator):
     name = estimator.__class__.__name__
-    if name in PARAM_VALIDATION_ESTIMATORS_TO_IGNORE:
-        pytest.skip(
-            f"Skipping check_param_validation for {name}: Does not use the "
-            "appropriate API for parameter validation yet."
-        )
     _set_checking_parameters(estimator)
     check_param_validation(name, estimator)
 
