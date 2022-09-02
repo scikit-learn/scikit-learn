@@ -610,7 +610,7 @@ shown in the following figure:
 References
 ----------
 
-.. [RW2006] Carl Eduard Rasmussen and Christopher K.I. Williams, "Gaussian Processes for Machine Learning", MIT Press 2006, Link to an official complete PDF version of the book `here <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ .
+.. [RW2006] Carl Eduard Rasmussen and Christopher K.I. Williams, "Gaussian Processes for Machine Learning", MIT Press 2006, `Book link <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_
 
 .. [Duv2014] David Duvenaud, "The Kernel Cookbook: Advice on Covariance functions", 2014, `Link <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_ .
 
