@@ -11,6 +11,7 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.decomposition import FactorAnalysis
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import ignore_warnings
 from sklearn.decomposition._factor_analysis import _ortho_rotation
 
@@ -112,3 +113,66 @@ def test_factor_analysis():
     )
     rotated = _ortho_rotation(factors[:, :n_components], method="varimax").T
     assert_array_almost_equal(np.abs(rotated), np.abs(r_solution), decimal=3)
+
+
+n_features = 5
+# n_samples, n_features, n_components = 20, 5, 3
+
+
+@pytest.mark.parametrize(
+    "data_type, expected_type, noise_variance_init",
+    [
+        (np.float32, np.float32, None),
+        (np.float64, np.float64, None),
+        (np.int32, np.float64, None),
+        (np.int64, np.float64, None),
+        (np.float32, np.float32, np.ones(n_features)),
+        (np.float64, np.float64, np.ones(n_features)),
+        (np.int32, np.float64, np.ones(n_features)),
+        (np.int64, np.float64, np.ones(n_features)),
+    ],
+)
+def test_factor_analysis_dtype_match(data_type, expected_type, noise_variance_init):
+    rng = np.random.RandomState(0)  # use global_random_seed for this?
+    n_samples, n_features, n_components = 20, 5, 3
+
+    W = rng.randn(n_components, n_features)
+    h = rng.randn(n_samples, n_components)
+    noise = rng.gamma(1, size=n_features) * rng.randn(n_samples, n_features)
+
+    X = np.dot(h, W) + noise
+
+    for method in ["randomized", "lapack"]:
+        clf = FactorAnalysis(
+            n_components=n_components,
+            svd_method=method,
+            noise_variance_init=noise_variance_init,
+        )
+        clf.fit(X.astype(data_type))
+        assert clf.components_.dtype == expected_type
+
+
+@pytest.mark.parametrize("method", ["lapack", "randomized"])
+def test_factor_analysis_numeric_consistency_float32_float64(method):
+    rng = np.random.RandomState(0)  # use global_random_seed for this?
+    n_samples, n_features, n_components = 20, 5, 3
+
+    W = rng.randn(n_components, n_features)
+    h = rng.randn(n_samples, n_components)
+    noise = rng.gamma(1, size=n_features) * rng.randn(n_samples, n_features)
+
+    tol = 1e-2
+    X = np.dot(h, W) + noise
+    clf_32 = FactorAnalysis(
+        tol=tol, n_components=n_components, svd_method=method, random_state=42
+    )
+    clf_32.fit(X.astype(np.float32))
+    clf_64 = FactorAnalysis(
+        tol=tol, n_components=n_components, svd_method=method, random_state=42
+    )
+    clf_64.fit(X.astype(np.float64))
+    # Check value consistency between types
+
+    assert_allclose(clf_32.components_, clf_64.components_)
+
+    # TODO: add check for transform

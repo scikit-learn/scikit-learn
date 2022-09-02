@@ -242,7 +242,7 @@ class FactorAnalysis(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
                     "with number of features : %d != %d"
                     % (len(self.noise_variance_init), n_features)
                 )
-            psi = np.array(self.noise_variance_init)
+            psi = np.array(self.noise_variance_init, dtype=X.dtype)
 
         loglike = []
         old_ll = -np.inf
