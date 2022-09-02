@@ -130,9 +130,9 @@ def check_branching_factor(node, branching_factor):
             check_branching_factor(cluster.child_, branching_factor)
 
 
-def test_branching_factor():
+def test_branching_factor(global_random_seed):
     # Test that nodes have at max branching_factor number of subclusters
-    X, y = make_blobs()
+    X, y = make_blobs(random_state=global_random_seed)
     branching_factor = 9
 
     # Purposefully set a low threshold to maximize the subclusters.
@@ -154,9 +154,9 @@ def check_threshold(birch_instance, threshold):
         current_leaf = current_leaf.next_leaf_
 
 
-def test_threshold():
+def test_threshold(global_random_seed):
     # Test that the leaf subclusters have a threshold lesser than radius
-    X, y = make_blobs(n_samples=80, centers=4)
+    X, y = make_blobs(n_samples=80, centers=4, random_state=global_random_seed)
     brc = Birch(threshold=0.5, n_clusters=None)
     brc.fit(X)
     check_threshold(brc, 0.5)
@@ -166,10 +166,10 @@ def test_threshold():
     check_threshold(brc, 5.0)
 
 
-def test_birch_n_clusters_long_int(global_random_seed):
+def test_birch_n_clusters_long_int():
     # Check that birch supports n_clusters with np.int64 dtype, for instance
     # coming from np.arange. #16484
-    X, _ = make_blobs(random_state=global_random_seed)
+    X, _ = make_blobs(random_state=0)
     n_clusters = np.int64(5)
     Birch(n_clusters=n_clusters).fit(X)
 
