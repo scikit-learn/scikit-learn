@@ -17,6 +17,7 @@ import numpy as np
 
 from ..exceptions import DataConversionWarning
 from ..metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
+from ..metrics.pairwise import _VALID_METRICS
 from ..utils import gen_batches, get_chunk_n_rows
 from ..utils._param_validation import Interval, HasMethods, StrOptions
 from ..utils.validation import check_memory
@@ -89,7 +90,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-    p : int, default=2
+    p : float, default=2
         Parameter for the Minkowski metric from
         :class:`~sklearn.metrics.pairwise_distances`. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
@@ -231,42 +232,12 @@ class OPTICS(ClusterMixin, BaseEstimator):
             Interval(Integral, 2, None, closed="left"),
             Interval(Real, 0, 1, closed="both"),
         ],
-        "max_eps": [Interval(Real, None, None, closed="both")],
-        "metric": [
-            callable,
-            StrOptions(
-                {
-                    "braycurtis",
-                    "canberra",
-                    "chebyshev",
-                    "cityblock",
-                    "correlation",
-                    "cosine",
-                    "dice",
-                    "euclidean",
-                    "hamming",
-                    "jaccard",
-                    "kulsinski",
-                    "l1",
-                    "l2",
-                    "mahalanobis",
-                    "manhattan",
-                    "minkowski",
-                    "precomputed",
-                    "rogerstanimoto",
-                    "russellrao",
-                    "seuclidean",
-                    "sokalmichener",
-                    "sokalsneath",
-                    "sqeuclidean",
-                    "yule",
-                }
-            ),
-        ],
-        "p": [Interval(Integral, 1, None, closed="left")],
+        "max_eps": [Interval(Real, 0, None, closed="both")],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "p": [Interval(Real, 1, None, closed="left")],
         "metric_params": [dict, None],
         "cluster_method": [StrOptions({"dbscan", "xi"})],
-        "eps": [Interval(Real, None, None, closed="both"), None],
+        "eps": [Interval(Real, 0, None, closed="both"), None],
         "xi": [Interval(Real, 0, 1, closed="both")],
         "predecessor_correction": ["boolean"],
         "min_cluster_size": [
@@ -337,6 +308,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
             Returns a fitted instance of self.
         """
         self._validate_params()
+
         dtype = bool if self.metric in PAIRWISE_BOOLEAN_FUNCTIONS else float
         if dtype == bool and X.dtype != bool:
             msg = (
