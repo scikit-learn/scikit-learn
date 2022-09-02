@@ -661,26 +661,6 @@ def test_sparse_coder_n_features_in():
     assert sc.n_features_in_ == d.shape[1]
 
 
-# default value of batch_size changed. FIXME: remove in 1.3
-@pytest.mark.filterwarnings("ignore:The default value of batch_size will change")
-@pytest.mark.parametrize(
-    "param, match",
-    [
-        ({"n_components": 0}, "n_components == 0, must be >= 1"),
-        ({"fit_algorithm": "wrong"}, "Coding method 'wrong' not supported"),
-        ({"batch_size": 0}, "batch_size == 0, must be >= 1"),
-        ({"n_iter": -1}, "n_iter == -1, must be >= 0"),
-        ({"max_iter": -1}, "max_iter == -1, must be >= 0"),
-        ({"max_no_improvement": -1}, "max_no_improvement == -1, must be >= 0"),
-    ],
-)
-def test_minibatch_dict_learning_wrong_params(param, match):
-    # Check that error are raised with clear error message when wrong values
-    # are passed for the parameters of MiniBatchDictionaryLearning
-    with pytest.raises(ValueError, match=match):
-        MiniBatchDictionaryLearning(**param).fit(X)
-
-
 @pytest.mark.parametrize("attr", ["iter_offset_", "inner_stats_", "random_state_"])
 def test_minibatch_dict_learning_deprecated_attributes(attr):
     # check that we raise a deprecation warning when accessing the deprecated
