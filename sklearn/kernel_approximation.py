@@ -262,12 +262,12 @@ class RBFSampler(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimat
 
     Attributes
     ----------
-    random_offset_ : ndarray of shape (n_components,), dtype=float64
+    random_offset_ : ndarray of shape (n_components,), dtype=float64 or float32
         Random offset used to compute the projection in the `n_components`
         dimensions of the feature space.
 
     random_weights_ : ndarray of shape (n_features, n_components),\
-        dtype=float64
+        dtype=float64 or float32
         Random projection directions drawn from the Fourier transform
         of the RBF kernel.
 
