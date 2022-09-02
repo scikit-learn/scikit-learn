@@ -1147,13 +1147,13 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     Returns
     -------
     coverage_error : float
+        The coverage error.
 
     References
     ----------
     .. [1] Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010).
            Mining multi-label data. In Data mining and knowledge discovery
            handbook (pp. 667-685). Springer US.
-
     """
     y_true = check_array(y_true, ensure_2d=True)
     y_score = check_array(y_score, ensure_2d=True)
@@ -1704,9 +1704,11 @@ def top_k_accuracy_score(
         `normalize == True` and the number of samples with
         `normalize == False`.
 
-    See also
+    See Also
     --------
-    accuracy_score
+    accuracy_score : Compute the accuracy score. By default, the function will
+        return the fraction of correct predictions divided by the total number
+        of predictions.
 
     Notes
     -----
@@ -1729,7 +1731,6 @@ def top_k_accuracy_score(
     >>> # Not normalizing gives the number of "correctly" classified samples
     >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
     3
-
     """
     y_true = check_array(y_true, ensure_2d=False, dtype=None)
     y_true = column_or_1d(y_true)

@@ -138,6 +138,9 @@ Changelog
   :class:`cluster.AgglomerativeClustering` and will be renamed to `metric` in v1.4.
   :pr:`23470` by :user:`Meekail Zain <micky774>`.
 
+- |Fix| :class:`cluster.KMeans` now supports readonly attributes when predicting.
+  :pr:`24258` by `Thomas Fan`_
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -184,6 +187,13 @@ Changelog
   `num_features > num_samples`.
   :pr:`11860` by :user:`Pierre Ablin <pierreablin>`,
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
+
+:mod:`sklearn.discriminant_analysis`
+....................................
+
+- |Fix| Validate parameters only in `fit` and not in `__init__`
+  for :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
+  :pr:`24218` by :user:`Stefanie Molin <stefmolin>`.
 
 :mod:`sklearn.ensemble`
 .......................

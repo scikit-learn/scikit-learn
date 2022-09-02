@@ -843,7 +843,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     [1.451...]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0, None, closed="left")],
         "l1_ratio": [Interval(Real, 0, 1, closed="both")],
         "fit_intercept": ["boolean"],
@@ -1268,7 +1268,7 @@ class Lasso(ElasticNet):
     0.15...
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **ElasticNet._parameter_constraints,
     }
     _parameter_constraints.pop("l1_ratio")
@@ -1461,7 +1461,7 @@ def _path_residuals(
 class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
     """Base class for iterative model fitting along a regularization path."""
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "eps": [Interval(Real, 0, None, closed="neither")],
         "n_alphas": [Interval(Integral, 1, None, closed="left")],
         "alphas": ["array-like", None],
@@ -2216,7 +2216,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     [0.398...]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **LinearModelCV._parameter_constraints,
         "l1_ratio": [Interval(Real, 0, 1, closed="both"), "array-like"],
     }
@@ -2410,6 +2410,12 @@ class MultiTaskElasticNet(Lasso):
     [0.0872422 0.0872422]
     """
 
+    _parameter_constraints: dict = {
+        **ElasticNet._parameter_constraints,
+    }
+    for param in ("precompute", "positive"):
+        _parameter_constraints.pop(param)
+
     def __init__(
         self,
         alpha=1.0,
@@ -2459,6 +2465,8 @@ class MultiTaskElasticNet(Lasso):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+        self._validate_params()
+
         _normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
@@ -2501,8 +2509,6 @@ class MultiTaskElasticNet(Lasso):
 
         self.coef_ = np.asfortranarray(self.coef_)  # coef contiguous in memory
 
-        if self.selection not in ["random", "cyclic"]:
-            raise ValueError("selection should be either random or cyclic.")
         random = self.selection == "random"
 
         (
@@ -2659,6 +2665,11 @@ class MultiTaskLasso(MultiTaskElasticNet):
     >>> print(clf.intercept_)
     [-0.41888636 -0.87382323]
     """
+
+    _parameter_constraints: dict = {
+        **MultiTaskElasticNet._parameter_constraints,
+    }
+    _parameter_constraints.pop("l1_ratio")
 
     def __init__(
         self,
@@ -2871,7 +2882,7 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     [0.00166409 0.00166409]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **LinearModelCV._parameter_constraints,
         "l1_ratio": [Interval(Real, 0, 1, closed="both"), "array-like"],
     }
@@ -3114,7 +3125,7 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     array([[153.7971...,  94.9015...]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **LinearModelCV._parameter_constraints,
     }
     _parameter_constraints.pop("precompute")

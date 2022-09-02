@@ -184,7 +184,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
     array([ -0.9821...,  -1.0370..., -73.3697...,  -0.9821...])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **NeighborsBase._parameter_constraints,
         "contamination": [
             StrOptions({"auto"}),

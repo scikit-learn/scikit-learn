@@ -784,8 +784,7 @@ def _labels_inertia(
     n_clusters = centers.shape[0]
 
     labels = np.full(n_samples, -1, dtype=np.int32)
-    weight_in_clusters = np.zeros(n_clusters, dtype=centers.dtype)
-    center_shift = np.zeros_like(weight_in_clusters)
+    center_shift = np.zeros(n_clusters, dtype=centers.dtype)
 
     if sp.issparse(X):
         _labels = lloyd_iter_chunked_sparse
@@ -795,16 +794,17 @@ def _labels_inertia(
         _inertia = _inertia_dense
         X = ReadonlyArrayWrapper(X)
 
+    centers = ReadonlyArrayWrapper(centers)
     _labels(
         X,
         sample_weight,
         x_squared_norms,
         centers,
-        centers,
-        weight_in_clusters,
-        labels,
-        center_shift,
-        n_threads,
+        centers_new=None,
+        weight_in_clusters=None,
+        labels=labels,
+        center_shift=center_shift,
+        n_threads=n_threads,
         update_centers=False,
     )
 
@@ -832,7 +832,7 @@ class _BaseKMeans(
 ):
     """Base class for KMeans and MiniBatchKMeans"""
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_clusters": [Interval(Integral, 1, None, closed="left")],
         "init": [StrOptions({"k-means++", "random"}), callable, "array-like"],
         "n_init": [
@@ -1336,7 +1336,7 @@ class KMeans(_BaseKMeans):
            [ 1.,  2.]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseKMeans._parameter_constraints,
         "copy_x": ["boolean"],
         "algorithm": [
@@ -1841,7 +1841,7 @@ class MiniBatchKMeans(_BaseKMeans):
     array([1, 0], dtype=int32)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseKMeans._parameter_constraints,
         "batch_size": [Interval(Integral, 1, None, closed="left")],
         "compute_labels": ["boolean"],
