@@ -573,10 +573,11 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing :term:`fit`. The check for
-        decision_function or predict_proba is left out because the
-        estimator can be from the regressors which do not have either
-        of these methods.
+        A regressor or a classifier that implements :term:`fit`.
+        When a classifier is passed, :term:`decision_function` will be used
+        in priority and it will fallback to :term`predict_proba` if it is not
+        available.
+        When a regressor is passed, :term:`predict` is used.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation: the `n_classes * (
