@@ -632,7 +632,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     array([2, 1, 0, 2, 0, 2, 0, 1, 1, 1])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "estimator": [HasMethods(["fit"])],
         "n_jobs": [Integral, None],
     }
