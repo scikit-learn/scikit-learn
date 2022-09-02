@@ -257,7 +257,6 @@ class RANSACRegressor(
         "residual_threshold": [
             Interval(Real, None, None, closed="neither"),
             None,
-            "missing_values",
         ],
         "is_data_valid": [callable, None],
         "is_model_valid": [callable, None],

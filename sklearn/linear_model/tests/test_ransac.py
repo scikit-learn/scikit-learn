@@ -168,6 +168,9 @@ def test_ransac_predict():
     assert_array_equal(ransac_estimator.predict(X), np.zeros(100))
 
 
+@pytest.mark.skip(
+    "parmater validation does not accept residual_threshold=nan as a valid value."
+)
 def test_ransac_residuals_threshold_no_inliers():
     # When residual_threshold=nan there are no inliers and a
     # ValueError with a message should be raised
