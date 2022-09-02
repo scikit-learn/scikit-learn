@@ -719,9 +719,10 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self : object
             The partially fitted underlying estimator.
         """
-        self._validate_params()
         first_call = _check_partial_fit_first_call(self, classes)
         if first_call:
+            self._validate_params()
+
             self.estimators_ = [
                 clone(self.estimator)
                 for _ in range(self.n_classes_ * (self.n_classes_ - 1) // 2)
