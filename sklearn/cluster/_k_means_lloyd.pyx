@@ -50,14 +50,13 @@ def lloyd_iter_chunked_dense(
 
     centers_new : ndarray of shape (n_clusters, n_features), dtype=floating
         Centers after previous iteration, placeholder for the new centers
-        computed during this iteration.
-
-    centers_squared_norms : ndarray of shape (n_clusters,), dtype=floating
-        Squared L2 norm of the centers.
+        computed during this iteration. `centers_new` can be `None` if
+        `update_centers` is False.
 
     weight_in_clusters : ndarray of shape (n_clusters,), dtype=floating
         Placeholder for the sums of the weights of every observation assigned
-        to each center.
+        to each center. `weight_in_clusters` can be `None` if `update_centers`
+        is False.
 
     labels : ndarray of shape (n_samples,), dtype=int
         labels assignment.
@@ -78,7 +77,7 @@ def lloyd_iter_chunked_dense(
     cdef:
         int n_samples = X.shape[0]
         int n_features = X.shape[1]
-        int n_clusters = centers_new.shape[0]
+        int n_clusters = centers_old.shape[0]
 
         # hard-coded number of samples per chunk. Appeared to be close to
         # optimal in all situations.
@@ -243,14 +242,13 @@ def lloyd_iter_chunked_sparse(
 
     centers_new : ndarray of shape (n_clusters, n_features), dtype=floating
         Centers after previous iteration, placeholder for the new centers
-        computed during this iteration.
-
-    centers_squared_norms : ndarray of shape (n_clusters,), dtype=floating
-        Squared L2 norm of the centers.
+        computed during this iteration. `centers_new` can be `None` if
+        `update_centers` is False.
 
     weight_in_clusters : ndarray of shape (n_clusters,), dtype=floating
         Placeholder for the sums of the weights of every observation assigned
-        to each center.
+        to each center. `weight_in_clusters` can be `None` if `update_centers`
+        is False.
 
     labels : ndarray of shape (n_samples,), dtype=int
         labels assignment.
@@ -272,7 +270,7 @@ def lloyd_iter_chunked_sparse(
     cdef:
         int n_samples = X.shape[0]
         int n_features = X.shape[1]
-        int n_clusters = centers_new.shape[0]
+        int n_clusters = centers_old.shape[0]
 
         # Choose same as for dense. Does not have the same impact since with
         # sparse data the pairwise distances matrix is not precomputed.
