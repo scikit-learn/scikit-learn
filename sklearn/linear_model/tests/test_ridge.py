@@ -610,7 +610,8 @@ def test_ridge_individual_penalties():
 
     # Test error is raised when number of targets and penalties do not match.
     ridge = Ridge(alpha=penalties[:-1])
-    with pytest.raises(ValueError):
+    err_msg = "Number of targets and number of penalties do not correspond: 4 != 5"
+    with pytest.raises(ValueError, match=err_msg):
         ridge.fit(X, y)
 
 
