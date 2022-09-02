@@ -263,7 +263,7 @@ Changelog
   :pr:`23461` by :user:`Meekail Zain <micky774>`.
 
 - |Feature| :func:`metrics.roc_auc_score` now supports micro-averaging for the
-  ovr multiclass problem. :pr:`22518` by :user:`Arturo Amor <ArturoAmorQ>`.
+  ovr multiclass problem. :pr:`24338` by :user:`Arturo Amor <ArturoAmorQ>`.
 
 :mod:`sklearn.model_selection`
 ..............................
