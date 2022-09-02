@@ -21,7 +21,6 @@ from scipy import sparse
 from scipy import optimize
 from scipy.sparse import linalg as sp_linalg
 
-
 from ._base import LinearClassifierMixin, LinearModel
 from ._base import _deprecate_normalize, _preprocess_data, _rescale_data
 from ._sag import sag_solver
