@@ -18,10 +18,9 @@ from joblib import Parallel, effective_n_jobs
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils import deprecated
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
-from ..utils.validation import check_scalar
 from ..utils.fixes import delayed
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
@@ -1633,7 +1632,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     0.07...
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
@@ -1715,6 +1714,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
             Returns the instance itself.
         """
         self._validate_params()
+
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X)
         if self.n_components is None:
@@ -1990,6 +1990,38 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     0.059...
     """
 
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "n_iter": [
+            Interval(Integral, 0, None, closed="left"),
+            Hidden(StrOptions({"deprecated"})),
+        ],
+        "max_iter": [Interval(Integral, 0, None, closed="left"), None],
+        "fit_algorithm": [StrOptions({"cd", "lars"})],
+        "n_jobs": [None, Integral],
+        "batch_size": [
+            Interval(Integral, 1, None, closed="left"),
+            Hidden(StrOptions({"warn"})),
+        ],
+        "shuffle": ["boolean"],
+        "dict_init": [None, np.ndarray],
+        "transform_algorithm": [
+            StrOptions({"lasso_lars", "lasso_cd", "lars", "omp", "threshold"})
+        ],
+        "transform_n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
+        "transform_alpha": [Interval(Real, 0, None, closed="left"), None],
+        "verbose": ["verbose"],
+        "split_sign": ["boolean"],
+        "random_state": ["random_state"],
+        "positive_code": ["boolean"],
+        "positive_dict": ["boolean"],
+        "transform_max_iter": [Interval(Integral, 0, None, closed="left")],
+        "callback": [None, callable],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "max_no_improvement": [Interval(Integral, 0, None, closed="left"), None],
+    }
+
     def __init__(
         self,
         n_components=None,
@@ -2064,37 +2096,17 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     def _check_params(self, X):
         # n_components
-        if self.n_components is not None:
-            check_scalar(self.n_components, "n_components", int, min_val=1)
         self._n_components = self.n_components
         if self._n_components is None:
             self._n_components = X.shape[1]
 
         # fit_algorithm
-        if self.fit_algorithm not in ("lars", "cd"):
-            raise ValueError(
-                f"Coding method {self.fit_algorithm!r} not supported as a fit "
-                'algorithm. Expected either "lars" or "cd".'
-            )
         _check_positive_coding(self.fit_algorithm, self.positive_code)
         self._fit_algorithm = "lasso_" + self.fit_algorithm
 
         # batch_size
         if hasattr(self, "_batch_size"):
-            check_scalar(self._batch_size, "batch_size", int, min_val=1)
             self._batch_size = min(self._batch_size, X.shape[0])
-
-        # n_iter
-        if self.n_iter != "deprecated":
-            check_scalar(self.n_iter, "n_iter", int, min_val=0)
-
-        # max_iter
-        if self.max_iter is not None:
-            check_scalar(self.max_iter, "max_iter", int, min_val=0)
-
-        # max_no_improvement
-        if self.max_no_improvement is not None:
-            check_scalar(self.max_no_improvement, "max_no_improvement", int, min_val=0)
 
     def _initialize_dict(self, X, random_state):
         """Initialization of the dictionary."""
@@ -2264,6 +2276,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
+
         self._batch_size = self.batch_size
         if self.batch_size == "warn":
             warnings.warn(
@@ -2396,6 +2410,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             Return the instance itself.
         """
         has_components = hasattr(self, "components_")
+
+        if not has_components:
+            self._validate_params()
 
         X = self._validate_data(
             X, dtype=[np.float64, np.float32], order="C", reset=not has_components
