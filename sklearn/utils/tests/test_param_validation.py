@@ -202,7 +202,7 @@ def test_hasmethods():
         StrOptions({"a", "b", "c"}),
         # _MissingValues(),
         _VerboseHelper(),
-        HasMethods("fit"),
+        # HasMethods("fit"),
         _IterablesNotString(),
         _CVObjects(),
     ],
