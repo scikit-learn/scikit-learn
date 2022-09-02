@@ -1,10 +1,9 @@
 cimport numpy as cnp
 
 from cython cimport final
-from cython.parallel cimport prange
 
 from ._base cimport (
-    PairwiseDistancesReduction64,
+    BaseDistanceReducer64,
     _sqeuclidean_row_norms64,
 )
 
@@ -54,7 +53,7 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
     return {}
 
 
-cdef class PairwiseDistances64(PairwiseDistancesReduction64):
+cdef class PairwiseDistances64(BaseDistanceReducer64):
     """64bit implementation of PairwiseDistances."""
 
     @classmethod
@@ -90,7 +89,7 @@ cdef class PairwiseDistances64(PairwiseDistancesReduction64):
             # at time to leverage a call to the BLAS GEMM routine as explained
             # in more details in the docstring.
             use_squared_distances = metric == "sqeuclidean"
-            pdr = FastEuclideanPairwiseDistances64(
+            pdr = EuclideanPairwiseDistances64(
                 X=X, Y=Y,
                 use_squared_distances=use_squared_distances,
                 chunk_size=chunk_size,
@@ -170,7 +169,7 @@ cdef class PairwiseDistances64(PairwiseDistancesReduction64):
                 self.pairwise_distances_matrix[X_start + i, Y_start + j] = dist_i_j
 
 
-cdef class FastEuclideanPairwiseDistances64(PairwiseDistances64):
+cdef class EuclideanPairwiseDistances64(PairwiseDistances64):
     """EuclideanDistance-specialized 64bit implementation for PairwiseDistances."""
 
     @classmethod
@@ -194,7 +193,7 @@ cdef class FastEuclideanPairwiseDistances64(PairwiseDistances64):
         ):
             warnings.warn(
                 f"Some metric_kwargs have been passed ({metric_kwargs}) but aren't "
-                f"usable for this case (FastEuclideanPairwiseDistances64) and will be ignored.",
+                f"usable for this case (EuclideanPairwiseDistances64) and will be ignored.",
                 UserWarning,
                 stacklevel=3,
             )

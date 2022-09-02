@@ -433,7 +433,7 @@ class OneHotEncoder(_BaseEncoder):
            [1., 0., 0.]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "categories": [StrOptions({"auto"}), list],
         "drop": [StrOptions({"first", "if_binary"}), "array-like", None],
         "dtype": "no_validation",  # validation delegated to numpy
@@ -1188,7 +1188,7 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
            [ 0., -1.]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "categories": [StrOptions({"auto"}), list],
         "dtype": "no_validation",  # validation delegated to numpy
         "encoded_missing_value": [Integral, type(np.nan)],

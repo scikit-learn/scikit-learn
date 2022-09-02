@@ -1,22 +1,20 @@
 cimport numpy as cnp
 
-from ._base cimport (
-    PairwiseDistancesReduction64,
-)
+from ._base cimport BaseDistanceReducer64
 from ._gemm_term_computer cimport GEMMTermComputer64
 
-from ...utils._typedefs cimport ITYPE_t, DTYPE_t
+from ...utils._typedefs cimport DTYPE_t
 
 cnp.import_array()
 
-cdef class PairwiseDistances64(PairwiseDistancesReduction64):
+cdef class PairwiseDistances64(BaseDistanceReducer64):
     """64bit implementation of PairwiseDistances."""
 
     cdef:
         DTYPE_t[:, ::1] pairwise_distances_matrix
 
 
-cdef class FastEuclideanPairwiseDistances64(PairwiseDistances64):
+cdef class EuclideanPairwiseDistances64(PairwiseDistances64):
     """EuclideanDistance-specialized 64bit implementation for PairwiseDistances."""
     cdef:
         GEMMTermComputer64 gemm_term_computer

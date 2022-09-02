@@ -484,7 +484,7 @@ class MDS(BaseEstimator):
     (100, 2)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "metric": ["boolean"],
         "n_init": [Interval(Integral, 1, None, closed="left")],
