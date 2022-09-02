@@ -1966,7 +1966,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     0.059...
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
         "n_iter": [
