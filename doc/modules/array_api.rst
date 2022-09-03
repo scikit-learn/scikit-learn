@@ -22,6 +22,10 @@ instead of relying on NumPy.
 At this stage, this support is **considered experimental** and must be enabled
 explicitly as explained in the following.
 
+.. note::
+    Currently, only `cupy.array_api` and `numpy.array_api` are known to work
+    with scikit-learn's estimators.
+
 Example usage
 =============
 
