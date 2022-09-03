@@ -335,16 +335,34 @@ def adjusted_rand_score(labels_true, labels_pred):
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        Ground truth class labels to be used as a reference
+        Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        Cluster labels to evaluate
+        Cluster labels to evaluate.
 
     Returns
     -------
     ARI : float
        Similarity score between -0.5 and 1.0. Random labelings have an ARI
        close to 0.0. 1.0 stands for perfect match.
+
+    See Also
+    --------
+    adjusted_mutual_info_score : Adjusted Mutual Information.
+
+    References
+    ----------
+    .. [Hubert1985] L. Hubert and P. Arabie, Comparing Partitions,
+      Journal of Classification 1985
+      https://link.springer.com/article/10.1007%2FBF01908075
+
+    .. [Steinley2004] D. Steinley, Properties of the Hubert-Arabie
+      adjusted Rand index, Psychological Methods 2004
+
+    .. [wk] https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
+
+    .. [Chacon] :doi:`Minimum adjusted Rand index for two clusterings of a given size,
+      2022, J. E. Chacón and A. I. Rastrojo <10.1007/s11634-022-00491-w>`
 
     Examples
     --------
@@ -379,25 +397,6 @@ def adjusted_rand_score(labels_true, labels_pred):
 
       >>> adjusted_rand_score([0, 0, 1, 1], [0, 1, 0, 1])
       -0.5
-
-    References
-    ----------
-    .. [Hubert1985] L. Hubert and P. Arabie, Comparing Partitions,
-      Journal of Classification 1985
-      https://link.springer.com/article/10.1007%2FBF01908075
-
-    .. [Steinley2004] D. Steinley, Properties of the Hubert-Arabie
-      adjusted Rand index, Psychological Methods 2004
-
-    .. [wk] https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
-
-    .. [Chacon] :doi:`Minimum adjusted Rand index for two clusterings of a given size,
-      2022, J. E. Chacón and A. I. Rastrojo <10.1007/s11634-022-00491-w>`
-
-
-    See Also
-    --------
-    adjusted_mutual_info_score : Adjusted Mutual Information.
     """
     (tn, fp), (fn, tp) = pair_confusion_matrix(labels_true, labels_pred)
     # convert to Python integer types, to avoid overflow or underflow
