@@ -240,7 +240,7 @@ def test_fit_preserves_dtype(method, solver, data_type, expected_type):
 @pytest.mark.parametrize("solver", eigen_solvers)
 def test_fit_transform_numerical_consistency(method, solver):
     """Ensures numerical consistency between np.float32 and np.float64 computations"""
-    rtol = 1e-3
+    rtol = 1e-5
     rng = np.random.RandomState(42)
     X = np.array(list(product(range(5), repeat=2)))
     X = X + 1e-10 * rng.uniform(size=X.shape)
