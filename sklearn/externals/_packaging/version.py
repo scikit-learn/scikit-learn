@@ -72,7 +72,7 @@ def parse(version: str) -> Union["LegacyVersion", "Version"]:
 
     Returns
     -------
-    version :class:`Version` object or a :class:`LegacyVersion` object
+    version : :class:`Version` object or a :class:`LegacyVersion` object
         Returned class depends on the given version: if is a valid
         PEP 440 version or a legacy version.
     """
