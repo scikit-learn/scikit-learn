@@ -15,6 +15,8 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.decomposition._dict_learning.dict_learning",
     "sklearn.externals._packaging.version.parse",
     "sklearn.inspection._plot.partial_dependence.plot_partial_dependence",
+    # sklearn.deprecation._update_doc is updating the doc against the numpydoc.
+    # This will be fixed with issue: #24328
     "sklearn.metrics._plot.det_curve.plot_det_curve",
     "sklearn.metrics._plot.precision_recall_curve.plot_precision_recall_curve",
     "sklearn.metrics._ranking.dcg_score",
