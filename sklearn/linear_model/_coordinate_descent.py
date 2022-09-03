@@ -2410,6 +2410,12 @@ class MultiTaskElasticNet(Lasso):
     [0.0872422 0.0872422]
     """
 
+    _parameter_constraints: dict = {
+        **ElasticNet._parameter_constraints,
+    }
+    for param in ("precompute", "positive"):
+        _parameter_constraints.pop(param)
+
     def __init__(
         self,
         alpha=1.0,
@@ -2459,6 +2465,8 @@ class MultiTaskElasticNet(Lasso):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+        self._validate_params()
+
         _normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
@@ -2501,8 +2509,6 @@ class MultiTaskElasticNet(Lasso):
 
         self.coef_ = np.asfortranarray(self.coef_)  # coef contiguous in memory
 
-        if self.selection not in ["random", "cyclic"]:
-            raise ValueError("selection should be either random or cyclic.")
         random = self.selection == "random"
 
         (
@@ -2659,6 +2665,11 @@ class MultiTaskLasso(MultiTaskElasticNet):
     >>> print(clf.intercept_)
     [-0.41888636 -0.87382323]
     """
+
+    _parameter_constraints: dict = {
+        **MultiTaskElasticNet._parameter_constraints,
+    }
+    _parameter_constraints.pop("l1_ratio")
 
     def __init__(
         self,
