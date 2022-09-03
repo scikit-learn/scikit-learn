@@ -1278,6 +1278,9 @@ class FeatureAgglomeration(
         "compute_distances": ["boolean"],
     }
 
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
+
     def __init__(
         self,
         n_clusters=2,
@@ -1322,7 +1325,9 @@ class FeatureAgglomeration(
             Returns the transformer.
         """
         self._validate_params()
-        X = self._validate_data(X, ensure_min_features=2)
+        X = self._validate_data(
+            X, ensure_min_features=2, dtype=[np.float64, np.float32]
+        )
         super()._fit(X.T)
         self._n_features_out = self.n_clusters_
         return self
