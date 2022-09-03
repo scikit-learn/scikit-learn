@@ -84,7 +84,7 @@ def test_lle_simple_grid(global_dtype, solver):
 @pytest.mark.parametrize("method", ["standard", "hessian", "modified", "ltsa"])
 @pytest.mark.parametrize("solver", eigen_solvers)
 def test_lle_manifold(global_dtype, method, solver):
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(97)
     # similar test on a slightly more complex manifold
     X = np.array(list(product(np.arange(18), repeat=2)))
     X = np.c_[X, X[:, 0] ** 2 / 18]
