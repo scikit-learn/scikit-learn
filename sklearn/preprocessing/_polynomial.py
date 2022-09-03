@@ -130,7 +130,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
            [ 1.,  4.,  5., 20.]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "degree": [Interval(Integral, 0, None, closed="left"), "array-like"],
         "interaction_only": ["boolean"],
         "include_bias": ["boolean"],
@@ -632,7 +632,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
            [0.  , 0.  , 0.5 , 0.5 ]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_knots": [Interval(Integral, 2, None, closed="left")],
         "degree": [Interval(Integral, 0, None, closed="left")],
         "knots": [StrOptions({"uniform", "quantile"}), "array-like"],

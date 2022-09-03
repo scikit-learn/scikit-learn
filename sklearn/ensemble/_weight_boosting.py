@@ -59,7 +59,7 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
     instead.
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "base_estimator": "no_validation",  # TODO create an estimator-like constraint ?
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "learning_rate": [Interval(Real, 0, None, closed="neither")],
@@ -454,8 +454,8 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     0.983...
     """
 
-    _parameter_constraints = {
-        **BaseWeightBoosting._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **BaseWeightBoosting._parameter_constraints,
         "algorithm": [StrOptions({"SAMME", "SAMME.R"})],
     }
 
@@ -1011,8 +1011,8 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     0.9771...
     """
 
-    _parameter_constraints = {
-        **BaseWeightBoosting._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **BaseWeightBoosting._parameter_constraints,
         "loss": [StrOptions({"linear", "square", "exponential"})],
     }
 
