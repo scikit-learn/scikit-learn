@@ -509,7 +509,7 @@ class SkewedChi2Sampler(
         if X.dtype == np.float32:
             self.random_weights_ = self.random_weights_.astype(X.dtype, copy=False)
             self.random_offset_ = self.random_offset_.astype(X.dtype, copy=False)
-            
+
         self._n_features_out = self.n_components
         return self
 
