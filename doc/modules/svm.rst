@@ -851,10 +851,11 @@ SVDD
 
 Support Vector Data Description (SVDD), proposed by Tax and Duin (2004),
 aims at finding a spherically shaped boundary around a data set. Specifically,
-it computes a minimum volume hypersphere containing the most of the data with
-the number of outliers controlled by the parameter of the model.
+it computes a minimum volume hypersphere (in the feature space induced by the
+kernel) containing the most of the data with the number of outliers controlled
+by the parameter of the model.
 
-The original formulation suffered from non-convexity issues related to optimality of 
+The original formulation suffered from non-convexity issues related to optimality of
 the attained solution for certain values of the regularization parameter :math:`C`.
 Chang, Lee, and Lin (2013) suggested a reformulation of the SVDD model
 which had a well-defined and provably unique global solution for any :math:`C>0`.
