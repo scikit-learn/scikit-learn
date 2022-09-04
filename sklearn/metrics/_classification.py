@@ -39,7 +39,7 @@ from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
 from ..utils.sparsefuncs import count_nonzero
-from ..exceptions import UndefinedMetricWarning
+from ..exceptions import UndefinedMetricWarning, DataConversionWarning
 
 from ._base import _check_pos_label_consistency
 
@@ -2530,7 +2530,9 @@ def log_loss(
 
     eps : float, default=1e-15
         Log loss is undefined for p=0 or p=1, so probabilities are
-        clipped to max(eps, min(1 - eps, p)).
+        clipped to max(eps, min(1 - eps, p)). For input of type
+        np.float32/np.float16, eps will default to their respective precision
+        np.finfo(np.float32).eps/np.finfo(np.float16).eps.
 
     normalize : bool, default=True
         If true, return the mean loss per sample.
@@ -2597,6 +2599,28 @@ def log_loss(
         transformed_labels = np.append(
             1 - transformed_labels, transformed_labels, axis=1
         )
+
+    # if y_pred is np.float32/16, change eps to prevent the following:
+    # 1) y_pred when passing through np.clip, ceiling becomes 1-eps = 1.0
+    # 2) log(1-y_pred) when y_pred=1.0 instead of 1-eps, will result in nan
+    if (type(y_pred[0]) == np.float32) and (eps < np.finfo(np.float32).eps):
+        # eps increased to np.float32 precision
+        warnings.warn(
+            "y_pred is np.float32 and eps = %e too small, eps increased "
+            "to np.float32 precision using np.finfo(np.float32).eps = %e"
+            % (eps, np.finfo(np.float32).eps),
+            DataConversionWarning,
+        )
+        eps = np.finfo(np.float32).eps
+    elif (type(y_pred[0]) == np.float16) and (eps < np.finfo(np.float16).eps):
+        # eps increased to np.float16 precision
+        warnings.warn(
+            "y_pred is np.float16 and eps = %e too small, eps increased "
+            "to np.float16 precision using np.finfo(np.float16).eps = %e"
+            % (eps, np.finfo(np.float16).eps),
+            DataConversionWarning,
+        )
+        eps = np.finfo(np.float16).eps
 
     # Clipping
     y_pred = np.clip(y_pred, eps, 1 - eps)
