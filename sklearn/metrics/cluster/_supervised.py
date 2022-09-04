@@ -890,6 +890,16 @@ def adjusted_mutual_info_score(
     adjusted_rand_score : Adjusted Rand Index.
     mutual_info_score : Mutual Information (not adjusted for chance).
 
+    References
+    ----------
+    .. [1] `Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
+       Clusterings Comparison: Variants, Properties, Normalization and
+       Correction for Chance, JMLR
+       <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>`_
+
+    .. [2] `Wikipedia entry for the Adjusted Mutual Information
+       <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
+
     Examples
     --------
 
@@ -910,16 +920,6 @@ def adjusted_mutual_info_score(
       >>> adjusted_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
       ... # doctest: +SKIP
       0.0
-
-    References
-    ----------
-    .. [1] `Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
-       Clusterings Comparison: Variants, Properties, Normalization and
-       Correction for Chance, JMLR
-       <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>`_
-
-    .. [2] `Wikipedia entry for the Adjusted Mutual Information
-       <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples = labels_true.shape[0]
