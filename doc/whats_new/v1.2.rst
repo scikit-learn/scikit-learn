@@ -208,6 +208,12 @@ Changelog
 :mod:`sklearn.feature_selection`
 ................................
 
+:mod:`sklearn.kernel_approximation`
+............................
+
+- |Enhancement| :class:`kernel_approximation.SkewedChi2Sampler` now preserves
+  dtype for `numpy.float32` inputs. :pr:`xxxxx` by `Rahil Parikh <rprkh>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
