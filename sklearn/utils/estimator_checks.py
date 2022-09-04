@@ -27,6 +27,8 @@ from ._testing import create_memmap_backed_data
 from ._testing import raises
 from . import is_scalar_nan
 
+from ..decomposition import PCA
+
 from ..linear_model import LinearRegression
 from ..linear_model import LogisticRegression
 from ..linear_model import RANSACRegressor
@@ -1086,6 +1088,10 @@ def check_sample_weights_invariance(name, estimator_orig, kind="ones"):
 
     estimator1.fit(X1, y=y1, sample_weight=None)
     estimator2.fit(X2, y=y2, sample_weight=sw2)
+
+    # Handle sign-indeterminacy for PCA
+    if isinstance(estimator1, PCA) and isinstance(estimator2, PCA):
+        estimator2._match_sign(estimator1)
 
     for method in ["predict", "predict_proba", "decision_function", "transform"]:
         if hasattr(estimator_orig, method):

@@ -10,7 +10,7 @@
 #
 # License: BSD 3 clause
 
-from math import log, sqrt
+from math import log
 from numbers import Integral, Real
 
 import numpy as np
@@ -24,7 +24,7 @@ from ..utils import check_random_state
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils._param_validation import Interval, StrOptions
 
 
@@ -112,6 +112,16 @@ def _infer_dimension(spectrum, n_samples):
     for rank in range(1, spectrum.shape[0]):
         ll[rank] = _assess_dimension(spectrum, rank, n_samples)
     return ll.argmax()
+
+
+def _sample_count(sample_weight, n_samples):
+    """Determines the number of samples explicitly provided or via sample_weight."""
+    if sample_weight is None:
+        return n_samples
+    # Assume when sample_weight.sum() > n_samples that sample_weight contains count;
+    # otherwise assume that the sums is not meaningful (e.g. it sums to 1) and set
+    # (arbitrarily) the count of unweighted samples to n_samples
+    return max(sample_weight.sum(), n_samples)
 
 
 class PCA(_BasePCA):
@@ -402,7 +412,7 @@ class PCA(_BasePCA):
         self.power_iteration_normalizer = power_iteration_normalizer
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, sample_weight=None):
         """Fit the model with X.
 
         Parameters
@@ -414,6 +424,10 @@ class PCA(_BasePCA):
         y : Ignored
             Ignored.
 
+        sample_weight : float or ndarray of shape (n_samples,), default=None
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
+
         Returns
         -------
         self : object
@@ -421,10 +435,10 @@ class PCA(_BasePCA):
         """
         self._validate_params()
 
-        self._fit(X)
+        self._fit(X, sample_weight=sample_weight)
         return self
 
-    def fit_transform(self, X, y=None):
+    def fit_transform(self, X, y=None, sample_weight=None):
         """Fit the model with X and apply the dimensionality reduction on X.
 
         Parameters
@@ -435,6 +449,10 @@ class PCA(_BasePCA):
 
         y : Ignored
             Ignored.
+
+        sample_weight : float or ndarray of shape (n_samples,), default=None
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
 
         Returns
         -------
@@ -448,19 +466,30 @@ class PCA(_BasePCA):
         """
         self._validate_params()
 
-        U, S, Vt = self._fit(X)
+        U, S, Vt, u_scale = self._fit(X, sample_weight=sample_weight)
         U = U[:, : self.n_components_]
 
         if self.whiten:
-            # X_new = X * V / S * sqrt(n_samples) = U * sqrt(n_samples)
-            U *= sqrt(X.shape[0] - 1)
+            # Readjust for sample weights only
+            U *= u_scale
         else:
-            # X_new = X * V = U * S * Vt * V = U * S
-            U *= S[: self.n_components_]
+            # Readjust for sample weights and scale by singular values
+            U *= u_scale * S[: self.n_components_]
 
         return U
 
-    def _fit(self, X):
+    def _match_sign(self, pca):
+        """Ensures that the calling object's component signs match those
+        of the provided object to resolve sign indeterminacy.
+        """
+        for c, (i, j) in enumerate(
+            zip(np.sign(self.components_[:, 0]), np.sign(pca.components_[:, 0]))
+        ):
+            if i != j:
+                self.components_[c] *= -1
+        return self
+
+    def _fit(self, X, sample_weight=None):
         """Dispatch to the right submethod depending on the chosen solver."""
 
         # Raise an error for sparse input.
@@ -474,6 +503,35 @@ class PCA(_BasePCA):
         X = self._validate_data(
             X, dtype=[np.float64, np.float32], ensure_2d=True, copy=self.copy
         )
+
+        # Validate sample weights and compute scale parameter for fit_transform
+        if sample_weight is None:
+            # No weights; whiten with sqrt(n - 1); non-whiten x1 for a No-op
+            u_scale = np.sqrt(X.shape[0] - 1) if self.whiten else 1.0
+        else:
+            sample_weight = _check_sample_weight(sample_weight, X, copy=self.copy)
+
+            # Sample weights are normalized to sum to 1 before SVD so we have:
+            # U * S * Vt = (1/n * W)^1/2 * X = sqrt(1/n) * W^(1/2) * X
+            # Non-whitened:
+            # X = sqrt(n) * W^(-1/2) * U * S * Vt
+            # X * V = sqrt(n) * W^(-1/2) * U * S
+            #
+            # Whitened:
+            # N.B. that self.transform uses explained_variance_ w/ bessel's correction
+            # While SVD is done using "weighted average" so we need to scale then
+            # apply bessel's correction on singular values: n/(n-1). That is we want:
+            # X * [(n / (n-1) * S^2)^(-1/2)] * V
+            # Multiply both sides of non-whitened eq. by P^(-1/2) with P=(n/(n-1)*S^2)
+            # X * P^(-1/2) * V = sqrt(n)*W^(-1/2) * U * S*[(n/(n-1)*S^2)^(-1/2)]
+            # = sqrt(n) * sqrt(n-1) / sqrt(n) * W^(-1/2) * U * S * S^-1
+            # = sqrt(n - 1) * W^(-1/2) * U
+            weight_sum = _sample_count(sample_weight, X.shape[0])
+            u_scale = np.sqrt(
+                ((weight_sum - 1) / sample_weight)
+                if self.whiten
+                else (weight_sum / sample_weight)
+            )[:, None]
 
         # Handle n_components==None
         if self.n_components is None:
@@ -498,11 +556,15 @@ class PCA(_BasePCA):
 
         # Call different fits for either full or truncated SVD
         if self._fit_svd_solver == "full":
-            return self._fit_full(X, n_components)
+            U, S, Vt = self._fit_full(X, n_components, sample_weight=sample_weight)
         elif self._fit_svd_solver in ["arpack", "randomized"]:
-            return self._fit_truncated(X, n_components, self._fit_svd_solver)
+            U, S, Vt = self._fit_truncated(
+                X, n_components, self._fit_svd_solver, sample_weight=sample_weight
+            )
 
-    def _fit_full(self, X, n_components):
+        return U, S, Vt, u_scale
+
+    def _fit_full(self, X, n_components, sample_weight=None):
         """Fit the model by computing full SVD on X."""
         n_samples, n_features = X.shape
 
@@ -518,9 +580,7 @@ class PCA(_BasePCA):
                 "svd_solver='full'" % (n_components, min(n_samples, n_features))
             )
 
-        # Center data
-        self.mean_ = np.mean(X, axis=0)
-        X -= self.mean_
+        X, sv_scale = self._weight_and_center(X, sample_weight=sample_weight)
 
         U, S, Vt = linalg.svd(X, full_matrices=False)
         # flip eigenvectors' sign to enforce deterministic output
@@ -529,7 +589,7 @@ class PCA(_BasePCA):
         components_ = Vt
 
         # Get variance explained by singular values
-        explained_variance_ = (S**2) / (n_samples - 1)
+        explained_variance_ = (S**2) * sv_scale
         total_var = explained_variance_.sum()
         explained_variance_ratio_ = explained_variance_ / total_var
         singular_values_ = S.copy()  # Store the singular values.
@@ -561,7 +621,7 @@ class PCA(_BasePCA):
 
         return U, S, Vt
 
-    def _fit_truncated(self, X, n_components, svd_solver):
+    def _fit_truncated(self, X, n_components, svd_solver, sample_weight=None):
         """Fit the model by computing truncated SVD (by ARPACK or randomized)
         on X.
         """
@@ -589,9 +649,7 @@ class PCA(_BasePCA):
 
         random_state = check_random_state(self.random_state)
 
-        # Center data
-        self.mean_ = np.mean(X, axis=0)
-        X -= self.mean_
+        X, sv_scale = self._weight_and_center(X, sample_weight=sample_weight)
 
         if svd_solver == "arpack":
             v0 = _init_arpack_v0(min(X.shape), random_state)
@@ -619,7 +677,7 @@ class PCA(_BasePCA):
         self.n_components_ = n_components
 
         # Get variance explained by singular values
-        self.explained_variance_ = (S**2) / (n_samples - 1)
+        self.explained_variance_ = (S**2) * sv_scale
 
         # Workaround in-place variance calculation since at the time numpy
         # did not have a way to calculate variance in-place.
@@ -690,3 +748,22 @@ class PCA(_BasePCA):
 
     def _more_tags(self):
         return {"preserves_dtype": [np.float64, np.float32]}
+
+    def _weight_and_center(self, X, sample_weight=None):
+        """Center X and apply sample weights if applicable."""
+        if sample_weight is None:
+            # Center data
+            self.mean_ = np.mean(X, axis=0)
+            X -= self.mean_
+            return X, np.float64(1.0) / (X.shape[0] - 1)
+        # Weighted instance; Center with weighted average and weight
+        weight_sum = _sample_count(sample_weight, X.shape[0])
+        sample_weight /= sample_weight.sum()
+        sample_weight = sample_weight.reshape(-1, 1)
+        # Center with weighted average
+        self.mean_ = sample_weight.T @ X
+        X -= self.mean_
+        # Perform SVD on weighted data matrix
+        X *= np.sqrt(sample_weight)
+        # Apply Bessel's correction adjusting for weighted average
+        return X, weight_sum / (weight_sum - 1)

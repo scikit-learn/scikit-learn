@@ -171,6 +171,10 @@ Changelog
   function.
   :pr:`23905` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+  |Feature| :class:`decomposition.PCA` now supports `sample_weight` for weighted
+  PCA.
+  :pr:`24079` by :user:`Nick Smith <nicholastoddsmith>`.
+
 - |API| The `n_iter` parameter of :class:`decomposition.MiniBatchSparsePCA` is
   deprecated and replaced by the parameters `max_iter`, `tol`, and
   `max_no_improvement` to be consistent with
