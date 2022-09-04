@@ -444,6 +444,9 @@ class SkewedChi2Sampler(
     1.0
     """
 
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
+
     def __init__(self, *, skewedness=1.0, n_components=100, random_state=None):
         self.skewedness = skewedness
         self.n_components = n_components
@@ -477,6 +480,12 @@ class SkewedChi2Sampler(
         # transform by inverse CDF of sech
         self.random_weights_ = 1.0 / np.pi * np.log(np.tan(np.pi / 2.0 * uniform))
         self.random_offset_ = random_state.uniform(0, 2 * np.pi, size=self.n_components)
+
+        # With this we preserve the dtype of X in transform() later
+        if X.dtype == np.float32:
+            self.random_weights_ = self.random_weights_.astype(X.dtype, copy=False)
+            self.random_offset_ = self.random_offset_.astype(X.dtype, copy=False)
+
         self._n_features_out = self.n_components
         return self
 
