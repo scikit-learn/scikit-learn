@@ -12,7 +12,6 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn.externals._packaging.version.parse",
     # sklearn.deprecation._update_doc is updating the doc against the numpydoc.
     # This will be fixed in future PRs.
     "sklearn.inspection._plot.partial_dependence.plot_partial_dependence",
