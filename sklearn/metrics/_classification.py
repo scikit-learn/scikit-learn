@@ -2612,6 +2612,7 @@ def log_loss(
             DataConversionWarning,
         )
         eps = np.finfo(np.float32).eps
+    # following elif section can be removed if float16 support is not wanted
     elif (type(y_pred[0]) == np.float16) and (eps < np.finfo(np.float16).eps):
         # eps increased to np.float16 precision
         warnings.warn(
