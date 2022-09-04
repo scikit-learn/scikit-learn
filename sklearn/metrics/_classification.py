@@ -2497,7 +2497,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
 
 
 def log_loss(
-    y_true, y_pred, *, eps=1e-15, normalize=True, sample_weight=None, labels=None
+    y_true, y_pred, *, eps=1e-7, normalize=True, sample_weight=None, labels=None
 ):
     r"""Log loss, aka logistic loss or cross-entropy loss.
 
@@ -2528,7 +2528,7 @@ def log_loss(
         ordered alphabetically, as done by
         :class:`preprocessing.LabelBinarizer`.
 
-    eps : float, default=1e-15
+    eps : float, default=1e-7
         Log loss is undefined for p=0 or p=1, so probabilities are
         clipped to max(eps, min(1 - eps, p)).
 
