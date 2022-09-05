@@ -784,8 +784,7 @@ def _labels_inertia(
     n_clusters = centers.shape[0]
 
     labels = np.full(n_samples, -1, dtype=np.int32)
-    weight_in_clusters = np.zeros(n_clusters, dtype=centers.dtype)
-    center_shift = np.zeros_like(weight_in_clusters)
+    center_shift = np.zeros(n_clusters, dtype=centers.dtype)
 
     if sp.issparse(X):
         _labels = lloyd_iter_chunked_sparse
@@ -795,16 +794,17 @@ def _labels_inertia(
         _inertia = _inertia_dense
         X = ReadonlyArrayWrapper(X)
 
+    centers = ReadonlyArrayWrapper(centers)
     _labels(
         X,
         sample_weight,
         x_squared_norms,
         centers,
-        centers,
-        weight_in_clusters,
-        labels,
-        center_shift,
-        n_threads,
+        centers_new=None,
+        weight_in_clusters=None,
+        labels=labels,
+        center_shift=center_shift,
+        n_threads=n_threads,
         update_centers=False,
     )
 

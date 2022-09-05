@@ -21,7 +21,7 @@ from ...utils.fixes import delayed
 
 @deprecated(
     "Function `plot_partial_dependence` is deprecated in 1.0 and will be "
-    "removed in 1.2. Use PartialDependenceDisplay.from_estimator instead"
+    "removed in 1.2. Use PartialDependenceDisplay.from_estimator instead."
 )
 def plot_partial_dependence(
     estimator,
@@ -47,11 +47,15 @@ def plot_partial_dependence(
     random_state=None,
     centered=False,
 ):
-    """Partial dependence (PD) and individual conditional expectation (ICE)
-    plots.
+    """Partial dependence and individual conditional expectation plots.
 
-    Partial dependence plots, individual conditional expectation plots or an
-    overlay of both of them can be plotted by setting the ``kind``
+    .. deprecated:: 1.0
+       `plot_partial_dependence` is deprecated in 1.0 and will be removed in
+       1.2. Please use the class method:
+       :func:`~sklearn.metrics.PartialDependenceDisplay.from_estimator`.
+
+    Partial dependence plots (PD), individual conditional expectation (ICE)
+    plots or an overlay of both of them can be plotted by setting the ``kind``
     parameter.
 
     The ICE and PD plots can be centered with the parameter `centered`.
@@ -98,11 +102,6 @@ def plot_partial_dependence(
         :class:`~sklearn.ensemble.GradientBoostingRegressor`, not to
         :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
         :class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
-
-    .. deprecated:: 1.0
-       `plot_partial_dependence` is deprecated in 1.0 and will be removed in
-       1.2. Please use the class method:
-       :func:`~sklearn.metrics.PartialDependenceDisplay.from_estimator`.
 
     Parameters
     ----------
@@ -297,6 +296,7 @@ def plot_partial_dependence(
     Returns
     -------
     display : :class:`~sklearn.inspection.PartialDependenceDisplay`
+        Partial Dependence Plot.
 
     See Also
     --------
