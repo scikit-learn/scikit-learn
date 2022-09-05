@@ -666,8 +666,8 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
     ids=["MLPClassifier", "RandomForestClassifier"],
 )
 def test_stacking_classifier_multilabel_predict_proba(estimator):
-    """Check the behaviour for the multilabel classification case and the `predict_proba`
-    stacking method.
+    """Check the behaviour for the multilabel classification case and the
+    `predict_proba` stacking method.
 
     Estimators are not consistent with the output arrays and we need to ensure that
     we handle all cases.
