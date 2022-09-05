@@ -1292,7 +1292,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
         The data.
 
     axis : int, default=0
-        axis used to scale along. If 0, independently scale each feature,
+        Axis used to scale along. If 0, independently scale each feature,
         otherwise (if 1) scale each sample.
 
     copy : bool, default=True
