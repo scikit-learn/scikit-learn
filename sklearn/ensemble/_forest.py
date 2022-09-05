@@ -3129,6 +3129,18 @@ class ObliqueRandomForestClassifier(ForestClassifier):
     [1]
     """
 
+    _parameter_constraints: dict = {
+        **ForestClassifier._parameter_constraints,
+        **ObliqueDecisionTreeClassifier._parameter_constraints,
+        "class_weight": [
+            StrOptions({"balanced_subsample", "balanced"}),
+            dict,
+            list,
+            None,
+        ],
+    }
+    _parameter_constraints.pop("splitter")
+
     def __init__(
         self,
         n_estimators=100,
