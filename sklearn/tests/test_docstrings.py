@@ -19,8 +19,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     # This will be fixed with issue: #24328
     "sklearn.metrics._plot.det_curve.plot_det_curve",
     "sklearn.metrics._plot.precision_recall_curve.plot_precision_recall_curve",
-    "sklearn.metrics._ranking.dcg_score",
-    "sklearn.metrics._ranking.roc_curve",
     "sklearn.metrics.cluster._supervised.entropy",
     "sklearn.metrics.cluster._supervised.fowlkes_mallows_score",
     "sklearn.metrics.pairwise.pairwise_distances_chunked",
