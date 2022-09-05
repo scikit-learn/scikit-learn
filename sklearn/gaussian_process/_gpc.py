@@ -145,9 +145,9 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 
     References
     ----------
-    .. [RW2006] Carl Eduard Rasmussen and Christopher K.I. Williams,
-       "Gaussian Processes for Machine Learning", MIT Press 2006,
-       `Link <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_
+    .. [RW2006] `Carl E. Rasmussen and Christopher K.I. Williams,
+       "Gaussian Processes for Machine Learning",
+       MIT Press 2006 <https://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_
     """
 
     def __init__(
@@ -624,9 +624,9 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
 
     References
     ----------
-    .. [RW2006] Carl Eduard Rasmussen and Christopher K.I. Williams,
-       "Gaussian Processes for Machine Learning", MIT Press 2006,
-       `Link <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_
+    .. [RW2006] `Carl E. Rasmussen and Christopher K.I. Williams,
+       "Gaussian Processes for Machine Learning",
+       MIT Press 2006 <https://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_
 
     Examples
     --------
