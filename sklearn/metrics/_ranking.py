@@ -23,7 +23,7 @@ import warnings
 from functools import partial
 
 import numpy as np
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, issparse
 from scipy.stats import rankdata
 
 from ..utils import assert_all_finite
@@ -1070,7 +1070,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     0.416...
     """
     check_consistent_length(y_true, y_score, sample_weight)
-    y_true = check_array(y_true, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=False, accept_sparse="csr")
     y_score = check_array(y_score, ensure_2d=False)
 
     if y_true.shape != y_score.shape:
@@ -1083,7 +1083,9 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     ):
         raise ValueError("{0} format is not supported".format(y_type))
 
-    y_true = csr_matrix(y_true)
+    if not issparse(y_true):
+        y_true = csr_matrix(y_true)
+
     y_score = -y_score
 
     n_samples, n_labels = y_true.shape
