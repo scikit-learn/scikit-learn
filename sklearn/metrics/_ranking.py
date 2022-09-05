@@ -976,7 +976,6 @@ def roc_curve(
     array([0. , 0.5, 0.5, 1. , 1. ])
     >>> thresholds
     array([1.8 , 0.8 , 0.4 , 0.35, 0.1 ])
-
     """
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
@@ -1475,7 +1474,6 @@ def dcg_score(
     >>> dcg_score(true_relevance,
     ...           scores, k=1, ignore_ties=True)
     5.0
-
     """
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
