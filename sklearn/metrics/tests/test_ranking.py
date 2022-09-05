@@ -736,7 +736,7 @@ def test_roc_auc_score_multiclass_error(msg, kwargs):
         roc_auc_score(y_true, y_prob, **kwargs)
 
 
-def test_assert_ovr_roc_auc_chance_level():
+def test_ovr_roc_auc_chance_level():
     # Build equal probability predictions to multiclass problem
     y_true = np.array([3, 1, 2, 0])
     y_pred = 0.25 * np.ones((4, 4))
