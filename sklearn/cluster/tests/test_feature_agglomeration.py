@@ -55,36 +55,16 @@ def test_feature_agglomeration_feature_names_out():
     )
 
 
-@pytest.mark.parametrize(
-    "input_dtype, expected_dtype",
-    (
-        (np.float32, np.float32),
-        (np.float64, np.float64),
-        (np.int32, np.float64),
-        (np.int64, np.float64),
-    ),
-)
-def test_feature_agglomeration_dtype_match(input_dtype, expected_dtype):
-    """Ensure dtype preservations for fit_transformation output"""
-    rng = np.random.RandomState(42)
-    X, _ = make_blobs(n_features=6, random_state=rng)
-    X = X.astype(input_dtype, copy=False)
-
-    agglo = FeatureAgglomeration(n_clusters=3)
-    X_trans = agglo.fit_transform(X)
-
-    assert X_trans.dtype == expected_dtype
-
-
-def test_feature_agglomeration_numerical_consistency():
+def test_feature_agglomeration_numerical_consistency(global_random_seed):
     """Ensure numerical consistency among np.float32 and np.float64"""
-    rtol = 1e-5
-    rng = np.random.RandomState(42)
-    X, _ = make_blobs(n_features=6, random_state=rng)
+    rng = np.random.RandomState(global_random_seed)
+    X_64, _ = make_blobs(n_features=6, random_state=rng)
+    X_32 = X_64.astype(np.float32)
+
     agglo_32 = FeatureAgglomeration(n_clusters=3)
     agglo_64 = FeatureAgglomeration(n_clusters=3)
 
-    X_trans_32 = agglo_32.fit_transform(X.astype(np.float32))
-    X_trans_64 = agglo_64.fit_transform(X.astype(np.float64))
+    X_trans_64 = agglo_64.fit_transform(X_64)
+    X_trans_32 = agglo_32.fit_transform(X_32)
 
-    assert_allclose(X_trans_32, X_trans_64, rtol=rtol)
+    assert_allclose(X_trans_32, X_trans_64)

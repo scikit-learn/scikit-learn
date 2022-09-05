@@ -1278,9 +1278,6 @@ class FeatureAgglomeration(
         "compute_distances": ["boolean"],
     }
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
-
     def __init__(
         self,
         n_clusters=2,
@@ -1336,3 +1333,6 @@ class FeatureAgglomeration(
     def fit_predict(self):
         """Fit and return the result of each sample's clustering assignment."""
         raise AttributeError
+
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
