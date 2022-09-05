@@ -1,7 +1,6 @@
 from libc cimport math
 import numpy as np
 cimport numpy as cnp
-from libc.stdio cimport printf
 
 cnp.import_array()
 
@@ -60,7 +59,7 @@ cpdef cnp.ndarray[cnp.float32_t, ndim=2] _binary_search_perplexity(
     cdef double entropy
     cdef double sum_Pi
     cdef double sum_disti_Pi
-    cdef long i, j, k, l
+    cdef long i, j, l
 
     # This array is later used as a 32bit array. It has multiple intermediate
     # floating point additions that benefit from the extra precision
