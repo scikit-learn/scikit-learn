@@ -265,6 +265,10 @@ Changelog
   of a binary classification problem. :pr:`22518` by
   :user:`Arturo Amor <ArturoAmorQ>`.
 
+- |Fix| Allows `csr_matrix` as input for parameter: `y_true` of
+   the :func:`metrics.label_ranking_average_precision_score` metric.
+   :pr:`23442` by :user:`Sean Atukorala <ShehanAT>`
+  
 - |Fix| :func:`metrics.ndcg_score` will now trigger a warning when the `y_true`
   value contains a negative value. Users may still use negative values, but the
   result may not be between 0 and 1. Starting in v1.4, passing in negative
