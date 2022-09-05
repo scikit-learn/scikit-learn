@@ -141,6 +141,10 @@ Changelog
 - |Fix| :class:`cluster.KMeans` now supports readonly attributes when predicting.
   :pr:`24258` by `Thomas Fan`_
 
+- |Efficiency| :class:`cluster.KMeans` with `algorithm="lloyd"` is now faster
+  and uses less memory. :pr:`24264` by
+  :user:`Vincent Maladiere <Vincent-Maladiere>`.
+
 :mod:`sklearn.datasets`
 .......................
 
