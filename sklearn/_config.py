@@ -116,6 +116,8 @@ def set_config(
         Use Array API dispatching when inputs follow the Array API standard.
         Default is False.
 
+        See the :ref:`User Guide <array_api>` for more details.
+
         .. versionadded:: 1.2
 
     See Also

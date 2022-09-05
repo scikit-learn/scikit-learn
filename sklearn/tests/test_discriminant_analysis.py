@@ -695,13 +695,15 @@ def test_lda_array_api(array_namespace):
     with config_context(array_api_dispatch=True):
         lda_xp.fit(X_xp, y_xp)
 
+    # Fitted-attributes which are arrays must have the same
+    # namespace than the one of the training data.
     for key, attribute in array_attributes.items():
-        gm_xp_param = getattr(lda_xp, key)
-        assert hasattr(gm_xp_param, "__array_namespace__")
-        gm_xp_param_np = _convert_to_numpy(gm_xp_param, xp=xp)
+        lda_xp_param = getattr(lda_xp, key)
+        assert hasattr(lda_xp_param, "__array_namespace__")
 
+        lda_xp_param_np = _convert_to_numpy(lda_xp_param, xp=xp)
         assert_allclose(
-            attribute, gm_xp_param_np, err_msg=f"{key} not the same", atol=1e-3
+            attribute, lda_xp_param_np, err_msg=f"{key} not the same", atol=1e-3
         )
 
     # Check predictions are the same
