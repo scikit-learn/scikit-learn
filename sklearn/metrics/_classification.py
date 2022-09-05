@@ -39,7 +39,7 @@ from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
 from ..utils.sparsefuncs import count_nonzero
-from ..exceptions import UndefinedMetricWarning
+from ..exceptions import UndefinedMetricWarning, DataConversionWarning
 
 from ._base import _check_pos_label_consistency
 
@@ -2497,7 +2497,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
 
 
 def log_loss(
-    y_true, y_pred, *, eps=1e-7, normalize=True, sample_weight=None, labels=None
+    y_true, y_pred, *, eps="auto", normalize=True, sample_weight=None, labels=None
 ):
     r"""Log loss, aka logistic loss or cross-entropy loss.
 
@@ -2528,9 +2528,11 @@ def log_loss(
         ordered alphabetically, as done by
         :class:`preprocessing.LabelBinarizer`.
 
-    eps : float, default=1e-7
+    eps : float or "auto", default="auto" or 1e-15
         Log loss is undefined for p=0 or p=1, so probabilities are
         clipped to max(eps, min(1 - eps, p)).
+        Default value will be the epsilon of the dtype of y_pred if it is
+        a numpy array or 1e-15 if a non-numpy input is passed
 
     normalize : bool, default=True
         If true, return the mean loss per sample.
@@ -2567,9 +2569,18 @@ def log_loss(
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616...
     """
+    if eps == "auto":
+        if "numpy" in str(type(y_pred)) and "float" in str(y_pred.dtype):
+            eps = np.finfo(y_pred.dtype).eps
+        else:
+            warnings.warn(
+                "eps set to 1e-15 as y_pred is not a numpy float array",
+                DataConversionWarning,
+            )
+            eps = 1e-15
+
     y_pred = check_array(y_pred, ensure_2d=False)
     check_consistent_length(y_pred, y_true, sample_weight)
-
     lb = LabelBinarizer()
 
     if labels is not None:

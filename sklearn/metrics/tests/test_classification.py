@@ -2530,6 +2530,15 @@ def test_log_loss():
     loss = log_loss(y_true, y_score2, labels=[1, 2, 3])
     assert_almost_equal(loss, 1.0630345, decimal=6)
 
+    # ensure np.float32 and np.float16 inputs give correct output
+    for dtype in [np.float16, np.float32]:
+        y_true = [1, 2, 2]
+        y_score2 = np.array(
+            [[0.2, 0.7, 0.3], [0.6, 0.5, 0.3], [0.3, 0.9, 0.1]], dtype=dtype
+        )
+        loss = log_loss(y_true, y_score2, labels=[1, 2, 3])
+        assert_almost_equal(loss, 1.0630345, decimal=3)
+
 
 def test_log_loss_pandas_input():
     # case when input is a pandas series and dataframe gh-5715
