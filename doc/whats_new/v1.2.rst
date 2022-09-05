@@ -138,6 +138,9 @@ Changelog
   :class:`cluster.AgglomerativeClustering` and will be renamed to `metric` in v1.4.
   :pr:`23470` by :user:`Meekail Zain <micky774>`.
 
+- |Fix| :class:`cluster.KMeans` now supports readonly attributes when predicting.
+  :pr:`24258` by `Thomas Fan`_
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -204,6 +207,13 @@ Changelog
 
 :mod:`sklearn.feature_selection`
 ................................
+
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Fix| Fix :class:`gaussian_process.kernels.Matern` gradient computation with
+  `nu=0.5` for PyPy (and possibly other non CPython interpreters). :pr:`24245`
+  by :user:`Loïc Estève <lesteve>`.
 
 :mod:`sklearn.kernel_approximation`
 ...................................
