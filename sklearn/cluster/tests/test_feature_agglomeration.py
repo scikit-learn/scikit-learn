@@ -58,7 +58,7 @@ def test_feature_agglomeration_feature_names_out():
 def test_feature_agglomeration_numerical_consistency(global_random_seed):
     """Ensure numerical consistency among np.float32 and np.float64"""
     rng = np.random.RandomState(global_random_seed)
-    X_64, _ = make_blobs(n_features=6, random_state=rng)
+    X_64, _ = make_blobs(n_features=12, random_state=rng)
     X_32 = X_64.astype(np.float32)
 
     agglo_32 = FeatureAgglomeration(n_clusters=3)
