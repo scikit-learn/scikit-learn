@@ -694,7 +694,7 @@ def test_roc_auc_score_multiclass_labels_error(msg, y_true, labels, multi_class)
         ),
         (
             (
-                r"average must be one of \('macro', 'weighted', None, 'micro'\) for "
+                r"average must be one of \('micro', 'macro', 'weighted', None\) for "
                 r"multiclass problems"
             ),
             {"average": "samples", "multi_class": "ovr"},
@@ -742,10 +742,10 @@ def test_assert_ovr_roc_auc_chance_level():
     y_pred = 0.25 * np.ones((4, 4))
 
     macro_roc_auc = roc_auc_score(y_true, y_pred, multi_class="ovr", average="macro")
-    assert_allclose(macro_roc_auc, 0.5)
+    assert macro_roc_auc == pytest.approx(0.5)
 
     micro_roc_auc = roc_auc_score(y_true, y_pred, multi_class="ovr", average="micro")
-    assert_allclose(micro_roc_auc, 0.5)
+    assert micro_roc_auc == pytest.approx(0.5)
 
 
 def test_auc_score_non_binary_class():
