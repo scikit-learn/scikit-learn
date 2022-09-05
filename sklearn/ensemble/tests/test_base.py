@@ -6,6 +6,7 @@ Testing for the base module (sklearn.ensemble.base).
 # License: BSD 3 clause
 
 import numpy as np
+import pytest
 
 from sklearn.datasets import load_iris
 from sklearn.ensemble import BaggingClassifier
@@ -106,3 +107,17 @@ def test_set_random_states():
             est1.get_params()["clf__random_state"]
             == est2.get_params()["clf__random_state"]
         )
+
+
+# TODO: remove in 1.4
+def test_base_estimator_attribute_deprecated():
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    model = BaggingClassifier(estimator=Perceptron(random_state=None), n_estimators=3)
+    model.fit(X, y)
+    err_msg = (
+        "Attribute `base_estimator_` was deprecated in version 1.2 and "
+        "will be removed in 1.4. Use `estimator_` instead."
+    )
+    with pytest.warns(FutureWarning, match=err_msg):
+        model.base_estimator_
