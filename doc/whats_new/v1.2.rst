@@ -208,6 +208,13 @@ Changelog
 :mod:`sklearn.feature_selection`
 ................................
 
+:mod:`sklearn.gaussian_process`
+...............................
+
+- |Fix| Fix :class:`gaussian_process.kernels.Matern` gradient computation with
+  `nu=0.5` for PyPy (and possibly other non CPython interpreters). :pr:`24245`
+  by :user:`Loïc Estève <lesteve>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
