@@ -152,7 +152,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     def _validate_estimator(self, default=None):
         """Check the base estimator.
 
-        Sets the base_estimator_` attributes.
+        Sets the `estimator_` attributes.
         """
         if self.estimator is not None and (
             self.base_estimator not in [None, "deprecated"]

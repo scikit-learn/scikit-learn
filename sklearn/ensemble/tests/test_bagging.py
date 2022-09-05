@@ -533,19 +533,19 @@ def test_estimator():
 
     ensemble = BaggingClassifier(None, n_jobs=3, random_state=0).fit(X_train, y_train)
 
-    assert isinstance(ensemble.base_estimator_, DecisionTreeClassifier)
+    assert isinstance(ensemble.estimator_, DecisionTreeClassifier)
 
     ensemble = BaggingClassifier(
         DecisionTreeClassifier(), n_jobs=3, random_state=0
     ).fit(X_train, y_train)
 
-    assert isinstance(ensemble.base_estimator_, DecisionTreeClassifier)
+    assert isinstance(ensemble.estimator_, DecisionTreeClassifier)
 
     ensemble = BaggingClassifier(Perceptron(), n_jobs=3, random_state=0).fit(
         X_train, y_train
     )
 
-    assert isinstance(ensemble.base_estimator_, Perceptron)
+    assert isinstance(ensemble.estimator_, Perceptron)
 
     # Regression
     X_train, X_test, y_train, y_test = train_test_split(
@@ -554,16 +554,16 @@ def test_estimator():
 
     ensemble = BaggingRegressor(None, n_jobs=3, random_state=0).fit(X_train, y_train)
 
-    assert isinstance(ensemble.base_estimator_, DecisionTreeRegressor)
+    assert isinstance(ensemble.estimator_, DecisionTreeRegressor)
 
     ensemble = BaggingRegressor(DecisionTreeRegressor(), n_jobs=3, random_state=0).fit(
         X_train, y_train
     )
 
-    assert isinstance(ensemble.base_estimator_, DecisionTreeRegressor)
+    assert isinstance(ensemble.estimator_, DecisionTreeRegressor)
 
     ensemble = BaggingRegressor(SVR(), n_jobs=3, random_state=0).fit(X_train, y_train)
-    assert isinstance(ensemble.base_estimator_, SVR)
+    assert isinstance(ensemble.estimator_, SVR)
 
 
 def test_bagging_with_pipeline():

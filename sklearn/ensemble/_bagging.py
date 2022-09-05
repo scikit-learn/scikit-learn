@@ -88,8 +88,8 @@ def _parallel_build_estimators(
     max_samples = ensemble._max_samples
     bootstrap = ensemble.bootstrap
     bootstrap_features = ensemble.bootstrap_features
-    support_sample_weight = has_fit_parameter(ensemble.base_estimator_, "sample_weight")
-    has_check_input = has_fit_parameter(ensemble.base_estimator_, "check_input")
+    support_sample_weight = has_fit_parameter(ensemble.estimator_, "sample_weight")
+    has_check_input = has_fit_parameter(ensemble.estimator_, "check_input")
     requires_feature_indexing = bootstrap_features or max_features != n_features
 
     if not support_sample_weight and sample_weight is not None:
@@ -324,15 +324,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
 
         self._validate_params()
 
-        # TODO(1.4): Remove when base_estimator is removed
-        if self.base_estimator != "deprecated":
-            warn(
-                "`base_estimator` was renamed to `estimator` in version 1.2 and "
-                "will be removed in 1.4.",
-                FutureWarning,
-            )
-            self.estimator = self.base_estimator
-
         # Convert data (X is required to be 2d and indexable)
         X, y = self._validate_data(
             X,
@@ -404,7 +395,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self._validate_estimator()
 
         if max_depth is not None:
-            self.base_estimator_.max_depth = max_depth
+            self.estimator_.max_depth = max_depth
 
         # Validate max_samples
         if max_samples is None:
@@ -653,8 +644,15 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
 
     Attributes
     ----------
+    estimator_ : estimator
+        The base estimator from which the ensemble is grown.
+
     base_estimator_ : estimator
         The base estimator from which the ensemble is grown.
+
+        .. deprecated:: 1.2
+            `base_estimator_` is deprecated and will be removed in 1.4.
+            Use `estimator_` instead.
 
     n_features_ : int
         The number of features when :meth:`fit` is performed.
@@ -768,7 +766,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         )
 
     def _validate_estimator(self):
-        """Check the estimator and set the base_estimator_ attribute."""
+        """Check the estimator and set the estimator_ attribute."""
         super()._validate_estimator(default=DecisionTreeClassifier())
 
     def _set_oob_score(self, X, y):
@@ -911,7 +909,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             classes corresponds to that in the attribute :term:`classes_`.
         """
         check_is_fitted(self)
-        if hasattr(self.base_estimator_, "predict_log_proba"):
+        if hasattr(self.estimator_, "predict_log_proba"):
             # Check data
             X = self._validate_data(
                 X,
@@ -1085,8 +1083,16 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
 
     Attributes
     ----------
+    estimator_ : estimator
+        The base estimator from which the ensemble is grown.
+
     base_estimator_ : estimator
         The base estimator from which the ensemble is grown.
+
+        .. deprecated:: 1.2
+            `base_estimator_` is deprecated and will be removed in 1.4.
+            Use `estimator_` instead.
+
 
     n_features_ : int
         The number of features when :meth:`fit` is performed.
@@ -1237,7 +1243,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         return y_hat
 
     def _validate_estimator(self):
-        """Check the estimator and set the base_estimator_ attribute."""
+        """Check the estimator and set the estimator_ attribute."""
         super()._validate_estimator(default=DecisionTreeRegressor())
 
     def _set_oob_score(self, X, y):
