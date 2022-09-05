@@ -614,6 +614,7 @@ References
    "Gaussian Processes for Machine Learning",
    MIT Press 2006 <https://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_
 
-.. [Duv2014] David Duvenaud, "The Kernel Cookbook: Advice on Covariance functions", 2014, `Link <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_ .
+.. [Duv2014] `David Duvenaud, "The Kernel Cookbook: Advice on Covariance functions", 2014
+   <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
 
 .. currentmodule:: sklearn.gaussian_process
