@@ -16,6 +16,7 @@ from ._ranking import precision_recall_curve
 from ._ranking import roc_auc_score
 from ._ranking import roc_curve
 from ._ranking import top_k_accuracy_score
+from ._ranking import precision_at_k_score
 
 from ._classification import accuracy_score
 from ._classification import balanced_accuracy_score
@@ -168,6 +169,7 @@ __all__ = [
     "plot_precision_recall_curve",
     "plot_roc_curve",
     "PrecisionRecallDisplay",
+    "precision_at_k_score",
     "precision_recall_curve",
     "precision_recall_fscore_support",
     "precision_score",

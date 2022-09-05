@@ -31,6 +31,7 @@ from sklearn.metrics import roc_curve
 from sklearn.metrics._ranking import _ndcg_sample_scores, _dcg_sample_scores
 from sklearn.metrics import ndcg_score, dcg_score
 from sklearn.metrics import top_k_accuracy_score
+from sklearn.metrics import precision_at_k_score
 
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.model_selection import train_test_split
@@ -2042,3 +2043,422 @@ def test_top_k_accuracy_score_warning(y_true, k):
 def test_top_k_accuracy_score_error(y_true, y_score, labels, msg):
     with pytest.raises(ValueError, match=msg):
         top_k_accuracy_score(y_true, y_score, k=2, labels=labels)
+
+
+@pytest.mark.parametrize(
+    "y_true, y_score, k, msg",
+    [
+        (
+            [0, 1],
+            [0, 1],
+            1,
+            r"Expected 2D array, got 1D array instead.*",
+        ),
+        (
+            [[0, 1]],
+            [[0, 1], [0, 1]],
+            1,
+            r"Found input variables with inconsistent numbers of samples: \[1, 2\]",
+        ),
+        (
+            [[0, 1]],
+            [[0, 1, 1]],
+            1,
+            r"Input matrices have inconsisten shapes: \(1, 2\) vs \(1, 3\)",
+        ),
+        (
+            [[0, 2, 2]],
+            [[0, 1, 1]],
+            1,
+            r"Relevance values \(y_true\) have to be 0 or 1. Got 2 instead",
+        ),
+        (
+            [[0, 1, 1]],
+            [[0, 1, 1]],
+            3,
+            r"Expected k to be an integer from interval \[1, 3\). Got 3 instead",
+        ),
+        (
+            [[0, 1, 1]],
+            [[0, 1, 1]],
+            1.5,
+            r"Expected k to be an integer from interval \[1, 3\). Got 1.5 instead",
+        ),
+    ],
+)
+def test_precision_at_k_score_error(y_true, y_score, k, msg):
+    with pytest.raises(ValueError, match=msg):
+        precision_at_k_score(y_true, y_score, k=k)
+
+
+def test_precision_at_k_score_invariant():
+    y_true = np.random.RandomState(0).randint(2, size=70).reshape(7, 10)
+    y_score = y_true + y_true * np.random.RandomState(0).uniform(
+        -0.2, 0.2, size=y_true.shape
+    )
+    k = 4
+    precision = precision_at_k_score(y_true, y_score, k=k)
+    precision_no_ties = precision_at_k_score(y_true, y_score, k=k, ignore_ties=True)
+    assert precision == pytest.approx(precision_no_ties)
+    y_score += 1000
+    assert precision_at_k_score(y_true, y_score, k=k) == pytest.approx(precision)
+
+
+# Naive implementation of precision@k that should return identical results
+# in case of no score ties
+def _precision_at_k_score_naive(y_true, y_score, k):
+    score = 0
+    for y_t, y_s in zip(np.array(y_true), np.array(y_score)):
+        score += y_t[np.argsort(-y_s)[:k]].mean()
+    score /= len(y_true)
+    return score
+
+
+@pytest.mark.parametrize("ignore_ties", [True, False])
+@pytest.mark.parametrize(
+    "y_true, y_score, k, expected_score",
+    [
+        ([[0, 1]], [[0.25, 0.75]], 1, 1.0),
+        ([[0, 1]], [[0.75, 0.25]], 1, 0.0),
+        ([[1, 1]], [[0.75, 0.25]], 1, 1.0),
+        ([[0, 0]], [[0.75, 0.25]], 1, 0.0),
+        ([[0, 0, 0]], [[0.25, 0.5, 0.75]], 1, 0.0),
+        ([[0, 0, 1]], [[0.25, 0.5, 0.75]], 1, 1.0),
+        ([[0, 1, 0]], [[0.25, 0.5, 0.75]], 1, 0.0),
+        ([[0, 1, 1]], [[0.25, 0.5, 0.75]], 1, 1.0),
+        ([[1, 0, 0]], [[0.25, 0.5, 0.75]], 1, 0.0),
+        ([[1, 0, 1]], [[0.25, 0.5, 0.75]], 1, 1.0),
+        ([[1, 1, 0]], [[0.25, 0.5, 0.75]], 1, 0.0),
+        ([[1, 1, 1]], [[0.25, 0.5, 0.75]], 1, 1.0),
+        ([[0, 0, 0]], [[0.75, 0.5, 0.25]], 1, 0.0),
+        ([[0, 0, 1]], [[0.75, 0.5, 0.25]], 1, 0.0),
+        ([[0, 1, 0]], [[0.75, 0.5, 0.25]], 1, 0.0),
+        ([[0, 1, 1]], [[0.75, 0.5, 0.25]], 1, 0.0),
+        ([[1, 0, 0]], [[0.75, 0.5, 0.25]], 1, 1.0),
+        ([[1, 0, 1]], [[0.75, 0.5, 0.25]], 1, 1.0),
+        ([[1, 1, 0]], [[0.75, 0.5, 0.25]], 1, 1.0),
+        ([[1, 1, 1]], [[0.75, 0.5, 0.25]], 1, 1.0),
+        ([[0, 0, 0]], [[0.5, 0.75, 0.25]], 1, 0.0),
+        ([[0, 0, 1]], [[0.5, 0.75, 0.25]], 1, 0.0),
+        ([[0, 1, 0]], [[0.5, 0.75, 0.25]], 1, 1.0),
+        ([[0, 1, 1]], [[0.5, 0.75, 0.25]], 1, 1.0),
+        ([[1, 0, 0]], [[0.5, 0.75, 0.25]], 1, 0.0),
+        ([[1, 0, 1]], [[0.5, 0.75, 0.25]], 1, 0.0),
+        ([[1, 1, 0]], [[0.5, 0.75, 0.25]], 1, 1.0),
+        ([[1, 1, 1]], [[0.5, 0.75, 0.25]], 1, 1.0),
+        ([[0, 0, 0]], [[0.75, 0.5, 0.25]], 2, 0.0),
+        ([[0, 0, 1]], [[0.75, 0.5, 0.25]], 2, 0.0),
+        ([[0, 1, 0]], [[0.75, 0.5, 0.25]], 2, 0.5),
+        ([[0, 1, 1]], [[0.75, 0.5, 0.25]], 2, 0.5),
+        ([[1, 0, 0]], [[0.75, 0.5, 0.25]], 2, 0.5),
+        ([[1, 0, 1]], [[0.75, 0.5, 0.25]], 2, 0.5),
+        ([[1, 1, 0]], [[0.75, 0.5, 0.25]], 2, 1.0),
+        ([[1, 1, 1]], [[0.75, 0.5, 0.25]], 2, 1.0),
+        ([[0, 1, 0, 1]], [[0, 1, 2, 3]], 1, 1.0),
+        ([[0, 1, 1, 1]], [[0, 1, 2, 3]], 1, 1.0),
+        ([[1, 0, 0, 1]], [[0, 1, 2, 3]], 1, 1.0),
+        ([[1, 0, 0, 0]], [[0, 1, 2, 3]], 1, 0.0),
+        ([[0, 0, 0, 0]], [[0, 1, 2, 3]], 1, 0.0),
+        ([[0, 1, 0, 1]], [[0, 1, 2, 3]], 2, 0.5),
+        ([[0, 1, 0, 1]], [[0, 1, 2, 3]], 3, 2 / 3),
+        ([[0, 1, 1, 1]], [[0, 1, 2, 3]], 2, 1.0),
+        ([[1, 0, 0, 1]], [[0, 1, 2, 3]], 3, 1 / 3),
+        ([[1, 0, 0, 0]], [[0, 1, 2, 3]], 3, 0.0),
+        ([[0, 1, 0], [1, 1, 0]], [[0.1, 10.0, -3], [0, 1, 3]], 1, (1 + 0) / 2.0),
+        (
+            [[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+            [[0.1, 10, -3], [0, 1, 3], [0, 2, 0]],
+            1,
+            (1 + 0 + 1) / 3.0,
+        ),
+    ],
+)
+def test_precision_at_k_score_no_ties(y_true, y_score, expected_score, k, ignore_ties):
+    precision = precision_at_k_score(y_true, y_score, k=k, ignore_ties=ignore_ties)
+    precision_naive = _precision_at_k_score_naive(y_true, y_score, k)
+    assert precision == pytest.approx(precision_naive)
+    assert precision == pytest.approx(expected_score)
+
+
+@pytest.mark.parametrize("ignore_ties", [True, False])
+@pytest.mark.parametrize("k", np.arange(1, 10))
+def test_precision_at_k_score_no_ties_big(k, ignore_ties):
+    y_true = [
+        [1, 0, 1, 1, 1, 1, 0, 0, 1, 1],
+        [1, 0, 0, 0, 1, 1, 1, 1, 0, 1],
+        [0, 1, 0, 1, 1, 1, 1, 0, 1, 0],
+        [1, 0, 0, 0, 0, 1, 0, 1, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+        [0, 1, 0, 0, 0, 1, 0, 0, 0, 0],
+        [0, 1, 1, 1, 1, 0, 1, 0, 1, 1],
+        [1, 1, 0, 1, 0, 1, 1, 1, 1, 1],
+        [1, 0, 1, 1, 1, 0, 1, 1, 1, 0],
+        [1, 0, 1, 1, 0, 1, 1, 0, 0, 1],
+        [1, 0, 0, 0, 0, 0, 1, 0, 0, 0],
+        [0, 1, 0, 1, 0, 0, 1, 0, 1, 0],
+        [0, 1, 1, 1, 1, 1, 1, 0, 1, 0],
+        [0, 1, 0, 0, 0, 0, 1, 1, 1, 0],
+        [1, 1, 0, 1, 1, 1, 0, 1, 1, 0],
+    ]
+    y_score = [
+        [
+            0.65467702,
+            0.88122547,
+            0.94578845,
+            0.44679143,
+            0.44061796,
+            0.78953817,
+            0.91056713,
+            0.25949161,
+            0.84125438,
+            0.21819678,
+        ],
+        [
+            0.46593298,
+            0.94942325,
+            0.19977599,
+            0.01736648,
+            0.82501951,
+            0.03600755,
+            0.04383009,
+            0.75692056,
+            0.80043687,
+            0.6112442,
+        ],
+        [
+            0.19267264,
+            0.88868595,
+            0.3572272,
+            0.62033713,
+            0.28563908,
+            0.0520317,
+            0.05601457,
+            0.41374389,
+            0.10042479,
+            0.53512091,
+        ],
+        [
+            0.32116973,
+            0.55488938,
+            0.22981539,
+            0.74839842,
+            0.43577025,
+            0.34778699,
+            0.55367017,
+            0.87070184,
+            0.59363117,
+            0.99113769,
+        ],
+        [
+            0.21249511,
+            0.99253928,
+            0.71408457,
+            0.54103825,
+            0.29074035,
+            0.31057162,
+            0.01067713,
+            0.42486626,
+            0.5366077,
+            0.88832442,
+        ],
+        [
+            0.6626517,
+            0.36320679,
+            0.03049896,
+            0.69835932,
+            0.79171985,
+            0.9391964,
+            0.81759524,
+            0.36721326,
+            0.75621746,
+            0.13472103,
+        ],
+        [
+            0.84298292,
+            0.37482851,
+            0.37979562,
+            0.68028953,
+            0.54985378,
+            0.57740614,
+            0.80755918,
+            0.50069147,
+            0.05732087,
+            0.3253189,
+        ],
+        [
+            0.89590121,
+            0.11802159,
+            0.20567209,
+            0.04328881,
+            0.19684219,
+            0.26665757,
+            0.16400678,
+            0.91822898,
+            0.06773789,
+            0.28438488,
+        ],
+        [
+            0.68665464,
+            0.71187363,
+            0.34531799,
+            0.21365922,
+            0.95718144,
+            0.03935022,
+            0.24603266,
+            0.62164586,
+            0.7137508,
+            0.85865442,
+        ],
+        [
+            0.55679626,
+            0.74332297,
+            0.29837764,
+            0.21557642,
+            0.03983606,
+            0.51524805,
+            0.45420211,
+            0.9487636,
+            0.88216139,
+            0.47332105,
+        ],
+        [
+            0.14237343,
+            0.83999129,
+            0.04732777,
+            0.65369622,
+            0.68778036,
+            0.73751348,
+            0.65410045,
+            0.35951342,
+            0.32663793,
+            0.40532552,
+        ],
+        [
+            0.90376202,
+            0.29443308,
+            0.97483998,
+            0.05654031,
+            0.68015246,
+            0.70137117,
+            0.63853821,
+            0.65504841,
+            0.85580542,
+            0.57285687,
+        ],
+        [
+            0.90614943,
+            0.10929522,
+            0.04049114,
+            0.71101833,
+            0.60164777,
+            0.15321571,
+            0.85970345,
+            0.0111538,
+            0.67691718,
+            0.04652544,
+        ],
+        [
+            0.28134125,
+            0.68388527,
+            0.1348439,
+            0.92407579,
+            0.92931566,
+            0.39036256,
+            0.31225202,
+            0.39014442,
+            0.09818647,
+            0.38874521,
+        ],
+        [
+            0.55152542,
+            0.19964636,
+            0.66828765,
+            0.75490564,
+            0.59505001,
+            0.96393101,
+            0.64804319,
+            0.73987149,
+            0.25876913,
+            0.10559946,
+        ],
+    ]
+
+    precision = precision_at_k_score(y_true, y_score, k=k, ignore_ties=ignore_ties)
+    precision_naive = _precision_at_k_score_naive(y_true, y_score, k)
+    assert precision == pytest.approx(precision_naive)
+
+
+@pytest.mark.parametrize(
+    "y_true, y_score, k, ignore_ties, expected_score",
+    [
+        ([[0, 0]], [[0.5, 0.5]], 1, False, 0.0),
+        ([[1, 1]], [[0.5, 0.5]], 1, False, 1.0),
+        ([[0, 0, 0]], [[0.25, 0.5, 0.5]], 1, False, 0.0),
+        ([[0, 1, 1]], [[0.25, 0.5, 0.5]], 1, False, 1.0),
+        ([[1, 0, 0]], [[0.25, 0.5, 0.5]], 1, False, 0.0),
+        ([[1, 1, 1]], [[0.25, 0.5, 0.5]], 1, False, 1.0),
+        ([[0, 0, 0]], [[0.25, 0.5, 0.5]], 2, False, 0.0),
+        ([[0, 1, 1]], [[0.25, 0.5, 0.5]], 2, False, 1.0),
+        ([[1, 0, 0]], [[0.25, 0.5, 0.5]], 2, False, 0.0),
+        ([[1, 1, 1]], [[0.25, 0.5, 0.5]], 2, False, 1.0),
+        ([[0, 0, 1]], [[0.25, 0.5, 0.5]], 2, False, 0.5),
+        ([[0, 1, 0]], [[0.25, 0.5, 0.5]], 2, False, 0.5),
+        ([[1, 0, 1]], [[0.25, 0.5, 0.5]], 2, False, 0.5),
+        ([[1, 1, 0]], [[0.25, 0.5, 0.5]], 2, False, 0.5),
+        ([[0, 1, 0, 1, 0, 1]], [[0, 1, 1, 1, 1, 1]], 5, False, 0.6),
+    ],
+)
+def test_precision_at_k_score_k_ties_trivial(
+    y_true, y_score, k, ignore_ties, expected_score
+):
+    precision = precision_at_k_score(y_true, y_score, k=k, ignore_ties=ignore_ties)
+    precision_naive = _precision_at_k_score_naive(y_true, y_score, k)
+    assert precision == pytest.approx(precision_naive)
+    assert precision == pytest.approx(expected_score)
+
+
+@pytest.mark.parametrize(
+    "y_true, y_score, k, ignore_ties, expected_score",
+    [
+        ([[1, 0]], [[0.5, 0.5]], 1, False, 0.5),
+        ([[0, 1]], [[0.5, 0.5]], 1, False, 0.5),
+        ([[0, 0, 1]], [[0.25, 0.5, 0.5]], 1, False, 0.5),
+        ([[0, 1, 0]], [[0.25, 0.5, 0.5]], 1, False, 0.5),
+        ([[1, 0, 1]], [[0.25, 0.5, 0.5]], 1, False, 0.5),
+        ([[1, 1, 0]], [[0.25, 0.5, 0.5]], 1, False, 0.5),
+        ([[0, 1, 0, 1]], [[0, 0, 1, 1]], 1, False, 0.5),
+        ([[0, 1, 0, 1]], [[0, 0, 1, 1]], 1, True, 0.0),
+        ([[0, 1, 0, 1]], [[0, 0, 1, 1]], 3, False, 0.5),
+        ([[0, 1, 0, 1]], [[0, 0, 1, 1]], 3, True, 1 / 3),
+        ([[0, 1, 0, 1, 0, 1]], [[0, 1, 1, 1, 1, 1]], 1, False, 0.6),
+        ([[0, 1, 0, 1, 0, 1]], [[0, 1, 1, 1, 1, 1]], 2, False, 0.6),
+        ([[0, 1, 0, 1, 0, 1]], [[0, 1, 1, 1, 1, 1]], 3, False, 0.6),
+        ([[0, 1, 0, 1, 0, 1]], [[0, 1, 1, 1, 1, 1]], 4, False, 0.6),
+        ([[0, 1, 0, 1, 0, 1]], [[0, 1, 1, 1, 1, 1]], 1, True, 1),
+        ([[0, 1, 0, 1, 0, 1]], [[0, 1, 1, 1, 1, 1]], 2, True, 0.5),
+        ([[0, 1, 0, 1, 0, 1]], [[0, 1, 1, 1, 1, 1]], 3, True, 1 / 3),
+        ([[0, 1, 0, 1, 0, 1]], [[0, 1, 1, 1, 1, 1]], 4, True, 0.5),
+        (
+            [[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+            [[0.1, 10, -3], [3, 1, 3], [0, 2, 0]],
+            1,
+            False,
+            (1 + 0.5 + 1) / 3.0,
+        ),
+        (
+            [[0, 1, 0], [1, 1, 0], [0, 1, 1]],
+            [[0.1, 10, -3], [3, 1, 3], [0, 2, 0]],
+            1,
+            True,
+            (1 + 1 + 1) / 3.0,
+        ),
+    ],
+)
+def test_precision_at_k_score_k_ties(y_true, y_score, k, ignore_ties, expected_score):
+    precision = precision_at_k_score(y_true, y_score, k=k, ignore_ties=ignore_ties)
+    precision_naive = _precision_at_k_score_naive(y_true, y_score, k)
+    # If `ignore_ties`, `precision` might still not be equal `precision_naive`
+    # because of the undefined behaivour
+    if not ignore_ties:
+        assert precision != precision_naive
+    assert precision == pytest.approx(expected_score)

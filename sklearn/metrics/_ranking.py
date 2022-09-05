@@ -1810,3 +1810,168 @@ def top_k_accuracy_score(
         return np.sum(hits)
     else:
         return np.dot(hits, sample_weight)
+
+
+def _tie_averaged_precision_at_k(y_true, y_score, k):
+    """
+    Compute Precision@K by averaging over possible permutations of ties.
+
+    The relevance (`y_true`) of an index falling inside a tied group (in the order
+    induced by `y_score`) is replaced by the average relevance within this group.
+    The adjusted relevance then used to calculate the metric.
+
+    This amounts to averaging scores for all possible orderings of the tied
+    groups.
+
+    Parameters
+    ----------
+    y_true : ndarray
+        The true relevance scores (binary - 0/1 or False/True).
+
+    y_score : ndarray
+        Predicted scores (continuos).
+
+    k : int
+        Only consider the highest k scores in the ranking.
+
+    Returns
+    -------
+    precision_at_k : float
+        Precision@K averaged over possible permutation of ties.
+
+    References
+    ----------
+    McSherry, F., & Najork, M. (2008, March). Computing information retrieval
+    performance measures efficiently in the presence of tied scores. In
+    European conference on information retrieval (pp. 414-421). Springer,
+    Berlin, Heidelberg.
+    """
+    _, inv, counts = np.unique(-y_score, return_inverse=True, return_counts=True)
+    relevance_per_group = np.zeros(len(counts))
+    np.add.at(relevance_per_group, inv, y_true)
+    counts_cumsum = np.cumsum(counts)
+    tie_group = np.searchsorted(counts_cumsum, k)
+    counts_before_tie = counts_cumsum[tie_group - 1] if tie_group != 0 else 0
+    return (
+        relevance_per_group[:tie_group].sum()
+        + relevance_per_group[tie_group] * (k - counts_before_tie) / counts[tie_group]
+    ) / k
+
+
+def precision_at_k_score(
+    y_true, y_score, *, k=1, sample_weight=None, ignore_ties=False
+):
+    """Compute Precision@K.
+
+    Calculate precision for the top-K scored labels.
+
+    In Information Retrieval paradigm, each sample i represents a query,
+    ``y_true[i]`` - relevance indicators per document (relevant/not relevant),
+    and ``y_score[i]`` - predicted scores per document (used for ranking).
+    The top-scored documents are then considered to be "retrieved"
+    and being evaluated given their true relevance.
+
+    This ranking metric returns a high value if relevant documents are ranked high by
+    ``y_score``. Although the metric takes value in [0, 1] interval,
+    the best scoring function (``y_score``) may not achieve precision@k of 1
+    if the number of positive labels is less than k.
+
+    Parameters
+    ----------
+    y_true : ndarray of shape (n_samples, n_labels)
+        True relevance indicators of entities to be ranked.
+        Any non-zero value is treated as positive/relevant.
+
+    y_score : ndarray of shape (n_samples, n_labels)
+        Target scores, can either be probability estimates, confidence values,
+        or non-thresholded measure of decisions (as returned by
+        "decision_function" on some classifiers).
+
+    k : int, default=1
+        Only consider the highest k scores in the ranking.
+
+    sample_weight : ndarray of shape (n_samples,), default=None
+        Sample weights. If `None`, all samples are given the same weight.
+
+    ignore_ties : bool, default=False
+        Assume that there are no ties in y_score (which is likely to be the
+        case if y_score is continuous) for efficiency gains.
+
+    Returns
+    -------
+    precision_at_k : float in [0., 1.]
+        The averaged precision@k for all samples.
+
+    References
+    ----------
+    `Wikipedia entry for Precision At K
+    <https://en.wikipedia.org/wiki/Evaluation_measures_(information_retrieval)#Precision_at_k>`_
+
+    Manning, Christopher D.; Raghavan, Prabhakar; Schütze, Hinrich (2008).
+    Introduction to Information Retrieval. Cambridge University Press.
+
+    McSherry, F., & Najork, M. (2008, March). Computing information retrieval
+    performance measures efficiently in the presence of tied scores. In
+    European conference on information retrieval (pp. 414-421). Springer,
+    Berlin, Heidelberg.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import precision_at_k_score
+    >>> # we have groud-truth (binary) relevance of some answers to a query:
+    >>> true_relevance = [[0, 1, 0, 1]]
+    >>> # we predict some (relevance) scores for the answers
+    >>> scores = [[0.1, 0.2, 0.3, 0.4]]
+    >>> # we can get the true relevance of the top scored answer (precision@1)
+    >>> precision_at_k_score(true_relevance, scores)
+    1.0
+    >>> # we can get the average true relevance of the top k answers (precision@k)
+    >>> precision_at_k_score(true_relevance, scores, k=3)
+    0.66...
+    >>> # now we have some ties in our prediction
+    >>> scores = np.asarray([[0, 0, 1, 1]])
+    >>> # by default ties are averaged, so here we get the average
+    >>> # true relevance of our top predictions
+    >>> precision_at_k_score(true_relevance, scores, k=1)
+    0.5
+    >>> # we can choose to ignore ties for faster results, but only
+    >>> # if we know there aren't ties in our scores, otherwise we get
+    >>> # wrong results:
+    >>> precision_at_k_score(true_relevance, scores, k=1, ignore_ties=True)
+    0.0
+    """
+    y_true = check_array(y_true, ensure_2d=True)
+    if set(np.unique(y_true)) - {0, 1}:
+        raise ValueError(
+            "Relevance values (y_true) have to be 0 or 1. Got {} instead".format(
+                (set(np.unique(y_true)) - {0, 1}).pop()
+            )
+        )
+    y_score = check_array(y_score, ensure_2d=True)
+    check_consistent_length(y_true, y_score, sample_weight)
+    if y_true.shape != y_score.shape:
+        raise ValueError(
+            "Input matrices have inconsisten shapes: {} vs {}".format(
+                y_true.shape, y_score.shape
+            )
+        )
+    if not isinstance(k, (int, np.integer)) or k < 1 or k >= y_true.shape[1]:
+        raise ValueError(
+            "Expected k to be an integer from interval [1, {}). Got {} instead".format(
+                y_true.shape[1], k
+            )
+        )
+
+    if ignore_ties:
+        top_score_index = np.argpartition(-y_score, k)[:, :k]
+        top_scored_labels = y_true[
+            np.arange(top_score_index.shape[0])[:, np.newaxis], top_score_index
+        ]
+        precision_by_sample = top_scored_labels.mean(axis=1)
+    else:
+        precision_by_sample = [
+            _tie_averaged_precision_at_k(y_t, y_s, k)
+            for y_t, y_s in zip(y_true, y_score)
+        ]
+    return np.average(precision_by_sample, weights=sample_weight)
