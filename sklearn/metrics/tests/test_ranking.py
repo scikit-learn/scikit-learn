@@ -593,7 +593,7 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
         [out_0, out_1, out_2],
     )
 
-    # Compute unweighted results (default behaviour)
+    # Compute unweighted results (default behaviour is average="macro")
     result_unweighted = (out_0 + out_1 + out_2) / 3.0
     assert_almost_equal(
         roc_auc_score(y_true, y_scores, multi_class="ovr", labels=labels),
@@ -609,6 +609,17 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
         ),
         result_weighted,
     )
+
+    # Perfect classifier has roc_auc_score = 1.0
+    y_perfect = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0]]
+    assert_almost_equal(
+        roc_auc_score(y_true, y_perfect, multi_class="ovr", labels=labels),
+        1.0,
+    )
+
+    # Imperfect classifier has roc_auc_score < 1.0
+    y_imperfect = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]]
+    assert roc_auc_score(y_true, y_imperfect, multi_class="ovr", labels=labels) < 1.0
 
 
 @pytest.mark.parametrize(
