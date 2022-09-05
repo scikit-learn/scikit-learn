@@ -655,85 +655,89 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
 
 
 @pytest.mark.parametrize(
-    "stack_method", ["auto", "predict", "predict_proba", "decision_function"]
+    "estimator",
+    [
+        # output a 2D array of the probability of the positive class for each output
+        MLPClassifier(random_state=42),
+        # output a list of 2D array containing the probability of each class
+        # for each output
+        RandomForestClassifier(random_state=42),
+    ],
+    ids=["MLPClassifier", "RandomForestClassifier"],
 )
-@pytest.mark.parametrize("passthrough", [False, True])
-def test_stacking_classifier_multilabel(stack_method, passthrough):
-    """Check the behaviour of the `_concatenate_prediction` utils
-    when `y` is multilabel.
+def test_stacking_classifier_multilabel_predict_proba(estimator):
+    """Check the behaviour for the multilabel classification case and the `predict_proba`
+    stacking method.
+
+    Estimators are not consistent with the output arrays and we need to ensure that
+    we handle all cases.
     """
     X_train, X_test, y_train, y_test = train_test_split(
         X_multilabel, y_multilabel, stratify=y_multilabel, random_state=42
     )
+    n_outputs = 3
 
-    if stack_method == "decision_function":
-        estimators = [
-            ("ridge_1", RidgeClassifier()),
-            ("ridge_2", RidgeClassifier()),
-        ]
-    else:
-        estimators = [
-            ("mlp", MLPClassifier()),
-            ("knnc", RandomForestClassifier()),
-            ("dcs", DummyClassifier(strategy="stratified", random_state=42)),
-            ("dcu", DummyClassifier(strategy="uniform", random_state=42)),
-        ]
-
-    final_estimator = KNeighborsClassifier()
-
-    clf = StackingClassifier(
+    # MLPClassifier will return a 2D array where each column is the probability
+    # of the positive class for each output. We stack this array directly without
+    # any further processing.
+    estimators = [("est", estimator)]
+    stacker = StackingClassifier(
         estimators=estimators,
-        final_estimator=final_estimator,
-        passthrough=passthrough,
-        stack_method=stack_method,
-    )
-    y_train_before_fit = y_train.copy()
-    clf.fit(X_train, y_train)
-    assert_array_equal(y_train_before_fit, y_train)
+        final_estimator=KNeighborsClassifier(),
+        stack_method="predict_proba",
+    ).fit(X_train, y_train)
 
-    y_pred = clf.predict(X_test)
-    assert y_pred.shape == y_test.shape
+    X_trans = stacker.transform(X_test)
+    assert X_trans.shape == (X_test.shape[0], n_outputs)
+    # we should not have any collinear classes and thus nothing should sum to 1
+    assert not any(np.isclose(X_trans.sum(axis=1), 1.0))
 
-    y_proba = clf.predict_proba(X_test)
-
-    X_trans = clf.transform(X_test)
-    expected_n_features = len(estimators)
-
-    assert y_proba.shape == y_test.shape
-    assert len(clf.classes_) == y_test.shape[1]
-    expected_n_features *= y_test.shape[1]
-
-    if passthrough:
-        X_test_last_cols = X_trans[:, -X_test.shape[1] :]
-        assert_array_equal(X_test, X_test_last_cols)
-        expected_n_features += X_test.shape[1]
-
-    assert X_trans.shape[1] == expected_n_features
+    y_pred = stacker.predict(X_test)
+    assert y_pred.shape == y_pred.shape
 
 
-@pytest.mark.parametrize(
-    "stack_method", ["auto", "predict", "predict_proba", "decision_function"]
-)
-@pytest.mark.parametrize("passthrough", [False, True])
-def test_stacking_classifier_binary(stack_method, passthrough):
-    """Check the behaviour of the `_concatenate_prediction` utils when `y` is binary"""
+def test_stacking_classifier_multilabel_decision_function():
+    """Check the behaviour for the multilabel classification case and the
+    `decision_function` stacking method. Only `RidgeClassifier` supports this
+    case.
+    """
     X_train, X_test, y_train, y_test = train_test_split(
-        X_binary, y_binary, stratify=y_binary, random_state=42
+        X_multilabel, y_multilabel, stratify=y_multilabel, random_state=42
     )
+    n_outputs = 3
 
-    if stack_method == "decision_function":
-        estimators = [
-            ("ridge_1", RidgeClassifier()),
-            ("ridge_2", RidgeClassifier()),
-        ]
-    else:
-        estimators = [
-            ("mlp", MLPClassifier()),
-            ("knnc", RandomForestClassifier()),
-            ("dcs", DummyClassifier(strategy="stratified", random_state=42)),
-            ("dcu", DummyClassifier(strategy="uniform", random_state=42)),
-        ]
+    estimators = [("est", RidgeClassifier())]
+    stacker = StackingClassifier(
+        estimators=estimators,
+        final_estimator=KNeighborsClassifier(),
+        stack_method="decision_function",
+    ).fit(X_train, y_train)
 
+    X_trans = stacker.transform(X_test)
+    assert X_trans.shape == (X_test.shape[0], n_outputs)
+
+    # check the shape consistency of the prediction
+    y_pred = stacker.predict(X_test)
+    assert y_pred.shape == y_pred.shape
+
+
+@pytest.mark.parametrize("stack_method", ["auto", "predict"])
+@pytest.mark.parametrize("passthrough", [False, True])
+def test_stacking_classifier_multilabel_auto_predict(stack_method, passthrough):
+    """Check the behaviour for the multilabel classification case for stack methods
+    supported for all estimators or automatically picked up.
+    """
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_multilabel, y_multilabel, stratify=y_multilabel, random_state=42
+    )
+    y_train_before_fit = y_train.copy()
+    n_outputs = 3
+
+    estimators = [
+        ("mlp", MLPClassifier(random_state=42)),
+        ("rf", RandomForestClassifier(random_state=42)),
+        ("ridge", RidgeClassifier()),
+    ]
     final_estimator = KNeighborsClassifier()
 
     clf = StackingClassifier(
@@ -741,28 +745,27 @@ def test_stacking_classifier_binary(stack_method, passthrough):
         final_estimator=final_estimator,
         passthrough=passthrough,
         stack_method=stack_method,
-    )
-    y_train_before_fit = y_train.copy()
-    clf.fit(X_train, y_train)
+    ).fit(X_train, y_train)
+
+    # make sure we don't change `y_train` inplace
     assert_array_equal(y_train_before_fit, y_train)
 
     y_pred = clf.predict(X_test)
     assert y_pred.shape == y_test.shape
 
-    y_proba = clf.predict_proba(X_test)
+    if stack_method == "auto":
+        expected_stack_methods = ["predict_proba", "predict_proba", "decision_function"]
+    else:
+        expected_stack_methods = ["predict"] * len(estimators)
+    assert clf.stack_method_ == expected_stack_methods
 
-    X_trans = clf.transform(X_test)
-    expected_n_features = len(estimators)
-
-    assert y_proba.shape == (y_test.shape[0], 2)
-    assert len(clf.classes_) == 2
-
+    n_features_X_trans = n_outputs * len(estimators)
     if passthrough:
-        X_test_last_cols = X_trans[:, -X_test.shape[1] :]
-        assert_array_equal(X_test, X_test_last_cols)
-        expected_n_features += X_test.shape[1]
+        n_features_X_trans += X_train.shape[1]
+    X_trans = clf.transform(X_test)
+    assert X_trans.shape == (X_test.shape[0], n_features_X_trans)
 
-    assert X_trans.shape[1] == expected_n_features
+    assert_array_equal(clf.classes_, [np.array([0, 1])] * n_outputs)
 
 
 @pytest.mark.parametrize(
