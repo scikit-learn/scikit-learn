@@ -419,8 +419,9 @@ def roc_auc_score(
         If ``None``, the scores for each class are returned.
         Otherwise, this determines the type of averaging performed on the data.
         Note: multiclass ROC AUC currently only handles the 'macro' and
-        'weighted' averages. For multiclass targets, `average=None`
-        is only implemented for `multi_class='ovo'`.
+        'weighted' averages. For multiclass targets, `average=None` is only
+        implemented for `multi_class='ovo'` and `average='micro'` is only
+        implemented for `multi_class='ovr'`.
 
         ``'micro'``:
             Calculate metrics globally by considering each element of the label
@@ -622,6 +623,9 @@ def _multiclass_roc_auc_score(
         ``'weighted'``:
             Calculate metrics for each label, taking into account the
             prevalence of the classes.
+        ``'micro'``:
+            Calculate metrics for the binarized-raveled classes. Only supported
+            for `multi_class='ovr'`.
 
     sample_weight : array-like of shape (n_samples,) or None
         Sample weights.
