@@ -12,7 +12,6 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn.externals._packaging.version.parse",
     # sklearn.deprecation._update_doc is updating the doc against the numpydoc.
     # This will be fixed in future PRs.
     "sklearn.inspection._plot.partial_dependence.plot_partial_dependence",
@@ -23,8 +22,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._ranking.dcg_score",
     "sklearn.metrics._ranking.roc_curve",
     "sklearn.metrics.pairwise.pairwise_distances_chunked",
-    "sklearn.preprocessing._data.maxabs_scale",
-    "sklearn.preprocessing._data.scale",
     "sklearn.svm._bounds.l1_min_c",
     "sklearn.tree._export.plot_tree",
     "sklearn.utils.axis0_safe_slice",
@@ -32,8 +29,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.extmath.fast_logdet",
     "sklearn.utils.extmath.randomized_svd",
     "sklearn.utils.extmath.safe_sparse_dot",
-    "sklearn.utils.extmath.squared_norm",
-    "sklearn.utils.extmath.stable_cumsum",
     "sklearn.utils.extmath.svd_flip",
     "sklearn.utils.extmath.weighted_mode",
     "sklearn.utils.fixes.delayed",
