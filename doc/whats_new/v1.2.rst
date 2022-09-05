@@ -141,9 +141,9 @@ Changelog
 - |Fix| :class:`cluster.KMeans` now supports readonly attributes when predicting.
   :pr:`24258` by `Thomas Fan`_
 
-- |Efficiency| Speed improvement for the `_k_means_lloyd` routine that no longer
-  needs the unused `x_squared_norms` argument.
-  :pr:`24264` by :user:`Vincent Maladiere <Vincent-Maladiere>`.
+- |Efficiency| :class:`cluster.KMeans` with `algorithm="lloyd"` is now faster
+  and uses less memory. :pr:`24264` by
+  :user:`Vincent Maladiere <Vincent-Maladiere>`.
 
 :mod:`sklearn.datasets`
 .......................
