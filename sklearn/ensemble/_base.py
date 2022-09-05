@@ -5,6 +5,7 @@
 
 from abc import ABCMeta, abstractmethod
 from typing import List
+import warnings
 
 import numpy as np
 
@@ -20,7 +21,7 @@ from ..tree import (
     BaseDecisionTree,
     DecisionTreeClassifier,
 )
-from ..utils import Bunch, _print_elapsed_time
+from ..utils import Bunch, _print_elapsed_time, deprecated
 from ..utils import check_random_state
 from ..utils.metaestimators import _BaseComposition
 
@@ -112,8 +113,15 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     Attributes
     ----------
+    estimator_ : estimator
+        The base estimator from which the ensemble is grown.
+
     base_estimator_ : estimator
         The base estimator from which the ensemble is grown.
+
+        .. deprecated:: 1.2
+            `base_estimator_` is deprecated and will be removed in 1.4.
+            Use `estimator_` instead.
 
     estimators_ : list of estimators
         The collection of fitted base estimators.
@@ -146,23 +154,50 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         Sets the base_estimator_` attributes.
         """
-        if self.estimator is not None:
-            self.base_estimator_ = self.estimator
-        elif self.base_estimator != "deprecated" and self.base_estimator is not None:
-            self.base_estimator_ = self.base_estimator
-        else:
-            self.base_estimator_ = default
+        if self.estimator is not None and (
+            self.base_estimator not in [None, "deprecated"]
+        ):
+            raise ValueError(
+                "Both `estimator` and `base_estimator` were set. Only set `estimator`."
+            )
 
-        if self.base_estimator_ is None:
-            raise ValueError("estimator and base_estimator cannot be None")
+        if self.estimator is not None:
+            self._estimator = self.estimator
+        elif self.base_estimator not in [None, "deprecated"]:
+            warnings.warn(
+                "`base_estimator` was renamed to `estimator` in version 1.2 and "
+                "will be removed in 1.4.",
+                FutureWarning,
+            )
+            self._estimator = self.base_estimator
+        else:
+            self._estimator = default
+
+        if self._estimator is None:
+            raise ValueError("`estimator` cannot be None.")
+
+    # TODO: remove in 1.4
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute `base_estimator_` was deprecated in version 1.2 and will be removed "
+        "in 1.4. Use `estimator_` instead."
+    )
+    @property
+    def base_estimator_(self):
+        return self._estimator
+
+    # TODO: remove in 1.4
+    @property
+    def estimator_(self):
+        return self._estimator
 
     def _make_estimator(self, append=True, random_state=None):
-        """Make and configure a copy of the `base_estimator_` attribute.
+        """Make and configure a copy of the `estimator_` attribute.
 
         Warning: This method should be used to properly instantiate new
         sub-estimators.
         """
-        estimator = clone(self.base_estimator_)
+        estimator = clone(self.estimator_)
         estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
 
         # TODO: Remove in v1.2
