@@ -79,5 +79,5 @@ anova_svm[-1].coef_
 anova_svm[:-1].inverse_transform(anova_svm[-1].coef_)
 
 # %%
-# We can see that the features with non-zero coefficients are the selected 
+# We can see that the features with non-zero coefficients are the selected
 # features by the first step.
