@@ -40,7 +40,6 @@ from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
-from sklearn.metrics import roc_auc_score
 from sklearn.metrics import zero_one_loss
 from sklearn.metrics import brier_score_loss
 from sklearn.metrics import multilabel_confusion_matrix
@@ -1875,18 +1874,6 @@ def test_precision_recall_f1_no_labels_average_none_warn():
         fbeta = fbeta_score(y_true, y_pred, beta=1, average=None)
 
     assert_array_almost_equal(fbeta, [0, 0, 0], 2)
-
-
-def test_assert_ovr_roc_auc_chance_level():
-    # Build equal probability predictions to multiclass problem
-    y_true = np.array([3, 1, 2, 0])
-    y_pred = 0.25 * np.ones((4, 4))
-
-    macro_roc_auc = roc_auc_score(y_true, y_pred, multi_class="ovr", average="macro")
-    assert_allclose(macro_roc_auc, 0.5)
-
-    micro_roc_auc = roc_auc_score(y_true, y_pred, multi_class="ovr", average="micro")
-    assert_allclose(micro_roc_auc, 0.5)
 
 
 def test_prf_warnings():

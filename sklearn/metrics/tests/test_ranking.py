@@ -736,6 +736,18 @@ def test_roc_auc_score_multiclass_error(msg, kwargs):
         roc_auc_score(y_true, y_prob, **kwargs)
 
 
+def test_assert_ovr_roc_auc_chance_level():
+    # Build equal probability predictions to multiclass problem
+    y_true = np.array([3, 1, 2, 0])
+    y_pred = 0.25 * np.ones((4, 4))
+
+    macro_roc_auc = roc_auc_score(y_true, y_pred, multi_class="ovr", average="macro")
+    assert_allclose(macro_roc_auc, 0.5)
+
+    micro_roc_auc = roc_auc_score(y_true, y_pred, multi_class="ovr", average="micro")
+    assert_allclose(micro_roc_auc, 0.5)
+
+
 def test_auc_score_non_binary_class():
     # Test that roc_auc_score function returns an error when trying
     # to compute AUC for non-binary class values.
