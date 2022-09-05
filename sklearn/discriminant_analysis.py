@@ -205,7 +205,7 @@ class LinearDiscriminantAnalysis(
           - 'eigen': Eigenvalue decomposition.
             Can be combined with shrinkage or custom covariance estimator.
 
-        .. versionchanged:: 1.2
+        .. versionadded:: 1.2
             `solver="svd"` now has experimental Array API support. See the
             :ref:`Array API User Guide <array_api>` for more details.
 
