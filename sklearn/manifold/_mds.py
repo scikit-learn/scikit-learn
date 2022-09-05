@@ -484,7 +484,7 @@ class MDS(BaseEstimator):
     (100, 2)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "metric": ["boolean"],
         "n_init": [Interval(Integral, 1, None, closed="left")],
@@ -539,7 +539,7 @@ class MDS(BaseEstimator):
         y : Ignored
             Not used, present for API consistency by convention.
 
-        init : ndarray of shape (n_samples,), default=None
+        init : ndarray of shape (n_samples, n_components), default=None
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.

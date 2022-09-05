@@ -73,7 +73,7 @@ plt.vlines(
     linewidth=3,
     label="Optimum on test",
 )
-plt.legend(loc="lower left")
+plt.legend(loc="lower right")
 plt.ylim([0, 1.2])
 plt.xlabel("Regularization parameter")
 plt.ylabel("Performance")
