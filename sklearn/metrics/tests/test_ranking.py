@@ -694,10 +694,10 @@ def test_roc_auc_score_multiclass_labels_error(msg, y_true, labels, multi_class)
         ),
         (
             (
-                r"average must be one of \('macro', 'weighted', None\) for "
+                r"average must be one of \('macro', 'weighted', None, 'micro'\) for "
                 r"multiclass problems"
             ),
-            {"average": "micro", "multi_class": "ovr"},
+            {"average": "samples", "multi_class": "ovr"},
         ),
         (
             (
