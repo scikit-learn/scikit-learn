@@ -444,7 +444,7 @@ def _gradient_descent(
 
 
 def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
-    r"""Expresses to what extent the local structure is retained.
+    r"""Indicate to what extent the local structure is retained.
 
     The trustworthiness is within [0, 1]. It is defined as
 

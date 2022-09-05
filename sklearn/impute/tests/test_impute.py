@@ -907,20 +907,6 @@ def test_iterative_imputer_additive_matrix():
     assert_allclose(X_test_filled, X_test_est, rtol=1e-3, atol=0.01)
 
 
-@pytest.mark.parametrize(
-    "max_iter, tol, error_type, warning",
-    [
-        (-1, 1e-3, ValueError, "should be a positive integer"),
-        (1, -1e-3, ValueError, "should be a non-negative float"),
-    ],
-)
-def test_iterative_imputer_error_param(max_iter, tol, error_type, warning):
-    X = np.zeros((100, 2))
-    imputer = IterativeImputer(max_iter=max_iter, tol=tol)
-    with pytest.raises(error_type, match=warning):
-        imputer.fit_transform(X)
-
-
 def test_iterative_imputer_early_stopping():
     rng = np.random.RandomState(0)
     n = 50

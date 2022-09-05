@@ -12,22 +12,15 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn.decomposition._dict_learning.dict_learning",
-    "sklearn.externals._packaging.version.parse",
+    # sklearn.deprecation._update_doc is updating the doc against the numpydoc.
+    # This will be fixed in future PRs.
     "sklearn.inspection._plot.partial_dependence.plot_partial_dependence",
-    "sklearn.linear_model._least_angle.lars_path_gram",
-    "sklearn.linear_model._omp.orthogonal_mp_gram",
-    "sklearn.manifold._locally_linear.locally_linear_embedding",
-    "sklearn.manifold._t_sne.trustworthiness",
+    # sklearn.deprecation._update_doc is updating the doc against the numpydoc.
+    # This will be fixed with issue: #24328
     "sklearn.metrics._plot.det_curve.plot_det_curve",
     "sklearn.metrics._plot.precision_recall_curve.plot_precision_recall_curve",
-    "sklearn.metrics._ranking.coverage_error",
     "sklearn.metrics._ranking.dcg_score",
     "sklearn.metrics._ranking.roc_curve",
-    "sklearn.metrics._regression.mean_pinball_loss",
-    "sklearn.metrics.cluster._bicluster.consensus_score",
-    "sklearn.metrics.cluster._supervised.adjusted_mutual_info_score",
-    "sklearn.metrics.cluster._supervised.adjusted_rand_score",
     "sklearn.metrics.cluster._supervised.entropy",
     "sklearn.metrics.cluster._supervised.fowlkes_mallows_score",
     "sklearn.metrics.pairwise.pairwise_distances_chunked",
@@ -41,7 +34,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.extmath.randomized_svd",
     "sklearn.utils.extmath.safe_sparse_dot",
     "sklearn.utils.extmath.squared_norm",
-    "sklearn.utils.extmath.stable_cumsum",
     "sklearn.utils.extmath.svd_flip",
     "sklearn.utils.extmath.weighted_mode",
     "sklearn.utils.fixes.delayed",

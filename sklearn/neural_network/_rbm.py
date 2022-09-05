@@ -447,5 +447,6 @@ class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
                 "check_methods_sample_order_invariance": (
                     "fails for the score_samples method"
                 ),
-            }
+            },
+            "preserves_dtype": [np.float64, np.float32],
         }

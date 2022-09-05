@@ -203,7 +203,7 @@ def lars_path_gram(
     return_n_iter=False,
     positive=False,
 ):
-    """lars_path in the sufficient stats mode [1]
+    """The lars_path in the sufficient stats mode [1].
 
     The optimization objective for the case method='lasso' is::
 
@@ -280,7 +280,7 @@ def lars_path_gram(
         Indices of active variables at the end of the path.
 
     coefs : array-like of shape (n_features, n_alphas + 1)
-        Coefficients along the path
+        Coefficients along the path.
 
     n_iter : int
         Number of iterations run. Returned only if return_n_iter is set
@@ -288,14 +288,13 @@ def lars_path_gram(
 
     See Also
     --------
-    lars_path
-    lasso_path
-    lasso_path_gram
-    LassoLars
-    Lars
-    LassoLarsCV
-    LarsCV
-    sklearn.decomposition.sparse_encode
+    lars_path_gram : Compute LARS path.
+    lasso_path : Compute Lasso path with coordinate descent.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    Lars : Least Angle Regression model a.k.a. LAR.
+    LassoLarsCV : Cross-validated Lasso, using the LARS algorithm.
+    LarsCV : Cross-validated Least Angle Regression model.
+    sklearn.decomposition.sparse_encode : Sparse coding.
 
     References
     ----------
@@ -307,7 +306,6 @@ def lars_path_gram(
 
     .. [3] `Wikipedia entry on the Lasso
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
-
     """
     return _lars_path_solver(
         X=None,

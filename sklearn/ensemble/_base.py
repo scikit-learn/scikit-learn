@@ -4,7 +4,6 @@
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-import numbers
 from typing import List
 
 import numpy as np
@@ -143,19 +142,10 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # self.estimators_ needs to be filled by the derived classes in fit.
 
     def _validate_estimator(self, default=None):
-        """Check the estimator and the n_estimator attribute.
+        """Check the base estimator.
 
         Sets the base_estimator_` attributes.
         """
-        if not isinstance(self.n_estimators, numbers.Integral):
-            raise ValueError(
-                f"n_estimators must be an integer, got {type(self.n_estimators)}."
-            )
-        if self.n_estimators <= 0:
-            raise ValueError(
-                f"n_estimators must be greater than zero, got {self.n_estimators}."
-            )
-
         if self.estimator is not None:
             self.base_estimator_ = self.estimator
         elif self.base_estimator != "deprecated" and self.base_estimator is not None:
