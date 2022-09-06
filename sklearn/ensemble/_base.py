@@ -184,11 +184,13 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     )
     @property
     def base_estimator_(self):
+        """Estimator used to grow the ensemble."""
         return self._estimator
 
     # TODO: remove in 1.4
     @property
     def estimator_(self):
+        """Estimator used to grow the ensemble."""
         return self._estimator
 
     def _make_estimator(self, append=True, random_state=None):

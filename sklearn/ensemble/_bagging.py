@@ -1093,7 +1093,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
             `base_estimator_` is deprecated and will be removed in 1.4.
             Use `estimator_` instead.
 
-
     n_features_ : int
         The number of features when :meth:`fit` is performed.
 
