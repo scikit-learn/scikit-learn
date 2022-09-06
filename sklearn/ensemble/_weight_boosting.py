@@ -44,7 +44,7 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import has_fit_parameter
 from ..utils.validation import _num_samples
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import HasMethods, Interval, StrOptions
 
 __all__ = [
     "AdaBoostClassifier",
@@ -60,11 +60,11 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
     """
 
     _parameter_constraints: dict = {
-        "estimator": "no_validation",
+        "estimator": [HasMethods(["fit", "predict"])],
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "learning_rate": [Interval(Real, 0, None, closed="neither")],
         "random_state": ["random_state"],
-        "base_estimator": "no_validation",  # TODO create an estimator-like constraint ?
+        "base_estimator": [HasMethods(["fit", "predict"])],
     }
 
     @abstractmethod
@@ -351,6 +351,9 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         the base estimator is :class:`~sklearn.tree.DecisionTreeClassifier`
         initialized with `max_depth=1`.
 
+        .. versionadded:: 1.2
+           `base_estimator` was renamed to `estimator`.
+
     n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
@@ -391,6 +394,9 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
     ----------
     estimator_ : estimator
         The base estimator from which the ensemble is grown.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
 
     base_estimator_ : estimator
         The base estimator from which the ensemble is grown.
@@ -517,7 +523,7 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
                 )
         if not has_fit_parameter(self.estimator_, "sample_weight"):
             raise ValueError(
-                "%s doesn't support sample_weight." % self.estimator_.__class__.__name__
+                f"{self.estimator.__class__.__name__} doesn't support sample_weight."
             )
 
     def _boost(self, iboost, X, y, sample_weight, random_state):
@@ -948,6 +954,9 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         :class:`~sklearn.tree.DecisionTreeRegressor` initialized with
         `max_depth=3`.
 
+        .. versionadded:: 1.2
+           `base_estimator` was renamed to `estimator`.
+
     n_estimators : int, default=50
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
@@ -986,6 +995,9 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     ----------
     estimator_ : estimator
         The base estimator from which the ensemble is grown.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
 
     base_estimator_ : estimator
         The base estimator from which the ensemble is grown.

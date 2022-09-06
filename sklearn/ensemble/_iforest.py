@@ -116,9 +116,12 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
     Attributes
     ----------
-    estimator_ : ExtraTreeRegressor instance
+    estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor` instance
         The child estimator template used to create the collection of
         fitted sub-estimators.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
 
     base_estimator_ : ExtraTreeRegressor instance
         The child estimator template used to create the collection of

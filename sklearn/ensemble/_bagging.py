@@ -23,7 +23,7 @@ from ..utils import indices_to_mask
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
-from ..utils._param_validation import Interval
+from ..utils._param_validation import Interval, HasMethods
 from ..utils.validation import has_fit_parameter, check_is_fitted, _check_sample_weight
 from ..utils.fixes import delayed
 
@@ -229,11 +229,10 @@ def _estimator_has(attr):
     def check(self):
         if hasattr(self, "estimators_"):
             return hasattr(self.estimators_[0], attr)
-        # TODO(1.4): Remove when the base_estimator deprecation cycle ends
-        elif self.base_estimator != "deprecated":
-            return hasattr(self.base_estimator, attr)
-        else:
+        elif self.estimator is not None:
             return hasattr(self.estimator, attr)
+        else:  # TODO(1.4): Remove when the base_estimator deprecation cycle ends
+            return hasattr(self.base_estimator, attr)
 
     return check
 
@@ -246,7 +245,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     """
 
     _parameter_constraints: dict = {
-        "estimator": "no_validation",
+        "estimator": [HasMethods(["fit", "predict"])],
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "max_samples": [
             Interval(Integral, 1, None, closed="left"),
@@ -263,7 +262,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         "n_jobs": [None, Integral],
         "random_state": ["random_state"],
         "verbose": ["verbose"],
-        "base_estimator": "no_validation",
+        "base_estimator": [HasMethods(["fit", "predict"])],
     }
 
     @abstractmethod
@@ -581,6 +580,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         If None, then the base estimator is a
         :class:`~sklearn.tree.DecisionTreeClassifier`.
 
+        .. versionadded:: 1.2
+           `base_estimator` was renamed to `estimator`.
+
     n_estimators : int, default=10
         The number of base estimators in the ensemble.
 
@@ -646,6 +648,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     ----------
     estimator_ : estimator
         The base estimator from which the ensemble is grown.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
 
     base_estimator_ : estimator
         The base estimator from which the ensemble is grown.
@@ -1023,6 +1028,9 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         If None, then the base estimator is a
         :class:`~sklearn.tree.DecisionTreeRegressor`.
 
+        .. versionadded:: 1.2
+           `base_estimator` was renamed to `estimator`.
+
     n_estimators : int, default=10
         The number of base estimators in the ensemble.
 
@@ -1085,6 +1093,9 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     ----------
     estimator_ : estimator
         The base estimator from which the ensemble is grown.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
 
     base_estimator_ : estimator
         The base estimator from which the ensemble is grown.

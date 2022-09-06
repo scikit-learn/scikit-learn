@@ -1293,9 +1293,12 @@ class RandomForestClassifier(ForestClassifier):
 
     Attributes
     ----------
-    estimator_ : DecisionTreeClassifier
+    estimator_ : :class:`~sklearn.tree.DecisionTreeClassifier`
         The child estimator template used to create the collection of fitted
         sub-estimators.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
 
     base_estimator_ : DecisionTreeClassifier
         The child estimator template used to create the collection of fitted
@@ -1655,9 +1658,12 @@ class RandomForestRegressor(ForestRegressor):
 
     Attributes
     ----------
-    estimator_ : DecisionTreeRegressor
+    estimator_ : :class:`~sklearn.tree.DecisionTreeRegressor`
         The child estimator template used to create the collection of fitted
         sub-estimators.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
 
     base_estimator_ : DecisionTreeRegressor
         The child estimator template used to create the collection of fitted
@@ -2006,9 +2012,12 @@ class ExtraTreesClassifier(ForestClassifier):
 
     Attributes
     ----------
-    estimator_ : ExtraTreesClassifier
+    estimator_ : :class:`~sklearn.tree.ExtraTreesClassifier`
         The child estimator template used to create the collection of fitted
         sub-estimators.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
 
     base_estimator_ : ExtraTreesClassifier
         The child estimator template used to create the collection of fitted
@@ -2359,9 +2368,12 @@ class ExtraTreesRegressor(ForestRegressor):
 
     Attributes
     ----------
-    estimator_ : ExtraTreeRegressor
+    estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor`
         The child estimator template used to create the collection of fitted
         sub-estimators.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
 
     base_estimator_ : ExtraTreeRegressor
         The child estimator template used to create the collection of fitted
@@ -2622,6 +2634,9 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
     estimator_ : :class:`~sklearn.tree.ExtraTreeClassifier` instance
         The child estimator template used to create the collection of fitted
         sub-estimators.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
 
     base_estimator_ : :class:`~sklearn.tree.ExtraTreeClassifier` instance
         The child estimator template used to create the collection of fitted
