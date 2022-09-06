@@ -271,7 +271,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             x
             for cst_set in self.interaction_cst
             for x in cst_set
-            if not (x == int(x) and 0 <= x and x < n_features)
+            if not (isinstance(x, int) and 0 <= x and x < n_features)
         ]
         if invalid_indices:
             raise ValueError(
@@ -280,7 +280,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 f" features, got invalid indices: {invalid_indices!r}"
             )
 
-        constraints = [set([int(x) for x in group]) for group in self.interaction_cst]
+        constraints = [set(group) for group in self.interaction_cst]
 
         # Add all not listed features as own group by default.
         rest = set(range(n_features)).difference(set().union(*constraints))

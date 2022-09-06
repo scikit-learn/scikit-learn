@@ -180,7 +180,8 @@ class TreeGrower:
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
-    interaction_cst : list of sets of integers
+    interaction_cst : list of sets of integers, default=None
+        List of interaction constraints.
     l2_regularization : float, default=0.
         The L2 regularization parameter.
     min_hessian_to_split : float, default=1e-3
@@ -417,7 +418,7 @@ class TreeGrower:
         )
 
         if self.interaction_cst is not None:
-            self.root.interaction_cst_indices = list(range(len(self.interaction_cst)))
+            self.root.interaction_cst_indices = range(len(self.interaction_cst))
             allowed_features = set().union(*self.interaction_cst)
             self.root.allowed_features = np.array(
                 list(allowed_features), dtype=np.uint32
@@ -642,7 +643,7 @@ class TreeGrower:
         #  - This is for nodes that are already split and have a
         #    node.split_info.feature_idx.
         allowed_features = set()
-        interaction_cst_indices = list()
+        interaction_cst_indices = []
         for i in node.interaction_cst_indices:
             if node.split_info.feature_idx in self.interaction_cst[i]:
                 interaction_cst_indices.append(i)

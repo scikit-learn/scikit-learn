@@ -1184,7 +1184,6 @@ def test_interaction_cst_numerically():
     )
 
 
-# TODO: Remove in v1.2
 @pytest.mark.parametrize(
     "old_loss, new_loss, Estimator",
     [
