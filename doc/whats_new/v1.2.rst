@@ -203,8 +203,8 @@ Changelog
   :pr:`20415` by :user:`Zhehao Liu <MaxwellLZH>`.
 
 - |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
-  :class:`ensemble.HistGradientBoostingRegressor` does not error when predicting
-  on an categories encoded as a negative value and considers it unknown.
+  :class:`ensemble.HistGradientBoostingRegressor` no longer error when predicting
+  on categories encoded as negative values and instead consider them unknown.
   :pr:`24283` by `Thomas Fan`_.
 
 :mod:`sklearn.feature_selection`
