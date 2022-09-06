@@ -32,7 +32,8 @@ n_bins = 5
 np.random.seed(0)
 
 X = face.reshape((-1, 1))  # We need an (n_sample, n_feature) array
-est = preprocessing.KBinsDiscretizer(n_bins=n_bins, strategy='uniform', encode='ordinal', random_state = 0)
+est = preprocessing.KBinsDiscretizer(n_bins=n_bins, strategy='uniform',
+                                     encode='ordinal', random_state=0)
 est.fit(X)
 values = est.bin_edges_[0]
 labels = est.transform(X)
