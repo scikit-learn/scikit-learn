@@ -2532,7 +2532,7 @@ def log_loss(
         Log loss is undefined for p=0 or p=1, so probabilities are
         clipped to max(eps, min(1 - eps, p)).
         Default value will be the epsilon of the dtype of y_pred if it is
-        a numpy array or 1e-15 if a non-numpy input is passed
+        a numpy array or 1e-15 if a non-numpy input is passed.
 
     normalize : bool, default=True
         If true, return the mean loss per sample.
