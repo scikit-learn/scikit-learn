@@ -239,7 +239,7 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
     (1797, 7)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [
             Interval(Integral, 1, None, closed="left"),
             None,

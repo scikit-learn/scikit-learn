@@ -309,7 +309,7 @@ def test_base_estimator():
 
 def test_sample_weights_infinite():
     msg = "Sample weights have reached infinite values"
-    clf = AdaBoostClassifier(n_estimators=30, learning_rate=5.0, algorithm="SAMME")
+    clf = AdaBoostClassifier(n_estimators=30, learning_rate=23.0, algorithm="SAMME")
     with pytest.warns(UserWarning, match=msg):
         clf.fit(iris.data, iris.target)
 
@@ -575,3 +575,22 @@ def test_adaboost_negative_weight_error(model, X, y):
     err_msg = "Negative values in data passed to `sample_weight`"
     with pytest.raises(ValueError, match=err_msg):
         model.fit(X, y, sample_weight=sample_weight)
+
+
+def test_adaboost_numerically_stable_feature_importance_with_small_weights():
+    """Check that we don't create NaN feature importance with numerically
+    instable inputs.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20320
+    """
+    rng = np.random.RandomState(42)
+    X = rng.normal(size=(1000, 10))
+    y = rng.choice([0, 1], size=1000)
+    sample_weight = np.ones_like(y) * 1e-263
+    tree = DecisionTreeClassifier(max_depth=10, random_state=12)
+    ada_model = AdaBoostClassifier(
+        base_estimator=tree, n_estimators=20, random_state=12
+    )
+    ada_model.fit(X, y, sample_weight=sample_weight)
+    assert np.isnan(ada_model.feature_importances_).sum() == 0
