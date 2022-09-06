@@ -272,7 +272,7 @@ Changelog
 - |Fix| Allows `csr_matrix` as input for parameter: `y_true` of
    the :func:`metrics.label_ranking_average_precision_score` metric.
    :pr:`23442` by :user:`Sean Atukorala <ShehanAT>`
-  
+
 - |Fix| :func:`metrics.ndcg_score` will now trigger a warning when the `y_true`
   value contains a negative value. Users may still use negative values, but the
   result may not be between 0 and 1. Starting in v1.4, passing in negative
@@ -283,7 +283,8 @@ Changelog
 - |Fix| automatically set `eps` in :func:`metrics.logloss` depending on the input
   arrays. `eps` was previously too small by default when passing lower precision
   floating point arrays.
-  :pr:`24354` by :user:`Safiuddin Khaja <Safikh>`
+  :pr:`24354` by :user:`Safiuddin Khaja <Safikh>` and
+  :user:`gsiisg <gsiisg>`
 
 :mod:`sklearn.model_selection`
 ..............................
