@@ -610,6 +610,10 @@ def shuffle(*arrays, random_state=None, n_samples=None):
     shuffled_arrays : sequence of indexable data-structures
         Sequence of shuffled copies of the collections. The original arrays
         are not impacted.
+        
+    See Also
+    --------
+    resample    
 
     Examples
     --------
@@ -643,10 +647,6 @@ def shuffle(*arrays, random_state=None, n_samples=None):
 
       >>> shuffle(y, n_samples=2, random_state=0)
       array([0, 1])
-
-    See Also
-    --------
-    resample
     """
     return resample(
         *arrays, replace=False, n_samples=n_samples, random_state=random_state
