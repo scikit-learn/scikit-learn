@@ -30,7 +30,7 @@ from ..utils._mask import _get_mask
 from ..utils.fixes import delayed
 from ..utils.fixes import sp_version, parse_version
 
-from ._pairwise_distances_reduction import PairwiseDistancesArgKmin
+from ._pairwise_distances_reduction import ArgKmin
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
 from ..exceptions import DataConversionWarning
 
@@ -669,14 +669,14 @@ def pairwise_distances_argmin_min(
     if metric_kwargs is None:
         metric_kwargs = {}
 
-    if PairwiseDistancesArgKmin.is_usable_for(X, Y, metric):
+    if ArgKmin.is_usable_for(X, Y, metric):
         # This is an adaptor for one "sqeuclidean" specification.
         # For this backend, we can directly use "sqeuclidean".
         if metric_kwargs.get("squared", False) and metric == "euclidean":
             metric = "sqeuclidean"
             metric_kwargs = {}
 
-        values, indices = PairwiseDistancesArgKmin.compute(
+        values, indices = ArgKmin.compute(
             X=X,
             Y=Y,
             k=1,
@@ -688,7 +688,7 @@ def pairwise_distances_argmin_min(
         values = values.flatten()
         indices = indices.flatten()
     else:
-        # TODO: once PairwiseDistancesArgKmin supports sparse input matrices and 32 bit,
+        # TODO: once ArgKmin supports sparse input matrices and 32 bit,
         # we won't need to fallback to pairwise_distances_chunked anymore.
 
         # Turn off check for finiteness because this is costly and because arrays
@@ -781,14 +781,14 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
     if metric_kwargs is None:
         metric_kwargs = {}
 
-    if PairwiseDistancesArgKmin.is_usable_for(X, Y, metric):
+    if ArgKmin.is_usable_for(X, Y, metric):
         # This is an adaptor for one "sqeuclidean" specification.
         # For this backend, we can directly use "sqeuclidean".
         if metric_kwargs.get("squared", False) and metric == "euclidean":
             metric = "sqeuclidean"
             metric_kwargs = {}
 
-        indices = PairwiseDistancesArgKmin.compute(
+        indices = ArgKmin.compute(
             X=X,
             Y=Y,
             k=1,
@@ -799,7 +799,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         )
         indices = indices.flatten()
     else:
-        # TODO: once PairwiseDistancesArgKmin supports sparse input matrices and 32 bit,
+        # TODO: once ArgKmin supports sparse input matrices and 32 bit,
         # we won't need to fallback to pairwise_distances_chunked anymore.
 
         # Turn off check for finiteness because this is costly and because arrays
@@ -1190,28 +1190,33 @@ def linear_kernel(X, Y=None, dense_output=True):
 
 def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     """
-    Compute the polynomial kernel between X and Y::
+    Compute the polynomial kernel between X and Y.
 
-        K(X, Y) = (gamma <X, Y> + coef0)^degree
+    :math:`K(X, Y) = (gamma <X, Y> + coef0)^degree`
 
     Read more in the :ref:`User Guide <polynomial_kernel>`.
 
     Parameters
     ----------
     X : ndarray of shape (n_samples_X, n_features)
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
+        An optional second feature array. If `None`, uses `Y=X`.
 
     degree : int, default=3
+        Kernel degree.
 
     gamma : float, default=None
-        If None, defaults to 1.0 / n_features.
+        Coefficient of the vector inner product. If None, defaults to 1.0 / n_features.
 
     coef0 : float, default=1
+        Constant offset added to scaled inner product.
 
     Returns
     -------
     Gram matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        The polynomial kernel.
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
@@ -1225,8 +1230,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
 
 
 def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
-    """
-    Compute the sigmoid kernel between X and Y::
+    """Compute the sigmoid kernel between X and Y.
 
         K(X, Y) = tanh(gamma <X, Y> + coef0)
 
@@ -1235,18 +1239,21 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     Parameters
     ----------
     X : ndarray of shape (n_samples_X, n_features)
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
-        If `None`, uses `Y=X`.
+        An optional second feature array. If `None`, uses `Y=X`.
 
     gamma : float, default=None
-        If None, defaults to 1.0 / n_features.
+        Coefficient of the vector inner product. If None, defaults to 1.0 / n_features.
 
     coef0 : float, default=1
+        Constant offset added to scaled inner product.
 
     Returns
     -------
     Gram matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        Sigmoid kernel between two arrays.
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:
@@ -1260,8 +1267,7 @@ def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
 
 
 def rbf_kernel(X, Y=None, gamma=None):
-    """
-    Compute the rbf (gaussian) kernel between X and Y::
+    """Compute the rbf (gaussian) kernel between X and Y.
 
         K(x, y) = exp(-gamma ||x-y||^2)
 
@@ -1272,9 +1278,10 @@ def rbf_kernel(X, Y=None, gamma=None):
     Parameters
     ----------
     X : ndarray of shape (n_samples_X, n_features)
+        A feature array.
 
     Y : ndarray of shape (n_samples_Y, n_features), default=None
-        If `None`, uses `Y=X`.
+        An optional second feature array. If `None`, uses `Y=X`.
 
     gamma : float, default=None
         If None, defaults to 1.0 / n_features.
@@ -1282,6 +1289,7 @@ def rbf_kernel(X, Y=None, gamma=None):
     Returns
     -------
     kernel_matrix : ndarray of shape (n_samples_X, n_samples_Y)
+        The RBF kernel.
     """
     X, Y = check_pairwise_arrays(X, Y)
     if gamma is None:

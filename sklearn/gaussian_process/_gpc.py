@@ -637,7 +637,7 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
            [0.79064206, 0.06525643, 0.14410151]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "kernel": [Kernel, None],
         "optimizer": [StrOptions({"fmin_l_bfgs_b"}), callable, None],
         "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],

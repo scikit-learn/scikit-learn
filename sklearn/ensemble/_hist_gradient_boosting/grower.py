@@ -182,6 +182,28 @@ class TreeGrower:
         to determine the effective number of threads use, which takes cgroups CPU
         quotes into account. See the docstring of `_openmp_effective_n_threads`
         for details.
+
+    Attributes
+    ----------
+    histogram_builder : HistogramBuilder
+    splitter : Splitter
+    root : TreeNode
+    finalized_leaves : list of TreeNode
+    splittable_nodes : list of TreeNode
+    missing_values_bin_idx : int
+        Equals n_bins - 1
+    n_categorical_splits : int
+    n_features : int
+    n_nodes : int
+    total_find_split_time : float
+        Time spent finding the best splits
+    total_compute_hist_time : float
+        Time spent computing histograms
+    total_apply_split_time : float
+        Time spent splitting nodes
+    with_monotonic_cst : bool
+        Whether there are monotonic constraints that apply. False iff monotonic_cst is
+        None.
     """
 
     def __init__(

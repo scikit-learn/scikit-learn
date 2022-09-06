@@ -24,6 +24,8 @@ from sklearn.naive_bayes import CategoricalNB
 DISCRETE_NAIVE_BAYES_CLASSES = [BernoulliNB, CategoricalNB, ComplementNB, MultinomialNB]
 ALL_NAIVE_BAYES_CLASSES = DISCRETE_NAIVE_BAYES_CLASSES + [GaussianNB]
 
+msg = "The default value for `force_alpha` will change"
+pytestmark = pytest.mark.filterwarnings(f"ignore:{msg}:FutureWarning")
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -921,6 +923,63 @@ def test_n_features_deprecation(Estimator):
 
     with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
         est.n_features_
+
+
+# TODO(1.4): Remove
+@pytest.mark.parametrize("Estimator", DISCRETE_NAIVE_BAYES_CLASSES)
+@pytest.mark.parametrize("alpha", [1, [0.1, 1e-11], 1e-12])
+def test_force_alpha_deprecation(Estimator, alpha):
+    if Estimator is CategoricalNB and isinstance(alpha, list):
+        pytest.skip("CategoricalNB does not support array-like alpha values.")
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    alpha_min = 1e-10
+    msg = "The default value for `force_alpha` will change to `True`"
+    est = Estimator(alpha=alpha)
+    est_force = Estimator(alpha=alpha, force_alpha=True)
+    if np.min(alpha) < alpha_min:
+        with pytest.warns(FutureWarning, match=msg):
+            est.fit(X, y)
+    else:
+        est.fit(X, y)
+    est_force.fit(X, y)
+
+
+def test_check_alpha():
+    """The provided value for alpha must only be
+    used if alpha < _ALPHA_MIN and force_alpha is True.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/10772
+    """
+    _ALPHA_MIN = 1e-10
+    b = BernoulliNB(alpha=0, force_alpha=True)
+    assert b._check_alpha() == 0
+
+    alphas = np.array([0.0, 1.0])
+
+    b = BernoulliNB(alpha=alphas, force_alpha=True)
+    # We manually set `n_features_in_` not to have `_check_alpha` err
+    b.n_features_in_ = alphas.shape[0]
+    assert_array_equal(b._check_alpha(), alphas)
+
+    msg = (
+        "alpha too small will result in numeric errors, setting alpha = %.1e"
+        % _ALPHA_MIN
+    )
+    b = BernoulliNB(alpha=0, force_alpha=False)
+    with pytest.warns(UserWarning, match=msg):
+        assert b._check_alpha() == _ALPHA_MIN
+
+    b = BernoulliNB(alpha=0)
+    with pytest.warns(UserWarning, match=msg):
+        assert b._check_alpha() == _ALPHA_MIN
+
+    b = BernoulliNB(alpha=alphas, force_alpha=False)
+    # We manually set `n_features_in_` not to have `_check_alpha` err
+    b.n_features_in_ = alphas.shape[0]
+    with pytest.warns(UserWarning, match=msg):
+        assert_array_equal(b._check_alpha(), np.array([_ALPHA_MIN, 1.0]))
 
 
 @pytest.mark.parametrize("Estimator", ALL_NAIVE_BAYES_CLASSES)

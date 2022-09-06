@@ -98,7 +98,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     Use derived classes instead.
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "splitter": [StrOptions({"best", "random"})],
         "max_depth": [Interval(Integral, 1, None, closed="left"), None],
         "min_samples_split": [
@@ -705,8 +705,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
             - If int, then consider `max_features` features at each split.
             - If float, then `max_features` is a fraction and
-              `int(max_features * n_features)` features are considered at each
-              split.
+              `max(1, int(max_features * n_features_in_))` features are considered at
+              each split.
             - If "auto", then `max_features=sqrt(n_features)`.
             - If "sqrt", then `max_features=sqrt(n_features)`.
             - If "log2", then `max_features=log2(n_features)`.
@@ -888,7 +888,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
         "criterion": [StrOptions({"gini", "entropy", "log_loss"}), Hidden(Criterion)],
         "class_weight": [dict, list, StrOptions({"balanced"}), None],
@@ -1131,7 +1131,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
-          `int(max_features * n_features)` features are considered at each
+          `max(1, int(max_features * n_features_in_))` features are considered at each
           split.
         - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
@@ -1277,7 +1277,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
            0.16...,  0.11..., -0.73..., -0.30..., -0.00...])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
         "criterion": [
             StrOptions(
@@ -1466,8 +1466,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
             - If int, then consider `max_features` features at each split.
             - If float, then `max_features` is a fraction and
-              `int(max_features * n_features)` features are considered at each
-              split.
+              `max(1, int(max_features * n_features_in_))` features are considered at
+              each split.
             - If "auto", then `max_features=sqrt(n_features)`.
             - If "sqrt", then `max_features=sqrt(n_features)`.
             - If "log2", then `max_features=log2(n_features)`.
@@ -1755,7 +1755,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
-          `int(max_features * n_features)` features are considered at each
+          `max(1, int(max_features * n_features_in_))` features are considered at each
           split.
         - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.

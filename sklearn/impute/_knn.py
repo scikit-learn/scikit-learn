@@ -10,7 +10,6 @@ from ..utils.validation import FLOAT_DTYPES
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import _NAN_METRICS
 from ..neighbors._base import _get_weights
-from ..neighbors._base import _check_weights
 from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
 from ..utils.validation import check_is_fitted
@@ -92,10 +91,10 @@ class KNNImputer(_BaseImputer):
 
     See Also
     --------
-    SimpleImputer : Imputation transformer for completing missing values
+    SimpleImputer : Univariate imputer for completing missing values
         with simple strategies.
-    IterativeImputer : Multivariate imputer that estimates each feature
-        from all the others.
+    IterativeImputer : Multivariate imputer that estimates values to impute for
+        each feature with missing values from all the others.
 
     References
     ----------
@@ -117,8 +116,8 @@ class KNNImputer(_BaseImputer):
            [8. , 8. , 7. ]])
     """
 
-    _parameter_constraints = {
-        **_BaseImputer._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **_BaseImputer._parameter_constraints,
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "weights": [StrOptions({"uniform", "distance"}), callable, Hidden(None)],
         "metric": [StrOptions(set(_NAN_METRICS)), callable],
@@ -220,7 +219,6 @@ class KNNImputer(_BaseImputer):
             copy=self.copy,
         )
 
-        _check_weights(self.weights)
         self._fit_X = X
         self._mask_fit_X = _get_mask(self._fit_X, self.missing_values)
         self._valid_mask = ~np.all(self._mask_fit_X, axis=0)

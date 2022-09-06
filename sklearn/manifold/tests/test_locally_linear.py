@@ -115,21 +115,6 @@ def test_lle_manifold(global_dtype, method, solver):
     ), details
 
 
-# Test the error raised when parameter passed to lle is invalid
-def test_lle_init_parameters():
-    X = np.random.rand(5, 3)
-
-    clf = manifold.LocallyLinearEmbedding(eigen_solver="error")
-    msg = "unrecognized eigen_solver 'error'"
-    with pytest.raises(ValueError, match=msg):
-        clf.fit(X)
-
-    clf = manifold.LocallyLinearEmbedding(method="error")
-    msg = "unrecognized method 'error'"
-    with pytest.raises(ValueError, match=msg):
-        clf.fit(X)
-
-
 def test_pipeline():
     # check that LocallyLinearEmbedding works fine as a Pipeline
     # only checks that no error is raised.

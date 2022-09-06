@@ -49,7 +49,7 @@ dependent_packages = {
     "sphinxext-opengraph": ("0.4.2", "docs"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
-    "conda-lock": ("1.0.5", "maintenance"),
+    "conda-lock": ("1.1.1", "maintenance"),
 }
 
 

@@ -2,8 +2,10 @@
 #
 # License: BSD 3 clause
 
-import numpy as np
+from numbers import Integral, Real
 import warnings
+
+import numpy as np
 
 from ..base import BaseEstimator, MetaEstimatorMixin, RegressorMixin, clone
 from ..base import MultiOutputMixin
@@ -12,6 +14,7 @@ from ..utils.random import sample_without_replacement
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ._base import LinearRegression
 from ..utils.validation import has_fit_parameter
+from ..utils._param_validation import Interval, Options, StrOptions, HasMethods, Hidden
 from ..exceptions import ConvergenceWarning
 
 _EPSILON = np.spacing(1)
@@ -244,6 +247,45 @@ class RANSACRegressor(
     array([-31.9417...])
     """  # noqa: E501
 
+    _parameter_constraints: dict = {
+        "estimator": [HasMethods(["fit", "score", "predict"]), None],
+        "min_samples": [
+            Interval(Integral, 1, None, closed="left"),
+            Interval(Real, 0, 1, closed="both"),
+            None,
+        ],
+        "residual_threshold": [Interval(Real, 0, None, closed="left"), None],
+        "is_data_valid": [callable, None],
+        "is_model_valid": [callable, None],
+        "max_trials": [
+            Interval(Integral, 0, None, closed="left"),
+            Options(Real, {np.inf}),
+        ],
+        "max_skips": [
+            Interval(Integral, 0, None, closed="left"),
+            Options(Real, {np.inf}),
+        ],
+        "stop_n_inliers": [
+            Interval(Integral, 0, None, closed="left"),
+            Options(Real, {np.inf}),
+        ],
+        "stop_score": [Interval(Real, None, None, closed="both")],
+        "stop_probability": [Interval(Real, 0, 1, closed="both")],
+        "loss": [
+            StrOptions(
+                {"absolute_error", "squared_error", "absolute_loss", "squared_loss"},
+                deprecated={"absolute_loss", "squared_loss"},
+            ),
+            callable,
+        ],
+        "random_state": ["random_state"],
+        "base_estimator": [
+            HasMethods(["fit", "score", "predict"]),
+            Hidden(StrOptions({"deprecated"})),
+            None,
+        ],
+    }
+
     def __init__(
         self,
         estimator=None,
@@ -306,6 +348,8 @@ class RANSACRegressor(
             `is_data_valid` and `is_model_valid` return False for all
             `max_trials` randomly chosen sub-samples.
         """
+        self._validate_params()
+
         # Need to validate separately here. We can't pass multi_output=True
         # because that would allow y to be csr. Delay expensive finiteness
         # check to the estimator's own input validation.
@@ -343,19 +387,12 @@ class RANSACRegressor(
         elif 0 < self.min_samples < 1:
             min_samples = np.ceil(self.min_samples * X.shape[0])
         elif self.min_samples >= 1:
-            if self.min_samples % 1 != 0:
-                raise ValueError("Absolute number of samples must be an integer value.")
             min_samples = self.min_samples
-        else:
-            raise ValueError("Value for `min_samples` must be scalar and positive.")
         if min_samples > X.shape[0]:
             raise ValueError(
                 "`min_samples` may not be larger than number "
                 "of samples: n_samples = %d." % (X.shape[0])
             )
-
-        if self.stop_probability < 0 or self.stop_probability > 1:
-            raise ValueError("`stop_probability` must be in range [0, 1].")
 
         if self.residual_threshold is None:
             # MAD (median absolute deviation)
@@ -396,13 +433,6 @@ class RANSACRegressor(
 
         elif callable(self.loss):
             loss_function = self.loss
-
-        else:
-            raise ValueError(
-                "loss should be 'absolute_error', 'squared_error' or a "
-                "callable. Got %s. "
-                % self.loss
-            )
 
         random_state = check_random_state(self.random_state)
 

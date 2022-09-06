@@ -39,7 +39,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     Note that the "stratified" and "uniform" strategies lead to
     non-deterministic predictions that can be rendered deterministic by setting
     the `random_state` parameter if needed. The other strategies are naturally
-    deterministic and, once fit, always return a the same constant prediction
+    deterministic and, once fit, always return the same constant prediction
     for any value of `X`.
 
     Read more in the :ref:`User Guide <dummy_estimators>`.
@@ -137,7 +137,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     0.75
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "strategy": [
             StrOptions({"most_frequent", "prior", "stratified", "uniform", "constant"})
         ],
@@ -526,7 +526,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     0.0
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "strategy": [StrOptions({"mean", "median", "quantile", "constant"})],
         "quantile": [Interval(Real, 0.0, 1.0, closed="both"), None],
         "constant": [

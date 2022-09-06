@@ -1,8 +1,6 @@
-import warnings
 import  numpy as np
 cimport numpy as cnp
 from scipy import sparse
-from ..exceptions import ConvergenceWarning
 from ..utils._cython_blas cimport _dot
 cnp.import_array()
 

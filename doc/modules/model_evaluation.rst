@@ -694,10 +694,6 @@ and inferred labels::
     for an example of classification report usage for
     hand-written digits.
 
-  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-    for an example of classification report usage for text
-    documents.
-
   * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
     for an example of classification report usage for
     grid search with nested cross-validation.
@@ -813,10 +809,6 @@ precision-recall curve as follows.
         :align: center
 
 .. topic:: Examples:
-
-  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-    for an example of :func:`f1_score` usage to classify  text
-    documents.
 
   * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
     for an example of :func:`precision_score` and :func:`recall_score` usage
@@ -1581,8 +1573,8 @@ same classification task:
 
 * DET curves form a linear curve in normal deviate scale if the detection
   scores are normally (or close-to normally) distributed.
-  It was shown by [Navratil2007]_ that the reverse it not necessarily true and
-  even more general distributions are able produce linear DET curves.
+  It was shown by [Navratil2007]_ that the reverse is not necessarily true and
+  even more general distributions are able to produce linear DET curves.
 
 * The normal deviate scale transformation spreads out the points such that a
   comparatively larger space of plot is occupied.
@@ -2611,7 +2603,7 @@ explained in the example linked below.
 .. topic:: Example:
 
   * See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
-    for an example of using a the pinball loss to evaluate and tune the
+    for an example of using the pinball loss to evaluate and tune the
     hyper-parameters of quantile regression models on data with non-symmetric
     noise and outliers.
 
