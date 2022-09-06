@@ -136,8 +136,6 @@ def _hdbscan_sparse_distance_matrix(
     alpha=1.0,
     **metric_params,
 ):
-    assert issparse(X)
-
     # Compute sparse mutual reachability graph
     # if max_dist > 0, max distance to use when the reachability is infinite
     max_dist = metric_params.get("max_dist", 0.0)
@@ -154,11 +152,11 @@ def _hdbscan_sparse_distance_matrix(
         > 1
     ):
         raise ValueError(
-            "There exists points with less than %s neighbors. "
-            "Ensure your distance matrix has non zeros values for "
+            "There exists points with fewer than %s neighbors. "
+            "Ensure your distance matrix has non-zero values for "
             "at least `min_sample`=%s neighbors for each points (i.e. K-nn graph), "
-            "or specify a `max_dist` to use when distances are missing."
-            % (min_samples, min_samples)
+            "or specify a `max_dist` in `metric_params` to use when distances "
+            "are missing." % (min_samples, min_samples)
         )
 
     # Compute the minimum spanning tree for the sparse graph
@@ -499,7 +497,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         elif issparse(X):
             # Handle sparse precomputed distance matrices separately
             X = self._validate_data(
-                X, accept_sparse="csr", force_all_finite=False, dtype=np.float64
+                X,
+                accept_sparse="csr",
+                dtype=np.float64,
             )
         else:
             # Only non-sparse, precomputed distance matrices are handled here
@@ -565,7 +565,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                     kwargs.pop(key, None)
             elif self.metric in KDTree.valid_metrics:
                 func = _hdbscan_prims
-            else:  # Metric is a valid BallTree metric
+            else:
+                # Metric is a valid BallTree metric
                 func = _hdbscan_prims
                 kwargs["algo"] = "ball_tree"
 
