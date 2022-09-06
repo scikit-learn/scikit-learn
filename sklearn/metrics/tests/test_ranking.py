@@ -610,8 +610,8 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
         result_weighted,
     )
 
-    # Perfect classifier has roc_auc_score = 1.0
-    y_perfect = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [0.0, 0.0, 1.0]]
+    # Perfect classifier (from a ranking point of view) has roc_auc_score = 1.0
+    y_perfect = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [0.2, 0.05, 0.85]]
     assert_almost_equal(
         roc_auc_score(y_true, y_perfect, multi_class="ovr", labels=labels),
         1.0,
