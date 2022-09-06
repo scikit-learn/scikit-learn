@@ -10,8 +10,14 @@ from ..utils.extmath import safe_sparse_dot
 
 
 def l1_min_c(X, y, *, loss="squared_hinge", fit_intercept=True, intercept_scaling=1.0):
-    """
-    Return the lowest bound for C such that for C in (l1_min_C, infinity) the model is guaranteed not to be empty. This applies to l1 penalized classifiers, such as LinearSVC with penalty='l1' and linear_model.LogisticRegression with penalty='l1'. This value is valid if class_weight parameter in fit() is not set.
+    """Return the lowest bound for C.
+
+    The lower bound for C is computed such that for C in (l1_min_C, infinity)
+    the model is guaranteed not to be empty. This applies to l1 penalized
+    classifiers, such as LinearSVC with penalty='l1' and
+    linear_model.LogisticRegression with penalty='l1'.
+
+    This value is valid if class_weight parameter in fit() is not set.
 
     Parameters
     ----------
