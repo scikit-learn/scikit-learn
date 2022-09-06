@@ -1176,9 +1176,10 @@ Interaction constraints
 
 A priori, the histogram gradient boosting trees are allowed to use any feature
 to split a node into child nodes. This creates so called interactions between
-features. Sometimes, one wants to restrict the possible interactions. This can
-be done by the parameter ``interaction_cst``, where one can specify the
-indices of features that are allowed to interact
+features, i.e. usage of different features as split along a brang. Sometimes,
+one wants to restrict the possible interactions. This can be done by the
+parameter ``interaction_cst``, where one can specify the indices of features
+that are allowed to interact.
 For instance, with 3 features in total, ``interaction_cst=[{0}, {1}, {2}]``
 forbids all interactions.
 The constraints ``[{0, 1}, {1, 2}]`` specifies two groups of possibly
@@ -1193,6 +1194,11 @@ The following depicts a tree and the possible splits of the tree:
     1   2    <- Left split still fulfills both constraint groups.
    / \ / \      Right split at feature 2 has only group {1, 2} from now on.
 
+LightGBM uses the same logic for overlapping groups.
+
+Note that features not listed in ``interaction_cst`` are automatically
+assigned an interaction group for themselves. With again 3 features, this
+means that ``[{0}]`` is equivalent to ``[{0}, {1, 2}]``.
 
 Low-level parallelism
 ---------------------
