@@ -1147,8 +1147,10 @@ def test_unknown_category_that_are_negative():
     ).fit(X, y)
 
     # -1 is unknown because it is negative
-    y_pred_neg_one = hist.predict(np.asarray([[-1, -1]]))
+    X_test_neg = np.asarray([[-1, -2], [-3, -4]])
+    y_pred_neg_one = hist.predict(X_test_neg)
 
     # np.nan is treated as unknown
-    y_pred_neg_one = hist.predict(np.array([[np.nan, np.nan]]))
+    X_test_nan = np.full(X_test_neg.shape, fill_value=np.nan)
+    y_pred_neg_one = hist.predict(X_test_nan)
     assert_allclose(y_pred_neg_one, y_pred_neg_one)
