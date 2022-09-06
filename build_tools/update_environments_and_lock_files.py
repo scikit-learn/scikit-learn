@@ -198,12 +198,19 @@ conda_build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
-        "conda_dependencies": ["pypy"]
+        "conda_dependencies": ["pypy", "python"]
         + remove_from(
             common_dependencies_without_coverage, ["python", "pandas", "pillow"]
         )
         + ["ccache"],
-        "package_constraints": {"blas": "[build=openblas]"},
+        "package_constraints": {
+            "blas": "[build=openblas]",
+            # XXX: this can be removed when the vendored cloudpickle inside
+            # joblib includes the cloudpickle fix from
+            # https://github.com/cloudpipe/cloudpickle/pull/469
+            # 2022-09-06: the fix is not in any cloudpickle release yet
+            "python": "3.7",
+        },
     },
     {
         "build_name": "py38_conda_forge_mkl",
