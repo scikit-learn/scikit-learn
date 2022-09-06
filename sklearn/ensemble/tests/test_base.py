@@ -6,7 +6,6 @@ Testing for the base module (sklearn.ensemble.base).
 # License: BSD 3 clause
 
 import numpy as np
-import pytest
 
 from sklearn.datasets import load_iris
 from sklearn.ensemble import BaggingClassifier
@@ -47,27 +46,6 @@ def test_base():
         base_estimator=Perceptron(), n_estimators=np.int32(3)
     )
     np_int_ensemble.fit(iris.data, iris.target)
-
-
-def test_base_zero_n_estimators():
-    # Check that instantiating a BaseEnsemble with n_estimators<=0 raises
-    # a ValueError.
-    ensemble = BaggingClassifier(base_estimator=Perceptron(), n_estimators=0)
-    iris = load_iris()
-    with pytest.raises(ValueError):
-        ensemble.fit(iris.data, iris.target)
-
-
-def test_base_not_int_n_estimators():
-    # Check that instantiating a BaseEnsemble with a string as n_estimators
-    # raises a ValueError demanding n_estimators to be supplied as an integer.
-    string_ensemble = BaggingClassifier(base_estimator=Perceptron(), n_estimators="3")
-    iris = load_iris()
-    with pytest.raises(ValueError):
-        string_ensemble.fit(iris.data, iris.target)
-    float_ensemble = BaggingClassifier(base_estimator=Perceptron(), n_estimators=3.0)
-    with pytest.raises(ValueError):
-        float_ensemble.fit(iris.data, iris.target)
 
 
 def test_set_random_states():

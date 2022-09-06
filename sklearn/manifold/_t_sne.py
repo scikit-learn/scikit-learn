@@ -444,7 +444,7 @@ def _gradient_descent(
 
 
 def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
-    r"""Expresses to what extent the local structure is retained.
+    r"""Indicate to what extent the local structure is retained.
 
     The trustworthiness is within [0, 1]. It is defined as
 
@@ -746,7 +746,7 @@ class TSNE(BaseEstimator):
     (4, 2)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "perplexity": [Interval(Real, 0, None, closed="neither")],
         "early_exaggeration": [Interval(Real, 1, None, closed="left")],
