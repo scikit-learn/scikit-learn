@@ -113,6 +113,10 @@ def test_hdbscan_algorithms(algo, metric):
     n_clusters = len(set(labels)) - int(-1 in labels)
     assert n_clusters == n_clusters_true
 
+    # Validation for brute is handled by `pairwise_distances`
+    if algo in ("brute", "auto"):
+        return
+
     ALGOS_TREES = {
         "kdtree": KDTree,
         "balltree": BallTree,
@@ -123,27 +127,21 @@ def test_hdbscan_algorithms(algo, metric):
         "minkowski": {"p": 2},
         "wminkowski": {"p": 2, "w": np.ones(X.shape[1])},
     }.get(metric, None)
-    if algo not in ("auto", "brute"):
-        if metric not in ALGOS_TREES[algo].valid_metrics:
-            with pytest.raises(ValueError):
-                HDBSCAN(
-                    algorithm=algo,
-                    metric=metric,
-                    metric_params=metric_params,
-                ).fit(X)
-        elif metric == "wminkowski":
-            with pytest.warns(FutureWarning):
-                HDBSCAN(
-                    algorithm=algo,
-                    metric=metric,
-                    metric_params=metric_params,
-                ).fit(X)
-        else:
-            HDBSCAN(
-                algorithm=algo,
-                metric=metric,
-                metric_params=metric_params,
-            ).fit(X)
+
+    hdb = HDBSCAN(
+        algorithm=algo,
+        metric=metric,
+        metric_params=metric_params,
+    )
+
+    if metric not in ALGOS_TREES[algo].valid_metrics:
+        with pytest.raises(ValueError):
+            hdb.fit(X)
+    elif metric == "wminkowski":
+        with pytest.warns(FutureWarning):
+            hdb.fit(X)
+    else:
+        hdb.fit(X)
 
 
 def test_hdbscan_dbscan_clustering():
