@@ -5,7 +5,7 @@ Vector Quantization Example
 =========================================================
 
 Face, a 1024 x 768 size image of a raccoon face,
-is used here to illustrate how `k`-means is
+is used here to illustrate how KBinsDiscretizer is
 used for vector quantization.
 
 """
@@ -18,7 +18,7 @@ import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
 
-from sklearn import cluster
+from sklearn import preprocessing
 
 
 try:  # SciPy >= 0.16 have face in misc
@@ -28,17 +28,16 @@ try:  # SciPy >= 0.16 have face in misc
 except ImportError:
     face = sp.face(gray=True)
 
-n_clusters = 5
+n_bins = 5
 np.random.seed(0)
 
 X = face.reshape((-1, 1))  # We need an (n_sample, n_feature) array
-k_means = cluster.KMeans(n_clusters=n_clusters, n_init=4)
-k_means.fit(X)
-values = k_means.cluster_centers_.squeeze()
-labels = k_means.labels_
+est = preprocessing.KBinsDiscretizer(n_bins=n_bins, strategy='uniform', encode='ordinal', random_state = 0)
+est.fit(X)
+values = est.bin_edges_[0]
+labels = est.transform(X)
 
-# create an array from labels and values
-face_compressed = np.choose(labels, values)
+face_compressed = est.inverse_transform(labels)
 face_compressed.shape = face.shape
 
 vmin = face.min()
@@ -53,7 +52,7 @@ plt.figure(2, figsize=(3, 2.2))
 plt.imshow(face_compressed, cmap=plt.cm.gray, vmin=vmin, vmax=vmax)
 
 # equal bins face
-regular_values = np.linspace(0, 256, n_clusters + 1)
+regular_values = np.linspace(0, 256, n_bins + 1)
 regular_labels = np.searchsorted(regular_values, face) - 1
 regular_values = 0.5 * (regular_values[1:] + regular_values[:-1])  # mean
 regular_face = np.choose(regular_labels.ravel(), regular_values, mode="clip")
@@ -76,3 +75,6 @@ for center_1, center_2 in zip(regular_values[:-1], regular_values[1:]):
     plt.axvline(0.5 * (center_1 + center_2), color="b", linestyle="--")
 
 plt.show()
+
+print(f'face: number of unique values: {len(np.unique(face))}')
+print(f'labels: number of unique_values: {len(np.unique(labels))}')
