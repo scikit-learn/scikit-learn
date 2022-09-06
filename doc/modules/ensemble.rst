@@ -416,7 +416,7 @@ learners::
 The number of weak learners is controlled by the parameter ``n_estimators``. The
 ``learning_rate`` parameter controls the contribution of the weak learners in
 the final combination. By default, weak learners are decision stumps. Different
-weak learners can be specified through the ``base_estimator`` parameter.
+weak learners can be specified through the ``estimator`` parameter.
 The main parameters to tune to obtain good results are ``n_estimators`` and
 the complexity of the base estimators (e.g., its depth ``max_depth`` or
 minimum required number of samples to consider a split ``min_samples_split``).
