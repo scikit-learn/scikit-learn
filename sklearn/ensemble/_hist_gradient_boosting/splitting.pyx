@@ -17,7 +17,6 @@ from numpy.math cimport INFINITY
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport Y_DTYPE_C
 from .common cimport hist_struct
-from .common import HISTOGRAM_DTYPE
 from .common cimport BITSET_INNER_DTYPE_C
 from .common cimport BITSET_DTYPE_C
 from .common cimport MonotonicConstraint

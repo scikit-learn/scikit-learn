@@ -30,6 +30,8 @@ from .utils.validation import _check_feature_names_in
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from .utils.validation import check_non_negative
 from .utils._param_validation import Interval
+from .utils._param_validation import StrOptions
+from .metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
 
 
 class PolynomialCountSketch(
@@ -896,6 +898,20 @@ class Nystroem(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
     0.9987...
     """
 
+    _parameter_constraints: dict = {
+        "kernel": [
+            StrOptions(set(PAIRWISE_KERNEL_FUNCTIONS.keys()) | {"precomputed"}),
+            callable,
+        ],
+        "gamma": [Interval(Real, 0, None, closed="left"), None],
+        "coef0": [Interval(Real, None, None, closed="neither"), None],
+        "degree": [Interval(Real, 1, None, closed="left"), None],
+        "kernel_params": [dict, None],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+        "n_jobs": [Integral, None],
+    }
+
     def __init__(
         self,
         kernel="rbf",
@@ -939,6 +955,7 @@ class Nystroem(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         X = self._validate_data(X, accept_sparse="csr")
         rnd = check_random_state(self.random_state)
         n_samples = X.shape[0]

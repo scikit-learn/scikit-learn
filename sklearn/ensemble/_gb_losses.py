@@ -35,9 +35,9 @@ class LossFunction(metaclass=ABCMeta):
     def __init__(self, n_classes):
         self.K = n_classes
 
+    @abstractmethod
     def init_estimator(self):
         """Default ``init`` estimator for loss function."""
-        raise NotImplementedError()
 
     @abstractmethod
     def __call__(self, y, raw_predictions, sample_weight=None):
@@ -584,6 +584,7 @@ class QuantileLossFunction(RegressionLossFunction):
 class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
     """Base class for classification loss functions."""
 
+    @abstractmethod
     def _raw_prediction_to_proba(self, raw_predictions):
         """Template method to convert raw predictions into probabilities.
 
