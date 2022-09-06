@@ -846,6 +846,9 @@ Finally, follow the formatting rules below to make it consistently good:
 * When editing reStructuredText (``.rst``) files, try to keep line length under
   80 characters when possible (exceptions include links and tables).
 
+* Both single and double backticks surrounding text will render as inline
+  literal ('code'), due to specific configurations set in scikit-learn.
+
 * Before submitting your pull request check if your modifications have
   introduced new sphinx warnings and try to fix them.
 
