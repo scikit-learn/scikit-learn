@@ -990,9 +990,9 @@ These two notions allow us to construct the *mutual reachability graph*
 :math:`G_{ms}` defined for a fixed choice of `min_samples` by associating each
 sample :math:`x_p` with a vertex of the graph, and thus edges between points
 :math:`x_p, x_q` are the mutual reachability distance :math:`d_m(x_p, x_q)`
-between them. We may build subsets of this graph, labeled
-:math:`G_{ms,\epsilon}` defined as the original graph after removing any edges
-with value greater than `eps`. Any points whose core distance is less than `eps`
+between them. We may build subsets of this graph, denoted as
+:math:`G_{ms,\epsilon}`, by removing any edges with value greater than `eps`
+from the original graph. Any points whose core distance is less than `eps`
 are at this staged marked as noise. The remaining points are then clustered by
 finding the connected components of this trimmed graph.
 
