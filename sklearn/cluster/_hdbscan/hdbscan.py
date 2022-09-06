@@ -27,30 +27,6 @@ from ._reachability import mutual_reachability, sparse_mutual_reachability
 from ._tree import compute_stability, condense_tree, get_clusters, labelling_at_cut
 
 FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics
-_PARAM_CONSTRAINTS = {
-    "min_cluster_size": [Interval(Integral, left=2, right=None, closed="left")],
-    "min_samples": [Interval(Integral, left=1, right=None, closed="left"), None],
-    "cluster_selection_epsilon": [Interval(Real, left=0, right=None, closed="left")],
-    "max_cluster_size": [Interval(Integral, left=0, right=None, closed="left")],
-    "metric": [StrOptions(set(FAST_METRICS + ["precomputed"])), callable],
-    "alpha": [Interval(Real, left=0, right=None, closed="neither")],
-    "algorithm": [
-        StrOptions(
-            {
-                "auto",
-                "brute",
-                "kdtree",
-                "balltree",
-            }
-        )
-    ],
-    "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
-    "memory": [str, None, Path],
-    "n_jobs": [Integral, None],
-    "cluster_selection_method": [StrOptions({"eom", "leaf"})],
-    "allow_single_cluster": ["boolean"],
-    "metric_params": [dict, None],
-}
 
 
 def _tree_to_labels(
@@ -423,7 +399,32 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     array([ 2,  6, -1, ..., -1, -1, -1])
     """
 
-    _parameter_constraints = _PARAM_CONSTRAINTS
+    _parameter_constraints = {
+        "min_cluster_size": [Interval(Integral, left=2, right=None, closed="left")],
+        "min_samples": [Interval(Integral, left=1, right=None, closed="left"), None],
+        "cluster_selection_epsilon": [
+            Interval(Real, left=0, right=None, closed="left")
+        ],
+        "max_cluster_size": [Interval(Integral, left=0, right=None, closed="left")],
+        "metric": [StrOptions(set(FAST_METRICS + ["precomputed"])), callable],
+        "alpha": [Interval(Real, left=0, right=None, closed="neither")],
+        "algorithm": [
+            StrOptions(
+                {
+                    "auto",
+                    "brute",
+                    "kdtree",
+                    "balltree",
+                }
+            )
+        ],
+        "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
+        "memory": [str, None, Path],
+        "n_jobs": [Integral, None],
+        "cluster_selection_method": [StrOptions({"eom", "leaf"})],
+        "allow_single_cluster": ["boolean"],
+        "metric_params": [dict, None],
+    }
 
     def __init__(
         self,
@@ -474,7 +475,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             Returns self.
         """
         self._validate_params()
-        metric_params = self.metric_params or {}
+        self._metric_params = self.metric_params or {}
         if self.metric != "precomputed":
             # Non-precomputed matrices may contain non-finite values.
             X = self._validate_data(
@@ -509,7 +510,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             # from the given distance matrix.
             tmp = X.copy()
             tmp[np.isinf(tmp)] = 1
-            self._validate_data(tmp)
+            self._validate_data(tmp, dtype=np.float64)
 
         self.n_features_in_ = X.shape[1]
         self._min_samples = (
@@ -527,7 +528,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             metric=self.metric,
             leaf_size=self.leaf_size,
             n_jobs=self.n_jobs,
-            **metric_params,
+            **self._metric_params,
         )
         if "kdtree" in self.algorithm and self.metric not in KDTree.valid_metrics:
             raise ValueError(
@@ -621,18 +622,26 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self.fit(X)
         return self.labels_
 
-    def weighted_cluster_centroid(self, cluster_id):
+    def weighted_cluster_center(self, cluster_id, mode="centroid"):
         """
         Provide an approximate representative point for a given cluster.
-
-        Note that this technique assumes a euclidean metric for speed of
-        computation. For more general metrics use the `weighted_cluster_medoid`
-        method which is slower, but can work with more general metrics.
 
         Parameters
         ----------
         cluster_id : int
             The id of the cluster to compute a centroid for.
+
+        mode : str, default="centroid"
+            The mode to use when providing the cluster center. The options are:
+            - "centroid" which calculates the center by taking the weighted
+              average of their positions. Note that the algorithm assumes a
+              euclidean metric and does not guarantee that the output will be
+              an observed data point.
+            - "medoid" which calculates the center by taking the point in the
+              fitted data which minimizes the distance to all other points in
+              the cluster. This is slower than "centroid" since it requires
+              computing additional pairwise distances between points of the
+              same cluster but guarantees the output is an observed data point.
 
         Returns
         -------
@@ -652,42 +661,15 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         cluster_data = self._raw_data[mask]
         cluster_membership_strengths = self.probabilities_[mask]
 
-        return np.average(cluster_data, weights=cluster_membership_strengths, axis=0)
-
-    def weighted_cluster_medoid(self, cluster_id):
-        """
-        Provide an approximate representative point for a given cluster.
-
-        Note that this technique can be very slow and memory intensive for
-        large clusters. For faster results use the `weighted_cluster_centroid`
-        method which is faster, but assumes a euclidean metric.
-
-        Parameters
-        ----------
-        cluster_id : int
-            The id of the cluster to compute a medoid for.
-
-        Returns
-        -------
-        centroid : array of shape (n_features,)
-            A representative medoid for cluster `cluster_id`.
-        """
-        if not hasattr(self, "labels_"):
-            raise AttributeError("Model has not been fit to data")
-
-        if cluster_id == -1:
-            raise ValueError(
-                "Cannot calculate weighted centroid for -1 cluster "
-                "since it is a noise cluster"
+        if mode == "centroid":
+            return np.average(
+                cluster_data, weights=cluster_membership_strengths, axis=0
             )
 
-        mask = self.labels_ == cluster_id
-        cluster_data = self._raw_data[mask]
-        cluster_membership_strengths = self.probabilities_[mask]
-        metric_params = self.metric_params or {}
-
-        dist_mat = pairwise_distances(cluster_data, metric=self.metric, **metric_params)
-
+        # mode == "medoid"
+        dist_mat = pairwise_distances(
+            cluster_data, metric=self.metric, **self._metric_params
+        )
         dist_mat = dist_mat * cluster_membership_strengths
         medoid_index = np.argmin(dist_mat.sum(axis=1))
         return cluster_data[medoid_index]
@@ -732,4 +714,4 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         )
 
     def _more_tags(self):
-        return {"allow_nan": True}
+        return {"allow_nan": self.metric != "precomputed"}

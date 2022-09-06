@@ -244,19 +244,19 @@ def test_hdbscan_centroids_medoids():
     clusterer = HDBSCAN().fit(H)
 
     for idx, center in enumerate(centers):
-        centroid = clusterer.weighted_cluster_centroid(idx)
+        centroid = clusterer.weighted_cluster_center(idx, mode="centroid")
         assert_array_almost_equal(centroid, center, decimal=1)
 
-        medoid = clusterer.weighted_cluster_medoid(idx)
+        medoid = clusterer.weighted_cluster_center(idx, mode="medoid")
         assert_array_almost_equal(medoid, center, decimal=1)
 
 
 def test_hdbscan_no_centroid_medoid_for_noise():
     clusterer = HDBSCAN().fit(X)
     with pytest.raises(ValueError):
-        clusterer.weighted_cluster_centroid(-1)
+        clusterer.weighted_cluster_center(-1, mode="centroid")
     with pytest.raises(ValueError):
-        clusterer.weighted_cluster_medoid(-1)
+        clusterer.weighted_cluster_center(-1, mode="medoid")
 
 
 def test_hdbscan_allow_single_cluster_with_epsilon():
@@ -311,9 +311,9 @@ def test_hdbscan_unfit_centers_errors():
     hdb = HDBSCAN()
     msg = "Model has not been fit to data"
     with pytest.raises(AttributeError, match=msg):
-        hdb.weighted_cluster_centroid(0)
+        hdb.weighted_cluster_center(0, mode="centroid")
     with pytest.raises(AttributeError, match=msg):
-        hdb.weighted_cluster_medoid(0)
+        hdb.weighted_cluster_center(0, mode="medoid")
 
 
 def test_hdbscan_precomputed_array_like():
