@@ -508,6 +508,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
             # Perform data validation after removing infinite values (numpy.inf)
             # from the given distance matrix.
+            X = np.asarray(X)
             tmp = X.copy()
             tmp[np.isinf(tmp)] = 1
             self._validate_data(tmp, dtype=np.float64)

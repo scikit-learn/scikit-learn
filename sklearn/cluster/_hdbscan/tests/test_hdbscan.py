@@ -6,7 +6,6 @@ import numpy as np
 import pytest
 from scipy import sparse, stats
 from scipy.spatial import distance
-from scipy.stats import mode
 
 from sklearn.cluster import HDBSCAN
 from sklearn.datasets import make_blobs
@@ -41,21 +40,6 @@ def test_missing_data():
     clean_indices = list(range(1, 5)) + list(range(6, 200))
     clean_model = HDBSCAN().fit(X_missing_data[clean_indices])
     assert np.allclose(clean_model.labels_, model.labels_[clean_indices])
-
-
-def homogeneity(labels1, labels2):
-    num_missed = 0.0
-    for label in set(labels1):
-        matches = labels2[labels1 == label]
-        match_mode = mode(matches)[0][0]
-        num_missed += np.sum(matches != match_mode)
-
-    for label in set(labels2):
-        matches = labels1[labels2 == label]
-        match_mode = mode(matches)[0][0]
-        num_missed += np.sum(matches != match_mode)
-
-    return num_missed / 2.0
 
 
 def test_hdbscan_distance_matrix():
@@ -314,8 +298,8 @@ def test_hdbscan_unfit_centers_errors():
         hdb.weighted_cluster_center(0, mode="medoid")
 
 
-def test_hdbscan_precomputed_array_like():
-    X = np.array([[1, np.inf], [np.inf, 1]])
+@pytest.mark.parametrize("X", [np.array([[1, np.inf], [np.inf, 1]]), [[1, 2], [2, 1]]])
+def test_hdbscan_precomputed_array_like(X):
     HDBSCAN(metric="precomputed").fit(X)
 
 
