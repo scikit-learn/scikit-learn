@@ -2530,14 +2530,18 @@ def test_log_loss():
     loss = log_loss(y_true, y_score2, labels=[1, 2, 3])
     assert_almost_equal(loss, 1.0630345, decimal=6)
 
-    # ensure np.float32 and np.float16 inputs give correct output
+
+def test_log_loss_eps_auto():
+    """Check the behaviour of `eps="auto"` that changes depending on the input
+    array dtype.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/24315
+    """
     for dtype in [np.float16, np.float32]:
-        y_true = [1, 2, 2]
-        y_score2 = np.array(
-            [[0.2, 0.7, 0.3], [0.6, 0.5, 0.3], [0.3, 0.9, 0.1]], dtype=dtype
-        )
-        loss = log_loss(y_true, y_score2, labels=[1, 2, 3])
-        assert_almost_equal(loss, 1.0630345, decimal=3)
+        y_true = [[0, 1]]
+        y_score = np.array([1], dtype=dtype)
+        loss = log_loss(y_true, y_score, eps="auto")
+        assert_allclose(loss, 0.000977, atol=1e-3)
 
 
 def test_log_loss_pandas_input():
