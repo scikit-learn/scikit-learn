@@ -280,9 +280,9 @@ Changelog
   :pr:`22710` by :user:`Conroy Trinh <trinhcon>` and
   :pr:`23461` by :user:`Meekail Zain <micky774>`.
 
-- |Fix| :func:`metrics.logloss` takes "auto" as default eps value and it will be equal to
-  eps value of the `y_pred` if `y_pred` is numpy float else it will be 1e-15. This change was
-  made to be able to handle float16 and float32 numpy arrays
+- |Fix| automatically set `eps` in :func:`metrics.logloss` depending on the input
+  arrays. `eps` was previously too small by default when passing lower precision
+  floating point arrays.
   :pr:`24354` by :user:`Safiuddin Khaja <Safikh>`
 
 :mod:`sklearn.model_selection`
