@@ -610,16 +610,47 @@ def test_multiclass_ovr_roc_auc_toydata(y_true, labels):
         result_weighted,
     )
 
+
+@pytest.mark.parametrize(
+    "multi_class, average",
+    [
+        ("ovr", "macro"),
+        ("ovr", "micro"),
+        ("ovo", "macro"),
+    ],
+)
+def test_perfect_imperfect_chance_multiclass_roc_auc(multi_class, average):
+    y_true = np.array([3, 1, 2, 0])
+
     # Perfect classifier (from a ranking point of view) has roc_auc_score = 1.0
-    y_perfect = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [0.2, 0.05, 0.85]]
+    y_perfect = [
+        [0.0, 0.0, 0.0, 1.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.75, 0.05, 0.05, 0.15],
+    ]
     assert_almost_equal(
-        roc_auc_score(y_true, y_perfect, multi_class="ovr", labels=labels),
+        roc_auc_score(y_true, y_perfect, multi_class=multi_class, average=average),
         1.0,
     )
 
     # Imperfect classifier has roc_auc_score < 1.0
-    y_imperfect = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0], [1.0, 0.0, 0.0]]
-    assert roc_auc_score(y_true, y_imperfect, multi_class="ovr", labels=labels) < 1.0
+    y_imperfect = [
+        [0.0, 0.0, 0.0, 1.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ]
+    assert (
+        roc_auc_score(y_true, y_imperfect, multi_class=multi_class, average=average)
+        < 1.0
+    )
+
+    # Chance level classifier has roc_auc_score = 5.0
+    y_chance = 0.25 * np.ones((4, 4))
+    assert roc_auc_score(
+        y_true, y_chance, multi_class=multi_class, average=average
+    ) == pytest.approx(0.5)
 
 
 @pytest.mark.parametrize(
@@ -745,18 +776,6 @@ def test_roc_auc_score_multiclass_error(msg, kwargs):
     y_true = rng.randint(0, 3, size=20)
     with pytest.raises(ValueError, match=msg):
         roc_auc_score(y_true, y_prob, **kwargs)
-
-
-def test_ovr_roc_auc_chance_level():
-    # Build equal probability predictions to multiclass problem
-    y_true = np.array([3, 1, 2, 0])
-    y_pred = 0.25 * np.ones((4, 4))
-
-    macro_roc_auc = roc_auc_score(y_true, y_pred, multi_class="ovr", average="macro")
-    assert macro_roc_auc == pytest.approx(0.5)
-
-    micro_roc_auc = roc_auc_score(y_true, y_pred, multi_class="ovr", average="micro")
-    assert micro_roc_auc == pytest.approx(0.5)
 
 
 def test_auc_score_non_binary_class():
