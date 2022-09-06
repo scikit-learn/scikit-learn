@@ -118,12 +118,11 @@ plot(3 * X, hdb.labels_, hdb.probabilities_, ax=axes[2])
 # Traditional DBSCAN assumes that any potential clusters are homogenous in
 # density. HDBSCAN is free from such constraints. To demonstrate this we
 # consider the following dataset
-fig, axis = plt.subplots(1, 1, figsize=(12, 5))
 centers = [[-0.85, -0.85], [-0.85, 0.85], [3, 3], [3, -3]]
 X, labels_true = make_blobs(
     n_samples=750, centers=centers, cluster_std=[0.2, 0.35, 1.35, 1.35], random_state=0
 )
-plot(X, labels=labels_true, ground_truth=True, ax=axis)
+plot(X, labels=labels_true, ground_truth=True)
 
 # %%
 # This dataset is more difficult for DBSCAN due to the varying densities and
@@ -148,9 +147,8 @@ plot(X, dbs.labels_, parameters=params, ax=axes[1])
 # that DBSCAN is incapable of simultaneously separating the two dense clusters
 # while preventing the sparse clusters from fragmenting. Let's compare with
 # HDBSCAN.
-fig, axis = plt.subplots(1, 1, figsize=(12, 5))
 hdb = HDBSCAN().fit(X)
-plot(X, hdb.labels_, hdb.probabilities_, ax=axis)
+plot(X, hdb.labels_, hdb.probabilities_)
 
 # %%
 # HDBSCAN is able to pick up and preserve the multi-scale structure of the
