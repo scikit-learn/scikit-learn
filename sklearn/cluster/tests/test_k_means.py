@@ -226,22 +226,16 @@ def test_minibatch_update_consistency():
     weight_sums = np.zeros(centers_old.shape[0], dtype=X.dtype)
     weight_sums_csr = np.zeros(centers_old.shape[0], dtype=X.dtype)
 
-    x_squared_norms = (X**2).sum(axis=1)
-    x_squared_norms_csr = row_norms(X_csr, squared=True)
-
     sample_weight = np.ones(X.shape[0], dtype=X.dtype)
 
     # extract a small minibatch
     X_mb = X[:10]
     X_mb_csr = X_csr[:10]
-    x_mb_squared_norms = x_squared_norms[:10]
-    x_mb_squared_norms_csr = x_squared_norms_csr[:10]
     sample_weight_mb = sample_weight[:10]
 
     # step 1: compute the dense minibatch update
     old_inertia = _mini_batch_step(
         X_mb,
-        x_mb_squared_norms,
         sample_weight_mb,
         centers_old,
         centers_new,
@@ -252,16 +246,13 @@ def test_minibatch_update_consistency():
     assert old_inertia > 0.0
 
     # compute the new inertia on the same batch to check that it decreased
-    labels, new_inertia = _labels_inertia(
-        X_mb, sample_weight_mb, x_mb_squared_norms, centers_new
-    )
+    labels, new_inertia = _labels_inertia(X_mb, sample_weight_mb, centers_new)
     assert new_inertia > 0.0
     assert new_inertia < old_inertia
 
     # step 2: compute the sparse minibatch update
     old_inertia_csr = _mini_batch_step(
         X_mb_csr,
-        x_mb_squared_norms_csr,
         sample_weight_mb,
         centers_old_csr,
         centers_new_csr,
@@ -273,7 +264,7 @@ def test_minibatch_update_consistency():
 
     # compute the new inertia on the same batch to check that it decreased
     labels_csr, new_inertia_csr = _labels_inertia(
-        X_mb_csr, sample_weight_mb, x_mb_squared_norms_csr, centers_new_csr
+        X_mb_csr, sample_weight_mb, centers_new_csr
     )
     assert new_inertia_csr > 0.0
     assert new_inertia_csr < old_inertia_csr
@@ -441,20 +432,16 @@ def test_minibatch_reassign(data):
     for i in range(n_clusters):
         perfect_centers[i] = X[true_labels == i].mean(axis=0)
 
-    x_squared_norms = row_norms(data, squared=True)
     sample_weight = np.ones(n_samples)
     centers_new = np.empty_like(perfect_centers)
 
     # Give a perfect initialization, but a large reassignment_ratio, as a
     # result many centers should be reassigned and the model should no longer
     # be good
-    score_before = -_labels_inertia(
-        data, sample_weight, x_squared_norms, perfect_centers, 1
-    )[1]
+    score_before = -_labels_inertia(data, sample_weight, perfect_centers, 1)[1]
 
     _mini_batch_step(
         data,
-        x_squared_norms,
         sample_weight,
         perfect_centers,
         centers_new,
@@ -464,9 +451,7 @@ def test_minibatch_reassign(data):
         reassignment_ratio=1,
     )
 
-    score_after = -_labels_inertia(
-        data, sample_weight, x_squared_norms, centers_new, 1
-    )[1]
+    score_after = -_labels_inertia(data, sample_weight, centers_new, 1)[1]
 
     assert score_before > score_after
 
@@ -474,7 +459,6 @@ def test_minibatch_reassign(data):
     # no center should be reassigned.
     _mini_batch_step(
         data,
-        x_squared_norms,
         sample_weight,
         perfect_centers,
         centers_new,
