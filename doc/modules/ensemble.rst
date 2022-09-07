@@ -1176,7 +1176,7 @@ Interaction constraints
 
 A priori, the histogram gradient boosting trees are allowed to use any feature
 to split a node into child nodes. This creates so called interactions between
-features, i.e. usage of different features as split along a brang. Sometimes,
+features, i.e. usage of different features as split along a branch. Sometimes,
 one wants to restrict the possible interactions. This can be done by the
 parameter ``interaction_cst``, where one can specify the indices of features
 that are allowed to interact.
