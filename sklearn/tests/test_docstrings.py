@@ -20,7 +20,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics._plot.det_curve.plot_det_curve",
     "sklearn.metrics._plot.precision_recall_curve.plot_precision_recall_curve",
     "sklearn.metrics.pairwise.pairwise_distances_chunked",
-    "sklearn.svm._bounds.l1_min_c",
     "sklearn.tree._export.plot_tree",
     "sklearn.utils.axis0_safe_slice",
     "sklearn.utils.extmath.density",
