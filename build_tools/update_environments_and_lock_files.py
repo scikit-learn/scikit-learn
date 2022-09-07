@@ -205,10 +205,9 @@ conda_build_metadata_list = [
         + ["ccache"],
         "package_constraints": {
             "blas": "[build=openblas]",
-            # XXX: this can be removed when the vendored cloudpickle inside
-            # joblib includes the cloudpickle fix from
-            # https://github.com/cloudpipe/cloudpickle/pull/469
-            # 2022-09-06: the fix is not in any cloudpickle release yet
+            # XXX: this can be removed when cloudpickle issues with PyPy > 3.7
+            # issues are fixed.  For more details see
+            # https://github.com/cloudpipe/cloudpickle/pull/461
             "python": "3.7",
         },
     },
