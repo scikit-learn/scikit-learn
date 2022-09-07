@@ -294,7 +294,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         # Lower bound for right child and upper bound for left child are set to the same value
                         right_child_min = middle_value
                         left_child_max = middle_value
-                    elif splitter.monotonic_cst[split.feature] == -1:
+                    else:  # i.e. splitter.monotonic_cst[split.feature] == -1
                         # Split on a feature with decreasing monotonicity constraint
                         # Lower bound for right child is the current lower bound
                         right_child_min = lower_bound
@@ -487,7 +487,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                         # Lower bound for right child and upper bound for left child and are set to the same value
                         right_child_min = middle_value
                         left_child_max = middle_value
-                    elif splitter.monotonic_cst[node.feature] == -1:
+                    else:  # i.e. splitter.monotonic_cst[node.feature] == -1
                         # Split on a feature with decreasing monotonicity constraint
                         # Lower bound for right child is the current lower bound
                         right_child_min = record.lower_bound
@@ -1736,7 +1736,6 @@ cdef _cost_complexity_prune(unsigned char[:] leaves_in_subtree, # OUT
                     # ... and child_r[node_idx] != _TREE_LEAF:
                     node_indices_stack.push(child_l[node_idx])
                     node_indices_stack.push(child_r[node_idx])
-
             leaves_in_subtree[pruned_branch_node_idx] = 1
             in_subtree[pruned_branch_node_idx] = 1
 
