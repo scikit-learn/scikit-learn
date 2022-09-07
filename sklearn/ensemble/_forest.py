@@ -406,23 +406,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             n_samples_bootstrap = None
 
         self._validate_estimator()
-        # TODO(1.2): Remove "mse" and "mae"
         if isinstance(self, (RandomForestRegressor, ExtraTreesRegressor)):
-            if self.criterion == "mse":
-                warn(
-                    "Criterion 'mse' was deprecated in v1.0 and will be "
-                    "removed in version 1.2. Use `criterion='squared_error'` "
-                    "which is equivalent.",
-                    FutureWarning,
-                )
-            elif self.criterion == "mae":
-                warn(
-                    "Criterion 'mae' was deprecated in v1.0 and will be "
-                    "removed in version 1.2. Use `criterion='absolute_error'` "
-                    "which is equivalent.",
-                    FutureWarning,
-                )
-
             # TODO(1.3): Remove "auto"
             if self.max_features == "auto":
                 warn(
@@ -1496,14 +1480,6 @@ class RandomForestRegressor(ForestRegressor):
         .. versionadded:: 1.0
            Poisson criterion.
 
-        .. deprecated:: 1.0
-            Criterion "mse" was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion="squared_error"` which is equivalent.
-
-        .. deprecated:: 1.0
-            Criterion "mae" was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion="absolute_error"` which is equivalent.
-
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
         all leaves are pure or until all leaves contain less than
@@ -2179,14 +2155,6 @@ class ExtraTreesRegressor(ForestRegressor):
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
-
-        .. deprecated:: 1.0
-            Criterion "mse" was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion="squared_error"` which is equivalent.
-
-        .. deprecated:: 1.0
-            Criterion "mae" was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion="absolute_error"` which is equivalent.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
