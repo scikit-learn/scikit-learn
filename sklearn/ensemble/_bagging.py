@@ -23,7 +23,7 @@ from ..utils import indices_to_mask
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
-from ..utils._param_validation import Interval, HasMethods
+from ..utils._param_validation import Interval, HasMethods, StrOptions
 from ..utils.validation import has_fit_parameter, check_is_fitted, _check_sample_weight
 from ..utils.fixes import delayed
 
@@ -245,7 +245,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     """
 
     _parameter_constraints: dict = {
-        "estimator": [HasMethods(["fit", "predict"])],
+        "estimator": [HasMethods(["fit", "predict"]), None],
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "max_samples": [
             Interval(Integral, 1, None, closed="left"),
@@ -262,7 +262,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         "n_jobs": [None, Integral],
         "random_state": ["random_state"],
         "verbose": ["verbose"],
-        "base_estimator": [HasMethods(["fit", "predict"])],
+        "base_estimator": [HasMethods(["fit", "predict"]), StrOptions({"deprecated"})],
     }
 
     @abstractmethod
