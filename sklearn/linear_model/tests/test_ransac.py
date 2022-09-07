@@ -168,26 +168,6 @@ def test_ransac_predict():
     assert_array_equal(ransac_estimator.predict(X), np.zeros(100))
 
 
-def test_ransac_residuals_threshold_no_inliers():
-    # When residual_threshold=nan there are no inliers and a
-    # ValueError with a message should be raised
-    estimator = LinearRegression()
-    ransac_estimator = RANSACRegressor(
-        estimator,
-        min_samples=2,
-        residual_threshold=float("nan"),
-        random_state=0,
-        max_trials=5,
-    )
-
-    msg = "RANSAC could not find a valid consensus set"
-    with pytest.raises(ValueError, match=msg):
-        ransac_estimator.fit(X, y)
-    assert ransac_estimator.n_skips_no_inliers_ == 5
-    assert ransac_estimator.n_skips_invalid_data_ == 0
-    assert ransac_estimator.n_skips_invalid_model_ == 0
-
-
 def test_ransac_no_valid_data():
     def is_data_valid(X, y):
         return False
@@ -343,14 +323,8 @@ def test_ransac_min_n_samples():
         residual_threshold=5,
         random_state=0,
     )
-    ransac_estimator3 = RANSACRegressor(
-        estimator, min_samples=-1, residual_threshold=5, random_state=0
-    )
-    ransac_estimator4 = RANSACRegressor(
-        estimator, min_samples=5.2, residual_threshold=5, random_state=0
-    )
     ransac_estimator5 = RANSACRegressor(
-        estimator, min_samples=2.0, residual_threshold=5, random_state=0
+        estimator, min_samples=2, residual_threshold=5, random_state=0
     )
     ransac_estimator6 = RANSACRegressor(estimator, residual_threshold=5, random_state=0)
     ransac_estimator7 = RANSACRegressor(
@@ -375,12 +349,6 @@ def test_ransac_min_n_samples():
     assert_array_almost_equal(
         ransac_estimator1.predict(X), ransac_estimator6.predict(X)
     )
-
-    with pytest.raises(ValueError):
-        ransac_estimator3.fit(X, y)
-
-    with pytest.raises(ValueError):
-        ransac_estimator4.fit(X, y)
 
     with pytest.raises(ValueError):
         ransac_estimator7.fit(X, y)

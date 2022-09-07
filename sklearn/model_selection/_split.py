@@ -28,7 +28,6 @@ from ..utils import _approximate_mode
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
-from ..base import _pprint
 
 __all__ = [
     "BaseCrossValidator",
@@ -422,7 +421,7 @@ class KFold(_BaseKFold):
 
     See Also
     --------
-    StratifiedKFold : Takes group information into account to avoid building
+    StratifiedKFold : Takes class information into account to avoid building
         folds with imbalanced class distributions (for binary or multiclass
         classification tasks).
 
@@ -453,8 +452,8 @@ class KFold(_BaseKFold):
 class GroupKFold(_BaseKFold):
     """K-fold iterator variant with non-overlapping groups.
 
-    The same group will not appear in two different folds (the number of
-    distinct groups has to be at least equal to the number of folds).
+    Each group will appear exactly once in the test set across all folds (the
+    number of distinct groups has to be at least equal to the number of folds).
 
     The folds are approximately balanced in the sense that the number of
     distinct groups is approximately the same in each fold.
@@ -504,6 +503,10 @@ class GroupKFold(_BaseKFold):
     --------
     LeaveOneGroupOut : For splitting the data according to explicit
         domain-specific stratification of the dataset.
+
+    StratifiedKFold : Takes class information into account to avoid building
+        folds with imbalanced class proportions (for binary or multiclass
+        classification tasks).
     """
 
     def __init__(self, n_splits=5):
@@ -759,10 +762,11 @@ class StratifiedGroupKFold(_BaseKFold):
     return stratified folds with non-overlapping groups. The folds are made by
     preserving the percentage of samples for each class.
 
-    The same group will not appear in two different folds (the number of
-    distinct groups has to be at least equal to the number of folds).
+    Each group will appear exactly once in the test set across all folds (the
+    number of distinct groups has to be at least equal to the number of folds).
 
-    The difference between GroupKFold and StratifiedGroupKFold is that
+    The difference between :class:`~sklearn.model_selection.GroupKFold`
+    and :class:`~sklearn.model_selection.StratifiedGroupKFold` is that
     the former attempts to create balanced folds such that the number of
     distinct groups is approximately the same in each fold, whereas
     StratifiedGroupKFold attempts to create folds which preserve the
@@ -1105,9 +1109,10 @@ class TimeSeriesSplit(_BaseKFold):
 class LeaveOneGroupOut(BaseCrossValidator):
     """Leave One Group Out cross-validator
 
-    Provides train/test indices to split data according to a third-party
-    provided group. This group information can be used to encode arbitrary
-    domain specific stratifications of the samples as integers.
+    Provides train/test indices to split data such that each training set is
+    comprised of all samples except ones belonging to one specific group.
+    Arbitrary domain specific group information is provided an array integers
+    that encodes the group of each sample.
 
     For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
@@ -1117,7 +1122,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
     Notes
     -----
     Splits are ordered according to the index of the group left out. The first
-    split has training set consting of the group whose index in `groups` is
+    split has testing set consisting of the group whose index in `groups` is
     lowest, and so on.
 
     Examples
@@ -1147,6 +1152,10 @@ class LeaveOneGroupOut(BaseCrossValidator):
     [[1 2]
      [3 4]] [[5 6]
      [7 8]] [1 2] [1 2]
+
+    See also
+    --------
+    GroupKFold: K-fold iterator variant with non-overlapping groups.
     """
 
     def _iter_test_masks(self, X, y, groups):
@@ -1799,6 +1808,12 @@ class GroupShuffleSplit(ShuffleSplit):
     ...     print("TRAIN:", train_idx, "TEST:", test_idx)
     TRAIN: [2 3 4 5 6 7] TEST: [0 1]
     TRAIN: [0 1 5 6 7] TEST: [2 3 4]
+
+    See Also
+    --------
+    ShuffleSplit : Shuffles samples to create independent test/train sets.
+
+    LeavePGroupsOut : Train set leaves out all possible subsets of `p` groups.
     """
 
     def __init__(
@@ -2464,6 +2479,56 @@ def train_test_split(
 # (Needed for external libraries that may use nose.)
 # Use setattr to avoid mypy errors when monkeypatching.
 setattr(train_test_split, "__test__", False)
+
+
+def _pprint(params, offset=0, printer=repr):
+    """Pretty print the dictionary 'params'
+
+    Parameters
+    ----------
+    params : dict
+        The dictionary to pretty print
+
+    offset : int, default=0
+        The offset in characters to add at the begin of each line.
+
+    printer : callable, default=repr
+        The function to convert entries to strings, typically
+        the builtin str or repr
+
+    """
+    # Do a multi-line justified repr:
+    options = np.get_printoptions()
+    np.set_printoptions(precision=5, threshold=64, edgeitems=2)
+    params_list = list()
+    this_line_length = offset
+    line_sep = ",\n" + (1 + offset // 2) * " "
+    for i, (k, v) in enumerate(sorted(params.items())):
+        if type(v) is float:
+            # use str for representing floating point numbers
+            # this way we get consistent representation across
+            # architectures and versions.
+            this_repr = "%s=%s" % (k, str(v))
+        else:
+            # use repr of the rest
+            this_repr = "%s=%s" % (k, printer(v))
+        if len(this_repr) > 500:
+            this_repr = this_repr[:300] + "..." + this_repr[-100:]
+        if i > 0:
+            if this_line_length + len(this_repr) >= 75 or "\n" in this_repr:
+                params_list.append(line_sep)
+                this_line_length = len(line_sep)
+            else:
+                params_list.append(", ")
+                this_line_length += 2
+        params_list.append(this_repr)
+        this_line_length += len(this_repr)
+
+    np.set_printoptions(**options)
+    lines = "".join(params_list)
+    # Strip trailing space to avoid nightmare in doctests
+    lines = "\n".join(l.rstrip(" ") for l in lines.split("\n"))
+    return lines
 
 
 def _build_repr(self):

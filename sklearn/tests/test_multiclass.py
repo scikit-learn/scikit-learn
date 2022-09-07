@@ -41,6 +41,9 @@ from sklearn.exceptions import NotFittedError
 from sklearn import datasets
 from sklearn.datasets import load_breast_cancer
 
+msg = "The default value for `force_alpha` will change"
+pytestmark = pytest.mark.filterwarnings(f"ignore:{msg}:FutureWarning")
+
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
 perm = rng.permutation(iris.target.size)
@@ -717,11 +720,6 @@ def test_ecoc_float_y():
 
     ovo = OutputCodeClassifier(LinearSVC())
     msg = "Unknown label type"
-    with pytest.raises(ValueError, match=msg):
-        ovo.fit(X, y)
-
-    ovo = OutputCodeClassifier(LinearSVC(), code_size=-1)
-    msg = "code_size should be greater than 0, got -1"
     with pytest.raises(ValueError, match=msg):
         ovo.fit(X, y)
 

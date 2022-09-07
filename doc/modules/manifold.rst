@@ -462,14 +462,28 @@ Nonmetric MDS
 -------------
 
 Non metric :class:`MDS` focuses on the ordination of the data. If
-:math:`S_{ij} < S_{jk}`, then the embedding should enforce :math:`d_{ij} <
-d_{jk}`. A simple algorithm to enforce that is to use a monotonic regression
-of :math:`d_{ij}` on :math:`S_{ij}`, yielding disparities :math:`\hat{d}_{ij}`
-in the same order as :math:`S_{ij}`.
+:math:`S_{ij} > S_{jk}`, then the embedding should enforce :math:`d_{ij} <
+d_{jk}`. For this reason, we discuss it in terms of dissimilarities
+(:math:`\delta_{ij}`) instead of similarities (:math:`S_{ij}`). Note that
+dissimilarities can easily be obtained from similarities through a simple
+transform, e.g. :math:`\delta_{ij}=c_1-c_2 S_{ij}` for some real constants
+:math:`c_1, c_2`. A simple algorithm to enforce proper ordination is to use a
+monotonic regression of :math:`d_{ij}` on :math:`\delta_{ij}`, yielding
+disparities :math:`\hat{d}_{ij}` in the same order as :math:`\delta_{ij}`.
 
 A trivial solution to this problem is to set all the points on the origin. In
-order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized.
+order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized. Note
+that since we only care about relative ordering, our objective should be
+invariant to simple translation and scaling, however the stress used in metric
+MDS is sensitive to scaling. To address this, non-metric MDS may use a
+normalized stress, known as Stress-1 defined as
 
+.. math::
+    \sqrt{\frac{\sum_{i < j} (d_{ij} - \hat{d}_{ij})^2}{\sum_{i < j} d_{ij}^2}}.
+
+The use of normalized Stress-1 can be enabled by setting `normalized_stress=True`,
+however it is only compatible with the non-metric MDS problem and will be ignored
+in the metric case.
 
 .. figure:: ../auto_examples/manifold/images/sphx_glr_plot_mds_001.png
    :target: ../auto_examples/manifold/plot_mds.html
@@ -484,11 +498,11 @@ order to avoid that, the disparities :math:`\hat{d}_{ij}` are normalized.
     Borg, I.; Groenen P. Springer Series in Statistics (1997)
 
   * `"Nonmetric multidimensional scaling: a numerical method"
-    <https://link.springer.com/article/10.1007%2FBF02289694>`_
+    <http://cda.psych.uiuc.edu/psychometrika_highly_cited_articles/kruskal_1964b.pdf>`_
     Kruskal, J. Psychometrika, 29 (1964)
 
   * `"Multidimensional scaling by optimizing goodness of fit to a nonmetric hypothesis"
-    <https://link.springer.com/article/10.1007%2FBF02289565>`_
+    <http://cda.psych.uiuc.edu/psychometrika_highly_cited_articles/kruskal_1964a.pdf>`_
     Kruskal, J. Psychometrika, 29, (1964)
 
 .. _t_sne:

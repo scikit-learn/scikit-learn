@@ -197,7 +197,7 @@ The decision rule for Bernoulli naive Bayes is based on
 
 .. math::
 
-    P(x_i \mid y) = P(i \mid y) x_i + (1 - P(i \mid y)) (1 - x_i)
+    P(x_i \mid y) = P(x_i = 1 \mid y) x_i + (1 - P(x_i = 1 \mid y)) (1 - x_i)
 
 which differs from multinomial NB's rule
 in that it explicitly penalizes the non-occurrence of a feature :math:`i`
@@ -229,10 +229,10 @@ It is advisable to evaluate both models, if time permits.
 Categorical Naive Bayes
 -----------------------
 
-:class:`CategoricalNB` implements the categorical naive Bayes 
-algorithm for categorically distributed data. It assumes that each feature, 
-which is described by the index :math:`i`, has its own categorical 
-distribution. 
+:class:`CategoricalNB` implements the categorical naive Bayes
+algorithm for categorically distributed data. It assumes that each feature,
+which is described by the index :math:`i`, has its own categorical
+distribution.
 
 For each feature :math:`i` in the training set :math:`X`,
 :class:`CategoricalNB` estimates a categorical distribution for each feature i

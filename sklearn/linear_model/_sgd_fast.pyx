@@ -7,10 +7,9 @@
 
 
 import numpy as np
-import sys
 from time import time
 
-from libc.math cimport exp, log, sqrt, pow, fabs
+from libc.math cimport exp, log, pow, fabs
 cimport numpy as cnp
 from numpy.math cimport INFINITY
 cdef extern from "_sgd_fast_helpers.h":

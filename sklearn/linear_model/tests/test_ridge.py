@@ -125,7 +125,7 @@ def ols_ridge_dataset(global_random_seed, request):
     )
     X[:, -1] = 1  # last columns acts as intercept
     U, s, Vt = linalg.svd(X)
-    assert np.all(s) > 1e-3  # to be sure
+    assert np.all(s > 1e-3)  # to be sure
     U1, U2 = U[:, :k], U[:, k:]
     Vt1, _ = Vt[:k, :], Vt[k:, :]
 
@@ -610,7 +610,8 @@ def test_ridge_individual_penalties():
 
     # Test error is raised when number of targets and penalties do not match.
     ridge = Ridge(alpha=penalties[:-1])
-    with pytest.raises(ValueError):
+    err_msg = "Number of targets and number of penalties do not correspond: 4 != 5"
+    with pytest.raises(ValueError, match=err_msg):
         ridge.fit(X, y)
 
 
@@ -919,16 +920,6 @@ def test_ridge_gcv_sample_weights(
     assert_allclose(gcv_errors, kfold_errors, rtol=1e-3)
     assert_allclose(gcv_ridge.coef_, kfold.coef_, rtol=1e-3)
     assert_allclose(gcv_ridge.intercept_, kfold.intercept_, rtol=1e-3)
-
-
-@pytest.mark.parametrize("mode", [True, 1, 5, "bad", "gcv"])
-def test_check_gcv_mode_error(mode):
-    X, y = make_regression(n_samples=5, n_features=2)
-    gcv = RidgeCV(gcv_mode=mode)
-    with pytest.raises(ValueError, match="Unknown value for 'gcv_mode'"):
-        gcv.fit(X, y)
-    with pytest.raises(ValueError, match="Unknown value for 'gcv_mode'"):
-        _check_gcv_mode(X, mode)
 
 
 @pytest.mark.parametrize("sparse", [True, False])
