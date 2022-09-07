@@ -167,11 +167,11 @@ def test_estimator():
     assert np.count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs
 
     coef_normalized = omp.coef_[0].copy()
-    omp.set_params(fit_intercept=True, normalize=False)
+    omp.set_params(fit_intercept=True)
     omp.fit(X, y[:, 0])
     assert_array_almost_equal(coef_normalized, omp.coef_)
 
-    omp.set_params(fit_intercept=False, normalize=False)
+    omp.set_params(fit_intercept=False)
     omp.fit(X, y[:, 0])
     assert np.count_nonzero(omp.coef_) <= n_nonzero_coefs
     assert omp.coef_.shape == (n_features,)
