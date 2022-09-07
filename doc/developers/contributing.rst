@@ -675,8 +675,8 @@ We are glad to accept any sort of documentation:
   describe what the object does and details any parameters, attributes and
   methods. Docstrings live alongside the code in
   `sklearn/ <https://github.com/scikit-learn/scikit-learn/tree/main/sklearn>`_
-* user guide - these provide more information about the algorithms in
-  scikit-learn and generally live in the root
+* user guide - these provide more detailed information about the algorithms
+  implemented in scikit-learn and generally live in the root
   `doc/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc>`_ directory
   and
   `doc/modules/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc/modules>`_
