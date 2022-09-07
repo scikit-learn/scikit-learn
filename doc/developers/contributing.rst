@@ -671,9 +671,9 @@ Documentation
 
 We are glad to accept any sort of documentation:
 
-* function/method/class docstrings - these describe what the object does and
-  details any parameters, attributes and methods. Docstrings live alongside the
-  code in
+* function/method/class docstrings (also known as "API documentation") - these
+  describe what the object does and details any parameters, attributes and
+  methods. Docstrings live alongside the code in
   `sklearn/ <https://github.com/scikit-learn/scikit-learn/tree/main/sklearn>`_
 * user guide - these provide more information about the algorithms provided in
   scikit-learn and generally live in the root
@@ -693,7 +693,8 @@ We are glad to accept any sort of documentation:
 
 You can edit the documentation using any text editor, and then generate the
 HTML output by following :ref:`building_documentation`. The resulting HTML files
-will be placed in ``_build/html/stable`` and are viewable in a web browser.
+will be placed in ``_build/html/stable`` and are viewable in a web browser, for
+instance by opening the local ``_build/html/stable/index.html`` file.
 
 .. _building_documentation:
 
@@ -728,7 +729,8 @@ without the example gallery:
     make
 
 The documentation will be generated in the ``_build/html/stable`` directory
-and are viewable in a web browser.
+and are viewable in a web browser, for instance by opening the local
+``_build/html/stable/index.html`` file.
 To also generate the example gallery you can use:
 
 .. prompt:: bash $
