@@ -716,17 +716,6 @@ def test_warm_start_clear(Cls):
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
-def test_warm_start_zero_n_estimators(Cls):
-    # Test if warm start with zero n_estimators raises error
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    est = Cls(n_estimators=100, max_depth=1, warm_start=True)
-    est.fit(X, y)
-    est.set_params(n_estimators=0)
-    with pytest.raises(ValueError):
-        est.fit(X, y)
-
-
-@pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
 def test_warm_start_smaller_n_estimators(Cls):
     # Test if warm start with smaller n_estimators raises error
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
@@ -1289,22 +1278,6 @@ def test_n_features_deprecation(Estimator):
 
     with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
         est.n_features_
-
-
-# TODO: Remove in v1.2
-@pytest.mark.parametrize("Estimator", GRADIENT_BOOSTING_ESTIMATORS)
-def test_criterion_mse_deprecated(Estimator):
-    est1 = Estimator(criterion="mse", random_state=0)
-
-    with pytest.warns(FutureWarning, match="Criterion 'mse' was deprecated"):
-        est1.fit(X, y)
-
-    est2 = Estimator(criterion="squared_error", random_state=0)
-    est2.fit(X, y)
-    if hasattr(est1, "predict_proba"):
-        assert_allclose(est1.predict_proba(X), est2.predict_proba(X))
-    else:
-        assert_allclose(est1.predict(X), est2.predict(X))
 
 
 @pytest.mark.parametrize(

@@ -139,9 +139,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         **DecisionTreeRegressor._parameter_constraints,
         "learning_rate": [Interval(Real, 0.0, None, closed="left")],
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
-        "criterion": [
-            StrOptions({"friedman_mse", "squared_error", "mse"}, deprecated={"mse"})
-        ],
+        "criterion": [StrOptions({"friedman_mse", "squared_error"})],
         "subsample": [Interval(Real, 0.0, 1.0, closed="right")],
         "verbose": ["verbose"],
         "warm_start": ["boolean"],
@@ -435,15 +433,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        if self.criterion == "mse":
-            # TODO(1.2): Remove. By then it should raise an error.
-            warnings.warn(
-                "Criterion 'mse' was deprecated in v1.0 and will be "
-                "removed in version 1.2. Use `criterion='squared_error'` "
-                "which is equivalent.",
-                FutureWarning,
-            )
-
         self._validate_params()
 
         if not self.warm_start:
@@ -928,8 +917,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         and an increase in bias.
         Values must be in the range `(0.0, 1.0]`.
 
-    criterion : {'friedman_mse', 'squared_error', 'mse'}, \
-            default='friedman_mse'
+    criterion : {'friedman_mse', 'squared_error'}, default='friedman_mse'
         The function to measure the quality of a split. Supported criteria are
         'friedman_mse' for the mean squared error with improvement score by
         Friedman, 'squared_error' for mean squared error. The default value of
@@ -937,10 +925,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         approximation in some cases.
 
         .. versionadded:: 0.18
-
-        .. deprecated:: 1.0
-            Criterion 'mse' was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion='squared_error'` which is equivalent.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
@@ -1511,8 +1495,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         and an increase in bias.
         Values must be in the range `(0.0, 1.0]`.
 
-    criterion : {'friedman_mse', 'squared_error', 'mse'}, \
-            default='friedman_mse'
+    criterion : {'friedman_mse', 'squared_error'}, default='friedman_mse'
         The function to measure the quality of a split. Supported criteria are
         "friedman_mse" for the mean squared error with improvement score by
         Friedman, "squared_error" for mean squared error. The default value of
@@ -1520,10 +1503,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         approximation in some cases.
 
         .. versionadded:: 0.18
-
-        .. deprecated:: 1.0
-            Criterion 'mse' was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion='squared_error'` which is equivalent.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
