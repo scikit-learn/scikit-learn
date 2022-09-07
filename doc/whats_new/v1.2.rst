@@ -202,6 +202,12 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Feature| Added interaction constraints for
+  :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+  :class:`~sklearn.ensemble.HistGradientBoostingRegressor` via the new
+  argument `interaction_cst`.
+  :pr:`21020` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
 
