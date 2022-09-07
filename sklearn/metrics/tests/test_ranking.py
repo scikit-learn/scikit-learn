@@ -3,6 +3,7 @@ import pytest
 import numpy as np
 import warnings
 from scipy.sparse import csr_matrix
+from scipy import stats
 
 from sklearn import datasets
 from sklearn import svm
@@ -35,6 +36,7 @@ from sklearn.metrics import top_k_accuracy_score
 from sklearn.exceptions import UndefinedMetricWarning
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
+from sklearn.preprocessing import label_binarize
 
 
 ###############################################################################
@@ -651,6 +653,24 @@ def test_perfect_imperfect_chance_multiclass_roc_auc(multi_class, average):
     assert roc_auc_score(
         y_true, y_chance, multi_class=multi_class, average=average
     ) == pytest.approx(0.5)
+
+
+def test_micro_averaged_ovr_roc_auc():
+    y_pred = stats.dirichlet.rvs([2.0, 1.0, 0.5], size=1000, random_state=0)
+    y_true = np.asarray(
+        [
+            stats.multinomial.rvs(n=1, p=y_pred_i, random_state=0).argmax()
+            for y_pred_i in y_pred
+        ]
+    )
+    y_onehot = label_binarize(y_true, classes=[0, 1, 2])
+    fpr, tpr, _ = roc_curve(y_onehot.ravel(), y_pred.ravel())
+    roc_auc_by_hand = auc(fpr, tpr)
+    roc_auc_auto = roc_auc_score(y_true, y_pred, multi_class="ovr", average="micro")
+    assert_almost_equal(
+        roc_auc_by_hand,
+        roc_auc_auto,
+    )
 
 
 @pytest.mark.parametrize(
