@@ -40,6 +40,7 @@ from ..utils._param_validation import Hidden
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..metrics import check_scoring
+from ..metrics import get_scorer_names
 from ..exceptions import ConvergenceWarning
 from ..utils.sparsefuncs import mean_variance_axis
 
@@ -1447,13 +1448,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
 
 def _check_gcv_mode(X, gcv_mode):
-    possible_gcv_modes = [None, "auto", "svd", "eigen"]
-    if gcv_mode not in possible_gcv_modes:
-        raise ValueError(
-            "Unknown value for 'gcv_mode'. Got {} instead of one of {}".format(
-                gcv_mode, possible_gcv_modes
-            )
-        )
     if gcv_mode in ["eigen", "svd"]:
         return gcv_mode
     # if X has more rows than columns, use decomposition of X^T.X,
@@ -2106,6 +2100,18 @@ class _RidgeGCV(LinearModel):
 
 
 class _BaseRidgeCV(LinearModel):
+
+    _parameter_constraints: dict = {
+        "alphas": ["array-like", Interval(Real, 0, None, closed="neither")],
+        "fit_intercept": ["boolean"],
+        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
+        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "cv": ["cv_object"],
+        "gcv_mode": [StrOptions({"auto", "svd", "eigen"}), None],
+        "store_cv_values": ["boolean"],
+        "alpha_per_target": ["boolean"],
+    }
+
     def __init__(
         self,
         alphas=(0.1, 1.0, 10.0),
@@ -2172,10 +2178,6 @@ class _BaseRidgeCV(LinearModel):
                     alpha = check_scalar_alpha(alpha, f"alphas[{index}]")
             else:
                 self.alphas[0] = check_scalar_alpha(self.alphas[0], "alphas")
-        else:
-            # check for single non-iterable item
-            self.alphas = check_scalar_alpha(self.alphas, "alphas")
-
         alphas = np.asarray(self.alphas)
 
         if cv is None:
@@ -2238,7 +2240,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     Parameters
     ----------
-    alphas : ndarray of shape (n_alphas,), default=(0.1, 1.0, 10.0)
+    alphas : array-like of shape (n_alphas,), default=(0.1, 1.0, 10.0)
         Array of alpha values to try.
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
@@ -2370,6 +2372,40 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     0.5166...
     """
 
+    def fit(self, X, y, sample_weight=None):
+        """Fit Ridge regression model with cv.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Training data. If using GCV, will be cast to float64
+            if necessary.
+
+        y : ndarray of shape (n_samples,) or (n_samples, n_targets)
+            Target values. Will be cast to X's dtype if necessary.
+
+        sample_weight : float or ndarray of shape (n_samples,), default=None
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+
+        Notes
+        -----
+        When sample_weight is provided, the selected hyperparameter may depend
+        on whether we use leave-one-out cross-validation (cv=None or cv='auto')
+        or another form of cross-validation, because only leave-one-out
+        cross-validation takes the sample weights into account when computing
+        the validation score.
+        """
+        self._validate_params()
+
+        super().fit(X, y, sample_weight=sample_weight)
+        return self
+
 
 class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
     """Ridge classifier with built-in cross-validation.
@@ -2383,7 +2419,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
 
     Parameters
     ----------
-    alphas : ndarray of shape (n_alphas,), default=(0.1, 1.0, 10.0)
+    alphas : array-like of shape (n_alphas,), default=(0.1, 1.0, 10.0)
         Array of alpha values to try.
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
@@ -2501,6 +2537,13 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
     0.9630...
     """
 
+    _parameter_constraints: dict = {
+        **_BaseRidgeCV._parameter_constraints,
+        "class_weight": [dict, StrOptions({"balanced"}), None],
+    }
+    for param in ("gcv_mode", "alpha_per_target"):
+        _parameter_constraints.pop(param)
+
     def __init__(
         self,
         alphas=(0.1, 1.0, 10.0),
@@ -2544,6 +2587,8 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
+
         # `RidgeClassifier` does not accept "sag" or "saga" solver and thus support
         # csr, csc, and coo sparse matrices. By using solver="eigen" we force to accept
         # all sparse format.

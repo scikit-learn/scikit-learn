@@ -69,13 +69,10 @@ CRITERIA_CLF = {
     "log_loss": _criterion.Entropy,
     "entropy": _criterion.Entropy,
 }
-# TODO(1.2): Remove "mse" and "mae".
 CRITERIA_REG = {
     "squared_error": _criterion.MSE,
-    "mse": _criterion.MSE,
     "friedman_mse": _criterion.FriedmanMSE,
     "absolute_error": _criterion.MAE,
-    "mae": _criterion.MAE,
     "poisson": _criterion.Poisson,
 }
 
@@ -332,21 +329,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
             else:
                 criterion = CRITERIA_REG[self.criterion](self.n_outputs_, n_samples)
-            # TODO(1.2): Remove "mse" and "mae"
-            if self.criterion == "mse":
-                warnings.warn(
-                    "Criterion 'mse' was deprecated in v1.0 and will be "
-                    "removed in version 1.2. Use `criterion='squared_error'` "
-                    "which is equivalent.",
-                    FutureWarning,
-                )
-            elif self.criterion == "mae":
-                warnings.warn(
-                    "Criterion 'mae' was deprecated in v1.0 and will be "
-                    "removed in version 1.2. Use `criterion='absolute_error'` "
-                    "which is equivalent.",
-                    FutureWarning,
-                )
         else:
             # Make a deepcopy in case the criterion has mutable attributes that
             # might be shared and modified concurrently during parallel fitting
@@ -1032,14 +1014,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         .. versionadded:: 0.24
             Poisson deviance criterion.
 
-        .. deprecated:: 1.0
-            Criterion "mse" was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion="squared_error"` which is equivalent.
-
-        .. deprecated:: 1.0
-            Criterion "mae" was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion="absolute_error"` which is equivalent.
-
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
         strategies are "best" to choose the best split and "random" to choose
@@ -1230,17 +1204,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
         "criterion": [
-            StrOptions(
-                {
-                    "squared_error",
-                    "friedman_mse",
-                    "absolute_error",
-                    "poisson",
-                    "mse",
-                    "mae",
-                },
-                deprecated={"mse", "mae"},
-            ),
+            StrOptions({"squared_error", "friedman_mse", "absolute_error", "poisson"}),
             Hidden(Criterion),
         ],
     }
@@ -1628,25 +1592,22 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Parameters
     ----------
-    criterion : {"squared_error", "friedman_mse"}, default="squared_error"
+    criterion : {"squared_error", "friedman_mse", "absolute_error", "poisson"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
-        variance reduction as feature selection criterion and "mae" for the
-        mean absolute error.
+        variance reduction as feature selection criterion and minimizes the L2
+        loss using the mean of each terminal node, "friedman_mse", which uses
+        mean squared error with Friedman's improvement score for potential
+        splits, "absolute_error" for the mean absolute error, which minimizes
+        the L1 loss using the median of each terminal node, and "poisson" which
+        uses reduction in Poisson deviance to find splits.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
         .. versionadded:: 0.24
             Poisson deviance criterion.
-
-        .. deprecated:: 1.0
-            Criterion "mse" was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion="squared_error"` which is equivalent.
-
-        .. deprecated:: 1.0
-            Criterion "mae" was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion="absolute_error"` which is equivalent.
 
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
