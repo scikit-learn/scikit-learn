@@ -312,16 +312,22 @@ class NotInvariantSampleOrder(BaseEstimator):
 
 
 class OneClassSampleErrorClassifier(BaseBadClassifier):
+    def __init__(self, raise_when_single_class=False):
+        self.raise_when_single_class = raise_when_single_class
+
     def fit(self, X, y, sample_weight=None):
         # Convert data
         X, y = check_X_y(
             X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
         )
 
+        self.has_single_class_ = False
         cls, y = np.unique(y, return_inverse=True)
         nb_cls = cls.shape[0]
         if nb_cls < 2:
-            raise ValueError("normal class error")
+            if self.raise_when_single_class:
+                self.has_single_class_ = True
+                raise ValueError("normal class error")
 
         # find the number of class after trimming
         if sample_weight is not None:
@@ -329,45 +335,15 @@ class OneClassSampleErrorClassifier(BaseBadClassifier):
             if isinstance(sample_weight, np.ndarray) and len(sample_weight) > 0:
                 nb_cls = np.count_nonzero(np.bincount(y, sample_weight))
             if nb_cls < 2:
+                self.has_single_class_ = True
                 raise ValueError("Nonsensical Error")
 
         return self
 
     def predict(self, X):
-        X = check_array(X)
-        return np.ones(X.shape[0])
-
-
-class OneClassSampleErrorClassifierPredict(BaseBadClassifier):
-    def __init__(self, flag=False):
-        self.flag = flag
-
-    def fit(self, X, y, sample_weight=None):
-        # Convert data
-        X, y = check_X_y(
-            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
-        )
-
-        cls, y = np.unique(y, return_inverse=True)
-        nb_cls = cls.shape[0]
-        if nb_cls < 2:
-            raise ValueError("normal class error")
-
-        # find the number of class after trimming
-        if sample_weight is not None:
-            nb_cls = cls.shape[0]
-            if isinstance(sample_weight, np.ndarray) and len(sample_weight) > 0:
-                nb_cls = np.count_nonzero(np.bincount(y, sample_weight))
-            if nb_cls < 2:
-                self.flag = True
-
-        self.flag_ = self.flag
-        return self
-
-    def predict(self, X):
         check_is_fitted(self)
         X = check_array(X)
-        if self.flag:
+        if self.has_single_class_:
             return np.zeros(X.shape[0])
         return np.ones(X.shape[0])
 
@@ -617,12 +593,6 @@ def test_check_estimator():
     )
     with raises(AssertionError, match=msg):
         check_estimator(OneClassSampleErrorClassifier())
-
-    # check for predictions for classifiers reducing to
-    # less than two classes via sample weights
-    name = OneClassSampleErrorClassifierPredict.__name__
-    with raises(AssertionError):
-        check_estimator(OneClassSampleErrorClassifierPredict())
 
     # Large indices test on bad estimator
     msg = (

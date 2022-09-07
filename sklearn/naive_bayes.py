@@ -327,7 +327,7 @@ class GaussianNB(_BaseNB):
         if sample_weight is not None:
             n_new = float(sample_weight.sum())
             if n_new == 0:
-                return 0, 0
+                return mu, var
             new_mu = np.average(X, axis=0, weights=sample_weight)
             new_var = np.average((X - new_mu) ** 2, axis=0, weights=sample_weight)
         else:
