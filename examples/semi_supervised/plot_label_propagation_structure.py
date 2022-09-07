@@ -62,7 +62,7 @@ plt.scatter(
     label="unlabeled",
 )
 plt.legend(scatterpoints=1, shadow=False, loc="center")
-plt.title("Raw data (2 classes=outer and inner)")
+_ = plt.title("Raw data (2 classes=outer and inner)")
 
 # %%
 #
