@@ -706,6 +706,8 @@ class TSNE(BaseEstimator):
 
     learning_rate_ : float
         Effective learning rate.
+        
+        .. versionadded:: 1.2
 
     n_iter_ : int
         Number of iterations run.
