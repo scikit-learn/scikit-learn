@@ -677,9 +677,6 @@ def test_stacking_classifier_multilabel_predict_proba(estimator):
     )
     n_outputs = 3
 
-    # MLPClassifier will return a 2D array where each column is the probability
-    # of the positive class for each output. We stack this array directly without
-    # any further processing.
     estimators = [("est", estimator)]
     stacker = StackingClassifier(
         estimators=estimators,
@@ -693,7 +690,7 @@ def test_stacking_classifier_multilabel_predict_proba(estimator):
     assert not any(np.isclose(X_trans.sum(axis=1), 1.0))
 
     y_pred = stacker.predict(X_test)
-    assert y_pred.shape == y_pred.shape
+    assert y_pred.shape == y_test.shape
 
 
 def test_stacking_classifier_multilabel_decision_function():
@@ -716,9 +713,8 @@ def test_stacking_classifier_multilabel_decision_function():
     X_trans = stacker.transform(X_test)
     assert X_trans.shape == (X_test.shape[0], n_outputs)
 
-    # check the shape consistency of the prediction
     y_pred = stacker.predict(X_test)
-    assert y_pred.shape == y_pred.shape
+    assert y_pred.shape == y_test.shape
 
 
 @pytest.mark.parametrize("stack_method", ["auto", "predict"])

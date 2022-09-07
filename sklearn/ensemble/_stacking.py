@@ -102,9 +102,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         it will drop one of the probability column when using probabilities
         in the binary case. Indeed, the p(y|c=0) = 1 - p(y|c=1)
 
-        When `y` type is `"multilabel-indicator"` or `"multiclass-multioutput"`
-        and the method used is `predict_proba`, `preds` can be either a ndarray
-        of shape (n_samples, n_class) or for some estimators a list of ndarray.
+        When `y` type is `"multilabel-indicator"`` and the method used is
+        `predict_proba`, `preds` can be either a `ndarray` of shape
+        `(n_samples, n_class)` or for some estimators a list of `ndarray`.
         This function will drop one of the probability column in this situation as well.
         """
         X_meta = []
@@ -608,7 +608,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             Returns a fitted instance of estimator.
         """
         check_classification_targets(y)
-        if type_of_target(y) in ("multilabel-indicator", "multiclass-multioutput"):
+        if type_of_target(y) == "multilabel-indicator":
             self._label_encoder = [LabelEncoder().fit(yk) for yk in y.T]
             self.classes_ = [le.classes_ for le in self._label_encoder]
             y_encoded = np.array(
