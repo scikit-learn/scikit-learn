@@ -655,11 +655,12 @@ def test_perfect_imperfect_chance_multiclass_roc_auc(multi_class, average):
     ) == pytest.approx(0.5)
 
 
-def test_micro_averaged_ovr_roc_auc():
-    y_pred = stats.dirichlet.rvs([2.0, 1.0, 0.5], size=1000, random_state=0)
+def test_micro_averaged_ovr_roc_auc(global_random_seed):
+    seed = global_random_seed
+    y_pred = stats.dirichlet.rvs([2.0, 1.0, 0.5], size=1000, random_state=seed)
     y_true = np.asarray(
         [
-            stats.multinomial.rvs(n=1, p=y_pred_i, random_state=0).argmax()
+            stats.multinomial.rvs(n=1, p=y_pred_i, random_state=seed).argmax()
             for y_pred_i in y_pred
         ]
     )
