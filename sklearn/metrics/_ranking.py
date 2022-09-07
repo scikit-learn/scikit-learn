@@ -872,7 +872,7 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
 
     ps = tps + fps
     # Initialize the result array with zeros to make sure that precision[ps == 0]
-    # does not contain uninitialized values. 
+    # does not contain uninitialized values.
     precision = np.zeros_like(tps)
     np.divide(tps, ps, out=precision, where=(ps != 0))
 
