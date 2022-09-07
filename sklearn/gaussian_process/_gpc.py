@@ -37,9 +37,7 @@ COEFS = np.array(
 class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     """Binary Gaussian process classification based on Laplace approximation.
 
-    The implementation is based on Algorithm 3.1, 3.2, and 5.1 of
-    ``Gaussian Processes for Machine Learning'' (GPML) by Rasmussen and
-    Williams.
+    The implementation is based on Algorithm 3.1, 3.2, and 5.1 from [RW2006]_.
 
     Internally, the Laplace approximation is used for approximating the
     non-Gaussian posterior by a Gaussian.
@@ -145,6 +143,11 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
     log_marginal_likelihood_value_ : float
         The log-marginal-likelihood of ``self.kernel_.theta``
 
+    References
+    ----------
+    .. [RW2006] `Carl E. Rasmussen and Christopher K.I. Williams,
+       "Gaussian Processes for Machine Learning",
+       MIT Press 2006 <https://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_
     """
 
     def __init__(
@@ -484,9 +487,7 @@ class _BinaryGaussianProcessClassifierLaplace(BaseEstimator):
 class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     """Gaussian process classification (GPC) based on Laplace approximation.
 
-    The implementation is based on Algorithm 3.1, 3.2, and 5.1 of
-    Gaussian Processes for Machine Learning (GPML) by Rasmussen and
-    Williams.
+    The implementation is based on Algorithm 3.1, 3.2, and 5.1 from [RW2006]_.
 
     Internally, the Laplace approximation is used for approximating the
     non-Gaussian posterior by a Gaussian.
@@ -620,6 +621,12 @@ class GaussianProcessClassifier(ClassifierMixin, BaseEstimator):
     See Also
     --------
     GaussianProcessRegressor : Gaussian process regression (GPR).
+
+    References
+    ----------
+    .. [RW2006] `Carl E. Rasmussen and Christopher K.I. Williams,
+       "Gaussian Processes for Machine Learning",
+       MIT Press 2006 <https://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_
 
     Examples
     --------
