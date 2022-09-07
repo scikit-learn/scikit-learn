@@ -2533,6 +2533,8 @@ def log_loss(
         clipped to max(eps, min(1 - eps, p)). The default will depend on the
         data type of `y_pred` and set to `np.finfo(y_pred.dtype).eps`.
 
+        .. versionadded:: 1.2
+
     normalize : bool, default=True
         If true, return the mean loss per sample.
         Otherwise, return the sum of the per-sample losses.
@@ -2568,7 +2570,7 @@ def log_loss(
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616...
     """
-    y_pred = check_array(y_pred, ensure_2d=False)
+    y_pred = check_array(y_pred, ensure_2d=False, dtype=np.float64)
     eps = np.finfo(y_pred.dtype).eps if eps == "auto" else eps
 
     check_consistent_length(y_pred, y_true, sample_weight)
