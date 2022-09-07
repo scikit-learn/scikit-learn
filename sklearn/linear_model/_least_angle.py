@@ -2172,11 +2172,11 @@ class LassoLarsIC(LassoLars):
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> reg = linear_model.LassoLarsIC(criterion='bic', normalize=False)
+    >>> reg = linear_model.LassoLarsIC(criterion='bic')
     >>> X = [[-2, 2], [-1, 1], [0, 0], [1, 1], [2, 2]]
     >>> y = [-2.2222, -1.1111, 0, -1.1111, -2.2222]
     >>> reg.fit(X, y)
-    LassoLarsIC(criterion='bic', normalize=False)
+    LassoLarsIC(criterion='bic')
     >>> print(reg.coef_)
     [ 0.  -1.11...]
     """
