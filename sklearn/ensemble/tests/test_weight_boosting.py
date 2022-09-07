@@ -592,21 +592,22 @@ def test_adaboost_numerically_stable_feature_importance_with_small_weights():
     assert np.isnan(ada_model.feature_importances_).sum() == 0
 
 
+# TODO: remove in 1.4
 @pytest.mark.parametrize(
-    "bagging_class, estimator_class",
+    "AdaBoost, Estimator",
     [
         (AdaBoostClassifier, DecisionTreeClassifier),
         (AdaBoostRegressor, DecisionTreeRegressor),
     ],
 )
-def test_base_estimator_argument_deprecated(bagging_class, estimator_class):
+def test_base_estimator_argument_deprecated(AdaBoost, Estimator):
     X = np.array([[1, 2], [3, 4]])
     y = np.array([1, 0])
-    model = bagging_class(base_estimator=estimator_class(), n_estimators=10)
+    model = AdaBoost(base_estimator=Estimator())
 
-    err_msg = (
+    warn_msg = (
         "`base_estimator` was renamed to `estimator` in version 1.2 and "
         "will be removed in 1.4."
     )
-    with pytest.warns(FutureWarning, match=err_msg):
+    with pytest.warns(FutureWarning, match=warn_msg):
         model.fit(X, y)
