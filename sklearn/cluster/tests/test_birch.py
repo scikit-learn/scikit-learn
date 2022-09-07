@@ -11,7 +11,6 @@ from sklearn.cluster import Birch
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.linear_model import ElasticNet
 from sklearn.metrics import pairwise_distances_argmin, v_measure_score
 
 from sklearn.utils._testing import assert_almost_equal
@@ -82,13 +81,6 @@ def test_n_clusters():
     brc2.fit(X)
     assert_array_equal(brc1.subcluster_labels_, brc2.subcluster_labels_)
     assert_array_equal(brc1.labels_, brc2.labels_)
-
-    # Test that n_clusters being a non-cluster estimator raises an Error.
-    clf = ElasticNet()
-    brc3 = Birch(n_clusters=clf)
-    msg = r"The 'n_clusters' parameter of Birch must be .* Got .* instead."
-    with pytest.raises(ValueError, match=msg):
-        brc3.fit(X)
 
     # Test that a small number of clusters raises a warning.
     brc4 = Birch(threshold=10000.0)
