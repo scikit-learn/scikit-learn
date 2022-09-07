@@ -424,8 +424,7 @@ class _VectorizerMixin:
     def build_analyzer(self):
         """Return a callable to process input data.
 
-        The callable handles that handles preprocessing, tokenization, and
-        n-grams generation.
+        The callable handles preprocessing, tokenization, and n-grams generation.
 
         Returns
         -------
@@ -635,7 +634,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
         a direct ASCII mapping.
-        'unicode' is a slightly slower method that works on any characters.
+        'unicode' is a slightly slower method that works on any character.
         None (default) does nothing.
 
         Both 'ascii' and 'unicode' use NFKD normalization from
