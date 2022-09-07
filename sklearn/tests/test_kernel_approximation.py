@@ -215,6 +215,33 @@ def test_rbf_sampler():
     assert np.mean(error) <= 0.05  # mean is fairly close
 
 
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+def test_rbf_sampler_fitted_attributes_dtype(dtype):
+    # Test that attributes are float32 when input is float32
+    rbf = RBFSampler()
+
+    X = np.array([[1, 2], [3, 4], [5, 6]], dtype=dtype)
+
+    rbf.fit(X)
+
+    assert rbf.random_offset_.dtype == dtype
+    assert rbf.random_weights_.dtype == dtype
+
+
+def test_rbf_sampler_dtype_equivalence():
+    # Test that the results are similar independent of X's dtype
+    rbf32 = RBFSampler(random_state=42)
+    X32 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
+    rbf32.fit(X32)
+
+    rbf64 = RBFSampler(random_state=42)
+    X64 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float64)
+    rbf64.fit(X64)
+
+    assert_allclose(rbf32.random_offset_, rbf64.random_offset_)
+    assert_allclose(rbf32.random_weights_, rbf64.random_weights_)
+
+
 def test_input_validation():
     # Regression test: kernel approx. transformers should work on lists
     # No assertions; the old versions would simply crash
