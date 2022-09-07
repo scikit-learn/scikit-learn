@@ -4,13 +4,12 @@
 
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
 
-from libc.stdlib cimport malloc, free
+from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.stdio cimport printf
 from libc.stdint cimport SIZE_MAX
 
-from ..tree._utils cimport safe_realloc, sizet_ptr_to_ndarray
-from ..utils import check_array
+from ..tree._utils cimport safe_realloc
 
 import numpy as np
 cimport numpy as cnp
@@ -116,7 +115,6 @@ cdef class _QuadTree:
                           SIZE_t cell_id=0) nogil except -1:
         """Insert a point in the QuadTree."""
         cdef int ax
-        cdef DTYPE_t n_frac
         cdef SIZE_t selected_child
         cdef Cell* cell = &self.cells[cell_id]
         cdef SIZE_t n_point = cell.cumulative_size

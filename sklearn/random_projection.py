@@ -300,7 +300,7 @@ class BaseRandomProjection(
     Use derived classes instead.
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [
             Interval(Integral, 1, None, closed="left"),
             StrOptions({"auto"}),
@@ -734,7 +734,7 @@ class SparseRandomProjection(BaseRandomProjection):
     0.0182...
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseRandomProjection._parameter_constraints,
         "density": [Interval(Real, 0.0, 1.0, closed="right"), StrOptions({"auto"})],
         "dense_output": ["boolean"],

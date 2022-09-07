@@ -381,7 +381,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
     MeanShift(bandwidth=2)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "bandwidth": [Interval(Real, 0, None, closed="neither"), None],
         "seeds": ["array-like", None],
         "bin_seeding": ["boolean"],

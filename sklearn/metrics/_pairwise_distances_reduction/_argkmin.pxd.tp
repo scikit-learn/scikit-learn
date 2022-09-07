@@ -21,11 +21,11 @@ cnp.import_array()
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
-from ._base cimport PairwiseDistancesReduction{{name_suffix}}
+from ._base cimport BaseDistanceReducer{{name_suffix}}
 from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
 
-cdef class PairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistancesReduction{{name_suffix}}):
-    """{{name_suffix}}bit implementation of PairwiseDistancesArgKmin."""
+cdef class ArgKmin{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
+    """{{name_suffix}}bit implementation of BaseDistanceReducer{{name_suffix}} for the `ArgKmin` reduction."""
 
     cdef:
         ITYPE_t k
@@ -38,8 +38,8 @@ cdef class PairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistancesReduction{{n
         ITYPE_t ** heaps_indices_chunks
 
 
-cdef class FastEuclideanPairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistancesArgKmin{{name_suffix}}):
-    """EuclideanDistance-specialized {{name_suffix}}bit implementation for PairwiseDistancesArgKmin."""
+cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
+    """EuclideanDistance-specialized {{name_suffix}}bit implementation of ArgKmin{{name_suffix}}."""
     cdef:
         GEMMTermComputer{{name_suffix}} gemm_term_computer
         const DTYPE_t[::1] X_norm_squared
