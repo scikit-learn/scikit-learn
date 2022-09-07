@@ -148,7 +148,6 @@ def _sparse_encode(
                 alpha=alpha,
                 fit_intercept=False,
                 verbose=verbose,
-                normalize=False,
                 precompute=gram,
                 fit_path=False,
                 positive=positive,
@@ -168,7 +167,6 @@ def _sparse_encode(
         clf = Lasso(
             alpha=alpha,
             fit_intercept=False,
-            normalize="deprecated",  # as it was False by default
             precompute=gram,
             max_iter=max_iter,
             warm_start=True,
@@ -190,7 +188,6 @@ def _sparse_encode(
             lars = Lars(
                 fit_intercept=False,
                 verbose=verbose,
-                normalize=False,
                 precompute=gram,
                 n_nonzero_coefs=int(regularization),
                 fit_path=False,

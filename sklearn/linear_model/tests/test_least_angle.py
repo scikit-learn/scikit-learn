@@ -25,18 +25,18 @@ G = np.dot(X.T, X)
 Xy = np.dot(X.T, y)
 n_samples = y.size
 
-# FIXME: 'normalize' to be removed in 1.4
+# TODO(1.4): 'normalize' to be removed
 filterwarnings_normalize = pytest.mark.filterwarnings(
-    "ignore:The default of 'normalize'"
+    "ignore:'normalize' was deprecated"
 )
 
 
-# FIXME: 'normalize' to be removed in 1.4
+# TODO(1.4) 'normalize' to be removed
 @pytest.mark.parametrize(
     "LeastAngleModel", [Lars, LassoLars, LarsCV, LassoLarsCV, LassoLarsIC]
 )
 @pytest.mark.parametrize(
-    "normalize, n_warnings", [(True, 0), (False, 0), ("deprecated", 1)]
+    "normalize, n_warnings", [(True, 1), (False, 1), ("deprecated", 0)]
 )
 def test_assure_warning_when_normalize(LeastAngleModel, normalize, n_warnings):
     # check that we issue a FutureWarning when normalize was set
@@ -138,7 +138,7 @@ def test_all_precomputed():
             assert_array_almost_equal(expected, got)
 
 
-# FIXME: 'normalize' to be removed in 1.4
+# TODO(1.4): 'normalize' to be removed
 @filterwarnings_normalize
 @pytest.mark.filterwarnings("ignore: `rcond` parameter will change")
 # numpy deprecation
@@ -489,7 +489,6 @@ def test_lars_cv():
     assert not hasattr(lars_cv, "n_nonzero_coefs")
 
 
-@filterwarnings_normalize
 def test_lars_cv_max_iter(recwarn):
     warnings.simplefilter("always")
     with np.errstate(divide="raise", invalid="raise"):
@@ -501,18 +500,15 @@ def test_lars_cv_max_iter(recwarn):
         X = np.c_[X, x, x]  # add correlated features
         lars_cv = linear_model.LassoLarsCV(max_iter=5, cv=5)
         lars_cv.fit(X, y)
+
     # Check that there is no warning in general and no ConvergenceWarning
     # in particular.
     # Materialize the string representation of the warning to get a more
     # informative error message in case of AssertionError.
     recorded_warnings = [str(w) for w in recwarn]
-    # FIXME: when 'normalize' is removed set exchange below for:
-    # assert len(recorded_warnings) == []
-    assert len(recorded_warnings) == 1
-    assert "normalize' will be set to False in version 1.2" in recorded_warnings[0]
+    assert len(recorded_warnings) == 0
 
 
-@filterwarnings_normalize
 def test_lasso_lars_ic():
     # Test the LassoLarsIC object by checking that
     # - some good features are selected.

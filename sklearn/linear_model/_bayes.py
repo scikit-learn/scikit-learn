@@ -12,11 +12,9 @@ from scipy import linalg
 
 from ._base import LinearModel, _preprocess_data, _rescale_data
 from ..base import RegressorMixin
-from ._base import _deprecate_normalize
 from ..utils.extmath import fast_logdet
 from scipy.linalg import pinvh
 from ..utils.validation import _check_sample_weight
-from ..utils._param_validation import StrOptions, Hidden
 from ..utils._param_validation import Interval
 
 ###############################################################################
@@ -78,18 +76,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
         and thus has no associated variance. If set
         to False, no intercept will be used in calculations
         (i.e. data is expected to be centered).
-
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and will be removed in
-            1.2.
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
@@ -187,7 +173,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
         "lambda_init": [None, Interval(Real, 0, None, closed="left")],
         "compute_score": ["boolean"],
         "fit_intercept": ["boolean"],
-        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
         "copy_X": ["boolean"],
         "verbose": ["verbose"],
     }
@@ -205,7 +190,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
         lambda_init=None,
         compute_score=False,
         fit_intercept=True,
-        normalize="deprecated",
         copy_X=True,
         verbose=False,
     ):
@@ -219,7 +203,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self.lambda_init = lambda_init
         self.compute_score = compute_score
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.copy_X = copy_X
         self.verbose = verbose
 
@@ -246,10 +229,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
         """
         self._validate_params()
 
-        self._normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
-        )
-
         X, y = self._validate_data(X, y, dtype=[np.float64, np.float32], y_numeric=True)
 
         if sample_weight is not None:
@@ -259,8 +238,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
             X,
             y,
             self.fit_intercept,
-            self._normalize,
-            self.copy_X,
+            copy=self.copy_X,
             sample_weight=sample_weight,
         )
 
@@ -373,11 +351,9 @@ class BayesianRidge(RegressorMixin, LinearModel):
             Standard deviation of predictive distribution of query points.
         """
         y_mean = self._decision_function(X)
-        if return_std is False:
+        if not return_std:
             return y_mean
         else:
-            if self._normalize:
-                X = (X - self.X_offset_) / self.X_scale_
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
             y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))
             return y_mean, y_std
@@ -489,18 +465,6 @@ class ARDRegression(RegressorMixin, LinearModel):
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and will be removed in
-            1.2.
-
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
@@ -589,7 +553,6 @@ class ARDRegression(RegressorMixin, LinearModel):
         "compute_score": ["boolean"],
         "threshold_lambda": [Interval(Real, 0, None, closed="left")],
         "fit_intercept": ["boolean"],
-        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
         "copy_X": ["boolean"],
         "verbose": ["verbose"],
     }
@@ -606,14 +569,12 @@ class ARDRegression(RegressorMixin, LinearModel):
         compute_score=False,
         threshold_lambda=1.0e4,
         fit_intercept=True,
-        normalize="deprecated",
         copy_X=True,
         verbose=False,
     ):
         self.n_iter = n_iter
         self.tol = tol
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.alpha_1 = alpha_1
         self.alpha_2 = alpha_2
         self.lambda_1 = lambda_1
@@ -644,10 +605,6 @@ class ARDRegression(RegressorMixin, LinearModel):
 
         self._validate_params()
 
-        self._normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
-        )
-
         X, y = self._validate_data(
             X, y, dtype=[np.float64, np.float32], y_numeric=True, ensure_min_samples=2
         )
@@ -656,7 +613,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         coef_ = np.zeros(n_features, dtype=X.dtype)
 
         X, y, X_offset_, y_offset_, X_scale_ = _preprocess_data(
-            X, y, self.fit_intercept, self._normalize, self.copy_X
+            X, y, self.fit_intercept, copy=self.copy_X
         )
 
         self.X_offset_ = X_offset_
@@ -802,8 +759,6 @@ class ARDRegression(RegressorMixin, LinearModel):
         if return_std is False:
             return y_mean
         else:
-            if self._normalize:
-                X = (X - self.X_offset_) / self.X_scale_
             X = X[:, self.lambda_ < self.threshold_lambda]
             sigmas_squared_data = (np.dot(X, self.sigma_) * X).sum(axis=1)
             y_std = np.sqrt(sigmas_squared_data + (1.0 / self.alpha_))

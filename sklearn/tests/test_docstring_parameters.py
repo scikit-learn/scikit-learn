@@ -235,18 +235,6 @@ def test_fit_docstring_attributes(name, Estimator):
         # default="auto" raises an error with the shape of `X`
         est.set_params(n_components=2)
 
-    # FIXME: TO BE REMOVED in 1.4 (avoid FutureWarning)
-    if Estimator.__name__ in (
-        "OrthogonalMatchingPursuit",
-        "OrthogonalMatchingPursuitCV",
-        "Lars",
-        "LarsCV",
-        "LassoLars",
-        "LassoLarsCV",
-        "LassoLarsIC",
-    ):
-        est.set_params(normalize=False)
-
     # FIXME: TO BE REMOVED for 1.2 (avoid FutureWarning)
     if Estimator.__name__ == "TSNE":
         est.set_params(learning_rate=200.0, init="random", perplexity=2)
