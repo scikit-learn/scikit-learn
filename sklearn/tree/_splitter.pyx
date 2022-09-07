@@ -16,10 +16,7 @@ from ._criterion cimport Criterion
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
 
-from cython.operator cimport dereference as deref
-
 import numpy as np
-cimport numpy as cnp
 
 from scipy.sparse import csc_matrix
 
