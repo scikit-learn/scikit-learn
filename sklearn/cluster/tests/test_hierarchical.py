@@ -136,18 +136,6 @@ def test_height_linkage_tree():
         assert len(children) + n_leaves == n_nodes
 
 
-def test_agglomerative_clustering_wrong_arg_memory():
-    # Test either if an error is raised when memory is not
-    # either a str or a joblib.Memory instance
-    rng = np.random.RandomState(0)
-    n_samples = 100
-    X = rng.randn(n_samples, 50)
-    memory = 5
-    clustering = AgglomerativeClustering(memory=memory)
-    with pytest.raises(ValueError):
-        clustering.fit(X)
-
-
 def test_zero_cosine_linkage_tree():
     # Check that zero vectors in X produce an error when
     # 'cosine' affinity is used
