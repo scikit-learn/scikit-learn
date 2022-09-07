@@ -745,7 +745,7 @@ To build the PDF manual, run:
    to know the exact version.
 
 Guidelines for writing python docstrings
-------------------------------------
+----------------------------------------
 
 It is important to keep a good compromise between mathematical and algorithmic
 details, and give intuition to the reader on what the algorithm does.
