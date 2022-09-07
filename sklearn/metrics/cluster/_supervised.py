@@ -1104,6 +1104,16 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     score : float
        The resulting Fowlkes-Mallows score.
 
+    References
+    ----------
+    .. [1] `E. B. Fowkles and C. L. Mallows, 1983. "A method for comparing two
+       hierarchical clusterings". Journal of the American Statistical
+       Association
+       <https://www.tandfonline.com/doi/abs/10.1080/01621459.1983.10478008>`_
+
+    .. [2] `Wikipedia entry for the Fowlkes-Mallows Index
+           <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
+
     Examples
     --------
 
@@ -1121,16 +1131,6 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
       >>> fowlkes_mallows_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
-
-    References
-    ----------
-    .. [1] `E. B. Fowkles and C. L. Mallows, 1983. "A method for comparing two
-       hierarchical clusterings". Journal of the American Statistical
-       Association
-       <https://www.tandfonline.com/doi/abs/10.1080/01621459.1983.10478008>`_
-
-    .. [2] `Wikipedia entry for the Fowlkes-Mallows Index
-           <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     (n_samples,) = labels_true.shape
@@ -1144,12 +1144,17 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
 
 def entropy(labels):
-    """Calculates the entropy for a labeling.
+    """Calculate the entropy for a labeling.
 
     Parameters
     ----------
     labels : array-like of shape (n_samples,), dtype=int
         The labels.
+
+    Returns
+    -------
+    entropy : float
+       The entropy for a labeling.
 
     Notes
     -----
