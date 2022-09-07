@@ -58,6 +58,8 @@ cdef class Criterion:
     cdef double get_sum_total(self, INT32_t node_id) nogil
     cdef bint check_monotonicity(self, INT32_t monotonic_cst,
                                  double lower_bound, double upper_bound) nogil
+    cdef inline bint _check_monotonicity(self, INT32_t monotonic_cst, double lower_bound, double upper_bound,
+                                         double sum_left, double sum_right) nogil
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""

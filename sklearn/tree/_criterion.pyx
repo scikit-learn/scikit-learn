@@ -196,8 +196,32 @@ cdef class Criterion:
         pass
 
     cdef bint check_monotonicity(self, INT32_t monotonic_cst,
-                                        double lower_bound, double upper_bound) nogil:
+                                       double lower_bound, double upper_bound) nogil:
         pass
+
+    cdef inline bint _check_monotonicity(self, INT32_t monotonic_cst,
+                                        double lower_bound, double upper_bound,
+                                        double sum_left, double sum_right) nogil:
+        cdef:
+            double weighted_n_left = self.weighted_n_left
+            double weighted_n_right = self.weighted_n_right
+            bint check_lower_bound = (
+                (sum_left >= lower_bound * weighted_n_left) &
+                (sum_right >= lower_bound * weighted_n_right)
+            )
+            bint check_upper_bound = (
+                (sum_left <= upper_bound * weighted_n_left) &
+                (sum_right <= upper_bound * weighted_n_right)
+            )
+            bint check_monotonic_cst
+        if monotonic_cst == 0: # No constraint
+            return check_lower_bound & check_upper_bound
+        else:
+            check_monotonic_cst = (
+                (sum_left * weighted_n_right -
+                 sum_right * weighted_n_left) * monotonic_cst <= 0
+            )
+            return check_lower_bound & check_upper_bound & check_monotonic_cst
 
 
 cdef class ClassificationCriterion(Criterion):
@@ -445,26 +469,8 @@ cdef class ClassificationCriterion(Criterion):
         cdef:
             double sum_left = self.sum_left[0][0]
             double sum_right = self.sum_right[0][0]
-            double weighted_n_left = self.weighted_n_left
-            double weighted_n_right = self.weighted_n_right
 
-            bint check_lower = (
-                (sum_left >= lower_bound * weighted_n_left) &
-                (sum_right >= lower_bound * weighted_n_right)
-            )
-            bint check_upper = (
-                (sum_left <= upper_bound * weighted_n_left) &
-                (sum_right <= upper_bound * weighted_n_right)
-            )
-            bint check_monotonic
-        if monotonic_cst == 0: # No constraint
-            return check_lower & check_upper
-        else:
-            check_monotonic = (
-                (sum_left * weighted_n_right -
-                 sum_right * weighted_n_left) * monotonic_cst <= 0
-            )
-            return check_lower & check_upper & check_monotonic
+        return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, sum_left, sum_right)
 
 
 cdef class Entropy(ClassificationCriterion):
@@ -814,26 +820,8 @@ cdef class RegressionCriterion(Criterion):
         cdef:
             double sum_left = self.sum_left[0]
             double sum_right = self.sum_right[0]
-            double weighted_n_left = self.weighted_n_left
-            double weighted_n_right = self.weighted_n_right
 
-            bint check_lower = (
-                (sum_left >= lower_bound * weighted_n_left) &
-                (sum_right >= lower_bound * weighted_n_right)
-            )
-            bint check_upper = (
-                (sum_left <= upper_bound * weighted_n_left) &
-                (sum_right <= upper_bound * weighted_n_right)
-            )
-            bint check_monotonic
-        if monotonic_cst == 0: # No constraint
-            return check_lower & check_upper
-        else:
-            check_monotonic = (
-                (sum_left * weighted_n_right -
-                 sum_right * weighted_n_left) * monotonic_cst <= 0
-            )
-            return check_lower & check_upper & check_monotonic
+        return self._check_monotonicity(monotonic_cst, lower_bound, upper_bound, sum_left, sum_right)
 
 cdef class MSE(RegressionCriterion):
     """Mean squared error impurity criterion.
