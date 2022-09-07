@@ -54,7 +54,7 @@ cdef class Splitter:
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, cnp.ndarray[INT32_t] monotonic_cst):
+                  object random_state, INT32_t[:] monotonic_cst):
         """
         Parameters
         ----------
@@ -93,7 +93,7 @@ cdef class Splitter:
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.random_state = random_state
-        self.monotonic_cst = <INT32_t*> monotonic_cst.data
+        self.monotonic_cst = &monotonic_cst[0]
 
     def __getstate__(self):
         return {}
@@ -792,10 +792,10 @@ cdef class BaseSparseSplitter(Splitter):
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, cnp.ndarray[INT32_t] monotonic_cst):
+                  object random_state, INT32_t[:] monotonic_cst):
         # Parent __cinit__ is automatically called
         self.n_total_samples = 0
-        self.monotonic_cst = <INT32_t*> monotonic_cst.data
+        self.monotonic_cst = &monotonic_cst[0]
 
     cdef int init(self,
                   object X,
