@@ -16,7 +16,6 @@ from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..tree import (
     DecisionTreeRegressor,
-    ExtraTreeRegressor,
     BaseDecisionTree,
     DecisionTreeClassifier,
 )
@@ -147,15 +146,6 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         estimator = clone(self.base_estimator_)
         estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
-
-        # TODO: Remove in v1.2
-        # criterion "mse" and "mae" would cause warnings in every call to
-        # DecisionTreeRegressor.fit(..)
-        if isinstance(estimator, (DecisionTreeRegressor, ExtraTreeRegressor)):
-            if getattr(estimator, "criterion", None) == "mse":
-                estimator.set_params(criterion="squared_error")
-            elif getattr(estimator, "criterion", None) == "mae":
-                estimator.set_params(criterion="absolute_error")
 
         # TODO(1.3): Remove
         # max_features = 'auto' would cause warnings in every call to
