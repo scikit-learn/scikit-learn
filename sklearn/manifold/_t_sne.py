@@ -592,7 +592,7 @@ class TSNE(BaseEstimator):
         following [4] and [5].
 
         .. versionchanged:: 1.2
-           The default value chaned to `"auto"`.
+           The default value changed to `"auto"`.
 
     n_iter : int, default=1000
         Maximum number of iterations for the optimization. Should be at
