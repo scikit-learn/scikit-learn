@@ -613,7 +613,7 @@ def shuffle(*arrays, random_state=None, n_samples=None):
 
     See Also
     --------
-    resample
+    resample : Resample arrays or sparse matrices in a consistent way.
 
     Examples
     --------
