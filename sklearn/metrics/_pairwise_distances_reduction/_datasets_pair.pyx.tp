@@ -89,6 +89,11 @@ cdef class DatasetsPair{{name_suffix}}:
         datasets_pair: DatasetsPair{{name_suffix}}
             The suited DatasetsPair{{name_suffix}} implementation.
         """
+        # The `Y_norm_squared` might be passed to via metrics_kwargs
+        # for the Euclidean specialisation but must not be passed to
+        # DistanceMetrics.
+        if metric_kwargs is not None:
+            metric_kwargs.pop("Y_norm_squared", None)
         cdef:
             {{DistanceMetric}} distance_metric = {{DistanceMetric}}.get_metric(
                 metric,
