@@ -528,7 +528,6 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
         ("auto", ValueError),
         ("random", AttributeError),
         (lambda x: x.importance, AttributeError),
-        ([0], ValueError),
     ],
 )
 @pytest.mark.parametrize("Selector", [RFE, RFECV])

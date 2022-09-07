@@ -716,17 +716,6 @@ def test_warm_start_clear(Cls):
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
-def test_warm_start_zero_n_estimators(Cls):
-    # Test if warm start with zero n_estimators raises error
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    est = Cls(n_estimators=100, max_depth=1, warm_start=True)
-    est.fit(X, y)
-    est.set_params(n_estimators=0)
-    with pytest.raises(ValueError):
-        est.fit(X, y)
-
-
-@pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
 def test_warm_start_smaller_n_estimators(Cls):
     # Test if warm start with smaller n_estimators raises error
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)

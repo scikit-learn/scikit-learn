@@ -339,18 +339,6 @@ def test_pipeline_spectral_clustering(seed=36):
         )
 
 
-def test_spectral_embedding_unknown_eigensolver(seed=36):
-    # Test that SpectralClustering fails with an unknown eigensolver
-    se = SpectralEmbedding(
-        n_components=1,
-        affinity="precomputed",
-        random_state=np.random.RandomState(seed),
-        eigen_solver="<unknown>",
-    )
-    with pytest.raises(ValueError):
-        se.fit(S)
-
-
 def test_connectivity(seed=36):
     # Test that graph connectivity test works as expected
     graph = np.array(

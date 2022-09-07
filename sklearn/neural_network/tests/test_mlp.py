@@ -331,10 +331,6 @@ def test_lbfgs_regression_maxfun(X, y):
             mlp.fit(X, y)
             assert max_fun >= mlp.n_iter_
 
-    mlp.max_fun = -1
-    with pytest.raises(ValueError):
-        mlp.fit(X, y)
-
 
 def test_learning_rate_warmstart():
     # Tests that warm_start reuse past solutions.
