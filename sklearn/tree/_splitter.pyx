@@ -51,7 +51,7 @@ cdef class Splitter:
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, const INT32_t[:] monotonic_cst):
+                  object random_state, INT32_t[:] monotonic_cst):
         """
         Parameters
         ----------
@@ -74,7 +74,7 @@ cdef class Splitter:
         random_state : object
             The user inputted random state to be used for pseudo-randomness
 
-        monotonic_cst : INT32_t[:]
+        monotonic_cst : INT32_t*
             Monotonicity constraints
 
         """
@@ -90,7 +90,7 @@ cdef class Splitter:
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.random_state = random_state
-        self.monotonic_cst = monotonic_cst
+        self.monotonic_cst = &monotonic_cst[0]
 
     def __getstate__(self):
         return {}
@@ -279,7 +279,6 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
-        cdef INT32_t monotonic_constraint
 
         cdef SplitRecord best, current
         cdef double current_proxy_improvement = -INFINITY
@@ -346,7 +345,7 @@ cdef class BestSplitter(BaseDenseSplitter):
             # f_j in the interval [n_total_constants, f_i[
             current.feature = features[f_j]
 
-            monotonic_constraint = self.monotonic_cst[0]
+            monotonic_constraint = self.monotonic_cst[current.feature]
             # Sort samples along that feature; by
             # copying the values into an array and
             # sorting the array in a manner which utilizes the cache more
@@ -604,7 +603,6 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
-        cdef INT32_t monotonic_constraint
 
         cdef SplitRecord best, current
         cdef double current_proxy_improvement = - INFINITY
@@ -791,10 +789,10 @@ cdef class BaseSparseSplitter(Splitter):
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, const INT32_t[:] monotonic_cst):
+                  object random_state, INT32_t[:] monotonic_cst):
         # Parent __cinit__ is automatically called
         self.n_total_samples = 0
-        self.monotonic_cst = monotonic_cst
+        self.monotonic_cst = &monotonic_cst[0]
 
     cdef int init(self,
                   object X,
@@ -1122,7 +1120,6 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
-        cdef INT32_t monotonic_constraint
 
         cdef SplitRecord best, current
         _init_split(&best, end)
@@ -1360,7 +1357,6 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
         cdef UINT32_t* random_state = &self.rand_r_state
-        cdef INT32_t monotonic_constraint
 
         cdef SplitRecord best, current
         _init_split(&best, end)
