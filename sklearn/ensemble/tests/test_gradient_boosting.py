@@ -1280,13 +1280,10 @@ def test_n_features_deprecation(Estimator):
         est.n_features_
 
 
+# TODO(1.3): Remove
 @pytest.mark.parametrize(
     "old_loss, new_loss, Estimator",
     [
-        # TODO(1.2): Remove
-        ("ls", "squared_error", GradientBoostingRegressor),
-        ("lad", "absolute_error", GradientBoostingRegressor),
-        # TODO(1.3): Remove
         ("deviance", "log_loss", GradientBoostingClassifier),
     ],
 )

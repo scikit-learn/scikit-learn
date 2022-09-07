@@ -11,11 +11,9 @@ from timeit import default_timer as time
 from ..._loss.loss import (
     _LOSSES,
     BaseLoss,
-    AbsoluteError,
     HalfBinomialLoss,
     HalfMultinomialLoss,
     HalfPoissonLoss,
-    HalfSquaredError,
     PinballLoss,
 )
 from ...base import BaseEstimator, RegressorMixin, ClassifierMixin, is_classifier
@@ -39,12 +37,9 @@ from .grower import TreeGrower
 
 
 _LOSSES = _LOSSES.copy()
-# TODO(1.2): Remove "least_squares" and "least_absolute_deviation"
 # TODO(1.3): Remove "binary_crossentropy" and "categorical_crossentropy"
 _LOSSES.update(
     {
-        "least_squares": HalfSquaredError,
-        "least_absolute_deviation": AbsoluteError,
         "poisson": HalfPoissonLoss,
         "quantile": PinballLoss,
         "binary_crossentropy": HalfBinomialLoss,
@@ -1129,15 +1124,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.1
            Added option 'quantile'.
 
-        .. deprecated:: 1.0
-            The loss 'least_squares' was deprecated in v1.0 and will be removed
-            in version 1.2. Use `loss='squared_error'` which is equivalent.
-
-        .. deprecated:: 1.0
-            The loss 'least_absolute_deviation' was deprecated in v1.0 and will
-            be removed in version 1.2. Use `loss='absolute_error'` which is
-            equivalent.
-
     quantile : float, default=None
         If loss is "quantile", this parameter specifies which quantile to be estimated
         and must be between 0 and 1.
@@ -1294,21 +1280,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     0.92...
     """
 
-    # TODO(1.2): remove "least_absolute_deviation"
     _parameter_constraints: dict = {
         **BaseHistGradientBoosting._parameter_constraints,
         "loss": [
-            StrOptions(
-                {
-                    "squared_error",
-                    "least_squares",
-                    "absolute_error",
-                    "least_absolute_deviation",
-                    "poisson",
-                    "quantile",
-                },
-                deprecated={"least_squares", "least_absolute_deviation"},
-            ),
+            StrOptions({"squared_error", "absolute_error", "poisson", "quantile"}),
             BaseLoss,
         ],
         "quantile": [Interval(Real, 0, 1, closed="both"), None],
@@ -1411,24 +1386,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         return y
 
     def _get_loss(self, sample_weight):
-        # TODO: Remove in v1.2
-        if self.loss == "least_squares":
-            warnings.warn(
-                "The loss 'least_squares' was deprecated in v1.0 and will be "
-                "removed in version 1.2. Use 'squared_error' which is "
-                "equivalent.",
-                FutureWarning,
-            )
-            return _LOSSES["squared_error"](sample_weight=sample_weight)
-        elif self.loss == "least_absolute_deviation":
-            warnings.warn(
-                "The loss 'least_absolute_deviation' was deprecated in v1.0 "
-                " and will be removed in version 1.2. Use 'absolute_error' "
-                "which is equivalent.",
-                FutureWarning,
-            )
-            return _LOSSES["absolute_error"](sample_weight=sample_weight)
-
         if self.loss == "quantile":
             return _LOSSES[self.loss](
                 sample_weight=sample_weight, quantile=self.quantile
