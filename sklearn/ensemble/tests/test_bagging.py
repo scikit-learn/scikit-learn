@@ -237,6 +237,9 @@ class DummySizeEstimator(BaseEstimator):
         self.training_size_ = X.shape[0]
         self.training_hash_ = joblib.hash(X)
 
+    def predict(self, X):
+        return np.ones(X.shape[0])
+
 
 def test_bootstrap_samples():
     # Test that bootstrapping samples generate non-perfect base estimators.
