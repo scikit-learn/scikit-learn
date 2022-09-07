@@ -675,13 +675,13 @@ We are glad to accept any sort of documentation:
   describe what the object does and details any parameters, attributes and
   methods. Docstrings live alongside the code in
   `sklearn/ <https://github.com/scikit-learn/scikit-learn/tree/main/sklearn>`_
-* user guide - these provide more information about the algorithms provided in
+* user guide - these provide more information about the algorithms in
   scikit-learn and generally live in the root
   `doc/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc>`_ directory
   and
   `doc/modules/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc/modules>`_
 * tutorials - these introduce various statistical learning and machine learning
-  concepts are located in
+  concepts and are located in
   `doc/tutorial <https://github.com/scikit-learn/scikit-learn/tree/main/doc/tutorial>`_
 * examples - these provide full code examples that may demonstrate the use of
   scikit-learn modules, compare different algorithms or discuss their
