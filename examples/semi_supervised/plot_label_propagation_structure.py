@@ -61,7 +61,7 @@ plt.scatter(
     marker=".",
     label="unlabeled",
 )
-plt.legend(scatterpoints=1, shadow=False, loc="upper right")
+plt.legend(scatterpoints=1, shadow=False, loc="center")
 plt.title("Raw data (2 classes=outer and inner)")
 
 # %%
@@ -100,6 +100,6 @@ plt.scatter(
     s=10,
     label="inner learned",
 )
-plt.legend(scatterpoints=1, shadow=False, loc="upper right")
+plt.legend(scatterpoints=1, shadow=False, loc="center")
 plt.title("Labels learned with Label Spreading (KNN)")
 plt.show()
