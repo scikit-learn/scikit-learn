@@ -1280,22 +1280,6 @@ def test_n_features_deprecation(Estimator):
         est.n_features_
 
 
-# TODO: Remove in v1.2
-@pytest.mark.parametrize("Estimator", GRADIENT_BOOSTING_ESTIMATORS)
-def test_criterion_mse_deprecated(Estimator):
-    est1 = Estimator(criterion="mse", random_state=0)
-
-    with pytest.warns(FutureWarning, match="Criterion 'mse' was deprecated"):
-        est1.fit(X, y)
-
-    est2 = Estimator(criterion="squared_error", random_state=0)
-    est2.fit(X, y)
-    if hasattr(est1, "predict_proba"):
-        assert_allclose(est1.predict_proba(X), est2.predict_proba(X))
-    else:
-        assert_allclose(est1.predict(X), est2.predict(X))
-
-
 @pytest.mark.parametrize(
     "old_loss, new_loss, Estimator",
     [
