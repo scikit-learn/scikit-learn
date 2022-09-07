@@ -498,6 +498,7 @@ def test_lars_cv_max_iter(recwarn):
         x = rng.randn(len(y))
         X = diabetes.data
         X = np.c_[X, x, x]  # add correlated features
+        X = StandardScaler().fit_transform(X)
         lars_cv = linear_model.LassoLarsCV(max_iter=5, cv=5)
         lars_cv.fit(X, y)
 
@@ -519,6 +520,7 @@ def test_lasso_lars_ic():
     rng = np.random.RandomState(42)
     X = diabetes.data
     X = np.c_[X, rng.randn(X.shape[0], 5)]  # add 5 bad features
+    X = StandardScaler().fit_transform(X)
     lars_bic.fit(X, y)
     lars_aic.fit(X, y)
     nonzero_bic = np.where(lars_bic.coef_)[0]
