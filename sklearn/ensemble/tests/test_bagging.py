@@ -938,26 +938,53 @@ def test_n_features_deprecation(Estimator):
         est.n_features_
 
 
+# TODO: remove in 1.4
 @pytest.mark.parametrize(
-    "bagging_class, estimator_class",
+    "Bagging, Estimator",
     [
         (BaggingClassifier, DecisionTreeClassifier),
         (BaggingRegressor, DecisionTreeRegressor),
     ],
 )
-def test_base_estimator_argument_deprecated(bagging_class, estimator_class):
+def test_base_estimator_argument_deprecated(Bagging, Estimator):
     X = np.array([[1, 2], [3, 4]])
     y = np.array([1, 0])
-    model = bagging_class(base_estimator=estimator_class(), n_estimators=10)
+    model = Bagging(base_estimator=Estimator(), n_estimators=10)
 
-    err_msg = (
+    warn_msg = (
         "`base_estimator` was renamed to `estimator` in version 1.2 and "
         "will be removed in 1.4."
     )
-    with pytest.warns(FutureWarning, match=err_msg):
+    with pytest.warns(FutureWarning, match=warn_msg):
         model.fit(X, y)
 
 
+# TODO: remove in 1.4
+@pytest.mark.parametrize(
+    "Bagging",
+    [BaggingClassifier, BaggingClassifier],
+)
+def test_base_estimator_property_deprecated(Bagging):
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    model = Bagging()
+    model.fit(X, y)
+
+    warn_msg = (
+        "Attribute `base_estimator_` was deprecated in version 1.2 and "
+        "will be removed in 1.4. Use `estimator_` instead."
+    )
+    with pytest.warns(FutureWarning, match=warn_msg):
+        model.base_estimator_
+
+
+# TODO: remove in 1.4
 def test_deprecated_base_estimator_has_decision_function():
+    """Check that `BaggingClassifier` delegate to classifier with
+    `decision_function`."""
+    iris = load_iris()
+    X, y = iris.data, iris.target
     clf = BaggingClassifier(base_estimator=SVC())
     assert hasattr(clf, "decision_function")
+    y_decision = clf.fit(X, y).decision_function(X)
+    assert y_decision.shape == (150, 3)

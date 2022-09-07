@@ -1799,3 +1799,22 @@ def test_random_trees_embedding_feature_names_out():
         ]
     ]
     assert_array_equal(expected_names, names)
+
+
+# TODO: remove in 1.4
+@pytest.mark.parametrize(
+    "name",
+    FOREST_ESTIMATORS,
+)
+def test_base_estimator_property_deprecated(name):
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    model = FOREST_ESTIMATORS[name]()
+    model.fit(X, y)
+
+    warn_msg = (
+        "Attribute `base_estimator_` was deprecated in version 1.2 and "
+        "will be removed in 1.4. Use `estimator_` instead."
+    )
+    with pytest.warns(FutureWarning, match=warn_msg):
+        model.base_estimator_

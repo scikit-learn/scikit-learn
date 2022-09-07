@@ -611,3 +611,22 @@ def test_base_estimator_argument_deprecated(AdaBoost, Estimator):
     )
     with pytest.warns(FutureWarning, match=warn_msg):
         model.fit(X, y)
+
+
+# TODO: remove in 1.4
+@pytest.mark.parametrize(
+    "AdaBoost",
+    [AdaBoostClassifier, AdaBoostRegressor],
+)
+def test_base_estimator_property_deprecated(AdaBoost):
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    model = AdaBoost()
+    model.fit(X, y)
+
+    warn_msg = (
+        "Attribute `base_estimator_` was deprecated in version 1.2 and "
+        "will be removed in 1.4. Use `estimator_` instead."
+    )
+    with pytest.warns(FutureWarning, match=warn_msg):
+        model.base_estimator_
