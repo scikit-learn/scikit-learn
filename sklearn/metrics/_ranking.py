@@ -871,7 +871,10 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
     )
 
     ps = tps + fps
-    precision = np.divide(tps, ps, where=(ps != 0))
+    # Initialize the result array with zeros to make sure that precision[ps == 0]
+    # does not contain uninitialized values.
+    precision = np.zeros_like(tps)
+    np.divide(tps, ps, out=precision, where=(ps != 0))
 
     # When no positive label in y_true, recall is set to 1 for all thresholds
     # tps[-1] == 0 <=> y_true == all negative labels

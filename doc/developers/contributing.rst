@@ -669,16 +669,34 @@ underestimate how easy an issue is to solve!
 Documentation
 =============
 
-We are glad to accept any sort of documentation: function docstrings,
-reStructuredText documents (like this one), tutorials, etc. reStructuredText
-documents live in the source code repository under the ``doc/`` directory.
+We are glad to accept any sort of documentation:
+
+* function/method/class docstrings (also known as "API documentation") - these
+  describe what the object does and details any parameters, attributes and
+  methods. Docstrings live alongside the code in
+  `sklearn/ <https://github.com/scikit-learn/scikit-learn/tree/main/sklearn>`_
+* user guide - these provide more detailed information about the algorithms
+  implemented in scikit-learn and generally live in the root
+  `doc/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc>`_ directory
+  and
+  `doc/modules/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc/modules>`_
+* tutorials - these introduce various statistical learning and machine learning
+  concepts and are located in
+  `doc/tutorial <https://github.com/scikit-learn/scikit-learn/tree/main/doc/tutorial>`_
+* examples - these provide full code examples that may demonstrate the use of
+  scikit-learn modules, compare different algorithms or discuss their
+  interpretation etc. Examples live in
+  `examples/ <https://github.com/scikit-learn/scikit-learn/tree/main/examples>`_
+* other reStructuredText documents (like this one) - provide various other
+  useful information (e.g., our guide to contributing) and live in
+  `doc/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc>`_
 
 You can edit the documentation using any text editor, and then generate the
-HTML output by typing ``make`` from the ``doc/`` directory. Alternatively,
-``make html`` may be used to generate the documentation **with** the example
-gallery (which takes quite some time). The resulting HTML files will be
-placed in ``_build/html/stable`` and are viewable in a web browser.
+HTML output by following :ref:`building_documentation`. The resulting HTML files
+will be placed in ``_build/html/stable`` and are viewable in a web browser, for
+instance by opening the local ``_build/html/stable/index.html`` file.
 
+.. _building_documentation:
 
 Building the documentation
 --------------------------
@@ -710,7 +728,9 @@ without the example gallery:
 
     make
 
-The documentation will be generated in the ``_build/html/stable`` directory.
+The documentation will be generated in the ``_build/html/stable`` directory
+and are viewable in a web browser, for instance by opening the local
+``_build/html/stable/index.html`` file.
 To also generate the example gallery you can use:
 
 .. prompt:: bash $
