@@ -848,7 +848,8 @@ Finally, follow the formatting rules below to make it consistently good:
 
 * In scikit-learn reStructuredText files both single and double backticks
   surrounding text will render as inline literal (often used for code, e.g.,
-  `list`). This is due to specific configurations we have set.
+  `list`). This is due to specific configurations we have set. Single
+  backticks should be used nowadays.
 
 * Before submitting your pull request check if your modifications have
   introduced new sphinx warnings and try to fix them.
