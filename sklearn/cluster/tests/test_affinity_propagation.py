@@ -70,9 +70,7 @@ def test_affinity_propagation_precomputed():
 
 
 def test_affinity_propagation_no_copy():
-    """
-    Check behaviour of not copying the input data.
-    """
+    """Check behaviour of not copying the input data."""
     S = -euclidean_distances(X, squared=True)
     S_original = S.copy()
     preference = np.median(S) * 10
@@ -81,6 +79,8 @@ def test_affinity_propagation_no_copy():
     # with copy=True S should not be modified
     affinity_propagation(S, preference=preference, copy=True, random_state=0)
     assert_allclose(S, S_original)
+    assert not np.allclose(S.diagonal(), preference)
+    assert_allclose(S.diagonal(), np.zeros(S.shape[0]))
 
     # with copy=False S will be modified inplace
     affinity_propagation(S, preference=preference, copy=False, random_state=0)
@@ -251,7 +251,7 @@ def test_affinity_propagation_random_state():
     ap.fit(X)
     centers76 = ap.cluster_centers_
     # check that the centers have not yet converged to the same solution
-    assert np.mean((centers0 - centers76) ** 2) > 0.5
+    assert np.mean((centers0 - centers76) ** 2) > 1
 
 
 @pytest.mark.parametrize("centers", [csr_matrix(np.zeros((1, 10))), np.zeros((1, 10))])
