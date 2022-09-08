@@ -173,7 +173,7 @@ def _parallel_build_trees(
             tree.random_state, n_samples, n_samples_bootstrap
         )
 
-        if len(indices) == 0:
+        if indices.size == 0:
             raise ValueError(
                 "No samples were selected from your data, try increasing max_samples."
             )
