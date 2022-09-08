@@ -13,7 +13,6 @@ from scipy.special import comb
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
-from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
 from ..utils.validation import _check_feature_names_in
 from ..utils._param_validation import Interval, StrOptions
