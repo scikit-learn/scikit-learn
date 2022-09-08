@@ -33,7 +33,7 @@ np.random.seed(0)
 
 X = face.reshape((-1, 1))  # We need an (n_sample, n_feature) array
 est = preprocessing.KBinsDiscretizer(
-    n_bins=n_bins, strategy="uniform", encode="ordinal", random_state=0
+    n_bins=n_bins, strategy="kmeans", encode="ordinal", random_state=0
 )
 est.fit(X)
 values = est.bin_edges_[0]
@@ -47,12 +47,12 @@ vmax = face.max()
 
 # original face
 plt.figure(1, figsize=(3, 2.2))
-plt.title('original image')
+plt.title("original image")
 plt.imshow(face, cmap=plt.cm.gray, vmin=vmin, vmax=256)
 
 # compressed face
 plt.figure(2, figsize=(3, 2.2))
-plt.title('quantized image (kmeans)')
+plt.title("quantized image (kmeans)")
 plt.imshow(face_compressed, cmap=plt.cm.gray, vmin=vmin, vmax=vmax)
 
 # equal bins face
@@ -62,7 +62,7 @@ regular_values = 0.5 * (regular_values[1:] + regular_values[:-1])  # mean
 regular_face = np.choose(regular_labels.ravel(), regular_values, mode="clip")
 regular_face.shape = face.shape
 plt.figure(3, figsize=(3, 2.2))
-plt.title('quantized image (dqual bins)')
+plt.title("quantized image (equal bins)")
 plt.imshow(regular_face, cmap=plt.cm.gray, vmin=vmin, vmax=vmax)
 
 # histogram
@@ -72,7 +72,7 @@ plt.axes([0.01, 0.01, 0.98, 0.98])
 plt.hist(X, bins=256, color=".5", edgecolor=".5")
 plt.yticks(())
 plt.xticks(regular_values)
-plt.title('image intensity histogram')
+plt.title("image intensity histogram")
 values = np.sort(values)
 for center_1, center_2 in zip(values[:-1], values[1:]):
     plt.axvline(0.5 * (center_1 + center_2), color="b")
