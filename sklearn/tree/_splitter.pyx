@@ -74,7 +74,7 @@ cdef class Splitter:
         random_state : object
             The user inputted random state to be used for pseudo-randomness
 
-        monotonic_cst : INT32_t*
+        monotonic_cst : INT32_t[:]
             Monotonicity constraints
 
         """
@@ -90,7 +90,7 @@ cdef class Splitter:
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
         self.random_state = random_state
-        self.monotonic_cst = &monotonic_cst[0]
+        self.monotonic_cst = monotonic_cst
 
     def __getstate__(self):
         return {}
@@ -298,6 +298,8 @@ cdef class BestSplitter(BaseDenseSplitter):
         # n_total_constants = n_known_constants + n_found_constants
         cdef SIZE_t n_total_constants = n_known_constants
         cdef SIZE_t partition_end
+
+        cdef INT32_t monotonic_constraint
 
         _init_split(&best, end)
 
@@ -624,6 +626,8 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef DTYPE_t max_feature_value
         cdef DTYPE_t current_feature_value
 
+        cdef INT32_t monotonic_constraint
+
         _init_split(&best, end)
 
         # Sample up to max_features without replacement using a
@@ -792,7 +796,7 @@ cdef class BaseSparseSplitter(Splitter):
                   object random_state, const INT32_t[:] monotonic_cst):
         # Parent __cinit__ is automatically called
         self.n_total_samples = 0
-        self.monotonic_cst = &monotonic_cst[0]
+        self.monotonic_cst = monotonic_cst
 
     cdef int init(self,
                   object X,
@@ -1147,6 +1151,8 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
         cdef SIZE_t start_positive
         cdef SIZE_t end_negative
 
+        cdef INT32_t monotonic_constraint
+
         # Sample up to max_features without replacement using a
         # Fisher-Yates-based algorithm (using the local variables `f_i` and
         # `f_j` to compute a permutation of the `features` array).
@@ -1386,6 +1392,8 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         # start_negative = start
         cdef SIZE_t start_positive
         cdef SIZE_t end_negative
+
+        cdef INT32_t monotonic_constraint
 
         # Sample up to max_features without replacement using a
         # Fisher-Yates-based algorithm (using the local variables `f_i` and
