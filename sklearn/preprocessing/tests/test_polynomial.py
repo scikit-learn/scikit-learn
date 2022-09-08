@@ -769,19 +769,6 @@ def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only):
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
 
-def test_polynomial_features_deprecated_n_input_features():
-    # check that we raise a deprecation warning when accessing
-    # `n_input_features_`. FIXME: remove in 1.2
-    depr_msg = (
-        "The attribute `n_input_features_` was deprecated in version "
-        "1.0 and will be removed in 1.2."
-    )
-    X = np.arange(10).reshape(5, 2)
-
-    with pytest.warns(FutureWarning, match=depr_msg):
-        PolynomialFeatures().fit(X).n_input_features_
-
-
 def test_polynomial_features_behaviour_on_zero_degree():
     """Check that PolynomialFeatures raises error when degree=0 and include_bias=False,
     and output a single constant column when include_bias=True
