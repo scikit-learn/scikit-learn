@@ -324,9 +324,6 @@ class RBFSampler(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimat
         "random_state": ["random_state"],
     }
 
-    def _more_tags(self):
-        return {"preserves_dtype": [np.float64, np.float32]}
-
     def __init__(self, *, gamma=1.0, n_components=100, random_state=None):
         self.gamma = gamma
         self.n_components = n_components
@@ -394,6 +391,9 @@ class RBFSampler(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimat
         np.cos(projection, projection)
         projection *= np.sqrt(2.0) / np.sqrt(self.n_components)
         return projection
+
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
 
 
 class SkewedChi2Sampler(
