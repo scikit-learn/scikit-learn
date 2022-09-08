@@ -69,7 +69,7 @@ for ax, (method, fa) in zip(axes, methods):
     vmax = np.abs(components).max()
     ax.imshow(components, cmap="RdBu_r", vmax=vmax, vmin=-vmax)
     ax.set_yticks(np.arange(len(feature_names)))
-    if ax.is_first_col():
+    if ax.get_subplotspec().is_first_col():
         ax.set_yticklabels(feature_names)
     else:
         ax.set_yticklabels([])
