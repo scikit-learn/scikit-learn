@@ -1801,7 +1801,7 @@ def test_random_trees_embedding_feature_names_out():
     assert_array_equal(expected_names, names)
 
 
-# TODO: remove in 1.4
+# TODO(1.4): remove in 1.4
 @pytest.mark.parametrize(
     "name",
     FOREST_ESTIMATORS,

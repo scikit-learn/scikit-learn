@@ -338,7 +338,7 @@ def test_iforest_with_n_jobs_does_not_segfault():
     IsolationForest(n_estimators=10, max_samples=256, n_jobs=2).fit(X)
 
 
-# TODO: remove in 1.4
+# TODO(1.4): remove in 1.4
 def test_base_estimator_property_deprecated():
     X = np.array([[1, 2], [3, 4]])
     y = np.array([1, 0])

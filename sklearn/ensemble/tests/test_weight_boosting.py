@@ -592,7 +592,7 @@ def test_adaboost_numerically_stable_feature_importance_with_small_weights():
     assert np.isnan(ada_model.feature_importances_).sum() == 0
 
 
-# TODO: remove in 1.4
+# TODO(1.4): remove in 1.4
 @pytest.mark.parametrize(
     "AdaBoost, Estimator",
     [
@@ -613,7 +613,7 @@ def test_base_estimator_argument_deprecated(AdaBoost, Estimator):
         model.fit(X, y)
 
 
-# TODO: remove in 1.4
+# TODO(1.4): remove in 1.4
 @pytest.mark.parametrize(
     "AdaBoost",
     [AdaBoostClassifier, AdaBoostRegressor],

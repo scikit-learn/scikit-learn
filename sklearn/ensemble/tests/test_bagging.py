@@ -938,7 +938,7 @@ def test_n_features_deprecation(Estimator):
         est.n_features_
 
 
-# TODO: remove in 1.4
+# TODO(1.4): remove in 1.4
 @pytest.mark.parametrize(
     "Bagging, Estimator",
     [
@@ -959,7 +959,7 @@ def test_base_estimator_argument_deprecated(Bagging, Estimator):
         model.fit(X, y)
 
 
-# TODO: remove in 1.4
+# TODO(1.4): remove in 1.4
 @pytest.mark.parametrize(
     "Bagging",
     [BaggingClassifier, BaggingClassifier],
@@ -978,7 +978,6 @@ def test_base_estimator_property_deprecated(Bagging):
         model.base_estimator_
 
 
-# TODO: remove in 1.4
 def test_deprecated_base_estimator_has_decision_function():
     """Check that `BaggingClassifier` delegate to classifier with
     `decision_function`."""
