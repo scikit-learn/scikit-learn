@@ -215,7 +215,7 @@ def test_rbf_sampler():
     assert np.mean(error) <= 0.05  # mean is fairly close
 
 
-@pytest.mark.parameterize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
 def test_skewed_chi2_sampler_fitted_attributes_dtype(dtype):
     skewed_chi2_sampler = SkewedChi2Sampler()
 
