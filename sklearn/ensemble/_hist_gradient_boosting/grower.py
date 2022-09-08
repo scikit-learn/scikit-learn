@@ -164,7 +164,7 @@ class TreeGrower:
     is_categorical : ndarray of bool of shape (n_features,), default=None
         Indicates categorical features.
     monotonic_cst : array-like of shape (n_features,), dtype=int, default=None
-        Indicates the monotonic constraint to enforce on each feature. -1, 1
+        Indicates the monotonic constraint to enforce on each feature. 1, -1
         and 0 respectively correspond to a positive constraint, negative
         constraint and no constraint. Read more in the :ref:`User Guide
         <monotonic_cst_gbdt>`.
