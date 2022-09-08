@@ -316,18 +316,6 @@ def test_iforest_with_uniform_data():
     assert all(iforest.predict(np.ones((100, 10))) == 1)
 
 
-# FIXME: remove in 1.2
-def test_n_features_deprecation():
-    # Check that we raise the proper deprecation warning if accessing
-    # `n_features_`.
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    est = IsolationForest().fit(X, y)
-
-    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
-        est.n_features_
-
-
 def test_iforest_with_n_jobs_does_not_segfault():
     """Check that Isolation Forest does not segfault with n_jobs=2
 
