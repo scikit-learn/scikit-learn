@@ -262,7 +262,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         "n_jobs": [None, Integral],
         "random_state": ["random_state"],
         "verbose": ["verbose"],
-        "base_estimator": [HasMethods(["fit", "predict"]), StrOptions({"deprecated"})],
+        "base_estimator": [
+            HasMethods(["fit", "predict"]),
+            StrOptions({"deprecated"}),
+            None,
+        ],
     }
 
     @abstractmethod

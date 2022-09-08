@@ -173,10 +173,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             self._estimator = default
 
-        if self._estimator is None:
-            raise ValueError("`estimator` cannot be None.")
-
-    # TODO: remove in 1.4
+    # TODO(1.4): remove
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
         "Attribute `base_estimator_` was deprecated in version 1.2 and will be removed "
@@ -187,7 +184,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """Estimator used to grow the ensemble."""
         return self._estimator
 
-    # TODO: remove in 1.4
+    # TODO(1.4): remove
     @property
     def estimator_(self):
         """Estimator used to grow the ensemble."""
