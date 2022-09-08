@@ -986,5 +986,10 @@ def test_deprecated_base_estimator_has_decision_function():
     X, y = iris.data, iris.target
     clf = BaggingClassifier(base_estimator=SVC())
     assert hasattr(clf, "decision_function")
-    y_decision = clf.fit(X, y).decision_function(X)
+    warn_msg = (
+        "`base_estimator` was renamed to `estimator` in version 1.2 and "
+        "will be removed in 1.4."
+    )
+    with pytest.warns(FutureWarning, match=warn_msg):
+        y_decision = clf.fit(X, y).decision_function(X)
     assert y_decision.shape == (150, 3)
