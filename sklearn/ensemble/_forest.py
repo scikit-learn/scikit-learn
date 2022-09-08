@@ -2560,14 +2560,14 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
 
     Attributes
     ----------
-    estimator_ : :class:`~sklearn.tree.ExtraTreeClassifier` instance
+    estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor` instance
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
         .. versionadded:: 1.2
            `base_estimator_` was renamed to `estimator_`.
 
-    base_estimator_ : :class:`~sklearn.tree.ExtraTreeClassifier` instance
+    base_estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor` instance
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
@@ -2575,7 +2575,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
             `base_estimator_` is deprecated and will be removed in 1.4.
             Use `estimator_` instead.
 
-    estimators_ : list of :class:`~sklearn.tree.ExtraTreeClassifier` instances
+    estimators_ : list of :class:`~sklearn.tree.ExtraTreeRegressor` instances
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
