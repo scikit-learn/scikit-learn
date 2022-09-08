@@ -435,18 +435,18 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         with nogil:
             # add root to frontier
             rc = self._add_split_node(
-                                      splitter,         # splitter
-                                      tree,             # tree
-                                      0,                # start
-                                      n_node_samples,   # end
-                                      INFINITY,         # impurity
-                                      IS_FIRST,         # is_first
-                                      IS_LEFT,          # is_left
-                                      NULL,             # parent
-                                      0,                # depth
-                                      -INFINITY,        # lower_bound
-                                      INFINITY,         # upper_bound
-                                      &split_node_left  # res
+                splitter=splitter,
+                tree=tree,
+                start=0,
+                end=n_node_samples,
+                impurity=INFINITY,
+                is_first=IS_FIRST,
+                is_left=IS_LEFT,
+                parent=NULL,
+                depth=0,
+                lower_bound=-INFINITY,
+                upper_bound=INFINITY,
+                res=&split_node_left,
             )
             if rc >= 0:
                 _add_to_frontier(split_node_left, frontier)
@@ -502,18 +502,18 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
                     # Compute left split node
                     rc = self._add_split_node(
-                                              splitter,             # splitter
-                                              tree,                 # tree
-                                              record.start,         # start
-                                              record.pos,           # end
-                                              record.impurity_left, # impurity
-                                              IS_NOT_FIRST,         # is_first
-                                              IS_LEFT,              # is_left
-                                              node,                 # parent
-                                              record.depth + 1,     # depth
-                                              left_child_min,       # lower_bound
-                                              left_child_max,       # upper_bound
-                                              &split_node_left      # res
+                        splitter=splitter,
+                        tree=tree,
+                        start=record.start,
+                        end=record.pos,
+                        impurity=record.impurity_left,
+                        is_first=IS_NOT_FIRST,
+                        is_left=IS_LEFT,
+                        parent=node,
+                        depth=record.depth + 1,
+                        lower_bound=left_child_min,
+                        upper_bound=left_child_max,
+                        res=&split_node_left,
                     )
                     if rc == -1:
                         break
@@ -523,18 +523,18 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
                     # Compute right split node
                     rc = self._add_split_node(
-                                              splitter,             # splitter
-                                              tree,                 # tree
-                                              record.pos,           # start
-                                              record.end,           # end
-                                              record.impurity_right,# impurity
-                                              IS_NOT_FIRST,         # is_first
-                                              IS_NOT_LEFT,          # is_left
-                                              node,                 # parent
-                                              record.depth + 1,     # depth
-                                              right_child_min,      # lower_bound
-                                              right_child_max,      # upper_bound
-                                              &split_node_right     # res
+                        splitter=splitter,
+                        tree=tree,
+                        start=record.pos,
+                        end=record.end,
+                        impurity=record.impurity_right,
+                        is_first=IS_NOT_FIRST,
+                        is_left=IS_NOT_LEFT,
+                        parent=node,
+                        depth=record.depth + 1,
+                        lower_bound=right_child_min,
+                        upper_bound=right_child_max,
+                        res=&split_node_right,
                     )
                     if rc == -1:
                         break
@@ -556,19 +556,20 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
             raise MemoryError()
 
     cdef inline int _add_split_node(
-                                    self,
-                                    Splitter splitter,
-                                    Tree tree,
-                                    SIZE_t start,
-                                    SIZE_t end,
-                                    double impurity,
-                                    bint is_first,
-                                    bint is_left,
-                                    Node* parent,
-                                    SIZE_t depth,
-                                    double lower_bound,
-                                    double upper_bound,
-                                    FrontierRecord* res) nogil except -1:
+        self,
+        Splitter splitter,
+        Tree tree,
+        SIZE_t start,
+        SIZE_t end,
+        double impurity,
+        bint is_first,
+        bint is_left,
+        Node* parent,
+        SIZE_t depth,
+        double lower_bound,
+        double upper_bound,
+        FrontierRecord* res
+    ) nogil except -1:
         """Adds node w/ partition ``[start, end)`` to the frontier. """
         cdef SplitRecord split
         cdef SIZE_t node_id
