@@ -6,6 +6,7 @@ Testing for the base module (sklearn.ensemble.base).
 # License: BSD 3 clause
 
 import numpy as np
+import pytest
 
 from sklearn.datasets import load_iris
 from sklearn.ensemble import BaggingClassifier
@@ -106,3 +107,13 @@ def test_set_random_states():
             est1.get_params()["clf__random_state"]
             == est2.get_params()["clf__random_state"]
         )
+
+
+# TODO(1.4): remove
+def test_validate_estimator_value_error():
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    model = BaggingClassifier(estimator=Perceptron(), base_estimator=Perceptron())
+    err_msg = "Both `estimator` and `base_estimator` were set. Only set `estimator`."
+    with pytest.raises(ValueError, match=err_msg):
+        model.fit(X, y)
