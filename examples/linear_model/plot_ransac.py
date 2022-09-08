@@ -3,8 +3,18 @@
 Robust linear model estimation using RANSAC
 ===========================================
 
-In this example we see how to robustly fit a linear model to faulty data using
+:ref:`RANSAC <ransac_regression>` (random sample consensus) is an iterative
+algorithm to estimate parameters of a model from a dataset with outliers, especially when
+the outliers have little-to-no influence on the values of the estimates.
+
+In this example, we see how to robustly fit a linear model to faulty data using
 the RANSAC algorithm.
+
+References
+----------
+ * `"Overview of the RANSAC Algorithm"
+    <http://www.cse.yorku.ca/~kosta/CompVis_Notes/ransac.pdf>`_
+    K.G. Derpanis. - Image Rochester NY, 4(1):2-3, 2010.
 
 """
 
