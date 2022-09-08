@@ -215,6 +215,35 @@ def test_rbf_sampler():
     assert np.mean(error) <= 0.05  # mean is fairly close
 
 
+@pytest.mark.parameterize("dtype", [np.float32, np.float64])
+def test_skewed_chi2_sampler_fitted_attributes_dtype(dtype):
+    skewed_chi2_sampler = SkewedChi2Sampler()
+
+    X = np.array([[1, 2], [3, 4], [5, 6]], dtype=dtype)
+
+    skewed_chi2_sampler.fit(X)
+
+    assert skewed_chi2_sampler.random_offset_.dtype == dtype
+    assert skewed_chi2_sampler.random_weights_.dtype == dtype
+
+
+def test_skewed_chi2_sampler_dtype_equivalence():
+    skewed_chi2_sampler_32 = SkewedChi2Sampler(random_state=42)
+    X_32 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
+    skewed_chi2_sampler_32.fit(X_32)
+
+    skewed_chi2_sampler_64 = SkewedChi2Sampler(random_state=42)
+    X_64 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float64)
+    skewed_chi2_sampler_64.fit(X_64)
+
+    assert_allclose(
+        skewed_chi2_sampler_32.random_offset_, skewed_chi2_sampler_64.random_offset_
+    )
+    assert_allclose(
+        skewed_chi2_sampler_32.random_weights_, skewed_chi2_sampler_64.random_weights_
+    )
+
+
 def test_input_validation():
     # Regression test: kernel approx. transformers should work on lists
     # No assertions; the old versions would simply crash
