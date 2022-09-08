@@ -56,6 +56,62 @@ from sklearn.externals._packaging.version import parse as parse_version  # noqa
 
 VERSION = sklearn.__version__
 
+# See: https://numpy.org/doc/stable/reference/c-api/deprecations.html
+DEFINE_MACRO_NUMPY_C_API = (
+    "NPY_NO_DEPRECATED_API",
+    "NPY_1_7_API_VERSION",
+)
+
+# XXX: add new extensions to this list when they
+# are not using the old NumPy C API (i.e. version 1.7)
+# TODO: when Cython>=3.0 is used, make sure all Cython extensions
+# use the newest NumPy C API by `#defining` `NPY_NO_DEPRECATED_API` to be
+# `NPY_1_7_API_VERSION`, and remove this list.
+# See: https://github.com/cython/cython/blob/1777f13461f971d064bd1644b02d92b350e6e7d1/docs/src/userguide/migrating_to_cy30.rst#numpy-c-api # noqa
+USE_NEWEST_NUMPY_C_API = (
+    "sklearn.__check_build._check_build",
+    "sklearn._loss._loss",
+    "sklearn.cluster._k_means_common",
+    "sklearn.cluster._k_means_lloyd",
+    "sklearn.cluster._k_means_elkan",
+    "sklearn.cluster._k_means_minibatch",
+    "sklearn.datasets._svmlight_format_fast",
+    "sklearn.decomposition._cdnmf_fast",
+    "sklearn.ensemble._hist_gradient_boosting._gradient_boosting",
+    "sklearn.ensemble._hist_gradient_boosting.histogram",
+    "sklearn.ensemble._hist_gradient_boosting.splitting",
+    "sklearn.ensemble._hist_gradient_boosting._binning",
+    "sklearn.ensemble._hist_gradient_boosting._predictor",
+    "sklearn.ensemble._hist_gradient_boosting._bitset",
+    "sklearn.ensemble._hist_gradient_boosting.common",
+    "sklearn.ensemble._hist_gradient_boosting.utils",
+    "sklearn.feature_extraction._hashing_fast",
+    "sklearn.manifold._barnes_hut_tsne",
+    "sklearn.metrics.cluster._expected_mutual_info_fast",
+    "sklearn.metrics._pairwise_distances_reduction._datasets_pair",
+    "sklearn.metrics._pairwise_distances_reduction._gemm_term_computer",
+    "sklearn.metrics._pairwise_distances_reduction._base",
+    "sklearn.metrics._pairwise_distances_reduction._argkmin",
+    "sklearn.metrics._pairwise_distances_reduction._radius_neighborhood",
+    "sklearn.metrics._pairwise_fast",
+    "sklearn.neighbors._partition_nodes",
+    "sklearn.tree._splitter",
+    "sklearn.tree._utils",
+    "sklearn.utils._cython_blas",
+    "sklearn.utils._fast_dict",
+    "sklearn.utils._openmp_helpers",
+    "sklearn.utils._weight_vector",
+    "sklearn.utils._random",
+    "sklearn.utils._logistic_sigmoid",
+    "sklearn.utils._readonly_array_wrapper",
+    "sklearn.utils._typedefs",
+    "sklearn.utils._heap",
+    "sklearn.utils._sorting",
+    "sklearn.utils._vector_sentinel",
+    "sklearn.utils._isfinite",
+    "sklearn.svm._newrand",
+    "sklearn._isotonic",
+)
 
 # For some commands, use setuptools
 SETUPTOOLS_COMMANDS = {
@@ -142,6 +198,15 @@ try:
 
         def build_extensions(self):
             from sklearn._build_utils.openmp_helpers import get_openmp_flag
+
+            for ext in self.extensions:
+                if ext.name in USE_NEWEST_NUMPY_C_API:
+                    print(f"Using newest NumPy C API for extension {ext.name}")
+                    ext.define_macros.append(DEFINE_MACRO_NUMPY_C_API)
+                else:
+                    print(
+                        f"Using old NumPy C API (version 1.7) for extension {ext.name}"
+                    )
 
             if sklearn._OPENMP_SUPPORTED:
                 openmp_flag = get_openmp_flag(self.compiler)
