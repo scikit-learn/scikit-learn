@@ -18,7 +18,7 @@ from ._base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, column_or_1d, deprecated
+from ..utils import check_random_state, column_or_1d
 from ..utils import indices_to_mask
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
@@ -528,16 +528,6 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         """
         return [sample_indices for _, sample_indices in self._get_estimators_indices()]
 
-    # TODO: Remove in 1.2
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `n_features_` was deprecated in version 1.0 and will be "
-        "removed in 1.2. Use `n_features_in_` instead."
-    )
-    @property
-    def n_features_(self):
-        return self.n_features_in_
-
 
 class BaggingClassifier(ClassifierMixin, BaseBagging):
     """A Bagging classifier.
@@ -628,13 +618,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
     ----------
     base_estimator_ : estimator
         The base estimator from which the ensemble is grown.
-
-    n_features_ : int
-        The number of features when :meth:`fit` is performed.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1051,13 +1034,6 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
     ----------
     base_estimator_ : estimator
         The base estimator from which the ensemble is grown.
-
-    n_features_ : int
-        The number of features when :meth:`fit` is performed.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
