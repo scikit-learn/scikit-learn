@@ -494,19 +494,19 @@ class SkewedChi2Sampler(
             Returns the instance itself.
         """
         self._validate_params()
-        X = self._validate_data(X, dtype=[np.float64, np.float32])
+        X = self._validate_data(X)
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
         uniform = random_state.uniform(size=(n_features, self.n_components))
         # transform by inverse CDF of sech
-        self.random_weights_ = (
-            1.0
-            / np.pi
-            * np.log(np.tan(np.pi / 2.0 * uniform)).astype(X.dtype, copy=False)
-        )
-        self.random_offset_ = random_state.uniform(
-            0, 2 * np.pi, size=self.n_components
-        ).astype(X.dtype, copy=False)
+        self.random_weights_ = 1.0 / np.pi * np.log(np.tan(np.pi / 2.0 * uniform))
+        self.random_offset_ = random_state.uniform(0, 2 * np.pi, size=self.n_components)
+
+        # With this we preserve the dtype of X in transform() later
+        if X.dtype == np.float32:
+            self.random_weights_ = self.random_weights_.astype(X.dtype, copy=False)
+            self.random_offset_ = self.random_offset_.astype(X.dtype, copy=False)
+
         self._n_features_out = self.n_components
         return self
 

@@ -215,19 +215,20 @@ def test_rbf_sampler():
     assert np.mean(error) <= 0.05  # mean is fairly close
 
 
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_skewed_chi2_sampler_fitted_attributes_dtype(dtype):
+def test_skewed_chi2_sampler_fitted_attributes_dtype(global_dtype):
+    # Test that attributes are float32 when input is float32
     skewed_chi2_sampler = SkewedChi2Sampler()
 
-    X = np.array([[1, 2], [3, 4], [5, 6]], dtype=dtype)
+    X = np.array([[1, 2], [3, 4], [5, 6]], dtype=global_dtype)
 
     skewed_chi2_sampler.fit(X)
 
-    assert skewed_chi2_sampler.random_offset_.dtype == dtype
-    assert skewed_chi2_sampler.random_weights_.dtype == dtype
+    assert skewed_chi2_sampler.random_offset_.dtype == global_dtype
+    assert skewed_chi2_sampler.random_weights_.dtype == global_dtype
 
 
 def test_skewed_chi2_sampler_dtype_equivalence():
+    # Test that the results are similar independent of X's dtype
     skewed_chi2_sampler_32 = SkewedChi2Sampler(random_state=42)
     X_32 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
     skewed_chi2_sampler_32.fit(X_32)
