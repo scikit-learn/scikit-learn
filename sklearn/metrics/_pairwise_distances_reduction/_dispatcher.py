@@ -99,8 +99,16 @@ class BaseDistanceReductionDispatcher:
             return hasattr(X, "flags") and X.flags.c_contiguous
 
         def is_valid_sparse_matrix(X):
-            # TODO: support CSR matrices without non-zeros elements
-            return isspmatrix_csr(X) and X.nnz > 0
+            return (
+                isspmatrix_csr(X)
+                and
+                # TODO: support CSR matrices without non-zeros elements
+                X.nnz > 0
+                and
+                # TODO: support CSR matrices with int64 indices and indptr
+                # See: https://github.com/scikit-learn/scikit-learn/issues/23653
+                X.indices.dtype == X.indptr.dtype == np.int32
+            )
 
         return (
             get_config().get("enable_cython_pairwise_dist", True)

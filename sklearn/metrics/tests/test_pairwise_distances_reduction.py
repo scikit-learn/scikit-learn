@@ -556,6 +556,14 @@ def test_pairwise_distances_reduction_is_usable_for():
     X_csr_0_nnz = csr_matrix(X * 0)
     assert not BaseDistanceReductionDispatcher.is_usable_for(X_csr_0_nnz, Y, metric)
 
+    # CSR matrices with int64 indices and indptr (e.g. large nnz, or large n_features)
+    # aren't supported as of now.
+    # See: https://github.com/scikit-learn/scikit-learn/issues/23653
+    # TODO: support CSR matrices with int64 indices and indptr
+    X_csr_int64 = csr_matrix(X)
+    X_csr_int64.indices = X_csr_int64.indices.astype(np.int64)
+    assert not BaseDistanceReductionDispatcher.is_usable_for(X_csr_int64, Y, metric)
+
 
 def test_argkmin_factory_method_wrong_usages():
     rng = np.random.RandomState(1)
