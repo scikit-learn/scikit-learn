@@ -215,17 +215,16 @@ def test_rbf_sampler():
     assert np.mean(error) <= 0.05  # mean is fairly close
 
 
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
-def test_rbf_sampler_fitted_attributes_dtype(dtype):
+def test_rbf_sampler_fitted_attributes_dtype(global_dtype):
     # Test that attributes are float32 when input is float32
     rbf = RBFSampler()
 
-    X = np.array([[1, 2], [3, 4], [5, 6]], dtype=dtype)
+    X = np.array([[1, 2], [3, 4], [5, 6]], dtype=global_dtype)
 
     rbf.fit(X)
 
-    assert rbf.random_offset_.dtype == dtype
-    assert rbf.random_weights_.dtype == dtype
+    assert rbf.random_offset_.dtype == global_dtype
+    assert rbf.random_weights_.dtype == global_dtype
 
 
 def test_rbf_sampler_dtype_equivalence():
