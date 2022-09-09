@@ -141,6 +141,10 @@ Changelog
 - |Fix| :class:`cluster.KMeans` now supports readonly attributes when predicting.
   :pr:`24258` by `Thomas Fan`_
 
+- |Efficiency| :class:`cluster.KMeans` with `algorithm="lloyd"` is now faster
+  and uses less memory. :pr:`24264` by
+  :user:`Vincent Maladiere <Vincent-Maladiere>`.
+
 :mod:`sklearn.datasets`
 .......................
 
@@ -205,6 +209,30 @@ Changelog
   NaN in feature importance when fitted with very small sample weight.
   :pr:`20415` by :user:`Zhehao Liu <MaxwellLZH>`.
 
+- |API| Rename the constructor parameter `base_estimator` to `estimator` in
+  the following classes:
+  :class:`ensemble.BaggingClassifier`,
+  :class:`ensemble.BaggingRegressor`,
+  :class:`ensemble.AdaBoostClassifier`,
+  :class:`ensemble.AdaBoostRegressor`.
+  `base_estimator` is deprecated in 1.2 and will be removed in 1.4.
+  :pr:`23819` by :user:`Adrian Trujillo <trujillo9616>` and :user:`Edoardo Abati <EdAbati>`.
+
+- |API| Rename the fitted attribute `base_estimator_` to `estimator_` in
+  the following classes:
+  :class:`ensemble.BaggingClassifier`,
+  :class:`ensemble.BaggingRegressor`,
+  :class:`ensemble.AdaBoostClassifier`,
+  :class:`ensemble.AdaBoostRegressor`,
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`,
+  :class:`ensemble.ExtraTreesRegressor`,
+  :class:`ensemble.RandomTreesEmbedding`,
+  :class:`ensemble.IsolationForest`.
+  `base_estimator_` is deprecated in 1.2 and will be removed in 1.4.
+  :pr:`23819` by :user:`Adrian Trujillo <trujillo9616>` and :user:`Edoardo Abati <EdAbati>`.
+
 :mod:`sklearn.feature_selection`
 ................................
 
@@ -220,6 +248,9 @@ Changelog
 
 - |Enhancement| :class:`kernel_approximation.RBFSampler` now preserves
   dtype for `numpy.float32` inputs. :pr:`24317` by `Tim Head <betatim>`.
+
+- |Enhancement| :class:`kernel_approximation.SkewedChi2Sampler` now preserves
+  dtype for `numpy.float32` inputs. :pr:`24350` by :user:`Rahil Parikh <rprkh>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -271,6 +302,10 @@ Changelog
   of a binary classification problem. :pr:`22518` by
   :user:`Arturo Amor <ArturoAmorQ>`.
 
+- |Fix| Allows `csr_matrix` as input for parameter: `y_true` of
+   the :func:`metrics.label_ranking_average_precision_score` metric.
+   :pr:`23442` by :user:`Sean Atukorala <ShehanAT>`
+  
 - |Fix| :func:`metrics.ndcg_score` will now trigger a warning when the `y_true`
   value contains a negative value. Users may still use negative values, but the
   result may not be between 0 and 1. Starting in v1.4, passing in negative

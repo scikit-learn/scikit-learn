@@ -485,16 +485,6 @@ def test_ransac_dynamic_max_trials():
     assert _dynamic_max_trials(1, 100, 10, 0) == 0
     assert _dynamic_max_trials(1, 100, 10, 1) == float("inf")
 
-    estimator = LinearRegression()
-    ransac_estimator = RANSACRegressor(estimator, min_samples=2, stop_probability=-0.1)
-
-    with pytest.raises(ValueError):
-        ransac_estimator.fit(X, y)
-
-    ransac_estimator = RANSACRegressor(estimator, min_samples=2, stop_probability=1.1)
-    with pytest.raises(ValueError):
-        ransac_estimator.fit(X, y)
-
 
 def test_ransac_fit_sample_weight():
     ransac_estimator = RANSACRegressor(random_state=0)
