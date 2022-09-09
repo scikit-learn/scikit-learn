@@ -449,28 +449,28 @@ class NeighborhoodComponentsAnalysis(
             return np.eye(n_components, X.shape[1])
         elif init == "random":
             return self.random_state_.standard_normal(size=(n_components, X.shape[1]))
-        else:
-            init_time = time.time()
-            if init == "pca":
-                pca = PCA(n_components=n_components, random_state=self.random_state_)
-                if self.verbose:
-                    print("Finding principal components... ", end="")
-                    sys.stdout.flush()
-                pca.fit(X)
-                transformation = pca.components_
-            else:  # init == "lda":
-                from ..discriminant_analysis import LinearDiscriminantAnalysis
 
-                lda = LinearDiscriminantAnalysis(n_components=n_components)
-                if self.verbose:
-                    print("Finding most discriminative components... ", end="")
-                    sys.stdout.flush()
-                lda.fit(X, y)
-                transformation = lda.scalings_.T[:n_components]
+        init_time = time.time()
+        if init == "pca":
+            pca = PCA(n_components=n_components, random_state=self.random_state_)
             if self.verbose:
-                print("done in {:5.2f}s".format(time.time() - init_time))
+                print("Finding principal components... ", end="")
+                sys.stdout.flush()
+            pca.fit(X)
+            transformation = pca.components_
+        else:  # init == "lda":
+            from ..discriminant_analysis import LinearDiscriminantAnalysis
 
-            return transformation
+            lda = LinearDiscriminantAnalysis(n_components=n_components)
+            if self.verbose:
+                print("Finding most discriminative components... ", end="")
+                sys.stdout.flush()
+            lda.fit(X, y)
+            transformation = lda.scalings_.T[:n_components]
+        if self.verbose:
+            print("done in {:5.2f}s".format(time.time() - init_time))
+
+        return transformation
 
     def _callback(self, transformation):
         """Called after each iteration of the optimizer.
