@@ -3,10 +3,10 @@
 # Authors: G. Varoquaux, A. Gramfort, L. Buitinck, J. Nothman
 # License: BSD 3 clause
 
+import warnings
 from abc import ABCMeta, abstractmethod
 from inspect import signature
 from operator import attrgetter
-import warnings
 
 import numpy as np
 from scipy.sparse import issparse, csc_matrix
