@@ -368,6 +368,13 @@ Changelog
   :class:`neighbors.RadiusNeighborsTransformer`.
   :pr:`24075` by :user:`Valentin Laurent <Valentin-Laurent>`.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| :class:`preprocessing.FunctionTransformer` will always try to set
+  `n_features_in_` and `feature_names_in_` regardless of the `validate` parameter.
+  :pr:`23993` by `Thomas Fan`_.
+
 :mod:`sklearn.svm`
 ..................
 
