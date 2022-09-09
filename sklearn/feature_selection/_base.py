@@ -181,10 +181,10 @@ def _get_feature_importances(
         A scikit-learn estimator from which we want to get the feature
         importances.
 
-    X : {array-like, sparse matrix} of shape (n_samples, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features), default=None
         The training input samples.
 
-    y : array-like of shape (n_samples,)
+    y : array-like of shape (n_samples,), default=None
         The target values.
 
     getter : "auto", str or callable
