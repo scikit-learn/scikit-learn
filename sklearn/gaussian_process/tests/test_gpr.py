@@ -16,6 +16,7 @@ import pytest
 from sklearn.gaussian_process import GaussianProcessRegressor
 from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, WhiteKernel
 from sklearn.gaussian_process.kernels import DotProduct, ExpSineSquared
+from sklearn.gaussian_process.tests._custom_min_t_kernel import CustomMinT
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import (
@@ -23,6 +24,7 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_allclose,
+    assert_array_equal,
 )
 
 
@@ -767,3 +769,19 @@ def test_sample_y_shapes(normalize_y, n_targets):
 
     y_samples = model.sample_y(X_test, n_samples=n_samples_y_test)
     assert y_samples.shape == y_test_shape
+
+
+def test_gpr_predict_input_not_modified():
+    """
+    Check that the input X is not modified by the predict method of the
+    GaussianProcessRegressor when setting return_std=True.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/24340
+    """
+    gpr = GaussianProcessRegressor(kernel=CustomMinT()).fit(X, y)
+
+    original_x2 = np.copy(X2)
+    _, _ = gpr.predict(X2, return_std=True)
+
+    assert_array_equal(original_x2, X2)
