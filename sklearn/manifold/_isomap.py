@@ -5,6 +5,7 @@
 import warnings
 
 import numpy as np
+from numbers import Integral, Real
 
 from scipy.sparse import issparse
 from scipy.sparse.csgraph import shortest_path
@@ -17,6 +18,8 @@ from ..utils.validation import check_is_fitted
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
 from ..utils.graph import _fix_connected_components
+from ..utils._param_validation import Interval, StrOptions
+from ..metrics.pairwise import _VALID_METRICS
 
 
 class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
@@ -158,6 +161,21 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     >>> X_transformed.shape
     (100, 2)
     """
+
+    _parameter_constraints: dict = {
+        "n_neighbors": [Interval(Integral, 1, None, closed="left"), None],
+        "radius": [Interval(Real, 0, None, closed="both"), None],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "eigen_solver": [StrOptions({"auto", "arpack", "dense"})],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left"), None],
+        "path_method": [StrOptions({"auto", "FW", "D"})],
+        "neighbors_algorithm": [StrOptions({"auto", "brute", "kd_tree", "ball_tree"})],
+        "n_jobs": [Integral, None],
+        "p": [Interval(Real, 1, None, closed="left")],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "metric_params": [dict, None],
+    }
 
     def __init__(
         self,
@@ -325,6 +343,7 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
+        self._validate_params()
         self._fit_transform(X)
         return self
 
@@ -345,6 +364,7 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         X_new : array-like, shape (n_samples, n_components)
             X transformed in the new space.
         """
+        self._validate_params()
         self._fit_transform(X)
         return self.embedding_
 

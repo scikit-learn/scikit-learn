@@ -10,6 +10,7 @@ Link: https://github.com/blei-lab/onlineldavb
 
 # Author: Chyi-Kwei Yau
 # Author: Matthew D. Hoffman (original onlineldavb implementation)
+from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
@@ -21,6 +22,7 @@ from ..utils import check_random_state, gen_batches, gen_even_slices
 from ..utils.validation import check_non_negative
 from ..utils.validation import check_is_fitted
 from ..utils.fixes import delayed
+from ..utils._param_validation import Interval, StrOptions
 
 from ._online_lda_fast import (
     mean_change,
@@ -320,6 +322,25 @@ class LatentDirichletAllocation(
            [0.15297572, 0.00362644, 0.44412786, 0.39568399, 0.003586  ]])
     """
 
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 0, None, closed="neither")],
+        "doc_topic_prior": [None, Interval(Real, 0, 1, closed="both")],
+        "topic_word_prior": [None, Interval(Real, 0, 1, closed="both")],
+        "learning_method": [StrOptions({"batch", "online"})],
+        "learning_decay": [Interval(Real, 0, 1, closed="both")],
+        "learning_offset": [Interval(Real, 1.0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "batch_size": [Interval(Integral, 0, None, closed="neither")],
+        "evaluate_every": [Interval(Integral, None, None, closed="neither")],
+        "total_samples": [Interval(Real, 0, None, closed="neither")],
+        "perp_tol": [Interval(Real, 0, None, closed="left")],
+        "mean_change_tol": [Interval(Real, 0, None, closed="left")],
+        "max_doc_update_iter": [Interval(Integral, 0, None, closed="left")],
+        "n_jobs": [None, Integral],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         n_components=10,
@@ -356,26 +377,6 @@ class LatentDirichletAllocation(
         self.n_jobs = n_jobs
         self.verbose = verbose
         self.random_state = random_state
-
-    def _check_params(self):
-        """Check model parameters."""
-        if self.n_components <= 0:
-            raise ValueError("Invalid 'n_components' parameter: %r" % self.n_components)
-
-        if self.total_samples <= 0:
-            raise ValueError(
-                "Invalid 'total_samples' parameter: %r" % self.total_samples
-            )
-
-        if self.learning_offset < 0:
-            raise ValueError(
-                "Invalid 'learning_offset' parameter: %r" % self.learning_offset
-            )
-
-        if self.learning_method not in ("batch", "online"):
-            raise ValueError(
-                "Invalid 'learning_method' parameter: %r" % self.learning_method
-            )
 
     def _init_latent_vars(self, n_features):
         """Initialize latent variables."""
@@ -559,7 +560,7 @@ class LatentDirichletAllocation(
         self
             Partially fitted estimator.
         """
-        self._check_params()
+        self._validate_params()
         first_time = not hasattr(self, "components_")
         X = self._check_non_neg_array(
             X, reset_n_features=first_time, whom="LatentDirichletAllocation.partial_fit"
@@ -609,7 +610,7 @@ class LatentDirichletAllocation(
         self
             Fitted estimator.
         """
-        self._check_params()
+        self._validate_params()
         X = self._check_non_neg_array(
             X, reset_n_features=True, whom="LatentDirichletAllocation.fit"
         )

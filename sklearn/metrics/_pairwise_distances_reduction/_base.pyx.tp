@@ -1,16 +1,34 @@
+{{py:
+
+implementation_specific_values = [
+    # Values are the following ones:
+    #
+    #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
+    #
+    # We also use the float64 dtype and C-type names as defined in
+    # `sklearn.utils._typedefs` to maintain consistency.
+    #
+    ('64', 'DTYPE_t', 'DTYPE'),
+    ('32', 'cnp.float32_t', 'np.float32')
+]
+
+}}
 cimport numpy as cnp
-import numpy as np
+cimport openmp
 
-from sklearn import get_config
 from cython cimport final
+from cython.operator cimport dereference as deref
 from cython.parallel cimport parallel, prange
+from libcpp.vector cimport vector
 
-from ._datasets_pair cimport DatasetsPair
 from ...utils._cython_blas cimport _dot
 from ...utils._openmp_helpers cimport _openmp_thread_num
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
+import numpy as np
+
 from numbers import Integral
+from sklearn import get_config
 from sklearn.utils import check_scalar
 from ...utils._openmp_helpers import _openmp_effective_n_threads
 from ...utils._typedefs import ITYPE, DTYPE
@@ -44,12 +62,62 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms64(
     return squared_row_norms
 
 
-cdef class PairwiseDistancesReduction64:
-    """Base 64bit implementation of PairwiseDistancesReduction."""
+cpdef DTYPE_t[::1] _sqeuclidean_row_norms32(
+    const cnp.float32_t[:, ::1] X,
+    ITYPE_t num_threads,
+):
+    """Compute the squared euclidean norm of the rows of X in parallel.
+
+    This is faster than using np.einsum("ij, ij->i") even when using a single thread.
+    """
+    cdef:
+        # Casting for X to remove the const qualifier is needed because APIs
+        # exposed via scipy.linalg.cython_blas aren't reflecting the arguments'
+        # const qualifier.
+        # See: https://github.com/scipy/scipy/issues/14262
+        cnp.float32_t * X_ptr = <cnp.float32_t *> &X[0, 0]
+        ITYPE_t i = 0, j = 0
+        ITYPE_t thread_num
+        ITYPE_t n = X.shape[0]
+        ITYPE_t d = X.shape[1]
+        DTYPE_t[::1] squared_row_norms = np.empty(n, dtype=DTYPE)
+
+        # To upcast the i-th row of X from 32bit to 64bit
+        vector[vector[DTYPE_t]] X_i_upcast = vector[vector[DTYPE_t]](
+            num_threads, vector[DTYPE_t](d)
+        )
+
+    with nogil, parallel(num_threads=num_threads):
+        thread_num = openmp.omp_get_thread_num()
+        for i in prange(n, schedule='static'):
+            # Upcasting the i-th row of X from 32bit to 64bit
+            for j in range(d):
+                X_i_upcast[thread_num][j] = <DTYPE_t> deref(X_ptr + i * d + j)
+
+            squared_row_norms[i] = _dot(
+                d, X_i_upcast[thread_num].data(), 1,
+                X_i_upcast[thread_num].data(), 1,
+            )
+
+    return squared_row_norms
+
+{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
+
+from ._datasets_pair cimport DatasetsPair{{name_suffix}}
+
+cdef class BaseDistanceReducer{{name_suffix}}:
+    """
+    Base {{name_suffix}}bit implementation template of the pairwise-distances reduction
+    backend.
+
+    Implementations inherit from this template and may override the several
+    defined hooks as needed in order to easily extend functionality with
+    minimal redundant code.
+    """
 
     def __init__(
         self,
-        DatasetsPair datasets_pair,
+        DatasetsPair{{name_suffix}} datasets_pair,
         chunk_size=None,
         strategy=None,
      ):
@@ -97,7 +165,18 @@ cdef class PairwiseDistancesReduction64:
         if strategy == 'auto':
             # This is a simple heuristic whose constant for the
             # comparison has been chosen based on experiments.
-            if 4 * self.chunk_size * self.effective_n_threads < self.n_samples_X:
+            # parallel_on_X has less synchronization overhead than
+            # parallel_on_Y and should therefore be used whenever
+            # n_samples_X is large enough to not starve any of the
+            # available hardware threads.
+            if self.n_samples_Y < self.n_samples_X:
+                # No point to even consider parallelizing on Y in this case. This
+                # is in particular important to do this on machines with a large
+                # number of hardware threads.
+                strategy = 'parallel_on_X'
+            elif 4 * self.chunk_size * self.effective_n_threads < self.n_samples_X:
+                # If Y is larger than X, but X is still large enough to allow for
+                # parallelism, we might still want to favor parallelizing on X.
                 strategy = 'parallel_on_X'
             else:
                 strategy = 'parallel_on_Y'
@@ -112,15 +191,15 @@ cdef class PairwiseDistancesReduction64:
 
     @final
     cdef void _parallel_on_X(self) nogil:
-        """Compute the pairwise distances of each row vector of X on Y
-        by parallelizing computation on the outer loop on chunks of X
-        and reduce them.
+        """Perform computation and reduction in parallel on chunks of X.
 
-        This strategy dispatches chunks of Y uniformly on threads.
-        Each thread processes all the chunks of X in turn. This strategy is
-        a sequence of embarrassingly parallel subtasks (the inner loop on Y
-        chunks) with intermediate datastructures synchronisation at each
-        iteration of the sequential outer loop on X chunks.
+        This strategy dispatches tasks statically on threads. Each task
+        processes exactly only one chunk of X, computing and reducing
+        distances matrices between vectors of this chunk and vectors of all
+        chunks of Y, one chunk of Y at a time.
+
+        This strategy is embarrassingly parallel with no intermediate data
+        structures synchronization at all.
 
         Private datastructures are modified internally by threads.
 
@@ -181,15 +260,17 @@ cdef class PairwiseDistancesReduction64:
 
     @final
     cdef void _parallel_on_Y(self) nogil:
-        """Compute the pairwise distances of each row vector of X on Y
-        by parallelizing computation on the inner loop on chunks of Y
-        and reduce them.
+        """Perform computation and reduction in parallel on chunks of Y.
 
-        This strategy dispatches chunks of Y uniformly on threads.
-        Each thread processes all the chunks of X in turn. This strategy is
-        a sequence of embarrassingly parallel subtasks (the inner loop on Y
-        chunks) with intermediate datastructures synchronisation at each
-        iteration of the sequential outer loop on X chunks.
+        This strategy is a sequence of embarrassingly parallel subtasks:
+        chunks of X are iterated over sequentially, and for each chunk of X,
+        tasks are dispatched statically on threads. Each task processes one
+        and only one chunk of Y, computing and reducing distances matrices
+        between vectors of the chunk of X and vectors of the Y.
+
+        It comes with lock-free and parallelized intermediate data structures
+        that synchronize at each iteration of the sequential outer loop on X
+        chunks.
 
         Private datastructures are modified internally by threads.
 
@@ -238,9 +319,6 @@ cdef class PairwiseDistancesReduction64:
                     )
                 # end: prange
 
-                # Note: we don't need a _parallel_on_Y_finalize similarly.
-                # This can be introduced if needed.
-
             # end: with nogil, parallel
 
             # Synchronizing the thread datastructures with the main ones
@@ -263,7 +341,7 @@ cdef class PairwiseDistancesReduction64:
     ) nogil:
         """Compute the pairwise distances on two chunks of X and Y and reduce them.
 
-        This is THE core computational method of PairwiseDistanceReductions64.
+        This is THE core computational method of BaseDistanceReducer{{name_suffix}}.
         This must be implemented in subclasses agnostically from the parallelization
         strategies.
         """
@@ -295,7 +373,7 @@ cdef class PairwiseDistancesReduction64:
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
-        """Initialise datastructures used in a thread given its number."""
+        """Initialize datastructures used in a thread given its number."""
         return
 
     cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
@@ -306,7 +384,7 @@ cdef class PairwiseDistancesReduction64:
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
-        """Initialise datastructures just before the _compute_and_reduce_distances_on_chunks.
+        """Initialize datastructures just before the _compute_and_reduce_distances_on_chunks.
 
         This is eventually used to upcast X[X_start:X_end] to 64bit.
         """
@@ -340,7 +418,7 @@ cdef class PairwiseDistancesReduction64:
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
-        """Initialise datastructures used in a thread given its number."""
+        """Initialize datastructures used in a thread given its number."""
         return
 
     cdef void _parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
@@ -351,7 +429,7 @@ cdef class PairwiseDistancesReduction64:
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
-        """Initialise datastructures just before the _compute_and_reduce_distances_on_chunks.
+        """Initialize datastructures just before the _compute_and_reduce_distances_on_chunks.
 
         This is eventually used to upcast Y[Y_start:Y_end] to 64bit.
         """
@@ -370,3 +448,5 @@ cdef class PairwiseDistancesReduction64:
     ) nogil:
         """Update datastructures after executing all the reductions."""
         return
+
+{{endfor}}

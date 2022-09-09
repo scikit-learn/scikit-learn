@@ -26,7 +26,7 @@ GPR_CHOLESKY_LOWER = True
 class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """Gaussian process regression (GPR).
 
-    The implementation is based on Algorithm 2.1 of [1]_.
+    The implementation is based on Algorithm 2.1 of [RW2006]_.
 
     In addition to standard scikit-learn estimator API,
     :class:`GaussianProcessRegressor`:
@@ -155,10 +155,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
     References
     ----------
-    .. [1] `Rasmussen, Carl Edward.
-       "Gaussian processes in machine learning."
-       Summer school on machine learning. Springer, Berlin, Heidelberg, 2003
-       <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_.
+    .. [RW2006] `Carl E. Rasmussen and Christopher K.I. Williams,
+       "Gaussian Processes for Machine Learning",
+       MIT Press 2006 <https://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_
 
     Examples
     --------
@@ -175,7 +174,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "kernel": [None, Kernel],
         "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
         "optimizer": [StrOptions({"fmin_l_bfgs_b"}), callable, None],
