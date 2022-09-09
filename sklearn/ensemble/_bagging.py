@@ -379,7 +379,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             Override value used when fitting base estimator. Only supported
             if the base estimator has a check_input parameter for fit function.
             If the meta-estimator already checks the input, set this value to
-            False to prevent redundant input checking (#23149).
+            False to prevent redundant input validation.
 
         **fit_params : dict, default=None
             Parameters to pass to the `fit` method of the underlying estimator.
