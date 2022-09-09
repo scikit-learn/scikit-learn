@@ -56,7 +56,7 @@ methods = [
     ("Unrotated FA", FactorAnalysis()),
     ("Varimax FA", FactorAnalysis(rotation="varimax")),
 ]
-fig, axes = plt.subplots(ncols=len(methods), figsize=(10, 8),sharey=True)
+fig, axes = plt.subplots(ncols=len(methods), figsize=(10, 8), sharey=True)
 
 for ax, (method, fa) in zip(axes, methods):
     fa.set_params(n_components=n_comps)
