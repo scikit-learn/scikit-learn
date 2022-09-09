@@ -2394,10 +2394,11 @@ def check_outlier_contamination(name, estimator_orig):
 
     for constraint in contamination_constraints:
         if isinstance(constraint, Interval):
-            validity_interval = Interval(Real, 0, 0.5, closed="right")
-            assert (
-                constraint.left in validity_interval
-                and constraint.right in validity_interval
+            assert(
+                constraint.type == Real
+                and constraint.left >= 0.0
+                and constraint.right <= 0.5
+                and (constraint.left > 0 or constraint.closed in {"right", "neither"})
             ), "contamination constraint should be an interval in (0, 0.5]"
 
 
