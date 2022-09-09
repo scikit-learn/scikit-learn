@@ -400,7 +400,9 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         y = self._validate_y(y)
 
         # Check parameters
-        self.base_estimator_ = self._validate_estimator(self._get_estimator())
+        self.base_estimator_ = self._validate_estimator(
+            default=self._get_estimator()
+        )
 
         routed_params = process_routing(
             obj=self,
