@@ -216,7 +216,8 @@ def test_rbf_sampler():
 
 
 def test_skewed_chi2_sampler_fitted_attributes_dtype(global_dtype):
-    # Test that attributes are float32 when input is float32
+    """Check that the fitted attributes are stored accordingly to the
+    data type of X."""
     skewed_chi2_sampler = SkewedChi2Sampler()
 
     X = np.array([[1, 2], [3, 4], [5, 6]], dtype=global_dtype)
@@ -228,7 +229,7 @@ def test_skewed_chi2_sampler_fitted_attributes_dtype(global_dtype):
 
 
 def test_skewed_chi2_sampler_dtype_equivalence():
-    # Test that the results are similar independent of X's dtype
+    """Check the equivalence of the results with 32 and 64 bits input."""
     skewed_chi2_sampler_32 = SkewedChi2Sampler(random_state=42)
     X_32 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
     skewed_chi2_sampler_32.fit(X_32)
