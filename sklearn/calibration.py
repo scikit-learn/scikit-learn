@@ -475,7 +475,7 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
 
         Returns
         -------
-        routing : MetadataRouter
+        router : :class:`~sklearn.utils.metadata_routing.MetadataRouter`
             A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """

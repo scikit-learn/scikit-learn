@@ -158,7 +158,7 @@ class _MultimetricScorer:
 
         Returns
         -------
-        routing : MetadataRouter
+        router : :class:`~sklearn.utils.metadata_routing.MetadataRouter`
             A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
@@ -536,16 +536,16 @@ class _PassthroughScorer:
 
         Returns
         -------
-        routing : MetadataRouter
+        router : :class:`~sklearn.utils.metadata_routing.MetadataRouter`
             A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
         # This scorer doesn't do any validation or routing, it only exposes the
         # score requests to the parent object. This object behaves as a
         # consumer rather than a router.
-        res = MetadataRequest(owner=self._estimator.__class__.__name__)
-        res.score = get_routing_for_object(self._estimator).score
-        return res
+        router = MetadataRequest(owner=self._estimator.__class__.__name__)
+        router.score = get_routing_for_object(self._estimator).score
+        return router
 
 
 def check_scoring(estimator, scoring=None, *, allow_none=False):
