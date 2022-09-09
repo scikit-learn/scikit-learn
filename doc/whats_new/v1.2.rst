@@ -246,6 +246,9 @@ Changelog
 :mod:`sklearn.kernel_approximation`
 ...................................
 
+- |Enhancement| :class:`kernel_approximation.RBFSampler` now preserves
+  dtype for `numpy.float32` inputs. :pr:`24317` by `Tim Head <betatim>`.
+
 - |Enhancement| :class:`kernel_approximation.SkewedChi2Sampler` now preserves
   dtype for `numpy.float32` inputs. :pr:`24350` by :user:`Rahil Parikh <rprkh>`.
 

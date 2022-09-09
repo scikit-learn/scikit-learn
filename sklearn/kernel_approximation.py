@@ -264,12 +264,12 @@ class RBFSampler(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimat
 
     Attributes
     ----------
-    random_offset_ : ndarray of shape (n_components,), dtype=float64
+    random_offset_ : ndarray of shape (n_components,), dtype={np.float64, np.float32}
         Random offset used to compute the projection in the `n_components`
         dimensions of the feature space.
 
     random_weights_ : ndarray of shape (n_features, n_components),\
-        dtype=float64
+        dtype={np.float64, np.float32}
         Random projection directions drawn from the Fourier transform
         of the RBF kernel.
 
@@ -360,6 +360,13 @@ class RBFSampler(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimat
         )
 
         self.random_offset_ = random_state.uniform(0, 2 * np.pi, size=self.n_components)
+
+        if X.dtype == np.float32:
+            # Setting the data type of the fitted attribute will ensure the
+            # output data type during `transform`.
+            self.random_weights_ = self.random_weights_.astype(X.dtype, copy=False)
+            self.random_offset_ = self.random_offset_.astype(X.dtype, copy=False)
+
         self._n_features_out = self.n_components
         return self
 
@@ -385,6 +392,9 @@ class RBFSampler(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimat
         np.cos(projection, projection)
         projection *= np.sqrt(2.0) / np.sqrt(self.n_components)
         return projection
+
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
 
 
 class SkewedChi2Sampler(
