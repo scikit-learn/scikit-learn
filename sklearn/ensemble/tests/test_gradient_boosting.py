@@ -1265,21 +1265,6 @@ def test_gbr_degenerate_feature_importances():
     assert_array_equal(gbr.feature_importances_, np.zeros(10, dtype=np.float64))
 
 
-# FIXME: remove in 1.2
-@pytest.mark.parametrize(
-    "Estimator", [GradientBoostingClassifier, GradientBoostingRegressor]
-)
-def test_n_features_deprecation(Estimator):
-    # Check that we raise the proper deprecation warning if accessing
-    # `n_features_`.
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    est = Estimator().fit(X, y)
-
-    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
-        est.n_features_
-
-
 @pytest.mark.parametrize(
     "old_loss, new_loss, Estimator",
     [
