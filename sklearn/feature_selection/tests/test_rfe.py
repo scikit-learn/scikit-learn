@@ -181,14 +181,6 @@ def test_rfecv():
     rfecv.fit(X, y)
     # non-regression test for missing worst feature:
 
-    # TODO: Remove in v1.2 when grid_scores_ is removed
-    msg = (
-        r"The `grid_scores_` attribute is deprecated in version 1\.0 in "
-        r"favor of `cv_results_` and will be removed in version 1\.2."
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        assert len(rfecv.grid_scores_) == X.shape[1]
-
     for key in rfecv.cv_results_.keys():
         assert len(rfecv.cv_results_[key]) == X.shape[1]
 
@@ -226,10 +218,6 @@ def test_rfecv():
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, scoring=test_scorer)
     rfecv.fit(X, y)
 
-    # TODO: Remove in v1.2 when grid_scores_ is removed
-    with pytest.warns(FutureWarning, match=msg):
-        assert_array_equal(rfecv.grid_scores_, np.ones(rfecv.grid_scores_.shape))
-
     # In the event of cross validation score ties, the expected behavior of
     # RFECV is to return the FEWEST features that maximize the CV score.
     # Because test_scorer always returns 1.0 in this example, RFECV should
@@ -239,10 +227,6 @@ def test_rfecv():
     # Same as the first two tests, but with step=2
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=2)
     rfecv.fit(X, y)
-
-    # TODO: Remove in v1.2 when grid_scores_ is removed
-    with pytest.warns(FutureWarning, match=msg):
-        assert len(rfecv.grid_scores_) == 6
 
     for key in rfecv.cv_results_.keys():
         assert len(rfecv.cv_results_[key]) == 6
@@ -275,14 +259,6 @@ def test_rfecv_mockclassifier():
     rfecv = RFECV(estimator=MockClassifier(), step=1)
     rfecv.fit(X, y)
     # non-regression test for missing worst feature:
-
-    # TODO: Remove in v1.2 when grid_scores_ is removed
-    msg = (
-        r"The `grid_scores_` attribute is deprecated in version 1\.0 in "
-        r"favor of `cv_results_` and will be removed in version 1\.2."
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        assert len(rfecv.grid_scores_) == X.shape[1]
 
     for key in rfecv.cv_results_.keys():
         assert len(rfecv.cv_results_[key]) == X.shape[1]
@@ -327,14 +303,6 @@ def test_rfecv_cv_results_size():
         rfecv.fit(X, y)
 
         score_len = np.ceil((X.shape[1] - min_features_to_select) / step) + 1
-
-        # TODO: Remove in v1.2 when grid_scores_ is removed
-        msg = (
-            r"The `grid_scores_` attribute is deprecated in version 1\.0 in "
-            r"favor of `cv_results_` and will be removed in version 1\.2."
-        )
-        with pytest.warns(FutureWarning, match=msg):
-            assert len(rfecv.grid_scores_) == score_len
 
         for key in rfecv.cv_results_.keys():
             assert len(rfecv.cv_results_[key]) == score_len
@@ -430,19 +398,6 @@ def test_number_of_subsets_of_features():
         rfecv = RFECV(estimator=SVC(kernel="linear"), step=step)
         rfecv.fit(X, y)
 
-        # TODO: Remove in v1.2 when grid_scores_ is removed
-        msg = (
-            r"The `grid_scores_` attribute is deprecated in version 1\.0 in "
-            r"favor of `cv_results_` and will be removed in version 1\.2."
-        )
-        with pytest.warns(FutureWarning, match=msg):
-            assert len(rfecv.grid_scores_) == formula1(
-                n_features, n_features_to_select, step
-            )
-            assert len(rfecv.grid_scores_) == formula2(
-                n_features, n_features_to_select, step
-            )
-
         for key in rfecv.cv_results_.keys():
             assert len(rfecv.cv_results_[key]) == formula1(
                 n_features, n_features_to_select, step
@@ -462,23 +417,11 @@ def test_rfe_cv_n_jobs():
     rfecv.fit(X, y)
     rfecv_ranking = rfecv.ranking_
 
-    # TODO: Remove in v1.2 when grid_scores_ is removed
-    msg = (
-        r"The `grid_scores_` attribute is deprecated in version 1\.0 in "
-        r"favor of `cv_results_` and will be removed in version 1\.2."
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        rfecv_grid_scores = rfecv.grid_scores_
-
     rfecv_cv_results_ = rfecv.cv_results_
 
     rfecv.set_params(n_jobs=2)
     rfecv.fit(X, y)
     assert_array_almost_equal(rfecv.ranking_, rfecv_ranking)
-
-    # TODO: Remove in v1.2 when grid_scores_ is removed
-    with pytest.warns(FutureWarning, match=msg):
-        assert_array_almost_equal(rfecv.grid_scores_, rfecv_grid_scores)
 
     assert rfecv_cv_results_.keys() == rfecv.cv_results_.keys()
     for key in rfecv_cv_results_.keys():
