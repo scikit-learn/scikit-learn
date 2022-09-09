@@ -12,7 +12,6 @@ import scipy.sparse as sp
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
 from .base import MultiOutputMixin
 from .utils import check_random_state
-from .utils import deprecated
 from .utils._param_validation import StrOptions, Interval
 from .utils.validation import _num_samples
 from .utils.validation import check_array
@@ -39,7 +38,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     Note that the "stratified" and "uniform" strategies lead to
     non-deterministic predictions that can be rendered deterministic by setting
     the `random_state` parameter if needed. The other strategies are naturally
-    deterministic and, once fit, always return a the same constant prediction
+    deterministic and, once fit, always return the same constant prediction
     for any value of `X`.
 
     Read more in the :ref:`User Guide <dummy_estimators>`.
@@ -106,13 +105,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     n_outputs_ : int
         Number of outputs.
 
-    n_features_in_ : `None`
-        Always set to `None`.
-
-        .. versionadded:: 0.24
-        .. deprecated:: 1.0
-            Will be removed in 1.0
-
     sparse_output_ : bool
         True if the array returned from predict is to be in sparse CSC format.
         Is automatically set to True if the input `y` is passed in sparse
@@ -137,7 +129,7 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
     0.75
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "strategy": [
             StrOptions({"most_frequent", "prior", "stratified", "uniform", "constant"})
         ],
@@ -449,16 +441,6 @@ class DummyClassifier(MultiOutputMixin, ClassifierMixin, BaseEstimator):
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
 
-    # TODO: Remove in 1.2
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "`n_features_in_` is deprecated in 1.0 and will be removed in 1.2."
-    )
-    @property
-    def n_features_in_(self):
-        check_is_fitted(self)
-        return None
-
 
 class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """Regressor that makes predictions using simple rules.
@@ -497,13 +479,6 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Mean or median or quantile of the training targets or constant value
         given by the user.
 
-    n_features_in_ : `None`
-        Always set to `None`.
-
-        .. versionadded:: 0.24
-        .. deprecated:: 1.0
-            Will be removed in 1.0
-
     n_outputs_ : int
         Number of outputs.
 
@@ -526,7 +501,7 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     0.0
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "strategy": [StrOptions({"mean", "median", "quantile", "constant"})],
         "quantile": [Interval(Real, 0.0, 1.0, closed="both"), None],
         "constant": [
@@ -697,13 +672,3 @@ class DummyRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         if X is None:
             X = np.zeros(shape=(len(y), 1))
         return super().score(X, y, sample_weight)
-
-    # TODO: Remove in 1.2
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "`n_features_in_` is deprecated in 1.0 and will be removed in 1.2."
-    )
-    @property
-    def n_features_in_(self):
-        check_is_fitted(self)
-        return None
