@@ -794,6 +794,7 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         )
 
     def _get_estimator(self):
+        """Get the base estimator. By default, returns a decision tree."""
         if self.base_estimator is None:
             return DecisionTreeClassifier()
         return self.base_estimator
