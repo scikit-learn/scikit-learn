@@ -202,17 +202,6 @@ def _special_sparse_dot(W, H, X):
         return np.dot(W, H)
 
 
-def _compute_regularization(alpha_W, alpha_H, l1_ratio):
-    """Compute L1 and L2 regularization coefficients for W and H."""
-    alpha_H = alpha_W if alpha_H == "same" else alpha_H
-    l1_reg_W = alpha_W * l1_ratio
-    l1_reg_H = alpha_H * l1_ratio
-    l2_reg_W = alpha_W * (1.0 - l1_ratio)
-    l2_reg_H = alpha_H * (1.0 - l1_ratio)
-
-    return l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H
-
-
 def _beta_loss_to_float(beta_loss):
     """Convert string beta_loss to float."""
     beta_loss_map = {"frobenius": 2, "kullback-leibler": 1, "itakura-saito": 0}
@@ -1197,6 +1186,10 @@ class _BaseNMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         # beta_loss
         self._beta_loss = _beta_loss_to_float(self.beta_loss)
 
+        # alpha_W/H
+        self._alpha_W = self.alpha_W
+        self._alpha_H = self.alpha_W if self.alpha_H == "same" else self.alpha_H
+
     def _check_w_h(self, X, W, H, update_H):
         """Check W and H, or initialize them."""
         n_samples, n_features = X.shape
@@ -1228,14 +1221,14 @@ class _BaseNMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
             )
         return W, H
 
-    def _scale_regularization(self, X):
-        """Scale regularization terms."""
+    def _compute_regularization(self, X):
+        """Compute scaled regularization terms."""
         n_samples, n_features = X.shape
 
-        l1_reg_W = n_features * self._l1_reg_W
-        l1_reg_H = n_samples * self._l1_reg_H
-        l2_reg_W = n_features * self._l2_reg_W
-        l2_reg_H = n_samples * self._l2_reg_H
+        l1_reg_W = n_features * self._alpha_W * self.l1_ratio
+        l1_reg_H = n_samples * self._alpha_H * self.l1_ratio
+        l2_reg_W = n_features * self._alpha_W * (1.0 - self.l1_ratio)
+        l2_reg_H = n_samples * self._alpha_H * (1.0 - self.l1_ratio)
 
         return l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H
 
@@ -1555,13 +1548,6 @@ class NMF(_BaseNMF):
                 UserWarning,
             )
 
-        (
-            self._l1_reg_W,
-            self._l1_reg_H,
-            self._l2_reg_W,
-            self._l2_reg_H,
-        ) = _compute_regularization(self.alpha_W, self.alpha_H, self.l1_ratio)
-
         return self
 
     def fit_transform(self, X, y=None, W=None, H=None):
@@ -1658,7 +1644,7 @@ class NMF(_BaseNMF):
         W, H = self._check_w_h(X, W, H, update_H)
 
         # scale the regularization terms
-        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(X)
+        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._compute_regularization(X)
 
         if self.solver == "cd":
             W, H, n_iter = _fit_coordinate_descent(
@@ -2004,13 +1990,6 @@ class MiniBatchNMF(_BaseNMF):
             else self.transform_max_iter
         )
 
-        (
-            self._l1_reg_W,
-            self._l1_reg_H,
-            self._l2_reg_W,
-            self._l2_reg_H,
-        ) = _compute_regularization(self.alpha_W, self.alpha_H, self.l1_ratio)
-
         return self
 
     def _solve_W(self, X, H, max_iter):
@@ -2025,7 +2004,7 @@ class MiniBatchNMF(_BaseNMF):
 
         # Get scaled regularization terms. Done for each minibatch to take into account
         # variable sizes of minibatches.
-        l1_reg_W, _, l2_reg_W, _ = self._scale_regularization(X)
+        l1_reg_W, _, l2_reg_W, _ = self._compute_regularization(X)
 
         for _ in range(max_iter):
             W, *_ = _multiplicative_update_w(
@@ -2046,7 +2025,7 @@ class MiniBatchNMF(_BaseNMF):
 
         # get scaled regularization terms. Done for each minibatch to take into account
         # variable sizes of minibatches.
-        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._scale_regularization(X)
+        l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H = self._compute_regularization(X)
 
         # update W
         if self.fresh_restarts or W is None:
