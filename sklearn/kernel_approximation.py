@@ -361,8 +361,9 @@ class RBFSampler(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimat
 
         self.random_offset_ = random_state.uniform(0, 2 * np.pi, size=self.n_components)
 
-        # With this we preserve the dtype of X in transform() later
         if X.dtype == np.float32:
+            # Setting the data type of the fitted attribute will ensure the
+            # output data type during `transform`.
             self.random_weights_ = self.random_weights_.astype(X.dtype, copy=False)
             self.random_offset_ = self.random_offset_.astype(X.dtype, copy=False)
 
