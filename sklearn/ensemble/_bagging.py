@@ -382,7 +382,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             False to prevent redundant input validation.
 
         **fit_params : dict, default=None
-            Parameters to pass to the `fit` method of the underlying estimator.
+            Parameters to pass to the :term:`fit` method of the underlying estimator.
 
         Returns
         -------
