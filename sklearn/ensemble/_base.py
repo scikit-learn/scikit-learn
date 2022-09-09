@@ -5,6 +5,7 @@
 
 from abc import ABCMeta, abstractmethod
 from typing import List
+import warnings
 
 import numpy as np
 
@@ -19,7 +20,7 @@ from ..tree import (
     BaseDecisionTree,
     DecisionTreeClassifier,
 )
-from ..utils import Bunch, _print_elapsed_time
+from ..utils import Bunch, _print_elapsed_time, deprecated
 from ..utils import check_random_state
 from ..utils.metaestimators import _BaseComposition
 
@@ -92,7 +93,7 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     Parameters
     ----------
-    base_estimator : object
+    estimator : object
         The base estimator from which the ensemble is built.
 
     n_estimators : int, default=10
@@ -102,10 +103,24 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         The list of attributes to use as parameters when instantiating a
         new base estimator. If none are given, default parameters are used.
 
+    base_estimator : object, default="deprecated"
+        Use `estimator` instead.
+
+        .. deprecated:: 1.2
+            `base_estimator` is deprecated and will be removed in 1.4.
+            Use `estimator` instead.
+
     Attributes
     ----------
+    estimator_ : estimator
+        The base estimator from which the ensemble is grown.
+
     base_estimator_ : estimator
         The base estimator from which the ensemble is grown.
+
+        .. deprecated:: 1.2
+            `base_estimator_` is deprecated and will be removed in 1.4.
+            Use `estimator_` instead.
 
     estimators_ : list of estimators
         The collection of fitted base estimators.
@@ -115,11 +130,19 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     _required_parameters: List[str] = []
 
     @abstractmethod
-    def __init__(self, base_estimator, *, n_estimators=10, estimator_params=tuple()):
+    def __init__(
+        self,
+        estimator=None,
+        *,
+        n_estimators=10,
+        estimator_params=tuple(),
+        base_estimator="deprecated",
+    ):
         # Set parameters
-        self.base_estimator = base_estimator
+        self.estimator = estimator
         self.n_estimators = n_estimators
         self.estimator_params = estimator_params
+        self.base_estimator = base_estimator
 
         # Don't instantiate estimators now! Parameters of base_estimator might
         # still change. Eg., when grid-searching with the nested object syntax.
@@ -128,23 +151,51 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     def _validate_estimator(self, default=None):
         """Check the base estimator.
 
-        Sets the base_estimator_` attributes.
+        Sets the `estimator_` attributes.
         """
-        if self.base_estimator is not None:
-            self.base_estimator_ = self.base_estimator
-        else:
-            self.base_estimator_ = default
+        if self.estimator is not None and (
+            self.base_estimator not in [None, "deprecated"]
+        ):
+            raise ValueError(
+                "Both `estimator` and `base_estimator` were set. Only set `estimator`."
+            )
 
-        if self.base_estimator_ is None:
-            raise ValueError("base_estimator cannot be None")
+        if self.estimator is not None:
+            self._estimator = self.estimator
+        elif self.base_estimator not in [None, "deprecated"]:
+            warnings.warn(
+                "`base_estimator` was renamed to `estimator` in version 1.2 and "
+                "will be removed in 1.4.",
+                FutureWarning,
+            )
+            self._estimator = self.base_estimator
+        else:
+            self._estimator = default
+
+    # TODO(1.4): remove
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute `base_estimator_` was deprecated in version 1.2 and will be removed "
+        "in 1.4. Use `estimator_` instead."
+    )
+    @property
+    def base_estimator_(self):
+        """Estimator used to grow the ensemble."""
+        return self._estimator
+
+    # TODO(1.4): remove
+    @property
+    def estimator_(self):
+        """Estimator used to grow the ensemble."""
+        return self._estimator
 
     def _make_estimator(self, append=True, random_state=None):
-        """Make and configure a copy of the `base_estimator_` attribute.
+        """Make and configure a copy of the `estimator_` attribute.
 
         Warning: This method should be used to properly instantiate new
         sub-estimators.
         """
-        estimator = clone(self.base_estimator_)
+        estimator = clone(self.estimator_)
         estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
 
         # TODO(1.3): Remove

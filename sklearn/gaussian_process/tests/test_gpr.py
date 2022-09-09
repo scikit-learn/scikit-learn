@@ -29,7 +29,6 @@ from sklearn.utils._testing import (
     assert_almost_equal,
     assert_array_almost_equal,
     assert_allclose,
-    assert_array_equal,
 )
 
 
@@ -834,7 +833,7 @@ def test_gpr_predict_input_not_modified():
     """
     gpr = GaussianProcessRegressor(kernel=CustomMinT()).fit(X, y)
 
-    original_x2 = np.copy(X2)
+    X2_copy = np.copy(X2)
     _, _ = gpr.predict(X2, return_std=True)
 
-    assert_array_equal(original_x2, X2)
+    assert_allclose(X2, X2_copy)
