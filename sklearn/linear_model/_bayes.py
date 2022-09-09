@@ -111,13 +111,12 @@ class BayesianRidge(RegressorMixin, LinearModel):
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
 
-    X_offset_ : float
-        If `normalize=True`, offset subtracted for centering data to a
-        zero mean.
+    X_offset_ : ndarray of shape (n_features,)
+        If `fit_intercept=True`, offset subtracted for centering data to a
+        zero mean. Set to np.zeros(n_features) otherwise.
 
-    X_scale_ : float
-        If `normalize=True`, parameter used to scale data to a unit
-        standard deviation.
+    X_scale_ : ndarray of shape (n_features,)
+        Set to np.ones(n_features).
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
