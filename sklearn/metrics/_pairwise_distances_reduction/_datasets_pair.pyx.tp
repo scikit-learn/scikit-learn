@@ -91,11 +91,11 @@ cdef class DatasetsPair{{name_suffix}}:
         datasets_pair: DatasetsPair{{name_suffix}}
             The suited DatasetsPair{{name_suffix}} implementation.
         """
-        # Y_norm_squared might be propagated down to DatasetsPairs 
-        # via metrics_kwargs when the Euclidean specialisations 
-        # can't be used. To prevent Y_norm_squared to be passed 
-        # down to DistanceMetrics (whose constructors would raise 
-        # a RuntimeError), we pop it here. 
+        # Y_norm_squared might be propagated down to DatasetsPairs
+        # via metrics_kwargs when the Euclidean specialisations
+        # can't be used. To prevent Y_norm_squared to be passed
+        # down to DistanceMetrics (whose constructors would raise
+        # a RuntimeError), we pop it here.
         if metric_kwargs is not None:
             metric_kwargs.pop("Y_norm_squared", None)
         cdef:
@@ -284,26 +284,32 @@ cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
 
         self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
 
-        # We support the sparse-dense case by using the sparse-sparse case to avoid
-        # introducing a new complex set of interfaces.
+        # We support the sparse-dense case by using the sparse-sparse interfaces
+        # of `DistanceMetric` (namely `DistanceMetric.{dist_csr,rdist_csr}`) to
+        # avoid introducing a new complex set of interfaces. In this case, we
+        # need to convert `Y`, the dense array into a CSR matrix. Here we motive
+        # using another simpler CSR representation for `Y`.
         #
-        # To do so, we use an alternative CSR datastructure is used where:
-        #  - the `data` array is the original dense array, `Y`
-        #  - the `indices` array is a single row of n_features elements:
+        # Indeed, if we were to use the usual CSR representation for `Y`,
+        # storing all the columns indices in `indices` would have required
+        # allocating an array of n_samples × n_features elements with repeated
+        # contiguous integers from 0 to n_features - 1. This would have been
+        # very wasteful from a memory point of view. This alternative
+        # representation just uses the necessary amount of information needed
+        # and only necessitates shifting the address of `data` before calling
+        # the CSR × CSR routines. In this representation:
+        #
+        #  - the `data` array is the original dense array, `Y`, whose first
+        #  element's address is shifted before calling the CSR × CSR routine
+        #
+        #  - the `indices` array is a single row of `n_features` elements:
         #
         #                      [0, 1, ..., n_features-1]
         #
-        #  - the `indptr` array is a single row of n_X + 1 elements:
-        #
-        #         [0, n_features, 2 * n_features, ..., n_features * n_X]
-        #
-        # If we were to use the natural CSR representation for the dense array,
-        # the indices would have required allocating an array of
-        # n_samples × n_features elements with repeated contiguous integers from
-        # 0 to n_features - 1, and this would have been very wasteful from a memory
-        # point of view. This alternative representation just uses the necessary
-        # amount of information needed and only necessitates shifting
-        # the address of `indices` before calling the CSR × CSR routines.
+        #  - the `indptr` array is not materialised as the indices pointers'
+        #  offset is constant (the offset equals `n_features`). Moreover, as
+        #  `data` is shifted, constant `start` and `end` indices pointers
+        #  respectively equalling 0 and n_features are used.
 
         # Y array already has been checked here
         self.n_Y = Y.shape[0]
