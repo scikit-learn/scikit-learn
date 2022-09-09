@@ -209,7 +209,7 @@ class OneHotEncoder(_BaseEncoder):
     strings, denoting the values taken on by categorical (discrete) features.
     The features are encoded using a one-hot (aka 'one-of-K' or 'dummy')
     encoding scheme. This creates a binary column for each category and
-    returns a sparse matrix or dense array (depending on the ``sparse``
+    returns a sparse matrix or dense array (depending on the ``sparse_output``
     parameter)
 
     By default, the encoder derives the categories based on the unique values
@@ -271,6 +271,15 @@ class OneHotEncoder(_BaseEncoder):
     sparse : bool, default=True
         Will return sparse matrix if set True else will return an array.
 
+        .. deprecated:: 1.2
+           `sparse` is deprecated in 1.2 and will be removed in 1.4. Use
+           `sparse_output` instead.
+
+    sparse_output : bool, default=True
+        Will return sparse matrix if set True else will return an array.
+
+        .. versionadded:: 1.2
+
     dtype : number type, default=float
         Desired dtype of output.
 
@@ -331,7 +340,7 @@ class OneHotEncoder(_BaseEncoder):
         (if any).
 
     drop_idx_ : array of shape (n_features,)
-        - ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category
+        - ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category
           to be dropped for each feature.
         - ``drop_idx_[i] = None`` if no category is to be dropped from the
           feature with index ``i``, e.g. when `drop='if_binary'` and the
@@ -398,7 +407,7 @@ class OneHotEncoder(_BaseEncoder):
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> enc.transform([['Female', 1], ['Male', 4]]).toarray()
     array([[1., 0., 1., 0., 0.],
-           [0., 1., 0., 0., 0.]])
+           [0., 1., 0., 0., 0.]])https://www.google.com/search?q=pytest+multiple+futurewarning+%3A+%3A+name+them&sxsrf=ALiCzsbF8fYHcx7Ue9L71r0qZVnL2UWM6Q%3A1662724332745&ei=7CgbY-GILbCu3LUPrY2xiA0&ved=0ahUKEwjhrtnp0of6AhUwF7cAHa1GDNEQ4dUDCA4&uact=5&oq=pytest+multiple+futurewarning+%3A+%3A+name+them&gs_lcp=Cgdnd3Mtd2l6EAMyBAgjECc6CggAEEcQ1gQQsANKBAhBGABKBAhGGABQ5AZY7gxgmg5oAXABeACAAX6IAcsDkgEDMC40mAEAoAEByAEIwAEB&sclient=gws-wiz
     >>> enc.inverse_transform([[0, 1, 1, 0, 0], [0, 0, 0, 1, 0]])
     array([['Male', 1],
            [None, 2]], dtype=object)
@@ -425,7 +434,7 @@ class OneHotEncoder(_BaseEncoder):
 
     >>> import numpy as np
     >>> X = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3], dtype=object).T
-    >>> ohe = OneHotEncoder(max_categories=3, sparse=False).fit(X)
+    >>> ohe = OneHotEncoder(max_categories=3, sparse_output=False).fit(X)
     >>> ohe.infrequent_categories_
     [array(['a', 'd'], dtype=object)]
     >>> ohe.transform([["a"], ["b"]])
@@ -444,7 +453,8 @@ class OneHotEncoder(_BaseEncoder):
             Interval(Real, 0, 1, closed="neither"),
             None,
         ],
-        "sparse": ["boolean"],
+        "sparse": [StrOptions({"deprecated"}), "boolean"],  # deprecated
+        "sparse_output": ["boolean"],
     }
 
     def __init__(
@@ -452,7 +462,8 @@ class OneHotEncoder(_BaseEncoder):
         *,
         categories="auto",
         drop=None,
-        sparse=True,
+        sparse="deprecated",
+        sparse_output=True,
         dtype=np.float64,
         handle_unknown="error",
         min_frequency=None,
@@ -460,6 +471,7 @@ class OneHotEncoder(_BaseEncoder):
     ):
         self.categories = categories
         self.sparse = sparse
+        self.sparse_output = sparse_output
         self.dtype = dtype
         self.handle_unknown = handle_unknown
         self.drop = drop
@@ -797,6 +809,14 @@ class OneHotEncoder(_BaseEncoder):
         self
             Fitted encoder.
         """
+        if self.sparse != "deprecated":
+            warnings.warn(
+                "'sparse' was renamed to 'sparse_output' in version 1.2 and "
+                "will be removed in 1.4.",
+                FutureWarning,
+            )
+            self.sparse_output = self.sparse
+
         self._validate_params()
         self._check_infrequent_enabled()
 
@@ -830,7 +850,7 @@ class OneHotEncoder(_BaseEncoder):
         -------
         X_out : {ndarray, sparse matrix} of shape \
                 (n_samples, n_encoded_features)
-            Transformed input. If `sparse=True`, a sparse matrix will be
+            Transformed input. If `sparse_output=True`, a sparse matrix will be
             returned.
         """
         check_is_fitted(self)
@@ -879,7 +899,7 @@ class OneHotEncoder(_BaseEncoder):
             shape=(n_samples, feature_indices[-1]),
             dtype=self.dtype,
         )
-        if not self.sparse:
+        if not self.sparse_output:
             return out.toarray()
         else:
             return out

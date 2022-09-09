@@ -13,7 +13,8 @@ from sklearn.utils import is_scalar_nan
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
 
-
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_one_hot_encoder_sparse_dense():
     # check that sparse and dense will give the same results
 
@@ -92,6 +93,8 @@ def test_one_hot_encoder_handle_unknown_strings(handle_unknown):
     assert_array_equal(X2, X2_passed)
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
 @pytest.mark.parametrize("input_dtype", [np.int32, np.float32, np.float64])
 def test_one_hot_encoder_dtype(input_dtype, output_dtype):
@@ -107,6 +110,8 @@ def test_one_hot_encoder_dtype(input_dtype, output_dtype):
     assert_array_equal(oh.fit(X).transform(X), X_expected)
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
 def test_one_hot_encoder_dtype_pandas(output_dtype):
     pd = pytest.importorskip("pandas")
@@ -228,6 +233,8 @@ def check_categorical_onehot(X):
     return Xtr1.toarray()
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "X",
     [
@@ -262,6 +269,8 @@ def test_one_hot_encoder(X):
     assert_allclose(Xtr.toarray(), [[0, 1, 1, 0, 1], [1, 0, 0, 1, 1]])
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
 @pytest.mark.parametrize("sparse_", [False, True])
 @pytest.mark.parametrize("drop", [None, "first"])
@@ -321,6 +330,9 @@ def test_one_hot_encoder_inverse(handle_unknown, sparse_, drop):
         ),
     ],
 )
+
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_one_hot_encoder_inverse_transform_raise_error_with_unknown(
     X, X_trans, sparse_
 ):
@@ -342,6 +354,8 @@ def test_one_hot_encoder_inverse_transform_raise_error_with_unknown(
         enc.inverse_transform(X_trans)
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_one_hot_encoder_inverse_if_binary():
     X = np.array([["Male", 1], ["Female", 3], ["Female", 2]], dtype=object)
     ohe = OneHotEncoder(drop="if_binary", sparse=False)
@@ -352,6 +366,8 @@ def test_one_hot_encoder_inverse_if_binary():
 # check that resetting drop option without refitting does not throw an error
 # TODO: Remove in 1.2 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 @pytest.mark.parametrize("drop", ["if_binary", "first", None])
 @pytest.mark.parametrize("reset_drop", ["if_binary", "first", None])
@@ -552,6 +568,8 @@ def test_one_hot_encoder_specified_categories_mixed_columns():
     assert np.issubdtype(enc.categories_[1].dtype, np.object_)
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_one_hot_encoder_pandas():
     pd = pytest.importorskip("pandas")
 
@@ -584,6 +602,8 @@ def test_one_hot_encoder_feature_names_drop(get_names, drop, expected_names):
     assert_array_equal(expected_names, feature_names)
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_one_hot_encoder_drop_equals_if_binary():
     # Canonical case
     X = [[10, "yes"], [20, "no"], [30, "yes"]]
@@ -845,6 +865,8 @@ def test_invalid_drop_length(drop):
         enc.fit([["abc", 2, 55], ["def", 1, 55], ["def", 3, 59]])
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("density", [True, False], ids=["sparse", "dense"])
 @pytest.mark.parametrize("drop", ["first", ["a", 2, "b"]], ids=["first", "manual"])
 def test_categories(density, drop):
@@ -882,6 +904,9 @@ def test_encoders_has_categorical_tags(Encoder):
         {"max_categories": 4, "min_frequency": 12},
     ],
 )
+
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("categories", ["auto", [["a", "b", "c", "d"]]])
 def test_ohe_infrequent_two_levels(kwargs, categories):
     """Test that different parameters for combine 'a', 'c', and 'd' into
@@ -916,6 +941,8 @@ def test_ohe_infrequent_two_levels(kwargs, categories):
 
 # TODO(1.2): Remove filterwarning when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("drop", ["if_binary", "first", ["b"]])
 def test_ohe_infrequent_two_levels_drop_frequent(drop):
     """Test two levels and dropping the frequent category."""
@@ -941,6 +968,8 @@ def test_ohe_infrequent_two_levels_drop_frequent(drop):
     assert_array_equal([["b"], ["infrequent_sklearn"]], X_inverse)
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("drop", [["a"], ["d"]])
 def test_ohe_infrequent_two_levels_drop_infrequent_errors(drop):
     """Test two levels and dropping any infrequent category removes the
@@ -970,6 +999,9 @@ def test_ohe_infrequent_two_levels_drop_infrequent_errors(drop):
         {"max_categories": 4, "min_frequency": 6},
     ],
 )
+
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_ohe_infrequent_three_levels(kwargs):
     """Test that different parameters for combing 'a', and 'd' into
     the infrequent category works as expected."""
@@ -1004,6 +1036,8 @@ def test_ohe_infrequent_three_levels(kwargs):
     assert_array_equal(["x0_b", "x0_c", "x0_infrequent_sklearn"], feature_names)
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("drop", ["first", ["b"]])
 def test_ohe_infrequent_three_levels_drop_frequent(drop):
     """Test three levels and dropping the frequent category."""
@@ -1025,6 +1059,8 @@ def test_ohe_infrequent_three_levels_drop_frequent(drop):
     assert_allclose([[0, 0], [0, 0]], X_trans)
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("drop", [["a"], ["d"]])
 def test_ohe_infrequent_three_levels_drop_infrequent_errors(drop):
     """Test three levels and dropping the infrequent category."""
@@ -1038,6 +1074,8 @@ def test_ohe_infrequent_three_levels_drop_infrequent_errors(drop):
         ohe.fit(X_train)
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_ohe_infrequent_handle_unknown_error():
     """Test that different parameters for combining 'a', and 'd' into
     the infrequent category works as expected."""
@@ -1062,6 +1100,8 @@ def test_ohe_infrequent_handle_unknown_error():
         ohe.transform(X_test)
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "kwargs", [{"max_categories": 3, "min_frequency": 1}, {"min_frequency": 4}]
 )
@@ -1090,6 +1130,8 @@ def test_ohe_infrequent_two_levels_user_cats_one_frequent(kwargs):
         assert_allclose([[0], [1]], ohe.transform(X_test))
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_ohe_infrequent_two_levels_user_cats():
     """Test that the order of the categories provided by a user is respected."""
     X_train = np.array(
@@ -1117,6 +1159,8 @@ def test_ohe_infrequent_two_levels_user_cats():
     assert_array_equal(expected_inv, X_inv)
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_ohe_infrequent_three_levels_user_cats():
     """Test that the order of the categories provided by a user is respected.
     In this case 'c' is encoded as the first category and 'b' is encoded
@@ -1153,6 +1197,8 @@ def test_ohe_infrequent_three_levels_user_cats():
     assert_array_equal(expected_inv, X_inv)
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_ohe_infrequent_mixed():
     """Test infrequent categories where feature 0 has infrequent categories,
     and feature 1 does not."""
@@ -1330,6 +1376,8 @@ def test_ohe_infrequent_multiple_categories_dtypes():
     assert_array_equal(expected_inv, X_inv)
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("kwargs", [{"min_frequency": 21, "max_categories": 1}])
 def test_ohe_infrequent_one_level_errors(kwargs):
     """All user provided categories are infrequent."""
@@ -1342,6 +1390,8 @@ def test_ohe_infrequent_one_level_errors(kwargs):
     assert_allclose(X_trans, [[1]])
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("kwargs", [{"min_frequency": 2, "max_categories": 3}])
 def test_ohe_infrequent_user_cats_unknown_training_errors(kwargs):
     """All user provided categories are infrequent."""
@@ -1358,6 +1408,18 @@ def test_ohe_infrequent_user_cats_unknown_training_errors(kwargs):
     assert_allclose(X_trans, [[1], [1]])
 
 
+# TODO: Remove in 1.4 when `sparse` parameter is replaced by `sparse_output`
+def test_one_hot_encoder_sparse_deprecated():
+    X = [["Male", 1], ["Female", 3], ["Female", 2]]
+
+    msg = (
+        "'sparse' was renamed to 'sparse_output' in version 1.2 and will be removed in"
+        " 1.4."
+    )
+    with pytest.warns(FutureWarning, match=msg):
+        enc = OneHotEncoder(sparse=False).fit(X)
+
+
 # TODO: Remove in 1.2 when get_feature_names is removed
 def test_one_hot_encoder_get_feature_names_deprecated():
     X = np.array([["cat", "dog"]], dtype=object).T
@@ -1368,6 +1430,8 @@ def test_one_hot_encoder_get_feature_names_deprecated():
         enc.get_feature_names()
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 # deliberately omit 'OS' as an invalid combo
 @pytest.mark.parametrize(
     "input_dtype, category_dtype", ["OO", "OU", "UO", "UU", "US", "SO", "SU", "SS"]
@@ -1402,6 +1466,8 @@ def test_encoders_string_categories(input_dtype, category_dtype, array_type):
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 @pytest.mark.parametrize("missing_value", [np.nan, None])
 def test_ohe_missing_values_get_feature_names(get_names, missing_value):
@@ -1412,6 +1478,8 @@ def test_ohe_missing_values_get_feature_names(get_names, missing_value):
     assert_array_equal(names, ["x0_a", "x0_b", f"x0_{missing_value}"])
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_ohe_missing_value_support_pandas():
     # check support for pandas with mixed dtypes and missing values
     pd = pytest.importorskip("pandas")
@@ -1435,6 +1503,8 @@ def test_ohe_missing_value_support_pandas():
     assert_allclose(Xtr, expected_df_trans)
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("handle_unknown", ["infrequent_if_exist", "ignore"])
 @pytest.mark.parametrize("pd_nan_type", ["pd.NA", "np.nan"])
 def test_ohe_missing_value_support_pandas_categorical(pd_nan_type, handle_unknown):
@@ -1467,6 +1537,8 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type, handle_unknow
     assert np.isnan(ohe.categories_[0][-1])
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
 def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
     """Check drop='first' and handle_unknown='ignore'/'infrequent_if_exist'
@@ -1503,6 +1575,8 @@ def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
     assert_array_equal(X_inv, np.array([["a", 0]], dtype=object))
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
 def test_ohe_drop_if_binary_handle_unknown_ignore_warns(handle_unknown):
     """Check drop='if_binary' and handle_unknown='ignore' during transform."""
@@ -1538,6 +1612,8 @@ def test_ohe_drop_if_binary_handle_unknown_ignore_warns(handle_unknown):
     assert_array_equal(X_inv, np.array([["a", None]], dtype=object))
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
 def test_ohe_drop_first_explicit_categories(handle_unknown):
     """Check drop='first' and handle_unknown='ignore'/'infrequent_if_exist'
