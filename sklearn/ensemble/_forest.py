@@ -215,7 +215,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     @abstractmethod
     def __init__(
         self,
-        base_estimator,
+        estimator,
         n_estimators=100,
         *,
         estimator_params=tuple(),
@@ -227,11 +227,13 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         warm_start=False,
         class_weight=None,
         max_samples=None,
+        base_estimator="deprecated",
     ):
         super().__init__(
-            base_estimator=base_estimator,
+            estimator=estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
+            base_estimator=base_estimator,
         )
 
         self.bootstrap = bootstrap
@@ -666,7 +668,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
     @abstractmethod
     def __init__(
         self,
-        base_estimator,
+        estimator,
         n_estimators=100,
         *,
         estimator_params=tuple(),
@@ -678,9 +680,10 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         warm_start=False,
         class_weight=None,
         max_samples=None,
+        base_estimator="deprecated",
     ):
         super().__init__(
-            base_estimator,
+            estimator=estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
             bootstrap=bootstrap,
@@ -691,6 +694,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             warm_start=warm_start,
             class_weight=class_weight,
             max_samples=max_samples,
+            base_estimator=base_estimator,
         )
 
     @staticmethod
@@ -927,7 +931,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
     @abstractmethod
     def __init__(
         self,
-        base_estimator,
+        estimator,
         n_estimators=100,
         *,
         estimator_params=tuple(),
@@ -938,9 +942,10 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         verbose=0,
         warm_start=False,
         max_samples=None,
+        base_estimator="deprecated",
     ):
         super().__init__(
-            base_estimator,
+            estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
             bootstrap=bootstrap,
@@ -950,6 +955,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             verbose=verbose,
             warm_start=warm_start,
             max_samples=max_samples,
+            base_estimator=base_estimator,
         )
 
     def predict(self, X):
@@ -1260,9 +1266,20 @@ class RandomForestClassifier(ForestClassifier):
 
     Attributes
     ----------
+    estimator_ : :class:`~sklearn.tree.DecisionTreeClassifier`
+        The child estimator template used to create the collection of fitted
+        sub-estimators.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
+
     base_estimator_ : DecisionTreeClassifier
         The child estimator template used to create the collection of fitted
         sub-estimators.
+
+        .. deprecated:: 1.2
+            `base_estimator_` is deprecated and will be removed in 1.4.
+            Use `estimator_` instead.
 
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
@@ -1386,7 +1403,7 @@ class RandomForestClassifier(ForestClassifier):
         max_samples=None,
     ):
         super().__init__(
-            base_estimator=DecisionTreeClassifier(),
+            estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
             estimator_params=(
                 "criterion",
@@ -1599,9 +1616,20 @@ class RandomForestRegressor(ForestRegressor):
 
     Attributes
     ----------
+    estimator_ : :class:`~sklearn.tree.DecisionTreeRegressor`
+        The child estimator template used to create the collection of fitted
+        sub-estimators.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
+
     base_estimator_ : DecisionTreeRegressor
         The child estimator template used to create the collection of fitted
         sub-estimators.
+
+        .. deprecated:: 1.2
+            `base_estimator_` is deprecated and will be removed in 1.4.
+            Use `estimator_` instead.
 
     estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
@@ -1712,7 +1740,7 @@ class RandomForestRegressor(ForestRegressor):
         max_samples=None,
     ):
         super().__init__(
-            base_estimator=DecisionTreeRegressor(),
+            estimator=DecisionTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=(
                 "criterion",
@@ -1935,9 +1963,20 @@ class ExtraTreesClassifier(ForestClassifier):
 
     Attributes
     ----------
+    estimator_ : :class:`~sklearn.tree.ExtraTreesClassifier`
+        The child estimator template used to create the collection of fitted
+        sub-estimators.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
+
     base_estimator_ : ExtraTreesClassifier
         The child estimator template used to create the collection of fitted
         sub-estimators.
+
+        .. deprecated:: 1.2
+            `base_estimator_` is deprecated and will be removed in 1.4.
+            Use `estimator_` instead.
 
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
@@ -2053,7 +2092,7 @@ class ExtraTreesClassifier(ForestClassifier):
         max_samples=None,
     ):
         super().__init__(
-            base_estimator=ExtraTreeClassifier(),
+            estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
             estimator_params=(
                 "criterion",
@@ -2265,9 +2304,20 @@ class ExtraTreesRegressor(ForestRegressor):
 
     Attributes
     ----------
+    estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor`
+        The child estimator template used to create the collection of fitted
+        sub-estimators.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
+
     base_estimator_ : ExtraTreeRegressor
         The child estimator template used to create the collection of fitted
         sub-estimators.
+
+        .. deprecated:: 1.2
+            `base_estimator_` is deprecated and will be removed in 1.4.
+            Use `estimator_` instead.
 
     estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
@@ -2366,7 +2416,7 @@ class ExtraTreesRegressor(ForestRegressor):
         max_samples=None,
     ):
         super().__init__(
-            base_estimator=ExtraTreeRegressor(),
+            estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=(
                 "criterion",
@@ -2510,11 +2560,22 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
 
     Attributes
     ----------
-    base_estimator_ : :class:`~sklearn.tree.ExtraTreeClassifier` instance
+    estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor` instance
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
-    estimators_ : list of :class:`~sklearn.tree.ExtraTreeClassifier` instances
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
+
+    base_estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor` instance
+        The child estimator template used to create the collection of fitted
+        sub-estimators.
+
+        .. deprecated:: 1.2
+            `base_estimator_` is deprecated and will be removed in 1.4.
+            Use `estimator_` instead.
+
+    estimators_ : list of :class:`~sklearn.tree.ExtraTreeRegressor` instances
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
@@ -2602,7 +2663,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         warm_start=False,
     ):
         super().__init__(
-            base_estimator=ExtraTreeRegressor(),
+            estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=(
                 "criterion",

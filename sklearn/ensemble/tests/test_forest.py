@@ -1148,7 +1148,7 @@ def check_memory_layout(name, dtype):
     y = iris.target
     assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
-    if est.base_estimator.splitter in SPARSE_SPLITTERS:
+    if est.estimator.splitter in SPARSE_SPLITTERS:
         # csr matrix
         X = csr_matrix(iris.data, dtype=dtype)
         y = iris.target
@@ -1755,3 +1755,22 @@ def test_random_trees_embedding_feature_names_out():
         ]
     ]
     assert_array_equal(expected_names, names)
+
+
+# TODO(1.4): remove in 1.4
+@pytest.mark.parametrize(
+    "name",
+    FOREST_ESTIMATORS,
+)
+def test_base_estimator_property_deprecated(name):
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    model = FOREST_ESTIMATORS[name]()
+    model.fit(X, y)
+
+    warn_msg = (
+        "Attribute `base_estimator_` was deprecated in version 1.2 and "
+        "will be removed in 1.4. Use `estimator_` instead."
+    )
+    with pytest.warns(FutureWarning, match=warn_msg):
+        model.base_estimator_

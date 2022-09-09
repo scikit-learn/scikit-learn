@@ -209,6 +209,30 @@ Changelog
   NaN in feature importance when fitted with very small sample weight.
   :pr:`20415` by :user:`Zhehao Liu <MaxwellLZH>`.
 
+- |API| Rename the constructor parameter `base_estimator` to `estimator` in
+  the following classes:
+  :class:`ensemble.BaggingClassifier`,
+  :class:`ensemble.BaggingRegressor`,
+  :class:`ensemble.AdaBoostClassifier`,
+  :class:`ensemble.AdaBoostRegressor`.
+  `base_estimator` is deprecated in 1.2 and will be removed in 1.4.
+  :pr:`23819` by :user:`Adrian Trujillo <trujillo9616>` and :user:`Edoardo Abati <EdAbati>`.
+
+- |API| Rename the fitted attribute `base_estimator_` to `estimator_` in
+  the following classes:
+  :class:`ensemble.BaggingClassifier`,
+  :class:`ensemble.BaggingRegressor`,
+  :class:`ensemble.AdaBoostClassifier`,
+  :class:`ensemble.AdaBoostRegressor`,
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`,
+  :class:`ensemble.ExtraTreesRegressor`,
+  :class:`ensemble.RandomTreesEmbedding`,
+  :class:`ensemble.IsolationForest`.
+  `base_estimator_` is deprecated in 1.2 and will be removed in 1.4.
+  :pr:`23819` by :user:`Adrian Trujillo <trujillo9616>` and :user:`Edoardo Abati <EdAbati>`.
+
 :mod:`sklearn.feature_selection`
 ................................
 
