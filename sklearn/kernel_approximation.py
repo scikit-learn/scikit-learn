@@ -503,8 +503,8 @@ class SkewedChi2Sampler(
         self.random_offset_ = random_state.uniform(0, 2 * np.pi, size=self.n_components)
 
         if X.dtype == np.float32:
-        # Setting the data type of the fitted attribute will ensure
-        # the output data type during `transform`.
+            # Setting the data type of the fitted attribute will ensure the
+            # output data type during `transform`.
             self.random_weights_ = self.random_weights_.astype(X.dtype, copy=False)
             self.random_offset_ = self.random_offset_.astype(X.dtype, copy=False)
 
