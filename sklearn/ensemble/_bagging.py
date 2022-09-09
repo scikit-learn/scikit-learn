@@ -127,7 +127,7 @@ def _parallel_build_estimators(
             ensemble.base_estimator_, "sample_weight"
         )
         if support_sample_weight:
-            sample_weight = fit_params.get("sample_weight")
+            sample_weight = fit_params.pop("sample_weight", None)
             if sample_weight is None:
                 curr_sample_weight = np.ones((n_samples,))
             else:
@@ -140,9 +140,6 @@ def _parallel_build_estimators(
                 not_indices_mask = ~indices_to_mask(indices, n_samples)
                 curr_sample_weight[not_indices_mask] = 0
 
-            fit_params = {
-                key: val for key, val in fit_params.items() if key != "sample_weight"
-            }
             X_ = X[:, features] if requires_feature_indexing else X
             estimator_fit(X_, y, sample_weight=curr_sample_weight, **fit_params)
         else:
@@ -336,9 +333,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
     def _parallel_args(self):
         return {}
 
+    @abstractmethod
     def _get_estimator(self):
-        # should be overridden by child classes
-        raise NotImplementedError("Return the default base estimator instance.")
+        """Get the base estimator. Initialize to a default estimator if
+        necessary.
+        """
 
     def _fit(
         self,
@@ -382,12 +381,14 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             False to prevent redundant input validation.
 
         **fit_params : dict, default=None
-            Parameters to pass to the :term:`fit` method of the underlying estimator.
+            Parameters to pass to the :term:`fit` method of the underlying
+            estimator.
 
         Returns
         -------
         self : object
             Fitted estimator.
+
         """
         random_state = check_random_state(self.random_state)
 
@@ -399,10 +400,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         self._n_samples = n_samples
         y = self._validate_y(y)
 
-        # Check parameters
-        self.base_estimator_ = self._validate_estimator(
-            default=self._get_estimator()
-        )
+        self.base_estimator_ = self._validate_estimator(default=self._get_estimator())
 
         routed_params = process_routing(
             obj=self,
@@ -581,7 +579,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         base_estimator = self._validate_estimator(self._get_estimator())
         router = (
             MetadataRouter(owner=self.__class__.__name__)
-            # no add_self(self) because the bagging metaestimator does not use
+            # no add_self(self) because the bagging meta-estimator does not use
             # fit_params
             .add(
                 base_estimator=base_estimator,
