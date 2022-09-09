@@ -243,6 +243,12 @@ Changelog
   `nu=0.5` for PyPy (and possibly other non CPython interpreters). :pr:`24245`
   by :user:`Loïc Estève <lesteve>`.
 
+:mod:`sklearn.kernel_approximation`
+...................................
+
+- |Enhancement| :class:`kernel_approximation.SkewedChi2Sampler` now preserves
+  dtype for `numpy.float32` inputs. :pr:`24350` by :user:`Rahil Parikh <rprkh>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
