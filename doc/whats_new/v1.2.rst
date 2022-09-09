@@ -41,9 +41,8 @@ random sampling procedures.
 Changes impacting all modules
 -----------------------------
 
-- |MajorFeature| The `set_output` API has been adopted by transformers
-  in :mod:`sklearn.preprocessing` and
-  :class:`sklearn.pipeline.Pipeline` :pr:`23734` by `Thomas Fan`_.
+- |MajorFeature| The `set_output` API has been adopted by all transformers.
+  :pr:`23734` by `Thomas Fan`_.
 
 - |Enhancement| Finiteness checks (detection of NaN and infinite values) in all
   estimators are now significantly more efficient for float32 data by leveraging
@@ -309,7 +308,7 @@ Changelog
 - |Fix| Allows `csr_matrix` as input for parameter: `y_true` of
    the :func:`metrics.label_ranking_average_precision_score` metric.
    :pr:`23442` by :user:`Sean Atukorala <ShehanAT>`
-  
+
 - |Fix| :func:`metrics.ndcg_score` will now trigger a warning when the `y_true`
   value contains a negative value. Users may still use negative values, but the
   result may not be between 0 and 1. Starting in v1.4, passing in negative
