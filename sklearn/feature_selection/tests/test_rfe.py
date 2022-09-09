@@ -301,14 +301,14 @@ def test_rfecv_mockclassifier(global_random_seed):
     assert len(rfecv.ranking_) == X.shape[1]
 
 
-def test_rfecv_verbose_output(global_random_seed):
+def test_rfecv_verbose_output():
     # Check verbose=1 is producing an output.
     from io import StringIO
     import sys
 
     sys.stdout = StringIO()
 
-    generator = check_random_state(global_random_seed)
+    generator = check_random_state(0)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = list(iris.target)
@@ -465,8 +465,8 @@ def test_number_of_subsets_of_features(global_random_seed):
             )
 
 
-def test_rfe_cv_n_jobs(global_random_seed):
-    generator = check_random_state(global_random_seed)
+def test_rfe_cv_n_jobs():
+    generator = check_random_state()
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
@@ -498,8 +498,8 @@ def test_rfe_cv_n_jobs(global_random_seed):
         assert rfecv_cv_results_[key] == pytest.approx(rfecv.cv_results_[key])
 
 
-def test_rfe_cv_groups(global_random_seed):
-    generator = check_random_state(global_random_seed)
+def test_rfe_cv_groups():
+    generator = check_random_state(0)
     iris = load_iris()
     number_groups = 4
     groups = np.floor(np.linspace(0, number_groups, len(iris.target)))
@@ -519,14 +519,14 @@ def test_rfe_cv_groups(global_random_seed):
 @pytest.mark.parametrize(
     "importance_getter", [attrgetter("regressor_.coef_"), "regressor_.coef_"]
 )
-@pytest.mark.parametrize("selector, expected_n_features", [(RFE, 5), (RFECV, 5)])
+@pytest.mark.parametrize("selector, expected_n_features", [(RFE, 5), (RFECV, 4)])
 def test_rfe_wrapped_estimator(
-    importance_getter, selector, expected_n_features, global_random_seed
+    importance_getter, selector, expected_n_features
 ):
     # Non-regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/15312
-    X, y = make_friedman1(n_samples=50, n_features=10, random_state=global_random_seed)
-    estimator = LinearSVR(random_state=global_random_seed)
+    X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
+    estimator = LinearSVR(random_state=0)
 
     log_estimator = TransformedTargetRegressor(
         regressor=estimator, func=np.log, inverse_func=np.exp
@@ -548,9 +548,9 @@ def test_rfe_wrapped_estimator(
 )
 @pytest.mark.parametrize("Selector", [RFE, RFECV])
 def test_rfe_importance_getter_validation(
-    importance_getter, err_type, Selector, global_random_seed
+    importance_getter, err_type, Selector
 ):
-    X, y = make_friedman1(n_samples=50, n_features=10, random_state=global_random_seed)
+    X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
     estimator = LinearSVR()
     log_estimator = TransformedTargetRegressor(
         regressor=estimator, func=np.log, inverse_func=np.exp
