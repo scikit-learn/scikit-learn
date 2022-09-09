@@ -2394,7 +2394,7 @@ def check_outlier_contamination(name, estimator_orig):
 
     for constraint in contamination_constraints:
         if isinstance(constraint, Interval):
-            assert(
+            assert (
                 constraint.type == Real
                 and constraint.left >= 0.0
                 and constraint.right <= 0.5
