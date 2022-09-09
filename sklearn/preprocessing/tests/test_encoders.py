@@ -13,6 +13,7 @@ from sklearn.utils import is_scalar_nan
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
 
+
 # TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_one_hot_encoder_sparse_dense():
@@ -319,6 +320,8 @@ def test_one_hot_encoder_inverse(handle_unknown, sparse_, drop):
         enc.inverse_transform(X_tr)
 
 
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("sparse_", [False, True])
 @pytest.mark.parametrize(
     "X, X_trans",
@@ -330,9 +333,6 @@ def test_one_hot_encoder_inverse(handle_unknown, sparse_, drop):
         ),
     ],
 )
-
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_one_hot_encoder_inverse_transform_raise_error_with_unknown(
     X, X_trans, sparse_
 ):
@@ -894,6 +894,8 @@ def test_encoders_has_categorical_tags(Encoder):
 
 # TODO(1.2): Remove filterwarning when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "kwargs",
     [
@@ -904,9 +906,6 @@ def test_encoders_has_categorical_tags(Encoder):
         {"max_categories": 4, "min_frequency": 12},
     ],
 )
-
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize("categories", ["auto", [["a", "b", "c", "d"]]])
 def test_ohe_infrequent_two_levels(kwargs, categories):
     """Test that different parameters for combine 'a', 'c', and 'd' into
@@ -987,6 +986,8 @@ def test_ohe_infrequent_two_levels_drop_infrequent_errors(drop):
 
 # TODO(1.2): Remove filterwarning when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 @pytest.mark.parametrize(
     "kwargs",
     [
@@ -999,9 +1000,6 @@ def test_ohe_infrequent_two_levels_drop_infrequent_errors(drop):
         {"max_categories": 4, "min_frequency": 6},
     ],
 )
-
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_ohe_infrequent_three_levels(kwargs):
     """Test that different parameters for combing 'a', and 'd' into
     the infrequent category works as expected."""
@@ -1417,7 +1415,7 @@ def test_one_hot_encoder_sparse_deprecated():
         " 1.4."
     )
     with pytest.warns(FutureWarning, match=msg):
-        enc = OneHotEncoder(sparse=False).fit(X)
+        OneHotEncoder(sparse=False).fit(X)
 
 
 # TODO: Remove in 1.2 when get_feature_names is removed
