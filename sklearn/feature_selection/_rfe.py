@@ -116,8 +116,8 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
         .. versionadded:: 0.24
 
         .. versionchanged:: 1.2
-           Added support for custom importance getter with estimator, training input
-           samples `X` and the target labels `y`.
+           Added support for a callable `importance_getter` which accepts estimator,
+           training input samples `X` and the target labels `y` as arguments.
 
     Attributes
     ----------
@@ -544,8 +544,8 @@ class RFECV(RFE):
         .. versionadded:: 0.24
 
         .. versionchanged:: 1.2
-           Added support for custom importance getter with estimator, training input
-           samples `X` and the target labels `y`.
+           Added support for a callable `importance_getter` which accepts estimator,
+           training input samples `X` and the target labels `y` as arguments.
 
     Attributes
     ----------
