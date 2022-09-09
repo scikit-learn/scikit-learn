@@ -72,13 +72,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     powers_ : ndarray of shape (`n_output_features_`, `n_features_in_`)
         `powers_[i, j]` is the exponent of the jth input in the ith output.
 
-    n_input_features_ : int
-        The total number of input features.
-
-        .. deprecated:: 1.0
-            This attribute is deprecated in 1.0 and will be removed in 1.2.
-            Refer to `n_features_in_` instead.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -130,7 +123,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
            [ 1.,  4.,  5., 20.]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "degree": [Interval(Integral, 0, None, closed="left"), "array-like"],
         "interaction_only": ["boolean"],
         "include_bias": ["boolean"],
@@ -505,16 +498,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 XP = Xout
         return XP
 
-    # TODO: Remove in 1.2
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The attribute `n_input_features_` was "
-        "deprecated in version 1.0 and will be removed in 1.2."
-    )
-    @property
-    def n_input_features_(self):
-        return self.n_features_in_
-
 
 # TODO:
 # - sparse support (either scipy or own cython solution)?
@@ -632,7 +615,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
            [0.  , 0.  , 0.5 , 0.5 ]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_knots": [Interval(Integral, 2, None, closed="left")],
         "degree": [Interval(Integral, 0, None, closed="left")],
         "knots": [StrOptions({"uniform", "quantile"}), "array-like"],

@@ -184,7 +184,7 @@ class RFE(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "estimator": [HasMethods(["fit"])],
         "n_features_to_select": [
             None,
@@ -628,8 +628,8 @@ class RFECV(RFE):
     array([1, 1, 1, 1, 1, 6, 4, 3, 2, 5])
     """
 
-    _parameter_constraints = {
-        **RFE._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **RFE._parameter_constraints,
         "min_features_to_select": [Interval(Integral, 0, None, closed="neither")],
         "cv": ["cv_object"],
         "scoring": [None, str, callable],
