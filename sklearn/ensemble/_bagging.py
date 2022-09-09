@@ -1256,6 +1256,7 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         return y_hat
 
     def _get_estimator(self):
+        """Get the base estimator. By default, returns a decision tree."""
         if self.base_estimator is None:
             return DecisionTreeRegressor()
         return self.base_estimator
