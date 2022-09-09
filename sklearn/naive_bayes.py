@@ -238,7 +238,7 @@ class GaussianNB(_BaseNB):
     [1]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "priors": ["array-like", None],
         "var_smoothing": [Interval(Real, 0, None, closed="left")],
     }
@@ -545,7 +545,7 @@ class _BaseDiscreteNB(_BaseNB):
     _count(X, Y)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
         "fit_prior": ["boolean"],
         "class_prior": ["array-like", None],
@@ -800,16 +800,6 @@ class _BaseDiscreteNB(_BaseNB):
     def _more_tags(self):
         return {"poor_score": True}
 
-    # TODO: Remove in 1.2
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `n_features_` was deprecated in version 1.0 and will be "
-        "removed in 1.2. Use `n_features_in_` instead."
-    )
-    @property
-    def n_features_(self):
-        return self.n_features_in_
-
 
 class MultinomialNB(_BaseDiscreteNB):
     """
@@ -865,13 +855,6 @@ class MultinomialNB(_BaseDiscreteNB):
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical log probability of features
         given a class, ``P(x_i|y)``.
-
-    n_features_ : int
-        Number of features of each sample.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1006,13 +989,6 @@ class ComplementNB(_BaseDiscreteNB):
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical weights for class complements.
 
-    n_features_ : int
-        Number of features of each sample.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -1052,7 +1028,7 @@ class ComplementNB(_BaseDiscreteNB):
     [3]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseDiscreteNB._parameter_constraints,
         "norm": ["boolean"],
     }
@@ -1160,13 +1136,6 @@ class BernoulliNB(_BaseDiscreteNB):
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical log probability of features given a class, P(x_i|y).
 
-    n_features_ : int
-        Number of features of each sample.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -1213,7 +1182,7 @@ class BernoulliNB(_BaseDiscreteNB):
     [3]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseDiscreteNB._parameter_constraints,
         "binarize": [None, Interval(Real, 0, None, closed="left")],
     }
@@ -1347,13 +1316,6 @@ class CategoricalNB(_BaseDiscreteNB):
         for each feature. Each array provides the empirical log probability
         of categories given the respective feature and class, ``P(x_i|y)``.
 
-    n_features_ : int
-        Number of features of each sample.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -1392,7 +1354,7 @@ class CategoricalNB(_BaseDiscreteNB):
     [3]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseDiscreteNB._parameter_constraints,
         "min_categories": [
             None,

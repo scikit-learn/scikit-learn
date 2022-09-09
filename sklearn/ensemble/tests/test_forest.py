@@ -25,7 +25,6 @@ from scipy.special import comb
 import pytest
 
 import joblib
-from numpy.testing import assert_allclose
 
 from sklearn.dummy import DummyRegressor
 from sklearn.metrics import mean_poisson_deviance
@@ -1687,28 +1686,6 @@ def test_little_tree_with_small_max_samples(ForestClass):
     assert tree1.node_count > tree2.node_count, msg
 
 
-# FIXME: remove in 1.2
-@pytest.mark.parametrize(
-    "Estimator",
-    [
-        ExtraTreesClassifier,
-        ExtraTreesRegressor,
-        RandomForestClassifier,
-        RandomForestRegressor,
-        RandomTreesEmbedding,
-    ],
-)
-def test_n_features_deprecation(Estimator):
-    # Check that we raise the proper deprecation warning if accessing
-    # `n_features_`.
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    est = Estimator().fit(X, y)
-
-    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
-        est.n_features_
-
-
 # TODO: Remove in v1.3
 @pytest.mark.parametrize(
     "Estimator",
@@ -1736,27 +1713,6 @@ def test_max_features_deprecation(Estimator):
 
     with pytest.warns(FutureWarning, match=err_msg):
         est.fit(X, y)
-
-
-@pytest.mark.parametrize(
-    "old_criterion, new_criterion, Estimator",
-    [
-        # TODO(1.2): Remove "mse" and "mae"
-        ("mse", "squared_error", RandomForestRegressor),
-        ("mae", "absolute_error", RandomForestRegressor),
-    ],
-)
-def test_criterion_deprecated(old_criterion, new_criterion, Estimator):
-    est1 = Estimator(criterion=old_criterion, random_state=0)
-
-    with pytest.warns(
-        FutureWarning, match=f"Criterion '{old_criterion}' was deprecated"
-    ):
-        est1.fit(X, y)
-
-    est2 = Estimator(criterion=new_criterion, random_state=0)
-    est2.fit(X, y)
-    assert_allclose(est1.predict(X), est2.predict(X))
 
 
 @pytest.mark.parametrize("Forest", FOREST_REGRESSORS)

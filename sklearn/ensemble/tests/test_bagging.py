@@ -922,16 +922,3 @@ def test_bagging_get_estimators_indices():
     clf.fit(X, y)
 
     assert_array_equal(clf.estimators_[0]._sample_indices, clf.estimators_samples_[0])
-
-
-# FIXME: remove in 1.2
-@pytest.mark.parametrize("Estimator", [BaggingClassifier, BaggingRegressor])
-def test_n_features_deprecation(Estimator):
-    # Check that we raise the proper deprecation warning if accessing
-    # `n_features_`.
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    est = Estimator().fit(X, y)
-
-    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
-        est.n_features_

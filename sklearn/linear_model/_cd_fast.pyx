@@ -9,16 +9,14 @@
 from libc.math cimport fabs
 cimport numpy as cnp
 import numpy as np
-import numpy.linalg as linalg
 
-from cpython cimport bool
 from cython cimport floating
 import warnings
 from ..exceptions import ConvergenceWarning
 
-from ..utils._cython_blas cimport (_axpy, _dot, _asum, _ger, _gemv, _nrm2,
+from ..utils._cython_blas cimport (_axpy, _dot, _asum, _gemv, _nrm2,
                                    _copy, _scal)
-from ..utils._cython_blas cimport RowMajor, ColMajor, Trans, NoTrans
+from ..utils._cython_blas cimport ColMajor, Trans, NoTrans
 
 
 from ..utils._random cimport our_rand_r

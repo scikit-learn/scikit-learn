@@ -370,17 +370,17 @@ def plot_det_curve(
 ):
     """Plot detection error tradeoff (DET) curve.
 
-    Extra keyword arguments will be passed to matplotlib's `plot`.
-
-    Read more in the :ref:`User Guide <visualizations>`.
-
-    .. versionadded:: 0.24
-
     .. deprecated:: 1.0
        `plot_det_curve` is deprecated in 1.0 and will be removed in
        1.2. Use one of the following class methods:
        :func:`~sklearn.metrics.DetCurveDisplay.from_predictions` or
        :func:`~sklearn.metrics.DetCurveDisplay.from_estimator`.
+
+    Extra keyword arguments will be passed to matplotlib's `plot`.
+
+    Read more in the :ref:`User Guide <visualizations>`.
+
+    .. versionadded:: 0.24
 
     Parameters
     ----------

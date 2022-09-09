@@ -4,7 +4,6 @@
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-import numbers
 from typing import List
 
 import numpy as np
@@ -17,7 +16,6 @@ from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..tree import (
     DecisionTreeRegressor,
-    ExtraTreeRegressor,
     BaseDecisionTree,
     DecisionTreeClassifier,
 )
@@ -128,24 +126,10 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # self.estimators_ needs to be filled by the derived classes in fit.
 
     def _validate_estimator(self, default=None):
-        """Check the estimator and the n_estimator attribute.
+        """Check the base estimator.
 
         Sets the base_estimator_` attributes.
         """
-        if not isinstance(self.n_estimators, numbers.Integral):
-            raise ValueError(
-                "n_estimators must be an integer, got {0}.".format(
-                    type(self.n_estimators)
-                )
-            )
-
-        if self.n_estimators <= 0:
-            raise ValueError(
-                "n_estimators must be greater than zero, got {0}.".format(
-                    self.n_estimators
-                )
-            )
-
         if self.base_estimator is not None:
             self.base_estimator_ = self.base_estimator
         else:
@@ -162,15 +146,6 @@ class BaseEnsemble(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """
         estimator = clone(self.base_estimator_)
         estimator.set_params(**{p: getattr(self, p) for p in self.estimator_params})
-
-        # TODO: Remove in v1.2
-        # criterion "mse" and "mae" would cause warnings in every call to
-        # DecisionTreeRegressor.fit(..)
-        if isinstance(estimator, (DecisionTreeRegressor, ExtraTreeRegressor)):
-            if getattr(estimator, "criterion", None) == "mse":
-                estimator.set_params(criterion="squared_error")
-            elif getattr(estimator, "criterion", None) == "mae":
-                estimator.set_params(criterion="absolute_error")
 
         # TODO(1.3): Remove
         # max_features = 'auto' would cause warnings in every call to

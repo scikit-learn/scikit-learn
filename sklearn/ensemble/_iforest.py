@@ -145,13 +145,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         .. versionadded:: 0.20
 
-    n_features_ : int
-        The number of features when ``fit`` is performed.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -197,7 +190,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
     array([ 1,  1, -1])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "max_samples": [
             StrOptions({"auto"}),
