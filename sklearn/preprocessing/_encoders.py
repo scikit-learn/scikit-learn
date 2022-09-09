@@ -407,7 +407,7 @@ class OneHotEncoder(_BaseEncoder):
     [array(['Female', 'Male'], dtype=object), array([1, 2, 3], dtype=object)]
     >>> enc.transform([['Female', 1], ['Male', 4]]).toarray()
     array([[1., 0., 1., 0., 0.],
-           [0., 1., 0., 0., 0.]])https://www.google.com/search?q=pytest+multiple+futurewarning+%3A+%3A+name+them&sxsrf=ALiCzsbF8fYHcx7Ue9L71r0qZVnL2UWM6Q%3A1662724332745&ei=7CgbY-GILbCu3LUPrY2xiA0&ved=0ahUKEwjhrtnp0of6AhUwF7cAHa1GDNEQ4dUDCA4&uact=5&oq=pytest+multiple+futurewarning+%3A+%3A+name+them&gs_lcp=Cgdnd3Mtd2l6EAMyBAgjECc6CggAEEcQ1gQQsANKBAhBGABKBAhGGABQ5AZY7gxgmg5oAXABeACAAX6IAcsDkgEDMC40mAEAoAEByAEIwAEB&sclient=gws-wiz
+           [0., 1., 0., 0., 0.]])
     >>> enc.inverse_transform([[0, 1, 1, 0, 0], [0, 0, 0, 1, 0]])
     array([['Male', 1],
            [None, 2]], dtype=object)
