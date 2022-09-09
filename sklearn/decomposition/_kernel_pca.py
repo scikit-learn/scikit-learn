@@ -16,7 +16,6 @@ from ..utils.validation import (
     _check_psd_eigenvalues,
 )
 from ..utils._param_validation import Interval, StrOptions
-from ..utils.deprecation import deprecated
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..preprocessing import KernelCenterer
