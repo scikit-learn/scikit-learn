@@ -611,6 +611,10 @@ def shuffle(*arrays, random_state=None, n_samples=None):
         Sequence of shuffled copies of the collections. The original arrays
         are not impacted.
 
+    See Also
+    --------
+    resample : Resample arrays or sparse matrices in a consistent way.
+
     Examples
     --------
     It is possible to mix sparse and dense arrays in the same run::
@@ -643,10 +647,6 @@ def shuffle(*arrays, random_state=None, n_samples=None):
 
       >>> shuffle(y, n_samples=2, random_state=0)
       array([0, 1])
-
-    See Also
-    --------
-    resample
     """
     return resample(
         *arrays, replace=False, n_samples=n_samples, random_state=random_state

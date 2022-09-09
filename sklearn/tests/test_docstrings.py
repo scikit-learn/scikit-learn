@@ -12,40 +12,22 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn.decomposition._dict_learning.dict_learning",
-    "sklearn.decomposition._dict_learning.dict_learning_online",
-    "sklearn.decomposition._nmf.non_negative_factorization",
-    "sklearn.externals._packaging.version.parse",
-    "sklearn.feature_extraction.text.strip_accents_unicode",
+    # sklearn.deprecation._update_doc is updating the doc against the numpydoc.
+    # This will be fixed in future PRs.
     "sklearn.inspection._plot.partial_dependence.plot_partial_dependence",
-    "sklearn.linear_model._least_angle.lars_path_gram",
-    "sklearn.linear_model._omp.orthogonal_mp_gram",
-    "sklearn.manifold._locally_linear.locally_linear_embedding",
-    "sklearn.manifold._t_sne.trustworthiness",
+    # sklearn.deprecation._update_doc is updating the doc against the numpydoc.
+    # This will be fixed with issue: #24328
     "sklearn.metrics._plot.det_curve.plot_det_curve",
+    # sklearn.deprecation._update_doc is updating the doc against the numpydoc.
+    # This will be fixed with issue: #24328
     "sklearn.metrics._plot.precision_recall_curve.plot_precision_recall_curve",
-    "sklearn.metrics._ranking.coverage_error",
-    "sklearn.metrics._ranking.dcg_score",
-    "sklearn.metrics._ranking.roc_curve",
-    "sklearn.metrics._ranking.top_k_accuracy_score",
-    "sklearn.metrics._regression.mean_pinball_loss",
-    "sklearn.metrics.cluster._bicluster.consensus_score",
-    "sklearn.metrics.cluster._supervised.adjusted_mutual_info_score",
-    "sklearn.metrics.cluster._supervised.adjusted_rand_score",
-    "sklearn.metrics.cluster._supervised.entropy",
-    "sklearn.metrics.cluster._supervised.fowlkes_mallows_score",
     "sklearn.metrics.pairwise.pairwise_distances_chunked",
-    "sklearn.preprocessing._data.maxabs_scale",
-    "sklearn.preprocessing._data.scale",
-    "sklearn.svm._bounds.l1_min_c",
     "sklearn.tree._export.plot_tree",
     "sklearn.utils.axis0_safe_slice",
     "sklearn.utils.extmath.density",
     "sklearn.utils.extmath.fast_logdet",
     "sklearn.utils.extmath.randomized_svd",
     "sklearn.utils.extmath.safe_sparse_dot",
-    "sklearn.utils.extmath.squared_norm",
-    "sklearn.utils.extmath.stable_cumsum",
     "sklearn.utils.extmath.svd_flip",
     "sklearn.utils.extmath.weighted_mode",
     "sklearn.utils.fixes.delayed",
@@ -66,11 +48,9 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.multiclass.unique_labels",
     "sklearn.utils.safe_mask",
     "sklearn.utils.safe_sqr",
-    "sklearn.utils.shuffle",
     "sklearn.utils.sparsefuncs.count_nonzero",
     "sklearn.utils.sparsefuncs.csc_median_axis_0",
     "sklearn.utils.sparsefuncs.incr_mean_variance_axis",
-    "sklearn.utils.sparsefuncs.inplace_swap_row",
     "sklearn.utils.sparsefuncs.inplace_swap_row_csc",
     "sklearn.utils.sparsefuncs.inplace_swap_row_csr",
     "sklearn.utils.validation.check_is_fitted",
