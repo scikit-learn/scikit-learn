@@ -575,7 +575,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         Returns
         -------
         router : :class:`~sklearn.utils.metadata_routing.MetadataRouter`
-            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
         base_estimator = self._validate_estimator(self._get_estimator())
