@@ -720,7 +720,7 @@ provided via an array that encodes the group of each sample.
 Each training set is thus constituted by all the samples except the ones
 related to a specific group. This is the same as :class:`LeavePGroupsOut` with
 `n_groups=1` and the same as :class:`GroupKFold` with `n_splits` equal to the
-number of groups
+number of unique labels passed to the `groups` parameter.
 
 For example, in the cases of multiple experiments, :class:`LeaveOneGroupOut`
 can be used to create a cross-validation based on the different experiments:
