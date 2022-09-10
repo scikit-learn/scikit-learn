@@ -16,6 +16,10 @@ from sklearn.decomposition._pca import _infer_dimension
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
 
+SPARSE_PCA_SOLVERS = PCA_SOLVERS
+SPARSE_M, SPARSE_N = iris.data.shape
+SPARSE_RANDOM_SEED = 0
+
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
 @pytest.mark.parametrize("n_components", range(1, iris.data.shape[1]))
@@ -37,6 +41,21 @@ def test_pca(svd_solver, n_components):
     cov = pca.get_covariance()
     precision = pca.get_precision()
     assert_allclose(np.dot(cov, precision), np.eye(X.shape[1]), atol=1e-12)
+
+
+@pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
+@pytest.mark.parametrize("n_components", range(1, min(SPARSE_M, SPARSE_N)))
+def test_pca_sparse(svd_solver, n_components):
+    X = sp.sparse.random(SPARSE_M, SPARSE_N, random_state=SPARSE_RANDOM_SEED)
+    pca = PCA(n_components=n_components, svd_solver=svd_solver)
+    pca.fit(X)
+
+    Xd = np.asarray(X.todense())
+    pcad = PCA(n_components=n_components, svd_solver=svd_solver)
+    pcad.fit(Xd)
+
+    assert_allclose(pca.components_, pcad.components_)
+    assert_allclose(pca.singular_values_, pcad.singular_values_)
 
 
 def test_no_empty_slice_warning():
