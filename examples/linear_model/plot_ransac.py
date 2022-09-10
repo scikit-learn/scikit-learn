@@ -3,18 +3,15 @@
 Robust linear model estimation using RANSAC
 ===========================================
 
-:ref:`RANSAC <ransac_regression>` (random sample consensus) is an iterative
-algorithm to estimate parameters of a model from a dataset with outliers, especially when
-the outliers have little-to-no influence on the values of the estimates.
-
 In this example, we see how to robustly fit a linear model to faulty data using
-the RANSAC algorithm.
+the :ref:`RANSAC <ransac_regression>` algorithm.
 
-References
-----------
- * `"Overview of the RANSAC Algorithm"
-    <http://www.cse.yorku.ca/~kosta/CompVis_Notes/ransac.pdf>`_
-    K.G. Derpanis. - Image Rochester NY, 4(1):2-3, 2010.
+The ordinary linear regressor is sensitive to outliers, and the fitted line can
+easily be skewed away from the true underlying relationship of data.
+
+The RANSAC regressor automatically splits the data into inliers and outliers,
+and the fitted line is determined only by the identified inliers.
+
 
 """
 
