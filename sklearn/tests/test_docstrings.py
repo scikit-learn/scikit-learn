@@ -18,9 +18,10 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     # sklearn.deprecation._update_doc is updating the doc against the numpydoc.
     # This will be fixed with issue: #24328
     "sklearn.metrics._plot.det_curve.plot_det_curve",
+    # sklearn.deprecation._update_doc is updating the doc against the numpydoc.
+    # This will be fixed with issue: #24328
     "sklearn.metrics._plot.precision_recall_curve.plot_precision_recall_curve",
     "sklearn.metrics.pairwise.pairwise_distances_chunked",
-    "sklearn.svm._bounds.l1_min_c",
     "sklearn.tree._export.plot_tree",
     "sklearn.utils.axis0_safe_slice",
     "sklearn.utils.extmath.density",
@@ -47,7 +48,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.multiclass.unique_labels",
     "sklearn.utils.safe_mask",
     "sklearn.utils.safe_sqr",
-    "sklearn.utils.shuffle",
     "sklearn.utils.sparsefuncs.count_nonzero",
     "sklearn.utils.sparsefuncs.csc_median_axis_0",
     "sklearn.utils.sparsefuncs.incr_mean_variance_axis",
