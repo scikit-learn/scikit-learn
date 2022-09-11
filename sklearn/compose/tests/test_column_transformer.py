@@ -480,7 +480,8 @@ def test_column_transformer_mixed_cols_sparse():
         ct.fit_transform(df)
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output` in OneHotEncoder.
+# TODO(1.4): Remove filterwarning when `sparse` is replaced by`sparse_output`
+# in OneHotEncoder.
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_column_transformer_sparse_threshold():
     X_array = np.array([["a", "b"], ["A", "B"]], dtype=object).T
