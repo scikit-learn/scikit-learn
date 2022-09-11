@@ -689,7 +689,7 @@ the dropped category. :meth`OneHotEncoder.inverse_transform` will map all zeros
 to the dropped category if a category is dropped and `None` if a category is
 not dropped::
 
-    >>> drop_enc = preprocessing.OneHotEncoder(drop='if_binary', sparse=False,
+    >>> drop_enc = preprocessing.OneHotEncoder(drop='if_binary', sparse_output=False,
     ...                                        handle_unknown='ignore').fit(X)
     >>> X_test = [['unknown', 'America', 'IE']]
     >>> X_trans = drop_enc.transform(X_test)
@@ -755,7 +755,7 @@ infrequent::
 
    >>> X = np.array([['dog'] * 5 + ['cat'] * 20 + ['rabbit'] * 10 +
    ...               ['snake'] * 3], dtype=object).T
-   >>> enc = preprocessing.OneHotEncoder(min_frequency=6, sparse=False).fit(X)
+   >>> enc = preprocessing.OneHotEncoder(min_frequency=6, sparse_output=False).fit(X)
    >>> enc.infrequent_categories_
    [array(['dog', 'snake'], dtype=object)]
    >>> enc.transform(np.array([['dog'], ['cat'], ['rabbit'], ['snake']]))
@@ -768,7 +768,7 @@ By setting handle_unknown to `'infrequent_if_exist'`, unknown categories will
 be considered infrequent::
 
    >>> enc = preprocessing.OneHotEncoder(
-   ...    handle_unknown='infrequent_if_exist', sparse=False, min_frequency=6)
+   ...    handle_unknown='infrequent_if_exist', sparse_output=False, min_frequency=6)
    >>> enc = enc.fit(X)
    >>> enc.transform(np.array([['dragon']]))
    array([[0., 0., 1.]])
@@ -797,7 +797,7 @@ the output. This will result in all but the `'cat'` category to be considered
 infrequent, leading to two features, one for `'cat'` and one for infrequent
 categories - which are all the others::
 
-   >>> enc = preprocessing.OneHotEncoder(max_categories=2, sparse=False)
+   >>> enc = preprocessing.OneHotEncoder(max_categories=2, sparse_output=False)
    >>> enc = enc.fit(X)
    >>> enc.transform([['dog'], ['cat'], ['rabbit'], ['snake']])
    array([[0., 1.],
@@ -811,7 +811,7 @@ categories are kept. In the following example, `min_frequency=4` considers
 only `snake` to be infrequent, but `max_categories=3`, forces `dog` to also be
 infrequent::
 
-   >>> enc = preprocessing.OneHotEncoder(min_frequency=4, max_categories=3, sparse=False)
+   >>> enc = preprocessing.OneHotEncoder(min_frequency=4, max_categories=3, sparse_output=False)
    >>> enc = enc.fit(X)
    >>> enc.transform([['dog'], ['cat'], ['rabbit'], ['snake']])
    array([[0., 0., 1.],
