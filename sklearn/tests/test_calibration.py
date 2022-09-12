@@ -19,7 +19,7 @@ from sklearn.utils.extmath import softmax
 from sklearn.exceptions import NotFittedError
 from sklearn.datasets import make_classification, make_blobs, load_iris
 from sklearn.preprocessing import LabelEncoder
-from sklearn.model_selection import KFold, cross_val_predict
+from sklearn.model_selection import GroupKFold, KFold, cross_val_predict
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import (
     RandomForestClassifier,
@@ -47,6 +47,10 @@ from sklearn.utils._testing import _convert_container
 
 
 N_SAMPLES = 200
+
+
+def _weighted(estimator):
+    return estimator.set_fit_request(sample_weight=True)
 
 
 @pytest.fixture(scope="module")
@@ -82,7 +86,9 @@ def test_calibration(data, method, ensemble):
         (X_train, X_test),
         (sparse.csr_matrix(X_train), sparse.csr_matrix(X_test)),
     ]:
-        cal_clf = CalibratedClassifierCV(clf, method=method, cv=5, ensemble=ensemble)
+        cal_clf = CalibratedClassifierCV(
+            _weighted(clf), method=method, cv=5, ensemble=ensemble
+        )
         # Note that this fit overwrites the fit on the entire training
         # set
         cal_clf.fit(this_X_train, y_train, sample_weight=sw_train)
@@ -152,7 +158,7 @@ def test_sample_weight(data, method, ensemble):
     X_train, y_train, sw_train = X[:n_samples], y[:n_samples], sample_weight[:n_samples]
     X_test = X[n_samples:]
 
-    estimator = LinearSVC(random_state=42)
+    estimator = _weighted(LinearSVC(random_state=42))
     calibrated_clf = CalibratedClassifierCV(estimator, method=method, ensemble=ensemble)
     calibrated_clf.fit(X_train, y_train, sample_weight=sw_train)
     probs_with_sw = calibrated_clf.predict_proba(X_test)
@@ -886,7 +892,7 @@ def test_calibrated_classifier_cv_double_sample_weights_equivalence(method, ense
     y_twice[::2] = y
     y_twice[1::2] = y
 
-    estimator = LogisticRegression()
+    estimator = _weighted(LogisticRegression())
     calibrated_clf_without_weights = CalibratedClassifierCV(
         estimator,
         method=method,
@@ -928,7 +934,9 @@ def test_calibration_with_fit_params(fit_params_type, data):
         "b": _convert_container(y, fit_params_type),
     }
 
-    clf = CheckingClassifier(expected_fit_params=["a", "b"])
+    clf = CheckingClassifier(expected_fit_params=["a", "b"]).set_fit_request(
+        a=True, b=True
+    )
     pc_clf = CalibratedClassifierCV(clf)
 
     pc_clf.fit(X, y, **fit_params)
@@ -946,32 +954,10 @@ def test_calibration_with_sample_weight_base_estimator(sample_weight, data):
     estimator.
     """
     X, y = data
-    clf = CheckingClassifier(expected_sample_weight=True)
+    clf = _weighted(CheckingClassifier(expected_sample_weight=True))
     pc_clf = CalibratedClassifierCV(clf)
 
     pc_clf.fit(X, y, sample_weight=sample_weight)
-
-
-def test_calibration_without_sample_weight_base_estimator(data):
-    """Check that even if the estimator doesn't support
-    sample_weight, fitting with sample_weight still works.
-
-    There should be a warning, since the sample_weight is not passed
-    on to the estimator.
-    """
-    X, y = data
-    sample_weight = np.ones_like(y)
-
-    class ClfWithoutSampleWeight(CheckingClassifier):
-        def fit(self, X, y, **fit_params):
-            assert "sample_weight" not in fit_params
-            return super().fit(X, y, **fit_params)
-
-    clf = ClfWithoutSampleWeight()
-    pc_clf = CalibratedClassifierCV(clf)
-
-    with pytest.warns(UserWarning):
-        pc_clf.fit(X, y, sample_weight=sample_weight)
 
 
 def test_calibration_with_fit_params_inconsistent_length(data):
@@ -1006,7 +992,7 @@ def test_calibrated_classifier_cv_zeros_sample_weights_equivalence(method, ensem
     sample_weight = np.zeros_like(y)
     sample_weight[::2] = 1
 
-    estimator = LogisticRegression()
+    estimator = _weighted(LogisticRegression())
     calibrated_clf_without_weights = CalibratedClassifierCV(
         estimator,
         method=method,
@@ -1054,3 +1040,13 @@ def test_calibrated_classifier_deprecation_base_estimator(data):
     warn_msg = "`base_estimator` was renamed to `estimator`"
     with pytest.warns(FutureWarning, match=warn_msg):
         calibrated_classifier.fit(*data)
+
+
+def test_calibration_groupkfold(data):
+    # Check that groups are routed to the splitter
+    X, y = data
+    groups = np.array([0, 1] * (len(y) // 2))  # assumes len(y) is even
+    cv = GroupKFold(n_splits=2)
+    calib_clf = CalibratedClassifierCV(cv=cv)
+    # check that fitting does not raise an error
+    calib_clf.fit(X, y, groups=groups)

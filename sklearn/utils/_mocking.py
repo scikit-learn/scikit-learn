@@ -3,6 +3,7 @@ import numpy as np
 from ..base import BaseEstimator, ClassifierMixin
 from .validation import _check_sample_weight, _num_samples, check_array
 from .validation import check_is_fitted
+from ..utils._metadata_requests import RequestMethod
 
 
 class ArraySlicingWrapper:
@@ -319,6 +320,14 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
 
     def _more_tags(self):
         return {"_skip_test": True, "X_types": ["1dlabel"]}
+
+
+# Deactivate key validation for CheckingClassifier because we want to be able to
+# call fit with arbitrary fit_params and record them. Without this change, we
+# would get an error because those arbitrary params are not expected.
+CheckingClassifier.set_fit_request = RequestMethod(  # type: ignore
+    name="fit", keys=[], validate_keys=False
+)
 
 
 class NoSampleWeightWrapper(BaseEstimator):

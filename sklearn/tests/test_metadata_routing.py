@@ -39,7 +39,7 @@ def assert_request_is_empty(metadata_request, exclude=None):
     """Check if a metadata request dict is empty.
 
     One can exclude a method or a list of methods from the check using the
-    ``exclude`` perameter.
+    ``exclude`` parameter.
     """
     if isinstance(metadata_request, MetadataRouter):
         for _, route_mapping in metadata_request:
@@ -70,10 +70,22 @@ def assert_request_equal(request, dictionary):
         assert not len(getattr(request, method).requests)
 
 
-def record_metadata(obj, method, **kwargs):
-    """Utility function to store passed metadata to a method."""
+def record_metadata(obj, method, record_default=True, **kwargs):
+    """Utility function to store passed metadata to a method.
+
+    If record_default is False, kwargs whose values are "default" are skipped.
+    This is so that checks on keyword arguments whose default was not changed
+    are skipped.
+
+    """
     if not hasattr(obj, "_records"):
-        setattr(obj, "_records", dict())
+        obj._records = {}
+    if not record_default:
+        kwargs = {
+            key: val
+            for key, val in kwargs.items()
+            if not isinstance(val, str) or (val != "default")
+        }
     obj._records[method] = kwargs
 
 
@@ -339,13 +351,11 @@ def test_simple_metadata_routing():
     # If the estimator accepts the metadata but doesn't explicitly say it doesn't
     # need it, there's an error
     clf = SimpleMetaClassifier(estimator=ClassifierFitMetadata())
-    with pytest.raises(
-        ValueError,
-        match=(
-            "sample_weight is passed but is not explicitly set as requested or not for"
-            " ClassifierFitMetadata.fit"
-        ),
-    ):
+    err_message = (
+        "[sample_weight] are passed but are not explicitly set as requested or"
+        " not for ClassifierFitMetadata.fit"
+    )
+    with pytest.raises(ValueError, match=re.escape(err_message)):
         clf.fit(X, y, sample_weight=my_weights)
 
     # Explicitly saying the estimator doesn't need it, makes the error go away,
@@ -587,7 +597,9 @@ def test_setting_default_requests():
 
 
 def test_method_metadata_request():
-    mmr = MethodMetadataRequest(owner="test", method="fit")
+    mmr = MethodMetadataRequest(
+        router=MetadataRequest(owner="test"), owner="test", method="fit"
+    )
 
     with pytest.raises(
         ValueError, match="alias should be either a valid identifier or"
@@ -654,9 +666,9 @@ def test_estimator_warnings():
     "obj, string",
     [
         (
-            MethodMetadataRequest(owner="test", method="fit").add_request(
-                param="foo", alias="bar"
-            ),
+            MethodMetadataRequest(
+                router=MetadataRequest(owner="test"), owner="test", method="fit"
+            ).add_request(param="foo", alias="bar"),
             "{'foo': 'bar'}",
         ),
         (
@@ -847,6 +859,193 @@ def test_metadata_routing_get_param_names():
     assert router._get_param_names(
         method="fit", return_alias=True, ignore_self=True
     ) == router._get_param_names(method="fit", return_alias=False, ignore_self=True)
+
+
+def test_warn_on_invalid_child():
+    """Test that we error if the child is not known."""
+    with pytest.raises(ValueError, match="Unknown child"):
+        MetadataRouter(owner="test").add(
+            estimator=LinearRegression(), method_mapping="one-to-one"
+        ).warn_on(
+            child="invalid",
+            method="fit",
+            params=None,
+            raise_on="1.4",
+        )
+
+
+def test_router_deprecation_warning():
+    """This test checks the warning mechanism related to `warn_on`.
+
+    `warn_on` is there to handle backward compatibility in cases where the
+    meta-estimator is already doing some routing, and SLEP006 would break
+    existing user code. `warn_on` helps converting some of those errors to
+    warnings.
+
+    In different scenarios with a meta-estimator and a child estimator we test
+    if the warning is raised when it should, an error raised when it should,
+    and the combinations of the above cases.
+    """
+
+    class MetaEstimator(BaseEstimator, MetaEstimatorMixin):
+        def __init__(self, estimator):
+            self.estimator = estimator
+
+        def fit(self, X, y, **fit_params):
+            routed_params = process_routing(self, "fit", fit_params)
+            self.estimator_ = clone(self.estimator).fit(
+                X, y, **routed_params.estimator.fit
+            )
+
+        def predict(self, X, **predict_params):
+            routed_params = process_routing(self, "predict", predict_params)
+            return self.estimator_.predict(X, **routed_params.estimator.predict)
+
+        def get_metadata_routing(self):
+            return (
+                MetadataRouter(owner=self.__class__.__name__)
+                .add(estimator=self.estimator, method_mapping="one-to-one")
+                .warn_on(
+                    child="estimator",
+                    method="fit",
+                    params=None,
+                    raise_on="1.4",
+                )
+            )
+
+    class Estimator(BaseEstimator):
+        def fit(self, X, y, sample_weight=None, groups=None):
+            return self
+
+        def predict(self, X, sample_weight=None):
+            return np.ones(shape=len(X))
+
+    est = MetaEstimator(estimator=Estimator())
+    # the meta-estimator has set (using `warn_on`) to have a warning on `fit`.
+    with pytest.warns(
+        FutureWarning, match="From version 1.4 this results in the following error"
+    ):
+        est.fit(X, y, sample_weight=my_weights)
+
+    err_msg = (
+        "{params} are passed but are not explicitly set as requested or not for {owner}"
+    )
+    warn_msg = "From version 1.4 this results in the following error"
+    # but predict should raise since there is no warn_on set for it.
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            err_msg.format(params="[sample_weight]", owner="Estimator.predict")
+        ),
+    ):
+        est.predict(X, sample_weight=my_weights)
+
+    # In this case both a warning and an error are raised. The warning comes
+    # from the MetaEstimator, and the error from WeightedMetaRegressor since it
+    # doesn't have any warn_on set but sample_weight is passed.
+    est = MetaEstimator(estimator=WeightedMetaRegressor(estimator=RegressorMetadata()))
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            err_msg.format(params="[sample_weight]", owner="RegressorMetadata.fit")
+        ),
+    ):
+        with pytest.warns(FutureWarning, match=warn_msg):
+            est.fit(X, y, sample_weight=my_weights)
+
+    class WarningWeightedMetaRegressor(WeightedMetaRegressor):
+        """A WeightedMetaRegressor which warns instead."""
+
+        def get_metadata_routing(self):
+            router = (
+                MetadataRouter(owner=self.__class__.__name__)
+                .add_self(self)
+                .add(estimator=self.estimator, method_mapping="one-to-one")
+                .warn_on(
+                    child="estimator",
+                    method="fit",
+                    params=["sample_weight"],
+                    raise_on="1.4",
+                )
+                .warn_on(
+                    child="estimator",
+                    method="score",
+                    params=["sample_weight"],
+                    raise_on="1.4",
+                )
+            )
+            return router
+
+    # Now there's only a warning since both meta-estimators warn.
+    est = MetaEstimator(
+        estimator=WarningWeightedMetaRegressor(estimator=RegressorMetadata())
+    )
+    with pytest.warns(FutureWarning, match=warn_msg):
+        est.fit(X, y, sample_weight=my_weights)
+
+    # here we should raise because there is no warn_on for groups
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            err_msg.format(params="[sample_weight, groups]", owner="Estimator.fit")
+        ),
+    ):
+        # the sample_weight should still warn
+        with pytest.warns(FutureWarning, match=warn_msg):
+            WarningWeightedMetaRegressor(estimator=Estimator()).fit(
+                X, y, sample_weight=my_weights, groups=1
+            )
+
+    # but if the inner estimator has a non-default request, we fall back to
+    # raising an error
+    est = MetaEstimator(
+        estimator=WarningWeightedMetaRegressor(
+            estimator=RegressorMetadata().set_fit_request(sample_weight=True)
+        )
+    )
+    with pytest.raises(
+        ValueError,
+        match=re.escape(
+            err_msg.format(
+                params="[sample_weight]", owner="WarningWeightedMetaRegressor.fit"
+            )
+        ),
+    ):
+        est.fit(X, y, sample_weight=my_weights)
+
+
+@pytest.mark.parametrize(
+    "estimator, is_default_request",
+    [
+        (LinearRegression(), True),
+        (LinearRegression().set_fit_request(sample_weight=True), False),  # type: ignore
+        (WeightedMetaRegressor(estimator=LinearRegression()), True),
+        (
+            WeightedMetaRegressor(
+                estimator=LinearRegression().set_fit_request(  # type: ignore
+                    sample_weight=True
+                )
+            ),
+            False,
+        ),
+        (
+            WeightedMetaRegressor(
+                estimator=LinearRegression()
+            ).set_fit_request(  # type: ignore
+                sample_weight=True
+            ),
+            False,
+        ),
+    ],
+)
+def test_is_default_request(estimator, is_default_request):
+    """Test the `_is_default_request` machinery.
+
+    It should be `True` only if the user hasn't changed any default values.
+
+    Applies to both `MetadataRouter` and `MetadataRequest`.
+    """
+    assert estimator.get_metadata_routing()._is_default_request == is_default_request
 
 
 def test_method_generation():

@@ -1,41 +1,52 @@
-import pytest
-import numpy as np
-import scipy.sparse as sp
-from joblib import cpu_count
 import re
 
-from sklearn.utils._testing import assert_almost_equal
-from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
+import numpy as np
+import pytest
+import scipy.sparse as sp
+from joblib import cpu_count
+
 from sklearn import datasets
-from sklearn.base import clone
-from sklearn.datasets import make_classification
-from sklearn.datasets import load_linnerud
-from sklearn.datasets import make_multilabel_classification
-from sklearn.datasets import make_regression
-from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
+from sklearn.base import ClassifierMixin, clone
+from sklearn.datasets import (
+    load_linnerud,
+    make_classification,
+    make_multilabel_classification,
+    make_regression,
+)
+from sklearn.ensemble import (
+    GradientBoostingRegressor,
+    RandomForestClassifier,
+    StackingRegressor,
+)
 from sklearn.exceptions import NotFittedError
-from sklearn.linear_model import Lasso
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import OrthogonalMatchingPursuit
-from sklearn.linear_model import Ridge
-from sklearn.linear_model import SGDClassifier
-from sklearn.linear_model import SGDRegressor
-from sklearn.linear_model import LinearRegression
+from sklearn.impute import SimpleImputer
+from sklearn.linear_model import (
+    Lasso,
+    LinearRegression,
+    LogisticRegression,
+    OrthogonalMatchingPursuit,
+    Ridge,
+    SGDClassifier,
+    SGDRegressor,
+)
 from sklearn.metrics import jaccard_score, mean_squared_error
+from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.multioutput import ClassifierChain, RegressorChain
-from sklearn.multioutput import MultiOutputClassifier
-from sklearn.multioutput import MultiOutputRegressor
+from sklearn.multioutput import (
+    ClassifierChain,
+    MultiOutputClassifier,
+    MultiOutputRegressor,
+    RegressorChain,
+)
+from sklearn.pipeline import make_pipeline
 from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
-from sklearn.model_selection import GridSearchCV, train_test_split
-from sklearn.dummy import DummyRegressor, DummyClassifier
-from sklearn.pipeline import make_pipeline
-from sklearn.impute import SimpleImputer
-from sklearn.ensemble import StackingRegressor
+from sklearn.utils._testing import (
+    assert_almost_equal,
+    assert_array_almost_equal,
+    assert_array_equal,
+)
 
 
 def test_multi_target_regression():
@@ -115,12 +126,14 @@ def test_multi_target_sample_weights_api():
     w = [0.8, 0.6]
 
     rgr = MultiOutputRegressor(OrthogonalMatchingPursuit())
-    msg = "does not support sample weights"
-    with pytest.raises(ValueError, match=msg):
+    msg = re.escape("fit got unexpected argument(s) {'sample_weight'}")
+    with pytest.raises(TypeError, match=msg):
         rgr.fit(X, y, w)
 
     # no exception should be raised if the base estimator supports weights
-    rgr = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
+    rgr = MultiOutputRegressor(
+        GradientBoostingRegressor(random_state=0).set_fit_request(sample_weight=True)
+    )
     rgr.fit(X, y, w)
 
 
@@ -129,12 +142,20 @@ def test_multi_target_sample_weight_partial_fit():
     X = [[1, 2, 3], [4, 5, 6]]
     y = [[3.141, 2.718], [2.718, 3.141]]
     w = [2.0, 1.0]
-    rgr_w = MultiOutputRegressor(SGDRegressor(random_state=0, max_iter=5))
+    rgr_w = MultiOutputRegressor(
+        SGDRegressor(random_state=0, max_iter=5).set_partial_fit_request(
+            sample_weight=True
+        )
+    )
     rgr_w.partial_fit(X, y, w)
 
     # weighted with different weights
     w = [2.0, 2.0]
-    rgr = MultiOutputRegressor(SGDRegressor(random_state=0, max_iter=5))
+    rgr = MultiOutputRegressor(
+        SGDRegressor(random_state=0, max_iter=5).set_partial_fit_request(
+            sample_weight=True
+        )
+    )
     rgr.partial_fit(X, y, w)
 
     assert rgr.predict(X)[0][0] != rgr_w.predict(X)[0][0]
@@ -145,7 +166,9 @@ def test_multi_target_sample_weights():
     Xw = [[1, 2, 3], [4, 5, 6]]
     yw = [[3.141, 2.718], [2.718, 3.141]]
     w = [2.0, 1.0]
-    rgr_w = MultiOutputRegressor(GradientBoostingRegressor(random_state=0))
+    rgr_w = MultiOutputRegressor(
+        GradientBoostingRegressor(random_state=0).set_fit_request(sample_weight=True)
+    )
     rgr_w.fit(Xw, yw, w)
 
     # unweighted, but with repeated samples
@@ -368,7 +391,9 @@ def test_multi_output_classification_sample_weights():
     Xw = [[1, 2, 3], [4, 5, 6]]
     yw = [[3, 2], [2, 3]]
     w = np.asarray([2.0, 1.0])
-    forest = RandomForestClassifier(n_estimators=10, random_state=1)
+    forest = RandomForestClassifier(n_estimators=10, random_state=1).set_fit_request(
+        sample_weight=True
+    )
     clf_w = MultiOutputClassifier(forest)
     clf_w.fit(Xw, yw, w)
 
@@ -388,7 +413,9 @@ def test_multi_output_classification_partial_fit_sample_weights():
     Xw = [[1, 2, 3], [4, 5, 6], [1.5, 2.5, 3.5]]
     yw = [[3, 2], [2, 3], [3, 2]]
     w = np.asarray([2.0, 1.0, 1.0])
-    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20)
+    sgd_linear_clf = SGDClassifier(random_state=1, max_iter=20).set_fit_request(
+        sample_weight=True
+    )
     clf_w = MultiOutputClassifier(sgd_linear_clf)
     clf_w.fit(Xw, yw, w)
 
@@ -606,40 +633,6 @@ def test_multi_output_classes_(estimator):
     assert len(estimator.classes_) == n_outputs
     for estimator_classes, expected_classes in zip(classes, estimator.classes_):
         assert_array_equal(estimator_classes, expected_classes)
-
-
-class DummyRegressorWithFitParams(DummyRegressor):
-    def fit(self, X, y, sample_weight=None, **fit_params):
-        self._fit_params = fit_params
-        return super().fit(X, y, sample_weight)
-
-
-class DummyClassifierWithFitParams(DummyClassifier):
-    def fit(self, X, y, sample_weight=None, **fit_params):
-        self._fit_params = fit_params
-        return super().fit(X, y, sample_weight)
-
-
-@pytest.mark.filterwarnings("ignore:`n_features_in_` is deprecated")
-@pytest.mark.parametrize(
-    "estimator, dataset",
-    [
-        (
-            MultiOutputClassifier(DummyClassifierWithFitParams(strategy="prior")),
-            datasets.make_multilabel_classification(),
-        ),
-        (
-            MultiOutputRegressor(DummyRegressorWithFitParams()),
-            datasets.make_regression(n_targets=3, random_state=0),
-        ),
-    ],
-)
-def test_multioutput_estimator_with_fit_params(estimator, dataset):
-    X, y = dataset
-    some_param = np.zeros_like(X)
-    estimator.fit(X, y, some_param=some_param)
-    for dummy_estimator in estimator.estimators_:
-        assert "some_param" in dummy_estimator._fit_params
 
 
 def test_regressor_chain_w_fit_params():
