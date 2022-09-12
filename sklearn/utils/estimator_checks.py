@@ -2133,7 +2133,6 @@ def check_classifiers_one_label(name, classifier_orig):
 
 
 @ignore_warnings(category=(DeprecationWarning, FutureWarning))
-@parametrize_with_checks([NuSVC()])
 def check_classifiers_one_label_sample_weights(name, classifier_orig):
     # check that classifiers accepting sample_weight fit or
     # throws an ValueError with explicit message if
