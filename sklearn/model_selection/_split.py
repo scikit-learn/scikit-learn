@@ -476,9 +476,9 @@ class GroupKFold(_BaseKFold):
     --------
     >>> import numpy as np
     >>> from sklearn.model_selection import GroupKFold
-    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
-    >>> y = np.array([1, 2, 3, 4])
-    >>> groups = np.array([0, 0, 2, 2])
+    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]])
+    >>> y = np.array([1, 2, 3, 4, 5, 6])
+    >>> groups = np.array([0, 0, 2, 2, 3, 3])
     >>> group_kfold = GroupKFold(n_splits=2)
     >>> group_kfold.get_n_splits(X, y, groups)
     2
@@ -489,15 +489,18 @@ class GroupKFold(_BaseKFold):
     ...     X_train, X_test = X[train_index], X[test_index]
     ...     y_train, y_test = y[train_index], y[test_index]
     ...     print(X_train, X_test, y_train, y_test)
-    ...
-    TRAIN: [0 1] TEST: [2 3]
-    [[1 2]
-     [3 4]] [[5 6]
-     [7 8]] [1 2] [3 4]
-    TRAIN: [2 3] TEST: [0 1]
+    TRAIN: [2 3] TEST: [0 1 4 5]
     [[5 6]
-     [7 8]] [[1 2]
-     [3 4]] [3 4] [1 2]
+    [7 8]] [[ 1  2]
+    [ 3  4]
+    [ 9 10]
+    [11 12]] [3 4] [1 2 5 6]
+    TRAIN: [0 1 4 5] TEST: [2 3]
+    [[ 1  2]
+    [ 3  4]
+    [ 9 10]
+    [11 12]] [[5 6]
+    [7 8]] [1 2 5 6] [3 4]
 
     See Also
     --------
