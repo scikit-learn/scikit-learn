@@ -313,9 +313,9 @@ Changelog
   :pr:`22710` by :user:`Conroy Trinh <trinhcon>` and
   :pr:`23461` by :user:`Meekail Zain <micky774>`.
 
-- |Fix| automatically set `eps` in :func:`metrics.logloss` depending on the input
-  arrays. `eps` was previously too small by default when passing lower precision
-  floating point arrays.
+- |Fix| add a `"auto"` option to `eps` in :func:`metrics.logloss`.
+  This option will automatically set the `eps` value depending on the data
+  type `y_pred`.
   :pr:`24354` by :user:`Safiuddin Khaja <Safikh>` and
   :user:`gsiisg <gsiisg>`
 
