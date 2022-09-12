@@ -24,7 +24,7 @@ ctypedef cnp.float64_t DOUBLE
 
 
 def csr_row_norms(X):
-    """L2 norm of each row in CSR matrix X."""
+    """Squared L2 norm of each row in CSR matrix X."""
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
     return np.asarray(_csr_row_norms(X.data, X.indices, X.indptr))
