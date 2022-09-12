@@ -1186,10 +1186,6 @@ class _BaseNMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         # beta_loss
         self._beta_loss = _beta_loss_to_float(self.beta_loss)
 
-        # alpha_W/H
-        self._alpha_W = self.alpha_W
-        self._alpha_H = self.alpha_W if self.alpha_H == "same" else self.alpha_H
-
     def _check_w_h(self, X, W, H, update_H):
         """Check W and H, or initialize them."""
         n_samples, n_features = X.shape
@@ -1224,11 +1220,13 @@ class _BaseNMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
     def _compute_regularization(self, X):
         """Compute scaled regularization terms."""
         n_samples, n_features = X.shape
+        alpha_W = self.alpha_W
+        alpha_H = self.alpha_W if self.alpha_H == "same" else self.alpha_H
 
-        l1_reg_W = n_features * self._alpha_W * self.l1_ratio
-        l1_reg_H = n_samples * self._alpha_H * self.l1_ratio
-        l2_reg_W = n_features * self._alpha_W * (1.0 - self.l1_ratio)
-        l2_reg_H = n_samples * self._alpha_H * (1.0 - self.l1_ratio)
+        l1_reg_W = n_features * alpha_W * self.l1_ratio
+        l1_reg_H = n_samples * alpha_H * self.l1_ratio
+        l2_reg_W = n_features * alpha_W * (1.0 - self.l1_ratio)
+        l2_reg_H = n_samples * alpha_H * (1.0 - self.l1_ratio)
 
         return l1_reg_W, l1_reg_H, l2_reg_W, l2_reg_H
 
