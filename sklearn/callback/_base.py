@@ -3,7 +3,8 @@
 from abc import ABC, abstractmethod
 
 
-# Not a method of BaseEstimator because it might be called from an extern function
+# Not a method of BaseEstimator because it might not be directly called from fit but
+# by a non-method function called by fit
 def _eval_callbacks_on_fit_iter_end(**kwargs):
     """Evaluate the on_fit_iter_end method of the callbacks
 
@@ -54,6 +55,8 @@ class BaseCallback(ABC):
     def on_fit_begin(self, estimator, *, X=None, y=None):
         """Method called at the beginning of the fit method of the estimator
 
+        Only called 
+
         Parameters
         ----------
         estimator: estimator instance
@@ -102,6 +105,11 @@ class BaseCallback(ABC):
 
             - fit_state: dict
                 Model specific quantities updated during fit. This is not meant to be
+                used by generic callbacks but by a callback designed for a specific
+                estimator instead.
+
+            - extra_verbose: dict
+                Model specific . This is not meant to be
                 used by generic callbacks but by a callback designed for a specific
                 estimator instead.
 
