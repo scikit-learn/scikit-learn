@@ -194,7 +194,7 @@ Changelog
 
 - |API| The `n_features_` attribute of
   :class:`decomposition.PCA` is deprecated in favor of
-  `n_features_in_` and will be removed in 1.4. :pr:`20240` by
+  `n_features_in_` and will be removed in 1.4. :pr:`24421` by
   :user:`Kshitij Mathur <Kshitij68>`.
 
 :mod:`sklearn.discriminant_analysis`
