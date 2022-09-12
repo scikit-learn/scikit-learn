@@ -371,6 +371,10 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
+- |API| The `sparse` parameter is now deprecated in :class:`preprocessing.OneHotEncoder`,
+  and will be removed in version 1.4. Use `sparse_output` instead.
+  :pr:`24412` by :user:`Rushil Desai <rusdes>`.
+
 - |Enhancement| :class:`preprocessing.FunctionTransformer` will always try to set
   `n_features_in_` and `feature_names_in_` regardless of the `validate` parameter.
   :pr:`23993` by `Thomas Fan`_.
