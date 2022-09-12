@@ -156,9 +156,9 @@ You can use the method
 to :func:`learning_curve` to generate and plot the learning curve:
 
 .. plot::
-   :context:
+   :context: close-figs
    :align: center
 
       from sklearn.model_selection import LearningCurveDisplay
       LearningCurveDisplay.from_estimator(
-         VVC(kernel="linear"), X, y, train_sizes=[50, 80, 110], cv=5)
+         SVC(kernel="linear"), X, y, train_sizes=[50, 80, 110], cv=5)
