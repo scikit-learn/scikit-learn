@@ -721,10 +721,10 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
 
     Parameters
     ----------
-    X : array-like of shape (n_samples_X, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
         Array containing points.
 
-    Y : array-like of shape (n_samples_Y, n_features)
+    Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features)
         Arrays containing points.
 
     axis : int, default=1
