@@ -166,18 +166,6 @@ def test_birch_n_clusters_long_int():
     Birch(n_clusters=n_clusters).fit(X)
 
 
-# TODO: Remove in 1.2
-@pytest.mark.parametrize("attribute", ["fit_", "partial_fit_"])
-def test_birch_fit_attributes_deprecated(attribute):
-    """Test that fit_ and partial_fit_ attributes are deprecated."""
-    msg = f"`{attribute}` is deprecated in 1.0 and will be removed in 1.2"
-    X, y = make_blobs(n_samples=10)
-    brc = Birch().fit(X, y)
-
-    with pytest.warns(FutureWarning, match=msg):
-        getattr(brc, attribute)
-
-
 def test_feature_names_out():
     """Check `get_feature_names_out` for `Birch`."""
     X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)

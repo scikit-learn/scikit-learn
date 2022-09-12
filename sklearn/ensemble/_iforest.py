@@ -116,9 +116,20 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
     Attributes
     ----------
+    estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor` instance
+        The child estimator template used to create the collection of
+        fitted sub-estimators.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
+
     base_estimator_ : ExtraTreeRegressor instance
         The child estimator template used to create the collection of
         fitted sub-estimators.
+
+        .. deprecated:: 1.2
+            `base_estimator_` is deprecated and will be removed in 1.4.
+            Use `estimator_` instead.
 
     estimators_ : list of ExtraTreeRegressor instances
         The collection of fitted sub-estimators.
@@ -226,7 +237,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         warm_start=False,
     ):
         super().__init__(
-            base_estimator=ExtraTreeRegressor(
+            estimator=ExtraTreeRegressor(
                 max_features=1, splitter="random", random_state=random_state
             ),
             # here above max_features has no links with self.max_features
