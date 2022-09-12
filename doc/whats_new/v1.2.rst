@@ -243,6 +243,11 @@ Changelog
   `nu=0.5` for PyPy (and possibly other non CPython interpreters). :pr:`24245`
   by :user:`Loïc Estève <lesteve>`.
 
+- |Fix| The `fit` method of :class:`gaussian_process.GaussianProcessRegressor`
+  will not modify the input X in case a custom kernel is used, with a `diag`
+  method that returns part of the input X. :pr:`24405`
+  by :user:`Omar Salman <OmarManzoor>`.
+
 :mod:`sklearn.kernel_approximation`
 ...................................
 
@@ -305,7 +310,7 @@ Changelog
 - |Fix| Allows `csr_matrix` as input for parameter: `y_true` of
    the :func:`metrics.label_ranking_average_precision_score` metric.
    :pr:`23442` by :user:`Sean Atukorala <ShehanAT>`
-  
+
 - |Fix| :func:`metrics.ndcg_score` will now trigger a warning when the `y_true`
   value contains a negative value. Users may still use negative values, but the
   result may not be between 0 and 1. Starting in v1.4, passing in negative
