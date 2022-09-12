@@ -510,9 +510,6 @@ def test_grow_tree_categories():
     assert_allclose(prediction, [-1])
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`
-# in OneHotEncoder.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize("min_samples_leaf", (1, 20))
 @pytest.mark.parametrize("n_unique_categories", (2, 10, 100))
 @pytest.mark.parametrize("target", ("binary", "random", "equal"))
@@ -524,7 +521,7 @@ def test_ohe_equivalence(min_samples_leaf, n_unique_categories, target):
     n_samples = 10_000
     X_binned = rng.randint(0, n_unique_categories, size=(n_samples, 1), dtype=np.uint8)
 
-    X_ohe = OneHotEncoder(sparse=False).fit_transform(X_binned)
+    X_ohe = OneHotEncoder(sparse_output=False).fit_transform(X_binned)
     X_ohe = np.asfortranarray(X_ohe).astype(np.uint8)
 
     if target == "equal":

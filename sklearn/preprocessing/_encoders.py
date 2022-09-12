@@ -471,6 +471,7 @@ class OneHotEncoder(_BaseEncoder):
         max_categories=None,
     ):
         self.categories = categories
+        # TODO(1.4): Remove self.sparse
         self.sparse = sparse
         self.sparse_output = sparse_output
         self.dtype = dtype

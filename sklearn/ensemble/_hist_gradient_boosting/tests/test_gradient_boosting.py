@@ -916,9 +916,6 @@ def test_unknown_categories_nan(insert_missing, Est, bool_categorical_parameter)
     assert len(np.unique(est.predict(X_test))) == 1
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`
-# in OneHotEncoder.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 def test_categorical_encoding_strategies():
     # Check native categorical handling vs different encoding strategies. We
     # make sure that native encoding needs only 1 split to achieve a perfect
@@ -967,7 +964,7 @@ def test_categorical_encoding_strategies():
     # Using OHEd data, we need less splits than with pure OEd data, but we
     # still need more splits than with the native categorical splits
     ct = make_column_transformer(
-        (OneHotEncoder(sparse=False), [1]), remainder="passthrough"
+        (OneHotEncoder(sparse_output=False), [1]), remainder="passthrough"
     )
     X_ohe = ct.fit_transform(X)
     clf_no_cat.set_params(max_depth=2)

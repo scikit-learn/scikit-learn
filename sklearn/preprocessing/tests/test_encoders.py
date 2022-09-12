@@ -14,14 +14,12 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import OrdinalEncoder
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 def test_one_hot_encoder_sparse_dense():
     # check that sparse and dense will give the same results
 
     X = np.array([[3, 2, 1], [0, 1, 1]])
     enc_sparse = OneHotEncoder()
-    enc_dense = OneHotEncoder(sparse=False)
+    enc_dense = OneHotEncoder(sparse_output=False)
 
     X_trans_sparse = enc_sparse.fit_transform(X)
     X_trans_dense = enc_dense.fit_transform(X)
@@ -94,8 +92,6 @@ def test_one_hot_encoder_handle_unknown_strings(handle_unknown):
     assert_array_equal(X2, X2_passed)
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
 @pytest.mark.parametrize("input_dtype", [np.int32, np.float32, np.float64])
 def test_one_hot_encoder_dtype(input_dtype, output_dtype):
@@ -106,13 +102,11 @@ def test_one_hot_encoder_dtype(input_dtype, output_dtype):
     assert_array_equal(oh.fit_transform(X).toarray(), X_expected)
     assert_array_equal(oh.fit(X).transform(X).toarray(), X_expected)
 
-    oh = OneHotEncoder(categories="auto", dtype=output_dtype, sparse=False)
+    oh = OneHotEncoder(categories="auto", dtype=output_dtype, sparse_output=False)
     assert_array_equal(oh.fit_transform(X), X_expected)
     assert_array_equal(oh.fit(X).transform(X), X_expected)
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize("output_dtype", [np.int32, np.float32, np.float64])
 def test_one_hot_encoder_dtype_pandas(output_dtype):
     pd = pytest.importorskip("pandas")
@@ -124,7 +118,7 @@ def test_one_hot_encoder_dtype_pandas(output_dtype):
     assert_array_equal(oh.fit_transform(X_df).toarray(), X_expected)
     assert_array_equal(oh.fit(X_df).transform(X_df).toarray(), X_expected)
 
-    oh = OneHotEncoder(dtype=output_dtype, sparse=False)
+    oh = OneHotEncoder(dtype=output_dtype, sparse_output=False)
     assert_array_equal(oh.fit_transform(X_df), X_expected)
     assert_array_equal(oh.fit(X_df).transform(X_df), X_expected)
 
@@ -225,7 +219,7 @@ def check_categorical_onehot(X):
     enc = OneHotEncoder(categories="auto")
     Xtr1 = enc.fit_transform(X)
 
-    enc = OneHotEncoder(categories="auto", sparse=False)
+    enc = OneHotEncoder(categories="auto", sparse_output=False)
     Xtr2 = enc.fit_transform(X)
 
     assert_allclose(Xtr1.toarray(), Xtr2)
@@ -234,8 +228,6 @@ def check_categorical_onehot(X):
     return Xtr1.toarray()
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "X",
     [
@@ -270,20 +262,18 @@ def test_one_hot_encoder(X):
     assert_allclose(Xtr.toarray(), [[0, 1, 1, 0, 1], [1, 0, 0, 1, 1]])
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
 @pytest.mark.parametrize("sparse_", [False, True])
 @pytest.mark.parametrize("drop", [None, "first"])
 def test_one_hot_encoder_inverse(handle_unknown, sparse_, drop):
     X = [["abc", 2, 55], ["def", 1, 55], ["abc", 3, 55]]
-    enc = OneHotEncoder(sparse=sparse_, drop=drop)
+    enc = OneHotEncoder(sparse_output=sparse_, drop=drop)
     X_tr = enc.fit_transform(X)
     exp = np.array(X, dtype=object)
     assert_array_equal(enc.inverse_transform(X_tr), exp)
 
     X = [[2, 55], [1, 55], [3, 55]]
-    enc = OneHotEncoder(sparse=sparse_, categories="auto", drop=drop)
+    enc = OneHotEncoder(sparse_output=sparse_, categories="auto", drop=drop)
     X_tr = enc.fit_transform(X)
     exp = np.array(X)
     assert_array_equal(enc.inverse_transform(X_tr), exp)
@@ -293,7 +283,7 @@ def test_one_hot_encoder_inverse(handle_unknown, sparse_, drop):
         # drop is incompatible with handle_unknown=ignore
         X = [["abc", 2, 55], ["def", 1, 55], ["abc", 3, 55]]
         enc = OneHotEncoder(
-            sparse=sparse_,
+            sparse_output=sparse_,
             handle_unknown=handle_unknown,
             categories=[["abc", "def"], [1, 2], [54, 55, 56]],
         )
@@ -305,7 +295,9 @@ def test_one_hot_encoder_inverse(handle_unknown, sparse_, drop):
         # with an otherwise numerical output, still object if unknown
         X = [[2, 55], [1, 55], [3, 55]]
         enc = OneHotEncoder(
-            sparse=sparse_, categories=[[1, 2], [54, 56]], handle_unknown=handle_unknown
+            sparse_output=sparse_,
+            categories=[[1, 2], [54, 56]],
+            handle_unknown=handle_unknown,
         )
         X_tr = enc.fit_transform(X)
         exp = np.array(X, dtype=object)
@@ -320,8 +312,6 @@ def test_one_hot_encoder_inverse(handle_unknown, sparse_, drop):
         enc.inverse_transform(X_tr)
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize("sparse_", [False, True])
 @pytest.mark.parametrize(
     "X, X_trans",
@@ -341,7 +331,7 @@ def test_one_hot_encoder_inverse_transform_raise_error_with_unknown(
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/14934
     """
-    enc = OneHotEncoder(sparse=sparse_).fit(X)
+    enc = OneHotEncoder(sparse_output=sparse_).fit(X)
     msg = (
         r"Samples \[(\d )*\d\] can not be inverted when drop=None and "
         r"handle_unknown='error' because they contain all zeros"
@@ -354,11 +344,9 @@ def test_one_hot_encoder_inverse_transform_raise_error_with_unknown(
         enc.inverse_transform(X_trans)
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 def test_one_hot_encoder_inverse_if_binary():
     X = np.array([["Male", 1], ["Female", 3], ["Female", 2]], dtype=object)
-    ohe = OneHotEncoder(drop="if_binary", sparse=False)
+    ohe = OneHotEncoder(drop="if_binary", sparse_output=False)
     X_tr = ohe.fit_transform(X)
     assert_array_equal(ohe.inverse_transform(X_tr), X)
 
@@ -366,14 +354,12 @@ def test_one_hot_encoder_inverse_if_binary():
 # check that resetting drop option without refitting does not throw an error
 # TODO: Remove in 1.2 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 @pytest.mark.parametrize("drop", ["if_binary", "first", None])
 @pytest.mark.parametrize("reset_drop", ["if_binary", "first", None])
 def test_one_hot_encoder_drop_reset(get_names, drop, reset_drop):
     X = np.array([["Male", 1], ["Female", 3], ["Female", 2]], dtype=object)
-    ohe = OneHotEncoder(drop=drop, sparse=False)
+    ohe = OneHotEncoder(drop=drop, sparse_output=False)
     ohe.fit(X)
     X_tr = ohe.transform(X)
     feature_names = getattr(ohe, get_names)()
@@ -602,8 +588,6 @@ def test_one_hot_encoder_feature_names_drop(get_names, drop, expected_names):
     assert_array_equal(expected_names, feature_names)
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 def test_one_hot_encoder_drop_equals_if_binary():
     # Canonical case
     X = [[10, "yes"], [20, "no"], [30, "yes"]]
@@ -612,7 +596,7 @@ def test_one_hot_encoder_drop_equals_if_binary():
     )
     expected_drop_idx = np.array([None, 0])
 
-    ohe = OneHotEncoder(drop="if_binary", sparse=False)
+    ohe = OneHotEncoder(drop="if_binary", sparse_output=False)
     result = ohe.fit_transform(X)
     assert_array_equal(ohe.drop_idx_, expected_drop_idx)
     assert_allclose(result, expected)
@@ -622,7 +606,7 @@ def test_one_hot_encoder_drop_equals_if_binary():
     expected = np.array([[1.0, 1.0], [0.0, 1.0], [0.0, 1.0]])
     expected_drop_idx = np.array([0, None])
 
-    ohe = OneHotEncoder(drop="if_binary", sparse=False)
+    ohe = OneHotEncoder(drop="if_binary", sparse_output=False)
     result = ohe.fit_transform(X)
     assert_array_equal(ohe.drop_idx_, expected_drop_idx)
     assert_allclose(result, expected)
@@ -865,13 +849,11 @@ def test_invalid_drop_length(drop):
         enc.fit([["abc", 2, 55], ["def", 1, 55], ["def", 3, 59]])
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize("density", [True, False], ids=["sparse", "dense"])
 @pytest.mark.parametrize("drop", ["first", ["a", 2, "b"]], ids=["first", "manual"])
 def test_categories(density, drop):
-    ohe_base = OneHotEncoder(sparse=density)
-    ohe_test = OneHotEncoder(sparse=density, drop=drop)
+    ohe_base = OneHotEncoder(sparse_output=density)
+    ohe_test = OneHotEncoder(sparse_output=density, drop=drop)
     X = [["c", 1, "a"], ["a", 2, "b"]]
     ohe_base.fit(X)
     ohe_test.fit(X)
@@ -894,8 +876,6 @@ def test_encoders_has_categorical_tags(Encoder):
 
 # TODO(1.2): Remove filterwarning when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "kwargs",
     [
@@ -915,7 +895,7 @@ def test_ohe_infrequent_two_levels(kwargs, categories):
     ohe = OneHotEncoder(
         categories=categories,
         handle_unknown="infrequent_if_exist",
-        sparse=False,
+        sparse_output=False,
         **kwargs,
     ).fit(X_train)
     assert_array_equal(ohe.infrequent_categories_, [["a", "c", "d"]])
@@ -940,15 +920,16 @@ def test_ohe_infrequent_two_levels(kwargs, categories):
 
 # TODO(1.2): Remove filterwarning when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize("drop", ["if_binary", "first", ["b"]])
 def test_ohe_infrequent_two_levels_drop_frequent(drop):
     """Test two levels and dropping the frequent category."""
 
     X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3]).T
     ohe = OneHotEncoder(
-        handle_unknown="infrequent_if_exist", sparse=False, max_categories=2, drop=drop
+        handle_unknown="infrequent_if_exist",
+        sparse_output=False,
+        max_categories=2,
+        drop=drop,
     ).fit(X_train)
     assert_array_equal(ohe.drop_idx_, [0])
 
@@ -967,8 +948,6 @@ def test_ohe_infrequent_two_levels_drop_frequent(drop):
     assert_array_equal([["b"], ["infrequent_sklearn"]], X_inverse)
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize("drop", [["a"], ["d"]])
 def test_ohe_infrequent_two_levels_drop_infrequent_errors(drop):
     """Test two levels and dropping any infrequent category removes the
@@ -976,7 +955,10 @@ def test_ohe_infrequent_two_levels_drop_infrequent_errors(drop):
 
     X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3]).T
     ohe = OneHotEncoder(
-        handle_unknown="infrequent_if_exist", sparse=False, max_categories=2, drop=drop
+        handle_unknown="infrequent_if_exist",
+        sparse_output=False,
+        max_categories=2,
+        drop=drop,
     )
 
     msg = f"Unable to drop category {drop[0]!r} from feature 0 because it is infrequent"
@@ -986,8 +968,6 @@ def test_ohe_infrequent_two_levels_drop_infrequent_errors(drop):
 
 # TODO(1.2): Remove filterwarning when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "kwargs",
     [
@@ -1006,7 +986,7 @@ def test_ohe_infrequent_three_levels(kwargs):
 
     X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3]).T
     ohe = OneHotEncoder(
-        handle_unknown="infrequent_if_exist", sparse=False, **kwargs
+        handle_unknown="infrequent_if_exist", sparse_output=False, **kwargs
     ).fit(X_train)
     assert_array_equal(ohe.infrequent_categories_, [["a", "d"]])
 
@@ -1034,15 +1014,16 @@ def test_ohe_infrequent_three_levels(kwargs):
     assert_array_equal(["x0_b", "x0_c", "x0_infrequent_sklearn"], feature_names)
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize("drop", ["first", ["b"]])
 def test_ohe_infrequent_three_levels_drop_frequent(drop):
     """Test three levels and dropping the frequent category."""
 
     X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3]).T
     ohe = OneHotEncoder(
-        handle_unknown="infrequent_if_exist", sparse=False, max_categories=3, drop=drop
+        handle_unknown="infrequent_if_exist",
+        sparse_output=False,
+        max_categories=3,
+        drop=drop,
     ).fit(X_train)
 
     X_test = np.array([["b"], ["c"], ["d"]])
@@ -1057,14 +1038,15 @@ def test_ohe_infrequent_three_levels_drop_frequent(drop):
     assert_allclose([[0, 0], [0, 0]], X_trans)
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize("drop", [["a"], ["d"]])
 def test_ohe_infrequent_three_levels_drop_infrequent_errors(drop):
     """Test three levels and dropping the infrequent category."""
     X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3]).T
     ohe = OneHotEncoder(
-        handle_unknown="infrequent_if_exist", sparse=False, max_categories=3, drop=drop
+        handle_unknown="infrequent_if_exist",
+        sparse_output=False,
+        max_categories=3,
+        drop=drop,
     )
 
     msg = f"Unable to drop category {drop[0]!r} from feature 0 because it is infrequent"
@@ -1072,16 +1054,14 @@ def test_ohe_infrequent_three_levels_drop_infrequent_errors(drop):
         ohe.fit(X_train)
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 def test_ohe_infrequent_handle_unknown_error():
     """Test that different parameters for combining 'a', and 'd' into
     the infrequent category works as expected."""
 
     X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3]).T
-    ohe = OneHotEncoder(handle_unknown="error", sparse=False, max_categories=3).fit(
-        X_train
-    )
+    ohe = OneHotEncoder(
+        handle_unknown="error", sparse_output=False, max_categories=3
+    ).fit(X_train)
     assert_array_equal(ohe.infrequent_categories_, [["a", "d"]])
 
     # all categories are known
@@ -1098,8 +1078,6 @@ def test_ohe_infrequent_handle_unknown_error():
         ohe.transform(X_test)
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "kwargs", [{"max_categories": 3, "min_frequency": 1}, {"min_frequency": 4}]
 )
@@ -1109,7 +1087,7 @@ def test_ohe_infrequent_two_levels_user_cats_one_frequent(kwargs):
     X_train = np.array([["a"] * 5 + ["e"] * 30], dtype=object).T
     ohe = OneHotEncoder(
         categories=[["c", "d", "a", "b"]],
-        sparse=False,
+        sparse_output=False,
         handle_unknown="infrequent_if_exist",
         **kwargs,
     ).fit(X_train)
@@ -1128,8 +1106,6 @@ def test_ohe_infrequent_two_levels_user_cats_one_frequent(kwargs):
         assert_allclose([[0], [1]], ohe.transform(X_test))
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 def test_ohe_infrequent_two_levels_user_cats():
     """Test that the order of the categories provided by a user is respected."""
     X_train = np.array(
@@ -1137,7 +1113,7 @@ def test_ohe_infrequent_two_levels_user_cats():
     ).T
     ohe = OneHotEncoder(
         categories=[["c", "d", "a", "b"]],
-        sparse=False,
+        sparse_output=False,
         handle_unknown="infrequent_if_exist",
         max_categories=2,
     ).fit(X_train)
@@ -1157,8 +1133,6 @@ def test_ohe_infrequent_two_levels_user_cats():
     assert_array_equal(expected_inv, X_inv)
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 def test_ohe_infrequent_three_levels_user_cats():
     """Test that the order of the categories provided by a user is respected.
     In this case 'c' is encoded as the first category and 'b' is encoded
@@ -1169,7 +1143,7 @@ def test_ohe_infrequent_three_levels_user_cats():
     ).T
     ohe = OneHotEncoder(
         categories=[["c", "d", "b", "a"]],
-        sparse=False,
+        sparse_output=False,
         handle_unknown="infrequent_if_exist",
         max_categories=3,
     ).fit(X_train)
@@ -1195,8 +1169,6 @@ def test_ohe_infrequent_three_levels_user_cats():
     assert_array_equal(expected_inv, X_inv)
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 def test_ohe_infrequent_mixed():
     """Test infrequent categories where feature 0 has infrequent categories,
     and feature 1 does not."""
@@ -1205,7 +1177,7 @@ def test_ohe_infrequent_mixed():
     # X[:, 1] nothing is infrequent
     X = np.c_[[0, 1, 3, 3, 3, 3, 2, 0, 3], [0, 0, 0, 0, 1, 1, 1, 1, 1]]
 
-    ohe = OneHotEncoder(max_categories=3, drop="if_binary", sparse=False)
+    ohe = OneHotEncoder(max_categories=3, drop="if_binary", sparse_output=False)
     ohe.fit(X)
 
     X_test = [[3, 0], [1, 1]]
@@ -1374,22 +1346,20 @@ def test_ohe_infrequent_multiple_categories_dtypes():
     assert_array_equal(expected_inv, X_inv)
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize("kwargs", [{"min_frequency": 21, "max_categories": 1}])
 def test_ohe_infrequent_one_level_errors(kwargs):
     """All user provided categories are infrequent."""
     X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 2]).T
 
-    ohe = OneHotEncoder(handle_unknown="infrequent_if_exist", sparse=False, **kwargs)
+    ohe = OneHotEncoder(
+        handle_unknown="infrequent_if_exist", sparse_output=False, **kwargs
+    )
     ohe.fit(X_train)
 
     X_trans = ohe.transform([["a"]])
     assert_allclose(X_trans, [[1]])
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize("kwargs", [{"min_frequency": 2, "max_categories": 3}])
 def test_ohe_infrequent_user_cats_unknown_training_errors(kwargs):
     """All user provided categories are infrequent."""
@@ -1397,7 +1367,7 @@ def test_ohe_infrequent_user_cats_unknown_training_errors(kwargs):
     X_train = np.array([["e"] * 3], dtype=object).T
     ohe = OneHotEncoder(
         categories=[["c", "d", "a", "b"]],
-        sparse=False,
+        sparse_output=False,
         handle_unknown="infrequent_if_exist",
         **kwargs,
     ).fit(X_train)
@@ -1425,8 +1395,6 @@ def test_one_hot_encoder_get_feature_names_deprecated():
         enc.get_feature_names()
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 # deliberately omit 'OS' as an invalid combo
 @pytest.mark.parametrize(
     "input_dtype, category_dtype", ["OO", "OU", "UO", "UU", "US", "SO", "SU", "SS"]
@@ -1442,7 +1410,7 @@ def test_encoders_string_categories(input_dtype, category_dtype, array_type):
 
     X = np.array([["b"], ["a"]], dtype=input_dtype)
     categories = [np.array(["b", "a"], dtype=category_dtype)]
-    ohe = OneHotEncoder(categories=categories, sparse=False).fit(X)
+    ohe = OneHotEncoder(categories=categories, sparse_output=False).fit(X)
 
     X_test = _convert_container(
         [["a"], ["a"], ["b"], ["a"]], array_type, dtype=input_dtype
@@ -1461,20 +1429,16 @@ def test_encoders_string_categories(input_dtype, category_dtype, array_type):
 
 # TODO: Remove in 1.2 when get_feature_names is removed.
 @pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
 @pytest.mark.parametrize("missing_value", [np.nan, None])
 def test_ohe_missing_values_get_feature_names(get_names, missing_value):
     # encoder with missing values with object dtypes
     X = np.array([["a", "b", missing_value, "a", missing_value]], dtype=object).T
-    ohe = OneHotEncoder(sparse=False, handle_unknown="ignore").fit(X)
+    ohe = OneHotEncoder(sparse_output=False, handle_unknown="ignore").fit(X)
     names = getattr(ohe, get_names)()
     assert_array_equal(names, ["x0_a", "x0_b", f"x0_{missing_value}"])
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 def test_ohe_missing_value_support_pandas():
     # check support for pandas with mixed dtypes and missing values
     pd = pytest.importorskip("pandas")
@@ -1498,8 +1462,6 @@ def test_ohe_missing_value_support_pandas():
     assert_allclose(Xtr, expected_df_trans)
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize("handle_unknown", ["infrequent_if_exist", "ignore"])
 @pytest.mark.parametrize("pd_nan_type", ["pd.NA", "np.nan"])
 def test_ohe_missing_value_support_pandas_categorical(pd_nan_type, handle_unknown):
@@ -1523,7 +1485,7 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type, handle_unknow
         ]
     )
 
-    ohe = OneHotEncoder(sparse=False, handle_unknown=handle_unknown)
+    ohe = OneHotEncoder(sparse_output=False, handle_unknown=handle_unknown)
     df_trans = ohe.fit_transform(df)
     assert_allclose(expected_df_trans, df_trans)
 
@@ -1532,15 +1494,15 @@ def test_ohe_missing_value_support_pandas_categorical(pd_nan_type, handle_unknow
     assert np.isnan(ohe.categories_[0][-1])
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
 def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
     """Check drop='first' and handle_unknown='ignore'/'infrequent_if_exist'
     during transform."""
     X = [["a", 0], ["b", 2], ["b", 1]]
 
-    ohe = OneHotEncoder(drop="first", sparse=False, handle_unknown=handle_unknown)
+    ohe = OneHotEncoder(
+        drop="first", sparse_output=False, handle_unknown=handle_unknown
+    )
     X_trans = ohe.fit_transform(X)
 
     X_expected = np.array(
@@ -1570,14 +1532,14 @@ def test_ohe_drop_first_handle_unknown_ignore_warns(handle_unknown):
     assert_array_equal(X_inv, np.array([["a", 0]], dtype=object))
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
 def test_ohe_drop_if_binary_handle_unknown_ignore_warns(handle_unknown):
     """Check drop='if_binary' and handle_unknown='ignore' during transform."""
     X = [["a", 0], ["b", 2], ["b", 1]]
 
-    ohe = OneHotEncoder(drop="if_binary", sparse=False, handle_unknown=handle_unknown)
+    ohe = OneHotEncoder(
+        drop="if_binary", sparse_output=False, handle_unknown=handle_unknown
+    )
     X_trans = ohe.fit_transform(X)
 
     X_expected = np.array(
@@ -1607,8 +1569,6 @@ def test_ohe_drop_if_binary_handle_unknown_ignore_warns(handle_unknown):
     assert_array_equal(X_inv, np.array([["a", None]], dtype=object))
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize("handle_unknown", ["ignore", "infrequent_if_exist"])
 def test_ohe_drop_first_explicit_categories(handle_unknown):
     """Check drop='first' and handle_unknown='ignore'/'infrequent_if_exist'
@@ -1618,7 +1578,7 @@ def test_ohe_drop_first_explicit_categories(handle_unknown):
 
     ohe = OneHotEncoder(
         drop="first",
-        sparse=False,
+        sparse_output=False,
         handle_unknown=handle_unknown,
         categories=[["b", "a"], [1, 2]],
     )
