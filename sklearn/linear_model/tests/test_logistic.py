@@ -1772,18 +1772,18 @@ def test_logistic_regression_multi_class_auto(est, solver):
 
 @pytest.mark.parametrize("solver", ("lbfgs", "newton-cg", "sag", "saga"))
 def test_penalty_none(solver):
-    # - Make sure warning is raised if penalty='none' and C is set to a
+    # - Make sure warning is raised if penalty=None and C is set to a
     #   non-default value.
-    # - Make sure setting penalty='none' is equivalent to setting C=np.inf with
+    # - Make sure setting penalty=None is equivalent to setting C=np.inf with
     #   l2 penalty.
     X, y = make_classification(n_samples=1000, random_state=0)
 
-    msg = "Setting penalty='none' will ignore the C"
-    lr = LogisticRegression(penalty="none", solver=solver, C=4)
+    msg = "Setting penalty=None will ignore the C"
+    lr = LogisticRegression(penalty=None, solver=solver, C=4)
     with pytest.warns(UserWarning, match=msg):
         lr.fit(X, y)
 
-    lr_none = LogisticRegression(penalty="none", solver=solver, random_state=0)
+    lr_none = LogisticRegression(penalty=None, solver=solver, random_state=0)
     lr_l2_C_inf = LogisticRegression(
         penalty="l2", C=np.inf, solver=solver, random_state=0
     )
@@ -1971,3 +1971,16 @@ def test_single_feature_newton_cg():
     y = np.array([1, 1, 0, 0, 1, 1, 0, 1])
     assert X.shape[1] == 1
     LogisticRegression(solver="newton-cg", fit_intercept=True).fit(X, y)
+
+
+# TODO(1.4): Remove
+def test_warning_on_penalty_string_none():
+    # Test that warning message is shown when penalty='none'
+    target = iris.target_names[iris.target]
+    lr = LogisticRegression(penalty="none")
+    warning_message = (
+        "`penalty='none'`has been deprecated in 1.2 and will be removed in 1.4."
+        " To keep the past behaviour, set `penalty=None`."
+    )
+    with pytest.warns(FutureWarning, match=warning_message):
+        lr.fit(iris.data, target)

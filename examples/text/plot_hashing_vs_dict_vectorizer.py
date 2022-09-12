@@ -315,7 +315,7 @@ print(f"done in {duration:.3f} s at {data_size_mb / duration:.1f} MB/s")
 
 # %%
 # We can observe that this is the fastest text tokenization strategy so far,
-# assuming the that the downstream machine learning task can tolerate a few
+# assuming that the downstream machine learning task can tolerate a few
 # collisions.
 #
 # TfidfVectorizer

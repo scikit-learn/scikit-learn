@@ -45,11 +45,15 @@ def test_function_param_validation(func_module):
 
     # check that there is a constraint for each parameter
     if func_params:
+        validation_params = parameter_constraints.keys()
+        unexpected_params = set(validation_params) - set(func_params)
+        missing_params = set(func_params) - set(validation_params)
         err_msg = (
-            "Mismatch between the parameter constraints defined in the "
-            f"validate_params decorator and the parameters of {func_name}."
+            "Mismatch between _parameter_constraints and the parameters of"
+            f" {func_name}.\nConsider the unexpected parameters {unexpected_params} and"
+            f" expected but missing parameters {missing_params}\n"
         )
-        assert list(parameter_constraints.keys()) == func_params, err_msg
+        assert set(validation_params) == set(func_params), err_msg
 
     # this object does not have a valid type for sure for all params
     param_with_bad_type = type("BadType", (), {})()

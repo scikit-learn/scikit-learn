@@ -30,7 +30,7 @@ from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative
 from .utils.validation import _check_sample_weight
-from .utils._param_validation import Interval
+from .utils._param_validation import Interval, Hidden, StrOptions
 
 __all__ = [
     "BernoulliNB",
@@ -238,7 +238,7 @@ class GaussianNB(_BaseNB):
     [1]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "priors": ["array-like", None],
         "var_smoothing": [Interval(Real, 0, None, closed="left")],
     }
@@ -545,16 +545,18 @@ class _BaseDiscreteNB(_BaseNB):
     _count(X, Y)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
         "fit_prior": ["boolean"],
         "class_prior": ["array-like", None],
+        "force_alpha": ["boolean", Hidden(StrOptions({"warn"}))],
     }
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
+    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None, force_alpha="warn"):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_prior = class_prior
+        self.force_alpha = force_alpha
 
     @abstractmethod
     def _count(self, X, Y):
@@ -622,6 +624,7 @@ class _BaseDiscreteNB(_BaseNB):
         alpha = (
             np.asarray(self.alpha) if not isinstance(self.alpha, Real) else self.alpha
         )
+        alpha_min = np.min(alpha)
         if isinstance(alpha, np.ndarray):
             if not alpha.shape[0] == self.n_features_in_:
                 raise ValueError(
@@ -629,15 +632,26 @@ class _BaseDiscreteNB(_BaseNB):
                     f"Got {alpha.shape[0]} elements instead of {self.n_features_in_}."
                 )
             # check that all alpha are positive
-            if np.min(alpha) < 0:
+            if alpha_min < 0:
                 raise ValueError("All values in alpha must be greater than 0.")
-        alpha_min = 1e-10
-        if np.min(alpha) < alpha_min:
+        alpha_lower_bound = 1e-10
+        # TODO(1.4): Replace w/ deprecation of self.force_alpha
+        # See gh #22269
+        _force_alpha = self.force_alpha
+        if _force_alpha == "warn" and alpha_min < alpha_lower_bound:
+            _force_alpha = False
+            warnings.warn(
+                "The default value for `force_alpha` will change to `True` in 1.4. To"
+                " suppress this warning, manually set the value of `force_alpha`.",
+                FutureWarning,
+            )
+        if alpha_min < alpha_lower_bound and not _force_alpha:
             warnings.warn(
                 "alpha too small will result in numeric errors, setting alpha ="
-                f" {alpha_min:.1e}"
+                f" {alpha_lower_bound:.1e}. Use `force_alpha=True` to keep alpha"
+                " unchanged."
             )
-            return np.maximum(alpha, alpha_min)
+            return np.maximum(alpha, alpha_lower_bound)
         return alpha
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
@@ -786,16 +800,6 @@ class _BaseDiscreteNB(_BaseNB):
     def _more_tags(self):
         return {"poor_score": True}
 
-    # TODO: Remove in 1.2
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `n_features_` was deprecated in version 1.0 and will be "
-        "removed in 1.2. Use `n_features_in_` instead."
-    )
-    @property
-    def n_features_(self):
-        return self.n_features_in_
-
 
 class MultinomialNB(_BaseDiscreteNB):
     """
@@ -812,7 +816,16 @@ class MultinomialNB(_BaseDiscreteNB):
     ----------
     alpha : float or array-like of shape (n_features,), default=1.0
         Additive (Laplace/Lidstone) smoothing parameter
-        (0 for no smoothing).
+        (set alpha=0 and force_alpha=True, for no smoothing).
+
+    force_alpha : bool, default=False
+        If False and alpha is less than 1e-10, it will set alpha to
+        1e-10. If True, alpha will remain unchanged. This may cause
+        numerical errors if alpha is too close to 0.
+
+        .. versionadded:: 1.2
+        .. deprecated:: 1.2
+           The default value of `force_alpha` will change to `True` in v1.4.
 
     fit_prior : bool, default=True
         Whether to learn class prior probabilities or not.
@@ -842,13 +855,6 @@ class MultinomialNB(_BaseDiscreteNB):
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical log probability of features
         given a class, ``P(x_i|y)``.
-
-    n_features_ : int
-        Number of features of each sample.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -881,15 +887,22 @@ class MultinomialNB(_BaseDiscreteNB):
     >>> X = rng.randint(5, size=(6, 100))
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> from sklearn.naive_bayes import MultinomialNB
-    >>> clf = MultinomialNB()
+    >>> clf = MultinomialNB(force_alpha=True)
     >>> clf.fit(X, y)
-    MultinomialNB()
+    MultinomialNB(force_alpha=True)
     >>> print(clf.predict(X[2:3]))
     [3]
     """
 
-    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None):
-        super().__init__(alpha=alpha, fit_prior=fit_prior, class_prior=class_prior)
+    def __init__(
+        self, *, alpha=1.0, force_alpha="warn", fit_prior=True, class_prior=None
+    ):
+        super().__init__(
+            alpha=alpha,
+            fit_prior=fit_prior,
+            class_prior=class_prior,
+            force_alpha=force_alpha,
+        )
 
     def _more_tags(self):
         return {"requires_positive_X": True}
@@ -928,7 +941,17 @@ class ComplementNB(_BaseDiscreteNB):
     Parameters
     ----------
     alpha : float or array-like of shape (n_features,), default=1.0
-        Additive (Laplace/Lidstone) smoothing parameter (0 for no smoothing).
+        Additive (Laplace/Lidstone) smoothing parameter
+        (set alpha=0 and force_alpha=True, for no smoothing).
+
+    force_alpha : bool, default=False
+        If False and alpha is less than 1e-10, it will set alpha to
+        1e-10. If True, alpha will remain unchanged. This may cause
+        numerical errors if alpha is too close to 0.
+
+        .. versionadded:: 1.2
+        .. deprecated:: 1.2
+           The default value of `force_alpha` will change to `True` in v1.4.
 
     fit_prior : bool, default=True
         Only used in edge case with a single class in the training set.
@@ -966,13 +989,6 @@ class ComplementNB(_BaseDiscreteNB):
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical weights for class complements.
 
-    n_features_ : int
-        Number of features of each sample.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -1005,20 +1021,33 @@ class ComplementNB(_BaseDiscreteNB):
     >>> X = rng.randint(5, size=(6, 100))
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> from sklearn.naive_bayes import ComplementNB
-    >>> clf = ComplementNB()
+    >>> clf = ComplementNB(force_alpha=True)
     >>> clf.fit(X, y)
-    ComplementNB()
+    ComplementNB(force_alpha=True)
     >>> print(clf.predict(X[2:3]))
     [3]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseDiscreteNB._parameter_constraints,
         "norm": ["boolean"],
     }
 
-    def __init__(self, *, alpha=1.0, fit_prior=True, class_prior=None, norm=False):
-        super().__init__(alpha=alpha, fit_prior=fit_prior, class_prior=class_prior)
+    def __init__(
+        self,
+        *,
+        alpha=1.0,
+        force_alpha="warn",
+        fit_prior=True,
+        class_prior=None,
+        norm=False,
+    ):
+        super().__init__(
+            alpha=alpha,
+            force_alpha=force_alpha,
+            fit_prior=fit_prior,
+            class_prior=class_prior,
+        )
         self.norm = norm
 
     def _more_tags(self):
@@ -1064,7 +1093,16 @@ class BernoulliNB(_BaseDiscreteNB):
     ----------
     alpha : float or array-like of shape (n_features,), default=1.0
         Additive (Laplace/Lidstone) smoothing parameter
-        (0 for no smoothing).
+        (set alpha=0 and force_alpha=True, for no smoothing).
+
+    force_alpha : bool, default=False
+        If False and alpha is less than 1e-10, it will set alpha to
+        1e-10. If True, alpha will remain unchanged. This may cause
+        numerical errors if alpha is too close to 0.
+
+        .. versionadded:: 1.2
+        .. deprecated:: 1.2
+           The default value of `force_alpha` will change to `True` in v1.4.
 
     binarize : float or None, default=0.0
         Threshold for binarizing (mapping to booleans) of sample features.
@@ -1097,13 +1135,6 @@ class BernoulliNB(_BaseDiscreteNB):
 
     feature_log_prob_ : ndarray of shape (n_classes, n_features)
         Empirical log probability of features given a class, P(x_i|y).
-
-    n_features_ : int
-        Number of features of each sample.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1144,20 +1175,33 @@ class BernoulliNB(_BaseDiscreteNB):
     >>> X = rng.randint(5, size=(6, 100))
     >>> Y = np.array([1, 2, 3, 4, 4, 5])
     >>> from sklearn.naive_bayes import BernoulliNB
-    >>> clf = BernoulliNB()
+    >>> clf = BernoulliNB(force_alpha=True)
     >>> clf.fit(X, Y)
-    BernoulliNB()
+    BernoulliNB(force_alpha=True)
     >>> print(clf.predict(X[2:3]))
     [3]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseDiscreteNB._parameter_constraints,
         "binarize": [None, Interval(Real, 0, None, closed="left")],
     }
 
-    def __init__(self, *, alpha=1.0, binarize=0.0, fit_prior=True, class_prior=None):
-        super().__init__(alpha=alpha, fit_prior=fit_prior, class_prior=class_prior)
+    def __init__(
+        self,
+        *,
+        alpha=1.0,
+        force_alpha="warn",
+        binarize=0.0,
+        fit_prior=True,
+        class_prior=None,
+    ):
+        super().__init__(
+            alpha=alpha,
+            fit_prior=fit_prior,
+            class_prior=class_prior,
+            force_alpha=force_alpha,
+        )
         self.binarize = binarize
 
     def _check_X(self, X):
@@ -1219,7 +1263,16 @@ class CategoricalNB(_BaseDiscreteNB):
     ----------
     alpha : float, default=1.0
         Additive (Laplace/Lidstone) smoothing parameter
-        (0 for no smoothing).
+        (set alpha=0 and force_alpha=True, for no smoothing).
+
+    force_alpha : bool, default=False
+        If False and alpha is less than 1e-10, it will set alpha to
+        1e-10. If True, alpha will remain unchanged. This may cause
+        numerical errors if alpha is too close to 0.
+
+        .. versionadded:: 1.2
+        .. deprecated:: 1.2
+           The default value of `force_alpha` will change to `True` in v1.4.
 
     fit_prior : bool, default=True
         Whether to learn class prior probabilities or not.
@@ -1263,13 +1316,6 @@ class CategoricalNB(_BaseDiscreteNB):
         for each feature. Each array provides the empirical log probability
         of categories given the respective feature and class, ``P(x_i|y)``.
 
-    n_features_ : int
-        Number of features of each sample.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -1301,14 +1347,14 @@ class CategoricalNB(_BaseDiscreteNB):
     >>> X = rng.randint(5, size=(6, 100))
     >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> from sklearn.naive_bayes import CategoricalNB
-    >>> clf = CategoricalNB()
+    >>> clf = CategoricalNB(force_alpha=True)
     >>> clf.fit(X, y)
-    CategoricalNB()
+    CategoricalNB(force_alpha=True)
     >>> print(clf.predict(X[2:3]))
     [3]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseDiscreteNB._parameter_constraints,
         "min_categories": [
             None,
@@ -1319,9 +1365,20 @@ class CategoricalNB(_BaseDiscreteNB):
     }
 
     def __init__(
-        self, *, alpha=1.0, fit_prior=True, class_prior=None, min_categories=None
+        self,
+        *,
+        alpha=1.0,
+        force_alpha="warn",
+        fit_prior=True,
+        class_prior=None,
+        min_categories=None,
     ):
-        super().__init__(alpha=alpha, fit_prior=fit_prior, class_prior=class_prior)
+        super().__init__(
+            alpha=alpha,
+            force_alpha=force_alpha,
+            fit_prior=fit_prior,
+            class_prior=class_prior,
+        )
         self.min_categories = min_categories
 
     def fit(self, X, y, sample_weight=None):

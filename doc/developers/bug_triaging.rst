@@ -101,7 +101,7 @@ The following workflow [1]_ is a good way to approach issue triaging:
 
 #. Thank the reporter for opening an issue
 
-   The issue tracker is many people’s first interaction with the
+   The issue tracker is many people's first interaction with the
    scikit-learn project itself, beyond just using the library. As such,
    we want it to be a welcoming, pleasant experience.
 

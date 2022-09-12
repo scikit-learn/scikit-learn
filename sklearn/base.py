@@ -167,7 +167,7 @@ class BaseEstimator(_MetadataRequester):
         out = dict()
         for key in self._get_param_names():
             value = getattr(self, key)
-            if deep and hasattr(value, "get_params"):
+            if deep and hasattr(value, "get_params") and not isinstance(value, type):
                 deep_items = value.get_params().items()
                 out.update((key + "__" + k, val) for k, val in deep_items)
             out[key] = value

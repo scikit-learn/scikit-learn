@@ -18,6 +18,24 @@ from functools import partial
 import pytest
 import numpy as np
 
+from sklearn.cluster import (
+    AffinityPropagation,
+    Birch,
+    MeanShift,
+    OPTICS,
+    SpectralClustering,
+)
+from sklearn.datasets import make_blobs
+from sklearn.manifold import Isomap, TSNE, LocallyLinearEmbedding
+from sklearn.neighbors import (
+    LocalOutlierFactor,
+    KNeighborsClassifier,
+    KNeighborsRegressor,
+    RadiusNeighborsClassifier,
+    RadiusNeighborsRegressor,
+)
+from sklearn.semi_supervised import LabelPropagation, LabelSpreading
+
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
@@ -445,128 +463,51 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
         est.set_params(**new_params)
 
 
-PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
-    "ARDRegression",
-    "AdditiveChi2Sampler",
-    "AffinityPropagation",
-    "BaggingClassifier",
-    "BaggingRegressor",
-    "BayesianGaussianMixture",
-    "BayesianRidge",
-    "BernoulliRBM",
-    "CalibratedClassifierCV",
-    "ClassifierChain",
-    "CountVectorizer",
-    "DictionaryLearning",
-    "ElasticNetCV",
-    "EllipticEnvelope",
-    "EmpiricalCovariance",
-    "ExtraTreesClassifier",
-    "ExtraTreesRegressor",
-    "FeatureHasher",
-    "FunctionTransformer",
-    "GaussianMixture",
-    "GenericUnivariateSelect",
-    "GradientBoostingClassifier",
-    "GradientBoostingRegressor",
-    "GraphicalLasso",
-    "GraphicalLassoCV",
-    "HashingVectorizer",
-    "Isomap",
-    "IsotonicRegression",
-    "IterativeImputer",
-    "KNNImputer",
-    "KNeighborsTransformer",
-    "KernelPCA",
-    "LabelPropagation",
-    "LabelSpreading",
-    "Lars",
-    "LarsCV",
-    "LassoCV",
-    "LassoLars",
-    "LassoLarsCV",
-    "LassoLarsIC",
-    "LatentDirichletAllocation",
-    "LedoitWolf",
-    "LocallyLinearEmbedding",
-    "MinCovDet",
-    "MiniBatchDictionaryLearning",
-    "MultiOutputClassifier",
-    "MultiOutputRegressor",
-    "MultiTaskElasticNet",
-    "MultiTaskElasticNetCV",
-    "MultiTaskLasso",
-    "MultiTaskLassoCV",
-    "NearestCentroid",
-    "NearestNeighbors",
-    "NeighborhoodComponentsAnalysis",
-    "NuSVC",
-    "NuSVR",
-    "Nystroem",
-    "OAS",
-    "OPTICS",
-    "OneClassSVM",
-    "OneVsOneClassifier",
-    "OneVsRestClassifier",
-    "OrthogonalMatchingPursuit",
-    "OrthogonalMatchingPursuitCV",
-    "OutputCodeClassifier",
-    "PatchExtractor",
-    "PolynomialCountSketch",
-    "PolynomialFeatures",
-    "QuadraticDiscriminantAnalysis",
-    "RANSACRegressor",
-    "RBFSampler",
-    "RFE",
-    "RFECV",
-    "RadiusNeighborsClassifier",
-    "RadiusNeighborsRegressor",
-    "RadiusNeighborsTransformer",
-    "RandomForestClassifier",
-    "RandomForestRegressor",
-    "RandomTreesEmbedding",
-    "RegressorChain",
-    "RidgeCV",
-    "RidgeClassifierCV",
-    "SVC",
-    "SVR",
-    "SelectFdr",
-    "SelectFpr",
-    "SelectFromModel",
-    "SelectFwe",
-    "SelectKBest",
-    "SelectPercentile",
-    "SelfTrainingClassifier",
-    "SequentialFeatureSelector",
-    "ShrunkCovariance",
-    "SimpleImputer",
-    "SkewedChi2Sampler",
-    "SpectralBiclustering",
-    "SpectralClustering",
-    "SpectralCoclustering",
-    "SpectralEmbedding",
-    "SplineTransformer",
-    "StackingClassifier",
-    "StackingRegressor",
-    "TSNE",
-    "TfidfVectorizer",
-    "TheilSenRegressor",
-    "TransformedTargetRegressor",
-    "TruncatedSVD",
-    "VotingClassifier",
-    "VotingRegressor",
-]
-
-
 @pytest.mark.parametrize(
     "estimator", _tested_estimators(), ids=_get_check_estimator_ids
 )
 def test_check_param_validation(estimator):
     name = estimator.__class__.__name__
-    if name in PARAM_VALIDATION_ESTIMATORS_TO_IGNORE:
-        pytest.skip(
-            f"Skipping check_param_validation for {name}: Does not use the "
-            "appropriate API for parameter validation yet."
-        )
     _set_checking_parameters(estimator)
     check_param_validation(name, estimator)
+
+
+# TODO: remove this filter in 1.2
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.parametrize(
+    "Estimator",
+    [
+        AffinityPropagation,
+        Birch,
+        MeanShift,
+        KNeighborsClassifier,
+        KNeighborsRegressor,
+        RadiusNeighborsClassifier,
+        RadiusNeighborsRegressor,
+        LabelPropagation,
+        LabelSpreading,
+        OPTICS,
+        SpectralClustering,
+        LocalOutlierFactor,
+        LocallyLinearEmbedding,
+        Isomap,
+        TSNE,
+    ],
+)
+def test_f_contiguous_array_estimator(Estimator):
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/23988
+    # https://github.com/scikit-learn/scikit-learn/issues/24013
+
+    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
+    X = np.asfortranarray(X)
+    y = np.round(X[:, 0])
+
+    est = Estimator()
+    est.fit(X, y)
+
+    if hasattr(est, "transform"):
+        est.transform(X)
+
+    if hasattr(est, "predict"):
+        est.predict(X)
