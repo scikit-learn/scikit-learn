@@ -371,7 +371,8 @@ Changelog
 :mod:`sklearn.preprocessing`
 ............................
 
-- |API| The `sparse` parameter is now deprecated in :class:`preprocessing.OneHotEncoder`,
+- |API| The `sparse` parameter of :class:`preprocessing.OneHotEncoder`
+  is now deprecated
   and will be removed in version 1.4. Use `sparse_output` instead.
   :pr:`24412` by :user:`Rushil Desai <rusdes>`.
 
