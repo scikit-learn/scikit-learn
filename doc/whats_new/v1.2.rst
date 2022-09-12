@@ -243,6 +243,11 @@ Changelog
   `nu=0.5` for PyPy (and possibly other non CPython interpreters). :pr:`24245`
   by :user:`Loïc Estève <lesteve>`.
 
+- |Fix| The `fit` method of :class:`gaussian_process.GaussianProcessRegressor`
+  will not modify the input X in case a custom kernel is used, with a `diag`
+  method that returns part of the input X. :pr:`24405`
+  by :user:`Omar Salman <OmarManzoor>`.
+
 :mod:`sklearn.kernel_approximation`
 ...................................
 
