@@ -279,6 +279,7 @@ class OneHotEncoder(_BaseEncoder):
         Will return sparse matrix if set True else will return an array.
 
         .. versionadded:: 1.2
+           `sparse` was renamed to `sparse_output`
 
     dtype : number type, default=float
         Desired dtype of output.
@@ -811,7 +812,7 @@ class OneHotEncoder(_BaseEncoder):
         """
         if self.sparse != "deprecated":
             warnings.warn(
-                "'sparse' was renamed to 'sparse_output' in version 1.2 and "
+                "`sparse` was renamed to `sparse_output` in version 1.2 and "
                 "will be removed in 1.4.",
                 FutureWarning,
             )

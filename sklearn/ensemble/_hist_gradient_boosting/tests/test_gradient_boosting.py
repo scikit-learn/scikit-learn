@@ -918,7 +918,7 @@ def test_unknown_categories_nan(insert_missing, Est, bool_categorical_parameter)
 
 # TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`
 # in OneHotEncoder.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 def test_categorical_encoding_strategies():
     # Check native categorical handling vs different encoding strategies. We
     # make sure that native encoding needs only 1 split to achieve a perfect

@@ -512,7 +512,7 @@ def test_grow_tree_categories():
 
 # TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`
 # in OneHotEncoder.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 @pytest.mark.parametrize("min_samples_leaf", (1, 20))
 @pytest.mark.parametrize("n_unique_categories", (2, 10, 100))
 @pytest.mark.parametrize("target", ("binary", "random", "equal"))

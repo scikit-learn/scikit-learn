@@ -482,7 +482,7 @@ def test_column_transformer_mixed_cols_sparse():
 
 # TODO(1.4): Remove filterwarning when `sparse` is replaced by`sparse_output`
 # in OneHotEncoder.
-@pytest.mark.filterwarnings("ignore::FutureWarning")
+@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 def test_column_transformer_sparse_threshold():
     X_array = np.array([["a", "b"], ["A", "B"]], dtype=object).T
     # above data has sparsity of 4 / 8 = 0.5
