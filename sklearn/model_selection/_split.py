@@ -2356,7 +2356,7 @@ def train_test_split(
 ):
     """Split arrays or matrices into random train and test subsets.
 
-    It's a quick utility that wraps input validation,
+    Quick utility that wraps input validation,
     ``next(ShuffleSplit().split(X, y))``, and application to input data
     into a single call for splitting (and optionally subsampling) data into a
     one-liner.
