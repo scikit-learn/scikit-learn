@@ -129,7 +129,8 @@ def safe_mask(X, mask):
 
     Returns
     -------
-        mask
+    mask : ndarray
+        Array that is safe to use on X.
     """
     mask = np.asarray(mask)
     if np.issubdtype(mask.dtype, np.signedinteger):
