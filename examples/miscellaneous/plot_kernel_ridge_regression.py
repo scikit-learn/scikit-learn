@@ -203,6 +203,7 @@ common_params = {
     "scoring": "neg_mean_squared_error",
     "negate": True,
     "score_name": "Mean Squared Error",
+    "std_display_style": None,
     "cv": 10,
     "ax": ax,
 }

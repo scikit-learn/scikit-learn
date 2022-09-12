@@ -87,7 +87,7 @@ class LearningCurveDisplay:
         score_name=None,
         score_type="test",
         log_scale=False,
-        std_display_style=None,
+        std_display_style="fill_between",
         line_kw=None,
         fill_between_kw=None,
         errorbar_kw=None,
@@ -117,7 +117,7 @@ class LearningCurveDisplay:
         log_scale : bool, default=False
             Whether or not to use a logarithmic scale for the x-axis.
 
-        std_display_style : {"errorbar", "fill_between"}, default=None
+        std_display_style : {"errorbar", "fill_between"} or None, default="fill_between"
             The style used to display the score standard deviation around the
             mean score. If None, no standard deviation representation is
             displayed.
@@ -205,7 +205,7 @@ class LearningCurveDisplay:
                         **errorbar_kw,
                     )
                 )
-            self.line_, self.fill_between_ = None, None
+            self.lines_, self.fill_between_ = None, None
         elif std_display_style == "fill_between":
             if fill_between_kw is None:
                 fill_between_kw = {}
@@ -260,7 +260,7 @@ class LearningCurveDisplay:
         score_name=None,
         score_type="test",
         log_scale=False,
-        std_display_style=None,
+        std_display_style="fill_between",
         line_kw=None,
         fill_between_kw=None,
         errorbar_kw=None,
@@ -379,7 +379,7 @@ class LearningCurveDisplay:
         log_scale : bool, default=False
             Whether or not to use a logarithmic scale for the x-axis.
 
-        std_display_style : {"errorbar", "fill_between"}, default=None
+        std_display_style : {"errorbar", "fill_between"} or None, default="fill_between"
             The style used to display the score standard deviation around the
             mean score. If `None, no representation of the standard deviation
             is displayed.

@@ -26,12 +26,13 @@ def test_learnig_curve_display_default_usage(pyplot, data):
 
     import matplotlib as mpl
 
-    assert isinstance(display.errorbar_, list)
-    for eb in display.errorbar_:
-        assert isinstance(eb, mpl.container.ErrorbarContainer)
-        assert eb.get_label() in ["Training Score", "Testing Score"]
-    assert display.line_ is None
-    assert display.fill_between_ is None
+    assert display.errorbar_ is None
+    assert isinstance(display.lines_, list)
+    for line in display.lines_:
+        assert isinstance(line, mpl.lines.Line2D)
+    assert isinstance(display.fill_between_, list)
+    for fill in display.fill_between_:
+        assert isinstance(fill, mpl.collections.PolyCollection)
     assert display.score_name == "Score"
     assert display.ax_.get_xlabel() == "Number of samples in the training set"
     assert display.ax_.get_ylabel() == "Score"
