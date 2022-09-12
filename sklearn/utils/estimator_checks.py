@@ -34,7 +34,6 @@ from ..linear_model import LogisticRegression
 from ..linear_model import RANSACRegressor
 from ..linear_model import Ridge
 from ..linear_model import SGDRegressor
-from ..svm import NuSVC
 
 from ..base import (
     clone,
