@@ -27,27 +27,35 @@ def csr_row_norms(X):
     """L2 norm of each row in CSR matrix X."""
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
-    return _csr_row_norms(X.data, X.shape, X.indices, X.indptr)
+    return np.asarray(_csr_row_norms(X.data, X.indices, X.indptr))
 
 
-def _csr_row_norms(cnp.ndarray[floating, ndim=1, mode="c"] X_data,
-                   shape,
-                   cnp.ndarray[integral, ndim=1, mode="c"] X_indices,
-                   cnp.ndarray[integral, ndim=1, mode="c"] X_indptr):
+def _csr_row_norms(
+    floating[::1] X_data,
+    integral[::1] X_indices,
+    integral[::1] X_indptr,
+):
     cdef:
-        unsigned long long n_samples = shape[0]
-        unsigned long long i
+        integral n_samples = X_indptr.shape[0] - 1
+        integral i
         integral j
-        double sum_
+        floating sum_
 
-    norms = np.empty(n_samples, dtype=X_data.dtype)
-    cdef floating[::1] norms_view = norms
+    if floating is float:
+        dtype = np.float32
+    else:
+        dtype = np.float64
 
-    for i in range(n_samples):
-        sum_ = 0.0
-        for j in range(X_indptr[i], X_indptr[i + 1]):
-            sum_ += X_data[j] * X_data[j]
-        norms_view[i] = sum_
+    cdef floating[::1] norms = (
+        np.empty(n_samples, dtype=dtype)
+    )
+
+    with nogil:
+        for i in range(n_samples):
+            sum_ = 0.0
+            for j in range(X_indptr[i], X_indptr[i + 1]):
+                sum_ += X_data[j] * X_data[j]
+            norms[i] = sum_
 
     return norms
 
