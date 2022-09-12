@@ -33,7 +33,7 @@ def _calculate_permutation_scores(
     """Calculate score when `col_idx` is permuted."""
     random_state = check_random_state(random_state)
 
-    # Work on a copy of X to to ensure thread-safety in case of threading based
+    # Work on a copy of X to ensure thread-safety in case of threading based
     # parallelism. Furthermore, making a copy is also useful when the joblib
     # backend is 'loky' (default) or the old 'multiprocessing': in those cases,
     # if X is large it will be automatically be backed by a readonly memory map
@@ -58,7 +58,7 @@ def _calculate_permutation_scores(
         if hasattr(X_permuted, "iloc"):
             col = X_permuted.iloc[shuffling_idx, col_idx]
             col.index = X_permuted.index
-            X_permuted.iloc[:, col_idx] = col
+            X_permuted[X_permuted.columns[col_idx]] = col
         else:
             X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
         scores.append(_weights_scorer(scorer, estimator, X_permuted, y, sample_weight))
@@ -212,8 +212,8 @@ def permutation_importance(
 
     References
     ----------
-    .. [BRE] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
-             2001. https://doi.org/10.1023/A:1010933404324
+    .. [BRE] :doi:`L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32,
+             2001. <10.1023/A:1010933404324>`
 
     Examples
     --------

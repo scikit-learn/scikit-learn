@@ -26,8 +26,9 @@ from .utils.validation import _num_features
 from .utils.validation import _check_feature_names_in
 from .utils.validation import _generate_get_feature_names_out
 from .utils.validation import check_is_fitted
-from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _get_feature_names
+from .utils._estimator_html_repr import estimator_html_repr
+from .utils._param_validation import validate_parameter_constraints
 from .callback import BaseCallback
 from .callback import AutoPropagatedMixin
 from .callback import ComputationTree
@@ -108,56 +109,6 @@ def clone(estimator, *, safe=True):
     return new_object
 
 
-def _pprint(params, offset=0, printer=repr):
-    """Pretty print the dictionary 'params'
-
-    Parameters
-    ----------
-    params : dict
-        The dictionary to pretty print
-
-    offset : int, default=0
-        The offset in characters to add at the begin of each line.
-
-    printer : callable, default=repr
-        The function to convert entries to strings, typically
-        the builtin str or repr
-
-    """
-    # Do a multi-line justified repr:
-    options = np.get_printoptions()
-    np.set_printoptions(precision=5, threshold=64, edgeitems=2)
-    params_list = list()
-    this_line_length = offset
-    line_sep = ",\n" + (1 + offset // 2) * " "
-    for i, (k, v) in enumerate(sorted(params.items())):
-        if type(v) is float:
-            # use str for representing floating point numbers
-            # this way we get consistent representation across
-            # architectures and versions.
-            this_repr = "%s=%s" % (k, str(v))
-        else:
-            # use repr of the rest
-            this_repr = "%s=%s" % (k, printer(v))
-        if len(this_repr) > 500:
-            this_repr = this_repr[:300] + "..." + this_repr[-100:]
-        if i > 0:
-            if this_line_length + len(this_repr) >= 75 or "\n" in this_repr:
-                params_list.append(line_sep)
-                this_line_length = len(line_sep)
-            else:
-                params_list.append(", ")
-                this_line_length += 2
-        params_list.append(this_repr)
-        this_line_length += len(this_repr)
-
-    np.set_printoptions(**options)
-    lines = "".join(params_list)
-    # Strip trailing space to avoid nightmare in doctests
-    lines = "\n".join(l.rstrip(" ") for l in lines.split("\n"))
-    return lines
-
-
 class BaseEstimator:
     """Base class for all estimators in scikit-learn.
 
@@ -217,7 +168,7 @@ class BaseEstimator:
         out = dict()
         for key in self._get_param_names():
             value = getattr(self, key)
-            if deep and hasattr(value, "get_params"):
+            if deep and hasattr(value, "get_params") and not isinstance(value, type):
                 deep_items = value.get_params().items()
                 out.update((key + "__" + k, val) for k, val in deep_items)
             out[key] = value
@@ -339,8 +290,8 @@ class BaseEstimator:
                     "using version {2}. This might lead to breaking code or "
                     "invalid results. Use at your own risk. "
                     "For more info please refer to:\n"
-                    "https://scikit-learn.org/stable/modules/model_persistence"
-                    ".html#security-maintainability-limitations".format(
+                    "https://scikit-learn.org/stable/model_persistence.html"
+                    "#security-maintainability-limitations".format(
                         self.__class__.__name__, pickle_version, __version__
                     ),
                     UserWarning,
@@ -493,7 +444,7 @@ class BaseEstimator:
                 message += "Feature names seen at fit time, yet now missing:\n"
                 message += add_names(missing_names)
 
-            if not missing_names and not missing_names:
+            if not missing_names and not unexpected_names:
                 message += (
                     "Feature names must be in the same order as they were in fit.\n"
                 )
@@ -608,6 +559,20 @@ class BaseEstimator:
             self._check_n_features(X, reset=reset)
 
         return out
+
+    def _validate_params(self):
+        """Validate types and values of constructor parameters
+
+        The expected type and values must be defined in the `_parameter_constraints`
+        class attribute, which is a dictionary `param_name: list of constraints`. See
+        the docstring of `validate_parameter_constraints` for a description of the
+        accepted constraints.
+        """
+        validate_parameter_constraints(
+            self._parameter_constraints,
+            self.get_params(deep=False),
+            caller_name=self.__class__.__name__,
+        )
 
     def _set_callbacks(self, callbacks):
         """Set callbacks for the estimator.
@@ -1052,7 +1017,8 @@ class _OneToOneFeatureMixin:
 
             - If `input_features` is `None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
-              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 

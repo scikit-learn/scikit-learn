@@ -76,8 +76,8 @@ class Pipeline(_BaseComposition):
     ----------
     steps : list of tuple
         List of (name, transform) tuples (implementing `fit`/`transform`) that
-        are chained, in the order in which they are chained, with the last
-        object an estimator.
+        are chained in sequential order. The last transform must be an
+        estimator.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the fitted transformers of the pipeline. By default,
@@ -329,7 +329,7 @@ class Pipeline(_BaseComposition):
 
         fit_transform_one_cached = memory.cache(_fit_transform_one)
 
-        for (step_idx, name, transformer) in self._iter(
+        for step_idx, name, transformer in self._iter(
             with_final=False, filter_passthrough=False
         ):
             node = root.children[step_idx]
@@ -1258,14 +1258,19 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         # X is passed to all transformers so we just delegate to the first one
         return self.transformer_list[0][1].n_features_in_
 
+    def __sklearn_is_fitted__(self):
+        # Delegate whether feature union was fitted
+        for _, transformer, _ in self._iter():
+            check_is_fitted(transformer)
+        return True
+
     def _sk_visual_block_(self):
         names, transformers = zip(*self.transformer_list)
         return _VisualBlock("parallel", transformers, names=names)
 
 
 def make_union(*transformers, n_jobs=None, verbose=False):
-    """
-    Construct a FeatureUnion from the given transformers.
+    """Construct a FeatureUnion from the given transformers.
 
     This is a shorthand for the FeatureUnion constructor; it does not require,
     and does not permit, naming the transformers. Instead, they will be given
@@ -1274,6 +1279,7 @@ def make_union(*transformers, n_jobs=None, verbose=False):
     Parameters
     ----------
     *transformers : list of estimators
+        One or more estimators.
 
     n_jobs : int, default=None
         Number of jobs to run in parallel.
@@ -1282,7 +1288,7 @@ def make_union(*transformers, n_jobs=None, verbose=False):
         for more details.
 
         .. versionchanged:: v0.20
-           `n_jobs` default changed from 1 to None
+           `n_jobs` default changed from 1 to None.
 
     verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be
@@ -1291,6 +1297,8 @@ def make_union(*transformers, n_jobs=None, verbose=False):
     Returns
     -------
     f : FeatureUnion
+        A :class:`FeatureUnion` object for concatenating the results of multiple
+        transformer objects.
 
     See Also
     --------

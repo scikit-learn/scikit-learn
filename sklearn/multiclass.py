@@ -34,6 +34,7 @@ case.
 # License: BSD 3 clause
 
 import array
+from numbers import Integral, Real
 import numpy as np
 import warnings
 import scipy.sparse as sp
@@ -45,6 +46,7 @@ from .base import MetaEstimatorMixin, is_regressor
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
+from .utils._param_validation import HasMethods, Interval
 from .utils._tags import _safe_tags
 from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
@@ -102,14 +104,13 @@ def _predict_binary(estimator, X):
     return score
 
 
-def _check_estimator(estimator):
-    """Make sure that an estimator implements the necessary methods."""
-    if not hasattr(estimator, "decision_function") and not hasattr(
-        estimator, "predict_proba"
-    ):
-        raise ValueError(
-            "The base estimator should implement decision_function or predict_proba!"
-        )
+def _threshold_for_binary_predict(estimator):
+    """Threshold for predictions from binary estimator."""
+    if hasattr(estimator, "decision_function") and is_classifier(estimator):
+        return 0.0
+    else:
+        # predict_proba threshold
+        return 0.5
 
 
 class _ConstantPredictor(BaseEstimator):
@@ -202,8 +203,11 @@ class OneVsRestClassifier(
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing :term:`fit` and one of
-        :term:`decision_function` or :term:`predict_proba`.
+        A regressor or a classifier that implements :term:`fit`.
+        When a classifier is passed, :term:`decision_function` will be used
+        in priority and it will fallback to :term`predict_proba` if it is not
+        available.
+        When a regressor is passed, :term:`predict` is used.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation: the `n_classes`
@@ -215,6 +219,15 @@ class OneVsRestClassifier(
 
         .. versionchanged:: 0.20
            `n_jobs` default changed from 1 to None
+
+    verbose : int, default=0
+        The verbosity level, if non zero, progress messages are printed.
+        Below 50, the output is sent to stderr. Otherwise, the output is sent
+        to stdout. The frequency of the messages increases with the verbosity
+        level, reporting all iterations at 10. See :class:`joblib.Parallel` for
+        more details.
+
+        .. versionadded:: 1.1
 
     Attributes
     ----------
@@ -272,9 +285,16 @@ class OneVsRestClassifier(
     array([2, 0, 1])
     """
 
-    def __init__(self, estimator, *, n_jobs=None):
+    _parameter_constraints = {
+        "estimator": [HasMethods(["fit"])],
+        "n_jobs": [Integral, None],
+        "verbose": ["verbose"],
+    }
+
+    def __init__(self, estimator, *, n_jobs=None, verbose=0):
         self.estimator = estimator
         self.n_jobs = n_jobs
+        self.verbose = verbose
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -293,6 +313,8 @@ class OneVsRestClassifier(
         self : object
             Instance of fitted estimator.
         """
+        self._validate_params()
+
         # A sparse LabelBinarizer, with sparse_output=True, has been shown to
         # outperform or match a dense label binarizer in all cases and has also
         # resulted in less or equal memory consumption in the fit_ovr function
@@ -305,7 +327,7 @@ class OneVsRestClassifier(
         # In cases where individual estimators are very fast to train setting
         # n_jobs > 1 in can results in slower performance due to the overhead
         # of spawning threads.  See joblib issue #112.
-        self.estimators_ = Parallel(n_jobs=self.n_jobs)(
+        self.estimators_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
             delayed(_fit_binary)(
                 self.estimator,
                 X,
@@ -354,6 +376,8 @@ class OneVsRestClassifier(
             Instance of partially fitted estimator.
         """
         if _check_partial_fit_first_call(self, classes):
+            self._validate_params()
+
             if not hasattr(self.estimator, "partial_fit"):
                 raise ValueError(
                     ("Base estimator {0}, doesn't have partial_fit method").format(
@@ -416,12 +440,7 @@ class OneVsRestClassifier(
                 argmaxima[maxima == pred] = i
             return self.classes_[argmaxima]
         else:
-            if hasattr(self.estimators_[0], "decision_function") and is_classifier(
-                self.estimators_[0]
-            ):
-                thresh = 0
-            else:
-                thresh = 0.5
+            thresh = _threshold_for_binary_predict(self.estimators_[0])
             indices = array.array("i")
             indptr = array.array("i", [0])
             for e in self.estimators_:
@@ -567,8 +586,11 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing :term:`fit` and one of
-        :term:`decision_function` or :term:`predict_proba`.
+        A regressor or a classifier that implements :term:`fit`.
+        When a classifier is passed, :term:`decision_function` will be used
+        in priority and it will fallback to :term`predict_proba` if it is not
+        available.
+        When a regressor is passed, :term:`predict` is used.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation: the `n_classes * (
@@ -623,6 +645,11 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     array([2, 1, 0, 2, 0, 2, 0, 1, 1, 1])
     """
 
+    _parameter_constraints: dict = {
+        "estimator": [HasMethods(["fit"])],
+        "n_jobs": [Integral, None],
+    }
+
     def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
@@ -643,6 +670,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self : object
             The fitted underlying estimator.
         """
+        self._validate_params()
         # We need to validate the data because we do a safe_indexing later.
         X, y = self._validate_data(
             X, y, accept_sparse=["csr", "csc"], force_all_finite=False
@@ -706,6 +734,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """
         first_call = _check_partial_fit_first_call(self, classes)
         if first_call:
+            self._validate_params()
+
             self.estimators_ = [
                 clone(self.estimator)
                 for _ in range(self.n_classes_ * (self.n_classes_ - 1) // 2)
@@ -760,7 +790,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """
         Y = self.decision_function(X)
         if self.n_classes_ == 2:
-            return self.classes_[(Y > 0).astype(int)]
+            thresh = _threshold_for_binary_predict(self.estimators_[0])
+            return self.classes_[(Y > thresh).astype(int)]
         return self.classes_[Y.argmax(axis=1)]
 
     def decision_function(self, X):
@@ -920,6 +951,16 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     array([1])
     """
 
+    _parameter_constraints: dict = {
+        "estimator": [
+            HasMethods(["fit", "decision_function"]),
+            HasMethods(["fit", "predict_proba"]),
+        ],
+        "code_size": [Interval(Real, 0.0, None, closed="neither")],
+        "random_state": ["random_state"],
+        "n_jobs": [Integral, None],
+    }
+
     def __init__(self, estimator, *, code_size=1.5, random_state=None, n_jobs=None):
         self.estimator = estimator
         self.code_size = code_size
@@ -942,14 +983,9 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
+        self._validate_params()
         y = self._validate_data(X="no_validation", y=y)
 
-        if self.code_size <= 0:
-            raise ValueError(
-                "code_size should be greater than 0, got {0}".format(self.code_size)
-            )
-
-        _check_estimator(self.estimator)
         random_state = check_random_state(self.random_state)
         check_classification_targets(y)
 

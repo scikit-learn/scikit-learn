@@ -208,9 +208,9 @@ def test_r_regression_force_finite(X, y, expected_corr_coef, force_finite):
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/15672
     """
-    with pytest.warns(None) as records:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
         corr_coef = r_regression(X, y, force_finite=force_finite)
-    assert not [w.message for w in records]
     np.testing.assert_array_almost_equal(corr_coef, expected_corr_coef)
 
 
@@ -291,9 +291,9 @@ def test_f_regression_corner_case(
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/15672
     """
-    with pytest.warns(None) as records:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
         f_statistic, p_values = f_regression(X, y, force_finite=force_finite)
-    assert not [w.message for w in records]
     np.testing.assert_array_almost_equal(f_statistic, expected_f_statistic)
     np.testing.assert_array_almost_equal(p_values, expected_p_values)
 
@@ -442,11 +442,13 @@ def test_select_kbest_all():
     assert_array_equal(X, X_r)
 
 
-def test_select_kbest_zero():
+@pytest.mark.parametrize("dtype_in", [np.float32, np.float64])
+def test_select_kbest_zero(dtype_in):
     # Test whether k=0 correctly returns no features.
     X, y = make_classification(
         n_samples=20, n_features=10, shuffle=False, random_state=0
     )
+    X = X.astype(dtype_in)
 
     univariate_filter = SelectKBest(f_classif, k=0)
     univariate_filter.fit(X, y)
@@ -456,6 +458,7 @@ def test_select_kbest_zero():
     with pytest.warns(UserWarning, match="No features were selected"):
         X_selected = univariate_filter.transform(X)
     assert X_selected.shape == (20, 0)
+    assert X_selected.dtype == dtype_in
 
 
 def test_select_heuristics_classif():
@@ -550,21 +553,6 @@ def test_select_percentile_regression_full():
     support = univariate_filter.get_support()
     gtruth = np.ones(20)
     assert_array_equal(support, gtruth)
-
-
-def test_invalid_percentile():
-    X, y = make_regression(
-        n_samples=10, n_features=20, n_informative=2, shuffle=False, random_state=0
-    )
-
-    with pytest.raises(ValueError):
-        SelectPercentile(percentile=-1).fit(X, y)
-    with pytest.raises(ValueError):
-        SelectPercentile(percentile=101).fit(X, y)
-    with pytest.raises(ValueError):
-        GenericUnivariateSelect(mode="percentile", param=-1).fit(X, y)
-    with pytest.raises(ValueError):
-        GenericUnivariateSelect(mode="percentile", param=101).fit(X, y)
 
 
 def test_select_kbest_regression():
@@ -826,32 +814,12 @@ def test_nans():
         assert_array_equal(select.get_support(indices=True), np.array([1, 2]))
 
 
-def test_score_func_error():
-    X = [[0, 1, 0], [0, -1, -1], [0, 0.5, 0.5]]
-    y = [1, 0, 1]
-
-    for SelectFeatures in [
-        SelectKBest,
-        SelectPercentile,
-        SelectFwe,
-        SelectFdr,
-        SelectFpr,
-        GenericUnivariateSelect,
-    ]:
-        with pytest.raises(TypeError):
-            SelectFeatures(score_func=10).fit(X, y)
-
-
 def test_invalid_k():
     X = [[0, 1, 0], [0, -1, -1], [0, 0.5, 0.5]]
     y = [1, 0, 1]
 
     with pytest.raises(ValueError):
-        SelectKBest(k=-1).fit(X, y)
-    with pytest.raises(ValueError):
         SelectKBest(k=4).fit(X, y)
-    with pytest.raises(ValueError):
-        GenericUnivariateSelect(mode="k_best", param=-1).fit(X, y)
     with pytest.raises(ValueError):
         GenericUnivariateSelect(mode="k_best", param=4).fit(X, y)
 

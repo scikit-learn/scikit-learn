@@ -60,7 +60,8 @@ from sklearn import datasets
 
 from sklearn.utils import compute_sample_weight
 
-CLF_CRITERIONS = ("gini", "entropy")
+
+CLF_CRITERIONS = ("gini", "log_loss")
 REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
 
 CLF_TREES = {
@@ -501,6 +502,8 @@ def test_importances_gini_equal_squared_error():
     assert_array_equal(clf.tree_.n_node_samples, reg.tree_.n_node_samples)
 
 
+# TODO(1.3): Remove warning filter
+@pytest.mark.filterwarnings("ignore:`max_features='auto'` has been deprecated in 1.1")
 def test_max_features():
     # Check max_features.
     for name, TreeRegressor in REG_TREES.items():
@@ -611,95 +614,6 @@ def test_error():
         est.fit([[0, 1, 2]], [0, 0, 0])
     with pytest.raises(ValueError, match="Some.*y are negative.*Poisson"):
         est.fit([[0, 1, 2]], [5, -0.1, 2])
-
-
-@pytest.mark.parametrize("name, Tree", ALL_TREES.items())
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"max_depth": -1}, ValueError, "max_depth == -1, must be >= 1"),
-        (
-            {"max_depth": 1.1},
-            TypeError,
-            "max_depth must be an instance of int",
-        ),
-        ({"min_samples_leaf": 0}, ValueError, "min_samples_leaf == 0, must be >= 1"),
-        ({"min_samples_leaf": 0.0}, ValueError, "min_samples_leaf == 0.0, must be > 0"),
-        (
-            {"min_samples_leaf": "foo"},
-            TypeError,
-            "min_samples_leaf must be an instance of float",
-        ),
-        ({"min_samples_split": 1}, ValueError, "min_samples_split == 1, must be >= 2"),
-        (
-            {"min_samples_split": 0.0},
-            ValueError,
-            "min_samples_split == 0.0, must be > 0.0",
-        ),
-        (
-            {"min_samples_split": 1.1},
-            ValueError,
-            "min_samples_split == 1.1, must be <= 1.0",
-        ),
-        (
-            {"min_samples_split": "foo"},
-            TypeError,
-            "min_samples_split must be an instance of float",
-        ),
-        (
-            {"min_weight_fraction_leaf": -1},
-            ValueError,
-            "min_weight_fraction_leaf == -1, must be >= 0.0",
-        ),
-        (
-            {"min_weight_fraction_leaf": 0.6},
-            ValueError,
-            "min_weight_fraction_leaf == 0.6, must be <= 0.5",
-        ),
-        (
-            {"min_weight_fraction_leaf": "foo"},
-            TypeError,
-            "min_weight_fraction_leaf must be an instance of float",
-        ),
-        ({"max_features": 0}, ValueError, "max_features == 0, must be >= 1"),
-        ({"max_features": 0.0}, ValueError, "max_features == 0.0, must be > 0.0"),
-        ({"max_features": 1.1}, ValueError, "max_features == 1.1, must be <= 1.0"),
-        ({"max_features": "foobar"}, ValueError, "Invalid value for max_features."),
-        ({"max_leaf_nodes": 0}, ValueError, "max_leaf_nodes == 0, must be >= 2"),
-        (
-            {"max_leaf_nodes": 1.5},
-            TypeError,
-            "max_leaf_nodes must be an instance of int",
-        ),
-        (
-            {"min_impurity_decrease": -1},
-            ValueError,
-            "min_impurity_decrease == -1, must be >= 0.0",
-        ),
-        (
-            {"min_impurity_decrease": "foo"},
-            TypeError,
-            "min_impurity_decrease must be an instance of float",
-        ),
-        ({"ccp_alpha": -1.0}, ValueError, "ccp_alpha == -1.0, must be >= 0.0"),
-        (
-            {"ccp_alpha": "foo"},
-            TypeError,
-            "ccp_alpha must be an instance of float",
-        ),
-    ],
-)
-def test_tree_params_validation(name, Tree, params, err_type, err_msg):
-    """Check parameter validation in DecisionTreeClassifier, DecisionTreeRegressor,
-    ExtraTreeClassifier, and ExtraTreeRegressor.
-    """
-    if "Classifier" in name:
-        X, y = iris.data, iris.target
-    else:
-        X, y = diabetes.data, diabetes.target
-    est = Tree(**params)
-    with pytest.raises(err_type, match=err_msg):
-        est.fit(X, y)
 
 
 def test_min_samples_split():
@@ -978,6 +892,9 @@ def test_min_impurity_decrease():
                         actual_decrease, expected_decrease
                     )
 
+
+def test_pickle():
+    """Test pickling preserves Tree properties and performance."""
     for name, TreeEstimator in ALL_TREES.items():
         if "Classifier" in name:
             X, y = iris.data, iris.target
@@ -987,23 +904,43 @@ def test_min_impurity_decrease():
         est = TreeEstimator(random_state=0)
         est.fit(X, y)
         score = est.score(X, y)
-        fitted_attribute = dict()
-        for attribute in ["max_depth", "node_count", "capacity"]:
-            fitted_attribute[attribute] = getattr(est.tree_, attribute)
+
+        # test that all class properties are maintained
+        attributes = [
+            "max_depth",
+            "node_count",
+            "capacity",
+            "n_classes",
+            "children_left",
+            "children_right",
+            "n_leaves",
+            "feature",
+            "threshold",
+            "impurity",
+            "n_node_samples",
+            "weighted_n_node_samples",
+            "value",
+        ]
+        fitted_attribute = {
+            attribute: getattr(est.tree_, attribute) for attribute in attributes
+        }
 
         serialized_object = pickle.dumps(est)
         est2 = pickle.loads(serialized_object)
         assert type(est2) == est.__class__
+
         score2 = est2.score(X, y)
         assert (
             score == score2
         ), "Failed to generate same score  after pickling with {0}".format(name)
-
         for attribute in fitted_attribute:
-            assert (
-                getattr(est2.tree_, attribute) == fitted_attribute[attribute]
-            ), "Failed to generate same attribute {0} after pickling with {1}".format(
-                attribute, name
+            assert_array_equal(
+                getattr(est2.tree_, attribute),
+                fitted_attribute[attribute],
+                err_msg=(
+                    f"Failed to generate same attribute {attribute} after pickling with"
+                    f" {name}"
+                ),
             )
 
 
@@ -1253,7 +1190,7 @@ def check_class_weights(name):
 
     # Check that sample_weight and class_weight are multiplicative
     clf1 = TreeClassifier(random_state=0)
-    clf1.fit(iris.data, iris.target, sample_weight ** 2)
+    clf1.fit(iris.data, iris.target, sample_weight**2)
     clf2 = TreeClassifier(class_weight=class_weight, random_state=0)
     clf2.fit(iris.data, iris.target, sample_weight)
     assert_almost_equal(clf1.feature_importances_, clf2.feature_importances_)
@@ -1269,21 +1206,10 @@ def check_class_weight_errors(name):
     TreeClassifier = CLF_TREES[name]
     _y = np.vstack((y, np.array(y) * 2)).T
 
-    # Invalid preset string
-    clf = TreeClassifier(class_weight="the larch", random_state=0)
-    with pytest.raises(ValueError):
-        clf.fit(X, y)
-    with pytest.raises(ValueError):
-        clf.fit(X, _y)
-
-    # Not a list or preset for multi-output
-    clf = TreeClassifier(class_weight=1, random_state=0)
-    with pytest.raises(ValueError):
-        clf.fit(X, _y)
-
     # Incorrect length list for multi-output
     clf = TreeClassifier(class_weight=[{-1: 0.5, 1: 1.0}], random_state=0)
-    with pytest.raises(ValueError):
+    err_msg = "number of elements in class_weight should match number of outputs."
+    with pytest.raises(ValueError, match=err_msg):
         clf.fit(X, _y)
 
 
@@ -1371,12 +1297,10 @@ def test_with_only_one_non_constant_features():
 
 def test_big_input():
     # Test if the warning for too large inputs is appropriate.
-    X = np.repeat(10 ** 40.0, 4).astype(np.float64).reshape(-1, 1)
+    X = np.repeat(10**40.0, 4).astype(np.float64).reshape(-1, 1)
     clf = DecisionTreeClassifier()
-    try:
+    with pytest.raises(ValueError, match="float32"):
         clf.fit(X, [0, 1, 0, 1])
-    except ValueError as e:
-        assert "float32" in str(e)
 
 
 def test_realloc():
@@ -2118,7 +2042,7 @@ def test_poisson_vs_mse():
 
 
 @pytest.mark.parametrize("criterion", REG_CRITERIONS)
-def test_decision_tree_regressor_sample_weight_consistentcy(criterion):
+def test_decision_tree_regressor_sample_weight_consistency(criterion):
     """Test that the impact of sample_weight is consistent."""
     tree_params = dict(criterion=criterion)
     tree = DecisionTreeRegressor(**tree_params, random_state=42)
@@ -2155,38 +2079,28 @@ def test_decision_tree_regressor_sample_weight_consistentcy(criterion):
     assert_allclose(tree1.predict(X), tree2.predict(X))
 
 
-# TODO: Remove in v1.2
-@pytest.mark.parametrize("Tree", REG_TREES.values())
-@pytest.mark.parametrize(
-    "old_criterion, new_criterion",
-    [
-        ("mse", "squared_error"),
-        ("mae", "absolute_error"),
-    ],
-)
-def test_criterion_deprecated(Tree, old_criterion, new_criterion):
-    tree = Tree(criterion=old_criterion)
-
-    with pytest.warns(
-        FutureWarning, match=f"Criterion '{old_criterion}' was deprecated"
-    ):
-        tree.fit(X, y)
-
-    tree_new = Tree(criterion=new_criterion).fit(X, y)
-    assert_allclose(tree.predict(X), tree_new.predict(X))
-
-
-@pytest.mark.parametrize("Tree", ALL_TREES.values())
-def test_n_features_deprecated(Tree):
-    # check that we raise a deprecation warning when accessing `n_features_`.
-    # FIXME: remove in 1.2
-    depr_msg = (
-        "The attribute `n_features_` is deprecated in 1.0 and will be "
-        "removed in 1.2. Use `n_features_in_` instead."
+@pytest.mark.parametrize("Tree", [DecisionTreeClassifier, ExtraTreeClassifier])
+@pytest.mark.parametrize("n_classes", [2, 4])
+def test_criterion_entropy_same_as_log_loss(Tree, n_classes):
+    """Test that criterion=entropy gives same as log_loss."""
+    n_samples, n_features = 50, 5
+    X, y = datasets.make_classification(
+        n_classes=n_classes,
+        n_samples=n_samples,
+        n_features=n_features,
+        n_informative=n_features,
+        n_redundant=0,
+        random_state=42,
     )
+    tree_log_loss = Tree(criterion="log_loss", random_state=43).fit(X, y)
+    tree_entropy = Tree(criterion="entropy", random_state=43).fit(X, y)
 
-    with pytest.warns(FutureWarning, match=depr_msg):
-        Tree().fit(X, y).n_features_
+    assert_tree_equal(
+        tree_log_loss.tree_,
+        tree_entropy.tree_,
+        f"{Tree!r} with criterion 'entropy' and 'log_loss' gave different trees.",
+    )
+    assert_allclose(tree_log_loss.predict(X), tree_entropy.predict(X))
 
 
 def test_different_endianness_pickle():
@@ -2436,3 +2350,24 @@ def test_check_node_ndarray():
 
     with pytest.raises(ValueError, match="node array.+incompatible dtype"):
         _check_node_ndarray(problematic_node_ndarray, expected_dtype=expected_dtype)
+
+
+# TODO(1.3): Remove
+def test_max_features_auto_deprecated():
+    for Tree in CLF_TREES.values():
+        tree = Tree(max_features="auto")
+        msg = (
+            "`max_features='auto'` has been deprecated in 1.1 and will be removed in"
+            " 1.3. To keep the past behaviour, explicitly set `max_features='sqrt'`."
+        )
+        with pytest.warns(FutureWarning, match=msg):
+            tree.fit(X, y)
+
+    for Tree in REG_TREES.values():
+        tree = Tree(max_features="auto")
+        msg = (
+            "`max_features='auto'` has been deprecated in 1.1 and will be removed in"
+            " 1.3. To keep the past behaviour, explicitly set `max_features=1.0'`."
+        )
+        with pytest.warns(FutureWarning, match=msg):
+            tree.fit(X, y)

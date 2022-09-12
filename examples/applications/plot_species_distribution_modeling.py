@@ -4,8 +4,8 @@ Species distribution modeling
 =============================
 
 Modeling species' geographic distributions is an important
-problem in conservation biology. In this example we
-model the geographic distribution of two south american
+problem in conservation biology. In this example, we
+model the geographic distribution of two South American
 mammals given past observations and 14 environmental
 variables. Since we have only positive examples (there are
 no unsuccessful observations), we cast this problem as a
@@ -214,7 +214,7 @@ def plot_species_distribution(
         plt.scatter(
             species.pts_train["dd long"],
             species.pts_train["dd lat"],
-            s=2 ** 2,
+            s=2**2,
             c="black",
             marker="^",
             label="train",
@@ -222,7 +222,7 @@ def plot_species_distribution(
         plt.scatter(
             species.pts_test["dd long"],
             species.pts_test["dd lat"],
-            s=2 ** 2,
+            s=2**2,
             c="black",
             marker="x",
             label="test",

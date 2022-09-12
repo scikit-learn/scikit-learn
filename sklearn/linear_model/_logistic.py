@@ -11,11 +11,14 @@ Logistic Regression
 #         Arthur Mensch <arthur.mensch@m4x.org
 
 import numbers
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
 from scipy import optimize
 from joblib import Parallel, effective_n_jobs
+
+from sklearn.metrics import get_scorer_names
 
 from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ._linear_loss import LinearModelLoss
@@ -31,6 +34,7 @@ from ..utils.optimize import _newton_cg, _check_optimize_result
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.fixes import delayed
+from ..utils._param_validation import StrOptions, Interval
 from ..model_selection import check_cv
 from ..metrics import get_scorer
 from ..callback._base import _eval_callbacks_on_fit_iter_end
@@ -44,21 +48,9 @@ _LOGISTIC_SOLVER_CONVERGENCE_MSG = (
 
 
 def _check_solver(solver, penalty, dual):
-    all_solvers = ["liblinear", "newton-cg", "lbfgs", "sag", "saga"]
-    if solver not in all_solvers:
-        raise ValueError(
-            "Logistic Regression supports only solvers in %s, got %s."
-            % (all_solvers, solver)
-        )
 
-    all_penalties = ["l1", "l2", "elasticnet", "none"]
-    if penalty not in all_penalties:
-        raise ValueError(
-            "Logistic Regression supports only penalties in %s, got %s."
-            % (all_penalties, penalty)
-        )
-
-    if solver not in ["liblinear", "saga"] and penalty not in ("l2", "none"):
+    # TODO(1.4): Remove "none" option
+    if solver not in ["liblinear", "saga"] and penalty not in ("l2", "none", None):
         raise ValueError(
             "Solver %s supports only 'l2' or 'none' penalties, got %s penalty."
             % (solver, penalty)
@@ -89,11 +81,6 @@ def _check_multi_class(multi_class, solver, n_classes):
             multi_class = "multinomial"
         else:
             multi_class = "ovr"
-    if multi_class not in ("multinomial", "ovr"):
-        raise ValueError(
-            "multi_class should be 'multinomial', 'ovr' or 'auto'. Got %s."
-            % multi_class
-        )
     if multi_class == "multinomial" and solver == "liblinear":
         raise ValueError("Solver %s does not support a multinomial backend." % solver)
     return multi_class
@@ -817,10 +804,10 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
     Parameters
     ----------
-    penalty : {'l1', 'l2', 'elasticnet', 'none'}, default='l2'
+    penalty : {'l1', 'l2', 'elasticnet', None}, default='l2'
         Specify the norm of the penalty:
 
-        - `'none'`: no penalty is added;
+        - `None`: no penalty is added;
         - `'l2'`: add a L2 penalty term and it is the default choice;
         - `'l1'`: add a L1 penalty term;
         - `'elasticnet'`: both L1 and L2 penalty terms are added.
@@ -832,6 +819,10 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
 
         .. versionadded:: 0.19
            l1 penalty with SAGA solver (allowing 'multinomial' + L1)
+
+        .. deprecated:: 1.2
+           The 'none' option was deprecated in version 1.2, and will be removed
+           in 1.4. Use `None` instead.
 
     dual : bool, default=False
         Dual or primal formulation. Dual formulation is only implemented for
@@ -897,11 +888,11 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            The choice of the algorithm depends on the penalty chosen:
            Supported penalties by solver:
 
-           - 'newton-cg'   -   ['l2', 'none']
-           - 'lbfgs'       -   ['l2', 'none']
+           - 'newton-cg'   -   ['l2', None]
+           - 'lbfgs'       -   ['l2', None]
            - 'liblinear'   -   ['l1', 'l2']
-           - 'sag'         -   ['l2', 'none']
-           - 'saga'        -   ['elasticnet', 'l1', 'l2', 'none']
+           - 'sag'         -   ['l2', None]
+           - 'saga'        -   ['elasticnet', 'l1', 'l2', None]
 
         .. note::
            'sag' and 'saga' fast convergence is only guaranteed on
@@ -911,11 +902,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         .. seealso::
            Refer to the User Guide for more information regarding
            :class:`LogisticRegression` and more specifically the
-           `Table <https://scikit-learn.org/dev/modules/linear_model.html#logistic-regression>`_
-           summarazing solver/penalty supports.
-           <!--
-           # noqa: E501
-           -->
+           :ref:`Table <Logistic_regression>`
+           summarizing solver/penalty supports.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
@@ -1065,6 +1053,28 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     0.97...
     """
 
+    _parameter_constraints: dict = {
+        # TODO(1.4): Remove "none" option
+        "penalty": [
+            StrOptions({"l1", "l2", "elasticnet", "none"}, deprecated={"none"}),
+            None,
+        ],
+        "dual": ["boolean"],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "C": [Interval(Real, 0, None, closed="right")],
+        "fit_intercept": ["boolean"],
+        "intercept_scaling": [Interval(Real, 0, None, closed="neither")],
+        "class_weight": [dict, StrOptions({"balanced"}), None],
+        "random_state": ["random_state"],
+        "solver": [StrOptions({"newton-cg", "lbfgs", "liblinear", "sag", "saga"})],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "multi_class": [StrOptions({"auto", "ovr", "multinomial"})],
+        "verbose": ["verbose"],
+        "warm_start": ["boolean"],
+        "n_jobs": [None, Integral],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both"), None],
+    }
+
     def __init__(
         self,
         penalty="l2",
@@ -1130,30 +1140,30 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         -----
         The SAGA solver supports both float64 and float32 bit arrays.
         """
+
+        self._validate_params()
+
         solver = _check_solver(self.solver, self.penalty, self.dual)
 
-        if not isinstance(self.C, numbers.Number) or self.C < 0:
-            raise ValueError("Penalty term must be positive; got (C=%r)" % self.C)
-        if self.penalty == "elasticnet":
-            if (
-                not isinstance(self.l1_ratio, numbers.Number)
-                or self.l1_ratio < 0
-                or self.l1_ratio > 1
-            ):
-                raise ValueError(
-                    "l1_ratio must be between 0 and 1; got (l1_ratio=%r)"
-                    % self.l1_ratio
-                )
-        elif self.l1_ratio is not None:
+        if self.penalty != "elasticnet" and self.l1_ratio is not None:
             warnings.warn(
                 "l1_ratio parameter is only used when penalty is "
                 "'elasticnet'. Got "
                 "(penalty={})".format(self.penalty)
             )
+
+        # TODO(1.4): Remove "none" option
         if self.penalty == "none":
+            warnings.warn(
+                "`penalty='none'`has been deprecated in 1.2 and will be removed in 1.4."
+                " To keep the past behaviour, set `penalty=None`.",
+                FutureWarning,
+            )
+
+        if self.penalty is None or self.penalty == "none":
             if self.C != 1.0:  # default values
                 warnings.warn(
-                    "Setting penalty='none' will ignore the C and l1_ratio parameters"
+                    "Setting penalty=None will ignore the C and l1_ratio parameters"
                 )
                 # Note that check for l1_ratio is done right above
             C_ = np.inf
@@ -1161,16 +1171,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         else:
             C_ = self.C
             penalty = self.penalty
-        if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
-            raise ValueError(
-                "Maximum number of iteration must be positive; got (max_iter=%r)"
-                % self.max_iter
-            )
-        if not isinstance(self.tol, numbers.Number) or self.tol < 0:
-            raise ValueError(
-                "Tolerance for stopping criteria must be positive; got (tol=%r)"
-                % self.tol
-            )
 
         if solver == "lbfgs":
             _dtype = np.float64
@@ -1197,7 +1197,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                     " 'solver' is set to 'liblinear'. Got 'n_jobs'"
                     " = {}.".format(effective_n_jobs(self.n_jobs))
                 )
-            self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
+            self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
                 X,
                 y,
                 self.C,
@@ -1212,7 +1212,6 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
                 self.random_state,
                 sample_weight=sample_weight,
             )
-            self.n_iter_ = np.array([n_iter_])
             return self
 
         if solver in ["sag", "saga"]:
@@ -1672,6 +1671,22 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     0.98...
     """
 
+    _parameter_constraints: dict = {**LogisticRegression._parameter_constraints}
+
+    for param in ["C", "warm_start", "l1_ratio"]:
+        _parameter_constraints.pop(param)
+
+    _parameter_constraints.update(
+        {
+            "Cs": [Interval(Integral, 1, None, closed="left"), "array-like"],
+            "cv": ["cv_object"],
+            "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+            "l1_ratios": ["array-like", None],
+            "refit": ["boolean"],
+            "penalty": [StrOptions({"l1", "l2", "elasticnet"})],
+        }
+    )
+
     def __init__(
         self,
         *,
@@ -1732,18 +1747,11 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         self : object
             Fitted LogisticRegressionCV estimator.
         """
+
+        self._validate_params()
+
         solver = _check_solver(self.solver, self.penalty, self.dual)
 
-        if not isinstance(self.max_iter, numbers.Number) or self.max_iter < 0:
-            raise ValueError(
-                "Maximum number of iteration must be positive; got (max_iter=%r)"
-                % self.max_iter
-            )
-        if not isinstance(self.tol, numbers.Number) or self.tol < 0:
-            raise ValueError(
-                "Tolerance for stopping criteria must be positive; got (tol=%r)"
-                % self.tol
-            )
         if self.penalty == "elasticnet":
             if (
                 self.l1_ratios is None
@@ -1771,12 +1779,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 )
 
             l1_ratios_ = [None]
-
-        if self.penalty == "none":
-            raise ValueError(
-                "penalty='none' is not useful and not supported by "
-                "LogisticRegressionCV."
-            )
 
         X, y = self._validate_data(
             X,

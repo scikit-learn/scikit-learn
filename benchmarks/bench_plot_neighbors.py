@@ -102,7 +102,7 @@ def barplot_neighbors(
 
     plt.figure(figsize=(8, 11))
 
-    for (sbplt, vals, quantity, build_time, query_time) in [
+    for sbplt, vals, quantity, build_time, query_time in [
         (311, Nrange, "N", N_results_build, N_results_query),
         (312, Drange, "D", D_results_build, D_results_query),
         (313, krange, "k", k_results_build, k_results_query),

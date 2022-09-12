@@ -35,7 +35,7 @@ expected_y = f(X).ravel()
 # The lognormal distribution is non-symmetric and long tailed: observing large
 # outliers is likely but it is impossible to observe small outliers.
 sigma = 0.5 + X.ravel() / 10
-noise = rng.lognormal(sigma=sigma) - np.exp(sigma ** 2 / 2)
+noise = rng.lognormal(sigma=sigma) - np.exp(sigma**2 / 2)
 y = expected_y + noise
 
 # %%
@@ -72,6 +72,11 @@ for alpha in [0.05, 0.5, 0.95]:
     all_models["q %1.2f" % alpha] = gbr.fit(X_train, y_train)
 
 # %%
+# Notice that :class:`~sklearn.ensemble.HistGradientBoostingRegressor` is much
+# faster than :class:`~sklearn.ensemble.GradientBoostingRegressor` starting with
+# intermediate datasets (`n_samples >= 10_000`), which is not the case of the
+# present example.
+#
 # For the sake of comparison, we also fit a baseline model trained with the
 # usual (mean) squared error (MSE).
 gbr_ls = GradientBoostingRegressor(loss="squared_error", **common_params)

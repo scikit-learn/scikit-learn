@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-#
 # scikit-learn documentation build configuration file, created by
 # sphinx-quickstart on Fri Jan  8 09:13:42 2010.
 #
@@ -17,7 +15,7 @@ import os
 import warnings
 import re
 from datetime import datetime
-from packaging.version import parse
+from sklearn.externals._packaging.version import parse
 from pathlib import Path
 from io import StringIO
 
@@ -29,7 +27,7 @@ sys.path.insert(0, os.path.abspath("sphinxext"))
 
 from github_link import make_linkcode_resolve
 import sphinx_gallery
-import matplotlib as mpl
+from sphinx_gallery.sorting import ExampleTitleSortKey
 
 # -- General configuration ---------------------------------------------------
 
@@ -49,22 +47,20 @@ extensions = [
     "sphinx-prompt",
     "sphinxext.opengraph",
     "doi_role",
+    "allow_nan_estimators",
+    "matplotlib.sphinxext.plot_directive",
 ]
 
-# Support for `plot::` directives in sphinx 3.2 requires matplotlib 3.1.0 or newer
-if parse(mpl.__version__) >= parse("3.1.0"):
-    extensions.append("matplotlib.sphinxext.plot_directive")
+# Produce `plot::` directives for examples that contain `import matplotlib` or
+# `from matplotlib import`.
+numpydoc_use_plots = True
 
-    # Produce `plot::` directives for examples that contain `import matplotlib` or
-    # `from matplotlib import`.
-    numpydoc_use_plots = True
-
-    # Options for the `::plot` directive:
-    # https://matplotlib.org/stable/api/sphinxext_plot_directive_api.html
-    plot_formats = ["png"]
-    plot_include_source = True
-    plot_html_show_formats = False
-    plot_html_show_source_link = False
+# Options for the `::plot` directive:
+# https://matplotlib.org/stable/api/sphinxext_plot_directive_api.html
+plot_formats = ["png"]
+plot_include_source = True
+plot_html_show_formats = False
+plot_html_show_source_link = False
 
 # this is needed for some reason...
 # see https://github.com/numpy/numpydoc/issues/69
@@ -96,7 +92,7 @@ source_suffix = ".rst"
 # source_encoding = 'utf-8'
 
 # The main toctree document.
-main_doc = "contents"
+root_doc = "contents"
 
 # General information about the project.
 project = "scikit-learn"
@@ -163,7 +159,11 @@ html_theme = "scikit-learn-modern"
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {"google_analytics": True, "mathjax_path": mathjax_path}
+html_theme_options = {
+    "google_analytics": True,
+    "mathjax_path": mathjax_path,
+    "link_to_live_contributing_page": not parsed_version.is_devrelease,
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ["themes"]
@@ -253,11 +253,17 @@ redirects = {
     "auto_examples/feature_selection/plot_permutation_test_for_classification": (
         "auto_examples/model_selection/plot_permutation_tests_for_classification"
     ),
+    "modules/model_persistence": "model_persistence",
+    "auto_examples/linear_model/plot_bayesian_ridge": (
+        "auto_examples/linear_model/plot_ard"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
     html_additional_pages[old_link] = "redirects.html"
 
+# Not showing the search summary makes the search page load faster.
+html_show_search_summary = False
 
 # -- Options for LaTeX output ------------------------------------------------
 latex_elements = {
@@ -358,6 +364,24 @@ class SubSectionTitleOrder:
         return directory
 
 
+class SKExampleTitleSortKey(ExampleTitleSortKey):
+    """Sorts release highlights based on version number."""
+
+    def __call__(self, filename):
+        title = super().__call__(filename)
+        prefix = "plot_release_highlights_"
+
+        # Use title to sort if not a release highlight
+        if not filename.startswith(prefix):
+            return title
+
+        major_minor = filename[len(prefix) :].split("_")[:2]
+        version_float = float(".".join(major_minor))
+
+        # negate to place the newest version highlights first
+        return -version_float
+
+
 sphinx_gallery_conf = {
     "doc_module": "sklearn",
     "backreferences_dir": os.path.join("modules", "generated"),
@@ -366,6 +390,7 @@ sphinx_gallery_conf = {
     "examples_dirs": ["../examples"],
     "gallery_dirs": ["auto_examples"],
     "subsection_order": SubSectionTitleOrder("../examples"),
+    "within_subsection_order": SKExampleTitleSortKey,
     "binder": {
         "org": "scikit-learn",
         "repo": "scikit-learn",
@@ -377,6 +402,7 @@ sphinx_gallery_conf = {
     # avoid generating too many cross links
     "inspect_global_variables": False,
     "remove_config_comments": True,
+    "plot_gallery": "True",
 }
 
 
@@ -501,9 +527,18 @@ def generate_min_dependency_substitutions(app):
 issues_github_path = "scikit-learn/scikit-learn"
 
 
+def disable_plot_gallery_for_linkcheck(app):
+    if app.builder.name == "linkcheck":
+        sphinx_gallery_conf["plot_gallery"] = "False"
+
+
 def setup(app):
+    # do not run the examples when using linkcheck by using a small priority
+    # (default priority is 500 and sphinx-gallery using builder-inited event too)
+    app.connect("builder-inited", disable_plot_gallery_for_linkcheck, priority=50)
     app.connect("builder-inited", generate_min_dependency_table)
     app.connect("builder-inited", generate_min_dependency_substitutions)
+
     # to hide/show the prompt in code examples:
     app.connect("build-finished", make_carousel_thumbs)
     app.connect("build-finished", filter_search_index)
@@ -542,3 +577,70 @@ ogp_site_url = "https://scikit-learn/stable/"
 ogp_image = "https://scikit-learn.org/stable/_static/scikit-learn-logo-small.png"
 ogp_use_first_image = True
 ogp_site_name = "scikit-learn"
+
+# Config for linkcheck that checks the documentation for broken links
+
+# ignore all links in 'whats_new' to avoid doing many github requests and
+# hitting the github rate threshold that makes linkcheck take a lot of time
+linkcheck_exclude_documents = [r"whats_new/.*"]
+
+# default timeout to make some sites links fail faster
+linkcheck_timeout = 10
+
+# Allow redirects from doi.org
+linkcheck_allowed_redirects = {r"https://doi.org/.+": r".*"}
+linkcheck_ignore = [
+    # ignore links to local html files e.g. in image directive :target: field
+    r"^..?/",
+    # ignore links to specific pdf pages because linkcheck does not handle them
+    # ('utf-8' codec can't decode byte error)
+    r"http://www.utstat.toronto.edu/~rsalakhu/sta4273/notes/Lecture2.pdf#page=.*",
+    "https://www.fordfoundation.org/media/2976/"
+    "roads-and-bridges-the-unseen-labor-behind-our-digital-infrastructure.pdf#page=.*",
+    # links falsely flagged as broken
+    "https://www.researchgate.net/publication/"
+    "233096619_A_Dendrite_Method_for_Cluster_Analysis",
+    "https://www.researchgate.net/publication/221114584_Random_Fourier_Approximations_"
+    "for_Skewed_Multiplicative_Histogram_Kernels",
+    "https://www.researchgate.net/publication/4974606_"
+    "Hedonic_housing_prices_and_the_demand_for_clean_air",
+    "https://www.researchgate.net/profile/Anh-Huy-Phan/publication/220241471_Fast_"
+    "Local_Algorithms_for_Large_Scale_Nonnegative_Matrix_and_Tensor_Factorizations",
+    "https://doi.org/10.13140/RG.2.2.35280.02565",
+    "https://www.microsoft.com/en-us/research/uploads/prod/2006/01/"
+    "Bishop-Pattern-Recognition-and-Machine-Learning-2006.pdf",
+    "https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-99-87.pdf",
+    "https://microsoft.com/",
+    "https://www.jstor.org/stable/2984099",
+    "https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf",
+    # Broken links from testimonials
+    "http://www.bestofmedia.com",
+    "http://www.data-publica.com/",
+    "https://livelovely.com",
+    "https://www.mars.com/global",
+    "https://www.yhat.com",
+    # Ignore some dynamically created anchors. See
+    # https://github.com/sphinx-doc/sphinx/issues/9016 for more details about
+    # the github example
+    r"https://github.com/conda-forge/miniforge#miniforge",
+    r"https://stackoverflow.com/questions/5836335/"
+    "consistently-create-same-random-numpy-array/5837352#comment6712034_5837352",
+]
+
+# Use a browser-like user agent to avoid some "403 Client Error: Forbidden for
+# url" errors. This is taken from the variable navigator.userAgent inside a
+# browser console.
+user_agent = (
+    "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:100.0) Gecko/20100101 Firefox/100.0"
+)
+
+# Use Github token from environment variable to avoid Github rate limits when
+# checking Github links
+github_token = os.getenv("GITHUB_TOKEN")
+
+if github_token is None:
+    linkcheck_request_headers = {}
+else:
+    linkcheck_request_headers = {
+        "https://github.com/": {"Authorization": f"token {github_token}"},
+    }
