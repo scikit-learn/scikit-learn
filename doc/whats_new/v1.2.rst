@@ -316,8 +316,9 @@ Changelog
 - |Fix| add a `"auto"` option to `eps` in :func:`metrics.logloss`.
   This option will automatically set the `eps` value depending on the data
   type `y_pred`.
-  :pr:`24354` by :user:`Safiuddin Khaja <Safikh>` and
-  :user:`gsiisg <gsiisg>`
+  :pr:`24354` by :user:`Safiuddin Khaja <Safikh>`,
+  :user:`gsiisg <gsiisg>`, and
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
