@@ -88,7 +88,7 @@ pipeline
 
 import numpy as np
 
-parameters = {
+parameter_grid = {
     "vect__max_df": (0.2, 0.4, 0.6, 0.8, 1.0),
     "vect__min_df": (1, 3, 5, 10),
     "vect__ngram_range": ((1, 1), (1, 2)),  # unigrams or bigrams
@@ -107,7 +107,7 @@ from sklearn.model_selection import RandomizedSearchCV
 
 random_search = RandomizedSearchCV(
     estimator=pipeline,
-    param_distributions=parameters,
+    param_distributions=parameter_grid,
     n_iter=40,
     random_state=0,
     n_jobs=2,
@@ -115,8 +115,8 @@ random_search = RandomizedSearchCV(
 )
 
 print("Performing grid search...")
-print("parameters:")
-pprint(parameters)
+print("Hyperparameters to be evaluated:")
+pprint(parameter_grid)
 
 # %%
 from time import time
@@ -128,7 +128,7 @@ print(f"Done in {time() - t0:.3f}s")
 # %%
 print("Best parameters combination found:")
 best_parameters = random_search.best_estimator_.get_params()
-for param_name in sorted(parameters.keys()):
+for param_name in sorted(parameter_grid.keys()):
     print(f"{param_name}: {best_parameters[param_name]}")
 
 # %%
@@ -163,11 +163,12 @@ cv_results = cv_results.rename(shorten_param, axis=1)
 # <https://plotly.com/python-api-reference/generated/plotly.express.scatter.html>`_
 # to visualize the trade-off between scoring time and mean test score (i.e. "CV
 # score"). Passing the cursor over a given point displays the corresponding
-# parameters.
+# parameters. Error bars correspond to one standard deviation as computed in the
+# different folds of the cross-validation.
 
 import plotly.express as px
 
-param_names = [shorten_param(name) for name in parameters.keys()]
+param_names = [shorten_param(name) for name in parameter_grid.keys()]
 labels = {
     "mean_score_time": "CV Score time (s)",
     "mean_test_score": "CV score (accuracy)",
@@ -180,6 +181,15 @@ fig = px.scatter(
     error_y="std_test_score",
     hover_data=param_names,
     labels=labels,
+)
+fig.update_layout(
+    title={
+        "text": "trade-off between scoring time and mean test score",
+        "y": 0.95,
+        "x": 0.5,
+        "xanchor": "center",
+        "yanchor": "top",
+    }
 )
 fig
 
