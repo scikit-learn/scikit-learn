@@ -305,11 +305,12 @@ class LearningCurveDisplay:
             - :term:`CV splitter`,
             - An iterable yielding (train, test) splits as arrays of indices.
 
-            For int/None inputs, if the estimator is a classifier and ``y`` is
-            either binary or multiclass, :class:`StratifiedKFold` is used. In
-            all other cases, :class:`KFold` is used. These splitters are
-            instantiated with `shuffle=False` so the splits will be the same
-            across calls.
+            For int/None inputs, if the estimator is a classifier and `y` is
+            either binary or multiclass,
+            :class:`~sklearn.model_selection.StratifiedKFold` is used. In all
+            other cases, :class:`~sklearn.model_selectionKFold` is used. These
+            splitters are instantiated with `shuffle=False` so the splits will
+            be the same across calls.
 
             Refer :ref:`User Guide <cross_validation>` for the various
             cross-validation strategies that can be used here.
@@ -317,7 +318,7 @@ class LearningCurveDisplay:
         scoring : str or callable, default=None
             A str (see model evaluation documentation) or
             a scorer callable object / function with signature
-            ``scorer(estimator, X, y)``.
+            `scorer(estimator, X, y)`.
 
         exploit_incremental_learning : bool, default=False
             If the estimator supports incremental learning, this will be
@@ -326,8 +327,8 @@ class LearningCurveDisplay:
         n_jobs : int, default=None
             Number of jobs to run in parallel. Training the estimator and
             computing the score are parallelized over the different training
-            and test sets. ``None`` means 1 unless in a
-            :obj:`joblib.parallel_backend` context. ``-1`` means using all
+            and test sets. `None` means 1 unless in a
+            :obj:`joblib.parallel_backend` context. `-1` means using all
             processors. See :term:`Glossary <n_jobs>` for more details.
 
         pre_dispatch : int or str, default='all'
@@ -340,10 +341,10 @@ class LearningCurveDisplay:
 
         shuffle : bool, default=False
             Whether to shuffle training data before taking prefixes of it
-            based on``train_sizes``.
+            based on`train_sizes`.
 
         random_state : int, RandomState instance or None, default=None
-            Used when ``shuffle`` is True. Pass an int for reproducible
+            Used when `shuffle` is True. Pass an int for reproducible
             output across multiple function calls.
             See :term:`Glossary <random_state>`.
 
@@ -351,9 +352,6 @@ class LearningCurveDisplay:
             Value to assign to the score if an error occurs in estimator
             fitting. If set to 'raise', the error is raised. If a numeric value
             is given, FitFailedWarning is raised.
-
-        return_times : bool, default=False
-            Whether to return the fit and score times.
 
         fit_params : dict, default=None
             Parameters to pass to the fit method of the estimator.
@@ -381,7 +379,7 @@ class LearningCurveDisplay:
 
         std_display_style : {"errorbar", "fill_between"} or None, default="fill_between"
             The style used to display the score standard deviation around the
-            mean score. If `None, no representation of the standard deviation
+            mean score. If `None`, no representation of the standard deviation
             is displayed.
 
         line_kw : dict, default=None
