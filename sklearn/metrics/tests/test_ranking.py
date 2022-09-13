@@ -672,10 +672,7 @@ def test_micro_averaged_ovr_roc_auc(global_random_seed):
     fpr, tpr, _ = roc_curve(y_onehot.ravel(), y_pred.ravel())
     roc_auc_by_hand = auc(fpr, tpr)
     roc_auc_auto = roc_auc_score(y_true, y_pred, multi_class="ovr", average="micro")
-    assert_almost_equal(
-        roc_auc_by_hand,
-        roc_auc_auto,
-    )
+    assert roc_auc_by_hand == pytest.approx(roc_auc_auto)
 
 
 @pytest.mark.parametrize(
