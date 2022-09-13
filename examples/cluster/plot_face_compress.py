@@ -82,5 +82,24 @@ for center_1, center_2 in zip(regular_values[:-1], regular_values[1:]):
 
 plt.show()
 
+# The number of unique values in the quantized image is reducd to only 5 values. 
 print(f"face: number of unique values: {len(np.unique(face))}")
-print(f"labels: number of unique_values: {len(np.unique(labels))}")
+print(f"labels: number of unique values: {len(np.unique(labels))}")
+
+# A note on in-memory image compression 
+# Let's have a look at the memory size of these images.
+print(f'face bytes: {face.nbytes}')
+print(f'labels bytes: {labels.nbytes}')
+# Although the quantized image has far fewer unique values, its memory size is 4 times the original image.
+# The reason behind this is the data types used.
+print(f'face dtype: {face.dtype}')
+print(f'labels dtype: {labels.dtype}')
+
+#Let us cast the compressed image to the same type as the input
+labels_uint8 = labels.astype(np.uint8)
+#Now, both images have the same size
+print(f'face bytes: {face.nbytes}')
+print(f'labels bytes: {labels_uint8.nbytes}')
+
+# The cluster labels are in the range 0,1,2,3,4
+# While this could be compressed to a 4 bit integer, uint8 is as small as we can go with numpy.
