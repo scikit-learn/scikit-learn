@@ -1,5 +1,6 @@
 from time import time
 from collections import namedtuple
+from numbers import Integral, Real
 import warnings
 
 from scipy import stats
@@ -12,6 +13,7 @@ from ..utils import check_array, check_random_state, _safe_indexing, is_scalar_n
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 from ..utils.validation import _check_feature_names_in
 from ..utils._mask import _get_mask
+from ..utils._param_validation import HasMethods, Interval, StrOptions
 
 from ._base import _BaseImputer
 from ._base import SimpleImputer
@@ -234,6 +236,26 @@ class IterativeImputer(_BaseImputer):
            [10.       ,  4.9999...,  9.        ]])
     """
 
+    _parameter_constraints: dict = {
+        **_BaseImputer._parameter_constraints,
+        "estimator": [None, HasMethods(["fit", "predict"])],
+        "sample_posterior": ["boolean"],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "n_nearest_features": [None, Interval(Integral, 1, None, closed="left")],
+        "initial_strategy": [
+            StrOptions({"mean", "median", "most_frequent", "constant"})
+        ],
+        "imputation_order": [
+            StrOptions({"ascending", "descending", "roman", "arabic", "random"})
+        ],
+        "skip_complete": ["boolean"],
+        "min_value": [None, Interval(Real, None, None, closed="both"), "array-like"],
+        "max_value": [None, Interval(Real, None, None, closed="both"), "array-like"],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         estimator=None,
@@ -443,13 +465,6 @@ class IterativeImputer(_BaseImputer):
         elif self.imputation_order == "random":
             ordered_idx = missing_values_idx
             self.random_state_.shuffle(ordered_idx)
-        else:
-            raise ValueError(
-                "Got an invalid imputation order: '{0}'. It must "
-                "be one of the following: 'roman', 'arabic', "
-                "'ascending', 'descending', or "
-                "'random'.".format(self.imputation_order)
-            )
         return ordered_idx
 
     def _get_abs_corr_mat(self, X_filled, tolerance=1e-6):
@@ -602,21 +617,10 @@ class IterativeImputer(_BaseImputer):
         Xt : array-like, shape (n_samples, n_features)
             The imputed input data.
         """
+        self._validate_params()
         self.random_state_ = getattr(
             self, "random_state_", check_random_state(self.random_state)
         )
-
-        if self.max_iter < 0:
-            raise ValueError(
-                "'max_iter' should be a positive integer. Got {} instead.".format(
-                    self.max_iter
-                )
-            )
-
-        if self.tol < 0:
-            raise ValueError(
-                "'tol' should be a non-negative float. Got {} instead.".format(self.tol)
-            )
 
         if self.estimator is None:
             from ..linear_model import BayesianRidge

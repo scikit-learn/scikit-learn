@@ -1,13 +1,23 @@
+{{py:
+
+implementation_specific_values = [
+    # Values are the following ones:
+    #
+    #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
+    #
+    # We also use the float64 dtype and C-type names as defined in
+    # `sklearn.utils._typedefs` to maintain consistency.
+    #
+    ('64', 'DTYPE_t', 'DTYPE'),
+    ('32', 'cnp.float32_t', 'np.float32')
+]
+
+}}
 cimport numpy as cnp
 
 from libcpp.memory cimport shared_ptr
 from libcpp.vector cimport vector
 from cython cimport final
-
-from ._base cimport (
-    PairwiseDistancesReduction64,
-)
-from ._gemm_term_computer cimport GEMMTermComputer64
 
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
@@ -31,14 +41,21 @@ cdef cnp.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
 )
 
 #####################
+{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
-cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
-    """64bit implementation of PairwiseDistancesRadiusNeighborhood ."""
+from ._base cimport BaseDistanceReducer{{name_suffix}}
+from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
+
+cdef class RadiusNeighbors{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
+    """
+    {{name_suffix}}bit implementation of BaseDistanceReducer{{name_suffix}} for the
+    `RadiusNeighbors` reduction.
+    """
 
     cdef:
         DTYPE_t radius
 
-        # DistanceMetric compute rank-preserving surrogate distance via rdist
+        # DistanceMetric{{name_suffix}} compute rank-preserving surrogate distance via rdist
         # which are proxies necessitating less computations.
         # We get the equivalent for the radius to be able to compare it against
         # vectors' rank-preserving surrogate distances.
@@ -79,11 +96,13 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
     ) nogil
 
 
-cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesRadiusNeighborhood64):
-    """EuclideanDistance-specialized 64bit implementation for PairwiseDistancesRadiusNeighborhood."""
+cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}}):
+    """EuclideanDistance-specialized {{name_suffix}}bit implementation for RadiusNeighbors{{name_suffix}}."""
     cdef:
-        GEMMTermComputer64 gemm_term_computer
+        GEMMTermComputer{{name_suffix}} gemm_term_computer
         const DTYPE_t[::1] X_norm_squared
         const DTYPE_t[::1] Y_norm_squared
 
         bint use_squared_distances
+
+{{endfor}}
