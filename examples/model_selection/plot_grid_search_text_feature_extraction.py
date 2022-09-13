@@ -209,6 +209,10 @@ fig
 # hyperparameters. This helps finding interactions between more than two
 # hyperparameters and provide intuition on their relevance for improving the
 # performance of a pipeline.
+#
+# We apply a `math.log10` transformation on the `alpha` axis to spread the
+# active range and improve the readability of the plot. A value :math:`x` on
+# said axis is to be understood as :math:`10^x`.
 
 import math
 
@@ -228,6 +232,15 @@ fig = px.parallel_coordinates(
     color_continuous_scale=px.colors.sequential.Viridis_r,
     labels=labels,
 )
+fig.update_layout(
+    title={
+        "text": "Parallel coordinates plot of text classifier pipeline",
+        "y": 0.95,
+        "x": 0.5,
+        "xanchor": "center",
+        "yanchor": "top",
+    }
+)
 fig
 
 # %%
@@ -237,10 +250,6 @@ fig
 # parallel coordinate plot. You can then slide (move) the range selection and
 # cross two selections to see the intersections. You can undo a selection by
 # clicking once again on the same axis.
-#
-# .. note:: We applied a `math.log10` transformation on the `alpha` axis to
-#    spread the active range and improve the readability of the plot. A value
-#    :math:`x` on said axis is to be understood as :math:`10^x`.
 #
 # In particular for this hyperparameter search, it is interesting to notice that
 # the top performing models do not seem to depend on the regularization `norm`,
