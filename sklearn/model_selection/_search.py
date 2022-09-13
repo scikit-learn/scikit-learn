@@ -1511,6 +1511,12 @@ class RandomizedSearchCV(BaseSearchCV):
     verbose : int
         Controls the verbosity: the higher, the more messages.
 
+        - >1 : the computation time for each fold and parameter candidate is
+          displayed;
+        - >2 : the score is also displayed;
+        - >3 : the fold and candidate parameter indexes are also displayed
+          together with the starting time of the computation.
+
     pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
