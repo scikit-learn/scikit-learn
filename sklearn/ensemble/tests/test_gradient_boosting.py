@@ -1265,23 +1265,14 @@ def test_gbr_degenerate_feature_importances():
     assert_array_equal(gbr.feature_importances_, np.zeros(10, dtype=np.float64))
 
 
-@pytest.mark.parametrize(
-    "old_loss, new_loss, Estimator",
-    [
-        # TODO(1.2): Remove
-        ("ls", "squared_error", GradientBoostingRegressor),
-        ("lad", "absolute_error", GradientBoostingRegressor),
-        # TODO(1.3): Remove
-        ("deviance", "log_loss", GradientBoostingClassifier),
-    ],
-)
-def test_loss_deprecated(old_loss, new_loss, Estimator):
-    est1 = Estimator(loss=old_loss, random_state=0)
+# TODO(1.3): Remove
+def test_loss_deprecated():
+    est1 = GradientBoostingClassifier(loss="deviance", random_state=0)
 
-    with pytest.warns(FutureWarning, match=rf"The loss.* '{old_loss}' was deprecated"):
+    with pytest.warns(FutureWarning, match=r"The loss.* 'deviance' was deprecated"):
         est1.fit(X, y)
 
-    est2 = Estimator(loss=new_loss, random_state=0)
+    est2 = GradientBoostingClassifier(loss="log_loss", random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))
 
