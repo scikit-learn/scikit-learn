@@ -7,12 +7,11 @@ The dataset used in this example is :ref:`20newsgroups_dataset` which will be
 automatically downloaded, cached and reused for the document classification
 example.
 
-In this example we tune the hyperparameters of a particular classifier using a
+In this example, we tune the hyperparameters of a particular classifier using a
 :class:`~sklearn.model_selection.RandomizedSearchCV`. For a demo on the
 performance of some other classifiers, see the
 :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
 notebook.
-
 """
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
@@ -25,9 +24,9 @@ notebook.
 # Data loading
 # ------------
 # We load two categories from the training set. You can adjust the number of
-# categories by adding their names to the list or setting `categories=None` in
-# the dataset loader to get the 20 of them.
-
+# categories by adding their names to the list or setting `categories=None`
+# when calling the dataset loader :func:`~sklearn.datasets.fetch20newsgroups`
+# to get the 20 of them.
 from sklearn.datasets import fetch_20newsgroups
 
 categories = [
@@ -59,7 +58,7 @@ print(f"{len(data_train.data)} documents")
 # Pipeline with hyperparameter tuning
 # -----------------------------------
 # We define a pipeline combining a text feature vectorizer with a simple
-# classifier.
+# classifier yet effective for text classification.
 
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.naive_bayes import ComplementNB
@@ -125,7 +124,7 @@ random_search.fit(data_train.data, data_train.target)
 print(f"Done in {time() - t0:.3f}s")
 
 # %%
-print("Best parameters set:")
+print("Best parameters combination found:")
 best_parameters = random_search.best_estimator_.get_params()
 for param_name in sorted(parameters.keys()):
     print(f"{param_name}: {best_parameters[param_name]}")
@@ -160,9 +159,9 @@ cv_results = cv_results.rename(shorten_param, axis=1)
 # %%
 # We can use a `plotly.express.scatter
 # <https://plotly.com/python-api-reference/generated/plotly.express.scatter.html>`_
-# to visualize the trade-off between scoring time and mean test score. Passing
-# the cursor over a given point displays the corresponding parameters.
-
+# to visualize the trade-off between scoring time and mean test score
+# (i.e. "CV score"). Passing the cursor over a given point displays the
+# corresponding parameters.
 import plotly.express as px
 
 param_names = [shorten_param(name) for name in parameters.keys()]
