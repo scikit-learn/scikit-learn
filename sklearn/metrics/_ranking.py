@@ -613,9 +613,12 @@ def _multiclass_roc_auc_score(
             Calculate metrics for the multiclass case using the one-vs-one
             approach.
 
-    average : {'macro', 'weighted'}
+    average : {'micro', 'macro', 'weighted'}
         Determines the type of averaging performed on the pairwise binary
         metric scores
+        ``'micro'``:
+            Calculate metrics for the binarized-raveled classes. Only supported
+            for `multi_class='ovr'`.
         ``'macro'``:
             Calculate metrics for each label, and find their unweighted
             mean. This does not take label imbalance into account. Classes
@@ -623,9 +626,6 @@ def _multiclass_roc_auc_score(
         ``'weighted'``:
             Calculate metrics for each label, taking into account the
             prevalence of the classes.
-        ``'micro'``:
-            Calculate metrics for the binarized-raveled classes. Only supported
-            for `multi_class='ovr'`.
 
     sample_weight : array-like of shape (n_samples,) or None
         Sample weights.
