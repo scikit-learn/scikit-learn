@@ -268,6 +268,9 @@ redirects = {
     "auto_examples/linear_model/plot_bayesian_ridge": (
         "auto_examples/linear_model/plot_ard"
     ),
+    "examples/model_selection/grid_search_text_feature_extraction.py": (
+        "examples/model_selection/plot_grid_search_text_feature_extraction.py"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
