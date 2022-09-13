@@ -11,6 +11,8 @@ requires = [
     # see: https://github.com/scipy/oldest-supported-numpy/blob/main/setup.cfg
     "oldest-supported-numpy",
 
+    # nightly scipy 1.10.0.dev0 are the first wheels available for python 3.11
+    "scipy==1.10.0.dev0; python_version>='3.11'",
     "scipy>=1.3.2",
 ]
 

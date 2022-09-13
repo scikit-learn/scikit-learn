@@ -67,6 +67,10 @@ jobs:
             python: 310
             bitness: 64
             platform_id: win_amd64
+          - os: windows-latest
+            python: 311
+            bitness: 64
+            platform_id: win_amd64
 
           # Window 32 bit
           - os: windows-latest
@@ -97,6 +101,14 @@ jobs:
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
 
+          # On Python 3.11 only supports 64bit and is only available with manylinux2014
+          - os: ubuntu-latest
+            python: 311
+            bitness: 64
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
+            scipy_image: scipy-1.10.0.dev0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+
           # MacOS x86_64
           - os: macos-latest
             bitness: 64
@@ -109,6 +121,10 @@ jobs:
           - os: macos-latest
             bitness: 64
             python: 310
+            platform_id: macosx_x86_64
+          - os: macos-latest
+            bitness: 64
+            python: 311
             platform_id: macosx_x86_64
 
           # MacOS arm64
@@ -123,6 +139,10 @@ jobs:
           - os: macos-latest
             bitness: 64
             python: 310
+            platform_id: macosx_arm64
+          - os: macos-latest
+            bitness: 64
+            python: 311
             platform_id: macosx_arm64
 
     steps:
@@ -142,6 +162,7 @@ jobs:
                             OPENBLAS_NUM_THREADS=2
                             SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
+                            PIP_EXTRA_INDEX_URL=https://pypi.anaconda.org/scipy-wheels-nightly/simple
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_ARCHS: all
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
@@ -149,6 +170,7 @@ jobs:
           CIBW_TEST_SKIP: "*-macosx_arm64"
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir} ${{ matrix.bitness }}
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }} ${{ matrix.bitness }}
+          CIBW_BEFORE_TEST: if [[ ${{matrix.python}} == 311 ]]; then python -m pip install scipy==1.10.0.dev0; fi
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
           CIBW_TEST_COMMAND: bash {project}/build_tools/github/test_wheels.sh
           CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }} ${{ matrix.bitness }}
