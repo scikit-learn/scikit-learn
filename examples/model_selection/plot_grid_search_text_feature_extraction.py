@@ -81,7 +81,9 @@ pipeline
 # parameter `n_iter` of the :class:`~sklearn.model_selection.RandomizedSearchCV`
 # controls the number of different random combination that are evaluated. Notice
 # that setting `n_iter` larger than the number of possible combinations in a
-# grid would lead to repeating already-explored combinations.
+# grid would lead to repeating already-explored combinations. We search for
+# the best parameters for both the feature extraction (`vect__`) and the
+# classifier (`clf__`).
 
 import numpy as np
 
@@ -94,12 +96,10 @@ parameters = {
 }
 
 # %%
-# We search for the best parameters for both the feature extraction and the
-# classifier. In this case `n_iter=40` is not an exhaustive search of the
-# hyperparameter grid. In practice it would be interesting to increase the
-# parameter `n_iter` to get a more informative analysis. The consequent increase
-# in computing time can be handled by increasing the number of CPUs via the
-# `n_jobs` parameter.
+# In this case `n_iter=40` is not an exhaustive search of the hyperparameters'
+# grid. In practice it would be interesting to increase the parameter `n_iter
+# to get a more informative analysis. The consequent increase in computing time
+# can be handled by increasing the number of CPUs via the `n_jobs` parameter.
 
 from pprint import pprint
 from sklearn.model_selection import RandomizedSearchCV
@@ -122,7 +122,7 @@ from time import time
 
 t0 = time()
 random_search.fit(data_train.data, data_train.target)
-print(f"done in {time() - t0:.3f}s")
+print(f"Done in {time() - t0:.3f}s")
 
 # %%
 print("Best parameters set:")
@@ -148,6 +148,7 @@ import pandas as pd
 
 
 def shorten_param(param_name):
+    """Remove components' prefixes in param_name."""
     if "__" in param_name:
         return param_name.rsplit("__", 1)[1]
     return param_name
@@ -165,7 +166,7 @@ cv_results = cv_results.rename(shorten_param, axis=1)
 import plotly.express as px
 
 param_names = [shorten_param(name) for name in parameters.keys()]
-labels = {"mean_score_time": "score time (s)", "mean_test_score": "CV score"}
+labels = {"mean_score_time": "CV Score time (s)", "mean_test_score": "CV score (accuracy)"}
 fig = px.scatter(
     cv_results,
     x="mean_score_time",
@@ -181,26 +182,29 @@ fig
 # Notice that the cluster of models in the upper-left corner of the plot have
 # the best trade-off between accuracy and scoring time. In this case, using
 # bigrams increases the required scoring time without improving considerably the
-# accuracy of the pipeline. For more information on how to customize an
-# automated tuning to maximize score and minimize scoring time, see the example
-# notebook
-# :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`.
+# accuracy of the pipeline. 
+# 
+# .. note:: For more information on how to customize an automated tuning 
+#    to maximize score and minimize scoring time, see the example notebook
+#    :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`.
 #
 # We can also use a `plotly.express.parallel_coordinates
 # <https://plotly.com/python-api-reference/generated/plotly.express.parallel_coordinates.html>`_
 # to further visualize the mean test score as a function of the tuned
 # hyperparameters. This helps finding interactions between more than two
-# hyperparameters and provide an intuition on the relevance they have for
-# maximizing the performance of a pipeline.
+# hyperparameters and provide intuition on their relevance for improving
+# the performance of a pipeline.
 
 import math
 
 column_results = param_names + ["mean_test_score", "mean_score_time"]
 
 transform_funcs = dict.fromkeys(column_results, lambda x: x)
+# Using a logarithmic scale for alpha
 transform_funcs["alpha"] = math.log10
+# L1 norms are mapped to index 1, and L2 norms to index 2
 transform_funcs["norm"] = lambda x: 2 if x == "l2" else 1
-# unigrams are mapped to index 1 and bigrams to index 2
+# Unigrams are mapped to index 1 and bigrams to index 2
 transform_funcs["ngram_range"] = lambda x: x[1]
 
 fig = px.parallel_coordinates(
@@ -227,9 +231,9 @@ fig
 # the top performing models do not seem to depend on the regularization `norm`,
 # but they do depend on a trade-off between `max_df`, `min_df` and the
 # regularization strength `alpha`. The reason is that including noisy features
-# (i.e. `max_df` close to 1.0 or `min_df` close to 0) tend to overfit and
-# therefore require a stronger regularization to compensate. Having less
-# features require less regularization and less scoring time.
+# (i.e. `max_df` close to :math:`1.0` or `min_df` close to :math:`0`) tend 
+# to overfit and therefore require a stronger regularization to compensate.
+# Having less features require less regularization and less scoring time.
 #
-# The best accuracies are obtained when `alpha` is between :math:`10^{-6}` and
+# The best accuracy scores are obtained when `alpha` is between :math:`10^{-6}` and
 # :math:`10^0`, regardless of the hyperparameter `norm`.
