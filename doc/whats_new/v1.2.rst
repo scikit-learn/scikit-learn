@@ -318,12 +318,11 @@ Changelog
   :pr:`22710` by :user:`Conroy Trinh <trinhcon>` and
   :pr:`23461` by :user:`Meekail Zain <micky774>`.
 
-- |Fix| add a `"auto"` option to `eps` in :func:`metrics.logloss`.
+- |Enhancement| Adds an `"auto"` option to `eps` in :func:`metrics.logloss`.
   This option will automatically set the `eps` value depending on the data
-  type `y_pred`.
-  :pr:`24354` by :user:`Safiuddin Khaja <Safikh>`,
-  :user:`gsiisg <gsiisg>`, and
-  :user:`Guillaume Lemaitre <glemaitre>`.
+  type of `y_pred`. In addition, the default value of `eps` is changed from
+  `1e-15` to the new `"auto"` option.
+  :pr:`24354` by :user:`Safiuddin Khaja <Safikh>` and :user:`gsiisg <gsiisg>`.
 
 :mod:`sklearn.model_selection`
 ..............................

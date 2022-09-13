@@ -2534,7 +2534,7 @@ def log_loss(
         data type of `y_pred` and set to `np.finfo(y_pred.dtype).eps`.
 
         .. versionadded:: 1.2
-        
+
         .. versionchanged:: 1.2
            The default value changed from `1e-15` to `"auto"` that is
            equivalent to `np.finfo(y_pred.dtype).eps`.
