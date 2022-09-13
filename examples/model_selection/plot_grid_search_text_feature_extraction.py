@@ -83,8 +83,8 @@ pipeline
 # controls the number of different random combination that are evaluated. Notice
 # that setting `n_iter` larger than the number of possible combinations in a
 # grid would lead to repeating already-explored combinations. We search for the
-# best parameters for both the feature extraction (`vect__`) and the classifier
-# (`clf__`).
+# best parameter combination for both the feature extraction (`vect__`) and the
+# classifier (`clf__`).
 
 import numpy as np
 
@@ -98,9 +98,11 @@ parameter_grid = {
 
 # %%
 # In this case `n_iter=40` is not an exhaustive search of the hyperparameters'
-# grid. In practice it would be interesting to increase the parameter `n_iter to
-# get a more informative analysis. The consequent increase in computing time can
-# be handled by increasing the number of CPUs via the `n_jobs` parameter.
+# grid. In practice it would be interesting to increase the parameter `n_iter`
+# to get a more informative analysis. As a consequence, the computional time
+# increases. We can reduce it by taking advantage of the parallelisation over
+# the parameter combinations evaluation by increasing the number of CPUs used
+# via the parameter `n_jobs`.
 
 from pprint import pprint
 from sklearn.model_selection import RandomizedSearchCV
