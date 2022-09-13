@@ -619,6 +619,9 @@ def _multiclass_roc_auc_score(
         ``'micro'``:
             Calculate metrics for the binarized-raveled classes. Only supported
             for `multi_class='ovr'`.
+
+        .. versionadded:: 1.2
+
         ``'macro'``:
             Calculate metrics for each label, and find their unweighted
             mean. This does not take label imbalance into account. Classes
