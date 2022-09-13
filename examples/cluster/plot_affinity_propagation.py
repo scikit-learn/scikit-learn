@@ -54,7 +54,7 @@ plt.close("all")
 plt.figure(1)
 plt.clf()
 
-colors = plt.cycler("color", plt.get_cmap()(np.linspace(0, 1, 4)))
+colors = plt.cycler("color", plt.cm.viridis(np.linspace(0, 1, 4)))
 
 for k, col in zip(range(n_clusters_), colors):
     class_members = labels == k
