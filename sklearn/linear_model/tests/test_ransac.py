@@ -353,8 +353,8 @@ def test_ransac_min_n_samples():
     with pytest.raises(ValueError):
         ransac_estimator7.fit(X, y)
 
-    err_msg = "From version 1.2, `min_samples` needs to be explicitly set"
-    with pytest.warns(FutureWarning, match=err_msg):
+    err_msg = "`min_samples` needs to be explicitly set"
+    with pytest.raises(ValueError, match=err_msg):
         ransac_estimator8.fit(X, y)
 
 
@@ -485,16 +485,6 @@ def test_ransac_dynamic_max_trials():
     assert _dynamic_max_trials(1, 100, 10, 0) == 0
     assert _dynamic_max_trials(1, 100, 10, 1) == float("inf")
 
-    estimator = LinearRegression()
-    ransac_estimator = RANSACRegressor(estimator, min_samples=2, stop_probability=-0.1)
-
-    with pytest.raises(ValueError):
-        ransac_estimator.fit(X, y)
-
-    ransac_estimator = RANSACRegressor(estimator, min_samples=2, stop_probability=1.1)
-    with pytest.raises(ValueError):
-        ransac_estimator.fit(X, y)
-
 
 def test_ransac_fit_sample_weight():
     ransac_estimator = RANSACRegressor(random_state=0)
@@ -582,25 +572,6 @@ def test_perfect_horizontal_line():
 
     assert_allclose(ransac_estimator.estimator_.coef_, 0.0)
     assert_allclose(ransac_estimator.estimator_.intercept_, 0.0)
-
-
-# TODO: Remove in v1.2
-@pytest.mark.parametrize(
-    "old_loss, new_loss",
-    [
-        ("absolute_loss", "squared_error"),
-        ("squared_loss", "absolute_error"),
-    ],
-)
-def test_loss_deprecated(old_loss, new_loss):
-    est1 = RANSACRegressor(loss=old_loss, random_state=0)
-
-    with pytest.warns(FutureWarning, match=f"The loss '{old_loss}' was deprecated"):
-        est1.fit(X, y)
-
-    est2 = RANSACRegressor(loss=new_loss, random_state=0)
-    est2.fit(X, y)
-    assert_allclose(est1.predict(X), est2.predict(X))
 
 
 def test_base_estimator_deprecated():
