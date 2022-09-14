@@ -1081,6 +1081,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
           - 1: monotonically increasing
           - 0: no constraint
           - -1: monotonically decreasing
+
         The constraints are only valid for binary classifications and hold
         over the probability of the positive class.
 
