@@ -72,7 +72,7 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
-    TEST_CMD="$TEST_CMD -n$CPU_COUNT"
+    TEST_CMD="$TEST_CMD"
 fi
 
 if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
