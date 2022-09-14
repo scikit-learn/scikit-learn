@@ -207,18 +207,18 @@ def test_staged_predict(algorithm):
 def test_gridsearch():
     # Check that base trees can be grid-searched.
     # AdaBoost classification
-    boost = AdaBoostClassifier(base_estimator=DecisionTreeClassifier())
+    boost = AdaBoostClassifier(estimator=DecisionTreeClassifier())
     parameters = {
         "n_estimators": (1, 2),
-        "base_estimator__max_depth": (1, 2),
+        "estimator__max_depth": (1, 2),
         "algorithm": ("SAMME", "SAMME.R"),
     }
     clf = GridSearchCV(boost, parameters)
     clf.fit(iris.data, iris.target)
 
     # AdaBoost regression
-    boost = AdaBoostRegressor(base_estimator=DecisionTreeRegressor(), random_state=0)
-    parameters = {"n_estimators": (1, 2), "base_estimator__max_depth": (1, 2)}
+    boost = AdaBoostRegressor(estimator=DecisionTreeRegressor(), random_state=0)
+    parameters = {"n_estimators": (1, 2), "estimator__max_depth": (1, 2)}
     clf = GridSearchCV(boost, parameters)
     clf.fit(diabetes.data, diabetes.target)
 
@@ -273,27 +273,16 @@ def test_importances():
         assert (importances[:3, np.newaxis] >= importances[3:]).all()
 
 
-def test_error():
-    # Test that it gives proper exception on deficient input.
-
-    reg = AdaBoostRegressor(loss="foo")
-    msg = "loss must be 'linear', 'square', or 'exponential'. Got 'foo' instead."
-    with pytest.raises(ValueError, match=msg):
-        reg.fit(X, y_class)
-
-    clf = AdaBoostClassifier(algorithm="foo")
-    msg = "Algorithm must be 'SAMME' or 'SAMME.R'. Got 'foo' instead."
-    with pytest.raises(ValueError, match=msg):
-        clf.fit(X, y_class)
-
+def test_adaboost_classifier_sample_weight_error():
+    # Test that it gives proper exception on incorrect sample weight.
     clf = AdaBoostClassifier()
     msg = re.escape("sample_weight.shape == (1,), expected (6,)")
     with pytest.raises(ValueError, match=msg):
         clf.fit(X, y_class, sample_weight=np.asarray([-1]))
 
 
-def test_base_estimator():
-    # Test different base estimators.
+def test_estimator():
+    # Test different estimators.
     from sklearn.ensemble import RandomForestClassifier
 
     # XXX doesn't work with y_class because RF doesn't support classes_
@@ -322,7 +311,7 @@ def test_base_estimator():
 
 def test_sample_weights_infinite():
     msg = "Sample weights have reached infinite values"
-    clf = AdaBoostClassifier(n_estimators=30, learning_rate=5.0, algorithm="SAMME")
+    clf = AdaBoostClassifier(n_estimators=30, learning_rate=23.0, algorithm="SAMME")
     with pytest.warns(UserWarning, match=msg):
         clf.fit(iris.data, iris.target)
 
@@ -353,14 +342,14 @@ def test_sparse_classification():
 
         # Trained on sparse format
         sparse_classifier = AdaBoostClassifier(
-            base_estimator=CustomSVC(probability=True),
+            estimator=CustomSVC(probability=True),
             random_state=1,
             algorithm="SAMME",
         ).fit(X_train_sparse, y_train)
 
         # Trained on dense format
         dense_classifier = AdaBoostClassifier(
-            base_estimator=CustomSVC(probability=True),
+            estimator=CustomSVC(probability=True),
             random_state=1,
             algorithm="SAMME",
         ).fit(X_train, y_train)
@@ -444,12 +433,12 @@ def test_sparse_regression():
 
         # Trained on sparse format
         sparse_classifier = AdaBoostRegressor(
-            base_estimator=CustomSVR(), random_state=1
+            estimator=CustomSVR(), random_state=1
         ).fit(X_train_sparse, y_train)
 
         # Trained on dense format
         dense_classifier = dense_results = AdaBoostRegressor(
-            base_estimator=CustomSVR(), random_state=1
+            estimator=CustomSVR(), random_state=1
         ).fit(X_train, y_train)
 
         # predict
@@ -511,11 +500,9 @@ def test_multidimensional_X():
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
 def test_adaboostclassifier_without_sample_weight(algorithm):
     X, y = iris.data, iris.target
-    base_estimator = NoSampleWeightWrapper(DummyClassifier())
-    clf = AdaBoostClassifier(base_estimator=base_estimator, algorithm=algorithm)
-    err_msg = "{} doesn't support sample_weight".format(
-        base_estimator.__class__.__name__
-    )
+    estimator = NoSampleWeightWrapper(DummyClassifier())
+    clf = AdaBoostClassifier(estimator=estimator, algorithm=algorithm)
+    err_msg = "{} doesn't support sample_weight".format(estimator.__class__.__name__)
     with pytest.raises(ValueError, match=err_msg):
         clf.fit(X, y)
 
@@ -534,7 +521,7 @@ def test_adaboostregressor_sample_weight():
 
     # random_state=0 ensure that the underlying bootstrap will use the outlier
     regr_no_outlier = AdaBoostRegressor(
-        base_estimator=LinearRegression(), n_estimators=1, random_state=0
+        estimator=LinearRegression(), n_estimators=1, random_state=0
     )
     regr_with_weight = clone(regr_no_outlier)
     regr_with_outlier = clone(regr_no_outlier)
@@ -556,35 +543,6 @@ def test_adaboostregressor_sample_weight():
     assert score_with_outlier < score_no_outlier
     assert score_with_outlier < score_with_weight
     assert score_no_outlier == pytest.approx(score_with_weight)
-
-
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"n_estimators": -1}, ValueError, "n_estimators == -1, must be >= 1"),
-        ({"n_estimators": 0}, ValueError, "n_estimators == 0, must be >= 1"),
-        (
-            {"n_estimators": 1.5},
-            TypeError,
-            "n_estimators must be an instance of <class 'numbers.Integral'>,"
-            " not <class 'float'>",
-        ),
-        ({"learning_rate": -1}, ValueError, "learning_rate == -1, must be > 0."),
-        ({"learning_rate": 0}, ValueError, "learning_rate == 0, must be > 0."),
-    ],
-)
-@pytest.mark.parametrize(
-    "model, X, y",
-    [
-        (AdaBoostClassifier, X, y_class),
-        (AdaBoostRegressor, X, y_regr),
-    ],
-)
-def test_adaboost_params_validation(model, X, y, params, err_type, err_msg):
-    """Check input parameter validation in weight boosting."""
-    est = model(**params)
-    with pytest.raises(err_type, match=err_msg):
-        est.fit(X, y)
 
 
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
@@ -629,14 +587,14 @@ def test_adaboost_regressor_reset_weights():
     data, target = data[idx], target[idx]
     adaboost_10 = AdaBoostRegressor(
         learning_rate=1.0,
-        base_estimator=DecisionTreeRegressor(max_depth=3),
+        estimator=DecisionTreeRegressor(max_depth=3),
         n_estimators=10,
         no_improvement="continue",
         random_state=0,
     )
     adaboost_500 = AdaBoostRegressor(
         learning_rate=1.0,
-        base_estimator=DecisionTreeRegressor(max_depth=3),
+        estimator=DecisionTreeRegressor(max_depth=3),
         n_estimators=500,
         no_improvement="continue",
         random_state=0,
@@ -668,3 +626,60 @@ def test_adaboost_regressor_reset_weights():
 
     # We got an expected result.
     assert mae_10 > mae_500
+
+
+def test_adaboost_numerically_stable_feature_importance_with_small_weights():
+    """Check that we don't create NaN feature importance with numerically
+    instable inputs.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20320
+    """
+    rng = np.random.RandomState(42)
+    X = rng.normal(size=(1000, 10))
+    y = rng.choice([0, 1], size=1000)
+    sample_weight = np.ones_like(y) * 1e-263
+    tree = DecisionTreeClassifier(max_depth=10, random_state=12)
+    ada_model = AdaBoostClassifier(estimator=tree, n_estimators=20, random_state=12)
+    ada_model.fit(X, y, sample_weight=sample_weight)
+    assert np.isnan(ada_model.feature_importances_).sum() == 0
+
+
+# TODO(1.4): remove in 1.4
+@pytest.mark.parametrize(
+    "AdaBoost, Estimator",
+    [
+        (AdaBoostClassifier, DecisionTreeClassifier),
+        (AdaBoostRegressor, DecisionTreeRegressor),
+    ],
+)
+def test_base_estimator_argument_deprecated(AdaBoost, Estimator):
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    model = AdaBoost(base_estimator=Estimator())
+
+    warn_msg = (
+        "`base_estimator` was renamed to `estimator` in version 1.2 and "
+        "will be removed in 1.4."
+    )
+    with pytest.warns(FutureWarning, match=warn_msg):
+        model.fit(X, y)
+
+
+# TODO(1.4): remove in 1.4
+@pytest.mark.parametrize(
+    "AdaBoost",
+    [AdaBoostClassifier, AdaBoostRegressor],
+)
+def test_base_estimator_property_deprecated(AdaBoost):
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    model = AdaBoost()
+    model.fit(X, y)
+
+    warn_msg = (
+        "Attribute `base_estimator_` was deprecated in version 1.2 and "
+        "will be removed in 1.4. Use `estimator_` instead."
+    )
+    with pytest.warns(FutureWarning, match=warn_msg):
+        model.base_estimator_
