@@ -3884,10 +3884,8 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         (names[::-1], "Feature names must be in the same order as they were in fit."),
         (
             [f"another_prefix_{i}" for i in range(n_features)],
-            (
-                "Feature names unseen at fit time:\n- another_prefix_0\n-"
-                " another_prefix_1\n"
-            ),
+            "Feature names unseen at fit time:\n- another_prefix_0\n-"
+            " another_prefix_1\n",
         ),
         (
             names[:3],
