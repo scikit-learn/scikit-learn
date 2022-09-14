@@ -47,7 +47,8 @@ from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import label_binarize
 
-iris = load_iris()
+X, y = iris.data, iris.target
+y = iris.target_names[y]
 X, y = iris.data, iris.target
 target_names = iris.target_names
 
@@ -96,10 +97,10 @@ y_score = classifier.fit(X_train, y_train).predict_proba(X_test)
 #     meta-estimator). The OvR ROC evaluation can be used to evaluate any kind
 #     of classification models respectively of how they were trained (inherently
 #     multiclass training, or via OvR or OvO training reductions, see
-#     :ref:`multiclass`). The LogisticRegression model we use is inherently
+#     :ref:`multiclass`). The :class:`~sklearn.linear_model.LogisticRegression` model we use is inherently
 #     multiclass, thanks to the use of the multinomial formulation. But it would
 #     also have been possible to use OvR ROC evaluation of an OvO multiclass
-#     support vector machine model such as :class:`sklearn.svm.SVC`.
+#     support vector machine model such as :class:`~sklearn.svm.SVC`.
 #
 # ROC curve showing a specific class
 # ----------------------------------
@@ -152,7 +153,8 @@ RocCurveDisplay.from_predictions(
 )
 plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level (AUC = 0.5)")
 plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
+plt.ylim([0.0, 1.0])
+plt.axis("square")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
 plt.title("Receiver operating characteristic (micro-averaged)")
@@ -181,10 +183,8 @@ print(f"Micro-averaged One-vs-Rest ROC AUC score:\n{micro_roc_auc_ovr:.2f}")
 
 from sklearn.metrics import roc_curve, auc
 
-fpr = dict()
-tpr = dict()
-roc_auc = dict()
-
+# store the fpr, tpr, and roc_auc for all averaging strategies
+fpr, tpr, roc_auc = dict(), dict(), dict()
 # Compute micro-average ROC curve and ROC area
 fpr["micro"], tpr["micro"], _ = roc_curve(y_onehot_test.ravel(), y_score.ravel())
 roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
@@ -282,12 +282,12 @@ plt.show()
 # =========================
 #
 # The One-vs-One (OvO) multiclass strategy consists in fitting one classifier
-# per class pair. Since it requires to fit `n_classes` * (`n_classes` - 1) / 2
+# per class pair. Since it requires to train `n_classes` * (`n_classes` - 1) / 2
 # classifiers, this method is usually slower than One-vs-Rest due to its
 # O(`n_classes`^2) complexity.
 #
 # In this section, we demonstrate the macro-averaged AUC using the OvO scheme
-# for the 3 posible combinations in the :ref:`iris_dataset`: "setosa" vs
+# for the 3 possible combinations in the :ref:`iris_dataset`: "setosa" vs
 # "versicolor", "versicolor" vs "virginica" and  "virginica" vs "setosa". Notice
 # that micro-averaging is not defined for the OvO scheme.
 #
@@ -405,14 +405,14 @@ plt.legend()
 plt.show()
 
 # %%
-# We confirm that the clases "versicolor" and "virginica" are not well
+# We confirm that the classes "versicolor" and "virginica" are not well
 # identified by a linear classifier. Notice that the "virginica"-vs-the-rest
 # ROC-AUC score (0.77) is between the OvO ROC-AUC scores for "versicolor" vs
 # "virginica" (0.64) and "setosa" vs "virginica" (0.90). Indeed, the OvO
 # strategy gives additional information on the overlap between classes, at the
 # expense of computational cost.
 #
-# The OvO strategy is recomended if the user is mainly interested in correctly
+# The OvO strategy is recommended if the user is mainly interested in correctly
 # identifying a particular class or subset of classes, whereas evaluating the
 # global performance of a classifier can be correctly resumed by a given
 # averaging strategy.
