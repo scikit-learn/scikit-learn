@@ -1,11 +1,10 @@
 from functools import wraps
-from functools import update_wrapper
-from types import MethodType
 
 from scipy.sparse import issparse
 
 from ..utils import check_pandas_support
 from .._config import get_config
+from ._available_if import available_if
 
 
 __all__ = [
@@ -15,55 +14,17 @@ __all__ = [
 ]
 
 
-# This is the same as utils.metaestimators.avaliable_if. To avoid the circular
-# dependency between utils.metaestimators and base we redefine it here
-class _AvailableIfDescriptor:
-    def __init__(self, fn, check, attribute_name):
-        self.fn = fn
-        self.check = check
-        self.attribute_name = attribute_name
-
-        # update the docstring of the descriptor
-        update_wrapper(self, fn)
-
-    def __get__(self, obj, owner=None):
-        attr_err = AttributeError(
-            f"This {repr(owner.__name__)} has no attribute {repr(self.attribute_name)}"
-        )
-        if obj is not None:
-            # delegate only on instances, not the classes.
-            # this is to allow access to the docstrings.
-            if not self.check(obj):
-                raise attr_err
-            out = MethodType(self.fn, obj)
-
-        else:
-            # This makes it possible to use the decorated method as an unbound method,
-            # for instance when monkeypatching.
-            @wraps(self.fn)
-            def out(*args, **kwargs):
-                if not self.check(args[0]):
-                    raise attr_err
-                return self.fn(*args, **kwargs)
-
-        return out
-
-
-def _available_if(check):
-    return lambda fn: _AvailableIfDescriptor(fn, check, attribute_name=fn.__name__)
-
-
 def _wrap_in_pandas_container(
     data_to_wrap,
     *,
     index=None,
     columns=None,
 ):
-    """Create a named container.
+    """Create a Pandas DataFrame.
 
     Parameters
     ----------
-    data_to_wrap : ndarray, sparse matrix or pandas DataFrame
+    data_to_wrap : {ndarray, dataframe}
         Container to name.
 
     index : array-like, default=None
@@ -75,7 +36,7 @@ def _wrap_in_pandas_container(
 
     Returns
     -------
-    named_container : DataFrame or ndarray
+    dataframe : DataFrame
         Container with column names or unchanged `output`.
     """
     if issparse(data_to_wrap):
@@ -222,7 +183,7 @@ class SetOutputMixin:
         if hasattr(cls, "fit_transform"):
             cls.fit_transform = _wrap_method_output(cls.fit_transform, "transform")
 
-    @_available_if(_auto_wrap_is_configured)
+    @available_if(_auto_wrap_is_configured)
     def set_output(self, *, transform=None):
         """Set output container.
 
