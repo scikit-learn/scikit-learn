@@ -440,3 +440,8 @@ plt.show()
 # identifying a particular class or subset of classes, whereas evaluating the
 # global performance of a classifier can be correctly resumed by a given
 # averaging strategy.
+#
+# Micro-average is dominated by the more frequent class, since the counts are
+# pooled. The macro-average better reflects the statistics of the less frequent
+# classes, and then is more appropriate when performance on all the classes is
+# equally important.
