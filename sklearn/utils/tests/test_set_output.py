@@ -39,7 +39,7 @@ def test__wrap_in_pandas_container_error_validation():
     X_csr = csr_matrix(X)
     match = "Pandas output does not support sparse data"
     with pytest.raises(ValueError, match=match):
-        _wrap_in_pandas_container(X_csr)
+        _wrap_in_pandas_container(X_csr, columns=["a", "b", "c"])
 
 
 class EstimatorWithoutSetOutputAndWithoutTransform:
@@ -184,7 +184,7 @@ def test_get_output_auto_wrap_false():
 
 
 def test_auto_wrap_output_errors_with_incorrect_input():
-    msg = "auto_wrap_output should be a bool or a callable"
+    msg = "auto_wrap_output should be a bool"
     with pytest.raises(ValueError, match=msg):
 
         class BadEstimator(SetOutputMixin, auto_wrap_output="bad_parameter"):

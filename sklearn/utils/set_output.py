@@ -17,8 +17,8 @@ __all__ = [
 def _wrap_in_pandas_container(
     data_to_wrap,
     *,
+    columns,
     index=None,
-    columns=None,
 ):
     """Create a Pandas DataFrame.
 
@@ -27,12 +27,12 @@ def _wrap_in_pandas_container(
     data_to_wrap : {ndarray, dataframe}
         Container to name.
 
-    index : array-like, default=None
-        Index for data.
-
-    columns : callable or ndarray, default=None
+    columns : callable or ndarray
         The column names or a callable that returns the column names. This is
         useful if the column names require some computation.
+
+    index : array-like, default=None
+        Index for data.
 
     Returns
     -------
@@ -113,7 +113,8 @@ def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
         Index to attach to output.
 
     estimator : estimator instance
-        Estimator to get the output configuration from.
+        Estimator with to get the output configuration from. The estimator
+        must define a `get_feature_names_out` when a non-ndarray is returned.
 
     Returns
     -------
@@ -130,7 +131,7 @@ def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
     return _wrap_in_pandas_container(
         data_to_wrap=data_to_wrap,
         index=getattr(original_input, "index", None),
-        columns=getattr(estimator, "get_feature_names_out", None),
+        columns=estimator.get_feature_names_out,
     )
 
 
@@ -172,7 +173,7 @@ class SetOutputMixin:
         # Dynamically wraps `transform` and `fit_transform` and configure it's
         # output based on `set_output`.
         if not isinstance(auto_wrap_output, bool):
-            raise ValueError("auto_wrap_output should be a bool or a callable")
+            raise ValueError("auto_wrap_output should be a bool")
 
         cls._sklearn_auto_wrap_output = auto_wrap_output
         if not auto_wrap_output:
