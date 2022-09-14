@@ -238,7 +238,7 @@ def get_finite_row_indices(matrix):
 
 
 class HDBSCAN(ClusterMixin, BaseEstimator):
-    """Perform HDBSCAN clustering from vector array or distance matrix.
+    """Cluster data using hierarchical density-based clustering.
 
     HDBSCAN - Hierarchical Density-Based Spatial Clustering of Applications
     with Noise. Performs DBSCAN over varying epsilon values and integrates
@@ -258,7 +258,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     min_samples : int, default=None
         The number of samples in a neighborhood for a point
         to be considered as a core point. This includes the point itself.
-        defaults to the `min_cluster_size`.
+        When `None`, defaults to `min_cluster_size`.
 
     cluster_selection_epsilon : float, default=0.0
         A distance threshold. Clusters below this value will be merged.
@@ -275,7 +275,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         feature array.
 
         - If metric is a string or callable, it must be one of
-          the options allowed by `metrics.pairwise.pairwise_distances` for its
+          the options allowed by :func:`~sklearn.metrics.pairwise.pairwise_distances` for its
           metric parameter.
 
         - If metric is "precomputed", X is assumed to be a distance matrix and
@@ -285,14 +285,14 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         A distance scaling parameter as used in robust single linkage.
         See [3]_ for more information.
 
-    algorithm : str, default='auto'
+    algorithm : {"auto", "brute", "kdtree", "balltree"}, default="auto"
         Exactly which algorithm to use; hdbscan has variants specialised
         for different characteristics of the data. By default this is set
-        to `'auto'` which attempts to use a `KDTree` tree if possible,
-        otherwise it uses a `BallTree` tree.
+        to `'auto'` which attempts to use a :class:`~sklearn.neighbors.KDTree` tree if possible,
+        otherwise it uses a :class:`~sklearn.neighbors.BallTree` tree.
 
         If the `X` passed during `fit` is sparse or `metric` is invalid for
-        both `KDTree` and `BallTree`, then it resolves to use the `brute`
+        both :class:`~sklearn.neighbors.KDTree` and :class:`~sklearn.neighbors.BallTree`, then it resolves to use the `"brute"`
         algorithm.
 
         Available algorithms:
@@ -301,8 +301,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         - `'balltree'`
 
     leaf_size : int, default=40
-        Leaf size for trees responsible for fast nearest neighbour queries. A
-        large dataset size and small leaf_size may induce excessive memory
+        Leaf size for trees responsible for fast nearest neighbour queries when a KDTree or a BallTree are used as algorithms. A
+        large dataset size and small `leaf_size` may induce excessive memory
         usage. If you are running out of memory consider increasing the
         `leaf_size` parameter. Ignored for `algorithm=brute`.
 
@@ -312,14 +312,12 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    cluster_selection_method : str, default='eom'
+    cluster_selection_method : {"eom", "leaf"}, default="eom"
         The method used to select clusters from the condensed tree. The
         standard approach for HDBSCAN* is to use an Excess of Mass algorithm
         to find the most persistent clusters. Alternatively you can instead
         select the clusters at the leaves of the tree -- this provides the
-        most fine grained and homogeneous clusters. Options are:
-        - `eom`
-        - `leaf`
+        most fine grained and homogeneous clusters.
 
     allow_single_cluster : bool, default=False
         By default HDBSCAN* will not produce a single cluster, setting this
@@ -347,11 +345,11 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     Attributes
     ----------
-    labels_ : ndarray, shape (n_samples, )
-        Cluster labels for each point in the dataset given to fit().
+    labels_ : ndarray of shape (n_samples,)
+        Cluster labels for each point in the dataset given to :term:`fit`.
         Noisy samples are given the label -1.
 
-    probabilities_ : ndarray, shape (n_samples, )
+    probabilities_ : ndarray of shape (n_samples,)
         The strength with which each sample is a member of its assigned
         cluster. Noise points have probability zero; points in clusters
         have values assigned proportional to the degree that they
@@ -414,7 +412,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             Interval(Real, left=0, right=None, closed="left")
         ],
         "max_cluster_size": [Interval(Integral, left=0, right=None, closed="left")],
-        "metric": [StrOptions(set(FAST_METRICS + ["precomputed"])), callable],
+        "metric": [StrOptions(set(FAST_METRICS + {"precomputed"})), callable],
         "alpha": [Interval(Real, left=0, right=None, closed="neither")],
         "algorithm": [
             StrOptions(
@@ -465,16 +463,16 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self.metric_params = metric_params
 
     def fit(self, X, y=None):
-        """Perform HDBSCAN clustering from features or distance matrix.
+        """Find clusters based on hierarchical density-based clustering.
 
         Parameters
         ----------
-        X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
-                array of shape (n_samples, n_samples)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), or \
+                ndarray of shape (n_samples, n_samples)
             A feature array, or array of distances between samples if
             `metric='precomputed'`.
 
-        y : Ignored
+        y : None
             Ignored.
 
         Returns
@@ -612,21 +610,21 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         return self
 
     def fit_predict(self, X, y=None):
-        """Perform clustering on X and return cluster labels.
+        """Cluster X and return the associated cluster labels.
 
         Parameters
         ----------
-        X : array or sparse (CSR) matrix of shape (n_samples, n_features), or \
-                array of shape (n_samples, n_samples)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), or \
+                ndarray of shape (n_samples, n_samples)
             A feature array, or array of distances between samples if
             `metric='precomputed'`.
 
-        y : Ignored
+        y : None
             Ignored.
 
         Returns
         -------
-        y : ndarray, shape (n_samples, )
+        y : ndarray of shape (n_samples,)
             Cluster labels.
         """
         self.fit(X)
