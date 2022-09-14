@@ -12,7 +12,6 @@ import numpy as np
 from scipy import sparse
 import joblib
 
-from sklearn.utils.fixes import parse_version
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
@@ -228,8 +227,7 @@ def test_pipeline_invalid_parameters():
         pipe.set_params(anova__C=0.1)
 
     # Test clone
-    with pytest.warns(None):
-        pipe2 = clone(pipe)
+    pipe2 = clone(pipe)
     assert not pipe.named_steps["svc"] is pipe2.named_steps["svc"]
 
     # Check that apart from estimators, the parameters are the same
@@ -424,11 +422,11 @@ def test_fit_predict_on_pipeline():
     # test that the fit_predict on pipeline yields same results as applying
     # transform and clustering steps separately
     scaler = StandardScaler()
-    km = KMeans(random_state=0)
+    km = KMeans(random_state=0, n_init="auto")
     # As pipeline doesn't clone estimators on construction,
     # it must have its own estimators
     scaler_for_pipeline = StandardScaler()
-    km_for_pipeline = KMeans(random_state=0)
+    km_for_pipeline = KMeans(random_state=0, n_init="auto")
 
     # first compute the transform and clustering step separately
     scaled = scaler.fit_transform(iris.data)
@@ -503,8 +501,7 @@ def test_feature_union():
     assert_array_almost_equal(X_transformed, X_sp_transformed.toarray())
 
     # Test clone
-    with pytest.warns(None):
-        fs2 = clone(fs)
+    fs2 = clone(fs)
     assert fs.transformer_list[0][1] is not fs2.transformer_list[0][1]
 
     # test setting parameters
@@ -991,33 +988,25 @@ def test_set_feature_union_step_drop(get_names):
     assert_array_equal([[2, 3]], ft.fit_transform(X))
     assert_array_equal(["m2__x2", "m3__x3"], getattr(ft, get_names)())
 
-    with pytest.warns(None) as record:
-        ft.set_params(m2="drop")
-        assert_array_equal([[3]], ft.fit(X).transform(X))
-        assert_array_equal([[3]], ft.fit_transform(X))
+    ft.set_params(m2="drop")
+    assert_array_equal([[3]], ft.fit(X).transform(X))
+    assert_array_equal([[3]], ft.fit_transform(X))
     assert_array_equal(["m3__x3"], getattr(ft, get_names)())
-    assert not [w.message for w in record]
 
-    with pytest.warns(None) as record:
-        ft.set_params(m3="drop")
-        assert_array_equal([[]], ft.fit(X).transform(X))
-        assert_array_equal([[]], ft.fit_transform(X))
+    ft.set_params(m3="drop")
+    assert_array_equal([[]], ft.fit(X).transform(X))
+    assert_array_equal([[]], ft.fit_transform(X))
     assert_array_equal([], getattr(ft, get_names)())
-    assert not [w.message for w in record]
 
-    with pytest.warns(None) as record:
-        # check we can change back
-        ft.set_params(m3=mult3)
-        assert_array_equal([[3]], ft.fit(X).transform(X))
-    assert not [w.message for w in record]
+    # check we can change back
+    ft.set_params(m3=mult3)
+    assert_array_equal([[3]], ft.fit(X).transform(X))
 
-    with pytest.warns(None) as record:
-        # Check 'drop' step at construction time
-        ft = FeatureUnion([("m2", "drop"), ("m3", mult3)])
-        assert_array_equal([[3]], ft.fit(X).transform(X))
-        assert_array_equal([[3]], ft.fit_transform(X))
+    # Check 'drop' step at construction time
+    ft = FeatureUnion([("m2", "drop"), ("m3", mult3)])
+    assert_array_equal([[3]], ft.fit(X).transform(X))
+    assert_array_equal([[3]], ft.fit_transform(X))
     assert_array_equal(["m3__x3"], getattr(ft, get_names)())
-    assert not [w.message for w in record]
 
 
 def test_set_feature_union_passthrough():
@@ -1163,11 +1152,7 @@ def test_pipeline_memory():
     y = iris.target
     cachedir = mkdtemp()
     try:
-        if parse_version(joblib.__version__) < parse_version("0.12"):
-            # Deal with change of API in joblib
-            memory = joblib.Memory(cachedir=cachedir, verbose=10)
-        else:
-            memory = joblib.Memory(location=cachedir, verbose=10)
+        memory = joblib.Memory(location=cachedir, verbose=10)
         # Test with Transformer + SVC
         clf = SVC(probability=True, random_state=0)
         transf = DummyTransf()
@@ -1227,11 +1212,7 @@ def test_pipeline_memory():
 
 def test_make_pipeline_memory():
     cachedir = mkdtemp()
-    if parse_version(joblib.__version__) < parse_version("0.12"):
-        # Deal with change of API in joblib
-        memory = joblib.Memory(cachedir=cachedir, verbose=10)
-    else:
-        memory = joblib.Memory(location=cachedir, verbose=10)
+    memory = joblib.Memory(location=cachedir, verbose=10)
     pipeline = make_pipeline(DummyTransf(), SVC(), memory=memory)
     assert pipeline.memory is memory
     pipeline = make_pipeline(DummyTransf(), SVC())
@@ -1533,6 +1514,31 @@ def test_pipeline_check_if_fitted():
         check_is_fitted(pipeline)
     pipeline.fit(iris.data, iris.target)
     check_is_fitted(pipeline)
+
+
+def test_feature_union_check_if_fitted():
+    """Check __sklearn_is_fitted__ is defined correctly."""
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    union = FeatureUnion([("clf", MinimalTransformer())])
+    with pytest.raises(NotFittedError):
+        check_is_fitted(union)
+
+    union.fit(X, y)
+    check_is_fitted(union)
+
+    # passthrough is stateless
+    union = FeatureUnion([("pass", "passthrough")])
+    check_is_fitted(union)
+
+    union = FeatureUnion([("clf", MinimalTransformer()), ("pass", "passthrough")])
+    with pytest.raises(NotFittedError):
+        check_is_fitted(union)
+
+    union.fit(X, y)
+    check_is_fitted(union)
 
 
 def test_pipeline_get_feature_names_out_passes_names_through():

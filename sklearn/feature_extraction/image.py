@@ -10,12 +10,13 @@ extract features from images.
 # License: BSD 3 clause
 
 from itertools import product
-import numbers
+from numbers import Integral, Number, Real
 import numpy as np
 from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
 from ..utils import check_array, check_random_state
+from ..utils._param_validation import Interval
 from ..base import BaseEstimator
 
 __all__ = [
@@ -139,7 +140,7 @@ def _to_graph(
 
 
 def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
-    """Graph of the pixel-to-pixel gradient connections
+    """Graph of the pixel-to-pixel gradient connections.
 
     Edges are weighted with the gradient values.
 
@@ -158,7 +159,12 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
         The class to use to build the returned adjacency matrix.
     dtype : dtype, default=None
         The data of the returned sparse matrix. By default it is the
-        dtype of img
+        dtype of img.
+
+    Returns
+    -------
+    graph : ndarray or a sparse matrix class
+        The computed adjacency matrix.
 
     Notes
     -----
@@ -177,18 +183,18 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
 def grid_to_graph(
     n_x, n_y, n_z=1, *, mask=None, return_as=sparse.coo_matrix, dtype=int
 ):
-    """Graph of the pixel-to-pixel connections
+    """Graph of the pixel-to-pixel connections.
 
     Edges exist if 2 voxels are connected.
 
     Parameters
     ----------
     n_x : int
-        Dimension in x axis
+        Dimension in x axis.
     n_y : int
-        Dimension in y axis
+        Dimension in y axis.
     n_z : int, default=1
-        Dimension in z axis
+        Dimension in z axis.
     mask : ndarray of shape (n_x, n_y, n_z), dtype=bool, default=None
         An optional mask of the image, to consider only part of the
         pixels.
@@ -196,7 +202,12 @@ def grid_to_graph(
             default=sparse.coo_matrix
         The class to use to build the returned adjacency matrix.
     dtype : dtype, default=int
-        The data of the returned sparse matrix. By default it is int
+        The data of the returned sparse matrix. By default it is int.
+
+    Returns
+    -------
+    graph : np.ndarray or a sparse matrix class
+        The computed adjacency matrix.
 
     Notes
     -----
@@ -239,11 +250,11 @@ def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
     all_patches = n_h * n_w
 
     if max_patches:
-        if isinstance(max_patches, (numbers.Integral)) and max_patches < all_patches:
+        if isinstance(max_patches, (Integral)) and max_patches < all_patches:
             return max_patches
-        elif isinstance(max_patches, (numbers.Integral)) and max_patches >= all_patches:
+        elif isinstance(max_patches, (Integral)) and max_patches >= all_patches:
             return all_patches
-        elif isinstance(max_patches, (numbers.Real)) and 0 < max_patches < 1:
+        elif isinstance(max_patches, (Real)) and 0 < max_patches < 1:
             return int(max_patches * all_patches)
         else:
             raise ValueError("Invalid value for max_patches: %r" % max_patches)
@@ -289,9 +300,9 @@ def _extract_patches(arr, patch_shape=8, extraction_step=1):
 
     arr_ndim = arr.ndim
 
-    if isinstance(patch_shape, numbers.Number):
+    if isinstance(patch_shape, Number):
         patch_shape = tuple([patch_shape] * arr_ndim)
-    if isinstance(extraction_step, numbers.Number):
+    if isinstance(extraction_step, Number):
         extraction_step = tuple([extraction_step] * arr_ndim)
 
     patch_strides = arr.strides
@@ -311,7 +322,7 @@ def _extract_patches(arr, patch_shape=8, extraction_step=1):
 
 
 def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None):
-    """Reshape a 2D image into a collection of patches
+    """Reshape a 2D image into a collection of patches.
 
     The resulting patches are allocated in a dedicated array.
 
@@ -492,6 +503,16 @@ class PatchExtractor(BaseEstimator):
     Patches shape: (545706, 2, 2)
     """
 
+    _parameter_constraints: dict = {
+        "patch_size": [tuple, None],
+        "max_patches": [
+            None,
+            Interval(Real, 0, 1, closed="neither"),
+            Interval(Integral, 1, None, closed="left"),
+        ],
+        "random_state": ["random_state"],
+    }
+
     def __init__(self, *, patch_size=None, max_patches=None, random_state=None):
         self.patch_size = patch_size
         self.max_patches = max_patches
@@ -516,6 +537,7 @@ class PatchExtractor(BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         return self
 
     def transform(self, X):

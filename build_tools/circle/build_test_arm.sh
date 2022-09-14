@@ -6,6 +6,8 @@ set -x
 UNAMESTR=`uname`
 N_CORES=`nproc --all`
 
+# defines the get_dep and show_installed_libraries functions
+source build_tools/shared.sh
 
 setup_ccache() {
     echo "Setting up ccache"
@@ -20,13 +22,6 @@ setup_ccache() {
     ccache -M 0
 }
 
-# imports get_dep
-source build_tools/shared.sh
-
-sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
-sudo apt-get update
-
-# Setup conda environment
 MINICONDA_URL="https://github.com/conda-forge/miniforge/releases/latest/download/Mambaforge-Linux-aarch64.sh"
 
 # Install Mambaforge
@@ -35,35 +30,13 @@ MINICONDA_PATH=$HOME/miniconda
 chmod +x mambaforge.sh && ./mambaforge.sh -b -p $MINICONDA_PATH
 export PATH=$MINICONDA_PATH/bin:$PATH
 mamba init --all --verbose
+mamba update --yes mamba
 mamba update --yes conda
+mamba install "$(get_dep conda-lock min)" -y
+conda-lock install --name $CONDA_ENV_NAME $LOCK_FILE
+source activate $CONDA_ENV_NAME
 
-# Create environment and install dependencies
-mamba create -n testenv --yes $(get_dep python $PYTHON_VERSION)
-source activate testenv
-
-# Use the latest by default
-mamba install --verbose -y  ccache \
-                            pip \
-                            $(get_dep numpy $NUMPY_VERSION) \
-                            $(get_dep scipy $SCIPY_VERSION) \
-                            $(get_dep cython $CYTHON_VERSION) \
-                            $(get_dep joblib $JOBLIB_VERSION) \
-                            $(get_dep threadpoolctl $THREADPOOLCTL_VERSION) \
-                            $(get_dep pytest $PYTEST_VERSION) \
-                            $(get_dep pytest-xdist $PYTEST_XDIST_VERSION)
 setup_ccache
-
-if [[ "$COVERAGE" == "true" ]]; then
-    # XXX: coverage is temporary pinned to 6.2 because 6.3 is not fork-safe
-    # cf. https://github.com/nedbat/coveragepy/issues/1310
-    mamba install --verbose -y codecov pytest-cov coverage=6.2
-fi
-
-if [[ "$TEST_DOCSTRINGS" == "true" ]]; then
-    # numpydoc requires sphinx
-    mamba install --verbose -y sphinx
-    mamba install --verbose -y "numpydoc<1.2"
-fi
 
 python --version
 
@@ -73,8 +46,7 @@ export SKLEARN_BUILD_PARALLEL=$(($N_CORES + 1))
 
 # Disable the build isolation and build in the tree so that the same folder can be
 # cached between CI runs.
-# TODO: remove the '--use-feature' flag when made obsolete in pip 21.3.
-pip install --verbose --no-build-isolation --use-feature=in-tree-build .
+pip install --verbose --no-build-isolation .
 
 # Report cache usage
 ccache -s --verbose

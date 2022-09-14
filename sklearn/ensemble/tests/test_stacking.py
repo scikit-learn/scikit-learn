@@ -5,6 +5,7 @@
 
 import pytest
 import numpy as np
+from numpy.testing import assert_array_equal
 import scipy.sparse as sparse
 
 from sklearn.base import BaseEstimator
@@ -43,8 +44,14 @@ from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import ignore_warnings
 
-X_diabetes, y_diabetes = load_diabetes(return_X_y=True)
-X_iris, y_iris = load_iris(return_X_y=True)
+from sklearn.exceptions import NotFittedError
+
+from unittest.mock import Mock
+
+diabetes = load_diabetes()
+X_diabetes, y_diabetes = diabetes.data, diabetes.target
+iris = load_iris()
+X_iris, y_iris = iris.data, iris.target
 
 
 @pytest.mark.parametrize(
@@ -273,14 +280,13 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
 @pytest.mark.parametrize(
     "y, params, type_err, msg_err",
     [
-        (y_iris, {"estimators": None}, ValueError, "Invalid 'estimators' attribute,"),
         (y_iris, {"estimators": []}, ValueError, "Invalid 'estimators' attribute,"),
         (
             y_iris,
             {
                 "estimators": [
                     ("lr", LogisticRegression()),
-                    ("svm", SVC(max_iter=5e4)),
+                    ("svm", SVC(max_iter=50_000)),
                 ],
                 "stack_method": "predict_proba",
             },
@@ -303,7 +309,7 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
             {
                 "estimators": [
                     ("lr", LogisticRegression()),
-                    ("cor", LinearSVC(max_iter=5e4)),
+                    ("cor", LinearSVC(max_iter=50_000)),
                 ],
                 "final_estimator": NoWeightClassifier(),
             },
@@ -321,12 +327,6 @@ def test_stacking_classifier_error(y, params, type_err, msg_err):
 @pytest.mark.parametrize(
     "y, params, type_err, msg_err",
     [
-        (
-            y_diabetes,
-            {"estimators": None},
-            ValueError,
-            "Invalid 'estimators' attribute,",
-        ),
         (y_diabetes, {"estimators": []}, ValueError, "Invalid 'estimators' attribute,"),
         (
             y_diabetes,
@@ -401,8 +401,8 @@ def test_stacking_classifier_stratify_default():
     # check that we stratify the classes for the default CV
     clf = StackingClassifier(
         estimators=[
-            ("lr", LogisticRegression(max_iter=1e4)),
-            ("svm", LinearSVC(max_iter=1e4)),
+            ("lr", LogisticRegression(max_iter=10_000)),
+            ("svm", LinearSVC(max_iter=10_000)),
         ]
     )
     # since iris is not shuffled, a simple k-fold would not contain the
@@ -531,6 +531,89 @@ def test_stacking_cv_influence(stacker, X, y):
 
 
 @pytest.mark.parametrize(
+    "Stacker, Estimator, stack_method, final_estimator, X, y",
+    [
+        (
+            StackingClassifier,
+            DummyClassifier,
+            "predict_proba",
+            LogisticRegression(random_state=42),
+            X_iris,
+            y_iris,
+        ),
+        (
+            StackingRegressor,
+            DummyRegressor,
+            "predict",
+            LinearRegression(),
+            X_diabetes,
+            y_diabetes,
+        ),
+    ],
+)
+def test_stacking_prefit(Stacker, Estimator, stack_method, final_estimator, X, y):
+    """Check the behaviour of stacking when `cv='prefit'`"""
+    X_train1, X_train2, y_train1, y_train2 = train_test_split(
+        X, y, random_state=42, test_size=0.5
+    )
+    estimators = [
+        ("d0", Estimator().fit(X_train1, y_train1)),
+        ("d1", Estimator().fit(X_train1, y_train1)),
+    ]
+
+    # mock out fit and stack_method to be asserted later
+    for _, estimator in estimators:
+        estimator.fit = Mock()
+        stack_func = getattr(estimator, stack_method)
+        setattr(estimator, stack_method, Mock(side_effect=stack_func))
+
+    stacker = Stacker(
+        estimators=estimators, cv="prefit", final_estimator=final_estimator
+    )
+    stacker.fit(X_train2, y_train2)
+
+    assert stacker.estimators_ == [estimator for _, estimator in estimators]
+    # fit was not called again
+    assert all(estimator.fit.call_count == 0 for estimator in stacker.estimators_)
+
+    # stack method is called with the proper inputs
+    for estimator in stacker.estimators_:
+        stack_func_mock = getattr(estimator, stack_method)
+        stack_func_mock.assert_called_with(X_train2)
+
+
+@pytest.mark.parametrize(
+    "stacker, X, y",
+    [
+        (
+            StackingClassifier(
+                estimators=[("lr", LogisticRegression()), ("svm", SVC())],
+                cv="prefit",
+            ),
+            X_iris,
+            y_iris,
+        ),
+        (
+            StackingRegressor(
+                estimators=[
+                    ("lr", LinearRegression()),
+                    ("svm", LinearSVR()),
+                ],
+                cv="prefit",
+            ),
+            X_diabetes,
+            y_diabetes,
+        ),
+    ],
+)
+def test_stacking_prefit_error(stacker, X, y):
+    # check that NotFittedError is raised
+    # if base estimators are not fitted when cv="prefit"
+    with pytest.raises(NotFittedError):
+        stacker.fit(X, y)
+
+
+@pytest.mark.parametrize(
     "make_dataset, Stacking, Estimator",
     [
         (make_classification, StackingClassifier, LogisticRegression),
@@ -561,3 +644,79 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
     msg = "'MyEstimator' object has no attribute 'n_features_in_'"
     with pytest.raises(AttributeError, match=msg):
         stacker.n_features_in_
+
+
+@pytest.mark.parametrize(
+    "stacker, feature_names, X, y, expected_names",
+    [
+        (
+            StackingClassifier(
+                estimators=[
+                    ("lr", LogisticRegression(random_state=0)),
+                    ("svm", LinearSVC(random_state=0)),
+                ]
+            ),
+            iris.feature_names,
+            X_iris,
+            y_iris,
+            [
+                "stackingclassifier_lr0",
+                "stackingclassifier_lr1",
+                "stackingclassifier_lr2",
+                "stackingclassifier_svm0",
+                "stackingclassifier_svm1",
+                "stackingclassifier_svm2",
+            ],
+        ),
+        (
+            StackingClassifier(
+                estimators=[
+                    ("lr", LogisticRegression(random_state=0)),
+                    ("other", "drop"),
+                    ("svm", LinearSVC(random_state=0)),
+                ]
+            ),
+            iris.feature_names,
+            X_iris[:100],
+            y_iris[:100],  # keep only classes 0 and 1
+            [
+                "stackingclassifier_lr",
+                "stackingclassifier_svm",
+            ],
+        ),
+        (
+            StackingRegressor(
+                estimators=[
+                    ("lr", LinearRegression()),
+                    ("svm", LinearSVR(random_state=0)),
+                ]
+            ),
+            diabetes.feature_names,
+            X_diabetes,
+            y_diabetes,
+            [
+                "stackingregressor_lr",
+                "stackingregressor_svm",
+            ],
+        ),
+    ],
+    ids=[
+        "StackingClassifier_multiclass",
+        "StackingClassifier_binary",
+        "StackingRegressor",
+    ],
+)
+@pytest.mark.parametrize("passthrough", [True, False])
+def test_get_feature_names_out(
+    stacker, feature_names, X, y, expected_names, passthrough
+):
+    """Check get_feature_names_out works for stacking."""
+
+    stacker.set_params(passthrough=passthrough)
+    stacker.fit(scale(X), y)
+
+    if passthrough:
+        expected_names = np.concatenate((expected_names, feature_names))
+
+    names_out = stacker.get_feature_names_out(feature_names)
+    assert_array_equal(names_out, expected_names)

@@ -26,7 +26,7 @@ correspond to a specific family of machine learning models. It is only a
 *way* to train a model. Often, an instance of :class:`SGDClassifier` or
 :class:`SGDRegressor` will have an equivalent estimator in
 the scikit-learn API, potentially using a different optimization technique.
-For example, using `SGDClassifier(loss='log')` results in logistic regression,
+For example, using `SGDClassifier(loss='log_loss')` results in logistic regression,
 i.e. a model equivalent to :class:`~sklearn.linear_model.LogisticRegression`
 which is fitted via SGD instead of being fitted by one of the other solvers
 in :class:`~sklearn.linear_model.LogisticRegression`. Similarly,
@@ -113,7 +113,7 @@ parameter. :class:`SGDClassifier` supports the following loss functions:
 
   * ``loss="hinge"``: (soft-margin) linear Support Vector Machine,
   * ``loss="modified_huber"``: smoothed hinge loss,
-  * ``loss="log"``: logistic regression,
+  * ``loss="log_loss"``: logistic regression,
   * and all regression losses below. In this case the target is encoded as -1
     or 1, and the problem is treated as a regression problem. The predicted
     class then correspond to the sign of the predicted target.
@@ -125,11 +125,11 @@ parameters if an example violates the margin constraint, which makes
 training very efficient and may result in sparser models (i.e. with more zero
 coefficients), even when L2 penalty is used.
 
-Using ``loss="log"`` or ``loss="modified_huber"`` enables the
+Using ``loss="log_loss"`` or ``loss="modified_huber"`` enables the
 ``predict_proba`` method, which gives a vector of probability estimates
 :math:`P(y|x)` per sample :math:`x`::
 
-    >>> clf = SGDClassifier(loss="log", max_iter=5).fit(X, y)
+    >>> clf = SGDClassifier(loss="log_loss", max_iter=5).fit(X, y)
     >>> clf.predict_proba([[1., 1.]]) # doctest: +SKIP
     array([[0.00..., 0.99...]])
 
@@ -168,7 +168,7 @@ one-dimensional array of shape (n_classes,). The i-th row of ``coef_`` holds
 the weight vector of the OVA classifier for the i-th class; classes are
 indexed in ascending order (see attribute ``classes_``).
 Note that, in principle, since they allow to create a probability model,
-``loss="log"`` and ``loss="modified_huber"`` are more suitable for
+``loss="log_loss"`` and ``loss="modified_huber"`` are more suitable for
 one-vs-all classification.
 
 :class:`SGDClassifier` supports both weighted classes and weighted
@@ -419,9 +419,9 @@ Different choices for :math:`L` entail different classifiers or regressors:
 - Modified Huber:
   :math:`L(y_i, f(x_i)) = \max(0, 1 - y_i f(x_i))^2` if :math:`y_i f(x_i) >
   1`, and :math:`L(y_i, f(x_i)) = -4 y_i f(x_i)` otherwise.
-- Log: equivalent to Logistic Regression.
+- Log Loss: equivalent to Logistic Regression.
   :math:`L(y_i, f(x_i)) = \log(1 + \exp (-y_i f(x_i)))`.
-- Least-Squares: Linear regression (Ridge or Lasso depending on
+- Squared Error: Linear regression (Ridge or Lasso depending on
   :math:`R`).
   :math:`L(y_i, f(x_i)) = \frac{1}{2}(y_i - f(x_i))^2`.
 - Huber: less sensitive to outliers than least-squares. It is equivalent to
@@ -546,8 +546,8 @@ The code is written in Cython.
    .. [#1] `"Stochastic Gradient Descent"
        <https://leon.bottou.org/projects/sgd>`_ L. Bottou - Website, 2010.
 
-   .. [#2] `"Pegasos: Primal estimated sub-gradient solver for svm"
-      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.74.8513>`_
+   .. [#2] :doi:`"Pegasos: Primal estimated sub-gradient solver for svm"
+      <10.1145/1273496.1273598>`
       S. Shalev-Shwartz, Y. Singer, N. Srebro - In Proceedings of ICML '07.
 
    .. [#3] `"Stochastic gradient descent training for l1-regularized
@@ -561,12 +561,12 @@ The code is written in Cython.
       <1107.2490v2>`
       Xu, Wei (2011)
 
-   .. [#5] `"Regularization and variable selection via the elastic net"
-      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.124.4696>`_
+   .. [#5] :doi:`"Regularization and variable selection via the elastic net"
+      <10.1111/j.1467-9868.2005.00503.x>`
       H. Zou, T. Hastie - Journal of the Royal Statistical Society Series B,
       67 (2), 301-320.
 
-   .. [#6] `"Solving large scale linear prediction problems using stochastic
+   .. [#6] :doi:`"Solving large scale linear prediction problems using stochastic
       gradient descent algorithms"
-      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.58.7377>`_
+      <10.1145/1015330.1015332>`
       T. Zhang - In Proceedings of ICML '04.

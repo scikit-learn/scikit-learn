@@ -1,10 +1,12 @@
+from contextlib import suppress
+from collections import Counter
 from typing import NamedTuple
 
 import numpy as np
 from . import is_scalar_nan
 
 
-def _unique(values, *, return_inverse=False):
+def _unique(values, *, return_inverse=False, return_counts=False):
     """Helper function to find unique values with support for python objects.
 
     Uses pure python method for object dtype, and numpy method for
@@ -18,6 +20,10 @@ def _unique(values, *, return_inverse=False):
     return_inverse : bool, default=False
         If True, also return the indices of the unique values.
 
+    return_counts : bool, default=False
+        If True, also return the number of times each unique item appears in
+        values.
+
     Returns
     -------
     unique : ndarray
@@ -26,16 +32,38 @@ def _unique(values, *, return_inverse=False):
     unique_inverse : ndarray
         The indices to reconstruct the original array from the unique array.
         Only provided if `return_inverse` is True.
+
+    unique_counts : ndarray
+        The number of times each of the unique values comes up in the original
+        array. Only provided if `return_counts` is True.
     """
     if values.dtype == object:
-        return _unique_python(values, return_inverse=return_inverse)
+        return _unique_python(
+            values, return_inverse=return_inverse, return_counts=return_counts
+        )
     # numerical
-    out = np.unique(values, return_inverse=return_inverse)
+    return _unique_np(
+        values, return_inverse=return_inverse, return_counts=return_counts
+    )
+
+
+def _unique_np(values, return_inverse=False, return_counts=False):
+    """Helper function to find unique values for numpy arrays that correctly
+    accounts for nans. See `_unique` documentation for details."""
+    uniques = np.unique(
+        values, return_inverse=return_inverse, return_counts=return_counts
+    )
+
+    inverse, counts = None, None
+
+    if return_counts:
+        *uniques, counts = uniques
 
     if return_inverse:
-        uniques, inverse = out
-    else:
-        uniques = out
+        *uniques, inverse = uniques
+
+    if return_counts or return_inverse:
+        uniques = uniques[0]
 
     # np.unique will have duplicate missing values at the end of `uniques`
     # here we clip the nans and remove it from uniques
@@ -45,9 +73,19 @@ def _unique(values, *, return_inverse=False):
         if return_inverse:
             inverse[inverse > nan_idx] = nan_idx
 
+        if return_counts:
+            counts[nan_idx] = np.sum(counts[nan_idx:])
+            counts = counts[: nan_idx + 1]
+
+    ret = (uniques,)
+
     if return_inverse:
-        return uniques, inverse
-    return uniques
+        ret += (inverse,)
+
+    if return_counts:
+        ret += (counts,)
+
+    return ret[0] if len(ret) == 1 else ret
 
 
 class MissingValues(NamedTuple):
@@ -126,7 +164,7 @@ def _map_to_integer(values, uniques):
     return np.array([table[v] for v in values])
 
 
-def _unique_python(values, *, return_inverse):
+def _unique_python(values, *, return_inverse, return_counts):
     # Only used in `_uniques`, see docstring there for details
     try:
         uniques_set = set(values)
@@ -141,11 +179,15 @@ def _unique_python(values, *, return_inverse):
             "Encoders require their input to be uniformly "
             f"strings or numbers. Got {types}"
         )
+    ret = (uniques,)
 
     if return_inverse:
-        return uniques, _map_to_integer(values, uniques)
+        ret += (_map_to_integer(values, uniques),)
 
-    return uniques
+    if return_counts:
+        ret += (_get_counts(values, uniques),)
+
+    return ret[0] if len(ret) == 1 else ret
 
 
 def _encode(values, *, uniques, check_unknown=True):
@@ -273,3 +315,52 @@ def _check_unknown(values, known_values, return_mask=False):
     if return_mask:
         return diff, valid_mask
     return diff
+
+
+class _NaNCounter(Counter):
+    """Counter with support for nan values."""
+
+    def __init__(self, items):
+        super().__init__(self._generate_items(items))
+
+    def _generate_items(self, items):
+        """Generate items without nans. Stores the nan counts separately."""
+        for item in items:
+            if not is_scalar_nan(item):
+                yield item
+                continue
+            if not hasattr(self, "nan_count"):
+                self.nan_count = 0
+            self.nan_count += 1
+
+    def __missing__(self, key):
+        if hasattr(self, "nan_count") and is_scalar_nan(key):
+            return self.nan_count
+        raise KeyError(key)
+
+
+def _get_counts(values, uniques):
+    """Get the count of each of the `uniques` in `values`.
+
+    The counts will use the order passed in by `uniques`. For non-object dtypes,
+    `uniques` is assumed to be sorted and `np.nan` is at the end.
+    """
+    if values.dtype.kind in "OU":
+        counter = _NaNCounter(values)
+        output = np.zeros(len(uniques), dtype=np.int64)
+        for i, item in enumerate(uniques):
+            with suppress(KeyError):
+                output[i] = counter[item]
+        return output
+
+    unique_values, counts = _unique_np(values, return_counts=True)
+
+    # Recorder unique_values based on input: `uniques`
+    uniques_in_values = np.isin(uniques, unique_values, assume_unique=True)
+    if np.isnan(unique_values[-1]) and np.isnan(uniques[-1]):
+        uniques_in_values[-1] = True
+
+    unique_valid_indices = np.searchsorted(unique_values, uniques[uniques_in_values])
+    output = np.zeros_like(uniques, dtype=np.int64)
+    output[uniques_in_values] = counts[unique_valid_indices]
+    return output

@@ -13,6 +13,7 @@ import warnings
 import numpy as np
 from scipy import linalg
 from scipy.special import expit
+from numbers import Real, Integral
 
 from .base import BaseEstimator, TransformerMixin, ClassifierMixin
 from .base import _ClassNamePrefixFeaturesOutMixin
@@ -22,6 +23,7 @@ from .utils.multiclass import unique_labels
 from .utils.validation import check_is_fitted
 from .utils.multiclass import check_classification_targets
 from .utils.extmath import softmax
+from .utils._param_validation import StrOptions, Interval, HasMethods
 from .preprocessing import StandardScaler
 
 
@@ -70,14 +72,8 @@ def _cov(X, shrinkage=None, covariance_estimator=None):
                 s = sc.scale_[:, np.newaxis] * s * sc.scale_[np.newaxis, :]
             elif shrinkage == "empirical":
                 s = empirical_covariance(X)
-            else:
-                raise ValueError("unknown shrinkage parameter")
-        elif isinstance(shrinkage, float) or isinstance(shrinkage, int):
-            if shrinkage < 0 or shrinkage > 1:
-                raise ValueError("shrinkage parameter must be between 0 and 1")
+        elif isinstance(shrinkage, Real):
             s = shrunk_covariance(empirical_covariance(X), shrinkage)
-        else:
-            raise TypeError("shrinkage must be a float or a string")
     else:
         if shrinkage is not None and shrinkage != 0:
             raise ValueError(
@@ -313,6 +309,16 @@ class LinearDiscriminantAnalysis(
     [1]
     """
 
+    _parameter_constraints: dict = {
+        "solver": [StrOptions({"svd", "lsqr", "eigen"})],
+        "shrinkage": [StrOptions({"auto"}), Interval(Real, 0, 1, closed="both"), None],
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "priors": ["array-like", None],
+        "store_covariance": ["boolean"],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "covariance_estimator": [HasMethods("fit"), None],
+    }
+
     def __init__(
         self,
         solver="svd",
@@ -494,6 +500,7 @@ class LinearDiscriminantAnalysis(
         rank = np.sum(S > self.tol)
         # Scaling of within covariance is: V' 1/S
         scalings = (Vt[:rank] / std).T / S[:rank]
+        fac = 1.0 if n_classes == 1 else 1.0 / (n_classes - 1)
 
         # 3) Between variance scaling
         # Scale weighted centers
@@ -512,14 +519,14 @@ class LinearDiscriminantAnalysis(
         if self._max_components == 0:
             self.explained_variance_ratio_ = np.empty((0,), dtype=S.dtype)
         else:
-            self.explained_variance_ratio_ = (S ** 2 / np.sum(S ** 2))[
+            self.explained_variance_ratio_ = (S**2 / np.sum(S**2))[
                 : self._max_components
             ]
 
         rank = np.sum(S > self.tol * S[0])
         self.scalings_ = np.dot(scalings, Vt.T[:, :rank])
         coef = np.dot(self.means_ - self.xbar_, self.scalings_)
-        self.intercept_ = -0.5 * np.sum(coef ** 2, axis=1) + np.log(self.priors_)
+        self.intercept_ = -0.5 * np.sum(coef**2, axis=1) + np.log(self.priors_)
         self.coef_ = np.dot(coef, self.scalings_.T)
         self.intercept_ -= np.dot(self.xbar_, self.coef_.T)
 
@@ -545,6 +552,9 @@ class LinearDiscriminantAnalysis(
         self : object
             Fitted estimator.
         """
+
+        self._validate_params()
+
         X, y = self._validate_data(
             X, y, ensure_min_samples=2, dtype=[np.float64, np.float32]
         )
@@ -584,7 +594,7 @@ class LinearDiscriminantAnalysis(
 
         if self.solver == "svd":
             if self.shrinkage is not None:
-                raise NotImplementedError("shrinkage not supported")
+                raise NotImplementedError("shrinkage not supported with 'svd' solver.")
             if self.covariance_estimator is not None:
                 raise ValueError(
                     "covariance estimator "
@@ -605,11 +615,6 @@ class LinearDiscriminantAnalysis(
                 y,
                 shrinkage=self.shrinkage,
                 covariance_estimator=self.covariance_estimator,
-            )
-        else:
-            raise ValueError(
-                "unknown solver {} (valid solvers are 'svd', "
-                "'lsqr', and 'eigen').".format(self.solver)
             )
         if self.classes_.size == 2:  # treat binary case as a special case
             self.coef_ = np.array(
@@ -729,7 +734,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
 
     Parameters
     ----------
-    priors : ndarray of shape (n_classes,), default=None
+    priors : array-like of shape (n_classes,), default=None
         Class priors. By default, the class proportions are inferred from the
         training data.
 
@@ -814,10 +819,17 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
     [1]
     """
 
+    _parameter_constraints: dict = {
+        "priors": ["array-like", None],
+        "reg_param": [Interval(Real, 0, 1, closed="both")],
+        "store_covariance": ["boolean"],
+        "tol": [Interval(Real, 0, None, closed="left")],
+    }
+
     def __init__(
         self, *, priors=None, reg_param=0.0, store_covariance=False, tol=1.0e-4
     ):
-        self.priors = np.asarray(priors) if priors is not None else None
+        self.priors = priors
         self.reg_param = reg_param
         self.store_covariance = store_covariance
         self.tol = tol
@@ -846,6 +858,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
         X, y = self._validate_data(X, y)
         check_classification_targets(y)
         self.classes_, y = np.unique(y, return_inverse=True)
@@ -859,7 +872,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
         if self.priors is None:
             self.priors_ = np.bincount(y) / float(n_samples)
         else:
-            self.priors_ = self.priors
+            self.priors_ = np.array(self.priors)
 
         cov = None
         store_covariance = self.store_covariance
@@ -883,7 +896,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             rank = np.sum(S > self.tol)
             if rank < n_features:
                 warnings.warn("Variables are collinear")
-            S2 = (S ** 2) / (len(Xg) - 1)
+            S2 = (S**2) / (len(Xg) - 1)
             S2 = ((1 - self.reg_param) * S2) + self.reg_param
             if self.store_covariance or store_covariance:
                 # cov = V * (S^2 / (n-1)) * V.T
@@ -908,7 +921,7 @@ class QuadraticDiscriminantAnalysis(ClassifierMixin, BaseEstimator):
             S = self.scalings_[i]
             Xm = X - self.means_[i]
             X2 = np.dot(Xm, R * (S ** (-0.5)))
-            norm2.append(np.sum(X2 ** 2, axis=1))
+            norm2.append(np.sum(X2**2, axis=1))
         norm2 = np.array(norm2).T  # shape = [len(X), n_classes]
         u = np.asarray([np.sum(np.log(s)) for s in self.scalings_])
         return -0.5 * (norm2 + u) + np.log(self.priors_)

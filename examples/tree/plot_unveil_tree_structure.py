@@ -60,7 +60,7 @@ clf.fit(X_train, y_train)
 #     node
 #   - ``feature[i]``: feature used for splitting node ``i``
 #   - ``threshold[i]``: threshold value at node ``i``
-#   - ``n_node_samples[i]``: the number of of training samples reaching node
+#   - ``n_node_samples[i]``: the number of training samples reaching node
 #     ``i``
 #   - ``impurity[i]``: the impurity at node ``i``
 #

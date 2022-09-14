@@ -9,6 +9,7 @@ from scipy import linalg
 from numpy.testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_less
+from sklearn.utils._testing import _convert_container
 
 from sklearn.covariance import (
     graphical_lasso,
@@ -155,8 +156,54 @@ def test_graphical_lasso_cv(random_state=1):
     finally:
         sys.stdout = orig_stdout
 
-    # Smoke test with specified alphas
-    GraphicalLassoCV(alphas=[0.8, 0.5], tol=1e-1, n_jobs=1).fit(X)
+
+@pytest.mark.parametrize("alphas_container_type", ["list", "tuple", "array"])
+def test_graphical_lasso_cv_alphas_iterable(alphas_container_type):
+    """Check that we can pass an array-like to `alphas`.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/22489
+    """
+    true_cov = np.array(
+        [
+            [0.8, 0.0, 0.2, 0.0],
+            [0.0, 0.4, 0.0, 0.0],
+            [0.2, 0.0, 0.3, 0.1],
+            [0.0, 0.0, 0.1, 0.7],
+        ]
+    )
+    rng = np.random.RandomState(0)
+    X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
+    alphas = _convert_container([0.02, 0.03], alphas_container_type)
+    GraphicalLassoCV(alphas=alphas, tol=1e-1, n_jobs=1).fit(X)
+
+
+@pytest.mark.parametrize(
+    "alphas,err_type,err_msg",
+    [
+        ([-0.02, 0.03], ValueError, "must be > 0"),
+        ([0, 0.03], ValueError, "must be > 0"),
+        (["not_number", 0.03], TypeError, "must be an instance of float"),
+    ],
+)
+def test_graphical_lasso_cv_alphas_invalid_array(alphas, err_type, err_msg):
+    """Check that if an array-like containing a value
+    outside of (0, inf] is passed to `alphas`, a ValueError is raised.
+    Check if a string is passed, a TypeError is raised.
+    """
+    true_cov = np.array(
+        [
+            [0.8, 0.0, 0.2, 0.0],
+            [0.0, 0.4, 0.0, 0.0],
+            [0.2, 0.0, 0.3, 0.1],
+            [0.0, 0.0, 0.1, 0.7],
+        ]
+    )
+    rng = np.random.RandomState(0)
+    X = rng.multivariate_normal(mean=[0, 0, 0, 0], cov=true_cov, size=200)
+
+    with pytest.raises(err_type, match=err_msg):
+        GraphicalLassoCV(alphas=alphas, tol=1e-1, n_jobs=1).fit(X)
 
 
 # TODO: Remove `score` and `test_score` suffix in 1.2

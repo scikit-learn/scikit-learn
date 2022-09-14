@@ -2,20 +2,18 @@
 # Author: Lars Buitinck
 # License: 3-clause BSD
 
-cimport cython
 from libcpp.vector cimport vector
-cimport numpy as np
-import numpy as np
+cimport numpy as cnp
 
-np.import_array()
+cnp.import_array()
 
 
-def dbscan_inner(np.ndarray[np.uint8_t, ndim=1, mode='c'] is_core,
-                 np.ndarray[object, ndim=1] neighborhoods,
-                 np.ndarray[np.npy_intp, ndim=1, mode='c'] labels):
-    cdef np.npy_intp i, label_num = 0, v
-    cdef np.ndarray[np.npy_intp, ndim=1] neighb
-    cdef vector[np.npy_intp] stack
+def dbscan_inner(cnp.ndarray[cnp.uint8_t, ndim=1, mode='c'] is_core,
+                 cnp.ndarray[object, ndim=1] neighborhoods,
+                 cnp.ndarray[cnp.npy_intp, ndim=1, mode='c'] labels):
+    cdef cnp.npy_intp i, label_num = 0, v
+    cdef cnp.ndarray[cnp.npy_intp, ndim=1] neighb
+    cdef vector[cnp.npy_intp] stack
 
     for i in range(labels.shape[0]):
         if labels[i] != -1 or not is_core[i]:

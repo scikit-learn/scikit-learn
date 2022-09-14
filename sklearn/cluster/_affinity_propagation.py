@@ -5,7 +5,7 @@
 
 # License: BSD 3 clause
 
-import numbers
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
@@ -13,8 +13,7 @@ import numpy as np
 from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array, check_random_state
-from ..utils import check_scalar
-from ..utils.deprecation import deprecated
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import check_is_fitted
 from ..metrics import euclidean_distances
 from ..metrics import pairwise_distances_argmin
@@ -406,6 +405,21 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
            [4, 2]])
     """
 
+    _parameter_constraints: dict = {
+        "damping": [Interval(Real, 0.5, 1.0, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "convergence_iter": [Interval(Integral, 1, None, closed="left")],
+        "copy": ["boolean"],
+        "preference": [
+            "array-like",
+            Interval(Real, None, None, closed="neither"),
+            None,
+        ],
+        "affinity": [StrOptions({"euclidean", "precomputed"})],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         *,
@@ -427,16 +441,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         self.preference = preference
         self.affinity = affinity
         self.random_state = random_state
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        return self.affinity == "precomputed"
 
     def _more_tags(self):
         return {"pairwise": self.affinity == "precomputed"}
@@ -460,6 +464,8 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         self
             Returns the instance itself.
         """
+        self._validate_params()
+
         if self.affinity == "precomputed":
             accept_sparse = False
         else:
@@ -467,29 +473,8 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         X = self._validate_data(X, accept_sparse=accept_sparse)
         if self.affinity == "precomputed":
             self.affinity_matrix_ = X
-        elif self.affinity == "euclidean":
+        else:  # self.affinity == "euclidean"
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
-        else:
-            raise ValueError(
-                "Affinity must be 'precomputed' or 'euclidean'. Got %s instead"
-                % str(self.affinity)
-            )
-
-        check_scalar(
-            self.damping,
-            "damping",
-            target_type=numbers.Real,
-            min_val=0.5,
-            max_val=1,
-            include_boundaries="left",
-        )
-        check_scalar(self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1)
-        check_scalar(
-            self.convergence_iter,
-            "convergence_iter",
-            target_type=numbers.Integral,
-            min_val=1,
-        )
 
         (
             self.cluster_centers_indices_,
