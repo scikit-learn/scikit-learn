@@ -80,7 +80,6 @@ class BaseWeightBoosting(BaseEnsemble, metaclass=ABCMeta):
         random_state=None,
         base_estimator="deprecated",
     ):
-
         super().__init__(
             estimator=estimator,
             n_estimators=n_estimators,
@@ -498,7 +497,6 @@ class AdaBoostClassifier(ClassifierMixin, BaseWeightBoosting):
         random_state=None,
         base_estimator="deprecated",
     ):
-
         super().__init__(
             estimator=estimator,
             n_estimators=n_estimators,
@@ -1074,6 +1072,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
     _parameter_constraints: dict = {
         **BaseWeightBoosting._parameter_constraints,
         "loss": [StrOptions({"linear", "square", "exponential"})],
+        "no_improvement": [StrOptions({"reset_weights", "stop", "warn", "continue"})],
     }
 
     def __init__(
@@ -1087,7 +1086,6 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         base_estimator="deprecated",
         no_improvement="warn",
     ):
-
         super().__init__(
             estimator=estimator,
             n_estimators=n_estimators,

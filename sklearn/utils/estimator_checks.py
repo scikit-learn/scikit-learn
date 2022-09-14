@@ -271,7 +271,6 @@ def _yield_clustering_checks(clusterer):
 
 
 def _yield_outliers_checks(estimator):
-
     # checks for the contamination parameter
     if hasattr(estimator, "contamination"):
         yield check_outlier_contamination
@@ -809,7 +808,6 @@ def _is_pairwise_metric(estimator):
 
 
 def _pairwise_estimator_convert_X(X, estimator, kernel=linear_kernel):
-
     if _is_pairwise_metric(estimator):
         return pairwise_distances(X, metric="euclidean")
     tags = _safe_tags(estimator)
@@ -1360,7 +1358,6 @@ def check_methods_subset_invariance(name, estimator_orig):
         "score_samples",
         "predict_proba",
     ]:
-
         msg = ("{method} of {name} is not invariant when applied to a subset.").format(
             method=method, name=name
         )
@@ -1643,7 +1640,6 @@ def _check_transformer(name, transformer_orig, X, y):
             and X.ndim == 2
             and X.shape[1] > 1
         ):
-
             # If it's not an array, it does not have a 'T' property
             with raises(
                 ValueError,
@@ -2887,7 +2883,6 @@ def check_regressors_no_decision_function(name, regressor_orig):
 
 @ignore_warnings(category=FutureWarning)
 def check_class_weight_classifiers(name, classifier_orig):
-
     if _safe_tags(classifier_orig, key="binary_only"):
         problems = [2]
     else:
@@ -3491,7 +3486,6 @@ def check_decision_proba_consistency(name, estimator_orig):
     estimator = clone(estimator_orig)
 
     if hasattr(estimator, "decision_function") and hasattr(estimator, "predict_proba"):
-
         estimator.fit(X_train, y_train)
         # Since the link function from decision_function() to predict_proba()
         # is sometimes not precise enough (typically expit), we round to the
@@ -3890,8 +3884,10 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         (names[::-1], "Feature names must be in the same order as they were in fit."),
         (
             [f"another_prefix_{i}" for i in range(n_features)],
-            "Feature names unseen at fit time:\n- another_prefix_0\n-"
-            " another_prefix_1\n",
+            (
+                "Feature names unseen at fit time:\n- another_prefix_0\n-"
+                " another_prefix_1\n"
+            ),
         ),
         (
             names[:3],

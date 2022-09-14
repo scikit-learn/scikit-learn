@@ -578,7 +578,6 @@ def test_adaboost_negative_weight_error(model, X, y):
 
 
 def test_adaboost_regressor_reset_weights():
-
     # Please refer to https://github.com/scikit-learn/scikit-learn/issues/20443
 
     np.random.seed(0)
