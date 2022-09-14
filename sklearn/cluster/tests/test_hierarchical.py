@@ -237,6 +237,8 @@ def test_agglomerative_clustering():
 
     # Test using another metric than euclidean works with linkage complete
     for metric in PAIRED_DISTANCES.keys():
+        if metric == "haversine":
+            continue  # doesn't work with the squared connectivity matrix
         # Compare our (structured) implementation to scipy
         clustering = AgglomerativeClustering(
             n_clusters=10,

@@ -406,14 +406,19 @@ def test_paired_distances(metric, func):
     # Euclidean distance, with Y != X.
     Y = rng.random_sample((5, 4))
 
-    if metric == 'haversine':
+    if metric == "haversine":
+        with pytest.raises(TypeError, match="X and Y should both be of shape (n_samples, 2), "):
+            func(X, Y)
         X, Y = X[:, :2], Y[:, :2]
 
     S = paired_distances(X, Y, metric=metric)
     S2 = func(X, Y)
     assert_array_almost_equal(S, S2)
-    S3 = func(csr_matrix(X), csr_matrix(Y))
-    assert_array_almost_equal(S, S3)
+
+    if metric != "haversine":  # doesn't work with Haversine because it needs exaclty 2 columns
+        S3 = func(csr_matrix(X), csr_matrix(Y))
+        assert_array_almost_equal(S, S3)
+
     if metric in PAIRWISE_DISTANCE_FUNCTIONS:
         # Check the pairwise_distances implementation
         # gives the same value
