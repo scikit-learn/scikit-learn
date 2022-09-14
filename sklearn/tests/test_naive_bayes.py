@@ -912,19 +912,6 @@ def test_check_accuracy_on_digits():
     assert scores.mean() > 0.86
 
 
-# FIXME: remove in 1.2
-@pytest.mark.parametrize("Estimator", DISCRETE_NAIVE_BAYES_CLASSES)
-def test_n_features_deprecation(Estimator):
-    # Check that we raise the proper deprecation warning if accessing
-    # `n_features_`.
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    est = Estimator().fit(X, y)
-
-    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
-        est.n_features_
-
-
 # TODO(1.4): Remove
 @pytest.mark.parametrize("Estimator", DISCRETE_NAIVE_BAYES_CLASSES)
 @pytest.mark.parametrize("alpha", [1, [0.1, 1e-11], 1e-12])
