@@ -45,12 +45,11 @@ which gives equal weight to the classification of each label.
 import numpy as np
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import label_binarize
 
+iris = load_iris()
+target_names = iris.target_names
 X, y = iris.data, iris.target
 y = iris.target_names[y]
-X, y = iris.data, iris.target
-target_names = iris.target_names
 
 random_state = np.random.RandomState(0)
 n_samples, n_features = X.shape
@@ -64,7 +63,11 @@ X = np.c_[X, random_state.randn(n_samples, 200 * n_features)]
 ) = train_test_split(X, y, test_size=0.5, stratify=y, random_state=0)
 
 # %%
-# We train a linear classifier that can naturally handle multiclass problems.
+# We train a :class:`~sklearn.linear_model.LogisticRegression` model which can
+# naturally handle multiclass problems, thanks to the use of the multinomial
+# formulation. But it would also have been possible to use OvR ROC evaluation of
+# an OvO multiclass support vector machine model such as
+# :class:`~sklearn.svm.SVC`.
 
 from sklearn.linear_model import LogisticRegression
 
@@ -93,30 +96,37 @@ y_score = classifier.fit(X_train, y_train).predict_proba(X_test)
 # .. note:: One should not confuse the OvR strategy used to apply ROC
 #     **evaluation** to multiclass classifiers with the OvR strategy used to
 #     **train** a multiclass classifier by fitting a set binary classifiers (for
-#     instance via the :class:`sklearn.multiclass.OneVsRestClassifier`
+#     instance via the :class:`~sklearn.multiclass.OneVsRestClassifier`
 #     meta-estimator). The OvR ROC evaluation can be used to evaluate any kind
-#     of classification models respectively of how they were trained (inherently
-#     multiclass training, or via OvR or OvO training reductions, see
-#     :ref:`multiclass`). The :class:`~sklearn.linear_model.LogisticRegression` model we use is inherently
-#     multiclass, thanks to the use of the multinomial formulation. But it would
-#     also have been possible to use OvR ROC evaluation of an OvO multiclass
-#     support vector machine model such as :class:`~sklearn.svm.SVC`.
+#     of classification models irrespectively of how they were trained (see
+#     :ref:`multiclass`).
 #
+# In this section we use a :class:`~sklearn.preprocessing.LabelBinarizer` to
+# binarize the target by one-hot-encoding in a OvR fashion. This means that the
+# target of shape (`n_samples`,) is mapped to a target of shape (`n_samples`,
+# `n_classes`).
+
+from sklearn.preprocessing import LabelBinarizer
+
+label_binarizer = LabelBinarizer().fit(y_train)
+y_onehot_test = label_binarizer.transform(y_test)
+y_onehot_test.shape  # (n_samples, n_classes)
+
+# %%
+# We can as well easily check the encoding of a specific class:
+
+label_binarizer.transform(["virginica"])
+
+# %%
 # ROC curve showing a specific class
 # ----------------------------------
 #
 # In the following plot we show the resulting ROC curve when regarding the iris
 # flowers as either "virginica" (`class_id=2`) or "non-virginica" (the rest).
 
-y_onehot_test = label_binarize(y_test, classes=[0, 1, 2])
-y_onehot_test.shape  # (n_samples, n_classes)
-
-# %%
-target_names
-
-# %%
-class_id = 2
-target_names[class_id]
+class_of_interest = "virginica"
+class_id = np.flatnonzero(label_binarizer.classes_ == class_of_interest)[0]
+class_id
 
 # %%
 import matplotlib.pyplot as plt
@@ -130,7 +140,8 @@ RocCurveDisplay.from_predictions(
 )
 plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level (AUC = 0.5)")
 plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
+plt.ylim([0.0, 1.0])
+plt.axis("square")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
 plt.title("One-vs-Rest ROC: Virginica vs (Setosa & Versicolor)")
@@ -169,8 +180,9 @@ plt.show()
 from sklearn.metrics import roc_auc_score
 
 micro_roc_auc_ovr = roc_auc_score(
-    y_onehot_test,
+    y_test,
     y_score,
+    multi_class="ovr",
     average="micro",
 )
 
@@ -192,10 +204,10 @@ roc_auc["micro"] = auc(fpr["micro"], tpr["micro"])
 print(f"Micro-averaged One-vs-Rest ROC AUC score:\n{roc_auc['micro']:.2f}")
 
 # %%
-# Notice that by default, the computation of the ROC curve adds a single point
-# at the maximal false positive rate by using linear interpolation and the
-# McClish correction [:doi:`Analyzing a portion of the ROC curve Med Decis
-# Making. 1989 Jul-Sep; 9(3):190-5.<10.1177/0272989x8900900307>`].
+# .. note:: By default, the computation of the ROC curve adds a single point at
+#     the maximal false positive rate by using linear interpolation and the
+#     McClish correction [:doi:`Analyzing a portion of the ROC curve Med Decis
+#     Making. 1989 Jul-Sep; 9(3):190-5.<10.1177/0272989x8900900307>`].
 #
 # ROC curve using the OvR macro-average
 # -------------------------------------
@@ -228,9 +240,14 @@ print(f"Macro-averaged One-vs-Rest ROC AUC score:\n{roc_auc['macro']:.2f}")
 # %%
 # This computation is equivalent to simply calling
 
-micro_roc_auc_ovr = roc_auc_score(y_onehot_test, y_score, average="macro")
+macro_roc_auc_ovr = roc_auc_score(
+    y_onehot_test,
+    y_score,
+    multi_class="ovr",
+    average="macro",
+)
 
-print(f"Macro-averaged One-vs-Rest ROC AUC score:\n{micro_roc_auc_ovr:.2f}")
+print(f"Macro-averaged One-vs-Rest ROC AUC score:\n{macro_roc_auc_ovr:.2f}")
 
 # %%
 # Plot all OvR ROC curves together
@@ -270,7 +287,8 @@ for class_id, color in zip(range(n_classes), colors):
 
 plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level (AUC = 0.5)")
 plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
+plt.ylim([0.0, 1.0])
+plt.axis("square")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
 plt.title("Some extension of Receiver operating characteristic to multiclass")
@@ -302,21 +320,24 @@ plt.show()
 
 from itertools import combinations
 
-pair_list = combinations(np.unique(y), 2)
-print(list(pair_list))
+pair_list = list(combinations(np.unique(y), 2))
+print(pair_list)
 
 # %%
 pair_scores = []
 mean_tpr = dict()
 
-for ix, (idx_a, idx_b) in enumerate(combinations(np.unique(y), 2)):
+for ix, (label_a, label_b) in enumerate(pair_list):
 
-    a_mask = y_test == idx_a
-    b_mask = y_test == idx_b
+    a_mask = y_test == label_a
+    b_mask = y_test == label_b
     ab_mask = np.logical_or(a_mask, b_mask)
 
     a_true = a_mask[ab_mask]
     b_true = b_mask[ab_mask]
+
+    idx_a = np.flatnonzero(label_binarizer.classes_ == label_a)[0]
+    idx_b = np.flatnonzero(label_binarizer.classes_ == label_b)[0]
 
     fpr_a, tpr_a, _ = roc_curve(a_true, y_score[ab_mask, idx_a])
     fpr_b, tpr_b, _ = roc_curve(b_true, y_score[ab_mask, idx_b])
@@ -332,10 +353,7 @@ for ix, (idx_a, idx_b) in enumerate(combinations(np.unique(y), 2)):
     plt.plot(
         fpr_grid,
         mean_tpr[ix],
-        label=(
-            f"Mean {target_names[idx_a]} vs {target_names[idx_b]} ROC curve (AUC ="
-            f" {mean_score :.2f})"
-        ),
+        label=f"Mean {label_a} vs {label_b} ROC curve (AUC = {mean_score :.2f})",
         linestyle=":",
         linewidth=4,
     )
@@ -343,20 +361,21 @@ for ix, (idx_a, idx_b) in enumerate(combinations(np.unique(y), 2)):
         a_true,
         y_score[ab_mask, idx_a],
         ax=ax,
-        name=f"ROC curve for {target_names[idx_a]} as positive class",
+        name=f"ROC curve for {label_a} as positive class",
     )
     RocCurveDisplay.from_predictions(
         b_true,
         y_score[ab_mask, idx_b],
         ax=ax,
-        name=f"ROC curve for {target_names[idx_b]} as positive class",
+        name=f"ROC curve for {label_b} as positive class",
     )
     plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level (AUC = 0.5)")
     plt.xlim([0.0, 1.0])
-    plt.ylim([0.0, 1.05])
+    plt.ylim([0.0, 1.0])
+    plt.axis("square")
     plt.xlabel("False Positive Rate")
     plt.ylabel("True Positive Rate")
-    plt.title(f"{target_names[idx_a]} vs {target_names[idx_b]} ROC curves")
+    plt.title(f"{target_names[idx_a]} vs {label_b} ROC curves")
     plt.legend()
     plt.show()
 
@@ -367,7 +386,12 @@ print(f"Macro-averaged One-vs-One ROC AUC score:\n{np.average(pair_scores):.2f}"
 # to the implemented `average="macro"` option of the
 # :class:`~sklearn.metrics.roc_auc_score` function.
 
-macro_roc_auc_ovo = roc_auc_score(y_test, y_score, multi_class="ovo", average="macro")
+macro_roc_auc_ovo = roc_auc_score(
+    y_onehot_test,
+    y_score,
+    multi_class="ovo",
+    average="macro",
+)
 
 print(f"One-vs-One ROC AUC scores:\n{macro_roc_auc_ovo:.2f}")
 
@@ -376,18 +400,15 @@ print(f"One-vs-One ROC AUC scores:\n{macro_roc_auc_ovo:.2f}")
 # --------------------------------
 
 ovo_tpr = np.zeros_like(fpr_grid)
-for ix, (idx_a, idx_b) in enumerate(combinations(np.unique(y), 2)):
+for ix, (label_a, label_b) in enumerate(pair_list):
     ovo_tpr += mean_tpr[ix]
     plt.plot(
         fpr_grid,
         mean_tpr[ix],
-        label=(
-            f"Mean {target_names[idx_a]} vs {target_names[idx_b]} ROC curve (AUC ="
-            f" {pair_scores[ix]:.2f})"
-        ),
+        label=f"Mean {label_a} vs {label_b} ROC curve (AUC = {pair_scores[ix]:.2f})",
     )
 
-ovo_tpr /= sum(1 for pair in enumerate(combinations(np.unique(y), 2)))
+ovo_tpr /= sum(1 for pair in enumerate(pair_list))
 
 plt.plot(
     fpr_grid,
