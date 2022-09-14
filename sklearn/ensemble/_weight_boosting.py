@@ -993,6 +993,13 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
             `base_estimator` is deprecated and will be removed in 1.4.
             Use `estimator` instead.
 
+    no_improvement : {'reset_weights', 'stop', 'warn', 'continue'}, default='warn'
+        Determines a strategy when an error rate is increasing during training.
+        - `reset_weights` resets sample weights and continues training.
+        - `stop` finish training like as early stopping.
+        - `warn` shows warning messages and continues training.
+        - `continue` (or any other argument) ignores an error rate's increasing.
+
     Attributes
     ----------
     estimator_ : estimator
@@ -1078,6 +1085,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
         loss="linear",
         random_state=None,
         base_estimator="deprecated",
+        no_improvement="warn",
     ):
 
         super().__init__(
@@ -1090,6 +1098,7 @@ class AdaBoostRegressor(RegressorMixin, BaseWeightBoosting):
 
         self.loss = loss
         self.random_state = random_state
+        self.no_improvement = no_improvement
 
     def _validate_estimator(self):
         """Check the estimator and set the estimator_ attribute."""

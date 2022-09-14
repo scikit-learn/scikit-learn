@@ -577,6 +577,57 @@ def test_adaboost_negative_weight_error(model, X, y):
         model.fit(X, y, sample_weight=sample_weight)
 
 
+def test_adaboost_regressor_reset_weights():
+
+    # Please refer to https://github.com/scikit-learn/scikit-learn/issues/20443
+
+    np.random.seed(0)
+    data, target = fetch_california_housing(return_X_y=True)
+    idx = np.random.choice(len(data), 1000, replace=False)
+    data, target = data[idx], target[idx]
+    adaboost_10 = AdaBoostRegressor(
+        learning_rate=1.0,
+        estimator=DecisionTreeRegressor(max_depth=3),
+        n_estimators=10,
+        no_improvement="continue",
+        random_state=0,
+    )
+    adaboost_500 = AdaBoostRegressor(
+        learning_rate=1.0,
+        estimator=DecisionTreeRegressor(max_depth=3),
+        n_estimators=500,
+        no_improvement="continue",
+        random_state=0,
+    )
+
+    # We usually assume a model with large n_estimators should be
+    # better than the small ones.
+    mae_10 = -cross_val_score(
+        adaboost_10, data, target, cv=5, scoring="neg_mean_absolute_error"
+    ).mean()
+    mae_500 = -cross_val_score(
+        adaboost_500, data, target, cv=5, scoring="neg_mean_absolute_error"
+    ).mean()
+
+    # But we saw an unexpected result.
+    assert mae_10 < mae_500
+
+    # Then we are going to resolve it by reset weights
+    # if we see errors increase during training.
+    adaboost_10.set_params(no_improvement="reset_weights")
+    adaboost_500.set_params(no_improvement="reset_weights")
+
+    mae_10 = -cross_val_score(
+        adaboost_10, data, target, cv=5, scoring="neg_mean_absolute_error"
+    ).mean()
+    mae_500 = -cross_val_score(
+        adaboost_500, data, target, cv=5, scoring="neg_mean_absolute_error"
+    ).mean()
+
+    # We got an expected result.
+    assert mae_10 > mae_500
+
+
 def test_adaboost_numerically_stable_feature_importance_with_small_weights():
     """Check that we don't create NaN feature importance with numerically
     instable inputs.
