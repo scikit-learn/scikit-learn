@@ -1496,22 +1496,24 @@ def test_decision_path(name):
     check_decision_path(name)
 
 
-def test_min_impurity_decrease():
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    all_estimators = [
+@pytest.mark.parametrize(
+    "Estimator",
+    [
         RandomForestClassifier,
         RandomForestRegressor,
         ExtraTreesClassifier,
         ExtraTreesRegressor,
-    ]
+    ],
+)
+def test_min_impurity_decrease(Estimator):
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
 
-    for Estimator in all_estimators:
-        est = Estimator(min_impurity_decrease=0.1)
-        est.fit(X, y)
-        for tree in est.estimators_:
-            # Simply check if the parameter is passed on correctly. Tree tests
-            # will suffice for the actual working of this param
-            assert tree.min_impurity_decrease == 0.1
+    est = Estimator(min_impurity_decrease=0.1)
+    est.fit(X, y)
+    for tree in est.estimators_:
+        # Simply check if the parameter is passed on correctly. Tree tests
+        # will suffice for the actual working of this param
+        assert tree.min_impurity_decrease == 0.1
 
 
 def test_poisson_y_positive_check():
