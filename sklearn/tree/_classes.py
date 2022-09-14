@@ -771,6 +771,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
           - 1: monotonically increasing
           - 0: no constraint
           - -1: monotonically decreasing
+
         The constraints are only valid for binary classifications and hold
         over the probability of the positive class.
 
@@ -1511,6 +1512,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
           - 1: monotonically increasing
           - 0: no constraint
           - -1: monotonically decreasing
+
         The constraints are only valid for binary classifications and hold
         over the probability of the positive class.
 
