@@ -48,11 +48,11 @@ def test_assure_warning_when_normalize(LeastAngleModel, normalize, n_warnings):
     y = rng.rand(n_samples)
 
     model = LeastAngleModel(normalize=normalize)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as rec:
+        warnings.simplefilter("always", FutureWarning)
         model.fit(X, y)
 
-    record = [r for r in record if r.category == FutureWarning]
-    assert len(record) == n_warnings
+    assert len([w.message for w in rec]) == n_warnings
 
 
 def test_simple():
@@ -530,12 +530,6 @@ def test_lasso_lars_ic():
     assert lars_bic.alpha_ > lars_aic.alpha_
     assert len(nonzero_bic) < len(nonzero_aic)
     assert np.max(nonzero_bic) < diabetes.data.shape[1]
-
-    # test error on unknown IC
-    lars_broken = linear_model.LassoLarsIC("<unknown>")
-
-    with pytest.raises(ValueError):
-        lars_broken.fit(X, y)
 
 
 def test_lars_path_readonly_data():

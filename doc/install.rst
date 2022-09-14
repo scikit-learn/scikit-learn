@@ -80,8 +80,8 @@ Then run:
         ><span class="sk-expandable" data-packager="pip" data-os="mac" data-venv="no">pip install -U scikit-learn</span
         ><span class="sk-expandable" data-packager="pip" data-os="windows" data-venv="no">pip install -U scikit-learn</span
         ><span class="sk-expandable" data-packager="pip" data-os="linux" data-venv="no">pip3 install -U scikit-learn</span
-        ><span class="sk-expandable" data-packager="conda" data-venv="">conda create -n sklearn-env -c conda-forge scikit-learn</span
-        ><span class="sk-expandable" data-packager="conda" data-venv="">conda activate sklearn-env</span
+        ><span class="sk-expandable" data-packager="conda">conda create -n sklearn-env -c conda-forge scikit-learn</span
+        ><span class="sk-expandable" data-packager="conda">conda activate sklearn-env</span
        ></code></pre></div>
 
 In order to check your installation you can use
@@ -187,6 +187,19 @@ dependencies (numpy, scipy) that scikit-learn requires.
 
 The following is an incomplete list of OS and python distributions
 that provide their own version of scikit-learn.
+
+Alpine Linux
+------------
+
+Alpine Linux's package is provided through the `official repositories
+<https://pkgs.alpinelinux.org/packages?name=py3-scikit-learn>`__ as
+``py3-scikit-learn`` for Python.
+It can be installed by typing the following command:
+
+.. prompt:: bash $
+
+  sudo apk add py3-scikit-learn
+
 
 Arch Linux
 ----------

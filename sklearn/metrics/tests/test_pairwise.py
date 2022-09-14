@@ -1,3 +1,4 @@
+import warnings
 from types import GeneratorType
 
 import numpy as np
@@ -206,18 +207,18 @@ def test_pairwise_boolean_distance(metric):
         pairwise_distances(X.astype(bool), Y=Y, metric=metric)
 
     # Check that no warning is raised if X is already boolean and Y is None:
-    with pytest.warns(None) as records:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DataConversionWarning)
         pairwise_distances(X.astype(bool), metric=metric)
-    assert not [w.message for w in records]
 
 
 def test_no_data_conversion_warning():
     # No warnings issued if metric is not a boolean distance function
     rng = np.random.RandomState(0)
     X = rng.randn(5, 4)
-    with pytest.warns(None) as records:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", DataConversionWarning)
         pairwise_distances(X, metric="minkowski")
-    assert not [w.message for w in records]
 
 
 @pytest.mark.parametrize("func", [pairwise_distances, pairwise_kernels])
@@ -549,6 +550,14 @@ def test_pairwise_distances_argmin_min(dtype):
     argmin_1 = pairwise_distances_argmin(X, X, axis=1)
 
     assert_array_equal(argmin_0, argmin_1)
+
+    # F-contiguous arrays must be supported and must return identical results.
+    argmin_C_contiguous = pairwise_distances_argmin(X, Y)
+    argmin_F_contiguous = pairwise_distances_argmin(
+        np.asfortranarray(X), np.asfortranarray(Y)
+    )
+
+    assert_array_equal(argmin_C_contiguous, argmin_F_contiguous)
 
 
 def _reduce_func(dist, start):

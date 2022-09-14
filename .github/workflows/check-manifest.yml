@@ -5,7 +5,7 @@ on:
     - cron: '0 0 * * *'
 
 jobs:
-  check:
+  check-manifest:
     # Don't run on forks
     if: github.repository == 'scikit-learn/scikit-learn'
 

@@ -17,6 +17,10 @@ on:
   # Manual run
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   # Check whether to build the wheels and the source tarball
   check_build_trigger:
@@ -85,18 +89,6 @@ jobs:
             bitness: 64
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
-
-          # Linux 64 bit manylinux2010
-          - os: ubuntu-latest
-            python: 38
-            bitness: 64
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2010
-          - os: ubuntu-latest
-            python: 39
-            bitness: 64
-            platform_id: manylinux_x86_64
-            manylinux_image: manylinux2010
 
           # NumPy on Python 3.10 only supports 64bit and is only available with manylinux2014
           - os: ubuntu-latest
@@ -168,6 +160,15 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           path: wheelhouse/*.whl
+
+  update-tracker:
+    uses: ./.github/workflows/update_tracking_issue.yml
+    if: ${{ always() }}
+    needs: [build_wheels]
+    with:
+      job_status: ${{ needs.build_wheels.result }}
+    secrets:
+      BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}
 
   # Build the source distribution under Linux
   build_sdist:

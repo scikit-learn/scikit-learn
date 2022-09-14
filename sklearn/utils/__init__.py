@@ -129,7 +129,8 @@ def safe_mask(X, mask):
 
     Returns
     -------
-        mask
+    mask : ndarray
+        Array that is safe to use on X.
     """
     mask = np.asarray(mask)
     if np.issubdtype(mask.dtype, np.signedinteger):
@@ -473,6 +474,10 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
         Sequence of resampled copies of the collections. The original arrays
         are not impacted.
 
+    See Also
+    --------
+    shuffle : Shuffle arrays or sparse matrices in a consistent way.
+
     Examples
     --------
     It is possible to mix sparse and dense arrays in the same run::
@@ -512,10 +517,6 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
       >>> resample(y, n_samples=5, replace=False, stratify=y,
       ...          random_state=0)
       [1, 1, 1, 0, 1]
-
-    See Also
-    --------
-    shuffle
     """
     max_n_samples = n_samples
     random_state = check_random_state(random_state)
@@ -611,6 +612,10 @@ def shuffle(*arrays, random_state=None, n_samples=None):
         Sequence of shuffled copies of the collections. The original arrays
         are not impacted.
 
+    See Also
+    --------
+    resample : Resample arrays or sparse matrices in a consistent way.
+
     Examples
     --------
     It is possible to mix sparse and dense arrays in the same run::
@@ -643,10 +648,6 @@ def shuffle(*arrays, random_state=None, n_samples=None):
 
       >>> shuffle(y, n_samples=2, random_state=0)
       array([0, 1])
-
-    See Also
-    --------
-    resample
     """
     return resample(
         *arrays, replace=False, n_samples=n_samples, random_state=random_state
@@ -1210,16 +1211,6 @@ def all_estimators(type_filter=None):
             classes = [
                 (name, est_cls) for name, est_cls in classes if not name.startswith("_")
             ]
-
-            # TODO: Remove when FeatureHasher is implemented in PYPY
-            # Skips FeatureHasher for PYPY
-            if IS_PYPY and "feature_extraction" in modname:
-                classes = [
-                    (name, est_cls)
-                    for name, est_cls in classes
-                    if name == "FeatureHasher"
-                ]
-
             all_classes.extend(classes)
 
     all_classes = set(all_classes)

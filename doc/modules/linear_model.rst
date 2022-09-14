@@ -389,10 +389,10 @@ formula is valid only when `n_samples > n_features`.
            The Annals of Statistics 35.5 (2007): 2173-2192.
            <0712.0881.pdf>`
 
-  .. [13] `Cherkassky, Vladimir, and Yunqian Ma.
+  .. [13] :doi:`Cherkassky, Vladimir, and Yunqian Ma.
            "Comparison of model selection for regression."
            Neural computation 15.7 (2003): 1691-1714.
-           <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.392.8794&rep=rep1&type=pdf>`_
+           <10.1162/089976603321891864>`
 
 Comparison with the regularization parameter of SVM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -571,7 +571,7 @@ The disadvantages of the LARS method include:
     in the discussion section of the Efron et al. (2004) Annals of
     Statistics article.
 
-The LARS model can be used using via the estimator :class:`Lars`, or its
+The LARS model can be used via the estimator :class:`Lars`, or its
 low-level implementation :func:`lars_path` or :func:`lars_path_gram`.
 
 
@@ -631,7 +631,7 @@ column is always zero.
 
 Orthogonal Matching Pursuit (OMP)
 =================================
-:class:`OrthogonalMatchingPursuit` and :func:`orthogonal_mp` implements the OMP
+:class:`OrthogonalMatchingPursuit` and :func:`orthogonal_mp` implement the OMP
 algorithm for approximating the fit of a linear model with constraints imposed
 on the number of non-zero coefficients (ie. the :math:`\ell_0` pseudo-norm).
 
@@ -746,13 +746,6 @@ There are four more hyperparameters, :math:`\alpha_1`, :math:`\alpha_2`,
 :math:`\alpha` and :math:`\lambda`. These are usually chosen to be
 *non-informative*. By default :math:`\alpha_1 = \alpha_2 =  \lambda_1 = \lambda_2 = 10^{-6}`.
 
-
-.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_bayesian_ridge_001.png
-   :target: ../auto_examples/linear_model/plot_bayesian_ridge.html
-   :align: center
-   :scale: 50%
-
-
 Bayesian Ridge Regression is used for regression::
 
     >>> from sklearn import linear_model
@@ -778,7 +771,6 @@ is more robust to ill-posed problems.
 
 .. topic:: Examples:
 
- * :ref:`sphx_glr_auto_examples_linear_model_plot_bayesian_ridge.py`
  * :ref:`sphx_glr_auto_examples_linear_model_plot_bayesian_ridge_curvefit.py`
 
 .. topic:: References:
@@ -789,37 +781,35 @@ is more robust to ill-posed problems.
 
     * Michael E. Tipping, `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_, 2001.
 
+.. _automatic_relevance_determination:
 
 Automatic Relevance Determination - ARD
 ---------------------------------------
 
-:class:`ARDRegression` is very similar to `Bayesian Ridge Regression`_,
-but can lead to sparser coefficients :math:`w` [1]_ [2]_.
-:class:`ARDRegression` poses a different prior over :math:`w`, by dropping the
-assumption of the Gaussian being spherical.
+The Automatic Relevance Determination (as being implemented in
+:class:`ARDRegression`) is a kind of linear model which is very similar to the
+`Bayesian Ridge Regression`_, but that leads to sparser coefficients :math:`w`
+[1]_ [2]_.
 
-Instead, the distribution over :math:`w` is assumed to be an axis-parallel,
-elliptical Gaussian distribution.
-
-This means each coefficient :math:`w_{i}` is drawn from a Gaussian distribution,
-centered on zero and with a precision :math:`\lambda_{i}`:
+:class:`ARDRegression` poses a different prior over :math:`w`: it drops
+the spherical Gaussian distribution for a centered elliptic Gaussian
+distribution. This means each coefficient :math:`w_{i}` can itself be drawn from
+a Gaussian distribution, centered on zero and with a precision
+:math:`\lambda_{i}`:
 
 .. math:: p(w|\lambda) = \mathcal{N}(w|0,A^{-1})
 
-with :math:`\text{diag}(A) = \lambda = \{\lambda_{1},...,\lambda_{p}\}`.
+with :math:`A` being a positive definite diagonal matrix and
+:math:`\text{diag}(A) = \lambda = \{\lambda_{1},...,\lambda_{p}\}`.
 
-In contrast to `Bayesian Ridge Regression`_, each coordinate of :math:`w_{i}`
-has its own standard deviation :math:`\lambda_i`. The prior over all
-:math:`\lambda_i` is chosen to be the same gamma distribution given by
-hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
+In contrast to the `Bayesian Ridge Regression`_, each coordinate of
+:math:`w_{i}` has its own standard deviation :math:`\frac{1}{\lambda_i}`. The
+prior over all :math:`\lambda_i` is chosen to be the same gamma distribution
+given by the hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
 
-.. figure:: ../auto_examples/linear_model/images/sphx_glr_plot_ard_001.png
-   :target: ../auto_examples/linear_model/plot_ard.html
-   :align: center
-   :scale: 50%
-
-ARD is also known in the literature as *Sparse Bayesian Learning* and
-*Relevance Vector Machine* [3]_ [4]_.
+ARD is also known in the literature as *Sparse Bayesian Learning* and *Relevance
+Vector Machine* [3]_ [4]_. For a worked-out comparison between ARD and `Bayesian
+Ridge Regression`_, see the example below.
 
 .. topic:: Examples:
 
@@ -860,28 +850,91 @@ regularization.
     that it improves numerical stability. No regularization amounts to
     setting C to a very high value.
 
-As an optimization problem, binary class :math:`\ell_2` penalized logistic
-regression minimizes the following cost function:
+Binary Case
+-----------
 
-.. math:: \min_{w, c} \frac{1}{2}w^T w + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1) .
+For notational ease, we assume that the target :math:`y_i` takes values in the
+set :math:`\{0, 1\}` for data point :math:`i`.
+Once fitted, the :meth:`~sklearn.linear_model.LogisticRegression.predict_proba`
+method of :class:`~sklearn.linear_model.LogisticRegression` predicts
+the probability of the positive class :math:`P(y_i=1|X_i)` as
 
-Similarly, :math:`\ell_1` regularized logistic regression solves the following
-optimization problem:
+.. math:: \hat{p}(X_i) = \operatorname{expit}(X_i w + w_0) = \frac{1}{1 + \exp(-X_i w - w_0)}.
 
-.. math:: \min_{w, c} \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1).
+As an optimization problem, binary
+class logistic regression with regularization term :math:`r(w)` minimizes the
+following cost function:
 
-Elastic-Net regularization is a combination of :math:`\ell_1` and
-:math:`\ell_2`, and minimizes the following cost function:
+.. math:: \min_{w} C \sum_{i=1}^n \left(-y_i \log(\hat{p}(X_i)) - (1 - y_i) \log(1 - \hat{p}(X_i))\right) + r(w).
 
-.. math:: \min_{w, c} \frac{1 - \rho}{2}w^T w + \rho \|w\|_1 + C \sum_{i=1}^n \log(\exp(- y_i (X_i^T w + c)) + 1),
 
-where :math:`\rho` controls the strength of :math:`\ell_1` regularization vs.
-:math:`\ell_2` regularization (it corresponds to the `l1_ratio` parameter).
+We currently provide four choices for the regularization term  :math:`r(w)`  via
+the `penalty` argument:
 
-Note that, in this notation, it's assumed that the target :math:`y_i` takes
-values in the set :math:`{-1, 1}` at trial :math:`i`. We can also see that
-Elastic-Net is equivalent to :math:`\ell_1` when :math:`\rho = 1` and equivalent
-to :math:`\ell_2` when :math:`\rho=0`.
++----------------+-------------------------------------------------+
+| penalty        | :math:`r(w)`                                    |
++================+=================================================+
+| `None`         | :math:`0`                                       |
++----------------+-------------------------------------------------+
+| :math:`\ell_1` | :math:`\|w\|_1`                                 |
++----------------+-------------------------------------------------+
+| :math:`\ell_2` | :math:`\frac{1}{2}\|w\|_2^2 = \frac{1}{2}w^T w` |
++----------------+-------------------------------------------------+
+| `ElasticNet`   | :math:`\frac{1 - \rho}{2}w^T w + \rho \|w\|_1`  |
++----------------+-------------------------------------------------+
+
+For ElasticNet, :math:`\rho` (which corresponds to the `l1_ratio` parameter)
+controls the strength of :math:`\ell_1` regularization vs. :math:`\ell_2`
+regularization. Elastic-Net is equivalent to :math:`\ell_1` when
+:math:`\rho = 1` and equivalent to :math:`\ell_2` when :math:`\rho=0`.
+
+Multinomial Case
+----------------
+
+The binary case can be extended to :math:`K` classes leading to the multinomial
+logistic regression, see also `log-linear model
+<https://en.wikipedia.org/wiki/Multinomial_logistic_regression#As_a_log-linear_model>`_.
+
+.. note::
+   It is possible to parameterize a :math:`K`-class classification model
+   using only :math:`K-1` weight vectors, leaving one class probability fully
+   determined by the other class probabilities by leveraging the fact that all
+   class probabilities must sum to one. We deliberately choose to overparameterize the model
+   using :math:`K` weight vectors for ease of implementation and to preserve the
+   symmetrical inductive bias regarding ordering of classes, see [16]_. This effect becomes
+   especially important when using regularization. The choice of overparameterization can be
+   detrimental for unpenalized models since then the solution may not be unique, as shown in [16]_.
+
+Let :math:`y_i \in {1, \ldots, K}` be the label (ordinal) encoded target variable for observation :math:`i`.
+Instead of a single coefficient vector, we now have
+a matrix of coefficients :math:`W` where each row vector :math:`W_k` corresponds to class
+:math:`k`. We aim at predicting the class probabilities :math:`P(y_i=k|X_i)` via
+:meth:`~sklearn.linear_model.LogisticRegression.predict_proba` as:
+
+.. math:: \hat{p}_k(X_i) = \frac{\exp(X_i W_k + W_{0, k})}{\sum_{l=0}^{K-1} \exp(X_i W_l + W_{0, l})}.
+
+The objective for the optimization becomes
+
+.. math:: \min_W -C \sum_{i=1}^n \sum_{k=0}^{K-1} [y_i = k] \log(\hat{p}_k(X_i)) + r(W).
+
+Where :math:`[P]` represents the Iverson bracket which evaluates to :math:`0`
+if :math:`P` is false, otherwise it evaluates to :math:`1`. We currently provide four choices
+for the regularization term :math:`r(W)` via the `penalty` argument:
+
++----------------+----------------------------------------------------------------------------------+
+| penalty        | :math:`r(W)`                                                                     |
++================+==================================================================================+
+| `None`         | :math:`0`                                                                        |
++----------------+----------------------------------------------------------------------------------+
+| :math:`\ell_1` | :math:`\|W\|_{1,1} = \sum_{i=1}^n\sum_{j=1}^{K}|W_{i,j}|`                        |
++----------------+----------------------------------------------------------------------------------+
+| :math:`\ell_2` | :math:`\frac{1}{2}\|W\|_F^2 = \frac{1}{2}\sum_{i=1}^n\sum_{j=1}^{K} W_{i,j}^2`   |
++----------------+----------------------------------------------------------------------------------+
+| `ElasticNet`   | :math:`\frac{1 - \rho}{2}\|W\|_F^2 + \rho \|W\|_{1,1}`                           |
++----------------+----------------------------------------------------------------------------------+
+
+Solvers
+-------
 
 The solvers implemented in the class :class:`LogisticRegression`
 are "liblinear", "newton-cg", "lbfgs", "sag" and "saga":
@@ -1014,6 +1067,10 @@ to warm-starting (see :term:`Glossary <warm_start>`).
     .. [9] `"Performance Evaluation of Lbfgs vs other solvers"
             <http://www.fuzihao.org/blog/2016/01/16/Comparison-of-Gradient-Descent-Stochastic-Gradient-Descent-and-L-BFGS/>`_
 
+    .. [16] :arxiv:`Simon, Noah, J. Friedman and T. Hastie.
+        "A Blockwise Descent Algorithm for Group-penalized Multiresponse and
+        Multinomial Regression." <1311.6529>`
+
 .. _Generalized_linear_regression:
 
 Generalized Linear Regression
@@ -1032,7 +1089,7 @@ reproductive exponential dispersion model (EDM) [11]_).
 
 The minimization problem becomes:
 
-.. math::    \min_{w} \frac{1}{2 n_{\text{samples}}} \sum_i d(y_i, \hat{y}_i) + \frac{\alpha}{2} ||w||_2,
+.. math::    \min_{w} \frac{1}{2 n_{\text{samples}}} \sum_i d(y_i, \hat{y}_i) + \frac{\alpha}{2} ||w||_2^2,
 
 where :math:`\alpha` is the L2 regularization penalty. When sample weights are
 provided, the average becomes a weighted average.
@@ -1492,7 +1549,7 @@ in the following ways.
   * Peter J. Huber, Elvezio M. Ronchetti: Robust Statistics, Concomitant scale estimates, pg 172
 
 Note that this estimator is different from the R implementation of Robust Regression
-(http://www.ats.ucla.edu/stat/r/dae/rreg.htm) because the R implementation does a weighted least
+(https://stats.oarc.ucla.edu/r/dae/robust-regression/) because the R implementation does a weighted least
 squares implementation with weights given to each sample on the basis of how much the residual is
 greater than a certain threshold.
 
@@ -1522,7 +1579,7 @@ see also :class:`~sklearn.metrics.mean_pinball_loss`,
     \begin{cases}
         q t, & t > 0, \\
         0,    & t = 0, \\
-        (1-q) t, & t < 0
+        (q-1) t, & t < 0
     \end{cases}
 
 and the L1 penalty controlled by parameter ``alpha``, similar to

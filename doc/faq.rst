@@ -164,7 +164,7 @@ scikit-learn has to offer. If we started doing arbitrary structured
 learning, we'd need to redesign the whole package and the project
 would likely collapse under its own weight.
 
-There are two project with API similar to scikit-learn that
+There are two projects with API similar to scikit-learn that
 do structured prediction:
 
 * `pystruct <https://pystruct.github.io/>`_ handles general structured
@@ -196,7 +196,7 @@ a built-in just-in-time compiler).
 
 Note however that this support is still considered experimental and specific
 components might behave slightly differently. Please refer to the test
-suite of a the specific module of interest for more details.
+suite of the specific module of interest for more details.
 
 How do I deal with string data (or trees, graphs...)?
 -----------------------------------------------------

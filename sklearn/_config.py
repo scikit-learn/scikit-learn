@@ -8,7 +8,7 @@ _global_config = {
     "assume_finite": bool(os.environ.get("SKLEARN_ASSUME_FINITE", False)),
     "working_memory": int(os.environ.get("SKLEARN_WORKING_MEMORY", 1024)),
     "print_changed_only": True,
-    "display": "text",
+    "display": "diagram",
     "pairwise_dist_chunk_size": int(
         os.environ.get("SKLEARN_PAIRWISE_DIST_CHUNK_SIZE", 256)
     ),
@@ -85,13 +85,14 @@ def set_config(
     display : {'text', 'diagram'}, default=None
         If 'diagram', estimators will be displayed as a diagram in a Jupyter
         lab or notebook context. If 'text', estimators will be displayed as
-        text. Default is 'text'.
+        text. Default is 'diagram'.
 
         .. versionadded:: 0.23
 
     pairwise_dist_chunk_size : int, default=None
-        The number of row vectors per chunk for PairwiseDistancesReduction.
-        Default is 256 (suitable for most of modern laptops' caches and architectures).
+        The number of row vectors per chunk for the accelerated pairwise-
+        distances reduction backend. Default is 256 (suitable for most of
+        modern laptops' caches and architectures).
 
         Intended for easier benchmarking and testing of scikit-learn internals.
         End users are not expected to benefit from customizing this configuration
@@ -100,8 +101,8 @@ def set_config(
         .. versionadded:: 1.1
 
     enable_cython_pairwise_dist : bool, default=None
-        Use PairwiseDistancesReduction when possible.
-        Default is True.
+        Use the accelerated pairwise-distances reduction backend when
+        possible. Global default: True.
 
         Intended for easier benchmarking and testing of scikit-learn internals.
         End users are not expected to benefit from customizing this configuration
@@ -173,13 +174,14 @@ def config_context(
         If 'diagram', estimators will be displayed as a diagram in a Jupyter
         lab or notebook context. If 'text', estimators will be displayed as
         text. If None, the existing value won't change.
-        The default value is 'text'.
+        The default value is 'diagram'.
 
         .. versionadded:: 0.23
 
     pairwise_dist_chunk_size : int, default=None
-        The number of vectors per chunk for PairwiseDistancesReduction.
-        Default is 256 (suitable for most of modern laptops' caches and architectures).
+        The number of row vectors per chunk for the accelerated pairwise-
+        distances reduction backend. Default is 256 (suitable for most of
+        modern laptops' caches and architectures).
 
         Intended for easier benchmarking and testing of scikit-learn internals.
         End users are not expected to benefit from customizing this configuration
@@ -188,8 +190,8 @@ def config_context(
         .. versionadded:: 1.1
 
     enable_cython_pairwise_dist : bool, default=None
-        Use PairwiseDistancesReduction when possible.
-        Default is True.
+        Use the accelerated pairwise-distances reduction backend when
+        possible. Global default: True.
 
         Intended for easier benchmarking and testing of scikit-learn internals.
         End users are not expected to benefit from customizing this configuration

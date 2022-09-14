@@ -6,16 +6,18 @@ Various bayesian regression
 # License: BSD 3 clause
 
 from math import log
+from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
 
-from ._base import LinearModel, _rescale_data
+from ._base import LinearModel, _preprocess_data, _rescale_data
 from ..base import RegressorMixin
 from ._base import _deprecate_normalize
 from ..utils.extmath import fast_logdet
 from scipy.linalg import pinvh
 from ..utils.validation import _check_sample_weight
-
+from ..utils._param_validation import StrOptions, Hidden
+from ..utils._param_validation import Interval
 
 ###############################################################################
 # BayesianRidge regression
@@ -174,6 +176,22 @@ class BayesianRidge(RegressorMixin, LinearModel):
     array([1.])
     """
 
+    _parameter_constraints: dict = {
+        "n_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="neither")],
+        "alpha_1": [Interval(Real, 0, None, closed="left")],
+        "alpha_2": [Interval(Real, 0, None, closed="left")],
+        "lambda_1": [Interval(Real, 0, None, closed="left")],
+        "lambda_2": [Interval(Real, 0, None, closed="left")],
+        "alpha_init": [None, Interval(Real, 0, None, closed="left")],
+        "lambda_init": [None, Interval(Real, 0, None, closed="left")],
+        "compute_score": ["boolean"],
+        "fit_intercept": ["boolean"],
+        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
+        "copy_X": ["boolean"],
+        "verbose": ["verbose"],
+    }
+
     def __init__(
         self,
         *,
@@ -226,23 +244,18 @@ class BayesianRidge(RegressorMixin, LinearModel):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
+
         self._normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
-
-        if self.n_iter < 1:
-            raise ValueError(
-                "n_iter should be greater than or equal to 1. Got {!r}.".format(
-                    self.n_iter
-                )
-            )
 
         X, y = self._validate_data(X, y, dtype=[np.float64, np.float32], y_numeric=True)
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
+        X, y, X_offset_, y_offset_, X_scale_ = _preprocess_data(
             X,
             y,
             self.fit_intercept,
@@ -253,7 +266,7 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         if sample_weight is not None:
             # Sample weight can be implemented via a simple rescaling.
-            X, y = _rescale_data(X, y, sample_weight)
+            X, y, _ = _rescale_data(X, y, sample_weight)
 
         self.X_offset_ = X_offset_
         self.X_scale_ = X_scale_
@@ -566,6 +579,21 @@ class ARDRegression(RegressorMixin, LinearModel):
     array([1.])
     """
 
+    _parameter_constraints: dict = {
+        "n_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "alpha_1": [Interval(Real, 0, None, closed="left")],
+        "alpha_2": [Interval(Real, 0, None, closed="left")],
+        "lambda_1": [Interval(Real, 0, None, closed="left")],
+        "lambda_2": [Interval(Real, 0, None, closed="left")],
+        "compute_score": ["boolean"],
+        "threshold_lambda": [Interval(Real, 0, None, closed="left")],
+        "fit_intercept": ["boolean"],
+        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
+        "copy_X": ["boolean"],
+        "verbose": ["verbose"],
+    }
+
     def __init__(
         self,
         *,
@@ -613,6 +641,9 @@ class ARDRegression(RegressorMixin, LinearModel):
         self : object
             Fitted estimator.
         """
+
+        self._validate_params()
+
         self._normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
@@ -624,7 +655,7 @@ class ARDRegression(RegressorMixin, LinearModel):
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features, dtype=X.dtype)
 
-        X, y, X_offset_, y_offset_, X_scale_ = self._preprocess_data(
+        X, y, X_offset_, y_offset_, X_scale_ = _preprocess_data(
             X, y, self.fit_intercept, self._normalize, self.copy_X
         )
 

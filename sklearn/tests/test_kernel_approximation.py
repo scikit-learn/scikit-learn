@@ -6,6 +6,7 @@ import pytest
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
 
 from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
@@ -24,19 +25,10 @@ X /= X.sum(axis=1)[:, np.newaxis]
 Y /= Y.sum(axis=1)[:, np.newaxis]
 
 
-@pytest.mark.parametrize("degree", [-1, 0])
-def test_polynomial_count_sketch_raises_if_degree_lower_than_one(degree):
-    with pytest.raises(ValueError, match=f"degree={degree} should be >=1."):
-        ps_transform = PolynomialCountSketch(degree=degree)
-        ps_transform.fit(X, Y)
-
-
-@pytest.mark.parametrize("X", [X, csr_matrix(X)])
-@pytest.mark.parametrize("Y", [Y, csr_matrix(Y)])
 @pytest.mark.parametrize("gamma", [0.1, 1, 2.5])
-@pytest.mark.parametrize("degree", [1, 2, 3])
-@pytest.mark.parametrize("coef0", [0, 1, 2.5])
-def test_polynomial_count_sketch(X, Y, gamma, degree, coef0):
+@pytest.mark.parametrize("degree, n_components", [(1, 500), (2, 500), (3, 5000)])
+@pytest.mark.parametrize("coef0", [0, 2.5])
+def test_polynomial_count_sketch(gamma, degree, coef0, n_components):
     # test that PolynomialCountSketch approximates polynomial
     # kernel on random data
 
@@ -45,7 +37,11 @@ def test_polynomial_count_sketch(X, Y, gamma, degree, coef0):
 
     # approximate kernel mapping
     ps_transform = PolynomialCountSketch(
-        n_components=5000, gamma=gamma, coef0=coef0, degree=degree, random_state=42
+        n_components=n_components,
+        gamma=gamma,
+        coef0=coef0,
+        degree=degree,
+        random_state=42,
     )
     X_trans = ps_transform.fit_transform(X)
     Y_trans = ps_transform.transform(Y)
@@ -56,6 +52,29 @@ def test_polynomial_count_sketch(X, Y, gamma, degree, coef0):
     np.abs(error, out=error)
     assert np.max(error) <= 0.1  # nothing too far off
     assert np.mean(error) <= 0.05  # mean is fairly close
+
+
+@pytest.mark.parametrize("gamma", [0.1, 1.0])
+@pytest.mark.parametrize("degree", [1, 2, 3])
+@pytest.mark.parametrize("coef0", [0, 2.5])
+def test_polynomial_count_sketch_dense_sparse(gamma, degree, coef0):
+    """Check that PolynomialCountSketch results are the same for dense and sparse
+    input.
+    """
+    ps_dense = PolynomialCountSketch(
+        n_components=500, gamma=gamma, degree=degree, coef0=coef0, random_state=42
+    )
+    Xt_dense = ps_dense.fit_transform(X)
+    Yt_dense = ps_dense.transform(Y)
+
+    ps_sparse = PolynomialCountSketch(
+        n_components=500, gamma=gamma, degree=degree, coef0=coef0, random_state=42
+    )
+    Xt_sparse = ps_sparse.fit_transform(csr_matrix(X))
+    Yt_sparse = ps_sparse.transform(csr_matrix(Y))
+
+    assert_allclose(Xt_dense, Xt_sparse)
+    assert_allclose(Yt_dense, Yt_sparse)
 
 
 def _linear_kernel(X, Y):
@@ -194,6 +213,64 @@ def test_rbf_sampler():
     np.abs(error, out=error)
     assert np.max(error) <= 0.1  # nothing too far off
     assert np.mean(error) <= 0.05  # mean is fairly close
+
+
+def test_rbf_sampler_fitted_attributes_dtype(global_dtype):
+    """Check that the fitted attributes are stored accordingly to the
+    data type of X."""
+    rbf = RBFSampler()
+
+    X = np.array([[1, 2], [3, 4], [5, 6]], dtype=global_dtype)
+
+    rbf.fit(X)
+
+    assert rbf.random_offset_.dtype == global_dtype
+    assert rbf.random_weights_.dtype == global_dtype
+
+
+def test_rbf_sampler_dtype_equivalence():
+    """Check the equivalence of the results with 32 and 64 bits input."""
+    rbf32 = RBFSampler(random_state=42)
+    X32 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
+    rbf32.fit(X32)
+
+    rbf64 = RBFSampler(random_state=42)
+    X64 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float64)
+    rbf64.fit(X64)
+
+    assert_allclose(rbf32.random_offset_, rbf64.random_offset_)
+    assert_allclose(rbf32.random_weights_, rbf64.random_weights_)
+
+
+def test_skewed_chi2_sampler_fitted_attributes_dtype(global_dtype):
+    """Check that the fitted attributes are stored accordingly to the
+    data type of X."""
+    skewed_chi2_sampler = SkewedChi2Sampler()
+
+    X = np.array([[1, 2], [3, 4], [5, 6]], dtype=global_dtype)
+
+    skewed_chi2_sampler.fit(X)
+
+    assert skewed_chi2_sampler.random_offset_.dtype == global_dtype
+    assert skewed_chi2_sampler.random_weights_.dtype == global_dtype
+
+
+def test_skewed_chi2_sampler_dtype_equivalence():
+    """Check the equivalence of the results with 32 and 64 bits input."""
+    skewed_chi2_sampler_32 = SkewedChi2Sampler(random_state=42)
+    X_32 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
+    skewed_chi2_sampler_32.fit(X_32)
+
+    skewed_chi2_sampler_64 = SkewedChi2Sampler(random_state=42)
+    X_64 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float64)
+    skewed_chi2_sampler_64.fit(X_64)
+
+    assert_allclose(
+        skewed_chi2_sampler_32.random_offset_, skewed_chi2_sampler_64.random_offset_
+    )
+    assert_allclose(
+        skewed_chi2_sampler_32.random_weights_, skewed_chi2_sampler_64.random_weights_
+    )
 
 
 def test_input_validation():
@@ -346,3 +423,47 @@ def test_nystroem_component_indices():
     )
     feature_map_nystroem.fit(X)
     assert feature_map_nystroem.component_indices_.shape == (10,)
+
+
+@pytest.mark.parametrize(
+    "Estimator", [PolynomialCountSketch, RBFSampler, SkewedChi2Sampler, Nystroem]
+)
+def test_get_feature_names_out(Estimator):
+    """Check get_feature_names_out"""
+    est = Estimator().fit(X)
+    X_trans = est.transform(X)
+
+    names_out = est.get_feature_names_out()
+    class_name = Estimator.__name__.lower()
+    expected_names = [f"{class_name}{i}" for i in range(X_trans.shape[1])]
+    assert_array_equal(names_out, expected_names)
+
+
+def test_additivechi2sampler_get_feature_names_out():
+    """Check get_feature_names_out for AdditiveChi2Sampler."""
+    rng = np.random.RandomState(0)
+    X = rng.random_sample(size=(300, 3))
+
+    chi2_sampler = AdditiveChi2Sampler(sample_steps=3).fit(X)
+    input_names = ["f0", "f1", "f2"]
+    suffixes = [
+        "f0_sqrt",
+        "f1_sqrt",
+        "f2_sqrt",
+        "f0_cos1",
+        "f1_cos1",
+        "f2_cos1",
+        "f0_sin1",
+        "f1_sin1",
+        "f2_sin1",
+        "f0_cos2",
+        "f1_cos2",
+        "f2_cos2",
+        "f0_sin2",
+        "f1_sin2",
+        "f2_sin2",
+    ]
+
+    names_out = chi2_sampler.get_feature_names_out(input_features=input_names)
+    expected_names = [f"additivechi2sampler_{suffix}" for suffix in suffixes]
+    assert_array_equal(names_out, expected_names)

@@ -4,6 +4,7 @@
 # Modified by: Pete Green <p.l.green@liverpool.ac.uk>
 # License: BSD 3 clause
 
+import warnings
 import sys
 import re
 import numpy as np
@@ -13,7 +14,11 @@ from scipy.optimize import approx_fprime
 import pytest
 
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, WhiteKernel
+from sklearn.gaussian_process.kernels import (
+    RBF,
+    ConstantKernel as C,
+    WhiteKernel,
+)
 from sklearn.gaussian_process.kernels import DotProduct, ExpSineSquared
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.exceptions import ConvergenceWarning
@@ -478,57 +483,65 @@ def test_warning_bounds():
         length_scale_bounds=[1e3, 1e5]
     )
     gpr_sum = GaussianProcessRegressor(kernel=kernel_sum)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
         gpr_sum.fit(X, y)
 
-    assert len(record) == 2
-    assert (
-        record[0].message.args[0]
-        == "The optimal value found for "
-        "dimension 0 of parameter "
-        "k1__noise_level is close to the "
-        "specified upper bound 0.001. "
-        "Increasing the bound and calling "
-        "fit again may find a better value."
-    )
+        assert len(record) == 2
 
-    assert (
-        record[1].message.args[0]
-        == "The optimal value found for "
-        "dimension 0 of parameter "
-        "k2__length_scale is close to the "
-        "specified lower bound 1000.0. "
-        "Decreasing the bound and calling "
-        "fit again may find a better value."
-    )
+        assert issubclass(record[0].category, ConvergenceWarning)
+        assert (
+            record[0].message.args[0]
+            == "The optimal value found for "
+            "dimension 0 of parameter "
+            "k1__noise_level is close to the "
+            "specified upper bound 0.001. "
+            "Increasing the bound and calling "
+            "fit again may find a better value."
+        )
+
+        assert issubclass(record[1].category, ConvergenceWarning)
+        assert (
+            record[1].message.args[0]
+            == "The optimal value found for "
+            "dimension 0 of parameter "
+            "k2__length_scale is close to the "
+            "specified lower bound 1000.0. "
+            "Decreasing the bound and calling "
+            "fit again may find a better value."
+        )
 
     X_tile = np.tile(X, 2)
     kernel_dims = RBF(length_scale=[1.0, 2.0], length_scale_bounds=[1e1, 1e2])
     gpr_dims = GaussianProcessRegressor(kernel=kernel_dims)
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
         gpr_dims.fit(X_tile, y)
 
-    assert len(record) == 2
-    assert (
-        record[0].message.args[0]
-        == "The optimal value found for "
-        "dimension 0 of parameter "
-        "length_scale is close to the "
-        "specified lower bound 10.0. "
-        "Decreasing the bound and calling "
-        "fit again may find a better value."
-    )
+        assert len(record) == 2
 
-    assert (
-        record[1].message.args[0]
-        == "The optimal value found for "
-        "dimension 1 of parameter "
-        "length_scale is close to the "
-        "specified lower bound 10.0. "
-        "Decreasing the bound and calling "
-        "fit again may find a better value."
-    )
+        assert issubclass(record[0].category, ConvergenceWarning)
+        assert (
+            record[0].message.args[0]
+            == "The optimal value found for "
+            "dimension 0 of parameter "
+            "length_scale is close to the "
+            "specified lower bound 10.0. "
+            "Decreasing the bound and calling "
+            "fit again may find a better value."
+        )
+
+        assert issubclass(record[1].category, ConvergenceWarning)
+        assert (
+            record[1].message.args[0]
+            == "The optimal value found for "
+            "dimension 1 of parameter "
+            "length_scale is close to the "
+            "specified lower bound 10.0. "
+            "Decreasing the bound and calling "
+            "fit again may find a better value."
+        )
 
 
 def test_bound_check_fixed_hyperparameter():
@@ -632,8 +645,11 @@ def test_gpr_consistency_std_cov_non_invertible_kernel():
 @pytest.mark.parametrize(
     "params, TypeError, err_msg",
     [
-        ({"kernel": RBF(), "optimizer": "unknown"}, ValueError, "Unknown optimizer"),
-        ({"alpha": np.zeros(100)}, ValueError, "alpha must be a scalar or an array"),
+        (
+            {"alpha": np.zeros(100)},
+            ValueError,
+            "alpha must be a scalar or an array with same number of entries as y",
+        ),
         (
             {
                 "kernel": WhiteKernel(noise_level_bounds=(-np.inf, np.inf)),
@@ -755,3 +771,30 @@ def test_sample_y_shapes(normalize_y, n_targets):
 
     y_samples = model.sample_y(X_test, n_samples=n_samples_y_test)
     assert y_samples.shape == y_test_shape
+
+
+class CustomKernel(C):
+    """
+    A custom kernel that has a diag method that returns the first column of the
+    input matrix X. This is a helper for the test to check that the input
+    matrix X is not mutated.
+    """
+
+    def diag(self, X):
+        return X[:, 0]
+
+
+def test_gpr_predict_input_not_modified():
+    """
+    Check that the input X is not modified by the predict method of the
+    GaussianProcessRegressor when setting return_std=True.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/24340
+    """
+    gpr = GaussianProcessRegressor(kernel=CustomKernel()).fit(X, y)
+
+    X2_copy = np.copy(X2)
+    _, _ = gpr.predict(X2, return_std=True)
+
+    assert_allclose(X2, X2_copy)

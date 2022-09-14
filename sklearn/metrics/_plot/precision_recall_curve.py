@@ -60,6 +60,18 @@ class PrecisionRecallDisplay:
     PrecisionRecallDisplay.from_predictions : Plot Precision Recall Curve
         using predictions from a binary classifier.
 
+    Notes
+    -----
+    The average precision (cf. :func:`~sklearn.metrics.average_precision`) in
+    scikit-learn is computed without any interpolation. To be consistent with
+    this metric, the precision-recall curve is plotted without any
+    interpolation as well (step-wise style).
+
+    You can change this style by passing the keyword argument
+    `drawstyle="default"` in :meth:`plot`, :meth:`from_estimator`, or
+    :meth:`from_predictions`. However, the curve will not be strictly
+    consistent with the reported average precision.
+
     Examples
     --------
     >>> import matplotlib.pyplot as plt
@@ -119,6 +131,17 @@ class PrecisionRecallDisplay:
         -------
         display : :class:`~sklearn.metrics.PrecisionRecallDisplay`
             Object that stores computed values.
+
+        Notes
+        -----
+        The average precision (cf. :func:`~sklearn.metrics.average_precision`)
+        in scikit-learn is computed without any interpolation. To be consistent
+        with this metric, the precision-recall curve is plotted without any
+        interpolation as well (step-wise style).
+
+        You can change this style by passing the keyword argument
+        `drawstyle="default"`. However, the curve will not be strictly
+        consistent with the reported average precision.
         """
         check_matplotlib_support("PrecisionRecallDisplay.plot")
 
@@ -215,6 +238,17 @@ class PrecisionRecallDisplay:
         PrecisionRecallDisplay.from_predictions : Plot precision-recall curve
             using estimated probabilities or output of decision function.
 
+        Notes
+        -----
+        The average precision (cf. :func:`~sklearn.metrics.average_precision`)
+        in scikit-learn is computed without any interpolation. To be consistent
+        with this metric, the precision-recall curve is plotted without any
+        interpolation as well (step-wise style).
+
+        You can change this style by passing the keyword argument
+        `drawstyle="default"`. However, the curve will not be strictly
+        consistent with the reported average precision.
+
         Examples
         --------
         >>> import matplotlib.pyplot as plt
@@ -303,6 +337,17 @@ class PrecisionRecallDisplay:
         --------
         PrecisionRecallDisplay.from_estimator : Plot precision-recall curve
             using an estimator.
+
+        Notes
+        -----
+        The average precision (cf. :func:`~sklearn.metrics.average_precision`)
+        in scikit-learn is computed without any interpolation. To be consistent
+        with this metric, the precision-recall curve is plotted without any
+        interpolation as well (step-wise style).
+
+        You can change this style by passing the keyword argument
+        `drawstyle="default"`. However, the curve will not be strictly
+        consistent with the reported average precision.
 
         Examples
         --------

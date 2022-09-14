@@ -317,7 +317,7 @@ def test_extract_patches_strided():
     expected_views = expected_views_1D + expected_views_2D + expected_views_3D
     last_patches = last_patch_1D + last_patch_2D + last_patch_3D
 
-    for (image_shape, patch_size, patch_step, expected_view, last_patch) in zip(
+    for image_shape, patch_size, patch_step, expected_view, last_patch in zip(
         image_shapes, patch_sizes, patch_steps, expected_views, last_patches
     ):
         image = np.arange(np.prod(image_shape)).reshape(image_shape)

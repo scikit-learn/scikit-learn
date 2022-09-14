@@ -3,11 +3,15 @@
 #         Andreas Mueller
 # License: BSD
 from typing import List, Any
+from types import MethodType
+import warnings
+from functools import wraps
 
 from abc import ABCMeta, abstractmethod
 from operator import attrgetter
 from functools import update_wrapper
 import numpy as np
+from contextlib import suppress
 
 from ..utils import _safe_indexing
 from ..utils._tags import _safe_tags
@@ -36,7 +40,7 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         except (TypeError, ValueError):
             # Ignore TypeError for cases where estimators is not a list of
             # (name, estimator) and ignore ValueError when the list is not
-            # formated correctly. This is to prevent errors when calling
+            # formatted correctly. This is to prevent errors when calling
             # `set_params`. `BaseEstimator.set_params` calls `get_params` which
             # can error for invalid values for `estimators`.
             return out
@@ -56,10 +60,13 @@ class _BaseComposition(BaseEstimator, metaclass=ABCMeta):
         items = getattr(self, attr)
         if isinstance(items, list) and items:
             # Get item names used to identify valid names in params
-            item_names, _ = zip(*items)
-            for name in list(params.keys()):
-                if "__" not in name and name in item_names:
-                    self._replace_estimator(attr, name, params.pop(name))
+            # `zip` raises a TypeError when `items` does not contains
+            # elements of length 2
+            with suppress(TypeError):
+                item_names, _ = zip(*items)
+                for name in list(params.keys()):
+                    if "__" not in name and name in item_names:
+                        self._replace_estimator(attr, name, params.pop(name))
 
         # 3. Step parameters and other initialisation arguments
         super().set_params(**params)
@@ -119,21 +126,17 @@ class _AvailableIfDescriptor:
             # this is to allow access to the docstrings.
             if not self.check(obj):
                 raise attr_err
+            out = MethodType(self.fn, obj)
 
-            # lambda, but not partial, allows help() to work with update_wrapper
-            out = lambda *args, **kwargs: self.fn(obj, *args, **kwargs)  # noqa
         else:
-
-            def fn(*args, **kwargs):
+            # This makes it possible to use the decorated method as an unbound method,
+            # for instance when monkeypatching.
+            @wraps(self.fn)
+            def out(*args, **kwargs):
                 if not self.check(args[0]):
                     raise attr_err
                 return self.fn(*args, **kwargs)
 
-            # This makes it possible to use the decorated method as an unbound method,
-            # for instance when monkeypatching.
-            out = lambda *args, **kwargs: fn(*args, **kwargs)  # noqa
-        # update the docstring of the returned function
-        update_wrapper(out, self.fn)
         return out
 
 
@@ -173,6 +176,7 @@ def available_if(check):
     return lambda fn: _AvailableIfDescriptor(fn, check, attribute_name=fn.__name__)
 
 
+# TODO(1.3) remove
 class _IffHasAttrDescriptor(_AvailableIfDescriptor):
     """Implements a conditional property using the descriptor protocol.
 
@@ -194,6 +198,12 @@ class _IffHasAttrDescriptor(_AvailableIfDescriptor):
         self.delegate_names = delegate_names
 
     def _check(self, obj):
+        warnings.warn(
+            "if_delegate_has_method was deprecated in version 1.1 and will be "
+            "removed in version 1.3. Use available_if instead.",
+            FutureWarning,
+        )
+
         delegate = None
         for delegate_name in self.delegate_names:
             try:
@@ -210,11 +220,16 @@ class _IffHasAttrDescriptor(_AvailableIfDescriptor):
         return True
 
 
+# TODO(1.3) remove
 def if_delegate_has_method(delegate):
     """Create a decorator for methods that are delegated to a sub-estimator
 
     This enables ducktyping by hasattr returning True according to the
     sub-estimator.
+
+    .. deprecated:: 1.3
+        `if_delegate_has_method` is deprecated in version 1.1 and will be removed in
+        version 1.3. Use `available_if` instead.
 
     Parameters
     ----------

@@ -25,7 +25,6 @@ from scipy.special import comb
 import pytest
 
 import joblib
-from numpy.testing import assert_allclose
 
 from sklearn.dummy import DummyRegressor
 from sklearn.metrics import mean_poisson_deviance
@@ -157,7 +156,7 @@ def check_iris_criterion(name, criterion):
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS)
-@pytest.mark.parametrize("criterion", ("gini", "entropy"))
+@pytest.mark.parametrize("criterion", ("gini", "log_loss"))
 def test_iris(name, criterion):
     check_iris_criterion(name, criterion)
 
@@ -347,7 +346,7 @@ def check_importances(name, criterion, dtype, tolerance):
 @pytest.mark.parametrize(
     "name, criterion",
     itertools.chain(
-        product(FOREST_CLASSIFIERS, ["gini", "entropy"]),
+        product(FOREST_CLASSIFIERS, ["gini", "log_loss"]),
         product(FOREST_REGRESSORS, ["squared_error", "friedman_mse", "absolute_error"]),
     ),
 )
@@ -451,7 +450,7 @@ def test_importances_asymptotic():
 
     # Estimate importances with totally randomized trees
     clf = ExtraTreesClassifier(
-        n_estimators=500, max_features=1, criterion="entropy", random_state=0
+        n_estimators=500, max_features=1, criterion="log_loss", random_state=0
     ).fit(X, y)
 
     importances = (
@@ -851,7 +850,7 @@ def test_random_trees_dense_type():
     X, y = datasets.make_circles(factor=0.5)
     X_transformed = hasher.fit_transform(X)
 
-    # Assert that type is ndarray, not scipy.sparse.csr.csr_matrix
+    # Assert that type is ndarray, not scipy.sparse.csr_matrix
     assert type(X_transformed) == np.ndarray
 
 
@@ -1003,14 +1002,6 @@ def check_min_samples_split(name):
     X, y = hastie_X, hastie_y
     ForestEstimator = FOREST_ESTIMATORS[name]
 
-    # test boundary value
-    with pytest.raises(ValueError):
-        ForestEstimator(min_samples_split=-1).fit(X, y)
-    with pytest.raises(ValueError):
-        ForestEstimator(min_samples_split=0).fit(X, y)
-    with pytest.raises(ValueError):
-        ForestEstimator(min_samples_split=1.1).fit(X, y)
-
     est = ForestEstimator(min_samples_split=10, n_estimators=1, random_state=0)
     est.fit(X, y)
     node_idx = est.estimators_[0].tree_.children_left != -1
@@ -1036,12 +1027,6 @@ def check_min_samples_leaf(name):
 
     # Test if leaves contain more than leaf_count training examples
     ForestEstimator = FOREST_ESTIMATORS[name]
-
-    # test boundary value
-    with pytest.raises(ValueError):
-        ForestEstimator(min_samples_leaf=-1).fit(X, y)
-    with pytest.raises(ValueError):
-        ForestEstimator(min_samples_leaf=0).fit(X, y)
 
     est = ForestEstimator(min_samples_leaf=5, n_estimators=1, random_state=0)
     est.fit(X, y)
@@ -1163,7 +1148,7 @@ def check_memory_layout(name, dtype):
     y = iris.target
     assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
-    if est.base_estimator.splitter in SPARSE_SPLITTERS:
+    if est.estimator.splitter in SPARSE_SPLITTERS:
         # csr matrix
         X = csr_matrix(iris.data, dtype=dtype)
         y = iris.target
@@ -1292,13 +1277,6 @@ def check_class_weight_errors(name):
     ForestClassifier = FOREST_CLASSIFIERS[name]
     _y = np.vstack((y, np.array(y) * 2)).T
 
-    # Invalid preset string
-    clf = ForestClassifier(class_weight="the larch", random_state=0)
-    with pytest.raises(ValueError):
-        clf.fit(X, y)
-    with pytest.raises(ValueError):
-        clf.fit(X, _y)
-
     # Warning warm_start with preset
     clf = ForestClassifier(class_weight="balanced", warm_start=True, random_state=0)
     clf.fit(X, y)
@@ -1307,11 +1285,6 @@ def check_class_weight_errors(name):
         "Warm-start fitting without increasing n_estimators does not fit new trees."
     )
     with pytest.warns(UserWarning, match=warn_msg):
-        clf.fit(X, _y)
-
-    # Not a list or preset for multi-output
-    clf = ForestClassifier(class_weight=1, random_state=0)
-    with pytest.raises(ValueError):
         clf.fit(X, _y)
 
     # Incorrect length list for multi-output
@@ -1624,54 +1597,11 @@ def test_max_samples_bootstrap(name):
 
 
 @pytest.mark.parametrize("name", FOREST_CLASSIFIERS_REGRESSORS)
-@pytest.mark.parametrize(
-    "max_samples, exc_type, exc_msg",
-    [
-        (
-            int(1e9),
-            ValueError,
-            "`max_samples` must be in range 1 to 6 but got value 1000000000",
-        ),
-        (
-            2.0,
-            ValueError,
-            r"`max_samples` must be in range \(0.0, 1.0\] but got value 2.0",
-        ),
-        (
-            0.0,
-            ValueError,
-            r"`max_samples` must be in range \(0.0, 1.0\] but got value 0.0",
-        ),
-        (
-            np.nan,
-            ValueError,
-            r"`max_samples` must be in range \(0.0, 1.0\] but got value nan",
-        ),
-        (
-            np.inf,
-            ValueError,
-            r"`max_samples` must be in range \(0.0, 1.0\] but got value inf",
-        ),
-        (
-            "str max_samples?!",
-            TypeError,
-            r"`max_samples` should be int or float, but got " r"type '\<class 'str'\>'",
-        ),
-        (
-            np.ones(2),
-            TypeError,
-            r"`max_samples` should be int or float, but got type "
-            r"'\<class 'numpy.ndarray'\>'",
-        ),
-    ],
-    # Avoid long error messages in test names:
-    # https://github.com/scikit-learn/scikit-learn/issues/21362
-    ids=lambda x: x[:10].replace("]", "") if isinstance(x, str) else x,
-)
-def test_max_samples_exceptions(name, max_samples, exc_type, exc_msg):
-    # Check invalid `max_samples` values
-    est = FOREST_CLASSIFIERS_REGRESSORS[name](bootstrap=True, max_samples=max_samples)
-    with pytest.raises(exc_type, match=exc_msg):
+def test_large_max_samples_exception(name):
+    # Check invalid `max_samples`
+    est = FOREST_CLASSIFIERS_REGRESSORS[name](bootstrap=True, max_samples=int(1e9))
+    match = "`max_samples` must be <= n_samples=6 but got value 1000000000"
+    with pytest.raises(ValueError, match=match):
         est.fit(X, y)
 
 
@@ -1756,28 +1686,6 @@ def test_little_tree_with_small_max_samples(ForestClass):
     assert tree1.node_count > tree2.node_count, msg
 
 
-# FIXME: remove in 1.2
-@pytest.mark.parametrize(
-    "Estimator",
-    [
-        ExtraTreesClassifier,
-        ExtraTreesRegressor,
-        RandomForestClassifier,
-        RandomForestRegressor,
-        RandomTreesEmbedding,
-    ],
-)
-def test_n_features_deprecation(Estimator):
-    # Check that we raise the proper deprecation warning if accessing
-    # `n_features_`.
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    est = Estimator().fit(X, y)
-
-    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
-        est.n_features_
-
-
 # TODO: Remove in v1.3
 @pytest.mark.parametrize(
     "Estimator",
@@ -1807,27 +1715,6 @@ def test_max_features_deprecation(Estimator):
         est.fit(X, y)
 
 
-# TODO: Remove in v1.2
-@pytest.mark.parametrize(
-    "old_criterion, new_criterion",
-    [
-        ("mse", "squared_error"),
-        ("mae", "absolute_error"),
-    ],
-)
-def test_criterion_deprecated(old_criterion, new_criterion):
-    est1 = RandomForestRegressor(criterion=old_criterion, random_state=0)
-
-    with pytest.warns(
-        FutureWarning, match=f"Criterion '{old_criterion}' was deprecated"
-    ):
-        est1.fit(X, y)
-
-    est2 = RandomForestRegressor(criterion=new_criterion, random_state=0)
-    est2.fit(X, y)
-    assert_allclose(est1.predict(X), est2.predict(X))
-
-
 @pytest.mark.parametrize("Forest", FOREST_REGRESSORS)
 def test_mse_criterion_object_segfault_smoke_test(Forest):
     # This is a smoke test to ensure that passing a mutable criterion
@@ -1842,3 +1729,48 @@ def test_mse_criterion_object_segfault_smoke_test(Forest):
     est = FOREST_REGRESSORS[Forest](n_estimators=2, n_jobs=2, criterion=mse_criterion)
 
     est.fit(X_reg, y)
+
+
+def test_random_trees_embedding_feature_names_out():
+    """Check feature names out for Random Trees Embedding."""
+    random_state = np.random.RandomState(0)
+    X = np.abs(random_state.randn(100, 4))
+    hasher = RandomTreesEmbedding(
+        n_estimators=2, max_depth=2, sparse_output=False, random_state=0
+    ).fit(X)
+    names = hasher.get_feature_names_out()
+    expected_names = [
+        f"randomtreesembedding_{tree}_{leaf}"
+        # Note: nodes with indices 0, 1 and 4 are internal split nodes and
+        # therefore do not appear in the expected output feature names.
+        for tree, leaf in [
+            (0, 2),
+            (0, 3),
+            (0, 5),
+            (0, 6),
+            (1, 2),
+            (1, 3),
+            (1, 5),
+            (1, 6),
+        ]
+    ]
+    assert_array_equal(expected_names, names)
+
+
+# TODO(1.4): remove in 1.4
+@pytest.mark.parametrize(
+    "name",
+    FOREST_ESTIMATORS,
+)
+def test_base_estimator_property_deprecated(name):
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    model = FOREST_ESTIMATORS[name]()
+    model.fit(X, y)
+
+    warn_msg = (
+        "Attribute `base_estimator_` was deprecated in version 1.2 and "
+        "will be removed in 1.4. Use `estimator_` instead."
+    )
+    with pytest.warns(FutureWarning, match=warn_msg):
+        model.base_estimator_
