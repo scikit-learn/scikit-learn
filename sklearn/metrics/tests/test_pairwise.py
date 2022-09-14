@@ -407,7 +407,7 @@ def test_paired_distances(metric, func):
     Y = rng.random_sample((5, 4))
 
     if metric == "haversine":
-        with pytest.raises(TypeError, match="X and Y should both be of shape (n_samples, 2), "):
+        with pytest.raises(ValueError, match="X and Y should both be of shape (n_samples, 2), "):
             func(X, Y)
         X, Y = X[:, :2], Y[:, :2]
 
@@ -415,7 +415,8 @@ def test_paired_distances(metric, func):
     S2 = func(X, Y)
     assert_array_almost_equal(S, S2)
 
-    if metric != "haversine":  # doesn't work with Haversine because it needs exaclty 2 columns
+    # doesn't work with Haversine because it needs exactly 2 columns
+    if metric != "haversine":
         S3 = func(csr_matrix(X), csr_matrix(Y))
         assert_array_almost_equal(S, S3)
 
