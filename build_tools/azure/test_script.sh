@@ -87,5 +87,5 @@ if [[ -n "$SELECTED_TESTS" ]]; then
 fi
 
 set -x
-eval "$TEST_CMD --pyargs sklearn.tree --verbose"
+eval "$TEST_CMD --pyargs --verbose"
 set +x
