@@ -58,10 +58,6 @@ from sklearn.preprocessing import normalize
 from sklearn.exceptions import DataConversionWarning
 
 
-# filter out haversine because it is a special case and only works with 2 dims
-PAIRED_DISTANCES.pop("haversine")
-
-
 def test_pairwise_distances():
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
@@ -408,6 +404,9 @@ def test_paired_distances(metric, func):
     X = rng.random_sample((5, 4))
     # Euclidean distance, with Y != X.
     Y = rng.random_sample((5, 4))
+
+    if metric == 'haversine':
+        X, Y = X[:, :2], Y[:, :2]
 
     S = paired_distances(X, Y, metric=metric)
     S2 = func(X, Y)
