@@ -6,30 +6,33 @@ Multiclass Receiver Operating Characteristic (ROC)
 This example describes the use of the Receiver Operating Characteristic (ROC)
 metric to evaluate multiclass classifiers quality.
 
-ROC curves typically feature true positive rate on the Y axis, and false
-positive rate on the X axis. This means that the top left corner of the plot is
-the "ideal" point - a false positive rate of zero, and a true positive rate of
-one. This is not very realistic, but it does mean that a larger area under the
-curve (AUC) is usually better.
+ROC curves typically feature true positive rate (TPR) on the Y axis, and false
+positive rate (FPR) on the X axis. This means that the top left corner of the
+plot is the "ideal" point - a false positive rate of zero, and a true positive
+rate of one. This is not very realistic, but it does mean that a larger area
+under the curve (AUC) is usually better.
 
 The "steepness" of ROC curves is also important, since it is ideal to maximize
 the true positive rate while minimizing the false positive rate.
 
-ROC curves are typically used in binary classification to study the output of a
-classifier. In order to extend ROC curve and ROC area to multi-label
-classification, it is necessary to binarize the output. One ROC curve can be
-drawn per label, but one can also draw a ROC curve by considering each element
-of the label indicator matrix as a binary prediction (micro-averaging).
+ROC curves are typically used in binary classification, where the TPR and FPR
+can be defined unambiguously. In the case of multiclass classification, a notion
+of TPR/FPR is obtained only after binarizing the output. This can be done in 2
+different ways:
 
-Another evaluation measure for multi-label classification is macro-averaging,
-which gives equal weight to the classification of each label.
+- the One-vs-Rest scheme compares each class against all the others (assumed as
+  one);
+- the One-vs-One scheme compares every unique pairwise combination of classes.
+
+In this example we explore both schemes and demo the concepts of micro and macro
+averaging as different ways of summarizing the information of the multiclass ROC
+curves.
 
 .. note::
 
     See :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py` for
     an extension of the present example estimating the variance of the ROC
     curves and their respective AUC.
-
 """
 
 # %%
@@ -65,9 +68,8 @@ X = np.c_[X, random_state.randn(n_samples, 200 * n_features)]
 # %%
 # We train a :class:`~sklearn.linear_model.LogisticRegression` model which can
 # naturally handle multiclass problems, thanks to the use of the multinomial
-# formulation. But it would also have been possible to use OvR ROC evaluation of
-# an OvO multiclass support vector machine model such as
-# :class:`~sklearn.svm.SVC`.
+# formulation. It is also possible to use OvR ROC evaluation of an OvO
+# multiclass support vector machine model such as :class:`~sklearn.svm.SVC`.
 
 from sklearn.linear_model import LogisticRegression
 
@@ -76,15 +78,6 @@ y_score = classifier.fit(X_train, y_train).predict_proba(X_test)
 
 
 # %%
-# ROC curves are typically defined in binary classification, where the
-# true/false positive rates can be defined unambiguously. In the case of
-# multiclass classification, a notion of true/false positive rates is obtained
-# after binarizing the problem. This can be done in 2 different ways:
-#
-# - the One-vs-Rest scheme compares each class against all the others (assumed
-#   as one);
-# - the One-vs-One scheme compares every unique pairwise combination of classes.
-#
 # One-vs-Rest multiclass ROC
 # ==========================
 #
@@ -153,8 +146,15 @@ plt.show()
 # ----------------------------------
 #
 # Micro-averaging aggregates the contributions from all the classes (using
-# `.ravel`) to compute the average metric. In a multi-class classification
-# setup, micro-averaging is preferable if the classes are severely imbalanced.
+# `.ravel`) to compute the average metrics as follows:
+#
+# :math:`TPR=\frac{\sum_{c}TP_c}{\sum_{c}(TP_c + FN_c)}`
+#
+# :math:`FPR=\frac{\sum_{c}FP_c}{\sum_{c}(FP_c + TN_c)}`
+#
+# In a multi-class classification setup with highly imbalanced classes,
+# micro-averaging is preferable over macro-averaging. In such cases, one can
+# alternatively use a weighted macro-averaging, not demoed here.
 
 RocCurveDisplay.from_predictions(
     y_onehot_test.ravel(),
@@ -191,7 +191,7 @@ print(f"Micro-averaged One-vs-Rest ROC AUC score:\n{micro_roc_auc_ovr:.2f}")
 # %%
 # This is equivalent to computing the ROC curve with
 # :class:`~sklearn.metrics.roc_curve` and then the area under the curve with
-# :class:`~sklearn.metrics.auc` for the raveled classes.
+# :class:`~sklearn.metrics.auc` for the raveled true and predicted classes.
 
 from sklearn.metrics import roc_curve, auc
 
@@ -241,7 +241,7 @@ print(f"Macro-averaged One-vs-Rest ROC AUC score:\n{roc_auc['macro']:.2f}")
 # This computation is equivalent to simply calling
 
 macro_roc_auc_ovr = roc_auc_score(
-    y_onehot_test,
+    y_test,
     y_score,
     multi_class="ovr",
     average="macro",
