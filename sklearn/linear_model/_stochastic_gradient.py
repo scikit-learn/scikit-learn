@@ -2160,13 +2160,10 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         warm_start=False,
         average=False,
     ):
-
-        alpha = None
         self.nu = nu
         super(SGDOneClassSVM, self).__init__(
             loss="hinge",
             penalty="l2",
-            alpha=alpha,
             C=1.0,
             l1_ratio=0,
             fit_intercept=fit_intercept,
@@ -2360,13 +2357,11 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         self : object
             Returns a fitted instance of self.
         """
+        self._validate_params()
         if not hasattr(self, "coef_"):
-            self._validate_params()
             self._more_validate_params(for_partial_fit=True)
 
-        self._validate_params(for_partial_fit=True)
         alpha = self.nu / 2
-
         return self._partial_fit(
             X,
             alpha,
@@ -2463,7 +2458,6 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         self._validate_params()
         self._more_validate_params()
 
-        self._validate_params()
         alpha = self.nu / 2
         self._fit(
             X,

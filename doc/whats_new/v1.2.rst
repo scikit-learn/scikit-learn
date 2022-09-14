@@ -280,6 +280,12 @@ Changelog
   in :class:`linear_model.LogisticRegression`, and will be removed in version 1.4.
   Use `None` instead. :pr:`23877` by :user:`Zhehao Liu <MaxwellLZH>`.
 
+- |Fix| :class:`linear_model.SGDOneClassSVM` no longer performs parameter
+  validation in the constructor. All validation is now handled in `fit()` and
+  `partial_fit()`.
+  :pr:`24433` by :user:`Yogendrasingh <iofall>`, :user:`Arisa Y. <arisayosh>`
+  and :user:`Tim Head <betatim>`.
+
 :mod:`sklearn.manifold`
 .......................
 
