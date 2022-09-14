@@ -43,11 +43,14 @@ cdef cnp.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
 #####################
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
-from ._base cimport PairwiseDistancesReduction{{name_suffix}}
+from ._base cimport BaseDistanceReducer{{name_suffix}}
 from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
 
-cdef class PairwiseDistancesRadiusNeighborhood{{name_suffix}}(PairwiseDistancesReduction{{name_suffix}}):
-    """{{name_suffix}}bit implementation of PairwiseDistancesRadiusNeighborhood ."""
+cdef class RadiusNeighbors{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
+    """
+    {{name_suffix}}bit implementation of BaseDistanceReducer{{name_suffix}} for the
+    `RadiusNeighbors` reduction.
+    """
 
     cdef:
         DTYPE_t radius
@@ -93,8 +96,8 @@ cdef class PairwiseDistancesRadiusNeighborhood{{name_suffix}}(PairwiseDistancesR
     ) nogil
 
 
-cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood{{name_suffix}}(PairwiseDistancesRadiusNeighborhood{{name_suffix}}):
-    """EuclideanDistance-specialized {{name_suffix}}bit implementation for PairwiseDistancesRadiusNeighborhood."""
+cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}}):
+    """EuclideanDistance-specialized {{name_suffix}}bit implementation for RadiusNeighbors{{name_suffix}}."""
     cdef:
         GEMMTermComputer{{name_suffix}} gemm_term_computer
         const DTYPE_t[::1] X_norm_squared

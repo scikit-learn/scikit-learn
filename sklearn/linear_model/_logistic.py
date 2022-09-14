@@ -1014,7 +1014,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     0.97...
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         # TODO(1.4): Remove "none" option
         "penalty": [
             StrOptions({"l1", "l2", "elasticnet", "none"}, deprecated={"none"}),
@@ -1612,7 +1612,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
     0.98...
     """
 
-    _parameter_constraints = {**LogisticRegression._parameter_constraints}
+    _parameter_constraints: dict = {**LogisticRegression._parameter_constraints}
 
     for param in ["C", "warm_start", "l1_ratio"]:
         _parameter_constraints.pop(param)

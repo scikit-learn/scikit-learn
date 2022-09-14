@@ -4,13 +4,14 @@
 from copy import deepcopy
 
 import numpy as np
-import numbers
+from numbers import Integral, Real
 
 from ._base import SelectorMixin
 from ._base import _get_feature_importances
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted, check_scalar, _num_features
+from ..utils._param_validation import HasMethods, Interval, Options
 
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import available_if
@@ -229,6 +230,19 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     2
     """
 
+    _parameter_constraints: dict = {
+        "estimator": [HasMethods("fit")],
+        "threshold": [Interval(Real, None, None, closed="both"), str, None],
+        "prefit": ["boolean"],
+        "norm_order": [
+            Interval(Integral, None, -1, closed="right"),
+            Interval(Integral, 1, None, closed="left"),
+            Options(Real, {np.inf, -np.inf}),
+        ],
+        "max_features": [Interval(Integral, 0, None, closed="left"), callable, None],
+        "importance_getter": [str, callable],
+    }
+
     def __init__(
         self,
         estimator,
@@ -266,9 +280,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 "When `prefit=True` and `max_features` is a callable, call `fit` "
                 "before calling `transform`."
             )
-        elif max_features is not None and not isinstance(
-            max_features, numbers.Integral
-        ):
+        elif max_features is not None and not isinstance(max_features, Integral):
             raise ValueError(
                 f"`max_features` must be an integer. Got `max_features={max_features}` "
                 "instead."
@@ -294,30 +306,19 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         if self.max_features is not None:
             n_features = _num_features(X)
 
-            if isinstance(self.max_features, numbers.Integral):
-                check_scalar(
-                    self.max_features,
-                    "max_features",
-                    numbers.Integral,
-                    min_val=0,
-                    max_val=n_features,
-                )
-                self.max_features_ = self.max_features
-            elif callable(self.max_features):
+            if callable(self.max_features):
                 max_features = self.max_features(X)
-                check_scalar(
-                    max_features,
-                    "max_features(X)",
-                    numbers.Integral,
-                    min_val=0,
-                    max_val=n_features,
-                )
-                self.max_features_ = max_features
-            else:
-                raise TypeError(
-                    "'max_features' must be either an int or a callable that takes"
-                    f" 'X' as input. Got {self.max_features} instead."
-                )
+            else:  # int
+                max_features = self.max_features
+
+            check_scalar(
+                max_features,
+                "max_features",
+                Integral,
+                min_val=0,
+                max_val=n_features,
+            )
+            self.max_features_ = max_features
 
     def fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer.
@@ -339,6 +340,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
         self._check_max_features(X)
 
         if self.prefit:
@@ -393,10 +395,14 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        self._check_max_features(X)
+        first_call = not hasattr(self, "estimator_")
+
+        if first_call:
+            self._validate_params()
+            self._check_max_features(X)
 
         if self.prefit:
-            if not hasattr(self, "estimator_"):
+            if first_call:
                 try:
                     check_is_fitted(self.estimator)
                 except NotFittedError as exc:
@@ -407,7 +413,6 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 self.estimator_ = deepcopy(self.estimator)
             return self
 
-        first_call = not hasattr(self, "estimator_")
         if first_call:
             self.estimator_ = clone(self.estimator)
         self.estimator_.partial_fit(X, y, **fit_params)
