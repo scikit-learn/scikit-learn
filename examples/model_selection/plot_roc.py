@@ -76,7 +76,6 @@ from sklearn.linear_model import LogisticRegression
 classifier = LogisticRegression()
 y_score = classifier.fit(X_train, y_train).predict_proba(X_test)
 
-
 # %%
 # One-vs-Rest multiclass ROC
 # ==========================
@@ -151,7 +150,11 @@ plt.show()
 # :math:`TPR=\frac{\sum_{c}TP_c}{\sum_{c}(TP_c + FN_c)}`
 #
 # :math:`FPR=\frac{\sum_{c}FP_c}{\sum_{c}(FP_c + TN_c)}`
-#
+
+print(f"y_score: {y_score[0:2,:]}")
+print(f"y_score.ravel(): {y_score[0:2,:].ravel()}")
+
+# %%
 # In a multi-class classification setup with highly imbalanced classes,
 # micro-averaging is preferable over macro-averaging. In such cases, one can
 # alternatively use a weighted macro-averaging, not demoed here.
