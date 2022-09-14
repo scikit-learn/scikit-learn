@@ -237,7 +237,7 @@ fig = px.parallel_coordinates(
 fig.update_layout(
     title={
         "text": "Parallel coordinates plot of text classifier pipeline",
-        "y": 0.95,
+        "y": 0.99,
         "x": 0.5,
         "xanchor": "center",
         "yanchor": "top",
