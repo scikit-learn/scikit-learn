@@ -2357,8 +2357,8 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         self : object
             Returns a fitted instance of self.
         """
-        self._validate_params()
         if not hasattr(self, "coef_"):
+            self._validate_params()
             self._more_validate_params(for_partial_fit=True)
 
         alpha = self.nu / 2
