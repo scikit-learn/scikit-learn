@@ -323,6 +323,10 @@ Changelog
   :pr:`22710` by :user:`Conroy Trinh <trinhcon>` and
   :pr:`23461` by :user:`Meekail Zain <micky774>`.
 
+- |Feature| :func:`metrics.roc_auc_score` now supports micro-averaging
+  (`average="micro"`) for the One-vs-Rest multiclass case (`multi_class="ovr"`).
+  :pr:`24338` by :user:`Arturo Amor <ArturoAmorQ>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
