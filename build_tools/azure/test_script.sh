@@ -86,6 +86,13 @@ if [[ -n "$SELECTED_TESTS" ]]; then
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
 
+if [[ -n "$SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES" ]]; then
+    # If Cython directives are activated, IndexErrors (which aren't fatal) are
+    # raised and captured by pytest, but not raised again. pytest in return raises
+    # PytestUnraisableExceptionWarnings, which we must treat as errors on the CI.
+    TEST_CMD="$TEST_CMD -Werror::pytest.PytestUnraisableExceptionWarning"
+fi
+
 set -x
 eval "$TEST_CMD --pyargs sklearn"
 set +x
