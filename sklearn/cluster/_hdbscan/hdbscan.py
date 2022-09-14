@@ -9,11 +9,9 @@ HDBSCAN: Hierarchical Density-Based Spatial Clustering
 # License: BSD 3 clause
 
 from numbers import Integral, Real
-from pathlib import Path
 from warnings import warn
 
 import numpy as np
-from joblib import Memory
 from scipy.sparse import csgraph, issparse
 
 from sklearn.base import BaseEstimator, ClusterMixin
@@ -176,9 +174,8 @@ def _hdbscan_prims(
         p=None,
     ).fit(X)
 
-    n_samples = X.shape[0]
-    core_distances = np.empty(n_samples, dtype=np.float64)
-    core_distances[:] = nbrs.kneighbors(X, min_samples)[0][:, -1]
+    neighbors_distances, _ = nbrs.kneighbors(X, min_samples, return_distance=True)
+    core_distances = np.ascontiguousarray(neighbors_distances[:, -1])
     dist_metric = DistanceMetric.get_metric(metric, **metric_params)
 
     # Mutual reachability distance is implicit in mst_linkage_core_vector
@@ -309,11 +306,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         usage. If you are running out of memory consider increasing the
         `leaf_size` parameter. Ignored for `algorithm=brute`.
 
-    memory : str, default=None
-        Used to cache the output of the computation of the tree.
-        By default, no caching is done. If a string is given, it is the
-        path to the caching directory.
-
     n_jobs : int, default=None
         Number of jobs to run in parallel to calculate distances.
         `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -333,6 +325,22 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         By default HDBSCAN* will not produce a single cluster, setting this
         to True will override this and allow single cluster results in
         the case that you feel this is a valid result for your dataset.
+
+    store_centers : str, default=None
+        Which, if any, cluster centers to compute and store. The options are:
+        - `None` which does not compute nor store any centers.
+        - `"centroid"` which calculates the center by taking the weighted
+          average of their positions. Note that the algorithm uses the
+          euclidean metric and does not guarantee that the output will be
+          an observed data point.
+        - `"medoid"` which calculates the center by taking the point in the
+          fitted data which minimizes the distance to all other points in
+          the cluster. This is slower than "centroid" since it requires
+          computing additional pairwise distances between points of the
+          same cluster but guarantees the output is an observed data point.
+          The medoid is also well-defined for arbitrary metrics, and does not
+          depend on a euclidean metric.
+        - `"both"`which computes and stores both forms of centers.
 
     metric_params : dict, default=None
         Arguments passed to the distance metric.
@@ -419,10 +427,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             )
         ],
         "leaf_size": [Interval(Integral, left=1, right=None, closed="left")],
-        "memory": [str, None, Path],
         "n_jobs": [Integral, None],
         "cluster_selection_method": [StrOptions({"eom", "leaf"})],
         "allow_single_cluster": ["boolean"],
+        "store_centers": [None, StrOptions({"centroid", "medoid", "both"})],
         "metric_params": [dict, None],
     }
 
@@ -436,10 +444,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         alpha=1.0,
         algorithm="auto",
         leaf_size=40,
-        memory=None,
         n_jobs=4,
         cluster_selection_method="eom",
         allow_single_cluster=False,
+        store_centers=None,
         metric_params=None,
     ):
         self.min_cluster_size = min_cluster_size
@@ -450,10 +458,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self.metric = metric
         self.algorithm = algorithm
         self.leaf_size = leaf_size
-        self.memory = memory
         self.n_jobs = n_jobs
         self.cluster_selection_method = cluster_selection_method
         self.allow_single_cluster = allow_single_cluster
+        self.store_centers = store_centers
         self.metric_params = metric_params
 
     def fit(self, X, y=None):
@@ -508,17 +516,15 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
             # Perform data validation after removing infinite values (numpy.inf)
             # from the given distance matrix.
-            X = np.asarray(X)
-            tmp = X.copy()
-            tmp[np.isinf(tmp)] = 1
-            self._validate_data(tmp, dtype=np.float64)
-
+            X = self._validate_data(X, force_all_finite=False, dtype=np.float64)
+            if np.isnan(X).any():
+                # TODO: Support np.nan in Cython implementation for sparse
+                # HDBSCAN
+                raise ValueError("np.nan values found in precomputed-sparse")
         self.n_features_in_ = X.shape[1]
         self._min_samples = (
             self.min_cluster_size if self.min_samples is None else self.min_samples
         )
-
-        memory = Memory(location=self.memory, verbose=0)
 
         func = None
         kwargs = dict(
@@ -552,7 +558,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
             if self.algorithm == "brute":
                 func = _hdbscan_brute
-                for key in ("algo", "leaf_size", "n_jobs"):
+                for key in ("algo", "leaf_size"):
                     kwargs.pop(key, None)
             elif self.algorithm == "kdtree":
                 func = _hdbscan_prims
@@ -563,16 +569,17 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             if issparse(X) or self.metric not in FAST_METRICS:
                 # We can't do much with sparse matrices ...
                 func = _hdbscan_brute
-                for key in ("algo", "leaf_size", "n_jobs"):
+                for key in ("algo", "leaf_size"):
                     kwargs.pop(key, None)
             elif self.metric in KDTree.valid_metrics:
+                # TODO: Benchmark KD vs Ball Tree efficacy
                 func = _hdbscan_prims
             else:
                 # Metric is a valid BallTree metric
                 func = _hdbscan_prims
                 kwargs["algo"] = "ball_tree"
 
-        single_linkage_tree = memory.cache(func)(**kwargs)
+        single_linkage_tree = func(**kwargs)
 
         (
             self.labels_,
@@ -600,6 +607,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             new_probabilities[finite_index] = self.probabilities_
             self.probabilities_ = new_probabilities
 
+        if self.store_centers:
+            self._weighted_cluster_center(X)
         return self
 
     def fit_predict(self, X, y=None):
@@ -623,57 +632,34 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self.fit(X)
         return self.labels_
 
-    def weighted_cluster_center(self, cluster_id, mode="centroid"):
-        """
-        Provide an approximate representative point for a given cluster.
+    def _weighted_cluster_center(self, X):
+        n_clusters = len(set(self.labels_))
+        mask = np.empty((X.shape[0],), dtype=np.bool_)
+        make_centroids = self.store_centers in ("centroid", "both")
+        make_medoids = self.store_centers in ("medoid", "both")
 
-        Parameters
-        ----------
-        cluster_id : int
-            The id of the cluster to compute a centroid for.
+        if make_centroids:
+            self.centroids_ = np.empty((n_clusters, X.shape[1]), dtype=np.float64)
+        if make_medoids:
+            self.medoids_ = np.empty((n_clusters, X.shape[1]), dtype=np.float64)
 
-        mode : str, default="centroid"
-            The mode to use when providing the cluster center. The options are:
-            - "centroid" which calculates the center by taking the weighted
-              average of their positions. Note that the algorithm assumes a
-              euclidean metric and does not guarantee that the output will be
-              an observed data point.
-            - "medoid" which calculates the center by taking the point in the
-              fitted data which minimizes the distance to all other points in
-              the cluster. This is slower than "centroid" since it requires
-              computing additional pairwise distances between points of the
-              same cluster but guarantees the output is an observed data point.
-
-        Returns
-        -------
-        centroid : array of shape (n_features,)
-            A representative centroid for cluster `cluster_id`.
-        """
-        if not hasattr(self, "labels_"):
-            raise AttributeError("Model has not been fit to data")
-
-        if cluster_id == -1:
-            raise ValueError(
-                "Cannot calculate weighted centroid for -1 cluster "
-                "since it is a noise cluster"
-            )
-
-        mask = self.labels_ == cluster_id
-        cluster_data = self._raw_data[mask]
-        cluster_membership_strengths = self.probabilities_[mask]
-
-        if mode == "centroid":
-            return np.average(
-                cluster_data, weights=cluster_membership_strengths, axis=0
-            )
-
-        # mode == "medoid"
-        dist_mat = pairwise_distances(
-            cluster_data, metric=self.metric, **self._metric_params
-        )
-        dist_mat = dist_mat * cluster_membership_strengths
-        medoid_index = np.argmin(dist_mat.sum(axis=1))
-        return cluster_data[medoid_index]
+        # Need to handle iteratively seen each cluster may have a different
+        # number of samples, hence we can't create a homogenous 3D array.
+        for idx in range(n_clusters):
+            mask = self.labels_ == idx
+            data = X[mask]
+            strength = self.probabilities_[mask]
+            if make_centroids:
+                self.centroids_[idx] = np.average(data, weights=strength, axis=0)
+            if make_medoids:
+                # TODO: Implement weighted argmin PWD backend
+                dist_mat = pairwise_distances(
+                    data, metric=self.metric, **self._metric_params
+                )
+                dist_mat = dist_mat * strength
+                medoid_index = np.argmin(dist_mat.sum(axis=1))
+                self.medoids_[idx] = data[medoid_index]
+        return
 
     def dbscan_clustering(self, cut_distance, min_cluster_size=5):
         """
@@ -694,18 +680,16 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
         Parameters
         ----------
-
         cut_distance : float
             The mutual reachability distance cut value to use to generate a
             flat clustering.
 
-        min_cluster_size : int, optional
+        min_cluster_size : int, default=5
             Clusters smaller than this value with be called 'noise' and remain
             unclustered in the resulting flat clustering.
 
         Returns
         -------
-
         labels : array [n_samples]
             An array of cluster labels, one per datapoint. Unclustered points
             are assigned the label -1.

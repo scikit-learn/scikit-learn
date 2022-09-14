@@ -211,34 +211,24 @@ def test_hdbscan_sparse():
         HDBSCAN(metric="euclidean", algorithm="balltree").fit(sparse_X)
 
 
-def test_hdbscan_caching(tmp_path):
-
-    labels1 = HDBSCAN(memory=tmp_path, min_samples=5).fit_predict(X)
-    labels2 = HDBSCAN(memory=tmp_path, min_samples=5, min_cluster_size=6).fit_predict(X)
-    n_clusters1 = len(set(labels1)) - int(-1 in labels1)
-    n_clusters2 = len(set(labels2)) - int(-1 in labels2)
-    assert n_clusters1 == n_clusters2
-
-
-def test_hdbscan_centroids_medoids():
+def test_hdbscan_centers():
     centers = [(0.0, 0.0), (3.0, 3.0)]
     H, _ = make_blobs(n_samples=1000, random_state=0, centers=centers, cluster_std=0.5)
-    clusterer = HDBSCAN().fit(H)
+    hdb = HDBSCAN(store_centers="both").fit(H)
 
     for idx, center in enumerate(centers):
-        centroid = clusterer.weighted_cluster_center(idx, mode="centroid")
+        centroid = hdb.centroids_[idx]
         assert_array_almost_equal(centroid, center, decimal=1)
 
-        medoid = clusterer.weighted_cluster_center(idx, mode="medoid")
+        medoid = hdb.centroids_[idx]
         assert_array_almost_equal(medoid, center, decimal=1)
 
 
 def test_hdbscan_no_centroid_medoid_for_noise():
-    clusterer = HDBSCAN().fit(X)
     with pytest.raises(ValueError):
-        clusterer.weighted_cluster_center(-1, mode="centroid")
+        HDBSCAN(store_centers="centroid").fit(X)
     with pytest.raises(ValueError):
-        clusterer.weighted_cluster_center(-1, mode="medoid")
+        HDBSCAN(store_centers="medoid").fit(X)
 
 
 def test_hdbscan_allow_single_cluster_with_epsilon():
@@ -287,15 +277,6 @@ def test_hdbscan_better_than_dbscan():
     hdb = HDBSCAN().fit(X)
     n_clusters = len(set(hdb.labels_)) - int(-1 in hdb.labels_)
     assert n_clusters == 4
-
-
-def test_hdbscan_unfit_centers_errors():
-    hdb = HDBSCAN()
-    msg = "Model has not been fit to data"
-    with pytest.raises(AttributeError, match=msg):
-        hdb.weighted_cluster_center(0, mode="centroid")
-    with pytest.raises(AttributeError, match=msg):
-        hdb.weighted_cluster_center(0, mode="medoid")
 
 
 @pytest.mark.parametrize("X", [np.array([[1, np.inf], [np.inf, 1]]), [[1, 2], [2, 1]]])
