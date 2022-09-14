@@ -623,7 +623,6 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
         res.end = end
         res.depth = depth
         res.impurity = impurity
-        node_value = splitter.criterion.get_sum_total(node_id) / weighted_n_node_samples
 
         if not is_leaf:
             # is split node

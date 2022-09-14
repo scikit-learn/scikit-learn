@@ -192,9 +192,6 @@ cdef class Criterion:
                                  - (self.weighted_n_left /
                                     self.weighted_n_node_samples * impurity_left)))
 
-    cdef double get_sum_total(self, INT32_t node_id) nogil:
-        pass
-
     cdef bint check_monotonicity(self, INT32_t monotonic_cst,
                                        double lower_bound, double upper_bound) nogil:
         pass
@@ -459,10 +456,6 @@ cdef class ClassificationCriterion(Criterion):
         for k in range(self.n_outputs):
             memcpy(dest, &self.sum_total[k, 0], self.n_classes[k] * sizeof(double))
             dest += self.max_n_classes
-
-    cdef inline double get_sum_total(self, INT32_t node_id) nogil:
-        """Get the weighted sum of the class 0 occurences in node"""
-        return self.sum_total[node_id][0]
 
     cdef inline bint check_monotonicity(self, INT32_t monotonic_cst, double lower_bound, double upper_bound) nogil:
         """Check monotonic constraint is satisfied at the current classification split"""
@@ -810,10 +803,6 @@ cdef class RegressionCriterion(Criterion):
 
         for k in range(self.n_outputs):
             dest[k] = self.sum_total[k] / self.weighted_n_node_samples
-
-    cdef inline double get_sum_total(self, INT32_t node_id) nogil:
-        """Get the weighted sum of the target values in node"""
-        return self.sum_total[node_id]
 
     cdef inline bint check_monotonicity(self, INT32_t monotonic_cst, double lower_bound, double upper_bound) nogil:
         """Check monotonic constraint is satisfied at the current regression split"""
