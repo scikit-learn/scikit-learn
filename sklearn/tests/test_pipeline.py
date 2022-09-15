@@ -1122,6 +1122,28 @@ def test_set_feature_union_passthrough():
     )
 
 
+def test_feature_union_passthrough_get_feature_names_out():
+    """Check that get_feature_names_out works with passthrough without
+    passing input_features.
+    """
+    X = iris.data
+    pca = PCA(n_components=2, svd_solver="randomized", random_state=0)
+
+    ft = FeatureUnion([("pca", pca), ("passthrough", "passthrough")])
+    ft.fit(X)
+    assert_array_equal(
+        [
+            "pca__pca0",
+            "pca__pca1",
+            "passthrough__x0",
+            "passthrough__x1",
+            "passthrough__x2",
+            "passthrough__x3",
+        ],
+        ft.get_feature_names_out(),
+    )
+
+
 def test_step_name_validation():
     error_message_1 = r"Estimator names must not contain __: got \['a__q'\]"
     error_message_2 = r"Names provided are not unique: \['a', 'a'\]"
