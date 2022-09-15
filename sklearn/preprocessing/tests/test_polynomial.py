@@ -28,80 +28,6 @@ def test_polynomial_and_spline_array_order(est):
     assert np.isfortran(est(order="F").fit_transform(X))
 
 
-@pytest.mark.parametrize(
-    "params, err_msg",
-    [
-        ({"degree": -1}, "degree must be a non-negative integer"),
-        ({"degree": 2.5}, "degree must be a non-negative integer"),
-        ({"degree": "string"}, "degree must be a non-negative integer"),
-        ({"n_knots": 1}, "n_knots must be a positive integer >= 2."),
-        ({"n_knots": 1}, "n_knots must be a positive integer >= 2."),
-        ({"n_knots": 2.5}, "n_knots must be a positive integer >= 2."),
-        ({"n_knots": "string"}, "n_knots must be a positive integer >= 2."),
-        ({"knots": 1}, "Expected 2D array, got scalar array instead:"),
-        ({"knots": [1, 2]}, "Expected 2D array, got 1D array instead:"),
-        (
-            {"knots": [[1]]},
-            r"Number of knots, knots.shape\[0\], must be >= 2.",
-        ),
-        (
-            {"knots": [[1, 5], [2, 6]]},
-            r"knots.shape\[1\] == n_features is violated.",
-        ),
-        (
-            {"knots": [[1], [1], [2]]},
-            "knots must be sorted without duplicates.",
-        ),
-        ({"knots": [[2], [1]]}, "knots must be sorted without duplicates."),
-        (
-            {"extrapolation": None},
-            "extrapolation must be one of 'error', 'constant', 'linear', "
-            "'continue' or 'periodic'.",
-        ),
-        (
-            {"extrapolation": 1},
-            "extrapolation must be one of 'error', 'constant', 'linear', "
-            "'continue' or 'periodic'.",
-        ),
-        (
-            {"extrapolation": "string"},
-            "extrapolation must be one of 'error', 'constant', 'linear', "
-            "'continue' or 'periodic'.",
-        ),
-        ({"include_bias": None}, "include_bias must be bool."),
-        ({"include_bias": 1}, "include_bias must be bool."),
-        ({"include_bias": "string"}, "include_bias must be bool."),
-        (
-            {"extrapolation": "periodic", "n_knots": 3, "degree": 3},
-            "Periodic splines require degree < n_knots. Got n_knots=3 and degree=3.",
-        ),
-        (
-            {"extrapolation": "periodic", "knots": [[0], [1]], "degree": 2},
-            "Periodic splines require degree < n_knots. Got n_knots=2 and degree=2.",
-        ),
-    ],
-)
-def test_spline_transformer_input_validation(params, err_msg):
-    """Test that we raise errors for invalid input in SplineTransformer."""
-    X = [[1], [2]]
-
-    with pytest.raises(ValueError, match=err_msg):
-        SplineTransformer(**params).fit(X)
-
-
-def test_spline_transformer_manual_knot_input():
-    """
-    Test that array-like knot positions in SplineTransformer are accepted.
-    """
-    X = np.arange(20).reshape(10, 2)
-    knots = [[0.5, 1], [1.5, 2], [5, 10]]
-    st1 = SplineTransformer(degree=3, knots=knots, n_knots=None).fit(X)
-    knots = np.asarray(knots)
-    st2 = SplineTransformer(degree=3, knots=knots, n_knots=None).fit(X)
-    for i in range(X.shape[1]):
-        assert_allclose(st1.bsplines_[i].t, st2.bsplines_[i].t)
-
-
 @pytest.mark.parametrize("extrapolation", ["continue", "periodic"])
 def test_spline_transformer_integer_knots(extrapolation):
     """Test that SplineTransformer accepts integer value knot positions."""
@@ -236,31 +162,6 @@ def test_spline_transformer_get_base_knot_positions(
         X=X, knots=knots, n_knots=n_knots, sample_weight=sample_weight
     )
     assert_allclose(base_knots, expected_knots)
-
-
-@pytest.mark.parametrize(
-    "knots, n_knots, degree",
-    [
-        ("uniform", 5, 3),
-        ("uniform", 12, 8),
-        (
-            [[-1.0, 0.0], [0, 1.0], [0.1, 2.0], [0.2, 3.0], [0.3, 4.0], [1, 5.0]],
-            None,
-            3,
-        ),
-    ],
-)
-def test_spline_transformer_periodicity_of_extrapolation(knots, n_knots, degree):
-    """Test that the SplineTransformer is periodic for multiple features."""
-    X_1 = np.linspace((-1, 0), (1, 5), 10)
-    X_2 = np.linspace((1, 5), (3, 10), 10)
-
-    splt = SplineTransformer(
-        knots=knots, n_knots=n_knots, degree=degree, extrapolation="periodic"
-    )
-    splt.fit(X_1)
-
-    assert_allclose(splt.transform(X_1), splt.transform(X_2))
 
 
 @pytest.mark.parametrize(["bias", "intercept"], [(True, False), (False, True)])
@@ -465,13 +366,10 @@ def test_spline_transformer_n_features_out(n_knots, include_bias, degree):
 @pytest.mark.parametrize(
     "params, err_msg",
     [
-        ({"degree": -1}, "degree must be a non-negative integer"),
-        ({"degree": 2.5}, "degree must be a non-negative int or tuple"),
-        ({"degree": "12"}, r"degree=\(min_degree, max_degree\) must"),
-        ({"degree": "string"}, "degree must be a non-negative int or tuple"),
         ({"degree": (-1, 2)}, r"degree=\(min_degree, max_degree\) must"),
         ({"degree": (0, 1.5)}, r"degree=\(min_degree, max_degree\) must"),
         ({"degree": (3, 2)}, r"degree=\(min_degree, max_degree\) must"),
+        ({"degree": (1, 2, 3)}, r"int or tuple \(min_degree, max_degree\)"),
     ],
 )
 def test_polynomial_features_input_validation(params, err_msg):
@@ -877,19 +775,6 @@ def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only):
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
 
-def test_polynomial_features_deprecated_n_input_features():
-    # check that we raise a deprecation warning when accessing
-    # `n_input_features_`. FIXME: remove in 1.2
-    depr_msg = (
-        "The attribute `n_input_features_` was deprecated in version "
-        "1.0 and will be removed in 1.2."
-    )
-    X = np.arange(10).reshape(5, 2)
-
-    with pytest.warns(FutureWarning, match=depr_msg):
-        PolynomialFeatures().fit(X).n_input_features_
-
-
 # TODO: Remove in 1.2 when get_feature_names is removed
 @pytest.mark.parametrize("Transformer", [SplineTransformer, PolynomialFeatures])
 def test_get_feature_names_deprecated(Transformer):
@@ -915,7 +800,7 @@ def test_polynomial_features_behaviour_on_zero_degree():
 
     poly = PolynomialFeatures(degree=(0, 0), include_bias=False)
     err_msg = (
-        "Setting both min_deree and max_degree to zero and include_bias to"
+        "Setting both min_degree and max_degree to zero and include_bias to"
         " False would result in an empty output array."
     )
     with pytest.raises(ValueError, match=err_msg):
