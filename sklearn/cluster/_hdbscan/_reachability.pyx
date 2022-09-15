@@ -20,7 +20,7 @@ def mutual_reachability(distance_matrix, min_points=5, alpha=None):
 
     Parameters
     ----------
-    distance_matrix : ndarray, shape (n_samples, n_samples)
+    distance_matrix : ndarray of shape (n_samples, n_samples)
         Array of distances between samples.
 
     min_points : int, default=5
@@ -46,6 +46,9 @@ def mutual_reachability(distance_matrix, min_points=5, alpha=None):
     size = distance_matrix.shape[0]
     min_points = min(size - 1, min_points)
     try:
+        # Compute the core distances for all samples `x_p` corresponding
+        # to the distance of the k-th farthest neighbours (including
+        # `x_p`).
         core_distances = np.partition(distance_matrix,
                                       min_points,
                                       axis=0)[min_points]
