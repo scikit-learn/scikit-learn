@@ -57,7 +57,7 @@ y = iris.target_names[y]
 random_state = np.random.RandomState(0)
 n_samples, n_features = X.shape
 n_classes = len(np.unique(y))
-X = np.c_[X, random_state.randn(n_samples, 200 * n_features)]
+X = np.concatenate([X, random_state.randn(n_samples, 200 * n_features)], axis=1)
 (
     X_train,
     X_test,
@@ -229,7 +229,7 @@ fpr_grid = np.linspace(0.0, 1.0, 1000)
 mean_tpr = np.zeros_like(fpr_grid)
 
 for i in range(n_classes):
-    mean_tpr += np.interp(fpr_grid, fpr[i], tpr[i])
+    mean_tpr += np.interp(fpr_grid, fpr[i], tpr[i])  # linear interpolation
 
 # Average it and compute AUC
 mean_tpr /= n_classes
@@ -422,7 +422,8 @@ plt.plot(
 )
 plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level (AUC = 0.5)")
 plt.xlim([0.0, 1.0])
-plt.ylim([0.0, 1.05])
+plt.ylim([0.0, 1.0])
+plt.axis("square")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
 plt.legend()
