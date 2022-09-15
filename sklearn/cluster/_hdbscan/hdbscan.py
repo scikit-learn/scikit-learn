@@ -338,7 +338,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     ----------
     labels_ : ndarray of shape (n_samples,)
         Cluster labels for each point in the dataset given to :term:`fit`.
-        Noisy samples are given the label -1.
+        There are two reserved labels:
+        - Noisy samples are given the label -1.
+        - Samples with missing data are given the label -2.
 
     probabilities_ : ndarray of shape (n_samples,)
         The strength with which each sample is a member of its assigned
