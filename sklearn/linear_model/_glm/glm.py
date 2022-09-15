@@ -69,8 +69,7 @@ class NewtonSolver(ABC):
 
     Parameters
     ----------
-    coef : ndarray of shape (n_dof,), (n_classes, n_dof) or (n_classes * n_dof,), \
-        default=None
+    coef : ndarray of shape (n_dof,), (n_classes, n_dof) or (n_classes * n_dof,)
         Start/Initial coefficients of a linear model.
         If shape (n_classes * n_dof,), the classes of one feature are contiguous,
         i.e. one reconstructs the 2d-array via
@@ -136,7 +135,7 @@ class NewtonSolver(ABC):
     def __init__(
         self,
         *,
-        coef=None,
+        coef,
         linear_loss=LinearModelLoss(base_loss=HalfSquaredError, fit_intercept=True),
         l2_reg_strength=0.0,
         tol=1e-4,
@@ -161,13 +160,7 @@ class NewtonSolver(ABC):
             - self.raw_prediction
             - self.loss_value
         """
-        if self.coef is None:
-            self.coef = self.linear_loss.init_zero_coef(X)
-            self.raw_prediction = np.zeros_like(y)
-        else:
-            _, _, self.raw_prediction = self.linear_loss.weight_intercept_raw(
-                self.coef, X
-            )
+        _, _, self.raw_prediction = self.linear_loss.weight_intercept_raw(self.coef, X)
         self.loss_value = self.linear_loss.loss(
             coef=self.coef,
             X=X,
@@ -546,8 +539,8 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
                 "singular or very ill-conditioned Hessian matrix at iteration "
                 f"#{self.iteration}. It will now resort to lbfgs instead.\n"
                 "Further options are to use another solver or to avoid such situation "
-                "in the first place. Possible remedies are removing collinearfeatures "
-                "of X or increasing the penalization strengths.\n"
+                "in the first place. Possible remedies are removing collinear features"
+                " of X or increasing the penalization strengths.\n"
                 "The original Linear Algebra message was:\n"
                 + str(e),
                 scipy.linalg.LinAlgWarning,
