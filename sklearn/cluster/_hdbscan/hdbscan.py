@@ -177,7 +177,7 @@ def _hdbscan_prims(
     return _process_mst(min_spanning_tree)
 
 
-def remap_single_linkage_tree(tree, internal_to_raw, outliers):
+def remap_single_linkage_tree(tree, internal_to_raw, non_finite):
     """
     Takes an internal single_linkage_tree structure and adds back in a set of points
     that were initially detected as non-finite and returns that new tree.
@@ -194,7 +194,7 @@ def remap_single_linkage_tree(tree, internal_to_raw, outliers):
     """
     finite_count = len(internal_to_raw)
 
-    outlier_count = len(outliers)
+    outlier_count = len(non_finite)
     for i, (left, right, *_) in enumerate(tree):
         if left < finite_count:
             tree[i, 0] = internal_to_raw[left]
@@ -205,10 +205,10 @@ def remap_single_linkage_tree(tree, internal_to_raw, outliers):
         else:
             tree[i, 1] = right + outlier_count
 
-    outlier_tree = np.zeros((len(outliers), 4))
+    outlier_tree = np.zeros((len(non_finite), 4))
     last_cluster_id = tree[tree.shape[0] - 1][0:2].max()
     last_cluster_size = tree[tree.shape[0] - 1][3]
-    for i, outlier in enumerate(outliers):
+    for i, outlier in enumerate(non_finite):
         outlier_tree[i] = (outlier, last_cluster_id + 1, np.inf, last_cluster_size + 1)
         last_cluster_id += 1
         last_cluster_size += 1
@@ -226,7 +226,7 @@ def _get_finite_row_indices(matrix):
             [i for i, row in enumerate(matrix.tolil().data) if np.all(np.isfinite(row))]
         )
     else:
-        row_indices = np.isfinite(matrix.sum(axis=1)).nonzero()[0]
+        (row_indices,) = np.isfinite(matrix.sum(axis=1)).nonzero()
     return row_indices
 
 
@@ -515,12 +515,22 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 # Pass only the purely finite indices into hdbscan
                 # We will later assign all non-finite points to the
                 # noise cluster (label=-1)
-                # TODO: Correctly propogate np.nan as a missing value, instead
-                # of relegating to noise as we currently do.
+
+                # Reduce X to make the checks for missing/outlier samples more
+                # convenient.
+                reduced_X = X.sum(axis=1)
+
+                # Samples with missing data are denoted by the presence of
+                # `np.nan`
+                missing = list(np.isnan(reduced_X).nonzero()[0])
+
+                # Outlier samples are denoted by the presence of `np.inf`
+                outliers = list(np.isinf(reduced_X).nonzero()[0])
+
+                # Continue with only finite samples
                 finite_index = _get_finite_row_indices(X)
-                X = X[finite_index]
                 internal_to_raw = {x: y for x, y in enumerate(finite_index)}
-                outliers = list(set(range(X.shape[0])) - set(finite_index))
+                X = X[finite_index]
         elif issparse(X):
             # Handle sparse precomputed distance matrices separately
             X = self._validate_data(
@@ -620,14 +630,18 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             # remap indices to align with original data in the case of
             # non-finite entries.
             self._single_linkage_tree_ = remap_single_linkage_tree(
-                self._single_linkage_tree_, internal_to_raw, outliers
+                self._single_linkage_tree_,
+                internal_to_raw,
+                non_finite=outliers + missing,
             )
             new_labels = np.full(self._raw_data.shape[0], -1)
             new_labels[finite_index] = self.labels_
+            new_labels[missing] = -2
             self.labels_ = new_labels
 
             new_probabilities = np.zeros(self._raw_data.shape[0])
             new_probabilities[finite_index] = self.probabilities_
+            new_probabilities[missing] = np.nan
             self.probabilities_ = new_probabilities
 
         if self.store_centers:

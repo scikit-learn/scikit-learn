@@ -22,15 +22,35 @@ X, y = shuffle(X, y, random_state=7)
 X = StandardScaler().fit_transform(X)
 
 
-@pytest.mark.parametrize("missing_value", [np.inf, np.nan])
-def test_missing_data(missing_value):
+def test_missing_data():
     """
-    Tests if nan data are treated as infinite distance from all other points
+    Tests if nan data are propogated as missing data rather than outliers.
+    """
+    X_missing_data = X.copy()
+    X_missing_data[0] = [np.nan, 1]
+    X_missing_data[5] = [np.nan, np.nan]
+    # import pdb; pdb.set_trace()
+    model = HDBSCAN().fit(X_missing_data)
+
+    (missing_labels_idx,) = (model.labels_ == -2).nonzero()
+    assert_array_equal(missing_labels_idx, [0, 5])
+
+    (missing_probs_idx,) = (np.isnan(model.probabilities_)).nonzero()
+    assert_array_equal(missing_probs_idx, [0, 5])
+
+    clean_indices = list(range(1, 5)) + list(range(6, 200))
+    clean_model = HDBSCAN().fit(X_missing_data[clean_indices])
+    assert_array_equal(clean_model.labels_, model.labels_[clean_indices])
+
+
+def test_outlier_data():
+    """
+    Tests if np.inf data are treated as infinite distance from all other points
     and assigned to -1 cluster.
     """
     X_missing_data = X.copy()
-    X_missing_data[0] = [missing_value, 1]
-    X_missing_data[5] = [missing_value, missing_value]
+    X_missing_data[0] = [np.inf, 1]
+    X_missing_data[5] = [np.inf, np.inf]
     model = HDBSCAN().fit(X_missing_data)
     assert model.labels_[0] == -1
     assert model.labels_[5] == -1
@@ -47,7 +67,7 @@ def test_hdbscan_distance_matrix():
     D /= np.max(D)
 
     labels = HDBSCAN(metric="precomputed").fit_predict(D)
-    n_clusters = len(set(labels)) - int(-1 in labels)
+    n_clusters = len(set(labels) - {-1, -2})
     assert n_clusters == n_clusters_true
 
     # Check that clustering is arbitrarily good
@@ -67,13 +87,13 @@ def test_hdbscan_sparse_distance_matrix():
     D.eliminate_zeros()
 
     labels = HDBSCAN(metric="precomputed").fit_predict(D)
-    n_clusters = len(set(labels)) - int(-1 in labels)
+    n_clusters = len(set(labels) - {-1, -2})
     assert n_clusters == n_clusters_true
 
 
 def test_hdbscan_feature_vector():
     labels = HDBSCAN().fit_predict(X)
-    n_clusters = len(set(labels)) - int(-1 in labels)
+    n_clusters = len(set(labels) - {-1, -2})
     assert n_clusters == n_clusters_true
 
     # Check that clustering is arbitrarily good
@@ -94,7 +114,7 @@ def test_hdbscan_feature_vector():
 @pytest.mark.parametrize("metric", _VALID_METRICS)
 def test_hdbscan_algorithms(algo, metric):
     labels = HDBSCAN(algorithm=algo).fit_predict(X)
-    n_clusters = len(set(labels)) - int(-1 in labels)
+    n_clusters = len(set(labels) - {-1, -2})
     assert n_clusters == n_clusters_true
 
     # Validation for brute is handled by `pairwise_distances`
@@ -131,7 +151,7 @@ def test_hdbscan_algorithms(algo, metric):
 def test_hdbscan_dbscan_clustering():
     clusterer = HDBSCAN().fit(X)
     labels = clusterer.dbscan_clustering(0.3)
-    n_clusters = len(set(labels)) - int(-1 in labels)
+    n_clusters = len(set(labels) - {-1, -2})
     assert n_clusters == n_clusters_true
 
 
@@ -143,7 +163,7 @@ def test_hdbscan_high_dimensional():
         metric="seuclidean",
         metric_params={"V": np.ones(H.shape[1])},
     ).fit_predict(H)
-    n_clusters = len(set(labels)) - int(-1 in labels)
+    n_clusters = len(set(labels) - {-1, -2})
     assert n_clusters == n_clusters_true
 
 
@@ -151,13 +171,13 @@ def test_hdbscan_best_balltree_metric():
     labels = HDBSCAN(
         metric="seuclidean", metric_params={"V": np.ones(X.shape[1])}
     ).fit_predict(X)
-    n_clusters = len(set(labels)) - int(-1 in labels)
+    n_clusters = len(set(labels) - {-1, -2})
     assert n_clusters == n_clusters_true
 
 
 def test_hdbscan_no_clusters():
     labels = HDBSCAN(min_cluster_size=len(X) - 1).fit_predict(X)
-    n_clusters = len(set(labels)) - int(-1 in labels)
+    n_clusters = len(set(labels) - {-1, -2})
     assert n_clusters == 0
 
 
@@ -176,7 +196,7 @@ def test_hdbscan_min_cluster_size():
 def test_hdbscan_callable_metric():
     metric = distance.euclidean
     labels = HDBSCAN(metric=metric).fit_predict(X)
-    n_clusters = len(set(labels)) - int(-1 in labels)
+    n_clusters = len(set(labels) - {-1, -2})
     assert n_clusters == n_clusters_true
 
 
@@ -191,13 +211,13 @@ def test_hdbscan_sparse():
     sparse_X = sparse.csr_matrix(X)
 
     labels = HDBSCAN().fit(sparse_X).labels_
-    n_clusters = len(set(labels)) - int(-1 in labels)
+    n_clusters = len(set(labels) - {-1, -2})
     assert n_clusters == 3
 
     sparse_X_nan = sparse_X.copy()
     sparse_X_nan[0, 0] = np.nan
     labels = HDBSCAN().fit(sparse_X_nan).labels_
-    n_clusters = len(set(labels)) - int(-1 in labels)
+    n_clusters = len(set(labels) - {-1, -2})
     assert n_clusters == 3
 
     msg = "Sparse data matrices only support algorithm `brute`."
