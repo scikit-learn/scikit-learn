@@ -787,7 +787,7 @@ def test_n_threads_agnosticism(
     )
 
 
-pytest.mark.parametrize(
+@pytest.mark.parametrize(
     "n_samples, chunk_size, Dispatcher, dtype",
     [
         (100, 50, ArgKmin, np.float64),
@@ -798,9 +798,9 @@ pytest.mark.parametrize(
 )
 def test_format_agnosticism(
     global_random_seed,
-    Dispatcher,
     n_samples,
     chunk_size,
+    Dispatcher,
     dtype,
     n_features=100,
 ):
