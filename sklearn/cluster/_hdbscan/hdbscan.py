@@ -400,8 +400,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
        Sander, J., 2014. Density-Based Clustering Validation. In SDM
        (pp. 839-847).
 
-    .. [5] Malzer, C., & Baum, M. (2019). A Hybrid Approach To Hierarchical
-           Density-based Cluster Selection. arxiv preprint 1911.02282.
+    .. [5] :arxiv:`Malzer, C., & Baum, M. (2019).
+       "A Hybrid Approach To Hierarchical Density-based Cluster Selection."
+       <1911.02282>`.
 
     Examples
     --------
