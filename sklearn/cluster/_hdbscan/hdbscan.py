@@ -21,7 +21,7 @@ from ...neighbors import BallTree, KDTree, NearestNeighbors
 from ...utils._param_validation import Interval, StrOptions
 from ...utils.validation import _assert_all_finite
 from ._linkage import label, mst_from_distance_matrix, mst_from_data_matrix
-from ._reachability import mutual_reachability, sparse_mutual_reachability
+from ._reachability import mutual_reachability
 from ._tree import compute_stability, condense_tree, get_clusters, labelling_at_cut
 
 FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics
@@ -63,7 +63,7 @@ def _process_mst(min_spanning_tree):
 def _hdbscan_brute(
     X,
     min_samples=5,
-    alpha=1.0,
+    alpha=None,
     metric="euclidean",
     n_jobs=None,
     **metric_params,
@@ -78,13 +78,15 @@ def _hdbscan_brute(
         distance_matrix = pairwise_distances(
             X, metric=metric, n_jobs=n_jobs, **metric_params
         )
+    if alpha is not None:
+        distance_matrix = distance_matrix / alpha
 
     if issparse(distance_matrix):
         # Compute sparse mutual reachability graph
         # if max_dist > 0, max distance to use when the reachability is infinite
         max_dist = metric_params.get("max_dist", 0.0)
-        mutual_reachability_ = sparse_mutual_reachability(
-            X.tolil(), min_points=min_samples, max_dist=max_dist, alpha=alpha
+        mutual_reachability_ = mutual_reachability(
+            distance_matrix.tolil(), min_points=min_samples, max_dist=max_dist
         )
         # Check connected component on mutual reachability
         # If more than one component, it means that even if the distance matrix X
@@ -122,7 +124,7 @@ def _hdbscan_brute(
         return single_linkage_tree
 
     # distance_matrix is dense
-    mutual_reachability_ = mutual_reachability(distance_matrix, min_samples, alpha)
+    mutual_reachability_ = mutual_reachability(distance_matrix, min_samples)
 
     min_spanning_tree = mst_from_distance_matrix(mutual_reachability_)
 
@@ -534,6 +536,11 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             self.min_cluster_size if self.min_samples is None else self.min_samples
         )
 
+        if self._min_samples > X.shape[0]:
+            raise ValueError(
+                f"min_samples ({self._min_samples}) must be at most the number of"
+                f" samples in X ({X.shape[0]})"
+            )
         mst_func = None
         kwargs = dict(
             X=X,

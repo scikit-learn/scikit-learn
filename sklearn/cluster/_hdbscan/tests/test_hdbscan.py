@@ -276,11 +276,11 @@ def test_hdbscan_better_than_dbscan():
     [
         ({"metric": "precomputed"}, np.array([[1, np.inf], [np.inf, 1]])),
         ({"metric": "precomputed"}, [[1, 2], [2, 1]]),
-        ({"min_samples": 1}, [[1, 2], [3, 4]]),
+        ({}, [[1, 2], [3, 4]]),
     ],
 )
 def test_hdbscan_usable_inputs(X, kwargs):
-    HDBSCAN(**kwargs).fit(X)
+    HDBSCAN(min_samples=1, **kwargs).fit(X)
 
 
 def test_hdbscan_sparse_distances_too_few_nonzero():
@@ -310,3 +310,10 @@ def test_hdbscan_tree_invalid_metric():
     if len(metrics_not_kd) > 0:
         with pytest.raises(ValueError, match=msg):
             HDBSCAN(algorithm="kdtree", metric=metrics_not_kd[0]).fit(X)
+
+
+def test_hdbscan_too_many_min_samples():
+    hdb = HDBSCAN(min_samples=len(X) + 1)
+    msg = r"min_samples (.*) must be at most"
+    with pytest.raises(ValueError, match=msg):
+        hdb.fit(X)
