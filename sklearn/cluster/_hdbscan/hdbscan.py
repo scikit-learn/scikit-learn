@@ -674,7 +674,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     def _weighted_cluster_center(self, X):
         # Number of non-noise clusters
-        n_clusters = len(set(self.labels_)) - int(-1 in set(self.labels_))
+        n_clusters = len(set(self.labels_) - {-1, -2})
         mask = np.empty((X.shape[0],), dtype=np.bool_)
         make_centroids = self.store_centers in ("centroid", "both")
         make_medoids = self.store_centers in ("medoid", "both")
