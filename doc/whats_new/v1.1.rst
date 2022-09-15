@@ -814,7 +814,7 @@ Changelog
 
 - |Enhancement| :meth:`inspection.PartialDependenceDisplay.from_estimator`,
   :meth:`inspection.PartialDependenceDisplay.plot`, and
-  `inspection.plot_partial_dependence` now support plotting centered
+  :func:`inspection.plot_partial_dependence` now support plotting centered
   Individual Conditional Expectation (cICE) and centered PDP curves controlled
   by setting the parameter `centered`.
   :pr:`18310` by :user:`Johannes Elfner <JoElfner>` and

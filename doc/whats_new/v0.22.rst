@@ -27,13 +27,13 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
-- |Fix| Fixed a bug in `metrics.plot_roc_curve` where
+- |Fix| Fixed a bug in :func:`metrics.plot_roc_curve` where
   the name of the estimator was passed in the :class:`metrics.RocCurveDisplay`
   instead of the parameter `name`. It results in a different plot when calling
   :meth:`metrics.RocCurveDisplay.plot` for the subsequent times.
   :pr:`16500` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| Fixed a bug in `metrics.plot_precision_recall_curve` where the
+- |Fix| Fixed a bug in :func:`metrics.plot_precision_recall_curve` where the
   name of the estimator was passed in the
   :class:`metrics.PrecisionRecallDisplay` instead of the parameter `name`. It
   results in a different plot when calling
@@ -82,18 +82,18 @@ Changelog
   Follow-up of :pr:`15898` by :user:`Shivam Gargsya <shivamgargsya>`.
   :pr:`15933` by :user:`Guillaume Lemaitre <glemaitre>` and `Olivier Grisel`_.
 
-- |Fix| `inspection.plot_partial_dependence` and
+- |Fix| :func:`inspection.plot_partial_dependence` and
   :meth:`inspection.PartialDependenceDisplay.plot` now consistently checks
   the number of axes passed in. :pr:`15760` by `Thomas Fan`_.
 
 :mod:`sklearn.metrics`
 ......................
 
-- |Fix| `metrics.plot_confusion_matrix` now raises error when `normalize`
+- |Fix| :func:`metrics.plot_confusion_matrix` now raises error when `normalize`
   is invalid. Previously, it runs fine with no normalization.
   :pr:`15888` by `Hanmin Qin`_.
 
-- |Fix| `metrics.plot_confusion_matrix` now colors the label color
+- |Fix| :func:`metrics.plot_confusion_matrix` now colors the label color
   correctly to maximize contrast with its background. :pr:`15936` by
   `Thomas Fan`_ and :user:`DizietAsahi`.
 
@@ -101,7 +101,7 @@ Changelog
   value of the ``zero_division`` keyword argument. :pr:`15879`
   by :user:`Bibhash Chandra Mitra <Bibyutatsu>`.
 
-- |Fix| Fixed a bug in `metrics.plot_confusion_matrix` to correctly
+- |Fix| Fixed a bug in :func:`metrics.plot_confusion_matrix` to correctly
   pass the `values_format` parameter to the :class:`ConfusionMatrixDisplay`
   plot() call. :pr:`15937` by :user:`Stephen Blystone <blynotes>`.
 
@@ -451,7 +451,7 @@ Changelog
   - |Feature| Estimators now have an additional `warm_start` parameter that
     enables warm starting. :pr:`14012` by :user:`Johann Faouzi <johannfaouzi>`.
   - |Feature| :func:`inspection.partial_dependence` and
-    `inspection.plot_partial_dependence` now support the fast 'recursion'
+    :func:`inspection.plot_partial_dependence` now support the fast 'recursion'
     method for both estimators. :pr:`13769` by `Nicolas Hug`_.
   - |Enhancement| for :class:`ensemble.HistGradientBoostingClassifier` the
     training loss or score is now monitored on a class-wise stratified
@@ -616,18 +616,18 @@ Changelog
   respect to a given scoring function. :issue:`13146` by `Thomas Fan`_.
 
 - |Feature| :func:`inspection.partial_dependence` and
-  `inspection.plot_partial_dependence` now support the fast 'recursion'
+  :func:`inspection.plot_partial_dependence` now support the fast 'recursion'
   method for :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor`. :pr:`13769` by
   `Nicolas Hug`_.
 
-- |Enhancement| `inspection.plot_partial_dependence` has been extended to
+- |Enhancement| :func:`inspection.plot_partial_dependence` has been extended to
   now support the new visualization API described in the :ref:`User Guide
   <visualizations>`. :pr:`14646` by `Thomas Fan`_.
 
 - |Enhancement| :func:`inspection.partial_dependence` accepts pandas DataFrame
   and :class:`pipeline.Pipeline` containing :class:`compose.ColumnTransformer`.
-  In addition `inspection.plot_partial_dependence` will use the column
+  In addition :func:`inspection.plot_partial_dependence` will use the column
   names by default when a dataframe is passed.
   :pr:`14028` and :pr:`15429` by `Guillaume Lemaitre`_.
 
@@ -712,7 +712,7 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
-- |MajorFeature| `metrics.plot_roc_curve` has been added to plot roc
+- |MajorFeature| :func:`metrics.plot_roc_curve` has been added to plot roc
   curves. This function introduces the visualization API described in
   the :ref:`User Guide <visualizations>`. :pr:`14357` by `Thomas Fan`_.
 
@@ -732,10 +732,10 @@ Changelog
   Gain and Normalized Discounted Cumulative Gain. :pr:`9951` by :user:`Jérôme
   Dockès <jeromedockes>`.
 
-- |Feature| `metrics.plot_precision_recall_curve` has been added to plot
+- |Feature| :func:`metrics.plot_precision_recall_curve` has been added to plot
   precision recall curves. :pr:`14936` by `Thomas Fan`_.
 
-- |Feature| `metrics.plot_confusion_matrix` has been added to plot
+- |Feature| :func:`metrics.plot_confusion_matrix` has been added to plot
   confusion matrices. :pr:`15083` by `Thomas Fan`_.
 
 - |Feature| Added multiclass support to :func:`metrics.roc_auc_score` with

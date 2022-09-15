@@ -555,7 +555,7 @@ Changelog
 .........................
 
 - |Feature| :func:`inspection.partial_dependence` and
-  `inspection.plot_partial_dependence` now support calculating and
+  :func:`inspection.plot_partial_dependence` now support calculating and
   plotting Individual Conditional Expectation (ICE) curves controlled by the
   ``kind`` parameter.
   :pr:`16619` by :user:`Madhura Jayratne <madhuracj>`.
@@ -660,7 +660,7 @@ Changelog
   :pr:`10591` by :user:`Jeremy Karnowski <jkarnows>` and
   :user:`Daniel Mohns <dmohns>`.
 
-- |Feature| Added `metrics.plot_det_curve` and
+- |Feature| Added :func:`metrics.plot_det_curve` and
   :class:`metrics.DetCurveDisplay` to ease the plot of DET curves.
   :pr:`18176` by :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -674,11 +674,11 @@ Changelog
   Rand index.
   :pr:`17412` by :user:`Uwe F Mayer <ufmayer>`.
 
-- |Feature| `metrics.plot_confusion_matrix` now supports making colorbar
+- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
   optional in the matplotlib plot by setting `colorbar=False`. :pr:`17192` by
   :user:`Avi Gupta <avigupta2612>`
 
-- |Feature| `metrics.plot_confusion_matrix` now supports making colorbar
+- |Feature| :func:`metrics.plot_confusion_matrix` now supports making colorbar
   optional in the matplotlib plot by setting colorbar=False. :pr:`17192` by
   :user:`Avi Gupta <avigupta2612>`.
 
@@ -687,12 +687,12 @@ Changelog
   :user:`Lucy Liu <lucyleeow>`.
 
 - |Enhancement| Add `pos_label` parameter in
-  `metrics.plot_precision_recall_curve` in order to specify the positive
+  :func:`metrics.plot_precision_recall_curve` in order to specify the positive
   class to be used when computing the precision and recall statistics.
   :pr:`17569` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Enhancement| Add `pos_label` parameter in
-  `metrics.plot_roc_curve` in order to specify the positive
+  :func:`metrics.plot_roc_curve` in order to specify the positive
   class to be used when computing the roc auc statistics.
   :pr:`17651` by :user:`Clara Matos <claramatos>`.
 
@@ -724,7 +724,7 @@ Changelog
   classifiers directly with string labeled target classes.
   :pr:`18114` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Fix| Fixed bug in `metrics.plot_confusion_matrix` where error occurs
+- |Fix| Fixed bug in :func:`metrics.plot_confusion_matrix` where error occurs
   when `y_true` contains labels that were not previously seen by the classifier
   while the `labels` and `display_labels` parameters are set to `None`.
   :pr:`18405` by :user:`Thomas J. Fan <thomasjpfan>` and
