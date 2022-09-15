@@ -518,7 +518,7 @@ def test_pairwise_distances_reduction_is_usable_for():
     Y = rng.rand(100, 10)
     X_csr = csr_matrix(X)
     Y_csr = csr_matrix(Y)
-    metric = "euclidean"
+    metric = "manhattan"
 
     # Must be usable for all possible pair of {dense, sparse} datasets
     assert BaseDistanceReductionDispatcher.is_usable_for(X, Y, metric)
@@ -549,6 +549,19 @@ def test_pairwise_distances_reduction_is_usable_for():
     # F-ordered arrays are not supported
     assert not BaseDistanceReductionDispatcher.is_usable_for(
         np.asfortranarray(X), Y, metric
+    )
+
+    # We prefer not to use those implementations for fused sparse-dense when
+    # metric="(sq)euclidean" because it's not yet the most efficient one on
+    # all configurations of datasets.
+    # See: https://github.com/scikit-learn/scikit-learn/pull/23585#issuecomment-1247996669  # noqa
+    # TODO: implement specialisation for (sq)euclidean on fused sparse-dense
+    # using sparse-dense routines for matrix-vector multiplications.
+    assert not BaseDistanceReductionDispatcher.is_usable_for(
+        X_csr, Y, metric="euclidean"
+    )
+    assert not BaseDistanceReductionDispatcher.is_usable_for(
+        X_csr, Y_csr, metric="sqeuclidean"
     )
 
     # CSR matrices without non-zeros elements aren't currently supported

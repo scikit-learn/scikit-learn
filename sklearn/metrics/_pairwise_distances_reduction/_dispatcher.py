@@ -110,7 +110,7 @@ class BaseDistanceReductionDispatcher:
                 X.indices.dtype == X.indptr.dtype == np.int32
             )
 
-        return (
+        is_usable = (
             get_config().get("enable_cython_pairwise_dist", True)
             and (is_numpy_c_ordered(X) or is_valid_sparse_matrix(X))
             and (is_numpy_c_ordered(Y) or is_valid_sparse_matrix(Y))
@@ -118,6 +118,24 @@ class BaseDistanceReductionDispatcher:
             and X.dtype in (np.float32, np.float64)
             and metric in cls.valid_metrics()
         )
+
+        # The other joblib-based back-end might be more efficient on fused sparse-dense
+        # datasets' pairs on metric="(sq)euclidean" for some configurations because it
+        # uses the Squared Euclidean matrix decomposition, i.e.:
+        #
+        #       ||X_c_i - Y_c_j||² = ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
+        #
+        # calling efficient sparse-dense routines for matrix and vectors multiplication
+        # implemented in SciPy we do not use yet here.
+        # See: https://github.com/scikit-learn/scikit-learn/pull/23585#issuecomment-1247996669  # noqa
+        # TODO: implement specialisation for (sq)euclidean on fused sparse-dense
+        # using sparse-dense routines for matrix-vector multiplications.
+        fused_sparse_dense_euclidean_case_guard = not (
+            (is_valid_sparse_matrix(X) or is_valid_sparse_matrix(Y))
+            and "euclidean" in metric
+        )
+
+        return is_usable and fused_sparse_dense_euclidean_case_guard
 
     @classmethod
     @abstractmethod
