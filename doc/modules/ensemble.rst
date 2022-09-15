@@ -1130,7 +1130,7 @@ Depending on the problem at hand, you may have prior knowledge indicating
 that a given feature should in general have a positive (or negative) effect
 on the target value. For example, all else being equal, a higher credit
 score should increase the probability of getting approved for a loan.
-_Monotonic constraints_ allow you to incorporate such prior knowledge into the
+Monotonic constraints allow you to incorporate such prior knowledge into the
 model.
 
 For :math:`F`, a the predictor with two features:
