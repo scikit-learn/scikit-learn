@@ -14,11 +14,13 @@ from ...neighbors import BallTree, KDTree
 
 def mutual_reachability(distance_matrix, min_points=5, max_dist=0.0):
     """Compute the weighted adjacency matrix of the mutual reachability
-    graph of a distance matrix.
+    graph of a distance matrix. Note that computation is performed in-place for
+    `distance_matrix`. If out-of-place computation is required, pass a copy to
+    this function.
 
     Parameters
     ----------
-    distance_matrix : {ndarray or sparse matrix} of shape (n_samples, n_samples)
+    distance_matrix : ndarray or sparse matrix of shape (n_samples, n_samples)
         Array of distances between samples.
 
     min_points : int, default=5

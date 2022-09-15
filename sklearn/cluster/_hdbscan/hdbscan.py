@@ -123,7 +123,9 @@ def _hdbscan_brute(
 
         return single_linkage_tree
 
-    # distance_matrix is dense
+    # `distance_matrix` is dense at this point.
+    # Note that `distance_matrix` is manipulated in-place, however we do not
+    # need it for anything else past this point, hence the operation is safe.
     mutual_reachability_ = mutual_reachability(distance_matrix, min_samples)
 
     min_spanning_tree = mst_from_distance_matrix(mutual_reachability_)
