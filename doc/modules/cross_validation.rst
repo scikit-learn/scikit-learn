@@ -713,14 +713,14 @@ Here is a visualization of cross-validation behavior for uneven groups:
 Leave One Group Out
 ^^^^^^^^^^^^^^^^^^^
 
-:class:`LeaveOneGroupOut` is a cross-validation scheme which holds out
-the samples according to a third-party provided array of integer groups. This
-group information can be used to encode arbitrary domain specific pre-defined
-cross-validation folds.
+:class:`LeaveOneGroupOut` is a cross-validation scheme where each split holds
+out samples belonging to one specific group. Group information is
+provided via an array that encodes the group of each sample.
 
 Each training set is thus constituted by all the samples except the ones
-related to a specific group. This is basically the same as
-:class:`LeavePGroupsOut` with ``n_groups=1``.
+related to a specific group. This is the same as :class:`LeavePGroupsOut` with
+`n_groups=1` and the same as :class:`GroupKFold` with `n_splits` equal to the
+number of unique labels passed to the `groups` parameter.
 
 For example, in the cases of multiple experiments, :class:`LeaveOneGroupOut`
 can be used to create a cross-validation based on the different experiments:

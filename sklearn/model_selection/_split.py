@@ -476,9 +476,9 @@ class GroupKFold(_BaseKFold):
     --------
     >>> import numpy as np
     >>> from sklearn.model_selection import GroupKFold
-    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
-    >>> y = np.array([1, 2, 3, 4])
-    >>> groups = np.array([0, 0, 2, 2])
+    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]])
+    >>> y = np.array([1, 2, 3, 4, 5, 6])
+    >>> groups = np.array([0, 0, 2, 2, 3, 3])
     >>> group_kfold = GroupKFold(n_splits=2)
     >>> group_kfold.get_n_splits(X, y, groups)
     2
@@ -489,15 +489,18 @@ class GroupKFold(_BaseKFold):
     ...     X_train, X_test = X[train_index], X[test_index]
     ...     y_train, y_test = y[train_index], y[test_index]
     ...     print(X_train, X_test, y_train, y_test)
-    ...
-    TRAIN: [0 1] TEST: [2 3]
-    [[1 2]
-     [3 4]] [[5 6]
-     [7 8]] [1 2] [3 4]
-    TRAIN: [2 3] TEST: [0 1]
+    TRAIN: [2 3] TEST: [0 1 4 5]
     [[5 6]
-     [7 8]] [[1 2]
-     [3 4]] [3 4] [1 2]
+    [7 8]] [[ 1  2]
+    [ 3  4]
+    [ 9 10]
+    [11 12]] [3 4] [1 2 5 6]
+    TRAIN: [0 1 4 5] TEST: [2 3]
+    [[ 1  2]
+    [ 3  4]
+    [ 9 10]
+    [11 12]] [[5 6]
+    [7 8]] [1 2 5 6] [3 4]
 
     See Also
     --------
@@ -1109,9 +1112,10 @@ class TimeSeriesSplit(_BaseKFold):
 class LeaveOneGroupOut(BaseCrossValidator):
     """Leave One Group Out cross-validator
 
-    Provides train/test indices to split data according to a third-party
-    provided group. This group information can be used to encode arbitrary
-    domain specific stratifications of the samples as integers.
+    Provides train/test indices to split data such that each training set is
+    comprised of all samples except ones belonging to one specific group.
+    Arbitrary domain specific group information is provided an array integers
+    that encodes the group of each sample.
 
     For instance the groups could be the year of collection of the samples
     and thus allow for cross-validation against time-based splits.
@@ -1121,7 +1125,7 @@ class LeaveOneGroupOut(BaseCrossValidator):
     Notes
     -----
     Splits are ordered according to the index of the group left out. The first
-    split has training set consting of the group whose index in `groups` is
+    split has testing set consisting of the group whose index in `groups` is
     lowest, and so on.
 
     Examples
@@ -2355,10 +2359,10 @@ def train_test_split(
 ):
     """Split arrays or matrices into random train and test subsets.
 
-    Quick utility that wraps input validation and
-    ``next(ShuffleSplit().split(X, y))`` and application to input data
-    into a single call for splitting (and optionally subsampling) data in a
-    oneliner.
+    Quick utility that wraps input validation,
+    ``next(ShuffleSplit().split(X, y))``, and application to input data
+    into a single call for splitting (and optionally subsampling) data into a
+    one-liner.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 

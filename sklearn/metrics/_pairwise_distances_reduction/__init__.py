@@ -32,7 +32,7 @@
 #
 #    Dispatchers are meant to be used in the Python code. Under the hood, a
 #    dispatcher must only define the logic to choose at runtime to the correct
-#    dtype-specialized :class:`PairwiseDistancesReduction` implementation based
+#    dtype-specialized :class:`BaseDistanceReductionDispatcher` implementation based
 #    on the dtype of X and of Y.
 #
 #
@@ -46,19 +46,18 @@
 #
 #
 #                               (base dispatcher)
-#                           PairwiseDistancesReduction
+#                         BaseDistanceReductionDispatcher
 #                                       ∆
 #                                       |
 #                                       |
-#                     +-----------------+-----------------+
-#                     |                                   |
-#               (dispatcher)                        (dispatcher)
-#         PairwiseDistancesArgKmin           PairwiseDistancesRadiusNeighbors
+#               +-----------------------+----------------------+
+#               |                                              |
+#          (dispatcher)                                   (dispatcher)
+#            ArgKmin                                     RadiusNeighbors
 #               |                                              |
 #               |                                              |
-#               |                                              |
-#               |                  (64bit implem.)             |
-#               |          PairwiseDistancesReduction64        |
+#               |                (64bit implem.)               |
+#               |           BaseDistanceReducer{32,64}         |
 #               |                       ∆                      |
 #               |                       |                      |
 #               |                       |                      |
@@ -66,36 +65,37 @@
 #               |     |                                   |    |
 #               |     |                                   |    |
 #               x     |                                   |    x
-#        PairwiseDistancesArgKmin64       PairwiseDistancesRadiusNeighbors64
+#            ArgKmin{32,64}                        RadiusNeighbors{32,64}
 #               |     ∆                                   ∆    |
 #               |     |                                   |    |
-#               x     |                                   |    |
-#     FastEuclideanPairwiseDistancesArgKmin64             |    |
-#                                                         |    |
-#                                                         |    x
-#                                  FastEuclideanPairwiseDistancesRadiusNeighbors64
+#        ======================= Specializations =============================
+#               |     |                                   |    |
+#               |     |                                   |    |
+#               x     |                                   |    x
+#        EuclideanArgKmin{32,64}               EuclideanRadiusNeighbors{32,64}
 #
-#    For instance :class:`PairwiseDistancesArgKmin`, dispatches to
-#    :class:`PairwiseDistancesArgKmin64` if X and Y are both dense NumPy arrays
-#    with a float64 dtype.
+#    For instance :class:`ArgKmin`, dispatches to both :class:`ArgKmin64`
+#    and :class:`ArgKmin32` if X and Y are both dense NumPy arrays with a `float64`
+#    or `float32` dtype respectively.
 #
 #    In addition, if the metric parameter is set to "euclidean" or "sqeuclidean",
-#    :class:`PairwiseDistancesArgKmin64` further dispatches to
-#    :class:`FastEuclideanPairwiseDistancesArgKmin64` a specialized subclass
-#    to optimally handle the Euclidean distance case using the Generalized Matrix
-#    Multiplication (see the docstring of :class:`GEMMTermComputer64` for details).
+#    then `ArgKmin{32,64}` further dispatches to `EuclideanArgKmin{32,64}`. For
+#    example, :class:`ArgKmin64` would dispatch to :class:`EuclideanArgKmin64`, a
+#    specialized subclass that optimally handles the Euclidean distance case
+#    using Generalized Matrix Multiplication over `float64` data (see the
+#    docstring of :class:`GEMMTermComputer64` for details).
 
 
 from ._dispatcher import (
-    PairwiseDistancesReduction,
-    PairwiseDistancesArgKmin,
-    PairwiseDistancesRadiusNeighborhood,
+    BaseDistanceReductionDispatcher,
+    ArgKmin,
+    RadiusNeighbors,
     sqeuclidean_row_norms,
 )
 
 __all__ = [
-    "PairwiseDistancesReduction",
-    "PairwiseDistancesArgKmin",
-    "PairwiseDistancesRadiusNeighborhood",
+    "BaseDistanceReductionDispatcher",
+    "ArgKmin",
+    "RadiusNeighbors",
     "sqeuclidean_row_norms",
 ]

@@ -38,7 +38,7 @@ pre_python_environment_install() {
         apt-get update
         apt-get install -y python3-dev python3-numpy python3-scipy \
                 python3-matplotlib libatlas3-base libatlas-base-dev \
-                python3-virtualenv python3-pandas ccache
+                python3-virtualenv python3-pandas ccache git
 
     elif [[ "$DISTRIB" == "conda-pypy3" ]]; then
         # need compilers
