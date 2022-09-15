@@ -1177,8 +1177,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
           - 0: no constraint
           - -1: monotonic decrease
 
-        The constraints are only valid for binary classifications and hold
-        over the probability of the positive class.
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
         .. versionadded:: 0.23

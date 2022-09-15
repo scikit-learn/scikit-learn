@@ -169,8 +169,6 @@ class TreeGrower:
           - 0: no constraint
           - -1: monotonic decrease
 
-        The constraints are only valid for binary classifications and hold
-        over the probability of the positive class.
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
     l2_regularization : float, default=0.
         The L2 regularization parameter.
