@@ -11,7 +11,7 @@ import gc
 from scipy.sparse import lil_matrix as sparse_matrix
 from scipy.spatial.distance import pdist, squareform
 
-from sklearn.neighbors import BallTree, KDTree
+from ...neighbors import BallTree, KDTree
 
 
 def mutual_reachability(distance_matrix, min_points=5, alpha=None):

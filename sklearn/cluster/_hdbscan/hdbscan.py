@@ -20,7 +20,7 @@ from ...metrics._dist_metrics import DistanceMetric
 from ...neighbors import BallTree, KDTree, NearestNeighbors
 from ...utils._param_validation import Interval, StrOptions
 from ...utils.validation import _assert_all_finite
-from ._linkage import label, mst_linkage_core, mst_linkage_core_vector
+from ._linkage import label, mst_from_distance_matrix, mst_from_data_matrix
 from ._reachability import mutual_reachability, sparse_mutual_reachability
 from ._tree import compute_stability, condense_tree, get_clusters, labelling_at_cut
 
@@ -124,7 +124,7 @@ def _hdbscan_brute(
     # distance_matrix is dense
     mutual_reachability_ = mutual_reachability(distance_matrix, min_samples, alpha)
 
-    min_spanning_tree = mst_linkage_core(mutual_reachability_)
+    min_spanning_tree = mst_from_distance_matrix(mutual_reachability_)
 
     # Warn if the MST couldn't be constructed around the missing distances
     if np.isinf(min_spanning_tree.T[2]).any():
@@ -167,8 +167,8 @@ def _hdbscan_prims(
     core_distances = np.ascontiguousarray(neighbors_distances[:, -1])
     dist_metric = DistanceMetric.get_metric(metric, **metric_params)
 
-    # Mutual reachability distance is implicit in mst_linkage_core_vector
-    min_spanning_tree = mst_linkage_core_vector(X, core_distances, dist_metric, alpha)
+    # Mutual reachability distance is implicit in mst_from_data_matrix
+    min_spanning_tree = mst_from_data_matrix(X, core_distances, dist_metric, alpha)
 
     return _process_mst(min_spanning_tree)
 
