@@ -20,6 +20,137 @@ the project community.
 Roles And Responsibilities
 ==========================
 
+The scikit-learn community is organized in **Roles**. The Roles in the project
+governance are listed below sorted by increasing involvement in the project:
+
+- Contributors
+- Recurring Contributors
+- Core Contributors
+
+Roles' Definition, Responsibilities, Rights and Recognition are inherited.
+
+Contributors
+------------
+
+Definition
+~~~~~~~~~~
+
+**Contributors are individuals or organisations who participate technically, socially
+or financially to the life or improvement of the scikit-learn.**
+
+.. note:: **Contributors aren't necessarily developers.**
+
+There are many ways to contribute to the project:
+
+- improving the documentation (with respect to its UX and UI, structural organisation,
+  content, examples and references)
+- organising events (such as sprints, workshop, meetups, ...)
+- reviewing Pull Requests
+- producing qualitative reference materials (blog posts, presentation, ...)
+- mentoring other Contributors
+- triaging Issues
+- authoring Pull Requests
+- participating in the project's discussions
+- advocating the project to the public
+- searching for funds for the project
+- funding the project
+
+Responsibilities
+~~~~~~~~~~~~~~~~
+
+- Must personally uphold the Code of Conduct.
+
+Rights and Recognition
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Have their contribution acknowledge somewhere (e.g. listed in the changelog)
+
+Recurring Contributors
+----------------------
+
+Definition
+~~~~~~~~~~
+
+**Recurring Contributors are Contributors who recurrently participate to the project.**
+
+Recurring Contributors are seen as Contributors who get confortable with the project and
+who can provide valuable insight on some of its aspects.
+
+Recurrent Contributor role will often be an intermediate step for people in becoming
+Core Contributors once their contributions are frequent enough and during a sustained
+period of time if they are willing to get involved further in the project.
+
+Recurrent Contributor is an valuable role by itself for people who want to be part of
+the project on a more advisory-like role, as they for example might not have the time
+availability or don't want the responsibilities that come with being a Core Contributor.
+
+Contributors are promoted as Recurrent Contributors after the proposal of at least
+another Recurrent Contributor and after a vote on the private mailing list.
+
+Responsibilities
+~~~~~~~~~~~~~~~~
+
+- Willing to attend events and sessions organised by their team.
+
+Rights and Recognition
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Are part of the scikit-learn GitHub organisation
+- Are listed as Recurring Contributors on scikit-learn websites
+- Can nominate Contributors to be Recurrent Contributors
+- Might become Core-Contributors
+- Can participate to monthly Core-contributors meetings
+
+
+Core Contributors
+-----------------
+
+Definition
+~~~~~~~~~~
+
+**Core Contributors are Recurring Contributors which entrusted with their involvement to
+the well being of the Project thanks to their frequency of quality contributions over a
+sustained period of time.**
+
+.. note:: **Core Contributors aren't necessarily Core Developers.**
+
+
+They are the main governing and decision body of the Project and are therefore given
+voting and managing rights to the Project services.
+
+Team memberships for Core Contributors refer to their Core Contributor role, as
+experienced and entrusted members of the team they are considered Recurrent Contributors
+for the rest of the teams and given permissions accordingly.
+
+The exact permissions of all Core Contributors may therefore not be the same and depend
+on their team memberships. Even if they have commit rights, Core Contributors should
+still have their pull requests reviewed by at least one other Core Contributor
+before merging.
+
+In rare circumstances, a Core Contributor may bypass this review if in their best
+judgement it is appropriate to do so, but such expedited PR merges must be justifiable
+and ultimately subject to review post hoc, if necessary.
+
+Recurrent Contributors are promoted as Core Contributors after the proposal of at least
+another Core Contributor and after a vote on the private mailing list.
+
+Responsibilities
+~~~~~~~~~~~~~~~~
+
+- Willing to organise events and sessions for their team
+
+Rights and Recognition
+~~~~~~~~~~~~~~~~~~~~~~
+
+- Are part of the Maintainers GitHub Team
+- Are listed as Core Contributors on scikit-learn websites
+- Can nominate Recurrent Contributors to be Core Contributors
+- Have “commit rights” to the repository
+- Take part in the projects' governance discussions
+- Have vote rights for the project direction (promoting a contributor to be a
+  core-developer, approving a SLEP, etc.)
+
+
 Contributors
 ------------
 
