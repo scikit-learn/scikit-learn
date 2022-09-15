@@ -107,7 +107,6 @@ jobs:
             bitness: 64
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
-            scipy_image: scipy-1.10.0.dev0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
 
           # MacOS x86_64
           - os: macos-latest
