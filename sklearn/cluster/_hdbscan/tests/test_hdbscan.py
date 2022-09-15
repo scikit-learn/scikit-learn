@@ -14,23 +14,23 @@ from sklearn.metrics.pairwise import _VALID_METRICS
 from sklearn.neighbors import BallTree, KDTree
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
-from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose, assert_array_equal
 
 n_clusters_true = 3
 X, y = make_blobs(n_samples=200, random_state=10)
 X, y = shuffle(X, y, random_state=7)
 X = StandardScaler().fit_transform(X)
 
-X_missing_data = X.copy()
-X_missing_data[0] = [np.nan, 1]
-X_missing_data[5] = [np.nan, np.nan]
 
-
-def test_missing_data():
+@pytest.mark.parametrize("missing_value", [np.inf, np.nan])
+def test_missing_data(missing_value):
     """
     Tests if nan data are treated as infinite distance from all other points
     and assigned to -1 cluster.
     """
+    X_missing_data = X.copy()
+    X_missing_data[0] = [missing_value, 1]
+    X_missing_data[5] = [missing_value, missing_value]
     model = HDBSCAN().fit(X_missing_data)
     assert model.labels_[0] == -1
     assert model.labels_[5] == -1
@@ -39,7 +39,7 @@ def test_missing_data():
     assert model.probabilities_[5] == 0
     clean_indices = list(range(1, 5)) + list(range(6, 200))
     clean_model = HDBSCAN().fit(X_missing_data[clean_indices])
-    assert np.allclose(clean_model.labels_, model.labels_[clean_indices])
+    assert_array_equal(clean_model.labels_, model.labels_[clean_indices])
 
 
 def test_hdbscan_distance_matrix():
@@ -180,11 +180,6 @@ def test_hdbscan_callable_metric():
     assert n_clusters == n_clusters_true
 
 
-def test_hdbscan_input_lists():
-    X = [[1.0, 2.0], [3.0, 4.0]]
-    HDBSCAN(min_samples=1).fit(X)
-
-
 @pytest.mark.parametrize("tree", ["kd", "ball"])
 def test_hdbscan_precomputed_non_brute(tree):
     hdb = HDBSCAN(metric="precomputed", algorithm=f"prims_{tree}tree")
@@ -193,7 +188,6 @@ def test_hdbscan_precomputed_non_brute(tree):
 
 
 def test_hdbscan_sparse():
-
     sparse_X = sparse.csr_matrix(X)
 
     labels = HDBSCAN().fit(sparse_X).labels_
@@ -218,10 +212,10 @@ def test_hdbscan_centers():
 
     for idx, center in enumerate(centers):
         centroid = hdb.centroids_[idx]
-        assert_array_almost_equal(centroid, center, decimal=1)
+        assert_allclose(center, centroid, rtol=1, atol=0.05)
 
         medoid = hdb.centroids_[idx]
-        assert_array_almost_equal(medoid, center, decimal=1)
+        assert_allclose(center, medoid, rtol=1, atol=0.05)
 
     # Ensure that nothing is done for noise
     hdb = HDBSCAN(store_centers="both", min_cluster_size=X.shape[0]).fit(X)
@@ -277,9 +271,16 @@ def test_hdbscan_better_than_dbscan():
     assert n_clusters == 4
 
 
-@pytest.mark.parametrize("X", [np.array([[1, np.inf], [np.inf, 1]]), [[1, 2], [2, 1]]])
-def test_hdbscan_precomputed_array_like(X):
-    HDBSCAN(metric="precomputed").fit(X)
+@pytest.mark.parametrize(
+    "kwargs, X",
+    [
+        ({"metric": "precomputed"}, np.array([[1, np.inf], [np.inf, 1]])),
+        ({"metric": "precomputed"}, [[1, 2], [2, 1]]),
+        ({"min_samples": 1}, [[1, 2], [3, 4]]),
+    ],
+)
+def test_hdbscan_usable_inputs(X, kwargs):
+    HDBSCAN(**kwargs).fit(X)
 
 
 def test_hdbscan_sparse_distances_too_few_nonzero():
