@@ -3,7 +3,9 @@
 # License: 3-clause BSD
 
 import numpy as np
+from cython.parallel cimport prange
 cimport numpy as cnp
+from libc.math cimport isfinite
 
 import gc
 
@@ -44,19 +46,27 @@ def mutual_reachability(distance_matrix, min_points=5, max_dist=0.0):
        In Pacific-Asia Conference on Knowledge Discovery and Data Mining
        (pp. 160-172). Springer Berlin Heidelberg.
     """
+    # Account for index offset
+    min_points -= 1
+
     if issparse(distance_matrix):
-        return _sparse_mutual_reachability(
+        _sparse_mutual_reachability(
             distance_matrix,
             min_points=min_points,
             max_dist=max_dist
         )
-    return _dense_mutual_reachability(distance_matrix, min_points=min_points)
+        return distance_matrix.tocsr()
 
-cdef _dense_mutual_reachability(cnp.ndarray distance_matrix, min_points=5):
+    _dense_mutual_reachability(distance_matrix, min_points=min_points)
+    return distance_matrix
+
+cdef _dense_mutual_reachability(
+    cnp.ndarray[dtype=cnp.float64_t, ndim=2] distance_matrix,
+    cnp.intp_t min_points=5
+):
     cdef cnp.intp_t i, j, n_samples = distance_matrix.shape[0]
-
-    # Account for index offset
-    min_points -= 1
+    cdef cnp.float64_t mr_dist
+    cdef cnp.float64_t[:] core_distances
 
     # Compute the core distances for all samples `x_p` corresponding
     # to the distance of the k-th farthest neighbours (including
@@ -67,11 +77,15 @@ cdef _dense_mutual_reachability(cnp.ndarray distance_matrix, min_points=5):
         axis=0,
     )[min_points]
 
-    for i in range(n_samples):
-        for j in range(n_samples):
-            mr_dist = max(core_distances[i], core_distances[j], distance_matrix[i, j])
-            distance_matrix[i, j] = mr_dist
-    return distance_matrix
+    with nogil:
+        for i in range(n_samples):
+            for j in prange(n_samples):
+                mr_dist = max(
+                    core_distances[i],
+                    core_distances[j],
+                    distance_matrix[i, j]
+                )
+                distance_matrix[i, j] = mr_dist
 
 # Assumes LIL format.
 # TODO: Rewrite for CSR.
@@ -80,30 +94,27 @@ cdef _sparse_mutual_reachability(
     cnp.intp_t min_points=5,
     cnp.float64_t max_dist=0.
 ):
-    cdef cnp.intp_t i, j, n
+    cdef cnp.intp_t i, j, n, n_samples = distance_matrix.shape[0]
     cdef cnp.float64_t mr_dist
-    cdef cnp.ndarray[dtype=cnp.float64_t, ndim=1] core_distances
-    cdef cnp.ndarray[dtype=cnp.int32_t, ndim=1] nz_row_data
-    cdef cnp.ndarray[dtype=cnp.int32_t, ndim=1] nz_col_data
-    core_distances = np.empty(distance_matrix.shape[0], dtype=np.float64)
+    cdef cnp.float64_t[:] core_distances
+    cdef cnp.int32_t[:] nz_row_data, nz_col_data
+    core_distances = np.empty(n_samples, dtype=np.float64)
 
-    # Account for index offset
-    min_points -= 1
-    for i in range(distance_matrix.shape[0]):
+    for i in range(n_samples):
         if min_points < len(distance_matrix.data[i]):
-            core_distances[i] = np.partition(distance_matrix.data[i], min_points)[min_points]
+            core_distances[i] = np.partition(
+                distance_matrix.data[i],
+                min_points
+            )[min_points]
         else:
             core_distances[i] = np.infty
 
     nz_row_data, nz_col_data = distance_matrix.nonzero()
-
     for n in range(nz_row_data.shape[0]):
         i = nz_row_data[n]
         j = nz_col_data[n]
         mr_dist = max(core_distances[i], core_distances[j], distance_matrix[i, j])
-        if np.isfinite(mr_dist):
+        if isfinite(mr_dist):
             distance_matrix[i, j] = mr_dist
         elif max_dist > 0:
             distance_matrix[i, j] = max_dist
-
-    return distance_matrix.tocsr()
