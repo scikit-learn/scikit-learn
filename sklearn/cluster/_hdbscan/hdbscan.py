@@ -195,7 +195,7 @@ def remap_single_linkage_tree(tree, internal_to_raw, outliers):
     finite_count = len(internal_to_raw)
 
     outlier_count = len(outliers)
-    for i, (left, right, distance, size) in enumerate(tree):
+    for i, (left, right, *_) in enumerate(tree):
         if left < finite_count:
             tree[i, 0] = internal_to_raw[left]
         else:
@@ -216,7 +216,7 @@ def remap_single_linkage_tree(tree, internal_to_raw, outliers):
     return tree
 
 
-def get_finite_row_indices(matrix):
+def _get_finite_row_indices(matrix):
     """
     Returns the indices of the purely finite rows of a
     sparse matrix or dense ndarray
@@ -226,7 +226,7 @@ def get_finite_row_indices(matrix):
             [i for i, row in enumerate(matrix.tolil().data) if np.all(np.isfinite(row))]
         )
     else:
-        row_indices = np.where(np.isfinite(matrix).sum(axis=1) == matrix.shape[1])[0]
+        row_indices = np.isfinite(matrix.sum(axis=1)).nonzero()[0]
     return row_indices
 
 
@@ -498,7 +498,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         if self.metric != "precomputed":
             # Non-precomputed matrices may contain non-finite values.
             X = self._validate_data(
-                X, accept_sparse="csr", force_all_finite=False, dtype=np.float64
+                X,
+                accept_sparse=["csr", "lil"],
+                force_all_finite=False,
+                dtype=np.float64,
             )
             self._raw_data = X
             all_finite = True
@@ -510,8 +513,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             if not all_finite:
                 # Pass only the purely finite indices into hdbscan
                 # We will later assign all non-finite points to the
-                # background-1 cluster
-                finite_index = get_finite_row_indices(X)
+                # noise cluster (label=-1)
+                # TODO: Correctly propogate np.nan as a missing value, instead
+                # of relegating to noise as we currently do.
+                finite_index = _get_finite_row_indices(X)
                 X = X[finite_index]
                 internal_to_raw = {x: y for x, y in enumerate(finite_index)}
                 outliers = list(set(range(X.shape[0])) - set(finite_index))
@@ -519,7 +524,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             # Handle sparse precomputed distance matrices separately
             X = self._validate_data(
                 X,
-                accept_sparse="csr",
+                accept_sparse=["csr", "lil"],
                 dtype=np.float64,
             )
         else:
@@ -589,7 +594,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 for key in ("algo", "leaf_size"):
                     kwargs.pop(key, None)
             elif self.metric in KDTree.valid_metrics:
-                # TODO: Benchmark KD vs Ball Tree efficacy
+                # TODO: Benchmark KD vs Ball Tree efficiency
                 mst_func = _hdbscan_prims
             else:
                 # Metric is a valid BallTree metric
