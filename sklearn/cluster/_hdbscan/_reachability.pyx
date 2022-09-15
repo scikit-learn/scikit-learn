@@ -23,7 +23,8 @@ def mutual_reachability(distance_matrix, min_points=5, max_dist=0.0):
     Parameters
     ----------
     distance_matrix : ndarray or sparse matrix of shape (n_samples, n_samples)
-        Array of distances between samples.
+        Array of distances between samples. If sparse, the array must be in
+        `LIL` format.
 
     min_points : int, default=5
         The number of points in a neighbourhood for a point to be considered
@@ -36,7 +37,7 @@ def mutual_reachability(distance_matrix, min_points=5, max_dist=0.0):
 
     Returns
     -------
-    mututal_reachability: ndarray, shape (n_samples, n_samples)
+    mututal_reachability: ndarray of shape (n_samples, n_samples)
         Weighted adjacency matrix of the mutual reachability graph.
 
     References
