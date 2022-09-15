@@ -787,13 +787,15 @@ def test_n_threads_agnosticism(
     )
 
 
-@pytest.mark.parametrize("n_samples", [100, 1000])
-@pytest.mark.parametrize("chunk_size", [50, 512, 1024])
-@pytest.mark.parametrize(
-    "Dispatcher",
-    [ArgKmin, RadiusNeighbors],
+pytest.mark.parametrize(
+    "n_samples, chunk_size, Dispatcher, dtype",
+    [
+        (100, 50, ArgKmin, np.float64),
+        (1024, 256, RadiusNeighbors, np.float32),
+        (100, 1024, ArgKmin, np.float32),
+        (541, 137, RadiusNeighbors, np.float64),
+    ],
 )
-@pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_format_agnosticism(
     global_random_seed,
     Dispatcher,
