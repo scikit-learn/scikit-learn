@@ -6,7 +6,7 @@ Pipeline ANOVA SVM
 This example shows how a feature selection can be easily integrated within
 a machine learning pipeline.
 
-We also show that you can easily introspect part of the pipeline.
+We also show that you can easily inspect part of the pipeline.
 
 """
 
@@ -29,7 +29,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
 # %%
 # A common mistake done with feature selection is to search a subset of
-# discriminative features on the full dataset instead of only using the
+# discriminative features on the full dataset, instead of only using the
 # training set. The usage of scikit-learn :func:`~sklearn.pipeline.Pipeline`
 # prevents to make such mistake.
 #
@@ -38,7 +38,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 #
 # When calling `fit` on the training data, a subset of feature will be selected
 # and the index of these selected features will be stored. The feature selector
-# will subsequently reduce the number of feature and pass this subset to the
+# will subsequently reduce the number of features, and pass this subset to the
 # classifier which will be trained.
 
 from sklearn.feature_selection import SelectKBest, f_classif
@@ -51,12 +51,12 @@ anova_svm = make_pipeline(anova_filter, clf)
 anova_svm.fit(X_train, y_train)
 
 # %%
-# Once the training accomplished, we can predict on new unseen samples. In this
+# Once the training is complete, we can predict on new unseen samples. In this
 # case, the feature selector will only select the most discriminative features
 # based on the information stored during training. Then, the data will be
 # passed to the classifier which will make the prediction.
 #
-# Here, we report the final metrics via a classification report.
+# Here, we show the final metrics via a classification report.
 
 from sklearn.metrics import classification_report
 
@@ -71,13 +71,13 @@ print(classification_report(y_test, y_pred))
 anova_svm[-1].coef_
 
 # %%
-# However, we do not know which features where selected from the original
-# dataset. We could proceed by several manner. Here, we will inverse the
+# However, we do not know which features were selected from the original
+# dataset. We could proceed by several manners. Here, we will invert the
 # transformation of these coefficients to get information about the original
 # space.
 
 anova_svm[:-1].inverse_transform(anova_svm[-1].coef_)
 
 # %%
-# We can see that the first three features where the selected features by
-# the first step.
+# We can see that the features with non-zero coefficients are the selected
+# features by the first step.

@@ -389,10 +389,10 @@ formula is valid only when `n_samples > n_features`.
            The Annals of Statistics 35.5 (2007): 2173-2192.
            <0712.0881.pdf>`
 
-  .. [13] `Cherkassky, Vladimir, and Yunqian Ma.
+  .. [13] :doi:`Cherkassky, Vladimir, and Yunqian Ma.
            "Comparison of model selection for regression."
            Neural computation 15.7 (2003): 1691-1714.
-           <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.392.8794&rep=rep1&type=pdf>`_
+           <10.1162/089976603321891864>`
 
 Comparison with the regularization parameter of SVM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

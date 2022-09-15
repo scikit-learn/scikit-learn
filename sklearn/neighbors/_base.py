@@ -6,11 +6,13 @@
 #          Multi-output support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
+import itertools
 from functools import partial
 
 import warnings
 from abc import ABCMeta, abstractmethod
 import numbers
+from numbers import Integral, Real
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
@@ -23,8 +25,8 @@ from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..metrics._pairwise_distances_reduction import (
-    PairwiseDistancesArgKmin,
-    PairwiseDistancesRadiusNeighborhood,
+    ArgKmin,
+    RadiusNeighbors,
 )
 from ..utils import (
     check_array,
@@ -34,6 +36,7 @@ from ..utils import (
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.fixes import delayed, sp_version
 from ..utils.fixes import parse_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
@@ -83,26 +86,17 @@ VALID_METRICS_SPARSE = dict(
 )
 
 
-def _check_weights(weights):
-    """Check to make sure weights are valid"""
-    if weights not in (None, "uniform", "distance") and not callable(weights):
-        raise ValueError(
-            "weights not recognized: should be 'uniform', "
-            "'distance', or a callable function"
-        )
-
-    return weights
-
-
 def _get_weights(dist, weights):
     """Get the weights from an array of distances and a parameter ``weights``.
+
+    Assume weights have already been validated.
 
     Parameters
     ----------
     dist : ndarray
         The input distances.
 
-    weights : {'uniform', 'distance' or a callable}
+    weights : {'uniform', 'distance'}, callable or None
         The kind of weighting used.
 
     Returns
@@ -112,7 +106,8 @@ def _get_weights(dist, weights):
     """
     if weights in (None, "uniform"):
         return None
-    elif weights == "distance":
+
+    if weights == "distance":
         # if user attempts to classify a point that was zero distance from one
         # or more training points, those training points are weighted as 1.0
         # and the other points as 0.0
@@ -132,13 +127,9 @@ def _get_weights(dist, weights):
             inf_row = np.any(inf_mask, axis=1)
             dist[inf_row] = inf_mask[inf_row]
         return dist
-    elif callable(weights):
+
+    if callable(weights):
         return weights(dist)
-    else:
-        raise ValueError(
-            "weights not recognized: should be 'uniform', "
-            "'distance', or a callable function"
-        )
 
 
 def _is_sorted_by_data(graph):
@@ -386,6 +377,17 @@ def _radius_neighbors_from_graph(graph, radius, return_distance):
 class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for nearest neighbors estimators."""
 
+    _parameter_constraints: dict = {
+        "n_neighbors": [Interval(Integral, 1, None, closed="left"), None],
+        "radius": [Interval(Real, 0, None, closed="both"), None],
+        "algorithm": [StrOptions({"auto", "ball_tree", "kd_tree", "brute"})],
+        "leaf_size": [Interval(Integral, 1, None, closed="left")],
+        "p": [Interval(Real, 1, None, closed="both"), None],
+        "metric": [StrOptions(set(itertools.chain(*VALID_METRICS.values()))), callable],
+        "metric_params": [dict, None],
+        "n_jobs": [Integral, None],
+    }
+
     @abstractmethod
     def __init__(
         self,
@@ -409,9 +411,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self.n_jobs = n_jobs
 
     def _check_algorithm_metric(self):
-        if self.algorithm not in ["auto", "brute", "kd_tree", "ball_tree"]:
-            raise ValueError("unrecognized algorithm: '%s'" % self.algorithm)
-
         if self.algorithm == "auto":
             if self.metric == "precomputed":
                 alg_check = "brute"
@@ -512,11 +511,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self.metric == "minkowski":
             p = self.effective_metric_params_.pop("p", 2)
             w = self.effective_metric_params_.pop("w", None)
-            if p < 1:
-                raise ValueError(
-                    "p must be greater or equal to one for minkowski metric"
-                )
-            elif p == 1 and w is None:
+
+            if p == 1 and w is None:
                 self.effective_metric_ = "manhattan"
             elif p == 2 and w is None:
                 self.effective_metric_ = "euclidean"
@@ -649,17 +645,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
         elif self._fit_method == "brute":
             self._tree = None
-        else:
-            raise ValueError("algorithm = '%s' not recognized" % self.algorithm)
-
-        if self.n_neighbors is not None:
-            if self.n_neighbors <= 0:
-                raise ValueError("Expected n_neighbors > 0. Got %d" % self.n_neighbors)
-            elif not isinstance(self.n_neighbors, numbers.Integral):
-                raise TypeError(
-                    "n_neighbors does not take %s value, enter integer value"
-                    % type(self.n_neighbors)
-                )
 
         return self
 
@@ -809,12 +794,12 @@ class KNeighborsMixin:
         chunked_results = None
         use_pairwise_distances_reductions = (
             self._fit_method == "brute"
-            and PairwiseDistancesArgKmin.is_usable_for(
+            and ArgKmin.is_usable_for(
                 X if X is not None else self._fit_X, self._fit_X, self.effective_metric_
             )
         )
         if use_pairwise_distances_reductions:
-            results = PairwiseDistancesArgKmin.compute(
+            results = ArgKmin.compute(
                 X=X,
                 Y=self._fit_X,
                 k=n_neighbors,
@@ -832,7 +817,7 @@ class KNeighborsMixin:
             )
 
         elif self._fit_method == "brute":
-            # TODO: should no longer be needed once PairwiseDistancesArgKmin
+            # TODO: should no longer be needed once ArgKmin
             # is extended to accept sparse and/or float32 inputs.
 
             reduce_func = partial(
@@ -980,8 +965,8 @@ class KNeighborsMixin:
 
         else:
             raise ValueError(
-                'Unsupported mode, must be one of "connectivity" '
-                'or "distance" but got "%s" instead' % mode
+                'Unsupported mode, must be one of "connectivity", '
+                f'or "distance" but got "{mode}" instead'
             )
 
         n_queries = A_ind.shape[0]
@@ -1142,13 +1127,13 @@ class RadiusNeighborsMixin:
 
         use_pairwise_distances_reductions = (
             self._fit_method == "brute"
-            and PairwiseDistancesRadiusNeighborhood.is_usable_for(
+            and RadiusNeighbors.is_usable_for(
                 X if X is not None else self._fit_X, self._fit_X, self.effective_metric_
             )
         )
 
         if use_pairwise_distances_reductions:
-            results = PairwiseDistancesRadiusNeighborhood.compute(
+            results = RadiusNeighbors.compute(
                 X=X,
                 Y=self._fit_X,
                 radius=radius,
@@ -1333,7 +1318,7 @@ class RadiusNeighborsMixin:
         else:
             raise ValueError(
                 'Unsupported mode, must be one of "connectivity", '
-                'or "distance" but got %s instead' % mode
+                f'or "distance" but got "{mode}" instead'
             )
 
         n_queries = A_ind.shape[0]

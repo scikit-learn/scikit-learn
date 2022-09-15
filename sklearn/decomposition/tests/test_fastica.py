@@ -7,7 +7,6 @@ import warnings
 
 import numpy as np
 from scipy import stats
-from sklearn.datasets import make_low_rank_matrix
 
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
@@ -158,17 +157,15 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
     assert sources.shape == (1000, 2)
 
     assert_allclose(sources_fun, sources)
-    assert_allclose(sources, ica.transform(m.T))
+    # the debian 32 bit build with global dtype float32 needs an atol to pass
+    atol = 1e-7 if global_dtype == np.float32 else 0
+    assert_allclose(sources, ica.transform(m.T), atol=atol)
 
     assert ica.mixing_.shape == (2, 2)
 
-    for fn in [np.tanh, "exp(-.5(x^2))"]:
-        ica = FastICA(fun=fn, algorithm=algo)
-        with pytest.raises(ValueError):
-            ica.fit(m.T)
-
-    with pytest.raises(TypeError):
-        FastICA(fun=range(10)).fit(m.T)
+    ica = FastICA(fun=np.tanh, algorithm=algo)
+    with pytest.raises(ValueError):
+        ica.fit(m.T)
 
 
 def test_fastica_nowhiten():
@@ -362,19 +359,12 @@ def test_fastica_errors():
     rng = np.random.RandomState(0)
     X = rng.random_sample((n_samples, n_features))
     w_init = rng.randn(n_features + 1, n_features + 1)
-    fastica_estimator = FastICA(max_iter=0)
-    with pytest.raises(ValueError, match="max_iter should be greater than 1"):
-        fastica_estimator.fit(X)
     with pytest.raises(ValueError, match=r"alpha must be in \[1,2\]"):
         fastica(X, fun_args={"alpha": 0})
     with pytest.raises(
         ValueError, match="w_init has invalid shape.+" r"should be \(3L?, 3L?\)"
     ):
         fastica(X, w_init=w_init)
-    with pytest.raises(
-        ValueError, match="Invalid algorithm.+must be.+parallel.+or.+deflation"
-    ):
-        fastica(X, algorithm="pizza")
 
 
 def test_fastica_whiten_unit_variance():
@@ -465,7 +455,7 @@ def test_fastica_output_shape(whiten, return_X_mean, return_n_iter):
 
 @pytest.mark.parametrize("add_noise", [True, False])
 def test_fastica_simple_different_solvers(add_noise, global_random_seed):
-    """Test FastICA is consistent between whiten_solvers when `sign_flip=True`."""
+    """Test FastICA is consistent between whiten_solvers."""
     rng = np.random.RandomState(global_random_seed)
     n_samples = 1000
     # Generate two sources:
@@ -487,34 +477,23 @@ def test_fastica_simple_different_solvers(add_noise, global_random_seed):
 
     outs = {}
     for solver in ("svd", "eigh"):
-        ica = FastICA(
-            random_state=0, whiten="unit-variance", whiten_solver=solver, sign_flip=True
-        )
+        ica = FastICA(random_state=0, whiten="unit-variance", whiten_solver=solver)
         sources = ica.fit_transform(m.T)
         outs[solver] = sources
         assert ica.components_.shape == (2, 2)
         assert sources.shape == (1000, 2)
 
-    assert_allclose(outs["eigh"], outs["svd"])
+    # compared numbers are not all on the same magnitude. Using a small atol to
+    # make the test less brittle
+    assert_allclose(outs["eigh"], outs["svd"], atol=1e-12)
 
 
 def test_fastica_eigh_low_rank_warning(global_random_seed):
     """Test FastICA eigh solver raises warning for low-rank data."""
     rng = np.random.RandomState(global_random_seed)
-    X = make_low_rank_matrix(
-        n_samples=10, n_features=10, random_state=rng, effective_rank=2
-    )
+    A = rng.randn(10, 2)
+    X = A @ A.T
     ica = FastICA(random_state=0, whiten="unit-variance", whiten_solver="eigh")
     msg = "There are some small singular values"
     with pytest.warns(UserWarning, match=msg):
         ica.fit(X)
-
-
-@pytest.mark.parametrize("whiten_solver", ["this_should_fail", "test", 1, None])
-def test_fastica_whiten_solver_validation(whiten_solver):
-    rng = np.random.RandomState(0)
-    X = rng.random_sample((10, 2))
-    ica = FastICA(random_state=rng, whiten_solver=whiten_solver, whiten="unit-variance")
-    msg = f"`whiten_solver` must be 'eigh' or 'svd' but got {whiten_solver} instead"
-    with pytest.raises(ValueError, match=msg):
-        ica.fit_transform(X)

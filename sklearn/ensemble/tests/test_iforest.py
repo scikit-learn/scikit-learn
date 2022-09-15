@@ -79,13 +79,6 @@ def test_iforest_error():
     """Test that it gives proper exception on deficient input."""
     X = iris.data
 
-    # Test max_samples
-    with pytest.raises(ValueError):
-        IsolationForest(max_samples=-1).fit(X)
-    with pytest.raises(ValueError):
-        IsolationForest(max_samples=0.0).fit(X)
-    with pytest.raises(ValueError):
-        IsolationForest(max_samples=2.0).fit(X)
     # The dataset has less than 256 samples, explicitly setting
     # max_samples > n_samples should result in a warning. If not set
     # explicitly there should be no warning
@@ -98,11 +91,6 @@ def test_iforest_error():
     with warnings.catch_warnings():
         warnings.simplefilter("error", UserWarning)
         IsolationForest(max_samples=np.int64(2)).fit(X)
-
-    with pytest.raises(ValueError):
-        IsolationForest(max_samples="foobar").fit(X)
-    with pytest.raises(ValueError):
-        IsolationForest(max_samples=1.5).fit(X)
 
     # test X_test n_features match X_train one:
     with pytest.raises(ValueError):

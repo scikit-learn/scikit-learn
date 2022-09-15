@@ -271,19 +271,8 @@ def test_importances():
         assert (importances[:3, np.newaxis] >= importances[3:]).all()
 
 
-def test_error():
-    # Test that it gives proper exception on deficient input.
-
-    reg = AdaBoostRegressor(loss="foo")
-    msg = "loss must be 'linear', 'square', or 'exponential'. Got 'foo' instead."
-    with pytest.raises(ValueError, match=msg):
-        reg.fit(X, y_class)
-
-    clf = AdaBoostClassifier(algorithm="foo")
-    msg = "Algorithm must be 'SAMME' or 'SAMME.R'. Got 'foo' instead."
-    with pytest.raises(ValueError, match=msg):
-        clf.fit(X, y_class)
-
+def test_adaboost_classifier_sample_weight_error():
+    # Test that it gives proper exception on incorrect sample weight.
     clf = AdaBoostClassifier()
     msg = re.escape("sample_weight.shape == (1,), expected (6,)")
     with pytest.raises(ValueError, match=msg):
@@ -320,7 +309,7 @@ def test_base_estimator():
 
 def test_sample_weights_infinite():
     msg = "Sample weights have reached infinite values"
-    clf = AdaBoostClassifier(n_estimators=30, learning_rate=5.0, algorithm="SAMME")
+    clf = AdaBoostClassifier(n_estimators=30, learning_rate=23.0, algorithm="SAMME")
     with pytest.warns(UserWarning, match=msg):
         clf.fit(iris.data, iris.target)
 
@@ -556,34 +545,6 @@ def test_adaboostregressor_sample_weight():
     assert score_no_outlier == pytest.approx(score_with_weight)
 
 
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"n_estimators": -1}, ValueError, "n_estimators == -1, must be >= 1"),
-        ({"n_estimators": 0}, ValueError, "n_estimators == 0, must be >= 1"),
-        (
-            {"n_estimators": 1.5},
-            TypeError,
-            "n_estimators must be an instance of int, not float",
-        ),
-        ({"learning_rate": -1}, ValueError, "learning_rate == -1, must be > 0."),
-        ({"learning_rate": 0}, ValueError, "learning_rate == 0, must be > 0."),
-    ],
-)
-@pytest.mark.parametrize(
-    "model, X, y",
-    [
-        (AdaBoostClassifier, X, y_class),
-        (AdaBoostRegressor, X, y_regr),
-    ],
-)
-def test_adaboost_params_validation(model, X, y, params, err_type, err_msg):
-    """Check input parameter validation in weight boosting."""
-    est = model(**params)
-    with pytest.raises(err_type, match=err_msg):
-        est.fit(X, y)
-
-
 @pytest.mark.parametrize("algorithm", ["SAMME", "SAMME.R"])
 def test_adaboost_consistent_predict(algorithm):
     # check that predict_proba and predict give consistent results
@@ -614,3 +575,22 @@ def test_adaboost_negative_weight_error(model, X, y):
     err_msg = "Negative values in data passed to `sample_weight`"
     with pytest.raises(ValueError, match=err_msg):
         model.fit(X, y, sample_weight=sample_weight)
+
+
+def test_adaboost_numerically_stable_feature_importance_with_small_weights():
+    """Check that we don't create NaN feature importance with numerically
+    instable inputs.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20320
+    """
+    rng = np.random.RandomState(42)
+    X = rng.normal(size=(1000, 10))
+    y = rng.choice([0, 1], size=1000)
+    sample_weight = np.ones_like(y) * 1e-263
+    tree = DecisionTreeClassifier(max_depth=10, random_state=12)
+    ada_model = AdaBoostClassifier(
+        base_estimator=tree, n_estimators=20, random_state=12
+    )
+    ada_model.fit(X, y, sample_weight=sample_weight)
+    assert np.isnan(ada_model.feature_importances_).sum() == 0

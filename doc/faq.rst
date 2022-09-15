@@ -196,7 +196,7 @@ a built-in just-in-time compiler).
 
 Note however that this support is still considered experimental and specific
 components might behave slightly differently. Please refer to the test
-suite of a the specific module of interest for more details.
+suite of the specific module of interest for more details.
 
 How do I deal with string data (or trees, graphs...)?
 -----------------------------------------------------

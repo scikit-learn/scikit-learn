@@ -11,7 +11,6 @@ from sklearn.cluster import Birch
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.linear_model import ElasticNet
 from sklearn.metrics import pairwise_distances_argmin, v_measure_score
 
 from sklearn.utils._testing import assert_almost_equal
@@ -82,13 +81,6 @@ def test_n_clusters():
     brc2.fit(X)
     assert_array_equal(brc1.subcluster_labels_, brc2.subcluster_labels_)
     assert_array_equal(brc1.labels_, brc2.labels_)
-
-    # Test that the wrong global clustering step raises an Error.
-    clf = ElasticNet()
-    brc3 = Birch(n_clusters=clf)
-    err_msg = "n_clusters should be an instance of ClusterMixin or an int"
-    with pytest.raises(TypeError, match=err_msg):
-        brc3.fit(X)
 
     # Test that a small number of clusters raises a warning.
     brc4 = Birch(threshold=10000.0)
@@ -184,40 +176,6 @@ def test_birch_fit_attributes_deprecated(attribute):
 
     with pytest.warns(FutureWarning, match=msg):
         getattr(brc, attribute)
-
-
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"threshold": -1.0}, ValueError, "threshold == -1.0, must be > 0.0."),
-        ({"threshold": 0.0}, ValueError, "threshold == 0.0, must be > 0.0."),
-        ({"branching_factor": 0}, ValueError, "branching_factor == 0, must be > 1."),
-        ({"branching_factor": 1}, ValueError, "branching_factor == 1, must be > 1."),
-        (
-            {"branching_factor": 1.5},
-            TypeError,
-            "branching_factor must be an instance of int, not float.",
-        ),
-        ({"branching_factor": -2}, ValueError, "branching_factor == -2, must be > 1."),
-        ({"n_clusters": 0}, ValueError, "n_clusters == 0, must be >= 1."),
-        (
-            {"n_clusters": 2.5},
-            TypeError,
-            "n_clusters must be an instance of int, not float.",
-        ),
-        (
-            {"n_clusters": "whatever"},
-            TypeError,
-            "n_clusters should be an instance of ClusterMixin or an int",
-        ),
-        ({"n_clusters": -3}, ValueError, "n_clusters == -3, must be >= 1."),
-    ],
-)
-def test_birch_params_validation(params, err_type, err_msg):
-    """Check the parameters validation in `Birch`."""
-    X, _ = make_blobs(n_samples=80, centers=4)
-    with pytest.raises(err_type, match=err_msg):
-        Birch(**params).fit(X)
 
 
 def test_feature_names_out():
