@@ -127,7 +127,7 @@ from sklearn.metrics import RocCurveDisplay
 RocCurveDisplay.from_predictions(
     y_onehot_test[:, class_id],
     y_score[:, class_id],
-    name=f"ROC curve for {target_names[class_id]} vs the rest",
+    name=f"ROC curve for {class_of_interest} vs the rest",
     color="darkorange",
 )
 plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level (AUC = 0.5)")
@@ -145,7 +145,7 @@ plt.show()
 # ----------------------------------
 #
 # Micro-averaging aggregates the contributions from all the classes (using
-# `.ravel`) to compute the average metrics as follows:
+# :func:`np.ravel`) to compute the average metrics as follows:
 #
 # :math:`TPR=\frac{\sum_{c}TP_c}{\sum_{c}(TP_c + FN_c)}`
 #
