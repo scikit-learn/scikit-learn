@@ -744,7 +744,7 @@ Changelog
   :pr:`20431` by :user:`Oliver Pfaffel <o1iv3r>`.
 
 - |Enhancement| Add kwargs to format ICE and PD lines separately in partial
-  dependence plots :func:`inspection.plot_partial_dependence` and
+  dependence plots `inspection.plot_partial_dependence` and
   :meth:`inspection.PartialDependenceDisplay.plot`. :pr:`19428` by :user:`Mehdi
   Hamoumi <mhham>`.
 
@@ -754,7 +754,7 @@ Changelog
 
 - |API| :class:`inspection.PartialDependenceDisplay` exposes a class method:
   :func:`~inspection.PartialDependenceDisplay.from_estimator`.
-  :func:`inspection.plot_partial_dependence` is deprecated in favor of the
+  `inspection.plot_partial_dependence` is deprecated in favor of the
   class method and will be removed in 1.2. :pr:`20959` by `Thomas Fan`_.
 
 :mod:`sklearn.kernel_approximation`
@@ -947,7 +947,7 @@ Changelog
   :func:`~metrics.ConfusionMatrixDisplay.from_estimator` and
   :func:`~metrics.ConfusionMatrixDisplay.from_predictions` allowing to create
   a confusion matrix plot using an estimator or the predictions.
-  :func:`metrics.plot_confusion_matrix` is deprecated in favor of these two
+  `metrics.plot_confusion_matrix` is deprecated in favor of these two
   class methods and will be removed in 1.2.
   :pr:`18543` by `Guillaume Lemaitre`_.
 
@@ -955,7 +955,7 @@ Changelog
   :func:`~metrics.PrecisionRecallDisplay.from_estimator` and
   :func:`~metrics.PrecisionRecallDisplay.from_predictions` allowing to create
   a precision-recall curve using an estimator or the predictions.
-  :func:`metrics.plot_precision_recall_curve` is deprecated in favor of these
+  `metrics.plot_precision_recall_curve` is deprecated in favor of these
   two class methods and will be removed in 1.2.
   :pr:`20552` by `Guillaume Lemaitre`_.
 
@@ -963,7 +963,7 @@ Changelog
   :func:`~metrics.DetCurveDisplay.from_estimator` and
   :func:`~metrics.DetCurveDisplay.from_predictions` allowing to create
   a confusion matrix plot using an estimator or the predictions.
-  :func:`metrics.plot_det_curve` is deprecated in favor of these two
+  `metrics.plot_det_curve` is deprecated in favor of these two
   class methods and will be removed in 1.2.
   :pr:`19278` by `Guillaume Lemaitre`_.
 

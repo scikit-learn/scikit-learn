@@ -484,7 +484,7 @@ Changelog
 .........................
 
 - |Feature| :func:`inspection.partial_dependence` and
-  :func:`inspection.plot_partial_dependence` now support the fast 'recursion'
+  `inspection.plot_partial_dependence` now support the fast 'recursion'
   method for :class:`ensemble.RandomForestRegressor` and
   :class:`tree.DecisionTreeRegressor`. :pr:`15864` by
   `Nicolas Hug`_.
@@ -584,7 +584,7 @@ Changelog
 
 - |API| Changed the formatting of values in
   :meth:`metrics.ConfusionMatrixDisplay.plot` and
-  :func:`metrics.plot_confusion_matrix` to pick the shorter format (either '2g'
+  `metrics.plot_confusion_matrix` to pick the shorter format (either '2g'
   or 'd'). :pr:`16159` by :user:`Rick Mackenbach <Rick-Mackenbach>` and
   `Thomas Fan`_.
 

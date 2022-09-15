@@ -12,15 +12,6 @@ import sklearn
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    # sklearn.deprecation._update_doc is updating the doc against the numpydoc.
-    # This will be fixed in future PRs.
-    "sklearn.inspection._plot.partial_dependence.plot_partial_dependence",
-    # sklearn.deprecation._update_doc is updating the doc against the numpydoc.
-    # This will be fixed with issue: #24328
-    "sklearn.metrics._plot.det_curve.plot_det_curve",
-    # sklearn.deprecation._update_doc is updating the doc against the numpydoc.
-    # This will be fixed with issue: #24328
-    "sklearn.metrics._plot.precision_recall_curve.plot_precision_recall_curve",
     "sklearn.metrics.pairwise.pairwise_distances_chunked",
     "sklearn.tree._export.plot_tree",
     "sklearn.utils.axis0_safe_slice",

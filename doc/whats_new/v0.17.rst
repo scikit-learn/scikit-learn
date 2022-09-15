@@ -349,7 +349,7 @@ Bug fixes
 
 - Fixes to the ``Bunch`` class used to store datasets.
 
-- Fixed :func:`ensemble.plot_partial_dependence` ignoring the
+- Fixed `ensemble.plot_partial_dependence` ignoring the
   ``percentiles`` parameter.
 
 - Providing a ``set`` as vocabulary in ``CountVectorizer`` no longer

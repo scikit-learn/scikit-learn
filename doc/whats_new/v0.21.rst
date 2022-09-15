@@ -81,7 +81,7 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
-- |Fix| Fixed a bug in :func:`inspection.plot_partial_dependence` where 
+- |Fix| Fixed a bug in `inspection.plot_partial_dependence` where 
   ``target`` parameter was not being taken into account for multiclass problems.
   :pr:`14393` by :user:`Guillem G. Subies <guillemgsubies>`.
 
@@ -522,10 +522,10 @@ Support for Python 3.4 and below has been officially dropped.
   :pr:`13193` by :user:`Samuel O. Ronsin <samronsin>`.
 
 - |API| :func:`ensemble.partial_dependence` and
-  :func:`ensemble.plot_partial_dependence` are now deprecated in favor of
+  `ensemble.plot_partial_dependence` are now deprecated in favor of
   :func:`inspection.partial_dependence<sklearn.inspection.partial_dependence>`
   and
-  :func:`inspection.plot_partial_dependence<sklearn.inspection.plot_partial_dependence>`.
+  `inspection.plot_partial_dependence<sklearn.inspection.plot_partial_dependence>`.
   :pr:`12599` by :user:`Trevor Stephens<trevorstephens>` and
   :user:`Nicolas Hug<NicolasHug>`.
 
@@ -599,7 +599,7 @@ Support for Python 3.4 and below has been officially dropped.
 (new subpackage)
 
 - |Feature| Partial dependence plots
-  (:func:`inspection.plot_partial_dependence`) are now supported for
+  (`inspection.plot_partial_dependence`) are now supported for
   any regressor or classifier (provided that they have a `predict_proba`
   method). :pr:`12599` by :user:`Trevor Stephens <trevorstephens>` and
   :user:`Nicolas Hug <NicolasHug>`.
