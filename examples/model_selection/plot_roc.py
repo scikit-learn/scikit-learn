@@ -68,8 +68,7 @@ X = np.concatenate([X, random_state.randn(n_samples, 200 * n_features)], axis=1)
 # %%
 # We train a :class:`~sklearn.linear_model.LogisticRegression` model which can
 # naturally handle multiclass problems, thanks to the use of the multinomial
-# formulation. It is also possible to use OvR ROC evaluation of an OvO
-# multiclass support vector machine model such as :class:`~sklearn.svm.SVC`.
+# formulation.
 
 from sklearn.linear_model import LogisticRegression
 
@@ -151,7 +150,8 @@ plt.show()
 #
 # :math:`FPR=\frac{\sum_{c}FP_c}{\sum_{c}(FP_c + TN_c)}`
 
-print(f"y_score: {y_score[0:2,:]}")
+print(f"y_score:\n{y_score[0:2,:]}")
+# %%
 print(f"y_score.ravel(): {y_score[0:2,:].ravel()}")
 
 # %%
@@ -171,7 +171,7 @@ plt.ylim([0.0, 1.0])
 plt.axis("square")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
-plt.title("Receiver operating characteristic (micro-averaged)")
+plt.title("Receiver operating characteristic (micro-averaged OvR)")
 plt.legend()
 plt.show()
 
@@ -396,7 +396,7 @@ macro_roc_auc_ovo = roc_auc_score(
     average="macro",
 )
 
-print(f"One-vs-One ROC AUC scores:\n{macro_roc_auc_ovo:.2f}")
+print(f"Macro-averaged One-vs-One ROC AUC score:\n{macro_roc_auc_ovo:.2f}")
 
 # %%
 # Plot all OvO ROC curves together
@@ -434,15 +434,16 @@ plt.show()
 # identified by a linear classifier. Notice that the "virginica"-vs-the-rest
 # ROC-AUC score (0.77) is between the OvO ROC-AUC scores for "versicolor" vs
 # "virginica" (0.64) and "setosa" vs "virginica" (0.90). Indeed, the OvO
-# strategy gives additional information on the overlap between classes, at the
-# expense of computational cost.
+# strategy gives additional information on the confusion between a pair of
+# classes, at the expense of computational cost when the number of classes
+# is large.
 #
 # The OvO strategy is recommended if the user is mainly interested in correctly
 # identifying a particular class or subset of classes, whereas evaluating the
-# global performance of a classifier can be correctly resumed by a given
+# global performance of a classifier can still be summarized via a given
 # averaging strategy.
 #
-# Micro-average is dominated by the more frequent class, since the counts are
-# pooled. The macro-average better reflects the statistics of the less frequent
-# classes, and then is more appropriate when performance on all the classes is
-# equally important.
+# Micro-averaged OvR ROC is dominated by the more frequent class, since the
+# counts are pooled. The macro-averaged alternative better reflects the
+# statistics of the less frequent classes, and then is more appropriate when
+# performance on all the classes is deemed equally important.
