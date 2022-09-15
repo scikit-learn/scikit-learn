@@ -1130,36 +1130,42 @@ Depending on the problem at hand, you may have prior knowledge indicating
 that a given feature should in general have a positive (or negative) effect
 on the target value. For example, all else being equal, a higher credit
 score should increase the probability of getting approved for a loan.
-Monotonic constraints allow you to incorporate such prior knowledge into the
+_Monotonic constraints_ allow you to incorporate such prior knowledge into the
 model.
 
-A positive monotonic constraint is a constraint of the form:
+For :math:`F`, a the predictor with two features:
 
-:math:`x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2)`,
-where :math:`F` is the predictor with two features.
+ - a **monotonic increase constraint** is a constraint of the form:
+    .. math::
+        x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2)
 
-Similarly, a negative monotonic constraint is of the form:
-
-:math:`x_1 \leq x_1' \implies F(x_1, x_2) \geq F(x_1', x_2)`.
-
-Note that monotonic constraints only constraint the output "all else being
-equal". Indeed, the following relation **is not enforced** by a positive
-constraint: :math:`x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2')`.
+ - a **monotonic decrease constraint** is a constraint of the form:
+    .. math::
+        x_1 \leq x_1' \implies F(x_1, x_2) \geq F(x_1', x_2)
 
 You can specify a monotonic constraint on each feature using the
 `monotonic_cst` parameter. For each feature, a value of 0 indicates no
-constraint, while -1 and 1 indicate a negative and positive constraint,
-respectively::
+constraint, while 1 and -1 respectively indicate a monotonic increase and
+monotonic decrease constraint::
 
   >>> from sklearn.ensemble import HistGradientBoostingRegressor
 
-  ... # positive, negative, and no constraint on the 3 features
+  ... # monotonic increase, monotonic decrease, and no constraint on the 3 features
   >>> gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1, 0])
 
-In a binary classification context, imposing a monotonic constraint means
-that the feature is supposed to have a positive / negative effect on the
-probability to belong to the positive class. Monotonic constraints are not
-supported for multiclass context.
+In a binary classification context, imposing monotonic increase (respectively
+monotonic decrease constraint) means that the feature is supposed to have a
+positive effect (respectively negative effect) on the probability of samples
+belonging to the positive class.
+
+Nevertheless, monotonic constraints only marginally constraint feature effect on output.
+For instance, monotonic increase and decrease constraints cannot be used to enforce to
+modelling constraints:
+
+    .. math::
+        x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2')
+
+Also, monotonic constraints are not supported for multiclass context.
 
 .. note::
     Since categories are unordered quantities, it is not possible to enforce
