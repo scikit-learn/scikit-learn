@@ -14,12 +14,12 @@ from warnings import warn
 import numpy as np
 from scipy.sparse import csgraph, issparse
 
-from sklearn.base import BaseEstimator, ClusterMixin
-from sklearn.metrics import pairwise_distances
-from sklearn.metrics._dist_metrics import DistanceMetric
-from sklearn.neighbors import BallTree, KDTree, NearestNeighbors
-from sklearn.utils._param_validation import Interval, StrOptions
-
+from ...base import BaseEstimator, ClusterMixin
+from ...metrics import pairwise_distances
+from ...metrics._dist_metrics import DistanceMetric
+from ...neighbors import BallTree, KDTree, NearestNeighbors
+from ...utils._param_validation import Interval, StrOptions
+from ...utils.validation import _assert_all_finite
 from ._linkage import label, mst_linkage_core, mst_linkage_core_vector
 from ._reachability import mutual_reachability, sparse_mutual_reachability
 from ._tree import compute_stability, condense_tree, get_clusters, labelling_at_cut
@@ -33,7 +33,7 @@ def _tree_to_labels(
     cluster_selection_method="eom",
     allow_single_cluster=False,
     cluster_selection_epsilon=0.0,
-    max_cluster_size=0,
+    max_cluster_size=None,
 ):
     """Converts a pretrained tree and cluster size into a
     set of labels and probabilities.
@@ -80,13 +80,48 @@ def _hdbscan_brute(
         )
 
     if issparse(distance_matrix):
-        return _hdbscan_sparse_distance_matrix(
-            distance_matrix,
-            min_samples,
-            alpha,
-            **metric_params,
+        # Compute sparse mutual reachability graph
+        # if max_dist > 0, max distance to use when the reachability is infinite
+        max_dist = metric_params.get("max_dist", 0.0)
+        mutual_reachability_ = sparse_mutual_reachability(
+            X.tolil(), min_points=min_samples, max_dist=max_dist, alpha=alpha
         )
+        # Check connected component on mutual reachability
+        # If more than one component, it means that even if the distance matrix X
+        # has one component, there exists with less than `min_samples` neighbors
+        if (
+            csgraph.connected_components(
+                mutual_reachability_, directed=False, return_labels=False
+            )
+            > 1
+        ):
+            raise ValueError(
+                f"There exists points with fewer than {min_samples} neighbors. Ensure"
+                " your distance matrix has non-zero values for at least"
+                f" `min_sample`={min_samples} neighbors for each points (i.e. K-nn"
+                " graph), or specify a `max_dist` in `metric_params` to use when"
+                " distances are missing."
+            )
 
+        # Compute the minimum spanning tree for the sparse graph
+        sparse_min_spanning_tree = csgraph.minimum_spanning_tree(mutual_reachability_)
+
+        edges_sorted_indices = np.argsort(sparse_min_spanning_tree.data)
+        rows, cols = sparse_min_spanning_tree.nonzero()
+        min_spanning_tree = np.vstack(
+            (
+                rows[edges_sorted_indices],
+                cols[edges_sorted_indices],
+                sparse_min_spanning_tree.data[edges_sorted_indices],
+            ),
+        ).T
+
+        # Convert edge list into standard hierarchical clustering format
+        single_linkage_tree = label(min_spanning_tree)
+
+        return single_linkage_tree
+
+    # distance_matrix is dense
     mutual_reachability_ = mutual_reachability(distance_matrix, min_samples, alpha)
 
     min_spanning_tree = mst_linkage_core(mutual_reachability_)
@@ -102,52 +137,6 @@ def _hdbscan_brute(
         )
 
     return _process_mst(min_spanning_tree)
-
-
-def _hdbscan_sparse_distance_matrix(
-    X,
-    min_samples=5,
-    alpha=1.0,
-    **metric_params,
-):
-    # Compute sparse mutual reachability graph
-    # if max_dist > 0, max distance to use when the reachability is infinite
-    max_dist = metric_params.get("max_dist", 0.0)
-    mutual_reachability_ = sparse_mutual_reachability(
-        X.tolil(), min_points=min_samples, max_dist=max_dist, alpha=alpha
-    )
-    # Check connected component on mutual reachability
-    # If more than one component, it means that even if the distance matrix X
-    # has one component, there exists with less than `min_samples` neighbors
-    if (
-        csgraph.connected_components(
-            mutual_reachability_, directed=False, return_labels=False
-        )
-        > 1
-    ):
-        raise ValueError(
-            "There exists points with fewer than %s neighbors. "
-            "Ensure your distance matrix has non-zero values for "
-            "at least `min_sample`=%s neighbors for each points (i.e. K-nn graph), "
-            "or specify a `max_dist` in `metric_params` to use when distances "
-            "are missing." % (min_samples, min_samples)
-        )
-
-    # Compute the minimum spanning tree for the sparse graph
-    sparse_min_spanning_tree = csgraph.minimum_spanning_tree(mutual_reachability_)
-
-    # Convert the graph to scipy cluster array format
-    nonzeros = sparse_min_spanning_tree.nonzero()
-    nonzero_vals = sparse_min_spanning_tree[nonzeros]
-    min_spanning_tree = np.vstack(nonzeros + (nonzero_vals,)).T
-
-    # Sort edges of the min_spanning_tree by weight
-    min_spanning_tree = min_spanning_tree[np.argsort(min_spanning_tree.T[2]), :][0]
-
-    # Convert edge list into standard hierarchical clustering format
-    single_linkage_tree = label(min_spanning_tree)
-
-    return single_linkage_tree
 
 
 def _hdbscan_prims(
@@ -264,47 +253,48 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         A distance threshold. Clusters below this value will be merged.
         See [5]_ for more information.
 
-    max_cluster_size : int, default=0
-        A limit to the size of clusters returned by the `eom` cluster selection
-        algorithm. Has no effect if `cluster_selection_method=leaf`. Can be
-        overridden in rare cases by a high value for
-        `cluster_selection_epsilon`.
+    max_cluster_size : int, default=None
+        A limit to the size of clusters returned by the `"eom"` cluster
+        selection algorithm. There is no limit when `max_cluster_size=None`.
+        Has no effect if `cluster_selection_method="leaf"`.
 
     metric : str or callable, default='euclidean'
         The metric to use when calculating distance between instances in a
         feature array.
 
         - If metric is a string or callable, it must be one of
-          the options allowed by :func:`~sklearn.metrics.pairwise.pairwise_distances` for its
-          metric parameter.
+          the options allowed by :func:`~sklearn.metrics.pairwise.pairwise_distances`
+          for its metric parameter.
 
         - If metric is "precomputed", X is assumed to be a distance matrix and
           must be square.
+
+    metric_params : dict, default=None
+        Arguments passed to the distance metric.
 
     alpha : float, default=1.0
         A distance scaling parameter as used in robust single linkage.
         See [3]_ for more information.
 
     algorithm : {"auto", "brute", "kdtree", "balltree"}, default="auto"
-        Exactly which algorithm to use; hdbscan has variants specialised
-        for different characteristics of the data. By default this is set
-        to `'auto'` which attempts to use a :class:`~sklearn.neighbors.KDTree` tree if possible,
-        otherwise it uses a :class:`~sklearn.neighbors.BallTree` tree.
+        Exactly which algorithm to use for computing core distances; By default
+        this is set to `"auto"` which attempts to use a
+        :class:`~sklearn.neighbors.KDTree` tree if possible, otherwise it uses
+        a :class:`~sklearn.neighbors.BallTree` tree. Both `"KDTree"` and
+        `"BallTree"` algorithms use the
+        :class:`~sklearn.neighbors.NearestNeighbors` estimator.
 
         If the `X` passed during `fit` is sparse or `metric` is invalid for
-        both :class:`~sklearn.neighbors.KDTree` and :class:`~sklearn.neighbors.BallTree`, then it resolves to use the `"brute"`
-        algorithm.
-
-        Available algorithms:
-        - `'brute'`
-        - `'kdtree'`
-        - `'balltree'`
+        both :class:`~sklearn.neighbors.KDTree` and
+        :class:`~sklearn.neighbors.BallTree`, then it resolves to use the
+        `"brute"` algorithm.
 
     leaf_size : int, default=40
-        Leaf size for trees responsible for fast nearest neighbour queries when a KDTree or a BallTree are used as algorithms. A
-        large dataset size and small `leaf_size` may induce excessive memory
-        usage. If you are running out of memory consider increasing the
-        `leaf_size` parameter. Ignored for `algorithm=brute`.
+        Leaf size for trees responsible for fast nearest neighbour queries when
+        a KDTree or a BallTree are used as core-distance algorithms. A large
+        dataset size and small `leaf_size` may induce excessive memory usage.
+        If you are running out of memory consider increasing the `leaf_size`
+        parameter. Ignored for `algorithm="brute"`.
 
     n_jobs : int, default=None
         Number of jobs to run in parallel to calculate distances.
@@ -314,10 +304,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     cluster_selection_method : {"eom", "leaf"}, default="eom"
         The method used to select clusters from the condensed tree. The
-        standard approach for HDBSCAN* is to use an Excess of Mass algorithm
-        to find the most persistent clusters. Alternatively you can instead
-        select the clusters at the leaves of the tree -- this provides the
-        most fine grained and homogeneous clusters.
+        standard approach for HDBSCAN* is to use an Excess of Mass (`"eom"`)
+        algorithm to find the most persistent clusters. Alternatively you can
+        instead select the clusters at the leaves of the tree -- this provides
+        the most fine grained and homogeneous clusters.
 
     allow_single_cluster : bool, default=False
         By default HDBSCAN* will not produce a single cluster, setting this
@@ -340,9 +330,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
           depend on a euclidean metric.
         - `"both"`which computes and stores both forms of centers.
 
-    metric_params : dict, default=None
-        Arguments passed to the distance metric.
-
     Attributes
     ----------
     labels_ : ndarray of shape (n_samples,)
@@ -361,6 +348,25 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Defined only when `X`
         has feature names that are all strings.
+
+    centroids_ : ndarray of shape (n_clusters, n_features)
+        A collection containing the centroid of each cluster calculated under
+        the standard euclidean metric. The centroids may fall "outside" their
+        respective clusters if the clusters themselves are non-convex.
+
+        Note that `n_clusters` only counts non-trivial clusters. That is to
+        say, the `-1` label for the virtual noise cluster is excluded.
+
+    medoids_ : ndarray of shape (n_clusters, n_features)
+        A collection containing the medoid of each cluster calculated under
+        the whichever metric was passed to the `metric` parameter. The
+        medoids are points in the original cluster which minimize the average
+        distance to all other points in that cluster under the chosen metric.
+        These can be thought of as the result of projecting the `metric`-based
+        centroid back onto the cluster.
+
+        Note that `n_clusters` only counts non-trivial clusters. That is to
+        say, the `-1` label for the virtual noise cluster is excluded.
 
     See Also
     --------
@@ -411,8 +417,12 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         "cluster_selection_epsilon": [
             Interval(Real, left=0, right=None, closed="left")
         ],
-        "max_cluster_size": [Interval(Integral, left=0, right=None, closed="left")],
-        "metric": [StrOptions(set(FAST_METRICS + {"precomputed"})), callable],
+        "max_cluster_size": [
+            None,
+            Interval(Integral, left=1, right=None, closed="left"),
+        ],
+        "metric": [StrOptions(set(FAST_METRICS + ["precomputed"])), callable],
+        "metric_params": [dict, None],
         "alpha": [Interval(Real, left=0, right=None, closed="neither")],
         "algorithm": [
             StrOptions(
@@ -429,7 +439,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         "cluster_selection_method": [StrOptions({"eom", "leaf"})],
         "allow_single_cluster": ["boolean"],
         "store_centers": [None, StrOptions({"centroid", "medoid", "both"})],
-        "metric_params": [dict, None],
     }
 
     def __init__(
@@ -437,8 +446,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         min_cluster_size=5,
         min_samples=None,
         cluster_selection_epsilon=0.0,
-        max_cluster_size=0,
+        max_cluster_size=None,
         metric="euclidean",
+        metric_params=None,
         alpha=1.0,
         algorithm="auto",
         leaf_size=40,
@@ -446,7 +456,6 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         cluster_selection_method="eom",
         allow_single_cluster=False,
         store_centers=None,
-        metric_params=None,
     ):
         self.min_cluster_size = min_cluster_size
         self.min_samples = min_samples
@@ -454,13 +463,13 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self.max_cluster_size = max_cluster_size
         self.cluster_selection_epsilon = cluster_selection_epsilon
         self.metric = metric
+        self.metric_params = metric_params
         self.algorithm = algorithm
         self.leaf_size = leaf_size
         self.n_jobs = n_jobs
         self.cluster_selection_method = cluster_selection_method
         self.allow_single_cluster = allow_single_cluster
         self.store_centers = store_centers
-        self.metric_params = metric_params
 
     def fit(self, X, y=None):
         """Find clusters based on hierarchical density-based clustering.
@@ -488,10 +497,11 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 X, accept_sparse="csr", force_all_finite=False, dtype=np.float64
             )
             self._raw_data = X
-
-            all_finite = (
-                np.all(np.isfinite(X.data)) if issparse(X) else np.all(np.isfinite(X))
-            )
+            all_finite = True
+            try:
+                _assert_all_finite(X.data if issparse(X) else X)
+            except ValueError:
+                all_finite = False
 
             if not all_finite:
                 # Pass only the purely finite indices into hdbscan
@@ -524,7 +534,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             self.min_cluster_size if self.min_samples is None else self.min_samples
         )
 
-        func = None
+        mst_func = None
         kwargs = dict(
             X=X,
             algo="kd_tree",
@@ -535,12 +545,12 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             n_jobs=self.n_jobs,
             **self._metric_params,
         )
-        if "kdtree" in self.algorithm and self.metric not in KDTree.valid_metrics:
+        if self.algorithm == "kdtree" and self.metric not in KDTree.valid_metrics:
             raise ValueError(
                 f"{self.metric} is not a valid metric for a KDTree-based algorithm."
                 " Please select a different metric."
             )
-        elif "balltree" in self.algorithm and self.metric not in BallTree.valid_metrics:
+        elif self.algorithm == "balltree" and self.metric not in BallTree.valid_metrics:
             raise ValueError(
                 f"{self.metric} is not a valid metric for a BallTree-based algorithm."
                 " Please select a different metric."
@@ -555,29 +565,29 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 raise ValueError("Sparse data matrices only support algorithm `brute`.")
 
             if self.algorithm == "brute":
-                func = _hdbscan_brute
+                mst_func = _hdbscan_brute
                 for key in ("algo", "leaf_size"):
                     kwargs.pop(key, None)
             elif self.algorithm == "kdtree":
-                func = _hdbscan_prims
+                mst_func = _hdbscan_prims
             elif self.algorithm == "balltree":
-                func = _hdbscan_prims
+                mst_func = _hdbscan_prims
                 kwargs["algo"] = "ball_tree"
         else:
             if issparse(X) or self.metric not in FAST_METRICS:
                 # We can't do much with sparse matrices ...
-                func = _hdbscan_brute
+                mst_func = _hdbscan_brute
                 for key in ("algo", "leaf_size"):
                     kwargs.pop(key, None)
             elif self.metric in KDTree.valid_metrics:
                 # TODO: Benchmark KD vs Ball Tree efficacy
-                func = _hdbscan_prims
+                mst_func = _hdbscan_prims
             else:
                 # Metric is a valid BallTree metric
-                func = _hdbscan_prims
+                mst_func = _hdbscan_prims
                 kwargs["algo"] = "ball_tree"
 
-        single_linkage_tree = func(**kwargs)
+        single_linkage_tree = mst_func(**kwargs)
 
         (
             self.labels_,
@@ -631,7 +641,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         return self.labels_
 
     def _weighted_cluster_center(self, X):
-        n_clusters = len(set(self.labels_))
+        # Number of non-noise clusters
+        n_clusters = len(set(self.labels_)) - int(-1 in set(self.labels_))
         mask = np.empty((X.shape[0],), dtype=np.bool_)
         make_centroids = self.store_centers in ("centroid", "both")
         make_medoids = self.store_centers in ("medoid", "both")

@@ -223,12 +223,10 @@ def test_hdbscan_centers():
         medoid = hdb.centroids_[idx]
         assert_array_almost_equal(medoid, center, decimal=1)
 
-
-def test_hdbscan_no_centroid_medoid_for_noise():
-    with pytest.raises(ValueError):
-        HDBSCAN(store_centers="centroid").fit(X)
-    with pytest.raises(ValueError):
-        HDBSCAN(store_centers="medoid").fit(X)
+    # Ensure that nothing is done for noise
+    hdb = HDBSCAN(store_centers="both", min_cluster_size=X.shape[0]).fit(X)
+    assert hdb.centroids_.shape[0] == 0
+    assert hdb.medoids_.shape[0] == 0
 
 
 def test_hdbscan_allow_single_cluster_with_epsilon():
@@ -290,3 +288,24 @@ def test_hdbscan_sparse_distances_too_few_nonzero():
     msg = "There exists points with fewer than"
     with pytest.raises(ValueError, match=msg):
         HDBSCAN(metric="precomputed").fit(X)
+
+
+def test_hdbscan_tree_invalid_metric():
+    metric_callable = lambda x: x
+    msg = (
+        ".* is not a valid metric for a .*-based algorithm\\. Please select a different"
+        " metric\\."
+    )
+
+    # Callables are not supported for either
+    with pytest.raises(ValueError, match=msg):
+        HDBSCAN(algorithm="kdtree", metric=metric_callable).fit(X)
+    with pytest.raises(ValueError, match=msg):
+        HDBSCAN(algorithm="balltree", metric=metric_callable).fit(X)
+
+    # The set of valid metrics for KDTree at the time of writing this test is a
+    # strict subset of those supported in BallTree
+    metrics_not_kd = list(set(BallTree.valid_metrics) - set(KDTree.valid_metrics))
+    if len(metrics_not_kd) > 0:
+        with pytest.raises(ValueError, match=msg):
+            HDBSCAN(algorithm="kdtree", metric=metrics_not_kd[0]).fit(X)

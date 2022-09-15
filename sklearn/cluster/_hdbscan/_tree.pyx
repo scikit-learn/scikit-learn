@@ -574,7 +574,7 @@ cpdef tuple get_clusters(np.ndarray tree, dict stability,
                          cluster_selection_method='eom',
                          allow_single_cluster=False,
                          cluster_selection_epsilon=0.0,
-                         max_cluster_size=0):
+                         max_cluster_size=None):
     """Given a tree and stability dict, produce the cluster labels
     (and probabilities) for a flat clustering based on the chosen
     cluster selection method.
@@ -599,7 +599,7 @@ cpdef tuple get_clusters(np.ndarray tree, dict stability,
     cluster_selection_epsilon: float, optional (default 0.0)
         A distance threshold for cluster splits.
 
-    max_cluster_size: int, optional (default 0)
+    max_cluster_size: int, default=None
         The maximum size for clusters located by the EOM clusterer. Can
         be overridden by the cluster_selection_epsilon parameter in
         rare cases.
@@ -643,7 +643,7 @@ cpdef tuple get_clusters(np.ndarray tree, dict stability,
     num_points = np.max(tree[tree['child_size'] == 1]['child']) + 1
     max_lambda = np.max(tree['lambda_val'])
 
-    if max_cluster_size <= 0:
+    if max_cluster_size is None:
         max_cluster_size = num_points + 1  # Set to a value that will never be triggered
     cluster_sizes = {child: child_size for child, child_size
                  in zip(cluster_tree['child'], cluster_tree['child_size'])}
