@@ -646,7 +646,7 @@ def test_regressor_chain_w_fit_params():
             self.sample_weight_ = fit_params["sample_weight"]
             super().fit(X, y, **fit_params)
 
-    model = RegressorChain(MySGD())
+    model = RegressorChain(MySGD().set_fit_request(sample_weight=True))
 
     # Fitting with params
     fit_param = {"sample_weight": weight}
