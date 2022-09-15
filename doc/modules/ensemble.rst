@@ -1133,7 +1133,7 @@ score should increase the probability of getting approved for a loan.
 Monotonic constraints allow you to incorporate such prior knowledge into the
 model.
 
-For :math:`F`, a the predictor with two features:
+For a predictor :math:`F` with two features:
 
  - a **monotonic increase constraint** is a constraint of the form:
     .. math::
