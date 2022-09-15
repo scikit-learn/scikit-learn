@@ -1,5 +1,6 @@
 # mutual reachability distance compiutations
-# Authors: Leland McInnes
+# Authors: Leland McInnes <leland.mcinnes@gmail.com>
+#          Meekail Zain <zainmeekail@gmail.com>
 # License: 3-clause BSD
 
 import numpy as np

@@ -2,9 +2,10 @@
 HDBSCAN: Hierarchical Density-Based Spatial Clustering
          of Applications with Noise
 """
-# Author: Leland McInnes <leland.mcinnes@gmail.com>
-#         Steve Astels <sastels@gmail.com>
-#         John Healy <jchealy@gmail.com>
+# Authors: Leland McInnes <leland.mcinnes@gmail.com>
+#          Steve Astels <sastels@gmail.com>
+#          John Healy <jchealy@gmail.com>
+#          Meekail Zain <zainmeekail@gmail.com>
 #
 # License: BSD 3 clause
 
