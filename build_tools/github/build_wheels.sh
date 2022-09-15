@@ -31,6 +31,7 @@ if [[ "$RUNNER_OS" == "macOS" ]]; then
     export CFLAGS="$CFLAGS -I$PREFIX/include"
     export CXXFLAGS="$CXXFLAGS -I$PREFIX/include"
     export LDFLAGS="$LDFLAGS -Wl,-rpath,$PREFIX/lib -L$PREFIX/lib -lomp"
+    export SETUPTOOLS_USE_DISTUTILS=stdlib
 fi
 
 # The version of the built dependencies are specified
