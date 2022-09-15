@@ -242,6 +242,7 @@ conda_build_metadata_list = [
             "sphinx-gallery",
             "numpydoc",
             "sphinx-prompt",
+            "plotly",
         ],
         "pip_dependencies": ["sphinxext-opengraph"],
         "package_constraints": {
@@ -257,6 +258,7 @@ conda_build_metadata_list = [
             "numpydoc": "min",
             "sphinx-prompt": "min",
             "sphinxext-opengraph": "min",
+            "plotly": "min",
         },
     },
     {
@@ -274,6 +276,7 @@ conda_build_metadata_list = [
             "sphinx-gallery",
             "numpydoc",
             "sphinx-prompt",
+            "plotly",
         ],
         "pip_dependencies": ["sphinxext-opengraph"],
         "package_constraints": {

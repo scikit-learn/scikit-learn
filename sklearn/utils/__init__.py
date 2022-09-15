@@ -129,7 +129,8 @@ def safe_mask(X, mask):
 
     Returns
     -------
-        mask
+    mask : ndarray
+        Array that is safe to use on X.
     """
     mask = np.asarray(mask)
     if np.issubdtype(mask.dtype, np.signedinteger):
@@ -667,6 +668,7 @@ def safe_sqr(X, *, copy=True):
     Returns
     -------
     X ** 2 : element wise square
+         Return the element-wise square of the input.
     """
     X = check_array(X, accept_sparse=["csr", "csc", "coo"], ensure_2d=False)
     if issparse(X):

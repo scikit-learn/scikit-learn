@@ -192,6 +192,11 @@ Changelog
   :pr:`11860` by :user:`Pierre Ablin <pierreablin>`,
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
 
+- |API| The `n_features_` attribute of
+  :class:`decomposition.PCA` is deprecated in favor of
+  `n_features_in_` and will be removed in 1.4. :pr:`24421` by
+  :user:`Kshitij Mathur <Kshitij68>`.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
@@ -209,6 +214,30 @@ Changelog
   NaN in feature importance when fitted with very small sample weight.
   :pr:`20415` by :user:`Zhehao Liu <MaxwellLZH>`.
 
+- |API| Rename the constructor parameter `base_estimator` to `estimator` in
+  the following classes:
+  :class:`ensemble.BaggingClassifier`,
+  :class:`ensemble.BaggingRegressor`,
+  :class:`ensemble.AdaBoostClassifier`,
+  :class:`ensemble.AdaBoostRegressor`.
+  `base_estimator` is deprecated in 1.2 and will be removed in 1.4.
+  :pr:`23819` by :user:`Adrian Trujillo <trujillo9616>` and :user:`Edoardo Abati <EdAbati>`.
+
+- |API| Rename the fitted attribute `base_estimator_` to `estimator_` in
+  the following classes:
+  :class:`ensemble.BaggingClassifier`,
+  :class:`ensemble.BaggingRegressor`,
+  :class:`ensemble.AdaBoostClassifier`,
+  :class:`ensemble.AdaBoostRegressor`,
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`,
+  :class:`ensemble.ExtraTreesRegressor`,
+  :class:`ensemble.RandomTreesEmbedding`,
+  :class:`ensemble.IsolationForest`.
+  `base_estimator_` is deprecated in 1.2 and will be removed in 1.4.
+  :pr:`23819` by :user:`Adrian Trujillo <trujillo9616>` and :user:`Edoardo Abati <EdAbati>`.
+
 :mod:`sklearn.feature_selection`
 ................................
 
@@ -218,6 +247,20 @@ Changelog
 - |Fix| Fix :class:`gaussian_process.kernels.Matern` gradient computation with
   `nu=0.5` for PyPy (and possibly other non CPython interpreters). :pr:`24245`
   by :user:`Loïc Estève <lesteve>`.
+
+- |Fix| The `fit` method of :class:`gaussian_process.GaussianProcessRegressor`
+  will not modify the input X in case a custom kernel is used, with a `diag`
+  method that returns part of the input X. :pr:`24405`
+  by :user:`Omar Salman <OmarManzoor>`.
+
+:mod:`sklearn.kernel_approximation`
+...................................
+
+- |Enhancement| :class:`kernel_approximation.RBFSampler` now preserves
+  dtype for `numpy.float32` inputs. :pr:`24317` by `Tim Head <betatim>`.
+
+- |Enhancement| :class:`kernel_approximation.SkewedChi2Sampler` now preserves
+  dtype for `numpy.float32` inputs. :pr:`24350` by :user:`Rahil Parikh <rprkh>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -272,13 +315,17 @@ Changelog
 - |Fix| Allows `csr_matrix` as input for parameter: `y_true` of
    the :func:`metrics.label_ranking_average_precision_score` metric.
    :pr:`23442` by :user:`Sean Atukorala <ShehanAT>`
-  
+
 - |Fix| :func:`metrics.ndcg_score` will now trigger a warning when the `y_true`
   value contains a negative value. Users may still use negative values, but the
   result may not be between 0 and 1. Starting in v1.4, passing in negative
   values for `y_true` will raise an error.
   :pr:`22710` by :user:`Conroy Trinh <trinhcon>` and
   :pr:`23461` by :user:`Meekail Zain <micky774>`.
+
+- |Feature| :func:`metrics.roc_auc_score` now supports micro-averaging
+  (`average="micro"`) for the One-vs-Rest multiclass case (`multi_class="ovr"`).
+  :pr:`24338` by :user:`Arturo Amor <ArturoAmorQ>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -334,6 +381,13 @@ Changelog
   :class:`neighbors.KNeighborsTransformer` and
   :class:`neighbors.RadiusNeighborsTransformer`.
   :pr:`24075` by :user:`Valentin Laurent <Valentin-Laurent>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| :class:`preprocessing.FunctionTransformer` will always try to set
+  `n_features_in_` and `feature_names_in_` regardless of the `validate` parameter.
+  :pr:`23993` by `Thomas Fan`_.
 
 :mod:`sklearn.svm`
 ..................
