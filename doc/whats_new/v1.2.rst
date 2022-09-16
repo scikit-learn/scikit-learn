@@ -207,6 +207,9 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Feature| Adds `class_weight` to :class:`ensemble.HistGradientBoostingClassifier`.
+  :pr:`22014` by `Thomas Fan`_.
+
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
 
