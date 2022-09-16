@@ -115,7 +115,7 @@ def plot_tree(
 
     feature_names : list of strings, default=None
         Names of each of the features.
-        If None, generic names will be used ("X[0]", "X[1]", ...).
+        If None, generic names will be used ("x[0]", "x[1]", ...).
 
     class_names : list of str or bool, default=None
         Names of each of the target classes in ascending numerical order.
@@ -291,7 +291,7 @@ class _BaseTreeExporter:
             if self.feature_names is not None:
                 feature = self.feature_names[tree.feature[node_id]]
             else:
-                feature = "X%s%s%s" % (
+                feature = "x%s%s%s" % (
                     characters[1],
                     tree.feature[node_id],
                     characters[2],
@@ -789,7 +789,7 @@ def export_graphviz(
 
     feature_names : list of str, default=None
         Names of each of the features.
-        If None generic names will be used ("feature_0", "feature_1", ...).
+        If None, generic names will be used ("x[0]", "x[1]", ...).
 
     class_names : list of str or bool, default=None
         Names of each of the target classes in ascending numerical order.

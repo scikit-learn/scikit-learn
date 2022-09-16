@@ -13,6 +13,7 @@ from ._agglomerative import (
     FeatureAgglomeration,
 )
 from ._kmeans import k_means, KMeans, MiniBatchKMeans, kmeans_plusplus
+from ._bisect_k_means import BisectingKMeans
 from ._dbscan import dbscan, DBSCAN
 from ._optics import (
     OPTICS,
@@ -33,6 +34,7 @@ __all__ = [
     "cluster_optics_xi",
     "compute_optics_graph",
     "KMeans",
+    "BisectingKMeans",
     "FeatureAgglomeration",
     "MeanShift",
     "MiniBatchKMeans",

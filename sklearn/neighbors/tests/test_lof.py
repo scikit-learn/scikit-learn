@@ -146,13 +146,6 @@ def test_score_samples():
     )
 
 
-def test_contamination():
-    X = [[1, 1], [1, 0]]
-    clf = neighbors.LocalOutlierFactor(contamination=0.6)
-    with pytest.raises(ValueError):
-        clf.fit(X)
-
-
 def test_novelty_errors():
     X = iris.data
 

@@ -4,6 +4,7 @@ import joblib
 import pytest
 import numpy as np
 import scipy.sparse as sp
+from unittest.mock import Mock
 
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
@@ -21,6 +22,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.linear_model import _sgd_fast as sgd_fast
+from sklearn.linear_model import _stochastic_gradient
 from sklearn.model_selection import RandomizedSearchCV
 
 
@@ -212,61 +214,6 @@ def asgd(klass, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
         average_intercept /= i + 1.0
 
     return average_weights, average_intercept
-
-
-@pytest.mark.parametrize(
-    "klass",
-    [
-        SGDClassifier,
-        SparseSGDClassifier,
-        SGDRegressor,
-        SparseSGDRegressor,
-        SGDOneClassSVM,
-        SparseSGDOneClassSVM,
-    ],
-)
-@pytest.mark.parametrize("fit_method", ["fit", "partial_fit"])
-@pytest.mark.parametrize(
-    "params, err_msg",
-    [
-        ({"alpha": -0.1}, "alpha must be >= 0"),
-        ({"penalty": "foobar", "l1_ratio": 0.85}, "Penalty foobar is not supported"),
-        ({"loss": "foobar"}, "The loss foobar is not supported"),
-        ({"l1_ratio": 1.1}, r"l1_ratio must be in \[0, 1\]"),
-        ({"learning_rate": "<unknown>"}, "learning rate <unknown> is not supported"),
-        ({"nu": -0.5}, r"nu must be in \(0, 1]"),
-        ({"nu": 2}, r"nu must be in \(0, 1]"),
-        ({"alpha": 0, "learning_rate": "optimal"}, "alpha must be > 0"),
-        ({"eta0": 0, "learning_rate": "constant"}, "eta0 must be > 0"),
-        ({"max_iter": -1}, "max_iter must be > zero"),
-        ({"shuffle": "false"}, "shuffle must be either True or False"),
-        ({"early_stopping": "false"}, "early_stopping must be either True or False"),
-        (
-            {"validation_fraction": -0.1},
-            r"validation_fraction must be in range \(0, 1\)",
-        ),
-        ({"n_iter_no_change": 0}, "n_iter_no_change must be >= 1"),
-    ],
-    # Avoid long error messages in test names:
-    # https://github.com/scikit-learn/scikit-learn/issues/21362
-    ids=lambda x: x[:10].replace("]", "") if isinstance(x, str) else x,
-)
-def test_sgd_estimator_params_validation(klass, fit_method, params, err_msg):
-    """Validate parameters in the different SGD estimators."""
-    try:
-        sgd_estimator = klass(**params)
-    except TypeError as err:
-        if "unexpected keyword argument" in str(err):
-            # skip test if the parameter is not supported by the estimator
-            return
-        raise err
-
-    with pytest.raises(ValueError, match=err_msg):
-        if is_classifier(sgd_estimator) and fit_method == "partial_fit":
-            fit_params = {"classes": np.unique(Y)}
-        else:
-            fit_params = {}
-        getattr(sgd_estimator, fit_method)(X, Y, **fit_params)
 
 
 def _test_warm_start(klass, X, Y, lr):
@@ -668,7 +615,7 @@ def test_partial_fit_weight_class_balanced(klass):
         r"class_weight 'balanced' is not supported for "
         r"partial_fit\. In order to use 'balanced' weights, "
         r"use compute_class_weight\('balanced', classes=classes, y=y\). "
-        r"In place of y you can us a large enough sample "
+        r"In place of y you can use a large enough sample "
         r"of the full training set target to properly "
         r"estimate the class frequency distributions\. "
         r"Pass the resulting weights as the class_weight "
@@ -933,14 +880,6 @@ def test_equal_class_weight(klass):
 def test_wrong_class_weight_label(klass):
     # ValueError due to not existing class label.
     clf = klass(alpha=0.1, max_iter=1000, class_weight={0: 0.5})
-    with pytest.raises(ValueError):
-        clf.fit(X, Y)
-
-
-@pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
-def test_wrong_class_weight_format(klass):
-    # ValueError due to wrong class_weight argument type.
-    clf = klass(alpha=0.1, max_iter=1000, class_weight=[0.5])
     with pytest.raises(ValueError):
         clf.fit(X, Y)
 
@@ -1739,7 +1678,7 @@ def test_ocsvm_vs_sgdocsvm():
         fit_intercept=True,
         max_iter=max_iter,
         random_state=random_state,
-        tol=-np.inf,
+        tol=None,
     )
     pipe_sgd = make_pipeline(transform, clf_sgd)
     pipe_sgd.fit(X_train)
@@ -2082,7 +2021,7 @@ def test_multi_core_gridsearch_and_early_stopping():
     }
 
     clf = SGDClassifier(tol=1e-2, max_iter=1000, early_stopping=True, random_state=0)
-    search = RandomizedSearchCV(clf, param_grid, n_iter=3, n_jobs=2, random_state=0)
+    search = RandomizedSearchCV(clf, param_grid, n_iter=5, n_jobs=2, random_state=0)
     search.fit(iris.data, iris.target)
     assert search.best_score_ > 0.8
 
@@ -2123,13 +2062,10 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
 
 
+# TODO(1.3): Remove
 @pytest.mark.parametrize(
     "old_loss, new_loss, Estimator",
     [
-        # TODO(1.2): Remove "squared_loss"
-        ("squared_loss", "squared_error", linear_model.SGDClassifier),
-        ("squared_loss", "squared_error", linear_model.SGDRegressor),
-        # TODO(1.3): Remove "log"
         ("log", "log_loss", linear_model.SGDClassifier),
     ],
 )
@@ -2185,3 +2121,27 @@ def test_sgd_random_state(Estimator, global_random_seed):
         assert est.n_iter_ == 1
 
     assert np.abs(coef_same_seed_a - coef_other_seed).max() > 1.0
+
+
+def test_validation_mask_correctly_subsets(monkeypatch):
+    """Test that data passed to validation callback correctly subsets.
+
+    Non-regression test for #23255.
+    """
+    X, Y = iris.data, iris.target
+    n_samples = X.shape[0]
+    validation_fraction = 0.2
+    clf = linear_model.SGDClassifier(
+        early_stopping=True,
+        tol=1e-3,
+        max_iter=1000,
+        validation_fraction=validation_fraction,
+    )
+
+    mock = Mock(side_effect=_stochastic_gradient._ValidationScoreCallback)
+    monkeypatch.setattr(_stochastic_gradient, "_ValidationScoreCallback", mock)
+    clf.fit(X, Y)
+
+    X_val, y_val = mock.call_args[0][1:3]
+    assert X_val.shape[0] == int(n_samples * validation_fraction)
+    assert y_val.shape[0] == int(n_samples * validation_fraction)

@@ -731,14 +731,6 @@ class HalfTweedieLoss(BaseLoss):
     """
 
     def __init__(self, sample_weight=None, power=1.5):
-        check_scalar(
-            power,
-            "power",
-            target_type=numbers.Real,
-            include_boundaries="neither",
-            min_val=-np.inf,
-            max_val=np.inf,
-        )
         super().__init__(
             closs=CyHalfTweedieLoss(power=float(power)),
             link=LogLink(),

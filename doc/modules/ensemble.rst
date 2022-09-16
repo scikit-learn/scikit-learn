@@ -61,7 +61,7 @@ way they draw random subsets of the training set:
 
 In scikit-learn, bagging methods are offered as a unified
 :class:`BaggingClassifier` meta-estimator  (resp. :class:`BaggingRegressor`),
-taking as input a user-specified base estimator along with parameters
+taking as input a user-specified estimator along with parameters
 specifying the strategy to draw random subsets. In particular, ``max_samples``
 and ``max_features`` control the size of the subsets (in terms of samples and
 features), while ``bootstrap`` and ``bootstrap_features`` control whether
@@ -69,7 +69,7 @@ samples and features are drawn with or without replacement. When using a subset
 of the available samples the generalization accuracy can be estimated with the
 out-of-bag samples by setting ``oob_score=True``. As an example, the
 snippet below illustrates how to instantiate a bagging ensemble of
-:class:`KNeighborsClassifier` base estimators, each built on random subsets of
+:class:`KNeighborsClassifier` estimators, each built on random subsets of
 50% of the samples and 50% of the features.
 
     >>> from sklearn.ensemble import BaggingClassifier
@@ -416,7 +416,7 @@ learners::
 The number of weak learners is controlled by the parameter ``n_estimators``. The
 ``learning_rate`` parameter controls the contribution of the weak learners in
 the final combination. By default, weak learners are decision stumps. Different
-weak learners can be specified through the ``base_estimator`` parameter.
+weak learners can be specified through the ``estimator`` parameter.
 The main parameters to tune to obtain good results are ``n_estimators`` and
 the complexity of the base estimators (e.g., its depth ``max_depth`` or
 minimum required number of samples to consider a split ``min_samples_split``).
@@ -562,7 +562,7 @@ for regression which can be specified via the argument
 The figure below shows the results of applying :class:`GradientBoostingRegressor`
 with least squares loss and 500 base learners to the diabetes dataset
 (:func:`sklearn.datasets.load_diabetes`).
-The plot on the left shows the train and test error at each iteration.
+The plot shows the train and test error at each iteration.
 The train error at each iteration is stored in the
 :attr:`~GradientBoostingRegressor.train_score_` attribute
 of the gradient boosting model. The test error at each iterations can be obtained
@@ -681,7 +681,7 @@ approximated as follows:
 .. note::
 
   Briefly, a first-order Taylor approximation says that
-  :math:`l(z) \approx l(a) + (z - a) \frac{\partial l(a)}{\partial a}`.
+  :math:`l(z) \approx l(a) + (z - a) \frac{\partial l}{\partial z}(a)`.
   Here, :math:`z` corresponds to :math:`F_{m - 1}(x_i) + h_m(x_i)`, and
   :math:`a` corresponds to :math:`F_{m-1}(x_i)`
 
@@ -826,7 +826,7 @@ does poorly.
    :scale: 75
 
 Another strategy to reduce the variance is by subsampling the features
-analogous to the random splits in :class:`RandomForestClassifier` .
+analogous to the random splits in :class:`RandomForestClassifier`.
 The number of subsampled features can be controlled via the ``max_features``
 parameter.
 
@@ -979,7 +979,7 @@ corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
 
 Note that **early-stopping is enabled by default if the number of samples is
 larger than 10,000**. The early-stopping behaviour is controlled via the
-``early-stopping``, ``scoring``, ``validation_fraction``,
+``early_stopping``, ``scoring``, ``validation_fraction``,
 ``n_iter_no_change``, and ``tol`` parameters. It is possible to early-stop
 using an arbitrary :term:`scorer`, or just the training or validation loss.
 Note that for technical reasons, using a scorer is significantly slower than
@@ -1241,7 +1241,7 @@ Voting Classifier
 The idea behind the :class:`VotingClassifier` is to combine
 conceptually different machine learning classifiers and use a majority vote
 or the average predicted probabilities (soft vote) to predict the class labels.
-Such a classifier can be useful for a set of equally well performing model
+Such a classifier can be useful for a set of equally well performing models
 in order to balance out their individual weaknesses.
 
 
@@ -1333,7 +1333,7 @@ Here, the predicted class label is 2, since it has the
 highest average probability.
 
 The following example illustrates how the decision regions may change
-when a soft :class:`VotingClassifier` is used based on an linear Support
+when a soft :class:`VotingClassifier` is used based on a linear Support
 Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
 
    >>> from sklearn import datasets

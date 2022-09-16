@@ -7,8 +7,10 @@ source build_tools/shared.sh
 
 if [[ "$DISTRIB" =~ ^conda.* ]]; then
     source activate $VIRTUALENV
-elif [[ "$DISTRIB" == "ubuntu" ]] || [[ "$DISTRIB" == "debian-32" ]]; then
+elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" || "$DISTRIB" == "pip-nogil" ]]; then
     source $VIRTUALENV/bin/activate
+elif [[ "$DISTRIB" == "pip-windows" ]]; then
+    source $VIRTUALENV/Scripts/activate
 fi
 
 if [[ "$BUILD_WITH_ICC" == "true" ]]; then
@@ -24,6 +26,13 @@ if [[ "$BUILD_REASON" == "Schedule" ]]; then
     # Enable global dtype fixture for all nightly builds to discover
     # numerical-sensitive tests.
     # https://scikit-learn.org/stable/computing/parallelism.html#environment-variables
+    export SKLEARN_RUN_FLOAT32_TESTS=1
+fi
+
+COMMIT_MESSAGE=$(python build_tools/azure/get_commit_message.py --only-show-message)
+
+if [[ "$COMMIT_MESSAGE" =~ \[float32\] ]]; then
+    echo "float32 tests will be run due to commit message"
     export SKLEARN_RUN_FLOAT32_TESTS=1
 fi
 
@@ -49,7 +58,7 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 if [[ -n "$CHECK_WARNINGS" ]]; then
-    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
+    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Werror::numpy.VisibleDeprecationWarning"
 
     # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib
     # removes its usage

@@ -1,11 +1,15 @@
-import numpy as np
+from numbers import Integral, Real
 import warnings
+
+import numpy as np
 
 from ._base import _fit_liblinear, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
 from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, LinearModel
+from ..utils import deprecated
 from ..utils.validation import _num_samples
 from ..utils.multiclass import check_classification_targets
+from ..utils._param_validation import Interval, StrOptions
 
 
 class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
@@ -61,7 +65,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         to false, no intercept will be used in calculations
         (i.e. data is expected to be already centered).
 
-    intercept_scaling : float, default=1
+    intercept_scaling : float, default=1.0
         When self.fit_intercept is True, instance vector x becomes
         ``[x, self.intercept_scaling]``,
         i.e. a "synthetic" feature with constant value equals to
@@ -187,6 +191,21 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     [1]
     """
 
+    _parameter_constraints: dict = {
+        "penalty": [StrOptions({"l1", "l2"})],
+        "loss": [StrOptions({"hinge", "squared_hinge"})],
+        "dual": ["boolean"],
+        "tol": [Interval(Real, 0.0, None, closed="neither")],
+        "C": [Interval(Real, 0.0, None, closed="neither")],
+        "multi_class": [StrOptions({"ovr", "crammer_singer"})],
+        "fit_intercept": ["boolean"],
+        "intercept_scaling": [Interval(Real, 0, None, closed="neither")],
+        "class_weight": [None, dict, StrOptions({"balanced"})],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+    }
+
     def __init__(
         self,
         penalty="l2",
@@ -240,8 +259,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         self : object
             An instance of the estimator.
         """
-        if self.C < 0:
-            raise ValueError("Penalty term must be positive; got (C=%r)" % self.C)
+        self._validate_params()
 
         X, y = self._validate_data(
             X,
@@ -425,6 +443,19 @@ class LinearSVR(RegressorMixin, LinearModel):
     [-2.384...]
     """
 
+    _parameter_constraints: dict = {
+        "epsilon": [Real],
+        "tol": [Interval(Real, 0.0, None, closed="neither")],
+        "C": [Interval(Real, 0.0, None, closed="neither")],
+        "loss": [StrOptions({"epsilon_insensitive", "squared_epsilon_insensitive"})],
+        "fit_intercept": ["boolean"],
+        "intercept_scaling": [Interval(Real, 0, None, closed="neither")],
+        "dual": ["boolean"],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+    }
+
     def __init__(
         self,
         *,
@@ -474,8 +505,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         self : object
             An instance of the estimator.
         """
-        if self.C < 0:
-            raise ValueError("Penalty term must be positive; got (C=%r)" % self.C)
+        self._validate_params()
 
         X, y = self._validate_data(
             X,
@@ -557,14 +587,15 @@ class SVC(BaseSVC):
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
-        Ignored by all other kernels.
+        Must be non-negative. Ignored by all other kernels.
 
     gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         - if ``gamma='scale'`` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
-        - if 'auto', uses 1 / n_features.
+        - if 'auto', uses 1 / n_features
+        - if float, must be non-negative.
 
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
@@ -820,14 +851,15 @@ class NuSVC(BaseSVC):
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
-        Ignored by all other kernels.
+        Must be non-negative. Ignored by all other kernels.
 
     gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         - if ``gamma='scale'`` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
-        - if 'auto', uses 1 / n_features.
+        - if 'auto', uses 1 / n_features
+        - if float, must be non-negative.
 
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
@@ -1007,6 +1039,12 @@ class NuSVC(BaseSVC):
 
     _impl = "nu_svc"
 
+    _parameter_constraints: dict = {
+        **BaseSVC._parameter_constraints,
+        "nu": [Interval(Real, 0.0, 1.0, closed="right")],
+    }
+    _parameter_constraints.pop("C")
+
     def __init__(
         self,
         *,
@@ -1084,14 +1122,15 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
-        Ignored by all other kernels.
+        Must be non-negative. Ignored by all other kernels.
 
     gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         - if ``gamma='scale'`` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
-        - if 'auto', uses 1 / n_features.
+        - if 'auto', uses 1 / n_features
+        - if float, must be non-negative.
 
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
@@ -1112,7 +1151,7 @@ class SVR(RegressorMixin, BaseLibSVM):
          Epsilon in the epsilon-SVR model. It specifies the epsilon-tube
          within which no penalty is associated in the training loss function
          with points predicted within a distance epsilon from the actual
-         value.
+         value. Must be non-negative.
 
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.
@@ -1134,6 +1173,9 @@ class SVR(RegressorMixin, BaseLibSVM):
     class_weight_ : ndarray of shape (n_classes,)
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
+
+        .. deprecated:: 1.2
+            `class_weight_` was deprecated in version 1.2 and will be removed in 1.4.
 
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
@@ -1167,8 +1209,8 @@ class SVR(RegressorMixin, BaseLibSVM):
 
         .. versionadded:: 1.1
 
-    n_support_ : ndarray of shape (n_classes,), dtype=int32
-        Number of support vectors for each class.
+    n_support_ : ndarray of shape (1,), dtype=int32
+        Number of support vectors.
 
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
@@ -1214,6 +1256,10 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     _impl = "epsilon_svr"
 
+    _parameter_constraints: dict = {**BaseLibSVM._parameter_constraints}
+    for unused_param in ["class_weight", "nu", "probability", "random_state"]:
+        _parameter_constraints.pop(unused_param)
+
     def __init__(
         self,
         *,
@@ -1247,6 +1293,15 @@ class SVR(RegressorMixin, BaseLibSVM):
             max_iter=max_iter,
             random_state=None,
         )
+
+    # TODO(1.4): Remove
+    @deprecated(  # type: ignore
+        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
+        " 1.4."
+    )
+    @property
+    def class_weight_(self):
+        return np.empty(0)
 
     def _more_tags(self):
         return {
@@ -1287,14 +1342,15 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
-        Ignored by all other kernels.
+        Must be non-negative. Ignored by all other kernels.
 
     gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         - if ``gamma='scale'`` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
-        - if 'auto', uses 1 / n_features.
+        - if 'auto', uses 1 / n_features
+        - if float, must be non-negative.
 
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
@@ -1326,6 +1382,9 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     class_weight_ : ndarray of shape (n_classes,)
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
+
+        .. deprecated:: 1.2
+            `class_weight_` was deprecated in version 1.2 and will be removed in 1.4.
 
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
@@ -1359,8 +1418,8 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
         .. versionadded:: 1.1
 
-    n_support_ : ndarray of shape (n_classes,), dtype=int32
-        Number of support vectors for each class.
+    n_support_ : ndarray of shape (1,), dtype=int32
+        Number of support vectors.
 
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
@@ -1406,6 +1465,10 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     _impl = "nu_svr"
 
+    _parameter_constraints: dict = {**BaseLibSVM._parameter_constraints}
+    for unused_param in ["class_weight", "epsilon", "probability", "random_state"]:
+        _parameter_constraints.pop(unused_param)
+
     def __init__(
         self,
         *,
@@ -1440,6 +1503,15 @@ class NuSVR(RegressorMixin, BaseLibSVM):
             random_state=None,
         )
 
+    # TODO(1.4): Remove
+    @deprecated(  # type: ignore
+        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
+        " 1.4."
+    )
+    @property
+    def class_weight_(self):
+        return np.empty(0)
+
     def _more_tags(self):
         return {
             "_xfail_checks": {
@@ -1469,14 +1541,15 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
-        Ignored by all other kernels.
+        Must be non-negative. Ignored by all other kernels.
 
     gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         - if ``gamma='scale'`` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
-        - if 'auto', uses 1 / n_features.
+        - if 'auto', uses 1 / n_features
+        - if float, must be non-negative.
 
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
@@ -1514,6 +1587,9 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     class_weight_ : ndarray of shape (n_classes,)
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
+
+        .. deprecated:: 1.2
+            `class_weight_` was deprecated in version 1.2 and will be removed in 1.4.
 
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
@@ -1588,6 +1664,10 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     _impl = "one_class"
 
+    _parameter_constraints: dict = {**BaseLibSVM._parameter_constraints}
+    for unused_param in ["C", "class_weight", "epsilon", "probability", "random_state"]:
+        _parameter_constraints.pop(unused_param)
+
     def __init__(
         self,
         *,
@@ -1620,6 +1700,15 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
             max_iter,
             random_state=None,
         )
+
+    # TODO(1.4): Remove
+    @deprecated(  # type: ignore
+        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
+        " 1.4."
+    )
+    @property
+    def class_weight_(self):
+        return np.empty(0)
 
     def fit(self, X, y=None, sample_weight=None, **params):
         """Detect the soft boundary of the set of samples X.
