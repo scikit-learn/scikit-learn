@@ -55,7 +55,7 @@ disp = PartialDependenceDisplay.from_estimator(
     ax=ax,
 )
 
-# With respectively monotonic increase (1) and a monotonic decrease (-1) constraints.
+# With monotonic increase (1) and a monotonic decrease (-1) constraints, respectively.
 gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1])
 gbdt.fit(X, y)
 
