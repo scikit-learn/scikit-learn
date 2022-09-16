@@ -2,6 +2,7 @@
 
 import pickle
 import pytest
+import sys
 import tempfile
 
 import numpy as np
@@ -22,14 +23,15 @@ y = np.zeros(100, dtype=int)
 @pytest.mark.parametrize("Callback", [ConvergenceMonitor, EarlyStopping, ProgressBar, Snapshot, TextVerbose,])
 def test_callback_doesnt_hold_ref_to_estimator(Callback):
     callback = Callback()
-    est = Estimator()._set_callbacks(callbacks=callback)
+    est = Estimator()
+    callback_refcount = sys.getrefcount(callback)
+    est_refcount = sys.getrefcount(est)
+    
+    est._set_callbacks(callbacks=callback)
     est.fit(X, y)
-
-    tree_dir = est._computation_tree.tree_dir
-
-    del est
-    del callback
-    assert not tree_dir.is_dir()
+    # estimator has a ref on the callback but the callback has no ref to the estimator
+    assert sys.getrefcount(est) == est_refcount
+    assert sys.getrefcount(callback) == callback_refcount + 1
 
 
 @pytest.mark.parametrize("n_jobs", (1, 2))

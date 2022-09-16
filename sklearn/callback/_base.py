@@ -122,7 +122,10 @@ class BaseCallback(ABC):
         pass
 
     def _set_context(self, context):
-        self._callback_context = context
+        if not hasattr(self, "_callback_contexts"):
+            self._callback_contexts = []
+        
+        self._callback_contexts.append(context)
 
 
 class AutoPropagatedMixin:

@@ -3,6 +3,7 @@
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 
+from codecs import ignore_errors
 import copy
 import warnings
 from collections import defaultdict
@@ -645,10 +646,11 @@ class BaseEstimator:
 
         sub_estimator._parent_ct_node = parent_node
 
-        if not hasattr(sub_estimator, "_callbacks"):
-            sub_estimator._callbacks = propagated_callbacks
-        else:
-            sub_estimator._callbacks.extend(propagated_callbacks)
+        # if not hasattr(sub_estimator, "_callbacks"):
+        #     sub_estimator._callbacks = propagated_callbacks
+        # else:
+        #     sub_estimator._callbacks.extend(propagated_callbacks)
+        sub_estimator._set_callbacks(getattr(sub_estimator, "_callbacks", []) + propagated_callbacks)
 
     def _eval_callbacks_on_fit_begin(self, *, levels, X=None, y=None):
         """Evaluate the on_fit_begin method of the callbacks
@@ -681,11 +683,10 @@ class BaseEstimator:
         )
 
         if hasattr(self, "_callbacks"):
-            #
-            #if self._computation_tree.parent_node is None:
+            # 
             CallbackContext(self._callbacks, finalizer=partial(rmtree, ignore_errors=True), finalizer_args=self._computation_tree.tree_dir)
 
-            # 
+            #
             file_path = self._computation_tree.tree_dir / "computation_tree.pkl"
             with open(file_path, "wb") as f:
                 pickle.dump(self._computation_tree, f)

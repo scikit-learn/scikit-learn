@@ -105,7 +105,7 @@ class _RichProgressMonitor(Thread):
 
     def __init__(self, estimator, event, max_depth_show=None, max_depth_keep=None):
         Thread.__init__(self)
-        self.estimator = estimator
+        self.computation_tree = estimator._computation_tree
         self.event = event
         self.max_depth_show = max_depth_show
         self.max_depth_keep = max_depth_keep
@@ -151,7 +151,7 @@ class _RichProgressMonitor(Thread):
             return
 
         if this_dir is None:
-            this_dir = self.estimator._computation_tree.tree_dir
+            this_dir = self.computation_tree.tree_dir
             # _ordered_tasks holds the list of the tasks in the order we want them to
             # be displayed.
             self._progress_ctx._ordered_tasks = []
