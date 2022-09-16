@@ -964,7 +964,7 @@ def test_categorical_encoding_strategies():
     # Using OHEd data, we need less splits than with pure OEd data, but we
     # still need more splits than with the native categorical splits
     ct = make_column_transformer(
-        (OneHotEncoder(sparse=False), [1]), remainder="passthrough"
+        (OneHotEncoder(sparse_output=False), [1]), remainder="passthrough"
     )
     X_ohe = ct.fit_transform(X)
     clf_no_cat.set_params(max_depth=2)

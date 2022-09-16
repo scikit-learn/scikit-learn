@@ -404,6 +404,10 @@ Changelog
   `n_features_in_` and `feature_names_in_` regardless of the `validate` parameter.
   :pr:`23993` by `Thomas Fan`_.
 
+- |API| The `sparse` parameter of :class:`preprocessing.OneHotEncoder`
+  is now deprecated and will be removed in version 1.4. Use `sparse_output` instead.
+  :pr:`24412` by :user:`Rushil Desai <rusdes>`.
+
 :mod:`sklearn.svm`
 ..................
 
