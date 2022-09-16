@@ -271,6 +271,9 @@ redirects = {
     "examples/model_selection/grid_search_text_feature_extraction.py": (
         "examples/model_selection/plot_grid_search_text_feature_extraction.py"
     ),
+    "examples/miscellaneous/plot_changed_only_pprint_parameter": (
+        "examples/miscellaneous/plot_estimator_representation"
+    ),
 }
 html_context["redirects"] = redirects
 for old_link in redirects:
