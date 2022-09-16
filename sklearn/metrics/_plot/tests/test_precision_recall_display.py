@@ -12,7 +12,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.svm import SVC, SVR
 from sklearn.utils import shuffle
 
-from sklearn.metrics import PrecisionRecallDisplay, plot_precision_recall_curve
+from sklearn.metrics import PrecisionRecallDisplay
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
 pytestmark = pytest.mark.filterwarnings(
@@ -61,18 +61,6 @@ def test_precision_recall_display_validation(pyplot):
     err_msg = r"y_true takes value in {10, 11} and pos_label is not specified"
     with pytest.raises(ValueError, match=err_msg):
         PrecisionRecallDisplay.from_predictions(y, y_pred_classifier)
-
-
-# FIXME: Remove in 1.2
-def test_plot_precision_recall_curve_deprecation(pyplot):
-    """Check that we raise a FutureWarning when calling
-    `plot_precision_recall_curve`."""
-
-    X, y = make_classification(random_state=0)
-    clf = LogisticRegression().fit(X, y)
-    deprecation_warning = "Function plot_precision_recall_curve is deprecated"
-    with pytest.warns(FutureWarning, match=deprecation_warning):
-        plot_precision_recall_curve(clf, X, y)
 
 
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])

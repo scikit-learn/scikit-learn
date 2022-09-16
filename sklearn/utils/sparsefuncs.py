@@ -514,7 +514,7 @@ def min_max_axis(X, axis, ignore_nan=False):
 
 
 def count_nonzero(X, axis=None, sample_weight=None):
-    """A variant of X.getnnz() with extension to weighting on axis 0
+    """A variant of X.getnnz() with extension to weighting on axis 0.
 
     Useful in efficiently calculating multilabel metrics.
 
@@ -528,6 +528,12 @@ def count_nonzero(X, axis=None, sample_weight=None):
 
     sample_weight : array-like of shape (n_samples,), default=None
         Weight for each row of X.
+
+    Returns
+    -------
+    nnz : int, float, ndarray of shape (n_samples,) or ndarray of shape (n_features,)
+        Number of non-zero values in the array along a given axis. Otherwise,
+        the total number of non-zero values in the array is returned.
     """
     if axis == -1:
         axis = 1

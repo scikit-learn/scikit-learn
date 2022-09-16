@@ -14,8 +14,7 @@ from ..utils import check_array, is_scalar_nan
 from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
+from ..utils._param_validation import Interval, StrOptions, Hidden
 from ..utils._mask import _get_mask
 
 from ..utils._encode import _encode, _check_unknown, _unique, _get_counts
@@ -209,7 +208,7 @@ class OneHotEncoder(_BaseEncoder):
     strings, denoting the values taken on by categorical (discrete) features.
     The features are encoded using a one-hot (aka 'one-of-K' or 'dummy')
     encoding scheme. This creates a binary column for each category and
-    returns a sparse matrix or dense array (depending on the ``sparse``
+    returns a sparse matrix or dense array (depending on the ``sparse_output``
     parameter)
 
     By default, the encoder derives the categories based on the unique values
@@ -271,6 +270,16 @@ class OneHotEncoder(_BaseEncoder):
     sparse : bool, default=True
         Will return sparse matrix if set True else will return an array.
 
+        .. deprecated:: 1.2
+           `sparse` is deprecated in 1.2 and will be removed in 1.4. Use
+           `sparse_output` instead.
+
+    sparse_output : bool, default=True
+        Will return sparse matrix if set True else will return an array.
+
+        .. versionadded:: 1.2
+           `sparse` was renamed to `sparse_output`
+
     dtype : number type, default=float
         Desired dtype of output.
 
@@ -331,7 +340,7 @@ class OneHotEncoder(_BaseEncoder):
         (if any).
 
     drop_idx_ : array of shape (n_features,)
-        - ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category
+        - ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category
           to be dropped for each feature.
         - ``drop_idx_[i] = None`` if no category is to be dropped from the
           feature with index ``i``, e.g. when `drop='if_binary'` and the
@@ -425,7 +434,7 @@ class OneHotEncoder(_BaseEncoder):
 
     >>> import numpy as np
     >>> X = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3], dtype=object).T
-    >>> ohe = OneHotEncoder(max_categories=3, sparse=False).fit(X)
+    >>> ohe = OneHotEncoder(max_categories=3, sparse_output=False).fit(X)
     >>> ohe.infrequent_categories_
     [array(['a', 'd'], dtype=object)]
     >>> ohe.transform([["a"], ["b"]])
@@ -444,7 +453,8 @@ class OneHotEncoder(_BaseEncoder):
             Interval(Real, 0, 1, closed="neither"),
             None,
         ],
-        "sparse": ["boolean"],
+        "sparse": [Hidden(StrOptions({"deprecated"})), "boolean"],  # deprecated
+        "sparse_output": ["boolean"],
     }
 
     def __init__(
@@ -452,14 +462,17 @@ class OneHotEncoder(_BaseEncoder):
         *,
         categories="auto",
         drop=None,
-        sparse=True,
+        sparse="deprecated",
+        sparse_output=True,
         dtype=np.float64,
         handle_unknown="error",
         min_frequency=None,
         max_categories=None,
     ):
         self.categories = categories
+        # TODO(1.4): Remove self.sparse
         self.sparse = sparse
+        self.sparse_output = sparse_output
         self.dtype = dtype
         self.handle_unknown = handle_unknown
         self.drop = drop
@@ -798,6 +811,16 @@ class OneHotEncoder(_BaseEncoder):
             Fitted encoder.
         """
         self._validate_params()
+
+        if self.sparse != "deprecated":
+            warnings.warn(
+                "`sparse` was renamed to `sparse_output` in version 1.2 and "
+                "will be removed in 1.4. `sparse_out` is ignored unless you "
+                "leave `sparse` to its default value.",
+                FutureWarning,
+            )
+            self.sparse_output = self.sparse
+
         self._check_infrequent_enabled()
 
         fit_results = self._fit(
@@ -830,7 +853,7 @@ class OneHotEncoder(_BaseEncoder):
         -------
         X_out : {ndarray, sparse matrix} of shape \
                 (n_samples, n_encoded_features)
-            Transformed input. If `sparse=True`, a sparse matrix will be
+            Transformed input. If `sparse_output=True`, a sparse matrix will be
             returned.
         """
         check_is_fitted(self)
@@ -879,7 +902,7 @@ class OneHotEncoder(_BaseEncoder):
             shape=(n_samples, feature_indices[-1]),
             dtype=self.dtype,
         )
-        if not self.sparse:
+        if not self.sparse_output:
             return out.toarray()
         else:
             return out
