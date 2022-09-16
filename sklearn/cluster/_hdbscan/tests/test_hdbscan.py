@@ -265,7 +265,9 @@ def test_hdbscan_centers(algorithm):
         assert_allclose(center, medoid, rtol=1, atol=0.05)
 
     # Ensure that nothing is done for noise
-    hdb = HDBSCAN(store_centers="both", min_cluster_size=X.shape[0]).fit(X)
+    hdb = HDBSCAN(
+        algorithm=algorithm, store_centers="both", min_cluster_size=X.shape[0]
+    ).fit(X)
     assert hdb.centroids_.shape[0] == 0
     assert hdb.medoids_.shape[0] == 0
 
