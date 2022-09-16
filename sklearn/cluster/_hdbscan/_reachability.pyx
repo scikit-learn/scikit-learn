@@ -51,16 +51,17 @@ def mutual_reachability(distance_matrix, min_points=5, max_dist=0.0):
     # Account for index offset
     min_points -= 1
 
+    # Note that in both routines `distance_matrix` is operated on in-place. At
+    # this point, if out-of-place operation is desired then this function
+    # should have been passed a copy.
     if issparse(distance_matrix):
-        _sparse_mutual_reachability(
+        return _sparse_mutual_reachability(
             distance_matrix,
             min_points=min_points,
             max_dist=max_dist
-        )
-        return distance_matrix.tocsr()
+        ).tocsr()
 
-    _dense_mutual_reachability(distance_matrix, min_points=min_points)
-    return distance_matrix
+    return _dense_mutual_reachability(distance_matrix, min_points=min_points)
 
 cdef _dense_mutual_reachability(
     cnp.ndarray[dtype=cnp.float64_t, ndim=2] distance_matrix,
@@ -88,6 +89,7 @@ cdef _dense_mutual_reachability(
                     distance_matrix[i, j]
                 )
                 distance_matrix[i, j] = mr_dist
+    return distance_matrix
 
 # Assumes LIL format.
 # TODO: Rewrite for CSR.
@@ -120,3 +122,4 @@ cdef _sparse_mutual_reachability(
             distance_matrix[i, j] = mr_dist
         elif max_dist > 0:
             distance_matrix[i, j] = max_dist
+    return distance_matrix

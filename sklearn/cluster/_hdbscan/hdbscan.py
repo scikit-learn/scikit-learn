@@ -28,6 +28,33 @@ from ._tree import compute_stability, condense_tree, get_clusters, labelling_at_
 FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics
 
 
+def _brute_mst(mutual_reachability, min_samples, sparse=False):
+    if not sparse:
+        return mst_from_distance_matrix(mutual_reachability)
+
+    # Check connected component on mutual reachability
+    # If more than one component, it means that even if the distance matrix X
+    # has one component, there exists with less than `min_samples` neighbors
+    if (
+        csgraph.connected_components(
+            mutual_reachability, directed=False, return_labels=False
+        )
+        > 1
+    ):
+        raise ValueError(
+            f"There exists points with fewer than {min_samples} neighbors. Ensure"
+            " your distance matrix has non-zero values for at least"
+            f" `min_sample`={min_samples} neighbors for each points (i.e. K-nn"
+            " graph), or specify a `max_dist` in `metric_params` to use when"
+            " distances are missing."
+        )
+
+    # Compute the minimum spanning tree for the sparse graph
+    sparse_min_spanning_tree = csgraph.minimum_spanning_tree(mutual_reachability)
+    rows, cols = sparse_min_spanning_tree.nonzero()
+    return np.vstack((rows, cols, sparse_min_spanning_tree.data)).T
+
+
 def _tree_to_labels(
     single_linkage_tree,
     min_cluster_size=10,
@@ -67,6 +94,7 @@ def _hdbscan_brute(
     alpha=None,
     metric="euclidean",
     n_jobs=None,
+    copy=False,
     **metric_params,
 ):
     if metric == "precomputed":
@@ -74,63 +102,31 @@ def _hdbscan_brute(
         # sklearn.metrics.pairwise_distances handle it,
         # enables the usage of numpy.inf in the distance
         # matrix to indicate missing distance information.
-        distance_matrix = X
+        distance_matrix = X.copy() if copy else X
+
     else:
         distance_matrix = pairwise_distances(
             X, metric=metric, n_jobs=n_jobs, **metric_params
         )
     if alpha is not None:
-        distance_matrix = distance_matrix / alpha
+        if copy:
+            distance_matrix = distance_matrix / alpha
+        else:
+            distance_matrix /= alpha
 
-    if issparse(distance_matrix):
-        # Compute sparse mutual reachability graph
-        # if max_dist > 0, max distance to use when the reachability is infinite
-        max_dist = metric_params.get("max_dist", 0.0)
-        mutual_reachability_ = mutual_reachability(
-            distance_matrix.tolil(), min_points=min_samples, max_dist=max_dist
-        )
-        # Check connected component on mutual reachability
-        # If more than one component, it means that even if the distance matrix X
-        # has one component, there exists with less than `min_samples` neighbors
-        if (
-            csgraph.connected_components(
-                mutual_reachability_, directed=False, return_labels=False
-            )
-            > 1
-        ):
-            raise ValueError(
-                f"There exists points with fewer than {min_samples} neighbors. Ensure"
-                " your distance matrix has non-zero values for at least"
-                f" `min_sample`={min_samples} neighbors for each points (i.e. K-nn"
-                " graph), or specify a `max_dist` in `metric_params` to use when"
-                " distances are missing."
-            )
+    # max_dist is only relevant for sparse and is ignored for dense
+    max_dist = metric_params.get("max_dist", 0.0)
+    sparse = issparse(distance_matrix)
+    distance_matrix = distance_matrix.tolil() if sparse else distance_matrix
 
-        # Compute the minimum spanning tree for the sparse graph
-        sparse_min_spanning_tree = csgraph.minimum_spanning_tree(mutual_reachability_)
-
-        edges_sorted_indices = np.argsort(sparse_min_spanning_tree.data)
-        rows, cols = sparse_min_spanning_tree.nonzero()
-        min_spanning_tree = np.vstack(
-            (
-                rows[edges_sorted_indices],
-                cols[edges_sorted_indices],
-                sparse_min_spanning_tree.data[edges_sorted_indices],
-            ),
-        ).T
-
-        # Convert edge list into standard hierarchical clustering format
-        single_linkage_tree = label(min_spanning_tree)
-
-        return single_linkage_tree
-
-    # `distance_matrix` is dense at this point.
     # Note that `distance_matrix` is manipulated in-place, however we do not
     # need it for anything else past this point, hence the operation is safe.
-    mutual_reachability_ = mutual_reachability(distance_matrix, min_samples)
-
-    min_spanning_tree = mst_from_distance_matrix(mutual_reachability_)
-
+    mutual_reachability_ = mutual_reachability(
+        distance_matrix, min_points=min_samples, max_dist=max_dist
+    )
+    min_spanning_tree = _brute_mst(
+        mutual_reachability_, min_samples=min_samples, sparse=sparse
+    )
     # Warn if the MST couldn't be constructed around the missing distances
     if np.isinf(min_spanning_tree.T[2]).any():
         warn(
@@ -335,6 +331,17 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
           depend on a euclidean metric.
         - `"both"`which computes and stores both forms of centers.
 
+    copy : bool, default=False
+        If `copy=True` then any time an in-place modifications would be made
+        that would overwrite data passed to :term:`fit`, a copy will first be
+        made, guaranteeing that the original data will be unchanged. Currently
+        this only makes a difference when passing in a dense precomputed
+        distance array (i.e. when `metric="precomputed"`).
+
+        Note that, even if `copy=False`, a copy may still be made during
+        :term:`fit` if conversion of the passed data is necessary. See
+        :func:`~sklearn.utils.validation.check_array` for more details.
+
     Attributes
     ----------
     labels_ : ndarray of shape (n_samples,)
@@ -447,6 +454,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         "cluster_selection_method": [StrOptions({"eom", "leaf"})],
         "allow_single_cluster": ["boolean"],
         "store_centers": [None, StrOptions({"centroid", "medoid", "both"})],
+        "copy": ["boolean"],
     }
 
     def __init__(
@@ -464,6 +472,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         cluster_selection_method="eom",
         allow_single_cluster=False,
         store_centers=None,
+        copy=False,
     ):
         self.min_cluster_size = min_cluster_size
         self.min_samples = min_samples
@@ -478,6 +487,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         self.cluster_selection_method = cluster_selection_method
         self.allow_single_cluster = allow_single_cluster
         self.store_centers = store_centers
+        self.copy = copy
 
     def fit(self, X, y=None):
         """Find clusters based on hierarchical density-based clustering.
@@ -594,6 +604,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
             if self.algorithm == "brute":
                 mst_func = _hdbscan_brute
+                kwargs["copy"] = self.copy
                 for key in ("algo", "leaf_size"):
                     kwargs.pop(key, None)
             elif self.algorithm == "kdtree":
@@ -605,6 +616,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             if issparse(X) or self.metric not in FAST_METRICS:
                 # We can't do much with sparse matrices ...
                 mst_func = _hdbscan_brute
+                kwargs["copy"] = self.copy
                 for key in ("algo", "leaf_size"):
                     kwargs.pop(key, None)
             elif self.metric in KDTree.valid_metrics:
@@ -731,7 +743,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
         Returns
         -------
-        labels : array [n_samples]
+        labels : ndarray of shape (n_samples,)
             An array of cluster labels, one per datapoint. Unclustered points
             are assigned the label -1.
         """

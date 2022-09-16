@@ -10,7 +10,7 @@ from scipy.spatial import distance
 from sklearn.cluster import HDBSCAN
 from sklearn.datasets import make_blobs
 from sklearn.metrics import fowlkes_mallows_score
-from sklearn.metrics.pairwise import _VALID_METRICS
+from sklearn.metrics.pairwise import _VALID_METRICS, euclidean_distances
 from sklearn.neighbors import BallTree, KDTree
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
@@ -63,10 +63,11 @@ def test_outlier_data():
 
 
 def test_hdbscan_distance_matrix():
-    D = distance.squareform(distance.pdist(X))
-    D /= np.max(D)
+    D = euclidean_distances(X)
+    D_original = D.copy()
+    labels = HDBSCAN(metric="precomputed", copy=True).fit_predict(D)
 
-    labels = HDBSCAN(metric="precomputed").fit_predict(D)
+    assert_allclose(D, D_original)
     n_clusters = len(set(labels) - {-1, -2})
     assert n_clusters == n_clusters_true
 
