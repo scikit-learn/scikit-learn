@@ -11,7 +11,7 @@ positively correlated with the first feature (with some random and
 non-random variations), and in general negatively correlated with the second
 feature.
 
-By respectively imposing a monotonic increase and a monotonic decrease constraints
+By imposing a monotonic increase or a monotonic decrease constraint, respectively,
 on the features during the learning process, the estimator is able to properly follow
 the general trend instead of being subject to the variations.
 

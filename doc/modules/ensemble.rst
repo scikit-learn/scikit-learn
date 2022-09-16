@@ -1153,19 +1153,18 @@ monotonic decrease constraint::
   ... # monotonic increase, monotonic decrease, and no constraint on the 3 features
   >>> gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1, 0])
 
-In a binary classification context, imposing monotonic increase constraint (respectively
-a monotonic decrease constraint) means that higher values of the feature are supposed
-to have a positive effect (respectively a negative effect) on the probability of samples
-belonging to the positive class.
+In a binary classification context, imposing a monotonic increase (decrease) constraint means that higher values of the feature are supposed
+to have a positive (negative) effect on the probability of samples
+to belong to the positive class.
 
-Nevertheless, monotonic constraints only marginally constraint feature effects on output.
+Nevertheless, monotonic constraints only marginally constrain feature effects on the output.
 For instance, monotonic increase and decrease constraints cannot be used to enforce the
 following modelling constraint:
 
     .. math::
         x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2')
 
-Also, monotonic constraints are not supported for multiclass context.
+Also, monotonic constraints are not supported for multiclass classification.
 
 .. note::
     Since categories are unordered quantities, it is not possible to enforce
