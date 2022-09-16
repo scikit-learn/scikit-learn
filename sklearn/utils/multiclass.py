@@ -316,7 +316,8 @@ def type_of_target(y, input_name=""):
 
     # Invalid inputs
     if y.ndim > 2 or (y.dtype == object and len(y) and not isinstance(y.flat[0], str)):
-        raise ValueError( # [[[1, 2]]] or [obj_1] and not ["label_1"]
+        # [[[1, 2]]] or [obj_1] and not ["label_1"]
+        raise ValueError(
             "Use an object array containing strings or encode the values in a"
             " contiguous numerical array."
         ) 

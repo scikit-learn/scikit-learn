@@ -417,7 +417,7 @@ Changelog
   :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
 
 - |Enhancement| :func:`utils.multiclass.type_of_target` now raises an
-  informative error message on receiving invalid inputs. :pr:`xxxxx`
+  informative error message on receiving invalid inputs. :pr:`24448`
   by :user:`Rahil Parikh <rprkh>`. 
 
 Code and Documentation Contributors
