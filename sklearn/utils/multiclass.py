@@ -320,7 +320,7 @@ def type_of_target(y, input_name=""):
         raise ValueError(
             "Use an object array containing strings or encode the values in a"
             " contiguous numerical array."
-        ) 
+        )
 
     if y.ndim == 2 and y.shape[1] == 0:
         return "unknown"  # [[]]
