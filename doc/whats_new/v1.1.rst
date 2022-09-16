@@ -806,13 +806,6 @@ Changelog
   using the method :func:`inspection.DecisionBoundaryDisplay.from_estimator`.
   :pr:`16061` by `Thomas Fan`_.
 
-- |Feature| Add :class:`metrics.PredictionErrorDisplay` to plot the predicted
-  and actual values to assess the performance of a regressor. The display can
-  be created with the class methods
-  :func:`metrics.PredictionErrorDisplay.from_estimator` and
-  :func:`metrics.PredictionErrorDisplay.from_predictions`.
-  :pr:`18020` by :user:`Guillaume Lemaitre <glemaitre>`.
-
 - |Enhancement| In
   :meth:`inspection.PartialDependenceDisplay.from_estimator`, allow
   `kind` to accept a list of strings to specify  which type of

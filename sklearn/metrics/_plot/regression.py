@@ -17,7 +17,7 @@ class PredictionErrorDisplay:
 
     Read more in the :ref:`User Guide <visualizations>`.
 
-    .. versionadded:: 1.1
+    .. versionadded:: 1.2
 
     Parameters
     ----------
