@@ -595,10 +595,10 @@ General Concepts
         meta-estimator.  Ordinarily, these nested parameters are denoted by
         using a :term:`double underscore` (``__``) to separate between the
         estimator-as-parameter and its parameter.  Thus ``clf =
-        BaggingClassifier(base_estimator=DecisionTreeClassifier(max_depth=3))``
-        has a deep parameter ``base_estimator__max_depth`` with value ``3``,
-        which is accessible with ``clf.base_estimator.max_depth`` or
-        ``clf.get_params()['base_estimator__max_depth']``.
+        BaggingClassifier(estimator=DecisionTreeClassifier(max_depth=3))``
+        has a deep parameter ``estimator__max_depth`` with value ``3``,
+        which is accessible with ``clf.estimator.max_depth`` or
+        ``clf.get_params()['estimator__max_depth']``.
 
         The list of parameters and their current values can be retrieved from
         an :term:`estimator instance` using its :term:`get_params` method.
