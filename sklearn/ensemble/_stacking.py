@@ -476,7 +476,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,) or list of ndarray if `y` \
-        is of type `"multilabel-indicator"` or `"multiclass-multioutput"`.
+        is of type `"multilabel-indicator"`.
         Class labels.
 
     estimators_ : list of estimators
@@ -646,7 +646,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         """
         y_pred = super().predict(X, **predict_params)
         if isinstance(self._label_encoder, list):
-            # Handle the multilabel-indicator and multiclass-multioutput cases
+            # Handle the multilabel-indicator case
             y_pred = np.array(
                 [
                     self._label_encoder[target_idx].inverse_transform(target)
@@ -677,7 +677,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         y_pred = self.final_estimator_.predict_proba(self.transform(X))
 
         if isinstance(self._label_encoder, list):
-            # Handle the multilabel-indicator and multiclass-multioutput cases
+            # Handle the multilabel-indicator cases
             y_pred = np.array([preds[:, 0] for preds in y_pred]).T
         return y_pred
 
