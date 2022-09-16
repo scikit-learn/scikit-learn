@@ -9,6 +9,7 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._testing import _convert_container
 
 from sklearn.datasets import make_blobs
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -99,21 +100,8 @@ def test_lda_predict():
         # LDA shouldn't be able to separate those
         assert np.any(y_pred3 != y3), "solver %s" % solver
 
-    # Test invalid shrinkages
-    clf = LinearDiscriminantAnalysis(solver="lsqr", shrinkage=-0.2231)
-    with pytest.raises(ValueError):
-        clf.fit(X, y)
-
-    clf = LinearDiscriminantAnalysis(solver="eigen", shrinkage="dummy")
-    with pytest.raises(ValueError):
-        clf.fit(X, y)
-
     clf = LinearDiscriminantAnalysis(solver="svd", shrinkage="auto")
     with pytest.raises(NotImplementedError):
-        clf.fit(X, y)
-
-    clf = LinearDiscriminantAnalysis(solver="lsqr", shrinkage=np.array([1, 2]))
-    with pytest.raises(TypeError, match="shrinkage must be a float or a string"):
         clf.fit(X, y)
 
     clf = LinearDiscriminantAnalysis(
@@ -129,11 +117,6 @@ def test_lda_predict():
     ):
         clf.fit(X, y)
 
-    # Test unknown solver
-    clf = LinearDiscriminantAnalysis(solver="dummy")
-    with pytest.raises(ValueError):
-        clf.fit(X, y)
-
     # test bad solver with covariance_estimator
     clf = LinearDiscriminantAnalysis(solver="svd", covariance_estimator=LedoitWolf())
     with pytest.raises(
@@ -143,11 +126,9 @@ def test_lda_predict():
 
     # test bad covariance estimator
     clf = LinearDiscriminantAnalysis(
-        solver="lsqr", covariance_estimator=KMeans(n_clusters=2)
+        solver="lsqr", covariance_estimator=KMeans(n_clusters=2, n_init="auto")
     )
-    with pytest.raises(
-        ValueError, match="KMeans does not have a covariance_ attribute"
-    ):
+    with pytest.raises(ValueError):
         clf.fit(X, y)
 
 
@@ -572,6 +553,30 @@ def test_qda_priors():
     assert n_pos2 > n_pos
 
 
+@pytest.mark.parametrize("priors_type", ["list", "tuple", "array"])
+def test_qda_prior_type(priors_type):
+    """Check that priors accept array-like."""
+    priors = [0.5, 0.5]
+    clf = QuadraticDiscriminantAnalysis(
+        priors=_convert_container([0.5, 0.5], priors_type)
+    ).fit(X6, y6)
+    assert isinstance(clf.priors_, np.ndarray)
+    assert_array_equal(clf.priors_, priors)
+
+
+def test_qda_prior_copy():
+    """Check that altering `priors` without `fit` doesn't change `priors_`"""
+    priors = np.array([0.5, 0.5])
+    qda = QuadraticDiscriminantAnalysis(priors=priors).fit(X, y)
+
+    # we expect the following
+    assert_array_equal(qda.priors_, qda.priors)
+
+    # altering `priors` without `fit` should not change `priors_`
+    priors[0] = 0.2
+    assert qda.priors_[0] != qda.priors[0]
+
+
 def test_qda_store_covariance():
     # The default is to not set the covariances_ attribute
     clf = QuadraticDiscriminantAnalysis().fit(X6, y6)
@@ -638,7 +643,7 @@ def test_covariance():
     assert_almost_equal(c_s, c_s.T)
 
 
-@pytest.mark.parametrize("solver", ["svd, lsqr", "eigen"])
+@pytest.mark.parametrize("solver", ["svd", "lsqr", "eigen"])
 def test_raises_value_error_on_same_number_of_classes_and_samples(solver):
     """
     Tests that if the number of samples equals the number

@@ -1,6 +1,7 @@
 """
 Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
+import re
 import warnings
 import numpy as np
 from numpy.testing import assert_allclose
@@ -18,8 +19,7 @@ from sklearn.datasets import make_classification, make_regression
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble._gradient_boosting import predict_stages
-from sklearn.preprocessing import OneHotEncoder, scale
-from sklearn.svm import LinearSVC
+from sklearn.preprocessing import scale
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state, tosequence
@@ -75,189 +75,6 @@ def test_classification_toy(loss):
 
     leaves = clf.apply(X)
     assert leaves.shape == (6, 10, 1)
-
-
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"learning_rate": 0}, ValueError, "learning_rate == 0, must be > 0.0"),
-        (
-            {"learning_rate": "foo"},
-            TypeError,
-            "learning_rate must be an instance of float",
-        ),
-        ({"n_estimators": 0}, ValueError, "n_estimators == 0, must be >= 1"),
-        (
-            {"n_estimators": 1.5},
-            TypeError,
-            "n_estimators must be an instance of int,",
-        ),
-        ({"loss": "foobar"}, ValueError, "Loss 'foobar' not supported"),
-        ({"subsample": 0.0}, ValueError, "subsample == 0.0, must be > 0.0"),
-        ({"subsample": 1.1}, ValueError, "subsample == 1.1, must be <= 1.0"),
-        (
-            {"subsample": "foo"},
-            TypeError,
-            "subsample must be an instance of float",
-        ),
-        ({"init": {}}, ValueError, "The init parameter must be an estimator or 'zero'"),
-        ({"max_features": 0}, ValueError, "max_features == 0, must be >= 1"),
-        ({"max_features": 0.0}, ValueError, "max_features == 0.0, must be > 0.0"),
-        ({"max_features": 1.1}, ValueError, "max_features == 1.1, must be <= 1.0"),
-        ({"max_features": "foobar"}, ValueError, "Invalid value for max_features."),
-        ({"verbose": -1}, ValueError, "verbose == -1, must be >= 0"),
-        (
-            {"verbose": "foo"},
-            TypeError,
-            "verbose must be an instance of",
-        ),
-        ({"warm_start": "foo"}, TypeError, "warm_start must be an instance of"),
-        (
-            {"validation_fraction": 0.0},
-            ValueError,
-            "validation_fraction == 0.0, must be > 0.0",
-        ),
-        (
-            {"validation_fraction": 1.0},
-            ValueError,
-            "validation_fraction == 1.0, must be < 1.0",
-        ),
-        (
-            {"validation_fraction": "foo"},
-            TypeError,
-            "validation_fraction must be an instance of float",
-        ),
-        ({"n_iter_no_change": 0}, ValueError, "n_iter_no_change == 0, must be >= 1"),
-        (
-            {"n_iter_no_change": 1.5},
-            TypeError,
-            "n_iter_no_change must be an instance of int,",
-        ),
-        ({"tol": 0.0}, ValueError, "tol == 0.0, must be > 0.0"),
-        (
-            {"tol": "foo"},
-            TypeError,
-            "tol must be an instance of float,",
-        ),
-        # The following parameters are checked in BaseDecisionTree
-        ({"min_samples_leaf": 0}, ValueError, "min_samples_leaf == 0, must be >= 1"),
-        ({"min_samples_leaf": 0.0}, ValueError, "min_samples_leaf == 0.0, must be > 0"),
-        (
-            {"min_samples_leaf": "foo"},
-            TypeError,
-            "min_samples_leaf must be an instance of float",
-        ),
-        ({"min_samples_split": 1}, ValueError, "min_samples_split == 1, must be >= 2"),
-        (
-            {"min_samples_split": 0.0},
-            ValueError,
-            "min_samples_split == 0.0, must be > 0.0",
-        ),
-        (
-            {"min_samples_split": 1.1},
-            ValueError,
-            "min_samples_split == 1.1, must be <= 1.0",
-        ),
-        (
-            {"min_samples_split": "foo"},
-            TypeError,
-            "min_samples_split must be an instance of float",
-        ),
-        (
-            {"min_weight_fraction_leaf": -1},
-            ValueError,
-            "min_weight_fraction_leaf == -1, must be >= 0.0",
-        ),
-        (
-            {"min_weight_fraction_leaf": 0.6},
-            ValueError,
-            "min_weight_fraction_leaf == 0.6, must be <= 0.5",
-        ),
-        (
-            {"min_weight_fraction_leaf": "foo"},
-            TypeError,
-            "min_weight_fraction_leaf must be an instance of float",
-        ),
-        ({"max_leaf_nodes": 0}, ValueError, "max_leaf_nodes == 0, must be >= 2"),
-        (
-            {"max_leaf_nodes": 1.5},
-            TypeError,
-            "max_leaf_nodes must be an instance of int",
-        ),
-        ({"max_depth": -1}, ValueError, "max_depth == -1, must be >= 1"),
-        (
-            {"max_depth": 1.1},
-            TypeError,
-            "max_depth must be an instance of int",
-        ),
-        (
-            {"min_impurity_decrease": -1},
-            ValueError,
-            "min_impurity_decrease == -1, must be >= 0.0",
-        ),
-        (
-            {"min_impurity_decrease": "foo"},
-            TypeError,
-            "min_impurity_decrease must be an instance of float",
-        ),
-        ({"ccp_alpha": -1.0}, ValueError, "ccp_alpha == -1.0, must be >= 0.0"),
-        (
-            {"ccp_alpha": "foo"},
-            TypeError,
-            "ccp_alpha must be an instance of float",
-        ),
-        ({"criterion": "mae"}, ValueError, "criterion='mae' is not supported."),
-    ],
-    # Avoid long error messages in test names:
-    # https://github.com/scikit-learn/scikit-learn/issues/21362
-    ids=lambda x: x[:10].replace("]", "") if isinstance(x, str) else x,
-)
-@pytest.mark.parametrize(
-    "GradientBoosting, X, y",
-    [
-        (GradientBoostingRegressor, X_reg, y_reg),
-        (GradientBoostingClassifier, iris.data, iris.target),
-    ],
-)
-def test_gbdt_parameter_checks(GradientBoosting, X, y, params, err_type, err_msg):
-    # Check input parameter validation for GradientBoosting
-    est = GradientBoosting(**params)
-    with pytest.raises(err_type, match=err_msg):
-        est.fit(X, y)
-
-
-@pytest.mark.parametrize(
-    "params, err_msg",
-    [
-        ({"loss": "huber", "alpha": 0.0}, "alpha == 0.0, must be > 0.0"),
-        ({"loss": "quantile", "alpha": 0.0}, "alpha == 0.0, must be > 0.0"),
-        ({"loss": "huber", "alpha": 1.2}, "alpha == 1.2, must be < 1.0"),
-        ({"loss": "quantile", "alpha": 1.2}, "alpha == 1.2, must be < 1.0"),
-    ],
-)
-def test_gbdt_loss_alpha_error(params, err_msg):
-    # check that an error is raised when alpha is not proper for quantile and
-    # huber loss
-    with pytest.raises(ValueError, match=err_msg):
-        GradientBoostingRegressor(**params).fit(X_reg, y_reg)
-
-
-@pytest.mark.parametrize(
-    "GradientBoosting, loss",
-    [
-        (GradientBoostingClassifier, "ls"),
-        (GradientBoostingClassifier, "absolute_error"),
-        (GradientBoostingClassifier, "quantile"),
-        (GradientBoostingClassifier, "huber"),
-        (GradientBoostingRegressor, "log_loss"),
-        (GradientBoostingRegressor, "exponential"),
-    ],
-)
-def test_wrong_type_loss_function(GradientBoosting, loss):
-    # check that we raise an error when not using the right type of loss
-    # function
-    with pytest.raises(ValueError):
-        GradientBoosting(loss=loss).fit(X, y)
 
 
 @pytest.mark.parametrize("loss", ("log_loss", "exponential"))
@@ -899,17 +716,6 @@ def test_warm_start_clear(Cls):
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
-def test_warm_start_zero_n_estimators(Cls):
-    # Test if warm start with zero n_estimators raises error
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    est = Cls(n_estimators=100, max_depth=1, warm_start=True)
-    est.fit(X, y)
-    est.set_params(n_estimators=0)
-    with pytest.raises(ValueError):
-        est.fit(X, y)
-
-
-@pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
 def test_warm_start_smaller_n_estimators(Cls):
     # Test if warm start with smaller n_estimators raises error
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
@@ -1112,12 +918,6 @@ def test_zero_estimator_reg():
     mse_gbdt = mean_squared_error(y_reg, y_pred)
     assert mse_gbdt < mse_baseline
 
-    est = GradientBoostingRegressor(
-        n_estimators=20, max_depth=1, random_state=1, init="foobar"
-    )
-    with pytest.raises(ValueError):
-        est.fit(X_reg, y_reg)
-
 
 def test_zero_estimator_clf():
     # Test if init='zero' works for classification.
@@ -1140,12 +940,6 @@ def test_zero_estimator_clf():
     )
     est.fit(X, y)
     assert est.score(X, y) > 0.96
-
-    est = GradientBoostingClassifier(
-        n_estimators=20, max_depth=1, random_state=1, init="foobar"
-    )
-    with pytest.raises(ValueError):
-        est.fit(X, y)
 
 
 @pytest.mark.parametrize("GBEstimator", GRADIENT_BOOSTING_ESTIMATORS)
@@ -1429,30 +1223,16 @@ def test_gradient_boosting_with_init_pipeline():
     # sure we make the distinction between ValueError raised by a pipeline that
     # was passed sample_weight, and a ValueError raised by a regular estimator
     # whose input checking failed.
-    with pytest.raises(ValueError, match="nu <= 0 or nu > 1"):
+    invalid_nu = 1.5
+    err_msg = (
+        "The 'nu' parameter of NuSVR must be a float in the"
+        f" range (0.0, 1.0]. Got {invalid_nu} instead."
+    )
+    with pytest.raises(ValueError, match=re.escape(err_msg)):
         # Note that NuSVR properly supports sample_weight
-        init = NuSVR(gamma="auto", nu=1.5)
+        init = NuSVR(gamma="auto", nu=invalid_nu)
         gb = GradientBoostingRegressor(init=init)
         gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
-
-
-@pytest.mark.parametrize(
-    "estimator, missing_method",
-    [
-        (GradientBoostingClassifier(init=LinearSVC()), "predict_proba"),
-        (GradientBoostingRegressor(init=OneHotEncoder()), "predict"),
-    ],
-)
-def test_gradient_boosting_init_wrong_methods(estimator, missing_method):
-    # Make sure error is raised if init estimators don't have the required
-    # methods (fit, predict, predict_proba)
-
-    message = (
-        "The init parameter must be a valid estimator and support both fit and "
-        + missing_method
-    )
-    with pytest.raises(ValueError, match=message):
-        estimator.fit(X, y)
 
 
 def test_early_stopping_n_classes():
@@ -1485,54 +1265,14 @@ def test_gbr_degenerate_feature_importances():
     assert_array_equal(gbr.feature_importances_, np.zeros(10, dtype=np.float64))
 
 
-# FIXME: remove in 1.2
-@pytest.mark.parametrize(
-    "Estimator", [GradientBoostingClassifier, GradientBoostingRegressor]
-)
-def test_n_features_deprecation(Estimator):
-    # Check that we raise the proper deprecation warning if accessing
-    # `n_features_`.
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    est = Estimator().fit(X, y)
+# TODO(1.3): Remove
+def test_loss_deprecated():
+    est1 = GradientBoostingClassifier(loss="deviance", random_state=0)
 
-    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
-        est.n_features_
-
-
-# TODO: Remove in v1.2
-@pytest.mark.parametrize("Estimator", GRADIENT_BOOSTING_ESTIMATORS)
-def test_criterion_mse_deprecated(Estimator):
-    est1 = Estimator(criterion="mse", random_state=0)
-
-    with pytest.warns(FutureWarning, match="Criterion 'mse' was deprecated"):
+    with pytest.warns(FutureWarning, match=r"The loss.* 'deviance' was deprecated"):
         est1.fit(X, y)
 
-    est2 = Estimator(criterion="squared_error", random_state=0)
-    est2.fit(X, y)
-    if hasattr(est1, "predict_proba"):
-        assert_allclose(est1.predict_proba(X), est2.predict_proba(X))
-    else:
-        assert_allclose(est1.predict(X), est2.predict(X))
-
-
-@pytest.mark.parametrize(
-    "old_loss, new_loss, Estimator",
-    [
-        # TODO(1.2): Remove
-        ("ls", "squared_error", GradientBoostingRegressor),
-        ("lad", "absolute_error", GradientBoostingRegressor),
-        # TODO(1.3): Remove
-        ("deviance", "log_loss", GradientBoostingClassifier),
-    ],
-)
-def test_loss_deprecated(old_loss, new_loss, Estimator):
-    est1 = Estimator(loss=old_loss, random_state=0)
-
-    with pytest.warns(FutureWarning, match=rf"The loss.* '{old_loss}' was deprecated"):
-        est1.fit(X, y)
-
-    est2 = Estimator(loss=new_loss, random_state=0)
+    est2 = GradientBoostingClassifier(loss="log_loss", random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))
 

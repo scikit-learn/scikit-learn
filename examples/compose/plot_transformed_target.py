@@ -128,7 +128,7 @@ f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
 from sklearn.datasets import fetch_openml
 from sklearn.preprocessing import QuantileTransformer, quantile_transform
 
-ames = fetch_openml(name="house_prices", as_frame=True)
+ames = fetch_openml(name="house_prices", as_frame=True, parser="pandas")
 # Keep only numeric columns
 X = ames.data.select_dtypes(np.number)
 # Remove columns with NaN or Inf values

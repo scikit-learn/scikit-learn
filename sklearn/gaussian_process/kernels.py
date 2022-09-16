@@ -1421,7 +1421,7 @@ class WhiteKernel(StationaryKernelMixin, GenericKernelMixin, Kernel):
 
 
 class RBF(StationaryKernelMixin, NormalizedKernelMixin, Kernel):
-    """Radial-basis function kernel (aka squared-exponential kernel).
+    """Radial basis function kernel (aka squared-exponential kernel).
 
     The RBF kernel is a stationary kernel. It is also known as the
     "squared exponential" kernel. It is parameterized by a length scale
@@ -1733,9 +1733,14 @@ class Matern(RBF):
 
             if self.nu == 0.5:
                 denominator = np.sqrt(D.sum(axis=2))[:, :, np.newaxis]
-                K_gradient = K[..., np.newaxis] * np.divide(
-                    D, denominator, where=denominator != 0
+                divide_result = np.zeros_like(D)
+                np.divide(
+                    D,
+                    denominator,
+                    out=divide_result,
+                    where=denominator != 0,
                 )
+                K_gradient = K[..., np.newaxis] * divide_result
             elif self.nu == 1.5:
                 K_gradient = 3 * D * np.exp(-np.sqrt(3 * D.sum(-1)))[..., np.newaxis]
             elif self.nu == 2.5:

@@ -1,19 +1,16 @@
 # Author: Lars Buitinck
 # License: BSD 3 clause
 
-import sys
-import array
-cimport cython
 from libc.stdlib cimport abs
 from libcpp.vector cimport vector
 
-cimport numpy as np
+cimport numpy as cnp
 import numpy as np
 from ..utils._typedefs cimport INT32TYPE_t, INT64TYPE_t
 from ..utils.murmurhash cimport murmurhash3_bytes_s32
 from ..utils._vector_sentinel cimport vector_to_nd_array
 
-np.import_array()
+cnp.import_array()
 
 
 def transform(raw_X, Py_ssize_t n_features, dtype,
@@ -37,8 +34,8 @@ def transform(raw_X, Py_ssize_t n_features, dtype,
     # Since Python array does not understand Numpy dtypes, we grow the indices
     # and values arrays ourselves. Use a Py_ssize_t capacity for safety.
     cdef Py_ssize_t capacity = 8192     # arbitrary
-    cdef np.int64_t size = 0
-    cdef np.ndarray values = np.empty(capacity, dtype=dtype)
+    cdef cnp.int64_t size = 0
+    cdef cnp.ndarray values = np.empty(capacity, dtype=dtype)
 
     for x in raw_X:
         for f, v in x:
@@ -80,13 +77,13 @@ def transform(raw_X, Py_ssize_t n_features, dtype,
 
         indptr.push_back(size)
 
-    indicies_array = vector_to_nd_array(&indices)
+    indices_array = vector_to_nd_array(&indices)
     indptr_array = vector_to_nd_array(&indptr)
 
     if indptr_array[indptr_array.shape[0]-1] > np.iinfo(np.int32).max:  # = 2**31 - 1
         # both indices and indptr have the same dtype in CSR arrays
-        indicies_array = indicies_array.astype(np.int64, copy=False)
+        indices_array = indices_array.astype(np.int64, copy=False)
     else:
         indptr_array = indptr_array.astype(np.int32, copy=False)
 
-    return (indicies_array, indptr_array, values[:size])
+    return (indices_array, indptr_array, values[:size])

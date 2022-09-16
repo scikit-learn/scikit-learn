@@ -11,13 +11,13 @@
 # See _tree.pyx for details.
 
 import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 
-ctypedef np.npy_float32 DTYPE_t          # Type of X
-ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
-ctypedef np.npy_intp SIZE_t              # Type for indices and counters
-ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
-ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+ctypedef cnp.npy_float32 DTYPE_t          # Type of X
+ctypedef cnp.npy_float64 DOUBLE_t         # Type of y, sample_weight
+ctypedef cnp.npy_intp SIZE_t              # Type for indices and counters
+ctypedef cnp.npy_int32 INT32_t            # Signed 32 bit integer
+ctypedef cnp.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 
 from ._splitter cimport Splitter
 from ._splitter cimport SplitRecord
@@ -62,14 +62,14 @@ cdef class Tree:
     cdef int _resize(self, SIZE_t capacity) nogil except -1
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
 
-    cdef np.ndarray _get_value_ndarray(self)
-    cdef np.ndarray _get_node_ndarray(self)
+    cdef cnp.ndarray _get_value_ndarray(self)
+    cdef cnp.ndarray _get_node_ndarray(self)
 
-    cpdef np.ndarray predict(self, object X)
+    cpdef cnp.ndarray predict(self, object X)
 
-    cpdef np.ndarray apply(self, object X)
-    cdef np.ndarray _apply_dense(self, object X)
-    cdef np.ndarray _apply_sparse_csr(self, object X)
+    cpdef cnp.ndarray apply(self, object X)
+    cdef cnp.ndarray _apply_dense(self, object X)
+    cdef cnp.ndarray _apply_sparse_csr(self, object X)
 
     cpdef object decision_path(self, object X)
     cdef object _decision_path_dense(self, object X)
@@ -98,6 +98,6 @@ cdef class TreeBuilder:
     cdef SIZE_t max_depth               # Maximal tree depth
     cdef double min_impurity_decrease   # Impurity threshold for early stopping
 
-    cpdef build(self, Tree tree, object X, np.ndarray y,
-                np.ndarray sample_weight=*)
-    cdef _check_input(self, object X, np.ndarray y, np.ndarray sample_weight)
+    cpdef build(self, Tree tree, object X, cnp.ndarray y,
+                cnp.ndarray sample_weight=*)
+    cdef _check_input(self, object X, cnp.ndarray y, cnp.ndarray sample_weight)

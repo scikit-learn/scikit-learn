@@ -53,12 +53,6 @@ def test_classification_toy():
     assert_array_equal(clf.predict(T_csr.tolil()), true_result)
 
 
-def test_precomputed():
-    clf = NearestCentroid(metric="precomputed")
-    with pytest.raises(ValueError):
-        clf.fit(X, y)
-
-
 def test_iris():
     # Check consistency on dataset iris.
     for metric in ("euclidean", "cosine"):

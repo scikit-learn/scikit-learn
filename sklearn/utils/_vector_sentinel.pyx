@@ -1,10 +1,10 @@
 from cython.operator cimport dereference as deref
 from cpython.ref cimport Py_INCREF
-cimport numpy as np
+cimport numpy as cnp
 
 from ._typedefs cimport DTYPECODE, ITYPECODE, INT32TYPECODE, INT64TYPECODE
 
-np.import_array()
+cnp.import_array()
 
 
 cdef StdVectorSentinel _create_sentinel(vector_typed * vect_ptr):
@@ -104,11 +104,11 @@ cdef class StdVectorSentinelInt64(StdVectorSentinel):
         return INT64TYPECODE
 
 
-cdef np.ndarray vector_to_nd_array(vector_typed * vect_ptr):
+cdef cnp.ndarray vector_to_nd_array(vector_typed * vect_ptr):
     cdef:
-        np.npy_intp size = deref(vect_ptr).size()
+        cnp.npy_intp size = deref(vect_ptr).size()
         StdVectorSentinel sentinel =  _create_sentinel(vect_ptr)
-        np.ndarray arr = np.PyArray_SimpleNewFromData(
+        cnp.ndarray arr = cnp.PyArray_SimpleNewFromData(
             1, &size, sentinel.get_typenum(), sentinel.get_data())
 
     # Makes the numpy array responsible of the life-cycle of its buffer.
@@ -116,5 +116,5 @@ cdef np.ndarray vector_to_nd_array(vector_typed * vect_ptr):
     # `PyArray_SetBaseObject` below, so we increase its reference counter.
     # See: https://docs.python.org/3/c-api/intro.html#reference-count-details
     Py_INCREF(sentinel)
-    np.PyArray_SetBaseObject(arr, sentinel)
+    cnp.PyArray_SetBaseObject(arr, sentinel)
     return arr

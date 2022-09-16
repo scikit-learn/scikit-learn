@@ -77,7 +77,7 @@ def mean_variance_axis(X, axis, weights=None, return_sum_weights=False):
         Axis along which the axis should be computed.
 
     weights : ndarray of shape (n_samples,) or (n_features,), default=None
-        if axis is set to 0 shape is (n_samples,) or
+        If axis is set to 0 shape is (n_samples,) or
         if axis is set to 1 shape is (n_features,).
         If it is set to None, then samples are equally weighted.
 
@@ -361,7 +361,7 @@ def inplace_swap_row_csr(X, m, n):
 
 def inplace_swap_row(X, m, n):
     """
-    Swaps two rows of a CSC/CSR matrix in-place.
+    Swap two rows of a CSC/CSR matrix in-place.
 
     Parameters
     ----------
@@ -385,7 +385,7 @@ def inplace_swap_row(X, m, n):
 
 def inplace_swap_column(X, m, n):
     """
-    Swaps two columns of a CSC/CSR matrix in-place.
+    Swap two columns of a CSC/CSR matrix in-place.
 
     Parameters
     ----------
@@ -504,7 +504,7 @@ def min_max_axis(X, axis, ignore_nan=False):
     maxs : ndarray of shape (n_features,), dtype={np.float32, np.float64}
         Feature-wise maxima.
     """
-    if isinstance(X, sp.csr_matrix) or isinstance(X, sp.csc_matrix):
+    if isinstance(X, (sp.csr_matrix, sp.csc_matrix)):
         if ignore_nan:
             return _sparse_nan_min_max(X, axis=axis)
         else:
