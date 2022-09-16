@@ -5,6 +5,8 @@ import scipy.sparse
 import pytest
 import warnings
 
+from scipy.special import logsumexp
+
 from sklearn.datasets import load_digits, load_iris
 
 from sklearn.model_selection import train_test_split
@@ -13,6 +15,7 @@ from sklearn.model_selection import cross_val_score
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB
 from sklearn.naive_bayes import MultinomialNB, ComplementNB
@@ -21,6 +24,8 @@ from sklearn.naive_bayes import CategoricalNB
 DISCRETE_NAIVE_BAYES_CLASSES = [BernoulliNB, CategoricalNB, ComplementNB, MultinomialNB]
 ALL_NAIVE_BAYES_CLASSES = DISCRETE_NAIVE_BAYES_CLASSES + [GaussianNB]
 
+msg = "The default value for `force_alpha` will change"
+pytestmark = pytest.mark.filterwarnings(f"ignore:{msg}:FutureWarning")
 
 # Data is just 6 separable points in the plane
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -779,9 +784,7 @@ def test_categoricalnb_with_min_categories(
 @pytest.mark.parametrize(
     "min_categories, error_msg",
     [
-        ("bad_arg", "'min_categories' should have integral"),
         ([[3, 2], [2, 4]], "'min_categories' should have shape"),
-        (1.0, "'min_categories' should have integral"),
     ],
 )
 def test_categoricalnb_min_categories_errors(min_categories, error_msg):
@@ -835,29 +838,6 @@ def test_alpha():
     prob = np.array([[2.0 / 3, 1.0 / 3], [0, 1]])
     assert_array_almost_equal(nb.predict_proba(X), prob)
 
-    # Test for alpha < 0
-    X = np.array([[1, 0], [1, 1]])
-    y = np.array([0, 1])
-    expected_msg = re.escape(
-        "Smoothing parameter alpha = -1.0e-01. alpha should be > 0."
-    )
-    b_nb = BernoulliNB(alpha=-0.1)
-    m_nb = MultinomialNB(alpha=-0.1)
-    c_nb = CategoricalNB(alpha=-0.1)
-    with pytest.raises(ValueError, match=expected_msg):
-        b_nb.fit(X, y)
-    with pytest.raises(ValueError, match=expected_msg):
-        m_nb.fit(X, y)
-    with pytest.raises(ValueError, match=expected_msg):
-        c_nb.fit(X, y)
-
-    b_nb = BernoulliNB(alpha=-0.1)
-    m_nb = MultinomialNB(alpha=-0.1)
-    with pytest.raises(ValueError, match=expected_msg):
-        b_nb.partial_fit(X, y, classes=[0, 1])
-    with pytest.raises(ValueError, match=expected_msg):
-        m_nb.partial_fit(X, y, classes=[0, 1])
-
 
 def test_alpha_vector():
     X = np.array([[1, 0], [1, 1]])
@@ -880,7 +860,7 @@ def test_alpha_vector():
     # Test alpha non-negative
     alpha = np.array([1.0, -0.1])
     m_nb = MultinomialNB(alpha=alpha)
-    expected_msg = "Smoothing parameter alpha = -1.0e-01. alpha should be > 0."
+    expected_msg = "All values in alpha must be greater than 0."
     with pytest.raises(ValueError, match=expected_msg):
         m_nb.fit(X, y)
 
@@ -894,9 +874,7 @@ def test_alpha_vector():
     # Test correct dimensions
     alpha = np.array([1.0, 2.0, 3.0])
     m_nb = MultinomialNB(alpha=alpha)
-    expected_msg = re.escape(
-        "alpha should be a scalar or a numpy array with shape [n_features]"
-    )
+    expected_msg = "When alpha is an array, it should contains `n_features`"
     with pytest.raises(ValueError, match=expected_msg):
         m_nb.fit(X, y)
 
@@ -945,3 +923,69 @@ def test_n_features_deprecation(Estimator):
 
     with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
         est.n_features_
+
+
+# TODO(1.4): Remove
+@pytest.mark.parametrize("Estimator", DISCRETE_NAIVE_BAYES_CLASSES)
+@pytest.mark.parametrize("alpha", [1, [0.1, 1e-11], 1e-12])
+def test_force_alpha_deprecation(Estimator, alpha):
+    if Estimator is CategoricalNB and isinstance(alpha, list):
+        pytest.skip("CategoricalNB does not support array-like alpha values.")
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    alpha_min = 1e-10
+    msg = "The default value for `force_alpha` will change to `True`"
+    est = Estimator(alpha=alpha)
+    est_force = Estimator(alpha=alpha, force_alpha=True)
+    if np.min(alpha) < alpha_min:
+        with pytest.warns(FutureWarning, match=msg):
+            est.fit(X, y)
+    else:
+        est.fit(X, y)
+    est_force.fit(X, y)
+
+
+def test_check_alpha():
+    """The provided value for alpha must only be
+    used if alpha < _ALPHA_MIN and force_alpha is True.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/10772
+    """
+    _ALPHA_MIN = 1e-10
+    b = BernoulliNB(alpha=0, force_alpha=True)
+    assert b._check_alpha() == 0
+
+    alphas = np.array([0.0, 1.0])
+
+    b = BernoulliNB(alpha=alphas, force_alpha=True)
+    # We manually set `n_features_in_` not to have `_check_alpha` err
+    b.n_features_in_ = alphas.shape[0]
+    assert_array_equal(b._check_alpha(), alphas)
+
+    msg = (
+        "alpha too small will result in numeric errors, setting alpha = %.1e"
+        % _ALPHA_MIN
+    )
+    b = BernoulliNB(alpha=0, force_alpha=False)
+    with pytest.warns(UserWarning, match=msg):
+        assert b._check_alpha() == _ALPHA_MIN
+
+    b = BernoulliNB(alpha=0)
+    with pytest.warns(UserWarning, match=msg):
+        assert b._check_alpha() == _ALPHA_MIN
+
+    b = BernoulliNB(alpha=alphas, force_alpha=False)
+    # We manually set `n_features_in_` not to have `_check_alpha` err
+    b.n_features_in_ = alphas.shape[0]
+    with pytest.warns(UserWarning, match=msg):
+        assert_array_equal(b._check_alpha(), np.array([_ALPHA_MIN, 1.0]))
+
+
+@pytest.mark.parametrize("Estimator", ALL_NAIVE_BAYES_CLASSES)
+def test_predict_joint_proba(Estimator):
+    est = Estimator().fit(X2, y2)
+    jll = est.predict_joint_log_proba(X2)
+    log_prob_x = logsumexp(jll, axis=1)
+    log_prob_x_y = jll - np.atleast_2d(log_prob_x).T
+    assert_allclose(est.predict_log_proba(X2), log_prob_x_y)

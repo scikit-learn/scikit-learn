@@ -1,5 +1,6 @@
 # Minimum spanning tree single linkage implementation for hdbscan
-# Authors: Leland McInnes, Steve Astels
+# Authors: Leland McInnes <leland.mcinnes@gmail.com>
+#          Steve Astels <sastels@gmail.com>
 # License: 3-clause BSD
 
 import numpy as np
@@ -8,10 +9,10 @@ import cython
 
 from libc.float cimport DBL_MAX
 
-from sklearn.metrics._dist_metrics cimport DistanceMetric
+from ...metrics._dist_metrics cimport DistanceMetric
 
 
-cpdef cnp.ndarray[cnp.double_t, ndim=2] mst_linkage_core(
+cpdef cnp.ndarray[cnp.double_t, ndim=2] mst_from_distance_matrix(
     cnp.ndarray[cnp.double_t, ndim=2] distance_matrix
 ):
 
@@ -52,7 +53,7 @@ cpdef cnp.ndarray[cnp.double_t, ndim=2] mst_linkage_core(
     return result
 
 
-cpdef cnp.ndarray[cnp.double_t, ndim=2] mst_linkage_core_vector(
+cpdef cnp.ndarray[cnp.double_t, ndim=2] mst_from_data_matrix(
     cnp.ndarray[cnp.double_t, ndim=2, mode='c'] raw_data,
     cnp.ndarray[cnp.double_t, ndim=1, mode='c'] core_distances,
     DistanceMetric dist_metric,

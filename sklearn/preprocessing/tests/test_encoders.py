@@ -60,11 +60,6 @@ def test_one_hot_encoder_handle_unknown(handle_unknown):
     # ensure transformed data was not modified in place
     assert_allclose(X2, X2_passed)
 
-    # Raise error if handle_unknown is neither ignore or error.
-    oh = OneHotEncoder(handle_unknown="42")
-    with pytest.raises(ValueError, match="handle_unknown should be one of"):
-        oh.fit(X)
-
 
 def test_one_hot_encoder_not_fitted():
     X = np.array([["a"], ["b"]])
@@ -716,50 +711,6 @@ def test_ordinal_encoder_handle_unknowns_numeric(dtype):
     assert_array_equal(X_trans_inv, inv_exp)
 
 
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        (
-            {"handle_unknown": "use_encoded_value"},
-            TypeError,
-            "unknown_value should be an integer or np.nan when handle_unknown "
-            "is 'use_encoded_value', got None.",
-        ),
-        (
-            {"unknown_value": -2},
-            TypeError,
-            "unknown_value should only be set when handle_unknown is "
-            "'use_encoded_value', got -2.",
-        ),
-        (
-            {"handle_unknown": "use_encoded_value", "unknown_value": "bla"},
-            TypeError,
-            "unknown_value should be an integer or np.nan when handle_unknown "
-            "is 'use_encoded_value', got bla.",
-        ),
-        (
-            {"handle_unknown": "use_encoded_value", "unknown_value": 1},
-            ValueError,
-            "The used value for unknown_value (1) is one of the values "
-            "already used for encoding the seen categories.",
-        ),
-        (
-            {"handle_unknown": "ignore"},
-            ValueError,
-            "handle_unknown should be either 'error' or 'use_encoded_value', "
-            "got ignore.",
-        ),
-    ],
-)
-def test_ordinal_encoder_handle_unknowns_raise(params, err_type, err_msg):
-    # Check error message when validating input parameters
-    X = np.array([["a", "x"], ["b", "y"]], dtype=object)
-
-    encoder = OrdinalEncoder(**params)
-    with pytest.raises(err_type, match=err_msg):
-        encoder.fit(X)
-
-
 def test_ordinal_encoder_handle_unknowns_nan():
     # Make sure unknown_value=np.nan properly works
 
@@ -884,32 +835,6 @@ def test_one_hot_encoder_drop_manual(missing_value):
     else:
         assert_array_equal(dropped_cats, cats_to_drop)
         assert_array_equal(X_array, X_inv_trans)
-
-
-@pytest.mark.parametrize(
-    "X_fit, params, err_msg",
-    [
-        (
-            [["Male"], ["Female"]],
-            {"drop": "second"},
-            "Wrong input for parameter `drop`",
-        ),
-        (
-            [["abc", 2, 55], ["def", 1, 55], ["def", 3, 59]],
-            {"drop": np.asarray("b", dtype=object)},
-            "Wrong input for parameter `drop`",
-        ),
-        (
-            [["abc", 2, 55], ["def", 1, 55], ["def", 3, 59]],
-            {"drop": ["ghi", 3, 59]},
-            "The following categories were supposed",
-        ),
-    ],
-)
-def test_one_hot_encoder_invalid_params(X_fit, params, err_msg):
-    enc = OneHotEncoder(**params)
-    with pytest.raises(ValueError, match=err_msg):
-        enc.fit(X_fit)
 
 
 @pytest.mark.parametrize("drop", [["abc", 3], ["abc", 3, 41, "a"]])
@@ -1433,22 +1358,6 @@ def test_ohe_infrequent_user_cats_unknown_training_errors(kwargs):
     assert_allclose(X_trans, [[1], [1]])
 
 
-@pytest.mark.parametrize(
-    "kwargs, error_msg",
-    [
-        ({"max_categories": -2}, "max_categories must be greater than 1"),
-        ({"min_frequency": -1}, "min_frequency must be an integer at least"),
-        ({"min_frequency": 1.1}, "min_frequency must be an integer at least"),
-    ],
-)
-def test_ohe_infrequent_invalid_parameters_error(kwargs, error_msg):
-    X_train = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 2]).T
-
-    ohe = OneHotEncoder(handle_unknown="infrequent_if_exist", **kwargs)
-    with pytest.raises(ValueError, match=error_msg):
-        ohe.fit(X_train)
-
-
 # TODO: Remove in 1.2 when get_feature_names is removed
 def test_one_hot_encoder_get_feature_names_deprecated():
     X = np.array([["cat", "dog"]], dtype=object).T
@@ -1928,6 +1837,15 @@ def test_ordinal_encoder_unknown_missing_interaction():
     X_test_trans = oe.transform(X_test)
     assert_allclose(X_test_trans, [[np.nan], [-3]])
 
+    # Non-regression test for #24082
+    X_roundtrip = oe.inverse_transform(X_test_trans)
+
+    # np.nan is unknown so it maps to None
+    assert X_roundtrip[0][0] is None
+
+    # -3 is the encoded missing value so it maps back to nan
+    assert np.isnan(X_roundtrip[1][0])
+
 
 @pytest.mark.parametrize("with_pandas", [True, False])
 def test_ordinal_encoder_encoded_missing_value_error(with_pandas):
@@ -1953,3 +1871,55 @@ def test_ordinal_encoder_encoded_missing_value_error(with_pandas):
 
     with pytest.raises(ValueError, match=error_msg):
         oe.fit(X)
+
+
+@pytest.mark.parametrize(
+    "X_train, X_test_trans_expected, X_roundtrip_expected",
+    [
+        (
+            # missing value is not in training set
+            # inverse transform will considering encoded nan as unknown
+            np.array([["a"], ["1"]], dtype=object),
+            [[0], [np.nan], [np.nan]],
+            np.asarray([["1"], [None], [None]], dtype=object),
+        ),
+        (
+            # missing value in training set,
+            # inverse transform will considering encoded nan as missing
+            np.array([[np.nan], ["1"], ["a"]], dtype=object),
+            [[0], [np.nan], [np.nan]],
+            np.asarray([["1"], [np.nan], [np.nan]], dtype=object),
+        ),
+    ],
+)
+def test_ordinal_encoder_unknown_missing_interaction_both_nan(
+    X_train, X_test_trans_expected, X_roundtrip_expected
+):
+    """Check transform when unknown_value and encoded_missing_value is nan.
+
+    Non-regression test for #24082.
+    """
+    oe = OrdinalEncoder(
+        handle_unknown="use_encoded_value",
+        unknown_value=np.nan,
+        encoded_missing_value=np.nan,
+    ).fit(X_train)
+
+    X_test = np.array([["1"], [np.nan], ["b"]])
+    X_test_trans = oe.transform(X_test)
+
+    # both nan and unknown are encoded as nan
+    assert_allclose(X_test_trans, X_test_trans_expected)
+    X_roundtrip = oe.inverse_transform(X_test_trans)
+
+    n_samples = X_roundtrip_expected.shape[0]
+    for i in range(n_samples):
+        expected_val = X_roundtrip_expected[i, 0]
+        val = X_roundtrip[i, 0]
+
+        if expected_val is None:
+            assert val is None
+        elif is_scalar_nan(expected_val):
+            assert np.isnan(val)
+        else:
+            assert val == expected_val

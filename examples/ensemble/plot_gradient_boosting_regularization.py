@@ -86,7 +86,7 @@ for label, color, setting in [
         label=label,
     )
 
-plt.legend(loc="upper left")
+plt.legend(loc="upper right")
 plt.xlabel("Boosting Iterations")
 plt.ylabel("Test Set Deviance")
 

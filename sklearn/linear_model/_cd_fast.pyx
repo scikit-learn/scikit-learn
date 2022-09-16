@@ -9,16 +9,14 @@
 from libc.math cimport fabs
 cimport numpy as cnp
 import numpy as np
-import numpy.linalg as linalg
 
-from cpython cimport bool
 from cython cimport floating
 import warnings
 from ..exceptions import ConvergenceWarning
 
-from ..utils._cython_blas cimport (_axpy, _dot, _asum, _ger, _gemv, _nrm2,
+from ..utils._cython_blas cimport (_axpy, _dot, _asum, _gemv, _nrm2,
                                    _copy, _scal)
-from ..utils._cython_blas cimport RowMajor, ColMajor, Trans, NoTrans
+from ..utils._cython_blas cimport ColMajor, Trans, NoTrans
 
 
 from ..utils._random cimport our_rand_r
@@ -279,9 +277,9 @@ def sparse_enet_coordinate_descent(
     floating [::1] w,
     floating alpha,
     floating beta,
-    cnp.ndarray[floating, ndim=1, mode='c'] X_data,
-    cnp.ndarray[int, ndim=1, mode='c'] X_indices,
-    cnp.ndarray[int, ndim=1, mode='c'] X_indptr,
+    floating[::1] X_data, # TODO: Make const after release of Cython 3 (#23147)
+    const int[::1] X_indices,
+    const int[::1] X_indptr,
     floating[::1] y,
     floating[::1] sample_weight,
     floating[::1] X_mean,

@@ -19,6 +19,9 @@ INT64TYPE = np.int64 # WARNING: this should match INT64TYPE_t in typedefs.pxd
 #DTYPE = np.asarray(ddummy_view).dtype
 DTYPE = np.float64  # WARNING: this should match DTYPE_t in typedefs.pxd
 
+# WARNING: this must match SPARSE_INDEX_TYPE_t in typedefs.pxd
+SPARSE_INDEX_TYPE = np.int32
+
 # some handy constants
 cdef DTYPE_t INF = np.inf
 cdef DTYPE_t PI = np.pi

@@ -333,7 +333,6 @@ cdef class BoruvkaAlgorithm(object):
         self._data = np.array(self.tree.data)
         self._raw_data = self.tree.data
         self.node_bounds = self.tree.node_bounds
-        self.min_samples = min_samples
         self.alpha = alpha
         self.approx_min_span_tree = approx_min_span_tree
         self.n_jobs = n_jobs
@@ -419,18 +418,18 @@ cdef class BoruvkaAlgorithm(object):
             knn_data = Parallel(n_jobs=self.n_jobs, max_nbytes=None)(
                 delayed(_core_dist_query)
                 (self.core_dist_tree, points,
-                 self.min_samples + 1)
+                 self.min_samples)
                 for points in datasets)
             knn_dist = np.vstack([x[0] for x in knn_data])
             knn_indices = np.vstack([x[1] for x in knn_data])
         else:
             knn_dist, knn_indices = self.core_dist_tree.query(
                 self.tree.data,
-                k=self.min_samples + 1,
+                k=self.min_samples,
                 dualtree=True,
                 breadth_first=True)
 
-        self.core_distance_arr = knn_dist[:, self.min_samples].copy()
+        self.core_distance_arr = knn_dist[:, self.min_samples - 1].copy()
         self.core_distance = (<np.double_t[:self.num_points:1]> (
             <np.double_t *> self.core_distance_arr.data))
 
@@ -449,7 +448,7 @@ cdef class BoruvkaAlgorithm(object):
         # issues, but we'll get quite a few, and they are the hard ones to
         # get, so fill in any we can and then run update components.
         for n in range(self.num_points):
-            for i in range(0, self.min_samples + 1):
+            for i in range(0, self.min_samples):
                 m = knn_indices[n, i]
                 if n == m:
                     continue

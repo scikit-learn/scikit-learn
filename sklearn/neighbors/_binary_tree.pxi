@@ -230,12 +230,14 @@ leaf_size : positive int, default=40
     satisfy ``leaf_size <= n_points <= 2 * leaf_size``, except in
     the case that ``n_samples < leaf_size``.
 
-metric : str or DistanceMetric object
-    The distance metric to use for the tree.  Default='minkowski'
-    with p=2 (that is, a euclidean metric). See the documentation
-    of the DistanceMetric class for a list of available metrics.
-    {binary_tree}.valid_metrics gives a list of the metrics which
-    are valid for {BinaryTree}.
+metric : str or DistanceMetric object, default='minkowski'
+    Metric to use for distance computation. Default is "minkowski", which
+    results in the standard Euclidean distance when p = 2.
+    {binary_tree}.valid_metrics gives a list of the metrics which are valid for
+    {BinaryTree}. See the documentation of `scipy.spatial.distance
+    <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and the
+    metrics listed in :class:`~sklearn.metrics.pairwise.distance_metrics` for
+    more information.
 
 Additional keywords are passed to the distance metric class.
 Note: Callable functions in the metric parameter are NOT supported for KDTree

@@ -5,7 +5,7 @@
 # License: BSD 3 clause
 
 import numpy as np
-import numbers
+from numbers import Integral, Real
 from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
@@ -14,8 +14,8 @@ from ..utils.extmath import svd_flip, _randomized_eigsh
 from ..utils.validation import (
     check_is_fitted,
     _check_psd_eigenvalues,
-    check_scalar,
 )
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.deprecation import deprecated
 from ..exceptions import NotFittedError
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
@@ -42,8 +42,8 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
     n_components : int, default=None
         Number of components. If None, all non-zero components are kept.
 
-    kernel : {'linear', 'poly', \
-            'rbf', 'sigmoid', 'cosine', 'precomputed'}, default='linear'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'cosine', 'precomputed'} \
+            or callable, default='linear'
         Kernel used for PCA.
 
     gamma : float, default=None
@@ -216,7 +216,7 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
     .. [2] `Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
        "Learning to find pre-images."
        Advances in neural information processing systems 16 (2004): 449-456.
-       <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.68.5164&rep=rep1&type=pdf>`_
+       <https://papers.nips.cc/paper/2003/file/ac1ad983e08ad3304a97e147f522747e-Paper.pdf>`_
 
     .. [3] :arxiv:`Halko, Nathan, Per-Gunnar Martinsson, and Joel A. Tropp.
        "Finding structure with randomness: Probabilistic algorithms for
@@ -238,6 +238,40 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
     >>> X_transformed.shape
     (1797, 7)
     """
+
+    _parameter_constraints: dict = {
+        "n_components": [
+            Interval(Integral, 1, None, closed="left"),
+            None,
+        ],
+        "kernel": [
+            StrOptions({"linear", "poly", "rbf", "sigmoid", "cosine", "precomputed"}),
+            callable,
+        ],
+        "gamma": [
+            Interval(Real, 0, None, closed="left"),
+            None,
+        ],
+        "degree": [Interval(Integral, 0, None, closed="left")],
+        "coef0": [Interval(Real, None, None, closed="neither")],
+        "kernel_params": [dict, None],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "fit_inverse_transform": ["boolean"],
+        "eigen_solver": [StrOptions({"auto", "dense", "arpack", "randomized"})],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [
+            Interval(Integral, 1, None, closed="left"),
+            None,
+        ],
+        "iterated_power": [
+            Interval(Integral, 0, None, closed="left"),
+            StrOptions({"auto"}),
+        ],
+        "remove_zero_eig": ["boolean"],
+        "random_state": ["random_state"],
+        "copy_X": ["boolean"],
+        "n_jobs": [None, Integral],
+    }
 
     def __init__(
         self,
@@ -313,7 +347,6 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         if self.n_components is None:
             n_components = K.shape[0]  # use all dimensions
         else:
-            check_scalar(self.n_components, "n_components", numbers.Integral, min_val=1)
             n_components = min(K.shape[0], self.n_components)
 
         # compute eigenvectors
@@ -343,8 +376,6 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
                 random_state=self.random_state,
                 selection="module",
             )
-        else:
-            raise ValueError("Unsupported value for `eigen_solver`: %r" % eigen_solver)
 
         # make sure that the eigenvalues are ok and fix numerical issues
         self.eigenvalues_ = _check_psd_eigenvalues(
@@ -416,6 +447,8 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
+
         if self.fit_inverse_transform and self.kernel == "precomputed":
             raise ValueError("Cannot fit_inverse_transform with a precomputed kernel.")
         X = self._validate_data(X, accept_sparse="csr", copy=self.copy_X)
@@ -532,7 +565,7 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         `Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
         "Learning to find pre-images."
         Advances in neural information processing systems 16 (2004): 449-456.
-        <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.68.5164&rep=rep1&type=pdf>`_
+        <https://papers.nips.cc/paper/2003/file/ac1ad983e08ad3304a97e147f522747e-Paper.pdf>`_
         """
         if not self.fit_inverse_transform:
             raise NotFittedError(

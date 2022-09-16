@@ -3,9 +3,10 @@
 ====================================
 Demo of HDBSCAN clustering algorithm
 ====================================
+.. currentmodule:: sklearn
 
-In this demo we will take a look at :class:`sklearn.cluster.HDBSCAN` from the
-perspective of generalizing the :class:`sklearn.cluster.DBSCAN` algorithm.
+In this demo we will take a look at :class:`cluster.HDBSCAN` from the
+perspective of generalizing the :class:`cluster.DBSCAN` algorithm.
 We'll compare both algorithms on specific datasets. Finally we'll evaluate
 HDBSCAN's sensitivity to certain hyperparameters. We first define a couple
 utility functions for convenience.
@@ -20,7 +21,7 @@ import matplotlib.pyplot as plt
 
 def plot(X, labels, probabilities=None, parameters=None, ground_truth=False, ax=None):
     if ax is None:
-        _, ax = plt.subplots()
+        _, ax = plt.subplots(figsize=(10, 4))
     labels = labels if labels is not None else np.ones(X.shape[0])
     probabilities = probabilities if probabilities is not None else np.ones(X.shape[0])
     # Black removed and is used for noise instead.
@@ -51,6 +52,7 @@ def plot(X, labels, probabilities=None, parameters=None, ground_truth=False, ax=
         parameters_str = ", ".join(f"{k}={v}" for k, v in parameters.items())
         title += f" | {parameters_str}"
     ax.set_title(title)
+    plt.tight_layout()
 
 
 # %%
@@ -62,12 +64,11 @@ def plot(X, labels, probabilities=None, parameters=None, ground_truth=False, ax=
 # DBSCAN it does not require specification of an arbitray (and indeed tricky)
 # `eps` hyperparameter. For example, below we generate a dataset composed of
 # a mixture of three diagonal Gaussians.
-fig, axis = plt.subplots(1, 1, figsize=(12, 5))
 centers = [[1, 1], [-1, -1], [1.5, -1.5]]
 X, labels_true = make_blobs(
     n_samples=750, centers=centers, cluster_std=[0.4, 0.1, 0.75], random_state=0
 )
-plot(X, labels=labels_true, ground_truth=True, ax=axis)
+plot(X, labels=labels_true, ground_truth=True)
 # %%
 # Scale Invariance
 # -----------------
@@ -77,7 +78,7 @@ plot(X, labels=labels_true, ground_truth=True, ax=axis)
 # epsilon value that works for one dataset, and try to apply it to a
 # similar but rescaled versions of the dataset. Below are plots of the original
 # dataset, and versions rescaled by 0.5 and 3 respectively.
-fig, axes = plt.subplots(3, 1, figsize=(12, 16))
+fig, axes = plt.subplots(3, 1, figsize=(10, 12))
 parameters = {"eps": 0.3}
 dbs = DBSCAN(**parameters).fit(X)
 plot(X, dbs.labels_, parameters=parameters, ax=axes[0])
@@ -99,9 +100,9 @@ plot(3 * X, dbs.labels_, parameters={"eps": 0.9}, ax=axis)
 # great care must be taken to select the appropriate value for `eps`. HDBSCAN
 # is much more robust in this sense. HDBSCAN can be seen as clustering over
 # all possible values of `eps` and extracting the best clusters from all
-# possible clusters (see :ref:`HDBSCAN`). One immediate advantage is that
-# HDBSCAN is scale-invariant.
-fig, axes = plt.subplots(3, 1, figsize=(12, 16))
+# possible clusters (see :ref:`User Guide <HDBSCAN>`). One immediate
+# advantage is that HDBSCAN is scale-invariant.
+fig, axes = plt.subplots(3, 1, figsize=(10, 12))
 hdb = HDBSCAN().fit(X)
 plot(X, hdb.labels_, hdb.probabilities_, ax=axes[0])
 hdb.fit(0.5 * X)
@@ -117,12 +118,11 @@ plot(3 * X, hdb.labels_, hdb.probabilities_, ax=axes[2])
 # Traditional DBSCAN assumes that any potential clusters are homogenous in
 # density. HDBSCAN is free from such constraints. To demonstrate this we
 # consider the following dataset
-fig, axis = plt.subplots(1, 1, figsize=(12, 5))
 centers = [[-0.85, -0.85], [-0.85, 0.85], [3, 3], [3, -3]]
 X, labels_true = make_blobs(
     n_samples=750, centers=centers, cluster_std=[0.2, 0.35, 1.35, 1.35], random_state=0
 )
-plot(X, labels=labels_true, ground_truth=True, ax=axis)
+plot(X, labels=labels_true, ground_truth=True)
 
 # %%
 # This dataset is more difficult for DBSCAN due to the varying densities and
@@ -132,7 +132,7 @@ plot(X, labels=labels_true, ground_truth=True, ax=axis)
 # clusters into many false clusters. Not to mention this requires manually
 # tuning choices of `eps` until we find a tradeoff that we are comfortable
 # with. Let's see how DBSCAN tackles this.
-fig, axes = plt.subplots(2, 1, figsize=(12, 10))
+fig, axes = plt.subplots(2, 1, figsize=(10, 8))
 params = {"eps": 0.7}
 dbs = DBSCAN(**params).fit(X)
 plot(X, dbs.labels_, parameters=params, ax=axes[0])
@@ -147,9 +147,8 @@ plot(X, dbs.labels_, parameters=params, ax=axes[1])
 # that DBSCAN is incapable of simultaneously separating the two dense clusters
 # while preventing the sparse clusters from fragmenting. Let's compare with
 # HDBSCAN.
-fig, axis = plt.subplots(1, 1, figsize=(12, 5))
 hdb = HDBSCAN().fit(X)
-plot(X, hdb.labels_, hdb.probabilities_, ax=axis)
+plot(X, hdb.labels_, hdb.probabilities_)
 
 # %%
 # HDBSCAN is able to pick up and preserve the multi-scale structure of the
@@ -182,7 +181,7 @@ plot(X, hdb.labels_, hdb.probabilities_, ax=axis)
 # overlap.
 
 PARAM = ({"min_cluster_size": 5}, {"min_cluster_size": 3}, {"min_cluster_size": 25})
-fig, axes = plt.subplots(3, 1, figsize=(12, 16))
+fig, axes = plt.subplots(3, 1, figsize=(10, 12))
 for i, param in enumerate(PARAM):
     hdb = HDBSCAN(**param).fit(X)
     labels = hdb.labels_
@@ -204,7 +203,7 @@ PARAM = (
     {"min_cluster_size": 20, "min_samples": 3},
     {"min_cluster_size": 20, "min_samples": 25},
 )
-fig, axes = plt.subplots(3, 1, figsize=(12, 16))
+fig, axes = plt.subplots(3, 1, figsize=(10, 12))
 for i, param in enumerate(PARAM):
     hdb = HDBSCAN(**param).fit(X)
     labels = hdb.labels_

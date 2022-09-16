@@ -152,22 +152,6 @@ def test_lda_fit_transform(method):
     assert_array_almost_equal(X_fit, X_trans, 4)
 
 
-def test_invalid_params():
-    # test `_check_params` method
-    X = np.ones((5, 10))
-
-    invalid_models = (
-        ("n_components", LatentDirichletAllocation(n_components=0)),
-        ("learning_method", LatentDirichletAllocation(learning_method="unknown")),
-        ("total_samples", LatentDirichletAllocation(total_samples=0)),
-        ("learning_offset", LatentDirichletAllocation(learning_offset=-1)),
-    )
-    for param, model in invalid_models:
-        regex = r"^Invalid %r parameter" % param
-        with pytest.raises(ValueError, match=regex):
-            model.fit(X)
-
-
 def test_lda_negative_input():
     # test pass dense matrix with sparse negative input.
     X = np.full((5, 10), -1.0)

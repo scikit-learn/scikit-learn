@@ -531,12 +531,6 @@ def test_lasso_lars_ic():
     assert len(nonzero_bic) < len(nonzero_aic)
     assert np.max(nonzero_bic) < diabetes.data.shape[1]
 
-    # test error on unknown IC
-    lars_broken = linear_model.LassoLarsIC("<unknown>")
-
-    with pytest.raises(ValueError):
-        lars_broken.fit(X, y)
-
 
 def test_lars_path_readonly_data():
     # When using automated memory mapping on large input, the
