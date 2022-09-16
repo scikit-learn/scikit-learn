@@ -70,10 +70,10 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
     # Ignore distutils deprecation warning, used by joblib internally
     TEST_CMD="$TEST_CMD -Wignore:distutils\ Version\ classes\ are\ deprecated:DeprecationWarning"
 
-    # In some case, exceptions are be raised (by bug) in tests, and captured by pytest,
+    # In some case, exceptions are raised (by bug) in tests, and captured by pytest,
     # but not raised again. This is for instance the case when Cython directives are
     # activated: IndexErrors (which aren't fatal) are raised on out-of-bound accesses.
-    # In those cases, pytest instead raise PytestUnraisableExceptionWarnings,
+    # In those cases, pytest instead raises pytest.PytestUnraisableExceptionWarnings,
     # which we must treat as errors on the CI.
     TEST_CMD="$TEST_CMD -Werror::pytest.PytestUnraisableExceptionWarning"
 fi
@@ -92,7 +92,6 @@ if [[ -n "$SELECTED_TESTS" ]]; then
     # Override to make selected tests run on all random seeds
     export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
 fi
-
 
 set -x
 eval "$TEST_CMD --pyargs sklearn"
