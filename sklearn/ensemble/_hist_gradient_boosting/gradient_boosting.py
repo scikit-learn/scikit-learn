@@ -1547,9 +1547,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         weights inversely proportional to class frequencies in the input data
         as `n_samples / (n_classes * np.bincount(y))`.
         Note that these weights will be multiplied with sample_weight (passed
-        through the fit method) if `sample_weight is` specified.
+        through the fit method) if `sample_weight` is specified.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
     Attributes
     ----------
@@ -1631,6 +1631,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             ),
             BaseLoss,
         ],
+        "class_weight": [dict, StrOptions({"balanced"}), None],
     }
 
     def __init__(
