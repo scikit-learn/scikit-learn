@@ -1145,8 +1145,8 @@ For a predictor :math:`F` with two features:
 
 You can specify a monotonic constraint on each feature using the
 `monotonic_cst` parameter. For each feature, a value of 0 indicates no
-constraint, while 1 and -1 respectively indicate a monotonic increase and
-monotonic decrease constraint::
+constraint, while 1 and -1 indicate a monotonic increase and
+monotonic decrease constraint, respectively::
 
   >>> from sklearn.ensemble import HistGradientBoostingRegressor
 
