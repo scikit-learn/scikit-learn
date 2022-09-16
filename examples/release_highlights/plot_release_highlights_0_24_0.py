@@ -196,6 +196,7 @@ linear_baseline.fit(X_train, y_train).score(X_test, y_test)
 
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.datasets import fetch_california_housing
+
 # from sklearn.inspection import plot_partial_dependence
 from sklearn.inspection import PartialDependenceDisplay
 

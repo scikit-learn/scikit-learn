@@ -126,6 +126,7 @@ print(completeness_score(kmeans.predict(X_test), y_test))
 import numpy as np
 from matplotlib import pyplot as plt
 from sklearn.model_selection import train_test_split
+
 # from sklearn.inspection import plot_partial_dependence
 from sklearn.inspection import PartialDependenceDisplay
 from sklearn.ensemble import HistGradientBoostingRegressor
