@@ -48,7 +48,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.multiclass.unique_labels",
     "sklearn.utils.safe_mask",
     "sklearn.utils.safe_sqr",
-    "sklearn.utils.sparsefuncs.count_nonzero",
     "sklearn.utils.sparsefuncs.csc_median_axis_0",
     "sklearn.utils.sparsefuncs.incr_mean_variance_axis",
     "sklearn.utils.sparsefuncs.inplace_swap_row_csc",
