@@ -49,7 +49,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.sparsefuncs.incr_mean_variance_axis",
     "sklearn.utils.sparsefuncs.inplace_swap_row_csc",
     "sklearn.utils.sparsefuncs.inplace_swap_row_csr",
-    "sklearn.utils.validation.check_is_fitted",
 ]
 FUNCTION_DOCSTRING_IGNORE_LIST = set(FUNCTION_DOCSTRING_IGNORE_LIST)
 
