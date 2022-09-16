@@ -659,7 +659,7 @@ Changelog
   equivalent to `criterion="entropy"`.
   :pr:`23047` by :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |Enhancement| Adds :term:`get_feature_names_out` to
+- |Enhancement| Adds :meth:`get_feature_names_out` to
   :class:`ensemble.VotingClassifier`, :class:`ensemble.VotingRegressor`,
   :class:`ensemble.StackingClassifier`, and
   :class:`ensemble.StackingRegressor`. :pr:`22695` and :pr:`22697`  by `Thomas Fan`_.
