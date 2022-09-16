@@ -219,7 +219,8 @@ class _PGNMF(NMF):
             tol=tol,
             max_iter=max_iter,
             random_state=random_state,
-            alpha=alpha,
+            alpha_W=alpha,
+            alpha_H=alpha,
             l1_ratio=l1_ratio,
         )
         self.nls_max_iter = nls_max_iter

@@ -167,7 +167,7 @@ class EmpiricalCovariance(BaseEstimator):
     array([0.0622..., 0.0193...])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "store_precision": ["boolean"],
         "assume_centered": ["boolean"],
     }

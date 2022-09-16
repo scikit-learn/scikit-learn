@@ -2103,41 +2103,6 @@ def test_criterion_entropy_same_as_log_loss(Tree, n_classes):
     assert_allclose(tree_log_loss.predict(X), tree_entropy.predict(X))
 
 
-@pytest.mark.parametrize(
-    "old_criterion, new_criterion, Tree",
-    [
-        # TODO(1.2): Remove "mse" and "mae"
-        ("mse", "squared_error", DecisionTreeRegressor),
-        ("mse", "squared_error", ExtraTreeRegressor),
-        ("mae", "absolute_error", DecisionTreeRegressor),
-        ("mae", "absolute_error", ExtraTreeRegressor),
-    ],
-)
-def test_criterion_deprecated(old_criterion, new_criterion, Tree):
-    tree = Tree(criterion=old_criterion)
-
-    with pytest.warns(
-        FutureWarning, match=f"Criterion '{old_criterion}' was deprecated"
-    ):
-        tree.fit(X, y)
-
-    tree_new = Tree(criterion=new_criterion).fit(X, y)
-    assert_allclose(tree.predict(X), tree_new.predict(X))
-
-
-@pytest.mark.parametrize("Tree", ALL_TREES.values())
-def test_n_features_deprecated(Tree):
-    # check that we raise a deprecation warning when accessing `n_features_`.
-    # FIXME: remove in 1.2
-    depr_msg = (
-        "The attribute `n_features_` is deprecated in 1.0 and will be "
-        "removed in 1.2. Use `n_features_in_` instead."
-    )
-
-    with pytest.warns(FutureWarning, match=depr_msg):
-        Tree().fit(X, y).n_features_
-
-
 def test_different_endianness_pickle():
     X, y = datasets.make_classification(random_state=0)
 
