@@ -14,8 +14,7 @@ from ..utils import check_array, is_scalar_nan
 from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
+from ..utils._param_validation import Interval, StrOptions, Hidden
 from ..utils._mask import _get_mask
 
 from ..utils._encode import _encode, _check_unknown, _unique, _get_counts
@@ -454,7 +453,7 @@ class OneHotEncoder(_BaseEncoder):
             Interval(Real, 0, 1, closed="neither"),
             None,
         ],
-        "sparse": [StrOptions({"deprecated"}), "boolean"],  # deprecated
+        "sparse": [Hidden(StrOptions({"deprecated"})), "boolean"],  # deprecated
         "sparse_output": ["boolean"],
     }
 

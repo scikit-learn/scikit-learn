@@ -554,8 +554,6 @@ def test_one_hot_encoder_specified_categories_mixed_columns():
     assert np.issubdtype(enc.categories_[1].dtype, np.object_)
 
 
-# TODO(1.4): Remove filterwarning when `sparse` is replaced by `sparse_output`.
-@pytest.mark.filterwarnings("ignore:`sparse` was renamed:FutureWarning:sklearn")
 def test_one_hot_encoder_pandas():
     pd = pytest.importorskip("pandas")
 
@@ -1376,7 +1374,7 @@ def test_ohe_infrequent_user_cats_unknown_training_errors(kwargs):
     assert_allclose(X_trans, [[1], [1]])
 
 
-# TODO: Remove in 1.4 when `sparse` parameter is replaced by `sparse_output`
+# TODO(1.4): Remove when `sparse` parameter is replaced by `sparse_output`
 def test_one_hot_encoder_sparse_deprecated():
     X = [["Male", 1], ["Female", 3], ["Female", 2]]
 
