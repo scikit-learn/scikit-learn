@@ -286,6 +286,12 @@ Changelog
   in :class:`linear_model.LogisticRegression`, and will be removed in version 1.4.
   Use `None` instead. :pr:`23877` by :user:`Zhehao Liu <MaxwellLZH>`.
 
+- |Fix| :class:`linear_model.SGDOneClassSVM` no longer performs parameter
+  validation in the constructor. All validation is now handled in `fit()` and
+  `partial_fit()`.
+  :pr:`24433` by :user:`Yogendrasingh <iofall>`, :user:`Arisa Y. <arisayosh>`
+  and :user:`Tim Head <betatim>`.
+
 :mod:`sklearn.manifold`
 .......................
 
@@ -328,6 +334,10 @@ Changelog
   values for `y_true` will raise an error.
   :pr:`22710` by :user:`Conroy Trinh <trinhcon>` and
   :pr:`23461` by :user:`Meekail Zain <micky774>`.
+
+- |Feature| :func:`metrics.roc_auc_score` now supports micro-averaging
+  (`average="micro"`) for the One-vs-Rest multiclass case (`multi_class="ovr"`).
+  :pr:`24338` by :user:`Arturo Amor <ArturoAmorQ>`.
 
 :mod:`sklearn.model_selection`
 ..............................
