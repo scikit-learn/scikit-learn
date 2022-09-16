@@ -562,6 +562,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
                 # TODO: Support np.nan in Cython implementation for sparse
                 # HDBSCAN
                 raise ValueError("np.nan values found in precomputed-sparse")
+        if X.shape[0] == 1:
+            raise ValueError("n_samples=1 while HDBSCAN requires more than one sample")
         self.n_features_in_ = X.shape[1]
         self._min_samples = (
             self.min_cluster_size if self.min_samples is None else self.min_samples
