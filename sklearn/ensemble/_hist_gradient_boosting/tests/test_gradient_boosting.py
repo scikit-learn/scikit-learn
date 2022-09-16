@@ -1082,13 +1082,10 @@ def test_uint8_predict(Est):
     est.predict(X)
 
 
+# TODO(1.3): Remove
 @pytest.mark.parametrize(
     "old_loss, new_loss, Estimator",
     [
-        # TODO(1.2): Remove
-        ("least_squares", "squared_error", HistGradientBoostingRegressor),
-        ("least_absolute_deviation", "absolute_error", HistGradientBoostingRegressor),
-        # TODO(1.3): Remove
         ("auto", "log_loss", HistGradientBoostingClassifier),
         ("binary_crossentropy", "log_loss", HistGradientBoostingClassifier),
         ("categorical_crossentropy", "log_loss", HistGradientBoostingClassifier),
