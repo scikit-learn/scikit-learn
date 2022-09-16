@@ -810,15 +810,17 @@ class OneHotEncoder(_BaseEncoder):
         self
             Fitted encoder.
         """
+        self._validate_params()
+
         if self.sparse != "deprecated":
             warnings.warn(
                 "`sparse` was renamed to `sparse_output` in version 1.2 and "
-                "will be removed in 1.4.",
+                "will be removed in 1.4. `sparse_out` is ignored unless you "
+                "leave `sparse` to its default value.",
                 FutureWarning,
             )
             self.sparse_output = self.sparse
 
-        self._validate_params()
         self._check_infrequent_enabled()
 
         fit_results = self._fit(
