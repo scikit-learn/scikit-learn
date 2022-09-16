@@ -201,7 +201,7 @@ common_params = {
     "y": y[:100],
     "train_sizes": np.linspace(0.1, 1, 10),
     "scoring": "neg_mean_squared_error",
-    "negate": True,
+    "negate_score": True,
     "score_name": "Mean Squared Error",
     "std_display_style": None,
     "cv": 10,

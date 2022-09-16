@@ -83,7 +83,7 @@ class LearningCurveDisplay:
         self,
         ax=None,
         *,
-        negate=True,
+        negate_score=True,
         score_name=None,
         score_type="test",
         log_scale=False,
@@ -100,7 +100,7 @@ class LearningCurveDisplay:
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
-        negate : bool, default=False
+        negate_score : bool, default=False
             Whether or not to negate the scores obtained through
             :func:`~sklearn.model_selection.learning_curve`. This is
             particularly useful when using the error denoted by `neg_*` in
@@ -146,12 +146,10 @@ class LearningCurveDisplay:
         if ax is None:
             _, ax = plt.subplots()
 
-        if negate:
+        if negate_score:
             train_scores, test_scores = -self.train_scores, -self.test_scores
-            label = "Error"
         else:
             train_scores, test_scores = self.train_scores, self.test_scores
-            label = "Score"
 
         if std_display_style not in ("errorbar", "fill_between", None):
             raise ValueError(
@@ -166,11 +164,11 @@ class LearningCurveDisplay:
             )
 
         if score_type == "train":
-            scores = {f"Training {label}": train_scores}
+            scores = {"Training metric": train_scores}
         elif score_type == "test":
-            scores = {f"Test {label}": test_scores}
+            scores = {"Test metric": test_scores}
         else:  # score_type == "both"
-            scores = {f"Training {label}": train_scores, f"Test {label}": test_scores}
+            scores = {"Training metric": train_scores, "Test metric": test_scores}
 
         if std_display_style in ("fill_between", None):
             # plot the mean score
@@ -256,7 +254,7 @@ class LearningCurveDisplay:
         error_score=np.nan,
         fit_params=None,
         ax=None,
-        negate=False,
+        negate_score=False,
         score_name=None,
         score_type="test",
         log_scale=False,
@@ -360,7 +358,7 @@ class LearningCurveDisplay:
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
-        negate : bool, default=False
+        negate_score : bool, default=False
             Whether or not to negate the scores obtained through
             :func:`~sklearn.model_selection.learning_curve`. This is
             particularly useful when using the error denoted by `neg_*` in
@@ -442,7 +440,7 @@ class LearningCurveDisplay:
         )
         return viz.plot(
             ax=ax,
-            negate=negate,
+            negate_score=negate_score,
             score_type=score_type,
             log_scale=log_scale,
             std_display_style=std_display_style,
