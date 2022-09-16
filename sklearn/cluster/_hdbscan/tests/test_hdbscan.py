@@ -21,6 +21,13 @@ X, y = make_blobs(n_samples=200, random_state=10)
 X, y = shuffle(X, y, random_state=7)
 X = StandardScaler().fit_transform(X)
 
+ALGORITHMS = [
+    "kdtree",
+    "balltree",
+    "brute",
+    "auto",
+]
+
 
 def test_missing_data():
     """
@@ -103,15 +110,7 @@ def test_hdbscan_feature_vector():
     assert score >= 0.98
 
 
-@pytest.mark.parametrize(
-    "algo",
-    [
-        "kdtree",
-        "balltree",
-        "brute",
-        "auto",
-    ],
-)
+@pytest.mark.parametrize("algo", ALGORITHMS)
 @pytest.mark.parametrize("metric", _VALID_METRICS)
 def test_hdbscan_algorithms(algo, metric):
     labels = HDBSCAN(algorithm=algo).fit_predict(X)
@@ -226,20 +225,20 @@ def test_hdbscan_sparse():
         HDBSCAN(metric="euclidean", algorithm="balltree").fit(sparse_X)
 
 
-def test_hdbscan_centers():
+@pytest.mark.parametrize("algorithm", ALGORITHMS)
+def test_hdbscan_centers(algorithm):
     centers = [(0.0, 0.0), (3.0, 3.0)]
     H, _ = make_blobs(n_samples=1000, random_state=0, centers=centers, cluster_std=0.5)
     hdb = HDBSCAN(store_centers="both").fit(H)
 
-    for idx, center in enumerate(centers):
-        centroid = hdb.centroids_[idx]
+    for center, centroid, medoid in zip(centers, hdb.centroids_, hdb.medoids_):
         assert_allclose(center, centroid, rtol=1, atol=0.05)
-
-        medoid = hdb.centroids_[idx]
         assert_allclose(center, medoid, rtol=1, atol=0.05)
 
     # Ensure that nothing is done for noise
-    hdb = HDBSCAN(store_centers="both", min_cluster_size=X.shape[0]).fit(X)
+    hdb = HDBSCAN(
+        algorithm=algorithm, store_centers="both", min_cluster_size=X.shape[0]
+    ).fit(X)
     assert hdb.centroids_.shape[0] == 0
     assert hdb.medoids_.shape[0] == 0
 
