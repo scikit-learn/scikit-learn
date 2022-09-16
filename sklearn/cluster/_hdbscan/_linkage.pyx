@@ -10,7 +10,9 @@ import cython
 from libc.float cimport DBL_MAX
 
 from ...metrics._dist_metrics cimport DistanceMetric
-
+from ...cluster._hierarchical_fast cimport UnionFind
+from ...utils._typedefs cimport ITYPE_t, DTYPE_t
+from ...utils._typedefs import ITYPE, DTYPE
 
 cpdef cnp.ndarray[cnp.double_t, ndim=2] mst_from_distance_matrix(
     cnp.ndarray[cnp.double_t, ndim=2] distance_matrix
@@ -173,44 +175,6 @@ cpdef cnp.ndarray[cnp.double_t, ndim=2] mst_from_data_matrix(
         current_node = new_node
 
     return result_arr
-
-
-cdef class UnionFind (object):
-
-    cdef:
-        cnp.ndarray parent_arr
-        cnp.ndarray size_arr
-        cnp.intp_t next_label
-        cnp.intp_t *parent
-        cnp.intp_t *size
-
-    def __init__(self, N):
-        self.parent_arr = -1 * np.ones(2 * N - 1, dtype=np.intp, order='C')
-        self.next_label = N
-        self.size_arr = np.hstack((np.ones(N, dtype=np.intp),
-                                   np.zeros(N-1, dtype=np.intp)))
-        self.parent = (<cnp.intp_t *> self.parent_arr.data)
-        self.size = (<cnp.intp_t *> self.size_arr.data)
-
-    cdef void union(self, cnp.intp_t m, cnp.intp_t n):
-        self.size[self.next_label] = self.size[m] + self.size[n]
-        self.parent[m] = self.next_label
-        self.parent[n] = self.next_label
-        self.size[self.next_label] = self.size[m] + self.size[n]
-        self.next_label += 1
-
-        return
-
-    @cython.wraparound(True)
-    cdef cnp.intp_t fast_find(self, cnp.intp_t n):
-        cdef cnp.intp_t p
-        p = n
-        while self.parent_arr[n] != -1:
-            n = self.parent_arr[n]
-        # label up to the root
-        while self.parent_arr[p] != n:
-            p, self.parent_arr[p] = self.parent_arr[p], n
-        return n
 
 @cython.wraparound(True)
 cpdef cnp.ndarray[cnp.double_t, ndim=2] label(cnp.double_t[:,:] L):
