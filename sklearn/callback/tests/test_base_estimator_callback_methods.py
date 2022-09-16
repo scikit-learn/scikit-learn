@@ -9,6 +9,8 @@ from sklearn.callback.tests._utils import NotValidCallback
 from sklearn.callback.tests._utils import Estimator
 from sklearn.callback.tests._utils import MetaEstimator
 
+from sklearn.callback import ProgressBar
+
 
 @pytest.mark.parametrize("callbacks",
     [
@@ -93,3 +95,30 @@ def test_eval_callbacks_on_fit_begin():
 
     ct_pickle = Path(estimator._computation_tree.tree_dir) / "computation_tree.pkl"
     assert ct_pickle.exists()
+
+
+def test_callback_context_finalize():
+    """Check that the folder containing the computation tree of the estimator is
+    deleted when there are no reference left to its callbacks.
+    """
+    callback = TestingCallback()
+
+    # estimator is not fitted, its computation tree is not built yet
+    est = Estimator()._set_callbacks(callbacks=callback)
+    assert not hasattr(est, "_computation_tree")
+
+    # estimator is fitted, a folder has been created to hold its computation tree
+    est.fit(X=None, y=None)
+    assert hasattr(est, "_computation_tree")
+    tree_dir = est._computation_tree.tree_dir
+    assert tree_dir.is_dir()
+
+    # there is no more reference to the estimator, but there is still a reference to the
+    # callback which might need to access the computation tree
+    del est
+    assert tree_dir.is_dir()
+
+    # there is no more reference to the callback, the computation tree folder must be
+    # deleted
+    del callback
+    assert not tree_dir.is_dir()

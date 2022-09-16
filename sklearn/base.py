@@ -10,6 +10,8 @@ import platform
 import inspect
 import re
 import pickle
+from shutil import rmtree
+from functools import partial
 
 import numpy as np
 
@@ -32,6 +34,7 @@ from .utils._param_validation import validate_parameter_constraints
 from .callback import BaseCallback
 from .callback import AutoPropagatedMixin
 from .callback import ComputationTree
+from .callback._base import CallbackContext
 
 
 def clone(estimator, *, safe=True):
@@ -678,6 +681,11 @@ class BaseEstimator:
         )
 
         if hasattr(self, "_callbacks"):
+            #
+            #if self._computation_tree.parent_node is None:
+            CallbackContext(self._callbacks, finalizer=partial(rmtree, ignore_errors=True), finalizer_args=self._computation_tree.tree_dir)
+
+            # 
             file_path = self._computation_tree.tree_dir / "computation_tree.pkl"
             with open(file_path, "wb") as f:
                 pickle.dump(self._computation_tree, f)

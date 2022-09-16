@@ -1,6 +1,7 @@
 # License: BSD 3 clause
 
 from abc import ABC, abstractmethod
+import weakref
 
 
 # Not a method of BaseEstimator because it might not be directly called from fit but
@@ -120,6 +121,9 @@ class BaseCallback(ABC):
         """
         pass
 
+    def _set_context(self, context):
+        self._callback_context = context
+
 
 class AutoPropagatedMixin:
     """Mixin for auto-propagated callbacks
@@ -132,3 +136,10 @@ class AutoPropagatedMixin:
     """
 
     pass
+
+
+class CallbackContext:
+    def __init__(self, callbacks, finalizer, finalizer_args):
+        for callback in callbacks:
+            callback._set_context(self)
+        weakref.finalize(self, finalizer, finalizer_args)

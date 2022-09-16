@@ -6,13 +6,30 @@ import tempfile
 
 import numpy as np
 
+from sklearn.callback import ConvergenceMonitor
+from sklearn.callback import EarlyStopping
+from sklearn.callback import ProgressBar
 from sklearn.callback import Snapshot
+from sklearn.callback import TextVerbose
 from sklearn.callback.tests._utils import Estimator
 from sklearn.callback.tests._utils import MetaEstimator
 
 
 X = np.zeros((100, 3))
 y = np.zeros(100, dtype=int)
+
+
+@pytest.mark.parametrize("Callback", [ConvergenceMonitor, EarlyStopping, ProgressBar, Snapshot, TextVerbose,])
+def test_callback_doesnt_hold_ref_to_estimator(Callback):
+    callback = Callback()
+    est = Estimator()._set_callbacks(callbacks=callback)
+    est.fit(X, y)
+
+    tree_dir = est._computation_tree.tree_dir
+
+    del est
+    del callback
+    assert not tree_dir.is_dir()
 
 
 @pytest.mark.parametrize("n_jobs", (1, 2))
