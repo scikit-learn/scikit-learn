@@ -17,7 +17,8 @@ DISTRIBUTOR_INIT = op.join("sklearn", "_distributor_init.py")
 VCOMP140_SRC_PATH = "C:\\Windows\\System32\\vcomp140.dll"
 VCRUNTIME140_SRC_PATH = "C:\\Windows\\System32\\vcruntime140.dll"
 VCRUNTIME140_1_SRC_PATH = "C:\\Windows\\System32\\vcruntime140_1.dll"
-MSVCP140_SRC_PATH = "C:\\Windows\\System32\\msvcp140.dll" 
+MSVCP140_SRC_PATH = "C:\\Windows\\System32\\msvcp140.dll"
+
 
 def make_distributor_init_32_bits(
     distributor_init, vcomp140_dll_filename, vcruntime140_dll_filename
@@ -167,7 +168,7 @@ def main(wheel_dirname, bitness):
             vcomp140_dll_filename,
             vcruntime140_dll_filename,
             vcruntime140_1_dll_filename,
-            msvcp140_dll_filename
+            msvcp140_dll_filename,
         )
 
 
