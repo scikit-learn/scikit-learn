@@ -23,33 +23,45 @@ The module structure is the following:
 from abc import ABCMeta
 from abc import abstractmethod
 from numbers import Integral, Real
+from time import time
 import warnings
 
-from ._base import BaseEnsemble
-from ..base import ClassifierMixin, RegressorMixin
-from ..base import is_classifier
-
-from ._gradient_boosting import predict_stages
-from ._gradient_boosting import predict_stage
-from ._gradient_boosting import _random_sample_mask
-
 import numpy as np
-
 from scipy.sparse import csc_matrix
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 
-from time import time
 from ..model_selection import train_test_split
 from ..tree import DecisionTreeRegressor
 from ..tree._tree import DTYPE, DOUBLE
-from . import _gb_losses
 
-from ..utils import check_array, check_random_state, column_or_1d
+from .._loss.loss import (
+    _LOSSES,
+    AbsoluteError,
+    BaseLoss,
+    ExponentialLoss,
+    HalfBinomialLoss,
+    HalfMultinomialLoss,
+    HalfSquaredError,
+    PinballLoss,
+)
+from ..base import ClassifierMixin
+from ..base import RegressorMixin
+from ..base import is_classifier
+from ..exceptions import NotFittedError
+from ..utils import check_random_state
+from ..utils import check_array
+from ..utils import column_or_1d
+from ..utils import deprecated
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.multiclass import check_classification_targets
-from ..exceptions import NotFittedError
+
+import _gb_losses
+from ._base import BaseEnsemble
+from ._gradient_boosting import predict_stages
+from ._gradient_boosting import predict_stage
+from ._gradient_boosting import _random_sample_mask
 
 
 class VerboseReporter:
@@ -200,6 +212,10 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
     def _validate_y(self, y, sample_weight=None):
         """Called by fit to validate y."""
 
+    @abstractmethod
+    def _get_loss(self, sample_weight):
+        pass
+
     def _fit_stage(
         self,
         i,
@@ -224,7 +240,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         # iteration i - 1.
         raw_predictions_copy = raw_predictions.copy()
 
-        for k in range(loss.K):
+        for k in range(self._n_trees_per_iteration):
             if loss.is_multi_class:
                 y = np.array(original_y == k, dtype=np.float64)
 
@@ -273,6 +289,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         return raw_predictions
 
     def _check_params(self):
+        """Set parameters self._loss and self.max_features_."""
         if self.loss == "log_loss":
             loss_class = (
                 _gb_losses.MultinomialDeviance
@@ -315,7 +332,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if self.init_ is None:
             self.init_ = self._loss.init_estimator()
 
-        self.estimators_ = np.empty((self.n_estimators, self._loss.K), dtype=object)
+        self.estimators_ = np.empty(
+            (self.n_estimators, self._n_trees_per_iteration), dtype=object
+        )
         self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
         # do oob?
         if self.subsample < 1.0:
@@ -351,7 +370,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             )
 
         self.estimators_ = np.resize(
-            self.estimators_, (total_n_estimators, self._loss.K)
+            self.estimators_, (total_n_estimators, self._n_trees_per_iteration)
         )
         self.train_score_ = np.resize(self.train_score_, total_n_estimators)
         if self.subsample < 1 or hasattr(self, "oob_improvement_"):
@@ -438,6 +457,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         self._check_params()
 
+        if isinstance(self.loss, str):
+            self._loss = self._get_loss(sample_weight=sample_weight)
+        elif isinstance(self.loss, BaseLoss):
+            self._loss = self.loss
+
         if self.n_iter_no_change is not None:
             stratify = y if is_classifier(self) else None
             X, X_val, y, y_val, sample_weight, sample_weight_val = train_test_split(
@@ -469,7 +493,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # fit initial model and initialize raw predictions
             if self.init_ == "zero":
                 raw_predictions = np.zeros(
-                    shape=(X.shape[0], self._loss.K), dtype=np.float64
+                    shape=(X.shape[0], self._n_trees_per_iteration), dtype=np.float64
                 )
             else:
                 # XXX clean this once we have a support_sample_weight tag
@@ -673,7 +697,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         X = self.estimators_[0, 0]._validate_X_predict(X, check_input=True)
         if self.init_ == "zero":
             raw_predictions = np.zeros(
-                shape=(X.shape[0], self._loss.K), dtype=np.float64
+                shape=(X.shape[0], self._n_trees_per_iteration), dtype=np.float64
             )
         else:
             raw_predictions = self._loss.get_init_raw_predictions(X, self.init_).astype(
@@ -1082,9 +1106,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         Set via the ``init`` argument or ``loss.init_estimator``.
 
     estimators_ : ndarray of DecisionTreeRegressor of \
-            shape (n_estimators, ``loss_.K``)
-        The collection of fitted sub-estimators. ``loss_.K`` is 1 for binary
-        classification, otherwise n_classes.
+            shape (n_estimators, ``n_trees_per_iteration``)
+        The collection of fitted sub-estimators. ``_n_trees_per_iteration`` is 1 for
+        binary classification, otherwise ``n_classes``.
 
     classes_ : ndarray of shape (n_classes,)
         The classes labels.
@@ -1223,7 +1247,39 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         self._n_classes = len(self.classes_)
         # expose n_classes_ attribute
         self.n_classes_ = self._n_classes
+        self._n_trees_per_iteration_ = 1 if self.n_classes_ <= 2 else self.n_classes_
         return y
+
+    def _get_loss(self, sample_weight):
+        # TODO(1.3): Remove deviance
+        if self.loss == "deviance":
+            warnings.warn(
+                "The loss parameter name 'deviance' was deprecated in v1.1 and will be "
+                "removed in version 1.3. Use the new parameter name 'log_loss' which "
+                "is equivalent.",
+                FutureWarning,
+            )
+
+        if self.loss in ("log_loss", "deviance"):
+            if self.n_classes == 2:
+                return HalfBinomialLoss(sample_weight=sample_weight)
+            else:
+                return HalfMultinomialLoss(
+                    sample_weight=sample_weight, n_classes=self.n_classes
+                )
+        elif self.loss == "exponential":
+            if self.n_classes > 2:
+                raise ValueError(
+                    f"loss='{self.loss}' is not suitable for a binary classification "
+                    "problem. Please use loss='log_loss' instead."
+                )
+            else:
+                return ExponentialLoss(sample_weight=sample_weight)
+        else:
+            raise ValueError(
+                f"Loss {self.loss} is not supported for {self.__class__.__name__}. "
+                f"Accepted losses: {self._VALID_LOSSES}."
+            )
 
     def decision_function(self, X):
         """Compute the decision function of ``X``.
@@ -1767,6 +1823,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     def _validate_y(self, y, sample_weight=None):
         if y.dtype.kind == "O":
             y = y.astype(DOUBLE)
+        self._n_trees_per_iteration = 1
         return y
 
     def predict(self, X):
