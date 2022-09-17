@@ -1294,7 +1294,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     Parameters
     ----------
     estimator : estimator instance
-        estimator instance for which the check is performed.
+        Estimator instance for which the check is performed.
 
     attributes : str, list or tuple of str, default=None
         Attribute name(s) given as string or a list/tuple of strings
@@ -1317,12 +1317,11 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     all_or_any : callable, {all, any}, default=all
         Specify whether all or any of the given attributes must exist.
 
-    Returns
-    -------
-    None
-
     Raises
     ------
+    TypeError
+        If the estimator is a class or not an estimator instance
+
     NotFittedError
         If the attributes are not found.
     """
