@@ -82,7 +82,7 @@ class ConfusionMatrixDisplay:
         self,
         *,
         include_values=True,
-        cmap="viridis",
+        cmap="Pastel1",
         xticks_rotation="horizontal",
         values_format=None,
         ax=None,
@@ -97,7 +97,7 @@ class ConfusionMatrixDisplay:
         include_values : bool, default=True
             Includes values in confusion matrix.
 
-        cmap : str or matplotlib Colormap, default='viridis'
+        cmap : str or matplotlib Colormap, default='Pastel1'
             Colormap recognized by matplotlib.
 
         xticks_rotation : {'vertical', 'horizontal'} or float, \
@@ -206,7 +206,7 @@ class ConfusionMatrixDisplay:
         include_values=True,
         xticks_rotation="horizontal",
         values_format=None,
-        cmap="viridis",
+        cmap="Pastel1",
         ax=None,
         colorbar=True,
         im_kw=None,
@@ -266,7 +266,7 @@ class ConfusionMatrixDisplay:
             Format specification for values in confusion matrix. If `None`, the
             format specification is 'd' or '.2g' whichever is shorter.
 
-        cmap : str or matplotlib Colormap, default='viridis'
+        cmap : str or matplotlib Colormap, default='Pastel1'
             Colormap recognized by matplotlib.
 
         ax : matplotlib Axes, default=None
@@ -347,7 +347,7 @@ class ConfusionMatrixDisplay:
         include_values=True,
         xticks_rotation="horizontal",
         values_format=None,
-        cmap="viridis",
+        cmap="Pastel1",
         ax=None,
         colorbar=True,
         im_kw=None,
@@ -404,7 +404,7 @@ class ConfusionMatrixDisplay:
             Format specification for values in confusion matrix. If `None`, the
             format specification is 'd' or '.2g' whichever is shorter.
 
-        cmap : str or matplotlib Colormap, default='viridis'
+        cmap : str or matplotlib Colormap, default='Pastel1'
             Colormap recognized by matplotlib.
 
         ax : matplotlib Axes, default=None
