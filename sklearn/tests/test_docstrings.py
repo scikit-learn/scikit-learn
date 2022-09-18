@@ -34,7 +34,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.is_scalar_nan",
     "sklearn.utils.metaestimators.available_if",
     "sklearn.utils.metaestimators.if_delegate_has_method",
-    "sklearn.utils.multiclass.type_of_target",
     "sklearn.utils.multiclass.unique_labels",
     "sklearn.utils.sparsefuncs.csc_median_axis_0",
     "sklearn.utils.sparsefuncs.incr_mean_variance_axis",
