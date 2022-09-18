@@ -497,8 +497,8 @@ def test_column_transformer_sparse_threshold():
     for thres in [0.75001, 1]:
         col_trans = ColumnTransformer(
             [
-                ("trans1", OneHotEncoder(sparse=True), [0]),
-                ("trans2", OneHotEncoder(sparse=False), [1]),
+                ("trans1", OneHotEncoder(sparse_output=True), [0]),
+                ("trans2", OneHotEncoder(sparse_output=False), [1]),
             ],
             sparse_threshold=thres,
         )
@@ -509,8 +509,8 @@ def test_column_transformer_sparse_threshold():
     for thres in [0.75, 0]:
         col_trans = ColumnTransformer(
             [
-                ("trans1", OneHotEncoder(sparse=True), [0]),
-                ("trans2", OneHotEncoder(sparse=False), [1]),
+                ("trans1", OneHotEncoder(sparse_output=True), [0]),
+                ("trans2", OneHotEncoder(sparse_output=False), [1]),
             ],
             sparse_threshold=thres,
         )
@@ -522,8 +522,8 @@ def test_column_transformer_sparse_threshold():
     for thres in [0.33, 0, 1]:
         col_trans = ColumnTransformer(
             [
-                ("trans1", OneHotEncoder(sparse=False), [0]),
-                ("trans2", OneHotEncoder(sparse=False), [1]),
+                ("trans1", OneHotEncoder(sparse_output=False), [0]),
+                ("trans2", OneHotEncoder(sparse_output=False), [1]),
             ],
             sparse_threshold=thres,
         )

@@ -512,7 +512,7 @@ def dict_learning(
     positive_code=False,
     method_max_iter=1000,
 ):
-    """Solves a dictionary learning matrix factorization problem.
+    """Solve a dictionary learning matrix factorization problem.
 
     Finds the best dictionary and the corresponding sparse code for
     approximating the data matrix X by solving::
@@ -568,7 +568,7 @@ def dict_learning(
         if `code_init` and `dict_init` are not None.
 
     callback : callable, default=None
-        Callable that gets invoked every five iterations
+        Callable that gets invoked every five iterations.
 
     verbose : bool, default=False
         To control the verbosity of the procedure.
@@ -613,11 +613,13 @@ def dict_learning(
 
     See Also
     --------
-    dict_learning_online
-    DictionaryLearning
-    MiniBatchDictionaryLearning
-    SparsePCA
-    MiniBatchSparsePCA
+    dict_learning_online : Solve a dictionary learning matrix factorization
+        problem online.
+    DictionaryLearning : Find a dictionary that sparsely encodes data.
+    MiniBatchDictionaryLearning : A faster, less accurate version
+        of the dictionary learning algorithm.
+    SparsePCA : Sparse Principal Components Analysis.
+    MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
     """
     if method not in ("lars", "cd"):
         raise ValueError("Coding method %r not supported as a fit algorithm." % method)
