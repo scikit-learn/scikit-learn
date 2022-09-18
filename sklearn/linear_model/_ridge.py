@@ -475,6 +475,9 @@ def ridge_regression(
         Precision of the solution. Note that `tol` has no effect for solvers 'svd' and
         'cholesky'.
 
+        .. versionchanged:: 1.2
+           Default value change to 1e-4.
+
     verbose : int, default=0
         Verbosity level. Setting verbose > 0 will display additional
         information depending on the solver used.
@@ -982,6 +985,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         Precision of the solution. Note that `tol` has no effect for solvers 'svd' and
         'cholesky'.
 
+        .. versionchanged:: 1.2
+           Default value change to 1e-4.
+
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', \
             'sag', 'saga', 'lbfgs'}, default='auto'
         Solver to use in the computational routines:
@@ -1281,6 +1287,9 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
     tol : float, default=1e-4
         Precision of the solution. Note that `tol` has no effect for solvers 'svd' and
         'cholesky'.
+
+        .. versionchanged:: 1.2
+           Default value change to 1e-4.
 
     class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
