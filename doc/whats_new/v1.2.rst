@@ -192,6 +192,11 @@ Changelog
   :pr:`11860` by :user:`Pierre Ablin <pierreablin>`,
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
 
+- |API| The `n_features_` attribute of
+  :class:`decomposition.PCA` is deprecated in favor of
+  `n_features_in_` and will be removed in 1.4. :pr:`24421` by
+  :user:`Kshitij Mathur <Kshitij68>`.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
@@ -202,8 +207,17 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Feature| Adds `class_weight` to :class:`ensemble.HistGradientBoostingClassifier`.
+  :pr:`22014` by `Thomas Fan`_.
+
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+- |Enhancement| :class:`ensemble.StackingClassifier` now supports
+  multilabel-indicator target
+  :pr:`24146` by :user:`Nicolas Peretti <nicoperetti>`,
+  :user:`Nestor Navarro <nestornav>`, :user:`Nati Tomattis <natitomattis>`,
+  and :user:`Vincent Maladiere <Vincent-Maladiere>`.
 
 - |Fix| Fixed the issue where :class:`ensemble.AdaBoostClassifier` outputs
   NaN in feature importance when fitted with very small sample weight.
@@ -243,6 +257,11 @@ Changelog
   `nu=0.5` for PyPy (and possibly other non CPython interpreters). :pr:`24245`
   by :user:`Loïc Estève <lesteve>`.
 
+- |Fix| The `fit` method of :class:`gaussian_process.GaussianProcessRegressor`
+  will not modify the input X in case a custom kernel is used, with a `diag`
+  method that returns part of the input X. :pr:`24405`
+  by :user:`Omar Salman <OmarManzoor>`.
+
 :mod:`sklearn.kernel_approximation`
 ...................................
 
@@ -269,6 +288,12 @@ Changelog
 - |API| String option `"none"` is deprecated for `penalty` argument
   in :class:`linear_model.LogisticRegression`, and will be removed in version 1.4.
   Use `None` instead. :pr:`23877` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+- |Fix| :class:`linear_model.SGDOneClassSVM` no longer performs parameter
+  validation in the constructor. All validation is now handled in `fit()` and
+  `partial_fit()`.
+  :pr:`24433` by :user:`Yogendrasingh <iofall>`, :user:`Arisa Y. <arisayosh>`
+  and :user:`Tim Head <betatim>`.
 
 :mod:`sklearn.manifold`
 .......................
@@ -305,13 +330,17 @@ Changelog
 - |Fix| Allows `csr_matrix` as input for parameter: `y_true` of
    the :func:`metrics.label_ranking_average_precision_score` metric.
    :pr:`23442` by :user:`Sean Atukorala <ShehanAT>`
-  
+
 - |Fix| :func:`metrics.ndcg_score` will now trigger a warning when the `y_true`
   value contains a negative value. Users may still use negative values, but the
   result may not be between 0 and 1. Starting in v1.4, passing in negative
   values for `y_true` will raise an error.
   :pr:`22710` by :user:`Conroy Trinh <trinhcon>` and
   :pr:`23461` by :user:`Meekail Zain <micky774>`.
+
+- |Feature| :func:`metrics.roc_auc_score` now supports micro-averaging
+  (`average="micro"`) for the One-vs-Rest multiclass case (`multi_class="ovr"`).
+  :pr:`24338` by :user:`Arturo Amor <ArturoAmorQ>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -374,6 +403,10 @@ Changelog
 - |Enhancement| :class:`preprocessing.FunctionTransformer` will always try to set
   `n_features_in_` and `feature_names_in_` regardless of the `validate` parameter.
   :pr:`23993` by `Thomas Fan`_.
+
+- |API| The `sparse` parameter of :class:`preprocessing.OneHotEncoder`
+  is now deprecated and will be removed in version 1.4. Use `sparse_output` instead.
+  :pr:`24412` by :user:`Rushil Desai <rusdes>`.
 
 :mod:`sklearn.svm`
 ..................

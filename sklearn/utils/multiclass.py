@@ -394,7 +394,6 @@ def class_distribution(y, sample_weight=None):
 
     class_prior : list of size n_outputs of ndarray of size (n_classes,)
         Class distribution of each column.
-
     """
     classes = []
     n_classes = []

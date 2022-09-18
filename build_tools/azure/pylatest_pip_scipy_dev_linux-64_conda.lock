@@ -6,7 +6,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/_libgcc_mutex-0.1-main.conda#c3473f
 https://repo.anaconda.com/pkgs/main/linux-64/ca-certificates-2022.07.19-h06a4308_0.conda#6d4c2a14b2bdebc9507442efbda8208e
 https://repo.anaconda.com/pkgs/main/linux-64/ld_impl_linux-64-2.38-h1181459_1.conda#68eedfd9c06f2b0e6888d8db345b7f5b
 https://repo.anaconda.com/pkgs/main/linux-64/libstdcxx-ng-11.2.0-h1234567_1.conda#57623d10a70e09e1d048c2b2b6f4e2dd
-https://repo.anaconda.com/pkgs/main/noarch/tzdata-2022a-hda174b7_0.conda#e8fd073330b1083fcd3bc2634722f1a6
+https://repo.anaconda.com/pkgs/main/noarch/tzdata-2022c-h04d1e81_0.conda#c10549a6463dbd5320b8015772d572cd
 https://repo.anaconda.com/pkgs/main/linux-64/libgomp-11.2.0-h1234567_1.conda#b372c0eea9b60732fdae4b817a63c8cd
 https://repo.anaconda.com/pkgs/main/linux-64/_openmp_mutex-5.1-1_gnu.conda#71d281e9c2192cb3fa425655a8defb85
 https://repo.anaconda.com/pkgs/main/linux-64/libgcc-ng-11.2.0-h1234567_1.conda#a87728dabf3151fb9cfa990bd2eb0464
@@ -16,7 +16,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/libuuid-1.0.3-h7f8727e_2.conda#6c4c
 https://repo.anaconda.com/pkgs/main/linux-64/ncurses-6.3-h5eee18b_3.conda#0c616f387885c1bbb57ec0bd1e779ced
 https://repo.anaconda.com/pkgs/main/linux-64/openssl-1.1.1q-h7f8727e_0.conda#2ac47797afee2ece8d339c18b095b8d8
 https://repo.anaconda.com/pkgs/main/linux-64/xz-5.2.5-h7f8727e_1.conda#5d01fcf310bf465237f6b95a019d73bc
-https://repo.anaconda.com/pkgs/main/linux-64/zlib-1.2.12-h7f8727e_2.conda#4f4080e9939f082332cd8be7fedad087
+https://repo.anaconda.com/pkgs/main/linux-64/zlib-1.2.12-h5eee18b_3.conda#2b51a6917fb98080e5fd3c34f8721ad8
 https://repo.anaconda.com/pkgs/main/linux-64/ccache-3.7.9-hfe4627d_0.conda#bef6fc681c273bb7bd0c67d1a591365e
 https://repo.anaconda.com/pkgs/main/linux-64/readline-8.1.2-h7f8727e_1.conda#ea33f478fea12406f394944e7e4f3d20
 https://repo.anaconda.com/pkgs/main/linux-64/tk-8.6.12-h1ccaba5_0.conda#fa10ff4aa631fa4aa090a6234d7770b9
@@ -31,7 +31,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-22.1.2-py310h06a4308_0.conda#44
 # pip charset-normalizer @ https://files.pythonhosted.org/packages/db/51/a507c856293ab05cdc1db77ff4bc1268ddd39f29e7dc4919aa497f0adbec/charset_normalizer-2.1.1-py3-none-any.whl#sha256=83e9a75d1911279afd89352c68b45348559d1fc0506b054b346651b5e7fee29f
 # pip docutils @ https://files.pythonhosted.org/packages/93/69/e391bd51bc08ed9141ecd899a0ddb61ab6465309f1eb470905c0c8868081/docutils-0.19-py3-none-any.whl#sha256=5e1de4d849fee02c63b040a4a3fd567f4ab104defd8a5511fbbc24a8a017efbc
 # pip execnet @ https://files.pythonhosted.org/packages/81/c0/3072ecc23f4c5e0a1af35e3a222855cfd9c80a1a105ca67be3b6172637dd/execnet-1.9.0-py2.py3-none-any.whl#sha256=a295f7cc774947aac58dde7fdc85f4aa00c42adf5d8f5468fc630c1acf30a142
-# pip idna @ https://files.pythonhosted.org/packages/04/a2/d918dcd22354d8958fe113e1a3630137e0fc8b44859ade3063982eacd2a4/idna-3.3-py3-none-any.whl#sha256=84d9dd047ffa80596e0f246e2eab0b391788b0503584e8945f2368256d2735ff
+# pip idna @ https://files.pythonhosted.org/packages/fc/34/3030de6f1370931b9dbb4dad48f6ab1015ab1d32447850b9fc94e60097be/idna-3.4-py3-none-any.whl#sha256=90b77e79eaa3eba6de819a0c442c0b4ceefc341a7a2ab77d7562bf49f425c5c2
 # pip imagesize @ https://files.pythonhosted.org/packages/ff/62/85c4c919272577931d407be5ba5d71c20f0b616d31a0befe0ae45bb79abd/imagesize-1.4.1-py2.py3-none-any.whl#sha256=0d8d18d08f840c19d0ee7ca1fd82490fdc3729b7ac93f49870406ddde8ef8d8b
 # pip iniconfig @ https://files.pythonhosted.org/packages/9b/dd/b3c12c6d707058fa947864b67f0c4e0c39ef8610988d7baea9578f3c48f3/iniconfig-1.1.1-py2.py3-none-any.whl#sha256=011e24c64b7f47f6ebd835bb12a743f2fbe9a26d4cecaa7f53bc4f35ee9da8b3
 # pip markupsafe @ https://files.pythonhosted.org/packages/9e/82/2e089c6f34e77c073aa5a67040d368aac0dfb9b8ccbb46d381452c26fc33/MarkupSafe-2.1.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=10c1bfff05d95783da83491be968e8fe789263689c02724e0c691933c52994f5

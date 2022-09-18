@@ -531,7 +531,7 @@ def count_nonzero(X, axis=None, sample_weight=None):
 
     Returns
     -------
-    int or array of int
+    nnz : int, float, ndarray of shape (n_samples,) or ndarray of shape (n_features,)
         Number of non-zero values in the array along a given axis. Otherwise,
         the total number of non-zero values in the array is returned.
     """
