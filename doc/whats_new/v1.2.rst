@@ -34,6 +34,7 @@ random sampling procedures.
 - |API| The default value of `tol` was changed from `1e-3` to `1e-4` for
   :func:`linear_model.ridge_regression`, :class:`linear_model.Ridge` and
   :class:`linear_model.`RidgeClassifier`.
+  :pr:`24465` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Fix| Make sign of `components_` deterministic in :class:`decomposition.SparsePCA`.
   :pr:`23935` by :user:`Guillaume Lemaitre <glemaitre>`.
@@ -296,6 +297,7 @@ Changelog
 - |API| The default value of `tol` was changed from `1e-3` to `1e-4` for
   :func:`linear_model.ridge_regression`, :class:`linear_model.Ridge` and
   :class:`linear_model.`RidgeClassifier`.
+  :pr:`24465` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Fix| :class:`linear_model.SGDOneClassSVM` no longer performs parameter
   validation in the constructor. All validation is now handled in `fit()` and
