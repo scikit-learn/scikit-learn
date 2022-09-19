@@ -33,7 +33,6 @@ def configuration(parent_package="", top_path=None):
         "_datasets_pair.pyx",
         "_gemm_term_computer.pyx",
         "_base.pyx",
-        "_pairwise_distances.pyx",
         "_argkmin.pyx",
         "_pairwise_distances.pyx",
         "_radius_neighborhood.pyx",
