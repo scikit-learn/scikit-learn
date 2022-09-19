@@ -28,6 +28,7 @@ from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm._base import _fit_liblinear
 from ..utils import check_array, check_consistent_length, compute_class_weight
 from ..utils import check_random_state
+from ..utils._metadata_requests import MetadataRouter, MethodMapping, process_routing
 from ..utils.extmath import softmax
 from ..utils.extmath import row_norms
 from ..utils.optimize import _newton_cg, _check_optimize_result
@@ -1667,7 +1668,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         self.random_state = random_state
         self.l1_ratios = l1_ratios
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, **fit_params):
         """Fit the model according to the given training data.
 
         Parameters
@@ -1682,6 +1683,10 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         sample_weight : array-like of shape (n_samples,) default=None
             Array of weights that are assigned to individual samples.
             If not provided, then each sample is given unit weight.
+
+        **fit_params : dict
+            Parameters to pass to the `fit` method of the underlying
+            classifier.
 
         Returns
         -------
@@ -1752,9 +1757,15 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         else:
             max_squared_sum = None
 
+        routed_params = process_routing(
+            obj=self,
+            method="fit",
+            other_params=fit_params,
+        )
+
         # init cross-validation generator
         cv = check_cv(self.cv, y, classifier=True)
-        folds = list(cv.split(X, y))
+        folds = list(cv.split(X, y, **routed_params.splitter.split))
 
         # Use the label encoded classes
         n_classes = len(encoded_labels)
@@ -2002,7 +2013,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
 
         return self
 
-    def score(self, X, y, sample_weight=None):
+    def score(self, X, y, sample_weight=None, **score_params):
         """Score using the `scoring` option on the given test data and labels.
 
         Parameters
@@ -2016,15 +2027,52 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
+        **score_params:
+            Parameters to pass to the `score` method of the underlying scorer.
+
         Returns
         -------
         score : float
             Score of self.predict(X) wrt. y.
         """
-        scoring = self.scoring or "accuracy"
-        scoring = get_scorer(scoring)
+        scoring = self._get_scorer()
+        routed_params = process_routing(
+            obj=self,
+            method="score",
+            sample_weight=sample_weight,
+            other_params=score_params,
+        )
 
-        return scoring(self, X, y, sample_weight=sample_weight)
+        return scoring(
+            self, X, y, sample_weight=sample_weight, **routed_params.scorer.score
+        )
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = (
+            MetadataRouter(owner=self.__class__.__name__)
+            .add_self(self)
+            .add(
+                splitter=self.cv,
+                method_mapping=MethodMapping().add(callee="split", caller="fit"),
+            )
+            .add(
+                scorer=self._get_scorer(),
+                method_mapping=MethodMapping().add(callee="score", caller="score"),
+            )
+            .warn_on(child="scorer", method="score", params=["sample_weight"])
+        )
+        return router
 
     def _more_tags(self):
         return {
@@ -2034,3 +2082,11 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 ),
             }
         }
+
+    def _get_scorer(self):
+        """Get the scorer based on the scoring method specified.
+
+        The default scoring method is `accuracy`.
+        """
+        scoring = self.scoring or "accuracy"
+        return get_scorer(scoring)
