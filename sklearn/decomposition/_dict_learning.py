@@ -1181,7 +1181,7 @@ class _BaseSparseCoding(_ClassNamePrefixFeaturesOutMixin, TransformerMixin):
         SparseCoder."""
         X = self._validate_data(X, reset=False)
 
-        if (hasattr(self, "alpha") and self.transform_alpha is None):
+        if hasattr(self, "alpha") and self.transform_alpha is None:
             transform_alpha = self.alpha
         else:
             transform_alpha = self.transform_alpha
