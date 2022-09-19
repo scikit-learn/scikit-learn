@@ -50,7 +50,7 @@ def single_source_shortest_path_length(graph, source, *, cutoff=None):
     ...                   [ 0, 1, 0, 0],
     ...                   [ 0, 0, 0, 0]])
     >>> single_source_shortest_path_length(graph, 0)
-    {0: 0, 1: 1, 2: 2}  # Node 3 is not reachable from 0.
+    {0: 0, 1: 1, 2: 2}
     >>> graph = np.ones((6, 6))
     >>> sorted(single_source_shortest_path_length(graph, 2).items())
     [(0, 1), (1, 1), (2, 0), (3, 1), (4, 1), (5, 1)]
