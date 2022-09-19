@@ -815,7 +815,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
             Added the 'single' option
 
     distance_threshold : float, default=None
-        The linkage distance threshold above which, clusters will not be
+        The linkage distance threshold at or above which clusters will not be
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
         ``compute_full_tree`` must be ``True``.
 
@@ -1180,7 +1180,7 @@ class FeatureAgglomeration(
         argument `axis=1`, and reduce it to an array of size [M].
 
     distance_threshold : float, default=None
-        The linkage distance threshold above which, clusters will not be
+        The linkage distance threshold at or above which clusters will not be
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
         ``compute_full_tree`` must be ``True``.
 
