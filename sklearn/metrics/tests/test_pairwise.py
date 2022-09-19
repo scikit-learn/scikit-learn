@@ -1293,11 +1293,11 @@ def test_pairwise_similarity_sparse_output(metric, pairwise_func):
     # should be dense, and equal to K1
     K2 = pairwise_func(X, Y, dense_output=True)
     assert not issparse(K2)
-    assert_allclose(K1.todense(), K2)
+    assert_allclose(K1.toarray(), K2)
 
-    # show the kernel output equal to the sparse.todense()
+    # show the kernel output equal to the sparse.toarray()
     K3 = pairwise_kernels(X, Y=Y, metric=metric)
-    assert_allclose(K1.todense(), K3)
+    assert_allclose(K1.toarray(), K3)
 
 
 def test_cosine_similarity():
