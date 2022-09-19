@@ -1826,7 +1826,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
           solution.
         - `'threshold'`: squashes to zero all coefficients less than alpha from
           the projection ``dictionary * X'``.
-        
+
         If `None`, defaults to `alpha`.
 
         .. versionchanged:: 1.2
