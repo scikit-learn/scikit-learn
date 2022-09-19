@@ -316,7 +316,6 @@ cdef class EuclideanPairwiseDistances64(PairwiseDistances64):
     ) nogil:
         cdef:
             ITYPE_t i, j
-            DTYPE_t squared_dist_i_j
             ITYPE_t n_X = X_end - X_start
             ITYPE_t n_Y = Y_end - Y_start
             DTYPE_t *dist_middle_terms = self.gemm_term_computer._compute_distances_on_chunks(
@@ -329,10 +328,10 @@ cdef class EuclideanPairwiseDistances64(PairwiseDistances64):
                 #
                 #             ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
                 #
-                self.pairwise_distances_matrix[i, j] = (
-                    self.X_norm_squared[i]
+                self.pairwise_distances_matrix[X_start + i, Y_start + j] = (
+                    self.X_norm_squared[X_start + i]
                     + dist_middle_terms[i * n_Y + j]
-                    + self.Y_norm_squared[j]
+                    + self.Y_norm_squared[Y_start + j]
                 )
 
     def _finalize_results(self):
