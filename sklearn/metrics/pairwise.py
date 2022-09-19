@@ -938,6 +938,9 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
     """
     X, Y = check_pairwise_arrays(X, Y)
 
+    if sum_over_features and PairwiseDistances.is_usable_for(X, Y, metric="manhattan"):
+        return PairwiseDistances.compute(X, Y, metric="manhattan")
+
     if issparse(X) or issparse(Y):
         if not sum_over_features:
             raise TypeError(
