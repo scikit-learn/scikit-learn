@@ -139,15 +139,17 @@ class LeaveOneOut(BaseCrossValidator):
     2
     >>> print(loo)
     LeaveOneOut()
-    >>> for train_index, test_index in loo.split(X):
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    >>> for i, (train_index, test_index) in enumerate(loo.split(X)):
     ...     X_train, X_test = X[train_index], X[test_index]
-    ...     y_train, y_test = y[train_index], y[test_index]
-    ...     print(X_train, X_test, y_train, y_test)
-    TRAIN: [1] TEST: [0]
-    [[3 4]] [[1 2]] [2] [1]
-    TRAIN: [0] TEST: [1]
-    [[1 2]] [[3 4]] [1] [2]
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}, data={X_train}")
+    ...     print(f"  Test:  index={test_index}, data={X_test}")
+    Fold 0:
+      Train: index=[1], data=[[3 4]]
+      Test:  index=[0], data=[[1 2]]
+    Fold 1:
+      Train: index=[0], data=[[1 2]]
+      Test:  index=[1], data=[[3 4]]
 
     See Also
     --------
