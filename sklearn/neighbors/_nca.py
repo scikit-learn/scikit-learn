@@ -486,7 +486,7 @@ class NeighborhoodComponentsAnalysis(
         X_embedded = np.dot(X, transformation.T)  # (n_samples, n_components)
 
         # Compute softmax distances
-        p_ij = pairwise_distances(X_embedded, squared=True)
+        p_ij = pairwise_distances(X_embedded, metric="sqeuclidean")
         np.fill_diagonal(p_ij, np.inf)
         p_ij = softmax(-p_ij)  # (n_samples, n_samples)
 
