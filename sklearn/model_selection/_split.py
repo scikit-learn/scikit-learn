@@ -489,11 +489,11 @@ class GroupKFold(_BaseKFold):
     ...     print(f"  Train: index={train_index}, group={groups[train_index]}")
     ...     print(f"  Test:  index={test_index}, group={groups[test_index]}")
     Fold 0:
-    Train: index=[2 3], group=[2 2]
-    Test:  index=[0 1 4 5], group=[0 0 3 3]
+      Train: index=[2 3], group=[2 2]
+      Test:  index=[0 1 4 5], group=[0 0 3 3]
     Fold 1:
-    Train: index=[0 1 4 5], group=[0 0 3 3]
-    Test:  index=[2 3], group=[2 2]
+      Train: index=[0 1 4 5], group=[0 0 3 3]
+      Test:  index=[2 3], group=[2 2]
 
     See Also
     --------
