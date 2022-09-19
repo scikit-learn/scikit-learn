@@ -215,6 +215,7 @@ def type_of_target(y, input_name=""):
     Parameters
     ----------
     y : array-like
+        Target values.
 
     input_name : str, default=""
         The data name used to construct the error message.
