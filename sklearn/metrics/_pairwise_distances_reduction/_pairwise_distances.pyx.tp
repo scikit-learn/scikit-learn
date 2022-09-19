@@ -152,7 +152,7 @@ cdef class PairwiseDistances{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
         # by zeroing the diagonal.
         distance_matrix = np.asarray(self.pairwise_distances_matrix)
         if self.datasets_pair.X_is_Y:
-            np.fill_diagonal(distance_matrix, 0)
+            np.fill_diagonal(distance_matrix, 0.)
 
         return distance_matrix
 
@@ -166,12 +166,10 @@ cdef class PairwiseDistances{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
     ) nogil:
         cdef:
             ITYPE_t i, j
-            DTYPE_t dist_i_j
 
         for i in range(X_start, X_end):
             for j in range(Y_start, Y_end):
-                dist_i_j = self.datasets_pair.dist(i, j)
-                self.pairwise_distances_matrix[i, j] = dist_i_j
+                self.pairwise_distances_matrix[i, j] = self.datasets_pair.dist(i, j)
 
 
 cdef class EuclideanPairwiseDistances{{name_suffix}}(PairwiseDistances{{name_suffix}}):
@@ -229,7 +227,7 @@ cdef class EuclideanPairwiseDistances{{name_suffix}}(PairwiseDistances{{name_suf
             chunk_size=self.chunk_size,
         )
 
-        if metric_kwargs is not None and "Y_norm_squared" in metric_kwargs:
+        if metric_kwargs is not None and metric_kwargs.get("Y_norm_squared", None) is not None:
             self.Y_norm_squared = metric_kwargs.pop("Y_norm_squared")
         else:
             self.Y_norm_squared = _sqeuclidean_row_norms{{name_suffix}}(
@@ -237,14 +235,18 @@ cdef class EuclideanPairwiseDistances{{name_suffix}}(PairwiseDistances{{name_suf
                 self.effective_n_threads,
             )
 
-        # Do not recompute norms if datasets are identical.
-        self.X_norm_squared = (
-            self.Y_norm_squared if self.datasets_pair.X_is_Y else
-            _sqeuclidean_row_norms{{name_suffix}}(
-                datasets_pair.X,
-                self.effective_n_threads,
+        if metric_kwargs is not None and metric_kwargs.get("X_norm_squared", None) is not None:
+            self.X_norm_squared = metric_kwargs.pop("X_norm_squared")
+        else:
+            # Do not recompute norms if datasets are identical.
+            self.X_norm_squared = (
+                self.Y_norm_squared if self.datasets_pair.X_is_Y else
+                _sqeuclidean_row_norms{{name_suffix}}(
+                    datasets_pair.X,
+                    self.effective_n_threads,
+                )
             )
-        )
+
         self.use_squared_distances = use_squared_distances
 
 
@@ -335,6 +337,8 @@ cdef class EuclideanPairwiseDistances{{name_suffix}}(PairwiseDistances{{name_suf
         cdef:
             ITYPE_t i, j
             ITYPE_t pair_index = 0
+            DTYPE_t sq_dist_i_j = 0.
+
             DTYPE_t *dist_middle_terms = self.gemm_term_computer._compute_distances_on_chunks(
                 X_start, X_end, Y_start, Y_end, thread_num
             )
@@ -345,10 +349,15 @@ cdef class EuclideanPairwiseDistances{{name_suffix}}(PairwiseDistances{{name_suf
                 #
                 #             ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
                 #
-                self.pairwise_distances_matrix[i, j] = (
+                sq_dist_i_j = (
                     self.X_norm_squared[i]
                     + dist_middle_terms[pair_index]
                     + self.Y_norm_squared[j]
+                )
+                # Guard against eventual -0. and NaN caused by catastrophic
+                # cancellation (e.g. if X is Y)
+                self.pairwise_distances_matrix[i, j] = (
+                    sq_dist_i_j if 0. < sq_dist_i_j == sq_dist_i_j else 0.
                 )
                 pair_index += 1
 
