@@ -21,6 +21,8 @@ def configuration(parent_package="", top_path=None):
         "sklearn/metrics/_pairwise_distances_reduction/_base.pxd.tp",
         "sklearn/metrics/_pairwise_distances_reduction/_argkmin.pyx.tp",
         "sklearn/metrics/_pairwise_distances_reduction/_argkmin.pxd.tp",
+        "sklearn/metrics/_pairwise_distances_reduction/_pairwise_distances.pyx.tp",
+        "sklearn/metrics/_pairwise_distances_reduction/_pairwise_distances.pxd.tp",
         "sklearn/metrics/_pairwise_distances_reduction/_radius_neighborhood.pyx.tp",
         "sklearn/metrics/_pairwise_distances_reduction/_radius_neighborhood.pxd.tp",
     ]
@@ -33,6 +35,7 @@ def configuration(parent_package="", top_path=None):
         "_base.pyx",
         "_pairwise_distances.pyx",
         "_argkmin.pyx",
+        "_pairwise_distances.pyx",
         "_radius_neighborhood.pyx",
     ]
 

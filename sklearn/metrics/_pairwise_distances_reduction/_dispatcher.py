@@ -15,6 +15,7 @@ from ._argkmin import (
 )
 from ._pairwise_distances import (
     PairwiseDistances64,
+    PairwiseDistances32,
 )
 from ._radius_neighborhood import (
     RadiusNeighbors64,
@@ -146,11 +147,6 @@ class PairwiseDistances(BaseDistanceReductionDispatcher):
     """
 
     @classmethod
-    def is_usable_for(cls, X, Y, metric) -> bool:
-        # TODO: support float32
-        return super().is_usable_for(X, Y, metric) and X.dtype == np.float64
-
-    @classmethod
     def compute(
         cls,
         X,
@@ -243,8 +239,19 @@ class PairwiseDistances(BaseDistanceReductionDispatcher):
                 metric_kwargs=metric_kwargs,
                 strategy=strategy,
             )
+
+        if X.dtype == Y.dtype == np.float32:
+            return PairwiseDistances32.compute(
+                X=X,
+                Y=Y,
+                metric=metric,
+                chunk_size=chunk_size,
+                metric_kwargs=metric_kwargs,
+                strategy=strategy,
+            )
+
         raise ValueError(
-            "Only 64bit float datasets are supported at this time, "
+            "Only float64 or float32 datasets pairs are supported at this time, "
             f"got: X.dtype={X.dtype} and Y.dtype={Y.dtype}."
         )
 

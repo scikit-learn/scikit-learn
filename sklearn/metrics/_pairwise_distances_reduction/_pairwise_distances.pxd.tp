@@ -1,0 +1,25 @@
+from ...utils._typedefs cimport DTYPE_t
+
+{{for name_suffix in ['32', '64']}}
+
+from ._base cimport BaseDistanceReducer{{name_suffix}}
+from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
+
+
+cdef class PairwiseDistances{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
+    """{{name_suffix}}bit implementation of PairwiseDistances."""
+
+    cdef:
+        DTYPE_t[:, ::1] pairwise_distances_matrix
+
+
+cdef class EuclideanPairwiseDistances{{name_suffix}}(PairwiseDistances{{name_suffix}}):
+    """EuclideanDistance-specialized {{name_suffix}}bit implementation for PairwiseDistances."""
+    cdef:
+        GEMMTermComputer{{name_suffix}} gemm_term_computer
+        const DTYPE_t[::1] X_norm_squared
+        const DTYPE_t[::1] Y_norm_squared
+
+        bint use_squared_distances
+
+{{endfor}}
