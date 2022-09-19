@@ -133,7 +133,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         The data to center and scale.
 
     axis : int, default=0
-        axis used to compute the means and standard deviations along. If 0,
+        Axis used to compute the means and standard deviations along. If 0,
         independently standardize each feature, otherwise (if 1) standardize
         each sample.
 
@@ -145,7 +145,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         unit standard deviation).
 
     copy : bool, default=True
-        set to False to perform inplace row normalization and avoid a
+        Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSC matrix and if axis is 1).
 
@@ -153,6 +153,12 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     -------
     X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
         The transformed data.
+
+    See Also
+    --------
+    StandardScaler : Performs scaling to unit variance using the Transformer
+        API (e.g. as part of a preprocessing
+        :class:`~sklearn.pipeline.Pipeline`).
 
     Notes
     -----
@@ -189,13 +195,6 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         :class:`~sklearn.preprocessing.StandardScaler` within a
         :ref:`Pipeline <pipeline>` in order to prevent most risks of data
         leaking: `pipe = make_pipeline(StandardScaler(), LogisticRegression())`.
-
-    See Also
-    --------
-    StandardScaler : Performs scaling to unit variance using the Transformer
-        API (e.g. as part of a preprocessing
-        :class:`~sklearn.pipeline.Pipeline`).
-
     """  # noqa
     X = check_array(
         X,
@@ -380,7 +379,7 @@ class MinMaxScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     [[1.5 0. ]]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "feature_range": [tuple],
         "copy": ["boolean"],
         "clip": ["boolean"],
@@ -773,7 +772,7 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     [[3. 3.]]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "copy": ["boolean"],
         "with_mean": ["boolean"],
         "with_std": ["boolean"],
@@ -1131,7 +1130,7 @@ class MaxAbsScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [ 0. ,  1. , -0.5]])
     """
 
-    _parameter_constraints = {"copy": ["boolean"]}
+    _parameter_constraints: dict = {"copy": ["boolean"]}
 
     def __init__(self, *, copy=True):
         self.copy = copy
@@ -1293,7 +1292,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
         The data.
 
     axis : int, default=0
-        axis used to scale along. If 0, independently scale each feature,
+        Axis used to scale along. If 0, independently scale each feature,
         otherwise (if 1) scale each sample.
 
     copy : bool, default=True
@@ -1470,7 +1469,7 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [ 1. ,  0. , -1.6]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "with_centering": ["boolean"],
         "with_scaling": ["boolean"],
         "quantile_range": [tuple],
@@ -1933,7 +1932,7 @@ class Normalizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [0.5, 0.7, 0.5, 0.1]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "norm": [StrOptions({"l1", "l2", "max"})],
         "copy": ["boolean"],
     }
@@ -2107,7 +2106,7 @@ class Binarizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [0., 1., 0.]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "threshold": [Real],
         "copy": ["boolean"],
     }
@@ -2486,7 +2485,7 @@ class QuantileTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator
     array([...])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_quantiles": [Interval(Integral, 1, None, closed="left")],
         "output_distribution": [StrOptions({"uniform", "normal"})],
         "ignore_implicit_zeros": ["boolean"],
@@ -3045,7 +3044,7 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
      [ 1.106...  1.414...]]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "method": [StrOptions({"yeo-johnson", "box-cox"})],
         "standardize": ["boolean"],
         "copy": ["boolean"],

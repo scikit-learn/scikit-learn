@@ -364,7 +364,6 @@ cdef class ClassificationCriterion(Criterion):
         cdef SIZE_t p
         cdef SIZE_t k
         cdef SIZE_t c
-        cdef SIZE_t label_index
         cdef DOUBLE_t w = 1.0
 
         # Update statistics up to new_pos
@@ -1298,15 +1297,9 @@ cdef class Poisson(RegressionCriterion):
         i.e. the impurity of the left child (samples[start:pos]) and the
         impurity of the right child (samples[pos:end]) for Poisson.
         """
-        cdef const DOUBLE_t[:, ::1] y = self.y
-
         cdef SIZE_t start = self.start
         cdef SIZE_t pos = self.pos
         cdef SIZE_t end = self.end
-
-        cdef SIZE_t i, p, k
-        cdef DOUBLE_t y_mean = 0.
-        cdef DOUBLE_t w = 1.0
 
         impurity_left[0] = self.poisson_loss(start, pos, self.sum_left,
                                              self.weighted_n_left)
