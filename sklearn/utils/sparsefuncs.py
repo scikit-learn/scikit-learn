@@ -514,7 +514,7 @@ def min_max_axis(X, axis, ignore_nan=False):
 
 
 def count_nonzero(X, axis=None, sample_weight=None):
-    """A variant of X.getnnz() with extension to weighting on axis 0
+    """A variant of X.getnnz() with extension to weighting on axis 0.
 
     Useful in efficiently calculating multilabel metrics.
 
@@ -528,6 +528,12 @@ def count_nonzero(X, axis=None, sample_weight=None):
 
     sample_weight : array-like of shape (n_samples,), default=None
         Weight for each row of X.
+
+    Returns
+    -------
+    nnz : int, float, ndarray of shape (n_samples,) or ndarray of shape (n_features,)
+        Number of non-zero values in the array along a given axis. Otherwise,
+        the total number of non-zero values in the array is returned.
     """
     if axis == -1:
         axis = 1
@@ -594,6 +600,7 @@ def _get_elem_at_rank(rank, data, n_negative, n_zeros):
 
 def csc_median_axis_0(X):
     """Find the median across axis 0 of a CSC matrix.
+
     It is equivalent to doing np.median(X, axis=0).
 
     Parameters
@@ -605,7 +612,6 @@ def csc_median_axis_0(X):
     -------
     median : ndarray of shape (n_features,)
         Median.
-
     """
     if not isinstance(X, sp.csc_matrix):
         raise TypeError("Expected matrix of CSC format, got %s" % X.format)
