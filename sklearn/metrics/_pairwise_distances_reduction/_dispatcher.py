@@ -141,10 +141,15 @@ class PairwiseDistances(BaseDistanceReductionDispatcher):
     The distance function `dist` depends on the values of the `metric`
     and `metric_kwargs` parameters.
 
-    This class is not meant to be instanciated, one should only use
+    This class is not meant to be instantiated, one should only use
     its :meth:`compute` classmethod which handles allocation and
     deallocation consistently.
     """
+
+    @classmethod
+    def is_usable_for(cls, X, Y, metric) -> bool:
+        Y = X if Y is None else Y
+        return super().is_usable_for(X, Y, metric)
 
     @classmethod
     def compute(

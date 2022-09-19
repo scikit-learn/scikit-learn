@@ -98,7 +98,14 @@ cdef class PairwiseDistances{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
             )
         else:
             # Precompute data-derived distance metric parameters
-            params = _precompute_metric_params(X, Y, metric=metric, **metric_kwargs)
+            metric_kwargs = {} if metric_kwargs is None else metric_kwargs
+
+            params = _precompute_metric_params(
+                X,
+                Y,
+                metric=metric,
+                **metric_kwargs,
+            )
             metric_kwargs.update(**params)
 
             # Fall back on a generic implementation that handles most scipy
