@@ -91,7 +91,7 @@ and follows the decision-making process outlined in :ref:`governance`.
    * `joblib <https://github.com/joblib/joblib/issues>`__
    * `sphinx-gallery <https://github.com/sphinx-gallery/sphinx-gallery/issues>`__
    * `numpydoc <https://github.com/numpy/numpydoc/issues>`__
-   * `liac-arff <https://github.com/renatopp/liac-arff>`__
+   * `liac-arff <https://github.com/renatopp/liac-arff/issues>`__
 
    and larger projects:
 
