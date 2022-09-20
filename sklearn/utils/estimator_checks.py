@@ -5,6 +5,7 @@ import re
 from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
+from numbers import Real
 
 import numpy as np
 from scipy import sparse
@@ -13,6 +14,7 @@ import joblib
 
 from . import IS_PYPY
 from .. import config_context
+from ._param_validation import Interval
 from ._testing import _get_args
 from ._testing import assert_raise_message
 from ._testing import assert_array_equal
@@ -31,6 +33,7 @@ from ..linear_model import LinearRegression
 from ..linear_model import LogisticRegression
 from ..linear_model import RANSACRegressor
 from ..linear_model import Ridge
+from ..linear_model import SGDRegressor
 
 from ..base import (
     clone,
@@ -44,6 +47,7 @@ from ..base import (
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..random_projection import BaseRandomProjection
 from ..feature_selection import SelectKBest
+from ..feature_selection import SelectFromModel
 from ..pipeline import make_pipeline
 from ..exceptions import DataConversionWarning
 from ..exceptions import NotFittedError
@@ -52,8 +56,11 @@ from ..model_selection import train_test_split
 from ..model_selection import ShuffleSplit
 from ..model_selection._validation import _safe_split
 from ..metrics.pairwise import rbf_kernel, linear_kernel, pairwise_distances
-from ..utils.fixes import threadpool_info
+from ..utils.fixes import sp_version
+from ..utils.fixes import parse_version
 from ..utils.validation import check_is_fitted
+from ..utils._param_validation import make_constraint
+from ..utils._param_validation import generate_invalid_param_val
 
 from . import shuffle
 from ._tags import (
@@ -265,6 +272,10 @@ def _yield_clustering_checks(clusterer):
 
 def _yield_outliers_checks(estimator):
 
+    # checks for the contamination parameter
+    if hasattr(estimator, "contamination"):
+        yield check_outlier_contamination
+
     # checks for outlier detectors that have a fit_predict method
     if hasattr(estimator, "fit_predict"):
         yield check_outliers_fit_predict
@@ -389,6 +400,9 @@ def _construct_instance(Estimator):
                 estimator = Estimator(LinearRegression())
             elif issubclass(Estimator, RegressorMixin):
                 estimator = Estimator(Ridge())
+            elif issubclass(Estimator, SelectFromModel):
+                # Increases coverage because SGDRegressor has partial_fit
+                estimator = Estimator(SGDRegressor(random_state=0))
             else:
                 estimator = Estimator(LogisticRegression(C=1))
         elif required_parameters in (["estimators"],):
@@ -643,6 +657,8 @@ def _set_checking_parameters(estimator):
     # avoid deprecated behaviour
     params = estimator.get_params()
     name = estimator.__class__.__name__
+    if name == "TSNE":
+        estimator.set_params(perplexity=2)
     if "n_iter" in params and name != "TSNE":
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
@@ -739,8 +755,18 @@ def _set_checking_parameters(estimator):
     if name == "OneHotEncoder":
         estimator.set_params(handle_unknown="ignore")
 
+    if name == "QuantileRegressor":
+        # Avoid warning due to Scipy deprecating interior-point solver
+        solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
+        estimator.set_params(solver=solver)
+
     if name in CROSS_DECOMPOSITION:
         estimator.set_params(n_components=1)
+
+    # Default "auto" parameter can lead to different ordering of eigenvalues on
+    # windows: #24105
+    if name == "SpectralEmbedding":
+        estimator.set_params(eigen_tol=1e-5)
 
 
 class _NotAnArray:
@@ -1413,6 +1439,10 @@ def check_fit2d_1sample(name, estimator_orig):
     # min_cluster_size cannot be less than the data size for OPTICS.
     if name == "OPTICS":
         estimator.set_params(min_samples=1)
+
+    # perplexity cannot be more than the number of samples for TSNE.
+    if name == "TSNE":
+        estimator.set_params(perplexity=0.5)
 
     msgs = [
         "1 sample",
@@ -2100,22 +2130,6 @@ def check_classifiers_one_label(name, classifier_orig):
         assert_array_equal(classifier.predict(X_test), y, err_msg=error_string_predict)
 
 
-def _create_memmap_backed_data(numpy_arrays):
-    # OpenBLAS is known to segfault with unaligned data on the Prescott architecture
-    # See: https://github.com/scipy/scipy/issues/14886
-    has_prescott_openblas = any(
-        True
-        for info in threadpool_info()
-        if info["internal_api"] == "openblas"
-        # Prudently assume Prescott might be the architecture if it is unknown.
-        and info.get("architecture", "prescott").lower() == "prescott"
-    )
-    return [
-        create_memmap_backed_data(array, aligned=has_prescott_openblas)
-        for array in numpy_arrays
-    ]
-
-
 @ignore_warnings  # Warnings are raised by decision function
 def check_classifiers_train(
     name, classifier_orig, readonly_memmap=False, X_dtype="float64"
@@ -2133,7 +2147,7 @@ def check_classifiers_train(
         X_b -= X_b.min()
 
     if readonly_memmap:
-        X_m, y_m, X_b, y_b = _create_memmap_backed_data([X_m, y_m, X_b, y_b])
+        X_m, y_m, X_b, y_b = create_memmap_backed_data([X_m, y_m, X_b, y_b])
 
     problems = [(X_b, y_b)]
     tags = _safe_tags(classifier_orig)
@@ -2348,12 +2362,32 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
             decision = estimator.decision_function(X)
             check_outlier_corruption(num_outliers, expected_outliers, decision)
 
-        # raises error when contamination is a scalar and not in [0,1]
-        msg = r"contamination must be in \(0, 0.5]"
-        for contamination in [-0.5, 2.3]:
-            estimator.set_params(contamination=contamination)
-            with raises(ValueError, match=msg):
-                estimator.fit(X)
+
+def check_outlier_contamination(name, estimator_orig):
+    # Check that the contamination parameter is in (0.0, 0.5] when it is an
+    # interval constraint.
+
+    if not hasattr(estimator_orig, "_parameter_constraints"):
+        # Only estimator implementing parameter constraints will be checked
+        return
+
+    if "contamination" not in estimator_orig._parameter_constraints:
+        return
+
+    contamination_constraints = estimator_orig._parameter_constraints["contamination"]
+    if not any([isinstance(c, Interval) for c in contamination_constraints]):
+        raise AssertionError(
+            "contamination constraints should contain a Real Interval constraint."
+        )
+
+    for constraint in contamination_constraints:
+        if isinstance(constraint, Interval):
+            assert (
+                constraint.type == Real
+                and constraint.left >= 0.0
+                and constraint.right <= 0.5
+                and (constraint.left > 0 or constraint.closed in {"right", "neither"})
+            ), "contamination constraint should be an interval in (0, 0.5]"
 
 
 @ignore_warnings(category=FutureWarning)
@@ -2801,7 +2835,7 @@ def check_regressors_train(
         y_ = y
 
     if readonly_memmap:
-        X, y, y_ = _create_memmap_backed_data([X, y, y_])
+        X, y, y_ = create_memmap_backed_data([X, y, y_])
 
     if not hasattr(regressor, "alphas") and hasattr(regressor, "alpha"):
         # linear regressors need to set alpha, but not generalized CV ones
@@ -3511,13 +3545,6 @@ def check_outliers_fit_predict(name, estimator_orig):
             decision = estimator.decision_function(X)
             check_outlier_corruption(num_outliers, expected_outliers, decision)
 
-        # raises error when contamination is a scalar and not in [0,1]
-        msg = r"contamination must be in \(0, 0.5]"
-        for contamination in [-0.5, -0.001, 0.5001, 2.3]:
-            estimator.set_params(contamination=contamination)
-            with raises(ValueError, match=msg):
-                estimator.fit_predict(X)
-
 
 def check_fit_non_negative(name, estimator_orig):
     # Check that proper warning is raised for non-negative X
@@ -4024,3 +4051,93 @@ def check_transformer_get_feature_names_out_pandas(name, transformer_orig):
     assert (
         len(feature_names_out_default) == n_features_out
     ), f"Expected {n_features_out} feature names, got {len(feature_names_out_default)}"
+
+
+def check_param_validation(name, estimator_orig):
+    # Check that an informative error is raised when the value of a constructor
+    # parameter does not have an appropriate type or value.
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(20, 5))
+    X = _pairwise_estimator_convert_X(X, estimator_orig)
+    y = rng.randint(0, 2, size=20)
+    y = _enforce_estimator_tags_y(estimator_orig, y)
+
+    estimator_params = estimator_orig.get_params(deep=False).keys()
+
+    # check that there is a constraint for each parameter
+    if estimator_params:
+        validation_params = estimator_orig._parameter_constraints.keys()
+        unexpected_params = set(validation_params) - set(estimator_params)
+        missing_params = set(estimator_params) - set(validation_params)
+        err_msg = (
+            f"Mismatch between _parameter_constraints and the parameters of {name}."
+            f"\nConsider the unexpected parameters {unexpected_params} and expected but"
+            f" missing parameters {missing_params}"
+        )
+        assert validation_params == estimator_params, err_msg
+
+    # this object does not have a valid type for sure for all params
+    param_with_bad_type = type("BadType", (), {})()
+
+    fit_methods = ["fit", "partial_fit", "fit_transform", "fit_predict"]
+
+    for param_name in estimator_params:
+        constraints = estimator_orig._parameter_constraints[param_name]
+
+        if constraints == "no_validation":
+            # This parameter is not validated
+            continue
+
+        match = rf"The '{param_name}' parameter of {name} must be .* Got .* instead."
+        err_msg = (
+            f"{name} does not raise an informative error message when the "
+            f"parameter {param_name} does not have a valid type or value."
+        )
+
+        estimator = clone(estimator_orig)
+
+        # First, check that the error is raised if param doesn't match any valid type.
+        estimator.set_params(**{param_name: param_with_bad_type})
+
+        for method in fit_methods:
+            if not hasattr(estimator, method):
+                # the method is not accessible with the current set of parameters
+                continue
+
+            with raises(ValueError, match=match, err_msg=err_msg):
+                if any(
+                    isinstance(X_type, str) and X_type.endswith("labels")
+                    for X_type in _safe_tags(estimator, key="X_types")
+                ):
+                    # The estimator is a label transformer and take only `y`
+                    getattr(estimator, method)(y)
+                else:
+                    getattr(estimator, method)(X, y)
+
+        # Then, for constraints that are more than a type constraint, check that the
+        # error is raised if param does match a valid type but does not match any valid
+        # value for this type.
+        constraints = [make_constraint(constraint) for constraint in constraints]
+
+        for constraint in constraints:
+            try:
+                bad_value = generate_invalid_param_val(constraint, constraints)
+            except NotImplementedError:
+                continue
+
+            estimator.set_params(**{param_name: bad_value})
+
+            for method in fit_methods:
+                if not hasattr(estimator, method):
+                    # the method is not accessible with the current set of parameters
+                    continue
+
+                with raises(ValueError, match=match, err_msg=err_msg):
+                    if any(
+                        X_type.endswith("labels")
+                        for X_type in _safe_tags(estimator, key="X_types")
+                    ):
+                        # The estimator is a label transformer and take only `y`
+                        getattr(estimator, method)(y)
+                    else:
+                        getattr(estimator, method)(X, y)

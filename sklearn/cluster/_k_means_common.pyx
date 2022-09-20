@@ -9,15 +9,11 @@
 # provided by the user). This is fixed in cython > 0.3.
 
 import numpy as np
-cimport numpy as np
 from cython cimport floating
 from cython.parallel cimport prange
 from libc.math cimport sqrt
 
 from ..utils.extmath import row_norms
-
-
-np.import_array()
 
 
 # Number of samples per data chunk defined as a global constant.
@@ -136,7 +132,7 @@ cpdef floating _inertia_sparse(
     """Compute inertia for sparse input data
 
     Sum of squared distance between each sample and its assigned center.
-    
+
     If single_label is >= 0, the inertia is computed only for that label.
     """
     cdef:
@@ -145,7 +141,6 @@ cpdef floating _inertia_sparse(
         int[::1] X_indptr = X.indptr
 
         int n_samples = X.shape[0]
-        int n_features = X.shape[1]
         int i, j
 
         floating sq_dist = 0.0
@@ -226,8 +221,6 @@ cpdef void _relocate_empty_clusters_sparse(
 
     cdef:
         int n_samples = X_indptr.shape[0] - 1
-        int n_features = centers_old.shape[1]
-        floating x
         int i, j, k
 
         floating[::1] distances = np.zeros(n_samples, dtype=X_data.base.dtype)

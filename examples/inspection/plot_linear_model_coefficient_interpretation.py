@@ -46,7 +46,7 @@ import seaborn as sns
 
 from sklearn.datasets import fetch_openml
 
-survey = fetch_openml(data_id=534, as_frame=True)
+survey = fetch_openml(data_id=534, as_frame=True, parser="pandas")
 
 # %%
 # Then, we identify features `X` and targets `y`: the column WAGE is our
