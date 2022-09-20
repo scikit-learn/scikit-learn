@@ -138,8 +138,6 @@ the corresponding solver is chosen.
 +-------------+----------------------------------------------------+
 | 'lbfgs'     | The ``positive=True`` option is specified.         |
 +-------------+----------------------------------------------------+
-| 'sag'       | The ``return_intercept=True`` option is specified. |
-+-------------+----------------------------------------------------+
 | 'cholesky'  | The input array X is not sparse.                   |
 +-------------+----------------------------------------------------+
 | 'sparse_cg' | All of the above conditions are not fulfilled.     |
