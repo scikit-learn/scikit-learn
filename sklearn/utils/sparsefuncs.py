@@ -126,8 +126,7 @@ def mean_variance_axis(X, axis, weights=None, return_sum_weights=False):
 
 
 def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n, weights=None):
-    """Compute incremental mean and variance along an axis on a CSR or
-    CSC matrix.
+    """Compute incremental mean and variance along an axis on a CSR or CSC matrix.
 
     last_mean, last_var are the statistics computed at the last step by this
     function. Both must be initialized to 0-arrays of the proper size, i.e.
@@ -153,8 +152,8 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n, weights=Non
     last_n : float or ndarray of shape (n_features,) or (n_samples,), \
             dtype=floating
         Sum of the weights seen so far, excluding the current weights
-        If not float, it should be of shape (n_samples,) if
-        axis=0 or (n_features,) if axis=1. If float it corresponds to
+        If not float, it should be of shape (n_features,) if
+        axis=0 or (n_samples,) if axis=1. If float it corresponds to
         having same weights for all samples (or features).
 
     weights : ndarray of shape (n_samples,) or (n_features,), default=None

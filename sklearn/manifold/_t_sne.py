@@ -461,11 +461,12 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+        (n_samples, n_samples)
         If the metric is 'precomputed' X must be a square distance
         matrix. Otherwise it contains a sample per row.
 
-    X_embedded : ndarray of shape (n_samples, n_components)
+    X_embedded : {array-like, sparse matrix} of shape (n_samples, n_components)
         Embedding of the training data in low-dimensional space.
 
     n_neighbors : int, default=5
@@ -1095,7 +1096,8 @@ class TSNE(BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+            (n_samples, n_samples)
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row. If the method
             is 'exact', X may be a sparse matrix of type 'csr', 'csc'
@@ -1121,7 +1123,8 @@ class TSNE(BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+            (n_samples, n_samples)
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row. If the method
             is 'exact', X may be a sparse matrix of type 'csr', 'csc'
