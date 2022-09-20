@@ -92,11 +92,7 @@ The kmeans does reduce the dimensionality or number of unique values required to
 
 ###Colored Image version With actual Compression:
 
-try:
-  face = face(gray=False)
-
-except ImportError:
-  face = sp.face(gray=False)
+face = sp.misc.face(gray=False)
 
 n_clusters = 64 #clusters of colors
 np.random.seed(0)
