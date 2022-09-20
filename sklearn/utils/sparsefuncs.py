@@ -600,6 +600,7 @@ def _get_elem_at_rank(rank, data, n_negative, n_zeros):
 
 def csc_median_axis_0(X):
     """Find the median across axis 0 of a CSC matrix.
+
     It is equivalent to doing np.median(X, axis=0).
 
     Parameters
@@ -611,7 +612,6 @@ def csc_median_axis_0(X):
     -------
     median : ndarray of shape (n_features,)
         Median.
-
     """
     if not isinstance(X, sp.csc_matrix):
         raise TypeError("Expected matrix of CSC format, got %s" % X.format)
