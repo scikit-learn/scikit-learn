@@ -231,7 +231,7 @@ cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
 
     @final
     cdef ITYPE_t n_samples_Y(self) nogil:
-        return self.Y_indptr.shape[0] -1
+        return self.Y_indptr.shape[0] - 1
 
     @final
     cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil:

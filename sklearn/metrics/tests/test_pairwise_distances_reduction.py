@@ -1,3 +1,4 @@
+import itertools
 import re
 from collections import defaultdict
 
@@ -815,11 +816,12 @@ def test_format_agnosticism(
     chunk_size,
     Dispatcher,
     dtype,
-    n_features=100,
 ):
     # Results must not depend on the number of threads
     rng = np.random.RandomState(global_random_seed)
     spread = 100
+    n_features = 100
+
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
 
@@ -837,62 +839,33 @@ def test_format_agnosticism(
         check_parameters = {"radius": radius}
         compute_parameters = {"sort_results": True}
 
-    # XXX: use itertools.pairwise when available?
-    dist_dense_dense, indices_dense_dense = Dispatcher.compute(
+    dist_dense, indices_dense = Dispatcher.compute(
         X,
         Y,
         parameter,
+        chunk_size=chunk_size,
         return_distance=True,
         **compute_parameters,
     )
 
-    dist_sparse_sparse, indices_sparse_sparse = Dispatcher.compute(
-        X_csr,
-        Y_csr,
-        parameter,
-        return_distance=True,
-        **compute_parameters,
-    )
-
-    ASSERT_RESULT[(Dispatcher, dtype)](
-        dist_dense_dense,
-        dist_sparse_sparse,
-        indices_dense_dense,
-        indices_sparse_sparse,
-        **check_parameters,
-    )
-
-    dist_dense_sparse, indices_dense_sparse = Dispatcher.compute(
-        X,
-        Y_csr,
-        parameter,
-        return_distance=True,
-        **compute_parameters,
-    )
-
-    ASSERT_RESULT[(Dispatcher, dtype)](
-        dist_dense_dense,
-        dist_dense_sparse,
-        indices_dense_dense,
-        indices_dense_sparse,
-        **check_parameters,
-    )
-
-    dist_sparse_dense, indices_sparse_dense = Dispatcher.compute(
-        X_csr,
-        Y,
-        parameter,
-        return_distance=True,
-        **compute_parameters,
-    )
-
-    ASSERT_RESULT[(Dispatcher, dtype)](
-        dist_dense_dense,
-        dist_sparse_dense,
-        indices_dense_dense,
-        indices_sparse_dense,
-        **check_parameters,
-    )
+    for _X, _Y in itertools.product((X, X_csr), (Y, Y_csr)):
+        if _X is X and _Y is Y:
+            continue
+        dist, indices = Dispatcher.compute(
+            _X,
+            _Y,
+            parameter,
+            chunk_size=chunk_size,
+            return_distance=True,
+            **compute_parameters,
+        )
+        ASSERT_RESULT[(Dispatcher, dtype)](
+            dist_dense,
+            dist,
+            indices_dense,
+            indices,
+            **check_parameters,
+        )
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
