@@ -1827,11 +1827,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         - `'threshold'`: squashes to zero all coefficients less than alpha from
           the projection ``dictionary * X'``.
 
-        If `None`, defaults to `alpha`.
-
-        .. versionchanged:: 1.2
-            When None, default value changed from 1.0 to `alpha`.
-
     transform_n_nonzero_coefs : int, default=None
         Number of nonzero coefficients to target in each column of the
         solution. This is only used by `algorithm='lars'` and
@@ -1844,6 +1839,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         If `algorithm='threshold'`, `alpha` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
         If `None`, defaults to `alpha`.
+
+        .. versionchanged:: 1.2
+            When None, default value changed from 1.0 to `alpha`.
 
     verbose : bool or int, default=False
         To control the verbosity of the procedure.
