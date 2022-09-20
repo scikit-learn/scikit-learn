@@ -128,10 +128,10 @@ its ``coef_`` member::
 
 Note that the class :class:`Ridge` allows for the user to specify that the 
 solver be automatically chosen by setting `solver="auto"`. When this option 
-is specified, :class:`Ridge` will choose between the `"lbfgs"`, `"sag"`, 
-`"cholesky"`, and `"sparse_cg"` solvers. :class:`Ridge` will begin checking 
-the conditions shown in the following table from top to bottom. If the 
-condition is true, the corresponding solver is chosen.
+is specified, :class:`Ridge` will choose between the `"lbfgs"`, `"cholesky"`, 
+and `"sparse_cg"` solvers. :class:`Ridge` will begin checking the conditions
+shown in the following table from top to bottom. If the condition is true,
+the corresponding solver is chosen.
 
 +-------------+----------------------------------------------------+
 | **Solver**  | **Condition**                                      |
