@@ -1541,6 +1541,10 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
     dcg_score : Discounted Cumulative Gain (not normalized).
 
     """
+    # raise value error if y_true or y_score is single input
+    if y_true.ndim == 1 & y_true.shape[0] == 1:
+        raise ValueError("Expected y_true to have an array >1")
+
     gain = _dcg_sample_scores(y_true, y_score, k, ignore_ties=ignore_ties)
     # Here we use the order induced by y_true so we can ignore ties since
     # the gain associated to tied indices is the same (permuting ties doesn't
