@@ -801,24 +801,23 @@ def test_n_threads_agnosticism(
 
 
 @pytest.mark.parametrize(
-    "n_samples, Dispatcher, dtype",
+    "Dispatcher, dtype",
     [
-        (100, ArgKmin, np.float64),
-        (100, RadiusNeighbors, np.float32),
-        (100, ArgKmin, np.float32),
-        (100, RadiusNeighbors, np.float64),
+        (ArgKmin, np.float64),
+        (RadiusNeighbors, np.float32),
+        (ArgKmin, np.float32),
+        (RadiusNeighbors, np.float64),
     ],
 )
 def test_format_agnosticism(
     global_random_seed,
-    n_samples,
     Dispatcher,
     dtype,
 ):
     """Check that results do not depend on the format (dense, sparse) of the input."""
     rng = np.random.RandomState(global_random_seed)
     spread = 100
-    n_features = 100
+    n_samples, n_features = 100, 100
 
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
