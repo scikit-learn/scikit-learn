@@ -42,6 +42,10 @@ Changes impacting all modules
 -----------------------------
 
 - |MajorFeature| The `set_output` API has been adopted by all transformers.
+  Meta-estimators that contain transformers such as :class:`pipeline.Pipeline`
+  or :class:`compose.ColumnTransformer` also define a `set_output`.
+  For details, see
+  `SLEP018 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep018/proposal.html>`__.
   :pr:`23734` by `Thomas Fan`_.
 
 - |Enhancement| Finiteness checks (detection of NaN and infinite values) in all

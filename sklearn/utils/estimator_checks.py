@@ -4160,7 +4160,7 @@ def check_set_output(name, transformer_orig):
     if name in CROSS_DECOMPOSITION:
         X_trans_default = X_trans_default[0]
 
-    # Default and no setting returne the same transform
+    # Default and no setting -> returns the same transform
     assert_allclose_dense_sparse(X_trans_no_setting, X_trans_default)
 
 

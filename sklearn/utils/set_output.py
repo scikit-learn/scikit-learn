@@ -116,7 +116,7 @@ def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
 
     Returns
     -------
-    wrapped_output : {ndarray, dataframe}
+    output : {ndarray, dataframe}
         If the output config is "default" or the estimator is not configured
         for wrapping return `data_to_wrap` unchanged.
         If the output config is "pandas", return `data_to_wrap` as a pandas
@@ -184,10 +184,17 @@ class _SetOutputMixin:
         if not auto_wrap_output:
             return
 
-        if hasattr(cls, "transform"):
-            cls.transform = _wrap_method_output(cls.transform, "transform")
-        if hasattr(cls, "fit_transform"):
-            cls.fit_transform = _wrap_method_output(cls.fit_transform, "transform")
+        # Mapping from method to key in configurationsaf
+        method_to_key = [
+            ("transform", "transform"),
+            ("fit_transform", "transform"),
+        ]
+
+        for method, key in method_to_key:
+            if not hasattr(cls, method):
+                continue
+            wrapped_method = _wrap_method_output(getattr(cls, method), key)
+            setattr(cls, method, wrapped_method)
 
     @available_if(_auto_wrap_is_configured)
     def set_output(self, *, transform=None):
