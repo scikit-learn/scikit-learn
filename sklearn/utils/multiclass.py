@@ -54,7 +54,7 @@ def unique_labels(*ys):
     Parameters
     ----------
     *ys : array-likes
-        Unique Label Values.
+        Label values.
 
     Returns
     -------
