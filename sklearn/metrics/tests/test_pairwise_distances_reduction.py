@@ -868,28 +868,24 @@ def test_format_agnosticism(
         )
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
-@pytest.mark.parametrize("n_samples", [100, 1000])
-@pytest.mark.parametrize("metric", BaseDistanceReductionDispatcher.valid_metrics())
-@pytest.mark.parametrize(
-    "Dispatcher",
-    [ArgKmin, RadiusNeighbors],
-)
+@pytest.mark.parametrize("n_samples_X, n_samples_Y", [(100, 100), (100, 500), (500, 100)])
+@pytest.mark.parametrize("metric", ['euclidean', 'minkowski', 'manhattan', 'infinity', 'seuclidean', 'haversine'])
+@pytest.mark.parametrize("Dispatcher", [ArgKmin, RadiusNeighbors])
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_strategies_consistency(
     global_random_seed,
     Dispatcher,
     metric,
-    n_samples,
+    n_samples_X,
+    n_samples_Y,
     dtype,
     n_features=10,
 ):
 
     rng = np.random.RandomState(global_random_seed)
     spread = 100
-    X = rng.rand(n_samples, n_features).astype(dtype) * spread
-    Y = rng.rand(n_samples, n_features).astype(dtype) * spread
+    X = rng.rand(n_samples_X, n_features).astype(dtype) * spread
+    Y = rng.rand(n_samples_Y, n_features).astype(dtype) * spread
 
     # Haversine distance only accepts 2D data
     if metric == "haversine":
@@ -917,7 +913,7 @@ def test_strategies_consistency(
             metric, n_features, seed=global_random_seed
         )[0],
         # To be sure to use parallelization
-        chunk_size=n_samples // 4,
+        chunk_size=n_samples_X // 4,
         strategy="parallel_on_X",
         return_distance=True,
         **compute_parameters,
@@ -933,7 +929,7 @@ def test_strategies_consistency(
             metric, n_features, seed=global_random_seed
         )[0],
         # To be sure to use parallelization
-        chunk_size=n_samples // 4,
+        chunk_size=n_samples_Y // 4,
         strategy="parallel_on_Y",
         return_distance=True,
         **compute_parameters,
