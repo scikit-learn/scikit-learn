@@ -9,7 +9,6 @@ from ._available_if import available_if
 
 __all__ = [
     "get_output_config",
-    "SetOutputMixin",
     "safe_set_output",
 ]
 
@@ -67,7 +66,7 @@ def get_output_config(method, estimator=None):
     Parameters
     ----------
     method : {"transform"}
-        Method to get container output for.
+        Estimator's method to get container output for.
 
     estimator : estimator instance or None
         Estimator to get the output configuration from. If `None`, check global
@@ -101,9 +100,9 @@ def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
     Parameters
     ----------
     method : {"transform"}
-        Method to get container output for.
+        Estimator's method to get container output for.
 
-    data_to_wrap : ndarray
+    data_to_wrap : {ndarray, dataframe}
         Data to wrap with container.
 
     original_input : {ndarray, dataframe}
@@ -113,18 +112,19 @@ def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
         Index to attach to output.
 
     estimator : estimator instance
-        Estimator with to get the output configuration from. The estimator
-        must define a `get_feature_names_out` when a non-ndarray is returned.
+        Estimator with to get the output configuration from.
 
     Returns
     -------
-    wrapped_output : ndarray or DataFrame
-        Wrapped output with column names and index or `output` itself if wrapping is
-        not configured.
+    wrapped_output : {ndarray, dataframe}
+        If the output config is "default" or the estimator is not configured
+        for wrapping return `data_to_wrap` unchanged.
+        If the output config is "pandas", return `data_to_wrap` as a pandas
+        DataFrame.
     """
     output_config = get_output_config(method, estimator)
 
-    if output_config["dense"] == "default":
+    if output_config["dense"] == "default" or not _auto_wrap_is_configured(estimator):
         return data_to_wrap
 
     # dense_config == "pandas"
@@ -136,13 +136,13 @@ def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
 
 
 def _wrap_method_output(f, method):
-    """Wrapper used by SetOutputMixin to automatically wrap methods."""
+    """Wrapper used by `_SetOutputMixin` to automatically wrap methods."""
 
     @wraps(f)
     def wrapped(self, X, *args, **kwargs):
         data_to_wrap = f(self, X, *args, **kwargs)
-        # only wrap the first output for cross decomposition
         if isinstance(data_to_wrap, tuple):
+            # only wrap the first output for cross decomposition
             return (
                 _wrap_data_with_container(method, data_to_wrap[0], X, self),
                 *data_to_wrap[1:],
@@ -153,16 +153,21 @@ def _wrap_method_output(f, method):
     return wrapped
 
 
-def _auto_wrap_is_configured(self):
-    return hasattr(self, "get_feature_names_out") and getattr(
-        self, "_sklearn_auto_wrap_output", False
+def _auto_wrap_is_configured(estimator):
+    """Return True if estimator is configured for auto-wrapping the transform method.
+
+    `_SetOutputMixin` sets `_sklearn_auto_wrap_output` to False if auto wrapping is
+    manually disabled.
+    """
+    return hasattr(estimator, "get_feature_names_out") and getattr(
+        estimator, "_sklearn_auto_wrap_output", False
     )
 
 
-class SetOutputMixin:
+class _SetOutputMixin:
     """Mixin that dynamically wraps methods to return container based on config.
 
-    Currently `SetOutputMixin` wraps `transform` and `fit_transform` and configures
+    Currently `_SetOutputMixin` wraps `transform` and `fit_transform` and configures
     it based on `set_output` of the global configuration.
 
     `set_output` is only defined if `get_feature_names_out` is defined and
@@ -195,7 +200,12 @@ class SetOutputMixin:
         Parameters
         ----------
         transform : {"default", "pandas"}, default=None
-            Configure output of `transform` and `fit_transform`.
+            Configure output of the following estimator's methods:
+
+            - `"transform"`
+            - `"fit_transform"`
+
+            If `None`, this operation is a no-op.
 
         Returns
         -------
@@ -227,7 +237,12 @@ def safe_set_output(estimator, *, transform=None):
         Estimator instance.
 
     transform : {"default", "pandas"}, default=None
-        Configure output of `transform` and `fit_transform`.
+        Configure output of the following estimator's methods:
+
+        - `"transform"`
+        - `"fit_transform"`
+
+        If `None`, this operation is a no-op.
 
     Returns
     -------
@@ -247,6 +262,6 @@ def safe_set_output(estimator, *, transform=None):
     if not hasattr(estimator, "set_output"):
         raise ValueError(
             f"Unable to configure output for {estimator} because `set_output` "
-            "is not available"
+            "is not available."
         )
     return estimator.set_output(transform=transform)

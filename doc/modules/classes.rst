@@ -1637,7 +1637,6 @@ Plotting
    utils.safe_sqr
    utils.shuffle
    utils.set_output.get_output_config
-   utils.set_output.SetOutputMixin
    utils.set_output.safe_set_output
    utils.sparsefuncs.incr_mean_variance_axis
    utils.sparsefuncs.inplace_column_scale

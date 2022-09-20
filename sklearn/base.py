@@ -15,7 +15,7 @@ import numpy as np
 from . import __version__
 from ._config import get_config
 from .utils import _IS_32BIT
-from .utils.set_output import SetOutputMixin
+from .utils.set_output import _SetOutputMixin
 from .utils._tags import (
     _DEFAULT_TAGS,
 )
@@ -806,7 +806,7 @@ class BiclusterMixin:
         return data[row_ind[:, np.newaxis], col_ind]
 
 
-class TransformerMixin(SetOutputMixin):
+class TransformerMixin(_SetOutputMixin):
     """Mixin class for all transformers in scikit-learn."""
 
     def fit_transform(self, X, y=None, **fit_params):

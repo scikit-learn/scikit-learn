@@ -7,7 +7,7 @@ from numpy.testing import assert_array_equal
 from sklearn._config import config_context, get_config
 from sklearn.utils.set_output import _wrap_in_pandas_container
 from sklearn.utils.set_output import safe_set_output
-from sklearn.utils.set_output import SetOutputMixin
+from sklearn.utils.set_output import _SetOutputMixin
 from sklearn.utils.set_output import get_output_config
 
 
@@ -51,7 +51,7 @@ class EstimatorNoSetOutputWithTransform:
         return X  # pragma: no cover
 
 
-class EstimatorWithSetOutput(SetOutputMixin):
+class EstimatorWithSetOutput(_SetOutputMixin):
     def fit(self, X, y=None):
         self.n_features_in_ = X.shape[1]
         return self
@@ -90,7 +90,7 @@ def test_safe_set_output():
     assert config["dense"] == "default"
 
 
-class EstimatorNoSetOutputWithTransformNoFeatureNamesOut(SetOutputMixin):
+class EstimatorNoSetOutputWithTransformNoFeatureNamesOut(_SetOutputMixin):
     def transform(self, X, y=None):
         return X  # pragma: no cover
 
@@ -169,7 +169,7 @@ def test_get_output_config():
     assert config["dense"] == "pandas"
 
 
-class EstimatorWithSetOutputNoAutoWrap(SetOutputMixin, auto_wrap_output=False):
+class EstimatorWithSetOutputNoAutoWrap(_SetOutputMixin, auto_wrap_output=False):
     def transform(self, X, y=None):
         return X
 
@@ -187,5 +187,5 @@ def test_auto_wrap_output_errors_with_incorrect_input():
     msg = "auto_wrap_output should be a bool"
     with pytest.raises(ValueError, match=msg):
 
-        class BadEstimator(SetOutputMixin, auto_wrap_output="bad_parameter"):
+        class BadEstimator(_SetOutputMixin, auto_wrap_output="bad_parameter"):
             pass
