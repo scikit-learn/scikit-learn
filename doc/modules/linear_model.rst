@@ -127,7 +127,7 @@ its ``coef_`` member::
     0.13636...
 
 Note that the class :class:`Ridge` allows for the user to specify that the 
-solver be automatically chosen when `solver="auto"`. When this option 
+solver be automatically chosen by setting `solver="auto"`. When this option 
 is specified, :class:`Ridge` will choose between the `"lbfgs"`, `"sag"`, 
 `"cholesky"`, and `"sparse_cg"` solvers. :class:`Ridge` will begin checking 
 the conditions shown in the following table from top to bottom. If the 
