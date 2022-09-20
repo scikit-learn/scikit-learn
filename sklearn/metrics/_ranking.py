@@ -1379,6 +1379,12 @@ def _tie_averaged_dcg(y_true, y_score, discount_cumsum):
     return (ranked * discount_sums).sum()
 
 
+def _check_dcg_target_length(y_true):
+    """Check that y_true has the correct shape for DCG."""
+    if len(y_true) == 1 and len(y_true[0]) == 1:
+        raise ValueError("Cannot compute DCG for a single sample.")
+
+
 def _check_dcg_target_type(y_true):
     y_type = type_of_target(y_true, input_name="y_true")
     supported_fmt = (
@@ -1492,6 +1498,7 @@ def dcg_score(
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
+    _check_dcg_target_length(y_true)
     _check_dcg_target_type(y_true)
     return np.average(
         _dcg_sample_scores(
@@ -1541,9 +1548,6 @@ def _ndcg_sample_scores(y_true, y_score, k=None, ignore_ties=False):
     dcg_score : Discounted Cumulative Gain (not normalized).
 
     """
-    # raise value error if y_true or y_score is single input
-    if y_true.ndim == 1 & y_true.shape[0] == 1:
-        raise ValueError("Expected y_true to have an array >1")
 
     gain = _dcg_sample_scores(y_true, y_score, k, ignore_ties=ignore_ties)
     # Here we use the order induced by y_true so we can ignore ties since
@@ -1664,6 +1668,8 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
             " raise a ValueError on negative y_true values starting from version 1.4.",
             FutureWarning,
         )
+    # raise value error if y_true or y_score is single input
+    _check_dcg_target_length(y_true)
     _check_dcg_target_type(y_true)
     gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
     return np.average(gain, weights=sample_weight)
