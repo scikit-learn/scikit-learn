@@ -62,6 +62,9 @@ class ProgressBar(BaseCallback, AutoPropagatedMixin):
         self._stop_event.set()
         self.progress_monitor.join()
 
+    def on_fit_exception(self):
+        pass
+
     def __getstate__(self):
         state = self.__dict__.copy()
         if "_stop_event" in state:

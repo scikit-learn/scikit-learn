@@ -718,6 +718,13 @@ class BaseEstimator:
             if not is_propagated:
                 callback.on_fit_end()
 
+    def _eval_callbacks_on_fit_exception(self):
+        if not hasattr(self, "_callbacks"):
+            return
+
+        for callback in self._callbacks:
+            callback.on_fit_exception()
+
     def _from_reconstruction_attributes(self, *, reconstruction_attributes):
         """Return an as if fitted copy of this estimator
 

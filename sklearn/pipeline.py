@@ -32,6 +32,7 @@ from .utils.validation import check_is_fitted
 from .utils.fixes import delayed
 from .exceptions import NotFittedError
 from .callback._base import _eval_callbacks_on_fit_iter_end
+from .callback._base import callback_aware
 
 
 __all__ = ["Pipeline", "FeatureUnion", "make_pipeline", "make_union"]
@@ -366,6 +367,7 @@ class Pipeline(_BaseComposition):
 
         return X
 
+    @callback_aware
     def fit(self, X, y=None, **fit_params):
         """Fit the model.
 

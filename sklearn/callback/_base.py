@@ -1,6 +1,7 @@
 # License: BSD 3 clause
 
 from abc import ABC, abstractmethod
+from functools import wraps
 import weakref
 
 
@@ -121,6 +122,10 @@ class BaseCallback(ABC):
         """
         pass
 
+    @abstractmethod
+    def on_fit_exception(self):
+        pass
+
     def _set_context(self, context):
         if not hasattr(self, "_callback_contexts"):
             self._callback_contexts = []
@@ -146,3 +151,19 @@ class CallbackContext:
         for callback in callbacks:
             callback._set_context(self)
         weakref.finalize(self, finalizer, finalizer_args)
+
+
+def callback_aware(fit_method):
+    """Decorator ...
+    """
+    @wraps(fit_method)
+    def inner(self, *args, **kwargs):
+        try:
+            return fit_method(self, *args, **kwargs)
+        except BaseException:
+            self._eval_callbacks_on_fit_exception()
+            raise
+        finally:
+            self._eval_callbacks_on_fit_end()
+
+    return inner
