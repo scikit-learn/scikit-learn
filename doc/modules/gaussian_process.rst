@@ -57,7 +57,9 @@ If the initial hyperparameters should be kept fixed, `None` can be passed as
 optimizer.
 
 The noise level in the targets can be specified by passing it via the
-parameter ``alpha``, either globally as a scalar or per datapoint.
+parameter ``alpha`` when constructing the instance of
+:class:`GaussianProcessRegressor` or via the parameter ``sample_variance``
+when fitting dataset, either globally as a scalar or per datapoint.
 Note that a moderate noise level can also be helpful for dealing with numeric
 issues during fitting as it is effectively implemented as Tikhonov
 regularization, i.e., by adding it to the diagonal of the kernel matrix. An

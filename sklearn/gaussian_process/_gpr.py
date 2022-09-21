@@ -128,6 +128,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         The kernel used for prediction. The structure of the kernel is the
         same as the one passed as parameter but with optimized hyperparameters.
 
+    sample_variance_ : float or ndarray of shape (n_samples,), default=None
+        Value added to the diagonal of the kernel matrix during fitting.
+
     L_ : array-like of shape (n_samples, n_samples)
         Lower-triangular Cholesky decomposition of the kernel in ``X_train_``.
 
@@ -203,7 +206,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self.copy_X_train = copy_X_train
         self.random_state = random_state
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_variance=None):
         """Fit Gaussian process regression model.
 
         Parameters
@@ -213,6 +216,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Target values.
+
+        sample_variance : float or ndarray of shape (n_samples,), default=None
+            Value added to the diagonal of the kernel matrix during fitting.
 
         Returns
         -------
@@ -256,14 +262,27 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             self._y_train_mean = np.zeros(shape=shape_y_stats)
             self._y_train_std = np.ones(shape=shape_y_stats)
 
-        if np.iterable(self.alpha) and self.alpha.shape[0] != y.shape[0]:
-            if self.alpha.shape[0] == 1:
-                self.alpha = self.alpha[0]
-            else:
-                raise ValueError(
-                    "alpha must be a scalar or an array with same number of "
-                    f"entries as y. ({self.alpha.shape[0]} != {y.shape[0]})"
-                )
+        self.sample_variance_ = sample_variance
+        if sample_variance is None:
+            if np.iterable(self.alpha) and self.alpha.shape[0] != y.shape[0]:
+                if self.alpha.shape[0] == 1:
+                    self.alpha = self.alpha[0]
+                else:
+                    raise ValueError(
+                        "alpha must be a scalar or an array with same number of "
+                        f"entries as y. ({self.alpha.shape[0]} != {y.shape[0]})"
+                    )
+        else:
+            if np.iterable(sample_variance) and sample_variance.shape[0] != y.shape[0]:
+                if sample_variance.shape[0] == 1:
+                    sample_variance = sample_variance[0]
+                    self.sample_variance_ = sample_variance
+                else:
+                    raise ValueError(
+                        "sample_variance must be a scalar or an array with same number"
+                        f" of entries as y. ({sample_variance.shape[0]} !="
+                        f" {y.shape[0]})"
+                    )
 
         self.X_train_ = np.copy(X) if self.copy_X_train else X
         self.y_train_ = np.copy(y) if self.copy_X_train else y
@@ -319,15 +338,25 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         # of actual query points
         # Alg. 2.1, page 19, line 2 -> L = cholesky(K + sigma^2 I)
         K = self.kernel_(self.X_train_)
-        K[np.diag_indices_from(K)] += self.alpha
+        if sample_variance is None:
+            K[np.diag_indices_from(K)] += self.alpha
+        else:
+            K[np.diag_indices_from(K)] += sample_variance
         try:
             self.L_ = cholesky(K, lower=GPR_CHOLESKY_LOWER, check_finite=False)
         except np.linalg.LinAlgError as exc:
-            exc.args = (
-                f"The kernel, {self.kernel_}, is not returning a positive "
-                "definite matrix. Try gradually increasing the 'alpha' "
-                "parameter of your GaussianProcessRegressor estimator.",
-            ) + exc.args
+            if sample_variance is None:
+                exc.args = (
+                    f"The kernel, {self.kernel_}, is not returning a positive "
+                    "definite matrix. Try gradually increasing the 'alpha' "
+                    "parameter of your GaussianProcessRegressor estimator.",
+                ) + exc.args
+            else:
+                exc.args = (
+                    f"The kernel, {self.kernel_}, is not returning a positive "
+                    "definite matrix. Try gradually increasing the 'sample_variance' "
+                    "parameter when you invoke 'fit'.",
+                ) + exc.args
             raise
         # Alg 2.1, page 19, line 3 -> alpha = L^T \ (L \ y)
         self.alpha_ = cho_solve(
@@ -548,7 +577,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             K = kernel(self.X_train_)
 
         # Alg. 2.1, page 19, line 2 -> L = cholesky(K + sigma^2 I)
-        K[np.diag_indices_from(K)] += self.alpha
+        if self.sample_variance_ is None:
+            K[np.diag_indices_from(K)] += self.alpha
+        else:
+            K[np.diag_indices_from(K)] += self.sample_variance_
         try:
             L = cholesky(K, lower=GPR_CHOLESKY_LOWER, check_finite=False)
         except np.linalg.LinAlgError:
