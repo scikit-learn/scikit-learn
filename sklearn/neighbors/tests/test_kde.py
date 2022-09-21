@@ -17,7 +17,7 @@ import joblib
 def compute_kernel_slow(Y, X, kernel, h):
     if h == "scott":
         h = X.shape[0] ** (-1 / (X.shape[1] + 4))
-    elif h == "silvermann":
+    elif h == "silverman":
         h = (X.shape[0] * (X.shape[1] + 2) / 4) ** (-1 / (X.shape[1] + 4))
 
     d = np.sqrt(((Y[:, None, :] - X) ** 2).sum(-1))
@@ -51,7 +51,7 @@ def check_results(kernel, bandwidth, atol, rtol, X, Y, dens_true):
 @pytest.mark.parametrize(
     "kernel", ["gaussian", "tophat", "epanechnikov", "exponential", "linear", "cosine"]
 )
-@pytest.mark.parametrize("bandwidth", [0.01, 0.1, 1, "scott", "silvermann"])
+@pytest.mark.parametrize("bandwidth", [0.01, 0.1, 1, "scott", "silverman"])
 def test_kernel_density(kernel, bandwidth):
     n_samples, n_features = (100, 3)
 
@@ -115,7 +115,7 @@ def test_kde_algorithm_metric_choice(algorithm, metric):
     kde = KernelDensity(algorithm=algorithm, metric=metric)
 
     if algorithm == "kd_tree" and metric not in KDTree.valid_metrics:
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="invalid metric"):
             kde.fit(X)
     else:
         kde.fit(X)
@@ -131,18 +131,7 @@ def test_kde_score(n_samples=100, n_features=3):
     # Y = rng.random_sample((n_samples, n_features))
 
 
-def test_kde_badargs():
-    X = np.random.random((200, 10))
-    with pytest.raises(ValueError):
-        KernelDensity(algorithm="blah").fit(X)
-    with pytest.raises(ValueError):
-        KernelDensity(bandwidth=0).fit(X)
-    with pytest.raises(ValueError):
-        KernelDensity(kernel="blah").fit(X)
-    with pytest.raises(ValueError):
-        KernelDensity(metric="blah").fit(X)
-    with pytest.raises(ValueError):
-        KernelDensity(algorithm="kd_tree", metric="blah").fit(X)
+def test_kde_sample_weights_error():
     kde = KernelDensity()
     with pytest.raises(ValueError):
         kde.fit(np.random.random((200, 10)), sample_weight=np.random.random((200, 10)))
@@ -210,17 +199,6 @@ def test_kde_sample_weights():
                     assert_allclose(scores_scaled_weight, scores_weight)
 
 
-def test_sample_weight_invalid():
-    # Check sample weighting raises errors.
-    kde = KernelDensity()
-    data = np.reshape([1.0, 2.0, 3.0], (-1, 1))
-
-    sample_weight = [0.1, -0.2, 0.3]
-    expected_err = "Negative values in data passed to `sample_weight`"
-    with pytest.raises(ValueError, match=expected_err):
-        kde.fit(data, sample_weight=sample_weight)
-
-
 @pytest.mark.parametrize("sample_weight", [None, [0.1, 0.2, 0.3]])
 def test_pickling(tmpdir, sample_weight):
     # Make sure that predictions are the same before and after pickling. Used
@@ -254,7 +232,7 @@ def test_check_is_fitted(method):
         getattr(kde, method)(X)
 
 
-@pytest.mark.parametrize("bandwidth", ["scott", "silvermann", 0.1])
+@pytest.mark.parametrize("bandwidth", ["scott", "silverman", 0.1])
 def test_bandwidth(bandwidth):
     n_samples, n_features = (100, 3)
     rng = np.random.RandomState(0)
@@ -268,45 +246,8 @@ def test_bandwidth(bandwidth):
     # Test that the attribute self.bandwidth_ has the expected value
     if bandwidth == "scott":
         h = X.shape[0] ** (-1 / (X.shape[1] + 4))
-    elif bandwidth == "silvermann":
+    elif bandwidth == "silverman":
         h = (X.shape[0] * (X.shape[1] + 2) / 4) ** (-1 / (X.shape[1] + 4))
     else:
         h = bandwidth
     assert kde.bandwidth_ == pytest.approx(h)
-
-
-@pytest.mark.parametrize(
-    "bandwidth, exc_type, exc_msg",
-    [
-        (
-            "str test",
-            ValueError,
-            "When `bandwidth` is a string, it should be one of: scott, silvermann."
-            " Got 'str test' instead.",
-        ),
-        (
-            -2.0,
-            ValueError,
-            r"bandwidth == -2.0, must be > 0.",
-        ),
-        (
-            0.0,
-            ValueError,
-            r"bandwidth == 0.0, must be > 0.",
-        ),
-        (
-            np.ones(2),
-            TypeError,
-            r"bandwidth must be an instance of float, not ndarray.",
-        ),
-    ],
-    # Avoid long error messages in test names:
-    # https://github.com/scikit-learn/scikit-learn/issues/21362
-)
-def test_bandwidth_exceptions(bandwidth, exc_type, exc_msg):
-    # Check invalid `bandwidth` values
-    n_samples, n_features = (100, 3)
-    rng = np.random.RandomState(0)
-    X = rng.randn(n_samples, n_features)
-    with pytest.raises(exc_type, match=exc_msg):
-        KernelDensity(bandwidth=bandwidth).fit(X)

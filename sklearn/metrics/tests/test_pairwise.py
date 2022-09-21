@@ -474,7 +474,9 @@ def test_pairwise_distances_argmin_min(global_dtype):
     assert_allclose(vals, expected_vals)
     # sparse matrix case
     idxsp, valssp = pairwise_distances_argmin_min(Xsp, Ysp, metric="euclidean")
+    idxsp2 = pairwise_distances_argmin(Xsp, Ysp, metric="euclidean")
     assert_allclose(idxsp, expected_idx)
+    assert_allclose(idxsp2, expected_idx)
     assert_allclose(valssp, expected_vals)
     # We don't want np.matrix here
     assert type(idxsp) == np.ndarray
@@ -506,7 +508,9 @@ def test_pairwise_distances_argmin_min(global_dtype):
     assert_allclose(vals, expected_vals)
     # sparse matrix case
     idxsp, valssp = pairwise_distances_argmin_min(Xsp, Ysp, metric="manhattan")
+    idxsp2 = pairwise_distances_argmin(Xsp, Ysp, metric="manhattan")
     assert_allclose(idxsp, expected_idx)
+    assert_allclose(idxsp2, expected_idx)
     assert_allclose(valssp, expected_vals)
 
     # Non-euclidean Scipy distance (callable)
@@ -561,6 +565,14 @@ def test_pairwise_distances_argmin_min(global_dtype):
     argmin_1 = pairwise_distances_argmin(X, X, axis=1)
 
     assert_array_equal(argmin_0, argmin_1)
+
+    # F-contiguous arrays must be supported and must return identical results.
+    argmin_C_contiguous = pairwise_distances_argmin(X, Y)
+    argmin_F_contiguous = pairwise_distances_argmin(
+        np.asfortranarray(X), np.asfortranarray(Y)
+    )
+
+    assert_array_equal(argmin_C_contiguous, argmin_F_contiguous)
 
 
 def _reduce_func(dist, start):

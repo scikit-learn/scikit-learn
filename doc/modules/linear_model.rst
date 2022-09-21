@@ -126,6 +126,23 @@ its ``coef_`` member::
     >>> reg.intercept_
     0.13636...
 
+Note that the class :class:`Ridge` allows for the user to specify that the 
+solver be automatically chosen by setting `solver="auto"`. When this option 
+is specified, :class:`Ridge` will choose between the `"lbfgs"`, `"cholesky"`, 
+and `"sparse_cg"` solvers. :class:`Ridge` will begin checking the conditions
+shown in the following table from top to bottom. If the condition is true,
+the corresponding solver is chosen.
+
++-------------+----------------------------------------------------+
+| **Solver**  | **Condition**                                      |
++-------------+----------------------------------------------------+
+| 'lbfgs'     | The ``positive=True`` option is specified.         |
++-------------+----------------------------------------------------+
+| 'cholesky'  | The input array X is not sparse.                   |
++-------------+----------------------------------------------------+
+| 'sparse_cg' | None of the above conditions are fulfilled.        |
++-------------+----------------------------------------------------+
+
 
 Classification
 --------------
@@ -389,10 +406,10 @@ formula is valid only when `n_samples > n_features`.
            The Annals of Statistics 35.5 (2007): 2173-2192.
            <0712.0881.pdf>`
 
-  .. [13] `Cherkassky, Vladimir, and Yunqian Ma.
+  .. [13] :doi:`Cherkassky, Vladimir, and Yunqian Ma.
            "Comparison of model selection for regression."
            Neural computation 15.7 (2003): 1691-1714.
-           <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.392.8794&rep=rep1&type=pdf>`_
+           <10.1162/089976603321891864>`
 
 Comparison with the regularization parameter of SVM
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1549,7 +1566,7 @@ in the following ways.
   * Peter J. Huber, Elvezio M. Ronchetti: Robust Statistics, Concomitant scale estimates, pg 172
 
 Note that this estimator is different from the R implementation of Robust Regression
-(http://www.ats.ucla.edu/stat/r/dae/rreg.htm) because the R implementation does a weighted least
+(https://stats.oarc.ucla.edu/r/dae/robust-regression/) because the R implementation does a weighted least
 squares implementation with weights given to each sample on the basis of how much the residual is
 greater than a certain threshold.
 

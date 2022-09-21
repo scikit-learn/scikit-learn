@@ -1,5 +1,5 @@
 import numpy as np
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal, assert_allclose
 import pytest
 
 from sklearn.manifold import _mds as mds
@@ -42,3 +42,30 @@ def test_MDS():
     sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
     mds_clf = mds.MDS(metric=False, n_jobs=3, dissimilarity="precomputed")
     mds_clf.fit(sim)
+
+
+@pytest.mark.parametrize("k", [0.5, 1.5, 2])
+def test_normed_stress(k):
+    """Test that non-metric MDS normalized stress is scale-invariant."""
+    sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
+
+    X1, stress1 = mds.smacof(
+        sim, metric=False, normalized_stress=True, max_iter=5, random_state=0
+    )
+    X2, stress2 = mds.smacof(
+        k * sim, metric=False, normalized_stress=True, max_iter=5, random_state=0
+    )
+
+    assert_allclose(stress1, stress2, rtol=1e-5)
+    assert_allclose(X1, X2, rtol=1e-5)
+
+
+def test_normalize_metric_warning():
+    """
+    Test that a UserWarning is emitted when using normalized stress with
+    metric-MDS.
+    """
+    msg = "Normalized stress is not supported"
+    sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
+    with pytest.raises(ValueError, match=msg):
+        mds.smacof(sim, metric=True, normalized_stress=True)

@@ -6,7 +6,7 @@
 #         Andrew Knyazev <Andrew.Knyazev@ucdenver.edu>
 # License: BSD 3 clause
 
-import numbers
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
@@ -15,8 +15,9 @@ from scipy.linalg import LinAlgError, qr, svd
 from scipy.sparse import csc_matrix
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import check_random_state, as_float_array, check_scalar
-from ..metrics.pairwise import pairwise_kernels
+from ..utils._param_validation import Interval, StrOptions
+from ..utils import check_random_state, as_float_array
+from ..metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from ..neighbors import kneighbors_graph, NearestNeighbors
 from ..manifold import spectral_embedding
 from ._kmeans import k_means
@@ -426,8 +427,9 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         but may also lead to instabilities. If None, then ``'arpack'`` is
         used. See [4]_ for more details regarding `'lobpcg'`.
 
-    n_components : int, default=n_clusters
-        Number of eigenvectors to use for the spectral embedding.
+    n_components : int, default=None
+        Number of eigenvectors to use for the spectral embedding. If None,
+        defaults to `n_clusters`.
 
     random_state : int, RandomState instance, default=None
         A pseudo random number generator used for the initialization
@@ -589,11 +591,11 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
            Stella X. Yu, Jianbo Shi
            <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
 
-    .. [4] `Toward the Optimal Preconditioned Eigensolver:
-           Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001.
+    .. [4] :doi:`Toward the Optimal Preconditioned Eigensolver:
+           Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001
            A. V. Knyazev
            SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541.
-           <https://epubs.siam.org/doi/pdf/10.1137/S1064827500366124>`_
+           <10.1137/S1064827500366124>`
 
     .. [5] :doi:`Simple, direct, and efficient multi-way spectral clustering, 2019
            Anil Damle, Victor Minden, Lexing Ying
@@ -614,6 +616,33 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     SpectralClustering(assign_labels='discretize', n_clusters=2,
         random_state=0)
     """
+
+    _parameter_constraints: dict = {
+        "n_clusters": [Interval(Integral, 1, None, closed="left")],
+        "eigen_solver": [StrOptions({"arpack", "lobpcg", "amg"}), None],
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "random_state": ["random_state"],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
+        "gamma": [Interval(Real, 0, None, closed="left")],
+        "affinity": [
+            callable,
+            StrOptions(
+                set(KERNEL_PARAMS)
+                | {"nearest_neighbors", "precomputed", "precomputed_nearest_neighbors"}
+            ),
+        ],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "eigen_tol": [
+            Interval(Real, 0.0, None, closed="left"),
+            StrOptions({"auto"}),
+        ],
+        "assign_labels": [StrOptions({"kmeans", "discretize", "cluster_qr"})],
+        "degree": [Interval(Integral, 0, None, closed="left")],
+        "coef0": [Interval(Real, None, None, closed="neither")],
+        "kernel_params": [dict, None],
+        "n_jobs": [Integral, None],
+        "verbose": ["verbose"],
+    }
 
     def __init__(
         self,
@@ -672,6 +701,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         self : object
             A fitted instance of the estimator.
         """
+        self._validate_params()
+
         X = self._validate_data(
             X,
             accept_sparse=["csr", "csc", "coo"],
@@ -689,55 +720,6 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
                 " a custom affinity matrix, "
                 "set ``affinity=precomputed``."
             )
-
-        check_scalar(
-            self.n_clusters,
-            "n_clusters",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
-
-        check_scalar(
-            self.n_init,
-            "n_init",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
-
-        check_scalar(
-            self.gamma,
-            "gamma",
-            target_type=numbers.Real,
-            min_val=1.0,
-            include_boundaries="left",
-        )
-
-        check_scalar(
-            self.n_neighbors,
-            "n_neighbors",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
-
-        if self.eigen_tol != "auto":
-            check_scalar(
-                self.eigen_tol,
-                "eigen_tol",
-                target_type=numbers.Real,
-                min_val=0,
-                include_boundaries="left",
-            )
-
-        check_scalar(
-            self.degree,
-            "degree",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
 
         if self.affinity == "nearest_neighbors":
             connectivity = kneighbors_graph(
