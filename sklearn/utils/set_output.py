@@ -108,9 +108,6 @@ def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
     original_input : {ndarray, dataframe}
         Original input of function.
 
-    index : array-like
-        Index to attach to output.
-
     estimator : estimator instance
         Estimator with to get the output configuration from.
 
