@@ -145,7 +145,7 @@ Relation to impurity-based importance in trees
 Tree-based models provide an alternative measure of :ref:`feature importances
 based on the mean decrease in impurity <random_forest_feature_importance>`
 (MDI). Impurity is quantified by the splitting criterion of the decision trees
-(Gini, Entropy or Mean Squared Error). However, this method can give high
+(Gini, Log Loss or Mean Squared Error). However, this method can give high
 importance to features that may not be predictive on unseen data when the model
 is overfitting. Permutation-based feature importance, on the other hand, avoids
 this issue, since it can be computed on unseen data.
@@ -157,7 +157,7 @@ with a small number of possible categories.
 
 Permutation-based feature importances do not exhibit such a bias. Additionally,
 the permutation feature importance may be computed performance metric on the
-model predictions predictions and can be used to analyze any model class (not
+model predictions and can be used to analyze any model class (not
 just tree-based models).
 
 The following example highlights the limitations of impurity-based feature

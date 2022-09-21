@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as sp
 import pytest
+import warnings
 
 from sklearn.utils._testing import (
     assert_array_almost_equal,
@@ -64,12 +65,6 @@ def test_kernel_pca():
             if inv:
                 X_pred2 = kpca.inverse_transform(X_pred_transformed)
                 assert X_pred2.shape == X_pred.shape
-
-
-def test_kernel_pca_invalid_solver():
-    """Check that kPCA raises an error if the solver parameter is invalid"""
-    with pytest.raises(ValueError):
-        KernelPCA(eigen_solver="unknown").fit(np.random.randn(10, 10))
 
 
 def test_kernel_pca_invalid_parameters():
@@ -234,7 +229,12 @@ def test_leave_zero_eig():
     X_fit = np.array([[1, 1], [0, 0]])
 
     # Assert that even with all np warnings on, there is no div by zero warning
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        # There might be warnings about the kernel being badly conditioned,
+        # but there should not be warnings about division by zero.
+        # (Numpy division by zero warning can have many message variants, but
+        # at least we know that it is a RuntimeWarning so lets check only this)
+        warnings.simplefilter("error", RuntimeWarning)
         with np.errstate(all="warn"):
             k = KernelPCA(n_components=2, remove_zero_eig=False, eigen_solver="dense")
             # Fit, then transform
@@ -243,13 +243,6 @@ def test_leave_zero_eig():
             B = k.fit_transform(X_fit)
             # Compare
             assert_array_almost_equal(np.abs(A), np.abs(B))
-
-    for w in record:
-        # There might be warnings about the kernel being badly conditioned,
-        # but there should not be warnings about division by zero.
-        # (Numpy division by zero warning can have many message variants, but
-        # at least we know that it is a RuntimeWarning so lets check only this)
-        assert not issubclass(w.category, RuntimeWarning)
 
 
 def test_kernel_pca_precomputed():
@@ -315,18 +308,6 @@ def test_kernel_pca_precomputed_non_symmetric(solver):
     # comparison between the non-centered and centered versions
     assert_array_equal(kpca.eigenvectors_, kpca_c.eigenvectors_)
     assert_array_equal(kpca.eigenvalues_, kpca_c.eigenvalues_)
-
-
-def test_kernel_pca_invalid_kernel():
-    """Tests that using an invalid kernel name raises a ValueError
-
-    An invalid kernel name should raise a ValueError at fit time.
-    """
-    rng = np.random.RandomState(0)
-    X_fit = rng.random_sample((2, 4))
-    kpca = KernelPCA(kernel="tototiti")
-    with pytest.raises(ValueError):
-        kpca.fit(X_fit)
 
 
 def test_gridsearch_pipeline():
@@ -533,24 +514,6 @@ def test_32_64_decomposition_shape():
     # Compare the shapes (corresponds to the number of non-zero eigenvalues)
     kpca = KernelPCA()
     assert kpca.fit_transform(X).shape == kpca.fit_transform(X.astype(np.float32)).shape
-
-
-# TODO: Remove in 1.2
-def test_kernel_pca_lambdas_deprecated():
-    kp = KernelPCA()
-    kp.eigenvalues_ = None
-    msg = r"Attribute `lambdas_` was deprecated in version 1\.0"
-    with pytest.warns(FutureWarning, match=msg):
-        kp.lambdas_
-
-
-# TODO: Remove in 1.2
-def test_kernel_pca_alphas_deprecated():
-    kp = KernelPCA(kernel="precomputed")
-    kp.eigenvectors_ = None
-    msg = r"Attribute `alphas_` was deprecated in version 1\.0"
-    with pytest.warns(FutureWarning, match=msg):
-        kp.alphas_
 
 
 def test_kernel_pca_feature_names_out():

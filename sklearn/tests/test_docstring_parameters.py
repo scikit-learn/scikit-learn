@@ -20,6 +20,7 @@ from sklearn.utils import all_estimators
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
 from sklearn.utils.estimator_checks import _construct_instance
+from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
@@ -248,7 +249,7 @@ def test_fit_docstring_attributes(name, Estimator):
 
     # FIXME: TO BE REMOVED for 1.2 (avoid FutureWarning)
     if Estimator.__name__ == "TSNE":
-        est.set_params(learning_rate=200.0, init="random")
+        est.set_params(learning_rate=200.0, init="random", perplexity=2)
 
     # FIXME: TO BE REMOVED for 1.3 (avoid FutureWarning)
     if Estimator.__name__ == "SequentialFeatureSelector":
@@ -257,6 +258,27 @@ def test_fit_docstring_attributes(name, Estimator):
     # FIXME: TO BE REMOVED for 1.3 (avoid FutureWarning)
     if Estimator.__name__ == "FastICA":
         est.set_params(whiten="unit-variance")
+
+    # FIXME: TO BE REMOVED for 1.3 (avoid FutureWarning)
+    if Estimator.__name__ == "MiniBatchDictionaryLearning":
+        est.set_params(batch_size=5)
+
+    # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
+    if Estimator.__name__ in ("KMeans", "MiniBatchKMeans"):
+        est.set_params(n_init="auto")
+
+    # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
+    if Estimator.__name__ in (
+        "MultinomialNB",
+        "ComplementNB",
+        "BernoulliNB",
+        "CategoricalNB",
+    ):
+        est.set_params(force_alpha=True)
+
+    if Estimator.__name__ == "QuantileRegressor":
+        solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
+        est.set_params(solver=solver)
 
     # In case we want to deprecate some attributes in the future
     skipped_attributes = {}

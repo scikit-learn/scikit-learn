@@ -48,8 +48,10 @@ from matplotlib import offsetbox
 from sklearn.preprocessing import MinMaxScaler
 
 
-def plot_embedding(X, title, ax):
+def plot_embedding(X, title):
+    _, ax = plt.subplots()
     X = MinMaxScaler().fit_transform(X)
+
     for digit in digits.target_names:
         ax.scatter(
             *X[y == digit].T,
@@ -142,8 +144,6 @@ embeddings = {
     ),
     "t-SNE embeedding": TSNE(
         n_components=2,
-        init="pca",
-        learning_rate="auto",
         n_iter=500,
         n_iter_without_progress=150,
         n_jobs=2,
@@ -175,15 +175,8 @@ for name, transformer in embeddings.items():
 
 # %%
 # Finally, we can plot the resulting projection given by each method.
-from itertools import zip_longest
-
-fig, axs = plt.subplots(nrows=7, ncols=2, figsize=(17, 24))
-
-for name, ax in zip_longest(timing, axs.ravel()):
-    if name is None:
-        ax.axis("off")
-        continue
+for name in timing:
     title = f"{name} (time {timing[name]:.3f}s)"
-    plot_embedding(projections[name], title, ax)
+    plot_embedding(projections[name], title)
 
 plt.show()

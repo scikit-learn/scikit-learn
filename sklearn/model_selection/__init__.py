@@ -72,3 +72,15 @@ __all__ = [
     "train_test_split",
     "validation_curve",
 ]
+
+
+# TODO: remove this check once the estimator is no longer experimental.
+def __getattr__(name):
+    if name in {"HalvingGridSearchCV", "HalvingRandomSearchCV"}:
+        raise ImportError(
+            f"{name} is experimental and the API might change without any "
+            "deprecation cycle. To use it, you need to explicitly import "
+            "enable_halving_search_cv:\n"
+            "from sklearn.experimental import enable_halving_search_cv"
+        )
+    raise AttributeError(f"module {__name__} has no attribute {name}")

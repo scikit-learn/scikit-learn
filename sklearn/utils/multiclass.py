@@ -54,6 +54,7 @@ def unique_labels(*ys):
     Parameters
     ----------
     *ys : array-likes
+        Label values.
 
     Returns
     -------
@@ -150,7 +151,7 @@ def is_multilabel(y):
             warnings.simplefilter("error", np.VisibleDeprecationWarning)
             try:
                 y = np.asarray(y)
-            except np.VisibleDeprecationWarning:
+            except (np.VisibleDeprecationWarning, ValueError):
                 # dtype=object should be provided explicitly for ragged arrays,
                 # see NEP 34
                 y = np.array(y, dtype=object)
@@ -185,6 +186,7 @@ def check_classification_targets(y):
     Parameters
     ----------
     y : array-like
+        Target values.
     """
     y_type = type_of_target(y, input_name="y")
     if y_type not in [
@@ -212,7 +214,7 @@ def type_of_target(y, input_name=""):
     Parameters
     ----------
     y : {array-like, sparse matrix}
-        The target array. If a sparse matrix, `y` is expected to be a
+        Target values. If a sparse matrix, `y` is expected to be a
         CSR/CSC matrix.
 
     input_name : str, default=""
@@ -408,7 +410,6 @@ def class_distribution(y, sample_weight=None):
 
     class_prior : list of size n_outputs of ndarray of size (n_classes,)
         Class distribution of each column.
-
     """
     classes = []
     n_classes = []

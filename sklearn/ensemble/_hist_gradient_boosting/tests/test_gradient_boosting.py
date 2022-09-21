@@ -1,12 +1,13 @@
+import warnings
+
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 from sklearn._loss.loss import (
     AbsoluteError,
     HalfBinomialLoss,
-    HalfMultinomialLoss,
-    HalfPoissonLoss,
     HalfSquaredError,
+    PinballLoss,
 )
 from sklearn.datasets import make_classification, make_regression
 from sklearn.datasets import make_low_rank_matrix
@@ -31,15 +32,6 @@ from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
 n_threads = _openmp_effective_n_threads()
 
-_LOSSES = {
-    "squared_error": HalfSquaredError,
-    "absolute_error": AbsoluteError,
-    "poisson": HalfPoissonLoss,
-    "binary_crossentropy": HalfBinomialLoss,
-    "categorical_crossentropy": HalfMultinomialLoss,
-}
-
-
 X_classification, y_classification = make_classification(random_state=0)
 X_regression, y_regression = make_regression(random_state=0)
 X_multi_classification, y_multi_classification = make_classification(
@@ -55,45 +47,14 @@ def _make_dumb_dataset(n_samples):
     return X_dumb, y_dumb
 
 
-@pytest.mark.parametrize(
-    "GradientBoosting, X, y",
-    [
-        (HistGradientBoostingClassifier, X_classification, y_classification),
-        (HistGradientBoostingRegressor, X_regression, y_regression),
-    ],
-)
-@pytest.mark.parametrize(
-    "params, err_msg",
-    [
-        ({"loss": "blah"}, "Loss blah is not supported for"),
-        ({"learning_rate": 0}, "learning_rate=0 must be strictly positive"),
-        ({"learning_rate": -1}, "learning_rate=-1 must be strictly positive"),
-        ({"max_iter": 0}, "max_iter=0 must not be smaller than 1"),
-        ({"max_leaf_nodes": 0}, "max_leaf_nodes=0 should not be smaller than 2"),
-        ({"max_leaf_nodes": 1}, "max_leaf_nodes=1 should not be smaller than 2"),
-        ({"max_depth": 0}, "max_depth=0 should not be smaller than 1"),
-        ({"min_samples_leaf": 0}, "min_samples_leaf=0 should not be smaller"),
-        ({"l2_regularization": -1}, "l2_regularization=-1 must be positive"),
-        ({"max_bins": 1}, "max_bins=1 should be no smaller than 2 and no larger"),
-        ({"max_bins": 256}, "max_bins=256 should be no smaller than 2 and no"),
-        ({"n_iter_no_change": -1}, "n_iter_no_change=-1 must be positive"),
-        ({"validation_fraction": -1}, "validation_fraction=-1 must be strictly"),
-        ({"validation_fraction": 0}, "validation_fraction=0 must be strictly"),
-        ({"tol": -1}, "tol=-1 must not be smaller than 0"),
-    ],
-)
-def test_init_parameters_validation(GradientBoosting, X, y, params, err_msg):
-
-    with pytest.raises(ValueError, match=err_msg):
-        GradientBoosting(**params).fit(X, y)
-
-
+# TODO(1.3): remove
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_invalid_classification_loss():
     binary_clf = HistGradientBoostingClassifier(loss="binary_crossentropy")
     err_msg = (
         "loss='binary_crossentropy' is not defined for multiclass "
         "classification with n_classes=3, use "
-        "loss='categorical_crossentropy' instead"
+        "loss='log_loss' instead"
     )
     with pytest.raises(ValueError, match=err_msg):
         binary_clf.fit(np.zeros(shape=(3, 2)), np.arange(3))
@@ -249,6 +210,44 @@ def test_absolute_error_sample_weight():
     gbdt.fit(X, y, sample_weight=sample_weight)
 
 
+@pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
+def test_asymmetric_error(quantile):
+    """Test quantile regression for asymmetric distributed targets."""
+    n_samples = 10_000
+    rng = np.random.RandomState(42)
+    # take care that X @ coef + intercept > 0
+    X = np.concatenate(
+        (
+            np.abs(rng.randn(n_samples)[:, None]),
+            -rng.randint(2, size=(n_samples, 1)),
+        ),
+        axis=1,
+    )
+    intercept = 1.23
+    coef = np.array([0.5, -2])
+    # For an exponential distribution with rate lambda, e.g. exp(-lambda * x),
+    # the quantile at level q is:
+    #   quantile(q) = - log(1 - q) / lambda
+    #   scale = 1/lambda = -quantile(q) / log(1-q)
+    y = rng.exponential(
+        scale=-(X @ coef + intercept) / np.log(1 - quantile), size=n_samples
+    )
+    model = HistGradientBoostingRegressor(
+        loss="quantile",
+        quantile=quantile,
+        max_iter=25,
+        random_state=0,
+        max_leaf_nodes=10,
+    ).fit(X, y)
+    assert_allclose(np.mean(model.predict(X) > y), quantile, rtol=1e-2)
+
+    pinball_loss = PinballLoss(quantile=quantile)
+    loss_true_quantile = pinball_loss(y, X @ coef + intercept)
+    loss_pred_quantile = pinball_loss(y, model.predict(X))
+    # we are overfitting
+    assert loss_pred_quantile <= loss_true_quantile
+
+
 @pytest.mark.parametrize("y", [([1.0, -2.0, 0.0]), ([0.0, 0.0, 0.0])])
 def test_poisson_y_positive(y):
     # Test that ValueError is raised if either one y_i < 0 or sum(y_i) <= 0.
@@ -388,7 +387,7 @@ def test_missing_values_resilience(
         make_classification(random_state=0, n_classes=2),
         make_classification(random_state=0, n_classes=3, n_informative=3),
     ],
-    ids=["binary_crossentropy", "categorical_crossentropy"],
+    ids=["binary_log_loss", "multiclass_log_loss"],
 )
 def test_zero_division_hessians(data):
     # non regression test for issue #14018
@@ -579,6 +578,8 @@ def test_infinite_values_missing_values():
     assert stump_clf.fit(X, y_isnan).score(X, y_isnan) == 1
 
 
+# TODO(1.3): remove
+@pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_crossentropy_binary_problem():
     # categorical_crossentropy should only be used if there are more than two
     # classes present. PR #14869
@@ -623,7 +624,7 @@ def test_zero_sample_weights_classification():
     y = [0, 0, 1, 0]
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1]
-    gb = HistGradientBoostingClassifier(loss="binary_crossentropy", min_samples_leaf=1)
+    gb = HistGradientBoostingClassifier(loss="log_loss", min_samples_leaf=1)
     gb.fit(X, y, sample_weight=sample_weight)
     assert_array_equal(gb.predict([[1, 0]]), [1])
 
@@ -631,9 +632,7 @@ def test_zero_sample_weights_classification():
     y = [0, 0, 1, 0, 2]
     # ignore the first 2 training samples by setting their weight to 0
     sample_weight = [0, 0, 1, 1, 1]
-    gb = HistGradientBoostingClassifier(
-        loss="categorical_crossentropy", min_samples_leaf=1
-    )
+    gb = HistGradientBoostingClassifier(loss="log_loss", min_samples_leaf=1)
     gb.fit(X, y, sample_weight=sample_weight)
     assert_array_equal(gb.predict([[1, 0]]), [1])
 
@@ -695,8 +694,8 @@ def test_sample_weight_effect(problem, duplication):
     assert np.allclose(est_sw._raw_predict(X_dup), est_dup._raw_predict(X_dup))
 
 
-@pytest.mark.parametrize("loss_name", ("squared_error", "absolute_error"))
-def test_sum_hessians_are_sample_weight(loss_name):
+@pytest.mark.parametrize("Loss", (HalfSquaredError, AbsoluteError))
+def test_sum_hessians_are_sample_weight(Loss):
     # For losses with constant hessians, the sum_hessians field of the
     # histograms must be equal to the sum of the sample weight of samples at
     # the corresponding bin.
@@ -711,7 +710,7 @@ def test_sum_hessians_are_sample_weight(loss_name):
     # While sample weights are supposed to be positive, this still works.
     sample_weight = rng.normal(size=n_samples)
 
-    loss = _LOSSES[loss_name](sample_weight=sample_weight)
+    loss = Loss(sample_weight=sample_weight)
     gradients, hessians = loss.init_gradient_and_hessian(
         n_samples=n_samples, dtype=G_H_DTYPE
     )
@@ -965,7 +964,7 @@ def test_categorical_encoding_strategies():
     # Using OHEd data, we need less splits than with pure OEd data, but we
     # still need more splits than with the native categorical splits
     ct = make_column_transformer(
-        (OneHotEncoder(sparse=False), [1]), remainder="passthrough"
+        (OneHotEncoder(sparse_output=False), [1]), remainder="passthrough"
     )
     X_ohe = ct.fit_transform(X)
     clf_no_cat.set_params(max_depth=2)
@@ -1083,21 +1082,99 @@ def test_uint8_predict(Est):
     est.predict(X)
 
 
-# TODO: Remove in v1.2
+# TODO(1.3): Remove
 @pytest.mark.parametrize(
-    "old_loss, new_loss",
+    "old_loss, new_loss, Estimator",
     [
-        ("least_squares", "squared_error"),
-        ("least_absolute_deviation", "absolute_error"),
+        ("auto", "log_loss", HistGradientBoostingClassifier),
+        ("binary_crossentropy", "log_loss", HistGradientBoostingClassifier),
+        ("categorical_crossentropy", "log_loss", HistGradientBoostingClassifier),
     ],
 )
-def test_loss_deprecated(old_loss, new_loss):
-    X, y = make_regression(n_samples=50, random_state=0)
-    est1 = HistGradientBoostingRegressor(loss=old_loss, random_state=0)
+def test_loss_deprecated(old_loss, new_loss, Estimator):
+    if old_loss == "categorical_crossentropy":
+        X, y = X_multi_classification[:10], y_multi_classification[:10]
+        assert len(np.unique(y)) > 2
+    else:
+        X, y = X_classification[:10], y_classification[:10]
+
+    est1 = Estimator(loss=old_loss, random_state=0)
 
     with pytest.warns(FutureWarning, match=f"The loss '{old_loss}' was deprecated"):
         est1.fit(X, y)
 
-    est2 = HistGradientBoostingRegressor(loss=new_loss, random_state=0)
+    est2 = Estimator(loss=new_loss, random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))
+
+
+def test_no_user_warning_with_scoring():
+    """Check that no UserWarning is raised when scoring is set.
+
+    Non-regression test for #22907.
+    """
+    pd = pytest.importorskip("pandas")
+    X, y = make_regression(n_samples=50, random_state=0)
+    X_df = pd.DataFrame(X, columns=[f"col{i}" for i in range(X.shape[1])])
+
+    est = HistGradientBoostingRegressor(
+        random_state=0, scoring="neg_mean_absolute_error", early_stopping=True
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        est.fit(X_df, y)
+
+
+def test_class_weights():
+    """High level test to check class_weights."""
+    n_samples = 255
+    n_features = 2
+
+    X, y = make_classification(
+        n_samples=n_samples,
+        n_features=n_features,
+        n_informative=n_features,
+        n_redundant=0,
+        n_clusters_per_class=1,
+        n_classes=2,
+        random_state=0,
+    )
+    y_is_1 = y == 1
+
+    # class_weight is the same as sample weights with the corresponding class
+    clf = HistGradientBoostingClassifier(
+        min_samples_leaf=2, random_state=0, max_depth=2
+    )
+    sample_weight = np.ones(shape=(n_samples))
+    sample_weight[y_is_1] = 3.0
+    clf.fit(X, y, sample_weight=sample_weight)
+
+    class_weight = {0: 1.0, 1: 3.0}
+    clf_class_weighted = clone(clf).set_params(class_weight=class_weight)
+    clf_class_weighted.fit(X, y)
+
+    assert_allclose(clf.decision_function(X), clf_class_weighted.decision_function(X))
+
+    # Check that sample_weight and class_weight are multiplicative
+    clf.fit(X, y, sample_weight=sample_weight**2)
+    clf_class_weighted.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(clf.decision_function(X), clf_class_weighted.decision_function(X))
+
+    # Make imbalanced dataset
+    X_imb = np.concatenate((X[~y_is_1], X[y_is_1][:10]))
+    y_imb = np.concatenate((y[~y_is_1], y[y_is_1][:10]))
+
+    # class_weight="balanced" is the same as sample_weights to be
+    # inversely proportional to n_samples / (n_classes * np.bincount(y))
+    clf_balanced = clone(clf).set_params(class_weight="balanced")
+    clf_balanced.fit(X_imb, y_imb)
+
+    class_weight = y_imb.shape[0] / (2 * np.bincount(y_imb))
+    sample_weight = class_weight[y_imb]
+    clf_sample_weight = clone(clf).set_params(class_weight=None)
+    clf_sample_weight.fit(X_imb, y_imb, sample_weight=sample_weight)
+
+    assert_allclose(
+        clf_balanced.decision_function(X_imb),
+        clf_sample_weight.decision_function(X_imb),
+    )

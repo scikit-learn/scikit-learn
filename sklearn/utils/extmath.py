@@ -18,7 +18,6 @@ from scipy import linalg, sparse
 
 from . import check_random_state
 from ._logistic_sigmoid import _log_logistic_sigmoid
-from .fixes import np_version, parse_version
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
 
@@ -31,6 +30,7 @@ def squared_norm(x):
     Parameters
     ----------
     x : array-like
+        The input array which could be either be a vector or a 2 dimensional array.
 
     Returns
     -------
@@ -217,7 +217,7 @@ def randomized_range_finder(
 
     # Generating normal random vectors with shape: (A.shape[1], size)
     Q = random_state.normal(size=(A.shape[1], size))
-    if A.dtype.kind == "f":
+    if hasattr(A, "dtype") and A.dtype.kind == "f":
         # Ensure f32 is preserved as f32
         Q = Q.astype(A.dtype, copy=False)
 
@@ -244,6 +244,7 @@ def randomized_range_finder(
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
     Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode="economic")
+
     return Q
 
 
@@ -257,11 +258,12 @@ def randomized_svd(
     transpose="auto",
     flip_sign=True,
     random_state="warn",
+    svd_lapack_driver="gesdd",
 ):
     """Computes a truncated randomized SVD.
 
-    This method solves the fixed-rank approximation problem described in the
-    Halko et al paper (problem (1.5), p5).
+    This method solves the fixed-rank approximation problem described in [1]_
+    (problem (1.5), p5).
 
     Parameters
     ----------
@@ -279,8 +281,8 @@ def randomized_svd(
         approximation of singular vectors and singular values. Users might wish
         to increase this parameter up to `2*k - n_components` where k is the
         effective rank, for large matrices, noisy problems, matrices with
-        slowly decaying spectrums, or to increase precision accuracy. See Halko
-        et al (pages 5, 23 and 26).
+        slowly decaying spectrums, or to increase precision accuracy. See [1]_
+        (pages 5, 23 and 26).
 
     n_iter : int or 'auto', default='auto'
         Number of power iterations. It can be used to deal with very noisy
@@ -292,7 +294,7 @@ def randomized_svd(
         more costly power iterations steps. When `n_components` is equal
         or greater to the effective matrix rank and the spectrum does not
         present a slow decay, `n_iter=0` or `1` should even work fine in theory
-        (see Halko et al paper, page 9).
+        (see [1]_ page 9).
 
         .. versionchanged:: 0.18
 
@@ -333,6 +335,14 @@ def randomized_svd(
             the value of `random_state` explicitly to suppress the deprecation
             warning.
 
+    svd_lapack_driver : {"gesdd", "gesvd"}, default="gesdd"
+        Whether to use the more efficient divide-and-conquer approach
+        (`"gesdd"`) or more general rectangular approach (`"gesvd"`) to compute
+        the SVD of the matrix B, which is the projection of M into a low
+        dimensional subspace, as described in [1]_.
+
+        .. versionadded:: 1.2
+
     Notes
     -----
     This algorithm finds a (usually very good) approximate truncated
@@ -347,17 +357,16 @@ def randomized_svd(
 
     References
     ----------
-    * :arxiv:`"Finding structure with randomness:
+    .. [1] :arxiv:`"Finding structure with randomness:
       Stochastic algorithms for constructing approximate matrix decompositions"
       <0909.4061>`
       Halko, et al. (2009)
 
-    * A randomized algorithm for the decomposition of matrices
+    .. [2] A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
 
-    * An implementation of a randomized algorithm for principal component
-      analysis
-      A. Szlam et al. 2014
+    .. [3] An implementation of a randomized algorithm for principal component
+      analysis A. Szlam et al. 2014
     """
     if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
         warnings.warn(
@@ -406,7 +415,7 @@ def randomized_svd(
     B = safe_sparse_dot(Q.T, M)
 
     # compute the SVD on the thin matrix: (k + p) wide
-    Uhat, s, Vt = linalg.svd(B, full_matrices=False)
+    Uhat, s, Vt = linalg.svd(B, full_matrices=False, lapack_driver=svd_lapack_driver)
 
     del B
     U = np.dot(Q, Uhat)
@@ -963,17 +972,11 @@ def _incremental_mean_and_var(
     else:
         sum_op = np.sum
     if sample_weight is not None:
-        if np_version >= parse_version("1.16.6"):
-            # equivalent to np.nansum(X * sample_weight, axis=0)
-            # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
-            # dtype arg of np.matmul only exists since version 1.16
-            new_sum = _safe_accumulator_op(
-                np.matmul, sample_weight, np.where(X_nan_mask, 0, X)
-            )
-        else:
-            new_sum = _safe_accumulator_op(
-                np.nansum, X * sample_weight[:, None], axis=0
-            )
+        # equivalent to np.nansum(X * sample_weight, axis=0)
+        # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
+        new_sum = _safe_accumulator_op(
+            np.matmul, sample_weight, np.where(X_nan_mask, 0, X)
+        )
         new_sample_count = _safe_accumulator_op(
             np.sum, sample_weight[:, None] * (~X_nan_mask), axis=0
         )
@@ -992,25 +995,15 @@ def _incremental_mean_and_var(
         T = new_sum / new_sample_count
         temp = X - T
         if sample_weight is not None:
-            if np_version >= parse_version("1.16.6"):
-                # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
-                # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
-                # dtype arg of np.matmul only exists since version 1.16
-                correction = _safe_accumulator_op(
-                    np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
-                )
-                temp **= 2
-                new_unnormalized_variance = _safe_accumulator_op(
-                    np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
-                )
-            else:
-                correction = _safe_accumulator_op(
-                    sum_op, temp * sample_weight[:, None], axis=0
-                )
-                temp *= temp
-                new_unnormalized_variance = _safe_accumulator_op(
-                    sum_op, temp * sample_weight[:, None], axis=0
-                )
+            # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
+            # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
+            correction = _safe_accumulator_op(
+                np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
+            )
+            temp **= 2
+            new_unnormalized_variance = _safe_accumulator_op(
+                np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
+            )
         else:
             correction = _safe_accumulator_op(sum_op, temp, axis=0)
             temp **= 2
@@ -1019,7 +1012,7 @@ def _incremental_mean_and_var(
         # correction term of the corrected 2 pass algorithm.
         # See "Algorithms for computing the sample variance: analysis
         # and recommendations", by Chan, Golub, and LeVeque.
-        new_unnormalized_variance -= correction ** 2 / new_sample_count
+        new_unnormalized_variance -= correction**2 / new_sample_count
 
         last_unnormalized_variance = last_variance * last_sample_count
 
@@ -1065,6 +1058,9 @@ def _deterministic_vector_sign_flip(u):
 def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     """Use high precision for cumsum and check that final value matches sum.
 
+    Warns if the final cumulative sum does not match the sum (up to the chosen
+    tolerance).
+
     Parameters
     ----------
     arr : array-like
@@ -1076,6 +1072,11 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
         Relative tolerance, see ``np.allclose``.
     atol : float, default=1e-08
         Absolute tolerance, see ``np.allclose``.
+
+    Returns
+    -------
+    out : ndarray
+        Array with the cumulative sums along the chosen axis.
     """
     out = np.cumsum(arr, axis=axis, dtype=np.float64)
     expected = np.sum(arr, axis=axis, dtype=np.float64)

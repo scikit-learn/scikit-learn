@@ -150,7 +150,7 @@ def test_sample_weight_deviance():
 
         deviance_w_w = loss(y, p, sample_weight)
         deviance_wo_w = loss(y, p)
-        assert deviance_wo_w == deviance_w_w
+        assert_allclose(deviance_wo_w, deviance_w_w)
 
 
 @pytest.mark.parametrize("n_classes, n_samples", [(3, 100), (5, 57), (7, 13)])

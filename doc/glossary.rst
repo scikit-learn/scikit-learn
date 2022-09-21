@@ -207,7 +207,7 @@ General Concepts
 
     deprecation
         We use deprecation to slowly violate our :term:`backwards
-        compatibility` assurances, usually to to:
+        compatibility` assurances, usually to:
 
         * change the default value of a parameter; or
         * remove a parameter, attribute, method, class, etc.
@@ -595,10 +595,10 @@ General Concepts
         meta-estimator.  Ordinarily, these nested parameters are denoted by
         using a :term:`double underscore` (``__``) to separate between the
         estimator-as-parameter and its parameter.  Thus ``clf =
-        BaggingClassifier(base_estimator=DecisionTreeClassifier(max_depth=3))``
-        has a deep parameter ``base_estimator__max_depth`` with value ``3``,
-        which is accessible with ``clf.base_estimator.max_depth`` or
-        ``clf.get_params()['base_estimator__max_depth']``.
+        BaggingClassifier(estimator=DecisionTreeClassifier(max_depth=3))``
+        has a deep parameter ``estimator__max_depth`` with value ``3``,
+        which is accessible with ``clf.estimator.max_depth`` or
+        ``clf.get_params()['estimator__max_depth']``.
 
         The list of parameters and their current values can be retrieved from
         an :term:`estimator instance` using its :term:`get_params` method.
@@ -694,7 +694,7 @@ General Concepts
         decision-making process outlined in :ref:`governance`.
         For all votes, a proposal must have been made public and discussed before the
         vote. Such a proposal must be a consolidated document, in the form of a
-        ‘Scikit-Learn Enhancement Proposal’ (SLEP), rather than a long discussion on an
+        "Scikit-Learn Enhancement Proposal" (SLEP), rather than a long discussion on an
         issue. A SLEP must be submitted as a pull-request to
         `enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_ using the
         `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_.
@@ -835,7 +835,13 @@ Class APIs and Estimator Types
         * :term:`predict` if :term:`inductive`
 
     density estimator
-        TODO
+        An :term:`unsupervised` estimation of input probability density
+        function. Commonly used techniques are:
+
+        * :ref:`kernel_density` - uses a kernel function, controlled by the
+          bandwidth parameter to represent density;
+        * :ref:`Gaussian mixture <mixture>` - uses mixture of Gaussian models
+          to represent density.
 
     estimator
     estimators
@@ -1171,18 +1177,19 @@ Methods
             predicted class.  Columns are ordered according to
             :term:`classes_`.
         multilabel classification
-            Scikit-learn is inconsistent in its representation of multilabel
-            decision functions.  Some estimators represent it like multiclass
-            multioutput, i.e. a list of 2d arrays, each with two columns. Others
-            represent it with a single 2d array, whose columns correspond to
-            the individual binary classification decisions. The latter
-            representation is ambiguously identical to the multiclass
-            classification format, though its semantics differ: it should be
-            interpreted, like in the binary case, by thresholding at 0.
+            Scikit-learn is inconsistent in its representation of :term:`multilabel`
+            decision functions. It may be represented one of two ways:
 
-            TODO: `This gist
-            <https://gist.github.com/jnothman/4807b1b0266613c20ba4d1f88d0f8cf5>`_
-            highlights the use of the different formats for multilabel.
+            - List of 2d arrays, each array of shape: (`n_samples`, 2), like in
+              multiclass multioutput. List is of length `n_labels`.
+
+            - Single 2d array of shape (`n_samples`, `n_labels`), with each
+              'column' in the array corresponding to the individual binary
+              classification decisions. This is identical to the
+              multiclass classification format, though its semantics differ: it
+              should be interpreted, like in the binary case, by thresholding at
+              0.
+
         multioutput classification
             A list of 2d arrays, corresponding to each multiclass decision
             function.
@@ -1257,7 +1264,7 @@ Methods
         be generated.  If `input_features` is not passed in, then the
         `feature_names_in_` attribute will be used. If the
         `feature_names_in_` attribute is not defined, then the
-        input names are named `[x0, x1, ..., x(n_features_in_)]`.
+        input names are named `[x0, x1, ..., x(n_features_in_ - 1)]`.
 
     ``get_n_splits``
         On a :term:`CV splitter` (not an estimator), returns the number of
@@ -1385,7 +1392,11 @@ Methods
         often the likelihood of the data under the model.
 
     ``score_samples``
-        TODO
+        A method that returns a score for each given sample. The exact
+        definition of *score* varies from one class to another. In the case of
+        density estimation, it can be the log density model on the data, and in
+        the case of outlier detection, it can be the opposite of the outlier
+        factor of the data.
 
         If the estimator was not already :term:`fitted`, calling this method
         should raise a :class:`exceptions.NotFittedError`.
@@ -1492,7 +1503,13 @@ functions or non-estimator constructors.
         ``cv`` values are validated and interpreted with :func:`utils.check_cv`.
 
     ``kernel``
-        TODO
+        Specifies the kernel function to be used by Kernel Method algorithms.
+        For example, the estimators :class:`SVC` and
+        :class:`GaussianProcessClassifier` both have a ``kernel`` parameter
+        that takes the name of the kernel to use as string or a callable
+        kernel function used to compute the kernel matrix. For more reference,
+        see the :ref:`kernel_approximation` and the :ref:`gaussian_process`
+        user guides.
 
     ``max_iter``
         For estimators involving iterative optimization, this determines the
@@ -1554,6 +1571,9 @@ functions or non-estimator constructors.
         ``n_jobs`` is ``None`` by default, which means *unset*; it will
         generally be interpreted as ``n_jobs=1``, unless the current
         :class:`joblib.Parallel` backend context specifies otherwise.
+
+        Note that even if ``n_jobs=1``, low-level parallelism (via Numpy and OpenMP)
+        might be used in some configuration.
 
         For more details on the use of ``joblib`` and its interactions with
         scikit-learn, please refer to our :ref:`parallelism notes
@@ -1693,7 +1713,7 @@ See concept :term:`attribute`.
         predictors.
 
     ``coef_``
-        The weight/coefficient matrix of a generalised linear model
+        The weight/coefficient matrix of a generalized linear model
         :term:`predictor`, of shape ``(n_features,)`` for binary classification
         and single-output regression, ``(n_classes, n_features)`` for
         multiclass classification and ``(n_targets, n_features)`` for

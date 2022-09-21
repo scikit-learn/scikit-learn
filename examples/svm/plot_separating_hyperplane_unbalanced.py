@@ -25,10 +25,10 @@ unbalanced classes.
 
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
 from sklearn import svm
 from sklearn.datasets import make_blobs
+from sklearn.inspection import DecisionBoundaryDisplay
 
 # we create two clusters of random points
 n_samples_1 = 1000
@@ -56,29 +56,31 @@ plt.scatter(X[:, 0], X[:, 1], c=y, cmap=plt.cm.Paired, edgecolors="k")
 
 # plot the decision functions for both classifiers
 ax = plt.gca()
-xlim = ax.get_xlim()
-ylim = ax.get_ylim()
-
-# create grid to evaluate model
-xx = np.linspace(xlim[0], xlim[1], 30)
-yy = np.linspace(ylim[0], ylim[1], 30)
-YY, XX = np.meshgrid(yy, xx)
-xy = np.vstack([XX.ravel(), YY.ravel()]).T
-
-# get the separating hyperplane
-Z = clf.decision_function(xy).reshape(XX.shape)
-
-# plot decision boundary and margins
-a = ax.contour(XX, YY, Z, colors="k", levels=[0], alpha=0.5, linestyles=["-"])
-
-# get the separating hyperplane for weighted classes
-Z = wclf.decision_function(xy).reshape(XX.shape)
+disp = DecisionBoundaryDisplay.from_estimator(
+    clf,
+    X,
+    plot_method="contour",
+    colors="k",
+    levels=[0],
+    alpha=0.5,
+    linestyles=["-"],
+    ax=ax,
+)
 
 # plot decision boundary and margins for weighted classes
-b = ax.contour(XX, YY, Z, colors="r", levels=[0], alpha=0.5, linestyles=["-"])
+wdisp = DecisionBoundaryDisplay.from_estimator(
+    wclf,
+    X,
+    plot_method="contour",
+    colors="r",
+    levels=[0],
+    alpha=0.5,
+    linestyles=["-"],
+    ax=ax,
+)
 
 plt.legend(
-    [a.collections[0], b.collections[0]],
+    [disp.surface_.collections[0], wdisp.surface_.collections[0]],
     ["non weighted", "weighted"],
     loc="upper right",
 )

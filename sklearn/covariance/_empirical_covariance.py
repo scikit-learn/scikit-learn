@@ -167,6 +167,11 @@ class EmpiricalCovariance(BaseEstimator):
     array([0.0622..., 0.0193...])
     """
 
+    _parameter_constraints: dict = {
+        "store_precision": ["boolean"],
+        "assume_centered": ["boolean"],
+    }
+
     def __init__(self, *, store_precision=True, assume_centered=False):
         self.store_precision = store_precision
         self.assume_centered = assume_centered
@@ -207,7 +212,7 @@ class EmpiricalCovariance(BaseEstimator):
         return precision
 
     def fit(self, X, y=None):
-        """Fit the maximum liklihood covariance estimator to X.
+        """Fit the maximum likelihood covariance estimator to X.
 
         Parameters
         ----------
@@ -223,6 +228,7 @@ class EmpiricalCovariance(BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         X = self._validate_data(X)
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
@@ -297,7 +303,7 @@ class EmpiricalCovariance(BaseEstimator):
         error = comp_cov - self.covariance_
         # compute the error norm
         if norm == "frobenius":
-            squared_norm = np.sum(error ** 2)
+            squared_norm = np.sum(error**2)
         elif norm == "spectral":
             squared_norm = np.amax(linalg.svdvals(np.dot(error.T, error)))
         else:
