@@ -51,6 +51,29 @@ Changes impacting all modules
   second-pass algorithm.
   :pr:`23197` by :user:`Meekail Zain <micky774>`
 
+- |Enhancement| Support for combinations of dense and sparse datasets pairs
+  for all distance metrics and for float32 and float64 datasets has been added
+  or has seen its performance improved for the following estimators:
+
+  - :func:`sklearn.metrics.pairwise_distances_argmin`
+  - :func:`sklearn.metrics.pairwise_distances_argmin_min`
+  - :class:`sklearn.cluster.AffinityPropagation`
+  - :class:`sklearn.cluster.Birch`
+  - :class:`sklearn.cluster.SpectralClustering`
+  - :class:`sklearn.neighbors.KNeighborsClassifier`
+  - :class:`sklearn.neighbors.KNeighborsRegressor`
+  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
+  - :class:`sklearn.neighbors.RadiusNeighborsRegressor`
+  - :class:`sklearn.neighbors.LocalOutlierFactor`
+  - :class:`sklearn.neighbors.NearestNeighbors`
+  - :class:`sklearn.manifold.Isomap`
+  - :class:`sklearn.manifold.TSNE`
+  - :func:`sklearn.manifold.trustworthiness`
+
+  :pr:`23604` and :pr:`23585` by :user:`Julien Jerphanion <jjerphan>`,
+  :user:`Olivier Grisel <ogrisel>`, and `Thomas Fan`_.
+
+
 Changelog
 ---------
 

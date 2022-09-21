@@ -139,15 +139,17 @@ class LeaveOneOut(BaseCrossValidator):
     2
     >>> print(loo)
     LeaveOneOut()
-    >>> for train_index, test_index in loo.split(X):
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    >>> for i, (train_index, test_index) in enumerate(loo.split(X)):
     ...     X_train, X_test = X[train_index], X[test_index]
-    ...     y_train, y_test = y[train_index], y[test_index]
-    ...     print(X_train, X_test, y_train, y_test)
-    TRAIN: [1] TEST: [0]
-    [[3 4]] [[1 2]] [2] [1]
-    TRAIN: [0] TEST: [1]
-    [[1 2]] [[3 4]] [1] [2]
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}, data={X_train}")
+    ...     print(f"  Test:  index={test_index}, data={X_test}")
+    Fold 0:
+      Train: index=[1], data=[[3 4]]
+      Test:  index=[0], data=[[1 2]]
+    Fold 1:
+      Train: index=[0], data=[[1 2]]
+      Test:  index=[1], data=[[3 4]]
 
     See Also
     --------
@@ -484,23 +486,16 @@ class GroupKFold(_BaseKFold):
     2
     >>> print(group_kfold)
     GroupKFold(n_splits=2)
-    >>> for train_index, test_index in group_kfold.split(X, y, groups):
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
-    ...     X_train, X_test = X[train_index], X[test_index]
-    ...     y_train, y_test = y[train_index], y[test_index]
-    ...     print(X_train, X_test, y_train, y_test)
-    TRAIN: [2 3] TEST: [0 1 4 5]
-    [[5 6]
-    [7 8]] [[ 1  2]
-    [ 3  4]
-    [ 9 10]
-    [11 12]] [3 4] [1 2 5 6]
-    TRAIN: [0 1 4 5] TEST: [2 3]
-    [[ 1  2]
-    [ 3  4]
-    [ 9 10]
-    [11 12]] [[5 6]
-    [7 8]] [1 2 5 6] [3 4]
+    >>> for i, (train_index, test_index) in enumerate(group_kfold.split(X, y, groups)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}, group={groups[train_index]}")
+    ...     print(f"  Test:  index={test_index}, group={groups[test_index]}")
+    Fold 0:
+      Train: index=[2 3], group=[2 2]
+      Test:  index=[0 1 4 5], group=[0 0 3 3]
+    Fold 1:
+      Train: index=[0 1 4 5], group=[0 0 3 3]
+      Test:  index=[2 3], group=[2 2]
 
     See Also
     --------
