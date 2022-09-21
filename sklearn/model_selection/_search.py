@@ -966,7 +966,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
             if rank:
                 # when input is nan, scipy >= 1.10 rankdata returns nan. To
-                # keep previous behaviour nans are set to the
+                # keep previous behaviour nans are set to be smaller than the
                 # minimum value in the array before ranking
                 min_array_means = min(array_means) - 1
                 np.nan_to_num(array_means, copy=False, nan=min_array_means)
