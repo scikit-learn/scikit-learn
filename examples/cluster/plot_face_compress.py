@@ -26,13 +26,13 @@ try:  # SciPy >= 0.16 have face in misc
 
     face = face(gray=True)
 except ImportError:
-    face = sp.face(gray=True)
+    face = sp.misc.face(gray=True)
 
-n_clusters = 5
+N_CLUSTERS = 5
 np.random.seed(0)
 
 X = face.reshape((-1, 1))  # We need an (n_sample, n_feature) array
-k_means = cluster.KMeans(n_clusters=n_clusters, n_init=4)
+k_means = cluster.KMeans(n_clusters=N_CLUSTERS, n_init=4)
 k_means.fit(X)
 values = k_means.cluster_centers_.squeeze()
 labels = k_means.labels_
@@ -53,7 +53,7 @@ plt.figure(2, figsize=(3, 2.2))
 plt.imshow(face_compressed, cmap=plt.cm.gray, vmin=vmin, vmax=vmax)
 
 # equal bins face
-regular_values = np.linspace(0, 256, n_clusters + 1)
+regular_values = np.linspace(0, 256, N_CLUSTERS + 1)
 regular_labels = np.searchsorted(regular_values, face) - 1
 regular_values = 0.5 * (regular_values[1:] + regular_values[:-1])  # mean
 regular_face = np.choose(regular_labels.ravel(), regular_values, mode="clip")
@@ -77,24 +77,26 @@ for center_1, center_2 in zip(regular_values[:-1], regular_values[1:]):
 
 plt.show()
 
+#Word Of Caution:
 
-"""
-Word Of Caution:
+#Theoretically, the above example should demonstrate compression.
+#But there's a catch when we try to check the size of images;
+#the compressed image actually ends up taking more memory
+#space than the image itself. Even though the number of
+#unique values in the image is greater compared to the
+#compressed image.The catch comes from the fact that
+#numpy arrays are contiguous and are required to have
+#preallocated memory for each object. This is where
+#the numpy speed comes from. But for example, as above,
+#it has caused problems. The kmeans does reduce the
+#dimensionality or number of unique values required to
+#represent the image,but they are still stored in the same length nparray.
 
-Theoretically, the above example should demonstrate compression. But there's a catch when we try to check the size of images; 
-the compressed image actually ends up taking more memory space than the image itself. 
-Even though the number of unique values in the image is greater compared to the compressed image. 
-The catch comes from the fact that numpy arrays are contiguous and are required to have preallocated memory for each object. 
-This is where the numpy speed comes from. But for example, as above, it has caused problems. 
-The kmeans does reduce the dimensionality or number of unique values required to represent the image,
- but they are still stored in the same length nparray.
-"""
-
-###Colored Image version With actual Compression:
+#Colored Image version With actual Compression:
 
 face = sp.misc.face(gray=False)
 
-n_clusters = 64  # clusters of colors
+N_CLUSTERS = 64  # clusters of colors
 np.random.seed(0)
 
 plt.imshow(face)
@@ -105,7 +107,7 @@ w, h, d = original_shape = tuple(
 
 face = np.array(face, dtype=np.float64) / 255  # small number easier to multiply
 face_array = np.reshape(face, (w * h, d))  # reshape the image for Kmeans
-kmeans = cluster.KMeans(n_clusters=n_clusters, random_state=0).fit(face_array)
+kmeans = cluster.KMeans(n_clusters=N_CLUSTERS, random_state=0).fit(face_array)
 labels = kmeans.predict(face_array)
 
 
