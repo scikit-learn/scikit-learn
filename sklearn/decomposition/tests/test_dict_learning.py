@@ -762,15 +762,6 @@ def test_update_dict():
     assert_allclose(newd_batch, newd_online)
 
 
-# default value of batch_size changed. FIXME: remove in 1.3
-@pytest.mark.filterwarnings("ignore:The default value of batch_size will change")
-@pytest.mark.parametrize("Estimator", [DictionaryLearning, MiniBatchDictionaryLearning])
-def test_warning_default_transform_alpha(Estimator):
-    dl = Estimator(alpha=0.1, max_iter=5)
-    with pytest.warns(FutureWarning, match="default transform_alpha"):
-        dl.fit_transform(X)
-
-
 # FIXME: remove in 1.3
 def test_dict_learning_online_n_iter_deprecated():
     # Check that an error is raised when a deprecated argument is set when max_iter
