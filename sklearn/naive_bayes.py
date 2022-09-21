@@ -25,7 +25,6 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import deprecated
 from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative
