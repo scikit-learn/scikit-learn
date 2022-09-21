@@ -4210,9 +4210,8 @@ def check_set_output_pandas(name, transformer_orig):
     if name in CROSS_DECOMPOSITION:
         X_trans_pandas = X_trans_pandas[0]
 
-    # Return is a pandas DataFrame
-    assert hasattr(X_trans_pandas, "iloc")
-    assert_array_equal(transformer.get_feature_names_out(), X_trans_pandas.columns)
-    assert_allclose(X_trans_pandas.to_numpy(), X_trans_no_setting)
-
-    assert_array_equal(X_trans_pandas.index, df.index)
+    assert isinstance(X_trans_pandas, pd.DataFrame)
+    expected_dataframe = pd.DataFrame(
+        X_trans_no_setting, columns=transformer.get_feature_names_out()
+    )
+    pd.testing.assert_frame_equal(X_trans_pandas, expected_dataframe)
