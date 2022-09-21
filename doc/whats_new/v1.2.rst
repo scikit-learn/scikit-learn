@@ -458,6 +458,9 @@ Changelog
   deterministic SVD used by the randomized SVD algorithm.
   :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
 
+- |FIX| :func:`utils.multiclass.type_of_target` now properly handles sparse matrices.
+  :pr:`14862` by :user:`Léonard Binet <leonardbinet>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
