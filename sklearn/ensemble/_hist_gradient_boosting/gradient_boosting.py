@@ -11,15 +11,13 @@ from timeit import default_timer as time
 from ..._loss.loss import (
     _LOSSES,
     BaseLoss,
-    AbsoluteError,
     HalfBinomialLoss,
     HalfMultinomialLoss,
     HalfPoissonLoss,
-    HalfSquaredError,
     PinballLoss,
 )
 from ...base import BaseEstimator, RegressorMixin, ClassifierMixin, is_classifier
-from ...utils import check_random_state, resample
+from ...utils import check_random_state, resample, compute_sample_weight
 from ...utils.validation import (
     check_is_fitted,
     check_consistent_length,
@@ -39,12 +37,9 @@ from .grower import TreeGrower
 
 
 _LOSSES = _LOSSES.copy()
-# TODO(1.2): Remove "least_squares" and "least_absolute_deviation"
 # TODO(1.3): Remove "binary_crossentropy" and "categorical_crossentropy"
 _LOSSES.update(
     {
-        "least_squares": HalfSquaredError,
-        "least_absolute_deviation": AbsoluteError,
         "poisson": HalfPoissonLoss,
         "quantile": PinballLoss,
         "binary_crossentropy": HalfBinomialLoss,
@@ -163,6 +158,14 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             raise ValueError(
                 "monotonic constraints are not supported for multiclass classification."
             )
+
+    def _finalize_sample_weight(self, sample_weight, y):
+        """Finalize sample weight.
+
+        Used by subclasses to adjust sample_weights. This is useful for implementing
+        class weights.
+        """
+        return sample_weight
 
     def _check_categories(self, X):
         """Check and validate categorical features in X
@@ -287,6 +290,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             sample_weight = _check_sample_weight(sample_weight, X, dtype=np.float64)
             # TODO: remove when PDP supports sample weights
             self._fitted_with_sw = True
+
+        sample_weight = self._finalize_sample_weight(sample_weight, y)
 
         rng = check_random_state(self.random_state)
 
@@ -1129,15 +1134,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.1
            Added option 'quantile'.
 
-        .. deprecated:: 1.0
-            The loss 'least_squares' was deprecated in v1.0 and will be removed
-            in version 1.2. Use `loss='squared_error'` which is equivalent.
-
-        .. deprecated:: 1.0
-            The loss 'least_absolute_deviation' was deprecated in v1.0 and will
-            be removed in version 1.2. Use `loss='absolute_error'` which is
-            equivalent.
-
     quantile : float, default=None
         If loss is "quantile", this parameter specifies which quantile to be estimated
         and must be between 0 and 1.
@@ -1186,10 +1182,12 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. versionadded:: 0.24
 
     monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature. -1, 1
-        and 0 respectively correspond to a negative constraint, positive
-        constraint and no constraint. Read more in the :ref:`User Guide
-        <monotonic_cst_gbdt>`.
+        Indicates the monotonic constraint to enforce on each feature.
+          - 1: monotonic increase
+          - 0: no constraint
+          - -1: monotonic decrease
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
         .. versionadded:: 0.23
 
@@ -1294,21 +1292,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
     0.92...
     """
 
-    # TODO(1.2): remove "least_absolute_deviation"
     _parameter_constraints: dict = {
         **BaseHistGradientBoosting._parameter_constraints,
         "loss": [
-            StrOptions(
-                {
-                    "squared_error",
-                    "least_squares",
-                    "absolute_error",
-                    "least_absolute_deviation",
-                    "poisson",
-                    "quantile",
-                },
-                deprecated={"least_squares", "least_absolute_deviation"},
-            ),
+            StrOptions({"squared_error", "absolute_error", "poisson", "quantile"}),
             BaseLoss,
         ],
         "quantile": [Interval(Real, 0, 1, closed="both"), None],
@@ -1411,24 +1398,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         return y
 
     def _get_loss(self, sample_weight):
-        # TODO: Remove in v1.2
-        if self.loss == "least_squares":
-            warnings.warn(
-                "The loss 'least_squares' was deprecated in v1.0 and will be "
-                "removed in version 1.2. Use 'squared_error' which is "
-                "equivalent.",
-                FutureWarning,
-            )
-            return _LOSSES["squared_error"](sample_weight=sample_weight)
-        elif self.loss == "least_absolute_deviation":
-            warnings.warn(
-                "The loss 'least_absolute_deviation' was deprecated in v1.0 "
-                " and will be removed in version 1.2. Use 'absolute_error' "
-                "which is equivalent.",
-                FutureWarning,
-            )
-            return _LOSSES["absolute_error"](sample_weight=sample_weight)
-
         if self.loss == "quantile":
             return _LOSSES[self.loss](
                 sample_weight=sample_weight, quantile=self.quantile
@@ -1525,10 +1494,14 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         .. versionadded:: 0.24
 
     monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature. -1, 1
-        and 0 respectively correspond to a negative constraint, positive
-        constraint and no constraint. Read more in the :ref:`User Guide
-        <monotonic_cst_gbdt>`.
+        Indicates the monotonic constraint to enforce on each feature.
+          - 1: monotonic increase
+          - 0: no constraint
+          - -1: monotonic decrease
+
+        The constraints are only valid for binary classifications and hold
+        over the probability of the positive class.
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
         .. versionadded:: 0.23
 
@@ -1573,6 +1546,16 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         is enabled.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+    class_weight : dict or 'balanced', default=None
+        Weights associated with classes in the form `{class_label: weight}`.
+        If not given, all classes are supposed to have weight one.
+        The "balanced" mode uses the values of y to automatically adjust
+        weights inversely proportional to class frequencies in the input data
+        as `n_samples / (n_classes * np.bincount(y))`.
+        Note that these weights will be multiplied with sample_weight (passed
+        through the fit method) if `sample_weight` is specified.
+
+        .. versionadded:: 1.2
 
     Attributes
     ----------
@@ -1654,6 +1637,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             ),
             BaseLoss,
         ],
+        "class_weight": [dict, StrOptions({"balanced"}), None],
     }
 
     def __init__(
@@ -1677,6 +1661,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         tol=1e-7,
         verbose=0,
         random_state=None,
+        class_weight=None,
     ):
         super(HistGradientBoostingClassifier, self).__init__(
             loss=loss,
@@ -1698,6 +1683,19 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             verbose=verbose,
             random_state=random_state,
         )
+        self.class_weight = class_weight
+
+    def _finalize_sample_weight(self, sample_weight, y):
+        """Adjust sample_weights with class_weights."""
+        if self.class_weight is None:
+            return sample_weight
+
+        expanded_class_weight = compute_sample_weight(self.class_weight, y)
+
+        if sample_weight is not None:
+            return sample_weight * expanded_class_weight
+        else:
+            return expanded_class_weight
 
     def predict(self, X):
         """Predict classes for X.

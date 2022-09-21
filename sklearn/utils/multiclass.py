@@ -54,6 +54,7 @@ def unique_labels(*ys):
     Parameters
     ----------
     *ys : array-likes
+        Label values.
 
     Returns
     -------
@@ -215,6 +216,7 @@ def type_of_target(y, input_name=""):
     Parameters
     ----------
     y : array-like
+        Target values.
 
     input_name : str, default=""
         The data name used to construct the error message.
@@ -394,7 +396,6 @@ def class_distribution(y, sample_weight=None):
 
     class_prior : list of size n_outputs of ndarray of size (n_classes,)
         Class distribution of each column.
-
     """
     classes = []
     n_classes = []

@@ -163,11 +163,13 @@ class TreeGrower:
         If it's a bool, the same value is used for all features.
     is_categorical : ndarray of bool of shape (n_features,), default=None
         Indicates categorical features.
-    monotonic_cst : array-like of shape (n_features,), dtype=int, default=None
-        Indicates the monotonic constraint to enforce on each feature. -1, 1
-        and 0 respectively correspond to a positive constraint, negative
-        constraint and no constraint. Read more in the :ref:`User Guide
-        <monotonic_cst_gbdt>`.
+    monotonic_cst : array-like of int of shape (n_features,), dtype=int, default=None
+        Indicates the monotonic constraint to enforce on each feature.
+          - 1: monotonic increase
+          - 0: no constraint
+          - -1: monotonic decrease
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
     l2_regularization : float, default=0.
         The L2 regularization parameter.
     min_hessian_to_split : float, default=1e-3
