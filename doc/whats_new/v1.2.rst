@@ -223,6 +223,12 @@ Changelog
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
+- |MajorFeature| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now
+  supports the `Array API <https://data-apis.org/array-api/latest/>`_ for
+  `solver="svd"`. Array API support is considered experimental and might evolve
+  without being subjected to our usual rolling deprecation cycle policy. See
+  :ref:`array_api` for more details. :pr:`22554` by `Thomas Fan`_.
+
 - |Fix| Validate parameters only in `fit` and not in `__init__`
   for :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
   :pr:`24218` by :user:`Stefanie Molin <stefmolin>`.
@@ -451,6 +457,9 @@ Changelog
   `lapack_svd_driver`, to specify the lapack driver used in the internal
   deterministic SVD used by the randomized SVD algorithm.
   :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
+
+- |FIX| :func:`utils.multiclass.type_of_target` now properly handles sparse matrices.
+  :pr:`14862` by :user:`Léonard Binet <leonardbinet>`.
 
 Code and Documentation Contributors
 -----------------------------------
