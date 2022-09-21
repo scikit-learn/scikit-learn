@@ -45,7 +45,7 @@ from sklearn.utils.estimator_checks import check_estimator
 import sklearn
 
 from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, OneHotEncoder
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import Ridge
@@ -513,7 +513,10 @@ def test_f_contiguous_array_estimator(Estimator):
 SET_OUTPUT_ESTIMATORS = list(
     chain(
         _tested_estimators("transformer"),
-        [make_pipeline(StandardScaler(), MinMaxScaler())],
+        [
+            make_pipeline(StandardScaler(), MinMaxScaler()),
+            OneHotEncoder(sparse_output=False),
+        ],
     )
 )
 
