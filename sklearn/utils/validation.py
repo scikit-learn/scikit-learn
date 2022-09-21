@@ -29,6 +29,8 @@ from .. import get_config as _get_config
 from ..exceptions import PositiveSpectrumWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
+from ..utils._array_api import get_namespace
+from ..utils._array_api import _asarray_with_order
 from ._isfinite import cy_isfinite, FiniteStatus
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
@@ -96,9 +98,12 @@ def _assert_all_finite(
 ):
     """Like assert_all_finite, but only for ndarray."""
 
+    xp, _ = get_namespace(X)
+
     if _get_config()["assume_finite"]:
         return
-    X = np.asanyarray(X)
+
+    X = xp.asarray(X)
 
     # for object dtype data, we only check for NaNs (GH-13254)
     if X.dtype == np.dtype("object") and not allow_nan:
@@ -114,18 +119,20 @@ def _assert_all_finite(
     # Cython implementation to prevent false positives and provide a detailed
     # error message.
     with np.errstate(over="ignore"):
-        first_pass_isfinite = np.isfinite(np.sum(X))
+        first_pass_isfinite = xp.isfinite(xp.sum(X))
     if first_pass_isfinite:
         return
     # Cython implementation doesn't support FP16 or complex numbers
-    use_cython = X.data.contiguous and X.dtype.type in {np.float32, np.float64}
+    use_cython = (
+        xp is np and X.data.contiguous and X.dtype.type in {np.float32, np.float64}
+    )
     if use_cython:
         out = cy_isfinite(X.reshape(-1), allow_nan=allow_nan)
         has_nan_error = False if allow_nan else out == FiniteStatus.has_nan
         has_inf = out == FiniteStatus.has_infinite
     else:
         has_inf = np.isinf(X).any()
-        has_nan_error = False if allow_nan else np.isnan(X).any()
+        has_nan_error = False if allow_nan else xp.isnan(X).any()
     if has_inf or has_nan_error:
         if has_nan_error:
             type_err = "NaN"
@@ -734,6 +741,7 @@ def check_array(
             "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html",  # noqa
             FutureWarning,
         )
+    xp, is_array_api = get_namespace(array)
 
     # store reference to original array to check if copy is needed when
     # function returns
@@ -773,7 +781,7 @@ def check_array(
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
             # if input is object, convert to float.
-            dtype = np.float64
+            dtype = xp.float64
         else:
             dtype = None
 
@@ -849,7 +857,7 @@ def check_array(
                     # Conversion float -> int should not contain NaN or
                     # inf (numpy#14412). We cannot use casting='safe' because
                     # then conversion float -> int would be disallowed.
-                    array = np.asarray(array, order=order)
+                    array = _asarray_with_order(array, order=order, xp=xp)
                     if array.dtype.kind == "f":
                         _assert_all_finite(
                             array,
@@ -858,9 +866,9 @@ def check_array(
                             estimator_name=estimator_name,
                             input_name=input_name,
                         )
-                    array = array.astype(dtype, casting="unsafe", copy=False)
+                    array = xp.astype(array, dtype, copy=False)
                 else:
-                    array = np.asarray(array, order=order, dtype=dtype)
+                    array = _asarray_with_order(array, order=order, dtype=dtype, xp=xp)
             except ComplexWarning as complex_warning:
                 raise ValueError(
                     "Complex data not supported\n{}\n".format(array)
@@ -895,7 +903,6 @@ def check_array(
                 "dtype='numeric' is not compatible with arrays of bytes/strings."
                 "Convert your data to numeric values explicitly instead."
             )
-
         if not allow_nd and array.ndim >= 3:
             raise ValueError(
                 "Found array with dim %d. %s expected <= 2."
@@ -928,8 +935,18 @@ def check_array(
                 % (n_features, array.shape, ensure_min_features, context)
             )
 
-    if copy and np.may_share_memory(array, array_orig):
-        array = np.array(array, dtype=dtype, order=order)
+    if copy:
+        if xp.__name__ in {"numpy", "numpy.array_api"}:
+            # only make a copy if `array` and `array_orig` may share memory`
+            if np.may_share_memory(array, array_orig):
+                array = _asarray_with_order(
+                    array, dtype=dtype, order=order, copy=True, xp=xp
+                )
+        else:
+            # always make a copy for non-numpy arrays
+            array = _asarray_with_order(
+                array, dtype=dtype, order=order, copy=True, xp=xp
+            )
 
     return array
 
@@ -1145,10 +1162,11 @@ def column_or_1d(y, *, warn=False):
     ValueError
         If `y` is not a 1D array or a 2D array with a single row or column.
     """
-    y = np.asarray(y)
-    shape = np.shape(y)
+    xp, _ = get_namespace(y)
+    y = xp.asarray(y)
+    shape = y.shape
     if len(shape) == 1:
-        return np.ravel(y)
+        return _asarray_with_order(xp.reshape(y, -1), order="C", xp=xp)
     if len(shape) == 2 and shape[1] == 1:
         if warn:
             warnings.warn(
@@ -1158,7 +1176,7 @@ def column_or_1d(y, *, warn=False):
                 DataConversionWarning,
                 stacklevel=2,
             )
-        return np.ravel(y)
+        return _asarray_with_order(xp.reshape(y, -1), order="C", xp=xp)
 
     raise ValueError(
         "y should be a 1d array, got an array of shape {} instead.".format(shape)
@@ -1363,6 +1381,7 @@ def check_non_negative(X, whom):
     whom : str
         Who passed X to this function.
     """
+    xp, _ = get_namespace(X)
     # avoid X.min() on sparse matrix since it also sorts the indices
     if sp.issparse(X):
         if X.format in ["lil", "dok"]:
@@ -1372,7 +1391,7 @@ def check_non_negative(X, whom):
         else:
             X_min = X.data.min()
     else:
-        X_min = X.min()
+        X_min = xp.min(X)
 
     if X_min < 0:
         raise ValueError("Negative values in data passed to %s" % whom)

@@ -37,6 +37,7 @@ from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import _incremental_mean_and_var
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
+from ..utils._array_api import get_namespace
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted, _check_sample_weight
@@ -429,10 +430,11 @@ class LinearClassifierMixin(ClassifierMixin):
             this class would be predicted.
         """
         check_is_fitted(self)
+        xp, _ = get_namespace(X)
 
         X = self._validate_data(X, accept_sparse="csr", reset=False)
         scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
-        return scores.ravel() if scores.shape[1] == 1 else scores
+        return xp.reshape(scores, -1) if scores.shape[1] == 1 else scores
 
     def predict(self, X):
         """
@@ -448,12 +450,14 @@ class LinearClassifierMixin(ClassifierMixin):
         y_pred : ndarray of shape (n_samples,)
             Vector containing the class labels for each sample.
         """
+        xp, _ = get_namespace(X)
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
-            indices = (scores > 0).astype(int)
+            indices = xp.astype(scores > 0, int)
         else:
-            indices = scores.argmax(axis=1)
-        return self.classes_[indices]
+            indices = xp.argmax(scores, axis=1)
+
+        return xp.take(self.classes_, indices, axis=0)
 
     def _predict_proba_lr(self, X):
         """Probability estimation for OvR logistic regression.
