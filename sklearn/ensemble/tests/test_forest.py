@@ -1270,7 +1270,7 @@ def check_memory_layout(name, dtype):
     assert_array_almost_equal(est.fit(X, y).predict(X), y)
 
     if (
-        est.base_estimator.splitter in SPARSE_SPLITTERS
+        est.estimator.splitter in SPARSE_SPLITTERS
         and name != "ObliqueRandomForestClassifier"
     ):
         # csr matrix

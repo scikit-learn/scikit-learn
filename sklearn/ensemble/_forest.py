@@ -3148,7 +3148,7 @@ class ObliqueRandomForestClassifier(ForestClassifier):
         feature_combinations=1.5,
     ):
         super().__init__(
-            base_estimator=ObliqueDecisionTreeClassifier(),
+            estimator=ObliqueDecisionTreeClassifier(),
             n_estimators=n_estimators,
             estimator_params=(
                 "criterion",
