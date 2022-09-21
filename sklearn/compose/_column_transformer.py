@@ -594,11 +594,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             elif old == "passthrough":
                 # FunctionTransformer is present in list of transformers,
                 # so get next transformer, but save original string
-                #
-                # The fitted FunctionTransformer is save in another attribute
-                # So it can be used during transform
-                self._name_to_fitted_passthrough[name] = next(fitted_transformers)
+                func_transformer = next(fitted_transformers)
                 trans = "passthrough"
+
+                # The fitted FunctionTransformer is saved in another attribute,
+                # so it can be used during transform for set_output.
+                self._name_to_fitted_passthrough[name] = func_transformer
             elif _is_empty_column_selection(column):
                 trans = old
             else:
