@@ -140,7 +140,7 @@ the corresponding solver is chosen.
 +-------------+----------------------------------------------------+
 | 'cholesky'  | The input array X is not sparse.                   |
 +-------------+----------------------------------------------------+
-| 'sparse_cg' | All of the above conditions are not fulfilled.     |
+| 'sparse_cg' | None of the above conditions are fulfilled.        |
 +-------------+----------------------------------------------------+
 
 
