@@ -377,7 +377,8 @@ The homogeneous NumPy and SciPy data objects currently expected are most
 efficient to process for most operations. Extensive work would also be needed
 to support Pandas categorical types. Restricting input to homogeneous
 types therefore reduces maintenance cost and encourages usage of efficient
-data structures.
+data structures. But `ColumnTransformer https://scikit-learn.org/stable/modules/generated/sklearn.compose.ColumnTransformer.html#sklearn.compose.ColumnTransformer`
+can be used with pandas DataFrame.
 
 Do you plan to implement transform for target y in a pipeline?
 ----------------------------------------------------------------------------
