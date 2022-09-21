@@ -13,6 +13,8 @@ cimport numpy as cnp
 import numpy as np
 from cython cimport floating
 from numpy.math cimport isnan
+from scipy.sparse._csr import csr_matrix
+
 
 cnp.import_array()
 
@@ -97,34 +99,34 @@ def csr_mean_variance_axis0(X, weights=None, return_sum_weights=False):
     return means, variances
 
 
-def _csr_mean_variance_axis0(cnp.ndarray[floating, ndim=1, mode="c"] X_data,
+def _csr_mean_variance_axis0(floating[::1] X_data,
                              unsigned long long n_samples,
                              unsigned long long n_features,
-                             cnp.ndarray[integral, ndim=1] X_indices,
-                             cnp.ndarray[integral, ndim=1] X_indptr,
-                             cnp.ndarray[floating, ndim=1] weights):
+                             integral[::1] X_indices,
+                             integral[::1] X_indptr,
+                             floating[::1] weights):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef:
-        cnp.npy_intp i
+        cnp.intp_t i
         unsigned long long row_ind
         integral col_ind
         cnp.float64_t diff
         # means[j] contains the mean of feature j
-        cnp.ndarray[cnp.float64_t, ndim=1] means = np.zeros(n_features)
+        cnp.float64_t[::1] means = np.zeros(n_features)
         # variances[j] contains the variance of feature j
-        cnp.ndarray[cnp.float64_t, ndim=1] variances = np.zeros(n_features)
+        cnp.float64_t[::1] variances = np.zeros(n_features)
 
-        cnp.ndarray[cnp.float64_t, ndim=1] sum_weights = np.full(
+        cnp.float64_t[::1] sum_weights = np.full(
             fill_value=np.sum(weights, dtype=np.float64), shape=n_features)
-        cnp.ndarray[cnp.float64_t, ndim=1] sum_weights_nz = np.zeros(
+        cnp.float64_t[::1] sum_weights_nz = np.zeros(
             shape=n_features)
-        cnp.ndarray[cnp.float64_t, ndim=1] correction = np.zeros(
+        cnp.float64_t[::1] correction = np.zeros(
             shape=n_features)
 
-        cnp.ndarray[cnp.uint64_t, ndim=1] counts = np.full(
+        cnp.uint64_t[::1] counts = np.full(
             fill_value=weights.shape[0], shape=n_features, dtype=np.uint64)
-        cnp.ndarray[cnp.uint64_t, ndim=1] counts_nz = np.zeros(
+        cnp.uint64_t[::1] counts_nz = np.zeros(
             shape=n_features, dtype=np.uint64)
 
     for row_ind in range(len(X_indptr) - 1):
@@ -219,12 +221,12 @@ def csc_mean_variance_axis0(X, weights=None, return_sum_weights=False):
     return means, variances
 
 
-def _csc_mean_variance_axis0(cnp.ndarray[floating, ndim=1, mode="c"] X_data,
+def _csc_mean_variance_axis0(floating[::1] X_data,
                              unsigned long long n_samples,
                              unsigned long long n_features,
-                             cnp.ndarray[integral, ndim=1] X_indices,
-                             cnp.ndarray[integral, ndim=1] X_indptr,
-                             cnp.ndarray[floating, ndim=1] weights):
+                             integral[::1] X_indices,
+                             integral[::1] X_indptr,
+                             floating[::1] weights):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef:
@@ -526,10 +528,10 @@ def _inplace_csr_row_normalize_l2(cnp.ndarray[floating, ndim=1] X_data,
             X_data[j] /= sum_
 
 
-def assign_rows_csr(X,
-                    cnp.ndarray[cnp.npy_intp, ndim=1] X_rows,
-                    cnp.ndarray[cnp.npy_intp, ndim=1] out_rows,
-                    cnp.ndarray[floating, ndim=2, mode="c"] out):
+def assign_rows_csr(X: csr_matrix,
+                    const cnp.intp_t[::1] X_rows,
+                    const cnp.intp_t[::1] out_rows,
+                    floating[:, ::1] out):
     """Densify selected rows of a CSR matrix into a preallocated array.
 
     Like out[out_rows] = X[X_rows].toarray() but without copying.
@@ -545,18 +547,20 @@ def assign_rows_csr(X,
     cdef:
         # npy_intp (np.intp in Python) is what np.where returns,
         # but int is what scipy.sparse uses.
-        int i, ind, j
-        cnp.npy_intp rX
-        cnp.ndarray[floating, ndim=1] data = X.data
-        cnp.ndarray[int, ndim=1] indices = X.indices, indptr = X.indptr
+        int i, ind, j, ri
+        cnp.intp_t rX
+        floating[::1] data = X.data
+        int[::1] indices = X.indices, indptr = X.indptr
 
     if X_rows.shape[0] != out_rows.shape[0]:
         raise ValueError("cannot assign %d rows to %d"
                          % (X_rows.shape[0], out_rows.shape[0]))
 
-    out[out_rows] = 0.
-    for i in range(X_rows.shape[0]):
-        rX = X_rows[i]
-        for ind in range(indptr[rX], indptr[rX + 1]):
-            j = indices[ind]
-            out[out_rows[i], j] = data[ind]
+    with nogil:
+        for ri in range(out_rows.shape[0]):
+            out[out_rows[ri]] = 0.
+        for i in range(X_rows.shape[0]):
+            rX = X_rows[i]
+            for ind in range(indptr[rX], indptr[rX + 1]):
+                j = indices[ind]
+                out[out_rows[i], j] = data[ind]
