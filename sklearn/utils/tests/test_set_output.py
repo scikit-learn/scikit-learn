@@ -184,7 +184,7 @@ def test_get_output_auto_wrap_false():
 
 
 def test_auto_wrap_output_errors_with_incorrect_input():
-    msg = "auto_wrap_output should be a bool"
+    msg = "auto_wrap_output must be a bool"
     with pytest.raises(ValueError, match=msg):
 
         class BadEstimator(_SetOutputMixin, auto_wrap_output="bad_parameter"):

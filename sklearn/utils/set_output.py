@@ -178,13 +178,13 @@ class _SetOutputMixin:
         # Dynamically wraps `transform` and `fit_transform` and configure it's
         # output based on `set_output`.
         if not isinstance(auto_wrap_output, bool):
-            raise ValueError("auto_wrap_output should be a bool")
+            raise ValueError("auto_wrap_output must be a bool")
 
         cls._sklearn_auto_wrap_output = auto_wrap_output
         if not auto_wrap_output:
             return
 
-        # Mapping from method to key in configurationsaf
+        # Mapping from method to key in configurations
         method_to_key = [
             ("transform", "transform"),
             ("fit_transform", "transform"),
