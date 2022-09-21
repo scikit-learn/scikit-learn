@@ -78,7 +78,7 @@ for center_1, center_2 in zip(regular_values[:-1], regular_values[1:]):
 plt.show()
 
 
-'''
+"""
 Word Of Caution:
 
 Theoretically, the above example should demonstrate compression. But there's a catch when we try to check the size of images; 
@@ -88,21 +88,23 @@ The catch comes from the fact that numpy arrays are contiguous and are required 
 This is where the numpy speed comes from. But for example, as above, it has caused problems. 
 The kmeans does reduce the dimensionality or number of unique values required to represent the image,
  but they are still stored in the same length nparray.
-'''
+"""
 
 ###Colored Image version With actual Compression:
 
 face = sp.misc.face(gray=False)
 
-n_clusters = 64 #clusters of colors
+n_clusters = 64  # clusters of colors
 np.random.seed(0)
 
 plt.imshow(face)
 
-w, h, d = original_shape = tuple(face.shape) # a colored image contains 3 stacked matrices  
+w, h, d = original_shape = tuple(
+    face.shape
+)  # a colored image contains 3 stacked matrices
 
-face = np.array(face, dtype=np.float64) / 255 #small number easier to multiply
-face_array = np.reshape(face, (w * h, d)) #reshape the image for Kmeans
+face = np.array(face, dtype=np.float64) / 255  # small number easier to multiply
+face_array = np.reshape(face, (w * h, d))  # reshape the image for Kmeans
 kmeans = cluster.KMeans(n_clusters=n_clusters, random_state=0).fit(face_array)
 labels = kmeans.predict(face_array)
 
@@ -124,13 +126,13 @@ plt.figure(3)
 plt.clf()
 plt.axis("on")
 plt.title("Quantised image Compressed")
-img_re_compressed = ((img_re*255).astype('uint8'))
+img_re_compressed = (img_re * 255).astype("uint8")
 plt.imshow(img_re_compressed)
 
-#number of elements multiplied by byte size of each element
-img_re_size = img_re.itemsize * img_re.size     
+# number of elements multiplied by byte size of each element
+img_re_size = img_re.itemsize * img_re.size
 img_re_c_size = img_re_compressed.itemsize * img_re_compressed.size
-#number of unique elements reduce in compressed image due to clustering
+# number of unique elements reduce in compressed image due to clustering
 face_uniq = len(np.unique(face))
 img_re_c_uniq = len(np.unique(img_re_compressed))
 
