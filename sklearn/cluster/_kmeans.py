@@ -267,8 +267,7 @@ class KMeansCythonEngine:
     TODO: see URL for more details.
     """
 
-    def _prepare_fit(self, estimator, X, y=None, sample_weight=None):
-        engine_fit_context = {}
+    def prepare_fit(self, estimator, X, y=None, sample_weight=None):
         X = estimator._validate_data(
             X,
             accept_sparse="csr",
@@ -312,21 +311,26 @@ class KMeansCythonEngine:
             kmeans_single = _kmeans_single_lloyd
             estimator._check_mkl_vcomp(X, X.shape[0])
 
-        engine_fit_context = {
-            "x_squared_norms": x_squared_norms,
-            "kmeans_single_func": kmeans_single,
-            "random_state": random_state,
-            "tol": self._scale_tolerance(X, self.tol),
-            "X_mean": X_mean,
-        }
-        return X, init, engine_fit_context
+        self.estimator = estimator
+        self.x_squared_norms = x_squared_norms
+        self.kmeans_single_func = kmeans_single
+        self.random_state = random_state
+        self.tol = self.scale_tolerance(X, self.tol)
+        self.X_mean = X_mean
+        self.init = init
+        return X, y, sample_weight
 
-    def _init_centroids(self, estimator, *args, **kwargs):
+    def init_centroids(self, X):
         # XXX: the actual implementation of the centroids init should also be
         # moved to the engine.
-        return estimator._init_centroids(*args, **kwargs)
+        return self.estimator._init_centroids(
+            X,
+            x_squared_norms=self.x_squared_norms,
+            init=self.init,
+            random_state=self.random_state,
+        )
 
-    def _scale_tolerance(self, X, tol):
+    def scale_tolerance(self, X, tol):
         """Return a tolerance which is dependent on the dataset."""
         if tol == 0:
             return 0
@@ -335,6 +339,16 @@ class KMeansCythonEngine:
         else:
             variances = np.var(X, axis=0)
         return np.mean(variances) * tol
+
+    def unshift_centers(self, estimator, X, best_centers):
+        X_mean = self.engine_fit_context["X_mean"]
+        if not sp.issparse(X):
+            if not estimator.copy_x:
+                X += X_mean
+            best_centers += X_mean
+
+    def is_same_clustering(self, labels, best_labels, n_clusters):
+        return _is_same_clustering(labels, best_labels, n_clusters)
 
 
 @validate_params(
@@ -1476,7 +1490,7 @@ class KMeans(_BaseKMeans):
         self._validate_params()
         engine_class = get_engine_class("kmeans", default=KMeansCythonEngine)
         engine = engine_class(self)
-        X, y, sample_weight, engine_fit_ctx = engine._prepare_fit(
+        X, y, sample_weight = engine.prepare_fit(
             self,
             X,
             y=y,
@@ -1488,7 +1502,7 @@ class KMeans(_BaseKMeans):
 
         for i in range(self._n_init):
             # Initialize centers
-            centers_init = engine._init_centroids(X, **engine_fit_ctx)
+            centers_init = engine.init_centroids(X)
             if self.verbose:
                 print("Initialization complete")
 
@@ -1499,7 +1513,6 @@ class KMeans(_BaseKMeans):
                 centers_init,
                 max_iter=self.max_iter,
                 verbose=self.verbose,
-                **engine_fit_ctx,
             )
 
             # determine if these results are the best so far
@@ -1509,19 +1522,14 @@ class KMeans(_BaseKMeans):
             # permuted labels, due to rounding errors)
             if best_inertia is None or (
                 inertia < best_inertia
-                and not _is_same_clustering(labels, best_labels, self.n_clusters)
+                and not engine.is_same_clustering(labels, best_labels, self.n_clusters)
             ):
                 best_labels = labels
                 best_centers = centers
                 best_inertia = inertia
                 best_n_iter = n_iter_
 
-        engine._rescale_centers_and_data(X, best_centers, engine_fit_ctx)
-        # XXX:
-        # if not sp.issparse(X):
-        #     if not self.copy_x:
-        #         X += X_mean
-        #     best_centers += X_mean
+        engine.unshift_centers(X, best_centers)
 
         distinct_clusters = len(set(best_labels))
         if distinct_clusters < self.n_clusters:
