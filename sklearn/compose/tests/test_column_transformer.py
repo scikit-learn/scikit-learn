@@ -2130,7 +2130,11 @@ def test_column_transform_set_output_mixed(remainder, fit_transform):
     )
     ct = ColumnTransformer(
         [
-            ("color_encode", OneHotEncoder(sparse=False, dtype="int8"), ["color"]),
+            (
+                "color_encode",
+                OneHotEncoder(sparse_output=False, dtype="int8"),
+                ["color"],
+            ),
             ("age", StandardScaler(), ["age"]),
         ],
         remainder=remainder,
@@ -2169,7 +2173,11 @@ def test_column_transform_set_output_after_fitting(remainder):
     )
     ct = ColumnTransformer(
         [
-            ("color_encode", OneHotEncoder(sparse=False, dtype="int16"), ["pet"]),
+            (
+                "color_encode",
+                OneHotEncoder(sparse_output=False, dtype="int16"),
+                ["pet"],
+            ),
             ("age", StandardScaler(), ["age"]),
         ],
         remainder=remainder,

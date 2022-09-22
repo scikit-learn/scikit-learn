@@ -1967,8 +1967,8 @@ def test_one_hot_encoder_set_output():
     with pytest.raises(ValueError, match=match):
         ohe.fit_transform(X_df)
 
-    ohe_default = OneHotEncoder(sparse=False).set_output(transform="default")
-    ohe_pandas = OneHotEncoder(sparse=False).set_output(transform="pandas")
+    ohe_default = OneHotEncoder(sparse_output=False).set_output(transform="default")
+    ohe_pandas = OneHotEncoder(sparse_output=False).set_output(transform="pandas")
 
     X_default = ohe_default.fit_transform(X_df)
     X_pandas = ohe_pandas.fit_transform(X_df)
