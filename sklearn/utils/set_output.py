@@ -26,9 +26,12 @@ def _wrap_in_pandas_container(
     data_to_wrap : {ndarray, dataframe}
         Container to name.
 
-    columns : callable or ndarray
-        The column names or a callable that returns the column names. This is
-        useful if the column names require some computation.
+    columns : callable, ndarray, or None
+        The column names or a callable that returns the column names. The
+        callable is useful if the column names require some computation.
+        If `None` and `data_to_wrap` is already a dataframe, then the column
+        names are not changed. If `None` and `data_to_wrap` is **not** a
+        dataframe, then columns are `range(n_features)`.
 
     index : array-like, default=None
         Index for data.
