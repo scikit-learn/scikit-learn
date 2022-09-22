@@ -369,7 +369,9 @@ Changelog
 
 - |Feature| :func:`metrics.roc_auc_score` now supports micro-averaging
   (`average="micro"`) for the One-vs-Rest multiclass case (`multi_class="ovr"`).
-  :pr:`24338` by :user:`Arturo Amor <ArturoAmorQ>`.
+
+- |Fix| :func: `metrics.ndcg_score` and `metrics.dcg_score` will raise error if `y_true` is a single value.
+  :pr:`24482` by :user:`Madi Ebersole <mae5357>`.
 
 :mod:`sklearn.model_selection`
 ..............................
