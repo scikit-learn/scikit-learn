@@ -964,7 +964,7 @@ def test_categorical_encoding_strategies():
     # Using OHEd data, we need less splits than with pure OEd data, but we
     # still need more splits than with the native categorical splits
     ct = make_column_transformer(
-        (OneHotEncoder(sparse=False), [1]), remainder="passthrough"
+        (OneHotEncoder(sparse_output=False), [1]), remainder="passthrough"
     )
     X_ohe = ct.fit_transform(X)
     clf_no_cat.set_params(max_depth=2)
@@ -1082,13 +1082,10 @@ def test_uint8_predict(Est):
     est.predict(X)
 
 
+# TODO(1.3): Remove
 @pytest.mark.parametrize(
     "old_loss, new_loss, Estimator",
     [
-        # TODO(1.2): Remove
-        ("least_squares", "squared_error", HistGradientBoostingRegressor),
-        ("least_absolute_deviation", "absolute_error", HistGradientBoostingRegressor),
-        # TODO(1.3): Remove
         ("auto", "log_loss", HistGradientBoostingClassifier),
         ("binary_crossentropy", "log_loss", HistGradientBoostingClassifier),
         ("categorical_crossentropy", "log_loss", HistGradientBoostingClassifier),
@@ -1126,3 +1123,58 @@ def test_no_user_warning_with_scoring():
     with warnings.catch_warnings():
         warnings.simplefilter("error", UserWarning)
         est.fit(X_df, y)
+
+
+def test_class_weights():
+    """High level test to check class_weights."""
+    n_samples = 255
+    n_features = 2
+
+    X, y = make_classification(
+        n_samples=n_samples,
+        n_features=n_features,
+        n_informative=n_features,
+        n_redundant=0,
+        n_clusters_per_class=1,
+        n_classes=2,
+        random_state=0,
+    )
+    y_is_1 = y == 1
+
+    # class_weight is the same as sample weights with the corresponding class
+    clf = HistGradientBoostingClassifier(
+        min_samples_leaf=2, random_state=0, max_depth=2
+    )
+    sample_weight = np.ones(shape=(n_samples))
+    sample_weight[y_is_1] = 3.0
+    clf.fit(X, y, sample_weight=sample_weight)
+
+    class_weight = {0: 1.0, 1: 3.0}
+    clf_class_weighted = clone(clf).set_params(class_weight=class_weight)
+    clf_class_weighted.fit(X, y)
+
+    assert_allclose(clf.decision_function(X), clf_class_weighted.decision_function(X))
+
+    # Check that sample_weight and class_weight are multiplicative
+    clf.fit(X, y, sample_weight=sample_weight**2)
+    clf_class_weighted.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(clf.decision_function(X), clf_class_weighted.decision_function(X))
+
+    # Make imbalanced dataset
+    X_imb = np.concatenate((X[~y_is_1], X[y_is_1][:10]))
+    y_imb = np.concatenate((y[~y_is_1], y[y_is_1][:10]))
+
+    # class_weight="balanced" is the same as sample_weights to be
+    # inversely proportional to n_samples / (n_classes * np.bincount(y))
+    clf_balanced = clone(clf).set_params(class_weight="balanced")
+    clf_balanced.fit(X_imb, y_imb)
+
+    class_weight = y_imb.shape[0] / (2 * np.bincount(y_imb))
+    sample_weight = class_weight[y_imb]
+    clf_sample_weight = clone(clf).set_params(class_weight=None)
+    clf_sample_weight.fit(X_imb, y_imb, sample_weight=sample_weight)
+
+    assert_allclose(
+        clf_balanced.decision_function(X_imb),
+        clf_sample_weight.decision_function(X_imb),
+    )

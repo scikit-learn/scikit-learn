@@ -1,6 +1,5 @@
 # Author: Nicolas Hug
 
-cimport cython
 from cython.parallel import prange
 import numpy as np
 
