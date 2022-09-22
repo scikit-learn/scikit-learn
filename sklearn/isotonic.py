@@ -228,7 +228,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     array([1.8628..., 3.7256...])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "y_min": [Interval(Real, None, None, closed="both"), None],
         "y_max": [Interval(Real, None, None, closed="both"), None],
         "increasing": ["boolean", StrOptions({"auto"})],

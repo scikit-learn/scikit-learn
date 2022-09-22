@@ -5,6 +5,8 @@
 from math import sqrt
 
 import numpy as np
+from scipy.sparse import csr_matrix
+
 from sklearn import neighbors
 import re
 import pytest
@@ -226,3 +228,19 @@ def test_predicted_outlier_number(expected_outliers):
     if num_outliers != expected_outliers:
         y_dec = clf.negative_outlier_factor_
         check_outlier_corruption(num_outliers, expected_outliers, y_dec)
+
+
+def test_sparse():
+    # LocalOutlierFactor must support CSR inputs
+    # TODO: compare results on dense and sparse data as proposed in:
+    # https://github.com/scikit-learn/scikit-learn/pull/23585#discussion_r968388186
+    X = csr_matrix(iris.data)
+
+    lof = neighbors.LocalOutlierFactor(novelty=True)
+    lof.fit(X)
+    lof.predict(X)
+    lof.score_samples(X)
+    lof.decision_function(X)
+
+    lof = neighbors.LocalOutlierFactor(novelty=False)
+    lof.fit_predict(X)

@@ -366,13 +366,10 @@ def test_spline_transformer_n_features_out(n_knots, include_bias, degree):
 @pytest.mark.parametrize(
     "params, err_msg",
     [
-        ({"degree": -1}, "degree must be a non-negative integer"),
-        ({"degree": 2.5}, "degree must be a non-negative int or tuple"),
-        ({"degree": "12"}, r"degree=\(min_degree, max_degree\) must"),
-        ({"degree": "string"}, "degree must be a non-negative int or tuple"),
         ({"degree": (-1, 2)}, r"degree=\(min_degree, max_degree\) must"),
         ({"degree": (0, 1.5)}, r"degree=\(min_degree, max_degree\) must"),
         ({"degree": (3, 2)}, r"degree=\(min_degree, max_degree\) must"),
+        ({"degree": (1, 2, 3)}, r"int or tuple \(min_degree, max_degree\)"),
     ],
 )
 def test_polynomial_features_input_validation(params, err_msg):
@@ -778,19 +775,6 @@ def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only):
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
 
-def test_polynomial_features_deprecated_n_input_features():
-    # check that we raise a deprecation warning when accessing
-    # `n_input_features_`. FIXME: remove in 1.2
-    depr_msg = (
-        "The attribute `n_input_features_` was deprecated in version "
-        "1.0 and will be removed in 1.2."
-    )
-    X = np.arange(10).reshape(5, 2)
-
-    with pytest.warns(FutureWarning, match=depr_msg):
-        PolynomialFeatures().fit(X).n_input_features_
-
-
 # TODO: Remove in 1.2 when get_feature_names is removed
 @pytest.mark.parametrize("Transformer", [SplineTransformer, PolynomialFeatures])
 def test_get_feature_names_deprecated(Transformer):
@@ -816,7 +800,7 @@ def test_polynomial_features_behaviour_on_zero_degree():
 
     poly = PolynomialFeatures(degree=(0, 0), include_bias=False)
     err_msg = (
-        "Setting both min_deree and max_degree to zero and include_bias to"
+        "Setting both min_degree and max_degree to zero and include_bias to"
         " False would result in an empty output array."
     )
     with pytest.raises(ValueError, match=err_msg):

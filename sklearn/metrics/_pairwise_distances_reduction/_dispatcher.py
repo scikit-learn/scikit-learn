@@ -3,7 +3,9 @@ from abc import abstractmethod
 import numpy as np
 
 from typing import List
-from scipy.sparse import issparse
+
+from scipy.sparse import isspmatrix_csr
+
 from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING
 
 from ._base import (
@@ -92,21 +94,49 @@ class BaseDistanceReductionDispatcher:
         -------
         True if the dispatcher can be used, else False.
         """
-        dtypes_validity = X.dtype == Y.dtype and X.dtype in (np.float32, np.float64)
-        c_contiguity = (
-            hasattr(X, "flags")
-            and X.flags.c_contiguous
-            and hasattr(Y, "flags")
-            and Y.flags.c_contiguous
-        )
-        return (
+
+        def is_numpy_c_ordered(X):
+            return hasattr(X, "flags") and X.flags.c_contiguous
+
+        def is_valid_sparse_matrix(X):
+            return (
+                isspmatrix_csr(X)
+                and
+                # TODO: support CSR matrices without non-zeros elements
+                X.nnz > 0
+                and
+                # TODO: support CSR matrices with int64 indices and indptr
+                # See: https://github.com/scikit-learn/scikit-learn/issues/23653
+                X.indices.dtype == X.indptr.dtype == np.int32
+            )
+
+        is_usable = (
             get_config().get("enable_cython_pairwise_dist", True)
-            and not issparse(X)
-            and not issparse(Y)
-            and dtypes_validity
-            and c_contiguity
+            and (is_numpy_c_ordered(X) or is_valid_sparse_matrix(X))
+            and (is_numpy_c_ordered(Y) or is_valid_sparse_matrix(Y))
+            and X.dtype == Y.dtype
+            and X.dtype in (np.float32, np.float64)
             and metric in cls.valid_metrics()
         )
+
+        # The other joblib-based back-end might be more efficient on fused sparse-dense
+        # datasets' pairs on metric="(sq)euclidean" for some configurations because it
+        # uses the Squared Euclidean matrix decomposition, i.e.:
+        #
+        #       ||X_c_i - Y_c_j||² = ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
+        #
+        # calling efficient sparse-dense routines for matrix and vectors multiplication
+        # implemented in SciPy we do not use yet here.
+        # See: https://github.com/scikit-learn/scikit-learn/pull/23585#issuecomment-1247996669  # noqa
+        # TODO: implement specialisation for (sq)euclidean on fused sparse-dense
+        # using sparse-dense routines for matrix-vector multiplications.
+        fused_sparse_dense_euclidean_case_guard = not (
+            (is_valid_sparse_matrix(X) or is_valid_sparse_matrix(Y))
+            and isinstance(metric, str)
+            and "euclidean" in metric
+        )
+
+        return is_usable and fused_sparse_dense_euclidean_case_guard
 
     @classmethod
     @abstractmethod
