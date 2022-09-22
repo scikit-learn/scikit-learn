@@ -22,7 +22,7 @@ random sampling procedures.
 - |Fix| The condition for early stopping has now been changed in
   :func:`linear_model._sgd_fast._plain_sgd` which is used by :class:`linear_model.SGDRegressor`
   and :class:`linear_model.SGDClassifier`. The old condition did not disambiguate between
-  training and validation examples and had an effect of overscaling the error tolerance.
+  training and validation set and had an effect of overscaling the error tolerance.
   This has been fixed in :pr:`23798` by :user:`Harsh Agrawal <Harsh14901>`
 
 - |Enhancement| The default `eigen_tol` for :class:`cluster.SpectralClustering`,
