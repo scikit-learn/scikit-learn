@@ -67,7 +67,7 @@ feature, code or documentation improvement).
      conda activate sklearn-env
 
 #. **Alternative to conda:** If you run Linux or similar, you can instead use
-   your system's Python provided it is recent enough (3.7 or higher
+   your system's Python provided it is recent enough (3.8 or higher
    at the time of writing). In this case, we recommend to create a dedicated
    virtualenv_ and install the scikit-learn build dependencies with pip:
 
@@ -114,16 +114,11 @@ Runtime dependencies
 Scikit-learn requires the following dependencies both at build time and at
 runtime:
 
-- Python (>= 3.7),
+- Python (>= 3.8),
 - NumPy (>= |NumpyMinVersion|),
 - SciPy (>= |ScipyMinVersion|),
 - Joblib (>= |JoblibMinVersion|),
 - threadpoolctl (>= |ThreadpoolctlMinVersion|).
-
-.. note::
-
-   For running on PyPy, PyPy3-v5.10+, Numpy 1.14.0+, and scipy 1.1.0+
-   are required. For PyPy, only installation instructions with pip apply.
 
 Build dependencies
 ~~~~~~~~~~~~~~~~~~
@@ -150,8 +145,8 @@ Building Scikit-learn also requires:
    (before cythonization) will force the build to fail if OpenMP is not
    supported.
 
-Since version 0.21, scikit-learn automatically detects and use the linear
-algebrea library used by SciPy **at runtime**. Scikit-learn has therefore no
+Since version 0.21, scikit-learn automatically detects and uses the linear
+algebra library used by SciPy **at runtime**. Scikit-learn has therefore no
 build dependency on BLAS/LAPACK implementations such as OpenBlas, Atlas, Blis
 or MKL.
 
@@ -182,11 +177,11 @@ each time you update the sources. Therefore it is recommended that you install
 in with the ``pip install --no-build-isolation --editable .`` command, which
 allows you to edit the code in-place. This builds the extension in place and
 creates a link to the development directory (see `the pip docs
-<https://pip.pypa.io/en/stable/reference/pip_install/#editable-installs>`_).
+<https://pip.pypa.io/en/stable/topics/local-project-installs/#editable-installs>`_).
 
-This is fundamentally similar to using the command ``python setup.py develop``
-(see `the setuptool docs
-<https://setuptools.readthedocs.io/en/latest/setuptools.html#development-mode>`_).
+As the doc aboves explains, this is fundamentally similar to using the command
+``python setup.py develop``. (see `the setuptool docs
+<https://setuptools.pypa.io/en/latest/userguide/development_mode.html>`_).
 It is however preferred to use pip.
 
 On Unix-like systems, you can equivalently type ``make in`` from the top-level
@@ -205,14 +200,14 @@ to build scikit-learn Cython extensions for each supported platform.
 Windows
 -------
 
-First, install `Build Tools for Visual Studio 2019
-<https://visualstudio.microsoft.com/downloads/>`_.
+First, download the `Build Tools for Visual Studio 2019 installer
+<https://aka.ms/vs/17/release/vs_buildtools.exe>`_.
 
-.. warning::
+Run the downloaded `vs_buildtools.exe` file, during the installation you will
+need to make sure you select "Desktop development with C++", similarly to this
+screenshot:
 
-    You DO NOT need to install Visual Studio 2019. You only need the "Build
-    Tools for Visual Studio 2019", under "All downloads" -> "Tools for Visual
-    Studio 2019".
+.. image:: ../images/visual-studio-build-tools-selection.png
 
 Secondly, find out if you are running 64-bit or 32-bit Python. The building
 command depends on the architecture of the Python interpreter. You can check
@@ -300,6 +295,12 @@ forge using the following command:
     conda list
 
 which should include ``compilers`` and ``llvm-openmp``.
+
+.. note::
+
+   If you installed these packages after creating and activating a new conda
+   environment, you will need to first deactivate and then reactivate the
+   environment for these changes to take effect.
 
 The compilers meta-package will automatically set custom environment
 variables:

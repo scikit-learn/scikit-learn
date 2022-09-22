@@ -20,6 +20,7 @@ import copy
 from abc import ABCMeta
 from abc import abstractmethod
 from math import ceil
+from numbers import Integral, Real
 
 import numpy as np
 from scipy.sparse import issparse
@@ -32,11 +33,11 @@ from ..base import is_classifier
 from ..base import MultiOutputMixin
 from ..utils import Bunch
 from ..utils import check_random_state
-from ..utils.deprecation import deprecated
 from ..utils.validation import _check_sample_weight
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
+from ..utils._param_validation import Hidden, Interval, StrOptions
 
 from ._criterion import Criterion
 from ._splitter import Splitter
@@ -62,14 +63,15 @@ __all__ = [
 DTYPE = _tree.DTYPE
 DOUBLE = _tree.DOUBLE
 
-CRITERIA_CLF = {"gini": _criterion.Gini, "entropy": _criterion.Entropy}
-# TODO: Remove "mse" and "mae" in version 1.2.
+CRITERIA_CLF = {
+    "gini": _criterion.Gini,
+    "log_loss": _criterion.Entropy,
+    "entropy": _criterion.Entropy,
+}
 CRITERIA_REG = {
     "squared_error": _criterion.MSE,
-    "mse": _criterion.MSE,
     "friedman_mse": _criterion.FriedmanMSE,
     "absolute_error": _criterion.MAE,
-    "mae": _criterion.MAE,
     "poisson": _criterion.Poisson,
 }
 
@@ -91,6 +93,30 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
+
+    _parameter_constraints: dict = {
+        "splitter": [StrOptions({"best", "random"})],
+        "max_depth": [Interval(Integral, 1, None, closed="left"), None],
+        "min_samples_split": [
+            Interval(Integral, 2, None, closed="left"),
+            Interval(Real, 0.0, 1.0, closed="right"),
+        ],
+        "min_samples_leaf": [
+            Interval(Integral, 1, None, closed="left"),
+            Interval(Real, 0.0, 1.0, closed="neither"),
+        ],
+        "min_weight_fraction_leaf": [Interval(Real, 0.0, 0.5, closed="both")],
+        "max_features": [
+            Interval(Integral, 1, None, closed="left"),
+            Interval(Real, 0.0, 1.0, closed="right"),
+            StrOptions({"auto", "sqrt", "log2"}, deprecated={"auto"}),
+            None,
+        ],
+        "random_state": ["random_state"],
+        "max_leaf_nodes": [Interval(Integral, 2, None, closed="left"), None],
+        "min_impurity_decrease": [Interval(Real, 0.0, None, closed="left")],
+        "ccp_alpha": [Interval(Real, 0.0, None, closed="left")],
+    }
 
     @abstractmethod
     def __init__(
@@ -147,18 +173,13 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.tree_.n_leaves
 
-    def fit(
-        self, X, y, sample_weight=None, check_input=True, X_idx_sorted="deprecated"
-    ):
-
+    def fit(self, X, y, sample_weight=None, check_input=True):
+        self._validate_params()
         random_state = check_random_state(self.random_state)
-
-        if self.ccp_alpha < 0.0:
-            raise ValueError("ccp_alpha must be greater than or equal to 0")
 
         if check_input:
             # Need to validate separately here.
-            # We can't pass multi_ouput=True because that would allow y to be
+            # We can't pass multi_output=True because that would allow y to be
             # csr.
             check_X_params = dict(dtype=DTYPE, accept_sparse="csc")
             check_y_params = dict(ensure_2d=False, dtype=None)
@@ -226,42 +247,16 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
-        # Check parameters
         max_depth = np.iinfo(np.int32).max if self.max_depth is None else self.max_depth
-        max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
 
         if isinstance(self.min_samples_leaf, numbers.Integral):
-            if not 1 <= self.min_samples_leaf:
-                raise ValueError(
-                    "min_samples_leaf must be at least 1 or in (0, 0.5], got %s"
-                    % self.min_samples_leaf
-                )
             min_samples_leaf = self.min_samples_leaf
         else:  # float
-            if not 0.0 < self.min_samples_leaf <= 0.5:
-                raise ValueError(
-                    "min_samples_leaf must be at least 1 or in (0, 0.5], got %s"
-                    % self.min_samples_leaf
-                )
             min_samples_leaf = int(ceil(self.min_samples_leaf * n_samples))
 
         if isinstance(self.min_samples_split, numbers.Integral):
-            if not 2 <= self.min_samples_split:
-                raise ValueError(
-                    "min_samples_split must be an integer "
-                    "greater than 1 or a float in (0.0, 1.0]; "
-                    "got the integer %s"
-                    % self.min_samples_split
-                )
             min_samples_split = self.min_samples_split
         else:  # float
-            if not 0.0 < self.min_samples_split <= 1.0:
-                raise ValueError(
-                    "min_samples_split must be an integer "
-                    "greater than 1 or a float in (0.0, 1.0]; "
-                    "got the float %s"
-                    % self.min_samples_split
-                )
             min_samples_split = int(ceil(self.min_samples_split * n_samples))
             min_samples_split = max(2, min_samples_split)
 
@@ -271,18 +266,24 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if self.max_features == "auto":
                 if is_classification:
                     max_features = max(1, int(np.sqrt(self.n_features_in_)))
+                    warnings.warn(
+                        "`max_features='auto'` has been deprecated in 1.1 "
+                        "and will be removed in 1.3. To keep the past behaviour, "
+                        "explicitly set `max_features='sqrt'`.",
+                        FutureWarning,
+                    )
                 else:
                     max_features = self.n_features_in_
+                    warnings.warn(
+                        "`max_features='auto'` has been deprecated in 1.1 "
+                        "and will be removed in 1.3. To keep the past behaviour, "
+                        "explicitly set `max_features=1.0'`.",
+                        FutureWarning,
+                    )
             elif self.max_features == "sqrt":
                 max_features = max(1, int(np.sqrt(self.n_features_in_)))
             elif self.max_features == "log2":
                 max_features = max(1, int(np.log2(self.n_features_in_)))
-            else:
-                raise ValueError(
-                    "Invalid value for max_features. "
-                    "Allowed string values are 'auto', "
-                    "'sqrt' or 'log2'."
-                )
         elif self.max_features is None:
             max_features = self.n_features_in_
         elif isinstance(self.max_features, numbers.Integral):
@@ -295,26 +296,12 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         self.max_features_ = max_features
 
+        max_leaf_nodes = -1 if self.max_leaf_nodes is None else self.max_leaf_nodes
+
         if len(y) != n_samples:
             raise ValueError(
                 "Number of labels=%d does not match number of samples=%d"
                 % (len(y), n_samples)
-            )
-        if not 0 <= self.min_weight_fraction_leaf <= 0.5:
-            raise ValueError("min_weight_fraction_leaf must in [0, 0.5]")
-        if max_depth <= 0:
-            raise ValueError("max_depth must be greater than zero. ")
-        if not (0 < max_features <= self.n_features_in_):
-            raise ValueError("max_features must be in (0, n_features]")
-        if not isinstance(max_leaf_nodes, numbers.Integral):
-            raise ValueError(
-                "max_leaf_nodes must be integral number but was %r" % max_leaf_nodes
-            )
-        if -1 < max_leaf_nodes < 2:
-            raise ValueError(
-                ("max_leaf_nodes {0} must be either None or larger than 1").format(
-                    max_leaf_nodes
-                )
             )
 
         if sample_weight is not None:
@@ -332,19 +319,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             min_weight_leaf = self.min_weight_fraction_leaf * np.sum(sample_weight)
 
-        if self.min_impurity_decrease < 0.0:
-            raise ValueError("min_impurity_decrease must be greater than or equal to 0")
-
-        # TODO: Remove in 1.1
-        if X_idx_sorted != "deprecated":
-            warnings.warn(
-                "The parameter 'X_idx_sorted' is deprecated and has no "
-                "effect. It will be removed in 1.1 (renaming of 0.26). You "
-                "can suppress this warning by not passing any value to the "
-                "'X_idx_sorted' parameter.",
-                FutureWarning,
-            )
-
         # Build tree
         criterion = self.criterion
         if not isinstance(criterion, Criterion):
@@ -354,21 +328,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
             else:
                 criterion = CRITERIA_REG[self.criterion](self.n_outputs_, n_samples)
-            # TODO: Remove in v1.2
-            if self.criterion == "mse":
-                warnings.warn(
-                    "Criterion 'mse' was deprecated in v1.0 and will be "
-                    "removed in version 1.2. Use `criterion='squared_error'` "
-                    "which is equivalent.",
-                    FutureWarning,
-                )
-            elif self.criterion == "mae":
-                warnings.warn(
-                    "Criterion 'mae' was deprecated in v1.0 and will be "
-                    "removed in version 1.2. Use `criterion='absolute_error'` "
-                    "which is equivalent.",
-                    FutureWarning,
-                )
         else:
             # Make a deepcopy in case the criterion has mutable attributes that
             # might be shared and modified concurrently during parallel fitting
@@ -456,7 +415,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         check_input : bool, default=True
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you're doing.
 
         Returns
         -------
@@ -505,7 +464,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         check_input : bool, default=True
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you're doing.
 
         Returns
         -------
@@ -533,7 +492,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         check_input : bool, default=True
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you're doing.
 
         Returns
         -------
@@ -547,9 +506,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def _prune_tree(self):
         """Prune tree using Minimal Cost-Complexity Pruning."""
         check_is_fitted(self)
-
-        if self.ccp_alpha < 0.0:
-            raise ValueError("ccp_alpha must be greater than or equal to 0")
 
         if self.ccp_alpha == 0.0:
             return
@@ -643,9 +599,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     Parameters
     ----------
-    criterion : {"gini", "entropy"}, default="gini"
+    criterion : {"gini", "entropy", "log_loss"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "entropy" for the information gain.
+        "gini" for the Gini impurity and "log_loss" and "entropy" both for the
+        Shannon information gain, see :ref:`tree_mathematical_formulation`.
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
@@ -693,12 +650,16 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
             - If int, then consider `max_features` features at each split.
             - If float, then `max_features` is a fraction and
-              `int(max_features * n_features)` features are considered at each
-              split.
+              `max(1, int(max_features * n_features_in_))` features are considered at
+              each split.
             - If "auto", then `max_features=sqrt(n_features)`.
             - If "sqrt", then `max_features=sqrt(n_features)`.
             - If "log2", then `max_features=log2(n_features)`.
             - If None, then `max_features=n_features`.
+
+            .. deprecated:: 1.1
+                The `"auto"` option was deprecated in 1.1 and will be removed
+                in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -793,13 +754,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         or a list containing the number of classes for each
         output (for multi-output problems).
 
-    n_features_ : int
-        The number of features when ``fit`` is performed.
-
-        .. deprecated:: 1.0
-           `n_features_` is deprecated in 1.0 and will be removed in
-           1.2. Use `n_features_in_` instead.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -865,6 +819,12 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
 
+    _parameter_constraints: dict = {
+        **BaseDecisionTree._parameter_constraints,
+        "criterion": [StrOptions({"gini", "entropy", "log_loss"}), Hidden(Criterion)],
+        "class_weight": [dict, list, StrOptions({"balanced"}), None],
+    }
+
     def __init__(
         self,
         *,
@@ -896,9 +856,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha,
         )
 
-    def fit(
-        self, X, y, sample_weight=None, check_input=True, X_idx_sorted="deprecated"
-    ):
+    def fit(self, X, y, sample_weight=None, check_input=True):
         """Build a decision tree classifier from the training set (X, y).
 
         Parameters
@@ -920,13 +878,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         check_input : bool, default=True
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
-
-        X_idx_sorted : deprecated, default="deprecated"
-            This parameter is deprecated and has no effect.
-            It will be removed in 1.1 (renaming of 0.26).
-
-            .. deprecated:: 0.24
+            Don't use this parameter unless you know what you're doing.
 
         Returns
         -------
@@ -939,7 +891,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             y,
             sample_weight=sample_weight,
             check_input=check_input,
-            X_idx_sorted=X_idx_sorted,
         )
         return self
 
@@ -958,7 +909,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         check_input : bool, default=True
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you're doing.
 
         Returns
         -------
@@ -1019,14 +970,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
             return proba
 
-    @deprecated(  # type: ignore
-        "The attribute `n_features_` is deprecated in 1.0 and will be removed "
-        "in 1.2. Use `n_features_in_` instead."
-    )
-    @property
-    def n_features_(self):
-        return self.n_features_in_
-
     def _more_tags(self):
         return {"multilabel": True}
 
@@ -1054,14 +997,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         .. versionadded:: 0.24
             Poisson deviance criterion.
-
-        .. deprecated:: 1.0
-            Criterion "mse" was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion="squared_error"` which is equivalent.
-
-        .. deprecated:: 1.0
-            Criterion "mae" was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion="absolute_error"` which is equivalent.
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
@@ -1109,12 +1044,16 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
-          `int(max_features * n_features)` features are considered at each
+          `max(1, int(max_features * n_features_in_))` features are considered at each
           split.
         - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
+
+        .. deprecated:: 1.1
+            The `"auto"` option was deprecated in 1.1 and will be removed
+            in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1179,13 +1118,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     max_features_ : int
         The inferred value of max_features.
 
-    n_features_ : int
-        The number of features when ``fit`` is performed.
-
-        .. deprecated:: 1.0
-           `n_features_` is deprecated in 1.0 and will be removed in
-           1.2. Use `n_features_in_` instead.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -1246,6 +1178,14 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
            0.16...,  0.11..., -0.73..., -0.30..., -0.00...])
     """
 
+    _parameter_constraints: dict = {
+        **BaseDecisionTree._parameter_constraints,
+        "criterion": [
+            StrOptions({"squared_error", "friedman_mse", "absolute_error", "poisson"}),
+            Hidden(Criterion),
+        ],
+    }
+
     def __init__(
         self,
         *,
@@ -1275,9 +1215,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             ccp_alpha=ccp_alpha,
         )
 
-    def fit(
-        self, X, y, sample_weight=None, check_input=True, X_idx_sorted="deprecated"
-    ):
+    def fit(self, X, y, sample_weight=None, check_input=True):
         """Build a decision tree regressor from the training set (X, y).
 
         Parameters
@@ -1298,13 +1236,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         check_input : bool, default=True
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
-
-        X_idx_sorted : deprecated, default="deprecated"
-            This parameter is deprecated and has no effect.
-            It will be removed in 1.1 (renaming of 0.26).
-
-            .. deprecated:: 0.24
+            Don't use this parameter unless you know what you're doing.
 
         Returns
         -------
@@ -1317,7 +1249,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             y,
             sample_weight=sample_weight,
             check_input=check_input,
-            X_idx_sorted=X_idx_sorted,
         )
         return self
 
@@ -1348,14 +1279,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         )
         return averaged_predictions
 
-    @deprecated(  # type: ignore
-        "The attribute `n_features_` is deprecated in 1.0 and will be removed "
-        "in 1.2. Use `n_features_in_` instead."
-    )
-    @property
-    def n_features_(self):
-        return self.n_features_in_
-
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
     """An extremely randomized tree classifier.
@@ -1373,9 +1296,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
     Parameters
     ----------
-    criterion : {"gini", "entropy"}, default="gini"
+    criterion : {"gini", "entropy", "log_loss"}, default="gini"
         The function to measure the quality of a split. Supported criteria are
-        "gini" for the Gini impurity and "entropy" for the information gain.
+        "gini" for the Gini impurity and "log_loss" and "entropy" both for the
+        Shannon information gain, see :ref:`tree_mathematical_formulation`.
 
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
@@ -1418,17 +1342,24 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, {"auto", "sqrt", "log2"} or None, default="auto"
+    max_features : int, float, {"auto", "sqrt", "log2"} or None, default="sqrt"
         The number of features to consider when looking for the best split:
 
             - If int, then consider `max_features` features at each split.
             - If float, then `max_features` is a fraction and
-              `int(max_features * n_features)` features are considered at each
-              split.
+              `max(1, int(max_features * n_features_in_))` features are considered at
+              each split.
             - If "auto", then `max_features=sqrt(n_features)`.
             - If "sqrt", then `max_features=sqrt(n_features)`.
             - If "log2", then `max_features=log2(n_features)`.
             - If None, then `max_features=n_features`.
+
+            .. versionchanged:: 1.1
+                The default of `max_features` changed from `"auto"` to `"sqrt"`.
+
+            .. deprecated:: 1.1
+                The `"auto"` option was deprecated in 1.1 and will be removed
+                in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1515,13 +1446,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         high cardinality features (many unique values). See
         :func:`sklearn.inspection.permutation_importance` as an alternative.
 
-    n_features_ : int
-        The number of features when ``fit`` is performed.
-
-        .. deprecated:: 1.0
-           `n_features_` is deprecated in 1.0 and will be removed in
-           1.2. Use `n_features_in_` instead.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -1591,7 +1515,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         min_samples_split=2,
         min_samples_leaf=1,
         min_weight_fraction_leaf=0.0,
-        max_features="auto",
+        max_features="sqrt",
         random_state=None,
         max_leaf_nodes=None,
         min_impurity_decrease=0.0,
@@ -1630,25 +1554,22 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Parameters
     ----------
-    criterion : {"squared_error", "friedman_mse"}, default="squared_error"
+    criterion : {"squared_error", "friedman_mse", "absolute_error", "poisson"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
-        variance reduction as feature selection criterion and "mae" for the
-        mean absolute error.
+        variance reduction as feature selection criterion and minimizes the L2
+        loss using the mean of each terminal node, "friedman_mse", which uses
+        mean squared error with Friedman's improvement score for potential
+        splits, "absolute_error" for the mean absolute error, which minimizes
+        the L1 loss using the median of each terminal node, and "poisson" which
+        uses reduction in Poisson deviance to find splits.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
         .. versionadded:: 0.24
             Poisson deviance criterion.
-
-        .. deprecated:: 1.0
-            Criterion "mse" was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion="squared_error"` which is equivalent.
-
-        .. deprecated:: 1.0
-            Criterion "mae" was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion="absolute_error"` which is equivalent.
 
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
@@ -1691,17 +1612,24 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         the input samples) required to be at a leaf node. Samples have
         equal weight when sample_weight is not provided.
 
-    max_features : int, float, {"auto", "sqrt", "log2"} or None, default="auto"
+    max_features : int, float, {"auto", "sqrt", "log2"} or None, default=1.0
         The number of features to consider when looking for the best split:
 
         - If int, then consider `max_features` features at each split.
         - If float, then `max_features` is a fraction and
-          `int(max_features * n_features)` features are considered at each
+          `max(1, int(max_features * n_features_in_))` features are considered at each
           split.
         - If "auto", then `max_features=n_features`.
         - If "sqrt", then `max_features=sqrt(n_features)`.
         - If "log2", then `max_features=log2(n_features)`.
         - If None, then `max_features=n_features`.
+
+        .. versionchanged:: 1.1
+            The default of `max_features` changed from `"auto"` to `1.0`.
+
+        .. deprecated:: 1.1
+            The `"auto"` option was deprecated in 1.1 and will be removed
+            in 1.3.
 
         Note: the search for a split does not stop until at least one
         valid partition of the node samples is found, even if it requires to
@@ -1746,13 +1674,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     ----------
     max_features_ : int
         The inferred value of max_features.
-
-    n_features_ : int
-        The number of features when ``fit`` is performed.
-
-        .. deprecated:: 1.0
-           `n_features_` is deprecated in 1.0 and will be removed in
-           1.2. Use `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1827,7 +1748,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         min_samples_split=2,
         min_samples_leaf=1,
         min_weight_fraction_leaf=0.0,
-        max_features="auto",
+        max_features=1.0,
         random_state=None,
         min_impurity_decrease=0.0,
         max_leaf_nodes=None,

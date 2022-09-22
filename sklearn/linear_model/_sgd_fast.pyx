@@ -1,7 +1,3 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-#
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Mathieu Blondel (partial_fit support)
 #         Rob Zinkov (passive-aggressive)
@@ -11,12 +7,10 @@
 
 
 import numpy as np
-import sys
 from time import time
 
-cimport cython
-from libc.math cimport exp, log, sqrt, pow, fabs
-cimport numpy as np
+from libc.math cimport exp, log, pow, fabs
+cimport numpy as cnp
 from numpy.math cimport INFINITY
 cdef extern from "_sgd_fast_helpers.h":
     bint skl_isfinite(double) nogil
@@ -24,7 +18,7 @@ cdef extern from "_sgd_fast_helpers.h":
 from ..utils._weight_vector cimport WeightVector64 as WeightVector
 from ..utils._seq_dataset cimport SequentialDataset64 as SequentialDataset
 
-np.import_array()
+cnp.import_array()
 
 # Penalty constants
 DEF NO_PENALTY = 0
@@ -366,20 +360,20 @@ cdef class SquaredEpsilonInsensitive(Regression):
         return SquaredEpsilonInsensitive, (self.epsilon,)
 
 
-def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
+def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
                double intercept,
-               np.ndarray[double, ndim=1, mode='c'] average_weights,
+               cnp.ndarray[double, ndim=1, mode='c'] average_weights,
                double average_intercept,
                LossFunction loss,
                int penalty_type,
                double alpha, double C,
                double l1_ratio,
                SequentialDataset dataset,
-               np.ndarray[unsigned char, ndim=1, mode='c'] validation_mask,
+               cnp.ndarray[unsigned char, ndim=1, mode='c'] validation_mask,
                bint early_stopping, validation_score_cb,
                int n_iter_no_change,
                int max_iter, double tol, int fit_intercept,
-               int verbose, bint shuffle, np.uint32_t seed,
+               int verbose, bint shuffle, cnp.uint32_t seed,
                double weight_pos, double weight_neg,
                int learning_rate, double eta0,
                double power_t,
@@ -439,7 +433,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
         The weight of the positive class.
     weight_neg : float
         The weight of the negative class.
-    seed : np.uint32_t
+    seed : cnp.uint32_t
         Seed of the pseudorandom number generator used to shuffle the data.
     learning_rate : int
         The learning rate:
@@ -506,6 +500,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef double sample_weight
     cdef double class_weight = 1.0
     cdef unsigned int count = 0
+    cdef unsigned int train_count = n_samples - validation_mask.sum()
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
     cdef int is_hinge = isinstance(loss, Hinge)
@@ -519,7 +514,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
     cdef unsigned char [:] validation_mask_view = validation_mask
 
     # q vector is only used for L1 regularization
-    cdef np.ndarray[double, ndim = 1, mode = "c"] q = None
+    cdef cnp.ndarray[double, ndim = 1, mode = "c"] q = None
     cdef double * q_data_ptr = NULL
     if penalty_type == L1 or penalty_type == ELASTICNET:
         q = np.zeros((n_features,), dtype=np.float64, order="c")
@@ -637,7 +632,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     print("Norm: %.2f, NNZs: %d, Bias: %.6f, T: %d, "
                           "Avg. loss: %f"
                           % (w.norm(), weights.nonzero()[0].shape[0],
-                             intercept, count, sumloss / n_samples))
+                             intercept, count, sumloss / train_count))
                     print("Total training time: %.2f seconds."
                           % (time() - t_start))
 
@@ -659,7 +654,7 @@ def _plain_sgd(np.ndarray[double, ndim=1, mode='c'] weights,
                     best_score = score
             # or evaluate the loss on the training set
             else:
-                if tol > -INFINITY and sumloss > best_loss - tol * n_samples:
+                if tol > -INFINITY and sumloss > best_loss - tol * train_count:
                     no_improvement_count += 1
                 else:
                     no_improvement_count = 0

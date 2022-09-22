@@ -1,7 +1,15 @@
 import warnings
 
+import numpy as np
+
 from ..base import BaseEstimator, TransformerMixin
-from ..utils.validation import _allclose_dense_sparse, check_array
+from ..utils.metaestimators import available_if
+from ..utils.validation import (
+    _allclose_dense_sparse,
+    _check_feature_names_in,
+    check_array,
+)
+from ..utils._param_validation import StrOptions
 
 
 def _identity(X):
@@ -61,6 +69,20 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
        .. versionadded:: 0.20
 
+    feature_names_out : callable, 'one-to-one' or None, default=None
+        Determines the list of feature names that will be returned by the
+        `get_feature_names_out` method. If it is 'one-to-one', then the output
+        feature names will be equal to the input feature names. If it is a
+        callable, then it must take two positional arguments: this
+        `FunctionTransformer` (`self`) and an array-like of input feature names
+        (`input_features`). It must return an array-like of output feature
+        names. The `get_feature_names_out` method is only defined if
+        `feature_names_out` is not None.
+
+        See ``get_feature_names_out`` for more details.
+
+        .. versionadded:: 1.1
+
     kw_args : dict, default=None
         Dictionary of additional keyword arguments to pass to func.
 
@@ -74,14 +96,13 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     Attributes
     ----------
     n_features_in_ : int
-        Number of features seen during :term:`fit`. Defined only when
-        `validate=True`.
+        Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
-        Names of features seen during :term:`fit`. Defined only when `validate=True`
-        and `X` has feature names that are all strings.
+        Names of features seen during :term:`fit`. Defined only when `X` has feature
+        names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -105,6 +126,17 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
            [1.0986..., 1.3862...]])
     """
 
+    _parameter_constraints: dict = {
+        "func": [callable, None],
+        "inverse_func": [callable, None],
+        "validate": ["boolean"],
+        "accept_sparse": ["boolean"],
+        "check_inverse": ["boolean"],
+        "feature_names_out": [callable, StrOptions({"one-to-one"}), None],
+        "kw_args": [dict, None],
+        "inv_kw_args": [dict, None],
+    }
+
     def __init__(
         self,
         func=None,
@@ -113,6 +145,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         validate=False,
         accept_sparse=False,
         check_inverse=True,
+        feature_names_out=None,
         kw_args=None,
         inv_kw_args=None,
     ):
@@ -121,18 +154,32 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         self.validate = validate
         self.accept_sparse = accept_sparse
         self.check_inverse = check_inverse
+        self.feature_names_out = feature_names_out
         self.kw_args = kw_args
         self.inv_kw_args = inv_kw_args
 
     def _check_input(self, X, *, reset):
         if self.validate:
             return self._validate_data(X, accept_sparse=self.accept_sparse, reset=reset)
+        elif reset:
+            # Set feature_names_in_ and n_features_in_ even if validate=False
+            # We run this only when reset==True to store the attributes but not
+            # validate them, because validate=False
+            self._check_n_features(X, reset=reset)
+            self._check_feature_names(X, reset=reset)
         return X
 
     def _check_inverse_transform(self, X):
         """Check that func and inverse_func are the inverse."""
         idx_selected = slice(None, None, max(1, X.shape[0] // 100))
         X_round_trip = self.inverse_transform(self.transform(X[idx_selected]))
+
+        if not np.issubdtype(X.dtype, np.number):
+            raise ValueError(
+                "'check_inverse' is only supported when all the elements in `X` is"
+                " numerical."
+            )
+
         if not _allclose_dense_sparse(X[idx_selected], X_round_trip):
             warnings.warn(
                 "The provided functions are not strictly"
@@ -160,6 +207,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         self : object
             FunctionTransformer class instance.
         """
+        self._validate_params()
         X = self._check_input(X, reset=True)
         if self.check_inverse and not (self.func is None or self.inverse_func is None):
             self._check_inverse_transform(X)
@@ -197,6 +245,54 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         if self.validate:
             X = check_array(X, accept_sparse=self.accept_sparse)
         return self._transform(X, func=self.inverse_func, kw_args=self.inv_kw_args)
+
+    @available_if(lambda self: self.feature_names_out is not None)
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        This method is only defined if `feature_names_out` is not None.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input feature names.
+
+            - If `input_features` is None, then `feature_names_in_` is
+              used as the input feature names. If `feature_names_in_` is not
+              defined, then names are generated:
+              `[x0, x1, ..., x(n_features_in_ - 1)]`.
+            - If `input_features` is array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+
+            - If `feature_names_out` is 'one-to-one', the input feature names
+              are returned (see `input_features` above). This requires
+              `feature_names_in_` and/or `n_features_in_` to be defined, which
+              is done automatically if `validate=True`. Alternatively, you can
+              set them in `func`.
+            - If `feature_names_out` is a callable, then it is called with two
+              arguments, `self` and `input_features`, and its return value is
+              returned by this method.
+        """
+        if hasattr(self, "n_features_in_") or input_features is not None:
+            input_features = _check_feature_names_in(self, input_features)
+        if self.feature_names_out == "one-to-one":
+            names_out = input_features
+        elif callable(self.feature_names_out):
+            names_out = self.feature_names_out(self, input_features)
+        else:
+            raise ValueError(
+                f"feature_names_out={self.feature_names_out!r} is invalid. "
+                'It must either be "one-to-one" or a callable with two '
+                "arguments: the function transformer and an array-like of "
+                "input feature names. The callable must return an array-like "
+                "of output feature names."
+            )
+        return np.asarray(names_out, dtype=object)
 
     def _transform(self, X, func=None, kw_args=None):
         if func is None:

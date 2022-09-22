@@ -18,10 +18,7 @@ where no sort of memory checks are done.
 
 Notes
 -----
-Maybe we could speed it a bit further by decorating functions with
-@cython.boundscheck(False), but probably it is not worth since all
-work is done in lisvm_helper.c
-Also, the signature mode='c' is somewhat superficial, since we already
+The signature mode='c' is somewhat superficial, since we already
 check that arrays are C-contiguous in svm.py
 
 Authors
@@ -30,9 +27,8 @@ Authors
       Gael Varoquaux <gael.varoquaux@normalesup.org>
 """
 
-import warnings
 import  numpy as np
-cimport numpy as np
+cimport numpy as cnp
 from libc.stdlib cimport free
 from ..utils._cython_blas cimport _dot
 
@@ -42,7 +38,7 @@ cdef extern from *:
     ctypedef struct svm_parameter:
         pass
 
-np.import_array()
+cnp.import_array()
 
 
 ################################################################################
@@ -54,14 +50,14 @@ LIBSVM_KERNEL_TYPES = ['linear', 'poly', 'rbf', 'sigmoid', 'precomputed']
 # Wrapper functions
 
 def fit(
-    np.ndarray[np.float64_t, ndim=2, mode='c'] X,
-    np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
+    cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] X,
+    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] Y,
     int svm_type=0, kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0., double tol=1e-3,
     double C=1., double nu=0.5, double epsilon=0.1,
-    np.ndarray[np.float64_t, ndim=1, mode='c']
+    cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
-    np.ndarray[np.float64_t, ndim=1, mode='c']
+    cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
         sample_weight=np.empty(0),
     int shrinking=1, int probability=0,
     double cache_size=100.,
@@ -155,14 +151,17 @@ def fit(
 
     probA, probB : array of shape (n_class*(n_class-1)/2,)
         Probability estimates, empty array for probability=False.
+
+    n_iter : ndarray of shape (max(1, (n_class * (n_class - 1) // 2)),)
+        Number of iterations run by the optimization routine to fit the model.
     """
 
     cdef svm_parameter param
     cdef svm_problem problem
     cdef svm_model *model
     cdef const char *error_msg
-    cdef np.npy_intp SV_len
-    cdef np.npy_intp nr
+    cdef cnp.npy_intp SV_len
+    cdef cnp.npy_intp nr
 
 
     if len(sample_weight) == 0:
@@ -178,7 +177,7 @@ def fit(
         &problem, X.data, Y.data, sample_weight.data, X.shape, kernel_index)
     if problem.x == NULL:
         raise MemoryError("Seems we've run out of memory")
-    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
+    cdef cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
     set_parameter(
         &param, svm_type, kernel_index, degree, gamma, coef0, nu, cache_size,
@@ -202,21 +201,25 @@ def fit(
     SV_len  = get_l(model)
     n_class = get_nr(model)
 
-    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef
+    cdef cnp.ndarray[int, ndim=1, mode='c'] n_iter
+    n_iter = np.empty(max(1, n_class * (n_class - 1) // 2), dtype=np.intc)
+    copy_n_iter(n_iter.data, model)
+
+    cdef cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] sv_coef
     sv_coef = np.empty((n_class-1, SV_len), dtype=np.float64)
     copy_sv_coef (sv_coef.data, model)
 
     # the intercept is just model.rho but with sign changed
-    cdef np.ndarray[np.float64_t, ndim=1, mode='c'] intercept
+    cdef cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] intercept
     intercept = np.empty(int((n_class*(n_class-1))/2), dtype=np.float64)
     copy_intercept (intercept.data, model, intercept.shape)
 
-    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] support
+    cdef cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] support
     support = np.empty (SV_len, dtype=np.int32)
     copy_support (support.data, model)
 
     # copy model.SV
-    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] support_vectors
+    cdef cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] support_vectors
     if kernel_index == 4:
         # precomputed kernel
         support_vectors = np.empty((0, 0), dtype=np.float64)
@@ -224,7 +227,7 @@ def fit(
         support_vectors = np.empty((SV_len, X.shape[1]), dtype=np.float64)
         copy_SV(support_vectors.data, model, support_vectors.shape)
 
-    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] n_class_SV
+    cdef cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] n_class_SV
     if svm_type == 0 or svm_type == 1:
         n_class_SV = np.empty(n_class, dtype=np.int32)
         copy_nSV(n_class_SV.data, model)
@@ -232,8 +235,8 @@ def fit(
         # OneClass and SVR are considered to have 2 classes
         n_class_SV = np.array([SV_len, SV_len], dtype=np.int32)
 
-    cdef np.ndarray[np.float64_t, ndim=1, mode='c'] probA
-    cdef np.ndarray[np.float64_t, ndim=1, mode='c'] probB
+    cdef cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] probA
+    cdef cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] probB
     if probability != 0:
         if svm_type < 2: # SVC and NuSVC
             probA = np.empty(int(n_class*(n_class-1)/2), dtype=np.float64)
@@ -251,7 +254,7 @@ def fit(
     free(problem.x)
 
     return (support, support_vectors, n_class_SV, sv_coef, intercept,
-           probA, probB, fit_status)
+           probA, probB, fit_status, n_iter)
 
 
 cdef void set_predict_params(
@@ -276,19 +279,19 @@ cdef void set_predict_params(
                          nr_weight, weight_label, weight, max_iter, random_seed)
 
 
-def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
-            np.ndarray[np.int32_t, ndim=1, mode='c'] support,
-            np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
-            np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
-            np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
-            np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-            np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
-            np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
+def predict(cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] X,
+            cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] support,
+            cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] SV,
+            cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] nSV,
+            cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] sv_coef,
+            cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] intercept,
+            cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] probA=np.empty(0),
+            cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] probB=np.empty(0),
             int svm_type=0, kernel='rbf', int degree=3,
             double gamma=0.1, double coef0=0.,
-            np.ndarray[np.float64_t, ndim=1, mode='c']
+            cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
                 class_weight=np.empty(0),
-            np.ndarray[np.float64_t, ndim=1, mode='c']
+            cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
                 sample_weight=np.empty(0),
             double cache_size=100.):
     """
@@ -340,12 +343,12 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     dec_values : array
         Predicted values.
     """
-    cdef np.ndarray[np.float64_t, ndim=1, mode='c'] dec_values
+    cdef cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] dec_values
     cdef svm_parameter param
     cdef svm_model *model
     cdef int rv
 
-    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
+    cdef cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
 
     set_predict_params(&param, svm_type, kernel, degree, gamma, coef0,
@@ -370,19 +373,19 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
 
 
 def predict_proba(
-    np.ndarray[np.float64_t, ndim=2, mode='c'] X,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] support,
-    np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
-    np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
-    np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-    np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
-    np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
+    cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] X,
+    cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] support,
+    cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] SV,
+    cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] nSV,
+    cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] sv_coef,
+    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] intercept,
+    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] probA=np.empty(0),
+    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] probB=np.empty(0),
     int svm_type=0, kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0.,
-    np.ndarray[np.float64_t, ndim=1, mode='c']
+    cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
-    np.ndarray[np.float64_t, ndim=1, mode='c']
+    cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
         sample_weight=np.empty(0),
     double cache_size=100.):
     """
@@ -444,10 +447,10 @@ def predict_proba(
     dec_values : array
         Predicted values.
     """
-    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
+    cdef cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] dec_values
     cdef svm_parameter param
     cdef svm_model *model
-    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
+    cdef cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
     cdef int rv
 
@@ -459,7 +462,7 @@ def predict_proba(
                       sv_coef.data, intercept.data, nSV.data,
                       probA.data, probB.data)
 
-    cdef np.npy_intp n_class = get_nr(model)
+    cdef cnp.npy_intp n_class = get_nr(model)
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
     try:
@@ -475,19 +478,19 @@ def predict_proba(
 
 
 def decision_function(
-    np.ndarray[np.float64_t, ndim=2, mode='c'] X,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] support,
-    np.ndarray[np.float64_t, ndim=2, mode='c'] SV,
-    np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
-    np.ndarray[np.float64_t, ndim=2, mode='c'] sv_coef,
-    np.ndarray[np.float64_t, ndim=1, mode='c'] intercept,
-    np.ndarray[np.float64_t, ndim=1, mode='c'] probA=np.empty(0),
-    np.ndarray[np.float64_t, ndim=1, mode='c'] probB=np.empty(0),
+    cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] X,
+    cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] support,
+    cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] SV,
+    cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] nSV,
+    cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] sv_coef,
+    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] intercept,
+    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] probA=np.empty(0),
+    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] probB=np.empty(0),
     int svm_type=0, kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0.,
-    np.ndarray[np.float64_t, ndim=1, mode='c']
+    cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
-    np.ndarray[np.float64_t, ndim=1, mode='c']
+    cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
          sample_weight=np.empty(0),
     double cache_size=100.):
     """
@@ -542,12 +545,12 @@ def decision_function(
     dec_values : array
         Predicted values.
     """
-    cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
+    cdef cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] dec_values
     cdef svm_parameter param
     cdef svm_model *model
-    cdef np.npy_intp n_class
+    cdef cnp.npy_intp n_class
 
-    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
+    cdef cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
 
     cdef int rv
@@ -581,14 +584,14 @@ def decision_function(
 
 
 def cross_validation(
-    np.ndarray[np.float64_t, ndim=2, mode='c'] X,
-    np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
+    cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] X,
+    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] Y,
     int n_fold, svm_type=0, kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0., double tol=1e-3,
     double C=1., double nu=0.5, double epsilon=0.1,
-    np.ndarray[np.float64_t, ndim=1, mode='c']
+    cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
-    np.ndarray[np.float64_t, ndim=1, mode='c']
+    cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
         sample_weight=np.empty(0),
     int shrinking=0, int probability=0, double cache_size=100.,
     int max_iter=-1,
@@ -675,8 +678,8 @@ def cross_validation(
     cdef svm_problem problem
     cdef svm_model *model
     cdef const char *error_msg
-    cdef np.npy_intp SV_len
-    cdef np.npy_intp nr
+    cdef cnp.npy_intp SV_len
+    cdef cnp.npy_intp nr
 
     if len(sample_weight) == 0:
         sample_weight = np.ones(X.shape[0], dtype=np.float64)
@@ -695,7 +698,7 @@ def cross_validation(
         &problem, X.data, Y.data, sample_weight.data, X.shape, kernel_index)
     if problem.x == NULL:
         raise MemoryError("Seems we've run out of memory")
-    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
+    cdef cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
 
     # set parameters
@@ -709,7 +712,7 @@ def cross_validation(
     if error_msg:
         raise ValueError(error_msg)
 
-    cdef np.ndarray[np.float64_t, ndim=1, mode='c'] target
+    cdef cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] target
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
     try:

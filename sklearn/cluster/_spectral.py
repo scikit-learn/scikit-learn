@@ -1,21 +1,58 @@
-# -*- coding: utf-8 -*-
 """Algorithms for spectral clustering"""
 
-# Author: Gael Varoquaux gael.varoquaux@normalesup.org
+# Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Brian Cheung
 #         Wei LI <kuantkid@gmail.com>
+#         Andrew Knyazev <Andrew.Knyazev@ucdenver.edu>
 # License: BSD 3 clause
+
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
 
+from scipy.linalg import LinAlgError, qr, svd
+from scipy.sparse import csc_matrix
+
 from ..base import BaseEstimator, ClusterMixin
+from ..utils._param_validation import Interval, StrOptions
 from ..utils import check_random_state, as_float_array
-from ..utils.deprecation import deprecated
-from ..metrics.pairwise import pairwise_kernels
+from ..metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from ..neighbors import kneighbors_graph, NearestNeighbors
 from ..manifold import spectral_embedding
 from ._kmeans import k_means
+
+
+def cluster_qr(vectors):
+    """Find the discrete partition closest to the eigenvector embedding.
+
+        This implementation was proposed in [1]_.
+
+    .. versionadded:: 1.1
+
+        Parameters
+        ----------
+        vectors : array-like, shape: (n_samples, n_clusters)
+            The embedding space of the samples.
+
+        Returns
+        -------
+        labels : array of integers, shape: n_samples
+            The cluster labels of vectors.
+
+        References
+        ----------
+        .. [1] :doi:`Simple, direct, and efficient multi-way spectral clustering, 2019
+            Anil Damle, Victor Minden, Lexing Ying
+            <10.1093/imaiai/iay008>`
+
+    """
+
+    k = vectors.shape[1]
+    _, _, piv = qr(vectors.T, pivoting=True)
+    ut, _, v = svd(vectors[piv[:k], :].T)
+    vectors = abs(np.dot(vectors, np.dot(ut, v.conj())))
+    return vectors.argmax(axis=1)
 
 
 def discretize(
@@ -73,9 +110,6 @@ def discretize(
 
     """
 
-    from scipy.sparse import csc_matrix
-    from scipy.linalg import LinAlgError
-
     random_state = check_random_state(random_state)
 
     vectors = as_float_array(vectors, copy=copy)
@@ -97,7 +131,7 @@ def discretize(
     # Normalize the rows of the eigenvectors.  Samples should lie on the unit
     # hypersphere centered at the origin.  This transforms the samples in the
     # embedding space to the space of partition matrices.
-    vectors = vectors / np.sqrt((vectors ** 2).sum(axis=1))[:, np.newaxis]
+    vectors = vectors / np.sqrt((vectors**2).sum(axis=1))[:, np.newaxis]
 
     svd_restarts = 0
     has_converged = False
@@ -139,8 +173,8 @@ def discretize(
 
             try:
                 U, S, Vh = np.linalg.svd(t_svd)
-                svd_restarts += 1
             except LinAlgError:
+                svd_restarts += 1
                 print("SVD did not converge, randomizing and trying again")
                 break
 
@@ -165,7 +199,7 @@ def spectral_clustering(
     eigen_solver=None,
     random_state=None,
     n_init=10,
-    eigen_tol=0.0,
+    eigen_tol="auto",
     assign_labels="kmeans",
     verbose=False,
 ):
@@ -197,13 +231,14 @@ def spectral_clustering(
         Number of clusters to extract.
 
     n_components : int, default=n_clusters
-        Number of eigenvectors to use for the spectral embedding
+        Number of eigenvectors to use for the spectral embedding.
 
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
-        The eigenvalue decomposition strategy to use. AMG requires pyamg
-        to be installed. It can be faster on very large, sparse problems,
-        but may also lead to instabilities. If None, then ``'arpack'`` is
-        used. See [4]_ for more details regarding `'lobpcg'`.
+        The eigenvalue decomposition method. If None then ``'arpack'`` is used.
+        See [4]_ for more details regarding ``'lobpcg'``.
+        Eigensolver ``'amg'`` runs ``'lobpcg'`` with optional
+        Algebraic MultiGrid preconditioning and requires pyamg to be installed.
+        It can be faster on very large sparse problems [6]_ and [7]_.
 
     random_state : int, RandomState instance, default=None
         A pseudo random number generator used for the initialization
@@ -225,16 +260,37 @@ def spectral_clustering(
         consecutive runs in terms of inertia. Only used if
         ``assign_labels='kmeans'``.
 
-    eigen_tol : float, default=0.0
-        Stopping criterion for eigendecomposition of the Laplacian matrix
-        when using arpack eigen_solver.
+    eigen_tol : float, default="auto"
+        Stopping criterion for eigendecomposition of the Laplacian matrix.
+        If `eigen_tol="auto"` then the passed tolerance will depend on the
+        `eigen_solver`:
 
-    assign_labels : {'kmeans', 'discretize'}, default='kmeans'
+        - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
+        - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
+          `eigen_tol=None` which configures the underlying `lobpcg` solver to
+          automatically resolve the value according to their heuristics. See,
+          :func:`scipy.sparse.linalg.lobpcg` for details.
+
+        Note that when using `eigen_solver="lobpcg"` or `eigen_solver="amg"`
+        values of `tol<1e-5` may lead to convergence issues and should be
+        avoided.
+
+        .. versionadded:: 1.2
+           Added 'auto' option.
+
+    assign_labels : {'kmeans', 'discretize', 'cluster_qr'}, default='kmeans'
         The strategy to use to assign labels in the embedding
-        space.  There are two ways to assign labels after the Laplacian
+        space.  There are three ways to assign labels after the Laplacian
         embedding.  k-means can be applied and is a popular choice. But it can
         also be sensitive to initialization. Discretization is another
         approach which is less sensitive to random initialization [3]_.
+        The cluster_qr method [5]_ directly extracts clusters from eigenvectors
+        in spectral clustering. In contrast to k-means and discretization, cluster_qr
+        has no tuning parameters and is not an iterative method, yet may outperform
+        k-means and discretization in terms of both quality and speed.
+
+        .. versionchanged:: 1.1
+           Added new labeling method 'cluster_qr'.
 
     verbose : bool, default=False
         Verbosity mode.
@@ -246,39 +302,54 @@ def spectral_clustering(
     labels : array of integers, shape: n_samples
         The labels of the clusters.
 
+    Notes
+    -----
+    The graph should contain only one connected component, elsewhere
+    the results make little sense.
+
+    This algorithm solves the normalized cut for `k=2`: it is a
+    normalized spectral clustering.
+
     References
     ----------
 
-    .. [1] `Normalized cuts and image segmentation, 2000
+    .. [1] :doi:`Normalized cuts and image segmentation, 2000
            Jianbo Shi, Jitendra Malik
-           <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324>`_
+           <10.1109/34.868688>`
 
-    .. [2] `A Tutorial on Spectral Clustering, 2007
+    .. [2] :doi:`A Tutorial on Spectral Clustering, 2007
            Ulrike von Luxburg
-           <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323>`_
+           <10.1007/s11222-007-9033-z>`
 
     .. [3] `Multiclass spectral clustering, 2003
            Stella X. Yu, Jianbo Shi
            <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
 
-    .. [4] `Toward the Optimal Preconditioned Eigensolver:
-           Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001.
+    .. [4] :doi:`Toward the Optimal Preconditioned Eigensolver:
+           Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001
            A. V. Knyazev
            SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541.
-           <https://epubs.siam.org/doi/pdf/10.1137/S1064827500366124>`_
+           <10.1137/S1064827500366124>`
 
-    Notes
-    -----
-    The graph should contain only one connect component, elsewhere
-    the results make little sense.
+    .. [5] :doi:`Simple, direct, and efficient multi-way spectral clustering, 2019
+           Anil Damle, Victor Minden, Lexing Ying
+           <10.1093/imaiai/iay008>`
 
-    This algorithm solves the normalized cut for k=2: it is a
-    normalized spectral clustering.
+    .. [6] :doi:`Multiscale Spectral Image Segmentation Multiscale preconditioning
+           for computing eigenvalues of graph Laplacians in image segmentation, 2006
+           Andrew Knyazev
+           <10.13140/RG.2.2.35280.02565>`
+
+    .. [7] :doi:`Preconditioned spectral clustering for stochastic block partition
+           streaming graph challenge (Preliminary version at arXiv.)
+           David Zhuzhunashvili, Andrew Knyazev
+           <10.1109/HPEC.2017.8091045>`
     """
-    if assign_labels not in ("kmeans", "discretize"):
+    if assign_labels not in ("kmeans", "discretize", "cluster_qr"):
         raise ValueError(
             "The 'assign_labels' parameter should be "
-            "'kmeans' or 'discretize', but '%s' was given" % assign_labels
+            "'kmeans' or 'discretize', or 'cluster_qr', "
+            f"but {assign_labels!r} was given"
         )
     if isinstance(affinity, np.matrix):
         raise TypeError(
@@ -312,6 +383,8 @@ def spectral_clustering(
         _, labels, _ = k_means(
             maps, n_clusters, random_state=random_state, n_init=n_init, verbose=verbose
         )
+    elif assign_labels == "cluster_qr":
+        labels = cluster_qr(maps)
     else:
         labels = discretize(maps, random_state=random_state)
 
@@ -354,8 +427,9 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         but may also lead to instabilities. If None, then ``'arpack'`` is
         used. See [4]_ for more details regarding `'lobpcg'`.
 
-    n_components : int, default=n_clusters
-        Number of eigenvectors to use for the spectral embedding.
+    n_components : int, default=None
+        Number of eigenvectors to use for the spectral embedding. If None,
+        defaults to `n_clusters`.
 
     random_state : int, RandomState instance, default=None
         A pseudo random number generator used for the initialization
@@ -403,16 +477,37 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         Number of neighbors to use when constructing the affinity matrix using
         the nearest neighbors method. Ignored for ``affinity='rbf'``.
 
-    eigen_tol : float, default=0.0
-        Stopping criterion for eigendecomposition of the Laplacian matrix
-        when ``eigen_solver='arpack'``.
+    eigen_tol : float, default="auto"
+        Stopping criterion for eigendecomposition of the Laplacian matrix.
+        If `eigen_tol="auto"` then the passed tolerance will depend on the
+        `eigen_solver`:
 
-    assign_labels : {'kmeans', 'discretize'}, default='kmeans'
+        - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
+        - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
+          `eigen_tol=None` which configures the underlying `lobpcg` solver to
+          automatically resolve the value according to their heuristics. See,
+          :func:`scipy.sparse.linalg.lobpcg` for details.
+
+        Note that when using `eigen_solver="lobpcg"` or `eigen_solver="amg"`
+        values of `tol<1e-5` may lead to convergence issues and should be
+        avoided.
+
+        .. versionadded:: 1.2
+           Added 'auto' option.
+
+    assign_labels : {'kmeans', 'discretize', 'cluster_qr'}, default='kmeans'
         The strategy for assigning labels in the embedding space. There are two
         ways to assign labels after the Laplacian embedding. k-means is a
         popular choice, but it can be sensitive to initialization.
         Discretization is another approach which is less sensitive to random
         initialization [3]_.
+        The cluster_qr method [5]_ directly extract clusters from eigenvectors
+        in spectral clustering. In contrast to k-means and discretization, cluster_qr
+        has no tuning parameters and runs no iterations, yet may outperform
+        k-means and discretization in terms of both quality and speed.
+
+        .. versionchanged:: 1.1
+           Added new labeling method 'cluster_qr'.
 
     degree : float, default=3
         Degree of the polynomial kernel. Ignored by other kernels.
@@ -484,23 +579,27 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     References
     ----------
-    .. [1] `Normalized cuts and image segmentation, 2000
+    .. [1] :doi:`Normalized cuts and image segmentation, 2000
            Jianbo Shi, Jitendra Malik
-           <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324>`_
+           <10.1109/34.868688>`
 
-    .. [2] `A Tutorial on Spectral Clustering, 2007
+    .. [2] :doi:`A Tutorial on Spectral Clustering, 2007
            Ulrike von Luxburg
-           <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323>`_
+           <10.1007/s11222-007-9033-z>`
 
     .. [3] `Multiclass spectral clustering, 2003
            Stella X. Yu, Jianbo Shi
            <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
 
-    .. [4] `Toward the Optimal Preconditioned Eigensolver:
-           Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001.
+    .. [4] :doi:`Toward the Optimal Preconditioned Eigensolver:
+           Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001
            A. V. Knyazev
            SIAM Journal on Scientific Computing 23, no. 2, pp. 517-541.
-           <https://epubs.siam.org/doi/pdf/10.1137/S1064827500366124>`_
+           <10.1137/S1064827500366124>`
+
+    .. [5] :doi:`Simple, direct, and efficient multi-way spectral clustering, 2019
+           Anil Damle, Victor Minden, Lexing Ying
+           <10.1093/imaiai/iay008>`
 
     Examples
     --------
@@ -518,6 +617,33 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         random_state=0)
     """
 
+    _parameter_constraints: dict = {
+        "n_clusters": [Interval(Integral, 1, None, closed="left")],
+        "eigen_solver": [StrOptions({"arpack", "lobpcg", "amg"}), None],
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "random_state": ["random_state"],
+        "n_init": [Interval(Integral, 1, None, closed="left")],
+        "gamma": [Interval(Real, 0, None, closed="left")],
+        "affinity": [
+            callable,
+            StrOptions(
+                set(KERNEL_PARAMS)
+                | {"nearest_neighbors", "precomputed", "precomputed_nearest_neighbors"}
+            ),
+        ],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "eigen_tol": [
+            Interval(Real, 0.0, None, closed="left"),
+            StrOptions({"auto"}),
+        ],
+        "assign_labels": [StrOptions({"kmeans", "discretize", "cluster_qr"})],
+        "degree": [Interval(Integral, 0, None, closed="left")],
+        "coef0": [Interval(Real, None, None, closed="neither")],
+        "kernel_params": [dict, None],
+        "n_jobs": [Integral, None],
+        "verbose": ["verbose"],
+    }
+
     def __init__(
         self,
         n_clusters=8,
@@ -529,7 +655,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         gamma=1.0,
         affinity="rbf",
         n_neighbors=10,
-        eigen_tol=0.0,
+        eigen_tol="auto",
         assign_labels="kmeans",
         degree=3,
         coef0=1,
@@ -575,6 +701,8 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         self : object
             A fitted instance of the estimator.
         """
+        self._validate_params()
+
         X = self._validate_data(
             X,
             accept_sparse=["csr", "csc", "coo"],
@@ -661,13 +789,3 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
             "pairwise": self.affinity
             in ["precomputed", "precomputed_nearest_neighbors"]
         }
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        return self.affinity in ["precomputed", "precomputed_nearest_neighbors"]

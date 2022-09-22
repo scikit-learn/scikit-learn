@@ -9,8 +9,29 @@ Version 1.0.2
 
 **In Development**
 
+- |Fix| :class:`cluster.Birch`,
+  :class:`feature_selection.RFECV`, :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.GradientBoostingRegressor`, and
+  :class:`ensemble.GradientBoostingClassifier` do not raise warning when fitted
+  on a pandas DataFrame anymore. :pr:`21578` by `Thomas Fan`_.
+
 Changelog
 ---------
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed an infinite loop in :func:`cluster.SpectralClustering` by
+  moving an iteration counter from try to except.
+  :pr:`21271` by :user:`Tyler Martin <martintb>`.
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Fix| :func:`datasets.fetch_openml` is now thread safe. Data is first
+  downloaded to a temporary subfolder and then renamed.
+  :pr:`21833` by :user:`Siavash Rezazadeh <siavrez>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -21,6 +42,103 @@ Changelog
   and :class:`decomposition.MiniBatchSparsePCA` to be convex and match the referenced
   article. :pr:`19210` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`, :class:`ensemble.ExtraTreesRegressor`,
+  and :class:`ensemble.RandomTreesEmbedding` now raise a ``ValueError`` when
+  ``bootstrap=False`` and ``max_samples`` is not ``None``.
+  :pr:`21295` :user:`Haoyin Xu <PSSF23>`.
+
+- |Fix| Solve a bug in :class:`ensemble.GradientBoostingClassifier` where the
+  exponential loss was computing the positive gradient instead of the
+  negative one.
+  :pr:`22050` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| Fixed :class:`feature_selection.SelectFromModel` by improving support
+  for base estimators that do not set `feature_names_in_`. :pr:`21991` by
+  `Thomas Fan`_.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| Fix a bug in :class:`linear_model.RidgeClassifierCV` where the method
+  `predict` was performing an `argmax` on the scores obtained from
+  `decision_function` instead of returning the multilabel indicator matrix.
+  :pr:`19869` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| :class:`linear_model.LassoLarsIC` now correctly computes AIC
+  and BIC. An error is now raised when `n_features > n_samples` and
+  when the noise variance is not provided.
+  :pr:`21481` by :user:`Guillaume Lemaitre <glemaitre>` and
+  :user:`Andrés Babino <ababino>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| Fixed an unnecessary error when fitting :class:`manifold.Isomap` with a
+  precomputed dense distance matrix where the neighbors graph has multiple
+  disconnected components. :pr:`21915` by `Tom Dupre la Tour`_.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| All :class:`sklearn.metrics.DistanceMetric` subclasses now correctly support
+  read-only buffer attributes.
+  This fixes a regression introduced in 1.0.0 with respect to 0.24.2.
+  :pr:`21694` by :user:`Julien Jerphanion <jjerphan>`.
+
+- |Fix| All :class:`sklearn.metrics.MinkowskiDistance` now accepts a weight
+  parameter that makes it possible to write code that behaves consistently both
+  with scipy 1.8 and earlier versions. In turns this means that all
+  neighbors-based estimators (except those that use `algorithm="kd_tree"`) now
+  accept a weight parameter with `metric="minknowski"` to yield results that
+  are always consistent with `scipy.spatial.distance.cdist`.
+  :pr:`21741` by :user:`Olivier Grisel <ogrisel>`.
+
+:mod:`sklearn.multiclass`
+.........................
+
+- |Fix| :meth:`multiclass.OneVsRestClassifier.predict_proba` does not error when
+  fitted on constant integer targets. :pr:`21871` by `Thomas Fan`_.
+
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| :class:`neighbors.KDTree` and :class:`neighbors.BallTree` correctly supports
+  read-only buffer attributes. :pr:`21845` by `Thomas Fan`_.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| Fixes compatibility bug with NumPy 1.22 in :class:`preprocessing.OneHotEncoder`.
+  :pr:`21517` by `Thomas Fan`_.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Prevents :func:`tree.plot_tree` from drawing out of the boundary of
+  the figure. :pr:`21917` by `Thomas Fan`_.
+
+- |Fix| Support loading pickles of decision tree models when the pickle has
+  been generated on a platform with a different bitness. A typical example is
+  to train and pickle the model on 64 bit machine and load the model on a 32
+  bit machine for prediction. :pr:`21552` by :user:`Loïc Estève <lesteve>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| :func:`utils.estimator_html_repr` now escapes all the estimator
+  descriptions in the generated HTML. :pr:`21493` by
+  :user:`Aurélien Geron <ageron>`.
 
 .. _changes_1_0_1:
 
@@ -205,6 +323,10 @@ random sampling procedures.
 - |Fix| The splitting criterion of :class:`tree.DecisionTreeClassifier` and
   :class:`tree.DecisionTreeRegressor` can be impacted by a fix in the handling
   of rounding errors. Previously some extra spurious splits could occur.
+
+- |Fix| :func:`model_selection.train_test_split` with a `stratify` parameter
+  and :class:`model_selection.StratifiedShuffleSplit` may lead to slightly
+  different results.
 
 Details are listed in the changelog below.
 
@@ -646,7 +768,7 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Feature| Added :class:`linear_model.QuantileRegressor` which implements
+- |MajorFeature| Added :class:`linear_model.QuantileRegressor` which implements
   linear quantile regression with L1 penalty.
   :pr:`9978` by :user:`David Dale <avidale>` and
   :user:`Christian Lorentzen <lorentzenchr>`.
@@ -1081,11 +1203,10 @@ Changelog
   :func:`~sklearn.utils.check_array` in 1.0 and will raise a `TypeError` in
   1.2. :pr:`20165` by `Thomas Fan`_.
 
-- |API| :func:`utils._testing.assert_warns` and
-  :func:`utils._testing.assert_warns_message` are deprecated in 1.0 and will
-  be removed in 1.2. Used `pytest.warns` context manager instead. Note that
-  these functions were not documented and part from the public API.
-  :pr:`20521` by :user:`Olivier Grisel <ogrisel>`.
+- |API| `utils._testing.assert_warns` and `utils._testing.assert_warns_message`
+  are deprecated in 1.0 and will be removed in 1.2. Used `pytest.warns` context
+  manager instead. Note that these functions were not documented and part from
+  the public API. :pr:`20521` by :user:`Olivier Grisel <ogrisel>`.
 
 - |API| Fixed several bugs in :func:`utils.graph.graph_shortest_path`, which is
   now deprecated. Use `scipy.sparse.csgraph.shortest_path` instead. :pr:`20531`
@@ -1102,10 +1223,10 @@ Adrian Garcia Badaracco, Adrian Sadłocha, Adrin Jalali, Agamemnon Krasoulis,
 Alberto Rubiales, Albert Thomas, Albert Villanova del Moral, Alek Lefebvre,
 Alessia Marcolini, Alexandr Fonari, Alihan Zihna, Aline Ribeiro de Almeida,
 Amanda, Amanda Dsouza, Amol Deshmukh, Ana Pessoa, Anavelyz, Andreas Mueller,
-Andrew Delong, Ashish, Ashvith Shetty, Atsushi Nukariya, Avi Gupta, Ayush
-Singh, baam, BaptBillard, Benjamin Pedigo, Bertrand Thirion, Bharat
-Raghunathan, bmalezieux, Brian Rice, Brian Sun, Bruno Charron, Bryan Chen,
-bumblebee, caherrera-meli, Carsten Allefeld, CeeThinwa, Chiara Marmo,
+Andrew Delong, Ashish, Ashvith Shetty, Atsushi Nukariya, Aurélien Geron, Avi
+Gupta, Ayush Singh, baam, BaptBillard, Benjamin Pedigo, Bertrand Thirion,
+Bharat Raghunathan, bmalezieux, Brian Rice, Brian Sun, Bruno Charron, Bryan
+Chen, bumblebee, caherrera-meli, Carsten Allefeld, CeeThinwa, Chiara Marmo,
 chrissobel, Christian Lorentzen, Christopher Yeh, Chuliang Xiao, Clément
 Fauchereau, cliffordEmmanuel, Conner Shen, Connor Tann, David Dale, David Katz,
 David Poznik, Dimitri Papadopoulos Orfanos, Divyanshu Deoli, dmallia17,

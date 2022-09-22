@@ -11,6 +11,7 @@ from scipy import linalg
 from ._base import BaseMixture, _check_shape
 from ..utils import check_array
 from ..utils.extmath import row_norms
+from ..utils._param_validation import StrOptions
 
 
 ###############################################################################
@@ -229,7 +230,7 @@ def _estimate_gaussian_covariances_diag(resp, X, nk, means, reg_covar):
         The covariance vector of the current components.
     """
     avg_X2 = np.dot(resp.T, X * X) / nk[:, np.newaxis]
-    avg_means2 = means ** 2
+    avg_means2 = means**2
     avg_X_means = means * np.dot(resp.T, X) / nk[:, np.newaxis]
     return avg_X2 - 2 * avg_X_means + avg_means2 + reg_covar
 
@@ -434,17 +435,17 @@ def _estimate_log_gaussian_prob(X, means, precisions_chol, covariance_type):
             log_prob[:, k] = np.sum(np.square(y), axis=1)
 
     elif covariance_type == "diag":
-        precisions = precisions_chol ** 2
+        precisions = precisions_chol**2
         log_prob = (
-            np.sum((means ** 2 * precisions), 1)
+            np.sum((means**2 * precisions), 1)
             - 2.0 * np.dot(X, (means * precisions).T)
-            + np.dot(X ** 2, precisions.T)
+            + np.dot(X**2, precisions.T)
         )
 
     elif covariance_type == "spherical":
-        precisions = precisions_chol ** 2
+        precisions = precisions_chol**2
         log_prob = (
-            np.sum(means ** 2, 1) * precisions
+            np.sum(means**2, 1) * precisions
             - 2 * np.dot(X, means.T * precisions)
             + np.outer(row_norms(X, squared=True), precisions)
         )
@@ -473,14 +474,10 @@ class GaussianMixture(BaseMixture):
         String describing the type of covariance parameters to use.
         Must be one of:
 
-        'full'
-            each component has its own general covariance matrix
-        'tied'
-            all components share the same general covariance matrix
-        'diag'
-            each component has its own diagonal covariance matrix
-        'spherical'
-            each component has its own single variance
+        - 'full': each component has its own general covariance matrix.
+        - 'tied': all components share the same general covariance matrix.
+        - 'diag': each component has its own diagonal covariance matrix.
+        - 'spherical': each component has its own single variance.
 
     tol : float, default=1e-3
         The convergence threshold. EM iterations will stop when the
@@ -496,13 +493,20 @@ class GaussianMixture(BaseMixture):
     n_init : int, default=1
         The number of initializations to perform. The best results are kept.
 
-    init_params : {'kmeans', 'random'}, default='kmeans'
+    init_params : {'kmeans', 'k-means++', 'random', 'random_from_data'}, \
+    default='kmeans'
         The method used to initialize the weights, the means and the
         precisions.
-        Must be one of::
+        String must be one of:
 
-            'kmeans' : responsibilities are initialized using kmeans.
-            'random' : responsibilities are initialized randomly.
+        - 'kmeans' : responsibilities are initialized using kmeans.
+        - 'k-means++' : use the k-means++ method to initialize.
+        - 'random' : responsibilities are initialized randomly.
+        - 'random_from_data' : initial means are randomly selected data points.
+
+        .. versionchanged:: v1.1
+            `init_params` now accepts 'random_from_data' and 'k-means++' as
+            initialization methods.
 
     weights_init : array-like of shape (n_components, ), default=None
         The user-provided initial weights.
@@ -633,6 +637,14 @@ class GaussianMixture(BaseMixture):
     array([1, 0])
     """
 
+    _parameter_constraints: dict = {
+        **BaseMixture._parameter_constraints,
+        "covariance_type": [StrOptions({"full", "tied", "diag", "spherical"})],
+        "weights_init": ["array-like", None],
+        "means_init": ["array-like", None],
+        "precisions_init": ["array-like", None],
+    }
+
     def __init__(
         self,
         n_components=1,
@@ -672,13 +684,6 @@ class GaussianMixture(BaseMixture):
     def _check_parameters(self, X):
         """Check the Gaussian mixture parameters are well defined."""
         _, n_features = X.shape
-        if self.covariance_type not in ["spherical", "tied", "diag", "full"]:
-            raise ValueError(
-                "Invalid value for 'covariance_type': %s "
-                "'covariance_type' should be in "
-                "['spherical', 'tied', 'diag', 'full']"
-                % self.covariance_type
-            )
 
         if self.weights_init is not None:
             self.weights_init = _check_weights(self.weights_init, self.n_components)
@@ -732,7 +737,7 @@ class GaussianMixture(BaseMixture):
                 self.precisions_init, lower=True
             )
         else:
-            self.precisions_cholesky_ = self.precisions_init
+            self.precisions_cholesky_ = np.sqrt(self.precisions_init)
 
     def _m_step(self, X, log_resp):
         """M step.
@@ -745,11 +750,10 @@ class GaussianMixture(BaseMixture):
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.
         """
-        n_samples, _ = X.shape
         self.weights_, self.means_, self.covariances_ = _estimate_gaussian_parameters(
             X, np.exp(log_resp), self.reg_covar, self.covariance_type
         )
-        self.weights_ /= n_samples
+        self.weights_ /= self.weights_.sum()
         self.precisions_cholesky_ = _compute_precision_cholesky(
             self.covariances_, self.covariance_type
         )
@@ -794,7 +798,7 @@ class GaussianMixture(BaseMixture):
                 self.precisions_cholesky_, self.precisions_cholesky_.T
             )
         else:
-            self.precisions_ = self.precisions_cholesky_ ** 2
+            self.precisions_ = self.precisions_cholesky_**2
 
     def _n_parameters(self):
         """Return the number of free parameters in the model."""
@@ -813,6 +817,9 @@ class GaussianMixture(BaseMixture):
     def bic(self, X):
         """Bayesian information criterion for the current model on the input X.
 
+        You can refer to this :ref:`mathematical section <aic_bic>` for more
+        details regarding the formulation of the BIC used.
+
         Parameters
         ----------
         X : array of shape (n_samples, n_dimensions)
@@ -829,6 +836,9 @@ class GaussianMixture(BaseMixture):
 
     def aic(self, X):
         """Akaike information criterion for the current model on the input X.
+
+        You can refer to this :ref:`mathematical section <aic_bic>` for more
+        details regarding the formulation of the AIC used.
 
         Parameters
         ----------

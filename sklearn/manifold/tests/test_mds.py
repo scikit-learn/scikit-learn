@@ -1,9 +1,8 @@
 import numpy as np
-from numpy.testing import assert_array_almost_equal
+from numpy.testing import assert_array_almost_equal, assert_allclose
 import pytest
 
 from sklearn.manifold import _mds as mds
-from sklearn.utils._testing import ignore_warnings
 
 
 def test_smacof():
@@ -45,24 +44,28 @@ def test_MDS():
     mds_clf.fit(sim)
 
 
-# TODO: Remove in 1.1
-def test_MDS_pairwise_deprecated():
-    mds_clf = mds.MDS(metric="precomputed")
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        mds_clf._pairwise
+@pytest.mark.parametrize("k", [0.5, 1.5, 2])
+def test_normed_stress(k):
+    """Test that non-metric MDS normalized stress is scale-invariant."""
+    sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
+
+    X1, stress1 = mds.smacof(
+        sim, metric=False, normalized_stress=True, max_iter=5, random_state=0
+    )
+    X2, stress2 = mds.smacof(
+        k * sim, metric=False, normalized_stress=True, max_iter=5, random_state=0
+    )
+
+    assert_allclose(stress1, stress2, rtol=1e-5)
+    assert_allclose(X1, X2, rtol=1e-5)
 
 
-# TODO: Remove in 1.1
-@ignore_warnings(category=FutureWarning)
-@pytest.mark.parametrize(
-    "dissimilarity, expected_pairwise",
-    [
-        ("precomputed", True),
-        ("euclidean", False),
-    ],
-)
-def test_MDS_pairwise(dissimilarity, expected_pairwise):
-    # _pairwise attribute is set correctly
-    mds_clf = mds.MDS(dissimilarity=dissimilarity)
-    assert mds_clf._pairwise == expected_pairwise
+def test_normalize_metric_warning():
+    """
+    Test that a UserWarning is emitted when using normalized stress with
+    metric-MDS.
+    """
+    msg = "Normalized stress is not supported"
+    sim = np.array([[0, 5, 3, 4], [5, 0, 2, 2], [3, 2, 0, 1], [4, 2, 1, 0]])
+    with pytest.raises(ValueError, match=msg):
+        mds.smacof(sim, metric=True, normalized_stress=True)

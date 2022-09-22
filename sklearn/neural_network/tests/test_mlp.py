@@ -331,10 +331,6 @@ def test_lbfgs_regression_maxfun(X, y):
             mlp.fit(X, y)
             assert max_fun >= mlp.n_iter_
 
-    mlp.max_fun = -1
-    with pytest.raises(ValueError):
-        mlp.fit(X, y)
-
 
 def test_learning_rate_warmstart():
     # Tests that warm_start reuse past solutions.
@@ -506,39 +502,22 @@ def test_partial_fit_errors():
     assert not hasattr(MLPClassifier(solver="lbfgs"), "partial_fit")
 
 
-@pytest.mark.parametrize(
-    "args",
-    [
-        {"hidden_layer_sizes": -1},
-        {"max_iter": -1},
-        {"shuffle": "true"},
-        {"alpha": -1},
-        {"learning_rate_init": -1},
-        {"momentum": 2},
-        {"momentum": -0.5},
-        {"nesterovs_momentum": "invalid"},
-        {"early_stopping": "invalid"},
-        {"validation_fraction": 1},
-        {"validation_fraction": -0.5},
-        {"beta_1": 1},
-        {"beta_1": -0.5},
-        {"beta_2": 1},
-        {"beta_2": -0.5},
-        {"epsilon": -0.5},
-        {"n_iter_no_change": -1},
-        {"solver": "hadoken"},
-        {"learning_rate": "converge"},
-        {"activation": "cloak"},
-    ],
-)
-def test_params_errors(args):
-    # Test that invalid parameters raise value error
-    X = [[3, 2], [1, 6]]
-    y = [1, 0]
-    clf = MLPClassifier
+def test_nonfinite_params():
+    # Check that MLPRegressor throws ValueError when dealing with non-finite
+    # parameter values
+    rng = np.random.RandomState(0)
+    n_samples = 10
+    fmax = np.finfo(np.float64).max
+    X = fmax * rng.uniform(size=(n_samples, 2))
+    y = rng.standard_normal(size=n_samples)
 
-    with pytest.raises(ValueError):
-        clf(**args).fit(X, y)
+    clf = MLPRegressor()
+    msg = (
+        "Solver produced non-finite parameter weights. The input data may contain large"
+        " values and need to be preprocessed."
+    )
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
 
 
 def test_predict_proba_binary():

@@ -8,7 +8,12 @@ _global_config = {
     "assume_finite": bool(os.environ.get("SKLEARN_ASSUME_FINITE", False)),
     "working_memory": int(os.environ.get("SKLEARN_WORKING_MEMORY", 1024)),
     "print_changed_only": True,
-    "display": "text",
+    "display": "diagram",
+    "pairwise_dist_chunk_size": int(
+        os.environ.get("SKLEARN_PAIRWISE_DIST_CHUNK_SIZE", 256)
+    ),
+    "enable_cython_pairwise_dist": True,
+    "array_api_dispatch": False,
 }
 _threadlocal = threading.local()
 
@@ -22,7 +27,7 @@ def _get_threadlocal_config():
 
 
 def get_config():
-    """Retrieve current values for configuration set by :func:`set_config`
+    """Retrieve current values for configuration set by :func:`set_config`.
 
     Returns
     -------
@@ -40,7 +45,13 @@ def get_config():
 
 
 def set_config(
-    assume_finite=None, working_memory=None, print_changed_only=None, display=None
+    assume_finite=None,
+    working_memory=None,
+    print_changed_only=None,
+    display=None,
+    pairwise_dist_chunk_size=None,
+    enable_cython_pairwise_dist=None,
+    array_api_dispatch=None,
 ):
     """Set global scikit-learn configuration
 
@@ -76,9 +87,38 @@ def set_config(
     display : {'text', 'diagram'}, default=None
         If 'diagram', estimators will be displayed as a diagram in a Jupyter
         lab or notebook context. If 'text', estimators will be displayed as
-        text. Default is 'text'.
+        text. Default is 'diagram'.
 
         .. versionadded:: 0.23
+
+    pairwise_dist_chunk_size : int, default=None
+        The number of row vectors per chunk for the accelerated pairwise-
+        distances reduction backend. Default is 256 (suitable for most of
+        modern laptops' caches and architectures).
+
+        Intended for easier benchmarking and testing of scikit-learn internals.
+        End users are not expected to benefit from customizing this configuration
+        setting.
+
+        .. versionadded:: 1.1
+
+    enable_cython_pairwise_dist : bool, default=None
+        Use the accelerated pairwise-distances reduction backend when
+        possible. Global default: True.
+
+        Intended for easier benchmarking and testing of scikit-learn internals.
+        End users are not expected to benefit from customizing this configuration
+        setting.
+
+        .. versionadded:: 1.1
+
+    array_api_dispatch : bool, default=None
+        Use Array API dispatching when inputs follow the Array API standard.
+        Default is False.
+
+        See the :ref:`User Guide <array_api>` for more details.
+
+        .. versionadded:: 1.2
 
     See Also
     --------
@@ -95,42 +135,99 @@ def set_config(
         local_config["print_changed_only"] = print_changed_only
     if display is not None:
         local_config["display"] = display
+    if pairwise_dist_chunk_size is not None:
+        local_config["pairwise_dist_chunk_size"] = pairwise_dist_chunk_size
+    if enable_cython_pairwise_dist is not None:
+        local_config["enable_cython_pairwise_dist"] = enable_cython_pairwise_dist
+    if array_api_dispatch is not None:
+        local_config["array_api_dispatch"] = array_api_dispatch
 
 
 @contextmanager
-def config_context(**new_config):
-    """Context manager for global scikit-learn configuration
+def config_context(
+    *,
+    assume_finite=None,
+    working_memory=None,
+    print_changed_only=None,
+    display=None,
+    pairwise_dist_chunk_size=None,
+    enable_cython_pairwise_dist=None,
+    array_api_dispatch=None,
+):
+    """Context manager for global scikit-learn configuration.
 
     Parameters
     ----------
-    assume_finite : bool, default=False
+    assume_finite : bool, default=None
         If True, validation for finiteness will be skipped,
         saving time, but leading to potential crashes. If
         False, validation for finiteness will be performed,
-        avoiding error.  Global default: False.
+        avoiding error. If None, the existing value won't change.
+        The default value is False.
 
-    working_memory : int, default=1024
+    working_memory : int, default=None
         If set, scikit-learn will attempt to limit the size of temporary arrays
         to this number of MiB (per job when parallelised), often saving both
         computation time and memory on expensive operations that can be
-        performed in chunks. Global default: 1024.
+        performed in chunks. If None, the existing value won't change.
+        The default value is 1024.
 
-    print_changed_only : bool, default=True
+    print_changed_only : bool, default=None
         If True, only the parameters that were set to non-default
         values will be printed when printing an estimator. For example,
         ``print(SVC())`` while True will only print 'SVC()', but would print
         'SVC(C=1.0, cache_size=200, ...)' with all the non-changed parameters
-        when False. Default is True.
+        when False. If None, the existing value won't change.
+        The default value is True.
 
         .. versionchanged:: 0.23
            Default changed from False to True.
 
-    display : {'text', 'diagram'}, default='text'
+    display : {'text', 'diagram'}, default=None
         If 'diagram', estimators will be displayed as a diagram in a Jupyter
         lab or notebook context. If 'text', estimators will be displayed as
-        text. Default is 'text'.
+        text. If None, the existing value won't change.
+        The default value is 'diagram'.
 
         .. versionadded:: 0.23
+
+    pairwise_dist_chunk_size : int, default=None
+        The number of row vectors per chunk for the accelerated pairwise-
+        distances reduction backend. Default is 256 (suitable for most of
+        modern laptops' caches and architectures).
+
+        Intended for easier benchmarking and testing of scikit-learn internals.
+        End users are not expected to benefit from customizing this configuration
+        setting.
+
+        .. versionadded:: 1.1
+
+    enable_cython_pairwise_dist : bool, default=None
+        Use the accelerated pairwise-distances reduction backend when
+        possible. Global default: True.
+
+        Intended for easier benchmarking and testing of scikit-learn internals.
+        End users are not expected to benefit from customizing this configuration
+        setting.
+
+        .. versionadded:: 1.1
+
+    array_api_dispatch : bool, default=None
+        Use Array API dispatching when inputs follow the Array API standard.
+        Default is False.
+
+        See the :ref:`User Guide <array_api>` for more details.
+
+        .. versionadded:: 1.2
+
+    Yields
+    ------
+    None.
+
+    See Also
+    --------
+    set_config : Set global scikit-learn configuration.
+    get_config : Retrieve current values of the global configuration.
 
     Notes
     -----
@@ -149,14 +246,17 @@ def config_context(**new_config):
     Traceback (most recent call last):
     ...
     ValueError: Input contains NaN...
-
-    See Also
-    --------
-    set_config : Set global scikit-learn configuration.
-    get_config : Retrieve current values of the global configuration.
     """
     old_config = get_config()
-    set_config(**new_config)
+    set_config(
+        assume_finite=assume_finite,
+        working_memory=working_memory,
+        print_changed_only=print_changed_only,
+        display=display,
+        pairwise_dist_chunk_size=pairwise_dist_chunk_size,
+        enable_cython_pairwise_dist=enable_cython_pairwise_dist,
+        array_api_dispatch=array_api_dispatch,
+    )
 
     try:
         yield

@@ -11,7 +11,7 @@
 # License: BSD 3 clause
 
 from math import log, sqrt
-import numbers
+from numbers import Integral, Real
 
 import numpy as np
 from scipy import linalg
@@ -22,9 +22,11 @@ from scipy.sparse.linalg import svds
 from ._base import _BasePCA
 from ..utils import check_random_state
 from ..utils._arpack import _init_arpack_v0
+from ..utils.deprecation import deprecated
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
+from ..utils._param_validation import Interval, StrOptions
 
 
 def _assess_dimension(spectrum, rank, n_samples):
@@ -203,6 +205,21 @@ class PCA(_BasePCA):
 
         .. versionadded:: 0.18.0
 
+    n_oversamples : int, default=10
+        This parameter is only relevant when `svd_solver="randomized"`.
+        It corresponds to the additional number of random vectors to sample the
+        range of `X` so as to ensure proper conditioning. See
+        :func:`~sklearn.utils.extmath.randomized_svd` for more details.
+
+        .. versionadded:: 1.1
+
+    power_iteration_normalizer : {'auto', 'QR', 'LU', 'none'}, default='auto'
+        Power iteration normalizer for randomized SVD solver.
+        Not used by ARPACK. See :func:`~sklearn.utils.extmath.randomized_svd`
+        for more details.
+
+        .. versionadded:: 1.1
+
     random_state : int, RandomState instance or None, default=None
         Used when the 'arpack' or 'randomized' solvers are used. Pass an int
         for reproducible results across multiple function calls.
@@ -302,16 +319,16 @@ class PCA(_BasePCA):
     For svd_solver == 'arpack', refer to `scipy.sparse.linalg.svds`.
 
     For svd_solver == 'randomized', see:
-    `Halko, N., Martinsson, P. G., and Tropp, J. A. (2011).
+    :doi:`Halko, N., Martinsson, P. G., and Tropp, J. A. (2011).
     "Finding structure with randomness: Probabilistic algorithms for
     constructing approximate matrix decompositions".
     SIAM review, 53(2), 217-288.
-    <https://doi.org/10.1137/090771806>`_
+    <10.1137/090771806>`
     and also
-    `Martinsson, P. G., Rokhlin, V., and Tygert, M. (2011).
+    :doi:`Martinsson, P. G., Rokhlin, V., and Tygert, M. (2011).
     "A randomized algorithm for the decomposition of matrices".
-    Applied and Computational Harmonic Analysis, 30(1), 47-68
-    <https://doi.org/10.1016/j.acha.2010.02.003>`_.
+    Applied and Computational Harmonic Analysis, 30(1), 47-68.
+    <10.1016/j.acha.2010.02.003>`
 
     Examples
     --------
@@ -343,6 +360,26 @@ class PCA(_BasePCA):
     [6.30061...]
     """
 
+    _parameter_constraints: dict = {
+        "n_components": [
+            Interval(Integral, 0, None, closed="left"),
+            Interval(Real, 0, 1, closed="neither"),
+            StrOptions({"mle"}),
+            None,
+        ],
+        "copy": ["boolean"],
+        "whiten": ["boolean"],
+        "svd_solver": [StrOptions({"auto", "full", "arpack", "randomized"})],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "iterated_power": [
+            StrOptions({"auto"}),
+            Interval(Integral, 0, None, closed="left"),
+        ],
+        "n_oversamples": [Interval(Integral, 1, None, closed="left")],
+        "power_iteration_normalizer": [StrOptions({"auto", "QR", "LU", "none"})],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         n_components=None,
@@ -352,6 +389,8 @@ class PCA(_BasePCA):
         svd_solver="auto",
         tol=0.0,
         iterated_power="auto",
+        n_oversamples=10,
+        power_iteration_normalizer="auto",
         random_state=None,
     ):
         self.n_components = n_components
@@ -360,7 +399,19 @@ class PCA(_BasePCA):
         self.svd_solver = svd_solver
         self.tol = tol
         self.iterated_power = iterated_power
+        self.n_oversamples = n_oversamples
+        self.power_iteration_normalizer = power_iteration_normalizer
         self.random_state = random_state
+
+    # TODO(1.4): remove in 1.4
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute `n_features_` was deprecated in version 1.2 and will be "
+        "removed in 1.4. Use `n_features_in_` instead."
+    )
+    @property
+    def n_features_(self):
+        return self.n_features_in_
 
     def fit(self, X, y=None):
         """Fit the model with X.
@@ -379,6 +430,8 @@ class PCA(_BasePCA):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
+
         self._fit(X)
         return self
 
@@ -404,6 +457,8 @@ class PCA(_BasePCA):
         This method returns a Fortran-ordered array. To convert it to a
         C-ordered array, use 'np.ascontiguousarray'.
         """
+        self._validate_params()
+
         U, S, Vt = self._fit(X)
         U = U[:, : self.n_components_]
 
@@ -446,7 +501,7 @@ class PCA(_BasePCA):
             # Small problem or n_components == 'mle', just call full PCA
             if max(X.shape) <= 500 or n_components == "mle":
                 self._fit_svd_solver = "full"
-            elif n_components >= 1 and n_components < 0.8 * min(X.shape):
+            elif 1 <= n_components < 0.8 * min(X.shape):
                 self._fit_svd_solver = "randomized"
             # This is also the case of n_components in (0,1)
             else:
@@ -457,10 +512,6 @@ class PCA(_BasePCA):
             return self._fit_full(X, n_components)
         elif self._fit_svd_solver in ["arpack", "randomized"]:
             return self._fit_truncated(X, n_components, self._fit_svd_solver)
-        else:
-            raise ValueError(
-                "Unrecognized svd_solver='{0}'".format(self._fit_svd_solver)
-            )
 
     def _fit_full(self, X, n_components):
         """Fit the model by computing full SVD on X."""
@@ -477,13 +528,6 @@ class PCA(_BasePCA):
                 "min(n_samples, n_features)=%r with "
                 "svd_solver='full'" % (n_components, min(n_samples, n_features))
             )
-        elif n_components >= 1:
-            if not isinstance(n_components, numbers.Integral):
-                raise ValueError(
-                    "n_components=%r must be of type int "
-                    "when greater than or equal to 1, "
-                    "was of type=%r" % (n_components, type(n_components))
-                )
 
         # Center data
         self.mean_ = np.mean(X, axis=0)
@@ -496,7 +540,7 @@ class PCA(_BasePCA):
         components_ = Vt
 
         # Get variance explained by singular values
-        explained_variance_ = (S ** 2) / (n_samples - 1)
+        explained_variance_ = (S**2) / (n_samples - 1)
         total_var = explained_variance_.sum()
         explained_variance_ratio_ = explained_variance_ / total_var
         singular_values_ = S.copy()  # Store the singular values.
@@ -519,7 +563,7 @@ class PCA(_BasePCA):
         else:
             self.noise_variance_ = 0.0
 
-        self.n_samples_, self.n_features_ = n_samples, n_features
+        self.n_samples_ = n_samples
         self.components_ = components_[:n_components]
         self.n_components_ = n_components
         self.explained_variance_ = explained_variance_[:n_components]
@@ -545,12 +589,6 @@ class PCA(_BasePCA):
                 "min(n_samples, n_features)=%r with "
                 "svd_solver='%s'"
                 % (n_components, min(n_samples, n_features), svd_solver)
-            )
-        elif not isinstance(n_components, numbers.Integral):
-            raise ValueError(
-                "n_components=%r must be of type int "
-                "when greater than or equal to 1, was of type=%r"
-                % (n_components, type(n_components))
             )
         elif svd_solver == "arpack" and n_components == min(n_samples, n_features):
             raise ValueError(
@@ -580,23 +618,32 @@ class PCA(_BasePCA):
             U, S, Vt = randomized_svd(
                 X,
                 n_components=n_components,
+                n_oversamples=self.n_oversamples,
                 n_iter=self.iterated_power,
+                power_iteration_normalizer=self.power_iteration_normalizer,
                 flip_sign=True,
                 random_state=random_state,
             )
 
-        self.n_samples_, self.n_features_ = n_samples, n_features
+        self.n_samples_ = n_samples
         self.components_ = Vt
         self.n_components_ = n_components
 
         # Get variance explained by singular values
-        self.explained_variance_ = (S ** 2) / (n_samples - 1)
-        total_var = np.var(X, ddof=1, axis=0)
-        self.explained_variance_ratio_ = self.explained_variance_ / total_var.sum()
+        self.explained_variance_ = (S**2) / (n_samples - 1)
+
+        # Workaround in-place variance calculation since at the time numpy
+        # did not have a way to calculate variance in-place.
+        N = X.shape[0] - 1
+        np.square(X, out=X)
+        np.sum(X, axis=0, out=X[0])
+        total_var = (X[0] / N).sum()
+
+        self.explained_variance_ratio_ = self.explained_variance_ / total_var
         self.singular_values_ = S.copy()  # Store the singular values.
 
         if self.n_components_ < min(n_features, n_samples):
-            self.noise_variance_ = total_var.sum() - self.explained_variance_.sum()
+            self.noise_variance_ = total_var - self.explained_variance_.sum()
             self.noise_variance_ /= min(n_features, n_samples) - n_components
         else:
             self.noise_variance_ = 0.0
