@@ -31,9 +31,7 @@ X, _ = make_blobs(
 
 
 def test_affinity_propagation(global_random_seed):
-    """
-    Test consistency of the affinity propagations.
-    """
+    """Test consistency of the affinity propagations."""
     S = -euclidean_distances(X, squared=True)
     preference = np.median(S) * 10
     cluster_centers_indices, labels = affinity_propagation(
@@ -46,8 +44,7 @@ def test_affinity_propagation(global_random_seed):
 
 
 def test_affinity_propagation_precomputed():
-    """
-    Check equality of precomputed affinity matrix to internally computed affinity
+    """Check equality of precomputed affinity matrix to internally computed affinity
     matrix.
     """
     S = -euclidean_distances(X, squared=True)
@@ -233,8 +230,7 @@ def test_equal_similarities_and_preferences():
 
 
 def test_affinity_propagation_random_state():
-    """
-    Check that different random states lead to different initialisations
+    """Check that different random states lead to different initialisations
     by looking at the center locations after two iterations.
     """
     centers = [[1, 1], [-1, -1], [1, -1]]
