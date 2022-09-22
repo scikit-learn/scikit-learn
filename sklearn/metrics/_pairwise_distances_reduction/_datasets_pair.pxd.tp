@@ -23,7 +23,7 @@ from ...metrics._dist_metrics cimport DistanceMetric, DistanceMetric32
 cdef class DatasetsPair{{name_suffix}}:
     cdef:
         {{DistanceMetric}} distance_metric
-        np.intp_t n_features
+        cnp.intp_t n_features
 
     cdef cnp.intp_t n_samples_X(self) nogil
 

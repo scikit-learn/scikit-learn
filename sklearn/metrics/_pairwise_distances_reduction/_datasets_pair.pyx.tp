@@ -193,11 +193,11 @@ cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         return self.Y.shape[0]
 
     @final
-    cdef DTYPE_t surrogate_dist(self, cnp.intp_t i, cnp.intp_t j) nogil:
+    cdef cnp.float64_t surrogate_dist(self, cnp.intp_t i, cnp.intp_t j) nogil:
         return self.distance_metric.rdist(&self.X[i, 0], &self.Y[j, 0], self.n_features)
 
     @final
-    cdef DTYPE_t dist(self, cnp.intp_t i, cnp.intp_t j) nogil:
+    cdef cnp.float64_t dist(self, cnp.intp_t i, cnp.intp_t j) nogil:
         return self.distance_metric.dist(&self.X[i, 0], &self.Y[j, 0], self.n_features)
 
 
@@ -233,7 +233,7 @@ cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         return self.Y_indptr.shape[0] - 1
 
     @final
-    cdef DTYPE_t surrogate_dist(self, cnp.intp_t i, cnp.intp_t j) nogil:
+    cdef cnp.float64_t surrogate_dist(self, cnp.intp_t i, cnp.intp_t j) nogil:
         return self.distance_metric.rdist_csr(
             x1_data=&self.X_data[0],
             x1_indices=self.X_indices,
@@ -247,7 +247,7 @@ cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         )
 
     @final
-    cdef DTYPE_t dist(self, cnp.intp_t i, cnp.intp_t j) nogil:
+    cdef cnp.float64_t dist(self, cnp.intp_t i, cnp.intp_t j) nogil:
         return self.distance_metric.dist_csr(
             x1_data=&self.X_data[0],
             x1_indices=self.X_indices,
@@ -326,7 +326,7 @@ cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         return self.n_Y
 
     @final
-    cdef DTYPE_t surrogate_dist(self, cnp.intp_t i, cnp.intp_t j) nogil:
+    cdef cnp.float64_t surrogate_dist(self, cnp.intp_t i, cnp.intp_t j) nogil:
         return self.distance_metric.rdist_csr(
             x1_data=&self.X_data[0],
             x1_indices=self.X_indices,
@@ -342,7 +342,7 @@ cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         )
 
     @final
-    cdef DTYPE_t dist(self, cnp.intp_t i, cnp.intp_t j) nogil:
+    cdef cnp.float64_t dist(self, cnp.intp_t i, cnp.intp_t j) nogil:
 
         return self.distance_metric.dist_csr(
             x1_data=&self.X_data[0],
@@ -392,12 +392,12 @@ cdef class DenseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         return self.datasets_pair.n_samples_X()
 
     @final
-    cdef DTYPE_t surrogate_dist(self, cnp.intp_t i, cnp.intp_t j) nogil:
+    cdef cnp.float64_t surrogate_dist(self, cnp.intp_t i, cnp.intp_t j) nogil:
         # Swapping arguments on the same interface
         return self.datasets_pair.surrogate_dist(j, i)
 
     @final
-    cdef DTYPE_t dist(self, cnp.intp_t i, cnp.intp_t j) nogil:
+    cdef cnp.float64_t dist(self, cnp.intp_t i, cnp.intp_t j) nogil:
         # Swapping arguments on the same interface
         return self.datasets_pair.dist(j, i)
 
