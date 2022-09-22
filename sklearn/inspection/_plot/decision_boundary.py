@@ -136,6 +136,7 @@ class DecisionBoundaryDisplay:
         Returns
         -------
         display: :class:`~sklearn.inspection.DecisionBoundaryDisplay`
+            Object that stores computed values.
         """
         check_matplotlib_support("DecisionBoundaryDisplay.plot")
         import matplotlib.pyplot as plt  # noqa

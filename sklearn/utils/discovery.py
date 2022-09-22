@@ -4,7 +4,7 @@ from importlib import import_module
 from operator import itemgetter
 from pathlib import Path
 
-MODULE_TO_IGNORE = {
+_MODULE_TO_IGNORE = {
     "tests",
     "externals",
     "setup",
@@ -63,7 +63,7 @@ def all_estimators(type_filter=None):
         for _, module_name, _ in pkgutil.walk_packages(path=[root], prefix="sklearn."):
             module_parts = module_name.split(".")
             if (
-                any(part in MODULE_TO_IGNORE for part in module_parts)
+                any(part in _MODULE_TO_IGNORE for part in module_parts)
                 or "._" in module_name
             ):
                 continue
@@ -147,7 +147,7 @@ def all_displays():
         for _, module_name, _ in pkgutil.walk_packages(path=[root], prefix="sklearn."):
             module_parts = module_name.split(".")
             if (
-                any(part in MODULE_TO_IGNORE for part in module_parts)
+                any(part in _MODULE_TO_IGNORE for part in module_parts)
                 or "._" in module_name
             ):
                 continue
@@ -197,7 +197,7 @@ def all_functions():
         for _, module_name, _ in pkgutil.walk_packages(path=[root], prefix="sklearn."):
             module_parts = module_name.split(".")
             if (
-                any(part in MODULE_TO_IGNORE for part in module_parts)
+                any(part in _MODULE_TO_IGNORE for part in module_parts)
                 or "._" in module_name
             ):
                 continue
@@ -205,7 +205,7 @@ def all_functions():
             module = import_module(module_name)
             functions = inspect.getmembers(module, _is_checked_function)
             functions = [
-                (f"{func.__module__}.{func.__name__}", func)
+                (func.__name__, func)
                 for name, func in functions
                 if not name.startswith("_")
             ]
