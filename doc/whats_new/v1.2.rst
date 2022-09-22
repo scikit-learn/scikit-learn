@@ -19,12 +19,6 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
-- |Fix| The condition for early stopping has now been changed in
-  :func:`linear_model._sgd_fast._plain_sgd` which is used by :class:`linear_model.SGDRegressor`
-  and :class:`linear_model.SGDClassifier`. The old condition did not disambiguate between
-  training and validation set and had an effect of overscaling the error tolerance.
-  This has been fixed in :pr:`23798` by :user:`Harsh Agrawal <Harsh14901>`
-
 - |Enhancement| The default `eigen_tol` for :class:`cluster.SpectralClustering`,
   :class:`manifold.SpectralEmbedding`, :func:`cluster.spectral_clustering`,
   and :func:`manifold.spectral_embedding` is now `None` when using the `'amg'`
@@ -43,6 +37,12 @@ random sampling procedures.
 - |Fix| The `components_` signs in :class:`decomposition.FastICA` might differ.
   It is now consistent and deterministic with all SVD solvers.
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
+
+- |Fix| The condition for early stopping has now been changed in
+  :func:`linear_model._sgd_fast._plain_sgd` which is used by :class:`linear_model.SGDRegressor`
+  and :class:`linear_model.SGDClassifier`. The old condition did not disambiguate between
+  training and validation set and had an effect of overscaling the error tolerance.
+  This has been fixed in :pr:`23798` by :user:`Harsh Agrawal <Harsh14901>`
 
 Changes impacting all modules
 -----------------------------
@@ -330,10 +330,10 @@ Changelog
   :pr:`24433` by :user:`Yogendrasingh <iofall>`, :user:`Arisa Y. <arisayosh>`
   and :user:`Tim Head <betatim>`.
 
-- |Fix| :func:`linear_model._sgd_fast._plain_sgd`
-  Fix average loss calculation when early stopping is enabled.
+- |Fix| Fix average loss calculation when early stopping is enabled in
+  :class:`linear_model.SGDRegressor` and :class:`linear_model.SGDClassifier`.
   Also updated the condition for early stopping accordingly.
-  :pr:`23798` by :user:`Harsh Agrawal <Harsh14901>`
+  :pr:`23798` by :user:`Harsh Agrawal <Harsh14901>`.
 
 :mod:`sklearn.manifold`
 .......................
