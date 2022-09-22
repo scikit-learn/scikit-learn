@@ -267,7 +267,11 @@ class KMeansCythonEngine:
     TODO: see URL for more details.
     """
 
-    def prepare_fit(self, estimator, X, y=None, sample_weight=None):
+    def __init__(self, estimator):
+        self.estimator = estimator
+
+    def prepare_fit(self, X, y=None, sample_weight=None):
+        estimator = self.estimator
         X = estimator._validate_data(
             X,
             accept_sparse="csr",
@@ -276,6 +280,11 @@ class KMeansCythonEngine:
             copy=estimator.copy_x,
             accept_large_sparse=False,
         )
+        # this sets estimator _algorithm implicitly
+        # XXX: shall we explose this logic as part of then engine API?
+        # or is the current API flexible enough?
+        estimator._check_params_vs_input(X)
+
         # TODO: delegate rng and sample weight checks to engine
         random_state = check_random_state(estimator.random_state)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
@@ -284,7 +293,7 @@ class KMeansCythonEngine:
         # prediction time XXX: shall we wrap engine-specific private fit
         # attributes in a predict context dict set as attribute on the
         # estimator?
-        estimator._n_threads, self._n_threads = _openmp_effective_n_threads()
+        estimator._n_threads = self._n_threads = _openmp_effective_n_threads()
 
         # Validate init array
         init = estimator.init
@@ -302,6 +311,8 @@ class KMeansCythonEngine:
             if init_is_array_like:
                 init -= X_mean
 
+            self.X_mean = X_mean
+
         # precompute squared norms of data points
         x_squared_norms = row_norms(X, squared=True)
 
@@ -311,12 +322,10 @@ class KMeansCythonEngine:
             kmeans_single = _kmeans_single_lloyd
             estimator._check_mkl_vcomp(X, X.shape[0])
 
-        self.estimator = estimator
         self.x_squared_norms = x_squared_norms
         self.kmeans_single_func = kmeans_single
         self.random_state = random_state
-        self.tol = self.scale_tolerance(X, self.tol)
-        self.X_mean = X_mean
+        self.tol = self.scale_tolerance(X, estimator.tol)
         self.init = init
         return X, y, sample_weight
 
@@ -340,15 +349,25 @@ class KMeansCythonEngine:
             variances = np.var(X, axis=0)
         return np.mean(variances) * tol
 
-    def unshift_centers(self, estimator, X, best_centers):
-        X_mean = self.engine_fit_context["X_mean"]
+    def unshift_centers(self, X, best_centers):
         if not sp.issparse(X):
-            if not estimator.copy_x:
-                X += X_mean
-            best_centers += X_mean
+            if not self.estimator.copy_x:
+                X += self.X_mean
+            best_centers += self.X_mean
 
     def is_same_clustering(self, labels, best_labels, n_clusters):
         return _is_same_clustering(labels, best_labels, n_clusters)
+
+    def kmeans_single(self, X, sample_weight, centers_init):
+        return self.kmeans_single_func(
+            X,
+            sample_weight,
+            centers_init,
+            max_iter=self.estimator.max_iter,
+            tol=self.tol,
+            n_threads=self._n_threads,
+            verbose=self.estimator.verbose,
+        )
 
 
 @validate_params(
@@ -1491,7 +1510,6 @@ class KMeans(_BaseKMeans):
         engine_class = get_engine_class("kmeans", default=KMeansCythonEngine)
         engine = engine_class(self)
         X, y, sample_weight = engine.prepare_fit(
-            self,
             X,
             y=y,
             sample_weight=sample_weight,
@@ -1511,8 +1529,6 @@ class KMeans(_BaseKMeans):
                 X,
                 sample_weight,
                 centers_init,
-                max_iter=self.max_iter,
-                verbose=self.verbose,
             )
 
             # determine if these results are the best so far
