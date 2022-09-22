@@ -484,7 +484,7 @@ Note that magic methods ``__add__``, ``__mul___`` and ``__pow__`` are
 overridden on the Kernel objects, so one can use e.g. ``RBF() + RBF()`` as
 a shortcut for ``Sum(RBF(), RBF())``.
 
-Radial-basis function (RBF) kernel
+Radial basis function (RBF) kernel
 ----------------------------------
 The :class:`RBF` kernel is a stationary kernel. It is also known as the "squared
 exponential" kernel. It is parameterized by a length-scale parameter :math:`l>0`, which
@@ -610,8 +610,11 @@ shown in the following figure:
 References
 ----------
 
-.. [RW2006] Carl Eduard Rasmussen and Christopher K.I. Williams, "Gaussian Processes for Machine Learning", MIT Press 2006, Link to an official complete PDF version of the book `here <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_ .
+.. [RW2006] `Carl E. Rasmussen and Christopher K.I. Williams,
+   "Gaussian Processes for Machine Learning",
+   MIT Press 2006 <https://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_
 
-.. [Duv2014] David Duvenaud, "The Kernel Cookbook: Advice on Covariance functions", 2014, `Link <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_ .
+.. [Duv2014] `David Duvenaud, "The Kernel Cookbook: Advice on Covariance functions", 2014
+   <https://www.cs.toronto.edu/~duvenaud/cookbook/>`_
 
 .. currentmodule:: sklearn.gaussian_process

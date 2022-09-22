@@ -339,29 +339,6 @@ def test_pipeline_spectral_clustering(seed=36):
         )
 
 
-def test_spectral_embedding_unknown_eigensolver(seed=36):
-    # Test that SpectralClustering fails with an unknown eigensolver
-    se = SpectralEmbedding(
-        n_components=1,
-        affinity="precomputed",
-        random_state=np.random.RandomState(seed),
-        eigen_solver="<unknown>",
-    )
-    with pytest.raises(ValueError):
-        se.fit(S)
-
-
-def test_spectral_embedding_unknown_affinity(seed=36):
-    # Test that SpectralClustering fails with an unknown affinity type
-    se = SpectralEmbedding(
-        n_components=1,
-        affinity="<unknown>",
-        random_state=np.random.RandomState(seed),
-    )
-    with pytest.raises(ValueError):
-        se.fit(S)
-
-
 def test_connectivity(seed=36):
     # Test that graph connectivity test works as expected
     graph = np.array(
@@ -507,4 +484,6 @@ def test_spectral_eigen_tol_auto(monkeypatch, solver):
 
     spectral_embedding(S, random_state=42, eigen_solver=solver, eigen_tol="auto")
     mocked_solver.assert_called()
-    assert mocked_solver.call_args.kwargs["tol"] == default_value
+
+    _, kwargs = mocked_solver.call_args
+    assert kwargs["tol"] == default_value

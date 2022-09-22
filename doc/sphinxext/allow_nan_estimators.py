@@ -1,11 +1,7 @@
 from sklearn.utils import all_estimators
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import FeatureUnion
-from sklearn.decomposition import SparseCoder
 from sklearn.utils.estimator_checks import _construct_instance
 from sklearn.utils._testing import SkipTest
 from docutils import nodes
-import warnings
 from contextlib import suppress
 
 from docutils.parsers.rst import Directive
@@ -27,7 +23,7 @@ class AllowNanEstimators(Directive):
             if est._get_tags().get("allow_nan"):
                 module_name = ".".join(est_class.__module__.split(".")[:2])
                 class_title = f"{est_class.__name__}"
-                class_url = f"generated/{module_name}.{class_title}.html"
+                class_url = f"./generated/{module_name}.{class_title}.html"
                 item = nodes.list_item()
                 para = nodes.paragraph()
                 para += nodes.reference(

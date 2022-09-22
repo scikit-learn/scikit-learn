@@ -15,11 +15,17 @@ on:
 jobs:
   # Build the documentation against the minimum version of the dependencies
   doc-min-dependencies:
+    # This prevents this workflow from running on a fork.
+    # To test this workflow on a fork, uncomment the following line.
+    if: github.repository == 'scikit-learn/scikit-learn'
+
     runs-on: ubuntu-latest
     steps:
       - name: Checkout scikit-learn
         uses: actions/checkout@v2
         with:
+          # needed by build_doc.sh to compute the list of changed doc files:
+          fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Setup Python
@@ -31,6 +37,9 @@ jobs:
           OMP_NUM_THREADS: 2
           MKL_NUM_THREADS: 2
           CONDA_ENV_NAME: testenv
+          # Sphinx race condition in doc-min-dependencies is causing job to stall
+          # Here we run the job serially
+          SPHINX_NUMJOBS: 1
           LOCK_FILE: build_tools/github/doc_min_dependencies_linux-64_conda.lock
 
       - name: Upload documentation
@@ -41,11 +50,17 @@ jobs:
 
   # Build the documentation against the latest version of the dependencies
   doc:
+    # This prevents this workflow from running on a fork.
+    # To test this workflow on a fork, uncomment the following line.
+    if: github.repository == 'scikit-learn/scikit-learn'
+
     runs-on: ubuntu-latest
     steps:
       - name: Checkout scikit-learn
         uses: actions/checkout@v2
         with:
+          # needed by build_doc.sh to compute the list of changed doc files:
+          fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Setup Python

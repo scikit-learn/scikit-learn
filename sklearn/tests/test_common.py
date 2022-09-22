@@ -18,6 +18,24 @@ from functools import partial
 import pytest
 import numpy as np
 
+from sklearn.cluster import (
+    AffinityPropagation,
+    Birch,
+    MeanShift,
+    OPTICS,
+    SpectralClustering,
+)
+from sklearn.datasets import make_blobs
+from sklearn.manifold import Isomap, TSNE, LocallyLinearEmbedding
+from sklearn.neighbors import (
+    LocalOutlierFactor,
+    KNeighborsClassifier,
+    KNeighborsRegressor,
+    RadiusNeighborsClassifier,
+    RadiusNeighborsRegressor,
+)
+from sklearn.semi_supervised import LabelPropagation, LabelSpreading
+
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import ignore_warnings
 from sklearn.exceptions import ConvergenceWarning
@@ -413,15 +431,9 @@ def test_transformers_get_feature_names_out(transformer):
         )
 
 
-VALIDATE_ESTIMATOR_INIT = [
-    "SGDOneClassSVM",
-]
-VALIDATE_ESTIMATOR_INIT = set(VALIDATE_ESTIMATOR_INIT)
-
-
 @pytest.mark.parametrize(
     "Estimator",
-    [est for name, est in all_estimators() if name not in VALIDATE_ESTIMATOR_INIT],
+    [est for name, est in all_estimators()],
 )
 def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
     """Check that init or set_param does not raise errors."""
@@ -445,211 +457,51 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
         est.set_params(**new_params)
 
 
-PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
-    "ARDRegression",
-    "AdaBoostClassifier",
-    "AdaBoostRegressor",
-    "AdditiveChi2Sampler",
-    "AffinityPropagation",
-    "AgglomerativeClustering",
-    "BaggingClassifier",
-    "BaggingRegressor",
-    "BayesianGaussianMixture",
-    "BayesianRidge",
-    "BernoulliNB",
-    "BernoulliRBM",
-    "Binarizer",
-    "Birch",
-    "CCA",
-    "CalibratedClassifierCV",
-    "CategoricalNB",
-    "ClassifierChain",
-    "ComplementNB",
-    "CountVectorizer",
-    "DBSCAN",
-    "DecisionTreeClassifier",
-    "DecisionTreeRegressor",
-    "DictVectorizer",
-    "DictionaryLearning",
-    "DummyClassifier",
-    "DummyRegressor",
-    "ElasticNet",
-    "ElasticNetCV",
-    "EllipticEnvelope",
-    "EmpiricalCovariance",
-    "ExtraTreeClassifier",
-    "ExtraTreeRegressor",
-    "ExtraTreesClassifier",
-    "ExtraTreesRegressor",
-    "FactorAnalysis",
-    "FastICA",
-    "FeatureAgglomeration",
-    "FeatureHasher",
-    "FunctionTransformer",
-    "GammaRegressor",
-    "GaussianMixture",
-    "GaussianNB",
-    "GaussianProcessClassifier",
-    "GaussianProcessRegressor",
-    "GaussianRandomProjection",
-    "GenericUnivariateSelect",
-    "GradientBoostingClassifier",
-    "GradientBoostingRegressor",
-    "GraphicalLasso",
-    "GraphicalLassoCV",
-    "HashingVectorizer",
-    "HistGradientBoostingClassifier",
-    "HistGradientBoostingRegressor",
-    "HuberRegressor",
-    "IncrementalPCA",
-    "IsolationForest",
-    "Isomap",
-    "IsotonicRegression",
-    "IterativeImputer",
-    "KBinsDiscretizer",
-    "KNNImputer",
-    "KNeighborsClassifier",
-    "KNeighborsRegressor",
-    "KNeighborsTransformer",
-    "KernelDensity",
-    "KernelPCA",
-    "KernelRidge",
-    "LabelBinarizer",
-    "LabelPropagation",
-    "LabelSpreading",
-    "Lars",
-    "LarsCV",
-    "Lasso",
-    "LassoCV",
-    "LassoLars",
-    "LassoLarsCV",
-    "LassoLarsIC",
-    "LatentDirichletAllocation",
-    "LedoitWolf",
-    "LinearDiscriminantAnalysis",
-    "LinearRegression",
-    "LinearSVC",
-    "LinearSVR",
-    "LocalOutlierFactor",
-    "LocallyLinearEmbedding",
-    "LogisticRegression",
-    "LogisticRegressionCV",
-    "MDS",
-    "MLPClassifier",
-    "MLPRegressor",
-    "MaxAbsScaler",
-    "MeanShift",
-    "MinCovDet",
-    "MinMaxScaler",
-    "MiniBatchDictionaryLearning",
-    "MiniBatchNMF",
-    "MiniBatchSparsePCA",
-    "MissingIndicator",
-    "MultiLabelBinarizer",
-    "MultiOutputClassifier",
-    "MultiOutputRegressor",
-    "MultiTaskElasticNet",
-    "MultiTaskElasticNetCV",
-    "MultiTaskLasso",
-    "MultiTaskLassoCV",
-    "MultinomialNB",
-    "NMF",
-    "NearestCentroid",
-    "NearestNeighbors",
-    "NeighborhoodComponentsAnalysis",
-    "Normalizer",
-    "NuSVC",
-    "NuSVR",
-    "Nystroem",
-    "OAS",
-    "OPTICS",
-    "OneClassSVM",
-    "OneHotEncoder",
-    "OneVsOneClassifier",
-    "OneVsRestClassifier",
-    "OrdinalEncoder",
-    "OrthogonalMatchingPursuit",
-    "OrthogonalMatchingPursuitCV",
-    "OutputCodeClassifier",
-    "PCA",
-    "PLSCanonical",
-    "PLSRegression",
-    "PLSSVD",
-    "PassiveAggressiveClassifier",
-    "PassiveAggressiveRegressor",
-    "PatchExtractor",
-    "Perceptron",
-    "PoissonRegressor",
-    "PolynomialCountSketch",
-    "PolynomialFeatures",
-    "PowerTransformer",
-    "QuadraticDiscriminantAnalysis",
-    "QuantileRegressor",
-    "QuantileTransformer",
-    "RANSACRegressor",
-    "RBFSampler",
-    "RFE",
-    "RFECV",
-    "RadiusNeighborsClassifier",
-    "RadiusNeighborsRegressor",
-    "RadiusNeighborsTransformer",
-    "RandomForestClassifier",
-    "RandomForestRegressor",
-    "RandomTreesEmbedding",
-    "RegressorChain",
-    "Ridge",
-    "RidgeCV",
-    "RidgeClassifier",
-    "RidgeClassifierCV",
-    "RobustScaler",
-    "SGDClassifier",
-    "SGDOneClassSVM",
-    "SGDRegressor",
-    "SVC",
-    "SVR",
-    "SelectFdr",
-    "SelectFpr",
-    "SelectFromModel",
-    "SelectFwe",
-    "SelectKBest",
-    "SelectPercentile",
-    "SelfTrainingClassifier",
-    "SequentialFeatureSelector",
-    "ShrunkCovariance",
-    "SimpleImputer",
-    "SkewedChi2Sampler",
-    "SparsePCA",
-    "SparseRandomProjection",
-    "SpectralBiclustering",
-    "SpectralClustering",
-    "SpectralCoclustering",
-    "SpectralEmbedding",
-    "SplineTransformer",
-    "StackingClassifier",
-    "StackingRegressor",
-    "StandardScaler",
-    "TSNE",
-    "TfidfTransformer",
-    "TfidfVectorizer",
-    "TheilSenRegressor",
-    "TransformedTargetRegressor",
-    "TruncatedSVD",
-    "TweedieRegressor",
-    "VarianceThreshold",
-    "VotingClassifier",
-    "VotingRegressor",
-]
-
-
 @pytest.mark.parametrize(
     "estimator", _tested_estimators(), ids=_get_check_estimator_ids
 )
 def test_check_param_validation(estimator):
     name = estimator.__class__.__name__
-    if name in PARAM_VALIDATION_ESTIMATORS_TO_IGNORE:
-        pytest.skip(
-            f"Skipping check_param_validation for {name}: Does not use the "
-            "appropriate API for parameter validation yet."
-        )
     _set_checking_parameters(estimator)
     check_param_validation(name, estimator)
+
+
+# TODO: remove this filter in 1.2
+@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
+@pytest.mark.parametrize(
+    "Estimator",
+    [
+        AffinityPropagation,
+        Birch,
+        MeanShift,
+        KNeighborsClassifier,
+        KNeighborsRegressor,
+        RadiusNeighborsClassifier,
+        RadiusNeighborsRegressor,
+        LabelPropagation,
+        LabelSpreading,
+        OPTICS,
+        SpectralClustering,
+        LocalOutlierFactor,
+        LocallyLinearEmbedding,
+        Isomap,
+        TSNE,
+    ],
+)
+def test_f_contiguous_array_estimator(Estimator):
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/23988
+    # https://github.com/scikit-learn/scikit-learn/issues/24013
+
+    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
+    X = np.asfortranarray(X)
+    y = np.round(X[:, 0])
+
+    est = Estimator()
+    est.fit(X, y)
+
+    if hasattr(est, "transform"):
+        est.transform(X)
+
+    if hasattr(est, "predict"):
+        est.predict(X)

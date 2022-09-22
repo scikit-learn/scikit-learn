@@ -107,6 +107,14 @@ def skip_if_matplotlib_not_installed(fname):
         raise SkipTest(f"Skipping doctests for {basename}, matplotlib not installed")
 
 
+def skip_if_cupy_not_installed(fname):
+    try:
+        import cupy  # noqa
+    except ImportError:
+        basename = os.path.basename(fname)
+        raise SkipTest(f"Skipping doctests for {basename}, cupy not installed")
+
+
 def pytest_runtest_setup(item):
     fname = item.fspath.strpath
     # normalize filename to use forward slashes on Windows for easier handling
@@ -146,6 +154,9 @@ def pytest_runtest_setup(item):
     for each in rst_files_requiring_matplotlib:
         if fname.endswith(each):
             skip_if_matplotlib_not_installed(fname)
+
+    if fname.endswith("array_api.rst"):
+        skip_if_cupy_not_installed(fname)
 
 
 def pytest_configure(config):
