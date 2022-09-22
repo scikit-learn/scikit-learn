@@ -1746,6 +1746,14 @@ def _test_dcg_score_for(y_true, y_score):
     assert ideal == pytest.approx((np.sort(y_true)[:, ::-1] / discount).sum(axis=1))
 
 
+def _test_dcg_score_errors():
+    # raise error if y_true is single value
+    y_true = np.array([1])
+    y_score = np.array([1])
+    with pytest.raises(ValueError, match="Cannot compute DCG for a single sample."):
+        dcg_score(y_true, y_score)
+
+
 def test_dcg_ties():
     y_true = np.asarray([np.arange(5)])
     y_score = np.zeros(y_true.shape)
@@ -1857,6 +1865,14 @@ def _test_ndcg_score_for(y_true, y_score):
     assert score[all_zero] == pytest.approx(np.zeros(all_zero.sum()))
     assert ideal.shape == (y_true.shape[0],)
     assert score.shape == (y_true.shape[0],)
+
+
+def _test_ndcg_score_errors():
+    # raise error if y_true is single value
+    y_true = np.array([1])
+    y_score = np.array([1])
+    with pytest.raises(ValueError, match="Cannot compute DCG for a single sample."):
+        ndcg_score(y_true, y_score)
 
 
 def test_partial_roc_auc_score():
