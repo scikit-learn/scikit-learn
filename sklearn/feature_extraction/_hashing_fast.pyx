@@ -1,9 +1,6 @@
 # Author: Lars Buitinck
 # License: BSD 3 clause
 
-import sys
-import array
-cimport cython
 from libc.stdlib cimport abs
 from libcpp.vector cimport vector
 

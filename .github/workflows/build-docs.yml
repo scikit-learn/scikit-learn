@@ -37,6 +37,9 @@ jobs:
           OMP_NUM_THREADS: 2
           MKL_NUM_THREADS: 2
           CONDA_ENV_NAME: testenv
+          # Sphinx race condition in doc-min-dependencies is causing job to stall
+          # Here we run the job serially
+          SPHINX_NUMJOBS: 1
           LOCK_FILE: build_tools/github/doc_min_dependencies_linux-64_conda.lock
 
       - name: Upload documentation

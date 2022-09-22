@@ -431,15 +431,9 @@ def test_transformers_get_feature_names_out(transformer):
         )
 
 
-VALIDATE_ESTIMATOR_INIT = [
-    "SGDOneClassSVM",
-]
-VALIDATE_ESTIMATOR_INIT = set(VALIDATE_ESTIMATOR_INIT)
-
-
 @pytest.mark.parametrize(
     "Estimator",
-    [est for name, est in all_estimators() if name not in VALIDATE_ESTIMATOR_INIT],
+    [est for name, est in all_estimators()],
 )
 def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
     """Check that init or set_param does not raise errors."""
@@ -463,44 +457,11 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
         est.set_params(**new_params)
 
 
-PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
-    "CalibratedClassifierCV",
-    "ClassifierChain",
-    "DictionaryLearning",
-    "HashingVectorizer",
-    "IterativeImputer",
-    "LatentDirichletAllocation",
-    "MiniBatchDictionaryLearning",
-    "MultiTaskElasticNet",
-    "MultiTaskLasso",
-    "NeighborhoodComponentsAnalysis",
-    "Nystroem",
-    "OAS",
-    "OPTICS",
-    "OneVsOneClassifier",
-    "OneVsRestClassifier",
-    "PatchExtractor",
-    "RANSACRegressor",
-    "RegressorChain",
-    "RidgeCV",
-    "RidgeClassifierCV",
-    "SelectFromModel",
-    "SpectralBiclustering",
-    "SpectralCoclustering",
-    "SpectralEmbedding",
-]
-
-
 @pytest.mark.parametrize(
     "estimator", _tested_estimators(), ids=_get_check_estimator_ids
 )
 def test_check_param_validation(estimator):
     name = estimator.__class__.__name__
-    if name in PARAM_VALIDATION_ESTIMATORS_TO_IGNORE:
-        pytest.skip(
-            f"Skipping check_param_validation for {name}: Does not use the "
-            "appropriate API for parameter validation yet."
-        )
     _set_checking_parameters(estimator)
     check_param_validation(name, estimator)
 
