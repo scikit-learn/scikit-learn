@@ -16,6 +16,7 @@ About the project
 -----------------
 
 What is the project name (a lot of people get it wrong)?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 scikit-learn, but not scikit or SciKit nor sci-kit learn.
 Also not scikits.learn or scikits-learn, which were previously used.
 
@@ -28,9 +29,37 @@ Why scikit?
 There are multiple scikits, which are scientific toolboxes built around SciPy.
 Apart from scikit-learn, another popular one is `scikit-image <https://scikit-image.org/>`_.
 
-Why did you remove HMMs from scikit-learn?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-See :ref:`adding_graphical_models`.
+Do you support PyPy?
+^^^^^^^^^^^^^^^^^^^^
+
+scikit-learn is regularly tested and maintained to work with
+`PyPy <https://pypy.org/>`_ (an alternative Python implementation with
+a built-in just-in-time compiler).
+
+Note however that this support is still considered experimental and specific
+components might behave slightly differently. Please refer to the test
+suite of the specific module of interest for more details.
+
+Why is there no support for deep or reinforcement learning / Will there be support for deep or reinforcement learning in scikit-learn?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Deep learning and reinforcement learning both require a rich vocabulary to
+define an architecture, with deep learning additionally requiring
+GPUs for efficient computing. However, neither of these fit within
+the design constraints of scikit-learn; as a result, deep learning
+and reinforcement learning are currently out of scope for what
+scikit-learn seeks to achieve.
+
+You can find more information about addition of gpu support at
+`Will you add GPU support?`_.
+
+Note that scikit-learn currently implements a simple multilayer perceptron
+in :mod:`sklearn.neural_network`. We will only accept bug fixes for this module.
+If you want to implement more complex deep learning models, please turn to
+popular deep learning frameworks such as
+`tensorflow <https://www.tensorflow.org/>`_,
+`keras <https://keras.io/>`_
+and `pytorch <https://pytorch.org/>`_.
 
 .. _adding_graphical_models:
 
@@ -59,6 +88,15 @@ do structured prediction:
   completeness; treats a feature vector as a sample and uses an offset encoding
   for the dependencies between feature vectors)
 
+
+Implementation decisions
+------------------------
+
+Why did you remove HMMs from scikit-learn?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+See :ref:`adding_graphical_models`.
+
+
 Will you add GPU support?
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -68,38 +106,6 @@ issues. scikit-learn is designed to be easy to install on a wide variety of
 platforms. Outside of neural networks, GPUs don't play a large role in machine
 learning today, and much larger gains in speed can often be achieved by a
 careful choice of algorithms.
-
-Why is there no support for deep or reinforcement learning / Will there be support for deep or reinforcement learning in scikit-learn?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-Deep learning and reinforcement learning both require a rich vocabulary to
-define an architecture, with deep learning additionally requiring
-GPUs for efficient computing. However, neither of these fit within
-the design constraints of scikit-learn; as a result, deep learning
-and reinforcement learning are currently out of scope for what
-scikit-learn seeks to achieve.
-
-You can find more information about addition of gpu support at
-`Will you add GPU support?`_.
-
-Note that scikit-learn currently implements a simple multilayer perceptron
-in :mod:`sklearn.neural_network`. We will only accept bug fixes for this module.
-If you want to implement more complex deep learning models, please turn to
-popular deep learning frameworks such as
-`tensorflow <https://www.tensorflow.org/>`_,
-`keras <https://keras.io/>`_
-and `pytorch <https://pytorch.org/>`_.
-
-Do you support PyPy?
-^^^^^^^^^^^^^^^^^^^^
-
-scikit-learn is regularly tested and maintained to work with
-`PyPy <https://pypy.org/>`_ (an alternative Python implementation with
-a built-in just-in-time compiler).
-
-Note however that this support is still considered experimental and specific
-components might behave slightly differently. Please refer to the test
-suite of the specific module of interest for more details.
 
 Why do categorical variables need preprocessing in scikit-learn, compared to other tools?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
