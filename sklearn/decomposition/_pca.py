@@ -22,6 +22,7 @@ from scipy.sparse.linalg import svds
 from ._base import _BasePCA
 from ..utils import check_random_state
 from ..utils._arpack import _init_arpack_v0
+from ..utils.deprecation import deprecated
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
@@ -212,7 +213,7 @@ class PCA(_BasePCA):
 
         .. versionadded:: 1.1
 
-    power_iteration_normalizer : {‘auto’, ‘QR’, ‘LU’, ‘none’}, default=’auto’
+    power_iteration_normalizer : {'auto', 'QR', 'LU', 'none'}, default='auto'
         Power iteration normalizer for randomized SVD solver.
         Not used by ARPACK. See :func:`~sklearn.utils.extmath.randomized_svd`
         for more details.
@@ -359,7 +360,7 @@ class PCA(_BasePCA):
     [6.30061...]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [
             Interval(Integral, 0, None, closed="left"),
             Interval(Real, 0, 1, closed="neither"),
@@ -401,6 +402,16 @@ class PCA(_BasePCA):
         self.n_oversamples = n_oversamples
         self.power_iteration_normalizer = power_iteration_normalizer
         self.random_state = random_state
+
+    # TODO(1.4): remove in 1.4
+    # mypy error: Decorated property not supported
+    @deprecated(  # type: ignore
+        "Attribute `n_features_` was deprecated in version 1.2 and will be "
+        "removed in 1.4. Use `n_features_in_` instead."
+    )
+    @property
+    def n_features_(self):
+        return self.n_features_in_
 
     def fit(self, X, y=None):
         """Fit the model with X.
@@ -552,7 +563,7 @@ class PCA(_BasePCA):
         else:
             self.noise_variance_ = 0.0
 
-        self.n_samples_, self.n_features_ = n_samples, n_features
+        self.n_samples_ = n_samples
         self.components_ = components_[:n_components]
         self.n_components_ = n_components
         self.explained_variance_ = explained_variance_[:n_components]
@@ -614,7 +625,7 @@ class PCA(_BasePCA):
                 random_state=random_state,
             )
 
-        self.n_samples_, self.n_features_ = n_samples, n_features
+        self.n_samples_ = n_samples
         self.components_ = Vt
         self.n_components_ = n_components
 

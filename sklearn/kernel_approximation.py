@@ -8,6 +8,7 @@ approximate kernel feature maps based on Fourier transforms and Count Sketches.
 
 # License: BSD 3 clause
 
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
@@ -28,6 +29,9 @@ from .utils.validation import check_is_fitted
 from .utils.validation import _check_feature_names_in
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from .utils.validation import check_non_negative
+from .utils._param_validation import Interval
+from .utils._param_validation import StrOptions
+from .metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
 
 
 class PolynomialCountSketch(
@@ -117,6 +121,14 @@ class PolynomialCountSketch(
     1.0
     """
 
+    _parameter_constraints: dict = {
+        "gamma": [Interval(Real, 0, None, closed="left")],
+        "degree": [Interval(Integral, 1, None, closed="left")],
+        "coef0": [Interval(Real, None, None, closed="neither")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self, *, gamma=1.0, degree=2, coef0=0, n_components=100, random_state=None
     ):
@@ -147,8 +159,7 @@ class PolynomialCountSketch(
         self : object
             Returns the instance itself.
         """
-        if not self.degree >= 1:
-            raise ValueError(f"degree={self.degree} should be >=1.")
+        self._validate_params()
 
         X = self._validate_data(X, accept_sparse="csc")
         random_state = check_random_state(self.random_state)
@@ -253,12 +264,12 @@ class RBFSampler(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimat
 
     Attributes
     ----------
-    random_offset_ : ndarray of shape (n_components,), dtype=float64
+    random_offset_ : ndarray of shape (n_components,), dtype={np.float64, np.float32}
         Random offset used to compute the projection in the `n_components`
         dimensions of the feature space.
 
     random_weights_ : ndarray of shape (n_features, n_components),\
-        dtype=float64
+        dtype={np.float64, np.float32}
         Random projection directions drawn from the Fourier transform
         of the RBF kernel.
 
@@ -307,6 +318,12 @@ class RBFSampler(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimat
     1.0
     """
 
+    _parameter_constraints: dict = {
+        "gamma": [Interval(Real, 0, None, closed="left")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
+
     def __init__(self, *, gamma=1.0, n_components=100, random_state=None):
         self.gamma = gamma
         self.n_components = n_components
@@ -332,6 +349,7 @@ class RBFSampler(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimat
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
 
         X = self._validate_data(X, accept_sparse="csr")
         random_state = check_random_state(self.random_state)
@@ -342,6 +360,13 @@ class RBFSampler(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimat
         )
 
         self.random_offset_ = random_state.uniform(0, 2 * np.pi, size=self.n_components)
+
+        if X.dtype == np.float32:
+            # Setting the data type of the fitted attribute will ensure the
+            # output data type during `transform`.
+            self.random_weights_ = self.random_weights_.astype(X.dtype, copy=False)
+            self.random_offset_ = self.random_offset_.astype(X.dtype, copy=False)
+
         self._n_features_out = self.n_components
         return self
 
@@ -367,6 +392,9 @@ class RBFSampler(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimat
         np.cos(projection, projection)
         projection *= np.sqrt(2.0) / np.sqrt(self.n_components)
         return projection
+
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
 
 
 class SkewedChi2Sampler(
@@ -444,6 +472,12 @@ class SkewedChi2Sampler(
     1.0
     """
 
+    _parameter_constraints: dict = {
+        "skewedness": [Interval(Real, None, None, closed="neither")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
+
     def __init__(self, *, skewedness=1.0, n_components=100, random_state=None):
         self.skewedness = skewedness
         self.n_components = n_components
@@ -469,7 +503,7 @@ class SkewedChi2Sampler(
         self : object
             Returns the instance itself.
         """
-
+        self._validate_params()
         X = self._validate_data(X)
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
@@ -477,6 +511,13 @@ class SkewedChi2Sampler(
         # transform by inverse CDF of sech
         self.random_weights_ = 1.0 / np.pi * np.log(np.tan(np.pi / 2.0 * uniform))
         self.random_offset_ = random_state.uniform(0, 2 * np.pi, size=self.n_components)
+
+        if X.dtype == np.float32:
+            # Setting the data type of the fitted attribute will ensure the
+            # output data type during `transform`.
+            self.random_weights_ = self.random_weights_.astype(X.dtype, copy=False)
+            self.random_offset_ = self.random_offset_.astype(X.dtype, copy=False)
+
         self._n_features_out = self.n_components
         return self
 
@@ -509,6 +550,9 @@ class SkewedChi2Sampler(
         np.cos(projection, projection)
         projection *= np.sqrt(2.0) / np.sqrt(self.n_components)
         return projection
+
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
 
 
 class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
@@ -590,6 +634,11 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     0.9499...
     """
 
+    _parameter_constraints: dict = {
+        "sample_steps": [Interval(Integral, 1, None, closed="left")],
+        "sample_interval": [Interval(Real, 0, None, closed="left"), None],
+    }
+
     def __init__(self, *, sample_steps=2, sample_interval=None):
         self.sample_steps = sample_steps
         self.sample_interval = sample_interval
@@ -612,6 +661,8 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         self : object
             Returns the transformer.
         """
+        self._validate_params()
+
         X = self._validate_data(X, accept_sparse="csr")
         check_non_negative(X, "X in AdditiveChi2Sampler.fit")
 
@@ -867,6 +918,20 @@ class Nystroem(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
     0.9987...
     """
 
+    _parameter_constraints: dict = {
+        "kernel": [
+            StrOptions(set(PAIRWISE_KERNEL_FUNCTIONS.keys()) | {"precomputed"}),
+            callable,
+        ],
+        "gamma": [Interval(Real, 0, None, closed="left"), None],
+        "coef0": [Interval(Real, None, None, closed="neither"), None],
+        "degree": [Interval(Real, 1, None, closed="left"), None],
+        "kernel_params": [dict, None],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+        "n_jobs": [Integral, None],
+    }
+
     def __init__(
         self,
         kernel="rbf",
@@ -910,6 +975,7 @@ class Nystroem(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         X = self._validate_data(X, accept_sparse="csr")
         rnd = check_random_state(self.random_state)
         n_samples = X.shape[0]

@@ -586,7 +586,7 @@ def multilabel_confusion_matrix(
 
 
 def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
-    r"""Cohen's kappa: a statistic that measures inter-annotator agreement.
+    r"""Compute Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
     of agreement between two annotators on a classification problem. It is
@@ -738,12 +738,16 @@ def jaccard_score(
 
     Returns
     -------
-    score : float (if average is not None) or array of floats, shape =\
-            [n_unique_labels]
+    score : float or ndarray of shape (n_unique_labels,), dtype=np.float64
+        The Jaccard score. When `average` is not `None`, a single scalar is
+        returned.
 
     See Also
     --------
-    accuracy_score, f1_score, multilabel_confusion_matrix
+    accuracy_score : Function for calculating the accuracy score.
+    f1_score : Function for calculating the F1 score.
+    multilabel_confusion_matrix : Function for computing a confusion matrix\
+                                  for each class or sample.
 
     Notes
     -----
@@ -2784,7 +2788,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     takes on a value between zero and one, since this is the largest
     possible difference between a predicted probability (which must be
     between zero and one) and the actual outcome (which can take on values
-    of only 0 and 1). It can be decomposed is the sum of refinement loss and
+    of only 0 and 1). It can be decomposed as the sum of refinement loss and
     calibration loss.
 
     The Brier score is appropriate for binary and categorical outcomes that
@@ -2824,6 +2828,11 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     score : float
         Brier score loss.
 
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Brier score
+            <https://en.wikipedia.org/wiki/Brier_score>`_.
+
     Examples
     --------
     >>> import numpy as np
@@ -2839,11 +2848,6 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     0.037...
     >>> brier_score_loss(y_true, np.array(y_prob) > 0.5)
     0.0
-
-    References
-    ----------
-    .. [1] `Wikipedia entry for the Brier score
-            <https://en.wikipedia.org/wiki/Brier_score>`_.
     """
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)

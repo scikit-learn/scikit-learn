@@ -23,7 +23,7 @@ from ..metrics._dist_metrics import METRIC_MAPPING
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils.graph import _fix_connected_components
-from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils._param_validation import Hidden, Interval, StrOptions, HasMethods
 from ..utils.validation import check_memory
 
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
@@ -815,7 +815,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
             Added the 'single' option
 
     distance_threshold : float, default=None
-        The linkage distance threshold above which, clusters will not be
+        The linkage distance threshold at or above which clusters will not be
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
         ``compute_full_tree`` must be ``True``.
 
@@ -890,7 +890,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     array([1, 1, 1, 0, 0, 0])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
         "affinity": [
             Hidden(StrOptions({"deprecated"})),
@@ -902,7 +902,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
             callable,
             None,
         ],
-        "memory": "no_validation",  # TODO
+        "memory": [str, HasMethods("cache"), None],
         "connectivity": ["array-like", callable, None],
         "compute_full_tree": [StrOptions({"auto"}), "boolean"],
         "linkage": [StrOptions(set(_TREE_BUILDERS.keys()))],
@@ -1180,7 +1180,7 @@ class FeatureAgglomeration(
         argument `axis=1`, and reduce it to an array of size [M].
 
     distance_threshold : float, default=None
-        The linkage distance threshold above which, clusters will not be
+        The linkage distance threshold at or above which clusters will not be
         merged. If not ``None``, ``n_clusters`` must be ``None`` and
         ``compute_full_tree`` must be ``True``.
 
@@ -1257,7 +1257,7 @@ class FeatureAgglomeration(
     (1797, 32)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
         "affinity": [
             Hidden(StrOptions({"deprecated"})),
@@ -1269,7 +1269,7 @@ class FeatureAgglomeration(
             callable,
             None,
         ],
-        "memory": "no_validation",  # TODO
+        "memory": [str, HasMethods("cache"), None],
         "connectivity": ["array-like", callable, None],
         "compute_full_tree": [StrOptions({"auto"}), "boolean"],
         "linkage": [StrOptions(set(_TREE_BUILDERS.keys()))],
