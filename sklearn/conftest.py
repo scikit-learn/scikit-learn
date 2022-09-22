@@ -241,3 +241,17 @@ def pytest_configure(config):
     # Register global_random_seed plugin if it is not already registered
     if not config.pluginmanager.hasplugin("sklearn.tests.random_seed"):
         config.pluginmanager.register(random_seed)
+
+
+def pytest_terminal_summary(terminalreporter, exitstatus, config):
+    # use @ as CSV delimiter , ; and | are arising in test names so can not be used ...
+    lines = ['name@duration\n']
+    for reps in terminalreporter.stats.values():
+        for rep in reps:
+            if getattr(rep, 'when', None) == "call":
+                line = f"{rep.nodeid}@{rep.duration}\n"
+                lines.append(line)
+
+    from pathlib import Path
+    with open(Path('.') / 'test_timings.csv', 'w') as test_timings_file:
+        test_timings_file.writelines(lines)
