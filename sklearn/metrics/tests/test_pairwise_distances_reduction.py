@@ -13,6 +13,7 @@ from sklearn.metrics._pairwise_distances_reduction import (
     BaseDistanceReductionDispatcher,
     ArgKmin,
     RadiusNeighbors,
+    PairwiseDistances,
     sqeuclidean_row_norms,
 )
 
@@ -688,6 +689,56 @@ def test_radius_neighborhood_factory_method_wrong_usages():
     with pytest.warns(UserWarning, match=message):
         RadiusNeighbors.compute(
             X=X, Y=Y, radius=radius, metric=metric, metric_kwargs=unused_metric_kwargs
+        )
+
+
+def test_pairwise_distances_factory_method_wrong_usages():
+    rng = np.random.RandomState(1)
+    X = rng.rand(100, 10)
+    Y = rng.rand(100, 10)
+    metric = "euclidean"
+
+    msg = (
+        "Only float64 or float32 datasets pairs are supported at this time, "
+        "got: X.dtype=float32 and Y.dtype=float64"
+    )
+    with pytest.raises(
+        ValueError,
+        match=msg,
+    ):
+        PairwiseDistances.compute(X=X.astype(np.float32), Y=Y, metric=metric)
+
+    msg = (
+        "Only float64 or float32 datasets pairs are supported at this time, "
+        "got: X.dtype=float64 and Y.dtype=int32"
+    )
+    with pytest.raises(
+        ValueError,
+        match=msg,
+    ):
+        PairwiseDistances.compute(X=X, Y=Y.astype(np.int32), metric=metric)
+
+    with pytest.raises(ValueError, match="Unrecognized metric"):
+        PairwiseDistances.compute(X=X, Y=Y, metric="wrong metric")
+
+    with pytest.raises(
+        ValueError, match=r"Buffer has wrong number of dimensions \(expected 2, got 1\)"
+    ):
+        PairwiseDistances.compute(X=np.array([1.0, 2.0]), Y=Y, metric=metric)
+
+    with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
+        PairwiseDistances.compute(X=np.asfortranarray(X), Y=Y, metric=metric)
+
+    unused_metric_kwargs = {"p": 3}
+
+    message = (
+        r"Some metric_kwargs have been passed \({'p': 3}\) but aren't usable for this"
+        r" case \(EuclideanPairwiseDistances64"
+    )
+
+    with pytest.warns(UserWarning, match=message):
+        PairwiseDistances.compute(
+            X=X, Y=Y, metric=metric, metric_kwargs=unused_metric_kwargs
         )
 
 
