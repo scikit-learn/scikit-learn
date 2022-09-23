@@ -1,9 +1,9 @@
 .. Places parent toc into the sidebar
+
 :parenttoc: True
 
 .. _engine:
 
-==================================
 Computation Engines (experimental)
 ==================================
 
@@ -13,7 +13,7 @@ any backward compatibility guarantees.
 TODO: explain goals here
 
 Activating an engine
-====================
+--------------------
 
 TODO: installing third party engine provider packages
 
@@ -22,7 +22,7 @@ TODO: how to list installed engines
 TODO: how to install a plugin
 
 Writing a new engine provider
-=============================
+-----------------------------
 
 TODO: show engine API of a given estimator.
 
