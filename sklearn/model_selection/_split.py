@@ -139,15 +139,17 @@ class LeaveOneOut(BaseCrossValidator):
     2
     >>> print(loo)
     LeaveOneOut()
-    >>> for train_index, test_index in loo.split(X):
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
+    >>> for i, (train_index, test_index) in enumerate(loo.split(X)):
     ...     X_train, X_test = X[train_index], X[test_index]
-    ...     y_train, y_test = y[train_index], y[test_index]
-    ...     print(X_train, X_test, y_train, y_test)
-    TRAIN: [1] TEST: [0]
-    [[3 4]] [[1 2]] [2] [1]
-    TRAIN: [0] TEST: [1]
-    [[1 2]] [[3 4]] [1] [2]
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}, data={X_train}")
+    ...     print(f"  Test:  index={test_index}, data={X_test}")
+    Fold 0:
+      Train: index=[1], data=[[3 4]]
+      Test:  index=[0], data=[[1 2]]
+    Fold 1:
+      Train: index=[0], data=[[1 2]]
+      Test:  index=[1], data=[[3 4]]
 
     See Also
     --------
@@ -476,28 +478,24 @@ class GroupKFold(_BaseKFold):
     --------
     >>> import numpy as np
     >>> from sklearn.model_selection import GroupKFold
-    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
-    >>> y = np.array([1, 2, 3, 4])
-    >>> groups = np.array([0, 0, 2, 2])
+    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]])
+    >>> y = np.array([1, 2, 3, 4, 5, 6])
+    >>> groups = np.array([0, 0, 2, 2, 3, 3])
     >>> group_kfold = GroupKFold(n_splits=2)
     >>> group_kfold.get_n_splits(X, y, groups)
     2
     >>> print(group_kfold)
     GroupKFold(n_splits=2)
-    >>> for train_index, test_index in group_kfold.split(X, y, groups):
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
-    ...     X_train, X_test = X[train_index], X[test_index]
-    ...     y_train, y_test = y[train_index], y[test_index]
-    ...     print(X_train, X_test, y_train, y_test)
-    ...
-    TRAIN: [0 1] TEST: [2 3]
-    [[1 2]
-     [3 4]] [[5 6]
-     [7 8]] [1 2] [3 4]
-    TRAIN: [2 3] TEST: [0 1]
-    [[5 6]
-     [7 8]] [[1 2]
-     [3 4]] [3 4] [1 2]
+    >>> for i, (train_index, test_index) in enumerate(group_kfold.split(X, y, groups)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}, group={groups[train_index]}")
+    ...     print(f"  Test:  index={test_index}, group={groups[test_index]}")
+    Fold 0:
+      Train: index=[2 3], group=[2 2]
+      Test:  index=[0 1 4 5], group=[0 0 3 3]
+    Fold 1:
+      Train: index=[0 1 4 5], group=[0 0 3 3]
+      Test:  index=[2 3], group=[2 2]
 
     See Also
     --------
@@ -2356,10 +2354,10 @@ def train_test_split(
 ):
     """Split arrays or matrices into random train and test subsets.
 
-    Quick utility that wraps input validation and
-    ``next(ShuffleSplit().split(X, y))`` and application to input data
-    into a single call for splitting (and optionally subsampling) data in a
-    oneliner.
+    Quick utility that wraps input validation,
+    ``next(ShuffleSplit().split(X, y))``, and application to input data
+    into a single call for splitting (and optionally subsampling) data into a
+    one-liner.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 
