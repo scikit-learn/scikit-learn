@@ -51,10 +51,11 @@ class KNNImputer(_BaseImputer):
           array of distances, and returns an array of the same shape
           containing the weights.
 
-    metric : {'nan_euclidean'} or callable, default='nan_euclidean'
+    metric : {'nan_euclidean', 'nan_manhattan'} or callable, default='nan_euclidean'
         Distance metric for searching neighbors. Possible values:
 
         - 'nan_euclidean'
+        - 'nan_manhattan'
         - callable : a user-defined function which conforms to the definition
           of ``_pairwise_callable(X, Y, metric, **kwds)``. The function
           accepts two arrays, X and Y, and a `missing_values` keyword in

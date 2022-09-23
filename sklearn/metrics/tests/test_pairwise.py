@@ -30,6 +30,7 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.metrics.pairwise import euclidean_distances
 from sklearn.metrics.pairwise import nan_euclidean_distances
 from sklearn.metrics.pairwise import manhattan_distances
+from sklearn.metrics.pairwise import nan_manhattan_distances
 from sklearn.metrics.pairwise import haversine_distances
 from sklearn.metrics.pairwise import linear_kernel
 from sklearn.metrics.pairwise import chi2_kernel, additive_chi2_kernel
@@ -118,6 +119,10 @@ def test_pairwise_distances():
     assert S.shape[0] == X.shape[0]
     assert S.shape[1] == Y.shape[0]
     assert_array_almost_equal(S, S2)
+    # Test manhattan distance works with NaN
+    S_masked = pairwise_distances(X_masked, Y_masked, metric="nan_manhattan")
+    S2_masked = nan_manhattan_distances(X_masked, Y_masked)
+    assert_allclose(S_masked, S2_masked)
 
     # Test cosine as a string metric versus cosine callable
     # The string "cosine" uses sklearn.metric,
@@ -929,17 +934,6 @@ def test_nan_euclidean_distances_equal_to_euclidean_distance(squared):
     assert_allclose(normal_distance, nan_distance)
 
 
-@pytest.mark.parametrize("X", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]])])
-@pytest.mark.parametrize("Y", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]]), None])
-def test_nan_euclidean_distances_infinite_values(X, Y):
-
-    with pytest.raises(ValueError) as excinfo:
-        nan_euclidean_distances(X, Y=Y)
-
-    exp_msg = "Input contains infinity or a value too large for dtype('float64')."
-    assert exp_msg == str(excinfo.value)
-
-
 @pytest.mark.parametrize(
     "X, X_diag, missing_value",
     [
@@ -970,19 +964,6 @@ def test_nan_euclidean_distances_2x2(X, X_diag, missing_value):
 
     dist_two_copy = nan_euclidean_distances(X, X.copy(), missing_values=missing_value)
     assert_allclose(exp_dist, dist_two_copy)
-
-
-@pytest.mark.parametrize("missing_value", [np.nan, -1])
-def test_nan_euclidean_distances_complete_nan(missing_value):
-    X = np.array([[missing_value, missing_value], [0, 1]])
-
-    exp_dist = np.array([[np.nan, np.nan], [np.nan, 0]])
-
-    dist = nan_euclidean_distances(X, missing_values=missing_value)
-    assert_allclose(exp_dist, dist)
-
-    dist = nan_euclidean_distances(X, X.copy(), missing_values=missing_value)
-    assert_allclose(exp_dist, dist)
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, -1])
@@ -1111,6 +1092,91 @@ def test_haversine_distances():
     err_msg = "Haversine distance only valid in 2 dimensions"
     with pytest.raises(ValueError, match=err_msg):
         haversine_distances(X)
+
+
+@pytest.mark.parametrize(
+    "metric_fn", [nan_euclidean_distances, nan_manhattan_distances]
+)
+@pytest.mark.parametrize("missing_value", [np.nan, -1])
+def test_nan_distances_metrics_complete_nan(metric_fn, missing_value):
+    X = np.array([[missing_value, missing_value], [0, 1]])
+    exp_dist = np.array([[np.nan, np.nan], [np.nan, 0]])
+
+    dist = metric_fn(X, missing_values=missing_value)
+    assert_allclose(exp_dist, dist)
+
+    dist = metric_fn(X, X.copy(), missing_values=missing_value)
+    assert_allclose(exp_dist, dist)
+
+
+@pytest.mark.parametrize(
+    "metric_fn", [nan_euclidean_distances, nan_manhattan_distances]
+)
+@pytest.mark.parametrize("X", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]])])
+@pytest.mark.parametrize("Y", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]]), None])
+def test_nan_distances_infinite_values(metric_fn, X, Y):
+    with pytest.raises(ValueError) as excinfo:
+        metric_fn(X, Y=Y)
+
+    exp_msg = "Input contains infinity or a value too large for dtype('float64')."
+    assert exp_msg == str(excinfo.value)
+
+
+def test_nan_manhattan_distances_equal_to_manhattan_distances():
+    rng = np.random.RandomState(714)
+    X = rng.randn(3, 4)
+    Y = rng.randn(4, 4)
+    normal_distance = manhattan_distances(X, Y=Y)
+    nan_distance = nan_manhattan_distances(X, Y=Y)
+    assert_array_equal(normal_distance, nan_distance)
+
+
+@pytest.mark.parametrize("missing_value", [np.nan, -1])
+def test_nan_manhattan_distances_not_trival(missing_value):
+    X = np.array(
+        [
+            [1.0, missing_value, 6.0, 7.0, 14.0],
+            [missing_value, 4.0, 2.0, 0.0, missing_value],
+            [6.0, missing_value, missing_value, missing_value, 8.0],
+        ]
+    )
+
+    Y = np.array(
+        [
+            [missing_value, 2.0, 5.0, missing_value, 12.0],
+            [missing_value, missing_value, 3.0, 5.0, 7.0],
+            [missing_value, missing_value, missing_value, 4.0, 6.0],
+        ]
+    )
+
+    # Check for symmetry
+    D1 = nan_manhattan_distances(X, Y, missing_values=missing_value)
+    D2 = nan_manhattan_distances(Y, X, missing_values=missing_value)
+    assert_almost_equal(D1, D2.T)
+
+    # Check with explicit formula
+    assert_array_equal(
+        nan_manhattan_distances(X[:1], Y[:1], missing_values=missing_value),
+        [[5.0 / 2.0 * ((6 - 5) + (14 - 12))]],
+    )
+
+    # Check against hand-calculated result
+    exp_res = [[7.5, 20.0, 27.5], [12.5, 15.0, 20.0], [20.0, 5.0, 10.0]]
+    assert_array_equal(
+        nan_manhattan_distances(X, Y, missing_values=missing_value), exp_res
+    )
+
+    # Check when Y = X is explicitly passed
+    D3 = nan_manhattan_distances(X, missing_values=missing_value)
+    D4 = nan_manhattan_distances(X, X, missing_values=missing_value)
+    D5 = nan_manhattan_distances(X, X.copy(), missing_values=missing_value)
+    assert_array_equal(D3, D4)
+    assert_array_equal(D4, D5)
+
+    # Check copy = True against copy = False
+    D6 = nan_manhattan_distances(X, Y, copy=True)
+    D7 = nan_manhattan_distances(X, Y, copy=False)
+    assert_array_equal(D6, D7)
 
 
 # Paired distances

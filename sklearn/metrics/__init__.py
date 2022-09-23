@@ -59,6 +59,7 @@ from .cluster import davies_bouldin_score
 
 from .pairwise import euclidean_distances
 from .pairwise import nan_euclidean_distances
+from .pairwise import nan_manhattan_distances
 from .pairwise import pairwise_distances
 from .pairwise import pairwise_distances_argmin
 from .pairwise import pairwise_distances_argmin_min
@@ -138,6 +139,7 @@ __all__ = [
     "log_loss",
     "make_scorer",
     "nan_euclidean_distances",
+    "nan_manhattan_distances",
     "matthews_corrcoef",
     "max_error",
     "mean_absolute_error",

@@ -29,6 +29,7 @@ from ..preprocessing import normalize
 from ..utils._mask import _get_mask
 from ..utils.fixes import delayed
 from ..utils.fixes import sp_version, parse_version
+from ..metrics import DistanceMetric
 
 from ._pairwise_distances_reduction import ArgKmin
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
@@ -868,8 +869,6 @@ def haversine_distances(X, Y=None):
     array([[    0.        , 11099.54035582],
            [11099.54035582,     0.        ]])
     """
-    from ..metrics import DistanceMetric
-
     return DistanceMetric.get_metric("haversine").pairwise(X, Y)
 
 
@@ -954,6 +953,105 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
     D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
     D = np.abs(D, D)
     return D.reshape((-1, X.shape[1]))
+
+
+def nan_manhattan_distances(X, Y=None, *, missing_values=np.nan, copy=True):
+    """Calculate the manhattan distances in the presence of missing values.
+
+    Compute the manhattan distance between each pair of samples in X and Y,
+    where Y=X is assumed if Y=None. When calculating the distance between a
+    pair of samples, this formulation ignores feature coordinates with a
+    missing value in either sample and scales up the weight of the remaining
+    coordinates:
+
+        dist(x,y) = weight * distance from present coordinates
+        where,
+        weight = Total # of coordinates / # of present coordinates
+
+    For example, the distance between ``[3, na, na, 6]`` and ``[1, na, 4, 5]``
+    is:
+
+        .. math::
+            \\frac{4}{2}(\\abs{3-1} + \\abs{6-5})
+
+    If all the coordinates are missing or if there are no common present
+    coordinates then NaN is returned for that pair.
+
+    Read more in the :ref:`User Guide <metrics>`.
+
+    .. versionadded:: 1.2
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples_X, n_features)
+        An array where each row is a sample and each column is a feature.
+
+    Y : array-like of shape (n_samples_Y, n_features), default=None
+        An array where each row is a sample and each column is a feature.
+        If `None`, method uses `Y=X`.
+
+    missing_values : np.nan or int, default=np.nan
+        Representation of missing value.
+
+    copy : bool, default=True
+        Make and use a deep copy of X and Y (if Y exists).
+
+    Returns
+    -------
+    distances : ndarray of shape (n_samples_X, n_samples_Y)
+        Returns the distances between the row vectors of `X`
+        and the row vectors of `Y`.
+
+    See Also
+    --------
+    paired_distances : Distances between pairs of elements of X and Y.
+
+    Examples
+    --------
+    >>> from sklearn.metrics.pairwise import nan_manhattan_distances
+    >>> nan = float("NaN")
+    >>> X = [[0, 1], [1, nan]]
+    >>> nan_manhattan_distances(X, X) # distance between rows of X
+    array([[0., 2.],
+           [2., 0.]])
+
+    >>> # get distance to origin
+    >>> nan_manhattan_distances(X, [[0, 0]])
+    array([[1.],
+           [2.]])
+    """
+
+    force_all_finite = "allow-nan" if is_scalar_nan(missing_values) else True
+    X, Y = check_pairwise_arrays(
+        X, Y, accept_sparse=False, force_all_finite=force_all_finite, copy=copy
+    )
+
+    # Get missing mask
+    missing_X = _get_mask(X, missing_values)
+    missing_Y = missing_X if Y is X else _get_mask(Y, missing_values)
+
+    # set missing values to zero
+    X[missing_X] = 0
+    Y[missing_Y] = 0
+
+    distances = DistanceMetric.get_metric("manhattan").pairwise(X, Y)
+
+    # Adjust distances for missing values
+    distances -= np.dot(X, missing_Y.T)
+    distances -= np.dot(missing_X, Y.T)
+
+    np.clip(distances, 0, None, out=distances)
+
+    if X is Y:
+        # Ensure that distances between vectors and themselves are set to 0.0.
+        # This may not be the case due to floating point rounding errors.
+        np.fill_diagonal(distances, 0.0)
+
+    present_count = np.dot(1 - missing_X, (1 - missing_Y).T)
+    distances /= np.maximum(1, present_count)
+    distances *= X.shape[1]
+    distances[present_count == 0] = np.nan
+    return distances
 
 
 def cosine_distances(X, Y=None):
@@ -1513,6 +1611,7 @@ PAIRWISE_DISTANCE_FUNCTIONS = {
     "manhattan": manhattan_distances,
     "precomputed": None,  # HACK: precomputed is always allowed, never called
     "nan_euclidean": nan_euclidean_distances,
+    "nan_manhattan": nan_manhattan_distances,
 }
 
 
@@ -1536,6 +1635,7 @@ def distance_metrics():
     'l2'            metrics.pairwise.euclidean_distances
     'manhattan'     metrics.pairwise.manhattan_distances
     'nan_euclidean' metrics.pairwise.nan_euclidean_distances
+    'nan_manhattan' metrics.pairwise.nan_manhattan_distances
     =============== ========================================
 
     Read more in the :ref:`User Guide <metrics>`.
@@ -1638,10 +1738,11 @@ _VALID_METRICS = [
     "yule",
     "wminkowski",
     "nan_euclidean",
+    "nan_manhattan",
     "haversine",
 ]
 
-_NAN_METRICS = ["nan_euclidean"]
+_NAN_METRICS = ["nan_euclidean", "nan_manhattan"]
 
 
 def _check_chunk_size(reduced, chunk_size):
@@ -1884,7 +1985,7 @@ def pairwise_distances(
     - From scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
       'manhattan']. These metrics support sparse matrix
       inputs.
-      ['nan_euclidean'] but it does not yet support sparse matrices.
+      ['nan_euclidean', 'nan_manhattan'] but it does not yet support sparse matrices.
 
     - From scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
       'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',

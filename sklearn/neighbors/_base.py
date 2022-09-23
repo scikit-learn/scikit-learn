@@ -23,7 +23,7 @@ from ._kd_tree import KDTree
 from ..base import BaseEstimator, MultiOutputMixin
 from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
-from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
+from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS, _NAN_METRICS
 from ..metrics._pairwise_distances_reduction import (
     ArgKmin,
     RadiusNeighbors,
@@ -82,7 +82,7 @@ if sp_version < parse_version("1.8.0.dev0"):
 VALID_METRICS_SPARSE = dict(
     ball_tree=[],
     kd_tree=[],
-    brute=(PAIRWISE_DISTANCE_FUNCTIONS.keys() - {"haversine", "nan_euclidean"}),
+    brute=(PAIRWISE_DISTANCE_FUNCTIONS.keys() - {"haversine", *_NAN_METRICS}),
 )
 
 
