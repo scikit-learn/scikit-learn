@@ -22,7 +22,7 @@ class FakeEngineHolder:
 FakeEntryPoint = namedtuple("FakeEntryPoint", ["name", "value"])
 
 
-def test_get_engine_class():
+def test_parse_entry_point():
     fake_entry_point = FakeEntryPoint(
         name="fake_engine",
         value="sklearn.tests.test_engines:FakeEngine",
@@ -33,7 +33,7 @@ def test_get_engine_class():
     assert spec.get_engine_class() is FakeEngine
 
 
-def test_get_nested_engine_class():
+def test_parse_entry_point_for_nested_engine_class():
     fake_entry_point = FakeEntryPoint(
         name="nested_fake_engine",
         value="sklearn.tests.test_engines:FakeEngineHolder.NestedFakeEngine",
