@@ -208,6 +208,11 @@ class ComputationTree:
             [self._tree_status[child.tree_status_idx] for child in node.children]
         )
 
+    def get_child_computation_tree_dir(self, node):
+        if node.children:
+            raise ValueError("node is not a leaf")
+        return self.tree_dir / str(node.tree_status_idx)
+
     def iterate(self, include_leaves=False):
         """Return an iterable over the nodes of the computation tree
 

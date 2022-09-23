@@ -847,8 +847,6 @@ def _fit_multiplicative_update(
 
     H_sum, HHt, XHt = None, None, None
     for n_iter in range(1, max_iter + 1):
-        if n_iter == 30:
-            raise ValueError("eh ouais")
         # update W
         # H_sum, HHt and XHt are saved and reused if not update_H
         W, H_sum, HHt, XHt = _multiplicative_update_w(

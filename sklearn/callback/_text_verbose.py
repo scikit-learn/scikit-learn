@@ -3,10 +3,11 @@
 import time
 
 from . import BaseCallback
-from . import AutoPropagatedMixin
 
 
-class TextVerbose(BaseCallback, AutoPropagatedMixin):
+class TextVerbose(BaseCallback):
+
+    auto_propagate = True
     request_stopping_criterion = True
 
     def __init__(self, min_time_between_calls=0):

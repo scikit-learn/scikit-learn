@@ -33,7 +33,6 @@ from .utils.validation import _get_feature_names
 from .utils._estimator_html_repr import estimator_html_repr
 from .utils._param_validation import validate_parameter_constraints
 from .callback import BaseCallback
-from .callback import AutoPropagatedMixin
 from .callback import ComputationTree
 from .callback._base import CallbackContext
 
@@ -617,13 +616,12 @@ class BaseEstimator:
             method of the sub-estimator is called.
         """
         if hasattr(sub_estimator, "_callbacks") and any(
-            isinstance(callback, AutoPropagatedMixin)
-            for callback in sub_estimator._callbacks
+            callback.auto_propagate for callback in sub_estimator._callbacks
         ):
             bad_callbacks = [
                 callback.__class__.__name__
                 for callback in sub_estimator._callbacks
-                if isinstance(callback, AutoPropagatedMixin)
+                if callback.auto_propagate
             ]
             raise TypeError(
                 f"The sub-estimators ({sub_estimator.__class__.__name__}) of a"
@@ -638,7 +636,7 @@ class BaseEstimator:
         propagated_callbacks = [
             callback
             for callback in self._callbacks
-            if isinstance(callback, AutoPropagatedMixin)
+            if callback.auto_propagate
         ]
 
         if not propagated_callbacks:
@@ -646,11 +644,9 @@ class BaseEstimator:
 
         sub_estimator._parent_ct_node = parent_node
 
-        # if not hasattr(sub_estimator, "_callbacks"):
-        #     sub_estimator._callbacks = propagated_callbacks
-        # else:
-        #     sub_estimator._callbacks.extend(propagated_callbacks)
-        sub_estimator._set_callbacks(getattr(sub_estimator, "_callbacks", []) + propagated_callbacks)
+        sub_estimator._set_callbacks(
+            getattr(sub_estimator, "_callbacks", []) + propagated_callbacks
+        )
 
     def _eval_callbacks_on_fit_begin(self, *, levels, X=None, y=None):
         """Evaluate the on_fit_begin method of the callbacks
@@ -694,10 +690,7 @@ class BaseEstimator:
             # Only call the on_fit_begin method of callbacks that are not
             # propagated from a meta-estimator.
             for callback in self._callbacks:
-                is_propagated = hasattr(self, "_parent_ct_node") and isinstance(
-                    callback, AutoPropagatedMixin
-                )
-                if not is_propagated:
+                if not callback._is_propagated(estimator=self):
                     callback.on_fit_begin(estimator=self, X=X, y=y)
 
         return self._computation_tree.root
@@ -712,10 +705,7 @@ class BaseEstimator:
         # Only call the on_fit_end method of callbacks that are not
         # propagated from a meta-estimator.
         for callback in self._callbacks:
-            is_propagated = isinstance(callback, AutoPropagatedMixin) and hasattr(
-                self, "_parent_ct_node"
-            )
-            if not is_propagated:
+            if not callback._is_propagated(estimator=self):
                 callback.on_fit_end()
 
     def _eval_callbacks_on_fit_exception(self):

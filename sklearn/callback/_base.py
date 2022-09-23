@@ -33,17 +33,11 @@ def _eval_callbacks_on_fit_iter_end(**kwargs):
     # stopping_criterion and reconstruction_attributes can be costly to compute. They
     # are passed as lambdas for lazy evaluation. We only actually compute them if a
     # callback requests it.
-    if any(
-        getattr(callback, "request_stopping_criterion", False)
-        for callback in estimator._callbacks
-    ):
+    if any(cb.request_stopping_criterion for cb in estimator._callbacks):
         kwarg = kwargs.pop("stopping_criterion", lambda: None)()
         kwargs["stopping_criterion"] = kwarg
 
-    if any(
-        getattr(callback, "request_from_reconstruction_attributes", False)
-        for callback in estimator._callbacks
-    ):
+    if any(cb.request_from_reconstruction_attributes for cb in estimator._callbacks):
         kwarg = kwargs.pop("from_reconstruction_attributes", lambda: None)()
         kwargs["from_reconstruction_attributes"] = kwarg
 
@@ -126,24 +120,37 @@ class BaseCallback(ABC):
     def on_fit_exception(self):
         pass
 
+    @property
+    def auto_propagate(self):
+        """Whether or not this callback should be propagated to sub-estimators.
+
+        An auto-propagated callback (from a meta-estimator to its sub-estimators) must
+        be set on the meta-estimator. Its `on_fit_begin` and `on_fit_end` methods will
+        only be called at the beginning and end of the fit method of the meta-estimator,
+        while its `on_fit_iter_end` method will be called at each computation node of
+        the meta-estimator and its sub-estimators.
+        """
+        return False
+
+    def _is_propagated(self, estimator):
+        """Check if this callback attached to estimator has been propagated from a
+        meta-estimator.
+        """
+        return self.auto_propagate and hasattr(estimator, "_parent_ct_node")
+
+    @property
+    def request_stopping_criterion(self):
+        return False
+
+    @property
+    def request_from_reconstruction_attributes(self):
+        return False
+
     def _set_context(self, context):
         if not hasattr(self, "_callback_contexts"):
             self._callback_contexts = []
         
         self._callback_contexts.append(context)
-
-
-class AutoPropagatedMixin:
-    """Mixin for auto-propagated callbacks
-
-    An auto-propagated callback (from a meta-estimator to its sub-estimators) must be
-    set on the meta-estimator. Its `on_fit_begin` and `on_fit_end` methods will only be
-    called at the beginning and end of the fit method of the meta-estimator, while its
-    `on_fit_iter_end` method will be called at each computation node of the
-    meta-estimator and its sub-estimators.
-    """
-
-    pass
 
 
 class CallbackContext:

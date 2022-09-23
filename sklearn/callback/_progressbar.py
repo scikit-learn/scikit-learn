@@ -1,21 +1,30 @@
 # License: BSD 3 clause
 
-from copy import copy
-import pickle
+import importlib
 from threading import Thread, Event
 
-import numpy as np
-from tqdm import tqdm
-from rich.progress import Progress
-from rich.progress import BarColumn, TimeRemainingColumn, TextColumn
-from rich.style import Style
-
 from . import BaseCallback
-from . import AutoPropagatedMixin
 from . import load_computation_tree
 
 
-class ProgressBar(BaseCallback, AutoPropagatedMixin):
+def _check_backend_support(backend, caller_name):
+    """Raise ImportError with detailed error message if backend is not installed.
+
+    Parameters
+    ----------
+    backend : {"rich", "tqdm"}
+        The requested backend.
+
+    caller_name : str
+        The name of the caller that requires the backend.
+    """
+    try:
+        importlib.import_module(backend)  # noqa
+    except ImportError as e:
+        raise ImportError(f"{caller_name} requires {backend} installed.") from e
+
+
+class ProgressBar(BaseCallback):
     """Callback that displays progress bars for each iterative steps of the estimator
 
     Parameters
@@ -31,13 +40,20 @@ class ProgressBar(BaseCallback, AutoPropagatedMixin):
         finished.
     """
 
+    auto_propagate = True
+
     def __init__(self, backend="rich", max_depth_show=None, max_depth_keep=None):
+        if backend not in ("rich", "tqdm"):
+            raise ValueError(f"backend should be 'rich' or 'tqdm', got {self.backend} instead.")
+        _check_backend_support(backend, caller_name="Progressbar")
         self.backend = backend
+
         if max_depth_show is not None and max_depth_show < 0:
             raise ValueError(f"max_depth_show should be >= 0.")
+        self.max_depth_show = max_depth_show
+
         if max_depth_keep is not None and max_depth_keep < 0:
             raise ValueError(f"max_depth_keep should be >= 0.")
-        self.max_depth_show = max_depth_show
         self.max_depth_keep = max_depth_keep
 
     def on_fit_begin(self, estimator, X=None, y=None):
@@ -50,8 +66,11 @@ class ProgressBar(BaseCallback, AutoPropagatedMixin):
                 max_depth_show=self.max_depth_show,
                 max_depth_keep=self.max_depth_keep,
             )
-        else:
-            raise ValueError(f"backend should be 'rich', got {self.backend} instead.")
+        elif self.backend == "tqdm":
+            self.progress_monitor = _TqdmProgressMonitor(
+                estimator=estimator,
+                event=self._stop_event,
+            )
 
         self.progress_monitor.start()
 
@@ -77,10 +96,15 @@ class ProgressBar(BaseCallback, AutoPropagatedMixin):
 # Custom Progress class to allow showing the tasks in a given order (given by setting
 # the _ordered_tasks attribute). In particular it allows to dynamically create and
 # insert tasks between existing tasks.
-class _Progress(Progress):
-    def get_renderables(self):
-        table = self.make_tasks_table(getattr(self, "_ordered_tasks", []))
-        yield table
+
+try:
+    from rich.progress import Progress
+    class _Progress(Progress):
+        def get_renderables(self):
+            table = self.make_tasks_table(getattr(self, "_ordered_tasks", []))
+            yield table
+except:
+    pass
 
 
 class _RichProgressMonitor(Thread):
@@ -119,6 +143,9 @@ class _RichProgressMonitor(Thread):
         self._computation_trees = {}
 
     def run(self):
+        from rich.progress import BarColumn, TimeRemainingColumn, TextColumn
+        from rich.style import Style
+
         with _Progress(
             TextColumn("[progress.description]{task.description}"),
             BarColumn(
@@ -218,7 +245,8 @@ class _RichProgressMonitor(Thread):
             else:
                 # node is a leaf, look for tasks of its sub computation tree before
                 # going to the next node
-                child_dir = this_dir / str(node.tree_status_idx)
+                child_dir = computation_tree.get_child_computation_tree_dir(node)
+                # child_dir = this_dir / str(node.tree_status_idx)
                 if child_dir.exists():
                     self._recursive_update_tasks(
                         child_dir, depth + computation_tree.depth
@@ -258,3 +286,23 @@ class _RichProgressMonitor(Thread):
             ]
             return self._progress_ctx._tasks[task_id]
         return
+
+
+class _TqdmProgressMonitor(Thread):
+    def __init__(self, estimator, event):
+        Thread.__init__(self)
+        self.computation_tree = estimator._computation_tree
+        self.event = event
+
+    def run(self):
+        from tqdm import tqdm
+
+        root = self.computation_tree.root
+
+        with tqdm(total=len(root.children)) as pbar:
+            while not self.event.wait(0.05):
+                node_progress = self.computation_tree.get_progress(root)
+                if node_progress != pbar.total:
+                    pbar.update(node_progress - pbar.n)
+
+            pbar.update(pbar.total - pbar.n)

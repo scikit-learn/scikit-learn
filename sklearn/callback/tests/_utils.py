@@ -4,7 +4,6 @@ from joblib.parallel import Parallel, delayed
 
 from sklearn.base import BaseEstimator, clone
 from sklearn.callback import BaseCallback
-from sklearn.callback import AutoPropagatedMixin
 from sklearn.callback._base import _eval_callbacks_on_fit_iter_end
 
 
@@ -19,9 +18,8 @@ class TestingCallback(BaseCallback):
         pass
 
 
-class TestingAutoPropagatedCallback(TestingCallback, AutoPropagatedMixin):
-    pass
-
+class TestingAutoPropagatedCallback(TestingCallback):
+    auto_propagate = True
 
 class NotValidCallback:
     def on_fit_begin(self, estimator, *, X=None, y=None):

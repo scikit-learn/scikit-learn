@@ -1,6 +1,5 @@
 # License: BSD 3 clause
 
-from ._base import AutoPropagatedMixin
 from ._base import BaseCallback
 from ._computation_tree import ComputationNode
 from ._computation_tree import ComputationTree
@@ -12,7 +11,6 @@ from ._snapshot import Snapshot
 from ._text_verbose import TextVerbose
 
 __all__ = [
-    "AutoPropagatedMixin",
     "BaseCallback",
     "ComputationNode",
     "ComputationTree",
