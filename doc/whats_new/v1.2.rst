@@ -5,9 +5,9 @@
 
 TODO: move to doc/whats_new/v1.3.rst once it exists in main:
 
-- |Enhancement| Experimential engine API to allow for external packages to
-  contribute alternative implementations for the core computational routines
-  of some selected scikit-learn estimators.
+- |Enhancement| Experimential engine API (no backward compatibility guarantees)
+  to allow for external packages to contribute alternative implementations for
+  the core computational routines of some selected scikit-learn estimators.
 
   Currently, the following estimators allow alternative implementations:
 
@@ -20,6 +20,7 @@ TODO: move to doc/whats_new/v1.3.rst once it exists in main:
     engine optimized for OpenCL enabled GPUs.
   - TODO: add more here
 
+  :pr:`24497` by :user:`ogrisel`, :user:`fcharras`.
 
 .. _changes_1_2:
 
