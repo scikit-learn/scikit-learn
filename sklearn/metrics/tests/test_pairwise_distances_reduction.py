@@ -742,26 +742,24 @@ def test_pairwise_distances_factory_method_wrong_usages():
         )
 
 
-@pytest.mark.parametrize("n_samples", [100, 1000])
-@pytest.mark.parametrize("chunk_size", [50, 512, 1024])
 @pytest.mark.parametrize(
-    "Dispatcher",
-    [ArgKmin, RadiusNeighbors],
+    "n_samples_X, n_samples_Y", [(100, 100), (500, 100), (100, 500)]
 )
+@pytest.mark.parametrize("Dispatcher", [ArgKmin, RadiusNeighbors])
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_chunk_size_agnosticism(
     global_random_seed,
     Dispatcher,
-    n_samples,
-    chunk_size,
+    n_samples_X,
+    n_samples_Y,
     dtype,
     n_features=100,
 ):
-    # Results must not depend on the chunk size
+    """Check that results do not depend on the chunk size."""
     rng = np.random.RandomState(global_random_seed)
     spread = 100
-    X = rng.rand(n_samples, n_features).astype(dtype) * spread
-    Y = rng.rand(n_samples, n_features).astype(dtype) * spread
+    X = rng.rand(n_samples_X, n_features).astype(dtype) * spread
+    Y = rng.rand(n_samples_Y, n_features).astype(dtype) * spread
 
     if Dispatcher is ArgKmin:
         parameter = 10
@@ -778,6 +776,7 @@ def test_chunk_size_agnosticism(
         X,
         Y,
         parameter,
+        chunk_size=256,  # default
         metric="manhattan",
         return_distance=True,
         **compute_parameters,
@@ -787,7 +786,7 @@ def test_chunk_size_agnosticism(
         X,
         Y,
         parameter,
-        chunk_size=chunk_size,
+        chunk_size=41,
         metric="manhattan",
         return_distance=True,
         **compute_parameters,
@@ -798,26 +797,24 @@ def test_chunk_size_agnosticism(
     )
 
 
-@pytest.mark.parametrize("n_samples", [100, 1000])
-@pytest.mark.parametrize("chunk_size", [50, 512, 1024])
 @pytest.mark.parametrize(
-    "Dispatcher",
-    [ArgKmin, RadiusNeighbors],
+    "n_samples_X, n_samples_Y", [(100, 100), (500, 100), (100, 500)]
 )
+@pytest.mark.parametrize("Dispatcher", [ArgKmin, RadiusNeighbors])
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_n_threads_agnosticism(
     global_random_seed,
     Dispatcher,
-    n_samples,
-    chunk_size,
+    n_samples_X,
+    n_samples_Y,
     dtype,
     n_features=100,
 ):
-    # Results must not depend on the number of threads
+    """Check that results do not depend on the number of threads."""
     rng = np.random.RandomState(global_random_seed)
     spread = 100
-    X = rng.rand(n_samples, n_features).astype(dtype) * spread
-    Y = rng.rand(n_samples, n_features).astype(dtype) * spread
+    X = rng.rand(n_samples_X, n_features).astype(dtype) * spread
+    Y = rng.rand(n_samples_Y, n_features).astype(dtype) * spread
 
     if Dispatcher is ArgKmin:
         parameter = 10
@@ -834,6 +831,7 @@ def test_n_threads_agnosticism(
         X,
         Y,
         parameter,
+        chunk_size=25,  # make sure we use multiple threads
         return_distance=True,
         **compute_parameters,
     )
@@ -843,6 +841,7 @@ def test_n_threads_agnosticism(
             X,
             Y,
             parameter,
+            chunk_size=25,
             return_distance=True,
             **compute_parameters,
         )
@@ -853,25 +852,23 @@ def test_n_threads_agnosticism(
 
 
 @pytest.mark.parametrize(
-    "n_samples, chunk_size, Dispatcher, dtype",
+    "Dispatcher, dtype",
     [
-        (100, 50, ArgKmin, np.float64),
-        (1024, 256, RadiusNeighbors, np.float32),
-        (100, 1024, ArgKmin, np.float32),
-        (541, 137, RadiusNeighbors, np.float64),
+        (ArgKmin, np.float64),
+        (RadiusNeighbors, np.float32),
+        (ArgKmin, np.float32),
+        (RadiusNeighbors, np.float64),
     ],
 )
 def test_format_agnosticism(
     global_random_seed,
-    n_samples,
-    chunk_size,
     Dispatcher,
     dtype,
 ):
-    # Results must not depend on the number of threads
+    """Check that results do not depend on the format (dense, sparse) of the input."""
     rng = np.random.RandomState(global_random_seed)
     spread = 100
-    n_features = 100
+    n_samples, n_features = 100, 100
 
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
@@ -894,7 +891,7 @@ def test_format_agnosticism(
         X,
         Y,
         parameter,
-        chunk_size=chunk_size,
+        chunk_size=50,
         return_distance=True,
         **compute_parameters,
     )
@@ -906,7 +903,7 @@ def test_format_agnosticism(
             _X,
             _Y,
             parameter,
-            chunk_size=chunk_size,
+            chunk_size=50,
             return_distance=True,
             **compute_parameters,
         )
@@ -919,28 +916,29 @@ def test_format_agnosticism(
         )
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
-@pytest.mark.parametrize("n_samples", [100, 1000])
-@pytest.mark.parametrize("metric", BaseDistanceReductionDispatcher.valid_metrics())
 @pytest.mark.parametrize(
-    "Dispatcher",
-    [ArgKmin, RadiusNeighbors],
+    "n_samples_X, n_samples_Y", [(100, 100), (100, 500), (500, 100)]
 )
+@pytest.mark.parametrize(
+    "metric",
+    ["euclidean", "minkowski", "manhattan", "infinity", "seuclidean", "haversine"],
+)
+@pytest.mark.parametrize("Dispatcher", [ArgKmin, RadiusNeighbors])
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_strategies_consistency(
     global_random_seed,
     Dispatcher,
     metric,
-    n_samples,
+    n_samples_X,
+    n_samples_Y,
     dtype,
     n_features=10,
 ):
-
+    """Check that the results do not depend on the strategy used."""
     rng = np.random.RandomState(global_random_seed)
     spread = 100
-    X = rng.rand(n_samples, n_features).astype(dtype) * spread
-    Y = rng.rand(n_samples, n_features).astype(dtype) * spread
+    X = rng.rand(n_samples_X, n_features).astype(dtype) * spread
+    Y = rng.rand(n_samples_Y, n_features).astype(dtype) * spread
 
     # Haversine distance only accepts 2D data
     if metric == "haversine":
@@ -968,7 +966,7 @@ def test_strategies_consistency(
             metric, n_features, seed=global_random_seed
         )[0],
         # To be sure to use parallelization
-        chunk_size=n_samples // 4,
+        chunk_size=n_samples_X // 4,
         strategy="parallel_on_X",
         return_distance=True,
         **compute_parameters,
@@ -984,7 +982,7 @@ def test_strategies_consistency(
             metric, n_features, seed=global_random_seed
         )[0],
         # To be sure to use parallelization
-        chunk_size=n_samples // 4,
+        chunk_size=n_samples_Y // 4,
         strategy="parallel_on_Y",
         return_distance=True,
         **compute_parameters,
@@ -1134,22 +1132,18 @@ def test_pairwise_distances_radius_neighbors(
     )
 
 
-@pytest.mark.parametrize(
-    "Dispatcher",
-    [ArgKmin, RadiusNeighbors],
-)
+@pytest.mark.parametrize("Dispatcher", [ArgKmin, RadiusNeighbors])
 @pytest.mark.parametrize("metric", ["manhattan", "euclidean"])
 @pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_memmap_backed_data(
     metric,
     Dispatcher,
     dtype,
-    n_samples=512,
-    n_features=100,
 ):
-    # Results must not depend on the datasets writability
+    """Check that the results do not depend on the datasets writability."""
     rng = np.random.RandomState(0)
     spread = 100
+    n_samples, n_features = 128, 10
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
 
