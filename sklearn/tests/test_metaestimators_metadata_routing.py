@@ -193,7 +193,7 @@ METAESTIMATORS = [
         "X": X,
         "y": y_multi,
         "routing_methods": ["fit"],
-        "warns_on": {},
+        "warns_on": {"fit": ["sample_weight", "metadata"]},
     },
     {
         "metaestimator": RegressorChain,
@@ -202,7 +202,7 @@ METAESTIMATORS = [
         "X": X,
         "y": y_multi,
         "routing_methods": ["fit"],
-        "warns_on": {},
+        "warns_on": {"fit": ["sample_weight", "metadata"]},
     },
 ]
 """List containing all metaestimators to be tested and their settings
