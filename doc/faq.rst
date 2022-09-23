@@ -40,6 +40,10 @@ Note however that this support is still considered experimental and specific
 components might behave slightly differently. Please refer to the test
 suite of the specific module of interest for more details.
 
+
+Implementation decisions
+------------------------
+
 Why is there no support for deep or reinforcement learning / Will there be support for deep or reinforcement learning in scikit-learn?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -87,10 +91,6 @@ do structured prediction:
   (focuses on exact inference; has HMMs, but mostly for the sake of
   completeness; treats a feature vector as a sample and uses an offset encoding
   for the dependencies between feature vectors)
-
-
-Implementation decisions
-------------------------
 
 Why did you remove HMMs from scikit-learn?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
