@@ -19,7 +19,7 @@ class FakeEngineHolder:
         pass
 
 
-FakeEntryPoint = namedtuple('FakeEntryPoint', ['name', 'value'])
+FakeEntryPoint = namedtuple("FakeEntryPoint", ["name", "value"])
 
 
 def test_get_engine_class():
