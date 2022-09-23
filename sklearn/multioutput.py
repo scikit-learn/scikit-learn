@@ -733,9 +733,13 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        router = MetadataRouter(owner=self.__class__.__name__).add(
-            estimator=self.base_estimator,
-            method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+        router = (
+            MetadataRouter(owner=self.__class__.__name__)
+            .add(
+                estimator=self.base_estimator,
+                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            )
+            .warn_on(child="estimator", method="fit", params=None)
         )
         return router
 
