@@ -1,8 +1,6 @@
 from importlib.metadata import entry_points
 from importlib import import_module
-from contextlib import contextmanager
 from functools import lru_cache
-from ssl import ALERT_DESCRIPTION_BAD_CERTIFICATE_HASH_VALUE
 import warnings
 
 from sklearn._config import get_config

@@ -1923,6 +1923,13 @@ class MiniBatchKMeans(_BaseKMeans):
     def _check_params_vs_input(self, X):
         super()._check_params_vs_input(X, default_n_init=3)
 
+        if self.tol > 0:
+            if sp.issparse(X):
+                variances = mean_variance_axis(X, axis=0)[1]
+            else:
+                variances = np.var(X, axis=0)
+            self._tol = np.mean(variances) * self.tol
+
         self._batch_size = min(self.batch_size, X.shape[0])
 
         # init_size
