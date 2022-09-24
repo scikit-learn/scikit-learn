@@ -37,7 +37,7 @@ def single_source_shortest_path_length(graph, source, *, cutoff=None):
     Returns
     -------
     paths : dict
-        Reachable end nodes mapped to lenght of path from source,
+        Reachable end nodes mapped to length of path from source,
         i.e. `{end: path_length}`.
 
     Examples
