@@ -437,6 +437,13 @@ Changelog
   :class:`neighbors.RadiusNeighborsTransformer`.
   :pr:`24075` by :user:`Valentin Laurent <Valentin-Laurent>`.
 
+:mod:`sklearn.pipeline`
+.......................
+
+- |Enhancement| :meth:`pipeline.FeatureUnion.get_feature_names_out` can now
+  be used when one of the transformers in the :class:`pipeline.FeatureUnion` is
+  `"passthrough"`. :pr:`24058` by :user:`Diederik Perdok <diederikwp>`
+
 :mod:`sklearn.preprocessing`
 ............................
 
