@@ -3303,7 +3303,7 @@ def _enforce_estimator_tags_x(estimator, X):
     # X of shape (`n_samples`, `n_samples`)
     if _safe_tags(estimator, key="pairwise"):
         # TODO: Remove when `_pairwise_estimator_convert_X`
-        # is removed and it's functionality is moved here
+        # is removed and its functionality is moved here
         if X.shape[0] != X.shape[1] or not np.allclose(X, X.T):
             X = X.dot(X.T)
     # Estimators with `1darray` in `X_types` tag only accept
