@@ -833,7 +833,7 @@ class StratifiedGroupKFold(_BaseKFold):
       Train: index=[ 4  5  6  7  8  9 10 11 12 13 14], group=[3 3 3 4 5 5 5 5 6 6 7]
       Test:  index=[ 0  1  2  3 15 16], group=[1 1 2 2 8 8]
     Fold 2:
-      Train: index=[ 0  1  2  3  4  5  6 12 13 14 15 16], group=[1 1 2 2 3 3 3 6 6 7 8 8]
+      Train: index=[ 0  1  2  3  4  5  6 12 13 14 15 16], group=[1 1 2 2 3 3 3 6 6 7 8 8]  # noqa: E501
       Test:  index=[ 7  8  9 10 11], group=[4 5 5 5 5]
 
     Notes
@@ -1754,7 +1754,7 @@ class ShuffleSplit(BaseShuffleSplit):
     >>> rs.get_n_splits(X)
     5
     >>> print(rs)
-    ShuffleSplit(n_splits=5, test_size=0.25, train_size=None, random_state=0)
+    ShuffleSplit(n_splits=5, random_state=0, test_size=0.25, train_size=None)
     >>> for i, (train_index, test_index) in enumerate(rs.split(X)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}")
@@ -1890,7 +1890,7 @@ class GroupShuffleSplit(ShuffleSplit):
     2
     >>> print(gss)
     GroupShuffleSplit(n_splits=2, random_state=42, test_size=None, train_size=0.7)
-    >>> for i, (train_idx, test_idx) in enumerate(gss.split(X, y, groups)):
+    >>> for i, (train_index, test_index) in enumerate(gss.split(X, y, groups)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}, group={groups[train_index]}")
     ...     print(f"  Test:  index={test_index}, group={groups[test_index]}")
