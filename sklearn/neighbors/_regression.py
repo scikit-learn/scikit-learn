@@ -221,7 +221,7 @@ class KNeighborsRegressor(KNeighborsMixin, RegressorMixin, NeighborsBase):
 
         Parameters
         ----------
-        X : array-like of shape (n_queries, n_features), \
+        X : {array-like, sparse matrix} of shape (n_queries, n_features), \
                 or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 
@@ -448,7 +448,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
 
         Parameters
         ----------
-        X : array-like of shape (n_queries, n_features), \
+        X : {array-like, sparse matrix} of shape (n_queries, n_features), \
                 or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 

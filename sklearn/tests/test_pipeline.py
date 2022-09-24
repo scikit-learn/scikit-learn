@@ -1013,29 +1013,42 @@ def test_set_feature_union_passthrough():
     """Check the behaviour of setting a transformer to `"passthrough"`."""
     mult2 = Mult(2)
     mult3 = Mult(3)
+
+    # We only test get_features_names_out, as get_feature_names is unsupported by
+    # FunctionTransformer, and hence unsupported by FeatureUnion passthrough.
+    mult2.get_feature_names_out = lambda input_features: ["x2"]
+    mult3.get_feature_names_out = lambda input_features: ["x3"]
+
     X = np.asarray([[1]])
 
     ft = FeatureUnion([("m2", mult2), ("m3", mult3)])
     assert_array_equal([[2, 3]], ft.fit(X).transform(X))
     assert_array_equal([[2, 3]], ft.fit_transform(X))
+    assert_array_equal(["m2__x2", "m3__x3"], ft.get_feature_names_out())
 
     ft.set_params(m2="passthrough")
     assert_array_equal([[1, 3]], ft.fit(X).transform(X))
     assert_array_equal([[1, 3]], ft.fit_transform(X))
+    assert_array_equal(["m2__myfeat", "m3__x3"], ft.get_feature_names_out(["myfeat"]))
 
     ft.set_params(m3="passthrough")
     assert_array_equal([[1, 1]], ft.fit(X).transform(X))
     assert_array_equal([[1, 1]], ft.fit_transform(X))
+    assert_array_equal(
+        ["m2__myfeat", "m3__myfeat"], ft.get_feature_names_out(["myfeat"])
+    )
 
     # check we can change back
     ft.set_params(m3=mult3)
     assert_array_equal([[1, 3]], ft.fit(X).transform(X))
     assert_array_equal([[1, 3]], ft.fit_transform(X))
+    assert_array_equal(["m2__myfeat", "m3__x3"], ft.get_feature_names_out(["myfeat"]))
 
     # Check 'passthrough' step at construction time
     ft = FeatureUnion([("m2", "passthrough"), ("m3", mult3)])
     assert_array_equal([[1, 3]], ft.fit(X).transform(X))
     assert_array_equal([[1, 3]], ft.fit_transform(X))
+    assert_array_equal(["m2__myfeat", "m3__x3"], ft.get_feature_names_out(["myfeat"]))
 
     X = iris.data
     columns = X.shape[1]
@@ -1044,16 +1057,51 @@ def test_set_feature_union_passthrough():
     ft = FeatureUnion([("passthrough", "passthrough"), ("pca", pca)])
     assert_array_equal(X, ft.fit(X).transform(X)[:, :columns])
     assert_array_equal(X, ft.fit_transform(X)[:, :columns])
+    assert_array_equal(
+        [
+            "passthrough__f0",
+            "passthrough__f1",
+            "passthrough__f2",
+            "passthrough__f3",
+            "pca__pca0",
+            "pca__pca1",
+        ],
+        ft.get_feature_names_out(["f0", "f1", "f2", "f3"]),
+    )
 
     ft.set_params(pca="passthrough")
     X_ft = ft.fit(X).transform(X)
     assert_array_equal(X_ft, np.hstack([X, X]))
     X_ft = ft.fit_transform(X)
     assert_array_equal(X_ft, np.hstack([X, X]))
+    assert_array_equal(
+        [
+            "passthrough__f0",
+            "passthrough__f1",
+            "passthrough__f2",
+            "passthrough__f3",
+            "pca__f0",
+            "pca__f1",
+            "pca__f2",
+            "pca__f3",
+        ],
+        ft.get_feature_names_out(["f0", "f1", "f2", "f3"]),
+    )
 
     ft.set_params(passthrough=pca)
     assert_array_equal(X, ft.fit(X).transform(X)[:, -columns:])
     assert_array_equal(X, ft.fit_transform(X)[:, -columns:])
+    assert_array_equal(
+        [
+            "passthrough__pca0",
+            "passthrough__pca1",
+            "pca__f0",
+            "pca__f1",
+            "pca__f2",
+            "pca__f3",
+        ],
+        ft.get_feature_names_out(["f0", "f1", "f2", "f3"]),
+    )
 
     ft = FeatureUnion(
         [("passthrough", "passthrough"), ("pca", pca)],
@@ -1061,6 +1109,39 @@ def test_set_feature_union_passthrough():
     )
     assert_array_equal(X * 2, ft.fit(X).transform(X)[:, :columns])
     assert_array_equal(X * 2, ft.fit_transform(X)[:, :columns])
+    assert_array_equal(
+        [
+            "passthrough__f0",
+            "passthrough__f1",
+            "passthrough__f2",
+            "passthrough__f3",
+            "pca__pca0",
+            "pca__pca1",
+        ],
+        ft.get_feature_names_out(["f0", "f1", "f2", "f3"]),
+    )
+
+
+def test_feature_union_passthrough_get_feature_names_out():
+    """Check that get_feature_names_out works with passthrough without
+    passing input_features.
+    """
+    X = iris.data
+    pca = PCA(n_components=2, svd_solver="randomized", random_state=0)
+
+    ft = FeatureUnion([("pca", pca), ("passthrough", "passthrough")])
+    ft.fit(X)
+    assert_array_equal(
+        [
+            "pca__pca0",
+            "pca__pca1",
+            "passthrough__x0",
+            "passthrough__x1",
+            "passthrough__x2",
+            "passthrough__x3",
+        ],
+        ft.get_feature_names_out(),
+    )
 
 
 def test_step_name_validation():
