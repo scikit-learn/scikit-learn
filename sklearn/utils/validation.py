@@ -734,13 +734,13 @@ def check_array(
         The converted and validated array.
     """
     if isinstance(array, np.matrix):
-        warnings.warn(
-            "np.matrix usage is deprecated in 1.0 and will raise a TypeError "
-            "in 1.2. Please convert to a numpy array with np.asarray. For "
-            "more information see: "
-            "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html",  # noqa
+        raise TypeError(
+            "np.matrix is not supported. Please convert to a numpy array with "
+            "np.asarray. For more information see: "
+            "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html",
             FutureWarning,
         )
+
     xp, is_array_api = get_namespace(array)
 
     # store reference to original array to check if copy is needed when
@@ -1877,16 +1877,12 @@ def _get_feature_names(X):
 
     types = sorted(t.__qualname__ for t in set(type(v) for v in feature_names))
 
-    # Warn when types are mixed and string is one of the types
+    # mixed type of string and non-string is not supported
     if len(types) > 1 and "str" in types:
-        # TODO: Convert to an error in 1.2
-        warnings.warn(
+        raise TypeError(
             "Feature names only support names that are all strings. "
-            f"Got feature names with dtypes: {types}. An error will be raised "
-            "in 1.2.",
-            FutureWarning,
+            f"Got feature names with dtypes: {types}."
         )
-        return
 
     # Only feature names of all strings are supported
     if len(types) == 1 and types[0] == "str":
