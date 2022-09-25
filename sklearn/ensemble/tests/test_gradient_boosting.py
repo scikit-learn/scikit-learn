@@ -1,6 +1,7 @@
 """
 Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
+from random import random
 import warnings
 import numpy as np
 from numpy.testing import assert_allclose
@@ -59,9 +60,11 @@ iris.target = iris.target[perm]
 
 
 @pytest.mark.parametrize("loss", ("log_loss", "exponential"))
-def test_classification_toy(loss):
+def test_classification_toy(loss, global_random_seed):
     # Check classification on a toy dataset.
-    clf = GradientBoostingClassifier(loss=loss, n_estimators=10, random_state=1)
+    clf = GradientBoostingClassifier(
+        loss=loss, n_estimators=10, random_state=global_random_seed
+    )
 
     with pytest.raises(ValueError):
         clf.predict(T)
@@ -344,12 +347,15 @@ def test_regression_dataset(loss, subsample, global_random_seed):
 
 @pytest.mark.parametrize("subsample", (1.0, 0.5))
 @pytest.mark.parametrize("sample_weight", (None, 1))
-def test_iris(subsample, sample_weight):
+def test_iris(subsample, sample_weight, global_random_seed):
     if sample_weight == 1:
         sample_weight = np.ones(len(iris.target))
     # Check consistency on dataset iris.
     clf = GradientBoostingClassifier(
-        n_estimators=100, loss="log_loss", random_state=1, subsample=subsample
+        n_estimators=100,
+        loss="log_loss",
+        random_state=global_random_seed,
+        subsample=subsample,
     )
     clf.fit(iris.data, iris.target, sample_weight=sample_weight)
     score = clf.score(iris.data, iris.target)
@@ -418,9 +424,9 @@ def test_feature_importances(GradientBoosting, X, y):
     assert hasattr(gbdt, "feature_importances_")
 
 
-def test_probability_log():
+def test_probability_log(global_random_seed):
     # Predict probabilities.
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=global_random_seed)
 
     with pytest.raises(ValueError):
         clf.predict_proba(T)
@@ -485,7 +491,9 @@ def test_max_feature_regression(global_random_seed):
     assert log_loss < 0.5, "GB failed with deviance %.4f" % log_loss
 
 
-def test_feature_importance_regression(fetch_california_housing_fxt):
+def test_feature_importance_regression(
+    fetch_california_housing_fxt, global_random_seed
+):
     """Test that Gini importance is calculated correctly.
 
     This test follows the example from [1]_ (pg. 373).
@@ -495,14 +503,16 @@ def test_feature_importance_regression(fetch_california_housing_fxt):
     """
     california = fetch_california_housing_fxt()
     X, y = california.data, california.target
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, random_state=global_random_seed
+    )
 
     reg = GradientBoostingRegressor(
         loss="huber",
         learning_rate=0.1,
         max_leaf_nodes=6,
         n_estimators=100,
-        random_state=0,
+        random_state=global_random_seed,
     )
     reg.fit(X_train, y_train)
     sorted_idx = np.argsort(reg.feature_importances_)[::-1]
@@ -675,7 +685,7 @@ def test_quantile_loss(global_random_seed):
 
     clf_ae.fit(X_reg, y_reg)
     y_ae = clf_ae.predict(X_reg)
-    assert_array_almost_equal(y_quantile, y_ae, decimal=4)
+    assert_allclose(y_quantile, y_ae)
 
 
 def test_symbol_labels():
@@ -846,39 +856,43 @@ def test_more_verbose_output():
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
-def test_warm_start(Cls):
+def test_warm_start(Cls, global_random_seed):
     # Test if warm start equals fit.
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    est = Cls(n_estimators=200, max_depth=1)
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=global_random_seed)
+    est = Cls(n_estimators=200, max_depth=1, random_state=global_random_seed)
     est.fit(X, y)
 
-    est_ws = Cls(n_estimators=100, max_depth=1, warm_start=True)
+    est_ws = Cls(
+        n_estimators=100, max_depth=1, warm_start=True, random_state=global_random_seed
+    )
     est_ws.fit(X, y)
     est_ws.set_params(n_estimators=200)
     est_ws.fit(X, y)
 
     if Cls is GradientBoostingRegressor:
-        assert_array_almost_equal(est_ws.predict(X), est.predict(X))
+        assert_allclose(est_ws.predict(X), est.predict(X))
     else:
         # Random state is preserved and hence predict_proba must also be
         # same
         assert_array_equal(est_ws.predict(X), est.predict(X))
-        assert_array_almost_equal(est_ws.predict_proba(X), est.predict_proba(X))
+        assert_allclose(est_ws.predict_proba(X), est.predict_proba(X))
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
-def test_warm_start_n_estimators(Cls):
+def test_warm_start_n_estimators(Cls, global_random_seed):
     # Test if warm start equals fit - set n_estimators.
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    est = Cls(n_estimators=300, max_depth=1)
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=global_random_seed)
+    est = Cls(n_estimators=300, max_depth=1, random_state=global_random_seed)
     est.fit(X, y)
 
-    est_ws = Cls(n_estimators=100, max_depth=1, warm_start=True)
+    est_ws = Cls(
+        n_estimators=100, max_depth=1, warm_start=True, random_state=global_random_seed
+    )
     est_ws.fit(X, y)
     est_ws.set_params(n_estimators=300)
     est_ws.fit(X, y)
 
-    assert_array_almost_equal(est_ws.predict(X), est.predict(X))
+    assert_allclose(est_ws.predict(X), est.predict(X))
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
@@ -1015,12 +1029,12 @@ def test_warm_start_sparse(Cls):
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
-def test_warm_start_fortran(Cls):
+def test_warm_start_fortran(Cls, global_random_seed):
     # Test that feeding a X in Fortran-ordered is giving the same results as
     # in C-ordered
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    est_c = Cls(n_estimators=1, random_state=1, warm_start=True)
-    est_fortran = Cls(n_estimators=1, random_state=1, warm_start=True)
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=global_random_seed)
+    est_c = Cls(n_estimators=1, random_state=global_random_seed, warm_start=True)
+    est_fortran = Cls(n_estimators=1, random_state=global_random_seed, warm_start=True)
 
     est_c.fit(X, y)
     est_c.set_params(n_estimators=11)
@@ -1031,7 +1045,7 @@ def test_warm_start_fortran(Cls):
     est_fortran.set_params(n_estimators=11)
     est_fortran.fit(X_fortran, y)
 
-    assert_array_almost_equal(est_c.predict(X), est_fortran.predict(X))
+    assert_allclose(est_c.predict(X), est_fortran.predict(X))
 
 
 def early_stopping_monitor(i, est, locals):
@@ -1203,10 +1217,10 @@ def test_warm_start_wo_nestimators_change():
     assert clf.estimators_.shape[0] == 10
 
 
-def test_probability_exponential():
+def test_probability_exponential(global_random_seed):
     # Predict probabilities.
     clf = GradientBoostingClassifier(
-        loss="exponential", n_estimators=100, random_state=1
+        loss="exponential", n_estimators=100, random_state=global_random_seed
     )
 
     with pytest.raises(ValueError):
@@ -1220,7 +1234,7 @@ def test_probability_exponential():
     assert np.all(y_proba >= 0.0)
     assert np.all(y_proba <= 1.0)
     score = clf.decision_function(T).ravel()
-    assert_array_almost_equal(y_proba[:, 1], expit(2 * score))
+    assert_allclose(y_proba[:, 1], expit(2 * score))
 
     # derive predictions from probabilities
     y_pred = clf.classes_.take(y_proba.argmax(axis=1), axis=0)
