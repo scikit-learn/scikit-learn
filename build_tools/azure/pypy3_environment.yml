@@ -5,6 +5,7 @@ channels:
   - conda-forge
 dependencies:
   - pypy
+  - python=3.7
   - numpy
   - blas[build=openblas]
   - scipy

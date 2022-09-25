@@ -694,10 +694,6 @@ and inferred labels::
     for an example of classification report usage for
     hand-written digits.
 
-  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-    for an example of classification report usage for text
-    documents.
-
   * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
     for an example of classification report usage for
     grid search with nested cross-validation.
@@ -813,10 +809,6 @@ precision-recall curve as follows.
         :align: center
 
 .. topic:: Examples:
-
-  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-    for an example of :func:`f1_score` usage to classify  text
-    documents.
 
   * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
     for an example of :func:`precision_score` and :func:`recall_score` usage
@@ -1581,8 +1573,8 @@ same classification task:
 
 * DET curves form a linear curve in normal deviate scale if the detection
   scores are normally (or close-to normally) distributed.
-  It was shown by [Navratil2007]_ that the reverse it not necessarily true and
-  even more general distributions are able produce linear DET curves.
+  It was shown by [Navratil2007]_ that the reverse is not necessarily true and
+  even more general distributions are able to produce linear DET curves.
 
 * The normal deviate scale transformation spreads out the points such that a
   comparatively larger space of plot is occupied.
@@ -2106,13 +2098,13 @@ to handle the multioutput case: :func:`mean_squared_error`,
 and :func:`d2_absolute_error_score`.
 
 
-These functions have an ``multioutput`` keyword argument which specifies the
+These functions have a ``multioutput`` keyword argument which specifies the
 way the scores or losses for each individual target should be averaged. The
 default is ``'uniform_average'``, which specifies a uniformly weighted mean
 over outputs. If an ``ndarray`` of shape ``(n_outputs,)`` is passed, then its
 entries are interpreted as weights and an according weighted average is
-returned. If ``multioutput`` is ``'raw_values'`` is specified, then all
-unaltered individual scores or losses will be returned in an array of shape
+returned. If ``multioutput`` is ``'raw_values'``, then all unaltered
+individual scores or losses will be returned in an array of shape
 ``(n_outputs,)``.
 
 
@@ -2121,7 +2113,7 @@ value ``'variance_weighted'`` for the ``multioutput`` parameter. This option
 leads to a weighting of each individual score by the variance of the
 corresponding target variable. This setting quantifies the globally captured
 unscaled variance. If the target variables are of different scale, then this
-score puts more importance on well explaining the higher variance variables.
+score puts more importance on explaining the higher variance variables.
 ``multioutput='variance_weighted'`` is the default value for :func:`r2_score`
 for backward compatibility. This will be changed to ``uniform_average`` in the
 future.
@@ -2133,14 +2125,14 @@ R² score, the coefficient of determination
 
 The :func:`r2_score` function computes the `coefficient of
 determination <https://en.wikipedia.org/wiki/Coefficient_of_determination>`_,
-usually denoted as R².
+usually denoted as :math:`R^2`.
 
 It represents the proportion of variance (of y) that has been explained by the
 independent variables in the model. It provides an indication of goodness of
 fit and therefore a measure of how well unseen samples are likely to be
 predicted by the model, through the proportion of explained variance.
 
-As such variance is dataset dependent, R² may not be meaningfully comparable
+As such variance is dataset dependent, :math:`R^2` may not be meaningfully comparable
 across different datasets. Best possible score is 1.0 and it can be negative
 (because the model can be arbitrarily worse). A constant model that always
 predicts the expected (average) value of y, disregarding the input features,
@@ -2151,7 +2143,7 @@ the :ref:`explained_variance_score` are identical.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
 and :math:`y_i` is the corresponding true value for total :math:`n` samples,
-the estimated R² is defined as:
+the estimated :math:`R^2` is defined as:
 
 .. math::
 
@@ -2159,7 +2151,7 @@ the estimated R² is defined as:
 
 where :math:`\bar{y} = \frac{1}{n} \sum_{i=1}^{n} y_i` and :math:`\sum_{i=1}^{n} (y_i - \hat{y}_i)^2 = \sum_{i=1}^{n} \epsilon_i^2`.
 
-Note that :func:`r2_score` calculates unadjusted R² without correcting for
+Note that :func:`r2_score` calculates unadjusted :math:`R^2` without correcting for
 bias in sample variance of y.
 
 In the particular case where the true target is constant, the :math:`R^2` score is
@@ -2555,14 +2547,16 @@ Pinball loss
 ------------
 
 The :func:`mean_pinball_loss` function is used to evaluate the predictive
-performance of quantile regression models. The `pinball loss
-<https://en.wikipedia.org/wiki/Quantile_regression#Computation>`_ is equivalent
-to :func:`mean_absolute_error` when the quantile parameter ``alpha`` is set to
-0.5.
+performance of `quantile regression
+<https://en.wikipedia.org/wiki/Quantile_regression>`_ models.
 
 .. math::
 
   \text{pinball}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0)
+
+The value of pinball loss is equivalent to half of :func:`mean_absolute_error` when the quantile
+parameter ``alpha`` is set to 0.5.
+
 
 Here is a small example of usage of the :func:`mean_pinball_loss` function::
 
@@ -2609,7 +2603,7 @@ explained in the example linked below.
 .. topic:: Example:
 
   * See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
-    for an example of using a the pinball loss to evaluate and tune the
+    for an example of using the pinball loss to evaluate and tune the
     hyper-parameters of quantile regression models on data with non-symmetric
     noise and outliers.
 

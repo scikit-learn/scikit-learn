@@ -43,7 +43,7 @@ confidence ellipsoids for multivariate models, and compute the
 Bayesian Information Criterion to assess the number of clusters in the
 data. A :meth:`GaussianMixture.fit` method is provided that learns a Gaussian
 Mixture Model from train data. Given test data, it can assign to each
-sample the Gaussian it mostly probably belong to using
+sample the Gaussian it mostly probably belongs to using
 the :meth:`GaussianMixture.predict` method.
 
 ..
@@ -120,7 +120,7 @@ Estimation algorithm Expectation-maximization
 -----------------------------------------------
 
 The main difficulty in learning Gaussian mixture models from unlabeled
-data is that it is one usually doesn't know which points came from
+data is that one usually doesn't know which points came from
 which latent component (if one has access to this information it gets
 very easy to fit a separate Gaussian distribution to each set of
 points). `Expectation-maximization
@@ -179,7 +179,7 @@ Variational Bayesian Gaussian Mixture
 
 The :class:`BayesianGaussianMixture` object implements a variant of the
 Gaussian mixture model with variational inference algorithms. The API is
-similar as the one defined by :class:`GaussianMixture`.
+similar to the one defined by :class:`GaussianMixture`.
 
 .. _variational_inference:
 
@@ -199,13 +199,13 @@ expectation-maximization solutions but introduces some subtle biases
 to the model. Inference is often notably slower, but not usually as
 much so as to render usage unpractical.
 
-Due to its Bayesian nature, the variational algorithm needs more hyper-
-parameters than expectation-maximization, the most important of these being the
+Due to its Bayesian nature, the variational algorithm needs more hyperparameters
+than expectation-maximization, the most important of these being the
 concentration parameter ``weight_concentration_prior``. Specifying a low value
-for the concentration prior will make the model put most of the weight on few
-components set the remaining components weights very close to zero. High values
-of the concentration prior will allow a larger number of components to be active
-in the mixture.
+for the concentration prior will make the model put most of the weight on a few
+components and set the remaining components' weights very close to zero. High
+values of the concentration prior will allow a larger number of components to
+be active in the mixture.
 
 The parameters implementation of the :class:`BayesianGaussianMixture` class
 proposes two types of prior for the weights distribution: a finite mixture model
@@ -313,7 +313,7 @@ Pros
 Cons
 .....
 
-:Speed: the extra parametrization necessary for variational inference make
+:Speed: the extra parametrization necessary for variational inference makes
    inference slower, although not by much.
 
 :Hyperparameters: this algorithm needs an extra hyperparameter
@@ -349,7 +349,7 @@ group of the mixture. At the end, to represent the infinite mixture, we
 associate the last remaining piece of the stick to the proportion of points
 that don't fall into all the other groups. The length of each piece is a random
 variable with probability proportional to the concentration parameter. Smaller
-value of the concentration will divide the unit-length into larger pieces of
+values of the concentration will divide the unit-length into larger pieces of
 the stick (defining more concentrated distribution). Larger concentration
 values will create smaller pieces of the stick (increasing the number of
 components with non zero weights).
