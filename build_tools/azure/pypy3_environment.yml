@@ -1,10 +1,11 @@
 # DO NOT EDIT: this file is generated from the specification found in the
-# following script to centralize the configuration for all Azure CI builds:
-# build_tools/azure/update_environments_and_lock_files.py
+# following script to centralize the configuration for CI builds:
+# build_tools/update_environments_and_lock_files.py
 channels:
   - conda-forge
 dependencies:
   - pypy
+  - python=3.7
   - numpy
   - blas[build=openblas]
   - scipy
@@ -13,6 +14,6 @@ dependencies:
   - threadpoolctl
   - matplotlib
   - pyamg
-  - pytest=6.2.5
+  - pytest
   - pytest-xdist
   - ccache

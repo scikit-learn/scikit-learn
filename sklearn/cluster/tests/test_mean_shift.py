@@ -76,14 +76,6 @@ def test_mean_shift(
     assert cluster_centers.dtype == global_dtype
 
 
-def test_mean_shift_negative_bandwidth():
-    bandwidth = -1
-    ms = MeanShift(bandwidth=bandwidth)
-    msg = r"bandwidth needs to be greater than zero or None," r" got -1\.000000"
-    with pytest.raises(ValueError, match=msg):
-        ms.fit(X)
-
-
 def test_estimate_bandwidth_with_sparse_matrix():
     # Test estimate_bandwidth with sparse matrix
     X = sparse.lil_matrix((1000, 1000))

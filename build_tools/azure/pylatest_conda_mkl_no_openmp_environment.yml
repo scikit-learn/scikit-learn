@@ -1,11 +1,11 @@
 # DO NOT EDIT: this file is generated from the specification found in the
-# following script to centralize the configuration for all Azure CI builds:
-# build_tools/azure/update_environments_and_lock_files.py
+# following script to centralize the configuration for CI builds:
+# build_tools/update_environments_and_lock_files.py
 channels:
   - defaults
 dependencies:
   - python
-  - numpy
+  - numpy=1.22
   - blas[build=mkl]
   - scipy
   - cython
@@ -14,7 +14,7 @@ dependencies:
   - matplotlib
   - pandas
   - pyamg
-  - pytest=6.2.5
+  - pytest
   - pytest-xdist
   - pillow
   - codecov

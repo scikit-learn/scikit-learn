@@ -15,20 +15,21 @@ from scipy import linalg
 from scipy.spatial.distance import pdist
 from scipy.spatial.distance import squareform
 from scipy.sparse import csr_matrix, issparse
+from numbers import Integral, Real
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator
 from ..utils import check_random_state
 from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_non_negative
+from ..utils._param_validation import Interval, StrOptions, Hidden
 from ..decomposition import PCA
-from ..metrics.pairwise import pairwise_distances
+from ..metrics.pairwise import pairwise_distances, _VALID_METRICS
 
 # mypy error: Module 'sklearn.manifold' has no attribute '_utils'
 from . import _utils  # type: ignore
 
 # mypy error: Module 'sklearn.manifold' has no attribute '_barnes_hut_tsne'
 from . import _barnes_hut_tsne  # type: ignore
-
 
 MACHINE_EPSILON = np.finfo(np.double).eps
 
@@ -396,7 +397,6 @@ def _gradient_descent(
         kwargs["compute_error"] = check_convergence or i == n_iter - 1
 
         error, grad = objective(p, *args, **kwargs)
-        grad_norm = linalg.norm(grad)
 
         inc = update * grad < 0.0
         dec = np.invert(inc)
@@ -411,6 +411,7 @@ def _gradient_descent(
             toc = time()
             duration = toc - tic
             tic = toc
+            grad_norm = linalg.norm(grad)
 
             if verbose >= 2:
                 print(
@@ -443,7 +444,7 @@ def _gradient_descent(
 
 
 def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
-    r"""Expresses to what extent the local structure is retained.
+    r"""Indicate to what extent the local structure is retained.
 
     The trustworthiness is within [0, 1]. It is defined as
 
@@ -460,11 +461,12 @@ def trustworthiness(X, X_embedded, *, n_neighbors=5, metric="euclidean"):
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
+    X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+        (n_samples, n_samples)
         If the metric is 'precomputed' X must be a square distance
         matrix. Otherwise it contains a sample per row.
 
-    X_embedded : ndarray of shape (n_samples, n_components)
+    X_embedded : {array-like, sparse matrix} of shape (n_samples, n_components)
         Embedding of the training data in low-dimensional space.
 
     n_neighbors : int, default=5
@@ -564,7 +566,8 @@ class TSNE(BaseEstimator):
         is used in other manifold learning algorithms. Larger datasets
         usually require a larger perplexity. Consider selecting a value
         between 5 and 50. Different values can result in significantly
-        different results.
+        different results. The perplexity must be less that the number
+        of samples.
 
     early_exaggeration : float, default=12.0
         Controls how tight natural clusters in the original space are in
@@ -575,7 +578,7 @@ class TSNE(BaseEstimator):
         optimization, the early exaggeration factor or the learning rate
         might be too high.
 
-    learning_rate : float or 'auto', default=200.0
+    learning_rate : float or "auto", default="auto"
         The learning rate for t-SNE is usually in the range [10.0, 1000.0]. If
         the learning rate is too high, the data may look like a 'ball' with any
         point approximately equidistant from its nearest neighbours. If the
@@ -587,7 +590,10 @@ class TSNE(BaseEstimator):
         ours. So our learning_rate=200 corresponds to learning_rate=800 in
         those other implementations. The 'auto' option sets the learning_rate
         to `max(N / early_exaggeration / 4, 50)` where N is the sample size,
-        following [4] and [5]. This will become default in 1.2.
+        following [4] and [5].
+
+        .. versionchanged:: 1.2
+           The default value changed to `"auto"`.
 
     n_iter : int, default=1000
         Maximum number of iterations for the optimization. Should be at
@@ -623,13 +629,14 @@ class TSNE(BaseEstimator):
 
         .. versionadded:: 1.1
 
-    init : {'random', 'pca'} or ndarray of shape (n_samples, n_components), \
-            default='random'
-        Initialization of embedding. Possible options are 'random', 'pca',
-        and a numpy array of shape (n_samples, n_components).
+    init : {"random", "pca"} or ndarray of shape (n_samples, n_components), \
+            default="pca"
+        Initialization of embedding.
         PCA initialization cannot be used with precomputed distances and is
-        usually more globally stable than random initialization. `init='pca'`
-        will become default in 1.2.
+        usually more globally stable than random initialization.
+
+        .. versionchanged:: 1.2
+           The default value changed to `"pca"`.
 
     verbose : int, default=0
         Verbosity level.
@@ -640,7 +647,7 @@ class TSNE(BaseEstimator):
         initializations might result in different local minima of the cost
         function. See :term:`Glossary <random_state>`.
 
-    method : str, default='barnes_hut'
+    method : {'barnes_hut', 'exact'}, default='barnes_hut'
         By default the gradient calculation algorithm uses Barnes-Hut
         approximation running in O(NlogN) time. method='exact'
         will run on the slower, but exact, algorithm in O(N^2) time. The
@@ -698,6 +705,11 @@ class TSNE(BaseEstimator):
 
         .. versionadded:: 1.0
 
+    learning_rate_ : float
+        Effective learning rate.
+
+        .. versionadded:: 1.2
+
     n_iter_ : int
         Number of iterations run.
 
@@ -739,10 +751,35 @@ class TSNE(BaseEstimator):
     >>> from sklearn.manifold import TSNE
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> X_embedded = TSNE(n_components=2, learning_rate='auto',
-    ...                   init='random').fit_transform(X)
+    ...                   init='random', perplexity=3).fit_transform(X)
     >>> X_embedded.shape
     (4, 2)
     """
+
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "perplexity": [Interval(Real, 0, None, closed="neither")],
+        "early_exaggeration": [Interval(Real, 1, None, closed="left")],
+        "learning_rate": [
+            StrOptions({"auto"}),
+            Interval(Real, 0, None, closed="neither"),
+        ],
+        "n_iter": [Interval(Integral, 250, None, closed="left")],
+        "n_iter_without_progress": [Interval(Integral, -1, None, closed="left")],
+        "min_grad_norm": [Interval(Real, 0, None, closed="left")],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "metric_params": [dict, None],
+        "init": [
+            StrOptions({"pca", "random"}),
+            np.ndarray,
+        ],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+        "method": [StrOptions({"barnes_hut", "exact"})],
+        "angle": [Interval(Real, 0, 1, closed="both")],
+        "n_jobs": [None, Integral],
+        "square_distances": ["boolean", Hidden(StrOptions({"deprecated"}))],
+    }
 
     # Control the number of exploration iterations with early_exaggeration on
     _EXPLORATION_N_ITER = 250
@@ -756,13 +793,13 @@ class TSNE(BaseEstimator):
         *,
         perplexity=30.0,
         early_exaggeration=12.0,
-        learning_rate="warn",
+        learning_rate="auto",
         n_iter=1000,
         n_iter_without_progress=300,
         min_grad_norm=1e-7,
         metric="euclidean",
         metric_params=None,
-        init="warn",
+        init="pca",
         verbose=0,
         random_state=None,
         method="barnes_hut",
@@ -787,53 +824,32 @@ class TSNE(BaseEstimator):
         self.n_jobs = n_jobs
         self.square_distances = square_distances
 
+    def _check_params_vs_input(self, X):
+        if self.perplexity >= X.shape[0]:
+            raise ValueError("perplexity must be less than n_samples")
+
     def _fit(self, X, skip_num_points=0):
         """Private function to fit the model using X as training data."""
 
-        if isinstance(self.init, str) and self.init == "warn":
-            # See issue #18018
-            warnings.warn(
-                "The default initialization in TSNE will change "
-                "from 'random' to 'pca' in 1.2.",
-                FutureWarning,
-            )
-            self._init = "random"
-        else:
-            self._init = self.init
-        if self.learning_rate == "warn":
-            # See issue #18018
-            warnings.warn(
-                "The default learning rate in TSNE will change "
-                "from 200.0 to 'auto' in 1.2.",
-                FutureWarning,
-            )
-            self._learning_rate = 200.0
-        else:
-            self._learning_rate = self.learning_rate
-
-        if isinstance(self._init, str) and self._init == "pca" and issparse(X):
+        if isinstance(self.init, str) and self.init == "pca" and issparse(X):
             raise TypeError(
                 "PCA initialization is currently not supported "
                 "with the sparse input matrix. Use "
                 'init="random" instead.'
             )
-        if self.method not in ["barnes_hut", "exact"]:
-            raise ValueError("'method' must be 'barnes_hut' or 'exact'")
-        if self.angle < 0.0 or self.angle > 1.0:
-            raise ValueError("'angle' must be between 0.0 - 1.0")
         if self.square_distances != "deprecated":
             warnings.warn(
                 "The parameter `square_distances` has not effect and will be "
                 "removed in version 1.3.",
                 FutureWarning,
             )
-        if self._learning_rate == "auto":
+        if self.learning_rate == "auto":
             # See issue #18018
-            self._learning_rate = X.shape[0] / self.early_exaggeration / 4
-            self._learning_rate = np.maximum(self._learning_rate, 50)
+            self.learning_rate_ = X.shape[0] / self.early_exaggeration / 4
+            self.learning_rate_ = np.maximum(self.learning_rate_, 50)
         else:
-            if not (self._learning_rate > 0):
-                raise ValueError("'learning_rate' must be a positive number or 'auto'.")
+            self.learning_rate_ = self.learning_rate
+
         if self.method == "barnes_hut":
             X = self._validate_data(
                 X,
@@ -846,7 +862,7 @@ class TSNE(BaseEstimator):
                 X, accept_sparse=["csr", "csc", "coo"], dtype=[np.float32, np.float64]
             )
         if self.metric == "precomputed":
-            if isinstance(self._init, str) and self._init == "pca":
+            if isinstance(self.init, str) and self.init == "pca":
                 raise ValueError(
                     'The parameter init="pca" cannot be used with metric="precomputed".'
                 )
@@ -873,16 +889,6 @@ class TSNE(BaseEstimator):
                 "quad-tree or oct-tree."
             )
         random_state = check_random_state(self.random_state)
-
-        if self.early_exaggeration < 1.0:
-            raise ValueError(
-                "early_exaggeration must be at least 1, but is {}".format(
-                    self.early_exaggeration
-                )
-            )
-
-        if self.n_iter < 250:
-            raise ValueError("n_iter should be at least 250")
 
         n_samples = X.shape[0]
 
@@ -976,33 +982,24 @@ class TSNE(BaseEstimator):
             # compute the joint probability distribution for the input space
             P = _joint_probabilities_nn(distances_nn, self.perplexity, self.verbose)
 
-        if isinstance(self._init, np.ndarray):
-            X_embedded = self._init
-        elif self._init == "pca":
+        if isinstance(self.init, np.ndarray):
+            X_embedded = self.init
+        elif self.init == "pca":
             pca = PCA(
                 n_components=self.n_components,
                 svd_solver="randomized",
                 random_state=random_state,
             )
             X_embedded = pca.fit_transform(X).astype(np.float32, copy=False)
-            # TODO: Update in 1.2
             # PCA is rescaled so that PC1 has standard deviation 1e-4 which is
             # the default value for random initialization. See issue #18018.
-            warnings.warn(
-                "The PCA initialization in TSNE will change to "
-                "have the standard deviation of PC1 equal to 1e-4 "
-                "in 1.2. This will ensure better convergence.",
-                FutureWarning,
-            )
-            # X_embedded = X_embedded / np.std(X_embedded[:, 0]) * 1e-4
-        elif self._init == "random":
+            X_embedded = X_embedded / np.std(X_embedded[:, 0]) * 1e-4
+        elif self.init == "random":
             # The embedding is initialized with iid samples from Gaussians with
             # standard deviation 1e-4.
             X_embedded = 1e-4 * random_state.standard_normal(
                 size=(n_samples, self.n_components)
             ).astype(np.float32)
-        else:
-            raise ValueError("'init' must be 'pca', 'random', or a numpy array")
 
         # Degrees of freedom of the Student's t-distribution. The suggestion
         # degrees_of_freedom = n_components - 1 comes from
@@ -1040,7 +1037,7 @@ class TSNE(BaseEstimator):
             "it": 0,
             "n_iter_check": self._N_ITER_CHECK,
             "min_grad_norm": self.min_grad_norm,
-            "learning_rate": self._learning_rate,
+            "learning_rate": self.learning_rate_,
             "verbose": self.verbose,
             "kwargs": dict(skip_num_points=skip_num_points),
             "args": [P, degrees_of_freedom, n_samples, self.n_components],
@@ -1099,7 +1096,8 @@ class TSNE(BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+            (n_samples, n_samples)
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row. If the method
             is 'exact', X may be a sparse matrix of type 'csr', 'csc'
@@ -1114,6 +1112,8 @@ class TSNE(BaseEstimator):
         X_new : ndarray of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
+        self._validate_params()
+        self._check_params_vs_input(X)
         embedding = self._fit(X)
         self.embedding_ = embedding
         return self.embedding_
@@ -1123,7 +1123,8 @@ class TSNE(BaseEstimator):
 
         Parameters
         ----------
-        X : ndarray of shape (n_samples, n_features) or (n_samples, n_samples)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features) or \
+            (n_samples, n_samples)
             If the metric is 'precomputed' X must be a square distance
             matrix. Otherwise it contains a sample per row. If the method
             is 'exact', X may be a sparse matrix of type 'csr', 'csc'
@@ -1138,6 +1139,7 @@ class TSNE(BaseEstimator):
         X_new : array of shape (n_samples, n_components)
             Embedding of the training data in low-dimensional space.
         """
+        self._validate_params()
         self.fit_transform(X)
         return self
 

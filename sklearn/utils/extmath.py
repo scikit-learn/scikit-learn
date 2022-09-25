@@ -20,6 +20,7 @@ from . import check_random_state
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
+from ._array_api import get_namespace
 
 
 def squared_norm(x):
@@ -30,6 +31,7 @@ def squared_norm(x):
     Parameters
     ----------
     x : array-like
+        The input array which could be either be a vector or a 2 dimensional array.
 
     Returns
     -------
@@ -216,7 +218,7 @@ def randomized_range_finder(
 
     # Generating normal random vectors with shape: (A.shape[1], size)
     Q = random_state.normal(size=(A.shape[1], size))
-    if A.dtype.kind == "f":
+    if hasattr(A, "dtype") and A.dtype.kind == "f":
         # Ensure f32 is preserved as f32
         Q = Q.astype(A.dtype, copy=False)
 
@@ -243,6 +245,7 @@ def randomized_range_finder(
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
     Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode="economic")
+
     return Q
 
 
@@ -256,11 +259,12 @@ def randomized_svd(
     transpose="auto",
     flip_sign=True,
     random_state="warn",
+    svd_lapack_driver="gesdd",
 ):
     """Computes a truncated randomized SVD.
 
-    This method solves the fixed-rank approximation problem described in the
-    Halko et al paper (problem (1.5), p5).
+    This method solves the fixed-rank approximation problem described in [1]_
+    (problem (1.5), p5).
 
     Parameters
     ----------
@@ -278,8 +282,8 @@ def randomized_svd(
         approximation of singular vectors and singular values. Users might wish
         to increase this parameter up to `2*k - n_components` where k is the
         effective rank, for large matrices, noisy problems, matrices with
-        slowly decaying spectrums, or to increase precision accuracy. See Halko
-        et al (pages 5, 23 and 26).
+        slowly decaying spectrums, or to increase precision accuracy. See [1]_
+        (pages 5, 23 and 26).
 
     n_iter : int or 'auto', default='auto'
         Number of power iterations. It can be used to deal with very noisy
@@ -291,7 +295,7 @@ def randomized_svd(
         more costly power iterations steps. When `n_components` is equal
         or greater to the effective matrix rank and the spectrum does not
         present a slow decay, `n_iter=0` or `1` should even work fine in theory
-        (see Halko et al paper, page 9).
+        (see [1]_ page 9).
 
         .. versionchanged:: 0.18
 
@@ -332,6 +336,14 @@ def randomized_svd(
             the value of `random_state` explicitly to suppress the deprecation
             warning.
 
+    svd_lapack_driver : {"gesdd", "gesvd"}, default="gesdd"
+        Whether to use the more efficient divide-and-conquer approach
+        (`"gesdd"`) or more general rectangular approach (`"gesvd"`) to compute
+        the SVD of the matrix B, which is the projection of M into a low
+        dimensional subspace, as described in [1]_.
+
+        .. versionadded:: 1.2
+
     Notes
     -----
     This algorithm finds a (usually very good) approximate truncated
@@ -346,17 +358,16 @@ def randomized_svd(
 
     References
     ----------
-    * :arxiv:`"Finding structure with randomness:
+    .. [1] :arxiv:`"Finding structure with randomness:
       Stochastic algorithms for constructing approximate matrix decompositions"
       <0909.4061>`
       Halko, et al. (2009)
 
-    * A randomized algorithm for the decomposition of matrices
+    .. [2] A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
 
-    * An implementation of a randomized algorithm for principal component
-      analysis
-      A. Szlam et al. 2014
+    .. [3] An implementation of a randomized algorithm for principal component
+      analysis A. Szlam et al. 2014
     """
     if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
         warnings.warn(
@@ -405,7 +416,7 @@ def randomized_svd(
     B = safe_sparse_dot(Q.T, M)
 
     # compute the SVD on the thin matrix: (k + p) wide
-    Uhat, s, Vt = linalg.svd(B, full_matrices=False)
+    Uhat, s, Vt = linalg.svd(B, full_matrices=False, lapack_driver=svd_lapack_driver)
 
     del B
     U = np.dot(Q, Uhat)
@@ -821,12 +832,20 @@ def softmax(X, copy=True):
     out : ndarray of shape (M, N)
         Softmax function evaluated at every point in x.
     """
+    xp, is_array_api = get_namespace(X)
     if copy:
-        X = np.copy(X)
-    max_prob = np.max(X, axis=1).reshape((-1, 1))
+        X = xp.asarray(X, copy=True)
+    max_prob = xp.reshape(xp.max(X, axis=1), (-1, 1))
     X -= max_prob
-    np.exp(X, X)
-    sum_prob = np.sum(X, axis=1).reshape((-1, 1))
+
+    if xp.__name__ in {"numpy", "numpy.array_api"}:
+        # optimization for NumPy arrays
+        np.exp(X, out=np.asarray(X))
+    else:
+        # array_api does not have `out=`
+        X = xp.exp(X)
+
+    sum_prob = xp.reshape(xp.sum(X, axis=1), (-1, 1))
     X /= sum_prob
     return X
 
@@ -1048,6 +1067,9 @@ def _deterministic_vector_sign_flip(u):
 def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     """Use high precision for cumsum and check that final value matches sum.
 
+    Warns if the final cumulative sum does not match the sum (up to the chosen
+    tolerance).
+
     Parameters
     ----------
     arr : array-like
@@ -1059,6 +1081,11 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
         Relative tolerance, see ``np.allclose``.
     atol : float, default=1e-08
         Absolute tolerance, see ``np.allclose``.
+
+    Returns
+    -------
+    out : ndarray
+        Array with the cumulative sums along the chosen axis.
     """
     out = np.cumsum(arr, axis=axis, dtype=np.float64)
     expected = np.sum(arr, axis=axis, dtype=np.float64)

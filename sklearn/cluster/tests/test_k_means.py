@@ -1,6 +1,7 @@
 """Testing for K-means"""
 import re
 import sys
+import warnings
 
 import numpy as np
 from scipy import sparse as sp
@@ -28,9 +29,16 @@ from sklearn.cluster._k_means_common import _euclidean_sparse_dense_wrapper
 from sklearn.cluster._k_means_common import _inertia_dense
 from sklearn.cluster._k_means_common import _inertia_sparse
 from sklearn.cluster._k_means_common import _is_same_clustering
+from sklearn.utils._testing import create_memmap_backed_data
 from sklearn.datasets import make_blobs
 from io import StringIO
 
+# TODO(1.4): Remove
+msg = (
+    r"The default value of `n_init` will change from \d* to 'auto' in 1.4. Set the"
+    r" value of `n_init` explicitly to suppress the warning:FutureWarning"
+)
+pytestmark = pytest.mark.filterwarnings("ignore:" + msg)
 
 # non centered, sparse centers to check the
 centers = np.array(
@@ -218,22 +226,16 @@ def test_minibatch_update_consistency(global_random_seed):
     weight_sums = np.zeros(centers_old.shape[0], dtype=X.dtype)
     weight_sums_csr = np.zeros(centers_old.shape[0], dtype=X.dtype)
 
-    x_squared_norms = (X**2).sum(axis=1)
-    x_squared_norms_csr = row_norms(X_csr, squared=True)
-
     sample_weight = np.ones(X.shape[0], dtype=X.dtype)
 
     # extract a small minibatch
     X_mb = X[:10]
     X_mb_csr = X_csr[:10]
-    x_mb_squared_norms = x_squared_norms[:10]
-    x_mb_squared_norms_csr = x_squared_norms_csr[:10]
     sample_weight_mb = sample_weight[:10]
 
     # step 1: compute the dense minibatch update
     old_inertia = _mini_batch_step(
         X_mb,
-        x_mb_squared_norms,
         sample_weight_mb,
         centers_old,
         centers_new,
@@ -244,16 +246,13 @@ def test_minibatch_update_consistency(global_random_seed):
     assert old_inertia > 0.0
 
     # compute the new inertia on the same batch to check that it decreased
-    labels, new_inertia = _labels_inertia(
-        X_mb, sample_weight_mb, x_mb_squared_norms, centers_new
-    )
+    labels, new_inertia = _labels_inertia(X_mb, sample_weight_mb, centers_new)
     assert new_inertia > 0.0
     assert new_inertia < old_inertia
 
     # step 2: compute the sparse minibatch update
     old_inertia_csr = _mini_batch_step(
         X_mb_csr,
-        x_mb_squared_norms_csr,
         sample_weight_mb,
         centers_old_csr,
         centers_new_csr,
@@ -265,7 +264,7 @@ def test_minibatch_update_consistency(global_random_seed):
 
     # compute the new inertia on the same batch to check that it decreased
     labels_csr, new_inertia_csr = _labels_inertia(
-        X_mb_csr, sample_weight_mb, x_mb_squared_norms_csr, centers_new_csr
+        X_mb_csr, sample_weight_mb, centers_new_csr
     )
     assert new_inertia_csr > 0.0
     assert new_inertia_csr < old_inertia_csr
@@ -433,20 +432,16 @@ def test_minibatch_reassign(data, global_random_seed):
     for i in range(n_clusters):
         perfect_centers[i] = X[true_labels == i].mean(axis=0)
 
-    x_squared_norms = row_norms(data, squared=True)
     sample_weight = np.ones(n_samples)
     centers_new = np.empty_like(perfect_centers)
 
     # Give a perfect initialization, but a large reassignment_ratio, as a
     # result many centers should be reassigned and the model should no longer
     # be good
-    score_before = -_labels_inertia(
-        data, sample_weight, x_squared_norms, perfect_centers, 1
-    )[1]
+    score_before = -_labels_inertia(data, sample_weight, perfect_centers, 1)[1]
 
     _mini_batch_step(
         data,
-        x_squared_norms,
         sample_weight,
         perfect_centers,
         centers_new,
@@ -456,9 +451,7 @@ def test_minibatch_reassign(data, global_random_seed):
         reassignment_ratio=1,
     )
 
-    score_after = -_labels_inertia(
-        data, sample_weight, x_squared_norms, centers_new, 1
-    )[1]
+    score_after = -_labels_inertia(data, sample_weight, centers_new, 1)[1]
 
     assert score_before > score_after
 
@@ -466,7 +459,6 @@ def test_minibatch_reassign(data, global_random_seed):
     # no center should be reassigned.
     _mini_batch_step(
         data,
-        x_squared_norms,
         sample_weight,
         perfect_centers,
         centers_new,
@@ -1032,6 +1024,35 @@ def test_inertia(dtype, global_random_seed):
     assert_allclose(inertia_sparse, expected, rtol=rtol)
 
 
+# TODO(1.4): Remove
+@pytest.mark.parametrize("Klass, default_n_init", [(KMeans, 10), (MiniBatchKMeans, 3)])
+def test_change_n_init_future_warning(Klass, default_n_init):
+    est = Klass(n_init=1)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        est.fit(X)
+
+    default_n_init = 10 if Klass.__name__ == "KMeans" else 3
+    msg = (
+        f"The default value of `n_init` will change from {default_n_init} to 'auto'"
+        " in 1.4"
+    )
+    est = Klass()
+    with pytest.warns(FutureWarning, match=msg):
+        est.fit(X)
+
+
+@pytest.mark.parametrize("Klass, default_n_init", [(KMeans, 10), (MiniBatchKMeans, 3)])
+def test_n_init_auto(Klass, default_n_init):
+    est = Klass(n_init="auto", init="k-means++")
+    est.fit(X)
+    assert est._n_init == 1
+
+    est = Klass(n_init="auto", init="random")
+    est.fit(X)
+    assert est._n_init == 10 if Klass.__name__ == "KMeans" else 3
+
+
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_sample_weight_unchanged(Estimator):
     # Check that sample_weight is not modified in place by KMeans (#17204)
@@ -1180,3 +1201,23 @@ def test_feature_names_out(Klass, method):
 
     names_out = kmeans.get_feature_names_out()
     assert_array_equal([f"{class_name}{i}" for i in range(n_clusters)], names_out)
+
+
+@pytest.mark.parametrize("is_sparse", [True, False])
+def test_predict_does_not_change_cluster_centers(is_sparse):
+    """Check that predict does not change cluster centers.
+
+    Non-regression test for gh-24253.
+    """
+    X, _ = make_blobs(n_samples=200, n_features=10, centers=10, random_state=0)
+    if is_sparse:
+        X = sp.csr_matrix(X)
+
+    kmeans = KMeans()
+    y_pred1 = kmeans.fit_predict(X)
+    # Make cluster_centers readonly
+    kmeans.cluster_centers_ = create_memmap_backed_data(kmeans.cluster_centers_)
+    kmeans.labels_ = create_memmap_backed_data(kmeans.labels_)
+
+    y_pred2 = kmeans.predict(X)
+    assert_array_equal(y_pred1, y_pred2)
