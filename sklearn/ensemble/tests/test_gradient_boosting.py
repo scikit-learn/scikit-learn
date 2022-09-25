@@ -1,8 +1,6 @@
 """
 Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
-from random import random
-import re
 import warnings
 import numpy as np
 from numpy.testing import assert_allclose
