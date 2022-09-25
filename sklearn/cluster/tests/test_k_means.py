@@ -168,7 +168,11 @@ def test_kmeans_elkan_results(distribution, array_constr, tol, global_random_see
 
     km_lloyd = KMeans(n_clusters=5, random_state=global_random_seed, n_init=1, tol=tol)
     km_elkan = KMeans(
-        algorithm="elkan", n_clusters=5, random_state=global_random_seed, n_init=1, tol=tol
+        algorithm="elkan",
+        n_clusters=5,
+        random_state=global_random_seed,
+        n_init=1,
+        tol=tol,
     )
 
     km_lloyd.fit(X)
@@ -333,7 +337,10 @@ def test_fortran_aligned_data(Estimator, global_random_seed):
         n_clusters=n_clusters, init=centers, n_init=1, random_state=global_random_seed
     ).fit(X)
     km_f = Estimator(
-        n_clusters=n_clusters, init=centers_fortran, n_init=1, random_state=global_random_seed
+        n_clusters=n_clusters,
+        init=centers_fortran,
+        n_init=1,
+        random_state=global_random_seed,
     ).fit(X_fortran)
     assert_allclose(km_c.cluster_centers_, km_f.cluster_centers_)
     assert_array_equal(km_c.labels_, km_f.labels_)
@@ -400,7 +407,9 @@ def test_minibatch_sensible_reassign(global_random_seed):
     # check that identical initial clusters are reassigned
     # also a regression test for when there are more desired reassignments than
     # samples.
-    zeroed_X, true_labels = make_blobs(n_samples=100, centers=5, random_state=global_random_seed)
+    zeroed_X, true_labels = make_blobs(
+        n_samples=100, centers=5, random_state=global_random_seed
+    )
     zeroed_X[::2, :] = 0
 
     km = MiniBatchKMeans(
@@ -626,10 +635,16 @@ def test_kmeans_predict(
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
 def test_dense_sparse(Estimator, global_random_seed):
     # Check that the results are the same for dense and sparse input.
-    sample_weight = np.random.RandomState(global_random_seed).random_sample((n_samples,))
-    km_dense = Estimator(n_clusters=n_clusters, random_state=global_random_seed, n_init=1)
+    sample_weight = np.random.RandomState(global_random_seed).random_sample(
+        (n_samples,)
+    )
+    km_dense = Estimator(
+        n_clusters=n_clusters, random_state=global_random_seed, n_init=1
+    )
     km_dense.fit(X, sample_weight=sample_weight)
-    km_sparse = Estimator(n_clusters=n_clusters, random_state=global_random_seed, n_init=1)
+    km_sparse = Estimator(
+        n_clusters=n_clusters, random_state=global_random_seed, n_init=1
+    )
     km_sparse.fit(X_csr, sample_weight=sample_weight)
 
     assert_array_equal(km_dense.labels_, km_sparse.labels_)
@@ -774,7 +789,8 @@ def test_float_precision(Estimator, data, global_random_seed):
     assert_allclose(inertia[np.float32], inertia[np.float64], rtol=1e-4)
     assert_allclose(Xt[np.float32], Xt[np.float64], atol=Xt[np.float64].max() * 1e-4)
     assert_allclose(
-        centers[np.float32], centers[np.float64], atol=centers[np.float64].max() * 1e-4)
+        centers[np.float32], centers[np.float64], atol=centers[np.float64].max() * 1e-4
+    )
     assert_array_equal(labels[np.float32], labels[np.float64])
 
 
@@ -829,10 +845,14 @@ def test_weighted_vs_repeated(global_random_seed):
     # repetition of the sample. Valid only if init is precomputed, otherwise
     # rng produces different results. Not valid for MinibatchKMeans due to rng
     # to extract minibatches.
-    sample_weight = np.random.RandomState(global_random_seed).randint(1, 5, size=n_samples)
+    sample_weight = np.random.RandomState(global_random_seed).randint(
+        1, 5, size=n_samples
+    )
     X_repeat = np.repeat(X, sample_weight, axis=0)
 
-    km = KMeans(init=centers, n_init=1, n_clusters=n_clusters, random_state=global_random_seed)
+    km = KMeans(
+        init=centers, n_init=1, n_clusters=n_clusters, random_state=global_random_seed
+    )
 
     km_weighted = clone(km).fit(X, sample_weight=sample_weight)
     repeated_labels = np.repeat(km_weighted.labels_, sample_weight)
@@ -908,9 +928,17 @@ def test_result_equal_in_diff_n_threads(Estimator, global_random_seed):
     X = rnd.normal(size=(50, 10))
 
     with threadpool_limits(limits=1, user_api="openmp"):
-        result_1 = Estimator(n_clusters=n_clusters, random_state=global_random_seed).fit(X).labels_
+        result_1 = (
+            Estimator(n_clusters=n_clusters, random_state=global_random_seed)
+            .fit(X)
+            .labels_
+        )
     with threadpool_limits(limits=2, user_api="openmp"):
-        result_2 = Estimator(n_clusters=n_clusters, random_state=global_random_seed).fit(X).labels_
+        result_2 = (
+            Estimator(n_clusters=n_clusters, random_state=global_random_seed)
+            .fit(X)
+            .labels_
+        )
     assert_array_equal(result_1, result_2)
 
 
@@ -1119,7 +1147,9 @@ def test_kmeans_plusplus_wrong_params(param, match):
 def test_kmeans_plusplus_output(data, dtype, global_random_seed):
     # Check for the correct number of seeds and all positive values
     data = data.astype(dtype)
-    centers, indices = kmeans_plusplus(data, n_clusters, random_state=global_random_seed)
+    centers, indices = kmeans_plusplus(
+        data, n_clusters, random_state=global_random_seed
+    )
 
     # Check there are the correct number of indices and that all indices are
     # positive and within the number of samples
@@ -1152,7 +1182,9 @@ def test_kmeans_plusplus_dataorder(global_random_seed):
 
     X_fortran = np.asfortranarray(X)
 
-    centers_fortran, _ = kmeans_plusplus(X_fortran, n_clusters, random_state=global_random_seed)
+    centers_fortran, _ = kmeans_plusplus(
+        X_fortran, n_clusters, random_state=global_random_seed
+    )
 
     assert_allclose(centers_c, centers_fortran)
 
