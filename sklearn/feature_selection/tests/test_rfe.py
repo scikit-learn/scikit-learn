@@ -63,9 +63,11 @@ class MockClassifier:
         return {"allow_nan": True}
 
 
-def test_rfe_features_importance(global_random_seed):
-    generator = check_random_state(global_random_seed)
+def test_rfe_features_importance():
+    generator = check_random_state(0)
     iris = load_iris()
+    # Add some irrelevant features. Random seed is set to make sure that
+    # irrelevant features are always irrelevant.
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
 
@@ -82,9 +84,11 @@ def test_rfe_features_importance(global_random_seed):
     assert_array_equal(rfe.get_support(), rfe_svc.get_support())
 
 
-def test_rfe(global_random_seed):
-    generator = check_random_state(global_random_seed)
+def test_rfe():
+    generator = check_random_state(0)
     iris = load_iris()
+    # Add some irrelevant features. Random seed is set to make sure that
+    # irrelevant features are always irrelevant.
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     X_sparse = sparse.csr_matrix(X)
     y = iris.target
@@ -136,10 +140,12 @@ def test_RFE_fit_score_params():
     RFE(estimator=TestEstimator()).fit(X, y, prop="foo").score(X, y, prop="foo")
 
 
-def test_rfe_percent_n_features(global_random_seed):
+def test_rfe_percent_n_features():
     # test that the results are the same
-    generator = check_random_state(global_random_seed)
+    generator = check_random_state(0)
     iris = load_iris()
+    # Add some irrelevant features. Random seed is set to make sure that
+    # irrelevant features are always irrelevant.
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
     # there are 10 features in the data. We select 40%.
@@ -154,9 +160,11 @@ def test_rfe_percent_n_features(global_random_seed):
     assert_array_equal(rfe_perc.support_, rfe_num.support_)
 
 
-def test_rfe_mockclassifier(global_random_seed):
-    generator = check_random_state(global_random_seed)
+def test_rfe_mockclassifier():
+    generator = check_random_state(0)
     iris = load_iris()
+    # Add some irrelevant features. Random seed is set to make sure that
+    # irrelevant features are always irrelevant.
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
 
@@ -170,9 +178,11 @@ def test_rfe_mockclassifier(global_random_seed):
     assert X_r.shape == iris.data.shape
 
 
-def test_rfecv(global_random_seed):
-    generator = check_random_state(global_random_seed)
+def test_rfecv():
+    generator = check_random_state(0)
     iris = load_iris()
+    # Add some irrelevant features. Random seed is set to make sure that
+    # irrelevant features are always irrelevant.
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = list(iris.target)  # regression test: list should be supported
 
@@ -265,8 +275,8 @@ def test_rfecv(global_random_seed):
     assert_array_equal(X_r_sparse.toarray(), iris.data)
 
 
-def test_rfecv_mockclassifier(global_random_seed):
-    generator = check_random_state(global_random_seed)
+def test_rfecv_mockclassifier():
+    generator = check_random_state(0)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = list(iris.target)  # regression test: list should be supported
@@ -454,8 +464,8 @@ def test_number_of_subsets_of_features(global_random_seed):
             )
 
 
-def test_rfe_cv_n_jobs():
-    generator = check_random_state()
+def test_rfe_cv_n_jobs(global_random_seed):
+    generator = check_random_state(global_random_seed)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
@@ -534,7 +544,7 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
 )
 @pytest.mark.parametrize("Selector", [RFE, RFECV])
 def test_rfe_importance_getter_validation(importance_getter, err_type, Selector):
-    X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
+    X, y = make_friedman1(n_samples=50, n_features=10, random_state=42)
     estimator = LinearSVR()
     log_estimator = TransformedTargetRegressor(
         regressor=estimator, func=np.log, inverse_func=np.exp
@@ -608,13 +618,13 @@ def test_multioutput(ClsRFE):
 
 @pytest.mark.parametrize("ClsRFE", [RFE, RFECV])
 @pytest.mark.parametrize("PLSEstimator", [CCA, PLSCanonical, PLSRegression])
-def test_rfe_pls(ClsRFE, PLSEstimator, global_random_seed):
+def test_rfe_pls(ClsRFE, PLSEstimator):
     """Check the behaviour of RFE with PLS estimators.
 
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/12410
     """
-    X, y = make_friedman1(n_samples=50, n_features=10, random_state=global_random_seed)
+    X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
     estimator = PLSEstimator(n_components=1)
     selector = ClsRFE(estimator, step=1).fit(X, y)
     assert selector.score(X, y) > 0.5
