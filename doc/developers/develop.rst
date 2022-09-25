@@ -635,6 +635,29 @@ instantiated with an instance of ``LogisticRegression`` (or
 of these two models is somewhat idiosyncratic but both should provide robust
 closed-form solutions.
 
+.. _developer_api_set_output:
+
+Developer API for `set_output`
+==============================
+
+With
+`SLEP018 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep018/proposal.html>`__,
+scikit-learn introduces the `set_output` API for configuring transformers to output
+pandas DataFrames. The `set_output` API is automatically defined if the transformer
+defines :term:`get_feature_names_out` and subclasses :class:`base.TransformerMixin`.
+:term:`get_feature_names_out` is used to get the column names for pandas output. You
+can opt-out of the `set_output` API by setting `auto_wrap_output=False` when defining
+a custom subclass::
+
+    class MyTransformer(TransformerMixin, BaseEstimator, auto_wrap_output=False,):
+
+        def fit(self, X, y=None):
+            return self
+        def transform(self, X, y=None):
+            return X
+        def get_feature_names_out(self, input_features=None):
+            ...
+
 .. _coding-guidelines:
 
 Coding guidelines

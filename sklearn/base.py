@@ -807,7 +807,12 @@ class BiclusterMixin:
 
 
 class TransformerMixin(_SetOutputMixin):
-    """Mixin class for all transformers in scikit-learn."""
+    """Mixin class for all transformers in scikit-learn.
+
+    If :term:`get_feature_names_out` is defined and `auto_wrap_output` is True,
+    then `TransformerMixin` will automatically wrap `transform` and `fit_transform` to
+    follow the `set_output` API. See the :ref:`developer_api_set_output` for details.
+    """
 
     def fit_transform(self, X, y=None, **fit_params):
         """
