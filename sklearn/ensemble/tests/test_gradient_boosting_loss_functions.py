@@ -194,11 +194,11 @@ def test_mdl_exception(n):
         MultinomialDeviance(n)
 
 
-def test_init_raw_predictions_shapes(global_random_seed):
+def test_init_raw_predictions_shapes():
     # Make sure get_init_raw_predictions returns float64 arrays with shape
     # (n_samples, K) where K is 1 for binary classification and regression, and
     # K = n_classes for multiclass classification
-    rng = np.random.RandomState(global_random_seed)
+    rng = np.random.RandomState(0)
 
     n_samples = 100
     X = rng.normal(size=(n_samples, 5))
