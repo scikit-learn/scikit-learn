@@ -23,7 +23,7 @@ import warnings
 from functools import partial
 
 import numpy as np
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, issparse
 from scipy.stats import rankdata
 
 from ..utils import assert_all_finite
@@ -419,8 +419,9 @@ def roc_auc_score(
         If ``None``, the scores for each class are returned.
         Otherwise, this determines the type of averaging performed on the data.
         Note: multiclass ROC AUC currently only handles the 'macro' and
-        'weighted' averages. For multiclass targets, `average=None`
-        is only implemented for `multi_class='ovo'`.
+        'weighted' averages. For multiclass targets, `average=None` is only
+        implemented for `multi_class='ovo'` and `average='micro'` is only
+        implemented for `multi_class='ovr'`.
 
         ``'micro'``:
             Calculate metrics globally by considering each element of the label
@@ -612,9 +613,15 @@ def _multiclass_roc_auc_score(
             Calculate metrics for the multiclass case using the one-vs-one
             approach.
 
-    average : {'macro', 'weighted'}
+    average : {'micro', 'macro', 'weighted'}
         Determines the type of averaging performed on the pairwise binary
         metric scores
+        ``'micro'``:
+            Calculate metrics for the binarized-raveled classes. Only supported
+            for `multi_class='ovr'`.
+
+        .. versionadded:: 1.2
+
         ``'macro'``:
             Calculate metrics for each label, and find their unweighted
             mean. This does not take label imbalance into account. Classes
@@ -636,6 +643,8 @@ def _multiclass_roc_auc_score(
 
     # validation for multiclass parameter specifications
     average_options = ("macro", "weighted", None)
+    if multi_class == "ovr":
+        average_options = ("micro",) + average_options
     if average not in average_options:
         raise ValueError(
             "average must be one of {0} for multiclass problems".format(average_options)
@@ -871,7 +880,10 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
     )
 
     ps = tps + fps
-    precision = np.divide(tps, ps, where=(ps != 0))
+    # Initialize the result array with zeros to make sure that precision[ps == 0]
+    # does not contain uninitialized values.
+    precision = np.zeros_like(tps)
+    np.divide(tps, ps, out=precision, where=(ps != 0))
 
     # When no positive label in y_true, recall is set to 1 for all thresholds
     # tps[-1] == 0 <=> y_true == all negative labels
@@ -976,7 +988,6 @@ def roc_curve(
     array([0. , 0.5, 0.5, 1. , 1. ])
     >>> thresholds
     array([1.8 , 0.8 , 0.4 , 0.35, 0.1 ])
-
     """
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
@@ -1071,7 +1082,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     0.416...
     """
     check_consistent_length(y_true, y_score, sample_weight)
-    y_true = check_array(y_true, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=False, accept_sparse="csr")
     y_score = check_array(y_score, ensure_2d=False)
 
     if y_true.shape != y_score.shape:
@@ -1084,7 +1095,9 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     ):
         raise ValueError("{0} format is not supported".format(y_type))
 
-    y_true = csr_matrix(y_true)
+    if not issparse(y_true):
+        y_true = csr_matrix(y_true)
+
     y_score = -y_score
 
     n_samples, n_labels = y_true.shape
@@ -1147,16 +1160,16 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     Returns
     -------
     coverage_error : float
+        The coverage error.
 
     References
     ----------
     .. [1] Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010).
            Mining multi-label data. In Data mining and knowledge discovery
            handbook (pp. 667-685). Springer US.
-
     """
-    y_true = check_array(y_true, ensure_2d=False)
-    y_score = check_array(y_score, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=True)
+    y_score = check_array(y_score, ensure_2d=True)
     check_consistent_length(y_true, y_score, sample_weight)
 
     y_type = type_of_target(y_true, input_name="y_true")
@@ -1475,7 +1488,6 @@ def dcg_score(
     >>> dcg_score(true_relevance,
     ...           scores, k=1, ignore_ties=True)
     5.0
-
     """
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
@@ -1555,7 +1567,11 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     ----------
     y_true : ndarray of shape (n_samples, n_labels)
         True targets of multilabel classification, or true scores of entities
-        to be ranked.
+        to be ranked. Negative values in `y_true` may result in an output
+        that is not between 0 and 1.
+
+        .. versionchanged:: 1.2
+            These negative values are deprecated, and will raise an error in v1.4.
 
     y_score : ndarray of shape (n_samples, n_labels)
         Target scores, can either be probability estimates, confidence values,
@@ -1619,23 +1635,31 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     >>> # the normalization takes k into account so a perfect answer
     >>> # would still get 1.0
     >>> ndcg_score(true_relevance, true_relevance, k=4)
-    1.0
+    1.0...
     >>> # now we have some ties in our prediction
     >>> scores = np.asarray([[1, 0, 0, 0, 1]])
     >>> # by default ties are averaged, so here we get the average (normalized)
     >>> # true relevance of our top predictions: (10 / 10 + 5 / 10) / 2 = .75
     >>> ndcg_score(true_relevance, scores, k=1)
-    0.75
+    0.75...
     >>> # we can choose to ignore ties for faster results, but only
     >>> # if we know there aren't ties in our scores, otherwise we get
     >>> # wrong results:
     >>> ndcg_score(true_relevance,
     ...           scores, k=1, ignore_ties=True)
-    0.5
+    0.5...
     """
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
+
+    if y_true.min() < 0:
+        # TODO(1.4): Replace warning w/ ValueError
+        warnings.warn(
+            "ndcg_score should not be used on negative y_true values. ndcg_score will"
+            " raise a ValueError on negative y_true values starting from version 1.4.",
+            FutureWarning,
+        )
     _check_dcg_target_type(y_true)
     gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
     return np.average(gain, weights=sample_weight)
@@ -1692,9 +1716,11 @@ def top_k_accuracy_score(
         `normalize == True` and the number of samples with
         `normalize == False`.
 
-    See also
+    See Also
     --------
-    accuracy_score
+    accuracy_score : Compute the accuracy score. By default, the function will
+        return the fraction of correct predictions divided by the total number
+        of predictions.
 
     Notes
     -----
@@ -1717,7 +1743,6 @@ def top_k_accuracy_score(
     >>> # Not normalizing gives the number of "correctly" classified samples
     >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
     3
-
     """
     y_true = check_array(y_true, ensure_2d=False, dtype=None)
     y_true = column_or_1d(y_true)

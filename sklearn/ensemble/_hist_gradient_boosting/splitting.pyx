@@ -17,7 +17,6 @@ from numpy.math cimport INFINITY
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport Y_DTYPE_C
 from .common cimport hist_struct
-from .common import HISTOGRAM_DTYPE
 from .common cimport BITSET_INNER_DTYPE_C
 from .common cimport BITSET_DTYPE_C
 from .common cimport MonotonicConstraint
@@ -136,6 +135,13 @@ cdef class Splitter:
         feature.
     is_categorical : ndarray of bool of shape (n_features,)
         Indicates categorical features.
+    monotonic_cst : ndarray of int of shape (n_features,), dtype=int
+        Indicates the monotonic constraint to enforce on each feature.
+          - 1: monotonic increase
+          - 0: no constraint
+          - -1: monotonic decrease
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
     l2_regularization : float
         The L2 regularization parameter.
     min_hessian_to_split : float, default=1e-3
@@ -149,6 +155,8 @@ cdef class Splitter:
         be ignored.
     hessians_are_constant: bool, default is False
         Whether hessians are constant.
+    n_threads : int, default=1
+        Number of OpenMP threads to use.
     """
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned

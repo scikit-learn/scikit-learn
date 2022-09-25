@@ -170,7 +170,7 @@ but regular, observation outside the frontier.
 .. topic:: References:
 
     * `Estimating the support of a high-dimensional distribution
-      <http://www.recognition.mccme.ru/pub/papers/SVM/sch99estimating.pdf>`_
+      <https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-99-87.pdf>`_
       Schölkopf, Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
 
 .. topic:: Examples:
@@ -332,7 +332,7 @@ lower density than their neighbors.
 
 In practice the local density is obtained from the k-nearest neighbors.
 The LOF score of an observation is equal to the ratio of the
-average local density of his k-nearest neighbors, and its own local density:
+average local density of its k-nearest neighbors, and its own local density:
 a normal instance is expected to have a local density similar to that of its
 neighbors, while abnormal data are expected to have much smaller local density.
 

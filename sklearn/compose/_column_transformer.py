@@ -190,6 +190,23 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     >>> ct.fit_transform(X)
     array([[0. , 1. , 0.5, 0.5],
            [0.5, 0.5, 0. , 1. ]])
+
+    :class:`ColumnTransformer` can be configured with a transformer that requires
+    a 1d array by setting the column to a string:
+
+    >>> from sklearn.feature_extraction import FeatureHasher
+    >>> from sklearn.preprocessing import MinMaxScaler
+    >>> import pandas as pd   # doctest: +SKIP
+    >>> X = pd.DataFrame({
+    ...     "documents": ["First item", "second one here", "Is this the last?"],
+    ...     "width": [3, 4, 5],
+    ... })  # doctest: +SKIP
+    >>> # "documents" is a string which configures ColumnTransformer to
+    >>> # pass the documents column as a 1d array to the FeatureHasher
+    >>> ct = ColumnTransformer(
+    ...     [("text_preprocess", FeatureHasher(input_type="string"), "documents"),
+    ...      ("num_preprocess", MinMaxScaler(), ["width"])])
+    >>> X_trans = ct.fit_transform(X)  # doctest: +SKIP
     """
 
     _required_parameters = ["transformers"]
