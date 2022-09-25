@@ -147,7 +147,7 @@ def test_regression_dataset(loss, subsample, global_random_seed):
 
         y_pred = reg.predict(X_reg)
         mse = mean_squared_error(y_reg, y_pred)
-        assert mse < 0.045
+        assert mse < 0.05
 
         if last_y_pred is not None:
             # FIXME: We temporarily bypass this test. This is due to the fact
