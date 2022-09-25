@@ -476,7 +476,8 @@ def ridge_regression(
         'cholesky'.
 
         .. versionchanged:: 1.2
-           Default value change to 1e-4.
+           Default value changed from 1e-3 to 1e-4 for consistency with other linear
+           models.
 
     verbose : int, default=0
         Verbosity level. Setting verbose > 0 will display additional
@@ -986,7 +987,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         'cholesky'.
 
         .. versionchanged:: 1.2
-           Default value change to 1e-4.
+           Default value changed from 1e-3 to 1e-4 for consistency with other linear
+           models.
 
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', \
             'sag', 'saga', 'lbfgs'}, default='auto'
@@ -1289,7 +1291,8 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         'cholesky'.
 
         .. versionchanged:: 1.2
-           Default value change to 1e-4.
+           Default value changed from 1e-3 to 1e-4 for consistency with other linear
+           models.
 
     class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
