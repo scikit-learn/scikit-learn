@@ -2631,8 +2631,7 @@ def log_loss(
 
     # Renormalize
     y_pred_sum = y_pred.sum(axis=1)
-    if np.any(np.abs(y_pred_sum - 1) >= 4 * np.finfo(float).eps):
-        y_pred = y_pred / y_pred_sum[:, np.newaxis]
+    y_pred = y_pred / y_pred_sum[:, np.newaxis]
     loss = -xlogy(transformed_labels, y_pred).sum(axis=1)
 
     return _weighted_sum(loss, sample_weight, normalize)
