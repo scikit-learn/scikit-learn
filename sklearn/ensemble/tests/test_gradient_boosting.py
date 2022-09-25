@@ -191,6 +191,7 @@ def test_regression_synthetic(global_random_seed):
         "min_samples_split": 2,
         "learning_rate": 0.1,
         "loss": "squared_error",
+        "random_state": global_random_seed,
     }
 
     # Friedman1
@@ -198,10 +199,10 @@ def test_regression_synthetic(global_random_seed):
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
 
-    clf = GradientBoostingRegressor()
+    clf = GradientBoostingRegressor(**regression_params)
     clf.fit(X_train, y_train)
     mse = mean_squared_error(y_test, clf.predict(X_test))
-    assert mse < 5.5
+    assert mse < 6.5
 
     # Friedman2
     X, y = datasets.make_friedman2(n_samples=1200, random_state=random_state)
