@@ -11,7 +11,6 @@ from sklearn.cluster import Birch
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.linear_model import ElasticNet
 from sklearn.metrics import pairwise_distances_argmin, v_measure_score
 
 from sklearn.utils._testing import assert_almost_equal
@@ -84,13 +83,6 @@ def test_n_clusters(global_random_seed):
     brc2.fit(X)
     assert_array_equal(brc1.subcluster_labels_, brc2.subcluster_labels_)
     assert_array_equal(brc1.labels_, brc2.labels_)
-
-    # Test that n_clusters being a non-cluster estimator raises an Error.
-    clf = ElasticNet()
-    brc3 = Birch(n_clusters=clf)
-    msg = r"The 'n_clusters' parameter of Birch must be .* Got .* instead."
-    with pytest.raises(ValueError, match=msg):
-        brc3.fit(X)
 
     # Test that a small number of clusters raises a warning.
     brc4 = Birch(threshold=10000.0)
@@ -174,18 +166,6 @@ def test_birch_n_clusters_long_int():
     X, _ = make_blobs(random_state=0)
     n_clusters = np.int64(5)
     Birch(n_clusters=n_clusters).fit(X)
-
-
-# TODO: Remove in 1.2
-@pytest.mark.parametrize("attribute", ["fit_", "partial_fit_"])
-def test_birch_fit_attributes_deprecated(attribute):
-    """Test that fit_ and partial_fit_ attributes are deprecated."""
-    msg = f"`{attribute}` is deprecated in 1.0 and will be removed in 1.2"
-    X, y = make_blobs(n_samples=10)
-    brc = Birch().fit(X, y)
-
-    with pytest.warns(FutureWarning, match=msg):
-        getattr(brc, attribute)
 
 
 def test_feature_names_out():

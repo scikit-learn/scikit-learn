@@ -5,11 +5,8 @@ integers, and values float.
 # Author: Gael Varoquaux
 # License: BSD
 
-cimport cython
-
 # C++
-from cython.operator cimport dereference as deref, preincrement as inc, \
-    predecrement as dec
+from cython.operator cimport dereference as deref, preincrement as inc
 from libcpp.utility cimport pair
 from libcpp.map cimport map as cpp_map
 

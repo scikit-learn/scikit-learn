@@ -330,9 +330,9 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse graph, BallTree, KDTree, NearestNeighbors}
+        X : {array-like, sparse matrix, BallTree, KDTree, NearestNeighbors}
             Sample data, shape = (n_samples, n_features), in the form of a
-            numpy array, sparse graph, precomputed tree, or NearestNeighbors
+            numpy array, sparse matrix, precomputed tree, or NearestNeighbors
             object.
 
         y : Ignored
@@ -352,7 +352,7 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse graph, BallTree, KDTree}
+        X : {array-like, sparse matrix, BallTree, KDTree}
             Training vector, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
@@ -381,7 +381,7 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_queries, n_features)
+        X : {array-like, sparse matrix}, shape (n_queries, n_features)
             If neighbors_algorithm='precomputed', X is assumed to be a
             distance matrix or a sparse graph of shape
             (n_queries, n_samples_fit).
