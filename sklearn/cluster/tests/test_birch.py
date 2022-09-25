@@ -41,7 +41,7 @@ def test_partial_fit(global_random_seed):
     brc_partial = Birch(n_clusters=None)
     brc_partial.partial_fit(X[:50])
     brc_partial.partial_fit(X[50:])
-    assert_array_almost_equal(brc_partial.subcluster_centers_, brc.subcluster_centers_)
+    assert_allclose(brc_partial.subcluster_centers_, brc.subcluster_centers_)
 
     # Test that same global labels are obtained after calling partial_fit
     # with None
@@ -59,12 +59,14 @@ def test_birch_predict(global_random_seed):
     shuffle_indices = np.arange(30)
     rng.shuffle(shuffle_indices)
     X_shuffle = X[shuffle_indices, :]
-    brc = Birch(n_clusters=4, threshold=1.1)
+    brc = Birch(n_clusters=4, threshold=1.0)
     brc.fit(X_shuffle)
-    centroids = brc.subcluster_centers_
     assert_array_equal(brc.labels_, brc.predict(X_shuffle))
-    nearest_centroid = pairwise_distances_argmin(X_shuffle, centroids)
-    assert_almost_equal(v_measure_score(nearest_centroid, brc.labels_), 1.0)
+    centroids = brc.subcluster_centers_
+    nearest_centroid = brc.subcluster_labels_[
+        pairwise_distances_argmin(X_shuffle, centroids)
+    ]
+    assert_allclose(v_measure_score(nearest_centroid, brc.labels_), 1.0)
 
 
 def test_n_clusters(global_random_seed):
@@ -107,7 +109,7 @@ def test_sparse_X(global_random_seed):
     brc_sparse.fit(csr)
 
     assert_array_equal(brc.labels_, brc_sparse.labels_)
-    assert_array_almost_equal(brc.subcluster_centers_, brc_sparse.subcluster_centers_)
+    assert_allclose(brc.subcluster_centers_, brc_sparse.subcluster_centers_)
 
 
 def test_partial_fit_second_call_error_checks():
