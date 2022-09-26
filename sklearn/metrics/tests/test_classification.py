@@ -7,6 +7,7 @@ import re
 
 import numpy as np
 from scipy import linalg
+from scipy.stats import bernoulli
 import pytest
 
 from sklearn import datasets
@@ -2470,8 +2471,8 @@ def test_log_loss():
         [[0.5, 0.5], [0.1, 0.9], [0.01, 0.99], [0.9, 0.1], [0.75, 0.25], [0.001, 0.999]]
     )
     loss = log_loss(y_true, y_pred)
-    # -np.mean(bernoulli.logpmf(np.array(y_true) == "yes", y_pred[:, 1]))
-    assert_almost_equal(loss, 1.8817971)
+    loss_true = -np.mean(bernoulli.logpmf(np.array(y_true) == "yes", y_pred[:, 1]))
+    assert_almost_equal(loss, loss_true)
 
     # multiclass case; adapted from http://bit.ly/RJJHWA
     y_true = [1, 0, 2]
