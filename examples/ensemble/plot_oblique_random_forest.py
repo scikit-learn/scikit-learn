@@ -17,7 +17,6 @@ random forest on cnae-9 utilizing sparse random projection machanism. All datase
 are subsampled due to computational constraints.
 """
 
-import numpy as np
 import pandas as pd
 from datetime import datetime
 
