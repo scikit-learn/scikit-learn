@@ -472,6 +472,12 @@ Changelog
 - |FIX| :func:`utils.multiclass.type_of_target` now properly handles sparse matrices.
   :pr:`14862` by :user:`Léonard Binet <leonardbinet>`.
 
+- |Feature| A new module in :mod:`sklearn.utils.discovery` exposes development
+  tools to discover estimators (i.e. :func:`~sklearn.utils.discovery.all_estimators`),
+  displays (i.e. :func:`~sklearn.utils.discovery.all_displays`) and
+  functions (i.e. :func:`~sklearn.utils.discovery.all_functions`) in scikit-learn.
+  :pr:`21469` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
