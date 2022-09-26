@@ -105,6 +105,8 @@ def density(w, **kwargs):
     ----------
     w : array-like
         The sparse vector.
+    **kwargs : keyword arguments
+        Ignored.
 
     Returns
     -------
