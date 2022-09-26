@@ -24,6 +24,8 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.dummy import DummyRegressor
+from sklearn.decomposition import PCA
+from sklearn.pipeline import make_pipeline
 
 
 # Load datasets
@@ -658,3 +660,43 @@ def test_get_features_names_out_classifier_error():
     )
     with pytest.raises(ValueError, match=msg):
         voting.get_feature_names_out()
+
+
+def test_voting_classifier_with_class_weights():
+    # check that VotingClassifier handles class weight for both
+    # numerical labels and string labels
+    X, y = datasets.load_breast_cancer(return_X_y=True)
+
+    # numerical labels
+    class_weight = {0: 1.5, 1: 2.0}
+    estimators = [
+        ("LR", LogisticRegression(class_weight=class_weight)),
+        ("Tree", DecisionTreeClassifier(class_weight=class_weight)),
+        ("RF", RandomForestClassifier(class_weight=class_weight)),
+    ]
+    model = VotingClassifier(estimators)
+    model.fit(X, y)
+
+    # string labels
+    y_string = np.array(["N", "Y"], dtype="object")[y]
+    class_weight = {"N": 1.5, "Y": 2.0}
+    estimators = [
+        ("LR", LogisticRegression(class_weight=class_weight)),
+        ("Tree", DecisionTreeClassifier(class_weight=class_weight)),
+        ("RF", RandomForestClassifier(class_weight=class_weight)),
+    ]
+    model = VotingClassifier(estimators)
+    model.fit(X, y_string)
+
+    # string labels with nested meta-estimators
+    log_reg = LogisticRegression(
+        multi_class="multinomial", class_weight=class_weight, random_state=1
+    )
+    rf = RandomForestClassifier(
+        n_estimators=50, class_weight=class_weight, random_state=1
+    )
+    rf_pipe = make_pipeline(PCA(), rf)
+    eclf1 = VotingClassifier(
+        estimators=[("lr", log_reg), ("rf", rf_pipe)], voting="hard"
+    )
+    eclf1 = eclf1.fit(X, y_string)

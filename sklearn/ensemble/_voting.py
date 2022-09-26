@@ -17,6 +17,7 @@ from abc import abstractmethod
 from numbers import Integral
 
 import numpy as np
+from typing import Mapping
 
 from joblib import Parallel
 
@@ -309,6 +310,31 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self.flatten_transform = flatten_transform
         self.verbose = verbose
 
+    def _validate_estimators(self):
+        names, clfs = super()._validate_estimators()
+
+        updated_clfs = []
+        for clf in clfs:
+            if clf == "drop":
+                continue
+
+            params_with_class_weights = [
+                (k, v)
+                for k, v in clf.get_params(deep=True).items()
+                if k.endswith("class_weight") and isinstance(v, Mapping)
+            ]
+            # re-encode params with class weights
+            if params_with_class_weights:
+                clf = clone(clf)
+                for k, v in params_with_class_weights:
+                    labels, weights = zip(*v.items())
+                    encoded_labels = self.le_.transform(labels)
+                    new_weights = dict(zip(encoded_labels, weights))
+                    clf.set_params(**{k: new_weights})
+
+            updated_clfs.append(clf)
+        return names, tuple(updated_clfs)
+
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
 
@@ -343,7 +369,6 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self.le_ = LabelEncoder().fit(y)
         self.classes_ = self.le_.classes_
         transformed_y = self.le_.transform(y)
-
         return super().fit(X, transformed_y, sample_weight)
 
     def predict(self, X):
