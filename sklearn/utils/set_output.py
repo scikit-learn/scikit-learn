@@ -233,7 +233,6 @@ def _safe_set_output(estimator, *, transform=None):
     """Safely call estimator.set_output and error if it not available.
 
     This is used by meta-estimators to set the output for child estimators.
-    See the :ref:`developer_api_set_output` for details.
 
     Parameters
     ----------
