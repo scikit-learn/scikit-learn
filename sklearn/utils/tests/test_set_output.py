@@ -122,10 +122,17 @@ def test_set_output_method():
 
     X = np.asarray([[1, 0, 3], [0, 0, 1]])
     est = EstimatorWithSetOutput().fit(X)
+
+    # transform=None is a noop
+    est2 = est.set_output(transform=None)
+    assert est2 is est
+    X_trans_np = est2.transform(X)
+    assert isinstance(X_trans_np, np.ndarray)
+
     est.set_output(transform="pandas")
 
-    X_trans = est.transform(X)
-    assert isinstance(X_trans, pd.DataFrame)
+    X_trans_pd = est.transform(X)
+    assert isinstance(X_trans_pd, pd.DataFrame)
 
 
 def test_set_output_method_error():

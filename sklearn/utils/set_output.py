@@ -223,7 +223,7 @@ class _SetOutputMixin:
             Estimator instance.
         """
         if transform is None:
-            return
+            return self
 
         if not hasattr(self, "_sklearn_output_config"):
             self._sklearn_output_config = {}
