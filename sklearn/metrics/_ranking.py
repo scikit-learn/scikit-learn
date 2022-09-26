@@ -23,7 +23,7 @@ import warnings
 from functools import partial
 
 import numpy as np
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, issparse
 from scipy.stats import rankdata
 
 from ..utils import assert_all_finite
@@ -419,8 +419,9 @@ def roc_auc_score(
         If ``None``, the scores for each class are returned.
         Otherwise, this determines the type of averaging performed on the data.
         Note: multiclass ROC AUC currently only handles the 'macro' and
-        'weighted' averages. For multiclass targets, `average=None`
-        is only implemented for `multi_class='ovo'`.
+        'weighted' averages. For multiclass targets, `average=None` is only
+        implemented for `multi_class='ovo'` and `average='micro'` is only
+        implemented for `multi_class='ovr'`.
 
         ``'micro'``:
             Calculate metrics globally by considering each element of the label
@@ -612,9 +613,15 @@ def _multiclass_roc_auc_score(
             Calculate metrics for the multiclass case using the one-vs-one
             approach.
 
-    average : {'macro', 'weighted'}
+    average : {'micro', 'macro', 'weighted'}
         Determines the type of averaging performed on the pairwise binary
         metric scores
+        ``'micro'``:
+            Calculate metrics for the binarized-raveled classes. Only supported
+            for `multi_class='ovr'`.
+
+        .. versionadded:: 1.2
+
         ``'macro'``:
             Calculate metrics for each label, and find their unweighted
             mean. This does not take label imbalance into account. Classes
@@ -636,6 +643,8 @@ def _multiclass_roc_auc_score(
 
     # validation for multiclass parameter specifications
     average_options = ("macro", "weighted", None)
+    if multi_class == "ovr":
+        average_options = ("micro",) + average_options
     if average not in average_options:
         raise ValueError(
             "average must be one of {0} for multiclass problems".format(average_options)
@@ -871,7 +880,10 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
     )
 
     ps = tps + fps
-    precision = np.divide(tps, ps, where=(ps != 0))
+    # Initialize the result array with zeros to make sure that precision[ps == 0]
+    # does not contain uninitialized values.
+    precision = np.zeros_like(tps)
+    np.divide(tps, ps, out=precision, where=(ps != 0))
 
     # When no positive label in y_true, recall is set to 1 for all thresholds
     # tps[-1] == 0 <=> y_true == all negative labels
@@ -1070,7 +1082,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     0.416...
     """
     check_consistent_length(y_true, y_score, sample_weight)
-    y_true = check_array(y_true, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=False, accept_sparse="csr")
     y_score = check_array(y_score, ensure_2d=False)
 
     if y_true.shape != y_score.shape:
@@ -1083,7 +1095,9 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     ):
         raise ValueError("{0} format is not supported".format(y_type))
 
-    y_true = csr_matrix(y_true)
+    if not issparse(y_true):
+        y_true = csr_matrix(y_true)
+
     y_score = -y_score
 
     n_samples, n_labels = y_true.shape
