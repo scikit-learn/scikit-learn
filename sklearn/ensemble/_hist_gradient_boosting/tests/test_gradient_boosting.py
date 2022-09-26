@@ -1161,10 +1161,12 @@ def test_interaction_cst_numerically():
     X_delta_1 = X_test + [0, delta]
     X_delta_0_1 = X_test + [delta, delta]
 
-    # Note: For true y, we have
+    # Note: For the y from above as a function of x0 and x1, we have
     # y(x0+d, x1+d) = y(x0, x1) + 5 * d * (2/5 + x0 + x1) + 5 * d**2
-    # y(x0+d, x1) = y(x0, x1) + 5 * d * (1/5 + x1)
-    # y(x0, x1+d) = y(x0, x1) + 5 * d * (1/5 + x0)
+    # y(x0+d, x1)   = y(x0, x1) + 5 * d * (1/5 + x1)
+    # y(x0,   x1+d) = y(x0, x1) + 5 * d * (1/5 + x0)
+    # Without interaction constraints, we would expect a result of 5 * d**2 for the
+    # following expression, but zero with constraints in place.
     assert_allclose(
         est_no_interactions.predict(X_delta_0_1)
         + est_no_interactions.predict(X_test)
