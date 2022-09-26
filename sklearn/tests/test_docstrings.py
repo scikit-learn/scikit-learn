@@ -32,7 +32,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.is_scalar_nan",
     "sklearn.utils.metaestimators.available_if",
     "sklearn.utils.metaestimators.if_delegate_has_method",
-    "sklearn.utils.sparsefuncs.inplace_swap_row_csc",
     "sklearn.utils.sparsefuncs.inplace_swap_row_csr",
 ]
 FUNCTION_DOCSTRING_IGNORE_LIST = set(FUNCTION_DOCSTRING_IGNORE_LIST)
