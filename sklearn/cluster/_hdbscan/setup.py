@@ -13,8 +13,6 @@ def configuration(parent_package="", top_path=None):
 
     config = Configuration("_hdbscan", parent_package, top_path)
 
-    # HDBSCAN subpackage
-    config.add_subpackage("tests")
     config.add_extension(
         "_linkage",
         sources=["_linkage.pyx"],
