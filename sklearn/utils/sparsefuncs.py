@@ -265,8 +265,7 @@ def inplace_row_scale(X, scale):
 
 
 def inplace_swap_row_csc(X, m, n):
-    """
-    Swaps two rows of a CSC matrix in-place.
+    """Swap two rows of a CSC matrix in-place.
 
     Parameters
     ----------

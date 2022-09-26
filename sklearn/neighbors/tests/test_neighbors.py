@@ -728,21 +728,6 @@ def test_radius_neighbors_classifier(
     assert_array_equal(y_pred, y_str[:n_test_pts])
 
 
-# TODO: Remove in v1.2
-def test_radius_neighbors_classifier_kwargs_is_deprecated():
-    extra_kwargs = {
-        "unused_param": "",
-        "extra_param": None,
-    }
-    msg = (
-        "Passing additional keyword parameters has no effect and is deprecated "
-        "in 1.0. An error will be raised from 1.2 and beyond. The ignored "
-        f"keyword parameter(s) are: {extra_kwargs.keys()}."
-    )
-    with pytest.warns(FutureWarning, match=re.escape(msg)):
-        neighbors.RadiusNeighborsClassifier(**extra_kwargs)
-
-
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
 @pytest.mark.parametrize("weights", WEIGHTS)
 @pytest.mark.parametrize("outlier_label", [0, -1, None])
