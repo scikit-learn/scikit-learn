@@ -7,12 +7,6 @@ from .._config import get_config
 from ._available_if import available_if
 
 
-__all__ = [
-    "get_output_config",
-    "safe_set_output",
-]
-
-
 def _wrap_in_pandas_container(
     data_to_wrap,
     *,
@@ -59,12 +53,8 @@ def _wrap_in_pandas_container(
     return pd.DataFrame(data_to_wrap, index=index, columns=columns)
 
 
-def get_output_config(method, estimator=None):
+def _get_output_config(method, estimator=None):
     """Get output configure based on estimator and global configuration.
-
-    .. note:: Experimental API
-        The `get_output_config` API is experimental and subject to change without
-        deprecation.
 
     Parameters
     ----------
@@ -122,7 +112,7 @@ def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
         If the output config is "pandas", return `data_to_wrap` as a pandas
         DataFrame.
     """
-    output_config = get_output_config(method, estimator)
+    output_config = _get_output_config(method, estimator)
 
     if output_config["dense"] == "default" or not _auto_wrap_is_configured(estimator):
         return data_to_wrap
@@ -239,15 +229,11 @@ class _SetOutputMixin:
         return self
 
 
-def safe_set_output(estimator, *, transform=None):
+def _safe_set_output(estimator, *, transform=None):
     """Safely call estimator.set_output and error if it not available.
 
     This is used by meta-estimators to set the output for child estimators.
     See the :ref:`developer_api_set_output` for details.
-
-    .. note:: Experimental API
-        The `safe_set_output` API is experimental and subject to change without
-        deprecation.
 
     Parameters
     ----------
