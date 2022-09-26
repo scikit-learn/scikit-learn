@@ -127,7 +127,7 @@ def set_config(
         packages to leverage specific hardware platforms using frameworks or
         libraries outside of the usual scikit-learn project dependencies.
 
-        TODO: add link to doc
+        See the :ref:`User Guide <engine>` for more details.
 
         .. versionadded:: 1.3
 
@@ -239,7 +239,7 @@ def config_context(
         packages to leverage specific hardware platforms using frameworks or
         libraries outside of the usual scikit-learn project dependencies.
 
-        TODO: add link to doc
+        See the :ref:`User Guide <engine>` for more details.
 
         .. versionadded:: 1.3
 
