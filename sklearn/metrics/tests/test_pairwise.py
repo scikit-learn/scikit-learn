@@ -446,7 +446,9 @@ def test_pairwise_distances_argmin_min(dtype):
     assert_array_almost_equal(vals, expected_vals)
     # sparse matrix case
     idxsp, valssp = pairwise_distances_argmin_min(Xsp, Ysp, metric="euclidean")
+    idxsp2 = pairwise_distances_argmin(Xsp, Ysp, metric="euclidean")
     assert_array_almost_equal(idxsp, expected_idx)
+    assert_array_almost_equal(idxsp2, expected_idx)
     assert_array_almost_equal(valssp, expected_vals)
     # We don't want np.matrix here
     assert type(idxsp) == np.ndarray
@@ -478,7 +480,9 @@ def test_pairwise_distances_argmin_min(dtype):
     assert_array_almost_equal(vals, expected_vals)
     # sparse matrix case
     idxsp, valssp = pairwise_distances_argmin_min(Xsp, Ysp, metric="manhattan")
+    idxsp2 = pairwise_distances_argmin(Xsp, Ysp, metric="manhattan")
     assert_array_almost_equal(idxsp, expected_idx)
+    assert_array_almost_equal(idxsp2, expected_idx)
     assert_array_almost_equal(valssp, expected_vals)
 
     # Non-euclidean Scipy distance (callable)
