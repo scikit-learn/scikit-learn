@@ -13,7 +13,6 @@ sparse matrices.
 import numpy as np
 from scipy import sparse
 
-from .deprecation import deprecated
 from ..metrics.pairwise import pairwise_distances
 
 
@@ -21,21 +20,25 @@ from ..metrics.pairwise import pairwise_distances
 # Path and connected component analysis.
 # Code adapted from networkx
 def single_source_shortest_path_length(graph, source, *, cutoff=None):
-    """Return the shortest path length from source to all reachable nodes.
-
-    Returns a dictionary of shortest path lengths keyed by target.
+    """Return the length of the shortest path from source to all reachable nodes.
 
     Parameters
     ----------
-    graph : {sparse matrix, ndarray} of shape (n, n)
+    graph : {sparse matrix, ndarray} of shape (n_nodes, n_nodes)
         Adjacency matrix of the graph. Sparse matrix of format LIL is
         preferred.
 
     source : int
-       Starting node for path.
+       Start node for path.
 
     cutoff : int, default=None
         Depth to stop the search - only paths of length <= cutoff are returned.
+
+    Returns
+    -------
+    paths : dict
+        Reachable end nodes mapped to length of path from source,
+        i.e. `{end: path_length}`.
 
     Examples
     --------
@@ -43,12 +46,12 @@ def single_source_shortest_path_length(graph, source, *, cutoff=None):
     >>> import numpy as np
     >>> graph = np.array([[ 0, 1, 0, 0],
     ...                   [ 1, 0, 1, 0],
-    ...                   [ 0, 1, 0, 1],
-    ...                   [ 0, 0, 1, 0]])
-    >>> list(sorted(single_source_shortest_path_length(graph, 0).items()))
-    [(0, 0), (1, 1), (2, 2), (3, 3)]
+    ...                   [ 0, 1, 0, 0],
+    ...                   [ 0, 0, 0, 0]])
+    >>> single_source_shortest_path_length(graph, 0)
+    {0: 0, 1: 1, 2: 2}
     >>> graph = np.ones((6, 6))
-    >>> list(sorted(single_source_shortest_path_length(graph, 2).items()))
+    >>> sorted(single_source_shortest_path_length(graph, 2).items())
     [(0, 1), (1, 1), (2, 0), (3, 1), (4, 1), (5, 1)]
     """
     if sparse.isspmatrix(graph):
@@ -69,53 +72,6 @@ def single_source_shortest_path_length(graph, source, *, cutoff=None):
             break
         level += 1
     return seen  # return all path lengths as dictionary
-
-
-@deprecated(
-    "`graph_shortest_path` is deprecated in 1.0 (renaming of 0.25) and will "
-    "be removed in 1.2. Use `scipy.sparse.csgraph.shortest_path` instead."
-)
-def graph_shortest_path(dist_matrix, directed=True, method="auto"):
-    """Shortest-path graph search on a positive directed or undirected graph.
-
-    Parameters
-    ----------
-    dist_matrix : arraylike or sparse matrix, shape = (N,N)
-        Array of positive distances.
-        If vertex i is connected to vertex j, then dist_matrix[i,j] gives
-        the distance between the vertices.
-        If vertex i is not connected to vertex j, then dist_matrix[i,j] = 0
-
-    directed : boolean
-        if True, then find the shortest path on a directed graph: only
-        progress from a point to its neighbors, not the other way around.
-        if False, then find the shortest path on an undirected graph: the
-        algorithm can progress from a point to its neighbors and vice versa.
-
-    method : {'auto', 'FW', 'D'}, default='auto'
-        method to use.  Options are
-        'auto' : attempt to choose the best method for the current problem
-        'FW' : Floyd-Warshall algorithm.  O[N^3]
-        'D' : Dijkstra's algorithm with Fibonacci stacks.  O[(k+log(N))N^2]
-
-    Returns
-    -------
-    G : np.ndarray, float, shape = [N,N]
-        G[i,j] gives the shortest distance from point i to point j
-        along the graph.
-
-    Notes
-    -----
-    As currently implemented, Dijkstra's algorithm does not work for
-    graphs with direction-dependent distances when directed == False.
-    i.e., if dist_matrix[i,j] and dist_matrix[j,i] are not equal and
-    both are nonzero, method='D' will not necessarily yield the correct
-    result.
-    Also, these routines have not been tested for graphs with negative
-    distances.  Negative distances can lead to infinite cycles that must
-    be handled by specialized algorithms.
-    """
-    return sparse.csgraph.shortest_path(dist_matrix, method=method, directed=directed)
 
 
 def _fix_connected_components(

@@ -63,7 +63,7 @@ from ..tree import (
     ExtraTreeRegressor,
 )
 from ..tree._tree import DTYPE, DOUBLE
-from ..utils import check_random_state, compute_sample_weight, deprecated
+from ..utils import check_random_state, compute_sample_weight
 from ..exceptions import DataConversionWarning
 from ._base import BaseEnsemble, _partition_estimators
 from ..utils.fixes import delayed
@@ -197,7 +197,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     instead.
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "bootstrap": ["boolean"],
         "oob_score": ["boolean"],
@@ -215,7 +215,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     @abstractmethod
     def __init__(
         self,
-        base_estimator,
+        estimator,
         n_estimators=100,
         *,
         estimator_params=tuple(),
@@ -227,11 +227,13 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         warm_start=False,
         class_weight=None,
         max_samples=None,
+        base_estimator="deprecated",
     ):
         super().__init__(
-            base_estimator=base_estimator,
+            estimator=estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
+            base_estimator=base_estimator,
         )
 
         self.bootstrap = bootstrap
@@ -405,24 +407,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         else:
             n_samples_bootstrap = None
 
-        self.base_estimator_ = self._validate_estimator()
-        # TODO(1.2): Remove "mse" and "mae"
-        if isinstance(self, (RandomForestRegressor, ExtraTreesRegressor)):
-            if self.criterion == "mse":
-                warn(
-                    "Criterion 'mse' was deprecated in v1.0 and will be "
-                    "removed in version 1.2. Use `criterion='squared_error'` "
-                    "which is equivalent.",
-                    FutureWarning,
-                )
-            elif self.criterion == "mae":
-                warn(
-                    "Criterion 'mae' was deprecated in v1.0 and will be "
-                    "removed in version 1.2. Use `criterion='absolute_error'` "
-                    "which is equivalent.",
-                    FutureWarning,
-                )
+        # TODO(1.4): change to
+        # self.estimator_ = self._validate_estimator()
+        self._estimator = self._validate_estimator()
 
+        if isinstance(self, (RandomForestRegressor, ExtraTreesRegressor)):
             # TODO(1.3): Remove "auto"
             if self.max_features == "auto":
                 warn(
@@ -654,17 +643,6 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         all_importances = np.mean(all_importances, axis=0, dtype=np.float64)
         return all_importances / np.sum(all_importances)
 
-    # TODO: Remove in 1.2
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `n_features_` was deprecated in version 1.0 and will be "
-        "removed in 1.2. Use `n_features_in_` instead."
-    )
-    @property
-    def n_features_(self):
-        """Number of features when fitting the estimator."""
-        return self.n_features_in_
-
 
 def _accumulate_prediction(predict, X, out, lock):
     """
@@ -693,7 +671,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
     @abstractmethod
     def __init__(
         self,
-        base_estimator,
+        estimator,
         n_estimators=100,
         *,
         estimator_params=tuple(),
@@ -705,9 +683,10 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
         warm_start=False,
         class_weight=None,
         max_samples=None,
+        base_estimator="deprecated",
     ):
         super().__init__(
-            base_estimator,
+            estimator=estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
             bootstrap=bootstrap,
@@ -718,6 +697,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             warm_start=warm_start,
             class_weight=class_weight,
             max_samples=max_samples,
+            base_estimator=base_estimator,
         )
 
     @staticmethod
@@ -954,7 +934,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
     @abstractmethod
     def __init__(
         self,
-        base_estimator,
+        estimator,
         n_estimators=100,
         *,
         estimator_params=tuple(),
@@ -965,9 +945,10 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
         verbose=0,
         warm_start=False,
         max_samples=None,
+        base_estimator="deprecated",
     ):
         super().__init__(
-            base_estimator,
+            estimator,
             n_estimators=n_estimators,
             estimator_params=estimator_params,
             bootstrap=bootstrap,
@@ -977,6 +958,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             verbose=verbose,
             warm_start=warm_start,
             max_samples=max_samples,
+            base_estimator=base_estimator,
         )
 
     def predict(self, X):
@@ -1287,9 +1269,20 @@ class RandomForestClassifier(ForestClassifier):
 
     Attributes
     ----------
+    estimator_ : :class:`~sklearn.tree.DecisionTreeClassifier`
+        The child estimator template used to create the collection of fitted
+        sub-estimators.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
+
     base_estimator_ : DecisionTreeClassifier
         The child estimator template used to create the collection of fitted
         sub-estimators.
+
+        .. deprecated:: 1.2
+            `base_estimator_` is deprecated and will be removed in 1.4.
+            Use `estimator_` instead.
 
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
@@ -1301,13 +1294,6 @@ class RandomForestClassifier(ForestClassifier):
     n_classes_ : int or list
         The number of classes (single output problem), or a list containing the
         number of classes for each output (multi-output problem).
-
-    n_features_ : int
-        The number of features when ``fit`` is performed.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1385,7 +1371,7 @@ class RandomForestClassifier(ForestClassifier):
     [1]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **ForestClassifier._parameter_constraints,
         **DecisionTreeClassifier._parameter_constraints,
         "class_weight": [
@@ -1420,7 +1406,7 @@ class RandomForestClassifier(ForestClassifier):
         max_samples=None,
     ):
         super().__init__(
-            base_estimator=DecisionTreeClassifier(),
+            estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
             estimator_params=(
                 "criterion",
@@ -1495,14 +1481,6 @@ class RandomForestRegressor(ForestRegressor):
 
         .. versionadded:: 1.0
            Poisson criterion.
-
-        .. deprecated:: 1.0
-            Criterion "mse" was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion="squared_error"` which is equivalent.
-
-        .. deprecated:: 1.0
-            Criterion "mae" was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion="absolute_error"` which is equivalent.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -1641,9 +1619,20 @@ class RandomForestRegressor(ForestRegressor):
 
     Attributes
     ----------
+    estimator_ : :class:`~sklearn.tree.DecisionTreeRegressor`
+        The child estimator template used to create the collection of fitted
+        sub-estimators.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
+
     base_estimator_ : DecisionTreeRegressor
         The child estimator template used to create the collection of fitted
         sub-estimators.
+
+        .. deprecated:: 1.2
+            `base_estimator_` is deprecated and will be removed in 1.4.
+            Use `estimator_` instead.
 
     estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
@@ -1658,13 +1647,6 @@ class RandomForestRegressor(ForestRegressor):
         Warning: impurity-based feature importances can be misleading for
         high cardinality features (many unique values). See
         :func:`sklearn.inspection.permutation_importance` as an alternative.
-
-    n_features_ : int
-        The number of features when ``fit`` is performed.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1733,7 +1715,7 @@ class RandomForestRegressor(ForestRegressor):
     [-8.32987858]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **ForestRegressor._parameter_constraints,
         **DecisionTreeRegressor._parameter_constraints,
     }
@@ -1761,7 +1743,7 @@ class RandomForestRegressor(ForestRegressor):
         max_samples=None,
     ):
         super().__init__(
-            base_estimator=DecisionTreeRegressor(),
+            estimator=DecisionTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=(
                 "criterion",
@@ -1984,9 +1966,20 @@ class ExtraTreesClassifier(ForestClassifier):
 
     Attributes
     ----------
+    estimator_ : :class:`~sklearn.tree.ExtraTreesClassifier`
+        The child estimator template used to create the collection of fitted
+        sub-estimators.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
+
     base_estimator_ : ExtraTreesClassifier
         The child estimator template used to create the collection of fitted
         sub-estimators.
+
+        .. deprecated:: 1.2
+            `base_estimator_` is deprecated and will be removed in 1.4.
+            Use `estimator_` instead.
 
     estimators_ : list of DecisionTreeClassifier
         The collection of fitted sub-estimators.
@@ -2009,13 +2002,6 @@ class ExtraTreesClassifier(ForestClassifier):
         Warning: impurity-based feature importances can be misleading for
         high cardinality features (many unique values). See
         :func:`sklearn.inspection.permutation_importance` as an alternative.
-
-    n_features_ : int
-        The number of features when ``fit`` is performed.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -2074,7 +2060,7 @@ class ExtraTreesClassifier(ForestClassifier):
     array([1])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **ForestClassifier._parameter_constraints,
         **DecisionTreeClassifier._parameter_constraints,
         "class_weight": [
@@ -2109,7 +2095,7 @@ class ExtraTreesClassifier(ForestClassifier):
         max_samples=None,
     ):
         super().__init__(
-            base_estimator=ExtraTreeClassifier(),
+            estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
             estimator_params=(
                 "criterion",
@@ -2179,14 +2165,6 @@ class ExtraTreesRegressor(ForestRegressor):
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
-
-        .. deprecated:: 1.0
-            Criterion "mse" was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion="squared_error"` which is equivalent.
-
-        .. deprecated:: 1.0
-            Criterion "mae" was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion="absolute_error"` which is equivalent.
 
     max_depth : int, default=None
         The maximum depth of the tree. If None, then nodes are expanded until
@@ -2329,9 +2307,20 @@ class ExtraTreesRegressor(ForestRegressor):
 
     Attributes
     ----------
+    estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor`
+        The child estimator template used to create the collection of fitted
+        sub-estimators.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
+
     base_estimator_ : ExtraTreeRegressor
         The child estimator template used to create the collection of fitted
         sub-estimators.
+
+        .. deprecated:: 1.2
+            `base_estimator_` is deprecated and will be removed in 1.4.
+            Use `estimator_` instead.
 
     estimators_ : list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
@@ -2346,13 +2335,6 @@ class ExtraTreesRegressor(ForestRegressor):
         Warning: impurity-based feature importances can be misleading for
         high cardinality features (many unique values). See
         :func:`sklearn.inspection.permutation_importance` as an alternative.
-
-    n_features_ : int
-        The number of features.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -2409,7 +2391,7 @@ class ExtraTreesRegressor(ForestRegressor):
     0.2727...
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **ForestRegressor._parameter_constraints,
         **DecisionTreeRegressor._parameter_constraints,
     }
@@ -2437,7 +2419,7 @@ class ExtraTreesRegressor(ForestRegressor):
         max_samples=None,
     ):
         super().__init__(
-            base_estimator=ExtraTreeRegressor(),
+            estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=(
                 "criterion",
@@ -2581,22 +2563,26 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
 
     Attributes
     ----------
-    base_estimator_ : :class:`~sklearn.tree.ExtraTreeClassifier` instance
+    estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor` instance
         The child estimator template used to create the collection of fitted
         sub-estimators.
 
-    estimators_ : list of :class:`~sklearn.tree.ExtraTreeClassifier` instances
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
+
+    base_estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor` instance
+        The child estimator template used to create the collection of fitted
+        sub-estimators.
+
+        .. deprecated:: 1.2
+            `base_estimator_` is deprecated and will be removed in 1.4.
+            Use `estimator_` instead.
+
+    estimators_ : list of :class:`~sklearn.tree.ExtraTreeRegressor` instances
         The collection of fitted sub-estimators.
 
     feature_importances_ : ndarray of shape (n_features,)
         The feature importances (the higher, the more important the feature).
-
-    n_features_ : int
-        The number of features when ``fit`` is performed.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -2649,7 +2635,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
            [0., 1., 1., 0., 1., 0., 0., 1., 1., 0.]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "n_jobs": [Integral, None],
         "verbose": ["verbose"],
@@ -2680,7 +2666,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         warm_start=False,
     ):
         super().__init__(
-            base_estimator=ExtraTreeRegressor(),
+            estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=(
                 "criterion",
@@ -2774,7 +2760,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         y = rnd.uniform(size=_num_samples(X))
         super().fit(X, y, sample_weight=sample_weight)
 
-        self.one_hot_encoder_ = OneHotEncoder(sparse=self.sparse_output)
+        self.one_hot_encoder_ = OneHotEncoder(sparse_output=self.sparse_output)
         output = self.one_hot_encoder_.fit_transform(self.apply(X))
         self._n_features_out = output.shape[1]
         return output

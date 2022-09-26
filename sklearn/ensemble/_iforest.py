@@ -116,9 +116,20 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
     Attributes
     ----------
+    estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor` instance
+        The child estimator template used to create the collection of
+        fitted sub-estimators.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
+
     base_estimator_ : ExtraTreeRegressor instance
         The child estimator template used to create the collection of
         fitted sub-estimators.
+
+        .. deprecated:: 1.2
+            `base_estimator_` is deprecated and will be removed in 1.4.
+            Use `estimator_` instead.
 
     estimators_ : list of ExtraTreeRegressor instances
         The collection of fitted sub-estimators.
@@ -144,13 +155,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
         (samples with decision function < 0) in training.
 
         .. versionadded:: 0.20
-
-    n_features_ : int
-        The number of features when ``fit`` is performed.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -197,7 +201,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
     array([ 1,  1, -1])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "max_samples": [
             StrOptions({"auto"}),
@@ -233,8 +237,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         warm_start=False,
     ):
         super().__init__(
-            base_estimator=None,
-            # here above max_features has no links with self.max_features
+            estimator=None,
             bootstrap=bootstrap,
             bootstrap_features=False,
             n_estimators=n_estimators,
@@ -260,7 +263,10 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
     def _get_estimator(self):
         return ExtraTreeRegressor(
-            max_features=1, splitter="random", random_state=self.random_state
+            # here max_features has no links with self.max_features
+            max_features=1,
+            splitter="random",
+            random_state=self.random_state,
         )
 
     def fit(self, X, y=None, sample_weight=None):

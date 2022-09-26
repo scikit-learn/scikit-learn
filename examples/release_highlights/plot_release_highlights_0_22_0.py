@@ -36,7 +36,10 @@ or with conda::
 
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
-from sklearn.metrics import plot_roc_curve
+
+# from sklearn.metrics import plot_roc_curve
+from sklearn.metrics import RocCurveDisplay
+
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.datasets import make_classification
 import matplotlib.pyplot as plt
@@ -49,8 +52,11 @@ svc.fit(X_train, y_train)
 rfc = RandomForestClassifier(random_state=42)
 rfc.fit(X_train, y_train)
 
-svc_disp = plot_roc_curve(svc, X_test, y_test)
-rfc_disp = plot_roc_curve(rfc, X_test, y_test, ax=svc_disp.ax_)
+# plot_roc_curve has been removed in version 1.2. From 1.2, use RocCurveDisplay instead.
+# svc_disp = plot_roc_curve(svc, X_test, y_test)
+# rfc_disp = plot_roc_curve(rfc, X_test, y_test, ax=svc_disp.ax_)
+svc_disp = RocCurveDisplay.from_estimator(svc, X_test, y_test)
+rfc_disp = RocCurveDisplay.from_estimator(rfc, X_test, y_test, ax=svc_disp.ax_)
 rfc_disp.figure_.suptitle("ROC curve comparison")
 
 plt.show()

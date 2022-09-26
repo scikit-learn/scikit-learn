@@ -5,6 +5,7 @@ import re
 from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
+from numbers import Real
 
 import numpy as np
 from scipy import sparse
@@ -13,6 +14,7 @@ import joblib
 
 from . import IS_PYPY
 from .. import config_context
+from ._param_validation import Interval
 from ._testing import _get_args
 from ._testing import assert_raise_message
 from ._testing import assert_array_equal
@@ -269,6 +271,10 @@ def _yield_clustering_checks(clusterer):
 
 
 def _yield_outliers_checks(estimator):
+
+    # checks for the contamination parameter
+    if hasattr(estimator, "contamination"):
+        yield check_outlier_contamination
 
     # checks for outlier detectors that have a fit_predict method
     if hasattr(estimator, "fit_predict"):
@@ -766,6 +772,11 @@ def _set_checking_parameters(estimator):
 
     if name in CROSS_DECOMPOSITION:
         estimator.set_params(n_components=1)
+
+    # Default "auto" parameter can lead to different ordering of eigenvalues on
+    # windows: #24105
+    if name == "SpectralEmbedding":
+        estimator.set_params(eigen_tol=1e-5)
 
 
 class _NotAnArray:
@@ -2360,6 +2371,33 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
         if num_outliers != expected_outliers:
             decision = estimator.decision_function(X)
             check_outlier_corruption(num_outliers, expected_outliers, decision)
+
+
+def check_outlier_contamination(name, estimator_orig):
+    # Check that the contamination parameter is in (0.0, 0.5] when it is an
+    # interval constraint.
+
+    if not hasattr(estimator_orig, "_parameter_constraints"):
+        # Only estimator implementing parameter constraints will be checked
+        return
+
+    if "contamination" not in estimator_orig._parameter_constraints:
+        return
+
+    contamination_constraints = estimator_orig._parameter_constraints["contamination"]
+    if not any([isinstance(c, Interval) for c in contamination_constraints]):
+        raise AssertionError(
+            "contamination constraints should contain a Real Interval constraint."
+        )
+
+    for constraint in contamination_constraints:
+        if isinstance(constraint, Interval):
+            assert (
+                constraint.type == Real
+                and constraint.left >= 0.0
+                and constraint.right <= 0.5
+                and (constraint.left > 0 or constraint.closed in {"right", "neither"})
+            ), "contamination constraint should be an interval in (0, 0.5]"
 
 
 @ignore_warnings(category=FutureWarning)
@@ -4080,7 +4118,7 @@ def check_param_validation(name, estimator_orig):
 
             with raises(ValueError, match=match, err_msg=err_msg):
                 if any(
-                    X_type.endswith("labels")
+                    isinstance(X_type, str) and X_type.endswith("labels")
                     for X_type in _safe_tags(estimator, key="X_types")
                 ):
                     # The estimator is a label transformer and take only `y`

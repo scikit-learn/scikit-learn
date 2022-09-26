@@ -61,9 +61,6 @@ from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 from sklearn.utils._testing import TempMemmap
 
 
-# TODO: Remove np.matrix usage in 1.2
-@pytest.mark.filterwarnings("ignore:np.matrix usage is deprecated in 1.0:FutureWarning")
-@pytest.mark.filterwarnings("ignore:the matrix subclass:PendingDeprecationWarning")
 def test_as_float_array():
     # Test function for as_float_array
     X = np.ones((3, 10), dtype=np.int32)
@@ -97,7 +94,6 @@ def test_as_float_array():
 
     # Test the copy parameter with some matrices
     matrices = [
-        np.matrix(np.arange(5)),
         sp.csc_matrix(np.arange(5)).toarray(),
         _sparse_random_matrix(10, 10, density=0.10).toarray(),
     ]
@@ -115,15 +111,11 @@ def test_as_float_array_nan(X):
     assert_allclose_dense_sparse(X_converted, X)
 
 
-# TODO: Remove np.matrix usage in 1.2
-@pytest.mark.filterwarnings("ignore:np.matrix usage is deprecated in 1.0:FutureWarning")
-@pytest.mark.filterwarnings("ignore:the matrix subclass:PendingDeprecationWarning")
 def test_np_matrix():
     # Confirm that input validation code does not return np.matrix
     X = np.arange(12).reshape(3, 4)
 
     assert not isinstance(as_float_array(X), np.matrix)
-    assert not isinstance(as_float_array(np.matrix(X)), np.matrix)
     assert not isinstance(as_float_array(sp.csc_matrix(X)), np.matrix)
 
 
@@ -1633,20 +1625,6 @@ def test_num_features_errors_scalars(X):
         _num_features(X)
 
 
-# TODO: Remove in 1.2
-@pytest.mark.filterwarnings("ignore:the matrix subclass:PendingDeprecationWarning")
-def test_check_array_deprecated_matrix():
-    """Test that matrix support is deprecated in 1.0."""
-
-    X = np.matrix(np.arange(5))
-    msg = (
-        "np.matrix usage is deprecated in 1.0 and will raise a TypeError "
-        "in 1.2. Please convert to a numpy array with np.asarray."
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        check_array(X)
-
-
 @pytest.mark.parametrize(
     "names",
     [list(range(2)), range(2), None, [["a", "b"], ["c", "d"]]],
@@ -1683,7 +1661,6 @@ def test_get_feature_names_numpy():
     assert names is None
 
 
-# TODO: Convert to a error in 1.2
 @pytest.mark.parametrize(
     "names, dtypes",
     [
@@ -1692,18 +1669,17 @@ def test_get_feature_names_numpy():
     ],
     ids=["int-str", "list-str"],
 )
-def test_get_feature_names_invalid_dtypes_warns(names, dtypes):
-    """Get feature names warns when the feature names have mixed dtypes"""
+def test_get_feature_names_invalid_dtypes(names, dtypes):
+    """Get feature names errors when the feature names have mixed dtypes"""
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
 
     msg = re.escape(
         "Feature names only support names that are all strings. "
-        f"Got feature names with dtypes: {dtypes}. An error will be raised"
+        f"Got feature names with dtypes: {dtypes}."
     )
-    with pytest.warns(FutureWarning, match=msg):
+    with pytest.raises(TypeError, match=msg):
         names = _get_feature_names(X)
-    assert names is None
 
 
 class PassthroughTransformer(BaseEstimator):
