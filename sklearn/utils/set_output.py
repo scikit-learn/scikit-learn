@@ -200,6 +200,9 @@ class _SetOutputMixin:
     def set_output(self, *, transform=None):
         """Set output container.
 
+        See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
+        for an example on how to use the API.
+
         .. note:: Experimental API
             The `set_output` API is experimental and subject to change without
             deprecation.
@@ -233,6 +236,7 @@ def safe_set_output(estimator, *, transform=None):
     """Safely call estimator.set_output and error if it not available.
 
     This is used by meta-estimators to set the output for child estimators.
+    See the :ref:`developer_api_set_output` for details.
 
     .. note:: Experimental API
         The `safe_set_output` API is experimental and subject to change without
