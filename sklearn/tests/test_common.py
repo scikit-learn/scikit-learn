@@ -34,6 +34,7 @@ from sklearn.neighbors import (
     RadiusNeighborsClassifier,
     RadiusNeighborsRegressor,
 )
+from sklearn.preprocessing import FunctionTransformer
 from sklearn.semi_supervised import LabelPropagation, LabelSpreading
 
 from sklearn.utils import all_estimators
@@ -509,6 +510,7 @@ SET_OUTPUT_ESTIMATORS = list(
         [
             make_pipeline(StandardScaler(), MinMaxScaler()),
             OneHotEncoder(sparse_output=False),
+            FunctionTransformer(feature_names_out="one-to-one"),
         ],
     )
 )

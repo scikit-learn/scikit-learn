@@ -179,13 +179,13 @@ def test_get_output_config():
     assert config["dense"] == "pandas"
 
 
-class EstimatorWithSetOutputNoAutoWrap(_SetOutputMixin, auto_wrap_output=False):
+class EstimatorWithSetOutputNoAutoWrap(_SetOutputMixin, auto_wrap_output_keys=None):
     def transform(self, X, y=None):
         return X
 
 
 def test_get_output_auto_wrap_false():
-    """Check that auto_wrap_output=False does not wrap."""
+    """Check that auto_wrap_output_keys=None does not wrap."""
     est = EstimatorWithSetOutputNoAutoWrap()
     assert not hasattr(est, "set_output")
 
@@ -193,9 +193,9 @@ def test_get_output_auto_wrap_false():
     assert X is est.transform(X)
 
 
-def test_auto_wrap_output_errors_with_incorrect_input():
-    msg = "auto_wrap_output must be a bool"
+def test_auto_wrap_output_keys_errors_with_incorrect_input():
+    msg = "auto_wrap_output_keys must be None or a tuple of keys."
     with pytest.raises(ValueError, match=msg):
 
-        class BadEstimator(_SetOutputMixin, auto_wrap_output="bad_parameter"):
+        class BadEstimator(_SetOutputMixin, auto_wrap_output_keys="bad_parameter"):
             pass

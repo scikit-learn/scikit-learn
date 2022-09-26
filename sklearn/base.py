@@ -109,7 +109,7 @@ def clone(estimator, *, safe=True):
     return new_object
 
 
-class BaseEstimator:
+class BaseEstimator(_SetOutputMixin):
     """Base class for all estimators in scikit-learn.
 
     Notes
@@ -117,6 +117,10 @@ class BaseEstimator:
     All estimators should specify all the parameters that can be set
     at the class level in their ``__init__`` as explicit keyword
     arguments (no ``*args`` or ``**kwargs``).
+
+    If :term:`get_feature_names_out` is defined and `auto_wrap_output` is True,
+    then `BaseEstimator` will automatically wrap `transform` and `fit_transform` to
+    follow the `set_output` API. See the :ref:`developer_api_set_output` for details.
     """
 
     @classmethod
@@ -806,13 +810,8 @@ class BiclusterMixin:
         return data[row_ind[:, np.newaxis], col_ind]
 
 
-class TransformerMixin(_SetOutputMixin):
-    """Mixin class for all transformers in scikit-learn.
-
-    If :term:`get_feature_names_out` is defined and `auto_wrap_output` is True,
-    then `TransformerMixin` will automatically wrap `transform` and `fit_transform` to
-    follow the `set_output` API. See the :ref:`developer_api_set_output` for details.
-    """
+class TransformerMixin:
+    """Mixin class for all transformers in scikit-learn."""
 
     def fit_transform(self, X, y=None, **fit_params):
         """

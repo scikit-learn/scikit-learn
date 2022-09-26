@@ -1503,7 +1503,7 @@ def _make_int_array():
 
 
 class TfidfTransformer(
-    _OneToOneFeatureMixin, TransformerMixin, BaseEstimator, auto_wrap_output=False
+    _OneToOneFeatureMixin, TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
 ):
     """Transform a count matrix to a normalized tf or tf-idf representation.
 

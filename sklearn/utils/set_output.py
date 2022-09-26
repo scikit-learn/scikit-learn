@@ -156,11 +156,13 @@ def _wrap_method_output(f, method):
 def _auto_wrap_is_configured(estimator):
     """Return True if estimator is configured for auto-wrapping the transform method.
 
-    `_SetOutputMixin` sets `_sklearn_auto_wrap_output` to False if auto wrapping is
+    `_SetOutputMixin` sets `_sklearn_auto_wrap_output_keys` to set() if auto wrapping is
     manually disabled.
     """
-    return hasattr(estimator, "get_feature_names_out") and getattr(
-        estimator, "_sklearn_auto_wrap_output", False
+    auto_wrap_output_keys = getattr(estimator, "_sklearn_auto_wrap_output_keys", set())
+    return (
+        hasattr(estimator, "get_feature_names_out")
+        and "transform" in auto_wrap_output_keys
     )
 
 
@@ -174,14 +176,16 @@ class _SetOutputMixin:
     `auto_wrap_output` is True.
     """
 
-    def __init_subclass__(cls, auto_wrap_output=True, **kwargs):
+    def __init_subclass__(cls, auto_wrap_output_keys=("transform",), **kwargs):
         # Dynamically wraps `transform` and `fit_transform` and configure it's
         # output based on `set_output`.
-        if not isinstance(auto_wrap_output, bool):
-            raise ValueError("auto_wrap_output must be a bool")
+        if not (
+            isinstance(auto_wrap_output_keys, tuple) or auto_wrap_output_keys is None
+        ):
+            raise ValueError("auto_wrap_output_keys must be None or a tuple of keys.")
 
-        cls._sklearn_auto_wrap_output = auto_wrap_output
-        if not auto_wrap_output:
+        if auto_wrap_output_keys is None:
+            cls._sklearn_auto_wrap_output_keys = set()
             return
 
         # Mapping from method to key in configurations
@@ -190,9 +194,12 @@ class _SetOutputMixin:
             ("fit_transform", "transform"),
         ]
 
+        cls._sklearn_auto_wrap_output_keys = set()
+
         for method, key in method_to_key:
-            if not hasattr(cls, method):
+            if not hasattr(cls, method) or key not in auto_wrap_output_keys:
                 continue
+            cls._sklearn_auto_wrap_output_keys.add(key)
             wrapped_method = _wrap_method_output(getattr(cls, method), key)
             setattr(cls, method, wrapped_method)
 
