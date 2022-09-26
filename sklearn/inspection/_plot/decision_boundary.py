@@ -111,7 +111,7 @@ class DecisionBoundaryDisplay:
     >>> from sklearn.datasets import load_iris
     >>> from sklearn.inspection import DecisionBoundaryDisplay
     >>> from sklearn.tree import DecisionTreeClassifier
-    >>>  = load_iris()
+    >>> iris = load_iris()
     >>> feature_1, feature_2 = np.meshgrid(
     ...     np.linspace(iris.data[:, 0].min(), iris.data[:, 0].max()),
     ...     np.linspace(iris.data[:, 1].min(), iris.data[:, 1].max())
@@ -121,10 +121,13 @@ class DecisionBoundaryDisplay:
     >>> y_pred = np.reshape(tree.predict(grid), feature_1.shape)
     >>> disp = DecisionBoundaryDisplay(
     ...     xx0=feature_1, xx1=feature_2, response=y_pred
-    ... ).plot()
+    ... )
+    >>> display.plot()
+    <...>
     >>> disp.ax_.scatter(
     ...     iris.data[:, 0], iris.data[:, 1], c=iris.target, edgecolor="black"
     ... )
+    >>> plt.show()
     """
 
     def __init__(self, *, xx0, xx1, response, xlabel=None, ylabel=None):
