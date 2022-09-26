@@ -38,6 +38,12 @@ random sampling procedures.
   It is now consistent and deterministic with all SVD solvers.
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
 
+- |Fix| The condition for early stopping has now been changed in
+  :func:`linear_model._sgd_fast._plain_sgd` which is used by :class:`linear_model.SGDRegressor`
+  and :class:`linear_model.SGDClassifier`. The old condition did not disambiguate between
+  training and validation set and had an effect of overscaling the error tolerance.
+  This has been fixed in :pr:`23798` by :user:`Harsh Agrawal <Harsh14901>`
+
 Changes impacting all modules
 -----------------------------
 
@@ -324,6 +330,11 @@ Changelog
   :pr:`24433` by :user:`Yogendrasingh <iofall>`, :user:`Arisa Y. <arisayosh>`
   and :user:`Tim Head <betatim>`.
 
+- |Fix| Fix average loss calculation when early stopping is enabled in
+  :class:`linear_model.SGDRegressor` and :class:`linear_model.SGDClassifier`.
+  Also updated the condition for early stopping accordingly.
+  :pr:`23798` by :user:`Harsh Agrawal <Harsh14901>`.
+
 :mod:`sklearn.manifold`
 .......................
 
@@ -426,6 +437,13 @@ Changelog
   :class:`neighbors.RadiusNeighborsTransformer`.
   :pr:`24075` by :user:`Valentin Laurent <Valentin-Laurent>`.
 
+:mod:`sklearn.pipeline`
+.......................
+
+- |Enhancement| :meth:`pipeline.FeatureUnion.get_feature_names_out` can now
+  be used when one of the transformers in the :class:`pipeline.FeatureUnion` is
+  `"passthrough"`. :pr:`24058` by :user:`Diederik Perdok <diederikwp>`
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -457,6 +475,9 @@ Changelog
   `lapack_svd_driver`, to specify the lapack driver used in the internal
   deterministic SVD used by the randomized SVD algorithm.
   :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
+
+- |FIX| :func:`utils.multiclass.type_of_target` now properly handles sparse matrices.
+  :pr:`14862` by :user:`Léonard Binet <leonardbinet>`.
 
 Code and Documentation Contributors
 -----------------------------------

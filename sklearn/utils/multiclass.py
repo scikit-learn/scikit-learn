@@ -170,13 +170,11 @@ def is_multilabel(y):
     if issparse(y):
         if isinstance(y, (dok_matrix, lil_matrix)):
             y = y.tocsr()
+        labels = xp.unique_values(y.data)
         return (
             len(y.data) == 0
-            or xp.unique_values(y.data).size == 1
-            and (
-                y.dtype.kind in "biu"
-                or _is_integral_float(xp.unique_values(y.data))  # bool, int, uint
-            )
+            or (labels.size == 1 or (labels.size == 2) and (0 in labels))
+            and (y.dtype.kind in "biu" or _is_integral_float(labels))  # bool, int, uint
         )
     else:
         labels = xp.unique_values(y)
@@ -223,8 +221,9 @@ def type_of_target(y, input_name=""):
 
     Parameters
     ----------
-    y : array-like
-        Target values.
+    y : {array-like, sparse matrix}
+        Target values. If a sparse matrix, `y` is expected to be a
+        CSR/CSC matrix.
 
     input_name : str, default=""
         The data name used to construct the error message.
@@ -303,12 +302,13 @@ def type_of_target(y, input_name=""):
     # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
     with warnings.catch_warnings():
         warnings.simplefilter("error", np.VisibleDeprecationWarning)
-        try:
-            y = xp.asarray(y)
-        except (np.VisibleDeprecationWarning, ValueError):
-            # dtype=object should be provided explicitly for ragged arrays,
-            # see NEP 34
-            y = xp.asarray(y, dtype=object)
+        if not issparse(y):
+            try:
+                y = xp.asarray(y)
+            except np.VisibleDeprecationWarning:
+                # dtype=object should be provided explicitly for ragged arrays,
+                # see NEP 34
+                y = xp.asarray(y, dtype=object)
 
     # The old sequence of sequences format
     try:
@@ -328,25 +328,39 @@ def type_of_target(y, input_name=""):
         pass
 
     # Invalid inputs
-    if y.ndim > 2 or (y.dtype == object and len(y) and not isinstance(y.flat[0], str)):
-        return "unknown"  # [[[1, 2]]] or [obj_1] and not ["label_1"]
+    if y.ndim not in (1, 2):
+        # Number of dimension greater than 2: [[[1, 2]]]
+        return "unknown"
+    if not min(y.shape):
+        # Empty ndarray: []/[[]]
+        if y.ndim == 1:
+            # 1-D empty array: []
+            return "binary"  # []
+        # 2-D empty array: [[]]
+        return "unknown"
+    if not issparse(y) and y.dtype == object and not isinstance(y.flat[0], str):
+        # [obj_1] and not ["label_1"]
+        return "unknown"
 
-    if y.ndim == 2 and y.shape[1] == 0:
-        return "unknown"  # [[]]
-
+    # Check if multioutput
     if y.ndim == 2 and y.shape[1] > 1:
         suffix = "-multioutput"  # [[1, 2], [1, 2]]
     else:
         suffix = ""  # [1, 2, 3] or [[1], [2], [3]]
 
-    # check float and contains non-integer float values
-    if y.dtype.kind == "f" and xp.any(y != y.astype(int)):
+    # Check float and contains non-integer float values
+    if y.dtype.kind == "f":
         # [.1, .2, 3] or [[.1, .2, 3]] or [[1., .2]] and not [1., 2., 3.]
-        _assert_all_finite(y, input_name=input_name)
-        return "continuous" + suffix
+        data = y.data if issparse(y) else y
+        if xp.any(data != data.astype(int)):
+            _assert_all_finite(data, input_name=input_name)
+            return "continuous" + suffix
 
-    if (xp.unique_values(y).shape[0] > 2) or (y.ndim >= 2 and len(y[0]) > 1):
-        return "multiclass" + suffix  # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
+    # Check multiclass
+    first_row = y[0] if not issparse(y) else y.getrow(0).data
+    if xp.unique_values(y).shape[0] > 2 or (y.ndim == 2 and len(first_row) > 1):
+        # [1, 2, 3] or [[1., 2., 3]] or [[1, 2]]
+        return "multiclass" + suffix
     else:
         return "binary"  # [1, 2] or [["a"], ["b"]]
 
