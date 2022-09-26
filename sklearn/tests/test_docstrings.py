@@ -29,11 +29,9 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.fixes.threadpool_limits",
     "sklearn.utils.gen_batches",
     "sklearn.utils.gen_even_slices",
-    "sklearn.utils.graph.single_source_shortest_path_length",
     "sklearn.utils.is_scalar_nan",
     "sklearn.utils.metaestimators.available_if",
     "sklearn.utils.metaestimators.if_delegate_has_method",
-    "sklearn.utils.sparsefuncs.inplace_swap_row_csc",
     "sklearn.utils.sparsefuncs.inplace_swap_row_csr",
 ]
 FUNCTION_DOCSTRING_IGNORE_LIST = set(FUNCTION_DOCSTRING_IGNORE_LIST)
