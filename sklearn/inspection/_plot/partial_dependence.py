@@ -191,10 +191,11 @@ class PartialDependenceDisplay:
     >>> deciles = {0: np.linspace(0, 1, num=5)}
     >>> pd_results = partial_dependence(
     ...     clf, X, features=0, kind="average", grid_resolution=5)
-    >>> disp = PartialDependenceDisplay(
+    >>> display = PartialDependenceDisplay(
     ...     [pd_results], features=features, feature_names=feature_names,
-    ...     target_idx=0, pdp_lim={1: (-1.38, 0.66)}, deciles=deciles)
-    >>> disp.plot()
+    ...     target_idx=0, deciles=deciles
+    ... )
+    >>> display.plot(pdp_lim={1: (-1.38, 0.66)})
     <...>
     >>> plt.show()
     """
