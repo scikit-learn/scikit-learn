@@ -36,7 +36,6 @@ def test_missing_data():
     X_missing_data = X.copy()
     X_missing_data[0] = [np.nan, 1]
     X_missing_data[5] = [np.nan, np.nan]
-    # import pdb; pdb.set_trace()
     model = HDBSCAN().fit(X_missing_data)
 
     (missing_labels_idx,) = (model.labels_ == -2).nonzero()
