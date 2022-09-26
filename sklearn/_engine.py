@@ -38,7 +38,7 @@ def _parse_entry_points(provider_names=None):
     if hasattr(all_entry_points, "select"):
         engine_entry_points = all_entry_points.select(group=SKLEARN_ENGINES_ENTRY_POINT)
     else:
-        engine_entry_points = all_entry_points[SKLEARN_ENGINES_ENTRY_POINT]
+        engine_entry_points = all_entry_points.get(SKLEARN_ENGINES_ENTRY_POINT, ())
     for entry_point in engine_entry_points:
         try:
             spec = _parse_entry_point(entry_point)
