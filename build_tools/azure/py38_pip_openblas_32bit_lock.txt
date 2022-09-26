@@ -12,9 +12,9 @@ execnet==1.9.0
     # via pytest-xdist
 iniconfig==1.1.1
     # via pytest
-joblib==1.1.0
+joblib==1.2.0
     # via -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
-numpy==1.23.2
+numpy==1.23.3
     # via
     #   -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
     #   scipy

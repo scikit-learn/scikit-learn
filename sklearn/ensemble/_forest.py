@@ -2757,7 +2757,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         y = rnd.uniform(size=_num_samples(X))
         super().fit(X, y, sample_weight=sample_weight)
 
-        self.one_hot_encoder_ = OneHotEncoder(sparse=self.sparse_output)
+        self.one_hot_encoder_ = OneHotEncoder(sparse_output=self.sparse_output)
         output = self.one_hot_encoder_.fit_transform(self.apply(X))
         self._n_features_out = output.shape[1]
         return output

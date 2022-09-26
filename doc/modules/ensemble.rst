@@ -706,13 +706,13 @@ space.
 
 .. note::
 
-  For some losses, e.g. the least absolute deviation (LAD) where the gradients
+  For some losses, e.g. ``'absolute_error'`` where the gradients
   are :math:`\pm 1`, the values predicted by a fitted :math:`h_m` are not
   accurate enough: the tree can only output integer values. As a result, the
   leaves values of the tree :math:`h_m` are modified once the tree is
   fitted, such that the leaves values minimize the loss :math:`L_m`. The
-  update is loss-dependent: for the LAD loss, the value of a leaf is updated
-  to the median of the samples in that leaf.
+  update is loss-dependent: for the absolute error loss, the value of 
+  a leaf is updated to the median of the samples in that leaf.
 
 Classification
 ^^^^^^^^^^^^^^
@@ -749,7 +749,7 @@ the parameter ``loss``:
     * Squared error (``'squared_error'``): The natural choice for regression
       due to its superior computational properties. The initial model is
       given by the mean of the target values.
-    * Least absolute deviation (``'lad'``): A robust loss function for
+    * Absolute error (``'absolute_error'``): A robust loss function for
       regression. The initial model is given by the median of the
       target values.
     * Huber (``'huber'``): Another robust loss function that combines
@@ -1133,33 +1133,38 @@ score should increase the probability of getting approved for a loan.
 Monotonic constraints allow you to incorporate such prior knowledge into the
 model.
 
-A positive monotonic constraint is a constraint of the form:
+For a predictor :math:`F` with two features:
 
-:math:`x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2)`,
-where :math:`F` is the predictor with two features.
+ - a **monotonic increase constraint** is a constraint of the form:
+    .. math::
+        x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2)
 
-Similarly, a negative monotonic constraint is of the form:
-
-:math:`x_1 \leq x_1' \implies F(x_1, x_2) \geq F(x_1', x_2)`.
-
-Note that monotonic constraints only constraint the output "all else being
-equal". Indeed, the following relation **is not enforced** by a positive
-constraint: :math:`x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2')`.
+ - a **monotonic decrease constraint** is a constraint of the form:
+    .. math::
+        x_1 \leq x_1' \implies F(x_1, x_2) \geq F(x_1', x_2)
 
 You can specify a monotonic constraint on each feature using the
 `monotonic_cst` parameter. For each feature, a value of 0 indicates no
-constraint, while -1 and 1 indicate a negative and positive constraint,
-respectively::
+constraint, while 1 and -1 indicate a monotonic increase and
+monotonic decrease constraint, respectively::
 
   >>> from sklearn.ensemble import HistGradientBoostingRegressor
 
-  ... # positive, negative, and no constraint on the 3 features
+  ... # monotonic increase, monotonic decrease, and no constraint on the 3 features
   >>> gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1, 0])
 
-In a binary classification context, imposing a monotonic constraint means
-that the feature is supposed to have a positive / negative effect on the
-probability to belong to the positive class. Monotonic constraints are not
-supported for multiclass context.
+In a binary classification context, imposing a monotonic increase (decrease) constraint means that higher values of the feature are supposed
+to have a positive (negative) effect on the probability of samples
+to belong to the positive class.
+
+Nevertheless, monotonic constraints only marginally constrain feature effects on the output.
+For instance, monotonic increase and decrease constraints cannot be used to enforce the
+following modelling constraint:
+
+    .. math::
+        x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2')
+
+Also, monotonic constraints are not supported for multiclass classification.
 
 .. note::
     Since categories are unordered quantities, it is not possible to enforce

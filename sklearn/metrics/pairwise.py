@@ -688,8 +688,9 @@ def pairwise_distances_argmin_min(
         values = values.flatten()
         indices = indices.flatten()
     else:
-        # TODO: once ArgKmin supports sparse input matrices and 32 bit,
-        # we won't need to fallback to pairwise_distances_chunked anymore.
+        # TODO: once BaseDistanceReductionDispatcher supports distance metrics
+        # for boolean datasets, we won't need to fallback to
+        # pairwise_distances_chunked anymore.
 
         # Turn off check for finiteness because this is costly and because arrays
         # have already been validated.
@@ -721,10 +722,10 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
 
     Parameters
     ----------
-    X : array-like of shape (n_samples_X, n_features)
+    X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
         Array containing points.
 
-    Y : array-like of shape (n_samples_Y, n_features)
+    Y : {array-like, sparse matrix} of shape (n_samples_Y, n_features)
         Arrays containing points.
 
     axis : int, default=1
@@ -799,8 +800,9 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         )
         indices = indices.flatten()
     else:
-        # TODO: once ArgKmin supports sparse input matrices and 32 bit,
-        # we won't need to fallback to pairwise_distances_chunked anymore.
+        # TODO: once BaseDistanceReductionDispatcher supports distance metrics
+        # for boolean datasets, we won't need to fallback to
+        # pairwise_distances_chunked anymore.
 
         # Turn off check for finiteness because this is costly and because arrays
         # have already been validated.
