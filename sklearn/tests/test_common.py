@@ -11,7 +11,7 @@ import warnings
 import sys
 import re
 import pkgutil
-from inspect import isgenerator, signature, Parameter
+from inspect import isgenerator, signature
 from itertools import product, chain
 from functools import partial
 
@@ -431,26 +431,13 @@ def test_transformers_get_feature_names_out(transformer):
         )
 
 
-VALIDATE_ESTIMATOR_INIT = [
-    "SGDOneClassSVM",
-]
-VALIDATE_ESTIMATOR_INIT = set(VALIDATE_ESTIMATOR_INIT)
-
-
 @pytest.mark.parametrize(
     "Estimator",
-    [est for name, est in all_estimators() if name not in VALIDATE_ESTIMATOR_INIT],
+    [est for name, est in all_estimators()],
 )
 def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
     """Check that init or set_param does not raise errors."""
-
-    # Remove parameters with **kwargs by filtering out Parameter.VAR_KEYWORD
-    # TODO: Remove in 1.2 when **kwargs is removed in RadiusNeighborsClassifier
-    params = [
-        name
-        for name, param in signature(Estimator).parameters.items()
-        if param.kind != Parameter.VAR_KEYWORD
-    ]
+    params = signature(Estimator).parameters
 
     smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), [1], {}, []]
     for value in smoke_test_values:

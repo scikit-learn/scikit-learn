@@ -139,7 +139,7 @@ def test_encode_options():
     assert not sp.issparse(Xt_2)
     assert_array_equal(
         OneHotEncoder(
-            categories=[np.arange(i) for i in [2, 3, 3, 3]], sparse=False
+            categories=[np.arange(i) for i in [2, 3, 3, 3]], sparse_output=False
         ).fit_transform(Xt_1),
         Xt_2,
     )
@@ -147,7 +147,9 @@ def test_encode_options():
     Xt_3 = est.transform(X)
     assert sp.issparse(Xt_3)
     assert_array_equal(
-        OneHotEncoder(categories=[np.arange(i) for i in [2, 3, 3, 3]], sparse=True)
+        OneHotEncoder(
+            categories=[np.arange(i) for i in [2, 3, 3, 3]], sparse_output=True
+        )
         .fit_transform(Xt_1)
         .toarray(),
         Xt_3.toarray(),
