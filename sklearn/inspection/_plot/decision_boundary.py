@@ -119,12 +119,12 @@ class DecisionBoundaryDisplay:
     >>> grid = np.vstack([feature_1.ravel(), feature_2.ravel()]).T
     >>> tree = DecisionTreeClassifier().fit(iris.data[:, :2], iris.target)
     >>> y_pred = np.reshape(tree.predict(grid), feature_1.shape)
-    >>> disp = DecisionBoundaryDisplay(
+    >>> display = DecisionBoundaryDisplay(
     ...     xx0=feature_1, xx1=feature_2, response=y_pred
     ... )
     >>> display.plot()
     <...>
-    >>> disp.ax_.scatter(
+    >>> display.ax_.scatter(
     ...     iris.data[:, 0], iris.data[:, 1], c=iris.target, edgecolor="black"
     ... )
     >>> plt.show()
