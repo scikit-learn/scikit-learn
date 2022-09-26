@@ -15,7 +15,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.pairwise_distances_chunked",
     "sklearn.tree._export.plot_tree",
     "sklearn.utils.axis0_safe_slice",
-    "sklearn.utils.extmath.density",
     "sklearn.utils.extmath.fast_logdet",
     "sklearn.utils.extmath.randomized_svd",
     "sklearn.utils.extmath.safe_sparse_dot",
