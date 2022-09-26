@@ -833,7 +833,7 @@ class StratifiedGroupKFold(_BaseKFold):
       Train: index=[ 4  5  6  7  8  9 10 11 12 13 14], group=[3 3 3 4 5 5 5 5 6 6 7]
       Test:  index=[ 0  1  2  3 15 16], group=[1 1 2 2 8 8]
     Fold 2:
-      Train: index=[ 0  1  2  3  4  5  6 12 13 14 15 16], group=[1 1 2 2 3 3 3 6 6 7 8 8]  # noqa: E501
+      Train: index=[ 0  1  2  3  4  5  6 12 13 14 15 16], group=[1 1 2 2 3 3 3 6 6 7 8 8]
       Test:  index=[ 7  8  9 10 11], group=[4 5 5 5 5]
 
     Notes
@@ -857,7 +857,7 @@ class StratifiedGroupKFold(_BaseKFold):
         tasks).
 
     GroupKFold: K-fold iterator variant with non-overlapping groups.
-    """
+    """  # noqa: E501
 
     def __init__(self, n_splits=5, shuffle=False, random_state=None):
         super().__init__(n_splits=n_splits, shuffle=shuffle, random_state=random_state)
@@ -1895,11 +1895,11 @@ class GroupShuffleSplit(ShuffleSplit):
     ...     print(f"  Train: index={train_index}, group={groups[train_index]}")
     ...     print(f"  Test:  index={test_index}, group={groups[test_index]}")
     Fold 0:
-      Train: index=[3 5 1], group=[2 3 1]
-      Test:  index=[2 4], group=[2 2]
+      Train: index=[2 3 4 5 6 7], group=[2 2 2 3 3 3]
+      Test:  index=[0 1], group=[1 1]
     Fold 1:
-      Train: index=[3 5 1], group=[2 3 1]
-      Test:  index=[2 4], group=[2 2]
+      Train: index=[0 1 5 6 7], group=[1 1 3 3 3]
+      Test:  index=[2 3 4], group=[2 2 2]
 
     See Also
     --------
