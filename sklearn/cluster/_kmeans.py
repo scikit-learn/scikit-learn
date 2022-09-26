@@ -1929,6 +1929,8 @@ class MiniBatchKMeans(_BaseKMeans):
             else:
                 variances = np.var(X, axis=0)
             self._tol = np.mean(variances) * self.tol
+        else:
+            self._tol = 0.0
 
         self._batch_size = min(self.batch_size, X.shape[0])
 
