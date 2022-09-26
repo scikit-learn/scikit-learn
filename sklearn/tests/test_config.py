@@ -14,6 +14,7 @@ def test_config_context():
         "working_memory": 1024,
         "print_changed_only": True,
         "display": "diagram",
+        "array_api_dispatch": False,
         "pairwise_dist_chunk_size": 256,
         "enable_cython_pairwise_dist": True,
     }
@@ -28,6 +29,7 @@ def test_config_context():
             "working_memory": 1024,
             "print_changed_only": True,
             "display": "diagram",
+            "array_api_dispatch": False,
             "pairwise_dist_chunk_size": 256,
             "enable_cython_pairwise_dist": True,
         }
@@ -59,6 +61,7 @@ def test_config_context():
         "working_memory": 1024,
         "print_changed_only": True,
         "display": "diagram",
+        "array_api_dispatch": False,
         "pairwise_dist_chunk_size": 256,
         "enable_cython_pairwise_dist": True,
     }

@@ -25,7 +25,6 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize
 from .preprocessing import LabelBinarizer
 from .preprocessing import label_binarize
-from .utils import deprecated
 from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative
@@ -197,13 +196,6 @@ class GaussianNB(_BaseNB):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
-
-    sigma_ : ndarray of shape (n_classes, n_features)
-        Variance of each feature per class.
-
-        .. deprecated:: 1.0
-           `sigma_` is deprecated in 1.0 and will be removed in 1.2.
-           Use `var_` instead.
 
     var_ : ndarray of shape (n_classes, n_features)
         Variance of each feature per class.
@@ -526,14 +518,6 @@ class GaussianNB(_BaseNB):
 
         joint_log_likelihood = np.array(joint_log_likelihood).T
         return joint_log_likelihood
-
-    @deprecated(  # type: ignore
-        "Attribute `sigma_` was deprecated in 1.0 and will be removed in"
-        "1.2. Use `var_` instead."
-    )
-    @property
-    def sigma_(self):
-        return self.var_
 
 
 class _BaseDiscreteNB(_BaseNB):
