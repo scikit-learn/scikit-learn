@@ -90,7 +90,7 @@ def _get_engine_class(engine_name, provider_names, engine_specs, default=None):
     return default
 
 
-def get_engine_class(engine_name, default=None):
+def get_engine_class(engine_name, default=None, verbose=False):
     provider_names = get_config()["engine_provider"]
     if isinstance(provider_names, str):
         provider_names = (provider_names,)
@@ -101,9 +101,12 @@ def get_engine_class(engine_name, default=None):
     if not provider_names:
         return default
     engine_specs = _parse_entry_points(provider_names=provider_names)
-    return _get_engine_class(
+    engine_class = _get_engine_class(
         engine_name=engine_name,
         provider_names=provider_names,
         engine_specs=engine_specs,
         default=default,
     )
+    if verbose:
+        print(f"Using engine {engine_class.__module__}.{engine_class.__qualname__} .")
+    return engine_class

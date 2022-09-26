@@ -1507,7 +1507,9 @@ class KMeans(_BaseKMeans):
             Fitted estimator.
         """
         self._validate_params()
-        engine_class = get_engine_class("kmeans", default=KMeansCythonEngine)
+        engine_class = get_engine_class(
+            "kmeans", default=KMeansCythonEngine, verbose=self.verbose
+        )
         engine = engine_class(self)
         X, y, sample_weight = engine.prepare_fit(
             X,
