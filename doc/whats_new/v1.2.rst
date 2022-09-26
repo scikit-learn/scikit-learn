@@ -480,7 +480,7 @@ Changelog
   :pr:`14862` by :user:`Léonard Binet <leonardbinet>`.
 
 - |Fix| HTML representation no longer errors when an estimator class is a value in
-  `get_params`. :pr:`xxxxx` by `Thomas Fan`_.
+  `get_params`. :pr:`24512` by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
