@@ -42,7 +42,7 @@ def _parse_entry_points(provider_names=None):
     for entry_point in engine_entry_points:
         try:
             spec = _parse_entry_point(entry_point)
-            if provider_names is not None and spec.provider_name in provider_names:
+            if provider_names is not None and spec.provider_name not in provider_names:
                 # Skip entry points that do not match the requested provider names.
                 continue
             specs.append(spec)
