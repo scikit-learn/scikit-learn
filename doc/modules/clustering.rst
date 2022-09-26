@@ -959,7 +959,7 @@ HDBSCAN
 =======
 
 The :class:`HDBSCAN` algorithm can be seen as an extension of :class:`DBSCAN`
-and :class:`OPTICS`. Specifically, :class:`DBSCAN` asserts that the clustering
+and :class:`OPTICS`. Specifically, :class:`DBSCAN` assumes that the clustering
 criterion (i.e. density requirement) is *globally homogeneous*.
 In other words, :class:`DBSCAN` may struggle to successfully capture clusters
 with different densities.
@@ -974,15 +974,15 @@ scales by building an alternative representation of the clustering problem.
 Mutual Reachability Graph
 -------------------------
 
-HDBSCAN first defines the *core distance* of a sample :math:`x_p` as the
-distance to its `min_samples`-nearest neighbor, counting itself. For example,
+HDBSCAN first defines :math:`d_c(x_p)`, the *core distance* of a sample :math:`x_p`, as the
+distance to its `min_samples`th-nearest neighbor, counting itself. For example,
 if `min_samples=5` and :math:`x_*` is the 5th-nearest neighbor of :math:`x_p`
 then the core distance is:
 
 .. math:: d_c(x_p)=d(x_p, x_*).
 
-Next it defines the *mutual reachability distance* of two points :math:`x_p, x_q`
-as
+Next it defines :math:`d_m(x_p, x_q)`, the *mutual reachability distance* of two points
+:math:`x_p, x_q`, as:
 
 .. math:: d_m(x_p, x_q) = \max\{d_c(x_p), d_c(x_q), d(x_p, x_q)\}
 
@@ -991,22 +991,22 @@ These two notions allow us to construct the *mutual reachability graph*
 sample :math:`x_p` with a vertex of the graph, and thus edges between points
 :math:`x_p, x_q` are the mutual reachability distance :math:`d_m(x_p, x_q)`
 between them. We may build subsets of this graph, denoted as
-:math:`G_{ms,\epsilon}`, by removing any edges with value greater than `eps`
-from the original graph. Any points whose core distance is less than `eps`
+:math:`G_{ms,\varepsilon}`, by removing any edges with value greater than :math:`\varepsilon`:
+from the original graph. Any points whose core distance is less than :math:`\varepsilon`:
 are at this staged marked as noise. The remaining points are then clustered by
 finding the connected components of this trimmed graph.
 
 .. note::
 
-  Taking the connected components of a trimmed graph :math:`G_{ms,\epsilon}` is
-  equivalent to running DBSCAN* with `min_samples` and `eps`. DBSCAN* is a
+  Taking the connected components of a trimmed graph :math:`G_{ms,\varepsilon}` is
+  equivalent to running DBSCAN* with `min_samples` and :math:`\varepsilon`. DBSCAN* is a
   slightly modified version of DBSCAN mentioned in [CM2013]_.
 
 Hierarchical Clustering
 -----------------------
 HDBSCAN can be seen as an algorithm which performs DBSCAN* clustering across all
-values of `eps`. As mentioned prior, this is equivalent to finding the connected
-components of the mutual reachability graphs for all values of `eps`. To do this
+values of :math:`\varepsilon`. As mentioned prior, this is equivalent to finding the connected
+components of the mutual reachability graphs for all values of :math:`\varepsilon`. To do this
 efficiently, HDBSCAN first extracts a minimum spanning tree (MST) from the fully
 -connected mutual reachability graph, then greedily cuts the edges with highest
 weight. An outline of the HDBSCAN algorithm is as follows:
@@ -1020,12 +1020,12 @@ weight. An outline of the HDBSCAN algorithm is as follows:
   5. Assign cluster labels to the connected components which contain the
      end points of the now-removed edge. If the component does not have at least
      one edge it is instead assigned a "null" label marking it as noise.
-  6. Repeat 4-6 until there are no more connected components.
+  6. Repeat 4-5 until there are no more connected components.
 
 HDBSCAN is therefore able to obtain all possible partitions achievable by
 DBSCAN* for a fixed choice of `min_samples` in a hierarchical fashion.
 Indeed, this allows HDBSCAN to perform clustering across multiple densities
-and as such it no longer needs `eps` to be given as a hyperparameter. Instead
+and as such it no longer needs :math:`\varepsilon` to be given as a hyperparameter. Instead
 it relies solely on the choice of `min_samples`, which tends to be a more robust
 hyperparameter.
 
