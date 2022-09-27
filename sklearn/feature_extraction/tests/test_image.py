@@ -20,7 +20,7 @@ from sklearn.feature_extraction.image import (
 
 @pytest.fixture(scope="module")
 def raccoon_face():
-    if sp_version >= parse_version("1.10"):
+    if sp_version.release >= parse_version("1.10").release:
         pytest.importorskip("pooch")
         from scipy.datasets import face
     else:
@@ -119,7 +119,7 @@ def test_connect_regions_with_grid(raccoon_face):
 
 
 def _downsampled_face():
-    if sp_version >= parse_version("1.10"):
+    if sp_version.release >= parse_version("1.10").release:
         pytest.importorskip("pooch")
         from scipy.datasets import face as raccoon_face
     else:
