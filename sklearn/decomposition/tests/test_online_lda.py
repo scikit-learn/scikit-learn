@@ -10,7 +10,7 @@ import pytest
 
 from sklearn.datasets import make_multilabel_classification
 from sklearn.decomposition import LatentDirichletAllocation
-from sklearn.decomposition._lda import (
+from sklearn.decomposition._online_lda_fast import (
     _dirichlet_expectation_1d,
     _dirichlet_expectation_2d,
 )
@@ -427,52 +427,32 @@ def test_lda_feature_names_out():
 
 
 @pytest.mark.parametrize("learning_method", ("batch", "online"))
-@pytest.mark.parametrize(
-    "train_data_type, expected_type",
-    (
-        (np.float32, np.float32),
-        (np.float64, np.float64),
-        (np.int32, np.float64),
-        (np.int64, np.float64),
-    ),
-)
-def test_lda_dtype_match(learning_method, train_data_type, expected_type):
+def test_lda_dtype_match(learning_method, global_dtype):
     # Verify output matrix dtype
-    dataset_X, _ = make_multilabel_classification(random_state=0)
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(20, 10)).astype(global_dtype, copy=False)
 
     lda = LatentDirichletAllocation(
         n_components=5, random_state=0, learning_method=learning_method
     )
-    lda.fit(dataset_X.astype(train_data_type))
-    assert lda.components_.dtype == expected_type
-
-    for input_data_type, expected_transformed_data_type in (
-        (np.float32, np.float32),
-        (np.float64, np.float64),
-        (np.int32, np.float64),
-        (np.int64, np.float64),
-    ):
-        transformed = lda.transform(dataset_X[-2:].astype(input_data_type))
-        assert transformed.dtype == expected_transformed_data_type
+    lda.fit(X)
+    assert lda.components_.dtype == global_dtype
+    assert lda.exp_dirichlet_component_.dtype == global_dtype
 
 
 @pytest.mark.parametrize("learning_method", ("batch", "online"))
-def test_lda_numerical_consistency(learning_method):
+def test_lda_numerical_consistency(learning_method, global_random_seed):
     # Verify numerical consistency among np.float32 and np.float64
-    dataset_X, _ = make_multilabel_classification(random_state=0)
-    rtol = 1e-3
+    rng = np.random.RandomState(global_random_seed)
+    X64 = rng.uniform(size=(20, 10))
+    X32 = X64.astype(np.float32)
 
-    lda_32 = LatentDirichletAllocation(
-        n_components=5, random_state=0, learning_method=learning_method
-    )
     lda_64 = LatentDirichletAllocation(
-        n_components=5, random_state=0, learning_method=learning_method
-    )
-    lda_32.fit(dataset_X.astype(np.float32))
-    lda_64.fit(dataset_X.astype(np.float64))
+        n_components=5, random_state=global_random_seed, learning_method=learning_method
+    ).fit(X64)
+    lda_32 = LatentDirichletAllocation(
+        n_components=5, random_state=global_random_seed, learning_method=learning_method
+    ).fit(X32)
 
-    assert_allclose(lda_32.components_, lda_64.components_, rtol=rtol)
-    transformed_32 = lda_32.transform(dataset_X[-2:].astype(np.float32))
-    transformed_64 = lda_32.transform(dataset_X[-2:].astype(np.float64))
-
-    assert_allclose(transformed_32, transformed_64, rtol=rtol)
+    assert_allclose(lda_32.components_, lda_64.components_)
+    assert_allclose(lda_32.transform(X32), lda_64.transform(X64))

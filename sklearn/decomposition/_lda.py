@@ -10,6 +10,7 @@ Link: https://github.com/blei-lab/onlineldavb
 
 # Author: Chyi-Kwei Yau
 # Author: Matthew D. Hoffman (original onlineldavb implementation)
+from cmath import exp
 from numbers import Integral, Real
 
 import numpy as np
@@ -25,8 +26,8 @@ from ..utils.fixes import delayed
 from ..utils._param_validation import Interval, StrOptions
 
 from ._online_lda_fast import (
-    mean_change,
-    _dirichlet_expectation_1d,
+    mean_change as cy_mean_change,
+    _dirichlet_expectation_1d as cy_dirichlet_expectation_1d,
     _dirichlet_expectation_2d,
 )
 
@@ -106,6 +107,15 @@ def _update_doc_distribution(
         X_indices = X.indices
         X_indptr = X.indptr
 
+    # These cython functions are called in a nested loop on usually very small arrays
+    # (lenght=n_topics). In that case, finding the appropriate signature of the
+    # fused-typed function can be more costly than its execution, hence the dispatch
+    # is done outside of the loop.
+    ctype = "float" if X.dtype == np.float32 else "double"
+    mean_change = cy_mean_change[ctype]
+    dirichlet_expectation_1d = cy_dirichlet_expectation_1d[ctype]
+    eps = np.finfo(X.dtype).eps
+
     for idx_d in range(n_samples):
         if is_sparse_x:
             ids = X_indices[X_indptr[idx_d] : X_indptr[idx_d + 1]]
@@ -125,11 +135,11 @@ def _update_doc_distribution(
 
             # The optimal phi_{dwk} is proportional to
             # exp(E[log(theta_{dk})]) * exp(E[log(beta_{dw})]).
-            norm_phi = np.dot(exp_doc_topic_d, exp_topic_word_d) + EPS
+            norm_phi = np.dot(exp_doc_topic_d, exp_topic_word_d) + eps
 
             doc_topic_d = exp_doc_topic_d * np.dot(cnts / norm_phi, exp_topic_word_d.T)
             # Note: adds doc_topic_prior to doc_topic_d, in-place.
-            _dirichlet_expectation_1d(doc_topic_d, doc_topic_prior, exp_doc_topic_d)
+            dirichlet_expectation_1d(doc_topic_d, doc_topic_prior, exp_doc_topic_d)
 
             if mean_change(last_d, doc_topic_d) < mean_change_tol:
                 break
@@ -138,7 +148,7 @@ def _update_doc_distribution(
         # Contribution of document d to the expected sufficient
         # statistics for the M step.
         if cal_sstats:
-            norm_phi = np.dot(exp_doc_topic_d, exp_topic_word_d) + EPS
+            norm_phi = np.dot(exp_doc_topic_d, exp_topic_word_d) + eps
             suff_stats[:, ids] += np.outer(exp_doc_topic_d, cnts / norm_phi)
 
     return (doc_topic_distr, suff_stats)
@@ -547,11 +557,13 @@ class LatentDirichletAllocation(
         X :  array-like or sparse matrix
 
         """
+        dtype = [np.float64, np.float32] if reset_n_features else self.components_.dtype
+
         X = self._validate_data(
             X,
             reset=reset_n_features,
             accept_sparse="csr",
-            dtype=[np.float64, np.float32],
+            dtype=dtype,
         )
         check_non_negative(X, whom)
 
@@ -573,8 +585,11 @@ class LatentDirichletAllocation(
         self
             Partially fitted estimator.
         """
-        self._validate_params()
         first_time = not hasattr(self, "components_")
+
+        if first_time:
+            self._validate_params()
+
         X = self._check_non_neg_array(
             X, reset_n_features=first_time, whom="LatentDirichletAllocation.partial_fit"
         )
