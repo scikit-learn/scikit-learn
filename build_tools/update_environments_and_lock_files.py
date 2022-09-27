@@ -195,6 +195,7 @@ conda_build_metadata_list = [
                 "pillow",
             ],
         )
+        + ["pooch"]
         + docstring_test_dependencies
         # python-dateutil is a dependency of pandas and pandas is removed from
         # the environment.yml. Adding python-dateutil so it is pinned
@@ -243,6 +244,7 @@ conda_build_metadata_list = [
             "numpydoc",
             "sphinx-prompt",
             "plotly",
+            "pooch",
         ],
         "pip_dependencies": ["sphinxext-opengraph"],
         "package_constraints": {
@@ -277,6 +279,7 @@ conda_build_metadata_list = [
             "numpydoc",
             "sphinx-prompt",
             "plotly",
+            "pooch",
         ],
         "pip_dependencies": ["sphinxext-opengraph"],
         "package_constraints": {
@@ -342,6 +345,7 @@ pip_build_metadata_list = [
             "pytest",
             "pytest-xdist",
             "pillow",
+            "pooch",
             "wheel",
         ],
         # The Windows 32bit build use 3.8.10. No cross-compilation support for

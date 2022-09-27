@@ -7,6 +7,7 @@ from scipy import ndimage
 from scipy.sparse.csgraph import connected_components
 import pytest
 
+from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.feature_extraction.image import (
     img_to_graph,
     grid_to_graph,
@@ -19,9 +20,10 @@ from sklearn.feature_extraction.image import (
 
 @pytest.fixture(scope="module")
 def raccoon_face():
-    try:  # Scipy >= 1.10`
+    if sp_version >= parse_version("1.10"):
+        pytest.importorskip("pooch")
         from scipy.datasets import face
-    except ImportError:
+    else:
         from scipy.misc import face
 
     return face(gray=True)
@@ -117,9 +119,10 @@ def test_connect_regions_with_grid(raccoon_face):
 
 
 def _downsampled_face():
-    try:  # Scipy >= 1.10`
+    if sp_version >= parse_version("1.10"):
+        pytest.importorskip("pooch")
         from scipy.datasets import face as raccoon_face
-    except ImportError:
+    else:
         from scipy.misc import face as raccoon_face
 
     face = raccoon_face(gray=True)
