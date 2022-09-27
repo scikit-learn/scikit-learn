@@ -231,12 +231,14 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     """Cluster data using hierarchical density-based clustering.
 
     HDBSCAN - Hierarchical Density-Based Spatial Clustering of Applications
-    with Noise. Performs DBSCAN over varying epsilon values and integrates
-    the result to find a clustering that gives the best stability over epsilon.
-    This allows HDBSCAN to find clusters of varying densities (unlike DBSCAN),
-    and be more robust to parameter selection.
+    with Noise. Performs :class:`~sklearn.cluster.DBSCAN` over varying epsilon
+    values and integrates the result to find a clustering that gives the best
+    stability over epsilon.
+    This allows HDBSCAN to find clusters of varying densities (unlike 
+    :class:`~sklearn.cluster.DBSCAN`), and be more robust to parameter selection.
+    Read more in the :ref:`User Guide <hdbscan>`.
 
-    ..versionadded:: 1.2
+    .. versionadded:: 1.2
 
     Parameters
     ----------
@@ -387,7 +389,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     DBSCAN : Density-Based Spatial Clustering of Applications
         with Noise.
     OPTICS : Ordering Points To Identify the Clustering Structure.
-    BIRCH : Memory-efficient, online-learning algorithm.
+    Birch : Memory-efficient, online-learning algorithm.
 
     References
     ----------
