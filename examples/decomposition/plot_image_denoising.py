@@ -43,25 +43,25 @@ try:  # Scipy >= 1.10
 except ImportError:
     from scipy.misc import face
 
-racoon_face = face(gray=True)
+raccoon_face = face(gray=True)
 
 # Convert from uint8 representation with values between 0 and 255 to
 # a floating point representation with values between 0 and 1.
-racoon_face = racoon_face / 255.0
+raccoon_face = raccoon_face / 255.0
 
 # downsample for higher speed
-racoon_face = (
-    racoon_face[::4, ::4]
-    + racoon_face[1::4, ::4]
-    + racoon_face[::4, 1::4]
-    + racoon_face[1::4, 1::4]
+raccoon_face = (
+    raccoon_face[::4, ::4]
+    + raccoon_face[1::4, ::4]
+    + raccoon_face[::4, 1::4]
+    + raccoon_face[1::4, 1::4]
 )
-racoon_face /= 4.0
-height, width = racoon_face.shape
+raccoon_face /= 4.0
+height, width = raccoon_face.shape
 
 # Distort the right half of the image
 print("Distorting image...")
-distorted = racoon_face.copy()
+distorted = raccoon_face.copy()
 distorted[:, width // 2 :] += 0.075 * np.random.randn(height, width // 2)
 
 
@@ -92,7 +92,7 @@ def show_with_diff(image, reference, title):
     plt.subplots_adjust(0.02, 0.02, 0.98, 0.79, 0.02, 0.2)
 
 
-show_with_diff(distorted, racoon_face, "Distorted image")
+show_with_diff(distorted, raccoon_face, "Distorted image")
 
 
 # %%
@@ -169,7 +169,7 @@ transform_algorithms = [
 reconstructions = {}
 for title, transform_algorithm, kwargs in transform_algorithms:
     print(title + "...")
-    reconstructions[title] = racoon_face.copy()
+    reconstructions[title] = raccoon_face.copy()
     t0 = time()
     dico.set_params(transform_algorithm=transform_algorithm, **kwargs)
     code = dico.transform(data)
@@ -185,6 +185,6 @@ for title, transform_algorithm, kwargs in transform_algorithms:
     )
     dt = time() - t0
     print("done in %.2fs." % dt)
-    show_with_diff(reconstructions[title], racoon_face, title + " (time: %.1fs)" % dt)
+    show_with_diff(reconstructions[title], raccoon_face, title + " (time: %.1fs)" % dt)
 
 plt.show()
