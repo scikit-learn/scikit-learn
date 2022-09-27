@@ -545,7 +545,7 @@ def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
     y_pred = np.array([[0, 0, 0, 0], [0, 0, 0, 1], [0, 1, 1, 0]])
 
     msg = (
-        "Tpr is ill-defined and being set to 0.0 in labels with no positives samples."
+        "Fnr is ill-defined and being set to 0.0 in labels with no positives samples."
         " Use `zero_division` parameter to control this behavior."
     )
 
