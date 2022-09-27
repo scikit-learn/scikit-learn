@@ -1,13 +1,13 @@
 import re
 from inspect import signature
-import pkgutil
-import inspect
-import importlib
 from typing import Optional
 
 import pytest
-from sklearn.utils import all_estimators
-import sklearn
+
+from sklearn.utils.discovery import all_estimators
+from sklearn.utils.discovery import all_displays
+from sklearn.utils.discovery import all_functions
+
 
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
@@ -15,7 +15,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.metrics.pairwise.pairwise_distances_chunked",
     "sklearn.tree._export.plot_tree",
     "sklearn.utils.axis0_safe_slice",
-    "sklearn.utils.extmath.density",
     "sklearn.utils.extmath.fast_logdet",
     "sklearn.utils.extmath.randomized_svd",
     "sklearn.utils.extmath.safe_sparse_dot",
@@ -32,76 +31,37 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.is_scalar_nan",
     "sklearn.utils._available_if.available_if",
     "sklearn.utils._available_if.if_delegate_has_method",
-    "sklearn.utils.sparsefuncs.inplace_swap_row_csr",
 ]
 FUNCTION_DOCSTRING_IGNORE_LIST = set(FUNCTION_DOCSTRING_IGNORE_LIST)
 
 
 def get_all_methods():
     estimators = all_estimators()
-    for name, Estimator in estimators:
+    displays = all_displays()
+    for name, Klass in estimators + displays:
         if name.startswith("_"):
             # skip private classes
             continue
         methods = []
-        for name in dir(Estimator):
+        for name in dir(Klass):
             if name.startswith("_"):
                 continue
-            method_obj = getattr(Estimator, name)
+            method_obj = getattr(Klass, name)
             if hasattr(method_obj, "__call__") or isinstance(method_obj, property):
                 methods.append(name)
         methods.append(None)
 
         for method in sorted(methods, key=str):
-            yield Estimator, method
-
-
-def _is_checked_function(item):
-    if not inspect.isfunction(item):
-        return False
-
-    if item.__name__.startswith("_"):
-        return False
-
-    mod = item.__module__
-    if not mod.startswith("sklearn.") or mod.endswith("estimator_checks"):
-        return False
-
-    return True
+            yield Klass, method
 
 
 def get_all_functions_names():
-    """Get all public functions define in the sklearn module"""
-    modules_to_ignore = {
-        "tests",
-        "externals",
-        "setup",
-        "conftest",
-        "experimental",
-        "estimator_checks",
-    }
-
-    all_functions_names = set()
-    for module_finder, module_name, ispkg in pkgutil.walk_packages(
-        path=sklearn.__path__, prefix="sklearn."
-    ):
-        module_parts = module_name.split(".")
-        if (
-            any(part in modules_to_ignore for part in module_parts)
-            or "._" in module_name
-        ):
-            continue
-
-        module = importlib.import_module(module_name)
-        functions = inspect.getmembers(module, _is_checked_function)
-        for name, func in functions:
-            full_name = f"{func.__module__}.{func.__name__}"
-            all_functions_names.add(full_name)
-
-    return sorted(all_functions_names)
+    functions = all_functions()
+    for _, func in functions:
+        yield f"{func.__module__}.{func.__name__}"
 
 
-def filter_errors(errors, method, Estimator=None):
+def filter_errors(errors, method, Klass=None):
     """
     Ignore some errors based on the method type.
 
@@ -124,8 +84,8 @@ def filter_errors(errors, method, Estimator=None):
 
         # Ignore PR02: Unknown parameters for properties. We sometimes use
         # properties for ducktyping, i.e. SGDClassifier.predict_proba
-        if code == "PR02" and Estimator is not None and method is not None:
-            method_obj = getattr(Estimator, method)
+        if code == "PR02" and Klass is not None and method is not None:
+            method_obj = getattr(Klass, method)
             if isinstance(method_obj, property):
                 continue
 
@@ -140,14 +100,14 @@ def filter_errors(errors, method, Estimator=None):
         yield code, message
 
 
-def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
+def repr_errors(res, Klass=None, method: Optional[str] = None) -> str:
     """Pretty print original docstring and the obtained errors
 
     Parameters
     ----------
     res : dict
         result of numpydoc.validate.validate
-    estimator : {estimator, None}
+    Klass : {Estimator, Display, None}
         estimator object or None
     method : str
         if estimator is not None, either the method name or None.
@@ -158,15 +118,15 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
        String representation of the error.
     """
     if method is None:
-        if hasattr(estimator, "__init__"):
+        if hasattr(Klass, "__init__"):
             method = "__init__"
-        elif estimator is None:
-            raise ValueError("At least one of estimator, method should be provided")
+        elif Klass is None:
+            raise ValueError("At least one of Klass, method should be provided")
         else:
             raise NotImplementedError
 
-    if estimator is not None:
-        obj = getattr(estimator, method)
+    if Klass is not None:
+        obj = getattr(Klass, method)
         try:
             obj_signature = str(signature(obj))
         except TypeError:
@@ -176,7 +136,7 @@ def repr_errors(res, estimator=None, method: Optional[str] = None) -> str:
                 "possibly because this is a property."
             )
 
-        obj_name = estimator.__name__ + "." + method
+        obj_name = Klass.__name__ + "." + method
     else:
         obj_signature = ""
         obj_name = method
@@ -213,10 +173,10 @@ def test_function_docstring(function_name, request):
         raise ValueError(msg)
 
 
-@pytest.mark.parametrize("Estimator, method", get_all_methods())
-def test_docstring(Estimator, method, request):
-    base_import_path = Estimator.__module__
-    import_path = [base_import_path, Estimator.__name__]
+@pytest.mark.parametrize("Klass, method", get_all_methods())
+def test_docstring(Klass, method, request):
+    base_import_path = Klass.__module__
+    import_path = [base_import_path, Klass.__name__]
     if method is not None:
         import_path.append(method)
 
@@ -224,10 +184,10 @@ def test_docstring(Estimator, method, request):
 
     res = numpydoc_validation.validate(import_path)
 
-    res["errors"] = list(filter_errors(res["errors"], method, Estimator=Estimator))
+    res["errors"] = list(filter_errors(res["errors"], method, Klass=Klass))
 
     if res["errors"]:
-        msg = repr_errors(res, Estimator, method)
+        msg = repr_errors(res, Klass, method)
 
         raise ValueError(msg)
 
