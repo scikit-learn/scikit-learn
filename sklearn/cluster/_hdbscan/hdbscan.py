@@ -234,7 +234,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     with Noise. Performs :class:`~sklearn.cluster.DBSCAN` over varying epsilon
     values and integrates the result to find a clustering that gives the best
     stability over epsilon.
-    This allows HDBSCAN to find clusters of varying densities (unlike 
+    This allows HDBSCAN to find clusters of varying densities (unlike
     :class:`~sklearn.cluster.DBSCAN`), and be more robust to parameter selection.
     Read more in the :ref:`User Guide <hdbscan>`.
 
