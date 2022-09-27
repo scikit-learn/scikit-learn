@@ -200,10 +200,6 @@ class _SetOutputMixin:
         See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
         for an example on how to use the API.
 
-        .. note:: Experimental API
-            The `set_output` API is experimental and subject to change without
-            deprecation.
-
         Parameters
         ----------
         transform : {"default", "pandas"}, default=None

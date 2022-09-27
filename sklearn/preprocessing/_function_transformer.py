@@ -306,3 +306,35 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
     def _more_tags(self):
         return {"no_validation": not self.validate, "stateless": True}
+
+    def set_output(self, *, transform=None):
+        """Set output container.
+
+        See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
+        for an example on how to use the API.
+
+        Parameters
+        ----------
+        transform : {"default", "pandas"}, default=None
+            Configure output of the following estimator's methods:
+
+            - `"transform"`
+            - `"fit_transform"`
+
+            If `None`, this operation is a no-op.
+
+        Returns
+        -------
+        self : estimator instance
+            Estimator instance.
+        """
+        if hasattr(super(), "set_output"):
+            return super().set_output(transform=transform)
+
+        if transform == "pandas" and self.feature_names_out is None:
+            warnings.warn(
+                'With transform="pandas" `func` should return a DataFrame to follow'
+                " the set_output API."
+            )
+
+        return self
