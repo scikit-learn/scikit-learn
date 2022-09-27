@@ -737,8 +737,7 @@ def check_array(
         raise TypeError(
             "np.matrix is not supported. Please convert to a numpy array with "
             "np.asarray. For more information see: "
-            "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html",
-            FutureWarning,
+            "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html"
         )
 
     xp, is_array_api = get_namespace(array)

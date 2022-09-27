@@ -437,6 +437,13 @@ Changelog
   :class:`neighbors.RadiusNeighborsTransformer`.
   :pr:`24075` by :user:`Valentin Laurent <Valentin-Laurent>`.
 
+:mod:`sklearn.pipeline`
+.......................
+
+- |Enhancement| :meth:`pipeline.FeatureUnion.get_feature_names_out` can now
+  be used when one of the transformers in the :class:`pipeline.FeatureUnion` is
+  `"passthrough"`. :pr:`24058` by :user:`Diederik Perdok <diederikwp>`
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -471,6 +478,12 @@ Changelog
 
 - |FIX| :func:`utils.multiclass.type_of_target` now properly handles sparse matrices.
   :pr:`14862` by :user:`Léonard Binet <leonardbinet>`.
+
+- |Feature| A new module exposes development tools to discover estimators (i.e.
+  :func:`utils.discovery.all_estimators`), displays (i.e.
+  :func:`utils.discovery.all_displays`) and functions (i.e.
+  :func:`utils.discovery.all_functions`) in scikit-learn.
+  :pr:`21469` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Code and Documentation Contributors
 -----------------------------------
