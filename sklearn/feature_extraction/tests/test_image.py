@@ -3,7 +3,6 @@
 # License: BSD 3 clause
 
 import numpy as np
-import scipy as sp
 from scipy import ndimage
 from scipy.sparse.csgraph import connected_components
 import pytest
@@ -16,6 +15,16 @@ from sklearn.feature_extraction.image import (
     PatchExtractor,
     _extract_patches,
 )
+
+
+@pytest.fixture(scope="module")
+def raccoon_face():
+    try:  # Scipy >= 1.10`
+        from scipy.datasets import face
+    except ImportError:
+        from scipy.misc import face
+
+    return face(gray=True)
 
 
 def test_img_to_graph():
@@ -82,8 +91,8 @@ def test_grid_to_graph():
     assert A.dtype == np.float64
 
 
-def test_connect_regions():
-    face = sp.misc.face(gray=True)
+def test_connect_regions(raccoon_face):
+    face = raccoon_face.copy()
     # subsample by 4 to reduce run time
     face = face[::4, ::4]
     for thr in (50, 150):
@@ -92,8 +101,8 @@ def test_connect_regions():
         assert ndimage.label(mask)[1] == connected_components(graph)[0]
 
 
-def test_connect_regions_with_grid():
-    face = sp.misc.face(gray=True)
+def test_connect_regions_with_grid(raccoon_face):
+    face = raccoon_face.copy()
 
     # subsample by 4 to reduce run time
     face = face[::4, ::4]
@@ -108,13 +117,12 @@ def test_connect_regions_with_grid():
 
 
 def _downsampled_face():
-    try:
-        face = sp.face(gray=True)
-    except AttributeError:
-        # Newer versions of scipy have face in misc
-        from scipy import misc
+    try:  # Scipy >= 1.10`
+        from scipy.datasets import face as raccoon_face
+    except ImportError:
+        from scipy.misc import face as raccoon_face
 
-        face = misc.face(gray=True)
+    face = raccoon_face(gray=True)
     face = face.astype(np.float32)
     face = face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2]
     face = face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2]
