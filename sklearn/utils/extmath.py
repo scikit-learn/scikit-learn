@@ -111,6 +111,12 @@ def density(w, **kwargs):
     float
         The density of w, between 0 and 1.
     """
+    if kwargs:
+        warnings.warn(
+            "Key arguments will be removed in one of the upcoming versions",
+            FutureWarning,
+        )
+
     if hasattr(w, "toarray"):
         d = float(w.nnz) / (w.shape[0] * w.shape[1])
     else:
@@ -1021,7 +1027,7 @@ def _incremental_mean_and_var(
         # correction term of the corrected 2 pass algorithm.
         # See "Algorithms for computing the sample variance: analysis
         # and recommendations", by Chan, Golub, and LeVeque.
-        new_unnormalized_variance -= correction**2 / new_sample_count
+        new_unnormalized_variance -= correction ** 2 / new_sample_count
 
         last_unnormalized_variance = last_variance * last_sample_count
 
