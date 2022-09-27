@@ -378,6 +378,11 @@ Changelog
   :pr:`22710` by :user:`Conroy Trinh <trinhcon>` and
   :pr:`23461` by :user:`Meekail Zain <micky774>`.
 
+- |FIX| :func:`metrics.log_loss` with `eps=0` now returns a correct value of 0 or
+  `np.inf` instead of `nan` for predictions at the boundaries (0 or 1). It also accepts
+  integer input.
+  :pr:`24365` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Feature| :func:`metrics.roc_auc_score` now supports micro-averaging
   (`average="micro"`) for the One-vs-Rest multiclass case (`multi_class="ovr"`).
   :pr:`24338` by :user:`Arturo Amor <ArturoAmorQ>`.
