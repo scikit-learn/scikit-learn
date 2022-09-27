@@ -263,11 +263,6 @@ class PairwiseDistances(BaseDistanceReductionDispatcher):
         This allows entirely decoupling the API entirely from the
         implementation details whilst maintaining RAII.
         """
-        # Note (jjerphan): Some design thoughts for future extensions.
-        # This factory comes to handle specialisations for the given arguments.
-        # For future work, this might can be an entrypoint to specialise operations
-        # for various backend and/or hardware and/or datatypes, and/or fused
-        # {sparse, dense}-datasetspair etc.
         Y = X if Y is None else Y
         if X.dtype == Y.dtype == np.float64:
             return PairwiseDistances64.compute(

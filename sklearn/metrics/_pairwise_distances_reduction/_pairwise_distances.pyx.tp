@@ -159,10 +159,9 @@ cdef class PairwiseDistances{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
         )
 
     def _finalize_results(self):
-        # If X is Y, then catastrophic cancellation might
-        # have occurred for computations of term on the diagonal
-        # which must be null. We enforce nullity of those term
-        # by zeroing the diagonal.
+        # If X is Y, then catastrophic cancellation might have occurred for
+        # computations of terms on the diagonal which must equal zero.
+        # We enforce it by zeroing the diagonal.
         distance_matrix = np.asarray(self.pairwise_distances_matrix)
         if self.datasets_pair.X_is_Y:
             np.fill_diagonal(distance_matrix, 0.)

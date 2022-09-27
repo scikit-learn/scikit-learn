@@ -103,8 +103,6 @@ cdef class DatasetsPair{{name_suffix}}:
                 metric,
                 **(metric_kwargs or {})
             )
-            # TODO: potentially we could infer identity of X and Y based on numerical
-            # values and not (uniquely) on the PyObject's identity
             bint X_is_Y = X is Y
 
         # Metric-specific checks that do not replace nor duplicate `check_array`.
