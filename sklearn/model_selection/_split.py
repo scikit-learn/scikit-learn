@@ -824,8 +824,8 @@ class StratifiedGroupKFold(_BaseKFold):
     StratifiedGroupKFold(n_splits=3, random_state=None, shuffle=False)
     >>> for i, (train_index, test_index) in enumerate(sgkf.split(X, y, groups)):
     ...     print(f"Fold {i}:")
-    ...     print(f"  Train: index={train_index}\\n\t group={groups[train_index]}")
-    ...     print(f"  Test:  index={test_index}\\n\t group={groups[test_index]}")
+    ...     print(f"""  Train: index={train_index}\n\t group={groups[train_index]}""")
+    ...     print(f"""  Test:  index={test_index}\n\t group={groups[test_index]}""")
     Fold 0:
       Train: index=[ 0  1  2  3  7  8  9 10 11 15 16]
              group=[1 1 2 2 4 5 5 5 5 8 8]
