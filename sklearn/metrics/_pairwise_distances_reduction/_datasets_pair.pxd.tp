@@ -25,11 +25,6 @@ cdef class DatasetsPair{{name_suffix}}:
         {{DistanceMetric}} distance_metric
         ITYPE_t n_features
 
-        # Note regarding semantic: X and Y can be different PyObjects (in this
-        # case, X_is_Y == False), yet they can have the exact same numerical
-        # values. Inferring identity based on numerical values is costly
-        # (especially for sparse-dense and dense-sparse datasets pairs), so we
-        # solely infer the value of X_is_Y based the PyObjects' identity.
         readonly bint X_is_Y
 
     cdef ITYPE_t n_samples_X(self) nogil
