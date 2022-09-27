@@ -713,9 +713,8 @@ class KNeighborsMixin:
 
         Parameters
         ----------
-        X : array-like, shape (n_queries, n_features), \
-            or (n_queries, n_indexed) if metric == 'precomputed', \
-                default=None
+        X : {array-like, sparse matrix}, shape (n_queries, n_features), \
+            or (n_queries, n_indexed) if metric == 'precomputed', default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
@@ -901,9 +900,8 @@ class KNeighborsMixin:
 
         Parameters
         ----------
-        X : array-like of shape (n_queries, n_features), \
-                or (n_queries, n_indexed) if metric == 'precomputed', \
-                default=None
+        X : {array-like, sparse matrix} of shape (n_queries, n_features), \
+            or (n_queries, n_indexed) if metric == 'precomputed', default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
@@ -1046,7 +1044,7 @@ class RadiusNeighborsMixin:
 
         Parameters
         ----------
-        X : array-like of (n_samples, n_features), default=None
+        X : {array-like, sparse matrix} of (n_samples, n_features), default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
@@ -1251,7 +1249,7 @@ class RadiusNeighborsMixin:
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features), default=None
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.

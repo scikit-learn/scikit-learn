@@ -2062,13 +2062,10 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
 
 
+# TODO(1.3): Remove
 @pytest.mark.parametrize(
     "old_loss, new_loss, Estimator",
     [
-        # TODO(1.2): Remove "squared_loss"
-        ("squared_loss", "squared_error", linear_model.SGDClassifier),
-        ("squared_loss", "squared_error", linear_model.SGDRegressor),
-        # TODO(1.3): Remove "log"
         ("log", "log_loss", linear_model.SGDClassifier),
     ],
 )

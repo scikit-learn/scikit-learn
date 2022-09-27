@@ -25,6 +25,7 @@ dependencies:
   - sphinx-gallery
   - numpydoc
   - sphinx-prompt
+  - plotly
   - pip
   - pip:
     - sphinxext-opengraph

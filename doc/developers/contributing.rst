@@ -68,19 +68,19 @@ up" on issues that others reported and that are relevant to you.  It also helps
 us if you spread the word: reference the project from your blog and articles,
 link to it from your website, or simply star to say "I use it":
 
-In case a contribution/issue involves changes to the API principles
-or changes to dependencies or supported versions, it must be backed by a
-:ref:`slep`, where a SLEP must be submitted as a pull-request to
-`enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_
-using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_
-and follows the decision-making process outlined in :ref:`governance`.
-
 .. raw:: html
 
    <a class="github-button" href="https://github.com/scikit-learn/scikit-learn"
    data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star
    scikit-learn/scikit-learn on GitHub">Star</a>
    <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+In case a contribution/issue involves changes to the API principles
+or changes to dependencies or supported versions, it must be backed by a
+:ref:`slep`, where a SLEP must be submitted as a pull-request to
+`enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_
+using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_
+and follows the decision-making process outlined in :ref:`governance`.
 
 .. topic:: Contributing to related projects
 
@@ -91,7 +91,7 @@ and follows the decision-making process outlined in :ref:`governance`.
    * `joblib <https://github.com/joblib/joblib/issues>`__
    * `sphinx-gallery <https://github.com/sphinx-gallery/sphinx-gallery/issues>`__
    * `numpydoc <https://github.com/numpy/numpydoc/issues>`__
-   * `liac-arff <https://github.com/renatopp/liac-arff>`__
+   * `liac-arff <https://github.com/renatopp/liac-arff/issues>`__
 
    and larger projects:
 
@@ -671,25 +671,25 @@ Documentation
 
 We are glad to accept any sort of documentation:
 
-* function/method/class docstrings (also known as "API documentation") - these
-  describe what the object does and details any parameters, attributes and
+* **function/method/class docstrings** (also known as "API documentation") -
+  these describe what the object does and details any parameters, attributes and
   methods. Docstrings live alongside the code in
-  `sklearn/ <https://github.com/scikit-learn/scikit-learn/tree/main/sklearn>`_
-* user guide - these provide more detailed information about the algorithms
+  `sklearn/ <https://github.com/scikit-learn/scikit-learn/tree/main/sklearn>`_.
+* **user guide** - these provide more detailed information about the algorithms
   implemented in scikit-learn and generally live in the root
   `doc/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc>`_ directory
   and
-  `doc/modules/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc/modules>`_
-* tutorials - these introduce various statistical learning and machine learning
+  `doc/modules/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc/modules>`_.
+* **tutorials** - these introduce various statistical learning and machine learning
   concepts and are located in
-  `doc/tutorial <https://github.com/scikit-learn/scikit-learn/tree/main/doc/tutorial>`_
-* examples - these provide full code examples that may demonstrate the use of
-  scikit-learn modules, compare different algorithms or discuss their
+  `doc/tutorial <https://github.com/scikit-learn/scikit-learn/tree/main/doc/tutorial>`_.
+* **examples** - these provide full code examples that may demonstrate the use
+  of scikit-learn modules, compare different algorithms or discuss their
   interpretation etc. Examples live in
   `examples/ <https://github.com/scikit-learn/scikit-learn/tree/main/examples>`_
-* other reStructuredText documents (like this one) - provide various other
+* **other reStructuredText documents** (like this one) - provide various other
   useful information (e.g., our guide to contributing) and live in
-  `doc/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc>`_
+  `doc/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc>`_.
 
 You can edit the documentation using any text editor, and then generate the
 HTML output by following :ref:`building_documentation`. The resulting HTML files
@@ -865,6 +865,11 @@ Finally, follow the formatting rules below to make it consistently good:
 
 * When editing reStructuredText (``.rst``) files, try to keep line length under
   80 characters when possible (exceptions include links and tables).
+
+* In scikit-learn reStructuredText files both single and double backticks
+  surrounding text will render as inline literal (often used for code, e.g.,
+  `list`). This is due to specific configurations we have set. Single
+  backticks should be used nowadays.
 
 * Before submitting your pull request check if your modifications have
   introduced new sphinx warnings and try to fix them.
