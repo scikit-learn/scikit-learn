@@ -557,9 +557,9 @@ def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
             y_true, y_pred, average=None, zero_division=zero_division
         )
         if zero_division == "warn":
-            assert len(record) == 0
-        else:
             assert str(record.pop().message) == msg
+        else:
+            assert len(record) == 0
     assert_array_almost_equal(tpr, [0.0, 0.5, 1.0, zero_division_value], 2)
     assert_array_almost_equal(fpr, [0.0, 0.0, 0.0, 1 / 3.0], 2)
     assert_array_almost_equal(tnr, [1.0, 1.0, 1.0, 2 / 3.0], 2)
@@ -571,9 +571,9 @@ def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
             y_true, y_pred, average="macro", zero_division=zero_division
         )
         if zero_division == "warn":
-            assert len(record) == 0
-        else:
             assert str(record.pop().message) == msg
+        else:
+            assert len(record) == 0
     assert_almost_equal(tpr, 0.625 if zero_division_value else 0.375)
     assert_almost_equal(fpr, 1 / 3.0 / 4.0)
     assert_almost_equal(tnr, 0.91666, 5)
@@ -595,9 +595,9 @@ def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
             y_true, y_pred, average="weighted", zero_division=zero_division
         )
         if zero_division == "warn":
-            assert len(record) == 0
-        else:
             assert str(record.pop().message) == msg
+        else:
+            assert len(record) == 0
     assert_almost_equal(tpr, 0.5)
     assert_almost_equal(fpr, 0)
     assert_almost_equal(tnr, 1.0)
