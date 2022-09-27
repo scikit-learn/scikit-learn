@@ -76,24 +76,19 @@ plot(X, labels=labels_true, ground_truth=True)
 # parameter, it is entirely meaningless and must be tuned for your specific
 # dataset. As a simple demonstration, consider what happens when we find an
 # epsilon value that works for one dataset, and try to apply it to a
-# similar but rescaled versions of the dataset. Below are plots of the original
-# dataset, and versions rescaled by 0.5 and 3 respectively.
+# similar but rescaled versions of the dataset.
 fig, axes = plt.subplots(3, 1, figsize=(10, 12))
-parameters = {"eps": 0.3}
-dbs = DBSCAN(**parameters).fit(X)
-plot(X, dbs.labels_, parameters=parameters, ax=axes[0])
-dbs.fit(0.5 * X)
-plot(0.5 * X, dbs.labels_, parameters=parameters, ax=axes[1])
-dbs.fit(3 * X)
-plot(3 * X, dbs.labels_, parameters=parameters, ax=axes[2])
+dbs = DBSCAN(eps=0.3)
+for idx, scale in enumerate((1, 0.5, 3)):
+    dbs.fit(X)
+    plot(X, dbs.labels_, parameters={"scale": scale, "eps": 0.3}, ax=axes[idx])
 
 # %%
 # Indeed, in order to maintain the same results we would have to scale `eps` by
 # the same factor.
 fig, axis = plt.subplots(1, 1, figsize=(12, 5))
 dbs = DBSCAN(eps=0.9).fit(3 * X)
-plot(3 * X, dbs.labels_, parameters={"eps": 0.9}, ax=axis)
-
+plot(3 * X, dbs.labels_, parameters={"scale": 3, "eps": 0.9}, ax=axis)
 # %%
 # While standardizing data (e.g. using
 # :class:`sklearn.preprocessing.StandardScaler`) helps mitigate this problem,
@@ -103,13 +98,10 @@ plot(3 * X, dbs.labels_, parameters={"eps": 0.9}, ax=axis)
 # possible clusters (see :ref:`User Guide <HDBSCAN>`). One immediate
 # advantage is that HDBSCAN is scale-invariant.
 fig, axes = plt.subplots(3, 1, figsize=(10, 12))
-hdb = HDBSCAN().fit(X)
-plot(X, hdb.labels_, hdb.probabilities_, ax=axes[0])
-hdb.fit(0.5 * X)
-plot(0.5 * X, hdb.labels_, hdb.probabilities_, ax=axes[1])
-hdb.fit(3 * X)
-plot(3 * X, hdb.labels_, hdb.probabilities_, ax=axes[2])
-
+hdb = HDBSCAN()
+for idx, scale in enumerate((1, 0.5, 3)):
+    hdb.fit(X)
+    plot(X, hdb.labels_, hdb.probabilities_, ax=axes[idx], parameters={"scale": scale})
 # %%
 # Multi-Scale Clustering
 # ----------------------
@@ -151,12 +143,11 @@ hdb = HDBSCAN().fit(X)
 plot(X, hdb.labels_, hdb.probabilities_)
 
 # %%
-# HDBSCAN is able to pick up and preserve the multi-scale structure of the
-# dataset, all the while requiring no parameter tuning. Of course in practice
-# on any sufficiently interesting dataset, there will be some tuning required,
-# but this demonstrates the fact that HDBSCAN can yield an entire class of
-# solutions that are inaccessible to DBSCAN without nearly as much manual
-# intervention and tuning.
+# HDBSCAN is able to adapt to the multi-scale structure of the dataset without
+# requiring parameter tuning. While any sufficiently interesting dataset will
+# require tuning, this case demonstrates that HDBSCAN can yield qualitatively
+# better classes of clusterings without users' intervention which are
+# inaccessible via DBSCAN.
 
 # %%
 # Hyperparameter Robustness
