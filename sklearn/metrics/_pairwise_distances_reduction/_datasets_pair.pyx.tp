@@ -123,11 +123,6 @@ cdef class DatasetsPair{{name_suffix}}:
 
         return DenseSparseDatasetsPair{{name_suffix}}(X, Y, distance_metric, X_is_Y)
 
-    def __init__(self, {{DistanceMetric}} distance_metric, bint X_is_Y, ITYPE_t n_features):
-        self.distance_metric = distance_metric
-        self.X_is_Y = X_is_Y
-        self.n_features = n_features
-
     @classmethod
     def unpack_csr_matrix(cls, X: csr_matrix):
         """Ensure that the CSR matrix is indexed with SPARSE_INDEX_TYPE."""
@@ -135,6 +130,11 @@ cdef class DatasetsPair{{name_suffix}}:
         X_indices = np.asarray(X.indices, dtype=SPARSE_INDEX_TYPE)
         X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
         return X_data, X_indices, X_indptr
+
+    def __init__(self, {{DistanceMetric}} distance_metric, ITYPE_t n_features, bint X_is_Y):
+        self.distance_metric = distance_metric
+        self.X_is_Y = X_is_Y
+        self.n_features = n_features
 
     cdef ITYPE_t n_samples_X(self) nogil:
         """Number of samples in X."""
