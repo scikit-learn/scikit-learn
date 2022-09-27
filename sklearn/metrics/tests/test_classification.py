@@ -547,15 +547,15 @@ def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
         "Tpr is ill-defined and being set to 0.0 in labels with no positives samples."
         " Use `zero_division` parameter to control this behavior."
     )
-    expected_type_warning = UndefinedMetricWarning if zero_division == "warn" else None
 
     zero_division_value = 1.0 if zero_division == 1.0 else 0.0
 
-    with pytest.warns(expected_type_warning) as record:
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
         tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
             y_true, y_pred, average=None, zero_division=zero_division
         )
-        if expected_type_warning is None:
+        if zero_division == "warn":
             assert len(record) == 0
         else:
             assert str(record.pop().message) == msg
@@ -564,11 +564,12 @@ def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
     assert_array_almost_equal(tnr, [1.0, 1.0, 1.0, 2 / 3.0], 2)
     assert_array_almost_equal(fnr, [1.0, 0.5, 0.0, zero_division_value], 2)
 
-    with pytest.warns(expected_type_warning) as record:
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
         tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
             y_true, y_pred, average="macro", zero_division=zero_division
         )
-        if expected_type_warning is None:
+        if zero_division == "warn":
             assert len(record) == 0
         else:
             assert str(record.pop().message) == msg
@@ -577,21 +578,22 @@ def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
     assert_almost_equal(tnr, 0.91666, 5)
     assert_almost_equal(fnr, 0.625 if zero_division_value else 0.375)
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
             y_true, y_pred, average="micro", zero_division=zero_division
         )
-        assert len(record) == 0
     assert_almost_equal(tpr, 0.5)
     assert_almost_equal(fpr, 0.125)
     assert_almost_equal(tnr, 0.875)
     assert_almost_equal(fnr, 0.5)
 
-    with pytest.warns(expected_type_warning) as record:
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
         tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
             y_true, y_pred, average="weighted", zero_division=zero_division
         )
-        if expected_type_warning is None:
+        if zero_division == "warn":
             assert len(record) == 0
         else:
             assert str(record.pop().message) == msg
@@ -600,7 +602,8 @@ def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
     assert_almost_equal(tnr, 1.0)
     assert_almost_equal(fnr, 0.5)
 
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
         tpr, fpr, tnr, fnr = tpr_fpr_tnr_fnr_score(
             y_true,
             y_pred,
@@ -608,7 +611,6 @@ def test_tpr_fpr_tnr_fnr_score_with_an_empty_prediction(zero_division):
             sample_weight=[1, 1, 2],
             zero_division=zero_division,
         )
-        assert len(record) == 0
     assert_almost_equal(tpr, 0.5)
     assert_almost_equal(fpr, 0.08333, 5)
     assert_almost_equal(tnr, 0.91666, 5)
@@ -2605,19 +2607,19 @@ def test_npv_warnings(zero_division):
         "Npv is ill-defined and being set to 0.0 due to no negative call samples."
         " Use `zero_division` parameter to control this behavior."
     )
-    expected_type_warning = UndefinedMetricWarning if zero_division == "warn" else None
 
-    with pytest.warns(expected_type_warning) as record:
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
         npv_score(
             np.array([[0, 0], [0, 0]]),
             np.array([[1, 1], [1, 1]]),
             average="micro",
             zero_division=zero_division,
         )
-        if expected_type_warning is None:
-            assert len(record) == 0
-        else:
+        if zero_division == "warn":
             assert str(record[-1].message) == msg
+        else:
+            assert len(record) == 0
 
     with pytest.warns(UndefinedMetricWarning, match=msg):
         npv_score([1, 1], [1, 1])
