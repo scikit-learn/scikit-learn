@@ -92,7 +92,7 @@ _ = kernel_pca_proj_ax.set_title("Projection of testing data\n using KernelPCA")
 # the coordinate system will be centered, rescaled on each component
 # with respected to its variance and finally be rotated.
 # The obtained data from this transformation is isotropic and can now be
-# projected on its _principal components_.
+# projected on its *principal components*.
 #
 # Thus, looking at the projection made using PCA (i.e. the middle figure), we
 # see that there is no change regarding the scaling; indeed the data being two
@@ -152,7 +152,7 @@ _ = kernel_pca_back_proj_ax.set_title("Reconstruction via KernelPCA")
 # :class:`~sklearn.decomposition.KernelPCA`.
 #
 # Indeed, :meth:`~sklearn.decomposition.KernelPCA.inverse_transform` cannot
-# rely on an analytical back-projection and thus an extact reconstruction.
+# rely on an analytical back-projection and thus an exact reconstruction.
 # Instead, a :class:`~sklearn.kernel_ridge.KernelRidge` is internally trained
 # to learn a mapping from the kernalized PCA basis to the original feature
 # space. This method therefore comes with an approximation introducing small

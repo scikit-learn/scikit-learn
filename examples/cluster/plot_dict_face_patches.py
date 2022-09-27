@@ -1,6 +1,6 @@
 """
 Online learning of a dictionary of parts of faces
-==================================================
+=================================================
 
 This example uses a large dataset of faces to learn a set of 20 x 20
 images patches that constitute faces.
@@ -21,20 +21,24 @@ cluster.
 
 """
 
-import time
-
-import matplotlib.pyplot as plt
-import numpy as np
-
+# %%
+# Load the data
+# -------------
 
 from sklearn import datasets
-from sklearn.cluster import MiniBatchKMeans
-from sklearn.feature_extraction.image import extract_patches_2d
 
 faces = datasets.fetch_olivetti_faces()
 
-# #############################################################################
+# %%
 # Learn the dictionary of images
+# ------------------------------
+
+import time
+
+import numpy as np
+
+from sklearn.cluster import MiniBatchKMeans
+from sklearn.feature_extraction.image import extract_patches_2d
 
 print("Learning the dictionary... ")
 rng = np.random.RandomState(0)
@@ -64,8 +68,12 @@ for _ in range(6):
 dt = time.time() - t0
 print("done in %.2fs." % dt)
 
-# #############################################################################
+# %%
 # Plot the results
+# ----------------
+
+import matplotlib.pyplot as plt
+
 plt.figure(figsize=(4.2, 4))
 for i, patch in enumerate(kmeans.cluster_centers_):
     plt.subplot(9, 9, i + 1)

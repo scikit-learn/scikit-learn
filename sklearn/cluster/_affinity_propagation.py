@@ -5,7 +5,7 @@
 
 # License: BSD 3 clause
 
-import numbers
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
@@ -13,8 +13,7 @@ import numpy as np
 from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array, check_random_state
-from ..utils import check_scalar
-from ..utils.deprecation import deprecated
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import check_is_fitted
 from ..metrics import euclidean_distances
 from ..metrics import pairwise_distances_argmin
@@ -112,8 +111,9 @@ def affinity_propagation(
     For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
     <sphx_glr_auto_examples_cluster_plot_affinity_propagation.py>`.
 
-    When the algorithm does not converge, it returns an empty array as
-    ``cluster_center_indices`` and ``-1`` as label for each training sample.
+    When the algorithm does not converge, it will still return a arrays of
+    ``cluster_center_indices`` and labels if there are any exemplars/clusters,
+    however they may be degenerate and should be used with caution.
 
     When all training samples have equal similarities and equal preferences,
     the assignment of cluster centers and labels depends on the preference.
@@ -171,7 +171,7 @@ def affinity_propagation(
     # Remove degeneracies
     S += (
         np.finfo(S.dtype).eps * S + np.finfo(S.dtype).tiny * 100
-    ) * random_state.randn(n_samples, n_samples)
+    ) * random_state.standard_normal(size=(n_samples, n_samples))
 
     # Execute parallel affinity propagation updates
     e = np.zeros((n_samples, convergence_iter))
@@ -231,7 +231,13 @@ def affinity_propagation(
     I = np.flatnonzero(E)
     K = I.size  # Identify exemplars
 
-    if K > 0 and not never_converged:
+    if K > 0:
+        if never_converged:
+            warnings.warn(
+                "Affinity propagation did not converge, this model "
+                "may return degenerate cluster centers and labels.",
+                ConvergenceWarning,
+            )
         c = np.argmax(S[:, I], axis=1)
         c[I] = np.arange(K)  # Identify clusters
         # Refine the final set of exemplars and clusters and return results
@@ -248,7 +254,7 @@ def affinity_propagation(
         labels = np.searchsorted(cluster_centers_indices, labels)
     else:
         warnings.warn(
-            "Affinity propagation did not converge, this model "
+            "Affinity propagation did not converge and this model "
             "will not have any cluster centers.",
             ConvergenceWarning,
         )
@@ -359,9 +365,14 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
     The algorithmic complexity of affinity propagation is quadratic
     in the number of points.
 
-    When ``fit`` does not converge, ``cluster_centers_`` becomes an empty
-    array and all training samples will be labelled as ``-1``. In addition,
-    ``predict`` will then label every sample as ``-1``.
+    When the algorithm does not converge, it will still return a arrays of
+    ``cluster_center_indices`` and labels if there are any exemplars/clusters,
+    however they may be degenerate and should be used with caution.
+
+    When ``fit`` does not converge, ``cluster_centers_`` is still populated
+    however it may be degenerate. In such a case, proceed with caution.
+    If ``fit`` does not converge and fails to produce any ``cluster_centers_``
+    then ``predict`` will label every sample as ``-1``.
 
     When all training samples have equal similarities and equal preferences,
     the assignment of cluster centers and labels depends on the preference.
@@ -394,6 +405,21 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
            [4, 2]])
     """
 
+    _parameter_constraints: dict = {
+        "damping": [Interval(Real, 0.5, 1.0, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "convergence_iter": [Interval(Integral, 1, None, closed="left")],
+        "copy": ["boolean"],
+        "preference": [
+            "array-like",
+            Interval(Real, None, None, closed="neither"),
+            None,
+        ],
+        "affinity": [StrOptions({"euclidean", "precomputed"})],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         *,
@@ -415,16 +441,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         self.preference = preference
         self.affinity = affinity
         self.random_state = random_state
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        return self.affinity == "precomputed"
 
     def _more_tags(self):
         return {"pairwise": self.affinity == "precomputed"}
@@ -448,6 +464,8 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         self
             Returns the instance itself.
         """
+        self._validate_params()
+
         if self.affinity == "precomputed":
             accept_sparse = False
         else:
@@ -455,29 +473,8 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         X = self._validate_data(X, accept_sparse=accept_sparse)
         if self.affinity == "precomputed":
             self.affinity_matrix_ = X
-        elif self.affinity == "euclidean":
+        else:  # self.affinity == "euclidean"
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
-        else:
-            raise ValueError(
-                "Affinity must be 'precomputed' or 'euclidean'. Got %s instead"
-                % str(self.affinity)
-            )
-
-        check_scalar(
-            self.damping,
-            "damping",
-            target_type=numbers.Real,
-            min_val=0.5,
-            max_val=1,
-            include_boundaries="left",
-        )
-        check_scalar(self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1)
-        check_scalar(
-            self.convergence_iter,
-            "convergence_iter",
-            target_type=numbers.Integral,
-            min_val=1,
-        )
 
         (
             self.cluster_centers_indices_,

@@ -1,4 +1,4 @@
-*.pyc
+*.pyc*
 *.so
 *.pyd
 *~
@@ -75,6 +75,9 @@ _configtest.o.d
 # Used by mypy
 .mypy_cache/
 
+# virtualenv from advanced installation guide
+sklearn-env/
+
 # files generated from a template
 sklearn/_loss/_loss.pyx
 sklearn/utils/_seq_dataset.pyx
@@ -82,3 +85,15 @@ sklearn/utils/_seq_dataset.pxd
 sklearn/utils/_weight_vector.pyx
 sklearn/utils/_weight_vector.pxd
 sklearn/linear_model/_sag_fast.pyx
+sklearn/metrics/_dist_metrics.pyx
+sklearn/metrics/_dist_metrics.pxd
+sklearn/metrics/_pairwise_distances_reduction/_argkmin.pxd
+sklearn/metrics/_pairwise_distances_reduction/_argkmin.pyx
+sklearn/metrics/_pairwise_distances_reduction/_base.pxd
+sklearn/metrics/_pairwise_distances_reduction/_base.pyx
+sklearn/metrics/_pairwise_distances_reduction/_datasets_pair.pxd
+sklearn/metrics/_pairwise_distances_reduction/_datasets_pair.pyx
+sklearn/metrics/_pairwise_distances_reduction/_gemm_term_computer.pxd
+sklearn/metrics/_pairwise_distances_reduction/_gemm_term_computer.pyx
+sklearn/metrics/_pairwise_distances_reduction/_radius_neighborhood.pxd
+sklearn/metrics/_pairwise_distances_reduction/_radius_neighborhood.pyx

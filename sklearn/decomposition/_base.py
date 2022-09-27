@@ -62,7 +62,8 @@ class _BasePCA(
         # handle corner cases first
         if self.n_components_ == 0:
             return np.eye(n_features) / self.noise_variance_
-        if self.n_components_ == n_features:
+
+        if np.isclose(self.noise_variance_, 0.0, atol=0.0):
             return linalg.inv(self.get_covariance())
 
         # Get precision using matrix inversion lemma
@@ -74,7 +75,7 @@ class _BasePCA(
         precision = np.dot(components_, components_.T) / self.noise_variance_
         precision.flat[:: len(precision) + 1] += 1.0 / exp_var_diff
         precision = np.dot(components_.T, np.dot(linalg.inv(precision), components_))
-        precision /= -(self.noise_variance_ ** 2)
+        precision /= -(self.noise_variance_**2)
         precision.flat[:: len(precision) + 1] += 1.0 / self.noise_variance_
         return precision
 

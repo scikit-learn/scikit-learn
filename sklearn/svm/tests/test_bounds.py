@@ -42,7 +42,7 @@ def test_l1_min_c_l2_loss():
         l1_min_c(dense_X, Y1, loss="l2")
 
 
-def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
+def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=1.0):
     min_c = l1_min_c(
         X,
         y,

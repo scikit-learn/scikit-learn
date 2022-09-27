@@ -1,33 +1,23 @@
-cimport cython
-cimport numpy as np
 from cython cimport floating
 
+cimport numpy as cnp
 import numpy as np
 
-np.import_array()
+cnp.import_array()
 
 from libc.math cimport exp, fabs, log
 from numpy.math cimport EULER
 
 
-# floating2 is introduced in order to accept parameters with two different
-# dtypes for `mean_change` and `_dirichlet_expectation_1d`.
-# By accepting two different two dtypes, unnecessary memory allocation is
-# suppressed along with type conversion in prediction time.
-ctypedef fused floating2:
-    float
-    double
-
-
-def mean_change(np.ndarray[ndim=1, dtype=floating] arr_1,
-                np.ndarray[ndim=1, dtype=floating2] arr_2):
+def mean_change(cnp.ndarray[ndim=1, dtype=cnp.float64_t] arr_1,
+                cnp.ndarray[ndim=1, dtype=cnp.float64_t] arr_2):
     """Calculate the mean difference between two arrays.
 
     Equivalent to np.abs(arr_1 - arr2).mean().
     """
 
-    cdef np.float64_t total, diff
-    cdef np.npy_intp i, size
+    cdef cnp.float64_t total, diff
+    cdef cnp.npy_intp i, size
 
     size = arr_1.shape[0]
     total = 0.0
@@ -38,9 +28,9 @@ def mean_change(np.ndarray[ndim=1, dtype=floating] arr_1,
     return total / size
 
 
-def _dirichlet_expectation_1d(np.ndarray[ndim=1, dtype=floating] doc_topic,
+def _dirichlet_expectation_1d(cnp.ndarray[ndim=1, dtype=cnp.float64_t] doc_topic,
                               double doc_topic_prior,
-                              np.ndarray[ndim=1, dtype=floating2] out):
+                              cnp.ndarray[ndim=1, dtype=cnp.float64_t] out):
     """Dirichlet expectation for a single sample:
         exp(E[log(theta)]) for theta ~ Dir(doc_topic)
     after adding doc_topic_prior to doc_topic, in-place.
@@ -50,8 +40,8 @@ def _dirichlet_expectation_1d(np.ndarray[ndim=1, dtype=floating] doc_topic,
         out[:] = np.exp(psi(doc_topic) - psi(np.sum(doc_topic)))
     """
 
-    cdef np.float64_t dt, psi_total, total
-    cdef np.npy_intp i, size
+    cdef cnp.float64_t dt, psi_total, total
+    cdef cnp.npy_intp i, size
 
     size = doc_topic.shape[0]
 
@@ -66,7 +56,7 @@ def _dirichlet_expectation_1d(np.ndarray[ndim=1, dtype=floating] doc_topic,
         out[i] = exp(psi(doc_topic[i]) - psi_total)
 
 
-def _dirichlet_expectation_2d(np.ndarray[ndim=2, dtype=floating] arr):
+def _dirichlet_expectation_2d(cnp.ndarray[ndim=2, dtype=cnp.float64_t] arr):
     """Dirichlet expectation for multiple samples:
     E[log(theta)] for theta ~ Dir(arr).
 
@@ -75,9 +65,9 @@ def _dirichlet_expectation_2d(np.ndarray[ndim=2, dtype=floating] arr):
     Note that unlike _dirichlet_expectation_1d, this function doesn't compute
     the exp and doesn't add in the prior.
     """
-    cdef floating row_total, psi_row_total
-    cdef np.ndarray[ndim=2, dtype=floating] d_exp
-    cdef np.npy_intp i, j, n_rows, n_cols
+    cdef cnp.float64_t row_total, psi_row_total
+    cdef cnp.ndarray[ndim=2, dtype=cnp.float64_t] d_exp
+    cdef cnp.npy_intp i, j, n_rows, n_cols
 
     n_rows = arr.shape[0]
     n_cols = arr.shape[1]

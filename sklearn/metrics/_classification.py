@@ -28,6 +28,7 @@ import numpy as np
 
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
+from scipy.special import xlogy
 
 from ..preprocessing import LabelBinarizer
 from ..preprocessing import LabelEncoder
@@ -586,7 +587,7 @@ def multilabel_confusion_matrix(
 
 
 def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
-    r"""Cohen's kappa: a statistic that measures inter-annotator agreement.
+    r"""Compute Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
     of agreement between two annotators on a classification problem. It is
@@ -632,9 +633,9 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
 
     References
     ----------
-    .. [1] J. Cohen (1960). "A coefficient of agreement for nominal scales".
+    .. [1] :doi:`J. Cohen (1960). "A coefficient of agreement for nominal scales".
            Educational and Psychological Measurement 20(1):37-46.
-           doi:10.1177/001316446002000104.
+           <10.1177/001316446002000104>`
     .. [2] `R. Artstein and M. Poesio (2008). "Inter-coder agreement for
            computational linguistics". Computational Linguistics 34(4):555-596
            <https://www.mitpressjournals.org/doi/pdf/10.1162/coli.07-034-R2>`_.
@@ -738,12 +739,16 @@ def jaccard_score(
 
     Returns
     -------
-    score : float (if average is not None) or array of floats, shape =\
-            [n_unique_labels]
+    score : float or ndarray of shape (n_unique_labels,), dtype=np.float64
+        The Jaccard score. When `average` is not `None`, a single scalar is
+        returned.
 
     See Also
     --------
-    accuracy_score, f1_score, multilabel_confusion_matrix
+    accuracy_score : Function for calculating the accuracy score.
+    f1_score : Function for calculating the F1 score.
+    multilabel_confusion_matrix : Function for computing a confusion matrix\
+                                  for each class or sample.
 
     Notes
     -----
@@ -770,6 +775,11 @@ def jaccard_score(
 
     >>> jaccard_score(y_true[0], y_pred[0])
     0.6666...
+
+    In the 2D comparison case (e.g. image similarity):
+
+    >>> jaccard_score(y_true, y_pred, average="micro")
+    0.6
 
     In the multilabel case:
 
@@ -866,9 +876,9 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
 
     References
     ----------
-    .. [1] `Baldi, Brunak, Chauvin, Andersen and Nielsen, (2000). Assessing the
-       accuracy of prediction algorithms for classification: an overview
-       <https://doi.org/10.1093/bioinformatics/16.5.412>`_.
+    .. [1] :doi:`Baldi, Brunak, Chauvin, Andersen and Nielsen, (2000). Assessing the
+       accuracy of prediction algorithms for classification: an overview.
+       <10.1093/bioinformatics/16.5.412>`
 
     .. [2] `Wikipedia entry for the Matthews Correlation Coefficient
        <https://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_.
@@ -905,8 +915,8 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     n_correct = np.trace(C, dtype=np.float64)
     n_samples = p_sum.sum()
     cov_ytyp = n_correct * n_samples - np.dot(t_sum, p_sum)
-    cov_ypyp = n_samples ** 2 - np.dot(p_sum, p_sum)
-    cov_ytyt = n_samples ** 2 - np.dot(t_sum, t_sum)
+    cov_ypyp = n_samples**2 - np.dot(p_sum, p_sum)
+    cov_ytyt = n_samples**2 - np.dot(t_sum, t_sum)
 
     if cov_ypyp * cov_ytyt == 0:
         return 0.0
@@ -1040,7 +1050,7 @@ def f1_score(
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : {'micro', 'macro', 'samples','weighted', 'binary'} or None, \
+    average : {'micro', 'macro', 'samples', 'weighted', 'binary'} or None, \
             default='binary'
         This parameter is required for multiclass/multilabel targets.
         If ``None``, the scores for each class are returned. Otherwise, this
@@ -1081,8 +1091,20 @@ def f1_score(
 
     See Also
     --------
-    fbeta_score, precision_recall_fscore_support, jaccard_score,
-    multilabel_confusion_matrix
+    fbeta_score : Compute the F-beta score.
+    precision_recall_fscore_support : Compute the precision, recall, F-score,
+        and support.
+    jaccard_score : Compute the Jaccard similarity coefficient score.
+    multilabel_confusion_matrix : Compute a confusion matrix for each class or
+        sample.
+
+    Notes
+    -----
+    When ``true positive + false positive == 0``, precision is undefined.
+    When ``true positive + false negative == 0``, recall is undefined.
+    In such cases, by default the metric will be set to 0, as will f-score,
+    and ``UndefinedMetricWarning`` will be raised. This behavior can be
+    modified with ``zero_division``.
 
     References
     ----------
@@ -1111,14 +1133,6 @@ def f1_score(
     >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
     >>> f1_score(y_true, y_pred, average=None)
     array([0.66666667, 1.        , 0.66666667])
-
-    Notes
-    -----
-    When ``true positive + false positive == 0``, precision is undefined.
-    When ``true positive + false negative == 0``, recall is undefined.
-    In such cases, by default the metric will be set to 0, as will f-score,
-    and ``UndefinedMetricWarning`` will be raised. This behavior can be
-    modified with ``zero_division``.
     """
     return fbeta_score(
         y_true,
@@ -1226,7 +1240,10 @@ def fbeta_score(
 
     See Also
     --------
-    precision_recall_fscore_support, multilabel_confusion_matrix
+    precision_recall_fscore_support : Compute the precision, recall, F-score,
+        and support.
+    multilabel_confusion_matrix : Compute a confusion matrix for each class or
+        sample.
 
     Notes
     -----
@@ -1393,8 +1410,8 @@ def precision_recall_fscore_support(
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
     true positives and ``fp`` the number of false positives. The precision is
-    intuitively the ability of the classifier not to label as positive a sample
-    that is negative.
+    intuitively the ability of the classifier not to label a negative sample as
+    positive.
 
     The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
     true positives and ``fn`` the number of false negatives. The recall is
@@ -1441,7 +1458,7 @@ def precision_recall_fscore_support(
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
         scores for that label only.
 
-    average : {'binary', 'micro', 'macro', 'samples','weighted'}, \
+    average : {'binary', 'micro', 'macro', 'samples', 'weighted'}, \
             default=None
         If ``None``, the scores for each class are returned. Otherwise, this
         determines the type of averaging performed on the data:
@@ -1484,12 +1501,15 @@ def precision_recall_fscore_support(
     -------
     precision : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
+        Precision score.
 
     recall : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
+        Recall score.
 
     fbeta_score : float (if average is not None) or array of float, shape =\
         [n_unique_labels]
+        F-beta score.
 
     support : None (if average is not None) or array of int, shape =\
         [n_unique_labels]
@@ -1562,7 +1582,7 @@ def precision_recall_fscore_support(
         true_sum = np.array([true_sum.sum()])
 
     # Finally, we have all our sufficient statistics. Divide! #
-    beta2 = beta ** 2
+    beta2 = beta**2
 
     # Divide, and on zero-division, set scores and/or warn according to
     # zero_division:
@@ -1623,6 +1643,174 @@ def precision_recall_fscore_support(
         true_sum = None  # return no support
 
     return precision, recall, f_score, true_sum
+
+
+def class_likelihood_ratios(
+    y_true,
+    y_pred,
+    *,
+    labels=None,
+    sample_weight=None,
+    raise_warning=True,
+):
+    """Compute binary classification positive and negative likelihood ratios.
+
+    The positive likelihood ratio is `LR+ = sensitivity / (1 - specificity)`
+    where the sensitivity or recall is the ratio `tp / (tp + fn)` and the
+    specificity is `tn / (tn + fp)`. The negative likelihood ratio is `LR- = (1
+    - sensitivity) / specificity`. Here `tp` is the number of true positives,
+    `fp` the number of false positives, `tn` is the number of true negatives and
+    `fn` the number of false negatives. Both class likelihood ratios can be used
+    to obtain post-test probabilities given a pre-test probability.
+
+    `LR+` ranges from 1 to infinity. A `LR+` of 1 indicates that the probability
+    of predicting the positive class is the same for samples belonging to either
+    class; therefore, the test is useless. The greater `LR+` is, the more a
+    positive prediction is likely to be a true positive when compared with the
+    pre-test probability. A value of `LR+` lower than 1 is invalid as it would
+    indicate that the odds of a sample being a true positive decrease with
+    respect to the pre-test odds.
+
+    `LR-` ranges from 0 to 1. The closer it is to 0, the lower the probability
+    of a given sample to be a false negative. A `LR-` of 1 means the test is
+    useless because the odds of having the condition did not change after the
+    test. A value of `LR-` greater than 1 invalidates the classifier as it
+    indicates an increase in the odds of a sample belonging to the positive
+    class after being classified as negative. This is the case when the
+    classifier systematically predicts the opposite of the true label.
+
+    A typical application in medicine is to identify the positive/negative class
+    to the presence/absence of a disease, respectively; the classifier being a
+    diagnostic test; the pre-test probability of an individual having the
+    disease can be the prevalence of such disease (proportion of a particular
+    population found to be affected by a medical condition); and the post-test
+    probabilities would be the probability that the condition is truly present
+    given a positive test result.
+
+    Read more in the :ref:`User Guide <class_likelihood_ratios>`.
+
+    Parameters
+    ----------
+    y_true : 1d array-like, or label indicator array / sparse matrix
+        Ground truth (correct) target values.
+
+    y_pred : 1d array-like, or label indicator array / sparse matrix
+        Estimated targets as returned by a classifier.
+
+    labels : array-like, default=None
+        List of labels to index the matrix. This may be used to select the
+        positive and negative classes with the ordering `labels=[negative_class,
+        positive_class]`. If `None` is given, those that appear at least once in
+        `y_true` or `y_pred` are used in sorted order.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    raise_warning : bool, default=True
+        Whether or not a case-specific warning message is raised when there is a
+        zero division. Even if the error is not raised, the function will return
+        nan in such cases.
+
+    Returns
+    -------
+    (positive_likelihood_ratio, negative_likelihood_ratio) : tuple
+        A tuple of two float, the first containing the Positive likelihood ratio
+        and the second the Negative likelihood ratio.
+
+    Warns
+    -----
+    When `false positive == 0`, the positive likelihood ratio is undefined.
+    When `true negative == 0`, the negative likelihood ratio is undefined.
+    When `true positive + false negative == 0` both ratios are undefined.
+    In such cases, `UserWarning` will be raised if raise_warning=True.
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Likelihood ratios in diagnostic testing
+           <https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import class_likelihood_ratios
+    >>> class_likelihood_ratios([0, 1, 0, 1, 0], [1, 1, 0, 0, 0])
+    (1.5, 0.75)
+    >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
+    >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
+    >>> class_likelihood_ratios(y_true, y_pred)
+    (1.33..., 0.66...)
+    >>> y_true = np.array(["non-zebra", "zebra", "non-zebra", "zebra", "non-zebra"])
+    >>> y_pred = np.array(["zebra", "zebra", "non-zebra", "non-zebra", "non-zebra"])
+    >>> class_likelihood_ratios(y_true, y_pred)
+    (1.5, 0.75)
+
+    To avoid ambiguities, use the notation `labels=[negative_class,
+    positive_class]`
+
+    >>> y_true = np.array(["non-cat", "cat", "non-cat", "cat", "non-cat"])
+    >>> y_pred = np.array(["cat", "cat", "non-cat", "non-cat", "non-cat"])
+    >>> class_likelihood_ratios(y_true, y_pred, labels=["non-cat", "cat"])
+    (1.5, 0.75)
+    """
+
+    y_type, y_true, y_pred = _check_targets(y_true, y_pred)
+    if y_type != "binary":
+        raise ValueError(
+            "class_likelihood_ratios only supports binary classification "
+            f"problems, got targets of type: {y_type}"
+        )
+
+    cm = confusion_matrix(
+        y_true,
+        y_pred,
+        sample_weight=sample_weight,
+        labels=labels,
+    )
+
+    # Case when `y_test` contains a single class and `y_test == y_pred`.
+    # This may happen when cross-validating imbalanced data and should
+    # not be interpreted as a perfect score.
+    if cm.shape == (1, 1):
+        msg = "samples of only one class were seen during testing "
+        if raise_warning:
+            warnings.warn(msg, UserWarning, stacklevel=2)
+        positive_likelihood_ratio = np.nan
+        negative_likelihood_ratio = np.nan
+    else:
+        tn, fp, fn, tp = cm.ravel()
+        support_pos = tp + fn
+        support_neg = tn + fp
+        pos_num = tp * support_neg
+        pos_denom = fp * support_pos
+        neg_num = fn * support_neg
+        neg_denom = tn * support_pos
+
+        # If zero division warn and set scores to nan, else divide
+        if support_pos == 0:
+            msg = "no samples of the positive class were present in the testing set "
+            if raise_warning:
+                warnings.warn(msg, UserWarning, stacklevel=2)
+            positive_likelihood_ratio = np.nan
+            negative_likelihood_ratio = np.nan
+        if fp == 0:
+            if tp == 0:
+                msg = "no samples predicted for the positive class"
+            else:
+                msg = "positive_likelihood_ratio ill-defined and being set to nan "
+            if raise_warning:
+                warnings.warn(msg, UserWarning, stacklevel=2)
+            positive_likelihood_ratio = np.nan
+        else:
+            positive_likelihood_ratio = pos_num / pos_denom
+        if tn == 0:
+            msg = "negative_likelihood_ratio ill-defined and being set to nan "
+            if raise_warning:
+                warnings.warn(msg, UserWarning, stacklevel=2)
+            negative_likelihood_ratio = np.nan
+        else:
+            negative_likelihood_ratio = neg_num / neg_denom
+
+    return positive_likelihood_ratio, negative_likelihood_ratio
 
 
 def precision_score(
@@ -2072,8 +2260,11 @@ def classification_report(
 
     See Also
     --------
-    precision_recall_fscore_support, confusion_matrix,
-    multilabel_confusion_matrix
+    precision_recall_fscore_support: Compute precision, recall, F-measure and
+        support for each class.
+    confusion_matrix: Compute confusion matrix to evaluate the accuracy of a
+        classification.
+    multilabel_confusion_matrix: Compute a confusion matrix for each class or sample.
 
     Examples
     --------
@@ -2359,10 +2550,16 @@ def log_loss(
     Returns
     -------
     loss : float
+        Log loss, aka logistic loss or cross-entropy loss.
 
     Notes
     -----
     The logarithm used is the natural logarithm (base-e).
+
+    References
+    ----------
+    C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer,
+    p. 209.
 
     Examples
     --------
@@ -2370,11 +2567,6 @@ def log_loss(
     >>> log_loss(["spam", "ham", "ham", "spam"],
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616...
-
-    References
-    ----------
-    C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer,
-    p. 209.
     """
     y_pred = check_array(y_pred, ensure_2d=False)
     check_consistent_length(y_pred, y_true, sample_weight)
@@ -2438,8 +2630,9 @@ def log_loss(
             )
 
     # Renormalize
-    y_pred /= y_pred.sum(axis=1)[:, np.newaxis]
-    loss = -(transformed_labels * np.log(y_pred)).sum(axis=1)
+    y_pred_sum = y_pred.sum(axis=1)
+    y_pred = y_pred / y_pred_sum[:, np.newaxis]
+    loss = -xlogy(transformed_labels, y_pred).sum(axis=1)
 
     return _weighted_sum(loss, sample_weight, normalize)
 
@@ -2479,6 +2672,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     Returns
     -------
     loss : float
+        Average hinge loss.
 
     References
     ----------
@@ -2492,8 +2686,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
 
     .. [3] `L1 AND L2 Regularization for Multiclass Hinge Loss Models
            by Robert C. Moore, John DeNero
-           <http://www.ttic.edu/sigml/symposium2011/papers/
-           Moore+DeNero_Regularization.pdf>`_.
+           <https://storage.googleapis.com/pub-tools-public-publication-data/pdf/37362.pdf>`_.
 
     Examples
     --------
@@ -2597,7 +2790,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     takes on a value between zero and one, since this is the largest
     possible difference between a predicted probability (which must be
     between zero and one) and the actual outcome (which can take on values
-    of only 0 and 1). It can be decomposed is the sum of refinement loss and
+    of only 0 and 1). It can be decomposed as the sum of refinement loss and
     calibration loss.
 
     The Brier score is appropriate for binary and categorical outcomes that
@@ -2637,6 +2830,11 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     score : float
         Brier score loss.
 
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Brier score
+            <https://en.wikipedia.org/wiki/Brier_score>`_.
+
     Examples
     --------
     >>> import numpy as np
@@ -2652,11 +2850,6 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     0.037...
     >>> brier_score_loss(y_true, np.array(y_prob) > 0.5)
     0.0
-
-    References
-    ----------
-    .. [1] `Wikipedia entry for the Brier score
-            <https://en.wikipedia.org/wiki/Brier_score>`_.
     """
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)

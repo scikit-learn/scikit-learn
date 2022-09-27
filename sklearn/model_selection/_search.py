@@ -42,7 +42,6 @@ from ..utils.metaestimators import available_if
 from ..utils.fixes import delayed
 from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
-from ..utils import deprecated
 
 __all__ = ["GridSearchCV", "ParameterGrid", "ParameterSampler", "RandomizedSearchCV"]
 
@@ -411,17 +410,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             },
         }
 
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        # allows cross-validation to see 'precomputed' metrics
-        return getattr(self.estimator, "_pairwise", False)
-
     def score(self, X, y=None):
         """Return the score on the given data, if the estimator has been refit.
 
@@ -656,7 +644,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         """Repeatedly calls `evaluate_candidates` to conduct a search.
 
         This method, implemented in sub-classes, makes it possible to
-        customize the the scheduling of evaluations: GridSearchCV and
+        customize the scheduling of evaluations: GridSearchCV and
         RandomizedSearchCV schedule evaluations for their whole parameter
         search space at once but other more sequential approaches are also
         possible: for instance is possible to iteratively schedule evaluations
@@ -768,7 +756,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
 
         **fit_params : dict of str -> object
-            Parameters passed to the ``fit`` method of the estimator.
+            Parameters passed to the `fit` method of the estimator.
+
+            If a fit parameter is an array-like whose length is equal to
+            `num_samples` then it will be split across CV groups along with `X`
+            and `y`. For example, the :term:`sample_weight` parameter is split
+            because `len(sample_weights) = len(X)`.
 
         Returns
         -------
@@ -972,9 +965,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             results["std_%s" % key_name] = array_stds
 
             if rank:
-                results["rank_%s" % key_name] = np.asarray(
-                    rankdata(-array_means, method="min"), dtype=np.int32
-                )
+                # when input is nan, scipy >= 1.10 rankdata returns nan. To
+                # keep previous behaviour nans are set to be smaller than the
+                # minimum value in the array before ranking
+                min_array_means = min(array_means) - 1
+                array_means = np.nan_to_num(array_means, copy=True, nan=min_array_means)
+                rank_result = rankdata(-array_means, method="min")
+                rank_result = np.asarray(rank_result, dtype=np.int32)
+                results["rank_%s" % key_name] = rank_result
 
         _store("fit_time", out["fit_time"])
         _store("score_time", out["score_time"])
@@ -1107,6 +1105,10 @@ class GridSearchCV(BaseSearchCV):
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
+
+        See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
+        to see how to design a custom selection strategy using a callable
+        via `refit`.
 
         .. versionchanged:: 0.20
             Support for callable added.
@@ -1307,6 +1309,15 @@ class GridSearchCV(BaseSearchCV):
 
         .. versionadded:: 1.0
 
+    See Also
+    --------
+    ParameterGrid : Generates all the combinations of a hyperparameter grid.
+    train_test_split : Utility function to split the data into a development
+        set usable for fitting a GridSearchCV instance and an evaluation set
+        for its final evaluation.
+    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
+        loss function.
+
     Notes
     -----
     The parameters selected are those that maximize the score of the left out
@@ -1319,15 +1330,6 @@ class GridSearchCV(BaseSearchCV):
     this case is to set `pre_dispatch`. Then, the memory is copied only
     `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
     n_jobs`.
-
-    See Also
-    ---------
-    ParameterGrid : Generates all the combinations of a hyperparameter grid.
-    train_test_split : Utility function to split the data into a development
-        set usable for fitting a GridSearchCV instance and an evaluation set
-        for its final evaluation.
-    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
-        loss function.
 
     Examples
     --------
@@ -1509,6 +1511,12 @@ class RandomizedSearchCV(BaseSearchCV):
 
     verbose : int
         Controls the verbosity: the higher, the more messages.
+
+        - >1 : the computation time for each fold and parameter candidate is
+          displayed;
+        - >2 : the score is also displayed;
+        - >3 : the fold and candidate parameter indexes are also displayed
+          together with the starting time of the computation.
 
     pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
