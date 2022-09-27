@@ -36,28 +36,32 @@ necessarily related to visualisation.
 # Generate distorted image
 # ------------------------
 import numpy as np
-import scipy as sp
 
 
-try:  # SciPy >= 0.16 have face in misc
+try:  # Scipy >= 1.10
+    from scipy.datasets import face
+except ImportError:
     from scipy.misc import face
 
-    face = face(gray=True)
-except ImportError:
-    face = sp.face(gray=True)
+racoon_face = face(gray=True)
 
 # Convert from uint8 representation with values between 0 and 255 to
 # a floating point representation with values between 0 and 1.
-face = face / 255.0
+racoon_face = racoon_face / 255.0
 
 # downsample for higher speed
-face = face[::4, ::4] + face[1::4, ::4] + face[::4, 1::4] + face[1::4, 1::4]
-face /= 4.0
-height, width = face.shape
+racoon_face = (
+    racoon_face[::4, ::4]
+    + racoon_face[1::4, ::4]
+    + racoon_face[::4, 1::4]
+    + racoon_face[1::4, 1::4]
+)
+racoon_face /= 4.0
+height, width = racoon_face.shape
 
 # Distort the right half of the image
 print("Distorting image...")
-distorted = face.copy()
+distorted = racoon_face.copy()
 distorted[:, width // 2 :] += 0.075 * np.random.randn(height, width // 2)
 
 
@@ -88,7 +92,7 @@ def show_with_diff(image, reference, title):
     plt.subplots_adjust(0.02, 0.02, 0.98, 0.79, 0.02, 0.2)
 
 
-show_with_diff(distorted, face, "Distorted image")
+show_with_diff(distorted, racoon_face, "Distorted image")
 
 
 # %%
@@ -165,7 +169,7 @@ transform_algorithms = [
 reconstructions = {}
 for title, transform_algorithm, kwargs in transform_algorithms:
     print(title + "...")
-    reconstructions[title] = face.copy()
+    reconstructions[title] = racoon_face.copy()
     t0 = time()
     dico.set_params(transform_algorithm=transform_algorithm, **kwargs)
     code = dico.transform(data)
@@ -181,6 +185,6 @@ for title, transform_algorithm, kwargs in transform_algorithms:
     )
     dt = time() - t0
     print("done in %.2fs." % dt)
-    show_with_diff(reconstructions[title], face, title + " (time: %.1fs)" % dt)
+    show_with_diff(reconstructions[title], racoon_face, title + " (time: %.1fs)" % dt)
 
 plt.show()
