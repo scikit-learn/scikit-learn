@@ -237,9 +237,8 @@ class AdamOptimizer(BaseOptimizer):
 
     References
     ----------
-    Kingma, Diederik, and Jimmy Ba.
-    "Adam: A method for stochastic optimization."
-    arXiv preprint arXiv:1412.6980 (2014).
+    :arxiv:`Kingma, Diederik, and Jimmy Ba (2014) "Adam: A method for
+        stochastic optimization." <1412.6980>
     """
 
     def __init__(
@@ -274,13 +273,13 @@ class AdamOptimizer(BaseOptimizer):
             for m, grad in zip(self.ms, grads)
         ]
         self.vs = [
-            self.beta_2 * v + (1 - self.beta_2) * (grad ** 2)
+            self.beta_2 * v + (1 - self.beta_2) * (grad**2)
             for v, grad in zip(self.vs, grads)
         ]
         self.learning_rate = (
             self.learning_rate_init
-            * np.sqrt(1 - self.beta_2 ** self.t)
-            / (1 - self.beta_1 ** self.t)
+            * np.sqrt(1 - self.beta_2**self.t)
+            / (1 - self.beta_1**self.t)
         )
         updates = [
             -self.learning_rate * m / (np.sqrt(v) + self.epsilon)

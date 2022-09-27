@@ -14,6 +14,7 @@ This module contains:
 # License: BSD 3 clause
 
 from abc import abstractmethod
+from numbers import Integral
 
 import numpy as np
 
@@ -29,8 +30,10 @@ from ..preprocessing import LabelEncoder
 from ..utils import Bunch
 from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _check_feature_names_in
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
+from ..utils._param_validation import StrOptions
 from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
 from ..utils.fixes import delayed
@@ -43,10 +46,17 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     instead.
     """
 
+    _parameter_constraints: dict = {
+        "estimators": [list],
+        "weights": ["array-like", None],
+        "n_jobs": [None, Integral],
+        "verbose": ["verbose"],
+    }
+
     def _log_message(self, name, idx, total):
         if not self.verbose:
             return None
-        return "(%d of %d) Processing %s" % (idx, total, name)
+        return f"({idx} of {total}) Processing {name}"
 
     @property
     def _weights_not_none(self):
@@ -66,9 +76,8 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
 
         if self.weights is not None and len(self.weights) != len(self.estimators):
             raise ValueError(
-                "Number of `estimators` and weights must be equal"
-                "; got %d weights, %d estimators"
-                % (len(self.weights), len(self.estimators))
+                "Number of `estimators` and weights must be equal; got"
+                f" {len(self.weights)} weights, {len(self.estimators)} estimators"
             )
 
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
@@ -277,6 +286,12 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     (6, 6)
     """
 
+    _parameter_constraints: dict = {
+        **_BaseVoting._parameter_constraints,
+        "voting": [StrOptions({"hard", "soft"})],
+        "flatten_transform": ["boolean"],
+    }
+
     def __init__(
         self,
         estimators,
@@ -318,15 +333,11 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         check_classification_targets(y)
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
             raise NotImplementedError(
                 "Multilabel and multi-output classification is not supported."
-            )
-
-        if self.voting not in ("soft", "hard"):
-            raise ValueError(
-                "Voting must be 'soft' or 'hard'; got (voting=%r)" % self.voting
             )
 
         self.le_ = LabelEncoder().fit(y)
@@ -408,9 +419,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         -------
         probabilities_or_labels
             If `voting='soft'` and `flatten_transform=True`:
-                returns ndarray of shape (n_classifiers, n_samples *
-                n_classes), being class probabilities calculated by each
-                classifier.
+                returns ndarray of shape (n_samples, n_classifiers * n_classes),
+                being class probabilities calculated by each classifier.
             If `voting='soft' and `flatten_transform=False`:
                 ndarray of shape (n_classifiers, n_samples, n_classes)
             If `voting='hard'`:
@@ -427,6 +437,42 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         else:
             return self._predict(X)
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        if self.voting == "soft" and not self.flatten_transform:
+            raise ValueError(
+                "get_feature_names_out is not supported when `voting='soft'` and "
+                "`flatten_transform=False`"
+            )
+
+        _check_feature_names_in(self, input_features, generate_names=False)
+        class_name = self.__class__.__name__.lower()
+
+        active_names = [name for name, est in self.estimators if est != "drop"]
+
+        if self.voting == "hard":
+            return np.asarray(
+                [f"{class_name}_{name}" for name in active_names], dtype=object
+            )
+
+        # voting == "soft"
+        n_classes = len(self.classes_)
+        names_out = [
+            f"{class_name}_{name}{i}" for name in active_names for i in range(n_classes)
+        ]
+        return np.asarray(names_out, dtype=object)
 
 
 class VotingRegressor(RegressorMixin, _BaseVoting):
@@ -547,6 +593,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
         y = column_or_1d(y, warn=True)
         return super().fit(X, y, sample_weight)
 
@@ -584,3 +631,23 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         """
         check_is_fitted(self)
         return self._predict(X)
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        _check_feature_names_in(self, input_features, generate_names=False)
+        class_name = self.__class__.__name__.lower()
+        return np.asarray(
+            [f"{class_name}_{name}" for name, est in self.estimators if est != "drop"],
+            dtype=object,
+        )

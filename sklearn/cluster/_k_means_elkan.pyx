@@ -6,14 +6,12 @@
 # fused types and when the array may be read-only (for instance when it's
 # provided by the user). This is fixed in cython > 0.3.
 
-import numpy as np
-cimport numpy as np
-cimport cython
+IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
+    cimport openmp
 from cython cimport floating
 from cython.parallel import prange, parallel
-from libc.math cimport sqrt
 from libc.stdlib cimport calloc, free
-from libc.string cimport memset, memcpy
+from libc.string cimport memset
 
 from ..utils.extmath import row_norms
 from ._k_means_common import CHUNK_SIZE
@@ -25,16 +23,14 @@ from ._k_means_common cimport _average_centers
 from ._k_means_common cimport _center_shift
 
 
-np.import_array()
-
-
 def init_bounds_dense(
         floating[:, ::1] X,                      # IN READ-ONLY
         floating[:, ::1] centers,                # IN
         floating[:, ::1] center_half_distances,  # IN
         int[::1] labels,                         # OUT
         floating[::1] upper_bounds,              # OUT
-        floating[:, ::1] lower_bounds):          # OUT
+        floating[:, ::1] lower_bounds,           # OUT
+        int n_threads):
     """Initialize upper and lower bounds for each sample for dense input data.
 
     Given X, centers and the pairwise distances divided by 2.0 between the
@@ -72,6 +68,9 @@ def init_bounds_dense(
     lower_bounds : ndarray, of shape(n_samples, n_clusters), dtype=floating
         The lower bound on the distance between each sample and each cluster
         center. This array is modified in place.
+
+    n_threads : int
+        The number of threads to be used by openmp.
     """
     cdef:
         int n_samples = X.shape[0]
@@ -81,7 +80,9 @@ def init_bounds_dense(
         floating min_dist, dist
         int best_cluster, i, j
 
-    for i in prange(n_samples, schedule='static', nogil=True):
+    for i in prange(
+        n_samples, num_threads=n_threads, schedule='static', nogil=True
+    ):
         best_cluster = 0
         min_dist = _euclidean_dense_dense(&X[i, 0], &centers[0, 0],
                                           n_features, False)
@@ -104,7 +105,8 @@ def init_bounds_sparse(
         floating[:, ::1] center_half_distances,  # IN
         int[::1] labels,                         # OUT
         floating[::1] upper_bounds,              # OUT
-        floating[:, ::1] lower_bounds):          # OUT
+        floating[:, ::1] lower_bounds,           # OUT
+        int n_threads):
     """Initialize upper and lower bounds for each sample for sparse input data.
 
     Given X, centers and the pairwise distances divided by 2.0 between the
@@ -142,6 +144,9 @@ def init_bounds_sparse(
     lower_bounds : ndarray of shape(n_samples, n_clusters), dtype=floating
         The lower bound on the distance between each sample and each cluster
         center. This array is modified in place.
+
+    n_threads : int
+        The number of threads to be used by openmp.
     """
     cdef:
         int n_samples = X.shape[0]
@@ -157,7 +162,9 @@ def init_bounds_sparse(
 
         floating[::1] centers_squared_norms = row_norms(centers, squared=True)
 
-    for i in prange(n_samples, schedule='static', nogil=True):
+    for i in prange(
+        n_samples, num_threads=n_threads, schedule='static', nogil=True
+    ):
         best_cluster = 0
         min_dist = _euclidean_sparse_dense(
             X_data[X_indptr[i]: X_indptr[i + 1]],
@@ -267,6 +274,9 @@ def elkan_iter_chunked_dense(
         floating *centers_new_chunk
         floating *weight_in_clusters_chunk
 
+        IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
+            openmp.omp_lock_t lock
+
     # count remainder chunk in total number of chunks
     n_chunks += n_samples != n_chunks * n_samples_chunk
 
@@ -276,6 +286,8 @@ def elkan_iter_chunked_dense(
     if update_centers:
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
+        IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
+            openmp.omp_init_lock(&lock)
 
     with nogil, parallel(num_threads=n_threads):
         # thread local buffers
@@ -302,19 +314,25 @@ def elkan_iter_chunked_dense(
                 weight_in_clusters_chunk,
                 update_centers)
 
-        # reduction from local buffers. The gil is necessary for that to avoid
-        # race conditions.
+        # reduction from local buffers.
         if update_centers:
-            with gil:
-                for j in range(n_clusters):
-                    weight_in_clusters[j] += weight_in_clusters_chunk[j]
-                    for k in range(n_features):
-                        centers_new[j, k] += centers_new_chunk[j * n_features + k]
+            IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
+                # The lock is necessary to avoid race conditions when aggregating
+                # info from different thread-local buffers.
+                openmp.omp_set_lock(&lock)
+            for j in range(n_clusters):
+                weight_in_clusters[j] += weight_in_clusters_chunk[j]
+                for k in range(n_features):
+                    centers_new[j, k] += centers_new_chunk[j * n_features + k]
+            IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
+                openmp.omp_unset_lock(&lock)
 
         free(centers_new_chunk)
         free(weight_in_clusters_chunk)
 
     if update_centers:
+        IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
+            openmp.omp_destroy_lock(&lock)
         _relocate_empty_clusters_dense(X, sample_weight, centers_old,
                                        centers_new, weight_in_clusters, labels)
 
@@ -498,6 +516,9 @@ def elkan_iter_chunked_sparse(
         floating *centers_new_chunk
         floating *weight_in_clusters_chunk
 
+        IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
+            openmp.omp_lock_t lock
+
     # count remainder chunk in total number of chunks
     n_chunks += n_samples != n_chunks * n_samples_chunk
 
@@ -507,6 +528,8 @@ def elkan_iter_chunked_sparse(
     if update_centers:
         memset(&centers_new[0, 0], 0, n_clusters * n_features * sizeof(floating))
         memset(&weight_in_clusters[0], 0, n_clusters * sizeof(floating))
+        IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
+            openmp.omp_init_lock(&lock)
 
     with nogil, parallel(num_threads=n_threads):
         # thread local buffers
@@ -536,19 +559,25 @@ def elkan_iter_chunked_sparse(
                 weight_in_clusters_chunk,
                 update_centers)
 
-        # reduction from local buffers. The gil is necessary for that to avoid
-        # race conditions.
+        # reduction from local buffers.
         if update_centers:
-            with gil:
-                for j in range(n_clusters):
-                    weight_in_clusters[j] += weight_in_clusters_chunk[j]
-                    for k in range(n_features):
-                        centers_new[j, k] += centers_new_chunk[j * n_features + k]
+            IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
+                # The lock is necessary to avoid race conditions when aggregating
+                # info from different thread-local buffers.
+                openmp.omp_set_lock(&lock)
+            for j in range(n_clusters):
+                weight_in_clusters[j] += weight_in_clusters_chunk[j]
+                for k in range(n_features):
+                    centers_new[j, k] += centers_new_chunk[j * n_features + k]
+            IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
+                openmp.omp_unset_lock(&lock)
 
         free(centers_new_chunk)
         free(weight_in_clusters_chunk)
 
     if update_centers:
+        IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
+            openmp.omp_destroy_lock(&lock)
         _relocate_empty_clusters_sparse(
             X_data, X_indices, X_indptr, sample_weight,
             centers_old, centers_new, weight_in_clusters, labels)

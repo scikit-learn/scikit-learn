@@ -30,6 +30,8 @@ from sklearn.metrics import cohen_kappa_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import coverage_error
 from sklearn.metrics import d2_tweedie_score
+from sklearn.metrics import d2_pinball_score
+from sklearn.metrics import d2_absolute_error_score
 from sklearn.metrics import det_curve
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import f1_score
@@ -115,6 +117,8 @@ REGRESSION_METRICS = {
     "mean_gamma_deviance": mean_gamma_deviance,
     "mean_compound_poisson_deviance": partial(mean_tweedie_deviance, power=1.4),
     "d2_tweedie_score": partial(d2_tweedie_score, power=1.4),
+    "d2_pinball_score": d2_pinball_score,
+    "d2_absolute_error_score": d2_absolute_error_score,
 }
 
 CLASSIFICATION_METRICS = {
@@ -507,6 +511,8 @@ MULTIOUTPUT_METRICS = {
     "explained_variance_score",
     "mean_absolute_percentage_error",
     "mean_pinball_loss",
+    "d2_pinball_score",
+    "d2_absolute_error_score",
 }
 
 # Symmetric with respect to their input arguments y_true and y_pred
@@ -585,6 +591,8 @@ NOT_SYMMETRIC_METRICS = {
     "mean_poisson_deviance",
     "mean_compound_poisson_deviance",
     "d2_tweedie_score",
+    "d2_pinball_score",
+    "d2_absolute_error_score",
     "mean_absolute_percentage_error",
 }
 
@@ -974,6 +982,10 @@ invalids_nan_inf = [
 )
 @pytest.mark.parametrize("y_true, y_score", invalids_nan_inf)
 def test_regression_thresholded_inf_nan_input(metric, y_true, y_score):
+    # Reshape since coverage_error only accepts 2D arrays.
+    if metric == coverage_error:
+        y_true = [y_true]
+        y_score = [y_score]
     with pytest.raises(ValueError, match=r"contains (NaN|infinity)"):
         metric(y_true, y_score)
 

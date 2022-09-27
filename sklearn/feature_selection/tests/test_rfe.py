@@ -3,12 +3,14 @@ Testing Recursive feature elimination
 """
 
 from operator import attrgetter
+
 import pytest
 import numpy as np
 from numpy.testing import assert_array_almost_equal, assert_array_equal, assert_allclose
 from scipy import sparse
 
 from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.cross_decomposition import PLSCanonical, PLSRegression, CCA
 from sklearn.feature_selection import RFE, RFECV
 from sklearn.datasets import load_iris, make_friedman1
 from sklearn.metrics import zero_one_loss
@@ -64,6 +66,8 @@ class MockClassifier:
 def test_rfe_features_importance():
     generator = check_random_state(0)
     iris = load_iris()
+    # Add some irrelevant features. Random seed is set to make sure that
+    # irrelevant features are always irrelevant.
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
 
@@ -83,6 +87,8 @@ def test_rfe_features_importance():
 def test_rfe():
     generator = check_random_state(0)
     iris = load_iris()
+    # Add some irrelevant features. Random seed is set to make sure that
+    # irrelevant features are always irrelevant.
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     X_sparse = sparse.csr_matrix(X)
     y = iris.target
@@ -134,21 +140,12 @@ def test_RFE_fit_score_params():
     RFE(estimator=TestEstimator()).fit(X, y, prop="foo").score(X, y, prop="foo")
 
 
-@pytest.mark.parametrize("n_features_to_select", [-1, 2.1])
-def test_rfe_invalid_n_features_errors(n_features_to_select):
-    clf = SVC(kernel="linear")
-
-    iris = load_iris()
-    rfe = RFE(estimator=clf, n_features_to_select=n_features_to_select, step=0.1)
-    msg = f"n_features_to_select must be .+ Got {n_features_to_select}"
-    with pytest.raises(ValueError, match=msg):
-        rfe.fit(iris.data, iris.target)
-
-
 def test_rfe_percent_n_features():
     # test that the results are the same
     generator = check_random_state(0)
     iris = load_iris()
+    # Add some irrelevant features. Random seed is set to make sure that
+    # irrelevant features are always irrelevant.
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
     # there are 10 features in the data. We select 40%.
@@ -166,6 +163,8 @@ def test_rfe_percent_n_features():
 def test_rfe_mockclassifier():
     generator = check_random_state(0)
     iris = load_iris()
+    # Add some irrelevant features. Random seed is set to make sure that
+    # irrelevant features are always irrelevant.
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
 
@@ -182,6 +181,8 @@ def test_rfe_mockclassifier():
 def test_rfecv():
     generator = check_random_state(0)
     iris = load_iris()
+    # Add some irrelevant features. Random seed is set to make sure that
+    # irrelevant features are always irrelevant.
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = list(iris.target)  # regression test: list should be supported
 
@@ -319,8 +320,8 @@ def test_rfecv_verbose_output():
     assert len(verbose_output.readline()) > 0
 
 
-def test_rfecv_cv_results_size():
-    generator = check_random_state(0)
+def test_rfecv_cv_results_size(global_random_seed):
+    generator = check_random_state(global_random_seed)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = list(iris.target)  # regression test: list should be supported
@@ -361,9 +362,11 @@ def test_rfe_estimator_tags():
     assert score.min() > 0.7
 
 
-def test_rfe_min_step():
+def test_rfe_min_step(global_random_seed):
     n_features = 10
-    X, y = make_friedman1(n_samples=50, n_features=n_features, random_state=0)
+    X, y = make_friedman1(
+        n_samples=50, n_features=n_features, random_state=global_random_seed
+    )
     n_samples, n_features = X.shape
     estimator = SVR(kernel="linear")
 
@@ -383,7 +386,7 @@ def test_rfe_min_step():
     assert sel.support_.sum() == n_features // 2
 
 
-def test_number_of_subsets_of_features():
+def test_number_of_subsets_of_features(global_random_seed):
     # In RFE, 'number_of_subsets_of_features'
     # = the number of iterations in '_fit'
     # = max(ranking_)
@@ -407,7 +410,7 @@ def test_number_of_subsets_of_features():
     for n_features, n_features_to_select, step in zip(
         n_features_list, n_features_to_select_list, step_list
     ):
-        generator = check_random_state(43)
+        generator = check_random_state(global_random_seed)
         X = generator.normal(size=(100, n_features))
         y = generator.rand(100).round()
         rfe = RFE(
@@ -433,7 +436,7 @@ def test_number_of_subsets_of_features():
     n_features_list = [11, 10]
     step_list = [2, 2]
     for n_features, step in zip(n_features_list, step_list):
-        generator = check_random_state(43)
+        generator = check_random_state(global_random_seed)
         X = generator.normal(size=(100, n_features))
         y = generator.rand(100).round()
         rfecv = RFECV(estimator=SVC(kernel="linear"), step=step)
@@ -461,8 +464,8 @@ def test_number_of_subsets_of_features():
             )
 
 
-def test_rfe_cv_n_jobs():
-    generator = check_random_state(0)
+def test_rfe_cv_n_jobs(global_random_seed):
+    generator = check_random_state(global_random_seed)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
@@ -537,7 +540,6 @@ def test_rfe_wrapped_estimator(importance_getter, selector, expected_n_features)
         ("auto", ValueError),
         ("random", AttributeError),
         (lambda x: x.importance, AttributeError),
-        ([0], ValueError),
     ],
 )
 @pytest.mark.parametrize("Selector", [RFE, RFECV])
@@ -586,8 +588,8 @@ def test_w_pipeline_2d_coef_():
     assert sfm.transform(data).shape[1] == 2
 
 
-def test_rfecv_std_and_mean():
-    generator = check_random_state(0)
+def test_rfecv_std_and_mean(global_random_seed):
+    generator = check_random_state(global_random_seed)
     iris = load_iris()
     X = np.c_[iris.data, generator.normal(size=(len(iris.data), 6))]
     y = iris.target
@@ -612,3 +614,17 @@ def test_multioutput(ClsRFE):
     clf = RandomForestClassifier(n_estimators=5)
     rfe_test = ClsRFE(clf)
     rfe_test.fit(X, y)
+
+
+@pytest.mark.parametrize("ClsRFE", [RFE, RFECV])
+@pytest.mark.parametrize("PLSEstimator", [CCA, PLSCanonical, PLSRegression])
+def test_rfe_pls(ClsRFE, PLSEstimator):
+    """Check the behaviour of RFE with PLS estimators.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/12410
+    """
+    X, y = make_friedman1(n_samples=50, n_features=10, random_state=0)
+    estimator = PLSEstimator(n_components=1)
+    selector = ClsRFE(estimator, step=1).fit(X, y)
+    assert selector.score(X, y) > 0.5

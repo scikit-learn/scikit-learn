@@ -3,9 +3,11 @@ Tests for sklearn.cluster._feature_agglomeration
 """
 # Authors: Sergul Aydore 2017
 import numpy as np
-import pytest
+
+from numpy.testing import assert_array_equal
 from sklearn.cluster import FeatureAgglomeration
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.datasets import make_blobs
 
 
 def test_feature_agglomeration():
@@ -14,12 +16,9 @@ def test_feature_agglomeration():
 
     agglo_mean = FeatureAgglomeration(n_clusters=n_clusters, pooling_func=np.mean)
     agglo_median = FeatureAgglomeration(n_clusters=n_clusters, pooling_func=np.median)
-    with pytest.warns(None) as record:
-        agglo_mean.fit(X)
-    assert not len(record)
-    with pytest.warns(None) as record:
-        agglo_median.fit(X)
-    assert not len(record)
+    agglo_mean.fit(X)
+    agglo_median.fit(X)
+
     assert np.size(np.unique(agglo_mean.labels_)) == n_clusters
     assert np.size(np.unique(agglo_median.labels_)) == n_clusters
     assert np.size(agglo_mean.labels_) == X.shape[1]
@@ -41,3 +40,16 @@ def test_feature_agglomeration():
 
     assert_array_almost_equal(agglo_mean.transform(X_full_mean), Xt_mean)
     assert_array_almost_equal(agglo_median.transform(X_full_median), Xt_median)
+
+
+def test_feature_agglomeration_feature_names_out():
+    """Check `get_feature_names_out` for `FeatureAgglomeration`."""
+    X, _ = make_blobs(n_features=6, random_state=0)
+    agglo = FeatureAgglomeration(n_clusters=3)
+    agglo.fit(X)
+    n_clusters = agglo.n_clusters_
+
+    names_out = agglo.get_feature_names_out()
+    assert_array_equal(
+        [f"featureagglomeration{i}" for i in range(n_clusters)], names_out
+    )

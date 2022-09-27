@@ -12,19 +12,20 @@ from math import log
 import sys
 import warnings
 
+from numbers import Integral, Real
 import numpy as np
 from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
 from joblib import Parallel
 
-from ._base import LinearModel
-from ._base import _deprecate_normalize
-from ._base import LinearRegression
+from ._base import LinearModel, LinearRegression
+from ._base import _deprecate_normalize, _preprocess_data
 from ..base import RegressorMixin, MultiOutputMixin
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
 from ..utils import arrayfuncs, as_float_array  # type: ignore
 from ..utils import check_random_state
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 from ..utils.fixes import delayed
@@ -49,7 +50,7 @@ def lars_path(
     return_n_iter=False,
     positive=False,
 ):
-    """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
+    """Compute Least Angle Regression or Lasso path using LARS algorithm [1].
 
     The optimization objective for the case method='lasso' is::
 
@@ -135,7 +136,7 @@ def lars_path(
         Indices of active variables at the end of the path.
 
     coefs : array-like of shape (n_features, n_alphas + 1)
-        Coefficients along the path
+        Coefficients along the path.
 
     n_iter : int
         Number of iterations run. Returned only if return_n_iter is set
@@ -143,14 +144,13 @@ def lars_path(
 
     See Also
     --------
-    lars_path_gram
-    lasso_path
-    lasso_path_gram
-    LassoLars
-    Lars
-    LassoLarsCV
-    LarsCV
-    sklearn.decomposition.sparse_encode
+    lars_path_gram : Compute LARS path in the sufficient stats mode.
+    lasso_path : Compute Lasso path with coordinate descent.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    Lars : Least Angle Regression model a.k.a. LAR.
+    LassoLarsCV : Cross-validated Lasso, using the LARS algorithm.
+    LarsCV : Cross-validated Least Angle Regression model.
+    sklearn.decomposition.sparse_encode : Sparse coding.
 
     References
     ----------
@@ -162,7 +162,6 @@ def lars_path(
 
     .. [3] `Wikipedia entry on the Lasso
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
-
     """
     if X is None and Gram is not None:
         raise ValueError(
@@ -204,7 +203,7 @@ def lars_path_gram(
     return_n_iter=False,
     positive=False,
 ):
-    """lars_path in the sufficient stats mode [1]
+    """The lars_path in the sufficient stats mode [1].
 
     The optimization objective for the case method='lasso' is::
 
@@ -281,7 +280,7 @@ def lars_path_gram(
         Indices of active variables at the end of the path.
 
     coefs : array-like of shape (n_features, n_alphas + 1)
-        Coefficients along the path
+        Coefficients along the path.
 
     n_iter : int
         Number of iterations run. Returned only if return_n_iter is set
@@ -289,14 +288,13 @@ def lars_path_gram(
 
     See Also
     --------
-    lars_path
-    lasso_path
-    lasso_path_gram
-    LassoLars
-    Lars
-    LassoLarsCV
-    LarsCV
-    sklearn.decomposition.sparse_encode
+    lars_path_gram : Compute LARS path.
+    lasso_path : Compute Lasso path with coordinate descent.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    Lars : Least Angle Regression model a.k.a. LAR.
+    LassoLarsCV : Cross-validated Lasso, using the LARS algorithm.
+    LarsCV : Cross-validated Least Angle Regression model.
+    sklearn.decomposition.sparse_encode : Sparse coding.
 
     References
     ----------
@@ -308,7 +306,6 @@ def lars_path_gram(
 
     .. [3] `Wikipedia entry on the Lasso
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
-
     """
     return _lars_path_solver(
         X=None,
@@ -707,7 +704,7 @@ def _lars_path_solver(
                 i = 0
                 L_ = L[:n_active, :n_active].copy()
                 while not np.isfinite(AA):
-                    L_.flat[:: n_active + 1] += (2 ** i) * eps
+                    L_.flat[:: n_active + 1] += (2**i) * eps
                     least_squares, _ = solve_cholesky(
                         L_, sign_active[:n_active], lower=True
                     )
@@ -969,6 +966,19 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     [ 0. -1.11...]
     """
 
+    _parameter_constraints: dict = {
+        "fit_intercept": ["boolean"],
+        "verbose": ["verbose"],
+        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
+        "precompute": ["boolean", StrOptions({"auto"}), np.ndarray, Hidden(None)],
+        "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left")],
+        "eps": [Interval(Real, 0, None, closed="left")],
+        "copy_X": ["boolean"],
+        "fit_path": ["boolean"],
+        "jitter": [Interval(Real, 0, None, closed="left"), None],
+        "random_state": ["random_state"],
+    }
+
     method = "lar"
     positive = False
 
@@ -1012,7 +1022,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         """Auxiliary method to fit the model using X, y as training data"""
         n_features = X.shape[1]
 
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+        X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X, y, self.fit_intercept, normalize, self.copy_X
         )
 
@@ -1109,6 +1119,8 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
+
         X, y = self._validate_data(X, y, y_numeric=True, multi_output=True)
 
         _normalize = _deprecate_normalize(
@@ -1294,6 +1306,14 @@ class LassoLars(Lars):
     [ 0.         -0.955...]
     """
 
+    _parameter_constraints: dict = {
+        **Lars._parameter_constraints,
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "positive": ["boolean"],
+    }
+    _parameter_constraints.pop("n_nonzero_coefs")
+
     method = "lasso"
 
     def __init__(
@@ -1450,7 +1470,7 @@ def _lars_path_residues(
         y_test -= y_mean
 
     if normalize:
-        norms = np.sqrt(np.sum(X_train ** 2, axis=0))
+        norms = np.sqrt(np.sum(X_train**2, axis=0))
         nonzeros = np.flatnonzero(norms)
         X_train[:, nonzeros] /= norms[nonzeros]
 
@@ -1602,6 +1622,11 @@ class LarsCV(Lars):
         or AIC for model selection.
     sklearn.decomposition.sparse_encode : Sparse coding.
 
+    Notes
+    -----
+    In `fit`, once the best parameter `alpha` is found through
+    cross-validation, the model is fit again using the entire training set.
+
     Examples
     --------
     >>> from sklearn.linear_model import LarsCV
@@ -1615,6 +1640,17 @@ class LarsCV(Lars):
     >>> reg.predict(X[:1,])
     array([154.3996...])
     """
+
+    _parameter_constraints: dict = {
+        **Lars._parameter_constraints,
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "cv": ["cv_object"],
+        "max_n_alphas": [Interval(Integral, 1, None, closed="left")],
+        "n_jobs": [Integral, None],
+    }
+
+    for parameter in ["n_nonzero_coefs", "jitter", "fit_path", "random_state"]:
+        _parameter_constraints.pop(parameter)
 
     method = "lar"
 
@@ -1666,6 +1702,8 @@ class LarsCV(Lars):
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
+
         _normalize = _deprecate_normalize(
             self.normalize, default=True, estimator_name=self.__class__.__name__
         )
@@ -1738,7 +1776,7 @@ class LarsCV(Lars):
         self.cv_alphas_ = all_alphas
         self.mse_path_ = mse_path
 
-        # Now compute the full model
+        # Now compute the full model using best_alpha
         # it will call a lasso internally when self if LassoLarsCV
         # as self.method == 'lasso'
         self._fit(
@@ -1900,14 +1938,19 @@ class LassoLarsCV(LarsCV):
 
     Notes
     -----
-    The object solves the same problem as the LassoCV object. However,
-    unlike the LassoCV, it find the relevant alphas values by itself.
-    In general, because of this property, it will be more stable.
+    The object solves the same problem as the
+    :class:`~sklearn.linear_model.LassoCV` object. However, unlike the
+    :class:`~sklearn.linear_model.LassoCV`, it find the relevant alphas values
+    by itself. In general, because of this property, it will be more stable.
     However, it is more fragile to heavily multicollinear datasets.
 
-    It is more efficient than the LassoCV if only a small number of
-    features are selected compared to the total number, for instance if
-    there are very few samples compared to the number of features.
+    It is more efficient than the :class:`~sklearn.linear_model.LassoCV` if
+    only a small number of features are selected compared to the total number,
+    for instance if there are very few samples compared to the number of
+    features.
+
+    In `fit`, once the best parameter `alpha` is found through
+    cross-validation, the model is fit again using the entire training set.
 
     Examples
     --------
@@ -1922,6 +1965,11 @@ class LassoLarsCV(LarsCV):
     >>> reg.predict(X[:1,])
     array([-78.4831...])
     """
+
+    _parameter_constraints = {
+        **LarsCV._parameter_constraints,
+        "positive": ["boolean"],
+    }
 
     method = "lasso"
 
@@ -2121,6 +2169,15 @@ class LassoLarsIC(LassoLars):
     [ 0.  -1.11...]
     """
 
+    _parameter_constraints: dict = {
+        **LassoLars._parameter_constraints,
+        "criterion": [StrOptions({"aic", "bic"})],
+        "noise_variance": [Interval(Real, 0, None, closed="left"), None],
+    }
+
+    for parameter in ["jitter", "fit_path", "alpha", "random_state"]:
+        _parameter_constraints.pop(parameter)
+
     def __init__(
         self,
         criterion="aic",
@@ -2171,6 +2228,8 @@ class LassoLarsIC(LassoLars):
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
+
         _normalize = _deprecate_normalize(
             self.normalize, default=True, estimator_name=self.__class__.__name__
         )
@@ -2179,7 +2238,7 @@ class LassoLarsIC(LassoLars):
             copy_X = self.copy_X
         X, y = self._validate_data(X, y, y_numeric=True)
 
-        X, y, Xmean, ymean, Xstd = LinearModel._preprocess_data(
+        X, y, Xmean, ymean, Xstd = _preprocess_data(
             X, y, self.fit_intercept, _normalize, copy_X
         )
 
@@ -2212,7 +2271,7 @@ class LassoLarsIC(LassoLars):
             )
 
         residuals = y[:, np.newaxis] - np.dot(X, coef_path_)
-        residuals_sum_squares = np.sum(residuals ** 2, axis=0)
+        residuals_sum_squares = np.sum(residuals**2, axis=0)
         degrees_of_freedom = np.zeros(coef_path_.shape[1], dtype=int)
         for k, coef in enumerate(coef_path_.T):
             mask = np.abs(coef) > np.finfo(coef.dtype).eps

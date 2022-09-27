@@ -59,6 +59,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC, LinearSVC
 from sklearn.cluster import KMeans
+from sklearn.neural_network import MLPRegressor
 
 from sklearn.impute import SimpleImputer
 
@@ -78,7 +79,7 @@ from sklearn.model_selection import GridSearchCV
 
 
 try:
-    WindowsError
+    WindowsError  # type: ignore
 except NameError:
     WindowsError = None
 
@@ -460,7 +461,7 @@ def check_cross_validate_single_metric(clf, X, y, scores):
         fitted_estimators,
     ) = scores
     # Test single metric evaluation when scoring is string or singleton list
-    for (return_train_score, dict_len) in ((True, 4), (False, 3)):
+    for return_train_score, dict_len in ((True, 4), (False, 3)):
         # Single metric passed as a string
         if return_train_score:
             mse_scores_dict = cross_validate(
@@ -929,7 +930,7 @@ def test_cross_val_predict():
     preds = cross_val_predict(est, Xsp, y)
     assert_array_almost_equal(len(preds), len(y))
 
-    preds = cross_val_predict(KMeans(), X)
+    preds = cross_val_predict(KMeans(n_init="auto"), X)
     assert len(preds) == len(y)
 
     class BadCV:
@@ -1875,7 +1876,7 @@ def test_cross_val_predict_method_checking():
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=0)
     for method in ["decision_function", "predict_proba", "predict_log_proba"]:
-        est = SGDClassifier(loss="log", random_state=2)
+        est = SGDClassifier(loss="log_loss", random_state=2)
         check_cross_val_predict_multiclass(est, X, y, method)
 
 
@@ -2362,25 +2363,12 @@ def test_callable_multimetric_confusion_matrix_cross_validate():
         assert "test_{}".format(name) in cv_results
 
 
-# TODO: Remove in 1.1 when the _pairwise attribute is removed
-def test_validation_pairwise():
-    # checks the interactions between the pairwise estimator tag
-    # and the _pairwise attribute
-    iris = load_iris()
-    X, y = iris.data, iris.target
-    linear_kernel = np.dot(X, X.T)
+def test_learning_curve_partial_fit_regressors():
+    """Check that regressors with partial_fit is supported.
 
-    svm = SVC(kernel="precomputed")
-    with pytest.warns(None) as record:
-        cross_validate(svm, linear_kernel, y, cv=2)
-    assert not record
+    Non-regression test for #22981.
+    """
+    X, y = make_regression(random_state=42)
 
-    # pairwise tag is not consistent with pairwise attribute
-    class IncorrectTagSVM(SVC):
-        def _more_tags(self):
-            return {"pairwise": False}
-
-    svm = IncorrectTagSVM(kernel="precomputed")
-    msg = "_pairwise was deprecated in 0.24 and will be removed in 1.1"
-    with pytest.warns(FutureWarning, match=msg):
-        cross_validate(svm, linear_kernel, y, cv=2)
+    # Does not error
+    learning_curve(MLPRegressor(), X, y, exploit_incremental_learning=True, cv=2)

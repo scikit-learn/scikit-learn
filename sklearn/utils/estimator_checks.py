@@ -5,6 +5,7 @@ import re
 from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
+from numbers import Real
 
 import numpy as np
 from scipy import sparse
@@ -13,6 +14,7 @@ import joblib
 
 from . import IS_PYPY
 from .. import config_context
+from ._param_validation import Interval
 from ._testing import _get_args
 from ._testing import assert_raise_message
 from ._testing import assert_array_equal
@@ -31,6 +33,7 @@ from ..linear_model import LinearRegression
 from ..linear_model import LogisticRegression
 from ..linear_model import RANSACRegressor
 from ..linear_model import Ridge
+from ..linear_model import SGDRegressor
 
 from ..base import (
     clone,
@@ -39,12 +42,12 @@ from ..base import (
     is_regressor,
     is_outlier_detector,
     RegressorMixin,
-    _is_pairwise,
 )
 
 from ..metrics import accuracy_score, adjusted_rand_score, f1_score
 from ..random_projection import BaseRandomProjection
 from ..feature_selection import SelectKBest
+from ..feature_selection import SelectFromModel
 from ..pipeline import make_pipeline
 from ..exceptions import DataConversionWarning
 from ..exceptions import NotFittedError
@@ -53,8 +56,11 @@ from ..model_selection import train_test_split
 from ..model_selection import ShuffleSplit
 from ..model_selection._validation import _safe_split
 from ..metrics.pairwise import rbf_kernel, linear_kernel, pairwise_distances
-from ..utils.fixes import threadpool_info
+from ..utils.fixes import sp_version
+from ..utils.fixes import parse_version
 from ..utils.validation import check_is_fitted
+from ..utils._param_validation import make_constraint
+from ..utils._param_validation import generate_invalid_param_val
 
 from . import shuffle
 from ._tags import (
@@ -78,7 +84,6 @@ CROSS_DECOMPOSITION = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD"]
 def _yield_checks(estimator):
     name = estimator.__class__.__name__
     tags = _safe_tags(estimator)
-    pairwise = _is_pairwise(estimator)
 
     yield check_no_attributes_set_in_init
     yield check_estimators_dtypes
@@ -87,7 +92,7 @@ def _yield_checks(estimator):
         yield check_sample_weights_pandas_series
         yield check_sample_weights_not_an_array
         yield check_sample_weights_list
-        if not pairwise:
+        if not tags["pairwise"]:
             # We skip pairwise because the data is not pairwise
             yield check_sample_weights_shape
             yield check_sample_weights_not_overwritten
@@ -111,7 +116,7 @@ def _yield_checks(estimator):
         # Test that all estimators check their input for NaN's and infs
         yield check_estimators_nan_inf
 
-    if pairwise:
+    if tags["pairwise"]:
         # Check that pairwise estimator throws error on non-square input
         yield check_nonsquare_error
 
@@ -168,7 +173,7 @@ def check_supervised_y_no_nan(name, estimator_orig):
     # Checks that the Estimator targets are not NaN.
     estimator = clone(estimator_orig)
     rng = np.random.RandomState(888)
-    X = rng.randn(10, 5)
+    X = rng.standard_normal(size=(10, 5))
 
     for value in [np.nan, np.inf]:
         y = np.full(10, value)
@@ -244,6 +249,7 @@ def _yield_transformer_checks(transformer):
         "LocallyLinearEmbedding",
         "RandomizedLasso",
         "LogisticRegressionCV",
+        "BisectingKMeans",
     ]
 
     name = transformer.__class__.__name__
@@ -260,10 +266,15 @@ def _yield_clustering_checks(clusterer):
         yield check_clustering
         yield partial(check_clustering, readonly_memmap=True)
         yield check_estimators_partial_fit_n_features
-    yield check_non_transformer_estimators_n_iter
+    if not hasattr(clusterer, "transform"):
+        yield check_non_transformer_estimators_n_iter
 
 
 def _yield_outliers_checks(estimator):
+
+    # checks for the contamination parameter
+    if hasattr(estimator, "contamination"):
+        yield check_outlier_contamination
 
     # checks for outlier detectors that have a fit_predict method
     if hasattr(estimator, "fit_predict"):
@@ -317,8 +328,9 @@ def _yield_all_checks(estimator):
         for check in _yield_outliers_checks(estimator):
             yield check
     yield check_parameters_default_constructible
-    yield check_methods_sample_order_invariance
-    yield check_methods_subset_invariance
+    if not tags["non_deterministic"]:
+        yield check_methods_sample_order_invariance
+        yield check_methods_subset_invariance
     yield check_fit2d_1sample
     yield check_fit2d_1feature
     yield check_get_params_invariance
@@ -388,6 +400,9 @@ def _construct_instance(Estimator):
                 estimator = Estimator(LinearRegression())
             elif issubclass(Estimator, RegressorMixin):
                 estimator = Estimator(Ridge())
+            elif issubclass(Estimator, SelectFromModel):
+                # Increases coverage because SGDRegressor has partial_fit
+                estimator = Estimator(SGDRegressor(random_state=0))
             else:
                 estimator = Estimator(LogisticRegression(C=1))
         elif required_parameters in (["estimators"],):
@@ -528,7 +543,7 @@ def parametrize_with_checks(estimators):
     )
 
 
-def check_estimator(Estimator, generate_only=False):
+def check_estimator(estimator=None, generate_only=False, Estimator="deprecated"):
     """Check if estimator adheres to scikit-learn conventions.
 
     This function will run an extensive test-suite for input validation,
@@ -549,10 +564,10 @@ def check_estimator(Estimator, generate_only=False):
 
     Parameters
     ----------
-    Estimator : estimator object
+    estimator : estimator object
         Estimator instance to check.
 
-        .. versionchanged:: 0.24
+        .. versionadded:: 1.1
            Passing a class was deprecated in version 0.23, and support for
            classes was removed in 0.24.
 
@@ -563,6 +578,13 @@ def check_estimator(Estimator, generate_only=False):
         `check(estimator)`.
 
         .. versionadded:: 0.22
+
+    Estimator : estimator object
+        Estimator instance to check.
+
+        .. deprecated:: 1.1
+            ``Estimator`` was deprecated in favor of ``estimator`` in version 1.1
+            and will be removed in version 1.3.
 
     Returns
     -------
@@ -575,7 +597,19 @@ def check_estimator(Estimator, generate_only=False):
     parametrize_with_checks : Pytest specific decorator for parametrizing estimator
         checks.
     """
-    if isinstance(Estimator, type):
+
+    if estimator is None and Estimator == "deprecated":
+        msg = "Either estimator or Estimator should be passed to check_estimator."
+        raise ValueError(msg)
+
+    if Estimator != "deprecated":
+        msg = (
+            "'Estimator' was deprecated in favor of 'estimator' in version 1.1 "
+            "and will be removed in version 1.3."
+        )
+        warnings.warn(msg, FutureWarning)
+        estimator = Estimator
+    if isinstance(estimator, type):
         msg = (
             "Passing a class was deprecated in version 0.23 "
             "and isn't supported anymore from 0.24."
@@ -583,7 +617,6 @@ def check_estimator(Estimator, generate_only=False):
         )
         raise TypeError(msg)
 
-    estimator = Estimator
     name = type(estimator).__name__
 
     def checks_generator():
@@ -624,20 +657,29 @@ def _set_checking_parameters(estimator):
     # avoid deprecated behaviour
     params = estimator.get_params()
     name = estimator.__class__.__name__
+    if name == "TSNE":
+        estimator.set_params(perplexity=2)
     if "n_iter" in params and name != "TSNE":
         estimator.set_params(n_iter=5)
     if "max_iter" in params:
         if estimator.max_iter is not None:
             estimator.set_params(max_iter=min(5, estimator.max_iter))
         # LinearSVR, LinearSVC
-        if estimator.__class__.__name__ in ["LinearSVR", "LinearSVC"]:
+        if name in ["LinearSVR", "LinearSVC"]:
             estimator.set_params(max_iter=20)
         # NMF
-        if estimator.__class__.__name__ == "NMF":
+        if name == "NMF":
             estimator.set_params(max_iter=500)
+        # MiniBatchNMF
+        if estimator.__class__.__name__ == "MiniBatchNMF":
+            estimator.set_params(max_iter=20, fresh_restarts=True)
         # MLP
-        if estimator.__class__.__name__ in ["MLPClassifier", "MLPRegressor"]:
+        if name in ["MLPClassifier", "MLPRegressor"]:
             estimator.set_params(max_iter=100)
+        # MiniBatchDictionaryLearning
+        if name == "MiniBatchDictionaryLearning":
+            estimator.set_params(max_iter=5)
+
     if "n_resampling" in params:
         # randomized lasso
         estimator.set_params(n_resampling=5)
@@ -649,6 +691,9 @@ def _set_checking_parameters(estimator):
     if "n_init" in params:
         # K-Means
         estimator.set_params(n_init=2)
+    if "batch_size" in params and not name.startswith("MLP"):
+        estimator.set_params(batch_size=10)
+
     if name == "MeanShift":
         # In the case of check_fit2d_1sample, bandwidth is set to None and
         # is thus estimated. De facto it is 0.0 as a single sample is provided
@@ -710,8 +755,18 @@ def _set_checking_parameters(estimator):
     if name == "OneHotEncoder":
         estimator.set_params(handle_unknown="ignore")
 
+    if name == "QuantileRegressor":
+        # Avoid warning due to Scipy deprecating interior-point solver
+        solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
+        estimator.set_params(solver=solver)
+
     if name in CROSS_DECOMPOSITION:
         estimator.set_params(n_components=1)
+
+    # Default "auto" parameter can lead to different ordering of eigenvalues on
+    # windows: #24105
+    if name == "SpectralEmbedding":
+        estimator.set_params(eigen_tol=1e-5)
 
 
 class _NotAnArray:
@@ -757,7 +812,8 @@ def _pairwise_estimator_convert_X(X, estimator, kernel=linear_kernel):
 
     if _is_pairwise_metric(estimator):
         return pairwise_distances(X, metric="euclidean")
-    if _is_pairwise(estimator):
+    tags = _safe_tags(estimator)
+    if tags["pairwise"]:
         return kernel(X, X)
 
     return X
@@ -798,11 +854,11 @@ def _generate_sparse_matrix(X_csr):
 
 def check_estimator_sparse_data(name, estimator_orig):
     rng = np.random.RandomState(0)
-    X = rng.rand(40, 3)
+    X = rng.uniform(size=(40, 3))
     X[X < 0.8] = 0
     X = _pairwise_estimator_convert_X(X, estimator_orig)
     X_csr = sparse.csr_matrix(X)
-    y = (4 * rng.rand(40)).astype(int)
+    y = (4 * rng.uniform(size=40)).astype(int)
     # catch deprecation warnings
     with ignore_warnings(category=FutureWarning):
         estimator = clone(estimator_orig)
@@ -1080,7 +1136,7 @@ def check_sample_weights_not_overwritten(name, estimator_orig):
 
     estimator.fit(X, y, sample_weight=sample_weight_fit)
 
-    err_msg = "{name} overwrote the original `sample_weight` given during fit"
+    err_msg = f"{name} overwrote the original `sample_weight` given during fit"
     assert_allclose(sample_weight_fit, sample_weight_original, err_msg=err_msg)
 
 
@@ -1088,7 +1144,7 @@ def check_sample_weights_not_overwritten(name, estimator_orig):
 def check_dtype_object(name, estimator_orig):
     # check that estimators treat dtype object as numeric if possible
     rng = np.random.RandomState(0)
-    X = _pairwise_estimator_convert_X(rng.rand(40, 10), estimator_orig)
+    X = _pairwise_estimator_convert_X(rng.uniform(size=(40, 10)), estimator_orig)
     X = X.astype(object)
     tags = _safe_tags(estimator_orig)
     y = (X[:, 0] * 4).astype(int)
@@ -1383,6 +1439,10 @@ def check_fit2d_1sample(name, estimator_orig):
     # min_cluster_size cannot be less than the data size for OPTICS.
     if name == "OPTICS":
         estimator.set_params(min_samples=1)
+
+    # perplexity cannot be more than the number of samples for TSNE.
+    if name == "TSNE":
+        estimator.set_params(perplexity=0.5)
 
     msgs = [
         "1 sample",
@@ -2070,22 +2130,6 @@ def check_classifiers_one_label(name, classifier_orig):
         assert_array_equal(classifier.predict(X_test), y, err_msg=error_string_predict)
 
 
-def _create_memmap_backed_data(numpy_arrays):
-    # OpenBLAS is known to segfault with unaligned data on the Prescott architecture
-    # See: https://github.com/scipy/scipy/issues/14886
-    has_prescott_openblas = any(
-        True
-        for info in threadpool_info()
-        if info["internal_api"] == "openblas"
-        # Prudently assume Prescott might be the architecture if it is unknown.
-        and info.get("architecture", "prescott").lower() == "prescott"
-    )
-    return [
-        create_memmap_backed_data(array, aligned=has_prescott_openblas)
-        for array in numpy_arrays
-    ]
-
-
 @ignore_warnings  # Warnings are raised by decision function
 def check_classifiers_train(
     name, classifier_orig, readonly_memmap=False, X_dtype="float64"
@@ -2103,14 +2147,14 @@ def check_classifiers_train(
         X_b -= X_b.min()
 
     if readonly_memmap:
-        X_m, y_m, X_b, y_b = _create_memmap_backed_data([X_m, y_m, X_b, y_b])
+        X_m, y_m, X_b, y_b = create_memmap_backed_data([X_m, y_m, X_b, y_b])
 
     problems = [(X_b, y_b)]
     tags = _safe_tags(classifier_orig)
     if not tags["binary_only"]:
         problems.append((X_m, y_m))
 
-    for (X, y) in problems:
+    for X, y in problems:
         classes = np.unique(y)
         n_classes = len(classes)
         n_samples, n_features = X.shape
@@ -2156,7 +2200,7 @@ def check_classifiers_train(
         )
 
         if not tags["no_validation"]:
-            if _is_pairwise(classifier):
+            if tags["pairwise"]:
                 with raises(
                     ValueError,
                     err_msg=msg_pairwise.format(name, "predict"),
@@ -2182,7 +2226,7 @@ def check_classifiers_train(
 
                 # raises error on malformed input for decision_function
                 if not tags["no_validation"]:
-                    if _is_pairwise(classifier):
+                    if tags["pairwise"]:
                         with raises(
                             ValueError,
                             err_msg=msg_pairwise.format(name, "decision_function"),
@@ -2206,7 +2250,7 @@ def check_classifiers_train(
             assert_array_almost_equal(np.sum(y_prob, axis=1), np.ones(n_samples))
             if not tags["no_validation"]:
                 # raises error on malformed input for predict_proba
-                if _is_pairwise(classifier_orig):
+                if tags["pairwise"]:
                     with raises(
                         ValueError,
                         err_msg=msg_pairwise.format(name, "predict_proba"),
@@ -2318,12 +2362,32 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
             decision = estimator.decision_function(X)
             check_outlier_corruption(num_outliers, expected_outliers, decision)
 
-        # raises error when contamination is a scalar and not in [0,1]
-        msg = r"contamination must be in \(0, 0.5]"
-        for contamination in [-0.5, 2.3]:
-            estimator.set_params(contamination=contamination)
-            with raises(ValueError, match=msg):
-                estimator.fit(X)
+
+def check_outlier_contamination(name, estimator_orig):
+    # Check that the contamination parameter is in (0.0, 0.5] when it is an
+    # interval constraint.
+
+    if not hasattr(estimator_orig, "_parameter_constraints"):
+        # Only estimator implementing parameter constraints will be checked
+        return
+
+    if "contamination" not in estimator_orig._parameter_constraints:
+        return
+
+    contamination_constraints = estimator_orig._parameter_constraints["contamination"]
+    if not any([isinstance(c, Interval) for c in contamination_constraints]):
+        raise AssertionError(
+            "contamination constraints should contain a Real Interval constraint."
+        )
+
+    for constraint in contamination_constraints:
+        if isinstance(constraint, Interval):
+            assert (
+                constraint.type == Real
+                and constraint.left >= 0.0
+                and constraint.right <= 0.5
+                and (constraint.left > 0 or constraint.closed in {"right", "neither"})
+            ), "contamination constraint should be an interval in (0, 0.5]"
 
 
 @ignore_warnings(category=FutureWarning)
@@ -2771,7 +2835,7 @@ def check_regressors_train(
         y_ = y
 
     if readonly_memmap:
-        X, y, y_ = _create_memmap_backed_data([X, y, y_])
+        X, y, y_ = create_memmap_backed_data([X, y, y_])
 
     if not hasattr(regressor, "alphas") and hasattr(regressor, "alpha"):
         # linear regressors need to set alpha, but not generalized CV ones
@@ -2837,7 +2901,7 @@ def check_class_weight_classifiers(name, classifier_orig):
         )
 
         # can't use gram_if_pairwise() here, setting up gram matrix manually
-        if _is_pairwise(classifier_orig):
+        if _safe_tags(classifier_orig, key="pairwise"):
             X_test = rbf_kernel(X_test, X_train)
             X_train = rbf_kernel(X_train, X_train)
 
@@ -3236,7 +3300,7 @@ def _enforce_estimator_tags_y(estimator, y):
 def _enforce_estimator_tags_x(estimator, X):
     # Pairwise estimators only accept
     # X of shape (`n_samples`, `n_samples`)
-    if _is_pairwise(estimator):
+    if _safe_tags(estimator, key="pairwise"):
         X = X.dot(X.T)
     # Estimators with `1darray` in `X_types` tag only accept
     # X of shape (`n_samples`,)
@@ -3481,13 +3545,6 @@ def check_outliers_fit_predict(name, estimator_orig):
             decision = estimator.decision_function(X)
             check_outlier_corruption(num_outliers, expected_outliers, decision)
 
-        # raises error when contamination is a scalar and not in [0,1]
-        msg = r"contamination must be in \(0, 0.5]"
-        for contamination in [-0.5, -0.001, 0.5001, 2.3]:
-            estimator.set_params(contamination=contamination)
-            with raises(ValueError, match=msg):
-                estimator.fit_predict(X)
-
 
 def check_fit_non_negative(name, estimator_orig):
     # Check that proper warning is raised for non-negative X
@@ -3618,20 +3675,8 @@ def check_n_features_in(name, estimator_orig):
 
     assert not hasattr(estimator, "n_features_in_")
     estimator.fit(X, y)
-    if hasattr(estimator, "n_features_in_"):
-        assert estimator.n_features_in_ == X.shape[1]
-    else:
-        warnings.warn(
-            "As of scikit-learn 0.23, estimators should expose a "
-            "n_features_in_ attribute, unless the 'no_validation' tag is "
-            "True. This attribute should be equal to the number of features "
-            "passed to the fit method. "
-            "An error will be raised from version 1.0 (renaming of 0.25) "
-            "when calling check_estimator(). "
-            "See SLEP010: "
-            "https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep010/proposal.html",  # noqa
-            FutureWarning,
-        )
+    assert hasattr(estimator, "n_features_in_")
+    assert estimator.n_features_in_ == X.shape[1]
 
 
 def check_requires_y_none(name, estimator_orig):
@@ -3647,14 +3692,6 @@ def check_requires_y_none(name, estimator_orig):
     X = rng.normal(loc=100, size=(n_samples, 2))
     X = _pairwise_estimator_convert_X(X, estimator)
 
-    warning_msg = (
-        "As of scikit-learn 0.23, estimators should have a "
-        "'requires_y' tag set to the appropriate value. "
-        "The default value of the tag is False. "
-        "An error will be raised from version 1.0 when calling "
-        "check_estimator() if the tag isn't properly set."
-    )
-
     expected_err_msgs = (
         "requires y to be passed, but the target y is None",
         "Expected array-like (array or non-string sequence), got None",
@@ -3665,7 +3702,7 @@ def check_requires_y_none(name, estimator_orig):
         estimator.fit(X, None)
     except ValueError as ve:
         if not any(msg in str(ve) for msg in expected_err_msgs):
-            warnings.warn(warning_msg, FutureWarning)
+            raise ve
 
 
 @ignore_warnings(category=FutureWarning)
@@ -3944,6 +3981,7 @@ def check_transformer_get_feature_names_out(name, transformer_orig):
     feature_names_out = transformer.get_feature_names_out(input_features)
     assert feature_names_out is not None
     assert isinstance(feature_names_out, np.ndarray)
+    assert feature_names_out.dtype == object
     assert all(isinstance(name, str) for name in feature_names_out)
 
     if isinstance(X_transform, tuple):
@@ -4013,3 +4051,93 @@ def check_transformer_get_feature_names_out_pandas(name, transformer_orig):
     assert (
         len(feature_names_out_default) == n_features_out
     ), f"Expected {n_features_out} feature names, got {len(feature_names_out_default)}"
+
+
+def check_param_validation(name, estimator_orig):
+    # Check that an informative error is raised when the value of a constructor
+    # parameter does not have an appropriate type or value.
+    rng = np.random.RandomState(0)
+    X = rng.uniform(size=(20, 5))
+    X = _pairwise_estimator_convert_X(X, estimator_orig)
+    y = rng.randint(0, 2, size=20)
+    y = _enforce_estimator_tags_y(estimator_orig, y)
+
+    estimator_params = estimator_orig.get_params(deep=False).keys()
+
+    # check that there is a constraint for each parameter
+    if estimator_params:
+        validation_params = estimator_orig._parameter_constraints.keys()
+        unexpected_params = set(validation_params) - set(estimator_params)
+        missing_params = set(estimator_params) - set(validation_params)
+        err_msg = (
+            f"Mismatch between _parameter_constraints and the parameters of {name}."
+            f"\nConsider the unexpected parameters {unexpected_params} and expected but"
+            f" missing parameters {missing_params}"
+        )
+        assert validation_params == estimator_params, err_msg
+
+    # this object does not have a valid type for sure for all params
+    param_with_bad_type = type("BadType", (), {})()
+
+    fit_methods = ["fit", "partial_fit", "fit_transform", "fit_predict"]
+
+    for param_name in estimator_params:
+        constraints = estimator_orig._parameter_constraints[param_name]
+
+        if constraints == "no_validation":
+            # This parameter is not validated
+            continue
+
+        match = rf"The '{param_name}' parameter of {name} must be .* Got .* instead."
+        err_msg = (
+            f"{name} does not raise an informative error message when the "
+            f"parameter {param_name} does not have a valid type or value."
+        )
+
+        estimator = clone(estimator_orig)
+
+        # First, check that the error is raised if param doesn't match any valid type.
+        estimator.set_params(**{param_name: param_with_bad_type})
+
+        for method in fit_methods:
+            if not hasattr(estimator, method):
+                # the method is not accessible with the current set of parameters
+                continue
+
+            with raises(ValueError, match=match, err_msg=err_msg):
+                if any(
+                    isinstance(X_type, str) and X_type.endswith("labels")
+                    for X_type in _safe_tags(estimator, key="X_types")
+                ):
+                    # The estimator is a label transformer and take only `y`
+                    getattr(estimator, method)(y)
+                else:
+                    getattr(estimator, method)(X, y)
+
+        # Then, for constraints that are more than a type constraint, check that the
+        # error is raised if param does match a valid type but does not match any valid
+        # value for this type.
+        constraints = [make_constraint(constraint) for constraint in constraints]
+
+        for constraint in constraints:
+            try:
+                bad_value = generate_invalid_param_val(constraint, constraints)
+            except NotImplementedError:
+                continue
+
+            estimator.set_params(**{param_name: bad_value})
+
+            for method in fit_methods:
+                if not hasattr(estimator, method):
+                    # the method is not accessible with the current set of parameters
+                    continue
+
+                with raises(ValueError, match=match, err_msg=err_msg):
+                    if any(
+                        X_type.endswith("labels")
+                        for X_type in _safe_tags(estimator, key="X_types")
+                    ):
+                        # The estimator is a label transformer and take only `y`
+                        getattr(estimator, method)(y)
+                    else:
+                        getattr(estimator, method)(X, y)

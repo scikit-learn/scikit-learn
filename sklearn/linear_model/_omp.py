@@ -8,6 +8,7 @@
 import warnings
 from math import sqrt
 
+from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
 from scipy.linalg.lapack import get_lapack_funcs
@@ -17,6 +18,7 @@ from ._base import LinearModel, _pre_fit, _deprecate_normalize
 from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import as_float_array, check_array
 from ..utils.fixes import delayed
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..model_selection import check_cv
 
 premature = (
@@ -342,7 +344,7 @@ def orthogonal_mp(
         Coefficients of the OMP solution. If `return_path=True`, this contains
         the whole coefficient path. In this case its shape is
         (n_features, n_features) or (n_features, n_targets, n_features) and
-        iterating over the last axis yields coefficients in increasing order
+        iterating over the last axis generates coefficients in increasing order
         of active features.
 
     n_iters : array-like or int
@@ -351,23 +353,22 @@ def orthogonal_mp(
 
     See Also
     --------
-    OrthogonalMatchingPursuit
-    orthogonal_mp_gram
-    lars_path
-    sklearn.decomposition.sparse_encode
+    OrthogonalMatchingPursuit : Orthogonal Matching Pursuit model.
+    orthogonal_mp_gram : Solve OMP problems using Gram matrix and the product X.T * y.
+    lars_path : Compute Least Angle Regression or Lasso path using LARS algorithm.
+    sklearn.decomposition.sparse_encode : Sparse coding.
 
     Notes
     -----
     Orthogonal matching pursuit was introduced in S. Mallat, Z. Zhang,
     Matching pursuits with time-frequency dictionaries, IEEE Transactions on
     Signal Processing, Vol. 41, No. 12. (December 1993), pp. 3397-3415.
-    (http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf)
+    (https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf)
 
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
     https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
-
     """
     X = check_array(X, order="F", copy=copy_X)
     copy_X = False
@@ -395,7 +396,7 @@ def orthogonal_mp(
         G = np.asfortranarray(G)
         Xy = np.dot(X.T, y)
         if tol is not None:
-            norms_squared = np.sum((y ** 2), axis=0)
+            norms_squared = np.sum((y**2), axis=0)
         else:
             norms_squared = None
         return orthogonal_mp_gram(
@@ -506,23 +507,24 @@ def orthogonal_mp_gram(
 
     See Also
     --------
-    OrthogonalMatchingPursuit
-    orthogonal_mp
-    lars_path
-    sklearn.decomposition.sparse_encode
+    OrthogonalMatchingPursuit : Orthogonal Matching Pursuit model (OMP).
+    orthogonal_mp : Solves n_targets Orthogonal Matching Pursuit problems.
+    lars_path : Compute Least Angle Regression or Lasso path using
+        LARS algorithm.
+    sklearn.decomposition.sparse_encode : Generic sparse coding.
+        Each column of the result is the solution to a Lasso problem.
 
     Notes
     -----
     Orthogonal matching pursuit was introduced in G. Mallat, Z. Zhang,
     Matching pursuits with time-frequency dictionaries, IEEE Transactions on
     Signal Processing, Vol. 41, No. 12. (December 1993), pp. 3397-3415.
-    (http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf)
+    (https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf)
 
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
     https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
-
     """
     Gram = check_array(Gram, order="F", copy=copy_Gram)
     Xy = np.asarray(Xy)
@@ -671,7 +673,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     Orthogonal matching pursuit was introduced in G. Mallat, Z. Zhang,
     Matching pursuits with time-frequency dictionaries, IEEE Transactions on
     Signal Processing, Vol. 41, No. 12. (December 1993), pp. 3397-3415.
-    (http://blanche.polytechnique.fr/~mallat/papiers/MallatPursuit93.pdf)
+    (https://www.di.ens.fr/~mallat/papiers/MallatPursuit93.pdf)
 
     This implementation is based on Rubinstein, R., Zibulevsky, M. and Elad,
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
@@ -689,6 +691,14 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> reg.predict(X[:1,])
     array([-78.3854...])
     """
+
+    _parameter_constraints: dict = {
+        "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
+        "tol": [Interval(Real, 0, None, closed="left"), None],
+        "fit_intercept": ["boolean"],
+        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
+        "precompute": [StrOptions({"auto"}), "boolean"],
+    }
 
     def __init__(
         self,
@@ -721,6 +731,8 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
+
         _normalize = _deprecate_normalize(
             self.normalize, default=True, estimator_name=self.__class__.__name__
         )
@@ -753,7 +765,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
                 return_n_iter=True,
             )
         else:
-            norms_sq = np.sum(y ** 2, axis=0) if self.tol is not None else None
+            norms_sq = np.sum(y**2, axis=0) if self.tol is not None else None
 
             coef_, self.n_iter_ = orthogonal_mp_gram(
                 Gram,
@@ -844,7 +856,7 @@ def _omp_path_residues(
         y_test -= y_mean
 
     if normalize:
-        norms = np.sqrt(np.sum(X_train ** 2, axis=0))
+        norms = np.sqrt(np.sum(X_train**2, axis=0))
         nonzeros = np.flatnonzero(norms)
         X_train[:, nonzeros] /= norms[nonzeros]
 
@@ -967,6 +979,11 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     sklearn.decomposition.sparse_encode : Generic sparse coding.
         Each column of the result is the solution to a Lasso problem.
 
+    Notes
+    -----
+    In `fit`, once the optimal number of non-zero coefficients is found through
+    cross-validation, the model is fit again using the entire training set.
+
     Examples
     --------
     >>> from sklearn.linear_model import OrthogonalMatchingPursuitCV
@@ -981,6 +998,16 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     >>> reg.predict(X[:1,])
     array([-78.3854...])
     """
+
+    _parameter_constraints: dict = {
+        "copy": ["boolean"],
+        "fit_intercept": ["boolean"],
+        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
+        "max_iter": [Interval(Integral, 0, None, closed="left"), None],
+        "cv": ["cv_object"],
+        "n_jobs": [Integral, None],
+        "verbose": ["verbose"],
+    }
 
     def __init__(
         self,
@@ -1017,6 +1044,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
 
         _normalize = _deprecate_normalize(
             self.normalize, default=True, estimator_name=self.__class__.__name__
