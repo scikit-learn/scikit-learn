@@ -113,7 +113,8 @@ def density(w, **kwargs):
     """
     if kwargs:
         warnings.warn(
-            "Key arguments will be removed in one of the upcoming versions",
+            "Additional keyword arguments are deprecated in version 1.2 and will be"
+            " removed in version 1.4.",
             FutureWarning,
         )
 
