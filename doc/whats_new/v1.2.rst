@@ -382,6 +382,11 @@ Changelog
   (`average="micro"`) for the One-vs-Rest multiclass case (`multi_class="ovr"`).
   :pr:`24338` by :user:`Arturo Amor <ArturoAmorQ>`.
 
+- |Feature| Add :func:`metrics.fpr_tpr_fnr_tnr_score`,
+  :func:`metrics.specificity_score` and :func:`metrics.npv_score`.
+  :pr:`19556` by :user:`Hao Chun Chang <haochunchang>`
+  and :user:`Pawel Kranzberg <Pawel-Kranzberg>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
