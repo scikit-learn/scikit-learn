@@ -1,3 +1,16 @@
+{{py:
+
+implementation_specific_values = [
+    # Values are the following ones:
+    #
+    #       name_suffix, INPUT_DTYPE
+    #
+    #
+    ('64', 'DTYPE'),
+    ('32', 'np.float32')
+]
+
+}}
 cimport numpy as cnp
 from cython cimport final
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
@@ -8,7 +21,7 @@ import warnings
 from scipy.sparse import issparse
 from ...utils import _in_unstable_openblas_configuration
 from ...utils.fixes import threadpool_limits, sp_version, parse_version
-from ...utils._typedefs import ITYPE, DTYPE
+from ...utils._typedefs import DTYPE
 
 cnp.import_array()
 
@@ -38,7 +51,7 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
         return {"VI": VI}
     return {}
 
-{{for name_suffix in ['64', '32']}}
+{{for name_suffix, INPUT_DTYPE in implementation_specific_values}}
 
 from ._base cimport (
     BaseDistanceReducer{{name_suffix}},
@@ -142,7 +155,7 @@ cdef class PairwiseDistances{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
 
         # Distance matrix which will be complete and returned to the caller.
         self.pairwise_distances_matrix = np.empty(
-            (self.n_samples_X, self.n_samples_Y), dtype=DTYPE,
+            (self.n_samples_X, self.n_samples_Y), dtype={{INPUT_DTYPE}},
         )
 
     def _finalize_results(self):

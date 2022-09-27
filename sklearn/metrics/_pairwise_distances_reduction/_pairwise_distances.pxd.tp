@@ -1,6 +1,20 @@
-from ...utils._typedefs cimport DTYPE_t
+{{py:
 
-{{for name_suffix in ['32', '64']}}
+implementation_specific_values = [
+    # Values are the following ones:
+    #
+    #       name_suffix, INPUT_DTYPE_t
+    #
+    #
+    ('64', 'cnp.float64_t'),
+    ('32', 'cnp.float32_t')
+]
+
+}}
+cimport numpy as cnp
+
+from ...utils._typedefs cimport DTYPE_t
+{{for name_suffix, INPUT_DTYPE_t in implementation_specific_values}}
 
 from ._base cimport BaseDistanceReducer{{name_suffix}}
 from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
@@ -10,7 +24,7 @@ cdef class PairwiseDistances{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
     """{{name_suffix}}bit implementation of PairwiseDistances."""
 
     cdef:
-        DTYPE_t[:, ::1] pairwise_distances_matrix
+        {{INPUT_DTYPE_t}}[:, ::1] pairwise_distances_matrix
 
 
 cdef class EuclideanPairwiseDistances{{name_suffix}}(PairwiseDistances{{name_suffix}}):

@@ -164,7 +164,7 @@ def test_binary_search_neighbors():
     desired_perplexity = 25.0
     random_state = check_random_state(0)
     data = random_state.randn(n_samples, 2).astype(np.float32, copy=False)
-    distances = pairwise_distances(data).astype(np.float32, copy=False)
+    distances = pairwise_distances(data)
     P1 = _binary_search_perplexity(distances, desired_perplexity, verbose=0)
 
     # Test that when we use all the neighbors the results are identical
