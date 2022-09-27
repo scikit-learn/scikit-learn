@@ -34,7 +34,7 @@ from ._pairwise_distances_reduction import (
     PairwiseDistances,
     _precompute_metric_params,
 )
-from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
+from ._pairwise_fast import _chi2_kernel_fast
 from ..exceptions import DataConversionWarning
 
 
@@ -940,6 +940,12 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
     """
     X, Y = check_pairwise_arrays(X, Y)
 
+    if issparse(X) or issparse(Y):
+        X = csr_matrix(X, copy=False)
+        Y = csr_matrix(Y, copy=False)
+        X.sum_duplicates()  # this also sorts indices in-place
+        Y.sum_duplicates()
+
     if sum_over_features and PairwiseDistances.is_usable_for(X, Y, metric="manhattan"):
         return PairwiseDistances.compute(X, Y, metric="manhattan")
 
@@ -949,14 +955,6 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
                 "sum_over_features=%r not supported for sparse matrices"
                 % sum_over_features
             )
-
-        X = csr_matrix(X, copy=False)
-        Y = csr_matrix(Y, copy=False)
-        X.sum_duplicates()  # this also sorts indices in-place
-        Y.sum_duplicates()
-        D = np.zeros((X.shape[0], Y.shape[0]))
-        _sparse_manhattan(X.data, X.indices, X.indptr, Y.data, Y.indices, Y.indptr, D)
-        return D
 
     if sum_over_features:
         return distance.cdist(X, Y, "cityblock")
