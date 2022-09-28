@@ -3,10 +3,10 @@ from collections import namedtuple
 import pytest
 
 from sklearn._engine import list_engine_provider_names
-from sklearn._engine import _parse_entry_point
 from sklearn._engine import get_engine_class
-from sklearn._engine import _get_engine_class
-from sklearn._engine import EngineSpec
+from sklearn._engine.base import _parse_entry_point
+from sklearn._engine.base import _get_engine_class
+from sklearn._engine.base import EngineSpec
 from sklearn._config import config_context
 
 

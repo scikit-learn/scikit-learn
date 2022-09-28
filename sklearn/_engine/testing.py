@@ -1,4 +1,4 @@
-from pytest import xfail
+from pytest import xfail, hookimpl
 
 from sklearn import config_context
 
@@ -18,18 +18,17 @@ def pytest_addoption(parser):
     )
 
 
-def pytest_runtest_call(item):
-    engine_provider = item.config.getoption("sklearn_engine_provider")
-    if engine_provider is None:
-        return item.runtest()
-
+@hookimpl(hookwrapper=True)
+def pytest_pyfunc_call(pyfuncitem):
+    engine_provider = pyfuncitem.config.getoption("sklearn_engine_provider")
     with config_context(engine_provider=engine_provider):
         try:
-            item.runtest()
+            outcome = yield
+            outcome.get_result()
         except FeatureNotCoveredByPluginError:
             xfail(
                 reason=(
-                    f"This test cover features that are not supported by the "
+                    "This test cover features that are not supported by the "
                     f"engine provided by {engine_provider}."
                 )
             )
