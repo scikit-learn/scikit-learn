@@ -33,13 +33,13 @@ class PredictionErrorDisplay:
 
     Attributes
     ----------
-    line_ : matplotlib Artist
+    line_ : matplotlib Artist or None
         Diagonal curve.
 
     errors_lines_ : matplotlib Artist or None
         Residual lines. If `with_errors=False`, then it is set to `None`.
 
-    scatter : matplotlib Artist
+    scatter_ : matplotlib Artist
         Scatter data points.
 
     ax_ : matplotlib Axes

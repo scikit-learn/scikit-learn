@@ -68,14 +68,14 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 # non-linearity, the model trained will not be precise during
 # prediction. Subsequently, a logarithmic function is used to linearize the
 # targets, allowing better prediction even with a similar linear model as
-# reported by the median absolute error (MAE).
-from sklearn.metrics import mean_absolute_error, r2_score
+# reported by the median absolute error (MedAE).
+from sklearn.metrics import median_absolute_error, r2_score
 
 
 def compute_score(y_true, y_pred):
     return {
         "R2 score": f"{r2_score(y_true, y_pred):.3f}",
-        "MAE": f"{mean_absolute_error(y_true, y_pred):.3f}",
+        "MedAE": f"{median_absolute_error(y_true, y_pred):.3f}",
     }
 
 
