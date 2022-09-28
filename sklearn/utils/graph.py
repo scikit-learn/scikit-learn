@@ -20,21 +20,25 @@ from ..metrics.pairwise import pairwise_distances
 # Path and connected component analysis.
 # Code adapted from networkx
 def single_source_shortest_path_length(graph, source, *, cutoff=None):
-    """Return the shortest path length from source to all reachable nodes.
-
-    Returns a dictionary of shortest path lengths keyed by target.
+    """Return the length of the shortest path from source to all reachable nodes.
 
     Parameters
     ----------
-    graph : {sparse matrix, ndarray} of shape (n, n)
+    graph : {sparse matrix, ndarray} of shape (n_nodes, n_nodes)
         Adjacency matrix of the graph. Sparse matrix of format LIL is
         preferred.
 
     source : int
-       Starting node for path.
+       Start node for path.
 
     cutoff : int, default=None
         Depth to stop the search - only paths of length <= cutoff are returned.
+
+    Returns
+    -------
+    paths : dict
+        Reachable end nodes mapped to length of path from source,
+        i.e. `{end: path_length}`.
 
     Examples
     --------
@@ -42,12 +46,12 @@ def single_source_shortest_path_length(graph, source, *, cutoff=None):
     >>> import numpy as np
     >>> graph = np.array([[ 0, 1, 0, 0],
     ...                   [ 1, 0, 1, 0],
-    ...                   [ 0, 1, 0, 1],
-    ...                   [ 0, 0, 1, 0]])
-    >>> list(sorted(single_source_shortest_path_length(graph, 0).items()))
-    [(0, 0), (1, 1), (2, 2), (3, 3)]
+    ...                   [ 0, 1, 0, 0],
+    ...                   [ 0, 0, 0, 0]])
+    >>> single_source_shortest_path_length(graph, 0)
+    {0: 0, 1: 1, 2: 2}
     >>> graph = np.ones((6, 6))
-    >>> list(sorted(single_source_shortest_path_length(graph, 2).items()))
+    >>> sorted(single_source_shortest_path_length(graph, 2).items())
     [(0, 1), (1, 1), (2, 0), (3, 1), (4, 1), (5, 1)]
     """
     if sparse.isspmatrix(graph):
