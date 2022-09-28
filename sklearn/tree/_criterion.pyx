@@ -790,8 +790,6 @@ cdef class RegressionCriterion(Criterion):
         cdef DOUBLE_t* sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
         cdef DOUBLE_t w
-        cdef DOUBLE_t y_ik
-        cdef DOUBLE_t w_y_ik
 
         self.n_missing = n_missing
         if n_missing == 0:
@@ -806,8 +804,6 @@ cdef class RegressionCriterion(Criterion):
                 w = sample_weight[i]
 
             for k in range(self.n_outputs):
-                y_ik = self.y[i, k]
-                w_y_ik = w * y_ik
                 self.sum_missing[k] += w
 
             self.weighted_n_missing += w
