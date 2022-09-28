@@ -13,10 +13,8 @@
 
 from ._criterion cimport Criterion
 
-from libc.stdlib cimport free
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
-from libc.string cimport memset
 from libc.math cimport isnan
 
 import numpy as np
@@ -282,10 +280,7 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t f_i = n_features
         cdef SIZE_t f_j
         cdef SIZE_t p
-        cdef SIZE_t feature_idx_offset
-        cdef SIZE_t feature_offset
         cdef SIZE_t i
-        cdef SIZE_t j
         cdef SIZE_t n_missing
         cdef SIZE_t directions
         cdef SIZE_t end_non_missing
@@ -301,7 +296,6 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t n_known_constants = n_constant_features[0]
         # n_total_constants = n_known_constants + n_found_constants
         cdef SIZE_t n_total_constants = n_known_constants
-        cdef DTYPE_t current_feature_value
 
         _init_split(&best, end)
 
@@ -706,7 +700,6 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef SIZE_t f_j
         cdef SIZE_t p
         cdef SIZE_t partition_end
-        cdef SIZE_t feature_stride
         # Number of features discovered to be constant during the split search
         cdef SIZE_t n_found_constants = 0
         # Number of features known to be constant and drawn without replacement
@@ -1218,7 +1211,6 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
         cdef SIZE_t n_known_constants = n_constant_features[0]
         # n_total_constants = n_known_constants + n_found_constants
         cdef SIZE_t n_total_constants = n_known_constants
-        cdef DTYPE_t current_feature_value
 
         cdef SIZE_t p_next
         cdef SIZE_t p_prev
@@ -1415,7 +1407,6 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         or 0 otherwise.
         """
         # Find the best split
-        cdef SIZE_t[::1] samples = self.samples
         cdef SIZE_t start = self.start
         cdef SIZE_t end = self.end
 
@@ -1424,7 +1415,6 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         cdef SIZE_t n_features = self.n_features
 
         cdef DTYPE_t[::1] Xf = self.feature_values
-        cdef SIZE_t[::1] index_to_samples = self.index_to_samples
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef double min_weight_leaf = self.min_weight_leaf
@@ -1447,7 +1437,6 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         cdef SIZE_t n_known_constants = n_constant_features[0]
         # n_total_constants = n_known_constants + n_found_constants
         cdef SIZE_t n_total_constants = n_known_constants
-        cdef SIZE_t partition_end
 
         cdef DTYPE_t min_feature_value
         cdef DTYPE_t max_feature_value

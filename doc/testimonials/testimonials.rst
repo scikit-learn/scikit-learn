@@ -138,14 +138,14 @@ Gaël Varoquaux, research at Parietal
    <div class="sk-testimonial-div-box">
 
 Betaworks is a NYC-based startup studio that builds new products, grows
-companies, and invests in others. Over the past 8 years we’ve launched a
+companies, and invests in others. Over the past 8 years we've launched a
 handful of social data analytics-driven services, such as Bitly, Chartbeat,
 digg and Scale Model. Consistently the betaworks data science team uses
 Scikit-learn for a variety of tasks. From exploratory analysis, to product
 development, it is an essential part of our toolkit. Recent uses are included
-in `digg’s new video recommender system
+in `digg's new video recommender system
 <https://medium.com/i-data/the-digg-video-recommender-2f9ade7c4ba3>`_,
-and Poncho’s `dynamic heuristic subspace clustering
+and Poncho's `dynamic heuristic subspace clustering
 <https://medium.com/@DiggData/scaling-poncho-using-data-ca24569d56fd>`_.
 
 .. raw:: html
@@ -609,11 +609,11 @@ Vincent Dubourg, PHIMECA Engineering, PhD Engineer
 
 At HowAboutWe, scikit-learn lets us implement a wide array of machine learning
 techniques in analysis and in production, despite having a small team.  We use
-scikit-learn’s classification algorithms to predict user behavior, enabling us
+scikit-learn's classification algorithms to predict user behavior, enabling us
 to (for example) estimate the value of leads from a given traffic source early
-in the lead’s tenure on our site. Also, our users' profiles consist of
+in the lead's tenure on our site. Also, our users' profiles consist of
 primarily unstructured data (answers to open-ended questions), so we use
-scikit-learn’s feature extraction and dimensionality reduction tools to
+scikit-learn's feature extraction and dimensionality reduction tools to
 translate these unstructured data into inputs for our matchmaking system.
 
 .. raw:: html
@@ -648,7 +648,7 @@ Daniel Weitzenfeld, Senior Data Scientist at HowAboutWe
    <div class="sk-testimonial-div-box">
 
 At PeerIndex we use scientific methodology to build the Influence Graph - a
-unique dataset that allows us to identify who’s really influential and in which
+unique dataset that allows us to identify who's really influential and in which
 context. To do this, we have to tackle a range of machine learning and
 predictive modeling problems. Scikit-learn has emerged as our primary tool for
 developing prototypes and making quick progress. From predicting missing data
@@ -879,12 +879,12 @@ Rafael Carrascosa, Lead developer
    <div class="sk-testimonial-div">
    <div class="sk-testimonial-div-box">
 
-Scikit-learn is helping to drive Moore’s Law, via Solido. Solido creates
+Scikit-learn is helping to drive Moore's Law, via Solido. Solido creates
 computer-aided design tools used by the majority of top-20 semiconductor
 companies and fabs, to design the bleeding-edge chips inside smartphones,
-automobiles, and more. Scikit-learn helps to power Solido’s algorithms for
+automobiles, and more. Scikit-learn helps to power Solido's algorithms for
 rare-event estimation, worst-case verification, optimization, and more. At
-Solido, we are particularly fond of scikit-learn’s libraries for Gaussian
+Solido, we are particularly fond of scikit-learn's libraries for Gaussian
 Process models, large-scale regularized linear regression, and classification.
 Scikit-learn has increased our productivity, because for many ML problems we no
 longer need to “roll our own” code. `This PyData 2014 talk <https://www.youtube.com/watch?v=Jm-eBD9xR3w>`_ has details.

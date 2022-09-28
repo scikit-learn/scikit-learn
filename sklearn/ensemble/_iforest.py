@@ -6,6 +6,7 @@ import numbers
 import numpy as np
 from scipy.sparse import issparse
 from warnings import warn
+from numbers import Integral, Real
 
 from ..tree import ExtraTreeRegressor
 from ..tree._tree import DTYPE as tree_dtype
@@ -15,6 +16,7 @@ from ..utils import (
     gen_batches,
     get_chunk_n_rows,
 )
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import check_is_fitted, _num_samples
 from ..base import OutlierMixin
 
@@ -79,7 +81,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         The number of features to draw from X to train each base estimator.
 
             - If int, then draw `max_features` features.
-            - If float, then draw `max_features * X.shape[1]` features.
+            - If float, then draw `max(1, int(max_features * n_features_in_))` features.
 
         Note: using a float number less than 1.0 or integer less than number of
         features will enable feature subsampling and leads to a longerr runtime.
@@ -114,9 +116,20 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
     Attributes
     ----------
+    estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor` instance
+        The child estimator template used to create the collection of
+        fitted sub-estimators.
+
+        .. versionadded:: 1.2
+           `base_estimator_` was renamed to `estimator_`.
+
     base_estimator_ : ExtraTreeRegressor instance
         The child estimator template used to create the collection of
         fitted sub-estimators.
+
+        .. deprecated:: 1.2
+            `base_estimator_` is deprecated and will be removed in 1.4.
+            Use `estimator_` instead.
 
     estimators_ : list of ExtraTreeRegressor instances
         The collection of fitted sub-estimators.
@@ -142,13 +155,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
         (samples with decision function < 0) in training.
 
         .. versionadded:: 0.20
-
-    n_features_ : int
-        The number of features when ``fit`` is performed.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -195,6 +201,28 @@ class IsolationForest(OutlierMixin, BaseBagging):
     array([ 1,  1, -1])
     """
 
+    _parameter_constraints: dict = {
+        "n_estimators": [Interval(Integral, 1, None, closed="left")],
+        "max_samples": [
+            StrOptions({"auto"}),
+            Interval(Integral, 1, None, closed="left"),
+            Interval(Real, 0, 1, closed="right"),
+        ],
+        "contamination": [
+            StrOptions({"auto"}),
+            Interval(Real, 0, 0.5, closed="right"),
+        ],
+        "max_features": [
+            Integral,
+            Interval(Real, 0, 1, closed="right"),
+        ],
+        "bootstrap": ["boolean"],
+        "n_jobs": [Integral, None],
+        "random_state": ["random_state"],
+        "verbose": ["verbose"],
+        "warm_start": ["boolean"],
+    }
+
     def __init__(
         self,
         *,
@@ -209,7 +237,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         warm_start=False,
     ):
         super().__init__(
-            base_estimator=ExtraTreeRegressor(
+            estimator=ExtraTreeRegressor(
                 max_features=1, splitter="random", random_state=random_state
             ),
             # here above max_features has no links with self.max_features
@@ -258,6 +286,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
         X = self._validate_data(X, accept_sparse=["csc"], dtype=tree_dtype)
         if issparse(X):
             # Pre-sort indices to avoid that each individual tree of the
@@ -270,22 +299,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
         # ensure that max_sample is in [1, n_samples]:
         n_samples = X.shape[0]
 
-        if self.contamination != "auto":
-            if not (0.0 < self.contamination <= 0.5):
-                raise ValueError(
-                    "contamination must be in (0, 0.5], got: %f" % self.contamination
-                )
-
-        if isinstance(self.max_samples, str):
-            if self.max_samples == "auto":
-                max_samples = min(256, n_samples)
-            else:
-                raise ValueError(
-                    "max_samples (%s) is not supported."
-                    'Valid choices are: "auto", int or'
-                    "float"
-                    % self.max_samples
-                )
+        if isinstance(self.max_samples, str) and self.max_samples == "auto":
+            max_samples = min(256, n_samples)
 
         elif isinstance(self.max_samples, numbers.Integral):
             if self.max_samples > n_samples:
@@ -298,11 +313,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 max_samples = n_samples
             else:
                 max_samples = self.max_samples
-        else:  # float
-            if not 0.0 < self.max_samples <= 1.0:
-                raise ValueError(
-                    "max_samples must be in (0, 1], got %r" % self.max_samples
-                )
+        else:  # max_samples is float
             max_samples = int(self.max_samples * X.shape[0])
 
         self.max_samples_ = max_samples

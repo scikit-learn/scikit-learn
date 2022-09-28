@@ -109,7 +109,7 @@ plt.show()
 # First aggregate all false positive rates
 all_fpr = np.unique(np.concatenate([fpr[i] for i in range(n_classes)]))
 
-# Then interpolate all ROC curves at this points
+# Then interpolate all ROC curves at these points
 mean_tpr = np.zeros_like(all_fpr)
 for i in range(n_classes):
     mean_tpr += np.interp(all_fpr, fpr[i], tpr[i])

@@ -471,48 +471,15 @@ def test_scale_and_stability(Est, X, Y):
     assert_allclose(Y_s_score, Y_score, atol=1e-4)
 
 
-@pytest.mark.parametrize("Est", (PLSSVD, PLSCanonical, CCA))
-@pytest.mark.parametrize(
-    "n_components, err_type, err_msg",
-    [
-        (0, ValueError, "n_components == 0, must be >= 1."),
-        (4, ValueError, "n_components == 4, must be <= 3."),
-        (
-            2.0,
-            TypeError,
-            "n_components must be an instance of int",
-        ),
-    ],
-)
-def test_n_components_bounds(Est, n_components, err_type, err_msg):
-    """Check the validation of `n_components` for `PLS` regressors."""
+@pytest.mark.parametrize("Estimator", (PLSSVD, PLSRegression, PLSCanonical, CCA))
+def test_n_components_upper_bounds(Estimator):
+    """Check the validation of `n_components` upper bounds for `PLS` regressors."""
     rng = np.random.RandomState(0)
     X = rng.randn(10, 5)
     Y = rng.randn(10, 3)
-    est = Est(n_components=n_components)
-    with pytest.raises(err_type, match=err_msg):
-        est.fit(X, Y)
-
-
-@pytest.mark.parametrize(
-    "n_components, err_type, err_msg",
-    [
-        (0, ValueError, "n_components == 0, must be >= 1."),
-        (6, ValueError, "n_components == 6, must be <= 5."),
-        (
-            2.0,
-            TypeError,
-            "n_components must be an instance of int",
-        ),
-    ],
-)
-def test_n_components_bounds_pls_regression(n_components, err_type, err_msg):
-    """Check the validation of `n_components` for `PLSRegression`."""
-    rng = np.random.RandomState(0)
-    X = rng.randn(10, 5)
-    Y = rng.randn(10, 3)
-    est = PLSRegression(n_components=n_components)
-    with pytest.raises(err_type, match=err_msg):
+    est = Estimator(n_components=10)
+    err_msg = "`n_components` upper bound is .*. Got 10 instead. Reduce `n_components`."
+    with pytest.raises(ValueError, match=err_msg):
         est.fit(X, Y)
 
 

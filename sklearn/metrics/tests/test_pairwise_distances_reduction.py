@@ -1,3 +1,4 @@
+import itertools
 import re
 from collections import defaultdict
 
@@ -9,10 +10,10 @@ from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
 from sklearn.metrics._pairwise_distances_reduction import (
-    PairwiseDistancesReduction,
-    PairwiseDistancesArgKmin,
-    PairwiseDistancesRadiusNeighborhood,
-    _sqeuclidean_row_norms64,
+    BaseDistanceReductionDispatcher,
+    ArgKmin,
+    RadiusNeighbors,
+    sqeuclidean_row_norms,
 )
 
 from sklearn.metrics import euclidean_distances
@@ -20,12 +21,13 @@ from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.utils._testing import (
     assert_array_equal,
     assert_allclose,
+    create_memmap_backed_data,
 )
 
 # Common supported metric between scipy.spatial.distance.cdist
-# and PairwiseDistancesReduction.
+# and BaseDistanceReductionDispatcher.
 # This allows constructing tests to check consistency of results
-# of concrete PairwiseDistancesReduction on some metrics using APIs
+# of concrete BaseDistanceReductionDispatcher on some metrics using APIs
 # from scipy and numpy.
 CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS = [
     "braycurtis",
@@ -89,11 +91,17 @@ def assert_argkmin_results_equality(ref_dist, dist, ref_indices, indices, rtol=1
 
 def relative_rounding(scalar, n_significant_digits):
     """Round a scalar to a number of significant digits relatively to its value."""
+    if scalar == 0:
+        return 0.0
     magnitude = int(floor(log10(abs(scalar)))) + 1
     return round(scalar, n_significant_digits - magnitude)
 
 
 def test_relative_rounding():
+
+    assert relative_rounding(0, 1) == 0.0
+    assert relative_rounding(0, 10) == 0.0
+    assert relative_rounding(0, 123456) == 0.0
 
     assert relative_rounding(123456789, 0) == 0
     assert relative_rounding(123456789, 2) == 120000000
@@ -296,17 +304,17 @@ ASSERT_RESULT = {
     # checks also for float64 data (with a larger number of significant digits)
     # as the tests could be unstable because of numerically tied distances on
     # some datasets (e.g. uniform grids).
-    (PairwiseDistancesArgKmin, np.float64): assert_argkmin_results_equality,
+    (ArgKmin, np.float64): assert_argkmin_results_equality,
     (
-        PairwiseDistancesRadiusNeighborhood,
+        RadiusNeighbors,
         np.float64,
     ): assert_radius_neighborhood_results_equality,
     # In the case of 32bit, indices can be permuted due to small difference
     # in the computations of their associated distances, hence we test equality of
     # results up to valid permutations.
-    (PairwiseDistancesArgKmin, np.float32): assert_argkmin_results_quasi_equality,
+    (ArgKmin, np.float32): assert_argkmin_results_quasi_equality,
     (
-        PairwiseDistancesRadiusNeighborhood,
+        RadiusNeighbors,
         np.float32,
     ): assert_radius_neighborhood_results_quasi_equality,
 }
@@ -406,18 +414,15 @@ def test_assert_radius_neighborhood_results_quasi_equality():
     _6_1m = 6.1 - eps
     _6_1p = 6.1 + eps
 
-    ref_dist = np.array(
-        [
-            np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
-            np.array([_1m, 1, _1p, _1p]),
-        ]
-    )
-    ref_indices = np.array(
-        [
-            np.array([1, 2, 3, 4, 5]),
-            np.array([6, 7, 8, 9]),
-        ]
-    )
+    ref_dist = [
+        np.array([1.2, 2.5, _6_1m, 6.1, _6_1p]),
+        np.array([_1m, 1, _1p, _1p]),
+    ]
+
+    ref_indices = [
+        np.array([1, 2, 3, 4, 5]),
+        np.array([6, 7, 8, 9]),
+    ]
 
     # Sanity check: compare the reference results to themselves.
     assert_radius_neighborhood_results_quasi_equality(
@@ -512,22 +517,66 @@ def test_pairwise_distances_reduction_is_usable_for():
     rng = np.random.RandomState(0)
     X = rng.rand(100, 10)
     Y = rng.rand(100, 10)
-    metric = "euclidean"
+    X_csr = csr_matrix(X)
+    Y_csr = csr_matrix(Y)
+    metric = "manhattan"
 
-    assert PairwiseDistancesReduction.is_usable_for(
-        X.astype(np.float64), X.astype(np.float64), metric
+    # Must be usable for all possible pair of {dense, sparse} datasets
+    assert BaseDistanceReductionDispatcher.is_usable_for(X, Y, metric)
+    assert BaseDistanceReductionDispatcher.is_usable_for(X_csr, Y_csr, metric)
+    assert BaseDistanceReductionDispatcher.is_usable_for(X_csr, Y, metric)
+    assert BaseDistanceReductionDispatcher.is_usable_for(X, Y_csr, metric)
+
+    assert BaseDistanceReductionDispatcher.is_usable_for(
+        X.astype(np.float64), Y.astype(np.float64), metric
     )
-    assert not PairwiseDistancesReduction.is_usable_for(
+
+    assert BaseDistanceReductionDispatcher.is_usable_for(
+        X.astype(np.float32), Y.astype(np.float32), metric
+    )
+
+    assert not BaseDistanceReductionDispatcher.is_usable_for(
         X.astype(np.int64), Y.astype(np.int64), metric
     )
 
-    assert not PairwiseDistancesReduction.is_usable_for(X, Y, metric="pyfunc")
-    assert not PairwiseDistancesReduction.is_usable_for(X.astype(np.float32), Y, metric)
-    assert not PairwiseDistancesReduction.is_usable_for(X, Y.astype(np.int32), metric)
+    assert not BaseDistanceReductionDispatcher.is_usable_for(X, Y, metric="pyfunc")
+    assert not BaseDistanceReductionDispatcher.is_usable_for(
+        X.astype(np.float32), Y, metric
+    )
+    assert not BaseDistanceReductionDispatcher.is_usable_for(
+        X, Y.astype(np.int32), metric
+    )
 
-    # TODO: remove once sparse matrices are supported
-    assert not PairwiseDistancesReduction.is_usable_for(csr_matrix(X), Y, metric)
-    assert not PairwiseDistancesReduction.is_usable_for(X, csr_matrix(Y), metric)
+    # F-ordered arrays are not supported
+    assert not BaseDistanceReductionDispatcher.is_usable_for(
+        np.asfortranarray(X), Y, metric
+    )
+
+    # We prefer not to use those implementations for fused sparse-dense when
+    # metric="(sq)euclidean" because it's not yet the most efficient one on
+    # all configurations of datasets.
+    # See: https://github.com/scikit-learn/scikit-learn/pull/23585#issuecomment-1247996669  # noqa
+    # TODO: implement specialisation for (sq)euclidean on fused sparse-dense
+    # using sparse-dense routines for matrix-vector multiplications.
+    assert not BaseDistanceReductionDispatcher.is_usable_for(
+        X_csr, Y, metric="euclidean"
+    )
+    assert not BaseDistanceReductionDispatcher.is_usable_for(
+        X_csr, Y_csr, metric="sqeuclidean"
+    )
+
+    # CSR matrices without non-zeros elements aren't currently supported
+    # TODO: support CSR matrices without non-zeros elements
+    X_csr_0_nnz = csr_matrix(X * 0)
+    assert not BaseDistanceReductionDispatcher.is_usable_for(X_csr_0_nnz, Y, metric)
+
+    # CSR matrices with int64 indices and indptr (e.g. large nnz, or large n_features)
+    # aren't supported as of now.
+    # See: https://github.com/scikit-learn/scikit-learn/issues/23653
+    # TODO: support CSR matrices with int64 indices and indptr
+    X_csr_int64 = csr_matrix(X)
+    X_csr_int64.indices = X_csr_int64.indices.astype(np.int64)
+    assert not BaseDistanceReductionDispatcher.is_usable_for(X_csr_int64, Y, metric)
 
 
 def test_argkmin_factory_method_wrong_usages():
@@ -538,52 +587,46 @@ def test_argkmin_factory_method_wrong_usages():
     metric = "euclidean"
 
     msg = (
-        "Only 64bit float datasets are supported at this time, "
+        "Only float64 or float32 datasets pairs are supported at this time, "
         "got: X.dtype=float32 and Y.dtype=float64"
     )
     with pytest.raises(ValueError, match=msg):
-        PairwiseDistancesArgKmin.compute(
-            X=X.astype(np.float32), Y=Y, k=k, metric=metric
-        )
+        ArgKmin.compute(X=X.astype(np.float32), Y=Y, k=k, metric=metric)
 
     msg = (
-        "Only 64bit float datasets are supported at this time, "
+        "Only float64 or float32 datasets pairs are supported at this time, "
         "got: X.dtype=float64 and Y.dtype=int32"
     )
     with pytest.raises(ValueError, match=msg):
-        PairwiseDistancesArgKmin.compute(X=X, Y=Y.astype(np.int32), k=k, metric=metric)
+        ArgKmin.compute(X=X, Y=Y.astype(np.int32), k=k, metric=metric)
 
     with pytest.raises(ValueError, match="k == -1, must be >= 1."):
-        PairwiseDistancesArgKmin.compute(X=X, Y=Y, k=-1, metric=metric)
+        ArgKmin.compute(X=X, Y=Y, k=-1, metric=metric)
 
     with pytest.raises(ValueError, match="k == 0, must be >= 1."):
-        PairwiseDistancesArgKmin.compute(X=X, Y=Y, k=0, metric=metric)
+        ArgKmin.compute(X=X, Y=Y, k=0, metric=metric)
 
     with pytest.raises(ValueError, match="Unrecognized metric"):
-        PairwiseDistancesArgKmin.compute(X=X, Y=Y, k=k, metric="wrong metric")
+        ArgKmin.compute(X=X, Y=Y, k=k, metric="wrong metric")
 
     with pytest.raises(
         ValueError, match=r"Buffer has wrong number of dimensions \(expected 2, got 1\)"
     ):
-        PairwiseDistancesArgKmin.compute(
-            X=np.array([1.0, 2.0]), Y=Y, k=k, metric=metric
-        )
+        ArgKmin.compute(X=np.array([1.0, 2.0]), Y=Y, k=k, metric=metric)
 
     with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
-        PairwiseDistancesArgKmin.compute(
-            X=np.asfortranarray(X), Y=Y, k=k, metric=metric
-        )
+        ArgKmin.compute(X=np.asfortranarray(X), Y=Y, k=k, metric=metric)
 
     unused_metric_kwargs = {"p": 3}
 
     message = (
         r"Some metric_kwargs have been passed \({'p': 3}\) but aren't usable for this"
         r" case \("
-        r"FastEuclideanPairwiseDistancesArgKmin."
+        r"EuclideanArgKmin64."
     )
 
     with pytest.warns(UserWarning, match=message):
-        PairwiseDistancesArgKmin.compute(
+        ArgKmin.compute(
             X=X, Y=Y, k=k, metric=metric, metric_kwargs=unused_metric_kwargs
         )
 
@@ -596,46 +639,42 @@ def test_radius_neighborhood_factory_method_wrong_usages():
     metric = "euclidean"
 
     msg = (
-        "Only 64bit float datasets are supported at this time, "
+        "Only float64 or float32 datasets pairs are supported at this time, "
         "got: X.dtype=float32 and Y.dtype=float64"
     )
     with pytest.raises(
         ValueError,
         match=msg,
     ):
-        PairwiseDistancesRadiusNeighborhood.compute(
+        RadiusNeighbors.compute(
             X=X.astype(np.float32), Y=Y, radius=radius, metric=metric
         )
 
     msg = (
-        "Only 64bit float datasets are supported at this time, "
+        "Only float64 or float32 datasets pairs are supported at this time, "
         "got: X.dtype=float64 and Y.dtype=int32"
     )
     with pytest.raises(
         ValueError,
         match=msg,
     ):
-        PairwiseDistancesRadiusNeighborhood.compute(
-            X=X, Y=Y.astype(np.int32), radius=radius, metric=metric
-        )
+        RadiusNeighbors.compute(X=X, Y=Y.astype(np.int32), radius=radius, metric=metric)
 
     with pytest.raises(ValueError, match="radius == -1.0, must be >= 0."):
-        PairwiseDistancesRadiusNeighborhood.compute(X=X, Y=Y, radius=-1, metric=metric)
+        RadiusNeighbors.compute(X=X, Y=Y, radius=-1, metric=metric)
 
     with pytest.raises(ValueError, match="Unrecognized metric"):
-        PairwiseDistancesRadiusNeighborhood.compute(
-            X=X, Y=Y, radius=radius, metric="wrong metric"
-        )
+        RadiusNeighbors.compute(X=X, Y=Y, radius=radius, metric="wrong metric")
 
     with pytest.raises(
         ValueError, match=r"Buffer has wrong number of dimensions \(expected 2, got 1\)"
     ):
-        PairwiseDistancesRadiusNeighborhood.compute(
+        RadiusNeighbors.compute(
             X=np.array([1.0, 2.0]), Y=Y, radius=radius, metric=metric
         )
 
     with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
-        PairwiseDistancesRadiusNeighborhood.compute(
+        RadiusNeighbors.compute(
             X=np.asfortranarray(X), Y=Y, radius=radius, metric=metric
         )
 
@@ -643,149 +682,230 @@ def test_radius_neighborhood_factory_method_wrong_usages():
 
     message = (
         r"Some metric_kwargs have been passed \({'p': 3}\) but aren't usable for this"
-        r" case \(FastEuclideanPairwiseDistancesRadiusNeighborhood"
+        r" case \(EuclideanRadiusNeighbors64"
     )
 
     with pytest.warns(UserWarning, match=message):
-        PairwiseDistancesRadiusNeighborhood.compute(
+        RadiusNeighbors.compute(
             X=X, Y=Y, radius=radius, metric=metric, metric_kwargs=unused_metric_kwargs
         )
 
 
-@pytest.mark.parametrize("n_samples", [100, 1000])
-@pytest.mark.parametrize("chunk_size", [50, 512, 1024])
 @pytest.mark.parametrize(
-    "PairwiseDistancesReduction",
-    [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
+    "n_samples_X, n_samples_Y", [(100, 100), (500, 100), (100, 500)]
 )
+@pytest.mark.parametrize("Dispatcher", [ArgKmin, RadiusNeighbors])
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_chunk_size_agnosticism(
     global_random_seed,
-    PairwiseDistancesReduction,
-    n_samples,
-    chunk_size,
+    Dispatcher,
+    n_samples_X,
+    n_samples_Y,
+    dtype,
     n_features=100,
-    dtype=np.float64,
 ):
-    # Results should not depend on the chunk size
+    """Check that results do not depend on the chunk size."""
     rng = np.random.RandomState(global_random_seed)
     spread = 100
-    X = rng.rand(n_samples, n_features).astype(dtype) * spread
-    Y = rng.rand(n_samples, n_features).astype(dtype) * spread
+    X = rng.rand(n_samples_X, n_features).astype(dtype) * spread
+    Y = rng.rand(n_samples_Y, n_features).astype(dtype) * spread
 
-    if PairwiseDistancesReduction is PairwiseDistancesArgKmin:
+    if Dispatcher is ArgKmin:
         parameter = 10
         check_parameters = {}
+        compute_parameters = {}
     else:
         # Scaling the radius slightly with the numbers of dimensions
         radius = 10 ** np.log(n_features)
         parameter = radius
         check_parameters = {"radius": radius}
+        compute_parameters = {"sort_results": True}
 
-    ref_dist, ref_indices = PairwiseDistancesReduction.compute(
+    ref_dist, ref_indices = Dispatcher.compute(
         X,
         Y,
         parameter,
+        chunk_size=256,  # default
         metric="manhattan",
         return_distance=True,
+        **compute_parameters,
     )
 
-    dist, indices = PairwiseDistancesReduction.compute(
+    dist, indices = Dispatcher.compute(
         X,
         Y,
         parameter,
-        chunk_size=chunk_size,
+        chunk_size=41,
         metric="manhattan",
         return_distance=True,
+        **compute_parameters,
     )
 
-    ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
+    ASSERT_RESULT[(Dispatcher, dtype)](
         ref_dist, dist, ref_indices, indices, **check_parameters
     )
 
 
-@pytest.mark.parametrize("n_samples", [100, 1000])
-@pytest.mark.parametrize("chunk_size", [50, 512, 1024])
 @pytest.mark.parametrize(
-    "PairwiseDistancesReduction",
-    [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
+    "n_samples_X, n_samples_Y", [(100, 100), (500, 100), (100, 500)]
 )
+@pytest.mark.parametrize("Dispatcher", [ArgKmin, RadiusNeighbors])
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_n_threads_agnosticism(
     global_random_seed,
-    PairwiseDistancesReduction,
-    n_samples,
-    chunk_size,
+    Dispatcher,
+    n_samples_X,
+    n_samples_Y,
+    dtype,
     n_features=100,
-    dtype=np.float64,
 ):
-    # Results should not depend on the number of threads
+    """Check that results do not depend on the number of threads."""
     rng = np.random.RandomState(global_random_seed)
     spread = 100
-    X = rng.rand(n_samples, n_features).astype(dtype) * spread
-    Y = rng.rand(n_samples, n_features).astype(dtype) * spread
+    X = rng.rand(n_samples_X, n_features).astype(dtype) * spread
+    Y = rng.rand(n_samples_Y, n_features).astype(dtype) * spread
 
-    if PairwiseDistancesReduction is PairwiseDistancesArgKmin:
+    if Dispatcher is ArgKmin:
         parameter = 10
         check_parameters = {}
+        compute_parameters = {}
     else:
         # Scaling the radius slightly with the numbers of dimensions
         radius = 10 ** np.log(n_features)
         parameter = radius
         check_parameters = {"radius": radius}
+        compute_parameters = {"sort_results": True}
 
-    ref_dist, ref_indices = PairwiseDistancesReduction.compute(
+    ref_dist, ref_indices = Dispatcher.compute(
         X,
         Y,
         parameter,
+        chunk_size=25,  # make sure we use multiple threads
         return_distance=True,
+        **compute_parameters,
     )
 
     with threadpoolctl.threadpool_limits(limits=1, user_api="openmp"):
-        dist, indices = PairwiseDistancesReduction.compute(
-            X, Y, parameter, return_distance=True
+        dist, indices = Dispatcher.compute(
+            X,
+            Y,
+            parameter,
+            chunk_size=25,
+            return_distance=True,
+            **compute_parameters,
         )
 
-    ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
+    ASSERT_RESULT[(Dispatcher, dtype)](
         ref_dist, dist, ref_indices, indices, **check_parameters
     )
 
 
-# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
-@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
-@pytest.mark.parametrize("n_samples", [100, 1000])
-@pytest.mark.parametrize("metric", PairwiseDistancesReduction.valid_metrics())
 @pytest.mark.parametrize(
-    "PairwiseDistancesReduction",
-    [PairwiseDistancesArgKmin, PairwiseDistancesRadiusNeighborhood],
+    "Dispatcher, dtype",
+    [
+        (ArgKmin, np.float64),
+        (RadiusNeighbors, np.float32),
+        (ArgKmin, np.float32),
+        (RadiusNeighbors, np.float64),
+    ],
 )
-def test_strategies_consistency(
+def test_format_agnosticism(
     global_random_seed,
-    PairwiseDistancesReduction,
-    metric,
-    n_samples,
-    n_features=10,
-    dtype=np.float64,
+    Dispatcher,
+    dtype,
 ):
-
+    """Check that results do not depend on the format (dense, sparse) of the input."""
     rng = np.random.RandomState(global_random_seed)
     spread = 100
+    n_samples, n_features = 100, 100
+
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = rng.rand(n_samples, n_features).astype(dtype) * spread
+
+    X_csr = csr_matrix(X)
+    Y_csr = csr_matrix(Y)
+
+    if Dispatcher is ArgKmin:
+        parameter = 10
+        check_parameters = {}
+        compute_parameters = {}
+    else:
+        # Scaling the radius slightly with the numbers of dimensions
+        radius = 10 ** np.log(n_features)
+        parameter = radius
+        check_parameters = {"radius": radius}
+        compute_parameters = {"sort_results": True}
+
+    dist_dense, indices_dense = Dispatcher.compute(
+        X,
+        Y,
+        parameter,
+        chunk_size=50,
+        return_distance=True,
+        **compute_parameters,
+    )
+
+    for _X, _Y in itertools.product((X, X_csr), (Y, Y_csr)):
+        if _X is X and _Y is Y:
+            continue
+        dist, indices = Dispatcher.compute(
+            _X,
+            _Y,
+            parameter,
+            chunk_size=50,
+            return_distance=True,
+            **compute_parameters,
+        )
+        ASSERT_RESULT[(Dispatcher, dtype)](
+            dist_dense,
+            dist,
+            indices_dense,
+            indices,
+            **check_parameters,
+        )
+
+
+@pytest.mark.parametrize(
+    "n_samples_X, n_samples_Y", [(100, 100), (100, 500), (500, 100)]
+)
+@pytest.mark.parametrize(
+    "metric",
+    ["euclidean", "minkowski", "manhattan", "infinity", "seuclidean", "haversine"],
+)
+@pytest.mark.parametrize("Dispatcher", [ArgKmin, RadiusNeighbors])
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
+def test_strategies_consistency(
+    global_random_seed,
+    Dispatcher,
+    metric,
+    n_samples_X,
+    n_samples_Y,
+    dtype,
+    n_features=10,
+):
+    """Check that the results do not depend on the strategy used."""
+    rng = np.random.RandomState(global_random_seed)
+    spread = 100
+    X = rng.rand(n_samples_X, n_features).astype(dtype) * spread
+    Y = rng.rand(n_samples_Y, n_features).astype(dtype) * spread
 
     # Haversine distance only accepts 2D data
     if metric == "haversine":
         X = np.ascontiguousarray(X[:, :2])
         Y = np.ascontiguousarray(Y[:, :2])
 
-    if PairwiseDistancesReduction is PairwiseDistancesArgKmin:
+    if Dispatcher is ArgKmin:
         parameter = 10
         check_parameters = {}
+        compute_parameters = {}
     else:
         # Scaling the radius slightly with the numbers of dimensions
         radius = 10 ** np.log(n_features)
         parameter = radius
         check_parameters = {"radius": radius}
+        compute_parameters = {"sort_results": True}
 
-    dist_par_X, indices_par_X = PairwiseDistancesReduction.compute(
+    dist_par_X, indices_par_X = Dispatcher.compute(
         X,
         Y,
         parameter,
@@ -795,12 +915,13 @@ def test_strategies_consistency(
             metric, n_features, seed=global_random_seed
         )[0],
         # To be sure to use parallelization
-        chunk_size=n_samples // 4,
+        chunk_size=n_samples_X // 4,
         strategy="parallel_on_X",
         return_distance=True,
+        **compute_parameters,
     )
 
-    dist_par_Y, indices_par_Y = PairwiseDistancesReduction.compute(
+    dist_par_Y, indices_par_Y = Dispatcher.compute(
         X,
         Y,
         parameter,
@@ -810,17 +931,18 @@ def test_strategies_consistency(
             metric, n_features, seed=global_random_seed
         )[0],
         # To be sure to use parallelization
-        chunk_size=n_samples // 4,
+        chunk_size=n_samples_Y // 4,
         strategy="parallel_on_Y",
         return_distance=True,
+        **compute_parameters,
     )
 
-    ASSERT_RESULT[(PairwiseDistancesReduction, dtype)](
+    ASSERT_RESULT[(Dispatcher, dtype)](
         dist_par_X, dist_par_Y, indices_par_X, indices_par_Y, **check_parameters
     )
 
 
-# "Concrete PairwiseDistancesReductions"-specific tests
+# "Concrete Dispatchers"-specific tests
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
 @pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
@@ -828,16 +950,25 @@ def test_strategies_consistency(
 @pytest.mark.parametrize("translation", [0, 1e6])
 @pytest.mark.parametrize("metric", CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS)
 @pytest.mark.parametrize("strategy", ("parallel_on_X", "parallel_on_Y"))
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_pairwise_distances_argkmin(
     global_random_seed,
     n_features,
     translation,
     metric,
     strategy,
+    dtype,
     n_samples=100,
     k=10,
-    dtype=np.float64,
 ):
+    # TODO: can we easily fix this discrepancy?
+    edge_cases = [
+        (np.float32, "chebyshev", 1000000.0),
+        (np.float32, "cityblock", 1000000.0),
+    ]
+    if (dtype, metric, translation) in edge_cases:
+        pytest.xfail("Numerical differences lead to small differences in results.")
+
     rng = np.random.RandomState(global_random_seed)
     spread = 1000
     X = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
@@ -865,7 +996,7 @@ def test_pairwise_distances_argkmin(
             row_idx, argkmin_indices_ref[row_idx]
         ]
 
-    argkmin_distances, argkmin_indices = PairwiseDistancesArgKmin.compute(
+    argkmin_distances, argkmin_indices = ArgKmin.compute(
         X,
         Y,
         k,
@@ -877,7 +1008,7 @@ def test_pairwise_distances_argkmin(
         strategy=strategy,
     )
 
-    ASSERT_RESULT[(PairwiseDistancesArgKmin, dtype)](
+    ASSERT_RESULT[(ArgKmin, dtype)](
         argkmin_distances,
         argkmin_distances_ref,
         argkmin_indices,
@@ -891,14 +1022,15 @@ def test_pairwise_distances_argkmin(
 @pytest.mark.parametrize("translation", [0, 1e6])
 @pytest.mark.parametrize("metric", CDIST_PAIRWISE_DISTANCES_REDUCTION_COMMON_METRICS)
 @pytest.mark.parametrize("strategy", ("parallel_on_X", "parallel_on_Y"))
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_pairwise_distances_radius_neighbors(
     global_random_seed,
     n_features,
     translation,
     metric,
     strategy,
+    dtype,
     n_samples=100,
-    dtype=np.float64,
 ):
     rng = np.random.RandomState(global_random_seed)
     spread = 1000
@@ -931,10 +1063,7 @@ def test_pairwise_distances_radius_neighbors(
         neigh_indices_ref.append(ind)
         neigh_distances_ref.append(dist)
 
-    neigh_indices_ref = np.array(neigh_indices_ref)
-    neigh_distances_ref = np.array(neigh_distances_ref)
-
-    neigh_distances, neigh_indices = PairwiseDistancesRadiusNeighborhood.compute(
+    neigh_distances, neigh_indices = RadiusNeighbors.compute(
         X,
         Y,
         radius,
@@ -947,26 +1076,83 @@ def test_pairwise_distances_radius_neighbors(
         sort_results=True,
     )
 
-    ASSERT_RESULT[(PairwiseDistancesRadiusNeighborhood, dtype)](
+    ASSERT_RESULT[(RadiusNeighbors, dtype)](
         neigh_distances, neigh_distances_ref, neigh_indices, neigh_indices_ref, radius
+    )
+
+
+@pytest.mark.parametrize("Dispatcher", [ArgKmin, RadiusNeighbors])
+@pytest.mark.parametrize("metric", ["manhattan", "euclidean"])
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
+def test_memmap_backed_data(
+    metric,
+    Dispatcher,
+    dtype,
+):
+    """Check that the results do not depend on the datasets writability."""
+    rng = np.random.RandomState(0)
+    spread = 100
+    n_samples, n_features = 128, 10
+    X = rng.rand(n_samples, n_features).astype(dtype) * spread
+    Y = rng.rand(n_samples, n_features).astype(dtype) * spread
+
+    # Create read only datasets
+    X_mm, Y_mm = create_memmap_backed_data([X, Y])
+
+    if Dispatcher is ArgKmin:
+        parameter = 10
+        check_parameters = {}
+        compute_parameters = {}
+    else:
+        # Scaling the radius slightly with the numbers of dimensions
+        radius = 10 ** np.log(n_features)
+        parameter = radius
+        check_parameters = {"radius": radius}
+        compute_parameters = {"sort_results": True}
+
+    ref_dist, ref_indices = Dispatcher.compute(
+        X,
+        Y,
+        parameter,
+        metric=metric,
+        return_distance=True,
+        **compute_parameters,
+    )
+
+    dist_mm, indices_mm = Dispatcher.compute(
+        X_mm,
+        Y_mm,
+        parameter,
+        metric=metric,
+        return_distance=True,
+        **compute_parameters,
+    )
+
+    ASSERT_RESULT[(Dispatcher, dtype)](
+        ref_dist, dist_mm, ref_indices, indices_mm, **check_parameters
     )
 
 
 @pytest.mark.parametrize("n_samples", [100, 1000])
 @pytest.mark.parametrize("n_features", [5, 10, 100])
 @pytest.mark.parametrize("num_threads", [1, 2, 8])
+@pytest.mark.parametrize("dtype", [np.float64, np.float32])
 def test_sqeuclidean_row_norms(
     global_random_seed,
     n_samples,
     n_features,
     num_threads,
-    dtype=np.float64,
+    dtype,
 ):
     rng = np.random.RandomState(global_random_seed)
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
 
     sq_row_norm_reference = np.linalg.norm(X, axis=1) ** 2
-    sq_row_norm = np.asarray(_sqeuclidean_row_norms64(X, num_threads=num_threads))
+    sq_row_norm = np.asarray(sqeuclidean_row_norms(X, num_threads=num_threads))
 
     assert_allclose(sq_row_norm_reference, sq_row_norm)
+
+    with pytest.raises(ValueError):
+        X = np.asfortranarray(X)
+        sqeuclidean_row_norms(X, num_threads=num_threads)

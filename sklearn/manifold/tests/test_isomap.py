@@ -216,19 +216,21 @@ def test_isomap_clone_bug():
         assert model.nbrs_.n_neighbors == n_neighbors
 
 
-def test_sparse_input():
+@pytest.mark.parametrize("eigen_solver", eigen_solvers)
+@pytest.mark.parametrize("path_method", path_methods)
+def test_sparse_input(eigen_solver, path_method):
+    # TODO: compare results on dense and sparse data as proposed in:
+    # https://github.com/scikit-learn/scikit-learn/pull/23585#discussion_r968388186
     X = sparse_rand(100, 3, density=0.1, format="csr")
 
-    # Should not error
-    for eigen_solver in eigen_solvers:
-        for path_method in path_methods:
-            clf = manifold.Isomap(
-                n_components=2,
-                eigen_solver=eigen_solver,
-                path_method=path_method,
-                n_neighbors=8,
-            )
-            clf.fit(X)
+    clf = manifold.Isomap(
+        n_components=2,
+        eigen_solver=eigen_solver,
+        path_method=path_method,
+        n_neighbors=8,
+    )
+    clf.fit(X)
+    clf.transform(X)
 
 
 def test_isomap_fit_precomputed_radius_graph():
