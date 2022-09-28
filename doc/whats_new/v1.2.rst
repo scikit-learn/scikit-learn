@@ -221,6 +221,10 @@ Changelog
   :pr:`11860` by :user:`Pierre Ablin <pierreablin>`,
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
 
+- |Enhancement| :class:`decomposition.LatentDirichletAllocation` now preserves dtype
+  for `numpy.float32` input. :pr:`24528` by :user:`Takeshi Oura <takoika>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 - |API| The `n_features_` attribute of
   :class:`decomposition.PCA` is deprecated in favor of
   `n_features_in_` and will be removed in 1.4. :pr:`24421` by
@@ -378,6 +382,11 @@ Changelog
   :pr:`22710` by :user:`Conroy Trinh <trinhcon>` and
   :pr:`23461` by :user:`Meekail Zain <micky774>`.
 
+- |FIX| :func:`metrics.log_loss` with `eps=0` now returns a correct value of 0 or
+  `np.inf` instead of `nan` for predictions at the boundaries (0 or 1). It also accepts
+  integer input.
+  :pr:`24365` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Feature| :func:`metrics.roc_auc_score` now supports micro-averaging
   (`average="micro"`) for the One-vs-Rest multiclass case (`multi_class="ovr"`).
   :pr:`24338` by :user:`Arturo Amor <ArturoAmorQ>`.
@@ -481,6 +490,12 @@ Changelog
 
 - For :func:`utils.extmath.density` the keyword parameters are deprecated.
   :pr:`24523` by :user:`Mia Bajic <clytaemnestra>`.
+
+- |Feature| A new module exposes development tools to discover estimators (i.e.
+  :func:`utils.discovery.all_estimators`), displays (i.e.
+  :func:`utils.discovery.all_displays`) and functions (i.e.
+  :func:`utils.discovery.all_functions`) in scikit-learn.
+  :pr:`21469` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Code and Documentation Contributors
 -----------------------------------

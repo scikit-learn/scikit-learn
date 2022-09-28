@@ -8,6 +8,7 @@ number of features selected with cross-validation.
 
 """
 
+import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.svm import SVC
 from sklearn.model_selection import StratifiedKFold
@@ -42,12 +43,17 @@ rfecv.fit(X, y)
 
 print("Optimal number of features : %d" % rfecv.n_features_)
 
+n_scores = len(rfecv.cv_results_["split0_test_score"])
+cv_scores = np.vstack(
+    (rfecv.cv_results_["split0_test_score"], rfecv.cv_results_["split1_test_score"])
+).T
+
 # Plot number of features VS. cross-validation scores
 plt.figure()
 plt.xlabel("Number of features selected")
 plt.ylabel("Cross validation score (accuracy)")
 plt.plot(
-    range(min_features_to_select, len(rfecv.grid_scores_) + min_features_to_select),
-    rfecv.grid_scores_,
+    range(min_features_to_select, n_scores + min_features_to_select),
+    cv_scores,
 )
 plt.show()
