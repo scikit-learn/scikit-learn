@@ -484,31 +484,32 @@ def test_n_components_upper_bounds(Estimator):
 
 
 @pytest.mark.parametrize("n_samples, n_features", [(100, 10), (100, 200)])
-@pytest.mark.parametrize("seed", range(10))
-def test_singular_value_helpers(n_samples, n_features, seed):
-    # Make sure SVD and power method give approximately the same results
-    X, Y = make_regression(n_samples, n_features, n_targets=5, random_state=seed)
+def test_singular_value_helpers(n_samples, n_features, global_random_seed):
+    X, Y = make_regression(
+        n_samples, n_features, n_targets=5, random_state=global_random_seed
+    )
     u1, v1, _ = _get_first_singular_vectors_power_method(X, Y, norm_y_weights=True)
     u2, v2 = _get_first_singular_vectors_svd(X, Y)
 
     _svd_flip_1d(u1, v1)
     _svd_flip_1d(u2, v2)
 
-    rtol = 1e-1
-    assert_allclose(u1, u2, rtol=rtol)
-    assert_allclose(v1, v2, rtol=rtol)
+    atol = 2e-4
+    assert_allclose(u1, u2, atol=atol)
+    assert_allclose(v1, v2, atol=atol)
 
 
-def test_one_component_equivalence():
+def test_one_component_equivalence(global_random_seed):
     # PLSSVD, PLSRegression and PLSCanonical should all be equivalent when
     # n_components is 1
-    X, Y = make_regression(100, 10, n_targets=5, random_state=0)
+    X, Y = make_regression(100, 10, n_targets=5, random_state=global_random_seed)
     svd = PLSSVD(n_components=1).fit(X, Y).transform(X)
     reg = PLSRegression(n_components=1).fit(X, Y).transform(X)
     canonical = PLSCanonical(n_components=1).fit(X, Y).transform(X)
 
-    assert_allclose(svd, reg, rtol=1e-2)
-    assert_allclose(svd, canonical, rtol=1e-2)
+    atol = 2e-3
+    assert_allclose(svd, reg, atol=atol)
+    assert_allclose(svd, canonical, atol=atol)
 
 
 def test_svd_flip_1d():
