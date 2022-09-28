@@ -340,6 +340,7 @@ def setup_package():
         python_requires=python_requires,
         install_requires=min_deps.tag_to_packages["install"],
         package_data={"": ["*.pxd"]},
+        entry_points={"pytest11": ["sklearn_plugin_testing = sklearn._engine.testing"]},
         **extra_setuptools_args,
     )
 

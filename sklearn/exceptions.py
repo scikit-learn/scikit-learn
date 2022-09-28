@@ -5,6 +5,7 @@ classes used across scikit-learn.
 
 __all__ = [
     "NotFittedError",
+    "FeatureNotCoveredByPluginError",
     "ConvergenceWarning",
     "DataConversionWarning",
     "DataDimensionalityWarning",
@@ -35,6 +36,19 @@ class NotFittedError(ValueError, AttributeError):
 
     .. versionchanged:: 0.18
        Moved from sklearn.utils.validation.
+    """
+
+
+class FeatureNotCoveredByPluginError(NotImplementedError):
+    """External plugins might not support all the combinations of parameters and
+    input types that the the vanilla sklearn implementation otherwise supports. In such
+    cases, plugins can raise this exception class. When running the sklearn test modules
+    using the sklearn pytest plugin, all the unit tests that fail by raising this
+    exception class will be automatically marked as "xfail", this enables sorting out
+    the tests that fail because they test features that are not supported by the plugin
+    and tests that fail because the plugin misbehave on supported features.
+
+    .. versionadded:: 1.2
     """
 
 
