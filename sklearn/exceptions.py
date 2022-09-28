@@ -39,7 +39,7 @@ class NotFittedError(ValueError, AttributeError):
     """
 
 
-class FeatureNotCoveredByPluginError(NotImplementedError):
+class NotSupportedByEngineError(NotImplementedError):
     """External plugins might not support all the combinations of parameters and
     input types that the the vanilla sklearn implementation otherwise supports. In such
     cases, plugins can raise this exception class. When running the sklearn test modules
