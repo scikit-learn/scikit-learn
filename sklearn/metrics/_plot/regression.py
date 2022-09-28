@@ -27,10 +27,6 @@ class PredictionErrorDisplay:
     y_pred : ndarray of shape (n_samples,)
         Prediction values.
 
-    scores : dict, default=None
-        Dictionary where the key is the name of the metric displayed and the
-        value is the metric value.
-
     Attributes
     ----------
     line_ : matplotlib Artist
@@ -72,16 +68,9 @@ class PredictionErrorDisplay:
     >>> plt.show()
     """
 
-    def __init__(
-        self,
-        *,
-        y_true,
-        y_pred,
-        scores=None,
-    ):
+    def __init__(self, *, y_true, y_pred):
         self.y_true = y_true
         self.y_pred = y_pred
-        self.scores = scores
 
     def plot(
         self,
@@ -90,7 +79,6 @@ class PredictionErrorDisplay:
         kind="predictions",
         scatter_kwargs=None,
         line_kwargs=None,
-        errors_kwargs=None,
     ):
         """Plot visualization.
 
@@ -102,13 +90,10 @@ class PredictionErrorDisplay:
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
-        kind : {"predictions", "predictions_residuals", "residuals"}, \
-                default="predictions"
+        kind : {"predictions", "residuals"}, default="predictions"
             The type of plot to draw:
 
             - "predictions" draws the predicted values vs. the true values.
-            - "predictions_residuals" is similar to "predictions" but also
-              shows the errors between the predictions and the true values.
             - "residuals" draws the residuals vs. the predicted values.
 
         scatter_kwargs : dict, default=None
@@ -117,21 +102,16 @@ class PredictionErrorDisplay:
 
         line_kwargs : dict, default=None
             Dictionary with keyword passed to the `matplotlib.pyplot.plot`
-            call to draw the diagonal line.
-
-        errors_kwargs : dict, default=None
-            Dictionary with keyword passed to the `matplotlib.pyplot.plot`
-            call to draw the residual lines. Only taken into account when
-            `with_errors=True`.
+            call to draw the optimal line.
 
         Returns
         -------
         display : :class:`~sklearn.metrics.plot.PredictionErrorDisplay`
             Object that stores computed values.
         """
-        check_matplotlib_support("PredictionErrorDisplay.plot")
+        check_matplotlib_support(f"{self.__class__.__name__}.plot")
 
-        expected_kind = ("predictions", "predictions_residuals", "residuals")
+        expected_kind = ("predictions", "residuals")
         if kind not in expected_kind:
             raise ValueError(
                 f"`kind` must be one of {', '.join(expected_kind)}. "
@@ -144,33 +124,17 @@ class PredictionErrorDisplay:
             scatter_kwargs = {}
         if line_kwargs is None:
             line_kwargs = {}
-        if errors_kwargs is None:
-            errors_kwargs = {}
 
         default_scatter_kwargs = {"color": "tab:blue", "alpha": 0.8}
         default_line_kwargs = {"color": "black", "alpha": 0.7, "linestyle": "--"}
-        default_errors_kwargs = {"color": "red", "alpha": 0.5}
 
         scatter_kwargs = {**default_scatter_kwargs, **scatter_kwargs}
         line_kwargs = {**default_line_kwargs, **line_kwargs}
-        errors_kwargs = {**default_errors_kwargs, **errors_kwargs}
 
         if ax is None:
             _, ax = plt.subplots()
 
-        if kind in ("predictions", "predictions_residuals"):
-            if kind == "predictions_residuals":
-                self.errors_lines_ = []
-                for actual, predicted in zip(self.y_true, self.y_pred):
-                    error_line = ax.plot(
-                        [actual, actual],
-                        [actual, predicted],
-                        **errors_kwargs,
-                    )
-                    self.errors_lines_ += error_line
-            else:
-                self.errors_lines_ = None
-
+        if kind == "predictions":
             max_value = max(np.max(self.y_true), np.max(self.y_pred))
             min_value = min(np.min(self.y_true), np.min(self.y_pred))
             self.line_ = ax.plot(
@@ -185,7 +149,6 @@ class PredictionErrorDisplay:
             ax.set_xticks(np.linspace(min_value, max_value, num=5))
             ax.set_yticks(np.linspace(min_value, max_value, num=5))
         else:  # kind == "residuals"
-            self.errors_lines_ = None
             self.line_ = ax.plot(
                 [np.min(self.y_pred), np.max(self.y_pred)],
                 [0, 0],
@@ -198,16 +161,6 @@ class PredictionErrorDisplay:
 
         ax.set(xlabel=xlabel, ylabel=ylabel)
 
-        if self.scores is not None:
-            extra = plt.Rectangle(
-                (0, 0), 0, 0, fc="w", fill=False, edgecolor="none", linewidth=0
-            )
-            scoring_legend = "\n".join(
-                [f"{name} = {value}" for name, value in self.scores.items()],
-            )
-            ax.legend([extra], [scoring_legend])
-
-        ax.set_aspect("equal", adjustable="box")
         self.ax_ = ax
         self.figure_ = ax.figure
 
@@ -220,20 +173,18 @@ class PredictionErrorDisplay:
         X,
         y,
         *,
-        scores=None,
         kind="predictions",
         subsample=1_000,
         random_state=None,
         ax=None,
         scatter_kwargs=None,
         line_kwargs=None,
-        errors_kwargs=None,
     ):
         """Plot the prediction error given a regressor and some data.
 
         Read more in the :ref:`User Guide <visualizations>`.
 
-        .. versionadded:: 1.1
+        .. versionadded:: 1.2
 
         Parameters
         ----------
@@ -247,17 +198,10 @@ class PredictionErrorDisplay:
         y : array-like of shape (n_samples,)
             Target values.
 
-        scores : dict, default=None
-            Dictionary containing scores that will be shown on the legend.
-            Key are the score names, values are the score values.
-
-        kind : {"predictions", "predictions_residuals", "residuals"}, \
-                default="predictions"
+        kind : {"predictions", "residuals"}, default="predictions"
             The type of plot to draw:
 
             - "predictions" draws the predicted values vs. the true values.
-            - "predictions_residuals" is similar to "predictions" but also
-              shows the errors between the predictions and the true values.
             - "residuals" draws the residuals vs. the predicted values.
 
         subsample : float, int or None, default=1_000
@@ -281,12 +225,7 @@ class PredictionErrorDisplay:
 
         line_kwargs : dict, default=None
             Dictionary with keyword passed to the `matplotlib.pyplot.plot`
-            call to draw the diagonal line.
-
-        errors_kwargs : dict, default=None
-            Dictionary with keyword passed to the `matplotlib.pyplot.plot`
-            call to draw the errors lines. Only taken into account when
-            `kind="predictions_residuals"`.
+            call to draw the optimal line.
 
         Returns
         -------
@@ -317,14 +256,12 @@ class PredictionErrorDisplay:
         return cls.from_predictions(
             y_true=y,
             y_pred=y_pred,
-            scores=scores,
             kind=kind,
             subsample=subsample,
             random_state=random_state,
             ax=ax,
             scatter_kwargs=scatter_kwargs,
             line_kwargs=line_kwargs,
-            errors_kwargs=errors_kwargs,
         )
 
     @classmethod
@@ -333,14 +270,12 @@ class PredictionErrorDisplay:
         y_true,
         y_pred,
         *,
-        scores=None,
         kind="predictions",
         subsample=1_000,
         random_state=None,
         ax=None,
         scatter_kwargs=None,
         line_kwargs=None,
-        errors_kwargs=None,
     ):
         """Plot the prediction error given the true and predicted targets.
 
@@ -356,17 +291,10 @@ class PredictionErrorDisplay:
         y_pred : array-like of shape (n_samples,)
             Predicted target values.
 
-        scores : dict, default=None
-            Dictionary containing scores that will be shown on the legend.
-            Key are the score names, values are the score values.
-
-        kind : {"predictions", "predictions_residuals", "residuals"}, \
-                default="predictions"
+        kind : {"predictions","residuals"}, default="predictions"
             The type of plot to draw:
 
             - "predictions" draws the predicted values vs. the true values.
-            - "predictions_residuals" is similar to "predictions" but also
-              shows the errors between the predictions and the true values.
             - "residuals" draws the residuals vs. the predicted values.
 
         subsample : float, int or None, default=1_000
@@ -390,12 +318,7 @@ class PredictionErrorDisplay:
 
         line_kwargs : dict, default=None
             Dictionary with keyword passed to the `matplotlib.pyplot.plot`
-            call to draw the diagonal line.
-
-        errors_kwargs : dict, default=None
-            Dictionary with keyword passed to the `matplotlib.pyplot.plot`
-            call to draw the errors lines. Only taken into account when
-            `kind="predictions_residuals"`.
+            call to draw the optimal line.
 
         Returns
         -------
@@ -446,7 +369,6 @@ class PredictionErrorDisplay:
         viz = PredictionErrorDisplay(
             y_true=y_true,
             y_pred=y_pred,
-            scores=scores,
         )
 
         return viz.plot(
@@ -454,5 +376,4 @@ class PredictionErrorDisplay:
             kind=kind,
             scatter_kwargs=scatter_kwargs,
             line_kwargs=line_kwargs,
-            errors_kwargs=errors_kwargs,
         )

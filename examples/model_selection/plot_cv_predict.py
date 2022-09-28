@@ -43,7 +43,7 @@ fig, axs = plt.subplots(ncols=2, figsize=(10, 4))
 PredictionErrorDisplay.from_predictions(
     y,
     y_pred=y_pred,
-    kind="predictions_residuals",
+    kind="predictions",
     subsample=100,
     ax=axs[0],
     random_state=0,

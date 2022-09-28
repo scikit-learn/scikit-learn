@@ -74,7 +74,7 @@ from sklearn.metrics import median_absolute_error, r2_score
 
 def compute_score(y_true, y_pred):
     return {
-        "R2 score": f"{r2_score(y_true, y_pred):.3f}",
+        "R2": f"{r2_score(y_true, y_pred):.3f}",
         "MedAE": f"{median_absolute_error(y_true, y_pred):.3f}",
     }
 
@@ -97,17 +97,21 @@ y_pred_ridge_with_trans_target = ridge_cv_with_trans_target.predict(X_test)
 PredictionErrorDisplay.from_predictions(
     y_test,
     y_pred_ridge,
-    scores=compute_score(y_test, y_pred_ridge),
     ax=ax0,
     scatter_kwargs={"alpha": 0.5},
 )
 PredictionErrorDisplay.from_predictions(
     y_test,
     y_pred_ridge_with_trans_target,
-    scores=compute_score(y_test, y_pred_ridge_with_trans_target),
     ax=ax1,
     scatter_kwargs={"alpha": 0.5},
 )
+
+# Add the score in the legend of each axis
+for ax, y_pred in zip([ax0, ax1], [y_pred_ridge, y_pred_ridge_with_trans_target]):
+    for name, score in compute_score(y_test, y_pred).items():
+        ax.plot([], [], " ", label=f"{name}={score}")
+    ax.legend(loc="upper left")
 
 ax0.set_title("Ridge regression \n without target transformation")
 ax1.set_title("Ridge regression \n with target transformation")
@@ -183,17 +187,22 @@ y_pred_ridge_with_trans_target = ridge_cv_with_trans_target.predict(X_test)
 PredictionErrorDisplay.from_predictions(
     y_test,
     y_pred_ridge,
-    scores=compute_score(y_test, y_pred_ridge),
     ax=ax0[0],
     scatter_kwargs={"alpha": 0.5},
 )
 PredictionErrorDisplay.from_predictions(
     y_test,
     y_pred_ridge_with_trans_target,
-    scores=compute_score(y_test, y_pred_ridge_with_trans_target),
     ax=ax0[1],
     scatter_kwargs={"alpha": 0.5},
 )
+
+# Add the score in the legend of each axis
+for ax, y_pred in zip([ax0[0], ax0[1]], [y_pred_ridge, y_pred_ridge_with_trans_target]):
+    for name, score in compute_score(y_test, y_pred).items():
+        ax.plot([], [], " ", label=f"{name}={score}")
+    ax.legend(loc="upper left")
+
 ax0[0].set_title("Ridge regression \n without target transformation")
 ax0[1].set_title("Ridge regression \n with target transformation")
 
@@ -201,7 +210,6 @@ ax0[1].set_title("Ridge regression \n with target transformation")
 PredictionErrorDisplay.from_predictions(
     y_test,
     y_pred_ridge,
-    scores=compute_score(y_test, y_pred_ridge),
     kind="residuals",
     ax=ax1[0],
     scatter_kwargs={"alpha": 0.5},
@@ -209,7 +217,6 @@ PredictionErrorDisplay.from_predictions(
 PredictionErrorDisplay.from_predictions(
     y_test,
     y_pred_ridge_with_trans_target,
-    scores=compute_score(y_test, y_pred_ridge_with_trans_target),
     kind="residuals",
     ax=ax1[1],
     scatter_kwargs={"alpha": 0.5},

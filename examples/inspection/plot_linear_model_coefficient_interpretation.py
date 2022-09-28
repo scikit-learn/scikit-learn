@@ -175,16 +175,19 @@ mae_train = median_absolute_error(y_train, model.predict(X_train))
 y_pred = model.predict(X_test)
 mae_test = median_absolute_error(y_test, y_pred)
 scores = {
-    "MAE on training set": f"{mae_train:.2f} $/hour",
-    "MAE on testing set": f"{mae_test:.2f} $/hour",
+    "MedAE on training set": f"{mae_train:.2f} $/hour",
+    "MedAE on testing set": f"{mae_test:.2f} $/hour",
 }
 
 # %%
 _, ax = plt.subplots(figsize=(5, 5))
 display = PredictionErrorDisplay.from_predictions(
-    y_true=y_test, y_pred=y_pred, scores=scores, ax=ax, scatter_kwargs={"alpha": 0.5}
+    y_true=y_test, y_pred=y_pred, ax=ax, scatter_kwargs={"alpha": 0.5}
 )
-_ = ax.set_title("Ridge model, small regularization")
+ax.set_title("Ridge model, small regularization")
+for name, score in scores.items():
+    ax.plot([], [], " ", label=f"{name}: {score}")
+ax.legend(loc="upper left")
 plt.tight_layout()
 
 # %%
@@ -329,7 +332,7 @@ coefs = pd.DataFrame(
 
 # %%
 plt.figure(figsize=(9, 7))
-sns.stripplot(data=coefs, orient="h", color="k", alpha=0.5)
+sns.stripplot(data=coefs, orient="h", palette="dark:k", alpha=0.5)
 sns.boxplot(data=coefs, orient="h", color="cyan", saturation=0.5, whis=10)
 plt.axvline(x=0, color=".5")
 plt.xlabel("Coefficient importance")
@@ -388,7 +391,7 @@ coefs = pd.DataFrame(
 
 # %%
 plt.figure(figsize=(9, 7))
-sns.stripplot(data=coefs, orient="h", color="k", alpha=0.5)
+sns.stripplot(data=coefs, orient="h", palette="dark:k", alpha=0.5)
 sns.boxplot(data=coefs, orient="h", color="cyan", saturation=0.5)
 plt.axvline(x=0, color=".5")
 plt.title("Coefficient importance and its variability")
@@ -440,15 +443,19 @@ mae_train = median_absolute_error(y_train, model.predict(X_train))
 y_pred = model.predict(X_test)
 mae_test = median_absolute_error(y_test, y_pred)
 scores = {
-    "MAE on training set": f"{mae_train:.2f} $/hour",
-    "MAE on testing set": f"{mae_test:.2f} $/hour",
+    "MedAE on training set": f"{mae_train:.2f} $/hour",
+    "MedAE on testing set": f"{mae_test:.2f} $/hour",
 }
 
 _, ax = plt.subplots(figsize=(5, 5))
 display = PredictionErrorDisplay.from_predictions(
-    y_true=y_test, y_pred=y_pred, scores=scores, ax=ax, scatter_kwargs={"alpha": 0.5}
+    y_true=y_test, y_pred=y_pred, ax=ax, scatter_kwargs={"alpha": 0.5}
 )
-_ = ax.set_title("Ridge model, small regularization, normalized variables")
+ax.set_title("Ridge model, small regularization, normalized variables")
+ax.set_title("Ridge model, small regularization")
+for name, score in scores.items():
+    ax.plot([], [], " ", label=f"{name}: {score}")
+ax.legend(loc="upper left")
 plt.tight_layout()
 
 # %%
@@ -486,7 +493,7 @@ coefs = pd.DataFrame(
 
 # %%
 plt.figure(figsize=(9, 7))
-sns.stripplot(data=coefs, orient="h", color="k", alpha=0.5)
+sns.stripplot(data=coefs, orient="h", palette="dark:k", alpha=0.5)
 sns.boxplot(data=coefs, orient="h", color="cyan", saturation=0.5, whis=10)
 plt.axvline(x=0, color=".5")
 plt.title("Coefficient variability")
@@ -531,15 +538,19 @@ mae_train = median_absolute_error(y_train, model.predict(X_train))
 y_pred = model.predict(X_test)
 mae_test = median_absolute_error(y_test, y_pred)
 scores = {
-    "MAE on training set": f"{mae_train:.2f} $/hour",
-    "MAE on testing set": f"{mae_test:.2f} $/hour",
+    "MedAE on training set": f"{mae_train:.2f} $/hour",
+    "MedAE on testing set": f"{mae_test:.2f} $/hour",
 }
 
 _, ax = plt.subplots(figsize=(5, 5))
 display = PredictionErrorDisplay.from_predictions(
-    y_true=y_test, y_pred=y_pred, scores=scores, ax=ax, scatter_kwargs={"alpha": 0.5}
+    y_true=y_test, y_pred=y_pred, ax=ax, scatter_kwargs={"alpha": 0.5}
 )
-_ = ax.set_title("Ridge model, optimum regularization, normalized variables")
+ax.set_title("Ridge model, optimum regularization, normalized variables")
+ax.set_title("Ridge model, small regularization")
+for name, score in scores.items():
+    ax.plot([], [], " ", label=f"{name}: {score}")
+ax.legend(loc="upper left")
 plt.tight_layout()
 
 # %%
@@ -632,15 +643,20 @@ mae_train = median_absolute_error(y_train, model.predict(X_train))
 y_pred = model.predict(X_test)
 mae_test = median_absolute_error(y_test, y_pred)
 scores = {
-    "MAE on training set": f"{mae_train:.2f} $/hour",
-    "MAE on testing set": f"{mae_test:.2f} $/hour",
+    "MedAE on training set": f"{mae_train:.2f} $/hour",
+    "MedAE on testing set": f"{mae_test:.2f} $/hour",
 }
 
 _, ax = plt.subplots(figsize=(6, 6))
 display = PredictionErrorDisplay.from_predictions(
-    y_true=y_test, y_pred=y_pred, scores=scores, ax=ax, scatter_kwargs={"alpha": 0.5}
+    y_true=y_test, y_pred=y_pred, ax=ax, scatter_kwargs={"alpha": 0.5}
 )
-_ = ax.set_title("Lasso model, regularization, normalized variables")
+ax.set_title("Lasso model, regularization, normalized variables")
+ax.set_title("Ridge model, small regularization")
+for name, score in scores.items():
+    ax.plot([], [], " ", label=f"{name}: {score}")
+ax.legend(loc="upper left")
+plt.tight_layout()
 
 # %%
 # For our dataset, again the model is not very predictive.
@@ -681,7 +697,7 @@ coefs = pd.DataFrame(
 
 # %%
 plt.figure(figsize=(9, 7))
-sns.stripplot(data=coefs, orient="h", color="k", alpha=0.5)
+sns.stripplot(data=coefs, orient="h", palette="dark:k", alpha=0.5)
 sns.boxplot(data=coefs, orient="h", color="cyan", saturation=0.5, whis=100)
 plt.axvline(x=0, color=".5")
 plt.title("Coefficient variability")

@@ -236,12 +236,15 @@ for ax, (name, est) in zip(
     display = PredictionErrorDisplay.from_predictions(
         y_true=y,
         y_pred=y_pred,
-        scores=scores,
         ax=ax,
         scatter_kwargs={"alpha": 0.2, "color": "tab:blue"},
         line_kwargs={"color": "tab:red"},
     )
     ax.set_title(f"{name}\nEvaluation in {elapsed_time:.2f} seconds")
+
+    for name, score in scores.items():
+        ax.plot([], [], " ", label=f"{name}: {score}")
+    ax.legend(loc="upper left")
 
 plt.suptitle("Single predictors versus stacked predictors")
 plt.tight_layout()
