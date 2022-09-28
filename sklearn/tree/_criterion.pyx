@@ -375,6 +375,8 @@ cdef class ClassificationCriterion(Criterion):
             memset(&self.sum_missing[k, 0], 0, self.n_classes[k] * sizeof(double))
 
         self.weighted_n_missing = 0.0
+
+        # The missing samples are assumed to be in self.samples[-n_missing:]
         for p in range(self.end - n_missing, self.end):
             i = samples[p]
             if sample_weight != NULL:
@@ -796,8 +798,9 @@ cdef class RegressionCriterion(Criterion):
             return
 
         memset(&self.sum_missing[0], 0, self.n_outputs * sizeof(double))
-
         self.weighted_n_missing = 0.0
+
+        # The missing samples are assumed to be in self.samples[-n_missing:]
         for p in range(self.end - n_missing, self.end):
             i = samples[p]
             if sample_weight != NULL:
