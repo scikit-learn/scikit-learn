@@ -106,6 +106,11 @@ def density(w, **kwargs):
     w : array-like
         The sparse vector.
 
+    keyword arguments :
+        .. deprecated:: 1.2
+            ``**kwargs`` was deprecated in version 1.2 and will be removed in
+            1.4.
+
     Returns
     -------
     float
