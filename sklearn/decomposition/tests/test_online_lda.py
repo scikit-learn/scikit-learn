@@ -427,7 +427,7 @@ def test_lda_feature_names_out():
 
 @pytest.mark.parametrize("learning_method", ("batch", "online"))
 def test_lda_dtype_match(learning_method, global_dtype):
-    # Verify output matrix dtype
+    """Check data type preservation of fitted attributes."""
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(20, 10)).astype(global_dtype, copy=False)
 
@@ -441,7 +441,7 @@ def test_lda_dtype_match(learning_method, global_dtype):
 
 @pytest.mark.parametrize("learning_method", ("batch", "online"))
 def test_lda_numerical_consistency(learning_method, global_random_seed):
-    # Verify numerical consistency among np.float32 and np.float64
+    """Check numerical consistency between np.float32 and np.float64."""
     rng = np.random.RandomState(global_random_seed)
     X64 = rng.uniform(size=(20, 10))
     X32 = X64.astype(np.float32)
