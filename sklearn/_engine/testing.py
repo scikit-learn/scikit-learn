@@ -28,6 +28,8 @@ def pytest_runtest_call(item):
             item.runtest()
         except FeatureNotCoveredByPluginError:
             xfail(
-                reason=f"This test cover features that are not supported by the "
-                f"engine provided by {engine_provider}."
+                reason=(
+                    f"This test cover features that are not supported by the "
+                    f"engine provided by {engine_provider}."
+                )
             )
