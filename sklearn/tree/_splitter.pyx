@@ -281,6 +281,7 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t f_j
         cdef SIZE_t p
         cdef SIZE_t i
+        cdef SIZE_t j
         cdef SIZE_t n_missing
         cdef SIZE_t directions
         cdef SIZE_t end_non_missing
