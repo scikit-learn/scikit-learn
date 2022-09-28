@@ -492,12 +492,11 @@ class ARDRegression(RegressorMixin, LinearModel):
         ``fit_intercept = False``.
 
     X_offset_ : float
-        If `normalize=True`, offset subtracted for centering data to a
-        zero mean.
+        If `fit_intercept=True`, offset subtracted for centering data to a
+        zero mean. Set to np.zeros(n_features) otherwise.
 
     X_scale_ : float
-        If `normalize=True`, parameter used to scale data to a unit
-        standard deviation.
+        Set to np.ones(n_features).
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
