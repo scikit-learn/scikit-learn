@@ -145,12 +145,8 @@ class PredictionErrorDisplay:
         if errors_kwargs is None:
             errors_kwargs = {}
 
-        default_scatter_kwargs = {"color": "black", "alpha": 0.8}
-        default_line_kwargs = {
-            "color": "tab:blue",
-            "alpha": 0.7,
-            "linestyle": "--",
-        }
+        default_scatter_kwargs = {"color": "tab:blue", "alpha": 0.8}
+        default_line_kwargs = {"color": "black", "alpha": 0.7, "linestyle": "--"}
         default_errors_kwargs = {"color": "red", "alpha": 0.5}
 
         scatter_kwargs = {**default_scatter_kwargs, **scatter_kwargs}
@@ -204,6 +200,7 @@ class PredictionErrorDisplay:
             )
             ax.legend([extra], [scoring_legend])
 
+        ax.set_aspect("equal", adjustable="box")
         self.ax_ = ax
         self.figure_ = ax.figure
 
