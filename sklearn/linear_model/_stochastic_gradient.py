@@ -160,14 +160,6 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         self._get_penalty_type(self.penalty)
         self._get_learning_rate_type(self.learning_rate)
 
-        # TODO(1.2): remove "squared_loss"
-        if self.loss == "squared_loss":
-            warnings.warn(
-                "The loss 'squared_loss' was deprecated in v1.0 and will be "
-                "removed in version 1.2. Use `loss='squared_error'` which is "
-                "equivalent.",
-                FutureWarning,
-            )
         # TODO(1.3): remove "log"
         if self.loss == "log":
             warnings.warn(
@@ -485,7 +477,6 @@ def fit_binary(
 
 class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
-    # TODO(1.2): Remove "squared_loss"
     # TODO(1.3): Remove "log""
     loss_functions = {
         "hinge": (Hinge, 1.0),
@@ -495,7 +486,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         "log": (Log,),
         "modified_huber": (ModifiedHuber,),
         "squared_error": (SquaredLoss,),
-        "squared_loss": (SquaredLoss,),
         "huber": (Huber, DEFAULT_EPSILON),
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
         "squared_epsilon_insensitive": (SquaredEpsilonInsensitive, DEFAULT_EPSILON),
@@ -503,12 +493,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
     _parameter_constraints: dict = {
         **BaseSGD._parameter_constraints,
-        "loss": [
-            StrOptions(
-                set(loss_functions),
-                deprecated={"squared_loss", "log"},
-            )
-        ],
+        "loss": [StrOptions(set(loss_functions), deprecated={"log"})],
         "early_stopping": ["boolean"],
         "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
@@ -956,10 +941,6 @@ class SGDClassifier(BaseSGDClassifier):
         More details about the losses formulas can be found in the
         :ref:`User Guide <sgd_mathematical_formulation>`.
 
-        .. deprecated:: 1.0
-            The loss 'squared_loss' was deprecated in v1.0 and will be removed
-            in version 1.2. Use `loss='squared_error'` which is equivalent.
-
         .. deprecated:: 1.1
             The loss 'log' was deprecated in v1.1 and will be removed
             in version 1.3. Use `loss='log_loss'` which is equivalent.
@@ -1368,10 +1349,8 @@ class SGDClassifier(BaseSGDClassifier):
 
 class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
-    # TODO: Remove squared_loss in v1.2
     loss_functions = {
         "squared_error": (SquaredLoss,),
-        "squared_loss": (SquaredLoss,),
         "huber": (Huber, DEFAULT_EPSILON),
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
         "squared_epsilon_insensitive": (SquaredEpsilonInsensitive, DEFAULT_EPSILON),
@@ -1379,12 +1358,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
     _parameter_constraints: dict = {
         **BaseSGD._parameter_constraints,
-        "loss": [
-            StrOptions(
-                set(loss_functions),
-                deprecated={"squared_loss"},
-            )
-        ],
+        "loss": [StrOptions(set(loss_functions))],
         "early_stopping": ["boolean"],
         "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
@@ -1768,10 +1742,6 @@ class SGDRegressor(BaseSGDRegressor):
 
         More details about the losses formulas can be found in the
         :ref:`User Guide <sgd_mathematical_formulation>`.
-
-        .. deprecated:: 1.0
-            The loss 'squared_loss' was deprecated in v1.0 and will be removed
-            in version 1.2. Use `loss='squared_error'` which is equivalent.
 
     penalty : {'l2', 'l1', 'elasticnet', None}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
@@ -2190,13 +2160,10 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         warm_start=False,
         average=False,
     ):
-
-        alpha = nu / 2
         self.nu = nu
         super(SGDOneClassSVM, self).__init__(
             loss="hinge",
             penalty="l2",
-            alpha=alpha,
             C=1.0,
             l1_ratio=0,
             fit_intercept=fit_intercept,

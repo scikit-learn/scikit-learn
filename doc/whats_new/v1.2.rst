@@ -38,6 +38,12 @@ random sampling procedures.
   It is now consistent and deterministic with all SVD solvers.
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
 
+- |Fix| The condition for early stopping has now been changed in
+  :func:`linear_model._sgd_fast._plain_sgd` which is used by :class:`linear_model.SGDRegressor`
+  and :class:`linear_model.SGDClassifier`. The old condition did not disambiguate between
+  training and validation set and had an effect of overscaling the error tolerance.
+  This has been fixed in :pr:`23798` by :user:`Harsh Agrawal <Harsh14901>`
+
 Changes impacting all modules
 -----------------------------
 
@@ -50,6 +56,29 @@ Changes impacting all modules
   estimators are now faster by utilizing a more efficient stop-on-first
   second-pass algorithm.
   :pr:`23197` by :user:`Meekail Zain <micky774>`
+
+- |Enhancement| Support for combinations of dense and sparse datasets pairs
+  for all distance metrics and for float32 and float64 datasets has been added
+  or has seen its performance improved for the following estimators:
+
+  - :func:`sklearn.metrics.pairwise_distances_argmin`
+  - :func:`sklearn.metrics.pairwise_distances_argmin_min`
+  - :class:`sklearn.cluster.AffinityPropagation`
+  - :class:`sklearn.cluster.Birch`
+  - :class:`sklearn.cluster.SpectralClustering`
+  - :class:`sklearn.neighbors.KNeighborsClassifier`
+  - :class:`sklearn.neighbors.KNeighborsRegressor`
+  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
+  - :class:`sklearn.neighbors.RadiusNeighborsRegressor`
+  - :class:`sklearn.neighbors.LocalOutlierFactor`
+  - :class:`sklearn.neighbors.NearestNeighbors`
+  - :class:`sklearn.manifold.Isomap`
+  - :class:`sklearn.manifold.TSNE`
+  - :func:`sklearn.manifold.trustworthiness`
+
+  :pr:`23604` and :pr:`23585` by :user:`Julien Jerphanion <jjerphan>`,
+  :user:`Olivier Grisel <ogrisel>`, and `Thomas Fan`_.
+
 
 Changelog
 ---------
@@ -192,8 +221,19 @@ Changelog
   :pr:`11860` by :user:`Pierre Ablin <pierreablin>`,
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
 
+- |API| The `n_features_` attribute of
+  :class:`decomposition.PCA` is deprecated in favor of
+  `n_features_in_` and will be removed in 1.4. :pr:`24421` by
+  :user:`Kshitij Mathur <Kshitij68>`.
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
+
+- |MajorFeature| :class:`discriminant_analysis.LinearDiscriminantAnalysis` now
+  supports the `Array API <https://data-apis.org/array-api/latest/>`_ for
+  `solver="svd"`. Array API support is considered experimental and might evolve
+  without being subjected to our usual rolling deprecation cycle policy. See
+  :ref:`array_api` for more details. :pr:`22554` by `Thomas Fan`_.
 
 - |Fix| Validate parameters only in `fit` and not in `__init__`
   for :class:`discriminant_analysis.QuadraticDiscriminantAnalysis`.
@@ -202,12 +242,45 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Feature| Adds `class_weight` to :class:`ensemble.HistGradientBoostingClassifier`.
+  :pr:`22014` by `Thomas Fan`_.
+
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+- |Enhancement| :class:`ensemble.StackingClassifier` now supports
+  multilabel-indicator target
+  :pr:`24146` by :user:`Nicolas Peretti <nicoperetti>`,
+  :user:`Nestor Navarro <nestornav>`, :user:`Nati Tomattis <natitomattis>`,
+  and :user:`Vincent Maladiere <Vincent-Maladiere>`.
 
 - |Fix| Fixed the issue where :class:`ensemble.AdaBoostClassifier` outputs
   NaN in feature importance when fitted with very small sample weight.
   :pr:`20415` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+- |API| Rename the constructor parameter `base_estimator` to `estimator` in
+  the following classes:
+  :class:`ensemble.BaggingClassifier`,
+  :class:`ensemble.BaggingRegressor`,
+  :class:`ensemble.AdaBoostClassifier`,
+  :class:`ensemble.AdaBoostRegressor`.
+  `base_estimator` is deprecated in 1.2 and will be removed in 1.4.
+  :pr:`23819` by :user:`Adrian Trujillo <trujillo9616>` and :user:`Edoardo Abati <EdAbati>`.
+
+- |API| Rename the fitted attribute `base_estimator_` to `estimator_` in
+  the following classes:
+  :class:`ensemble.BaggingClassifier`,
+  :class:`ensemble.BaggingRegressor`,
+  :class:`ensemble.AdaBoostClassifier`,
+  :class:`ensemble.AdaBoostRegressor`,
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier`,
+  :class:`ensemble.ExtraTreesRegressor`,
+  :class:`ensemble.RandomTreesEmbedding`,
+  :class:`ensemble.IsolationForest`.
+  `base_estimator_` is deprecated in 1.2 and will be removed in 1.4.
+  :pr:`23819` by :user:`Adrian Trujillo <trujillo9616>` and :user:`Edoardo Abati <EdAbati>`.
 
 :mod:`sklearn.feature_selection`
 ................................
@@ -218,6 +291,20 @@ Changelog
 - |Fix| Fix :class:`gaussian_process.kernels.Matern` gradient computation with
   `nu=0.5` for PyPy (and possibly other non CPython interpreters). :pr:`24245`
   by :user:`Loïc Estève <lesteve>`.
+
+- |Fix| The `fit` method of :class:`gaussian_process.GaussianProcessRegressor`
+  will not modify the input X in case a custom kernel is used, with a `diag`
+  method that returns part of the input X. :pr:`24405`
+  by :user:`Omar Salman <OmarManzoor>`.
+
+:mod:`sklearn.kernel_approximation`
+...................................
+
+- |Enhancement| :class:`kernel_approximation.RBFSampler` now preserves
+  dtype for `numpy.float32` inputs. :pr:`24317` by `Tim Head <betatim>`.
+
+- |Enhancement| :class:`kernel_approximation.SkewedChi2Sampler` now preserves
+  dtype for `numpy.float32` inputs. :pr:`24350` by :user:`Rahil Parikh <rprkh>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -236,6 +323,17 @@ Changelog
 - |API| String option `"none"` is deprecated for `penalty` argument
   in :class:`linear_model.LogisticRegression`, and will be removed in version 1.4.
   Use `None` instead. :pr:`23877` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+- |Fix| :class:`linear_model.SGDOneClassSVM` no longer performs parameter
+  validation in the constructor. All validation is now handled in `fit()` and
+  `partial_fit()`.
+  :pr:`24433` by :user:`Yogendrasingh <iofall>`, :user:`Arisa Y. <arisayosh>`
+  and :user:`Tim Head <betatim>`.
+
+- |Fix| Fix average loss calculation when early stopping is enabled in
+  :class:`linear_model.SGDRegressor` and :class:`linear_model.SGDClassifier`.
+  Also updated the condition for early stopping accordingly.
+  :pr:`23798` by :user:`Harsh Agrawal <Harsh14901>`.
 
 :mod:`sklearn.manifold`
 .......................
@@ -272,13 +370,22 @@ Changelog
 - |Fix| Allows `csr_matrix` as input for parameter: `y_true` of
    the :func:`metrics.label_ranking_average_precision_score` metric.
    :pr:`23442` by :user:`Sean Atukorala <ShehanAT>`
-  
+
 - |Fix| :func:`metrics.ndcg_score` will now trigger a warning when the `y_true`
   value contains a negative value. Users may still use negative values, but the
   result may not be between 0 and 1. Starting in v1.4, passing in negative
   values for `y_true` will raise an error.
   :pr:`22710` by :user:`Conroy Trinh <trinhcon>` and
   :pr:`23461` by :user:`Meekail Zain <micky774>`.
+
+- |FIX| :func:`metrics.log_loss` with `eps=0` now returns a correct value of 0 or
+  `np.inf` instead of `nan` for predictions at the boundaries (0 or 1). It also accepts
+  integer input.
+  :pr:`24365` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Feature| :func:`metrics.roc_auc_score` now supports micro-averaging
+  (`average="micro"`) for the One-vs-Rest multiclass case (`multi_class="ovr"`).
+  :pr:`24338` by :user:`Arturo Amor <ArturoAmorQ>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -335,6 +442,24 @@ Changelog
   :class:`neighbors.RadiusNeighborsTransformer`.
   :pr:`24075` by :user:`Valentin Laurent <Valentin-Laurent>`.
 
+:mod:`sklearn.pipeline`
+.......................
+
+- |Enhancement| :meth:`pipeline.FeatureUnion.get_feature_names_out` can now
+  be used when one of the transformers in the :class:`pipeline.FeatureUnion` is
+  `"passthrough"`. :pr:`24058` by :user:`Diederik Perdok <diederikwp>`
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| :class:`preprocessing.FunctionTransformer` will always try to set
+  `n_features_in_` and `feature_names_in_` regardless of the `validate` parameter.
+  :pr:`23993` by `Thomas Fan`_.
+
+- |API| The `sparse` parameter of :class:`preprocessing.OneHotEncoder`
+  is now deprecated and will be removed in version 1.4. Use `sparse_output` instead.
+  :pr:`24412` by :user:`Rushil Desai <rusdes>`.
+
 :mod:`sklearn.svm`
 ..................
 
@@ -355,6 +480,15 @@ Changelog
   `lapack_svd_driver`, to specify the lapack driver used in the internal
   deterministic SVD used by the randomized SVD algorithm.
   :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
+
+- |FIX| :func:`utils.multiclass.type_of_target` now properly handles sparse matrices.
+  :pr:`14862` by :user:`Léonard Binet <leonardbinet>`.
+
+- |Feature| A new module exposes development tools to discover estimators (i.e.
+  :func:`utils.discovery.all_estimators`), displays (i.e.
+  :func:`utils.discovery.all_displays`) and functions (i.e.
+  :func:`utils.discovery.all_functions`) in scikit-learn.
+  :pr:`21469` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Code and Documentation Contributors
 -----------------------------------

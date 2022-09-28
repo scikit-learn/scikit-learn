@@ -212,10 +212,7 @@ conda_build_metadata_list = [
         + ["ccache"],
         "package_constraints": {
             "blas": "[build=openblas]",
-            # XXX: this can be removed when cloudpickle issues with PyPy > 3.7
-            # issues are fixed.  For more details see
-            # https://github.com/cloudpipe/cloudpickle/pull/461
-            "python": "3.7",
+            "python": "3.9",
         },
     },
     {
@@ -242,6 +239,7 @@ conda_build_metadata_list = [
             "sphinx-gallery",
             "numpydoc",
             "sphinx-prompt",
+            "plotly",
         ],
         "pip_dependencies": ["sphinxext-opengraph"],
         "package_constraints": {
@@ -257,6 +255,7 @@ conda_build_metadata_list = [
             "numpydoc": "min",
             "sphinx-prompt": "min",
             "sphinxext-opengraph": "min",
+            "plotly": "min",
         },
     },
     {
@@ -274,6 +273,7 @@ conda_build_metadata_list = [
             "sphinx-gallery",
             "numpydoc",
             "sphinx-prompt",
+            "plotly",
         ],
         "pip_dependencies": ["sphinxext-opengraph"],
         "package_constraints": {
