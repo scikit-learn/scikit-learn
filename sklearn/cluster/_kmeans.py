@@ -257,6 +257,10 @@ def _kmeans_plusplus(X, n_clusters, x_squared_norms, random_state, n_local_trial
 # K-means batch estimation by EM (expectation maximization)
 
 
+class _IgnoreParam:
+    pass
+
+
 class KMeansCythonEngine:
     """Cython-based implementation of the core k-means routines
 
@@ -368,6 +372,33 @@ class KMeansCythonEngine:
             n_threads=self._n_threads,
             verbose=self.estimator.verbose,
         )
+
+    def prepare_prediction(self, X, sample_weight):
+        X = self.estimator._check_test_data(X)
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        return X, sample_weight
+
+    def get_labels(self, X, sample_weight):
+        labels, _ = _labels_inertia_threadpool_limit(
+            X,
+            sample_weight,
+            self.estimator.cluster_centers_,
+            n_threads=self.estimator._n_threads,
+        )
+
+        return labels
+
+    def prepare_transform(self, X):
+        return self.estimator._check_test_data(X)
+
+    def get_euclidean_distances(self, X):
+        return euclidean_distances(X, self.estimator.cluster_centers_)
+
+    def get_score(self, X, sample_weight):
+        _, scores = _labels_inertia_threadpool_limit(
+            X, sample_weight, self.estimator.cluster_centers_, self.estimator._n_threads
+        )
+        return scores
 
 
 @validate_params(
@@ -1471,6 +1502,12 @@ class KMeans(_BaseKMeans):
             )
             self._algorithm = "lloyd"
 
+    def _get_engine(self):
+        engine_class = get_engine_class(
+            "kmeans", default=KMeansCythonEngine, verbose=self.verbose
+        )
+        return engine_class(self)
+
     def _warn_mkl_vcomp(self, n_active_threads):
         """Warn when vcomp and mkl are both present"""
         warnings.warn(
@@ -1507,10 +1544,8 @@ class KMeans(_BaseKMeans):
             Fitted estimator.
         """
         self._validate_params()
-        engine_class = get_engine_class(
-            "kmeans", default=KMeansCythonEngine, verbose=self.verbose
-        )
-        engine = engine_class(self)
+        engine = self._get_engine()
+
         X, y, sample_weight = engine.prepare_fit(
             X,
             y=y,
@@ -1565,6 +1600,111 @@ class KMeans(_BaseKMeans):
         self.inertia_ = best_inertia
         self.n_iter_ = best_n_iter
         return self
+
+    def predict(self, X, sample_weight=None):
+        """Predict the closest cluster each sample in X belongs to.
+
+        In the vector quantization literature, `cluster_centers_` is called
+        the code book and each value returned by `predict` is the index of
+        the closest code in the code book.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            New data to predict.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            The weights for each observation in X. If None, all observations
+            are assigned equal weight.
+
+        Returns
+        -------
+        labels : ndarray of shape (n_samples,)
+            Index of the cluster each sample belongs to.
+        """
+        check_is_fitted(self)
+        engine = self._get_engine()
+        X, sample_weight = engine.prepare_prediction(X, sample_weight)
+        return engine.get_labels(X, sample_weight)
+
+    def fit_transform(self, X, y=None, sample_weight=None):
+        """Compute clustering and transform X to cluster-distance space.
+
+        Equivalent to fit(X).transform(X), but more efficiently implemented.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            New data to transform.
+
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            The weights for each observation in X. If None, all observations
+            are assigned equal weight.
+
+        Returns
+        -------
+        X_new : ndarray of shape (n_samples, n_clusters)
+            X transformed in the new space.
+        """
+        self.fit(X, sample_weight=sample_weight)
+        engine = self._get_engine()
+        return self._transform(X, engine)
+
+    def transform(self, X):
+        """Transform X to a cluster-distance space.
+
+        In the new space, each dimension is the distance to the cluster
+        centers. Note that even if X is sparse, the array returned by
+        `transform` will typically be dense.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            New data to transform.
+
+        Returns
+        -------
+        X_new : ndarray of shape (n_samples, n_clusters)
+            X transformed in the new space.
+        """
+        check_is_fitted(self)
+        engine = self._get_engine()
+        X = engine.prepare_transform(X)
+        return self._transform(X, engine)
+
+    def _transform(self, X, engine):
+        """Guts of transform method; no input validation."""
+        return engine.get_euclidean_distances(X)
+
+    def score(self, X, y=None, sample_weight=None):
+        """Opposite of the value of X on the K-means objective.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            New data.
+
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            The weights for each observation in X. If None, all observations
+            are assigned equal weight.
+
+        Returns
+        -------
+        score : float
+            Opposite of the value of X on the K-means objective.
+        """
+        check_is_fitted(self)
+        engine = self._get_engine()
+
+        X, sample_weight = engine.prepare_prediction(X, sample_weight)
+
+        return -engine.get_score(X, sample_weight)
 
 
 def _mini_batch_step(
