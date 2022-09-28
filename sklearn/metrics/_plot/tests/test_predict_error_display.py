@@ -43,6 +43,12 @@ def regressor_fitted():
             ValueError,
             "`kind` must be one of",
         ),
+        (
+            Ridge().fit(X, y),
+            {"x_axis": "xxx"},
+            ValueError,
+            "`x_axis` must be one of",
+        ),
     ],
 )
 @pytest.mark.parametrize("class_method", ["from_estimator", "from_predictions"])
@@ -161,3 +167,37 @@ def test_prediction_error_custom_artist(pyplot, regressor_fitted, class_method):
     display.plot(**extra_params)
     assert display.line_.get_color() == "black"
     assert_allclose(display.scatter_.get_edgecolor(), [[1.0, 0.0, 0.0, 0.8]])
+
+
+@pytest.mark.parametrize("class_method", ["from_estimator", "from_predictions"])
+def test_prediction_error_x_axis(pyplot, regressor_fitted, class_method):
+    """Check that the behaviour of the `x_axis` parameter. The x- and y-axis should be
+    swapped."""
+    x_axis = "actual_targets"
+
+    if class_method == "from_estimator":
+        display = PredictionErrorDisplay.from_estimator(
+            regressor_fitted, X, y, x_axis=x_axis
+        )
+    else:
+        y_pred = regressor_fitted.predict(X)
+        display = PredictionErrorDisplay.from_predictions(
+            y_true=y, y_pred=y_pred, x_axis=x_axis
+        )
+
+    assert display.ax_.get_xlabel() == "Actual values"
+    assert display.ax_.get_ylabel() == "Predicted values"
+
+    x_axis = "predicted_targets"
+    if class_method == "from_estimator":
+        display = PredictionErrorDisplay.from_estimator(
+            regressor_fitted, X, y, x_axis=x_axis
+        )
+    else:
+        y_pred = regressor_fitted.predict(X)
+        display = PredictionErrorDisplay.from_predictions(
+            y_true=y, y_pred=y_pred, x_axis=x_axis
+        )
+
+    assert display.ax_.get_xlabel() == "Predicted values"
+    assert display.ax_.get_ylabel() == "Actual values"

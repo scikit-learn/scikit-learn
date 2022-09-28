@@ -77,6 +77,7 @@ class PredictionErrorDisplay:
         ax=None,
         *,
         kind="predictions",
+        x_axis="actual_targets",
         scatter_kwargs=None,
         line_kwargs=None,
     ):
@@ -95,6 +96,10 @@ class PredictionErrorDisplay:
 
             - "predictions" draws the predicted values vs. the true values.
             - "residuals" draws the residuals vs. the predicted values.
+
+        x_axis : {"actual_targets", "predicted_targets"}, default="actual_targets"
+            Only used when `kind="predictions"`. The x-axis of the plot will
+            be either the actual target values or the predicted target values.
 
         scatter_kwargs : dict, default=None
             Dictionary with keywords passed to the `matplotlib.pyplot.scatter`
@@ -116,6 +121,13 @@ class PredictionErrorDisplay:
             raise ValueError(
                 f"`kind` must be one of {', '.join(expected_kind)}. "
                 f"Got {kind!r} instead."
+            )
+
+        expected_x_axis = ("actual_targets", "predicted_targets")
+        if x_axis not in expected_x_axis:
+            raise ValueError(
+                f"`x_axis` must be one of {', '.join(expected_x_axis)}. "
+                f"Got {x_axis!r} instead."
             )
 
         import matplotlib.pyplot as plt
@@ -141,9 +153,15 @@ class PredictionErrorDisplay:
                 [min_value, max_value], [min_value, max_value], **line_kwargs
             )[0]
 
-            self.scatter_ = ax.scatter(self.y_true, self.y_pred, **scatter_kwargs)
+            if x_axis == "actual_targets":
+                x_data, y_data = self.y_true, self.y_pred
+                xlabel, ylabel = "Actual values", "Predicted values"
+            else:  # x_axis == "predicted_targets"
+                x_data, y_data = self.y_pred, self.y_true
+                xlabel, ylabel = "Predicted values", "Actual values"
 
-            xlabel, ylabel = "Actual values", "Predicted values"
+            self.scatter_ = ax.scatter(x_data, y_data, **scatter_kwargs)
+
             # force to have a squared axis
             ax.set_aspect("equal", adjustable="datalim")
             ax.set_xticks(np.linspace(min_value, max_value, num=5))
@@ -174,6 +192,7 @@ class PredictionErrorDisplay:
         y,
         *,
         kind="predictions",
+        x_axis="actual_targets",
         subsample=1_000,
         random_state=None,
         ax=None,
@@ -203,6 +222,10 @@ class PredictionErrorDisplay:
 
             - "predictions" draws the predicted values vs. the true values.
             - "residuals" draws the residuals vs. the predicted values.
+
+        x_axis : {"actual_targets", "predicted_targets"}, default="actual_targets"
+            Only used when `kind="predictions"`. The x-axis of the plot will
+            be either the actual target values or the predicted target values.
 
         subsample : float, int or None, default=1_000
             Sampling the samples to be shown on the scatter plot. If `float`,
@@ -258,6 +281,7 @@ class PredictionErrorDisplay:
             y_pred=y_pred,
             kind=kind,
             subsample=subsample,
+            x_axis=x_axis,
             random_state=random_state,
             ax=ax,
             scatter_kwargs=scatter_kwargs,
@@ -271,6 +295,7 @@ class PredictionErrorDisplay:
         y_pred,
         *,
         kind="predictions",
+        x_axis="actual_targets",
         subsample=1_000,
         random_state=None,
         ax=None,
@@ -296,6 +321,10 @@ class PredictionErrorDisplay:
 
             - "predictions" draws the predicted values vs. the true values.
             - "residuals" draws the residuals vs. the predicted values.
+
+        x_axis : {"actual_targets", "predicted_targets"}, default="actual_targets"
+            Only used when `kind="predictions"`. The x-axis of the plot will
+            be either the actual target values or the predicted target values.
 
         subsample : float, int or None, default=1_000
             Sampling the samples to be shown on the scatter plot. If `float`,
@@ -374,6 +403,7 @@ class PredictionErrorDisplay:
         return viz.plot(
             ax=ax,
             kind=kind,
+            x_axis=x_axis,
             scatter_kwargs=scatter_kwargs,
             line_kwargs=line_kwargs,
         )

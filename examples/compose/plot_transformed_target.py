@@ -187,12 +187,14 @@ y_pred_ridge_with_trans_target = ridge_cv_with_trans_target.predict(X_test)
 PredictionErrorDisplay.from_predictions(
     y_test,
     y_pred_ridge,
+    x_axis="predicted_targets",
     ax=ax0[0],
     scatter_kwargs={"alpha": 0.5},
 )
 PredictionErrorDisplay.from_predictions(
     y_test,
     y_pred_ridge_with_trans_target,
+    x_axis="predicted_targets",
     ax=ax0[1],
     scatter_kwargs={"alpha": 0.5},
 )
@@ -227,3 +229,5 @@ ax1[1].set_title("Ridge regression \n with target transformation")
 f.suptitle("Ames housing data: selling price", y=0)
 plt.tight_layout()
 plt.show()
+
+# %%
