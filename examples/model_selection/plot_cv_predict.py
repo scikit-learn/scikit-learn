@@ -44,6 +44,7 @@ PredictionErrorDisplay.from_predictions(
     y,
     y_pred=y_pred,
     kind="predictions",
+    x_axis="predicted_targets",
     subsample=100,
     ax=axs[0],
     random_state=0,

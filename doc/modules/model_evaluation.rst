@@ -2694,6 +2694,38 @@ Here are some usage examples of the :func:`d2_absolute_error_score` function::
   >>> d2_absolute_error_score(y_true, y_pred)
   0.0
 
+Visual evaluation of regression models
+--------------------------------------
+
+The :class:`~sklearn.metrics.PredictionErrorDisplay` displays allows to visually
+inspect the quality of regression models. The quality of a regression model can
+be assessed using two different plots as shown below:
+
+.. image:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_predict_001.png
+   :target: ../auto_examples/model_selection/plot_cv_predict.html
+   :scale: 75
+   :align: center
+
+The left-hand side plot shows the predicted values vs. the actual values. A
+perfect regression model will display data point on the diagonal of this plot.
+Further away from this optimal line, the larger the error of the model.
+
+The right-hand side plot shows the residuals, i.e. the difference between the
+actual values and the predicted values, vs. the predicted values. This type of
+plot give an indication of the homoscedasticity of the model. A perfect
+regression model will display data points uniformly distributed around the
+horizontal axis. If the distribution is not uniform, then it indicates us that
+there is a relationship between the value of the target and the residuals, e.g.
+the error increases when the true target increases.
+
+Refer to the example below to see an model evaluation that make use of this
+display.
+
+.. topic:: Example:
+
+  * See :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py`
+    for an example showing effect of transforming the target before learning
+    a regression model.
 
 .. _clustering_metrics:
 
