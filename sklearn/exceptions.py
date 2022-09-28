@@ -5,7 +5,7 @@ classes used across scikit-learn.
 
 __all__ = [
     "NotFittedError",
-    "FeatureNotCoveredByPluginError",
+    "NotSupportedByEngineError",
     "ConvergenceWarning",
     "DataConversionWarning",
     "DataDimensionalityWarning",
