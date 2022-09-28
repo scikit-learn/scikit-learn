@@ -985,11 +985,12 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         return decisions
 
     def _more_tags(self):
-        if self.base_estimator is None:
-            base_estimator = DecisionTreeClassifier()
+        if self.estimator is None:
+            estimator = DecisionTreeClassifier()
         else:
-            base_estimator = self.base_estimator
-        return {"allow_nan": _safe_tags(base_estimator, "allow_nan")}
+            estimator = self.estimator
+
+        return {"allow_nan": _safe_tags(estimator, "allow_nan")}
 
 
 class BaggingRegressor(RegressorMixin, BaseBagging):
@@ -1273,8 +1274,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         self.oob_score_ = r2_score(y, predictions)
 
     def _more_tags(self):
-        if self.base_estimator is None:
-            base_estimator = DecisionTreeRegressor()
+        if self.estimator is None:
+            estimator = DecisionTreeRegressor()
         else:
-            base_estimator = self.base_estimator
-        return {"allow_nan": _safe_tags(base_estimator, "allow_nan")}
+            estimator = self.estimator
+        return {"allow_nan": _safe_tags(estimator, "allow_nan")}
