@@ -706,13 +706,13 @@ space.
 
 .. note::
 
-  For some losses, e.g. the least absolute deviation (LAD) where the gradients
+  For some losses, e.g. ``'absolute_error'`` where the gradients
   are :math:`\pm 1`, the values predicted by a fitted :math:`h_m` are not
   accurate enough: the tree can only output integer values. As a result, the
   leaves values of the tree :math:`h_m` are modified once the tree is
   fitted, such that the leaves values minimize the loss :math:`L_m`. The
-  update is loss-dependent: for the LAD loss, the value of a leaf is updated
-  to the median of the samples in that leaf.
+  update is loss-dependent: for the absolute error loss, the value of 
+  a leaf is updated to the median of the samples in that leaf.
 
 Classification
 ^^^^^^^^^^^^^^
@@ -749,7 +749,7 @@ the parameter ``loss``:
     * Squared error (``'squared_error'``): The natural choice for regression
       due to its superior computational properties. The initial model is
       given by the mean of the target values.
-    * Least absolute deviation (``'lad'``): A robust loss function for
+    * Absolute error (``'absolute_error'``): A robust loss function for
       regression. The initial model is given by the median of the
       target values.
     * Huber (``'huber'``): Another robust loss function that combines
