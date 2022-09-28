@@ -2272,12 +2272,16 @@ class PredefinedSplit(BaseCrossValidator):
     2
     >>> print(ps)
     PredefinedSplit(test_fold=array([ 0,  1, -1,  1]))
-    >>> for train_index, test_index in ps.split():
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
-    ...     X_train, X_test = X[train_index], X[test_index]
-    ...     y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [1 2 3] TEST: [0]
-    TRAIN: [0 2] TEST: [1 3]
+    >>> for i, (train_index, test_index) in enumerate(ps.split()):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"  Test:  index={test_index}")
+    Fold 0:
+      Train: index=[1 2 3]
+      Test:  index=[0]
+    Fold 1:
+      Train: index=[0 2]
+      Test:  index=[1 3]
     """
 
     def __init__(self, test_fold):
