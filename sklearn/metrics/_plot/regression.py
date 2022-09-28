@@ -33,8 +33,10 @@ class PredictionErrorDisplay:
 
     Attributes
     ----------
-    line_ : matplotlib Artist or None
-        Diagonal curve.
+    line_ : matplotlib Artist
+        Optimal line representing `y_true == y_pred`. Therefore, it is a
+        diagonal line for `kind="predictions"` and a horizontal line for
+        `kind="residuals"`.
 
     errors_lines_ : matplotlib Artist or None
         Residual lines. If `with_errors=False`, then it is set to `None`.
@@ -183,7 +185,12 @@ class PredictionErrorDisplay:
             ax.set_xticks(np.linspace(min_value, max_value, num=5))
             ax.set_yticks(np.linspace(min_value, max_value, num=5))
         else:  # kind == "residuals"
-            self.line_, self.errors_lines_ = None, None
+            self.errors_lines_ = None
+            self.line_ = ax.plot(
+                [np.min(self.y_pred), np.max(self.y_pred)],
+                [0, 0],
+                **line_kwargs,
+            )[0]
             self.scatter_ = ax.scatter(
                 self.y_pred, self.y_pred - self.y_true, **scatter_kwargs
             )
