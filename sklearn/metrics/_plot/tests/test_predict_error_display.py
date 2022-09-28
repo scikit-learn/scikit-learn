@@ -85,9 +85,11 @@ def test_prediction_error_display(pyplot, regressor_fitted, class_method, kind):
         assert_allclose(display.line_.get_xdata(), display.line_.get_ydata())
         assert display.ax_.get_xlabel() == "Actual values"
         assert display.ax_.get_ylabel() == "Predicted values"
+        assert display.line_ is not None
     else:
         assert display.ax_.get_xlabel() == "Predicted values"
         assert display.ax_.get_ylabel() == "Residuals"
+        assert display.line_ is not None
 
     assert display.errors_lines_ is None
     assert display.ax_.get_legend() is None
