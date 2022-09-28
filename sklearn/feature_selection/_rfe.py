@@ -17,7 +17,6 @@ from ..utils._param_validation import HasMethods, Interval
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
 from ..utils.fixes import delayed
-from ..utils.deprecation import deprecated
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
@@ -542,15 +541,6 @@ class RFECV(RFE):
     estimator_ : ``Estimator`` instance
         The fitted estimator used to select features.
 
-    grid_scores_ : ndarray of shape (n_subsets_of_features,)
-        The cross-validation scores such that
-        ``grid_scores_[i]`` corresponds to
-        the CV score of the i-th subset of features.
-
-        .. deprecated:: 1.0
-            The `grid_scores_` attribute is deprecated in version 1.0 in favor
-            of `cv_results_` and will be removed in version 1.2.
-
     cv_results_ : dict of ndarrays
         A dict with keys:
 
@@ -596,7 +586,7 @@ class RFECV(RFE):
 
     Notes
     -----
-    The size of ``grid_scores_`` is equal to
+    The size of all values in ``cv_results_`` is equal to
     ``ceil((n_features - min_features_to_select) / step) + 1``,
     where step is the number of features removed at each iteration.
 
@@ -773,17 +763,3 @@ class RFECV(RFE):
             self.cv_results_[f"split{i}_test_score"] = scores_rev[i]
 
         return self
-
-    # TODO: Remove in v1.2 when grid_scores_ is removed
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The `grid_scores_` attribute is deprecated in version 1.0 in favor "
-        "of `cv_results_` and will be removed in version 1.2."
-    )
-    @property
-    def grid_scores_(self):
-        # remove 2 for mean_test_score, std_test_score
-        grid_size = len(self.cv_results_) - 2
-        return np.asarray(
-            [self.cv_results_[f"split{i}_test_score"] for i in range(grid_size)]
-        ).T

@@ -1637,7 +1637,16 @@ Plotting
    utils.validation.check_symmetric
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter
-   utils.all_estimators
+
+Specific utilities to list scikit-learn components:
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.discovery.all_estimators
+   utils.discovery.all_displays
+   utils.discovery.all_functions
 
 Utilities from joblib:
 

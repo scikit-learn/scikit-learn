@@ -500,6 +500,7 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
     cdef double sample_weight
     cdef double class_weight = 1.0
     cdef unsigned int count = 0
+    cdef unsigned int train_count = n_samples - validation_mask.sum()
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
     cdef int is_hinge = isinstance(loss, Hinge)
@@ -631,7 +632,7 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
                     print("Norm: %.2f, NNZs: %d, Bias: %.6f, T: %d, "
                           "Avg. loss: %f"
                           % (w.norm(), weights.nonzero()[0].shape[0],
-                             intercept, count, sumloss / n_samples))
+                             intercept, count, sumloss / train_count))
                     print("Total training time: %.2f seconds."
                           % (time() - t_start))
 
@@ -653,7 +654,7 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
                     best_score = score
             # or evaluate the loss on the training set
             else:
-                if tol > -INFINITY and sumloss > best_loss - tol * n_samples:
+                if tol > -INFINITY and sumloss > best_loss - tol * train_count:
                     no_improvement_count += 1
                 else:
                     no_improvement_count = 0

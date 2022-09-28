@@ -20,6 +20,7 @@ from . import check_random_state
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
+from ._array_api import get_namespace
 
 
 def squared_norm(x):
@@ -104,6 +105,8 @@ def density(w, **kwargs):
     ----------
     w : array-like
         The sparse vector.
+    **kwargs : keyword arguments
+        Ignored.
 
     Returns
     -------
@@ -831,12 +834,20 @@ def softmax(X, copy=True):
     out : ndarray of shape (M, N)
         Softmax function evaluated at every point in x.
     """
+    xp, is_array_api = get_namespace(X)
     if copy:
-        X = np.copy(X)
-    max_prob = np.max(X, axis=1).reshape((-1, 1))
+        X = xp.asarray(X, copy=True)
+    max_prob = xp.reshape(xp.max(X, axis=1), (-1, 1))
     X -= max_prob
-    np.exp(X, X)
-    sum_prob = np.sum(X, axis=1).reshape((-1, 1))
+
+    if xp.__name__ in {"numpy", "numpy.array_api"}:
+        # optimization for NumPy arrays
+        np.exp(X, out=np.asarray(X))
+    else:
+        # array_api does not have `out=`
+        X = xp.exp(X)
+
+    sum_prob = xp.reshape(xp.sum(X, axis=1), (-1, 1))
     X /= sum_prob
     return X
 
