@@ -10,7 +10,6 @@ Link: https://github.com/blei-lab/onlineldavb
 
 # Author: Chyi-Kwei Yau
 # Author: Matthew D. Hoffman (original onlineldavb implementation)
-from cmath import exp
 from numbers import Integral, Real
 
 import numpy as np

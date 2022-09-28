@@ -8,7 +8,6 @@ from numpy.testing import assert_array_equal
 
 import pytest
 
-from sklearn.datasets import make_multilabel_classification
 from sklearn.decomposition import LatentDirichletAllocation
 from sklearn.decomposition._online_lda_fast import (
     _dirichlet_expectation_1d,
