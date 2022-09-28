@@ -519,9 +519,6 @@ Changelog
   and :class:`decomposition.SparseCoder` preserve dtype for `numpy.float32`.
   :pr:`22002` by :user:`Takeshi Oura <takoika>`.
 
-- |Enhancement| :class:`decomposition.LatentDirichletAllocation`
-  preserves dtype for `numpy.float32`.
-  :pr:`22113` by :user:`Takeshi Oura <takoika>`.
 - |Enhancement| :class:`decomposition.PCA` exposes a parameter `n_oversamples` to tune
   :func:`utils.randomized_svd` and get accurate results when the number of
   features is large.
