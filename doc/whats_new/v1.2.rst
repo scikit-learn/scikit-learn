@@ -166,7 +166,7 @@ Changelog
   :func:`datasets.fetch_lfw_people`,
   :func:`datasets.fetch_olivetti_faces`,
   and :func:`datasets.fetch_species_distributions`.
-  By default, all those functions will retry 3 times by default in case of network failure.
+  By default, the functions will retry up to 3 times in case of network failures.
   :pr:`21691` by :user:`Zhehao Liu <MaxwellLZH>`.
 
 :mod:`sklearn.decomposition`
