@@ -31,7 +31,7 @@ from numbers import Integral
 from sklearn import get_config
 from sklearn.utils import check_scalar
 from ...utils._openmp_helpers import _openmp_effective_n_threads
-from ...utils._typedefs import ITYPE, DTYPE
+from ...utils._typedefs import DTYPE
 
 cnp.import_array()
 

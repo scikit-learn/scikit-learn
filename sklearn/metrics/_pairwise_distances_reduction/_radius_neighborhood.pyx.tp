@@ -29,7 +29,7 @@ from ...utils._vector_sentinel cimport vector_to_nd_array
 
 from numbers import Real
 from scipy.sparse import issparse
-from ...utils import check_array, check_scalar, _in_unstable_openblas_configuration
+from ...utils import check_scalar, _in_unstable_openblas_configuration
 from ...utils.fixes import threadpool_limits
 
 cnp.import_array()
@@ -232,9 +232,6 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
-        cdef:
-            ITYPE_t idx, jdx
-
         # Sorting neighbors for each query vector of X
         if self.sort_results:
             for idx in range(X_start, X_end):
@@ -294,7 +291,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
         self,
     ) nogil:
         cdef:
-            ITYPE_t idx, jdx, thread_num, idx_n_element, idx_current
+            ITYPE_t idx
 
         with nogil, parallel(num_threads=self.effective_n_threads):
             # Merge vectors used in threads into the main ones.
@@ -454,7 +451,6 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
     cdef void _parallel_on_Y_init(
         self,
     ) nogil:
-        cdef ITYPE_t thread_num
         RadiusNeighbors{{name_suffix}}._parallel_on_Y_init(self)
         self.gemm_term_computer._parallel_on_Y_init()
 
