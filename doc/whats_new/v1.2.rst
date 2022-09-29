@@ -488,7 +488,8 @@ Changelog
 - |FIX| :func:`utils.multiclass.type_of_target` now properly handles sparse matrices.
   :pr:`14862` by :user:`Léonard Binet <leonardbinet>`.
 
-- For :func:`utils.extmath.density` the keyword parameters are deprecated.
+- |API| The extra keyword parameters of :func:`utils.extmath.density` are deprecated
+  and will be removed in 1.4.
   :pr:`24523` by :user:`Mia Bajic <clytaemnestra>`.
 
 - |Feature| A new module exposes development tools to discover estimators (i.e.
