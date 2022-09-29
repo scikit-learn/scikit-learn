@@ -234,3 +234,24 @@ def test_learning_curve_display_score_type(pyplot, data, std_display_style):
     assert_allclose(y_data_train, train_scores.mean(axis=1))
     assert_array_equal(x_data_test, train_sizes_abs)
     assert_allclose(y_data_test, test_scores.mean(axis=1))
+
+
+def test_learning_curve_display_log_scale(pyplot, data):
+    """Check the behaviour of the parameter `log_scale`."""
+    X, y = data
+    estimator = DecisionTreeClassifier(random_state=0)
+
+    train_sizes = [0.3, 0.6, 0.9]
+    display = LearningCurveDisplay.from_estimator(
+        estimator, X, y, train_sizes=train_sizes, log_scale=True
+    )
+
+    assert display.ax_.get_xscale() == "log"
+    assert display.ax_.get_yscale() == "linear"
+
+    display = LearningCurveDisplay.from_estimator(
+        estimator, X, y, train_sizes=train_sizes, log_scale=False
+    )
+
+    assert display.ax_.get_xscale() == "linear"
+    assert display.ax_.get_yscale() == "linear"
