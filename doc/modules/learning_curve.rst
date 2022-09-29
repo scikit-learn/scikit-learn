@@ -112,7 +112,7 @@ Learning curve
 A learning curve shows the validation and training score of an estimator
 for varying numbers of training samples. It is a tool to find out how much
 we benefit from adding more training data and whether the estimator suffers
-more from a variance error or a bias error. Coensider th following example
+more from a variance error or a bias error. Consider the following example
 where we plot the learning curve of a naive Bayes classifier and an SVM.
 
 For the naive Bayes, both the validation score and the training score
