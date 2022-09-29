@@ -1500,6 +1500,32 @@ def learning_curve(
     -----
     See :ref:`examples/model_selection/plot_learning_curve.py
     <sphx_glr_auto_examples_model_selection_plot_learning_curve.py>`
+
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> from sklearn.model_selection import learning_curve
+    >>> X, y = make_classification(n_samples=100, n_features=10, random_state=42)
+    >>> tree = DecisionTreeClassifier(max_depth=4, random_state=42)
+    >>> train_size_abs, train_scores, test_scores = learning_curve(
+    ...     tree, X, y, train_sizes=[0.3, 0.6, 0.9]
+    ... )
+    >>> for train_size, cv_train_scores, cv_test_scores in zip(
+    ...     train_size_abs, train_scores, test_scores
+    ... ):
+    ...     print(f"{train_size} samples were used to train the model")
+    ...     print(f"The average train accuracy is {cv_train_scores.mean()}")
+    ...     print(f"The average test accuracy is {cv_test_scores.mean()}")
+    24 samples were used to train the model
+    The average train accuracy is 1.0
+    The average test accuracy is 0.85
+    48 samples were used to train the model
+    The average train accuracy is 1.0
+    The average test accuracy is 0.9
+    72 samples were used to train the model
+    The average train accuracy is 1.0
+    The average test accuracy is 0.93
     """
     if exploit_incremental_learning and not hasattr(estimator, "partial_fit"):
         raise ValueError(
