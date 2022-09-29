@@ -162,11 +162,11 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
         for i in range(n_samples_X):
             for j in range(n_samples_Y):
                 heap_push(
-                    heaps_r_distances + i * self.k,
-                    heaps_indices + i * self.k,
-                    self.k,
-                    self.datasets_pair.surrogate_dist(X_start + i, Y_start + j),
-                    Y_start + j,
+                    values=heaps_r_distances + i * self.k,
+                    indices=heaps_indices + i * self.k,
+                    size=self.k,
+                    val=self.datasets_pair.surrogate_dist(X_start + i, Y_start + j),
+                    val_idx=Y_start + j,
                 )
 
     cdef void _parallel_on_X_init_chunk(
@@ -255,11 +255,11 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
                 for thread_num in range(self.chunks_n_threads):
                     for jdx in range(self.k):
                         heap_push(
-                            &self.argkmin_distances[X_start + idx, 0],
-                            &self.argkmin_indices[X_start + idx, 0],
-                            self.k,
-                            self.heaps_r_distances_chunks[thread_num][idx * self.k + jdx],
-                            self.heaps_indices_chunks[thread_num][idx * self.k + jdx],
+                            values=&self.argkmin_distances[X_start + idx, 0],
+                            indices=&self.argkmin_indices[X_start + idx, 0],
+                            size=self.k,
+                            val=self.heaps_r_distances_chunks[thread_num][idx * self.k + jdx],
+                            val_idx=self.heaps_indices_chunks[thread_num][idx * self.k + jdx],
                         )
 
     cdef void _parallel_on_Y_finalize(
@@ -513,11 +513,11 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
                 )
 
                 heap_push(
-                    heaps_r_distances + i * self.k,
-                    heaps_indices + i * self.k,
-                    self.k,
-                    sqeucliean_dist_i_j,
-                    j + Y_start,
+                    values=heaps_r_distances + i * self.k,
+                    indices=heaps_indices + i * self.k,
+                    size=self.k,
+                    val=sqeucliean_dist_i_j,
+                    val_idx=j + Y_start,
                 )
 
 {{endfor}}
