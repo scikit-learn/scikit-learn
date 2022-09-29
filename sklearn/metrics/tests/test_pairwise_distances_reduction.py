@@ -185,7 +185,7 @@ def assert_argkmin_results_quasi_equality(
             ), msg
 
 
-def assert_radius_neighborhood_results_equality(
+def assert_radius_neighbors_results_equality(
     ref_dist, dist, ref_indices, indices, radius
 ):
     # We get arrays of arrays and we need to check for individual pairs
@@ -204,7 +204,7 @@ def assert_radius_neighborhood_results_equality(
         )
 
 
-def assert_radius_neighborhood_results_quasi_equality(
+def assert_radius_neighbors_results_quasi_equality(
     ref_dist,
     dist,
     ref_indices,
@@ -308,7 +308,7 @@ ASSERT_RESULT = {
     (
         RadiusNeighbors,
         np.float64,
-    ): assert_radius_neighborhood_results_equality,
+    ): assert_radius_neighbors_results_equality,
     # In the case of 32bit, indices can be permuted due to small difference
     # in the computations of their associated distances, hence we test equality of
     # results up to valid permutations.
@@ -316,7 +316,7 @@ ASSERT_RESULT = {
     (
         RadiusNeighbors,
         np.float32,
-    ): assert_radius_neighborhood_results_quasi_equality,
+    ): assert_radius_neighbors_results_quasi_equality,
 }
 
 
@@ -404,7 +404,7 @@ def test_assert_argkmin_results_quasi_equality():
         )
 
 
-def test_assert_radius_neighborhood_results_quasi_equality():
+def test_assert_radius_neighbors_results_quasi_equality():
 
     rtol = 1e-7
     eps = 1e-7
@@ -425,7 +425,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
     ]
 
     # Sanity check: compare the reference results to themselves.
-    assert_radius_neighborhood_results_quasi_equality(
+    assert_radius_neighbors_results_quasi_equality(
         ref_dist,
         ref_dist,
         ref_indices,
@@ -435,7 +435,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
     )
 
     # Apply valid permutation on indices
-    assert_radius_neighborhood_results_quasi_equality(
+    assert_radius_neighbors_results_quasi_equality(
         np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
         np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
         np.array([np.array([1, 2, 3, 4, 5])]),
@@ -443,7 +443,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
         radius=6.1,
         rtol=rtol,
     )
-    assert_radius_neighborhood_results_quasi_equality(
+    assert_radius_neighbors_results_quasi_equality(
         np.array([np.array([_1m, _1m, 1, _1p, _1p])]),
         np.array([np.array([_1m, _1m, 1, _1p, _1p])]),
         np.array([np.array([6, 7, 8, 9, 10])]),
@@ -455,7 +455,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
     # Apply invalid permutation on indices
     msg = "Neighbors indices for query 0 are not matching"
     with pytest.raises(AssertionError, match=msg):
-        assert_radius_neighborhood_results_quasi_equality(
+        assert_radius_neighbors_results_quasi_equality(
             np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
             np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
             np.array([np.array([1, 2, 3, 4, 5])]),
@@ -465,7 +465,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
         )
 
     # Having extra last elements is valid if they are in: [radius ± rtol]
-    assert_radius_neighborhood_results_quasi_equality(
+    assert_radius_neighbors_results_quasi_equality(
         np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
         np.array([np.array([1.2, 2.5, _6_1m, 6.1])]),
         np.array([np.array([1, 2, 3, 4, 5])]),
@@ -479,7 +479,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
         "The last extra elements ([6.]) aren't in [radius ± rtol]=[6.1 ± 1e-07]"
     )
     with pytest.raises(AssertionError, match=msg):
-        assert_radius_neighborhood_results_quasi_equality(
+        assert_radius_neighbors_results_quasi_equality(
             np.array([np.array([1.2, 2.5, 6])]),
             np.array([np.array([1.2, 2.5])]),
             np.array([np.array([1, 2, 3])]),
@@ -491,7 +491,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
     # Indices aren't properly sorted w.r.t their distances
     msg = "Neighbors indices for query 0 are not matching"
     with pytest.raises(AssertionError, match=msg):
-        assert_radius_neighborhood_results_quasi_equality(
+        assert_radius_neighbors_results_quasi_equality(
             np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
             np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
             np.array([np.array([1, 2, 3, 4, 5])]),
@@ -503,7 +503,7 @@ def test_assert_radius_neighborhood_results_quasi_equality():
     # Distances aren't properly sorted
     msg = "Distances aren't sorted on row 0"
     with pytest.raises(AssertionError, match=msg):
-        assert_radius_neighborhood_results_quasi_equality(
+        assert_radius_neighbors_results_quasi_equality(
             np.array([np.array([1.2, 2.5, _6_1m, 6.1, _6_1p])]),
             np.array([np.array([2.5, 1.2, _6_1m, 6.1, _6_1p])]),
             np.array([np.array([1, 2, 3, 4, 5])]),
@@ -631,7 +631,7 @@ def test_argkmin_factory_method_wrong_usages():
         )
 
 
-def test_radius_neighborhood_factory_method_wrong_usages():
+def test_radius_neighbors_factory_method_wrong_usages():
     rng = np.random.RandomState(1)
     X = rng.rand(100, 10)
     Y = rng.rand(100, 10)

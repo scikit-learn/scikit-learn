@@ -16,7 +16,7 @@ from ._argkmin import (
     ArgKmin64,
     ArgKmin32,
 )
-from ._radius_neighborhood import (
+from ._radius_neighbors import (
     RadiusNeighbors64,
     RadiusNeighbors32,
 )
