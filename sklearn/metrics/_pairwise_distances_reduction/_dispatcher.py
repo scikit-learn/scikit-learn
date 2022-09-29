@@ -244,8 +244,6 @@ class ArgKmin(BaseDistancesReductionDispatcher):
                 'parallel_on_X' is usually the most efficient strategy.
                 When `X.shape[0]` is small but `Y.shape[0]` is large, 'parallel_on_Y'
                 brings more opportunity for parallelism and is therefore more efficient
-                despite the synchronization step at each iteration of the outer loop
-                on chunks of `X`.
 
               - None (default) looks-up in scikit-learn configuration for
                 `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
@@ -268,9 +266,9 @@ class ArgKmin(BaseDistancesReductionDispatcher):
 
         Notes
         -----
-        This classmethod is responsible for introspecting the arguments
-        values to dispatch to the most appropriate implementation of
-        :class:`ArgKmin64`.
+        This public classmethod is responsible for introspecting the arguments
+        values to dispatch to the private dtype-specialized implementation of
+        :class:`ArgKmin`.
 
         This allows decoupling the API entirely from the implementation details
         whilst maintaining RAII: all temporarily allocated datastructures necessary
@@ -415,13 +413,12 @@ class RadiusNeighbors(BaseDistancesReductionDispatcher):
         -----
         This public classmethod is responsible for introspecting the arguments
         values to dispatch to the private dtype-specialized implementation of
-        :class:`RadiusNeighbors64`.
+        :class:`RadiusNeighbors`.
 
-        All temporarily allocated datastructures necessary for the concrete
-        implementation are therefore freed when this classmethod returns.
-
-        This allows entirely decoupling the API entirely from the
-        implementation details whilst maintaining RAII.
+        This allows decoupling the API entirely from the implementation details
+        whilst maintaining RAII: all temporarily allocated datastructures necessary
+        for the concrete implementation are therefore freed when this classmethod
+        returns.
         """
         if X.dtype == Y.dtype == np.float64:
             return RadiusNeighbors64.compute(
