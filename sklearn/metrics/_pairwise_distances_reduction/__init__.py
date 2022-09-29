@@ -56,7 +56,7 @@
 #            ArgKmin                                     RadiusNeighbors
 #               |                                              |
 #               |                                              |
-#               |                (64bit implem.)               |
+#               |              (float{32,64} implem.)          |
 #               |           BaseDistancesReduction{32,64}      |
 #               |                       ∆                      |
 #               |                       |                      |
@@ -74,9 +74,9 @@
 #               x     |                                   |    x
 #        EuclideanArgKmin{32,64}               EuclideanRadiusNeighbors{32,64}
 #
-#    For instance :class:`ArgKmin`, dispatches to both :class:`ArgKmin64`
-#    and :class:`ArgKmin32` if X and Y are both dense NumPy arrays with a `float64`
-#    or `float32` dtype respectively.
+#    For instance :class:`ArgKmin` dispatches to:
+#      - :class:`ArgKmin64` if X and Y are two `float64` array-likes
+#      - :class:`ArgKmin32` if X and Y are two `float32` array-likes
 #
 #    In addition, if the metric parameter is set to "euclidean" or "sqeuclidean",
 #    then `ArgKmin{32,64}` further dispatches to `EuclideanArgKmin{32,64}`. For
