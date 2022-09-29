@@ -32,7 +32,7 @@
 #
 #    Dispatchers are meant to be used in the Python code. Under the hood, a
 #    dispatcher must only define the logic to choose at runtime to the correct
-#    dtype-specialized :class:`BaseDistanceReductionDispatcher` implementation based
+#    dtype-specialized :class:`BaseDistancesReductionDispatcher` implementation based
 #    on the dtype of X and of Y.
 #
 #
@@ -46,7 +46,7 @@
 #
 #
 #                               (base dispatcher)
-#                         BaseDistanceReductionDispatcher
+#                         BaseDistancesReductionDispatcher
 #                                       ∆
 #                                       |
 #                                       |
@@ -57,7 +57,7 @@
 #               |                                              |
 #               |                                              |
 #               |                (64bit implem.)               |
-#               |           BaseDistanceReducer{32,64}         |
+#               |           BaseDistancesReduction{32,64}      |
 #               |                       ∆                      |
 #               |                       |                      |
 #               |                       |                      |
@@ -87,14 +87,14 @@
 
 
 from ._dispatcher import (
-    BaseDistanceReductionDispatcher,
+    BaseDistancesReductionDispatcher,
     ArgKmin,
     RadiusNeighbors,
     sqeuclidean_row_norms,
 )
 
 __all__ = [
-    "BaseDistanceReductionDispatcher",
+    "BaseDistancesReductionDispatcher",
     "ArgKmin",
     "RadiusNeighbors",
     "sqeuclidean_row_norms",

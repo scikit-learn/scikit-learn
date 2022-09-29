@@ -40,7 +40,7 @@ cnp.import_array()
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
 from ._base cimport (
-    BaseDistanceReducer{{name_suffix}},
+    BaseDistancesReduction{{name_suffix}},
     _sqeuclidean_row_norms{{name_suffix}},
 )
 
@@ -52,8 +52,8 @@ from ._datasets_pair cimport (
 from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
 
 
-cdef class ArgKmin{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
-    """{{name_suffix}}bit implementation of the pairwise-distance reduction BaseDistanceReducer{{name_suffix}}."""
+cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
+    """{{name_suffix}}bit implementation of the pairwise-distance reduction BaseDistancesReduction{{name_suffix}}."""
 
     @classmethod
     def compute(
