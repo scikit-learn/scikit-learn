@@ -347,8 +347,10 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
     ):
         if (
             metric_kwargs is not None and
-            len(metric_kwargs) > 0 and
-            "Y_norm_squared" not in metric_kwargs
+            len(metric_kwargs) > 0 and (
+                "Y_norm_squared" not in metric_kwargs or
+                "X_norm_squared" not in metric_kwargs
+            )
         ):
             warnings.warn(
                 f"Some metric_kwargs have been passed ({metric_kwargs}) but aren't "
@@ -382,21 +384,26 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
             chunk_size=self.chunk_size,
         )
 
-        if metric_kwargs is not None and "Y_norm_squared" in metric_kwargs:
-            self.Y_norm_squared = check_array(
-                metric_kwargs.pop("Y_norm_squared"),
-                ensure_2d=False,
-                input_name="Y_norm_squared",
-                dtype=np.float64
-            )
+        if metric_kwargs is not None and metric_kwargs.get("Y_norm_squared", None) is not None:
+            self.Y_norm_squared = metric_kwargs.pop("Y_norm_squared")
         else:
-            self.Y_norm_squared = _sqeuclidean_row_norms{{name_suffix}}(datasets_pair.Y, self.effective_n_threads)
+            self.Y_norm_squared = _sqeuclidean_row_norms{{name_suffix}}(
+                datasets_pair.Y,
+                self.effective_n_threads,
+            )
 
-        # Do not recompute norms if datasets are identical.
-        self.X_norm_squared = (
-            self.Y_norm_squared if X is Y else
-            _sqeuclidean_row_norms{{name_suffix}}(datasets_pair.X, self.effective_n_threads)
-        )
+        if metric_kwargs is not None and metric_kwargs.get("X_norm_squared", None) is not None:
+            self.X_norm_squared = metric_kwargs.pop("X_norm_squared")
+        else:
+            # Do not recompute norms if datasets are identical.
+            self.X_norm_squared = (
+                self.Y_norm_squared if X is Y else
+                _sqeuclidean_row_norms{{name_suffix}}(
+                    datasets_pair.X,
+                    self.effective_n_threads,
+                )
+            )
+
         self.use_squared_distances = use_squared_distances
 
     @final
