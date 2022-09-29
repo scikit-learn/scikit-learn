@@ -108,6 +108,7 @@ def density(w, **kwargs):
 
     **kwargs : keyword arguments
         Keyword arguments passed to the density function.
+
         .. deprecated:: 1.2
             ``**kwargs`` were deprecated in version 1.2 and will be removed in
             1.4.
