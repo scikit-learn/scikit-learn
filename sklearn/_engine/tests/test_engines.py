@@ -25,7 +25,7 @@ FakeEntryPoint = namedtuple("FakeEntryPoint", ["name", "value"])
 def test_parse_entry_point():
     fake_entry_point = FakeEntryPoint(
         name="fake_engine",
-        value="sklearn.tests.test_engines:FakeEngine",
+        value="sklearn._engine.tests.test_engines:FakeEngine",
     )
     spec = _parse_entry_point(fake_entry_point)
     assert spec.name == "fake_engine"
@@ -36,7 +36,7 @@ def test_parse_entry_point():
 def test_parse_entry_point_for_nested_engine_class():
     fake_entry_point = FakeEntryPoint(
         name="nested_fake_engine",
-        value="sklearn.tests.test_engines:FakeEngineHolder.NestedFakeEngine",
+        value="sklearn._engine.tests.test_engines:FakeEngineHolder.NestedFakeEngine",
     )
     spec = _parse_entry_point(fake_entry_point)
     assert spec.name == "nested_fake_engine"
@@ -83,11 +83,13 @@ def test_get_engine_class():
         EngineSpec("kmeans", "provider1", "sklearn.provider1.module", "KMeansEngine"),
         EngineSpec("other", "provider1", "sklearn.provider1.module", "OtherEngine"),
         EngineSpec("kmeans", "provider2", "sklearn.provider2.module", "KMeansEngine"),
-        EngineSpec("kmeans", "provider3", "sklearn.tests.test_engines", "FakeEngine"),
+        EngineSpec(
+            "kmeans", "provider3", "sklearn._engine.tests.test_engines", "FakeEngine"
+        ),
         EngineSpec(
             "kmeans",
             "provider4",
-            "sklearn.tests.test_engines",
+            "sklearn._engine.tests.test_engines",
             "FakeEngineHolder.NestedFakeEngine",
         ),
     )
