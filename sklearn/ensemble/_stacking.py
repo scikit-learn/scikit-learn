@@ -518,7 +518,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         Wether to raise an error if using Regressors instead of Classifiers as estimators.
 
         .. versionadded:: 1.2
-            This parameters was added in 1.2
+            This parameter was added in 1.2
 
     Attributes
     ----------
@@ -857,7 +857,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         Wether to raise an error if using Regressors instead of Classifiers as estimators.
 
         .. versionadded:: 1.2
-            This parameters was added in 1.2
+            This parameter was added in 1.2
 
     Attributes
     ----------
