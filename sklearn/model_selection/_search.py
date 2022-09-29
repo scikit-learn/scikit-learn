@@ -965,16 +965,20 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             results["std_%s" % key_name] = array_stds
 
             if rank:
-                # when input is nan, scipy >= 1.10 rankdata returns nan. To
-                # keep previous behaviour nans are set to be smaller than the
-                # minimum value in the array before ranking
-                min_array_means = np.nanmin(array_means) - 1
-                if np.isnan(min_array_means):
-                    # all values in array_means are nan. Set min_array_means to 0
-                    min_array_means = 0
-                array_means = np.nan_to_num(array_means, copy=True, nan=min_array_means)
-                rank_result = rankdata(-array_means, method="min")
-                rank_result = np.asarray(rank_result, dtype=np.int32)
+                # When the fit/scoring fails `array_means` contains NaNs, we
+                # will exclude them from the ranking process and consider them
+                # as ties as worst performers.
+                if np.isnan(array_means).all():
+                    # All fit/scoring routines failed.
+                    rank_result = np.ones_like(array_means, dtype=np.int32)
+                else:
+                    min_array_means = np.nanmin(array_means) - 1
+                    array_means = np.nan_to_num(
+                        array_means, copy=True, nan=min_array_means
+                    )
+                    rank_result = rankdata(-array_means, method="min").astype(
+                        np.int32, copy=False
+                    )
                 results["rank_%s" % key_name] = rank_result
 
         _store("fit_time", out["fit_time"])
