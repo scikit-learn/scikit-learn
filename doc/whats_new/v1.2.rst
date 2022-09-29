@@ -494,6 +494,10 @@ Changelog
   :func:`utils.discovery.all_functions`) in scikit-learn.
   :pr:`21469` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| Do not try to call `get_params` on estimator class when creating the
+  HTML representation.
+  :pr:`24548` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
