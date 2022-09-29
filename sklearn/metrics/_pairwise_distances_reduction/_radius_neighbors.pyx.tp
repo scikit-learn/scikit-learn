@@ -325,7 +325,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
             for j in range(deref(self.neigh_indices)[i].size()):
                 deref(self.neigh_distances)[i][j] = (
                         self.datasets_pair.distance_metric._rdist_to_dist(
-                            # Guard against eventual -0., causing nan production.
+                            # Guard against potential -0., causing nan production.
                             max(deref(self.neigh_distances)[i][j], 0.)
                         )
                 )

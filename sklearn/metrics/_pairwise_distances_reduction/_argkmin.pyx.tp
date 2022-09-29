@@ -309,7 +309,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
                         num_threads=self.effective_n_threads):
             for j in range(self.k):
                 distances[i, j] = self.datasets_pair.distance_metric._rdist_to_dist(
-                    # Guard against eventual -0., causing nan production.
+                    # Guard against potential -0., causing nan production.
                     max(distances[i, j], 0.)
                 )
 
@@ -321,7 +321,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
 
             # Values are returned identically to the way `KNeighborsMixin.kneighbors`
             # returns values. This is counter-intuitive but this allows not using
-            # complex adaptations where `ArgKmin{{name_suffix}}.compute` is called.
+            # complex adaptations where `ArgKmin.compute` is called.
             return np.asarray(self.argkmin_distances), np.asarray(self.argkmin_indices)
 
         return np.asarray(self.argkmin_indices)
