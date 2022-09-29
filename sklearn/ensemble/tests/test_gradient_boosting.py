@@ -1122,8 +1122,14 @@ def test_gradient_boosting_early_stopping():
     )
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
-    # Check if early_stopping works as expected
-    for est, tol, early_stop_n_estimators in (
+    # Check if early_stopping works as expected, that is empirically check that the
+    # number of estimators is increasing when the tolerance decreases.
+
+    # Depending on platforms, the number of fitted estimators might slightly vary.
+    # Hence, we check for its inclusion in an interval centered in the expected
+    # number of fitted estimators rather than a strict equality.
+    delta_early_stop_n_estimators = 2
+    for est, tol, expected_early_stop_n_estimators in (
         (gbc, 1e-1, 28),
         (gbr, 1e-1, 13),
         (gbc, 1e-3, 70),
@@ -1131,7 +1137,11 @@ def test_gradient_boosting_early_stopping():
     ):
         est.set_params(tol=tol)
         est.fit(X_train, y_train)
-        assert est.n_estimators_ == early_stop_n_estimators
+        assert (
+            expected_early_stop_n_estimators - delta_early_stop_n_estimators
+            <= est.n_estimators_
+            <= expected_early_stop_n_estimators + delta_early_stop_n_estimators
+        )
         assert est.score(X_test, y_test) > 0.7
 
     # Without early stopping
