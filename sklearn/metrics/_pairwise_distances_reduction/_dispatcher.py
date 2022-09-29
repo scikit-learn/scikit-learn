@@ -175,6 +175,11 @@ class PairwiseDistances(BaseDistanceReductionDispatcher):
     The distance function `dist` depends on the values of the `metric`
     and `metric_kwargs` parameters.
 
+    This class only computes the pairwise distances matrix without
+    applying any reduction on it. It shares most of the underlying
+    code infrastructure with reducing variants to leverage
+    cache-aware chunking and multi-thread parallelism.
+
     This class is not meant to be instantiated, one should only use
     its :meth:`compute` classmethod which handles allocation and
     deallocation consistently.

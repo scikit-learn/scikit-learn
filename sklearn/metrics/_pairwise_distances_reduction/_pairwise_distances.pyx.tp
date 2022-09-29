@@ -67,7 +67,7 @@ from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
 
 
 cdef class PairwiseDistances{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
-    """{{name_suffix}}bit implementation of PairwiseDistances."""
+    """float{{name_suffix}} implementation of PairwiseDistances."""
 
     @classmethod
     def compute(
@@ -185,7 +185,7 @@ cdef class PairwiseDistances{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
 
 
 cdef class EuclideanPairwiseDistances{{name_suffix}}(PairwiseDistances{{name_suffix}}):
-    """EuclideanDistance-specialized {{name_suffix}}bit implementation for PairwiseDistances."""
+    """EuclideanDistance-specialized float{{name_suffix}} implementation for PairwiseDistances."""
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
