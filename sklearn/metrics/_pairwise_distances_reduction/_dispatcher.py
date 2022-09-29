@@ -51,10 +51,10 @@ def sqeuclidean_row_norms(X, num_threads):
     )
 
 
-class BaseDistanceReductionDispatcher:
+class BaseDistancesReductionDispatcher:
     """Abstract base dispatcher for pairwise distance computation & reduction.
 
-    Each dispatcher extending the base :class:`BaseDistanceReductionDispatcher`
+    Each dispatcher extending the base :class:`BaseDistancesReductionDispatcher`
     dispatcher must implement the :meth:`compute` classmethod.
     """
 
@@ -165,7 +165,7 @@ class BaseDistanceReductionDispatcher:
         """
 
 
-class ArgKmin(BaseDistanceReductionDispatcher):
+class ArgKmin(BaseDistancesReductionDispatcher):
     """Compute the argkmin of row vectors of X on the ones of Y.
 
     For each row vector of X, computes the indices of k first the rows
@@ -304,7 +304,7 @@ class ArgKmin(BaseDistanceReductionDispatcher):
         )
 
 
-class RadiusNeighbors(BaseDistanceReductionDispatcher):
+class RadiusNeighbors(BaseDistancesReductionDispatcher):
     """Compute radius-based neighbors for two sets of vectors.
 
     For each row-vector X[i] of the queries X, find all the indices j of

@@ -10,7 +10,7 @@ from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cdist
 
 from sklearn.metrics._pairwise_distances_reduction import (
-    BaseDistanceReductionDispatcher,
+    BaseDistancesReductionDispatcher,
     ArgKmin,
     RadiusNeighbors,
     sqeuclidean_row_norms,
@@ -522,33 +522,33 @@ def test_pairwise_distances_reduction_is_usable_for():
     metric = "manhattan"
 
     # Must be usable for all possible pair of {dense, sparse} datasets
-    assert BaseDistanceReductionDispatcher.is_usable_for(X, Y, metric)
-    assert BaseDistanceReductionDispatcher.is_usable_for(X_csr, Y_csr, metric)
-    assert BaseDistanceReductionDispatcher.is_usable_for(X_csr, Y, metric)
-    assert BaseDistanceReductionDispatcher.is_usable_for(X, Y_csr, metric)
+    assert BaseDistancesReductionDispatcher.is_usable_for(X, Y, metric)
+    assert BaseDistancesReductionDispatcher.is_usable_for(X_csr, Y_csr, metric)
+    assert BaseDistancesReductionDispatcher.is_usable_for(X_csr, Y, metric)
+    assert BaseDistancesReductionDispatcher.is_usable_for(X, Y_csr, metric)
 
-    assert BaseDistanceReductionDispatcher.is_usable_for(
+    assert BaseDistancesReductionDispatcher.is_usable_for(
         X.astype(np.float64), Y.astype(np.float64), metric
     )
 
-    assert BaseDistanceReductionDispatcher.is_usable_for(
+    assert BaseDistancesReductionDispatcher.is_usable_for(
         X.astype(np.float32), Y.astype(np.float32), metric
     )
 
-    assert not BaseDistanceReductionDispatcher.is_usable_for(
+    assert not BaseDistancesReductionDispatcher.is_usable_for(
         X.astype(np.int64), Y.astype(np.int64), metric
     )
 
-    assert not BaseDistanceReductionDispatcher.is_usable_for(X, Y, metric="pyfunc")
-    assert not BaseDistanceReductionDispatcher.is_usable_for(
+    assert not BaseDistancesReductionDispatcher.is_usable_for(X, Y, metric="pyfunc")
+    assert not BaseDistancesReductionDispatcher.is_usable_for(
         X.astype(np.float32), Y, metric
     )
-    assert not BaseDistanceReductionDispatcher.is_usable_for(
+    assert not BaseDistancesReductionDispatcher.is_usable_for(
         X, Y.astype(np.int32), metric
     )
 
     # F-ordered arrays are not supported
-    assert not BaseDistanceReductionDispatcher.is_usable_for(
+    assert not BaseDistancesReductionDispatcher.is_usable_for(
         np.asfortranarray(X), Y, metric
     )
 
@@ -558,17 +558,17 @@ def test_pairwise_distances_reduction_is_usable_for():
     # See: https://github.com/scikit-learn/scikit-learn/pull/23585#issuecomment-1247996669  # noqa
     # TODO: implement specialisation for (sq)euclidean on fused sparse-dense
     # using sparse-dense routines for matrix-vector multiplications.
-    assert not BaseDistanceReductionDispatcher.is_usable_for(
+    assert not BaseDistancesReductionDispatcher.is_usable_for(
         X_csr, Y, metric="euclidean"
     )
-    assert not BaseDistanceReductionDispatcher.is_usable_for(
+    assert not BaseDistancesReductionDispatcher.is_usable_for(
         X_csr, Y_csr, metric="sqeuclidean"
     )
 
     # CSR matrices without non-zeros elements aren't currently supported
     # TODO: support CSR matrices without non-zeros elements
     X_csr_0_nnz = csr_matrix(X * 0)
-    assert not BaseDistanceReductionDispatcher.is_usable_for(X_csr_0_nnz, Y, metric)
+    assert not BaseDistancesReductionDispatcher.is_usable_for(X_csr_0_nnz, Y, metric)
 
     # CSR matrices with int64 indices and indptr (e.g. large nnz, or large n_features)
     # aren't supported as of now.
@@ -576,7 +576,7 @@ def test_pairwise_distances_reduction_is_usable_for():
     # TODO: support CSR matrices with int64 indices and indptr
     X_csr_int64 = csr_matrix(X)
     X_csr_int64.indices = X_csr_int64.indices.astype(np.int64)
-    assert not BaseDistanceReductionDispatcher.is_usable_for(X_csr_int64, Y, metric)
+    assert not BaseDistancesReductionDispatcher.is_usable_for(X_csr_int64, Y, metric)
 
 
 def test_argkmin_factory_method_wrong_usages():

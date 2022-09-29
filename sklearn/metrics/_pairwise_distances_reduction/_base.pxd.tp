@@ -30,7 +30,7 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms{{name_suffix}}(
     ITYPE_t num_threads,
 )
 
-cdef class BaseDistanceReducer{{name_suffix}}:
+cdef class BaseDistancesReduction{{name_suffix}}:
     """
     Base {{name_suffix}}bit implementation template of the pairwise-distances reduction
     backend.
