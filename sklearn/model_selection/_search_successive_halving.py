@@ -50,7 +50,11 @@ def _top_k(results, k, itr):
         for a in (results["iter"], results["mean_test_score"], results["params"])
     )
     iter_indices = np.flatnonzero(iteration == itr)
-    sorted_indices = np.argsort(mean_test_score[iter_indices])
+    scores = mean_test_score[iter_indices]
+    # argsort() places NaNs at the end of the array so we move NaNs to the
+    # front of the array so the last `k` items are the those with the
+    # highest scores.
+    sorted_indices = np.roll(np.argsort(scores), np.count_nonzero(np.isnan(scores)))
     return np.array(params[iter_indices][sorted_indices[-k:]])
 
 
@@ -216,7 +220,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
         """
         last_iter = np.max(results["iter"])
         last_iter_indices = np.flatnonzero(results["iter"] == last_iter)
-        best_idx = np.argmax(results["mean_test_score"][last_iter_indices])
+        best_idx = np.nanargmax(results["mean_test_score"][last_iter_indices])
         return last_iter_indices[best_idx]
 
     def fit(self, X, y=None, groups=None, **fit_params):
