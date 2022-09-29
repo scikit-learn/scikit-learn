@@ -274,11 +274,6 @@ class ArgKmin(BaseDistanceReductionDispatcher):
         for the concrete implementation are therefore freed when this classmethod
         returns.
         """
-        # Note (jjerphan): Some design thoughts for future extensions.
-        # This factory comes to handle specialisations for the given arguments.
-        # For future work, this might can be an entrypoint to specialise operations
-        # for various backend and/or hardware and/or datatypes, and/or fused
-        # {sparse, dense}-datasetspair etc.
         if X.dtype == Y.dtype == np.float64:
             return ArgKmin64.compute(
                 X=X,
@@ -425,11 +420,6 @@ class RadiusNeighbors(BaseDistanceReductionDispatcher):
         This allows entirely decoupling the API entirely from the
         implementation details whilst maintaining RAII.
         """
-        # Note (jjerphan): Some design thoughts for future extensions.
-        # This factory comes to handle specialisations for the given arguments.
-        # For future work, this might can be an entrypoint to specialise operations
-        # for various backend and/or hardware and/or datatypes, and/or fused
-        # {sparse, dense}-datasetspair etc.
         if X.dtype == Y.dtype == np.float64:
             return RadiusNeighbors64.compute(
                 X=X,
