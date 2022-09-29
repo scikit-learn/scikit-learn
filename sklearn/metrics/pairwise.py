@@ -952,10 +952,14 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
     """
     X, Y = check_pairwise_arrays(X, Y)
 
-    if issparse(X) or issparse(Y):
+    if issparse(X):
         X = csr_matrix(X, copy=False)
+        # This also sorts indices in-place.
+        X.sum_duplicates()
+
+    if issparse(Y):
         Y = csr_matrix(Y, copy=False)
-        X.sum_duplicates()  # this also sorts indices in-place
+        # This also sorts indices in-place.
         Y.sum_duplicates()
 
     if sum_over_features and PairwiseDistances.is_usable_for(X, Y, metric="manhattan"):
@@ -963,10 +967,7 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
 
     if issparse(X) or issparse(Y):
         if not sum_over_features:
-            raise TypeError(
-                "sum_over_features=%r not supported for sparse matrices"
-                % sum_over_features
-            )
+            raise TypeError("sum_over_features=False not supported for sparse matrices")
 
     if sum_over_features:
         return distance.cdist(X, Y, "cityblock")
