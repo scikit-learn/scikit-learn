@@ -61,7 +61,7 @@ cdef inline Y_DTYPE_C _predict_one_from_raw_data(
                 node_idx = node.right
         elif node.is_categorical:
             if data_val < 0:
-                # data_val is not in the accepted range, so it is treated as unknown
+                # data_val is not in the accepted range, so it is treated as missing value
                 node_idx = node.left if node.missing_go_to_left else node.right
             elif in_bitset_2d_memoryview(
                     raw_left_cat_bitsets,

@@ -254,7 +254,7 @@ Changelog
 
 - |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` no longer error when predicting
-  on categories encoded as negative values and instead consider them unknown.
+  on categories encoded as negative values and instead consider them a member of the "missing category".
   :pr:`24283` by `Thomas Fan`_.
 
 - |API| Rename the constructor parameter `base_estimator` to `estimator` in

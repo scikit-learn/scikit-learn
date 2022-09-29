@@ -1185,8 +1185,7 @@ def test_unknown_category_that_are_negative():
 
     Non-regression test for #24274.
     """
-
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(42)
     n_samples = 1000
     X = np.c_[rng.rand(n_samples), rng.randint(4, size=n_samples)]
     y = np.zeros(shape=n_samples)
@@ -1198,11 +1197,11 @@ def test_unknown_category_that_are_negative():
         max_iter=10,
     ).fit(X, y)
 
-    # Negative values from the second column are treated as unknown
+    # Negative values from the second column are treated as missing value
     X_test_neg = np.asarray([[1, -2], [3, -4]])
     y_pred_neg_one = hist.predict(X_test_neg)
 
-    # np.nan from the second column is treated also treated as unknown.
+    # np.nan from the second column is treated also treated as missing value.
     X_test_nan = np.asarray([[1, np.nan], [3, np.nan]])
     y_pred_neg_one = hist.predict(X_test_nan)
     assert_allclose(y_pred_neg_one, y_pred_neg_one)
