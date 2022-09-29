@@ -1,4 +1,5 @@
 from contextlib import closing
+from inspect import isclass
 from io import StringIO
 from string import Template
 import html
@@ -125,7 +126,7 @@ def _get_visual_block(estimator):
         estimators = [
             (key, est)
             for key, est in estimator.get_params(deep=False).items()
-            if hasattr(est, "get_params") and hasattr(est, "fit")
+            if not isclass(est) and hasattr(est, "get_params") and hasattr(est, "fit")
         ]
         if estimators:
             return _VisualBlock(
