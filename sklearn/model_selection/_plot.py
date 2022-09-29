@@ -46,7 +46,7 @@ class LearningCurveDisplay:
         `matplotlib.container.ErrorbarContainer` objects. If another style is
         used, `errorbar_` is `None`.
 
-    line_ : list of matplotlib Artist or None
+    lines_ : list of matplotlib Artist or None
         When the `std_display_style` is `"fill_between"`, this is a list of
         `matplotlib.lines.Line2D` objects corresponding to the mean train and
         test scores. If another style is used, `line_` is `None`.
@@ -55,6 +55,10 @@ class LearningCurveDisplay:
         When the `std_display_style` is `"fill_between"`, this is a list of
         `matplotlib.collections.PolyCollection` objects. If another style is
         used, `fill_between_` is `None`.
+
+    See Also
+    --------
+    sklearn.model_selection.learning_curve : Compute the learning curve.
 
     Examples
     --------
@@ -166,9 +170,9 @@ class LearningCurveDisplay:
         if score_type == "train":
             scores = {"Training metric": train_scores}
         elif score_type == "test":
-            scores = {"Test metric": test_scores}
+            scores = {"Testing metric": test_scores}
         else:  # score_type == "both"
-            scores = {"Training metric": train_scores, "Test metric": test_scores}
+            scores = {"Training metric": train_scores, "Testing metric": test_scores}
 
         if std_display_style in ("fill_between", None):
             # plot the mean score

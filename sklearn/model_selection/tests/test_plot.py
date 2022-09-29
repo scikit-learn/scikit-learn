@@ -14,6 +14,27 @@ def data():
     return shuffle(*load_iris(return_X_y=True), random_state=0)
 
 
+@pytest.mark.parametrize(
+    "params, err_type, err_msg",
+    [
+        ({"std_display_style": "invalid"}, ValueError, "Unknown std_display_style:"),
+        ({"score_type": "invalid"}, ValueError, "Unknown score_type:"),
+    ],
+)
+def test_learning_curve_display_parameters_validation(
+    pyplot, data, params, err_type, err_msg
+):
+    """Check that we raise a proper error when passing invalid parameters."""
+    X, y = data
+    estimator = DecisionTreeClassifier(random_state=0)
+
+    train_sizes = [0.3, 0.6, 0.9]
+    with pytest.raises(err_type, match=err_msg):
+        LearningCurveDisplay.from_estimator(
+            estimator, X, y, train_sizes=train_sizes, **params
+        )
+
+
 def test_learning_curve_display_default_usage(pyplot, data):
     """Check the default usage of the LearningCurveDisplay class."""
     X, y = data
@@ -43,7 +64,7 @@ def test_learning_curve_display_default_usage(pyplot, data):
 
     _, legend_labels = display.ax_.get_legend_handles_labels()
     # one label for the line and the fill-between
-    assert legend_labels == ["Test metric", "Test metric"]
+    assert legend_labels == ["Testing metric", "Testing metric"]
 
     train_sizes_abs, train_scores, test_scores = learning_curve(
         estimator, X, y, train_sizes=train_sizes
@@ -97,3 +118,97 @@ def test_learning_curve_display_negate_score(pyplot, data):
     display.plot(negate_score=not negate_score)
     assert display.ax_.get_ylabel() == "Score"
     assert (display.lines_[0].get_data()[1] < 0).all()
+
+
+@pytest.mark.parametrize(
+    "score_name, ylabel", [(None, "Score"), ("Accuracy", "Accuracy")]
+)
+def test_learning_curve_display_score_name(pyplot, data, score_name, ylabel):
+    """Check that we can overwrite the default score name shown on the y-axis."""
+    X, y = data
+    estimator = DecisionTreeClassifier(random_state=0)
+
+    train_sizes = [0.3, 0.6, 0.9]
+    display = LearningCurveDisplay.from_estimator(
+        estimator, X, y, train_sizes=train_sizes, score_name=score_name
+    )
+
+    assert display.ax_.get_ylabel() == ylabel
+    X, y = data
+    estimator = DecisionTreeClassifier(max_depth=1, random_state=0)
+
+    train_sizes = [0.3, 0.6, 0.9]
+    display = LearningCurveDisplay.from_estimator(
+        estimator, X, y, train_sizes=train_sizes, score_name=score_name
+    )
+
+    assert display.score_name == ylabel
+
+
+def test_learning_curve_display_score_type(pyplot, data):
+    """Check the behaviour of setting the `score_type` parameter."""
+    X, y = data
+    estimator = DecisionTreeClassifier(random_state=0)
+
+    train_sizes = [0.3, 0.6, 0.9]
+    train_sizes_abs, train_scores, test_scores = learning_curve(
+        estimator, X, y, train_sizes=train_sizes
+    )
+
+    score_type = "train"
+    display = LearningCurveDisplay.from_estimator(
+        estimator,
+        X,
+        y,
+        train_sizes=train_sizes,
+        score_type=score_type,
+        std_display_style=None,
+    )
+
+    assert len(display.lines_) == 1
+    _, legend_label = display.ax_.get_legend_handles_labels()
+    assert legend_label == ["Training metric"]
+
+    x_data, y_data = display.lines_[0].get_data()
+    assert_array_equal(x_data, train_sizes_abs)
+    assert_allclose(y_data, train_scores.mean(axis=1))
+
+    score_type = "test"
+    display = LearningCurveDisplay.from_estimator(
+        estimator,
+        X,
+        y,
+        train_sizes=train_sizes,
+        score_type=score_type,
+        std_display_style=None,
+    )
+
+    assert len(display.lines_) == 1
+    _, legend_label = display.ax_.get_legend_handles_labels()
+    assert legend_label == ["Testing metric"]
+
+    x_data, y_data = display.lines_[0].get_data()
+    assert_array_equal(x_data, train_sizes_abs)
+    assert_allclose(y_data, test_scores.mean(axis=1))
+
+    score_type = "both"
+    display = LearningCurveDisplay.from_estimator(
+        estimator,
+        X,
+        y,
+        train_sizes=train_sizes,
+        score_type=score_type,
+        std_display_style=None,
+    )
+
+    assert len(display.lines_) == 2
+    _, legend_label = display.ax_.get_legend_handles_labels()
+    assert legend_label == ["Training metric", "Testing metric"]
+
+    x_data, y_data = display.lines_[0].get_data()
+    assert_array_equal(x_data, train_sizes_abs)
+    assert_allclose(y_data, train_scores.mean(axis=1))
+
+    x_data, y_data = display.lines_[1].get_data()
+    assert_array_equal(x_data, train_sizes_abs)
+    assert_allclose(y_data, test_scores.mean(axis=1))
