@@ -47,10 +47,7 @@ from ._base cimport BaseDistancesReduction{{name_suffix}}
 from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
 
 cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
-    """
-    {{name_suffix}}bit implementation of BaseDistancesReduction{{name_suffix}} for the
-    `RadiusNeighbors` reduction.
-    """
+    """float{{name_suffix}} implementation of the RadiusNeighbors."""
 
     cdef:
         DTYPE_t radius
@@ -97,7 +94,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
 
 
 cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}}):
-    """EuclideanDistance-specialized {{name_suffix}}bit implementation for RadiusNeighbors{{name_suffix}}."""
+    """EuclideanDistance-specialisation of RadiusNeighbors{{name_suffix}}."""
     cdef:
         GEMMTermComputer{{name_suffix}} gemm_term_computer
         const DTYPE_t[::1] X_norm_squared

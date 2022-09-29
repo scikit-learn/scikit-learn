@@ -72,10 +72,7 @@ from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
 
 
 cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
-    """
-    {{name_suffix}}bit implementation of the pairwise-distance reduction BaseDistancesReduction{{name_suffix}} for the
-    `RadiusNeighbors` reduction.
-    """
+    """float{{name_suffix}} implementation of the RadiusNeighbors."""
 
     @classmethod
     def compute(
@@ -335,7 +332,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
 
 
 cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}}):
-    """EuclideanDistance-specialized implementation for RadiusNeighbors{{name_suffix}}."""
+    """EuclideanDistance-specialisation of RadiusNeighbors{{name_suffix}}."""
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:

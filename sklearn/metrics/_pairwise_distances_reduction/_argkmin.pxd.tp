@@ -25,7 +25,7 @@ from ._base cimport BaseDistancesReduction{{name_suffix}}
 from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
 
 cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
-    """{{name_suffix}}bit implementation of BaseDistancesReduction{{name_suffix}} for the `ArgKmin` reduction."""
+    """float{{name_suffix}} implementation of the ArgKmin."""
 
     cdef:
         ITYPE_t k
@@ -39,7 +39,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
 
 
 cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
-    """EuclideanDistance-specialized {{name_suffix}}bit implementation of ArgKmin{{name_suffix}}."""
+    """EuclideanDistance-specialisation of ArgKmin{{name_suffix}}."""
     cdef:
         GEMMTermComputer{{name_suffix}} gemm_term_computer
         const DTYPE_t[::1] X_norm_squared
