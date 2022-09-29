@@ -1052,7 +1052,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             if trans == "drop":
                 continue
             if trans == "passthrough":
-                trans = FunctionTransformer()
+                trans = FunctionTransformer(feature_names_out="one-to-one")
             yield (name, trans, get_weight(name))
 
     def get_feature_names_out(self, input_features=None):
