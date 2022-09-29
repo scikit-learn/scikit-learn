@@ -163,7 +163,7 @@ You can also provide custom feature names for the input data using
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
- * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
+ * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
  * :ref:`sphx_glr_auto_examples_compose_plot_digits_pipe.py`
  * :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
@@ -202,7 +202,7 @@ each configuration.
 
 The parameter ``memory`` is needed in order to cache the transformers.
 ``memory`` can be either a string containing the directory where to cache the
-transformers or a `joblib.Memory <https://pythonhosted.org/joblib/memory.html>`_
+transformers or a `joblib.Memory <https://joblib.readthedocs.io/en/latest/memory.html>`_
 object::
 
     >>> from tempfile import mkdtemp

@@ -39,7 +39,7 @@ dependent_packages = {
     "pytest-cov": ("2.9.0", "tests"),
     "flake8": ("3.8.2", "tests"),
     "black": ("22.3.0", "tests"),
-    "mypy": ("0.770", "tests"),
+    "mypy": ("0.961", "tests"),
     "pyamg": ("4.0.0", "tests"),
     "sphinx": ("4.0.1", "docs"),
     "sphinx-gallery": ("0.7.0", "docs"),
@@ -47,9 +47,10 @@ dependent_packages = {
     "Pillow": ("7.1.2", "docs"),
     "sphinx-prompt": ("1.3.0", "docs"),
     "sphinxext-opengraph": ("0.4.2", "docs"),
+    "plotly": ("5.9.0", "docs, examples"),
     # XXX: Pin conda-lock to the latest released version (needs manual update
     # from time to time)
-    "conda-lock": ("1.0.5", "maintenance"),
+    "conda-lock": ("1.1.1", "maintenance"),
 }
 
 

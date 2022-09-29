@@ -269,19 +269,6 @@ def test_input_validation():
     DBSCAN().fit(X)  # must not raise exception
 
 
-@pytest.mark.parametrize(
-    "args",
-    [
-        {"algorithm": "blah"},
-        {"metric": "blah"},
-    ],
-)
-def test_dbscan_badargs(args):
-    # Test bad argument values: these should all raise ValueErrors
-    with pytest.raises(ValueError):
-        dbscan(X, **args)
-
-
 def test_pickle():
     obj = DBSCAN()
     s = pickle.dumps(obj)
@@ -425,36 +412,3 @@ def test_dbscan_precomputed_metric_with_initial_rows_zero():
     matrix = sparse.csr_matrix(ar)
     labels = DBSCAN(eps=0.2, metric="precomputed", min_samples=2).fit(matrix).labels_
     assert_array_equal(labels, [-1, -1, 0, 0, 0, 1, 1])
-
-
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"eps": -1.0}, ValueError, "eps == -1.0, must be > 0.0."),
-        ({"eps": 0.0}, ValueError, "eps == 0.0, must be > 0.0."),
-        ({"min_samples": 0}, ValueError, "min_samples == 0, must be >= 1."),
-        (
-            {"min_samples": 1.5},
-            TypeError,
-            "min_samples must be an instance of int, not float.",
-        ),
-        ({"min_samples": -2}, ValueError, "min_samples == -2, must be >= 1."),
-        ({"leaf_size": 0}, ValueError, "leaf_size == 0, must be >= 1."),
-        (
-            {"leaf_size": 2.5},
-            TypeError,
-            "leaf_size must be an instance of int, not float.",
-        ),
-        ({"leaf_size": -3}, ValueError, "leaf_size == -3, must be >= 1."),
-        ({"p": -2}, ValueError, "p == -2, must be >= 0.0."),
-        (
-            {"n_jobs": 2.5},
-            TypeError,
-            "n_jobs must be an instance of int, not float.",
-        ),
-    ],
-)
-def test_dbscan_params_validation(params, err_type, err_msg):
-    """Check the parameters validation in `DBSCAN`."""
-    with pytest.raises(err_type, match=err_msg):
-        DBSCAN(**params).fit(X)

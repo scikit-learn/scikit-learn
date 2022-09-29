@@ -11,6 +11,7 @@ Ridge regression
 
 from abc import ABCMeta, abstractmethod
 from functools import partial
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
@@ -33,9 +34,13 @@ from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
+from ..utils._param_validation import Hidden
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..metrics import check_scoring
+from ..metrics import get_scorer_names
 from ..exceptions import ConvergenceWarning
 from ..utils.sparsefuncs import mean_variance_axis
 
@@ -637,7 +642,7 @@ def _ridge_regression(
 
     # Some callers of this method might pass alpha as single
     # element array which already has been validated.
-    if alpha is not None and not isinstance(alpha, (np.ndarray, tuple)):
+    if alpha is not None and not isinstance(alpha, np.ndarray):
         alpha = check_scalar(
             alpha,
             "alpha",
@@ -772,6 +777,23 @@ def _ridge_regression(
 
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
+
+    _parameter_constraints: dict = {
+        "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
+        "fit_intercept": ["boolean"],
+        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
+        "copy_X": ["boolean"],
+        "max_iter": [Interval(Integral, 1, None, closed="left"), None],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "solver": [
+            StrOptions(
+                {"auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga", "lbfgs"}
+            )
+        ],
+        "positive": ["boolean"],
+        "random_state": ["random_state"],
+    }
+
     @abstractmethod
     def __init__(
         self,
@@ -842,13 +864,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
-
-        if self.max_iter is not None:
-            self.max_iter = check_scalar(
-                self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1
-            )
-
-        self.tol = check_scalar(self.tol, "tol", target_type=numbers.Real, min_val=0.0)
 
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
@@ -1118,6 +1133,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
+
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
         X, y = self._validate_data(
             X,
@@ -1367,6 +1384,11 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
     0.9595...
     """
 
+    _parameter_constraints: dict = {
+        **_BaseRidge._parameter_constraints,
+        "class_weight": [dict, StrOptions({"balanced"}), None],
+    }
+
     def __init__(
         self,
         alpha=1.0,
@@ -1417,6 +1439,8 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         self : object
             Instance of the estimator.
         """
+        self._validate_params()
+
         X, y, sample_weight, Y = self._prepare_data(X, y, sample_weight, self.solver)
 
         super().fit(X, Y, sample_weight=sample_weight)
@@ -1424,13 +1448,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
 
 def _check_gcv_mode(X, gcv_mode):
-    possible_gcv_modes = [None, "auto", "svd", "eigen"]
-    if gcv_mode not in possible_gcv_modes:
-        raise ValueError(
-            "Unknown value for 'gcv_mode'. Got {} instead of one of {}".format(
-                gcv_mode, possible_gcv_modes
-            )
-        )
     if gcv_mode in ["eigen", "svd"]:
         return gcv_mode
     # if X has more rows than columns, use decomposition of X^T.X,
@@ -2083,6 +2100,18 @@ class _RidgeGCV(LinearModel):
 
 
 class _BaseRidgeCV(LinearModel):
+
+    _parameter_constraints: dict = {
+        "alphas": ["array-like", Interval(Real, 0, None, closed="neither")],
+        "fit_intercept": ["boolean"],
+        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
+        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "cv": ["cv_object"],
+        "gcv_mode": [StrOptions({"auto", "svd", "eigen"}), None],
+        "store_cv_values": ["boolean"],
+        "alpha_per_target": ["boolean"],
+    }
+
     def __init__(
         self,
         alphas=(0.1, 1.0, 10.0),
@@ -2149,10 +2178,6 @@ class _BaseRidgeCV(LinearModel):
                     alpha = check_scalar_alpha(alpha, f"alphas[{index}]")
             else:
                 self.alphas[0] = check_scalar_alpha(self.alphas[0], "alphas")
-        else:
-            # check for single non-iterable item
-            self.alphas = check_scalar_alpha(self.alphas, "alphas")
-
         alphas = np.asarray(self.alphas)
 
         if cv is None:
@@ -2215,7 +2240,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     Parameters
     ----------
-    alphas : ndarray of shape (n_alphas,), default=(0.1, 1.0, 10.0)
+    alphas : array-like of shape (n_alphas,), default=(0.1, 1.0, 10.0)
         Array of alpha values to try.
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
@@ -2347,6 +2372,40 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     0.5166...
     """
 
+    def fit(self, X, y, sample_weight=None):
+        """Fit Ridge regression model with cv.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Training data. If using GCV, will be cast to float64
+            if necessary.
+
+        y : ndarray of shape (n_samples,) or (n_samples, n_targets)
+            Target values. Will be cast to X's dtype if necessary.
+
+        sample_weight : float or ndarray of shape (n_samples,), default=None
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+
+        Notes
+        -----
+        When sample_weight is provided, the selected hyperparameter may depend
+        on whether we use leave-one-out cross-validation (cv=None or cv='auto')
+        or another form of cross-validation, because only leave-one-out
+        cross-validation takes the sample weights into account when computing
+        the validation score.
+        """
+        self._validate_params()
+
+        super().fit(X, y, sample_weight=sample_weight)
+        return self
+
 
 class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
     """Ridge classifier with built-in cross-validation.
@@ -2360,7 +2419,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
 
     Parameters
     ----------
-    alphas : ndarray of shape (n_alphas,), default=(0.1, 1.0, 10.0)
+    alphas : array-like of shape (n_alphas,), default=(0.1, 1.0, 10.0)
         Array of alpha values to try.
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
@@ -2478,6 +2537,13 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
     0.9630...
     """
 
+    _parameter_constraints: dict = {
+        **_BaseRidgeCV._parameter_constraints,
+        "class_weight": [dict, StrOptions({"balanced"}), None],
+    }
+    for param in ("gcv_mode", "alpha_per_target"):
+        _parameter_constraints.pop(param)
+
     def __init__(
         self,
         alphas=(0.1, 1.0, 10.0),
@@ -2521,6 +2587,8 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
+
         # `RidgeClassifier` does not accept "sag" or "saga" solver and thus support
         # csr, csc, and coo sparse matrices. By using solver="eigen" we force to accept
         # all sparse format.
