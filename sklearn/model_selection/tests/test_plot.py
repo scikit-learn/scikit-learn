@@ -255,3 +255,61 @@ def test_learning_curve_display_log_scale(pyplot, data):
 
     assert display.ax_.get_xscale() == "linear"
     assert display.ax_.get_yscale() == "linear"
+
+
+def test_learning_curve_display_std_display_style(pyplot, data):
+    """Check the behaviour of the parameter `std_display_style`."""
+    X, y = data
+    estimator = DecisionTreeClassifier(random_state=0)
+
+    import matplotlib as mpl
+
+    train_sizes = [0.3, 0.6, 0.9]
+    std_display_style = None
+    display = LearningCurveDisplay.from_estimator(
+        estimator,
+        X,
+        y,
+        train_sizes=train_sizes,
+        std_display_style=std_display_style,
+    )
+
+    assert len(display.lines_) == 1
+    assert isinstance(display.lines_[0], mpl.lines.Line2D)
+    assert display.errorbar_ is None
+    assert display.fill_between_ is None
+    _, legend_label = display.ax_.get_legend_handles_labels()
+    assert len(legend_label) == 1
+
+    std_display_style = "fill_between"
+    display = LearningCurveDisplay.from_estimator(
+        estimator,
+        X,
+        y,
+        train_sizes=train_sizes,
+        std_display_style=std_display_style,
+    )
+
+    assert len(display.lines_) == 1
+    assert isinstance(display.lines_[0], mpl.lines.Line2D)
+    assert display.errorbar_ is None
+    assert len(display.fill_between_) == 1
+    assert isinstance(display.fill_between_[0], mpl.collections.PolyCollection)
+    _, legend_label = display.ax_.get_legend_handles_labels()
+    assert len(legend_label) == 2
+
+    std_display_style = "errorbar"
+    display = LearningCurveDisplay.from_estimator(
+        estimator,
+        X,
+        y,
+        train_sizes=train_sizes,
+        std_display_style=std_display_style,
+    )
+
+    assert display.lines_ is None
+    assert len(display.errorbar_) == 1
+    assert isinstance(display.errorbar_[0], mpl.container.ErrorbarContainer)
+    assert display.fill_between_ is None
+    _, legend_label = display.ax_.get_legend_handles_labels()
+    assert len(legend_label) == 1
