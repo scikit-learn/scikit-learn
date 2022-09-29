@@ -61,12 +61,15 @@ class BaseDistancesReductionDispatcher:
     @classmethod
     def valid_metrics(cls) -> List[str]:
         excluded = {
-            "pyfunc",  # is relatively slow because we need to coerce data as np arrays
+            # PyFunc cannot be supported because it necessitates interacting with
+            # the CPython interpreter to call user defined functions.
+            "pyfunc",
             "mahalanobis",  # is numerically unstable
-            # TODO: In order to support discrete distance metrics, we need to have a
-            # stable simultaneous sort which preserves the order of the input.
-            # The best might be using std::stable_sort and a Comparator taking an
-            # Arrays of Structures instead of Structure of Arrays (currently used).
+            # In order to support discrete distance metrics, we need to have a
+            # stable simultaneous sort which preserves the order of the indices
+            # because there generally is a lot of occurrences for a given values
+            # of distances in this case.
+            # TODO: implement a stable simultaneous_sort.
             "hamming",
             *BOOL_METRICS,
         }
