@@ -1197,11 +1197,9 @@ def test_unknown_category_that_are_negative():
         max_iter=10,
     ).fit(X, y)
 
-    # Negative values from the second column are treated as missing value
+    # Check that negative values from the second column are treated like a
+    # missing category
     X_test_neg = np.asarray([[1, -2], [3, -4]])
-    y_pred_neg_one = hist.predict(X_test_neg)
-
-    # np.nan from the second column is treated also treated as missing value.
     X_test_nan = np.asarray([[1, np.nan], [3, np.nan]])
-    y_pred_neg_one = hist.predict(X_test_nan)
-    assert_allclose(y_pred_neg_one, y_pred_neg_one)
+
+    assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
