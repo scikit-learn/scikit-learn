@@ -47,7 +47,7 @@ from itertools import cycle
 plt.figure(1)
 plt.clf()
 
-colors = cycle("bgrcmykbgrcmykbgrcmykbgrcmyk")
+colors = cycle("bgrcmyk")
 for k, col in zip(range(n_clusters_), colors):
     my_members = labels == k
     cluster_center = cluster_centers[k]
