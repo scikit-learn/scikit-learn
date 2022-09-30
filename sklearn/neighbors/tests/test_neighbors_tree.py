@@ -37,6 +37,7 @@ METRICS = {
     "manhattan": {},
     "minkowski": dict(p=3),
     "chebyshev": {},
+    "arccos": {},
     "seuclidean": dict(V=rng.random_sample(DIMENSION)),
     "wminkowski": dict(p=3, w=rng.random_sample(DIMENSION)),
     "mahalanobis": dict(V=V_mahalanobis),

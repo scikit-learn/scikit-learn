@@ -7,7 +7,13 @@ from sklearn.neighbors._kd_tree import KDTree
 
 DIMENSION = 3
 
-METRICS = {"euclidean": {}, "manhattan": {}, "chebyshev": {}, "minkowski": dict(p=3)}
+METRICS = {
+    "euclidean": {},
+    "manhattan": {},
+    "chebyshev": {},
+    "arccos": {},
+    "minkowski": dict(p=3)
+}
 
 
 def test_array_object_type():

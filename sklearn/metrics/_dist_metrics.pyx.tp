@@ -42,11 +42,12 @@ cdef extern from "arrayobject.h":
                                      int typenum, void* data)
 
 
-from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
+from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin, acos, M_PI
 
 from scipy.sparse import csr_matrix, issparse
 from ..utils._typedefs cimport DTYPE_t, ITYPE_t, DTYPECODE
 from ..utils._typedefs import DTYPE, ITYPE
+from ..utils._cython_blas cimport _dot
 from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..utils import check_array
 
@@ -117,6 +118,8 @@ METRIC_MAPPING{{name_suffix}} = {
     'sokalmichener': SokalMichenerDistance{{name_suffix}},
     'sokalsneath': SokalSneathDistance{{name_suffix}},
     'haversine': HaversineDistance{{name_suffix}},
+    'arccos': ArccosDistance{{name_suffix}},
+    'angular': ArccosDistance{{name_suffix}},
     'pyfunc': PyFuncDistance{{name_suffix}},
 }
 
@@ -169,6 +172,7 @@ cdef class DistanceMetric{{name_suffix}}:
     "wminkowski"    WMinkowskiDistance    p, w      ``sum(|w * (x - y)|^p)^(1/p)``
     "seuclidean"    SEuclideanDistance    V         ``sqrt(sum((x - y)^2 / V))``
     "mahalanobis"   MahalanobisDistance   V or VI   ``sqrt((x - y)' V^-1 (x - y))``
+    "angular"       ArccosDistance        -         ``arccos(dot(x, y) / (|x| * |y|)) / PI``
     ==============  ====================  ========  ===============================
 
     .. deprecated:: 1.1
@@ -2767,6 +2771,60 @@ cdef class HaversineDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
         sin_1 = sin(0.5 * (x1_1 - x2_1))
 
         return (sin_0 * sin_0 + cos(x1_0) * cos(x2_0) * sin_1 * sin_1)
+
+#------------------------------------------------------------
+# Arccos Distance
+#  D(x, y) = arccos(dot(x, y) / (|x| * |y|)) / PI
+# This is the metric version of cosine distance, i.e. the metric
+# most suitable when you wish to use cosine distance.
+
+cdef class ArccosDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
+    cdef inline {{INPUT_DTYPE_t}} cosine_similarity(
+        self,
+        const {{INPUT_DTYPE_t}}* x1,
+        const {{INPUT_DTYPE_t}}* x2,
+        ITYPE_t size
+    ) nogil except -1:
+        cdef DTYPE_t d = _dot(size, x1, 1, x2, 1)
+        cdef DTYPE_t norm1 = _dot(size, x1, 1, x1, 1)
+        cdef DTYPE_t norm2 = _dot(size, x2, 1, x2, 1)
+        return d / sqrt(norm1 * norm2)
+
+    cdef inline {{INPUT_DTYPE_t}} rdist(
+        self,
+        const {{INPUT_DTYPE_t}}* x1,
+        const {{INPUT_DTYPE_t}}* x2,
+        ITYPE_t size
+    ) nogil except -1:
+        # The non-metric, but rank-preserving, cosine distance.
+        return 1 - self.cosine_similarity(x1, x2, size)
+
+    cdef inline {{INPUT_DTYPE_t}} dist(
+        self,
+        const {{INPUT_DTYPE_t}}* x1,
+        const {{INPUT_DTYPE_t}}* x2,
+        ITYPE_t size
+    ) nogil except -1:
+        return acos(self.cosine_similarity(x1, x2, size)) / M_PI
+
+    cdef inline DTYPE_t _rdist_to_dist(
+        self,
+        DTYPE_t rdist
+    ) nogil except -1:
+        return acos(1 - rdist) / M_PI
+
+    cdef inline DTYPE_t _dist_to_rdist(
+        self,
+        DTYPE_t dist
+    ) nogil except -1:
+        return 1 - cos(M_PI * dist)
+
+    def rdist_to_dist(self, rdist):
+        return np.arccos(1 - rdist) / np.pi
+
+    def dist_to_rdist(self, dist):
+        return 1 - np.cos(np.pi * dist)
+
 
 #------------------------------------------------------------
 # User-defined distance

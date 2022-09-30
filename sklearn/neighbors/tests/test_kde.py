@@ -104,7 +104,14 @@ def test_kernel_density_sampling(n_samples=100, n_features=3):
 
 @pytest.mark.parametrize("algorithm", ["auto", "ball_tree", "kd_tree"])
 @pytest.mark.parametrize(
-    "metric", ["euclidean", "minkowski", "manhattan", "chebyshev", "haversine"]
+    "metric", [
+        "euclidean",
+        "minkowski",
+        "manhattan",
+        "chebyshev",
+        "haversine",
+        "arccos"
+    ]
 )
 def test_kde_algorithm_metric_choice(algorithm, metric):
     # Smoke test for various metrics and algorithms
@@ -164,8 +171,12 @@ def test_kde_sample_weights():
         n_samples_test = size_test // d
         test_points = rng.rand(n_samples_test, d)
         for algorithm in ["auto", "ball_tree", "kd_tree"]:
-            for metric in ["euclidean", "minkowski", "manhattan", "chebyshev"]:
-                if algorithm != "kd_tree" or metric in KDTree.valid_metrics:
+            for metric in [
+                "euclidean", "minkowski", "manhattan", "chebyshev", "arccos"
+            ]:
+                if ((metric != "arccos" or d != 1) and
+                    (algorithm != "kd_tree" or metric in KDTree.valid_metrics)
+                ):
                     kde = KernelDensity(algorithm=algorithm, metric=metric)
 
                     # Test that adding a constant sample weight has no effect
@@ -190,7 +201,7 @@ def test_kde_sample_weights():
 
                     # Test that sample weights has a non-trivial effect
                     diff = np.max(np.abs(scores_no_weight - scores_weight))
-                    assert diff > 0.001
+                    assert diff > 0.0005
 
                     # Test invariance with respect to arbitrary scaling
                     scale_factor = rng.rand()
