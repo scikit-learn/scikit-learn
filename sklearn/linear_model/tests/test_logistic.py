@@ -1984,3 +1984,14 @@ def test_warning_on_penalty_string_none():
     )
     with pytest.warns(FutureWarning, match=warning_message):
         lr.fit(iris.data, target)
+
+
+def test_logistic_regression_cv_scorer_receives_sample_weight():
+    X, y = make_classification(n_samples=10)
+    sample_weight = np.ones(len(y))
+    sample_weight[len(y) // 2 :] = 2
+
+    scorer = get_scorer("accuracy")
+    scorer.set_score_request(sample_weight=True)
+    lr_cv = LogisticRegressionCV(scoring=scorer)
+    lr_cv.fit(X, y, sample_weight=sample_weight)

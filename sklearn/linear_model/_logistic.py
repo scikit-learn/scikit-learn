@@ -1760,6 +1760,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         routed_params = process_routing(
             obj=self,
             method="fit",
+            sample_weight=sample_weight,
             other_params=fit_params,
         )
 
@@ -2068,7 +2069,9 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             )
             .add(
                 scorer=self._get_scorer(),
-                method_mapping=MethodMapping().add(callee="score", caller="score"),
+                method_mapping=MethodMapping()
+                .add(callee="score", caller="score")
+                .add(callee="score", caller="fit"),
             )
             .warn_on(child="scorer", method="score", params=["sample_weight"])
         )
