@@ -345,11 +345,10 @@ cdef class BestSplitter(BaseDenseSplitter):
             current.feature = features[f_j]
 
             n_missing = 0
-            # Sort samples along that feature; by copying the values into an array and
-            # sorting the array in a manner which utilizes the cache more
-            # effectively.
-            # Missing values are placed at the end and do not participate in the sorting.
+            # Copying values into Xf and then sorting Xf in a matter which utilizes the
+            # cache more effectively
             if has_missings[current.feature]:
+                # Missing values are placed at the end and do not participate in the sorting.
                 i, j = start, end - 1
                 while i <= j:
                     if isnan(self.X[samples[j], current.feature]):
@@ -370,6 +369,8 @@ cdef class BestSplitter(BaseDenseSplitter):
                 for i in range(start, end):
                     Xf[i] = self.X[samples[i], current.feature]
 
+            # Now that Xf contains the necessary values of X, we sort it and
+            # have samples follow Xf's order
             end_non_missing = end - n_missing
             sort(&Xf[start], &samples[start], end_non_missing - start)
 
