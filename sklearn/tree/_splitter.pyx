@@ -351,16 +351,19 @@ cdef class BestSplitter(BaseDenseSplitter):
                 # Missing values are placed at the end and do not participate in the sorting.
                 i, j = start, end - 1
                 while i <= j:
+                    # Finds the lowest position, samples[j], that is not missing
                     if isnan(self.X[samples[j], current.feature]):
                         n_missing += 1
                         j -= 1
                         continue
 
+                    # X[samples[j]] is a non-missing value
                     if isnan(self.X[samples[i], current.feature]):
-                        # nan samples are moved to j
+                        # If X[smaples[i]] is missing, swap samples[i] and samples[j]
                         samples[i], samples[j] = samples[j], samples[i]
                         n_missing += 1
                         j -= 1
+
                     Xf[i] = self.X[samples[i], current.feature]
                     i += 1
             else:
