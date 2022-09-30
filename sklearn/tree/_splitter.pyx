@@ -359,7 +359,7 @@ cdef class BestSplitter(BaseDenseSplitter):
 
                     # X[samples[j]] is a non-missing value
                     if isnan(self.X[samples[i], current.feature]):
-                        # If X[smaples[i]] is missing, swap samples[i] and samples[j]
+                        # If X[samples[i]] is missing, swap samples[i] and samples[j]
                         samples[i], samples[j] = samples[j], samples[i]
                         n_missing += 1
                         j -= 1
@@ -497,7 +497,7 @@ cdef class BestSplitter(BaseDenseSplitter):
 
                 # X[samples[j]] is a non-missing value
                 if isnan(self.X[samples[i], best.feature]):
-                    # If X[smaples[i]] is missing, swap samples[i] and samples[j]
+                    # If X[samples[i]] is missing, swap samples[i] and samples[j]
                     samples[i], samples[j] = samples[j], samples[i]
                     p += 1
                     j -= 1
