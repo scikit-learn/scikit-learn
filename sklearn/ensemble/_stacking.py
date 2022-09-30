@@ -586,13 +586,13 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             )
 
     def _validate_estimators(self):
+        # Original overwritten so we can have regressors as base estimators
         if len(self.estimators) == 0:
             raise ValueError(
                 "Invalid 'estimators' attribute, 'estimators' should be a "
                 "non-empty list of (string, estimator) tuples."
             )
         names, estimators = zip(*self.estimators)
-        # defined by MetaEstimatorMixin
         self._validate_names(names)
 
         has_estimator = any(est != "drop" for est in estimators)
@@ -601,8 +601,6 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
                 "All estimators are dropped. At least one is required "
                 "to be an estimator."
             )
-
-        is_estimator_type = is_classifier if is_classifier(self) else is_regressor
 
         return names, estimators
 
