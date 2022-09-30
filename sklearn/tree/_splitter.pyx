@@ -489,13 +489,15 @@ cdef class BestSplitter(BaseDenseSplitter):
             n_missing = best.n_missing
             i, j = start, end - 1
             while i < j and p < n_missing:
+                # Finds the lowest position, samples[j], that is not missing
                 if isnan(self.X[samples[j], best.feature]):
                     p += 1
                     j -= 1
                     continue
 
+                # X[samples[j]] is a non-missing value
                 if isnan(self.X[samples[i], best.feature]):
-                    # nan samples are moved to the end
+                    # If X[smaples[i]] is missing, swap samples[i] and samples[j]
                     samples[i], samples[j] = samples[j], samples[i]
                     p += 1
                     j -= 1
