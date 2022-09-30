@@ -655,7 +655,7 @@ def _log_reg_scoring_path(
         to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
         combination of L1 and L2.
 
-    **score_params: dict
+    **score_params : dict
         Parameters to pass to the `score` method of the underlying scorer.
 
     Returns
