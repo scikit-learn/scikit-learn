@@ -7,6 +7,7 @@
 # License: BSD 3 clause
 
 from numbers import Integral, Real
+import random
 import numpy as np
 
 from abc import ABCMeta, abstractmethod
@@ -716,7 +717,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             if self.loss_curve_[-1] < self.best_loss_:
                 self.best_loss_ = self.loss_curve_[-1]
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit the model to data matrix X and target(s) y.
 
         Parameters
@@ -728,12 +729,23 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             The target values (class labels in classification, real numbers in
             regression).
 
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then there is no weighting and subsampling method. 
+
         Returns
         -------
         self : object
             Returns a trained MLP model.
         """
         self._validate_params()
+
+        if sample_weight is not None:
+            n = X.shape[0]
+            indices = random.choices(np.arange(n),
+                                     weights=sample_weight,
+                                     k=n)
+            X = X[indices]
+            y = y[indices]
 
         return self._fit(X, y, incremental=False)
 
