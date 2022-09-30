@@ -221,6 +221,10 @@ Changelog
   :pr:`11860` by :user:`Pierre Ablin <pierreablin>`,
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
 
+- |Enhancement| :class:`decomposition.LatentDirichletAllocation` now preserves dtype
+  for `numpy.float32` input. :pr:`24528` by :user:`Takeshi Oura <takoika>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 - |API| The `n_features_` attribute of
   :class:`decomposition.PCA` is deprecated in favor of
   `n_features_in_` and will be removed in 1.4. :pr:`24421` by
@@ -257,6 +261,11 @@ Changelog
 - |Fix| Fixed the issue where :class:`ensemble.AdaBoostClassifier` outputs
   NaN in feature importance when fitted with very small sample weight.
   :pr:`20415` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+- |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` no longer error when predicting
+  on categories encoded as negative values and instead consider them a member
+  of the "missing category". :pr:`24283` by `Thomas Fan`_.
 
 - |API| Rename the constructor parameter `base_estimator` to `estimator` in
   the following classes:
@@ -378,6 +387,11 @@ Changelog
   :pr:`22710` by :user:`Conroy Trinh <trinhcon>` and
   :pr:`23461` by :user:`Meekail Zain <micky774>`.
 
+- |FIX| :func:`metrics.log_loss` with `eps=0` now returns a correct value of 0 or
+  `np.inf` instead of `nan` for predictions at the boundaries (0 or 1). It also accepts
+  integer input.
+  :pr:`24365` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Feature| :func:`metrics.roc_auc_score` now supports micro-averaging
   (`average="micro"`) for the One-vs-Rest multiclass case (`multi_class="ovr"`).
   :pr:`24338` by :user:`Arturo Amor <ArturoAmorQ>`.
@@ -441,6 +455,13 @@ Changelog
   :class:`neighbors.RadiusNeighborsTransformer`.
   :pr:`24075` by :user:`Valentin Laurent <Valentin-Laurent>`.
 
+:mod:`sklearn.pipeline`
+.......................
+
+- |Enhancement| :meth:`pipeline.FeatureUnion.get_feature_names_out` can now
+  be used when one of the transformers in the :class:`pipeline.FeatureUnion` is
+  `"passthrough"`. :pr:`24058` by :user:`Diederik Perdok <diederikwp>`
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -475,6 +496,15 @@ Changelog
 
 - |FIX| :func:`utils.multiclass.type_of_target` now properly handles sparse matrices.
   :pr:`14862` by :user:`Léonard Binet <leonardbinet>`.
+
+- |Fix| HTML representation no longer errors when an estimator class is a value in
+  `get_params`. :pr:`24512` by `Thomas Fan`_.
+
+- |Feature| A new module exposes development tools to discover estimators (i.e.
+  :func:`utils.discovery.all_estimators`), displays (i.e.
+  :func:`utils.discovery.all_displays`) and functions (i.e.
+  :func:`utils.discovery.all_functions`) in scikit-learn.
+  :pr:`21469` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Code and Documentation Contributors
 -----------------------------------
