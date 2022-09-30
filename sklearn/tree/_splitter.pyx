@@ -357,7 +357,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                         continue
 
                     if isnan(self.X[samples[i], current.feature]):
-                        # nan samples are moved to the end
+                        # nan samples are moved to j
                         samples[i], samples[j] = samples[j], samples[i]
                         n_missing += 1
                         j -= 1
