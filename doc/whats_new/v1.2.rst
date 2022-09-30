@@ -245,6 +245,8 @@ Changelog
 
 :mod:`sklearn.ensemble`
 .......................
+- |Feature| :class:`ensemble.StackingClassifier` now accepts any kind of base 
+  estimator.  :pr:`24538` by :user:`Guillem G Subies <GuillemGSubies>`.
 
 - |Feature| Adds `class_weight` to :class:`ensemble.HistGradientBoostingClassifier`.
   :pr:`22014` by `Thomas Fan`_.

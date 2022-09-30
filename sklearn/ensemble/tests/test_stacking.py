@@ -26,6 +26,7 @@ from sklearn.dummy import DummyClassifier
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import Ridge
 from sklearn.linear_model import RidgeClassifier
 from sklearn.svm import LinearSVC
 from sklearn.svm import LinearSVR
@@ -838,3 +839,15 @@ def test_get_feature_names_out(
 
     names_out = stacker.get_feature_names_out(feature_names)
     assert_array_equal(names_out, expected_names)
+
+
+def test_stacking_classifier_base_regressor():
+    """Check that a regressor can be estimator for a classifier."""
+    X_train, X_test, y_train, y_test = train_test_split(
+        scale(X_iris), y_iris, stratify=y_iris, random_state=42
+    )
+    clf = StackingClassifier(estimators=[("rigde", Ridge())])
+    clf.fit(X_train, y_train)
+    clf.predict(X_test)
+    clf.predict_proba(X_test)
+    assert clf.score(X_test, y_test) > 0.8

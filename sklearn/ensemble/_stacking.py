@@ -74,7 +74,6 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         n_jobs=None,
         verbose=0,
         passthrough=False,
-        raise_error_with_combined_estimators=True,
     ):
         super().__init__(estimators=estimators)
         self.final_estimator = final_estimator
@@ -83,7 +82,6 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         self.n_jobs = n_jobs
         self.verbose = verbose
         self.passthrough = passthrough
-        self.raise_error_with_combined_estimators = raise_error_with_combined_estimators
 
     def _clone_final_estimator(self, default):
         if self.final_estimator is not None:
@@ -163,45 +161,6 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
                     )
                 )
             return method
-
-    def _validate_estimators(self):
-        if len(self.estimators) == 0:
-            raise ValueError(
-                "Invalid 'estimators' attribute, 'estimators' should be a "
-                "non-empty list of (string, estimator) tuples."
-            )
-        names, estimators = zip(*self.estimators)
-        # defined by MetaEstimatorMixin
-        self._validate_names(names)
-
-        has_estimator = any(est != "drop" for est in estimators)
-        if not has_estimator:
-            raise ValueError(
-                "All estimators are dropped. At least one is required "
-                "to be an estimator."
-            )
-
-        is_estimator_type = is_classifier if is_classifier(self) else is_regressor
-
-        if not self.raise_error_with_combined_estimators:
-            for est in estimators:
-                if est != "drop" and not is_estimator_type(est):
-                    warnings.warn(
-                        "The estimator {} should be a {}.".format(
-                            est.__class__.__name__, is_estimator_type.__name__[3:]
-                        ),
-                        UserWarning,
-                    )
-        else:
-            for est in estimators:
-                if est != "drop" and not is_estimator_type(est):
-                    raise ValueError(
-                        "The estimator {} should be a {}.".format(
-                            est.__class__.__name__, is_estimator_type.__name__[3:]
-                        )
-                    )
-
-        return names, estimators
 
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
@@ -514,12 +473,6 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     verbose : int, default=0
         Verbosity level.
 
-    raise_error_with_combined_estimators : bool, default=True
-        Wether to raise an error if using Regressors instead of Classifiers as estimators.
-
-        .. versionadded:: 1.2
-            This parameter was added in 1.2
-
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,) or list of ndarray if `y` \
@@ -612,7 +565,6 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         n_jobs=None,
         passthrough=False,
         verbose=0,
-        raise_error_with_combined_estimators=True,
     ):
         super().__init__(
             estimators=estimators,
@@ -622,7 +574,6 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             n_jobs=n_jobs,
             passthrough=passthrough,
             verbose=verbose,
-            raise_error_with_combined_estimators=raise_error_with_combined_estimators,
         )
 
     def _validate_final_estimator(self):
@@ -633,6 +584,27 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
                     self.final_estimator_
                 )
             )
+
+    def _validate_estimators(self):
+        if len(self.estimators) == 0:
+            raise ValueError(
+                "Invalid 'estimators' attribute, 'estimators' should be a "
+                "non-empty list of (string, estimator) tuples."
+            )
+        names, estimators = zip(*self.estimators)
+        # defined by MetaEstimatorMixin
+        self._validate_names(names)
+
+        has_estimator = any(est != "drop" for est in estimators)
+        if not has_estimator:
+            raise ValueError(
+                "All estimators are dropped. At least one is required "
+                "to be an estimator."
+            )
+
+        is_estimator_type = is_classifier if is_classifier(self) else is_regressor
+
+        return names, estimators
 
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
@@ -853,12 +825,6 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     verbose : int, default=0
         Verbosity level.
 
-    raise_error_with_combined_estimators : bool, default=True
-        Wether to raise an error if using Regressors instead of Classifiers as estimators.
-
-        .. versionadded:: 1.2
-            This parameter was added in 1.2
-
     Attributes
     ----------
     estimators_ : list of estimator
@@ -930,7 +896,6 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
         n_jobs=None,
         passthrough=False,
         verbose=0,
-        raise_error_with_combined_estimators=True,
     ):
         super().__init__(
             estimators=estimators,
@@ -940,7 +905,6 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
             n_jobs=n_jobs,
             passthrough=passthrough,
             verbose=verbose,
-            raise_error_with_combined_estimators=raise_error_with_combined_estimators,
         )
 
     def _validate_final_estimator(self):
