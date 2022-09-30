@@ -5,7 +5,7 @@
 | Version   | Supported          |
 | --------- | ------------------ |
 | 1.1.2     | :white_check_mark: |
-| < 1.0.1   | :x:                |
+| < 1.1.2   | :x:                |
 
 ## Reporting a Vulnerability
 
@@ -16,5 +16,5 @@ If the security vulnerability is accepted, a patch will be crafted privately
 in order to prepare a dedicated bugfix release as timely as possible (depending
 on the complexity of the fix).
 
-You can also report security vulnerabilities to
-[tidelift](https://tidelift.com/security).
+In addition to sending the report by email, you can also report security
+vulnerabilities to [tidelift](https://tidelift.com/security).
