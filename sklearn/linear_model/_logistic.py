@@ -2028,7 +2028,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights.
 
-        **score_params:
+        **score_params : dict
             Parameters to pass to the `score` method of the underlying scorer.
 
         Returns
