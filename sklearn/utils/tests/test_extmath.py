@@ -48,6 +48,7 @@ def test_density():
     for X_ in (X_csr, X_csc, X_coo, X_lil):
         assert density(X_) == density(X)
 
+
 # TODO(1.4): Remove test
 def test_density_deprecated_kwargs():
     """Check that future warning is raised when user enters keyword arguments."""
