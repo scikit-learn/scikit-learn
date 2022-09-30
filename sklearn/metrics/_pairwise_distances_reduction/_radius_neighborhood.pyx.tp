@@ -66,9 +66,13 @@ from ._base cimport (
 from ._datasets_pair cimport (
     DatasetsPair{{name_suffix}},
     DenseDenseDatasetsPair{{name_suffix}},
+    SparseSparseDatasetsPair{{name_suffix}},
 )
 
-from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
+from ._gemm_term_computer cimport (
+    DenseDenseMiddleTermComputer{{name_suffix}},
+    SparseSparseMiddleTermComputer{{name_suffix}},
+)
 
 
 cdef class RadiusNeighbors{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
@@ -105,8 +109,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
         """
         if (
             metric in ("euclidean", "sqeuclidean")
-            and not issparse(X)
-            and not issparse(Y)
+            and not (issparse(X) ^ issparse(Y))
         ):
             # Specialized implementation with improved arithmetic intensity
             # and vector instructions (SIMD) by processing several vectors
@@ -381,7 +384,12 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
             )
             ITYPE_t dist_middle_terms_chunks_size = self.Y_n_samples_chunk * self.X_n_samples_chunk
 
-        self.gemm_term_computer = GEMMTermComputer{{name_suffix}}(
+        if isinstance(self.datasets_pair, DenseDenseDatasetsPair{{name_suffix}}):
+            MiddleTermComputer{{name_suffix}} = DenseDenseMiddleTermComputer{{name_suffix}}
+        else:
+            MiddleTermComputer{{name_suffix}} = SparseSparseMiddleTermComputer{{name_suffix}}
+
+        self.gemm_term_computer = MiddleTermComputer{{name_suffix}}(
             datasets_pair.X,
             datasets_pair.Y,
             self.effective_n_threads,

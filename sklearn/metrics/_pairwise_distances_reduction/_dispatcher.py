@@ -131,7 +131,7 @@ class BaseDistanceReductionDispatcher:
         # TODO: implement specialisation for (sq)euclidean on fused sparse-dense
         # using sparse-dense routines for matrix-vector multiplications.
         fused_sparse_dense_euclidean_case_guard = not (
-            (is_valid_sparse_matrix(X) or is_valid_sparse_matrix(Y))
+            (is_valid_sparse_matrix(X) ^ is_valid_sparse_matrix(Y))
             and isinstance(metric, str)
             and "euclidean" in metric
         )
