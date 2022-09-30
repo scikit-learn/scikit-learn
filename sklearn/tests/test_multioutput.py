@@ -656,6 +656,7 @@ def test_regressor_chain_w_fit_params():
     for est in model.estimators_:
         assert est.sample_weight_ is weight
 
+    # TODO(1.4): Remove check for FutureWarning
     # Test that the existing behavior works and raises a FutureWarning
     # when the underlying estimator used has a sample_weight parameter
     # defined in it's fit method.
