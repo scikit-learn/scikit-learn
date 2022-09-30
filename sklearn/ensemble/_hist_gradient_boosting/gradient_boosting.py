@@ -1490,8 +1490,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         For each categorical feature, there must be at most `max_bins` unique
         categories, and each categorical value must be in [0, max_bins -1].
-        During prediction, categories encoded as a negative value is treated as
-        a missing value.
+        During prediction, categories encoded as a negative value are treated as
+        missing values.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
