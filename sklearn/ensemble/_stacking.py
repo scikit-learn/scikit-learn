@@ -585,8 +585,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
                 )
             )
 
+    # Original overwritten so we can have regressors as base estimators
     def _validate_estimators(self):
-        # Original overwritten so we can have regressors as base estimators
         if len(self.estimators) == 0:
             raise ValueError(
                 "Invalid 'estimators' attribute, 'estimators' should be a "
