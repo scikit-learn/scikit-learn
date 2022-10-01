@@ -38,11 +38,11 @@ https://repo.anaconda.com/pkgs/main/osx-64/brotli-1.0.9-hca72f7f_7.conda#68e54d1
 https://repo.anaconda.com/pkgs/main/osx-64/libtiff-4.4.0-h2ef1027_0.conda#e5c4b2d2d5ae7b022f508ae5bfa434e7
 https://repo.anaconda.com/pkgs/main/osx-64/python-3.9.13-hdfd78df_1.conda#eac889fb0a5d2ed8014541b796af55f9
 https://repo.anaconda.com/pkgs/main/noarch/attrs-21.4.0-pyhd3eb1b0_0.conda#3bc977a57587a7964921e3e1e2e31f9e
-https://repo.anaconda.com/pkgs/main/osx-64/certifi-2022.6.15-py39hecd8cb5_0.conda#30db92d8d0532828b651a5bcca55d70d
+https://repo.anaconda.com/pkgs/main/osx-64/certifi-2022.9.14-py39hecd8cb5_0.conda#b3822e58d85198533f3a8512c19aa898
 https://repo.anaconda.com/pkgs/main/noarch/charset-normalizer-2.0.4-pyhd3eb1b0_0.conda#e7a441d94234b2b5fafee06e25dbf076
 https://repo.anaconda.com/pkgs/main/osx-64/coverage-6.2-py39hca72f7f_0.conda#55962a70ebebc8de15c4e1d745b20cdd
 https://repo.anaconda.com/pkgs/main/noarch/cycler-0.11.0-pyhd3eb1b0_0.conda#f5e365d2cdb66d547eb8c3ab93843aab
-https://repo.anaconda.com/pkgs/main/osx-64/cython-0.29.30-py39he9d5cce_0.conda#86142f3909fa8984ade817f086d45493
+https://repo.anaconda.com/pkgs/main/osx-64/cython-0.29.32-py39he9d5cce_0.conda#e5d7d7620ab25447bc81dc91af7c57e0
 https://repo.anaconda.com/pkgs/main/noarch/execnet-1.9.0-pyhd3eb1b0_0.conda#f895937671af67cebb8af617494b3513
 https://repo.anaconda.com/pkgs/main/noarch/idna-3.3-pyhd3eb1b0_0.conda#8f43a528cf83b43af38a4d142fa38b8a
 https://repo.anaconda.com/pkgs/main/noarch/iniconfig-1.1.1-pyhd3eb1b0_0.tar.bz2#e40edff2c5708f342cef43c7f280c507
@@ -88,5 +88,5 @@ https://repo.anaconda.com/pkgs/main/osx-64/mkl_random-1.2.2-py39hb2f4e1b_0.conda
 https://repo.anaconda.com/pkgs/main/osx-64/numpy-1.22.3-py39h2e5f0a9_0.conda#16892a18dae1fb1522845e4b6005b436
 https://repo.anaconda.com/pkgs/main/osx-64/numexpr-2.8.3-py39h2e5f0a9_0.conda#db012a622b75c38fe4c5c5bd54cc7f40
 https://repo.anaconda.com/pkgs/main/osx-64/scipy-1.7.3-py39h214d14d_2.conda#47d28f13f2c620e81a7ca0727ed9d16f
-https://repo.anaconda.com/pkgs/main/osx-64/pandas-1.4.3-py39he9d5cce_0.conda#ac483cb22652d8a5f49b6c071fdc1105
+https://repo.anaconda.com/pkgs/main/osx-64/pandas-1.4.4-py39he9d5cce_0.conda#4d0b65ff64d5a7380ec2e7e718b7ff8c
 https://repo.anaconda.com/pkgs/main/osx-64/pyamg-4.1.0-py39h1341a74_0.conda#9c560e676ee6f9f26b05f94ffda599d8
