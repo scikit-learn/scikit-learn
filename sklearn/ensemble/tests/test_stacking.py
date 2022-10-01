@@ -846,7 +846,7 @@ def test_stacking_classifier_base_regressor():
     X_train, X_test, y_train, y_test = train_test_split(
         scale(X_iris), y_iris, stratify=y_iris, random_state=42
     )
-    clf = StackingClassifier(estimators=[("rigde", Ridge())])
+    clf = StackingClassifier(estimators=[("ridge", Ridge())])
     clf.fit(X_train, y_train)
     clf.predict(X_test)
     clf.predict_proba(X_test)
