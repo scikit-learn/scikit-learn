@@ -137,7 +137,7 @@ def _compute_mi_cd(c, d, n_neighbors):
 
     kd = KDTree(c)
     m_all = kd.query_radius(c, radius, count_only=True, return_distance=False)
-    m_all = np.array(m_all) - 1.0
+    m_all = np.array(m_all) 
 
     mi = (
         digamma(n_samples)
