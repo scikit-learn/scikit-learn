@@ -37,7 +37,7 @@ def _check_cython_version():
         raise ValueError(message)
 
 
-def cythonize_extensions(top_path, config):
+def cythonize_extensions(extension):
     """Check that a recent Cython is available and cythonize extensions"""
     _check_cython_version()
     from Cython.Build import cythonize
@@ -71,8 +71,8 @@ def cythonize_extensions(top_path, config):
         os.environ.get("SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES", "0") != "0"
     )
 
-    config.ext_modules = cythonize(
-        config.ext_modules,
+    return cythonize(
+        extension,
         nthreads=n_jobs,
         compile_time_env={
             "SKLEARN_OPENMP_PARALLELISM_ENABLED": sklearn._OPENMP_SUPPORTED
