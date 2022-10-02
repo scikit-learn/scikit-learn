@@ -13,7 +13,6 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.tree._export.plot_tree",
-    "sklearn.utils.axis0_safe_slice",
     "sklearn.utils.extmath.fast_logdet",
     "sklearn.utils.extmath.randomized_svd",
     "sklearn.utils.extmath.safe_sparse_dot",
