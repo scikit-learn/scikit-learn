@@ -570,7 +570,7 @@ def configure_extension_modules():
     return cythonize_extensions(cython_exts)
 
 
-if __name__ == "__main__":
+def setup_package():
     python_requires = ">=3.8"
     required_python_version = (3, 8)
 
@@ -636,3 +636,7 @@ if __name__ == "__main__":
         metadata["ext_modules"] = configure_extension_modules()
         metadata["libraries"] = libraries
     setup(**metadata)
+
+
+if __name__ == "__main__":
+    setup_package()
