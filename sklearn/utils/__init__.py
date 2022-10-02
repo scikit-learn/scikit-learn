@@ -1001,7 +1001,7 @@ def _is_pandas_na(x):
 
 
 def is_scalar_nan(x):
-    """Tests if x is NaN.
+    """Test if x is NaN.
 
     This function is meant to overcome the issue that np.isnan does not allow
     non-numerical types as input, and that np.nan is not float('nan').
@@ -1009,10 +1009,12 @@ def is_scalar_nan(x):
     Parameters
     ----------
     x : any type
+        Any scalar value.
 
     Returns
     -------
     boolean
+        Returns true if x is NaN, and false otherwise.
 
     Examples
     --------
