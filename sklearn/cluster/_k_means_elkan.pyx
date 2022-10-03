@@ -169,7 +169,7 @@ def init_bounds_sparse(
         min_dist = _euclidean_sparse_dense(
             X_data[X_indptr[i]: X_indptr[i + 1]],
             X_indices[X_indptr[i]: X_indptr[i + 1]],
-            centers[0], centers_squared_norms[0], False)
+            centers, centers_squared_norms, 0, False)
 
         lower_bounds[i, 0] = min_dist
         for j in range(1, n_clusters):
@@ -177,7 +177,7 @@ def init_bounds_sparse(
                 dist = _euclidean_sparse_dense(
                     X_data[X_indptr[i]: X_indptr[i + 1]],
                     X_indices[X_indptr[i]: X_indptr[i + 1]],
-                    centers[j], centers_squared_norms[j], False)
+                    centers, centers_squared_norms, j, False)
                 lower_bounds[i, j] = dist
                 if dist < min_dist:
                     min_dist = dist
@@ -648,7 +648,7 @@ cdef void _update_chunk_sparse(
                         upper_bound = _euclidean_sparse_dense(
                             X_data[X_indptr[i] - s: X_indptr[i + 1] - s],
                             X_indices[X_indptr[i] - s: X_indptr[i + 1] - s],
-                            centers_old[label], centers_squared_norms[label], False)
+                            centers_old, centers_squared_norms, label, False)
                         lower_bounds[i, label] = upper_bound
                         bounds_tight = 1
 
@@ -660,7 +660,7 @@ cdef void _update_chunk_sparse(
                         distance = _euclidean_sparse_dense(
                             X_data[X_indptr[i] - s: X_indptr[i + 1] - s],
                             X_indices[X_indptr[i] - s: X_indptr[i + 1] - s],
-                            centers_old[j], centers_squared_norms[j], False)
+                            centers_old, centers_squared_norms, j, False)
                         lower_bounds[i, j] = distance
                         if distance < upper_bound:
                             label = j

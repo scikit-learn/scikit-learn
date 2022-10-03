@@ -102,13 +102,13 @@ cdef floating _euclidean_sparse_dense(
 def _euclidean_sparse_dense_wrapper(
         floating[::1] a_data,
         int[::1] a_indices,
-        floating[::1] b,
-        floating b_squared_norm,
+        floating[:, ::1] b_arr,
+        floating[::1] b_squared_norms,
         int b_index,
         bint squared):
     """Wrapper of _euclidean_sparse_dense for testing purpose"""
     return _euclidean_sparse_dense(
-        a_data, a_indices, b, b_squared_norm, b_index, squared)
+        a_data, a_indices, b_arr, b_squared_norms, b_index, squared)
 
 
 cpdef floating _inertia_dense(
