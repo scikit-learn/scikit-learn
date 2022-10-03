@@ -25,7 +25,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.fixes.threadpool_limits",
     "sklearn.utils.gen_batches",
     "sklearn.utils.gen_even_slices",
-    "sklearn.utils.is_scalar_nan",
     "sklearn.utils.metaestimators.available_if",
     "sklearn.utils.metaestimators.if_delegate_has_method",
 ]
