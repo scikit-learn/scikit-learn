@@ -1178,3 +1178,28 @@ def test_class_weights():
         clf_balanced.decision_function(X_imb),
         clf_sample_weight.decision_function(X_imb),
     )
+
+
+def test_unknown_category_that_are_negative():
+    """Check that unknown categories that are negative does not error.
+
+    Non-regression test for #24274.
+    """
+    rng = np.random.RandomState(42)
+    n_samples = 1000
+    X = np.c_[rng.rand(n_samples), rng.randint(4, size=n_samples)]
+    y = np.zeros(shape=n_samples)
+    y[X[:, 1] % 2 == 0] = 1
+
+    hist = HistGradientBoostingRegressor(
+        random_state=0,
+        categorical_features=[False, True],
+        max_iter=10,
+    ).fit(X, y)
+
+    # Check that negative values from the second column are treated like a
+    # missing category
+    X_test_neg = np.asarray([[1, -2], [3, -4]])
+    X_test_nan = np.asarray([[1, np.nan], [3, np.nan]])
+
+    assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
