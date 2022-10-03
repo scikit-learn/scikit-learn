@@ -10,7 +10,7 @@ from sklearn.cluster import KMeans, MiniBatchKMeans
 def compute_bench(samples_range, features_range):
 
     it = 0
-    results = defaultdict(lambda: [])
+    results = defaultdict(list)
     chunk = 100
 
     max_it = len(samples_range) * len(features_range)
@@ -55,7 +55,7 @@ def compute_bench(samples_range, features_range):
 
 
 def compute_bench_2(chunks):
-    results = defaultdict(lambda: [])
+    results = defaultdict(list)
     n_features = 50000
     means = np.array(
         [
@@ -107,6 +107,12 @@ if __name__ == "__main__":
 
     results = compute_bench(samples_range, features_range)
     results_2 = compute_bench_2(chunks)
+
+    import pickle
+    with open('./pr2_results.pickle', 'wb') as handle:
+        pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    with open('./pr2_results2.pickle', 'wb') as handle:
+        pickle.dump(results_2, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
     max_time = max(
         [max(i) for i in [t for (label, t) in results.items() if "speed" in label]]

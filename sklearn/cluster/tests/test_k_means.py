@@ -995,16 +995,16 @@ def test_euclidean_distance(dtype, squared, global_random_seed):
 
     # create a 2D array because the Cython function requires a 2D
     # input memview with a slice index to select the rows
-    b = rng.randn((1, 100)).astype(dtype, copy=False)
+    b = rng.randn(1, 100).astype(dtype, copy=False)
     b_squared_norm = (b**2).sum(axis=1)
     b_index = 0
 
     expected = ((a_dense - b) ** 2).sum()
     expected = expected if squared else np.sqrt(expected)
 
-    distance_dense_dense = _euclidean_dense_dense_wrapper(a_dense, b, squared)
+    distance_dense_dense = _euclidean_dense_dense_wrapper(a_dense, b[b_index], squared)
     distance_sparse_dense = _euclidean_sparse_dense_wrapper(
-        a_sparse.data, a_sparse.indices, b, b_squared_norm, b_index, squared
+        a_sparse.data, a_sparse.indices, a_sparse.indptr, 0, b, b_squared_norm, b_index, squared
     )
 
     rtol = 1e-4 if dtype == np.float32 else 1e-7
