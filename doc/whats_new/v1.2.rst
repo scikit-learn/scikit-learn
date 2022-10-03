@@ -97,7 +97,7 @@ Changelog
 :mod:`sklearn.base`
 ...................
 - |Feature| A `__sklearn_clone__` protocol is now available to override the
-  default behavior of :func:`base.clone`. :pr:`xxxxx` by `Thomas Fan`_.
+  default behavior of :func:`base.clone`. :pr:`24568` by `Thomas Fan`_.
 
 :mod:`sklearn.calibration`
 ..........................
