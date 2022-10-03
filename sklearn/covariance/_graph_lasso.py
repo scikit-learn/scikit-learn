@@ -10,7 +10,6 @@ import operator
 import sys
 import time
 
-from collections.abc import Iterable
 from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
@@ -25,7 +24,7 @@ from ..utils.validation import (
     check_scalar,
 )
 from ..utils.fixes import delayed
-from ..utils._param_validation import HasMethods, Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from ..linear_model import _cd_fast as cd_fast  # type: ignore
@@ -341,7 +340,7 @@ def graphical_lasso(
 
 
 class BaseGraphicalLasso(EmpiricalCovariance):
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **EmpiricalCovariance._parameter_constraints,
         "tol": [Interval(Real, 0, None, closed="right")],
         "enet_tol": [Interval(Real, 0, None, closed="right")],
@@ -464,7 +463,7 @@ class GraphicalLasso(BaseGraphicalLasso):
     array([0.073, 0.04 , 0.038, 0.143])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseGraphicalLasso._parameter_constraints,
         "alpha": [Interval(Real, 0, None, closed="right")],
     }
@@ -841,16 +840,11 @@ class GraphicalLassoCV(BaseGraphicalLasso):
     array([0.073, 0.04 , 0.038, 0.143])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseGraphicalLasso._parameter_constraints,
         "alphas": [Interval(Integral, 1, None, closed="left"), "array-like"],
         "n_refinements": [Interval(Integral, 1, None, closed="left")],
-        "cv": [
-            Interval(Integral, 2, None, closed="left"),
-            HasMethods(["split", "get_n_splits"]),
-            Iterable,
-            None,
-        ],
+        "cv": ["cv_object"],
         "n_jobs": [Integral, None],
     }
 

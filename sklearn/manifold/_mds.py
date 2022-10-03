@@ -40,6 +40,8 @@ def _smacof_single(
 
     metric : bool, default=True
         Compute metric or nonmetric SMACOF algorithm.
+        When ``False`` (i.e. non-metric MDS), dissimilarities with 0 are considered as
+        missing values.
 
     n_components : int, default=2
         Number of dimensions in which to immerse the dissimilarities. If an
@@ -208,6 +210,8 @@ def smacof(
 
     metric : bool, default=True
         Compute metric or nonmetric SMACOF algorithm.
+        When ``False`` (i.e. non-metric MDS), dissimilarities with 0 are considered as
+        missing values.
 
     n_components : int, default=2
         Number of dimensions in which to immerse the dissimilarities. If an
@@ -376,6 +380,8 @@ class MDS(BaseEstimator):
 
     metric : bool, default=True
         If ``True``, perform metric MDS; otherwise, perform nonmetric MDS.
+        When ``False`` (i.e. non-metric MDS), dissimilarities with 0 are considered as
+        missing values.
 
     n_init : int, default=4
         Number of times the SMACOF algorithm will be run with different
@@ -492,7 +498,7 @@ class MDS(BaseEstimator):
     (100, 2)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "metric": ["boolean"],
         "n_init": [Interval(Integral, 1, None, closed="left")],
@@ -551,7 +557,7 @@ class MDS(BaseEstimator):
         y : Ignored
             Not used, present for API consistency by convention.
 
-        init : ndarray of shape (n_samples,), default=None
+        init : ndarray of shape (n_samples, n_components), default=None
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
@@ -579,7 +585,7 @@ class MDS(BaseEstimator):
         y : Ignored
             Not used, present for API consistency by convention.
 
-        init : ndarray of shape (n_samples,), default=None
+        init : ndarray of shape (n_samples, n_components), default=None
             Starting configuration of the embedding to initialize the SMACOF
             algorithm. By default, the algorithm is initialized with a randomly
             chosen array.
