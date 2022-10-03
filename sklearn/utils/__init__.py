@@ -139,7 +139,8 @@ def safe_mask(X, mask):
 
 
 def axis0_safe_slice(X, mask, len_mask):
-    """
+    """Return a mask which is safer to use on X than safe_mask.
+
     This mask is safer than safe_mask since it returns an
     empty array, when a sparse matrix is sliced with a boolean mask
     with all False, instead of raising an unhelpful error in older
@@ -166,7 +167,8 @@ def axis0_safe_slice(X, mask, len_mask):
 
     Returns
     -------
-        mask
+    mask : ndarray
+        Array that is safe to use on X.
     """
     if len_mask != 0:
         return X[safe_mask(X, mask), :]
