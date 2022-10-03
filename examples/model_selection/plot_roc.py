@@ -8,12 +8,10 @@ metric to evaluate multiclass classifiers quality.
 
 ROC curves typically feature true positive rate (TPR) on the Y axis, and false
 positive rate (FPR) on the X axis. This means that the top left corner of the
-plot is the "ideal" point - a false positive rate of zero, and a true positive
-rate of one. This is not very realistic, but it does mean that a larger area
-under the curve (AUC) is usually better.
-
-The "steepness" of ROC curves is also important, since it is ideal to maximize
-the true positive rate while minimizing the false positive rate.
+plot is the "ideal" point - a FPR of zero, and a TPR of one. This is not very
+realistic, but it does mean that a larger area under the curve (AUC) is usually
+better. The "steepness" of ROC curves is also important, since it is ideal to
+maximize the TPR while minimizing the FPR.
 
 ROC curves are typically used in binary classification, where the TPR and FPR
 can be defined unambiguously. In the case of multiclass classification, a notion
@@ -80,17 +78,16 @@ y_score = classifier.fit(X_train, y_train).predict_proba(X_test)
 # ==========================
 #
 # The One-vs-the-Rest (OvR) multiclass strategy, also known as one-vs-all,
-# consists in computing one ROC curve per class to evaluate the classification
-# scores of one class compared to all the other classification scores predicted
-# by the multiclass classifier.
+# consists in computing a ROC curve per each of the `n_classes`. In each step, a
+# given class is regarded as the positive class and the remaining classes are
+# regarded as the negative class as a bulk.
 #
-# .. note:: One should not confuse the OvR strategy used to apply ROC
-#     **evaluation** to multiclass classifiers with the OvR strategy used to
-#     **train** a multiclass classifier by fitting a set binary classifiers (for
-#     instance via the :class:`~sklearn.multiclass.OneVsRestClassifier`
-#     meta-estimator). The OvR ROC evaluation can be used to evaluate any kind
-#     of classification models irrespectively of how they were trained (see
-#     :ref:`multiclass`).
+# .. note:: One should not confuse the OvR strategy used for the **evaluation**
+#     of multiclass classifiers with the OvR strategy used to **train** a
+#     multiclass classifier by fitting a set of binary classifiers (for instance
+#     via the :class:`~sklearn.multiclass.OneVsRestClassifier` meta-estimator).
+#     The OvR ROC evaluation can be used to evaluate any kind of classification
+#     models irrespectively of how they were trained (see :ref:`multiclass`).
 #
 # In this section we use a :class:`~sklearn.preprocessing.LabelBinarizer` to
 # binarize the target by one-hot-encoding in a OvR fashion. This means that the
@@ -390,7 +387,7 @@ print(f"Macro-averaged One-vs-One ROC AUC score:\n{np.average(pair_scores):.2f}"
 # :class:`~sklearn.metrics.roc_auc_score` function.
 
 macro_roc_auc_ovo = roc_auc_score(
-    y_onehot_test,
+    y_test,
     y_score,
     multi_class="ovo",
     average="macro",
