@@ -1015,7 +1015,7 @@ def is_scalar_nan(x):
 
     Returns
     -------
-    boolean
+    bool
         Returns true if x is NaN, and false otherwise.
 
     Examples
