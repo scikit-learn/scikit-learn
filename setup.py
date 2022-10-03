@@ -21,7 +21,7 @@ try:
     import builtins
 except ImportError:
     # Python 2 compat: just to be able to declare that Python >=3.8 is needed.
-    import __builtin__ as builtins
+    import builtins as builtins
 
 # This is a bit (!) hackish: we are setting a global variable so that the
 # main sklearn __init__ can detect if it is being loaded by the setup
