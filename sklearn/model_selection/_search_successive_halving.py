@@ -220,7 +220,15 @@ class BaseSuccessiveHalving(BaseSearchCV):
         """
         last_iter = np.max(results["iter"])
         last_iter_indices = np.flatnonzero(results["iter"] == last_iter)
-        best_idx = np.nanargmax(results["mean_test_score"][last_iter_indices])
+
+        test_scores = results["mean_test_score"][last_iter_indices]
+        # If all scores are NaNs there is no way to pick between them,
+        # so we (arbitrarily) declare the zero'th entry the best one
+        if np.isnan(test_scores).all():
+            best_idx = 0
+        else:
+            best_idx = np.nanargmax(test_scores)
+
         return last_iter_indices[best_idx]
 
     def fit(self, X, y=None, groups=None, **fit_params):
