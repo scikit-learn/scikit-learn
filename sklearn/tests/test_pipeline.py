@@ -894,24 +894,23 @@ def test_feature_union_parallel():
     assert_array_equal(X_transformed.toarray(), X_transformed_parallel2.toarray())
 
 
-# TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
-@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
-def test_feature_union_feature_names(get_names):
+def test_feature_union_feature_names():
     word_vect = CountVectorizer(analyzer="word")
     char_vect = CountVectorizer(analyzer="char_wb", ngram_range=(3, 3))
     ft = FeatureUnion([("chars", char_vect), ("words", word_vect)])
     ft.fit(JUNK_FOOD_DOCS)
-    feature_names = getattr(ft, get_names)()
+    feature_names = ft.get_feature_names_out()
     for feat in feature_names:
         assert "chars__" in feat or "words__" in feat
     assert len(feature_names) == 35
 
     ft = FeatureUnion([("tr1", Transf())]).fit([[1]])
 
-    msg = re.escape(f"Transformer tr1 (type Transf) does not provide {get_names}")
+    msg = re.escape(
+        "Transformer tr1 (type Transf) does not provide get_feature_names_out"
+    )
     with pytest.raises(AttributeError, match=msg):
-        getattr(ft, get_names)()
+        ft.get_feature_names_out()
 
 
 def test_classes_property():
@@ -930,73 +929,58 @@ def test_classes_property():
     assert_array_equal(clf.classes_, np.unique(y))
 
 
-# TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
-@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
-def test_set_feature_union_steps(get_names):
+def test_set_feature_union_steps():
     mult2 = Mult(2)
     mult3 = Mult(3)
     mult5 = Mult(5)
 
-    if get_names == "get_feature_names":
-        mult3.get_feature_names = lambda: ["x3"]
-        mult2.get_feature_names = lambda: ["x2"]
-        mult5.get_feature_names = lambda: ["x5"]
-    else:  # get_feature_names_out
-        mult3.get_feature_names_out = lambda input_features: ["x3"]
-        mult2.get_feature_names_out = lambda input_features: ["x2"]
-        mult5.get_feature_names_out = lambda input_features: ["x5"]
+    mult3.get_feature_names_out = lambda input_features: ["x3"]
+    mult2.get_feature_names_out = lambda input_features: ["x2"]
+    mult5.get_feature_names_out = lambda input_features: ["x5"]
 
     ft = FeatureUnion([("m2", mult2), ("m3", mult3)])
     assert_array_equal([[2, 3]], ft.transform(np.asarray([[1]])))
-    assert_array_equal(["m2__x2", "m3__x3"], getattr(ft, get_names)())
+    assert_array_equal(["m2__x2", "m3__x3"], ft.get_feature_names_out())
 
     # Directly setting attr
     ft.transformer_list = [("m5", mult5)]
     assert_array_equal([[5]], ft.transform(np.asarray([[1]])))
-    assert_array_equal(["m5__x5"], getattr(ft, get_names)())
+    assert_array_equal(["m5__x5"], ft.get_feature_names_out())
 
     # Using set_params
     ft.set_params(transformer_list=[("mock", mult3)])
     assert_array_equal([[3]], ft.transform(np.asarray([[1]])))
-    assert_array_equal(["mock__x3"], getattr(ft, get_names)())
+    assert_array_equal(["mock__x3"], ft.get_feature_names_out())
 
     # Using set_params to replace single step
     ft.set_params(mock=mult5)
     assert_array_equal([[5]], ft.transform(np.asarray([[1]])))
-    assert_array_equal(["mock__x5"], getattr(ft, get_names)())
+    assert_array_equal(["mock__x5"], ft.get_feature_names_out())
 
 
-# TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
-@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
-def test_set_feature_union_step_drop(get_names):
+def test_set_feature_union_step_drop():
     mult2 = Mult(2)
     mult3 = Mult(3)
 
-    if get_names == "get_feature_names":
-        mult2.get_feature_names = lambda: ["x2"]
-        mult3.get_feature_names = lambda: ["x3"]
-    else:  # get_feature_names_out
-        mult2.get_feature_names_out = lambda input_features: ["x2"]
-        mult3.get_feature_names_out = lambda input_features: ["x3"]
+    mult2.get_feature_names_out = lambda input_features: ["x2"]
+    mult3.get_feature_names_out = lambda input_features: ["x3"]
 
     X = np.asarray([[1]])
 
     ft = FeatureUnion([("m2", mult2), ("m3", mult3)])
     assert_array_equal([[2, 3]], ft.fit(X).transform(X))
     assert_array_equal([[2, 3]], ft.fit_transform(X))
-    assert_array_equal(["m2__x2", "m3__x3"], getattr(ft, get_names)())
+    assert_array_equal(["m2__x2", "m3__x3"], ft.get_feature_names_out())
 
     ft.set_params(m2="drop")
     assert_array_equal([[3]], ft.fit(X).transform(X))
     assert_array_equal([[3]], ft.fit_transform(X))
-    assert_array_equal(["m3__x3"], getattr(ft, get_names)())
+    assert_array_equal(["m3__x3"], ft.get_feature_names_out())
 
     ft.set_params(m3="drop")
     assert_array_equal([[]], ft.fit(X).transform(X))
     assert_array_equal([[]], ft.fit_transform(X))
-    assert_array_equal([], getattr(ft, get_names)())
+    assert_array_equal([], ft.get_feature_names_out())
 
     # check we can change back
     ft.set_params(m3=mult3)
@@ -1006,7 +990,7 @@ def test_set_feature_union_step_drop(get_names):
     ft = FeatureUnion([("m2", "drop"), ("m3", mult3)])
     assert_array_equal([[3]], ft.fit(X).transform(X))
     assert_array_equal([[3]], ft.fit_transform(X))
-    assert_array_equal(["m3__x3"], getattr(ft, get_names)())
+    assert_array_equal(["m3__x3"], ft.get_feature_names_out())
 
 
 def test_set_feature_union_passthrough():
@@ -1537,18 +1521,6 @@ def test_feature_union_warns_unknown_transformer_weight():
     union = FeatureUnion(transformer_list, transformer_weights=weights)
     with pytest.raises(ValueError, match=expected_msg):
         union.fit(X, y)
-
-
-# TODO: Remove in 1.2 when get_feature_names is removed
-def test_feature_union_get_feature_names_deprecated():
-    """Check that get_feature_names is deprecated"""
-    msg = "get_feature_names is deprecated in 1.0"
-    mult2 = Mult(2)
-    mult2.get_feature_names = lambda: ["x2"]
-
-    ft = FeatureUnion([("m2", mult2)])
-    with pytest.warns(FutureWarning, match=msg):
-        ft.get_feature_names()
 
 
 @pytest.mark.parametrize("passthrough", [None, "passthrough"])

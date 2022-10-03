@@ -139,7 +139,8 @@ def safe_mask(X, mask):
 
 
 def axis0_safe_slice(X, mask, len_mask):
-    """
+    """Return a mask which is safer to use on X than safe_mask.
+
     This mask is safer than safe_mask since it returns an
     empty array, when a sparse matrix is sliced with a boolean mask
     with all False, instead of raising an unhelpful error in older
@@ -166,7 +167,8 @@ def axis0_safe_slice(X, mask, len_mask):
 
     Returns
     -------
-        mask
+    mask : ndarray
+        Array that is safe to use on X.
     """
     if len_mask != 0:
         return X[safe_mask(X, mask), :]
@@ -1001,7 +1003,7 @@ def _is_pandas_na(x):
 
 
 def is_scalar_nan(x):
-    """Tests if x is NaN.
+    """Test if x is NaN.
 
     This function is meant to overcome the issue that np.isnan does not allow
     non-numerical types as input, and that np.nan is not float('nan').
@@ -1009,10 +1011,12 @@ def is_scalar_nan(x):
     Parameters
     ----------
     x : any type
+        Any scalar value.
 
     Returns
     -------
-    boolean
+    bool
+        Returns true if x is NaN, and false otherwise.
 
     Examples
     --------
