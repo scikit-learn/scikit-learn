@@ -186,7 +186,7 @@ random sampling procedures.
 - |Fix| :class:`cluster.KMeans` with ``algorithm="elkan"`` and
   ``algorithm="full"``.
 - |Fix| :class:`cluster.Birch`
-- |Fix| :func:`compose.ColumnTransformer.get_feature_names`
+- |Fix| `compose.ColumnTransformer.get_feature_names`
 - |Fix| :func:`compose.ColumnTransformer.fit`
 - |Fix| :func:`datasets.make_multilabel_classification`
 - |Fix| :class:`decomposition.PCA` with `n_components='mle'`
