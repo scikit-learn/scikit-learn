@@ -55,10 +55,32 @@ def _euclidean_dense_dense_wrapper(floating[::1] a, floating[::1] b,
 cdef floating _euclidean_sparse_dense(
         floating[::1] a_data,  # IN
         int[::1] a_indices,    # IN
-        floating[::1] b,       # IN
-        floating b_squared_norm,
+        floating[:, ::1] b_arr,       # IN
+        floating[::1] b_squared_norms,
+        int b_index,
         bint squared) nogil:
-    """Euclidean distance between a sparse and b dense"""
+    """Euclidean distance between a sparse and b dense.
+    
+    Parameters
+    ----------
+    a_data : 1D memview of floating
+        The sparse data.
+    a_indices : 1D memview of int
+        Indices of the sparse data.
+    b_arr : 2D memview of floating of shape (n_samples, n_cols)
+        The dense data.
+    b_squared_norms : 1D memview of floating
+        The squared l2 norms of each row in 'b'.
+    b_index : int
+        The index in the dense data.
+    squared : bint
+        Whether or not to return squared distance, or not.
+
+    Returns
+    -------
+    result : floating
+        The distance between 'a' and 'b'.
+    """
     cdef:
         int nnz = a_indices.shape[0]
         int i
@@ -66,11 +88,11 @@ cdef floating _euclidean_sparse_dense(
         floating result = 0.0
 
     for i in range(nnz):
-        bi = b[a_indices[i]]
+        bi = b_arr[b_index, a_indices[i]]
         tmp = a_data[i] - bi
         result += tmp * tmp - bi * bi
 
-    result += b_squared_norm
+    result += b_squared_norms[b_index]
 
     if result < 0: result = 0.0
 
@@ -82,10 +104,11 @@ def _euclidean_sparse_dense_wrapper(
         int[::1] a_indices,
         floating[::1] b,
         floating b_squared_norm,
+        int b_index,
         bint squared):
     """Wrapper of _euclidean_sparse_dense for testing purpose"""
     return _euclidean_sparse_dense(
-        a_data, a_indices, b, b_squared_norm, squared)
+        a_data, a_indices, b, b_squared_norm, b_index, squared)
 
 
 cpdef floating _inertia_dense(
@@ -155,7 +178,10 @@ cpdef floating _inertia_sparse(
             sq_dist = _euclidean_sparse_dense(
                 X_data[X_indptr[i]: X_indptr[i + 1]],
                 X_indices[X_indptr[i]: X_indptr[i + 1]],
-                centers[j], centers_squared_norms[j], True)
+                centers,
+                centers_squared_norms,
+                j,
+                True)
             inertia += sq_dist * sample_weight[i]
 
     return inertia
@@ -231,7 +257,7 @@ cpdef void _relocate_empty_clusters_sparse(
         distances[i] = _euclidean_sparse_dense(
             X_data[X_indptr[i]: X_indptr[i + 1]],
             X_indices[X_indptr[i]: X_indptr[i + 1]],
-            centers_old[j], centers_squared_norms[j], True)
+            centers_old, centers_squared_norms, j, True)
 
     cdef:
         int[::1] far_from_centers = np.argpartition(distances, -n_empty)[:-n_empty-1:-1].astype(np.int32)
