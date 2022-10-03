@@ -14,7 +14,6 @@ numpydoc_validation = pytest.importorskip("numpydoc.validate")
 FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.extmath.fast_logdet",
     "sklearn.utils.extmath.randomized_svd",
-    "sklearn.utils.extmath.safe_sparse_dot",
     "sklearn.utils.extmath.svd_flip",
     "sklearn.utils.extmath.weighted_mode",
     "sklearn.utils.fixes.delayed",
