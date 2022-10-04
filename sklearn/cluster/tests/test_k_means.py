@@ -1004,7 +1004,15 @@ def test_euclidean_distance(dtype, squared, global_random_seed):
 
     distance_dense_dense = _euclidean_dense_dense_wrapper(a_dense, b[b_index], squared)
     distance_sparse_dense = _euclidean_sparse_dense_wrapper(
-        a_sparse.data, a_sparse.indices, a_sparse.indptr, 0, b, b_squared_norm, b_index, squared
+        a_sparse.data,
+        a_sparse.indices,
+        a_sparse.indptr,
+        0,
+        0,
+        b,
+        b_squared_norm,
+        b_index,
+        squared,
     )
 
     rtol = 1e-4 if dtype == np.float32 else 1e-7

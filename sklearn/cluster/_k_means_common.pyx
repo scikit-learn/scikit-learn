@@ -57,6 +57,7 @@ cdef floating _euclidean_sparse_dense(
         int[::1] a_indices,    # IN
         int[::1] a_indptr,
         int sample_index,
+        int offset,
         floating[:, ::1] b_arr,       # IN
         floating[::1] b_squared_norms,
         int b_index,
@@ -71,12 +72,16 @@ cdef floating _euclidean_sparse_dense(
         Indices of the sparse data.
     a_indptr : 1D memview of int
         Index pointers for sparse data.
+    sample_index : int
+        The sample index (i.e. the index within the indptr of 'a_data').
+    offset : int
+        The offset on the 'a_indices'.
     b_arr : 2D memview of floating of shape (n_samples, n_cols)
         The dense data.
     b_squared_norms : 1D memview of floating
-        The squared l2 norms of each row in 'b'.
+        The squared l2 norms of each row in 'b_arr'.
     b_index : int
-        The index in the dense data.
+        The sample index in the dense data.
     squared : bint
         Whether or not to return squared distance, or not.
 
@@ -86,14 +91,14 @@ cdef floating _euclidean_sparse_dense(
         The distance between 'a' and 'b'.
     """
     cdef:
-        int nnz = a_indices[a_indptr[sample_index]:a_indptr[sample_index + 1]].shape[0]
+        int nnz = a_indices[a_indptr[sample_index] - offset:a_indptr[sample_index + 1] - offset].shape[0]
         int i
         floating tmp, bi
         floating result = 0.0
 
     for i in range(nnz):
-        bi = b_arr[b_index, a_indices[a_indptr[sample_index] + i]]
-        tmp = a_data[a_indptr[sample_index] + i] - bi
+        bi = b_arr[b_index, a_indices[a_indptr[sample_index] - offset + i]]
+        tmp = a_data[a_indptr[sample_index] - offset + i] - bi
         result += tmp * tmp - bi * bi
 
     result += b_squared_norms[b_index]
@@ -108,13 +113,14 @@ def _euclidean_sparse_dense_wrapper(
         int[::1] a_indices,
         int[::1] a_indptr,
         int sample_index,
+        int offset,
         floating[:, ::1] b_arr,
         floating[::1] b_squared_norms,
         int b_index,
         bint squared):
     """Wrapper of _euclidean_sparse_dense for testing purpose"""
     return _euclidean_sparse_dense(
-        a_data, a_indices, a_indptr, sample_index,
+        a_data, a_indices, a_indptr, sample_index, offset,
         b_arr, b_squared_norms, b_index, squared)
 
 
@@ -183,14 +189,8 @@ cpdef floating _inertia_sparse(
         j = labels[i]
         if single_label < 0 or single_label == j:
             sq_dist = _euclidean_sparse_dense(
-                X_data,
-                X_indices,
-                X_indptr,
-                i,
-                centers,
-                centers_squared_norms,
-                j,
-                True)
+                X_data, X_indices, X_indptr, i, 0,
+                centers, centers_squared_norms, j, True)
             inertia += sq_dist * sample_weight[i]
 
     return inertia
@@ -264,10 +264,7 @@ cpdef void _relocate_empty_clusters_sparse(
     for i in range(n_samples):
         j = labels[i]
         distances[i] = _euclidean_sparse_dense(
-                X_data,
-                X_indices,
-                X_indptr,
-                i,
+                X_data, X_indices, X_indptr, i, 0,
                 centers_old, centers_squared_norms, j, True)
 
     cdef:
