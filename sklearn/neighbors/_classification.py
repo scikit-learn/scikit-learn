@@ -19,7 +19,7 @@ from ._base import _get_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import ClassifierMixin
 from ..utils._param_validation import StrOptions
-from sklearn.metrics._pairwise_distances_reduction import PairwiseDistancesArgKminLabels
+from sklearn.metrics._pairwise_distances_reduction import ArgKminLabels
 
 
 class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
@@ -164,7 +164,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     [[0.666... 0.333...]]
     """
 
-    _parameter_constraints = {**NeighborsBase._parameter_constraints}
+    _parameter_constraints: dict = {**NeighborsBase._parameter_constraints}
     _parameter_constraints.pop("radius")
     _parameter_constraints.update(
         {"weights": [StrOptions({"uniform", "distance"}), callable, None]}
@@ -220,7 +220,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
         Parameters
         ----------
-        X : array-like of shape (n_queries, n_features), \
+        X : {array-like, sparse matrix} of shape (n_queries, n_features), \
                 or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 
@@ -230,11 +230,8 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             Class labels for each data sample.
         """
         if self.weights == "uniform":
-            if (
-                self.algorithm == "brute"
-                and PairwiseDistancesArgKminLabels.is_usable_for(
-                    X, self._fit_X, self.metric, validation_params={"labels": self._y}
-                )
+            if self.algorithm == "brute" and ArgKminLabels.is_usable_for(
+                X, self._fit_X, self.metric, validation_params={"labels": self._y}
             ):
                 probabilities = self.predict_proba(X)
                 if self.outputs_2d_:
@@ -283,7 +280,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
         Parameters
         ----------
-        X : array-like of shape (n_queries, n_features), \
+        X : {array-like, sparse matrix} of shape (n_queries, n_features), \
                 or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 
@@ -295,17 +292,14 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             by lexicographic order.
         """
         if self.weights == "uniform":
-            if (
-                self.algorithm == "brute"
-                and PairwiseDistancesArgKminLabels.is_usable_for(
-                    X, self._fit_X, self.metric
-                )
+            if self.algorithm == "brute" and ArgKminLabels.is_usable_for(
+                X, self._fit_X, self.metric
             ):
                 if self.outputs_2d_:
                     probabilities = []
                     for k in range(self._y.shape[1]):
                         probabilities.append(
-                            PairwiseDistancesArgKminLabels.compute(
+                            ArgKminLabels.compute(
                                 X,
                                 self._fit_X,
                                 k=self.n_neighbors,
@@ -316,7 +310,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                             )
                         )
                 else:
-                    probabilities = PairwiseDistancesArgKminLabels.compute(
+                    probabilities = ArgKminLabels.compute(
                         X,
                         self._fit_X,
                         k=self.n_neighbors,
@@ -455,13 +449,6 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    **kwargs : dict
-        Additional keyword arguments passed to the constructor.
-
-        .. deprecated:: 1.0
-            The RadiusNeighborsClassifier class will not longer accept extra
-            keyword parameters in 1.2 since they are unused.
-
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,)
@@ -531,7 +518,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
     [[0.66666667 0.33333333]]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **NeighborsBase._parameter_constraints,
         "weights": [StrOptions({"uniform", "distance"}), callable, None],
         "outlier_label": [Integral, str, "array-like", None],
@@ -550,17 +537,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
         outlier_label=None,
         metric_params=None,
         n_jobs=None,
-        **kwargs,
     ):
-        # TODO: Remove in v1.2
-        if len(kwargs) > 0:
-            warnings.warn(
-                "Passing additional keyword parameters has no effect and is "
-                "deprecated in 1.0. An error will be raised from 1.2 and "
-                "beyond. The ignored keyword parameter(s) are: "
-                f"{kwargs.keys()}.",
-                FutureWarning,
-            )
         super().__init__(
             radius=radius,
             algorithm=algorithm,
@@ -650,7 +627,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
 
         Parameters
         ----------
-        X : array-like of shape (n_queries, n_features), \
+        X : {array-like, sparse matrix} of shape (n_queries, n_features), \
                 or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 
@@ -692,7 +669,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
 
         Parameters
         ----------
-        X : array-like of shape (n_queries, n_features), \
+        X : {array-like, sparse matrix} of shape (n_queries, n_features), \
                 or (n_queries, n_indexed) if metric == 'precomputed'
             Test samples.
 

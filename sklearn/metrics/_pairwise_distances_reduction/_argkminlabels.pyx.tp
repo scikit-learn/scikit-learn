@@ -36,12 +36,12 @@ cpdef enum WeightingStrategy:
     other = 2
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
-from ._argkmin cimport PairwiseDistancesArgKmin{{name_suffix}}
+from ._argkmin cimport ArgKmin{{name_suffix}}
 from ._datasets_pair cimport DatasetsPair{{name_suffix}}
 
-cdef class PairwiseDistancesArgKminLabels{{name_suffix}}(PairwiseDistancesArgKmin{{name_suffix}}):
+cdef class ArgKminLabels{{name_suffix}}(ArgKmin{{name_suffix}}):
     """
-    {{name_suffix}}bit implementation of PairwiseDistancesArgKminLabel.
+    {{name_suffix}}bit implementation of ArgKminLabel.
     """
     cdef:
         const ITYPE_t[:] labels,
@@ -66,7 +66,7 @@ cdef class PairwiseDistancesArgKminLabels{{name_suffix}}(PairwiseDistancesArgKmi
 
         This classmethod is responsible for introspecting the arguments
         values to dispatch to the most appropriate implementation of
-        :class:`PairwiseDistancesArgKmin{{name_suffix}}`.
+        :class:`ArgKmin{{name_suffix}}`.
 
         This allows decoupling the API entirely from the implementation details
         whilst maintaining RAII: all temporarily allocated datastructures necessary
@@ -75,7 +75,7 @@ cdef class PairwiseDistancesArgKminLabels{{name_suffix}}(PairwiseDistancesArgKmi
 
         No instance should directly be created outside of this class method.
         """
-        pda = PairwiseDistancesArgKminLabels{{name_suffix}}(
+        pda = ArgKminLabels{{name_suffix}}(
             datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, metric, metric_kwargs),
             k=k,
             chunk_size=chunk_size,

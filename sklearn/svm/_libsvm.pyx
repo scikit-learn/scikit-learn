@@ -27,7 +27,6 @@ Authors
       Gael Varoquaux <gael.varoquaux@normalesup.org>
 """
 
-import warnings
 import  numpy as np
 cimport numpy as cnp
 from libc.stdlib cimport free
