@@ -232,6 +232,8 @@ cdef class ObliqueTree(Tree):
     cdef int _set_node_values(self, SplitRecord* split_node, Node *node) nogil except -1:
         """Set node data.
         """
+        # Cython type cast split record into its inherited split record
+        # For reference, see: https://www.codementor.io/@arpitbhayani/powering-inheritance-in-c-using-structure-composition-176sygr724
         cdef ObliqueSplitRecord* oblique_split_node = <ObliqueSplitRecord*>(split_node)
         cdef SIZE_t node_id = self.node_count
 
