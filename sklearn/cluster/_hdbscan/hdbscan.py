@@ -103,16 +103,11 @@ def _hdbscan_brute(
         # enables the usage of numpy.inf in the distance
         # matrix to indicate missing distance information.
         distance_matrix = X.copy() if copy else X
-
     else:
         distance_matrix = pairwise_distances(
             X, metric=metric, n_jobs=n_jobs, **metric_params
         )
-    if alpha is not None:
-        if copy:
-            distance_matrix = distance_matrix / alpha
-        else:
-            distance_matrix /= alpha
+    distance_matrix /= alpha
 
     # max_dist is only relevant for sparse and is ignored for dense
     max_dist = metric_params.get("max_dist", 0.0)
@@ -338,11 +333,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         that would overwrite data passed to :term:`fit`, a copy will first be
         made, guaranteeing that the original data will be unchanged. Currently
         this only makes a difference when passing in a dense precomputed
-        distance array (i.e. when `metric="precomputed"`).
-
-        Note that, even if `copy=False`, a copy may still be made during
-        :term:`fit` if conversion of the passed data is necessary. See
-        :func:`~sklearn.utils.validation.check_array` for more details.
+        distance array (i.e. when `metric="precomputed"`) and using the
+        `"brute"` algorithm (see `algorithm` for details).
 
     Attributes
     ----------
