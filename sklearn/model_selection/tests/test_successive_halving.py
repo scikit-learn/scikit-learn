@@ -52,6 +52,96 @@ class FastClassifier(DummyClassifier):
         return params
 
 
+class SometimesFailClassifier(DummyClassifier):
+    def __init__(
+        self,
+        strategy="stratified",
+        random_state=None,
+        constant=None,
+        n_estimators=10,
+        fail_fit=False,
+        fail_predict=False,
+        a=0,
+    ):
+        self.fail_fit = fail_fit
+        self.fail_predict = fail_predict
+        self.n_estimators = n_estimators
+        self.a = a
+
+        super().__init__(
+            strategy=strategy, random_state=random_state, constant=constant
+        )
+
+    def fit(self, X, y):
+        if self.fail_fit:
+            raise Exception("fitting failed")
+        else:
+            super().fit(X, y)
+            return self
+
+    def predict(self, X):
+        if self.fail_predict:
+            raise Exception("predict failed")
+        else:
+            return super().predict(X)
+
+
+@pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
+def test_nan_handling(
+    Est,
+):
+    n_samples = 1000
+    X, y = make_classification(n_samples=n_samples, random_state=0)
+
+    search = Est(
+        SometimesFailClassifier(),
+        {"fail_fit": [False, True], "a": range(3)},
+        resource="n_estimators",
+        max_resources=10,
+        min_resources=1,
+        factor=2,
+    )
+
+    search.fit(X, y)
+
+    # estimators where the fit failed should always rank lower than ones where
+    # the fit succeeded
+    assert search.best_params_["fail_fit"] == False
+    scores = search.cv_results_["mean_test_score"]
+    ranks = search.cv_results_["rank_test_score"]
+
+    # some scores should be NaN
+    assert np.isnan(scores).any()
+    # all NaN scores should have the same rank
+    assert np.unique(ranks[np.isnan(scores)]).shape[0] == 1
+    # NaNs should have the lowest rank
+    assert (np.unique(ranks[np.isnan(scores)])[0] >= ranks).all()
+
+    search = Est(
+        SometimesFailClassifier(),
+        {"fail_predict": [False, True], "a": range(3)},
+        resource="n_estimators",
+        max_resources=10,
+        min_resources=1,
+        factor=2,
+    )
+
+    search.fit(X, y)
+
+    # estimators where the prediction failed should always rank lower than
+    # ones where the prediction succeeded
+    assert search.best_params_["fail_predict"] == False
+    scores = search.cv_results_["mean_test_score"]
+    ranks = search.cv_results_["rank_test_score"]
+
+    # some scores should be NaN
+    assert np.isnan(scores).any()
+    # all NaN scores should have the same rank
+    assert np.unique(ranks[np.isnan(scores)]).shape[0] == 1
+    # NaNs should have the lowest rank
+    assert (np.unique(ranks[np.isnan(scores)])[0] >= ranks).all()
+
+
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
 @pytest.mark.parametrize(
     "aggressive_elimination,"
