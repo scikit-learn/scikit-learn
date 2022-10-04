@@ -101,16 +101,18 @@ if __name__ == "__main__":
     from mpl_toolkits.mplot3d import axes3d  # noqa register the 3d projection
     import matplotlib.pyplot as plt
 
-    samples_range = np.linspace(50, 150, 5).astype(int)
+    samples_range = np.linspace(50, 5000, 10).astype(int)
     features_range = np.linspace(150, 50000, 5).astype(int)
     chunks = np.linspace(500, 10000, 15).astype(int)
 
     results = compute_bench(samples_range, features_range)
-    results_2 = compute_bench_2(chunks)
 
     import pickle
     with open('./pr2_results.pickle', 'wb') as handle:
         pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    import sys
+    sys.exit()
+    results_2 = compute_bench_2(chunks)
     with open('./pr2_results2.pickle', 'wb') as handle:
         pickle.dump(results_2, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
