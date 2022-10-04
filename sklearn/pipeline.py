@@ -316,7 +316,8 @@ class Pipeline(_BaseComposition):
         if step_params and "fit" in method:
             # at least one parameter is passed with the old format, so we fall
             # back to the old routing behavior. We only allow this in "fit",
-            # "fit_transform", and "fit_predict"
+            # "fit_transform", and "fit_predict", since other methods don't
+            # accept extra params at the time of this change.
             warnings.warn(
                 "Passing parameters with the step__parameter format is deprecated and"
                 " their support will be removed in version 1.4. Use metadata routing"
@@ -347,10 +348,13 @@ class Pipeline(_BaseComposition):
             self, method=method, other_params=props, **kwargs
         )
         # now we remove transform routed metadata if
-        # route_metadata_to_transform is not True. This done for backward
+        # route_metadata_to_transform is not True. This is done for backward
         # compatibility, since Pipeline used to not route any metadata to
         # transform.
         warn = []
+        # the user can call transform on the pipeline only if the last step
+        # supports transform, in which case we include the last step in the
+        # iteration here.
         with_final = "transform" in method
         for _, name, _ in self._iter(with_final=with_final, filter_passthrough=True):
             if (
@@ -366,7 +370,7 @@ class Pipeline(_BaseComposition):
             # doesn't accept any metadata, there will be no warnings, which is
             # the majority of the users.
             warnings.warn(
-                f"The steps {' '.join(warn)} in this pipeline have requested metadata"
+                f"The steps {', '.join(warn)} in this pipeline have requested metadata"
                 " which you have provided, but you have not explicitly set the"
                 " `route_metadata_to_transform` for this Pipeline object. To silence"
                 " this warning, either remove the requests from those steps' transform"
@@ -458,7 +462,7 @@ class Pipeline(_BaseComposition):
 
         return self
 
-    def fit_transform(self, X, y=None, **fit_params):
+    def fit_transform(self, X, y=None, **params):
         """Fit the model and transform with the final estimator.
 
         Fits all the transformers one after the other and transform the data.
@@ -474,7 +478,7 @@ class Pipeline(_BaseComposition):
             Training targets. Must fulfill label requirements for all steps of
             the pipeline.
 
-        **fit_params : dict of string -> object
+        **params : dict of string -> object
             Parameters to be passed to steps' methods. If a step supports
             ``fit_transform``, it is called, otherwise ``fit`` and
             ``transform`` are called separately.
@@ -489,7 +493,7 @@ class Pipeline(_BaseComposition):
             Transformed samples.
         """
         fit_params_steps = self._check_method_params(
-            method="fit_transform", props=fit_params
+            method="fit_transform", props=params
         )
         Xt = self._fit(X, y, **fit_params_steps)
 
@@ -543,7 +547,7 @@ class Pipeline(_BaseComposition):
         return self.steps[-1][1].predict(Xt, **routed_params[self.steps[-1][0]].predict)
 
     @available_if(_final_estimator_has("fit_predict"))
-    def fit_predict(self, X, y=None, **fit_params):
+    def fit_predict(self, X, y=None, **params):
         """Transform the data, and apply `fit_predict` with the final estimator.
 
         Call `fit_transform` of each transformer in the pipeline. The
@@ -561,7 +565,7 @@ class Pipeline(_BaseComposition):
             Training targets. Must fulfill label requirements for all steps
             of the pipeline.
 
-        **fit_params : dict of string -> object
+        **params : dict of string -> object
             Parameters to be passed to steps' methods. If a step supports
             ``fit_transform``, it is called, otherwise ``fit`` and
             ``transform`` are called separately. For the last step
@@ -576,9 +580,7 @@ class Pipeline(_BaseComposition):
         y_pred : ndarray
             Result of calling `fit_predict` on the final estimator.
         """
-        fit_params_steps = self._check_method_params(
-            method="fit_predict", props=fit_params
-        )
+        fit_params_steps = self._check_method_params(method="fit_predict", props=params)
         Xt = self._fit(X, y, **fit_params_steps)
 
         fit_params_last_step = fit_params_steps[self.steps[-1][0]]
