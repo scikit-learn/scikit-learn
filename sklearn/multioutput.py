@@ -32,12 +32,12 @@ from .base import (
 )
 from .model_selection import cross_val_predict
 from .utils import _print_elapsed_time, check_random_state
-from .utils._param_validation import HasMethods
 from .utils.fixes import delayed
 from .utils.metadata_routing import MetadataRouter, MethodMapping, process_routing
 from .utils.metaestimators import available_if
 from .utils.multiclass import check_classification_targets
 from .utils.validation import check_is_fitted
+from .utils._param_validation import HasMethods, StrOptions
 
 __all__ = [
     "MultiOutputRegressor",
@@ -580,6 +580,15 @@ def _available_if_base_estimator_has(attr):
 
 
 class _BaseChain(BaseEstimator, metaclass=ABCMeta):
+
+    _parameter_constraints: dict = {
+        "base_estimator": [HasMethods(["fit", "predict"])],
+        "order": ["array-like", StrOptions({"random"}), None],
+        "cv": ["cv_object", StrOptions({"prefit"})],
+        "random_state": ["random_state"],
+        "verbose": ["boolean"],
+    }
+
     def __init__(
         self, base_estimator, *, order=None, cv=None, random_state=None, verbose=False
     ):
@@ -838,6 +847,8 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         self : object
             Class instance.
         """
+        self._validate_params()
+
         super().fit(X, Y)
         self.classes_ = [
             estimator.classes_ for chain_idx, estimator in enumerate(self.estimators_)
@@ -1030,6 +1041,8 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
         self : object
             Returns a fitted instance.
         """
+        self._validate_params()
+
         super().fit(X, Y, **fit_params)
         return self
 

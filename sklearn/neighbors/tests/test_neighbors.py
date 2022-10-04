@@ -728,21 +728,6 @@ def test_radius_neighbors_classifier(
     assert_array_equal(y_pred, y_str[:n_test_pts])
 
 
-# TODO: Remove in v1.2
-def test_radius_neighbors_classifier_kwargs_is_deprecated():
-    extra_kwargs = {
-        "unused_param": "",
-        "extra_param": None,
-    }
-    msg = (
-        "Passing additional keyword parameters has no effect and is deprecated "
-        "in 1.0. An error will be raised from 1.2 and beyond. The ignored "
-        f"keyword parameter(s) are: {extra_kwargs.keys()}."
-    )
-    with pytest.warns(FutureWarning, match=re.escape(msg)):
-        neighbors.RadiusNeighborsClassifier(**extra_kwargs)
-
-
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
 @pytest.mark.parametrize("weights", WEIGHTS)
 @pytest.mark.parametrize("outlier_label", [0, -1, None])
@@ -1654,7 +1639,7 @@ def test_kneighbors_brute_backend(
                     X_test, return_distance=True
                 )
             with config_context(enable_cython_pairwise_dist=True):
-                # Use the PairwiseDistancesReduction as a backend for brute
+                # Use the pairwise-distances reduction backend for brute
                 pdr_brute_dst, pdr_brute_idx = neigh.kneighbors(
                     X_test, return_distance=True
                 )
@@ -2184,7 +2169,7 @@ def test_radius_neighbors_brute_backend(
                     X_test, return_distance=True
                 )
             with config_context(enable_cython_pairwise_dist=True):
-                # Use the PairwiseDistancesReduction as a backend for brute
+                # Use the pairwise-distances reduction backend for brute
                 pdr_brute_dst, pdr_brute_idx = neigh.radius_neighbors(
                     X_test, return_distance=True
                 )

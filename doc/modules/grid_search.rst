@@ -77,7 +77,7 @@ evaluated and the best combination is retained.
     - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py` for an example of
       Grid Search computation on the digits dataset.
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py` for an example
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py` for an example
       of Grid Search coupling parameters from a text documents feature
       extractor (n-gram count vectorizer and TF-IDF transformer) with a
       classifier (here a linear SVM trained with SGD with either elastic

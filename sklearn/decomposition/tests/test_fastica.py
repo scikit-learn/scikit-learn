@@ -157,7 +157,9 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
     assert sources.shape == (1000, 2)
 
     assert_allclose(sources_fun, sources)
-    assert_allclose(sources, ica.transform(m.T))
+    # the debian 32 bit build with global dtype float32 needs an atol to pass
+    atol = 1e-7 if global_dtype == np.float32 else 0
+    assert_allclose(sources, ica.transform(m.T), atol=atol)
 
     assert ica.mixing_.shape == (2, 2)
 

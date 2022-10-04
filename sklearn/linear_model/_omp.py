@@ -507,10 +507,12 @@ def orthogonal_mp_gram(
 
     See Also
     --------
-    OrthogonalMatchingPursuit
-    orthogonal_mp
-    lars_path
-    sklearn.decomposition.sparse_encode
+    OrthogonalMatchingPursuit : Orthogonal Matching Pursuit model (OMP).
+    orthogonal_mp : Solves n_targets Orthogonal Matching Pursuit problems.
+    lars_path : Compute Least Angle Regression or Lasso path using
+        LARS algorithm.
+    sklearn.decomposition.sparse_encode : Generic sparse coding.
+        Each column of the result is the solution to a Lasso problem.
 
     Notes
     -----
@@ -523,7 +525,6 @@ def orthogonal_mp_gram(
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
     https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
-
     """
     Gram = check_array(Gram, order="F", copy=copy_Gram)
     Xy = np.asarray(Xy)
@@ -691,7 +692,7 @@ class OrthogonalMatchingPursuit(MultiOutputMixin, RegressorMixin, LinearModel):
     array([-78.3854...])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
         "tol": [Interval(Real, 0, None, closed="left"), None],
         "fit_intercept": ["boolean"],
@@ -998,7 +999,7 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
     array([-78.3854...])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "copy": ["boolean"],
         "fit_intercept": ["boolean"],
         "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],

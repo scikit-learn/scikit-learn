@@ -31,3 +31,4 @@ User Guide
    computing.rst
    model_persistence.rst
    common_pitfalls.rst
+   dispatching.rst
