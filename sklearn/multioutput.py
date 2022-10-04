@@ -721,28 +721,6 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         return Y_pred
 
-    def get_metadata_routing(self):
-        """Get metadata routing of this object.
-
-        Please check :ref:`User Guide <metadata_routing>` on how the routing
-        mechanism works.
-
-        Returns
-        -------
-        routing : MetadataRouter
-            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
-            routing information.
-        """
-        router = (
-            MetadataRouter(owner=self.__class__.__name__)
-            .add(
-                estimator=self.base_estimator,
-                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
-            )
-            .warn_on(child="estimator", method="fit", params=None)
-        )
-        return router
-
 
 class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
     """A multi-label model that arranges binary classifiers into a chain.
@@ -953,6 +931,24 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
 
         return Y_decision
 
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__).add(
+            estimator=self.base_estimator,
+            method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+        )
+        return router
+
     def _more_tags(self):
         return {"_skip_test": True, "multioutput_only": True}
 
@@ -1079,6 +1075,28 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
         super().fit(X, Y, **fit_params)
         return self
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = (
+            MetadataRouter(owner=self.__class__.__name__)
+            .add(
+                estimator=self.base_estimator,
+                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            )
+            .warn_on(child="estimator", method="fit", params=None)
+        )
+        return router
 
     def _more_tags(self):
         return {"multioutput_only": True}

@@ -193,7 +193,7 @@ METAESTIMATORS = [
         "X": X,
         "y": y_multi,
         "routing_methods": ["fit"],
-        "warns_on": {"fit": ["sample_weight", "metadata"]},
+        "warns_on": {},
     },
     {
         "metaestimator": RegressorChain,
