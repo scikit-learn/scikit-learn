@@ -127,6 +127,17 @@ to support Pandas categorical types. Restricting input to homogeneous
 types therefore reduces maintenance cost and encourages usage of efficient
 data structures.
 
+Note however that :class:`~sklearn.compose.ColumnTransformer` makes it
+convenient to handle heterogeneous pandas dataframes by mapping homogeneous subsets of
+dataframe columns selected by name or dtype to dedicated scikit-learn transformers.
+
+Therefore :class:`~sklearn.compose.ColumnTransformer` are often used in the first
+step of scikit-learn pipelines when dealing
+with heterogeneous dataframes (see :ref:`pipeline` for more details).
+
+See also :ref:`sphx_glr_auto_examples_compose_plot_column_transformer_mixed_types.py`
+for an example of working with heterogeneous (e.g. categorical and numeric) data.
+
 Do you plan to implement transform for target y in a pipeline?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Currently transform only works for features X in a pipeline.
