@@ -494,7 +494,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # Collect newly grown trees
             self.estimators_.extend(trees)
 
-        if self.oob_score:
+        # Only perform OOB computation again if there are newly grown trees or
+        # if it was not previously calculated due to oob_score parameter being False
+        if self.oob_score and (
+            n_more_estimators > 0 or not hasattr(self, "oob_score_")
+        ):
             y_type = type_of_target(y)
             if y_type in ("multiclass-multioutput", "unknown"):
                 # FIXME: we could consider to support multiclass-multioutput if
@@ -1217,7 +1221,8 @@ class RandomForestClassifier(ForestClassifier):
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
-        new forest. See :term:`the Glossary <warm_start>`.
+        new forest. See :term:`Glossary <warm_start>` and
+        :ref:`gradient_boosting_warm_start` for details.
 
     class_weight : {"balanced", "balanced_subsample"}, dict or list of dicts, \
             default=None
@@ -1593,7 +1598,8 @@ class RandomForestRegressor(ForestRegressor):
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
-        new forest. See :term:`the Glossary <warm_start>`.
+        new forest. See :term:`Glossary <warm_start>` and
+        :ref:`gradient_boosting_warm_start` for details.
 
     ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
@@ -1914,7 +1920,8 @@ class ExtraTreesClassifier(ForestClassifier):
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
-        new forest. See :term:`the Glossary <warm_start>`.
+        new forest. See :term:`Glossary <warm_start>` and
+        :ref:`gradient_boosting_warm_start` for details.
 
     class_weight : {"balanced", "balanced_subsample"}, dict or list of dicts, \
             default=None
@@ -2281,7 +2288,8 @@ class ExtraTreesRegressor(ForestRegressor):
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
-        new forest. See :term:`the Glossary <warm_start>`.
+        new forest. See :term:`Glossary <warm_start>` and
+        :ref:`gradient_boosting_warm_start` for details.
 
     ccp_alpha : non-negative float, default=0.0
         Complexity parameter used for Minimal Cost-Complexity Pruning. The
@@ -2556,7 +2564,8 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble, otherwise, just fit a whole
-        new forest. See :term:`the Glossary <warm_start>`.
+        new forest. See :term:`Glossary <warm_start>` and
+        :ref:`gradient_boosting_warm_start` for details.
 
     Attributes
     ----------
