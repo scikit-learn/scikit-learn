@@ -1,7 +1,5 @@
 from types import MethodType
-import warnings
 from functools import wraps
-from operator import attrgetter
 from functools import update_wrapper
 
 
@@ -81,74 +79,3 @@ def available_if(check):
     Hello
     """
     return lambda fn: _AvailableIfDescriptor(fn, check, attribute_name=fn.__name__)
-
-
-# TODO(1.3) remove
-class _IffHasAttrDescriptor(_AvailableIfDescriptor):
-    """Implements a conditional property using the descriptor protocol.
-
-    Using this class to create a decorator will raise an ``AttributeError``
-    if none of the delegates (specified in ``delegate_names``) is an attribute
-    of the base object or the first found delegate does not have an attribute
-    ``attribute_name``.
-
-    This allows ducktyping of the decorated method based on
-    ``delegate.attribute_name``. Here ``delegate`` is the first item in
-    ``delegate_names`` for which ``hasattr(object, delegate) is True``.
-
-    See https://docs.python.org/3/howto/descriptor.html for an explanation of
-    descriptors.
-    """
-
-    def __init__(self, fn, delegate_names, attribute_name):
-        super().__init__(fn, self._check, attribute_name)
-        self.delegate_names = delegate_names
-
-    def _check(self, obj):
-        warnings.warn(
-            "if_delegate_has_method was deprecated in version 1.1 and will be "
-            "removed in version 1.3. Use available_if instead.",
-            FutureWarning,
-        )
-
-        delegate = None
-        for delegate_name in self.delegate_names:
-            try:
-                delegate = attrgetter(delegate_name)(obj)
-                break
-            except AttributeError:
-                continue
-
-        if delegate is None:
-            return False
-        # raise original AttributeError
-        getattr(delegate, self.attribute_name)
-
-        return True
-
-
-# TODO(1.3) remove
-def if_delegate_has_method(delegate):
-    """Create a decorator for methods that are delegated to a sub-estimator
-
-    This enables ducktyping by hasattr returning True according to the
-    sub-estimator.
-
-    .. deprecated:: 1.3
-        `if_delegate_has_method` is deprecated in version 1.1 and will be removed in
-        version 1.3. Use `available_if` instead.
-
-    Parameters
-    ----------
-    delegate : str, list of str or tuple of str
-        Name of the sub-estimator that can be accessed as an attribute of the
-        base object. If a list or a tuple of names are provided, the first
-        sub-estimator that is an attribute of the base object will be used.
-
-    """
-    if isinstance(delegate, list):
-        delegate = tuple(delegate)
-    if not isinstance(delegate, tuple):
-        delegate = (delegate,)
-
-    return lambda fn: _IffHasAttrDescriptor(fn, delegate, attribute_name=fn.__name__)
