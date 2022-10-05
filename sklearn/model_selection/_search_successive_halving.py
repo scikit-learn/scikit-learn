@@ -667,6 +667,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     The parameters selected are those that maximize the score of the held-out
     data, according to the scoring parameter.
 
+    All parameter combinations scored with a NaN will share the lowest rank.
+
     Examples
     --------
 
@@ -1003,6 +1005,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     -----
     The parameters selected are those that maximize the score of the held-out
     data, according to the scoring parameter.
+
+    All parameter combinations scored with a NaN will share the lowest rank.
 
     Examples
     --------

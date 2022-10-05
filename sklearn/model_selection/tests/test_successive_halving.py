@@ -87,15 +87,17 @@ class SometimesFailClassifier(DummyClassifier):
 
 
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
+@pytest.mark.parametrize("fail_at", ("fit", "predict"))
 def test_nan_handling(
     Est,
+    fail_at,
 ):
     n_samples = 1000
     X, y = make_classification(n_samples=n_samples, random_state=0)
 
     search = Est(
         SometimesFailClassifier(),
-        {"fail_fit": [False, True], "a": range(3)},
+        {f"fail_{fail_at}": [False, True], "a": range(3)},
         resource="n_estimators",
         max_resources=10,
         min_resources=1,
@@ -104,33 +106,9 @@ def test_nan_handling(
 
     search.fit(X, y)
 
-    # estimators where the fit failed should always rank lower than ones where
-    # the fit succeeded
-    assert search.best_params_["fail_fit"] == False
-    scores = search.cv_results_["mean_test_score"]
-    ranks = search.cv_results_["rank_test_score"]
-
-    # some scores should be NaN
-    assert np.isnan(scores).any()
-    # all NaN scores should have the same rank
-    assert np.unique(ranks[np.isnan(scores)]).shape[0] == 1
-    # NaNs should have the lowest rank
-    assert (np.unique(ranks[np.isnan(scores)])[0] >= ranks).all()
-
-    search = Est(
-        SometimesFailClassifier(),
-        {"fail_predict": [False, True], "a": range(3)},
-        resource="n_estimators",
-        max_resources=10,
-        min_resources=1,
-        factor=2,
-    )
-
-    search.fit(X, y)
-
-    # estimators where the prediction failed should always rank lower than
-    # ones where the prediction succeeded
-    assert search.best_params_["fail_predict"] == False
+    # estimators that failed during fit/predict should always rank lower
+    # than ones where the fit/predict succeeded
+    assert search.best_params_[f"fail_{fail_at}"] == False
     scores = search.cv_results_["mean_test_score"]
     ranks = search.cv_results_["rank_test_score"]
 
