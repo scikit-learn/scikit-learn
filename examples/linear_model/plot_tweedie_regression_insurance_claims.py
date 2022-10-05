@@ -284,7 +284,7 @@ df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=0)
 #
 # Let us keep in mind that despite the seemingly large number of data points in
 # this dataset, the number of evaluation points where the claim amount is
-# non-zero is comparatively quite small:
+# non-zero is quite small:
 len(df_test)
 
 # %%
@@ -292,12 +292,13 @@ len(df_test[df_test["ClaimAmount"] > 0])
 
 # %%
 #
-# As a consequence we can expect some significant variability in our
-# evaluations upon random resampling for the train test split.
+# As a consequence, we expect a significant variability in our
+# evaluation upon random resampling of the train test split.
 #
 # The parameters of the model are estimated by minimizing the Poisson deviance
-# on the training set via a Newton solver. Some of the features are collinear,
-# we use a weak penalization to avoid numerical issues.
+# on the training set via a Newton solver. Some of the features are collinear
+# (e.g. because we did not drop any categorical level in the `OneHotEncoder`),
+# we use a weak L2 penalization to avoid numerical issues.
 glm_freq = PoissonRegressor(alpha=1e-4, solver="newton-cholesky")
 glm_freq.fit(X_train, df_train["Frequency"], sample_weight=df_train["Exposure"])
 
@@ -315,10 +316,10 @@ print(scores)
 
 # %%
 #
-# Note that the score measured on the test set is surprisingly better than a
-# training set. This might be specific to this random split. Proper
-# cross-validation is needed to assess how (un)stable our evaluation is under
-# resampling.
+# Note that the score measured on the test set is surprisingly better than on
+# the training set. This might be specific to this random train-test split.
+# Proper cross-validation could help us to assess the sampling variability of
+# these results.
 #
 # We can visually compare observed and predicted values, aggregated by the
 # drivers age (``DrivAge``), vehicle age (``VehAge``) and the insurance
@@ -421,9 +422,10 @@ print(scores)
 
 # %%
 #
-# Those metrics are not necessarily easy to interpret. It can be useful to
-# constrast those values to a model that does not use the input features and
-# only predict the average claim amount in the same setting:
+# Those metric values are not necessarily easy to interpret. It can be
+# insightful to compare them with a model that does not use any input
+# features and always predicts a constant value, i.e. the average claim
+# amount, in the same setting:
 
 from sklearn.dummy import DummyRegressor
 
@@ -448,13 +450,14 @@ print(scores)
 
 # %%
 #
-# We can conlude the claim amount is very challenging to predict, still the
+# We conlude that the claim amount is very challenging to predict. Still, the
 # Gamma regressor is able to leverage some information from the input features
 # to slighly improve upon the mean baseline in terms of D².
 #
 # Note that the resulting model is the average claim amount per claim. As such,
 # it is conditional on having at least one claim, and cannot be used to predict
-# the average claim amount per policy in general.
+# the average claim amount per policy. For this, it needs to be combined with
+# a claims frequency model.
 
 print(
     "Mean AvgClaim Amount per policy:              %.2f "
