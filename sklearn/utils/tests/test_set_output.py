@@ -87,7 +87,7 @@ def test__safe_set_output():
     config = _get_output_config("transform", est)
     assert config["dense"] == "default"
 
-    # transform is None is a noop, so the config remains "default"
+    # transform is None is a no-op, so the config remains "default"
     _safe_set_output(est, transform=None)
     config = _get_output_config("transform", est)
     assert config["dense"] == "default"
@@ -123,7 +123,7 @@ def test_set_output_method():
     X = np.asarray([[1, 0, 3], [0, 0, 1]])
     est = EstimatorWithSetOutput().fit(X)
 
-    # transform=None is a noop
+    # transform=None is a no-op
     est2 = est.set_output(transform=None)
     assert est2 is est
     X_trans_np = est2.transform(X)

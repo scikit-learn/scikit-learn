@@ -333,7 +333,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         if transform == "pandas" and self.feature_names_out is None:
             warnings.warn(
-                'With transform="pandas" `func` should return a DataFrame to follow'
+                'With transform="pandas", `func` should return a DataFrame to follow'
                 " the set_output API."
             )
 

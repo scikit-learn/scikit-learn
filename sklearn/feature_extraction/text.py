@@ -568,7 +568,7 @@ class _VectorizerMixin:
 
 
 class HashingVectorizer(
-    TransformerMixin, _VectorizerMixin, BaseEstimator, auto_wrap_output=False
+    TransformerMixin, _VectorizerMixin, BaseEstimator, auto_wrap_output_keys=None
 ):
     r"""Convert a collection of text documents to a matrix of token occurrences.
 

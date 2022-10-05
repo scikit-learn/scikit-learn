@@ -18,7 +18,7 @@ def _wrap_in_pandas_container(
     Parameters
     ----------
     data_to_wrap : {ndarray, dataframe}
-        Container to name.
+        Data to be wrapped as pandas dataframe.
 
     columns : callable, ndarray, or None
         The column names or a callable that returns the column names. The
@@ -36,7 +36,7 @@ def _wrap_in_pandas_container(
         Container with column names or unchanged `output`.
     """
     if issparse(data_to_wrap):
-        raise ValueError("Pandas output does not support sparse data")
+        raise ValueError("Pandas output does not support sparse data.")
 
     if callable(columns):
         columns = columns()
@@ -54,12 +54,12 @@ def _wrap_in_pandas_container(
 
 
 def _get_output_config(method, estimator=None):
-    """Get output configure based on estimator and global configuration.
+    """Get output config based on estimator and global configuration.
 
     Parameters
     ----------
     method : {"transform"}
-        Estimator's method to get container output for.
+        Estimator's method for which the output container is looked up.
 
     estimator : estimator instance or None
         Estimator to get the output configuration from. If `None`, check global
@@ -146,7 +146,7 @@ def _wrap_method_output(f, method):
 def _auto_wrap_is_configured(estimator):
     """Return True if estimator is configured for auto-wrapping the transform method.
 
-    `_SetOutputMixin` sets `_sklearn_auto_wrap_output_keys` to set() if auto wrapping is
+    `_SetOutputMixin` sets `_sklearn_auto_wrap_output_keys` to `set()` if auto wrapping is
     manually disabled.
     """
     auto_wrap_output_keys = getattr(estimator, "_sklearn_auto_wrap_output_keys", set())

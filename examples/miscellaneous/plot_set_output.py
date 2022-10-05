@@ -59,7 +59,7 @@ clf.set_output(transform="pandas")
 clf.fit(X_train, y_train)
 
 # %%
-# Each transformer in the pipeline are configured to return DataFrames. This
+# Each transformer in the pipeline is configured to return DataFrames. This
 # means that the final logistic regression step contain the feature names.
 clf[-1].feature_names_in_
 
@@ -101,7 +101,7 @@ clf.score(X_test, y_test)
 
 # %%
 # With the global configuration, all transformers output DataFrames. This allows us to
-# easily plot the logistic regression coefficients with the feature namesa.
+# easily plot the logistic regression coefficients with the corresponding feature names.
 import pandas as pd
 
 log_reg = clf[-1]

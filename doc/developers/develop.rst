@@ -645,7 +645,7 @@ With
 scikit-learn introduces the `set_output` API for configuring transformers to output
 pandas DataFrames. The `set_output` API is automatically defined if the transformer
 defines :term:`get_feature_names_out` and subclasses :class:`base.TransformerMixin`.
-:term:`get_feature_names_out` is used to get the column names for pandas output. You
+:term:`get_feature_names_out` is used to get the column names of pandas output. You
 can opt-out of the `set_output` API by setting `auto_wrap_output_keys=None` when defining
 a custom subclass::
 
