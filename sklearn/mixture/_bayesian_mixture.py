@@ -342,7 +342,7 @@ class BayesianGaussianMixture(BaseMixture):
     array([0, 1])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseMixture._parameter_constraints,
         "covariance_type": [StrOptions({"spherical", "tied", "diag", "full"})],
         "weight_concentration_prior_type": [

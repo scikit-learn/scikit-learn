@@ -155,7 +155,7 @@ class TruncatedSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
     [35.2410...  4.5981...   4.5420...  4.4486...  4.3288...]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "algorithm": [StrOptions({"arpack", "randomized"})],
         "n_iter": [Interval(Integral, 0, None, closed="left")],

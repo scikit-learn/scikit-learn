@@ -13,6 +13,7 @@ _global_config = {
         os.environ.get("SKLEARN_PAIRWISE_DIST_CHUNK_SIZE", 256)
     ),
     "enable_cython_pairwise_dist": True,
+    "array_api_dispatch": False,
 }
 _threadlocal = threading.local()
 
@@ -50,6 +51,7 @@ def set_config(
     display=None,
     pairwise_dist_chunk_size=None,
     enable_cython_pairwise_dist=None,
+    array_api_dispatch=None,
 ):
     """Set global scikit-learn configuration
 
@@ -90,8 +92,9 @@ def set_config(
         .. versionadded:: 0.23
 
     pairwise_dist_chunk_size : int, default=None
-        The number of row vectors per chunk for PairwiseDistancesReduction.
-        Default is 256 (suitable for most of modern laptops' caches and architectures).
+        The number of row vectors per chunk for the accelerated pairwise-
+        distances reduction backend. Default is 256 (suitable for most of
+        modern laptops' caches and architectures).
 
         Intended for easier benchmarking and testing of scikit-learn internals.
         End users are not expected to benefit from customizing this configuration
@@ -100,14 +103,22 @@ def set_config(
         .. versionadded:: 1.1
 
     enable_cython_pairwise_dist : bool, default=None
-        Use PairwiseDistancesReduction when possible.
-        Default is True.
+        Use the accelerated pairwise-distances reduction backend when
+        possible. Global default: True.
 
         Intended for easier benchmarking and testing of scikit-learn internals.
         End users are not expected to benefit from customizing this configuration
         setting.
 
         .. versionadded:: 1.1
+
+    array_api_dispatch : bool, default=None
+        Use Array API dispatching when inputs follow the Array API standard.
+        Default is False.
+
+        See the :ref:`User Guide <array_api>` for more details.
+
+        .. versionadded:: 1.2
 
     See Also
     --------
@@ -128,6 +139,8 @@ def set_config(
         local_config["pairwise_dist_chunk_size"] = pairwise_dist_chunk_size
     if enable_cython_pairwise_dist is not None:
         local_config["enable_cython_pairwise_dist"] = enable_cython_pairwise_dist
+    if array_api_dispatch is not None:
+        local_config["array_api_dispatch"] = array_api_dispatch
 
 
 @contextmanager
@@ -139,6 +152,7 @@ def config_context(
     display=None,
     pairwise_dist_chunk_size=None,
     enable_cython_pairwise_dist=None,
+    array_api_dispatch=None,
 ):
     """Context manager for global scikit-learn configuration.
 
@@ -178,8 +192,9 @@ def config_context(
         .. versionadded:: 0.23
 
     pairwise_dist_chunk_size : int, default=None
-        The number of vectors per chunk for PairwiseDistancesReduction.
-        Default is 256 (suitable for most of modern laptops' caches and architectures).
+        The number of row vectors per chunk for the accelerated pairwise-
+        distances reduction backend. Default is 256 (suitable for most of
+        modern laptops' caches and architectures).
 
         Intended for easier benchmarking and testing of scikit-learn internals.
         End users are not expected to benefit from customizing this configuration
@@ -188,14 +203,22 @@ def config_context(
         .. versionadded:: 1.1
 
     enable_cython_pairwise_dist : bool, default=None
-        Use PairwiseDistancesReduction when possible.
-        Default is True.
+        Use the accelerated pairwise-distances reduction backend when
+        possible. Global default: True.
 
         Intended for easier benchmarking and testing of scikit-learn internals.
         End users are not expected to benefit from customizing this configuration
         setting.
 
         .. versionadded:: 1.1
+
+    array_api_dispatch : bool, default=None
+        Use Array API dispatching when inputs follow the Array API standard.
+        Default is False.
+
+        See the :ref:`User Guide <array_api>` for more details.
+
+        .. versionadded:: 1.2
 
     Yields
     ------
@@ -232,6 +255,7 @@ def config_context(
         display=display,
         pairwise_dist_chunk_size=pairwise_dist_chunk_size,
         enable_cython_pairwise_dist=enable_cython_pairwise_dist,
+        array_api_dispatch=array_api_dispatch,
     )
 
     try:
