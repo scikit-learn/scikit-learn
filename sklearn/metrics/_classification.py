@@ -28,6 +28,7 @@ import numpy as np
 
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
+from scipy.special import xlogy
 
 from ..preprocessing import LabelBinarizer
 from ..preprocessing import LabelEncoder
@@ -2629,8 +2630,9 @@ def log_loss(
             )
 
     # Renormalize
-    y_pred /= y_pred.sum(axis=1)[:, np.newaxis]
-    loss = -(transformed_labels * np.log(y_pred)).sum(axis=1)
+    y_pred_sum = y_pred.sum(axis=1)
+    y_pred = y_pred / y_pred_sum[:, np.newaxis]
+    loss = -xlogy(transformed_labels, y_pred).sum(axis=1)
 
     return _weighted_sum(loss, sample_weight, normalize)
 
@@ -2788,7 +2790,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     takes on a value between zero and one, since this is the largest
     possible difference between a predicted probability (which must be
     between zero and one) and the actual outcome (which can take on values
-    of only 0 and 1). It can be decomposed is the sum of refinement loss and
+    of only 0 and 1). It can be decomposed as the sum of refinement loss and
     calibration loss.
 
     The Brier score is appropriate for binary and categorical outcomes that

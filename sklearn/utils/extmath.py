@@ -20,6 +20,7 @@ from . import check_random_state
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
+from ._array_api import get_namespace
 
 
 def squared_norm(x):
@@ -30,6 +31,7 @@ def squared_norm(x):
     Parameters
     ----------
     x : array-like
+        The input array which could be either be a vector or a 2 dimensional array.
 
     Returns
     -------
@@ -103,6 +105,8 @@ def density(w, **kwargs):
     ----------
     w : array-like
         The sparse vector.
+    **kwargs : keyword arguments
+        Ignored.
 
     Returns
     -------
@@ -830,12 +834,20 @@ def softmax(X, copy=True):
     out : ndarray of shape (M, N)
         Softmax function evaluated at every point in x.
     """
+    xp, is_array_api = get_namespace(X)
     if copy:
-        X = np.copy(X)
-    max_prob = np.max(X, axis=1).reshape((-1, 1))
+        X = xp.asarray(X, copy=True)
+    max_prob = xp.reshape(xp.max(X, axis=1), (-1, 1))
     X -= max_prob
-    np.exp(X, X)
-    sum_prob = np.sum(X, axis=1).reshape((-1, 1))
+
+    if xp.__name__ in {"numpy", "numpy.array_api"}:
+        # optimization for NumPy arrays
+        np.exp(X, out=np.asarray(X))
+    else:
+        # array_api does not have `out=`
+        X = xp.exp(X)
+
+    sum_prob = xp.reshape(xp.sum(X, axis=1), (-1, 1))
     X /= sum_prob
     return X
 
@@ -1057,6 +1069,9 @@ def _deterministic_vector_sign_flip(u):
 def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     """Use high precision for cumsum and check that final value matches sum.
 
+    Warns if the final cumulative sum does not match the sum (up to the chosen
+    tolerance).
+
     Parameters
     ----------
     arr : array-like
@@ -1068,6 +1083,11 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
         Relative tolerance, see ``np.allclose``.
     atol : float, default=1e-08
         Absolute tolerance, see ``np.allclose``.
+
+    Returns
+    -------
+    out : ndarray
+        Array with the cumulative sums along the chosen axis.
     """
     out = np.cumsum(arr, axis=axis, dtype=np.float64)
     expected = np.sum(arr, axis=axis, dtype=np.float64)
