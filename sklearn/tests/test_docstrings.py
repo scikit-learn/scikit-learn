@@ -18,7 +18,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.extmath.svd_flip",
     "sklearn.utils.extmath.weighted_mode",
     "sklearn.utils.fixes.delayed",
-    "sklearn.utils.fixes.linspace",
     # To be fixed in upstream issue:
     # https://github.com/joblib/threadpoolctl/issues/108
     "sklearn.utils.fixes.threadpool_info",
