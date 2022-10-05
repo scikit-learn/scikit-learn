@@ -28,9 +28,6 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
 
-      - name: Setup Python
-        uses: actions/setup-python@v4
-
       - name: Build documentation
         run: bash build_tools/github/build_doc.sh
         env:
@@ -62,9 +59,6 @@ jobs:
           # needed by build_doc.sh to compute the list of changed doc files:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Setup Python
-        uses: actions/setup-python@v4
 
       - name: Build documentation
         run: bash build_tools/github/build_doc.sh
