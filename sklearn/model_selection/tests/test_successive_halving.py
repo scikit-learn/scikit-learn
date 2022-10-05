@@ -75,15 +75,12 @@ class SometimesFailClassifier(DummyClassifier):
     def fit(self, X, y):
         if self.fail_fit:
             raise Exception("fitting failed")
-        else:
-            super().fit(X, y)
-            return self
+        return super().fit(X, y)
 
     def predict(self, X):
         if self.fail_predict:
             raise Exception("predict failed")
-        else:
-            return super().predict(X)
+        return super().predict(X)
 
 
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
