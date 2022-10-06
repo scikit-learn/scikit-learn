@@ -4,7 +4,7 @@ Multiclass Receiver Operating Characteristic (ROC)
 ==================================================
 
 This example describes the use of the Receiver Operating Characteristic (ROC)
-metric to evaluate multiclass classifiers quality.
+metric to evaluate the quality of multiclass classifiers.
 
 ROC curves typically feature true positive rate (TPR) on the Y axis, and false
 positive rate (FPR) on the X axis. This means that the top left corner of the
@@ -15,8 +15,8 @@ maximize the TPR while minimizing the FPR.
 
 ROC curves are typically used in binary classification, where the TPR and FPR
 can be defined unambiguously. In the case of multiclass classification, a notion
-of TPR/FPR is obtained only after binarizing the output. This can be done in 2
-different ways:
+of TPR or FPR is obtained only after binarizing the output. This can be done in
+2 different ways:
 
 - the One-vs-Rest scheme compares each class against all the others (assumed as
   one);
