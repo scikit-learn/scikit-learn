@@ -1181,19 +1181,8 @@ class _BaseSparseCoding(_ClassNamePrefixFeaturesOutMixin, TransformerMixin):
         SparseCoder."""
         X = self._validate_data(X, reset=False)
 
-        # transform_alpha has to be changed in _transform
-        # this is done for consistency with the value of alpha
-        if (
-            hasattr(self, "alpha")
-            and self.alpha != 1.0
-            and self.transform_alpha is None
-        ):
-            warnings.warn(
-                "By default transform_alpha will be equal to"
-                "alpha instead of 1.0 starting from version 1.2",
-                FutureWarning,
-            )
-            transform_alpha = 1.0  # TODO change to self.alpha in 1.2
+        if hasattr(self, "alpha") and self.transform_alpha is None:
+            transform_alpha = self.alpha
         else:
             transform_alpha = self.transform_alpha
 
@@ -1523,6 +1512,9 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         threshold below which coefficients will be squashed to zero.
         If `None`, defaults to `alpha`.
 
+        .. versionchanged:: 1.2
+            When None, default value changed from 1.0 to `alpha`.
+
     n_jobs : int or None, default=None
         Number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -1847,6 +1839,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         If `algorithm='threshold'`, `alpha` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
         If `None`, defaults to `alpha`.
+
+        .. versionchanged:: 1.2
+            When None, default value changed from 1.0 to `alpha`.
 
     verbose : bool or int, default=False
         To control the verbosity of the procedure.
