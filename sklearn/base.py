@@ -64,7 +64,7 @@ def clone(estimator, *, safe=True):
     return different results from the original estimator. More details can be
     found in :ref:`randomness`.
     """
-    if hasattr(estimator, "__sklearn_clone__"):
+    if hasattr(estimator, "__sklearn_clone__") and not inspect.isclass(estimator):
         return estimator.__sklearn_clone__()
     return _clone_parametrized(estimator, safe=safe)
 
