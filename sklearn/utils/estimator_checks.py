@@ -4209,7 +4209,7 @@ def check_set_output_pandas(name, transformer_orig):
         X_trans_pandas = transformer.fit_transform(df, y)
     except ValueError as e:
         # transformer does not support sparse data
-        assert str(e) == "Pandas output does not support sparse data", e
+        assert str(e) == "Pandas output does not support sparse data.", e
         return
     if name in CROSS_DECOMPOSITION:
         X_trans_pandas = X_trans_pandas[0]
