@@ -336,3 +336,12 @@ def test_hdbscan_too_many_min_samples():
     msg = r"min_samples (.*) must be at most"
     with pytest.raises(ValueError, match=msg):
         hdb.fit(X)
+
+
+def test_hdbscan_precomputed_dense_nan():
+    X_nan = X.copy()
+    X_nan[0, 0] = np.nan
+    msg = "np.nan values found in precomputed-dense"
+    hdb = HDBSCAN(metric="precomputed")
+    with pytest.raises(ValueError, match=msg):
+        hdb.fit(X_nan)

@@ -346,9 +346,12 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     probabilities_ : ndarray of shape (n_samples,)
         The strength with which each sample is a member of its assigned
-        cluster. Noise points have probability zero; points in clusters
-        have values assigned proportional to the degree that they
-        persist as part of the cluster.
+        cluster.
+
+        - Noisy samples have probability zero.
+        - Samples with missing data have probability `np.nan`.
+        - Clustered samples have probabilities proportional to the degree that
+          they persist as part of the cluster.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -386,27 +389,24 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     References
     ----------
 
-    .. [1] Campello, R. J., Moulavi, D., & Sander, J. (2013, April).
-       Density-based clustering based on hierarchical density estimates.
-       In Pacific-Asia Conference on Knowledge Discovery and Data Mining
-       (pp. 160-172). Springer Berlin Heidelberg.
-
-    .. [2] Campello, R. J., Moulavi, D., Zimek, A., & Sander, J. (2015).
+    .. [1] :doi:`Campello, R. J., Moulavi, D., & Sander, J. Density-based clustering
+      based on hierarchical density estimates.
+      <10.1007/978-3-642-37456-2_14>`
+    .. [2] :doi:`Campello, R. J., Moulavi, D., Zimek, A., & Sander, J.
        Hierarchical density estimates for data clustering, visualization,
-       and outlier detection. ACM Transactions on Knowledge Discovery
-       from Data (TKDD), 10(1), 5.
+       and outlier detection.<10.1145/2733381>`
 
-    .. [3] Chaudhuri, K., & Dasgupta, S. (2010). Rates of convergence for the
-       cluster tree. In Advances in Neural Information Processing Systems
-       (pp. 343-351).
+    .. [3] `Chaudhuri, K., & Dasgupta, S. Rates of convergence for the
+       cluster tree.
+       <https://papers.nips.cc/paper/2010/hash/
+       b534ba68236ba543ae44b22bd110a1d6-Abstract.html>`_
 
-    .. [4] Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and
-       Sander, J., 2014. Density-Based Clustering Validation. In SDM
-       (pp. 839-847).
+    .. [4] `Moulavi, D., Jaskowiak, P.A., Campello, R.J., Zimek, A. and
+       Sander, J. Density-Based Clustering Validation.
+       <https://www.dbs.ifi.lmu.de/~zimek/publications/SDM2014/DBCV.pdf>`_
 
-    .. [5] :arxiv:`Malzer, C., & Baum, M. (2019).
-       "A Hybrid Approach To Hierarchical Density-based Cluster Selection."
-       <1911.02282>`.
+    .. [5] :arxiv:`Malzer, C., & Baum, M. "A Hybrid Approach To Hierarchical
+       Density-based Cluster Selection."<1911.02282>`.
 
     Examples
     --------
@@ -553,12 +553,11 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             # from the given distance matrix.
             X = self._validate_data(X, force_all_finite=False, dtype=np.float64)
             if np.isnan(X).any():
-                # TODO: Support np.nan in Cython implementation for sparse
-                # HDBSCAN
-                raise ValueError("np.nan values found in precomputed-sparse")
+                # TODO: Support np.nan in Cython implementation for precomputed
+                # dense HDBSCAN
+                raise ValueError("np.nan values found in precomputed-dense")
         if X.shape[0] == 1:
             raise ValueError("n_samples=1 while HDBSCAN requires more than one sample")
-        self.n_features_in_ = X.shape[1]
         self._min_samples = (
             self.min_cluster_size if self.min_samples is None else self.min_samples
         )
@@ -571,11 +570,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         mst_func = None
         kwargs = dict(
             X=X,
-            algo="kd_tree",
             min_samples=self._min_samples,
             alpha=self.alpha,
             metric=self.metric,
-            leaf_size=self.leaf_size,
             n_jobs=self.n_jobs,
             **self._metric_params,
         )
@@ -601,27 +598,29 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             if self.algorithm == "brute":
                 mst_func = _hdbscan_brute
                 kwargs["copy"] = self.copy
-                for key in ("algo", "leaf_size"):
-                    kwargs.pop(key, None)
             elif self.algorithm == "kdtree":
                 mst_func = _hdbscan_prims
+                kwargs["algo"] = "kd_tree"
+                kwargs["leaf_size"] = self.leaf_size
             elif self.algorithm == "balltree":
                 mst_func = _hdbscan_prims
                 kwargs["algo"] = "ball_tree"
+                kwargs["leaf_size"] = self.leaf_size
         else:
             if issparse(X) or self.metric not in FAST_METRICS:
                 # We can't do much with sparse matrices ...
                 mst_func = _hdbscan_brute
                 kwargs["copy"] = self.copy
-                for key in ("algo", "leaf_size"):
-                    kwargs.pop(key, None)
             elif self.metric in KDTree.valid_metrics:
                 # TODO: Benchmark KD vs Ball Tree efficiency
                 mst_func = _hdbscan_prims
+                kwargs["algo"] = "kd_tree"
+                kwargs["leaf_size"] = self.leaf_size
             else:
                 # Metric is a valid BallTree metric
                 mst_func = _hdbscan_prims
                 kwargs["algo"] = "ball_tree"
+                kwargs["leaf_size"] = self.leaf_size
 
         single_linkage_tree = mst_func(**kwargs)
 
