@@ -507,10 +507,12 @@ def orthogonal_mp_gram(
 
     See Also
     --------
-    OrthogonalMatchingPursuit
-    orthogonal_mp
-    lars_path
-    sklearn.decomposition.sparse_encode
+    OrthogonalMatchingPursuit : Orthogonal Matching Pursuit model (OMP).
+    orthogonal_mp : Solves n_targets Orthogonal Matching Pursuit problems.
+    lars_path : Compute Least Angle Regression or Lasso path using
+        LARS algorithm.
+    sklearn.decomposition.sparse_encode : Generic sparse coding.
+        Each column of the result is the solution to a Lasso problem.
 
     Notes
     -----
@@ -523,7 +525,6 @@ def orthogonal_mp_gram(
     M., Efficient Implementation of the K-SVD Algorithm using Batch Orthogonal
     Matching Pursuit Technical Report - CS Technion, April 2008.
     https://www.cs.technion.ac.il/~ronrubin/Publications/KSVD-OMP-v2.pdf
-
     """
     Gram = check_array(Gram, order="F", copy=copy_Gram)
     Xy = np.asarray(Xy)

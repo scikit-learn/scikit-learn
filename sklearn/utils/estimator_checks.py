@@ -5,6 +5,7 @@ import re
 from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
+from numbers import Real
 
 import numpy as np
 from scipy import sparse
@@ -13,6 +14,7 @@ import joblib
 
 from . import IS_PYPY
 from .. import config_context
+from ._param_validation import Interval
 from ._testing import _get_args
 from ._testing import assert_raise_message
 from ._testing import assert_array_equal
@@ -269,6 +271,10 @@ def _yield_clustering_checks(clusterer):
 
 
 def _yield_outliers_checks(estimator):
+
+    # checks for the contamination parameter
+    if hasattr(estimator, "contamination"):
+        yield check_outlier_contamination
 
     # checks for outlier detectors that have a fit_predict method
     if hasattr(estimator, "fit_predict"):
@@ -2357,6 +2363,33 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
             check_outlier_corruption(num_outliers, expected_outliers, decision)
 
 
+def check_outlier_contamination(name, estimator_orig):
+    # Check that the contamination parameter is in (0.0, 0.5] when it is an
+    # interval constraint.
+
+    if not hasattr(estimator_orig, "_parameter_constraints"):
+        # Only estimator implementing parameter constraints will be checked
+        return
+
+    if "contamination" not in estimator_orig._parameter_constraints:
+        return
+
+    contamination_constraints = estimator_orig._parameter_constraints["contamination"]
+    if not any([isinstance(c, Interval) for c in contamination_constraints]):
+        raise AssertionError(
+            "contamination constraints should contain a Real Interval constraint."
+        )
+
+    for constraint in contamination_constraints:
+        if isinstance(constraint, Interval):
+            assert (
+                constraint.type == Real
+                and constraint.left >= 0.0
+                and constraint.right <= 0.5
+                and (constraint.left > 0 or constraint.closed in {"right", "neither"})
+            ), "contamination constraint should be an interval in (0, 0.5]"
+
+
 @ignore_warnings(category=FutureWarning)
 def check_classifiers_multilabel_representation_invariance(name, classifier_orig):
     X, y = make_multilabel_classification(
@@ -2793,6 +2826,7 @@ def check_regressors_train(
     X = _pairwise_estimator_convert_X(X, regressor_orig)
     y = scale(y)  # X is already scaled
     regressor = clone(regressor_orig)
+    X = _enforce_estimator_tags_x(regressor, X)
     y = _enforce_estimator_tags_y(regressor, y)
     if name in CROSS_DECOMPOSITION:
         rnd = np.random.RandomState(0)
@@ -3268,7 +3302,10 @@ def _enforce_estimator_tags_x(estimator, X):
     # Pairwise estimators only accept
     # X of shape (`n_samples`, `n_samples`)
     if _safe_tags(estimator, key="pairwise"):
-        X = X.dot(X.T)
+        # TODO: Remove when `_pairwise_estimator_convert_X`
+        # is removed and its functionality is moved here
+        if X.shape[0] != X.shape[1] or not np.allclose(X, X.T):
+            X = X.dot(X.T)
     # Estimators with `1darray` in `X_types` tag only accept
     # X of shape (`n_samples`,)
     if "1darray" in _safe_tags(estimator, key="X_types"):
@@ -3276,7 +3313,7 @@ def _enforce_estimator_tags_x(estimator, X):
     # Estimators with a `requires_positive_X` tag only accept
     # strictly positive data
     if _safe_tags(estimator, key="requires_positive_X"):
-        X -= X.min()
+        X -= X.min() - 1
     if "categorical" in _safe_tags(estimator, key="X_types"):
         X = (X - X.min()).astype(np.int32)
     return X
