@@ -512,6 +512,13 @@ Changelog
   :func:`utils.discovery.all_functions`) in scikit-learn.
   :pr:`21469` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |FIX| Introduced :func:`utils.fixes.csr_hstack` to mitigate bugs present in
+  `scipy.sparse.hstack` when stacking matrices with large shape, or very-many
+  non-zero elements. The function either aliases
+  `scipy.sparse.hstack(..., format='csr')` when the detected `scipy` version
+  is at least `1.9.2` or falls back to a vendored implementation.
+  :pr:`24595` by :user:`Meekail Zain <micky774>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
