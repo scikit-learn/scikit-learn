@@ -28,7 +28,7 @@ from .utils._tags import _safe_tags
 from .utils.validation import check_memory
 from .utils.validation import check_is_fitted
 from .utils import check_pandas_support
-from .utils.set_output import _safe_set_output, _get_output_config
+from .utils._set_output import _safe_set_output, _get_output_config
 from .utils.fixes import delayed
 from .exceptions import NotFittedError
 

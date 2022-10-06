@@ -2,7 +2,7 @@ from functools import wraps
 
 from scipy.sparse import issparse
 
-from ..utils import check_pandas_support
+from . import check_pandas_support
 from .._config import get_config
 from ._available_if import available_if
 
@@ -14,6 +14,8 @@ def _wrap_in_pandas_container(
     index=None,
 ):
     """Create a Pandas DataFrame.
+
+    If `data_to_wrap` is
 
     Parameters
     ----------
@@ -41,15 +43,15 @@ def _wrap_in_pandas_container(
     if callable(columns):
         columns = columns()
 
-    # Already a pandas DataFrame
-    if hasattr(data_to_wrap, "iloc"):
+    pd = check_pandas_support("Setting output container to 'pandas'")
+
+    if isinstance(data_to_wrap, pd.DataFrame):
         if columns is not None:
             data_to_wrap.columns = columns
         if index is not None:
             data_to_wrap.index = index
         return data_to_wrap
 
-    pd = check_pandas_support("Setting output container to 'pandas'")
     return pd.DataFrame(data_to_wrap, index=index, columns=columns)
 
 

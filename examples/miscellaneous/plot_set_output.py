@@ -13,7 +13,7 @@ For details, see
 """  # noqa
 
 # %%
-# First, we load the iris dataset as a dataframe to demonstrate the `set_output` API.
+# First, we load the iris dataset as a DataFrame to demonstrate the `set_output` API.
 from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 
@@ -23,7 +23,7 @@ X_train.head()
 
 # %%
 # To configure an estimator such as :class:`preprocessing.StandardScalar` to return
-# DataFrames, call `set_output`.
+# DataFrames, call `set_output`. This feature requires pandas to be installed.
 
 from sklearn.preprocessing import StandardScaler
 

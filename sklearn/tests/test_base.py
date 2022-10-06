@@ -15,7 +15,7 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
-from sklearn.utils.set_output import _get_output_config
+from sklearn.utils._set_output import _get_output_config
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 

@@ -15,7 +15,7 @@ import numpy as np
 from . import __version__
 from ._config import get_config
 from .utils import _IS_32BIT
-from .utils.set_output import _SetOutputMixin
+from .utils._set_output import _SetOutputMixin
 from .utils._tags import (
     _DEFAULT_TAGS,
 )
