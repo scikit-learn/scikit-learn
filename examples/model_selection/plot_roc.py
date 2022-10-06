@@ -123,16 +123,16 @@ from sklearn.metrics import RocCurveDisplay
 RocCurveDisplay.from_predictions(
     y_onehot_test[:, class_id],
     y_score[:, class_id],
-    name=f"ROC curve for {class_of_interest} vs the rest",
+    name=f"{class_of_interest} vs the rest",
     color="darkorange",
 )
-plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level (AUC = 0.5)")
+plt.plot([0, 1], [0, 1], "k--", label="chance level (AUC = 0.5)")
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.0])
 plt.axis("square")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
-plt.title("One-vs-Rest ROC: Virginica vs (Setosa & Versicolor)")
+plt.title("One-vs-Rest ROC curves:\nVirginica vs (Setosa & Versicolor)")
 plt.legend()
 plt.show()
 
@@ -159,16 +159,16 @@ print(f"y_score.ravel(): {y_score[0:2,:].ravel()}")
 RocCurveDisplay.from_predictions(
     y_onehot_test.ravel(),
     y_score.ravel(),
-    name="One-vs-Rest ROC (micro-averaged)",
+    name="micro-average OvR",
     color="darkorange",
 )
-plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level (AUC = 0.5)")
+plt.plot([0, 1], [0, 1], "k--", label="chance level (AUC = 0.5)")
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.0])
 plt.axis("square")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
-plt.title("Receiver operating characteristic (micro-averaged OvR)")
+plt.title("Micro-averaged One-vs-Rest\nReceiver Operating Characteristic")
 plt.legend()
 plt.show()
 
@@ -255,7 +255,7 @@ print(f"Macro-averaged One-vs-Rest ROC AUC score:\n{macro_roc_auc_ovr:.2f}")
 
 from itertools import cycle
 
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(figsize=(6, 6))
 
 plt.plot(
     fpr["micro"],
@@ -291,7 +291,7 @@ plt.ylim([0.0, 1.0])
 plt.axis("square")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
-plt.title("Some extension of Receiver operating characteristic to multiclass")
+plt.title("Extension of Receiver Operating Characteristic\nto One-vs-Rest multiclass")
 plt.legend(loc="lower right")
 plt.show()
 
@@ -349,11 +349,11 @@ for ix, (label_a, label_b) in enumerate(pair_list):
     mean_score = auc(fpr_grid, mean_tpr[ix])
     pair_scores.append(mean_score)
 
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=(6, 6))
     plt.plot(
         fpr_grid,
         mean_tpr[ix],
-        label=f"Mean {label_a} vs {label_b} ROC curve (AUC = {mean_score :.2f})",
+        label=f"Mean {label_a} vs {label_b} (AUC = {mean_score :.2f})",
         linestyle=":",
         linewidth=4,
     )
@@ -361,15 +361,15 @@ for ix, (label_a, label_b) in enumerate(pair_list):
         a_true,
         y_score[ab_mask, idx_a],
         ax=ax,
-        name=f"ROC curve for {label_a} as positive class",
+        name=f"{label_a} as positive class",
     )
     RocCurveDisplay.from_predictions(
         b_true,
         y_score[ab_mask, idx_b],
         ax=ax,
-        name=f"ROC curve for {label_b} as positive class",
+        name=f"{label_b} as positive class",
     )
-    plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level (AUC = 0.5)")
+    plt.plot([0, 1], [0, 1], "k--", label="chance level (AUC = 0.5)")
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.0])
     plt.axis("square")
@@ -400,12 +400,14 @@ print(f"Macro-averaged One-vs-One ROC AUC score:\n{macro_roc_auc_ovo:.2f}")
 # --------------------------------
 
 ovo_tpr = np.zeros_like(fpr_grid)
+
+fig, ax = plt.subplots(figsize=(6, 6))
 for ix, (label_a, label_b) in enumerate(pair_list):
     ovo_tpr += mean_tpr[ix]
     plt.plot(
         fpr_grid,
         mean_tpr[ix],
-        label=f"Mean {label_a} vs {label_b} ROC curve (AUC = {pair_scores[ix]:.2f})",
+        label=f"Mean {label_a} vs {label_b} (AUC = {pair_scores[ix]:.2f})",
     )
 
 ovo_tpr /= sum(1 for pair in enumerate(pair_list))
@@ -413,16 +415,17 @@ ovo_tpr /= sum(1 for pair in enumerate(pair_list))
 plt.plot(
     fpr_grid,
     ovo_tpr,
-    label=f"One-vs-One macro-average ROC curve (AUC = {macro_roc_auc_ovo:.2f})",
+    label=f"One-vs-One macro-average (AUC = {macro_roc_auc_ovo:.2f})",
     linestyle=":",
     linewidth=4,
 )
-plt.plot([0, 1], [0, 1], "k--", label="ROC curve for chance level (AUC = 0.5)")
+plt.plot([0, 1], [0, 1], "k--", label="chance level (AUC = 0.5)")
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.0])
 plt.axis("square")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
+plt.title("Extension of Receiver Operating Characteristic\nto One-vs-One multiclass")
 plt.legend()
 plt.show()
 
