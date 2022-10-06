@@ -497,11 +497,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 # edge case: deal with empty matrix
                 XP = sparse.csr_matrix((n_samples, 0), dtype=X.dtype)
             else:
-                # scipy.sparse.hstack breaks in scipy<1.8.0
+                # scipy.sparse.hstack breaks in scipy<1.9.2
                 # when `n_output_features_ > max_int32`
                 # TODO: Remove _csr_hstack and instead use
                 # scipy.sparse.hstack when we support
-                # scipy>=1.8.0.
+                # scipy>=1.9.2.
                 XP = _csr_hstack(to_stack, dtype=X.dtype)
         elif sparse.isspmatrix_csc(X) and self._max_degree < 4:
             return self.transform(X.tocsr()).tocsc()
