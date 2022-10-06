@@ -46,7 +46,7 @@ class _AvailableIfDescriptor:
 
 
 def available_if(check):
-    """An attribute that is available only if check returns a truthy value
+    """An attribute that is available only if check returns a truthy value.
 
     Parameters
     ----------
@@ -54,6 +54,12 @@ def available_if(check):
         When passed the object with the decorated method, this should return
         a truthy value if the attribute is available, and either return False
         or raise an AttributeError if not available.
+
+    Returns
+    -------
+    callable
+        Callable makes the decorated method available if `check` returns
+        a truthy value, otherwise the decorated method is unavailable.
 
     Examples
     --------
