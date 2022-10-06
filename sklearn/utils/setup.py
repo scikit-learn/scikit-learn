@@ -122,6 +122,14 @@ def configuration(parent_package="", top_path=None):
         libraries=libraries,
     )
 
+    config.add_extension(
+        "_csr_hstack",
+        sources=["_csr_hstack.pyx"],
+        include_dirs=[numpy.get_include()],
+        libraries=libraries,
+        language="c++",
+    )
+
     config.add_subpackage("tests")
 
     return config

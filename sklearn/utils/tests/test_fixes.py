@@ -11,8 +11,8 @@ import scipy.stats
 
 from sklearn.utils._testing import assert_array_equal
 
-from sklearn.utils.fixes import _object_dtype_isnan
-from sklearn.utils.fixes import loguniform
+from sklearn.utils.fixes import _object_dtype_isnan, loguniform, csr_hstack
+from scipy.sparse import random as sparse_random
 
 
 @pytest.mark.parametrize("dtype, val", ([object, 1], [object, "a"], [float, 1]))
@@ -46,3 +46,23 @@ def test_loguniform(low, high, base):
     assert loguniform(base**low, base**high).rvs(random_state=0) == loguniform(
         base**low, base**high
     ).rvs(random_state=0)
+
+
+def test_csr_hstack():
+    n_rows = 10
+    msg = "No matrices were provided to stack"
+    with pytest.raises(ValueError, match=msg):
+        csr_hstack([])
+
+    X1 = sparse_random(n_rows, 2, format="csr")
+    X2 = sparse_random(n_rows + 1, 2, format="csr")
+    msg = "Mismatching dimensions along axis*"
+    with pytest.raises(ValueError, match=msg):
+        csr_hstack([X1, X2])
+
+    X1 = sparse_random(n_rows, 2, density=0, format="csr")
+    X2 = sparse_random(n_rows, 2, density=0, format="csr")
+    X_stacked = csr_hstack([X1, X2])
+    assert X_stacked.data.size == 0
+    assert X_stacked.indices.size == 0
+    assert_array_equal(X_stacked.indptr, np.zeros(n_rows + 1, dtype=np.int64))

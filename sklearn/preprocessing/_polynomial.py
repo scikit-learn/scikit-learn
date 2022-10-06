@@ -17,6 +17,7 @@ from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weig
 from ..utils.validation import _check_feature_names_in
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.stats import _weighted_percentile
+from ..utils.fixes import csr_hstack
 
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
@@ -365,7 +366,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 # edge case: deal with empty matrix
                 XP = sparse.csr_matrix((n_samples, 0), dtype=X.dtype)
             else:
-                XP = sparse.hstack(to_stack, format="csr")
+                XP = csr_hstack(to_stack)
         elif sparse.isspmatrix_csc(X) and self._max_degree < 4:
             return self.transform(X.tocsr()).tocsc()
         elif sparse.isspmatrix(X):
@@ -386,7 +387,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 else:
                     bias = sparse.csc_matrix(np.ones((X.shape[0], 1)))
                     columns.append(bias)
-            XP = sparse.hstack(columns, dtype=X.dtype).tocsc()
+            XP = csr_hstack(columns, dtype=X.dtype).tocsc()
         else:
             # Do as if _min_degree = 0 and cut down array after the
             # computation, i.e. use _n_out_full instead of n_output_features_.
