@@ -638,8 +638,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         )
         if self.metric != "precomputed" and not all_finite:
             # Remap indices to align with original data in the case of
-            # non-finite entries. Samples with inf is mapped to -1 and
-            # nan is mapped to -2.
+            # non-finite entries. Samples with np.inf are mapped to -1 and
+            # those with np.nan are mapped to -2.
             self._single_linkage_tree_ = remap_single_linkage_tree(
                 self._single_linkage_tree_,
                 internal_to_raw,
