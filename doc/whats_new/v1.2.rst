@@ -31,6 +31,11 @@ random sampling procedures.
   to a tiny value. Moreover, `verbose` is now properly propagated to L-BFGS-B.
   :pr:`23619` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |API| The default value of `tol` was changed from `1e-3` to `1e-4` for
+  :func:`linear_model.ridge_regression`, :class:`linear_model.Ridge` and
+  :class:`linear_model.`RidgeClassifier`.
+  :pr:`24465` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Fix| Make sign of `components_` deterministic in :class:`decomposition.SparsePCA`.
   :pr:`23935` by :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -339,6 +344,11 @@ Changelog
 - |API| String option `"none"` is deprecated for `penalty` argument
   in :class:`linear_model.LogisticRegression`, and will be removed in version 1.4.
   Use `None` instead. :pr:`23877` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+- |API| The default value of `tol` was changed from `1e-3` to `1e-4` for
+  :func:`linear_model.ridge_regression`, :class:`linear_model.Ridge` and
+  :class:`linear_model.`RidgeClassifier`.
+  :pr:`24465` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Fix| :class:`linear_model.SGDOneClassSVM` no longer performs parameter
   validation in the constructor. All validation is now handled in `fit()` and
