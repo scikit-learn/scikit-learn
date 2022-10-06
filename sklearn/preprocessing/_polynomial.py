@@ -464,11 +464,14 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 # since currently CSR construction downcasts when possible, so
                 # we'd prefer to avoid an unnecessary cast. The dtype may still
                 # change in the concatenation process if needed.
+                # See: https://github.com/scipy/scipy/issues/16569
                 max_indices = expanded_d - 1
                 max_indptr = total_nnz - 1
                 needs_int64 = max(max_indices, max_indptr) > max_int32
                 index_dtype = np.int64 if needs_int64 else np.int32
 
+                # Result of the expansion, modified in place by the
+                # `_csr_polynomial_expansion` routine.
                 expanded_data = np.ndarray(shape=total_nnz, dtype=X.data.dtype)
                 expanded_indices = np.ndarray(shape=total_nnz, dtype=index_dtype)
                 expanded_indptr = np.ndarray(shape=X.indptr.shape[0], dtype=index_dtype)
@@ -494,8 +497,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 # edge case: deal with empty matrix
                 XP = sparse.csr_matrix((n_samples, 0), dtype=X.dtype)
             else:
-                # Breaks when `n_output_features_ > max_int32` for scipy
-                # versions earlier than 1.8.0
+                # scipy.sparse.hstack breaks in scipy<1.8.0
+                # when `n_output_features_ > max_int32`
+                # TODO: Remove _csr_hstack and instead use
+                # scipy.sparse.hstack when we support
+                # scipy>=1.8.0.
                 XP = _csr_hstack(to_stack, dtype=X.dtype)
         elif sparse.isspmatrix_csc(X) and self._max_degree < 4:
             return self.transform(X.tocsr()).tocsc()

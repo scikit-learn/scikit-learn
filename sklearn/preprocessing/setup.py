@@ -22,6 +22,7 @@ def configuration(parent_package="", top_path=None):
         sources=["_csr_hstack.pyx"],
         include_dirs=[numpy.get_include()],
         libraries=libraries,
+        language="c++",
     )
 
     config.add_subpackage("tests")

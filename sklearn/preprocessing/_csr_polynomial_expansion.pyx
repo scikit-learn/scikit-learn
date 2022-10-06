@@ -52,10 +52,14 @@ cdef inline cnp.int64_t _deg2_column(
         return d * i - (i**2 + i) / 2 + j
 
 def py_deg2_column(d, i, j, interaction_only):
-    """Compute the index of the column for a degree 2 expansion
+    """Compute the index of the column for a degree 2 expansion.
 
     d is the dimensionality of the input data, i and j are the indices
     for the columns involved in the expansion.
+
+    This function is defined in Python to use `PyLong`'s arbitrary
+    precision, and is called in Cython when C types' representability
+    range is too small.
     """
     if interaction_only:
         return d * i - (i**2 + 3 * i) // 2 - 1 + j
@@ -84,10 +88,14 @@ cdef inline cnp.int64_t _deg3_column(
                  - 3 * j**2 - 3 * j) / 6
                 + d * j + k)
 def py_deg3_column(d, i, j, k, interaction_only):
-    """Compute the index of the column for a degree 3 expansion
+    """Compute the index of the column for a degree 3 expansion.
 
     d is the dimensionality of the input data, i, j and k are the indices
     for the columns involved in the expansion.
+
+    This function is defined in Python to use `PyLong`'s arbitrary
+    precision, and is called in Cython when C types' representability
+    range is too small.
     """
     if interaction_only:
         return ((3 * d**2 * i - 3 * d * i**2 + i**3
@@ -98,14 +106,15 @@ def py_deg3_column(d, i, j, k, interaction_only):
                  - 3 * j**2 - 3 * j) // 6
                 + d * j + k)
 
+# TODO: `const`-qualify data, indices and indptr when Cython>=3.0 is released.
 def _csr_polynomial_expansion(
-    cnp.ndarray[DATA_t, ndim=1] data,           # TODO: Make const in Cython 3
-    cnp.ndarray[INDEX_A_t, ndim=1] indices,     # TODO: Make const in Cython 3
-    cnp.ndarray[INDEX_A_t, ndim=1] indptr,      # TODO: Make const in Cython 3
+    DATA_t[:] data,                 # IN READ-ONLY
+    INDEX_A_t[:] indices,           # IN READ-ONLY
+    INDEX_A_t[:] indptr,            # IN READ-ONLY
     INDEX_A_t d,
-    cnp.ndarray[DATA_t, ndim=1] result_data,
-    cnp.ndarray[INDEX_B_t, ndim=1] result_indices,
-    cnp.ndarray[INDEX_B_t, ndim=1] result_indptr,
+    DATA_t[:] result_data,          # OUT
+    INDEX_B_t[:] result_indices,    # OUT
+    INDEX_B_t[:] result_indptr,     # OUT
     FLAG_t interaction_only,
     FLAG_t degree
 ):
@@ -131,13 +140,16 @@ def _csr_polynomial_expansion(
         The dimensionality of the input CSR matrix.
 
     result_data : nd-array
-        The output CSR matrix's "data" attribute
+        The output CSR matrix's "data" attribute.
+        It is modified by this routine.
 
     result_indices : nd-array
-        The output CSR matrix's "indices" attribute
+        The output CSR matrix's "indices" attribute.
+        It is modified by this routine.
 
     result_indptr : nd-array
-        The output CSR matrix's "indptr" attribute
+        The output CSR matrix's "indptr" attribute.
+        It is modified by this routine.
 
     interaction_only : int
         0 for a polynomial expansion, 1 for an interaction expansion.
@@ -168,6 +180,9 @@ def _csr_polynomial_expansion(
                     j = indices[j_ptr]
                     if degree == 2:
                         if max(i, j) > MAX_SAFE_INDEX_DEG2:
+                            # In this case, the Cython implementation
+                            # would integer overflow. 
+                            # Here, we use arbitrary precision.
                             with gil:
                                 col = <INDEX_B_t> py_deg2_column(d, i, j, interaction_only)
                         else:
@@ -183,6 +198,9 @@ def _csr_polynomial_expansion(
                                             row_ends):
                             k = indices[k_ptr]
                             if max(i, j, k) > MAX_SAFE_INDEX_DEG3:
+                                # In this case, the Cython implementation
+                                # would integer overflow. 
+                                # Here, we use arbitrary precision.
                                 with gil:
                                     col = <INDEX_B_t> py_deg3_column(d, i, j, k, interaction_only)
                             else:

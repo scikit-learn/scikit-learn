@@ -1,4 +1,3 @@
-# distutils: language=c++
 # Based on `scipy.sparse.sparsetools.csr.h` under the BSD license.
 
 cimport cython
@@ -6,7 +5,6 @@ from libc.stdlib cimport malloc, free
 from libcpp.vector cimport vector
 
 cimport numpy as cnp
-cnp.import_array()
 
 # Fused type for data
 ctypedef fused DATA_t:
@@ -17,14 +15,16 @@ ctypedef fused DATA_t:
 # Need uniquely named fused types to generate full cross-product for all four
 # input/output array combinations
 
-# Input IND type. In the Python layer this will be set to smallest type
-# necessary to maintain integrity, determined by the maximum value across
+# Input CSR indices and indptr type.
+# In the Python layer, SciPy's implementation sets indices and indptr
+# type to smallest one necessary to maintain indices values
+# representability, determined by the maximum value across
 # all input blocks after concatenation.
 ctypedef fused IND_t:
     cnp.int32_t
     cnp.int64_t
 
-# TODO Add const keyword to input arrays in Cython 3.X
+# TODO: `const`-qualify fused-typed memoryviews when Cython>=3.0 is released.
 cpdef _csr_hstack(
     const Py_ssize_t n_blocks,      # Number of matrices to stack
     const Py_ssize_t n_rows,        # Number of rows (same across all matrices)
