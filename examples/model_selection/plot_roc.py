@@ -86,7 +86,7 @@ y_score = classifier.fit(X_train, y_train).predict_proba(X_test)
 #     of multiclass classifiers with the OvR strategy used to **train** a
 #     multiclass classifier by fitting a set of binary classifiers (for instance
 #     via the :class:`~sklearn.multiclass.OneVsRestClassifier` meta-estimator).
-#     The OvR ROC evaluation can be used to evaluate any kind of classification
+#     The OvR ROC evaluation can be used to scrutinize any kind of classification
 #     models irrespectively of how they were trained (see :ref:`multiclass`).
 #
 # In this section we use a :class:`~sklearn.preprocessing.LabelBinarizer` to
@@ -143,13 +143,15 @@ plt.show()
 # Micro-averaging aggregates the contributions from all the classes (using
 # :func:`np.ravel`) to compute the average metrics as follows:
 #
-# :math:`TPR=\frac{\sum_{c}TP_c}{\sum_{c}(TP_c + FN_c)}`
+# :math:`TPR=\frac{\sum_{c}TP_c}{\sum_{c}(TP_c + FN_c)}` ;
 #
-# :math:`FPR=\frac{\sum_{c}FP_c}{\sum_{c}(FP_c + TN_c)}`
+# :math:`FPR=\frac{\sum_{c}FP_c}{\sum_{c}(FP_c + TN_c)}` .
+#
+# We can briefly demo the effect of :func:`np.ravel`:
 
 print(f"y_score:\n{y_score[0:2,:]}")
-# %%
-print(f"y_score.ravel(): {y_score[0:2,:].ravel()}")
+print()
+print(f"y_score.ravel():\n{y_score[0:2,:].ravel()}")
 
 # %%
 # In a multi-class classification setup with highly imbalanced classes,
@@ -292,7 +294,7 @@ plt.axis("square")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
 plt.title("Extension of Receiver Operating Characteristic\nto One-vs-Rest multiclass")
-plt.legend(loc="lower right")
+plt.legend()
 plt.show()
 
 # %%
