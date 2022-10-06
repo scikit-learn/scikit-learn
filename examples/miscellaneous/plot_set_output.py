@@ -89,7 +89,9 @@ ct = ColumnTransformer(
         ("numerical", num_pipe, ["age", "fare"]),
         (
             "categorical",
-            OneHotEncoder(sparse_output=False, drop="if_binary"),
+            OneHotEncoder(
+                sparse_output=False, drop="if_binary", handle_unknown="ignore"
+            ),
             ["embarked", "sex", "pclass"],
         ),
     ),
