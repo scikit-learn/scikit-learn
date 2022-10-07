@@ -4147,8 +4147,9 @@ def check_param_validation(name, estimator_orig):
                         getattr(estimator, method)(X, y)
 
 
-def check_set_output(name, transformer_orig):
-    # Check transformer.set_output configures the output of `transform`
+def check_set_output_transform(name, transformer_orig):
+    # Check transformer.set_output with the default configuration does not
+    # change the transform output.
     tags = transformer_orig._get_tags()
     if "2darray" not in tags["X_types"] or tags["no_validation"]:
         return
@@ -4162,21 +4163,35 @@ def check_set_output(name, transformer_orig):
     y = _enforce_estimator_tags_y(transformer_orig, y)
     set_random_state(transformer)
 
-    X_trans_no_setting = transformer.fit_transform(X, y)
-    if name in CROSS_DECOMPOSITION:
-        X_trans_no_setting = X_trans_no_setting[0]
+    def fit_then_transform(est):
+        if name in CROSS_DECOMPOSITION:
+            return est.fit(X, y).transform(X, y)
+        return est.fit(X, y).transform(X)
 
-    transformer.set_output(transform="default")
-    X_trans_default = transformer.fit_transform(X, y)
-    if name in CROSS_DECOMPOSITION:
-        X_trans_default = X_trans_default[0]
+    def fit_transform(est):
+        return est.fit_transform(X, y)
 
-    # Default and no setting -> returns the same transform
-    assert_allclose_dense_sparse(X_trans_no_setting, X_trans_default)
+    transform_methods = [fit_then_transform, fit_transform]
+    for transform_method in transform_methods:
+        transformer = clone(transformer)
+        X_trans_no_setting = transform_method(transformer)
+
+        # Auto wrapping only wraps the first array
+        if name in CROSS_DECOMPOSITION:
+            X_trans_no_setting = X_trans_no_setting[0]
+
+        transformer.set_output(transform="default")
+        X_trans_default = transform_method(transformer)
+
+        if name in CROSS_DECOMPOSITION:
+            X_trans_default = X_trans_default[0]
+
+        # Default and no setting -> returns the same transformation
+        assert_allclose_dense_sparse(X_trans_no_setting, X_trans_default)
 
 
-def check_set_output_pandas(name, transformer_orig):
-    # Check transformer.set_output configures the output of transform="pandas"
+def check_set_output_transform_pandas(name, transformer_orig):
+    # Check transformer.set_output configures the output of transform="pandas".
     try:
         import pandas as pd
     except ImportError:
@@ -4200,22 +4215,37 @@ def check_set_output_pandas(name, transformer_orig):
     feature_names_in = [f"col{i}" for i in range(X.shape[1])]
     df = pd.DataFrame(X, columns=feature_names_in)
 
-    X_trans_no_setting = transformer.fit_transform(df, y)
-    if name in CROSS_DECOMPOSITION:
-        X_trans_no_setting = X_trans_no_setting[0]
-    transformer.set_output(transform="pandas")
+    def fit_then_transform(est):
+        if name in CROSS_DECOMPOSITION:
+            return est.fit(df, y).transform(df, y)
+        return est.fit(df, y).transform(df)
 
-    try:
-        X_trans_pandas = transformer.fit_transform(df, y)
-    except ValueError as e:
-        # transformer does not support sparse data
-        assert str(e) == "Pandas output does not support sparse data.", e
-        return
-    if name in CROSS_DECOMPOSITION:
-        X_trans_pandas = X_trans_pandas[0]
+    def fit_transform(est):
+        return est.fit_transform(df, y)
 
-    assert isinstance(X_trans_pandas, pd.DataFrame)
-    expected_dataframe = pd.DataFrame(
-        X_trans_no_setting, columns=transformer.get_feature_names_out()
-    )
-    pd.testing.assert_frame_equal(X_trans_pandas, expected_dataframe)
+    transform_methods = [fit_then_transform, fit_transform]
+
+    for transform_method in transform_methods:
+        transformer = clone(transformer).set_output(transform="default")
+        X_trans_no_setting = transform_method(transformer)
+
+        # Auto wrapping only wraps the first array
+        if name in CROSS_DECOMPOSITION:
+            X_trans_no_setting = X_trans_no_setting[0]
+
+        transformer.set_output(transform="pandas")
+        try:
+            X_trans_pandas = transform_method(transformer)
+        except ValueError as e:
+            # transformer does not support sparse data
+            assert str(e) == "Pandas output does not support sparse data.", e
+            return
+
+        if name in CROSS_DECOMPOSITION:
+            X_trans_pandas = X_trans_pandas[0]
+
+        assert isinstance(X_trans_pandas, pd.DataFrame)
+        expected_dataframe = pd.DataFrame(
+            X_trans_no_setting, columns=transformer.get_feature_names_out()
+        )
+        pd.testing.assert_frame_equal(X_trans_pandas, expected_dataframe)

@@ -74,8 +74,8 @@ from sklearn.utils.estimator_checks import (
     check_param_validation,
     check_transformer_get_feature_names_out,
     check_transformer_get_feature_names_out_pandas,
-    check_set_output,
-    check_set_output_pandas,
+    check_set_output_transform,
+    check_set_output_transform_pandas,
 )
 
 
@@ -519,27 +519,28 @@ SET_OUTPUT_ESTIMATORS = list(
 @pytest.mark.parametrize(
     "estimator", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
 )
-def test_set_output(estimator):
+def test_set_output_transform(estimator):
     name = estimator.__class__.__name__
     if not hasattr(estimator, "set_output"):
         pytest.skip(
-            f"Skipping check_set_output for {name}: Does not support set_output API"
+            f"Skipping check_set_output_transform for {name}: Does not support"
+            " set_output API"
         )
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
-        check_set_output(estimator.__class__.__name__, estimator)
+        check_set_output_transform(estimator.__class__.__name__, estimator)
 
 
 @pytest.mark.parametrize(
     "estimator", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
 )
-def test_set_output_pandas(estimator):
+def test_set_output_transform_pandas(estimator):
     name = estimator.__class__.__name__
     if not hasattr(estimator, "set_output"):
         pytest.skip(
-            f"Skipping check_set_output_pandas for {name}: Does not support set_output"
-            " API yet"
+            f"Skipping check_set_output_transform_pandas for {name}: Does not support"
+            " set_output API yet"
         )
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
-        check_set_output_pandas(estimator.__class__.__name__, estimator)
+        check_set_output_transform_pandas(estimator.__class__.__name__, estimator)
