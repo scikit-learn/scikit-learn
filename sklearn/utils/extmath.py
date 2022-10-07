@@ -595,7 +595,7 @@ def _randomized_eigsh(
 
 def weighted_mode(a, w, *, axis=0):
     """Return an array of the weighted modal (most common) value in the passed array.
-    
+
     If there is more than one such value, only the first is returned.
     The bin-count for the modal bins is also returned.
 
