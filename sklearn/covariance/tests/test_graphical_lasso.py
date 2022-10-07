@@ -238,5 +238,5 @@ def test_graphical_lasso_cv_scores():
     expected_mean = cv_scores.mean(axis=0)
     expected_std = cv_scores.std(axis=0)
 
-    assert_allclose(cov.cv_results_[f"mean_test_score"], expected_mean)
-    assert_allclose(cov.cv_results_[f"std_test_score"], expected_std)
+    assert_allclose(cov.cv_results_["mean_test_score"], expected_mean)
+    assert_allclose(cov.cv_results_["std_test_score"], expected_std)
