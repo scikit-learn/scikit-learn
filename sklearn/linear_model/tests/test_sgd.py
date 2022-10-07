@@ -4,6 +4,7 @@ import joblib
 import pytest
 import numpy as np
 import scipy.sparse as sp
+from unittest.mock import Mock
 
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
@@ -21,6 +22,7 @@ from sklearn.pipeline import make_pipeline
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.model_selection import StratifiedShuffleSplit, ShuffleSplit
 from sklearn.linear_model import _sgd_fast as sgd_fast
+from sklearn.linear_model import _stochastic_gradient
 from sklearn.model_selection import RandomizedSearchCV
 
 
@@ -212,61 +214,6 @@ def asgd(klass, X, y, eta, alpha, weight_init=None, intercept_init=0.0):
         average_intercept /= i + 1.0
 
     return average_weights, average_intercept
-
-
-@pytest.mark.parametrize(
-    "klass",
-    [
-        SGDClassifier,
-        SparseSGDClassifier,
-        SGDRegressor,
-        SparseSGDRegressor,
-        SGDOneClassSVM,
-        SparseSGDOneClassSVM,
-    ],
-)
-@pytest.mark.parametrize("fit_method", ["fit", "partial_fit"])
-@pytest.mark.parametrize(
-    "params, err_msg",
-    [
-        ({"alpha": -0.1}, "alpha must be >= 0"),
-        ({"penalty": "foobar", "l1_ratio": 0.85}, "Penalty foobar is not supported"),
-        ({"loss": "foobar"}, "The loss foobar is not supported"),
-        ({"l1_ratio": 1.1}, r"l1_ratio must be in \[0, 1\]"),
-        ({"learning_rate": "<unknown>"}, "learning rate <unknown> is not supported"),
-        ({"nu": -0.5}, r"nu must be in \(0, 1]"),
-        ({"nu": 2}, r"nu must be in \(0, 1]"),
-        ({"alpha": 0, "learning_rate": "optimal"}, "alpha must be > 0"),
-        ({"eta0": 0, "learning_rate": "constant"}, "eta0 must be > 0"),
-        ({"max_iter": -1}, "max_iter must be > zero"),
-        ({"shuffle": "false"}, "shuffle must be either True or False"),
-        ({"early_stopping": "false"}, "early_stopping must be either True or False"),
-        (
-            {"validation_fraction": -0.1},
-            r"validation_fraction must be in range \(0, 1\)",
-        ),
-        ({"n_iter_no_change": 0}, "n_iter_no_change must be >= 1"),
-    ],
-    # Avoid long error messages in test names:
-    # https://github.com/scikit-learn/scikit-learn/issues/21362
-    ids=lambda x: x[:10].replace("]", "") if isinstance(x, str) else x,
-)
-def test_sgd_estimator_params_validation(klass, fit_method, params, err_msg):
-    """Validate parameters in the different SGD estimators."""
-    try:
-        sgd_estimator = klass(**params)
-    except TypeError as err:
-        if "unexpected keyword argument" in str(err):
-            # skip test if the parameter is not supported by the estimator
-            return
-        raise err
-
-    with pytest.raises(ValueError, match=err_msg):
-        if is_classifier(sgd_estimator) and fit_method == "partial_fit":
-            fit_params = {"classes": np.unique(Y)}
-        else:
-            fit_params = {}
-        getattr(sgd_estimator, fit_method)(X, Y, **fit_params)
 
 
 def _test_warm_start(klass, X, Y, lr):
@@ -543,7 +490,7 @@ def test_not_enough_sample_for_early_stopping(klass):
 def test_sgd_clf(klass):
     # Check that SGD gives any results :-)
 
-    for loss in ("hinge", "squared_hinge", "log", "modified_huber"):
+    for loss in ("hinge", "squared_hinge", "log_loss", "modified_huber"):
         clf = klass(
             penalty="l2",
             alpha=0.01,
@@ -668,7 +615,7 @@ def test_partial_fit_weight_class_balanced(klass):
         r"class_weight 'balanced' is not supported for "
         r"partial_fit\. In order to use 'balanced' weights, "
         r"use compute_class_weight\('balanced', classes=classes, y=y\). "
-        r"In place of y you can us a large enough sample "
+        r"In place of y you can use a large enough sample "
         r"of the full training set target to properly "
         r"estimate the class frequency distributions\. "
         r"Pass the resulting weights as the class_weight "
@@ -771,7 +718,8 @@ def test_sgd_predict_proba_method_access(klass):
     # details.
     for loss in linear_model.SGDClassifier.loss_functions:
         clf = SGDClassifier(loss=loss)
-        if loss in ("log", "modified_huber"):
+        # TODO(1.3): Remove "log"
+        if loss in ("log_loss", "log", "modified_huber"):
             assert hasattr(clf, "predict_proba")
             assert hasattr(clf, "predict_log_proba")
         else:
@@ -799,7 +747,7 @@ def test_sgd_proba(klass):
 
     # log and modified_huber losses can output probability estimates
     # binary case
-    for loss in ["log", "modified_huber"]:
+    for loss in ["log_loss", "modified_huber"]:
         clf = klass(loss=loss, alpha=0.01, max_iter=10)
         clf.fit(X, Y)
         p = clf.predict_proba([[3, 2]])
@@ -813,7 +761,7 @@ def test_sgd_proba(klass):
         assert p[0, 1] < p[0, 0]
 
     # log loss multiclass probability estimates
-    clf = klass(loss="log", alpha=0.01, max_iter=10).fit(X2, Y2)
+    clf = klass(loss="log_loss", alpha=0.01, max_iter=10).fit(X2, Y2)
 
     d = clf.decision_function([[0.1, -0.1], [0.3, 0.2]])
     p = clf.predict_proba([[0.1, -0.1], [0.3, 0.2]])
@@ -932,14 +880,6 @@ def test_equal_class_weight(klass):
 def test_wrong_class_weight_label(klass):
     # ValueError due to not existing class label.
     clf = klass(alpha=0.1, max_iter=1000, class_weight={0: 0.5})
-    with pytest.raises(ValueError):
-        clf.fit(X, Y)
-
-
-@pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
-def test_wrong_class_weight_format(klass):
-    # ValueError due to wrong class_weight argument type.
-    clf = klass(alpha=0.1, max_iter=1000, class_weight=[0.5])
     with pytest.raises(ValueError):
         clf.fit(X, Y)
 
@@ -1738,7 +1678,7 @@ def test_ocsvm_vs_sgdocsvm():
         fit_intercept=True,
         max_iter=max_iter,
         random_state=random_state,
-        tol=-np.inf,
+        tol=None,
     )
     pipe_sgd = make_pipeline(transform, clf_sgd)
     pipe_sgd.fit(X_train)
@@ -2081,7 +2021,7 @@ def test_multi_core_gridsearch_and_early_stopping():
     }
 
     clf = SGDClassifier(tol=1e-2, max_iter=1000, early_stopping=True, random_state=0)
-    search = RandomizedSearchCV(clf, param_grid, n_iter=3, n_jobs=2, random_state=0)
+    search = RandomizedSearchCV(clf, param_grid, n_iter=5, n_jobs=2, random_state=0)
     search.fit(iris.data, iris.target)
     assert search.best_score_ > 0.8
 
@@ -2122,21 +2062,86 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
 
 
-# TODO: Remove in v1.2
+# TODO(1.3): Remove
 @pytest.mark.parametrize(
-    "Estimator", [linear_model.SGDClassifier, linear_model.SGDRegressor]
+    "old_loss, new_loss, Estimator",
+    [
+        ("log", "log_loss", linear_model.SGDClassifier),
+    ],
 )
-def test_loss_squared_loss_deprecated(Estimator):
+def test_loss_deprecated(old_loss, new_loss, Estimator):
 
     # Note: class BaseSGD calls self._validate_params() in __init__, therefore
-    # even instatiation of class raises FutureWarning for squared_loss.
-    with pytest.warns(FutureWarning, match="The loss 'squared_loss' was deprecated"):
-        est1 = Estimator(loss="squared_loss", random_state=0)
+    # even instantiation of class raises FutureWarning for deprecated losses.
+    with pytest.warns(FutureWarning, match=f"The loss '{old_loss}' was deprecated"):
+        est1 = Estimator(loss=old_loss, random_state=0)
         est1.fit(X, Y)
 
-    est2 = Estimator(loss="squared_error", random_state=0)
+    est2 = Estimator(loss=new_loss, random_state=0)
     est2.fit(X, Y)
     if hasattr(est1, "predict_proba"):
         assert_allclose(est1.predict_proba(X), est2.predict_proba(X))
     else:
         assert_allclose(est1.predict(X), est2.predict(X))
+
+
+@pytest.mark.parametrize(
+    "Estimator", [linear_model.SGDClassifier, linear_model.SGDRegressor]
+)
+def test_sgd_random_state(Estimator, global_random_seed):
+    # Train the same model on the same data without converging and check that we
+    # get reproducible results by fixing the random seed.
+    if Estimator == linear_model.SGDRegressor:
+        X, y = datasets.make_regression(random_state=global_random_seed)
+    else:
+        X, y = datasets.make_classification(random_state=global_random_seed)
+
+    # Fitting twice a model with the same hyper-parameters on the same training
+    # set with the same seed leads to the same results deterministically.
+
+    est = Estimator(random_state=global_random_seed, max_iter=1)
+    with pytest.warns(ConvergenceWarning):
+        coef_same_seed_a = est.fit(X, y).coef_
+        assert est.n_iter_ == 1
+
+    est = Estimator(random_state=global_random_seed, max_iter=1)
+    with pytest.warns(ConvergenceWarning):
+        coef_same_seed_b = est.fit(X, y).coef_
+        assert est.n_iter_ == 1
+
+    assert_allclose(coef_same_seed_a, coef_same_seed_b)
+
+    # Fitting twice a model with the same hyper-parameters on the same training
+    # set but with different random seed leads to different results after one
+    # epoch because of the random shuffling of the dataset.
+
+    est = Estimator(random_state=global_random_seed + 1, max_iter=1)
+    with pytest.warns(ConvergenceWarning):
+        coef_other_seed = est.fit(X, y).coef_
+        assert est.n_iter_ == 1
+
+    assert np.abs(coef_same_seed_a - coef_other_seed).max() > 1.0
+
+
+def test_validation_mask_correctly_subsets(monkeypatch):
+    """Test that data passed to validation callback correctly subsets.
+
+    Non-regression test for #23255.
+    """
+    X, Y = iris.data, iris.target
+    n_samples = X.shape[0]
+    validation_fraction = 0.2
+    clf = linear_model.SGDClassifier(
+        early_stopping=True,
+        tol=1e-3,
+        max_iter=1000,
+        validation_fraction=validation_fraction,
+    )
+
+    mock = Mock(side_effect=_stochastic_gradient._ValidationScoreCallback)
+    monkeypatch.setattr(_stochastic_gradient, "_ValidationScoreCallback", mock)
+    clf.fit(X, Y)
+
+    X_val, y_val = mock.call_args[0][1:3]
+    assert X_val.shape[0] == int(n_samples * validation_fraction)
+    assert y_val.shape[0] == int(n_samples * validation_fraction)

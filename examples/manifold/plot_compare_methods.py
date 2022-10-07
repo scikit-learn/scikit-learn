@@ -28,16 +28,16 @@ representation of the data in the low-dimensional space.
 #
 # We start by generating the S-curve dataset.
 
-from numpy.random import RandomState
 import matplotlib.pyplot as plt
 from matplotlib import ticker
 
+# unused but required import for doing 3d projections with matplotlib < 3.2
+import mpl_toolkits.mplot3d  # noqa: F401
+
 from sklearn import manifold, datasets
 
-rng = RandomState(0)
-
 n_samples = 1500
-S_points, S_color = datasets.make_s_curve(n_samples, random_state=rng)
+S_points, S_color = datasets.make_s_curve(n_samples, random_state=0)
 
 # %%
 # Let's look at the original data. Also define some helping
@@ -107,11 +107,11 @@ params = {
     "n_neighbors": n_neighbors,
     "n_components": n_components,
     "eigen_solver": "auto",
-    "random_state": rng,
+    "random_state": 0,
 }
 
-lle_standart = manifold.LocallyLinearEmbedding(method="standard", **params)
-S_standart = lle_standart.fit_transform(S_points)
+lle_standard = manifold.LocallyLinearEmbedding(method="standard", **params)
+S_standard = lle_standard.fit_transform(S_points)
 
 lle_ltsa = manifold.LocallyLinearEmbedding(method="ltsa", **params)
 S_ltsa = lle_ltsa.fit_transform(S_points)
@@ -119,7 +119,7 @@ S_ltsa = lle_ltsa.fit_transform(S_points)
 lle_hessian = manifold.LocallyLinearEmbedding(method="hessian", **params)
 S_hessian = lle_hessian.fit_transform(S_points)
 
-lle_mod = manifold.LocallyLinearEmbedding(method="modified", modified_tol=0.8, **params)
+lle_mod = manifold.LocallyLinearEmbedding(method="modified", **params)
 S_mod = lle_mod.fit_transform(S_points)
 
 # %%
@@ -129,7 +129,7 @@ fig, axs = plt.subplots(
 fig.suptitle("Locally Linear Embeddings", size=16)
 
 lle_methods = [
-    ("Standart locally linear embedding", S_standart),
+    ("Standard locally linear embedding", S_standard),
     ("Local tangent space alignment", S_ltsa),
     ("Hessian eigenmap", S_hessian),
     ("Modified locally linear embedding", S_mod),
@@ -163,7 +163,7 @@ plot_2d(S_isomap, S_color, "Isomap Embedding")
 # Read more in the :ref:`User Guide <multidimensional_scaling>`.
 
 md_scaling = manifold.MDS(
-    n_components=n_components, max_iter=50, n_init=4, random_state=rng
+    n_components=n_components, max_iter=50, n_init=4, random_state=0
 )
 S_scaling = md_scaling.fit_transform(S_points)
 
@@ -196,12 +196,13 @@ plot_2d(S_spectral, S_color, "Spectral Embedding")
 
 t_sne = manifold.TSNE(
     n_components=n_components,
-    learning_rate="auto",
     perplexity=30,
-    n_iter=250,
     init="random",
-    random_state=rng,
+    n_iter=250,
+    random_state=0,
 )
 S_t_sne = t_sne.fit_transform(S_points)
 
 plot_2d(S_t_sne, S_color, "T-distributed Stochastic  \n Neighbor Embedding")
+
+# %%

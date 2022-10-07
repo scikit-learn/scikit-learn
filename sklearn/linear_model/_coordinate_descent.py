@@ -10,6 +10,7 @@ import warnings
 import numbers
 from abc import ABC, abstractmethod
 from functools import partial
+from numbers import Integral, Real
 
 import numpy as np
 from scipy import sparse
@@ -18,9 +19,9 @@ from joblib import Parallel, effective_n_jobs
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
 from ._base import _preprocess_data, _deprecate_normalize
-from ..utils import check_array
-from ..utils import check_scalar
+from ..utils import check_array, check_scalar
 from ..utils.validation import check_random_state
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..model_selection import check_cv
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import (
@@ -29,6 +30,7 @@ from ..utils.validation import (
     check_is_fitted,
     column_or_1d,
 )
+from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..utils.fixes import delayed
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
@@ -164,7 +166,7 @@ def _alpha_grid(
             # Workaround to find alpha_max for sparse matrices.
             # since we should not destroy the sparsity of such matrices.
             _, _, X_offset, _, X_scale = _preprocess_data(
-                X, y, fit_intercept, normalize, return_mean=True
+                X, y, fit_intercept, normalize
             )
             mean_dot = X_offset * np.sum(y)
 
@@ -499,6 +501,7 @@ def enet_path(
     """
     X_offset_param = params.pop("X_offset", None)
     X_scale_param = params.pop("X_scale", None)
+    sample_weight = params.pop("sample_weight", None)
     tol = params.pop("tol", 1e-4)
     max_iter = params.pop("max_iter", 1000)
     random_state = params.pop("random_state", None)
@@ -544,14 +547,14 @@ def enet_path(
     # MultiTaskElasticNet does not support sparse matrices
     if not multi_output and sparse.isspmatrix(X):
         if X_offset_param is not None:
-            # As sparse matrices are not actually centered we need this
-            # to be passed to the CD solver.
+            # As sparse matrices are not actually centered we need this to be passed to
+            # the CD solver.
             X_sparse_scaling = X_offset_param / X_scale_param
             X_sparse_scaling = np.asarray(X_sparse_scaling, dtype=X.dtype)
         else:
             X_sparse_scaling = np.zeros(n_features, dtype=X.dtype)
 
-    # X should be normalized and fit already if function is called
+    # X should have been passed through _pre_fit already if function is called
     # from ElasticNet.fit
     if check_input:
         X, y, X_offset, y_offset, X_scale, precompute, Xy = _pre_fit(
@@ -578,7 +581,7 @@ def enet_path(
             normalize=False,
             copy_X=False,
         )
-    else:
+    elif len(alphas) > 1:
         alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
 
     n_alphas = len(alphas)
@@ -606,19 +609,22 @@ def enet_path(
         l2_reg = alpha * (1.0 - l1_ratio) * n_samples
         if not multi_output and sparse.isspmatrix(X):
             model = cd_fast.sparse_enet_coordinate_descent(
-                coef_,
-                l1_reg,
-                l2_reg,
-                X.data,
-                X.indices,
-                X.indptr,
-                y,
-                X_sparse_scaling,
-                max_iter,
-                tol,
-                rng,
-                random,
-                positive,
+                w=coef_,
+                alpha=l1_reg,
+                beta=l2_reg,
+                X_data=ReadonlyArrayWrapper(
+                    X.data
+                ),  # TODO: Remove after release of Cython 3 (#23147)
+                X_indices=X.indices,
+                X_indptr=X.indptr,
+                y=y,
+                sample_weight=sample_weight,
+                X_mean=X_sparse_scaling,
+                max_iter=max_iter,
+                tol=tol,
+                rng=rng,
+                random=random,
+                positive=positive,
             )
         elif multi_output:
             model = cd_fast.enet_coordinate_descent_multi_task(
@@ -748,7 +754,7 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         The tolerance for the optimization: if the updates are
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
-        than ``tol``.
+        than ``tol``, see Notes below.
 
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit as
@@ -807,12 +813,18 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         cross-validation.
     SGDRegressor : Implements elastic net regression with incremental training.
     SGDClassifier : Implements logistic regression with elastic net penalty
-        (``SGDClassifier(loss="log", penalty="elasticnet")``).
+        (``SGDClassifier(loss="log_loss", penalty="elasticnet")``).
 
     Notes
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a Fortran-contiguous numpy array.
+
+    The precise stopping criteria based on `tol` are the following: First, check that
+    that maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`
+    is smaller than `tol` times the maximum absolute coefficient, :math:`\\max_j |w_j|`.
+    If so, then additionally check whether the dual gap is smaller than `tol` times
+    :math:`||y||_2^2 / n_{\text{samples}}`.
 
     Examples
     --------
@@ -830,6 +842,21 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
     >>> print(regr.predict([[0, 0]]))
     [1.451...]
     """
+
+    _parameter_constraints: dict = {
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+        "fit_intercept": ["boolean"],
+        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
+        "precompute": ["boolean", "array-like"],
+        "max_iter": [Interval(Integral, 1, None, closed="left"), None],
+        "copy_X": ["boolean"],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "warm_start": ["boolean"],
+        "positive": ["boolean"],
+        "random_state": ["random_state"],
+        "selection": [StrOptions({"cyclic", "random"})],
+    }
 
     path = staticmethod(enet_path)
 
@@ -898,17 +925,11 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+        self._validate_params()
+
         _normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
-
-        check_scalar(
-            self.alpha,
-            "alpha",
-            target_type=numbers.Real,
-            min_val=0.0,
-        )
-
         if self.alpha == 0:
             warnings.warn(
                 "With alpha=0, this algorithm does not converge "
@@ -916,27 +937,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 "estimator",
                 stacklevel=2,
             )
-
-        if isinstance(self.precompute, str):
-            raise ValueError(
-                "precompute should be one of True, False or array-like. Got %r"
-                % self.precompute
-            )
-
-        check_scalar(
-            self.l1_ratio,
-            "l1_ratio",
-            target_type=numbers.Real,
-            min_val=0.0,
-            max_val=1.0,
-        )
-
-        if self.max_iter is not None:
-            check_scalar(
-                self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1
-            )
-
-        check_scalar(self.tol, "tol", target_type=numbers.Real, min_val=0.0)
 
         # Remember if X is copied
         X_copied = False
@@ -965,10 +965,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             sample_weight = None
         if sample_weight is not None:
             if check_input:
-                if sparse.issparse(X):
-                    raise ValueError(
-                        "Sample weights do not (yet) support sparse matrices."
-                    )
                 sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
             # TLDR: Rescale sw to sum up to n_samples.
             # Long: The objective function of Enet
@@ -1029,9 +1025,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
 
         n_targets = y.shape[1]
 
-        if self.selection not in ["cyclic", "random"]:
-            raise ValueError("selection should be either random or cyclic.")
-
         if not self.warm_start or not hasattr(self, "coef_"):
             coef_ = np.zeros((n_targets, n_features), dtype=X.dtype, order="F")
         else:
@@ -1057,17 +1050,19 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
                 precompute=precompute,
                 Xy=this_Xy,
                 copy_X=True,
+                coef_init=coef_[k],
                 verbose=False,
-                tol=self.tol,
+                return_n_iter=True,
                 positive=self.positive,
+                check_input=False,
+                # from here on **params
+                tol=self.tol,
                 X_offset=X_offset,
                 X_scale=X_scale,
-                return_n_iter=True,
-                coef_init=coef_[k],
                 max_iter=self.max_iter,
                 random_state=self.random_state,
                 selection=self.selection,
-                check_input=False,
+                sample_weight=sample_weight,
             )
             coef_[k] = this_coef[:, 0]
             dual_gaps_[k] = this_dual_gap[0]
@@ -1082,9 +1077,6 @@ class ElasticNet(MultiOutputMixin, RegressorMixin, LinearModel):
             self.dual_gap_ = dual_gaps_
 
         self._set_intercept(X_offset, y_offset, X_scale)
-
-        # workaround since _set_intercept will cast self.coef_ into X.dtype
-        self.coef_ = np.asarray(self.coef_, dtype=X.dtype)
 
         # check for finiteness of coefficients
         if not all(np.isfinite(w).all() for w in [self.coef_, self.intercept_]):
@@ -1181,7 +1173,7 @@ class Lasso(ElasticNet):
         The tolerance for the optimization: if the updates are
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
-        than ``tol``.
+        than ``tol``, see Notes below.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
@@ -1258,6 +1250,12 @@ class Lasso(ElasticNet):
     assumed to be specific to the targets. Hence they must correspond in
     number.
 
+    The precise stopping criteria based on `tol` are the following: First, check that
+    that maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`
+    is smaller than `tol` times the maximum absolute coefficient, :math:`\\max_j |w_j|`.
+    If so, then additionally check whether the dual gap is smaller than `tol` times
+    :math:`||y||_2^2 / n_{\text{samples}}`.
+
     Examples
     --------
     >>> from sklearn import linear_model
@@ -1269,6 +1267,11 @@ class Lasso(ElasticNet):
     >>> print(clf.intercept_)
     0.15...
     """
+
+    _parameter_constraints: dict = {
+        **ElasticNet._parameter_constraints,
+    }
+    _parameter_constraints.pop("l1_ratio")
 
     path = staticmethod(enet_path)
 
@@ -1421,6 +1424,8 @@ def _path_residuals(
     path_params["precompute"] = precompute
     path_params["copy_X"] = False
     path_params["alphas"] = alphas
+    # needed for sparse cd solver
+    path_params["sample_weight"] = sw_train
 
     if "l1_ratio" in path_params:
         path_params["l1_ratio"] = l1_ratio
@@ -1455,6 +1460,24 @@ def _path_residuals(
 
 class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
     """Base class for iterative model fitting along a regularization path."""
+
+    _parameter_constraints: dict = {
+        "eps": [Interval(Real, 0, None, closed="neither")],
+        "n_alphas": [Interval(Integral, 1, None, closed="left")],
+        "alphas": ["array-like", None],
+        "fit_intercept": ["boolean"],
+        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
+        "precompute": [StrOptions({"auto"}), "array-like", "boolean"],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "copy_X": ["boolean"],
+        "cv": ["cv_object"],
+        "verbose": ["verbose"],
+        "n_jobs": [Integral, None],
+        "positive": ["boolean"],
+        "random_state": ["random_state"],
+        "selection": [StrOptions({"cyclic", "random"})],
+    }
 
     @abstractmethod
     def __init__(
@@ -1532,6 +1555,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             Returns an instance of fitted model.
         """
 
+        self._validate_params()
+
         # Do as _deprecate_normalize but without warning as it's raised
         # below during the refitting on the best alpha.
         _normalize = self.normalize
@@ -1555,7 +1580,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             # by the model fitting itself
 
             # Need to validate separately here.
-            # We can't pass multi_ouput=True because that would allow y to be
+            # We can't pass multi_output=True because that would allow y to be
             # csr. We also want to allow y to be 64 or 32 but check_X_y only
             # allows to convert for 64.
             check_X_params = dict(
@@ -1576,7 +1601,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             del reference_to_old_X
         else:
             # Need to validate separately here.
-            # We can't pass multi_ouput=True because that would allow y to be
+            # We can't pass multi_output=True because that would allow y to be
             # csr. We also want to allow y to be 64 or 32 but check_X_y only
             # allows to convert for 64.
             check_X_params = dict(
@@ -1609,14 +1634,9 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
         if isinstance(sample_weight, numbers.Number):
             sample_weight = None
         if sample_weight is not None:
-            if sparse.issparse(X):
-                raise ValueError("Sample weights do not (yet) support sparse matrices.")
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         model = self._get_estimator()
-
-        if self.selection not in ["random", "cyclic"]:
-            raise ValueError("selection should be either random or cyclic.")
 
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self.get_params()
@@ -1644,7 +1664,7 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
         check_scalar_alpha = partial(
             check_scalar,
-            target_type=numbers.Real,
+            target_type=Real,
             min_val=0.0,
             include_boundaries="left",
         )
@@ -1665,12 +1685,8 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
             ]
         else:
             # Making sure alphas entries are scalars.
-            if np.isscalar(alphas):
-                check_scalar_alpha(alphas, "alphas")
-            else:
-                # alphas is an iterable item in this case.
-                for index, alpha in enumerate(alphas):
-                    check_scalar_alpha(alpha, f"alphas[{index}]")
+            for index, alpha in enumerate(alphas):
+                check_scalar_alpha(alpha, f"alphas[{index}]")
             # Making sure alphas is properly ordered.
             alphas = np.tile(np.sort(alphas)[::-1], (n_l1_ratio, 1))
 
@@ -1801,7 +1817,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
     n_alphas : int, default=100
         Number of alphas along the regularization path.
 
-    alphas : ndarray, default=None
+    alphas : array-like, default=None
         List of alphas where to compute the models.
         If ``None`` alphas are set automatically.
 
@@ -2029,7 +2045,7 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     n_alphas : int, default=100
         Number of alphas along the regularization path, used for each l1_ratio.
 
-    alphas : ndarray, default=None
+    alphas : array-like, default=None
         List of alphas where to compute the models.
         If None alphas are set automatically.
 
@@ -2199,6 +2215,11 @@ class ElasticNetCV(RegressorMixin, LinearModelCV):
     >>> print(regr.predict([[0, 0]]))
     [0.398...]
     """
+
+    _parameter_constraints: dict = {
+        **LinearModelCV._parameter_constraints,
+        "l1_ratio": [Interval(Real, 0, 1, closed="both"), "array-like"],
+    }
 
     path = staticmethod(enet_path)
 
@@ -2389,6 +2410,12 @@ class MultiTaskElasticNet(Lasso):
     [0.0872422 0.0872422]
     """
 
+    _parameter_constraints: dict = {
+        **ElasticNet._parameter_constraints,
+    }
+    for param in ("precompute", "positive"):
+        _parameter_constraints.pop(param)
+
     def __init__(
         self,
         alpha=1.0,
@@ -2438,12 +2465,14 @@ class MultiTaskElasticNet(Lasso):
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
         """
+        self._validate_params()
+
         _normalize = _deprecate_normalize(
             self.normalize, default=False, estimator_name=self.__class__.__name__
         )
 
         # Need to validate separately here.
-        # We can't pass multi_ouput=True because that would allow y to be csr.
+        # We can't pass multi_output=True because that would allow y to be csr.
         check_X_params = dict(
             dtype=[np.float64, np.float32],
             order="F",
@@ -2480,8 +2509,6 @@ class MultiTaskElasticNet(Lasso):
 
         self.coef_ = np.asfortranarray(self.coef_)  # coef contiguous in memory
 
-        if self.selection not in ["random", "cyclic"]:
-            raise ValueError("selection should be either random or cyclic.")
         random = self.selection == "random"
 
         (
@@ -2638,6 +2665,11 @@ class MultiTaskLasso(MultiTaskElasticNet):
     >>> print(clf.intercept_)
     [-0.41888636 -0.87382323]
     """
+
+    _parameter_constraints: dict = {
+        **MultiTaskElasticNet._parameter_constraints,
+    }
+    _parameter_constraints.pop("l1_ratio")
 
     def __init__(
         self,
@@ -2849,6 +2881,13 @@ class MultiTaskElasticNetCV(RegressorMixin, LinearModelCV):
     >>> print(clf.intercept_)
     [0.00166409 0.00166409]
     """
+
+    _parameter_constraints: dict = {
+        **LinearModelCV._parameter_constraints,
+        "l1_ratio": [Interval(Real, 0, 1, closed="both"), "array-like"],
+    }
+    _parameter_constraints.pop("precompute")
+    _parameter_constraints.pop("positive")
 
     path = staticmethod(enet_path)
 
@@ -3085,6 +3124,12 @@ class MultiTaskLassoCV(RegressorMixin, LinearModelCV):
     >>> reg.predict(X[:1,])
     array([[153.7971...,  94.9015...]])
     """
+
+    _parameter_constraints: dict = {
+        **LinearModelCV._parameter_constraints,
+    }
+    _parameter_constraints.pop("precompute")
+    _parameter_constraints.pop("positive")
 
     path = staticmethod(lasso_path)
 

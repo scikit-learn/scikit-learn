@@ -205,6 +205,28 @@ ul.search li div.context {
   ul.search li div.context {
     margin-left: 1rem;
   }
+
+  .sk-search-text-input {
+    width: 5rem;
+  }
+}
+
+@media screen and (min-width: 806px) {
+  .sk-search-text-input {
+    width: 7rem;
+  }
+}
+
+@media screen and (min-width: 820px) {
+  .sk-search-text-input {
+    width: 8rem;
+  }
+}
+
+@media screen and (min-width: 886px) {
+  .sk-search-text-input {
+    width: 12rem;
+  }
 }
 
 ul.search li a {
@@ -710,10 +732,6 @@ dt.field-odd, dt.field-even {
   box-sizing: border-box;
 }
 
-dl.field-list > dt:after {
-  content: ":";
-}
-
 .classifier {
   font-style: italic;
 }
@@ -810,8 +828,12 @@ div.admonition {
   background-color: #eee;
 }
 
-div.admonition p, div.admonition dl, div.admonition dd,
-div.deprecated p, div.versionchanged p, div.versionadded p{
+div.admonition p:last-child,
+div.admonition dl:last-child,
+div.admonition dd:last-child,
+div.deprecated p:last-child,
+div.versionchanged p:last-child,
+div.versionadded p:last-child{
   margin-bottom: 0
 }
 
@@ -837,7 +859,7 @@ dt.label {
   padding-right: 0.5rem;
 }
 
-/* copy buttonn */
+/* copy button */
 div.highlight:hover span.copybutton {
   background-color: #3F556B;
   color: white;

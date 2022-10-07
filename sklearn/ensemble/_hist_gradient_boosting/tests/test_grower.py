@@ -521,7 +521,7 @@ def test_ohe_equivalence(min_samples_leaf, n_unique_categories, target):
     n_samples = 10_000
     X_binned = rng.randint(0, n_unique_categories, size=(n_samples, 1), dtype=np.uint8)
 
-    X_ohe = OneHotEncoder(sparse=False).fit_transform(X_binned)
+    X_ohe = OneHotEncoder(sparse_output=False).fit_transform(X_binned)
     X_ohe = np.asfortranarray(X_ohe).astype(np.uint8)
 
     if target == "equal":

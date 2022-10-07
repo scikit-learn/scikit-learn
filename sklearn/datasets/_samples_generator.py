@@ -8,6 +8,7 @@ Generate samples of synthetic data sets.
 
 import numbers
 import array
+import warnings
 from collections.abc import Iterable
 
 import numpy as np
@@ -1238,12 +1239,20 @@ def make_low_rank_matrix(
     return np.dot(np.dot(u, s), v.T)
 
 
+# TODO(1.3): Change argument `data_transposed` default from True to False.
+# TODO(1.3): Deprecate data_transposed, always return data not transposed.
 def make_sparse_coded_signal(
-    n_samples, *, n_components, n_features, n_nonzero_coefs, random_state=None
+    n_samples,
+    *,
+    n_components,
+    n_features,
+    n_nonzero_coefs,
+    random_state=None,
+    data_transposed="warn",
 ):
     """Generate a signal as a sparse combination of dictionary elements.
 
-    Returns a matrix Y = DX, such as D is (n_features, n_components),
+    Returns a matrix Y = DX, such that D is (n_features, n_components),
     X is (n_components, n_samples) and each column of X has exactly
     n_nonzero_coefs non-zero elements.
 
@@ -1252,34 +1261,43 @@ def make_sparse_coded_signal(
     Parameters
     ----------
     n_samples : int
-        Number of samples to generate
+        Number of samples to generate.
 
     n_components : int
-        Number of components in the dictionary
+        Number of components in the dictionary.
 
     n_features : int
-        Number of features of the dataset to generate
+        Number of features of the dataset to generate.
 
     n_nonzero_coefs : int
-        Number of active (non-zero) coefficients in each sample
+        Number of active (non-zero) coefficients in each sample.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    data_transposed : bool, default=True
+        By default, Y, D and X are transposed.
+
+        .. versionadded:: 1.1
+
     Returns
     -------
-    data : ndarray of shape (n_features, n_samples)
-        The encoded signal (Y).
+    data : ndarray of shape (n_features, n_samples) or (n_samples, n_features)
+        The encoded signal (Y). The shape is `(n_samples, n_features)` if
+        `data_transposed` is False, otherwise it's `(n_features, n_samples)`.
 
-    dictionary : ndarray of shape (n_features, n_components)
-        The dictionary with normalized components (D).
+    dictionary : ndarray of shape (n_features, n_components) or \
+            (n_components, n_features)
+        The dictionary with normalized components (D). The shape is
+        `(n_components, n_features)` if `data_transposed` is False, otherwise it's
+        `(n_features, n_components)`.
 
-    code : ndarray of shape (n_components, n_samples)
+    code : ndarray of shape (n_components, n_samples) or (n_samples, n_components)
         The sparse code such that each column of this matrix has exactly
-        n_nonzero_coefs non-zero items (X).
-
+        n_nonzero_coefs non-zero items (X). The shape is `(n_samples, n_components)`
+        if `data_transposed` is False, otherwise it's `(n_components, n_samples)`.
     """
     generator = check_random_state(random_state)
 
@@ -1297,6 +1315,19 @@ def make_sparse_coded_signal(
 
     # encode signal
     Y = np.dot(D, X)
+
+    # raise warning if data_transposed is not passed explicitly
+    if data_transposed == "warn":
+        data_transposed = True
+        warnings.warn(
+            "The default value of data_transposed will change from True to False in"
+            " version 1.3",
+            FutureWarning,
+        )
+
+    # transpose if needed
+    if not data_transposed:
+        Y, D, X = Y.T, D.T, X.T
 
     return map(np.squeeze, (Y, D, X))
 
@@ -1374,7 +1405,7 @@ def make_spd_matrix(n_dim, *, random_state=None):
 
     See Also
     --------
-    make_sparse_spd_matrix
+    make_sparse_spd_matrix: Generate a sparse symmetric definite positive matrix.
     """
     generator = check_random_state(random_state)
 
@@ -1501,9 +1532,9 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
 
     References
     ----------
-    .. [1] S. Marsland, "Machine Learning: An Algorithmic Perspective",
-           Chapter 10, 2009.
-           http://seat.massey.ac.nz/personal/s.r.marsland/Code/10/lle.py
+    .. [1] S. Marsland, "Machine Learning: An Algorithmic Perspective", 2nd edition,
+           Chapter 6, 2014.
+           https://homepages.ecs.vuw.ac.nz/~marslast/Code/Ch6/lle.py
     """
     generator = check_random_state(random_state)
 
@@ -1606,7 +1637,7 @@ def make_gaussian_quantiles(
         The number of features for each sample.
 
     n_classes : int, default=3
-        The number of classes
+        The number of classes.
 
     shuffle : bool, default=True
         Shuffle the samples.
@@ -1631,7 +1662,6 @@ def make_gaussian_quantiles(
     References
     ----------
     .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
-
     """
     if n_samples < n_classes:
         raise ValueError("n_samples must be at least n_classes")
@@ -1747,10 +1777,10 @@ def make_biclusters(
     col_sizes = generator.multinomial(n_cols, np.repeat(1.0 / n_clusters, n_clusters))
 
     row_labels = np.hstack(
-        list(np.repeat(val, rep) for val, rep in zip(range(n_clusters), row_sizes))
+        [np.repeat(val, rep) for val, rep in zip(range(n_clusters), row_sizes)]
     )
     col_labels = np.hstack(
-        list(np.repeat(val, rep) for val, rep in zip(range(n_clusters), col_sizes))
+        [np.repeat(val, rep) for val, rep in zip(range(n_clusters), col_sizes)]
     )
 
     result = np.zeros(shape, dtype=np.float64)
@@ -1850,10 +1880,10 @@ def make_checkerboard(
     )
 
     row_labels = np.hstack(
-        list(np.repeat(val, rep) for val, rep in zip(range(n_row_clusters), row_sizes))
+        [np.repeat(val, rep) for val, rep in zip(range(n_row_clusters), row_sizes)]
     )
     col_labels = np.hstack(
-        list(np.repeat(val, rep) for val, rep in zip(range(n_col_clusters), col_sizes))
+        [np.repeat(val, rep) for val, rep in zip(range(n_col_clusters), col_sizes)]
     )
 
     result = np.zeros(shape, dtype=np.float64)

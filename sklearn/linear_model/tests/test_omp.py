@@ -28,6 +28,7 @@ y, X, gamma = make_sparse_coded_signal(
     n_features=n_samples,
     n_nonzero_coefs=n_nonzero_coefs,
     random_state=0,
+    data_transposed=True,
 )
 # Make X not of norm 1 for testing
 X *= 10

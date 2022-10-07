@@ -4,6 +4,7 @@
 
 import inspect
 import sys
+import warnings
 
 import numpy as np
 import pytest
@@ -79,6 +80,12 @@ def test_linear_model_normalize_deprecation_message(
         y = np.sign(y)
 
     model = estimator(normalize=normalize)
+    if warning_category is None:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", FutureWarning)
+            model.fit(X, y)
+        return
+
     with pytest.warns(warning_category) as record:
         model.fit(X, y)
     # Filter record in case other unrelated warnings are raised
@@ -90,8 +97,7 @@ def test_linear_model_normalize_deprecation_message(
             msg += "\n"
         raise AssertionError(msg)
     wanted = [r for r in record if r.category == warning_category]
-    if warning_category is not None:
-        assert "'normalize' was deprecated" in str(wanted[0].message)
+    assert "'normalize' was deprecated" in str(wanted[0].message)
     assert len(wanted) == n_warnings
 
 

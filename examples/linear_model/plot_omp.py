@@ -28,6 +28,7 @@ y, X, w = make_sparse_coded_signal(
     n_features=n_features,
     n_nonzero_coefs=n_nonzero_coefs,
     random_state=0,
+    data_transposed=True,
 )
 
 (idx,) = w.nonzero()

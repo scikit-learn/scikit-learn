@@ -965,9 +965,14 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             results["std_%s" % key_name] = array_stds
 
             if rank:
-                results["rank_%s" % key_name] = np.asarray(
-                    rankdata(-array_means, method="min"), dtype=np.int32
-                )
+                # when input is nan, scipy >= 1.10 rankdata returns nan. To
+                # keep previous behaviour nans are set to be smaller than the
+                # minimum value in the array before ranking
+                min_array_means = min(array_means) - 1
+                array_means = np.nan_to_num(array_means, copy=True, nan=min_array_means)
+                rank_result = rankdata(-array_means, method="min")
+                rank_result = np.asarray(rank_result, dtype=np.int32)
+                results["rank_%s" % key_name] = rank_result
 
         _store("fit_time", out["fit_time"])
         _store("score_time", out["score_time"])
@@ -1100,6 +1105,10 @@ class GridSearchCV(BaseSearchCV):
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
+
+        See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
+        to see how to design a custom selection strategy using a callable
+        via `refit`.
 
         .. versionchanged:: 0.20
             Support for callable added.
@@ -1502,6 +1511,12 @@ class RandomizedSearchCV(BaseSearchCV):
 
     verbose : int
         Controls the verbosity: the higher, the more messages.
+
+        - >1 : the computation time for each fold and parameter candidate is
+          displayed;
+        - >2 : the score is also displayed;
+        - >3 : the fold and candidate parameter indexes are also displayed
+          together with the starting time of the computation.
 
     pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
