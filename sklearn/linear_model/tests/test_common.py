@@ -101,7 +101,7 @@ def test_linear_model_normalize_deprecation_message(
     assert len(wanted) == n_warnings
 
 
-# Note: GammaRegressor() and TweedieRegressor(power != 1) do not have a canonical link.
+# Note: GammaRegressor() and TweedieRegressor(power != 1) have a non-canonical link.
 @pytest.mark.parametrize(
     "model",
     [
