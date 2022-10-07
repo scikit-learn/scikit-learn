@@ -295,18 +295,18 @@ def test_sparse_dense_equality(
 def test_same_output_sparse_dense_lasso_and_enet_cv():
     X, y = make_sparse_data(n_samples=40, n_features=10)
     clfs = ElasticNetCV(max_iter=100)
-    ignore_warnings(clfs.fit)(X, y)
+    clfs.fit(X, y)
     clfd = ElasticNetCV(max_iter=100)
-    ignore_warnings(clfd.fit)(X.toarray(), y)
+    clfd.fit(X.toarray(), y)
     assert_almost_equal(clfs.alpha_, clfd.alpha_, 7)
     assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)
     assert_array_almost_equal(clfs.mse_path_, clfd.mse_path_)
     assert_array_almost_equal(clfs.alphas_, clfd.alphas_)
 
     clfs = LassoCV(max_iter=100, cv=4)
-    ignore_warnings(clfs.fit)(X, y)
+    clfs.fit(X, y)
     clfd = LassoCV(max_iter=100, cv=4)
-    ignore_warnings(clfd.fit)(X.toarray(), y)
+    clfd.fit(X.toarray(), y)
     assert_almost_equal(clfs.alpha_, clfd.alpha_, 7)
     assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)
     assert_array_almost_equal(clfs.mse_path_, clfd.mse_path_)
@@ -327,13 +327,13 @@ def test_same_multiple_output_sparse_dense():
         [10, 11, 12, 13, 14],
         [11, 12, 13, 14, 15],
     ]
-    ignore_warnings(l.fit)(X, y)
+    l.fit(X, y)
     sample = np.array([1, 2, 3, 4, 5]).reshape(1, -1)
     predict_dense = l.predict(sample)
 
     l_sp = ElasticNet()
     X_sp = sp.coo_matrix(X)
-    ignore_warnings(l_sp.fit)(X_sp, y)
+    l_sp.fit(X_sp, y)
     sample_sparse = sp.coo_matrix(sample)
     predict_sparse = l_sp.predict(sample_sparse)
 

@@ -112,7 +112,7 @@ def _deprecate_normalize(normalize, estimator_name):
     )
 
     alpha_msg = ""
-    if "Lasso" in estimator_name:
+    if "LassoLars" in estimator_name:
         alpha_msg = "Set parameter alpha to: original_alpha * np.sqrt(n_samples). "
 
     if normalize != "deprecated" and normalize:
