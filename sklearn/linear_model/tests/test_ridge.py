@@ -1637,7 +1637,7 @@ def test_ridge_fit_intercept_sparse_sag(with_sample_weight, global_random_seed):
     assert_allclose(dense_ridge.intercept_, sparse_ridge.intercept_, rtol=1e-4)
     assert_allclose(dense_ridge.coef_, sparse_ridge.coef_, rtol=1e-4)
     with pytest.warns(UserWarning, match='"sag" solver requires.*'):
-        Ridge(solver="sag").fit(X_csr, y)
+        Ridge(solver="sag", fit_intercept=True, tol=1e-3, max_iter=None).fit(X_csr, y)
 
 
 @pytest.mark.parametrize("return_intercept", [False, True])
