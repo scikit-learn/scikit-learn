@@ -1277,39 +1277,49 @@ def test_sparse_input(EstimatorClass, sparse_matrix):
             assert_array_almost_equal(res_sparse, res)
 
 
-def test_gradient_boosting_early_stopping():
-    X, y = make_classification(n_samples=1000, random_state=0)
+@pytest.mark.parametrize(
+    "GradientBoostingEstimator", [GradientBoostingClassifier, GradientBoostingRegressor]
+)
+def test_gradient_boosting_early_stopping(GradientBoostingEstimator):
+    # Check if early stopping works as expected, that is empirically check that the
+    # number of trained estimators is increasing when the tolerance decreases.
 
-    gbc = GradientBoostingClassifier(
-        n_estimators=1000,
+    X, y = make_classification(n_samples=1000, random_state=0)
+    n_estimators = 1000
+
+    gb_large_tol = GradientBoostingEstimator(
+        n_estimators=n_estimators,
         n_iter_no_change=10,
         learning_rate=0.1,
         max_depth=3,
         random_state=42,
+        tol=1e-1,
     )
 
-    gbr = GradientBoostingRegressor(
-        n_estimators=1000,
+    gb_small_tol = GradientBoostingEstimator(
+        n_estimators=n_estimators,
         n_iter_no_change=10,
         learning_rate=0.1,
         max_depth=3,
         random_state=42,
+        tol=1e-3,
     )
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
-    # Check if early_stopping works as expected
-    for est, tol, early_stop_n_estimators in (
-        (gbc, 1e-1, 28),
-        (gbr, 1e-1, 13),
-        (gbc, 1e-3, 70),
-        (gbr, 1e-3, 28),
-    ):
-        est.set_params(tol=tol)
-        est.fit(X_train, y_train)
-        assert est.n_estimators_ == early_stop_n_estimators
-        assert est.score(X_test, y_test) > 0.7
+    gb_large_tol.fit(X_train, y_train)
+    gb_small_tol.fit(X_train, y_train)
 
-    # Without early stopping
+    assert gb_large_tol.n_estimators_ < gb_small_tol.n_estimators_ < n_estimators
+
+    assert gb_large_tol.score(X_test, y_test) > 0.7
+    assert gb_small_tol.score(X_test, y_test) > 0.7
+
+
+def test_gradient_boosting_without_early_stopping():
+    # When early stopping is not used, the number of trained estimators
+    # must be the one specified.
+    X, y = make_classification(n_samples=1000, random_state=0)
+
     gbc = GradientBoostingClassifier(
         n_estimators=50, learning_rate=0.1, max_depth=3, random_state=42
     )
@@ -1319,6 +1329,7 @@ def test_gradient_boosting_early_stopping():
     )
     gbr.fit(X, y)
 
+    # The number of trained estimators must be the one specified.
     assert gbc.n_estimators_ == 50
     assert gbr.n_estimators_ == 30
 
