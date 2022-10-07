@@ -181,14 +181,13 @@ class _SetOutputMixin:
             return
 
         # Mapping from method to key in configurations
-        method_to_key = [
-            ("transform", "transform"),
-            ("fit_transform", "transform"),
-        ]
-
+        method_to_key = {
+            "transform": "transform",
+            "fit_transform": "transform",
+        }
         cls._sklearn_auto_wrap_output_keys = set()
 
-        for method, key in method_to_key:
+        for method, key in method_to_key.items():
             if not hasattr(cls, method) or key not in auto_wrap_output_keys:
                 continue
             cls._sklearn_auto_wrap_output_keys.add(key)

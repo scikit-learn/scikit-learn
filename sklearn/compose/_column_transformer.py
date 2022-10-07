@@ -333,14 +333,19 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         """
         if fitted:
-            # Replace "passthrough" with the fitted version in
-            # _name_to_fitted_passthrough
-            def replace_passthrough(name, trans, columns):
-                if not replace_strings or name not in self._name_to_fitted_passthrough:
-                    return name, trans, columns
-                return name, self._name_to_fitted_passthrough[name], columns
+            if replace_strings:
+                # Replace "passthrough" with the fitted version in
+                # _name_to_fitted_passthrough
+                def replace_passthrough(name, trans, columns):
+                    if name not in self._name_to_fitted_passthrough:
+                        return name, trans, columns
+                    return name, self._name_to_fitted_passthrough[name], columns
 
-            transformers = [replace_passthrough(*trans) for trans in self.transformers_]
+                transformers = [
+                    replace_passthrough(*trans) for trans in self.transformers_
+                ]
+            else:
+                transformers = self.transformers_
         else:
             # interleave the validated column specifiers
             transformers = [
