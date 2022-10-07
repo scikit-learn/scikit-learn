@@ -15,7 +15,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.extmath.fast_logdet",
     "sklearn.utils.extmath.randomized_svd",
     "sklearn.utils.extmath.svd_flip",
-    "sklearn.utils.extmath.weighted_mode",
     "sklearn.utils.fixes.delayed",
     # To be fixed in upstream issue:
     # https://github.com/joblib/threadpoolctl/issues/108
