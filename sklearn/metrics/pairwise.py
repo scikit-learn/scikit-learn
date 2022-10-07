@@ -345,13 +345,16 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
         metric_kwargs = {
             "X_norm_squared": np.ravel(X_norm_squared)
             if X_norm_squared is not None
-            else X_norm_squared,
+            else None,
             "Y_norm_squared": np.ravel(Y_norm_squared)
             if Y_norm_squared is not None
-            else Y_norm_squared,
+            else None,
         }
         return PairwiseDistances.compute(X, Y, metric, metric_kwargs=metric_kwargs)
 
+    # XXX: the following code is still used for list-of-lists of numbers which
+    # aren't converted to numpy arrays in validation steps done in `check_array`.
+    # TODO: convert list-of-lists to numpy arrays in `check_array`.
     if X_norm_squared is not None:
         if X_norm_squared.dtype == np.float32:
             XX = None
@@ -887,6 +890,10 @@ def haversine_distances(X, Y=None):
     if PairwiseDistances.is_usable_for(X, Y, metric="haversine"):
         return PairwiseDistances.compute(X, Y, metric="haversine")
 
+    # XXX: the following code is still used for list-of-lists of numbers which
+    # aren't converted to numpy arrays in validation steps done in `check_array`.
+    # TODO: convert list-of-lists to numpy arrays in `check_array`.
+
     from ..metrics import DistanceMetric
 
     return DistanceMetric.get_metric("haversine").pairwise(X, Y)
@@ -964,6 +971,13 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
 
     if sum_over_features and PairwiseDistances.is_usable_for(X, Y, metric="manhattan"):
         return PairwiseDistances.compute(X, Y, metric="manhattan")
+
+    # XXX: the following code is still used for list-of-lists of numbers which
+    # aren't converted to numpy arrays in validation steps done in `check_array`
+    # and for supporting `sum_over_features` which we should probably remove.
+    # TODO: convert list-of-lists to numpy arrays in `check_array`.
+    # TODO: remove `sum_over_features`, see:
+    # https://github.com/scikit-learn/scikit-learn/issues/24597
 
     if issparse(X) or issparse(Y):
         if not sum_over_features:
@@ -2006,6 +2020,10 @@ def pairwise_distances(
             _pairwise_callable, metric=metric, force_all_finite=force_all_finite, **kwds
         )
     else:
+        # XXX: the following code is still used for list-of-lists of numbers which
+        # aren't converted to numpy arrays in validation steps done in `check_array`.
+        # TODO: convert list-of-lists to numpy arrays in `check_array`.
+
         if issparse(X) or issparse(Y):
             raise TypeError("scipy distance metrics do not support sparse matrices.")
 

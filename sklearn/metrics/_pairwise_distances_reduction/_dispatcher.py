@@ -290,7 +290,7 @@ class PairwiseDistances(BaseDistanceReductionDispatcher):
             )
 
         raise ValueError(
-            "Only float64 or float32 datasets pairs are supported at this time, "
+            "Only float64 or float32 datasets pairs are supported, but "
             f"got: X.dtype={X.dtype} and Y.dtype={Y.dtype}."
         )
 

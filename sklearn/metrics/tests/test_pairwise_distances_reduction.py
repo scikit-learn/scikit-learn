@@ -699,7 +699,7 @@ def test_pairwise_distances_factory_method_wrong_usages():
     metric = "euclidean"
 
     msg = (
-        "Only float64 or float32 datasets pairs are supported at this time, "
+        "Only float64 or float32 datasets pairs are supported, but "
         "got: X.dtype=float32 and Y.dtype=float64"
     )
     with pytest.raises(
@@ -709,7 +709,7 @@ def test_pairwise_distances_factory_method_wrong_usages():
         PairwiseDistances.compute(X=X.astype(np.float32), Y=Y, metric=metric)
 
     msg = (
-        "Only float64 or float32 datasets pairs are supported at this time, "
+        "Only float64 or float32 datasets pairs are supported, but "
         "got: X.dtype=float64 and Y.dtype=int32"
     )
     with pytest.raises(
@@ -728,18 +728,6 @@ def test_pairwise_distances_factory_method_wrong_usages():
 
     with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
         PairwiseDistances.compute(X=np.asfortranarray(X), Y=Y, metric=metric)
-
-    unused_metric_kwargs = {"p": 3}
-
-    message = (
-        r"Some metric_kwargs have been passed \({'p': 3}\) but aren't usable for this"
-        r" case \(EuclideanPairwiseDistances64"
-    )
-
-    with pytest.warns(UserWarning, match=message):
-        PairwiseDistances.compute(
-            X=X, Y=Y, metric=metric, metric_kwargs=unused_metric_kwargs
-        )
 
 
 @pytest.mark.parametrize(
