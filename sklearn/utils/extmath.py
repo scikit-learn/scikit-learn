@@ -619,7 +619,8 @@ def weighted_mode(a, w, *, axis=0):
 
     See Also
     --------
-    scipy.stats.mode: Calculates the Modal (most common) value of array elements along specified axis.
+    scipy.stats.mode: Calculates the Modal (most common) value of array elements
+        along specified axis.
 
     Examples
     --------
