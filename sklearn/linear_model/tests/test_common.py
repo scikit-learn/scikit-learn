@@ -144,13 +144,14 @@ def test_linear_model_normalize_deprecation_message(
 )
 @pytest.mark.parametrize("with_sample_weight", [False, True])
 def test_balance_property(model, with_sample_weight, global_random_seed):
-    # Test that sum(y_pred)=sum(y_true) on training set.
+    # Test that sum(y_pred) == sum(y_true) on the training set.
     # This must hold for all linear models with deviance of an exponential disperson
     # family as loss and the corresponding canonical link if fit_intercept=True.
     # Examples:
     #     - squared error and identity link (most linear models)
     #     - Poisson deviance with log link
     #     - log loss with logit link
+    # This is know as balance property or unconditional calibration/unbiasednes.
 
     if (
         with_sample_weight
