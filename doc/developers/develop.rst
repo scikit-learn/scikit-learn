@@ -658,6 +658,9 @@ a custom subclass::
         def get_feature_names_out(self, input_features=None):
             ...
 
+For transformers that return multiple array in `transform`, auto wrapping will
+only wrap the first array and not alter the other arrays.
+
 See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
 for an example on how to use the API.
 
