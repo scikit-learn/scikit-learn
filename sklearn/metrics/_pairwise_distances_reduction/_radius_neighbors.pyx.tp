@@ -14,7 +14,7 @@ from ...utils._vector_sentinel cimport vector_to_nd_array
 
 from numbers import Real
 from scipy.sparse import issparse
-from ...utils import check_scalar, _in_unstable_openblas_configuration
+from ...utils import check_array, check_scalar, _in_unstable_openblas_configuration
 from ...utils.fixes import threadpool_limits
 
 cnp.import_array()
@@ -367,16 +367,26 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
             chunk_size=self.chunk_size,
         )
 
-        if metric_kwargs is not None and metric_kwargs.get("Y_norm_squared", None) is not None:
-            self.Y_norm_squared = metric_kwargs.pop("Y_norm_squared")
+        if metric_kwargs is not None and "Y_norm_squared" in metric_kwargs:
+            self.Y_norm_squared = check_array(
+                metric_kwargs.pop("Y_norm_squared"),
+                ensure_2d=False,
+                input_name="Y_norm_squared",
+                dtype=np.float64,
+            )
         else:
             self.Y_norm_squared = _sqeuclidean_row_norms{{name_suffix}}(
                 Y,
                 self.effective_n_threads,
             )
 
-        if metric_kwargs is not None and metric_kwargs.get("X_norm_squared", None) is not None:
-            self.X_norm_squared = metric_kwargs.pop("X_norm_squared")
+        if metric_kwargs is not None and "X_norm_squared" in metric_kwargs:
+            self.X_norm_squared = check_array(
+                metric_kwargs.pop("X_norm_squared"),
+                ensure_2d=False,
+                input_name="X_norm_squared",
+                dtype=np.float64,
+            )
         else:
             # Do not recompute norms if datasets are identical.
             self.X_norm_squared = (
@@ -484,7 +494,7 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
         cdef:
             ITYPE_t i, j
             ITYPE_t pair_index = 0
-            DTYPE_t sqeucliean_dist_i_j
+            DTYPE_t sqeuclidean_dist_i_j
 
             DTYPE_t *dist_middle_terms = self.gemm_term_computer._compute_dist_middle_terms(
                 X_start, X_end, Y_start, Y_end, thread_num
@@ -497,20 +507,24 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
                 #
                 #             ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
                 #
-                sqeucliean_dist_i_j = (
+                sqeuclidean_dist_i_j = (
                     self.X_norm_squared[i]
                     + dist_middle_terms[pair_index]
                     + self.Y_norm_squared[j]
                 )
 
-                # Guard against eventual -0. and NaN caused by catastrophic
-                # cancellation (e.g. if X is Y)
-                sqeucliean_dist_i_j = (
-                    sqeucliean_dist_i_j if 0. < sqeucliean_dist_i_j == sqeucliean_dist_i_j else 0.
+                sqeuclidean_dist_i_j = (
+                    sqeuclidean_dist_i_j
+                    # Catastrophic cancellation causing -0. and NaN can be present
+                    # in some situations, e.g. when computing d(x_i, y_i) when X is Y.
+                    #
+                    #  Guard against -0.    Guard against NaN
+                    #     v                       v
+                    if 0. < sqeuclidean_dist_i_j == sqeuclidean_dist_i_j else 0.
                 )
 
-                if sqeucliean_dist_i_j <= self.r_radius:
-                    deref(self.neigh_distances_chunks[thread_num])[i].push_back(sqeucliean_dist_i_j)
+                if sqeuclidean_dist_i_j <= self.r_radius:
+                    deref(self.neigh_distances_chunks[thread_num])[i].push_back(sqeuclidean_dist_i_j)
                     deref(self.neigh_indices_chunks[thread_num])[i].push_back(j)
 
                 pair_index += 1
