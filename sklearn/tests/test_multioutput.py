@@ -28,6 +28,7 @@ from sklearn.linear_model import (
     Ridge,
     SGDClassifier,
     SGDRegressor,
+    QuantileRegressor,
 )
 from sklearn.metrics import jaccard_score, mean_squared_error
 from sklearn.model_selection import GridSearchCV, train_test_split
@@ -646,7 +647,7 @@ def test_regressor_chain_w_fit_params():
             self.sample_weight_ = fit_params["sample_weight"]
             super().fit(X, y, **fit_params)
 
-    model = RegressorChain(MySGD())
+    model = RegressorChain(MySGD().set_fit_request(sample_weight=True))
 
     # Fitting with params
     fit_param = {"sample_weight": weight}
@@ -654,6 +655,16 @@ def test_regressor_chain_w_fit_params():
 
     for est in model.estimators_:
         assert est.sample_weight_ is weight
+
+    # TODO(1.4): Remove check for FutureWarning
+    # Test that the existing behavior works and raises a FutureWarning
+    # when the underlying estimator used has a sample_weight parameter
+    # defined in it's fit method.
+    model = RegressorChain(QuantileRegressor())
+    fit_param = {"sample_weight": weight}
+
+    with pytest.warns(FutureWarning):
+        model.fit(X, y, **fit_param)
 
 
 @pytest.mark.parametrize(
