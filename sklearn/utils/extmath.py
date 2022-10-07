@@ -105,12 +105,25 @@ def density(w, **kwargs):
     ----------
     w : array-like
         The sparse vector.
+    **kwargs : keyword arguments
+        Ignored.
+
+        .. deprecated:: 1.2
+            ``**kwargs`` were deprecated in version 1.2 and will be removed in
+            1.4.
 
     Returns
     -------
     float
         The density of w, between 0 and 1.
     """
+    if kwargs:
+        warnings.warn(
+            "Additional keyword arguments are deprecated in version 1.2 and will be"
+            " removed in version 1.4.",
+            FutureWarning,
+        )
+
     if hasattr(w, "toarray"):
         d = float(w.nnz) / (w.shape[0] * w.shape[1])
     else:

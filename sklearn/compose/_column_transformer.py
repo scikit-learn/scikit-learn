@@ -20,7 +20,6 @@ from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils import _safe_indexing
 from ..utils import _get_column_indices
-from ..utils.deprecation import deprecated
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted, _check_feature_names_in
 from ..utils.fixes import delayed
@@ -407,43 +406,6 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         """
         # Use Bunch object to improve autocomplete
         return Bunch(**{name: trans for name, trans, _ in self.transformers_})
-
-    @deprecated(
-        "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. Please use get_feature_names_out instead."
-    )
-    def get_feature_names(self):
-        """Get feature names from all transformers.
-
-        Returns
-        -------
-        feature_names : list of strings
-            Names of the features produced by transform.
-        """
-        check_is_fitted(self)
-        feature_names = []
-        for name, trans, column, _ in self._iter(fitted=True):
-            if trans == "drop" or _is_empty_column_selection(column):
-                continue
-            if trans == "passthrough":
-                if hasattr(self, "feature_names_in_"):
-                    if (not isinstance(column, slice)) and all(
-                        isinstance(col, str) for col in column
-                    ):
-                        feature_names.extend(column)
-                    else:
-                        feature_names.extend(self.feature_names_in_[column])
-                else:
-                    indices = np.arange(self._n_features)
-                    feature_names.extend(["x%d" % i for i in indices[column]])
-                continue
-            if not hasattr(trans, "get_feature_names"):
-                raise AttributeError(
-                    "Transformer %s (type %s) does not provide get_feature_names."
-                    % (str(name), type(trans).__name__)
-                )
-            feature_names.extend([f"{name}__{f}" for f in trans.get_feature_names()])
-        return feature_names
 
     def _get_feature_name_out_for_transformer(
         self, name, trans, column, feature_names_in
