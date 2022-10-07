@@ -616,7 +616,7 @@ def weighted_mode(a, w, *, axis=0):
         Array of modal values.
     score : ndarray
         Array of weighted counts for each mode.
-        
+
     See Also
     --------
     scipy.stats.mode: Calculates the Modal (most common) value of array elements along specified axis.
