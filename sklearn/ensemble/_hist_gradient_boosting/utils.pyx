@@ -55,14 +55,14 @@ def get_equivalent_estimator(estimator, lib='lightgbm', n_classes=None):
         'reg_lambda': sklearn_params['l2_regularization'],
         'max_bin': sklearn_params['max_bins'],
         'min_data_in_bin': 1,
-        'min_child_weight': 1e-3,
+        'min_child_weight': 1e-3,  # alias for 'min_sum_hessian_in_leaf'
         'min_sum_hessian_in_leaf': 1e-3,
         'min_split_gain': 0,
         'verbosity': 10 if sklearn_params['verbose'] else -10,
         'boost_from_average': True,
         'enable_bundle': False,  # also makes feature order consistent
         'subsample_for_bin': _BinMapper().subsample,
-        'poisson_max_delta_step': 1e-10,
+        'poisson_max_delta_step': 1e-12,
     }
 
     if sklearn_params['loss'] == 'log_loss' and n_classes > 2:
