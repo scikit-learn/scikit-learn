@@ -342,14 +342,13 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
     """
     metric = "sqeuclidean" if squared else "euclidean"
     if PairwiseDistances.is_usable_for(X, Y, metric):
-        metric_kwargs = {
-            "X_norm_squared": np.ravel(X_norm_squared)
-            if X_norm_squared is not None
-            else None,
-            "Y_norm_squared": np.ravel(Y_norm_squared)
-            if Y_norm_squared is not None
-            else None,
-        }
+        metric_kwargs = {}
+        if X_norm_squared is not None:
+            metric_kwargs["X_norm_squared"] = np.ravel(X_norm_squared)
+
+        if Y_norm_squared is not None:
+            metric_kwargs["Y_norm_squared"] = np.ravel(Y_norm_squared)
+
         return PairwiseDistances.compute(X, Y, metric, metric_kwargs=metric_kwargs)
 
     # XXX: the following code is still used for list-of-lists of numbers which

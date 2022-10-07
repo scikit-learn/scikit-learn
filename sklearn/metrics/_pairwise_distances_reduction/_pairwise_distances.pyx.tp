@@ -1,25 +1,11 @@
-{{py:
-
-implementation_specific_values = [
-    # Values are the following ones:
-    #
-    #       name_suffix, INPUT_DTYPE
-    #
-    #
-    ('64', 'DTYPE'),
-    ('32', 'np.float32')
-]
-
-}}
 cimport numpy as cnp
 from cython cimport final
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
 import numpy as np
-import warnings
 
 from scipy.sparse import issparse
-from ...utils import _in_unstable_openblas_configuration
+from ...utils import check_array, _in_unstable_openblas_configuration
 from ...utils.fixes import threadpool_limits, sp_version, parse_version
 from ...utils._typedefs import DTYPE
 
@@ -51,7 +37,7 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
         return {"VI": VI}
     return {}
 
-{{for name_suffix, INPUT_DTYPE in implementation_specific_values}}
+{{for name_suffix, INPUT_DTYPE in (('64', 'DTYPE'),('32', 'np.float32'))}}
 
 from ._base cimport (
     BaseDistanceReducer{{name_suffix}},
@@ -222,16 +208,26 @@ cdef class EuclideanPairwiseDistances{{name_suffix}}(PairwiseDistances{{name_suf
             chunk_size=self.chunk_size,
         )
 
-        if metric_kwargs is not None and metric_kwargs.get("Y_norm_squared", None) is not None:
-            self.Y_norm_squared = metric_kwargs.pop("Y_norm_squared")
+        if metric_kwargs is not None and "Y_norm_squared" in metric_kwargs:
+            self.Y_norm_squared = check_array(
+                metric_kwargs.pop("Y_norm_squared"),
+                ensure_2d=False,
+                input_name="Y_norm_squared",
+                dtype=np.float64
+            )
         else:
             self.Y_norm_squared = _sqeuclidean_row_norms{{name_suffix}}(
                 Y,
                 self.effective_n_threads,
             )
 
-        if metric_kwargs is not None and metric_kwargs.get("X_norm_squared", None) is not None:
-            self.X_norm_squared = metric_kwargs.pop("X_norm_squared")
+        if metric_kwargs is not None and "X_norm_squared" in metric_kwargs:
+            self.X_norm_squared = check_array(
+                metric_kwargs.pop("X_norm_squared"),
+                ensure_2d=False,
+                input_name="X_norm_squared",
+                dtype=np.float64
+            )
         else:
             # Do not recompute norms if datasets are identical.
             self.X_norm_squared = (
