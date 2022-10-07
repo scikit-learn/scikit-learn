@@ -9,4 +9,5 @@ threadpoolctl
 pytest
 pytest-xdist
 pillow
+pooch
 wheel

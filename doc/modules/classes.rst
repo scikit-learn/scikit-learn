@@ -663,12 +663,6 @@ Plotting
    inspection.DecisionBoundaryDisplay
    inspection.PartialDependenceDisplay
 
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   inspection.plot_partial_dependence
-
 .. _isotonic_ref:
 
 :mod:`sklearn.isotonic`: Isotonic regression
@@ -1124,15 +1118,6 @@ Plotting
 See the :ref:`visualizations` section of the user guide for further details.
 
 .. currentmodule:: sklearn
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   metrics.plot_confusion_matrix
-   metrics.plot_det_curve
-   metrics.plot_precision_recall_curve
-   metrics.plot_roc_curve
 
 .. autosummary::
    :toctree: generated/
@@ -1652,13 +1637,22 @@ Plotting
    utils.validation.check_symmetric
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter
-   utils.all_estimators
    utils.metadata_routing.RequestType
    utils.metadata_routing.get_routing_for_object
    utils.metadata_routing.MetadataRouter
    utils.metadata_routing.MetadataRequest
    utils.metadata_routing.MethodMapping
    utils.metadata_routing.process_routing
+
+Specific utilities to list scikit-learn components:
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.discovery.all_estimators
+   utils.discovery.all_displays
+   utils.discovery.all_functions
 
 Utilities from joblib:
 
