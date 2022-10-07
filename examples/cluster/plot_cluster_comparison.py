@@ -171,7 +171,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
     )
     average_linkage = cluster.AgglomerativeClustering(
         linkage="average",
-        affinity="cityblock",
+        metric="cityblock",
         n_clusters=params["n_clusters"],
         connectivity=connectivity,
     )

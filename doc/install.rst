@@ -188,6 +188,19 @@ dependencies (numpy, scipy) that scikit-learn requires.
 The following is an incomplete list of OS and python distributions
 that provide their own version of scikit-learn.
 
+Alpine Linux
+------------
+
+Alpine Linux's package is provided through the `official repositories
+<https://pkgs.alpinelinux.org/packages?name=py3-scikit-learn>`__ as
+``py3-scikit-learn`` for Python.
+It can be installed by typing the following command:
+
+.. prompt:: bash $
+
+  sudo apk add py3-scikit-learn
+
+
 Arch Linux
 ----------
 

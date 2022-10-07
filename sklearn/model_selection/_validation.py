@@ -208,6 +208,16 @@ def cross_validate(
                 This is available only if ``return_estimator`` parameter
                 is set to ``True``.
 
+    See Also
+    --------
+    cross_val_score : Run cross-validation for single metric evaluation.
+
+    cross_val_predict : Get predictions from each split of cross-validation for
+        diagnostic purposes.
+
+    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
+        loss function.
+
     Examples
     --------
     >>> from sklearn import datasets, linear_model
@@ -238,17 +248,6 @@ def cross_validate(
     [-3635.5... -3573.3... -6114.7...]
     >>> print(scores['train_r2'])
     [0.28009951 0.3908844  0.22784907]
-
-    See Also
-    --------
-    cross_val_score : Run cross-validation for single metric evaluation.
-
-    cross_val_predict : Get predictions from each split of cross-validation for
-        diagnostic purposes.
-
-    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
-        loss function.
-
     """
     X, y, groups = indexable(X, y, groups)
 
@@ -361,7 +360,7 @@ def _warn_or_raise_about_fit_failures(results, error_score):
         if num_failed_fits == num_fits:
             all_fits_failed_message = (
                 f"\nAll the {num_fits} fits failed.\n"
-                "It is is very likely that your model is misconfigured.\n"
+                "It is very likely that your model is misconfigured.\n"
                 "You can try to debug the error by setting error_score='raise'.\n\n"
                 f"Below are more details about the failures:\n{fit_errors_summary}"
             )
@@ -1181,7 +1180,7 @@ def permutation_test_score(
     scoring=None,
     fit_params=None,
 ):
-    """Evaluate the significance of a cross-validated score with permutations
+    """Evaluate the significance of a cross-validated score with permutations.
 
     Permutes targets to generate 'randomized data' and compute the empirical
     p-value against the null hypothesis that features and targets are
@@ -1218,12 +1217,6 @@ def permutation_test_score(
         also passed on to the ``split`` method of the cross-validator. The
         cross-validator uses them for grouping the samples  while splitting
         the dataset into train/test set.
-
-    scoring : str or callable, default=None
-        A single str (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
-
-        If `None` the estimator's score method is used.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -1262,6 +1255,12 @@ def permutation_test_score(
     verbose : int, default=0
         The verbosity level.
 
+    scoring : str or callable, default=None
+        A single str (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
+
+        If `None` the estimator's score method is used.
+
     fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
@@ -1293,7 +1292,6 @@ def permutation_test_score(
         Performance
         <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
         Journal of Machine Learning Research (2010) vol. 11
-
     """
     X, y, groups = indexable(X, y, groups)
 
@@ -1806,17 +1804,17 @@ def validation_curve(
     verbose : int, default=0
         Controls the verbosity: the higher, the more messages.
 
-    fit_params : dict, default=None
-        Parameters to pass to the fit method of the estimator.
-
-        .. versionadded:: 0.24
-
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised.
 
         .. versionadded:: 0.20
+
+    fit_params : dict, default=None
+        Parameters to pass to the fit method of the estimator.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -1829,7 +1827,6 @@ def validation_curve(
     Notes
     -----
     See :ref:`sphx_glr_auto_examples_model_selection_plot_validation_curve.py`
-
     """
     X, y, groups = indexable(X, y, groups)
 

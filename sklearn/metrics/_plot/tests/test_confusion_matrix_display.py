@@ -377,3 +377,31 @@ def test_im_kw_adjust_vmin_vmax(pyplot):
     clim = disp.im_.get_clim()
     assert clim[0] == pytest.approx(0.0)
     assert clim[1] == pytest.approx(0.8)
+
+
+def test_confusion_matrix_text_kw(pyplot):
+    """Check that text_kw is passed to the text call."""
+    font_size = 15.0
+    X, y = make_classification(random_state=0)
+    classifier = SVC().fit(X, y)
+
+    # from_estimator passes the font size
+    disp = ConfusionMatrixDisplay.from_estimator(
+        classifier, X, y, text_kw={"fontsize": font_size}
+    )
+    for text in disp.text_.reshape(-1):
+        assert text.get_fontsize() == font_size
+
+    # plot adjusts plot to new font size
+    new_font_size = 20.0
+    disp.plot(text_kw={"fontsize": new_font_size})
+    for text in disp.text_.reshape(-1):
+        assert text.get_fontsize() == new_font_size
+
+    # from_predictions passes the font size
+    y_pred = classifier.predict(X)
+    disp = ConfusionMatrixDisplay.from_predictions(
+        y, y_pred, text_kw={"fontsize": font_size}
+    )
+    for text in disp.text_.reshape(-1):
+        assert text.get_fontsize() == font_size

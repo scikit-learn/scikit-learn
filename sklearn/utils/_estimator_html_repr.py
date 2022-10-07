@@ -1,6 +1,6 @@
 from contextlib import closing
-from contextlib import suppress
 from io import StringIO
+from inspect import isclass
 from string import Template
 import html
 
@@ -103,8 +103,16 @@ def _write_label_html(
 
 def _get_visual_block(estimator):
     """Generate information about how to display an estimator."""
-    with suppress(AttributeError):
-        return estimator._sk_visual_block_()
+    if hasattr(estimator, "_sk_visual_block_"):
+        try:
+            return estimator._sk_visual_block_()
+        except Exception:
+            return _VisualBlock(
+                "single",
+                estimator,
+                names=estimator.__class__.__name__,
+                name_details=str(estimator),
+            )
 
     if isinstance(estimator, str):
         return _VisualBlock(
@@ -114,11 +122,11 @@ def _get_visual_block(estimator):
         return _VisualBlock("single", estimator, names="None", name_details="None")
 
     # check if estimator looks like a meta estimator wraps estimators
-    if hasattr(estimator, "get_params"):
+    if hasattr(estimator, "get_params") and not isclass(estimator):
         estimators = [
             (key, est)
             for key, est in estimator.get_params(deep=False).items()
-            if hasattr(est, "get_params") and hasattr(est, "fit")
+            if hasattr(est, "get_params") and hasattr(est, "fit") and not isclass(est)
         ]
         if estimators:
             return _VisualBlock(
@@ -275,9 +283,10 @@ _STYLE = """
   position: absolute;
   border-left: 1px solid gray;
   box-sizing: border-box;
-  top: 2em;
+  top: 0;
   bottom: 0;
   left: 50%;
+  z-index: 0;
 }
 #$id div.sk-serial {
   display: flex;
@@ -286,8 +295,10 @@ _STYLE = """
   background-color: white;
   padding-right: 0.2em;
   padding-left: 0.2em;
+  position: relative;
 }
 #$id div.sk-item {
+  position: relative;
   z-index: 1;
 }
 #$id div.sk-parallel {
@@ -295,19 +306,22 @@ _STYLE = """
   align-items: stretch;
   justify-content: center;
   background-color: white;
+  position: relative;
 }
-#$id div.sk-parallel::before {
+#$id div.sk-item::before, #$id div.sk-parallel-item::before {
   content: "";
   position: absolute;
   border-left: 1px solid gray;
   box-sizing: border-box;
-  top: 2em;
+  top: 0;
   bottom: 0;
   left: 50%;
+  z-index: -1;
 }
 #$id div.sk-parallel-item {
   display: flex;
   flex-direction: column;
+  z-index: 1;
   position: relative;
   background-color: white;
 }
@@ -328,18 +342,14 @@ _STYLE = """
   box-sizing: border-box;
   padding-bottom: 0.4em;
   background-color: white;
-  position: relative;
 }
 #$id div.sk-label label {
   font-family: monospace;
   font-weight: bold;
-  background-color: white;
   display: inline-block;
   line-height: 1.2em;
 }
 #$id div.sk-label-container {
-  position: relative;
-  z-index: 2;
   text-align: center;
 }
 #$id div.sk-container {

@@ -99,6 +99,36 @@ class DecisionBoundaryDisplay:
 
     figure_ : matplotlib Figure
         Figure containing the confusion matrix.
+
+    See Also
+    --------
+    DecisionBoundaryDisplay.from_estimator : Plot decision boundary given an estimator.
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> import numpy as np
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.inspection import DecisionBoundaryDisplay
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> iris = load_iris()
+    >>> feature_1, feature_2 = np.meshgrid(
+    ...     np.linspace(iris.data[:, 0].min(), iris.data[:, 0].max()),
+    ...     np.linspace(iris.data[:, 1].min(), iris.data[:, 1].max())
+    ... )
+    >>> grid = np.vstack([feature_1.ravel(), feature_2.ravel()]).T
+    >>> tree = DecisionTreeClassifier().fit(iris.data[:, :2], iris.target)
+    >>> y_pred = np.reshape(tree.predict(grid), feature_1.shape)
+    >>> display = DecisionBoundaryDisplay(
+    ...     xx0=feature_1, xx1=feature_2, response=y_pred
+    ... )
+    >>> display.plot()
+    <...>
+    >>> display.ax_.scatter(
+    ...     iris.data[:, 0], iris.data[:, 1], c=iris.target, edgecolor="black"
+    ... )
+    <...>
+    >>> plt.show()
     """
 
     def __init__(self, *, xx0, xx1, response, xlabel=None, ylabel=None):
@@ -136,6 +166,7 @@ class DecisionBoundaryDisplay:
         Returns
         -------
         display: :class:`~sklearn.inspection.DecisionBoundaryDisplay`
+            Object that stores computed values.
         """
         check_matplotlib_support("DecisionBoundaryDisplay.plot")
         import matplotlib.pyplot as plt  # noqa
@@ -294,9 +325,16 @@ class DecisionBoundaryDisplay:
             np.linspace(x0_min, x0_max, grid_resolution),
             np.linspace(x1_min, x1_max, grid_resolution),
         )
+        if hasattr(X, "iloc"):
+            # we need to preserve the feature names and therefore get an empty dataframe
+            X_grid = X.iloc[[], :].copy()
+            X_grid.iloc[:, 0] = xx0.ravel()
+            X_grid.iloc[:, 1] = xx1.ravel()
+        else:
+            X_grid = np.c_[xx0.ravel(), xx1.ravel()]
 
         pred_func = _check_boundary_response_method(estimator, response_method)
-        response = pred_func(np.c_[xx0.ravel(), xx1.ravel()])
+        response = pred_func(X_grid)
 
         # convert classes predictions into integers
         if pred_func.__name__ == "predict" and hasattr(estimator, "classes_"):
@@ -311,14 +349,10 @@ class DecisionBoundaryDisplay:
             # TODO: Support pos_label
             response = response[:, 1]
 
-        if xlabel is not None:
-            xlabel = xlabel
-        else:
+        if xlabel is None:
             xlabel = X.columns[0] if hasattr(X, "columns") else ""
 
-        if ylabel is not None:
-            ylabel = ylabel
-        else:
+        if ylabel is None:
             ylabel = X.columns[1] if hasattr(X, "columns") else ""
 
         display = DecisionBoundaryDisplay(

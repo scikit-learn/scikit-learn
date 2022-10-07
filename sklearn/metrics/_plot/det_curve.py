@@ -6,7 +6,6 @@ from .. import det_curve
 from .._base import _check_pos_label_consistency
 
 from ...utils import check_matplotlib_support
-from ...utils import deprecated
 
 
 class DetCurveDisplay:
@@ -148,7 +147,6 @@ class DetCurveDisplay:
         det_curve : Compute error rates for different probability thresholds.
         DetCurveDisplay.from_predictions : Plot DET curve given the true and
             predicted labels.
-        plot_roc_curve : Plot Receiver operating characteristic (ROC) curve.
 
         Examples
         --------
@@ -199,8 +197,7 @@ class DetCurveDisplay:
         ax=None,
         **kwargs,
     ):
-        """Plot DET curve given the true and
-        predicted labels.
+        """Plot the DET curve given the true and predicted labels.
 
         Read more in the :ref:`User Guide <visualizations>`.
 
@@ -245,7 +242,6 @@ class DetCurveDisplay:
         det_curve : Compute error rates for different probability thresholds.
         DetCurveDisplay.from_estimator : Plot DET curve given an estimator and
             some data.
-        plot_roc_curve : Plot Receiver operating characteristic (ROC) curve.
 
         Examples
         --------
@@ -348,125 +344,3 @@ class DetCurveDisplay:
         self.ax_ = ax
         self.figure_ = ax.figure
         return self
-
-
-@deprecated(
-    "Function plot_det_curve is deprecated in 1.0 and will be "
-    "removed in 1.2. Use one of the class methods: "
-    "DetCurveDisplay.from_predictions or "
-    "DetCurveDisplay.from_estimator."
-)
-def plot_det_curve(
-    estimator,
-    X,
-    y,
-    *,
-    sample_weight=None,
-    response_method="auto",
-    name=None,
-    ax=None,
-    pos_label=None,
-    **kwargs,
-):
-    """Plot detection error tradeoff (DET) curve.
-
-    Extra keyword arguments will be passed to matplotlib's `plot`.
-
-    Read more in the :ref:`User Guide <visualizations>`.
-
-    .. versionadded:: 0.24
-
-    .. deprecated:: 1.0
-       `plot_det_curve` is deprecated in 1.0 and will be removed in
-       1.2. Use one of the following class methods:
-       :func:`~sklearn.metrics.DetCurveDisplay.from_predictions` or
-       :func:`~sklearn.metrics.DetCurveDisplay.from_estimator`.
-
-    Parameters
-    ----------
-    estimator : estimator instance
-        Fitted classifier or a fitted :class:`~sklearn.pipeline.Pipeline`
-        in which the last estimator is a classifier.
-
-    X : {array-like, sparse matrix} of shape (n_samples, n_features)
-        Input values.
-
-    y : array-like of shape (n_samples,)
-        Target values.
-
-    sample_weight : array-like of shape (n_samples,), default=None
-        Sample weights.
-
-    response_method : {'predict_proba', 'decision_function', 'auto'} \
-            default='auto'
-        Specifies whether to use :term:`predict_proba` or
-        :term:`decision_function` as the predicted target response. If set to
-        'auto', :term:`predict_proba` is tried first and if it does not exist
-        :term:`decision_function` is tried next.
-
-    name : str, default=None
-        Name of DET curve for labeling. If `None`, use the name of the
-        estimator.
-
-    ax : matplotlib axes, default=None
-        Axes object to plot on. If `None`, a new figure and axes is created.
-
-    pos_label : str or int, default=None
-        The label of the positive class.
-        When `pos_label=None`, if `y_true` is in {-1, 1} or {0, 1},
-        `pos_label` is set to 1, otherwise an error will be raised.
-
-    **kwargs : dict
-            Additional keywords arguments passed to matplotlib `plot` function.
-
-    Returns
-    -------
-    display : :class:`~sklearn.metrics.DetCurveDisplay`
-        Object that stores computed values.
-
-    See Also
-    --------
-    det_curve : Compute error rates for different probability thresholds.
-    DetCurveDisplay : DET curve visualization.
-    DetCurveDisplay.from_estimator : Plot DET curve given an estimator and
-        some data.
-    DetCurveDisplay.from_predictions : Plot DET curve given the true and
-        predicted labels.
-    RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
-        (ROC) curve given an estimator and some data.
-    RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
-        (ROC) curve given the true and predicted values.
-
-    Examples
-    --------
-    >>> import matplotlib.pyplot as plt
-    >>> from sklearn.datasets import make_classification
-    >>> from sklearn.metrics import plot_det_curve
-    >>> from sklearn.model_selection import train_test_split
-    >>> from sklearn.svm import SVC
-    >>> X, y = make_classification(n_samples=1000, random_state=0)
-    >>> X_train, X_test, y_train, y_test = train_test_split(
-    ...     X, y, test_size=0.4, random_state=0)
-    >>> clf = SVC(random_state=0).fit(X_train, y_train)
-    >>> plot_det_curve(clf, X_test, y_test)  # doctest: +SKIP
-    <...>
-    >>> plt.show()
-    """
-    check_matplotlib_support("plot_det_curve")
-
-    y_pred, pos_label = _get_response(
-        X, estimator, response_method, pos_label=pos_label
-    )
-
-    fpr, fnr, _ = det_curve(
-        y,
-        y_pred,
-        pos_label=pos_label,
-        sample_weight=sample_weight,
-    )
-
-    name = estimator.__class__.__name__ if name is None else name
-
-    viz = DetCurveDisplay(fpr=fpr, fnr=fnr, estimator_name=name, pos_label=pos_label)
-
-    return viz.plot(ax=ax, name=name, **kwargs)

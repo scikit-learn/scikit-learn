@@ -121,11 +121,11 @@ def ols_ridge_dataset(global_random_seed, request):
     k = min(n_samples, n_features)
     rng = np.random.RandomState(global_random_seed)
     X = make_low_rank_matrix(
-        n_samples=n_samples, n_features=n_features, effective_rank=k
+        n_samples=n_samples, n_features=n_features, effective_rank=k, random_state=rng
     )
     X[:, -1] = 1  # last columns acts as intercept
     U, s, Vt = linalg.svd(X)
-    assert np.all(s) > 1e-3  # to be sure
+    assert np.all(s > 1e-3)  # to be sure
     U1, U2 = U[:, :k], U[:, k:]
     Vt1, _ = Vt[:k, :], Vt[k:, :]
 
@@ -217,7 +217,7 @@ def test_ridge_regression_hstacked_X(
         alpha=alpha / 2,
         fit_intercept=fit_intercept,
         solver=solver,
-        tol=1e-12,
+        tol=1e-15 if solver in ("sag", "saga") else 1e-10,
         random_state=global_random_seed,
     )
     X = X[:, :-1]  # remove intercept
@@ -233,7 +233,9 @@ def test_ridge_regression_hstacked_X(
     coef = coef[:-1]
 
     assert model.intercept_ == pytest.approx(intercept)
-    assert_allclose(model.coef_, np.r_[coef, coef])
+    # coefficients are not all on the same magnitude, adding a small atol to
+    # make this test less brittle
+    assert_allclose(model.coef_, np.r_[coef, coef], atol=1e-8)
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
@@ -256,7 +258,7 @@ def test_ridge_regression_vstacked_X(
         alpha=2 * alpha,
         fit_intercept=fit_intercept,
         solver=solver,
-        tol=1e-11,
+        tol=1e-15 if solver in ("sag", "saga") else 1e-10,
         random_state=global_random_seed,
     )
     X = X[:, :-1]  # remove intercept
@@ -273,7 +275,9 @@ def test_ridge_regression_vstacked_X(
     coef = coef[:-1]
 
     assert model.intercept_ == pytest.approx(intercept)
-    assert_allclose(model.coef_, coef)
+    # coefficients are not all on the same magnitude, adding a small atol to
+    # make this test less brittle
+    assert_allclose(model.coef_, coef, atol=1e-8)
 
 
 @pytest.mark.parametrize("solver", SOLVERS)
@@ -606,43 +610,9 @@ def test_ridge_individual_penalties():
 
     # Test error is raised when number of targets and penalties do not match.
     ridge = Ridge(alpha=penalties[:-1])
-    with pytest.raises(ValueError):
+    err_msg = "Number of targets and number of penalties do not correspond: 4 != 5"
+    with pytest.raises(ValueError, match=err_msg):
         ridge.fit(X, y)
-
-
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"alpha": -1}, ValueError, "alpha == -1, must be >= 0.0"),
-        (
-            {"alpha": "1"},
-            TypeError,
-            "alpha must be an instance of float, not str",
-        ),
-        ({"max_iter": 0}, ValueError, "max_iter == 0, must be >= 1."),
-        (
-            {"max_iter": "1"},
-            TypeError,
-            "max_iter must be an instance of int, not str",
-        ),
-        ({"tol": -1.0}, ValueError, "tol == -1.0, must be >= 0."),
-        (
-            {"tol": "1"},
-            TypeError,
-            "tol must be an instance of float, not str",
-        ),
-    ],
-)
-def test_ridge_params_validation(params, err_type, err_msg):
-    """Check the parameters validation in Ridge."""
-
-    rng = np.random.RandomState(42)
-    n_samples, n_features, n_targets = 20, 10, 5
-    X = rng.randn(n_samples, n_features)
-    y = rng.randn(n_samples, n_targets)
-
-    with pytest.raises(err_type, match=err_msg):
-        Ridge(**params).fit(X, y)
 
 
 @pytest.mark.parametrize("n_col", [(), (1,), (3,)])
@@ -950,16 +920,6 @@ def test_ridge_gcv_sample_weights(
     assert_allclose(gcv_errors, kfold_errors, rtol=1e-3)
     assert_allclose(gcv_ridge.coef_, kfold.coef_, rtol=1e-3)
     assert_allclose(gcv_ridge.intercept_, kfold.intercept_, rtol=1e-3)
-
-
-@pytest.mark.parametrize("mode", [True, 1, 5, "bad", "gcv"])
-def test_check_gcv_mode_error(mode):
-    X, y = make_regression(n_samples=5, n_features=2)
-    gcv = RidgeCV(gcv_mode=mode)
-    with pytest.raises(ValueError, match="Unknown value for 'gcv_mode'"):
-        gcv.fit(X, y)
-    with pytest.raises(ValueError, match="Unknown value for 'gcv_mode'"):
-        _check_gcv_mode(X, mode)
 
 
 @pytest.mark.parametrize("sparse", [True, False])
@@ -1663,7 +1623,7 @@ def test_ridge_fit_intercept_sparse(solver, with_sample_weight, global_random_se
     sparse_ridge.fit(sp.csr_matrix(X), y, sample_weight=sample_weight)
 
     assert_allclose(dense_ridge.intercept_, sparse_ridge.intercept_)
-    assert_allclose(dense_ridge.coef_, sparse_ridge.coef_)
+    assert_allclose(dense_ridge.coef_, sparse_ridge.coef_, rtol=5e-7)
 
 
 @pytest.mark.parametrize("solver", ["saga", "svd", "cholesky"])
@@ -1805,7 +1765,7 @@ def test_dtype_match_cholesky():
     # Test different alphas in cholesky solver to ensure full coverage.
     # This test is separated from test_dtype_match for clarity.
     rng = np.random.RandomState(0)
-    alpha = (1.0, 0.5)
+    alpha = np.array([1.0, 0.5])
 
     n_samples, n_features, n_target = 6, 7, 2
     X_64 = rng.randn(n_samples, n_features)
