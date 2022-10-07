@@ -4,12 +4,20 @@
 #
 #    pip-compile --output-file=build_tools/azure/py38_pip_openblas_32bit_lock.txt build_tools/azure/py38_pip_openblas_32bit_requirements.txt
 #
+appdirs==1.4.4
+    # via pooch
 attrs==22.1.0
     # via pytest
+certifi==2022.9.24
+    # via requests
+charset-normalizer==2.1.1
+    # via requests
 cython==0.29.32
     # via -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
 execnet==1.9.0
     # via pytest-xdist
+idna==3.4
+    # via requests
 iniconfig==1.1.1
     # via pytest
 joblib==1.2.0
@@ -19,11 +27,15 @@ numpy==1.23.3
     #   -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
     #   scipy
 packaging==21.3
-    # via pytest
+    # via
+    #   pooch
+    #   pytest
 pillow==9.2.0
     # via -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
 pluggy==1.0.0
     # via pytest
+pooch==1.6.0
+    # via -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
 py==1.11.0
     # via
     #   pytest
@@ -39,11 +51,15 @@ pytest-forked==1.4.0
     # via pytest-xdist
 pytest-xdist==2.5.0
     # via -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
+requests==2.28.1
+    # via pooch
 scipy==1.9.1
     # via -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
 threadpoolctl==3.1.0
     # via -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
 tomli==2.0.1
     # via pytest
+urllib3==1.26.12
+    # via requests
 wheel==0.37.1
     # via -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
