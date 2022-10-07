@@ -208,8 +208,6 @@ def all_functions():
                 (func.__name__, func)
                 for name, func in functions
                 if not name.startswith("_")
-                # exclude functions from utils.fixex: they come from external packages
-                and "utils.fixes" not in func.__module__
             ]
             all_functions.extend(functions)
 
