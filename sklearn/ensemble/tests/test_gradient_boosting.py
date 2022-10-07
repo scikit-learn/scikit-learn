@@ -1154,7 +1154,7 @@ def test_gradient_boosting_without_early_stopping():
     )
     gbr.fit(X, y)
 
-    # The number of trained estimators but be the one specified.
+    # The number of trained estimators must be the one specified.
     assert gbc.n_estimators_ == 50
     assert gbr.n_estimators_ == 30
 
