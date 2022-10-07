@@ -221,11 +221,15 @@ def test_gamma_y_positive(y):
 
 def test_gamma():
     # For Gamma distributed target, an HGBT with Gamma loss should give better results
-    # than an HGBT with Poisson deviance, measured in Gamma deviance as metric.
-    # Note that we do not use squared error because it can potentially predict negaitve
-    # values.
+    # than an HGBT with squared error, measured in Gamma deviance as metric/score.
+    # Note that squared error could potentially predict negative values which is
+    # invalid (np.inf) for the Gamma deviance. A Poisson HGBT (having a log link)
+    # would not have that defect.
+    # Important note: It seems that a Poisson HGBT almost always has better
+    # out-of-sample performance than the Gamma HGBT, measured in Gamma deviance.
+    # LightGBM shows the same behaviour. The exact origin is unclear.
     rng = np.random.RandomState(42)
-    n_train, n_test, n_features = 500, 500, 20
+    n_train, n_test, n_features = 500, 100, 20
     X = make_low_rank_matrix(
         n_samples=n_train + n_test,
         n_features=n_features,
@@ -243,21 +247,21 @@ def test_gamma():
         X, y, test_size=n_test, random_state=rng
     )
     gbdt_gamma = HistGradientBoostingRegressor(loss="gamma", random_state=123)
-    gbdt_pois = HistGradientBoostingRegressor(loss="poisson", random_state=123)
+    gbdt_mse = HistGradientBoostingRegressor(loss="squared_error", random_state=123)
     dummy = DummyRegressor(strategy="mean")
-    for model in (gbdt_gamma, gbdt_pois, dummy):
+    for model in (gbdt_gamma, gbdt_mse, dummy):
         model.fit(X_train, y_train)
 
     for sample, X, y in [("train", X_train, y_train), ("test", X_test, y_test)]:
-        mgd_gbdt_gamma = mean_gamma_deviance(y, gbdt_gamma.predict(X))
-        mgd_gbdt_pois = mean_gamma_deviance(y, gbdt_pois.predict(X))
-        mgd_dummy = mean_gamma_deviance(y, dummy.predict(X))
-        assert mgd_gbdt_gamma < mgd_dummy
-        if sample == "train":
-            # Important note: It seems that the Poisson HGBT almost always has better
-            # out-of-sample performance than the Gamma HGBT, measured in Gamma
-            # deviance. LightGBM shows the same behaviour. The exact origin is unclear.
-            assert mgd_gbdt_gamma < mgd_gbdt_pois
+        score_gbdt_gamma = mean_gamma_deviance(y, gbdt_gamma.predict(X))
+        # We restrict the squared error HGBT to predict at least the minimum seen y at
+        # train time to make it strict positive.
+        score_gbdt_mse = mean_gamma_deviance(
+            y, np.maximum(np.min(y_train), gbdt_mse.predict(X))
+        )
+        score_dummy = mean_gamma_deviance(y, dummy.predict(X))
+        assert score_gbdt_gamma < score_dummy
+        assert score_gbdt_gamma < score_gbdt_mse
 
 
 @pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])
