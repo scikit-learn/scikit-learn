@@ -15,7 +15,9 @@ def _wrap_in_pandas_container(
 ):
     """Create a Pandas DataFrame.
 
-    If `data_to_wrap` is
+    If `data_to_wrap` is a DataFrame, then the `columns` and `index` will be changed
+    inplace. If `data_to_wrap` is a ndarray, then a new DataFrame is created with
+    `columns` and `index`.
 
     Parameters
     ----------
