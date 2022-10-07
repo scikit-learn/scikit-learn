@@ -12,23 +12,17 @@ from sklearn.utils.discovery import all_functions
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
 FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn.tree._export.plot_tree",
-    "sklearn.utils.axis0_safe_slice",
     "sklearn.utils.extmath.fast_logdet",
     "sklearn.utils.extmath.randomized_svd",
-    "sklearn.utils.extmath.safe_sparse_dot",
     "sklearn.utils.extmath.svd_flip",
     "sklearn.utils.extmath.weighted_mode",
     "sklearn.utils.fixes.delayed",
-    "sklearn.utils.fixes.linspace",
     # To be fixed in upstream issue:
     # https://github.com/joblib/threadpoolctl/issues/108
     "sklearn.utils.fixes.threadpool_info",
     "sklearn.utils.fixes.threadpool_limits",
     "sklearn.utils.gen_batches",
     "sklearn.utils.gen_even_slices",
-    "sklearn.utils.is_scalar_nan",
-    "sklearn.utils.metaestimators.available_if",
     "sklearn.utils.metaestimators.if_delegate_has_method",
 ]
 FUNCTION_DOCSTRING_IGNORE_LIST = set(FUNCTION_DOCSTRING_IGNORE_LIST)
