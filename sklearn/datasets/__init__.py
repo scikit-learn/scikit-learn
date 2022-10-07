@@ -3,8 +3,9 @@ The :mod:`sklearn.datasets` module includes utilities to load datasets,
 including methods to load and fetch popular reference datasets. It also
 features some artificial data generators.
 """
+import textwrap
+
 from ._base import load_breast_cancer
-from ._base import load_boston
 from ._base import load_diabetes
 from ._base import load_digits
 from ._base import load_files
@@ -66,7 +67,6 @@ __all__ = [
     "fetch_kddcup99",
     "fetch_openml",
     "get_data_home",
-    "load_boston",
     "load_diabetes",
     "load_digits",
     "load_files",
@@ -99,3 +99,50 @@ __all__ = [
     "make_spd_matrix",
     "make_swiss_roll",
 ]
+
+
+def __getattr__(name):
+    if name == "load_boston":
+        msg = textwrap.dedent(
+            """
+            `load_boston` has be removed from scikit-learn since version 1.2.
+
+            The Boston housing prices dataset has an ethical problem. You can refer to
+            the documentation of this function for further details.
+
+            The scikit-learn maintainers therefore strongly discourage the use of this
+            dataset unless the purpose of the code is to study and educate about
+            ethical issues in data science and machine learning.
+
+            In this special case, you can fetch the dataset from the original
+            source::
+
+                import pandas as pd
+                import numpy as np
+
+                data_url = "http://lib.stat.cmu.edu/datasets/boston"
+                raw_df = pd.read_csv(data_url, sep="\\s+", skiprows=22, header=None)
+                data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
+                target = raw_df.values[1::2, 2]
+
+            Alternative datasets include the California housing dataset (i.e.
+            :func:`~sklearn.datasets.fetch_california_housing`) and the Ames housing
+            dataset. You can load the datasets as follows::
+
+                from sklearn.datasets import fetch_california_housing
+                housing = fetch_california_housing()
+
+            for the California housing dataset and::
+
+                from sklearn.datasets import fetch_openml
+                housing = fetch_openml(name="house_prices", as_frame=True)
+
+            for the Ames housing dataset.
+            """
+        )
+        raise ImportError(msg)
+    try:
+        return globals()[name]
+    except KeyError:
+        # This is turned into the appropriate ImportError
+        raise AttributeError()
