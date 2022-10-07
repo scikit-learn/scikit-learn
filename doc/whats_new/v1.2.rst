@@ -417,6 +417,9 @@ Changelog
   nan score is correctly set to the maximum possible rank, rather than
   `np.iinfo(np.int32).min`. :pr:`24141` by :user:`Loïc Estève <lesteve>`.
 
+- |Feature| Adds :class:`model_selection.RollingWindowCV`.
+  :pr:`24589` by :user:`Maxwell Schmidt <MSchmidt99>`
+
 :mod:`sklearn.multioutput`
 ..........................
 

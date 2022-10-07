@@ -22,6 +22,7 @@ from sklearn.model_selection import KFold
 from sklearn.model_selection import StratifiedKFold
 from sklearn.model_selection import GroupKFold
 from sklearn.model_selection import TimeSeriesSplit
+from sklearn.model_selection import RollingWindowCV
 from sklearn.model_selection import LeaveOneOut
 from sklearn.model_selection import LeaveOneGroupOut
 from sklearn.model_selection import LeavePOut
@@ -172,6 +173,7 @@ def test_2d_y():
         LeavePGroupsOut(n_groups=2),
         GroupKFold(n_splits=3),
         TimeSeriesSplit(),
+        RollingWindowCV(),
         PredefinedSplit(test_fold=groups),
     ]
     for splitter in splitters:
@@ -1780,6 +1782,116 @@ def test_time_series_gap():
     with pytest.raises(ValueError, match="Too many splits.*and gap"):
         splits = TimeSeriesSplit(n_splits=4, gap=2).split(X)
         next(splits)
+
+
+def test_rolling_window_cv():
+    X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12], [13, 14], [15, 16]]
+
+    # Should fail if there are more folds than samples
+    with pytest.raises(ValueError, match="Cannot have number of folds.*greater"):
+        next(RollingWindowCV(n_splits=9).split(X))
+
+    with pytest.raises(ValueError):
+        RollingWindowCV(train_prop=0.8, buffer_prop=0.9)
+
+    with pytest.raises(ValueError):
+        RollingWindowCV(slide=-2.0)
+
+    with pytest.raises(ValueError):
+        next(RollingWindowCV(train_prop=0.99).split(X))
+
+    with pytest.raises(ValueError):
+        RollingWindowCV(bias="up")
+
+    rwcv = RollingWindowCV(2, bias="right")
+
+    # Manually check that Rolling Window CV preserves the data
+    # ordering on toy datasets
+    splits = rwcv.split(X)
+    train, test = next(splits)
+    assert_array_equal(train, [0, 1, 2, 3, 4, 5])
+    assert_array_equal(test, [6])
+
+    train, test = next(splits)
+    assert_array_equal(train, [1, 2, 3, 4, 5, 6])
+    assert_array_equal(test, [7])
+
+    # Check get_n_splits returns the correct number of splits
+    splits = RollingWindowCV(2, bias="right").split(X)
+    n_splits_actual = len(list(splits))
+    assert n_splits_actual == rwcv.get_n_splits()
+    assert n_splits_actual == 2
+
+
+def test_rolling_window_longitudinal():
+    time_col = np.tile(np.arange(8), 2)
+    X = np.arange(32).reshape(16, 2)
+
+    splits = RollingWindowCV(
+        time_column=time_col,
+        train_prop=0.5,
+        n_splits=3,
+        max_long_samples=2,
+        bias="right",
+    ).split(X)
+    train, test = next(splits)
+    assert_array_equal(train, [0, 8, 1, 9])
+    assert_array_equal(test, [2, 10, 3, 11])
+    train, test = next(splits)
+    assert_array_equal(train, [2, 10, 3, 11])
+    assert_array_equal(test, [4, 12, 5, 13])
+    train, test = next(splits)
+    assert_array_equal(train, [4, 12, 5, 13])
+    assert_array_equal(test, [6, 14, 7, 15])
+
+
+def test_rolling_window_params():
+    X = np.zeros((40, 1))
+
+    # slide
+    splits = RollingWindowCV(2, slide=1.0, bias="right").split(X)
+    train, test = next(splits)
+    assert_array_equal(train, np.arange(2, 25))
+    assert_array_equal(test, np.arange(25, 30))
+    train, test = next(splits)
+    assert_array_equal(train, np.arange(12, 35))
+    assert_array_equal(test, np.arange(35, 40))
+
+    # left bias
+    splits = RollingWindowCV(2, slide=1.0, bias="left").split(X)
+    train, test = next(splits)
+    assert_array_equal(train, np.arange(0, 23))
+    assert_array_equal(test, np.arange(23, 28))
+    train, test = next(splits)
+    assert_array_equal(train, np.arange(10, 33))
+    assert_array_equal(test, np.arange(33, 38))
+
+    # train bias
+    splits = RollingWindowCV(2, slide=1.0, bias="train").split(X)
+    train, test = next(splits)
+    assert_array_equal(train, np.arange(0, 25))
+    assert_array_equal(test, np.arange(25, 30))
+    train, test = next(splits)
+    assert_array_equal(train, np.arange(10, 35))
+    assert_array_equal(test, np.arange(35, 40))
+
+    # buffer
+    splits = RollingWindowCV(2, slide=1.0, buffer_prop=0.1, bias="right").split(X)
+    train, test = next(splits)
+    assert_array_equal(train, np.arange(2, 23))
+    assert_array_equal(test, np.arange(25, 30))
+    train, test = next(splits)
+    assert_array_equal(train, np.arange(12, 33))
+    assert_array_equal(test, np.arange(35, 40))
+
+    # expanding
+    splits = RollingWindowCV(2, slide=1.0, bias="train", expanding=True).split(X)
+    train, test = next(splits)
+    assert_array_equal(train, np.arange(0, 25))
+    assert_array_equal(test, np.arange(25, 30))
+    train, test = next(splits)
+    assert_array_equal(train, np.arange(0, 35))
+    assert_array_equal(test, np.arange(35, 40))
 
 
 def test_nested_cv():

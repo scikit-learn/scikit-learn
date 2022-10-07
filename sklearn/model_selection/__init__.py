@@ -6,6 +6,7 @@ from ._split import KFold
 from ._split import GroupKFold
 from ._split import StratifiedKFold
 from ._split import TimeSeriesSplit
+from ._split import RollingWindowCV
 from ._split import LeaveOneGroupOut
 from ._split import LeaveOneOut
 from ._split import LeavePGroupsOut
@@ -46,6 +47,7 @@ __all__ = [
     "BaseShuffleSplit",
     "GridSearchCV",
     "TimeSeriesSplit",
+    "RollingWindowCV",
     "KFold",
     "GroupKFold",
     "GroupShuffleSplit",
