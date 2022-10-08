@@ -147,7 +147,11 @@ def safe_sparse_dot(a, b, *, dense_output=False):
     dot_product : {ndarray, sparse matrix}
         Sparse if ``a`` and ``b`` are sparse and ``dense_output=False``.
     """
-    if a.ndim > 2 or b.ndim > 2:
+    if isinstance(b, sparse.linalg.LinearOperator):
+        # LinearOperator cannot be the RHS operand of a matmul
+        # so we use a linear algebra identity to make it the LHS
+        ret = (b.T @ a.T).T
+    elif a.ndim > 2 or b.ndim > 2:
         if sparse.issparse(a):
             # sparse is always 2D. Implies b is 3D+
             # [i, j] @ [k, ..., l, m, n] -> [i, k, ..., l, n]

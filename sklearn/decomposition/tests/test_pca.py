@@ -1,6 +1,7 @@
 import numpy as np
 import scipy as sp
 from numpy.testing import assert_array_equal
+from scipy.sparse.linalg import LinearOperator
 
 import pytest
 import warnings
@@ -43,10 +44,41 @@ def test_pca(svd_solver, n_components):
     assert_allclose(np.dot(cov, precision), np.eye(X.shape[1]), atol=1e-12)
 
 
-@pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
+def linear_operator_from_matrix(A):
+    return LinearOperator(
+        shape=A.shape,
+        dtype=A.dtype,
+        matvec=lambda x: A @ x,
+        rmatvec=lambda x: A.T @ x,
+        matmat=lambda X: A @ X,
+        rmatmat=lambda X: A.T @ X,
+    )
+
+
+def test_linear_operator_matmul():
+    A = np.array([[1, 2, 3], [4, 5, 6]])
+    B = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+    B = linear_operator_from_matrix(B)
+    expected_error = "Input operand 1 does not have enough dimensions"
+    with pytest.raises(ValueError, match=expected_error):
+        A @ B
+
+
+def test_linear_operator_reversed_matmul():
+    A = np.array([[1, 2, 3], [4, 5, 6]])
+    B = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+    B = linear_operator_from_matrix(B)
+    result = (B.T @ A.T).T
+    assert np.allclose(result, [[38, 44, 50, 56], [83, 98, 113, 128]])
+
+
 @pytest.mark.parametrize("n_components", range(1, min(SPARSE_M, SPARSE_N)))
-def test_pca_sparse(svd_solver, n_components):
-    X = sp.sparse.random(SPARSE_M, SPARSE_N, random_state=SPARSE_RANDOM_SEED)
+@pytest.mark.parametrize("format", ["csr", "csc"])
+@pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
+def test_pca_sparse(svd_solver, n_components, format):
+    X = sp.sparse.random(
+        SPARSE_M, SPARSE_N, format=format, random_state=SPARSE_RANDOM_SEED
+    )
     pca = PCA(n_components=n_components, svd_solver=svd_solver)
     pca.fit(X)
 
@@ -509,17 +541,6 @@ def test_pca_svd_solver_auto(data, n_components, expected_solver):
     pca_auto.fit(data)
     pca_test.fit(data)
     assert_allclose(pca_auto.components_, pca_test.components_)
-
-
-@pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-def test_pca_sparse_input(svd_solver):
-    X = np.random.RandomState(0).rand(5, 4)
-    X = sp.sparse.csr_matrix(X)
-    assert sp.sparse.issparse(X)
-
-    pca = PCA(n_components=3, svd_solver=svd_solver)
-    with pytest.raises(TypeError):
-        pca.fit(X)
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)

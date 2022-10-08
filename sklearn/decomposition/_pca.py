@@ -17,10 +17,10 @@ import numpy as np
 from scipy import linalg
 from scipy.special import gammaln
 from scipy.sparse import issparse
-from scipy.sparse.linalg import svds
+from scipy.sparse.linalg import svds, LinearOperator
 
 from ._base import _BasePCA
-from ..utils import check_random_state
+from ..utils import check_random_state, sparsefuncs
 from ..utils._arpack import _init_arpack_v0
 from ..utils.deprecation import deprecated
 from ..utils.extmath import fast_logdet, randomized_svd, svd_flip
@@ -113,6 +113,99 @@ def _infer_dimension(spectrum, n_samples):
     for rank in range(1, spectrum.shape[0]):
         ll[rank] = _assess_dimension(spectrum, rank, n_samples)
     return ll.argmax()
+
+
+def _center_implicitly(X, row_mean):
+    """Create an implicitly centered LinearOperator out of a matrix."""
+
+    assert X.ndim == 2
+    m, n = X.shape
+    A = X  # to avoid recursive references
+    r = row_mean.reshape(1, -1)
+    ones = np.ones((m, 1), dtype=X.dtype)
+
+    verbose = 0
+
+    def matvec(y):
+        if verbose:
+            print("matvec")
+            print(f"\t{A.shape=}")
+            print(f"\t{y.shape=}")
+            print(f"\t{r.shape=}")
+            print(f"\t{(A@y).shape=}")
+            print(f"\t{(r@y).shape=}")
+            print(f"\t{(A@y-r@y).shape=}")
+        out = A @ y - r @ y
+        if verbose:
+            print(f"\t{type(out)=}")
+            with np.printoptions(precision=2, suppress=True, threshold=1):
+                print(f"\t{out=}")
+        return out
+
+    def rmatvec(y):
+        if verbose:
+            print("rmatvec")
+            print(f"\t{A.shape=}")
+            print(f"\t{A.T.shape=}")
+            print(f"\t{y.shape=}")
+            print(f"\t{r.shape=}")
+            print(f"\t{r.T.shape=}")
+            print(f"\t{ones.shape=}")
+            print(f"\t{ones.T.shape=}")
+            print(f"\t{(A.T@y).shape=}")
+            print(f"\t{(r.T @ ones.T @ y).shape=}")
+            print(f"\t{(A.T @ y - r.T @ ones.T @ y).shape=}")
+        out = A.T @ y - r.T @ ones.T @ y
+        if verbose:
+            print(f"\t{type(out)=}")
+            with np.printoptions(precision=2, suppress=True, threshold=1):
+                print(f"\t{out=}")
+        return out
+
+    def matmat(Y):
+        if verbose:
+            print("matmat")
+            print(f"\t{A.shape=}")
+            print(f"\t{Y.shape=}")
+            print(f"\t{r.shape=}")
+            print(f"\t{(A @ Y).shape=}")
+            print(f"\t{(r @ Y).shape=}")
+            print(f"\t{(A @ Y - r @ Y).shape=}")
+        out = A @ Y - r @ Y
+        if verbose:
+            print(f"\t{type(out)=}")
+            with np.printoptions(precision=2, suppress=True, threshold=1):
+                print(f"\t{out=}")
+        return out
+
+    def rmatmat(Y):
+        if verbose:
+            print("rmatmat")
+            print(f"\t{A.shape=}")
+            print(f"\t{A.T.shape=}")
+            print(f"\t{Y.shape=}")
+            print(f"\t{r.shape=}")
+            print(f"\t{r.T.shape=}")
+            print(f"\t{ones.shape=}")
+            print(f"\t{ones.T.shape=}")
+            print(f"\t{(A.T @ Y).shape=}")
+            print(f"\t{(r.T @ ones.T @ Y).shape=}")
+            print(f"\t{(A.T @ Y - r.T @ ones.T @ Y).shape=}")
+        out = A.T @ Y - r.T @ ones.T @ Y
+        if verbose:
+            print(f"\t{type(out)=}")
+            with np.printoptions(precision=2, suppress=True, threshold=1):
+                print(f"\t{out=}")
+        return out
+
+    return LinearOperator(
+        shape=X.shape,
+        dtype=X.dtype,
+        matvec=matvec,
+        rmatvec=rmatvec,
+        matmat=matmat,
+        rmatmat=rmatmat,
+    )
 
 
 class PCA(_BasePCA):
@@ -474,16 +567,12 @@ class PCA(_BasePCA):
     def _fit(self, X):
         """Dispatch to the right submethod depending on the chosen solver."""
 
-        # Raise an error for sparse input.
-        # This is more informative than the generic one raised by check_array.
-        if issparse(X):
-            raise TypeError(
-                "PCA does not support sparse input. See "
-                "TruncatedSVD for a possible alternative."
-            )
-
         X = self._validate_data(
-            X, dtype=[np.float64, np.float32], ensure_2d=True, copy=self.copy
+            X,
+            dtype=[np.float64, np.float32],
+            ensure_2d=True,
+            copy=self.copy,
+            accept_sparse=["csr", "csc"],
         )
 
         # Handle n_components==None
@@ -601,8 +690,17 @@ class PCA(_BasePCA):
         random_state = check_random_state(self.random_state)
 
         # Center data
-        self.mean_ = np.mean(X, axis=0)
-        X -= self.mean_
+        have_total_var = False
+        if issparse(X):
+            # emulate behavior of a centered X without constructing it explicitly
+            row_mean, row_variance = sparsefuncs.mean_variance_axis(X, axis=0)
+            self.mean_ = row_mean
+            total_var = row_variance.sum() * n_samples / (n_samples-1) # ddof=1
+            have_total_var = True
+            X = _center_implicitly(X, row_mean)
+        else:
+            self.mean_ = np.mean(X, axis=0)
+            X -= self.mean_
 
         if svd_solver == "arpack":
             v0 = _init_arpack_v0(min(X.shape), random_state)
@@ -632,12 +730,12 @@ class PCA(_BasePCA):
         # Get variance explained by singular values
         self.explained_variance_ = (S**2) / (n_samples - 1)
 
-        # Workaround in-place variance calculation since at the time numpy
-        # did not have a way to calculate variance in-place.
-        N = X.shape[0] - 1
-        np.square(X, out=X)
-        np.sum(X, axis=0, out=X[0])
-        total_var = (X[0] / N).sum()
+        if not have_total_var:
+            # Workaround in-place variance calculation since at the time numpy
+            # did not have a way to calculate variance in-place.
+            np.square(X, out=X)
+            np.sum(X, axis=0, out=X[0])
+            total_var = (X[0] / (n_samples-1)).sum()
 
         self.explained_variance_ratio_ = self.explained_variance_ / total_var
         self.singular_values_ = S.copy()  # Store the singular values.
