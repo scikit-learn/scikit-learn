@@ -331,13 +331,6 @@ Changelog
   to a tiny value. Moreover, `verbose` is now properly propagated to L-BFGS-B.
   :pr:`23619` by :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |Fix| Use dtype-aware tolerances for the validation of gram matrices (passed by users
-  or precomputed). :pr:`22059` by :user:`Malte S. Kurz <MalteKurz>`.
-
-- |Fix| Fixed an error in :class:`linear_model.LogisticRegression` with
-  `solver="newton-cg"`, `fit_intercept=True`, and a single feature. :pr:`23608`
-  by `Tom Dupre la Tour`_.
-
 - |API| The default value for the `solver` parameter in
   :class:`linear_model.QuantileRegressor` will change from `"interior-point"`
   to `"highs"` in version 1.4.
