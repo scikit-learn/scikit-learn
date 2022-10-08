@@ -15,7 +15,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.extmath.fast_logdet",
     "sklearn.utils.extmath.randomized_svd",
     "sklearn.utils.extmath.svd_flip",
-    "sklearn.utils.gen_batches",
     "sklearn.utils.gen_even_slices",
     "sklearn.utils.metaestimators.if_delegate_has_method",
 ]

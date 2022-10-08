@@ -693,22 +693,23 @@ def _chunk_generator(gen, chunksize):
 
 
 def gen_batches(n, batch_size, *, min_batch_size=0):
-    """Generator to create slices containing batch_size elements, from 0 to n.
+    """Generator to create slices containing `batch_size` elements from 0 to `n`.
 
-    The last slice may contain less than batch_size elements, when batch_size
-    does not divide n.
+    The last slice may contain less than `batch_size` elements, when
+    `batch_size` does not divide `n`.
 
     Parameters
     ----------
     n : int
+        Size of the sequence.
     batch_size : int
-        Number of element in each batch.
+        Number of elements in each batch.
     min_batch_size : int, default=0
-        Minimum batch size to produce.
+        Set minimum required number of elements in each batch.
 
     Yields
     ------
-    slice of batch_size elements
+    `slice` of `batch_size` elements
 
     See Also
     --------
