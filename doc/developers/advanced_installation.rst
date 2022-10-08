@@ -296,6 +296,12 @@ forge using the following command:
 
 which should include ``compilers`` and ``llvm-openmp``.
 
+.. note::
+
+   If you installed these packages after creating and activating a new conda
+   environment, you will need to first deactivate and then reactivate the
+   environment for these changes to take effect.
+
 The compilers meta-package will automatically set custom environment
 variables:
 

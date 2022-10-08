@@ -354,7 +354,6 @@ def test_lasso_cv_positive_constraint():
 @pytest.mark.parametrize(
     "alphas, err_type, err_msg",
     [
-        (-2, ValueError, r"alphas == -2, must be >= 0.0."),
         ((1, -1, -100), ValueError, r"alphas\[1\] == -1, must be >= 0.0."),
         (
             (-0.1, -1.0, -10.0),
@@ -973,14 +972,6 @@ def test_sparse_input_dtype_enet_and_lassocv():
     assert_almost_equal(clf.coef_, clf1.coef_, decimal=6)
 
 
-def test_precompute_invalid_argument():
-    X, y, _, _ = build_dataset()
-    for clf in [ElasticNetCV(precompute="invalid"), LassoCV(precompute="invalid")]:
-        err_msg = ".*should be.*True.*False.*auto.* array-like.*Got 'invalid'"
-        with pytest.raises(ValueError, match=err_msg):
-            clf.fit(X, y)
-
-
 def test_elasticnet_precompute_incorrect_gram():
     # check that passing an invalid precomputed Gram matrix will raise an
     # error.
@@ -1394,10 +1385,6 @@ def test_convergence_warnings():
     X = random_state.standard_normal((1000, 500))
     y = random_state.standard_normal((1000, 3))
 
-    # check that the model fails to converge (a negative dual gap cannot occur)
-    with pytest.warns(ConvergenceWarning):
-        MultiTaskElasticNet(max_iter=1, tol=-1).fit(X, y)
-
     # check that the model converges w/o convergence warnings
     with warnings.catch_warnings():
         warnings.simplefilter("error", ConvergenceWarning)
@@ -1796,3 +1783,15 @@ def test_sample_weight_invariance(estimator):
 
     assert_allclose(reg_2sw.coef_, reg_dup.coef_)
     assert_allclose(reg_2sw.intercept_, reg_dup.intercept_)
+
+
+def test_read_only_buffer():
+    """Test that sparse coordinate descent works for read-only buffers"""
+
+    rng = np.random.RandomState(0)
+    clf = ElasticNet(alpha=0.1, copy_X=True, random_state=rng)
+    X = np.asfortranarray(rng.uniform(size=(100, 10)))
+    X.setflags(write=False)
+
+    y = rng.rand(100)
+    clf.fit(X, y)

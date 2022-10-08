@@ -175,7 +175,7 @@ class _PLS(
     https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "scale": ["boolean"],
         "deflation_mode": [StrOptions({"regression", "canonical"})],
@@ -615,7 +615,7 @@ class PLSRegression(_PLS):
     >>> Y_pred = pls2.predict(X)
     """
 
-    _parameter_constraints = {**_PLS._parameter_constraints}
+    _parameter_constraints: dict = {**_PLS._parameter_constraints}
     for param in ("deflation_mode", "mode", "algorithm"):
         _parameter_constraints.pop(param)
 
@@ -760,7 +760,7 @@ class PLSCanonical(_PLS):
     >>> X_c, Y_c = plsca.transform(X, Y)
     """
 
-    _parameter_constraints = {**_PLS._parameter_constraints}
+    _parameter_constraints: dict = {**_PLS._parameter_constraints}
     for param in ("deflation_mode", "mode"):
         _parameter_constraints.pop(param)
 
@@ -882,7 +882,7 @@ class CCA(_PLS):
     >>> X_c, Y_c = cca.transform(X, Y)
     """
 
-    _parameter_constraints = {**_PLS._parameter_constraints}
+    _parameter_constraints: dict = {**_PLS._parameter_constraints}
     for param in ("deflation_mode", "mode", "algorithm"):
         _parameter_constraints.pop(param)
 
@@ -969,7 +969,7 @@ class PLSSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     ((4, 2), (4, 2))
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "scale": ["boolean"],
         "copy": ["boolean"],
@@ -1052,7 +1052,7 @@ class PLSSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         Returns
         -------
         x_scores : array-like or tuple of array-like
-            The transformed data `X_tranformed` if `Y is not None`,
+            The transformed data `X_transformed` if `Y is not None`,
             `(X_transformed, Y_transformed)` otherwise.
         """
         check_is_fitted(self)
@@ -1083,7 +1083,7 @@ class PLSSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         Returns
         -------
         out : array-like or tuple of array-like
-            The transformed data `X_tranformed` if `Y is not None`,
+            The transformed data `X_transformed` if `Y is not None`,
             `(X_transformed, Y_transformed)` otherwise.
         """
         return self.fit(X, y).transform(X, y)

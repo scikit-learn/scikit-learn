@@ -157,7 +157,9 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
     assert sources.shape == (1000, 2)
 
     assert_allclose(sources_fun, sources)
-    assert_allclose(sources, ica.transform(m.T))
+    # the debian 32 bit build with global dtype float32 needs an atol to pass
+    atol = 1e-7 if global_dtype == np.float32 else 0
+    assert_allclose(sources, ica.transform(m.T), atol=atol)
 
     assert ica.mixing_.shape == (2, 2)
 
@@ -453,7 +455,7 @@ def test_fastica_output_shape(whiten, return_X_mean, return_n_iter):
 
 @pytest.mark.parametrize("add_noise", [True, False])
 def test_fastica_simple_different_solvers(add_noise, global_random_seed):
-    """Test FastICA is consistent between whiten_solvers when `sign_flip=True`."""
+    """Test FastICA is consistent between whiten_solvers."""
     rng = np.random.RandomState(global_random_seed)
     n_samples = 1000
     # Generate two sources:
@@ -475,15 +477,15 @@ def test_fastica_simple_different_solvers(add_noise, global_random_seed):
 
     outs = {}
     for solver in ("svd", "eigh"):
-        ica = FastICA(
-            random_state=0, whiten="unit-variance", whiten_solver=solver, sign_flip=True
-        )
+        ica = FastICA(random_state=0, whiten="unit-variance", whiten_solver=solver)
         sources = ica.fit_transform(m.T)
         outs[solver] = sources
         assert ica.components_.shape == (2, 2)
         assert sources.shape == (1000, 2)
 
-    assert_allclose(outs["eigh"], outs["svd"])
+    # compared numbers are not all on the same magnitude. Using a small atol to
+    # make the test less brittle
+    assert_allclose(outs["eigh"], outs["svd"], atol=1e-12)
 
 
 def test_fastica_eigh_low_rank_warning(global_random_seed):

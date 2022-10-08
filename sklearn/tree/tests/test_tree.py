@@ -1299,10 +1299,8 @@ def test_big_input():
     # Test if the warning for too large inputs is appropriate.
     X = np.repeat(10**40.0, 4).astype(np.float64).reshape(-1, 1)
     clf = DecisionTreeClassifier()
-    try:
+    with pytest.raises(ValueError, match="float32"):
         clf.fit(X, [0, 1, 0, 1])
-    except ValueError as e:
-        assert "float32" in str(e)
 
 
 def test_realloc():
@@ -2103,41 +2101,6 @@ def test_criterion_entropy_same_as_log_loss(Tree, n_classes):
         f"{Tree!r} with criterion 'entropy' and 'log_loss' gave different trees.",
     )
     assert_allclose(tree_log_loss.predict(X), tree_entropy.predict(X))
-
-
-@pytest.mark.parametrize(
-    "old_criterion, new_criterion, Tree",
-    [
-        # TODO(1.2): Remove "mse" and "mae"
-        ("mse", "squared_error", DecisionTreeRegressor),
-        ("mse", "squared_error", ExtraTreeRegressor),
-        ("mae", "absolute_error", DecisionTreeRegressor),
-        ("mae", "absolute_error", ExtraTreeRegressor),
-    ],
-)
-def test_criterion_deprecated(old_criterion, new_criterion, Tree):
-    tree = Tree(criterion=old_criterion)
-
-    with pytest.warns(
-        FutureWarning, match=f"Criterion '{old_criterion}' was deprecated"
-    ):
-        tree.fit(X, y)
-
-    tree_new = Tree(criterion=new_criterion).fit(X, y)
-    assert_allclose(tree.predict(X), tree_new.predict(X))
-
-
-@pytest.mark.parametrize("Tree", ALL_TREES.values())
-def test_n_features_deprecated(Tree):
-    # check that we raise a deprecation warning when accessing `n_features_`.
-    # FIXME: remove in 1.2
-    depr_msg = (
-        "The attribute `n_features_` is deprecated in 1.0 and will be "
-        "removed in 1.2. Use `n_features_in_` instead."
-    )
-
-    with pytest.warns(FutureWarning, match=depr_msg):
-        Tree().fit(X, y).n_features_
 
 
 def test_different_endianness_pickle():

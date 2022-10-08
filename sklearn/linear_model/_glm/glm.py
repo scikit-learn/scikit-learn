@@ -1034,7 +1034,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     # We allow for NewtonSolver classes for the "solver" parameter but do not
     # make them public in the docstrings. This facilitates testing and
     # benchmarking.
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0.0, None, closed="left")],
         "fit_intercept": ["boolean"],
         "solver": [
@@ -1783,7 +1783,7 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
     array([2.500..., 4.599...])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_GeneralizedLinearRegressor._parameter_constraints,
         "power": [Interval(Real, None, None, closed="neither")],
         "link": [StrOptions({"auto", "identity", "log"})],

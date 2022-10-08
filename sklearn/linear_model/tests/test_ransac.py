@@ -168,26 +168,6 @@ def test_ransac_predict():
     assert_array_equal(ransac_estimator.predict(X), np.zeros(100))
 
 
-def test_ransac_residuals_threshold_no_inliers():
-    # When residual_threshold=nan there are no inliers and a
-    # ValueError with a message should be raised
-    estimator = LinearRegression()
-    ransac_estimator = RANSACRegressor(
-        estimator,
-        min_samples=2,
-        residual_threshold=float("nan"),
-        random_state=0,
-        max_trials=5,
-    )
-
-    msg = "RANSAC could not find a valid consensus set"
-    with pytest.raises(ValueError, match=msg):
-        ransac_estimator.fit(X, y)
-    assert ransac_estimator.n_skips_no_inliers_ == 5
-    assert ransac_estimator.n_skips_invalid_data_ == 0
-    assert ransac_estimator.n_skips_invalid_model_ == 0
-
-
 def test_ransac_no_valid_data():
     def is_data_valid(X, y):
         return False
@@ -343,14 +323,8 @@ def test_ransac_min_n_samples():
         residual_threshold=5,
         random_state=0,
     )
-    ransac_estimator3 = RANSACRegressor(
-        estimator, min_samples=-1, residual_threshold=5, random_state=0
-    )
-    ransac_estimator4 = RANSACRegressor(
-        estimator, min_samples=5.2, residual_threshold=5, random_state=0
-    )
     ransac_estimator5 = RANSACRegressor(
-        estimator, min_samples=2.0, residual_threshold=5, random_state=0
+        estimator, min_samples=2, residual_threshold=5, random_state=0
     )
     ransac_estimator6 = RANSACRegressor(estimator, residual_threshold=5, random_state=0)
     ransac_estimator7 = RANSACRegressor(
@@ -377,16 +351,10 @@ def test_ransac_min_n_samples():
     )
 
     with pytest.raises(ValueError):
-        ransac_estimator3.fit(X, y)
-
-    with pytest.raises(ValueError):
-        ransac_estimator4.fit(X, y)
-
-    with pytest.raises(ValueError):
         ransac_estimator7.fit(X, y)
 
-    err_msg = "From version 1.2, `min_samples` needs to be explicitly set"
-    with pytest.warns(FutureWarning, match=err_msg):
+    err_msg = "`min_samples` needs to be explicitly set"
+    with pytest.raises(ValueError, match=err_msg):
         ransac_estimator8.fit(X, y)
 
 
@@ -517,16 +485,6 @@ def test_ransac_dynamic_max_trials():
     assert _dynamic_max_trials(1, 100, 10, 0) == 0
     assert _dynamic_max_trials(1, 100, 10, 1) == float("inf")
 
-    estimator = LinearRegression()
-    ransac_estimator = RANSACRegressor(estimator, min_samples=2, stop_probability=-0.1)
-
-    with pytest.raises(ValueError):
-        ransac_estimator.fit(X, y)
-
-    ransac_estimator = RANSACRegressor(estimator, min_samples=2, stop_probability=1.1)
-    with pytest.raises(ValueError):
-        ransac_estimator.fit(X, y)
-
 
 def test_ransac_fit_sample_weight():
     ransac_estimator = RANSACRegressor(random_state=0)
@@ -614,25 +572,6 @@ def test_perfect_horizontal_line():
 
     assert_allclose(ransac_estimator.estimator_.coef_, 0.0)
     assert_allclose(ransac_estimator.estimator_.intercept_, 0.0)
-
-
-# TODO: Remove in v1.2
-@pytest.mark.parametrize(
-    "old_loss, new_loss",
-    [
-        ("absolute_loss", "squared_error"),
-        ("squared_loss", "absolute_error"),
-    ],
-)
-def test_loss_deprecated(old_loss, new_loss):
-    est1 = RANSACRegressor(loss=old_loss, random_state=0)
-
-    with pytest.warns(FutureWarning, match=f"The loss '{old_loss}' was deprecated"):
-        est1.fit(X, y)
-
-    est2 = RANSACRegressor(loss=new_loss, random_state=0)
-    est2.fit(X, y)
-    assert_allclose(est1.predict(X), est2.predict(X))
 
 
 def test_base_estimator_deprecated():
