@@ -1235,7 +1235,6 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
     _parameter_constraints: dict = {
         **_GeneralizedLinearRegressor._parameter_constraints
     }
-    _parameter_constraints.pop("solver")
 
     def __init__(
         self,
@@ -1366,7 +1365,6 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     _parameter_constraints: dict = {
         **_GeneralizedLinearRegressor._parameter_constraints
     }
-    _parameter_constraints.pop("solver")
 
     def __init__(
         self,
