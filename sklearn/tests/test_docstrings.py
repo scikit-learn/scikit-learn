@@ -15,12 +15,6 @@ FUNCTION_DOCSTRING_IGNORE_LIST = [
     "sklearn.utils.extmath.fast_logdet",
     "sklearn.utils.extmath.randomized_svd",
     "sklearn.utils.extmath.svd_flip",
-    "sklearn.utils.extmath.weighted_mode",
-    "sklearn.utils.fixes.delayed",
-    # To be fixed in upstream issue:
-    # https://github.com/joblib/threadpoolctl/issues/108
-    "sklearn.utils.fixes.threadpool_info",
-    "sklearn.utils.fixes.threadpool_limits",
     "sklearn.utils.gen_batches",
     "sklearn.utils.gen_even_slices",
     "sklearn.utils.metaestimators.if_delegate_has_method",
@@ -51,7 +45,9 @@ def get_all_methods():
 def get_all_functions_names():
     functions = all_functions()
     for _, func in functions:
-        yield f"{func.__module__}.{func.__name__}"
+        # exclude functions from utils.fixex since they come from external packages
+        if "utils.fixes" not in func.__module__:
+            yield f"{func.__module__}.{func.__name__}"
 
 
 def filter_errors(errors, method, Klass=None):

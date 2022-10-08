@@ -605,7 +605,7 @@ def _randomized_eigsh(
 
 
 def weighted_mode(a, w, *, axis=0):
-    """Returns an array of the weighted modal (most common) value in a.
+    """Return an array of the weighted modal (most common) value in the passed array.
 
     If there is more than one such value, only the first is returned.
     The bin-count for the modal bins is also returned.
@@ -614,10 +614,10 @@ def weighted_mode(a, w, *, axis=0):
 
     Parameters
     ----------
-    a : array-like
-        n-dimensional array of which to find mode(s).
-    w : array-like
-        n-dimensional array of weights for each value.
+    a : array-like of shape (n_samples,)
+        Array of which values to find mode(s).
+    w : array-like of shape (n_samples,)
+        Array of weights for each value.
     axis : int, default=0
         Axis along which to operate. Default is 0, i.e. the first axis.
 
@@ -627,6 +627,11 @@ def weighted_mode(a, w, *, axis=0):
         Array of modal values.
     score : ndarray
         Array of weighted counts for each mode.
+
+    See Also
+    --------
+    scipy.stats.mode: Calculates the Modal (most common) value of array elements
+        along specified axis.
 
     Examples
     --------
@@ -645,10 +650,6 @@ def weighted_mode(a, w, *, axis=0):
 
     The value 2 has the highest score: it appears twice with weights of
     1.5 and 2: the sum of these is 3.5.
-
-    See Also
-    --------
-    scipy.stats.mode
     """
     if axis is None:
         a = np.ravel(a)
