@@ -176,6 +176,28 @@ class PartialDependenceDisplay:
     --------
     partial_dependence : Compute Partial Dependence values.
     PartialDependenceDisplay.from_estimator : Plot Partial Dependence.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> import matplotlib.pyplot as plt
+    >>> from sklearn.datasets import make_friedman1
+    >>> from sklearn.ensemble import GradientBoostingRegressor
+    >>> from sklearn.inspection import PartialDependenceDisplay
+    >>> from sklearn.inspection import partial_dependence
+    >>> X, y = make_friedman1()
+    >>> clf = GradientBoostingRegressor(n_estimators=10).fit(X, y)
+    >>> features, feature_names = [(0,)], [f"Features #{i}" for i in range(X.shape[1])]
+    >>> deciles = {0: np.linspace(0, 1, num=5)}
+    >>> pd_results = partial_dependence(
+    ...     clf, X, features=0, kind="average", grid_resolution=5)
+    >>> display = PartialDependenceDisplay(
+    ...     [pd_results], features=features, feature_names=feature_names,
+    ...     target_idx=0, deciles=deciles
+    ... )
+    >>> display.plot(pdp_lim={1: (-1.38, 0.66)})
+    <...>
+    >>> plt.show()
     """
 
     def __init__(
@@ -989,6 +1011,8 @@ class PartialDependenceDisplay:
         Returns
         -------
         display : :class:`~sklearn.inspection.PartialDependenceDisplay`
+            Returns a :class:`~sklearn.inspection.PartialDependenceDisplay`
+            object that contains the partial dependence plots.
         """
 
         check_matplotlib_support("plot_partial_dependence")
