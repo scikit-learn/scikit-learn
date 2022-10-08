@@ -101,7 +101,7 @@ jobs:
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
 
-          # On Python 3.11 only supports 64bit and is only available with manylinux2014
+          # NumPy on Python 3.11 only supports 64bit and is only available with manylinux2014
           - os: ubuntu-latest
             python: 311
             bitness: 64
