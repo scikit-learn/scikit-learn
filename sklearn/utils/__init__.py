@@ -405,7 +405,7 @@ def _get_column_indices(X, key):
                 stop = all_columns.get_loc(stop) + 1
             else:
                 stop = n_columns + 1
-            return list(range(n_columns)[slice(start, stop)])
+            return list(islice(range(n_columns), start, stop))
         else:
             columns = list(key)
 
