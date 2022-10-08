@@ -748,7 +748,7 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
 def gen_even_slices(n, n_packs, *, n_samples=None):
     """Generator to create `n_packs` evenly spaced slices going up to `n`.
 
-    If `n_packs` does not divide `n`, except for the first `n % n_packs` 
+    If `n_packs` does not divide `n`, except for the first `n % n_packs`
     slices, remaining slices may contain fewer elements.
 
     Parameters
