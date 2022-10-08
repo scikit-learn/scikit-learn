@@ -23,9 +23,10 @@ cp $WHEEL_PATH $WHEEL_NAME
 PYTHON_VERSION=$(echo ${PYTHON_VERSION:0:1}.${PYTHON_VERSION:1:2})
 
 # TODO: Remove when 3.11 images will be available for
-# windows
-# scipy
-# pandas
+# windows (for now the docker image is tagged as 3.11-rc)
+# TODO: Remove when 3.11 images will be available for
+# scipy (for now only available from nightly anaconda index)
+# pandas (no pandas 3.11 wheels for now) 
 if [[ "$PYTHON_VERSION" == "3.11" ]]; then
     PYTHON_VERSION=$(echo ${PYTHON_VERSION}-rc)
     CIBW_TEST_REQUIRES="pytest threadpoolctl"
