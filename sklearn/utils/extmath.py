@@ -117,6 +117,7 @@ def fast_logdet(A):
     Case-1: Matrix with a Positive determinant (Value of the logarithm of the
     determinant is returned)
 
+    >>> import numpy as np
     >>> from sklearn.utils.extmath import fast_logdet
     >>> a = np.array([[5, 1], [2, 8]])
     >>> fast_logdet(a)
