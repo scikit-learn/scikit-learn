@@ -695,7 +695,7 @@ class PCA(_BasePCA):
             # emulate behavior of a centered X without constructing it explicitly
             row_mean, row_variance = sparsefuncs.mean_variance_axis(X, axis=0)
             self.mean_ = row_mean
-            total_var = row_variance.sum() * n_samples / (n_samples-1) # ddof=1
+            total_var = row_variance.sum() * n_samples / (n_samples - 1)  # ddof=1
             have_total_var = True
             X = _center_implicitly(X, row_mean)
         else:
@@ -735,7 +735,7 @@ class PCA(_BasePCA):
             # did not have a way to calculate variance in-place.
             np.square(X, out=X)
             np.sum(X, axis=0, out=X[0])
-            total_var = (X[0] / (n_samples-1)).sum()
+            total_var = (X[0] / (n_samples - 1)).sum()
 
         self.explained_variance_ratio_ = self.explained_variance_ / total_var
         self.singular_values_ = S.copy()  # Store the singular values.
