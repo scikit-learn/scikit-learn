@@ -258,9 +258,9 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # Interaction constraints
 # .......................
 #
-# The histogram gradient boosters do have the interesting option to constrain
-# possible interactions among features. We do so by not allowing any
-# interaction and thus render the model as a version of a tree-based boosted
+# The histogram gradient boosters have an interesting option to constrain
+# possible interactions among features. In the following, we do not allow any
+# interactions and thus render the model as a version of a tree-based boosted
 # generalized additive model (GAM). This makes the model more interpretable
 # as the effect of each feature can be investaged independently of all others.
 #
@@ -294,6 +294,8 @@ display = PartialDependenceDisplay.from_estimator(
     ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
     pd_line_kw={"color": "tab:orange", "linestyle": "--"},
 )
+
+print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
     "Partial dependence of house value with Gradient Boosting\n"
     "and no interactions allowed"
@@ -301,10 +303,8 @@ display.figure_.suptitle(
 display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 
 # %%
-# All 4 plots show parallel lines meaning there is no interaction in the model.
-# (Note that to see the same with a
-# :class:`~sklearn.ensemble.HistGradientBoostingClassifier`, we would need to
-# plot in the link space, i.e. "logit(predict_proba(X))").
+# All 4 plots have parallel ICE lines meaning there is no interaction in the
+# model.
 # Let us also have a look at the corresponding 2D-plot.
 
 print("Computing partial dependence plots...")
