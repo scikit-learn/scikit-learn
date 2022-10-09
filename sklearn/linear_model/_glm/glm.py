@@ -74,7 +74,6 @@ class NewtonSolver(ABC):
         If shape (n_classes * n_dof,), the classes of one feature are contiguous,
         i.e. one reconstructs the 2d-array via
         coef.reshape((n_classes, -1), order="F").
-        If None, they are initialized with zero.
 
     linear_loss : LinearModelLoss
         The loss to be minimized.
