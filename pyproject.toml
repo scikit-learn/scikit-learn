@@ -11,9 +11,9 @@ requires = [
     # see: https://github.com/scipy/oldest-supported-numpy/blob/main/setup.cfg
     "oldest-supported-numpy",
 
-    # the last scipy wheel available for win32 is 1.9.1
-    "scipy<=1.9.1; sys_platform == 'win32'",
     "scipy>=1.3.2",
+    # the last scipy wheel available for win32 is 1.9.1
+    "scipy<=1.9.1; platform_machine == 'win32'",
 ]
 
 [tool.black]
