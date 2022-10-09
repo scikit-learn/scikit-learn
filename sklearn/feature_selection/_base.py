@@ -225,14 +225,12 @@ def _get_feature_importances(
             getter = attrgetter(getter)
         importances = getter(estimator)
 
-    elif callable(getter):
+    else:
+        # getter is a callable
         if len(signature(getter).parameters) == 3:
             importances = getter(estimator, X, y)
         else:
             importances = getter(estimator)
-
-    else:
-        raise ValueError("`importance_getter` has to be a string or `callable`")
 
     if transform_func is None:
         return importances
