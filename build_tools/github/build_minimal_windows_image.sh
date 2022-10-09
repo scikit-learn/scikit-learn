@@ -10,6 +10,7 @@ if [[ "$BITNESS" == "32" ]]; then
     # 32-bit architectures are not supported
     # by the official Docker images: Tests will just be run
     # on the host (instead of the minimal Docker container).
+    python -m pip install 'scipy<=1.9.1'
     exit 0
 fi
 
@@ -28,7 +29,6 @@ PYTHON_VERSION=$(echo ${PYTHON_VERSION:0:1}.${PYTHON_VERSION:1:2})
 # scipy (for now only available from nightly anaconda index)
 if [[ "$PYTHON_VERSION" == "3.11" ]]; then
     PYTHON_VERSION=$(echo ${PYTHON_VERSION}-rc)
-    python -m pip install scipy==1.10.0.dev0
 fi
 
 # Build a minimal Windows Docker image for testing the wheels
