@@ -11,9 +11,6 @@ ARG PIP_EXTRA_INDEX_URL
 COPY $WHEEL_NAME $WHEEL_NAME
 COPY $CONFTEST_NAME $CONFTEST_NAME
 RUN echo PIP_EXTRA_INDEX_URL = $env:PIP_EXTRA_INDEX_URL
-# TODO: Remove when 3.11 scipy wheels for windows will be available on pypa
-RUN echo $env:PYTHON_VERSION
-RUN if ($env:PYTHON_VERSION -match '3.11') {python -m pip install scipy==1.10.0.dev0}
 RUN pip install $env:WHEEL_NAME
 
 # Install the testing dependencies
