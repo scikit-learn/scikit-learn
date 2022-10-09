@@ -504,6 +504,7 @@ def test_rfe_importance_getter_with_train_instances():
         ("auto", ValueError),
         ("random", AttributeError),
         (lambda x: x.importance, AttributeError),
+        (42, ValueError),
     ],
 )
 @pytest.mark.parametrize("Selector", [RFE, RFECV])
