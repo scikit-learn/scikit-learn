@@ -1123,7 +1123,6 @@ def test_uint8_predict(Est):
     est.predict(X)
 
 
-# TODO(1.3): Remove
 @pytest.mark.parametrize(
     "interaction_cst, n_features, result",
     [
@@ -1146,20 +1145,22 @@ def test_interaction_cst_numerically():
     X = rng.uniform(size=(n_samples, 2))
     # Construct y with a strong interaction term
     # y = x0 + x1 + 5 * x0 * x1
-    y = np.c_[X, 5 * X[:, 0] * X[:, 1]].sum(axis=1)
+    y = np.hstack((X, 5 * X[:, [0]] * X[:, [1]])).sum(axis=1)
 
-    est = HistGradientBoostingRegressor()
+    est = HistGradientBoostingRegressor(random_state=42)
     est.fit(X, y)
-    est_no_interactions = HistGradientBoostingRegressor(interaction_cst=[{0}, {1}])
+    est_no_interactions = HistGradientBoostingRegressor(
+        interaction_cst=[{0}, {1}], random_state=42
+    )
     est_no_interactions.fit(X, y)
 
     delta = 0.25
     # Make sure we do not extrapolate out of the training set as tree-based estimators
     # are very bad in doing so.
     X_test = X[(X[:, 0] < 1 - delta) & (X[:, 1] < 1 - delta)]
-    X_delta_0 = X_test + [delta, 0]
-    X_delta_1 = X_test + [0, delta]
-    X_delta_0_1 = X_test + [delta, delta]
+    X_delta_d_0 = X_test + [delta, 0]
+    X_delta_0_d = X_test + [0, delta]
+    X_delta_d_d = X_test + [delta, delta]
 
     # Note: For the y from above as a function of x0 and x1, we have
     # y(x0+d, x1+d) = y(x0, x1) + 5 * d * (2/5 + x0 + x1) + 5 * d**2
@@ -1168,10 +1169,10 @@ def test_interaction_cst_numerically():
     # Without interaction constraints, we would expect a result of 5 * d**2 for the
     # following expression, but zero with constraints in place.
     assert_allclose(
-        est_no_interactions.predict(X_delta_0_1)
+        est_no_interactions.predict(X_delta_d_d)
         + est_no_interactions.predict(X_test)
-        - est_no_interactions.predict(X_delta_0)
-        - est_no_interactions.predict(X_delta_1),
+        - est_no_interactions.predict(X_delta_d_0)
+        - est_no_interactions.predict(X_delta_0_d),
         0,
         atol=1e-12,
     )
@@ -1179,14 +1180,15 @@ def test_interaction_cst_numerically():
     # Correct result of the expressions is 5 * delta**2. But this is hard to achieve by
     # a fitted tree-based model. The expression should, however, at least be positive!
     assert np.all(
-        est.predict(X_delta_0_1)
+        est.predict(X_delta_d_d)
         + est.predict(X_test)
-        - est.predict(X_delta_0)
-        - est.predict(X_delta_1)
+        - est.predict(X_delta_d_0)
+        - est.predict(X_delta_0_d)
         > 0.01
     )
 
 
+# TODO(1.3): Remove
 @pytest.mark.parametrize(
     "old_loss, new_loss, Estimator",
     [

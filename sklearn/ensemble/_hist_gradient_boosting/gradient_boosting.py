@@ -286,7 +286,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         constraints = [set(group) for group in self.interaction_cst]
 
         # Add all not listed features as own group by default.
-        rest = set(range(n_features)).difference(set().union(*constraints))
+        rest = set(range(n_features)) - set().union(*constraints)
         if len(rest) > 0:
             constraints.append(rest)
 

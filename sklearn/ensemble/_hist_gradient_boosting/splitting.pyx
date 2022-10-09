@@ -467,7 +467,7 @@ cdef class Splitter:
             int feature_idx
             int split_info_idx
             int best_split_info_idx
-            int n_allowed_features = self.n_features
+            int n_allowed_features
             split_info_struct split_info
             split_info_struct * split_infos
             const unsigned char [::1] has_missing_values = self.has_missing_values
@@ -476,9 +476,11 @@ cdef class Splitter:
             int n_threads = self.n_threads
             bint has_interaction_cst = False
 
-        if allowed_features is not None:
-            has_interaction_cst = True
+        has_interaction_cst = allowed_features is not None
+        if has_interaction_cst:
             n_allowed_features = allowed_features.shape[0]
+        else:
+            n_allowed_features = self.n_features
 
         with nogil:
 

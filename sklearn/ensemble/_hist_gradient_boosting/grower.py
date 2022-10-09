@@ -422,8 +422,8 @@ class TreeGrower:
         if self.interaction_cst is not None:
             self.root.interaction_cst_indices = range(len(self.interaction_cst))
             allowed_features = set().union(*self.interaction_cst)
-            self.root.allowed_features = np.array(
-                list(allowed_features), dtype=np.uint32
+            self.root.allowed_features = np.fromiter(
+                allowed_features, dtype=np.uint32, count=len(allowed_features)
             )
 
         self._compute_best_split_and_push(self.root)
@@ -625,6 +625,9 @@ class TreeGrower:
          1   2    <- Left split still fulfills both constraint groups.
         / \ / \      Right split at feature 2 has only group {1, 2} from now on.
 
+        LightGBM uses the same logic for overlapping groups. See
+        https://github.com/microsoft/LightGBM/issues/4481 for details.
+
         Parameters:
         ----------
         node : TreeNode
@@ -651,7 +654,7 @@ class TreeGrower:
                 interaction_cst_indices.append(i)
                 allowed_features.update(self.interaction_cst[i])
         return (
-            np.array(list(allowed_features), dtype=np.uint32),
+            np.fromiter(allowed_features, dtype=np.uint32, count=len(allowed_features)),
             interaction_cst_indices,
         )
 
