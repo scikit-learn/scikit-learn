@@ -91,7 +91,7 @@ def test_normalized_stress_default_change(metric):
 @pytest.mark.parametrize("metric", [True, False])
 def test_normalized_stress_auto(metric, monkeypatch):
     rng = np.random.RandomState(0)
-    X = rng.randn(3, 3)
+    X = rng.randn(4, 3)
     dist = euclidean_distances(X)
 
     mock = Mock(side_effect=mds._smacof_single)
@@ -99,7 +99,7 @@ def test_normalized_stress_auto(metric, monkeypatch):
 
     est = mds.MDS(metric=metric, normalized_stress="auto", random_state=rng)
     est.fit_transform(X)
-    mock.call_args[1]["normalized_stress"] != metric
+    assert mock.call_args[1]["normalized_stress"] != metric
 
     mds.smacof(dist, metric=metric, normalized_stress="auto", random_state=rng)
-    mock.call_args[1]["normalized_stress"] != metric
+    assert mock.call_args[1]["normalized_stress"] != metric
