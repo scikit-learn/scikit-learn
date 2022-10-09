@@ -151,7 +151,7 @@ def test_balance_property(model, with_sample_weight, global_random_seed):
     #     - squared error and identity link (most linear models)
     #     - Poisson deviance with log link
     #     - log loss with logit link
-    # This is know as balance property or unconditional calibration/unbiasednes.
+    # This is known as balance property or unconditional calibration/unbiasedness.
 
     if (
         with_sample_weight
