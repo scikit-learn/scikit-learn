@@ -167,7 +167,7 @@ jobs:
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_TEST_SKIP: "*-macosx_arm64"
-          CIBW_BEFORE_BUILD_WINDOWS: if ( '${{matrix.platform_id}}' -match 'win32' ) {python -m pip install 'scipy<=1.9.1'}
+          CIBW_BEFORE_BUILD_WINDOWS: if ( "${{matrix.platform_id}}" -match "win32" ) {python -m pip install 'scipy<=1.9.1'}
           CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir} ${{ matrix.bitness }}
           CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }} ${{ matrix.bitness }}
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
