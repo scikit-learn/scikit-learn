@@ -10,6 +10,8 @@ if [[ "$BITNESS" == "32" ]]; then
     # 32-bit architectures are not supported
     # by the official Docker images: Tests will just be run
     # on the host (instead of the minimal Docker container).
+    # the last scipy wheel available for win32 is 1.9.1
+    python -m pip install 'scipy<=1.9.1'
     exit 0
 fi
 
