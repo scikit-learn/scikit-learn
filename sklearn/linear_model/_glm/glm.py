@@ -355,7 +355,7 @@ class NewtonSolver(ABC):
                 ConvergenceWarning,
             )
             if self.verbose:
-                print("  Lines search did not converge and resorts to lbfgs instead.")
+                print("  Line search did not converge and resorts to lbfgs instead.")
             self.use_fallback_lbfgs_solve = True
             return
 
@@ -605,8 +605,8 @@ class QRCholeskyNewtonSolver(BaseCholeskyNewtonSolver):
 
         X' = QR with Q'Q = identity(k), k = min(n_samples, n_features)
 
-    This is the same as an LQ decomposition of X. We introduce the new variable t as,
-    see [1]:
+    This is the same as an LQ decomposition of X. We introduce the new variable z, see
+    [1], as:
 
         (coef, intercept) = (Q @ z, intercept)
 
