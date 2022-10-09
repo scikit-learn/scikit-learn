@@ -485,6 +485,7 @@ def test_n_components_upper_bounds(Estimator):
 
 @pytest.mark.parametrize("n_samples, n_features", [(100, 10), (100, 200)])
 def test_singular_value_helpers(n_samples, n_features, global_random_seed):
+    # Make sure SVD and power method give approximately the same results
     X, Y = make_regression(
         n_samples, n_features, n_targets=5, random_state=global_random_seed
     )
