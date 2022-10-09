@@ -29,7 +29,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/nspr-4.33-h295c915_0.conda#78454e88
 https://repo.anaconda.com/pkgs/main/linux-64/openssl-1.1.1q-h7f8727e_0.conda#2ac47797afee2ece8d339c18b095b8d8
 https://repo.anaconda.com/pkgs/main/linux-64/pcre-8.45-h295c915_0.conda#b32ccc24d1d9808618c1e898da60f68d
 https://repo.anaconda.com/pkgs/main/linux-64/xz-5.2.5-h7f8727e_1.conda#5d01fcf310bf465237f6b95a019d73bc
-https://repo.anaconda.com/pkgs/main/linux-64/zlib-1.2.12-h7f8727e_2.conda#4f4080e9939f082332cd8be7fedad087
+https://repo.anaconda.com/pkgs/main/linux-64/zlib-1.2.12-h5eee18b_3.conda#2b51a6917fb98080e5fd3c34f8721ad8
 https://repo.anaconda.com/pkgs/main/linux-64/ccache-3.7.9-hfe4627d_0.conda#bef6fc681c273bb7bd0c67d1a591365e
 https://repo.anaconda.com/pkgs/main/linux-64/glib-2.69.1-h4ff587b_1.conda#4c3eae7c0b8b1c8fb3046a0740313bbf
 https://repo.anaconda.com/pkgs/main/linux-64/libedit-3.1.20210910-h7f8727e_0.conda#cf16006f8f24e4224ddce196471d2509
@@ -57,11 +57,11 @@ https://repo.anaconda.com/pkgs/main/linux-64/libwebp-1.2.2-h55f646e_0.conda#c9ed
 https://repo.anaconda.com/pkgs/main/linux-64/nss-3.74-h0370c37_0.conda#fb2426b2f3cb17c9015fcbdf917a2f7b
 https://repo.anaconda.com/pkgs/main/linux-64/python-3.8.13-h12debd9_0.conda#edc17980bae484b711e090f0a0cbbaef
 https://repo.anaconda.com/pkgs/main/noarch/attrs-21.4.0-pyhd3eb1b0_0.conda#3bc977a57587a7964921e3e1e2e31f9e
-https://repo.anaconda.com/pkgs/main/linux-64/certifi-2022.6.15-py38h06a4308_0.conda#ebd13bbcc4bd93d8e743be775cc9b865
+https://repo.anaconda.com/pkgs/main/linux-64/certifi-2022.9.14-py38h06a4308_0.conda#e125d45829ea1764034620de0020f75b
 https://repo.anaconda.com/pkgs/main/noarch/charset-normalizer-2.0.4-pyhd3eb1b0_0.conda#e7a441d94234b2b5fafee06e25dbf076
 https://repo.anaconda.com/pkgs/main/linux-64/coverage-6.2-py38h7f8727e_0.conda#34a3006ca7d8d286b63593b31b845ace
 https://repo.anaconda.com/pkgs/main/noarch/cycler-0.11.0-pyhd3eb1b0_0.conda#f5e365d2cdb66d547eb8c3ab93843aab
-https://repo.anaconda.com/pkgs/main/linux-64/cython-0.29.30-py38h6a678d5_0.conda#46c524f271afb80dfa5ef984e72c6ff4
+https://repo.anaconda.com/pkgs/main/linux-64/cython-0.29.32-py38h6a678d5_0.conda#81e586e2923e84782265d5e34b2c7189
 https://repo.anaconda.com/pkgs/main/noarch/execnet-1.9.0-pyhd3eb1b0_0.conda#f895937671af67cebb8af617494b3513
 https://repo.anaconda.com/pkgs/main/noarch/idna-3.3-pyhd3eb1b0_0.conda#8f43a528cf83b43af38a4d142fa38b8a
 https://repo.anaconda.com/pkgs/main/noarch/iniconfig-1.1.1-pyhd3eb1b0_0.tar.bz2#e40edff2c5708f342cef43c7f280c507

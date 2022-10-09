@@ -2160,13 +2160,10 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         warm_start=False,
         average=False,
     ):
-
-        alpha = nu / 2
         self.nu = nu
         super(SGDOneClassSVM, self).__init__(
             loss="hinge",
             penalty="l2",
-            alpha=alpha,
             C=1.0,
             l1_ratio=0,
             fit_intercept=fit_intercept,

@@ -289,7 +289,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         if "onehot" in self.encode:
             self._encoder = OneHotEncoder(
                 categories=[np.arange(i) for i in self.n_bins_],
-                sparse=self.encode == "onehot",
+                sparse_output=self.encode == "onehot",
                 dtype=output_dtype,
             )
             # Fit the OneHotEncoder with toy datasets
