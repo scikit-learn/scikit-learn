@@ -158,4 +158,4 @@ def __getattr__(name):
         return globals()[name]
     except KeyError:
         # This is turned into the appropriate ImportError
-        raise AttributeError()
+        raise AttributeError
