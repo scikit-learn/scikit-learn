@@ -182,7 +182,7 @@ def stream_reuters_documents(data_path=None):
         print("done.")
 
     parser = ReutersParser()
-    for filename in glob(str(data_path / "*.sgm")):
+    for filename in data_path.glob("*.sgm"):
         for doc in parser.parse(open(filename, "rb")):
             yield doc
 
