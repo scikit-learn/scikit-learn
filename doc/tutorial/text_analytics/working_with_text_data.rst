@@ -57,19 +57,6 @@ the original skeletons intact:
   cp -r skeletons work_directory/sklearn_tut_workspace
 
 
-Machine learning algorithms need data. Go to each ``$TUTORIAL_HOME/data``
-sub-folder and run the ``fetch_data.py`` script from there (after
-having read them first).
-
-For instance:
-
-.. prompt:: bash $
-
-  cd $TUTORIAL_HOME/data/languages
-  less fetch_data.py
-  python fetch_data.py
-
-
 Loading the 20 newsgroups dataset
 ---------------------------------
 
