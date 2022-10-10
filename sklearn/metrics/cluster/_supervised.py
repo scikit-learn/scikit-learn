@@ -323,7 +323,8 @@ def adjusted_rand_score(labels_true, labels_pred):
     The adjusted Rand index is thus ensured to have a value close to
     0.0 for random labeling independently of the number of clusters and
     samples and exactly 1.0 when the clusterings are identical (up to
-    a permutation).
+    a permutation). The adjusted Rand index is bounded below by -0.5 for
+    especially discordant clusterings.
 
     ARI is a symmetric measure::
 
@@ -334,16 +335,34 @@ def adjusted_rand_score(labels_true, labels_pred):
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        Ground truth class labels to be used as a reference
+        Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        Cluster labels to evaluate
+        Cluster labels to evaluate.
 
     Returns
     -------
     ARI : float
-       Similarity score between -1.0 and 1.0. Random labelings have an ARI
+       Similarity score between -0.5 and 1.0. Random labelings have an ARI
        close to 0.0. 1.0 stands for perfect match.
+
+    See Also
+    --------
+    adjusted_mutual_info_score : Adjusted Mutual Information.
+
+    References
+    ----------
+    .. [Hubert1985] L. Hubert and P. Arabie, Comparing Partitions,
+      Journal of Classification 1985
+      https://link.springer.com/article/10.1007%2FBF01908075
+
+    .. [Steinley2004] D. Steinley, Properties of the Hubert-Arabie
+      adjusted Rand index, Psychological Methods 2004
+
+    .. [wk] https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
+
+    .. [Chacon] :doi:`Minimum adjusted Rand index for two clusterings of a given size,
+      2022, J. E. Chacón and A. I. Rastrojo <10.1007/s11634-022-00491-w>`
 
     Examples
     --------
@@ -373,20 +392,11 @@ def adjusted_rand_score(labels_true, labels_pred):
       >>> adjusted_rand_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
 
-    References
-    ----------
-    .. [Hubert1985] L. Hubert and P. Arabie, Comparing Partitions,
-      Journal of Classification 1985
-      https://link.springer.com/article/10.1007%2FBF01908075
+    ARI may take a negative value for especially discordant labelings that
+    are a worse choice than the expected value of random labels::
 
-    .. [Steinley2004] D. Steinley, Properties of the Hubert-Arabie
-      adjusted Rand index, Psychological Methods 2004
-
-    .. [wk] https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
-
-    See Also
-    --------
-    adjusted_mutual_info_score : Adjusted Mutual Information.
+      >>> adjusted_rand_score([0, 0, 1, 1], [0, 1, 0, 1])
+      -0.5
     """
     (tn, fp), (fn, tp) = pair_confusion_matrix(labels_true, labels_pred)
     # convert to Python integer types, to avoid overflow or underflow
@@ -880,6 +890,16 @@ def adjusted_mutual_info_score(
     adjusted_rand_score : Adjusted Rand Index.
     mutual_info_score : Mutual Information (not adjusted for chance).
 
+    References
+    ----------
+    .. [1] `Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
+       Clusterings Comparison: Variants, Properties, Normalization and
+       Correction for Chance, JMLR
+       <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>`_
+
+    .. [2] `Wikipedia entry for the Adjusted Mutual Information
+       <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
+
     Examples
     --------
 
@@ -900,16 +920,6 @@ def adjusted_mutual_info_score(
       >>> adjusted_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
       ... # doctest: +SKIP
       0.0
-
-    References
-    ----------
-    .. [1] `Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
-       Clusterings Comparison: Variants, Properties, Normalization and
-       Correction for Chance, JMLR
-       <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>`_
-
-    .. [2] `Wikipedia entry for the Adjusted Mutual Information
-       <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples = labels_true.shape[0]
@@ -1094,6 +1104,16 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     score : float
        The resulting Fowlkes-Mallows score.
 
+    References
+    ----------
+    .. [1] `E. B. Fowkles and C. L. Mallows, 1983. "A method for comparing two
+       hierarchical clusterings". Journal of the American Statistical
+       Association
+       <https://www.tandfonline.com/doi/abs/10.1080/01621459.1983.10478008>`_
+
+    .. [2] `Wikipedia entry for the Fowlkes-Mallows Index
+           <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
+
     Examples
     --------
 
@@ -1111,16 +1131,6 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
       >>> fowlkes_mallows_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
-
-    References
-    ----------
-    .. [1] `E. B. Fowkles and C. L. Mallows, 1983. "A method for comparing two
-       hierarchical clusterings". Journal of the American Statistical
-       Association
-       <https://www.tandfonline.com/doi/abs/10.1080/01621459.1983.10478008>`_
-
-    .. [2] `Wikipedia entry for the Fowlkes-Mallows Index
-           <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     (n_samples,) = labels_true.shape
@@ -1134,12 +1144,17 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
 
 def entropy(labels):
-    """Calculates the entropy for a labeling.
+    """Calculate the entropy for a labeling.
 
     Parameters
     ----------
     labels : array-like of shape (n_samples,), dtype=int
         The labels.
+
+    Returns
+    -------
+    entropy : float
+       The entropy for a labeling.
 
     Notes
     -----

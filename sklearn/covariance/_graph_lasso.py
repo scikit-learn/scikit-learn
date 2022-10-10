@@ -78,29 +78,6 @@ def alpha_max(emp_cov):
     return np.max(np.abs(A))
 
 
-class _DictWithDeprecatedKeys(dict):
-    """Dictionary with deprecated keys.
-
-    Currently only be used in GraphicalLassoCV to deprecate keys"""
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self._deprecated_key_to_new_key = {}
-
-    def __getitem__(self, key):
-        if key in self._deprecated_key_to_new_key:
-            warnings.warn(
-                f"Key: '{key}', is deprecated in 1.0 and will be "
-                f"removed in 1.2. Use '{self._deprecated_key_to_new_key[key]}' instead",
-                FutureWarning,
-            )
-        return super().__getitem__(key)
-
-    def _set_deprecated(self, value, *, new_key, deprecated_key):
-        self._deprecated_key_to_new_key[deprecated_key] = new_key
-        self[new_key] = self[deprecated_key] = value
-
-
 # The g-lasso algorithm
 def graphical_lasso(
     emp_cov,
@@ -340,7 +317,7 @@ def graphical_lasso(
 
 
 class BaseGraphicalLasso(EmpiricalCovariance):
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **EmpiricalCovariance._parameter_constraints,
         "tol": [Interval(Real, 0, None, closed="right")],
         "enet_tol": [Interval(Real, 0, None, closed="right")],
@@ -463,7 +440,7 @@ class GraphicalLasso(BaseGraphicalLasso):
     array([0.073, 0.04 , 0.038, 0.143])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseGraphicalLasso._parameter_constraints,
         "alpha": [Interval(Real, 0, None, closed="right")],
     }
@@ -840,7 +817,7 @@ class GraphicalLassoCV(BaseGraphicalLasso):
     array([0.073, 0.04 , 0.038, 0.143])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseGraphicalLasso._parameter_constraints,
         "alphas": [Interval(Integral, 1, None, closed="left"), "array-like"],
         "n_refinements": [Interval(Integral, 1, None, closed="left")],
@@ -1018,26 +995,13 @@ class GraphicalLassoCV(BaseGraphicalLasso):
         )
         grid_scores = np.array(grid_scores)
 
-        # TODO(1.2): Use normal dict for cv_results_ instead of _DictWithDeprecatedKeys
-        self.cv_results_ = _DictWithDeprecatedKeys(alphas=np.array(alphas))
+        self.cv_results_ = {"alphas": np.array(alphas)}
 
         for i in range(grid_scores.shape[1]):
-            self.cv_results_._set_deprecated(
-                grid_scores[:, i],
-                new_key=f"split{i}_test_score",
-                deprecated_key=f"split{i}_score",
-            )
+            self.cv_results_[f"split{i}_test_score"] = grid_scores[:, i]
 
-        self.cv_results_._set_deprecated(
-            np.mean(grid_scores, axis=1),
-            new_key="mean_test_score",
-            deprecated_key="mean_score",
-        )
-        self.cv_results_._set_deprecated(
-            np.std(grid_scores, axis=1),
-            new_key="std_test_score",
-            deprecated_key="std_score",
-        )
+        self.cv_results_["mean_test_score"] = np.mean(grid_scores, axis=1)
+        self.cv_results_["std_test_score"] = np.std(grid_scores, axis=1)
 
         best_alpha = alphas[best_index]
         self.alpha_ = best_alpha
