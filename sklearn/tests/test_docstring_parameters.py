@@ -280,6 +280,10 @@ def test_fit_docstring_attributes(name, Estimator):
         solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
         est.set_params(solver=solver)
 
+    # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
+    if Estimator.__name__ == "MDS":
+        est.set_params(normalized_stress="auto")
+
     # In case we want to deprecate some attributes in the future
     skipped_attributes = {}
 
