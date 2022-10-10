@@ -198,7 +198,8 @@ def test_pairwise_distances(global_dtype):
 
 @pytest.mark.parametrize("sum_over_features", [True, False])
 def test_manhattan_distances_deprecated_sum_over_features(sum_over_features):
-    """Check that future warning is raised when user enters sum_over_features argument."""
+    # Check that future warning is raised when user
+    # enters `sum_over_features` argument.
     X = [[1, 2], [3, 4]]
     Y = [[1, 2], [0, 3]]
     with pytest.warns(

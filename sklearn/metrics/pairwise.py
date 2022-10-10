@@ -873,7 +873,7 @@ def haversine_distances(X, Y=None):
     return DistanceMetric.get_metric("haversine").pairwise(X, Y)
 
 
-def manhattan_distances(X, Y=None, *, sum_over_features='deprecated'):
+def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
     """Compute the L1 distances between the vectors in X and Y.
 
     With sum_over_features equal to False it returns the componentwise
@@ -931,11 +931,10 @@ def manhattan_distances(X, Y=None, *, sum_over_features='deprecated'):
     >>> import numpy as np
     >>> X = np.ones((1, 2))
     >>> y = np.full((2, 2), 2.)
-    >>> manhattan_distances(X, y, sum_over_features=False)
-    array([[1., 1.],
-           [1., 1.]])
+    >>> manhattan_distances(X, y)
+    array([[2. 2.]])
     """
-    if sum_over_features != 'deprecated':
+    if sum_over_features != "deprecated":
         warnings.warn(
             "`sum_over_features` is deprecated in version 1.2 and will be"
             " removed in version 1.4.",
