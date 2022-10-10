@@ -162,6 +162,7 @@ jobs:
                             SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
                             PIP_EXTRA_INDEX_URL=https://pypi.anaconda.org/scipy-wheels-nightly/simple
+                            PIP_BUILD_OPTION=--prefer-binary
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_CONFIG_SETTINGS: "--build-option=--prefer-binary"
           CIBW_ARCHS: all
