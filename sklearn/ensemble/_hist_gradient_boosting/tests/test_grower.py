@@ -625,11 +625,28 @@ def test_grower_interaction_constraints():
             # Root's children's allowed_features must be the root's constraints set.
             assert_array_equal(node.allowed_features, list(root_constraint_set))
         for node in get_all_children(grower.root):
-            # Nodes accessible from the root must have their index in the root's
-            # constraints set. For example, sets {0, 1} and {1, 2} must not interact
-            # with each other.
-            if not node.is_leaf:
-                assert node.split_info.feature_idx in root_constraint_set
+            if node.is_leaf:
+                continue
+            # Ensure that each node uses a subset of features of its parent node.
+            parent_interaction_cst_indices = set(node.interaction_cst_indices)
+            right_interactions_cst_indices = set(
+                node.right_child.interaction_cst_indices
+            )
+            left_interactions_cst_indices = set(node.left_child.interaction_cst_indices)
+
+            assert right_interactions_cst_indices.issubset(
+                parent_interaction_cst_indices
+            )
+            assert left_interactions_cst_indices.issubset(
+                parent_interaction_cst_indices
+            )
+            # The features used for split must have been present in the root's
+            # constraint set.
+            assert node.split_info.feature_idx in root_constraint_set
 
     # Make sure that every feature is used at least once as split for the root node.
-    assert len(set(root_feature_splits)) == n_features
+    assert (
+        len(set(root_feature_splits))
+        == len(set().union(*interaction_cst))
+        == n_features
+    )
