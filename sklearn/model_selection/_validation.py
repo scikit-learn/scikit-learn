@@ -1518,13 +1518,13 @@ def learning_curve(
     ...     print(f"The average train accuracy is {cv_train_scores.mean():.2f}")
     ...     print(f"The average test accuracy is {cv_test_scores.mean():.2f}")
     24 samples were used to train the model
-    The average train accuracy is 1.0
+    The average train accuracy is 1.00
     The average test accuracy is 0.85
     48 samples were used to train the model
-    The average train accuracy is 1.0
-    The average test accuracy is 0.9
+    The average train accuracy is 1.00
+    The average test accuracy is 0.90
     72 samples were used to train the model
-    The average train accuracy is 1.0
+    The average train accuracy is 1.00
     The average test accuracy is 0.93
     """
     if exploit_incremental_learning and not hasattr(estimator, "partial_fit"):
