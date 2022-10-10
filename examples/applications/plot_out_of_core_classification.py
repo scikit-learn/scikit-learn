@@ -18,7 +18,6 @@ features (words) may appear in each batch.
 #          @FedericoV <https://github.com/FedericoV/>
 # License: BSD 3 clause
 
-from glob import glob
 import itertools
 from pathlib import Path
 from hashlib import sha256
