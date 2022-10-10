@@ -401,11 +401,11 @@ Changelog
   :pr:`22710` by :user:`Conroy Trinh <trinhcon>` and
   :pr:`23461` by :user:`Meekail Zain <micky774>`.
 
-- |Feature| Added a new possible value for ``zero_division`` to multiple classification
+- |Feature| Adds ``zero_division=np.nan`` to multiple classification
   metrics: :func:`precision_score`, :func:`recall_score`, :func:`f1_score`,
   :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
-  :func:`classification_report`. This change enables ``zero_division=np.nan``, meaning that when
-  there is a zero division the metric is undefined and should be excluded from averaging.
+  :func:`classification_report`. When ``zero_division=np.nan`` and
+  there is a zero division, the metric is undefined and is excluded from averaging.
   When not used for averages, the value returned is `np.nan`.
   :pr:`23183` by :user:`Marc Torrellas Socastro <marctorsoc>`.
 

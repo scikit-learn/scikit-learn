@@ -149,22 +149,24 @@ def _weighted_sum(sample_score, sample_weight, normalize=False):
 def _nan_average(scores, weights):
     """
     Wrapper for np.average, with np.nan values being ignored from the average
-    This is similar to np.nanmean, but allowing to pass weights as in np.average
+    If no weights are passed, then just same as np.nanmean. Otherwise, do similar
+    to it but with weights as in np.average
     """
+
+    if weights is None:
+        return np.nanmean(scores)
 
     mask = np.isnan(scores)
     if mask.all():
         return np.nan
-    if weights is None:
-        return np.average(scores[~mask])
-    if isinstance(weights, list):
-        weights = np.array(weights)
 
+    weights = np.asarray(weights)
     scores, weights = scores[~mask], weights[~mask]
 
     try:
         return np.average(scores, weights=weights)
     except ZeroDivisionError:
+        # this is when all weights are zero, then ignore them
         return np.average(scores)
 
 
@@ -813,13 +815,6 @@ def jaccard_score(
     >>> jaccard_score(y_true[0], y_pred[0])
     0.6666...
 
-    >>> jaccard_score(y_true_with_empty[1], y_pred_with_empty[1])
-    0...
-    >>> jaccard_score(y_true_with_empty[1], y_pred_with_empty[1], zero_division=1)
-    1...
-    >>> jaccard_score(y_true_with_empty[1], y_pred_with_empty[1], zero_division=np.nan)
-    nan...
-
     In the 2D comparison case (e.g. image similarity):
 
     >>> jaccard_score(y_true, y_pred, average="micro")
@@ -840,6 +835,15 @@ def jaccard_score(
     >>> y_pred = [0, 2, 1, 2]
     >>> jaccard_score(y_true, y_pred, average=None)
     array([1. , 0. , 0.33...])
+
+    Finally, see how zero_division works:
+
+    >>> jaccard_score([0, 0, 0], [0, 0, 0])
+    0...
+    >>> jaccard_score([0, 0, 0], [0, 0, 0], zero_division=1)
+    1...
+    >>> jaccard_score([0, 0, 0], [0, 0, 0], zero_division=np.nan)
+    nan...
     """
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
     samplewise = average == "samples"
