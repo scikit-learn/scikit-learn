@@ -30,7 +30,7 @@ import warnings
 
 from numbers import Integral
 from scipy.sparse import issparse
-from ...utils import check_scalar, _in_unstable_openblas_configuration
+from ...utils import check_array, check_scalar, _in_unstable_openblas_configuration
 from ...utils.fixes import threadpool_limits
 from ...utils._typedefs import ITYPE, DTYPE
 

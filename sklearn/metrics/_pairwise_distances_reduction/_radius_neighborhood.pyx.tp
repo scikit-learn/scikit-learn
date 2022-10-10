@@ -29,7 +29,7 @@ from ...utils._vector_sentinel cimport vector_to_nd_array
 
 from numbers import Real
 from scipy.sparse import issparse
-from ...utils import check_scalar, _in_unstable_openblas_configuration
+from ...utils import check_array, check_scalar, _in_unstable_openblas_configuration
 from ...utils.fixes import threadpool_limits
 
 cnp.import_array()
