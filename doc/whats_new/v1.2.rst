@@ -408,7 +408,7 @@ Changelog
 
 - |API| The parameter `sum_over_features` of :func:`metrics.pairwise.manhattan_distances` are deprecated
   and will be removed in 1.4.
-  :pr:`to add` by :user:`Rushil Desai <rusdes>`.
+  :pr:`24630` by :user:`Rushil Desai <rusdes>`.
 
 :mod:`sklearn.model_selection`
 ..............................
