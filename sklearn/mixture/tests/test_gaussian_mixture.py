@@ -581,9 +581,14 @@ def test_gaussian_mixture_fit_predict(seed, max_iter, tol):
         assert adjusted_rand_score(Y, Y_pred2) > 0.95
 
 
-def test_gaussian_mixture_fit_predict_n_init():
+def test_gaussian_mixture_fit_predict_n_init(global_random_seed):
     # Check that fit_predict is equivalent to fit.predict, when n_init > 1
-    X = np.random.RandomState(0).randn(1000, 5)
+
+    # Making this test seed-insensitive for the 0-99 range would
+    # be too costly. Restricting to the 0-9 range is necessary to
+    # use small enough datasets that avoid increasing the run time
+    # too much.
+    X = np.random.RandomState(global_random_seed % 10).randn(1000, 5)
     gm = GaussianMixture(n_components=5, n_init=5, random_state=0)
     y_pred1 = gm.fit_predict(X)
     y_pred2 = gm.predict(X)
