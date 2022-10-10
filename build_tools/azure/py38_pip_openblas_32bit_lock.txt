@@ -53,7 +53,7 @@ pytest-xdist==2.5.0
     # via -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
 requests==2.28.1
     # via pooch
-scipy==1.9.1
+scipy==1.9.2
     # via -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
 threadpoolctl==3.1.0
     # via -r build_tools/azure/py38_pip_openblas_32bit_requirements.txt
