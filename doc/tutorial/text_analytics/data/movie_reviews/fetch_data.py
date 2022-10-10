@@ -3,7 +3,6 @@
 from pathlib import Path
 from hashlib import sha256
 import tarfile
-from contextlib import closing
 from urllib.request import urlopen
 
 
@@ -27,7 +26,7 @@ if not DATA_FOLDER.exists():
         assert sha256(ARCHIVE_NAME.read_bytes()).hexdigest() == ARCHIVE_SHA256
 
         print("Decompressing %s" % ARCHIVE_NAME)
-        with closing(tarfile.open(ARCHIVE_NAME, "r:gz")) as archive:
+        with tarfile.open(ARCHIVE_NAME, "r:gz") as archive:
             archive.extractall(path=".")
 
     finally:
