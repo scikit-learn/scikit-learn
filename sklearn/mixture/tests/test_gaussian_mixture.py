@@ -702,9 +702,14 @@ def test_gaussian_mixture_fit_convergence_warning():
             g.fit(X)
 
 
-def test_multiple_init():
+def test_multiple_init(global_random_seed):
     # Test that multiple inits does not much worse than a single one
-    rng = np.random.RandomState(0)
+
+    # Making this test seed-insensitive for the 0-99 range would
+    # be too costly. Restricting to the 0-9 range is necessary to
+    # use small enough datasets that avoid increasing the run time
+    # too much.
+    rng = np.random.RandomState(global_random_seed % 10)
     n_samples, n_features, n_components = 50, 5, 2
     X = rng.randn(n_samples, n_features)
     for cv_type in COVARIANCE_TYPE:
