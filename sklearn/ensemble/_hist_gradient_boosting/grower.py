@@ -504,8 +504,8 @@ class TreeGrower:
 
         # set interaction constraints (the indices of the constraints sets)
         if self.interaction_cst is not None:
-            # Calculate allowed_features and interaction_cst_indices only once and
-            # inherit them by child nodes.
+            # Calculate allowed_features and interaction_cst_indices only once. Child
+            # nodes inherit them before they get split.
             (
                 left_child_node.allowed_features,
                 left_child_node.interaction_cst_indices,

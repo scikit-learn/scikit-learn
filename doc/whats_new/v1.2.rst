@@ -242,10 +242,10 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
-- |Feature| Added interaction constraints for
-  :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
-  :class:`~sklearn.ensemble.HistGradientBoostingRegressor` via the new
-  argument `interaction_cst`.
+- |Feature| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+  :class:`~sklearn.ensemble.HistGradientBoostingRegressor` now support
+  interaction constraints via the argument `interaction_cst` of their
+  constructors.
   :pr:`21020` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Feature| Adds `class_weight` to :class:`ensemble.HistGradientBoostingClassifier`.

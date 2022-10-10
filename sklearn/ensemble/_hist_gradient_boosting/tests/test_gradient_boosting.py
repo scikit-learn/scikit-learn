@@ -1178,7 +1178,8 @@ def test_interaction_cst_numerically():
     )
 
     # Correct result of the expressions is 5 * delta**2. But this is hard to achieve by
-    # a fitted tree-based model. The expression should, however, at least be positive!
+    # a fitted tree-based model. However, with 100 iterations the expression should
+    # at least be positive!
     assert np.all(
         est.predict(X_delta_d_d)
         + est.predict(X_test)

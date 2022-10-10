@@ -274,7 +274,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             x
             for cst_set in self.interaction_cst
             for x in cst_set
-            if not (isinstance(x, int) and 0 <= x and x < n_features)
+            if not (isinstance(x, Integral) and 0 <= x < n_features)
         ]
         if invalid_indices:
             raise ValueError(
@@ -1246,7 +1246,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
         For instance, with 5 features in total, `interaction_cst=[{0, 1}]`
         is equivalent to `interaction_cst=[{0, 1}, {2, 3, 4}]`,
-        and specifies that a single branch of a tree will either only split
+        and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
 
         .. versionadded:: 1.2
@@ -1578,7 +1578,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         For instance, with 5 features in total, `interaction_cst=[{0, 1}]`
         is equivalent to `interaction_cst=[{0, 1}, {2, 3, 4}]`,
-        and specifies that a single branch of a tree will either only split
+        and specifies that each branch of a tree will either only split
         on features 0 and 1 or only split on features 2, 3 and 4.
 
         .. versionadded:: 1.2

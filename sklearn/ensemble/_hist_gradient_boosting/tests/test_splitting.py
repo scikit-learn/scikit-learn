@@ -872,11 +872,13 @@ def test_split_interaction_constraints():
 
     sample_indices = np.arange(n_samples, dtype=np.uint32)
     all_hessians = np.ones(1, dtype=G_H_DTYPE)
-    sum_hessians = 1 * n_samples
+    sum_hessians = n_samples
     hessians_are_constant = True
 
     split_features = []
 
+    # The loop is to ensure that we split at least once on each allowed feature (0, 3).
+    # This is tracked by split_features and checked at the end.
     for i in range(10):
         rng = np.random.RandomState(919 + i)
         X_binned = np.asfortranarray(
@@ -947,7 +949,7 @@ def test_split_interaction_constraints():
             allowed_features=allowed_features,
         )
         split_features.append(si_root.feature_idx)
-        assert si_root.feature_idx in {0, 3}
+        assert si_root.feature_idx in allowed_features
 
     # make sure feature 0 and feature 3 are split on in the constraint setting
-    assert {0, 3} == set(split_features)
+    assert set(allowed_features) == set(split_features)

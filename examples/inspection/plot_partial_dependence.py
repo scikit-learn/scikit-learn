@@ -262,11 +262,11 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # possible interactions among features. In the following, we do not allow any
 # interactions and thus render the model as a version of a tree-based boosted
 # generalized additive model (GAM). This makes the model more interpretable
-# as the effect of each feature can be investaged independently of all others.
+# as the effect of each feature can be investigated independently of all others.
 #
-# We first train the :class:`~sklearn.ensemble.HistGradientBoostingRegressor`
-# with `interaction_cst`, where we pass each feature index in its own
-# list, e.g. `[[0], [1], [2], ..]`.
+# We train the :class:`~sklearn.ensemble.HistGradientBoostingRegressor` again,
+# now with `interaction_cst`, where we  pass for each feature a list containing
+# only its own index, e.g. `[[0], [1], [2], ..]`.
 
 print("Training interaction constraint HistGradientBoostingRegressor...")
 tic = time()
