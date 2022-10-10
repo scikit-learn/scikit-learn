@@ -278,11 +278,11 @@ def test_check_precisions():
         assert_array_equal(rand_data.precisions[covar_type], g.precisions_init)
 
 
-def test_suffstat_sk_full():
+def test_suffstat_sk_full(global_random_seed):
     # compare the precision matrix compute from the
     # EmpiricalCovariance.covariance fitted on X*sqrt(resp)
     # with _sufficient_sk_full, n_components=1
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features = 500, 2
 
     # special case 1, assuming data is "centered"
@@ -320,9 +320,9 @@ def test_suffstat_sk_full():
     assert_array_almost_equal(precs_est, precs_pred)
 
 
-def test_suffstat_sk_tied():
+def test_suffstat_sk_tied(global_random_seed):
     # use equation Nk * Sk / N = S_tied
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features, n_components = 500, 2, 2
 
     resp = rng.rand(n_samples, n_components)
@@ -350,9 +350,9 @@ def test_suffstat_sk_tied():
     assert_array_almost_equal(precs_est, precs_pred)
 
 
-def test_suffstat_sk_diag():
+def test_suffstat_sk_diag(global_random_seed):
     # test against 'full' case
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features, n_components = 500, 2, 2
 
     resp = rng.rand(n_samples, n_components)
@@ -375,10 +375,10 @@ def test_suffstat_sk_diag():
     assert_almost_equal(covars_pred_diag, 1.0 / precs_chol_pred**2)
 
 
-def test_gaussian_suffstat_sk_spherical():
+def test_gaussian_suffstat_sk_spherical(global_random_seed):
     # computing spherical covariance equals to the variance of one-dimension
     # data after flattening, n_components=1
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features = 500, 2
 
     X = rng.rand(n_samples, n_features)
@@ -397,9 +397,9 @@ def test_gaussian_suffstat_sk_spherical():
     assert_almost_equal(covars_pred_spherical, 1.0 / precs_chol_pred**2)
 
 
-def test_compute_log_det_cholesky():
+def test_compute_log_det_cholesky(global_random_seed):
     n_features = 2
-    rand_data = RandomData(np.random.RandomState(0))
+    rand_data = RandomData(np.random.RandomState(global_random_seed))
 
     for covar_type in COVARIANCE_TYPE:
         covariance = rand_data.covariances[covar_type]
@@ -430,11 +430,11 @@ def _naive_lmvnpdf_diag(X, means, covars):
     return resp
 
 
-def test_gaussian_mixture_log_probabilities():
+def test_gaussian_mixture_log_probabilities(global_random_seed):
     from sklearn.mixture._gaussian_mixture import _estimate_log_gaussian_prob
 
     # test against with _naive_lmvnpdf_diag
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     rand_data = RandomData(rng)
     n_samples = 500
     n_features = rand_data.n_features
@@ -478,9 +478,14 @@ def test_gaussian_mixture_log_probabilities():
 # skip tests on weighted_log_probabilities, log_weights
 
 
-def test_gaussian_mixture_estimate_log_prob_resp():
+def test_gaussian_mixture_estimate_log_prob_resp(global_random_seed):
     # test whether responsibilities are normalized
-    rng = np.random.RandomState(0)
+
+    # Making this test seed-insensitive for the 0-99 range would
+    # be too costly. Restricting to the 0-9 range is necessary to
+    # use small enough datasets that avoid increasing the run time
+    # too much.
+    rng = np.random.RandomState(global_random_seed % 10)
     rand_data = RandomData(rng, scale=5)
     n_samples = rand_data.n_samples
     n_features = rand_data.n_features
@@ -507,9 +512,13 @@ def test_gaussian_mixture_estimate_log_prob_resp():
         assert_array_equal(g.precisions_init, precisions)
 
 
-def test_gaussian_mixture_predict_predict_proba():
-    rng = np.random.RandomState(0)
-    rand_data = RandomData(rng)
+def test_gaussian_mixture_predict_predict_proba(global_random_seed):
+    # Making this test seed-insensitive for the 0-99 range would
+    # be too costly. Restricting to the 0-9 range is necessary to
+    # use small enough datasets that avoid increasing the run time
+    # too much.
+    rng = np.random.RandomState(global_random_seed % 10)
+    rand_data = RandomData(rng, n_samples=300)
     for covar_type in COVARIANCE_TYPE:
         X = rand_data.X[covar_type]
         Y = rand_data.Y
@@ -727,10 +736,10 @@ def test_gaussian_mixture_n_parameters():
         assert g._n_parameters() == n_params[cv_type]
 
 
-def test_bic_1d_1component():
+def test_bic_1d_1component(global_random_seed):
     # Test all of the covariance_types return the same BIC score for
     # 1-dimensional, 1 component fits.
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_dim, n_components = 100, 1, 1
     X = rng.randn(n_samples, n_dim)
     bic_full = (
@@ -753,10 +762,10 @@ def test_bic_1d_1component():
         assert_almost_equal(bic_full, bic)
 
 
-def test_gaussian_mixture_aic_bic():
+def test_gaussian_mixture_aic_bic(global_random_seed):
     # Test the aic and bic criteria
-    rng = np.random.RandomState(0)
-    n_samples, n_features, n_components = 50, 3, 2
+    rng = np.random.RandomState(global_random_seed)
+    n_samples, n_features, n_components = 20, 3, 2
     X = rng.randn(n_samples, n_features)
     # standard gaussian entropy
     sgh = 0.5 * (
@@ -900,10 +909,15 @@ def test_convergence_detected_with_warm_start():
         assert max_iter >= gmm.n_iter_
 
 
-def test_score():
+def test_score(global_random_seed):
     covar_type = "full"
-    rng = np.random.RandomState(0)
-    rand_data = RandomData(rng, scale=7)
+
+    # Making this test seed-insensitive for the 0-99 range would
+    # be too costly. Restricting to the 0-9 range is necessary to
+    # use small enough datasets that avoid increasing the run time
+    # too much.
+    rng = np.random.RandomState(global_random_seed % 10)
+    rand_data = RandomData(rng, scale=5)
     n_components = rand_data.n_components
     X = rand_data.X[covar_type]
 
@@ -1034,8 +1048,12 @@ def test_regularisation():
             gmm.set_params(reg_covar=1e-6).fit(X)
 
 
-def test_property():
-    rng = np.random.RandomState(0)
+def test_property(global_random_seed):
+    # Making this test seed-insensitive for the 0-99 range would
+    # be too costly. Restricting to the 0-9 range is necessary to
+    # use small enough datasets that avoid increasing the run time
+    # too much.
+    rng = np.random.RandomState(global_random_seed % 10)
     rand_data = RandomData(rng, scale=7)
     n_components = rand_data.n_components
 
