@@ -746,8 +746,11 @@ def svd_flip(u, v, u_based_decision=True):
 
     Returns
     -------
-    u_adjusted, v_adjusted : arrays
-        Adjusted columns of u and rows of v with the same dimensions as the input.
+    u_adjusted : ndarray
+        Array u with adjusted columns and the same dimensions as u.
+
+    v_adjusted : ndarray
+        Array v with adjusted rows and the same dimensions as v.
     """
     if u_based_decision:
         # columns of u, rows of v
