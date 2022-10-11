@@ -625,8 +625,6 @@ def test_grower_interaction_constraints():
             # Root's children's allowed_features must be the root's constraints set.
             assert_array_equal(node.allowed_features, list(root_constraint_set))
         for node in get_all_children(grower.root):
-            if node.is_leaf:
-                continue
             # Ensure that each node uses a subset of features of its parent node.
             parent_interaction_cst_indices = set(node.interaction_cst_indices)
             right_interactions_cst_indices = set(
