@@ -15,16 +15,29 @@ implementation_specific_values = [
 }}
 cimport numpy as cnp
 
-from ...utils._typedefs cimport DTYPE_t, ITYPE_t
+from ...utils._typedefs cimport DTYPE_t, ITYPE_t, SPARSE_INDEX_TYPE_t
 from libcpp.vector cimport vector
 
 {{for name_suffix, upcast_to_float64, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
+
+cdef void _middle_term_sparse_sparse_{{name_suffix}}(
+    const {{INPUT_DTYPE_t}}[:] X_data,
+    const SPARSE_INDEX_TYPE_t[:] X_indices,
+    const SPARSE_INDEX_TYPE_t[:] X_indptr,
+    ITYPE_t X_start,
+    ITYPE_t X_end,
+    const {{INPUT_DTYPE_t}}[:] Y_data,
+    const SPARSE_INDEX_TYPE_t[:] Y_indices,
+    const SPARSE_INDEX_TYPE_t[:] Y_indptr,
+    ITYPE_t Y_start,
+    ITYPE_t Y_end,
+    DTYPE_t * D,
+) nogil
+
+
 cdef class MiddleTermComputer{{name_suffix}}:
     cdef:
-        const {{INPUT_DTYPE_t}}[:, ::1] X
-        const {{INPUT_DTYPE_t}}[:, ::1] Y
-
         ITYPE_t effective_n_threads
         ITYPE_t chunks_n_threads
         ITYPE_t dist_middle_terms_chunks_size
@@ -33,12 +46,6 @@ cdef class MiddleTermComputer{{name_suffix}}:
 
         # Buffers for the `-2 * X_c @ Y_c.T` term computed via GEMM
         vector[vector[DTYPE_t]] dist_middle_terms_chunks
-
-{{if upcast_to_float64}}
-        # Buffers for upcasting chunks of X and Y from 32bit to 64bit
-        vector[vector[DTYPE_t]] X_c_upcast
-        vector[vector[DTYPE_t]] Y_c_upcast
-{{endif}}
 
     cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
         self,
@@ -78,6 +85,16 @@ cdef class MiddleTermComputer{{name_suffix}}:
 
 
 cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_suffix}}):
+    cdef:
+        const {{INPUT_DTYPE_t}}[:, ::1] X
+        const {{INPUT_DTYPE_t}}[:, ::1] Y
+
+    {{if upcast_to_float64}}
+        # Buffers for upcasting chunks of X and Y from 32bit to 64bit
+        vector[vector[DTYPE_t]] X_c_upcast
+        vector[vector[DTYPE_t]] Y_c_upcast
+    {{endif}}
+
     cdef DTYPE_t * _compute_distances_on_chunks(
         self,
         ITYPE_t X_start,
@@ -88,22 +105,16 @@ cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_
     ) nogil
 
 
-cdef void _middle_term_sparse_sparse_{{name_suffix}}(
-    const {{INPUT_DTYPE_t}}[:] X_data,
-    const ITYPE_t[:] X_indices,
-    const ITYPE_t[:] X_indptr,
-    ITYPE_t X_start,
-    ITYPE_t X_end,
-    const {{INPUT_DTYPE_t}}[:] Y_data,
-    const ITYPE_t[:] Y_indices,
-    const ITYPE_t[:] Y_indptr,
-    ITYPE_t Y_start,
-    ITYPE_t Y_end,
-    DTYPE_t[:, ::1] D
-) nogil
-
-
 cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_suffix}}):
+    cdef:
+        const {{INPUT_DTYPE_t}}[:] X_data
+        const SPARSE_INDEX_TYPE_t[:] X_indices
+        const SPARSE_INDEX_TYPE_t[:] X_indptr
+
+        const {{INPUT_DTYPE_t}}[:] Y_data
+        const SPARSE_INDEX_TYPE_t[:] Y_indices
+        const SPARSE_INDEX_TYPE_t[:] Y_indptr
+
     cdef DTYPE_t * _compute_distances_on_chunks(
         self,
         ITYPE_t X_start,

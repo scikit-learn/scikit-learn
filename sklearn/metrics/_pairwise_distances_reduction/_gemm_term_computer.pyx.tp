@@ -14,10 +14,13 @@ implementation_specific_values = [
 
 }}
 cimport numpy as cnp
+import numpy as np
 
 from libcpp.vector cimport vector
 
-from ...utils._typedefs cimport DTYPE_t, ITYPE_t
+from scipy.sparse import issparse, csr_matrix
+from ...utils._typedefs cimport DTYPE_t, ITYPE_t, SPARSE_INDEX_TYPE_t
+from ...utils._typedefs import SPARSE_INDEX_TYPE
 
 from ...utils._cython_blas cimport (
   BLAS_Order,
@@ -30,6 +33,37 @@ from ...utils._cython_blas cimport (
 )
 
 {{for name_suffix, upcast_to_float64, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
+
+
+cdef void _middle_term_sparse_sparse_{{name_suffix}}(
+    const {{INPUT_DTYPE_t}}[:] X_data,
+    const SPARSE_INDEX_TYPE_t[:] X_indices,
+    const SPARSE_INDEX_TYPE_t[:] X_indptr,
+    ITYPE_t X_start,
+    ITYPE_t X_end,
+    const {{INPUT_DTYPE_t}}[:] Y_data,
+    const SPARSE_INDEX_TYPE_t[:] Y_indices,
+    const SPARSE_INDEX_TYPE_t[:] Y_indptr,
+    ITYPE_t Y_start,
+    ITYPE_t Y_end,
+    DTYPE_t * D,
+) nogil:
+    cdef:
+        ITYPE_t i, j, k
+        ITYPE_t n_X = X_end - X_start
+        ITYPE_t n_Y = Y_end - Y_start
+        ITYPE_t _X_indices, _X_indptr, _Y_indices, _Y_indptr
+
+    for i in range(n_X):
+        for _X_indptr in range(X_indptr[X_start+i], X_indptr[X_start+i+1]):
+            _X_indices = X_indices[_X_indptr]
+            for j in range(n_Y):
+                for _Y_indptr in range(Y_indptr[Y_start+j], Y_indptr[Y_start+j+1]):
+                    _Y_indices = Y_indices[_Y_indptr]
+                    if _X_indices == _Y_indices:
+                        k = (X_start + i) * n_X + Y_start + j
+                        D[k] += -2 * X_data[_X_indptr] * Y_data[_Y_indptr]
+
 
 cdef class MiddleTermComputer{{name_suffix}}:
     """Component for `FastEuclidean*` variant wrapping the logic for the call to GEMM.
@@ -46,17 +80,79 @@ cdef class MiddleTermComputer{{name_suffix}}:
     arithmetic intensity.
     """
 
-    def __init__(self,
-        const {{INPUT_DTYPE_t}}[:, ::1] X,
-        const {{INPUT_DTYPE_t}}[:, ::1] Y,
+    @classmethod
+    def get_for(
+        cls,
+        X,
+        Y,
+        effective_n_threads,
+        chunks_n_threads,
+        dist_middle_terms_chunks_size,
+        n_features,
+        chunk_size,
+    ) -> MiddleTermComputer{{name_suffix}}:
+        """Return the DatasetsPair implementation for the given arguments.
+
+        Parameters
+        ----------
+        X : {ndarray, sparse matrix} of shape (n_samples_X, n_features)
+            Input data.
+            If provided as a ndarray, it must be C-contiguous.
+            If provided as a sparse matrix, it must be in CSR format.
+
+        Y : {ndarray, sparse matrix} of shape (n_samples_Y, n_features)
+            Input data.
+            If provided as a ndarray, it must be C-contiguous.
+            If provided as a sparse matrix, it must be in CSR format.
+
+        Returns
+        -------
+        middle_term_computer: MiddleTermComputer{{name_suffix}}
+            The suited MiddleTermComputer{{name_suffix}} implementation.
+        """
+        X_is_sparse = issparse(X)
+        Y_is_sparse = issparse(Y)
+
+        if not X_is_sparse and not Y_is_sparse:
+            return DenseDenseMiddleTermComputer{{name_suffix}}(
+                X,
+                Y,
+                effective_n_threads,
+                chunks_n_threads,
+                dist_middle_terms_chunks_size,
+                n_features,
+                chunk_size,
+            )
+        if X_is_sparse and Y_is_sparse:
+            return SparseSparseMiddleTermComputer{{name_suffix}}(
+                X,
+                Y,
+                effective_n_threads,
+                chunks_n_threads,
+                dist_middle_terms_chunks_size,
+                n_features,
+                chunk_size,
+            )
+
+        raise NotImplementedError("X and Y must be both sparse or dense")
+
+
+    @classmethod
+    def unpack_csr_matrix(cls, X: csr_matrix):
+        """Ensure that the CSR matrix is indexed with SPARSE_INDEX_TYPE."""
+        X_data = np.asarray(X.data, dtype=DTYPE)
+        X_indices = np.asarray(X.indices, dtype=SPARSE_INDEX_TYPE)
+        X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
+        return X_data, X_indices, X_indptr
+
+    def __init__(
+        self,
         ITYPE_t effective_n_threads,
         ITYPE_t chunks_n_threads,
         ITYPE_t dist_middle_terms_chunks_size,
         ITYPE_t n_features,
         ITYPE_t chunk_size,
     ):
-        self.X = X
-        self.Y = Y
         self.effective_n_threads = effective_n_threads
         self.chunks_n_threads = chunks_n_threads
         self.dist_middle_terms_chunks_size = dist_middle_terms_chunks_size
@@ -170,6 +266,26 @@ cdef class MiddleTermComputer{{name_suffix}}:
 
 cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_suffix}}):
 
+    def __init__(
+        self,
+        const {{INPUT_DTYPE_t}}[:, ::1] X,
+        const {{INPUT_DTYPE_t}}[:, ::1] Y,
+        ITYPE_t effective_n_threads,
+        ITYPE_t chunks_n_threads,
+        ITYPE_t dist_middle_terms_chunks_size,
+        ITYPE_t n_features,
+        ITYPE_t chunk_size,
+    ):
+        super().__init__(
+            effective_n_threads,
+            chunks_n_threads,
+            dist_middle_terms_chunks_size,
+            n_features,
+            chunk_size,
+        )
+        self.X = X
+        self.Y = Y
+
     cdef DTYPE_t * _compute_distances_on_chunks(
         self,
         ITYPE_t X_start,
@@ -218,36 +334,27 @@ cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_
         return dist_middle_terms
 
 
-cdef void _middle_term_sparse_sparse_{{name_suffix}}(
-    const {{INPUT_DTYPE_t}}[:] X_data,
-    const ITYPE_t[:] X_indices,
-    const ITYPE_t[:] X_indptr,
-    ITYPE_t X_start,
-    ITYPE_t X_end,
-    const {{INPUT_DTYPE_t}}[:] Y_data,
-    const ITYPE_t[:] Y_indices,
-    const ITYPE_t[:] Y_indptr,
-    ITYPE_t Y_start,
-    ITYPE_t Y_end,
-    DTYPE_t[:, ::1] D,
-) nogil:
-    cdef:
-        ITYPE_t i, j
-        ITYPE_t n_X = X_end - X_start
-        ITYPE_t n_Y = Y_end - Y_start
-        ITYPE_t _X_indices, _X_indptr, _Y_indices, _Y_indptr
-
-    for i in range(n_X):
-        for _X_indptr in range(X_indptr[i], X_indptr[i+1]):
-            _X_indices = X_indices[_X_indptr]
-            for j in range(n_Y):
-                for _Y_indptr in range(Y_indptr[j], Y_indptr[j+1]):
-                    _Y_indices = Y_indices[_Y_indptr]
-                    if _X_indices == _Y_indices:
-                        D[X_start + i, Y_start + j] += -2 * X_data[_X_indptr] * Y_data[_Y_indptr]
-
-
 cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_suffix}}):
+
+    def __init__(
+        self,
+        const {{INPUT_DTYPE_t}}[:, ::1] X,
+        const {{INPUT_DTYPE_t}}[:, ::1] Y,
+        ITYPE_t effective_n_threads,
+        ITYPE_t chunks_n_threads,
+        ITYPE_t dist_middle_terms_chunks_size,
+        ITYPE_t n_features,
+        ITYPE_t chunk_size,
+    ):
+        super().__init__(
+            effective_n_threads,
+            chunks_n_threads,
+            dist_middle_terms_chunks_size,
+            n_features,
+            chunk_size,
+        )
+        self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
+        self.Y_data, self.Y_indices, self.Y_indptr = self.unpack_csr_matrix(Y)
 
     cdef DTYPE_t * _compute_distances_on_chunks(
         self,
@@ -258,31 +365,23 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
         ITYPE_t thread_num,
     ) nogil:
         cdef:
-            const {{INPUT_DTYPE_t}}[:, ::1] X_c = self.X[X_start:X_end, :]
-            const {{INPUT_DTYPE_t}}[:, ::1] Y_c = self.Y[Y_start:Y_end, :]
-            DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num].data()
-
-            const {{INPUT_DTYPE_t}}[:] X_data = X_c.data
-            const ITYPE_t[:] X_indices =  X_c.indices
-            const ITYPE_t[:] X_indptr = X_c.indptr
-
-            const {{INPUT_DTYPE_t}}[:] Y_data = Y_c.data
-            const ITYPE_t[:] Y_indices =  Y_c.indices
-            const ITYPE_t[:] Y_indptr = Y_c.indptr
-
-            _middle_term_sparse_sparse_{{name_suffix}}(
-                X_data,
-                X_indices,
-                X_indptr,
-                X_start,
-                X_end,
-                Y_data,
-                Y_indices,
-                Y_indptr,
-                Y_start,
-                Y_end,
-                dist_middle_terms,
+            DTYPE_t *dist_middle_terms = (
+                self.dist_middle_terms_chunks[thread_num].data()
             )
+
+        _middle_term_sparse_sparse_{{name_suffix}}(
+            self.X_data,
+            self.X_indices,
+            self.X_indptr,
+            X_start,
+            X_end,
+            self.Y_data,
+            self.Y_indices,
+            self.Y_indptr,
+            Y_start,
+            Y_end,
+            dist_middle_terms,
+        )
 
         return dist_middle_terms
 
