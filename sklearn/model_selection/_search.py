@@ -972,11 +972,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             results["std_%s" % key_name] = array_stds
 
             if rank:
-                rank_result = rankdata(-array_means, method="min")
                 # when input is nan, scipy >= 1.10 rankdata returns nan. To
-                # keep previous behaviour nans are set to the
-                # maximum possible rank
-                rank_result[np.isnan(rank_result)] = len(rank_result)
+                # keep previous behaviour nans are set to be smaller than the
+                # minimum value in the array before ranking
+                min_array_means = min(array_means) - 1
+                array_means = np.nan_to_num(array_means, copy=True, nan=min_array_means)
+                rank_result = rankdata(-array_means, method="min")
                 rank_result = np.asarray(rank_result, dtype=np.int32)
                 results["rank_%s" % key_name] = rank_result
 

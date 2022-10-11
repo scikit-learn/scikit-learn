@@ -350,7 +350,7 @@ class LinearDiscriminantAnalysis(
         self.tol = tol  # used only in svd solver
         self.covariance_estimator = covariance_estimator
 
-    def _solve_lsqr(self, X, y, shrinkage, covariance_estimator):
+    def _solve_lstsq(self, X, y, shrinkage, covariance_estimator):
         """Least squares solver.
 
         The least squares solver computes a straightforward solution of the
@@ -621,7 +621,7 @@ class LinearDiscriminantAnalysis(
                 )
             self._solve_svd(X, y)
         elif self.solver == "lsqr":
-            self._solve_lsqr(
+            self._solve_lstsq(
                 X,
                 y,
                 shrinkage=self.shrinkage,
