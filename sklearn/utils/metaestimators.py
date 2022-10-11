@@ -142,14 +142,14 @@ class _IffHasAttrDescriptor(_AvailableIfDescriptor):
 
 # TODO(1.3) remove
 def if_delegate_has_method(delegate):
-    """Create a decorator for methods that are delegated to a sub-estimator
-
-    This enables ducktyping by hasattr returning True according to the
-    sub-estimator.
+    """Create a decorator for methods that are delegated to a sub-estimator.
 
     .. deprecated:: 1.3
         `if_delegate_has_method` is deprecated in version 1.1 and will be removed in
         version 1.3. Use `available_if` instead.
+
+    This enables ducktyping by hasattr returning True according to the
+    sub-estimator.
 
     Parameters
     ----------
@@ -157,7 +157,6 @@ def if_delegate_has_method(delegate):
         Name of the sub-estimator that can be accessed as an attribute of the
         base object. If a list or a tuple of names are provided, the first
         sub-estimator that is an attribute of the base object will be used.
-
     """
     if isinstance(delegate, list):
         delegate = tuple(delegate)
