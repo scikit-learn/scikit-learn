@@ -155,7 +155,7 @@ class Pipeline(_BaseComposition):
 
         Parameters
         ----------
-        transform : {"default", "pandas"}, default=None
+        transform : {"native", "pandas"}, default=None
             Configure output of `transform` and `fit_transform`.
 
         Returns
@@ -996,7 +996,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         Parameters
         ----------
-        transform : {"default", "pandas"}, default=None
+        transform : {"native", "pandas"}, default=None
             Configure output of `transform` and `fit_transform`.
 
         Returns

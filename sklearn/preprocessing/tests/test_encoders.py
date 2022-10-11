@@ -1915,7 +1915,7 @@ def test_one_hot_encoder_set_output():
     with pytest.raises(ValueError, match=match):
         ohe.fit_transform(X_df)
 
-    ohe_default = OneHotEncoder(sparse_output=False).set_output(transform="default")
+    ohe_default = OneHotEncoder(sparse_output=False).set_output(transform="native")
     ohe_pandas = OneHotEncoder(sparse_output=False).set_output(transform="pandas")
 
     X_default = ohe_default.fit_transform(X_df)
@@ -1931,7 +1931,7 @@ def test_ordinal_set_output():
 
     X_df = pd.DataFrame({"A": ["a", "b"], "B": [1, 2]})
 
-    ord_default = OrdinalEncoder().set_output(transform="default")
+    ord_default = OrdinalEncoder().set_output(transform="native")
     ord_pandas = OrdinalEncoder().set_output(transform="pandas")
 
     X_default = ord_default.fit_transform(X_df)

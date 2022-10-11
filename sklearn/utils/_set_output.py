@@ -75,7 +75,7 @@ def _get_output_config(method, estimator=None):
         Dictionary with keys:
 
         - "dense": specifies the dense container for `method`. This can be
-          `"default"` or `"pandas"`.
+          `"native"` or `"pandas"`.
     """
     est_sklearn_output_config = getattr(estimator, "_sklearn_output_config", {})
     if method in est_sklearn_output_config:
@@ -83,9 +83,9 @@ def _get_output_config(method, estimator=None):
     else:
         dense_config = get_config()[f"{method}_output"]
 
-    if dense_config not in {"default", "pandas"}:
+    if dense_config not in {"native", "pandas"}:
         raise ValueError(
-            f"output config must be 'default' or 'pandas' got {dense_config}"
+            f"output config must be 'native' or 'pandas' got {dense_config!r}"
         )
 
     return {"dense": dense_config}
@@ -111,14 +111,14 @@ def _wrap_data_with_container(method, data_to_wrap, original_input, estimator):
     Returns
     -------
     output : {ndarray, dataframe}
-        If the output config is "default" or the estimator is not configured
+        If the output config is "native" or the estimator is not configured
         for wrapping return `data_to_wrap` unchanged.
         If the output config is "pandas", return `data_to_wrap` as a pandas
         DataFrame.
     """
     output_config = _get_output_config(method, estimator)
 
-    if output_config["dense"] == "default" or not _auto_wrap_is_configured(estimator):
+    if output_config["dense"] == "native" or not _auto_wrap_is_configured(estimator):
         return data_to_wrap
 
     # dense_config == "pandas"
@@ -205,7 +205,7 @@ class _SetOutputMixin:
 
         Parameters
         ----------
-        transform : {"default", "pandas"}, default=None
+        transform : {"native", "pandas"}, default=None
             Configure output of the following estimator's methods:
 
             - `"transform"`
@@ -238,7 +238,7 @@ def _safe_set_output(estimator, *, transform=None):
     estimator : estimator instance
         Estimator instance.
 
-    transform : {"default", "pandas"}, default=None
+    transform : {"native", "pandas"}, default=None
         Configure output of the following estimator's methods:
 
         - `"transform"`
