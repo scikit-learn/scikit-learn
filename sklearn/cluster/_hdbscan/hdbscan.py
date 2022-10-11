@@ -27,6 +27,23 @@ from ._tree import compute_stability, condense_tree, get_clusters, labelling_at_
 
 FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics
 
+# Encodings are arbitray, but chosen as extensions to the -1 noise label.
+# Avoided enums so that the end user only deals with simple labels.
+_OUTLIER_ENCODING = {
+    "infinite": {
+        "label": -2,
+        # The probability could also be 1, since infinite points are certainly
+        # infinite outliers, however 0 is convention from the HDBSCAN library
+        # implementation.
+        "prob": 0,
+    },
+    "missing": {
+        "label": -3,
+        # A nan probability is chosen to emphasize the fact that the
+        # corresponding data was not considered in the clustering problem.
+        "prob": np.nan,
+    },
+}
 
 def _brute_mst(mutual_reachability, min_samples, sparse=False):
     if not sparse:
@@ -340,18 +357,20 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     ----------
     labels_ : ndarray of shape (n_samples,)
         Cluster labels for each point in the dataset given to :term:`fit`.
-        There are two reserved labels:
+        Outliers are labeled as follows:
         - Noisy samples are given the label -1.
-        - Samples with missing data are given the label -2.
+        - Samples with infinite elements (+/- np.inf) are given the label -2.
+        - Samples with missing data are given the label -3.
 
     probabilities_ : ndarray of shape (n_samples,)
         The strength with which each sample is a member of its assigned
         cluster.
 
-        - Noisy samples have probability zero.
-        - Samples with missing data have probability `np.nan`.
         - Clustered samples have probabilities proportional to the degree that
           they persist as part of the cluster.
+        - Noisy samples have probability zero.
+        - Samples with infinite elements (+/- np.inf) have probability 0.
+        - Samples with missing data have probability `np.nan`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -365,8 +384,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         the standard euclidean metric. The centroids may fall "outside" their
         respective clusters if the clusters themselves are non-convex.
 
-        Note that `n_clusters` only counts non-trivial clusters. That is to
-        say, the `-1` label for the virtual noise cluster is excluded.
+        Note that `n_clusters` only counts non-outlier clusters. That is to
+        say, the `-1, -2, -3` labels for the outlier clusters are excluded.
 
     medoids_ : ndarray of shape (n_clusters, n_features)
         A collection containing the medoid of each cluster calculated under
@@ -376,8 +395,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         These can be thought of as the result of projecting the `metric`-based
         centroid back onto the cluster.
 
-        Note that `n_clusters` only counts non-trivial clusters. That is to
-        say, the `-1` label for the virtual noise cluster is excluded.
+        Note that `n_clusters` only counts non-outlier clusters. That is to
+        say, the `-1, -2, -3` labels for the outlier clusters are excluded.
 
     See Also
     --------
@@ -520,8 +539,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
             if not all_finite:
                 # Pass only the purely finite indices into hdbscan
-                # We will later assign all non-finite points to the
-                # noise cluster (label=-1)
+                # We will later assign all non-finite points their
+                # corresponding labels, as specified in `_OUTLIER_ENCODING`
 
                 # Reduce X to make the checks for missing/outlier samples more
                 # convenient.
@@ -529,10 +548,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
                 # Samples with missing data are denoted by the presence of
                 # `np.nan`
-                missing = list(np.isnan(reduced_X).nonzero()[0])
+                missing_index = list(np.isnan(reduced_X).nonzero()[0])
 
                 # Outlier samples are denoted by the presence of `np.inf`
-                outliers = list(np.isinf(reduced_X).nonzero()[0])
+                infinite_index = list(np.isinf(reduced_X).nonzero()[0])
 
                 # Continue with only finite samples
                 finite_index = _get_finite_row_indices(X)
@@ -643,16 +662,20 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             self._single_linkage_tree_ = remap_single_linkage_tree(
                 self._single_linkage_tree_,
                 internal_to_raw,
-                non_finite=outliers + missing,
+                non_finite=infinite_index + missing_index,
             )
-            new_labels = np.full(self._raw_data.shape[0], -1)
+            new_labels = np.empty(self._raw_data.shape[0], dtype=np.int32)
             new_labels[finite_index] = self.labels_
-            new_labels[missing] = -2
+            new_labels[infinite_index] = _OUTLIER_ENCODING["infinite"]["label"]
+            new_labels[missing_index] = _OUTLIER_ENCODING["missing"]["label"]
             self.labels_ = new_labels
 
-            new_probabilities = np.zeros(self._raw_data.shape[0])
+            new_probabilities = np.zeros(self._raw_data.shape[0], dtype=np.float64)
             new_probabilities[finite_index] = self.probabilities_
-            new_probabilities[missing] = np.nan
+            # Infinite outliers have probability 0 by convention, though this
+            # is arbitrary.
+            new_probabilities[infinite_index] = _OUTLIER_ENCODING["infinite"]["prob"]
+            new_probabilities[missing_index] = _OUTLIER_ENCODING["missing"]["prob"]
             self.probabilities_ = new_probabilities
 
         if self.store_centers:

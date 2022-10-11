@@ -15,7 +15,7 @@ from sklearn.neighbors import BallTree, KDTree
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_allclose, assert_array_equal
-
+from sklearn.cluster._hdbscan.hdbscan import _OUTLIER_ENCODING
 n_clusters_true = 3
 X, y = make_blobs(n_samples=200, random_state=10)
 X, y = shuffle(X, y, random_state=7)
@@ -28,43 +28,37 @@ ALGORITHMS = [
     "auto",
 ]
 
+OUTLIER_SET = {-1} | {out["label"] for _, out in _OUTLIER_ENCODING.items()}
 
-def test_missing_data():
+@pytest.mark.parametrize("outlier_type", _OUTLIER_ENCODING)
+def test_outlier_data(outlier_type):
     """
-    Tests if nan data are propogated as missing data rather than outliers.
+    Tests if np.inf and np.nan data are each treated as special outliers.
     """
-    X_missing_data = X.copy()
-    X_missing_data[0] = [np.nan, 1]
-    X_missing_data[5] = [np.nan, np.nan]
-    model = HDBSCAN().fit(X_missing_data)
+    outlier = {
+        "infinite": np.inf,
+        "missing": np.nan,
+    }[outlier_type]
+    prob_check = {
+        "infinite": lambda x, y: x == y,
+        "missing": lambda x, y: np.isnan(x),        
+    }[outlier_type]
+    label = _OUTLIER_ENCODING[outlier_type]["label"]
+    prob = _OUTLIER_ENCODING[outlier_type]["prob"]
 
-    (missing_labels_idx,) = (model.labels_ == -2).nonzero()
+    X_outlier = X.copy()
+    X_outlier[0] = [outlier, 1]
+    X_outlier[5] = [outlier, outlier]
+    model = HDBSCAN().fit(X_outlier)
+
+    (missing_labels_idx,) = (model.labels_ == label).nonzero()
     assert_array_equal(missing_labels_idx, [0, 5])
 
-    (missing_probs_idx,) = (np.isnan(model.probabilities_)).nonzero()
+    (missing_probs_idx,) = (prob_check(model.probabilities_, prob)).nonzero()
     assert_array_equal(missing_probs_idx, [0, 5])
 
     clean_indices = list(range(1, 5)) + list(range(6, 200))
-    clean_model = HDBSCAN().fit(X_missing_data[clean_indices])
-    assert_array_equal(clean_model.labels_, model.labels_[clean_indices])
-
-
-def test_outlier_data():
-    """
-    Tests if np.inf data are treated as infinite distance from all other points
-    and assigned to -1 cluster.
-    """
-    X_missing_data = X.copy()
-    X_missing_data[0] = [np.inf, 1]
-    X_missing_data[5] = [np.inf, np.inf]
-    model = HDBSCAN().fit(X_missing_data)
-    assert model.labels_[0] == -1
-    assert model.labels_[5] == -1
-    assert model.probabilities_[0] == 0
-    assert model.probabilities_[5] == 0
-    assert model.probabilities_[5] == 0
-    clean_indices = list(range(1, 5)) + list(range(6, 200))
-    clean_model = HDBSCAN().fit(X_missing_data[clean_indices])
+    clean_model = HDBSCAN().fit(X_outlier[clean_indices])
     assert_array_equal(clean_model.labels_, model.labels_[clean_indices])
 
 
@@ -74,7 +68,7 @@ def test_hdbscan_distance_matrix():
     labels = HDBSCAN(metric="precomputed", copy=True).fit_predict(D)
 
     assert_allclose(D, D_original)
-    n_clusters = len(set(labels) - {-1, -2})
+    n_clusters = len(set(labels) - OUTLIER_SET)
     assert n_clusters == n_clusters_true
 
     # Check that clustering is arbitrarily good
@@ -94,13 +88,13 @@ def test_hdbscan_sparse_distance_matrix():
     D.eliminate_zeros()
 
     labels = HDBSCAN(metric="precomputed").fit_predict(D)
-    n_clusters = len(set(labels) - {-1, -2})
+    n_clusters = len(set(labels) - OUTLIER_SET)
     assert n_clusters == n_clusters_true
 
 
 def test_hdbscan_feature_vector():
     labels = HDBSCAN().fit_predict(X)
-    n_clusters = len(set(labels) - {-1, -2})
+    n_clusters = len(set(labels) - OUTLIER_SET)
     assert n_clusters == n_clusters_true
 
     # Check that clustering is arbitrarily good
@@ -113,7 +107,7 @@ def test_hdbscan_feature_vector():
 @pytest.mark.parametrize("metric", _VALID_METRICS)
 def test_hdbscan_algorithms(algo, metric):
     labels = HDBSCAN(algorithm=algo).fit_predict(X)
-    n_clusters = len(set(labels) - {-1, -2})
+    n_clusters = len(set(labels) - OUTLIER_SET)
     assert n_clusters == n_clusters_true
 
     # Validation for brute is handled by `pairwise_distances`
@@ -150,7 +144,7 @@ def test_hdbscan_algorithms(algo, metric):
 def test_hdbscan_dbscan_clustering():
     clusterer = HDBSCAN().fit(X)
     labels = clusterer.dbscan_clustering(0.3)
-    n_clusters = len(set(labels) - {-1, -2})
+    n_clusters = len(set(labels) - OUTLIER_SET)
     assert n_clusters == n_clusters_true
 
 
@@ -162,7 +156,7 @@ def test_hdbscan_high_dimensional():
         metric="seuclidean",
         metric_params={"V": np.ones(H.shape[1])},
     ).fit_predict(H)
-    n_clusters = len(set(labels) - {-1, -2})
+    n_clusters = len(set(labels) - OUTLIER_SET)
     assert n_clusters == n_clusters_true
 
 
@@ -170,13 +164,13 @@ def test_hdbscan_best_balltree_metric():
     labels = HDBSCAN(
         metric="seuclidean", metric_params={"V": np.ones(X.shape[1])}
     ).fit_predict(X)
-    n_clusters = len(set(labels) - {-1, -2})
+    n_clusters = len(set(labels) - OUTLIER_SET)
     assert n_clusters == n_clusters_true
 
 
 def test_hdbscan_no_clusters():
     labels = HDBSCAN(min_cluster_size=len(X) - 1).fit_predict(X)
-    n_clusters = len(set(labels) - {-1, -2})
+    n_clusters = len(set(labels) - OUTLIER_SET)
     assert n_clusters == 0
 
 
@@ -195,7 +189,7 @@ def test_hdbscan_min_cluster_size():
 def test_hdbscan_callable_metric():
     metric = distance.euclidean
     labels = HDBSCAN(metric=metric).fit_predict(X)
-    n_clusters = len(set(labels) - {-1, -2})
+    n_clusters = len(set(labels) - OUTLIER_SET)
     assert n_clusters == n_clusters_true
 
 
@@ -210,13 +204,13 @@ def test_hdbscan_sparse():
     sparse_X = sparse.csr_matrix(X)
 
     labels = HDBSCAN().fit(sparse_X).labels_
-    n_clusters = len(set(labels) - {-1, -2})
+    n_clusters = len(set(labels) - OUTLIER_SET)
     assert n_clusters == 3
 
     sparse_X_nan = sparse_X.copy()
     sparse_X_nan[0, 0] = np.nan
     labels = HDBSCAN().fit(sparse_X_nan).labels_
-    n_clusters = len(set(labels) - {-1, -2})
+    n_clusters = len(set(labels) - OUTLIER_SET)
     assert n_clusters == 3
 
     msg = "Sparse data matrices only support algorithm `brute`."
