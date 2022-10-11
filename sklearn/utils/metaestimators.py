@@ -160,11 +160,7 @@ def if_delegate_has_method(delegate):
 
     Returns
     -------
-    callable
-        Callable makes the decorated method available if atleast 
-        one delegate is an attribute of the base object and the
-        first found delegate has an attribute ``attribute_name``. 
-        Otherwise the decorated method is unavailable.
+    TO DO
     """
     if isinstance(delegate, list):
         delegate = tuple(delegate)
