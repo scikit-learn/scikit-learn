@@ -157,6 +157,7 @@ jobs:
         if: github.event_name == 'schedule'
         env:
           PIP_EXTRA_INDEX: https://pypi.anaconda.org/scipy-wheels-nightly/simple
+        run: echo ${{ env.PIP_EXTRA_INDEX }}
 
       - name: Build and test wheels
         env:
