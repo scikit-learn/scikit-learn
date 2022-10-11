@@ -232,6 +232,9 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
+        cdef:
+            ITYPE_t idx
+
         # Sorting neighbors for each query vector of X
         if self.sort_results:
             for idx in range(X_start, X_end):
