@@ -49,6 +49,20 @@ def test_density():
         assert density(X_) == density(X)
 
 
+# TODO(1.4): Remove test
+def test_density_deprecated_kwargs():
+    """Check that future warning is raised when user enters keyword arguments."""
+    test_array = np.array([[1, 2, 3], [4, 5, 6]])
+    with pytest.warns(
+        FutureWarning,
+        match=(
+            "Additional keyword arguments are deprecated in version 1.2 and will be"
+            " removed in version 1.4."
+        ),
+    ):
+        density(test_array, a=1)
+
+
 def test_uniform_weights():
     # with uniform weights, results should be identical to stats.mode
     rng = np.random.RandomState(0)

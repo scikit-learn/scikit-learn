@@ -349,6 +349,9 @@ pip_build_metadata_list = [
         # pip-compile, we are going to assume the pip lock file on a Linux
         # 64bit machine gives appropriate versions
         "python_version": "3.8.10",
+        "package_constraints": {
+            "scipy": "1.9.1",  # 1.9.2 not available for 32 bit Windows
+        },
     },
 ]
 
