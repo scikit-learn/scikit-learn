@@ -157,6 +157,14 @@ def if_delegate_has_method(delegate):
         Name of the sub-estimator that can be accessed as an attribute of the
         base object. If a list or a tuple of names are provided, the first
         sub-estimator that is an attribute of the base object will be used.
+
+    Returns
+    -------
+    callable
+        Callable makes the decorated method available if atleast 
+        one delegate is an attribute of the base object and the
+        first found delegate has an attribute ``attribute_name``. 
+        Otherwise the decorated method is unavailable.
     """
     if isinstance(delegate, list):
         delegate = tuple(delegate)
