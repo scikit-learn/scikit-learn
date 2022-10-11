@@ -153,6 +153,11 @@ jobs:
         with:
           python-version: '3.9'  # update once build dependencies are available
 
+      - name: Set pip extra index
+        if: github.event_name == 'schedule'
+        env:
+          PIP_EXTRA_INDEX: https://pypi.anaconda.org/scipy-wheels-nightly/simple
+
       - name: Build and test wheels
         env:
           CONFTEST_PATH: ${{ github.workspace }}/conftest.py
@@ -161,7 +166,7 @@ jobs:
                             OPENBLAS_NUM_THREADS=2
                             SKLEARN_SKIP_NETWORK_TESTS=1
                             SKLEARN_BUILD_PARALLEL=3
-                            PIP_EXTRA_INDEX_URL=https://pypi.anaconda.org/scipy-wheels-nightly/simple
+                            PIP_EXTRA_INDEX_URL=${{ env.PIP_EXTRA_INDEX }}
           CIBW_BUILD: cp${{ matrix.python }}-${{ matrix.platform_id }}
           CIBW_ARCHS: all
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
