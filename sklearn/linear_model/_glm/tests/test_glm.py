@@ -32,7 +32,7 @@ from sklearn.metrics import d2_tweedie_score, mean_poisson_deviance
 from sklearn.model_selection import train_test_split
 
 
-SOLVERS = ["lbfgs", "newton-cholesky", "newton-qr-cholesky"]
+SOLVERS = ["lbfgs", "newton-cholesky"]
 
 
 class BinomialRegressor(_GeneralizedLinearRegressor):
@@ -238,7 +238,7 @@ def test_glm_regression(solver, fit_intercept, glm_dataset):
         intercept = 0
 
     with warnings.catch_warnings():
-        if solver in ["newton-cholesky", "newton-qr-cholesky"]:
+        if solver == "newton-cholesky":
             warnings.filterwarnings(
                 action="ignore",
                 message=".*pointwise hessian to have many non-positive values.*",
@@ -396,9 +396,6 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
         rtol = 5e-5
         if solver == "newton-cholesky":
             rtol = 5e-4
-        elif solver == "newton-qr-cholesky":
-            if isinstance(model, TweedieRegressor) and model.power == 1.5:
-                pytest.xfail("newton-qr-cholesky fails on TweedieRegressor(power=1.5)")
         assert_allclose(model.predict(X), y, rtol=rtol)
 
         norm_solution = np.linalg.norm(np.r_[intercept, coef])
@@ -490,10 +487,6 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
     if n_samples > n_features:
         assert model_intercept == pytest.approx(intercept)
         rtol = 1e-4
-        if solver == "newton-qr-cholesky":
-            rtol = 5e-4
-            if isinstance(model, TweedieRegressor) and model.power == 1.5:
-                pytest.xfail("newton-qr-cholesky fails on TweedieRegressor(power=1.5)")
         assert_allclose(model_coef, np.r_[coef, coef], rtol=rtol)
     else:
         # As it is an underdetermined problem, prediction = y. The following shows that
@@ -512,7 +505,7 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
             # For minimum norm solution, we would have
             # assert model.intercept_ == pytest.approx(model.coef_[-1])
         else:
-            rtol = 5e-5 if solver == "newton-qr-cholesky" else 5e-6
+            rtol = 5e-6
             assert model_intercept == pytest.approx(intercept, rel=rtol)
             assert_allclose(model_coef, np.r_[coef, coef], rtol=1e-4)
 
@@ -857,7 +850,7 @@ def test_normal_ridge_comparison(
     assert_allclose(glm.predict(X_test), ridge.predict(X_test), rtol=2e-4)
 
 
-@pytest.mark.parametrize("solver", ["lbfgs", "newton-cholesky", "newton-qr-cholesky"])
+@pytest.mark.parametrize("solver", ["lbfgs", "newton-cholesky"])
 def test_poisson_glmnet(solver):
     """Compare Poisson regression with L2 regularization and LogLink to glmnet"""
     # library("glmnet")
@@ -968,8 +961,8 @@ def test_family_deprecation(est, family):
             assert est.family.power == family.power
 
 
-@pytest.mark.parametrize("newton_solver", ["newton-cholesky", "newton-qr-cholesky"])
-def test_linalg_warning_with_newton_solver(newton_solver, global_random_seed):
+def test_linalg_warning_with_newton_solver(global_random_seed):
+    newton_solver = "newton-cholesky"
     rng = np.random.RandomState(global_random_seed)
     # Use at least 20 samples to reduce the likelihood to get a degenerate
     # dataset for any global_random_seed.

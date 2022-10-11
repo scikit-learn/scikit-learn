@@ -491,7 +491,7 @@ class NewtonSolver(ABC):
         return self.coef
 
 
-class BaseCholeskyNewtonSolver(NewtonSolver):
+class CholeskyNewtonSolver(NewtonSolver):
     """Cholesky based Newton solver.
 
     Inner solver for finding the Newton step H w_newton = -g uses Cholesky based linear
@@ -500,6 +500,24 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
 
     def setup(self, X, y, sample_weight):
         super().setup(X=X, y=y, sample_weight=sample_weight)
+        n_dof = X.shape[1]
+        if self.linear_loss.fit_intercept:
+            n_dof += 1
+        self.gradient = np.empty_like(self.coef)
+        self.hessian = np.empty_like(self.coef, shape=(n_dof, n_dof))
+
+    def update_gradient_hessian(self, X, y, sample_weight):
+        _, _, self.hessian_warning = self.linear_loss.gradient_hessian(
+            coef=self.coef,
+            X=X,
+            y=y,
+            sample_weight=sample_weight,
+            l2_reg_strength=self.l2_reg_strength,
+            n_threads=self.n_threads,
+            gradient_out=self.gradient,
+            hessian_out=self.hessian,
+            raw_prediction=self.raw_prediction,  # this was updated in line_search
+        )
 
     def inner_solve(self, X, y, sample_weight):
         if self.hessian_warning:
@@ -563,119 +581,6 @@ class BaseCholeskyNewtonSolver(NewtonSolver):
             return
 
 
-class CholeskyNewtonSolver(BaseCholeskyNewtonSolver):
-    """Cholesky based Newton solver.
-
-    Inner solver for finding the Newton step H w_newton = -g uses Cholesky based linear
-    solver.
-    """
-
-    def setup(self, X, y, sample_weight):
-        super().setup(X=X, y=y, sample_weight=sample_weight)
-
-        n_dof = X.shape[1]
-        if self.linear_loss.fit_intercept:
-            n_dof += 1
-        self.gradient = np.empty_like(self.coef)
-        self.hessian = np.empty_like(self.coef, shape=(n_dof, n_dof))
-
-    def update_gradient_hessian(self, X, y, sample_weight):
-        _, _, self.hessian_warning = self.linear_loss.gradient_hessian(
-            coef=self.coef,
-            X=X,
-            y=y,
-            sample_weight=sample_weight,
-            l2_reg_strength=self.l2_reg_strength,
-            n_threads=self.n_threads,
-            gradient_out=self.gradient,
-            hessian_out=self.hessian,
-            raw_prediction=self.raw_prediction,  # this was updated in line_search
-        )
-
-
-class QRCholeskyNewtonSolver(BaseCholeskyNewtonSolver):
-    """QR and Cholesky based Newton solver.
-
-    This is a good solver for n_features >> n_samples, see [1].
-
-    This solver uses the structure of the problem, i.e. the fact that coef enters the
-    loss function only as X @ coef and ||coef||_2, and starts with an economic QR
-    decomposition of X':
-
-        X' = QR with Q'Q = identity(k), k = min(n_samples, n_features)
-
-    This is the same as an LQ decomposition of X. We introduce the new variable z, see
-    [1], as:
-
-        (coef, intercept) = (Q @ z, intercept)
-
-    By using X @ coef = R' @ z and ||coef||_2 = ||z||_2, we can just replace X
-    by R', solve for z instead of coef, and finally get coef = Q @ z.
-    Note that z has less elements than coef if n_features > n_samples:
-        len(z) = k = min(n_samples, n_features) <= n_features = len(coef).
-
-    [1] Hastie, T.J., & Tibshirani, R. (2003). Expression Arrays and the p n Problem.
-    https://web.stanford.edu/~hastie/Papers/pgtn.pdf
-    """
-
-    def setup(self, X, y, sample_weight):
-        n_samples, n_features = X.shape
-        # TODO: setting pivoting=True could improve stability
-        # QR of X'
-        self.Q, self.R = scipy.linalg.qr(
-            X.T, mode="economic", pivoting=False, check_finite=False
-        )
-        # use k = min(n_features, n_samples) instead of n_features
-        k = self.R.T.shape[1]
-        n_dof = k
-        if self.linear_loss.fit_intercept:
-            n_dof += 1
-        # store original coef
-        self.coef_original = self.coef
-        # set self.coef = z (coef_original = Q @ z)
-        self.coef = np.zeros_like(self.coef, shape=n_dof)
-        if np.sum(np.abs(self.coef_original)) > 0:
-            self.coef[:k] = self.Q.T @ self.coef_original[:n_features]
-        self.gradient = np.empty_like(self.coef)
-        self.hessian = np.empty_like(self.coef, shape=(n_dof, n_dof))
-
-        super().setup(X=self.R.T, y=y, sample_weight=sample_weight)
-
-    def update_gradient_hessian(self, X, y, sample_weight):
-        # Use R' instead of X
-        _, _, self.hessian_warning = self.linear_loss.gradient_hessian(
-            coef=self.coef,
-            X=self.R.T,
-            y=y,
-            sample_weight=sample_weight,
-            l2_reg_strength=self.l2_reg_strength,
-            n_threads=self.n_threads,
-            gradient_out=self.gradient,
-            hessian_out=self.hessian,
-            raw_prediction=self.raw_prediction,  # this was updated in line_search
-        )
-
-    def fallback_lbfgs_solve(self, X, y, sample_weight):
-        # Use R' instead of X
-        super().fallback_lbfgs_solve(X=self.R.T, y=y, sample_weight=sample_weight)
-
-    def line_search(self, X, y, sample_weight):
-        # Use R' instead of X
-        super().line_search(X=self.R.T, y=y, sample_weight=sample_weight)
-
-    def check_convergence(self, X, y, sample_weight):
-        # Use R' instead of X
-        super().check_convergence(X=self.R.T, y=y, sample_weight=sample_weight)
-
-    def finalize(self, X, y, sample_weight):
-        n_features = X.shape[1]
-        w, intercept = self.linear_loss.weight_intercept(self.coef)
-        self.coef_original[:n_features] = self.Q @ w
-        if self.linear_loss.fit_intercept:
-            self.coef_original[-1] = intercept
-        self.coef = self.coef_original
-
-
 class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     """Regression via a penalized Generalized Linear Model (GLM).
 
@@ -713,19 +618,16 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X @ coef + intercept).
 
-    solver : {'lbfgs', 'newton-cholesky', 'newton-qr-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
 
         'newton-cholesky'
-            Uses Newton-Raphson steps (equivalent to iterated reweighted least squares)
-            with an inner cholesky based solver.
-
-        'newton-qr-cholesky'
-            Same as 'newton-cholesky' but uses a QR decomposition of X.T. This solver
-            is better for `n_features >> n_samples` than 'newton-cholesky'.
+            Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
+            iterated reweighted least squares) with an inner Cholesky based solver.
+            This solver is suited for n_samples >> n_features.
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -786,7 +688,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         "alpha": [Interval(Real, 0.0, None, closed="left")],
         "fit_intercept": ["boolean"],
         "solver": [
-            StrOptions({"lbfgs", "newton-cholesky", "newton-qr-cholesky"}),
+            StrOptions({"lbfgs", "newton-cholesky"}),
             Hidden(type),
         ],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
@@ -930,12 +832,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             )
             self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
             coef = opt_res.x
-        elif self.solver in ["newton-cholesky", "newton-qr-cholesky"]:
-            sol_dict = {
-                "newton-cholesky": CholeskyNewtonSolver,
-                "newton-qr-cholesky": QRCholeskyNewtonSolver,
-            }
-            sol = sol_dict[self.solver](
+        elif self.solver == "newton-cholesky":
+            sol = CholeskyNewtonSolver(
                 coef=coef,
                 linear_loss=linear_loss,
                 l2_reg_strength=l2_reg_strength,
@@ -1153,19 +1051,16 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X @ coef + intercept).
 
-    solver : {'lbfgs', 'newton-cholesky', 'newton-qr-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
 
         'newton-cholesky'
-            Uses Newton-Raphson steps (equivalent to iterated reweighted least squares)
-            with an inner cholesky based solver.
-
-        'newton-qr-cholesky'
-            Same as 'newton-cholesky' but uses a QR decomposition of X.T. This solver
-            is better for `n_features >> n_samples` than 'newton-cholesky'.
+            Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
+            iterated reweighted least squares) with an inner Cholesky based solver.
+            This solver is suited for n_samples >> n_features.
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -1282,19 +1177,16 @@ class GammaRegressor(_GeneralizedLinearRegressor):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X @ coef + intercept).
 
-    solver : {'lbfgs', 'newton-cholesky', 'newton-qr-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
 
         'newton-cholesky'
-            Uses Newton-Raphson steps (equivalent to iterated reweighted least squares)
-            with an inner cholesky based solver.
-
-        'newton-qr-cholesky'
-            Same as 'newton-cholesky' but uses a QR decomposition of X.T. This solver
-            is better for `n_features >> n_samples` than 'newton-cholesky'.
+            Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
+            iterated reweighted least squares) with an inner Cholesky based solver.
+            This solver is suited for n_samples >> n_features.
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -1442,19 +1334,16 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         - 'log' for ``power > 0``, e.g. for Poisson, Gamma and Inverse Gaussian
           distributions
 
-    solver : {'lbfgs', 'newton-cholesky', 'newton-qr-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
 
         'newton-cholesky'
-            Uses Newton-Raphson steps (equivalent to iterated reweighted least squares)
-            with an inner cholesky based solver.
-
-        'newton-qr-cholesky'
-            Same as 'newton-cholesky' but uses a QR decomposition of X.T. This solver
-            is better for `n_features >> n_samples` than 'newton-cholesky'.
+            Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
+            iterated reweighted least squares) with an inner Cholesky based solver.
+            This solver is suited for n_samples >> n_features.
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
