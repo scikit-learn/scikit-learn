@@ -975,7 +975,7 @@ Mutual Reachability Graph
 -------------------------
 
 HDBSCAN first defines :math:`d_c(x_p)`, the *core distance* of a sample :math:`x_p`, as the
-distance to its `min_samples`th-nearest neighbor, counting itself. For example,
+distance to its `min_samples` th-nearest neighbor, counting itself. For example,
 if `min_samples=5` and :math:`x_*` is the 5th-nearest neighbor of :math:`x_p`
 then the core distance is:
 
