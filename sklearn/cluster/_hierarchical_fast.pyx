@@ -337,7 +337,6 @@ cdef class UnionFind(object):
         self.parent[n] = self.next_label
         self.size[self.next_label] = self.size[m] + self.size[n]
         self.next_label += 1
-
         return
 
     @cython.wraparound(True)
