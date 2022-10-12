@@ -542,6 +542,8 @@ Changelog
 
   :pr:`18975` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+  :pr:`18975` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 - |Enhancement| :class:`decomposition.SparsePCA` and :class:`decomposition.MiniBatchSparsePCA`
   preserve dtype for `numpy.float32`.
   :pr:`22111` by :user:`Takeshi Oura <takoika>`.
@@ -877,6 +879,11 @@ Changelog
   `base_estimator` is deprecated and will be removed in 1.3.
   :pr:`22062` by :user:`Adrian Trujillo <trujillo9616>`.
 
+- |Enhancement| :class:`linear_model.RidgeCV` now issues a warning if the optimal
+  value of `alpha` lies at the boundary of the explored range.
+  :pr:`21303` :user:`Divyaprabha M <divyaprabha123>` and
+  :user:`Ben Reiniger <bmreiniger>`, :pr:`23031` by
+  :user:`Meekail Zain <micky774>`.
 - |Enhancement| :func:`linear_model.ElasticNet` and
   and other linear model classes using coordinate descent show error
   messages when non-finite parameter weights are produced. :pr:`22148`

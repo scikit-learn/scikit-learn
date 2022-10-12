@@ -2235,6 +2235,30 @@ class _BaseRidgeCV(LinearModel):
             self.alpha_ = gs.best_estimator_.alpha
             self.best_score_ = gs.best_score_
 
+        min_alpha = np.min(self.alphas)
+        max_alpha = np.max(self.alphas)
+        alphas = [self.alpha_] if np.isscalar(self.alpha_) else self.alpha_
+        if any(
+            np.isclose(alpha, min_alpha) or np.isclose(alpha, max_alpha)
+            for alpha in alphas
+        ):
+            if self.alpha_per_target:
+                msg = (
+                    "Some of the individual targets had an optimal value for the"
+                    " regularization parameter `alpha` at the boundary of the"
+                    f" explored range (between {min_alpha} and {max_alpha}); the found"
+                    f" optimal values are: {self.alpha_}\nConsider changing the"
+                    " `alphas` parameter to explore a wider range."
+                )
+            else:
+                msg = (
+                    "The optimal value for the regularization parameter 'alpha' was"
+                    f" {self.alpha_} which lies at a boundary of the explored range"
+                    f" (between {min_alpha} and {max_alpha}). Consider updating the"
+                    " `alphas` parameter to explore a wider range."
+                )
+            warnings.warn(msg, ConvergenceWarning)
+
         self.coef_ = estimator.coef_
         self.intercept_ = estimator.intercept_
         self.n_features_in_ = estimator.n_features_in_

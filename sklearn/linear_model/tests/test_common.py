@@ -19,6 +19,7 @@ from sklearn.linear_model import ARDRegression
 
 from sklearn.utils.fixes import np_version, parse_version
 from sklearn.utils import check_random_state
+from sklearn.exceptions import ConvergenceWarning
 
 
 @pytest.mark.parametrize(
@@ -66,7 +67,9 @@ def test_linear_model_normalize_deprecation_message(
     with pytest.warns(warning_category) as record:
         model.fit(X, y)
     # Filter record in case other unrelated warnings are raised
-    unwanted = [r for r in record if r.category != warning_category]
+    unwanted = [
+        r for r in record if r.category not in [warning_category, ConvergenceWarning]
+    ]
     if len(unwanted):
         msg = "unexpected warnings:\n"
         for w in unwanted:
