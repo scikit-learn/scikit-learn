@@ -4180,7 +4180,7 @@ def check_set_output_transform(name, transformer_orig):
         if name in CROSS_DECOMPOSITION:
             X_trans_no_setting = X_trans_no_setting[0]
 
-        transformer.set_output(transform="native")
+        transformer.set_output(transform="default")
         X_trans_default = transform_method(transformer)
 
         if name in CROSS_DECOMPOSITION:
@@ -4226,7 +4226,7 @@ def check_set_output_transform_pandas(name, transformer_orig):
     transform_methods = [fit_then_transform, fit_transform]
 
     for transform_method in transform_methods:
-        transformer = clone(transformer).set_output(transform="native")
+        transformer = clone(transformer).set_output(transform="default")
         X_trans_no_setting = transform_method(transformer)
 
         # Auto wrapping only wraps the first array

@@ -315,7 +315,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        transform : {"native", "pandas"}, default=None
+        transform : {"default", "pandas"}, default=None
             Configure output of the following estimator's methods:
 
             - `"transform"`

@@ -83,14 +83,14 @@ def test__safe_set_output():
     config = _get_output_config("transform", est)
     assert config["dense"] == "pandas"
 
-    _safe_set_output(est, transform="native")
+    _safe_set_output(est, transform="default")
     config = _get_output_config("transform", est)
-    assert config["dense"] == "native"
+    assert config["dense"] == "default"
 
-    # transform is None is a no-op, so the config remains "native"
+    # transform is None is a no-op, so the config remains "default"
     _safe_set_output(est, transform=None)
     config = _get_output_config("transform", est)
-    assert config["dense"] == "native"
+    assert config["dense"] == "default"
 
 
 class EstimatorNoSetOutputWithTransformNoFeatureNamesOut(_SetOutputMixin):
@@ -111,7 +111,7 @@ def test__safe_set_output_error():
     est = EstimatorWithSetOutput()
     _safe_set_output(est, transform="bad")
 
-    msg = "output config must be 'native'"
+    msg = "output config must be 'default'"
     with pytest.raises(ValueError, match=msg):
         est.transform(X)
 
@@ -142,7 +142,7 @@ def test_set_output_method_error():
     est = EstimatorWithSetOutput().fit(X)
     est.set_output(transform="bad")
 
-    msg = "output config must be 'native'"
+    msg = "output config must be 'default'"
     with pytest.raises(ValueError, match=msg):
         est.transform(X)
 
@@ -170,9 +170,9 @@ def test__get_output_config():
         assert config["dense"] == "pandas"
 
         # If estimator has a config, use local config
-        est.set_output(transform="native")
+        est.set_output(transform="default")
         config = _get_output_config("transform", est)
-        assert config["dense"] == "native"
+        assert config["dense"] == "default"
 
     est.set_output(transform="pandas")
     config = _get_output_config("transform", est)
