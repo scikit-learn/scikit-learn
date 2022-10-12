@@ -1,25 +1,27 @@
-# -*- coding: utf-8 -*-
 """
-=========================================================
+===========================
 Vector Quantization Example
-=========================================================
+===========================
 
-Face, a 1024 x 768 size image of a raccoon face,
-is used here to illustrate how KBinsDiscretizer is
-used for vector quantization.
-
+This example shows how one can use :class:`~sklearn.preprocessing.KBinsDiscretizer`
+to perform vector quantization on a set of toy image, the raccoon face.
 """
 
-# Code source: Gaël Varoquaux
-# Modified for documentation by Jaques Grobler
+# Authors: Gael Varoquaux
+#          Jaques Grobler
 # License: BSD 3 clause
 
 # %%
-import numpy as np
-import matplotlib.pyplot as plt
-
-from sklearn import preprocessing
-
+# Original image
+# --------------
+#
+# We start by loading the raccoon face image from SciPy. We will additionally check
+# a couple of information regarding the image, such as the shape and data type used
+# to store the image.
+#
+# Note that depending of the SciPy version, we have to adapt the import since the
+# function returning the image is not located in the same module. Also, SciPy >= 1.10
+# will required the package `pooch` to be installed.
 try:  # Scipy >= 1.10
     from scipy.datasets import face
 except ImportError:
@@ -27,79 +29,145 @@ except ImportError:
 
 raccoon_face = face(gray=True)
 
-n_bins = 5
-np.random.seed(0)
-
-X = raccoon_face.reshape((-1, 1))  # We need an (n_sample, n_feature) array
-est = preprocessing.KBinsDiscretizer(
-    n_bins=n_bins, strategy="kmeans", encode="ordinal", random_state=0
-)
-est.fit(X)
-values = est.bin_edges_[0]
-labels = est.transform(X)
-
-raccoon_face_compressed = est.inverse_transform(labels)
-raccoon_face_compressed.shape = raccoon_face.shape
-
-vmin = raccoon_face.min()
-vmax = raccoon_face.max()
-
-# original raccoon_face
-plt.figure(1, figsize=(3, 2.2))
-plt.title("original image")
-plt.imshow(raccoon_face, cmap=plt.cm.gray, vmin=vmin, vmax=256)
-
-# compressed raccoon_face
-plt.figure(2, figsize=(3, 2.2))
-plt.title("quantized image (kmeans)")
-plt.imshow(raccoon_face_compressed, cmap=plt.cm.gray, vmin=vmin, vmax=vmax)
-
-# equal bins face
-regular_values = np.linspace(0, 256, n_bins + 1)
-regular_labels = np.searchsorted(regular_values, raccoon_face) - 1
-
-regular_values = 0.5 * (regular_values[1:] + regular_values[:-1])  # mean
-regular_raccoon_face = np.choose(regular_labels.ravel(), regular_values, mode="clip")
-regular_raccoon_face.shape = raccoon_face.shape
-plt.figure(3, figsize=(3, 2.2))
-plt.title("quantized image (equal bins)")
-plt.imshow(regular_raccoon_face, cmap=plt.cm.gray, vmin=vmin, vmax=vmax)
-
-# histogram
-plt.figure(4, figsize=(3, 2.2))
-plt.clf()
-plt.axes([0.01, 0.01, 0.98, 0.98])
-plt.hist(X, bins=256, color=".5", edgecolor=".5")
-plt.yticks(())
-plt.xticks(regular_values)
-plt.title("image intensity histogram")
-values = np.sort(values)
-for center_1, center_2 in zip(values[:-1], values[1:]):
-    plt.axvline(0.5 * (center_1 + center_2), color="b")
-
-for center_1, center_2 in zip(regular_values[:-1], regular_values[1:]):
-    plt.axvline(0.5 * (center_1 + center_2), color="b", linestyle="--")
-
-plt.show()
-# The number of unique values in the quantized image is reducd to only 5 values.
-print(f"face: number of unique values: {len(np.unique(face))}")
-print(f"labels: number of unique values: {len(np.unique(labels))}")
-# A note on in-memory image compression
-# Let's have a look at the memory size of these images.
-print(f"face bytes: {face.nbytes}")
-print(f"labels bytes: {labels.nbytes}")
-# Although the quantized image has far fewer unique values,
-# its memory size is 4 times the original image.
-# The reason behind this is the data types used.
-print(f"face dtype: {face.dtype}")
-print(f"labels dtype: {labels.dtype}")
-# Let us cast the compressed image to the same type as the input
-labels_uint8 = labels.astype(np.uint8)
-# Now, both images have the same size
-print(f"face bytes: {face.nbytes}")
-print(f"labels bytes: {labels_uint8.nbytes}")
-# The cluster labels are in the range 0,1,2,3,4
-# While this could be compressed to a 4 bit integer,
-# uint8 is as small as we can go with numpy.
+print(f"The dimension of the image is {raccoon_face.shape}")
+print(f"The data used to encode the image is of type {raccoon_face.dtype}")
+print(f"The number of bytes taken in RAM is {raccoon_face.nbytes}")
 
 # %%
+# Thus the image is a 2D array of 768 pixels in height and 1024 pixels in width. Each
+# value is a 8-bit unsigned integer, which means that the image is encoded using 8
+# bits per pixel. The total memory usage of the image is 786 kilobytes (1 bytes equal
+# 8 bits).
+#
+# Using 8-bit unsigned integer means that the image is encoded using 256 different
+# shades of gray, at most. We can check the distribution of these values.
+import matplotlib.pyplot as plt
+
+fig, ax = plt.subplots(ncols=2, figsize=(12, 4))
+
+ax[0].imshow(raccoon_face, cmap=plt.cm.gray)
+ax[0].axis("off")
+ax[0].set_title("Rendering of the image")
+ax[1].hist(raccoon_face.ravel(), bins=256)
+ax[1].set_xlabel("Pixel value")
+ax[1].set_ylabel("Number of pixels")
+ax[1].set_title("Distribution of the pixel values")
+_ = fig.suptitle("Original image of a raccoon face")
+
+# %%
+# Compression via vector quantization
+# -----------------------------------
+# The idea behind compression via vector quantization is to use a smaller number of
+# gray levels to represent the image. For instance, we can use 8 values instead of 256
+# values. Therefore, it means that we could efficiently use 1 bit instead of 8 bits to
+# encode a single pixel and therefore reduce the memory usage by a factor of 8. We will
+# later discuss about this memory usage.
+#
+# Encoding strategy
+# """""""""""""""""
+#
+# The compression can be performed by using a
+# :class:`~sklearn.preprocessing.KBinsDiscretizer`. We need to choose of a strategy
+# to define the 8 values. The simplest strategy is to define the 8 values equally
+# spaced that correspond to `strategy="uniform"`. From the previous histogram, we know
+# that this strategy is certainly not optimal.
+
+from sklearn.preprocessing import KBinsDiscretizer
+
+n_bins = 8
+encoder = KBinsDiscretizer(
+    n_bins=n_bins, encode="ordinal", strategy="uniform", random_state=0
+)
+compressed_raccoon_uniform = encoder.fit_transform(raccoon_face.reshape(-1, 1)).reshape(
+    raccoon_face.shape
+)
+
+fig, ax = plt.subplots(ncols=2, figsize=(12, 4))
+ax[0].imshow(compressed_raccoon_uniform, cmap=plt.cm.gray)
+ax[0].axis("off")
+ax[0].set_title("Rendering of the image")
+ax[1].hist(compressed_raccoon_uniform.ravel(), bins=256)
+ax[1].set_xlabel("Pixel value")
+ax[1].set_ylabel("Number of pixels")
+ax[1].set_title("Distribution of the pixel values")
+_ = fig.suptitle("Raccoon face compressed using 1-bit and a uniform strategy")
+
+# %%
+# Qualitatively, we can spot some small regions where we see the effect of the
+# compression (e.g. leaves on the bottom right corner). But after all, the resulting
+# image is still looking good.
+#
+# Looking a the distribution, we observe that all pixels values have been mapped to
+# 8 different values. But we can also see the amount of pixel in each bin is different.
+# This might not be the most effective strategy. We can check the correspondance between
+# the 8 values and the original pixel values.
+bin_edges = encoder.bin_edges_[0]
+bin_center = bin_edges[:-1] + (bin_edges[1:] - bin_edges[:-1]) / 2
+bin_center
+
+# %%
+plt.hist(raccoon_face.ravel(), bins=256)
+for center in bin_center:
+    plt.axvline(center, color="red")
+
+# %%
+# As previously stated, the strategy used is not optimal. The value 7, will encode a
+# rather small amount of pixels while the value 3 will encode a large amount of pixels.
+# We can instead use a clustering strategy such as k-means to find the 8 values.
+encoder = KBinsDiscretizer(
+    n_bins=n_bins, encode="ordinal", strategy="kmeans", random_state=0
+)
+compressed_raccoon_kmeans = encoder.fit_transform(raccoon_face.reshape(-1, 1)).reshape(
+    raccoon_face.shape
+)
+
+fig, ax = plt.subplots(ncols=2, figsize=(12, 4))
+ax[0].imshow(compressed_raccoon_kmeans, cmap=plt.cm.gray)
+ax[0].axis("off")
+ax[0].set_title("Rendering of the image")
+ax[1].hist(compressed_raccoon_kmeans.ravel(), bins=256)
+ax[1].set_xlabel("Pixel value")
+ax[1].set_ylabel("Number of pixels")
+ax[1].set_title("Distribution of the pixel values")
+_ = fig.suptitle("Raccoon face compressed using 1-bit and a K-means strategy")
+
+# %%
+bin_edges = encoder.bin_edges_[0]
+bin_center = bin_edges[:-1] + (bin_edges[1:] - bin_edges[:-1]) / 2
+bin_center
+
+# %%
+plt.hist(raccoon_face.ravel(), bins=256)
+for center in bin_center:
+    plt.axvline(center, color="red")
+
+# %%
+# The bins are now more balanced and the center of each bins are different from
+# the uniform strategy. Note that we could enforce the same number of pixels
+# per bin by using the `strategy="quantile"` instead of `strategy="kmeans"`.
+#
+# Memory footprint
+# """"""""""""""""
+#
+# We can quickly discussed the memory usage of the compressed image. We previously
+# stated that we should save 8 times less memory. Let's check it.
+print(f"The number of bytes taken in RAM is {compressed_raccoon_kmeans.nbytes}")
+print(f"Compression ratio: {compressed_raccoon_kmeans.nbytes / raccoon_face.nbytes}")
+
+# %%
+# This is quite surprising to see that our compressed image is taking x8 more memory
+# than the original image. This is indeed the opposit of what we expected. The reason
+# is mainly due to the type of data used to encode the image.
+print(f"Type of the compressed image: {compressed_raccoon_kmeans.dtype}")
+
+# %%
+# Indeed, the output of the :class:`~sklearn.preprocessing.KBinsDiscretizer` is an
+# array of 64-bit float. It means that it takes x8 more memory. However, we use this
+# 64-bit float representation to encode 8 values. Indeed, we will save memory only if
+# we cast the compressed image into an array of 1-bit integer. We could use potentially
+# the function `as_type` from `numpy`. However, a 1-bit integer representation does not
+# exist and to encode the 8 values, we will need to use the 8-bit unsigned integer
+# representation as well.
+#
+# In reality, the above compression would make sense with 64-bit float representation
+# of original image to observe a memory gain.
