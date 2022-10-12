@@ -150,6 +150,19 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
+- |MajorFeature| Added :class:`cluster.HDBSCAN`, a modern hierarchical density-based
+  clustering algorithm. Similarly to :class:`cluster.OPTICS`, it can be seen as a
+  generalization of :class:`DBSCAN` by allowing for hierarchical instead of flat
+  clustering, however it varies in its approach from :class:`cluster.OPTICS`. This
+  algorithm is very robust with respect to its hyperparameters' values and can
+  be used on a wide variety of data without much, if any, tuning.
+
+  This implementation is an adaptation from the original implementation of HDBSCAN in
+  `scikit-learn-contrib/hdbscan <https://github.com/scikit-learn-contrib/hdbscan>`_,
+  by :user:`Leland McInnes <lmcinnes>` et al.
+
+  :pr:`22616` by :user:`Meekail Zain <micky774>`
+
 - |Enhancement| The `predict` and `fit_predict` methods of :class:`cluster.OPTICS` now
   accept sparse data type for input data. :pr:`14736` by :user:`Hunt Zhan <huntzhan>`,
   :pr:`20802` by :user:`Brandon Pokorny <Clickedbigfoot>`,

@@ -58,6 +58,7 @@ def configuration(parent_package="", top_path=None):
     )
 
     config.add_subpackage("tests")
+    config.add_subpackage("_hdbscan")
 
     return config
 

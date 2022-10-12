@@ -768,6 +768,9 @@ def _set_checking_parameters(estimator):
     if name == "SpectralEmbedding":
         estimator.set_params(eigen_tol=1e-5)
 
+    if name == "HDBSCAN":
+        estimator.set_params(min_samples=1)
+
 
 class _NotAnArray:
     """An object that is convertible to an array.

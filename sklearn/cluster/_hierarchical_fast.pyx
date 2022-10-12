@@ -18,11 +18,8 @@ from cython.operator cimport dereference as deref, preincrement as inc
 from libcpp.map cimport map as cpp_map
 from libc.math cimport fmax
 
-DTYPE = np.float64
-ctypedef cnp.float64_t DTYPE_t
-
-ITYPE = np.intp
-ctypedef cnp.intp_t ITYPE_t
+from ..utils._typedefs cimport ITYPE_t, DTYPE_t
+from ..utils._typedefs import ITYPE, DTYPE
 
 from numpy.math cimport INFINITY
 
@@ -323,10 +320,6 @@ cdef class WeightedEdge:
 
 cdef class UnionFind(object):
 
-    cdef ITYPE_t next_label
-    cdef ITYPE_t[:] parent
-    cdef ITYPE_t[:] size
-
     def __init__(self, N):
         self.parent = np.full(2 * N - 1, -1., dtype=ITYPE, order='C')
         self.next_label = N
@@ -338,7 +331,6 @@ cdef class UnionFind(object):
         self.parent[n] = self.next_label
         self.size[self.next_label] = self.size[m] + self.size[n]
         self.next_label += 1
-
         return
 
     @cython.wraparound(True)

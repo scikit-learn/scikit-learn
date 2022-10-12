@@ -102,6 +102,7 @@ Classes
    cluster.AgglomerativeClustering
    cluster.Birch
    cluster.DBSCAN
+   cluster.HDBSCAN
    cluster.FeatureAgglomeration
    cluster.KMeans
    cluster.BisectingKMeans
