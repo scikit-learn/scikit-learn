@@ -20,7 +20,7 @@ from libcpp.vector cimport vector
 
 from scipy.sparse import issparse, csr_matrix
 from ...utils._typedefs cimport DTYPE_t, ITYPE_t, SPARSE_INDEX_TYPE_t
-from ...utils._typedefs import SPARSE_INDEX_TYPE
+from ...utils._typedefs import DTYPE, SPARSE_INDEX_TYPE
 
 from ...utils._cython_blas cimport (
   BLAS_Order,
@@ -61,7 +61,7 @@ cdef void _middle_term_sparse_sparse_{{name_suffix}}(
                 for _Y_indptr in range(Y_indptr[Y_start+j], Y_indptr[Y_start+j+1]):
                     _Y_indices = Y_indices[_Y_indptr]
                     if _X_indices == _Y_indices:
-                        k = (X_start + i) * n_X + Y_start + j
+                        k = i * n_X + j
                         D[k] += -2 * X_data[_X_indptr] * Y_data[_Y_indptr]
 
 
@@ -140,7 +140,7 @@ cdef class MiddleTermComputer{{name_suffix}}:
     @classmethod
     def unpack_csr_matrix(cls, X: csr_matrix):
         """Ensure that the CSR matrix is indexed with SPARSE_INDEX_TYPE."""
-        X_data = np.asarray(X.data, dtype=DTYPE)
+        X_data = np.asarray(X.data, dtype={{INPUT_DTYPE}})
         X_indices = np.asarray(X.indices, dtype=SPARSE_INDEX_TYPE)
         X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
         return X_data, X_indices, X_indptr
@@ -160,6 +160,87 @@ cdef class MiddleTermComputer{{name_suffix}}:
         self.chunk_size = chunk_size
 
         self.dist_middle_terms_chunks = vector[vector[DTYPE_t]](self.effective_n_threads)
+
+    cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num,
+    ) nogil:
+        return
+
+    cdef void _parallel_on_X_parallel_init(self, ITYPE_t thread_num) nogil:
+        self.dist_middle_terms_chunks[thread_num].resize(self.dist_middle_terms_chunks_size)
+
+    cdef void _parallel_on_X_init_chunk(
+        self,
+        ITYPE_t thread_num,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+    ) nogil:
+        return
+
+    cdef void _parallel_on_Y_init(self) nogil:
+        for thread_num in range(self.chunks_n_threads):
+            self.dist_middle_terms_chunks[thread_num].resize(
+                self.dist_middle_terms_chunks_size
+            )
+
+    cdef void _parallel_on_Y_parallel_init(
+        self,
+        ITYPE_t thread_num,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+    ) nogil:
+        return
+
+    cdef void _parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num
+    ) nogil:
+        return
+
+    cdef DTYPE_t * _compute_distances_on_chunks(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num,
+    ) nogil:
+        cdef:
+            DTYPE_t *dist_middle_terms = vector[DTYPE_t](1).data()
+        return dist_middle_terms
+
+
+
+cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_suffix}}):
+
+    def __init__(
+        self,
+        const {{INPUT_DTYPE_t}}[:, ::1] X,
+        const {{INPUT_DTYPE_t}}[:, ::1] Y,
+        ITYPE_t effective_n_threads,
+        ITYPE_t chunks_n_threads,
+        ITYPE_t dist_middle_terms_chunks_size,
+        ITYPE_t n_features,
+        ITYPE_t chunk_size,
+    ):
+        super().__init__(
+            effective_n_threads,
+            chunks_n_threads,
+            dist_middle_terms_chunks_size,
+            n_features,
+            chunk_size,
+        )
+        self.X = X
+        self.Y = Y
 
 {{if upcast_to_float64}}
         # We populate the buffer for upcasting chunks of X and Y from 32bit to 64bit.
@@ -194,10 +275,6 @@ cdef class MiddleTermComputer{{name_suffix}}:
         return
 {{endif}}
 
-
-    cdef void _parallel_on_X_parallel_init(self, ITYPE_t thread_num) nogil:
-        self.dist_middle_terms_chunks[thread_num].resize(self.dist_middle_terms_chunks_size)
-
     cdef void _parallel_on_X_init_chunk(
         self,
         ITYPE_t thread_num,
@@ -216,12 +293,6 @@ cdef class MiddleTermComputer{{name_suffix}}:
 {{else}}
         return
 {{endif}}
-
-    cdef void _parallel_on_Y_init(self) nogil:
-        for thread_num in range(self.chunks_n_threads):
-            self.dist_middle_terms_chunks[thread_num].resize(
-                self.dist_middle_terms_chunks_size
-            )
 
     cdef void _parallel_on_Y_parallel_init(
         self,
@@ -262,29 +333,6 @@ cdef class MiddleTermComputer{{name_suffix}}:
 {{else}}
         return
 {{endif}}
-
-
-cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_suffix}}):
-
-    def __init__(
-        self,
-        const {{INPUT_DTYPE_t}}[:, ::1] X,
-        const {{INPUT_DTYPE_t}}[:, ::1] Y,
-        ITYPE_t effective_n_threads,
-        ITYPE_t chunks_n_threads,
-        ITYPE_t dist_middle_terms_chunks_size,
-        ITYPE_t n_features,
-        ITYPE_t chunk_size,
-    ):
-        super().__init__(
-            effective_n_threads,
-            chunks_n_threads,
-            dist_middle_terms_chunks_size,
-            n_features,
-            chunk_size,
-        )
-        self.X = X
-        self.Y = Y
 
     cdef DTYPE_t * _compute_distances_on_chunks(
         self,
@@ -338,8 +386,8 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
 
     def __init__(
         self,
-        const {{INPUT_DTYPE_t}}[:, ::1] X,
-        const {{INPUT_DTYPE_t}}[:, ::1] Y,
+        X,
+        Y,
         ITYPE_t effective_n_threads,
         ITYPE_t chunks_n_threads,
         ITYPE_t dist_middle_terms_chunks_size,
