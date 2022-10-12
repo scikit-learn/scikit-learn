@@ -159,8 +159,9 @@ jobs:
           PIP_EXTRA_INDEX: https://pypi.anaconda.org/scipy-wheels-nightly/simple
           PIP_PRE: 1
         run: |
-          echo "PIP_EXTRA_INDEX=${{ env.PIP_EXTRA_INDEX }}" >> $GITHUB_ENV
-          echo "PIP_PRE=${{ env.PIP_PRE }}" >> $GITHUB_ENV
+          # Test with nightly dependencies for nightly builds
+          echo "PIP_EXTRA_INDEX=https://pypi.anaconda.org/scipy-wheels-nightly/simple" >> $GITHUB_ENV
+          echo "PIP_PRE=1" >> $GITHUB_ENV
 
       - name: Build and test wheels
         env:
