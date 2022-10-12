@@ -1,9 +1,10 @@
+from itertools import product
+
 import numpy as np
 
 from .. import confusion_matrix
 from ...utils import check_matplotlib_support
 from ...utils.multiclass import unique_labels
-from ...utils._plot import plot_heatmap
 from ...base import is_classifier
 
 
@@ -128,36 +129,69 @@ class ConfusionMatrixDisplay:
             Returns a :class:`~sklearn.metrics.ConfusionMatrixDisplay` instance
             that contains all the information to plot the confusion matrix.
         """
-        method_name = f"{self.__class__.__name__}.plot"
-        check_matplotlib_support(method_name)
+        check_matplotlib_support("ConfusionMatrixDisplay.plot")
+        import matplotlib.pyplot as plt
+
+        if ax is None:
+            fig, ax = plt.subplots()
+        else:
+            fig = ax.figure
+
         cm = self.confusion_matrix
         n_classes = cm.shape[0]
+
+        default_im_kw = dict(interpolation="nearest", cmap=cmap)
+        im_kw = im_kw or {}
+        im_kw = {**default_im_kw, **im_kw}
+        text_kw = text_kw or {}
+
+        self.im_ = ax.imshow(cm, **im_kw)
+        self.text_ = None
+        cmap_min, cmap_max = self.im_.cmap(0), self.im_.cmap(1.0)
+
+        if include_values:
+            self.text_ = np.empty_like(cm, dtype=object)
+
+            # print text with appropriate color depending on background
+            thresh = (cm.max() + cm.min()) / 2.0
+
+            for i, j in product(range(n_classes), range(n_classes)):
+                color = cmap_max if cm[i, j] < thresh else cmap_min
+
+                if values_format is None:
+                    text_cm = format(cm[i, j], ".2g")
+                    if cm.dtype.kind != "f":
+                        text_d = format(cm[i, j], "d")
+                        if len(text_d) < len(text_cm):
+                            text_cm = text_d
+                else:
+                    text_cm = format(cm[i, j], values_format)
+
+                default_text_kwargs = dict(ha="center", va="center", color=color)
+                text_kwargs = {**default_text_kwargs, **text_kw}
+
+                self.text_[i, j] = ax.text(j, i, text_cm, **text_kwargs)
+
         if self.display_labels is None:
             display_labels = np.arange(n_classes)
         else:
             display_labels = self.display_labels
-        fig, ax, im, text = plot_heatmap(
-            cm,
+        if colorbar:
+            fig.colorbar(self.im_, ax=ax)
+        ax.set(
+            xticks=np.arange(n_classes),
+            yticks=np.arange(n_classes),
+            xticklabels=display_labels,
+            yticklabels=display_labels,
             ylabel="True label",
             xlabel="Predicted label",
-            yticklabels=display_labels,
-            xticklabels=display_labels,
-            xticks_rotation=xticks_rotation,
-            ax=ax,
-            cmap=cmap,
-            include_values=include_values,
-            values_format=values_format,
-            colorbar=colorbar,
-            im_kw=im_kw,
-            text_kw=text_kw,
         )
 
         ax.set_ylim((n_classes - 0.5, -0.5))
+        plt.setp(ax.get_xticklabels(), rotation=xticks_rotation)
 
         self.figure_ = fig
         self.ax_ = ax
-        self.im_ = im
-        self.text_ = text
         return self
 
     @classmethod
