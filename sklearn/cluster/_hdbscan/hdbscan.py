@@ -45,6 +45,7 @@ _OUTLIER_ENCODING = {
     },
 }
 
+
 def _brute_mst(mutual_reachability, min_samples, sparse=False):
     if not sparse:
         return mst_from_distance_matrix(mutual_reachability)

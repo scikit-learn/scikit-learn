@@ -16,6 +16,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
 from sklearn.utils._testing import assert_allclose, assert_array_equal
 from sklearn.cluster._hdbscan.hdbscan import _OUTLIER_ENCODING
+
 n_clusters_true = 3
 X, y = make_blobs(n_samples=200, random_state=10)
 X, y = shuffle(X, y, random_state=7)
@@ -30,6 +31,7 @@ ALGORITHMS = [
 
 OUTLIER_SET = {-1} | {out["label"] for _, out in _OUTLIER_ENCODING.items()}
 
+
 @pytest.mark.parametrize("outlier_type", _OUTLIER_ENCODING)
 def test_outlier_data(outlier_type):
     """
@@ -41,7 +43,7 @@ def test_outlier_data(outlier_type):
     }[outlier_type]
     prob_check = {
         "infinite": lambda x, y: x == y,
-        "missing": lambda x, y: np.isnan(x),        
+        "missing": lambda x, y: np.isnan(x),
     }[outlier_type]
     label = _OUTLIER_ENCODING[outlier_type]["label"]
     prob = _OUTLIER_ENCODING[outlier_type]["prob"]
