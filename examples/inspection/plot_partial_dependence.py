@@ -373,11 +373,34 @@ _ = display.figure_.suptitle("ICE and PDP representations", fontsize=16)
 # humidity feature: some of the ICEs lines show a sharp decrease when the humidity is
 # above 80%.
 #
+# Since that all ICE lines are not parallel also indicates us that the model find
+# interactions between features. We can repeat the experiment by constraining this
+# gradient boosting models to not find any interaction between features using the
+# parameter `interaction_cst`:
+from sklearn.base import clone
+
+interaction_cst = [[i] for i in range(hgbdt_model[-1].n_features_in_)]
+hgbdt_model_without_interactions = (
+    clone(hgbdt_model)
+    .set_params(histgradientboostingregressor__interaction_cst=interaction_cst)
+    .fit(X_train, y_train)
+)
+
+_, ax = plt.subplots(ncols=2, figsize=(6, 4), sharey=True)
+
+features_info["centered"] = False
+display = PartialDependenceDisplay.from_estimator(
+    hgbdt_model_without_interactions,
+    X_train,
+    **features_info,
+    ax=ax,
+    **common_params,
+)
+_ = display.figure_.suptitle("ICE and PDP representations", fontsize=16)
+
+# %%
 # 2D interaction plots
 # --------------------
-#
-# Heatmap representation
-# """"""""""""""""""""""
 #
 # PDPs with two features of interest enable us to visualize interactions among them.
 # However, ICEs cannot be plotted in an easy manner and thus interpreted. We will show
@@ -410,8 +433,41 @@ plt.subplots_adjust(wspace=0.3)
 # We clearly see an interaction between the two features. For a temperature higher than
 # 20 degrees Celcius, the humidity will have a greater impact of the number of bike
 # rentals. For a temperature lower than 20 degrees Celsius, both the temperature and
-# humidity will have an impact on the number of bike rentals. 2-way interaction is also
-# supported for categorical data.
+# humidity will have an impact on the number of bike rentals.
+#
+# We can reuse the gradient boosting model that constrained the interaction between
+# features to see the difference:
+print("Computing partial dependence plots...")
+features_info = {
+    "features": ["temp", "humidity", ("temp", "humidity")],
+    "kind": "average",
+}
+_, ax = plt.subplots(ncols=3, figsize=(10, 4))
+tic = time()
+display = PartialDependenceDisplay.from_estimator(
+    hgbdt_model_without_interactions,
+    X_train,
+    **features_info,
+    ax=ax,
+    **common_params,
+)
+print(f"done in {time() - tic:.3f}s")
+_ = display.figure_.suptitle(
+    "1-way vs 2-way of numerical PDP using gradient boosting", fontsize=16
+)
+plt.subplots_adjust(wspace=0.3)
+
+# %%
+# Although the 2D-plot shows much less interaction compared with the 2D-plot from
+# above, it is much harder to come to the conclusion that there is no interaction at
+# all. This might be a cause of the discrete predictions of trees in combination with
+# numerically precision of partial dependence. We also observe that the univariate
+# dependence plots have slightly changed as the model tries to compensate for the
+# forbidden interactions (spikes in the "humidity" PD plot).
+#
+# The partial dependence between categorical features will provide a discrete
+# reprensentation that can be shown as a heatmap. For instance the interaction between
+# the season, the weather, and the target would be as follow:
 print("Computing partial dependence plots...")
 features_info = {
     "features": ["season", "weather", ("season", "weather")],
