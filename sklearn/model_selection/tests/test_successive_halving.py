@@ -105,16 +105,18 @@ def test_nan_handling(
 
     # estimators that failed during fit/predict should always rank lower
     # than ones where the fit/predict succeeded
-    assert search.best_params_[f"fail_{fail_at}"] == False
+    assert not search.best_params_[f"fail_{fail_at}"]
     scores = search.cv_results_["mean_test_score"]
     ranks = search.cv_results_["rank_test_score"]
 
     # some scores should be NaN
     assert np.isnan(scores).any()
+
+    unique_nan_ranks = np.unique(ranks[np.isnan(scores)])
     # all NaN scores should have the same rank
-    assert np.unique(ranks[np.isnan(scores)]).shape[0] == 1
+    assert unique_nan_ranks.shape[0] == 1
     # NaNs should have the lowest rank
-    assert (np.unique(ranks[np.isnan(scores)])[0] >= ranks).all()
+    assert (unique_nan_ranks[0] >= ranks).all()
 
 
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
