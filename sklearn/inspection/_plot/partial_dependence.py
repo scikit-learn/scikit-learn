@@ -246,12 +246,13 @@ class PartialDependenceDisplay:
     >>> X, y = make_friedman1()
     >>> clf = GradientBoostingRegressor(n_estimators=10).fit(X, y)
     >>> features, feature_names = [(0,)], [f"Features #{i}" for i in range(X.shape[1])]
+    >>> is_categorical = [(False,) for _ in range(len(features))]
     >>> deciles = {0: np.linspace(0, 1, num=5)}
     >>> pd_results = partial_dependence(
     ...     clf, X, features=0, kind="average", grid_resolution=5)
     >>> display = PartialDependenceDisplay(
     ...     [pd_results], features=features, feature_names=feature_names,
-    ...     target_idx=0, deciles=deciles
+    ...     target_idx=0, deciles=deciles, is_categorical=is_categorical
     ... )
     >>> display.plot(pdp_lim={1: (-1.38, 0.66)})
     <...>
