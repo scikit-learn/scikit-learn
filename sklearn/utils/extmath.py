@@ -20,6 +20,7 @@ from . import check_random_state
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
+from ._array_api import get_namespace
 
 
 def squared_norm(x):
@@ -104,12 +105,25 @@ def density(w, **kwargs):
     ----------
     w : array-like
         The sparse vector.
+    **kwargs : keyword arguments
+        Ignored.
+
+        .. deprecated:: 1.2
+            ``**kwargs`` were deprecated in version 1.2 and will be removed in
+            1.4.
 
     Returns
     -------
     float
         The density of w, between 0 and 1.
     """
+    if kwargs:
+        warnings.warn(
+            "Additional keyword arguments are deprecated in version 1.2 and will be"
+            " removed in version 1.4.",
+            FutureWarning,
+        )
+
     if hasattr(w, "toarray"):
         d = float(w.nnz) / (w.shape[0] * w.shape[1])
     else:
@@ -591,7 +605,7 @@ def _randomized_eigsh(
 
 
 def weighted_mode(a, w, *, axis=0):
-    """Returns an array of the weighted modal (most common) value in a.
+    """Return an array of the weighted modal (most common) value in the passed array.
 
     If there is more than one such value, only the first is returned.
     The bin-count for the modal bins is also returned.
@@ -600,10 +614,10 @@ def weighted_mode(a, w, *, axis=0):
 
     Parameters
     ----------
-    a : array-like
-        n-dimensional array of which to find mode(s).
-    w : array-like
-        n-dimensional array of weights for each value.
+    a : array-like of shape (n_samples,)
+        Array of which values to find mode(s).
+    w : array-like of shape (n_samples,)
+        Array of weights for each value.
     axis : int, default=0
         Axis along which to operate. Default is 0, i.e. the first axis.
 
@@ -613,6 +627,11 @@ def weighted_mode(a, w, *, axis=0):
         Array of modal values.
     score : ndarray
         Array of weighted counts for each mode.
+
+    See Also
+    --------
+    scipy.stats.mode: Calculates the Modal (most common) value of array elements
+        along specified axis.
 
     Examples
     --------
@@ -631,10 +650,6 @@ def weighted_mode(a, w, *, axis=0):
 
     The value 2 has the highest score: it appears twice with weights of
     1.5 and 2: the sum of these is 3.5.
-
-    See Also
-    --------
-    scipy.stats.mode
     """
     if axis is None:
         a = np.ravel(a)
@@ -725,12 +740,12 @@ def svd_flip(u, v, u_based_decision=True):
     Parameters
     ----------
     u : ndarray
-        u and v are the output of `linalg.svd` or
+        Parameters u and v are the output of `linalg.svd` or
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`.
 
     v : ndarray
-        u and v are the output of `linalg.svd` or
+        Parameters u and v are the output of `linalg.svd` or
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`.
         The input v should really be called vt to be consistent with scipy's
@@ -741,11 +756,13 @@ def svd_flip(u, v, u_based_decision=True):
         Otherwise, use the rows of v. The choice of which variable to base the
         decision on is generally algorithm dependent.
 
-
     Returns
     -------
-    u_adjusted, v_adjusted : arrays with the same dimensions as the input.
+    u_adjusted : ndarray
+        Array u with adjusted columns and the same dimensions as u.
 
+    v_adjusted : ndarray
+        Array v with adjusted rows and the same dimensions as v.
     """
     if u_based_decision:
         # columns of u, rows of v
@@ -831,12 +848,20 @@ def softmax(X, copy=True):
     out : ndarray of shape (M, N)
         Softmax function evaluated at every point in x.
     """
+    xp, is_array_api = get_namespace(X)
     if copy:
-        X = np.copy(X)
-    max_prob = np.max(X, axis=1).reshape((-1, 1))
+        X = xp.asarray(X, copy=True)
+    max_prob = xp.reshape(xp.max(X, axis=1), (-1, 1))
     X -= max_prob
-    np.exp(X, X)
-    sum_prob = np.sum(X, axis=1).reshape((-1, 1))
+
+    if xp.__name__ in {"numpy", "numpy.array_api"}:
+        # optimization for NumPy arrays
+        np.exp(X, out=np.asarray(X))
+    else:
+        # array_api does not have `out=`
+        X = xp.exp(X)
+
+    sum_prob = xp.reshape(xp.sum(X, axis=1), (-1, 1))
     X /= sum_prob
     return X
 
