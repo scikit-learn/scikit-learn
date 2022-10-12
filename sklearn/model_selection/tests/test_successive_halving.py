@@ -96,7 +96,7 @@ def test_nan_handling(
         SometimesFailClassifier(),
         {f"fail_{fail_at}": [False, True], "a": range(3)},
         resource="n_estimators",
-        max_resources=10,
+        max_resources=6,
         min_resources=1,
         factor=2,
     )
