@@ -27,14 +27,14 @@ class _SubsampleMetaSplitter:
 
     def split(self, X, y, groups=None):
         for train_idx, test_idx in self.base_cv.split(X, y, groups):
-            train_idx = resample(
+            if self.fraction < 1:train_idx = resample(
                 train_idx,
                 replace=False,
                 random_state=self.random_state,
                 n_samples=int(self.fraction * train_idx.shape[0]),
             )
             if self.subsample_test:
-                test_idx = resample(
+                if self.fraction < 1:test_idx = resample(
                     test_idx,
                     replace=False,
                     random_state=self.random_state,
