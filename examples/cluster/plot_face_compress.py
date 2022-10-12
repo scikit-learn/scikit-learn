@@ -14,24 +14,23 @@ used for vector quantization.
 # Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
 
+# %%
 import numpy as np
-import scipy as sp
 import matplotlib.pyplot as plt
 
 from sklearn import preprocessing
 
-
-try:  # SciPy >= 0.16 have face in misc
+try:  # Scipy >= 1.10
+    from scipy.datasets import face
+except ImportError:
     from scipy.misc import face
 
-    face = face(gray=True)
-except ImportError:
-    face = sp.face(gray=True)
+raccoon_face = face(gray=True)
 
 n_bins = 5
 np.random.seed(0)
 
-X = face.reshape((-1, 1))  # We need an (n_sample, n_feature) array
+X = raccoon_face.reshape((-1, 1))  # We need an (n_sample, n_feature) array
 est = preprocessing.KBinsDiscretizer(
     n_bins=n_bins, strategy="kmeans", encode="ordinal", random_state=0
 )
@@ -39,31 +38,32 @@ est.fit(X)
 values = est.bin_edges_[0]
 labels = est.transform(X)
 
-face_compressed = est.inverse_transform(labels)
-face_compressed.shape = face.shape
+raccoon_face_compressed = est.inverse_transform(labels)
+raccoon_face_compressed.shape = raccoon_face.shape
 
-vmin = face.min()
-vmax = face.max()
+vmin = raccoon_face.min()
+vmax = raccoon_face.max()
 
-# original face
+# original raccoon_face
 plt.figure(1, figsize=(3, 2.2))
 plt.title("original image")
-plt.imshow(face, cmap=plt.cm.gray, vmin=vmin, vmax=256)
+plt.imshow(raccoon_face, cmap=plt.cm.gray, vmin=vmin, vmax=256)
 
-# compressed face
+# compressed raccoon_face
 plt.figure(2, figsize=(3, 2.2))
 plt.title("quantized image (kmeans)")
-plt.imshow(face_compressed, cmap=plt.cm.gray, vmin=vmin, vmax=vmax)
+plt.imshow(raccoon_face_compressed, cmap=plt.cm.gray, vmin=vmin, vmax=vmax)
 
 # equal bins face
 regular_values = np.linspace(0, 256, n_bins + 1)
-regular_labels = np.searchsorted(regular_values, face) - 1
+regular_labels = np.searchsorted(regular_values, raccoon_face) - 1
+
 regular_values = 0.5 * (regular_values[1:] + regular_values[:-1])  # mean
-regular_face = np.choose(regular_labels.ravel(), regular_values, mode="clip")
-regular_face.shape = face.shape
+regular_raccoon_face = np.choose(regular_labels.ravel(), regular_values, mode="clip")
+regular_raccoon_face.shape = raccoon_face.shape
 plt.figure(3, figsize=(3, 2.2))
 plt.title("quantized image (equal bins)")
-plt.imshow(regular_face, cmap=plt.cm.gray, vmin=vmin, vmax=vmax)
+plt.imshow(regular_raccoon_face, cmap=plt.cm.gray, vmin=vmin, vmax=vmax)
 
 # histogram
 plt.figure(4, figsize=(3, 2.2))
@@ -101,3 +101,5 @@ print(f"labels bytes: {labels_uint8.nbytes}")
 # The cluster labels are in the range 0,1,2,3,4
 # While this could be compressed to a 4 bit integer,
 # uint8 is as small as we can go with numpy.
+
+# %%
