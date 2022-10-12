@@ -84,7 +84,8 @@ class SometimesFailClassifier(DummyClassifier):
 
 
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.FitFailedWarning")
-@pytest.mark.filterwarnings("ignore::UserWarning")
+@pytest.mark.filterwarnings("ignore:Scoring failed:UserWarning")
+@pytest.mark.filterwarnings("ignore:One or more of the:UserWarning")
 @pytest.mark.parametrize("Est", (HalvingGridSearchCV, HalvingRandomSearchCV))
 @pytest.mark.parametrize("fail_at", ("fit", "predict"))
 def test_nan_handling(
