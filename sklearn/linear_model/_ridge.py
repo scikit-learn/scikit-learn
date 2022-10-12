@@ -66,7 +66,7 @@ def _solve_sparse_cg(
     y,
     alpha,
     max_iter=None,
-    tol=1e-3,
+    tol=1e-4,
     verbose=0,
     X_offset=None,
     X_scale=None,
@@ -153,7 +153,7 @@ def _solve_lsqr(
     alpha,
     fit_intercept=True,
     max_iter=None,
-    tol=1e-3,
+    tol=1e-4,
     X_offset=None,
     X_scale=None,
     sample_weight_sqrt=None,
@@ -303,7 +303,7 @@ def _solve_lbfgs(
     alpha,
     positive=True,
     max_iter=None,
-    tol=1e-3,
+    tol=1e-4,
     X_offset=None,
     X_scale=None,
     sample_weight_sqrt=None,
@@ -381,7 +381,7 @@ def ridge_regression(
     sample_weight=None,
     solver="auto",
     max_iter=None,
-    tol=1e-3,
+    tol=1e-4,
     verbose=0,
     positive=False,
     random_state=None,
@@ -471,8 +471,13 @@ def ridge_regression(
         by scipy.sparse.linalg. For 'sag' and saga solver, the default value is
         1000. For 'lbfgs' solver, the default value is 15000.
 
-    tol : float, default=1e-3
-        Precision of the solution.
+    tol : float, default=1e-4
+        Precision of the solution. Note that `tol` has no effect for solvers 'svd' and
+        'cholesky'.
+
+        .. versionchanged:: 1.2
+           Default value changed from 1e-3 to 1e-4 for consistency with other linear
+           models.
 
     verbose : int, default=0
         Verbosity level. Setting verbose > 0 will display additional
@@ -556,7 +561,7 @@ def _ridge_regression(
     sample_weight=None,
     solver="auto",
     max_iter=None,
-    tol=1e-3,
+    tol=1e-4,
     verbose=0,
     positive=False,
     random_state=None,
@@ -803,7 +808,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         normalize="deprecated",
         copy_X=True,
         max_iter=None,
-        tol=1e-3,
+        tol=1e-4,
         solver="auto",
         positive=False,
         random_state=None,
@@ -977,8 +982,13 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         by scipy.sparse.linalg. For 'sag' solver, the default value is 1000.
         For 'lbfgs' solver, the default value is 15000.
 
-    tol : float, default=1e-3
-        Precision of the solution.
+    tol : float, default=1e-4
+        Precision of the solution. Note that `tol` has no effect for solvers 'svd' and
+        'cholesky'.
+
+        .. versionchanged:: 1.2
+           Default value changed from 1e-3 to 1e-4 for consistency with other linear
+           models.
 
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', \
             'sag', 'saga', 'lbfgs'}, default='auto'
@@ -1096,7 +1106,7 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         normalize="deprecated",
         copy_X=True,
         max_iter=None,
-        tol=1e-3,
+        tol=1e-4,
         solver="auto",
         positive=False,
         random_state=None,
@@ -1276,8 +1286,13 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         Maximum number of iterations for conjugate gradient solver.
         The default value is determined by scipy.sparse.linalg.
 
-    tol : float, default=1e-3
-        Precision of the solution.
+    tol : float, default=1e-4
+        Precision of the solution. Note that `tol` has no effect for solvers 'svd' and
+        'cholesky'.
+
+        .. versionchanged:: 1.2
+           Default value changed from 1e-3 to 1e-4 for consistency with other linear
+           models.
 
     class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -1397,7 +1412,7 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         normalize="deprecated",
         copy_X=True,
         max_iter=None,
-        tol=1e-3,
+        tol=1e-4,
         class_weight=None,
         solver="auto",
         positive=False,
