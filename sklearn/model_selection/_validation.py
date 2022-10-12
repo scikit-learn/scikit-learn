@@ -1496,11 +1496,6 @@ def learning_curve(
         Times spent for scoring in seconds. Only present if ``return_times``
         is True.
 
-    Notes
-    -----
-    See :ref:`examples/model_selection/plot_learning_curve.py
-    <sphx_glr_auto_examples_model_selection_plot_learning_curve.py>`
-
     Examples
     --------
     >>> from sklearn.datasets import make_classification
