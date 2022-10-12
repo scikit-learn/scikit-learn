@@ -509,15 +509,9 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
                     self.Y_norm_squared[j + Y_start]
                 )
 
-                sqeuclidean_dist_i_j = (
-                    sqeuclidean_dist_i_j
-                    # Catastrophic cancellation causing -0. and NaN can be present
-                    # in some situations, e.g. when computing d(x_i, y_i) when X is Y.
-                    #
-                    #  Guard against -0.    Guard against NaN
-                    #     v                       v
-                    if 0. < sqeuclidean_dist_i_j == sqeuclidean_dist_i_j else 0.
-                )
+                # Catastrophic cancellation might cause -0. to be present,
+                # e.g. when computing d(x_i, y_i) when X is Y.
+                sqeuclidean_dist_i_j = max(0., sqeuclidean_dist_i_j)
 
                 heap_push(
                     values=heaps_r_distances + i * self.k,

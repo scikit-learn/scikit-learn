@@ -513,15 +513,9 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
                     + self.Y_norm_squared[j]
                 )
 
-                sqeuclidean_dist_i_j = (
-                    sqeuclidean_dist_i_j
-                    # Catastrophic cancellation causing -0. and NaN can be present
-                    # in some situations, e.g. when computing d(x_i, y_i) when X is Y.
-                    #
-                    #  Guard against -0.    Guard against NaN
-                    #     v                       v
-                    if 0. < sqeuclidean_dist_i_j == sqeuclidean_dist_i_j else 0.
-                )
+                # Catastrophic cancellation might cause -0. to be present,
+                # e.g. when computing d(x_i, y_i) when X is Y.
+                sqeuclidean_dist_i_j = max(0., sqeuclidean_dist_i_j)
 
                 if sqeuclidean_dist_i_j <= self.r_radius:
                     deref(self.neigh_distances_chunks[thread_num])[i].push_back(sqeuclidean_dist_i_j)
