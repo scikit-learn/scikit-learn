@@ -38,7 +38,7 @@ jobs:
 
       - id: check_build_trigger
         name: Check build trigger
-        run: bash build_tools/github/check_build_trigger.sh >> $GITHUB_ENV
+        run: bash build_tools/github/check_build_trigger.sh
 
   # Build the wheels for Linux, Windows and macOS for Python 3.8 and newer
   build_wheels:
