@@ -14,6 +14,8 @@ from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils._set_output import _get_output_config
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 
@@ -659,3 +661,14 @@ def test_feature_names_in():
     # transform on feature names that are mixed also warns:
     with pytest.raises(TypeError, match=msg):
         trans.transform(df_mixed)
+
+
+def test_clone_keeps_output_config():
+    """Check that clone keeps the set_output config."""
+
+    ss = StandardScaler().set_output(transform="pandas")
+    config = _get_output_config("transform", ss)
+
+    ss_clone = clone(ss)
+    config_clone = _get_output_config("transform", ss_clone)
+    assert config == config_clone
