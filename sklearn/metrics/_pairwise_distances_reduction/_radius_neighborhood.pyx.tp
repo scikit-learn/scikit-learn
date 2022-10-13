@@ -1,18 +1,3 @@
-{{py:
-
-implementation_specific_values = [
-    # Values are the following ones:
-    #
-    #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
-    #
-    # We also use the float64 dtype and C-type names as defined in
-    # `sklearn.utils._typedefs` to maintain consistency.
-    #
-    ('64', 'DTYPE_t', 'DTYPE'),
-    ('32', 'cnp.float32_t', 'np.float32')
-]
-
-}}
 cimport numpy as cnp
 import numpy as np
 import warnings
@@ -56,7 +41,7 @@ cdef cnp.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
     return nd_arrays_of_nd_arrays
 
 #####################
-{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
+{{for name_suffix in ['64', '32']}}
 
 from ._base cimport (
     BaseDistanceReducer{{name_suffix}},
@@ -233,7 +218,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
         ITYPE_t X_end,
     ) nogil:
         cdef:
-            ITYPE_t idx, jdx
+            ITYPE_t idx
 
         # Sorting neighbors for each query vector of X
         if self.sort_results:
@@ -294,7 +279,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
         self,
     ) nogil:
         cdef:
-            ITYPE_t idx, jdx, thread_num, idx_n_element, idx_current
+            ITYPE_t idx
 
         with nogil, parallel(num_threads=self.effective_n_threads):
             # Merge vectors used in threads into the main ones.
@@ -454,7 +439,6 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
     cdef void _parallel_on_Y_init(
         self,
     ) nogil:
-        cdef ITYPE_t thread_num
         RadiusNeighbors{{name_suffix}}._parallel_on_Y_init(self)
         self.gemm_term_computer._parallel_on_Y_init()
 
@@ -506,7 +490,7 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
             DTYPE_t squared_dist_i_j
             ITYPE_t n_X = X_end - X_start
             ITYPE_t n_Y = Y_end - Y_start
-            DTYPE_t *dist_middle_terms = self.gemm_term_computer._compute_distances_on_chunks(
+            DTYPE_t *dist_middle_terms = self.gemm_term_computer._compute_dist_middle_terms(
                 X_start, X_end, Y_start, Y_end, thread_num
             )
 
