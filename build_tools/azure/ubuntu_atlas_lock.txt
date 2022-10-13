@@ -12,7 +12,7 @@ execnet==1.9.0
     # via pytest-xdist
 iniconfig==1.1.1
     # via pytest
-joblib==1.1.1
+joblib==1.2.0
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 packaging==21.3
     # via pytest
