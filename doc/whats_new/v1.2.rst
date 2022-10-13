@@ -52,6 +52,13 @@ random sampling procedures.
 Changes impacting all modules
 -----------------------------
 
+- |MajorFeature| The `set_output` API has been adopted by all transformers.
+  Meta-estimators that contain transformers such as :class:`pipeline.Pipeline`
+  or :class:`compose.ColumnTransformer` also define a `set_output`.
+  For details, see
+  `SLEP018 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep018/proposal.html>`__.
+  :pr:`23734` by `Thomas Fan`_.
+
 - |Enhancement| Finiteness checks (detection of NaN and infinite values) in all
   estimators are now significantly more efficient for float32 data by leveraging
   NumPy's SIMD optimized primitives.
@@ -84,6 +91,10 @@ Changes impacting all modules
   :pr:`23604` and :pr:`23585` by :user:`Julien Jerphanion <jjerphan>`,
   :user:`Olivier Grisel <ogrisel>`, and `Thomas Fan`_.
 
+- |Fix| Systematically check the sha256 digest of dataset tarballs used in code
+  examples in the documentation.
+  :pr:`24617` by :user:`Olivier Grisel <ogrisel>` and `Thomas Fan`_. Thanks to
+  `Sim4n6 <https://huntr.dev/users/sim4n6>`_ for the report.
 
 Changelog
 ---------
@@ -250,6 +261,12 @@ Changelog
 
 :mod:`sklearn.ensemble`
 .......................
+
+- |Feature| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+  :class:`~sklearn.ensemble.HistGradientBoostingRegressor` now support
+  interaction constraints via the argument `interaction_cst` of their
+  constructors.
+  :pr:`21020` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Feature| Adds `class_weight` to :class:`ensemble.HistGradientBoostingClassifier`.
   :pr:`22014` by `Thomas Fan`_.
@@ -515,6 +532,14 @@ Changelog
   :func:`utils.discovery.all_displays`) and functions (i.e.
   :func:`utils.discovery.all_functions`) in scikit-learn.
   :pr:`21469` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |API| Added an `"auto"` option to the `normalized_stress` argument in
+  :class:`manifold.MDS` and :func:`manifold.smacof`. Note that
+  `normalized_stress` is only valid for non-metric MDS, therefore the `"auto"`
+  option enables `normalized_stress` when `metric=False` and disables it when
+  `metric=True`. `"auto"` will become the default value foor `normalized_stress`
+  in version 1.4.
+  :pr:`23834` by :user:`Meekail Zain <micky774>`
 
 Code and Documentation Contributors
 -----------------------------------
