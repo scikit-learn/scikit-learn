@@ -7,6 +7,7 @@ from scipy import sparse
 from scipy.sparse import csgraph
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh
+from scipy.sparse.linalg import lobpcg
 
 from sklearn.manifold import SpectralEmbedding, _spectral_embedding
 from sklearn.manifold._spectral_embedding import _graph_is_connected
@@ -20,7 +21,6 @@ from sklearn.datasets import make_blobs
 from sklearn.utils.extmath import _deterministic_vector_sign_flip
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils.fixes import lobpcg
 
 try:
     from pyamg import smoothed_aggregation_solver  # noqa

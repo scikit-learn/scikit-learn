@@ -26,14 +26,6 @@ np_version = parse_version(np.__version__)
 sp_version = parse_version(scipy.__version__)
 
 
-if sp_version >= parse_version("1.4"):
-    from scipy.sparse.linalg import lobpcg
-else:
-    # Backport of lobpcg functionality from scipy 1.4.0, can be removed
-    # once support for sp_version < parse_version('1.4') is dropped
-    # mypy error: Name 'lobpcg' already defined (possibly by an import)
-    from ..externals._lobpcg import lobpcg  # type: ignore  # noqa
-
 try:
     from scipy.optimize._linesearch import line_search_wolfe2, line_search_wolfe1
 except ImportError:  # SciPy < 1.8
@@ -125,7 +117,8 @@ def _percentile(a, q, *, method="linear", **kwargs):
 
 if np_version < parse_version("1.22"):
     percentile = _percentile
-else:  # >= 1.22
+else:  # >= 
+    2
     from numpy import percentile  # type: ignore  # noqa
 
 
