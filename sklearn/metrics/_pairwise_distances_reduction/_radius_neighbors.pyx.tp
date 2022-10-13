@@ -495,7 +495,6 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
             ITYPE_t i, j
             ITYPE_t pair_index = 0
             DTYPE_t sqeuclidean_dist_i_j
-
             DTYPE_t *dist_middle_terms = self.gemm_term_computer._compute_dist_middle_terms(
                 X_start, X_end, Y_start, Y_end, thread_num
             )
