@@ -967,7 +967,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             if rank:
                 # When the fit/scoring fails `array_means` contains NaNs, we
                 # will exclude them from the ranking process and consider them
-                # as ties as worst performers.
+                # as tied with the worst performers.
                 if np.isnan(array_means).all():
                     # All fit/scoring routines failed.
                     rank_result = np.ones_like(array_means, dtype=np.int32)
