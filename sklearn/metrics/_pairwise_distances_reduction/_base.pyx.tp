@@ -455,7 +455,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         to ensure the proper upcast of Y[Y_start:Y_end] to float64 prior
         to the reduction with float64 accumulator buffers when Y.dtype is
         float32.
-        """""
+        """
         return
 
     cdef void _parallel_on_Y_synchronize(
