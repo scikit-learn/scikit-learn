@@ -47,7 +47,12 @@ random sampling procedures.
   :func:`linear_model._sgd_fast._plain_sgd` which is used by :class:`linear_model.SGDRegressor`
   and :class:`linear_model.SGDClassifier`. The old condition did not disambiguate between
   training and validation set and had an effect of overscaling the error tolerance.
-  This has been fixed in :pr:`23798` by :user:`Harsh Agrawal <Harsh14901>`
+  This has been fixed in :pr:`23798` by :user:`Harsh Agrawal <Harsh14901>`.
+
+- |Fix| For :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV` ranks corresponding to nan
+  scores will all be set to the maximum possible rank.
+  :pr:`24543` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changes impacting all modules
 -----------------------------
@@ -429,6 +434,11 @@ Changelog
 - |Fix| For all `SearchCV` classes and scipy >= 1.10, rank corresponding to a
   nan score is correctly set to the maximum possible rank, rather than
   `np.iinfo(np.int32).min`. :pr:`24141` by :user:`Loïc Estève <lesteve>`.
+
+- |Fix| For :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV` ranks corresponding to nan
+  scores will all be set to the maximum possible rank.
+  :pr:`24543` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.multioutput`
 ..........................
