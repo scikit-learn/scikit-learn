@@ -403,10 +403,9 @@ Changelog
   nan score is correctly set to the maximum possible rank, rather than
   `np.iinfo(np.int32).min`. :pr:`24141` by :user:`Loïc Estève <lesteve>`.
 
-- |Fix| :class:`model_selection.GridSearchCV` and
-  :class:`model_selection.RandomizedSearchCV` now rank as wort equally
-  performers the fit/scoring routines that fail and return `np.nan` scores.
-  Previous failing routines were ranked arbitrarily differently without ties.
+- |Fix| For :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV` ranks corresponding to nan
+  scores will all be set to the maximum possible rank.
   :pr:`24543` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.multioutput`
