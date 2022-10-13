@@ -148,8 +148,9 @@ def _weighted_sum(sample_score, sample_weight, normalize=False):
 
 def _nan_average(scores, weights):
     """
-    Wrapper to combine np.average and np.nanmean, so np.nan values are ignored from the average
-    and weights can be passed. Note that when possible, we degenerate to the prime methods.
+    Wrapper to combine np.average and np.nanmean, so np.nan values are ignored
+    from the average and weights can be passed. Note that when possible,
+    we degenerate to the prime methods.
     """
 
     if len(scores) == 0:
