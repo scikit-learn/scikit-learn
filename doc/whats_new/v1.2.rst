@@ -45,9 +45,9 @@ random sampling procedures.
   This has been fixed in :pr:`23798` by :user:`Harsh Agrawal <Harsh14901>`.
 
 - |Fix| :class:`model_selection.GridSearchCV` and
-  :class:`model_selection.RandomizedSearchCV` will rank as wort equally
-  performers the fit/scoring routines that fail and return `np.nan` scores.
-  Previous failing routines were ranked arbitrarily differently without ties.
+  :class:`model_selection.RandomizedSearchCV` will rank fit/scoring routines
+  that raise an exception as equal worst. Previously they were ranked as worst performers
+  in an arbitrary order.
   :pr:`24543` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changes impacting all modules
