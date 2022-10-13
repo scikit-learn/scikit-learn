@@ -116,10 +116,6 @@ class BaseCallback(ABC):
         """
         pass
 
-    @abstractmethod
-    def on_fit_exception(self):
-        pass
-
     @property
     def auto_propagate(self):
         """Whether or not this callback should be propagated to sub-estimators.
@@ -167,9 +163,6 @@ def callback_aware(fit_method):
     def inner(self, *args, **kwargs):
         try:
             return fit_method(self, *args, **kwargs)
-        except BaseException:
-            self._eval_callbacks_on_fit_exception()
-            raise
         finally:
             self._eval_callbacks_on_fit_end()
 

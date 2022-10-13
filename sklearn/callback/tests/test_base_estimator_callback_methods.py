@@ -9,8 +9,6 @@ from sklearn.callback.tests._utils import NotValidCallback
 from sklearn.callback.tests._utils import Estimator
 from sklearn.callback.tests._utils import MetaEstimator
 
-from sklearn.callback import ProgressBar
-
 
 @pytest.mark.parametrize("callbacks",
     [

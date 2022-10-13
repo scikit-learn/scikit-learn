@@ -66,5 +66,3 @@ def test_snapshot_meta_estimator(n_jobs, prefer):
                 # We kept last 5 snapshots out of 20 iterations.
                 # This one is the 16 + i-th.
                 assert loaded_estimator.n_iter_ == 16 + i
-
-

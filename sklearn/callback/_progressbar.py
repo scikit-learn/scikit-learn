@@ -29,7 +29,7 @@ class ProgressBar(BaseCallback):
 
     Parameters
     ----------
-    backend: {"rich"}, default="rich"
+    backend: {"rich", "tqdm"}, default="rich"
         The backend for the progress bars display.
 
     max_depth_show : int, default=None
@@ -80,9 +80,6 @@ class ProgressBar(BaseCallback):
     def on_fit_end(self):
         self._stop_event.set()
         self.progress_monitor.join()
-
-    def on_fit_exception(self):
-        pass
 
     def __getstate__(self):
         state = self.__dict__.copy()

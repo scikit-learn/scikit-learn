@@ -1,9 +1,13 @@
 # License: BSD 3 clause
 
+from urllib import request
 from . import BaseCallback
 
 
 class EarlyStopping(BaseCallback):
+
+    request_from_reconstruction_attributes = True
+
     def __init__(
         self,
         X_val=None,
@@ -23,7 +27,9 @@ class EarlyStopping(BaseCallback):
         self._no_improvement = {}
         self._last_monitored = {}
 
-    def on_fit_iter_end(self, *, node, **kwargs):
+    def on_fit_iter_end(self, *, estimator, node, **kwargs):
+        new_estimator = kwargs.get("from_reconstruction_attributes", None)
+
         if node.depth != self.estimator._computation_tree.depth:
             return
 
