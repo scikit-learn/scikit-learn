@@ -359,11 +359,11 @@ def randomized_svd(
 
     Returns
     -------
-    u : ndarray of shape(, n_components)
+    u : ndarray of shape (n_samples, n_components)
         Unitary matrix having left singular vectors with signs flipped as columns.
-    s : array of shape(1, n_components)
+    s : ndarray of shape (n_components,)
         The singular values, sorted in non-increasing order.
-    vh : ndarray of shape(n_components, )
+    vh : ndarray of shape (n_components, n_features)
         Unitary matrix having right singular vectors with signs flipped as rows.
 
     Notes
