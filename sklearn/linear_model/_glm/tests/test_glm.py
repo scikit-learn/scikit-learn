@@ -727,8 +727,6 @@ def test_warm_start(solver, fit_intercept, global_random_seed):
     assert_allclose(glm1.score(X, y), glm2.score(X, y), rtol=1e-5)
 
 
-# FIXME: 'normalize' to be removed in 1.2 in LinearRegression
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize("n_samples, n_features", [(100, 10), (10, 100)])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize("sample_weight", [None, True])
@@ -768,7 +766,6 @@ def test_normal_ridge_comparison(
     # GLM has 1/(2*n) * Loss + 1/2*L2, Ridge has Loss + L2
     ridge = Ridge(
         alpha=alpha_ridge,
-        normalize=False,
         random_state=42,
         fit_intercept=fit_intercept,
         **ridge_params,

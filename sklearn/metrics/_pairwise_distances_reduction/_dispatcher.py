@@ -61,12 +61,15 @@ class BaseDistanceReductionDispatcher:
     @classmethod
     def valid_metrics(cls) -> List[str]:
         excluded = {
-            "pyfunc",  # is relatively slow because we need to coerce data as np arrays
+            # PyFunc cannot be supported because it necessitates interacting with
+            # the CPython interpreter to call user defined functions.
+            "pyfunc",
             "mahalanobis",  # is numerically unstable
-            # TODO: In order to support discrete distance metrics, we need to have a
-            # stable simultaneous sort which preserves the order of the input.
-            # The best might be using std::stable_sort and a Comparator taking an
-            # Arrays of Structures instead of Structure of Arrays (currently used).
+            # In order to support discrete distance metrics, we need to have a
+            # stable simultaneous sort which preserves the order of the indices
+            # because there generally is a lot of occurrences for a given values
+            # of distances in this case.
+            # TODO: implement a stable simultaneous_sort.
             "hamming",
             *BOOL_METRICS,
         }
@@ -241,8 +244,6 @@ class ArgKmin(BaseDistanceReductionDispatcher):
                 'parallel_on_X' is usually the most efficient strategy.
                 When `X.shape[0]` is small but `Y.shape[0]` is large, 'parallel_on_Y'
                 brings more opportunity for parallelism and is therefore more efficient
-                despite the synchronization step at each iteration of the outer loop
-                on chunks of `X`.
 
               - None (default) looks-up in scikit-learn configuration for
                 `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
@@ -265,20 +266,14 @@ class ArgKmin(BaseDistanceReductionDispatcher):
 
         Notes
         -----
-        This classmethod is responsible for introspecting the arguments
-        values to dispatch to the most appropriate implementation of
-        :class:`ArgKmin64`.
+        This classmethod inspects the arguments values to dispatch to the
+        dtype-specialized implementation of :class:`ArgKmin`.
 
         This allows decoupling the API entirely from the implementation details
         whilst maintaining RAII: all temporarily allocated datastructures necessary
         for the concrete implementation are therefore freed when this classmethod
         returns.
         """
-        # Note (jjerphan): Some design thoughts for future extensions.
-        # This factory comes to handle specialisations for the given arguments.
-        # For future work, this might can be an entrypoint to specialise operations
-        # for various backend and/or hardware and/or datatypes, and/or fused
-        # {sparse, dense}-datasetspair etc.
         if X.dtype == Y.dtype == np.float64:
             return ArgKmin64.compute(
                 X=X,
@@ -415,21 +410,14 @@ class RadiusNeighbors(BaseDistanceReductionDispatcher):
 
         Notes
         -----
-        This public classmethod is responsible for introspecting the arguments
-        values to dispatch to the private dtype-specialized implementation of
-        :class:`RadiusNeighbors64`.
+        This classmethod inspects the arguments values to dispatch to the
+        dtype-specialized implementation of :class:`RadiusNeighbors`.
 
-        All temporarily allocated datastructures necessary for the concrete
-        implementation are therefore freed when this classmethod returns.
-
-        This allows entirely decoupling the API entirely from the
-        implementation details whilst maintaining RAII.
+        This allows decoupling the API entirely from the implementation details
+        whilst maintaining RAII: all temporarily allocated datastructures necessary
+        for the concrete implementation are therefore freed when this classmethod
+        returns.
         """
-        # Note (jjerphan): Some design thoughts for future extensions.
-        # This factory comes to handle specialisations for the given arguments.
-        # For future work, this might can be an entrypoint to specialise operations
-        # for various backend and/or hardware and/or datatypes, and/or fused
-        # {sparse, dense}-datasetspair etc.
         if X.dtype == Y.dtype == np.float64:
             return RadiusNeighbors64.compute(
                 X=X,
