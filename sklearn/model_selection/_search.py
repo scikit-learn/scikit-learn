@@ -973,9 +973,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                     rank_result = np.ones_like(array_means, dtype=np.int32)
                 else:
                     min_array_means = np.nanmin(array_means) - 1
-                    array_means = np.nan_to_num(
-                        array_means, copy=True, nan=min_array_means
-                    )
+                    array_means = np.nan_to_num(array_means, nan=min_array_means)
                     rank_result = rankdata(-array_means, method="min").astype(
                         np.int32, copy=False
                     )
