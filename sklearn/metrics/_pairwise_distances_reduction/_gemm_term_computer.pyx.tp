@@ -65,7 +65,7 @@ cdef class GEMMTermComputer{{name_suffix}}:
         self.dist_middle_terms_chunks = vector[vector[DTYPE_t]](self.effective_n_threads)
 
 {{if upcast_to_float64}}
-        # We populate the buffer for upcasting chunks of X and Y from 32bit to 64bit.
+        # We populate the buffer for upcasting chunks of X and Y from float32 to float64.
         self.X_c_upcast = vector[vector[DTYPE_t]](self.effective_n_threads)
         self.Y_c_upcast = vector[vector[DTYPE_t]](self.effective_n_threads)
 
