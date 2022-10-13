@@ -44,10 +44,9 @@ random sampling procedures.
   training and validation set and had an effect of overscaling the error tolerance.
   This has been fixed in :pr:`23798` by :user:`Harsh Agrawal <Harsh14901>`.
 
-- |Fix| :class:`model_selection.GridSearchCV` and
-  :class:`model_selection.RandomizedSearchCV` now rank fit/scoring routines
-  that raise an exception as equal worst. Previously they were ranked as worst performers
-  in an arbitrary order.
+- |Fix| For :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV` ranks corresponding to nan
+  scores will all be set to the maximum possible rank.
   :pr:`24543` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changes impacting all modules
