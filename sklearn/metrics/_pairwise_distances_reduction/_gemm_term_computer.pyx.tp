@@ -22,7 +22,6 @@ from ...utils._typedefs cimport DTYPE_t, ITYPE_t
 from ...utils._cython_blas cimport (
   BLAS_Order,
   BLAS_Trans,
-  ColMajor,
   NoTrans,
   RowMajor,
   Trans,
@@ -32,10 +31,10 @@ from ...utils._cython_blas cimport (
 {{for name_suffix, upcast_to_float64, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
 cdef class GEMMTermComputer{{name_suffix}}:
-    """Component for `FastEuclidean*` variant wrapping the logic for the call to GEMM.
+    """Component for `EuclideanDistance` specialisation wrapping the logic for the call to GEMM.
 
-    `FastEuclidean*` classes internally compute the squared Euclidean distances between
-    chunks of vectors X_c and Y_c using the following decomposition:
+    `EuclideanDistance` subclasses internally compute the squared Euclidean distances
+    between chunks of vectors X_c and Y_c using the following decomposition:
 
 
                 ||X_c_i - Y_c_j||² = ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
@@ -167,7 +166,7 @@ cdef class GEMMTermComputer{{name_suffix}}:
         return
 {{endif}}
 
-    cdef DTYPE_t * _compute_distances_on_chunks(
+    cdef DTYPE_t * _compute_dist_middle_terms(
         self,
         ITYPE_t X_start,
         ITYPE_t X_end,
@@ -176,8 +175,6 @@ cdef class GEMMTermComputer{{name_suffix}}:
         ITYPE_t thread_num,
     ) nogil:
         cdef:
-            ITYPE_t i, j
-            DTYPE_t squared_dist_i_j
             const {{INPUT_DTYPE_t}}[:, ::1] X_c = self.X[X_start:X_end, :]
             const {{INPUT_DTYPE_t}}[:, ::1] Y_c = self.Y[Y_start:Y_end, :]
             DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num].data()

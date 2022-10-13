@@ -330,26 +330,6 @@ pip_build_metadata_list = [
         # pip-compile
         "python_version": "3.8.5",
     },
-    {
-        "build_name": "py38_pip_openblas_32bit",
-        "folder": "build_tools/azure",
-        "pip_dependencies": [
-            "numpy",
-            "scipy",
-            "cython",
-            "joblib",
-            "threadpoolctl",
-            "pytest",
-            "pytest-xdist",
-            "pillow",
-            "pooch",
-            "wheel",
-        ],
-        # The Windows 32bit build use 3.8.10. No cross-compilation support for
-        # pip-compile, we are going to assume the pip lock file on a Linux
-        # 64bit machine gives appropriate versions
-        "python_version": "3.8.10",
-    },
 ]
 
 
