@@ -188,7 +188,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
         ITYPE_t X_end,
     ) nogil:
         cdef:
-            ITYPE_t idx, jdx
+            ITYPE_t idx
 
         # Sorting the main heaps portion associated to `X[X_start:X_end]`
         # in ascending order w.r.t the distances.
@@ -287,7 +287,6 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
     cdef void compute_exact_distances(self) nogil:
         cdef:
             ITYPE_t i, j
-            ITYPE_t[:, ::1] Y_indices = self.argkmin_indices
             DTYPE_t[:, ::1] distances = self.argkmin_distances
         for i in prange(self.n_samples_X, schedule='static', nogil=True,
                         num_threads=self.effective_n_threads):
@@ -432,7 +431,6 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
     cdef void _parallel_on_Y_init(
         self,
     ) nogil:
-        cdef ITYPE_t thread_num
         ArgKmin{{name_suffix}}._parallel_on_Y_init(self)
         self.gemm_term_computer._parallel_on_Y_init()
 

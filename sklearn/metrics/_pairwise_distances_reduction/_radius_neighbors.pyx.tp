@@ -215,7 +215,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
         ITYPE_t X_end,
     ) nogil:
         cdef:
-            ITYPE_t idx, jdx
+            ITYPE_t idx
 
         # Sorting neighbors for each query vector of X
         if self.sort_results:
@@ -276,7 +276,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
         self,
     ) nogil:
         cdef:
-            ITYPE_t idx, jdx, thread_num, idx_n_element, idx_current
+            ITYPE_t idx
 
         with nogil, parallel(num_threads=self.effective_n_threads):
             # Merge vectors used in threads into the main ones.
@@ -436,7 +436,6 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
     cdef void _parallel_on_Y_init(
         self,
     ) nogil:
-        cdef ITYPE_t thread_num
         RadiusNeighbors{{name_suffix}}._parallel_on_Y_init(self)
         self.gemm_term_computer._parallel_on_Y_init()
 
