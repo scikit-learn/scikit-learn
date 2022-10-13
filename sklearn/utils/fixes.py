@@ -117,8 +117,7 @@ def _percentile(a, q, *, method="linear", **kwargs):
 
 if np_version < parse_version("1.22"):
     percentile = _percentile
-else:  # >= 
-    2
+else:  # >= 1.22
     from numpy import percentile  # type: ignore  # noqa
 
 
