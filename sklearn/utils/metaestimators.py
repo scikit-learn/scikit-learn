@@ -160,7 +160,9 @@ def if_delegate_has_method(delegate):
 
     Returns
     -------
-    TO DO
+    callable
+        Callable makes the decorated method available if the delegate
+        has a method with the same name as the decorated method.
     """
     if isinstance(delegate, list):
         delegate = tuple(delegate)
