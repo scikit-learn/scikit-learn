@@ -12,7 +12,6 @@ import numpy as np
 from scipy import sparse
 from scipy.linalg import eigh
 from scipy.sparse.linalg import eigsh
-from scipy.sparse.linalg import lobpcg
 from scipy.sparse.csgraph import connected_components
 from scipy.sparse.csgraph import laplacian as csgraph_laplacian
 
@@ -25,6 +24,7 @@ from ..utils import (
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import _deterministic_vector_sign_flip
 from ..utils._param_validation import Interval, StrOptions
+from ..utils.fixes import lobpcg
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph, NearestNeighbors
 
