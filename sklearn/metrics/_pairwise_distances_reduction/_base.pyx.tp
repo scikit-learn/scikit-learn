@@ -442,8 +442,9 @@ cdef class BaseDistancesReduction{{name_suffix}}:
             thread_num, X_start, X_end,
         )
 
-        to ensure for the float32 case, the proper upcast of X[X_start:X_end] to
-        dedicated float64 buffers prior the reduction.
+        to ensure the proper upcast of X[X_start:X_end] to float64 prior
+        to the reduction with float64 accumulator buffers when X.dtype is
+        float32.
         """
         return
 
@@ -464,8 +465,9 @@ cdef class BaseDistancesReduction{{name_suffix}}:
             X_start, X_end, Y_start, Y_end, thread_num,
         )
 
-        to ensure for the float32 case, the proper upcast of Y[Y_start:Y_end] to
-        dedicated float64 buffers prior the reduction.
+        to ensure the proper upcast of Y[Y_start:Y_end] to float64 prior
+        to the reduction with float64 accumulator buffers when Y.dtype is
+        float32.
         """""
         return
 
