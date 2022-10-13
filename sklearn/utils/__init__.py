@@ -705,7 +705,7 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
     batch_size : int
         Number of elements in each batch.
     min_batch_size : int, default=0
-        Set minimum required number of elements in each batch.
+        Minimum number of elements in each batch.
 
     Yields
     ------
