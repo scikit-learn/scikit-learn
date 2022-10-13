@@ -161,6 +161,9 @@ def _nan_average(scores, weights):
         return np.nan
 
     weights = np.asarray(weights)
+    if not mask.any():
+        return np.average(scores, weights=weights)
+
     scores, weights = scores[~mask], weights[~mask]
 
     try:
