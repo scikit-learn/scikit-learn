@@ -109,3 +109,8 @@ import pandas as pd
 log_reg = clf[-1]
 coef = pd.Series(log_reg.coef_.ravel(), index=log_reg.feature_names_in_)
 _ = coef.sort_values().plot.barh()
+
+# %%
+# This resets `transform_output` to its default value to avoid impacting other
+# examples when generating the scikit-learn documentation
+set_config(transform_output="default")
