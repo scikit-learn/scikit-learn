@@ -265,18 +265,6 @@ def test_update_sigma(global_random_seed):
     np.testing.assert_allclose(sigma, sigma_woodbury)
 
 
-# FIXME: 'normalize' to be removed in 1.2 in LinearRegression
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
-def test_ard_regression_predict_normalize_true():
-    """Check that we can predict with `normalize=True` and `return_std=True`.
-    Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/18605
-    """
-    clf = ARDRegression(normalize=True)
-    clf.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
-    clf.predict([[1, 1]], return_std=True)
-
-
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
 def test_dtype_match(dtype, Estimator):
