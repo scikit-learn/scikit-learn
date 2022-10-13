@@ -7,11 +7,11 @@ dependencies:
   - python=3.8
   - numpy=1.17.3  # min
   - blas
-  - scipy=1.3.2  # min
+  - scipy=1.4.1  # min
   - cython=0.29.24  # min
   - joblib
   - threadpoolctl
-  - matplotlib=3.1.2  # min
+  - matplotlib=3.1.3  # min
   - pandas=1.0.5  # min
   - pyamg
   - pytest
