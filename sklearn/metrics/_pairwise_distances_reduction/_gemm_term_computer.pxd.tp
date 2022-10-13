@@ -76,7 +76,7 @@ cdef class GEMMTermComputer{{name_suffix}}:
         ITYPE_t thread_num
     ) nogil
 
-    cdef DTYPE_t * _compute_distances_on_chunks(
+    cdef DTYPE_t * _compute_dist_middle_terms(
         self,
         ITYPE_t X_start,
         ITYPE_t X_end,
