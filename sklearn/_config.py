@@ -14,6 +14,7 @@ _global_config = {
     ),
     "enable_cython_pairwise_dist": True,
     "array_api_dispatch": False,
+    "transform_output": "default",
 }
 _threadlocal = threading.local()
 
@@ -52,6 +53,7 @@ def set_config(
     pairwise_dist_chunk_size=None,
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
+    transform_output=None,
 ):
     """Set global scikit-learn configuration
 
@@ -120,6 +122,11 @@ def set_config(
 
         .. versionadded:: 1.2
 
+    transform_output : str, default=None
+        Configure the output container for transform.
+
+        .. versionadded:: 1.2
+
     See Also
     --------
     config_context : Context manager for global scikit-learn configuration.
@@ -141,6 +148,8 @@ def set_config(
         local_config["enable_cython_pairwise_dist"] = enable_cython_pairwise_dist
     if array_api_dispatch is not None:
         local_config["array_api_dispatch"] = array_api_dispatch
+    if transform_output is not None:
+        local_config["transform_output"] = transform_output
 
 
 @contextmanager
@@ -153,6 +162,7 @@ def config_context(
     pairwise_dist_chunk_size=None,
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
+    transform_output=None,
 ):
     """Context manager for global scikit-learn configuration.
 
@@ -220,6 +230,11 @@ def config_context(
 
         .. versionadded:: 1.2
 
+    transform_output : str, default=None
+        Configure the output container for transform.
+
+        .. versionadded:: 1.2
+
     Yields
     ------
     None.
@@ -256,6 +271,7 @@ def config_context(
         pairwise_dist_chunk_size=pairwise_dist_chunk_size,
         enable_cython_pairwise_dist=enable_cython_pairwise_dist,
         array_api_dispatch=array_api_dispatch,
+        transform_output=transform_output,
     )
 
     try:
