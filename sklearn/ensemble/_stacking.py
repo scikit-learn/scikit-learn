@@ -406,6 +406,10 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         list is defined as a tuple of string (i.e. name) and an estimator
         instance. An estimator can be set to 'drop' using `set_params`.
 
+        The type of estimator is generally expected to be a classifier.
+        However, one can pass a regressor for some use case (e.g. ordinal
+        regression) but the target `y` is expected to be encoded as numerical.
+
     final_estimator : estimator, default=None
         A classifier which will be used to combine the base estimators.
         The default classifier is a
@@ -618,7 +622,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
-            Target values.
+            Target values.Update sklearn/ensemble/_stacking.py
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.

@@ -851,3 +851,16 @@ def test_stacking_classifier_base_regressor():
     clf.predict(X_test)
     clf.predict_proba(X_test)
     assert clf.score(X_test, y_test) > 0.8
+
+
+def test_stacking_classifier_base_regressor_y_string():
+    """Check that a regressor cannot be used as the first layer in
+    `StackingClassifier` if the target is encoded as a string.
+    """
+    y_str = iris.target_names[y_iris]
+    X_train, X_test, y_train, y_test = train_test_split(
+        scale(X_iris), y_str, stratify=y_str, random_state=42
+    )
+    clf = StackingClassifier(estimators=[("ridge", Ridge())])
+    with pytest.raises(ValueError, match="could not convert string to float:"):
+        clf.fit(X_train, y_train)
