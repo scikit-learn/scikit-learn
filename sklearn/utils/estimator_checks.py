@@ -3913,22 +3913,14 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         X_bad = pd.DataFrame(X, columns=invalid_name)
 
         expected_msg = re.escape(
-            "The feature names should match those that were passed "
-            "during fit. Starting version 1.2, an error will be raised.\n"
+            "The feature names should match those that were passed during fit.\n"
             f"{additional_message}"
         )
         for name, method in check_methods:
-            # TODO In 1.2, this will be an error.
-            with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    "error",
-                    category=FutureWarning,
-                    module="sklearn",
-                )
-                with raises(
-                    FutureWarning, match=expected_msg, err_msg=f"{name} did not raise"
-                ):
-                    method(X_bad)
+            with raises(
+                ValueError, match=expected_msg, err_msg=f"{name} did not raise"
+            ):
+                method(X_bad)
 
         # partial_fit checks on second call
         # Do not call partial fit if early_stopping is on
