@@ -266,9 +266,8 @@ class ArgKmin(BaseDistancesReductionDispatcher):
 
         Notes
         -----
-        This public classmethod is responsible for introspecting the arguments
-        values to dispatch to the private dtype-specialized implementation of
-        :class:`ArgKmin`.
+        This classmethod inspects the arguments values to dispatch to the
+        dtype-specialized implementation of :class:`ArgKmin`.
 
         This allows decoupling the API entirely from the implementation details
         whilst maintaining RAII: all temporarily allocated datastructures necessary
