@@ -74,7 +74,7 @@ def _check_init(A, shape, whom):
         raise ValueError("Array passed to %s is full of zeros." % whom)
 
 
-def _beta_divergence(X, W, H, beta, square_root=False):
+def beta_divergence(X, W, H, beta, square_root=False):
     """Compute the beta-divergence of X and dot(W, H).
 
     Parameters
@@ -816,7 +816,7 @@ def _fit_multiplicative_update(
         gamma = 1.0
 
     # used for the convergence criterion
-    error_at_init = _beta_divergence(X, W, H, beta_loss, square_root=True)
+    error_at_init = beta_divergence(X, W, H, beta_loss, square_root=True)
     previous_error = error_at_init
 
     H_sum, HHt, XHt = None, None, None
@@ -862,7 +862,7 @@ def _fit_multiplicative_update(
 
         # test convergence criterion every 10 iterations
         if tol > 0 and n_iter % 10 == 0:
-            error = _beta_divergence(X, W, H, beta_loss, square_root=True)
+            error = beta_divergence(X, W, H, beta_loss, square_root=True)
 
             if verbose:
                 iter_time = time.time()
@@ -1582,7 +1582,7 @@ class NMF(_BaseNMF):
         with config_context(assume_finite=True):
             W, H, n_iter = self._fit_transform(X, W=W, H=H)
 
-        self.reconstruction_err_ = _beta_divergence(
+        self.reconstruction_err_ = beta_divergence(
             X, W, H, self._beta_loss, square_root=True
         )
 
@@ -2038,7 +2038,7 @@ class MiniBatchNMF(_BaseNMF):
             W[W < np.finfo(np.float64).eps] = 0.0
 
         batch_cost = (
-            _beta_divergence(X, W, H, self._beta_loss)
+            beta_divergence(X, W, H, self._beta_loss)
             + l1_reg_W * W.sum()
             + l1_reg_H * H.sum()
             + l2_reg_W * (W**2).sum()
@@ -2159,7 +2159,7 @@ class MiniBatchNMF(_BaseNMF):
         with config_context(assume_finite=True):
             W, H, n_iter, n_steps = self._fit_transform(X, W=W, H=H)
 
-        self.reconstruction_err_ = _beta_divergence(
+        self.reconstruction_err_ = beta_divergence(
             X, W, H, self._beta_loss, square_root=True
         )
 

@@ -461,8 +461,8 @@ def test_beta_divergence():
 
     for beta in beta_losses:
         ref = _beta_divergence_dense(X, W, H, beta)
-        loss = nmf._beta_divergence(X, W, H, beta)
-        loss_csr = nmf._beta_divergence(X_csr, W, H, beta)
+        loss = nmf.beta_divergence(X, W, H, beta)
+        loss_csr = nmf.beta_divergence(X_csr, W, H, beta)
 
         assert_almost_equal(ref, loss, decimal=7)
         assert_almost_equal(ref, loss_csr, decimal=7)
@@ -740,7 +740,7 @@ def test_nmf_decreasing(solver):
             )
 
             loss = (
-                nmf._beta_divergence(X, W, H, beta_loss)
+                nmf.beta_divergence(X, W, H, beta_loss)
                 + alpha * l1_ratio * n_features * W.sum()
                 + alpha * l1_ratio * n_samples * H.sum()
                 + alpha * (1 - l1_ratio) * n_features * (W**2).sum()
@@ -760,9 +760,9 @@ def test_nmf_underflow():
     H = np.abs(rng.randn(n_components, n_features))
 
     X[0, 0] = 0
-    ref = nmf._beta_divergence(X, W, H, beta=1.0)
+    ref = nmf.beta_divergence(X, W, H, beta=1.0)
     X[0, 0] = 1e-323
-    res = nmf._beta_divergence(X, W, H, beta=1.0)
+    res = nmf.beta_divergence(X, W, H, beta=1.0)
     assert_almost_equal(res, ref)
 
 

@@ -20,7 +20,7 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.decomposition import NMF
 from sklearn.decomposition._nmf import _initialize_nmf
-from sklearn.decomposition._nmf import _beta_divergence
+from sklearn.decomposition import beta_divergence
 from sklearn.decomposition._nmf import _check_init
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot, squared_norm
@@ -369,7 +369,7 @@ def bench_one(
     end = time()
     H = clf.components_
 
-    this_loss = _beta_divergence(X, W, H, 2.0, True)
+    this_loss = beta_divergence(X, W, H, 2.0, True)
     duration = end - st
     return this_loss, duration
 

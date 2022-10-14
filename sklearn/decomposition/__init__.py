@@ -9,6 +9,7 @@ from ._nmf import (
     NMF,
     MiniBatchNMF,
     non_negative_factorization,
+    beta_divergence,
 )
 from ._pca import PCA
 from ._incremental_pca import IncrementalPCA
@@ -50,4 +51,5 @@ __all__ = [
     "FactorAnalysis",
     "TruncatedSVD",
     "LatentDirichletAllocation",
+    "beta_divergence",
 ]
