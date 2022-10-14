@@ -371,7 +371,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         check_is_fitted(self)
         return self.final_estimator_.predict(self.transform(X), **predict_params)
 
-    def _sk_visual_block_(self, final_estimator):
+    def _sk_visual_block_with_final_estimator(self, final_estimator):
         names, estimators = zip(*self.estimators)
         parallel = _VisualBlock("parallel", estimators, names=names, dash_wrapped=False)
 
@@ -747,7 +747,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             final_estimator = LogisticRegression()
         else:
             final_estimator = self.final_estimator
-        return super()._sk_visual_block_(final_estimator)
+        return super()._sk_visual_block_with_final_estimator(final_estimator)
 
 
 class StackingRegressor(RegressorMixin, _BaseStacking):
@@ -966,4 +966,4 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
             final_estimator = RidgeCV()
         else:
             final_estimator = self.final_estimator
-        return super()._sk_visual_block_(final_estimator)
+        return super()._sk_visual_block_with_final_estimator(final_estimator)

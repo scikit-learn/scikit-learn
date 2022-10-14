@@ -15,8 +15,8 @@ Changelog
 :mod:`sklearn.compose`
 ......................
 
-- |Fix| :meth:`compose.ColumnTransformer.get_feature_names` does not call
-  :term:`get_feature_names` on transformers with an empty column selection.
+- |Fix| `compose.ColumnTransformer.get_feature_names` does not call
+  `get_feature_names` on transformers with an empty column selection.
   :pr:`19579` by `Thomas Fan`_.
 
 :mod:`sklearn.cross_decomposition`
