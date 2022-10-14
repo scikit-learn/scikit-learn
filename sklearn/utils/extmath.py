@@ -82,15 +82,37 @@ def row_norms(X, squared=False):
 
 
 def fast_logdet(A):
-    """Compute log(det(A)) for A symmetric.
+    """Compute logarithm of determinant of a square matrix.
 
-    Equivalent to : np.log(nl.det(A)) but more robust.
-    It returns -Inf if det(A) is non positive or is not defined.
+    The (natural) logarithm of the determinant of a square matrix
+    is returned if det(A) is non-negative and well defined.
+    If the determinant is zero or negative returns -Inf.
+
+    Equivalent to : np.log(np.det(A)) but more robust.
 
     Parameters
     ----------
-    A : array-like
-        The matrix.
+    A : array_like of shape (n, n)
+        The square matrix.
+
+    Returns
+    -------
+    logdet : float
+        When det(A) is strictly positive, log(det(A)) is returned.
+        When det(A) is non-positive or not defined, then -inf is returned.
+
+    See Also
+    --------
+    numpy.linalg.slogdet : Compute the sign and (natural) logarithm of the determinant
+        of an array.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.extmath import fast_logdet
+    >>> a = np.array([[5, 1], [2, 8]])
+    >>> fast_logdet(a)
+    3.6375861597263857
     """
     sign, ld = np.linalg.slogdet(A)
     if not sign > 0:
