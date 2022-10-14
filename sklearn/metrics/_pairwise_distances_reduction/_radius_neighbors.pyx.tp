@@ -214,6 +214,9 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
+        cdef:
+            ITYPE_t idx
+
         # Sorting neighbors for each query vector of X
         if self.sort_results:
             for idx in range(X_start, X_end):
@@ -521,4 +524,5 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
                     deref(self.neigh_indices_chunks[thread_num])[i].push_back(j)
 
                 pair_index += 1
+
 {{endfor}}

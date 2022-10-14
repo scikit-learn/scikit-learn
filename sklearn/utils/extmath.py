@@ -274,7 +274,7 @@ def randomized_svd(
     random_state="warn",
     svd_lapack_driver="gesdd",
 ):
-    """Computes a truncated randomized SVD.
+    """Compute a truncated randomized SVD.
 
     This method solves the fixed-rank approximation problem described in [1]_
     (problem (1.5), p5).
@@ -357,6 +357,15 @@ def randomized_svd(
 
         .. versionadded:: 1.2
 
+    Returns
+    -------
+    u : ndarray of shape (n_samples, n_components)
+        Unitary matrix having left singular vectors with signs flipped as columns.
+    s : ndarray of shape (n_components,)
+        The singular values, sorted in non-increasing order.
+    vh : ndarray of shape (n_components, n_features)
+        Unitary matrix having right singular vectors with signs flipped as rows.
+
     Notes
     -----
     This algorithm finds a (usually very good) approximate truncated
@@ -381,6 +390,17 @@ def randomized_svd(
 
     .. [3] An implementation of a randomized algorithm for principal component
       analysis A. Szlam et al. 2014
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.extmath import randomized_svd
+    >>> a = np.array([[1, 2, 3, 5],
+    ...               [3, 4, 5, 6],
+    ...               [7, 8, 9, 10]])
+    >>> U, s, Vh = randomized_svd(a, n_components=2, random_state=0)
+    >>> U.shape, s.shape, Vh.shape
+    ((3, 2), (2,), (2, 4))
     """
     if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
         warnings.warn(

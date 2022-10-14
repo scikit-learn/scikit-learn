@@ -647,8 +647,7 @@ def test_feature_names_in():
             warnings.simplefilter("error", UserWarning)
             trans.transform(X)
 
-    # TODO: Convert to a error in 1.2
-    # fit on dataframe with feature names that are mixed warns:
+    # fit on dataframe with feature names that are mixed raises an error:
     df_mixed = pd.DataFrame(X_np, columns=["a", "b", 1, 2])
     trans = NoOpTransformer()
     msg = re.escape(
@@ -658,7 +657,7 @@ def test_feature_names_in():
     with pytest.raises(TypeError, match=msg):
         trans.fit(df_mixed)
 
-    # transform on feature names that are mixed also warns:
+    # transform on feature names that are mixed also raises:
     with pytest.raises(TypeError, match=msg):
         trans.transform(df_mixed)
 

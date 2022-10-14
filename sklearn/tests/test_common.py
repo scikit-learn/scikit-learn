@@ -463,8 +463,6 @@ def test_check_param_validation(estimator):
     check_param_validation(name, estimator)
 
 
-# TODO: remove this filter in 1.2
-@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "Estimator",
     [

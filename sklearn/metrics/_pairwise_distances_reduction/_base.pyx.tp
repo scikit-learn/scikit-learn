@@ -356,15 +356,16 @@ cdef class BaseDistancesReduction{{name_suffix}}:
     ) nogil:
         """Initialize datastructures used in a thread given its number.
 
-        EuclideanDistance specialisations of subclass of BaseDistancesReduction _must_
-        in this method call:
+        In this method, EuclideanDistance specialisations of subclass of
+        BaseDistancesReduction _must_ call:
 
         self.gemm_term_computer._parallel_on_X_init_chunk(
             thread_num, X_start, X_end,
         )
 
-        to ensure for the float32 case, the proper upcast of X[X_start:X_end] to
-        dedicated float64 buffers prior the reduction.
+        to ensure the proper upcast of X[X_start:X_end] to float64 prior
+        to the reduction with float64 accumulator buffers when X.dtype is
+        float32.
         """
         return
 
@@ -378,15 +379,16 @@ cdef class BaseDistancesReduction{{name_suffix}}:
     ) nogil:
         """Initialize datastructures just before the _compute_and_reduce_distances_on_chunks.
 
-        EuclideanDistance specialisations of subclass of BaseDistancesReduction _must_
-        in this method call:
+        In this method, EuclideanDistance specialisations of subclass of
+        BaseDistancesReduction _must_ call:
 
         self.gemm_term_computer._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
             X_start, X_end, Y_start, Y_end, thread_num,
         )
 
-        to ensure for the float32 case, the proper upcast of Y[Y_start:Y_end] to
-        dedicated float64 buffers prior the reduction.
+        to ensure the proper upcast of Y[Y_start:Y_end] to float64 prior
+        to the reduction with float64 accumulator buffers when Y.dtype is
+        float32.
         """
         return
 
@@ -420,15 +422,16 @@ cdef class BaseDistancesReduction{{name_suffix}}:
     ) nogil:
         """Initialize datastructures used in a thread given its number.
 
-        EuclideanDistance specialisations of subclass of BaseDistancesReduction _must_
-        in this method call:
+        In this method, EuclideanDistance specialisations of subclass of
+        BaseDistancesReduction _must_ call:
 
         self.gemm_term_computer._parallel_on_Y_parallel_init(
             thread_num, X_start, X_end,
         )
 
-        to ensure for the float32 case, the proper upcast of X[X_start:X_end] to
-        dedicated float64 buffers prior the reduction.
+        to ensure the proper upcast of X[X_start:X_end] to float64 prior
+        to the reduction with float64 accumulator buffers when X.dtype is
+        float32.
         """
         return
 
@@ -442,16 +445,17 @@ cdef class BaseDistancesReduction{{name_suffix}}:
     ) nogil:
         """Initialize datastructures just before the _compute_and_reduce_distances_on_chunks.
 
-        EuclideanDistance specialisations of subclass of BaseDistancesReduction _must_
-        in this method call:
+        In this method, EuclideanDistance specialisations of subclass of
+        BaseDistancesReduction _must_ call:
 
         self.gemm_term_computer._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
             X_start, X_end, Y_start, Y_end, thread_num,
         )
 
-        to ensure for the float32 case, the proper upcast of Y[Y_start:Y_end] to
-        dedicated float64 buffers prior the reduction.
-        """""
+        to ensure the proper upcast of Y[Y_start:Y_end] to float64 prior
+        to the reduction with float64 accumulator buffers when Y.dtype is
+        float32.
+        """
         return
 
     cdef void _parallel_on_Y_synchronize(
