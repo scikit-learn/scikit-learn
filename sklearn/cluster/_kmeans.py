@@ -1055,11 +1055,12 @@ class _BaseKMeans(
         X = self._check_test_data(X)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        labels, _ = _labels_inertia_threadpool_limit(
+        labels = _labels_inertia_threadpool_limit(
             X,
             sample_weight,
             self.cluster_centers_,
             n_threads=self._n_threads,
+            return_inertia=False,
         )
 
         return labels
