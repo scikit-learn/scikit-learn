@@ -15,6 +15,7 @@ import numpy as np
 from . import __version__
 from ._config import get_config
 from .utils import _IS_32BIT
+from .utils._set_output import _SetOutputMixin
 from .utils._tags import (
     _DEFAULT_TAGS,
 )
@@ -98,6 +99,13 @@ def clone(estimator, *, safe=True):
                 "Cannot clone object %s, as the constructor "
                 "either does not set or modifies parameter %s" % (estimator, name)
             )
+
+    # _sklearn_output_config is used by `set_output` to configure the output
+    # container of an estimator.
+    if hasattr(estimator, "_sklearn_output_config"):
+        new_object._sklearn_output_config = copy.deepcopy(
+            estimator._sklearn_output_config
+        )
     return new_object
 
 
@@ -798,8 +806,13 @@ class BiclusterMixin:
         return data[row_ind[:, np.newaxis], col_ind]
 
 
-class TransformerMixin:
-    """Mixin class for all transformers in scikit-learn."""
+class TransformerMixin(_SetOutputMixin):
+    """Mixin class for all transformers in scikit-learn.
+
+    If :term:`get_feature_names_out` is defined and `auto_wrap_output` is True,
+    then `BaseEstimator` will automatically wrap `transform` and `fit_transform` to
+    follow the `set_output` API. See the :ref:`developer_api_set_output` for details.
+    """
 
     def fit_transform(self, X, y=None, **fit_params):
         """
