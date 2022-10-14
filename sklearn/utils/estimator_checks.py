@@ -3934,10 +3934,8 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         else:
             estimator.partial_fit(X, y)
 
-        with warnings.catch_warnings():
-            warnings.filterwarnings("error", category=FutureWarning, module="sklearn")
-            with raises(FutureWarning, match=expected_msg):
-                estimator.partial_fit(X_bad, y)
+        with raises(ValueError, match=expected_msg):
+            estimator.partial_fit(X_bad, y)
 
 
 def check_transformer_get_feature_names_out(name, transformer_orig):
