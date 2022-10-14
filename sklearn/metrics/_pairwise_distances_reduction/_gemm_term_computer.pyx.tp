@@ -22,7 +22,6 @@ from ...utils._typedefs cimport DTYPE_t, ITYPE_t
 from ...utils._cython_blas cimport (
   BLAS_Order,
   BLAS_Trans,
-  ColMajor,
   NoTrans,
   RowMajor,
   Trans,
@@ -66,7 +65,7 @@ cdef class GEMMTermComputer{{name_suffix}}:
         self.dist_middle_terms_chunks = vector[vector[DTYPE_t]](self.effective_n_threads)
 
 {{if upcast_to_float64}}
-        # We populate the buffer for upcasting chunks of X and Y from 32bit to 64bit.
+        # We populate the buffer for upcasting chunks of X and Y from float32 to float64.
         self.X_c_upcast = vector[vector[DTYPE_t]](self.effective_n_threads)
         self.Y_c_upcast = vector[vector[DTYPE_t]](self.effective_n_threads)
 
@@ -176,8 +175,6 @@ cdef class GEMMTermComputer{{name_suffix}}:
         ITYPE_t thread_num,
     ) nogil:
         cdef:
-            ITYPE_t i, j
-            DTYPE_t squared_dist_i_j
             const {{INPUT_DTYPE_t}}[:, ::1] X_c = self.X[X_start:X_end, :]
             const {{INPUT_DTYPE_t}}[:, ::1] Y_c = self.Y[Y_start:Y_end, :]
             DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num].data()
