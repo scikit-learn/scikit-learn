@@ -584,11 +584,7 @@ def test_check_estimator():
 
     # doesn't error on binary_only tagged estimator
     check_estimator(TaggedBinaryClassifier())
-
-    # Check regressor with requires_positive_X estimator tag
-    msg = "negative X values not supported!"
-    with raises(ValueError, match=msg):
-        check_estimator(RequiresPositiveXRegressor())
+    check_estimator(RequiresPositiveXRegressor())
 
     # Check regressor with requires_positive_y estimator tag
     msg = "negative y values not supported!"
