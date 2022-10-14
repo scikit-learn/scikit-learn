@@ -11,10 +11,6 @@ elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" || "$DISTRIB" == "pi
     source $VIRTUALENV/bin/activate
 fi
 
-if [[ "$BUILD_WITH_ICC" == "true" ]]; then
-    source /opt/intel/oneapi/setvars.sh
-fi
-
 if [[ "$BUILD_REASON" == "Schedule" ]]; then
     # Enable global random seed randomization to discover seed-sensitive tests
     # only on nightly builds.
