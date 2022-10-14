@@ -74,6 +74,9 @@ def filter_errors(errors, method, Klass=None):
         # Ignore GL08: Parsing of the method signature failed, possibly because this is
         # a property. Properties are sometimes used for deprecated attributes and the
         # attribute is already documented in the class docstring.
+        #
+        # All error codes:
+        # https://numpydoc.readthedocs.io/en/latest/validation.html#built-in-validation-checks
         if code in ("PR02", "GL08") and Klass is not None and method is not None:
             method_obj = getattr(Klass, method)
             if isinstance(method_obj, property):
