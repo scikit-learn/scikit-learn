@@ -280,9 +280,3 @@ jobs:
         COVERAGE: 'true'
         SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '7'  # non-default seed
-      py38_pip_openblas_32bit:
-        DISTRIB: 'pip-windows'
-        PYTHON_VERSION: '3.8'
-        PYTHON_ARCH: '32'
-        LOCK_FILE: ./build_tools/azure/py38_pip_openblas_32bit_lock.txt
-        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '8'  # non-default seed
