@@ -88,23 +88,18 @@ def fast_logdet(A):
     is returned if det(A) is non-negative and well defined.
     If the determinant is zero or negative returns -Inf.
 
-    Log Det = log(det(A)) for A, where A is square matrix.
-
     Equivalent to : np.log(np.det(A)) but more robust.
 
     Parameters
     ----------
     A : array_like of shape (n, n)
-        Input array, has to be a square 2-D array.
-        The square matrix whose (natural) logarithm of the determinant
-        needs to be found.
+        The square matrix.
 
     Returns
     -------
     logdet : float
-        When det(A) is non-negative (natural) logarithm of the determinant
-        is returned. When the determinant is non-positive or not defined, then -inf
-        is returned.
+        When det(A) is strictly positive, log(det(A)) is returned.
+        When det(A) is non-positive or not defined, then -inf is returned.
 
     See Also
     --------
@@ -113,27 +108,11 @@ def fast_logdet(A):
 
     Examples
     --------
-    There can be three cases:
-    Case-1: Matrix with a Positive determinant (Value of the logarithm of the
-    determinant is returned)
-
     >>> import numpy as np
     >>> from sklearn.utils.extmath import fast_logdet
     >>> a = np.array([[5, 1], [2, 8]])
     >>> fast_logdet(a)
     3.6375861597263857
-
-    Case-2: Matrix with a determinant equal to zero (-inf is returned)
-
-    >>> b = np.array([[1, 2], [1, 2]])
-    >>> fast_logdet(b)
-    -inf
-
-    Case-3: Matrix with a Negative determinant (-inf is returned)
-
-    >>> c = np.array([[1, 2], [3, 4]])
-    >>> fast_logdet(c)
-    -inf
     """
     sign, ld = np.linalg.slogdet(A)
     if not sign > 0:
