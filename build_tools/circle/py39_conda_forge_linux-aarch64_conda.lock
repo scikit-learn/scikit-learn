@@ -6,7 +6,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/ca-certificates-2022.9.24-h
 https://conda.anaconda.org/conda-forge/linux-aarch64/ld_impl_linux-aarch64-2.36.1-h02ad14f_2.tar.bz2#3ca1a8e406eab04ffc3bfa6e8ac0a724
 https://conda.anaconda.org/conda-forge/linux-aarch64/libgfortran5-12.1.0-h41d5c85_16.tar.bz2#f053ad62fdac14fb8e73cfed4e8d2676
 https://conda.anaconda.org/conda-forge/linux-aarch64/libstdcxx-ng-12.1.0-hd01590b_16.tar.bz2#b64391bb81cc2f914d57c0927ec8a26b
-https://conda.anaconda.org/conda-forge/noarch/tzdata-2022d-h191b570_0.tar.bz2#456b5b1d99e7a9654b331bcd82e71042
+https://conda.anaconda.org/conda-forge/noarch/tzdata-2022e-h191b570_0.tar.bz2#b6bd89cf71494c41a181cac13cc5a8ea
 https://conda.anaconda.org/conda-forge/linux-aarch64/libgfortran-ng-12.1.0-he9431aa_16.tar.bz2#69e5a58bbd94c934277f715160c1f0b5
 https://conda.anaconda.org/conda-forge/linux-aarch64/_openmp_mutex-4.5-2_kmp_llvm.tar.bz2#98a1185182fec3c434069fa74e6473d6
 https://conda.anaconda.org/conda-forge/linux-aarch64/libgcc-ng-12.1.0-h3242a24_16.tar.bz2#70e9f0947c17f3faf1a1974be0c110bf
@@ -21,7 +21,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/libnsl-2.0.0-hf897c2e_0.tar
 https://conda.anaconda.org/conda-forge/linux-aarch64/libopenblas-0.3.21-pthreads_h6cb6f83_3.tar.bz2#bc66302748a788c3bce59999ed6d737d
 https://conda.anaconda.org/conda-forge/linux-aarch64/libuuid-2.32.1-hf897c2e_1000.tar.bz2#e038da5ef9095b0d79aac14a311394e7
 https://conda.anaconda.org/conda-forge/linux-aarch64/libwebp-base-1.2.4-h4e544f5_0.tar.bz2#9c307c3dba834b9529f6dcd95db543ed
-https://conda.anaconda.org/conda-forge/linux-aarch64/libzlib-1.2.12-h4e544f5_4.tar.bz2#8a35fc3171a2aa46b4c85ac9e50b63af
+https://conda.anaconda.org/conda-forge/linux-aarch64/libzlib-1.2.13-h4e544f5_4.tar.bz2#88596b6277fe6d39f046983aae6044db
 https://conda.anaconda.org/conda-forge/linux-aarch64/ncurses-6.3-headf329_1.tar.bz2#486b68148e121bc8bbadc3cefae4c04f
 https://conda.anaconda.org/conda-forge/linux-aarch64/openssl-3.0.5-h4e544f5_2.tar.bz2#84de06ee822d6c051d5392d34368af66
 https://conda.anaconda.org/conda-forge/linux-aarch64/pthread-stubs-0.4-hb9de7d4_1001.tar.bz2#d0183ec6ce0b5aaa3486df25fa5f0ded
@@ -82,7 +82,7 @@ https://conda.anaconda.org/conda-forge/linux-aarch64/contourpy-1.0.5-py39hcdbe1f
 https://conda.anaconda.org/conda-forge/linux-aarch64/fonttools-4.37.4-py39h0fd3b05_0.tar.bz2#9bc47544096e976740a6e1eafae75ce9
 https://conda.anaconda.org/conda-forge/linux-aarch64/pytest-7.1.3-py39ha65689a_0.tar.bz2#0e9a91becacb59bde34dd2dcf77d1b0e
 https://conda.anaconda.org/conda-forge/linux-aarch64/scipy-1.9.1-py39h7b076ec_0.tar.bz2#6bbd156fdd08d4384b85576c8fdd095f
-https://conda.anaconda.org/conda-forge/linux-aarch64/matplotlib-base-3.6.0-py39h15a8d8b_0.tar.bz2#6628d4abba945e73fb45d86e2fd08efb
+https://conda.anaconda.org/conda-forge/linux-aarch64/matplotlib-base-3.6.1-py39h15a8d8b_0.tar.bz2#65f41e48208329d6e293cd8a99a6891b
 https://conda.anaconda.org/conda-forge/noarch/pytest-forked-1.4.0-pyhd8ed1ab_0.tar.bz2#95286e05a617de9ebfe3246cecbfb72f
-https://conda.anaconda.org/conda-forge/linux-aarch64/matplotlib-3.6.0-py39ha65689a_0.tar.bz2#abb9151255cfe1152e76df71f79ec88a
+https://conda.anaconda.org/conda-forge/linux-aarch64/matplotlib-3.6.1-py39ha65689a_0.tar.bz2#efd169a03fbe7ce48b201a8282ef42c0
 https://conda.anaconda.org/conda-forge/noarch/pytest-xdist-2.5.0-pyhd8ed1ab_0.tar.bz2#1fdd1f3baccf0deb647385c677a1a48e

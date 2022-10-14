@@ -14,7 +14,7 @@ if platform.python_implementation() == "PyPy":
 else:
     NUMPY_MIN_VERSION = "1.17.3"
 
-SCIPY_MIN_VERSION = "1.3.2"
+SCIPY_MIN_VERSION = "1.5.0"
 JOBLIB_MIN_VERSION = "1.1.1"
 THREADPOOLCTL_MIN_VERSION = "2.0.0"
 PYTEST_MIN_VERSION = "5.0.1"
