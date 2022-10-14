@@ -114,7 +114,7 @@ def make_distributor_init_64_bits(
         )
 
 
-def main(wheel_dirname, bitness):
+def main(wheel_dirname):
     """Embed vcomp140.dll, vcruntime140.dll and vcruntime140_1.dll."""
     if not op.exists(VCOMP140_SRC_PATH):
         raise ValueError(f"Could not find {VCOMP140_SRC_PATH}.")
@@ -122,10 +122,10 @@ def main(wheel_dirname, bitness):
     if not op.exists(VCRUNTIME140_SRC_PATH):
         raise ValueError(f"Could not find {VCRUNTIME140_SRC_PATH}.")
 
-    if not op.exists(VCRUNTIME140_1_SRC_PATH) and bitness == "64":
+    if not op.exists(VCRUNTIME140_1_SRC_PATH):
         raise ValueError(f"Could not find {VCRUNTIME140_1_SRC_PATH}.")
 
-    if not op.exists(MSVCP140_SRC_PATH) and bitness == "64":
+    if not op.exists(MSVCP140_SRC_PATH):
         raise ValueError(f"Could not find {MSVCP140_SRC_PATH}.")
 
     if not op.isdir(wheel_dirname):
@@ -149,29 +149,22 @@ def main(wheel_dirname, bitness):
     print(f"Copying {VCRUNTIME140_SRC_PATH} to {target_folder}.")
     shutil.copy2(VCRUNTIME140_SRC_PATH, target_folder)
 
-    if bitness == "64":
-        print(f"Copying {VCRUNTIME140_1_SRC_PATH} to {target_folder}.")
-        shutil.copy2(VCRUNTIME140_1_SRC_PATH, target_folder)
+    print(f"Copying {VCRUNTIME140_1_SRC_PATH} to {target_folder}.")
+    shutil.copy2(VCRUNTIME140_1_SRC_PATH, target_folder)
 
-        print(f"Copying {MSVCP140_SRC_PATH} to {target_folder}.")
-        shutil.copy2(MSVCP140_SRC_PATH, target_folder)
+    print(f"Copying {MSVCP140_SRC_PATH} to {target_folder}.")
+    shutil.copy2(MSVCP140_SRC_PATH, target_folder)
 
     # Generate the _distributor_init file in the source tree
-    print("Generating the '_distributor_init.py' file.")
-    if bitness == "32":
-        make_distributor_init_32_bits(
-            distributor_init, vcomp140_dll_filename, vcruntime140_dll_filename
-        )
-    else:
-        make_distributor_init_64_bits(
-            distributor_init,
-            vcomp140_dll_filename,
-            vcruntime140_dll_filename,
-            vcruntime140_1_dll_filename,
-            msvcp140_dll_filename,
-        )
+    make_distributor_init_64_bits(
+        distributor_init,
+        vcomp140_dll_filename,
+        vcruntime140_dll_filename,
+        vcruntime140_1_dll_filename,
+        msvcp140_dll_filename,
+    )
 
 
 if __name__ == "__main__":
-    _, wheel_file, bitness = sys.argv
-    main(wheel_file, bitness)
+    _, wheel_file = sys.argv
+    main(wheel_file)

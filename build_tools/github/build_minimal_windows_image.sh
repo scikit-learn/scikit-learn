@@ -4,16 +4,6 @@ set -e
 set -x
 
 PYTHON_VERSION=$1
-BITNESS=$2
-
-if [[ "$BITNESS" == "32" ]]; then
-    # 32-bit architectures are not supported
-    # by the official Docker images: Tests will just be run
-    # on the host (instead of the minimal Docker container).
-    # the last scipy wheel available for win32 is 1.9.1
-    python -m pip install 'scipy<=1.9.1'
-    exit 0
-fi
 
 TEMP_FOLDER="$HOME/AppData/Local/Temp"
 WHEEL_PATH=$(ls -d $TEMP_FOLDER/**/*/repaired_wheel/*)
@@ -38,5 +28,6 @@ docker build --build-arg PYTHON_VERSION=$PYTHON_VERSION \
              --build-arg CONFTEST_NAME=$CONFTEST_NAME \
              --build-arg CIBW_TEST_REQUIRES="$CIBW_TEST_REQUIRES" \
              --build-arg PIP_EXTRA_INDEX_URL="$PIP_EXTRA_INDEX_URL" \
+             --build-arg PIP_PRE="$PIP_PRE" \
              -f build_tools/github/Windows \
              -t scikit-learn/minimal-windows .
