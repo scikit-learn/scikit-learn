@@ -109,6 +109,15 @@ def test_loss_grad_hess_are_the_same(
         g4, h4, _ = loss.gradient_hessian(
             coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
         )
+    else:
+        with pytest.raises(NotImplementedError):
+            loss.gradient_hessian(
+                coef,
+                X,
+                y,
+                sample_weight=sample_weight,
+                l2_reg_strength=l2_reg_strength,
+            )
 
     assert_allclose(l1, l2)
     assert_allclose(g1, g2)

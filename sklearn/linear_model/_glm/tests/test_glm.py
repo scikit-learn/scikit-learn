@@ -505,8 +505,7 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
             # For minimum norm solution, we would have
             # assert model.intercept_ == pytest.approx(model.coef_[-1])
         else:
-            rtol = 5e-6
-            assert model_intercept == pytest.approx(intercept, rel=rtol)
+            assert model_intercept == pytest.approx(intercept, rel=5e-6)
             assert_allclose(model_coef, np.r_[coef, coef], rtol=1e-4)
 
 
@@ -961,7 +960,7 @@ def test_family_deprecation(est, family):
 def test_linalg_warning_with_newton_solver(global_random_seed):
     newton_solver = "newton-cholesky"
     rng = np.random.RandomState(global_random_seed)
-    # Use at least 20 samples to reduce the likelihood to get a degenerate
+    # Use at least 20 samples to reduce the likelihood of getting a degenerate
     # dataset for any global_random_seed.
     X_orig = rng.normal(size=(20, 3))
     y = rng.poisson(
@@ -971,8 +970,8 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
     # Collinear variation of the same input features.
     X_collinear = np.hstack([X_orig] * 10)
 
-    # Let's consider the deviance of constant baseline on this problem.
-    baseline_pred = np.full_like(y, y.astype(np.float64).mean())
+    # Let's consider the deviance of a constant baseline on this problem.
+    baseline_pred = np.full_like(y, y.mean())
     constant_model_deviance = mean_poisson_deviance(y, baseline_pred)
     assert constant_model_deviance > 1.0
 
