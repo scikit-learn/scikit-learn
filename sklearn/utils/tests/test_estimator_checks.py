@@ -405,7 +405,7 @@ class EstimatorMissingDefaultTags(BaseEstimator):
 class RequiresPositiveXRegressor(LinearRegression):
     def fit(self, X, y):
         X, y = self._validate_data(X, y, multi_output=True)
-        if (X <= 0).any():
+        if (X < 0).any():
             raise ValueError("negative X values not supported!")
         return super().fit(X, y)
 

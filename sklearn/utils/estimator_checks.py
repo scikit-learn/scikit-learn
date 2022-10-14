@@ -3279,7 +3279,7 @@ def _enforce_estimator_tags_X(estimator, X, kernel=linear_kernel):
     # Estimators with a `requires_positive_X` tag only accept
     # strictly positive data
     if _safe_tags(estimator, key="requires_positive_X"):
-        X = X - X.min() + 0.1
+        X = X - X.min()
     if "categorical" in _safe_tags(estimator, key="X_types"):
         X = (X - X.min()).astype(np.int32)
 
