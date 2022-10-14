@@ -97,7 +97,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.metrics._pairwise_distances_reduction._gemm_term_computer",
     "sklearn.metrics._pairwise_distances_reduction._base",
     "sklearn.metrics._pairwise_distances_reduction._argkmin",
-    "sklearn.metrics._pairwise_distances_reduction._radius_neighborhood",
+    "sklearn.metrics._pairwise_distances_reduction._radius_neighbors",
     "sklearn.metrics._pairwise_fast",
     "sklearn.neighbors._partition_nodes",
     "sklearn.tree._splitter",
@@ -338,7 +338,7 @@ extension_config = {
             "extra_compile_args": ["-std=c++11"],
         },
         {
-            "sources": ["_radius_neighborhood.pyx.tp", "_radius_neighborhood.pxd.tp"],
+            "sources": ["_radius_neighbors.pyx.tp", "_radius_neighbors.pxd.tp"],
             "language": "c++",
             "include_np": True,
             "extra_compile_args": ["-std=c++11"],
