@@ -70,14 +70,14 @@ tprs = []
 aucs = []
 mean_fpr = np.linspace(0, 1, 100)
 
-fig, ax = plt.subplots()
-for i, (train, test) in enumerate(cv.split(X, y)):
+fig, ax = plt.subplots(figsize=(6, 6))
+for fold, (train, test) in enumerate(cv.split(X, y)):
     classifier.fit(X[train], y[train])
     viz = RocCurveDisplay.from_estimator(
         classifier,
         X[test],
         y[test],
-        name="ROC fold {}".format(i),
+        name=f"ROC fold {fold}",
         alpha=0.3,
         lw=1,
         ax=ax,
@@ -86,13 +86,13 @@ for i, (train, test) in enumerate(cv.split(X, y)):
     interp_tpr[0] = 0.0
     tprs.append(interp_tpr)
     aucs.append(viz.roc_auc)
-
-ax.plot([0, 1], [0, 1], linestyle="--", lw=2, color="r", label="Chance", alpha=0.8)
+ax.plot([0, 1], [0, 1], "k--", label="chance level (AUC = 0.5)")
 
 mean_tpr = np.mean(tprs, axis=0)
 mean_tpr[-1] = 1.0
 mean_auc = auc(mean_fpr, mean_tpr)
 std_auc = np.std(aucs)
+
 ax.plot(
     mean_fpr,
     mean_tpr,
@@ -117,7 +117,10 @@ ax.fill_between(
 ax.set(
     xlim=[-0.05, 1.05],
     ylim=[-0.05, 1.05],
-    title="Receiver operating characteristic example",
+    xlabel="False Positive Rate",
+    ylabel="True Positive Rate",
+    title=f"Mean ROC curve with variability\n(Positive label '{target_names[1]}')",
 )
+ax.axis("square")
 ax.legend(loc="lower right")
 plt.show()
