@@ -196,6 +196,7 @@ def test_pairwise_distances(global_dtype):
         pairwise_distances(X, Y, metric="blah")
 
 
+# TODO(1.4): Remove test when `sum_over_features` parameter is removed
 @pytest.mark.parametrize("sum_over_features", [True, False])
 def test_manhattan_distances_deprecated_sum_over_features(sum_over_features):
     # Check that future warning is raised when user

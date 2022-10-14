@@ -928,12 +928,8 @@ def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
          [[1, 2], [0, 3]])
     array([[0., 2.],
            [4., 4.]])
-    >>> import numpy as np
-    >>> X = np.ones((1, 2))
-    >>> y = np.full((2, 2), 2.)
-    >>> manhattan_distances(X, y)
-    array([[2., 2.]])
     """
+    # TODO(1.4): remove sum_over_features
     if sum_over_features != "deprecated":
         warnings.warn(
             "`sum_over_features` is deprecated in version 1.2 and will be"
