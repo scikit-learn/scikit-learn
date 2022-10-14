@@ -44,55 +44,6 @@ def _object_dtype_isnan(X):
     return X != X
 
 
-class loguniform(scipy.stats.reciprocal):
-    """A class supporting log-uniform random variables.
-
-    Parameters
-    ----------
-    low : float
-        The minimum value
-    high : float
-        The maximum value
-
-    Methods
-    -------
-    rvs(self, size=None, random_state=None)
-        Generate log-uniform random variables
-
-    The most useful method for Scikit-learn usage is highlighted here.
-    For a full list, see
-    `scipy.stats.reciprocal
-    <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.reciprocal.html>`_.
-    This list includes all functions of ``scipy.stats`` continuous
-    distributions such as ``pdf``.
-
-    Notes
-    -----
-    This class generates values between ``low`` and ``high`` or
-
-        low <= loguniform(low, high).rvs() <= high
-
-    The logarithmic probability density function (PDF) is uniform. When
-    ``x`` is a uniformly distributed random variable between 0 and 1, ``10**x``
-    are random variables that are equally likely to be returned.
-
-    This class is an alias to ``scipy.stats.reciprocal``, which uses the
-    reciprocal distribution:
-    https://en.wikipedia.org/wiki/Reciprocal_distribution
-
-    Examples
-    --------
-
-    >>> from sklearn.utils.fixes import loguniform
-    >>> rv = loguniform(1e-3, 1e1)
-    >>> rvs = rv.rvs(random_state=42, size=1000)
-    >>> rvs.min()  # doctest: +SKIP
-    0.0010435856341129003
-    >>> rvs.max()  # doctest: +SKIP
-    9.97403052786026
-    """
-
-
 # remove when https://github.com/joblib/joblib/issues/1071 is fixed
 def delayed(function):
     """Decorator used to capture the arguments of a function."""
