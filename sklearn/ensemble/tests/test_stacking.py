@@ -842,7 +842,7 @@ def test_get_feature_names_out(
 
 
 def test_stacking_classifier_base_regressor():
-    """Check that a regressor can be estimator for a classifier."""
+    """Check that a regressor can be used as the first layer in `StackingClassifier`."""
     X_train, X_test, y_train, y_test = train_test_split(
         scale(X_iris), y_iris, stratify=y_iris, random_state=42
     )
