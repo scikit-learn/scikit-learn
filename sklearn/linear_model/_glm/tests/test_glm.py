@@ -237,14 +237,7 @@ def test_glm_regression(solver, fit_intercept, glm_dataset):
         coef = coef_without_intercept
         intercept = 0
 
-    with warnings.catch_warnings():
-        if solver == "newton-cholesky":
-            warnings.filterwarnings(
-                action="ignore",
-                message=".*pointwise hessian to have many non-positive values.*",
-                category=ConvergenceWarning,
-            )
-        model.fit(X, y)
+    model.fit(X, y)
 
     rtol = 5e-5 if solver == "lbfgs" else 1e-9
     assert model.intercept_ == pytest.approx(intercept, rel=rtol)
