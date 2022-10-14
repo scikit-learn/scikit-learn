@@ -693,22 +693,23 @@ def _chunk_generator(gen, chunksize):
 
 
 def gen_batches(n, batch_size, *, min_batch_size=0):
-    """Generator to create slices containing batch_size elements, from 0 to n.
+    """Generator to create slices containing `batch_size` elements from 0 to `n`.
 
-    The last slice may contain less than batch_size elements, when batch_size
-    does not divide n.
+    The last slice may contain less than `batch_size` elements, when
+    `batch_size` does not divide `n`.
 
     Parameters
     ----------
     n : int
+        Size of the sequence.
     batch_size : int
-        Number of element in each batch.
+        Number of elements in each batch.
     min_batch_size : int, default=0
-        Minimum batch size to produce.
+        Minimum number of elements in each batch.
 
     Yields
     ------
-    slice of batch_size elements
+    slice of `batch_size` elements
 
     See Also
     --------
@@ -746,21 +747,25 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
 
 
 def gen_even_slices(n, n_packs, *, n_samples=None):
-    """Generator to create n_packs slices going up to n.
+    """Generator to create `n_packs` evenly spaced slices going up to `n`.
+
+    If `n_packs` does not divide `n`, except for the first `n % n_packs`
+    slices, remaining slices may contain fewer elements.
 
     Parameters
     ----------
     n : int
+        Size of the sequence.
     n_packs : int
         Number of slices to generate.
     n_samples : int, default=None
-        Number of samples. Pass n_samples when the slices are to be used for
+        Number of samples. Pass `n_samples` when the slices are to be used for
         sparse matrix indexing; slicing off-the-end raises an exception, while
         it works for NumPy arrays.
 
     Yields
     ------
-    slice
+    `slice` representing a set of indices from 0 to n.
 
     See Also
     --------

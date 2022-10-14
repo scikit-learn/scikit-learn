@@ -20,6 +20,8 @@ from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils import _safe_indexing
 from ..utils import _get_column_indices
+from ..utils._set_output import _get_output_config, _safe_set_output
+from ..utils import check_pandas_support
 from ..utils.metaestimators import _BaseComposition
 from ..utils.validation import check_array, check_is_fitted, _check_feature_names_in
 from ..utils.fixes import delayed
@@ -252,6 +254,35 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         except (TypeError, ValueError):
             self.transformers = value
 
+    def set_output(self, transform=None):
+        """Set the output container when `"transform`" and `"fit_transform"` are called.
+
+        Calling `set_output` will set the output of all estimators in `transformers`
+        and `transformers_`.
+
+        Parameters
+        ----------
+        transform : {"default", "pandas"}, default=None
+            Configure output of `transform` and `fit_transform`.
+
+        Returns
+        -------
+        self : estimator instance
+            Estimator instance.
+        """
+        super().set_output(transform=transform)
+        transformers = (
+            trans
+            for _, trans, _ in chain(
+                self.transformers, getattr(self, "transformers_", [])
+            )
+            if trans not in {"passthrough", "drop"}
+        )
+        for trans in transformers:
+            _safe_set_output(trans, transform=transform)
+
+        return self
+
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
@@ -302,7 +333,19 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         """
         if fitted:
-            transformers = self.transformers_
+            if replace_strings:
+                # Replace "passthrough" with the fitted version in
+                # _name_to_fitted_passthrough
+                def replace_passthrough(name, trans, columns):
+                    if name not in self._name_to_fitted_passthrough:
+                        return name, trans, columns
+                    return name, self._name_to_fitted_passthrough[name], columns
+
+                transformers = [
+                    replace_passthrough(*trans) for trans in self.transformers_
+                ]
+            else:
+                transformers = self.transformers_
         else:
             # interleave the validated column specifiers
             transformers = [
@@ -314,12 +357,17 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
                 transformers = chain(transformers, [self._remainder])
         get_weight = (self.transformer_weights or {}).get
 
+        output_config = _get_output_config("transform", self)
         for name, trans, columns in transformers:
             if replace_strings:
                 # replace 'passthrough' with identity transformer and
                 # skip in case of 'drop'
                 if trans == "passthrough":
-                    trans = FunctionTransformer(accept_sparse=True, check_inverse=False)
+                    trans = FunctionTransformer(
+                        accept_sparse=True,
+                        check_inverse=False,
+                        feature_names_out="one-to-one",
+                    ).set_output(transform=output_config["dense"])
                 elif trans == "drop":
                     continue
                 elif _is_empty_column_selection(columns):
@@ -505,6 +553,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         # transformers are fitted; excludes 'drop' cases
         fitted_transformers = iter(transformers)
         transformers_ = []
+        self._name_to_fitted_passthrough = {}
 
         for name, old, column, _ in self._iter():
             if old == "drop":
@@ -512,8 +561,12 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             elif old == "passthrough":
                 # FunctionTransformer is present in list of transformers,
                 # so get next transformer, but save original string
-                next(fitted_transformers)
+                func_transformer = next(fitted_transformers)
                 trans = "passthrough"
+
+                # The fitted FunctionTransformer is saved in another attribute,
+                # so it can be used during transform for set_output.
+                self._name_to_fitted_passthrough[name] = func_transformer
             elif _is_empty_column_selection(column):
                 trans = old
             else:
@@ -765,6 +818,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             return sparse.hstack(converted_Xs).tocsr()
         else:
             Xs = [f.toarray() if sparse.issparse(f) else f for f in Xs]
+            config = _get_output_config("transform", self)
+            if config["dense"] == "pandas" and all(hasattr(X, "iloc") for X in Xs):
+                pd = check_pandas_support("transform")
+                return pd.concat(Xs, axis=1)
             return np.hstack(Xs)
 
     def _sk_visual_block_(self):

@@ -11,15 +11,6 @@ from sklearn.utils.discovery import all_functions
 
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
 
-FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn.utils.extmath.randomized_svd",
-    "sklearn.utils.extmath.svd_flip",
-    "sklearn.utils.gen_batches",
-    "sklearn.utils.gen_even_slices",
-    "sklearn.utils.metaestimators.if_delegate_has_method",
-]
-FUNCTION_DOCSTRING_IGNORE_LIST = set(FUNCTION_DOCSTRING_IGNORE_LIST)
-
 
 def get_all_methods():
     estimators = all_estimators()
@@ -146,11 +137,6 @@ def repr_errors(res, Klass=None, method: Optional[str] = None) -> str:
 @pytest.mark.parametrize("function_name", get_all_functions_names())
 def test_function_docstring(function_name, request):
     """Check function docstrings using numpydoc."""
-    if function_name in FUNCTION_DOCSTRING_IGNORE_LIST:
-        request.applymarker(
-            pytest.mark.xfail(run=False, reason="TODO pass numpydoc validation")
-        )
-
     res = numpydoc_validation.validate(function_name)
 
     res["errors"] = list(filter_errors(res["errors"], method="function"))
