@@ -3007,7 +3007,7 @@ def max_recall_at_precision_k(
 
     Returns
     -------
-    max_precision_at_recall_k : float
+    max_recall_at_precision_k : float
         Maximum Recall corresponding to precision threshold
         is greater than or equal to `k` with thresholds applied
         to the `pos_label` or to the label 1 if `pos_label=None`.
@@ -3028,7 +3028,7 @@ def max_recall_at_precision_k(
     >>> y_true = np.array([0, 0, 1, 1, 1, 1])
     >>> y_prob = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
     >>> k = 1
-    >>> max_precision_at_recall_k(y_true, y_prob, k)
+    >>> max_recall_at_precision_k(y_true, y_prob, k)
     0.75
     """
     if k < 0 or k > 1:
