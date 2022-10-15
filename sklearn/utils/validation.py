@@ -1151,6 +1151,8 @@ def column_or_1d(y, *, dtype=None, warn=False):
     dtype: data-type, default=None
         Data type for `y`.
 
+        .. versionadded:: 1.2
+
     warn : bool, default=False
        To control display of warnings.
 

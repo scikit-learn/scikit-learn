@@ -514,6 +514,9 @@ Changelog
   is now deprecated and will be removed in version 1.4. Use `sparse_output` instead.
   :pr:`24412` by :user:`Rushil Desai <rusdes>`.
 
+- |Fix| :class:`preprocessing.LabelEncoder` correctly encodes NaNs in `transform`.
+  :pr:`22629` by `Thomas Fan`_.
+
 :mod:`sklearn.svm`
 ..................
 
