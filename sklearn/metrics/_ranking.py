@@ -794,7 +794,9 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     return fps, tps, y_score[threshold_idxs]
 
 
-def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight=None):
+def precision_recall_curve(
+    y_true, probas_pred, *, pos_label=None, sample_weight=None, drop_intermediate=True
+):
     """Compute precision-recall pairs for different probability thresholds.
 
     Note: this implementation is restricted to the binary classification task.
@@ -850,6 +852,11 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
         Increasing thresholds on the decision function used to compute
         precision and recall where `n_thresholds = len(np.unique(probas_pred))`.
 
+    drop_intermediate : bool, default=True
+        Whether to drop some suboptimal thresholds which would not appear
+        on a plotted precision-recall curve. This is useful in order to create
+        lighter precision-recall curves.
+
     See Also
     --------
     PrecisionRecallDisplay.from_estimator : Plot Precision Recall Curve given
@@ -878,6 +885,19 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
     fps, tps, thresholds = _binary_clf_curve(
         y_true, probas_pred, pos_label=pos_label, sample_weight=sample_weight
     )
+
+    if drop_intermediate and len(fps) > 2:
+        # Drop thresholds corresponding to points where true positives (tps)
+        # do not change from the previous or subsequent point. This will keep
+        # only the first and last point for each tps value. All points
+        # with the same tps value have the same recall and thus x coordinate.
+        # They appear as a vertical line on the plot.
+        optimal_idxs = np.where(
+            np.r_[True, np.logical_or(np.diff(tps[:-1]), np.diff(tps[1:])), True]
+        )[0]
+        fps = fps[optimal_idxs]
+        tps = tps[optimal_idxs]
+        thresholds = thresholds[optimal_idxs]
 
     ps = tps + fps
     # Initialize the result array with zeros to make sure that precision[ps == 0]

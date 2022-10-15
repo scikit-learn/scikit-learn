@@ -891,35 +891,41 @@ def test_binary_clf_curve_zero_sample_weight(curve_func):
         assert_allclose(arr_1, arr_2)
 
 
-def test_precision_recall_curve():
+@pytest.mark.parametrize("drop", [True, False])
+def test_precision_recall_curve(drop):
     y_true, _, y_score = make_prediction(binary=True)
-    _test_precision_recall_curve(y_true, y_score)
+    _test_precision_recall_curve(y_true, y_score, drop)
 
     # Make sure the first point of the Precision-Recall on the right is:
     # (p=1.0, r=class balance) on a non-balanced dataset [1:]
-    p, r, t = precision_recall_curve(y_true[1:], y_score[1:])
+    p, r, t = precision_recall_curve(y_true[1:], y_score[1:], drop_intermediate=drop)
     assert r[0] == 1.0
     assert p[0] == y_true[1:].mean()
 
     # Use {-1, 1} for labels; make sure original labels aren't modified
     y_true[np.where(y_true == 0)] = -1
     y_true_copy = y_true.copy()
-    _test_precision_recall_curve(y_true, y_score)
+    _test_precision_recall_curve(y_true, y_score, drop)
     assert_array_equal(y_true_copy, y_true)
 
     labels = [1, 0, 0, 1]
     predict_probas = [1, 2, 3, 4]
-    p, r, t = precision_recall_curve(labels, predict_probas)
-    assert_array_almost_equal(p, np.array([0.5, 0.33333333, 0.5, 1.0, 1.0]))
-    assert_array_almost_equal(r, np.array([1.0, 0.5, 0.5, 0.5, 0.0]))
-    assert_array_almost_equal(t, np.array([1, 2, 3, 4]))
+    p, r, t = precision_recall_curve(labels, predict_probas, drop_intermediate=drop)
+    if drop:
+        assert_array_almost_equal(p, np.array([0.5, 0.33333333, 1.0, 1.0]))
+        assert_array_almost_equal(r, np.array([1.0, 0.5, 0.5, 0.0]))
+        assert_array_almost_equal(t, np.array([1, 2, 4]))
+    else:
+        assert_array_almost_equal(p, np.array([0.5, 0.33333333, 0.5, 1.0, 1.0]))
+        assert_array_almost_equal(r, np.array([1.0, 0.5, 0.5, 0.5, 0.0]))
+        assert_array_almost_equal(t, np.array([1, 2, 3, 4]))
     assert p.size == r.size
     assert p.size == t.size + 1
 
 
-def _test_precision_recall_curve(y_true, y_score):
+def _test_precision_recall_curve(y_true, y_score, drop):
     # Test Precision-Recall and area under PR curve
-    p, r, thresholds = precision_recall_curve(y_true, y_score)
+    p, r, thresholds = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
     precision_recall_auc = _average_precision_slow(y_true, y_score)
     assert_array_almost_equal(precision_recall_auc, 0.859, 3)
     assert_array_almost_equal(
@@ -932,17 +938,20 @@ def _test_precision_recall_curve(y_true, y_score):
     assert p.size == r.size
     assert p.size == thresholds.size + 1
     # Smoke test in the case of proba having only one value
-    p, r, thresholds = precision_recall_curve(y_true, np.zeros_like(y_score))
+    p, r, thresholds = precision_recall_curve(
+        y_true, np.zeros_like(y_score), drop_intermediate=drop
+    )
     assert p.size == r.size
     assert p.size == thresholds.size + 1
 
 
-def test_precision_recall_curve_toydata():
+@pytest.mark.parametrize("drop", [True, False])
+def test_precision_recall_curve_toydata(drop):
     with np.errstate(all="raise"):
         # Binary classification
         y_true = [0, 1]
         y_score = [0, 1]
-        p, r, _ = precision_recall_curve(y_true, y_score)
+        p, r, _ = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
         auc_prc = average_precision_score(y_true, y_score)
         assert_array_almost_equal(p, [0.5, 1, 1])
         assert_array_almost_equal(r, [1, 1, 0])
@@ -950,7 +959,7 @@ def test_precision_recall_curve_toydata():
 
         y_true = [0, 1]
         y_score = [1, 0]
-        p, r, _ = precision_recall_curve(y_true, y_score)
+        p, r, _ = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
         auc_prc = average_precision_score(y_true, y_score)
         assert_array_almost_equal(p, [0.5, 0.0, 1.0])
         assert_array_almost_equal(r, [1.0, 0.0, 0.0])
@@ -961,7 +970,7 @@ def test_precision_recall_curve_toydata():
 
         y_true = [1, 0]
         y_score = [1, 1]
-        p, r, _ = precision_recall_curve(y_true, y_score)
+        p, r, _ = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
         auc_prc = average_precision_score(y_true, y_score)
         assert_array_almost_equal(p, [0.5, 1])
         assert_array_almost_equal(r, [1.0, 0])
@@ -969,7 +978,7 @@ def test_precision_recall_curve_toydata():
 
         y_true = [1, 0]
         y_score = [1, 0]
-        p, r, _ = precision_recall_curve(y_true, y_score)
+        p, r, _ = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
         auc_prc = average_precision_score(y_true, y_score)
         assert_array_almost_equal(p, [0.5, 1, 1])
         assert_array_almost_equal(r, [1, 1, 0])
@@ -977,7 +986,7 @@ def test_precision_recall_curve_toydata():
 
         y_true = [1, 0]
         y_score = [0.5, 0.5]
-        p, r, _ = precision_recall_curve(y_true, y_score)
+        p, r, _ = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
         auc_prc = average_precision_score(y_true, y_score)
         assert_array_almost_equal(p, [0.5, 1])
         assert_array_almost_equal(r, [1, 0.0])
@@ -986,7 +995,7 @@ def test_precision_recall_curve_toydata():
         y_true = [0, 0]
         y_score = [0.25, 0.75]
         with pytest.warns(UserWarning, match="No positive class found in y_true"):
-            p, r, _ = precision_recall_curve(y_true, y_score)
+            p, r, _ = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
         with pytest.warns(UserWarning, match="No positive class found in y_true"):
             auc_prc = average_precision_score(y_true, y_score)
         assert_allclose(p, [0, 0, 1])
@@ -995,7 +1004,7 @@ def test_precision_recall_curve_toydata():
 
         y_true = [1, 1]
         y_score = [0.25, 0.75]
-        p, r, _ = precision_recall_curve(y_true, y_score)
+        p, r, _ = precision_recall_curve(y_true, y_score, drop_intermediate=drop)
         assert_almost_equal(average_precision_score(y_true, y_score), 1.0)
         assert_array_almost_equal(p, [1.0, 1.0, 1.0])
         assert_array_almost_equal(r, [1, 0.5, 0.0])
@@ -1098,6 +1107,24 @@ def test_precision_recall_curve_toydata():
             assert_allclose(
                 average_precision_score(y_true, y_score, average="weighted"), 1
             )
+
+
+def test_precision_recall_curve_drop_intermediate():
+    # Test that drop_intermediate drops the correct thresholds
+    y_true = [0, 0, 0, 0, 1, 1]
+    y_score = [0.0, 0.2, 0.5, 0.6, 0.7, 1.0]
+    precision, recall, thresholds = precision_recall_curve(
+        y_true, y_score, drop_intermediate=True
+    )
+    assert_array_almost_equal(thresholds, [0.0, 0.7, 1.0])
+
+    # Test dropping thresholds with repeating scores
+    y_true = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+    y_score = [0.0, 0.1, 0.6, 0.6, 0.7, 0.8, 0.9, 0.6, 0.7, 0.8, 0.9, 0.9, 1.0]
+    precision, recall, thresholds = precision_recall_curve(
+        y_true, y_score, drop_intermediate=True
+    )
+    assert_array_almost_equal(thresholds, [0.0, 0.6, 0.7, 0.8, 0.9, 1.0])
 
 
 def test_average_precision_constant_values():

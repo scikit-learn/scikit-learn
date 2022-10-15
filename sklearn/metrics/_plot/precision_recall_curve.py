@@ -186,6 +186,7 @@ class PrecisionRecallDisplay:
         *,
         sample_weight=None,
         pos_label=None,
+        drop_intermediate=True,
         response_method="auto",
         name=None,
         ax=None,
@@ -212,6 +213,11 @@ class PrecisionRecallDisplay:
             The class considered as the positive class when computing the
             precision and recall metrics. By default, `estimators.classes_[1]`
             is considered as the positive class.
+
+        drop_intermediate : bool, default=True
+            Whether to drop some suboptimal thresholds which would not appear
+            on a plotted precision-recall curve. This is useful in order to
+            create lighter precision-recall curves.
 
         response_method : {'predict_proba', 'decision_function', 'auto'}, \
             default='auto'
@@ -286,6 +292,7 @@ class PrecisionRecallDisplay:
             sample_weight=sample_weight,
             name=name,
             pos_label=pos_label,
+            drop_intermediate=drop_intermediate,
             ax=ax,
             **kwargs,
         )
@@ -298,6 +305,7 @@ class PrecisionRecallDisplay:
         *,
         sample_weight=None,
         pos_label=None,
+        drop_intermediate=True,
         name=None,
         ax=None,
         **kwargs,
@@ -318,6 +326,11 @@ class PrecisionRecallDisplay:
         pos_label : str or int, default=None
             The class considered as the positive class when computing the
             precision and recall metrics.
+
+        drop_intermediate : bool, default=True
+            Whether to drop some suboptimal thresholds which would not appear
+            on a plotted precision-recall curve. This is useful in order to
+            create lighter precision-recall curves.
 
         name : str, default=None
             Name for labeling curve. If `None`, name will be set to
@@ -374,7 +387,11 @@ class PrecisionRecallDisplay:
         pos_label = _check_pos_label_consistency(pos_label, y_true)
 
         precision, recall, _ = precision_recall_curve(
-            y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight
+            y_true,
+            y_pred,
+            pos_label=pos_label,
+            sample_weight=sample_weight,
+            drop_intermediate=drop_intermediate,
         )
         average_precision = average_precision_score(
             y_true, y_pred, pos_label=pos_label, sample_weight=sample_weight
