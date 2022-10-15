@@ -5,12 +5,13 @@
 import unittest
 import sys
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
 import joblib
 
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin
 from sklearn.datasets import make_multilabel_classification
 from sklearn.utils import deprecated
 from sklearn.utils._testing import (
@@ -21,8 +22,8 @@ from sklearn.utils._testing import (
     MinimalTransformer,
     SkipTest,
 )
-from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.fixes import np_version, parse_version
+
+from sklearn.utils.validation import check_is_fitted, check_X_y
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
 from sklearn.mixture import GaussianMixture
@@ -35,6 +36,7 @@ from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
 from sklearn.exceptions import SkipTestWarning
 from sklearn.utils.metaestimators import available_if
+from sklearn.utils._param_validation import Interval, StrOptions
 
 from sklearn.utils.estimator_checks import (
     _NotAnArray,
@@ -51,7 +53,9 @@ from sklearn.utils.estimator_checks import (
     check_fit_score_takes_y,
     check_no_attributes_set_in_init,
     check_regressor_data_not_an_array,
+    check_requires_y_none,
     check_outlier_corruption,
+    check_outlier_contamination,
     set_random_state,
     check_fit_check_is_fitted,
     check_methods_sample_order_invariance,
@@ -398,6 +402,17 @@ class EstimatorMissingDefaultTags(BaseEstimator):
         return tags
 
 
+class RequiresPositiveXRegressor(LinearRegression):
+    def fit(self, X, y):
+        X, y = self._validate_data(X, y, multi_output=True)
+        if (X <= 0).any():
+            raise ValueError("negative X values not supported!")
+        return super().fit(X, y)
+
+    def _more_tags(self):
+        return {"requires_positive_X": True}
+
+
 class RequiresPositiveYRegressor(LinearRegression):
     def fit(self, X, y):
         X, y = self._validate_data(X, y, multi_output=True)
@@ -430,8 +445,6 @@ class PartialFitChecksName(BaseEstimator):
 
 
 def test_not_an_array_array_function():
-    if np_version < parse_version("1.17"):
-        raise SkipTest("array_function protocol not supported in numpy <1.17")
     not_array = _NotAnArray(np.ones(10))
     msg = "Don't want to call array_function sum!"
     with raises(TypeError, match=msg):
@@ -571,6 +584,11 @@ def test_check_estimator():
 
     # doesn't error on binary_only tagged estimator
     check_estimator(TaggedBinaryClassifier())
+
+    # Check regressor with requires_positive_X estimator tag
+    msg = "negative X values not supported!"
+    with raises(ValueError, match=msg):
+        check_estimator(RequiresPositiveXRegressor())
 
     # Check regressor with requires_positive_y estimator tag
     msg = "negative y values not supported!"
@@ -1047,6 +1065,18 @@ def test_check_fit_check_is_fitted():
     check_fit_check_is_fitted("estimator", Estimator(behavior="attribute"))
 
 
+def test_check_requires_y_none():
+    class Estimator(BaseEstimator):
+        def fit(self, X, y):
+            X, y = check_X_y(X, y)
+
+    with warnings.catch_warnings(record=True) as record:
+        check_requires_y_none("estimator", Estimator())
+
+    # no warnings are raised
+    assert not [r.message for r in record]
+
+
 # TODO: Remove in 1.3 when Estimator is removed
 def test_deprecated_Estimator_check_estimator():
     err_msg = "'Estimator' was deprecated in favor of"
@@ -1075,3 +1105,57 @@ def test_non_deterministic_estimator_skip_tests():
         all_tests = list(_yield_all_checks(Estimator()))
         assert check_methods_sample_order_invariance not in all_tests
         assert check_methods_subset_invariance not in all_tests
+
+
+def test_check_outlier_contamination():
+    """Check the test for the contamination parameter in the outlier detectors."""
+
+    # Without any parameter constraints, the estimator will early exit the test by
+    # returning None.
+    class OutlierDetectorWithoutConstraint(OutlierMixin, BaseEstimator):
+        """Outlier detector without parameter validation."""
+
+        def __init__(self, contamination=0.1):
+            self.contamination = contamination
+
+        def fit(self, X, y=None, sample_weight=None):
+            return self  # pragma: no cover
+
+        def predict(self, X, y=None):
+            return np.ones(X.shape[0])
+
+    detector = OutlierDetectorWithoutConstraint()
+    assert check_outlier_contamination(detector.__class__.__name__, detector) is None
+
+    # Now, we check that with the parameter constraints, the test should only be valid
+    # if an Interval constraint with bound in [0, 1] is provided.
+    class OutlierDetectorWithConstraint(OutlierDetectorWithoutConstraint):
+        _parameter_constraints = {"contamination": [StrOptions({"auto"})]}
+
+    detector = OutlierDetectorWithConstraint()
+    err_msg = "contamination constraints should contain a Real Interval constraint."
+    with raises(AssertionError, match=err_msg):
+        check_outlier_contamination(detector.__class__.__name__, detector)
+
+    # Add a correct interval constraint and check that the test passes.
+    OutlierDetectorWithConstraint._parameter_constraints["contamination"] = [
+        Interval(Real, 0, 0.5, closed="right")
+    ]
+    detector = OutlierDetectorWithConstraint()
+    check_outlier_contamination(detector.__class__.__name__, detector)
+
+    incorrect_intervals = [
+        Interval(Integral, 0, 1, closed="right"),  # not an integral interval
+        Interval(Real, -1, 1, closed="right"),  # lower bound is negative
+        Interval(Real, 0, 2, closed="right"),  # upper bound is greater than 1
+        Interval(Real, 0, 0.5, closed="left"),  # lower bound include 0
+    ]
+
+    err_msg = r"contamination constraint should be an interval in \(0, 0.5\]"
+    for interval in incorrect_intervals:
+        OutlierDetectorWithConstraint._parameter_constraints["contamination"] = [
+            interval
+        ]
+        detector = OutlierDetectorWithConstraint()
+        with raises(AssertionError, match=err_msg):
+            check_outlier_contamination(detector.__class__.__name__, detector)

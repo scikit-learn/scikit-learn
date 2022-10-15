@@ -13,7 +13,6 @@ from sklearn.preprocessing import (
     PolynomialFeatures,
     SplineTransformer,
 )
-from sklearn.utils.fixes import linspace, sp_version, parse_version
 
 
 @pytest.mark.parametrize("est", (PolynomialFeatures, SplineTransformer))
@@ -29,80 +28,6 @@ def test_polynomial_and_spline_array_order(est):
     assert np.isfortran(est(order="F").fit_transform(X))
 
 
-@pytest.mark.parametrize(
-    "params, err_msg",
-    [
-        ({"degree": -1}, "degree must be a non-negative integer"),
-        ({"degree": 2.5}, "degree must be a non-negative integer"),
-        ({"degree": "string"}, "degree must be a non-negative integer"),
-        ({"n_knots": 1}, "n_knots must be a positive integer >= 2."),
-        ({"n_knots": 1}, "n_knots must be a positive integer >= 2."),
-        ({"n_knots": 2.5}, "n_knots must be a positive integer >= 2."),
-        ({"n_knots": "string"}, "n_knots must be a positive integer >= 2."),
-        ({"knots": 1}, "Expected 2D array, got scalar array instead:"),
-        ({"knots": [1, 2]}, "Expected 2D array, got 1D array instead:"),
-        (
-            {"knots": [[1]]},
-            r"Number of knots, knots.shape\[0\], must be >= 2.",
-        ),
-        (
-            {"knots": [[1, 5], [2, 6]]},
-            r"knots.shape\[1\] == n_features is violated.",
-        ),
-        (
-            {"knots": [[1], [1], [2]]},
-            "knots must be sorted without duplicates.",
-        ),
-        ({"knots": [[2], [1]]}, "knots must be sorted without duplicates."),
-        (
-            {"extrapolation": None},
-            "extrapolation must be one of 'error', 'constant', 'linear', "
-            "'continue' or 'periodic'.",
-        ),
-        (
-            {"extrapolation": 1},
-            "extrapolation must be one of 'error', 'constant', 'linear', "
-            "'continue' or 'periodic'.",
-        ),
-        (
-            {"extrapolation": "string"},
-            "extrapolation must be one of 'error', 'constant', 'linear', "
-            "'continue' or 'periodic'.",
-        ),
-        ({"include_bias": None}, "include_bias must be bool."),
-        ({"include_bias": 1}, "include_bias must be bool."),
-        ({"include_bias": "string"}, "include_bias must be bool."),
-        (
-            {"extrapolation": "periodic", "n_knots": 3, "degree": 3},
-            "Periodic splines require degree < n_knots. Got n_knots=3 and degree=3.",
-        ),
-        (
-            {"extrapolation": "periodic", "knots": [[0], [1]], "degree": 2},
-            "Periodic splines require degree < n_knots. Got n_knots=2 and degree=2.",
-        ),
-    ],
-)
-def test_spline_transformer_input_validation(params, err_msg):
-    """Test that we raise errors for invalid input in SplineTransformer."""
-    X = [[1], [2]]
-
-    with pytest.raises(ValueError, match=err_msg):
-        SplineTransformer(**params).fit(X)
-
-
-def test_spline_transformer_manual_knot_input():
-    """
-    Test that array-like knot positions in SplineTransformer are accepted.
-    """
-    X = np.arange(20).reshape(10, 2)
-    knots = [[0.5, 1], [1.5, 2], [5, 10]]
-    st1 = SplineTransformer(degree=3, knots=knots, n_knots=None).fit(X)
-    knots = np.asarray(knots)
-    st2 = SplineTransformer(degree=3, knots=knots, n_knots=None).fit(X)
-    for i in range(X.shape[1]):
-        assert_allclose(st1.bsplines_[i].t, st2.bsplines_[i].t)
-
-
 @pytest.mark.parametrize("extrapolation", ["continue", "periodic"])
 def test_spline_transformer_integer_knots(extrapolation):
     """Test that SplineTransformer accepts integer value knot positions."""
@@ -113,14 +38,11 @@ def test_spline_transformer_integer_knots(extrapolation):
     ).fit_transform(X)
 
 
-# TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
-@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
-def test_spline_transformer_feature_names(get_names):
+def test_spline_transformer_feature_names():
     """Test that SplineTransformer generates correct features name."""
     X = np.arange(20).reshape(10, 2)
     splt = SplineTransformer(n_knots=3, degree=3, include_bias=True).fit(X)
-    feature_names = getattr(splt, get_names)()
+    feature_names = splt.get_feature_names_out()
     assert_array_equal(
         feature_names,
         [
@@ -138,7 +60,7 @@ def test_spline_transformer_feature_names(get_names):
     )
 
     splt = SplineTransformer(n_knots=3, degree=3, include_bias=False).fit(X)
-    feature_names = getattr(splt, get_names)(["a", "b"])
+    feature_names = splt.get_feature_names_out(["a", "b"])
     assert_array_equal(
         feature_names,
         [
@@ -239,31 +161,6 @@ def test_spline_transformer_get_base_knot_positions(
     assert_allclose(base_knots, expected_knots)
 
 
-@pytest.mark.parametrize(
-    "knots, n_knots, degree",
-    [
-        ("uniform", 5, 3),
-        ("uniform", 12, 8),
-        (
-            [[-1.0, 0.0], [0, 1.0], [0.1, 2.0], [0.2, 3.0], [0.3, 4.0], [1, 5.0]],
-            None,
-            3,
-        ),
-    ],
-)
-def test_spline_transformer_periodicity_of_extrapolation(knots, n_knots, degree):
-    """Test that the SplineTransformer is periodic for multiple features."""
-    X_1 = linspace((-1, 0), (1, 5), 10)
-    X_2 = linspace((1, 5), (3, 10), 10)
-
-    splt = SplineTransformer(
-        knots=knots, n_knots=n_knots, degree=degree, extrapolation="periodic"
-    )
-    splt.fit(X_1)
-
-    assert_allclose(splt.transform(X_1), splt.transform(X_2))
-
-
 @pytest.mark.parametrize(["bias", "intercept"], [(True, False), (False, True)])
 def test_spline_transformer_periodic_linear_regression(bias, intercept):
     """Test that B-splines fit a periodic curve pretty well."""
@@ -295,10 +192,6 @@ def test_spline_transformer_periodic_linear_regression(bias, intercept):
     assert_allclose(predictions[0:100], predictions[100:200], rtol=1e-3)
 
 
-@pytest.mark.skipif(
-    sp_version < parse_version("1.0.0"),
-    reason="Periodic extrapolation not yet implemented for BSpline.",
-)
 def test_spline_transformer_periodic_spline_backport():
     """Test that the backport of extrapolate="periodic" works correctly"""
     X = np.linspace(-2, 3.5, 10)[:, None]
@@ -470,13 +363,10 @@ def test_spline_transformer_n_features_out(n_knots, include_bias, degree):
 @pytest.mark.parametrize(
     "params, err_msg",
     [
-        ({"degree": -1}, "degree must be a non-negative integer"),
-        ({"degree": 2.5}, "degree must be a non-negative int or tuple"),
-        ({"degree": "12"}, r"degree=\(min_degree, max_degree\) must"),
-        ({"degree": "string"}, "degree must be a non-negative int or tuple"),
         ({"degree": (-1, 2)}, r"degree=\(min_degree, max_degree\) must"),
         ({"degree": (0, 1.5)}, r"degree=\(min_degree, max_degree\) must"),
         ({"degree": (3, 2)}, r"degree=\(min_degree, max_degree\) must"),
+        ({"degree": (1, 2, 3)}, r"int or tuple \(min_degree, max_degree\)"),
     ],
 )
 def test_polynomial_features_input_validation(params, err_msg):
@@ -608,13 +498,10 @@ def test_polynomial_features_two_features(
         assert tf.powers_.shape == (tf.n_output_features_, tf.n_features_in_)
 
 
-# TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
-@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
-def test_polynomial_feature_names(get_names):
+def test_polynomial_feature_names():
     X = np.arange(30).reshape(10, 3)
     poly = PolynomialFeatures(degree=2, include_bias=True).fit(X)
-    feature_names = poly.get_feature_names()
+    feature_names = poly.get_feature_names_out()
     assert_array_equal(
         ["1", "x0", "x1", "x2", "x0^2", "x0 x1", "x0 x2", "x1^2", "x1 x2", "x2^2"],
         feature_names,
@@ -622,7 +509,7 @@ def test_polynomial_feature_names(get_names):
     assert len(feature_names) == poly.transform(X).shape[1]
 
     poly = PolynomialFeatures(degree=3, include_bias=False).fit(X)
-    feature_names = getattr(poly, get_names)(["a", "b", "c"])
+    feature_names = poly.get_feature_names_out(["a", "b", "c"])
     assert_array_equal(
         [
             "a",
@@ -650,7 +537,7 @@ def test_polynomial_feature_names(get_names):
     assert len(feature_names) == poly.transform(X).shape[1]
 
     poly = PolynomialFeatures(degree=(2, 3), include_bias=False).fit(X)
-    feature_names = getattr(poly, get_names)(["a", "b", "c"])
+    feature_names = poly.get_feature_names_out(["a", "b", "c"])
     assert_array_equal(
         [
             "a^2",
@@ -677,13 +564,13 @@ def test_polynomial_feature_names(get_names):
     poly = PolynomialFeatures(
         degree=(3, 3), include_bias=True, interaction_only=True
     ).fit(X)
-    feature_names = getattr(poly, get_names)(["a", "b", "c"])
+    feature_names = poly.get_feature_names_out(["a", "b", "c"])
     assert_array_equal(["1", "a b c"], feature_names)
     assert len(feature_names) == poly.transform(X).shape[1]
 
     # test some unicode
     poly = PolynomialFeatures(degree=1, include_bias=True).fit(X)
-    feature_names = poly.get_feature_names(["\u0001F40D", "\u262E", "\u05D0"])
+    feature_names = poly.get_feature_names_out(["\u0001F40D", "\u262E", "\u05D0"])
     assert_array_equal(["1", "\u0001F40D", "\u262E", "\u05D0"], feature_names)
 
 
@@ -882,24 +769,31 @@ def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only):
     assert_array_almost_equal(Xt_csr.A, Xt_dense)
 
 
-def test_polynomial_features_deprecated_n_input_features():
-    # check that we raise a deprecation warning when accessing
-    # `n_input_features_`. FIXME: remove in 1.2
-    depr_msg = (
-        "The attribute `n_input_features_` was deprecated in version "
-        "1.0 and will be removed in 1.2."
+def test_polynomial_features_behaviour_on_zero_degree():
+    """Check that PolynomialFeatures raises error when degree=0 and include_bias=False,
+    and output a single constant column when include_bias=True
+    """
+    X = np.ones((10, 2))
+    poly = PolynomialFeatures(degree=0, include_bias=False)
+    err_msg = (
+        "Setting degree to zero and include_bias to False would result in"
+        " an empty output array."
     )
-    X = np.arange(10).reshape(5, 2)
+    with pytest.raises(ValueError, match=err_msg):
+        poly.fit_transform(X)
 
-    with pytest.warns(FutureWarning, match=depr_msg):
-        PolynomialFeatures().fit(X).n_input_features_
+    poly = PolynomialFeatures(degree=(0, 0), include_bias=False)
+    err_msg = (
+        "Setting both min_degree and max_degree to zero and include_bias to"
+        " False would result in an empty output array."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        poly.fit_transform(X)
 
-
-# TODO: Remove in 1.2 when get_feature_names is removed
-@pytest.mark.parametrize("Transformer", [SplineTransformer, PolynomialFeatures])
-def test_get_feature_names_deprecated(Transformer):
-    X = np.arange(30).reshape(10, 3)
-    poly = Transformer().fit(X)
-    msg = "get_feature_names is deprecated in 1.0"
-    with pytest.warns(FutureWarning, match=msg):
-        poly.get_feature_names()
+    for _X in [X, sparse.csr_matrix(X), sparse.csc_matrix(X)]:
+        poly = PolynomialFeatures(degree=0, include_bias=True)
+        output = poly.fit_transform(_X)
+        # convert to dense array if needed
+        if sparse.issparse(output):
+            output = output.toarray()
+        assert_array_equal(output, np.ones((X.shape[0], 1)))

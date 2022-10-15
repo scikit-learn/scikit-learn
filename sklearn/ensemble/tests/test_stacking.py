@@ -5,6 +5,7 @@
 
 import pytest
 import numpy as np
+from numpy.testing import assert_array_equal
 import scipy.sparse as sparse
 
 from sklearn.base import BaseEstimator
@@ -19,16 +20,20 @@ from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_breast_cancer
 from sklearn.datasets import make_regression
 from sklearn.datasets import make_classification
+from sklearn.datasets import make_multilabel_classification
 
 from sklearn.dummy import DummyClassifier
 from sklearn.dummy import DummyRegressor
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import RidgeClassifier
 from sklearn.svm import LinearSVC
 from sklearn.svm import LinearSVR
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neural_network import MLPClassifier
 from sklearn.preprocessing import scale
 
 from sklearn.ensemble import StackingClassifier
@@ -47,8 +52,14 @@ from sklearn.exceptions import NotFittedError
 
 from unittest.mock import Mock
 
-X_diabetes, y_diabetes = load_diabetes(return_X_y=True)
-X_iris, y_iris = load_iris(return_X_y=True)
+diabetes = load_diabetes()
+X_diabetes, y_diabetes = diabetes.data, diabetes.target
+iris = load_iris()
+X_iris, y_iris = iris.data, iris.target
+X_multilabel, y_multilabel = make_multilabel_classification(
+    n_classes=3, random_state=42
+)
+X_binary, y_binary = make_classification(n_classes=2, random_state=42)
 
 
 @pytest.mark.parametrize(
@@ -277,14 +288,13 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
 @pytest.mark.parametrize(
     "y, params, type_err, msg_err",
     [
-        (y_iris, {"estimators": None}, ValueError, "Invalid 'estimators' attribute,"),
         (y_iris, {"estimators": []}, ValueError, "Invalid 'estimators' attribute,"),
         (
             y_iris,
             {
                 "estimators": [
                     ("lr", LogisticRegression()),
-                    ("svm", SVC(max_iter=5e4)),
+                    ("svm", SVC(max_iter=50_000)),
                 ],
                 "stack_method": "predict_proba",
             },
@@ -307,7 +317,7 @@ class NoWeightClassifier(ClassifierMixin, BaseEstimator):
             {
                 "estimators": [
                     ("lr", LogisticRegression()),
-                    ("cor", LinearSVC(max_iter=5e4)),
+                    ("cor", LinearSVC(max_iter=50_000)),
                 ],
                 "final_estimator": NoWeightClassifier(),
             },
@@ -325,12 +335,6 @@ def test_stacking_classifier_error(y, params, type_err, msg_err):
 @pytest.mark.parametrize(
     "y, params, type_err, msg_err",
     [
-        (
-            y_diabetes,
-            {"estimators": None},
-            ValueError,
-            "Invalid 'estimators' attribute,",
-        ),
         (y_diabetes, {"estimators": []}, ValueError, "Invalid 'estimators' attribute,"),
         (
             y_diabetes,
@@ -405,8 +409,8 @@ def test_stacking_classifier_stratify_default():
     # check that we stratify the classes for the default CV
     clf = StackingClassifier(
         estimators=[
-            ("lr", LogisticRegression(max_iter=1e4)),
-            ("svm", LinearSVC(max_iter=1e4)),
+            ("lr", LogisticRegression(max_iter=10_000)),
+            ("svm", LinearSVC(max_iter=10_000)),
         ]
     )
     # since iris is not shuffled, a simple k-fold would not contain the
@@ -648,3 +652,189 @@ def test_stacking_without_n_features_in(make_dataset, Stacking, Estimator):
     msg = "'MyEstimator' object has no attribute 'n_features_in_'"
     with pytest.raises(AttributeError, match=msg):
         stacker.n_features_in_
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        # output a 2D array of the probability of the positive class for each output
+        MLPClassifier(random_state=42),
+        # output a list of 2D array containing the probability of each class
+        # for each output
+        RandomForestClassifier(random_state=42),
+    ],
+    ids=["MLPClassifier", "RandomForestClassifier"],
+)
+def test_stacking_classifier_multilabel_predict_proba(estimator):
+    """Check the behaviour for the multilabel classification case and the
+    `predict_proba` stacking method.
+
+    Estimators are not consistent with the output arrays and we need to ensure that
+    we handle all cases.
+    """
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_multilabel, y_multilabel, stratify=y_multilabel, random_state=42
+    )
+    n_outputs = 3
+
+    estimators = [("est", estimator)]
+    stacker = StackingClassifier(
+        estimators=estimators,
+        final_estimator=KNeighborsClassifier(),
+        stack_method="predict_proba",
+    ).fit(X_train, y_train)
+
+    X_trans = stacker.transform(X_test)
+    assert X_trans.shape == (X_test.shape[0], n_outputs)
+    # we should not have any collinear classes and thus nothing should sum to 1
+    assert not any(np.isclose(X_trans.sum(axis=1), 1.0))
+
+    y_pred = stacker.predict(X_test)
+    assert y_pred.shape == y_test.shape
+
+
+def test_stacking_classifier_multilabel_decision_function():
+    """Check the behaviour for the multilabel classification case and the
+    `decision_function` stacking method. Only `RidgeClassifier` supports this
+    case.
+    """
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_multilabel, y_multilabel, stratify=y_multilabel, random_state=42
+    )
+    n_outputs = 3
+
+    estimators = [("est", RidgeClassifier())]
+    stacker = StackingClassifier(
+        estimators=estimators,
+        final_estimator=KNeighborsClassifier(),
+        stack_method="decision_function",
+    ).fit(X_train, y_train)
+
+    X_trans = stacker.transform(X_test)
+    assert X_trans.shape == (X_test.shape[0], n_outputs)
+
+    y_pred = stacker.predict(X_test)
+    assert y_pred.shape == y_test.shape
+
+
+@pytest.mark.parametrize("stack_method", ["auto", "predict"])
+@pytest.mark.parametrize("passthrough", [False, True])
+def test_stacking_classifier_multilabel_auto_predict(stack_method, passthrough):
+    """Check the behaviour for the multilabel classification case for stack methods
+    supported for all estimators or automatically picked up.
+    """
+    X_train, X_test, y_train, y_test = train_test_split(
+        X_multilabel, y_multilabel, stratify=y_multilabel, random_state=42
+    )
+    y_train_before_fit = y_train.copy()
+    n_outputs = 3
+
+    estimators = [
+        ("mlp", MLPClassifier(random_state=42)),
+        ("rf", RandomForestClassifier(random_state=42)),
+        ("ridge", RidgeClassifier()),
+    ]
+    final_estimator = KNeighborsClassifier()
+
+    clf = StackingClassifier(
+        estimators=estimators,
+        final_estimator=final_estimator,
+        passthrough=passthrough,
+        stack_method=stack_method,
+    ).fit(X_train, y_train)
+
+    # make sure we don't change `y_train` inplace
+    assert_array_equal(y_train_before_fit, y_train)
+
+    y_pred = clf.predict(X_test)
+    assert y_pred.shape == y_test.shape
+
+    if stack_method == "auto":
+        expected_stack_methods = ["predict_proba", "predict_proba", "decision_function"]
+    else:
+        expected_stack_methods = ["predict"] * len(estimators)
+    assert clf.stack_method_ == expected_stack_methods
+
+    n_features_X_trans = n_outputs * len(estimators)
+    if passthrough:
+        n_features_X_trans += X_train.shape[1]
+    X_trans = clf.transform(X_test)
+    assert X_trans.shape == (X_test.shape[0], n_features_X_trans)
+
+    assert_array_equal(clf.classes_, [np.array([0, 1])] * n_outputs)
+
+
+@pytest.mark.parametrize(
+    "stacker, feature_names, X, y, expected_names",
+    [
+        (
+            StackingClassifier(
+                estimators=[
+                    ("lr", LogisticRegression(random_state=0)),
+                    ("svm", LinearSVC(random_state=0)),
+                ]
+            ),
+            iris.feature_names,
+            X_iris,
+            y_iris,
+            [
+                "stackingclassifier_lr0",
+                "stackingclassifier_lr1",
+                "stackingclassifier_lr2",
+                "stackingclassifier_svm0",
+                "stackingclassifier_svm1",
+                "stackingclassifier_svm2",
+            ],
+        ),
+        (
+            StackingClassifier(
+                estimators=[
+                    ("lr", LogisticRegression(random_state=0)),
+                    ("other", "drop"),
+                    ("svm", LinearSVC(random_state=0)),
+                ]
+            ),
+            iris.feature_names,
+            X_iris[:100],
+            y_iris[:100],  # keep only classes 0 and 1
+            [
+                "stackingclassifier_lr",
+                "stackingclassifier_svm",
+            ],
+        ),
+        (
+            StackingRegressor(
+                estimators=[
+                    ("lr", LinearRegression()),
+                    ("svm", LinearSVR(random_state=0)),
+                ]
+            ),
+            diabetes.feature_names,
+            X_diabetes,
+            y_diabetes,
+            [
+                "stackingregressor_lr",
+                "stackingregressor_svm",
+            ],
+        ),
+    ],
+    ids=[
+        "StackingClassifier_multiclass",
+        "StackingClassifier_binary",
+        "StackingRegressor",
+    ],
+)
+@pytest.mark.parametrize("passthrough", [True, False])
+def test_get_feature_names_out(
+    stacker, feature_names, X, y, expected_names, passthrough
+):
+    """Check get_feature_names_out works for stacking."""
+
+    stacker.set_params(passthrough=passthrough)
+    stacker.fit(scale(X), y)
+
+    if passthrough:
+        expected_names = np.concatenate((expected_names, feature_names))
+
+    names_out = stacker.get_feature_names_out(feature_names)
+    assert_array_equal(names_out, expected_names)

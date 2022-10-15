@@ -25,6 +25,7 @@ from ._loss import (
     CyHalfPoissonLoss,
     CyHalfGammaLoss,
     CyHalfTweedieLoss,
+    CyHalfTweedieLossIdentity,
     CyHalfBinomialLoss,
     CyHalfMultinomialLoss,
 )
@@ -730,14 +731,6 @@ class HalfTweedieLoss(BaseLoss):
     """
 
     def __init__(self, sample_weight=None, power=1.5):
-        check_scalar(
-            power,
-            "power",
-            target_type=numbers.Real,
-            include_boundaries="neither",
-            min_val=-np.inf,
-            max_val=np.inf,
-        )
         super().__init__(
             closs=CyHalfTweedieLoss(power=float(power)),
             link=LogLink(),
@@ -768,6 +761,52 @@ class HalfTweedieLoss(BaseLoss):
             if sample_weight is not None:
                 term *= sample_weight
             return term
+
+
+class HalfTweedieLossIdentity(BaseLoss):
+    """Half Tweedie deviance loss with identity link, for regression.
+
+    Domain:
+    y_true in real numbers for power <= 0
+    y_true in non-negative real numbers for 0 < power < 2
+    y_true in positive real numbers for 2 <= power
+    y_pred in positive real numbers for power != 0
+    y_pred in real numbers for power = 0
+    power in real numbers
+
+    Link:
+    y_pred = raw_prediction
+
+    For a given sample x_i, half Tweedie deviance loss with p=power is defined
+    as::
+
+        loss(x_i) = max(y_true_i, 0)**(2-p) / (1-p) / (2-p)
+                    - y_true_i * raw_prediction_i**(1-p) / (1-p)
+                    + raw_prediction_i**(2-p) / (2-p)
+
+    Note that the minimum value of this loss is 0.
+
+    Note furthermore that although no Tweedie distribution exists for
+    0 < power < 1, it still gives a strictly consistent scoring function for
+    the expectation.
+    """
+
+    def __init__(self, sample_weight=None, power=1.5):
+        super().__init__(
+            closs=CyHalfTweedieLossIdentity(power=float(power)),
+            link=IdentityLink(),
+        )
+        if self.closs.power <= 0:
+            self.interval_y_true = Interval(-np.inf, np.inf, False, False)
+        elif self.closs.power < 2:
+            self.interval_y_true = Interval(0, np.inf, True, False)
+        else:
+            self.interval_y_true = Interval(0, np.inf, False, False)
+
+        if self.closs.power == 0:
+            self.interval_y_pred = Interval(-np.inf, np.inf, False, False)
+        else:
+            self.interval_y_pred = Interval(0, np.inf, False, False)
 
 
 class HalfBinomialLoss(BaseLoss):
@@ -823,7 +862,7 @@ class HalfBinomialLoss(BaseLoss):
         Returns
         -------
         proba : array of shape (n_samples, 2)
-            Element-wise class probabilites.
+            Element-wise class probabilities.
         """
         # Be graceful to shape (n_samples, 1) -> (n_samples,)
         if raw_prediction.ndim == 2 and raw_prediction.shape[1] == 1:
@@ -863,10 +902,10 @@ class HalfMultinomialLoss(BaseLoss):
 
     Reference
     ---------
-    .. [1] Simon, Noah, J. Friedman and T. Hastie.
+    .. [1] :arxiv:`Simon, Noah, J. Friedman and T. Hastie.
         "A Blockwise Descent Algorithm for Group-penalized Multiresponse and
-        Multinomial Regression."
-        https://arxiv.org/pdf/1311.6529.pdf
+        Multinomial Regression".
+        <1311.6529>`
     """
 
     is_multiclass = True
@@ -913,7 +952,7 @@ class HalfMultinomialLoss(BaseLoss):
         Returns
         -------
         proba : array of shape (n_samples, n_classes)
-            Element-wise class probabilites.
+            Element-wise class probabilities.
         """
         return self.link.inverse(raw_prediction)
 
@@ -951,7 +990,7 @@ class HalfMultinomialLoss(BaseLoss):
             Element-wise gradients.
 
         proba : array of shape (n_samples, n_classes)
-            Element-wise class probabilites.
+            Element-wise class probabilities.
         """
         if gradient_out is None:
             if proba_out is None:

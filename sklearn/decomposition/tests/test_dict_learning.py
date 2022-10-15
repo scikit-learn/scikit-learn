@@ -1,4 +1,5 @@
 import pytest
+import warnings
 
 import numpy as np
 from functools import partial
@@ -111,12 +112,12 @@ def test_max_iter():
         model.fit_transform(X)
 
     # check that the underlying model converges w/o warnings
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", ConvergenceWarning)
         model = SparseCoder(
             D_multi, transform_algorithm=transform_algorithm, transform_max_iter=2000
         )
         model.fit_transform(X)
-    assert not [w.message for w in record]
 
 
 def test_dict_learning_lars_positive_parameter():
@@ -259,13 +260,6 @@ def test_dict_learning_nonzero_coefs():
     assert len(np.flatnonzero(code)) == 3
 
 
-def test_dict_learning_unknown_fit_algorithm():
-    n_components = 5
-    dico = DictionaryLearning(n_components, fit_algorithm="<unknown>")
-    with pytest.raises(ValueError):
-        dico.fit(X)
-
-
 def test_dict_learning_split():
     n_components = 5
     dico = DictionaryLearning(
@@ -283,19 +277,36 @@ def test_dict_learning_split():
 def test_dict_learning_online_shapes():
     rng = np.random.RandomState(0)
     n_components = 8
+
     code, dictionary = dict_learning_online(
-        X, n_components=n_components, alpha=1, random_state=rng
+        X,
+        n_components=n_components,
+        batch_size=4,
+        max_iter=10,
+        method="cd",
+        random_state=rng,
+        return_code=True,
     )
     assert code.shape == (n_samples, n_components)
     assert dictionary.shape == (n_components, n_features)
     assert np.dot(code, dictionary).shape == X.shape
 
+    dictionary = dict_learning_online(
+        X,
+        n_components=n_components,
+        batch_size=4,
+        max_iter=10,
+        method="cd",
+        random_state=rng,
+        return_code=False,
+    )
+    assert dictionary.shape == (n_components, n_features)
+
 
 def test_dict_learning_online_lars_positive_parameter():
-    alpha = 1
     err_msg = "Positive constraint not supported for 'lars' coding method."
     with pytest.raises(ValueError, match=err_msg):
-        dict_learning_online(X, alpha=alpha, positive_code=True)
+        dict_learning_online(X, batch_size=4, max_iter=10, positive_code=True)
 
 
 @pytest.mark.parametrize(
@@ -314,6 +325,8 @@ def test_minibatch_dictionary_learning_positivity(
     n_components = 8
     dico = MiniBatchDictionaryLearning(
         n_components,
+        batch_size=4,
+        max_iter=10,
         transform_algorithm=transform_algorithm,
         random_state=0,
         positive_code=positive_code,
@@ -338,6 +351,8 @@ def test_minibatch_dictionary_learning_lars(positive_dict):
 
     dico = MiniBatchDictionaryLearning(
         n_components,
+        batch_size=4,
+        max_iter=10,
         transform_algorithm="lars",
         random_state=0,
         positive_dict=positive_dict,
@@ -359,6 +374,7 @@ def test_dict_learning_online_positivity(positive_code, positive_dict):
     code, dictionary = dict_learning_online(
         X,
         n_components=n_components,
+        batch_size=4,
         method="cd",
         alpha=1,
         random_state=rng,
@@ -376,27 +392,51 @@ def test_dict_learning_online_positivity(positive_code, positive_dict):
 
 
 def test_dict_learning_online_verbosity():
+    # test verbosity for better coverage
     n_components = 5
-    # test verbosity
     from io import StringIO
     import sys
 
     old_stdout = sys.stdout
     try:
         sys.stdout = StringIO()
+
+        # convergence monitoring verbosity
         dico = MiniBatchDictionaryLearning(
-            n_components, n_iter=20, verbose=1, random_state=0
+            n_components, batch_size=4, max_iter=5, verbose=1, tol=0.1, random_state=0
         )
         dico.fit(X)
         dico = MiniBatchDictionaryLearning(
-            n_components, n_iter=20, verbose=2, random_state=0
+            n_components,
+            batch_size=4,
+            max_iter=5,
+            verbose=1,
+            max_no_improvement=2,
+            random_state=0,
         )
         dico.fit(X)
+        # higher verbosity level
+        dico = MiniBatchDictionaryLearning(
+            n_components, batch_size=4, max_iter=5, verbose=2, random_state=0
+        )
+        dico.fit(X)
+
+        # function API verbosity
         dict_learning_online(
-            X, n_components=n_components, alpha=1, verbose=1, random_state=0
+            X,
+            n_components=n_components,
+            batch_size=4,
+            alpha=1,
+            verbose=1,
+            random_state=0,
         )
         dict_learning_online(
-            X, n_components=n_components, alpha=1, verbose=2, random_state=0
+            X,
+            n_components=n_components,
+            batch_size=4,
+            alpha=1,
+            verbose=2,
+            random_state=0,
         )
     finally:
         sys.stdout = old_stdout
@@ -406,14 +446,18 @@ def test_dict_learning_online_verbosity():
 
 def test_dict_learning_online_estimator_shapes():
     n_components = 5
-    dico = MiniBatchDictionaryLearning(n_components, n_iter=20, random_state=0)
+    dico = MiniBatchDictionaryLearning(
+        n_components, batch_size=4, max_iter=5, random_state=0
+    )
     dico.fit(X)
     assert dico.components_.shape == (n_components, n_features)
 
 
 def test_dict_learning_online_overcomplete():
     n_components = 12
-    dico = MiniBatchDictionaryLearning(n_components, n_iter=20, random_state=0).fit(X)
+    dico = MiniBatchDictionaryLearning(
+        n_components, batch_size=4, max_iter=5, random_state=0
+    ).fit(X)
     assert dico.components_.shape == (n_components, n_features)
 
 
@@ -422,7 +466,7 @@ def test_dict_learning_online_initialization():
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)
     dico = MiniBatchDictionaryLearning(
-        n_components, n_iter=0, dict_init=V, random_state=0
+        n_components, batch_size=4, max_iter=0, dict_init=V, random_state=0
     ).fit(X)
     assert_array_equal(dico.components_, V)
 
@@ -433,7 +477,12 @@ def test_dict_learning_online_readonly_initialization():
     V = rng.randn(n_components, n_features)
     V.setflags(write=False)
     MiniBatchDictionaryLearning(
-        n_components, n_iter=1, dict_init=V, random_state=0, shuffle=False
+        n_components,
+        batch_size=4,
+        max_iter=1,
+        dict_init=V,
+        random_state=0,
+        shuffle=False,
     ).fit(X)
 
 
@@ -444,15 +493,17 @@ def test_dict_learning_online_partial_fit():
     V /= np.sum(V**2, axis=1)[:, np.newaxis]
     dict1 = MiniBatchDictionaryLearning(
         n_components,
-        n_iter=10 * len(X),
+        max_iter=10,
         batch_size=1,
         alpha=1,
         shuffle=False,
         dict_init=V,
+        max_no_improvement=None,
+        tol=0.0,
         random_state=0,
     ).fit(X)
     dict2 = MiniBatchDictionaryLearning(
-        n_components, alpha=1, n_iter=1, dict_init=V, random_state=0
+        n_components, alpha=1, dict_init=V, random_state=0
     )
     for i in range(10):
         for sample in X:
@@ -461,22 +512,8 @@ def test_dict_learning_online_partial_fit():
     assert not np.all(sparse_encode(X, dict1.components_, alpha=1) == 0)
     assert_array_almost_equal(dict1.components_, dict2.components_, decimal=2)
 
-
-def test_dict_learning_iter_offset():
-    n_components = 12
-    rng = np.random.RandomState(0)
-    V = rng.randn(n_components, n_features)
-    dict1 = MiniBatchDictionaryLearning(
-        n_components, n_iter=10, dict_init=V, random_state=0, shuffle=False
-    )
-    dict2 = MiniBatchDictionaryLearning(
-        n_components, n_iter=10, dict_init=V, random_state=0, shuffle=False
-    )
-    dict1.fit(X)
-    for sample in X:
-        dict2.partial_fit(sample[np.newaxis, :])
-
-    assert dict1.iter_offset_ == dict2.iter_offset_
+    # partial_fit should ignore max_iter (#17433)
+    assert dict1.n_steps_ == dict2.n_steps_ == 100
 
 
 def test_sparse_encode_shapes():
@@ -624,6 +661,84 @@ def test_sparse_coder_n_features_in():
     assert sc.n_features_in_ == d.shape[1]
 
 
+@pytest.mark.parametrize("attr", ["iter_offset_", "inner_stats_", "random_state_"])
+def test_minibatch_dict_learning_deprecated_attributes(attr):
+    # check that we raise a deprecation warning when accessing the deprecated
+    # attributes of MiniBatchDictionaryLearning
+    # FIXME: remove in 1.3
+    depr_msg = (
+        f"The attribute `{attr}` is deprecated in 1.1 and will be removed in 1.3."
+    )
+    est = MiniBatchDictionaryLearning(
+        n_components=2, batch_size=4, max_iter=1, random_state=0
+    )
+    est.fit(X)
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        getattr(est, attr)
+
+
+def test_minibatch_dict_learning_partial_fit_iter_offset_deprecated():
+    # check the deprecation warning of iter_offset in partial_fit
+    # FIXME: remove in 1.3
+    depr_msg = (
+        "'iter_offset' is deprecated in version 1.1 and will be removed in version 1.3"
+    )
+    est = MiniBatchDictionaryLearning(n_components=2, batch_size=4, random_state=0)
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        est.partial_fit(X, iter_offset=0)
+
+
+def test_minibatch_dict_learning_n_iter_deprecated():
+    # check the deprecation warning of n_iter
+    # FIXME: remove in 1.3
+    depr_msg = (
+        "'n_iter' is deprecated in version 1.1 and will be removed in version 1.4"
+    )
+    est = MiniBatchDictionaryLearning(
+        n_components=2, batch_size=4, n_iter=5, random_state=0
+    )
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        est.fit(X)
+
+
+@pytest.mark.parametrize(
+    "arg, val",
+    [
+        ("iter_offset", 0),
+        ("inner_stats", None),
+        ("return_inner_stats", False),
+        ("return_n_iter", False),
+        ("n_iter", 5),
+    ],
+)
+def test_dict_learning_online_deprecated_args(arg, val):
+    # check the deprecation warning for the deprecated args of
+    # dict_learning_online
+    # FIXME: remove in 1.3
+    depr_msg = (
+        f"'{arg}' is deprecated in version 1.1 and will be removed in version 1.3."
+    )
+
+    with pytest.warns(FutureWarning, match=depr_msg):
+        dict_learning_online(
+            X, n_components=2, batch_size=4, random_state=0, **{arg: val}
+        )
+
+
+def test_batch_size_default_value_future_warning():
+    # Check that a FutureWarning is raised if batch_size is left to its default value.
+    # FIXME: remove in 1.3
+    msg = "The default value of batch_size will change"
+    with pytest.warns(FutureWarning, match=msg):
+        dict_learning_online(X, n_components=2, random_state=0)
+
+    with pytest.warns(FutureWarning, match=msg):
+        MiniBatchDictionaryLearning(n_components=2, random_state=0).fit(X)
+
+
 def test_update_dict():
     # Check the dict update in batch mode vs online mode
     # Non-regression test for #4866
@@ -647,11 +762,13 @@ def test_update_dict():
     assert_allclose(newd_batch, newd_online)
 
 
-@pytest.mark.parametrize("Estimator", [DictionaryLearning, MiniBatchDictionaryLearning])
-def test_warning_default_transform_alpha(Estimator):
-    dl = Estimator(alpha=0.1)
-    with pytest.warns(FutureWarning, match="default transform_alpha"):
-        dl.fit_transform(X)
+# FIXME: remove in 1.3
+def test_dict_learning_online_n_iter_deprecated():
+    # Check that an error is raised when a deprecated argument is set when max_iter
+    # is also set.
+    msg = "The following arguments are incompatible with 'max_iter'"
+    with pytest.raises(ValueError, match=msg):
+        dict_learning_online(X, max_iter=10, return_inner_stats=True)
 
 
 @pytest.mark.parametrize(
@@ -706,9 +823,6 @@ def test_sparse_coder_dtype_match(data_type, transform_algorithm):
     assert code.dtype == data_type
 
 
-@pytest.mark.parametrize(
-    "dictionary_learning_transformer", (DictionaryLearning, MiniBatchDictionaryLearning)
-)
 @pytest.mark.parametrize("fit_algorithm", ("lars", "cd"))
 @pytest.mark.parametrize(
     "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
@@ -725,12 +839,11 @@ def test_sparse_coder_dtype_match(data_type, transform_algorithm):
 def test_dictionary_learning_dtype_match(
     data_type,
     expected_type,
-    dictionary_learning_transformer,
     fit_algorithm,
     transform_algorithm,
 ):
     # Verify preserving dtype for fit and transform in dictionary learning class
-    dict_learner = dictionary_learning_transformer(
+    dict_learner = DictionaryLearning(
         n_components=8,
         fit_algorithm=fit_algorithm,
         transform_algorithm=transform_algorithm,
@@ -740,9 +853,42 @@ def test_dictionary_learning_dtype_match(
     assert dict_learner.components_.dtype == expected_type
     assert dict_learner.transform(X.astype(data_type)).dtype == expected_type
 
-    if dictionary_learning_transformer is MiniBatchDictionaryLearning:
-        assert dict_learner.inner_stats_[0].dtype == expected_type
-        assert dict_learner.inner_stats_[1].dtype == expected_type
+
+@pytest.mark.parametrize("fit_algorithm", ("lars", "cd"))
+@pytest.mark.parametrize(
+    "transform_algorithm", ("lasso_lars", "lasso_cd", "lars", "threshold", "omp")
+)
+@pytest.mark.parametrize(
+    "data_type, expected_type",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
+    ),
+)
+def test_minibatch_dictionary_learning_dtype_match(
+    data_type,
+    expected_type,
+    fit_algorithm,
+    transform_algorithm,
+):
+    # Verify preserving dtype for fit and transform in minibatch dictionary learning
+    dict_learner = MiniBatchDictionaryLearning(
+        n_components=8,
+        batch_size=10,
+        fit_algorithm=fit_algorithm,
+        transform_algorithm=transform_algorithm,
+        max_iter=100,
+        tol=1e-1,
+        random_state=0,
+    )
+    dict_learner.fit(X.astype(data_type))
+
+    assert dict_learner.components_.dtype == expected_type
+    assert dict_learner.transform(X.astype(data_type)).dtype == expected_type
+    assert dict_learner._inner_stats[0].dtype == expected_type
+    assert dict_learner._inner_stats[1].dtype == expected_type
 
 
 @pytest.mark.parametrize("method", ("lars", "cd"))
@@ -824,6 +970,7 @@ def test_dict_learning_online_dtype_match(data_type, expected_type, method):
         X.astype(data_type),
         n_components=n_components,
         alpha=1,
+        batch_size=10,
         random_state=rng,
         method=method,
     )
@@ -842,6 +989,7 @@ def test_dict_learning_online_numerical_consistency(method):
         X.astype(np.float64),
         n_components=n_components,
         alpha=alpha,
+        batch_size=10,
         random_state=0,
         method=method,
     )
@@ -849,6 +997,7 @@ def test_dict_learning_online_numerical_consistency(method):
         X.astype(np.float32),
         n_components=n_components,
         alpha=alpha,
+        batch_size=10,
         random_state=0,
         method=method,
     )
@@ -869,7 +1018,11 @@ def test_dict_learning_online_numerical_consistency(method):
 
 @pytest.mark.parametrize(
     "estimator",
-    [SparseCoder(X.T), DictionaryLearning(), MiniBatchDictionaryLearning()],
+    [
+        SparseCoder(X.T),
+        DictionaryLearning(),
+        MiniBatchDictionaryLearning(batch_size=4, max_iter=10),
+    ],
     ids=lambda x: x.__class__.__name__,
 )
 def test_get_feature_names_out(estimator):
@@ -883,3 +1036,14 @@ def test_get_feature_names_out(estimator):
         feature_names_out,
         [f"{estimator_name}{i}" for i in range(n_components)],
     )
+
+
+# TODO(1.4) remove
+def test_minibatch_dictionary_learning_warns_and_ignore_n_iter():
+    """Check that we always raise a warning when `n_iter` is set even if it is
+    ignored if `max_iter` is set.
+    """
+    warn_msg = "'n_iter' is deprecated in version 1.1"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        model = MiniBatchDictionaryLearning(batch_size=256, n_iter=2, max_iter=2).fit(X)
+    assert model.n_iter_ == 2

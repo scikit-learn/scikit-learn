@@ -21,8 +21,12 @@ We will model the complexity influence on three different estimators:
     - :class:`~sklearn.svm.NuSVR` (for regression data) which implements
       Nu support vector regression;
 
-    - :class:`~sklearn.ensemble.GradientBoostingRegressor` (for regression
-      data) which builds an additive model in a forward stage-wise fashion.
+    - :class:`~sklearn.ensemble.GradientBoostingRegressor` builds an additive
+      model in a forward stage-wise fashion. Notice that
+      :class:`~sklearn.ensemble.HistGradientBoostingRegressor` is much faster
+      than :class:`~sklearn.ensemble.GradientBoostingRegressor` starting with
+      intermediate datasets (`n_samples >= 10_000`), which is not the case for
+      this example.
 
 
 We make the model complexity vary through the choice of relevant model

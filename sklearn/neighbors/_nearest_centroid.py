@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Nearest Centroid Classification
 """
@@ -10,14 +9,17 @@ Nearest Centroid Classification
 
 import warnings
 import numpy as np
+from numbers import Real
 from scipy import sparse as sp
 
 from ..base import BaseEstimator, ClassifierMixin
-from ..metrics.pairwise import pairwise_distances
+from ..metrics.pairwise import pairwise_distances_argmin
 from ..preprocessing import LabelEncoder
 from ..utils.validation import check_is_fitted
 from ..utils.sparsefuncs import csc_median_axis_0
 from ..utils.multiclass import check_classification_targets
+from ..utils._param_validation import Interval, StrOptions
+from sklearn.metrics.pairwise import _VALID_METRICS
 
 
 class NearestCentroid(ClassifierMixin, BaseEstimator):
@@ -30,12 +32,16 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
     Parameters
     ----------
-    metric : str or callable, default="euclidian"
-        The metric to use when calculating distance between instances in a
-        feature array. If metric is a string or callable, it must be one of
-        the options allowed by
-        :func:`~sklearn.metrics.pairwise_distances` for its metric
-        parameter. The centroids for the samples corresponding to each class is
+    metric : str or callable, default="euclidean"
+        Metric to use for distance computation. See the documentation of
+        `scipy.spatial.distance
+        <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
+        the metrics listed in
+        :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
+        values. Note that "wminkowski", "seuclidean" and "mahalanobis" are not
+        supported.
+
+        The centroids for the samples corresponding to each class is
         the point from which the sum of the distances (according to the metric)
         of all samples that belong to that particular class are minimized.
         If the `"manhattan"` metric is provided, this centroid is the median
@@ -95,6 +101,16 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
     [1]
     """
 
+    _parameter_constraints: dict = {
+        "metric": [
+            StrOptions(
+                set(_VALID_METRICS) - {"mahalanobis", "seuclidean", "wminkowski"}
+            ),
+            callable,
+        ],
+        "shrink_threshold": [Interval(Real, 0, None, closed="neither"), None],
+    }
+
     def __init__(self, metric="euclidean", *, shrink_threshold=None):
         self.metric = metric
         self.shrink_threshold = shrink_threshold
@@ -117,8 +133,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        if self.metric == "precomputed":
-            raise ValueError("Precomputed is not supported.")
+        self._validate_params()
         # If X is sparse and the metric is "manhattan", store it in a csc
         # format is easier to calculate the median.
         if self.metric == "manhattan":
@@ -219,5 +234,5 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
         X = self._validate_data(X, accept_sparse="csr", reset=False)
         return self.classes_[
-            pairwise_distances(X, self.centroids_, metric=self.metric).argmin(axis=1)
+            pairwise_distances_argmin(X, self.centroids_, metric=self.metric)
         ]

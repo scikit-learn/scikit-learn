@@ -8,6 +8,7 @@ Generate samples of synthetic data sets.
 
 import numbers
 import array
+import warnings
 from collections.abc import Iterable
 
 import numpy as np
@@ -155,6 +156,11 @@ def make_classification(
     y : ndarray of shape (n_samples,)
         The integer labels for class membership of each sample.
 
+    See Also
+    --------
+    make_blobs : Simplified variant.
+    make_multilabel_classification : Unrelated generator for multilabel tasks.
+
     Notes
     -----
     The algorithm is adapted from Guyon [1] and was designed to generate
@@ -164,11 +170,6 @@ def make_classification(
     ----------
     .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable
            selection benchmark", 2003.
-
-    See Also
-    --------
-    make_blobs : Simplified variant.
-    make_multilabel_classification : Unrelated generator for multilabel tasks.
     """
     generator = check_random_state(random_state)
 
@@ -340,7 +341,7 @@ def make_multilabel_classification(
         If ``True``, some instances might not belong to any class.
 
     sparse : bool, default=False
-        If ``True``, return a sparse feature matrix
+        If ``True``, return a sparse feature matrix.
 
         .. versionadded:: 0.17
            parameter to allow *sparse* output.
@@ -375,7 +376,6 @@ def make_multilabel_classification(
     p_w_c : ndarray of shape (n_features, n_classes)
         The probability of each feature being drawn given each class.
         Only returned if ``return_distributions=True``.
-
     """
     if n_classes < 1:
         raise ValueError(
@@ -549,12 +549,12 @@ def make_regression(
         The bias term in the underlying linear model.
 
     effective_rank : int, default=None
-        if not None:
+        If not None:
             The approximate number of singular vectors required to explain most
             of the input data by linear combinations. Using this kind of
             singular spectrum in the input allows the generator to reproduce
             the correlations often observed in practice.
-        if None:
+        If None:
             The input set is well conditioned, centered and gaussian with
             unit variance.
 
@@ -1239,12 +1239,20 @@ def make_low_rank_matrix(
     return np.dot(np.dot(u, s), v.T)
 
 
+# TODO(1.3): Change argument `data_transposed` default from True to False.
+# TODO(1.3): Deprecate data_transposed, always return data not transposed.
 def make_sparse_coded_signal(
-    n_samples, *, n_components, n_features, n_nonzero_coefs, random_state=None
+    n_samples,
+    *,
+    n_components,
+    n_features,
+    n_nonzero_coefs,
+    random_state=None,
+    data_transposed="warn",
 ):
     """Generate a signal as a sparse combination of dictionary elements.
 
-    Returns a matrix Y = DX, such as D is (n_features, n_components),
+    Returns a matrix Y = DX, such that D is (n_features, n_components),
     X is (n_components, n_samples) and each column of X has exactly
     n_nonzero_coefs non-zero elements.
 
@@ -1253,34 +1261,43 @@ def make_sparse_coded_signal(
     Parameters
     ----------
     n_samples : int
-        Number of samples to generate
+        Number of samples to generate.
 
     n_components : int
-        Number of components in the dictionary
+        Number of components in the dictionary.
 
     n_features : int
-        Number of features of the dataset to generate
+        Number of features of the dataset to generate.
 
     n_nonzero_coefs : int
-        Number of active (non-zero) coefficients in each sample
+        Number of active (non-zero) coefficients in each sample.
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for dataset creation. Pass an int
         for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
 
+    data_transposed : bool, default=True
+        By default, Y, D and X are transposed.
+
+        .. versionadded:: 1.1
+
     Returns
     -------
-    data : ndarray of shape (n_features, n_samples)
-        The encoded signal (Y).
+    data : ndarray of shape (n_features, n_samples) or (n_samples, n_features)
+        The encoded signal (Y). The shape is `(n_samples, n_features)` if
+        `data_transposed` is False, otherwise it's `(n_features, n_samples)`.
 
-    dictionary : ndarray of shape (n_features, n_components)
-        The dictionary with normalized components (D).
+    dictionary : ndarray of shape (n_features, n_components) or \
+            (n_components, n_features)
+        The dictionary with normalized components (D). The shape is
+        `(n_components, n_features)` if `data_transposed` is False, otherwise it's
+        `(n_features, n_components)`.
 
-    code : ndarray of shape (n_components, n_samples)
+    code : ndarray of shape (n_components, n_samples) or (n_samples, n_components)
         The sparse code such that each column of this matrix has exactly
-        n_nonzero_coefs non-zero items (X).
-
+        n_nonzero_coefs non-zero items (X). The shape is `(n_samples, n_components)`
+        if `data_transposed` is False, otherwise it's `(n_components, n_samples)`.
     """
     generator = check_random_state(random_state)
 
@@ -1298,6 +1315,19 @@ def make_sparse_coded_signal(
 
     # encode signal
     Y = np.dot(D, X)
+
+    # raise warning if data_transposed is not passed explicitly
+    if data_transposed == "warn":
+        data_transposed = True
+        warnings.warn(
+            "The default value of data_transposed will change from True to False in"
+            " version 1.3",
+            FutureWarning,
+        )
+
+    # transpose if needed
+    if not data_transposed:
+        Y, D, X = Y.T, D.T, X.T
 
     return map(np.squeeze, (Y, D, X))
 
@@ -1375,7 +1405,7 @@ def make_spd_matrix(n_dim, *, random_state=None):
 
     See Also
     --------
-    make_sparse_spd_matrix
+    make_sparse_spd_matrix: Generate a sparse symmetric definite positive matrix.
     """
     generator = check_random_state(random_state)
 
@@ -1502,9 +1532,9 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
 
     References
     ----------
-    .. [1] S. Marsland, "Machine Learning: An Algorithmic Perspective",
-           Chapter 10, 2009.
-           http://seat.massey.ac.nz/personal/s.r.marsland/Code/10/lle.py
+    .. [1] S. Marsland, "Machine Learning: An Algorithmic Perspective", 2nd edition,
+           Chapter 6, 2014.
+           https://homepages.ecs.vuw.ac.nz/~marslast/Code/Ch6/lle.py
     """
     generator = check_random_state(random_state)
 
@@ -1607,7 +1637,7 @@ def make_gaussian_quantiles(
         The number of features for each sample.
 
     n_classes : int, default=3
-        The number of classes
+        The number of classes.
 
     shuffle : bool, default=True
         Shuffle the samples.
@@ -1632,7 +1662,6 @@ def make_gaussian_quantiles(
     References
     ----------
     .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
-
     """
     if n_samples < n_classes:
         raise ValueError("n_samples must be at least n_classes")
@@ -1686,8 +1715,7 @@ def make_biclusters(
     shuffle=True,
     random_state=None,
 ):
-    """Generate an array with constant block diagonal structure for
-    biclustering.
+    """Generate a constant block diagonal structure array for biclustering.
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
@@ -1727,6 +1755,11 @@ def make_biclusters(
     cols : ndarray of shape (n_clusters, X.shape[1])
         The indicators for cluster membership of each column.
 
+    See Also
+    --------
+    make_checkerboard: Generate an array with block checkerboard structure for
+        biclustering.
+
     References
     ----------
 
@@ -1734,10 +1767,6 @@ def make_biclusters(
         words using bipartite spectral graph partitioning. In Proceedings
         of the seventh ACM SIGKDD international conference on Knowledge
         discovery and data mining (pp. 269-274). ACM.
-
-    See Also
-    --------
-    make_checkerboard
     """
     generator = check_random_state(random_state)
     n_rows, n_cols = shape
@@ -1748,10 +1777,10 @@ def make_biclusters(
     col_sizes = generator.multinomial(n_cols, np.repeat(1.0 / n_clusters, n_clusters))
 
     row_labels = np.hstack(
-        list(np.repeat(val, rep) for val, rep in zip(range(n_clusters), row_sizes))
+        [np.repeat(val, rep) for val, rep in zip(range(n_clusters), row_sizes)]
     )
     col_labels = np.hstack(
-        list(np.repeat(val, rep) for val, rep in zip(range(n_clusters), col_sizes))
+        [np.repeat(val, rep) for val, rep in zip(range(n_clusters), col_sizes)]
     )
 
     result = np.zeros(shape, dtype=np.float64)
@@ -1851,10 +1880,10 @@ def make_checkerboard(
     )
 
     row_labels = np.hstack(
-        list(np.repeat(val, rep) for val, rep in zip(range(n_row_clusters), row_sizes))
+        [np.repeat(val, rep) for val, rep in zip(range(n_row_clusters), row_sizes)]
     )
     col_labels = np.hstack(
-        list(np.repeat(val, rep) for val, rep in zip(range(n_col_clusters), col_sizes))
+        [np.repeat(val, rep) for val, rep in zip(range(n_col_clusters), col_sizes)]
     )
 
     result = np.zeros(shape, dtype=np.float64)

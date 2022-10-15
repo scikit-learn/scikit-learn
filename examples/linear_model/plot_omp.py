@@ -28,6 +28,7 @@ y, X, w = make_sparse_coded_signal(
     n_features=n_features,
     n_nonzero_coefs=n_nonzero_coefs,
     random_state=0,
+    data_transposed=True,
 )
 
 (idx,) = w.nonzero()
@@ -43,7 +44,7 @@ plt.title("Sparse signal")
 plt.stem(idx, w[idx], use_line_collection=True)
 
 # plot the noise-free reconstruction
-omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs, normalize=False)
+omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs)
 omp.fit(X, y)
 coef = omp.coef_
 (idx_r,) = coef.nonzero()
@@ -62,7 +63,7 @@ plt.title("Recovered signal from noisy measurements")
 plt.stem(idx_r, coef[idx_r], use_line_collection=True)
 
 # plot the noisy reconstruction with number of non-zeros set by CV
-omp_cv = OrthogonalMatchingPursuitCV(normalize=False)
+omp_cv = OrthogonalMatchingPursuitCV()
 omp_cv.fit(X, y_noisy)
 coef = omp_cv.coef_
 (idx_r,) = coef.nonzero()

@@ -268,7 +268,7 @@ Then, setup the magics in a manner similar to ``line_profiler``.
 - **Under IPython 0.11+**, first create a configuration profile:
 
 .. prompt:: bash $
-  
+
     ipython profile create
 
 
@@ -425,4 +425,4 @@ See `joblib documentation <https://joblib.readthedocs.io>`_
 A simple algorithmic trick: warm restarts
 =========================================
 
-See the glossary entry for `warm_start <http://scikit-learn.org/dev/glossary.html#term-warm-start>`_
+See the glossary entry for :term:`warm_start`

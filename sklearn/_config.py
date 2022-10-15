@@ -8,11 +8,13 @@ _global_config = {
     "assume_finite": bool(os.environ.get("SKLEARN_ASSUME_FINITE", False)),
     "working_memory": int(os.environ.get("SKLEARN_WORKING_MEMORY", 1024)),
     "print_changed_only": True,
-    "display": "text",
+    "display": "diagram",
     "pairwise_dist_chunk_size": int(
         os.environ.get("SKLEARN_PAIRWISE_DIST_CHUNK_SIZE", 256)
     ),
     "enable_cython_pairwise_dist": True,
+    "array_api_dispatch": False,
+    "transform_output": "default",
 }
 _threadlocal = threading.local()
 
@@ -50,6 +52,8 @@ def set_config(
     display=None,
     pairwise_dist_chunk_size=None,
     enable_cython_pairwise_dist=None,
+    array_api_dispatch=None,
+    transform_output=None,
 ):
     """Set global scikit-learn configuration
 
@@ -85,13 +89,14 @@ def set_config(
     display : {'text', 'diagram'}, default=None
         If 'diagram', estimators will be displayed as a diagram in a Jupyter
         lab or notebook context. If 'text', estimators will be displayed as
-        text. Default is 'text'.
+        text. Default is 'diagram'.
 
         .. versionadded:: 0.23
 
     pairwise_dist_chunk_size : int, default=None
-        The number of row vectors per chunk for PairwiseDistancesReduction.
-        Default is 256 (suitable for most of modern laptops' caches and architectures).
+        The number of row vectors per chunk for the accelerated pairwise-
+        distances reduction backend. Default is 256 (suitable for most of
+        modern laptops' caches and architectures).
 
         Intended for easier benchmarking and testing of scikit-learn internals.
         End users are not expected to benefit from customizing this configuration
@@ -100,14 +105,27 @@ def set_config(
         .. versionadded:: 1.1
 
     enable_cython_pairwise_dist : bool, default=None
-        Use PairwiseDistancesReduction when possible.
-        Default is True.
+        Use the accelerated pairwise-distances reduction backend when
+        possible. Global default: True.
 
         Intended for easier benchmarking and testing of scikit-learn internals.
         End users are not expected to benefit from customizing this configuration
         setting.
 
         .. versionadded:: 1.1
+
+    array_api_dispatch : bool, default=None
+        Use Array API dispatching when inputs follow the Array API standard.
+        Default is False.
+
+        See the :ref:`User Guide <array_api>` for more details.
+
+        .. versionadded:: 1.2
+
+    transform_output : str, default=None
+        Configure the output container for transform.
+
+        .. versionadded:: 1.2
 
     See Also
     --------
@@ -128,6 +146,10 @@ def set_config(
         local_config["pairwise_dist_chunk_size"] = pairwise_dist_chunk_size
     if enable_cython_pairwise_dist is not None:
         local_config["enable_cython_pairwise_dist"] = enable_cython_pairwise_dist
+    if array_api_dispatch is not None:
+        local_config["array_api_dispatch"] = array_api_dispatch
+    if transform_output is not None:
+        local_config["transform_output"] = transform_output
 
 
 @contextmanager
@@ -139,6 +161,8 @@ def config_context(
     display=None,
     pairwise_dist_chunk_size=None,
     enable_cython_pairwise_dist=None,
+    array_api_dispatch=None,
+    transform_output=None,
 ):
     """Context manager for global scikit-learn configuration.
 
@@ -173,13 +197,14 @@ def config_context(
         If 'diagram', estimators will be displayed as a diagram in a Jupyter
         lab or notebook context. If 'text', estimators will be displayed as
         text. If None, the existing value won't change.
-        The default value is 'text'.
+        The default value is 'diagram'.
 
         .. versionadded:: 0.23
 
     pairwise_dist_chunk_size : int, default=None
-        The number of vectors per chunk for PairwiseDistancesReduction.
-        Default is 256 (suitable for most of modern laptops' caches and architectures).
+        The number of row vectors per chunk for the accelerated pairwise-
+        distances reduction backend. Default is 256 (suitable for most of
+        modern laptops' caches and architectures).
 
         Intended for easier benchmarking and testing of scikit-learn internals.
         End users are not expected to benefit from customizing this configuration
@@ -188,14 +213,27 @@ def config_context(
         .. versionadded:: 1.1
 
     enable_cython_pairwise_dist : bool, default=None
-        Use PairwiseDistancesReduction when possible.
-        Default is True.
+        Use the accelerated pairwise-distances reduction backend when
+        possible. Global default: True.
 
         Intended for easier benchmarking and testing of scikit-learn internals.
         End users are not expected to benefit from customizing this configuration
         setting.
 
         .. versionadded:: 1.1
+
+    array_api_dispatch : bool, default=None
+        Use Array API dispatching when inputs follow the Array API standard.
+        Default is False.
+
+        See the :ref:`User Guide <array_api>` for more details.
+
+        .. versionadded:: 1.2
+
+    transform_output : str, default=None
+        Configure the output container for transform.
+
+        .. versionadded:: 1.2
 
     Yields
     ------
@@ -232,6 +270,8 @@ def config_context(
         display=display,
         pairwise_dist_chunk_size=pairwise_dist_chunk_size,
         enable_cython_pairwise_dist=enable_cython_pairwise_dist,
+        array_api_dispatch=array_api_dispatch,
+        transform_output=transform_output,
     )
 
     try:

@@ -35,24 +35,6 @@ def test_valid_n_bins():
     assert KBinsDiscretizer(n_bins=2).fit(X).n_bins_.dtype == np.dtype(int)
 
 
-def test_invalid_n_bins():
-    est = KBinsDiscretizer(n_bins=1)
-    err_msg = (
-        "KBinsDiscretizer received an invalid number of bins. Received 1, expected at"
-        " least 2."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        est.fit_transform(X)
-
-    est = KBinsDiscretizer(n_bins=1.1)
-    err_msg = (
-        "KBinsDiscretizer received an invalid n_bins type. Received float, expected"
-        " int."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        est.fit_transform(X)
-
-
 def test_invalid_n_bins_array():
     # Bad shape
     n_bins = np.full((2, 4), 2.0)
@@ -149,17 +131,6 @@ def test_numeric_stability(i):
     assert_array_equal(Xt_expected, Xt)
 
 
-def test_invalid_encode_option():
-    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode="invalid-encode")
-    err_msg = (
-        r"Valid options for 'encode' are "
-        r"\('onehot', 'onehot-dense', 'ordinal'\). "
-        r"Got encode='invalid-encode' instead."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        est.fit(X)
-
-
 def test_encode_options():
     est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], encode="ordinal").fit(X)
     Xt_1 = est.transform(X)
@@ -168,7 +139,7 @@ def test_encode_options():
     assert not sp.issparse(Xt_2)
     assert_array_equal(
         OneHotEncoder(
-            categories=[np.arange(i) for i in [2, 3, 3, 3]], sparse=False
+            categories=[np.arange(i) for i in [2, 3, 3, 3]], sparse_output=False
         ).fit_transform(Xt_1),
         Xt_2,
     )
@@ -176,22 +147,13 @@ def test_encode_options():
     Xt_3 = est.transform(X)
     assert sp.issparse(Xt_3)
     assert_array_equal(
-        OneHotEncoder(categories=[np.arange(i) for i in [2, 3, 3, 3]], sparse=True)
+        OneHotEncoder(
+            categories=[np.arange(i) for i in [2, 3, 3, 3]], sparse_output=True
+        )
         .fit_transform(Xt_1)
         .toarray(),
         Xt_3.toarray(),
     )
-
-
-def test_invalid_strategy_option():
-    est = KBinsDiscretizer(n_bins=[2, 3, 3, 3], strategy="invalid-strategy")
-    err_msg = (
-        r"Valid options for 'strategy' are "
-        r"\('uniform', 'quantile', 'kmeans'\). "
-        r"Got strategy='invalid-strategy' instead."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        est.fit(X)
 
 
 @pytest.mark.parametrize(
@@ -315,29 +277,23 @@ def test_percentile_numeric_stability():
 
 
 @pytest.mark.parametrize("in_dtype", [np.float16, np.float32, np.float64])
-@pytest.mark.parametrize("out_dtype", [None, np.float16, np.float32, np.float64])
+@pytest.mark.parametrize("out_dtype", [None, np.float32, np.float64])
 @pytest.mark.parametrize("encode", ["ordinal", "onehot", "onehot-dense"])
 def test_consistent_dtype(in_dtype, out_dtype, encode):
     X_input = np.array(X, dtype=in_dtype)
     kbd = KBinsDiscretizer(n_bins=3, encode=encode, dtype=out_dtype)
+    kbd.fit(X_input)
 
-    # a error is raised if a wrong dtype is define for the model
-    if out_dtype not in [None, np.float32, np.float64]:
-        with pytest.raises(ValueError, match="Valid options for 'dtype' are"):
-            kbd.fit(X_input)
+    # test output dtype
+    if out_dtype is not None:
+        expected_dtype = out_dtype
+    elif out_dtype is None and X_input.dtype == np.float16:
+        # wrong numeric input dtype are cast in np.float64
+        expected_dtype = np.float64
     else:
-        kbd.fit(X_input)
-
-        # test output dtype
-        if out_dtype is not None:
-            expected_dtype = out_dtype
-        elif out_dtype is None and X_input.dtype == np.float16:
-            # wrong numeric input dtype are cast in np.float64
-            expected_dtype = np.float64
-        else:
-            expected_dtype = X_input.dtype
-        Xt = kbd.transform(X_input)
-        assert Xt.dtype == expected_dtype
+        expected_dtype = X_input.dtype
+    Xt = kbd.transform(X_input)
+    assert Xt.dtype == expected_dtype
 
 
 @pytest.mark.parametrize("input_dtype", [np.float16, np.float32, np.float64])
@@ -389,17 +345,6 @@ def test_kbinsdiscretizer_subsample_invalid_strategy():
         kbd.fit(X)
 
 
-def test_kbinsdiscretizer_subsample_invalid_type():
-    X = np.array([-2, 1.5, -4, -1]).reshape(-1, 1)
-    kbd = KBinsDiscretizer(
-        n_bins=10, encode="ordinal", strategy="quantile", subsample="full"
-    )
-
-    msg = "subsample must be an instance of int, not str."
-    with pytest.raises(TypeError, match=msg):
-        kbd.fit(X)
-
-
 # TODO: Remove in 1.3
 def test_kbinsdiscretizer_subsample_warn():
     X = np.random.rand(200001, 1).reshape(-1, 1)
@@ -410,25 +355,56 @@ def test_kbinsdiscretizer_subsample_warn():
         kbd.fit(X)
 
 
-@pytest.mark.parametrize("subsample", [0, int(2e5)])
-def test_kbinsdiscretizer_subsample_values(subsample):
+# TODO(1.3) remove
+def test_kbinsdiscretizer_subsample_values():
     X = np.random.rand(220000, 1).reshape(-1, 1)
     kbd_default = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile")
 
     kbd_with_subsampling = clone(kbd_default)
-    kbd_with_subsampling.set_params(subsample=subsample)
+    kbd_with_subsampling.set_params(subsample=int(2e5))
 
-    if subsample == 0:
-        with pytest.raises(ValueError, match="subsample == 0, must be >= 1."):
-            kbd_with_subsampling.fit(X)
-    else:
-        # TODO: Remove in 1.3
-        msg = "In version 1.3 onwards, subsample=2e5 will be used by default."
-        with pytest.warns(FutureWarning, match=msg):
-            kbd_default.fit(X)
+    msg = "In version 1.3 onwards, subsample=2e5 will be used by default."
+    with pytest.warns(FutureWarning, match=msg):
+        kbd_default.fit(X)
 
-        kbd_with_subsampling.fit(X)
-        assert not np.all(
-            kbd_default.bin_edges_[0] == kbd_with_subsampling.bin_edges_[0]
-        )
-        assert kbd_default.bin_edges_.shape == kbd_with_subsampling.bin_edges_.shape
+    kbd_with_subsampling.fit(X)
+    assert not np.all(kbd_default.bin_edges_[0] == kbd_with_subsampling.bin_edges_[0])
+    assert kbd_default.bin_edges_.shape == kbd_with_subsampling.bin_edges_.shape
+
+
+@pytest.mark.parametrize(
+    "encode, expected_names",
+    [
+        (
+            "onehot",
+            [
+                f"feat{col_id}_{float(bin_id)}"
+                for col_id in range(3)
+                for bin_id in range(4)
+            ],
+        ),
+        (
+            "onehot-dense",
+            [
+                f"feat{col_id}_{float(bin_id)}"
+                for col_id in range(3)
+                for bin_id in range(4)
+            ],
+        ),
+        ("ordinal", [f"feat{col_id}" for col_id in range(3)]),
+    ],
+)
+def test_kbinsdiscrtizer_get_feature_names_out(encode, expected_names):
+    """Check get_feature_names_out for different settings.
+    Non-regression test for #22731
+    """
+    X = [[-2, 1, -4], [-1, 2, -3], [0, 3, -2], [1, 4, -1]]
+
+    kbd = KBinsDiscretizer(n_bins=4, encode=encode).fit(X)
+    Xt = kbd.transform(X)
+
+    input_features = [f"feat{i}" for i in range(3)]
+    output_names = kbd.get_feature_names_out(input_features)
+    assert Xt.shape[1] == output_names.shape[0]
+
+    assert_array_equal(output_names, expected_names)

@@ -7,6 +7,7 @@
 # License: BSD 3 clause
 
 from collections import defaultdict
+from numbers import Integral
 import itertools
 import array
 import warnings
@@ -255,6 +256,12 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
            [0, 1, 0]])
     """
 
+    _parameter_constraints: dict = {
+        "neg_label": [Integral],
+        "pos_label": [Integral],
+        "sparse_output": ["boolean"],
+    }
+
     def __init__(self, *, neg_label=0, pos_label=1, sparse_output=False):
 
         self.neg_label = neg_label
@@ -275,6 +282,8 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+
+        self._validate_params()
 
         if self.neg_label >= self.pos_label:
             raise ValueError(
@@ -447,6 +456,11 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
         Shape will be (n_samples, 1) for binary problems. Sparse matrix will
         be of CSR format.
 
+    See Also
+    --------
+    LabelBinarizer : Class used to wrap the functionality of label_binarize and
+        allow for fitting to classes independently of the transform operation.
+
     Examples
     --------
     >>> from sklearn.preprocessing import label_binarize
@@ -467,11 +481,6 @@ def label_binarize(y, *, classes, neg_label=0, pos_label=1, sparse_output=False)
            [0],
            [0],
            [1]])
-
-    See Also
-    --------
-    LabelBinarizer : Class used to wrap the functionality of label_binarize and
-        allow for fitting to classes independently of the transform operation.
     """
     if not isinstance(y, list):
         # XXX Workaround that will be removed when list of list format is
@@ -734,6 +743,11 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
     array(['comedy', 'sci-fi', 'thriller'], dtype=object)
     """
 
+    _parameter_constraints: dict = {
+        "classes": ["array-like", None],
+        "sparse_output": ["boolean"],
+    }
+
     def __init__(self, *, classes=None, sparse_output=False):
         self.classes = classes
         self.sparse_output = sparse_output
@@ -753,7 +767,9 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
         self._cached_dict = None
+
         if self.classes is None:
             classes = sorted(set(itertools.chain.from_iterable(y)))
         elif len(set(self.classes)) < len(self.classes):
@@ -786,10 +802,11 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
             is in `y[i]`, and 0 otherwise. Sparse matrix will be of CSR
             format.
         """
-        self._cached_dict = None
-
         if self.classes is not None:
             return self.fit(y).transform(y)
+
+        self._validate_params()
+        self._cached_dict = None
 
         # Automatically increment on new class
         class_mapping = defaultdict(int)

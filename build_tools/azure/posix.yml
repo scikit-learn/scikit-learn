@@ -22,26 +22,25 @@ jobs:
     SKLEARN_SKIP_NETWORK_TESTS: '1'
     CCACHE_DIR: $(Pipeline.Workspace)/ccache
     CCACHE_COMPRESS: '1'
-    NUMPY_VERSION: 'latest'
-    SCIPY_VERSION: 'latest'
-    CYTHON_VERSION: 'latest'
-    JOBLIB_VERSION: 'latest'
-    PANDAS_VERSION: 'latest'
-    PYAMG_VERSION: 'latest'
-    PILLOW_VERSION: 'latest'
-    MATPLOTLIB_VERSION: 'latest'
-    PYTEST_VERSION: '6.2.5'
     PYTEST_XDIST_VERSION: 'latest'
-    THREADPOOLCTL_VERSION: 'latest'
     COVERAGE: 'true'
     TEST_DOCSTRINGS: 'false'
-    CREATE_ISSUE_ON_TRACKER: 'false'
+    CREATE_ISSUE_ON_TRACKER: 'true'
     SHOW_SHORT_SUMMARY: 'false'
   strategy:
     matrix:
       ${{ insert }}: ${{ parameters.matrix }}
 
   steps:
+    - task: UsePythonVersion@0
+      inputs:
+        versionSpec: '3.9'
+        addToPath: false
+      name: pyTools
+      displayName: Select python version to run CI python scripts
+    - bash: $(pyTools.pythonLocation)/bin/python build_tools/azure/get_selected_tests.py
+      displayName: Check selected tests for all random seeds
+      condition: eq(variables['Build.Reason'], 'PullRequest')
     - bash: echo "##vso[task.prependpath]$CONDA/bin"
       displayName: Add conda to PATH
       condition: startsWith(variables['DISTRIB'], 'conda')
@@ -65,22 +64,18 @@ jobs:
     - script: |
         build_tools/azure/test_docs.sh
       displayName: 'Test Docs'
+      condition: eq(variables['SELECTED_TESTS'], '')
     - script: |
         build_tools/azure/test_pytest_soft_dependency.sh
       displayName: 'Test Soft Dependency'
-      condition: eq(variables['CHECK_PYTEST_SOFT_DEPENDENCY'], 'true')
+      condition: and(eq(variables['CHECK_PYTEST_SOFT_DEPENDENCY'], 'true'),
+                     eq(variables['SELECTED_TESTS'], ''))
     - task: PublishTestResults@2
       inputs:
         testResultsFiles: '$(TEST_DIR)/$(JUNITXML)'
         testRunTitle: ${{ format('{0}-$(Agent.JobName)', parameters.name) }}
       displayName: 'Publish Test Results'
       condition: succeededOrFailed()
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.9'
-      displayName: Place Python into path to update issue tracker
-      condition: and(succeededOrFailed(), eq(variables['CREATE_ISSUE_ON_TRACKER'], 'true'),
-                     eq(variables['Build.Reason'], 'Schedule'))
     - bash: |
         set -ex
         if [[ $(BOT_GITHUB_TOKEN) == "" ]]; then
@@ -92,8 +87,14 @@ jobs:
         CI_NAME="$SYSTEM_JOBIDENTIFIER"
         ISSUE_REPO="$BUILD_REPOSITORY_NAME"
 
-        pip install defusedxml PyGithub
-        python maint_tools/create_issue_from_juint.py $(BOT_GITHUB_TOKEN) $CI_NAME $ISSUE_REPO $LINK_TO_RUN $JUNIT_FILE
+        $(pyTools.pythonLocation)/bin/pip install defusedxml PyGithub
+        $(pyTools.pythonLocation)/bin/python maint_tools/update_tracking_issue.py \
+          $(BOT_GITHUB_TOKEN) \
+          $CI_NAME \
+          $ISSUE_REPO \
+          $LINK_TO_RUN \
+          --junit-file $JUNIT_FILE \
+          --auto-close false
       displayName: 'Update issue tracker'
       env:
         JUNIT_FILE: $(TEST_DIR)/$(JUNITXML)
@@ -101,7 +102,8 @@ jobs:
                      eq(variables['Build.Reason'], 'Schedule'))
     - script: |
         build_tools/azure/upload_codecov.sh
-      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'))
+      condition: and(succeeded(), eq(variables['COVERAGE'], 'true'),
+                     eq(variables['SELECTED_TESTS'], ''))
       displayName: 'Upload To Codecov'
       env:
         CODECOV_TOKEN: $(CODECOV_TOKEN)

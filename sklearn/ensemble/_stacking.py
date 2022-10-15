@@ -5,6 +5,7 @@
 
 from abc import ABCMeta, abstractmethod
 from copy import deepcopy
+from numbers import Integral
 
 import numpy as np
 from joblib import Parallel
@@ -28,15 +29,39 @@ from ..model_selection import check_cv
 from ..preprocessing import LabelEncoder
 
 from ..utils import Bunch
-from ..utils.metaestimators import if_delegate_has_method
-from ..utils.multiclass import check_classification_targets
+from ..utils.multiclass import check_classification_targets, type_of_target
+from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
 from ..utils.fixes import delayed
+from ..utils._param_validation import HasMethods, StrOptions
+from ..utils.validation import _check_feature_names_in
+
+
+def _estimator_has(attr):
+    """Check if we can delegate a method to the underlying estimator.
+
+    First, we check the first fitted final estimator if available, otherwise we
+    check the unfitted final estimator.
+    """
+    return lambda self: (
+        hasattr(self.final_estimator_, attr)
+        if hasattr(self, "final_estimator_")
+        else hasattr(self.final_estimator, attr)
+    )
 
 
 class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCMeta):
     """Base class for stacking method."""
+
+    _parameter_constraints: dict = {
+        "estimators": [list],
+        "final_estimator": [None, HasMethods("fit")],
+        "cv": ["cv_object", StrOptions({"prefit"})],
+        "n_jobs": [None, Integral],
+        "passthrough": ["boolean"],
+        "verbose": ["verbose"],
+    }
 
     @abstractmethod
     def __init__(
@@ -76,23 +101,40 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         This helper is in charge of ensuring the predictions are 2D arrays and
         it will drop one of the probability column when using probabilities
         in the binary case. Indeed, the p(y|c=0) = 1 - p(y|c=1)
+
+        When `y` type is `"multilabel-indicator"`` and the method used is
+        `predict_proba`, `preds` can be either a `ndarray` of shape
+        `(n_samples, n_class)` or for some estimators a list of `ndarray`.
+        This function will drop one of the probability column in this situation as well.
         """
         X_meta = []
         for est_idx, preds in enumerate(predictions):
-            # case where the estimator returned a 1D array
-            if preds.ndim == 1:
+            if isinstance(preds, list):
+                # `preds` is here a list of `n_targets` 2D ndarrays of
+                # `n_classes` columns. The k-th column contains the
+                # probabilities of the samples belonging the k-th class.
+                #
+                # Since those probabilities must sum to one for each sample,
+                # we can work with probabilities of `n_classes - 1` classes.
+                # Hence we drop the first column.
+                for pred in preds:
+                    X_meta.append(pred[:, 1:])
+            elif preds.ndim == 1:
+                # Some estimator return a 1D array for predictions
+                # which must be 2-dimensional arrays.
                 X_meta.append(preds.reshape(-1, 1))
+            elif (
+                self.stack_method_[est_idx] == "predict_proba"
+                and len(self.classes_) == 2
+            ):
+                # Remove the first column when using probabilities in
+                # binary classification because both features `preds` are perfectly
+                # collinear.
+                X_meta.append(preds[:, 1:])
             else:
-                if (
-                    self.stack_method_[est_idx] == "predict_proba"
-                    and len(self.classes_) == 2
-                ):
-                    # Remove the first column when using probabilities in
-                    # binary classification because both features are perfectly
-                    # collinear.
-                    X_meta.append(preds[:, 1:])
-                else:
-                    X_meta.append(preds)
+                X_meta.append(preds)
+
+        self._n_feature_outs = [pred.shape[1] for pred in X_meta]
         if self.passthrough:
             X_meta.append(X)
             if sparse.issparse(X):
@@ -145,6 +187,9 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         -------
         self : object
         """
+
+        self._validate_params()
+
         # all_estimators contains all estimators, the one to be fitted and the
         # 'drop' string.
         names, all_estimators = self._validate_estimators()
@@ -256,7 +301,52 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         ]
         return self._concatenate_predictions(X, predictions)
 
-    @if_delegate_has_method(delegate="final_estimator_")
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features. The input feature names are only used when `passthrough` is
+            `True`.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then names are generated: `[x0, x1, ..., x(n_features_in_ - 1)]`.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
+            If `passthrough` is `False`, then only the names of `estimators` are used
+            to generate the output feature names.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        input_features = _check_feature_names_in(
+            self, input_features, generate_names=self.passthrough
+        )
+
+        class_name = self.__class__.__name__.lower()
+        non_dropped_estimators = (
+            name for name, est in self.estimators if est != "drop"
+        )
+        meta_names = []
+        for est, n_features_out in zip(non_dropped_estimators, self._n_feature_outs):
+            if n_features_out == 1:
+                meta_names.append(f"{class_name}_{est}")
+            else:
+                meta_names.extend(
+                    f"{class_name}_{est}{i}" for i in range(n_features_out)
+                )
+
+        if self.passthrough:
+            return np.concatenate((meta_names, input_features))
+
+        return np.asarray(meta_names, dtype=object)
+
+    @available_if(_estimator_has("predict"))
     def predict(self, X, **predict_params):
         """Predict target for X.
 
@@ -281,7 +371,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         check_is_fitted(self)
         return self.final_estimator_.predict(self.transform(X), **predict_params)
 
-    def _sk_visual_block_(self, final_estimator):
+    def _sk_visual_block_with_final_estimator(self, final_estimator):
         names, estimators = zip(*self.estimators)
         parallel = _VisualBlock("parallel", estimators, names=names, dash_wrapped=False)
 
@@ -385,7 +475,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     Attributes
     ----------
-    classes_ : ndarray of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,) or list of ndarray if `y` \
+        is of type `"multilabel-indicator"`.
         Class labels.
 
     estimators_ : list of estimators
@@ -457,6 +548,13 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     0.9...
     """
 
+    _parameter_constraints: dict = {
+        **_BaseStacking._parameter_constraints,
+        "stack_method": [
+            StrOptions({"auto", "predict_proba", "decision_function", "predict"})
+        ],
+    }
+
     def __init__(
         self,
         estimators,
@@ -510,11 +608,22 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             Returns a fitted instance of estimator.
         """
         check_classification_targets(y)
-        self._le = LabelEncoder().fit(y)
-        self.classes_ = self._le.classes_
-        return super().fit(X, self._le.transform(y), sample_weight)
+        if type_of_target(y) == "multilabel-indicator":
+            self._label_encoder = [LabelEncoder().fit(yk) for yk in y.T]
+            self.classes_ = [le.classes_ for le in self._label_encoder]
+            y_encoded = np.array(
+                [
+                    self._label_encoder[target_idx].transform(target)
+                    for target_idx, target in enumerate(y.T)
+                ]
+            ).T
+        else:
+            self._label_encoder = LabelEncoder().fit(y)
+            self.classes_ = self._label_encoder.classes_
+            y_encoded = self._label_encoder.transform(y)
+        return super().fit(X, y_encoded, sample_weight)
 
-    @if_delegate_has_method(delegate="final_estimator_")
+    @available_if(_estimator_has("predict"))
     def predict(self, X, **predict_params):
         """Predict target for X.
 
@@ -536,9 +645,19 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             Predicted targets.
         """
         y_pred = super().predict(X, **predict_params)
-        return self._le.inverse_transform(y_pred)
+        if isinstance(self._label_encoder, list):
+            # Handle the multilabel-indicator case
+            y_pred = np.array(
+                [
+                    self._label_encoder[target_idx].inverse_transform(target)
+                    for target_idx, target in enumerate(y_pred.T)
+                ]
+            ).T
+        else:
+            y_pred = self._label_encoder.inverse_transform(y_pred)
+        return y_pred
 
-    @if_delegate_has_method(delegate="final_estimator_")
+    @available_if(_estimator_has("predict_proba"))
     def predict_proba(self, X):
         """Predict class probabilities for `X` using the final estimator.
 
@@ -555,9 +674,14 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             The class probabilities of the input samples.
         """
         check_is_fitted(self)
-        return self.final_estimator_.predict_proba(self.transform(X))
+        y_pred = self.final_estimator_.predict_proba(self.transform(X))
 
-    @if_delegate_has_method(delegate="final_estimator_")
+        if isinstance(self._label_encoder, list):
+            # Handle the multilabel-indicator cases
+            y_pred = np.array([preds[:, 0] for preds in y_pred]).T
+        return y_pred
+
+    @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
         """Decision function for samples in `X` using the final estimator.
 
@@ -600,7 +724,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             final_estimator = LogisticRegression()
         else:
             final_estimator = self.final_estimator
-        return super()._sk_visual_block_(final_estimator)
+        return super()._sk_visual_block_with_final_estimator(final_estimator)
 
 
 class StackingRegressor(RegressorMixin, _BaseStacking):
@@ -819,4 +943,4 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
             final_estimator = RidgeCV()
         else:
             final_estimator = self.final_estimator
-        return super()._sk_visual_block_(final_estimator)
+        return super()._sk_visual_block_with_final_estimator(final_estimator)

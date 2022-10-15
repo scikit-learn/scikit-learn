@@ -11,12 +11,31 @@ import warnings
 import sys
 import re
 import pkgutil
-from inspect import isgenerator, signature, Parameter
+from inspect import isgenerator, signature
 from itertools import product, chain
 from functools import partial
 
 import pytest
 import numpy as np
+
+from sklearn.cluster import (
+    AffinityPropagation,
+    Birch,
+    MeanShift,
+    OPTICS,
+    SpectralClustering,
+)
+from sklearn.datasets import make_blobs
+from sklearn.manifold import Isomap, TSNE, LocallyLinearEmbedding
+from sklearn.neighbors import (
+    LocalOutlierFactor,
+    KNeighborsClassifier,
+    KNeighborsRegressor,
+    RadiusNeighborsClassifier,
+    RadiusNeighborsRegressor,
+)
+from sklearn.preprocessing import FunctionTransformer
+from sklearn.semi_supervised import LabelPropagation, LabelSpreading
 
 from sklearn.utils import all_estimators
 from sklearn.utils._testing import ignore_warnings
@@ -27,6 +46,7 @@ from sklearn.utils.estimator_checks import check_estimator
 import sklearn
 
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, OneHotEncoder
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import Ridge
@@ -51,8 +71,11 @@ from sklearn.utils.estimator_checks import (
     parametrize_with_checks,
     check_dataframe_column_names_consistency,
     check_n_features_in_after_fitting,
+    check_param_validation,
     check_transformer_get_feature_names_out,
     check_transformer_get_feature_names_out_pandas,
+    check_set_output_transform,
+    check_set_output_transform_pandas,
 )
 
 
@@ -115,8 +138,6 @@ def test_check_estimator_generate_only():
     assert isgenerator(all_instance_gen_checks)
 
 
-@ignore_warnings(category=(DeprecationWarning, FutureWarning))
-# ignore deprecated open(.., 'U') in numpy distutils
 def test_configure():
     # Smoke test the 'configure' step of setup, this tests all the
     # 'configure' functions in the setup.pys in scikit-learn
@@ -369,7 +390,7 @@ column_name_estimators = list(
 def test_pandas_column_name_consistency(estimator):
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
-        with pytest.warns(None) as record:
+        with warnings.catch_warnings(record=True) as record:
             check_dataframe_column_names_consistency(
                 estimator.__class__.__name__, estimator
             )
@@ -414,31 +435,15 @@ def test_transformers_get_feature_names_out(transformer):
         )
 
 
-VALIDATE_ESTIMATOR_INIT = [
-    "ColumnTransformer",
-    "SGDOneClassSVM",
-    "TheilSenRegressor",
-    "TweedieRegressor",
-]
-VALIDATE_ESTIMATOR_INIT = set(VALIDATE_ESTIMATOR_INIT)
-
-
 @pytest.mark.parametrize(
     "Estimator",
-    [est for name, est in all_estimators() if name not in VALIDATE_ESTIMATOR_INIT],
+    [est for name, est in all_estimators()],
 )
 def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
     """Check that init or set_param does not raise errors."""
+    params = signature(Estimator).parameters
 
-    # Remove parameters with **kwargs by filtering out Parameter.VAR_KEYWORD
-    # TODO: Remove in 1.2 when **kwargs is removed in RadiusNeighborsClassifier
-    params = [
-        name
-        for name, param in signature(Estimator).parameters.items()
-        if param.kind != Parameter.VAR_KEYWORD
-    ]
-
-    smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), {}, []]
+    smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), [1], {}, []]
     for value in smoke_test_values:
         new_params = {key: value for key in params}
 
@@ -447,3 +452,93 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
 
         # Also do does not raise
         est.set_params(**new_params)
+
+
+@pytest.mark.parametrize(
+    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
+)
+def test_check_param_validation(estimator):
+    name = estimator.__class__.__name__
+    _set_checking_parameters(estimator)
+    check_param_validation(name, estimator)
+
+
+@pytest.mark.parametrize(
+    "Estimator",
+    [
+        AffinityPropagation,
+        Birch,
+        MeanShift,
+        KNeighborsClassifier,
+        KNeighborsRegressor,
+        RadiusNeighborsClassifier,
+        RadiusNeighborsRegressor,
+        LabelPropagation,
+        LabelSpreading,
+        OPTICS,
+        SpectralClustering,
+        LocalOutlierFactor,
+        LocallyLinearEmbedding,
+        Isomap,
+        TSNE,
+    ],
+)
+def test_f_contiguous_array_estimator(Estimator):
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/23988
+    # https://github.com/scikit-learn/scikit-learn/issues/24013
+
+    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
+    X = np.asfortranarray(X)
+    y = np.round(X[:, 0])
+
+    est = Estimator()
+    est.fit(X, y)
+
+    if hasattr(est, "transform"):
+        est.transform(X)
+
+    if hasattr(est, "predict"):
+        est.predict(X)
+
+
+SET_OUTPUT_ESTIMATORS = list(
+    chain(
+        _tested_estimators("transformer"),
+        [
+            make_pipeline(StandardScaler(), MinMaxScaler()),
+            OneHotEncoder(sparse_output=False),
+            FunctionTransformer(feature_names_out="one-to-one"),
+        ],
+    )
+)
+
+
+@pytest.mark.parametrize(
+    "estimator", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
+)
+def test_set_output_transform(estimator):
+    name = estimator.__class__.__name__
+    if not hasattr(estimator, "set_output"):
+        pytest.skip(
+            f"Skipping check_set_output_transform for {name}: Does not support"
+            " set_output API"
+        )
+    _set_checking_parameters(estimator)
+    with ignore_warnings(category=(FutureWarning)):
+        check_set_output_transform(estimator.__class__.__name__, estimator)
+
+
+@pytest.mark.parametrize(
+    "estimator", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
+)
+def test_set_output_transform_pandas(estimator):
+    name = estimator.__class__.__name__
+    if not hasattr(estimator, "set_output"):
+        pytest.skip(
+            f"Skipping check_set_output_transform_pandas for {name}: Does not support"
+            " set_output API yet"
+        )
+    _set_checking_parameters(estimator)
+    with ignore_warnings(category=(FutureWarning)):
+        check_set_output_transform_pandas(estimator.__class__.__name__, estimator)
