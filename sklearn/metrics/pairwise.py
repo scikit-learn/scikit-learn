@@ -130,7 +130,7 @@ def check_pairwise_arrays(
 
     check_length_only : bool, default=False
         Whether to only check the length of the array
-        When true, dtype is ignored
+        When true, dtype is ignored and the check for 2D array is not performed.
 
          .. versionadded:: 1.2
 
@@ -146,6 +146,10 @@ def check_pairwise_arrays(
 
     X, Y, dtype_float = _return_float_dtype(X, Y)
     estimator = "check_pairwise_arrays"
+    if dtype is None and check_length_only is False:
+        dtype = dtype_float
+    elif check_length_only:
+        dtype = None
     ensure_2d = True
     if check_length_only:
         ensure_2d = False
