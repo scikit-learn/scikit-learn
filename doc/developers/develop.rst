@@ -659,6 +659,9 @@ setting `auto_wrap_output_keys=None` when defining a custom subclass::
         def get_feature_names_out(self, input_features=None):
             ...
 
+The default value for `auto_wrap_output_keys` is `("transform",)`, which automatically
+wraps `fit_transform` and `transform`.
+
 For transformers that return multiple arrays in `transform`, auto wrapping will
 only wrap the first array and not alter the other arrays.
 

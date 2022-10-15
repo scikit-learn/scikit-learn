@@ -167,7 +167,7 @@ class _SetOutputMixin:
     it based on `set_output` of the global configuration.
 
     `set_output` is only defined if `get_feature_names_out` is defined and
-    `auto_wrap_output` is True.
+    `auto_wrap_output_keys` is the default value.
     """
 
     def __init_subclass__(cls, auto_wrap_output_keys=("transform",), **kwargs):
