@@ -6,6 +6,7 @@
 import time
 import sys
 import itertools
+from numbers import Integral, Real
 import warnings
 
 from math import ceil
@@ -17,9 +18,9 @@ from joblib import Parallel, effective_n_jobs
 from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils import deprecated
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
-from ..utils.validation import check_scalar
 from ..utils.fixes import delayed
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
@@ -147,7 +148,6 @@ def _sparse_encode(
                 alpha=alpha,
                 fit_intercept=False,
                 verbose=verbose,
-                normalize=False,
                 precompute=gram,
                 fit_path=False,
                 positive=positive,
@@ -167,7 +167,6 @@ def _sparse_encode(
         clf = Lasso(
             alpha=alpha,
             fit_intercept=False,
-            normalize="deprecated",  # as it was False by default
             precompute=gram,
             max_iter=max_iter,
             warm_start=True,
@@ -189,7 +188,6 @@ def _sparse_encode(
             lars = Lars(
                 fit_intercept=False,
                 verbose=verbose,
-                normalize=False,
                 precompute=gram,
                 n_nonzero_coefs=int(regularization),
                 fit_path=False,
@@ -511,7 +509,7 @@ def dict_learning(
     positive_code=False,
     method_max_iter=1000,
 ):
-    """Solves a dictionary learning matrix factorization problem.
+    """Solve a dictionary learning matrix factorization problem.
 
     Finds the best dictionary and the corresponding sparse code for
     approximating the data matrix X by solving::
@@ -567,7 +565,7 @@ def dict_learning(
         if `code_init` and `dict_init` are not None.
 
     callback : callable, default=None
-        Callable that gets invoked every five iterations
+        Callable that gets invoked every five iterations.
 
     verbose : bool, default=False
         To control the verbosity of the procedure.
@@ -612,11 +610,13 @@ def dict_learning(
 
     See Also
     --------
-    dict_learning_online
-    DictionaryLearning
-    MiniBatchDictionaryLearning
-    SparsePCA
-    MiniBatchSparsePCA
+    dict_learning_online : Solve a dictionary learning matrix factorization
+        problem online.
+    DictionaryLearning : Find a dictionary that sparsely encodes data.
+    MiniBatchDictionaryLearning : A faster, less accurate version
+        of the dictionary learning algorithm.
+    SparsePCA : Sparse Principal Components Analysis.
+    MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
     """
     if method not in ("lars", "cd"):
         raise ValueError("Coding method %r not supported as a fit algorithm." % method)
@@ -761,7 +761,7 @@ def dict_learning_online(
     tol=1e-3,
     max_no_improvement=10,
 ):
-    """Solves a dictionary learning matrix factorization problem online.
+    """Solve a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
     approximating the data matrix X by solving::
@@ -794,7 +794,7 @@ def dict_learning_online(
         Number of mini-batch iterations to perform.
 
         .. deprecated:: 1.1
-           `n_iter` is deprecated in 1.1 and will be removed in 1.3. Use
+           `n_iter` is deprecated in 1.1 and will be removed in 1.4. Use
            `max_iter` instead.
 
     max_iter : int, default=None
@@ -924,11 +924,12 @@ def dict_learning_online(
 
     See Also
     --------
-    dict_learning
-    DictionaryLearning
-    MiniBatchDictionaryLearning
-    SparsePCA
-    MiniBatchSparsePCA
+    dict_learning : Solve a dictionary learning matrix factorization problem.
+    DictionaryLearning : Find a dictionary that sparsely encodes data.
+    MiniBatchDictionaryLearning : A faster, less accurate, version of the dictionary
+        learning algorithm.
+    SparsePCA : Sparse Principal Components Analysis.
+    MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
     """
     deps = (return_n_iter, return_inner_stats, iter_offset, inner_stats)
     if max_iter is not None and not all(arg == "deprecated" for arg in deps):
@@ -1177,19 +1178,8 @@ class _BaseSparseCoding(_ClassNamePrefixFeaturesOutMixin, TransformerMixin):
         SparseCoder."""
         X = self._validate_data(X, reset=False)
 
-        # transform_alpha has to be changed in _transform
-        # this is done for consistency with the value of alpha
-        if (
-            hasattr(self, "alpha")
-            and self.alpha != 1.0
-            and self.transform_alpha is None
-        ):
-            warnings.warn(
-                "By default transform_alpha will be equal to"
-                "alpha instead of 1.0 starting from version 1.2",
-                FutureWarning,
-            )
-            transform_alpha = 1.0  # TODO change to self.alpha in 1.2
+        if hasattr(self, "alpha") and self.transform_alpha is None:
+            transform_alpha = self.alpha
         else:
             transform_alpha = self.transform_alpha
 
@@ -1329,7 +1319,7 @@ class SparseCoder(_BaseSparseCoding, BaseEstimator):
     MiniBatchDictionaryLearning : A faster, less accurate, version of the
         dictionary learning algorithm.
     MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
-    SparsePCA : Mini-batch Sparse Principal Components Analysis.
+    SparsePCA : Sparse Principal Components Analysis.
     sparse_encode : Sparse coding where each row of the result is the solution
         to a sparse coding problem.
 
@@ -1519,6 +1509,9 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         threshold below which coefficients will be squashed to zero.
         If `None`, defaults to `alpha`.
 
+        .. versionchanged:: 1.2
+            When None, default value changed from 1.0 to `alpha`.
+
     n_jobs : int or None, default=None
         Number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -1630,6 +1623,28 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     0.07...
     """
 
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "fit_algorithm": [StrOptions({"lars", "cd"})],
+        "transform_algorithm": [
+            StrOptions({"lasso_lars", "lasso_cd", "lars", "omp", "threshold"})
+        ],
+        "transform_n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
+        "transform_alpha": [Interval(Real, 0, None, closed="left"), None],
+        "n_jobs": [Integral, None],
+        "code_init": [np.ndarray, None],
+        "dict_init": [np.ndarray, None],
+        "verbose": ["verbose"],
+        "split_sign": ["boolean"],
+        "random_state": ["random_state"],
+        "positive_code": ["boolean"],
+        "positive_dict": ["boolean"],
+        "transform_max_iter": [Interval(Integral, 0, None, closed="left")],
+    }
+
     def __init__(
         self,
         n_components=None,
@@ -1689,6 +1704,8 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
+
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X)
         if self.n_components is None:
@@ -1758,7 +1775,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         Total number of iterations over data batches to perform.
 
         .. deprecated:: 1.1
-           ``n_iter`` is deprecated in 1.1 and will be removed in 1.3. Use
+           ``n_iter`` is deprecated in 1.1 and will be removed in 1.4. Use
            ``max_iter`` instead.
 
     max_iter : int, default=None
@@ -1819,6 +1836,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         If `algorithm='threshold'`, `alpha` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
         If `None`, defaults to `alpha`.
+
+        .. versionchanged:: 1.2
+            When None, default value changed from 1.0 to `alpha`.
 
     verbose : bool or int, default=False
         To control the verbosity of the procedure.
@@ -1964,6 +1984,38 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     0.059...
     """
 
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "n_iter": [
+            Interval(Integral, 0, None, closed="left"),
+            Hidden(StrOptions({"deprecated"})),
+        ],
+        "max_iter": [Interval(Integral, 0, None, closed="left"), None],
+        "fit_algorithm": [StrOptions({"cd", "lars"})],
+        "n_jobs": [None, Integral],
+        "batch_size": [
+            Interval(Integral, 1, None, closed="left"),
+            Hidden(StrOptions({"warn"})),
+        ],
+        "shuffle": ["boolean"],
+        "dict_init": [None, np.ndarray],
+        "transform_algorithm": [
+            StrOptions({"lasso_lars", "lasso_cd", "lars", "omp", "threshold"})
+        ],
+        "transform_n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
+        "transform_alpha": [Interval(Real, 0, None, closed="left"), None],
+        "verbose": ["verbose"],
+        "split_sign": ["boolean"],
+        "random_state": ["random_state"],
+        "positive_code": ["boolean"],
+        "positive_dict": ["boolean"],
+        "transform_max_iter": [Interval(Integral, 0, None, closed="left")],
+        "callback": [None, callable],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "max_no_improvement": [Interval(Integral, 0, None, closed="left"), None],
+    }
+
     def __init__(
         self,
         n_components=None,
@@ -2038,37 +2090,17 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     def _check_params(self, X):
         # n_components
-        if self.n_components is not None:
-            check_scalar(self.n_components, "n_components", int, min_val=1)
         self._n_components = self.n_components
         if self._n_components is None:
             self._n_components = X.shape[1]
 
         # fit_algorithm
-        if self.fit_algorithm not in ("lars", "cd"):
-            raise ValueError(
-                f"Coding method {self.fit_algorithm!r} not supported as a fit "
-                'algorithm. Expected either "lars" or "cd".'
-            )
         _check_positive_coding(self.fit_algorithm, self.positive_code)
         self._fit_algorithm = "lasso_" + self.fit_algorithm
 
         # batch_size
         if hasattr(self, "_batch_size"):
-            check_scalar(self._batch_size, "batch_size", int, min_val=1)
             self._batch_size = min(self._batch_size, X.shape[0])
-
-        # n_iter
-        if self.n_iter != "deprecated":
-            check_scalar(self.n_iter, "n_iter", int, min_val=0)
-
-        # max_iter
-        if self.max_iter is not None:
-            check_scalar(self.max_iter, "max_iter", int, min_val=0)
-
-        # max_no_improvement
-        if self.max_no_improvement is not None:
-            check_scalar(self.max_no_improvement, "max_no_improvement", int, min_val=0)
 
     def _initialize_dict(self, X, random_state):
         """Initialization of the dictionary."""
@@ -2238,6 +2270,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
+
         self._batch_size = self.batch_size
         if self.batch_size == "warn":
             warnings.warn(
@@ -2251,6 +2285,17 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         )
 
         self._check_params(X)
+
+        if self.n_iter != "deprecated":
+            warnings.warn(
+                "'n_iter' is deprecated in version 1.1 and will be removed "
+                "in version 1.4. Use 'max_iter' and let 'n_iter' to its default "
+                "value instead. 'n_iter' is also ignored if 'max_iter' is "
+                "specified.",
+                FutureWarning,
+            )
+            n_iter = self.n_iter
+
         self._random_state = check_random_state(self.random_state)
 
         dictionary = self._initialize_dict(X, self._random_state)
@@ -2310,15 +2355,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             self.n_iter_ = np.ceil(self.n_steps_ / n_steps_per_iter)
         else:
             # TODO remove this branch in 1.3
-            if self.n_iter != "deprecated":
-                warnings.warn(
-                    "'n_iter' is deprecated in version 1.1 and will be removed"
-                    " in version 1.3. Use 'max_iter' instead.",
-                    FutureWarning,
-                )
-                n_iter = self.n_iter
-            else:
-                n_iter = 1000
+            n_iter = 1000 if self.n_iter == "deprecated" else self.n_iter
 
             batches = gen_batches(n_samples, self._batch_size)
             batches = itertools.cycle(batches)
@@ -2367,6 +2404,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             Return the instance itself.
         """
         has_components = hasattr(self, "components_")
+
+        if not has_components:
+            self._validate_params()
 
         X = self._validate_data(
             X, dtype=[np.float64, np.float32], order="C", reset=not has_components

@@ -363,17 +363,6 @@ def test_min_cluster_size(min_cluster_size, global_dtype):
     assert_array_equal(clust.labels_, clust_frac.labels_)
 
 
-@pytest.mark.parametrize("min_cluster_size", [0, -1, 1.1, 2.2])
-def test_min_cluster_size_invalid(min_cluster_size):
-    clust = OPTICS(min_cluster_size=min_cluster_size)
-    with pytest.raises(ValueError, match="must be a positive integer or a "):
-        clust.fit(X)
-
-    clust = OPTICS(min_cluster_size=min_cluster_size, metric="euclidean")
-    with pytest.raises(ValueError, match="must be a positive integer or a "):
-        clust.fit(sparse.csr_matrix(X))
-
-
 def test_min_cluster_size_invalid2():
     clust = OPTICS(min_cluster_size=len(X) + 1)
     with pytest.raises(ValueError, match="must be no greater than the "):
@@ -795,12 +784,6 @@ def test_compare_to_ELKI():
 
     index = np.where(clust1.core_distances_ <= 0.5)[0]
     assert_allclose(clust1.core_distances_[index], clust2.core_distances_[index])
-
-
-def test_wrong_cluster_method():
-    clust = OPTICS(cluster_method="superfancy")
-    with pytest.raises(ValueError, match="cluster_method should be one of "):
-        clust.fit(X)
 
 
 def test_extract_dbscan(global_dtype):

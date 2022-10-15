@@ -257,8 +257,8 @@ Subpackage-specific goals
 * Cross-validation should be able to be replaced by OOB estimates whenever a
   cross-validation iterator is used.
 * Redundant computations in pipelines should be avoided (related to point
-  above) cf `daskml
-  <https://dask-ml.readthedocs.io/en/latest/hyper-parameter-search.html#avoid-repeated-work>`_
+  above) cf `dask-ml
+  <https://ml.dask.org/hyper-parameter-search.html#avoid-repeated-work>`_
 
 :mod:`sklearn.neighbors`
 

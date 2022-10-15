@@ -255,6 +255,85 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # house age, whereas for values less than two there is a strong dependence on
 # age.
 #
+# Interaction constraints
+# .......................
+#
+# The histogram gradient boosters have an interesting option to constrain
+# possible interactions among features. In the following, we do not allow any
+# interactions and thus render the model as a version of a tree-based boosted
+# generalized additive model (GAM). This makes the model more interpretable
+# as the effect of each feature can be investigated independently of all others.
+#
+# We train the :class:`~sklearn.ensemble.HistGradientBoostingRegressor` again,
+# now with `interaction_cst`, where we  pass for each feature a list containing
+# only its own index, e.g. `[[0], [1], [2], ..]`.
+
+print("Training interaction constraint HistGradientBoostingRegressor...")
+tic = time()
+est_no_interactions = HistGradientBoostingRegressor(
+    interaction_cst=[[i] for i in range(X_train.shape[1])]
+)
+est_no_interactions.fit(X_train, y_train)
+print(f"done in {time() - tic:.3f}s")
+
+# %%
+# The easiest way to show the effect of forbidden interactions is again the
+# ICE plots.
+
+print("Computing partial dependence plots...")
+tic = time()
+display = PartialDependenceDisplay.from_estimator(
+    est_no_interactions,
+    X_train,
+    ["MedInc", "AveOccup", "HouseAge", "AveRooms"],
+    kind="both",
+    subsample=50,
+    n_jobs=3,
+    grid_resolution=20,
+    random_state=0,
+    ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
+    pd_line_kw={"color": "tab:orange", "linestyle": "--"},
+)
+
+print(f"done in {time() - tic:.3f}s")
+display.figure_.suptitle(
+    "Partial dependence of house value with Gradient Boosting\n"
+    "and no interactions allowed"
+)
+display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
+
+# %%
+# All 4 plots have parallel ICE lines meaning there is no interaction in the
+# model.
+# Let us also have a look at the corresponding 2D-plot.
+
+print("Computing partial dependence plots...")
+tic = time()
+_, ax = plt.subplots(ncols=3, figsize=(9, 4))
+display = PartialDependenceDisplay.from_estimator(
+    est_no_interactions,
+    X_train,
+    ["AveOccup", "HouseAge", ("AveOccup", "HouseAge")],
+    kind="average",
+    n_jobs=3,
+    grid_resolution=20,
+    ax=ax,
+)
+print(f"done in {time() - tic:.3f}s")
+display.figure_.suptitle(
+    "Partial dependence of house value with Gradient Boosting\n"
+    "and no interactions allowed"
+)
+display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
+
+# %%
+# Although the 2D-plot shows much less interaction compared with the 2D-plot
+# from above, it is much harder to come to the conclusion that there is no
+# interaction at all. This might be a cause of the discrete predictions of
+# trees in combination with numerically precision of partial dependence.
+# We also observe that the univariate dependence plots have slightly changed
+# as the model tries to compensate for the forbidden interactions.
+#
 # 3D interaction plots
 # --------------------
 #

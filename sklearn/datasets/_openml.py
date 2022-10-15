@@ -135,9 +135,7 @@ def _open_openml_url(
     req.add_header("Accept-encoding", "gzip")
 
     if data_home is None:
-        fsrc = _retry_on_network_error(n_retries, delay, req.full_url)(urlopen)(
-            req, timeout=delay
-        )
+        fsrc = _retry_on_network_error(n_retries, delay, req.full_url)(urlopen)(req)
         if is_gzip_encoded(fsrc):
             return gzip.GzipFile(fileobj=fsrc, mode="rb")
         return fsrc
@@ -154,7 +152,7 @@ def _open_openml_url(
             with TemporaryDirectory(dir=dir_name) as tmpdir:
                 with closing(
                     _retry_on_network_error(n_retries, delay, req.full_url)(urlopen)(
-                        req, timeout=delay
+                        req
                     )
                 ) as fsrc:
                     opener: Callable
@@ -852,6 +850,10 @@ def fetch_openml(
       typically loaded as such `(0, 1, ...)` with the `"pandas"` parser while
       `"liac-arff"` will force the use of string encoded class labels such as
       `"0"`, `"1"` and so on.
+    - The `"pandas"` parser will not strip single quotes - i.e. `'` - from
+      string columns. For instance, a string `'my string'` will be kept as is
+      while the `"liac-arff"` parser will strip the single quotes. For
+      categorical columns, the single quotes are stripped from the values.
 
     In addition, when `as_frame=False` is used, the `"liac-arff"` parser
     returns ordinally encoded data where the categories are provided in the

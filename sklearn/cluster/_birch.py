@@ -4,8 +4,8 @@
 # License: BSD 3 clause
 
 import warnings
-import numbers
 import numpy as np
+from numbers import Integral, Real
 from scipy import sparse
 from math import sqrt
 
@@ -18,7 +18,7 @@ from ..base import (
     _ClassNamePrefixFeaturesOutMixin,
 )
 from ..utils.extmath import row_norms
-from ..utils import check_scalar, deprecated
+from ..utils._param_validation import Interval
 from ..utils.validation import check_is_fitted
 from ..exceptions import ConvergenceWarning
 from . import AgglomerativeClustering
@@ -91,6 +91,11 @@ def _split_node(node, threshold, branching_factor):
     node1_dist, node2_dist = dist[(farthest_idx,)]
 
     node1_closer = node1_dist < node2_dist
+    # make sure node1 is closest to itself even if all distances are equal.
+    # This can only happen when all node.centroids_ are duplicates leading to all
+    # distances between centroids being zero.
+    node1_closer[farthest_idx[0]] = True
+
     for idx, subcluster in enumerate(node.subclusters_):
         if node1_closer[idx]:
             new_node1.append_subcluster(subcluster)
@@ -381,7 +386,7 @@ class Birch(
         in each. The parent subcluster of that node is removed and two new
         subclusters are added as parents of the 2 split nodes.
 
-    n_clusters : int, instance of sklearn.cluster model, default=3
+    n_clusters : int, instance of sklearn.cluster model or None, default=3
         Number of clusters after the final clustering step, which treats the
         subclusters from the leaves as new samples.
 
@@ -473,6 +478,14 @@ class Birch(
     array([0, 0, 0, 1, 1, 1])
     """
 
+    _parameter_constraints: dict = {
+        "threshold": [Interval(Real, 0.0, None, closed="neither")],
+        "branching_factor": [Interval(Integral, 1, None, closed="neither")],
+        "n_clusters": [None, ClusterMixin, Interval(Integral, 1, None, closed="left")],
+        "compute_labels": ["boolean"],
+        "copy": ["boolean"],
+    }
+
     def __init__(
         self,
         *,
@@ -487,24 +500,6 @@ class Birch(
         self.n_clusters = n_clusters
         self.compute_labels = compute_labels
         self.copy = copy
-
-    # TODO: Remove in 1.2
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "`fit_` is deprecated in 1.0 and will be removed in 1.2."
-    )
-    @property
-    def fit_(self):
-        return self._deprecated_fit
-
-    # TODO: Remove in 1.2
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "`partial_fit_` is deprecated in 1.0 and will be removed in 1.2."
-    )
-    @property
-    def partial_fit_(self):
-        return self._deprecated_partial_fit
 
     def fit(self, X, y=None):
         """
@@ -524,31 +519,8 @@ class Birch(
             Fitted estimator.
         """
 
-        # Validating the scalar parameters.
-        check_scalar(
-            self.threshold,
-            "threshold",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="neither",
-        )
-        check_scalar(
-            self.branching_factor,
-            "branching_factor",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="neither",
-        )
-        if isinstance(self.n_clusters, numbers.Number):
-            check_scalar(
-                self.n_clusters,
-                "n_clusters",
-                target_type=numbers.Integral,
-                min_val=1,
-            )
+        self._validate_params()
 
-        # TODO: Remove deprecated flags in 1.2
-        self._deprecated_fit, self._deprecated_partial_fit = True, False
         return self._fit(X, partial=False)
 
     def _fit(self, X, partial):
@@ -657,8 +629,8 @@ class Birch(
         self
             Fitted estimator.
         """
-        # TODO: Remove deprecated flags in 1.2
-        self._deprecated_partial_fit, self._deprecated_fit = True, False
+        self._validate_params()
+
         if X is None:
             # Perform just the final global clustering step.
             self._global_clustering()
@@ -739,15 +711,11 @@ class Birch(
 
         # Preprocessing for the global clustering.
         not_enough_centroids = False
-        if isinstance(clusterer, numbers.Integral):
+        if isinstance(clusterer, Integral):
             clusterer = AgglomerativeClustering(n_clusters=self.n_clusters)
             # There is no need to perform the global clustering step.
             if len(centroids) < self.n_clusters:
                 not_enough_centroids = True
-        elif clusterer is not None and not hasattr(clusterer, "fit_predict"):
-            raise TypeError(
-                "n_clusters should be an instance of ClusterMixin or an int"
-            )
 
         # To use in predict to avoid recalculation.
         self._subcluster_norms = row_norms(self.subcluster_centers_, squared=True)

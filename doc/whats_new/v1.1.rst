@@ -2,30 +2,174 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_1_2:
+
+Version 1.1.2
+=============
+
+**August 2022**
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- |Fix| :class:`manifold.TSNE` now throws a `ValueError` when fit with
+  `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
+  :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
+  :pr:`23471` by :user:`Meekail Zain <micky774>`.
+
+Changelog
+---------
+
+- |Fix| A default HTML representation is shown for meta-estimators with invalid
+  parameters. :pr:`24015` by `Thomas Fan`_.
+
+- |Fix| Add support for F-contiguous arrays for estimators and functions whose back-end
+  have been changed in 1.1.
+  :pr:`23990` by :user:`Julien Jerphanion <jjerphan>`.
+
+- |Fix| Wheels are now available for MacOS 10.9 and greater. :pr:`23833` by
+  `Thomas Fan`_.
+
+:mod:`sklearn.base`
+...................
+
+- |Fix| The `get_params` method of the :class:`BaseEstimator` class now supports
+  estimators with `type`-type params that have the `get_params` method.
+  :pr:`24017` by :user:`Henry Sorsky <hsorsky>`.
+
+:mod:`sklearn.cluster`
+......................
+
+- |Fix| Fixed a bug in :class:`cluster.Birch` that could trigger an error when splitting
+  a node if there are duplicates in the dataset.
+  :pr:`23395` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| :class:`feature_selection.SelectFromModel` defaults to selection
+  threshold 1e-5 when the estimator is either :class:`linear_model.ElasticNet`
+  or :class:`linear_model.ElasticNetCV` with `l1_ratio` equals 1 or
+  :class:`linear_model.LassoCV`.
+  :pr:`23636` by :user:`Hao Chun Chang <haochunchang>`.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Fix| :class:`impute.SimpleImputer` uses the dtype seen in `fit` for
+  `transform` when the dtype is object. :pr:`22063` by `Thomas Fan`_.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Use dtype-aware tolerances for the validation of gram matrices (passed by users
+  or precomputed). :pr:`22059` by :user:`Malte S. Kurz <MalteKurz>`.
+
+- |Fix| Fixed an error in :class:`linear_model.LogisticRegression` with
+  `solver="newton-cg"`, `fit_intercept=True`, and a single feature. :pr:`23608`
+  by `Tom Dupre la Tour`_.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| :class:`manifold.TSNE` now throws a `ValueError` when fit with
+  `perplexity>=n_samples` to ensure mathematical correctness of the algorithm.
+  :pr:`10805` by :user:`Mathias Andersen <MrMathias>` and
+  :pr:`23471` by :user:`Meekail Zain <micky774>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| Fixed error message of :class:`metrics.coverage_error` for 1D array input.
+  :pr:`23548` by :user:`Hao Chun Chang <haochunchang>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :meth:`preprocessing.OrdinalEncoder.inverse_transform` correctly handles
+  use cases where `unknown_value` or `encoded_missing_value` is `nan`. :pr:`24087`
+  by `Thomas Fan`_.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fixed invalid memory access bug during fit in
+  :class:`tree.DecisionTreeRegressor` and :class:`tree.DecisionTreeClassifier`.
+  :pr:`23273` by `Thomas Fan`_.
+
 .. _changes_1_1_1:
 
 Version 1.1.1
 =============
 
-**In Development**
+**May 2022**
 
 Changelog
 ---------
+
+- |Enhancement| The error message is improved when importing
+  :class:`model_selection.HalvingGridSearchCV`,
+  :class:`model_selection.HalvingRandomSearchCV`, or
+  :class:`impute.IterativeImputer` without importing the experimental flag.
+  :pr:`23194` by `Thomas Fan`_.
+
+- |Enhancement| Added an extension in doc/conf.py to automatically generate
+  the list of estimators that handle NaN values.
+  :pr:`23198` by :user:`Lise Kleiber <lisekleiber>`, :user:`Zhehao Liu <MaxwellLZH>`
+  and :user:`Chiara Marmo <cmarmo>`.
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Fix| Avoid timeouts in :func:`datasets.fetch_openml` by not passing a
+  `timeout` argument, :pr:`23358` by :user:`Loïc Estève <lesteve>`.
 
 :mod:`sklearn.decomposition`
 ............................
 
 - |Fix| Avoid spurious warning in :class:`decomposition.IncrementalPCA` when
-  `n_samples == n_components`. :pr:`23264` by :user:`Lucy Liu <lucyleeow>`
+  `n_samples == n_components`. :pr:`23264` by :user:`Lucy Liu <lucyleeow>`.
+
+:mod:`sklearn.feature_selection`
+................................
+
+- |Fix| The `partial_fit` method of :class:`feature_selection.SelectFromModel`
+  now conducts validation for `max_features` and `feature_names_in` parameters.
+  :pr:`23299` by :user:`Long Bao <lorentzbao>`.
 
 :mod:`sklearn.metrics`
 ......................
 
-- |Fix| Fixes `metrics.precision_recall_curve` to compute precision-recall at 100%
+- |Fix| Fixes :func:`metrics.precision_recall_curve` to compute precision-recall at 100%
   recall. The Precision-Recall curve now displays the last point corresponding to a
   classifier that always predicts the positive class: recall=100% and
   precision=class balance.
   :pr:`23214` by :user:`Stéphane Collot <stephanecollot>` and :user:`Max Baak <mbaak>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :class:`preprocessing.PolynomialFeatures` with ``degree`` equal to 0
+  will raise error when ``include_bias`` is set to False, and outputs a single
+  constant array when ``include_bias`` is set to True.
+  :pr:`23370` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| Fixes performance regression with low cardinality features for
+  :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`,
+  :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.GradientBoostingClassifier`, and
+  :class:`ensemble.GradientBoostingRegressor`.
+  :pr:`23410` by :user:`Loïc Estève <lesteve>`.
 
 :mod:`sklearn.utils`
 ....................
@@ -152,7 +296,11 @@ Changelog
 
   For instance :class:`sklearn.neighbors.NearestNeighbors.kneighbors` and
   :class:`sklearn.neighbors.NearestNeighbors.radius_neighbors`
-  can respectively be up to ×20 and ×5 faster than previously.
+  can respectively be up to ×20 and ×5 faster than previously on a laptop.
+
+  Moreover, implementations of those two algorithms are now suitable
+  for machine with many cores, making them usable for datasets consisting
+  of millions of samples.
 
   :pr:`21987`, :pr:`22064`, :pr:`22065`, :pr:`22288` and :pr:`22320`
   by :user:`Julien Jerphanion <jjerphan>`.
@@ -200,17 +348,6 @@ Changelog
   notebooks. It can be deactivated by setting `display='text'` in
   :func:`sklearn.set_config`.
   :pr:`22856` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
-
-- |Enhancement| The error message is improved when importing
-  :class:`model_selection.HalvingGridSearchCV`,
-  :class:`model_selection.HalvingRandomSearchCV`, or
-  :class:`impute.IterativeImputer` without importing the experimental flag.
-  :pr:`23194` by `Thomas Fan`_.
-
-- |Enhancement| Added an extension in doc/conf.py to automatically generate
-  the list of estimators that handle NaN values.
-  :pr:`23198` by `Lise Kleiber <lisekleiber>`_, :user:`Zhehao Liu <MaxwellLZH>`
-  and :user:`Chiara Marmo <cmarmo>`.
 
 :mod:`sklearn.calibration`
 ..........................
@@ -1183,55 +1320,60 @@ the project since version 1.0, including:
 2357juan, Abhishek Gupta, adamgonzo, Adam Li, adijohar, Aditya Kumawat, Aditya
 Raghuwanshi, Aditya Singh, Adrian Trujillo Duron, Adrin Jalali, ahmadjubair33,
 AJ Druck, aj-white, Alan Peixinho, Alberto Mario Ceballos-Arroyo, Alek
-Lefebvre, Alex, Alexandre Gramfort, alexanmv, almeidayoel, Amanda Dsouza, Aman
-Sharma, Amar pratap singh, Amit, amrcode, András Simon, Andreas Mueller,
-Andrew Knyazev, Andriy, Angus L'Herrou, Ankit Sharma, Anne Ducout, Arisa, Arth,
-arthurmello, Arturo Amor, ArturoAmor, Atharva Patil, aufarkari, Aurélien
-Geron, avm19, Ayan Bag, baam, Behrouz B, Ben3940, Benjamin Bossan, Bharat
-Raghunathan, Bijil Subhash, bmreiniger, Brandon Truth, Brenden Kadota, Brian
-Sun, cdrig, Chalmer Lowe, Chiara Marmo, Chitteti Srinath Reddy, Chloe-Agathe
-Azencott, Christian Lorentzen, Christian Ritter, christopherlim98, Christoph T.
-Weidemann, Christos Aridas, Claudio Salvatore Arcidiacono, combscCode, Daniela
-Fernandes, Dave Eargle, David Poznik, Dea María Léon, Dennis Osei, DessyVV,
-Dev514, Dimitri Papadopoulos Orfanos, Diwakar Gupta, Dr. Felix M. Riese, drskd,
-Emiko Sano, Emmanouil Gionanidis, EricEllwanger, Erich Schubert, Eric Larson,
-Eric Ndirangu, Estefania Barreto-Ojeda, eyast, Fatima GASMI, Federico Luna,
-Felix Glushchenkov, fkaren27, Fortune Uwha, FPGAwesome, francoisgoupil, Frans
-Larsson, Gabor Berei, Gabor Kertesz, Gabriel Stefanini Vicente, Gabriel S
-Vicente, Gael Varoquaux, GAURAV CHOUDHARY, Gauthier I, genvalen,
-Geoffrey-Paris, Giancarlo Pablo, glennfrutiz, gpapadok, Guillaume Lemaitre,
-Guillermo Tomás Fernández Martín, Gustavo Oliveira, Haidar Almubarak, Hannah
-Bohle, Haoyin Xu, Haya, Helder Geovane Gomes de Lima, henrymooresc, Hideaki
-Imamura, Himanshu Kumar, Hind-M, hmasdev, hvassard, i-aki-y, iasoon, Inclusive
-Coding Bot, Ingela, iofall, Ishan Kumar, Jack Liu, Jake Cowton, jalexand3r, J
-Alexander, Jauhar, Jaya Surya Kommireddy, Jay Stanley, Jeff Hale, je-kr,
-JElfner, Jenny Vo, Jérémie du Boisberranger, Jihane, Jirka Borovec, Joel
-Nothman, Jon Haitz Legarreta Gorroño, Jordan Silke, Jorge Ciprián, Jorge
-Loayza, Joseph Chazalon, Joseph Schwartz-Messing, JSchuerz, Juan Carlos Alfaro
-Jiménez, Juan Martin Loyola, Julien Jerphanion, katotten, Kaushik Roy
-Chowdhury, Ken4git, Kevin Doucet, KimAYoung, Koushik Joshi, Kranthi Sedamaki,
-krumetoft, lesnee, Logan Thomas, Loic Esteve, Louis Wagner, LucieClair, Lucy
-Liu, Luiz Eduardo Amaral, Magali, MaggieChege, Mai, mandjevant, Mandy Gu,
-Manimaran, MarcoM, Maren Westermann, Maria Boerner, MarieS-WiMLDS, Martel
-Corentin, mathurinm, Matías, matjansen, Matteo Francia, Maxwell, Meekail Zain,
-Megabyte, Mehrdad Moradizadeh, melemo2, Michael I Chen, michalkrawczyk,
-Micky774, milana2, millawell, Ming-Yang Ho, Mitzi, miwojc, Mizuki, mlant,
-Mohamed Haseeb, Mohit Sharma, Moonkyung94, mpoemsl, MrinalTyagi, Mr. Leu,
-msabatier, murata-yu, N, Nadirhan Şahin, NartayXD, nastegiano, nathansquan,
+Lefebvre, Alex, Alexandr, Alexandre Gramfort, alexanmv, almeidayoel, Amanda
+Dsouza, Aman Sharma, Amar pratap singh, Amit, amrcode, András Simon, Andreas
+Grivas, Andreas Mueller, Andrew Knyazev, Andriy, Angus L'Herrou, Ankit Sharma,
+Anne Ducout, Arisa, Arth, arthurmello, Arturo Amor, ArturoAmor, Atharva Patil,
+aufarkari, Aurélien Geron, avm19, Ayan Bag, baam, Bardiya Ak, Behrouz B,
+Ben3940, Benjamin Bossan, Bharat Raghunathan, Bijil Subhash, bmreiniger,
+Brandon Truth, Brenden Kadota, Brian Sun, cdrig, Chalmer Lowe, Chiara Marmo,
+Chitteti Srinath Reddy, Chloe-Agathe Azencott, Christian Lorentzen, Christian
+Ritter, christopherlim98, Christoph T. Weidemann, Christos Aridas, Claudio
+Salvatore Arcidiacono, combscCode, Daniela Fernandes, darioka, Darren Nguyen,
+Dave Eargle, David Gilbertson, David Poznik, Dea María Léon, Dennis Osei,
+DessyVV, Dev514, Dimitri Papadopoulos Orfanos, Diwakar Gupta, Dr. Felix M.
+Riese, drskd, Emiko Sano, Emmanouil Gionanidis, EricEllwanger, Erich Schubert,
+Eric Larson, Eric Ndirangu, ErmolaevPA, Estefania Barreto-Ojeda, eyast, Fatima
+GASMI, Federico Luna, Felix Glushchenkov, fkaren27, Fortune Uwha, FPGAwesome,
+francoisgoupil, Frans Larsson, ftorres16, Gabor Berei, Gabor Kertesz, Gabriel
+Stefanini Vicente, Gabriel S Vicente, Gael Varoquaux, GAURAV CHOUDHARY,
+Gauthier I, genvalen, Geoffrey-Paris, Giancarlo Pablo, glennfrutiz, gpapadok,
+Guillaume Lemaitre, Guillermo Tomás Fernández Martín, Gustavo Oliveira, Haidar
+Almubarak, Hannah Bohle, Hansin Ahuja, Haoyin Xu, Haya, Helder Geovane Gomes de
+Lima, henrymooresc, Hideaki Imamura, Himanshu Kumar, Hind-M, hmasdev, hvassard,
+i-aki-y, iasoon, Inclusive Coding Bot, Ingela, iofall, Ishan Kumar, Jack Liu,
+Jake Cowton, jalexand3r, J Alexander, Jauhar, Jaya Surya Kommireddy, Jay
+Stanley, Jeff Hale, je-kr, JElfner, Jenny Vo, Jérémie du Boisberranger, Jihane,
+Jirka Borovec, Joel Nothman, Jon Haitz Legarreta Gorroño, Jordan Silke, Jorge
+Ciprián, Jorge Loayza, Joseph Chazalon, Joseph Schwartz-Messing, Jovan
+Stojanovic, JSchuerz, Juan Carlos Alfaro Jiménez, Juan Martin Loyola, Julien
+Jerphanion, katotten, Kaushik Roy Chowdhury, Ken4git, Kenneth Prabakaran,
+kernc, Kevin Doucet, KimAYoung, Koushik Joshi, Kranthi Sedamaki, krishna kumar,
+krumetoft, lesnee, Lisa Casino, Logan Thomas, Loic Esteve, Louis Wagner,
+LucieClair, Lucy Liu, Luiz Eduardo Amaral, Magali, MaggieChege, Mai,
+mandjevant, Mandy Gu, Manimaran, MarcoM, Marco Wurps, Maren Westermann, Maria
+Boerner, MarieS-WiMLDS, Martel Corentin, martin-kokos, mathurinm, Matías,
+matjansen, Matteo Francia, Maxwell, Meekail Zain, Megabyte, Mehrdad
+Moradizadeh, melemo2, Michael I Chen, michalkrawczyk, Micky774, milana2,
+millawell, Ming-Yang Ho, Mitzi, miwojc, Mizuki, mlant, Mohamed Haseeb, Mohit
+Sharma, Moonkyung94, mpoemsl, MrinalTyagi, Mr. Leu, msabatier, murata-yu, N,
+Nadirhan Şahin, Naipawat Poolsawat, NartayXD, nastegiano, nathansquan,
 nat-salt, Nicki Skafte Detlefsen, Nicolas Hug, Niket Jain, Nikhil Suresh,
 Nikita Titov, Nikolay Kondratyev, Ohad Michel, Oleksandr Husak, Olivier Grisel,
-partev, Patrick Ferreira, Paul, pelennor, PierreAttard, Pieter Gijsbers, Pinky,
-poloso, Pramod Anantharam, puhuk, Purna Chandra Mansingh, QuadV, Rahil Parikh,
-Randall Boyes, randomgeek78, Raz Hoshia, Reshama Shaikh, Ricardo Ferreira,
-Richard Taylor, Rileran, Rishabh, Robin Thibaut, Roman Feldbauer, Roman
-Yurchak, Ross Barnowski, rsnegrin, Sachin Yadav, sakinaOuisrani, Sam Adam Day,
-Sanjay Marreddi, Sebastian Pujalte, SEELE, Seyedsaman (Sam) Emami, ShanDeng123,
-Shao Yang Hong, sharmadharmpal, shaymerNaturalint, Shubhraneel Pal, siavrez,
-slishak, Smile, spikebh, sply88, Sultan Orazbayev, Sumit Saha, Sven Eschlbeck,
-Swapnil Jha, Sylvain Marié, Takeshi Oura, Tamires Santana, Tenavi, teunpe,
-Theis Ferré Hjortkjær, Thiruvenkadam, Thomas J. Fan, t-jakubek, Tom Dupré la
-Tour, TONY GEORGE, Tyler Martin, Tyler Reddy, Udit Gupta, Ugo Marchand, Varun
-Agrawal, Venkatachalam N, Vera Komeyer, victoirelouis, Vikas Vishwakarma,
-Vikrant khedkar, Vladimir Chernyy, Vladimir Kim, WeijiaDu, Xiao Yuan, Yar Khine
-Phyo, Ying Xiong, yiyangq, Yosshi999, Yuki Koyama, Zach Deane-Mayer, Zeel B Patel,
+partev, Patrick Ferreira, Paul, pelennor, PierreAttard, Piet Brömmel, Pieter
+Gijsbers, Pinky, poloso, Pramod Anantharam, puhuk, Purna Chandra Mansingh,
+QuadV, Rahil Parikh, Randall Boyes, randomgeek78, Raz Hoshia, Reshama Shaikh,
+Ricardo Ferreira, Richard Taylor, Rileran, Rishabh, Robin Thibaut, Rocco Meli,
+Roman Feldbauer, Roman Yurchak, Ross Barnowski, rsnegrin, Sachin Yadav,
+sakinaOuisrani, Sam Adam Day, Sanjay Marreddi, Sebastian Pujalte, SEELE, SELEE,
+Seyedsaman (Sam) Emami, ShanDeng123, Shao Yang Hong, sharmadharmpal,
+shaymerNaturalint, Shuangchi He, Shubhraneel Pal, siavrez, slishak, Smile,
+spikebh, sply88, Srinath Kailasa, Stéphane Collot, Sultan Orazbayev, Sumit
+Saha, Sven Eschlbeck, Sven Stehle, Swapnil Jha, Sylvain Marié, Takeshi Oura,
+Tamires Santana, Tenavi, teunpe, Theis Ferré Hjortkjær, Thiruvenkadam, Thomas
+J. Fan, t-jakubek, toastedyeast, Tom Dupré la Tour, Tom McTiernan, TONY GEORGE,
+Tyler Martin, Tyler Reddy, Udit Gupta, Ugo Marchand, Varun Agrawal,
+Venkatachalam N, Vera Komeyer, victoirelouis, Vikas Vishwakarma, Vikrant
+khedkar, Vladimir Chernyy, Vladimir Kim, WeijiaDu, Xiao Yuan, Yar Khine Phyo,
+Ying Xiong, yiyangq, Yosshi999, Yuki Koyama, Zach Deane-Mayer, Zeel B Patel,
 zempleni, zhenfisher, 赵丰 (Zhao Feng)

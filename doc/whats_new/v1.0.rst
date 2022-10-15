@@ -412,7 +412,7 @@ Changelog
   1.2. :pr:`20165` by `Thomas Fan`_.
 
 - |API| :term:`get_feature_names_out` has been added to the transformer API
-  to get the names of the output features. :term:`get_feature_names` has in
+  to get the names of the output features. `get_feature_names` has in
   turn been deprecated. :pr:`18444` by `Thomas Fan`_.
 
 - |API| All estimators store `feature_names_in_` when fitted on pandas Dataframes.
@@ -520,7 +520,7 @@ Changelog
   argument to the regressor.
   :pr:`19244` by :user:`Ricardo <ricardojnf>`.
 
-- |FIX| :meth:`compose.ColumnTransformer.get_feature_names` supports
+- |FIX| `compose.ColumnTransformer.get_feature_names` supports
   non-string feature names returned by any of its transformers. However, note
   that ``get_feature_names`` is deprecated, use ``get_feature_names_out``
   instead. :pr:`18459` by :user:`Albert Villanova del Moral <albertvillanova>`
@@ -1203,11 +1203,10 @@ Changelog
   :func:`~sklearn.utils.check_array` in 1.0 and will raise a `TypeError` in
   1.2. :pr:`20165` by `Thomas Fan`_.
 
-- |API| :func:`utils._testing.assert_warns` and
-  :func:`utils._testing.assert_warns_message` are deprecated in 1.0 and will
-  be removed in 1.2. Used `pytest.warns` context manager instead. Note that
-  these functions were not documented and part from the public API.
-  :pr:`20521` by :user:`Olivier Grisel <ogrisel>`.
+- |API| `utils._testing.assert_warns` and `utils._testing.assert_warns_message`
+  are deprecated in 1.0 and will be removed in 1.2. Used `pytest.warns` context
+  manager instead. Note that these functions were not documented and part from
+  the public API. :pr:`20521` by :user:`Olivier Grisel <ogrisel>`.
 
 - |API| Fixed several bugs in :func:`utils.graph.graph_shortest_path`, which is
   now deprecated. Use `scipy.sparse.csgraph.shortest_path` instead. :pr:`20531`

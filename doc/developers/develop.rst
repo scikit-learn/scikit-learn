@@ -370,9 +370,10 @@ While when `deep=False`, the output will be::
     my_extra_param -> random
     subestimator -> LogisticRegression()
 
-The ``set_params`` on the other hand takes as input a dict of the form
-``'parameter': value`` and sets the parameter of the estimator using this dict.
-Return value must be estimator itself.
+On the other hand, ``set_params`` takes the parameters of ``__init__``
+as keyword arguments, unpacks them into a dict of the form
+``'parameter': value`` and sets the parameters of the estimator using this dict.
+Return value must be the estimator itself.
 
 While the ``get_params`` mechanism is not essential (see :ref:`cloning` below),
 the ``set_params`` function is necessary as it is used to set parameters during
@@ -552,8 +553,9 @@ preserves_dtype (default=``[np.float64]``)
 
 poor_score (default=False)
     whether the estimator fails to provide a "reasonable" test-set score, which
-    currently for regression is an R2 of 0.5 on a subset of the boston housing
-    dataset, and for classification an accuracy of 0.83 on
+    currently for regression is an R2 of 0.5 on ``make_regression(n_samples=200,
+    n_features=10, n_informative=1, bias=5.0, noise=20, random_state=42)``, and
+    for classification an accuracy of 0.83 on
     ``make_blobs(n_samples=300, random_state=0)``. These datasets and values
     are based on current estimators in sklearn and might be replaced by
     something more systematic.
@@ -634,6 +636,35 @@ instantiated with an instance of ``LogisticRegression`` (or
 of these two models is somewhat idiosyncratic but both should provide robust
 closed-form solutions.
 
+.. _developer_api_set_output:
+
+Developer API for `set_output`
+==============================
+
+With
+`SLEP018 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep018/proposal.html>`__,
+scikit-learn introduces the `set_output` API for configuring transformers to
+output pandas DataFrames. The `set_output` API is automatically defined if the
+transformer defines :term:`get_feature_names_out` and subclasses
+:class:`base.TransformerMixin`. :term:`get_feature_names_out` is used to get the
+column names of pandas output. You can opt-out of the `set_output` API by
+setting `auto_wrap_output_keys=None` when defining a custom subclass::
+
+    class MyTransformer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
+
+        def fit(self, X, y=None):
+            return self
+        def transform(self, X, y=None):
+            return X
+        def get_feature_names_out(self, input_features=None):
+            ...
+
+For transformers that return multiple arrays in `transform`, auto wrapping will
+only wrap the first array and not alter the other arrays.
+
+See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
+for an example on how to use the API.
+
 .. _coding-guidelines:
 
 Coding guidelines
@@ -677,7 +708,8 @@ In addition, we add the following guidelines:
   find bugs in scikit-learn.
 
 * Use the `numpy docstring standard
-  <https://numpydoc.readthedocs.io/en/latest/format.html#numpydoc-docstring-guide>`_ in all your docstrings.
+  <https://numpydoc.readthedocs.io/en/latest/format.html#docstring-standard>`_
+  in all your docstrings.
 
 
 A good example of code that we like can be found `here
