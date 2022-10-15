@@ -38,6 +38,7 @@ thus the clustering puts them in the same cluster.
 # License: BSD 3-Clause or CC-0
 
 import matplotlib.pyplot as plt
+import matplotlib.patheffects as PathEffects
 import numpy as np
 
 from sklearn.cluster import AgglomerativeClustering
@@ -108,13 +109,14 @@ for index, metric in enumerate(["cosine", "euclidean", "cityblock"]):
     avg_dist /= avg_dist.max()
     for i in range(n_clusters):
         for j in range(n_clusters):
-            plt.text(
+            t = plt.text(
                 i,
                 j,
                 "%5.3f" % avg_dist[i, j],
                 verticalalignment="center",
                 horizontalalignment="center",
             )
+            t.set_path_effects([PathEffects.withStroke(linewidth=5, foreground='w', alpha=0.5)])
 
     plt.imshow(avg_dist, interpolation="nearest", cmap="cividis", vmin=0)
     plt.xticks(range(n_clusters), labels, rotation=45)
