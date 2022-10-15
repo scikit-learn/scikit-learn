@@ -116,7 +116,9 @@ for index, metric in enumerate(["cosine", "euclidean", "cityblock"]):
                 verticalalignment="center",
                 horizontalalignment="center",
             )
-            t.set_path_effects([PathEffects.withStroke(linewidth=5, foreground='w', alpha=0.5)])
+            t.set_path_effects(
+                [PathEffects.withStroke(linewidth=5, foreground="w", alpha=0.5)]
+            )
 
     plt.imshow(avg_dist, interpolation="nearest", cmap="cividis", vmin=0)
     plt.xticks(range(n_clusters), labels, rotation=45)
