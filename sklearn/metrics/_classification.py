@@ -2887,10 +2887,9 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
 def max_precision_at_recall_k(
     y_true, probas_pred, k, *, pos_label=None, sample_weight=None
 ):
-    """
-    Computes maximum precision for a recall greater than `k`
+    """Compute maximum precision for a recall greater than `k`.
 
-    Note: This implementation is restricted to binary classification task
+    Note: This implementation is restricted to binary classification task.
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
     true positives and ``fp`` the number of false positives. The precision is
@@ -2913,8 +2912,7 @@ def max_precision_at_recall_k(
         `decision_function` on some classifiers).
 
     k : float
-        Minimum value of recall.
-        Should be between [0,1]
+        Minimum value of recall. Should be between [0,1].
 
     pos_label : int or str, default=None
         The label of the positive class.
@@ -2931,7 +2929,6 @@ def max_precision_at_recall_k(
         is greater than or equal to `k` with thresholds applied
         to the `pos_label` or to the label 1 if `pos_label=None`.
 
-
     See Also
     --------
     precision_recall_curve : Compute precision-recall curve.
@@ -2943,7 +2940,7 @@ def max_precision_at_recall_k(
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.metrics import max_recall_at_precision_k
+    >>> from sklearn.metrics import max_precision_at_recall_k
     >>> y_true = np.array([0, 0, 1, 1, 1, 1])
     >>> y_prob = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
     >>> k = 0.8
@@ -2967,10 +2964,9 @@ def max_precision_at_recall_k(
 def max_recall_at_precision_k(
     y_true, probas_pred, k, *, pos_label=None, sample_weight=None
 ):
-    """
-    Computes maximum recall for a precision greater than `k`
+    """Compute maximum recall for a precision greater than `k`.
 
-    Note: This implementation is restricted to binary classification task
+    Note: This implementation is restricted to binary classification task.
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
     true positives and ``fp`` the number of false positives. The precision is
@@ -2993,8 +2989,7 @@ def max_recall_at_precision_k(
         `decision_function` on some classifiers).
 
     k : float
-        Minimum value of recall.
-        Should be between [0,1]
+        Minimum value of recall. Should be between [0,1].
 
     pos_label : int or str, default=None
         The label of the positive class.
@@ -3004,14 +2999,12 @@ def max_recall_at_precision_k(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-
     Returns
     -------
     max_recall_at_precision_k : float
         Maximum Recall corresponding to precision threshold
         is greater than or equal to `k` with thresholds applied
         to the `pos_label` or to the label 1 if `pos_label=None`.
-
 
     See Also
     --------
