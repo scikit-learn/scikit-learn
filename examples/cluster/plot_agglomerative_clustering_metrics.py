@@ -131,7 +131,7 @@ for index, metric in enumerate(["cosine", "euclidean", "cityblock"]):
 # Plot clustering results
 for index, metric in enumerate(["cosine", "euclidean", "cityblock"]):
     model = AgglomerativeClustering(
-        n_clusters=n_clusters, linkage="average", affinity=metric
+        n_clusters=n_clusters, linkage="average", metric=metric
     )
     model.fit(X)
     plt.figure()
