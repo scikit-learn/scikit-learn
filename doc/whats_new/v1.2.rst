@@ -539,6 +539,11 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+- |Feature| :func:`metrics.pairwise_distances` accepts calculating pairwise distance
+  for arrays containing strings as well. This is supported only with custom functions
+  and the user is expected to pass `check_length_only=False` for this to work
+  :pr:`TODO` by :user:`Kshitij Mathur <Kshitij68>`.
+
 - |Feature| :func:`metrics.ConfusionMatrixDisplay.from_estimator`,
   :func:`metrics.ConfusionMatrixDisplay.from_predictions`, and
   :meth:`metrics.ConfusionMatrixDisplay.plot` accepts a `text_kw` parameter which is

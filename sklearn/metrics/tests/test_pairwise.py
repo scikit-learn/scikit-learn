@@ -1549,3 +1549,17 @@ def test_numeric_pairwise_distances_datatypes(metric, global_dtype, y_is_x):
     dist = pairwise_distances(X, Y, metric=metric, **params)
 
     assert_allclose(dist, expected_dist)
+
+
+def test_pairwise_dist_custom_scoring_for_string():
+    X = [
+        "This is my first sentences",
+        "my second dummy sentence",
+        "This is my third one",
+    ]
+
+    def dummy_string_similarity(x, y):
+        return np.abs(len(x) - len(y))
+
+    dist = pairwise_distances(X, metric=dummy_string_similarity, check_length_only=True)
+    assert dist.max() == 6.0

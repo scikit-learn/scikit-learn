@@ -69,6 +69,7 @@ def check_pairwise_arrays(
     accept_sparse="csr",
     force_all_finite=True,
     copy=False,
+    check_length_only=False,
 ):
     """Set X and Y appropriately and checks inputs.
 
@@ -127,6 +128,12 @@ def check_pairwise_arrays(
 
         .. versionadded:: 0.22
 
+    check_length_only : bool, default=False
+        Whether to only check the length of the array
+        When true, dtype is ignored
+
+         .. versionadded:: 1.2
+
     Returns
     -------
     safe_X : {array-like, sparse matrix} of shape (n_samples_X, n_features)
@@ -136,11 +143,12 @@ def check_pairwise_arrays(
         An array equal to Y if Y was not None, guaranteed to be a numpy array.
         If Y was None, safe_Y will be a pointer to X.
     """
-    X, Y, dtype_float = _return_float_dtype(X, Y)
 
+    X, Y, dtype_float = _return_float_dtype(X, Y)
     estimator = "check_pairwise_arrays"
-    if dtype is None:
-        dtype = dtype_float
+    ensure_2d = True
+    if check_length_only:
+        ensure_2d = False
 
     if Y is X or Y is None:
         X = Y = check_array(
@@ -150,6 +158,7 @@ def check_pairwise_arrays(
             copy=copy,
             force_all_finite=force_all_finite,
             estimator=estimator,
+            ensure_2d=ensure_2d,
         )
     else:
         X = check_array(
@@ -159,6 +168,7 @@ def check_pairwise_arrays(
             copy=copy,
             force_all_finite=force_all_finite,
             estimator=estimator,
+            ensure_2d=ensure_2d,
         )
         Y = check_array(
             Y,
@@ -167,6 +177,7 @@ def check_pairwise_arrays(
             copy=copy,
             force_all_finite=force_all_finite,
             estimator=estimator,
+            ensure_2d=ensure_2d,
         )
 
     if precomputed:
@@ -176,7 +187,7 @@ def check_pairwise_arrays(
                 "(n_queries, n_indexed). Got (%d, %d) "
                 "for %d indexed." % (X.shape[0], X.shape[1], Y.shape[0])
             )
-    elif X.shape[1] != Y.shape[1]:
+    elif X.ndim > 1 and X.shape[1] != Y.shape[1]:
         raise ValueError(
             "Incompatible dimension for X and Y matrices: "
             "X.shape[1] == %d while Y.shape[1] == %d" % (X.shape[1], Y.shape[1])
@@ -1596,7 +1607,10 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
 
 def _pairwise_callable(X, Y, metric, force_all_finite=True, **kwds):
     """Handle the callable case for pairwise_{distances,kernels}."""
-    X, Y = check_pairwise_arrays(X, Y, force_all_finite=force_all_finite)
+    check_length_only = kwds.pop("check_length_only", False)
+    X, Y = check_pairwise_arrays(
+        X, Y, force_all_finite=force_all_finite, check_length_only=check_length_only
+    )
 
     if X is Y:
         # Only calculate metric for upper triangle
