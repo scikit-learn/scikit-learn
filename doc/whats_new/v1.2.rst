@@ -410,7 +410,7 @@ Changelog
 - |Feature| Added :func:`max_recall_at_precision_k` and :func:`max_precision_at_recall_k`
   to calculate the 'maximum precision for thresholds where recall >= k' and 'maximum
   precision for thresholds where precision >= k' respectively.
-  :pr:`TODO` by :user:`Kshitij Mathur <Kshitij68>`.
+  :pr:`24671` by :user:`Kshitij Mathur <Kshitij68>`.
 
 - |Feature| :func:`metrics.ConfusionMatrixDisplay.from_estimator`,
   :func:`metrics.ConfusionMatrixDisplay.from_predictions`, and
