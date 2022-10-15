@@ -991,17 +991,15 @@ The :func:`jaccard_score` function computes the average of `Jaccard similarity
 coefficients <https://en.wikipedia.org/wiki/Jaccard_index>`_, also called the
 Jaccard index, between pairs of label sets.
 
-The Jaccard similarity coefficient 
-with a ground truth label set :math:`y` and predicted label set
-:math:`\hat{y}`, is defined as
-
+The Jaccard similarity coefficient with a ground truth label set :math:`y` and
+predicted label set :math:`\hat{y}`, is defined as
 .. math::
 
-    J(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} \frac{|y_i \cap \hat{y}_i|}{|y_i \cup \hat{y}_i|}.
+    J(y, \hat{y}) = \frac{|y \cap \hat{y}|}{|y \cup \hat{y}|}.
 
-:func:`jaccard_score` works like :func:`precision_recall_fscore_support` as a
-naively set-wise measure applying natively to binary targets, and extended to
-apply to multilabel and multiclass through the use of `average` (see
+The :func:`jaccard_score` (like :func:`precision_recall_fscore_support`) applies
+natively to binary targets. By computing it set-wise it can be extended to apply
+to multilabel and multiclass through the use of `average` (see
 :ref:`above <average>`).
 
 In the binary case::
@@ -1654,7 +1652,7 @@ then the 0-1 loss :math:`L_{0-1}` is defined as:
 
    L_{0-1}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i \not= y_i)
 
-where :math:`1(x)` is the `indicator function
+where :math:`zero-one loss = 1 - accuracy` is the `indicator function
 <https://en.wikipedia.org/wiki/Indicator_function>`_.
 
 
