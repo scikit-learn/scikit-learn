@@ -82,15 +82,37 @@ def row_norms(X, squared=False):
 
 
 def fast_logdet(A):
-    """Compute log(det(A)) for A symmetric.
+    """Compute logarithm of determinant of a square matrix.
 
-    Equivalent to : np.log(nl.det(A)) but more robust.
-    It returns -Inf if det(A) is non positive or is not defined.
+    The (natural) logarithm of the determinant of a square matrix
+    is returned if det(A) is non-negative and well defined.
+    If the determinant is zero or negative returns -Inf.
+
+    Equivalent to : np.log(np.det(A)) but more robust.
 
     Parameters
     ----------
-    A : array-like
-        The matrix.
+    A : array_like of shape (n, n)
+        The square matrix.
+
+    Returns
+    -------
+    logdet : float
+        When det(A) is strictly positive, log(det(A)) is returned.
+        When det(A) is non-positive or not defined, then -inf is returned.
+
+    See Also
+    --------
+    numpy.linalg.slogdet : Compute the sign and (natural) logarithm of the determinant
+        of an array.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.extmath import fast_logdet
+    >>> a = np.array([[5, 1], [2, 8]])
+    >>> fast_logdet(a)
+    3.6375861597263857
     """
     sign, ld = np.linalg.slogdet(A)
     if not sign > 0:
@@ -275,10 +297,10 @@ def randomized_svd(
     power_iteration_normalizer="auto",
     transpose="auto",
     flip_sign=True,
-    random_state="warn",
+    random_state=None,
     svd_lapack_driver="gesdd",
 ):
-    """Computes a truncated randomized SVD.
+    """Compute a truncated randomized SVD.
 
     This method solves the fixed-rank approximation problem described in [1]_
     (problem (1.5), p5).
@@ -348,10 +370,7 @@ def randomized_svd(
         function calls. See :term:`Glossary <random_state>`.
 
         .. versionchanged:: 1.2
-            The previous behavior (`random_state=0`) is deprecated, and
-            from v1.2 the default value will be `random_state=None`. Set
-            the value of `random_state` explicitly to suppress the deprecation
-            warning.
+            The default value changed from 0 to None.
 
     svd_lapack_driver : {"gesdd", "gesvd"}, default="gesdd"
         Whether to use the more efficient divide-and-conquer approach
@@ -360,6 +379,15 @@ def randomized_svd(
         dimensional subspace, as described in [1]_.
 
         .. versionadded:: 1.2
+
+    Returns
+    -------
+    u : ndarray of shape (n_samples, n_components)
+        Unitary matrix having left singular vectors with signs flipped as columns.
+    s : ndarray of shape (n_components,)
+        The singular values, sorted in non-increasing order.
+    vh : ndarray of shape (n_components, n_features)
+        Unitary matrix having right singular vectors with signs flipped as rows.
 
     Notes
     -----
@@ -385,6 +413,17 @@ def randomized_svd(
 
     .. [3] An implementation of a randomized algorithm for principal component
       analysis A. Szlam et al. 2014
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.extmath import randomized_svd
+    >>> a = np.array([[1, 2, 3, 5],
+    ...               [3, 4, 5, 6],
+    ...               [7, 8, 9, 10]])
+    >>> U, s, Vh = randomized_svd(a, n_components=2, random_state=0)
+    >>> U.shape, s.shape, Vh.shape
+    ((3, 2), (2,), (2, 4))
     """
     if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
         warnings.warn(
@@ -392,19 +431,6 @@ def randomized_svd(
             "csr_matrix is more efficient.".format(type(M).__name__),
             sparse.SparseEfficiencyWarning,
         )
-
-    if random_state == "warn":
-        warnings.warn(
-            "If 'random_state' is not supplied, the current default "
-            "is to use 0 as a fixed seed. This will change to  "
-            "None in version 1.2 leading to non-deterministic results "
-            "that better reflect nature of the randomized_svd solver. "
-            "If you want to silence this warning, set 'random_state' "
-            "to an integer seed or to None explicitly depending "
-            "if you want your code to be deterministic or not.",
-            FutureWarning,
-        )
-        random_state = 0
 
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
@@ -744,12 +770,12 @@ def svd_flip(u, v, u_based_decision=True):
     Parameters
     ----------
     u : ndarray
-        u and v are the output of `linalg.svd` or
+        Parameters u and v are the output of `linalg.svd` or
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`.
 
     v : ndarray
-        u and v are the output of `linalg.svd` or
+        Parameters u and v are the output of `linalg.svd` or
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`.
         The input v should really be called vt to be consistent with scipy's
@@ -760,11 +786,13 @@ def svd_flip(u, v, u_based_decision=True):
         Otherwise, use the rows of v. The choice of which variable to base the
         decision on is generally algorithm dependent.
 
-
     Returns
     -------
-    u_adjusted, v_adjusted : arrays with the same dimensions as the input.
+    u_adjusted : ndarray
+        Array u with adjusted columns and the same dimensions as u.
 
+    v_adjusted : ndarray
+        Array v with adjusted rows and the same dimensions as v.
     """
     if u_based_decision:
         # columns of u, rows of v

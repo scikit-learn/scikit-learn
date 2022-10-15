@@ -14,12 +14,6 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model import Lasso, ElasticNet, LassoCV, ElasticNetCV
 
 
-# FIXME: 'normalize' to be removed in 1.2
-filterwarnings_normalize = pytest.mark.filterwarnings(
-    "ignore:'normalize' was deprecated in version 1.0"
-)
-
-
 def test_sparse_coef():
     # Check that the sparse_coef property works
     clf = ElasticNet()
@@ -27,20 +21,6 @@ def test_sparse_coef():
 
     assert sp.isspmatrix(clf.sparse_coef_)
     assert clf.sparse_coef_.toarray().tolist()[0] == clf.coef_
-
-
-@filterwarnings_normalize
-def test_normalize_option():
-    # Check that the normalize option in enet works
-    X = sp.csc_matrix([[-1], [0], [1]])
-    y = [-1, 0, 1]
-    clf_dense = ElasticNet(normalize=True)
-    clf_sparse = ElasticNet(normalize=True)
-    clf_dense.fit(X, y)
-    X = sp.csc_matrix(X)
-    clf_sparse.fit(X, y)
-    assert_almost_equal(clf_dense.dual_gap_, 0)
-    assert_array_almost_equal(clf_dense.coef_, clf_sparse.coef_)
 
 
 def test_lasso_zero():
@@ -314,52 +294,50 @@ def test_sparse_dense_equality(
 
 def test_same_output_sparse_dense_lasso_and_enet_cv():
     X, y = make_sparse_data(n_samples=40, n_features=10)
-    for normalize in [True, False]:
-        clfs = ElasticNetCV(max_iter=100, normalize=normalize)
-        ignore_warnings(clfs.fit)(X, y)
-        clfd = ElasticNetCV(max_iter=100, normalize=normalize)
-        ignore_warnings(clfd.fit)(X.toarray(), y)
-        assert_almost_equal(clfs.alpha_, clfd.alpha_, 7)
-        assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)
-        assert_array_almost_equal(clfs.mse_path_, clfd.mse_path_)
-        assert_array_almost_equal(clfs.alphas_, clfd.alphas_)
+    clfs = ElasticNetCV(max_iter=100)
+    clfs.fit(X, y)
+    clfd = ElasticNetCV(max_iter=100)
+    clfd.fit(X.toarray(), y)
+    assert_almost_equal(clfs.alpha_, clfd.alpha_, 7)
+    assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)
+    assert_array_almost_equal(clfs.mse_path_, clfd.mse_path_)
+    assert_array_almost_equal(clfs.alphas_, clfd.alphas_)
 
-        clfs = LassoCV(max_iter=100, cv=4, normalize=normalize)
-        ignore_warnings(clfs.fit)(X, y)
-        clfd = LassoCV(max_iter=100, cv=4, normalize=normalize)
-        ignore_warnings(clfd.fit)(X.toarray(), y)
-        assert_almost_equal(clfs.alpha_, clfd.alpha_, 7)
-        assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)
-        assert_array_almost_equal(clfs.mse_path_, clfd.mse_path_)
-        assert_array_almost_equal(clfs.alphas_, clfd.alphas_)
+    clfs = LassoCV(max_iter=100, cv=4)
+    clfs.fit(X, y)
+    clfd = LassoCV(max_iter=100, cv=4)
+    clfd.fit(X.toarray(), y)
+    assert_almost_equal(clfs.alpha_, clfd.alpha_, 7)
+    assert_almost_equal(clfs.intercept_, clfd.intercept_, 7)
+    assert_array_almost_equal(clfs.mse_path_, clfd.mse_path_)
+    assert_array_almost_equal(clfs.alphas_, clfd.alphas_)
 
 
 def test_same_multiple_output_sparse_dense():
-    for normalize in [True, False]:
-        l = ElasticNet(normalize=normalize)
-        X = [
-            [0, 1, 2, 3, 4],
-            [0, 2, 5, 8, 11],
-            [9, 10, 11, 12, 13],
-            [10, 11, 12, 13, 14],
-        ]
-        y = [
-            [1, 2, 3, 4, 5],
-            [1, 3, 6, 9, 12],
-            [10, 11, 12, 13, 14],
-            [11, 12, 13, 14, 15],
-        ]
-        ignore_warnings(l.fit)(X, y)
-        sample = np.array([1, 2, 3, 4, 5]).reshape(1, -1)
-        predict_dense = l.predict(sample)
+    l = ElasticNet()
+    X = [
+        [0, 1, 2, 3, 4],
+        [0, 2, 5, 8, 11],
+        [9, 10, 11, 12, 13],
+        [10, 11, 12, 13, 14],
+    ]
+    y = [
+        [1, 2, 3, 4, 5],
+        [1, 3, 6, 9, 12],
+        [10, 11, 12, 13, 14],
+        [11, 12, 13, 14, 15],
+    ]
+    l.fit(X, y)
+    sample = np.array([1, 2, 3, 4, 5]).reshape(1, -1)
+    predict_dense = l.predict(sample)
 
-        l_sp = ElasticNet(normalize=normalize)
-        X_sp = sp.coo_matrix(X)
-        ignore_warnings(l_sp.fit)(X_sp, y)
-        sample_sparse = sp.coo_matrix(sample)
-        predict_sparse = l_sp.predict(sample_sparse)
+    l_sp = ElasticNet()
+    X_sp = sp.coo_matrix(X)
+    l_sp.fit(X_sp, y)
+    sample_sparse = sp.coo_matrix(sample)
+    predict_sparse = l_sp.predict(sample_sparse)
 
-        assert_array_almost_equal(predict_sparse, predict_dense)
+    assert_array_almost_equal(predict_sparse, predict_dense)
 
 
 def test_sparse_enet_coordinate_descent():
