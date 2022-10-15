@@ -126,6 +126,23 @@ its ``coef_`` member::
     >>> reg.intercept_
     0.13636...
 
+Note that the class :class:`Ridge` allows for the user to specify that the 
+solver be automatically chosen by setting `solver="auto"`. When this option 
+is specified, :class:`Ridge` will choose between the `"lbfgs"`, `"cholesky"`, 
+and `"sparse_cg"` solvers. :class:`Ridge` will begin checking the conditions
+shown in the following table from top to bottom. If the condition is true,
+the corresponding solver is chosen.
+
++-------------+----------------------------------------------------+
+| **Solver**  | **Condition**                                      |
++-------------+----------------------------------------------------+
+| 'lbfgs'     | The ``positive=True`` option is specified.         |
++-------------+----------------------------------------------------+
+| 'cholesky'  | The input array X is not sparse.                   |
++-------------+----------------------------------------------------+
+| 'sparse_cg' | None of the above conditions are fulfilled.        |
++-------------+----------------------------------------------------+
+
 
 Classification
 --------------
@@ -591,9 +608,9 @@ function of the norm of its coefficients.
 ::
 
    >>> from sklearn import linear_model
-   >>> reg = linear_model.LassoLars(alpha=.1, normalize=False)
+   >>> reg = linear_model.LassoLars(alpha=.1)
    >>> reg.fit([[0, 0], [1, 1]], [0, 1])
-   LassoLars(alpha=0.1, normalize=False)
+   LassoLars(alpha=0.1)
    >>> reg.coef_
    array([0.6..., 0.        ])
 

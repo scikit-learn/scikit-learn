@@ -60,33 +60,22 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         nature of the problem.
 
     metric : str or callable, default='minkowski'
-        The metric is used for distance computation. Any metric from scikit-learn
-        or scipy.spatial.distance can be used.
+        Metric to use for distance computation. Default is "minkowski", which
+        results in the standard Euclidean distance when p = 2. See the
+        documentation of `scipy.spatial.distance
+        <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
+        the metrics listed in
+        :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
+        values.
 
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square. X may be a sparse matrix, in which case only "nonzero"
-        elements may be considered neighbors.
+        must be square during fit. X may be a :term:`sparse graph`, in which
+        case only "nonzero" elements may be considered neighbors.
 
-        If metric is a callable function, it is called on each
-        pair of instances (rows) and the resulting value recorded. The callable
-        should take two arrays as input and return one value indicating the
-        distance between them. This works for Scipy's metrics, but is less
+        If metric is a callable function, it takes two arrays representing 1D
+        vectors as inputs and must return one value indicating the distance
+        between those vectors. This works for Scipy's metrics, but is less
         efficient than passing the metric name as a string.
-
-        Valid values for metric are:
-
-        - from scikit-learn: ['cityblock', 'cosine', 'euclidean', 'l1', 'l2',
-          'manhattan']
-
-        - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-          'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
-          'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
-          'yule']
-
-        See the documentation for scipy.spatial.distance for details on these
-        metrics:
-        https://docs.scipy.org/doc/scipy/reference/spatial.distance.html.
 
     p : int, default=2
         Parameter for the Minkowski metric from
@@ -195,7 +184,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
     array([ -0.9821...,  -1.0370..., -73.3697...,  -0.9821...])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **NeighborsBase._parameter_constraints,
         "contamination": [
             StrOptions({"auto"}),
@@ -249,7 +238,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features), default=None
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), default=None
             The query sample or samples to compute the Local Outlier Factor
             w.r.t. to the training samples.
 
@@ -346,7 +335,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The query sample or samples to compute the Local Outlier Factor
             w.r.t. to the training samples.
 
@@ -364,7 +353,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features), default=None
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), default=None
             The query sample or samples to compute the Local Outlier Factor
             w.r.t. to the training samples. If None, makes prediction on the
             training data without considering them as their own neighbors.
@@ -414,7 +403,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The query sample or samples to compute the Local Outlier Factor
             w.r.t. the training samples.
 
@@ -457,7 +446,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The query sample or samples to compute the Local Outlier Factor
             w.r.t. the training samples.
 

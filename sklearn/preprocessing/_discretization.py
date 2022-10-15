@@ -11,7 +11,7 @@ import warnings
 from . import OneHotEncoder
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils._param_validation import Hidden, Interval, StrOptions, Options
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_random_state
@@ -152,11 +152,11 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [ 0.5,  3.5, -1.5,  1.5]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_bins": [Interval(Integral, 2, None, closed="left"), "array-like"],
         "encode": [StrOptions({"onehot", "onehot-dense", "ordinal"})],
         "strategy": [StrOptions({"uniform", "quantile", "kmeans"})],
-        "dtype": [type, None],  # TODO: TypeOptions constraint,
+        "dtype": [Options(type, {np.float64, np.float32}), None],
         "subsample": [
             Interval(Integral, 1, None, closed="left"),
             None,
@@ -203,17 +203,10 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self._validate_params()
         X = self._validate_data(X, dtype="numeric")
 
-        supported_dtype = (np.float64, np.float32)
-        if self.dtype in supported_dtype:
+        if self.dtype in (np.float64, np.float32):
             output_dtype = self.dtype
-        elif self.dtype is None:
+        else:  # self.dtype is None
             output_dtype = X.dtype
-        else:
-            raise ValueError(
-                "Valid options for 'dtype' are "
-                f"{supported_dtype + (None,)}. Got dtype={self.dtype} "
-                " instead."
-            )
 
         n_samples, n_features = X.shape
 
@@ -296,7 +289,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         if "onehot" in self.encode:
             self._encoder = OneHotEncoder(
                 categories=[np.arange(i) for i in self.n_bins_],
-                sparse=self.encode == "onehot",
+                sparse_output=self.encode == "onehot",
                 dtype=output_dtype,
             )
             # Fit the OneHotEncoder with toy datasets

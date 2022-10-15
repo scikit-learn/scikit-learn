@@ -434,7 +434,7 @@ plt.tight_layout()
 # baseline with regards to random labeling: this means that depending on the
 # number of samples, clusters and ground truth classes, a completely random
 # labeling will not always yield the same values. In particular random labeling
-# won’t yield zero scores, especially when the number of clusters is large. This
+# won't yield zero scores, especially when the number of clusters is large. This
 # problem can safely be ignored when the number of samples is more than a
 # thousand and the number of clusters is less than 10, which is the case of the
 # present example. For smaller sample sizes or larger number of clusters it is
