@@ -206,12 +206,11 @@ class _SetOutputMixin:
         Parameters
         ----------
         transform : {"default", "pandas"}, default=None
-            Configure output of the following estimator's methods:
+            Configure output of `transform` and `fit_transform`.
 
-            - `"transform"`
-            - `"fit_transform"`
-
-            If `None`, this operation is a no-op.
+            - `"default"`: Output of an un-configured transformer
+            - `"pandas"`: DataFrames output
+            - `"None"`: No-op
 
         Returns
         -------

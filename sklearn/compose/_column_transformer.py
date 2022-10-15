@@ -265,6 +265,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         transform : {"default", "pandas"}, default=None
             Configure output of `transform` and `fit_transform`.
 
+            - `"default"`: Output of an un-configured transformer
+            - `"pandas"`: DataFrames output
+            - `"None"`: No-op
+
         Returns
         -------
         self : estimator instance
