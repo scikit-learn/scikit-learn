@@ -27,6 +27,8 @@ from sklearn.utils._mocking import MockDataFrame
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import balanced_accuracy_score
+from sklearn.metrics import max_precision_at_recall_k
+from sklearn.metrics import max_recall_at_precision_k
 from sklearn.metrics import class_likelihood_ratios
 from sklearn.metrics import classification_report
 from sklearn.metrics import cohen_kappa_score
@@ -2620,3 +2622,53 @@ def test_balanced_accuracy_score(y_true, y_pred):
     adjusted = balanced_accuracy_score(y_true, y_pred, adjusted=True)
     chance = balanced_accuracy_score(y_true, np.full_like(y_true, y_true[0]))
     assert adjusted == (balanced - chance) / (1 - chance)
+
+
+def test_max_precision_at_recall_k():
+    y_true = np.array([0, 0, 1, 1, 1, 1])
+    y_prob = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
+    y_multi = np.array([0, 2, 1, 1, 1, 1])
+
+    assert_almost_equal(max_precision_at_recall_k(y_true, y_prob, 0.8), 0.8)
+    assert_almost_equal(max_precision_at_recall_k(y_true, y_prob, 0.6), 1)
+    assert_almost_equal(max_precision_at_recall_k(y_true * 2 - 1, y_prob, 0.8), 0.8)
+
+    with pytest.raises(ValueError):
+        max_precision_at_recall_k(y_multi, y_prob, 0.8)
+    with pytest.raises(ValueError, match="Value of k must be in range 0 and 1"):
+        max_precision_at_recall_k(y_multi, y_prob, 1.1)
+    with pytest.raises(ValueError, match="Value of k must be in range 0 and 1"):
+        max_precision_at_recall_k(y_multi, y_prob, -0.1)
+
+    assert_almost_equal(
+        max_precision_at_recall_k(y_true, y_prob, 0.8, pos_label=1), 0.8
+    )
+
+    y_true = np.array([0])
+    y_prob = np.array([0.4])
+    with ignore_warnings():
+        assert_almost_equal(max_precision_at_recall_k(y_true, y_prob, 0.1), 0)
+
+
+def test_max_recall_at_precision_k():
+    y_true = np.array([0, 0, 1, 1, 1, 1])
+    y_prob = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
+    y_multi = np.array([0, 2, 1, 1, 1, 1])
+
+    assert_almost_equal(max_recall_at_precision_k(y_true, y_prob, 1), 0.75)
+    assert_almost_equal(max_recall_at_precision_k(y_true, y_prob, 0.8), 1)
+    assert_almost_equal(max_recall_at_precision_k(y_true * 2 - 1, y_prob, 1), 0.75)
+
+    with pytest.raises(ValueError):
+        max_recall_at_precision_k(y_multi, y_prob, 1)
+    with pytest.raises(ValueError, match="Value of k must be in range 0 and 1"):
+        max_recall_at_precision_k(y_multi, y_prob, 1.1)
+    with pytest.raises(ValueError, match="Value of k must be in range 0 and 1"):
+        max_recall_at_precision_k(y_multi, y_prob, -0.1)
+
+    assert_almost_equal(max_recall_at_precision_k(y_true, y_prob, 1, pos_label=1), 0.75)
+
+    y_true = np.array([0])
+    y_prob = np.array([0.4])
+    with ignore_warnings():
+        assert_almost_equal(max_recall_at_precision_k(y_true, y_prob, 0.1), 0)

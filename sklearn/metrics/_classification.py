@@ -41,6 +41,7 @@ from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
 from ..utils.sparsefuncs import count_nonzero
 from ..exceptions import UndefinedMetricWarning
+from ._ranking import precision_recall_curve
 
 from ._base import _check_pos_label_consistency
 
@@ -2881,3 +2882,164 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
             raise
     y_true = np.array(y_true == pos_label, int)
     return np.average((y_true - y_prob) ** 2, weights=sample_weight)
+
+
+def max_precision_at_recall_k(
+    y_true, probas_pred, k, *, pos_label=None, sample_weight=None
+):
+    """
+    Computes maximum precision for a recall greater than `k`
+
+    Note: This implementation is restricted to binary classification task
+
+    The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
+    true positives and ``fp`` the number of false positives. The precision is
+    intuitively the ability of the classifier not to label as positive a sample
+    that is negative.
+
+    The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
+    true positives and ``fn`` the number of false negatives. The recall is
+    intuitively the ability of the classifier to find all the positive samples.
+
+    Parameters
+    ----------
+    y_true : ndarray of shape (n_samples,)
+        True binary labels. If labels are not either {-1, 1} or {0, 1}, then
+        pos_label should be explicitly given.
+
+    probas_pred : ndarray of shape (n_samples,)
+        Target scores, can either be probability estimates of the positive
+        class, or non-thresholded measure of decisions (as returned by
+        `decision_function` on some classifiers).
+
+    k : float
+        Minimum value of recall.
+        Should be between [0,1]
+
+    pos_label : int or str, default=None
+        The label of the positive class.
+        When ``pos_label=None``, if y_true is in {-1, 1} or {0, 1},
+        ``pos_label`` is set to 1, otherwise an error will be raised.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+    Returns
+    -------
+    max_precision_at_recall_k : float
+        Maximum Recall corresponding to precision threshold
+        is greater than or equal to `k` with thresholds applied
+        to the `pos_label` or to the label 1 if `pos_label=None`.
+
+
+    See Also
+    --------
+    precision_recall_curve : Compute precision-recall curve.
+    PrecisionRecallDisplay.from_estimator : Plot Precision Recall Curve given
+        a binary classifier.
+    PrecisionRecallDisplay.from_predictions : Plot Precision Recall Curve
+        using predictions from a binary classifier.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import max_recall_at_precision_k
+    >>> y_true = np.array([0, 0, 1, 1, 1, 1])
+    >>> y_prob = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
+    >>> k = 0.8
+    >>> max_precision_at_recall_k(y_true, y_prob, k)
+    0.8
+    """
+    if k < 0 or k > 1:
+        raise ValueError("Value of k must be in range 0 and 1")
+    precisions, recalls, _ = precision_recall_curve(
+        y_true, probas_pred, pos_label=pos_label, sample_weight=sample_weight
+    )
+
+    valid_positions = recalls >= k
+    valid_precisions = precisions[valid_positions]
+    value = 0.0
+    if valid_precisions.shape[0] > 0:
+        value = np.max(valid_precisions)
+    return value
+
+
+def max_recall_at_precision_k(
+    y_true, probas_pred, k, *, pos_label=None, sample_weight=None
+):
+    """
+    Computes maximum recall for a precision greater than `k`
+
+    Note: This implementation is restricted to binary classification task
+
+    The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
+    true positives and ``fp`` the number of false positives. The precision is
+    intuitively the ability of the classifier not to label as positive a sample
+    that is negative.
+
+    The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
+    true positives and ``fn`` the number of false negatives. The recall is
+    intuitively the ability of the classifier to find all the positive samples.
+
+    Parameters
+    ----------
+    y_true : ndarray of shape (n_samples,)
+        True binary labels. If labels are not either {-1, 1} or {0, 1}, then
+        pos_label should be explicitly given.
+
+    probas_pred : ndarray of shape (n_samples,)
+        Target scores, can either be probability estimates of the positive
+        class, or non-thresholded measure of decisions (as returned by
+        `decision_function` on some classifiers).
+
+    k : float
+        Minimum value of recall.
+        Should be between [0,1]
+
+    pos_label : int or str, default=None
+        The label of the positive class.
+        When ``pos_label=None``, if y_true is in {-1, 1} or {0, 1},
+        ``pos_label`` is set to 1, otherwise an error will be raised.
+
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
+
+    Returns
+    -------
+    max_precision_at_recall_k : float
+        Maximum Recall corresponding to precision threshold
+        is greater than or equal to `k` with thresholds applied
+        to the `pos_label` or to the label 1 if `pos_label=None`.
+
+
+    See Also
+    --------
+    precision_recall_curve : Compute precision-recall curve.
+    PrecisionRecallDisplay.from_estimator : Plot Precision Recall Curve given
+        a binary classifier.
+    PrecisionRecallDisplay.from_predictions : Plot Precision Recall Curve
+        using predictions from a binary classifier.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import max_recall_at_precision_k
+    >>> y_true = np.array([0, 0, 1, 1, 1, 1])
+    >>> y_prob = np.array([0.1, 0.8, 0.9, 0.3, 1.0, 0.95])
+    >>> k = 1
+    >>> max_precision_at_recall_k(y_true, y_prob, k)
+    0.75
+    """
+    if k < 0 or k > 1:
+        raise ValueError("Value of k must be in range 0 and 1")
+    precisions, recalls, _ = precision_recall_curve(
+        y_true, probas_pred, pos_label=pos_label, sample_weight=sample_weight
+    )
+
+    valid_positions = precisions >= k
+    valid_recalls = recalls[valid_positions]
+    value = 0.0
+    if valid_recalls.shape[0] > 0:
+        value = np.max(valid_recalls)
+    return value

@@ -966,6 +966,8 @@ details.
    metrics.ndcg_score
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
+   metrics.max_precision_at_recall_k
+   metrics.max_recall_at_precision_k
    metrics.precision_score
    metrics.recall_score
    metrics.roc_auc_score

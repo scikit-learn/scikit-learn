@@ -36,7 +36,8 @@ from ._classification import recall_score
 from ._classification import zero_one_loss
 from ._classification import brier_score_loss
 from ._classification import multilabel_confusion_matrix
-
+from ._classification import max_precision_at_recall_k
+from ._classification import max_recall_at_precision_k
 from ._dist_metrics import DistanceMetric
 
 from . import cluster
@@ -140,6 +141,8 @@ __all__ = [
     "nan_euclidean_distances",
     "matthews_corrcoef",
     "max_error",
+    "max_precision_at_recall_k",
+    "max_recall_at_precision_k",
     "mean_absolute_error",
     "mean_squared_error",
     "mean_squared_log_error",

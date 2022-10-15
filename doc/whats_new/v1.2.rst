@@ -406,6 +406,12 @@ Changelog
 :mod:`sklearn.metrics`
 ......................
 
+
+- |Feature| Added :func:`max_recall_at_precision_k` and :func:`max_precision_at_recall_k`
+  to calculate the 'maximum precision for thresholds where recall >= k' and 'maximum
+  precision for thresholds where precision >= k' respectively.
+  :pr:`TODO` by :user:`Kshitij Mathur <Kshitij68>`.
+
 - |Feature| :func:`metrics.ConfusionMatrixDisplay.from_estimator`,
   :func:`metrics.ConfusionMatrixDisplay.from_predictions`, and
   :meth:`metrics.ConfusionMatrixDisplay.plot` accepts a `text_kw` parameter which is passed to

@@ -62,6 +62,8 @@ Scoring                                Function                                 
 'balanced_accuracy'                    :func:`metrics.balanced_accuracy_score`
 'top_k_accuracy'                       :func:`metrics.top_k_accuracy_score`
 'average_precision'                    :func:`metrics.average_precision_score`
+'max_precision_at_recall_k'            :func:`metrics.max_precision_at_recall_k`          for binary targets
+'max_recall_at_precision_k'            :func:`metrics.max_recall_at_precision_k`          for binary targets
 'neg_brier_score'                      :func:`metrics.brier_score_loss`
 'f1'                                   :func:`metrics.f1_score`                           for binary targets
 'f1_micro'                             :func:`metrics.f1_score`                           micro-averaged
@@ -313,6 +315,8 @@ Some of these are restricted to the binary classification case:
    roc_curve
    class_likelihood_ratios
    det_curve
+   max_precision_at_recall_k
+   max_recall_at_precision_k
 
 
 Others also work in the multiclass case:
@@ -795,6 +799,8 @@ score:
    precision_recall_fscore_support
    precision_score
    recall_score
+   max_precision_at_recall_k
+   max_recall_at_precision_k
 
 Note that the :func:`precision_recall_curve` function is restricted to the
 binary case. The :func:`average_precision_score` function works only in
