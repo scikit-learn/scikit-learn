@@ -109,48 +109,53 @@ def compute_bench_3(density_range):
     chunk = 100
 
     n_samples = 5000
-    n_features = 50
+    n_features = 500
+    n_repeats = 5
 
     max_it = len(density_range)
     for density in density_range:
-        it += 1
-        print("==============================")
-        print("Iteration %03d of %03d" % (it, max_it))
-        print("==============================")
-        print()
-        data = ss.rand(n_samples, n_features, density=density, format='csr')
+        for index in range(n_repeats):
+            it += 1
+            print("==============================")
+            print("Iteration %03d of %03d" % (it, max_it))
+            print("==============================")
+            print()
+            data = ss.rand(n_samples, n_features, density=density, format='csr')
 
-        # convert data to a range between (-50, 51)
-        data[data.nonzero()] = data[data.nonzero()] * 101 - 50
-        data = data.astype(int)
+            # convert data to a range between (-50, 51)
+            data[data.nonzero()] = data[data.nonzero()] * 101 - 50
+            data = data.astype(int)
 
-        print("K-Means")
-        tstart = time()
-        kmeans = KMeans(init="k-means++", n_clusters=10).fit(data)
+            print("K-Means")
+            tstart = time()
+            kmeans = KMeans(init="k-means++", n_clusters=10).fit(data)
 
-        delta = time() - tstart
-        print("Speed: %0.3fs" % delta)
-        print("Inertia: %0.5f" % kmeans.inertia_)
-        print()
+            delta = time() - tstart
+            print("Speed: %0.3fs" % delta)
+            print("Inertia: %0.5f" % kmeans.inertia_)
+            print()
 
-        results["kmeans_speed"].append(delta)
-        results["kmeans_quality"].append(kmeans.inertia_)
+            results["kmeans_speed"].append(delta)
+            results["kmeans_quality"].append(kmeans.inertia_)
+            
+            print("Fast K-Means")
+            # let's prepare the data in small chunks
+            mbkmeans = MiniBatchKMeans(
+                init="k-means++", n_clusters=10, batch_size=chunk
+            )
+            tstart = time()
+            mbkmeans.fit(data)
+            delta = time() - tstart
+            print("Speed: %0.3fs" % delta)
+            print("Inertia: %f" % mbkmeans.inertia_)
+            print()
+            print()
 
-        print("Fast K-Means")
-        # let's prepare the data in small chunks
-        mbkmeans = MiniBatchKMeans(
-            init="k-means++", n_clusters=10, batch_size=chunk
-        )
-        tstart = time()
-        mbkmeans.fit(data)
-        delta = time() - tstart
-        print("Speed: %0.3fs" % delta)
-        print("Inertia: %f" % mbkmeans.inertia_)
-        print()
-        print()
-
-        results["MiniBatchKMeans Speed"].append(delta)
-        results["MiniBatchKMeans Quality"].append(mbkmeans.inertia_)
+            results["MiniBatchKMeans Speed"].append(delta)
+            results["MiniBatchKMeans Quality"].append(mbkmeans.inertia_)
+            
+            results['density'].append(density)
+            results['index'].append(index)
 
     return results
 
