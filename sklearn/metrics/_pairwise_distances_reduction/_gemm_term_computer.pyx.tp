@@ -21,7 +21,6 @@ from libcpp.vector cimport vector
 from scipy.sparse import issparse, csr_matrix
 from ...utils._typedefs cimport DTYPE_t, ITYPE_t, SPARSE_INDEX_TYPE_t
 from ...utils._typedefs import DTYPE, SPARSE_INDEX_TYPE
-from ...utils._vector_sentinel cimport vector_to_nd_array
 
 from ...utils._cython_blas cimport (
   BLAS_Order,
@@ -419,16 +418,6 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
             )
             vector[DTYPE_t] vec_to_inspect
 
-        with gil:
-            print("DEBUG Before _middle_term_sparse_sparse_{{name_suffix}}")
-            print(f"DEBUG self.dist_middle_terms_chunks[{thread_num}]=")
-            vec_to_inspect = self.dist_middle_terms_chunks[thread_num]
-            vec_as_np_array = vector_to_nd_array(
-                # This is the address of the vector
-                &vec_to_inspect,
-            )
-            print(vec_as_np_array)
-
         _middle_term_sparse_sparse_{{name_suffix}}(
             self.X_data,
             self.X_indices,
@@ -442,15 +431,6 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
             Y_end,
             dist_middle_terms,
         )
-        with gil:
-            print("DEBUG After _middle_term_sparse_sparse_{{name_suffix}}")
-            print(f"DEBUG self.dist_middle_terms_chunks[{thread_num}]=")
-            vec_to_inspect = self.dist_middle_terms_chunks[thread_num]
-            vec_as_np_array = vector_to_nd_array(
-               # This is the address of the vector
-               &vec_to_inspect
-            )
-            print(vec_as_np_array)
 
         return dist_middle_terms
 

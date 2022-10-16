@@ -33,10 +33,6 @@ from scipy.sparse import issparse
 from ...utils import check_array, check_scalar, _in_unstable_openblas_configuration
 from ...utils.fixes import threadpool_limits
 from ...utils._typedefs import ITYPE, DTYPE
-from libcpp.vector cimport vector
-from ...utils._vector_sentinel cimport vector_to_nd_array
-from ...utils._typedefs cimport DTYPECODE
-
 
 cnp.import_array()
 
@@ -405,10 +401,6 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
             ).compute()
         )
         self.use_squared_distances = use_squared_distances
-        print("DEBUG X_norm_squared")
-        print(np.asarray(self.X_norm_squared))
-        print("DEBUG Y_norm_squared")
-        print(np.asarray(self.Y_norm_squared))
 
     @final
     cdef void compute_exact_distances(self) nogil:
