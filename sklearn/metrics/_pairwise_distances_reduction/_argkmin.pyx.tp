@@ -33,6 +33,9 @@ from scipy.sparse import issparse
 from ...utils import check_array, check_scalar, _in_unstable_openblas_configuration
 from ...utils.fixes import threadpool_limits
 from ...utils._typedefs import ITYPE, DTYPE
+from libcpp.vector cimport vector
+from ...utils._vector_sentinel cimport vector_to_nd_array
+from ...utils._typedefs cimport DTYPECODE
 
 
 cnp.import_array()
@@ -41,7 +44,7 @@ cnp.import_array()
 
 from ._base cimport (
     BaseDistanceReducer{{name_suffix}},
-    _sqeuclidean_row_norms{{name_suffix}},
+    SqeuclideanRowNorm{{name_suffix}},
 )
 
 from ._datasets_pair cimport (
@@ -390,14 +393,22 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
                 dtype=np.float64
             )
         else:
-            self.Y_norm_squared = _sqeuclidean_row_norms{{name_suffix}}(datasets_pair.Y, self.effective_n_threads)
+            self.Y_norm_squared = SqeuclideanRowNorm{{name_suffix}}.get_for(
+                Y, self.effective_n_threads
+            ).compute()
 
         # Do not recompute norms if datasets are identical.
         self.X_norm_squared = (
             self.Y_norm_squared if X is Y else
-            _sqeuclidean_row_norms{{name_suffix}}(datasets_pair.X, self.effective_n_threads)
+            SqeuclideanRowNorm{{name_suffix}}.get_for(
+                X, self.effective_n_threads
+            ).compute()
         )
         self.use_squared_distances = use_squared_distances
+        print("DEBUG X_norm_squared")
+        print(np.asarray(self.X_norm_squared))
+        print("DEBUG Y_norm_squared")
+        print(np.asarray(self.Y_norm_squared))
 
     @final
     cdef void compute_exact_distances(self) nogil:

@@ -27,17 +27,18 @@ from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
 import numpy as np
 
+from scipy.sparse import issparse, csr_matrix
 from numbers import Integral
 from sklearn import get_config
 from sklearn.utils import check_scalar
 from ...utils._openmp_helpers import _openmp_effective_n_threads
-from ...utils._typedefs import ITYPE, DTYPE
+from ...utils._typedefs import ITYPE, DTYPE, SPARSE_INDEX_TYPE
 
 cnp.import_array()
 
 #####################
 
-cpdef DTYPE_t[::1] _sqeuclidean_row_norms64(
+cpdef DTYPE_t[::1] _sqeuclidean_row_norms64_dense(
     const DTYPE_t[:, ::1] X,
     ITYPE_t num_threads,
 ):
@@ -62,7 +63,7 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms64(
     return squared_row_norms
 
 
-cpdef DTYPE_t[::1] _sqeuclidean_row_norms32(
+cpdef DTYPE_t[::1] _sqeuclidean_row_norms32_dense(
     const cnp.float32_t[:, ::1] X,
     ITYPE_t num_threads,
 ):
@@ -102,6 +103,73 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms32(
     return squared_row_norms
 
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
+
+cpdef DTYPE_t[::1] _sqeuclidean_row_norms{{name_suffix}}_sparse(
+    const {{INPUT_DTYPE_t}}[:] X_data,
+    const SPARSE_INDEX_TYPE_t[:] X_indptr,
+    ITYPE_t num_threads,
+):
+    cdef:
+        ITYPE_t n = X_indptr.shape[0] - 1
+        ITYPE_t idx = 0
+        ITYPE_t thread_num
+        ITYPE_t X_i_ptr
+        DTYPE_t[::1] squared_row_norms = np.zeros(n, dtype=DTYPE)
+
+    for idx in prange(n, schedule='static', nogil=True, num_threads=num_threads):
+        for X_i_ptr in range(X_indptr[idx], X_indptr[idx+1]):
+            squared_row_norms[idx] += X_data[X_i_ptr] * X_data[X_i_ptr]
+
+    return squared_row_norms
+
+
+cdef class SqeuclideanRowNorm{{name_suffix}}:
+
+    @classmethod
+    def get_for(cls, X, num_threads):
+        if issparse(X):
+            return SparseSqeuclideanRowNorm{{name_suffix}}(X, num_threads)
+        else:
+            return DenseSqeuclideanRowNorm{{name_suffix}}(X, num_threads)
+
+    @classmethod
+    def unpack_csr_matrix(cls, X: csr_matrix):
+        """Ensure that the CSR matrix is indexed with SPARSE_INDEX_TYPE."""
+        X_data = np.asarray(X.data, dtype={{INPUT_DTYPE}})
+        X_indices = np.asarray(X.indices, dtype=SPARSE_INDEX_TYPE)
+        X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
+        return X_data, X_indices, X_indptr
+
+    def __init__(self, num_threads):
+        self.num_threads = num_threads
+
+    cpdef DTYPE_t[::1] compute(self):
+        return None
+
+
+cdef class DenseSqeuclideanRowNorm{{name_suffix}}(SqeuclideanRowNorm{{name_suffix}}):
+
+    def __init__(self, X, num_threads):
+        super().__init__(num_threads)
+        self.X = X
+
+    cpdef DTYPE_t[::1] compute(self):
+        return _sqeuclidean_row_norms{{name_suffix}}_dense(self.X, self.num_threads)
+
+
+cdef class SparseSqeuclideanRowNorm{{name_suffix}}(SqeuclideanRowNorm{{name_suffix}}):
+
+    def __init__(self, X, num_threads):
+        super().__init__(num_threads)
+        self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
+
+    cpdef DTYPE_t[::1] compute(self):
+        return _sqeuclidean_row_norms{{name_suffix}}_sparse(
+            self.X_data,
+            self.X_indptr,
+            self.num_threads,
+        )
+
 
 from ._datasets_pair cimport DatasetsPair{{name_suffix}}
 

@@ -16,6 +16,9 @@ implementation_specific_values = [
 
 cimport numpy as cnp
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
+from libcpp.vector cimport vector
+from ...utils._vector_sentinel cimport vector_to_nd_array
+from ...utils._typedefs cimport DTYPECODE
 
 cnp.import_array()
 

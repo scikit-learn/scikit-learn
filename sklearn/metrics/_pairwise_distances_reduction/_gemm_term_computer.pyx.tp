@@ -21,6 +21,7 @@ from libcpp.vector cimport vector
 from scipy.sparse import issparse, csr_matrix
 from ...utils._typedefs cimport DTYPE_t, ITYPE_t, SPARSE_INDEX_TYPE_t
 from ...utils._typedefs import DTYPE, SPARSE_INDEX_TYPE
+from ...utils._vector_sentinel cimport vector_to_nd_array
 
 from ...utils._cython_blas cimport (
   BLAS_Order,
@@ -52,17 +53,17 @@ cdef void _middle_term_sparse_sparse_{{name_suffix}}(
         ITYPE_t i, j, k
         ITYPE_t n_X = X_end - X_start
         ITYPE_t n_Y = Y_end - Y_start
-        ITYPE_t _X_indices, _X_indptr, _Y_indices, _Y_indptr
+        ITYPE_t X_i_col_idx, X_i_ptr, Y_j_col_idx, Y_j_ptr
 
     for i in range(n_X):
-        for _X_indptr in range(X_indptr[X_start+i], X_indptr[X_start+i+1]):
-            _X_indices = X_indices[_X_indptr]
+        for X_i_ptr in range(X_indptr[X_start+i], X_indptr[X_start+i+1]):
+            X_i_col_idx = X_indices[X_i_ptr]
             for j in range(n_Y):
-                for _Y_indptr in range(Y_indptr[Y_start+j], Y_indptr[Y_start+j+1]):
-                    _Y_indices = Y_indices[_Y_indptr]
-                    if _X_indices == _Y_indices:
-                        k = i * n_X + j
-                        D[k] += -2 * X_data[_X_indptr] * Y_data[_Y_indptr]
+                k = i * n_Y + j
+                for Y_j_ptr in range(Y_indptr[Y_start+j], Y_indptr[Y_start+j+1]):
+                    Y_j_col_idx = Y_indices[Y_j_ptr]
+                    if X_i_col_idx == Y_j_col_idx:
+                        D[k] += -2 * X_data[X_i_ptr] * Y_data[Y_j_ptr]
 
 
 cdef class MiddleTermComputer{{name_suffix}}:
@@ -416,6 +417,17 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
             DTYPE_t *dist_middle_terms = (
                 self.dist_middle_terms_chunks[thread_num].data()
             )
+            vector[DTYPE_t] vec_to_inspect
+
+        with gil:
+            print("DEBUG Before _middle_term_sparse_sparse_{{name_suffix}}")
+            print(f"DEBUG self.dist_middle_terms_chunks[{thread_num}]=")
+            vec_to_inspect = self.dist_middle_terms_chunks[thread_num]
+            vec_as_np_array = vector_to_nd_array(
+                # This is the address of the vector
+                &vec_to_inspect,
+            )
+            print(vec_as_np_array)
 
         _middle_term_sparse_sparse_{{name_suffix}}(
             self.X_data,
@@ -430,6 +442,15 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
             Y_end,
             dist_middle_terms,
         )
+        with gil:
+            print("DEBUG After _middle_term_sparse_sparse_{{name_suffix}}")
+            print(f"DEBUG self.dist_middle_terms_chunks[{thread_num}]=")
+            vec_to_inspect = self.dist_middle_terms_chunks[thread_num]
+            vec_as_np_array = vector_to_nd_array(
+               # This is the address of the vector
+               &vec_to_inspect
+            )
+            print(vec_as_np_array)
 
         return dist_middle_terms
 

@@ -8,10 +8,7 @@ from scipy.sparse import isspmatrix_csr
 
 from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING
 
-from ._base import (
-    _sqeuclidean_row_norms64,
-    _sqeuclidean_row_norms32,
-)
+from ._base import SqeuclideanRowNorm32, SqeuclideanRowNorm64
 from ._argkmin import (
     ArgKmin64,
     ArgKmin32,
@@ -41,9 +38,9 @@ def sqeuclidean_row_norms(X, num_threads):
         Arrays containing the squared euclidean norm of each row of X.
     """
     if X.dtype == np.float64:
-        return _sqeuclidean_row_norms64(X, num_threads)
+        return SqeuclideanRowNorm64.get_for(X, num_threads).compute()
     if X.dtype == np.float32:
-        return _sqeuclidean_row_norms32(X, num_threads)
+        return SqeuclideanRowNorm32.get_for(X, num_threads).compute()
 
     raise ValueError(
         "Only float64 or float32 datasets are supported at this time, "
