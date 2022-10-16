@@ -3,6 +3,8 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 import pytest
+
+from numpy.testing import assert_allclose
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
 
@@ -283,9 +285,9 @@ def test_silhouette_nonzero_diag(dtype):
         silhouette_samples(dists, labels, metric="precomputed")
 
 
-@pytest.mark.parametrize('to_sparse', (csr_matrix, csc_matrix))
+@pytest.mark.parametrize("to_sparse", (csr_matrix, csc_matrix))
 def test_silhouette_sparse_input(to_sparse):
-    """ Ensure that silhouette_samples works for sparse matrix inputs """
+    """Ensure that silhouette_samples works for sparse matrix inputs"""
     X = np.array([[0, 0], [1, 0], [10, 10], [10, 11]], dtype=np.float32)
     y = np.array([1, 1, 1, 0])
     pdist = pairwise_distances(X)
@@ -294,16 +296,14 @@ def test_silhouette_sparse_input(to_sparse):
 
 
 def test_silhouette_sparse_implementation():
-    """ Ensure implementation for sparse matrix works correctly"""
-    X = np.array([[0, 0], [1, 0], [10, 10], [10, 11]], dtype=np.float32)
-    y = np.array([1, 1, 1, 0])
-    pdist = pairwise_distances(X)
-    sX = csr_matrix(pdist)
-    sparse_out = silhouette_samples(sX, y, metric="precomputed")
-    dense_out = silhouette_samples(pdist, y, metric="precomputed")
-
-    for out in zip(sparse_out, dense_out):
-        assert out[0] == out[1]
+    """Ensure implementation for sparse matrix works correctly"""
+    X = np.array([[0.2, 0.1, 0.1, 0.2, 0.1, 1.6, 0.2, 0.1]], dtype=np.float32).T
+    y = [0, 0, 0, 0, 1, 1, 1, 1]
+    pdist_dense = pairwise_distances(X)
+    pdist_sparse = csr_matrix(pdist_dense)
+    sparse_out = silhouette_samples(pdist_sparse, y, metric="precomputed")
+    dense_out = silhouette_samples(pdist_dense, y, metric="precomputed")
+    assert_allclose(sparse_out, dense_out)
 
 
 def assert_raises_on_only_one_label(func):

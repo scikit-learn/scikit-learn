@@ -134,8 +134,7 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
     """
     n_chunk_samples = D_chunk.shape[0]
     # accumulate distances from each sample to each cluster
-    clust_dists = np.zeros((n_chunk_samples, len(label_freqs)),
-                           dtype=D_chunk.dtype)
+    clust_dists = np.zeros((n_chunk_samples, len(label_freqs)), dtype=D_chunk.dtype)
     for i in range(n_chunk_samples):
         if issparse(D_chunk):
             current_chunk = D_chunk.getrow(i)
@@ -144,8 +143,9 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
         else:
             sample_weights = D_chunk[i]
             sample_labels = labels
-        clust_dists[i] += np.bincount(sample_labels, weights=sample_weights,
-                                      minlength=len(label_freqs))
+        clust_dists[i] += np.bincount(
+            sample_labels, weights=sample_weights, minlength=len(label_freqs)
+        )
 
     # intra_index selects intra-cluster distances within clust_dists
     end = start + n_chunk_samples
@@ -222,27 +222,13 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
     X, labels = check_X_y(X, labels, accept_sparse=["csc", "csr"])
 
     # Check for non-zero diagonal entries in precomputed distance matrix
-<<<<<<< HEAD
-    if metric == 'precomputed':
+    if metric == "precomputed":
         atol = np.finfo(X.dtype).eps * 100
         if np.any(np.abs(X.diagonal()) > atol):
             raise ValueError(
-                'The precomputed distance matrix contains non-zero '
-                'elements on the diagonal. Use np.fill_diagonal(X, 0).'
+                "The precomputed distance matrix contains non-zero "
+                "elements on the diagonal. Use np.fill_diagonal(X, 0)."
             )
-=======
-    if metric == "precomputed":
-        error_msg = ValueError(
-            "The precomputed distance matrix contains non-zero "
-            "elements on the diagonal. Use np.fill_diagonal(X, 0)."
-        )
-        if X.dtype.kind == "f":
-            atol = np.finfo(X.dtype).eps * 100
-            if np.any(np.abs(np.diagonal(X)) > atol):
-                raise ValueError(error_msg)
-        elif np.any(np.diagonal(X) != 0):  # integral dtype
-            raise ValueError(error_msg)
->>>>>>> upstream/main
 
     le = LabelEncoder()
     labels = le.fit_transform(labels)
