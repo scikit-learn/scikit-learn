@@ -3,6 +3,7 @@ from time import time
 
 import numpy as np
 from numpy import random as nr
+import scipy.sparse as ss 
 
 from sklearn.cluster import KMeans, MiniBatchKMeans
 
@@ -97,6 +98,63 @@ def compute_bench_2(chunks):
     return results
 
 
+def compute_bench_3(density_range):
+    """Compute benchmark for KMeans and MiniBatchKMeans with sparse data.
+    
+    For increasing number of samples and feature dimensions.
+    """
+
+    it = 0
+    results = defaultdict(list)
+    chunk = 100
+
+    n_samples = 5000
+    n_features = 50
+
+    max_it = len(density_range)
+    for density in density_range:
+        it += 1
+        print("==============================")
+        print("Iteration %03d of %03d" % (it, max_it))
+        print("==============================")
+        print()
+        data = ss.rand(n_samples, n_features, density=density, format='csr')
+
+        # convert data to a range between (-50, 51)
+        data[data.nonzero()] = data[data.nonzero()] * 101 - 50
+        data = data.astype(int)
+
+        print("K-Means")
+        tstart = time()
+        kmeans = KMeans(init="k-means++", n_clusters=10).fit(data)
+
+        delta = time() - tstart
+        print("Speed: %0.3fs" % delta)
+        print("Inertia: %0.5f" % kmeans.inertia_)
+        print()
+
+        results["kmeans_speed"].append(delta)
+        results["kmeans_quality"].append(kmeans.inertia_)
+
+        print("Fast K-Means")
+        # let's prepare the data in small chunks
+        mbkmeans = MiniBatchKMeans(
+            init="k-means++", n_clusters=10, batch_size=chunk
+        )
+        tstart = time()
+        mbkmeans.fit(data)
+        delta = time() - tstart
+        print("Speed: %0.3fs" % delta)
+        print("Inertia: %f" % mbkmeans.inertia_)
+        print()
+        print()
+
+        results["MiniBatchKMeans Speed"].append(delta)
+        results["MiniBatchKMeans Quality"].append(mbkmeans.inertia_)
+
+    return results
+
+
 if __name__ == "__main__":
     from mpl_toolkits.mplot3d import axes3d  # noqa register the 3d projection
     import matplotlib.pyplot as plt
@@ -104,11 +162,13 @@ if __name__ == "__main__":
     samples_range = np.linspace(50, 5000, 10).astype(int)
     features_range = np.linspace(150, 50000, 5).astype(int)
     chunks = np.linspace(500, 10000, 15).astype(int)
+    density_range = np.linspace(0.1, 1.0, 5)
 
-    results = compute_bench(samples_range, features_range)
+    # results = compute_bench(samples_range, features_range)
+    results = compute_bench_3(density_range)
 
     import pickle
-    with open('./pr2_results.pickle', 'wb') as handle:
+    with open('./pr2d1d_results.pickle', 'wb') as handle:
         pickle.dump(results, handle, protocol=pickle.HIGHEST_PROTOCOL)
     import sys
     sys.exit()
