@@ -1,27 +1,16 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: language_level=3
-
 # Author: Nicolas Hug
 
-cimport cython
 from cython.parallel import prange
 from libc.math cimport isnan
 import numpy as np
-cimport numpy as np
-from numpy.math cimport INFINITY
 
 from .common cimport X_DTYPE_C
 from .common cimport Y_DTYPE_C
 from .common import Y_DTYPE
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport BITSET_INNER_DTYPE_C
-from .common cimport BITSET_DTYPE_C
 from .common cimport node_struct
 from ._bitset cimport in_bitset_2d_memoryview
-
-np.import_array()
 
 
 def _predict_from_raw_data(  # raw data = non-binned data
@@ -30,12 +19,14 @@ def _predict_from_raw_data(  # raw data = non-binned data
         const BITSET_INNER_DTYPE_C [:, ::1] raw_left_cat_bitsets,
         const BITSET_INNER_DTYPE_C [:, ::1] known_cat_bitsets,
         const unsigned int [::1] f_idx_map,
+        int n_threads,
         Y_DTYPE_C [:] out):
 
     cdef:
         int i
 
-    for i in prange(numeric_data.shape[0], schedule='static', nogil=True):
+    for i in prange(numeric_data.shape[0], schedule='static', nogil=True,
+                    num_threads=n_threads):
         out[i] = _predict_one_from_raw_data(
             nodes, numeric_data, raw_left_cat_bitsets,
             known_cat_bitsets,
@@ -69,7 +60,10 @@ cdef inline Y_DTYPE_C _predict_one_from_raw_data(
             else:
                 node_idx = node.right
         elif node.is_categorical:
-            if in_bitset_2d_memoryview(
+            if data_val < 0:
+                # data_val is not in the accepted range, so it is treated as missing value
+                node_idx = node.left if node.missing_go_to_left else node.right
+            elif in_bitset_2d_memoryview(
                     raw_left_cat_bitsets,
                     <X_BINNED_DTYPE_C>data_val,
                     node.bitset_idx):
@@ -95,12 +89,14 @@ def _predict_from_binned_data(
         const X_BINNED_DTYPE_C [:, :] binned_data,
         BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
         const unsigned char missing_values_bin_idx,
+        int n_threads,
         Y_DTYPE_C [:] out):
 
     cdef:
         int i
 
-    for i in prange(binned_data.shape[0], schedule='static', nogil=True):
+    for i in prange(binned_data.shape[0], schedule='static', nogil=True,
+                    num_threads=n_threads):
         out[i] = _predict_one_from_binned_data(nodes,
                                                binned_data,
                                                binned_left_cat_bitsets, i,

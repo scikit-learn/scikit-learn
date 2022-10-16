@@ -1,7 +1,3 @@
-# cython: cdivision=True
-# cython: boundscheck=False
-# cython: wraparound=False
-# cython: language_level=3
 from .common cimport BITSET_INNER_DTYPE_C
 from .common cimport BITSET_DTYPE_C
 from .common cimport X_DTYPE_C
@@ -57,12 +53,13 @@ def set_raw_bitset_from_binned_bitset(BITSET_INNER_DTYPE_C[:] raw_bitset,  # OUT
                                       BITSET_INNER_DTYPE_C[:] binned_bitset,
                                       X_DTYPE_C[:] categories):
     """Set the raw_bitset from the values of the binned bitset
-    
+
     categories is a mapping from binned category value to raw category value.
     """
     cdef:
-        int binned_cat_value, raw_cat_value
-    
+        int binned_cat_value
+        X_DTYPE_C raw_cat_value
+
     for binned_cat_value, raw_cat_value in enumerate(categories):
         if in_bitset_memoryview(binned_bitset, binned_cat_value):
-            set_bitset_memoryview(raw_bitset, raw_cat_value)
+            set_bitset_memoryview(raw_bitset, <X_BINNED_DTYPE_C>raw_cat_value)

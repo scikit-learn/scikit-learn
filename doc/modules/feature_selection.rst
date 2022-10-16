@@ -87,7 +87,7 @@ These objects take as input a scoring function that returns univariate scores
 and p-values (or only scores for :class:`SelectKBest` and
 :class:`SelectPercentile`):
 
- * For regression: :func:`f_regression`, :func:`mutual_info_regression`
+ * For regression: :func:`r_regression`, :func:`f_regression`, :func:`mutual_info_regression`
 
  * For classification: :func:`chi2`, :func:`f_classif`, :func:`mutual_info_classif`
 
@@ -119,12 +119,12 @@ Recursive feature elimination
 =============================
 
 Given an external estimator that assigns weights to features (e.g., the
-coefficients of a linear model), recursive feature elimination (:class:`RFE`)
+coefficients of a linear model), the goal of recursive feature elimination (:class:`RFE`)
 is to select features by recursively considering smaller and smaller sets of
 features. First, the estimator is trained on the initial set of features and
 the importance of each feature is obtained either through any specific attribute
 (such as ``coef_``, ``feature_importances_``) or callable. Then, the least important
-features are pruned from current set of features.That procedure is recursively
+features are pruned from current set of features. That procedure is recursively
 repeated on the pruned set until the desired number of features to select is
 eventually reached.
 
@@ -145,10 +145,10 @@ number of features.
 Feature selection using SelectFromModel
 =======================================
 
-:class:`SelectFromModel` is a meta-transformer that can be used along with any
-estimator that importance of each feature through a specific attribute (such as
-``coef_``, ``feature_importances_``) or callable after fitting.
-The features are considered unimportant and removed, if the corresponding
+:class:`SelectFromModel` is a meta-transformer that can be used alongside any
+estimator that assigns importance to each feature through a specific attribute (such as
+``coef_``, ``feature_importances_``) or via an `importance_getter` callable after fitting.
+The features are considered unimportant and removed if the corresponding
 importance of the feature values are below the provided
 ``threshold`` parameter. Apart from specifying the threshold numerically,
 there are built-in heuristics for finding a threshold using a string argument.
@@ -196,9 +196,7 @@ alpha parameter, the fewer features selected.
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`: Comparison
-      of different algorithms for document classification including L1-based
-      feature selection.
+    * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_dense_vs_sparse_data.py`.
 
 .. _compressive_sensing:
 
@@ -271,14 +269,14 @@ SFS can be either forward or backward:
 
 Forward-SFS is a greedy procedure that iteratively finds the best new feature
 to add to the set of selected features. Concretely, we initially start with
-zero feature and find the one feature that maximizes a cross-validated score
+zero features and find the one feature that maximizes a cross-validated score
 when an estimator is trained on this single feature. Once that first feature
 is selected, we repeat the procedure by adding a new feature to the set of
 selected features. The procedure stops when the desired number of selected
 features is reached, as determined by the `n_features_to_select` parameter.
 
 Backward-SFS follows the same idea but works in the opposite direction:
-instead of starting with no feature and greedily adding features, we start
+instead of starting with no features and greedily adding features, we start
 with *all* the features and greedily *remove* features from the set. The
 `direction` parameter controls whether forward or backward SFS is used.
 

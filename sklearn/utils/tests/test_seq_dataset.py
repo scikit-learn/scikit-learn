@@ -8,7 +8,11 @@ import pytest
 import scipy.sparse as sp
 from numpy.testing import assert_array_equal
 from sklearn.utils._seq_dataset import (
-    ArrayDataset32, ArrayDataset64, CSRDataset32, CSRDataset64)
+    ArrayDataset32,
+    ArrayDataset64,
+    CSRDataset32,
+    CSRDataset64,
+)
 
 from sklearn.datasets import load_iris
 from sklearn.utils._testing import assert_allclose
@@ -45,21 +49,26 @@ def make_dense_dataset_64():
 
 
 def make_sparse_dataset_32():
-    return CSRDataset32(X_csr32.data, X_csr32.indptr, X_csr32.indices, y32,
-                        sample_weight32, seed=42)
+    return CSRDataset32(
+        X_csr32.data, X_csr32.indptr, X_csr32.indices, y32, sample_weight32, seed=42
+    )
 
 
 def make_sparse_dataset_64():
-    return CSRDataset64(X_csr64.data, X_csr64.indptr, X_csr64.indices, y64,
-                        sample_weight64, seed=42)
+    return CSRDataset64(
+        X_csr64.data, X_csr64.indptr, X_csr64.indices, y64, sample_weight64, seed=42
+    )
 
 
-@pytest.mark.parametrize('dataset_constructor', [
-    make_dense_dataset_32,
-    make_dense_dataset_64,
-    make_sparse_dataset_32,
-    make_sparse_dataset_64,
-])
+@pytest.mark.parametrize(
+    "dataset_constructor",
+    [
+        make_dense_dataset_32,
+        make_dense_dataset_64,
+        make_sparse_dataset_32,
+        make_sparse_dataset_64,
+    ],
+)
 def test_seq_dataset_basic_iteration(dataset_constructor):
     NUMBER_OF_RUNS = 5
     dataset = dataset_constructor()
@@ -81,10 +90,13 @@ def test_seq_dataset_basic_iteration(dataset_constructor):
         assert swi == sample_weight64[idx]
 
 
-@pytest.mark.parametrize('make_dense_dataset,make_sparse_dataset', [
-    (make_dense_dataset_32, make_sparse_dataset_32),
-    (make_dense_dataset_64, make_sparse_dataset_64),
-])
+@pytest.mark.parametrize(
+    "make_dense_dataset,make_sparse_dataset",
+    [
+        (make_dense_dataset_32, make_sparse_dataset_32),
+        (make_dense_dataset_64, make_sparse_dataset_64),
+    ],
+)
 def test_seq_dataset_shuffle(make_dense_dataset, make_sparse_dataset):
     dense_dataset, sparse_dataset = make_dense_dataset(), make_sparse_dataset()
     # not shuffled
@@ -118,10 +130,13 @@ def test_seq_dataset_shuffle(make_dense_dataset, make_sparse_dataset):
         assert idx2 == j
 
 
-@pytest.mark.parametrize('make_dataset_32,make_dataset_64', [
-    (make_dense_dataset_32, make_dense_dataset_64),
-    (make_sparse_dataset_32, make_sparse_dataset_64),
-])
+@pytest.mark.parametrize(
+    "make_dataset_32,make_dataset_64",
+    [
+        (make_dense_dataset_32, make_dense_dataset_64),
+        (make_sparse_dataset_32, make_sparse_dataset_64),
+    ],
+)
 def test_fused_types_consistency(make_dataset_32, make_dataset_64):
     dataset_32, dataset_64 = make_dataset_32(), make_dataset_64()
     NUMBER_OF_RUNS = 5
@@ -138,16 +153,18 @@ def test_fused_types_consistency(make_dataset_32, make_dataset_64):
 
 
 def test_buffer_dtype_mismatch_error():
-    with pytest.raises(ValueError, match='Buffer dtype mismatch'):
+    with pytest.raises(ValueError, match="Buffer dtype mismatch"):
         ArrayDataset64(X32, y32, sample_weight32, seed=42),
 
-    with pytest.raises(ValueError, match='Buffer dtype mismatch'):
+    with pytest.raises(ValueError, match="Buffer dtype mismatch"):
         ArrayDataset32(X64, y64, sample_weight64, seed=42),
 
-    with pytest.raises(ValueError, match='Buffer dtype mismatch'):
-        CSRDataset64(X_csr32.data, X_csr32.indptr, X_csr32.indices, y32,
-                     sample_weight32, seed=42),
+    with pytest.raises(ValueError, match="Buffer dtype mismatch"):
+        CSRDataset64(
+            X_csr32.data, X_csr32.indptr, X_csr32.indices, y32, sample_weight32, seed=42
+        ),
 
-    with pytest.raises(ValueError, match='Buffer dtype mismatch'):
-        CSRDataset32(X_csr64.data, X_csr64.indptr, X_csr64.indices, y64,
-                     sample_weight64, seed=42),
+    with pytest.raises(ValueError, match="Buffer dtype mismatch"):
+        CSRDataset32(
+            X_csr64.data, X_csr64.indptr, X_csr64.indices, y64, sample_weight64, seed=42
+        ),

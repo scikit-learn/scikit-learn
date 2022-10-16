@@ -1,16 +1,24 @@
 name: Pull Request Regex Title Labeler
 on:
   pull_request_target:
-    types: [opened]
+    types: [opened, edited]
+
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
 
   labeler:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
-    - name: Check Labels
-      id: labeler
-      continue-on-error: true
-      uses: jimschubert/labeler-action@v2
+    - uses: actions/checkout@v3
+    - uses: actions/setup-python@v4
       with:
-        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
+        python-version: '3.9'
+    - name: Install PyGithub
+      run: pip install -Uq PyGithub
+    - name: Label pull request
+      run: python .github/scripts/label_title_regex.py
+      env:
+        CONTEXT_GITHUB: ${{ toJson(github) }}

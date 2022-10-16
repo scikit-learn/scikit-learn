@@ -34,8 +34,8 @@ standard deviation.
 
 For instance, many elements used in the objective function of
 a learning algorithm (such as the RBF kernel of Support Vector
-Machines or the l1 and l2 regularizers of linear models) assume that
-all features are centered around zero and have variance in the same
+Machines or the l1 and l2 regularizers of linear models) may assume that
+all features are centered around zero or have variance in the same
 order. If a feature has a variance that is orders of magnitude larger
 than others, it might dominate the objective function and make the
 estimator unable to learn from other features correctly as expected.
@@ -240,10 +240,65 @@ Centering kernel matrices
 -------------------------
 
 If you have a kernel matrix of a kernel :math:`K` that computes a dot product
-in a feature space defined by function :math:`\phi`,
-a :class:`KernelCenterer` can transform the kernel matrix
-so that it contains inner products in the feature space
-defined by :math:`\phi` followed by removal of the mean in that space.
+in a feature space (possibly implicitly) defined by a function
+:math:`\phi(\cdot)`, a :class:`KernelCenterer` can transform the kernel matrix
+so that it contains inner products in the feature space defined by :math:`\phi`
+followed by the removal of the mean in that space. In other words,
+:class:`KernelCenterer` computes the centered Gram matrix associated to a
+positive semidefinite kernel :math:`K`.
+
+**Mathematical formulation**
+
+We can have a look at the mathematical formulation now that we have the
+intuition. Let :math:`K` be a kernel matrix of shape `(n_samples, n_samples)`
+computed from :math:`X`, a data matrix of shape `(n_samples, n_features)`,
+during the `fit` step. :math:`K` is defined by
+
+.. math::
+  K(X, X) = \phi(X) . \phi(X)^{T}
+
+:math:`\phi(X)` is a function mapping of :math:`X` to a Hilbert space. A
+centered kernel :math:`\tilde{K}` is defined as:
+
+.. math::
+  \tilde{K}(X, X) = \tilde{\phi}(X) . \tilde{\phi}(X)^{T}
+
+where :math:`\tilde{\phi}(X)` results from centering :math:`\phi(X)` in the
+Hilbert space.
+
+Thus, one could compute :math:`\tilde{K}` by mapping :math:`X` using the
+function :math:`\phi(\cdot)` and center the data in this new space. However,
+kernels are often used because they allows some algebra calculations that
+avoid computing explicitly this mapping using :math:`\phi(\cdot)`. Indeed, one
+can implicitly center as shown in Appendix B in [Scholkopf1998]_:
+
+.. math::
+  \tilde{K} = K - 1_{\text{n}_{samples}} K - K 1_{\text{n}_{samples}} + 1_{\text{n}_{samples}} K 1_{\text{n}_{samples}}
+
+:math:`1_{\text{n}_{samples}}` is a matrix of `(n_samples, n_samples)` where
+all entries are equal to :math:`\frac{1}{\text{n}_{samples}}`. In the
+`transform` step, the kernel becomes :math:`K_{test}(X, Y)` defined as:
+
+.. math::
+  K_{test}(X, Y) = \phi(Y) . \phi(X)^{T}
+
+:math:`Y` is the test dataset of shape `(n_samples_test, n_features)` and thus
+:math:`K_{test}` is of shape `(n_samples_test, n_samples)`. In this case,
+centering :math:`K_{test}` is done as:
+
+.. math::
+  \tilde{K}_{test}(X, Y) = K_{test} - 1'_{\text{n}_{samples}} K - K_{test} 1_{\text{n}_{samples}} + 1'_{\text{n}_{samples}} K 1_{\text{n}_{samples}}
+
+:math:`1'_{\text{n}_{samples}}` is a matrix of shape
+`(n_samples_test, n_samples)` where all entries are equal to
+:math:`\frac{1}{\text{n}_{samples}}`.
+
+.. topic:: References
+
+  .. [Scholkopf1998] B. Schölkopf, A. Smola, and K.R. Müller,
+    `"Nonlinear component analysis as a kernel eigenvalue problem."
+    <https://www.mlpack.org/papers/kpca.pdf>`_
+    Neural computation 10.5 (1998): 1299-1319.
 
 .. _preprocessing_transformer:
 
@@ -482,6 +537,43 @@ scikit-learn estimators, as these expect continuous input, and would interpret
 the categories as being ordered, which is often not desired (i.e. the set of
 browsers was ordered arbitrarily).
 
+By default, :class:`OrdinalEncoder` will also passthrough missing values that
+are indicated by `np.nan`.
+
+    >>> enc = preprocessing.OrdinalEncoder()
+    >>> X = [['male'], ['female'], [np.nan], ['female']]
+    >>> enc.fit_transform(X)
+    array([[ 1.],
+           [ 0.],
+           [nan],
+           [ 0.]])
+
+:class:`OrdinalEncoder` provides a parameter `encoded_missing_value` to encode
+the missing values without the need to create a pipeline and using
+:class:`~sklearn.impute.SimpleImputer`.
+
+    >>> enc = preprocessing.OrdinalEncoder(encoded_missing_value=-1)
+    >>> X = [['male'], ['female'], [np.nan], ['female']]
+    >>> enc.fit_transform(X)
+    array([[ 1.],
+           [ 0.],
+           [-1.],
+           [ 0.]])
+
+The above processing is equivalent to the following pipeline::
+
+    >>> from sklearn.pipeline import Pipeline
+    >>> from sklearn.impute import SimpleImputer
+    >>> enc = Pipeline(steps=[
+    ...     ("encoder", preprocessing.OrdinalEncoder()),
+    ...     ("imputer", SimpleImputer(strategy="constant", fill_value=-1)),
+    ... ])
+    >>> enc.fit_transform(X)
+    array([[ 1.],
+           [ 0.],
+           [-1.],
+           [ 0.]])
+
 Another possibility to convert categorical features to features that can be used
 with scikit-learn estimators is to use a one-of-K, also known as one-hot or
 dummy encoding.
@@ -528,17 +620,19 @@ dataset::
     array([[1., 0., 0., 1., 0., 0., 1., 0., 0., 0.]])
 
 If there is a possibility that the training data might have missing categorical
-features, it can often be better to specify ``handle_unknown='ignore'`` instead
-of setting the ``categories`` manually as above. When
-``handle_unknown='ignore'`` is specified and unknown categories are encountered
-during transform, no error will be raised but the resulting one-hot encoded
-columns for this feature will be all zeros
-(``handle_unknown='ignore'`` is only supported for one-hot encoding)::
+features, it can often be better to specify
+`handle_unknown='infrequent_if_exist'` instead of setting the `categories`
+manually as above. When `handle_unknown='infrequent_if_exist'` is specified
+and unknown categories are encountered during transform, no error will be
+raised but the resulting one-hot encoded columns for this feature will be all
+zeros or considered as an infrequent category if enabled.
+(`handle_unknown='infrequent_if_exist'` is only supported for one-hot
+encoding)::
 
-    >>> enc = preprocessing.OneHotEncoder(handle_unknown='ignore')
+    >>> enc = preprocessing.OneHotEncoder(handle_unknown='infrequent_if_exist')
     >>> X = [['male', 'from US', 'uses Safari'], ['female', 'from Europe', 'uses Firefox']]
     >>> enc.fit(X)
-    OneHotEncoder(handle_unknown='ignore')
+    OneHotEncoder(handle_unknown='infrequent_if_exist')
     >>> enc.transform([['female', 'from Asia', 'uses Chrome']]).toarray()
     array([[1., 0., 0., 0., 0., 0.]])
 
@@ -549,15 +643,14 @@ parameter allows the user to specify a category for each feature to be dropped.
 This is useful to avoid co-linearity in the input matrix in some classifiers.
 Such functionality is useful, for example, when using non-regularized
 regression (:class:`LinearRegression <sklearn.linear_model.LinearRegression>`),
-since co-linearity would cause the covariance matrix to be non-invertible.
-When this parameter is not None, ``handle_unknown`` must be set to
-``error``::
+since co-linearity would cause the covariance matrix to be non-invertible::
 
     >>> X = [['male', 'from US', 'uses Safari'],
     ...      ['female', 'from Europe', 'uses Firefox']]
     >>> drop_enc = preprocessing.OneHotEncoder(drop='first').fit(X)
     >>> drop_enc.categories_
-    [array(['female', 'male'], dtype=object), array(['from Europe', 'from US'], dtype=object), array(['uses Firefox', 'uses Safari'], dtype=object)]
+    [array(['female', 'male'], dtype=object), array(['from Europe', 'from US'], dtype=object),
+     array(['uses Firefox', 'uses Safari'], dtype=object)]
     >>> drop_enc.transform(X).toarray()
     array([[1., 1., 1.],
            [0., 0., 0.]])
@@ -570,7 +663,8 @@ categories. In this case, you can set the parameter `drop='if_binary'`.
     ...      ['female', 'Asia', 'Chrome']]
     >>> drop_enc = preprocessing.OneHotEncoder(drop='if_binary').fit(X)
     >>> drop_enc.categories_
-    [array(['female', 'male'], dtype=object), array(['Asia', 'Europe', 'US'], dtype=object), array(['Chrome', 'Firefox', 'Safari'], dtype=object)]
+    [array(['female', 'male'], dtype=object), array(['Asia', 'Europe', 'US'], dtype=object),
+     array(['Chrome', 'Firefox', 'Safari'], dtype=object)]
     >>> drop_enc.transform(X).toarray()
     array([[1., 0., 0., 1., 0., 0., 1.],
            [0., 0., 1., 0., 0., 1., 0.],
@@ -579,6 +673,30 @@ categories. In this case, you can set the parameter `drop='if_binary'`.
 In the transformed `X`, the first column is the encoding of the feature with
 categories "male"/"female", while the remaining 6 columns is the encoding of
 the 2 features with respectively 3 categories each.
+
+When `handle_unknown='ignore'` and `drop` is not None, unknown categories will
+be encoded as all zeros::
+
+    >>> drop_enc = preprocessing.OneHotEncoder(drop='first',
+    ...                                        handle_unknown='ignore').fit(X)
+    >>> X_test = [['unknown', 'America', 'IE']]
+    >>> drop_enc.transform(X_test).toarray()
+    array([[0., 0., 0., 0., 0.]])
+
+All the categories in `X_test` are unknown during transform and will be mapped
+to all zeros. This means that unknown categories will have the same mapping as
+the dropped category. :meth`OneHotEncoder.inverse_transform` will map all zeros
+to the dropped category if a category is dropped and `None` if a category is
+not dropped::
+
+    >>> drop_enc = preprocessing.OneHotEncoder(drop='if_binary', sparse_output=False,
+    ...                                        handle_unknown='ignore').fit(X)
+    >>> X_test = [['unknown', 'America', 'IE']]
+    >>> X_trans = drop_enc.transform(X_test)
+    >>> X_trans
+    array([[0., 0., 0., 0., 0., 0., 0.]])
+    >>> drop_enc.inverse_transform(X_trans)
+    array([['female', None, None]], dtype=object)
 
 :class:`OneHotEncoder` supports categorical features with missing values by
 considering the missing values as an additional category::
@@ -611,6 +729,107 @@ separate categories::
 See :ref:`dict_feature_extraction` for categorical features that are
 represented as a dict, not as scalars.
 
+.. _one_hot_encoder_infrequent_categories:
+
+Infrequent categories
+---------------------
+
+:class:`OneHotEncoder` supports aggregating infrequent categories into a single
+output for each feature. The parameters to enable the gathering of infrequent
+categories are `min_frequency` and `max_categories`.
+
+1. `min_frequency` is either an  integer greater or equal to 1, or a float in
+   the interval `(0.0, 1.0)`. If `min_frequency` is an integer, categories with
+   a cardinality smaller than `min_frequency`  will be considered infrequent.
+   If `min_frequency` is a float, categories with a cardinality smaller than
+   this fraction of the total number of samples will be considered infrequent.
+   The default value is 1, which means every category is encoded separately.
+
+2. `max_categories` is either `None` or any integer greater than 1. This
+   parameter sets an upper limit to the number of output features for each
+   input feature. `max_categories` includes the feature that combines
+   infrequent categories.
+
+In the following example, the categories, `'dog', 'snake'` are considered
+infrequent::
+
+   >>> X = np.array([['dog'] * 5 + ['cat'] * 20 + ['rabbit'] * 10 +
+   ...               ['snake'] * 3], dtype=object).T
+   >>> enc = preprocessing.OneHotEncoder(min_frequency=6, sparse_output=False).fit(X)
+   >>> enc.infrequent_categories_
+   [array(['dog', 'snake'], dtype=object)]
+   >>> enc.transform(np.array([['dog'], ['cat'], ['rabbit'], ['snake']]))
+   array([[0., 0., 1.],
+          [1., 0., 0.],
+          [0., 1., 0.],
+          [0., 0., 1.]])
+
+By setting handle_unknown to `'infrequent_if_exist'`, unknown categories will
+be considered infrequent::
+
+   >>> enc = preprocessing.OneHotEncoder(
+   ...    handle_unknown='infrequent_if_exist', sparse_output=False, min_frequency=6)
+   >>> enc = enc.fit(X)
+   >>> enc.transform(np.array([['dragon']]))
+   array([[0., 0., 1.]])
+
+:meth:`OneHotEncoder.get_feature_names_out` uses 'infrequent' as the infrequent
+feature name::
+
+   >>> enc.get_feature_names_out()
+   array(['x0_cat', 'x0_rabbit', 'x0_infrequent_sklearn'], dtype=object)
+
+When `'handle_unknown'` is set to `'infrequent_if_exist'` and an unknown
+category is encountered in transform:
+
+1. If infrequent category support was not configured or there was no
+   infrequent category during training, the resulting one-hot encoded columns
+   for this feature will be all zeros. In the inverse transform, an unknown
+   category will be denoted as `None`.
+
+2. If there is an infrequent category during training, the unknown category
+   will be considered infrequent. In the inverse transform, 'infrequent_sklearn'
+   will be used to represent the infrequent category.
+
+Infrequent categories can also be configured using `max_categories`. In the
+following example, we set `max_categories=2` to limit the number of features in
+the output. This will result in all but the `'cat'` category to be considered
+infrequent, leading to two features, one for `'cat'` and one for infrequent
+categories - which are all the others::
+
+   >>> enc = preprocessing.OneHotEncoder(max_categories=2, sparse_output=False)
+   >>> enc = enc.fit(X)
+   >>> enc.transform([['dog'], ['cat'], ['rabbit'], ['snake']])
+   array([[0., 1.],
+          [1., 0.],
+          [0., 1.],
+          [0., 1.]])
+
+If both `max_categories` and `min_frequency` are non-default values, then
+categories are selected based on `min_frequency` first and `max_categories`
+categories are kept. In the following example, `min_frequency=4` considers
+only `snake` to be infrequent, but `max_categories=3`, forces `dog` to also be
+infrequent::
+
+   >>> enc = preprocessing.OneHotEncoder(min_frequency=4, max_categories=3, sparse_output=False)
+   >>> enc = enc.fit(X)
+   >>> enc.transform([['dog'], ['cat'], ['rabbit'], ['snake']])
+   array([[0., 0., 1.],
+          [1., 0., 0.],
+          [0., 1., 0.],
+          [0., 0., 1.]])
+
+If there are infrequent categories with the same cardinality at the cutoff of
+`max_categories`, then then the first `max_categories` are taken based on lexicon
+ordering. In the following example, "b", "c", and "d", have the same cardinality
+and with `max_categories=2`, "b" and "c" are infrequent because they have a higher
+lexicon order.
+
+   >>> X = np.asarray([["a"] * 20 + ["b"] * 10 + ["c"] * 10 + ["d"] * 10], dtype=object).T
+   >>> enc = preprocessing.OneHotEncoder(max_categories=3).fit(X)
+   >>> enc.infrequent_categories_
+   [array(['b', 'c'], dtype=object)]
+
 .. _preprocessing_discretization:
 
 Discretization
@@ -624,7 +843,9 @@ of continuous attributes to one with only nominal attributes.
 
 One-hot encoded discretized features can make a model more expressive, while
 maintaining interpretability. For instance, pre-processing with a discretizer
-can introduce nonlinearity to linear models.
+can introduce nonlinearity to linear models. For more advanced possibilities,
+in particular smooth ones, see :ref:`generating_polynomial_features` further
+below.
 
 K-bins discretization
 ---------------------
@@ -666,6 +887,22 @@ selected with the ``strategy`` parameter. The 'uniform' strategy uses
 constant-width bins. The 'quantile' strategy uses the quantiles values to have
 equally populated bins in each feature. The 'kmeans' strategy defines bins based
 on a k-means clustering procedure performed on each feature independently.
+
+Be aware that one can specify custom bins by passing a callable defining the
+discretization strategy to :class:`~sklearn.preprocessing.FunctionTransformer`.
+For instance, we can use the Pandas function :func:`pandas.cut`::
+
+  >>> import pandas as pd
+  >>> import numpy as np
+  >>> bins = [0, 1, 13, 20, 60, np.inf]
+  >>> labels = ['infant', 'kid', 'teen', 'adult', 'senior citizen']
+  >>> transformer = preprocessing.FunctionTransformer(
+  ...     pd.cut, kw_args={'bins': bins, 'labels': labels, 'retbins': False}
+  ... )
+  >>> X = np.array([0.2, 2, 15, 25, 97])
+  >>> transformer.fit_transform(X)
+  ['infant', 'kid', 'teen', 'adult', 'senior citizen']
+  Categories (5, object): ['infant' < 'kid' < 'teen' < 'adult' < 'senior citizen']
 
 .. topic:: Examples:
 
@@ -740,12 +977,24 @@ Imputation of missing values
 
 Tools for imputing missing values are discussed at :ref:`impute`.
 
-.. _polynomial_features:
+.. _generating_polynomial_features:
 
 Generating polynomial features
 ==============================
 
-Often it's useful to add complexity to the model by considering nonlinear features of the input data. A simple and common method to use is polynomial features, which can get features' high-order and interaction terms. It is implemented in :class:`PolynomialFeatures`::
+Often it's useful to add complexity to a model by considering nonlinear
+features of the input data. We show two possibilities that are both based on
+polynomials: The first one uses pure polynomials, the second one uses splines,
+i.e. piecewise polynomials.
+
+.. _polynomial_features:
+
+Polynomial features
+-------------------
+
+A simple and common method to use is polynomial features, which can get
+features' high-order and interaction terms. It is implemented in
+:class:`PolynomialFeatures`::
 
     >>> import numpy as np
     >>> from sklearn.preprocessing import PolynomialFeatures
@@ -760,9 +1009,11 @@ Often it's useful to add complexity to the model by considering nonlinear featur
            [ 1.,  2.,  3.,  4.,  6.,  9.],
            [ 1.,  4.,  5., 16., 20., 25.]])
 
-The features of X have been transformed from :math:`(X_1, X_2)` to :math:`(1, X_1, X_2, X_1^2, X_1X_2, X_2^2)`.
+The features of X have been transformed from :math:`(X_1, X_2)` to
+:math:`(1, X_1, X_2, X_1^2, X_1X_2, X_2^2)`.
 
-In some cases, only interaction terms among features are required, and it can be gotten with the setting ``interaction_only=True``::
+In some cases, only interaction terms among features are required, and it can
+be gotten with the setting ``interaction_only=True``::
 
     >>> X = np.arange(9).reshape(3, 3)
     >>> X
@@ -775,11 +1026,94 @@ In some cases, only interaction terms among features are required, and it can be
            [  1.,   3.,   4.,   5.,  12.,  15.,  20.,  60.],
            [  1.,   6.,   7.,   8.,  42.,  48.,  56., 336.]])
 
-The features of X have been transformed from :math:`(X_1, X_2, X_3)` to :math:`(1, X_1, X_2, X_3, X_1X_2, X_1X_3, X_2X_3, X_1X_2X_3)`.
+The features of X have been transformed from :math:`(X_1, X_2, X_3)` to
+:math:`(1, X_1, X_2, X_3, X_1X_2, X_1X_3, X_2X_3, X_1X_2X_3)`.
 
-Note that polynomial features are used implicitly in `kernel methods <https://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`~sklearn.svm.SVC`, :class:`~sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
+Note that polynomial features are used implicitly in `kernel methods
+<https://en.wikipedia.org/wiki/Kernel_method>`_ (e.g., :class:`~sklearn.svm.SVC`,
+:class:`~sklearn.decomposition.KernelPCA`) when using polynomial :ref:`svm_kernels`.
 
-See :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py` for Ridge regression using created polynomial features.
+See :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py`
+for Ridge regression using created polynomial features.
+
+.. _spline_transformer:
+
+Spline transformer
+------------------
+
+Another way to add nonlinear terms instead of pure polynomials of features is
+to generate spline basis functions for each feature with the
+:class:`SplineTransformer`. Splines are piecewise polynomials, parametrized by
+their polynomial degree and the positions of the knots. The
+:class:`SplineTransformer` implements a B-spline basis, cf. the references
+below.
+
+.. note::
+
+    The :class:`SplineTransformer` treats each feature separately, i.e. it
+    won't give you interaction terms.
+
+Some of the advantages of splines over polynomials are:
+
+    - B-splines are very flexible and robust if you keep a fixed low degree,
+      usually 3, and parsimoniously adapt the number of knots. Polynomials
+      would need a higher degree, which leads to the next point.
+    - B-splines do not have oscillatory behaviour at the boundaries as have
+      polynomials (the higher the degree, the worse). This is known as `Runge's
+      phenomenon <https://en.wikipedia.org/wiki/Runge%27s_phenomenon>`_.
+    - B-splines provide good options for extrapolation beyond the boundaries,
+      i.e. beyond the range of fitted values. Have a look at the option
+      ``extrapolation``.
+    - B-splines generate a feature matrix with a banded structure. For a single
+      feature, every row contains only ``degree + 1`` non-zero elements, which
+      occur consecutively and are even positive. This results in a matrix with
+      good numerical properties, e.g. a low condition number, in sharp contrast
+      to a matrix of polynomials, which goes under the name
+      `Vandermonde matrix <https://en.wikipedia.org/wiki/Vandermonde_matrix>`_.
+      A low condition number is important for stable algorithms of linear
+      models.
+
+The following code snippet shows splines in action::
+
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import SplineTransformer
+    >>> X = np.arange(5).reshape(5, 1)
+    >>> X
+    array([[0],
+           [1],
+           [2],
+           [3],
+           [4]])
+    >>> spline = SplineTransformer(degree=2, n_knots=3)
+    >>> spline.fit_transform(X)
+    array([[0.5  , 0.5  , 0.   , 0.   ],
+           [0.125, 0.75 , 0.125, 0.   ],
+           [0.   , 0.5  , 0.5  , 0.   ],
+           [0.   , 0.125, 0.75 , 0.125],
+           [0.   , 0.   , 0.5  , 0.5  ]])
+
+As the ``X`` is sorted, one can easily see the banded matrix output. Only the
+three middle diagonals are non-zero for ``degree=2``. The higher the degree,
+the more overlapping of the splines.
+
+Interestingly, a :class:`SplineTransformer` of ``degree=0`` is the same as
+:class:`~sklearn.preprocessing.KBinsDiscretizer` with
+``encode='onehot-dense'`` and ``n_bins = n_knots - 1`` if
+``knots = strategy``.
+
+.. topic:: Examples:
+
+    * :ref:`sphx_glr_auto_examples_linear_model_plot_polynomial_interpolation.py`
+    * :ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`
+
+.. topic:: References:
+
+    * Eilers, P., & Marx, B. (1996). :doi:`Flexible Smoothing with B-splines and
+      Penalties <10.1214/ss/1038425655>`. Statist. Sci. 11 (1996), no. 2, 89--121.
+
+    * Perperoglou, A., Sauerbrei, W., Abrahamowicz, M. et al. :doi:`A review of
+      spline function procedures in R <10.1186/s12874-019-0666-3>`.
+      BMC Med Res Methodol 19, 46 (2019).
 
 .. _function_transformer:
 
@@ -795,6 +1129,7 @@ a transformer that applies a log transformation in a pipeline, do::
     >>> from sklearn.preprocessing import FunctionTransformer
     >>> transformer = FunctionTransformer(np.log1p, validate=True)
     >>> X = np.array([[0, 1], [2, 3]])
+    >>> # Since FunctionTransformer is no-op during fit, we can call transform directly
     >>> transformer.transform(X)
     array([[0.        , 0.69314718],
            [1.09861229, 1.38629436]])
@@ -810,4 +1145,5 @@ error with a ``filterwarnings``::
 
 For a full code example that demonstrates using a :class:`FunctionTransformer`
 to extract features from text data see
-:ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py`
+:ref:`sphx_glr_auto_examples_compose_plot_column_transformer.py` and
+:ref:`sphx_glr_auto_examples_applications_plot_cyclical_feature_engineering.py`.

@@ -11,6 +11,7 @@ import sklearn.datasets
 def is_pillow_installed():
     try:
         import PIL  # noqa
+
         return True
     except ImportError:
         return False
@@ -25,27 +26,27 @@ FETCH_PYTEST_MARKERS = {
             reason="fetch_opeml requires a dataset name or id"
         ),
         "fetch_lfw_people": pytest.mark.skipif(
-            not is_pillow_installed(),
-            reason="pillow is not installed"
-        )
+            not is_pillow_installed(), reason="pillow is not installed"
+        ),
     },
     "as_frame": {
         "fetch_openml": pytest.mark.xfail(
             reason="fetch_opeml requires a dataset name or id"
         ),
-    }
+    },
 }
 
 
 def check_pandas_dependency_message(fetch_func):
     try:
         import pandas  # noqa
+
         pytest.skip("This test requires pandas to not be installed")
     except ImportError:
         # Check that pandas is imported lazily and that an informative error
         # message is raised when pandas is missing:
         name = fetch_func.__name__
-        expected_msg = f'{name} with as_frame=True requires pandas'
+        expected_msg = f"{name} with as_frame=True requires pandas"
         with pytest.raises(ImportError, match=expected_msg):
             fetch_func(as_frame=True)
 
@@ -57,11 +58,12 @@ def check_return_X_y(bunch, dataset_func):
     assert X_y_tuple[1].shape == bunch.target.shape
 
 
-def check_as_frame(bunch, dataset_func,
-                   expected_data_dtype=None, expected_target_dtype=None):
-    pd = pytest.importorskip('pandas')
+def check_as_frame(
+    bunch, dataset_func, expected_data_dtype=None, expected_target_dtype=None
+):
+    pd = pytest.importorskip("pandas")
     frame_bunch = dataset_func(as_frame=True)
-    assert hasattr(frame_bunch, 'frame')
+    assert hasattr(frame_bunch, "frame")
     assert isinstance(frame_bunch.frame, pd.DataFrame)
     assert isinstance(frame_bunch.data, pd.DataFrame)
     assert frame_bunch.data.shape == bunch.data.shape
@@ -75,9 +77,17 @@ def check_as_frame(bunch, dataset_func,
     if expected_target_dtype is not None:
         assert np.all(frame_bunch.target.dtypes == expected_target_dtype)
 
+    # Test for return_X_y and as_frame=True
+    frame_X, frame_y = dataset_func(as_frame=True, return_X_y=True)
+    assert isinstance(frame_X, pd.DataFrame)
+    if frame_y.ndim > 1:
+        assert isinstance(frame_X, pd.DataFrame)
+    else:
+        assert isinstance(frame_y, pd.Series)
+
 
 def _skip_network_tests():
-    return os.environ.get('SKLEARN_SKIP_NETWORK_TESTS', '1') == '1'
+    return os.environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "1"
 
 
 def _generate_func_supporting_param(param, dataset_type=("load", "fetch")):
@@ -90,10 +100,12 @@ def _generate_func_supporting_param(param, dataset_type=("load", "fetch")):
         is_support_param = param in inspect.signature(obj).parameters
         if is_dataset_type and is_support_param:
             # check if we should skip if we don't have network support
-            marks = [pytest.mark.skipif(
-                condition=name.startswith("fetch") and _skip_network_tests(),
-                reason="Skip because fetcher requires internet network",
-            )]
+            marks = [
+                pytest.mark.skipif(
+                    condition=name.startswith("fetch") and _skip_network_tests(),
+                    reason="Skip because fetcher requires internet network",
+                )
+            ]
             if name in markers_fetch:
                 marks.append(markers_fetch[name])
 

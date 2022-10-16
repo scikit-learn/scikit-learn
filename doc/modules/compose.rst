@@ -139,14 +139,36 @@ or by name::
     >>> pipe['reduce_dim']
     PCA()
 
+To enable model inspection, :class:`~sklearn.pipeline.Pipeline` has a
+``get_feature_names_out()`` method, just like all transformers. You can use
+pipeline slicing to get the feature names going into each step::
+
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.feature_selection import SelectKBest
+    >>> iris = load_iris()
+    >>> pipe = Pipeline(steps=[
+    ...    ('select', SelectKBest(k=2)),
+    ...    ('clf', LogisticRegression())])
+    >>> pipe.fit(iris.data, iris.target)
+    Pipeline(steps=[('select', SelectKBest(...)), ('clf', LogisticRegression(...))])
+    >>> pipe[:-1].get_feature_names_out()
+    array(['x2', 'x3'], ...)
+
+You can also provide custom feature names for the input data using
+``get_feature_names_out``::
+
+    >>> pipe[:-1].get_feature_names_out(iris.feature_names)
+    array(['petal length (cm)', 'petal width (cm)'], ...)
+
 .. topic:: Examples:
 
  * :ref:`sphx_glr_auto_examples_feature_selection_plot_feature_selection_pipeline.py`
- * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
+ * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
  * :ref:`sphx_glr_auto_examples_compose_plot_digits_pipe.py`
  * :ref:`sphx_glr_auto_examples_miscellaneous_plot_kernel_approximation.py`
  * :ref:`sphx_glr_auto_examples_svm_plot_svm_anova.py`
  * :ref:`sphx_glr_auto_examples_compose_plot_compare_reduction.py`
+ * :ref:`sphx_glr_auto_examples_miscellaneous_plot_pipeline_display.py`
 
 .. topic:: See Also:
 
@@ -180,7 +202,7 @@ each configuration.
 
 The parameter ``memory`` is needed in order to cache the transformers.
 ``memory`` can be either a string containing the directory where to cache the
-transformers or a `joblib.Memory <https://pythonhosted.org/joblib/memory.html>`_
+transformers or a `joblib.Memory <https://joblib.readthedocs.io/en/latest/memory.html>`_
 object::
 
     >>> from tempfile import mkdtemp
@@ -426,21 +448,20 @@ By default, the remaining rating columns are ignored (``remainder='drop'``)::
   >>> from sklearn.feature_extraction.text import CountVectorizer
   >>> from sklearn.preprocessing import OneHotEncoder
   >>> column_trans = ColumnTransformer(
-  ...     [('city_category', OneHotEncoder(dtype='int'),['city']),
+  ...     [('categories', OneHotEncoder(dtype='int'), ['city']),
   ...      ('title_bow', CountVectorizer(), 'title')],
-  ...     remainder='drop')
+  ...     remainder='drop', verbose_feature_names_out=False)
 
   >>> column_trans.fit(X)
-  ColumnTransformer(transformers=[('city_category', OneHotEncoder(dtype='int'),
+  ColumnTransformer(transformers=[('categories', OneHotEncoder(dtype='int'),
                                    ['city']),
-                                  ('title_bow', CountVectorizer(), 'title')])
+                                  ('title_bow', CountVectorizer(), 'title')],
+                    verbose_feature_names_out=False)
 
-  >>> column_trans.get_feature_names()
-  ['city_category__x0_London', 'city_category__x0_Paris', 'city_category__x0_Sallisaw',
-  'title_bow__bow', 'title_bow__feast', 'title_bow__grapes', 'title_bow__his',
-  'title_bow__how', 'title_bow__last', 'title_bow__learned', 'title_bow__moveable',
-  'title_bow__of', 'title_bow__the', 'title_bow__trick', 'title_bow__watson',
-  'title_bow__wrath']
+  >>> column_trans.get_feature_names_out()
+  array(['city_London', 'city_Paris', 'city_Sallisaw', 'bow', 'feast',
+  'grapes', 'his', 'how', 'last', 'learned', 'moveable', 'of', 'the',
+   'trick', 'watson', 'wrath'], ...)
 
   >>> column_trans.transform(X).toarray()
   array([[1, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0],
@@ -527,19 +548,37 @@ above example would be::
                                   ('countvectorizer', CountVectorizer(),
                                    'title')])
 
+If :class:`~sklearn.compose.ColumnTransformer` is fitted with a dataframe
+and the dataframe only has string column names, then transforming a dataframe
+will use the column names to select the columns::
+
+
+  >>> ct = ColumnTransformer(
+  ...          [("scale", StandardScaler(), ["expert_rating"])]).fit(X)
+  >>> X_new = pd.DataFrame({"expert_rating": [5, 6, 1],
+  ...                       "ignored_new_col": [1.2, 0.3, -0.1]})
+  >>> ct.transform(X_new)
+  array([[ 0.9...],
+         [ 2.1...],
+         [-3.9...]])
+
 .. _visualizing_composite_estimators:
 
 Visualizing Composite Estimators
 ================================
 
-Estimators can be displayed with a HTML representation when shown in a
-jupyter notebook. This can be useful to diagnose or visualize a Pipeline with
-many estimators. This visualization is activated by setting the
-`display` option in :func:`~sklearn.set_config`::
+Estimators are displayed with an HTML representation when shown in a
+jupyter notebook. This is useful to diagnose or visualize a Pipeline with
+many estimators. This visualization is activated by default::
+
+  >>> column_trans  # doctest: +SKIP
+
+It can be deactivated by setting the `display` option in :func:`~sklearn.set_config`
+to 'text'::
 
   >>> from sklearn import set_config
-  >>> set_config(display='diagram')   # doctest: +SKIP
-  >>> # diplays HTML representation in a jupyter context
+  >>> set_config(display='text')  # doctest: +SKIP
+  >>> # displays text representation in a jupyter context
   >>> column_trans  # doctest: +SKIP
 
 An example of the HTML output can be seen in the

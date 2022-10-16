@@ -1,12 +1,8 @@
-# cython: boundscheck=False
-
 from libc cimport math
-cimport cython
 import numpy as np
-cimport numpy as np
-from libc.stdio cimport printf
+cimport numpy as cnp
 
-np.import_array()
+cnp.import_array()
 
 
 cdef extern from "numpy/npy_math.h":
@@ -16,8 +12,8 @@ cdef extern from "numpy/npy_math.h":
 cdef float EPSILON_DBL = 1e-8
 cdef float PERPLEXITY_TOLERANCE = 1e-5
 
-cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
-        np.ndarray[np.float32_t, ndim=2] sqdistances,
+cpdef cnp.ndarray[cnp.float32_t, ndim=2] _binary_search_perplexity(
+        cnp.ndarray[cnp.float32_t, ndim=2] sqdistances,
         float desired_perplexity,
         int verbose):
     """Binary search for sigmas of conditional Gaussians.
@@ -51,23 +47,23 @@ cpdef np.ndarray[np.float32_t, ndim=2] _binary_search_perplexity(
     cdef long n_neighbors = sqdistances.shape[1]
     cdef int using_neighbors = n_neighbors < n_samples
     # Precisions of conditional Gaussian distributions
-    cdef float beta
-    cdef float beta_min
-    cdef float beta_max
-    cdef float beta_sum = 0.0
+    cdef double beta
+    cdef double beta_min
+    cdef double beta_max
+    cdef double beta_sum = 0.0
 
     # Use log scale
-    cdef float desired_entropy = math.log(desired_perplexity)
-    cdef float entropy_diff
+    cdef double desired_entropy = math.log(desired_perplexity)
+    cdef double entropy_diff
 
-    cdef float entropy
-    cdef float sum_Pi
-    cdef float sum_disti_Pi
-    cdef long i, j, k, l
+    cdef double entropy
+    cdef double sum_Pi
+    cdef double sum_disti_Pi
+    cdef long i, j, l
 
     # This array is later used as a 32bit array. It has multiple intermediate
     # floating point additions that benefit from the extra precision
-    cdef np.ndarray[np.float64_t, ndim=2] P = np.zeros(
+    cdef cnp.ndarray[cnp.float64_t, ndim=2] P = np.zeros(
         (n_samples, n_neighbors), dtype=np.float64)
 
     for i in range(n_samples):

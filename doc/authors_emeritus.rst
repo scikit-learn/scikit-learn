@@ -3,7 +3,6 @@
 - Lars Buitinck
 - David Cournapeau
 - Noel Dawe
-- Shiqiao Du
 - Vincent Dubourg
 - Edouard Duchesnay
 - Alexander Fabisch
@@ -28,6 +27,7 @@
 - Peter Prettenhofer
 - (Venkat) Raghav, Rajagopalan
 - Jacob Schreiber
+- Du Shiqiao
 - Jake Vanderplas
 - David Warde-Farley
 - Ron Weiss

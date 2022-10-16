@@ -51,63 +51,73 @@ Overview of clustering methods
      - number of clusters
      - Very large ``n_samples``, medium ``n_clusters`` with
        :ref:`MiniBatch code <mini_batch_kmeans>`
-     - General-purpose, even cluster size, flat geometry, not too many clusters
+     - General-purpose, even cluster size, flat geometry,
+       not too many clusters, inductive
      - Distances between points
 
    * - :ref:`Affinity propagation <affinity_propagation>`
      - damping, sample preference
      - Not scalable with n_samples
-     - Many clusters, uneven cluster size, non-flat geometry
+     - Many clusters, uneven cluster size, non-flat geometry, inductive
      - Graph distance (e.g. nearest-neighbor graph)
 
    * - :ref:`Mean-shift <mean_shift>`
      - bandwidth
      - Not scalable with ``n_samples``
-     - Many clusters, uneven cluster size, non-flat geometry
+     - Many clusters, uneven cluster size, non-flat geometry, inductive
      - Distances between points
 
    * - :ref:`Spectral clustering <spectral_clustering>`
      - number of clusters
      - Medium ``n_samples``, small ``n_clusters``
-     - Few clusters, even cluster size, non-flat geometry
+     - Few clusters, even cluster size, non-flat geometry, transductive
      - Graph distance (e.g. nearest-neighbor graph)
 
    * - :ref:`Ward hierarchical clustering <hierarchical_clustering>`
      - number of clusters or distance threshold
      - Large ``n_samples`` and ``n_clusters``
-     - Many clusters, possibly connectivity constraints
+     - Many clusters, possibly connectivity constraints, transductive
      - Distances between points
 
    * - :ref:`Agglomerative clustering <hierarchical_clustering>`
      - number of clusters or distance threshold, linkage type, distance
      - Large ``n_samples`` and ``n_clusters``
      - Many clusters, possibly connectivity constraints, non Euclidean
-       distances
+       distances, transductive
      - Any pairwise distance
 
    * - :ref:`DBSCAN <dbscan>`
      - neighborhood size
      - Very large ``n_samples``, medium ``n_clusters``
-     - Non-flat geometry, uneven cluster sizes
+     - Non-flat geometry, uneven cluster sizes, outlier removal,
+       transductive
      - Distances between nearest points
 
    * - :ref:`OPTICS <optics>`
      - minimum cluster membership
      - Very large ``n_samples``, large ``n_clusters``
-     - Non-flat geometry, uneven cluster sizes, variable cluster density
+     - Non-flat geometry, uneven cluster sizes, variable cluster density,
+       outlier removal, transductive
      - Distances between points
 
    * - :ref:`Gaussian mixtures <mixture>`
      - many
      - Not scalable
-     - Flat geometry, good for density estimation
+     - Flat geometry, good for density estimation, inductive
      - Mahalanobis distances to  centers
 
-   * - :ref:`Birch`
+   * - :ref:`BIRCH <birch>`
      - branching factor, threshold, optional global clusterer.
      - Large ``n_clusters`` and ``n_samples``
-     - Large dataset, outlier removal, data reduction.
+     - Large dataset, outlier removal, data reduction, inductive
      - Euclidean distance between points
+
+   * - :ref:`Bisecting K-Means <bisect_k_means>`
+     - number of clusters
+     - Very large ``n_samples``, medium ``n_clusters``
+     - General-purpose, even cluster size, flat geometry,
+       no empty clusters, inductive, hierarchical
+     - Distances between points
 
 Non-flat geometry clustering is useful when the clusters have a specific
 shape, i.e. a non-flat manifold, and the standard euclidean distance is
@@ -119,6 +129,10 @@ Gaussian mixture models, useful for clustering, are described in
 mixture models. KMeans can be seen as a special case of Gaussian mixture
 model with equal covariance per component.
 
+:term:`Transductive <transductive>` clustering methods (in contrast to
+:term:`inductive` clustering methods) are not designed to be applied to new,
+unseen data.
+
 .. _k_means:
 
 K-means
@@ -127,7 +141,7 @@ K-means
 The :class:`KMeans` algorithm clusters data by trying to separate samples in n
 groups of equal variance, minimizing a criterion known as the *inertia* or
 within-cluster sum-of-squares (see below). This algorithm requires the number
-of clusters to be specified. It scales well to large number of samples and has
+of clusters to be specified. It scales well to large numbers of samples and has
 been used across a large range of application areas in many different fields.
 
 The k-means algorithm divides a set of :math:`N` samples :math:`X` into
@@ -196,10 +210,10 @@ As a result, the computation is often done several times, with different
 initializations of the centroids. One method to help address this issue is the
 k-means++ initialization scheme, which has been implemented in scikit-learn
 (use the ``init='k-means++'`` parameter). This initializes the centroids to be
-(generally) distant from each other, leading to provably better results than
-random initialization, as shown in the reference. 
+(generally) distant from each other, leading to probably better results than
+random initialization, as shown in the reference.
 
-K-means++ can also be called independently to select seeds for other 
+K-means++ can also be called independently to select seeds for other
 clustering algorithms, see :func:`sklearn.cluster.kmeans_plusplus` for details
 and example usage.
 
@@ -422,8 +436,8 @@ given sample.
 
 .. topic:: References:
 
- * `"Mean shift: A robust approach toward feature space analysis."
-   <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.76.8968&rep=rep1&type=pdf>`_
+ * :doi:`"Mean shift: A robust approach toward feature space analysis"
+   <10.1109/34.1000236>`
    D. Comaniciu and P. Meer, *IEEE Transactions on Pattern Analysis and Machine Intelligence* (2002)
 
 
@@ -444,7 +458,7 @@ to be specified in advance. It works well for a small number of clusters,
 but is not advised for many clusters.
 
 For two clusters, SpectralClustering solves a convex relaxation of the
-`normalised cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_
+`normalized cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_
 problem on the similarity graph: cutting the graph in two so that the weight of
 the edges cut is small compared to the weights of the edges inside each
 cluster. This criteria is especially interesting when working on images, where
@@ -485,11 +499,15 @@ computed using a function of a gradient of the image.
 
 .. |coin_kmeans| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_001.png
     :target: ../auto_examples/cluster/plot_coin_segmentation.html
-    :scale: 65
+    :scale: 35
 
 .. |coin_discretize| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_002.png
     :target: ../auto_examples/cluster/plot_coin_segmentation.html
-    :scale: 65
+    :scale: 35
+
+.. |coin_cluster_qr| image:: ../auto_examples/cluster/images/sphx_glr_plot_coin_segmentation_003.png
+    :target: ../auto_examples/cluster/plot_coin_segmentation.html
+    :scale: 35
 
 Different label assignment strategies
 -------------------------------------
@@ -501,12 +519,26 @@ In particular, unless you control the ``random_state``, it may not be
 reproducible from run-to-run, as it depends on random initialization.
 The alternative ``"discretize"`` strategy is 100% reproducible, but tends
 to create parcels of fairly even and geometrical shape.
+The recently added ``"cluster_qr"`` option is a deterministic alternative that
+tends to create the visually best partitioning on the example application
+below.
 
-=====================================  =====================================
- ``assign_labels="kmeans"``              ``assign_labels="discretize"``
-=====================================  =====================================
-|coin_kmeans|                          |coin_discretize|
-=====================================  =====================================
+================================  ================================  ================================
+ ``assign_labels="kmeans"``        ``assign_labels="discretize"``    ``assign_labels="cluster_qr"``
+================================  ================================  ================================
+|coin_kmeans|                          |coin_discretize|                  |coin_cluster_qr|
+================================  ================================  ================================
+
+.. topic:: References:
+
+ * `"Multiclass spectral clustering"
+   <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
+   Stella X. Yu, Jianbo Shi, 2003
+
+ * :doi:`"Simple, direct, and efficient multi-way spectral clustering"<10.1093/imaiai/iay008>`
+   Anil Damle, Victor Minden, Lexing Ying, 2019
+
+.. _spectral_clustering_graph:
 
 Spectral Clustering Graphs
 --------------------------
@@ -522,12 +554,12 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
 
 .. topic:: References:
 
- * `"A Tutorial on Spectral Clustering"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323>`_
+ * :doi:`"A Tutorial on Spectral Clustering"
+   <10.1007/s11222-007-9033-z>`
    Ulrike von Luxburg, 2007
 
- * `"Normalized cuts and image segmentation"
-   <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324>`_
+ * :doi:`"Normalized cuts and image segmentation"
+   <10.1109/34.868688>`
    Jianbo Shi, Jitendra Malik, 2000
 
  * `"A Random Walks View of Spectral Segmentation"
@@ -538,9 +570,9 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100>`_
    Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
 
- * `"Preconditioned Spectral Clustering for Stochastic
+ * :arxiv:`"Preconditioned Spectral Clustering for Stochastic
    Block Partition Streaming Graph Challenge"
-   <https://arxiv.org/abs/1708.07481>`_
+   <1708.07481>`
    David Zhuzhunashvili, Andrew Knyazev
 
 .. _hierarchical_clustering:
@@ -737,6 +769,65 @@ each class.
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`
 
+Bisecting K-Means
+-----------------
+
+.. _bisect_k_means:
+
+The :class:`BisectingKMeans` is an iterative variant of :class:`KMeans`, using
+divisive hierarchical clustering. Instead of creating all centroids at once, centroids
+are picked progressively based on a previous clustering: a cluster is split into two
+new clusters repeatedly until the target number of clusters is reached.
+
+:class:`BisectingKMeans` is more efficient than :class:`KMeans` when the number of
+clusters is large since it only works on a subset of the data at each bisection
+while :class:`KMeans` always works on the entire dataset.
+
+Although :class:`BisectingKMeans` can't benefit from the advantages of the `"k-means++"`
+initialization by design, it will still produce comparable results than
+`KMeans(init="k-means++")` in terms of inertia at cheaper computational costs, and will
+likely produce better results than `KMeans` with a random initialization.
+
+This variant is more efficient to agglomerative clustering if the number of clusters is
+small compared to the number of data points.
+
+This variant also does not produce empty clusters.
+
+There exist two strategies for selecting the cluster to split:
+ - ``bisecting_strategy="largest_cluster"`` selects the cluster having the most points
+ - ``bisecting_strategy="biggest_inertia"`` selects the cluster with biggest inertia
+   (cluster with biggest Sum of Squared Errors within)
+
+Picking by largest amount of data points in most cases produces result as
+accurate as picking by inertia and is faster (especially for larger amount of data
+points, where calculating error may be costly).
+
+Picking by largest amount of data points will also likely produce clusters of similar
+sizes while `KMeans` is known to produce clusters of different sizes.
+
+Difference between Bisecting K-Means and regular K-Means can be seen on example
+:ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py`.
+While the regular K-Means algorithm tends to create non-related clusters,
+clusters from Bisecting K-Means are well ordered and create quite a visible hierarchy.
+
+.. topic:: References:
+
+ * `"A Comparison of Document Clustering Techniques"
+   <http://www.philippe-fournier-viger.com/spmf/bisectingkmeans.pdf>`_
+   Michael Steinbach, George Karypis and Vipin Kumar,
+   Department of Computer Science and Egineering, University of Minnesota
+   (June 2000)
+ * `"Performance Analysis of K-Means and Bisecting K-Means Algorithms in Weblog Data"
+   <https://ijeter.everscience.org/Manuscripts/Volume-4/Issue-8/Vol-4-issue-8-M-23.pdf>`_
+   K.Abirami and Dr.P.Mayilvahanan,
+   International Journal of Emerging Technologies in Engineering Research (IJETER)
+   Volume 4, Issue 8, (August 2016)
+ * `"Bisecting K-means Algorithm Based on K-valued Self-determining
+   and Clustering Center Optimization"
+   <http://www.jcomputers.us/vol13/jcp1306-01.pdf>`_
+   Jian Di, Xinyue Gou
+   School of Control and Computer Engineering,North China Electric Power University,
+   Baoding, Hebei, China (August 2017)
 
 .. _dbscan:
 
@@ -943,7 +1034,7 @@ represented as children of a larger parent cluster.
 
 .. _birch:
 
-Birch
+BIRCH
 =====
 
 The :class:`Birch` builds a tree called the Clustering Feature Tree (CFT)
@@ -962,7 +1053,7 @@ the need to hold the entire input data in memory. This information includes:
 - Centroids - To avoid recalculation linear sum / n_samples.
 - Squared norm of the centroids.
 
-The Birch algorithm has two parameters, the threshold and the branching factor.
+The BIRCH algorithm has two parameters, the threshold and the branching factor.
 The branching factor limits the number of subclusters in a node and the
 threshold limits the distance between the entering sample and the existing
 subclusters.
@@ -996,13 +1087,13 @@ clusters (labels) and the samples are mapped to the global label of the nearest 
   then this node is again split into two and the process is continued
   recursively, till it reaches the root.
 
-**Birch or MiniBatchKMeans?**
+**BIRCH or MiniBatchKMeans?**
 
- - Birch does not scale very well to high dimensional data. As a rule of thumb if
+ - BIRCH does not scale very well to high dimensional data. As a rule of thumb if
    ``n_features`` is greater than twenty, it is generally better to use MiniBatchKMeans.
  - If the number of instances of data needs to be reduced, or if one wants a
    large number of subclusters either as a preprocessing step or otherwise,
-   Birch is more useful than MiniBatchKMeans.
+   BIRCH is more useful than MiniBatchKMeans.
 
 
 **How to use partial_fit?**
@@ -1377,7 +1468,7 @@ more broadly common names.
 
  * `Wikipedia entry for the Adjusted Mutual Information
    <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
-   
+
  .. [VEB2009] Vinh, Epps, and Bailey, (2009). "Information theoretic measures
    for clusterings comparison". Proceedings of the 26th Annual International
    Conference on Machine Learning - ICML '09.
@@ -1388,13 +1479,13 @@ more broadly common names.
    Clusterings Comparison: Variants, Properties, Normalization and
    Correction for Chance". JMLR
    <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
-   
+
  .. [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
    community
    detection algorithms on artificial networks". Scientific Reports 6: 30750.
    `doi:10.1038/srep30750 <https://www.nature.com/articles/srep30750>`_.
-   
-   
+
+
 
 .. _homogeneity_completeness:
 
@@ -1647,7 +1738,7 @@ Drawbacks
 
   * E. B. Fowkles and C. L. Mallows, 1983. "A method for comparing two
     hierarchical clusterings". Journal of the American Statistical Association.
-    http://wildfire.stat.ucla.edu/pdflibrary/fowlkes.pdf
+    https://www.tandfonline.com/doi/abs/10.1080/01621459.1983.10478008
 
   * `Wikipedia entry for the Fowlkes-Mallows Index
     <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
@@ -1696,10 +1787,9 @@ cluster analysis.
 
 .. topic:: References
 
- * Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
-   Interpretation and Validation of Cluster Analysis". Computational
-   and Applied Mathematics 20: 53–65.
-   `doi:10.1016/0377-0427(87)90125-7 <https://doi.org/10.1016/0377-0427(87)90125-7>`_.
+ * Peter J. Rousseeuw (1987). :doi:`"Silhouettes: a Graphical Aid to the
+   Interpretation and Validation of Cluster Analysis"<10.1016/0377-0427(87)90125-7>`
+   . Computational and Applied Mathematics 20: 53–65.
 
 
 Advantages
@@ -1732,12 +1822,12 @@ Calinski-Harabasz Index
 
 
 If the ground truth labels are not known, the Calinski-Harabasz index
-(:func:`sklearn.metrics.calinski_harabasz_score`) - also known as the Variance 
-Ratio Criterion - can be used to evaluate the model, where a higher 
+(:func:`sklearn.metrics.calinski_harabasz_score`) - also known as the Variance
+Ratio Criterion - can be used to evaluate the model, where a higher
 Calinski-Harabasz score relates to a model with better defined clusters.
 
 The index is the ratio of the sum of between-clusters dispersion and of
-inter-cluster dispersion for all clusters (where dispersion is defined as the
+within-cluster dispersion for all clusters (where dispersion is defined as the
 sum of distances squared):
 
   >>> from sklearn import metrics
@@ -1798,8 +1888,7 @@ number of points in cluster :math:`q`.
  * Caliński, T., & Harabasz, J. (1974).
    `"A Dendrite Method for Cluster Analysis"
    <https://www.researchgate.net/publication/233096619_A_Dendrite_Method_for_Cluster_Analysis>`_.
-   Communications in Statistics-theory and Methods 3: 1-27.
-   `doi:10.1080/03610927408827101 <https://doi.org/10.1080/03610927408827101>`_.
+   :doi:`Communications in Statistics-theory and Methods 3: 1-27 <10.1080/03610927408827101>`.
 
 
 .. _davies-bouldin_index:
@@ -1837,7 +1926,8 @@ Advantages
 ~~~~~~~~~~
 
 - The computation of Davies-Bouldin is simpler than that of Silhouette scores.
-- The index is computed only quantities and features inherent to the dataset.
+- The index is solely based on quantities and features inherent to the dataset
+  as its computation only uses point-wise distances.
 
 Drawbacks
 ~~~~~~~~~
@@ -1873,15 +1963,13 @@ Then the Davies-Bouldin index is defined as:
 .. topic:: References
 
  * Davies, David L.; Bouldin, Donald W. (1979).
-   "A Cluster Separation Measure"
+   :doi:`"A Cluster Separation Measure" <10.1109/TPAMI.1979.4766909>`
    IEEE Transactions on Pattern Analysis and Machine Intelligence.
    PAMI-1 (2): 224-227.
-   `doi:10.1109/TPAMI.1979.4766909 <https://doi.org/10.1109/TPAMI.1979.4766909>`_.
 
  * Halkidi, Maria; Batistakis, Yannis; Vazirgiannis, Michalis (2001).
-   "On Clustering Validation Techniques"
+   :doi:`"On Clustering Validation Techniques" <10.1023/A:1012801612483>`
    Journal of Intelligent Information Systems, 17(2-3), 107-145.
-   `doi:10.1023/A:1012801612483 <https://doi.org/10.1023/A:1012801612483>`_.
 
  * `Wikipedia entry for Davies-Bouldin index
    <https://en.wikipedia.org/wiki/Davies–Bouldin_index>`_.
@@ -2021,6 +2109,5 @@ diagonal entries::
 
 .. topic:: References
 
- * L. Hubert and P. Arabie, Comparing Partitions, Journal of
-   Classification 1985
-   <https://link.springer.com/article/10.1007%2FBF01908075>_
+ * :doi:`"Comparing Partitions" <10.1007/BF01908075>` 
+   L. Hubert and P. Arabie, Journal of Classification 1985

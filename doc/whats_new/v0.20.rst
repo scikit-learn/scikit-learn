@@ -824,7 +824,7 @@ Support for Python 3.3 has been officially dropped.
 :mod:`sklearn.feature_extraction`
 .................................
 
-- |Feature| Enable the call to :term:`get_feature_names` in unfitted
+- |Feature| Enable the call to `get_feature_names` in unfitted
   :class:`feature_extraction.text.CountVectorizer` initialized with a
   vocabulary. :issue:`10908` by :user:`Mohamed Maskani <maskani-moh>`.
 
@@ -1286,7 +1286,7 @@ Support for Python 3.3 has been officially dropped.
   be used for novelty detection, i.e. predict on new unseen data. Available
   prediction methods are ``predict``, ``decision_function`` and
   ``score_samples``. By default, ``novelty`` is set to ``False``, and only
-  the ``fit_predict`` method is avaiable.
+  the ``fit_predict`` method is available.
   By :user:`Albert Thomas <albertcthomas>`.
 
 - |Fix| Fixed a bug in :class:`neighbors.NearestNeighbors` where fitting a
@@ -1398,7 +1398,7 @@ Support for Python 3.3 has been officially dropped.
   :issue:`11308` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Feature| :class:`preprocessing.OneHotEncoder` now supports the
-  :term:`get_feature_names` method to obtain the transformed feature names.
+  `get_feature_names` method to obtain the transformed feature names.
   :issue:`10181` by :user:`Nirvan Anjirbag <Nirvan101>` and
   `Joris Van den Bossche`_.
 

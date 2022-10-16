@@ -10,6 +10,7 @@ BITNESS=$3
 # By default, the Windows wheels are not repaired.
 # In this case, we need to vendor VCRUNTIME140.dll
 wheel unpack "$WHEEL"
+WHEEL_DIRNAME=$(ls -d scikit_learn-*)
 python build_tools/github/vendor.py "$WHEEL_DIRNAME" "$BITNESS"
 wheel pack "$WHEEL_DIRNAME" -d "$DEST_DIR"
 rm -rf "$WHEEL_DIRNAME"

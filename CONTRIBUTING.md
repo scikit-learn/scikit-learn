@@ -13,7 +13,7 @@ documentation is no less important than improving the library itself. If you
 find a typo in the documentation, or have made improvements, do not hesitate to
 send an email to the mailing list or preferably submit a GitHub pull request.
 Documentation can be found under the
-[doc/](https://github.com/scikit-learn/scikit-learn/tree/master/doc) directory.
+[doc/](https://github.com/scikit-learn/scikit-learn/tree/main/doc) directory.
 
 But there are many other ways to help. In particular answering queries on the
 [issue tracker](https://github.com/scikit-learn/scikit-learn/issues),
