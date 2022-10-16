@@ -223,12 +223,16 @@ def silhouette_samples(X, labels, *, metric="euclidean", **kwds):
 
     # Check for non-zero diagonal entries in precomputed distance matrix
     if metric == "precomputed":
-        atol = np.finfo(X.dtype).eps * 100
-        if np.any(np.abs(X.diagonal()) > atol):
-            raise ValueError(
-                "The precomputed distance matrix contains non-zero "
-                "elements on the diagonal. Use np.fill_diagonal(X, 0)."
-            )
+        err_msg = ValueError(
+            "The precomputed distance matrix contains non-zero "
+            "elements on the diagonal. Use np.fill_diagonal(X, 0)."
+        )
+        if X.dtype.kind == "f":
+            atol = np.finfo(X.dtype).eps * 100
+            if np.any(np.abs(X.diagonal()) > atol):
+                raise err_msg
+        elif np.any(X.diagonal() != 0):  # integral dtype
+            raise err_msg
 
     le = LabelEncoder()
     labels = le.fit_transform(labels)
