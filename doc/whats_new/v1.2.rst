@@ -505,7 +505,7 @@ Changelog
   `None` when `early_stopping=True`, while `validation_scores_` and
   `best_validation_score_` are set to `None` when `early_stopping=False`.
   `validation_scores_` also changed from a Python list to a Numpy array.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`24683` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.pipeline`
 .......................
