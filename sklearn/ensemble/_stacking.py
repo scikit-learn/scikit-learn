@@ -408,7 +408,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
         The type of estimator is generally expected to be a classifier.
         However, one can pass a regressor for some use case (e.g. ordinal
-        regression) but the target `y` is expected to be encoded as numerical.
+        regression).
 
     final_estimator : estimator, default=None
         A classifier which will be used to combine the base estimators.
@@ -622,10 +622,10 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
-            Target values. If `y` is a list of strings, they will be encoded using
-            :class:`~sklearn.preprocessing.LabelEncoder`. If the order of the
-            classes is important (e.g. for ordinal regression), one should encode
-            the target `y` before calling `fit`.
+            Target values. Note that `y` will be internally encoded in numerically
+            increasing order or lexicographic order. If the order matter (e.g. for
+            ordinal regression), one should numerically encode the target `y` before
+            calling :term:`fit`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
