@@ -36,7 +36,7 @@ print(f"The number of bytes taken in RAM is {raccoon_face.nbytes}")
 # %%
 # Thus the image is a 2D array of 768 pixels in height and 1024 pixels in width. Each
 # value is a 8-bit unsigned integer, which means that the image is encoded using 8
-# bits per pixel. The total memory usage of the image is 786 kilobytes (1 bytes equal
+# bits per pixel. The total memory usage of the image is 786 kilobytes (1 bytes equals
 # 8 bits).
 #
 # Using 8-bit unsigned integer means that the image is encoded using 256 different
@@ -112,7 +112,7 @@ ax.hist(raccoon_face.ravel(), bins=256)
 color = "tab:orange"
 for center in bin_center:
     ax.axvline(center, color=color)
-    ax.text(center, 5000, f"{center:.2f}", color=color)
+    ax.text(center - 10, ax.get_ybound()[1] + 100, f"{center:.1f}", color=color)
 
 # %%
 # As previously stated, the uniform sampling strategy is not optimal. Notice for
@@ -144,9 +144,12 @@ bin_center = bin_edges[:-1] + (bin_edges[1:] - bin_edges[:-1]) / 2
 bin_center
 
 # %%
-plt.hist(raccoon_face.ravel(), bins=256)
+_, ax = plt.subplots()
+ax.hist(raccoon_face.ravel(), bins=256)
+color = "tab:orange"
 for center in bin_center:
-    plt.axvline(center, color="red")
+    ax.axvline(center, color=color)
+    ax.text(center - 10, ax.get_ybound()[1] + 100, f"{center:.1f}", color=color)
 
 # %%
 # The counts in the bins are now more balanced and their centers are no longer
