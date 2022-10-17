@@ -158,9 +158,9 @@ class Pipeline(_BaseComposition):
         transform : {"default", "pandas"}, default=None
             Configure output of `transform` and `fit_transform`.
 
-            - `"default"`: Output of an un-configured transformer
+            - `"default"`: Default output format of a transformer
             - `"pandas"`: DataFrames output
-            - `"None"`: No-op
+            - `None`: Current configuration is unchanged
 
         Returns
         -------
@@ -1003,9 +1003,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         transform : {"default", "pandas"}, default=None
             Configure output of `transform` and `fit_transform`.
 
-            - `"default"`: Output of an un-configured transformer
+            - `"default"`: Default output format of a transformer
             - `"pandas"`: DataFrames output
-            - `"None"`: No-op
+            - `None`: Current configuration is unchanged
 
         Returns
         -------
