@@ -521,6 +521,12 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     of a binary classification problem. Indeed, both feature will be perfectly
     collinear.
 
+    In some cases (e.g. ordinal regression), one can pass regressors as the first layer
+    of the :class:`StackingClassifier`. However, note that `y` will be internally
+    encoded in a numerically increasing order or lexicographic order. If this ordering
+    is not adequate, one should manually numerically encode the classes in the desired
+    order.
+
     References
     ----------
     .. [1] Wolpert, David H. "Stacked generalization." Neural networks 5.2
