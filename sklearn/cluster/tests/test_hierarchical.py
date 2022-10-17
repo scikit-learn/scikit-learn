@@ -224,17 +224,6 @@ def test_agglomerative_clustering():
         with pytest.raises(ValueError):
             clustering.fit(X)
 
-    # Test that using ward with another metric than euclidean raises an
-    # exception
-    clustering = AgglomerativeClustering(
-        n_clusters=10,
-        connectivity=connectivity.toarray(),
-        metric="manhattan",
-        linkage="ward",
-    )
-    with pytest.raises(ValueError):
-        clustering.fit(X)
-
     # Test using another metric than euclidean works with linkage complete
     for metric in PAIRED_DISTANCES.keys():
         # Compare our (structured) implementation to scipy
@@ -911,3 +900,42 @@ def test_deprecate_affinity():
         af.fit(X)
     with pytest.raises(ValueError, match=msg):
         af.fit_predict(X)
+
+
+@pytest.mark.parametrize("Clustering", [AgglomerativeClustering, FeatureAgglomeration])
+def test_agglomeration_ward_contrained_metric(Clustering):
+    """Check that we raise an errror when 'euclidean' or 'l2' are not passed with
+    ward linkage."""
+    rng = np.random.RandomState(0)
+    mask = np.ones([10, 10], dtype=bool)
+    n_samples = 100
+    X = rng.randn(n_samples, 50)
+    connectivity = grid_to_graph(*mask.shape)
+
+    clustering = Clustering(
+        n_clusters=10,
+        connectivity=connectivity.toarray(),
+        metric="manhattan",
+        linkage="ward",
+    )
+    with pytest.raises(ValueError):
+        clustering.fit(X)
+
+
+@pytest.mark.parametrize("Clustering", [AgglomerativeClustering, FeatureAgglomeration])
+@pytest.mark.parametrize("metric", ["euclidean", "l2"])
+def test_agglomeration_ward_euclidean(Clustering, metric):
+    """Check that we can pass 'euclidean' and 'l2' as metric with Ward linkage."""
+    rng = np.random.RandomState(0)
+    mask = np.ones([10, 10], dtype=bool)
+    n_samples = 100
+    X = rng.randn(n_samples, 100)
+    connectivity = grid_to_graph(*mask.shape)
+
+    clustering = Clustering(
+        n_clusters=10,
+        connectivity=connectivity.toarray(),
+        metric=metric,
+        linkage="ward",
+    )
+    clustering.fit(X)

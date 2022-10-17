@@ -756,7 +756,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
         feature array. If metric is a string or callable, it must be one of
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
         its metric parameter.
-        If linkage is "ward", only "euclidean" is accepted.
+        If linkage is "ward", only "euclidean" and "l2" are accepted.
         If "precomputed", a distance matrix (instead of a similarity matrix)
         is needed as input for the fit method.
 
@@ -767,7 +767,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
     metric : str or callable, default=None
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed". If set to `None` then
-        "euclidean" is used. If linkage is "ward", only "euclidean" is
+        "euclidean" is used. If linkage is "ward", only "euclidean" and "l2" are
         accepted. If "precomputed", a distance matrix is needed as input for
         the fit method.
 
@@ -1001,10 +1001,10 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
                 "compute_full_tree must be True if distance_threshold is set."
             )
 
-        if self.linkage == "ward" and self._metric != "euclidean":
+        if self.linkage == "ward" and self._metric not in ("euclidean", "l2"):
             raise ValueError(
                 f"{self._metric} was provided as metric. Ward can only "
-                "work with euclidean distances."
+                "work with euclidean distances (i.e. 'euclidean' and 'l2')."
             )
 
         tree_builder = _TREE_BUILDERS[self.linkage]
@@ -1119,7 +1119,7 @@ class FeatureAgglomeration(
         feature array. If metric is a string or callable, it must be one of
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
         its metric parameter.
-        If linkage is "ward", only "euclidean" is accepted.
+        If linkage is "ward", only "euclidean" and "l2" are accepted.
         If "precomputed", a distance matrix (instead of a similarity matrix)
         is needed as input for the fit method.
 
@@ -1130,7 +1130,7 @@ class FeatureAgglomeration(
     metric : str or callable, default=None
         Metric used to compute the linkage. Can be "euclidean", "l1", "l2",
         "manhattan", "cosine", or "precomputed". If set to `None` then
-        "euclidean" is used. If linkage is "ward", only "euclidean" is
+        "euclidean" is used. If linkage is "ward", only "euclidean" and "l2" are
         accepted. If "precomputed", a distance matrix is needed as input for
         the fit method.
 
