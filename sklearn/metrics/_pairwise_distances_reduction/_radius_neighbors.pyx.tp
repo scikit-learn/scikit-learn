@@ -506,10 +506,6 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
         # Pushing the distance and their associated indices in vectors.
         for i in range(n_X):
             for j in range(n_Y):
-                # Using the squared euclidean distance as the rank-preserving distance:
-                #
-                #             ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
-                #
                 sqeuclidean_dist_i_j = (
                     self.X_norm_squared[i + X_start]
                     + dist_middle_terms[i * n_Y + j]
