@@ -107,9 +107,12 @@ bin_center = bin_edges[:-1] + (bin_edges[1:] - bin_edges[:-1]) / 2
 bin_center
 
 # %%
-plt.hist(raccoon_face.ravel(), bins=256)
+_, ax = plt.subplots()
+ax.hist(raccoon_face.ravel(), bins=256)
+color = "tab:orange"
 for center in bin_center:
-    plt.axvline(center, color="red")
+    ax.axvline(center, color=color)
+    ax.text(center, 5000, f"{center:.2f}", color=color)
 
 # %%
 # As previously stated, the uniform sampling strategy is not optimal. Notice for
