@@ -592,7 +592,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     def _validate_estimators(self):
         """Overload the method of `_BaseHeterogeneousEnsemble` to be more
         lenient towards the type of `estimators`.
-        
+
         Regressors can be accepted for some cases such as ordinal regression.
         """
         if len(self.estimators) == 0:
