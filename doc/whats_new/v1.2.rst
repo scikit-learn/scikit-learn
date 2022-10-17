@@ -496,6 +496,17 @@ Changelog
   :class:`neighbors.RadiusNeighborsTransformer`.
   :pr:`24075` by :user:`Valentin Laurent <Valentin-Laurent>`.
 
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| :class:`neural_network.MLPClassifier` and
+  :class:`neural_network.MLPRegressor` always exposes the parameters `best_loss_`,
+  `validation_scores_`, and `best_validation_score_`. `best_loss_` is set to
+  `None` when `early_stopping=True`, while `validation_scores_` and
+  `best_validation_score_` are set to `None` when `early_stopping=False`.
+  `validation_scores_` also changed from a Python list to a Numpy array.
+  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
