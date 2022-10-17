@@ -187,7 +187,7 @@ Changelog
 - |Enhancement| :class:`cluster.AgglomerativeClustering` and
   :class:`cluster.FeatureAgglomeration` now accept `metric="l2"` together with
   `linkage="ward"`. `metric="l2"` is equivalent to `metric="euclidean"`.
-  :pr:`xx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`24681` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |API| The `affinity` attribute is now deprecated for
   :class:`cluster.AgglomerativeClustering` and will be renamed to `metric` in v1.4.
