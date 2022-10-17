@@ -590,11 +590,11 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             )
 
     def _validate_estimators(self):
-        """Overload the method of `_BaseHeterogeneousEnsemble` to be more
-        lenient towards the type of `estimators`.
-
-        Regressors can be accepted for some cases such as ordinal regression.
-        """
+    """Overload the method of `_BaseHeterogeneousEnsemble` to be more
+    lenient towards the type of `estimators`.
+    
+    Regressors can be accepted for some cases such as ordinal regression.
+    """
         if len(self.estimators) == 0:
             raise ValueError(
                 "Invalid 'estimators' attribute, 'estimators' should be a "
@@ -622,7 +622,10 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
-            Target values.
+            Target values. If `y` is a list of strings, they will be encoded using
+            :class:`~sklearn.preprocessing.LabelEncoder`. If the order of the
+            classes is important (e.g. for ordinal regression), one should encode
+            the target `y` before calling `fit`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
