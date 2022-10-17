@@ -209,8 +209,8 @@ class _SetOutputMixin:
             Configure output of `transform` and `fit_transform`.
 
             - `"default"`: Default output format of a transformer
-            - `"pandas"`: DataFrames output
-            - `None`: Current transform configuration is unchanged
+            - `"pandas"`: DataFrame output
+            - `None`: Transform configuration is unchanged
 
         Returns
         -------
