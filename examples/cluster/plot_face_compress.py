@@ -50,7 +50,7 @@ ax[0].axis("off")
 ax[0].set_title("Rendering of the image")
 ax[1].hist(raccoon_face.ravel(), bins=256)
 ax[1].set_xlabel("Pixel value")
-ax[1].set_ylabel("Number of pixels")
+ax[1].set_ylabel("Count of pixels")
 ax[1].set_title("Distribution of the pixel values")
 _ = fig.suptitle("Original image of a raccoon face")
 
