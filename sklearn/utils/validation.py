@@ -1148,7 +1148,7 @@ def column_or_1d(y, *, dtype=None, warn=False):
     y : array-like
        Input data.
 
-    dtype: data-type, default=None
+    dtype : data-type, default=None
         Data type for `y`.
 
         .. versionadded:: 1.2
