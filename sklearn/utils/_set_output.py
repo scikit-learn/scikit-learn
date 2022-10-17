@@ -210,7 +210,7 @@ class _SetOutputMixin:
 
             - `"default"`: Default output format of a transformer
             - `"pandas"`: DataFrames output
-            - `None`: Current configuration is unchanged
+            - `None`: Current transform configuration is unchanged
 
         Returns
         -------
