@@ -57,11 +57,12 @@ _ = fig.suptitle("Original image of a raccoon face")
 # %%
 # Compression via vector quantization
 # -----------------------------------
-# The idea behind compression via vector quantization is to use a smaller number of
-# gray levels to represent the image. For instance, we can use 8 values instead of 256
-# values. Therefore, it means that we could efficiently use 1 bit instead of 8 bits to
-# encode a single pixel and therefore reduce the memory usage by a factor of 8. We will
-# later discuss about this memory usage.
+#
+# The idea behind compression via vector quantization is to reduce the number of
+# gray levels to represent an image. For instance, we can use 8 values instead
+# of 256 values. Therefore, it means that we could efficiently use 1 bit instead
+# of 8 bits to encode a single pixel and therefore reduce the memory usage by a
+# factor of 8. We will later discuss about this memory usage.
 #
 # Encoding strategy
 # """""""""""""""""
