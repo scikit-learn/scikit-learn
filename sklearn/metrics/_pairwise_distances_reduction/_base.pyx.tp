@@ -1,5 +1,7 @@
 cimport numpy as cnp
-cimport openmp
+
+IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
+    cimport openmp
 
 from cython cimport final
 from cython.operator cimport dereference as deref
@@ -73,7 +75,12 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms32(
         )
 
     with nogil, parallel(num_threads=num_threads):
-        thread_num = openmp.omp_get_thread_num()
+
+        IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
+            thread_num = openmp.omp_get_thread_num()
+        ELSE:
+            thread_num = 1
+
         for i in prange(n, schedule='static'):
             # Upcasting the i-th row of X from 32bit to 64bit
             for j in range(d):
