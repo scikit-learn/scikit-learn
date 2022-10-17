@@ -496,23 +496,24 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
     ) nogil:
         cdef:
             ITYPE_t i, j
-            ITYPE_t pair_index = 0
             DTYPE_t sqeuclidean_dist_i_j
+            ITYPE_t n_X = X_end - X_start
+            ITYPE_t n_Y = Y_end - Y_start
             DTYPE_t *dist_middle_terms = self.gemm_term_computer._compute_dist_middle_terms(
                 X_start, X_end, Y_start, Y_end, thread_num
             )
 
         # Pushing the distance and their associated indices in vectors.
-        for i in range(X_start, X_end):
-            for j in range(Y_start, Y_end):
+        for i in range(n_X):
+            for j in range(n_Y):
                 # Using the squared euclidean distance as the rank-preserving distance:
                 #
                 #             ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
                 #
                 sqeuclidean_dist_i_j = (
-                    self.X_norm_squared[i]
-                    + dist_middle_terms[pair_index]
-                    + self.Y_norm_squared[j]
+                    self.X_norm_squared[i + X_start]
+                    + dist_middle_terms[i * n_Y + j]
+                    + self.Y_norm_squared[j + Y_start]
                 )
 
                 # Catastrophic cancellation might cause -0. to be present,
@@ -520,9 +521,7 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
                 sqeuclidean_dist_i_j = max(0., sqeuclidean_dist_i_j)
 
                 if sqeuclidean_dist_i_j <= self.r_radius:
-                    deref(self.neigh_distances_chunks[thread_num])[i].push_back(sqeuclidean_dist_i_j)
-                    deref(self.neigh_indices_chunks[thread_num])[i].push_back(j)
-
-                pair_index += 1
+                    deref(self.neigh_distances_chunks[thread_num])[i + X_start].push_back(sqeuclidean_dist_i_j)
+                    deref(self.neigh_indices_chunks[thread_num])[i + X_start].push_back(j + Y_start)
 
 {{endfor}}
