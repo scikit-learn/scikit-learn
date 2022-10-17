@@ -430,6 +430,10 @@ Changelog
   (`average="micro"`) for the One-vs-Rest multiclass case (`multi_class="ovr"`).
   :pr:`24338` by :user:`Arturo Amor <ArturoAmorQ>`.
 
+- |API| The parameter `sum_over_features` of :func:`metrics.pairwise.manhattan_distances` is deprecated
+  and will be removed in 1.4.
+  :pr:`24630` by :user:`Rushil Desai <rusdes>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
