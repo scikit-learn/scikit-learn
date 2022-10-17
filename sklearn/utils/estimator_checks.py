@@ -3708,7 +3708,6 @@ def check_n_features_in_after_fitting(name, estimator_orig):
     n_samples = 150
     X = rng.normal(size=(n_samples, 8))
     X = _enforce_estimator_tags_X(estimator, X)
-    X = _enforce_estimator_tags_X(estimator, X)
 
     if is_regressor(estimator):
         y = rng.normal(size=n_samples)
@@ -3794,7 +3793,6 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
 
     X_orig = rng.normal(size=(150, 8))
 
-    X_orig = _enforce_estimator_tags_X(estimator, X_orig)
     X_orig = _enforce_estimator_tags_X(estimator, X_orig)
     n_samples, n_features = X_orig.shape
 
