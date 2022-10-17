@@ -417,8 +417,7 @@ class BaseEstimator:
             fitted_feature_names != X_feature_names
         ):
             message = (
-                "The feature names should match those that were "
-                "passed during fit. Starting version 1.2, an error will be raised.\n"
+                "The feature names should match those that were passed during fit.\n"
             )
             fitted_feature_names_set = set(fitted_feature_names)
             X_feature_names_set = set(X_feature_names)
@@ -449,7 +448,7 @@ class BaseEstimator:
                     "Feature names must be in the same order as they were in fit.\n"
                 )
 
-            warnings.warn(message, FutureWarning)
+            raise ValueError(message)
 
     def _validate_data(
         self,
