@@ -67,11 +67,11 @@ _ = fig.suptitle("Original image of a raccoon face")
 # Encoding strategy
 # """""""""""""""""
 #
-# The compression can be performed by using a
-# :class:`~sklearn.preprocessing.KBinsDiscretizer`. We need to choose of a strategy
-# to define the 8 values. The simplest strategy is to define the 8 values equally
-# spaced that correspond to `strategy="uniform"`. From the previous histogram, we know
-# that this strategy is certainly not optimal.
+# The compression can be done using a
+# :class:`~sklearn.preprocessing.KBinsDiscretizer`. We need to choose a strategy
+# to define the 8 gray values to sub-sample. The simplest strategy is to define
+# them equally spaced, which correspond to setting `strategy="uniform"`. From
+# the previous histogram, we know that this strategy is certainly not optimal.
 
 from sklearn.preprocessing import KBinsDiscretizer
 
@@ -89,8 +89,8 @@ ax[0].axis("off")
 ax[0].set_title("Rendering of the image")
 ax[1].hist(compressed_raccoon_uniform.ravel(), bins=256)
 ax[1].set_xlabel("Pixel value")
-ax[1].set_ylabel("Number of pixels")
-ax[1].set_title("Distribution of the pixel values")
+ax[1].set_ylabel("Count of pixels")
+ax[1].set_title("Sub-sampled distribution of the pixel values")
 _ = fig.suptitle("Raccoon face compressed using 1-bit and a uniform strategy")
 
 # %%
@@ -98,10 +98,10 @@ _ = fig.suptitle("Raccoon face compressed using 1-bit and a uniform strategy")
 # compression (e.g. leaves on the bottom right corner). But after all, the resulting
 # image is still looking good.
 #
-# Looking a the distribution, we observe that all pixels values have been mapped to
-# 8 different values. But we can also see the amount of pixel in each bin is different.
-# This might not be the most effective strategy. We can check the correspondance between
-# the 8 values and the original pixel values.
+# We observe that the distribution of pixels values have been mapped to 8
+# different values. We can check the correspondance between such values and the
+# original pixel values.
+
 bin_edges = encoder.bin_edges_[0]
 bin_center = bin_edges[:-1] + (bin_edges[1:] - bin_edges[:-1]) / 2
 bin_center
@@ -112,9 +112,12 @@ for center in bin_center:
     plt.axvline(center, color="red")
 
 # %%
-# As previously stated, the strategy used is not optimal. The value 7, will encode a
-# rather small amount of pixels while the value 3 will encode a large amount of pixels.
-# We can instead use a clustering strategy such as k-means to find the 8 values.
+# As previously stated, the uniform sampling strategy is not optimal. Notice for
+# instance that the pixels mapped to the value 7 will encode a rather small
+# amount of information, whereas the mapped value 3 will represent a large
+# amount of counts. We can instead use a clustering strategy such as k-means to
+# find a more optimal mapping.
+
 encoder = KBinsDiscretizer(
     n_bins=n_bins, encode="ordinal", strategy="kmeans", random_state=0
 )
@@ -143,32 +146,34 @@ for center in bin_center:
     plt.axvline(center, color="red")
 
 # %%
-# The bins are now more balanced and the center of each bins are different from
-# the uniform strategy. Note that we could enforce the same number of pixels
-# per bin by using the `strategy="quantile"` instead of `strategy="kmeans"`.
+# The counts in the bins are now more balanced and their centers are no longer
+# equally spaced. Note that we could enforce the same number of pixels per bin
+# by using the `strategy="quantile"` instead of `strategy="kmeans"`.
 #
 # Memory footprint
 # """"""""""""""""
 #
-# We can quickly discussed the memory usage of the compressed image. We previously
-# stated that we should save 8 times less memory. Let's check it.
+# We previously stated that we should save 8 times less memory. Let's verify it.
+
 print(f"The number of bytes taken in RAM is {compressed_raccoon_kmeans.nbytes}")
 print(f"Compression ratio: {compressed_raccoon_kmeans.nbytes / raccoon_face.nbytes}")
 
 # %%
-# This is quite surprising to see that our compressed image is taking x8 more memory
-# than the original image. This is indeed the opposit of what we expected. The reason
-# is mainly due to the type of data used to encode the image.
+# It is quite surprising to see that our compressed image is taking x8 more
+# memory than the original image. This is indeed the opposite of what we
+# expected. The reason is mainly due to the type of data used to encode the
+# image.
+
 print(f"Type of the compressed image: {compressed_raccoon_kmeans.dtype}")
 
 # %%
-# Indeed, the output of the :class:`~sklearn.preprocessing.KBinsDiscretizer` is an
-# array of 64-bit float. It means that it takes x8 more memory. However, we use this
-# 64-bit float representation to encode 8 values. Indeed, we will save memory only if
-# we cast the compressed image into an array of 1-bit integer. We could use potentially
-# the function `as_type` from `numpy`. However, a 1-bit integer representation does not
-# exist and to encode the 8 values, we will need to use the 8-bit unsigned integer
-# representation as well.
+# Indeed, the output of the :class:`~sklearn.preprocessing.KBinsDiscretizer` is
+# an array of 64-bit float. It means that it takes x8 more memory. However, we
+# use this 64-bit float representation to encode 8 values. Indeed, we will save
+# memory only if we cast the compressed image into an array of 1-bit integer. We
+# could use the method `numpy.ndarray.astype`. However, a 1-bit integer
+# representation does not exist and to encode the 8 values, we would need to use
+# the 8-bit unsigned integer representation as well.
 #
-# In reality, the above compression would make sense with 64-bit float representation
-# of original image to observe a memory gain.
+# In practice, observing a memory gain would require the original image to be in
+# a 64-bit float representation.
