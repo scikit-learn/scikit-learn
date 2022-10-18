@@ -70,16 +70,16 @@ as objects that implement the ``transform`` method:
    selection with a configurable strategy. This allows to select the best
    univariate selection strategy with hyper-parameter search estimator.
 
-For instance, we can perform a :math:`\chi^2` test to the samples
-to retrieve only the two best features as follows:
+For instance, we can perform a F-test to the samples to retrieve only the two
+best features as follows:
 
   >>> from sklearn.datasets import load_iris
   >>> from sklearn.feature_selection import SelectKBest
-  >>> from sklearn.feature_selection import chi2
+  >>> from sklearn.feature_selection import f_classif
   >>> X, y = load_iris(return_X_y=True)
   >>> X.shape
   (150, 4)
-  >>> X_new = SelectKBest(chi2, k=2).fit_transform(X, y)
+  >>> X_new = SelectKBest(f_classif, k=2).fit_transform(X, y)
   >>> X_new.shape
   (150, 2)
 
@@ -94,7 +94,8 @@ and p-values (or only scores for :class:`SelectKBest` and
 The methods based on F-test estimate the degree of linear dependency between
 two random variables. On the other hand, mutual information methods can capture
 any kind of statistical dependency, but being nonparametric, they require more
-samples for accurate estimation.
+samples for accurate estimation. Note that the :math:`\chi^2`-test should be
+applied to non-negative features, such as frequencies.
 
 .. topic:: Feature selection with sparse data
 

@@ -13,7 +13,8 @@ scale the numeric features and one-hot encode the categorical ones.
 
 In this example, the numeric data is standard-scaled after mean-imputation. The
 categorical data is one-hot encoded via ``OneHotEncoder``, which
-creates a new category for missing values.
+creates a new category for missing values. We further reduce the dimensionality
+by selecting categories using a chi-squared test.
 
 In addition, we show two different ways to dispatch the columns to the
 particular pre-processor: by column names and by column data types.
@@ -38,6 +39,7 @@ from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.feature_selection import SelectPercentile, chi2
 
 np.random.seed(0)
 
@@ -77,8 +79,12 @@ numeric_transformer = Pipeline(
 )
 
 categorical_features = ["embarked", "sex", "pclass"]
-categorical_transformer = OneHotEncoder(handle_unknown="ignore")
-
+categorical_transformer = Pipeline(
+    steps=[
+        ("encoder", OneHotEncoder(handle_unknown="ignore")),
+        ("selecter", SelectPercentile(chi2, percentile=50)),
+    ]
+)
 preprocessor = ColumnTransformer(
     transformers=[
         ("num", numeric_transformer, numeric_features),
@@ -177,6 +183,7 @@ selector(dtype_include="category")(X_train)
 
 param_grid = {
     "preprocessor__num__imputer__strategy": ["mean", "median"],
+    "preprocessor__cat__selecter__percentile": [10, 30, 50, 70],
     "classifier__C": [0.1, 1.0, 10, 100],
 }
 
@@ -207,6 +214,7 @@ cv_results[
         "mean_test_score",
         "std_test_score",
         "param_preprocessor__num__imputer__strategy",
+        "param_preprocessor__cat__selecter__percentile",
         "param_classifier__C",
     ]
 ].head(5)
