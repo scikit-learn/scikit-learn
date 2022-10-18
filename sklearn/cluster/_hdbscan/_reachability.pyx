@@ -4,16 +4,13 @@
 # License: 3-clause BSD
 
 import numpy as np
-from cython.parallel cimport prange
+from scipy.sparse import issparse
+from ...neighbors import BallTree, KDTree
+
 cimport numpy as cnp
+from cython.parallel cimport prange
 from libc.math cimport isfinite
 
-import gc
-
-from scipy.sparse import issparse
-from scipy.spatial.distance import pdist, squareform
-
-from ...neighbors import BallTree, KDTree
 
 def mutual_reachability(distance_matrix, min_points=5, max_dist=0.0):
     """Compute the weighted adjacency matrix of the mutual reachability
