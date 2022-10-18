@@ -1074,7 +1074,9 @@ is defined by:
 
 .. math::
 
-  L_\text{Hinge}(y_w, y_t) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} \max\left\{1 + y_{t,i} - y_{w,i}, 0\right\}
+  L_\text{Hinge}(y, w) = \frac{1}{n_\text{samples}}
+  \sum_{i=0}^{n_\text{samples}-1} \max\left\{1 + \hat{w}_{i, y_i}
+  - w_{i, y_i}, 0\right\}
 
 Here is a small example demonstrating the use of the :func:`hinge_loss` function
 with a svm classifier in a binary class problem::
