@@ -56,7 +56,7 @@ cdef class BaseCriterion:
                                     double impurity_right) nogil
     cdef double proxy_impurity_improvement(self) nogil
 
- cdef class Criterion(BaseCriterion):
+cdef class Criterion(BaseCriterion):
     # The supervised criterion computes the impurity of a node and the reduction of
     # impurity of a split on that node using the distribution of labels in parent and
     # children nodes. It also computes the output statistics
