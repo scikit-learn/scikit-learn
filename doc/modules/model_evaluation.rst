@@ -1050,9 +1050,10 @@ the model and the data using
 that considers only prediction errors. (Hinge
 loss is used in maximal margin classifiers such as support vector machines.)
 
-If the labels are encoded with +1 and -1, :math:`y` is the set of true
-values, and :math:`w` is the set of predicted decisions as output by
-``decision_function``, then the hinge loss is defined as:
+If the true label :math:`y_i` of a binary classification task is encoded as
+:math:`y_i=\left\{-1, +1\right\}` for every sample :math:`i`; and :math:`w_i`
+is the corresponding predicted decision (an array of shape (`n_samples`,) as
+output by the `decision_function` method), then the hinge loss is defined as:
 
 .. math::
 
