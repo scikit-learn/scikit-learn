@@ -1064,10 +1064,13 @@ due to Crammer & Singer.
 `Here <http://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_ is
 the paper describing it.
 
-For a sample `i`, if :math:`y_{w,i}` is the predicted decision for true label 
-and :math:`y_{t,i}` is the maximum of the predicted decisions for all other 
-labels, where predicted decisions are output by decision function, then 
-multiclass hinge loss is defined by:
+In this case the predicted decision is an array of shape (`n_samples`,
+`n_labels`). If :math:`w_{i, y_i}` is the predicted decision for the true label
+:math:`y_i` of the :math:`i`-th sample; and
+:math:`\hat{w}_{i, y_i} = \max\left\{w_{i, y_j}~|~y_j \ne y_i \right\}`
+is the maximum of the
+predicted decisions for all the other labels, then the multi-class hinge loss
+is defined by:
 
 .. math::
 
