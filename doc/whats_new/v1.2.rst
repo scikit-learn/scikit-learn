@@ -528,7 +528,7 @@ Changelog
   a lower case `x[i]` to represent feature `i`. :pr:`23480` by `Thomas Fan`_.
 - |Enhancement| The :class:`tree.BaseDecisionTree` now checks for a ``BaseCriterion``
   Cython class rather than a ``Criterion``, which is a new abstract Cython API for
-  tree Criterion. :pr:`24678` by `Adam Li`_.
+  tree Criterion. :pr:`24678` by :user:`Adam Li <adam2392>`.
 
 :mod:`sklearn.utils`
 ....................
