@@ -25,7 +25,10 @@ We consider the titanic dataset, in which:
 
 # %%
 import pandas as pd
+from sklearn import set_config
 from sklearn.datasets import fetch_openml
+
+set_config(transform_output="pandas")
 
 X, y = fetch_openml(
     "titanic", version=1, as_frame=True, return_X_y=True, n_retries=10, parser="auto"
@@ -57,13 +60,14 @@ preprocessor = ColumnTransformer(
     transformers=[
         ("num", numeric_transformer, numeric_features),
         ("cat", categorical_transformer, categorical_features),
-    ]
+    ],
+    verbose_feature_names_out=False,
 )
 
 classifier = ColumnwiseNB(
     nb_estimators=[
-        ("gnb", GaussianNB(), [0, 1]),
-        ("cnb", CategoricalNB(), [2, 3, 4]),
+        ("gnb", GaussianNB(), numeric_features),
+        ("cnb", CategoricalNB(), categorical_features),
     ]
 )
 
@@ -86,9 +90,12 @@ print(f"Test accuracy: {accuracy_score(y_test, y_pred)}")
 
 param_grid = {
     "classifier__nb_estimators": [
-        [("gnb", GaussianNB(), [0, 1]), ("cnb", CategoricalNB(), [2, 3, 4])],
-        [("gnb", GaussianNB(), []), ("cnb", CategoricalNB(), [3])],
-        [("gnb", GaussianNB(), [3]), ("cnb", CategoricalNB(), [])],
+        [
+            ("gnb", GaussianNB(), ["age", "fare"]),
+            ("cnb", CategoricalNB(), categorical_features),
+        ],
+        [("gnb", GaussianNB(), []), ("cnb", CategoricalNB(), ["pclass"])],
+        [("gnb", GaussianNB(), ["embarked"]), ("cnb", CategoricalNB(), [])],
     ],
     "preprocessor__num__strategy": ["mean", "most_frequent"],
 }
