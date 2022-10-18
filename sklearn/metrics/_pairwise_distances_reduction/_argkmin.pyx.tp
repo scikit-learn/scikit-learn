@@ -507,7 +507,6 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
             DTYPE_t * heaps_r_distances = self.heaps_r_distances_chunks[thread_num]
             ITYPE_t * heaps_indices = self.heaps_indices_chunks[thread_num]
 
-
         # Pushing the distance and their associated indices on heaps
         # which keep tracks of the argkmin.
         for i in range(n_X):
