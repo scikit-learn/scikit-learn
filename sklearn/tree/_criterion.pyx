@@ -29,43 +29,21 @@ from ._utils cimport WeightedMedianCalculator
 # EPSILON is used in the Poisson criterion
 cdef double EPSILON = 10 * np.finfo('double').eps
 
-cdef class Criterion:
-    """Interface for impurity criteria.
+cdef class BaseCriterion:
+    """Abstract interface for criterion.
 
     This object stores methods on how to calculate how good a split is using
-    different metrics.
+    a set API. 
+
+    The criterion object is maintained such that left and right collected
+    statistics correspond to samples[start:pos] and samples[pos:end]. So the samples in
+    the "parent" node is samples[start:end], while left and right are split with the pointer
+    'pos' variable.
     """
     def __getstate__(self):
         return {}
 
     def __setstate__(self, d):
-        pass
-
-    cdef int init(self, const DOUBLE_t[:, ::1] y, DOUBLE_t* sample_weight,
-                  double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                  SIZE_t end) nogil except -1:
-        """Placeholder for a method which will initialize the criterion.
-
-        Returns -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-
-        Parameters
-        ----------
-        y : array-like, dtype=DOUBLE_t
-            y is a buffer that can store values for n_outputs target variables
-        sample_weight : array-like, dtype=DOUBLE_t
-            The weight of each sample
-        weighted_n_samples : double
-            The total weight of the samples being considered
-        samples : array-like, dtype=SIZE_t
-            Indices of the samples in X and y, where samples[start:end]
-            correspond to the samples in this node
-        start : SIZE_t
-            The first sample to be used on this node
-        end : SIZE_t
-            The last sample used on this node
-
-        """
         pass
 
     cdef int reset(self) nogil except -1:
@@ -192,6 +170,40 @@ cdef class Criterion:
                                  - (self.weighted_n_left /
                                     self.weighted_n_node_samples * impurity_left)))
 
+cdef class Criterion(BaseCriterion):
+    """Interface for impurity criteria.
+
+    This object stores methods on how to calculate how good a split is using
+    different metrics.
+    """
+    cdef int init(self, const DOUBLE_t[:, ::1] y, DOUBLE_t* sample_weight,
+                  double weighted_n_samples, SIZE_t* samples, SIZE_t start,
+                  SIZE_t end) nogil except -1:
+        """Placeholder for a method which will initialize the criterion.
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+
+        Parameters
+        ----------
+        y : array-like, dtype=DOUBLE_t
+            y is a buffer that can store values for n_outputs target variables
+        sample_weight : array-like, dtype=DOUBLE_t
+            The weight of each sample
+        weighted_n_samples : double
+            The total weight of the samples being considered
+        samples : array-like, dtype=SIZE_t
+            Indices of the samples in X and y, where samples[start:end]
+            correspond to the samples in this node
+        start : SIZE_t
+            The first sample to be used on this node
+        end : SIZE_t
+            The last sample used on this node
+
+        """
+        pass
+
+    
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
