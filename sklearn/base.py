@@ -808,9 +808,9 @@ class BiclusterMixin:
 class TransformerMixin(_SetOutputMixin):
     """Mixin class for all transformers in scikit-learn.
 
-    If :term:`get_feature_names_out` is defined and `auto_wrap_output` is True,
-    then `BaseEstimator` will automatically wrap `transform` and `fit_transform` to
-    follow the `set_output` API. See the :ref:`developer_api_set_output` for details.
+    If :term:`get_feature_names_out` is defined, then `BaseEstimator` will
+    automatically wrap `transform` and `fit_transform` to follow the `set_output`
+    API. See the :ref:`developer_api_set_output` for details.
 
     :class:`base.OneToOneFeatureMixin` and
     :class:`base.ClassNamePrefixFeaturesOutMixin` are helpful mixins for
