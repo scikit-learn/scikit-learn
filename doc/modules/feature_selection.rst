@@ -94,7 +94,7 @@ and p-values (or only scores for :class:`SelectKBest` and
 The methods based on F-test estimate the degree of linear dependency between
 two random variables. On the other hand, mutual information methods can capture
 any kind of statistical dependency, but being nonparametric, they require more
-samples for accurate estimation. Note that the :math:`\chi^2`-test should be
+samples for accurate estimation. Note that the :math:`\chi^2`-test should only be
 applied to non-negative features, such as frequencies.
 
 .. topic:: Feature selection with sparse data
