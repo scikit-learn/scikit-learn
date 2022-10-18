@@ -15,7 +15,7 @@ import numpy as np
 from scipy import linalg
 from joblib import Parallel, effective_n_jobs
 
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
+from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils import deprecated
 from ..utils._param_validation import Hidden, Interval, StrOptions
@@ -1152,7 +1152,7 @@ def dict_learning_online(
         return dictionary
 
 
-class _BaseSparseCoding(_ClassNamePrefixFeaturesOutMixin, TransformerMixin):
+class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
     """Base class from SparseCoder and DictionaryLearning algorithms."""
 
     def __init__(
