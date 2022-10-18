@@ -27,7 +27,9 @@ We consider the titanic dataset, in which:
 import pandas as pd
 from sklearn.datasets import fetch_openml
 
-X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True, n_retries=10)
+X, y = fetch_openml(
+    "titanic", version=1, as_frame=True, return_X_y=True, n_retries=10, parser="auto"
+)
 X["pclass"] = X["pclass"].astype("category")
 # Add a category for NaNs to the "embarked" feature:
 X["embarked"] = X["embarked"].cat.add_categories("N/A").fillna("N/A")
