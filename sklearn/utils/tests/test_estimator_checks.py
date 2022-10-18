@@ -35,6 +35,8 @@ from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
 from sklearn.exceptions import SkipTestWarning
 from sklearn.utils.metaestimators import available_if
+from sklearn.utils.estimator_checks import check_decision_proba_consistency
+
 
 from sklearn.utils.estimator_checks import (
     _NotAnArray,
@@ -1086,3 +1088,13 @@ def test_non_deterministic_estimator_skip_tests():
         all_tests = list(_yield_all_checks(Estimator()))
         assert check_methods_sample_order_invariance not in all_tests
         assert check_methods_subset_invariance not in all_tests
+
+
+def test_decision_proba_tie_ranking():
+    """Check that in case with some probabilities ties, we relax the
+    ranking comparison with the decision function.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/24025
+    """
+    estimator = SGDClassifier(loss="log_loss")
+    check_decision_proba_consistency("SGDClassifier", estimator)
