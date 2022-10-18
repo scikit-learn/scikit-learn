@@ -121,7 +121,7 @@ Changelog
 - |Enhancement| Introduces :class:`base.ClassNamePrefixFeaturesOutMixin` and
   :class:`base.ClassNamePrefixFeaturesOutMixin` mixins that defines
   :term:`get_feature_names_out` for common transformer uses cases.
-  :pr:`xxxxx` by `Thomas Fan`_.
+  :pr:`24688` by `Thomas Fan`_.
 
 :mod:`sklearn.calibration`
 ..........................
