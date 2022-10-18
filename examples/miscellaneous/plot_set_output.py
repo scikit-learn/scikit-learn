@@ -60,7 +60,7 @@ clf.fit(X_train, y_train)
 
 # %%
 # Each transformer in the pipeline is configured to return DataFrames. This
-# means that the final logistic regression step contain the feature names.
+# means that the final logistic regression step contains the feature names of the input.
 clf[-1].feature_names_in_
 
 # %%
@@ -75,7 +75,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y)
 
 # %%
 # The `set_output` API can be configured globally by using :func:`set_config` and
-# setting the `transform_output` to `"pandas"`.
+# setting `transform_output` to `"pandas"`.
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.impute import SimpleImputer
