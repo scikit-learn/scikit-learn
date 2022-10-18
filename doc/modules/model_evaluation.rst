@@ -707,10 +707,11 @@ The :func:`hamming_loss` computes the average Hamming loss or `Hamming
 distance <https://en.wikipedia.org/wiki/Hamming_distance>`_ between two sets
 of samples.
 
-If :math:`\hat{y}_{i,j}` is the predicted value for the :math:`j`-th label of
-a given sample `i`, :math:`y_{i,j}` is the corresponding true value, and
-:math:`n_\text{labels}` is the number of classes or labels, then the
-Hamming loss :math:`L_{Hamming}` is defined as:
+If :math:`\hat{y}_{i,j}` is the predicted value for the :math:`j`-th label of a
+given sample point :math:`i`, :math:`y_{i,j}` is the corresponding true value,
+:math:`n_\text{samples}` is the number of sample points and
+:math:`n_\text{labels}` is the number of labels, then the Hamming loss 
+:math:`L_{Hamming}` is defined as:
 
 .. math::
 
@@ -718,6 +719,10 @@ Hamming loss :math:`L_{Hamming}` is defined as:
 
 where :math:`1(x)` is the `indicator function
 <https://en.wikipedia.org/wiki/Indicator_function>`_. ::
+
+In multiclass classification, the Hamming loss is computed as the average of the
+0-1 classification loss (:math:`L_{0-1}`) over :math:`n_{\text{samples}}`.
+
 
   >>> from sklearn.metrics import hamming_loss
   >>> y_pred = [1, 2, 3, 4]
