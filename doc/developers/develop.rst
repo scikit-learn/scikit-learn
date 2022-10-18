@@ -655,7 +655,7 @@ column names of pandas output.
 the transformer has a one-to-one correspondence input features and output
 features such as :class:`~preprocessing.StandardScaler`.
 :class:`base.ClassNamePrefixFeaturesOutMixin` is useful when the transformer
-needs to generate their own names such as :class:`~decomposition.PCA`.
+needs to generate their own feature names out such as :class:`~decomposition.PCA`.
 
 You can opt-out of the `set_output` API by setting `auto_wrap_output_keys=None`
 when defining a custom subclass::

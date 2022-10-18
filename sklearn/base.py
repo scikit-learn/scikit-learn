@@ -884,8 +884,10 @@ class OneToOneFeatureMixin:
 class ClassNamePrefixFeaturesOutMixin:
     """Mixin class for transformers that generate their own names by prefixing.
 
-    This mixin is useful when the transformer needs to generate their own names
-    such as :class:`~decomposition.PCA`.
+    This mixin is useful when the transformer needs to generate their own feature
+    names out such as :class:`~decomposition.PCA`. For example, if
+    :class:`~decomposition.PCA` outputs 3 features, then the generated feature
+    names out are: `["pca0", "pca1", "pca2"]`.
 
     This mixin assumes that a `_n_features_out` attribute is defined when the
     transformer is fitted. `_n_features_out` is the number of output features
@@ -896,8 +898,8 @@ class ClassNamePrefixFeaturesOutMixin:
         """Get output feature names for transformation.
 
         The feature names out will prefixed by the lowercased class name. For
-        example, if the transformer outputs 3 features, then the names are:
-        `["class_name0", "class_name1", "class_name2"]`.
+        example, if the transformer outputs 3 features, then the feature names
+        out are: `["class_name0", "class_name1", "class_name2"]`.
 
         Parameters
         ----------
