@@ -3463,11 +3463,20 @@ def check_decision_proba_consistency(name, estimator_orig):
         a = estimator.predict_proba(X_test)[:, 1].round(decimals=10)
         b = estimator.decision_function(X_test).round(decimals=10)
 
-        prob_rank = rankdata(a)
-        # calculate the average decision score groupby the rank of predicted probability
-        avg_decision_score = [np.mean(b[prob_rank == i]) for i in np.unique(prob_rank)]
-        # check if the average decision score is strictly increasing
-        assert all(x < y for x, y in zip(avg_decision_score, avg_decision_score[1:]))
+        rank_proba, rank_score = rankdata(a), rankdata(b)
+        try:
+            assert_array_almost_equal(rank_proba, rank_score)
+        except AssertionError:
+            # Sometimes, the rounding applied on the probabilities will results
+            # on ties that are not present in the scores because it is
+            # numerically more precise. In this case, we relax the test by
+            # grouping the decision function scores based on the probability
+            # rank and check that the score is monotonically increasing.
+            grouped_y_score = np.array(
+                [b[rank_proba == group].mean() for group in np.unique(rank_proba)]
+            )
+            sorted_idx = np.argsort(grouped_y_score)
+            assert_array_equal(sorted_idx, np.arange(len(sorted_idx)))
 
 
 def check_outliers_fit_predict(name, estimator_orig):
