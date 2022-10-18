@@ -765,11 +765,11 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         Returns
         -------
         labels : ndarray of shape (n_samples,)
-            An array of cluster labels, one per datapoint. 
+            An array of cluster labels, one per datapoint.
             Outliers are labeled as follows:
             - Noisy samples are given the label -1.
             - Samples with infinite elements (+/- np.inf) are given the label -2.
-            - Samples with missing data are given the label -3.            
+            - Samples with missing data are given the label -3.
         """
         labels = labelling_at_cut(
             self._single_linkage_tree_, cut_distance, min_cluster_size

@@ -149,6 +149,7 @@ def test_dbscan_clustering():
     n_clusters = len(set(labels) - OUTLIER_SET)
     assert n_clusters == n_clusters_true
 
+
 @pytest.mark.parametrize("outlier_type", _OUTLIER_ENCODING)
 @pytest.mark.parametrize("cut_distance", (0.1, 0.5, 1))
 def test_dbscan_clustering_outlier_data(outlier_type, cut_distance):
@@ -174,6 +175,7 @@ def test_dbscan_clustering_outlier_data(outlier_type, cut_distance):
     clean_model = HDBSCAN().fit(X_outlier[clean_indices])
     clean_labels = clean_model.dbscan_clustering(cut_distance=cut_distance)
     assert_array_equal(clean_labels, labels[clean_indices])
+
 
 def test_hdbscan_high_dimensional():
     H, y = make_blobs(n_samples=50, random_state=0, n_features=64)
