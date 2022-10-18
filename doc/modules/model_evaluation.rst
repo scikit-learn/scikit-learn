@@ -1658,8 +1658,9 @@ then the 0-1 loss :math:`L_{0-1}` is defined as:
 
    L_{0-1}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i \not= y_i)
 
-where :math:`zero-one loss = 1 - accuracy` is the `indicator function
-<https://en.wikipedia.org/wiki/Indicator_function>`_.
+where :math:`1(x)` is the `indicator function
+<https://en.wikipedia.org/wiki/Indicator_function>`_. The zero one
+loss can also be computed as :math:`zero-one loss = 1 - accuracy`.
 
 
   >>> from sklearn.metrics import zero_one_loss
