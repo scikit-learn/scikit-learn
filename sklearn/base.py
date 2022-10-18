@@ -884,8 +884,8 @@ class OneToOneFeatureMixin:
 class ClassNamePrefixFeaturesOutMixin:
     """Mixin class for transformers that generate their own names by prefixing.
 
-    This mixin is useful when the transformer needs to generate their own feature
-    names out such as :class:`~decomposition.PCA`. For example, if
+    This mixin is useful when the transformer needs to generate its own feature
+    names out, such as :class:`~decomposition.PCA`. For example, if
     :class:`~decomposition.PCA` outputs 3 features, then the generated feature
     names out are: `["pca0", "pca1", "pca2"]`.
 
