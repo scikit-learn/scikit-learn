@@ -248,11 +248,11 @@ def test_sparse():
 
 def test_lof_error():
     X = [[0, 1, 2, 3]]
-    clf = neighbors.LocalOutlierFactor(contamination = 'auto', n_neighbors = 1)
+    clf = neighbors.LocalOutlierFactor(contamination="auto", n_neighbors=1)
     inequality_str = "n_neighbors < n_samples_fit"
     msg = f"Expected {inequality_str}, but "
-    f"n_neighbors = 1, n_samples_fit = 1, "
-    f"n_samples = 1"
+    "n_neighbors = 1, n_samples_fit = 1, "
+    "n_samples = 1"
     for method in ["fit", "fit_predict"]:
         with pytest.raises(ValueError, match=msg):
             getattr(clf, method)(X)
