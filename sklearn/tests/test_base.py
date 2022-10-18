@@ -615,7 +615,7 @@ def test_feature_names_in():
     trans.fit(df)
     msg = "The feature names should match those that were passed"
     df_bad = pd.DataFrame(X_np, columns=iris.feature_names[::-1])
-    with pytest.warns(FutureWarning, match=msg):
+    with pytest.raises(ValueError, match=msg):
         trans.transform(df_bad)
 
     # warns when fitted on dataframe and transforming a ndarray

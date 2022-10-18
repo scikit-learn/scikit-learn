@@ -424,7 +424,11 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     )
     @property
     def family(self):
-        """Ensure backward compatibility for the time of deprecation."""
+        """Ensure backward compatibility for the time of deprecation.
+
+        .. deprecated:: 1.1
+            Will be removed in 1.3
+        """
         if isinstance(self, PoissonRegressor):
             return "poisson"
         elif isinstance(self, GammaRegressor):
