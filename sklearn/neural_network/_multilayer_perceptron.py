@@ -931,7 +931,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     loss_curve_ : list of shape (`n_iter_`,)
         The ith element in the list represents the loss at the ith iteration.
 
-    validation_scores_ : ndarray of shape (n_iter_,) or None
+    validation_scores_ : ndarray of shape (`n_iter_`,) or None
         The score at each iteration on a held-out validation set. The score
         reported is the accuracy score. Only available if `early_stopping=True`,
         otherwise the attribute is set to `None`.
@@ -1411,7 +1411,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         Loss value evaluated at the end of each training step.
         The ith element in the list represents the loss at the ith iteration.
 
-    validation_scores_ : ndarray of shape (n_iter_,) or None
+    validation_scores_ : ndarray of shape (`n_iter_`,) or None
         The score at each iteration on a held-out validation set. The score
         reported is the R2 score. Only available if `early_stopping=True`,
         otherwise the attribute is set to `None`.
