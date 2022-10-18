@@ -15,7 +15,6 @@ and finally the ground truth.
 
 """
 
-# %%
 # Code source: Gaël Varoquaux
 # Modified for documentation by Jaques Grobler
 # License: BSD 3 clause
@@ -89,5 +88,3 @@ ax.set_zlabel("Petal length")
 ax.set_title("Ground Truth")
 
 fig.show()
-
-# %%
