@@ -75,11 +75,7 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms32(
         )
 
     with nogil, parallel(num_threads=num_threads):
-
-        IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
-            thread_num = openmp.omp_get_thread_num()
-        ELSE:
-            thread_num = 1
+        thread_num = _openmp_thread_num()
 
         for i in prange(n, schedule='static'):
             # Upcasting the i-th row of X from 32bit to 64bit
