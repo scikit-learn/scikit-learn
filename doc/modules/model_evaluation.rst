@@ -1055,9 +1055,10 @@ the model and the data using
 that considers only prediction errors. (Hinge
 loss is used in maximal margin classifiers such as support vector machines.)
 
-If the labels are encoded with +1 and -1, :math:`y` is the set of true
-values, and :math:`w` is the set of predicted decisions as output by
-``decision_function``, then the hinge loss is defined as:
+If the true label :math:`y_i` of a binary classification task is encoded as
+:math:`y_i=\left\{-1, +1\right\}` for every sample :math:`i`; and :math:`w_i`
+is the corresponding predicted decision (an array of shape (`n_samples`,) as
+output by the `decision_function` method), then the hinge loss is defined as:
 
 .. math::
 
@@ -1068,14 +1069,19 @@ due to Crammer & Singer.
 `Here <http://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_ is
 the paper describing it.
 
-For a sample `i`, if :math:`y_{w,i}` is the predicted decision for true label 
-and :math:`y_{t,i}` is the maximum of the predicted decisions for all other 
-labels, where predicted decisions are output by decision function, then 
-multiclass hinge loss is defined by:
+In this case the predicted decision is an array of shape (`n_samples`,
+`n_labels`). If :math:`w_{i, y_i}` is the predicted decision for the true label
+:math:`y_i` of the :math:`i`-th sample; and
+:math:`\hat{w}_{i, y_i} = \max\left\{w_{i, y_j}~|~y_j \ne y_i \right\}`
+is the maximum of the
+predicted decisions for all the other labels, then the multi-class hinge loss
+is defined by:
 
 .. math::
 
-  L_\text{Hinge}(y_w, y_t) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} \max\left\{1 + y_{t,i} - y_{w,i}, 0\right\}
+  L_\text{Hinge}(y, w) = \frac{1}{n_\text{samples}}
+  \sum_{i=0}^{n_\text{samples}-1} \max\left\{1 + \hat{w}_{i, y_i}
+  - w_{i, y_i}, 0\right\}
 
 Here is a small example demonstrating the use of the :func:`hinge_loss` function
 with a svm classifier in a binary class problem::
@@ -1657,8 +1663,9 @@ then the 0-1 loss :math:`L_{0-1}` is defined as:
 
    L_{0-1}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i \not= y_i)
 
-where :math:`zero-one loss = 1 - accuracy` is the `indicator function
-<https://en.wikipedia.org/wiki/Indicator_function>`_.
+where :math:`1(x)` is the `indicator function
+<https://en.wikipedia.org/wiki/Indicator_function>`_. The zero one
+loss can also be computed as :math:`zero-one loss = 1 - accuracy`.
 
 
   >>> from sklearn.metrics import zero_one_loss
