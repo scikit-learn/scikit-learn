@@ -27,7 +27,8 @@ from ._tree import compute_stability, condense_tree, get_clusters, labelling_at_
 
 FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics
 
-# Encodings are arbitray, but chosen as extensions to the -1 noise label.
+# Encodings are arbitray but must be strictly negative.
+# The current encodings are chosen as extensions to the -1 noise label.
 # Avoided enums so that the end user only deals with simple labels.
 _OUTLIER_ENCODING = {
     "infinite": {
@@ -764,15 +765,20 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         Returns
         -------
         labels : ndarray of shape (n_samples,)
-            An array of cluster labels, one per datapoint. Unclustered points
-            are assigned the label -1.
+            An array of cluster labels, one per datapoint. 
+            Outliers are labeled as follows:
+            - Noisy samples are given the label -1.
+            - Samples with infinite elements (+/- np.inf) are given the label -2.
+            - Samples with missing data are given the label -3.            
         """
         labels = labelling_at_cut(
             self._single_linkage_tree_, cut_distance, min_cluster_size
         )
+        # Infer indices from labels generated during `fit`
         infinite_index = self.labels_ == _OUTLIER_ENCODING["infinite"]["label"]
         missing_index = self.labels_ == _OUTLIER_ENCODING["missing"]["label"]
 
+        # Overwrite infinite/missing outlier samples (otherwise simple noise)
         labels[infinite_index] = _OUTLIER_ENCODING["infinite"]["label"]
         labels[missing_index] = _OUTLIER_ENCODING["missing"]["label"]
         return labels
