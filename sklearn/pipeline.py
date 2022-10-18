@@ -24,10 +24,11 @@ from .utils import (
     Bunch,
     _print_elapsed_time,
 )
-from .utils.deprecation import deprecated
 from .utils._tags import _safe_tags
 from .utils.validation import check_memory
 from .utils.validation import check_is_fitted
+from .utils import check_pandas_support
+from .utils._set_output import _safe_set_output, _get_output_config
 from .utils.fixes import delayed
 from .exceptions import NotFittedError
 
@@ -146,6 +147,25 @@ class Pipeline(_BaseComposition):
         self.steps = steps
         self.memory = memory
         self.verbose = verbose
+
+    def set_output(self, transform=None):
+        """Set the output container when `"transform`" and `"fit_transform"` are called.
+
+        Calling `set_output` will set the output of all estimators in `steps`.
+
+        Parameters
+        ----------
+        transform : {"default", "pandas"}, default=None
+            Configure output of `transform` and `fit_transform`.
+
+        Returns
+        -------
+        self : estimator instance
+            Estimator instance.
+        """
+        for _, _, step in self._iter():
+            _safe_set_output(step, transform=transform)
+        return self
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -969,6 +989,26 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self.transformer_weights = transformer_weights
         self.verbose = verbose
 
+    def set_output(self, transform=None):
+        """Set the output container when `"transform`" and `"fit_transform"` are called.
+
+        `set_output` will set the output of all estimators in `transformer_list`.
+
+        Parameters
+        ----------
+        transform : {"default", "pandas"}, default=None
+            Configure output of `transform` and `fit_transform`.
+
+        Returns
+        -------
+        self : estimator instance
+            Estimator instance.
+        """
+        super().set_output(transform=transform)
+        for _, step, _ in self._iter():
+            _safe_set_output(step, transform=transform)
+        return self
+
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
@@ -1053,30 +1093,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             if trans == "drop":
                 continue
             if trans == "passthrough":
-                trans = FunctionTransformer()
+                trans = FunctionTransformer(feature_names_out="one-to-one")
             yield (name, trans, get_weight(name))
-
-    @deprecated(
-        "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. Please use get_feature_names_out instead."
-    )
-    def get_feature_names(self):
-        """Get feature names from all transformers.
-
-        Returns
-        -------
-        feature_names : list of strings
-            Names of the features produced by transform.
-        """
-        feature_names = []
-        for name, trans, weight in self._iter():
-            if not hasattr(trans, "get_feature_names"):
-                raise AttributeError(
-                    "Transformer %s (type %s) does not provide get_feature_names."
-                    % (str(name), type(trans).__name__)
-                )
-            feature_names.extend([name + "__" + f for f in trans.get_feature_names()])
-        return feature_names
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -1212,6 +1230,11 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return self._hstack(Xs)
 
     def _hstack(self, Xs):
+        config = _get_output_config("transform", self)
+        if config["dense"] == "pandas" and all(hasattr(X, "iloc") for X in Xs):
+            pd = check_pandas_support("transform")
+            return pd.concat(Xs, axis=1)
+
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:

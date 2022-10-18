@@ -5,6 +5,7 @@ import re
 from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
+from numbers import Real
 
 import numpy as np
 from scipy import sparse
@@ -13,6 +14,7 @@ import joblib
 
 from . import IS_PYPY
 from .. import config_context
+from ._param_validation import Interval
 from ._testing import _get_args
 from ._testing import assert_raise_message
 from ._testing import assert_array_equal
@@ -269,6 +271,10 @@ def _yield_clustering_checks(clusterer):
 
 
 def _yield_outliers_checks(estimator):
+
+    # checks for the contamination parameter
+    if hasattr(estimator, "contamination"):
+        yield check_outlier_contamination
 
     # checks for outlier detectors that have a fit_predict method
     if hasattr(estimator, "fit_predict"):
@@ -756,6 +762,11 @@ def _set_checking_parameters(estimator):
 
     if name in CROSS_DECOMPOSITION:
         estimator.set_params(n_components=1)
+
+    # Default "auto" parameter can lead to different ordering of eigenvalues on
+    # windows: #24105
+    if name == "SpectralEmbedding":
+        estimator.set_params(eigen_tol=1e-5)
 
 
 class _NotAnArray:
@@ -2352,6 +2363,33 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
             check_outlier_corruption(num_outliers, expected_outliers, decision)
 
 
+def check_outlier_contamination(name, estimator_orig):
+    # Check that the contamination parameter is in (0.0, 0.5] when it is an
+    # interval constraint.
+
+    if not hasattr(estimator_orig, "_parameter_constraints"):
+        # Only estimator implementing parameter constraints will be checked
+        return
+
+    if "contamination" not in estimator_orig._parameter_constraints:
+        return
+
+    contamination_constraints = estimator_orig._parameter_constraints["contamination"]
+    if not any([isinstance(c, Interval) for c in contamination_constraints]):
+        raise AssertionError(
+            "contamination constraints should contain a Real Interval constraint."
+        )
+
+    for constraint in contamination_constraints:
+        if isinstance(constraint, Interval):
+            assert (
+                constraint.type == Real
+                and constraint.left >= 0.0
+                and constraint.right <= 0.5
+                and (constraint.left > 0 or constraint.closed in {"right", "neither"})
+            ), "contamination constraint should be an interval in (0, 0.5]"
+
+
 @ignore_warnings(category=FutureWarning)
 def check_classifiers_multilabel_representation_invariance(name, classifier_orig):
     X, y = make_multilabel_classification(
@@ -2788,6 +2826,7 @@ def check_regressors_train(
     X = _pairwise_estimator_convert_X(X, regressor_orig)
     y = scale(y)  # X is already scaled
     regressor = clone(regressor_orig)
+    X = _enforce_estimator_tags_x(regressor, X)
     y = _enforce_estimator_tags_y(regressor, y)
     if name in CROSS_DECOMPOSITION:
         rnd = np.random.RandomState(0)
@@ -3263,7 +3302,10 @@ def _enforce_estimator_tags_x(estimator, X):
     # Pairwise estimators only accept
     # X of shape (`n_samples`, `n_samples`)
     if _safe_tags(estimator, key="pairwise"):
-        X = X.dot(X.T)
+        # TODO: Remove when `_pairwise_estimator_convert_X`
+        # is removed and its functionality is moved here
+        if X.shape[0] != X.shape[1] or not np.allclose(X, X.T):
+            X = X.dot(X.T)
     # Estimators with `1darray` in `X_types` tag only accept
     # X of shape (`n_samples`,)
     if "1darray" in _safe_tags(estimator, key="X_types"):
@@ -3271,7 +3313,7 @@ def _enforce_estimator_tags_x(estimator, X):
     # Estimators with a `requires_positive_X` tag only accept
     # strictly positive data
     if _safe_tags(estimator, key="requires_positive_X"):
-        X -= X.min()
+        X -= X.min() - 1
     if "categorical" in _safe_tags(estimator, key="X_types"):
         X = (X - X.min()).astype(np.int32)
     return X
@@ -3885,22 +3927,14 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         X_bad = pd.DataFrame(X, columns=invalid_name)
 
         expected_msg = re.escape(
-            "The feature names should match those that were passed "
-            "during fit. Starting version 1.2, an error will be raised.\n"
+            "The feature names should match those that were passed during fit.\n"
             f"{additional_message}"
         )
         for name, method in check_methods:
-            # TODO In 1.2, this will be an error.
-            with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    "error",
-                    category=FutureWarning,
-                    module="sklearn",
-                )
-                with raises(
-                    FutureWarning, match=expected_msg, err_msg=f"{name} did not raise"
-                ):
-                    method(X_bad)
+            with raises(
+                ValueError, match=expected_msg, err_msg=f"{name} did not raise"
+            ):
+                method(X_bad)
 
         # partial_fit checks on second call
         # Do not call partial fit if early_stopping is on
@@ -3914,10 +3948,8 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         else:
             estimator.partial_fit(X, y)
 
-        with warnings.catch_warnings():
-            warnings.filterwarnings("error", category=FutureWarning, module="sklearn")
-            with raises(FutureWarning, match=expected_msg):
-                estimator.partial_fit(X_bad, y)
+        with raises(ValueError, match=expected_msg):
+            estimator.partial_fit(X_bad, y)
 
 
 def check_transformer_get_feature_names_out(name, transformer_orig):
@@ -4082,7 +4114,7 @@ def check_param_validation(name, estimator_orig):
 
             with raises(ValueError, match=match, err_msg=err_msg):
                 if any(
-                    X_type.endswith("labels")
+                    isinstance(X_type, str) and X_type.endswith("labels")
                     for X_type in _safe_tags(estimator, key="X_types")
                 ):
                     # The estimator is a label transformer and take only `y`
@@ -4117,3 +4149,107 @@ def check_param_validation(name, estimator_orig):
                         getattr(estimator, method)(y)
                     else:
                         getattr(estimator, method)(X, y)
+
+
+def check_set_output_transform(name, transformer_orig):
+    # Check transformer.set_output with the default configuration does not
+    # change the transform output.
+    tags = transformer_orig._get_tags()
+    if "2darray" not in tags["X_types"] or tags["no_validation"]:
+        return
+
+    rng = np.random.RandomState(0)
+    transformer = clone(transformer_orig)
+
+    X = rng.uniform(size=(20, 5))
+    X = _pairwise_estimator_convert_X(X, transformer_orig)
+    y = rng.randint(0, 2, size=20)
+    y = _enforce_estimator_tags_y(transformer_orig, y)
+    set_random_state(transformer)
+
+    def fit_then_transform(est):
+        if name in CROSS_DECOMPOSITION:
+            return est.fit(X, y).transform(X, y)
+        return est.fit(X, y).transform(X)
+
+    def fit_transform(est):
+        return est.fit_transform(X, y)
+
+    transform_methods = [fit_then_transform, fit_transform]
+    for transform_method in transform_methods:
+        transformer = clone(transformer)
+        X_trans_no_setting = transform_method(transformer)
+
+        # Auto wrapping only wraps the first array
+        if name in CROSS_DECOMPOSITION:
+            X_trans_no_setting = X_trans_no_setting[0]
+
+        transformer.set_output(transform="default")
+        X_trans_default = transform_method(transformer)
+
+        if name in CROSS_DECOMPOSITION:
+            X_trans_default = X_trans_default[0]
+
+        # Default and no setting -> returns the same transformation
+        assert_allclose_dense_sparse(X_trans_no_setting, X_trans_default)
+
+
+def check_set_output_transform_pandas(name, transformer_orig):
+    # Check transformer.set_output configures the output of transform="pandas".
+    try:
+        import pandas as pd
+    except ImportError:
+        raise SkipTest(
+            "pandas is not installed: not checking column name consistency for pandas"
+        )
+
+    tags = transformer_orig._get_tags()
+    if "2darray" not in tags["X_types"] or tags["no_validation"]:
+        return
+
+    rng = np.random.RandomState(0)
+    transformer = clone(transformer_orig)
+
+    X = rng.uniform(size=(20, 5))
+    X = _pairwise_estimator_convert_X(X, transformer_orig)
+    y = rng.randint(0, 2, size=20)
+    y = _enforce_estimator_tags_y(transformer_orig, y)
+    set_random_state(transformer)
+
+    feature_names_in = [f"col{i}" for i in range(X.shape[1])]
+    df = pd.DataFrame(X, columns=feature_names_in)
+
+    def fit_then_transform(est):
+        if name in CROSS_DECOMPOSITION:
+            return est.fit(df, y).transform(df, y)
+        return est.fit(df, y).transform(df)
+
+    def fit_transform(est):
+        return est.fit_transform(df, y)
+
+    transform_methods = [fit_then_transform, fit_transform]
+
+    for transform_method in transform_methods:
+        transformer = clone(transformer).set_output(transform="default")
+        X_trans_no_setting = transform_method(transformer)
+
+        # Auto wrapping only wraps the first array
+        if name in CROSS_DECOMPOSITION:
+            X_trans_no_setting = X_trans_no_setting[0]
+
+        transformer.set_output(transform="pandas")
+        try:
+            X_trans_pandas = transform_method(transformer)
+        except ValueError as e:
+            # transformer does not support sparse data
+            assert str(e) == "Pandas output does not support sparse data.", e
+            return
+
+        if name in CROSS_DECOMPOSITION:
+            X_trans_pandas = X_trans_pandas[0]
+
+        assert isinstance(X_trans_pandas, pd.DataFrame)
+        expected_dataframe = pd.DataFrame(
+            X_trans_no_setting, columns=transformer.get_feature_names_out()
+        )
+        pd.testing.assert_frame_equal(X_trans_pandas, expected_dataframe)
