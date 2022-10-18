@@ -821,7 +821,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
-        "criterion": [StrOptions({"gini", "entropy", "log_loss"}), Hidden(BaseCriterion)],
+        "criterion": [
+            StrOptions({"gini", "entropy", "log_loss"}),
+            Hidden(BaseCriterion),
+        ],
         "class_weight": [dict, list, StrOptions({"balanced"}), None],
     }
 
