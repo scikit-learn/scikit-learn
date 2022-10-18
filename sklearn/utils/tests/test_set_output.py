@@ -199,3 +199,16 @@ def test_auto_wrap_output_keys_errors_with_incorrect_input():
 
         class BadEstimator(_SetOutputMixin, auto_wrap_output_keys="bad_parameter"):
             pass
+
+
+def test__wrap_in_pandas_container_column_errors():
+    """If a callable `columns` errors, it has the same semantics as columns=None."""
+    pd = pytest.importorskip("pandas")
+
+    def get_columns():
+        raise ValueError("No feature names defined")
+
+    X_df = pd.DataFrame({"feat1": [1, 2, 3], "feat2": [3, 4, 5]})
+
+    X_wrapped = _wrap_in_pandas_container(X_df, columns=get_columns)
+    assert_array_equal(X_wrapped.columns, X_df.columns)

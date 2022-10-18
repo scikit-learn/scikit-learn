@@ -27,9 +27,11 @@ def _wrap_in_pandas_container(
     columns : callable, ndarray, or None
         The column names or a callable that returns the column names. The
         callable is useful if the column names require some computation.
-        If `None` and `data_to_wrap` is already a dataframe, then the column
-        names are not changed. If `None` and `data_to_wrap` is **not** a
-        dataframe, then columns are `range(n_features)`.
+        If `columns` is a callable that raises an error, `columns` will have
+        the same semantics as `None`. If `None` and `data_to_wrap` is already a
+        dataframe, then the column names are not changed. If `None` and
+        `data_to_wrap` is **not** a dataframe, then columns are
+        `range(n_features)`.
 
     index : array-like, default=None
         Index for data.
@@ -43,7 +45,10 @@ def _wrap_in_pandas_container(
         raise ValueError("Pandas output does not support sparse data.")
 
     if callable(columns):
-        columns = columns()
+        try:
+            columns = columns()
+        except Exception:
+            columns = None
 
     pd = check_pandas_support("Setting output container to 'pandas'")
 
