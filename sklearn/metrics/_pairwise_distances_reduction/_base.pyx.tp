@@ -123,52 +123,16 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms{{name_suffix}}_sparse(
     return squared_row_norms
 
 
-cdef class SqeuclideanRowNorm{{name_suffix}}:
-
-    @classmethod
-    def get_for(cls, X, num_threads):
-        if issparse(X):
-            return SparseSqeuclideanRowNorm{{name_suffix}}(X, num_threads)
-        else:
-            return DenseSqeuclideanRowNorm{{name_suffix}}(X, num_threads)
-
-    @classmethod
-    def unpack_csr_matrix(cls, X: csr_matrix):
-        """Ensure that the CSR matrix is indexed with SPARSE_INDEX_TYPE."""
+cpdef DTYPE_t[::1] _sqeuclidean_row_norms{{name_suffix}}(
+    X,
+    ITYPE_t num_threads,
+):
+    if issparse(X):
         X_data = np.asarray(X.data, dtype={{INPUT_DTYPE}})
-        X_indices = np.asarray(X.indices, dtype=SPARSE_INDEX_TYPE)
         X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
-        return X_data, X_indices, X_indptr
-
-    def __init__(self, num_threads):
-        self.num_threads = num_threads
-
-    cpdef DTYPE_t[::1] compute(self):
-        return None
-
-
-cdef class DenseSqeuclideanRowNorm{{name_suffix}}(SqeuclideanRowNorm{{name_suffix}}):
-
-    def __init__(self, X, num_threads):
-        super().__init__(num_threads)
-        self.X = X
-
-    cpdef DTYPE_t[::1] compute(self):
-        return _sqeuclidean_row_norms{{name_suffix}}_dense(self.X, self.num_threads)
-
-
-cdef class SparseSqeuclideanRowNorm{{name_suffix}}(SqeuclideanRowNorm{{name_suffix}}):
-
-    def __init__(self, X, num_threads):
-        super().__init__(num_threads)
-        self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
-
-    cpdef DTYPE_t[::1] compute(self):
-        return _sqeuclidean_row_norms{{name_suffix}}_sparse(
-            self.X_data,
-            self.X_indptr,
-            self.num_threads,
-        )
+        return _sqeuclidean_row_norms{{name_suffix}}_sparse(X_data, X_indptr, num_threads)
+    else:
+        return _sqeuclidean_row_norms{{name_suffix}}_dense(X, num_threads)
 
 
 from ._datasets_pair cimport DatasetsPair{{name_suffix}}

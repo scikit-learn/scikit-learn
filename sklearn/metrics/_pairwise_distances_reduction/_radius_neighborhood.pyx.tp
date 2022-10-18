@@ -60,7 +60,7 @@ cdef cnp.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
 
 from ._base cimport (
     BaseDistanceReducer{{name_suffix}},
-    _sqeuclidean_row_norms{{name_suffix}}_dense
+    _sqeuclidean_row_norms{{name_suffix}},
 )
 
 from ._datasets_pair cimport (
@@ -399,12 +399,12 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
                 dtype=np.float64
             )
         else:
-            self.Y_norm_squared = _sqeuclidean_row_norms{{name_suffix}}_dense(datasets_pair.Y, self.effective_n_threads)
+            self.Y_norm_squared = _sqeuclidean_row_norms{{name_suffix}}(datasets_pair.Y, self.effective_n_threads)
 
         # Do not recompute norms if datasets are identical.
         self.X_norm_squared = (
             self.Y_norm_squared if X is Y else
-            _sqeuclidean_row_norms{{name_suffix}}_dense(datasets_pair.X, self.effective_n_threads)
+            _sqeuclidean_row_norms{{name_suffix}}(datasets_pair.X, self.effective_n_threads)
         )
         self.use_squared_distances = use_squared_distances
 

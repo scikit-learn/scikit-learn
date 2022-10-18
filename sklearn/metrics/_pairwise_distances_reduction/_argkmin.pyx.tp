@@ -40,7 +40,7 @@ cnp.import_array()
 
 from ._base cimport (
     BaseDistanceReducer{{name_suffix}},
-    SqeuclideanRowNorm{{name_suffix}},
+    _sqeuclidean_row_norms{{name_suffix}}
 )
 
 from ._datasets_pair cimport (
@@ -389,16 +389,16 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
                 dtype=np.float64
             )
         else:
-            self.Y_norm_squared = SqeuclideanRowNorm{{name_suffix}}.get_for(
+            self.Y_norm_squared = _sqeuclidean_row_norms{{name_suffix}}(
                 Y, self.effective_n_threads
-            ).compute()
+            )
 
         # Do not recompute norms if datasets are identical.
         self.X_norm_squared = (
             self.Y_norm_squared if X is Y else
-            SqeuclideanRowNorm{{name_suffix}}.get_for(
+            _sqeuclidean_row_norms{{name_suffix}}(
                 X, self.effective_n_threads
-            ).compute()
+            )
         )
         self.use_squared_distances = use_squared_distances
 
