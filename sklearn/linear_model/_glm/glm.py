@@ -70,7 +70,7 @@ class NewtonSolver(ABC):
     Parameters
     ----------
     coef : ndarray of shape (n_dof,), (n_classes, n_dof) or (n_classes * n_dof,)
-        Start/Initial coefficients of a linear model.
+        Initial coefficients of a linear model.
         If shape (n_classes * n_dof,), the classes of one feature are contiguous,
         i.e. one reconstructs the 2d-array via
         coef.reshape((n_classes, -1), order="F").
@@ -114,8 +114,7 @@ class NewtonSolver(ABC):
     loss_value_old : float
         Value of objective function of previous itertion.
 
-    raw_prediction : ndarray of shape (n_samples,) or \
-            (n_samples, n_classes)
+    raw_prediction : ndarray of shape (n_samples,) or (n_samples, n_classes)
 
     converged : bool
         Indicator for convergence of the solver.
@@ -124,7 +123,8 @@ class NewtonSolver(ABC):
         Number of Newton steps, i.e. calls to inner_solve
 
     use_fallback_lbfgs_solve : bool
-        An inner solver can set this to True to resort to LBFGS for one iteration.
+        If set to True, the solver will resort to call LBFGS to finish the optimisation
+        procedure in case of convergence issues.
 
     gradient_times_newton : float
         gradient @ coef_newton, set in inner_solve and used by line_search. If the
@@ -629,6 +629,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             iterated reweighted least squares) with an inner Cholesky based solver.
             This solver is suited for n_samples >> n_features.
 
+            .. versionadded:: 1.2
+
     max_iter : int, default=100
         The maximal number of iterations for the solver.
         Values must be in the range `[1, inf)`.
@@ -1066,6 +1068,8 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
             iterated reweighted least squares) with an inner Cholesky based solver.
             This solver is suited for n_samples >> n_features.
 
+            .. versionadded:: 1.2
+
     max_iter : int, default=100
         The maximal number of iterations for the solver.
         Values must be in the range `[1, inf)`.
@@ -1191,6 +1195,8 @@ class GammaRegressor(_GeneralizedLinearRegressor):
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
             iterated reweighted least squares) with an inner Cholesky based solver.
             This solver is suited for n_samples >> n_features.
+
+            .. versionadded:: 1.2
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -1348,6 +1354,8 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
             iterated reweighted least squares) with an inner Cholesky based solver.
             This solver is suited for n_samples >> n_features.
+
+            .. versionadded:: 1.2
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.

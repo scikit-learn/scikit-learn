@@ -422,7 +422,7 @@ print(scores)
 
 # %%
 #
-# Those metric values are not necessarily easy to interpret. It can be
+# Those values of the metrics are not necessarily easy to interpret. It can be
 # insightful to compare them with a model that does not use any input
 # features and always predicts a constant value, i.e. the average claim
 # amount, in the same setting:
@@ -450,9 +450,10 @@ print(scores)
 
 # %%
 #
-# We conlude that the claim amount is very challenging to predict. Still, the
-# Gamma regressor is able to leverage some information from the input features
-# to slighly improve upon the mean baseline in terms of D².
+# We conclude that the claim amount is very challenging to predict. Still, the
+# :class:`~sklearn.linear.GammaRegressor` is able to leverage some information
+# from the input features to slighly improve upon the mean baseline in terms
+# of D².
 #
 # Note that the resulting model is the average claim amount per claim. As such,
 # it is conditional on having at least one claim, and cannot be used to predict
