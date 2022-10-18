@@ -17,9 +17,12 @@ from ._tree cimport UINT32_t         # Unsigned 32 bit integer
 
 
 cdef class BaseCriterion:
-    # This is an abstract interface for criterion that are used in either supervised,
-    # or unsupervised tree models. The downstream class must implement functions to
-    # compute the impurity in current node and children nodes.
+    # This is an abstract interface for criterion. For example, a tree model could be
+    # either supervised, or unsupervised computing impurity on samples of covariates, or
+    # labels, or both.
+    # 
+    # The downstream class must implement functions to compute the impurity in current
+    # node and children nodes.
 
     # Internal structures
     cdef DOUBLE_t* sample_weight         # Sample weights
