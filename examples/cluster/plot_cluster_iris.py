@@ -58,7 +58,7 @@ for idx, (name, est) in enumerate(estimators):
     ax.set_zlabel("Petal length")
     ax.set_title(titles[idx - 1])
 
-# # Plot the ground truth
+# Plot the ground truth
 ax = fig.add_subplot(2, 2, 4, projection="3d", elev=48, azim=134)
 
 for name, label in [("Setosa", 0), ("Versicolour", 1), ("Virginica", 2)]:
