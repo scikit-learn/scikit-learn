@@ -485,7 +485,7 @@ def test_gaussian_mixture_estimate_log_prob_resp(global_random_seed):
     # be too costly. Restricting to the 0-9 range is necessary to
     # use small enough datasets that avoid increasing the run time
     # too much.
-    rng = np.random.RandomState(global_random_seed % 10)
+    rng = np.random.RandomState(global_random_seed)
     rand_data = RandomData(rng, scale=5)
     n_samples = rand_data.n_samples
     n_features = rand_data.n_features
@@ -513,12 +513,8 @@ def test_gaussian_mixture_estimate_log_prob_resp(global_random_seed):
 
 
 def test_gaussian_mixture_predict_predict_proba(global_random_seed):
-    # Making this test seed-insensitive for the 0-99 range would
-    # be too costly. Restricting to the 0-9 range is necessary to
-    # use small enough datasets that avoid increasing the run time
-    # too much.
-    rng = np.random.RandomState(global_random_seed % 10)
-    rand_data = RandomData(rng, n_samples=300)
+    rng = np.random.RandomState(global_random_seed)
+    rand_data = RandomData(rng, n_samples=300, n_features=4)
     for covar_type in COVARIANCE_TYPE:
         X = rand_data.X[covar_type]
         Y = rand_data.Y
@@ -583,12 +579,7 @@ def test_gaussian_mixture_fit_predict(seed, max_iter, tol):
 
 def test_gaussian_mixture_fit_predict_n_init(global_random_seed):
     # Check that fit_predict is equivalent to fit.predict, when n_init > 1
-
-    # Making this test seed-insensitive for the 0-99 range would
-    # be too costly. Restricting to the 0-9 range is necessary to
-    # use small enough datasets that avoid increasing the run time
-    # too much.
-    X = np.random.RandomState(global_random_seed % 10).randn(1000, 5)
+    X = np.random.RandomState(global_random_seed).randn(1000, 5)
     gm = GaussianMixture(n_components=5, n_init=5, random_state=0)
     y_pred1 = gm.fit_predict(X)
     y_pred2 = gm.predict(X)
@@ -648,9 +639,9 @@ def test_gaussian_mixture_fit():
             assert_allclose(ecov.error_norm(prec_pred[k]), 0, atol=0.15)
 
 
-def test_gaussian_mixture_fit_best_params():
-    rng = np.random.RandomState(0)
-    rand_data = RandomData(rng)
+def test_gaussian_mixture_fit_best_params(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
+    rand_data = RandomData(rng, n_samples=400, n_features=3, scale=100)
     n_components = rand_data.n_components
     n_init = 10
     for covar_type in COVARIANCE_TYPE:
@@ -704,12 +695,7 @@ def test_gaussian_mixture_fit_convergence_warning():
 
 def test_multiple_init(global_random_seed):
     # Test that multiple inits does not much worse than a single one
-
-    # Making this test seed-insensitive for the 0-99 range would
-    # be too costly. Restricting to the 0-9 range is necessary to
-    # use small enough datasets that avoid increasing the run time
-    # too much.
-    rng = np.random.RandomState(global_random_seed % 10)
+    rng = np.random.RandomState(global_random_seed)
     n_samples, n_features, n_components = 50, 5, 2
     X = rng.randn(n_samples, n_features)
     for cv_type in COVARIANCE_TYPE:
@@ -921,13 +907,8 @@ def test_convergence_detected_with_warm_start():
 
 def test_score(global_random_seed):
     covar_type = "full"
-
-    # Making this test seed-insensitive for the 0-99 range would
-    # be too costly. Restricting to the 0-9 range is necessary to
-    # use small enough datasets that avoid increasing the run time
-    # too much.
-    rng = np.random.RandomState(global_random_seed % 10)
-    rand_data = RandomData(rng, scale=5)
+    rng = np.random.RandomState(global_random_seed)
+    rand_data = RandomData(rng, n_samples=500, scale=3)
     n_components = rand_data.n_components
     X = rand_data.X[covar_type]
 
@@ -1059,11 +1040,7 @@ def test_regularisation():
 
 
 def test_property(global_random_seed):
-    # Making this test seed-insensitive for the 0-99 range would
-    # be too costly. Restricting to the 0-9 range is necessary to
-    # use small enough datasets that avoid increasing the run time
-    # too much.
-    rng = np.random.RandomState(global_random_seed % 10)
+    rng = np.random.RandomState(global_random_seed)
     rand_data = RandomData(rng, scale=7)
     n_components = rand_data.n_components
 
