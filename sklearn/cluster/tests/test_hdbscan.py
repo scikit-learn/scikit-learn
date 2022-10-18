@@ -143,12 +143,37 @@ def test_hdbscan_algorithms(algo, metric):
         hdb.fit(X)
 
 
-def test_hdbscan_dbscan_clustering():
+def test_dbscan_clustering():
     clusterer = HDBSCAN().fit(X)
     labels = clusterer.dbscan_clustering(0.3)
     n_clusters = len(set(labels) - OUTLIER_SET)
     assert n_clusters == n_clusters_true
 
+@pytest.mark.parametrize("outlier_type", _OUTLIER_ENCODING)
+@pytest.mark.parametrize("cut_distance", (0.1, 0.5, 1))
+def test_dbscan_clustering_outlier_data(outlier_type, cut_distance):
+    """
+    Tests if np.inf and np.nan data are each treated as special outliers.
+    """
+    outlier = {
+        "infinite": np.inf,
+        "missing": np.nan,
+    }[outlier_type]
+    label = _OUTLIER_ENCODING[outlier_type]["label"]
+
+    X_outlier = X.copy()
+    X_outlier[0] = [outlier, 1]
+    X_outlier[5] = [outlier, outlier]
+    model = HDBSCAN().fit(X_outlier)
+    labels = model.dbscan_clustering(cut_distance=cut_distance)
+
+    (missing_labels_idx,) = (labels == label).nonzero()
+    assert_array_equal(missing_labels_idx, [0, 5])
+
+    clean_indices = list(range(1, 5)) + list(range(6, 200))
+    clean_model = HDBSCAN().fit(X_outlier[clean_indices])
+    clean_labels = clean_model.dbscan_clustering(cut_distance=cut_distance)
+    assert_array_equal(clean_labels, labels[clean_indices])
 
 def test_hdbscan_high_dimensional():
     H, y = make_blobs(n_samples=50, random_state=0, n_features=64)

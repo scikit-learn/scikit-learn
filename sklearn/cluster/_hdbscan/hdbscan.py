@@ -767,9 +767,15 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             An array of cluster labels, one per datapoint. Unclustered points
             are assigned the label -1.
         """
-        return labelling_at_cut(
+        labels = labelling_at_cut(
             self._single_linkage_tree_, cut_distance, min_cluster_size
         )
+        infinite_index = self.labels_ == _OUTLIER_ENCODING["infinite"]["label"]
+        missing_index = self.labels_ == _OUTLIER_ENCODING["missing"]["label"]
+
+        labels[infinite_index] = _OUTLIER_ENCODING["infinite"]["label"]
+        labels[missing_index] = _OUTLIER_ENCODING["missing"]["label"]
+        return labels
 
     def _more_tags(self):
         return {"allow_nan": self.metric != "precomputed"}
