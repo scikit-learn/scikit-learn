@@ -30,15 +30,15 @@ from ._utils cimport WeightedMedianCalculator
 cdef double EPSILON = 10 * np.finfo('double').eps
 
 cdef class BaseCriterion:
-    """Abstract interface for criterion.
+    """Abstract interface for any criterion.
 
     This object stores methods on how to calculate how good a split is using
     a set API. 
 
     The criterion object is maintained such that left and right collected
     statistics correspond to samples[start:pos] and samples[pos:end]. So the samples in
-    the "parent" node is samples[start:end], while left and right are split with the pointer
-    'pos' variable.
+    the "current" node is samples[start:end], while left and right children nodes are
+    split with the pointer 'pos' variable.
     """
     def __getstate__(self):
         return {}
@@ -174,7 +174,8 @@ cdef class Criterion(BaseCriterion):
     """Interface for impurity criteria.
 
     This object stores methods on how to calculate how good a split is using
-    different metrics.
+    different metrics. This is the base class for any supervised tree criterion
+    model with a homogeneous float64 dtyped y.
     """
     cdef int init(self, const DOUBLE_t[:, ::1] y, DOUBLE_t* sample_weight,
                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,

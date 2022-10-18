@@ -39,7 +39,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils._param_validation import Hidden, Interval, StrOptions
 
-from ._criterion import Criterion
+from ._criterion import BaseCriterion
 from ._splitter import Splitter
 from ._tree import DepthFirstTreeBuilder
 from ._tree import BestFirstTreeBuilder
@@ -321,7 +321,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         # Build tree
         criterion = self.criterion
-        if not isinstance(criterion, Criterion):
+        if not isinstance(criterion, BaseCriterion):
             if is_classification:
                 criterion = CRITERIA_CLF[self.criterion](
                     self.n_outputs_, self.n_classes_
@@ -821,7 +821,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
-        "criterion": [StrOptions({"gini", "entropy", "log_loss"}), Hidden(Criterion)],
+        "criterion": [StrOptions({"gini", "entropy", "log_loss"}), Hidden(BaseCriterion)],
         "class_weight": [dict, list, StrOptions({"balanced"}), None],
     }
 
@@ -1182,7 +1182,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         **BaseDecisionTree._parameter_constraints,
         "criterion": [
             StrOptions({"squared_error", "friedman_mse", "absolute_error", "poisson"}),
-            Hidden(Criterion),
+            Hidden(BaseCriterion),
         ],
     }
 

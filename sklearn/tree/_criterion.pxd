@@ -17,6 +17,10 @@ from ._tree cimport UINT32_t         # Unsigned 32 bit integer
 
 
 cdef class BaseCriterion:
+    # This is an abstract interface for criterion that are used in either supervised,
+    # or unsupervised tree models. The downstream class must implement functions to
+    # compute the impurity in current node and children nodes.
+
     # Internal structures
     cdef DOUBLE_t* sample_weight         # Sample weights
 
@@ -36,7 +40,7 @@ cdef class BaseCriterion:
     # The criterion object is maintained such that left and right collected
     # statistics correspond to samples[start:pos] and samples[pos:end].
     
-    # Core methods for a criterion class to implement
+    # Core methods for any criterion class to implement
     cdef int reset(self) nogil except -1
     cdef int reverse_reset(self) nogil except -1
     cdef int update(self, SIZE_t new_pos) nogil except -1
@@ -50,8 +54,9 @@ cdef class BaseCriterion:
     cdef double proxy_impurity_improvement(self) nogil
 
  cdef class Criterion(BaseCriterion):
-    # The criterion computes the impurity of a node and the reduction of
-    # impurity of a split on that node. It also computes the output statistics
+    # The supervised criterion computes the impurity of a node and the reduction of
+    # impurity of a split on that node using the distribution of labels in parent and
+    # children nodes. It also computes the output statistics
     # such as the mean in regression and class probabilities in classification.
 
     # Internal structures
