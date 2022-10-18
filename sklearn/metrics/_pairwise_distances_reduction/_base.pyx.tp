@@ -1,8 +1,5 @@
 cimport numpy as cnp
 
-IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
-    cimport openmp
-
 from cython cimport final
 from cython.operator cimport dereference as deref
 from cython.parallel cimport parallel, prange
