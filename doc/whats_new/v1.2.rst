@@ -115,6 +115,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.base`
+-------------------
+
+- |Enhancement| Introduces :class:`base.ClassNamePrefixFeaturesOutMixin` and
+  :class:`base.ClassNamePrefixFeaturesOutMixin` mixins that defines
+  :term:`get_feature_names_out` for common transformer uses cases.
+  :pr:`24688` by `Thomas Fan`_.
+
 :mod:`sklearn.calibration`
 ..........................
 
