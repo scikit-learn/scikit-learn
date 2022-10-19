@@ -108,7 +108,7 @@ def _process_mst(min_spanning_tree):
 
 def _hdbscan_brute(
     X,
-    n_neighbors=5,
+    min_samples=5,
     alpha=None,
     metric="euclidean",
     n_jobs=None,
@@ -144,10 +144,10 @@ def _hdbscan_brute(
     # Note that `distance_matrix` is manipulated in-place, however we do not
     # need it for anything else past this point, hence the operation is safe.
     mutual_reachability_ = mutual_reachability_graph(
-        distance_matrix, n_neighbors=n_neighbors, max_distance=max_distance
+        distance_matrix, min_samples=min_samples, max_distance=max_distance
     )
     min_spanning_tree = _brute_mst(
-        mutual_reachability_, min_samples=n_neighbors, sparse=sparse
+        mutual_reachability_, min_samples=min_samples, sparse=sparse
     )
     # Warn if the MST couldn't be constructed around the missing distances
     if np.isinf(min_spanning_tree.T[2]).any():
@@ -165,7 +165,7 @@ def _hdbscan_brute(
 def _hdbscan_prims(
     X,
     algo,
-    n_neighbors=5,
+    min_samples=5,
     alpha=1.0,
     metric="euclidean",
     leaf_size=40,
@@ -177,7 +177,7 @@ def _hdbscan_prims(
 
     # Get distance to kth nearest neighbour
     nbrs = NearestNeighbors(
-        n_neighbors=n_neighbors,
+        n_neighbors=min_samples,
         algorithm=algo,
         leaf_size=leaf_size,
         metric=metric,
@@ -186,7 +186,7 @@ def _hdbscan_prims(
         p=None,
     ).fit(X)
 
-    neighbors_distances, _ = nbrs.kneighbors(X, n_neighbors, return_distance=True)
+    neighbors_distances, _ = nbrs.kneighbors(X, min_samples, return_distance=True)
     core_distances = np.ascontiguousarray(neighbors_distances[:, -1])
     dist_metric = DistanceMetric.get_metric(metric, **metric_params)
 
@@ -599,7 +599,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         mst_func = None
         kwargs = dict(
             X=X,
-            n_neighbors=self._min_samples,
+            min_samples=self._min_samples,
             alpha=self.alpha,
             metric=self.metric,
             n_jobs=self.n_jobs,

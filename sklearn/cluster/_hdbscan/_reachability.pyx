@@ -12,7 +12,7 @@ from libc.math cimport isfinite, INFINITY
 
 
 def mutual_reachability_graph(
-    distance_matrix, n_neighbors=5, max_distance=0.0, copy=False
+    distance_matrix, min_samples=5, max_distance=0.0, copy=False
 ):
     """Compute the weighted adjacency matrix of the mutual reachability graph.
 
@@ -29,7 +29,7 @@ def mutual_reachability_graph(
         Array of distances between samples. If sparse, the array must be in
         `LIL` format.
 
-    n_neighbors : int, default=5
+    min_samples : int, default=5
         The number of points in a neighbourhood for a point to be considered
         a core point.
 
@@ -63,15 +63,15 @@ def mutual_reachability_graph(
         # FIXME: since we convert to a CSR matrix then we do not make the operation
         # in-place.
         return _sparse_mutual_reachability_graph(
-            distance_matrix, n_neighbors=n_neighbors, max_distance=max_distance
+            distance_matrix, min_samples=min_samples, max_distance=max_distance
         ).tocsr()
 
-    return _dense_mutual_reachability_graph(distance_matrix, n_neighbors=n_neighbors)
+    return _dense_mutual_reachability_graph(distance_matrix, min_samples=min_samples)
 
 
 cdef _dense_mutual_reachability_graph(
     cnp.ndarray[dtype=cnp.float64_t, ndim=2] distance_matrix,
-    cnp.intp_t n_neighbors=5
+    cnp.intp_t min_samples=5
 ):
     """Dense implementation of mutual reachability graph.
 
@@ -83,7 +83,7 @@ cdef _dense_mutual_reachability_graph(
     distance_matrix : ndarray of shape (n_samples, n_samples)
         Array of distances between samples.
 
-    n_neighbors : int, default=5
+    min_samples : int, default=5
         The number of points in a neighbourhood for a point to be considered
         a core point.
 
@@ -95,7 +95,7 @@ cdef _dense_mutual_reachability_graph(
     """
     cdef:
         cnp.intp_t i, j, n_samples = distance_matrix.shape[0]
-        cnp.intp_t farther_neighbor_idx = n_neighbors - 1
+        cnp.intp_t farther_neighbor_idx = min_samples - 1
         cnp.float64_t mutual_reachibility_distance
         cnp.float64_t[:] core_distances
 
@@ -118,7 +118,7 @@ cdef _dense_mutual_reachability_graph(
 # TODO: Rewrite for CSR.
 cdef _sparse_mutual_reachability_graph(
     object distance_matrix,
-    cnp.intp_t n_neighbors=5,
+    cnp.intp_t min_samples=5,
     cnp.float64_t max_distance=0.0,
 ):
     """Sparse implementation of mutual reachability graph.
@@ -132,7 +132,7 @@ cdef _sparse_mutual_reachability_graph(
         Sparse matrix of distances between samples. The sparse format should
         be `LIL`.
 
-    n_neighbors : int, default=5
+    min_samples : int, default=5
         The number of points in a neighbourhood for a point to be considered
         a core point.
 
@@ -145,7 +145,7 @@ cdef _sparse_mutual_reachability_graph(
     cdef:
         cnp.intp_t i, j, sample_idx, n_samples = distance_matrix.shape[0]
         list row_distances
-        cnp.intp_t farther_neighbor_idx = n_neighbors - 1
+        cnp.intp_t farther_neighbor_idx = min_samples - 1
         cnp.float64_t mutual_reachibility_distance
         cnp.float64_t[:] core_distances
         cnp.int32_t[:] nz_row_data, nz_col_data
