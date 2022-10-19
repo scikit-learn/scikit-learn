@@ -718,11 +718,10 @@ given sample point :math:`i`, :math:`y_{i,j}` is the corresponding true value,
    L_{Hamming}(y, \hat{y}) = \frac{1}{n_\text{samples} * n_\text{labels}} \sum_{i=0}^{n_\text{samples}-1} \sum_{j=0}^{n_\text{labels} - 1} 1(\hat{y}_{i,j} \not= y_{i,j})
 
 where :math:`1(x)` is the `indicator function
-<https://en.wikipedia.org/wiki/Indicator_function>`_. ::
+<https://en.wikipedia.org/wiki/Indicator_function>`_.
 
 In multiclass classification, the Hamming loss is computed as the average of the
-0-1 classification loss (:math:`L_{0-1}`) over :math:`n_{\text{samples}}`.
-
+0-1 classification loss (:math:`L_{0-1}`) over :math:`n_{\text{samples}}`. ::
 
   >>> from sklearn.metrics import hamming_loss
   >>> y_pred = [1, 2, 3, 4]
