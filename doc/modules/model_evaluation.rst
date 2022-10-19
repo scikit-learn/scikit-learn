@@ -720,8 +720,8 @@ given sample point :math:`i`, :math:`y_{i,j}` is the corresponding true value,
 where :math:`1(x)` is the `indicator function
 <https://en.wikipedia.org/wiki/Indicator_function>`_.
 
-In multiclass classification, the Hamming loss is computed as the average of the
-0-1 classification loss (:math:`L_{0-1}`) over :math:`n_{\text{samples}}`. ::
+The equation above does not hold true in the case of multiclass classification.
+Please refer to the note below for more information. ::
 
   >>> from sklearn.metrics import hamming_loss
   >>> y_pred = [1, 2, 3, 4]
