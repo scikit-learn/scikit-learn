@@ -496,6 +496,11 @@ Changelog
   :class:`neighbors.RadiusNeighborsTransformer`.
   :pr:`24075` by :user:`Valentin Laurent <Valentin-Laurent>`.
 
+- |Fix| Make error message clearer for `n_neighbors` when
+  :class:`neighbors.LocalOutlierFactor` is invoked when
+  `n_samples = n_neighbors`.
+  :pr:`23317` by :user:`Bharat Raghunathan <Bharat123rox>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
