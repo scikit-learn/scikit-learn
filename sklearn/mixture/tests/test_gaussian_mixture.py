@@ -761,7 +761,7 @@ def test_bic_1d_1component(global_random_seed):
 def test_gaussian_mixture_aic_bic(global_random_seed):
     # Test the aic and bic criteria
     rng = np.random.RandomState(global_random_seed)
-    n_samples, n_features, n_components = 20, 3, 2
+    n_samples, n_features, n_components = 50, 3, 2
     X = rng.randn(n_samples, n_features)
     # standard gaussian entropy
     sgh = 0.5 * (
