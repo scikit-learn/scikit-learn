@@ -62,11 +62,10 @@ X["year"].value_counts()
 # %%
 # We see that we have data from two years. We will use the first year to train the
 # model and the second year to test the model.
+X = X.drop(columns=["year"])
 mask_training = X["year"] == 0.0
 X_train, y_train = X[mask_training], y[mask_training]
 X_test, y_test = X[~mask_training], y[~mask_training]
-X_train = X_train.drop(columns=["year"])
-X_test = X_test.drop(columns=["year"])
 
 # %%
 # We can check the dataset information to see that we have heterogeneous data type. We
@@ -282,7 +281,9 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 
 print("Training HistGradientBoostingRegressor...")
 tic = time()
-hgbdt_model = make_pipeline(hgbdt_preprocessor, HistGradientBoostingRegressor())
+hgbdt_model = make_pipeline(
+    hgbdt_preprocessor, HistGradientBoostingRegressor(random_state=0)
+)
 hgbdt_model.fit(X_train, y_train)
 print(f"done in {time() - tic:.3f}s")
 print(f"Test R2 score: {hgbdt_model.score(X_test, y_test):.2f}")
