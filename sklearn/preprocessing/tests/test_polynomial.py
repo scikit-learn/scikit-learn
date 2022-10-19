@@ -850,7 +850,7 @@ def test_csr_polynomial_expansion_index_overflow_deg2(
         and n_features == 65535
         and not interaction_only
     ):
-        msg = r"Due to an error in `scipy.sparse.hstack` present in versions"
+        msg = r"In scipy versions `<1.9.2`, the function `scipy.sparse.hstack`"
         with pytest.raises(ValueError, match=msg):
             X_trans = pf.fit_transform(X)
         return

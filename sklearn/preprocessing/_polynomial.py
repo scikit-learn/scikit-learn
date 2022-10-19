@@ -430,13 +430,13 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                     and all_int32
                 ):
                     raise ValueError(
-                        "Due to an error in `scipy.sparse.hstack` present in versions"
-                        " `<1.9.2`, stacking sparse matrices such that the resulting"
-                        " matrix would have `n_cols` too large to be represented by"
-                        " 32bit integers results in negative columns. To avoid this"
-                        " error, either use a version of scipy `>=1.9.2` or alter the"
-                        " `PolynomialFeatures` transformer to produce fewer output"
-                        " features."
+                        "In scipy versions `<1.9.2`, the function `scipy.sparse.hstack`"
+                        " produces negative columns when:\n1. The output shape contains"
+                        " `n_cols` too large to be represented by a 32bit signed"
+                        " integer.\n2. All sub-matrices to be stacked have indices of"
+                        " dtype `np.int32`.\nTo avoid this error, either use a version"
+                        " of scipy `>=1.9.2` or alter the `PolynomialFeatures`"
+                        " transformer to produce fewer than 2^31 output features"
                     )
                 XP = sparse.hstack(to_stack, dtype=X.dtype)
         elif sparse.isspmatrix_csc(X) and self._max_degree < 4:
