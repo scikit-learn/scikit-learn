@@ -2117,8 +2117,8 @@ def test_transformers_with_pandas_out_but_not_feature_names_out(
     X_trans_np = ct.fit_transform(X_df)
     assert isinstance(X_trans_np, np.ndarray)
 
-    # `ct` does not have `get_feature_names_out` because `PandasOutTransformer` does define
-    # the method.
+    # `ct` does not have `get_feature_names_out` because `PandasOutTransformer` does
+    # not define the method.
     with pytest.raises(AttributeError, match="not provide get_feature_names_out"):
         ct.get_feature_names_out()
 
