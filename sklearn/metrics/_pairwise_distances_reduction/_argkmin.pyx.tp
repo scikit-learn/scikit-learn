@@ -18,6 +18,7 @@ from ...utils import check_array, check_scalar, _in_unstable_openblas_configurat
 from ...utils.fixes import threadpool_limits
 from ...utils._typedefs import ITYPE, DTYPE
 
+
 cnp.import_array()
 
 {{for name_suffix in ['64', '32']}}

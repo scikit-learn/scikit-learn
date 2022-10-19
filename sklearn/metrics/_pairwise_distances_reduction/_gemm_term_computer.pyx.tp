@@ -413,13 +413,11 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
-        cdef:
-            DTYPE_t val = 0
-        # reset the vector
+        # Flush the thread dist_middle_terms_chunks to 0.0
         fill(
             self.dist_middle_terms_chunks[thread_num].begin(),
             self.dist_middle_terms_chunks[thread_num].end(),
-            val,
+            0.0,
         )
 
     cdef void _parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
@@ -430,13 +428,11 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
-        cdef:
-            DTYPE_t val = 0
-        # reset the vector
+        # Flush the thread dist_middle_terms_chunks to 0.0
         fill(
             self.dist_middle_terms_chunks[thread_num].begin(),
             self.dist_middle_terms_chunks[thread_num].end(),
-            val,
+            0.0,
         )
 
     cdef DTYPE_t * _compute_dist_middle_terms(
