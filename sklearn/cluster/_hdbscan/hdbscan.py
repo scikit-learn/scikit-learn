@@ -22,7 +22,7 @@ from ...neighbors import BallTree, KDTree, NearestNeighbors
 from ...utils._param_validation import Interval, StrOptions
 from ...utils.validation import _assert_all_finite
 from ._linkage import label, mst_from_distance_matrix, mst_from_data_matrix
-from ._reachability import mutual_reachability
+from ._reachability import mutual_reachability_graph
 from ._tree import compute_stability, condense_tree, get_clusters, labelling_at_cut
 
 FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics
@@ -63,7 +63,7 @@ def _brute_mst(mutual_reachability, min_samples, sparse=False):
             f"There exists points with fewer than {min_samples} neighbors. Ensure"
             " your distance matrix has non-zero values for at least"
             f" `min_sample`={min_samples} neighbors for each points (i.e. K-nn"
-            " graph), or specify a `max_dist` in `metric_params` to use when"
+            " graph), or specify a `max_distance` in `metric_params` to use when"
             " distances are missing."
         )
 
@@ -108,7 +108,7 @@ def _process_mst(min_spanning_tree):
 
 def _hdbscan_brute(
     X,
-    min_samples=5,
+    n_neighbors=5,
     alpha=None,
     metric="euclidean",
     n_jobs=None,
@@ -128,17 +128,17 @@ def _hdbscan_brute(
     distance_matrix /= alpha
 
     # max_dist is only relevant for sparse and is ignored for dense
-    max_dist = metric_params.get("max_dist", 0.0)
+    max_distance = metric_params.get("max_distance", 0.0)
     sparse = issparse(distance_matrix)
     distance_matrix = distance_matrix.tolil() if sparse else distance_matrix
 
     # Note that `distance_matrix` is manipulated in-place, however we do not
     # need it for anything else past this point, hence the operation is safe.
-    mutual_reachability_ = mutual_reachability(
-        distance_matrix, min_points=min_samples, max_dist=max_dist
+    mutual_reachability_ = mutual_reachability_graph(
+        distance_matrix, n_neighbors=n_neighbors, max_distance=max_distance
     )
     min_spanning_tree = _brute_mst(
-        mutual_reachability_, min_samples=min_samples, sparse=sparse
+        mutual_reachability_, min_samples=n_neighbors, sparse=sparse
     )
     # Warn if the MST couldn't be constructed around the missing distances
     if np.isinf(min_spanning_tree.T[2]).any():
@@ -156,7 +156,7 @@ def _hdbscan_brute(
 def _hdbscan_prims(
     X,
     algo,
-    min_samples=5,
+    n_neighbors=5,
     alpha=1.0,
     metric="euclidean",
     leaf_size=40,
@@ -168,7 +168,7 @@ def _hdbscan_prims(
 
     # Get distance to kth nearest neighbour
     nbrs = NearestNeighbors(
-        n_neighbors=min_samples,
+        n_neighbors=n_neighbors,
         algorithm=algo,
         leaf_size=leaf_size,
         metric=metric,
@@ -177,7 +177,7 @@ def _hdbscan_prims(
         p=None,
     ).fit(X)
 
-    neighbors_distances, _ = nbrs.kneighbors(X, min_samples, return_distance=True)
+    neighbors_distances, _ = nbrs.kneighbors(X, n_neighbors, return_distance=True)
     core_distances = np.ascontiguousarray(neighbors_distances[:, -1])
     dist_metric = DistanceMetric.get_metric(metric, **metric_params)
 
@@ -590,7 +590,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         mst_func = None
         kwargs = dict(
             X=X,
-            min_samples=self._min_samples,
+            n_neighbors=self._min_samples,
             alpha=self.alpha,
             metric=self.metric,
             n_jobs=self.n_jobs,

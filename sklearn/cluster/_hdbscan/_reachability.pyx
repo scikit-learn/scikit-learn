@@ -1,44 +1,54 @@
-# mutual reachability distance compiutations
+# mutual reachability distance computations
 # Authors: Leland McInnes <leland.mcinnes@gmail.com>
 #          Meekail Zain <zainmeekail@gmail.com>
 # License: 3-clause BSD
 
 import numpy as np
-from cython.parallel cimport prange
-cimport numpy as cnp
-from libc.math cimport isfinite
-
-import gc
-
 from scipy.sparse import issparse
-from scipy.spatial.distance import pdist, squareform
 
 from ...neighbors import BallTree, KDTree
 
-def mutual_reachability(distance_matrix, min_points=5, max_dist=0.0):
-    """Compute the weighted adjacency matrix of the mutual reachability
-    graph of a distance matrix. Note that computation is performed in-place for
-    `distance_matrix`. If out-of-place computation is required, pass a copy to
-    this function.
+cimport numpy as cnp
+from cython.parallel cimport prange
+from libc.math cimport isfinite, INFINITY
+
+
+def mutual_reachability_graph(
+    distance_matrix, n_neighbors=5, max_distance=0.0, copy=False
+):
+    """Compute the weighted adjacency matrix of the mutual reachability graph.
+
+    The mutual reachability distance used to build the graph is defined as::
+
+        max(d_core(x_p), d_core(x_q), d(x_p, x_q))
+
+    and the core distance `d_core` is defined as the distance between a point
+    `x_p` and its k-th nearest neighbor.
 
     Parameters
     ----------
-    distance_matrix : ndarray or sparse matrix of shape (n_samples, n_samples)
+    distance_matrix : {ndarray, sparse matrix} of shape (n_samples, n_samples)
         Array of distances between samples. If sparse, the array must be in
         `LIL` format.
 
-    min_points : int, default=5
+    n_neighbors : int, default=5
         The number of points in a neighbourhood for a point to be considered
         a core point.
 
-    max_dist : float, default=0.0
+    max_distance : float, default=0.0
         The distance which `np.inf` is replaced with. When the true mutual-
         reachability distance is measured to be infinite, it is instead
-        truncated to `max_dist`.
+        truncated to `max_dist`. Only used when `distance_matrix` is a sparse
+        matrix.
+
+    copy : bool, default=False
+        Whether or not to compute the mutual reachinbility graph in-place, i.e.
+        modifying directly `distance_matrix`.
 
     Returns
     -------
-    mututal_reachability: ndarray of shape (n_samples, n_samples)
+    mututal_reachability_graph: {ndarray, sparse matrix} of shape \
+            (n_samples, n_samples)
         Weighted adjacency matrix of the mutual reachability graph.
 
     References
@@ -48,78 +58,121 @@ def mutual_reachability(distance_matrix, min_points=5, max_dist=0.0):
        In Pacific-Asia Conference on Knowledge Discovery and Data Mining
        (pp. 160-172). Springer Berlin Heidelberg.
     """
-    # Account for index offset
-    min_points -= 1
+    if copy:
+        distance_matrix = distance_matrix.copy()
 
-    # Note that in both routines `distance_matrix` is operated on in-place. At
-    # this point, if out-of-place operation is desired then this function
-    # should have been passed a copy.
     if issparse(distance_matrix):
-        return _sparse_mutual_reachability(
-            distance_matrix,
-            min_points=min_points,
-            max_dist=max_dist
+        # FIXME: since we convert to a CSR matrix then we do not make the operation
+        # in-place.
+        return _sparse_mutual_reachability_graph(
+            distance_matrix, n_neighbors=n_neighbors, max_distance=max_distance
         ).tocsr()
 
-    return _dense_mutual_reachability(distance_matrix, min_points=min_points)
+    return _dense_mutual_reachability_graph(distance_matrix, n_neighbors=n_neighbors)
 
-cdef _dense_mutual_reachability(
+
+cdef _dense_mutual_reachability_graph(
     cnp.ndarray[dtype=cnp.float64_t, ndim=2] distance_matrix,
-    cnp.intp_t min_points=5
+    cnp.intp_t n_neighbors=5
 ):
-    cdef cnp.intp_t i, j, n_samples = distance_matrix.shape[0]
-    cdef cnp.float64_t mr_dist
-    cdef cnp.float64_t[:] core_distances
+    """Dense implementation of mutual reachability graph.
 
-    # Compute the core distances for all samples `x_p` corresponding
-    # to the distance of the k-th farthest neighbours (including
-    # `x_p`).
+    The computation is done in-place, i.e. the distance matrix is modified
+    directly.
+
+    Parameters
+    ----------
+    distance_matrix : ndarray of shape (n_samples, n_samples)
+        Array of distances between samples.
+
+    n_neighbors : int, default=5
+        The number of points in a neighbourhood for a point to be considered
+        a core point.
+
+    Returns
+    -------
+    mututal_reachability_graph : ndarray of shape (n_samples, n_samples)
+        Weighted adjacency matrix of the mutual reachability graph. This object
+        is the same as `distance_matrix` since the operation is done in-place.
+    """
+    cdef:
+        cnp.intp_t i, j, n_samples = distance_matrix.shape[0]
+        cnp.intp_t farther_neighbor_idx = n_neighbors - 1
+        cnp.float64_t mutual_reachibility_distance
+        cnp.float64_t[:] core_distances
+
     core_distances = np.partition(
-        distance_matrix,
-        min_points,
-        axis=0,
-    )[min_points]
+        distance_matrix, farther_neighbor_idx, axis=0
+    )[farther_neighbor_idx]
 
     with nogil:
         for i in range(n_samples):
             for j in prange(n_samples):
-                mr_dist = max(
+                mutual_reachibility_distance = max(
                     core_distances[i],
                     core_distances[j],
-                    distance_matrix[i, j]
+                    distance_matrix[i, j],
                 )
-                distance_matrix[i, j] = mr_dist
+                distance_matrix[i, j] = mutual_reachibility_distance
     return distance_matrix
 
-# Assumes LIL format.
+
 # TODO: Rewrite for CSR.
-cdef _sparse_mutual_reachability(
+cdef _sparse_mutual_reachability_graph(
     object distance_matrix,
-    cnp.intp_t min_points=5,
-    cnp.float64_t max_dist=0.
+    cnp.intp_t n_neighbors=5,
+    cnp.float64_t max_distance=0.0,
 ):
-    cdef cnp.intp_t i, j, n, n_samples = distance_matrix.shape[0]
-    cdef cnp.float64_t mr_dist
-    cdef cnp.float64_t[:] core_distances
-    cdef cnp.int32_t[:] nz_row_data, nz_col_data
+    """Sparse implementation of mutual reachability graph.
+
+    The computation is done in-place, i.e. the distance matrix is modified
+    directly. This implementation only accepts `LIL` format sparse matrices.
+
+    Parameters
+    ----------
+    distance_matrix : sparse matrix of shape (n_samples, n_samples)
+        Sparse matrix of distances between samples. The sparse format should
+        be `LIL`.
+
+    n_neighbors : int, default=5
+        The number of points in a neighbourhood for a point to be considered
+        a core point.
+
+    Returns
+    -------
+    mututal_reachability_graph : sparse matrix of shape (n_samples, n_samples)
+        Weighted adjacency matrix of the mutual reachability graph. This object
+        is the same as `distance_matrix` since the operation is done in-place.
+    """
+    cdef:
+        cnp.intp_t i, j, sample_idx, n_samples = distance_matrix.shape[0]
+        list row_distances
+        cnp.intp_t farther_neighbor_idx = n_neighbors - 1
+        cnp.float64_t mutual_reachibility_distance
+        cnp.float64_t[:] core_distances
+        cnp.int32_t[:] nz_row_data, nz_col_data
+
     core_distances = np.empty(n_samples, dtype=np.float64)
 
     for i in range(n_samples):
-        if min_points < len(distance_matrix.data[i]):
+        row_distances = distance_matrix.data[i]
+        if farther_neighbor_idx < len(row_distances):
             core_distances[i] = np.partition(
-                distance_matrix.data[i],
-                min_points
-            )[min_points]
+                row_distances, farther_neighbor_idx
+            )[farther_neighbor_idx]
         else:
-            core_distances[i] = np.infty
+            core_distances[i] = INFINITY
 
     nz_row_data, nz_col_data = distance_matrix.nonzero()
-    for n in range(nz_row_data.shape[0]):
-        i = nz_row_data[n]
-        j = nz_col_data[n]
-        mr_dist = max(core_distances[i], core_distances[j], distance_matrix[i, j])
-        if isfinite(mr_dist):
-            distance_matrix[i, j] = mr_dist
-        elif max_dist > 0:
-            distance_matrix[i, j] = max_dist
+    for sample_idx in range(nz_row_data.shape[0]):
+        i, j = nz_row_data[sample_idx], nz_col_data[sample_idx]
+        mutual_reachibility_distance = max(
+            core_distances[i], core_distances[j], distance_matrix[i, j]
+        )
+        if isfinite(mutual_reachibility_distance):
+            distance_matrix[i, j] = mutual_reachibility_distance
+        elif max_distance > 0:
+            # TODO: it seems that we assume that distance_matrix is initialized
+            # with zeros.
+            distance_matrix[i, j] = max_distance
     return distance_matrix
