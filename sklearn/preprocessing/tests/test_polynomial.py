@@ -3,6 +3,7 @@ import pytest
 from scipy import sparse
 from scipy.sparse import random as sparse_random
 from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils.fixes import sp_version, parse_version
 
 from numpy.testing import assert_allclose, assert_array_equal
 from scipy.interpolate import BSpline
@@ -13,7 +14,6 @@ from sklearn.preprocessing import (
     PolynomialFeatures,
     SplineTransformer,
 )
-from sklearn.preprocessing._polynomial import _csr_hstack
 
 
 @pytest.mark.parametrize("est", (PolynomialFeatures, SplineTransformer))
@@ -841,13 +841,31 @@ def test_csr_polynomial_expansion_index_overflow_deg2(
     pf = PolynomialFeatures(
         interaction_only=interaction_only, include_bias=include_bias, degree=2
     )
-    X_trans = pf.fit_transform(X)
 
-    expected_dtype = (
-        np.int64 if X_trans.indices.max() > np.iinfo(np.int32).max else np.int32
+    # `scipy.sparse.hstack` breaks in scipy<1.9.2 when
+    # `n_output_features_ > max_int32`. Test that we provide
+    # an informative error message.
+    if (
+        sp_version < parse_version("1.9.2")
+        and n_features == 65535
+        and not interaction_only
+    ):
+        msg = r"Due to an error in `scipy.sparse.hstack` present in versions"
+        with pytest.raises(ValueError, match=msg):
+            X_trans = pf.fit_transform(X)
+        return
+    else:
+        X_trans = pf.fit_transform(X)
+
+    num_combinations = pf._num_combinations(
+        n_features=n_features,
+        min_degree=pf._min_degree,
+        max_degree=pf._max_degree,
+        interaction_only=pf.interaction_only,
+        include_bias=pf.include_bias,
     )
+    expected_dtype = np.int64 if num_combinations > np.iinfo(np.int32).max else np.int32
     expected_nnz = 1 + int(not interaction_only) + int(include_bias)
-
     assert X_trans.dtype == X.dtype
     assert X_trans.shape == (1, pf.n_output_features_)
     assert X_trans.indptr.dtype == X_trans.indices.dtype == expected_dtype
@@ -885,23 +903,3 @@ def test_polynomial_features_behaviour_on_zero_degree():
         if sparse.issparse(output):
             output = output.toarray()
         assert_array_equal(output, np.ones((X.shape[0], 1)))
-
-
-def test_csr_hstack():
-    n_rows = 10
-    msg = "No matrices were provided to stack"
-    with pytest.raises(ValueError, match=msg):
-        _csr_hstack([])
-
-    X1 = sparse_random(n_rows, 2, format="csr")
-    X2 = sparse_random(n_rows + 1, 2, format="csr")
-    msg = "Mismatching dimensions along axis*"
-    with pytest.raises(ValueError, match=msg):
-        _csr_hstack([X1, X2])
-
-    X1 = sparse_random(n_rows, 2, density=0, format="csr")
-    X2 = sparse_random(n_rows, 2, density=0, format="csr")
-    X_stacked = _csr_hstack([X1, X2])
-    assert X_stacked.data.size == 0
-    assert X_stacked.indices.size == 0
-    assert_array_almost_equal(X_stacked.indptr, np.zeros(n_rows + 1))
