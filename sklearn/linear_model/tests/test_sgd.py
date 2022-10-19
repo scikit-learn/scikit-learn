@@ -707,8 +707,6 @@ def test_set_coef_multiclass(klass):
     clf = klass().fit(X2, Y2, intercept_init=np.zeros((3,)))
 
 
-# TODO: Remove filterwarnings in v1.2.
-@pytest.mark.filterwarnings("ignore:.*squared_loss.*:FutureWarning")
 @pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
 def test_sgd_predict_proba_method_access(klass):
     # Checks that SGDClassifier predict_proba and predict_log_proba methods
@@ -880,14 +878,6 @@ def test_equal_class_weight(klass):
 def test_wrong_class_weight_label(klass):
     # ValueError due to not existing class label.
     clf = klass(alpha=0.1, max_iter=1000, class_weight={0: 0.5})
-    with pytest.raises(ValueError):
-        clf.fit(X, Y)
-
-
-@pytest.mark.parametrize("klass", [SGDClassifier, SparseSGDClassifier])
-def test_wrong_class_weight_format(klass):
-    # ValueError due to wrong class_weight argument type.
-    clf = klass(alpha=0.1, max_iter=1000, class_weight=[0.5])
     with pytest.raises(ValueError):
         clf.fit(X, Y)
 
@@ -2070,13 +2060,10 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     assert_array_almost_equal(clf_sequential.coef_, clf_parallel.coef_)
 
 
+# TODO(1.3): Remove
 @pytest.mark.parametrize(
     "old_loss, new_loss, Estimator",
     [
-        # TODO(1.2): Remove "squared_loss"
-        ("squared_loss", "squared_error", linear_model.SGDClassifier),
-        ("squared_loss", "squared_error", linear_model.SGDRegressor),
-        # TODO(1.3): Remove "log"
         ("log", "log_loss", linear_model.SGDClassifier),
     ],
 )

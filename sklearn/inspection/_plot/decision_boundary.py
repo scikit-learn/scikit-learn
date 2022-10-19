@@ -99,6 +99,36 @@ class DecisionBoundaryDisplay:
 
     figure_ : matplotlib Figure
         Figure containing the confusion matrix.
+
+    See Also
+    --------
+    DecisionBoundaryDisplay.from_estimator : Plot decision boundary given an estimator.
+
+    Examples
+    --------
+    >>> import matplotlib.pyplot as plt
+    >>> import numpy as np
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.inspection import DecisionBoundaryDisplay
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> iris = load_iris()
+    >>> feature_1, feature_2 = np.meshgrid(
+    ...     np.linspace(iris.data[:, 0].min(), iris.data[:, 0].max()),
+    ...     np.linspace(iris.data[:, 1].min(), iris.data[:, 1].max())
+    ... )
+    >>> grid = np.vstack([feature_1.ravel(), feature_2.ravel()]).T
+    >>> tree = DecisionTreeClassifier().fit(iris.data[:, :2], iris.target)
+    >>> y_pred = np.reshape(tree.predict(grid), feature_1.shape)
+    >>> display = DecisionBoundaryDisplay(
+    ...     xx0=feature_1, xx1=feature_2, response=y_pred
+    ... )
+    >>> display.plot()
+    <...>
+    >>> display.ax_.scatter(
+    ...     iris.data[:, 0], iris.data[:, 1], c=iris.target, edgecolor="black"
+    ... )
+    <...>
+    >>> plt.show()
     """
 
     def __init__(self, *, xx0, xx1, response, xlabel=None, ylabel=None):
@@ -136,6 +166,7 @@ class DecisionBoundaryDisplay:
         Returns
         -------
         display: :class:`~sklearn.inspection.DecisionBoundaryDisplay`
+            Object that stores computed values.
         """
         check_matplotlib_support("DecisionBoundaryDisplay.plot")
         import matplotlib.pyplot as plt  # noqa
