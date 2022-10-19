@@ -130,6 +130,15 @@ def _hdbscan_brute(
     # max_dist is only relevant for sparse and is ignored for dense
     max_distance = metric_params.get("max_distance", 0.0)
     sparse = issparse(distance_matrix)
+
+    # TODO: Investigate whether it is worth implementing a PWD backend for the
+    # combined operations of:
+    #   - The pairwise distance calculation
+    #   - The element-wise mutual-reachability calculation
+    # I suspect this would be better handled as one composite Cython routine to
+    # minimize memory-movement, however I (@micky774) am unsure whether it is
+    # narrow enough of a scope for the current PWD backend, or if it is better
+    # as a separate utility.
     distance_matrix = distance_matrix.tolil() if sparse else distance_matrix
 
     # Note that `distance_matrix` is manipulated in-place, however we do not

@@ -6,8 +6,6 @@
 import numpy as np
 from scipy.sparse import issparse
 
-from ...neighbors import BallTree, KDTree
-
 cimport numpy as cnp
 from cython.parallel cimport prange
 from libc.math cimport isfinite, INFINITY
