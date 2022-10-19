@@ -2055,8 +2055,8 @@ def test_column_transform_set_output_after_fitting(remainder):
         assert dtype == expected_dtypes[col]
 
 
-# Transformer that does not define get_feature_names_out. This transformer
-# always expects the input to be a DataFrame.
+# PandasOutTransformer that does not define get_feature_names_out and always expects
+# the input to be a DataFrame.
 class PandasOutTransformer(BaseEstimator):
     def __init__(self, offset=1.0):
         self.offset = offset
