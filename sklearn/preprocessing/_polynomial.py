@@ -21,6 +21,7 @@ from ..utils.fixes import sp_version, parse_version
 
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
 
+
 __all__ = [
     "PolynomialFeatures",
     "SplineTransformer",

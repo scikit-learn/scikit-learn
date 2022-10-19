@@ -16,6 +16,7 @@ def configuration(parent_package="", top_path=None):
         include_dirs=[numpy.get_include()],
         libraries=libraries,
     )
+
     config.add_subpackage("tests")
 
     return config

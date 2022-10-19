@@ -1,5 +1,5 @@
-# Author: Andrew nystrom <awnystrom@gmail.com>
-
+# Authors: Andrew nystrom <awnystrom@gmail.com>
+#          Meekail Zain <zainmeekail@gmail.com>
 from scipy.sparse import csr_matrix
 from libc.math cimport sqrt, pow
 
@@ -181,7 +181,7 @@ def _csr_polynomial_expansion(
                     if degree == 2:
                         if max(i, j) > MAX_SAFE_INDEX_DEG2:
                             # In this case, the Cython implementation
-                            # would integer overflow. 
+                            # would integer overflow.
                             # Here, we use arbitrary precision.
                             with gil:
                                 col = <INDEX_B_t> py_deg2_column(d, i, j, interaction_only)
@@ -199,7 +199,7 @@ def _csr_polynomial_expansion(
                             k = indices[k_ptr]
                             if max(i, j, k) > MAX_SAFE_INDEX_DEG3:
                                 # In this case, the Cython implementation
-                                # would integer overflow. 
+                                # would integer overflow.
                                 # Here, we use arbitrary precision.
                                 with gil:
                                     col = <INDEX_B_t> py_deg3_column(d, i, j, k, interaction_only)
