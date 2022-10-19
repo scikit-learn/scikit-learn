@@ -476,7 +476,7 @@ def partial_dependence(
 
     if is_categorical is None:
         is_categorical = [
-            tuple([False, False]) if isinstance(fxs, Iterable) else False
+            (False, False) if isinstance(fxs, Iterable) else False
             for fxs in features_indices
         ]
 
