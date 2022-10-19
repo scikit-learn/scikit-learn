@@ -14,25 +14,24 @@ implementation_specific_values = [
 
 }}
 cimport numpy as cnp
-import numpy as np
 
 from libcpp.vector cimport vector
-
-from scipy.sparse import issparse, csr_matrix
-from ...utils._typedefs cimport DTYPE_t, ITYPE_t, SPARSE_INDEX_TYPE_t
-from ...utils._typedefs import DTYPE, SPARSE_INDEX_TYPE
 
 from ...utils._cython_blas cimport (
   BLAS_Order,
   BLAS_Trans,
-  ColMajor,
   NoTrans,
   RowMajor,
   Trans,
   _gemm,
 )
+from ...utils._typedefs cimport DTYPE_t, ITYPE_t, SPARSE_INDEX_TYPE_t
 
-# TODO: change for `libcpp.algorithm.move` once Cython 3 is used
+import numpy as np
+from scipy.sparse import issparse, csr_matrix
+from ...utils._typedefs import DTYPE, SPARSE_INDEX_TYPE
+
+# TODO: change for `libcpp.algorithm.fill` once Cython 3 is used
 # Introduction in Cython:
 # https://github.com/cython/cython/blob/05059e2a9b89bf6738a7750b905057e5b1e3fe2e/Cython/Includes/libcpp/algorithm.pxd#L50 #noqa
 cdef extern from "<algorithm>" namespace "std" nogil:
@@ -73,10 +72,10 @@ cdef void _middle_term_sparse_sparse_{{name_suffix}}(
 
 
 cdef class MiddleTermComputer{{name_suffix}}:
-    """Component for `FastEuclidean*` variant wrapping the logic for the call to GEMM.
+    """Component for `EuclideanDistance` specialisation wrapping the logic for the call to GEMM.
 
-    `FastEuclidean*` classes internally compute the squared Euclidean distances between
-    chunks of vectors X_c and Y_c using the following decomposition:
+    `EuclideanDistance` subclasses internally compute the squared Euclidean distances
+    between chunks of vectors X_c and Y_c using the following decomposition:
 
 
                 ||X_c_i - Y_c_j||² = ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
@@ -213,7 +212,7 @@ cdef class MiddleTermComputer{{name_suffix}}:
     ) nogil:
         return
 
-    cdef DTYPE_t * _compute_distances_on_chunks(
+    cdef DTYPE_t * _compute_dist_middle_terms(
         self,
         ITYPE_t X_start,
         ITYPE_t X_end,
@@ -221,10 +220,7 @@ cdef class MiddleTermComputer{{name_suffix}}:
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
-        cdef:
-            DTYPE_t *dist_middle_terms = vector[DTYPE_t](1).data()
-        return dist_middle_terms
-
+        return NULL
 
 
 cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_suffix}}):
@@ -250,7 +246,7 @@ cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_
         self.Y = Y
 
 {{if upcast_to_float64}}
-        # We populate the buffer for upcasting chunks of X and Y from 32bit to 64bit.
+        # We populate the buffer for upcasting chunks of X and Y from float32 to float64.
         self.X_c_upcast = vector[vector[DTYPE_t]](self.effective_n_threads)
         self.Y_c_upcast = vector[vector[DTYPE_t]](self.effective_n_threads)
 
@@ -341,7 +337,7 @@ cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_
         return
 {{endif}}
 
-    cdef DTYPE_t * _compute_distances_on_chunks(
+    cdef DTYPE_t * _compute_dist_middle_terms(
         self,
         ITYPE_t X_start,
         ITYPE_t X_end,
@@ -350,8 +346,6 @@ cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_
         ITYPE_t thread_num,
     ) nogil:
         cdef:
-            ITYPE_t i, j
-            DTYPE_t squared_dist_i_j
             const {{INPUT_DTYPE_t}}[:, ::1] X_c = self.X[X_start:X_end, :]
             const {{INPUT_DTYPE_t}}[:, ::1] Y_c = self.Y[Y_start:Y_end, :]
             DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num].data()
@@ -445,7 +439,7 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
             val,
         )
 
-    cdef DTYPE_t * _compute_distances_on_chunks(
+    cdef DTYPE_t * _compute_dist_middle_terms(
         self,
         ITYPE_t X_start,
         ITYPE_t X_end,
@@ -457,7 +451,6 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
             DTYPE_t *dist_middle_terms = (
                 self.dist_middle_terms_chunks[thread_num].data()
             )
-            vector[DTYPE_t] vec_to_inspect
 
         _middle_term_sparse_sparse_{{name_suffix}}(
             self.X_data,

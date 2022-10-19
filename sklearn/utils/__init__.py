@@ -139,7 +139,8 @@ def safe_mask(X, mask):
 
 
 def axis0_safe_slice(X, mask, len_mask):
-    """
+    """Return a mask which is safer to use on X than safe_mask.
+
     This mask is safer than safe_mask since it returns an
     empty array, when a sparse matrix is sliced with a boolean mask
     with all False, instead of raising an unhelpful error in older
@@ -166,7 +167,8 @@ def axis0_safe_slice(X, mask, len_mask):
 
     Returns
     -------
-        mask
+    mask : ndarray
+        Array that is safe to use on X.
     """
     if len_mask != 0:
         return X[safe_mask(X, mask), :]
@@ -403,7 +405,7 @@ def _get_column_indices(X, key):
                 stop = all_columns.get_loc(stop) + 1
             else:
                 stop = n_columns + 1
-            return list(range(n_columns)[slice(start, stop)])
+            return list(islice(range(n_columns), start, stop))
         else:
             columns = list(key)
 
@@ -691,22 +693,23 @@ def _chunk_generator(gen, chunksize):
 
 
 def gen_batches(n, batch_size, *, min_batch_size=0):
-    """Generator to create slices containing batch_size elements, from 0 to n.
+    """Generator to create slices containing `batch_size` elements from 0 to `n`.
 
-    The last slice may contain less than batch_size elements, when batch_size
-    does not divide n.
+    The last slice may contain less than `batch_size` elements, when
+    `batch_size` does not divide `n`.
 
     Parameters
     ----------
     n : int
+        Size of the sequence.
     batch_size : int
-        Number of element in each batch.
+        Number of elements in each batch.
     min_batch_size : int, default=0
-        Minimum batch size to produce.
+        Minimum number of elements in each batch.
 
     Yields
     ------
-    slice of batch_size elements
+    slice of `batch_size` elements
 
     See Also
     --------
@@ -744,21 +747,25 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
 
 
 def gen_even_slices(n, n_packs, *, n_samples=None):
-    """Generator to create n_packs slices going up to n.
+    """Generator to create `n_packs` evenly spaced slices going up to `n`.
+
+    If `n_packs` does not divide `n`, except for the first `n % n_packs`
+    slices, remaining slices may contain fewer elements.
 
     Parameters
     ----------
     n : int
+        Size of the sequence.
     n_packs : int
         Number of slices to generate.
     n_samples : int, default=None
-        Number of samples. Pass n_samples when the slices are to be used for
+        Number of samples. Pass `n_samples` when the slices are to be used for
         sparse matrix indexing; slicing off-the-end raises an exception, while
         it works for NumPy arrays.
 
     Yields
     ------
-    slice
+    `slice` representing a set of indices from 0 to n.
 
     See Also
     --------
@@ -1001,7 +1008,7 @@ def _is_pandas_na(x):
 
 
 def is_scalar_nan(x):
-    """Tests if x is NaN.
+    """Test if x is NaN.
 
     This function is meant to overcome the issue that np.isnan does not allow
     non-numerical types as input, and that np.nan is not float('nan').
@@ -1009,10 +1016,12 @@ def is_scalar_nan(x):
     Parameters
     ----------
     x : any type
+        Any scalar value.
 
     Returns
     -------
-    boolean
+    bool
+        Returns true if x is NaN, and false otherwise.
 
     Examples
     --------

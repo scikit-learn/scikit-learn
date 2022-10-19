@@ -83,7 +83,7 @@ cdef class MiddleTermComputer{{name_suffix}}:
         ITYPE_t thread_num
     ) nogil
 
-    cdef DTYPE_t * _compute_distances_on_chunks(
+    cdef DTYPE_t * _compute_dist_middle_terms(
         self,
         ITYPE_t X_start,
         ITYPE_t X_end,
@@ -136,7 +136,7 @@ cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_
         ITYPE_t thread_num
     ) nogil
 
-    cdef DTYPE_t * _compute_distances_on_chunks(
+    cdef DTYPE_t * _compute_dist_middle_terms(
         self,
         ITYPE_t X_start,
         ITYPE_t X_end,
@@ -174,7 +174,7 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
         ITYPE_t thread_num
     ) nogil
 
-    cdef DTYPE_t * _compute_distances_on_chunks(
+    cdef DTYPE_t * _compute_dist_middle_terms(
         self,
         ITYPE_t X_start,
         ITYPE_t X_end,
