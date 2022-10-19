@@ -22,7 +22,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_sta
 X_train.head()
 
 # %%
-# To configure an estimator such as :class:`preprocessing.StandardScalar` to return
+# To configure an estimator such as :class:`preprocessing.StandardScaler` to return
 # DataFrames, call `set_output`. This feature requires pandas to be installed.
 
 from sklearn.preprocessing import StandardScaler
