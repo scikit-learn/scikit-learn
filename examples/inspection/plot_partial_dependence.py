@@ -62,8 +62,8 @@ X["year"].value_counts()
 # %%
 # We see that we have data from two years. We will use the first year to train the
 # model and the second year to test the model.
-X = X.drop(columns=["year"])
 mask_training = X["year"] == 0.0
+X = X.drop(columns=["year"])
 X_train, y_train = X[mask_training], y[mask_training]
 X_test, y_test = X[~mask_training], y[~mask_training]
 
@@ -105,9 +105,9 @@ xticklabels = [f"{day}\n{hour}:00" for day, hour in product(days, hours)]
 xtick_start, xtick_period = 6, 12
 
 fig, axs = plt.subplots(nrows=2, figsize=(8, 6), sharey=True, sharex=True)
-average_bike_rentals = bikes.frame.groupby(
-    ["year", "season", "weekday", "hour"]
-).mean()["count"]
+average_bike_rentals = bikes.frame.groupby(["year", "season", "weekday", "hour"]).mean(
+    numeric_only=True
+)["count"]
 for ax, (idx, df) in zip(axs, average_bike_rentals.groupby("year")):
     df.groupby("season").plot(ax=ax, legend=True)
 
@@ -380,7 +380,7 @@ _ = display.figure_.suptitle("ICE and PDP representations", fontsize=16)
 # parameter `interaction_cst`:
 from sklearn.base import clone
 
-interaction_cst = [[i] for i in range(hgbdt_model[-1].n_features_in_)]
+interaction_cst = [[i] for i in range(X_train.shape[1])]
 hgbdt_model_without_interactions = (
     clone(hgbdt_model)
     .set_params(histgradientboostingregressor__interaction_cst=interaction_cst)
