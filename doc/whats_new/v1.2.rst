@@ -431,6 +431,11 @@ Changelog
 - |API| The parameter `sum_over_features` of :func:`metrics.pairwise.manhattan_distances` is deprecated
   and will be removed in 1.4.
   :pr:`24630` by :user:`Rushil Desai <rusdes>`.
+  
+- |Enhancement| :class:`metrics.silhouette_samples` nows accepts a sparse
+  matrix of pairwise distances between samples, or a feature array.
+  :pr:`18723` by :user:`Sahil Gupta <sahilgupta2105>` and
+  :pr:`24677` by :user:`Ashwin Mathur <awinml>`.
 
 :mod:`sklearn.model_selection`
 ..............................
