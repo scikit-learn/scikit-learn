@@ -1148,10 +1148,15 @@ def test_sqeuclidean_row_norms(
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
 
+    X_csr = csr_matrix(X)
+
     sq_row_norm_reference = np.linalg.norm(X, axis=1) ** 2
     sq_row_norm = np.asarray(sqeuclidean_row_norms(X, num_threads=num_threads))
 
+    sq_row_norm_csr = np.asarray(sqeuclidean_row_norms(X_csr, num_threads=num_threads))
+
     assert_allclose(sq_row_norm_reference, sq_row_norm)
+    assert_allclose(sq_row_norm_reference, sq_row_norm_csr)
 
     with pytest.raises(ValueError):
         X = np.asfortranarray(X)
