@@ -54,7 +54,7 @@ from ._datasets_pair cimport (
     SparseSparseDatasetsPair{{name_suffix}},
 )
 
-from ._gemm_term_computer cimport MiddleTermComputer{{name_suffix}}
+from ._middle_term_computer cimport MiddleTermComputer{{name_suffix}}
 
 
 cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):

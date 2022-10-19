@@ -408,7 +408,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         In this method, EuclideanDistance specialisations of subclass of
         BaseDistancesReduction _must_ call:
 
-        self.gemm_term_computer._parallel_on_X_init_chunk(
+        self.middle_term_computer._parallel_on_X_init_chunk(
             thread_num, X_start, X_end,
         )
 
@@ -431,7 +431,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         In this method, EuclideanDistance specialisations of subclass of
         BaseDistancesReduction _must_ call:
 
-        self.gemm_term_computer._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
+        self.middle_term_computer._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
             X_start, X_end, Y_start, Y_end, thread_num,
         )
 
@@ -474,7 +474,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         In this method, EuclideanDistance specialisations of subclass of
         BaseDistancesReduction _must_ call:
 
-        self.gemm_term_computer._parallel_on_Y_parallel_init(
+        self.middle_term_computer._parallel_on_Y_parallel_init(
             thread_num, X_start, X_end,
         )
 
@@ -497,7 +497,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         In this method, EuclideanDistance specialisations of subclass of
         BaseDistancesReduction _must_ call:
 
-        self.gemm_term_computer._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
+        self.middle_term_computer._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
             X_start, X_end, Y_start, Y_end, thread_num,
         )
 

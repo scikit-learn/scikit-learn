@@ -15,8 +15,8 @@ def configuration(parent_package="", top_path=None):
     templates = [
         "sklearn/metrics/_pairwise_distances_reduction/_datasets_pair.pyx.tp",
         "sklearn/metrics/_pairwise_distances_reduction/_datasets_pair.pxd.tp",
-        "sklearn/metrics/_pairwise_distances_reduction/_gemm_term_computer.pyx.tp",
-        "sklearn/metrics/_pairwise_distances_reduction/_gemm_term_computer.pxd.tp",
+        "sklearn/metrics/_pairwise_distances_reduction/_middle_term_computer.pyx.tp",
+        "sklearn/metrics/_pairwise_distances_reduction/_middle_term_computer.pxd.tp",
         "sklearn/metrics/_pairwise_distances_reduction/_base.pyx.tp",
         "sklearn/metrics/_pairwise_distances_reduction/_base.pxd.tp",
         "sklearn/metrics/_pairwise_distances_reduction/_argkmin.pyx.tp",
@@ -29,7 +29,7 @@ def configuration(parent_package="", top_path=None):
 
     cython_sources = [
         "_datasets_pair.pyx",
-        "_gemm_term_computer.pyx",
+        "_middle_term_computer.pyx",
         "_base.pyx",
         "_argkmin.pyx",
         "_radius_neighbors.pyx",
