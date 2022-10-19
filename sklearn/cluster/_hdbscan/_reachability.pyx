@@ -6,9 +6,15 @@
 import numpy as np
 from scipy.sparse import issparse
 
+cimport cython
 cimport numpy as cnp
 from cython.parallel cimport prange
 from libc.math cimport isfinite, INFINITY
+
+
+ctypedef fused integral:
+    int
+    long long
 
 
 def mutual_reachability_graph(
@@ -59,19 +65,30 @@ def mutual_reachability_graph(
     if copy:
         distance_matrix = distance_matrix.copy()
 
+    further_neighbor_idx = min_samples - 1
     if issparse(distance_matrix):
         # FIXME: since we convert to a CSR matrix then we do not make the operation
         # in-place.
-        return _sparse_mutual_reachability_graph(
-            distance_matrix, min_samples=min_samples, max_distance=max_distance
-        ).tocsr()
+        distance_matrix = distance_matrix.tocsc()
+        _sparse_mutual_reachability_graph(
+            distance_matrix.data,
+            distance_matrix.indices,
+            distance_matrix.indptr,
+            distance_matrix.shape,
+            further_neighbor_idx=further_neighbor_idx,
+            max_distance=max_distance,
+        )
+    else:
+        _dense_mutual_reachability_graph(
+            distance_matrix, further_neighbor_idx=further_neighbor_idx
+        )
+    return distance_matrix
 
-    return _dense_mutual_reachability_graph(distance_matrix, min_samples=min_samples)
 
 
 cdef _dense_mutual_reachability_graph(
     cnp.ndarray[dtype=cnp.float64_t, ndim=2] distance_matrix,
-    cnp.intp_t min_samples=5
+    cnp.intp_t further_neighbor_idx=5
 ):
     """Dense implementation of mutual reachability graph.
 
@@ -95,13 +112,12 @@ cdef _dense_mutual_reachability_graph(
     """
     cdef:
         cnp.intp_t i, j, n_samples = distance_matrix.shape[0]
-        cnp.intp_t farther_neighbor_idx = min_samples - 1
         cnp.float64_t mutual_reachibility_distance
         cnp.float64_t[:] core_distances
 
     core_distances = np.partition(
-        distance_matrix, farther_neighbor_idx, axis=0
-    )[farther_neighbor_idx]
+        distance_matrix, further_neighbor_idx, axis=0
+    )[further_neighbor_idx]
 
     with nogil:
         for i in range(n_samples):
@@ -112,13 +128,15 @@ cdef _dense_mutual_reachability_graph(
                     distance_matrix[i, j],
                 )
                 distance_matrix[i, j] = mutual_reachibility_distance
-    return distance_matrix
 
 
 # TODO: Rewrite for CSR.
 cdef _sparse_mutual_reachability_graph(
-    object distance_matrix,
-    cnp.intp_t min_samples=5,
+    cnp.ndarray[cnp.float64_t, ndim=1, mode="c"] data,
+    cnp.ndarray[cnp.int32_t, ndim=1, mode="c"] indices,
+    cnp.ndarray[cnp.int32_t, ndim=1, mode="c"] indptr,
+    cnp.intp_t n_samples,
+    cnp.intp_t further_neighbor_idx=5,
     cnp.float64_t max_distance=0.0,
 ):
     """Sparse implementation of mutual reachability graph.
@@ -143,34 +161,30 @@ cdef _sparse_mutual_reachability_graph(
         is the same as `distance_matrix` since the operation is done in-place.
     """
     cdef:
-        cnp.intp_t i, j, sample_idx, n_samples = distance_matrix.shape[0]
-        list row_distances
-        cnp.intp_t farther_neighbor_idx = min_samples - 1
+        cnp.intp_t i, col_ind, row_ind
         cnp.float64_t mutual_reachibility_distance
         cnp.float64_t[:] core_distances
-        cnp.int32_t[:] nz_row_data, nz_col_data
+        cnp.float64_t[:] col_data
+        cnp.int32_t[:] row_indices
 
     core_distances = np.empty(n_samples, dtype=np.float64)
 
     for i in range(n_samples):
-        row_distances = distance_matrix.data[i]
-        if farther_neighbor_idx < len(row_distances):
+        col_data = data[indptr[i]:indptr[i + 1]]
+        if further_neighbor_idx < col_data.size:
             core_distances[i] = np.partition(
-                row_distances, farther_neighbor_idx
-            )[farther_neighbor_idx]
+                col_data, further_neighbor_idx
+            )[further_neighbor_idx]
         else:
             core_distances[i] = INFINITY
 
-    nz_row_data, nz_col_data = distance_matrix.nonzero()
-    for sample_idx in range(nz_row_data.shape[0]):
-        i, j = nz_row_data[sample_idx], nz_col_data[sample_idx]
-        mutual_reachibility_distance = max(
-            core_distances[i], core_distances[j], distance_matrix[i, j]
-        )
-        if isfinite(mutual_reachibility_distance):
-            distance_matrix[i, j] = mutual_reachibility_distance
-        elif max_distance > 0:
-            # TODO: it seems that we assume that distance_matrix is initialized
-            # with zeros.
-            distance_matrix[i, j] = max_distance
-    return distance_matrix
+    for col_ind in range(n_samples):
+        for i in range(indptr[col_ind], indptr[col_ind + 1]):
+            row_ind = indices[i]
+            mutual_reachibility_distance = max(
+                core_distances[col_ind], core_distances[row_ind], data[i]
+            )
+            if isfinite(mutual_reachibility_distance):
+                data[i] = mutual_reachibility_distance
+            elif max_distance > 0:
+                data[i] = max_distance
