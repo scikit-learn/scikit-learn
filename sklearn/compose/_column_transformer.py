@@ -528,7 +528,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
 
         Returns
         -------
-        feature_names_out : ndarray of str objects
+        feature_names_out : ndarray of shape (n_features,), dtype=str
             Transformed feature names.
         """
         if self.verbose_feature_names_out:
