@@ -212,3 +212,7 @@ def test__wrap_in_pandas_container_column_errors():
 
     X_wrapped = _wrap_in_pandas_container(X_df, columns=get_columns)
     assert_array_equal(X_wrapped.columns, X_df.columns)
+
+    X_np = np.asarray([[1, 3], [2, 4], [3, 5]])
+    X_wrapped = _wrap_in_pandas_container(X_np, columns=get_columns)
+    assert_array_equal(X_wrapped.columns, [0, 1])
