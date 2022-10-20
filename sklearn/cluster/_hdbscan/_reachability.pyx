@@ -84,7 +84,6 @@ def mutual_reachability_graph(
     return distance_matrix
 
 
-
 def _dense_mutual_reachability_graph(
     cnp.ndarray[dtype=floating, ndim=2] distance_matrix,
     cnp.intp_t further_neighbor_idx,
@@ -131,7 +130,7 @@ def _sparse_mutual_reachability_graph(
     cnp.ndarray[integral, ndim=1, mode="c"] indptr,
     cnp.intp_t n_samples,
     cnp.intp_t further_neighbor_idx,
-    cnp.float64_t max_distance,
+    floating max_distance,
 ):
     """Sparse implementation of mutual reachability graph.
 
