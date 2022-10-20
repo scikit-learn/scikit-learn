@@ -153,7 +153,7 @@ def _sparse_mutual_reachability_graph(
         matrix.
     """
     cdef:
-        cnp.intp_t i, col_ind
+        integral i, col_ind
         integral row_ind
         floating mutual_reachibility_distance
         floating[:] core_distances
