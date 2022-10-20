@@ -107,19 +107,21 @@ plt.show()
 # We can also build a :func:`~sklearn.metrics.classification_report`
 # through the :ref:`confusion matrix <confusion_matrix>`.
 
+
 def generate_gt_pred_from_cm(cm):
     y_true = []
     y_pred = []
 
     for gt in range(len(cm)):
         for pred in range(len(cm)):
-            y_true.append([gt]*cm[gt][pred])
-            y_pred.append([pred]*cm[gt][pred])
+            y_true.append([gt] * cm[gt][pred])
+            y_pred.append([pred] * cm[gt][pred])
 
     return y_true, y_pred
 
+
 y_true, y_pred = generate_gt_pred_from_cm(disp.confusion_matrix)
 print(
-    f"Classification report rebuilt from confusion matrix:\n"
+    "Classification report rebuilt from confusion matrix:\n"
     f"{metrics.classification_report(y_true, y_pred)}\n"
 )
