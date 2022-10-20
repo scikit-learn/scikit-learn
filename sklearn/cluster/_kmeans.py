@@ -22,7 +22,7 @@ from ..base import (
     BaseEstimator,
     ClusterMixin,
     TransformerMixin,
-    _ClassNamePrefixFeaturesOutMixin,
+    ClassNamePrefixFeaturesOutMixin,
 )
 from ..metrics.pairwise import euclidean_distances
 from ..metrics.pairwise import _euclidean_distances
@@ -813,7 +813,7 @@ def _labels_inertia_threadpool_limit(
 
 
 class _BaseKMeans(
-    _ClassNamePrefixFeaturesOutMixin, TransformerMixin, ClusterMixin, BaseEstimator, ABC
+    ClassNamePrefixFeaturesOutMixin, TransformerMixin, ClusterMixin, BaseEstimator, ABC
 ):
     """Base class for KMeans and MiniBatchKMeans"""
 
@@ -1055,11 +1055,12 @@ class _BaseKMeans(
         X = self._check_test_data(X)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        labels, _ = _labels_inertia_threadpool_limit(
+        labels = _labels_inertia_threadpool_limit(
             X,
             sample_weight,
             self.cluster_centers_,
             n_threads=self._n_threads,
+            return_inertia=False,
         )
 
         return labels
