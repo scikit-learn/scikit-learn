@@ -20,47 +20,6 @@ VCRUNTIME140_1_SRC_PATH = "C:\\Windows\\System32\\vcruntime140_1.dll"
 MSVCP140_SRC_PATH = "C:\\Windows\\System32\\msvcp140.dll"
 
 
-def make_distributor_init_32_bits(
-    distributor_init, vcomp140_dll_filename, vcruntime140_dll_filename
-):
-    """Create a _distributor_init.py file for 32-bit architectures.
-
-    This file is imported first when importing the sklearn package
-    so as to pre-load the vendored vcomp140.dll and vcruntime140.dll.
-    """
-    with open(distributor_init, "wt") as f:
-        f.write(
-            textwrap.dedent(
-                """
-            '''Helper to preload vcomp140.dll and vcruntime140.dll to
-            prevent "not found" errors.
-
-            Once vcomp140.dll and vcruntime140.dll are preloaded, the
-            namespace is made available to any subsequent vcomp140.dll
-            and vcruntime140.dll. This is created as part of the scripts
-            that build the wheel.
-            '''
-
-
-            import os
-            import os.path as op
-            from ctypes import WinDLL
-
-
-            if os.name == "nt":
-                # Load vcomp140.dll and vcruntime140.dll
-                libs_path = op.join(op.dirname(__file__), ".libs")
-                vcomp140_dll_filename = op.join(libs_path, "{0}")
-                vcruntime140_dll_filename = op.join(libs_path, "{1}")
-                WinDLL(op.abspath(vcomp140_dll_filename))
-                WinDLL(op.abspath(vcruntime140_dll_filename))
-            """.format(
-                    vcomp140_dll_filename, vcruntime140_dll_filename
-                )
-            )
-        )
-
-
 def make_distributor_init_64_bits(
     distributor_init,
     vcomp140_dll_filename,
