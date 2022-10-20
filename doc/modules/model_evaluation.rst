@@ -708,10 +708,10 @@ distance <https://en.wikipedia.org/wiki/Hamming_distance>`_ between two sets
 of samples.
 
 If :math:`\hat{y}_{i,j}` is the predicted value for the :math:`j`-th label of a
-given sample point :math:`i`, :math:`y_{i,j}` is the corresponding true value,
-:math:`n_\text{samples}` is the number of sample points and
-:math:`n_\text{labels}` is the number of labels, then the Hamming loss 
-:math:`L_{Hamming}` is defined as:
+given sample :math:`i`, :math:`y_{i,j}` is the corresponding true value,
+:math:`n_\text{samples}` is the number of samples and :math:`n_\text{labels}`
+is the number of labels, then the Hamming loss :math:`L_{Hamming}` is defined
+as:
 
 .. math::
 
