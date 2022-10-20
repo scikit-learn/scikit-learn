@@ -115,6 +115,7 @@ def main(wheel_dirname):
     shutil.copy2(MSVCP140_SRC_PATH, target_folder)
 
     # Generate the _distributor_init file in the source tree
+    print("Generating the '_distributor_init.py' file.")
     make_distributor_init_64_bits(
         distributor_init,
         vcomp140_dll_filename,
