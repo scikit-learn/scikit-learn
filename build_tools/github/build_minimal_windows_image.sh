@@ -16,8 +16,6 @@ PYTHON_VERSION=$(echo ${PYTHON_VERSION:0:1}.${PYTHON_VERSION:1:2})
 
 # TODO: Remove when 3.11 images will be available for
 # windows (for now the docker image is tagged as 3.11-rc)
-# TODO: Remove when 3.11 images will be available for
-# scipy (for now only available from nightly anaconda index)
 if [[ "$PYTHON_VERSION" == "3.11" ]]; then
     PYTHON_VERSION=$(echo ${PYTHON_VERSION}-rc)
 fi
@@ -27,7 +25,5 @@ docker build --build-arg PYTHON_VERSION=$PYTHON_VERSION \
              --build-arg WHEEL_NAME=$WHEEL_NAME \
              --build-arg CONFTEST_NAME=$CONFTEST_NAME \
              --build-arg CIBW_TEST_REQUIRES="$CIBW_TEST_REQUIRES" \
-             --build-arg PIP_EXTRA_INDEX_URL="$PIP_EXTRA_INDEX_URL" \
-             --build-arg PIP_PRE="$PIP_PRE" \
              -f build_tools/github/Windows \
              -t scikit-learn/minimal-windows .
