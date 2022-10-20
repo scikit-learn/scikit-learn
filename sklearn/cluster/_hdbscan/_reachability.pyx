@@ -153,8 +153,7 @@ def _sparse_mutual_reachability_graph(
         matrix.
     """
     cdef:
-        integral i, col_ind
-        integral row_ind
+        integral i, col_ind, row_ind
         floating mutual_reachibility_distance
         floating[:] core_distances
         floating[:] row_data
@@ -176,11 +175,11 @@ def _sparse_mutual_reachability_graph(
             core_distances[i] = INFINITY
 
     with nogil:
-        for col_ind in range(n_samples):
-            for i in range(indptr[col_ind], indptr[col_ind + 1]):
-                row_ind = indices[i]
+        for row_ind in range(n_samples):
+            for i in range(indptr[row_ind], indptr[row_ind + 1]):
+                col_ind = indices[i]
                 mutual_reachibility_distance = max(
-                    core_distances[col_ind], core_distances[row_ind], data[i]
+                    core_distances[row_ind], core_distances[col_ind], data[i]
                 )
                 if isfinite(mutual_reachibility_distance):
                     data[i] = mutual_reachibility_distance
