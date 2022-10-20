@@ -114,8 +114,8 @@ def generate_gt_pred_from_cm(cm):
 
     for gt in range(len(cm)):
         for pred in range(len(cm)):
-            y_true.append([gt] * cm[gt][pred])
-            y_pred.append([pred] * cm[gt][pred])
+            y_true += [gt] * cm[gt][pred]
+            y_pred += [pred] * cm[gt][pred]
 
     return y_true, y_pred
 
