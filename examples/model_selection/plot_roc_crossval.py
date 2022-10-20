@@ -55,6 +55,12 @@ X = np.concatenate([X, random_state.randn(n_samples, 200 * n_features)], axis=1)
 # %%
 # Classification and ROC analysis
 # -------------------------------
+#
+# Here we run a :class:`~sklearn.svm.SVC` classifier with cross-validation and
+# plot the ROC curves fold-wise. Notice that the baseline to define the chance
+# level (dashed ROC curve) is a classifier that would always predict the most
+# frequent class.
+
 import matplotlib.pyplot as plt
 
 from sklearn import svm
@@ -62,7 +68,6 @@ from sklearn.metrics import auc
 from sklearn.metrics import RocCurveDisplay
 from sklearn.model_selection import StratifiedKFold
 
-# Run classifier with cross-validation and plot ROC curves
 cv = StratifiedKFold(n_splits=6)
 classifier = svm.SVC(kernel="linear", probability=True, random_state=random_state)
 
@@ -92,7 +97,6 @@ mean_tpr = np.mean(tprs, axis=0)
 mean_tpr[-1] = 1.0
 mean_auc = auc(mean_fpr, mean_tpr)
 std_auc = np.std(aucs)
-
 ax.plot(
     mean_fpr,
     mean_tpr,
