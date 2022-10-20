@@ -123,7 +123,14 @@ def set_config(
         .. versionadded:: 1.2
 
     transform_output : str, default=None
-        Configure the output container for transform.
+        Configure output of `transform` and `fit_transform`.
+
+        See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
+        for an example on how to use the API.
+
+        - `"default"`: Default output format of a transformer
+        - `"pandas"`: DataFrame output
+        - `None`: Transform configuration is unchanged
 
         .. versionadded:: 1.2
 
@@ -231,7 +238,14 @@ def config_context(
         .. versionadded:: 1.2
 
     transform_output : str, default=None
-        Configure the output container for transform.
+        Configure output of `transform` and `fit_transform`.
+
+        See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
+        for an example on how to use the API.
+
+        - `"default"`: Default output format of a transformer
+        - `"pandas"`: DataFrame output
+        - `None`: Transform configuration is unchanged
 
         .. versionadded:: 1.2
 
