@@ -4,7 +4,6 @@ set -e
 set -x
 
 PYTHON_VERSION=$1
-BITNESS=$2
 
 if [[ "$BITNESS" == "32" ]]; then
     # 32-bit architectures use the regular
