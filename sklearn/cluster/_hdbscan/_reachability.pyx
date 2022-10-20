@@ -157,7 +157,7 @@ def _sparse_mutual_reachability_graph(
         integral row_ind
         floating mutual_reachibility_distance
         floating[:] core_distances
-        floating[:] col_data
+        floating[:] row_data
 
     if floating is float:
         dtype = np.float32
@@ -167,21 +167,22 @@ def _sparse_mutual_reachability_graph(
     core_distances = np.empty(n_samples, dtype=dtype)
 
     for i in range(n_samples):
-        col_data = data[indptr[i]:indptr[i + 1]]
-        if further_neighbor_idx < col_data.size:
+        row_data = data[indptr[i]:indptr[i + 1]]
+        if further_neighbor_idx < row_data.size:
             core_distances[i] = np.partition(
-                col_data, further_neighbor_idx
+                row_data, further_neighbor_idx
             )[further_neighbor_idx]
         else:
             core_distances[i] = INFINITY
 
-    for col_ind in range(n_samples):
-        for i in range(indptr[col_ind], indptr[col_ind + 1]):
-            row_ind = indices[i]
-            mutual_reachibility_distance = max(
-                core_distances[col_ind], core_distances[row_ind], data[i]
-            )
-            if isfinite(mutual_reachibility_distance):
-                data[i] = mutual_reachibility_distance
-            elif max_distance > 0:
-                data[i] = max_distance
+    with nogil:
+        for col_ind in range(n_samples):
+            for i in range(indptr[col_ind], indptr[col_ind + 1]):
+                row_ind = indices[i]
+                mutual_reachibility_distance = max(
+                    core_distances[col_ind], core_distances[row_ind], data[i]
+                )
+                if isfinite(mutual_reachibility_distance):
+                    data[i] = mutual_reachibility_distance
+                elif max_distance > 0:
+                    data[i] = max_distance
