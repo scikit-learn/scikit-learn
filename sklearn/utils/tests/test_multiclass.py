@@ -27,6 +27,21 @@ from sklearn.model_selection import ShuffleSplit
 from sklearn.svm import SVC
 from sklearn import datasets
 
+sparse_multilable_explicit_zero = csc_matrix(np.array([[0, 1], [1, 0]]))
+sparse_multilable_explicit_zero[:, 0] = 0
+
+
+def _generate_sparse(
+    matrix,
+    matrix_types=(csr_matrix, csc_matrix, coo_matrix, dok_matrix, lil_matrix),
+    dtypes=(bool, int, np.int8, np.uint8, float, np.float32),
+):
+    return [
+        matrix_type(matrix, dtype=dtype)
+        for matrix_type in matrix_types
+        for dtype in dtypes
+    ]
+
 
 EXAMPLES = {
     "multilabel-indicator": [
@@ -35,14 +50,10 @@ EXAMPLES = {
         csr_matrix(np.random.RandomState(42).randint(2, size=(10, 10))),
         [[0, 1], [1, 0]],
         [[0, 1]],
-        csr_matrix(np.array([[0, 1], [1, 0]])),
-        csr_matrix(np.array([[0, 1], [1, 0]], dtype=bool)),
-        csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.int8)),
-        csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.uint8)),
-        csr_matrix(np.array([[0, 1], [1, 0]], dtype=float)),
-        csr_matrix(np.array([[0, 1], [1, 0]], dtype=np.float32)),
-        csr_matrix(np.array([[0, 0], [0, 0]])),
-        csr_matrix(np.array([[0, 1]])),
+        sparse_multilable_explicit_zero,
+        *_generate_sparse([[0, 1], [1, 0]]),
+        *_generate_sparse([[0, 0], [0, 0]]),
+        *_generate_sparse([[0, 1]]),
         # Only valid when data is dense
         [[-1, 1], [1, -1]],
         np.array([[-1, 1], [1, -1]]),
@@ -72,6 +83,11 @@ EXAMPLES = {
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.uint8),
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=float),
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]], dtype=np.float32),
+        *_generate_sparse(
+            [[1, 0, 2, 2], [1, 4, 2, 4]],
+            matrix_types=(csr_matrix, csc_matrix),
+            dtypes=(int, np.int8, np.uint8, float, np.float32),
+        ),
         np.array([["a", "b"], ["c", "d"]]),
         np.array([["a", "b"], ["c", "d"]]),
         np.array([["a", "b"], ["c", "d"]], dtype=object),
@@ -110,9 +126,20 @@ EXAMPLES = {
         np.array([[0, 0.5], [0.5, 0]]),
         np.array([[0, 0.5], [0.5, 0]], dtype=np.float32),
         np.array([[0, 0.5]]),
+        *_generate_sparse(
+            [[0, 0.5], [0.5, 0]],
+            matrix_types=(csr_matrix, csc_matrix),
+            dtypes=(float, np.float32),
+        ),
+        *_generate_sparse(
+            [[0, 0.5]],
+            matrix_types=(csr_matrix, csc_matrix),
+            dtypes=(float, np.float32),
+        ),
     ],
     "unknown": [
         [[]],
+        np.array([[]], dtype=object),
         [()],
         # sequence of sequences that weren't supported even before deprecation
         np.array([np.array([]), np.array([1, 2, 3])], dtype=object),
@@ -121,6 +148,8 @@ EXAMPLES = {
         [frozenset([1, 2, 3]), frozenset([1, 2])],
         # and also confusable as sequences of sequences
         [{0: "a", 1: "b"}, {0: "a"}],
+        # ndim 0
+        np.array(0),
         # empty second dimension
         np.array([[], []]),
         # 3d

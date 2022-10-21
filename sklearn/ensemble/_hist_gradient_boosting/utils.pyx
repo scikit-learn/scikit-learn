@@ -40,8 +40,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm', n_classes=None):
     lightgbm_loss_mapping = {
         'squared_error': 'regression_l2',
         'absolute_error': 'regression_l1',
-        'binary_crossentropy': 'binary',
-        'categorical_crossentropy': 'multiclass'
+        'log_loss': 'binary' if n_classes == 2 else 'multiclass',
     }
 
     lightgbm_params = {
@@ -63,7 +62,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm', n_classes=None):
         'subsample_for_bin': _BinMapper().subsample,
     }
 
-    if sklearn_params['loss'] == 'categorical_crossentropy':
+    if sklearn_params['loss'] == 'log_loss' and n_classes > 2:
         # LightGBM multiplies hessians by 2 in multiclass loss.
         lightgbm_params['min_sum_hessian_in_leaf'] *= 2
         # LightGBM 3.0 introduced a different scaling of the hessian for the multiclass case.
@@ -76,8 +75,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm', n_classes=None):
     xgboost_loss_mapping = {
         'squared_error': 'reg:linear',
         'absolute_error': 'LEAST_ABSOLUTE_DEV_NOT_SUPPORTED',
-        'binary_crossentropy': 'reg:logistic',
-        'categorical_crossentropy': 'multi:softmax'
+        'log_loss': 'reg:logistic' if n_classes == 2 else 'multi:softmax',
     }
 
     xgboost_params = {
@@ -101,8 +99,7 @@ def get_equivalent_estimator(estimator, lib='lightgbm', n_classes=None):
         'squared_error': 'RMSE',
         # catboost does not support MAE when leaf_estimation_method is Newton
         'absolute_error': 'LEAST_ASBOLUTE_DEV_NOT_SUPPORTED',
-        'binary_crossentropy': 'Logloss',
-        'categorical_crossentropy': 'MultiClass'
+        'log_loss': 'Logloss' if n_classes == 2 else 'MultiClass',
     }
 
     catboost_params = {
