@@ -15,15 +15,13 @@ comes in to choose a direction that is not flat.
 #          Kevin Hughes
 # License: BSD 3 clause
 
-from sklearn.decomposition import PCA
+# %%
+# Create the data
+# ---------------
 
 import numpy as np
-import matplotlib.pyplot as plt
+
 from scipy import stats
-
-
-# #############################################################################
-# Create the data
 
 e = np.exp(1)
 np.random.seed(4)
@@ -51,8 +49,18 @@ a /= norm
 b /= norm
 
 
-# #############################################################################
+# %%
 # Plot the figures
+# ----------------
+
+from sklearn.decomposition import PCA
+
+import matplotlib.pyplot as plt
+
+# unused but required import for doing 3d projections with matplotlib < 3.2
+import mpl_toolkits.mplot3d  # noqa: F401
+
+
 def plot_figs(fig_num, elev, azim):
     fig = plt.figure(fig_num, figsize=(4, 3))
     plt.clf()

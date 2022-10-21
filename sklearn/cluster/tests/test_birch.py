@@ -11,18 +11,16 @@ from sklearn.cluster import Birch
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets import make_blobs
 from sklearn.exceptions import ConvergenceWarning
-from sklearn.linear_model import ElasticNet
 from sklearn.metrics import pairwise_distances_argmin, v_measure_score
 
-from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
 
 
-def test_n_samples_leaves_roots(global_dtype):
+def test_n_samples_leaves_roots(global_random_seed, global_dtype):
     # Sanity check for the number of samples in leaves and roots
-    X, y = make_blobs(n_samples=10)
-    X = X.astype(global_dtype)
+    X, y = make_blobs(n_samples=10, random_state=global_random_seed)
+    X = X.astype(global_dtype, copy=False)
     brc = Birch()
     brc.fit(X)
     n_samples_root = sum([sc.n_samples_ for sc in brc.root_.subclusters_])
@@ -33,10 +31,10 @@ def test_n_samples_leaves_roots(global_dtype):
     assert n_samples_root == X.shape[0]
 
 
-def test_partial_fit(global_dtype):
+def test_partial_fit(global_random_seed, global_dtype):
     # Test that fit is equivalent to calling partial_fit multiple times
-    X, y = make_blobs(n_samples=100)
-    X = X.astype(global_dtype)
+    X, y = make_blobs(n_samples=100, random_state=global_random_seed)
+    X = X.astype(global_dtype, copy=False)
     brc = Birch(n_clusters=3)
     brc.fit(X)
     brc_partial = Birch(n_clusters=None)
@@ -51,11 +49,11 @@ def test_partial_fit(global_dtype):
     assert_array_equal(brc_partial.subcluster_labels_, brc.subcluster_labels_)
 
 
-def test_birch_predict(global_dtype):
+def test_birch_predict(global_random_seed, global_dtype):
     # Test the predict method predicts the nearest centroid.
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = generate_clustered_data(n_clusters=3, n_features=3, n_samples_per_cluster=10)
-    X = X.astype(global_dtype)
+    X = X.astype(global_dtype, copy=False)
 
     # n_samples * n_samples_per_cluster
     shuffle_indices = np.arange(30)
@@ -63,19 +61,22 @@ def test_birch_predict(global_dtype):
     X_shuffle = X[shuffle_indices, :]
     brc = Birch(n_clusters=4, threshold=1.0)
     brc.fit(X_shuffle)
-    # TODO: the subcluster_centers_ fitted attribute must have the same dtype
-    # assert brc.subcluster_centers_.dtype == global_dtype
 
-    centroids = brc.subcluster_centers_
+    # Birch must preserve inputs' dtype
+    assert brc.subcluster_centers_.dtype == global_dtype
+
     assert_array_equal(brc.labels_, brc.predict(X_shuffle))
-    nearest_centroid = pairwise_distances_argmin(X_shuffle, centroids)
-    assert_almost_equal(v_measure_score(nearest_centroid, brc.labels_), 1.0)
+    centroids = brc.subcluster_centers_
+    nearest_centroid = brc.subcluster_labels_[
+        pairwise_distances_argmin(X_shuffle, centroids)
+    ]
+    assert_allclose(v_measure_score(nearest_centroid, brc.labels_), 1.0)
 
 
-def test_n_clusters(global_dtype):
+def test_n_clusters(global_random_seed, global_dtype):
     # Test that n_clusters param works properly
-    X, y = make_blobs(n_samples=100, centers=10)
-    X = X.astype(global_dtype)
+    X, y = make_blobs(n_samples=100, centers=10, random_state=global_random_seed)
+    X = X.astype(global_dtype, copy=False)
     brc1 = Birch(n_clusters=10)
     brc1.fit(X)
     assert len(brc1.subcluster_centers_) > 10
@@ -89,23 +90,16 @@ def test_n_clusters(global_dtype):
     assert_array_equal(brc1.subcluster_labels_, brc2.subcluster_labels_)
     assert_array_equal(brc1.labels_, brc2.labels_)
 
-    # Test that the wrong global clustering step raises an Error.
-    clf = ElasticNet()
-    brc3 = Birch(n_clusters=clf)
-    err_msg = "n_clusters should be an instance of ClusterMixin or an int"
-    with pytest.raises(TypeError, match=err_msg):
-        brc3.fit(X)
-
     # Test that a small number of clusters raises a warning.
     brc4 = Birch(threshold=10000.0)
     with pytest.warns(ConvergenceWarning):
         brc4.fit(X)
 
 
-def test_sparse_X(global_dtype):
+def test_sparse_X(global_random_seed, global_dtype):
     # Test that sparse and dense data give same results
-    X, y = make_blobs(n_samples=100, centers=10)
-    X = X.astype(global_dtype)
+    X, y = make_blobs(n_samples=100, centers=10, random_state=global_random_seed)
+    X = X.astype(global_dtype, copy=False)
     brc = Birch(n_clusters=10)
     brc.fit(X)
 
@@ -121,7 +115,7 @@ def test_partial_fit_second_call_error_checks(global_dtype):
     # second partial fit calls will error when n_features is not consistent
     # with the first call
     X, y = make_blobs(n_samples=100)
-    X = X.astype(global_dtype)
+    X = X.astype(global_dtype, copy=False)
     brc = Birch(n_clusters=3)
     brc.partial_fit(X, y)
 
@@ -138,10 +132,10 @@ def check_branching_factor(node, branching_factor):
             check_branching_factor(cluster.child_, branching_factor)
 
 
-def test_branching_factor(global_dtype):
+def test_branching_factor(global_random_seed, global_dtype):
     # Test that nodes have at max branching_factor number of subclusters
-    X, y = make_blobs()
-    X = X.astype(global_dtype)
+    X, y = make_blobs(random_state=global_random_seed)
+    X = X.astype(global_dtype, copy=False)
     branching_factor = 9
 
     # Purposefully set a low threshold to maximize the subclusters.
@@ -163,10 +157,10 @@ def check_threshold(birch_instance, threshold):
         current_leaf = current_leaf.next_leaf_
 
 
-def test_threshold(global_dtype):
+def test_threshold(global_random_seed, global_dtype):
     # Test that the leaf subclusters have a threshold lesser than radius
-    X, y = make_blobs(n_samples=80, centers=4)
-    X = X.astype(global_dtype)
+    X, y = make_blobs(n_samples=80, centers=4, random_state=global_random_seed)
+    X = X.astype(global_dtype, copy=False)
     brc = Birch(threshold=0.5, n_clusters=None)
     brc.fit(X)
     check_threshold(brc, 0.5)
@@ -184,59 +178,66 @@ def test_birch_n_clusters_long_int():
     Birch(n_clusters=n_clusters).fit(X)
 
 
-# TODO: Remove in 1.2
-@pytest.mark.parametrize("attribute", ["fit_", "partial_fit_"])
-def test_birch_fit_attributes_deprecated(attribute):
-    """Test that fit_ and partial_fit_ attributes are deprecated."""
-    msg = f"`{attribute}` is deprecated in 1.0 and will be removed in 1.2"
-    X, y = make_blobs(n_samples=10)
-    brc = Birch().fit(X, y)
-
-    with pytest.warns(FutureWarning, match=msg):
-        getattr(brc, attribute)
-
-
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"threshold": -1.0}, ValueError, "threshold == -1.0, must be > 0.0."),
-        ({"threshold": 0.0}, ValueError, "threshold == 0.0, must be > 0.0."),
-        ({"branching_factor": 0}, ValueError, "branching_factor == 0, must be > 1."),
-        ({"branching_factor": 1}, ValueError, "branching_factor == 1, must be > 1."),
-        (
-            {"branching_factor": 1.5},
-            TypeError,
-            "branching_factor must be an instance of int, not float.",
-        ),
-        ({"branching_factor": -2}, ValueError, "branching_factor == -2, must be > 1."),
-        ({"n_clusters": 0}, ValueError, "n_clusters == 0, must be >= 1."),
-        (
-            {"n_clusters": 2.5},
-            TypeError,
-            "n_clusters must be an instance of int, not float.",
-        ),
-        (
-            {"n_clusters": "whatever"},
-            TypeError,
-            "n_clusters should be an instance of ClusterMixin or an int",
-        ),
-        ({"n_clusters": -3}, ValueError, "n_clusters == -3, must be >= 1."),
-    ],
-)
-def test_birch_params_validation(params, err_type, err_msg):
-    """Check the parameters validation in `Birch`."""
-    X, _ = make_blobs(n_samples=80, centers=4)
-    with pytest.raises(err_type, match=err_msg):
-        Birch(**params).fit(X)
-
-
 def test_feature_names_out(global_dtype):
     """Check `get_feature_names_out` for `Birch`."""
     X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
-    X = X.astype(global_dtype)
+    X = X.astype(global_dtype, copy=False)
     brc = Birch(n_clusters=4)
     brc.fit(X)
     n_clusters = brc.subcluster_centers_.shape[0]
 
     names_out = brc.get_feature_names_out()
     assert_array_equal([f"birch{i}" for i in range(n_clusters)], names_out)
+
+
+def test_transform_match_across_dtypes(global_random_seed):
+    X, _ = make_blobs(n_samples=80, n_features=4, random_state=global_random_seed)
+    brc = Birch(n_clusters=4, threshold=1.1)
+    Y_64 = brc.fit_transform(X)
+    Y_32 = brc.fit_transform(X.astype(np.float32))
+
+    assert_allclose(Y_64, Y_32, atol=1e-6)
+
+
+def test_subcluster_dtype(global_dtype):
+    X = make_blobs(n_samples=80, n_features=4, random_state=0)[0].astype(
+        global_dtype, copy=False
+    )
+    brc = Birch(n_clusters=4)
+    assert brc.fit(X).subcluster_centers_.dtype == global_dtype
+
+
+def test_both_subclusters_updated():
+    """Check that both subclusters are updated when a node a split, even when there are
+    duplicated data points. Non-regression test for #23269.
+    """
+
+    X = np.array(
+        [
+            [-2.6192791, -1.5053215],
+            [-2.9993038, -1.6863596],
+            [-2.3724914, -1.3438171],
+            [-2.336792, -1.3417323],
+            [-2.4089134, -1.3290224],
+            [-2.3724914, -1.3438171],
+            [-3.364009, -1.8846745],
+            [-2.3724914, -1.3438171],
+            [-2.617677, -1.5003285],
+            [-2.2960556, -1.3260119],
+            [-2.3724914, -1.3438171],
+            [-2.5459878, -1.4533926],
+            [-2.25979, -1.3003055],
+            [-2.4089134, -1.3290224],
+            [-2.3724914, -1.3438171],
+            [-2.4089134, -1.3290224],
+            [-2.5459878, -1.4533926],
+            [-2.3724914, -1.3438171],
+            [-2.9720619, -1.7058647],
+            [-2.336792, -1.3417323],
+            [-2.3724914, -1.3438171],
+        ],
+        dtype=np.float32,
+    )
+
+    # no error
+    Birch(branching_factor=5, threshold=1e-5, n_clusters=None).fit(X)

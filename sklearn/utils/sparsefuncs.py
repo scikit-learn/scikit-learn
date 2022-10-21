@@ -77,7 +77,7 @@ def mean_variance_axis(X, axis, weights=None, return_sum_weights=False):
         Axis along which the axis should be computed.
 
     weights : ndarray of shape (n_samples,) or (n_features,), default=None
-        if axis is set to 0 shape is (n_samples,) or
+        If axis is set to 0 shape is (n_samples,) or
         if axis is set to 1 shape is (n_features,).
         If it is set to None, then samples are equally weighted.
 
@@ -126,8 +126,7 @@ def mean_variance_axis(X, axis, weights=None, return_sum_weights=False):
 
 
 def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n, weights=None):
-    """Compute incremental mean and variance along an axis on a CSR or
-    CSC matrix.
+    """Compute incremental mean and variance along an axis on a CSR or CSC matrix.
 
     last_mean, last_var are the statistics computed at the last step by this
     function. Both must be initialized to 0-arrays of the proper size, i.e.
@@ -153,8 +152,8 @@ def incr_mean_variance_axis(X, *, axis, last_mean, last_var, last_n, weights=Non
     last_n : float or ndarray of shape (n_features,) or (n_samples,), \
             dtype=floating
         Sum of the weights seen so far, excluding the current weights
-        If not float, it should be of shape (n_samples,) if
-        axis=0 or (n_features,) if axis=1. If float it corresponds to
+        If not float, it should be of shape (n_features,) if
+        axis=0 or (n_samples,) if axis=1. If float it corresponds to
         having same weights for all samples (or features).
 
     weights : ndarray of shape (n_samples,) or (n_features,), default=None
@@ -266,8 +265,7 @@ def inplace_row_scale(X, scale):
 
 
 def inplace_swap_row_csc(X, m, n):
-    """
-    Swaps two rows of a CSC matrix in-place.
+    """Swap two rows of a CSC matrix in-place.
 
     Parameters
     ----------
@@ -296,8 +294,7 @@ def inplace_swap_row_csc(X, m, n):
 
 
 def inplace_swap_row_csr(X, m, n):
-    """
-    Swaps two rows of a CSR matrix in-place.
+    """Swap two rows of a CSR matrix in-place.
 
     Parameters
     ----------
@@ -361,7 +358,7 @@ def inplace_swap_row_csr(X, m, n):
 
 def inplace_swap_row(X, m, n):
     """
-    Swaps two rows of a CSC/CSR matrix in-place.
+    Swap two rows of a CSC/CSR matrix in-place.
 
     Parameters
     ----------
@@ -385,7 +382,7 @@ def inplace_swap_row(X, m, n):
 
 def inplace_swap_column(X, m, n):
     """
-    Swaps two columns of a CSC/CSR matrix in-place.
+    Swap two columns of a CSC/CSR matrix in-place.
 
     Parameters
     ----------
@@ -478,8 +475,9 @@ def _sparse_nan_min_max(X, axis):
 
 
 def min_max_axis(X, axis, ignore_nan=False):
-    """Compute minimum and maximum along an axis on a CSR or CSC matrix and
-    optionally ignore NaN values.
+    """Compute minimium and maximum along an axis on a CSR or CSC matrix.
+
+     Optionally ignore NaN values.
 
     Parameters
     ----------
@@ -503,7 +501,7 @@ def min_max_axis(X, axis, ignore_nan=False):
     maxs : ndarray of shape (n_features,), dtype={np.float32, np.float64}
         Feature-wise maxima.
     """
-    if isinstance(X, sp.csr_matrix) or isinstance(X, sp.csc_matrix):
+    if isinstance(X, (sp.csr_matrix, sp.csc_matrix)):
         if ignore_nan:
             return _sparse_nan_min_max(X, axis=axis)
         else:
@@ -513,7 +511,7 @@ def min_max_axis(X, axis, ignore_nan=False):
 
 
 def count_nonzero(X, axis=None, sample_weight=None):
-    """A variant of X.getnnz() with extension to weighting on axis 0
+    """A variant of X.getnnz() with extension to weighting on axis 0.
 
     Useful in efficiently calculating multilabel metrics.
 
@@ -527,6 +525,12 @@ def count_nonzero(X, axis=None, sample_weight=None):
 
     sample_weight : array-like of shape (n_samples,), default=None
         Weight for each row of X.
+
+    Returns
+    -------
+    nnz : int, float, ndarray of shape (n_samples,) or ndarray of shape (n_features,)
+        Number of non-zero values in the array along a given axis. Otherwise,
+        the total number of non-zero values in the array is returned.
     """
     if axis == -1:
         axis = 1
@@ -593,6 +597,7 @@ def _get_elem_at_rank(rank, data, n_negative, n_zeros):
 
 def csc_median_axis_0(X):
     """Find the median across axis 0 of a CSC matrix.
+
     It is equivalent to doing np.median(X, axis=0).
 
     Parameters
@@ -604,7 +609,6 @@ def csc_median_axis_0(X):
     -------
     median : ndarray of shape (n_features,)
         Median.
-
     """
     if not isinstance(X, sp.csc_matrix):
         raise TypeError("Expected matrix of CSC format, got %s" % X.format)

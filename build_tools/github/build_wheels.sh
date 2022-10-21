@@ -18,9 +18,7 @@ if [[ "$RUNNER_OS" == "macOS" ]]; then
         export MACOSX_DEPLOYMENT_TARGET=12.0
         OPENMP_URL="https://anaconda.org/conda-forge/llvm-openmp/11.1.0/download/osx-arm64/llvm-openmp-11.1.0-hf3c4609_1.tar.bz2"
     else
-        # Currently, the oldest supported macos version is: High Sierra / 10.13.
-        # Note that Darwin_17 == High Sierra / 10.13.
-        export MACOSX_DEPLOYMENT_TARGET=10.13
+        export MACOSX_DEPLOYMENT_TARGET=10.9
         OPENMP_URL="https://anaconda.org/conda-forge/llvm-openmp/11.1.0/download/osx-64/llvm-openmp-11.1.0-hda6cdc1_1.tar.bz2"
     fi
 
@@ -33,6 +31,11 @@ if [[ "$RUNNER_OS" == "macOS" ]]; then
     export CFLAGS="$CFLAGS -I$PREFIX/include"
     export CXXFLAGS="$CXXFLAGS -I$PREFIX/include"
     export LDFLAGS="$LDFLAGS -Wl,-rpath,$PREFIX/lib -L$PREFIX/lib -lomp"
+    # Disable the use of setuptools's vendored copy distutils when invoking setuptools
+    # See: https://setuptools.pypa.io/en/latest/deprecated/distutils-legacy.html
+    # TODO: remove the definition of this environment variable when no
+    # reference to distutils exist in the code-base for building scikit-learn.
+    export SETUPTOOLS_USE_DISTUTILS=stdlib
 fi
 
 # The version of the built dependencies are specified
