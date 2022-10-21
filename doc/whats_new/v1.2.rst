@@ -395,8 +395,8 @@ Changelog
   `eigen_tol="auto"` in version 1.3.
   :pr:`23210` by :user:`Meekail Zain <micky774>`.
 
-- |Enhancement| :class:`manifold.Isomap` now preserves dtype for `numpy.float32` 
-  inputs. :pr:`24350` by :user:`Rahil Parikh <rprkh>`.
+- |Enhancement| :class:`manifold.Isomap` now preserves 
+  dtype for `numpy.float32` inputs. :pr:`24714` by :user:`Rahil Parikh <rprkh>`.
 
 :mod:`sklearn.metrics`
 ......................
