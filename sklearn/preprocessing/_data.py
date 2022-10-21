@@ -20,8 +20,8 @@ from scipy.special import boxcox
 from ..base import (
     BaseEstimator,
     TransformerMixin,
-    _OneToOneFeatureMixin,
-    _ClassNamePrefixFeaturesOutMixin,
+    OneToOneFeatureMixin,
+    ClassNamePrefixFeaturesOutMixin,
 )
 from ..utils import check_array
 from ..utils._param_validation import Interval, StrOptions
@@ -133,7 +133,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         The data to center and scale.
 
     axis : int, default=0
-        axis used to compute the means and standard deviations along. If 0,
+        Axis used to compute the means and standard deviations along. If 0,
         independently standardize each feature, otherwise (if 1) standardize
         each sample.
 
@@ -145,7 +145,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         unit standard deviation).
 
     copy : bool, default=True
-        set to False to perform inplace row normalization and avoid a
+        Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSC matrix and if axis is 1).
 
@@ -153,6 +153,12 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     -------
     X_tr : {ndarray, sparse matrix} of shape (n_samples, n_features)
         The transformed data.
+
+    See Also
+    --------
+    StandardScaler : Performs scaling to unit variance using the Transformer
+        API (e.g. as part of a preprocessing
+        :class:`~sklearn.pipeline.Pipeline`).
 
     Notes
     -----
@@ -189,13 +195,6 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
         :class:`~sklearn.preprocessing.StandardScaler` within a
         :ref:`Pipeline <pipeline>` in order to prevent most risks of data
         leaking: `pipe = make_pipeline(StandardScaler(), LogisticRegression())`.
-
-    See Also
-    --------
-    StandardScaler : Performs scaling to unit variance using the Transformer
-        API (e.g. as part of a preprocessing
-        :class:`~sklearn.pipeline.Pipeline`).
-
     """  # noqa
     X = check_array(
         X,
@@ -268,7 +267,7 @@ def scale(X, *, axis=0, with_mean=True, with_std=True, copy=True):
     return X
 
 
-class MinMaxScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class MinMaxScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Transform features by scaling each feature to a given range.
 
     This estimator scales and translates each feature individually such
@@ -380,7 +379,7 @@ class MinMaxScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     [[1.5 0. ]]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "feature_range": [tuple],
         "copy": ["boolean"],
         "clip": ["boolean"],
@@ -642,7 +641,7 @@ def minmax_scale(X, feature_range=(0, 1), *, axis=0, copy=True):
     return X
 
 
-class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class StandardScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Standardize features by removing the mean and scaling to unit variance.
 
     The standard score of a sample `x` is calculated as:
@@ -773,7 +772,7 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     [[3. 3.]]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "copy": ["boolean"],
         "with_mean": ["boolean"],
         "with_std": ["boolean"],
@@ -1059,7 +1058,7 @@ class StandardScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"allow_nan": True, "preserves_dtype": [np.float64, np.float32]}
 
 
-class MaxAbsScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class MaxAbsScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Scale each feature by its maximum absolute value.
 
     This estimator scales and translates each feature individually such
@@ -1131,7 +1130,7 @@ class MaxAbsScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [ 0. ,  1. , -0.5]])
     """
 
-    _parameter_constraints = {"copy": ["boolean"]}
+    _parameter_constraints: dict = {"copy": ["boolean"]}
 
     def __init__(self, *, copy=True):
         self.copy = copy
@@ -1293,7 +1292,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
         The data.
 
     axis : int, default=0
-        axis used to scale along. If 0, independently scale each feature,
+        Axis used to scale along. If 0, independently scale each feature,
         otherwise (if 1) scale each sample.
 
     copy : bool, default=True
@@ -1360,7 +1359,7 @@ def maxabs_scale(X, *, axis=0, copy=True):
     return X
 
 
-class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class RobustScaler(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Scale features using statistics that are robust to outliers.
 
     This Scaler removes the median and scales the data according to
@@ -1470,7 +1469,7 @@ class RobustScaler(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [ 1. ,  0. , -1.6]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "with_centering": ["boolean"],
         "with_scaling": ["boolean"],
         "quantile_range": [tuple],
@@ -1861,7 +1860,7 @@ def normalize(X, norm="l2", *, axis=1, copy=True, return_norm=False):
         return X
 
 
-class Normalizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Normalize samples individually to unit norm.
 
     Each sample (i.e. each row of the data matrix) with at least one
@@ -1933,7 +1932,7 @@ class Normalizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [0.5, 0.7, 0.5, 0.1]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "norm": [StrOptions({"l1", "l2", "max"})],
         "copy": ["boolean"],
     }
@@ -2038,7 +2037,7 @@ def binarize(X, *, threshold=0.0, copy=True):
     return X
 
 
-class Binarizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Binarize data (set feature values to 0 or 1) according to a threshold.
 
     Values greater than the threshold map to 1, while values less than
@@ -2107,7 +2106,7 @@ class Binarizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
            [0., 1., 0.]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "threshold": [Real],
         "copy": ["boolean"],
     }
@@ -2167,7 +2166,7 @@ class Binarizer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
         return {"stateless": True}
 
 
-class KernelCenterer(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class KernelCenterer(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     r"""Center an arbitrary kernel matrix :math:`K`.
 
     Let define a kernel :math:`K` such that:
@@ -2309,9 +2308,9 @@ class KernelCenterer(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEst
     @property
     def _n_features_out(self):
         """Number of transformed output features."""
-        # Used by _ClassNamePrefixFeaturesOutMixin. This model preserves the
+        # Used by ClassNamePrefixFeaturesOutMixin. This model preserves the
         # number of input features but this is not a one-to-one mapping in the
-        # usual sense. Hence the choice not to use _OneToOneFeatureMixin to
+        # usual sense. Hence the choice not to use OneToOneFeatureMixin to
         # implement get_feature_names_out for this class.
         return self.n_features_in_
 
@@ -2376,7 +2375,7 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.full((n_samples, 1), value), X))
 
 
-class QuantileTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class QuantileTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Transform features using quantiles information.
 
     This method transforms the features to follow a uniform or a normal
@@ -2486,7 +2485,7 @@ class QuantileTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator
     array([...])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_quantiles": [Interval(Integral, 1, None, closed="left")],
         "output_distribution": [StrOptions({"uniform", "normal"})],
         "ignore_implicit_zeros": ["boolean"],
@@ -2950,7 +2949,7 @@ def quantile_transform(
         )
 
 
-class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class PowerTransformer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     """Apply a power transform featurewise to make data more Gaussian-like.
 
     Power transforms are a family of parametric, monotonic transformations
@@ -3045,7 +3044,7 @@ class PowerTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
      [ 1.106...  1.414...]]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "method": [StrOptions({"yeo-johnson", "box-cox"})],
         "standardize": ["boolean"],
         "copy": ["boolean"],

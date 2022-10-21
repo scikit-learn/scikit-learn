@@ -11,7 +11,6 @@ cimport cython
 from libc.string cimport strchr
 
 import numpy as np
-import scipy.sparse as sp
 
 
 cdef bytes COMMA = u','.encode('ascii')

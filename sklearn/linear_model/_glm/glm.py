@@ -123,7 +123,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         we have `y_pred = exp(X @ coeff + intercept)`.
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0.0, None, closed="left")],
         "fit_intercept": ["boolean"],
         "solver": [StrOptions({"lbfgs"})],
@@ -424,7 +424,11 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     )
     @property
     def family(self):
-        """Ensure backward compatibility for the time of deprecation."""
+        """Ensure backward compatibility for the time of deprecation.
+
+        .. deprecated:: 1.1
+            Will be removed in 1.3
+        """
         if isinstance(self, PoissonRegressor):
             return "poisson"
         elif isinstance(self, GammaRegressor):
@@ -525,7 +529,9 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
     array([10.676..., 21.875...])
     """
 
-    _parameter_constraints = {**_GeneralizedLinearRegressor._parameter_constraints}
+    _parameter_constraints: dict = {
+        **_GeneralizedLinearRegressor._parameter_constraints
+    }
     _parameter_constraints.pop("solver")
 
     def __init__(
@@ -638,7 +644,9 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     array([19.483..., 35.795...])
     """
 
-    _parameter_constraints = {**_GeneralizedLinearRegressor._parameter_constraints}
+    _parameter_constraints: dict = {
+        **_GeneralizedLinearRegressor._parameter_constraints
+    }
     _parameter_constraints.pop("solver")
 
     def __init__(
@@ -781,7 +789,7 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
     array([2.500..., 4.599...])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_GeneralizedLinearRegressor._parameter_constraints,
         "power": [Interval(Real, None, None, closed="neither")],
         "link": [StrOptions({"auto", "identity", "log"})],

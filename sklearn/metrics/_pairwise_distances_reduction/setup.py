@@ -3,6 +3,8 @@ import os
 import numpy as np
 from numpy.distutils.misc_util import Configuration
 
+from sklearn._build_utils import gen_from_templates
+
 
 def configuration(parent_package="", top_path=None):
     config = Configuration("_pairwise_distances_reduction", parent_package, top_path)
@@ -10,12 +12,27 @@ def configuration(parent_package="", top_path=None):
     if os.name == "posix":
         libraries.append("m")
 
+    templates = [
+        "sklearn/metrics/_pairwise_distances_reduction/_datasets_pair.pyx.tp",
+        "sklearn/metrics/_pairwise_distances_reduction/_datasets_pair.pxd.tp",
+        "sklearn/metrics/_pairwise_distances_reduction/_gemm_term_computer.pyx.tp",
+        "sklearn/metrics/_pairwise_distances_reduction/_gemm_term_computer.pxd.tp",
+        "sklearn/metrics/_pairwise_distances_reduction/_base.pyx.tp",
+        "sklearn/metrics/_pairwise_distances_reduction/_base.pxd.tp",
+        "sklearn/metrics/_pairwise_distances_reduction/_argkmin.pyx.tp",
+        "sklearn/metrics/_pairwise_distances_reduction/_argkmin.pxd.tp",
+        "sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors.pyx.tp",
+        "sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors.pxd.tp",
+    ]
+
+    gen_from_templates(templates)
+
     cython_sources = [
         "_datasets_pair.pyx",
         "_gemm_term_computer.pyx",
         "_base.pyx",
         "_argkmin.pyx",
-        "_radius_neighborhood.pyx",
+        "_radius_neighbors.pyx",
     ]
 
     for source_file in cython_sources:

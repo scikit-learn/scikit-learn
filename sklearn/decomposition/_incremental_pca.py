@@ -73,7 +73,7 @@ class IncrementalPCA(_BasePCA):
         Principal axes in feature space, representing the directions of
         maximum variance in the data. Equivalently, the right singular
         vectors of the centered input data, parallel to its eigenvectors.
-        The components are sorted by ``explained_variance_``.
+        The components are sorted by decreasing ``explained_variance_``.
 
     explained_variance_ : ndarray of shape (n_components,)
         Variance explained by each of the selected components.
@@ -179,7 +179,7 @@ class IncrementalPCA(_BasePCA):
     (1797, 7)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "whiten": ["boolean"],
         "copy": ["boolean"],

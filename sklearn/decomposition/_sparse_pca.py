@@ -11,14 +11,14 @@ from ..utils.extmath import svd_flip
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.validation import check_array, check_is_fitted
 from ..linear_model import ridge_regression
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
+from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ._dict_learning import dict_learning, MiniBatchDictionaryLearning
 
 
-class _BaseSparsePCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class _BaseSparsePCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Base class for SparsePCA and MiniBatchSparsePCA"""
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [None, Interval(Integral, 1, None, closed="left")],
         "alpha": [Interval(Real, 0.0, None, closed="left")],
         "ridge_alpha": [Interval(Real, 0.0, None, closed="left")],
@@ -264,7 +264,7 @@ class SparsePCA(_BaseSparsePCA):
     0.9666...
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseSparsePCA._parameter_constraints,
         "U_init": [None, np.ndarray],
         "V_init": [None, np.ndarray],
@@ -472,7 +472,7 @@ class MiniBatchSparsePCA(_BaseSparsePCA):
     0.9...
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseSparsePCA._parameter_constraints,
         "max_iter": [Interval(Integral, 0, None, closed="left"), None],
         "n_iter": [
