@@ -3,28 +3,32 @@
 Gaussian Mixture Model Selection
 ================================
 
-This example shows that model selection can be performed with
-Gaussian Mixture Models using :ref:`information-theoretic criteria (BIC) <aic_bic>`.
-Model selection concerns both the covariance type
-and the number of components in the model.
-In that case, AIC also provides the right result (not shown to save time),
-but BIC is better suited if the problem is to identify the right model.
-Unlike Bayesian procedures, such inferences are prior-free.
+This example shows that model selection can be performed with Gaussian Mixture
+Models using :ref:`information-theory criteria <aic_bic>`. Model selection
+concerns both the covariance type and the number of components in the model.
+
+In this case, both the Akaike Information Criterion (AIC) and the Bayes
+Information Criterion (BIC) provide the right result, but we only demo the
+latter as BIC is better suited to identify the true model among a set of
+candidates. Unlike Bayesian procedures, such inferences are prior-free.
 
 """
 
 # %%
 # Data generation
 # ---------------
+#
+# We generate two components (each one containing `n_samples`) by randomly
+# sampling the standard normal distribution as returned by `numpy.random.randn`.
+# One component is kept spherical yet shifted and re-scaled. The other one is
+# deformed to have a more general covariance matrix.
 
 import numpy as np
 
-# Number of samples per component
 n_samples = 500
-
-# Generate random sample, two components
 np.random.seed(0)
 C = np.array([[0.0, -0.1], [1.7, 0.4]])
+
 X = np.r_[
     np.dot(np.random.randn(n_samples, 2), C),
     0.7 * np.random.randn(n_samples, 2) + np.array([-6, 3]),
@@ -33,6 +37,16 @@ X = np.r_[
 # %%
 # Model training and selection
 # ----------------------------
+#
+# We vary the number of components from 1 to 6 and the type of covariance
+# parameters to use:
+#
+# - `"full"`: each component has its own general covariance matrix.
+# - `"tied"`: all components share the same general covariance matrix.
+# - `"diag"`: each component has its own diagonal covariance matrix.
+# - `"spherical"`: each component has its own single variance.
+#
+# We score the different models and keep the best model (the lowest BIC).
 
 from sklearn.mixture import GaussianMixture
 
