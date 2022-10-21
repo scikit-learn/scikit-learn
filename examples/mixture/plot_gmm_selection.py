@@ -11,19 +11,13 @@ In that case, AIC also provides the right result (not shown to save time),
 but BIC is better suited if the problem is to identify the right model.
 Unlike Bayesian procedures, such inferences are prior-free.
 
-In that case, the model with 2 components and full covariance
-(which corresponds to the true generative model) is selected.
-
 """
 
+# %%
+# Data generation
+# ---------------
+
 import numpy as np
-import itertools
-
-from scipy import linalg
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-
-from sklearn import mixture
 
 # Number of samples per component
 n_samples = 500
@@ -36,6 +30,12 @@ X = np.r_[
     0.7 * np.random.randn(n_samples, 2) + np.array([-6, 3]),
 ]
 
+# %%
+# Model training and selection
+# ----------------------------
+
+from sklearn.mixture import GaussianMixture
+
 lowest_bic = np.infty
 bic = []
 n_components_range = range(1, 7)
@@ -43,9 +43,7 @@ cv_types = ["spherical", "tied", "diag", "full"]
 for cv_type in cv_types:
     for n_components in n_components_range:
         # Fit a Gaussian mixture with EM
-        gmm = mixture.GaussianMixture(
-            n_components=n_components, covariance_type=cv_type
-        )
+        gmm = GaussianMixture(n_components=n_components, covariance_type=cv_type)
         gmm.fit(X)
         bic.append(gmm.bic(X))
         if bic[-1] < lowest_bic:
@@ -53,11 +51,24 @@ for cv_type in cv_types:
             best_gmm = gmm
 
 bic = np.array(bic)
-color_iter = itertools.cycle(["navy", "turquoise", "cornflowerblue", "darkorange"])
 clf = best_gmm
+
+# %%
+# Plot the BIC scores
+# -------------------
+#
+# We plot a `*` to highlight the model with the lowest BIC score. In the present
+# case, the model with 2 components and full covariance (which corresponds to
+# the true generative model) is selected.
+
+import itertools
+
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+
+color_iter = itertools.cycle(["navy", "turquoise", "cornflowerblue", "darkorange"])
 bars = []
 
-# Plot the BIC scores
 plt.figure(figsize=(8, 6))
 spl = plt.subplot(2, 1, 1)
 for i, (cv_type, color) in enumerate(zip(cv_types, color_iter)):
@@ -82,7 +93,12 @@ plt.text(xpos, bic.min() * 0.97 + 0.03 * bic.max(), "*", fontsize=14)
 spl.set_xlabel("Number of components")
 spl.legend([b[0] for b in bars], cv_types)
 
-# Plot the winner
+# %%
+# Plot the best model
+# -------------------
+
+from scipy import linalg
+
 splot = plt.subplot(2, 1, 2)
 Y_ = clf.predict(X)
 for i, (mean, cov, color) in enumerate(zip(clf.means_, clf.covariances_, color_iter)):
