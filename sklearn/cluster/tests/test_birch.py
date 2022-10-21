@@ -111,11 +111,10 @@ def test_sparse_X(global_random_seed, global_dtype):
     assert_allclose(brc.subcluster_centers_, brc_sparse.subcluster_centers_)
 
 
-def test_partial_fit_second_call_error_checks(global_dtype):
+def test_partial_fit_second_call_error_checks():
     # second partial fit calls will error when n_features is not consistent
     # with the first call
     X, y = make_blobs(n_samples=100)
-    X = X.astype(global_dtype, copy=False)
     brc = Birch(n_clusters=3)
     brc.partial_fit(X, y)
 
@@ -178,10 +177,9 @@ def test_birch_n_clusters_long_int():
     Birch(n_clusters=n_clusters).fit(X)
 
 
-def test_feature_names_out(global_dtype):
+def test_feature_names_out():
     """Check `get_feature_names_out` for `Birch`."""
     X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
-    X = X.astype(global_dtype, copy=False)
     brc = Birch(n_clusters=4)
     brc.fit(X)
     n_clusters = brc.subcluster_centers_.shape[0]
