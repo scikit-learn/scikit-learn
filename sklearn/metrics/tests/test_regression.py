@@ -613,3 +613,15 @@ def test_dummy_quantile_parameter_tuning():
         ).fit(X, y)
 
         assert grid_search.best_params_["quantile"] == pytest.approx(alpha)
+
+
+def test_pinball_loss_relation_with_mae():
+    # Test that mean_pinball loss with alpha=0.5 if half of mean absolute error
+    rng = np.random.RandomState(714)
+    n = 100
+    y_true = rng.normal(size=n)
+    y_pred = y_true.copy() + rng.uniform(n)
+    assert (
+        mean_absolute_error(y_true, y_pred)
+        == mean_pinball_loss(y_true, y_pred, alpha=0.5) * 2
+    )

@@ -57,21 +57,29 @@ def _make_dumb_dataset(n_samples):
 @pytest.mark.parametrize(
     "params, err_msg",
     [
-        ({"loss": "blah"}, "Loss blah is not supported for"),
-        ({"learning_rate": 0}, "learning_rate=0 must be strictly positive"),
-        ({"learning_rate": -1}, "learning_rate=-1 must be strictly positive"),
-        ({"max_iter": 0}, "max_iter=0 must not be smaller than 1"),
-        ({"max_leaf_nodes": 0}, "max_leaf_nodes=0 should not be smaller than 2"),
-        ({"max_leaf_nodes": 1}, "max_leaf_nodes=1 should not be smaller than 2"),
-        ({"max_depth": 0}, "max_depth=0 should not be smaller than 1"),
-        ({"min_samples_leaf": 0}, "min_samples_leaf=0 should not be smaller"),
-        ({"l2_regularization": -1}, "l2_regularization=-1 must be positive"),
-        ({"max_bins": 1}, "max_bins=1 should be no smaller than 2 and no larger"),
-        ({"max_bins": 256}, "max_bins=256 should be no smaller than 2 and no"),
-        ({"n_iter_no_change": -1}, "n_iter_no_change=-1 must be positive"),
-        ({"validation_fraction": -1}, "validation_fraction=-1 must be strictly"),
-        ({"validation_fraction": 0}, "validation_fraction=0 must be strictly"),
-        ({"tol": -1}, "tol=-1 must not be smaller than 0"),
+        (
+            {"interaction_cst": "string"},
+            "",
+        ),
+        (
+            {"interaction_cst": [0, 1]},
+            "Interaction constraints must be None or an iterable of iterables",
+        ),
+        (
+            {"interaction_cst": [{0, 9999}]},
+            r"Interaction constraints must consist of integer indices in \[0,"
+            r" n_features - 1\] = \[.*\], specifying the position of features,",
+        ),
+        (
+            {"interaction_cst": [{-1, 0}]},
+            r"Interaction constraints must consist of integer indices in \[0,"
+            r" n_features - 1\] = \[.*\], specifying the position of features,",
+        ),
+        (
+            {"interaction_cst": [{0.5}]},
+            r"Interaction constraints must consist of integer indices in \[0,"
+            r" n_features - 1\] = \[.*\], specifying the position of features,",
+        ),
     ],
 )
 def test_init_parameters_validation(GradientBoosting, X, y, params, err_msg):
@@ -997,7 +1005,7 @@ def test_categorical_encoding_strategies():
     # Using OHEd data, we need less splits than with pure OEd data, but we
     # still need more splits than with the native categorical splits
     ct = make_column_transformer(
-        (OneHotEncoder(sparse=False), [1]), remainder="passthrough"
+        (OneHotEncoder(sparse_output=False), [1]), remainder="passthrough"
     )
     X_ohe = ct.fit_transform(X)
     clf_no_cat.set_params(max_depth=2)
@@ -1116,12 +1124,75 @@ def test_uint8_predict(Est):
 
 
 @pytest.mark.parametrize(
+    "interaction_cst, n_features, result",
+    [
+        (None, 931, None),
+        ([{0, 1}], 2, [{0, 1}]),
+        ([(1, 0), [5, 1]], 6, [{0, 1}, {1, 5}, {2, 3, 4}]),
+    ],
+)
+def test_check_interaction_cst(interaction_cst, n_features, result):
+    """Check that _check_interaction_cst returns the expected list of sets"""
+    est = HistGradientBoostingRegressor()
+    est.set_params(interaction_cst=interaction_cst)
+    assert est._check_interaction_cst(n_features) == result
+
+
+def test_interaction_cst_numerically():
+    """Check that interaction constraints have no forbidden interactions."""
+    rng = np.random.RandomState(42)
+    n_samples = 1000
+    X = rng.uniform(size=(n_samples, 2))
+    # Construct y with a strong interaction term
+    # y = x0 + x1 + 5 * x0 * x1
+    y = np.hstack((X, 5 * X[:, [0]] * X[:, [1]])).sum(axis=1)
+
+    est = HistGradientBoostingRegressor(random_state=42)
+    est.fit(X, y)
+    est_no_interactions = HistGradientBoostingRegressor(
+        interaction_cst=[{0}, {1}], random_state=42
+    )
+    est_no_interactions.fit(X, y)
+
+    delta = 0.25
+    # Make sure we do not extrapolate out of the training set as tree-based estimators
+    # are very bad in doing so.
+    X_test = X[(X[:, 0] < 1 - delta) & (X[:, 1] < 1 - delta)]
+    X_delta_d_0 = X_test + [delta, 0]
+    X_delta_0_d = X_test + [0, delta]
+    X_delta_d_d = X_test + [delta, delta]
+
+    # Note: For the y from above as a function of x0 and x1, we have
+    # y(x0+d, x1+d) = y(x0, x1) + 5 * d * (2/5 + x0 + x1) + 5 * d**2
+    # y(x0+d, x1)   = y(x0, x1) + 5 * d * (1/5 + x1)
+    # y(x0,   x1+d) = y(x0, x1) + 5 * d * (1/5 + x0)
+    # Without interaction constraints, we would expect a result of 5 * d**2 for the
+    # following expression, but zero with constraints in place.
+    assert_allclose(
+        est_no_interactions.predict(X_delta_d_d)
+        + est_no_interactions.predict(X_test)
+        - est_no_interactions.predict(X_delta_d_0)
+        - est_no_interactions.predict(X_delta_0_d),
+        0,
+        atol=1e-12,
+    )
+
+    # Correct result of the expressions is 5 * delta**2. But this is hard to achieve by
+    # a fitted tree-based model. However, with 100 iterations the expression should
+    # at least be positive!
+    assert np.all(
+        est.predict(X_delta_d_d)
+        + est.predict(X_test)
+        - est.predict(X_delta_d_0)
+        - est.predict(X_delta_0_d)
+        > 0.01
+    )
+
+
+# TODO(1.3): Remove
+@pytest.mark.parametrize(
     "old_loss, new_loss, Estimator",
     [
-        # TODO(1.2): Remove
-        ("least_squares", "squared_error", HistGradientBoostingRegressor),
-        ("least_absolute_deviation", "absolute_error", HistGradientBoostingRegressor),
-        # TODO(1.3): Remove
         ("auto", "log_loss", HistGradientBoostingClassifier),
         ("binary_crossentropy", "log_loss", HistGradientBoostingClassifier),
         ("categorical_crossentropy", "log_loss", HistGradientBoostingClassifier),
@@ -1159,3 +1230,83 @@ def test_no_user_warning_with_scoring():
     with warnings.catch_warnings():
         warnings.simplefilter("error", UserWarning)
         est.fit(X_df, y)
+
+
+def test_class_weights():
+    """High level test to check class_weights."""
+    n_samples = 255
+    n_features = 2
+
+    X, y = make_classification(
+        n_samples=n_samples,
+        n_features=n_features,
+        n_informative=n_features,
+        n_redundant=0,
+        n_clusters_per_class=1,
+        n_classes=2,
+        random_state=0,
+    )
+    y_is_1 = y == 1
+
+    # class_weight is the same as sample weights with the corresponding class
+    clf = HistGradientBoostingClassifier(
+        min_samples_leaf=2, random_state=0, max_depth=2
+    )
+    sample_weight = np.ones(shape=(n_samples))
+    sample_weight[y_is_1] = 3.0
+    clf.fit(X, y, sample_weight=sample_weight)
+
+    class_weight = {0: 1.0, 1: 3.0}
+    clf_class_weighted = clone(clf).set_params(class_weight=class_weight)
+    clf_class_weighted.fit(X, y)
+
+    assert_allclose(clf.decision_function(X), clf_class_weighted.decision_function(X))
+
+    # Check that sample_weight and class_weight are multiplicative
+    clf.fit(X, y, sample_weight=sample_weight**2)
+    clf_class_weighted.fit(X, y, sample_weight=sample_weight)
+    assert_allclose(clf.decision_function(X), clf_class_weighted.decision_function(X))
+
+    # Make imbalanced dataset
+    X_imb = np.concatenate((X[~y_is_1], X[y_is_1][:10]))
+    y_imb = np.concatenate((y[~y_is_1], y[y_is_1][:10]))
+
+    # class_weight="balanced" is the same as sample_weights to be
+    # inversely proportional to n_samples / (n_classes * np.bincount(y))
+    clf_balanced = clone(clf).set_params(class_weight="balanced")
+    clf_balanced.fit(X_imb, y_imb)
+
+    class_weight = y_imb.shape[0] / (2 * np.bincount(y_imb))
+    sample_weight = class_weight[y_imb]
+    clf_sample_weight = clone(clf).set_params(class_weight=None)
+    clf_sample_weight.fit(X_imb, y_imb, sample_weight=sample_weight)
+
+    assert_allclose(
+        clf_balanced.decision_function(X_imb),
+        clf_sample_weight.decision_function(X_imb),
+    )
+
+
+def test_unknown_category_that_are_negative():
+    """Check that unknown categories that are negative does not error.
+
+    Non-regression test for #24274.
+    """
+    rng = np.random.RandomState(42)
+    n_samples = 1000
+    X = np.c_[rng.rand(n_samples), rng.randint(4, size=n_samples)]
+    y = np.zeros(shape=n_samples)
+    y[X[:, 1] % 2 == 0] = 1
+
+    hist = HistGradientBoostingRegressor(
+        random_state=0,
+        categorical_features=[False, True],
+        max_iter=10,
+    ).fit(X, y)
+
+    # Check that negative values from the second column are treated like a
+    # missing category
+    X_test_neg = np.asarray([[1, -2], [3, -4]])
+    X_test_nan = np.asarray([[1, np.nan], [3, np.nan]])
+
+    assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))

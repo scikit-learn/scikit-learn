@@ -28,6 +28,7 @@ import numpy as np
 
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
+from scipy.special import xlogy
 
 from ..preprocessing import LabelBinarizer
 from ..preprocessing import LabelEncoder
@@ -586,7 +587,7 @@ def multilabel_confusion_matrix(
 
 
 def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
-    r"""Cohen's kappa: a statistic that measures inter-annotator agreement.
+    r"""Compute Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
     of agreement between two annotators on a classification problem. It is
@@ -738,12 +739,16 @@ def jaccard_score(
 
     Returns
     -------
-    score : float (if average is not None) or array of floats, shape =\
-            [n_unique_labels]
+    score : float or ndarray of shape (n_unique_labels,), dtype=np.float64
+        The Jaccard score. When `average` is not `None`, a single scalar is
+        returned.
 
     See Also
     --------
-    accuracy_score, f1_score, multilabel_confusion_matrix
+    accuracy_score : Function for calculating the accuracy score.
+    f1_score : Function for calculating the F1 score.
+    multilabel_confusion_matrix : Function for computing a confusion matrix\
+                                  for each class or sample.
 
     Notes
     -----
@@ -2545,10 +2550,16 @@ def log_loss(
     Returns
     -------
     loss : float
+        Log loss, aka logistic loss or cross-entropy loss.
 
     Notes
     -----
     The logarithm used is the natural logarithm (base-e).
+
+    References
+    ----------
+    C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer,
+    p. 209.
 
     Examples
     --------
@@ -2556,11 +2567,6 @@ def log_loss(
     >>> log_loss(["spam", "ham", "ham", "spam"],
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616...
-
-    References
-    ----------
-    C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer,
-    p. 209.
     """
     y_pred = check_array(y_pred, ensure_2d=False)
     check_consistent_length(y_pred, y_true, sample_weight)
@@ -2624,8 +2630,9 @@ def log_loss(
             )
 
     # Renormalize
-    y_pred /= y_pred.sum(axis=1)[:, np.newaxis]
-    loss = -(transformed_labels * np.log(y_pred)).sum(axis=1)
+    y_pred_sum = y_pred.sum(axis=1)
+    y_pred = y_pred / y_pred_sum[:, np.newaxis]
+    loss = -xlogy(transformed_labels, y_pred).sum(axis=1)
 
     return _weighted_sum(loss, sample_weight, normalize)
 
@@ -2679,8 +2686,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
 
     .. [3] `L1 AND L2 Regularization for Multiclass Hinge Loss Models
            by Robert C. Moore, John DeNero
-           <http://www.ttic.edu/sigml/symposium2011/papers/
-           Moore+DeNero_Regularization.pdf>`_.
+           <https://storage.googleapis.com/pub-tools-public-publication-data/pdf/37362.pdf>`_.
 
     Examples
     --------
@@ -2784,7 +2790,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     takes on a value between zero and one, since this is the largest
     possible difference between a predicted probability (which must be
     between zero and one) and the actual outcome (which can take on values
-    of only 0 and 1). It can be decomposed is the sum of refinement loss and
+    of only 0 and 1). It can be decomposed as the sum of refinement loss and
     calibration loss.
 
     The Brier score is appropriate for binary and categorical outcomes that
@@ -2824,6 +2830,11 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     score : float
         Brier score loss.
 
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Brier score
+            <https://en.wikipedia.org/wiki/Brier_score>`_.
+
     Examples
     --------
     >>> import numpy as np
@@ -2839,11 +2850,6 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     0.037...
     >>> brier_score_loss(y_true, np.array(y_prob) > 0.5)
     0.0
-
-    References
-    ----------
-    .. [1] `Wikipedia entry for the Brier score
-            <https://en.wikipedia.org/wiki/Brier_score>`_.
     """
     y_true = column_or_1d(y_true)
     y_prob = column_or_1d(y_prob)

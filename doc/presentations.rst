@@ -63,7 +63,7 @@ Videos
 
     3-hours long introduction to prediction tasks using scikit-learn.
 
-- `scikit-learn - Machine Learning in Python <https://newcircle.com/s/post/1152/scikit-learn_machine_learning_in_python>`_
+- `scikit-learn - Machine Learning in Python <https://www.youtube.com/watch?v=cHZONQ2-x7I>`_
   by `Jake Vanderplas`_ at the 2012 PyData workshop at Google
 
     Interactive demonstration of some scikit-learn features. 75 minutes.
@@ -74,5 +74,5 @@ Videos
 
 
 .. _Gael Varoquaux: http://gael-varoquaux.info
-.. _Jake Vanderplas: https://staff.washington.edu/jakevdp
+.. _Jake Vanderplas: http://www.vanderplas.com
 .. _Olivier Grisel: https://twitter.com/ogrisel

@@ -79,7 +79,7 @@ from sklearn.model_selection import GridSearchCV
 
 
 try:
-    WindowsError
+    WindowsError  # type: ignore
 except NameError:
     WindowsError = None
 

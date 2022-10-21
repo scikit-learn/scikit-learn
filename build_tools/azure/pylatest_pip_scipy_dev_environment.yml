@@ -13,7 +13,8 @@ dependencies:
     - pytest-xdist
     - codecov
     - pytest-cov
-    - coverage==6.2
+    - coverage
+    - pooch
     - sphinx
     - numpydoc
     - python-dateutil
