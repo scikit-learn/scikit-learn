@@ -53,11 +53,11 @@ from sklearn.mixture import GaussianMixture
 lowest_bic = np.infty
 bic = []
 n_components_range = range(1, 7)
-cv_types = ["spherical", "tied", "diag", "full"]
-for cv_type in cv_types:
+cov_types = ["spherical", "tied", "diag", "full"]
+for cov_type in cov_types:
     for n_components in n_components_range:
         # Fit a Gaussian mixture with EM
-        gmm = GaussianMixture(n_components=n_components, covariance_type=cv_type)
+        gmm = GaussianMixture(n_components=n_components, covariance_type=cov_type)
         gmm.fit(X)
         bic.append(gmm.bic(X))
         if bic[-1] < lowest_bic:
@@ -85,7 +85,7 @@ bars = []
 
 plt.figure(figsize=(8, 6))
 spl = plt.subplot(2, 1, 1)
-for i, (cv_type, color) in enumerate(zip(cv_types, color_iter)):
+for i, (cov_type, color) in enumerate(zip(cov_types, color_iter)):
     xpos = np.array(n_components_range) + 0.2 * (i - 2)
     bars.append(
         plt.bar(
@@ -105,7 +105,8 @@ xpos = (
 )
 plt.text(xpos, bic.min() * 0.97 + 0.03 * bic.max(), "*", fontsize=14)
 spl.set_xlabel("Number of components")
-spl.legend([b[0] for b in bars], cv_types)
+spl.legend([b[0] for b in bars], cov_types)
+plt.show()
 
 # %%
 # Plot the best model
@@ -130,8 +131,6 @@ for i, (mean, cov, color) in enumerate(zip(clf.means_, clf.covariances_, color_i
     ell.set_alpha(0.5)
     splot.add_artist(ell)
 
-plt.xticks(())
-plt.yticks(())
 plt.title(
     f"Selected GMM: {best_gmm.covariance_type} model, "
     f"{best_gmm.n_components} components"
