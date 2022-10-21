@@ -250,6 +250,31 @@ def test_isomap_fit_precomputed_radius_graph():
     assert_allclose(precomputed_result, result)
 
 
+def test_isomap_fitted_attributes_dtype(global_dtype):
+    """Check that the fitted attributes are stored accordingly to the
+    data type of X."""
+    iso = manifold.Isomap(n_neighbors=2)
+
+    X = np.array([[1, 2], [3, 4], [5, 6]], dtype=global_dtype)
+
+    iso.fit(X)
+
+    assert iso.dist_matrix_.dtype == global_dtype
+
+
+def test_isomap_dtype_equivalence():
+    """Check the equivalence of the results with 32 and 64 bits input."""
+    iso_32 = manifold.Isomap(n_neighbors=2)
+    X_32 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
+    iso_32.fit(X_32)
+
+    iso_64 = manifold.Isomap(n_neighbors=2)
+    X_64 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float64)
+    iso_64.fit(X_64)
+
+    assert_allclose(iso_32.dist_matrix_, iso_64.dist_matrix_)
+
+
 def test_isomap_raise_error_when_neighbor_and_radius_both_set():
     # Isomap.fit_transform must raise a ValueError if
     # radius and n_neighbors are provided.

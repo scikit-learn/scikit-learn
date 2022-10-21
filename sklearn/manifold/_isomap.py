@@ -294,7 +294,14 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         self.dist_matrix_ = shortest_path(nbg, method=self.path_method, directed=False)
 
+        if np.array(X).dtype == np.float32:
+            self.dist_matrix_ = self.dist_matrix_.astype(X.dtype, copy=False)
+
         G = self.dist_matrix_**2
+
+        if np.array(X).dtype == np.float32:
+            G = G.astype(X.dtype, copy=False)
+
         G *= -0.5
 
         self.embedding_ = self.kernel_pca_.fit_transform(G)
@@ -412,3 +419,6 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         G_X *= -0.5
 
         return self.kernel_pca_.transform(G_X)
+
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
