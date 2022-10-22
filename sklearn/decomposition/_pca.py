@@ -124,79 +124,17 @@ def _center_implicitly(X, row_mean):
     r = row_mean.reshape(1, -1)
     ones = np.ones((m, 1), dtype=X.dtype)
 
-    verbose = 0
-
     def matvec(y):
-        if verbose:
-            print("matvec")
-            print(f"\t{A.shape=}")
-            print(f"\t{y.shape=}")
-            print(f"\t{r.shape=}")
-            print(f"\t{(A@y).shape=}")
-            print(f"\t{(r@y).shape=}")
-            print(f"\t{(A@y-r@y).shape=}")
-        out = A @ y - r @ y
-        if verbose:
-            print(f"\t{type(out)=}")
-            with np.printoptions(precision=2, suppress=True, threshold=1):
-                print(f"\t{out=}")
-        return out
+        return A @ y - r @ y
 
     def rmatvec(y):
-        if verbose:
-            print("rmatvec")
-            print(f"\t{A.shape=}")
-            print(f"\t{A.T.shape=}")
-            print(f"\t{y.shape=}")
-            print(f"\t{r.shape=}")
-            print(f"\t{r.T.shape=}")
-            print(f"\t{ones.shape=}")
-            print(f"\t{ones.T.shape=}")
-            print(f"\t{(A.T@y).shape=}")
-            print(f"\t{(r.T @ ones.T @ y).shape=}")
-            print(f"\t{(A.T @ y - r.T @ ones.T @ y).shape=}")
-        out = A.T @ y - r.T @ ones.T @ y
-        if verbose:
-            print(f"\t{type(out)=}")
-            with np.printoptions(precision=2, suppress=True, threshold=1):
-                print(f"\t{out=}")
-        return out
+        return A.T @ y - r.T @ ones.T @ y
 
     def matmat(Y):
-        if verbose:
-            print("matmat")
-            print(f"\t{A.shape=}")
-            print(f"\t{Y.shape=}")
-            print(f"\t{r.shape=}")
-            print(f"\t{(A @ Y).shape=}")
-            print(f"\t{(r @ Y).shape=}")
-            print(f"\t{(A @ Y - r @ Y).shape=}")
-        out = A @ Y - r @ Y
-        if verbose:
-            print(f"\t{type(out)=}")
-            with np.printoptions(precision=2, suppress=True, threshold=1):
-                print(f"\t{out=}")
-        return out
+        return A @ Y - r @ Y
 
     def rmatmat(Y):
-        if verbose:
-            print("rmatmat")
-            print(f"\t{A.shape=}")
-            print(f"\t{A.T.shape=}")
-            print(f"\t{Y.shape=}")
-            print(f"\t{r.shape=}")
-            print(f"\t{r.T.shape=}")
-            print(f"\t{ones.shape=}")
-            print(f"\t{ones.T.shape=}")
-            print(f"\t{(A.T @ Y).shape=}")
-            print(f"\t{(r.T @ ones.T @ Y).shape=}")
-            print(f"\t{(A.T @ Y - r.T @ ones.T @ Y).shape=}")
-        out = A.T @ Y - r.T @ ones.T @ Y
-        if verbose:
-            print(f"\t{type(out)=}")
-            with np.printoptions(precision=2, suppress=True, threshold=1):
-                print(f"\t{out=}")
-        return out
+        return A.T @ Y - r.T @ ones.T @ Y
 
     return LinearOperator(
         shape=X.shape,
