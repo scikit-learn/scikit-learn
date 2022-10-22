@@ -260,6 +260,7 @@ def test_isomap_fitted_attributes_dtype(global_dtype):
     iso.fit(X)
 
     assert iso.dist_matrix_.dtype == global_dtype
+    assert iso.embedding_.dtype == global_dtype
 
 
 def test_isomap_dtype_equivalence():

@@ -396,7 +396,7 @@ Changelog
   :pr:`23210` by :user:`Meekail Zain <micky774>`.
 
 - |Enhancement| :class:`manifold.Isomap` now preserves 
-  dtype for `numpy.float32` inputs. :pr:`24714` by :user:`Rahil Parikh <rprkh>`.
+  dtype for `np.float32` inputs. :pr:`24714` by :user:`Rahil Parikh <rprkh>`.
 
 :mod:`sklearn.metrics`
 ......................

@@ -298,10 +298,6 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             self.dist_matrix_ = self.dist_matrix_.astype(X.dtype, copy=False)
 
         G = self.dist_matrix_**2
-
-        if np.array(X).dtype == np.float32:
-            G = G.astype(X.dtype, copy=False)
-
         G *= -0.5
 
         self.embedding_ = self.kernel_pca_.fit_transform(G)
