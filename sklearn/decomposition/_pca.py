@@ -120,21 +120,20 @@ def _center_implicitly(X, row_mean):
 
     assert X.ndim == 2
     m, n = X.shape
-    A = X  # to avoid recursive references
     r = row_mean.reshape(1, -1)
     ones = np.ones((m, 1), dtype=X.dtype)
 
     def matvec(y):
-        return A @ y - r @ y
+        return X @ y - r @ y
 
     def rmatvec(y):
-        return A.T @ y - r.T @ ones.T @ y
+        return X.T @ y - r.T @ ones.T @ y
 
     def matmat(Y):
-        return A @ Y - r @ Y
+        return X @ Y - r @ Y
 
     def rmatmat(Y):
-        return A.T @ Y - r.T @ ones.T @ Y
+        return X.T @ Y - r.T @ ones.T @ Y
 
     return LinearOperator(
         shape=X.shape,
