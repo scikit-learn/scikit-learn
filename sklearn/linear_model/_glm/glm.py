@@ -491,7 +491,7 @@ class NewtonSolver(ABC):
         return self.coef
 
 
-class CholeskyNewtonSolver(NewtonSolver):
+class NewtonCholeskySolver(NewtonSolver):
     """Cholesky based Newton solver.
 
     Inner solver for finding the Newton step H w_newton = -g uses Cholesky based linear
@@ -835,7 +835,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
             coef = opt_res.x
         elif self.solver == "newton-cholesky":
-            sol = CholeskyNewtonSolver(
+            sol = NewtonCholeskySolver(
                 coef=coef,
                 linear_loss=linear_loss,
                 l2_reg_strength=l2_reg_strength,
