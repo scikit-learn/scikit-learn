@@ -33,7 +33,7 @@ from ...utils.optimize import _check_optimize_result
 from .._linear_loss import LinearModelLoss
 
 
-class NewtonSolver(ABC):
+class _NewtonSolver(ABC):
     """Newton solver for GLMs.
 
     This class implements Newton/2nd-order optimization routines for GLMs. Each Newton
@@ -54,7 +54,7 @@ class NewtonSolver(ABC):
     above pattern and use structure specific tricks.
 
     Usage pattern:
-        - initialize solver: sol = NewtonSolver(...)
+        - initialize solver: sol = _NewtonSolver(...)
         - solve the problem: sol.solve(X, y, sample_weight)
 
     References
@@ -491,7 +491,7 @@ class NewtonSolver(ABC):
         return self.coef
 
 
-class NewtonCholeskySolver(NewtonSolver):
+class _NewtonCholeskySolver(_NewtonSolver):
     """Cholesky based Newton solver.
 
     Inner solver for finding the Newton step H w_newton = -g uses Cholesky based linear
@@ -683,7 +683,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         we have `y_pred = exp(X @ coeff + intercept)`.
     """
 
-    # We allow for NewtonSolver classes for the "solver" parameter but do not
+    # We allow for _NewtonSolver classes for the "solver" parameter but do not
     # make them public in the docstrings. This facilitates testing and
     # benchmarking.
     _parameter_constraints: dict = {
@@ -833,7 +833,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
             coef = opt_res.x
         elif self.solver == "newton-cholesky":
-            sol = NewtonCholeskySolver(
+            sol = _NewtonCholeskySolver(
                 coef=coef,
                 linear_loss=linear_loss,
                 l2_reg_strength=l2_reg_strength,
@@ -844,7 +844,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             )
             coef = sol.solve(X, y, sample_weight)
             self.n_iter_ = sol.iteration
-        elif issubclass(self.solver, NewtonSolver):
+        elif issubclass(self.solver, _NewtonSolver):
             sol = self.solver(
                 coef=coef,
                 linear_loss=linear_loss,
