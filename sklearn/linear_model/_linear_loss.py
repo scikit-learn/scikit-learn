@@ -67,13 +67,21 @@ class LinearModelLoss:
         self.base_loss = base_loss
         self.fit_intercept = fit_intercept
 
-    def init_zero_coef(self, X):
+    def init_zero_coef(self, X, dtype=None):
         """Allocate coef of correct shape with zeros.
 
         Parameters:
         -----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
+        dtype : data-type, default=None
+            Overrides the data type of coef. With dtype=None, coef will have the same
+            dtype as X.
+
+        Returns
+        -------
+        coef : ndarray of shape (n_dof,) or (n_classes, n_dof)
+            Coefficients of a linear model.
         """
         n_features = X.shape[1]
         n_classes = self.base_loss.n_classes
@@ -82,9 +90,10 @@ class LinearModelLoss:
         else:
             n_dof = n_features
         if self.base_loss.is_multiclass:
-            self.coef = np.zeros_like(X, shape=(n_classes, n_dof))
+            coef = np.zeros_like(X, shape=(n_classes, n_dof), dtype=dtype, order="F")
         else:
-            self.coef = np.zeros_like(X, shape=n_dof)
+            coef = np.zeros_like(X, shape=n_dof, dtype=dtype)
+        return coef
 
     def weight_intercept(self, coef):
         """Helper function to get coefficients and intercept.

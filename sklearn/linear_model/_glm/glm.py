@@ -799,13 +799,11 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 coef = self.coef_
             coef = coef.astype(loss_dtype, copy=False)
         else:
+            coef = linear_loss.init_zero_coef(X, dtype=loss_dtype)
             if self.fit_intercept:
-                coef = np.zeros(n_features + 1, dtype=loss_dtype)
                 coef[-1] = linear_loss.base_loss.link.link(
                     np.average(y, weights=sample_weight)
                 )
-            else:
-                coef = np.zeros(n_features, dtype=loss_dtype)
 
         l2_reg_strength = self.alpha
         n_threads = _openmp_effective_n_threads()
