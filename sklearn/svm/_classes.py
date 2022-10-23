@@ -37,9 +37,11 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         square of the hinge loss. The combination of ``penalty='l1'``
         and ``loss='hinge'`` is not supported.
 
-    dual : bool, default=True
+    dual : {"auto", False, True}, default= "auto"
         Select the algorithm to either solve the dual or primal
-        optimization problem. Prefer dual=False when n_samples > n_features.
+        optimization problem.
+        Sets dual = False when n_samples > n_features if dual is "auto"
+        and dual = True otherwise.
 
     tol : float, default=1e-4
         Tolerance for stopping criteria.
@@ -210,7 +212,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         penalty="l2",
         loss="squared_hinge",
         *,
-        dual=True,
+        dual="auto",
         tol=1e-4,
         C=1.0,
         multi_class="ovr",
@@ -259,6 +261,9 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             An instance of the estimator.
         """
         self._validate_params()
+
+        if self.dual == "auto":
+            self.dual = True if X.shape[0] < X.shape[1] else False
 
         X, y = self._validate_data(
             X,
@@ -362,9 +367,11 @@ class LinearSVR(RegressorMixin, LinearModel):
         To lessen the effect of regularization on synthetic feature weight
         (and therefore on the intercept) intercept_scaling has to be increased.
 
-    dual : bool, default=True
+    dual : {"auto", False, True}, default= "auto"
         Select the algorithm to either solve the dual or primal
-        optimization problem. Prefer dual=False when n_samples > n_features.
+        optimization problem.
+        Sets dual = False when n_samples > n_features if dual is "auto"
+        and dual = True otherwise.
 
     verbose : int, default=0
         Enable verbose output. Note that this setting takes advantage of a
@@ -464,7 +471,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         loss="epsilon_insensitive",
         fit_intercept=True,
         intercept_scaling=1.0,
-        dual=True,
+        dual="auto",
         verbose=0,
         random_state=None,
         max_iter=1000,
@@ -505,6 +512,9 @@ class LinearSVR(RegressorMixin, LinearModel):
             An instance of the estimator.
         """
         self._validate_params()
+
+        if self.dual == "auto":
+            self.dual = True if X.shape[0] < X.shape[1] else False
 
         X, y = self._validate_data(
             X,
