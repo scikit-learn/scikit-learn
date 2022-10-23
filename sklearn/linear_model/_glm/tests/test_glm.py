@@ -14,7 +14,7 @@ from scipy import linalg
 from scipy.optimize import minimize, root
 
 from sklearn.base import clone
-from sklearn._loss import HalfBinomialLoss
+from sklearn._loss import HalfBinomialLoss, HalfPoissonLoss, HalfTweedieLoss
 from sklearn._loss.glm_distribution import TweedieDistribution
 from sklearn._loss.link import IdentityLink, LogLink
 
@@ -26,6 +26,7 @@ from sklearn.linear_model import (
     TweedieRegressor,
 )
 from sklearn.linear_model._glm import _GeneralizedLinearRegressor
+from sklearn.linear_model._glm.glm import _NewtonCholeskySolver
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import d2_tweedie_score, mean_poisson_deviance
@@ -1029,3 +1030,80 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
     assert penalized_collinear_newton_deviance == pytest.approx(
         original_newton_deviance, rel=rtol
     )
+
+
+@pytest.mark.parametrize("verbose", [0, 1, 2])
+def test_newton_solver_verbosity(capsys, verbose):
+    """Test the std output of verbose newton solvers."""
+    y = np.array([1, 2], dtype=float)
+    X = np.array([[1.0, 0], [0, 1]], dtype=float)
+    linear_loss = LinearModelLoss(base_loss=HalfPoissonLoss(), fit_intercept=False)
+    sol = _NewtonCholeskySolver(
+        coef=linear_loss.init_zero_coef(X),
+        linear_loss=linear_loss,
+        l2_reg_strength=0,
+        verbose=verbose,
+    )
+    sol.solve(X, y, None)  # returns array([0., 0.69314758])
+    captured = capsys.readouterr()
+
+    if verbose == 0:
+        assert captured.out == ""
+    else:
+        msg = [
+            "Newton iter=1",
+            "Check Convergence",
+            "1. max |gradient|",
+            "2. Newton decrement",
+            "Solver did converge at loss = ",
+        ]
+        for m in msg:
+            assert m in captured.out
+
+    if verbose >= 2:
+        msg = ["Backtracking Line Search"]
+        for m in msg:
+            assert m in captured.out
+
+    # Set the Newton solver to a state with a completely wrong Newton step.
+    sol = _NewtonCholeskySolver(
+        coef=linear_loss.init_zero_coef(X),
+        linear_loss=linear_loss,
+        l2_reg_strength=0,
+        verbose=verbose,
+    )
+    sol.setup(X=X, y=y, sample_weight=None)
+    sol.iteration = 1
+    sol.update_gradient_hessian(X=X, y=y, sample_weight=None)
+    sol.coef_newton = np.array([1.0, 0])
+    sol.gradient_times_newton = sol.gradient @ sol.coef_newton
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", ConvergenceWarning)
+        sol.line_search(X=X, y=y, sample_weight=None)
+        captured = capsys.readouterr()
+    if verbose >= 1:
+        assert (
+            "Line search did not converge and resorts to lbfgs instead." in captured.out
+        )
+
+    # Test for a case with negative hessian. We badly initialize coef for a Tweedie
+    # loss with non-canonical link, e.g. Inverse Gaussian deviance with a log link.
+    linear_loss = LinearModelLoss(
+        base_loss=HalfTweedieLoss(power=3), fit_intercept=False
+    )
+    sol = _NewtonCholeskySolver(
+        coef=linear_loss.init_zero_coef(X) + 1,
+        linear_loss=linear_loss,
+        l2_reg_strength=0,
+        verbose=verbose,
+    )
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", ConvergenceWarning)
+        sol.solve(X, y, None)
+    captured = capsys.readouterr()
+    if verbose >= 1:
+        assert (
+            "The inner solver detected a pointwise Hessian with many negative values"
+            " and resorts to lbfgs instead."
+            in captured.out
+        )
