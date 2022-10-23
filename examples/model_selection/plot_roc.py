@@ -298,7 +298,7 @@ plt.show()
 # The One-vs-One (OvO) multiclass strategy consists in fitting one classifier
 # per class pair. Since it requires to train `n_classes` * (`n_classes` - 1) / 2
 # classifiers, this method is usually slower than One-vs-Rest due to its
-# O(`n_classes`^2) complexity.
+# O(`n_classes` ^2) complexity.
 #
 # In this section, we demonstrate the macro-averaged AUC using the OvO scheme
 # for the 3 possible combinations in the :ref:`iris_dataset`: "setosa" vs
