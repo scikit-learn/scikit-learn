@@ -847,7 +847,7 @@ def test_csr_polynomial_expansion_index_overflow_deg2(
     # an informative error message.
     if (
         sp_version < parse_version("1.9.2")
-        and n_features == 65535
+        and n_features >= 65535
         and not interaction_only
     ):
         msg = r"In scipy versions `<1.9.2`, the function `scipy.sparse.hstack`"
