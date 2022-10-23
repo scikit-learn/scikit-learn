@@ -161,7 +161,7 @@ class LinearModelLoss:
         if not self.base_loss.is_multiclass:
             raw_prediction = X @ weights + intercept
         else:
-            # weights has shape to (n_classes, n_dof)
+            # weights has shape (n_classes, n_dof)
             raw_prediction = X @ weights.T + intercept  # ndarray, likely C-contiguous
 
         return weights, intercept, raw_prediction
@@ -481,8 +481,10 @@ class LinearModelLoss:
                 # multiplication (gemm), is by far faster.
                 WX = hess_pointwise[:, None] * X
                 hess[:n_features, :n_features] = np.dot(X.T, WX)
-            # flattened view on the array
+
             if l2_reg_strength > 0:
+                # The L2 penalty enters the Hessian on the diagonal only. To add those
+                # terms, we use a flattened view on the array.
                 hess.reshape(-1)[
                     : (n_features * n_dof) : (n_dof + 1)
                 ] += l2_reg_strength
@@ -492,6 +494,8 @@ class LinearModelLoss:
                 # hess = (X, 1)' @ diag(h) @ (X, 1)
                 #      = (X' @ diag(h) @ X, X' @ h)
                 #        (           h @ X, sum(h))
+                # The left upper part has already been filled, it remains to compute
+                # the last row and the last column.
                 Xh = X.T @ hess_pointwise
                 hess[:-1, -1] = Xh
                 hess[-1, :-1] = Xh
