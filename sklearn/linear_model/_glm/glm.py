@@ -180,7 +180,7 @@ class _NewtonSolver(ABC):
 
         Sets:
             - self.coef_newton
-            - gradient_times_newton
+            - self.gradient_times_newton
         """
 
     def fallback_lbfgs_solve(self, X, y, sample_weight):
@@ -453,7 +453,7 @@ class _NewtonSolver(ABC):
 
             # 2. Inner solver
             #    Calculate Newton step/direction
-            #    This usually sets self.coef_newton.
+            #    This usually sets self.coef_newton and self.gradient_times_newton.
             self.inner_solve(X=X, y=y, sample_weight=sample_weight)
             if self.use_fallback_lbfgs_solve:
                 break
