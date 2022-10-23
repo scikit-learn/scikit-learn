@@ -8,8 +8,8 @@ implementation_specific_values = [
     # We also use the float64 dtype and C-type names as defined in
     # `sklearn.utils._typedefs` to maintain consistency.
     #
-    ('64', False, 'DTYPE_t', 'DTYPE'),
-    ('32', True, 'cnp.float32_t', 'np.float32')
+    ('64', 'DTYPE_t', 'DTYPE'),
+    ('32', 'cnp.float32_t', 'np.float32')
 ]
 
 }}
@@ -103,7 +103,7 @@ cdef DTYPE_t[::1] _sqeuclidean_row_norms32_dense(
     return squared_row_norms
 
 
-{{for name_suffix, upcast_to_float64, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
+{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
 from ._datasets_pair cimport DatasetsPair{{name_suffix}}
 
