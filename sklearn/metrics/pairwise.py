@@ -354,6 +354,7 @@ def _euclidean_distances(X, Y, X_norm_squared=None, Y_norm_squared=None, squared
     # XXX: the following code is still used for list-of-lists of numbers which
     # aren't converted to numpy arrays in validation steps done in `check_array`.
     # TODO: convert list-of-lists to numpy arrays in `check_array`.
+    # See: https://github.com/scikit-learn/scikit-learn/issues/24745
     if X_norm_squared is not None:
         if X_norm_squared.dtype == np.float32:
             XX = None
@@ -892,6 +893,7 @@ def haversine_distances(X, Y=None):
     # XXX: the following code is still used for list-of-lists of numbers which
     # aren't converted to numpy arrays in validation steps done in `check_array`.
     # TODO: convert list-of-lists to numpy arrays in `check_array`.
+    # See: https://github.com/scikit-learn/scikit-learn/issues/24745
 
     from ..metrics import DistanceMetric
 
@@ -975,6 +977,7 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
     # aren't converted to numpy arrays in validation steps done in `check_array`
     # and for supporting `sum_over_features` which we should probably remove.
     # TODO: convert list-of-lists to numpy arrays in `check_array`.
+    # See: https://github.com/scikit-learn/scikit-learn/issues/24745
     # TODO: remove `sum_over_features`, see:
     # https://github.com/scikit-learn/scikit-learn/issues/24597
 
@@ -2023,6 +2026,7 @@ def pairwise_distances(
         # XXX: the following code is still used for list-of-lists of numbers which
         # aren't converted to numpy arrays in validation steps done in `check_array`.
         # TODO: convert list-of-lists to numpy arrays in `check_array`.
+        # See: https://github.com/scikit-learn/scikit-learn/issues/24745
 
         if issparse(X) or issparse(Y):
             raise TypeError("scipy distance metrics do not support sparse matrices.")
