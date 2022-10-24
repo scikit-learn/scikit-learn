@@ -848,24 +848,35 @@ Ridge Regression`_, see the example below.
 Logistic regression
 ===================
 
-Logistic regression, despite its name, is a linear model for classification
-rather than regression. Logistic regression is also known in the literature as
-logit regression, maximum-entropy classification (MaxEnt) or the log-linear
-classifier. In this model, the probabilities describing the possible outcomes
-of a single trial are modeled using a
-`logistic function <https://en.wikipedia.org/wiki/Logistic_function>`_.
+LogisticRegression, despite its name, is implemented as a linear model for
+classification rather than regression in terms of scikit-learn/ML nomenclature.
+Logistic regression is also known in the literature as logit regression,
+maximum-entropy classification (MaxEnt) or the log-linear classifier. In this
+model, the probabilities describing the possible outcomes of a single trial are
+modeled using a `logistic function
+<https://en.wikipedia.org/wiki/Logistic_function>`_.
 
 Logistic regression is implemented in :class:`LogisticRegression`.
 This implementation can fit binary, One-vs-Rest, or multinomial logistic
 regression with optional :math:`\ell_1`, :math:`\ell_2` or Elastic-Net
 regularization.
 
-.. note::
+.. note:: **Regularization**
 
     Regularization is applied by default, which is common in machine
     learning but not in statistics. Another advantage of regularization is
     that it improves numerical stability. No regularization amounts to
     setting C to a very high value.
+
+.. note:: **Logistic Regression as a special case of the Generalized Linear Regression Model (GLM)**
+
+    Logistic regression is a special case of
+    :ref:`generalized_linear_regression` with a Binomial/Bernoulli conditional
+    distribution and a Logit link. The numerical output of the logistic
+    regression, which is the predicted probability, can be used as a classifier
+    by applying a threshold (by default 0.5) to it. This is how it is
+    implemented in scikit-learn, so it expects a categorical target, making it
+    the Logistic (Regression) Classifier.
 
 Binary Case
 -----------
