@@ -26,7 +26,7 @@ from sklearn.linear_model import (
     TweedieRegressor,
 )
 from sklearn.linear_model._glm import _GeneralizedLinearRegressor
-from sklearn.linear_model._glm.glm import _NewtonCholeskySolver
+from sklearn.linear_model._glm._newton_solver import NewtonCholeskySolver
 from sklearn.linear_model._linear_loss import LinearModelLoss
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import d2_tweedie_score, mean_poisson_deviance
@@ -1038,7 +1038,7 @@ def test_newton_solver_verbosity(capsys, verbose):
     y = np.array([1, 2], dtype=float)
     X = np.array([[1.0, 0], [0, 1]], dtype=float)
     linear_loss = LinearModelLoss(base_loss=HalfPoissonLoss(), fit_intercept=False)
-    sol = _NewtonCholeskySolver(
+    sol = NewtonCholeskySolver(
         coef=linear_loss.init_zero_coef(X),
         linear_loss=linear_loss,
         l2_reg_strength=0,
@@ -1066,7 +1066,7 @@ def test_newton_solver_verbosity(capsys, verbose):
             assert m in captured.out
 
     # Set the Newton solver to a state with a completely wrong Newton step.
-    sol = _NewtonCholeskySolver(
+    sol = NewtonCholeskySolver(
         coef=linear_loss.init_zero_coef(X),
         linear_loss=linear_loss,
         l2_reg_strength=0,
@@ -1088,7 +1088,7 @@ def test_newton_solver_verbosity(capsys, verbose):
 
     # Set the Newton solver to a state with bad Newton step such that the loss
     # improvement in line search is tiny.
-    sol = _NewtonCholeskySolver(
+    sol = NewtonCholeskySolver(
         coef=np.array([1e-12, 0.69314758]),
         linear_loss=linear_loss,
         l2_reg_strength=0,
@@ -1118,7 +1118,7 @@ def test_newton_solver_verbosity(capsys, verbose):
     linear_loss = LinearModelLoss(
         base_loss=HalfTweedieLoss(power=3), fit_intercept=False
     )
-    sol = _NewtonCholeskySolver(
+    sol = NewtonCholeskySolver(
         coef=linear_loss.init_zero_coef(X) + 1,
         linear_loss=linear_loss,
         l2_reg_strength=0,
