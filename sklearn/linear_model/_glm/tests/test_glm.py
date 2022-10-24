@@ -397,7 +397,7 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
         if solver == "newton-cholesky":
             # XXX: This solver shows random behaviour. Sometimes it finds solutions
             # with norm_model <= norm_solution! So we check conditionally.
-            if not (norm_model > (1 + 1e-12) * norm_solution):
+            if norm_model < (1 + 1e-12) * norm_solution:
                 assert model.intercept_ == pytest.approx(intercept)
                 assert_allclose(model.coef_, coef, rtol=rtol)
         elif solver == "lbfgs" and fit_intercept:
