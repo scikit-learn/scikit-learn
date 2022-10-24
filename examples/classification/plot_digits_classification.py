@@ -104,8 +104,10 @@ print(f"Confusion matrix:\n{disp.confusion_matrix}")
 plt.show()
 
 ###############################################################################
-# We can also build a :func:`~sklearn.metrics.classification_report`
-# through the :ref:`confusion matrix <confusion_matrix>`.
+# If the results from evaluating a classifier are stored in the form of a
+# :ref:`confusion matrix <confusion_matrix>` and not in terms of `y_true` and
+# `y_pred`, one can still build a :func:`~sklearn.metrics.classification_report`
+# as follows:
 
 
 # The ground truth and predicted lists
