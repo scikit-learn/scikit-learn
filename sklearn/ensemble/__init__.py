@@ -19,6 +19,7 @@ from ._voting import VotingClassifier
 from ._voting import VotingRegressor
 from ._stacking import StackingClassifier
 from ._stacking import StackingRegressor
+from ._ensemble_selection import EnsembleSelection
 from ._hist_gradient_boosting.gradient_boosting import (
     HistGradientBoostingRegressor,
     HistGradientBoostingClassifier,
@@ -42,6 +43,7 @@ __all__ = [
     "VotingRegressor",
     "StackingClassifier",
     "StackingRegressor",
+    "EnsembleSelection",
     "HistGradientBoostingClassifier",
     "HistGradientBoostingRegressor",
 ]
