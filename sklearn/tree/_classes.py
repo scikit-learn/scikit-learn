@@ -321,14 +321,16 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             min_weight_leaf = self.min_weight_fraction_leaf * np.sum(sample_weight)
 
         # Build tree
-        # set the Cython criterion functionality 
+        # set the Cython criterion functionality
         criterion = self._set_criterion(n_samples, is_classification)
 
-        # set the Cython splitter functionality 
+        # set the Cython splitter functionality
         X_issparse = issparse(X)
-        splitter = self._set_splitter(X_issparse, criterion, min_samples_leaf, min_weight_leaf, random_state)
-        
-        # set the Cython tree functionality 
+        splitter = self._set_splitter(
+            X_issparse, criterion, min_samples_leaf, min_weight_leaf, random_state
+        )
+
+        # set the Cython tree functionality
         tree = self._set_tree()
         self.tree_ = tree
 
@@ -362,7 +364,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self._prune_tree()
 
         return self
-    
+
     def _set_criterion(self, n_samples, is_classification):
         criterion = self.criterion
         if not isinstance(criterion, Criterion):
@@ -390,7 +392,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             )
         return tree
 
-    def _set_splitter(self, X_issparse, criterion, min_samples_leaf, min_weight_leaf, random_state):
+    def _set_splitter(
+        self, X_issparse, criterion, min_samples_leaf, min_weight_leaf, random_state
+    ):
         SPLITTERS = SPARSE_SPLITTERS if X_issparse else DENSE_SPLITTERS
 
         splitter = self.splitter
@@ -603,10 +607,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
 
         return self.tree_.compute_feature_importances()
-
-
-class SupervisedDecisionTree(BaseDecisionTree):
-    def
 
 
 # =============================================================================
