@@ -22,6 +22,7 @@ from subprocess import TimeoutExpired
 import re
 import contextlib
 from collections.abc import Iterable
+from collections.abc import Sequence
 
 import scipy as sp
 from functools import wraps
@@ -34,7 +35,7 @@ from unittest import TestCase
 
 # WindowsError only exist on Windows
 try:
-    WindowsError
+    WindowsError  # type: ignore
 except NameError:
     WindowsError = None
 
@@ -51,7 +52,6 @@ import sklearn
 from sklearn.utils import (
     IS_PYPY,
     _IS_32BIT,
-    deprecated,
     _in_unstable_openblas_configuration,
 )
 from sklearn.utils.multiclass import check_classification_targets
@@ -60,6 +60,7 @@ from sklearn.utils.validation import (
     check_is_fitted,
     check_X_y,
 )
+from sklearn.utils.fixes import threadpool_info
 
 
 __all__ = [
@@ -85,137 +86,6 @@ assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
 assert_raises_regexp = assert_raises_regex
-
-
-# TODO: Remove in 1.2
-@deprecated(  # type: ignore
-    "`assert_warns` is deprecated in 1.0 and will be removed in 1.2."
-    "Use `pytest.warns` instead."
-)
-def assert_warns(warning_class, func, *args, **kw):
-    """Test that a certain warning occurs.
-
-    .. deprecated:: 1.0
-        `assert_warns` is deprecated in 1.0 and will be removed in 1.2.
-        Use `pytest.warns` instead.
-
-    Parameters
-    ----------
-    warning_class : the warning class
-        The class to test for, e.g. UserWarning.
-
-    func : callable
-        Callable object to trigger warnings.
-
-    *args : the positional arguments to `func`.
-
-    **kw : the keyword arguments to `func`
-
-    Returns
-    -------
-    result : the return value of `func`
-
-    """
-    with warnings.catch_warnings(record=True) as w:
-        # Cause all warnings to always be triggered.
-        warnings.simplefilter("always")
-        # Trigger a warning.
-        result = func(*args, **kw)
-        if hasattr(np, "FutureWarning"):
-            # Filter out numpy-specific warnings in numpy >= 1.9
-            w = [e for e in w if e.category is not np.VisibleDeprecationWarning]
-
-        # Verify some things
-        if not len(w) > 0:
-            raise AssertionError("No warning raised when calling %s" % func.__name__)
-
-        found = any(warning.category is warning_class for warning in w)
-        if not found:
-            raise AssertionError(
-                "%s did not give warning: %s( is %s)"
-                % (func.__name__, warning_class, w)
-            )
-    return result
-
-
-# TODO: Remove in 1.2
-@deprecated(  # type: ignore
-    "`assert_warns_message` is deprecated in 1.0 and will be removed in 1.2."
-    "Use `pytest.warns` instead."
-)
-def assert_warns_message(warning_class, message, func, *args, **kw):
-    # very important to avoid uncontrolled state propagation
-    """Test that a certain warning occurs and with a certain message.
-
-    .. deprecated:: 1.0
-        `assert_warns_message` is deprecated in 1.0 and will be removed in 1.2.
-        Use `pytest.warns` instead.
-
-    Parameters
-    ----------
-    warning_class : the warning class
-        The class to test for, e.g. UserWarning.
-
-    message : str or callable
-        The message or a substring of the message to test for. If callable,
-        it takes a string as the argument and will trigger an AssertionError
-        if the callable returns `False`.
-
-    func : callable
-        Callable object to trigger warnings.
-
-    *args : the positional arguments to `func`.
-
-    **kw : the keyword arguments to `func`.
-
-    Returns
-    -------
-    result : the return value of `func`
-
-    """
-    with warnings.catch_warnings(record=True) as w:
-        # Cause all warnings to always be triggered.
-        warnings.simplefilter("always")
-        if hasattr(np, "FutureWarning"):
-            # Let's not catch the numpy internal DeprecationWarnings
-            warnings.simplefilter("ignore", np.VisibleDeprecationWarning)
-        # Trigger a warning.
-        result = func(*args, **kw)
-        # Verify some things
-        if not len(w) > 0:
-            raise AssertionError("No warning raised when calling %s" % func.__name__)
-
-        found = [issubclass(warning.category, warning_class) for warning in w]
-        if not any(found):
-            raise AssertionError(
-                "No warning raised for %s with class %s"
-                % (func.__name__, warning_class)
-            )
-
-        message_found = False
-        # Checks the message of all warnings belong to warning_class
-        for index in [i for i, x in enumerate(found) if x]:
-            # substring will match, the entire message with typo won't
-            msg = w[index].message  # For Python 3 compatibility
-            msg = str(msg.args[0] if hasattr(msg, "args") else msg)
-            if callable(message):  # add support for certain tests
-                check_in_message = message
-            else:
-
-                def check_in_message(msg):
-                    return message in msg
-
-            if check_in_message(msg):
-                message_found = True
-                break
-
-        if not message_found:
-            raise AssertionError(
-                "Did not receive the message you expected ('%s') for <%s>, got: '%s'"
-                % (message, func.__name__, msg)
-            )
-
-    return result
 
 
 # To remove when we support numpy 1.7
@@ -602,6 +472,38 @@ class TempMemmap:
         _delete_folder(self.temp_folder)
 
 
+def _create_memmap_backed_array(array, filename, mmap_mode):
+    # https://numpy.org/doc/stable/reference/generated/numpy.memmap.html
+    fp = np.memmap(filename, dtype=array.dtype, mode="w+", shape=array.shape)
+    fp[:] = array[:]  # write array to memmap array
+    fp.flush()
+    memmap_backed_array = np.memmap(
+        filename, dtype=array.dtype, mode=mmap_mode, shape=array.shape
+    )
+    return memmap_backed_array
+
+
+def _create_aligned_memmap_backed_arrays(data, mmap_mode, folder):
+    if isinstance(data, np.ndarray):
+        filename = op.join(folder, "data.dat")
+        return _create_memmap_backed_array(data, filename, mmap_mode)
+
+    if isinstance(data, Sequence) and all(
+        isinstance(each, np.ndarray) for each in data
+    ):
+        return [
+            _create_memmap_backed_array(
+                array, op.join(folder, f"data{index}.dat"), mmap_mode
+            )
+            for index, array in enumerate(data)
+        ]
+
+    raise ValueError(
+        "When creating aligned memmap-backed arrays, input must be a single array or a"
+        " sequence of arrays"
+    )
+
+
 def create_memmap_backed_data(data, mmap_mode="r", return_folder=False, aligned=False):
     """
     Parameters
@@ -616,18 +518,23 @@ def create_memmap_backed_data(data, mmap_mode="r", return_folder=False, aligned=
     """
     temp_folder = tempfile.mkdtemp(prefix="sklearn_testing_")
     atexit.register(functools.partial(_delete_folder, temp_folder, warn=True))
+    # OpenBLAS is known to segfault with unaligned data on the Prescott
+    # architecture so force aligned=True on Prescott. For more details, see:
+    # https://github.com/scipy/scipy/issues/14886
+    has_prescott_openblas = any(
+        True
+        for info in threadpool_info()
+        if info["internal_api"] == "openblas"
+        # Prudently assume Prescott might be the architecture if it is unknown.
+        and info.get("architecture", "prescott").lower() == "prescott"
+    )
+    if has_prescott_openblas:
+        aligned = True
+
     if aligned:
-        if isinstance(data, np.ndarray) and data.flags.aligned:
-            # https://numpy.org/doc/stable/reference/generated/numpy.memmap.html
-            filename = op.join(temp_folder, "data.dat")
-            fp = np.memmap(filename, dtype=data.dtype, mode="w+", shape=data.shape)
-            fp[:] = data[:]  # write data to memmap array
-            fp.flush()
-            memmap_backed_data = np.memmap(
-                filename, dtype=data.dtype, mode=mmap_mode, shape=data.shape
-            )
-        else:
-            raise ValueError("If aligned=True, input must be a single numpy array.")
+        memmap_backed_data = _create_aligned_memmap_backed_arrays(
+            data, mmap_mode, temp_folder
+        )
     else:
         filename = op.join(temp_folder, "data.pkl")
         joblib.dump(data, filename)

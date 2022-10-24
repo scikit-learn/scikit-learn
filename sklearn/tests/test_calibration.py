@@ -23,7 +23,6 @@ from sklearn.model_selection import KFold, cross_val_predict
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import (
     RandomForestClassifier,
-    RandomForestRegressor,
     VotingClassifier,
 )
 from sklearn.linear_model import LogisticRegression, LinearRegression
@@ -71,7 +70,7 @@ def test_calibration(data, method, ensemble):
     X_test, y_test = X[n_samples:], y[n_samples:]
 
     # Naive-Bayes
-    clf = MultinomialNB().fit(X_train, y_train, sample_weight=sw_train)
+    clf = MultinomialNB(force_alpha=True).fit(X_train, y_train, sample_weight=sw_train)
     prob_pos_clf = clf.predict_proba(X_test)[:, 1]
 
     cal_clf = CalibratedClassifierCV(clf, cv=y.size + 1, ensemble=ensemble)
@@ -115,28 +114,6 @@ def test_calibration(data, method, ensemble):
             assert brier_score_loss(y_test, prob_pos_clf) > brier_score_loss(
                 (y_test + 1) % 2, prob_pos_cal_clf_relabeled
             )
-
-
-@pytest.mark.parametrize("ensemble", [True, False])
-def test_calibration_bad_method(data, ensemble):
-    # Check only "isotonic" and "sigmoid" are accepted as methods
-    X, y = data
-    clf = LinearSVC()
-    clf_invalid_method = CalibratedClassifierCV(clf, method="foo", ensemble=ensemble)
-    with pytest.raises(ValueError):
-        clf_invalid_method.fit(X, y)
-
-
-@pytest.mark.parametrize("ensemble", [True, False])
-def test_calibration_regressor(data, ensemble):
-    # `base-estimator` should provide either decision_function or
-    # predict_proba (most regressors, for instance, should fail)
-    X, y = data
-    clf_base_regressor = CalibratedClassifierCV(
-        RandomForestRegressor(), ensemble=ensemble
-    )
-    with pytest.raises(RuntimeError):
-        clf_base_regressor.fit(X, y)
 
 
 def test_calibration_default_estimator(data):
@@ -322,7 +299,7 @@ def test_calibration_prefit():
     X_test, y_test = X[2 * n_samples :], y[2 * n_samples :]
 
     # Naive-Bayes
-    clf = MultinomialNB()
+    clf = MultinomialNB(force_alpha=True)
     # Check error if clf not prefit
     unfit_clf = CalibratedClassifierCV(clf, cv="prefit")
     with pytest.raises(NotFittedError):

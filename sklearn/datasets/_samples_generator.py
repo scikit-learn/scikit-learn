@@ -1405,7 +1405,7 @@ def make_spd_matrix(n_dim, *, random_state=None):
 
     See Also
     --------
-    make_sparse_spd_matrix
+    make_sparse_spd_matrix: Generate a sparse symmetric definite positive matrix.
     """
     generator = check_random_state(random_state)
 
@@ -1532,9 +1532,9 @@ def make_swiss_roll(n_samples=100, *, noise=0.0, random_state=None, hole=False):
 
     References
     ----------
-    .. [1] S. Marsland, "Machine Learning: An Algorithmic Perspective",
-           Chapter 10, 2009.
-           http://seat.massey.ac.nz/personal/s.r.marsland/Code/10/lle.py
+    .. [1] S. Marsland, "Machine Learning: An Algorithmic Perspective", 2nd edition,
+           Chapter 6, 2014.
+           https://homepages.ecs.vuw.ac.nz/~marslast/Code/Ch6/lle.py
     """
     generator = check_random_state(random_state)
 
@@ -1637,7 +1637,7 @@ def make_gaussian_quantiles(
         The number of features for each sample.
 
     n_classes : int, default=3
-        The number of classes
+        The number of classes.
 
     shuffle : bool, default=True
         Shuffle the samples.
@@ -1662,7 +1662,6 @@ def make_gaussian_quantiles(
     References
     ----------
     .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
-
     """
     if n_samples < n_classes:
         raise ValueError("n_samples must be at least n_classes")

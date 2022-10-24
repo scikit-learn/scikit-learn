@@ -5,6 +5,7 @@ import re
 from copy import deepcopy
 from functools import partial, wraps
 from inspect import signature
+from numbers import Real
 
 import numpy as np
 from scipy import sparse
@@ -13,6 +14,7 @@ import joblib
 
 from . import IS_PYPY
 from .. import config_context
+from ._param_validation import Interval
 from ._testing import _get_args
 from ._testing import assert_raise_message
 from ._testing import assert_array_equal
@@ -54,7 +56,8 @@ from ..model_selection import train_test_split
 from ..model_selection import ShuffleSplit
 from ..model_selection._validation import _safe_split
 from ..metrics.pairwise import rbf_kernel, linear_kernel, pairwise_distances
-from ..utils.fixes import threadpool_info
+from ..utils.fixes import sp_version
+from ..utils.fixes import parse_version
 from ..utils.validation import check_is_fitted
 from ..utils._param_validation import make_constraint
 from ..utils._param_validation import generate_invalid_param_val
@@ -268,6 +271,10 @@ def _yield_clustering_checks(clusterer):
 
 
 def _yield_outliers_checks(estimator):
+
+    # checks for the contamination parameter
+    if hasattr(estimator, "contamination"):
+        yield check_outlier_contamination
 
     # checks for outlier detectors that have a fit_predict method
     if hasattr(estimator, "fit_predict"):
@@ -748,8 +755,18 @@ def _set_checking_parameters(estimator):
     if name == "OneHotEncoder":
         estimator.set_params(handle_unknown="ignore")
 
+    if name == "QuantileRegressor":
+        # Avoid warning due to Scipy deprecating interior-point solver
+        solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
+        estimator.set_params(solver=solver)
+
     if name in CROSS_DECOMPOSITION:
         estimator.set_params(n_components=1)
+
+    # Default "auto" parameter can lead to different ordering of eigenvalues on
+    # windows: #24105
+    if name == "SpectralEmbedding":
+        estimator.set_params(eigen_tol=1e-5)
 
 
 class _NotAnArray:
@@ -2113,22 +2130,6 @@ def check_classifiers_one_label(name, classifier_orig):
         assert_array_equal(classifier.predict(X_test), y, err_msg=error_string_predict)
 
 
-def _create_memmap_backed_data(numpy_arrays):
-    # OpenBLAS is known to segfault with unaligned data on the Prescott architecture
-    # See: https://github.com/scipy/scipy/issues/14886
-    has_prescott_openblas = any(
-        True
-        for info in threadpool_info()
-        if info["internal_api"] == "openblas"
-        # Prudently assume Prescott might be the architecture if it is unknown.
-        and info.get("architecture", "prescott").lower() == "prescott"
-    )
-    return [
-        create_memmap_backed_data(array, aligned=has_prescott_openblas)
-        for array in numpy_arrays
-    ]
-
-
 @ignore_warnings  # Warnings are raised by decision function
 def check_classifiers_train(
     name, classifier_orig, readonly_memmap=False, X_dtype="float64"
@@ -2146,7 +2147,7 @@ def check_classifiers_train(
         X_b -= X_b.min()
 
     if readonly_memmap:
-        X_m, y_m, X_b, y_b = _create_memmap_backed_data([X_m, y_m, X_b, y_b])
+        X_m, y_m, X_b, y_b = create_memmap_backed_data([X_m, y_m, X_b, y_b])
 
     problems = [(X_b, y_b)]
     tags = _safe_tags(classifier_orig)
@@ -2361,12 +2362,32 @@ def check_outliers_train(name, estimator_orig, readonly_memmap=True):
             decision = estimator.decision_function(X)
             check_outlier_corruption(num_outliers, expected_outliers, decision)
 
-        # raises error when contamination is a scalar and not in [0,1]
-        msg = r"contamination must be in \(0, 0.5]"
-        for contamination in [-0.5, 2.3]:
-            estimator.set_params(contamination=contamination)
-            with raises(ValueError, match=msg):
-                estimator.fit(X)
+
+def check_outlier_contamination(name, estimator_orig):
+    # Check that the contamination parameter is in (0.0, 0.5] when it is an
+    # interval constraint.
+
+    if not hasattr(estimator_orig, "_parameter_constraints"):
+        # Only estimator implementing parameter constraints will be checked
+        return
+
+    if "contamination" not in estimator_orig._parameter_constraints:
+        return
+
+    contamination_constraints = estimator_orig._parameter_constraints["contamination"]
+    if not any([isinstance(c, Interval) for c in contamination_constraints]):
+        raise AssertionError(
+            "contamination constraints should contain a Real Interval constraint."
+        )
+
+    for constraint in contamination_constraints:
+        if isinstance(constraint, Interval):
+            assert (
+                constraint.type == Real
+                and constraint.left >= 0.0
+                and constraint.right <= 0.5
+                and (constraint.left > 0 or constraint.closed in {"right", "neither"})
+            ), "contamination constraint should be an interval in (0, 0.5]"
 
 
 @ignore_warnings(category=FutureWarning)
@@ -2805,6 +2826,7 @@ def check_regressors_train(
     X = _pairwise_estimator_convert_X(X, regressor_orig)
     y = scale(y)  # X is already scaled
     regressor = clone(regressor_orig)
+    X = _enforce_estimator_tags_x(regressor, X)
     y = _enforce_estimator_tags_y(regressor, y)
     if name in CROSS_DECOMPOSITION:
         rnd = np.random.RandomState(0)
@@ -2814,7 +2836,7 @@ def check_regressors_train(
         y_ = y
 
     if readonly_memmap:
-        X, y, y_ = _create_memmap_backed_data([X, y, y_])
+        X, y, y_ = create_memmap_backed_data([X, y, y_])
 
     if not hasattr(regressor, "alphas") and hasattr(regressor, "alpha"):
         # linear regressors need to set alpha, but not generalized CV ones
@@ -3280,7 +3302,10 @@ def _enforce_estimator_tags_x(estimator, X):
     # Pairwise estimators only accept
     # X of shape (`n_samples`, `n_samples`)
     if _safe_tags(estimator, key="pairwise"):
-        X = X.dot(X.T)
+        # TODO: Remove when `_pairwise_estimator_convert_X`
+        # is removed and its functionality is moved here
+        if X.shape[0] != X.shape[1] or not np.allclose(X, X.T):
+            X = X.dot(X.T)
     # Estimators with `1darray` in `X_types` tag only accept
     # X of shape (`n_samples`,)
     if "1darray" in _safe_tags(estimator, key="X_types"):
@@ -3288,7 +3313,7 @@ def _enforce_estimator_tags_x(estimator, X):
     # Estimators with a `requires_positive_X` tag only accept
     # strictly positive data
     if _safe_tags(estimator, key="requires_positive_X"):
-        X -= X.min()
+        X -= X.min() - 1
     if "categorical" in _safe_tags(estimator, key="X_types"):
         X = (X - X.min()).astype(np.int32)
     return X
@@ -3523,13 +3548,6 @@ def check_outliers_fit_predict(name, estimator_orig):
         ):
             decision = estimator.decision_function(X)
             check_outlier_corruption(num_outliers, expected_outliers, decision)
-
-        # raises error when contamination is a scalar and not in [0,1]
-        msg = r"contamination must be in \(0, 0.5]"
-        for contamination in [-0.5, -0.001, 0.5001, 2.3]:
-            estimator.set_params(contamination=contamination)
-            with raises(ValueError, match=msg):
-                estimator.fit_predict(X)
 
 
 def check_fit_non_negative(name, estimator_orig):
@@ -3895,22 +3913,14 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         X_bad = pd.DataFrame(X, columns=invalid_name)
 
         expected_msg = re.escape(
-            "The feature names should match those that were passed "
-            "during fit. Starting version 1.2, an error will be raised.\n"
+            "The feature names should match those that were passed during fit.\n"
             f"{additional_message}"
         )
         for name, method in check_methods:
-            # TODO In 1.2, this will be an error.
-            with warnings.catch_warnings():
-                warnings.filterwarnings(
-                    "error",
-                    category=FutureWarning,
-                    module="sklearn",
-                )
-                with raises(
-                    FutureWarning, match=expected_msg, err_msg=f"{name} did not raise"
-                ):
-                    method(X_bad)
+            with raises(
+                ValueError, match=expected_msg, err_msg=f"{name} did not raise"
+            ):
+                method(X_bad)
 
         # partial_fit checks on second call
         # Do not call partial fit if early_stopping is on
@@ -3924,10 +3934,8 @@ def check_dataframe_column_names_consistency(name, estimator_orig):
         else:
             estimator.partial_fit(X, y)
 
-        with warnings.catch_warnings():
-            warnings.filterwarnings("error", category=FutureWarning, module="sklearn")
-            with raises(FutureWarning, match=expected_msg):
-                estimator.partial_fit(X_bad, y)
+        with raises(ValueError, match=expected_msg):
+            estimator.partial_fit(X_bad, y)
 
 
 def check_transformer_get_feature_names_out(name, transformer_orig):
@@ -4052,18 +4060,28 @@ def check_param_validation(name, estimator_orig):
 
     # check that there is a constraint for each parameter
     if estimator_params:
+        validation_params = estimator_orig._parameter_constraints.keys()
+        unexpected_params = set(validation_params) - set(estimator_params)
+        missing_params = set(estimator_params) - set(validation_params)
         err_msg = (
             f"Mismatch between _parameter_constraints and the parameters of {name}."
+            f"\nConsider the unexpected parameters {unexpected_params} and expected but"
+            f" missing parameters {missing_params}"
         )
-        assert estimator_orig._parameter_constraints.keys() == estimator_params, err_msg
+        assert validation_params == estimator_params, err_msg
 
     # this object does not have a valid type for sure for all params
     param_with_bad_type = type("BadType", (), {})()
 
     fit_methods = ["fit", "partial_fit", "fit_transform", "fit_predict"]
-    methods = [method for method in fit_methods if hasattr(estimator_orig, method)]
 
     for param_name in estimator_params:
+        constraints = estimator_orig._parameter_constraints[param_name]
+
+        if constraints == "no_validation":
+            # This parameter is not validated
+            continue
+
         match = rf"The '{param_name}' parameter of {name} must be .* Got .* instead."
         err_msg = (
             f"{name} does not raise an informative error message when the "
@@ -4075,14 +4093,24 @@ def check_param_validation(name, estimator_orig):
         # First, check that the error is raised if param doesn't match any valid type.
         estimator.set_params(**{param_name: param_with_bad_type})
 
-        for method in methods:
+        for method in fit_methods:
+            if not hasattr(estimator, method):
+                # the method is not accessible with the current set of parameters
+                continue
+
             with raises(ValueError, match=match, err_msg=err_msg):
-                getattr(estimator, method)(X, y)
+                if any(
+                    isinstance(X_type, str) and X_type.endswith("labels")
+                    for X_type in _safe_tags(estimator, key="X_types")
+                ):
+                    # The estimator is a label transformer and take only `y`
+                    getattr(estimator, method)(y)
+                else:
+                    getattr(estimator, method)(X, y)
 
         # Then, for constraints that are more than a type constraint, check that the
         # error is raised if param does match a valid type but does not match any valid
         # value for this type.
-        constraints = estimator_orig._parameter_constraints[param_name]
         constraints = [make_constraint(constraint) for constraint in constraints]
 
         for constraint in constraints:
@@ -4093,6 +4121,121 @@ def check_param_validation(name, estimator_orig):
 
             estimator.set_params(**{param_name: bad_value})
 
-            for method in methods:
+            for method in fit_methods:
+                if not hasattr(estimator, method):
+                    # the method is not accessible with the current set of parameters
+                    continue
+
                 with raises(ValueError, match=match, err_msg=err_msg):
-                    getattr(estimator, method)(X, y)
+                    if any(
+                        X_type.endswith("labels")
+                        for X_type in _safe_tags(estimator, key="X_types")
+                    ):
+                        # The estimator is a label transformer and take only `y`
+                        getattr(estimator, method)(y)
+                    else:
+                        getattr(estimator, method)(X, y)
+
+
+def check_set_output_transform(name, transformer_orig):
+    # Check transformer.set_output with the default configuration does not
+    # change the transform output.
+    tags = transformer_orig._get_tags()
+    if "2darray" not in tags["X_types"] or tags["no_validation"]:
+        return
+
+    rng = np.random.RandomState(0)
+    transformer = clone(transformer_orig)
+
+    X = rng.uniform(size=(20, 5))
+    X = _pairwise_estimator_convert_X(X, transformer_orig)
+    y = rng.randint(0, 2, size=20)
+    y = _enforce_estimator_tags_y(transformer_orig, y)
+    set_random_state(transformer)
+
+    def fit_then_transform(est):
+        if name in CROSS_DECOMPOSITION:
+            return est.fit(X, y).transform(X, y)
+        return est.fit(X, y).transform(X)
+
+    def fit_transform(est):
+        return est.fit_transform(X, y)
+
+    transform_methods = [fit_then_transform, fit_transform]
+    for transform_method in transform_methods:
+        transformer = clone(transformer)
+        X_trans_no_setting = transform_method(transformer)
+
+        # Auto wrapping only wraps the first array
+        if name in CROSS_DECOMPOSITION:
+            X_trans_no_setting = X_trans_no_setting[0]
+
+        transformer.set_output(transform="default")
+        X_trans_default = transform_method(transformer)
+
+        if name in CROSS_DECOMPOSITION:
+            X_trans_default = X_trans_default[0]
+
+        # Default and no setting -> returns the same transformation
+        assert_allclose_dense_sparse(X_trans_no_setting, X_trans_default)
+
+
+def check_set_output_transform_pandas(name, transformer_orig):
+    # Check transformer.set_output configures the output of transform="pandas".
+    try:
+        import pandas as pd
+    except ImportError:
+        raise SkipTest(
+            "pandas is not installed: not checking column name consistency for pandas"
+        )
+
+    tags = transformer_orig._get_tags()
+    if "2darray" not in tags["X_types"] or tags["no_validation"]:
+        return
+
+    rng = np.random.RandomState(0)
+    transformer = clone(transformer_orig)
+
+    X = rng.uniform(size=(20, 5))
+    X = _pairwise_estimator_convert_X(X, transformer_orig)
+    y = rng.randint(0, 2, size=20)
+    y = _enforce_estimator_tags_y(transformer_orig, y)
+    set_random_state(transformer)
+
+    feature_names_in = [f"col{i}" for i in range(X.shape[1])]
+    df = pd.DataFrame(X, columns=feature_names_in)
+
+    def fit_then_transform(est):
+        if name in CROSS_DECOMPOSITION:
+            return est.fit(df, y).transform(df, y)
+        return est.fit(df, y).transform(df)
+
+    def fit_transform(est):
+        return est.fit_transform(df, y)
+
+    transform_methods = [fit_then_transform, fit_transform]
+
+    for transform_method in transform_methods:
+        transformer = clone(transformer).set_output(transform="default")
+        X_trans_no_setting = transform_method(transformer)
+
+        # Auto wrapping only wraps the first array
+        if name in CROSS_DECOMPOSITION:
+            X_trans_no_setting = X_trans_no_setting[0]
+
+        transformer.set_output(transform="pandas")
+        try:
+            X_trans_pandas = transform_method(transformer)
+        except ValueError as e:
+            # transformer does not support sparse data
+            assert str(e) == "Pandas output does not support sparse data.", e
+            return
+
+        if name in CROSS_DECOMPOSITION:
+            X_trans_pandas = X_trans_pandas[0]
+
+        assert isinstance(X_trans_pandas, pd.DataFrame)
+        expected_dataframe = pd.DataFrame(
+            X_trans_no_setting, columns=transformer.get_feature_names_out()
+        )
+        pd.testing.assert_frame_equal(X_trans_pandas, expected_dataframe)
