@@ -48,7 +48,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     in them for performance reasons. We pick the loss functions that implement
     (1/2 times) EDM deviances.
 
-    Read more in the :ref:`User Guide <Generalized_linear_regression>`.
+    Read more in the :ref:`User Guide <Generalized_linear_models>`.
 
     .. versionadded:: 0.23
 
@@ -448,7 +448,7 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
 
     This regressor uses the 'log' link function.
 
-    Read more in the :ref:`User Guide <Generalized_linear_regression>`.
+    Read more in the :ref:`User Guide <Generalized_linear_models>`.
 
     .. versionadded:: 0.23
 
@@ -562,7 +562,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
 
     This regressor uses the 'log' link function.
 
-    Read more in the :ref:`User Guide <Generalized_linear_regression>`.
+    Read more in the :ref:`User Guide <Generalized_linear_models>`.
 
     .. versionadded:: 0.23
 
@@ -678,7 +678,7 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
     This estimator can be used to model different GLMs depending on the
     ``power`` parameter, which determines the underlying distribution.
 
-    Read more in the :ref:`User Guide <Generalized_linear_regression>`.
+    Read more in the :ref:`User Guide <Generalized_linear_models>`.
 
     .. versionadded:: 0.23
 
