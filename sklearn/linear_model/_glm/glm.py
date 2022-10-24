@@ -241,8 +241,6 @@ class _NewtonSolver(ABC):
 
         # np.sum(np.abs(self.gradient_old))
         sum_abs_grad_old = -1
-        sum_abs_grad_previous = -1  # Used to track sum|gradients| of i-1
-        has_improved_sum_abs_grad_previous = False
 
         is_verbose = self.verbose >= 2
         if is_verbose:
@@ -298,52 +296,6 @@ class _NewtonSolver(ABC):
                     )
                 if check:
                     break
-                # 2.2 Deal with relative gradient differences around machine precision.
-                tiny_grad = sum_abs_grad_old * eps
-                abs_grad_improvement = np.abs(sum_abs_grad - sum_abs_grad_old)
-                check = abs_grad_improvement <= tiny_grad
-                if is_verbose:
-                    print(
-                        "      check |sum(|gradient|) - sum(|gradient_old|)| <= eps * "
-                        "sum(|gradient_old|):"
-                        f" {abs_grad_improvement} <= {tiny_grad} {check}"
-                    )
-                if check:
-                    break
-                # 2.3 This is really the last resort.
-                # Check that sum(|gradient_{i-1}|) < sum(|gradient_{i-2}|)
-                #            = has_improved_sum_abs_grad_previous
-                # If now sum(|gradient_{i}|) >= sum(|gradient_{i-1}|), this iteration
-                # made things worse and we should have stopped at i-1.
-                check = (
-                    has_improved_sum_abs_grad_previous
-                    and sum_abs_grad >= sum_abs_grad_previous
-                )
-                if is_verbose:
-                    print(
-                        "      check if previously "
-                        f"sum(|gradient_{i-1}|) < sum(|gradient_{i-2}|) but now "
-                        f"sum(|gradient_{i}|) >= sum(|gradient_{i-1}|) {check}"
-                    )
-                if check:
-                    t /= beta  # we go back to i-1
-                    self.coef = self.coef_old + t * self.coef_newton
-                    raw = self.raw_prediction + t * raw_prediction_newton
-                    self.loss_value, self.gradient = self.linear_loss.loss_gradient(
-                        coef=self.coef,
-                        X=X,
-                        y=y,
-                        sample_weight=sample_weight,
-                        l2_reg_strength=self.l2_reg_strength,
-                        n_threads=self.n_threads,
-                        raw_prediction=raw,
-                    )
-                    break
-                # Calculate for the next iteration
-                has_improved_sum_abs_grad_previous = (
-                    sum_abs_grad < sum_abs_grad_previous
-                )
-                sum_abs_grad_previous = sum_abs_grad
 
             t *= beta
         else:

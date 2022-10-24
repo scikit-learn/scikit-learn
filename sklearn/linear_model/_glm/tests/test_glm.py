@@ -1109,9 +1109,6 @@ def test_newton_solver_verbosity(capsys, verbose):
             "check loss improvement <= armijo term:",
             "check loss |improvement| <= eps * |loss_old|:",
             "check sum(|gradient|) < sum(|gradient_old|):",
-            "check |sum(|gradient|) - sum(|gradient_old|)| <= eps *"
-            " sum(|gradient_old|):",
-            "check if previously sum(|gradient",
         ]
         for m in msg:
             assert m in captured.out
