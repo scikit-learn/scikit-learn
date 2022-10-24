@@ -2,6 +2,7 @@ import pytest
 import numpy as np
 import scipy.sparse as sp
 from joblib import cpu_count
+import re
 
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
@@ -10,6 +11,8 @@ from sklearn import datasets
 from sklearn.base import clone
 from sklearn.datasets import make_classification
 from sklearn.datasets import load_linnerud
+from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import make_regression
 from sklearn.ensemble import GradientBoostingRegressor, RandomForestClassifier
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import Lasso
@@ -18,15 +21,17 @@ from sklearn.linear_model import OrthogonalMatchingPursuit
 from sklearn.linear_model import Ridge
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import SGDRegressor
+from sklearn.linear_model import LinearRegression
 from sklearn.metrics import jaccard_score, mean_squared_error
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multioutput import ClassifierChain, RegressorChain
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.multioutput import MultiOutputRegressor
 from sklearn.svm import LinearSVC
+from sklearn.tree import DecisionTreeClassifier
 from sklearn.base import ClassifierMixin
 from sklearn.utils import shuffle
-from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.dummy import DummyRegressor, DummyClassifier
 from sklearn.pipeline import make_pipeline
 from sklearn.impute import SimpleImputer
@@ -700,6 +705,47 @@ def test_classifier_chain_tuple_invalid_order():
 
     with pytest.raises(ValueError, match="invalid order"):
         chain.fit(X, y)
+
+
+def test_classifier_chain_verbose(capsys):
+    X, y = make_multilabel_classification(
+        n_samples=100, n_features=5, n_classes=3, n_labels=3, random_state=0
+    )
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+    pattern = (
+        r"\[Chain\].*\(1 of 3\) Processing order 0, total=.*\n"
+        r"\[Chain\].*\(2 of 3\) Processing order 1, total=.*\n"
+        r"\[Chain\].*\(3 of 3\) Processing order 2, total=.*\n$"
+    )
+
+    classifier = ClassifierChain(
+        DecisionTreeClassifier(),
+        order=[0, 1, 2],
+        random_state=0,
+        verbose=True,
+    )
+    classifier.fit(X_train, y_train)
+    assert re.match(pattern, capsys.readouterr()[0])
+
+
+def test_regressor_chain_verbose(capsys):
+    X, y = make_regression(n_samples=125, n_targets=3, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+    pattern = (
+        r"\[Chain\].*\(1 of 3\) Processing order 1, total=.*\n"
+        r"\[Chain\].*\(2 of 3\) Processing order 0, total=.*\n"
+        r"\[Chain\].*\(3 of 3\) Processing order 2, total=.*\n$"
+    )
+    regressor = RegressorChain(
+        LinearRegression(),
+        order=[1, 0, 2],
+        random_state=0,
+        verbose=True,
+    )
+    regressor.fit(X_train, y_train)
+    assert re.match(pattern, capsys.readouterr()[0])
 
 
 def test_multioutputregressor_ducktypes_fitted_estimator():

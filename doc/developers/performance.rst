@@ -268,7 +268,7 @@ Then, setup the magics in a manner similar to ``line_profiler``.
 - **Under IPython 0.11+**, first create a configuration profile:
 
 .. prompt:: bash $
-  
+
     ipython profile create
 
 
@@ -341,9 +341,16 @@ memory alignment, direct blas calls...
 Using OpenMP
 ------------
 
-Since scikit-learn can be built without OpenMP, it's necessary to
-protect each direct call to OpenMP. This can be done using the following
-syntax::
+Since scikit-learn can be built without OpenMP, it's necessary to protect each
+direct call to OpenMP.
+
+There are some helpers in
+[sklearn/utils/_openmp_helpers.pyx](https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/utils/_openmp_helpers.pyx)
+that you can reuse for the main useful functionalities and already have the
+necessary protection to be built without OpenMP.
+
+If the helpers are not enough, you need to protect your OpenMP code using the
+following syntax::
 
   # importing OpenMP
   IF SKLEARN_OPENMP_PARALLELISM_ENABLED:
@@ -425,4 +432,4 @@ See `joblib documentation <https://joblib.readthedocs.io>`_
 A simple algorithmic trick: warm restarts
 =========================================
 
-See the glossary entry for `warm_start <http://scikit-learn.org/dev/glossary.html#term-warm-start>`_
+See the glossary entry for :term:`warm_start`

@@ -1,6 +1,7 @@
 """
 Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
+import re
 import warnings
 import numpy as np
 from numpy.testing import assert_allclose
@@ -18,8 +19,7 @@ from sklearn.datasets import make_classification, make_regression
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble._gradient_boosting import predict_stages
-from sklearn.preprocessing import OneHotEncoder, scale
-from sklearn.svm import LinearSVC
+from sklearn.preprocessing import scale
 from sklearn.metrics import mean_squared_error
 from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state, tosequence
@@ -59,9 +59,11 @@ iris.target = iris.target[perm]
 
 
 @pytest.mark.parametrize("loss", ("log_loss", "exponential"))
-def test_classification_toy(loss):
+def test_classification_toy(loss, global_random_seed):
     # Check classification on a toy dataset.
-    clf = GradientBoostingClassifier(loss=loss, n_estimators=10, random_state=1)
+    clf = GradientBoostingClassifier(
+        loss=loss, n_estimators=10, random_state=global_random_seed
+    )
 
     with pytest.raises(ValueError):
         clf.predict(T)
@@ -77,227 +79,50 @@ def test_classification_toy(loss):
     assert leaves.shape == (6, 10, 1)
 
 
-@pytest.mark.parametrize(
-    "params, err_type, err_msg",
-    [
-        ({"learning_rate": 0}, ValueError, "learning_rate == 0, must be > 0.0"),
-        (
-            {"learning_rate": "foo"},
-            TypeError,
-            "learning_rate must be an instance of float",
-        ),
-        ({"n_estimators": 0}, ValueError, "n_estimators == 0, must be >= 1"),
-        (
-            {"n_estimators": 1.5},
-            TypeError,
-            "n_estimators must be an instance of int,",
-        ),
-        ({"loss": "foobar"}, ValueError, "Loss 'foobar' not supported"),
-        ({"subsample": 0.0}, ValueError, "subsample == 0.0, must be > 0.0"),
-        ({"subsample": 1.1}, ValueError, "subsample == 1.1, must be <= 1.0"),
-        (
-            {"subsample": "foo"},
-            TypeError,
-            "subsample must be an instance of float",
-        ),
-        ({"init": {}}, ValueError, "The init parameter must be an estimator or 'zero'"),
-        ({"max_features": 0}, ValueError, "max_features == 0, must be >= 1"),
-        ({"max_features": 0.0}, ValueError, "max_features == 0.0, must be > 0.0"),
-        ({"max_features": 1.1}, ValueError, "max_features == 1.1, must be <= 1.0"),
-        ({"max_features": "foobar"}, ValueError, "Invalid value for max_features."),
-        ({"verbose": -1}, ValueError, "verbose == -1, must be >= 0"),
-        (
-            {"verbose": "foo"},
-            TypeError,
-            "verbose must be an instance of",
-        ),
-        ({"warm_start": "foo"}, TypeError, "warm_start must be an instance of"),
-        (
-            {"validation_fraction": 0.0},
-            ValueError,
-            "validation_fraction == 0.0, must be > 0.0",
-        ),
-        (
-            {"validation_fraction": 1.0},
-            ValueError,
-            "validation_fraction == 1.0, must be < 1.0",
-        ),
-        (
-            {"validation_fraction": "foo"},
-            TypeError,
-            "validation_fraction must be an instance of float",
-        ),
-        ({"n_iter_no_change": 0}, ValueError, "n_iter_no_change == 0, must be >= 1"),
-        (
-            {"n_iter_no_change": 1.5},
-            TypeError,
-            "n_iter_no_change must be an instance of int,",
-        ),
-        ({"tol": 0.0}, ValueError, "tol == 0.0, must be > 0.0"),
-        (
-            {"tol": "foo"},
-            TypeError,
-            "tol must be an instance of float,",
-        ),
-        # The following parameters are checked in BaseDecisionTree
-        ({"min_samples_leaf": 0}, ValueError, "min_samples_leaf == 0, must be >= 1"),
-        ({"min_samples_leaf": 0.0}, ValueError, "min_samples_leaf == 0.0, must be > 0"),
-        (
-            {"min_samples_leaf": "foo"},
-            TypeError,
-            "min_samples_leaf must be an instance of float",
-        ),
-        ({"min_samples_split": 1}, ValueError, "min_samples_split == 1, must be >= 2"),
-        (
-            {"min_samples_split": 0.0},
-            ValueError,
-            "min_samples_split == 0.0, must be > 0.0",
-        ),
-        (
-            {"min_samples_split": 1.1},
-            ValueError,
-            "min_samples_split == 1.1, must be <= 1.0",
-        ),
-        (
-            {"min_samples_split": "foo"},
-            TypeError,
-            "min_samples_split must be an instance of float",
-        ),
-        (
-            {"min_weight_fraction_leaf": -1},
-            ValueError,
-            "min_weight_fraction_leaf == -1, must be >= 0.0",
-        ),
-        (
-            {"min_weight_fraction_leaf": 0.6},
-            ValueError,
-            "min_weight_fraction_leaf == 0.6, must be <= 0.5",
-        ),
-        (
-            {"min_weight_fraction_leaf": "foo"},
-            TypeError,
-            "min_weight_fraction_leaf must be an instance of float",
-        ),
-        ({"max_leaf_nodes": 0}, ValueError, "max_leaf_nodes == 0, must be >= 2"),
-        (
-            {"max_leaf_nodes": 1.5},
-            TypeError,
-            "max_leaf_nodes must be an instance of int",
-        ),
-        ({"max_depth": -1}, ValueError, "max_depth == -1, must be >= 1"),
-        (
-            {"max_depth": 1.1},
-            TypeError,
-            "max_depth must be an instance of int",
-        ),
-        (
-            {"min_impurity_decrease": -1},
-            ValueError,
-            "min_impurity_decrease == -1, must be >= 0.0",
-        ),
-        (
-            {"min_impurity_decrease": "foo"},
-            TypeError,
-            "min_impurity_decrease must be an instance of float",
-        ),
-        ({"ccp_alpha": -1.0}, ValueError, "ccp_alpha == -1.0, must be >= 0.0"),
-        (
-            {"ccp_alpha": "foo"},
-            TypeError,
-            "ccp_alpha must be an instance of float",
-        ),
-        ({"criterion": "mae"}, ValueError, "criterion='mae' is not supported."),
-    ],
-    # Avoid long error messages in test names:
-    # https://github.com/scikit-learn/scikit-learn/issues/21362
-    ids=lambda x: x[:10].replace("]", "") if isinstance(x, str) else x,
-)
-@pytest.mark.parametrize(
-    "GradientBoosting, X, y",
-    [
-        (GradientBoostingRegressor, X_reg, y_reg),
-        (GradientBoostingClassifier, iris.data, iris.target),
-    ],
-)
-def test_gbdt_parameter_checks(GradientBoosting, X, y, params, err_type, err_msg):
-    # Check input parameter validation for GradientBoosting
-    est = GradientBoosting(**params)
-    with pytest.raises(err_type, match=err_msg):
-        est.fit(X, y)
-
-
-@pytest.mark.parametrize(
-    "params, err_msg",
-    [
-        ({"loss": "huber", "alpha": 0.0}, "alpha == 0.0, must be > 0.0"),
-        ({"loss": "quantile", "alpha": 0.0}, "alpha == 0.0, must be > 0.0"),
-        ({"loss": "huber", "alpha": 1.2}, "alpha == 1.2, must be < 1.0"),
-        ({"loss": "quantile", "alpha": 1.2}, "alpha == 1.2, must be < 1.0"),
-    ],
-)
-def test_gbdt_loss_alpha_error(params, err_msg):
-    # check that an error is raised when alpha is not proper for quantile and
-    # huber loss
-    with pytest.raises(ValueError, match=err_msg):
-        GradientBoostingRegressor(**params).fit(X_reg, y_reg)
-
-
-@pytest.mark.parametrize(
-    "GradientBoosting, loss",
-    [
-        (GradientBoostingClassifier, "ls"),
-        (GradientBoostingClassifier, "absolute_error"),
-        (GradientBoostingClassifier, "quantile"),
-        (GradientBoostingClassifier, "huber"),
-        (GradientBoostingRegressor, "log_loss"),
-        (GradientBoostingRegressor, "exponential"),
-    ],
-)
-def test_wrong_type_loss_function(GradientBoosting, loss):
-    # check that we raise an error when not using the right type of loss
-    # function
-    with pytest.raises(ValueError):
-        GradientBoosting(loss=loss).fit(X, y)
-
-
 @pytest.mark.parametrize("loss", ("log_loss", "exponential"))
-def test_classification_synthetic(loss):
+def test_classification_synthetic(loss, global_random_seed):
     # Test GradientBoostingClassifier on synthetic dataset used by
-    # Hastie et al. in ESLII Example 12.7.
-    X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
+    # Hastie et al. in ESLII - Figure 10.9
+    X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=global_random_seed)
 
     X_train, X_test = X[:2000], X[2000:]
     y_train, y_test = y[:2000], y[2000:]
 
-    gbrt = GradientBoostingClassifier(
-        n_estimators=100,
-        min_samples_split=2,
-        max_depth=1,
-        loss=loss,
-        learning_rate=1.0,
-        random_state=0,
-    )
-    gbrt.fit(X_train, y_train)
-    error_rate = 1.0 - gbrt.score(X_test, y_test)
-    assert error_rate < 0.09
+    # Increasing the number of trees should decrease the test error
+    common_params = {
+        "max_depth": 1,
+        "learning_rate": 1.0,
+        "loss": loss,
+        "random_state": global_random_seed,
+    }
+    gbrt_100_stumps = GradientBoostingClassifier(n_estimators=100, **common_params)
+    gbrt_100_stumps.fit(X_train, y_train)
 
-    gbrt = GradientBoostingClassifier(
-        n_estimators=200,
-        min_samples_split=2,
-        max_depth=1,
-        loss=loss,
-        learning_rate=1.0,
-        subsample=0.5,
-        random_state=0,
-    )
-    gbrt.fit(X_train, y_train)
-    error_rate = 1.0 - gbrt.score(X_test, y_test)
-    assert error_rate < 0.08
+    gbrt_200_stumps = GradientBoostingClassifier(n_estimators=200, **common_params)
+    gbrt_200_stumps.fit(X_train, y_train)
+
+    assert gbrt_100_stumps.score(X_test, y_test) < gbrt_200_stumps.score(X_test, y_test)
+
+    # Decision stumps are better suited for this dataset with a large number of
+    # estimators.
+    common_params = {
+        "n_estimators": 200,
+        "learning_rate": 1.0,
+        "loss": loss,
+        "random_state": global_random_seed,
+    }
+    gbrt_stumps = GradientBoostingClassifier(max_depth=1, **common_params)
+    gbrt_stumps.fit(X_train, y_train)
+
+    gbrt_10_nodes = GradientBoostingClassifier(max_leaf_nodes=10, **common_params)
+    gbrt_10_nodes.fit(X_train, y_train)
+
+    assert gbrt_stumps.score(X_test, y_test) > gbrt_10_nodes.score(X_test, y_test)
 
 
 @pytest.mark.parametrize("loss", ("squared_error", "absolute_error", "huber"))
 @pytest.mark.parametrize("subsample", (1.0, 0.5))
-def test_regression_dataset(loss, subsample):
+def test_regression_dataset(loss, subsample, global_random_seed):
     # Check consistency on regression dataset with least squares
     # and least absolute deviation.
     ones = np.ones(len(y_reg))
@@ -312,7 +137,7 @@ def test_regression_dataset(loss, subsample):
             max_depth=4,
             subsample=subsample,
             min_samples_split=2,
-            random_state=1,
+            random_state=global_random_seed,
             learning_rate=0.5,
         )
 
@@ -322,7 +147,7 @@ def test_regression_dataset(loss, subsample):
 
         y_pred = reg.predict(X_reg)
         mse = mean_squared_error(y_reg, y_pred)
-        assert mse < 0.04
+        assert mse < 0.05
 
         if last_y_pred is not None:
             # FIXME: We temporarily bypass this test. This is due to the fact
@@ -338,12 +163,15 @@ def test_regression_dataset(loss, subsample):
 
 @pytest.mark.parametrize("subsample", (1.0, 0.5))
 @pytest.mark.parametrize("sample_weight", (None, 1))
-def test_iris(subsample, sample_weight):
+def test_iris(subsample, sample_weight, global_random_seed):
     if sample_weight == 1:
         sample_weight = np.ones(len(iris.target))
     # Check consistency on dataset iris.
     clf = GradientBoostingClassifier(
-        n_estimators=100, loss="log_loss", random_state=1, subsample=subsample
+        n_estimators=100,
+        loss="log_loss",
+        random_state=global_random_seed,
+        subsample=subsample,
     )
     clf.fit(iris.data, iris.target, sample_weight=sample_weight)
     score = clf.score(iris.data, iris.target)
@@ -353,16 +181,17 @@ def test_iris(subsample, sample_weight):
     assert leaves.shape == (150, 100, 3)
 
 
-def test_regression_synthetic():
+def test_regression_synthetic(global_random_seed):
     # Test on synthetic regression datasets used in Leo Breiman,
     # `Bagging Predictors?. Machine Learning 24(2): 123-140 (1996).
-    random_state = check_random_state(1)
+    random_state = check_random_state(global_random_seed)
     regression_params = {
         "n_estimators": 100,
         "max_depth": 4,
         "min_samples_split": 2,
         "learning_rate": 0.1,
         "loss": "squared_error",
+        "random_state": global_random_seed,
     }
 
     # Friedman1
@@ -370,10 +199,10 @@ def test_regression_synthetic():
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
 
-    clf = GradientBoostingRegressor()
+    clf = GradientBoostingRegressor(**regression_params)
     clf.fit(X_train, y_train)
     mse = mean_squared_error(y_test, clf.predict(X_test))
-    assert mse < 5.0
+    assert mse < 6.5
 
     # Friedman2
     X, y = datasets.make_friedman2(n_samples=1200, random_state=random_state)
@@ -383,7 +212,7 @@ def test_regression_synthetic():
     clf = GradientBoostingRegressor(**regression_params)
     clf.fit(X_train, y_train)
     mse = mean_squared_error(y_test, clf.predict(X_test))
-    assert mse < 1700.0
+    assert mse < 2500.0
 
     # Friedman3
     X, y = datasets.make_friedman3(n_samples=1200, random_state=random_state)
@@ -393,7 +222,7 @@ def test_regression_synthetic():
     clf = GradientBoostingRegressor(**regression_params)
     clf.fit(X_train, y_train)
     mse = mean_squared_error(y_test, clf.predict(X_test))
-    assert mse < 0.015
+    assert mse < 0.025
 
 
 @pytest.mark.parametrize(
@@ -412,9 +241,9 @@ def test_feature_importances(GradientBoosting, X, y):
     assert hasattr(gbdt, "feature_importances_")
 
 
-def test_probability_log():
+def test_probability_log(global_random_seed):
     # Predict probabilities.
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=global_random_seed)
 
     with pytest.raises(ValueError):
         clf.predict_proba(T)
@@ -459,9 +288,9 @@ def test_check_inputs_predict_stages():
         predict_stages(clf.estimators_, x_fortran, clf.learning_rate, score)
 
 
-def test_max_feature_regression():
+def test_max_feature_regression(global_random_seed):
     # Test to make sure random state is set properly.
-    X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
+    X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=global_random_seed)
 
     X_train, X_test = X[:2000], X[2000:]
     y_train, y_test = y[:2000], y[2000:]
@@ -472,14 +301,16 @@ def test_max_feature_regression():
         max_depth=2,
         learning_rate=0.1,
         max_features=2,
-        random_state=1,
+        random_state=global_random_seed,
     )
     gbrt.fit(X_train, y_train)
     log_loss = gbrt._loss(y_test, gbrt.decision_function(X_test))
     assert log_loss < 0.5, "GB failed with deviance %.4f" % log_loss
 
 
-def test_feature_importance_regression(fetch_california_housing_fxt):
+def test_feature_importance_regression(
+    fetch_california_housing_fxt, global_random_seed
+):
     """Test that Gini importance is calculated correctly.
 
     This test follows the example from [1]_ (pg. 373).
@@ -489,14 +320,16 @@ def test_feature_importance_regression(fetch_california_housing_fxt):
     """
     california = fetch_california_housing_fxt()
     X, y = california.data, california.target
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, random_state=global_random_seed
+    )
 
     reg = GradientBoostingRegressor(
         loss="huber",
         learning_rate=0.1,
         max_leaf_nodes=6,
         n_estimators=100,
-        random_state=0,
+        random_state=global_random_seed,
     )
     reg.fit(X_train, y_train)
     sorted_idx = np.argsort(reg.feature_importances_)[::-1]
@@ -595,9 +428,9 @@ def test_staged_predict_proba():
 
 
 @pytest.mark.parametrize("Estimator", GRADIENT_BOOSTING_ESTIMATORS)
-def test_staged_functions_defensive(Estimator):
+def test_staged_functions_defensive(Estimator, global_random_seed):
     # test that staged_functions make defensive copies
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.uniform(size=(10, 3))
     y = (4 * X[:, 0]).astype(int) + 1  # don't predict zeros
     estimator = Estimator()
@@ -647,22 +480,29 @@ def test_degenerate_targets():
     assert_array_equal(np.ones((1,), dtype=np.float64), clf.predict([rng.rand(2)]))
 
 
-def test_quantile_loss():
+def test_quantile_loss(global_random_seed):
     # Check if quantile loss with alpha=0.5 equals absolute_error.
     clf_quantile = GradientBoostingRegressor(
-        n_estimators=100, loss="quantile", max_depth=4, alpha=0.5, random_state=7
+        n_estimators=100,
+        loss="quantile",
+        max_depth=4,
+        alpha=0.5,
+        random_state=global_random_seed,
     )
 
     clf_quantile.fit(X_reg, y_reg)
     y_quantile = clf_quantile.predict(X_reg)
 
     clf_ae = GradientBoostingRegressor(
-        n_estimators=100, loss="absolute_error", max_depth=4, random_state=7
+        n_estimators=100,
+        loss="absolute_error",
+        max_depth=4,
+        random_state=global_random_seed,
     )
 
     clf_ae.fit(X_reg, y_reg)
     y_ae = clf_ae.predict(X_reg)
-    assert_array_almost_equal(y_quantile, y_ae, decimal=4)
+    assert_allclose(y_quantile, y_ae)
 
 
 def test_symbol_labels():
@@ -833,39 +673,43 @@ def test_more_verbose_output():
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
-def test_warm_start(Cls):
+def test_warm_start(Cls, global_random_seed):
     # Test if warm start equals fit.
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    est = Cls(n_estimators=200, max_depth=1)
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=global_random_seed)
+    est = Cls(n_estimators=200, max_depth=1, random_state=global_random_seed)
     est.fit(X, y)
 
-    est_ws = Cls(n_estimators=100, max_depth=1, warm_start=True)
+    est_ws = Cls(
+        n_estimators=100, max_depth=1, warm_start=True, random_state=global_random_seed
+    )
     est_ws.fit(X, y)
     est_ws.set_params(n_estimators=200)
     est_ws.fit(X, y)
 
     if Cls is GradientBoostingRegressor:
-        assert_array_almost_equal(est_ws.predict(X), est.predict(X))
+        assert_allclose(est_ws.predict(X), est.predict(X))
     else:
         # Random state is preserved and hence predict_proba must also be
         # same
         assert_array_equal(est_ws.predict(X), est.predict(X))
-        assert_array_almost_equal(est_ws.predict_proba(X), est.predict_proba(X))
+        assert_allclose(est_ws.predict_proba(X), est.predict_proba(X))
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
-def test_warm_start_n_estimators(Cls):
+def test_warm_start_n_estimators(Cls, global_random_seed):
     # Test if warm start equals fit - set n_estimators.
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    est = Cls(n_estimators=300, max_depth=1)
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=global_random_seed)
+    est = Cls(n_estimators=300, max_depth=1, random_state=global_random_seed)
     est.fit(X, y)
 
-    est_ws = Cls(n_estimators=100, max_depth=1, warm_start=True)
+    est_ws = Cls(
+        n_estimators=100, max_depth=1, warm_start=True, random_state=global_random_seed
+    )
     est_ws.fit(X, y)
     est_ws.set_params(n_estimators=300)
     est_ws.fit(X, y)
 
-    assert_array_almost_equal(est_ws.predict(X), est.predict(X))
+    assert_allclose(est_ws.predict(X), est.predict(X))
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
@@ -896,17 +740,6 @@ def test_warm_start_clear(Cls):
     est_2.fit(X, y)  # clears old state and equals est
 
     assert_array_almost_equal(est_2.predict(X), est.predict(X))
-
-
-@pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
-def test_warm_start_zero_n_estimators(Cls):
-    # Test if warm start with zero n_estimators raises error
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    est = Cls(n_estimators=100, max_depth=1, warm_start=True)
-    est.fit(X, y)
-    est.set_params(n_estimators=0)
-    with pytest.raises(ValueError):
-        est.fit(X, y)
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
@@ -1002,12 +835,12 @@ def test_warm_start_sparse(Cls):
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
-def test_warm_start_fortran(Cls):
+def test_warm_start_fortran(Cls, global_random_seed):
     # Test that feeding a X in Fortran-ordered is giving the same results as
     # in C-ordered
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    est_c = Cls(n_estimators=1, random_state=1, warm_start=True)
-    est_fortran = Cls(n_estimators=1, random_state=1, warm_start=True)
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=global_random_seed)
+    est_c = Cls(n_estimators=1, random_state=global_random_seed, warm_start=True)
+    est_fortran = Cls(n_estimators=1, random_state=global_random_seed, warm_start=True)
 
     est_c.fit(X, y)
     est_c.set_params(n_estimators=11)
@@ -1018,7 +851,7 @@ def test_warm_start_fortran(Cls):
     est_fortran.set_params(n_estimators=11)
     est_fortran.fit(X_fortran, y)
 
-    assert_array_almost_equal(est_c.predict(X), est_fortran.predict(X))
+    assert_allclose(est_c.predict(X), est_fortran.predict(X))
 
 
 def early_stopping_monitor(i, est, locals):
@@ -1098,34 +931,32 @@ def test_complete_regression():
     assert tree.children_left[tree.children_left == TREE_LEAF].shape[0] == k + 1
 
 
-def test_zero_estimator_reg():
+def test_zero_estimator_reg(global_random_seed):
     # Test if init='zero' works for regression by checking that it is better
     # than a simple baseline.
 
     baseline = DummyRegressor(strategy="mean").fit(X_reg, y_reg)
     mse_baseline = mean_squared_error(baseline.predict(X_reg), y_reg)
     est = GradientBoostingRegressor(
-        n_estimators=5, max_depth=1, random_state=1, init="zero", learning_rate=0.5
+        n_estimators=5,
+        max_depth=1,
+        random_state=global_random_seed,
+        init="zero",
+        learning_rate=0.5,
     )
     est.fit(X_reg, y_reg)
     y_pred = est.predict(X_reg)
     mse_gbdt = mean_squared_error(y_reg, y_pred)
     assert mse_gbdt < mse_baseline
 
-    est = GradientBoostingRegressor(
-        n_estimators=20, max_depth=1, random_state=1, init="foobar"
-    )
-    with pytest.raises(ValueError):
-        est.fit(X_reg, y_reg)
 
-
-def test_zero_estimator_clf():
+def test_zero_estimator_clf(global_random_seed):
     # Test if init='zero' works for classification.
     X = iris.data
     y = np.array(iris.target)
 
     est = GradientBoostingClassifier(
-        n_estimators=20, max_depth=1, random_state=1, init="zero"
+        n_estimators=20, max_depth=1, random_state=global_random_seed, init="zero"
     )
     est.fit(X, y)
 
@@ -1136,16 +967,10 @@ def test_zero_estimator_clf():
     y[mask] = 1
     y[~mask] = 0
     est = GradientBoostingClassifier(
-        n_estimators=20, max_depth=1, random_state=1, init="zero"
+        n_estimators=20, max_depth=1, random_state=global_random_seed, init="zero"
     )
     est.fit(X, y)
     assert est.score(X, y) > 0.96
-
-    est = GradientBoostingClassifier(
-        n_estimators=20, max_depth=1, random_state=1, init="foobar"
-    )
-    with pytest.raises(ValueError):
-        est.fit(X, y)
 
 
 @pytest.mark.parametrize("GBEstimator", GRADIENT_BOOSTING_ESTIMATORS)
@@ -1186,10 +1011,10 @@ def test_warm_start_wo_nestimators_change():
     assert clf.estimators_.shape[0] == 10
 
 
-def test_probability_exponential():
+def test_probability_exponential(global_random_seed):
     # Predict probabilities.
     clf = GradientBoostingClassifier(
-        loss="exponential", n_estimators=100, random_state=1
+        loss="exponential", n_estimators=100, random_state=global_random_seed
     )
 
     with pytest.raises(ValueError):
@@ -1203,7 +1028,7 @@ def test_probability_exponential():
     assert np.all(y_proba >= 0.0)
     assert np.all(y_proba <= 1.0)
     score = clf.decision_function(T).ravel()
-    assert_array_almost_equal(y_proba[:, 1], expit(2 * score))
+    assert_allclose(y_proba[:, 1], expit(2 * score))
 
     # derive predictions from probabilities
     y_pred = clf.classes_.take(y_proba.argmax(axis=1), axis=0)
@@ -1277,39 +1102,49 @@ def test_sparse_input(EstimatorClass, sparse_matrix):
             assert_array_almost_equal(res_sparse, res)
 
 
-def test_gradient_boosting_early_stopping():
-    X, y = make_classification(n_samples=1000, random_state=0)
+@pytest.mark.parametrize(
+    "GradientBoostingEstimator", [GradientBoostingClassifier, GradientBoostingRegressor]
+)
+def test_gradient_boosting_early_stopping(GradientBoostingEstimator):
+    # Check if early stopping works as expected, that is empirically check that the
+    # number of trained estimators is increasing when the tolerance decreases.
 
-    gbc = GradientBoostingClassifier(
-        n_estimators=1000,
+    X, y = make_classification(n_samples=1000, random_state=0)
+    n_estimators = 1000
+
+    gb_large_tol = GradientBoostingEstimator(
+        n_estimators=n_estimators,
         n_iter_no_change=10,
         learning_rate=0.1,
         max_depth=3,
         random_state=42,
+        tol=1e-1,
     )
 
-    gbr = GradientBoostingRegressor(
-        n_estimators=1000,
+    gb_small_tol = GradientBoostingEstimator(
+        n_estimators=n_estimators,
         n_iter_no_change=10,
         learning_rate=0.1,
         max_depth=3,
         random_state=42,
+        tol=1e-3,
     )
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
-    # Check if early_stopping works as expected
-    for est, tol, early_stop_n_estimators in (
-        (gbc, 1e-1, 28),
-        (gbr, 1e-1, 13),
-        (gbc, 1e-3, 70),
-        (gbr, 1e-3, 28),
-    ):
-        est.set_params(tol=tol)
-        est.fit(X_train, y_train)
-        assert est.n_estimators_ == early_stop_n_estimators
-        assert est.score(X_test, y_test) > 0.7
+    gb_large_tol.fit(X_train, y_train)
+    gb_small_tol.fit(X_train, y_train)
 
-    # Without early stopping
+    assert gb_large_tol.n_estimators_ < gb_small_tol.n_estimators_ < n_estimators
+
+    assert gb_large_tol.score(X_test, y_test) > 0.7
+    assert gb_small_tol.score(X_test, y_test) > 0.7
+
+
+def test_gradient_boosting_without_early_stopping():
+    # When early stopping is not used, the number of trained estimators
+    # must be the one specified.
+    X, y = make_classification(n_samples=1000, random_state=0)
+
     gbc = GradientBoostingClassifier(
         n_estimators=50, learning_rate=0.1, max_depth=3, random_state=42
     )
@@ -1319,6 +1154,7 @@ def test_gradient_boosting_early_stopping():
     )
     gbr.fit(X, y)
 
+    # The number of trained estimators must be the one specified.
     assert gbc.n_estimators_ == 50
     assert gbr.n_estimators_ == 30
 
@@ -1391,14 +1227,16 @@ def _make_multiclass():
     ],
     ids=["binary classification", "multiclass classification", "regression"],
 )
-def test_gradient_boosting_with_init(gb, dataset_maker, init_estimator):
+def test_gradient_boosting_with_init(
+    gb, dataset_maker, init_estimator, global_random_seed
+):
     # Check that GradientBoostingRegressor works when init is a sklearn
     # estimator.
     # Check that an error is raised if trying to fit with sample weight but
     # initial estimator does not support sample weight
 
     X, y = dataset_maker()
-    sample_weight = np.random.RandomState(42).rand(100)
+    sample_weight = np.random.RandomState(global_random_seed).rand(100)
 
     # init supports sample weights
     init_est = init_estimator()
@@ -1429,30 +1267,16 @@ def test_gradient_boosting_with_init_pipeline():
     # sure we make the distinction between ValueError raised by a pipeline that
     # was passed sample_weight, and a ValueError raised by a regular estimator
     # whose input checking failed.
-    with pytest.raises(ValueError, match="nu <= 0 or nu > 1"):
+    invalid_nu = 1.5
+    err_msg = (
+        "The 'nu' parameter of NuSVR must be a float in the"
+        f" range (0.0, 1.0]. Got {invalid_nu} instead."
+    )
+    with pytest.raises(ValueError, match=re.escape(err_msg)):
         # Note that NuSVR properly supports sample_weight
-        init = NuSVR(gamma="auto", nu=1.5)
+        init = NuSVR(gamma="auto", nu=invalid_nu)
         gb = GradientBoostingRegressor(init=init)
         gb.fit(X, y, sample_weight=np.ones(X.shape[0]))
-
-
-@pytest.mark.parametrize(
-    "estimator, missing_method",
-    [
-        (GradientBoostingClassifier(init=LinearSVC()), "predict_proba"),
-        (GradientBoostingRegressor(init=OneHotEncoder()), "predict"),
-    ],
-)
-def test_gradient_boosting_init_wrong_methods(estimator, missing_method):
-    # Make sure error is raised if init estimators don't have the required
-    # methods (fit, predict, predict_proba)
-
-    message = (
-        "The init parameter must be a valid estimator and support both fit and "
-        + missing_method
-    )
-    with pytest.raises(ValueError, match=message):
-        estimator.fit(X, y)
 
 
 def test_early_stopping_n_classes():
@@ -1485,54 +1309,14 @@ def test_gbr_degenerate_feature_importances():
     assert_array_equal(gbr.feature_importances_, np.zeros(10, dtype=np.float64))
 
 
-# FIXME: remove in 1.2
-@pytest.mark.parametrize(
-    "Estimator", [GradientBoostingClassifier, GradientBoostingRegressor]
-)
-def test_n_features_deprecation(Estimator):
-    # Check that we raise the proper deprecation warning if accessing
-    # `n_features_`.
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    est = Estimator().fit(X, y)
+# TODO(1.3): Remove
+def test_loss_deprecated():
+    est1 = GradientBoostingClassifier(loss="deviance", random_state=0)
 
-    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
-        est.n_features_
-
-
-# TODO: Remove in v1.2
-@pytest.mark.parametrize("Estimator", GRADIENT_BOOSTING_ESTIMATORS)
-def test_criterion_mse_deprecated(Estimator):
-    est1 = Estimator(criterion="mse", random_state=0)
-
-    with pytest.warns(FutureWarning, match="Criterion 'mse' was deprecated"):
+    with pytest.warns(FutureWarning, match=r"The loss.* 'deviance' was deprecated"):
         est1.fit(X, y)
 
-    est2 = Estimator(criterion="squared_error", random_state=0)
-    est2.fit(X, y)
-    if hasattr(est1, "predict_proba"):
-        assert_allclose(est1.predict_proba(X), est2.predict_proba(X))
-    else:
-        assert_allclose(est1.predict(X), est2.predict(X))
-
-
-@pytest.mark.parametrize(
-    "old_loss, new_loss, Estimator",
-    [
-        # TODO(1.2): Remove
-        ("ls", "squared_error", GradientBoostingRegressor),
-        ("lad", "absolute_error", GradientBoostingRegressor),
-        # TODO(1.3): Remove
-        ("deviance", "log_loss", GradientBoostingClassifier),
-    ],
-)
-def test_loss_deprecated(old_loss, new_loss, Estimator):
-    est1 = Estimator(loss=old_loss, random_state=0)
-
-    with pytest.warns(FutureWarning, match=rf"The loss.* '{old_loss}' was deprecated"):
-        est1.fit(X, y)
-
-    est2 = Estimator(loss=new_loss, random_state=0)
+    est2 = GradientBoostingClassifier(loss="log_loss", random_state=0)
     est2.fit(X, y)
     assert_allclose(est1.predict(X), est2.predict(X))
 
