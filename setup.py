@@ -8,6 +8,7 @@ import sys
 import os
 import platform
 import shutil
+import warnings
 
 # We need to import setuptools before because it monkey-patches distutils
 import setuptools  # noqa
@@ -383,5 +384,48 @@ def setup_package():
     setup(**metadata)
 
 
+def _warn_about_win32_support():
+    """Warn about dropping win32 support."""
+
+    def is_os_64bit():
+        """Check if the OS is 64bit."""
+        return platform.machine().endswith("64")
+
+    def is_python_64bit():
+        """Check if the Python interpreter is 64bit."""
+        return sys.maxsize > 2**32
+
+    if platform.system() != "Windows" or (is_os_64bit() and is_python_64bit()):
+        # Not a Windows platform or a Windows 64 bit platform with a 64 bit Python
+        # Nothing to warn about
+        return
+
+    warn_msg = (
+        "{}. The recent version of SciPy cannot "
+        "be build with this Python bitness. The latest supported version is "
+        "SciPy 1.9.1 for Python below 3.9. If you want to build scikit-learn "
+        "from source, you will need to satisfy this configuration. Alternatively, "
+        "you can install {}."
+    )
+
+    if not is_os_64bit():
+        warnings.warn(
+            warn_msg.format(
+                "Your operating system is Windows 32 bit",
+                "a Windows 64 bit operating system and a 64 bit Python interpreter",
+            ),
+            RuntimeWarning,
+        )
+    elif not is_python_64bit():
+        warnings.warn(
+            warn_msg.format(
+                "Your Python interpreter is 32 bit",
+                "a 64 bit Python interpreter",
+            ),
+            RuntimeWarning,
+        )
+
+
 if __name__ == "__main__":
+    _warn_about_win32_support()
     setup_package()
