@@ -333,7 +333,7 @@ Changelog
   :func:`feature_selction.mutual_info_classif`, where the continuous features
   in `X` should be scaled to a unit variance independtly if the target `y` is
   continuous or discrete.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`
+  :pr:`24747` by :user:`Guillaume Lemaitre <glemaitre>`
 
 :mod:`sklearn.gaussian_process`
 ...............................
