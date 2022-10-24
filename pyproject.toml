@@ -9,7 +9,8 @@ requires = [
     # wheels on PyPI
     #
     # see: https://github.com/scipy/oldest-supported-numpy/blob/main/setup.cfg
-    "oldest-supported-numpy",
+    "oldest-supported-numpy; not (python_version=='3.10' and platform_system=='Windows' and platform_python_implementation != 'PyPy')",
+    "numpy==1.22.3; python_version=='3.10' and platform_system=='Windows' and platform_python_implementation != 'PyPy'",
 
     "scipy>=1.3.2",
 ]
