@@ -447,12 +447,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     SyntaxWarning,
                     stacklevel=3,
                 )
-            effective_p = self.metric_params["p"]
-        else:
-            effective_p = self.p
-
-        if self.metric in ["wminkowski", "minkowski"] and effective_p < 1:
-            raise ValueError("p must be greater or equal to one for minkowski metric")
 
     def _fit(self, X, y=None):
         if self._get_tags()["requires_y"]:
@@ -618,6 +612,21 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     self._fit_method = "ball_tree"
                 else:
                     self._fit_method = "brute"
+
+        if (
+            self.effective_metric_ in ["wminkowski", "minkowski"]
+            and self.effective_metric_params_["p"] < 1
+        ):
+            # For p < 1 minkowski is not a valid metric as it does not
+            # satisfy triangular inequality, but that is workable for
+            # bruteforce algorithm. But kd_tree and ball_tree requires
+            # valid metric to work
+            if self._fit_method == "brute":
+                warnings.warn("for p < 1 minkowski is not a valid metric")
+            else:
+                raise ValueError(
+                    "p must be greater or equal to one for minkowski metric"
+                )
 
         if self._fit_method == "ball_tree":
             self._tree = BallTree(
