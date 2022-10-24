@@ -9,8 +9,11 @@ requires = [
     # wheels on PyPI
     #
     # see: https://github.com/scipy/oldest-supported-numpy/blob/main/setup.cfg
+    "oldest-supported-numpy; python_version!='3.10' or platform_system!='Windows' or platform_python_implementation=='PyPy'",
+    # For CPython 3.10 under Windows, SciPy requires NumPy 1.22.3 while the
+    # oldest supported NumPy is defined as 1.21.6. We therefore need to force
+    # it for this specific configuration.
     "numpy==1.22.3; python_version=='3.10' and platform_system=='Windows' and platform_python_implementation != 'PyPy'",
-    "oldest-supported-numpy",
 
     "scipy>=1.3.2",
 ]
