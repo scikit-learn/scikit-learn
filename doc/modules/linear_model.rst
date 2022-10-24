@@ -1122,8 +1122,7 @@ The minimization problem becomes:
 where :math:`\alpha` is the L2 regularization penalty. When sample weights are
 provided, the average becomes a weighted average.
 
-The following table lists some specific EDMs and their unit deviance (all of
-these are instances of the Tweedie family):
+The following table lists some specific EDMs and their unit deviance :
 
 ================= ===============================  ============================================
 Distribution       Target Domain                    Unit Deviance :math:`d(y, \hat{y})`
@@ -1132,6 +1131,8 @@ Normal            :math:`y \in (-\infty, \infty)`  :math:`(y-\hat{y})^2`
 Poisson           :math:`y \in [0, \infty)`        :math:`2(y\log\frac{y}{\hat{y}}-y+\hat{y})`
 Gamma             :math:`y \in (0, \infty)`        :math:`2(\log\frac{\hat{y}}{y}+\frac{y}{\hat{y}}-1)`
 Inverse Gaussian  :math:`y \in (0, \infty)`        :math:`\frac{(y-\hat{y})^2}{y\hat{y}^2}`
+Binomial          :math:`y \in (0, 1)`             :math:`2({y}\log\frac{\hat{y}}{y}+({n}-{y})\log\frac{{n}-\hat{y}}{{n}-{y}})`
+Bernoulli         :math:`y \in (0, 1)`             :math:`2({y}\log\frac{\hat{y}}{y}+({1}-{y})\log\frac{{1}-\hat{y}}{{1}-{y}})`
 ================= ===============================  ============================================
 
 The Probability Density Functions (PDF) of these distributions are illustrated
