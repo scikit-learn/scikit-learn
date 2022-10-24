@@ -875,8 +875,8 @@ regularization.
     distribution and a Logit link. The numerical output of the logistic
     regression, which is the predicted probability, can be used as a classifier
     by applying a threshold (by default 0.5) to it. This is how it is
-    implemented in scikit-learn, so it expects a categorical target, making it
-    the Logistic (Regression) Classifier.
+    implemented in scikit-learn, so it expects a categorical target, making
+    the Logistic Regression a classifier.
 
 Binary Case
 -----------
