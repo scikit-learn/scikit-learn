@@ -868,10 +868,10 @@ regularization.
     that it improves numerical stability. No regularization amounts to
     setting C to a very high value.
 
-.. note:: **Logistic Regression as a special case of the Generalized Linear Regression Model (GLM)**
+.. note:: **Logistic Regression as a special case of the Generalized Linear Models (GLM)**
 
     Logistic regression is a special case of
-    :ref:`generalized_linear_regression` with a Binomial/Bernoulli conditional
+    :ref:`generalized_linear_models` with a Binomial/Bernoulli conditional
     distribution and a Logit link. The numerical output of the logistic
     regression, which is the predicted probability, can be used as a classifier
     by applying a threshold (by default 0.5) to it. This is how it is
@@ -1099,9 +1099,9 @@ to warm-starting (see :term:`Glossary <warm_start>`).
         "A Blockwise Descent Algorithm for Group-penalized Multiresponse and
         Multinomial Regression." <1311.6529>`
 
-.. _Generalized_linear_regression:
+.. _Generalized_linear_models:
 
-Generalized Linear Regression
+Generalized Linear Models
 =============================
 
 Generalized Linear Models (GLM) extend linear models in two ways
