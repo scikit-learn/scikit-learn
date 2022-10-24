@@ -98,7 +98,7 @@ def test_init_zero_coef(base_loss, fit_intercept, n_features, dtype):
     else:
         assert coef.dtype == dtype
 
-    assert np.sum(np.abs(coef)) == 0
+    assert np.count_nonzero(coef) == 0
 
 
 @pytest.mark.parametrize("base_loss", LOSSES)
