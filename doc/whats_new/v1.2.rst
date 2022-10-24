@@ -354,6 +354,16 @@ Changelog
 ...........................
 
 - |Enhancement| :class:`linear_model.GammaRegressor`,
+  :class:`linear_model.PoissonRegressor` and :class:`linear_model.TweedieRegressor` got
+  a new solver `solver="newton-cholesky"`. This is a 2nd order (Newton) optimisation
+  routine that uses a Cholesky decomposition of the hessian matrix.
+  When `n_samples >> n_features`, the `"newton-cholesky"` solver has been observed to
+  converge both faster and to a higher precision solution than the `"lbfgs"` solver on
+  problems with one-hot encoded categorical variables with some rare categorical
+  levels.
+  :pr:`24637` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Enhancement| :class:`linear_model.GammaRegressor`,
   :class:`linear_model.PoissonRegressor` and :class:`linear_model.TweedieRegressor`
   can reach higher precision with the lbfgs solver, in particular when `tol` is set
   to a tiny value. Moreover, `verbose` is now properly propagated to L-BFGS-B.
