@@ -173,79 +173,80 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         return self.tree_.n_leaves
 
-    def fit(self, X, y, sample_weight=None, check_input=True):
+    def fit(self, X, y=None, sample_weight=None, check_input=True):
         self._validate_params()
         random_state = check_random_state(self.random_state)
 
-        if check_input:
-            # Need to validate separately here.
-            # We can't pass multi_output=True because that would allow y to be
-            # csr.
-            check_X_params = dict(dtype=DTYPE, accept_sparse="csc")
-            check_y_params = dict(ensure_2d=False, dtype=None)
-            X, y = self._validate_data(
-                X, y, validate_separately=(check_X_params, check_y_params)
-            )
-            if issparse(X):
-                X.sort_indices()
-
-                if X.indices.dtype != np.intc or X.indptr.dtype != np.intc:
-                    raise ValueError(
-                        "No support for np.int64 index based sparse matrices"
-                    )
-
-            if self.criterion == "poisson":
-                if np.any(y < 0):
-                    raise ValueError(
-                        "Some value(s) of y are negative which is"
-                        " not allowed for Poisson regression."
-                    )
-                if np.sum(y) <= 0:
-                    raise ValueError(
-                        "Sum of y is not positive which is "
-                        "necessary for Poisson regression."
-                    )
-
-        # Determine output settings
-        n_samples, self.n_features_in_ = X.shape
-        is_classification = is_classifier(self)
-
-        y = np.atleast_1d(y)
-        expanded_class_weight = None
-
-        if y.ndim == 1:
-            # reshape is necessary to preserve the data contiguity against vs
-            # [:, np.newaxis] that does not.
-            y = np.reshape(y, (-1, 1))
-
-        self.n_outputs_ = y.shape[1]
-
-        if is_classification:
-            check_classification_targets(y)
-            y = np.copy(y)
-
-            self.classes_ = []
-            self.n_classes_ = []
-
-            if self.class_weight is not None:
-                y_original = np.copy(y)
-
-            y_encoded = np.zeros(y.shape, dtype=int)
-            for k in range(self.n_outputs_):
-                classes_k, y_encoded[:, k] = np.unique(y[:, k], return_inverse=True)
-                self.classes_.append(classes_k)
-                self.n_classes_.append(classes_k.shape[0])
-            y = y_encoded
-
-            if self.class_weight is not None:
-                expanded_class_weight = compute_sample_weight(
-                    self.class_weight, y_original
+        if y is not None:
+            if check_input:
+                # Need to validate separately here.
+                # We can't pass multi_output=True because that would allow y to be
+                # csr.
+                check_X_params = dict(dtype=DTYPE, accept_sparse="csc")
+                check_y_params = dict(ensure_2d=False, dtype=None)
+                X, y = self._validate_data(
+                    X, y, validate_separately=(check_X_params, check_y_params)
                 )
+                if issparse(X):
+                    X.sort_indices()
 
-            self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
+                    if X.indices.dtype != np.intc or X.indptr.dtype != np.intc:
+                        raise ValueError(
+                            "No support for np.int64 index based sparse matrices"
+                        )
 
-        if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
-            y = np.ascontiguousarray(y, dtype=DOUBLE)
+                if self.criterion == "poisson":
+                    if np.any(y < 0):
+                        raise ValueError(
+                            "Some value(s) of y are negative which is"
+                            " not allowed for Poisson regression."
+                        )
+                    if np.sum(y) <= 0:
+                        raise ValueError(
+                            "Sum of y is not positive which is "
+                            "necessary for Poisson regression."
+                        )
+
+            # Determine output settings
+            n_samples, self.n_features_in_ = X.shape
+            is_classification = is_classifier(self)
+
+            y = np.atleast_1d(y)
+            expanded_class_weight = None
+
+            if y.ndim == 1:
+                # reshape is necessary to preserve the data contiguity against vs
+                # [:, np.newaxis] that does not.
+                y = np.reshape(y, (-1, 1))
+
+            self.n_outputs_ = y.shape[1]
+
+            if is_classification:
+                check_classification_targets(y)
+                y = np.copy(y)
+
+                self.classes_ = []
+                self.n_classes_ = []
+
+                if self.class_weight is not None:
+                    y_original = np.copy(y)
+
+                y_encoded = np.zeros(y.shape, dtype=int)
+                for k in range(self.n_outputs_):
+                    classes_k, y_encoded[:, k] = np.unique(y[:, k], return_inverse=True)
+                    self.classes_.append(classes_k)
+                    self.n_classes_.append(classes_k.shape[0])
+                y = y_encoded
+
+                if self.class_weight is not None:
+                    expanded_class_weight = compute_sample_weight(
+                        self.class_weight, y_original
+                    )
+
+                self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
+
+            if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
+                y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         max_depth = np.iinfo(np.int32).max if self.max_depth is None else self.max_depth
 
@@ -320,40 +321,16 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             min_weight_leaf = self.min_weight_fraction_leaf * np.sum(sample_weight)
 
         # Build tree
-        criterion = self.criterion
-        if not isinstance(criterion, Criterion):
-            if is_classification:
-                criterion = CRITERIA_CLF[self.criterion](
-                    self.n_outputs_, self.n_classes_
-                )
-            else:
-                criterion = CRITERIA_REG[self.criterion](self.n_outputs_, n_samples)
-        else:
-            # Make a deepcopy in case the criterion has mutable attributes that
-            # might be shared and modified concurrently during parallel fitting
-            criterion = copy.deepcopy(criterion)
+        # set the Cython criterion functionality 
+        criterion = self._set_criterion(n_samples, is_classification)
 
-        SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
-
-        splitter = self.splitter
-        if not isinstance(self.splitter, Splitter):
-            splitter = SPLITTERS[self.splitter](
-                criterion,
-                self.max_features_,
-                min_samples_leaf,
-                min_weight_leaf,
-                random_state,
-            )
-
-        if is_classifier(self):
-            self.tree_ = Tree(self.n_features_in_, self.n_classes_, self.n_outputs_)
-        else:
-            self.tree_ = Tree(
-                self.n_features_in_,
-                # TODO: tree shouldn't need this in this case
-                np.array([1] * self.n_outputs_, dtype=np.intp),
-                self.n_outputs_,
-            )
+        # set the Cython splitter functionality 
+        X_issparse = issparse(X)
+        splitter = self._set_splitter(X_issparse, criterion, min_samples_leaf, min_weight_leaf, random_state)
+        
+        # set the Cython tree functionality 
+        tree = self._set_tree()
+        self.tree_ = tree
 
         # Use BestFirst if max_leaf_nodes given; use DepthFirst otherwise
         if max_leaf_nodes < 0:
@@ -385,6 +362,47 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         self._prune_tree()
 
         return self
+    
+    def _set_criterion(self, n_samples, is_classification):
+        criterion = self.criterion
+        if not isinstance(criterion, Criterion):
+            if is_classification:
+                criterion = CRITERIA_CLF[self.criterion](
+                    self.n_outputs_, self.n_classes_
+                )
+            else:
+                criterion = CRITERIA_REG[self.criterion](self.n_outputs_, n_samples)
+        else:
+            # Make a deepcopy in case the criterion has mutable attributes that
+            # might be shared and modified concurrently during parallel fitting
+            criterion = copy.deepcopy(criterion)
+        return criterion
+
+    def _set_tree(self):
+        if is_classifier(self):
+            tree = Tree(self.n_features_in_, self.n_classes_, self.n_outputs_)
+        else:
+            tree = Tree(
+                self.n_features_in_,
+                # TODO: tree shouldn't need this in this case
+                np.array([1] * self.n_outputs_, dtype=np.intp),
+                self.n_outputs_,
+            )
+        return tree
+
+    def _set_splitter(self, X_issparse, criterion, min_samples_leaf, min_weight_leaf, random_state):
+        SPLITTERS = SPARSE_SPLITTERS if X_issparse else DENSE_SPLITTERS
+
+        splitter = self.splitter
+        if not isinstance(self.splitter, Splitter):
+            splitter = SPLITTERS[self.splitter](
+                criterion,
+                self.max_features_,
+                min_samples_leaf,
+                min_weight_leaf,
+                random_state,
+            )
+        return splitter
 
     def _validate_X_predict(self, X, check_input):
         """Validate the training data on predict (probabilities)."""
@@ -585,6 +603,10 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
 
         return self.tree_.compute_feature_importances()
+
+
+class SupervisedDecisionTree(BaseDecisionTree):
+    def
 
 
 # =============================================================================
