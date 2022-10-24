@@ -387,40 +387,39 @@ def setup_package():
 def _warn_about_win32_support():
     """Warn about dropping win32 support."""
 
-    def is_os_64bit():
-        """Check if the OS is 64bit."""
-        return platform.machine().endswith("64")
+    is_os_64bit = platform.machine().endswith("64")
+    is_python_64bit = sys.maxsize > 2**32
 
-    def is_python_64bit():
-        """Check if the Python interpreter is 64bit."""
-        return sys.maxsize > 2**32
-
-    if platform.system() != "Windows" or (is_os_64bit() and is_python_64bit()):
+    if platform.system() != "Windows" or (is_os_64bit and is_python_64bit):
         # Not a Windows platform or a Windows 64 bit platform with a 64 bit Python
         # Nothing to warn about
         return
 
     warn_msg = (
-        "{}. The recent version of SciPy cannot "
+        "Scikit-learn does not provides official support for 32 bit Windows platform. "
+        "It means that no wheels 'win32' wheels are provided for "
+        "scikit-learn >= 1.1.2. {problem}. The recent version of SciPy cannot "
         "be build with this Python bitness. The latest supported version is "
         "SciPy 1.9.1 for Python below 3.9. If you want to build scikit-learn "
         "from source, you will need to satisfy this configuration. Alternatively, "
-        "you can install {}."
+        "you can install {solution}."
     )
 
-    if not is_os_64bit():
+    if not is_os_64bit:
         warnings.warn(
             warn_msg.format(
-                "Your operating system is Windows 32 bit",
-                "a Windows 64 bit operating system and a 64 bit Python interpreter",
+                problem="Your operating system is Windows 32 bit",
+                solution=(
+                    "a Windows 64 bit operating system and a 64 bit Python interpreter"
+                ),
             ),
             RuntimeWarning,
         )
-    elif not is_python_64bit():
+    elif not is_python_64bit:
         warnings.warn(
             warn_msg.format(
-                "Your Python interpreter is 32 bit",
-                "a 64 bit Python interpreter",
+                problem="Your Python interpreter is 32 bit",
+                solution="a 64 bit Python interpreter",
             ),
             RuntimeWarning,
         )
