@@ -1,14 +1,12 @@
 # Authors: Andrew nystrom <awnystrom@gmail.com>
 #          Meekail Zain <zainmeekail@gmail.com>
-from scipy.sparse import csr_matrix
 from libc.math cimport sqrt, pow
-
 cimport numpy as cnp
 cnp.import_array()
 
-cdef extern from "limits.h":
-    cdef int INT_MAX
-    cdef long LONG_MAX
+from scipy.sparse import csr_matrix
+
+from libc.limits cimport INT_MAX, LONG_MAX
 
 ctypedef cnp.int8_t FLAG_t
 
@@ -157,7 +155,7 @@ def _csr_polynomial_expansion(
     FLAG_t degree
 ):
     """
-    Perform a second-degree polynomial or interaction expansion on a scipy
+    Perform a second or third degree polynomial or interaction expansion on a
     compressed sparse row (CSR) matrix. The method used only takes products of
     non-zero features. For a matrix with density :math:`d`, this results in a
     speedup on the order of :math:`(1/d)^k` where :math:`k` is the degree of
@@ -219,7 +217,7 @@ def _csr_polynomial_expansion(
                     if degree == 2:
                         if max(i, j) > MAX_SAFE_INDEX_DEG2:
                             # In this case, the Cython implementation
-                            # would integer overflow.
+                            # would result in an integer overflow.
                             # Here, we use arbitrary precision.
                             with gil:
                                 col = <INDEX_B_t> py_deg2_column(d, i, j, interaction_only)
@@ -237,7 +235,7 @@ def _csr_polynomial_expansion(
                             k = indices[k_ptr]
                             if max(i, j, k) > MAX_SAFE_INDEX_DEG3:
                                 # In this case, the Cython implementation
-                                # would integer overflow.
+                                # would result in an integer overflow.
                                 # Here, we use arbitrary precision.
                                 with gil:
                                     col = <INDEX_B_t> py_deg3_column(d, i, j, k, interaction_only)

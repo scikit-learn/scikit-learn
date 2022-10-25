@@ -847,6 +847,11 @@ def test_csr_polynomial_expansion_index_overflow_deg2(
     # an informative error message.
     if (
         sp_version < parse_version("1.9.2")
+        # When `n_features>=65535`, `scipy.sparse.hstack` may not use the right
+        # dtype for representing indices and indptr if `n_features` is still
+        # small enough so that each block matrix's indices and indptr arrays
+        # can be represnented with `np.int32`. We test `n_features==65535`
+        # since it is guaranteed to run into this bug.
         and n_features == 65535
         and not interaction_only
     ):
