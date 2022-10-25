@@ -3481,7 +3481,21 @@ def check_decision_proba_consistency(name, estimator_orig):
         # inversions in case of machine level differences.
         a = estimator.predict_proba(X_test)[:, 1].round(decimals=10)
         b = estimator.decision_function(X_test).round(decimals=10)
-        assert_array_equal(rankdata(a), rankdata(b))
+
+        rank_proba, rank_score = rankdata(a), rankdata(b)
+        try:
+            assert_array_almost_equal(rank_proba, rank_score)
+        except AssertionError:
+            # Sometimes, the rounding applied on the probabilities will have
+            # ties that are not present in the scores because it is
+            # numerically more precise. In this case, we relax the test by
+            # grouping the decision function scores based on the probability
+            # rank and check that the score is monotonically increasing.
+            grouped_y_score = np.array(
+                [b[rank_proba == group].mean() for group in np.unique(rank_proba)]
+            )
+            sorted_idx = np.argsort(grouped_y_score)
+            assert_array_equal(sorted_idx, np.arange(len(sorted_idx)))
 
 
 def check_outliers_fit_predict(name, estimator_orig):

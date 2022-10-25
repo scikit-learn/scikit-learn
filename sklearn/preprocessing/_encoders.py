@@ -9,7 +9,7 @@ import warnings
 import numpy as np
 from scipy import sparse
 
-from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
+from ..base import BaseEstimator, TransformerMixin, OneToOneFeatureMixin
 from ..utils import check_array, is_scalar_nan
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
@@ -1055,7 +1055,7 @@ class OneHotEncoder(_BaseEncoder):
         return np.array(feature_names, dtype=object)
 
 
-class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
+class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     """
     Encode categorical features as an integer array.
 
