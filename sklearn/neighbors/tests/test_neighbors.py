@@ -1498,6 +1498,39 @@ def test_neighbors_validate_parameters(Estimator):
         nbrs.predict([[]])
 
 
+@pytest.mark.parametrize(
+    "Estimator",
+    [
+        neighbors.KNeighborsClassifier,
+        neighbors.RadiusNeighborsClassifier,
+        neighbors.KNeighborsRegressor,
+        neighbors.RadiusNeighborsRegressor,
+    ],
+)
+def test_neighbors_non_metric_minkowski(Estimator):
+    """
+    Validation of all classes extending NeighborsBase for minkowski metric with p < 1
+    """
+    X = rng.random_sample((10, 2))
+    y = np.ones(10)
+
+    model = Estimator(p=0.1)
+    msg = "for p < 1 minkowski is not a valid metric"
+    with pytest.warns(UserWarning, match=msg):
+        model.fit(X, y)
+        assert model._fit_method == "brute"
+
+    model = Estimator(algorithm="kd_tree", p=0.1)
+    msg = "p must be greater or equal to one for minkowski metric"
+    with pytest.raises(ValueError, match=msg):
+        model.fit(X, y)
+
+    model = Estimator(algorithm="ball_tree", p=0.1)
+    msg = "p must be greater or equal to one for minkowski metric"
+    with pytest.raises(ValueError, match=msg):
+        model.fit(X, y)
+
+
 # TODO: remove when NearestNeighbors methods uses parameter validation mechanism
 def test_nearest_neighbors_validate_params():
     """Validate parameter of NearestNeighbors."""
