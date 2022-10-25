@@ -442,6 +442,7 @@ def test_high_perplexity_precomputed_sparse_distances():
 @ignore_warnings(category=EfficiencyWarning)
 def test_sparse_precomputed_distance(global_dtype):
     """Make sure that TSNE works identically for sparse and dense matrix"""
+    atol = 1e-5 if global_dtype == np.float32 else 0
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
 
@@ -459,7 +460,7 @@ def test_sparse_precomputed_distance(global_dtype):
 
     for fmt in ["csr", "lil"]:
         Xt_sparse = tsne.fit_transform(D_sparse.asformat(fmt))
-        assert_allclose(Xt_dense, Xt_sparse)
+        assert_allclose(Xt_dense, Xt_sparse, atol=atol)
 
 
 def test_non_positive_computed_distances():
