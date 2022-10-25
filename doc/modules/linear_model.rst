@@ -1167,6 +1167,9 @@ The choice of the distribution depends on the problem at hand:
 * If the target values seem to be heavier tailed than a Gamma distribution,
   you might try an Inverse Gaussian deviance (or even higher variance powers
   of the Tweedie family).
+* If the target values :math:`y` are probabilities, you can use the Binomial or
+  Bernoulli deviance. The Binomial/ Bernoulli Deviance with a logit link can be
+  used for binary classification. 
 
 
 Examples of use cases include:
@@ -1177,9 +1180,13 @@ Examples of use cases include:
 * Risk modeling / insurance policy pricing:  number of claim events /
   policyholder per year (Poisson), cost per event (Gamma), total cost per
   policyholder per year (Tweedie / Compound Poisson Gamma).
+* Credit Default / Fraud Detection: number of fraudulent transactions from a
+  region (Binomial)
 * Predictive maintenance: number of production interruption events per year
   (Poisson), duration of interruption (Gamma), total interruption time per year
   (Tweedie / Compound Poisson Gamma).
+* Medical Drug Testing: number of cured patients in a set of trials/ number of
+  patients experiencing side effects (Binomial)
 
 
 .. topic:: References:
