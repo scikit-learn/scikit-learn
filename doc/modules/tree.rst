@@ -598,8 +598,8 @@ assigned based on the split found during training::
     >>> tree.predict(X)
     array([0, 0, 1, 1])
 
-If no missing values are seen during training for a given feature, then during prediction
-missing values are mapped to the child with the most samples.
+If no missing values are seen during training for a given feature, then during
+prediction missing values are mapped to the child with the most samples.
 
 .. _minimal_cost_complexity_pruning:
 
