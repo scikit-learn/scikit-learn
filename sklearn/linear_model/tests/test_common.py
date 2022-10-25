@@ -116,12 +116,13 @@ def test_linear_model_normalize_deprecation_message(
         LassoLarsCV(),
         LassoLarsIC(),
         LinearRegression(),
-        # TODO: Why does this fail badly with sample_weights?
+        # TODO: SAGA fails badly with sample_weights. This is a kown liimitation, see
+        # https://github.com/scikit-learn/scikit-learn/issues/21305
         pytest.param(
             LogisticRegression(
                 penalty="elasticnet", solver="saga", l1_ratio=0.5, tol=1e-15
             ),
-            marks=pytest.mark.xfail(reason="Unknown bug"),
+            marks=pytest.mark.xfail(reason="Missing importance sampling scheme"),
         ),
         LogisticRegressionCV(),
         MultiTaskElasticNet(),
