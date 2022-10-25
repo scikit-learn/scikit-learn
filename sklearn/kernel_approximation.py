@@ -22,7 +22,7 @@ except ImportError:  # scipy < 1.4
 
 from .base import BaseEstimator
 from .base import TransformerMixin
-from .base import _ClassNamePrefixFeaturesOutMixin
+from .base import ClassNamePrefixFeaturesOutMixin
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
@@ -35,7 +35,7 @@ from .metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
 
 
 class PolynomialCountSketch(
-    _ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
+    ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
 ):
     """Polynomial kernel approximation via Tensor Sketch.
 
@@ -240,7 +240,7 @@ class PolynomialCountSketch(
         return data_sketch
 
 
-class RBFSampler(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Approximate a RBF kernel feature map using random Fourier features.
 
     It implements a variant of Random Kitchen Sinks.[1]
@@ -398,7 +398,7 @@ class RBFSampler(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimat
 
 
 class SkewedChi2Sampler(
-    _ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
+    ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
 ):
     """Approximate feature map for "skewed chi-squared" kernel.
 
@@ -802,7 +802,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         return {"stateless": True, "requires_positive_X": True}
 
 
-class Nystroem(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Approximate a kernel map using a subset of the training data.
 
     Constructs an approximate feature map for an arbitrary kernel

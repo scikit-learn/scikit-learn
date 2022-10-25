@@ -27,6 +27,8 @@ from .utils import (
 from .utils._tags import _safe_tags
 from .utils.validation import check_memory
 from .utils.validation import check_is_fitted
+from .utils import check_pandas_support
+from .utils._set_output import _safe_set_output, _get_output_config
 from .utils.fixes import delayed
 from .exceptions import NotFittedError
 
@@ -145,6 +147,29 @@ class Pipeline(_BaseComposition):
         self.steps = steps
         self.memory = memory
         self.verbose = verbose
+
+    def set_output(self, transform=None):
+        """Set the output container when `"transform`" and `"fit_transform"` are called.
+
+        Calling `set_output` will set the output of all estimators in `steps`.
+
+        Parameters
+        ----------
+        transform : {"default", "pandas"}, default=None
+            Configure output of `transform` and `fit_transform`.
+
+            - `"default"`: Default output format of a transformer
+            - `"pandas"`: DataFrame output
+            - `None`: Transform configuration is unchanged
+
+        Returns
+        -------
+        self : estimator instance
+            Estimator instance.
+        """
+        for _, _, step in self._iter():
+            _safe_set_output(step, transform=transform)
+        return self
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -968,6 +993,30 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self.transformer_weights = transformer_weights
         self.verbose = verbose
 
+    def set_output(self, transform=None):
+        """Set the output container when `"transform`" and `"fit_transform"` are called.
+
+        `set_output` will set the output of all estimators in `transformer_list`.
+
+        Parameters
+        ----------
+        transform : {"default", "pandas"}, default=None
+            Configure output of `transform` and `fit_transform`.
+
+            - `"default"`: Default output format of a transformer
+            - `"pandas"`: DataFrame output
+            - `None`: Transform configuration is unchanged
+
+        Returns
+        -------
+        self : estimator instance
+            Estimator instance.
+        """
+        super().set_output(transform=transform)
+        for _, step, _ in self._iter():
+            _safe_set_output(step, transform=transform)
+        return self
+
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
@@ -993,7 +1042,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         Valid parameter keys can be listed with ``get_params()``. Note that
         you can directly set the parameters of the estimators contained in
-        `tranformer_list`.
+        `transformer_list`.
 
         Parameters
         ----------
@@ -1189,6 +1238,11 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return self._hstack(Xs)
 
     def _hstack(self, Xs):
+        config = _get_output_config("transform", self)
+        if config["dense"] == "pandas" and all(hasattr(X, "iloc") for X in Xs):
+            pd = check_pandas_support("transform")
+            return pd.concat(Xs, axis=1)
+
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:
