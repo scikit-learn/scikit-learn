@@ -387,17 +387,15 @@ def setup_package():
 def _warn_about_win32_support():
     """Warn about dropping win32 support."""
 
+    if platform.system() != "Windows":
+        return
+        
     is_os_64bit = platform.machine().endswith("64")
     is_python_64bit = sys.maxsize > 2**32
 
-    if platform.system() != "Windows" or (is_os_64bit and is_python_64bit):
-        # Not a Windows platform or a Windows 64 bit platform with a 64 bit Python
-        # Nothing to warn about
-        return
-
     warn_msg = (
-        "Scikit-learn does not provides official support for 32 bit Windows platform. "
-        "It means that no wheels 'win32' wheels are provided for "
+        "Scikit-learn does not provide official support for 32-bit Windows. "
+        "This means that there are no 'win32' wheels for "
         "scikit-learn >= 1.1.2. {problem}. The recent version of SciPy cannot "
         "be build with this Python bitness. The latest supported version is "
         "SciPy 1.9.1 for Python below 3.9. If you want to build scikit-learn "
