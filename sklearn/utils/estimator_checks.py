@@ -3509,8 +3509,8 @@ def check_decision_proba_consistency(name, estimator_orig):
         try:
             assert_array_almost_equal(rank_proba, rank_score)
         except AssertionError:
-            # Sometimes, the rounding applied on the probabilities will results
-            # on ties that are not present in the scores because it is
+            # Sometimes, the rounding applied on the probabilities will have
+            # ties that are not present in the scores because it is
             # numerically more precise. In this case, we relax the test by
             # grouping the decision function scores based on the probability
             # rank and check that the score is monotonically increasing.
