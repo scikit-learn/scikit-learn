@@ -1,5 +1,4 @@
 cimport numpy as cnp
-cimport openmp
 
 from cython cimport final
 from cython.operator cimport dereference as deref
@@ -73,7 +72,8 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms32(
         )
 
     with nogil, parallel(num_threads=num_threads):
-        thread_num = openmp.omp_get_thread_num()
+        thread_num = _openmp_thread_num()
+
         for i in prange(n, schedule='static'):
             # Upcasting the i-th row of X from float32 to float64
             for j in range(d):
