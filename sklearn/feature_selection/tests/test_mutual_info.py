@@ -209,7 +209,7 @@ def test_mutual_info_options(global_dtype):
         assert not np.allclose(mi_1, mi_3)
 
 
-def test_mutual_information_symmetry_classif_regression():
+def test_mutual_information_symmetry_classif_regression(global_random_seed):
     """Check that `mutual_info_classif` and `mutual_info_regression` are
     symmetric by switching the target `y` as `feature` in `X` and vice
     versa.
@@ -217,9 +217,30 @@ def test_mutual_information_symmetry_classif_regression():
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/23720
     """
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     n = 100
     d, c = rng.randint(10, size=n), rng.normal(0, 1, size=n)
+
+    mi_classif = mutual_info_classif(
+        c[:, None], d, discrete_features=[False], random_state=123
+    )
+
+    mi_regression = mutual_info_regression(
+        d[:, None], c, discrete_features=[True], random_state=123
+    )
+
+    assert mi_classif == pytest.approx(mi_regression)
+
+
+def test_mutual_info_symmetry_classif_regression_correlated():
+    """Check that `mutual_info_classif` and `mutual_info_regression` are
+    symmetric by switching the target `y` as `feature` in `X` and vice
+    versa and `X` and `y` are correlated."""
+
+    rng = np.random.RandomState(0)
+    n = 100
+    d = rng.randint(10, size=n)
+    c = d.astype(np.float64)
 
     mi_classif = mutual_info_classif(
         c[:, None], d, discrete_features=[False], random_state=123
