@@ -78,7 +78,7 @@ clf = best_gmm
 import itertools
 import matplotlib.pyplot as plt
 
-color_iter = itertools.cycle(["navy", "turquoise", "cornflowerblue", "darkorange"])
+color_iter = itertools.cycle(["navy", "darkorange", "cornflowerblue", "turquoise"])
 bars = []
 
 for i, (cov_type, color) in enumerate(zip(cov_types, color_iter)):
