@@ -1,5 +1,3 @@
-# Author: Maria Telenczuk <https://github.com/maikia>
-#
 # License: BSD 3 clause
 
 import inspect
@@ -65,8 +63,8 @@ from sklearn.linear_model import (
         MultiTaskElasticNetCV(),
         MultiTaskLasso(),
         MultiTaskLassoCV(),
-        OrthogonalMatchingPursuit(normalize=False),
-        OrthogonalMatchingPursuitCV(normalize=False),
+        OrthogonalMatchingPursuit(),
+        OrthogonalMatchingPursuitCV(),
         PoissonRegressor(),
         Ridge(),
         RidgeCV(),
@@ -74,7 +72,7 @@ from sklearn.linear_model import (
             SGDRegressor(tol=1e-15),
             marks=pytest.mark.xfail(reason="Unsufficient precision."),
         ),
-        SGDRegressor(penalty="elasticnet"),
+        SGDRegressor(penalty="elasticnet", max_iter=10_000),
         TweedieRegressor(power=0),  # same as Ridge
     ],
     ids=lambda x: x.__class__.__name__,
