@@ -630,7 +630,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 warnings.warn("for p < 1 minkowski is not a valid metric")
             else:
                 raise ValueError(
-                    "p must be greater or equal to one for minkowski metric"
+                    "p must be greater or equal to one for minkowski metric, set p >= 1"
+                    " or algorithm='brute'"
                 )
 
         if self._fit_method == "ball_tree":

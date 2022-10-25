@@ -1521,12 +1521,18 @@ def test_neighbors_non_metric_minkowski(Estimator):
         assert model._fit_method == "brute"
 
     model = Estimator(algorithm="kd_tree", p=0.1)
-    msg = "p must be greater or equal to one for minkowski metric"
+    msg = (
+        "p must be greater or equal to one for minkowski metric, set p >= 1 or"
+        " algorithm='brute'"
+    )
     with pytest.raises(ValueError, match=msg):
         model.fit(X, y)
 
     model = Estimator(algorithm="ball_tree", p=0.1)
-    msg = "p must be greater or equal to one for minkowski metric"
+    msg = (
+        "p must be greater or equal to one for minkowski metric, set p >= 1 or"
+        " algorithm='brute'"
+    )
     with pytest.raises(ValueError, match=msg):
         model.fit(X, y)
 
