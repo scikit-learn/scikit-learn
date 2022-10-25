@@ -19,20 +19,13 @@ from ..utils._param_validation import Interval, StrOptions
 from ..utils.stats import _weighted_percentile
 from ..utils.fixes import sp_version, parse_version
 
-from ._csr_polynomial_expansion import _csr_polynomial_expansion
+from ._csr_polynomial_expansion import _csr_polynomial_expansion, _calc_expanded_nnz
 
 
 __all__ = [
     "PolynomialFeatures",
     "SplineTransformer",
 ]
-
-
-def _calc_expanded_dimensionality(d, interaction_only, degree):
-    if degree == 2:
-        return (d**2 + d) // 2 - interaction_only * d
-    else:
-        return (d**3 + 3 * d**2 + 2 * d) // 6 - interaction_only * d**2
 
 
 class PolynomialFeatures(TransformerMixin, BaseEstimator):
@@ -367,16 +360,14 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             for deg in range(max(2, self._min_degree), self._max_degree + 1):
                 # Count how many nonzero elements the expanded matrix will contain.
                 total_nnz = sum(
-                    _calc_expanded_dimensionality(
+                    _calc_expanded_nnz(
                         X.indptr[row_i + 1] - X.indptr[row_i],
                         self.interaction_only,
                         deg,
                     )
                     for row_i in range(X.indptr.shape[0] - 1)
                 )
-                expanded_d = _calc_expanded_dimensionality(
-                    X.shape[1], self.interaction_only, deg
-                )
+                expanded_d = _calc_expanded_nnz(X.shape[1], self.interaction_only, deg)
 
                 if expanded_d == 0:
                     break
