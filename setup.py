@@ -389,7 +389,7 @@ def _warn_about_win32_support():
 
     if platform.system() != "Windows":
         return
-        
+
     is_os_64bit = platform.machine().endswith("64")
     is_python_64bit = sys.maxsize > 2**32
 
