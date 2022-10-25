@@ -71,7 +71,7 @@ clf = best_gmm
 # Plot the BIC scores
 # -------------------
 #
-# We plot a `*` to highlight the model with the lowest BIC score. In the present
+# We draw a `*` to highlight the model with the lowest BIC score. In the present
 # case, the model with 2 components and full covariance (which corresponds to
 # the true generative model) is selected.
 
@@ -107,6 +107,16 @@ plt.show()
 # %%
 # Plot the best model
 # -------------------
+#
+# We plot an ellipse to show each Gaussian component of the selected model. For
+# such purpose, one needs to find the eigenvalues of the covariance matrices as
+# returned by the `covariances_` attribute. The shape of such matrices depends
+# on the `covariance_type`:
+#
+# - `"full"`: (n_components, n_features, n_features)
+# - `"tied"`: (n_features, n_features)
+# - `"diag"`: (n_components, n_features)
+# - `"spherical"`: (n_components,)
 
 from matplotlib.patches import Ellipse
 from scipy import linalg
@@ -119,7 +129,6 @@ for i, (mean, cov, color) in enumerate(zip(clf.means_, clf.covariances_, color_i
         continue
     plt.scatter(X[Y_ == i, 0], X[Y_ == i, 1], 0.8, color=color)
 
-    # Plot an ellipse to show the Gaussian component
     angle = np.arctan2(w[0][1], w[0][0])
     angle = 180.0 * angle / np.pi  # convert to degrees
     v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
