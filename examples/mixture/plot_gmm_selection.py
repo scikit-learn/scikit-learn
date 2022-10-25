@@ -76,15 +76,11 @@ clf = best_gmm
 # the true generative model) is selected.
 
 import itertools
-
 import matplotlib.pyplot as plt
-import matplotlib as mpl
 
 color_iter = itertools.cycle(["navy", "turquoise", "cornflowerblue", "darkorange"])
 bars = []
 
-plt.figure(figsize=(8, 6))
-spl = plt.subplot(2, 1, 1)
 for i, (cov_type, color) in enumerate(zip(cov_types, color_iter)):
     xpos = np.array(n_components_range) + 0.2 * (i - 2)
     bars.append(
@@ -104,17 +100,18 @@ xpos = (
     + 0.2 * np.floor(bic.argmin() / len(n_components_range))
 )
 plt.text(xpos, bic.min() * 0.97 + 0.03 * bic.max(), "*", fontsize=14)
-spl.set_xlabel("Number of components")
-spl.legend([b[0] for b in bars], cov_types)
+plt.xlabel("Number of components")
+plt.legend([b[0] for b in bars], cov_types)
 plt.show()
 
 # %%
 # Plot the best model
 # -------------------
 
+from matplotlib.patches import Ellipse
 from scipy import linalg
 
-splot = plt.subplot(2, 1, 2)
+fig, ax = plt.subplots()
 Y_ = clf.predict(X)
 for i, (mean, cov, color) in enumerate(zip(clf.means_, clf.covariances_, color_iter)):
     v, w = linalg.eigh(cov)
@@ -126,14 +123,13 @@ for i, (mean, cov, color) in enumerate(zip(clf.means_, clf.covariances_, color_i
     angle = np.arctan2(w[0][1], w[0][0])
     angle = 180.0 * angle / np.pi  # convert to degrees
     v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
-    ell = mpl.patches.Ellipse(mean, v[0], v[1], 180.0 + angle, color=color)
-    ell.set_clip_box(splot.bbox)
-    ell.set_alpha(0.5)
-    splot.add_artist(ell)
+    ellipse = Ellipse(mean, v[0], v[1], 180.0 + angle, color=color)
+    ellipse.set_clip_box(fig.bbox)
+    ellipse.set_alpha(0.5)
+    ax.add_artist(ellipse)
 
 plt.title(
     f"Selected GMM: {best_gmm.covariance_type} model, "
     f"{best_gmm.n_components} components"
 )
-plt.subplots_adjust(hspace=0.35, bottom=0.02)
 plt.show()
