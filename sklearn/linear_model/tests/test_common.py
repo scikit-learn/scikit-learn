@@ -97,23 +97,19 @@ def test_balance_property(model, with_sample_weight, global_random_seed):
         pytest.skip("Estimator does not support sample_weight.")
 
     rel = 1e-4  # test precision
-    # TODO: Investigate why these models achieve less accurate results for the
-    #       intercept.
-    if isinstance(model, SGDRegressor) or (
-        hasattr(model, "solver") and model.solver == "saga"
-    ):
+    if isinstance(model, SGDRegressor):
+        rel = 1e-1
+    elif hasattr(model, "solver") and model.solver == "saga":
         rel = 1e-2
 
     rng = np.random.RandomState(global_random_seed)
-    n_train, n_test, n_features, n_targets = 100, 50, 10, None
+    n_train, n_features, n_targets = 100, 10, None
     if isinstance(
         model,
         (MultiTaskElasticNet, MultiTaskElasticNetCV, MultiTaskLasso, MultiTaskLassoCV),
     ):
         n_targets = 3
-    X = make_low_rank_matrix(
-        n_samples=n_train + n_test, n_features=n_features, random_state=rng
-    )
+    X = make_low_rank_matrix(n_samples=n_train, n_features=n_features, random_state=rng)
     if n_targets:
         coef = (
             rng.uniform(low=-2, high=2, size=(n_features, n_targets))
