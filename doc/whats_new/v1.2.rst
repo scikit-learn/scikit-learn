@@ -331,7 +331,7 @@ Changelog
 
 - |Fix| fix a bug in :func:`feature_selection.mutual_info_regression` and
   :func:`feature_selction.mutual_info_classif`, where the continuous features
-  in `X` should be scaled to a unit variance independtly if the target `y` is
+  in `X` should be scaled to a unit variance independently if the target `y` is
   continuous or discrete.
   :pr:`24747` by :user:`Guillaume Lemaitre <glemaitre>`
 
