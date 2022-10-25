@@ -583,8 +583,10 @@ have built-in support for missing values when `splitter='best'` and criterion is
 `squared_error'`, `'friedman_mse'`, or `'poisson'` for regression.
 
 For each potential threshold, the splitter will evaluate the split with all the
-missing values going to the left child or the right child. When predicting, the
-samples with missing values are assigned according::
+missing values going to the left child or the right child. The splitter also
+checks the split where all the missing values go to one child and non-missing
+values go to the other. When predicting, the samples with missing values are
+assigned based on the split found during training::
 
     >>> from sklearn.tree import DecisionTreeClassifier
     >>> import numpy as np
