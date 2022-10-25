@@ -12,18 +12,20 @@ from math import log
 import sys
 import warnings
 
+from numbers import Integral, Real
 import numpy as np
 from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
 from joblib import Parallel
 
-from ._base import LinearModel
-from ._base import _deprecate_normalize
+from ._base import LinearModel, LinearRegression
+from ._base import _deprecate_normalize, _preprocess_data
 from ..base import RegressorMixin, MultiOutputMixin
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
 from ..utils import arrayfuncs, as_float_array  # type: ignore
 from ..utils import check_random_state
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
 from ..utils.fixes import delayed
@@ -48,7 +50,7 @@ def lars_path(
     return_n_iter=False,
     positive=False,
 ):
-    """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
+    """Compute Least Angle Regression or Lasso path using LARS algorithm [1].
 
     The optimization objective for the case method='lasso' is::
 
@@ -134,7 +136,7 @@ def lars_path(
         Indices of active variables at the end of the path.
 
     coefs : array-like of shape (n_features, n_alphas + 1)
-        Coefficients along the path
+        Coefficients along the path.
 
     n_iter : int
         Number of iterations run. Returned only if return_n_iter is set
@@ -142,14 +144,13 @@ def lars_path(
 
     See Also
     --------
-    lars_path_gram
-    lasso_path
-    lasso_path_gram
-    LassoLars
-    Lars
-    LassoLarsCV
-    LarsCV
-    sklearn.decomposition.sparse_encode
+    lars_path_gram : Compute LARS path in the sufficient stats mode.
+    lasso_path : Compute Lasso path with coordinate descent.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    Lars : Least Angle Regression model a.k.a. LAR.
+    LassoLarsCV : Cross-validated Lasso, using the LARS algorithm.
+    LarsCV : Cross-validated Least Angle Regression model.
+    sklearn.decomposition.sparse_encode : Sparse coding.
 
     References
     ----------
@@ -161,7 +162,6 @@ def lars_path(
 
     .. [3] `Wikipedia entry on the Lasso
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
-
     """
     if X is None and Gram is not None:
         raise ValueError(
@@ -203,7 +203,7 @@ def lars_path_gram(
     return_n_iter=False,
     positive=False,
 ):
-    """lars_path in the sufficient stats mode [1]
+    """The lars_path in the sufficient stats mode [1].
 
     The optimization objective for the case method='lasso' is::
 
@@ -280,7 +280,7 @@ def lars_path_gram(
         Indices of active variables at the end of the path.
 
     coefs : array-like of shape (n_features, n_alphas + 1)
-        Coefficients along the path
+        Coefficients along the path.
 
     n_iter : int
         Number of iterations run. Returned only if return_n_iter is set
@@ -288,14 +288,13 @@ def lars_path_gram(
 
     See Also
     --------
-    lars_path
-    lasso_path
-    lasso_path_gram
-    LassoLars
-    Lars
-    LassoLarsCV
-    LarsCV
-    sklearn.decomposition.sparse_encode
+    lars_path_gram : Compute LARS path.
+    lasso_path : Compute Lasso path with coordinate descent.
+    LassoLars : Lasso model fit with Least Angle Regression a.k.a. Lars.
+    Lars : Least Angle Regression model a.k.a. LAR.
+    LassoLarsCV : Cross-validated Lasso, using the LARS algorithm.
+    LarsCV : Cross-validated Least Angle Regression model.
+    sklearn.decomposition.sparse_encode : Sparse coding.
 
     References
     ----------
@@ -307,7 +306,6 @@ def lars_path_gram(
 
     .. [3] `Wikipedia entry on the Lasso
            <https://en.wikipedia.org/wiki/Lasso_(statistics)>`_
-
     """
     return _lars_path_solver(
         X=None,
@@ -544,6 +542,7 @@ def _lars_path_solver(
             sys.stdout.flush()
 
     tiny32 = np.finfo(np.float32).tiny  # to avoid division by 0 warning
+    cov_precision = np.finfo(Cov.dtype).precision
     equality_tolerance = np.finfo(np.float32).eps
 
     if Gram is not None:
@@ -705,7 +704,7 @@ def _lars_path_solver(
                 i = 0
                 L_ = L[:n_active, :n_active].copy()
                 while not np.isfinite(AA):
-                    L_.flat[:: n_active + 1] += (2 ** i) * eps
+                    L_.flat[:: n_active + 1] += (2**i) * eps
                     least_squares, _ = solve_cholesky(
                         L_, sign_active[:n_active], lower=True
                     )
@@ -725,6 +724,10 @@ def _lars_path_solver(
             # think could be avoided if we just update it using an
             # orthogonal (QR) decomposition of X
             corr_eq_dir = np.dot(Gram[:n_active, n_active:].T, least_squares)
+
+        # Explicit rounding can be necessary to avoid `np.argmax(Cov)` yielding
+        # unstable results because of rounding errors.
+        np.around(corr_eq_dir, decimals=cov_precision, out=corr_eq_dir)
 
         g1 = arrayfuncs.min_pos((C - Cov) / (AA - corr_eq_dir + tiny32))
         if positive:
@@ -856,7 +859,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     verbose : bool or int, default=False
         Sets the verbosity amount.
 
-    normalize : bool, default=True
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -864,9 +867,11 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
+        .. versionchanged:: 1.2
+           default changed from True to False in 1.2.
+
+        .. deprecated:: 1.2
+            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
 
     precompute : bool, 'auto' or array-like , default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -940,6 +945,12 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     lars_path: Compute Least Angle Regression or Lasso
@@ -950,12 +961,25 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> reg = linear_model.Lars(n_nonzero_coefs=1, normalize=False)
+    >>> reg = linear_model.Lars(n_nonzero_coefs=1)
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
-    Lars(n_nonzero_coefs=1, normalize=False)
+    Lars(n_nonzero_coefs=1)
     >>> print(reg.coef_)
     [ 0. -1.11...]
     """
+
+    _parameter_constraints: dict = {
+        "fit_intercept": ["boolean"],
+        "verbose": ["verbose"],
+        "normalize": ["boolean", Hidden(StrOptions({"deprecated"}))],
+        "precompute": ["boolean", StrOptions({"auto"}), np.ndarray, Hidden(None)],
+        "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left")],
+        "eps": [Interval(Real, 0, None, closed="left")],
+        "copy_X": ["boolean"],
+        "fit_path": ["boolean"],
+        "jitter": [Interval(Real, 0, None, closed="left"), None],
+        "random_state": ["random_state"],
+    }
 
     method = "lar"
     positive = False
@@ -1000,7 +1024,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         """Auxiliary method to fit the model using X, y as training data"""
         n_features = X.shape[1]
 
-        X, y, X_offset, y_offset, X_scale = self._preprocess_data(
+        X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X, y, self.fit_intercept, normalize, self.copy_X
         )
 
@@ -1097,10 +1121,12 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
+
         X, y = self._validate_data(X, y, y_numeric=True, multi_output=True)
 
         _normalize = _deprecate_normalize(
-            self.normalize, default=True, estimator_name=self.__class__.__name__
+            self.normalize, estimator_name=self.__class__.__name__
         )
 
         alpha = getattr(self, "alpha", 0.0)
@@ -1157,7 +1183,7 @@ class LassoLars(Lars):
     verbose : bool or int, default=False
         Sets the verbosity amount.
 
-    normalize : bool, default=True
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1165,9 +1191,11 @@ class LassoLars(Lars):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
+        .. versionchanged:: 1.2
+           default changed from True to False in 1.2.
+
+        .. deprecated:: 1.2
+            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
 
     precompute : bool, 'auto' or array-like, default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -1252,6 +1280,12 @@ class LassoLars(Lars):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     lars_path : Compute Least Angle Regression or Lasso
@@ -1269,12 +1303,20 @@ class LassoLars(Lars):
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> reg = linear_model.LassoLars(alpha=0.01, normalize=False)
+    >>> reg = linear_model.LassoLars(alpha=0.01)
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1])
-    LassoLars(alpha=0.01, normalize=False)
+    LassoLars(alpha=0.01)
     >>> print(reg.coef_)
     [ 0.         -0.955...]
     """
+
+    _parameter_constraints: dict = {
+        **Lars._parameter_constraints,
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "positive": ["boolean"],
+    }
+    _parameter_constraints.pop("n_nonzero_coefs")
 
     method = "lasso"
 
@@ -1328,7 +1370,7 @@ def _lars_path_residues(
     method="lars",
     verbose=False,
     fit_intercept=True,
-    normalize=True,
+    normalize=False,
     max_iter=500,
     eps=np.finfo(float).eps,
     positive=False,
@@ -1378,7 +1420,7 @@ def _lars_path_residues(
         'lasso' for expected small values of alpha in the doc of LassoLarsCV
         and LassoLarsIC.
 
-    normalize : bool, default=True
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1386,9 +1428,11 @@ def _lars_path_residues(
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
+        .. versionchanged:: 1.2
+           default changed from True to False in 1.2.
+
+        .. deprecated:: 1.2
+            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
 
     max_iter : int, default=500
         Maximum number of iterations to perform.
@@ -1432,7 +1476,7 @@ def _lars_path_residues(
         y_test -= y_mean
 
     if normalize:
-        norms = np.sqrt(np.sum(X_train ** 2, axis=0))
+        norms = np.sqrt(np.sum(X_train**2, axis=0))
         nonzeros = np.flatnonzero(norms)
         X_train[:, nonzeros] /= norms[nonzeros]
 
@@ -1474,7 +1518,7 @@ class LarsCV(Lars):
     max_iter : int, default=500
         Maximum number of iterations to perform.
 
-    normalize : bool, default=True
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1482,9 +1526,11 @@ class LarsCV(Lars):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
+        .. versionchanged:: 1.2
+           default changed from True to False in 1.2.
+
+        .. deprecated:: 1.2
+            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
 
     precompute : bool, 'auto' or array-like , default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -1564,6 +1610,12 @@ class LarsCV(Lars):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     lars_path : Compute Least Angle Regression or Lasso
@@ -1578,12 +1630,17 @@ class LarsCV(Lars):
         or AIC for model selection.
     sklearn.decomposition.sparse_encode : Sparse coding.
 
+    Notes
+    -----
+    In `fit`, once the best parameter `alpha` is found through
+    cross-validation, the model is fit again using the entire training set.
+
     Examples
     --------
     >>> from sklearn.linear_model import LarsCV
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_samples=200, noise=4.0, random_state=0)
-    >>> reg = LarsCV(cv=5, normalize=False).fit(X, y)
+    >>> reg = LarsCV(cv=5).fit(X, y)
     >>> reg.score(X, y)
     0.9996...
     >>> reg.alpha_
@@ -1591,6 +1648,17 @@ class LarsCV(Lars):
     >>> reg.predict(X[:1,])
     array([154.3996...])
     """
+
+    _parameter_constraints: dict = {
+        **Lars._parameter_constraints,
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "cv": ["cv_object"],
+        "max_n_alphas": [Interval(Integral, 1, None, closed="left")],
+        "n_jobs": [Integral, None],
+    }
+
+    for parameter in ["n_nonzero_coefs", "jitter", "fit_path", "random_state"]:
+        _parameter_constraints.pop(parameter)
 
     method = "lar"
 
@@ -1642,8 +1710,10 @@ class LarsCV(Lars):
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
+
         _normalize = _deprecate_normalize(
-            self.normalize, default=True, estimator_name=self.__class__.__name__
+            self.normalize, estimator_name=self.__class__.__name__
         )
 
         X, y = self._validate_data(X, y, y_numeric=True)
@@ -1714,7 +1784,7 @@ class LarsCV(Lars):
         self.cv_alphas_ = all_alphas
         self.mse_path_ = mse_path
 
-        # Now compute the full model
+        # Now compute the full model using best_alpha
         # it will call a lasso internally when self if LassoLarsCV
         # as self.method == 'lasso'
         self._fit(
@@ -1753,7 +1823,7 @@ class LassoLarsCV(LarsCV):
     max_iter : int, default=500
         Maximum number of iterations to perform.
 
-    normalize : bool, default=True
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1761,9 +1831,11 @@ class LassoLarsCV(LarsCV):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
+        .. versionchanged:: 1.2
+           default changed from True to False in 1.2.
+
+        .. deprecated:: 1.2
+            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
 
     precompute : bool or 'auto' , default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -1854,6 +1926,12 @@ class LassoLarsCV(LarsCV):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     lars_path : Compute Least Angle Regression or Lasso
@@ -1870,21 +1948,26 @@ class LassoLarsCV(LarsCV):
 
     Notes
     -----
-    The object solves the same problem as the LassoCV object. However,
-    unlike the LassoCV, it find the relevant alphas values by itself.
-    In general, because of this property, it will be more stable.
+    The object solves the same problem as the
+    :class:`~sklearn.linear_model.LassoCV` object. However, unlike the
+    :class:`~sklearn.linear_model.LassoCV`, it find the relevant alphas values
+    by itself. In general, because of this property, it will be more stable.
     However, it is more fragile to heavily multicollinear datasets.
 
-    It is more efficient than the LassoCV if only a small number of
-    features are selected compared to the total number, for instance if
-    there are very few samples compared to the number of features.
+    It is more efficient than the :class:`~sklearn.linear_model.LassoCV` if
+    only a small number of features are selected compared to the total number,
+    for instance if there are very few samples compared to the number of
+    features.
+
+    In `fit`, once the best parameter `alpha` is found through
+    cross-validation, the model is fit again using the entire training set.
 
     Examples
     --------
     >>> from sklearn.linear_model import LassoLarsCV
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(noise=4.0, random_state=0)
-    >>> reg = LassoLarsCV(cv=5, normalize=False).fit(X, y)
+    >>> reg = LassoLarsCV(cv=5).fit(X, y)
     >>> reg.score(X, y)
     0.9993...
     >>> reg.alpha_
@@ -1892,6 +1975,11 @@ class LassoLarsCV(LarsCV):
     >>> reg.predict(X[:1,])
     array([-78.4831...])
     """
+
+    _parameter_constraints = {
+        **LarsCV._parameter_constraints,
+        "positive": ["boolean"],
+    }
 
     method = "lasso"
 
@@ -1932,17 +2020,17 @@ class LassoLarsIC(LassoLars):
 
     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
-    AIC is the Akaike information criterion and BIC is the Bayes
-    Information criterion. Such criteria are useful to select the value
+    AIC is the Akaike information criterion [2]_ and BIC is the Bayes
+    Information criterion [3]_. Such criteria are useful to select the value
     of the regularization parameter by making a trade-off between the
     goodness of fit and the complexity of the model. A good model should
     explain well the data while being simple.
 
-    Read more in the :ref:`User Guide <least_angle_regression>`.
+    Read more in the :ref:`User Guide <lasso_lars_ic>`.
 
     Parameters
     ----------
-    criterion : {'bic' , 'aic'}, default='aic'
+    criterion : {'aic', 'bic'}, default='aic'
         The type of criterion to use.
 
     fit_intercept : bool, default=True
@@ -1953,7 +2041,7 @@ class LassoLarsIC(LassoLars):
     verbose : bool or int, default=False
         Sets the verbosity amount.
 
-    normalize : bool, default=True
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1961,9 +2049,11 @@ class LassoLarsIC(LassoLars):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
+        .. versionchanged:: 1.2
+           default changed from True to False in 1.2.
+
+        .. deprecated:: 1.2
+            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
 
     precompute : bool, 'auto' or array-like, default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -1996,6 +2086,13 @@ class LassoLarsIC(LassoLars):
         As a consequence using LassoLarsIC only makes sense for problems where
         a sparse solution is expected and/or reached.
 
+    noise_variance : float, default=None
+        The estimated noise variance of the data. If `None`, an unbiased
+        estimate is computed by an OLS model. However, it is only possible
+        in the case where `n_samples > n_features + fit_intercept`.
+
+        .. versionadded:: 1.1
+
     Attributes
     ----------
     coef_ : array-like of shape (n_features,)
@@ -2020,13 +2117,24 @@ class LassoLarsIC(LassoLars):
     criterion_ : array-like of shape (n_alphas,)
         The value of the information criteria ('aic', 'bic') across all
         alphas. The alpha which has the smallest information criterion is
-        chosen. This value is larger by a factor of ``n_samples`` compared to
-        Eqns. 2.15 and 2.16 in (Zou et al, 2007).
+        chosen, as specified in [1]_.
+
+    noise_variance_ : float
+        The estimated noise variance from the data used to compute the
+        criterion.
+
+        .. versionadded:: 1.1
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -2043,24 +2151,44 @@ class LassoLarsIC(LassoLars):
 
     Notes
     -----
-    The estimation of the number of degrees of freedom is given by:
+    The number of degrees of freedom is computed as in [1]_.
 
-    "On the degrees of freedom of the lasso"
-    Hui Zou, Trevor Hastie, and Robert Tibshirani
-    Ann. Statist. Volume 35, Number 5 (2007), 2173-2192.
+    To have more details regarding the mathematical formulation of the
+    AIC and BIC criteria, please refer to :ref:`User Guide <lasso_lars_ic>`.
 
-    https://en.wikipedia.org/wiki/Akaike_information_criterion
-    https://en.wikipedia.org/wiki/Bayesian_information_criterion
+    References
+    ----------
+    .. [1] :arxiv:`Zou, Hui, Trevor Hastie, and Robert Tibshirani.
+            "On the degrees of freedom of the lasso."
+            The Annals of Statistics 35.5 (2007): 2173-2192.
+            <0712.0881>`
+
+    .. [2] `Wikipedia entry on the Akaike information criterion
+            <https://en.wikipedia.org/wiki/Akaike_information_criterion>`_
+
+    .. [3] `Wikipedia entry on the Bayesian information criterion
+            <https://en.wikipedia.org/wiki/Bayesian_information_criterion>`_
 
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> reg = linear_model.LassoLarsIC(criterion='bic', normalize=False)
-    >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
-    LassoLarsIC(criterion='bic', normalize=False)
+    >>> reg = linear_model.LassoLarsIC(criterion='bic')
+    >>> X = [[-2, 2], [-1, 1], [0, 0], [1, 1], [2, 2]]
+    >>> y = [-2.2222, -1.1111, 0, -1.1111, -2.2222]
+    >>> reg.fit(X, y)
+    LassoLarsIC(criterion='bic')
     >>> print(reg.coef_)
     [ 0.  -1.11...]
     """
+
+    _parameter_constraints: dict = {
+        **LassoLars._parameter_constraints,
+        "criterion": [StrOptions({"aic", "bic"})],
+        "noise_variance": [Interval(Real, 0, None, closed="left"), None],
+    }
+
+    for parameter in ["jitter", "fit_path", "alpha", "random_state"]:
+        _parameter_constraints.pop(parameter)
 
     def __init__(
         self,
@@ -2074,6 +2202,7 @@ class LassoLarsIC(LassoLars):
         eps=np.finfo(float).eps,
         copy_X=True,
         positive=False,
+        noise_variance=None,
     ):
         self.criterion = criterion
         self.fit_intercept = fit_intercept
@@ -2085,6 +2214,7 @@ class LassoLarsIC(LassoLars):
         self.precompute = precompute
         self.eps = eps
         self.fit_path = True
+        self.noise_variance = noise_variance
 
     def _more_tags(self):
         return {"multioutput": False}
@@ -2110,15 +2240,17 @@ class LassoLarsIC(LassoLars):
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
+
         _normalize = _deprecate_normalize(
-            self.normalize, default=True, estimator_name=self.__class__.__name__
+            self.normalize, estimator_name=self.__class__.__name__
         )
 
         if copy_X is None:
             copy_X = self.copy_X
         X, y = self._validate_data(X, y, y_numeric=True)
 
-        X, y, Xmean, ymean, Xstd = LinearModel._preprocess_data(
+        X, y, Xmean, ymean, Xstd = _preprocess_data(
             X, y, self.fit_intercept, _normalize, copy_X
         )
 
@@ -2142,17 +2274,17 @@ class LassoLarsIC(LassoLars):
         n_samples = X.shape[0]
 
         if self.criterion == "aic":
-            K = 2  # AIC
+            criterion_factor = 2
         elif self.criterion == "bic":
-            K = log(n_samples)  # BIC
+            criterion_factor = log(n_samples)
         else:
-            raise ValueError("criterion should be either bic or aic")
+            raise ValueError(
+                f"criterion should be either bic or aic, got {self.criterion!r}"
+            )
 
-        R = y[:, np.newaxis] - np.dot(X, coef_path_)  # residuals
-        mean_squared_error = np.mean(R ** 2, axis=0)
-        sigma2 = np.var(y)
-
-        df = np.zeros(coef_path_.shape[1], dtype=int)  # Degrees of freedom
+        residuals = y[:, np.newaxis] - np.dot(X, coef_path_)
+        residuals_sum_squares = np.sum(residuals**2, axis=0)
+        degrees_of_freedom = np.zeros(coef_path_.shape[1], dtype=int)
         for k, coef in enumerate(coef_path_.T):
             mask = np.abs(coef) > np.finfo(coef.dtype).eps
             if not np.any(mask):
@@ -2160,16 +2292,61 @@ class LassoLarsIC(LassoLars):
             # get the number of degrees of freedom equal to:
             # Xc = X[:, mask]
             # Trace(Xc * inv(Xc.T, Xc) * Xc.T) ie the number of non-zero coefs
-            df[k] = np.sum(mask)
+            degrees_of_freedom[k] = np.sum(mask)
 
         self.alphas_ = alphas_
-        eps64 = np.finfo("float64").eps
+
+        if self.noise_variance is None:
+            self.noise_variance_ = self._estimate_noise_variance(
+                X, y, positive=self.positive
+            )
+        else:
+            self.noise_variance_ = self.noise_variance
+
         self.criterion_ = (
-            n_samples * mean_squared_error / (sigma2 + eps64) + K * df
-        )  # Eqns. 2.15--16 in (Zou et al, 2007)
+            n_samples * np.log(2 * np.pi * self.noise_variance_)
+            + residuals_sum_squares / self.noise_variance_
+            + criterion_factor * degrees_of_freedom
+        )
         n_best = np.argmin(self.criterion_)
 
         self.alpha_ = alphas_[n_best]
         self.coef_ = coef_path_[:, n_best]
         self._set_intercept(Xmean, ymean, Xstd)
         return self
+
+    def _estimate_noise_variance(self, X, y, positive):
+        """Compute an estimate of the variance with an OLS model.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Data to be fitted by the OLS model. We expect the data to be
+            centered.
+
+        y : ndarray of shape (n_samples,)
+            Associated target.
+
+        positive : bool, default=False
+            Restrict coefficients to be >= 0. This should be inline with
+            the `positive` parameter from `LassoLarsIC`.
+
+        Returns
+        -------
+        noise_variance : float
+            An estimator of the noise variance of an OLS model.
+        """
+        if X.shape[0] <= X.shape[1] + self.fit_intercept:
+            raise ValueError(
+                f"You are using {self.__class__.__name__} in the case where the number "
+                "of samples is smaller than the number of features. In this setting, "
+                "getting a good estimate for the variance of the noise is not "
+                "possible. Provide an estimate of the noise variance in the "
+                "constructor."
+            )
+        # X and y are already centered and we don't need to fit with an intercept
+        ols_model = LinearRegression(positive=positive, fit_intercept=False)
+        y_pred = ols_model.fit(X, y).predict(X)
+        return np.sum((y - y_pred) ** 2) / (
+            X.shape[0] - X.shape[1] - self.fit_intercept
+        )

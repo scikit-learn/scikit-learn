@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 """
@@ -9,14 +8,17 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 #
 # License: BSD 3 clause
 
-import numpy as np
 import warnings
+from numbers import Integral, Real
+
+import numpy as np
 from scipy import sparse
 
+from ..metrics.pairwise import _VALID_METRICS
 from ..base import BaseEstimator, ClusterMixin
 from ..utils.validation import _check_sample_weight
+from ..utils._param_validation import Interval, StrOptions
 from ..neighbors import NearestNeighbors
-
 from ._dbscan_inner import dbscan_inner
 
 
@@ -189,7 +191,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
         its metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square. X may be a :term:`Glossary <sparse graph>`, in which
+        must be square. X may be a :term:`sparse graph`, in which
         case only "nonzero" elements may be considered neighbors for DBSCAN.
 
         .. versionadded:: 0.17
@@ -238,6 +240,12 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -291,6 +299,20 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     DBSCAN(eps=3, min_samples=2)
     """
 
+    _parameter_constraints: dict = {
+        "eps": [Interval(Real, 0.0, None, closed="neither")],
+        "min_samples": [Interval(Integral, 1, None, closed="left")],
+        "metric": [
+            StrOptions(set(_VALID_METRICS) | {"precomputed"}),
+            callable,
+        ],
+        "metric_params": [dict, None],
+        "algorithm": [StrOptions({"auto", "ball_tree", "kd_tree", "brute"})],
+        "leaf_size": [Interval(Integral, 1, None, closed="left")],
+        "p": [Interval(Real, 0.0, None, closed="left"), None],
+        "n_jobs": [Integral, None],
+    }
+
     def __init__(
         self,
         eps=0.5,
@@ -337,10 +359,9 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
-        X = self._validate_data(X, accept_sparse="csr")
+        self._validate_params()
 
-        if not self.eps > 0.0:
-            raise ValueError("eps must be positive.")
+        X = self._validate_data(X, accept_sparse="csr")
 
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X)
@@ -420,3 +441,6 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         """
         self.fit(X, sample_weight=sample_weight)
         return self.labels_
+
+    def _more_tags(self):
+        return {"pairwise": self.metric == "precomputed"}

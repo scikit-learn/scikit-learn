@@ -8,6 +8,7 @@
 # License: BSD 3 clause
 
 import time
+from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
@@ -15,15 +16,16 @@ from scipy.special import expit  # logistic function
 
 from ..base import BaseEstimator
 from ..base import TransformerMixin
-from ..utils import check_array
+from ..base import ClassNamePrefixFeaturesOutMixin
 from ..utils import check_random_state
 from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import log_logistic
 from ..utils.validation import check_is_fitted
+from ..utils._param_validation import Interval
 
 
-class BernoulliRBM(TransformerMixin, BaseEstimator):
+class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Bernoulli Restricted Boltzmann Machine (RBM).
 
     A Restricted Boltzmann Machine with binary visible units and
@@ -54,7 +56,8 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         during training.
 
     verbose : int, default=0
-        The verbosity level. The default, zero, means silent mode.
+        The verbosity level. The default, zero, means silent mode. Range
+        of values is [0, inf].
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation for:
@@ -77,28 +80,31 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         Biases of the visible units.
 
     components_ : array-like of shape (n_components, n_features)
-        Weight matrix, where n_features in the number of
-        visible units and n_components is the number of hidden units.
+        Weight matrix, where `n_features` is the number of
+        visible units and `n_components` is the number of hidden units.
 
     h_samples_ : array-like of shape (batch_size, n_components)
         Hidden Activation sampled from the model distribution,
-        where batch_size in the number of examples per minibatch and
-        n_components is the number of hidden units.
+        where `batch_size` is the number of examples per minibatch and
+        `n_components` is the number of hidden units.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
 
-    Examples
-    --------
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
 
-    >>> import numpy as np
-    >>> from sklearn.neural_network import BernoulliRBM
-    >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
-    >>> model = BernoulliRBM(n_components=2)
-    >>> model.fit(X)
-    BernoulliRBM(n_components=2)
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    sklearn.neural_network.MLPRegressor : Multi-layer Perceptron regressor.
+    sklearn.neural_network.MLPClassifier : Multi-layer Perceptron classifier.
+    sklearn.decomposition.PCA : An unsupervised linear dimensionality
+        reduction model.
 
     References
     ----------
@@ -110,7 +116,26 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
     [2] Tieleman, T. Training Restricted Boltzmann Machines using
         Approximations to the Likelihood Gradient. International Conference
         on Machine Learning (ICML) 2008
+
+    Examples
+    --------
+
+    >>> import numpy as np
+    >>> from sklearn.neural_network import BernoulliRBM
+    >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
+    >>> model = BernoulliRBM(n_components=2)
+    >>> model.fit(X)
+    BernoulliRBM(n_components=2)
     """
+
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "learning_rate": [Interval(Real, 0, None, closed="neither")],
+        "batch_size": [Interval(Integral, 1, None, closed="left")],
+        "n_iter": [Interval(Integral, 0, None, closed="left")],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+    }
 
     def __init__(
         self,
@@ -183,7 +208,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
             Values of the hidden layer.
         """
         p = self._mean_hiddens(v)
-        return rng.random_sample(size=p.shape) < p
+        return rng.uniform(size=p.shape) < p
 
     def _sample_visibles(self, h, rng):
         """Sample from the distribution P(v|h).
@@ -204,7 +229,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         p = np.dot(h, self.components_)
         p += self.intercept_visible_
         expit(p, out=p)
-        return rng.random_sample(size=p.shape) < p
+        return rng.uniform(size=p.shape) < p
 
     def _free_energy(self, v):
         """Computes the free energy F(v) = - log sum_h exp(-E(v,h)).
@@ -245,19 +270,24 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         return v_
 
     def partial_fit(self, X, y=None):
-        """Fit the model to the data X which should contain a partial
-        segment of the data.
+        """Fit the model to the partial segment of the data X.
 
         Parameters
         ----------
         X : ndarray of shape (n_samples, n_features)
             Training data.
 
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs), default=None
+            Target values (None for unsupervised transformations).
+
         Returns
         -------
         self : BernoulliRBM
             The fitted model.
         """
+
+        self._validate_params()
+
         first_pass = not hasattr(self, "components_")
         X = self._validate_data(
             X, accept_sparse="csr", dtype=np.float64, reset=first_pass
@@ -269,6 +299,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
                 self.random_state_.normal(0, 0.01, (self.n_components, X.shape[1])),
                 order="F",
             )
+            self._n_features_out = self.components_.shape[0]
         if not hasattr(self, "intercept_hidden_"):
             self.intercept_hidden_ = np.zeros(
                 self.n_components,
@@ -333,7 +364,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        v = check_array(X, accept_sparse="csr")
+        v = self._validate_data(X, accept_sparse="csr", reset=False)
         rng = check_random_state(self.random_state)
 
         # Randomly corrupt one feature in each sample in v.
@@ -357,11 +388,17 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Training data.
 
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs), default=None
+            Target values (None for unsupervised transformations).
+
         Returns
         -------
         self : BernoulliRBM
             The fitted model.
         """
+
+        self._validate_params()
+
         X = self._validate_data(X, accept_sparse="csr", dtype=(np.float64, np.float32))
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
@@ -371,6 +408,7 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
             order="F",
             dtype=X.dtype,
         )
+        self._n_features_out = self.components_.shape[0]
         self.intercept_hidden_ = np.zeros(self.n_components, dtype=X.dtype)
         self.intercept_visible_ = np.zeros(X.shape[1], dtype=X.dtype)
         self.h_samples_ = np.zeros((self.batch_size, self.n_components), dtype=X.dtype)
@@ -409,5 +447,6 @@ class BernoulliRBM(TransformerMixin, BaseEstimator):
                 "check_methods_sample_order_invariance": (
                     "fails for the score_samples method"
                 ),
-            }
+            },
+            "preserves_dtype": [np.float64, np.float32],
         }

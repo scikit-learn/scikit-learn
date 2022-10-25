@@ -1,8 +1,8 @@
-# -*- coding: utf-8 -*-
 from collections.abc import Mapping
 import re
 
 import pytest
+import warnings
 from scipy import sparse
 
 from sklearn.feature_extraction.text import strip_tags
@@ -96,7 +96,7 @@ def test_strip_accents():
     assert strip_accents_unicode(a) == expected
 
     # strings that are already decomposed
-    a = "o\u0308"  # o with diaresis
+    a = "o\u0308"  # o with diaeresis
     expected = "o"
     assert strip_accents_unicode(a) == expected
 
@@ -395,7 +395,7 @@ def test_fit_countvectorizer_twice():
 
 
 def test_countvectorizer_custom_token_pattern():
-    """Check `get_feature_names()` when a custom token pattern is passed.
+    """Check `get_feature_names_out()` when a custom token pattern is passed.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/12971
     """
@@ -409,7 +409,8 @@ def test_countvectorizer_custom_token_pattern():
     vectorizer = CountVectorizer(token_pattern=token_pattern)
     vectorizer.fit_transform(corpus)
     expected = ["document", "one", "sample"]
-    assert vectorizer.get_feature_names() == expected
+    feature_names_out = vectorizer.get_feature_names_out()
+    assert_array_equal(feature_names_out, expected)
 
 
 def test_countvectorizer_custom_token_pattern_with_several_group():
@@ -432,7 +433,9 @@ def test_countvectorizer_custom_token_pattern_with_several_group():
 
 
 def test_countvectorizer_uppercase_in_vocab():
-    vocabulary = ["Sample", "Upper", "CaseVocabulary"]
+    # Check that the check for uppercase in the provided vocabulary is only done at fit
+    # time and not at transform time (#21251)
+    vocabulary = ["Sample", "Upper", "Case", "Vocabulary"]
     message = (
         "Upper case characters found in"
         " vocabulary while 'lowercase'"
@@ -441,8 +444,23 @@ def test_countvectorizer_uppercase_in_vocab():
     )
 
     vectorizer = CountVectorizer(lowercase=True, vocabulary=vocabulary)
+
     with pytest.warns(UserWarning, match=message):
-        vectorizer.fit_transform(vocabulary)
+        vectorizer.fit(vocabulary)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        vectorizer.transform(vocabulary)
+
+
+def test_tf_transformer_feature_names_out():
+    """Check get_feature_names_out for TfidfTransformer"""
+    X = [[1, 1, 1], [1, 1, 0], [1, 0, 0]]
+    tr = TfidfTransformer(smooth_idf=True, norm="l2").fit(X)
+
+    feature_names_in = ["a", "c", "b"]
+    feature_names_out = tr.get_feature_names_out(feature_names_in)
+    assert_array_equal(feature_names_in, feature_names_out)
 
 
 def test_tf_idf_smoothing():
@@ -452,7 +470,7 @@ def test_tf_idf_smoothing():
     assert (tfidf >= 0).all()
 
     # check normalization
-    assert_array_almost_equal((tfidf ** 2).sum(axis=1), [1.0, 1.0, 1.0])
+    assert_array_almost_equal((tfidf**2).sum(axis=1), [1.0, 1.0, 1.0])
 
     # this is robust to features with only zeros
     X = [[1, 1, 0], [1, 1, 0], [1, 0, 0]]
@@ -468,7 +486,7 @@ def test_tfidf_no_smoothing():
     assert (tfidf >= 0).all()
 
     # check normalization
-    assert_array_almost_equal((tfidf ** 2).sum(axis=1), [1.0, 1.0, 1.0])
+    assert_array_almost_equal((tfidf**2).sum(axis=1), [1.0, 1.0, 1.0])
 
     # the lack of smoothing make IDF fragile in the presence of feature with
     # only zeros
@@ -595,15 +613,32 @@ def test_vectorizer():
 
 
 def test_tfidf_vectorizer_setters():
-    tv = TfidfVectorizer(norm="l2", use_idf=False, smooth_idf=False, sublinear_tf=False)
+    norm, use_idf, smooth_idf, sublinear_tf = "l2", False, False, False
+    tv = TfidfVectorizer(
+        norm=norm, use_idf=use_idf, smooth_idf=smooth_idf, sublinear_tf=sublinear_tf
+    )
+    tv.fit(JUNK_FOOD_DOCS)
+    assert tv._tfidf.norm == norm
+    assert tv._tfidf.use_idf == use_idf
+    assert tv._tfidf.smooth_idf == smooth_idf
+    assert tv._tfidf.sublinear_tf == sublinear_tf
+
+    # assigning value to `TfidfTransformer` should not have any effect until
+    # fitting
     tv.norm = "l1"
-    assert tv._tfidf.norm == "l1"
     tv.use_idf = True
-    assert tv._tfidf.use_idf
     tv.smooth_idf = True
-    assert tv._tfidf.smooth_idf
     tv.sublinear_tf = True
-    assert tv._tfidf.sublinear_tf
+    assert tv._tfidf.norm == norm
+    assert tv._tfidf.use_idf == use_idf
+    assert tv._tfidf.smooth_idf == smooth_idf
+    assert tv._tfidf.sublinear_tf == sublinear_tf
+
+    tv.fit(JUNK_FOOD_DOCS)
+    assert tv._tfidf.norm == tv.norm
+    assert tv._tfidf.use_idf == tv.use_idf
+    assert tv._tfidf.smooth_idf == tv.smooth_idf
+    assert tv._tfidf.sublinear_tf == tv.sublinear_tf
 
 
 @fails_if_pypy
@@ -650,7 +685,7 @@ def test_feature_names():
 
     # test for Value error on unfitted/empty vocabulary
     with pytest.raises(ValueError):
-        cv.get_feature_names()
+        cv.get_feature_names_out()
     assert not cv.fixed_vocabulary_
 
     # test for vocabulary learned from data
@@ -658,7 +693,10 @@ def test_feature_names():
     n_samples, n_features = X.shape
     assert len(cv.vocabulary_) == n_features
 
-    feature_names = cv.get_feature_names()
+    feature_names = cv.get_feature_names_out()
+    assert isinstance(feature_names, np.ndarray)
+    assert feature_names.dtype == object
+
     assert len(feature_names) == n_features
     assert_array_equal(
         [
@@ -692,7 +730,7 @@ def test_feature_names():
     ]
 
     cv = CountVectorizer(vocabulary=vocab)
-    feature_names = cv.get_feature_names()
+    feature_names = cv.get_feature_names_out()
     assert_array_equal(
         [
             "beer",
@@ -744,9 +782,9 @@ def test_count_vectorizer_max_features():
     counts_3 = cv_3.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
     counts_None = cv_None.fit_transform(JUNK_FOOD_DOCS).sum(axis=0)
 
-    features_1 = cv_1.get_feature_names()
-    features_3 = cv_3.get_feature_names()
-    features_None = cv_None.get_feature_names()
+    features_1 = cv_1.get_feature_names_out()
+    features_3 = cv_3.get_feature_names_out()
+    features_None = cv_None.get_feature_names_out()
 
     # The most common feature is "the", with frequency 7.
     assert 7 == counts_1.max()
@@ -810,7 +848,7 @@ def test_count_binary_occurrences():
     test_data = ["aaabc", "abbde"]
     vect = CountVectorizer(analyzer="char", max_df=1.0)
     X = vect.fit_transform(test_data).toarray()
-    assert_array_equal(["a", "b", "c", "d", "e"], vect.get_feature_names())
+    assert_array_equal(["a", "b", "c", "d", "e"], vect.get_feature_names_out())
     assert_array_equal([[3, 1, 1, 0, 0], [1, 2, 0, 1, 1]], X)
 
     # using boolean features, we can fetch the binary occurrence info
@@ -987,7 +1025,7 @@ def test_vectorizer_unicode():
 
     vect = HashingVectorizer(norm=None, alternate_sign=False)
     X_hashed = vect.transform([document])
-    assert X_hashed.shape == (1, 2 ** 20)
+    assert X_hashed.shape == (1, 2**20)
 
     # No collisions on such a small dataset
     assert X_counted.nnz == X_hashed.nnz
@@ -1031,9 +1069,9 @@ def test_pickling_vectorizer():
         if IS_PYPY and isinstance(orig, HashingVectorizer):
             continue
         else:
-            assert_array_equal(
-                copy.fit_transform(JUNK_FOOD_DOCS).toarray(),
-                orig.fit_transform(JUNK_FOOD_DOCS).toarray(),
+            assert_allclose_dense_sparse(
+                copy.fit_transform(JUNK_FOOD_DOCS),
+                orig.fit_transform(JUNK_FOOD_DOCS),
             )
 
 
@@ -1081,7 +1119,9 @@ def test_countvectorizer_vocab_sets_when_pickling():
         unpickled_cv = pickle.loads(pickle.dumps(cv))
         cv.fit(ALL_FOOD_DOCS)
         unpickled_cv.fit(ALL_FOOD_DOCS)
-        assert cv.get_feature_names() == unpickled_cv.get_feature_names()
+        assert_array_equal(
+            cv.get_feature_names_out(), unpickled_cv.get_feature_names_out()
+        )
 
 
 def test_countvectorizer_vocab_dicts_when_pickling():
@@ -1108,7 +1148,9 @@ def test_countvectorizer_vocab_dicts_when_pickling():
         unpickled_cv = pickle.loads(pickle.dumps(cv))
         cv.fit(ALL_FOOD_DOCS)
         unpickled_cv.fit(ALL_FOOD_DOCS)
-        assert cv.get_feature_names() == unpickled_cv.get_feature_names()
+        assert_array_equal(
+            cv.get_feature_names_out(), unpickled_cv.get_feature_names_out()
+        )
 
 
 def test_stop_words_removal():
@@ -1159,6 +1201,11 @@ def test_tfidf_vectorizer_setter():
         copy.transform(JUNK_FOOD_DOCS).toarray(),
         orig.transform(JUNK_FOOD_DOCS).toarray(),
     )
+    # `idf_` cannot be set with `use_idf=False`
+    copy = TfidfVectorizer(vocabulary=orig.vocabulary_, use_idf=False)
+    err_msg = "`idf_` cannot be set when `user_idf=False`."
+    with pytest.raises(ValueError, match=err_msg):
+        copy.idf_ = orig.idf_
 
 
 def test_tfidfvectorizer_invalid_idf_attr():
@@ -1268,13 +1315,13 @@ def test_tfidf_vectorizer_type(vectorizer_dtype, output_dtype, warning_expected)
     vectorizer = TfidfVectorizer(dtype=vectorizer_dtype)
 
     warning_msg_match = "'dtype' should be used."
-    warning_cls = UserWarning
-    expected_warning_cls = warning_cls if warning_expected else None
-    with pytest.warns(expected_warning_cls, match=warning_msg_match) as record:
-        X_idf = vectorizer.fit_transform(X)
-    if expected_warning_cls is None:
-        relevant_warnings = [w for w in record if isinstance(w, warning_cls)]
-        assert len(relevant_warnings) == 0
+    if warning_expected:
+        with pytest.warns(UserWarning, match=warning_msg_match):
+            X_idf = vectorizer.fit_transform(X)
+    else:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            X_idf = vectorizer.fit_transform(X)
     assert X_idf.dtype == output_dtype
 
 
@@ -1332,9 +1379,9 @@ def test_vectorizer_stop_words_inconsistent():
         assert _check_stop_words_consistency(vec) is False
 
     # Only one warning per stop list
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         vec.fit_transform(["hello world"])
-    assert not len(record)
     assert _check_stop_words_consistency(vec) is None
 
     # Test caching of inconsistency assessment
@@ -1408,7 +1455,7 @@ def test_stop_word_validation_custom_preprocessor(Estimator):
     ],
 )
 def test_callable_analyzer_error(Estimator, input_type, err_type, err_msg):
-    if issubclass(Estimator, HashingVectorizer):
+    if issubclass(Estimator, HashingVectorizer) and IS_PYPY:
         pytest.xfail("HashingVectorizer is not supported on PyPy")
     data = ["this is text, not file or filename"]
     with pytest.raises(err_type, match=err_msg):
@@ -1441,7 +1488,7 @@ def test_callable_analyzer_reraise_error(tmpdir, Estimator):
     def analyzer(doc):
         raise Exception("testing")
 
-    if issubclass(Estimator, HashingVectorizer):
+    if issubclass(Estimator, HashingVectorizer) and IS_PYPY:
         pytest.xfail("HashingVectorizer is not supported on PyPy")
 
     f = tmpdir.join("file.txt")
@@ -1589,3 +1636,12 @@ def test_nonnegative_hashing_vectorizer_result_indices():
     hashing = HashingVectorizer(n_features=1000000, ngram_range=(2, 3))
     indices = hashing.transform(["22pcs efuture"]).indices
     assert indices[0] >= 0
+
+
+@pytest.mark.parametrize(
+    "Estimator", [CountVectorizer, TfidfVectorizer, TfidfTransformer, HashingVectorizer]
+)
+def test_vectorizers_do_not_have_set_output(Estimator):
+    """Check that vectorizers do not define set_output."""
+    est = Estimator()
+    assert not hasattr(est, "set_output")

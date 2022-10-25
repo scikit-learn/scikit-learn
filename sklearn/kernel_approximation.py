@@ -8,6 +8,7 @@ approximate kernel feature maps based on Fourier transforms and Count Sketches.
 
 # License: BSD 3 clause
 
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
@@ -21,14 +22,21 @@ except ImportError:  # scipy < 1.4
 
 from .base import BaseEstimator
 from .base import TransformerMixin
-from .utils import check_random_state, as_float_array
+from .base import ClassNamePrefixFeaturesOutMixin
+from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
 from .utils.validation import check_is_fitted
+from .utils.validation import _check_feature_names_in
 from .metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from .utils.validation import check_non_negative
+from .utils._param_validation import Interval
+from .utils._param_validation import StrOptions
+from .metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
 
 
-class PolynomialCountSketch(BaseEstimator, TransformerMixin):
+class PolynomialCountSketch(
+    ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
+):
     """Polynomial kernel approximation via Tensor Sketch.
 
     Implements Tensor Sketch, which approximates the feature map
@@ -83,6 +91,21 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
+    Nystroem : Approximate a kernel map using a subset of the training data.
+    RBFSampler : Approximate a RBF kernel feature map using random Fourier
+        features.
+    SkewedChi2Sampler : Approximate feature map for "skewed chi-squared" kernel.
+    sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
+
     Examples
     --------
     >>> from sklearn.kernel_approximation import PolynomialCountSketch
@@ -97,6 +120,14 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
     >>> clf.score(X_features, y)
     1.0
     """
+
+    _parameter_constraints: dict = {
+        "gamma": [Interval(Real, 0, None, closed="left")],
+        "degree": [Interval(Integral, 1, None, closed="left")],
+        "coef0": [Interval(Real, None, None, closed="neither")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
 
     def __init__(
         self, *, gamma=1.0, degree=2, coef0=0, n_components=100, random_state=None
@@ -116,7 +147,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training data, where `n_samples` in the number of samples
+            Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         y : array-like of shape (n_samples,) or (n_samples, n_outputs), \
@@ -126,10 +157,9 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         Returns
         -------
         self : object
-            Returns the transformer.
+            Returns the instance itself.
         """
-        if not self.degree >= 1:
-            raise ValueError(f"degree={self.degree} should be >=1.")
+        self._validate_params()
 
         X = self._validate_data(X, accept_sparse="csc")
         random_state = check_random_state(self.random_state)
@@ -143,6 +173,7 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         )
 
         self.bitHash_ = random_state.choice(a=[-1, 1], size=(self.degree, n_features))
+        self._n_features_out = self.n_components
         return self
 
     def transform(self, X):
@@ -151,13 +182,13 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : {array-like}, shape (n_samples, n_features)
-            New data, where `n_samples` in the number of samples
+            New data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
-            Projected array.
+            Returns the instance itself.
         """
 
         check_is_fitted(self)
@@ -209,9 +240,8 @@ class PolynomialCountSketch(BaseEstimator, TransformerMixin):
         return data_sketch
 
 
-class RBFSampler(TransformerMixin, BaseEstimator):
-    """Approximates feature map of an RBF kernel by Monte Carlo approximation
-    of its Fourier transform.
+class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+    """Approximate a RBF kernel feature map using random Fourier features.
 
     It implements a variant of Random Kitchen Sinks.[1]
 
@@ -234,12 +264,12 @@ class RBFSampler(TransformerMixin, BaseEstimator):
 
     Attributes
     ----------
-    random_offset_ : ndarray of shape (n_components,), dtype=float64
+    random_offset_ : ndarray of shape (n_components,), dtype={np.float64, np.float32}
         Random offset used to compute the projection in the `n_components`
         dimensions of the feature space.
 
     random_weights_ : ndarray of shape (n_features, n_components),\
-        dtype=float64
+        dtype={np.float64, np.float32}
         Random projection directions drawn from the Fourier transform
         of the RBF kernel.
 
@@ -247,6 +277,31 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
+    Nystroem : Approximate a kernel map using a subset of the training data.
+    PolynomialCountSketch : Polynomial kernel approximation via Tensor Sketch.
+    SkewedChi2Sampler : Approximate feature map for
+        "skewed chi-squared" kernel.
+    sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
+
+    Notes
+    -----
+    See "Random Features for Large-Scale Kernel Machines" by A. Rahimi and
+    Benjamin Recht.
+
+    [1] "Weighted Sums of Random Kitchen Sinks: Replacing
+    minimization with randomization in learning" by A. Rahimi and
+    Benjamin Recht.
+    (https://people.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
 
     Examples
     --------
@@ -261,17 +316,13 @@ class RBFSampler(TransformerMixin, BaseEstimator):
     SGDClassifier(max_iter=5)
     >>> clf.score(X_features, y)
     1.0
-
-    Notes
-    -----
-    See "Random Features for Large-Scale Kernel Machines" by A. Rahimi and
-    Benjamin Recht.
-
-    [1] "Weighted Sums of Random Kitchen Sinks: Replacing
-    minimization with randomization in learning" by A. Rahimi and
-    Benjamin Recht.
-    (https://people.eecs.berkeley.edu/~brecht/papers/08.rah.rec.nips.pdf)
     """
+
+    _parameter_constraints: dict = {
+        "gamma": [Interval(Real, 0, None, closed="left")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
 
     def __init__(self, *, gamma=1.0, n_components=100, random_state=None):
         self.gamma = gamma
@@ -286,7 +337,7 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data, where `n_samples` in the number of samples
+            Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         y : array-like, shape (n_samples,) or (n_samples, n_outputs), \
@@ -296,8 +347,9 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Returns the transformer.
+            Returns the instance itself.
         """
+        self._validate_params()
 
         X = self._validate_data(X, accept_sparse="csr")
         random_state = check_random_state(self.random_state)
@@ -308,6 +360,14 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         )
 
         self.random_offset_ = random_state.uniform(0, 2 * np.pi, size=self.n_components)
+
+        if X.dtype == np.float32:
+            # Setting the data type of the fitted attribute will ensure the
+            # output data type during `transform`.
+            self.random_weights_ = self.random_weights_.astype(X.dtype, copy=False)
+            self.random_offset_ = self.random_offset_.astype(X.dtype, copy=False)
+
+        self._n_features_out = self.n_components
         return self
 
     def transform(self, X):
@@ -316,13 +376,13 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            New data, where `n_samples` in the number of samples
+            New data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
-            Projected array.
+            Returns the instance itself.
         """
         check_is_fitted(self)
 
@@ -333,10 +393,14 @@ class RBFSampler(TransformerMixin, BaseEstimator):
         projection *= np.sqrt(2.0) / np.sqrt(self.n_components)
         return projection
 
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
 
-class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
-    """Approximates feature map of the "skewed chi-squared" kernel by Monte
-    Carlo approximation of its Fourier transform.
+
+class SkewedChi2Sampler(
+    ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
+):
+    """Approximate feature map for "skewed chi-squared" kernel.
 
     Read more in the :ref:`User Guide <skewed_chi_kernel_approx>`.
 
@@ -370,6 +434,27 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
+    Nystroem : Approximate a kernel map using a subset of the training data.
+    RBFSampler : Approximate a RBF kernel feature map using random Fourier
+        features.
+    SkewedChi2Sampler : Approximate feature map for "skewed chi-squared" kernel.
+    sklearn.metrics.pairwise.chi2_kernel : The exact chi squared kernel.
+    sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
+
+    References
+    ----------
+    See "Random Fourier Approximations for Skewed Multiplicative Histogram
+    Kernels" by Fuxin Li, Catalin Ionescu and Cristian Sminchisescu.
+
     Examples
     --------
     >>> from sklearn.kernel_approximation import SkewedChi2Sampler
@@ -385,19 +470,13 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
     SGDClassifier(max_iter=10)
     >>> clf.score(X_features, y)
     1.0
-
-    References
-    ----------
-    See "Random Fourier Approximations for Skewed Multiplicative Histogram
-    Kernels" by Fuxin Li, Catalin Ionescu and Cristian Sminchisescu.
-
-    See Also
-    --------
-    AdditiveChi2Sampler : A different approach for approximating an additive
-        variant of the chi squared kernel.
-
-    sklearn.metrics.pairwise.chi2_kernel : The exact chi squared kernel.
     """
+
+    _parameter_constraints: dict = {
+        "skewedness": [Interval(Real, None, None, closed="neither")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
 
     def __init__(self, *, skewedness=1.0, n_components=100, random_state=None):
         self.skewedness = skewedness
@@ -412,7 +491,7 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training data, where `n_samples` in the number of samples
+            Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         y : array-like, shape (n_samples,) or (n_samples, n_outputs), \
@@ -422,9 +501,9 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         Returns
         -------
         self : object
-            Returns the transformer.
+            Returns the instance itself.
         """
-
+        self._validate_params()
         X = self._validate_data(X)
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
@@ -432,6 +511,14 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         # transform by inverse CDF of sech
         self.random_weights_ = 1.0 / np.pi * np.log(np.tan(np.pi / 2.0 * uniform))
         self.random_offset_ = random_state.uniform(0, 2 * np.pi, size=self.n_components)
+
+        if X.dtype == np.float32:
+            # Setting the data type of the fitted attribute will ensure the
+            # output data type during `transform`.
+            self.random_weights_ = self.random_weights_.astype(X.dtype, copy=False)
+            self.random_offset_ = self.random_offset_.astype(X.dtype, copy=False)
+
+        self._n_features_out = self.n_components
         return self
 
     def transform(self, X):
@@ -447,12 +534,12 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
-            Projected array.
+            Returns the instance itself.
         """
         check_is_fitted(self)
-
-        X = as_float_array(X, copy=True)
-        X = self._validate_data(X, copy=False, reset=False)
+        X = self._validate_data(
+            X, copy=True, dtype=[np.float64, np.float32], reset=False
+        )
         if (X <= -self.skewedness).any():
             raise ValueError("X may not contain entries smaller than -skewedness.")
 
@@ -464,6 +551,9 @@ class SkewedChi2Sampler(TransformerMixin, BaseEstimator):
         projection *= np.sqrt(2.0) / np.sqrt(self.n_components)
         return projection
 
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
+
 
 class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     """Approximate feature map for additive chi2 kernel.
@@ -473,7 +563,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
     Since the kernel that is to be approximated is additive, the components of
     the input vectors can be treated separately.  Each entry in the original
-    space is transformed into 2*sample_steps+1 features, where sample_steps is
+    space is transformed into 2*sample_steps-1 features, where sample_steps is
     a parameter of the method. Typical values of sample_steps include 1, 2 and
     3.
 
@@ -500,6 +590,12 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -538,6 +634,11 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     0.9499...
     """
 
+    _parameter_constraints: dict = {
+        "sample_steps": [Interval(Integral, 1, None, closed="left")],
+        "sample_interval": [Interval(Real, 0, None, closed="left"), None],
+    }
+
     def __init__(self, *, sample_steps=2, sample_interval=None):
         self.sample_steps = sample_steps
         self.sample_interval = sample_interval
@@ -552,7 +653,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
             and `n_features` is the number of features.
 
         y : array-like, shape (n_samples,) or (n_samples, n_outputs), \
-            default=None
+                default=None
             Target values (None for unsupervised transformations).
 
         Returns
@@ -560,6 +661,8 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         self : object
             Returns the transformer.
         """
+        self._validate_params()
+
         X = self._validate_data(X, accept_sparse="csr")
         check_non_negative(X, "X in AdditiveChi2Sampler.fit")
 
@@ -586,13 +689,13 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data, where `n_samples` in the number of samples
+            Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         Returns
         -------
         X_new : {ndarray, sparse matrix}, \
-               shape = (n_samples, n_features * (2*sample_steps + 1))
+               shape = (n_samples, n_features * (2*sample_steps - 1))
             Whether the return value is an array or sparse matrix depends on
             the type of the input X.
         """
@@ -612,6 +715,33 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
         transf = self._transform_sparse if sparse else self._transform_dense
         return transf(X)
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Only used to validate feature names with the names seen in :meth:`fit`.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        input_features = _check_feature_names_in(
+            self, input_features, generate_names=True
+        )
+        est_name = self.__class__.__name__.lower()
+
+        names_list = [f"{est_name}_{name}_sqrt" for name in input_features]
+
+        for j in range(1, self.sample_steps):
+            cos_names = [f"{est_name}_{name}_cos{j}" for name in input_features]
+            sin_names = [f"{est_name}_{name}_sin{j}" for name in input_features]
+            names_list.extend(cos_names + sin_names)
+
+        return np.asarray(names_list, dtype=object)
 
     def _transform_dense(self, X):
         non_zero = X != 0.0
@@ -672,7 +802,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         return {"stateless": True, "requires_positive_X": True}
 
 
-class Nystroem(TransformerMixin, BaseEstimator):
+class Nystroem(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Approximate a kernel map using a subset of the training data.
 
     Constructs an approximate feature map for an arbitrary kernel
@@ -684,7 +814,7 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    kernel : string or callable, default='rbf'
+    kernel : str or callable, default='rbf'
         Kernel map to be approximated. A callable should accept two arguments
         and the keyword arguments passed to this object as `kernel_params`, and
         should return a floating point number.
@@ -745,6 +875,32 @@ class Nystroem(TransformerMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    AdditiveChi2Sampler : Approximate feature map for additive chi2 kernel.
+    PolynomialCountSketch : Polynomial kernel approximation via Tensor Sketch.
+    RBFSampler : Approximate a RBF kernel feature map using random Fourier
+        features.
+    SkewedChi2Sampler : Approximate feature map for "skewed chi-squared" kernel.
+    sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
+
+    References
+    ----------
+    * Williams, C.K.I. and Seeger, M.
+      "Using the Nystroem method to speed up kernel machines",
+      Advances in neural information processing systems 2001
+
+    * T. Yang, Y. Li, M. Mahdavi, R. Jin and Z. Zhou
+      "Nystroem Method vs Random Fourier Features: A Theoretical and Empirical
+      Comparison",
+      Advances in Neural Information Processing Systems 2012
+
     Examples
     --------
     >>> from sklearn import datasets, svm
@@ -760,26 +916,21 @@ class Nystroem(TransformerMixin, BaseEstimator):
     LinearSVC()
     >>> clf.score(data_transformed, y)
     0.9987...
-
-    References
-    ----------
-    * Williams, C.K.I. and Seeger, M.
-      "Using the Nystroem method to speed up kernel machines",
-      Advances in neural information processing systems 2001
-
-    * T. Yang, Y. Li, M. Mahdavi, R. Jin and Z. Zhou
-      "Nystroem Method vs Random Fourier Features: A Theoretical and Empirical
-      Comparison",
-      Advances in Neural Information Processing Systems 2012
-
-
-    See Also
-    --------
-    RBFSampler : An approximation to the RBF kernel using random Fourier
-        features.
-
-    sklearn.metrics.pairwise.kernel_metrics : List of built-in kernels.
     """
+
+    _parameter_constraints: dict = {
+        "kernel": [
+            StrOptions(set(PAIRWISE_KERNEL_FUNCTIONS.keys()) | {"precomputed"}),
+            callable,
+        ],
+        "gamma": [Interval(Real, 0, None, closed="left"), None],
+        "coef0": [Interval(Real, None, None, closed="neither"), None],
+        "degree": [Interval(Real, 1, None, closed="left"), None],
+        "kernel_params": [dict, None],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+        "n_jobs": [Integral, None],
+    }
 
     def __init__(
         self,
@@ -812,13 +963,19 @@ class Nystroem(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training data, where `n_samples` in the number of samples
+            Training data, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
         y : array-like, shape (n_samples,) or (n_samples, n_outputs), \
                 default=None
             Target values (None for unsupervised transformations).
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
         """
+        self._validate_params()
         X = self._validate_data(X, accept_sparse="csr")
         rnd = check_random_state(self.random_state)
         n_samples = X.shape[0]
@@ -853,7 +1010,8 @@ class Nystroem(TransformerMixin, BaseEstimator):
         S = np.maximum(S, 1e-12)
         self.normalization_ = np.dot(U / np.sqrt(S), V)
         self.components_ = basis
-        self.component_indices_ = inds
+        self.component_indices_ = basis_inds
+        self._n_features_out = n_components
         return self
 
     def transform(self, X):

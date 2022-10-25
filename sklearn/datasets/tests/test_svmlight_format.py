@@ -5,6 +5,7 @@ import numpy as np
 import scipy.sparse as sp
 import os
 import shutil
+from importlib import resources
 from tempfile import NamedTemporaryFile
 
 import pytest
@@ -16,17 +17,26 @@ from sklearn.utils._testing import fails_if_pypy
 import sklearn
 from sklearn.datasets import load_svmlight_file, load_svmlight_files, dump_svmlight_file
 
-currdir = os.path.dirname(os.path.abspath(__file__))
-datafile = os.path.join(currdir, "data", "svmlight_classification.txt")
-multifile = os.path.join(currdir, "data", "svmlight_multilabel.txt")
-invalidfile = os.path.join(currdir, "data", "svmlight_invalid.txt")
-invalidfile2 = os.path.join(currdir, "data", "svmlight_invalid_order.txt")
+
+TEST_DATA_MODULE = "sklearn.datasets.tests.data"
+datafile = "svmlight_classification.txt"
+multifile = "svmlight_multilabel.txt"
+invalidfile = "svmlight_invalid.txt"
+invalidfile2 = "svmlight_invalid_order.txt"
 
 pytestmark = fails_if_pypy
 
 
+def _load_svmlight_local_test_file(filename, **kwargs):
+    """
+    Helper to load resource `filename` with `importlib.resources`
+    """
+    with resources.open_binary(TEST_DATA_MODULE, filename) as f:
+        return load_svmlight_file(f, **kwargs)
+
+
 def test_load_svmlight_file():
-    X, y = load_svmlight_file(datafile)
+    X, y = _load_svmlight_local_test_file(datafile)
 
     # test X's shape
     assert X.indptr.shape[0] == 7
@@ -63,39 +73,48 @@ def test_load_svmlight_file():
 
 def test_load_svmlight_file_fd():
     # test loading from file descriptor
-    X1, y1 = load_svmlight_file(datafile)
 
-    fd = os.open(datafile, os.O_RDONLY)
-    try:
-        X2, y2 = load_svmlight_file(fd)
-        assert_array_almost_equal(X1.data, X2.data)
-        assert_array_almost_equal(y1, y2)
-    finally:
-        os.close(fd)
+    # GH20081: testing equality between path-based and
+    # fd-based load_svmlight_file
+    with resources.path(TEST_DATA_MODULE, datafile) as data_path:
+        data_path = str(data_path)
+        X1, y1 = load_svmlight_file(data_path)
+
+        fd = os.open(data_path, os.O_RDONLY)
+        try:
+            X2, y2 = load_svmlight_file(fd)
+            assert_array_almost_equal(X1.data, X2.data)
+            assert_array_almost_equal(y1, y2)
+        finally:
+            os.close(fd)
 
 
 def test_load_svmlight_file_multilabel():
-    X, y = load_svmlight_file(multifile, multilabel=True)
+    X, y = _load_svmlight_local_test_file(multifile, multilabel=True)
     assert y == [(0, 1), (2,), (), (1, 2)]
 
 
 def test_load_svmlight_files():
-    X_train, y_train, X_test, y_test = load_svmlight_files(
-        [datafile] * 2, dtype=np.float32
-    )
+    with resources.path(TEST_DATA_MODULE, datafile) as data_path:
+        X_train, y_train, X_test, y_test = load_svmlight_files(
+            [str(data_path)] * 2, dtype=np.float32
+        )
     assert_array_equal(X_train.toarray(), X_test.toarray())
     assert_array_almost_equal(y_train, y_test)
     assert X_train.dtype == np.float32
     assert X_test.dtype == np.float32
 
-    X1, y1, X2, y2, X3, y3 = load_svmlight_files([datafile] * 3, dtype=np.float64)
+    with resources.path(TEST_DATA_MODULE, datafile) as data_path:
+        X1, y1, X2, y2, X3, y3 = load_svmlight_files(
+            [str(data_path)] * 3, dtype=np.float64
+        )
     assert X1.dtype == X2.dtype
     assert X2.dtype == X3.dtype
     assert X3.dtype == np.float64
 
 
 def test_load_svmlight_file_n_features():
-    X, y = load_svmlight_file(datafile, n_features=22)
+    X, y = _load_svmlight_local_test_file(datafile, n_features=22)
 
     # test X'shape
     assert X.indptr.shape[0] == 7
@@ -109,15 +128,15 @@ def test_load_svmlight_file_n_features():
 
     # 21 features in file
     with pytest.raises(ValueError):
-        load_svmlight_file(datafile, n_features=20)
+        _load_svmlight_local_test_file(datafile, n_features=20)
 
 
 def test_load_compressed():
-    X, y = load_svmlight_file(datafile)
+    X, y = _load_svmlight_local_test_file(datafile)
 
     with NamedTemporaryFile(prefix="sklearn-test", suffix=".gz") as tmp:
         tmp.close()  # necessary under windows
-        with open(datafile, "rb") as f:
+        with resources.open_binary(TEST_DATA_MODULE, datafile) as f:
             with gzip.open(tmp.name, "wb") as fh_out:
                 shutil.copyfileobj(f, fh_out)
         Xgz, ygz = load_svmlight_file(tmp.name)
@@ -129,7 +148,7 @@ def test_load_compressed():
 
     with NamedTemporaryFile(prefix="sklearn-test", suffix=".bz2") as tmp:
         tmp.close()  # necessary under windows
-        with open(datafile, "rb") as f:
+        with resources.open_binary(TEST_DATA_MODULE, datafile) as f:
             with BZ2File(tmp.name, "wb") as fh_out:
                 shutil.copyfileobj(f, fh_out)
         Xbz, ybz = load_svmlight_file(tmp.name)
@@ -142,12 +161,12 @@ def test_load_compressed():
 
 def test_load_invalid_file():
     with pytest.raises(ValueError):
-        load_svmlight_file(invalidfile)
+        _load_svmlight_local_test_file(invalidfile)
 
 
 def test_load_invalid_order_file():
     with pytest.raises(ValueError):
-        load_svmlight_file(invalidfile2)
+        _load_svmlight_local_test_file(invalidfile2)
 
 
 def test_load_zero_based():
@@ -208,7 +227,10 @@ def test_load_large_qid():
 
 def test_load_invalid_file2():
     with pytest.raises(ValueError):
-        load_svmlight_files([datafile, invalidfile, datafile])
+        with resources.path(TEST_DATA_MODULE, datafile) as data_path, resources.path(
+            TEST_DATA_MODULE, invalidfile
+        ) as invalid_path:
+            load_svmlight_files([str(data_path), str(invalid_path), str(data_path)])
 
 
 def test_not_a_filename():
@@ -224,7 +246,7 @@ def test_invalid_filename():
 
 
 def test_dump():
-    X_sparse, y_dense = load_svmlight_file(datafile)
+    X_sparse, y_dense = _load_svmlight_local_test_file(datafile)
     X_dense = X_sparse.toarray()
     y_sparse = sp.csr_matrix(y_dense)
 
@@ -338,7 +360,7 @@ def test_dump_concise():
 
 
 def test_dump_comment():
-    X, y = load_svmlight_file(datafile)
+    X, y = _load_svmlight_local_test_file(datafile)
     X = X.toarray()
 
     f = BytesIO()
@@ -371,7 +393,7 @@ def test_dump_comment():
 
 
 def test_dump_invalid():
-    X, y = load_svmlight_file(datafile)
+    X, y = _load_svmlight_local_test_file(datafile)
 
     f = BytesIO()
     y2d = [y]
@@ -385,7 +407,7 @@ def test_dump_invalid():
 
 def test_dump_query_id():
     # test dumping a file with query_id
-    X, y = load_svmlight_file(datafile)
+    X, y = _load_svmlight_local_test_file(datafile)
     X = X.toarray()
     query_id = np.arange(X.shape[0]) // 2
     f = BytesIO()
@@ -530,4 +552,29 @@ def test_load_offset_exhaustive_splits():
 
 def test_load_with_offsets_error():
     with pytest.raises(ValueError, match="n_features is required"):
-        load_svmlight_file(datafile, offset=3, length=3)
+        _load_svmlight_local_test_file(datafile, offset=3, length=3)
+
+
+def test_multilabel_y_explicit_zeros(tmp_path):
+    """
+    Ensure that if y contains explicit zeros (i.e. elements of y.data equal to
+    0) then those explicit zeros are not encoded.
+    """
+    save_path = str(tmp_path / "svm_explicit_zero")
+    rng = np.random.RandomState(42)
+    X = rng.randn(3, 5).astype(np.float64)
+    indptr = np.array([0, 2, 3, 6])
+    indices = np.array([0, 2, 2, 0, 1, 2])
+    # The first and last element are explicit zeros.
+    data = np.array([0, 1, 1, 1, 1, 0])
+    y = sp.csr_matrix((data, indices, indptr), shape=(3, 3))
+    # y as a dense array would look like
+    # [[0, 0, 1],
+    #  [0, 0, 1],
+    #  [1, 1, 0]]
+
+    dump_svmlight_file(X, y, save_path, multilabel=True)
+
+    _, y_load = load_svmlight_file(save_path, multilabel=True)
+    y_true = [(2.0,), (2.0,), (0.0, 1.0)]
+    assert y_load == y_true

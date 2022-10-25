@@ -14,7 +14,7 @@ use incomplete datasets is to discard entire rows and/or columns containing
 missing values. However, this comes at the price of losing data which may be
 valuable (even though incomplete). A better strategy is to impute the missing
 values, i.e., to infer them from the known part of the data. See the
-:ref:`glossary` entry on imputation.
+glossary entry on :term:`imputation`.
 
 
 Univariate vs. Multivariate Imputation
@@ -313,3 +313,12 @@ wrap this in a :class:`Pipeline` with a classifier (e.g., a
   >>> results = clf.predict(X_test)
   >>> results.shape
   (100,)
+
+Estimators that handle NaN values
+=================================
+
+Some estimators are designed to handle NaN values without preprocessing. 
+Below is the list of these estimators, classified by type 
+(cluster, regressor, classifier, transform) :
+
+.. allow_nan_estimators::

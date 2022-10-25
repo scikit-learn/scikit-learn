@@ -113,9 +113,9 @@ def plot_tree(
         The maximum depth of the representation. If None, the tree is fully
         generated.
 
-    feature_names : list of strings, default=None
+    feature_names : list of str, default=None
         Names of each of the features.
-        If None, generic names will be used ("X[0]", "X[1]", ...).
+        If None, generic names will be used ("x[0]", "x[1]", ...).
 
     class_names : list of str or bool, default=None
         Names of each of the target classes in ascending numerical order.
@@ -174,7 +174,6 @@ def plot_tree(
     >>> clf = clf.fit(iris.data, iris.target)
     >>> tree.plot_tree(clf)
     [...]
-
     """
 
     check_is_fitted(decision_tree)
@@ -291,7 +290,7 @@ class _BaseTreeExporter:
             if self.feature_names is not None:
                 feature = self.feature_names[tree.feature[node_id]]
             else:
-                feature = "X%s%s%s" % (
+                feature = "x%s%s%s" % (
                     characters[1],
                     tree.feature[node_id],
                     characters[2],
@@ -666,8 +665,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
         scale_x = ax_width / max_x
         scale_y = ax_height / max_y
-
-        self.recurse(draw_tree, decision_tree.tree_, ax, scale_x, scale_y, ax_height)
+        self.recurse(draw_tree, decision_tree.tree_, ax, max_x, max_y)
 
         anns = [ann for ann in ax.get_children() if isinstance(ann, Annotation)]
 
@@ -693,7 +691,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
 
         return anns
 
-    def recurse(self, node, tree, ax, scale_x, scale_y, height, depth=0):
+    def recurse(self, node, tree, ax, max_x, max_y, depth=0):
         import matplotlib.pyplot as plt
 
         kwargs = dict(
@@ -701,7 +699,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
             ha="center",
             va="center",
             zorder=100 - 10 * depth,
-            xycoords="axes points",
+            xycoords="axes fraction",
             arrowprops=self.arrow_args.copy(),
         )
         kwargs["arrowprops"]["edgecolor"] = plt.rcParams["text.color"]
@@ -710,7 +708,7 @@ class _MPLTreeExporter(_BaseTreeExporter):
             kwargs["fontsize"] = self.fontsize
 
         # offset things by .5 to center them in plot
-        xy = ((node.x + 0.5) * scale_x, height - (node.y + 0.5) * scale_y)
+        xy = ((node.x + 0.5) / max_x, (max_y - node.y - 0.5) / max_y)
 
         if self.max_depth is None or depth <= self.max_depth:
             if self.filled:
@@ -723,17 +721,17 @@ class _MPLTreeExporter(_BaseTreeExporter):
                 ax.annotate(node.tree.label, xy, **kwargs)
             else:
                 xy_parent = (
-                    (node.parent.x + 0.5) * scale_x,
-                    height - (node.parent.y + 0.5) * scale_y,
+                    (node.parent.x + 0.5) / max_x,
+                    (max_y - node.parent.y - 0.5) / max_y,
                 )
                 ax.annotate(node.tree.label, xy_parent, xy, **kwargs)
             for child in node.children:
-                self.recurse(child, tree, ax, scale_x, scale_y, height, depth=depth + 1)
+                self.recurse(child, tree, ax, max_x, max_y, depth=depth + 1)
 
         else:
             xy_parent = (
-                (node.parent.x + 0.5) * scale_x,
-                height - (node.parent.y + 0.5) * scale_y,
+                (node.parent.x + 0.5) / max_x,
+                (max_y - node.parent.y - 0.5) / max_y,
             )
             kwargs["bbox"]["fc"] = "grey"
             ax.annotate("\n  (...)  \n", xy_parent, xy, **kwargs)
@@ -790,7 +788,7 @@ def export_graphviz(
 
     feature_names : list of str, default=None
         Names of each of the features.
-        If None generic names will be used ("feature_0", "feature_1", ...).
+        If None, generic names will be used ("x[0]", "x[1]", ...).
 
     class_names : list of str or bool, default=None
         Names of each of the target classes in ascending numerical order.
@@ -839,7 +837,7 @@ def export_graphviz(
 
     Returns
     -------
-    dot_data : string
+    dot_data : str
         String representation of the input tree in GraphViz dot format.
         Only returned if ``out_file`` is None.
 
@@ -961,7 +959,7 @@ def export_text(
 
     Returns
     -------
-    report : string
+    report : str
         Text summary of all the rules in the decision tree.
 
     Examples

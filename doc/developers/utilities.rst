@@ -153,6 +153,11 @@ efficiently process ``scipy.sparse`` data.
   Used for scaling features to unit standard deviation in
   :class:`~sklearn.preprocessing.StandardScaler`.
 
+- :func:`~sklearn.neighbors.sort_graph_by_row_values`: can be used to sort a
+  CSR sparse matrix such that each row is stored with increasing values. This
+  is useful to improve efficiency when using precomputed sparse distance
+  matrices in estimators relying on nearest neighbors graph.
+
 
 Graph Routines
 ==============
@@ -165,18 +170,17 @@ Graph Routines
   If this is ever needed again, it would be far faster to use a single
   iteration of Dijkstra's algorithm from ``graph_shortest_path``.
 
-- :func:`graph_shortest_path.graph_shortest_path`:
-  (used in :class:`~sklearn.manifold.Isomap`)
-  Return the shortest path between all pairs of connected points on a directed
-  or undirected graph.  Both the Floyd-Warshall algorithm and Dijkstra's
-  algorithm are available.  The algorithm is most efficient when the
-  connectivity matrix is a ``scipy.sparse.csr_matrix``.
-
 
 Testing Functions
 =================
 
-- :func:`all_estimators` : returns a list of all estimators in
+- :func:`discovery.all_estimators` : returns a list of all estimators in
+  scikit-learn to test for consistent behavior and interfaces.
+
+- :func:`discovery.all_displays` : returns a list of all displays (related to
+  plotting API) in scikit-learn to test for consistent behavior and interfaces.
+
+- :func:`discovery.all_functions` : returns a list all functions in
   scikit-learn to test for consistent behavior and interfaces.
 
 Multiclass and multilabel utility function
@@ -196,7 +200,7 @@ Helper Functions
   to ``n``.  Used in :func:`~sklearn.decomposition.dict_learning` and
   :func:`~sklearn.cluster.k_means`.
 
-- :class:`gen_batches`: generator to create slices containing batch size elements 
+- :class:`gen_batches`: generator to create slices containing batch size elements
   from 0 to ``n``
 
 - :func:`safe_mask`: Helper function to convert a mask to the format expected

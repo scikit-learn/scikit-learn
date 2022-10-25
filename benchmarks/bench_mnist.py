@@ -6,7 +6,7 @@ MNIST dataset benchmark
 Benchmark on the MNIST dataset.  The dataset comprises 70,000 samples
 and 784 features. Here, we consider the task of predicting
 10 classes -  digits from 0 to 9 from their raw images. By contrast to the
-covertype dataset, the feature space is homogenous.
+covertype dataset, the feature space is homogeneous.
 
 Example of output :
     [..]
@@ -62,7 +62,7 @@ def load_data(dtype=np.float32, order="F"):
     ######################################################################
     # Load dataset
     print("Loading dataset...")
-    data = fetch_openml("mnist_784")
+    data = fetch_openml("mnist_784", as_frame=True, parser="pandas")
     X = check_array(data["data"], dtype=dtype, order=order)
     y = data["target"]
 

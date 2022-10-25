@@ -6,7 +6,7 @@ import itertools
 import numpy as np
 import pytest
 
-from sklearn.neighbors import DistanceMetric
+from sklearn.metrics import DistanceMetric
 from sklearn.neighbors._ball_tree import (
     BallTree,
     kernel_norm,
@@ -233,6 +233,8 @@ def test_gaussian_kde(Cls, n_samples=1000):
         assert_array_almost_equal(dens_tree, dens_gkde, decimal=3)
 
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "Cls, metric",
     itertools.chain(

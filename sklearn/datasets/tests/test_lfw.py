@@ -15,12 +15,10 @@ import tempfile
 import numpy as np
 import pytest
 from functools import partial
-from sklearn.externals._pilutil import pillow_installed, imsave
 from sklearn.datasets import fetch_lfw_pairs
 from sklearn.datasets import fetch_lfw_people
 
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import SkipTest
 from sklearn.datasets.tests.test_common import check_return_X_y
 
 
@@ -41,8 +39,7 @@ FAKE_NAMES = [
 
 def setup_module():
     """Test fixture run once and common to all tests of this module"""
-    if not pillow_installed:
-        raise SkipTest("PIL not installed.")
+    Image = pytest.importorskip("PIL.Image")
 
     global SCIKIT_LEARN_DATA, SCIKIT_LEARN_EMPTY_DATA, LFW_HOME
 
@@ -69,10 +66,8 @@ def setup_module():
         for i in range(n_faces):
             file_path = os.path.join(folder_name, name + "_%04d.jpg" % i)
             uniface = np_rng.randint(0, 255, size=(250, 250, 3))
-            try:
-                imsave(file_path, uniface)
-            except ImportError:
-                raise SkipTest("PIL not installed")
+            img = Image.fromarray(uniface.astype(np.uint8))
+            img.save(file_path)
 
     # add some random file pollution to test robustness
     with open(os.path.join(LFW_HOME, "lfw_funneled", ".test.swp"), "wb") as f:
@@ -145,6 +140,7 @@ def test_load_fake_lfw_people():
         download_if_missing=False,
     )
     assert lfw_people.images.shape == (17, 250, 250, 3)
+    assert lfw_people.DESCR.startswith(".. _labeled_faces_in_the_wild_dataset:")
 
     # the ids and class names are the same as previously
     assert_array_equal(
@@ -219,3 +215,5 @@ def test_load_fake_lfw_pairs():
     # the ids and class names are the same as previously
     assert_array_equal(lfw_pairs_train.target, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
     assert_array_equal(lfw_pairs_train.target_names, expected_classes)
+
+    assert lfw_pairs_train.DESCR.startswith(".. _labeled_faces_in_the_wild_dataset:")

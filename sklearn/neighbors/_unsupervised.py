@@ -39,15 +39,24 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
         nature of the problem.
 
     metric : str or callable, default='minkowski'
-        The distance metric to use for the tree.  The default metric is
-        minkowski, and with p=2 is equivalent to the standard Euclidean
-        metric. See the documentation of :class:`DistanceMetric` for a
-        list of available metrics.
-        If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square during fit. X may be a :term:`sparse graph`,
-        in which case only "nonzero" elements may be considered neighbors.
+        Metric to use for distance computation. Default is "minkowski", which
+        results in the standard Euclidean distance when p = 2. See the
+        documentation of `scipy.spatial.distance
+        <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
+        the metrics listed in
+        :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
+        values.
 
-    p : int, default=2
+        If metric is "precomputed", X is assumed to be a distance matrix and
+        must be square during fit. X may be a :term:`sparse graph`, in which
+        case only "nonzero" elements may be considered neighbors.
+
+        If metric is a callable function, it takes two arrays representing 1D
+        vectors as inputs and must return one value indicating the distance
+        between those vectors. This works for Scipy's metrics, but is less
+        efficient than passing the metric name as a string.
+
+    p : float, default=2
         Parameter for the Minkowski metric from
         sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
@@ -74,6 +83,12 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     n_samples_fit_ : int
         Number of samples in the fitted data.
@@ -157,4 +172,5 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
         self : NearestNeighbors
             The fitted nearest neighbors estimator.
         """
+        self._validate_params()
         return self._fit(X)

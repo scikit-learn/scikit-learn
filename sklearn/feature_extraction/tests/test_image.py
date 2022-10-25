@@ -3,11 +3,11 @@
 # License: BSD 3 clause
 
 import numpy as np
-import scipy as sp
 from scipy import ndimage
 from scipy.sparse.csgraph import connected_components
 import pytest
 
+from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.feature_extraction.image import (
     img_to_graph,
     grid_to_graph,
@@ -16,7 +16,17 @@ from sklearn.feature_extraction.image import (
     PatchExtractor,
     _extract_patches,
 )
-from sklearn.utils._testing import ignore_warnings
+
+
+@pytest.fixture(scope="module")
+def raccoon_face():
+    if sp_version.release >= parse_version("1.10").release:
+        pytest.importorskip("pooch")
+        from scipy.datasets import face
+    else:
+        from scipy.misc import face
+
+    return face(gray=True)
 
 
 def test_img_to_graph():
@@ -32,6 +42,21 @@ def test_img_to_graph():
     )
 
 
+def test_img_to_graph_sparse():
+    # Check that the edges are in the right position
+    #  when using a sparse image with a singleton component
+    mask = np.zeros((2, 3), dtype=bool)
+    mask[0, 0] = 1
+    mask[:, 2] = 1
+    x = np.zeros((2, 3))
+    x[0, 0] = 1
+    x[0, 2] = -1
+    x[1, 2] = -2
+    grad_x = img_to_graph(x, mask=mask).todense()
+    desired = np.array([[1, 0, 0], [0, -1, 1], [0, 1, -2]])
+    np.testing.assert_array_equal(grad_x, desired)
+
+
 def test_grid_to_graph():
     # Checking that the function works with graphs containing no edges
     size = 2
@@ -41,9 +66,17 @@ def test_grid_to_graph():
     mask = np.zeros((size, size), dtype=bool)
     mask[0:roi_size, 0:roi_size] = True
     mask[-roi_size:, -roi_size:] = True
-    mask = mask.reshape(size ** 2)
+    mask = mask.reshape(size**2)
     A = grid_to_graph(n_x=size, n_y=size, mask=mask, return_as=np.ndarray)
     assert connected_components(A)[0] == 2
+
+    # check ordering
+    mask = np.zeros((2, 3), dtype=bool)
+    mask[0, 0] = 1
+    mask[:, 2] = 1
+    graph = grid_to_graph(2, 3, 1, mask=mask.ravel()).todense()
+    desired = np.array([[1, 0, 0], [0, 1, 1], [0, 1, 1]])
+    np.testing.assert_array_equal(graph, desired)
 
     # Checking that the function works whatever the type of mask is
     mask = np.ones((size, size), dtype=np.int16)
@@ -60,15 +93,8 @@ def test_grid_to_graph():
     assert A.dtype == np.float64
 
 
-@ignore_warnings(category=DeprecationWarning)  # scipy deprecation inside face
-def test_connect_regions():
-    try:
-        face = sp.face(gray=True)
-    except AttributeError:
-        # Newer versions of scipy have face in misc
-        from scipy import misc
-
-        face = misc.face(gray=True)
+def test_connect_regions(raccoon_face):
+    face = raccoon_face.copy()
     # subsample by 4 to reduce run time
     face = face[::4, ::4]
     for thr in (50, 150):
@@ -77,15 +103,8 @@ def test_connect_regions():
         assert ndimage.label(mask)[1] == connected_components(graph)[0]
 
 
-@ignore_warnings(category=DeprecationWarning)  # scipy deprecation inside face
-def test_connect_regions_with_grid():
-    try:
-        face = sp.face(gray=True)
-    except AttributeError:
-        # Newer versions of scipy have face in misc
-        from scipy import misc
-
-        face = misc.face(gray=True)
+def test_connect_regions_with_grid(raccoon_face):
+    face = raccoon_face.copy()
 
     # subsample by 4 to reduce run time
     face = face[::4, ::4]
@@ -100,13 +119,13 @@ def test_connect_regions_with_grid():
 
 
 def _downsampled_face():
-    try:
-        face = sp.face(gray=True)
-    except AttributeError:
-        # Newer versions of scipy have face in misc
-        from scipy import misc
+    if sp_version.release >= parse_version("1.10").release:
+        pytest.importorskip("pooch")
+        from scipy.datasets import face as raccoon_face
+    else:
+        from scipy.misc import face as raccoon_face
 
-        face = misc.face(gray=True)
+    face = raccoon_face(gray=True)
     face = face.astype(np.float32)
     face = face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2]
     face = face[::2, ::2] + face[1::2, ::2] + face[::2, 1::2] + face[1::2, 1::2]
@@ -309,7 +328,7 @@ def test_extract_patches_strided():
     expected_views = expected_views_1D + expected_views_2D + expected_views_3D
     last_patches = last_patch_1D + last_patch_2D + last_patch_3D
 
-    for (image_shape, patch_size, patch_step, expected_view, last_patch) in zip(
+    for image_shape, patch_size, patch_step, expected_view, last_patch in zip(
         image_shapes, patch_sizes, patch_steps, expected_views, last_patches
     ):
         image = np.arange(np.prod(image_shape)).reshape(image_shape)

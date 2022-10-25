@@ -5,6 +5,8 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
 # License: BSD 3 clause
 
+from numbers import Integral, Real
+
 import warnings
 from abc import ABCMeta, abstractmethod
 
@@ -13,13 +15,14 @@ from scipy.linalg import svd
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
 from ..base import MultiOutputMixin
+from ..base import ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_consistent_length
 from ..utils.fixes import sp_version
 from ..utils.fixes import parse_version
 from ..utils.extmath import svd_flip
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES
+from ..utils._param_validation import Interval, StrOptions
 from ..exceptions import ConvergenceWarning
-from ..utils.deprecation import deprecated
 
 __all__ = ["PLSCanonical", "PLSRegression", "PLSSVD"]
 
@@ -156,7 +159,12 @@ def _svd_flip_1d(u, v):
 
 
 class _PLS(
-    TransformerMixin, RegressorMixin, MultiOutputMixin, BaseEstimator, metaclass=ABCMeta
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    RegressorMixin,
+    MultiOutputMixin,
+    BaseEstimator,
+    metaclass=ABCMeta,
 ):
     """Partial Least Squares (PLS)
 
@@ -164,8 +172,19 @@ class _PLS(
 
     Main ref: Wegelin, a survey of Partial Least Squares (PLS) methods,
     with emphasis on the two-block case
-    https://www.stat.washington.edu/research/reports/2000/tr371.pdf
+    https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf
     """
+
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "scale": ["boolean"],
+        "deflation_mode": [StrOptions({"regression", "canonical"})],
+        "mode": [StrOptions({"A", "B"})],
+        "algorithm": [StrOptions({"svd", "nipals"})],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "copy": ["boolean"],
+    }
 
     @abstractmethod
     def __init__(
@@ -207,12 +226,15 @@ class _PLS(
         self : object
             Fitted model.
         """
+        self._validate_params()
 
         check_consistent_length(X, Y)
         X = self._validate_data(
             X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
         )
-        Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
+        Y = check_array(
+            Y, input_name="Y", dtype=np.float64, copy=self.copy, ensure_2d=False
+        )
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
 
@@ -221,41 +243,14 @@ class _PLS(
         q = Y.shape[1]
 
         n_components = self.n_components
-        if self.deflation_mode == "regression":
-            # With PLSRegression n_components is bounded by the rank of (X.T X)
-            # see Wegelin page 25
-            rank_upper_bound = p
-            if not 1 <= n_components <= rank_upper_bound:
-                # TODO: raise an error in 1.1
-                warnings.warn(
-                    f"As of version 0.24, n_components({n_components}) should "
-                    "be in [1, n_features]."
-                    f"n_components={rank_upper_bound} will be used instead. "
-                    "In version 1.1 (renaming of 0.26), an error will be "
-                    "raised.",
-                    FutureWarning,
-                )
-                n_components = rank_upper_bound
-        else:
-            # With CCA and PLSCanonical, n_components is bounded by the rank of
-            # X and the rank of Y: see Wegelin page 12
-            rank_upper_bound = min(n, p, q)
-            if not 1 <= self.n_components <= rank_upper_bound:
-                # TODO: raise an error in 1.1
-                warnings.warn(
-                    f"As of version 0.24, n_components({n_components}) should "
-                    "be in [1, min(n_features, n_samples, n_targets)] = "
-                    f"[1, {rank_upper_bound}]. "
-                    f"n_components={rank_upper_bound} will be used instead. "
-                    "In version 1.1 (renaming of 0.26), an error will be "
-                    "raised.",
-                    FutureWarning,
-                )
-                n_components = rank_upper_bound
-
-        if self.algorithm not in ("svd", "nipals"):
+        # With PLSRegression n_components is bounded by the rank of (X.T X) see
+        # Wegelin page 25. With CCA and PLSCanonical, n_components is bounded
+        # by the rank of X and the rank of Y: see Wegelin page 12
+        rank_upper_bound = p if self.deflation_mode == "regression" else min(n, p, q)
+        if n_components > rank_upper_bound:
             raise ValueError(
-                f"algorithm should be 'svd' or 'nipals', got {self.algorithm}."
+                f"`n_components` upper bound is {rank_upper_bound}. "
+                f"Got {n_components} instead. Reduce `n_components`."
             )
 
         self._norm_y_weights = self.deflation_mode == "canonical"  # 1.1
@@ -345,7 +340,7 @@ class _PLS(
         # Xi . Gamma.T is a sum of n_components rank-1 matrices. X_(R+1) is
         # whatever is left to fully reconstruct X, and can be 0 if X is of rank
         # n_components.
-        # Similiarly, Y was approximated as Omega . Delta.T + Y_(R+1)
+        # Similarly, Y was approximated as Omega . Delta.T + Y_(R+1)
 
         # Compute transformation matrices (rotations_). See User Guide.
         self.x_rotations_ = np.dot(
@@ -356,9 +351,11 @@ class _PLS(
             self.y_weights_,
             pinv2(np.dot(self.y_loadings_.T, self.y_weights_), check_finite=False),
         )
-
-        self.coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
-        self.coef_ = self.coef_ * self._y_std
+        # TODO(1.3): change `self._coef_` to `self.coef_`
+        self._coef_ = np.dot(self.x_rotations_, self.y_loadings_.T)
+        self._coef_ = (self._coef_ * self._y_std).T
+        self.intercept_ = self._y_mean
+        self._n_features_out = self.x_rotations_.shape[1]
         return self
 
     def transform(self, X, Y=None, copy=True):
@@ -388,7 +385,9 @@ class _PLS(
         # Apply rotation
         x_scores = np.dot(X, self.x_rotations_)
         if Y is not None:
-            Y = check_array(Y, ensure_2d=False, copy=copy, dtype=FLOAT_DTYPES)
+            Y = check_array(
+                Y, input_name="Y", ensure_2d=False, copy=copy, dtype=FLOAT_DTYPES
+            )
             if Y.ndim == 1:
                 Y = Y.reshape(-1, 1)
             Y -= self._y_mean
@@ -398,7 +397,7 @@ class _PLS(
 
         return x_scores
 
-    def inverse_transform(self, X):
+    def inverse_transform(self, X, Y=None):
         """Transform data back to its original space.
 
         Parameters
@@ -407,23 +406,39 @@ class _PLS(
             New data, where `n_samples` is the number of samples
             and `n_components` is the number of pls components.
 
+        Y : array-like of shape (n_samples, n_components)
+            New target, where `n_samples` is the number of samples
+            and `n_components` is the number of pls components.
+
         Returns
         -------
-        self : ndarray of shape (n_samples, n_features)
-            Return the reconstructed array.
+        X_reconstructed : ndarray of shape (n_samples, n_features)
+            Return the reconstructed `X` data.
+
+        Y_reconstructed : ndarray of shape (n_samples, n_targets)
+            Return the reconstructed `X` target. Only returned when `Y` is given.
 
         Notes
         -----
         This transformation will only be exact if `n_components=n_features`.
         """
         check_is_fitted(self)
-        X = check_array(X, dtype=FLOAT_DTYPES)
+        X = check_array(X, input_name="X", dtype=FLOAT_DTYPES)
         # From pls space to original space
         X_reconstructed = np.matmul(X, self.x_loadings_.T)
-
         # Denormalize
         X_reconstructed *= self._x_std
         X_reconstructed += self._x_mean
+
+        if Y is not None:
+            Y = check_array(Y, input_name="Y", dtype=FLOAT_DTYPES)
+            # From pls space to original space
+            Y_reconstructed = np.matmul(Y, self.y_loadings_.T)
+            # Denormalize
+            Y_reconstructed *= self._y_std
+            Y_reconstructed += self._y_mean
+            return X_reconstructed, Y_reconstructed
+
         return X_reconstructed
 
     def predict(self, X, copy=True):
@@ -453,8 +468,9 @@ class _PLS(
         # Normalize
         X -= self._x_mean
         X /= self._x_std
-        Ypred = np.dot(X, self.coef_)
-        return Ypred + self._y_mean
+        # TODO(1.3): change `self._coef_` to `self.coef_`
+        Ypred = X @ self._coef_.T
+        return Ypred + self.intercept_
 
     def fit_transform(self, X, y=None):
         """Learn and apply the dimension reduction on the train data.
@@ -462,12 +478,12 @@ class _PLS(
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vectors, where n_samples is the number of samples and
-            n_features is the number of predictors.
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of predictors.
 
         y : array-like of shape (n_samples, n_targets), default=None
-            Target vectors, where n_samples is the number of samples and
-            n_targets is the number of response variables.
+            Target vectors, where `n_samples` is the number of samples and
+            `n_targets` is the number of response variables.
 
         Returns
         -------
@@ -476,80 +492,32 @@ class _PLS(
         """
         return self.fit(X, y).transform(X, y)
 
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `norm_y_weights` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26)."
-    )
     @property
-    def norm_y_weights(self):
-        return self._norm_y_weights
-
-    @deprecated(  # type: ignore
-        "Attribute `x_mean_` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def x_mean_(self):
-        return self._x_mean
-
-    @deprecated(  # type: ignore
-        "Attribute `y_mean_` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def y_mean_(self):
-        return self._y_mean
-
-    @deprecated(  # type: ignore
-        "Attribute `x_std_` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def x_std_(self):
-        return self._x_std
-
-    @deprecated(  # type: ignore
-        "Attribute `y_std_` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def y_std_(self):
-        return self._y_std
-
-    @property
-    def x_scores_(self):
-        """Attribute `x_scores_` was deprecated in version 0.24."""
-        # TODO: raise error in 1.1 instead
-        if not isinstance(self, PLSRegression):
-            pass
+    def coef_(self):
+        """The coefficients of the linear model."""
+        # TODO(1.3): remove and change `self._coef_` to `self.coef_`
+        #            remove catch warnings from `_get_feature_importances`
+        #            delete self._coef_no_warning
+        #            update the docstring of `coef_` and `intercept_` attribute
+        if hasattr(self, "_coef_") and getattr(self, "_coef_warning", True):
             warnings.warn(
-                "Attribute `x_scores_` was deprecated in version 0.24 and "
-                "will be removed in 1.1 (renaming of 0.26). Use "
-                "est.transform(X) on the training data instead.",
+                "The attribute `coef_` will be transposed in version 1.3 to be "
+                "consistent with other linear models in scikit-learn. Currently, "
+                "`coef_` has a shape of (n_features, n_targets) and in the future it "
+                "will have a shape of (n_targets, n_features).",
                 FutureWarning,
             )
-        return self._x_scores
+            # Only warn the first time
+            self._coef_warning = False
 
-    @property
-    def y_scores_(self):
-        """Attribute `y_scores_` was deprecated in version 0.24."""
-        # TODO: raise error in 1.1 instead
-        if not isinstance(self, PLSRegression):
-            warnings.warn(
-                "Attribute `y_scores_` was deprecated in version 0.24 and "
-                "will be removed in 1.1 (renaming of 0.26). Use "
-                "est.transform(X) on the training data instead.",
-                FutureWarning,
-            )
-        return self._y_scores
+        return self._coef_.T
 
     def _more_tags(self):
         return {"poor_score": True, "requires_y": False}
 
 
 class PLSRegression(_PLS):
-    """PLS regression
+    """PLS regression.
 
     PLSRegression is also known as PLS2 or PLS1, depending on the number of
     targets.
@@ -566,6 +534,156 @@ class PLSRegression(_PLS):
 
     scale : bool, default=True
         Whether to scale `X` and `Y`.
+
+    max_iter : int, default=500
+        The maximum number of iterations of the power method when
+        `algorithm='nipals'`. Ignored otherwise.
+
+    tol : float, default=1e-06
+        The tolerance used as convergence criteria in the power method: the
+        algorithm stops whenever the squared norm of `u_i - u_{i-1}` is less
+        than `tol`, where `u` corresponds to the left singular vector.
+
+    copy : bool, default=True
+        Whether to copy `X` and `Y` in :term:`fit` before applying centering,
+        and potentially scaling. If `False`, these operations will be done
+        inplace, modifying both arrays.
+
+    Attributes
+    ----------
+    x_weights_ : ndarray of shape (n_features, n_components)
+        The left singular vectors of the cross-covariance matrices of each
+        iteration.
+
+    y_weights_ : ndarray of shape (n_targets, n_components)
+        The right singular vectors of the cross-covariance matrices of each
+        iteration.
+
+    x_loadings_ : ndarray of shape (n_features, n_components)
+        The loadings of `X`.
+
+    y_loadings_ : ndarray of shape (n_targets, n_components)
+        The loadings of `Y`.
+
+    x_scores_ : ndarray of shape (n_samples, n_components)
+        The transformed training samples.
+
+    y_scores_ : ndarray of shape (n_samples, n_components)
+        The transformed training targets.
+
+    x_rotations_ : ndarray of shape (n_features, n_components)
+        The projection matrix used to transform `X`.
+
+    y_rotations_ : ndarray of shape (n_features, n_components)
+        The projection matrix used to transform `Y`.
+
+    coef_ : ndarray of shape (n_features, n_targets)
+        The coefficients of the linear model such that `Y` is approximated as
+        `Y = X @ coef_ + intercept_`.
+
+    intercept_ : ndarray of shape (n_targets,)
+        The intercepts of the linear model such that `Y` is approximated as
+        `Y = X @ coef_ + intercept_`.
+
+        .. versionadded:: 1.1
+
+    n_iter_ : list of shape (n_components,)
+        Number of iterations of the power method, for each
+        component.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    PLSCanonical : Partial Least Squares transformer and regressor.
+
+    Examples
+    --------
+    >>> from sklearn.cross_decomposition import PLSRegression
+    >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
+    >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
+    >>> pls2 = PLSRegression(n_components=2)
+    >>> pls2.fit(X, Y)
+    PLSRegression()
+    >>> Y_pred = pls2.predict(X)
+    """
+
+    _parameter_constraints: dict = {**_PLS._parameter_constraints}
+    for param in ("deflation_mode", "mode", "algorithm"):
+        _parameter_constraints.pop(param)
+
+    # This implementation provides the same results that 3 PLS packages
+    # provided in the R language (R-project):
+    #     - "mixOmics" with function pls(X, Y, mode = "regression")
+    #     - "plspm " with function plsreg2(X, Y)
+    #     - "pls" with function oscorespls.fit(X, Y)
+
+    def __init__(
+        self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True
+    ):
+        super().__init__(
+            n_components=n_components,
+            scale=scale,
+            deflation_mode="regression",
+            mode="A",
+            algorithm="nipals",
+            max_iter=max_iter,
+            tol=tol,
+            copy=copy,
+        )
+
+    def fit(self, X, Y):
+        """Fit model to data.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of predictors.
+
+        Y : array-like of shape (n_samples,) or (n_samples, n_targets)
+            Target vectors, where `n_samples` is the number of samples and
+            `n_targets` is the number of response variables.
+
+        Returns
+        -------
+        self : object
+            Fitted model.
+        """
+        super().fit(X, Y)
+        # expose the fitted attributes `x_scores_` and `y_scores_`
+        self.x_scores_ = self._x_scores
+        self.y_scores_ = self._y_scores
+        return self
+
+
+class PLSCanonical(_PLS):
+    """Partial Least Squares transformer and regressor.
+
+    Read more in the :ref:`User Guide <cross_decomposition>`.
+
+    .. versionadded:: 0.8
+
+    Parameters
+    ----------
+    n_components : int, default=2
+        Number of components to keep. Should be in `[1, min(n_samples,
+        n_features, n_targets)]`.
+
+    scale : bool, default=True
+        Whether to scale `X` and `Y`.
+
+    algorithm : {'nipals', 'svd'}, default='nipals'
+        The algorithm used to estimate the first singular vectors of the
+        cross-covariance matrix. 'nipals' uses the power method while 'svd'
+        will compute the whole SVD.
 
     max_iter : int, default=500
         The maximum number of iterations of the power method when
@@ -597,12 +715,6 @@ class PLSRegression(_PLS):
     y_loadings_ : ndarray of shape (n_targets, n_components)
         The loadings of `Y`.
 
-    x_scores_ : ndarray of shape (n_samples, n_components)
-        The transformed training samples.
-
-    y_scores_ : ndarray of shape (n_samples, n_components)
-        The transformed training targets.
-
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
 
@@ -611,123 +723,13 @@ class PLSRegression(_PLS):
 
     coef_ : ndarray of shape (n_features, n_targets)
         The coefficients of the linear model such that `Y` is approximated as
-        `Y = X @ coef_`.
+        `Y = X @ coef_ + intercept_`.
 
-    n_iter_ : list of shape (n_components,)
-        Number of iterations of the power method, for each
-        component.
+    intercept_ : ndarray of shape (n_targets,)
+        The intercepts of the linear model such that `Y` is approximated as
+        `Y = X @ coef_ + intercept_`.
 
-    n_features_in_ : int
-        Number of features seen during :term:`fit`.
-
-    Examples
-    --------
-    >>> from sklearn.cross_decomposition import PLSRegression
-    >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
-    >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
-    >>> pls2 = PLSRegression(n_components=2)
-    >>> pls2.fit(X, Y)
-    PLSRegression()
-    >>> Y_pred = pls2.predict(X)
-    """
-
-    # This implementation provides the same results that 3 PLS packages
-    # provided in the R language (R-project):
-    #     - "mixOmics" with function pls(X, Y, mode = "regression")
-    #     - "plspm " with function plsreg2(X, Y)
-    #     - "pls" with function oscorespls.fit(X, Y)
-
-    def __init__(
-        self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True
-    ):
-        super().__init__(
-            n_components=n_components,
-            scale=scale,
-            deflation_mode="regression",
-            mode="A",
-            algorithm="nipals",
-            max_iter=max_iter,
-            tol=tol,
-            copy=copy,
-        )
-
-
-class PLSCanonical(_PLS):
-    """Partial Least Squares transformer and regressor.
-
-    Read more in the :ref:`User Guide <cross_decomposition>`.
-
-    .. versionadded:: 0.8
-
-    Parameters
-    ----------
-    n_components : int, default=2
-        Number of components to keep. Should be in `[1, min(n_samples,
-        n_features, n_targets)]`.
-
-    scale : bool, default=True
-        Whether to scale `X` and `Y`.
-
-    algorithm : {'nipals', 'svd'}, default='nipals'
-        The algorithm used to estimate the first singular vectors of the
-        cross-covariance matrix. 'nipals' uses the power method while 'svd'
-        will compute the whole SVD.
-
-    max_iter : int, default=500
-        the maximum number of iterations of the power method when
-        `algorithm='nipals'`. Ignored otherwise.
-
-    tol : float, default=1e-06
-        The tolerance used as convergence criteria in the power method: the
-        algorithm stops whenever the squared norm of `u_i - u_{i-1}` is less
-        than `tol`, where `u` corresponds to the left singular vector.
-
-    copy : bool, default=True
-        Whether to copy `X` and `Y` in fit before applying centering, and
-        potentially scaling. If False, these operations will be done inplace,
-        modifying both arrays.
-
-    Attributes
-    ----------
-    x_weights_ : ndarray of shape (n_features, n_components)
-        The left singular vectors of the cross-covariance matrices of each
-        iteration.
-
-    y_weights_ : ndarray of shape (n_targets, n_components)
-        The right singular vectors of the cross-covariance matrices of each
-        iteration.
-
-    x_loadings_ : ndarray of shape (n_features, n_components)
-        The loadings of `X`.
-
-    y_loadings_ : ndarray of shape (n_targets, n_components)
-        The loadings of `Y`.
-
-    x_scores_ : ndarray of shape (n_samples, n_components)
-        The transformed training samples.
-
-        .. deprecated:: 0.24
-           `x_scores_` is deprecated in 0.24 and will be removed in 1.1
-           (renaming of 0.26). You can just call `transform` on the training
-           data instead.
-
-    y_scores_ : ndarray of shape (n_samples, n_components)
-        The transformed training targets.
-
-        .. deprecated:: 0.24
-           `y_scores_` is deprecated in 0.24 and will be removed in 1.1
-           (renaming of 0.26). You can just call `transform` on the training
-           data instead.
-
-    x_rotations_ : ndarray of shape (n_features, n_components)
-        The projection matrix used to transform `X`.
-
-    y_rotations_ : ndarray of shape (n_features, n_components)
-        The projection matrix used to transform `Y`.
-
-    coef_ : ndarray of shape (n_features, n_targets)
-        The coefficients of the linear model such that `Y` is approximated as
-        `Y = X @ coef_`.
+        .. versionadded:: 1.1
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
@@ -735,6 +737,17 @@ class PLSCanonical(_PLS):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    CCA : Canonical Correlation Analysis.
+    PLSSVD : Partial Least Square SVD.
 
     Examples
     --------
@@ -745,12 +758,11 @@ class PLSCanonical(_PLS):
     >>> plsca.fit(X, Y)
     PLSCanonical()
     >>> X_c, Y_c = plsca.transform(X, Y)
-
-    See Also
-    --------
-    CCA
-    PLSSVD
     """
+
+    _parameter_constraints: dict = {**_PLS._parameter_constraints}
+    for param in ("deflation_mode", "mode"):
+        _parameter_constraints.pop(param)
 
     # This implementation provides the same results that the "plspm" package
     # provided in the R language (R-project), using the function plsca(X, Y).
@@ -825,22 +837,6 @@ class CCA(_PLS):
     y_loadings_ : ndarray of shape (n_targets, n_components)
         The loadings of `Y`.
 
-    x_scores_ : ndarray of shape (n_samples, n_components)
-        The transformed training samples.
-
-        .. deprecated:: 0.24
-           `x_scores_` is deprecated in 0.24 and will be removed in 1.1
-           (renaming of 0.26). You can just call `transform` on the training
-           data instead.
-
-    y_scores_ : ndarray of shape (n_samples, n_components)
-        The transformed training targets.
-
-        .. deprecated:: 0.24
-           `y_scores_` is deprecated in 0.24 and will be removed in 1.1
-           (renaming of 0.26). You can just call `transform` on the training
-           data instead.
-
     x_rotations_ : ndarray of shape (n_features, n_components)
         The projection matrix used to transform `X`.
 
@@ -849,7 +845,13 @@ class CCA(_PLS):
 
     coef_ : ndarray of shape (n_features, n_targets)
         The coefficients of the linear model such that `Y` is approximated as
-        `Y = X @ coef_`.
+        `Y = X @ coef_ + intercept_`.
+
+    intercept_ : ndarray of shape (n_targets,)
+        The intercepts of the linear model such that `Y` is approximated as
+        `Y = X @ coef_ + intercept_`.
+
+        .. versionadded:: 1.1
 
     n_iter_ : list of shape (n_components,)
         Number of iterations of the power method, for each
@@ -857,6 +859,12 @@ class CCA(_PLS):
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -874,6 +882,10 @@ class CCA(_PLS):
     >>> X_c, Y_c = cca.transform(X, Y)
     """
 
+    _parameter_constraints: dict = {**_PLS._parameter_constraints}
+    for param in ("deflation_mode", "mode", "algorithm"):
+        _parameter_constraints.pop(param)
+
     def __init__(
         self, n_components=2, *, scale=True, max_iter=500, tol=1e-06, copy=True
     ):
@@ -889,13 +901,13 @@ class CCA(_PLS):
         )
 
 
-class PLSSVD(TransformerMixin, BaseEstimator):
+class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Partial Least Square SVD.
 
-    This transformer simply performs a SVD on the crosscovariance matrix X'Y.
-    It is able to project both the training data `X` and the targets `Y`. The
-    training data X is projected on the left singular vectors, while the
-    targets are projected on the right singular vectors.
+    This transformer simply performs a SVD on the cross-covariance matrix
+    `X'Y`. It is able to project both the training data `X` and the targets
+    `Y`. The training data `X` is projected on the left singular vectors, while
+    the targets are projected on the right singular vectors.
 
     Read more in the :ref:`User Guide <cross_decomposition>`.
 
@@ -912,37 +924,32 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
     copy : bool, default=True
         Whether to copy `X` and `Y` in fit before applying centering, and
-        potentially scaling. If False, these operations will be done inplace,
+        potentially scaling. If `False`, these operations will be done inplace,
         modifying both arrays.
 
     Attributes
     ----------
     x_weights_ : ndarray of shape (n_features, n_components)
         The left singular vectors of the SVD of the cross-covariance matrix.
-        Used to project `X` in `transform`.
+        Used to project `X` in :meth:`transform`.
 
     y_weights_ : ndarray of (n_targets, n_components)
         The right singular vectors of the SVD of the cross-covariance matrix.
-        Used to project `X` in `transform`.
-
-    x_scores_ : ndarray of shape (n_samples, n_components)
-        The transformed training samples.
-
-        .. deprecated:: 0.24
-           `x_scores_` is deprecated in 0.24 and will be removed in 1.1
-           (renaming of 0.26). You can just call `transform` on the training
-           data instead.
-
-    y_scores_ : ndarray of shape (n_samples, n_components)
-        The transformed training targets.
-
-        .. deprecated:: 0.24
-           `y_scores_` is deprecated in 0.24 and will be removed in 1.1
-           (renaming of 0.26). You can just call `transform` on the training
-           data instead.
+        Used to project `X` in :meth:`transform`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    PLSCanonical : Partial Least Squares transformer and regressor.
+    CCA : Canonical Correlation Analysis.
 
     Examples
     --------
@@ -960,12 +967,13 @@ class PLSSVD(TransformerMixin, BaseEstimator):
     >>> X_c, Y_c = pls.transform(X, Y)
     >>> X_c.shape, Y_c.shape
     ((4, 2), (4, 2))
-
-    See Also
-    --------
-    PLSCanonical
-    CCA
     """
+
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "scale": ["boolean"],
+        "copy": ["boolean"],
+    }
 
     def __init__(self, n_components=2, *, scale=True, copy=True):
         self.n_components = n_components
@@ -982,12 +990,21 @@ class PLSSVD(TransformerMixin, BaseEstimator):
 
         Y : array-like of shape (n_samples,) or (n_samples, n_targets)
             Targets.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
         """
+        self._validate_params()
+
         check_consistent_length(X, Y)
         X = self._validate_data(
             X, dtype=np.float64, copy=self.copy, ensure_min_samples=2
         )
-        Y = check_array(Y, dtype=np.float64, copy=self.copy, ensure_2d=False)
+        Y = check_array(
+            Y, input_name="Y", dtype=np.float64, copy=self.copy, ensure_2d=False
+        )
         if Y.ndim == 1:
             Y = Y.reshape(-1, 1)
 
@@ -996,17 +1013,11 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         # n_components cannot be bigger than that.
         n_components = self.n_components
         rank_upper_bound = min(X.shape[0], X.shape[1], Y.shape[1])
-        if not 1 <= n_components <= rank_upper_bound:
-            # TODO: raise an error in 1.1
-            warnings.warn(
-                f"As of version 0.24, n_components({n_components}) should be "
-                "in [1, min(n_features, n_samples, n_targets)] = "
-                f"[1, {rank_upper_bound}]. "
-                f"n_components={rank_upper_bound} will be used instead. "
-                "In version 1.1 (renaming of 0.26), an error will be raised.",
-                FutureWarning,
+        if n_components > rank_upper_bound:
+            raise ValueError(
+                f"`n_components` upper bound is {rank_upper_bound}. "
+                f"Got {n_components} instead. Reduce `n_components`."
             )
-            n_components = rank_upper_bound
 
         X, Y, self._x_mean, self._y_mean, self._x_std, self._y_std = _center_scale_xy(
             X, Y, self.scale
@@ -1020,63 +1031,10 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         U, Vt = svd_flip(U, Vt)
         V = Vt.T
 
-        self._x_scores = np.dot(X, U)  # TODO: remove in 1.1
-        self._y_scores = np.dot(Y, V)  # TODO: remove in 1.1
         self.x_weights_ = U
         self.y_weights_ = V
+        self._n_features_out = self.x_weights_.shape[1]
         return self
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `x_scores_` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26). Use est.transform(X) on "
-        "the training data instead."
-    )
-    @property
-    def x_scores_(self):
-        return self._x_scores
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `y_scores_` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26). Use est.transform(X, Y) "
-        "on the training data instead."
-    )
-    @property
-    def y_scores_(self):
-        return self._y_scores
-
-    @deprecated(  # type: ignore
-        "Attribute `x_mean_` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def x_mean_(self):
-        return self._x_mean
-
-    @deprecated(  # type: ignore
-        "Attribute `y_mean_` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def y_mean_(self):
-        return self._y_mean
-
-    @deprecated(  # type: ignore
-        "Attribute `x_std_` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def x_std_(self):
-        return self._x_std
-
-    @deprecated(  # type: ignore
-        "Attribute `y_std_` was deprecated in version 0.24 and "
-        "will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def y_std_(self):
-        return self._y_std
 
     def transform(self, X, Y=None):
         """
@@ -1094,7 +1052,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         Returns
         -------
         x_scores : array-like or tuple of array-like
-            The transformed data `X_tranformed` if `Y` is not None,
+            The transformed data `X_transformed` if `Y is not None`,
             `(X_transformed, Y_transformed)` otherwise.
         """
         check_is_fitted(self)
@@ -1102,7 +1060,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         Xr = (X - self._x_mean) / self._x_std
         x_scores = np.dot(Xr, self.x_weights_)
         if Y is not None:
-            Y = check_array(Y, ensure_2d=False, dtype=np.float64)
+            Y = check_array(Y, input_name="Y", ensure_2d=False, dtype=np.float64)
             if Y.ndim == 1:
                 Y = Y.reshape(-1, 1)
             Yr = (Y - self._y_mean) / self._y_std
@@ -1125,7 +1083,7 @@ class PLSSVD(TransformerMixin, BaseEstimator):
         Returns
         -------
         out : array-like or tuple of array-like
-            The transformed data `X_tranformed` if `Y` is not None,
+            The transformed data `X_transformed` if `Y is not None`,
             `(X_transformed, Y_transformed)` otherwise.
         """
         return self.fit(X, y).transform(X, y)

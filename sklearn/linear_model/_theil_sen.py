@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 A Theil-Sen Estimator for Multiple Linear Regression Model
 """
@@ -9,6 +8,7 @@ A Theil-Sen Estimator for Multiple Linear Regression Model
 
 
 import warnings
+from numbers import Integral, Real
 from itertools import combinations
 
 import numpy as np
@@ -20,6 +20,7 @@ from joblib import Parallel, effective_n_jobs
 from ._base import LinearModel
 from ..base import RegressorMixin
 from ..utils import check_random_state
+from ..utils._param_validation import Interval
 from ..utils.fixes import delayed
 from ..exceptions import ConvergenceWarning
 
@@ -36,8 +37,8 @@ def _modified_weiszfeld_step(X, x_old):
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        Training vector, where n_samples is the number of samples and
-        n_features is the number of features.
+        Training vector, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
 
     x_old : ndarray of shape = (n_features,)
         Current start vector.
@@ -54,7 +55,7 @@ def _modified_weiszfeld_step(X, x_old):
       http://users.jyu.fi/~samiayr/pdf/ayramo_eurogen05.pdf
     """
     diff = X - x_old
-    diff_norm = np.sqrt(np.sum(diff ** 2, axis=1))
+    diff_norm = np.sqrt(np.sum(diff**2, axis=1))
     mask = diff_norm >= _EPSILON
     # x_old equals one of our samples
     is_x_old_in_X = int(mask.sum() < X.shape[0])
@@ -88,8 +89,8 @@ def _spatial_median(X, max_iter=300, tol=1.0e-3):
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        Training vector, where n_samples is the number of samples and
-        n_features is the number of features.
+        Training vector, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
 
     max_iter : int, default=300
         Maximum number of iterations.
@@ -170,11 +171,11 @@ def _lstsq(X, y, indices, fit_intercept):
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
-        Design matrix, where n_samples is the number of samples and
-        n_features is the number of features.
+        Design matrix, where `n_samples` is the number of samples and
+        `n_features` is the number of features.
 
     y : ndarray of shape (n_samples,)
-        Target vector, where n_samples is the number of samples.
+        Target vector, where `n_samples` is the number of samples.
 
     indices : ndarray of shape (n_subpopulation, n_subsamples)
         Indices of all subsamples with respect to the chosen subpopulation.
@@ -233,7 +234,8 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         number of features), consider only a stochastic subpopulation of a
         given maximal size if 'n choose k' is larger than max_subpopulation.
         For other than small problem sizes this parameter will determine
-        memory usage and runtime if n_subsamples is not changed.
+        memory usage and runtime if n_subsamples is not changed. Note that the
+        data type should be int but floats such as 1e4 can be accepted too.
 
     n_subsamples : int, default=None
         Number of samples to calculate the parameters. This is at least the
@@ -248,14 +250,14 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     max_iter : int, default=300
         Maximum number of iterations for the calculation of spatial median.
 
-    tol : float, default=1.e-3
+    tol : float, default=1e-3
         Tolerance when calculating spatial median.
 
     random_state : int, RandomState instance or None, default=None
         A random number generator instance to define the state of the random
         permutations generator. Pass an int for reproducible output across
         multiple function calls.
-        See :term:`Glossary <random_state>`
+        See :term:`Glossary <random_state>`.
 
     n_jobs : int, default=None
         Number of CPUs to use during the cross validation.
@@ -289,6 +291,24 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    HuberRegressor : Linear regression model that is robust to outliers.
+    RANSACRegressor : RANSAC (RANdom SAmple Consensus) algorithm.
+    SGDRegressor : Fitted by minimizing a regularized empirical loss with SGD.
+
+    References
+    ----------
+    - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009
+      Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
+      http://home.olemiss.edu/~xdang/papers/MTSE.pdf
+
     Examples
     --------
     >>> from sklearn.linear_model import TheilSenRegressor
@@ -300,13 +320,20 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     0.9884...
     >>> reg.predict(X[:1,])
     array([-31.5871...])
-
-    References
-    ----------
-    - Theil-Sen Estimators in a Multiple Linear Regression Model, 2009
-      Xin Dang, Hanxiang Peng, Xueqin Wang and Heping Zhang
-      http://home.olemiss.edu/~xdang/papers/MTSE.pdf
     """
+
+    _parameter_constraints: dict = {
+        "fit_intercept": ["boolean"],
+        "copy_X": ["boolean"],
+        # target_type should be Integral but can accept Real for backward compatibility
+        "max_subpopulation": [Interval(Real, 1, None, closed="left")],
+        "n_subsamples": [None, Integral],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "tol": [Interval(Real, 0.0, None, closed="left")],
+        "random_state": ["random_state"],
+        "n_jobs": [None, Integral],
+        "verbose": ["verbose"],
+    }
 
     def __init__(
         self,
@@ -323,7 +350,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     ):
         self.fit_intercept = fit_intercept
         self.copy_X = copy_X
-        self.max_subpopulation = int(max_subpopulation)
+        self.max_subpopulation = max_subpopulation
         self.n_subsamples = n_subsamples
         self.max_iter = max_iter
         self.tol = tol
@@ -351,7 +378,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
                     raise ValueError(
                         "Invalid parameter since n_features{0} "
                         "> n_subsamples ({1} > {2})."
-                        "".format(plus_1, n_dim, n_samples)
+                        "".format(plus_1, n_dim, n_subsamples)
                     )
             else:  # if n_samples < n_features
                 if n_subsamples != n_samples:
@@ -362,13 +389,6 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
                     )
         else:
             n_subsamples = min(n_dim, n_samples)
-
-        if self.max_subpopulation <= 0:
-            raise ValueError(
-                "Subpopulation must be strictly positive ({0} <= 0).".format(
-                    self.max_subpopulation
-                )
-            )
 
         all_combinations = max(1, np.rint(binom(n_samples, n_subsamples)))
         n_subpopulation = int(min(self.max_subpopulation, all_combinations))
@@ -388,7 +408,9 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
         Returns
         -------
         self : returns an instance of self.
+            Fitted `TheilSenRegressor` estimator.
         """
+        self._validate_params()
         random_state = check_random_state(self.random_state)
         X, y = self._validate_data(X, y, y_numeric=True)
         n_samples, n_features = X.shape

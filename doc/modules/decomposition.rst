@@ -167,15 +167,12 @@ Note: the implementation of ``inverse_transform`` in :class:`PCA` with
 .. topic:: References:
 
     * Algorithm 4.3 in
-      `"Finding structure with randomness: Stochastic algorithms for
-      constructing approximate matrix decompositions"
-      <https://arxiv.org/abs/0909.4061>`_
+      :arxiv:`"Finding structure with randomness: Stochastic algorithms for
+      constructing approximate matrix decompositions" <0909.4061>`
       Halko, et al., 2009
 
-    * `"An implementation of a randomized algorithm for principal component
-      analysis"
-      <https://arxiv.org/pdf/1412.3510.pdf>`_
-      A. Szlam et al. 2014
+    * :arxiv:`"An implementation of a randomized algorithm for principal component
+      analysis" <1412.3510>` A. Szlam et al. 2014
 
 .. _SparsePCA:
 
@@ -231,7 +228,7 @@ problem solved is a PCA problem (dictionary learning) with an
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
                 ||X-UV||_{\text{Fro}}^2+\alpha||V||_{1,1} \\
-                \text{subject to } & ||U_k||_2 = 1 \text{ for all }
+                \text{subject to } & ||U_k||_2 <= 1 \text{ for all }
                 0 \leq k < n_{components}
 
 :math:`||.||_{\text{Fro}}` stands for the Frobenius norm and :math:`||.||_{1,1}`
@@ -273,15 +270,22 @@ Exact Kernel PCA
 ----------------
 
 :class:`KernelPCA` is an extension of PCA which achieves non-linear
-dimensionality reduction through the use of kernels (see :ref:`metrics`). It
+dimensionality reduction through the use of kernels (see :ref:`metrics`) [Scholkopf1997]_. It
 has many applications including denoising, compression and structured
 prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 ``transform`` and ``inverse_transform``.
 
-.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_kernel_pca_001.png
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_kernel_pca_002.png
     :target: ../auto_examples/decomposition/plot_kernel_pca.html
     :align: center
     :scale: 75%
+
+.. note::
+    :meth:`KernelPCA.inverse_transform` relies on a kernel ridge to learn the
+    function mapping samples from the PCA basis into the original feature
+    space [Bakir2003]_. Thus, the reconstruction obtained with
+    :meth:`KernelPCA.inverse_transform` is an approximation. See the example
+    linked below for more details.
 
 .. topic:: Examples:
 
@@ -289,10 +293,16 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 
 .. topic:: References:
 
-    * Kernel PCA was introduced in "Kernel principal component analysis"
-      Bernhard Schoelkopf, Alexander J. Smola, and Klaus-Robert Mueller. 1999.
-      In Advances in kernel methods, MIT Press, Cambridge, MA, USA 327-352.
+    .. [Scholkopf1997] Schölkopf, Bernhard, Alexander Smola, and Klaus-Robert Müller.
+       `"Kernel principal component analysis."
+       <https://people.eecs.berkeley.edu/~wainwrig/stat241b/scholkopf_kernel.pdf>`_
+       International conference on artificial neural networks.
+       Springer, Berlin, Heidelberg, 1997.
 
+    .. [Bakir2003] Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
+       `"Learning to find pre-images."
+       <https://papers.nips.cc/paper/2003/file/ac1ad983e08ad3304a97e147f522747e-Paper.pdf>`_
+       Advances in neural information processing systems 16 (2003): 449-456.
 
 .. _kPCA_Solvers:
 
@@ -341,21 +351,19 @@ components is less than 10 (strict) and the number of samples is more than 200
 
     * *randomized* solver:
 
-        - Algorithm 4.3 in
-          `"Finding structure with randomness: Stochastic algorithms for
-          constructing approximate matrix decompositions"
-          <https://arxiv.org/abs/0909.4061>`_
-          Halko, et al., 2009
+        * Algorithm 4.3 in
+          :arxiv:`"Finding structure with randomness: Stochastic
+          algorithms for constructing approximate matrix decompositions" <0909.4061>`
+          Halko, et al. (2009)
 
-        - `"An implementation of a randomized algorithm for principal component
-          analysis"
-          <https://arxiv.org/pdf/1412.3510.pdf>`_
-          A. Szlam et al. 2014
+        * :arxiv:`"An implementation of a randomized algorithm
+          for principal component analysis" <1412.3510>`
+          A. Szlam et al. (2014)
 
     * *arpack* solver:
       `scipy.sparse.linalg.eigsh documentation
       <https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.linalg.eigsh.html>`_
-      R. B. Lehoucq, D. C. Sorensen, and C. Yang, 1998
+      R. B. Lehoucq, D. C. Sorensen, and C. Yang, (1998)
 
 
 .. _LSA:
@@ -513,7 +521,7 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
 .. math::
    (U^*, V^*) = \underset{U, V}{\operatorname{arg\,min\,}} & \frac{1}{2}
                 ||X-UV||_{\text{Fro}}^2+\alpha||U||_{1,1} \\
-                \text{subject to } & ||V_k||_2 = 1 \text{ for all }
+                \text{subject to } & ||V_k||_2 <= 1 \text{ for all }
                 0 \leq k < n_{\mathrm{atoms}}
 
 
@@ -521,7 +529,7 @@ dictionary fixed, and then updating the dictionary to best fit the sparse code.
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
    :scale: 60%
 
-.. |dict_img2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_006.png
+.. |dict_img2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_007.png
    :target: ../auto_examples/decomposition/plot_faces_decomposition.html
    :scale: 60%
 
@@ -540,19 +548,19 @@ different positivity constraints applied. Red indicates negative values, blue
 indicates positive values, and white represents zeros.
 
 
-.. |dict_img_pos1| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_011.png
+.. |dict_img_pos1| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_010.png
     :target: ../auto_examples/decomposition/plot_image_denoising.html
     :scale: 60%
 
-.. |dict_img_pos2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_012.png
+.. |dict_img_pos2| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_011.png
     :target: ../auto_examples/decomposition/plot_image_denoising.html
     :scale: 60%
 
-.. |dict_img_pos3| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_013.png
+.. |dict_img_pos3| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_012.png
     :target: ../auto_examples/decomposition/plot_image_denoising.html
     :scale: 60%
 
-.. |dict_img_pos4| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_014.png
+.. |dict_img_pos4| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_013.png
     :target: ../auto_examples/decomposition/plot_image_denoising.html
     :scale: 60%
 
@@ -681,7 +689,7 @@ about these components (e.g. whether they are orthogonal):
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
-.. |fa_img3| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_009.png
+.. |fa_img3| image:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_008.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :scale: 60%
 
@@ -691,7 +699,7 @@ The main advantage for Factor Analysis over :class:`PCA` is that
 it can model the variance in every direction of the input space independently
 (heteroscedastic noise):
 
-.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_008.png
+.. figure:: ../auto_examples/decomposition/images/sphx_glr_plot_faces_decomposition_009.png
     :target: ../auto_examples/decomposition/plot_faces_decomposition.html
     :align: center
     :scale: 75%
@@ -829,7 +837,7 @@ and the intensity of the regularization with the :attr:`alpha_W` and :attr:`alph
 (:math:`\alpha_W` and :math:`\alpha_H`) parameters. The priors are scaled by the number
 of samples (:math:`n\_samples`) for `H` and the number of features (:math:`n\_features`)
 for `W` to keep their impact balanced with respect to one another and to the data fit
-term as independant as possible of the size of the training set. Then the priors terms
+term as independent as possible of the size of the training set. Then the priors terms
 are:
 
 .. math::
@@ -913,10 +921,33 @@ stored components::
     * :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
     * :ref:`sphx_glr_auto_examples_decomposition_plot_beta_divergence.py`
 
+.. _MiniBatchNMF:
+
+Mini-batch Non Negative Matrix Factorization
+--------------------------------------------
+
+:class:`MiniBatchNMF` [7]_ implements a faster, but less accurate version of the
+non negative matrix factorization (i.e. :class:`~sklearn.decomposition.NMF`),
+better suited for large datasets.
+
+By default, :class:`MiniBatchNMF` divides the data into mini-batches and
+optimizes the NMF model in an online manner by cycling over the mini-batches
+for the specified number of iterations. The ``batch_size`` parameter controls
+the size of the batches.
+
+In order to speed up the mini-batch algorithm it is also possible to scale
+past batches, giving them less importance than newer batches. This is done
+introducing a so-called forgetting factor controlled by the ``forget_factor``
+parameter.
+
+The estimator also implements ``partial_fit``, which updates ``H`` by iterating
+only once over a mini-batch. This can be used for online learning when the data
+is not readily available from the start, or when the data does not fit into memory.
+
 .. topic:: References:
 
     .. [1] `"Learning the parts of objects by non-negative matrix factorization"
-      <http://www.columbia.edu/~jwp2128/Teaching/E4903/papers/nmf_nature.pdf>`_
+      <http://www.cs.columbia.edu/~blei/fogm/2020F/readings/LeeSeung1999.pdf>`_
       D. Lee, S. Seung, 1999
 
     .. [2] `"Non-negative Matrix Factorization with Sparseness Constraints"
@@ -925,18 +956,21 @@ stored components::
 
     .. [4] `"SVD based initialization: A head start for nonnegative
       matrix factorization"
-      <http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf>`_
+      <https://www.boutsidis.org/Boutsidis_PRE_08.pdf>`_
       C. Boutsidis, E. Gallopoulos, 2008
 
     .. [5] `"Fast local algorithms for large scale nonnegative matrix and tensor
       factorizations."
-      <http://www.bsp.brain.riken.jp/publications/2009/Cichocki-Phan-IEICE_col.pdf>`_
+      <https://www.researchgate.net/profile/Anh-Huy-Phan/publication/220241471_Fast_Local_Algorithms_for_Large_Scale_Nonnegative_Matrix_and_Tensor_Factorizations>`_
       A. Cichocki, A. Phan, 2009
 
-    .. [6] `"Algorithms for nonnegative matrix factorization with the beta-divergence"
-      <https://arxiv.org/pdf/1010.1763.pdf>`_
-      C. Fevotte, J. Idier, 2011
+    .. [6] :arxiv:`"Algorithms for nonnegative matrix factorization with
+           the beta-divergence" <1010.1763>`
+           C. Fevotte, J. Idier, 2011
 
+    .. [7] :arxiv:`"Online algorithms for nonnegative matrix factorization with the
+       Itakura-Saito divergence" <1106.4198>`
+       A. Lefevre, F. Bach, C. Fevotte, 2011
 
 .. _LatentDirichletAllocation:
 
@@ -1043,7 +1077,7 @@ when data can be fetched sequentially.
       M. Hoffman, D. Blei, F. Bach, 2010
 
     * `"Stochastic Variational Inference"
-      <http://www.columbia.edu/~jwp2128/Papers/HoffmanBleiWangPaisley2013.pdf>`_
+      <https://www.cs.columbia.edu/~blei/papers/HoffmanBleiWangPaisley2013.pdf>`_
       M. Hoffman, D. Blei, C. Wang, J. Paisley, 2013
 
     * `"The varimax criterion for analytic rotation in factor analysis"

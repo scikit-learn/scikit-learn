@@ -5,9 +5,9 @@ import warnings
 from pickle import loads
 from pickle import dumps
 from functools import partial
+from importlib import resources
 
 import pytest
-
 import numpy as np
 from sklearn.datasets import get_data_home
 from sklearn.datasets import clear_data_home
@@ -19,14 +19,14 @@ from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_linnerud
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_breast_cancer
-from sklearn.datasets import load_boston
 from sklearn.datasets import load_wine
+from sklearn.datasets._base import (
+    load_csv_data,
+    load_gzip_compressed_csv_data,
+)
+from sklearn.preprocessing import scale
 from sklearn.utils import Bunch
 from sklearn.datasets.tests.test_common import check_as_frame
-
-from sklearn.externals._pilutil import pillow_installed
-
-from sklearn.utils import IS_PYPY
 
 
 def _remove_dir(path):
@@ -88,8 +88,6 @@ def test_default_empty_load_files(load_files_root):
 
 
 def test_default_load_files(test_category_dir_1, test_category_dir_2, load_files_root):
-    if IS_PYPY:
-        pytest.xfail("[PyPy] fails due to string containing NUL characters")
     res = load_files(load_files_root)
     assert len(res.filenames) == 1
     assert len(res.target_names) == 2
@@ -100,8 +98,6 @@ def test_default_load_files(test_category_dir_1, test_category_dir_2, load_files
 def test_load_files_w_categories_desc_and_encoding(
     test_category_dir_1, test_category_dir_2, load_files_root
 ):
-    if IS_PYPY:
-        pytest.xfail("[PyPy] fails due to string containing NUL characters")
     category = os.path.abspath(test_category_dir_1).split("/").pop()
     res = load_files(
         load_files_root, description="test", categories=category, encoding="utf-8"
@@ -120,6 +116,84 @@ def test_load_files_wo_load_content(
     assert len(res.target_names) == 2
     assert res.DESCR is None
     assert res.get("data") is None
+
+
+@pytest.mark.parametrize("allowed_extensions", ([".txt"], [".txt", ".json"]))
+def test_load_files_allowed_extensions(tmp_path, allowed_extensions):
+    """Check the behaviour of `allowed_extension` in `load_files`."""
+    d = tmp_path / "sub"
+    d.mkdir()
+    files = ("file1.txt", "file2.json", "file3.json", "file4.md")
+    paths = [d / f for f in files]
+    for p in paths:
+        p.write_bytes(b"hello")
+    res = load_files(tmp_path, allowed_extensions=allowed_extensions)
+    assert set([str(p) for p in paths if p.suffix in allowed_extensions]) == set(
+        res.filenames
+    )
+
+
+@pytest.mark.parametrize(
+    "filename, expected_n_samples, expected_n_features, expected_target_names",
+    [
+        ("wine_data.csv", 178, 13, ["class_0", "class_1", "class_2"]),
+        ("iris.csv", 150, 4, ["setosa", "versicolor", "virginica"]),
+        ("breast_cancer.csv", 569, 30, ["malignant", "benign"]),
+    ],
+)
+def test_load_csv_data(
+    filename, expected_n_samples, expected_n_features, expected_target_names
+):
+    actual_data, actual_target, actual_target_names = load_csv_data(filename)
+    assert actual_data.shape[0] == expected_n_samples
+    assert actual_data.shape[1] == expected_n_features
+    assert actual_target.shape[0] == expected_n_samples
+    np.testing.assert_array_equal(actual_target_names, expected_target_names)
+
+
+def test_load_csv_data_with_descr():
+    data_file_name = "iris.csv"
+    descr_file_name = "iris.rst"
+
+    res_without_descr = load_csv_data(data_file_name=data_file_name)
+    res_with_descr = load_csv_data(
+        data_file_name=data_file_name, descr_file_name=descr_file_name
+    )
+    assert len(res_with_descr) == 4
+    assert len(res_without_descr) == 3
+
+    np.testing.assert_array_equal(res_with_descr[0], res_without_descr[0])
+    np.testing.assert_array_equal(res_with_descr[1], res_without_descr[1])
+    np.testing.assert_array_equal(res_with_descr[2], res_without_descr[2])
+
+    assert res_with_descr[-1].startswith(".. _iris_dataset:")
+
+
+@pytest.mark.parametrize(
+    "filename, kwargs, expected_shape",
+    [
+        ("diabetes_data_raw.csv.gz", {}, [442, 10]),
+        ("diabetes_target.csv.gz", {}, [442]),
+        ("digits.csv.gz", {"delimiter": ","}, [1797, 65]),
+    ],
+)
+def test_load_gzip_compressed_csv_data(filename, kwargs, expected_shape):
+    actual_data = load_gzip_compressed_csv_data(filename, **kwargs)
+    assert actual_data.shape == tuple(expected_shape)
+
+
+def test_load_gzip_compressed_csv_data_with_descr():
+    data_file_name = "diabetes_target.csv.gz"
+    descr_file_name = "diabetes.rst"
+
+    expected_data = load_gzip_compressed_csv_data(data_file_name=data_file_name)
+    actual_data, descr = load_gzip_compressed_csv_data(
+        data_file_name=data_file_name,
+        descr_file_name=descr_file_name,
+    )
+
+    np.testing.assert_array_equal(actual_data, expected_data)
+    assert descr.startswith(".. _diabetes_dataset:")
 
 
 def test_load_sample_images():
@@ -148,11 +222,25 @@ def test_load_sample_image():
 
 
 def test_load_missing_sample_image_error():
-    if pillow_installed:
-        with pytest.raises(AttributeError):
-            load_sample_image("blop.jpg")
-    else:
-        warnings.warn("Could not load sample images, PIL is not available.")
+    pytest.importorskip("PIL")
+    with pytest.raises(AttributeError):
+        load_sample_image("blop.jpg")
+
+
+def test_load_diabetes_raw():
+    """Test to check that we load a scaled version by default but that we can
+    get an unscaled version when setting `scaled=False`."""
+    diabetes_raw = load_diabetes(scaled=False)
+    assert diabetes_raw.data.shape == (442, 10)
+    assert diabetes_raw.target.size, 442
+    assert len(diabetes_raw.feature_names) == 10
+    assert diabetes_raw.DESCR
+
+    diabetes_default = load_diabetes()
+
+    np.testing.assert_allclose(
+        scale(diabetes_raw.data) / (442**0.5), diabetes_default.data, atol=1e-04
+    )
 
 
 @pytest.mark.parametrize(
@@ -172,7 +260,6 @@ def test_load_missing_sample_image_error():
         (load_diabetes, (442, 10), (442,), None, True, []),
         (load_digits, (1797, 64), (1797,), 10, True, []),
         (partial(load_digits, n_class=9), (1617, 64), (1617,), 10, True, []),
-        (load_boston, (506, 13), (506,), None, True, ["filename"]),
     ],
 )
 def test_loader(loader_func, data_shape, target_shape, n_target, has_descr, filenames):
@@ -188,7 +275,13 @@ def test_loader(loader_func, data_shape, target_shape, n_target, has_descr, file
     if has_descr:
         assert bunch.DESCR
     if filenames:
-        assert all([os.path.exists(bunch.get(f, False)) for f in filenames])
+        assert "data_module" in bunch
+        assert all(
+            [
+                f in bunch and resources.is_resource(bunch["data_module"], bunch[f])
+                for f in filenames
+            ]
+        )
 
 
 @pytest.mark.parametrize(
@@ -244,3 +337,15 @@ def test_bunch_dir():
     # check that dir (important for autocomplete) shows attributes
     data = load_iris()
     assert "data" in dir(data)
+
+
+def test_load_boston_error():
+    """Check that we raise the ethical warning when trying to import `load_boston`."""
+    msg = "The Boston housing prices dataset has an ethical problem"
+    with pytest.raises(ImportError, match=msg):
+        from sklearn.datasets import load_boston  # noqa
+
+    # other non-existing function should raise the usual import error
+    msg = "cannot import name 'non_existing_function' from 'sklearn.datasets'"
+    with pytest.raises(ImportError, match=msg):
+        from sklearn.datasets import non_existing_function  # noqa

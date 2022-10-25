@@ -180,7 +180,7 @@ def test_dbscan_metric_params():
             min_samples=min_samples,
             algorithm="ball_tree",
         ).fit(X)
-    assert not warns
+    assert not warns, warns[0].message
     core_sample_1, labels_1 = db.core_sample_indices_, db.labels_
 
     # Test that sample labels are the same as passing Minkowski 'p' directly
@@ -269,22 +269,6 @@ def test_input_validation():
     DBSCAN().fit(X)  # must not raise exception
 
 
-@pytest.mark.parametrize(
-    "args",
-    [
-        {"eps": -1.0},
-        {"algorithm": "blah"},
-        {"metric": "blah"},
-        {"leaf_size": -1},
-        {"p": -1},
-    ],
-)
-def test_dbscan_badargs(args):
-    # Test bad argument values: these should all raise ValueErrors
-    with pytest.raises(ValueError):
-        dbscan(X, **args)
-
-
 def test_pickle():
     obj = DBSCAN()
     s = pickle.dumps(obj)
@@ -302,7 +286,7 @@ def test_boundaries():
     assert 0 not in core
 
 
-def test_weighted_dbscan():
+def test_weighted_dbscan(global_random_seed):
     # ensure sample_weight is validated
     with pytest.raises(ValueError):
         dbscan([[0], [1]], sample_weight=[2])
@@ -336,7 +320,7 @@ def test_weighted_dbscan():
     )
 
     # for non-negative sample_weight, cores should be identical to repetition
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     sample_weight = rng.randint(0, 5, X.shape[0])
     core1, label1 = dbscan(X, sample_weight=sample_weight)
     assert len(label1) == len(X)

@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import scipy.sparse as sp
 import pytest
@@ -341,16 +343,28 @@ def test_davies_bouldin_score():
     pytest.approx(davies_bouldin_score(X, labels), 2 * np.sqrt(0.5) / 3)
 
     # Ensure divide by zero warning is not raised in general case
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
         davies_bouldin_score(X, labels)
-    div_zero_warnings = [
-        warning
-        for warning in record
-        if "divide by zero encountered" in warning.message.args[0]
-    ]
-    assert len(div_zero_warnings) == 0
 
     # General case - cluster have one sample
     X = [[0, 0], [2, 2], [3, 3], [5, 5]]
     labels = [0, 0, 1, 2]
     pytest.approx(davies_bouldin_score(X, labels), (5.0 / 4) / 3)
+
+
+def test_silhouette_score_integer_precomputed():
+    """Check that silhouette_score works for precomputed metrics that are integers.
+
+    Non-regression test for #22107.
+    """
+    result = silhouette_score(
+        [[0, 1, 2], [1, 0, 1], [2, 1, 0]], [0, 0, 1], metric="precomputed"
+    )
+    assert result == pytest.approx(1 / 6)
+
+    # non-zero on diagonal for ints raises an error
+    with pytest.raises(ValueError, match="contains non-zero"):
+        silhouette_score(
+            [[1, 1, 2], [1, 0, 1], [2, 1, 0]], [0, 0, 1], metric="precomputed"
+        )

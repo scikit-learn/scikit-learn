@@ -29,6 +29,7 @@ from sklearn.utils import _message_with_time, _print_elapsed_time
 from sklearn.utils import get_chunk_n_rows
 from sklearn.utils import is_scalar_nan
 from sklearn.utils import _to_object_array
+from sklearn.utils import _approximate_mode
 from sklearn.utils._mocking import MockDataFrame
 from sklearn import config_context
 
@@ -464,6 +465,25 @@ def test_safe_indexing_container_axis_0_unsupported_type():
         _safe_indexing(array, indices, axis=0)
 
 
+def test_safe_indexing_pandas_no_settingwithcopy_warning():
+    # Using safe_indexing with an array-like indexer gives a copy of the
+    # DataFrame -> ensure it doesn't raise a warning if modified
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame({"a": [1, 2, 3], "b": [3, 4, 5]})
+    subset = _safe_indexing(X, [0, 1], axis=0)
+    if hasattr(pd.errors, "SettingWithCopyWarning"):
+        SettingWithCopyWarning = pd.errors.SettingWithCopyWarning
+    else:
+        # backward compatibility for pandas < 1.5
+        SettingWithCopyWarning = pd.core.common.SettingWithCopyWarning
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", SettingWithCopyWarning)
+        subset.iloc[0, 0] = 10
+    # The original dataframe is unaffected by the assignment on the subset:
+    assert X.iloc[0, 0] == 1
+
+
 @pytest.mark.parametrize(
     "key, err_msg",
     [
@@ -542,27 +562,20 @@ def test_gen_even_slices():
 
 
 @pytest.mark.parametrize(
-    ("row_bytes", "max_n_rows", "working_memory", "expected", "warn_msg"),
+    ("row_bytes", "max_n_rows", "working_memory", "expected"),
     [
-        (1024, None, 1, 1024, None),
-        (1024, None, 0.99999999, 1023, None),
-        (1023, None, 1, 1025, None),
-        (1025, None, 1, 1023, None),
-        (1024, None, 2, 2048, None),
-        (1024, 7, 1, 7, None),
-        (1024 * 1024, None, 1, 1, None),
-        (
-            1024 * 1024 + 1,
-            None,
-            1,
-            1,
-            "Could not adhere to working_memory config. Currently 1MiB, 2MiB required.",
-        ),
+        (1024, None, 1, 1024),
+        (1024, None, 0.99999999, 1023),
+        (1023, None, 1, 1025),
+        (1025, None, 1, 1023),
+        (1024, None, 2, 2048),
+        (1024, 7, 1, 7),
+        (1024 * 1024, None, 1, 1),
     ],
 )
-def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory, expected, warn_msg):
-    warning = None if warn_msg is None else UserWarning
-    with pytest.warns(warning, match=warn_msg) as w:
+def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory, expected):
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         actual = get_chunk_n_rows(
             row_bytes=row_bytes,
             max_n_rows=max_n_rows,
@@ -571,15 +584,39 @@ def test_get_chunk_n_rows(row_bytes, max_n_rows, working_memory, expected, warn_
 
     assert actual == expected
     assert type(actual) is type(expected)
-    if warn_msg is None:
-        assert len(w) == 0
     with config_context(working_memory=working_memory):
-        with pytest.warns(warning, match=warn_msg) as w:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
             actual = get_chunk_n_rows(row_bytes=row_bytes, max_n_rows=max_n_rows)
         assert actual == expected
         assert type(actual) is type(expected)
-        if warn_msg is None:
-            assert len(w) == 0
+
+
+def test_get_chunk_n_rows_warns():
+    """Check that warning is raised when working_memory is too low."""
+    row_bytes = 1024 * 1024 + 1
+    max_n_rows = None
+    working_memory = 1
+    expected = 1
+
+    warn_msg = (
+        "Could not adhere to working_memory config. Currently 1MiB, 2MiB required."
+    )
+    with pytest.warns(UserWarning, match=warn_msg):
+        actual = get_chunk_n_rows(
+            row_bytes=row_bytes,
+            max_n_rows=max_n_rows,
+            working_memory=working_memory,
+        )
+
+    assert actual == expected
+    assert type(actual) is type(expected)
+
+    with config_context(working_memory=working_memory):
+        with pytest.warns(UserWarning, match=warn_msg):
+            actual = get_chunk_n_rows(row_bytes=row_bytes, max_n_rows=max_n_rows)
+        assert actual == expected
+        assert type(actual) is type(expected)
 
 
 @pytest.mark.parametrize(
@@ -655,10 +692,30 @@ def test_print_elapsed_time(message, expected, capsys, monkeypatch):
         ("", False),
         ("nan", False),
         ([np.nan], False),
+        (9867966753463435747313673, False),  # Python int that overflows with C type
     ],
 )
 def test_is_scalar_nan(value, result):
     assert is_scalar_nan(value) is result
+    # make sure that we are returning a Python bool
+    assert isinstance(is_scalar_nan(value), bool)
+
+
+def test_approximate_mode():
+    """Make sure sklearn.utils._approximate_mode returns valid
+    results for cases where "class_counts * n_draws" is enough
+    to overflow 32-bit signed integer.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/20774
+    """
+    X = np.array([99000, 1000], dtype=np.int32)
+    ret = _approximate_mode(class_counts=X, n_draws=25000, rng=0)
+
+    # Draws 25% of the total population, so in this case a fair draw means:
+    # 25% * 99.000 = 24.750
+    # 25% *  1.000 =    250
+    assert_array_equal(ret, [24750, 250])
 
 
 def dummy_func():

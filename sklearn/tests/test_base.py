@@ -1,20 +1,23 @@
 # Author: Gael Varoquaux
 # License: BSD 3 clause
 
+import re
 import numpy as np
 import scipy.sparse as sp
 import pytest
+import warnings
 
 import sklearn
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import ignore_warnings
 
-from sklearn.base import BaseEstimator, clone, is_classifier, _is_pairwise
+from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils._set_output import _get_output_config
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
-from sklearn.decomposition import KernelPCA
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
@@ -228,7 +231,7 @@ def test_str():
 
 
 def test_get_params():
-    test = T(K(), K())
+    test = T(K(), K)
 
     assert "a__d" in test.get_params(deep=True)
     assert "a__d" not in test.get_params(deep=False)
@@ -539,57 +542,25 @@ def test_repr_mimebundle_():
     tree = DecisionTreeClassifier()
     output = tree._repr_mimebundle_()
     assert "text/plain" in output
-    assert "text/html" not in output
+    assert "text/html" in output
 
-    with config_context(display="diagram"):
+    with config_context(display="text"):
         output = tree._repr_mimebundle_()
         assert "text/plain" in output
-        assert "text/html" in output
+        assert "text/html" not in output
 
 
 def test_repr_html_wraps():
     # Checks the display configuration flag controls the html output
     tree = DecisionTreeClassifier()
-    msg = "_repr_html_ is only defined when"
-    with pytest.raises(AttributeError, match=msg):
-        output = tree._repr_html_()
 
-    with config_context(display="diagram"):
-        output = tree._repr_html_()
-        assert "<style>" in output
+    output = tree._repr_html_()
+    assert "<style>" in output
 
-
-# TODO: Remove in 1.1 when the _pairwise attribute is removed
-def test_is_pairwise():
-    # simple checks for _is_pairwise
-    pca = KernelPCA(kernel="precomputed")
-    with pytest.warns(None) as record:
-        assert _is_pairwise(pca)
-    assert not record
-
-    # pairwise attribute that is not consistent with the pairwise tag
-    class IncorrectTagPCA(KernelPCA):
-        _pairwise = False
-
-    pca = IncorrectTagPCA(kernel="precomputed")
-    msg = "_pairwise was deprecated in 0.24 and will be removed in 1.1"
-    with pytest.warns(FutureWarning, match=msg):
-        assert not _is_pairwise(pca)
-
-    # the _pairwise attribute is present and set to True while pairwise tag is
-    # not present
-    class TruePairwise(BaseEstimator):
-        _pairwise = True
-
-    true_pairwise = TruePairwise()
-    with pytest.warns(FutureWarning, match=msg):
-        assert _is_pairwise(true_pairwise)
-
-    # pairwise attribute is not defined thus tag is used
-    est = BaseEstimator()
-    with pytest.warns(None) as record:
-        assert not _is_pairwise(est)
-    assert not record
+    with config_context(display="text"):
+        msg = "_repr_html_ is only defined when"
+        with pytest.raises(AttributeError, match=msg):
+            output = tree._repr_html_()
 
 
 def test_n_features_in_validation():
@@ -615,3 +586,88 @@ def test_n_features_in_no_validation():
 
     # does not raise
     est._check_n_features("invalid X", reset=False)
+
+
+def test_feature_names_in():
+    """Check that feature_name_in are recorded by `_validate_data`"""
+    pd = pytest.importorskip("pandas")
+    iris = datasets.load_iris()
+    X_np = iris.data
+    df = pd.DataFrame(X_np, columns=iris.feature_names)
+
+    class NoOpTransformer(TransformerMixin, BaseEstimator):
+        def fit(self, X, y=None):
+            self._validate_data(X)
+            return self
+
+        def transform(self, X):
+            self._validate_data(X, reset=False)
+            return X
+
+    # fit on dataframe saves the feature names
+    trans = NoOpTransformer().fit(df)
+    assert_array_equal(trans.feature_names_in_, df.columns)
+
+    # fit again but on ndarray does not keep the previous feature names (see #21383)
+    trans.fit(X_np)
+    assert not hasattr(trans, "feature_names_in_")
+
+    trans.fit(df)
+    msg = "The feature names should match those that were passed"
+    df_bad = pd.DataFrame(X_np, columns=iris.feature_names[::-1])
+    with pytest.raises(ValueError, match=msg):
+        trans.transform(df_bad)
+
+    # warns when fitted on dataframe and transforming a ndarray
+    msg = (
+        "X does not have valid feature names, but NoOpTransformer was "
+        "fitted with feature names"
+    )
+    with pytest.warns(UserWarning, match=msg):
+        trans.transform(X_np)
+
+    # warns when fitted on a ndarray and transforming dataframe
+    msg = "X has feature names, but NoOpTransformer was fitted without feature names"
+    trans = NoOpTransformer().fit(X_np)
+    with pytest.warns(UserWarning, match=msg):
+        trans.transform(df)
+
+    # fit on dataframe with all integer feature names works without warning
+    df_int_names = pd.DataFrame(X_np)
+    trans = NoOpTransformer()
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        trans.fit(df_int_names)
+
+    # fit on dataframe with no feature names or all integer feature names
+    # -> do not warn on transform
+    Xs = [X_np, df_int_names]
+    for X in Xs:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", UserWarning)
+            trans.transform(X)
+
+    # fit on dataframe with feature names that are mixed raises an error:
+    df_mixed = pd.DataFrame(X_np, columns=["a", "b", 1, 2])
+    trans = NoOpTransformer()
+    msg = re.escape(
+        "Feature names only support names that are all strings. "
+        "Got feature names with dtypes: ['int', 'str']"
+    )
+    with pytest.raises(TypeError, match=msg):
+        trans.fit(df_mixed)
+
+    # transform on feature names that are mixed also raises:
+    with pytest.raises(TypeError, match=msg):
+        trans.transform(df_mixed)
+
+
+def test_clone_keeps_output_config():
+    """Check that clone keeps the set_output config."""
+
+    ss = StandardScaler().set_output(transform="pandas")
+    config = _get_output_config("transform", ss)
+
+    ss_clone = clone(ss)
+    config_clone = _get_output_config("transform", ss_clone)
+    assert config == config_clone

@@ -5,6 +5,7 @@
 # License: BSD 3 clause
 
 import warnings
+from numbers import Integral, Real
 from operator import itemgetter
 
 import numpy as np
@@ -13,10 +14,11 @@ import scipy.optimize
 
 from ..base import BaseEstimator, RegressorMixin, clone
 from ..base import MultiOutputMixin
-from .kernels import RBF, ConstantKernel as C
+from .kernels import Kernel, RBF, ConstantKernel as C
 from ..preprocessing._data import _handle_zeros_in_scale
 from ..utils import check_random_state
 from ..utils.optimize import _check_optimize_result
+from ..utils._param_validation import Interval, StrOptions
 
 GPR_CHOLESKY_LOWER = True
 
@@ -24,7 +26,7 @@ GPR_CHOLESKY_LOWER = True
 class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     """Gaussian process regression (GPR).
 
-    The implementation is based on Algorithm 2.1 of [1]_.
+    The implementation is based on Algorithm 2.1 of [RW2006]_.
 
     In addition to standard scikit-learn estimator API,
     :class:`GaussianProcessRegressor`:
@@ -44,7 +46,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     ----------
     kernel : kernel instance, default=None
         The kernel specifying the covariance function of the GP. If None is
-        passed, the kernel ``ConstantKernel(1.0, constant_value_bounds="fixed"
+        passed, the kernel ``ConstantKernel(1.0, constant_value_bounds="fixed")
         * RBF(1.0, length_scale_bounds="fixed")`` is used as default. Note that
         the kernel hyperparameters are optimized during fitting unless the
         bounds are marked as "fixed".
@@ -61,7 +63,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         noise level directly as a parameter is mainly for convenience and
         for consistency with :class:`~sklearn.linear_model.Ridge`.
 
-    optimizer : "fmin_l_bfgs_b" or callable, default="fmin_l_bfgs_b"
+    optimizer : "fmin_l_bfgs_b", callable or None, default="fmin_l_bfgs_b"
         Can either be one of the internally supported optimizers for optimizing
         the kernel's parameters, specified by a string, or an externally
         defined optimizer passed as a callable. If a callable is passed, it
@@ -82,7 +84,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         Per default, the L-BFGS-B algorithm from `scipy.optimize.minimize`
         is used. If None is passed, the kernel's parameters are kept fixed.
-        Available internal optimizers are: `{'fmin_l_bfgs_b'}`
+        Available internal optimizers are: `{'fmin_l_bfgs_b'}`.
 
     n_restarts_optimizer : int, default=0
         The number of restarts of the optimizer for finding the kernel's
@@ -94,7 +96,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         run is performed.
 
     normalize_y : bool, default=False
-        Whether or not to normalized the target values `y` by removing the mean
+        Whether or not to normalize the target values `y` by removing the mean
         and scaling to unit-variance. This is recommended for cases where
         zero-mean, unit-variance priors are used. Note that, in this
         implementation, the normalisation is reversed before the GP predictions
@@ -140,12 +142,22 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    GaussianProcessClassifier : Gaussian process classification (GPC)
+        based on Laplace approximation.
+
     References
     ----------
-    .. [1] `Rasmussen, Carl Edward.
-       "Gaussian processes in machine learning."
-       Summer school on machine learning. Springer, Berlin, Heidelberg, 2003
-       <http://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_.
+    .. [RW2006] `Carl E. Rasmussen and Christopher K.I. Williams,
+       "Gaussian Processes for Machine Learning",
+       MIT Press 2006 <https://www.gaussianprocess.org/gpml/chapters/RW.pdf>`_
 
     Examples
     --------
@@ -161,6 +173,16 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     >>> gpr.predict(X[:2,:], return_std=True)
     (array([653.0..., 592.1...]), array([316.6..., 316.6...]))
     """
+
+    _parameter_constraints: dict = {
+        "kernel": [None, Kernel],
+        "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
+        "optimizer": [StrOptions({"fmin_l_bfgs_b"}), callable, None],
+        "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],
+        "normalize_y": ["boolean"],
+        "copy_X_train": ["boolean"],
+        "random_state": ["random_state"],
+    }
 
     def __init__(
         self,
@@ -194,8 +216,11 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
 
         Returns
         -------
-        self : returns an instance of self.
+        self : object
+            GaussianProcessRegressor class instance.
         """
+        self._validate_params()
+
         if self.kernel is None:  # Use an RBF kernel as default
             self.kernel_ = C(1.0, constant_value_bounds="fixed") * RBF(
                 1.0, length_scale_bounds="fixed"
@@ -227,8 +252,9 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             y = (y - self._y_train_mean) / self._y_train_std
 
         else:
-            self._y_train_mean = np.zeros(1)
-            self._y_train_std = 1
+            shape_y_stats = (y.shape[1],) if y.ndim == 2 else 1
+            self._y_train_mean = np.zeros(shape=shape_y_stats)
+            self._y_train_std = np.ones(shape=shape_y_stats)
 
         if np.iterable(self.alpha) and self.alpha.shape[0] != y.shape[0]:
             if self.alpha.shape[0] == 1:
@@ -312,7 +338,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         return self
 
     def predict(self, X, return_std=False, return_cov=False):
-        """Predict using the Gaussian process regression model
+        """Predict using the Gaussian process regression model.
 
         We can also predict based on an unfitted model by using the GP prior.
         In addition to the mean of the predictive distribution, optionally also
@@ -337,11 +363,12 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         y_mean : ndarray of shape (n_samples,) or (n_samples, n_targets)
             Mean of predictive distribution a query points.
 
-        y_std : ndarray of shape (n_samples,), optional
+        y_std : ndarray of shape (n_samples,) or (n_samples, n_targets), optional
             Standard deviation of predictive distribution at query points.
             Only returned when `return_std` is True.
 
-        y_cov : ndarray of shape (n_samples, n_samples), optional
+        y_cov : ndarray of shape (n_samples, n_samples) or \
+                (n_samples, n_samples, n_targets), optional
             Covariance of joint predictive distribution a query points.
             Only returned when `return_cov` is True.
         """
@@ -381,6 +408,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             # undo normalisation
             y_mean = self._y_train_std * y_mean + self._y_train_mean
 
+            # if y_mean has shape (n_samples, 1), reshape to (n_samples,)
+            if y_mean.ndim > 1 and y_mean.shape[1] == 1:
+                y_mean = np.squeeze(y_mean, axis=1)
+
             # Alg 2.1, page 19, line 5 -> v = L \ K(X_test, X_train)^T
             V = solve_triangular(
                 self.L_, K_trans.T, lower=GPR_CHOLESKY_LOWER, check_finite=False
@@ -391,14 +422,20 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 y_cov = self.kernel_(X) - V.T @ V
 
                 # undo normalisation
-                y_cov = y_cov * self._y_train_std ** 2
+                y_cov = np.outer(y_cov, self._y_train_std**2).reshape(
+                    *y_cov.shape, -1
+                )
+                # if y_cov has shape (n_samples, n_samples, 1), reshape to
+                # (n_samples, n_samples)
+                if y_cov.shape[2] == 1:
+                    y_cov = np.squeeze(y_cov, axis=2)
 
                 return y_mean, y_cov
             elif return_std:
                 # Compute variance of predictive distribution
                 # Use einsum to avoid explicitly forming the large matrix
                 # V^T @ V just to extract its diagonal afterward.
-                y_var = self.kernel_.diag(X)
+                y_var = self.kernel_.diag(X).copy()
                 y_var -= np.einsum("ij,ji->i", V.T, V)
 
                 # Check if any of the variances is negative because of
@@ -412,7 +449,13 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                     y_var[y_var_negative] = 0.0
 
                 # undo normalisation
-                y_var = y_var * self._y_train_std ** 2
+                y_var = np.outer(y_var, self._y_train_std**2).reshape(
+                    *y_var.shape, -1
+                )
+
+                # if y_var has shape (n_samples, 1), reshape to (n_samples,)
+                if y_var.shape[1] == 1:
+                    y_var = np.squeeze(y_var, axis=1)
 
                 return y_mean, np.sqrt(y_var)
             else:
@@ -427,7 +470,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             Query points where the GP is evaluated.
 
         n_samples : int, default=1
-            Number of samples drawn from the Gaussian process per query point
+            Number of samples drawn from the Gaussian process per query point.
 
         random_state : int, RandomState instance or None, default=0
             Determines random number generation to randomly draw samples.
@@ -449,8 +492,10 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
             y_samples = rng.multivariate_normal(y_mean, y_cov, n_samples).T
         else:
             y_samples = [
-                rng.multivariate_normal(y_mean[:, i], y_cov, n_samples).T[:, np.newaxis]
-                for i in range(y_mean.shape[1])
+                rng.multivariate_normal(
+                    y_mean[:, target], y_cov[..., target], n_samples
+                ).T[:, np.newaxis]
+                for target in range(y_mean.shape[1])
             ]
             y_samples = np.hstack(y_samples)
         return y_samples
@@ -458,7 +503,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
     def log_marginal_likelihood(
         self, theta=None, eval_gradient=False, clone_kernel=True
     ):
-        """Returns log-marginal likelihood of theta for training data.
+        """Return log-marginal likelihood of theta for training data.
 
         Parameters
         ----------

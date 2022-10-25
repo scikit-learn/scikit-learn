@@ -7,10 +7,10 @@ on:
 jobs:
   one:
     runs-on: ubuntu-latest
+    # Note that string comparisons is not case sensitive.
     if: >-
-      (github.event.comment.body == 'take' ||
-       github.event.comment.body == 'Take')
-      && !github.event.issue.assignee
+       startsWith(github.event.comment.body, '/take')
+       && !github.event.issue.assignee
     steps:
       - run: |
           echo "Assigning issue ${{ github.event.issue.number }} to ${{ github.event.comment.user.login }}"

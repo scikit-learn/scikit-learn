@@ -136,11 +136,13 @@ def test_classifier_correctness(loss):
         assert_array_almost_equal(clf1.w, clf2.coef_.ravel(), decimal=2)
 
 
-def test_classifier_undefined_methods():
+@pytest.mark.parametrize(
+    "response_method", ["predict_proba", "predict_log_proba", "transform"]
+)
+def test_classifier_undefined_methods(response_method):
     clf = PassiveAggressiveClassifier(max_iter=100)
-    for meth in ("predict_proba", "predict_log_proba", "transform"):
-        with pytest.raises(AttributeError):
-            getattr(clf, meth)
+    with pytest.raises(AttributeError):
+        getattr(clf, response_method)
 
 
 def test_class_weights():
@@ -198,20 +200,6 @@ def test_wrong_class_weight_label():
     y2 = [1, 1, 1, -1, -1]
 
     clf = PassiveAggressiveClassifier(class_weight={0: 0.5}, max_iter=100)
-    with pytest.raises(ValueError):
-        clf.fit(X2, y2)
-
-
-def test_wrong_class_weight_format():
-    # ValueError due to wrong class_weight argument type.
-    X2 = np.array([[-1.0, -1.0], [-1.0, 0], [-0.8, -1.0], [1.0, 1.0], [1.0, 0.0]])
-    y2 = [1, 1, 1, -1, -1]
-
-    clf = PassiveAggressiveClassifier(class_weight=[0.5], max_iter=100)
-    with pytest.raises(ValueError):
-        clf.fit(X2, y2)
-
-    clf = PassiveAggressiveClassifier(class_weight="the larch", max_iter=100)
     with pytest.raises(ValueError):
         clf.fit(X2, y2)
 
@@ -279,6 +267,5 @@ def test_regressor_correctness(loss):
 
 def test_regressor_undefined_methods():
     reg = PassiveAggressiveRegressor(max_iter=100)
-    for meth in ("transform",):
-        with pytest.raises(AttributeError):
-            getattr(reg, meth)
+    with pytest.raises(AttributeError):
+        reg.transform(X)

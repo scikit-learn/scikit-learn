@@ -49,6 +49,7 @@ def check_openmp_support():
     if "PYODIDE_PACKAGE_ABI" in os.environ:
         # Pyodide doesn't support OpenMP
         return False
+
     code = textwrap.dedent(
         """\
         #include <omp.h>
@@ -64,10 +65,12 @@ def check_openmp_support():
     extra_preargs = os.getenv("LDFLAGS", None)
     if extra_preargs is not None:
         extra_preargs = extra_preargs.strip().split(" ")
+        # FIXME: temporary fix to link against system libraries on linux
+        # "-Wl,--sysroot=/" should be removed
         extra_preargs = [
             flag
             for flag in extra_preargs
-            if flag.startswith(("-L", "-Wl,-rpath", "-l"))
+            if flag.startswith(("-L", "-Wl,-rpath", "-l", "-Wl,--sysroot=/"))
         ]
 
     extra_postargs = get_openmp_flag
