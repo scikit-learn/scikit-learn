@@ -356,15 +356,16 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         """
         self._validate_params()
 
-        if self.gamma == "scale":
-            # var = E[X^2] - E[X]^2 if sparse
-            X_var = (X.multiply(X)).mean() - (X.mean()) ** 2 if sparse else X.var()
-            self._gamma = 1.0 / (X.shape[1] * X_var) if X_var != 0 else 1.0
-        else:
-            self._gamma = self.gamma
         X = self._validate_data(X, accept_sparse="csr")
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
+        sparse = sp.isspmatrix(X)
+        if self.gamma == "scale":
+            # var = E[X^2] - E[X]^2 if sparse
+            X_var = (X.multiply(X)).mean() - (X.mean()) ** 2 if sparse else X.var()
+            self._gamma = 1.0 / (n_features * X_var) if X_var != 0 else 1.0
+        else:
+            self._gamma = self.gamma
         # sqrt(2 * gamma) * N(0,1)
         self.random_weights_ = (2.0 * self._gamma) ** 0.5 * random_state.normal(
             size=(n_features, self.n_components)
