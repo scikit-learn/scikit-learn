@@ -1147,6 +1147,15 @@ in the following figure,
    mass at :math:`Y=0` for the Poisson distribution and the Tweedie (power=1.5)
    distribution, but not for the Gamma distribution which has a strictly
    positive target domain.
+   
+.. figure:: ./glm_data/binomial_bernoulli_distributions.png
+   :align: center
+   :scale: 100%
+
+   PMF of a random variable Y following Binomial (number of trials = 10) and
+   Bernoulli Distributions with different probabilities of success (p).
+   Bernoulli Distribution is a special case of Binomial Distribution where the
+   number of trials is 1.
 
 The choice of the distribution depends on the problem at hand:
 
