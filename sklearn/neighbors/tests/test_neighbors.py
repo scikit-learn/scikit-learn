@@ -1507,33 +1507,47 @@ def test_neighbors_validate_parameters(Estimator):
         neighbors.RadiusNeighborsRegressor,
     ],
 )
-def test_neighbors_minkowski_semimetric(Estimator):
+@pytest.mark.parametrize("n_features", [2, 100])
+def test_neighbors_minkowski_semimetric(Estimator, n_features):
     """
     Validation of all classes extending NeighborsBase with
     Minkowski semi-metrics (i.e. when 0 < p < 1).
     """
-    X = rng.random_sample((10, 2))
+    X = rng.random_sample((10, n_features))
     y = np.ones(10)
 
-    model = Estimator(p=0.1, algo="auto")
-    msg = "for p < 1 minkowski is not a valid metric"
+    model = Estimator(p=0.1, algorithm="auto")
+    msg = (
+        "Mind that for 0 < p < 1, Minkowski metrics are not distance metric. Continuing"
+        " the execution with `algo='brute'`."
+    )
     with pytest.warns(UserWarning, match=msg):
         model.fit(X, y)
 
     assert model._fit_method == "brute"
 
+    model = Estimator(p=0.1, algorithm="brute")
+    msg = (
+        "Mind that for 0 < p < 1, Minkowski metrics are not distance metric. Continuing"
+        " the execution with `algo='brute'`."
+    )
+    with pytest.warns(UserWarning, match=msg):
+        model.fit(X, y)
+
     model = Estimator(algorithm="kd_tree", p=0.1)
     msg = (
-        "p must be greater or equal to one for minkowski metric, set p >= 1 or"
-        " algorithm='brute'"
+        'algo="kd_tree" or algo="ball_tree" requires 0 < p < 1 for'
+        " the Minkowski metric. To resolve this problem either "
+        "set p >= 1 or algo='brute'"
     )
     with pytest.raises(ValueError, match=msg):
         model.fit(X, y)
 
     model = Estimator(algorithm="ball_tree", p=0.1)
     msg = (
-        "p must be greater or equal to one for minkowski metric, set p >= 1 or"
-        " algorithm='brute'"
+        'algo="kd_tree" or algo="ball_tree" requires 0 < p < 1 for'
+        " the Minkowski metric. To resolve this problem either "
+        "set p >= 1 or algo='brute'"
     )
     with pytest.raises(ValueError, match=msg):
         model.fit(X, y)
