@@ -1185,7 +1185,7 @@ Examples of use cases include:
 * Predictive maintenance: number of production interruption events per year
   (Poisson), duration of interruption (Gamma), total interruption time per year
   (Tweedie / Compound Poisson Gamma).
-* Medical Drug Testing: number of cured patients in a set of trials/ number of
+* Medical Drug Testing: number of cured patients in a set of trials / number of
   patients experiencing side effects (Binomial)
 
 
