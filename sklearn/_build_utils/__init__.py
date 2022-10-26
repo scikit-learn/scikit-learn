@@ -9,11 +9,10 @@ import os
 import sklearn
 import contextlib
 
-from distutils.version import LooseVersion
-
 from .pre_build_helpers import basic_check_build
 from .openmp_helpers import check_openmp_support
 from .._min_dependencies import CYTHON_MIN_VERSION
+from ..externals._packaging.version import parse
 
 
 DEFAULT_ROOT = "sklearn"
@@ -30,7 +29,7 @@ def _check_cython_version():
         # Re-raise with more informative error message instead:
         raise ModuleNotFoundError(message) from e
 
-    if LooseVersion(Cython.__version__) < LooseVersion(CYTHON_MIN_VERSION):
+    if parse(Cython.__version__) < parse(CYTHON_MIN_VERSION):
         message += " The current version of Cython is {} installed in {}.".format(
             Cython.__version__, Cython.__path__
         )
