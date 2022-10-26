@@ -47,6 +47,47 @@ def _make_dumb_dataset(n_samples):
     return X_dumb, y_dumb
 
 
+@pytest.mark.parametrize(
+    "GradientBoosting, X, y",
+    [
+        (HistGradientBoostingClassifier, X_classification, y_classification),
+        (HistGradientBoostingRegressor, X_regression, y_regression),
+    ],
+)
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        (
+            {"interaction_cst": "string"},
+            "",
+        ),
+        (
+            {"interaction_cst": [0, 1]},
+            "Interaction constraints must be None or an iterable of iterables",
+        ),
+        (
+            {"interaction_cst": [{0, 9999}]},
+            r"Interaction constraints must consist of integer indices in \[0,"
+            r" n_features - 1\] = \[.*\], specifying the position of features,",
+        ),
+        (
+            {"interaction_cst": [{-1, 0}]},
+            r"Interaction constraints must consist of integer indices in \[0,"
+            r" n_features - 1\] = \[.*\], specifying the position of features,",
+        ),
+        (
+            {"interaction_cst": [{0.5}]},
+            r"Interaction constraints must consist of integer indices in \[0,"
+            r" n_features - 1\] = \[.*\], specifying the position of features,",
+        ),
+    ],
+)
+def test_init_parameters_validation(GradientBoosting, X, y, params, err_msg):
+
+    with pytest.raises(ValueError, match=err_msg):
+        GradientBoosting(**params).fit(X, y)
+
+
 # TODO(1.3): remove
 @pytest.mark.filterwarnings("ignore::FutureWarning")
 def test_invalid_classification_loss():
@@ -1075,6 +1116,72 @@ def test_uint8_predict(Est):
     est = Est()
     est.fit(X, y)
     est.predict(X)
+
+
+@pytest.mark.parametrize(
+    "interaction_cst, n_features, result",
+    [
+        (None, 931, None),
+        ([{0, 1}], 2, [{0, 1}]),
+        ([(1, 0), [5, 1]], 6, [{0, 1}, {1, 5}, {2, 3, 4}]),
+    ],
+)
+def test_check_interaction_cst(interaction_cst, n_features, result):
+    """Check that _check_interaction_cst returns the expected list of sets"""
+    est = HistGradientBoostingRegressor()
+    est.set_params(interaction_cst=interaction_cst)
+    assert est._check_interaction_cst(n_features) == result
+
+
+def test_interaction_cst_numerically():
+    """Check that interaction constraints have no forbidden interactions."""
+    rng = np.random.RandomState(42)
+    n_samples = 1000
+    X = rng.uniform(size=(n_samples, 2))
+    # Construct y with a strong interaction term
+    # y = x0 + x1 + 5 * x0 * x1
+    y = np.hstack((X, 5 * X[:, [0]] * X[:, [1]])).sum(axis=1)
+
+    est = HistGradientBoostingRegressor(random_state=42)
+    est.fit(X, y)
+    est_no_interactions = HistGradientBoostingRegressor(
+        interaction_cst=[{0}, {1}], random_state=42
+    )
+    est_no_interactions.fit(X, y)
+
+    delta = 0.25
+    # Make sure we do not extrapolate out of the training set as tree-based estimators
+    # are very bad in doing so.
+    X_test = X[(X[:, 0] < 1 - delta) & (X[:, 1] < 1 - delta)]
+    X_delta_d_0 = X_test + [delta, 0]
+    X_delta_0_d = X_test + [0, delta]
+    X_delta_d_d = X_test + [delta, delta]
+
+    # Note: For the y from above as a function of x0 and x1, we have
+    # y(x0+d, x1+d) = y(x0, x1) + 5 * d * (2/5 + x0 + x1) + 5 * d**2
+    # y(x0+d, x1)   = y(x0, x1) + 5 * d * (1/5 + x1)
+    # y(x0,   x1+d) = y(x0, x1) + 5 * d * (1/5 + x0)
+    # Without interaction constraints, we would expect a result of 5 * d**2 for the
+    # following expression, but zero with constraints in place.
+    assert_allclose(
+        est_no_interactions.predict(X_delta_d_d)
+        + est_no_interactions.predict(X_test)
+        - est_no_interactions.predict(X_delta_d_0)
+        - est_no_interactions.predict(X_delta_0_d),
+        0,
+        atol=1e-12,
+    )
+
+    # Correct result of the expressions is 5 * delta**2. But this is hard to achieve by
+    # a fitted tree-based model. However, with 100 iterations the expression should
+    # at least be positive!
+    assert np.all(
+        est.predict(X_delta_d_d)
+        + est.predict(X_test)
+        - est.predict(X_delta_d_0)
+        - est.predict(X_delta_0_d)
+        > 0.01
+    )
 
 
 # TODO(1.3): Remove

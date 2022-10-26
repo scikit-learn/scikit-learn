@@ -18,7 +18,7 @@ from scipy import linalg
 
 from ._cdnmf_fast import _update_cdnmf_fast
 from .._config import config_context
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
+from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_random_state, check_array, gen_batches
 from ..utils.extmath import randomized_svd, safe_sparse_dot, squared_norm
@@ -1130,7 +1130,7 @@ def non_negative_factorization(
     return W, H, n_iter
 
 
-class _BaseNMF(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator, ABC):
+class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator, ABC):
     """Base class for NMF and MiniBatchNMF."""
 
     _parameter_constraints: dict = {

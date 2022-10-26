@@ -35,7 +35,7 @@ from scipy import linalg
 import scipy.sparse as sp
 
 from .base import BaseEstimator, TransformerMixin
-from .base import _ClassNamePrefixFeaturesOutMixin
+from .base import ClassNamePrefixFeaturesOutMixin
 
 from .utils import check_random_state
 from .utils._param_validation import Interval, StrOptions
@@ -292,7 +292,7 @@ def _sparse_random_matrix(n_components, n_features, density="auto", random_state
 
 
 class BaseRandomProjection(
-    TransformerMixin, BaseEstimator, _ClassNamePrefixFeaturesOutMixin, metaclass=ABCMeta
+    TransformerMixin, BaseEstimator, ClassNamePrefixFeaturesOutMixin, metaclass=ABCMeta
 ):
     """Base class for random projections.
 
@@ -419,7 +419,7 @@ class BaseRandomProjection(
     def _n_features_out(self):
         """Number of transformed output features.
 
-        Used by _ClassNamePrefixFeaturesOutMixin.get_feature_names_out.
+        Used by ClassNamePrefixFeaturesOutMixin.get_feature_names_out.
         """
         return self.n_components
 

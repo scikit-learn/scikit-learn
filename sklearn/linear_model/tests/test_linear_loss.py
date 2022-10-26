@@ -35,10 +35,10 @@ def random_X_y_coef(
         n_features=n_features,
         random_state=rng,
     )
+    coef = linear_model_loss.init_zero_coef(X)
 
     if linear_model_loss.base_loss.is_multiclass:
         n_classes = linear_model_loss.base_loss.n_classes
-        coef = np.empty((n_classes, n_dof))
         coef.flat[:] = rng.uniform(
             low=coef_bound[0],
             high=coef_bound[1],
@@ -60,7 +60,6 @@ def random_X_y_coef(
 
         y = choice_vectorized(np.arange(n_classes), p=proba).astype(np.float64)
     else:
-        coef = np.empty((n_dof,))
         coef.flat[:] = rng.uniform(
             low=coef_bound[0],
             high=coef_bound[1],
@@ -79,9 +78,34 @@ def random_X_y_coef(
 
 @pytest.mark.parametrize("base_loss", LOSSES)
 @pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("n_features", [0, 1, 10])
+@pytest.mark.parametrize("dtype", [None, np.float32, np.float64, np.int64])
+def test_init_zero_coef(base_loss, fit_intercept, n_features, dtype):
+    """Test that init_zero_coef initializes coef correctly."""
+    loss = LinearModelLoss(base_loss=base_loss(), fit_intercept=fit_intercept)
+    rng = np.random.RandomState(42)
+    X = rng.normal(size=(5, n_features))
+    coef = loss.init_zero_coef(X, dtype=dtype)
+    if loss.base_loss.is_multiclass:
+        n_classes = loss.base_loss.n_classes
+        assert coef.shape == (n_classes, n_features + fit_intercept)
+        assert coef.flags["F_CONTIGUOUS"]
+    else:
+        assert coef.shape == (n_features + fit_intercept,)
+
+    if dtype is None:
+        assert coef.dtype == X.dtype
+    else:
+        assert coef.dtype == dtype
+
+    assert np.count_nonzero(coef) == 0
+
+
+@pytest.mark.parametrize("base_loss", LOSSES)
+@pytest.mark.parametrize("fit_intercept", [False, True])
 @pytest.mark.parametrize("sample_weight", [None, "range"])
 @pytest.mark.parametrize("l2_reg_strength", [0, 1])
-def test_loss_gradients_are_the_same(
+def test_loss_grad_hess_are_the_same(
     base_loss, fit_intercept, sample_weight, l2_reg_strength
 ):
     """Test that loss and gradient are the same across different functions."""
@@ -105,10 +129,26 @@ def test_loss_gradients_are_the_same(
     g3, h3 = loss.gradient_hessian_product(
         coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
+    if not base_loss.is_multiclass:
+        g4, h4, _ = loss.gradient_hessian(
+            coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+        )
+    else:
+        with pytest.raises(NotImplementedError):
+            loss.gradient_hessian(
+                coef,
+                X,
+                y,
+                sample_weight=sample_weight,
+                l2_reg_strength=l2_reg_strength,
+            )
 
     assert_allclose(l1, l2)
     assert_allclose(g1, g2)
     assert_allclose(g1, g3)
+    if not base_loss.is_multiclass:
+        assert_allclose(g1, g4)
+        assert_allclose(h4 @ g4, h3(g3))
 
     # same for sparse X
     X = sparse.csr_matrix(X)
@@ -124,6 +164,10 @@ def test_loss_gradients_are_the_same(
     g3_sp, h3_sp = loss.gradient_hessian_product(
         coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
     )
+    if not base_loss.is_multiclass:
+        g4_sp, h4_sp, _ = loss.gradient_hessian(
+            coef, X, y, sample_weight=sample_weight, l2_reg_strength=l2_reg_strength
+        )
 
     assert_allclose(l1, l1_sp)
     assert_allclose(l1, l2_sp)
@@ -131,6 +175,9 @@ def test_loss_gradients_are_the_same(
     assert_allclose(g1, g2_sp)
     assert_allclose(g1, g3_sp)
     assert_allclose(h3(g1), h3_sp(g1_sp))
+    if not base_loss.is_multiclass:
+        assert_allclose(g1, g4_sp)
+        assert_allclose(h4 @ g4, h4_sp @ g1_sp)
 
 
 @pytest.mark.parametrize("base_loss", LOSSES)

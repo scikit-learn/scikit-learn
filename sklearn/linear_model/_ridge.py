@@ -22,7 +22,7 @@ from scipy import optimize
 from scipy.sparse import linalg as sp_linalg
 
 from ._base import LinearClassifierMixin, LinearModel
-from ._base import _deprecate_normalize, _preprocess_data, _rescale_data
+from ._base import _preprocess_data, _rescale_data
 from ._sag import sag_solver
 from ..base import MultiOutputMixin, RegressorMixin, is_classifier
 from ..utils.extmath import safe_sparse_dot
@@ -36,7 +36,6 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
 from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
-from ..utils._param_validation import Hidden
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..metrics import check_scoring
@@ -784,7 +783,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
     _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
         "fit_intercept": ["boolean"],
-        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
         "copy_X": ["boolean"],
         "max_iter": [Interval(Integral, 1, None, closed="left"), None],
         "tol": [Interval(Real, 0, None, closed="left")],
@@ -803,7 +801,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         alpha=1.0,
         *,
         fit_intercept=True,
-        normalize="deprecated",
         copy_X=True,
         max_iter=None,
         tol=1e-4,
@@ -813,7 +810,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
     ):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.copy_X = copy_X
         self.max_iter = max_iter
         self.tol = tol
@@ -822,9 +818,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
-        self._normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
-        )
 
         if self.solver == "lbfgs" and not self.positive:
             raise ValueError(
@@ -872,8 +865,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             X,
             y,
             self.fit_intercept,
-            self._normalize,
-            self.copy_X,
+            copy=self.copy_X,
             sample_weight=sample_weight,
         )
 
@@ -957,18 +949,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         Whether to fit the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. ``X`` and ``y`` are expected to be centered).
-
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and
-            will be removed in 1.2.
 
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
@@ -1100,7 +1080,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         alpha=1.0,
         *,
         fit_intercept=True,
-        normalize="deprecated",
         copy_X=True,
         max_iter=None,
         tol=1e-4,
@@ -1111,7 +1090,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             copy_X=copy_X,
             max_iter=max_iter,
             tol=tol,
@@ -1264,18 +1242,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         intercept will be used in calculations (e.g. data is expected to be
         already centered).
 
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and
-            will be removed in 1.2.
-
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
@@ -1406,7 +1372,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         alpha=1.0,
         *,
         fit_intercept=True,
-        normalize="deprecated",
         copy_X=True,
         max_iter=None,
         tol=1e-4,
@@ -1418,7 +1383,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             copy_X=copy_X,
             max_iter=max_iter,
             tol=tol,
@@ -1624,7 +1588,6 @@ class _RidgeGCV(LinearModel):
         alphas=(0.1, 1.0, 10.0),
         *,
         fit_intercept=True,
-        normalize="deprecated",
         scoring=None,
         copy_X=True,
         gcv_mode=None,
@@ -1634,7 +1597,6 @@ class _RidgeGCV(LinearModel):
     ):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.scoring = scoring
         self.copy_X = copy_X
         self.gcv_mode = gcv_mode
@@ -1970,10 +1932,6 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-        _normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
-        )
-
         X, y = self._validate_data(
             X,
             y,
@@ -1997,8 +1955,7 @@ class _RidgeGCV(LinearModel):
             X,
             y,
             self.fit_intercept,
-            _normalize,
-            self.copy_X,
+            copy=self.copy_X,
             sample_weight=sample_weight,
         )
 
@@ -2115,7 +2072,6 @@ class _BaseRidgeCV(LinearModel):
     _parameter_constraints: dict = {
         "alphas": ["array-like", Interval(Real, 0, None, closed="neither")],
         "fit_intercept": ["boolean"],
-        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
         "scoring": [StrOptions(set(get_scorer_names())), callable, None],
         "cv": ["cv_object"],
         "gcv_mode": [StrOptions({"auto", "svd", "eigen"}), None],
@@ -2128,7 +2084,6 @@ class _BaseRidgeCV(LinearModel):
         alphas=(0.1, 1.0, 10.0),
         *,
         fit_intercept=True,
-        normalize="deprecated",
         scoring=None,
         cv=None,
         gcv_mode=None,
@@ -2137,7 +2092,6 @@ class _BaseRidgeCV(LinearModel):
     ):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.scoring = scoring
         self.cv = cv
         self.gcv_mode = gcv_mode
@@ -2195,7 +2149,6 @@ class _BaseRidgeCV(LinearModel):
             estimator = _RidgeGCV(
                 alphas,
                 fit_intercept=self.fit_intercept,
-                normalize=self.normalize,
                 scoring=self.scoring,
                 gcv_mode=self.gcv_mode,
                 store_cv_values=self.store_cv_values,
@@ -2219,7 +2172,6 @@ class _BaseRidgeCV(LinearModel):
             gs = GridSearchCV(
                 model(
                     fit_intercept=self.fit_intercept,
-                    normalize=self.normalize,
                     solver=solver,
                 ),
                 parameters,
@@ -2265,18 +2217,6 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
-
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and will be removed in
-            1.2.
 
     scoring : str, callable, default=None
         A string (see model evaluation documentation) or
@@ -2444,18 +2384,6 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and
-            will be removed in 1.2.
-
     scoring : str, callable, default=None
         A string (see model evaluation documentation) or
         a scorer callable object / function with signature
@@ -2560,7 +2488,6 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         alphas=(0.1, 1.0, 10.0),
         *,
         fit_intercept=True,
-        normalize="deprecated",
         scoring=None,
         cv=None,
         class_weight=None,
@@ -2569,7 +2496,6 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         super().__init__(
             alphas=alphas,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             scoring=scoring,
             cv=cv,
             store_cv_values=store_cv_values,

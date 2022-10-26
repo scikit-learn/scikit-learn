@@ -29,7 +29,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.tests.test_dist_metrics import BOOL_METRICS
 from sklearn.metrics.tests.test_pairwise_distances_reduction import (
-    assert_radius_neighborhood_results_equality,
+    assert_radius_neighbors_results_equality,
 )
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
@@ -2172,7 +2172,7 @@ def test_radius_neighbors_brute_backend(
                     X_test, return_distance=True
                 )
 
-        assert_radius_neighborhood_results_equality(
+        assert_radius_neighbors_results_equality(
             legacy_brute_dst,
             pdr_brute_dst,
             legacy_brute_idx,

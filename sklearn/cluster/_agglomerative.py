@@ -15,7 +15,7 @@ import numpy as np
 from scipy import sparse
 from scipy.sparse.csgraph import connected_components
 
-from ..base import BaseEstimator, ClusterMixin, _ClassNamePrefixFeaturesOutMixin
+from ..base import BaseEstimator, ClusterMixin, ClassNamePrefixFeaturesOutMixin
 from ..metrics.pairwise import paired_distances
 from ..metrics.pairwise import _VALID_METRICS
 from ..metrics import DistanceMetric
@@ -1099,7 +1099,7 @@ class AgglomerativeClustering(ClusterMixin, BaseEstimator):
 
 
 class FeatureAgglomeration(
-    _ClassNamePrefixFeaturesOutMixin, AgglomerativeClustering, AgglomerationTransform
+    ClassNamePrefixFeaturesOutMixin, AgglomerativeClustering, AgglomerationTransform
 ):
     """Agglomerate features.
 
