@@ -1,26 +1,10 @@
 """Test the ensemble_selection classifier and regressor."""
 
-import pytest
-import numpy as np
-import sklearn.metrics
-from numpy.testing import assert_array_equal
-import scipy.sparse as sparse
-
-
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_diabetes
-from sklearn.datasets import load_breast_cancer
-from sklearn.datasets import make_regression
-from sklearn.datasets import make_classification
-from sklearn.datasets import make_multilabel_classification
 from sklearn.model_selection import train_test_split
 
-from sklearn.dummy import DummyClassifier
-from sklearn.dummy import DummyRegressor
-from sklearn.linear_model import LogisticRegression
-from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import RidgeClassifier
-from sklearn.svm import LinearSVC
+
 from sklearn.svm import LinearSVR
 from sklearn.svm import SVC
 from sklearn.ensemble import RandomForestClassifier
@@ -28,7 +12,6 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.neural_network import MLPClassifier
-from sklearn.neural_network import MLPRegressor
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process import GaussianProcessRegressor
 
@@ -91,8 +74,8 @@ def test_ensemble_selection_classifier():
     X_train, X_test, y_train, y_test = train_test_split(
         scale(X_iris), y_iris, stratify=y_iris, test_size=0.5, random_state=seed
     )
+
     # convert label id to one-hot vector
-    # y_train_one_hot=preprocessing.OneHotEncoder().fit_transform(y_train.reshape((-1,1))).toarray() # not used
     y_test_one_hot = (
         preprocessing.OneHotEncoder().fit_transform(y_test.reshape((-1, 1))).toarray()
     )
