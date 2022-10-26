@@ -1516,6 +1516,11 @@ def test_neighbors_minkowski_semimetric(Estimator, n_features):
     X = rng.random_sample((10, n_features))
     y = np.ones(10)
 
+    model = Estimator(p=0)
+    with pytest.raises(ValueError):
+        # This Exception will be raised by _validate_params called in fit method
+        model.fit(X, y)
+
     model = Estimator(p=0.1, algorithm="auto")
     msg = (
         "Mind that for 0 < p < 1, Minkowski metrics are not distance metric. Continuing"
@@ -1536,18 +1541,18 @@ def test_neighbors_minkowski_semimetric(Estimator, n_features):
 
     model = Estimator(algorithm="kd_tree", p=0.1)
     msg = (
-        'algo="kd_tree" or algo="ball_tree" requires 0 < p < 1 for'
-        " the Minkowski metric. To resolve this problem either "
-        "set p >= 1 or algo='brute'"
+        'algo="kd_tree" does not support 0 < p < 1 for '
+        "the Minkowski metric. To resolve this problem either "
+        'set p >= 1 or algo="brute".'
     )
     with pytest.raises(ValueError, match=msg):
         model.fit(X, y)
 
     model = Estimator(algorithm="ball_tree", p=0.1)
     msg = (
-        'algo="kd_tree" or algo="ball_tree" requires 0 < p < 1 for'
-        " the Minkowski metric. To resolve this problem either "
-        "set p >= 1 or algo='brute'"
+        'algo="ball_tree" does not support 0 < p < 1 for '
+        "the Minkowski metric. To resolve this problem either "
+        'set p >= 1 or algo="brute".'
     )
     with pytest.raises(ValueError, match=msg):
         model.fit(X, y)
