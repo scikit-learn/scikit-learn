@@ -1168,7 +1168,7 @@ The choice of the distribution depends on the problem at hand:
   you might try an Inverse Gaussian deviance (or even higher variance powers
   of the Tweedie family).
 * If the target values :math:`y` are probabilities, you can use the Binomial or
-  Bernoulli deviance. The Binomial/ Bernoulli Deviance with a logit link can be
+  Bernoulli deviance. The Binomial / Bernoulli Deviance with a logit link can be
   used for binary classification. 
 
 
