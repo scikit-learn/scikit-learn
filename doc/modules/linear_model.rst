@@ -1126,16 +1126,16 @@ provided, the average becomes a weighted average.
 
 The following table lists some specific EDMs and their unit deviance :
 
-================= ===============================  ============================================
+================= ================================  ============================================
 Distribution       Target Domain                    Unit Deviance :math:`d(y, \hat{y})`
-================= ===============================  ============================================
-Normal            :math:`y \in (-\infty, \infty)`  :math:`(y-\hat{y})^2`
-Poisson           :math:`y \in [0, \infty)`        :math:`2(y\log\frac{y}{\hat{y}}-y+\hat{y})`
-Gamma             :math:`y \in (0, \infty)`        :math:`2(\log\frac{\hat{y}}{y}+\frac{y}{\hat{y}}-1)`
-Inverse Gaussian  :math:`y \in (0, \infty)`        :math:`\frac{(y-\hat{y})^2}{y\hat{y}^2}`
-Binomial          :math:`y \in (0, 1)`             :math:`2({y}\log\frac{\hat{y}}{y}+({n}-{y})\log\frac{{n}-\hat{y}}{{n}-{y}})`
-Bernoulli         :math:`y \in (0, 1)`             :math:`2({y}\log\frac{\hat{y}}{y}+({1}-{y})\log\frac{{1}-\hat{y}}{{1}-{y}})`
-================= ===============================  ============================================
+================= ================================  ============================================
+Normal            :math:`y \in (-\infty, \infty)`   :math:`(y-\hat{y})^2`
+Bernoulli         :math:`y \in \{0, 1\}`            :math:`2({y}\log\frac{y}{\hat{y}}+({1}-{y})\log\frac{{1}-{y}}{{1}-\hat{y}})`
+Categorical       :math:`y \in \{0, 1, ..., k-1\}`  :math:`2\sum_{i=0}^{k_\text{classes}-1} y_\text{i}\log\frac{y_\text{i}}{\hat{y_\text{i}}}`
+Poisson           :math:`y \in [0, \infty)`         :math:`2(y\log\frac{y}{\hat{y}}-y+\hat{y})`
+Gamma             :math:`y \in (0, \infty)`         :math:`2(\log\frac{y}{\hat{y}}+\frac{y}{\hat{y}}-1)`
+Inverse Gaussian  :math:`y \in (0, \infty)`         :math:`\frac{(y-\hat{y})^2}{y\hat{y}^2}`
+================= ================================  ============================================
 
 The Probability Density Functions (PDF) of these distributions are illustrated
 in the following figure,
@@ -1150,28 +1150,28 @@ in the following figure,
    distribution, but not for the Gamma distribution which has a strictly
    positive target domain.
    
-.. figure:: ./glm_data/binomial_bernoulli_distributions.png
+.. figure:: ./glm_data/bernoulli_distribution.png
    :align: center
    :scale: 100%
 
-   PMF of a random variable Y following Binomial (number of trials = 10) and
-   Bernoulli Distributions with different probabilities of success (p).
-   Bernoulli Distribution is a special case of Binomial Distribution where the
-   number of trials is 1.
+   PMF of a random variable Y following Bernoulli Distributions with probability
+   of success (p). Bernoulli Distribution is a special case of the Categorical
+   Distribution where the number of categories are 2.
 
 The choice of the distribution depends on the problem at hand:
 
 * If the target values :math:`y` are counts (non-negative integer valued) or
-  relative frequencies (non-negative), you might use a Poisson deviance
-  with log-link.
-* If the target values are positive valued and skewed, you might try a
-  Gamma deviance with log-link.
-* If the target values seem to be heavier tailed than a Gamma distribution,
-  you might try an Inverse Gaussian deviance (or even higher variance powers
-  of the Tweedie family).
-* If the target values :math:`y` are probabilities, you can use the Binomial or
-  Bernoulli deviance. The Binomial / Bernoulli Deviance with a logit link can be
-  used for binary classification. 
+  relative frequencies (non-negative), you might use a Poisson distribution
+  with a log-link.
+* If the target values are positive valued and skewed, you might try a Gamma
+  distribution with a log-link.
+* If the target values seem to be heavier tailed than a Gamma distribution, you
+  might try an Inverse Gaussian distribution (or even higher variance powers of
+  the Tweedie family).
+* If the target values :math:`y` are probabilities, you can use the Bernoulli
+  distribution. The Bernoulli distribution with a logit link can be used for
+  binary classification. The Categorical distribution with a softmax link can be
+  used for multiclass classification.
 
 
 Examples of use cases include:
@@ -1183,12 +1183,12 @@ Examples of use cases include:
   policyholder per year (Poisson), cost per event (Gamma), total cost per
   policyholder per year (Tweedie / Compound Poisson Gamma).
 * Credit Default / Fraud Detection: number of fraudulent transactions from a
-  region (Binomial)
+  region (Bernoulli)
 * Predictive maintenance: number of production interruption events per year
   (Poisson), duration of interruption (Gamma), total interruption time per year
   (Tweedie / Compound Poisson Gamma).
 * Medical Drug Testing: number of cured patients in a set of trials / number of
-  patients experiencing side effects (Binomial)
+  patients experiencing side effects (Bernoulli)
 
 
 .. topic:: References:
