@@ -22,6 +22,9 @@ SciPy release >= 1.9.2. Notable changes include:
 Other bug fixes will be available in the next 1.2 release, which will be
 released in the coming weeks.
 
+Note that support for Python 32-bit in Windows is dropped in this release. This
+is due to the fact that latest SciPy also dropped the support.
+
 .. _changes_1_1_2:
 
 Version 1.1.2
