@@ -21,8 +21,8 @@ def configuration(parent_package="", top_path=None):
         "sklearn/metrics/_pairwise_distances_reduction/_base.pxd.tp",
         "sklearn/metrics/_pairwise_distances_reduction/_argkmin.pyx.tp",
         "sklearn/metrics/_pairwise_distances_reduction/_argkmin.pxd.tp",
-        "sklearn/metrics/_pairwise_distances_reduction/_radius_neighborhood.pyx.tp",
-        "sklearn/metrics/_pairwise_distances_reduction/_radius_neighborhood.pxd.tp",
+        "sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors.pyx.tp",
+        "sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors.pxd.tp",
     ]
 
     gen_from_templates(templates)
@@ -32,7 +32,7 @@ def configuration(parent_package="", top_path=None):
         "_gemm_term_computer.pyx",
         "_base.pyx",
         "_argkmin.pyx",
-        "_radius_neighborhood.pyx",
+        "_radius_neighbors.pyx",
     ]
 
     for source_file in cython_sources:

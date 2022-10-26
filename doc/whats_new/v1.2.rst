@@ -31,6 +31,11 @@ random sampling procedures.
   to a tiny value. Moreover, `verbose` is now properly propagated to L-BFGS-B.
   :pr:`23619` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |API| The default value of `tol` was changed from `1e-3` to `1e-4` for
+  :func:`linear_model.ridge_regression`, :class:`linear_model.Ridge` and
+  :class:`linear_model.`RidgeClassifier`.
+  :pr:`24465` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Fix| Make sign of `components_` deterministic in :class:`decomposition.SparsePCA`.
   :pr:`23935` by :user:`Guillaume Lemaitre <glemaitre>`.
 
@@ -42,10 +47,22 @@ random sampling procedures.
   :func:`linear_model._sgd_fast._plain_sgd` which is used by :class:`linear_model.SGDRegressor`
   and :class:`linear_model.SGDClassifier`. The old condition did not disambiguate between
   training and validation set and had an effect of overscaling the error tolerance.
-  This has been fixed in :pr:`23798` by :user:`Harsh Agrawal <Harsh14901>`
+  This has been fixed in :pr:`23798` by :user:`Harsh Agrawal <Harsh14901>`.
+
+- |Fix| For :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV` ranks corresponding to nan
+  scores will all be set to the maximum possible rank.
+  :pr:`24543` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changes impacting all modules
 -----------------------------
+
+- |MajorFeature| The `set_output` API has been adopted by all transformers.
+  Meta-estimators that contain transformers such as :class:`pipeline.Pipeline`
+  or :class:`compose.ColumnTransformer` also define a `set_output`.
+  For details, see
+  `SLEP018 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep018/proposal.html>`__.
+  :pr:`23734` by `Thomas Fan`_.
 
 - |Enhancement| Finiteness checks (detection of NaN and infinite values) in all
   estimators are now significantly more efficient for float32 data by leveraging
@@ -79,6 +96,10 @@ Changes impacting all modules
   :pr:`23604` and :pr:`23585` by :user:`Julien Jerphanion <jjerphan>`,
   :user:`Olivier Grisel <ogrisel>`, and `Thomas Fan`_.
 
+- |Fix| Systematically check the sha256 digest of dataset tarballs used in code
+  examples in the documentation.
+  :pr:`24617` by :user:`Olivier Grisel <ogrisel>` and `Thomas Fan`_. Thanks to
+  `Sim4n6 <https://huntr.dev/users/sim4n6>`_ for the report.
 
 Changelog
 ---------
@@ -93,6 +114,14 @@ Changelog
     Entries should end with:
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.base`
+-------------------
+
+- |Enhancement| Introduces :class:`base.ClassNamePrefixFeaturesOutMixin` and
+  :class:`base.ClassNamePrefixFeaturesOutMixin` mixins that defines
+  :term:`get_feature_names_out` for common transformer uses cases.
+  :pr:`24688` by `Thomas Fan`_.
 
 :mod:`sklearn.calibration`
 ..........................
@@ -221,6 +250,10 @@ Changelog
   :pr:`11860` by :user:`Pierre Ablin <pierreablin>`,
   :pr:`22527` by :user:`Meekail Zain <micky774>` and `Thomas Fan`_.
 
+- |Enhancement| :class:`decomposition.LatentDirichletAllocation` now preserves dtype
+  for `numpy.float32` input. :pr:`24528` by :user:`Takeshi Oura <takoika>` and
+  :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 - |API| The `n_features_` attribute of
   :class:`decomposition.PCA` is deprecated in favor of
   `n_features_in_` and will be removed in 1.4. :pr:`24421` by
@@ -242,6 +275,12 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Feature| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
+  :class:`~sklearn.ensemble.HistGradientBoostingRegressor` now support
+  interaction constraints via the argument `interaction_cst` of their
+  constructors.
+  :pr:`21020` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 - |Feature| Adds `class_weight` to :class:`ensemble.HistGradientBoostingClassifier`.
   :pr:`22014` by `Thomas Fan`_.
 
@@ -257,6 +296,11 @@ Changelog
 - |Fix| Fixed the issue where :class:`ensemble.AdaBoostClassifier` outputs
   NaN in feature importance when fitted with very small sample weight.
   :pr:`20415` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+- |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` no longer error when predicting
+  on categories encoded as negative values and instead consider them a member
+  of the "missing category". :pr:`24283` by `Thomas Fan`_.
 
 - |API| Rename the constructor parameter `base_estimator` to `estimator` in
   the following classes:
@@ -310,6 +354,16 @@ Changelog
 ...........................
 
 - |Enhancement| :class:`linear_model.GammaRegressor`,
+  :class:`linear_model.PoissonRegressor` and :class:`linear_model.TweedieRegressor` got
+  a new solver `solver="newton-cholesky"`. This is a 2nd order (Newton) optimisation
+  routine that uses a Cholesky decomposition of the hessian matrix.
+  When `n_samples >> n_features`, the `"newton-cholesky"` solver has been observed to
+  converge both faster and to a higher precision solution than the `"lbfgs"` solver on
+  problems with one-hot encoded categorical variables with some rare categorical
+  levels.
+  :pr:`24637` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Enhancement| :class:`linear_model.GammaRegressor`,
   :class:`linear_model.PoissonRegressor` and :class:`linear_model.TweedieRegressor`
   can reach higher precision with the lbfgs solver, in particular when `tol` is set
   to a tiny value. Moreover, `verbose` is now properly propagated to L-BFGS-B.
@@ -323,6 +377,11 @@ Changelog
 - |API| String option `"none"` is deprecated for `penalty` argument
   in :class:`linear_model.LogisticRegression`, and will be removed in version 1.4.
   Use `None` instead. :pr:`23877` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+- |API| The default value of `tol` was changed from `1e-3` to `1e-4` for
+  :func:`linear_model.ridge_regression`, :class:`linear_model.Ridge` and
+  :class:`linear_model.`RidgeClassifier`.
+  :pr:`24465` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Fix| :class:`linear_model.SGDOneClassSVM` no longer performs parameter
   validation in the constructor. All validation is now handled in `fit()` and
@@ -387,6 +446,10 @@ Changelog
   (`average="micro"`) for the One-vs-Rest multiclass case (`multi_class="ovr"`).
   :pr:`24338` by :user:`Arturo Amor <ArturoAmorQ>`.
 
+- |API| The parameter `sum_over_features` of :func:`metrics.pairwise.manhattan_distances` is deprecated
+  and will be removed in 1.4.
+  :pr:`24630` by :user:`Rushil Desai <rusdes>`.
+
 - |Feature| Add :func:`metrics.fpr_tpr_fnr_tnr_score`,
   :func:`metrics.specificity_score` and :func:`metrics.npv_score`.
   :pr:`19556` by :user:`Hao Chun Chang <haochunchang>`
@@ -398,6 +461,11 @@ Changelog
 - |Fix| For all `SearchCV` classes and scipy >= 1.10, rank corresponding to a
   nan score is correctly set to the maximum possible rank, rather than
   `np.iinfo(np.int32).min`. :pr:`24141` by :user:`Loïc Estève <lesteve>`.
+
+- |Fix| For :class:`model_selection.GridSearchCV` and
+  :class:`model_selection.RandomizedSearchCV` ranks corresponding to nan
+  scores will all be set to the maximum possible rank.
+  :pr:`24543` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.multioutput`
 ..........................
@@ -432,6 +500,10 @@ Changelog
   :pr:`10468` by :user:`Ruben <icfly2>` and :pr:`22993` by
   :user:`Jovan Stojanovic <jovan-stojanovic>`.
 
+- |Efficiency| :class:`neighbors.NearestCentroid` is faster and requires
+  less memory as it better leverages CPUs' caches to compute predictions.
+  :pr:`24645` by :user:`Olivier Grisel <ogrisel>`.
+
 - |Feature| Adds new function :func:`neighbors.sort_graph_by_row_values` to
   sort a CSR sparse graph such that each row is stored with increasing values.
   This is useful to improve efficiency when using precomputed sparse distance
@@ -453,6 +525,10 @@ Changelog
 - |Enhancement| :meth:`pipeline.FeatureUnion.get_feature_names_out` can now
   be used when one of the transformers in the :class:`pipeline.FeatureUnion` is
   `"passthrough"`. :pr:`24058` by :user:`Diederik Perdok <diederikwp>`
+
+- |Enhancement| The :class:`FeatureUnion` class now has a `named_transformers`
+  attribute for accessing transformers by name.
+  :pr:`20331` by :user:`Christopher Flynn <crflynn>`.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -489,11 +565,29 @@ Changelog
 - |FIX| :func:`utils.multiclass.type_of_target` now properly handles sparse matrices.
   :pr:`14862` by :user:`Léonard Binet <leonardbinet>`.
 
+- |API| The extra keyword parameters of :func:`utils.extmath.density` are deprecated
+  and will be removed in 1.4.
+  :pr:`24523` by :user:`Mia Bajic <clytaemnestra>`.
+
+- |Fix| HTML representation no longer errors when an estimator class is a value in
+  `get_params`. :pr:`24512` by `Thomas Fan`_.
+
 - |Feature| A new module exposes development tools to discover estimators (i.e.
   :func:`utils.discovery.all_estimators`), displays (i.e.
   :func:`utils.discovery.all_displays`) and functions (i.e.
   :func:`utils.discovery.all_functions`) in scikit-learn.
   :pr:`21469` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |API| Added an `"auto"` option to the `normalized_stress` argument in
+  :class:`manifold.MDS` and :func:`manifold.smacof`. Note that
+  `normalized_stress` is only valid for non-metric MDS, therefore the `"auto"`
+  option enables `normalized_stress` when `metric=False` and disables it when
+  `metric=True`. `"auto"` will become the default value foor `normalized_stress`
+  in version 1.4.
+  :pr:`23834` by :user:`Meekail Zain <micky774>`
+
+- |FIX| :func:`utils.estimator_checks.check_estimator` now takes into account
+  the `requires_positive_X` tag correctly. :pr:`24667` by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------

@@ -113,7 +113,7 @@ def plot_tree(
         The maximum depth of the representation. If None, the tree is fully
         generated.
 
-    feature_names : list of strings, default=None
+    feature_names : list of str, default=None
         Names of each of the features.
         If None, generic names will be used ("x[0]", "x[1]", ...).
 
@@ -174,7 +174,6 @@ def plot_tree(
     >>> clf = clf.fit(iris.data, iris.target)
     >>> tree.plot_tree(clf)
     [...]
-
     """
 
     check_is_fitted(decision_tree)
