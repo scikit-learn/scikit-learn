@@ -495,6 +495,14 @@ Changelog
   :pr:`10468` by :user:`Ruben <icfly2>` and :pr:`22993` by
   :user:`Jovan Stojanovic <jovan-stojanovic>`.
 
+- |Enhancement| :class:`neighbors.NeighborsBase` now accepts Minkowski metric with
+  `0 < p < 1` for `algorithm="brute"` and raises `UserWarning`. For `algorithm="kd_tree"`
+  and `algorithm="ball_tree"` it raises `ValueError` as Minkowski with `0 < p < 1` isn't valid
+  distance metric. If `algorithm="auto"` and metric is Minkowski with `0 < p < 1`, `brute` algorithm
+  will be used.
+  :pr:`24750` by :user:`Rudresh Veerkhare <RudreshVeerkhare>`
+
+
 - |Efficiency| :class:`neighbors.NearestCentroid` is faster and requires
   less memory as it better leverages CPUs' caches to compute predictions.
   :pr:`24645` by :user:`Olivier Grisel <ogrisel>`.
