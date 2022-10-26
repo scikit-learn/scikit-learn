@@ -1,53 +1,18 @@
+"""Ensemble selection of classifiers and regressors"""
+
+# Authors: Pierrick Pochelu <pierrick.pochelu@gmail.com>
+
 import math
-from copy import deepcopy
-from numbers import Integral
-
 import numpy as np
-import sklearn.metrics
-
 from joblib import Parallel, delayed
-import scipy.sparse as sparse
-
-from ..base import clone
-from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
-from ..base import is_classifier, is_regressor
-from ..exceptions import NotFittedError
-from ..utils._estimator_html_repr import _VisualBlock
-
-from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
-
-from ..linear_model import LogisticRegression
-from ..linear_model import RidgeCV
-
-from ..model_selection import cross_val_predict
-from ..model_selection import check_cv
-
-from ..preprocessing import LabelEncoder
-
-from ..utils import Bunch
-from ..utils.multiclass import check_classification_targets, type_of_target
-from ..utils.metaestimators import available_if
-from ..utils.validation import check_is_fitted
-from ..utils.validation import column_or_1d
-from ..utils.fixes import delayed
-from ..utils._param_validation import HasMethods, StrOptions
-from ..utils.validation import _check_feature_names_in
-
-
-from ..base import BaseEstimator
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 
 
-def negative_log_error(y, p):
-    print(y)
-    print(p)
-    return np.mean(-np.log(1.0 - np.abs(y - p)))
-
-
 class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsemble):
-    """An ensemble classifier built by greedy stepwise selection.
+    """
+    An ensemble classifier built by greedy stepwise selection.
     # Bagged Ensemble Selection (section 2.3) of the original paper is not implemented.
 
     Parameters
@@ -61,14 +26,16 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
 
     min_estimators: integer, optional (default=1)
         The minimum number of base estimators.
-        The calibration dataset may be overfitted. We may hypothesis big ensembles generalize better.
-        So min_estimators value allows to regularize.
+        The calibration dataset may be overfitted. We may hypothesis big ensembles
+        generalize better. So min_estimators value allows to regularize.
 
     max_estimators : integer, optional (default=50)
-        The maximum number of base estimators. It allows to control the final ensemble size.
+        The maximum number of base estimators. It allows to control the final
+        ensemble size.
 
     pruning_factor : float, optional (default=0.6)
-        The worst pruning_factor estimators are remove to reduce the number of combinations
+        The worst pruning_factor estimators are remove to reduce the number of
+        combinations
 
     is_base_estimator_proba: bool, optional (default=True)
         If True, estimators call "predict_proba(X)", otherwise, "predict(X)"
@@ -282,7 +249,8 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
                 # Adding it ?
                 self.log(
                     "--> RESULT:"
-                    f" iteration:{e+1}/{self.max_estimators} add:{best_candidate_ens_name},"
+                    f" iteration:{e+1}/{self.max_estimators}"
+                    f" add:{best_candidate_ens_name}"
                     f" score:{best_candidate_ens_score}"
                 )
 
