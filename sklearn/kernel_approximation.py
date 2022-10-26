@@ -253,6 +253,9 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         Parameter of RBF kernel: exp(-gamma * x^2).
         If ``gamma='scale'`` is passed then it uses
         1 / (n_features * X.var()) as value of gamma.
+        
+        .. versionadded:: 1.2
+           The option `"scale"` was added in 1.2.
 
     n_components : int, default=100
         Number of Monte Carlo samples per original feature.
