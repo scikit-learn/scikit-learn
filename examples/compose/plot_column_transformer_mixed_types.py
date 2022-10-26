@@ -38,7 +38,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split, RandomizedSearchCV
 from sklearn.feature_selection import SelectPercentile, chi2
 
 np.random.seed(0)
@@ -179,7 +179,12 @@ selector(dtype_include="category")(X_train)
 # hyperparameters as part of the ``Pipeline``.
 # We will search for both the imputer strategy of the numeric preprocessing
 # and the regularization parameter of the logistic regression using
-# :class:`~sklearn.model_selection.GridSearchCV`.
+# :class:`~sklearn.model_selection.RandomizedSearchCV`. This type of
+# hyperparameter search allows to define the time budget through the `n_iter`
+# parameter. Note that you can increase the `n_iter` parameter if you want to
+# test more combinations. Alternatively, one can use the
+# :class:`~sklearn.model_selection.GridSearchCV` but the cartesian product of
+# the parameter space will be evaluated.
 
 param_grid = {
     "preprocessor__num__imputer__strategy": ["mean", "median"],
@@ -187,27 +192,27 @@ param_grid = {
     "classifier__C": [0.1, 1.0, 10, 100],
 }
 
-grid_search = GridSearchCV(clf, param_grid, cv=10)
-grid_search
+search_cv = RandomizedSearchCV(clf, param_grid, n_iter=10, random_state=0)
+search_cv
 
 # %%
 # Calling 'fit' triggers the cross-validated search for the best
 # hyper-parameters combination:
 #
-grid_search.fit(X_train, y_train)
+search_cv.fit(X_train, y_train)
 
 print("Best params:")
-print(grid_search.best_params_)
+print(search_cv.best_params_)
 
 # %%
 # The internal cross-validation scores obtained by those parameters is:
-print(f"Internal CV score: {grid_search.best_score_:.3f}")
+print(f"Internal CV score: {search_cv.best_score_:.3f}")
 
 # %%
 # We can also introspect the top grid search results as a pandas dataframe:
 import pandas as pd
 
-cv_results = pd.DataFrame(grid_search.cv_results_)
+cv_results = pd.DataFrame(search_cv.cv_results_)
 cv_results = cv_results.sort_values("mean_test_score", ascending=False)
 cv_results[
     [
@@ -225,8 +230,5 @@ cv_results[
 # not used for hyperparameter tuning.
 #
 print(
-    (
-        "best logistic regression from grid search: %.3f"
-        % grid_search.score(X_test, y_test)
-    )
+    f"best logistic regression from grid search: {search_cv.score(X_test, y_test):.3f}"
 )
