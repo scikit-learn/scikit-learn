@@ -369,7 +369,6 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
             self._gamma = 1.0 / (n_features * X_var) if X_var != 0 else 1.0
         else:
             self._gamma = self.gamma
-        # sqrt(2 * gamma) * N(0,1)
         self.random_weights_ = (2.0 * self._gamma) ** 0.5 * random_state.normal(
             size=(n_features, self.n_components)
         )
@@ -405,7 +404,6 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         projection = safe_sparse_dot(X, self.random_weights_)
         projection += self.random_offset_
         np.cos(projection, projection)
-        # sqrt(2) / sqrt(n_components)
         projection *= (2.0 / self.n_components) ** 0.5
         return projection
 
