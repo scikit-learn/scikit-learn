@@ -132,7 +132,7 @@ for i, (mean, cov, color) in enumerate(zip(clf.means_, clf.covariances_, color_i
     angle = np.arctan2(w[0][1], w[0][0])
     angle = 180.0 * angle / np.pi  # convert to degrees
     v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
-    ellipse = Ellipse(mean, v[0], v[1], 180.0 + angle, color=color)
+    ellipse = Ellipse(mean, v[0], v[1], angle=180.0 + angle, color=color)
     ellipse.set_clip_box(fig.bbox)
     ellipse.set_alpha(0.5)
     ax.add_artist(ellipse)
