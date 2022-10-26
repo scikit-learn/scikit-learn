@@ -1070,7 +1070,7 @@ with 'log' loss, which might be even faster but requires more tuning.
 
     It is possible to obtain the p-values and confidence intervals for
     coefficients in cases of regression without penalization. The `statsmodels
-    package <https://pypi.org/project/statsmodels/>` natively supports this.
+    package <https://pypi.org/project/statsmodels/>`_ natively supports this.
     Within sklearn, one could use bootstrapping instead as well.
 
 
