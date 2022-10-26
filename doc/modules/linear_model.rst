@@ -1102,7 +1102,7 @@ to warm-starting (see :term:`Glossary <warm_start>`).
 .. _Generalized_linear_models:
 
 Generalized Linear Models
-=============================
+=========================
 
 Generalized Linear Models (GLM) extend linear models in two ways
 [10]_. First, the predicted values :math:`\hat{y}` are linked to a linear
