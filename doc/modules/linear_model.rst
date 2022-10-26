@@ -1099,6 +1099,8 @@ to warm-starting (see :term:`Glossary <warm_start>`).
         "A Blockwise Descent Algorithm for Group-penalized Multiresponse and
         Multinomial Regression." <1311.6529>`
 
+.. _Generalized_linear_regression:
+
 .. _Generalized_linear_models:
 
 Generalized Linear Models
