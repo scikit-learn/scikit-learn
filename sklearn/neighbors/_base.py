@@ -382,7 +382,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         "radius": [Interval(Real, 0, None, closed="both"), None],
         "algorithm": [StrOptions({"auto", "ball_tree", "kd_tree", "brute"})],
         "leaf_size": [Interval(Integral, 1, None, closed="left")],
-        "p": [Interval(Real, 0, None, closed="both"), None],
+        "p": [Interval(Real, 0, None, closed="right"), None],
         "metric": [StrOptions(set(itertools.chain(*VALID_METRICS.values()))), callable],
         "metric_params": [dict, None],
         "n_jobs": [Integral, None],
@@ -633,7 +633,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     "Mind that for 0 < p < 1, Minkowski metrics are not distance"
                     " metric. Continuing the execution with `algo='brute'`."
                 )
-            else: # self._fit_method in ("kd_tree", "ball_tree")
+            else:  # self._fit_method in ("kd_tree", "ball_tree")
                 raise ValueError(
                     f'algo="{self._fit_method}" does not support 0 < p < 1 for '
                     "the Minkowski metric. To resolve this problem either "
