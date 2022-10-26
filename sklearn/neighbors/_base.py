@@ -633,11 +633,11 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     "Mind that for 0 < p < 1, Minkowski metrics are not distance"
                     " metric. Continuing the execution with `algo='brute'`."
                 )
-            else:
+            else: # self._fit_method in ("kd_tree", "ball_tree")
                 raise ValueError(
-                    'algo="kd_tree" or algo="ball_tree" requires 0 < p < 1 for'
-                    " the Minkowski metric. To resolve this problem either "
-                    "set p >= 1 or algo='brute'"
+                    f'algo="{self._fit_method}" does not support 0 < p < 1 for '
+                    "the Minkowski metric. To resolve this problem either "
+                    'set p >= 1 or algo="brute".'
                 )
 
         if self._fit_method == "ball_tree":
