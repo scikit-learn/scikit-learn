@@ -23,7 +23,8 @@ Other bug fixes will be available in the next 1.2 release, which will be
 released in the coming weeks.
 
 Note that support for 32-bit Python on Windows has been dropped in this release. This
-is due to the fact that SciPy 1.9.2 also dropped the support for that platform. Windows users are advised to install the 64-bit version of Python instead.
+is due to the fact that SciPy 1.9.2 also dropped the support for that platform.
+Windows users are advised to install the 64-bit version of Python instead.
 
 .. _changes_1_1_2:
 
