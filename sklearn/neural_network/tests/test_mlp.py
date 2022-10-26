@@ -901,5 +901,7 @@ def test_mlp_warm_start_with_early_stopping(MLPEstimator):
         max_iter=10, random_state=0, warm_start=True, early_stopping=True
     )
     mlp.fit(X_iris, y_iris)
+    n_validation_scores = len(mlp.validation_scores_)
     mlp.set_params(max_iter=20)
     mlp.fit(X_iris, y_iris)
+    assert len(mlp.validation_scores_) > n_validation_scores
