@@ -19,10 +19,6 @@ SciPy release >= 1.9.2. Notable changes include:
 - |Enhancement| Create wheels for Python 3.11.
   :pr:`24446` by :user:`Chiara Marmo <cmarmo>`.
 
-- |Fix| Warn about source build issues with Windows 32 bit and 32 bit
-  Python interpreter with recent SciPy versions.
-  :pr:`24742` and :pr:`24743` by :user:`Guillaume Lemaitre <glemaitre>`.
-
 Other bug fixes will be available in the next 1.2 release, which will be
 released in the coming weeks.
 
