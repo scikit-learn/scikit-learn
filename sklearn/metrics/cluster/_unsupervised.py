@@ -135,8 +135,9 @@ def _silhouette_reduce(D_chunk, start, labels, label_freqs):
     n_chunk_samples = D_chunk.shape[0]
     # accumulate distances from each sample to each cluster
     clust_dists = np.zeros((n_chunk_samples, len(label_freqs)), dtype=D_chunk.dtype)
+    D_chunk_is_sparse = issparse(D_chunk)
     for i in range(n_chunk_samples):
-        if issparse(D_chunk):
+        if D_chunk_is_sparse:
             current_chunk = D_chunk.getrow(i)
             sample_weights = current_chunk.data
             sample_labels = np.take(labels, current_chunk.indices)
