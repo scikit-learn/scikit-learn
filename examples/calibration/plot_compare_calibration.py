@@ -113,6 +113,7 @@ colors = plt.cm.get_cmap("Dark2")
 
 ax_calibration_curve = fig.add_subplot(gs[:2, :2])
 calibration_displays = {}
+markers = ["^", "v", "s", "o"]
 for i, (clf, name) in enumerate(clf_list):
     clf.fit(X_train, y_train)
     display = CalibrationDisplay.from_estimator(
@@ -123,6 +124,7 @@ for i, (clf, name) in enumerate(clf_list):
         name=name,
         ax=ax_calibration_curve,
         color=colors(i),
+        marker=markers[i],
     )
     calibration_displays[name] = display
 
