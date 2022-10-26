@@ -101,7 +101,6 @@ def gen_from_templates(templates):
             os.path.exists(outfile)
             and os.stat(template).st_mtime < os.stat(outfile).st_mtime
         ):
-
             with open(template, "r") as f:
                 tmpl = f.read()
 

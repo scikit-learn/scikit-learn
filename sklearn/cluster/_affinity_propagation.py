@@ -432,7 +432,6 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         verbose=False,
         random_state=None,
     ):
-
         self.damping = damping
         self.max_iter = max_iter
         self.convergence_iter = convergence_iter

@@ -719,7 +719,6 @@ def test_ordinal_encoder_handle_unknowns_nan_non_float_dtype():
 
 
 def test_ordinal_encoder_raise_categories_shape():
-
     X = np.array([["Low", "Medium", "High", "Medium", "Low"]], dtype=object).T
     cats = ["Low", "Medium", "High"]
     enc = OrdinalEncoder(categories=cats)

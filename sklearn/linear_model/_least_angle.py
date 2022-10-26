@@ -588,7 +588,6 @@ def _lars_path_solver(
         if n_iter >= max_iter or n_active >= n_features:
             break
         if not drop:
-
             ##########################################################
             # Append x_j to the Cholesky factorization of (Xa * Xa') #
             #                                                        #
@@ -777,7 +776,6 @@ def _lars_path_solver(
 
         # See if any coefficient has changed sign
         if drop and method == "lasso":
-
             # handle the case when idx is not length of 1
             for ii in idx:
                 arrayfuncs.cholesky_delete(L[:n_active, :n_active], ii)

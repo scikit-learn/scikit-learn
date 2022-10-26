@@ -300,7 +300,6 @@ def test_patch_extractor_color():
 
 
 def test_extract_patches_strided():
-
     image_shapes_1D = [(10,), (10,), (11,), (10,)]
     patch_sizes_1D = [(1,), (2,), (3,), (8,)]
     patch_steps_1D = [(1,), (1,), (4,), (2,)]

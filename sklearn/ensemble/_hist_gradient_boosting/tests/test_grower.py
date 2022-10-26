@@ -323,7 +323,6 @@ def test_max_depth(max_depth):
 
 
 def test_input_validation():
-
     X_binned, all_gradients, all_hessians = _make_training_data()
 
     X_binned_float = X_binned.astype(np.float32)
@@ -340,7 +339,6 @@ def test_input_validation():
 def test_init_parameters_validation():
     X_binned, all_gradients, all_hessians = _make_training_data()
     with pytest.raises(ValueError, match="min_gain_to_split=-1 must be positive"):
-
         TreeGrower(X_binned, all_gradients, all_hessians, min_gain_to_split=-1)
 
     with pytest.raises(ValueError, match="min_hessian_to_split=-1 must be positive"):

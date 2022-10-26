@@ -760,7 +760,6 @@ def test_linearsvc_parameters(loss, penalty, dual):
         or (loss, penalty, dual) == ("hinge", "l2", False)
         or (penalty, dual) == ("l1", True)
     ):
-
         with pytest.raises(
             ValueError,
             match="Unsupported set of arguments.*penalty='%s.*loss='%s.*dual=%s"

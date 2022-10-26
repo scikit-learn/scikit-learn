@@ -121,7 +121,6 @@ style.use("seaborn-colorblind")
 plt.figure(1)
 
 for marker, (score_name, score_func) in zip("d^vx.,", score_funcs):
-
     scores = fixed_classes_uniform_labelings_scores(
         score_func, n_samples, n_clusters_range, n_classes=n_classes
     )
@@ -189,7 +188,6 @@ plots = []
 names = []
 
 for marker, (score_name, score_func) in zip("d^vx.,", score_funcs):
-
     scores = uniform_labelings_scores(score_func, n_samples, n_clusters_range)
     plots.append(
         plt.errorbar(

@@ -98,7 +98,6 @@ def relative_rounding(scalar, n_significant_digits):
 
 
 def test_relative_rounding():
-
     assert relative_rounding(0, 1) == 0.0
     assert relative_rounding(0, 10) == 0.0
     assert relative_rounding(0, 123456) == 0.0
@@ -237,7 +236,6 @@ def assert_radius_neighborhood_results_quasi_equality(
 
     # Asserting equality of results one vector at a time
     for query_idx in range(n_queries):
-
         ref_dist_row = ref_dist[query_idx]
         dist_row = dist[query_idx]
 
@@ -321,7 +319,6 @@ ASSERT_RESULT = {
 
 
 def test_assert_argkmin_results_quasi_equality():
-
     rtol = 1e-7
     eps = 1e-7
     _1m = 1.0 - eps
@@ -405,7 +402,6 @@ def test_assert_argkmin_results_quasi_equality():
 
 
 def test_assert_radius_neighborhood_results_quasi_equality():
-
     rtol = 1e-7
     eps = 1e-7
     _1m = 1.0 - eps

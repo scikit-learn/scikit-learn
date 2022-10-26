@@ -139,7 +139,6 @@ def discretize(
     # If there is an exception we try to randomize and rerun SVD again
     # do this max_svd_restarts times.
     while (svd_restarts < max_svd_restarts) and not has_converged:
-
         # Initialize first column of rotation matrix with a row of the
         # eigenvectors
         rotation = np.zeros((n_components, n_components))

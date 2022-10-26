@@ -273,7 +273,6 @@ def run_benchmark():
     i_ax = 0
 
     for dataset_name, (X, y) in datasets:
-
         msg = "Benchmarking on %s:" % dataset_name
         print("\n%s\n%s" % (msg, "-" * len(msg)))
 

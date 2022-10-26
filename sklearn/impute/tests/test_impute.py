@@ -109,7 +109,6 @@ def test_imputation_deletion_warning(strategy):
 
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
 def test_imputation_deletion_warning_feature_names(strategy):
-
     pd = pytest.importorskip("pandas")
 
     missing_values = np.nan

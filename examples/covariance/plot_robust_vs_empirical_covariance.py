@@ -82,7 +82,6 @@ err_cov_emp_pure = np.zeros((range_n_outliers.size, repeat))
 # computation
 for i, n_outliers in enumerate(range_n_outliers):
     for j in range(repeat):
-
         rng = np.random.RandomState(i * j)
 
         # generate data

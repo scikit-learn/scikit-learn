@@ -263,7 +263,6 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
     }
 
     def __init__(self, *, neg_label=0, pos_label=1, sparse_output=False):
-
         self.neg_label = neg_label
         self.pos_label = pos_label
         self.sparse_output = sparse_output

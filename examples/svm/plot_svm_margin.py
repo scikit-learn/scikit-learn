@@ -33,7 +33,6 @@ fignum = 1
 
 # fit the model
 for name, penalty in (("unreg", 1), ("reg", 0.05)):
-
     clf = svm.SVC(kernel="linear", C=penalty)
     clf.fit(X, Y)
 

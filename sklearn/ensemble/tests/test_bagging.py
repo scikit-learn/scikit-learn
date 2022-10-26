@@ -210,7 +210,6 @@ def test_sparse_regression():
         X_train_sparse = sparse_format(X_train)
         X_test_sparse = sparse_format(X_test)
         for params in parameter_sets:
-
             # Trained on sparse format
             sparse_classifier = BaggingRegressor(
                 estimator=CustomSVR(), random_state=1, **params

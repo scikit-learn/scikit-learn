@@ -229,7 +229,6 @@ ax.add_collection(lc)
 # Add a label to each node. The challenge here is that we want to
 # position the labels to avoid overlap with other labels
 for index, (name, label, (x, y)) in enumerate(zip(names, labels, embedding.T)):
-
     dx = x - embedding[0]
     dx[index] = 1
     dy = y - embedding[1]

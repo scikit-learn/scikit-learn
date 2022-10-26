@@ -476,7 +476,6 @@ def fit_binary(
 
 
 class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
-
     # TODO(1.3): Remove "log""
     loss_functions = {
         "hinge": (Hinge, 1.0),
@@ -527,7 +526,6 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         warm_start=False,
         average=False,
     ):
-
         super().__init__(
             loss=loss,
             penalty=penalty,
@@ -1348,7 +1346,6 @@ class SGDClassifier(BaseSGDClassifier):
 
 
 class BaseSGDRegressor(RegressorMixin, BaseSGD):
-
     loss_functions = {
         "squared_error": (SquaredLoss,),
         "huber": (Huber, DEFAULT_EPSILON),
@@ -2264,7 +2261,6 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         self.t_ += self.n_iter_ * n_samples
 
         if self.average > 0:
-
             self._average_intercept = np.atleast_1d(average_intercept)
             self._standard_intercept = np.atleast_1d(intercept)
 

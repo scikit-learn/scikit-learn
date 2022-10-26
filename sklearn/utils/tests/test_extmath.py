@@ -677,7 +677,6 @@ def test_incremental_weighted_mean_and_variance_simple(rng, dtype):
 def test_incremental_weighted_mean_and_variance(
     mean, var, weight_loc, weight_scale, rng
 ):
-
     # Testing of correctness and numerical stability
     def _assert(X, sample_weight, expected_mean, expected_var):
         n = X.shape[0]

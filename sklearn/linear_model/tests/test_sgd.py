@@ -2070,7 +2070,6 @@ def test_SGDClassifier_fit_for_all_backends(backend):
     ],
 )
 def test_loss_deprecated(old_loss, new_loss, Estimator):
-
     # Note: class BaseSGD calls self._validate_params() in __init__, therefore
     # even instantiation of class raises FutureWarning for deprecated losses.
     with pytest.warns(FutureWarning, match=f"The loss '{old_loss}' was deprecated"):

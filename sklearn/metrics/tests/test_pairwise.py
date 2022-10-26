@@ -961,7 +961,6 @@ def test_nan_euclidean_distances_equal_to_euclidean_distance(squared):
 @pytest.mark.parametrize("X", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]])])
 @pytest.mark.parametrize("Y", [np.array([[np.inf, 0]]), np.array([[0, -np.inf]]), None])
 def test_nan_euclidean_distances_infinite_values(X, Y):
-
     with pytest.raises(ValueError) as excinfo:
         nan_euclidean_distances(X, Y=Y)
 
@@ -985,7 +984,6 @@ def test_nan_euclidean_distances_infinite_values(X, Y):
     ],
 )
 def test_nan_euclidean_distances_2x2(X, X_diag, missing_value):
-
     exp_dist = np.array([[0.0, X_diag], [X_diag, 0]])
 
     dist = nan_euclidean_distances(X, missing_values=missing_value)

@@ -282,7 +282,6 @@ class RANSACRegressor(
         random_state=None,
         base_estimator="deprecated",
     ):
-
         self.estimator = estimator
         self.min_samples = min_samples
         self.residual_threshold = residual_threshold

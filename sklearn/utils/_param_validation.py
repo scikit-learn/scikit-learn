@@ -166,7 +166,6 @@ def validate_params(parameter_constraints):
 
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-
             func_sig = signature(func)
 
             # Map *args/**kwargs to the function signature

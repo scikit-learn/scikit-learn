@@ -127,7 +127,6 @@ def test_additive_chi2_sampler():
     # test that the sample interval is set correctly
     sample_steps_available = [1, 2, 3]
     for sample_steps in sample_steps_available:
-
         # test that the sample_interval is initialized correctly
         transform = AdditiveChi2Sampler(sample_steps=sample_steps)
         assert transform.sample_interval is None

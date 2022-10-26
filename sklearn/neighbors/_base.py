@@ -400,7 +400,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         metric_params=None,
         n_jobs=None,
     ):
-
         self.n_neighbors = n_neighbors
         self.radius = radius
         self.algorithm = algorithm

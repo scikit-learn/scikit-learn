@@ -52,7 +52,6 @@ datasets = ["http", "smtp", "SA", "SF", "shuttle", "forestcover"]
 
 # Loop over all datasets for fitting and scoring the estimator:
 for dat in datasets:
-
     # Loading and vectorizing the data:
     print("====== %s ======" % dat)
     print("--- Fetching data...")

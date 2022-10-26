@@ -40,7 +40,6 @@ rng = np.random.RandomState(42)
 
 
 def preprocess_dataset(dataset_name):
-
     # loading and vectorization
     print(f"Loading {dataset_name} data")
     if dataset_name in ["http", "smtp", "SA", "SF"]:
@@ -123,7 +122,6 @@ from sklearn.ensemble import IsolationForest
 
 
 def compute_prediction(X, model_name):
-
     print(f"Computing {model_name} prediction...")
     if model_name == "LOF":
         clf = LocalOutlierFactor(n_neighbors=20, contamination="auto")

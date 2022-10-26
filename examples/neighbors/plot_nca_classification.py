@@ -65,7 +65,6 @@ classifiers = [
 ]
 
 for name, clf in zip(names, classifiers):
-
     clf.fit(X_train, y_train)
     score = clf.score(X_test, y_test)
 

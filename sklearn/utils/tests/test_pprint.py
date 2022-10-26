@@ -438,7 +438,6 @@ GridSearchCV(cv=3, error_score='raise-deprecating',
 
 
 def test_n_max_elements_to_show(print_changed_only_false):
-
     n_max_elements_to_show = 30
     pp = _EstimatorPrettyPrinter(
         compact=True,

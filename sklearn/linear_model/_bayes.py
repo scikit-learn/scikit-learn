@@ -298,7 +298,6 @@ class BayesianRidge(RegressorMixin, LinearModel):
 
         # Convergence loop of the bayesian ridge regression
         for iter_ in range(self.n_iter):
-
             # update posterior mean coef_ based on alpha_ and lambda_ and
             # compute corresponding rmse
             coef_, rmse_ = self._update_coef_(

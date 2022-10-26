@@ -779,7 +779,6 @@ def test_categoricalnb_with_min_categories(
     ],
 )
 def test_categoricalnb_min_categories_errors(min_categories, error_msg):
-
     X = np.array([[0, 0], [0, 1], [0, 0], [1, 1]])
     y = np.array([1, 1, 2, 2])
 

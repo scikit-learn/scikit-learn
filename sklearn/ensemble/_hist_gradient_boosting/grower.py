@@ -227,7 +227,6 @@ class TreeGrower:
         shrinkage=1.0,
         n_threads=None,
     ):
-
         self._validate_parameters(
             X_binned,
             min_gain_to_split,
@@ -532,7 +531,6 @@ class TreeGrower:
         should_split_left = not left_child_node.is_leaf
         should_split_right = not right_child_node.is_leaf
         if should_split_left or should_split_right:
-
             # We will compute the histograms of both nodes even if one of them
             # is a leaf, since computing the second histogram is very cheap
             # (using histogram subtraction).

@@ -93,7 +93,6 @@ def load_dataset(verbose=False, remove=()):
     feature_names = vectorizer.get_feature_names_out()
 
     if verbose:
-
         # compute size of loaded data
         data_train_size_mb = size_mb(data_train.data)
         data_test_size_mb = size_mb(data_test.data)

@@ -53,7 +53,6 @@ def test_load_svmlight_file():
         (1, 12, -3),
         (2, 20, 27),
     ):
-
         assert X[i, j] == val
 
     # tests X's zero values
@@ -123,7 +122,6 @@ def test_load_svmlight_file_n_features():
 
     # test X's non-zero values
     for i, j, val in ((0, 2, 2.5), (0, 10, -5.2), (1, 5, 1.0), (1, 12, -3)):
-
         assert X[i, j] == val
 
     # 21 features in file

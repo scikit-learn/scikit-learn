@@ -475,7 +475,6 @@ def test_subsample_splitter_determinism(subsample_test):
     ],
 )
 def test_top_k(k, itr, expected):
-
     results = {  # this isn't a 'real world' result dict
         "iter": [0, 0, 0, 0, 1, 1, 2, 2, 2],
         "mean_test_score": [4, 3, 5, 1, 11, 10, 5, 6, 9],

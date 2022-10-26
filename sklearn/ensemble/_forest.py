@@ -118,6 +118,12 @@ def _get_n_samples_bootstrap(n_samples, max_samples):
         return max_samples
 
     if isinstance(max_samples, Real):
+        if (n_samples * max_samples) < 1:
+            msg = (
+                "`max_samples`={} times `n_samples`={} must be greater than or equal"
+                " to 1."
+            )
+            raise ValueError(msg.format(max_samples, n_samples))
         return round(n_samples * max_samples)
 
 

@@ -429,7 +429,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
         return -self._compute_chunked_score_samples(X)
 
     def _compute_chunked_score_samples(self, X):
-
         n_samples = _num_samples(X)
 
         if self._max_features == X.shape[1]:

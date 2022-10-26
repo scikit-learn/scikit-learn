@@ -35,7 +35,6 @@ dense_linestyle = (0, ())  # solid
 
 fig, axes = plt.subplots(nrows=len(densities), ncols=1, figsize=(8, 10))
 for density, ax in zip(densities, axes):
-
     ax.plot(
         dimensionalities,
         csr_times[density] / trials,

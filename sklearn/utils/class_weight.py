@@ -147,7 +147,6 @@ def compute_sample_weight(class_weight, y, *, indices=None):
 
     expanded_class_weight = []
     for k in range(n_outputs):
-
         y_full = y[:, k]
         if sparse.issparse(y_full):
             # Ok to densify a single column at a time
