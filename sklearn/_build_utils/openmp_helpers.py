@@ -96,7 +96,7 @@ def check_openmp_support():
     if not openmp_supported:
         if os.getenv("SKLEARN_FAIL_NO_OPENMP"):
             raise Exception(
-                f"Failed to build with OpenMP, with message {exception_msg}"
+                f"Failed to build with OpenMP, with error message: {exception_msg}"
             )
         else:
             message = textwrap.dedent(
