@@ -10,13 +10,8 @@ from os.path import join
 import platform
 import shutil
 
-# We need to import setuptools before because it monkey-patches distutils
-import setuptools  # noqa
-
-# from setuptools._distutils.command.clean import clean as Clean
-from setuptools import Command, Extension
+from setuptools import Command, Extension, setup
 from setuptools.command.build_ext import build_ext
-from setuptools import setup
 
 import traceback
 import importlib

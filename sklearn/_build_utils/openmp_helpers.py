@@ -10,7 +10,7 @@ import textwrap
 import warnings
 import subprocess
 
-from distutils.errors import CompileError, LinkError
+from setuptools.errors import CompileError, LinkError
 
 from .pre_build_helpers import compile_test_program
 
