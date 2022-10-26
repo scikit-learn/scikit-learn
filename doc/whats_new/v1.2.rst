@@ -538,6 +538,9 @@ Changelog
   deterministic SVD used by the randomized SVD algorithm.
   :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
 
+- |Enhancement| :func:`utils.validation.column_or_1d` now accepts a `dtype`
+  parameter to specific `y`'s dtype. :pr:`22629` by `Thomas Fan`_.
+
 - |FIX| :func:`utils.multiclass.type_of_target` now properly handles sparse matrices.
   :pr:`14862` by :user:`Léonard Binet <leonardbinet>`.
 
