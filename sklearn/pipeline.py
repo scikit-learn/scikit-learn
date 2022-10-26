@@ -959,6 +959,14 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     Attributes
     ----------
+    named_transformers : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+        Read-only attribute to access any transformer parameter by user
+        given name. Keys are transformer names and values are
+        transformer parameters.
+
+        .. versionadded:: 1.2
+
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying first transformer in `transformer_list` exposes such an
@@ -1017,6 +1025,11 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             _safe_set_output(step, transform=transform)
         return self
 
+    @property
+    def named_transformers(self):
+        # Use Bunch object to improve autocomplete
+        return Bunch(**dict(self.transformer_list))
+
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
@@ -1042,7 +1055,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         Valid parameter keys can be listed with ``get_params()``. Note that
         you can directly set the parameters of the estimators contained in
-        `tranformer_list`.
+        `transformer_list`.
 
         Parameters
         ----------

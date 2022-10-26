@@ -354,6 +354,16 @@ Changelog
 ...........................
 
 - |Enhancement| :class:`linear_model.GammaRegressor`,
+  :class:`linear_model.PoissonRegressor` and :class:`linear_model.TweedieRegressor` got
+  a new solver `solver="newton-cholesky"`. This is a 2nd order (Newton) optimisation
+  routine that uses a Cholesky decomposition of the hessian matrix.
+  When `n_samples >> n_features`, the `"newton-cholesky"` solver has been observed to
+  converge both faster and to a higher precision solution than the `"lbfgs"` solver on
+  problems with one-hot encoded categorical variables with some rare categorical
+  levels.
+  :pr:`24637` by :user:`Christian Lorentzen <lorentzenchr>`.
+
+- |Enhancement| :class:`linear_model.GammaRegressor`,
   :class:`linear_model.PoissonRegressor` and :class:`linear_model.TweedieRegressor`
   can reach higher precision with the lbfgs solver, in particular when `tol` is set
   to a tiny value. Moreover, `verbose` is now properly propagated to L-BFGS-B.
@@ -511,6 +521,10 @@ Changelog
   be used when one of the transformers in the :class:`pipeline.FeatureUnion` is
   `"passthrough"`. :pr:`24058` by :user:`Diederik Perdok <diederikwp>`
 
+- |Enhancement| The :class:`FeatureUnion` class now has a `named_transformers`
+  attribute for accessing transformers by name.
+  :pr:`20331` by :user:`Christopher Flynn <crflynn>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -566,6 +580,9 @@ Changelog
   `metric=True`. `"auto"` will become the default value foor `normalized_stress`
   in version 1.4.
   :pr:`23834` by :user:`Meekail Zain <micky774>`
+
+- |FIX| :func:`utils.estimator_checks.check_estimator` now takes into account
+  the `requires_positive_X` tag correctly. :pr:`24667` by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
