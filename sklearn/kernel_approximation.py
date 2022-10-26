@@ -374,9 +374,7 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
             size=(n_features, self.n_components)
         )
 
-        self.random_offset_ = random_state.uniform(
-            0.0, 2.0 * np.pi, size=self.n_components
-        )
+        self.random_offset_ = random_state.uniform(0, 2 * np.pi, size=self.n_components)
 
         if X.dtype == np.float32:
             # Setting the data type of the fitted attribute will ensure the
