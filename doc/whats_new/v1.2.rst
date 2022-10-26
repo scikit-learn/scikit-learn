@@ -588,6 +588,9 @@ Changelog
   in version 1.4.
   :pr:`23834` by :user:`Meekail Zain <micky774>`
 
+- |FIX| :func:`utils.estimator_checks.check_estimator` now takes into account
+  the `requires_positive_X` tag correctly. :pr:`24667` by `Thomas Fan`_.
+
 Code and Documentation Contributors
 -----------------------------------
 
