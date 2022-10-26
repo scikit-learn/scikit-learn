@@ -179,10 +179,9 @@ selector(dtype_include="category")(X_train)
 # hyperparameters as part of the ``Pipeline``.
 # We will search for both the imputer strategy of the numeric preprocessing
 # and the regularization parameter of the logistic regression using
-# :class:`~sklearn.model_selection.RandomizedSearchCV`. This type of
-# hyperparameter search allows to define the time budget through the `n_iter`
-# parameter. Note that you can increase the `n_iter` parameter if you want to
-# test more combinations. Alternatively, one can use the
+# :class:`~sklearn.model_selection.RandomizedSearchCV`. This
+# hyperparameter search randomly selects a fixed number of parameter
+# settings configured by `n_iter`. Alternatively, one can use the
 # :class:`~sklearn.model_selection.GridSearchCV` but the cartesian product of
 # the parameter space will be evaluated.
 
