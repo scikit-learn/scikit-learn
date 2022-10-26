@@ -680,7 +680,7 @@ def test_early_stopping(MLPEstimator):
     assert mlp_estimator.max_iter > mlp_estimator.n_iter_
 
     assert mlp_estimator.best_loss_ is None
-    assert isinstance(mlp_estimator.validation_scores_, np.ndarray)
+    assert isinstance(mlp_estimator.validation_scores_, list)
 
     valid_scores = mlp_estimator.validation_scores_
     best_valid_score = mlp_estimator.best_validation_score_
@@ -892,3 +892,14 @@ def test_mlp_loading_from_joblib_partial_fit(tmp_path):
     # finetuned model learned the new target
     predicted_value = load_estimator.predict(fine_tune_features)
     assert_allclose(predicted_value, fine_tune_target, rtol=1e-4)
+
+
+@pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
+def test_mlp_warm_start_with_early_stopping(MLPEstimator):
+    """Check that early stopping works with warm start."""
+    mlp = MLPEstimator(
+        max_iter=10, random_state=0, warm_start=True, early_stopping=True
+    )
+    mlp.fit(X_iris, y_iris)
+    mlp.set_params(max_iter=20)
+    mlp.fit(X_iris, y_iris)
