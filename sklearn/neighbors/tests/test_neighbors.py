@@ -1507,18 +1507,20 @@ def test_neighbors_validate_parameters(Estimator):
         neighbors.RadiusNeighborsRegressor,
     ],
 )
-def test_neighbors_non_metric_minkowski(Estimator):
+def test_neighbors_minkowski_semimetric(Estimator):
     """
-    Validation of all classes extending NeighborsBase for minkowski metric with p < 1
+    Validation of all classes extending NeighborsBase with
+    Minkowski semi-metrics (i.e. when 0 < p < 1).
     """
     X = rng.random_sample((10, 2))
     y = np.ones(10)
 
-    model = Estimator(p=0.1)
+    model = Estimator(p=0.1, algo="auto")
     msg = "for p < 1 minkowski is not a valid metric"
     with pytest.warns(UserWarning, match=msg):
         model.fit(X, y)
-        assert model._fit_method == "brute"
+
+    assert model._fit_method == "brute"
 
     model = Estimator(algorithm="kd_tree", p=0.1)
     msg = (
