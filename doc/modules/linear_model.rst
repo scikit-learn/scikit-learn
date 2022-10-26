@@ -871,7 +871,7 @@ regularization.
 .. note:: **Logistic Regression as a special case of the Generalized Linear Models (GLM)**
 
     Logistic regression is a special case of
-    :ref:`generalized_linear_models` with a Binomial/Bernoulli conditional
+    :ref:`generalized_linear_models` with a Binomial / Bernoulli conditional
     distribution and a Logit link. The numerical output of the logistic
     regression, which is the predicted probability, can be used as a classifier
     by applying a threshold (by default 0.5) to it. This is how it is
