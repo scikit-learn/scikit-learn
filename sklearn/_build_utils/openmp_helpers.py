@@ -8,9 +8,6 @@ import os
 import sys
 import textwrap
 import warnings
-import subprocess
-
-from setuptools.errors import CompileError, LinkError
 
 from .pre_build_helpers import compile_test_program
 
@@ -75,6 +72,7 @@ def check_openmp_support():
 
     extra_postargs = get_openmp_flag
 
+    exception_msg = ""
     try:
         output = compile_test_program(
             code, extra_preargs=extra_preargs, extra_postargs=extra_postargs
@@ -91,12 +89,15 @@ def check_openmp_support():
         else:
             openmp_supported = False
 
-    except (CompileError, LinkError, subprocess.CalledProcessError):
+    except Exception as exception:
+        exception_msg = str(exception)
         openmp_supported = False
 
     if not openmp_supported:
         if os.getenv("SKLEARN_FAIL_NO_OPENMP"):
-            raise CompileError("Failed to build with OpenMP")
+            raise Exception(
+                f"Failed to build with OpenMP, with message {exception_msg}"
+            )
         else:
             message = textwrap.dedent(
                 """
