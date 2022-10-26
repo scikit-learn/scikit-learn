@@ -1,0 +1,7 @@
+pytest
+pytest-cov
+flake8
+mypy
+numpydoc
+black==22.3.0
+pre-commit

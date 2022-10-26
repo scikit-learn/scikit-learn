@@ -1,0 +1,16 @@
+name: sklearn-dev
+dependencies:
+    - python=3.9
+    - numpy
+    - scipy
+    - cython
+    - pytest
+    - pytest-cov
+    - flake8
+    - mypy
+    - numpydoc
+    - black=22.3.0
+    - pre-commit
+channels:
+    - conda-forge
+    - anaconda

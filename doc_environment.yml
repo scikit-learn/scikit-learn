@@ -1,0 +1,20 @@
+name: sklearn-doc
+dependencies:
+    - python=3.9
+    - numpy
+    - scipy
+    - cython
+    - sphinx
+    - sphinx-gallery
+    - numpydoc
+    - matplotlib
+    - Pillow
+    - pandas
+    - scikit-image
+    - packaging
+    - seaborn
+    - sphinx-prompt
+    - sphinxext-opengraph
+channels:
+    - conda-forge
+    - anaconda

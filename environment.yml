@@ -1,0 +1,8 @@
+name: sklearn-env
+dependencies:
+    - python=3.9
+    - numpy
+    - scipy
+    - cython
+channels:
+    - conda-forge

@@ -1,0 +1,11 @@
+sphinx
+sphinx-gallery
+numpydoc
+matplotlib
+Pillow
+pandas
+scikit-image
+packaging
+seaborn
+sphinx-prompt
+sphinxext-opengraph
