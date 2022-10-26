@@ -4,7 +4,6 @@ import numpy as np
 from scipy.sparse import csr_matrix
 import pytest
 
-from numpy.testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
@@ -244,10 +243,11 @@ def test_rbf_sampler_dtype_equivalence():
 
 
 def test_rbf_sampler_gamma_scale():
+    """Check the inner value computed when `gamma='scale'`."""
     X, y = [[0.0], [1.0]], [0, 1]
     rbf = RBFSampler(gamma="scale")
     rbf.fit(X, y)
-    assert_almost_equal(rbf._gamma, 4)
+    assert rbf._gamma == pytest.approx(4)
 
 
 def test_skewed_chi2_sampler_fitted_attributes_dtype(global_dtype):
