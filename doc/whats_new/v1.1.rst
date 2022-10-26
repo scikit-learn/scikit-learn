@@ -2,6 +2,26 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_1_3:
+
+Version 1.1.3
+=============
+
+**October 2022**
+
+This bugfix release only includes fixes for compatibility with the latest
+SciPy release >= 1.9.2. Notable changes include:
+
+- |Fix| Include `msvcp140.dll` in the scikit-learn wheels since it has been
+  removed in the latest SciPy wheels.
+  :pr:`24631` by :user:`Chiara Marmo <cmarmo>`.
+
+- |Enhancement| Create wheels for Python 3.11.
+  :pr:`24446` by :user:`Chiara Marmo <cmarmo>`.
+
+Other bug fixes will be available in the next 1.2 release, which will be
+released in the coming weeks.
+
 .. _changes_1_1_2:
 
 Version 1.1.2
