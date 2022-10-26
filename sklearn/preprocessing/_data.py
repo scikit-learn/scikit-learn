@@ -2877,7 +2877,7 @@ def quantile_transform(
     copy : bool, default=True
         Set to False to perform inplace transformation and avoid a copy (if the
         input is already a numpy array). If True, a copy of `X` is transformed,
-        leaving the original `X` unchanged
+        leaving the original `X` unchanged.
 
         .. versionchanged:: 0.23
             The default value of `copy` changed from False to True in 0.23.
