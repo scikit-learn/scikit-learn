@@ -622,10 +622,12 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             self.effective_metric_ in ["wminkowski", "minkowski"]
             and self.effective_metric_params_["p"] < 1
         ):
-            # For p < 1 minkowski is not a valid metric as it does not
-            # satisfy triangular inequality, but that is workable for
-            # bruteforce algorithm. But kd_tree and ball_tree requires
-            # valid metric to work
+            # For 0 < p < 1 Minkowski distances aren't valid distance
+            # metric as they do not satisfy triangular inequality:
+            # they are semimetrics.
+            # algo="kd_tree" and algo="ball_tree" can't be used because
+            # KDTree and BallTree require distance metric to work properly.
+            # However, the brute-force algorithm supports semimetrics.
             if self._fit_method == "brute":
                 warnings.warn("for p < 1 minkowski is not a valid metric")
             else:
