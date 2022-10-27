@@ -277,7 +277,8 @@ def test_input_error():
         gbdt.fit(X, y)
 
 
-def test_bounded_value_min_gain_to_split():
+@pytest.mark.parametrize("with_variance", [True, False])
+def test_bounded_value_min_gain_to_split(with_variance):
     # The purpose of this test is to show that when computing the gain at a
     # given split, the value of the current node should be properly bounded to
     # respect the monotonic constraints, because it strongly interacts with
@@ -301,7 +302,13 @@ def test_bounded_value_min_gain_to_split():
     hessians_are_constant = False
 
     builder = HistogramBuilder(
-        X_binned, n_bins, all_gradients, all_hessians, hessians_are_constant, n_threads
+        X_binned,
+        n_bins,
+        all_gradients,
+        all_hessians,
+        hessians_are_constant,
+        n_threads,
+        with_variance,
     )
     n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1], dtype=np.uint32)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
@@ -325,6 +332,7 @@ def test_bounded_value_min_gain_to_split():
         min_samples_leaf,
         min_gain_to_split,
         hessians_are_constant,
+        with_variance,
     )
 
     histograms = builder.compute_histograms_brute(sample_indices)

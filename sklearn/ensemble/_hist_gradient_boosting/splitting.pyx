@@ -188,6 +188,9 @@ cdef class Splitter:
         Whether hessians are constant.
     n_threads : int, default=1
         Number of OpenMP threads to use.
+    with_variance : bool, default is False
+        When set to ``True``, the variance of each leaf value is stored during
+        training.
     """
     cdef public:
         const X_BINNED_DTYPE_C [::1, :] X_binned
@@ -207,6 +210,7 @@ cdef class Splitter:
         unsigned int [::1] left_indices_buffer
         unsigned int [::1] right_indices_buffer
         int n_threads
+        unsigned char with_variance
 
     def __init__(self,
                  const X_BINNED_DTYPE_C [::1, :] X_binned,
@@ -220,7 +224,8 @@ cdef class Splitter:
                  unsigned int min_samples_leaf=20,
                  Y_DTYPE_C min_gain_to_split=0.,
                  unsigned char hessians_are_constant=False,
-                 unsigned int n_threads=1):
+                 unsigned int n_threads=1,
+                 unsigned char with_variance=False):
 
         self.X_binned = X_binned
         self.n_features = X_binned.shape[1]
@@ -235,6 +240,7 @@ cdef class Splitter:
         self.min_gain_to_split = min_gain_to_split
         self.hessians_are_constant = hessians_are_constant
         self.n_threads = n_threads
+        self.with_variance = with_variance
 
         # The partition array maps each sample index into the leaves of the
         # tree (a leaf in this context is a node that isn't split yet, not
@@ -713,23 +719,26 @@ cdef class Splitter:
 
             if self.hessians_are_constant:
                 sum_hessian_left += histograms[feature_idx, bin_idx].count
-                sum_hessian_squared_left += histograms[feature_idx, bin_idx].count
-                sum_gradient_hessian_left += histograms[feature_idx, bin_idx].sum_gradients
+                if self.with_variance:
+                    sum_hessian_squared_left += histograms[feature_idx, bin_idx].count
+                    sum_gradient_hessian_left += histograms[feature_idx, bin_idx].sum_gradients
             else:
                 sum_hessian_left += \
                     histograms[feature_idx, bin_idx].sum_hessians
-                sum_hessian_squared_left += \
-                    histograms[feature_idx, bin_idx].sum_hessians_squared
-                sum_gradient_hessian_left += histograms[feature_idx, bin_idx].sum_gradients_hessians
+                if self.with_variance:
+                    sum_hessian_squared_left += \
+                        histograms[feature_idx, bin_idx].sum_hessians_squared
+                    sum_gradient_hessian_left += histograms[feature_idx, bin_idx].sum_gradients_hessians
             sum_hessian_right = sum_hessians - sum_hessian_left
 
             sum_gradient_left += histograms[feature_idx, bin_idx].sum_gradients
             sum_gradient_right = sum_gradients - sum_gradient_left
 
-            sum_hessian_squared_right = sum_hessians_squared - sum_hessian_squared_left
-            sum_gradient_squared_left += histograms[feature_idx, bin_idx].sum_gradients_squared
-            sum_gradient_squared_right = sum_gradients_squared - sum_gradient_squared_left
-            sum_gradient_hessian_right = sum_gradients_hessians - sum_gradient_hessian_left
+            if self.with_variance:
+                sum_hessian_squared_right = sum_hessians_squared - sum_hessian_squared_left
+                sum_gradient_squared_left += histograms[feature_idx, bin_idx].sum_gradients_squared
+                sum_gradient_squared_right = sum_gradients_squared - sum_gradient_squared_left
+                sum_gradient_hessian_right = sum_gradients_hessians - sum_gradient_hessian_left
 
             if n_samples_left < self.min_samples_leaf:
                 continue
@@ -781,17 +790,28 @@ cdef class Splitter:
             split_info.n_samples_right = n_samples - best_n_samples_left
 
             # We recompute best values here but it's cheap
-            split_info.value_left, split_info.variance_left = compute_node_value_variance(
-                split_info.sum_gradient_left, split_info.sum_hessian_left,
-                split_info.sum_gradient_squared_left, split_info.sum_hessian_squared_left,
-                split_info.sum_gradient_hessian_left, split_info.n_samples_left,
-                lower_bound, upper_bound, self.l2_regularization)
+            if self.with_variance:
+                split_info.value_left, split_info.variance_left = compute_node_value_variance(
+                    split_info.sum_gradient_left, split_info.sum_hessian_left,
+                    split_info.sum_gradient_squared_left, split_info.sum_hessian_squared_left,
+                    split_info.sum_gradient_hessian_left, split_info.n_samples_left,
+                    lower_bound, upper_bound, self.l2_regularization)
 
-            split_info.value_right, split_info.variance_right = compute_node_value_variance(
-                split_info.sum_gradient_right, split_info.sum_hessian_right,
-                split_info.sum_gradient_squared_right, split_info.sum_hessian_squared_right,
-                split_info.sum_gradient_hessian_right, split_info.n_samples_right,
-                lower_bound, upper_bound, self.l2_regularization)
+                split_info.value_right, split_info.variance_right = compute_node_value_variance(
+                    split_info.sum_gradient_right, split_info.sum_hessian_right,
+                    split_info.sum_gradient_squared_right, split_info.sum_hessian_squared_right,
+                    split_info.sum_gradient_hessian_right, split_info.n_samples_right,
+                    lower_bound, upper_bound, self.l2_regularization)
+            else:
+                split_info.value_left = compute_node_value(
+                    split_info.sum_gradient_left, split_info.sum_hessian_left,
+                    lower_bound, upper_bound, self.l2_regularization)
+                split_info.variance_left = 1e-15
+
+                split_info.value_right = compute_node_value(
+                    split_info.sum_gradient_right, split_info.sum_hessian_right,
+                    lower_bound, upper_bound, self.l2_regularization)
+                split_info.variance_right = 1e-15
 
     cdef void _find_best_bin_to_split_right_to_left(
             self,
@@ -853,6 +873,8 @@ cdef class Splitter:
         sum_gradient_right, sum_hessian_right = 0., 0.
         sum_gradient_squared_right, sum_hessian_squared_right = 0., 0.
         sum_gradient_hessian_right = 0.
+        sum_gradient_squared_left, sum_hessian_squared_left = 0., 0.
+        sum_gradient_hessian_left = 0.
         n_samples_right = 0
 
         loss_current_node = _loss_from_value(value, sum_gradients)
@@ -863,15 +885,17 @@ cdef class Splitter:
 
             if self.hessians_are_constant:
                 sum_hessian_right += histograms[feature_idx, bin_idx + 1].count
-                sum_hessian_squared_right += histograms[feature_idx, bin_idx + 1].count
-                sum_gradient_hessian_right += histograms[feature_idx, bin_idx + 1].sum_gradients
+                if self.with_variance:
+                    sum_hessian_squared_right += histograms[feature_idx, bin_idx + 1].count
+                    sum_gradient_hessian_right += histograms[feature_idx, bin_idx + 1].sum_gradients
             else:
                 sum_hessian_right += \
                     histograms[feature_idx, bin_idx + 1].sum_hessians
-                sum_hessian_squared_right += \
-                    histograms[feature_idx, bin_idx + 1].sum_hessians_squared
-                sum_gradient_hessian_right += \
-                    histograms[feature_idx, bin_idx + 1].sum_gradients_hessians
+                if self.with_variance:
+                    sum_hessian_squared_right += \
+                        histograms[feature_idx, bin_idx + 1].sum_hessians_squared
+                    sum_gradient_hessian_right += \
+                        histograms[feature_idx, bin_idx + 1].sum_gradients_hessians
 
             sum_hessian_left = sum_hessians - sum_hessian_right
 
@@ -879,11 +903,12 @@ cdef class Splitter:
                 histograms[feature_idx, bin_idx + 1].sum_gradients
             sum_gradient_left = sum_gradients - sum_gradient_right
 
-            sum_hessian_squared_left = sum_hessians - sum_hessian_squared_right
-            sum_gradient_squared_right += \
-                histograms[feature_idx, bin_idx + 1].sum_gradients_squared
-            sum_gradient_squared_left = sum_gradients_squared - sum_gradient_squared_right
-            sum_gradient_hessian_left = sum_gradients_hessians - sum_gradient_hessian_right
+            if self.with_variance:
+                sum_hessian_squared_left = sum_hessians - sum_hessian_squared_right
+                sum_gradient_squared_right += \
+                    histograms[feature_idx, bin_idx + 1].sum_gradients_squared
+                sum_gradient_squared_left = sum_gradients_squared - sum_gradient_squared_right
+                sum_gradient_hessian_left = sum_gradients_hessians - sum_gradient_hessian_right
 
             if n_samples_right < self.min_samples_leaf:
                 continue
@@ -935,17 +960,28 @@ cdef class Splitter:
             split_info.n_samples_right = n_samples - best_n_samples_left
 
             # We recompute best values here but it's cheap
-            split_info.value_left, split_info.variance_left = compute_node_value_variance(
-                split_info.sum_gradient_left, split_info.sum_hessian_left,
-                split_info.sum_gradient_squared_left, split_info.sum_hessian_squared_left,
-                split_info.sum_gradient_hessian_left, split_info.n_samples_left,
-                lower_bound, upper_bound, self.l2_regularization)
+            if self.with_variance:
+                split_info.value_left, split_info.variance_left = compute_node_value_variance(
+                    split_info.sum_gradient_left, split_info.sum_hessian_left,
+                    split_info.sum_gradient_squared_left, split_info.sum_hessian_squared_left,
+                    split_info.sum_gradient_hessian_left, split_info.n_samples_left,
+                    lower_bound, upper_bound, self.l2_regularization)
 
-            split_info.value_right, split_info.variance_right = compute_node_value_variance(
-                split_info.sum_gradient_right, split_info.sum_hessian_right,
-                split_info.sum_gradient_squared_right, split_info.sum_hessian_squared_right,
-                split_info.sum_gradient_hessian_right, split_info.n_samples_right,
-                lower_bound, upper_bound, self.l2_regularization)
+                split_info.value_right, split_info.variance_right = compute_node_value_variance(
+                    split_info.sum_gradient_right, split_info.sum_hessian_right,
+                    split_info.sum_gradient_squared_right, split_info.sum_hessian_squared_right,
+                    split_info.sum_gradient_hessian_right, split_info.n_samples_right,
+                    lower_bound, upper_bound, self.l2_regularization)
+            else:
+                split_info.value_left = compute_node_value(
+                    split_info.sum_gradient_left, split_info.sum_hessian_left,
+                    lower_bound, upper_bound, self.l2_regularization)
+                split_info.variance_left = 1e-15
+
+                split_info.value_right = compute_node_value(
+                    split_info.sum_gradient_right, split_info.sum_hessian_right,
+                    lower_bound, upper_bound, self.l2_regularization)
+                split_info.variance_right = 1e-15
 
     cdef void _find_best_bin_to_split_category(
             self,
@@ -1056,20 +1092,23 @@ cdef class Splitter:
         for bin_idx in range(n_bins_non_missing):
             if self.hessians_are_constant:
                 sum_hessians_bin = feature_hist[bin_idx].count
-                sum_hessians_squared_bin = feature_hist[bin_idx].count
+                if self.with_variance:
+                    sum_hessians_squared_bin = feature_hist[bin_idx].count
             else:
                 sum_hessians_bin = feature_hist[bin_idx].sum_hessians
-                sum_hessians_squared_bin = feature_hist[bin_idx].sum_hessians_squared
+                if self.with_variance:
+                    sum_hessians_squared_bin = feature_hist[bin_idx].sum_hessians_squared
             if sum_hessians_bin * support_factor >= MIN_CAT_SUPPORT:
                 cat_infos[n_used_bins].bin_idx = bin_idx
                 sum_gradients_bin = feature_hist[bin_idx].sum_gradients
-                sum_gradients_squared_bin = feature_hist[bin_idx].sum_gradients_squared
-                if self.hessians_are_constant:
-                    sum_gradients_hessians_bin = feature_hist[bin_idx].sum_gradients
-                else:
-                    sum_gradients_hessians_bin = (
-                        feature_hist[bin_idx].sum_gradients_hessians
-                    )
+                if self.with_variance:
+                    sum_gradients_squared_bin = feature_hist[bin_idx].sum_gradients_squared
+                    if self.hessians_are_constant:
+                        sum_gradients_hessians_bin = feature_hist[bin_idx].sum_gradients
+                    else:
+                        sum_gradients_hessians_bin = (
+                            feature_hist[bin_idx].sum_gradients_hessians
+                        )
 
                 cat_infos[n_used_bins].value = (
                     sum_gradients_bin / (sum_hessians_bin + MIN_CAT_SUPPORT)
@@ -1080,24 +1119,27 @@ cdef class Splitter:
         if has_missing_values:
             if self.hessians_are_constant:
                 sum_hessians_bin = feature_hist[missing_values_bin_idx].count
-                sum_hessians_squared_bin = feature_hist[missing_values_bin_idx].count
+                if self.with_variance:
+                    sum_hessians_squared_bin = feature_hist[missing_values_bin_idx].count
             else:
                 sum_hessians_bin = feature_hist[missing_values_bin_idx].sum_hessians
-                sum_hessians_squared_bin = feature_hist[missing_values_bin_idx].sum_hessians_squared
+                if self.with_variance:
+                    sum_hessians_squared_bin = feature_hist[missing_values_bin_idx].sum_hessians_squared
             if sum_hessians_bin * support_factor >= MIN_CAT_SUPPORT:
                 cat_infos[n_used_bins].bin_idx = missing_values_bin_idx
                 sum_gradients_bin = (
                     feature_hist[missing_values_bin_idx].sum_gradients
                 )
-                sum_gradients_squared_bin = (
-                    feature_hist[missing_values_bin_idx].sum_gradients_squared
-                )
-                if self.hessians_are_constant:
-                    sum_gradients_hessians_bin = feature_hist[missing_values_bin_idx].sum_gradients
-                else:
-                    sum_gradients_hessians_bin = (
-                        feature_hist[missing_values_bin_idx].sum_gradients_hessians
+                if self.with_variance:
+                    sum_gradients_squared_bin = (
+                        feature_hist[missing_values_bin_idx].sum_gradients_squared
                     )
+                    if self.hessians_are_constant:
+                        sum_gradients_hessians_bin = feature_hist[missing_values_bin_idx].sum_gradients
+                    else:
+                        sum_gradients_hessians_bin = (
+                            feature_hist[missing_values_bin_idx].sum_gradients_hessians
+                        )
 
                 cat_infos[n_used_bins].value = (
                     sum_gradients_bin / (sum_hessians_bin + MIN_CAT_SUPPORT)
@@ -1137,21 +1179,24 @@ cdef class Splitter:
 
                 if self.hessians_are_constant:
                     sum_hessian_left += feature_hist[bin_idx].count
-                    sum_hessian_squared_left += feature_hist[bin_idx].count
-                    sum_gradient_hessian_left += feature_hist[bin_idx].sum_gradients
+                    if self.with_variance:
+                        sum_hessian_squared_left += feature_hist[bin_idx].count
+                        sum_gradient_hessian_left += feature_hist[bin_idx].sum_gradients
                 else:
                     sum_hessian_left += feature_hist[bin_idx].sum_hessians
-                    sum_hessian_squared_left += feature_hist[bin_idx].sum_hessians_squared
-                    sum_gradient_hessian_left += feature_hist[bin_idx].sum_gradients_hessians
+                    if self.with_variance:
+                        sum_hessian_squared_left += feature_hist[bin_idx].sum_hessians_squared
+                        sum_gradient_hessian_left += feature_hist[bin_idx].sum_gradients_hessians
                 sum_hessian_right = sum_hessians - sum_hessian_left
 
                 sum_gradient_left += feature_hist[bin_idx].sum_gradients
                 sum_gradient_right = sum_gradients - sum_gradient_left
 
-                sum_hessian_squared_right = sum_hessians_squared - sum_hessian_squared_left
-                sum_gradient_squared_left += feature_hist[bin_idx].sum_gradients_squared
-                sum_gradient_squared_right = sum_gradients_squared - sum_gradient_squared_left
-                sum_gradient_hessian_right = sum_gradients_hessians - sum_gradient_hessian_left
+                if self.with_variance:
+                    sum_hessian_squared_right = sum_hessians_squared - sum_hessian_squared_left
+                    sum_gradient_squared_left += feature_hist[bin_idx].sum_gradients_squared
+                    sum_gradient_squared_right = sum_gradients_squared - sum_gradient_squared_left
+                    sum_gradient_hessian_right = sum_gradients_hessians - sum_gradient_hessian_left
 
                 if (n_samples_left < self.min_samples_leaf or
                     sum_hessian_left < self.min_hessian_to_split):
@@ -1199,17 +1244,28 @@ cdef class Splitter:
             split_info.n_samples_right = n_samples - best_n_samples_left
 
             # We recompute best values here but it's cheap
-            split_info.value_left, split_info.variance_left = compute_node_value_variance(
-                split_info.sum_gradient_left, split_info.sum_hessian_left,
-                split_info.sum_gradient_squared_left, split_info.sum_hessian_squared_left,
-                split_info.sum_gradient_hessian_left, split_info.n_samples_left,
-                lower_bound, upper_bound, self.l2_regularization)
+            if self.with_variance:
+                split_info.value_left, split_info.variance_left = compute_node_value_variance(
+                    split_info.sum_gradient_left, split_info.sum_hessian_left,
+                    split_info.sum_gradient_squared_left, split_info.sum_hessian_squared_left,
+                    split_info.sum_gradient_hessian_left, split_info.n_samples_left,
+                    lower_bound, upper_bound, self.l2_regularization)
 
-            split_info.value_right, split_info.variance_right = compute_node_value_variance(
-                split_info.sum_gradient_right, split_info.sum_hessian_right,
-                split_info.sum_gradient_squared_right, split_info.sum_hessian_squared_right,
-                split_info.sum_gradient_hessian_right, split_info.n_samples_right,
-                lower_bound, upper_bound, self.l2_regularization)
+                split_info.value_right, split_info.variance_right = compute_node_value_variance(
+                    split_info.sum_gradient_right, split_info.sum_hessian_right,
+                    split_info.sum_gradient_squared_right, split_info.sum_hessian_squared_right,
+                    split_info.sum_gradient_hessian_right, split_info.n_samples_right,
+                    lower_bound, upper_bound, self.l2_regularization)
+            else:
+                split_info.value_left = compute_node_value(
+                    split_info.sum_gradient_left, split_info.sum_hessian_left,
+                    lower_bound, upper_bound, self.l2_regularization)
+                split_info.variance_left = 1e-15
+
+                split_info.value_right = compute_node_value(
+                    split_info.sum_gradient_right, split_info.sum_hessian_right,
+                    lower_bound, upper_bound, self.l2_regularization)
+                split_info.variance_right = 1e-15
 
             # create bitset with values from best_cat_infos_thresh
             init_bitset(split_info.left_cat_bitset)

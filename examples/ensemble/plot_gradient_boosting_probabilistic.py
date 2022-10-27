@@ -56,6 +56,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 # --------------------------------------------------------
 #
 # We fit a baseline model trained with the (mean) squared error (MSE)
+# We need to set the flag `with_variance=True` in order to be able
+# to get probabilistic outputs from our model.
 from sklearn.ensemble import HistGradientBoostingRegressor
 
 all_models = {}
@@ -65,7 +67,9 @@ common_params = dict(
     max_depth=2,
     min_samples_leaf=9,
 )
-gbr_ls = HistGradientBoostingRegressor(loss="squared_error", **common_params)
+gbr_ls = HistGradientBoostingRegressor(
+    loss="squared_error", with_variance=True, **common_params
+)
 all_models["mse"] = gbr_ls.fit(X_train, y_train)
 # %%
 # For the sake of comparison, we train multiple models with the

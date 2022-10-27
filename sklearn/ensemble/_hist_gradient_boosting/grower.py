@@ -15,6 +15,7 @@ from .splitting import Splitter
 from .histogram import HistogramBuilder
 from .predictor import TreePredictor
 from .utils import (
+    sum_parallel,
     sum_parallel_with_squares,
     sum_parallel_with_squares_two_arrays,
 )
@@ -231,6 +232,9 @@ class TreeGrower:
         to determine the effective number of threads use, which takes cgroups CPU
         quotes into account. See the docstring of `_openmp_effective_n_threads`
         for details.
+    with_variance : bool, default=False
+        When set to ``True``, the variance of each leaf value is stored during
+        training.
 
     Attributes
     ----------
@@ -274,6 +278,7 @@ class TreeGrower:
         min_hessian_to_split=1e-3,
         shrinkage=1.0,
         n_threads=None,
+        with_variance=False,
     ):
 
         self._validate_parameters(
@@ -334,7 +339,13 @@ class TreeGrower:
 
         hessians_are_constant = hessians.shape[0] == 1
         self.histogram_builder = HistogramBuilder(
-            X_binned, n_bins, gradients, hessians, hessians_are_constant, n_threads
+            X_binned,
+            n_bins,
+            gradients,
+            hessians,
+            hessians_are_constant,
+            n_threads,
+            with_variance,
         )
         missing_values_bin_idx = n_bins - 1
         self.splitter = Splitter(
@@ -350,6 +361,7 @@ class TreeGrower:
             min_gain_to_split,
             hessians_are_constant,
             n_threads,
+            with_variance,
         )
         self.n_bins_non_missing = n_bins_non_missing
         self.missing_values_bin_idx = missing_values_bin_idx
@@ -372,6 +384,7 @@ class TreeGrower:
         self.total_compute_hist_time = 0.0  # time spent computing histograms
         self.total_apply_split_time = 0.0  # time spent splitting nodes
         self.n_categorical_splits = 0
+        self.with_variance = with_variance
         self._intilialize_root(gradients, hessians, hessians_are_constant)
         self.n_nodes = 1
 
@@ -426,21 +439,34 @@ class TreeGrower:
         depth = 0
         if self.histogram_builder.hessians_are_constant:
             sum_hessians = hessians[0] * n_samples
-            sum_gradients, sum_gradients_squared = sum_parallel_with_squares(
-                gradients, self.n_threads
-            )
-            sum_hessians_squared = hessians[0] ** 2 * n_samples
-            sum_gradients_hessians = hessians[0] * sum_gradients
+            if self.with_variance:
+                sum_gradients, sum_gradients_squared = sum_parallel_with_squares(
+                    gradients, self.n_threads
+                )
+                sum_hessians_squared = hessians[0] ** 2 * n_samples
+                sum_gradients_hessians = hessians[0] * sum_gradients
+            else:
+                sum_gradients = sum_parallel(gradients, self.n_threads)
+                sum_gradients_squared = 0.0
+                sum_hessians_squared = 0.0
+                sum_gradients_hessians = 0.0
         else:
-            (
-                sum_gradients,
-                sum_hessians,
-                sum_gradients_squared,
-                sum_hessians_squared,
-                sum_gradients_hessians,
-            ) = sum_parallel_with_squares_two_arrays(
-                gradients, hessians, self.n_threads
-            )
+            if self.with_variance:
+                (
+                    sum_gradients,
+                    sum_hessians,
+                    sum_gradients_squared,
+                    sum_hessians_squared,
+                    sum_gradients_hessians,
+                ) = sum_parallel_with_squares_two_arrays(
+                    gradients, hessians, self.n_threads
+                )
+            else:
+                sum_gradients = sum_parallel(gradients, self.n_threads)
+                sum_hessians = sum_parallel(hessians, self.n_threads)
+                sum_gradients_squared = 0.0
+                sum_hessians_squared = 0.0
+                sum_gradients_hessians = 0.0
         self.root = TreeNode(
             depth=depth,
             sample_indices=self.splitter.partition,

@@ -313,7 +313,9 @@ def test_poisson():
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=n_test, random_state=rng
     )
-    gbdt_pois = HistGradientBoostingRegressor(loss="poisson", random_state=rng)
+    gbdt_pois = HistGradientBoostingRegressor(
+        loss="poisson", random_state=rng, with_variance=True
+    )
     gbdt_ls = HistGradientBoostingRegressor(loss="squared_error", random_state=rng)
     gbdt_pois.fit(X_train, y_train)
     gbdt_ls.fit(X_train, y_train)
@@ -1347,7 +1349,7 @@ def test_distribution_means_and_variances():
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=n_test, random_state=rng
     )
-    gbdt = HistGradientBoostingRegressor(loss="squared_error")
+    gbdt = HistGradientBoostingRegressor(loss="squared_error", with_variance=True)
     gbdt.fit(X_train, y_train)
     samples_array = [1, 10, 100, 1_000, 10_000, 100_000]
     distributions = [

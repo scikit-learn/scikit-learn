@@ -107,6 +107,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "scoring": [str, callable, None],
         "verbose": ["verbose"],
         "random_state": ["random_state"],
+        "with_variance": ["boolean"],
         "tree_correlation": [Interval(Real, -1, 1, closed="neither"), None],
     }
 
@@ -133,6 +134,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         tol,
         verbose,
         random_state,
+        with_variance,
         tree_correlation,
     ):
         self.loss = loss
@@ -154,6 +156,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.tol = tol
         self.verbose = verbose
         self.random_state = random_state
+        self.with_variance = with_variance
         self.tree_correlation = tree_correlation
 
     def _validate_parameters(self):
@@ -363,6 +366,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # there's no way to tell the scorer that it needs to predict binned
         # data.
         self._in_fit = True
+
+        # We need to store whether we store the variances during training
+        # so that these variances can be used for probabilistic predictions
+        # after training
+        self._is_fitted_with_variance = self.with_variance
 
         # `_openmp_effective_n_threads` is used to take cgroups CPU quotes
         # into account when determine the maximum number of threads to use.
@@ -652,6 +660,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     l2_regularization=self.l2_regularization,
                     shrinkage=self.learning_rate,
                     n_threads=n_threads,
+                    with_variance=self.with_variance,
                 )
                 grower.grow()
 
@@ -1358,11 +1367,16 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         is enabled.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+    with_variance : bool, default=False
+        When set to `True`, the variance of each leaf value is stored during
+        training. In Regressor models, this can be used to generate
+        probabilistic estimates.
     tree_correlation : float, default=None
         Tree correlation hyperparameter. This controls the amount of correlation
         we assume to exist between each subsequent tree in the ensemble. Only
         used when computing the standard deviations of the predictions. If None,
         defaults to np.log10(n_samples_train) / 100. Must be between -1 and 1.
+        Only used in Regressor models.
 
     Attributes
     ----------
@@ -1455,6 +1469,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         tol=1e-7,
         verbose=0,
         random_state=None,
+        with_variance=False,
         tree_correlation=None,
     ):
         super(HistGradientBoostingRegressor, self).__init__(
@@ -1477,6 +1492,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             tol=tol,
             verbose=verbose,
             random_state=random_state,
+            with_variance=with_variance,
             tree_correlation=tree_correlation,
         )
         self.quantile = quantile
@@ -1503,6 +1519,11 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         """
         check_is_fitted(self)
         if return_std:
+            if not self._is_fitted_with_variance:
+                raise ValueError(
+                    "The model was not fit with variance. Set "
+                    "'with_variance=True' at model initialization."
+                )
             # Get raw predictions and raw variances
             mean_raw, variance_raw = self._raw_predict(X, return_var=True)
             mean_raw, variance_raw = mean_raw.ravel(), variance_raw.ravel()
@@ -1843,12 +1864,16 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         .. versionadded:: 1.2
 
+    with_variance : bool, default=False
+        When set to `True`, the variance of each leaf value is stored during
+        training. In Regressor models, this can be used to generate
+        probabilistic estimates.
     tree_correlation : float, default=None
         Tree correlation hyperparameter. This controls the amount of correlation
         we assume to exist between each subsequent tree in the ensemble. Only
-        used when computing the standard deviations of the predictions, which is
-        not yet implemented for HistGradientBoostingClassifier. If None,
+        used when computing the standard deviations of the predictions. If None,
         defaults to np.log10(n_samples_train) / 100. Must be between -1 and 1.
+        Only used in Regressor models.
 
 
     Attributes
@@ -1956,6 +1981,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         tol=1e-7,
         verbose=0,
         random_state=None,
+        with_variance=False,
         tree_correlation=None,
         class_weight=None,
     ):
@@ -1979,6 +2005,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             tol=tol,
             verbose=verbose,
             random_state=random_state,
+            with_variance=with_variance,
             tree_correlation=tree_correlation,
         )
         self.class_weight = class_weight
