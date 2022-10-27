@@ -207,8 +207,10 @@ class SimpleImputer(_BaseImputer):
         transform/test time.
 
     keep_missing_features : bool, default=False
-        If true, features whose all values are missing during fit/train time
-        are not removed during transform/test time.
+        If True, features whose all values are missing when calling `fit` are
+        not removed when calling `transform`. The imputed value is always `0`
+        apart from the case where `strategy="constant"` where `fill_value` will
+        be used instead.
 
     Attributes
     ----------
@@ -451,15 +453,20 @@ class SimpleImputer(_BaseImputer):
                 n_explicit_zeros = mask_zeros.sum()
                 n_zeros = n_implicit_zeros[i] + n_explicit_zeros
 
-                if strategy == "mean":
-                    s = column.size + n_zeros
-                    statistics[i] = np.nan if s == 0 else column.sum() / s
+                if len(column) == 0 and self.keep_missing_features:
+                    # in case we want to keep columns with only missing values.
+                    statistics[i] = 0
+                else:
+                    if strategy == "mean":
+                        s = column.size + n_zeros
+                        statistics[i] = np.nan if s == 0 else column.sum() / s
 
-                elif strategy == "median":
-                    statistics[i] = _get_median(column, n_zeros)
+                    elif strategy == "median":
+                        statistics[i] = _get_median(column, n_zeros)
 
-                elif strategy == "most_frequent":
-                    statistics[i] = _most_frequent(column, 0, n_zeros)
+                    elif strategy == "most_frequent":
+                        statistics[i] = _most_frequent(column, 0, n_zeros)
+
         super()._fit_indicator(missing_mask)
 
         return statistics
@@ -476,7 +483,9 @@ class SimpleImputer(_BaseImputer):
             mean_masked = np.ma.mean(masked_X, axis=0)
             # Avoid the warning "Warning: converting a masked element to nan."
             mean = np.ma.getdata(mean_masked)
-            mean[np.ma.getmask(mean_masked)] = np.nan
+            mean[np.ma.getmask(mean_masked)] = (
+                0 if self.keep_missing_features else np.nan
+            )
 
             return mean
 
@@ -485,7 +494,9 @@ class SimpleImputer(_BaseImputer):
             median_masked = np.ma.median(masked_X, axis=0)
             # Avoid the warning "Warning: converting a masked element to nan."
             median = np.ma.getdata(median_masked)
-            median[np.ma.getmaskarray(median_masked)] = np.nan
+            median[np.ma.getmaskarray(median_masked)] = (
+                0 if self.keep_missing_features else np.nan
+            )
 
             return median
 
@@ -507,7 +518,10 @@ class SimpleImputer(_BaseImputer):
             for i, (row, row_mask) in enumerate(zip(X[:], mask[:])):
                 row_mask = np.logical_not(row_mask).astype(bool)
                 row = row[row_mask]
-                most_frequent[i] = _most_frequent(row, np.nan, 0)
+                if len(row) == 0 and self.keep_missing_features:
+                    most_frequent[i] = 0
+                else:
+                    most_frequent[i] = _most_frequent(row, np.nan, 0)
 
             return most_frequent
 

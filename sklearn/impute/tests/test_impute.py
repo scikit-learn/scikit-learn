@@ -7,6 +7,7 @@ from scipy.stats import kstest
 
 import io
 
+from sklearn.utils._testing import _convert_container
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_array_equal
@@ -53,9 +54,7 @@ def _assert_allclose_and_same_dtype(x, y):
     assert x.dtype == y.dtype
 
 
-def _check_statistics(
-    X, X_true, strategy, statistics, missing_values, keep_missing_features=False
-):
+def _check_statistics(X, X_true, strategy, statistics, missing_values):
     """Utility function for testing imputation for a given strategy.
 
     Test with dense and sparse arrays
@@ -78,17 +77,15 @@ def _check_statistics(
     imputer = SimpleImputer(
         missing_values=missing_values,
         strategy=strategy,
-        keep_missing_features=keep_missing_features,
     )
     X_trans = imputer.fit(X).transform(X.copy())
     assert_ae(imputer.statistics_, statistics, err_msg=err_msg.format(False))
-    assert_ae(X_trans, X_true, err_msg=err_msg.format(True))
+    assert_ae(X_trans, X_true, err_msg=err_msg.format(False))
 
     # Sparse matrix
     imputer = SimpleImputer(
         missing_values=missing_values,
         strategy=strategy,
-        keep_missing_features=keep_missing_features,
     )
     imputer.fit(sparse.csc_matrix(X))
     X_trans = imputer.transform(sparse.csc_matrix(X.copy()))
@@ -131,7 +128,6 @@ def test_imputation_deletion_warning(strategy):
         imputer.transform(X)
 
 
-# TODO: changes shape
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
 def test_imputation_deletion_warning_feature_names(strategy):
 
@@ -191,9 +187,7 @@ def safe_mean(arr, *args, **kwargs):
     return np.nan if length == 0 else np.mean(arr, *args, **kwargs)
 
 
-# TODO: changes shape
-@pytest.mark.parametrize("keep_missing_features", [True, False])
-def test_imputation_mean_median(keep_missing_features):
+def test_imputation_mean_median():
     # Test imputation using the mean and median strategies, when
     # missing_values != 0.
     rng = np.random.RandomState(0)
@@ -250,13 +244,12 @@ def test_imputation_mean_median(keep_missing_features):
             np.random.RandomState(j).shuffle(X_true[:, j])
 
         # Mean doesn't support columns containing NaNs, median does
-        if not keep_missing_features:
-            if strategy == "median":
-                cols_to_keep = ~np.isnan(X_true).any(axis=0)
-            else:
-                cols_to_keep = ~np.isnan(X_true).all(axis=0)
+        if strategy == "median":
+            cols_to_keep = ~np.isnan(X_true).any(axis=0)
+        else:
+            cols_to_keep = ~np.isnan(X_true).all(axis=0)
 
-            X_true = X_true[:, cols_to_keep]
+        X_true = X_true[:, cols_to_keep]
 
         _check_statistics(
             X,
@@ -264,7 +257,6 @@ def test_imputation_mean_median(keep_missing_features):
             strategy,
             true_statistics,
             test_missing_values,
-            keep_missing_features,
         )
 
 
@@ -372,8 +364,7 @@ def test_imputation_most_frequent():
 
 
 @pytest.mark.parametrize("marker", [None, np.nan, "NAN", "", 0])
-@pytest.mark.parametrize("keep_missing_features", [True, False])
-def test_imputation_most_frequent_objects(marker, keep_missing_features):
+def test_imputation_most_frequent_objects(marker):
     # Test imputation using the most-frequent strategy.
     X = np.array(
         [
@@ -385,32 +376,22 @@ def test_imputation_most_frequent_objects(marker, keep_missing_features):
         dtype=object,
     )
 
-    X_missing = array_with_nan_equal(X, marker).all(axis=0)
-
     X_true = np.array(
         [
-            [np.nan, "c", "a", "f"],
-            [np.nan, "c", "d", "d"],
-            [np.nan, "b", "d", "d"],
-            [np.nan, "c", "d", "h"],
+            ["c", "a", "f"],
+            ["c", "d", "d"],
+            ["b", "d", "d"],
+            ["c", "d", "h"],
         ],
         dtype=object,
     )
 
-    imputer = SimpleImputer(
-        missing_values=marker,
-        strategy="most_frequent",
-        keep_missing_features=keep_missing_features,
-    )
+    imputer = SimpleImputer(missing_values=marker, strategy="most_frequent")
     X_trans = imputer.fit(X).transform(X)
 
-    if keep_missing_features:
-        assert array_with_nan_equal(X_trans, X_true).all()
-    else:
-        assert_array_equal(X_trans, X_true[:, ~X_missing])
+    assert_array_equal(X_trans, X_true)
 
 
-# TODO: changes shape
 @pytest.mark.parametrize("dtype", [object, "category"])
 def test_imputation_most_frequent_pandas(dtype):
     # Test imputation using the most frequent strategy on pandas df
@@ -650,7 +631,6 @@ def test_iterative_imputer_verbose():
     imputer.transform(X)
 
 
-# TODO: changes shape
 def test_iterative_imputer_all_missing():
     n = 100
     d = 3
@@ -874,7 +854,6 @@ def test_iterative_imputer_transform_stochasticity():
     assert_allclose(X_fitted_1a, X_fitted_2)
 
 
-# TODO: changes shape
 def test_iterative_imputer_no_missing():
     rng = np.random.RandomState(0)
     X = rng.rand(100, 100)
@@ -1553,24 +1532,6 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
     )
 
 
-@pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent", "constant"])
-def test_simple_imputer_keep_missing_features(strategy):
-    X = np.array([[1, np.nan, 2], [3, np.nan, np.nan]])
-    X_missing = np.array([1])
-
-    imputer = SimpleImputer(strategy=strategy, keep_missing_features=True)
-    X_ft = imputer.fit_transform(X)
-    X_t = imputer.transform(X)
-
-    assert array_with_nan_equal(X_ft, X_t).all()
-    assert X.shape == X_ft.shape
-
-    if strategy != "constant":
-        assert array_with_nan_equal(X_ft[:, X_missing], np.nan).all()
-    else:
-        assert (X_ft[:, X_missing] == 0).all()
-
-
 @pytest.mark.parametrize(
     "initial_strategy", ["mean", "median", "most_frequent", "constant"]
 )
@@ -1709,3 +1670,51 @@ def test_imputer_transform_preserves_numeric_dtype(dtype_test):
     X_test = np.asarray([[np.nan, np.nan, np.nan]], dtype=dtype_test)
     X_trans = imp.transform(X_test)
     assert X_trans.dtype == dtype_test
+
+
+@pytest.mark.parametrize("array_type", ["array", "sparse"])
+@pytest.mark.parametrize("keep_missing_features", [True, False])
+def test_simple_imputer_constant_keep_missing_features(
+    array_type, keep_missing_features
+):
+    """Check the behaviour of `keep_missing_features` with `strategy='constant'.
+    For backward compatibility, a column full of missing values will always be
+    fill and never dropped.
+    """
+    X = np.array([[np.nan, 2], [np.nan, 3], [np.nan, 6]])
+    X = _convert_container(X, array_type)
+    fill_value = 10
+    imputer = SimpleImputer(
+        strategy="constant",
+        fill_value=fill_value,
+        keep_missing_features=keep_missing_features,
+    )
+    X_imputed = imputer.fit_transform(X)
+    assert X_imputed.shape == X.shape
+    constant_feature = X_imputed[:, 0].A if array_type == "sparse" else X_imputed[:, 0]
+    assert_array_equal(constant_feature, fill_value)
+
+
+@pytest.mark.parametrize("array_type", ["array", "sparse"])
+@pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
+@pytest.mark.parametrize("keep_missing_features", [True, False])
+def test_simple_imputer_keep_missing_features(
+    strategy, array_type, keep_missing_features
+):
+    """Check the behaviour of `keep_missing_features` with all strategies but
+    'constant'.
+    """
+    X = np.array([[np.nan, 2], [np.nan, 3], [np.nan, 6]])
+    X = _convert_container(X, array_type)
+    imputer = SimpleImputer(
+        strategy=strategy, keep_missing_features=keep_missing_features
+    )
+    X_imputed = imputer.fit_transform(X)
+    if keep_missing_features:
+        assert X_imputed.shape == X.shape
+        constant_feature = (
+            X_imputed[:, 0].A if array_type == "sparse" else X_imputed[:, 0]
+        )
+        assert_array_equal(constant_feature, 0)
+    else:
+        assert X_imputed.shape == (X.shape[0], X.shape[1] - 1)

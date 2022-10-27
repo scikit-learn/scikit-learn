@@ -3,6 +3,8 @@ import pytest
 import numpy as np
 from scipy import sparse
 
+from sklearn.base import clone
+
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_array_equal
@@ -30,7 +32,6 @@ def test_imputation_missing_value_in_test_array(imputer):
     imputer.fit(train).transform(test)
 
 
-# TODO: changes shape
 # ConvergenceWarning will be raised by the IterativeImputer
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("marker", [np.nan, -1, 0])
@@ -63,7 +64,6 @@ def test_imputers_add_indicator(marker, imputer):
     assert_allclose(X_trans[:, :-4], X_trans_no_indicator)
 
 
-# TODO: changes shape
 # ConvergenceWarning will be raised by the IterativeImputer
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("marker", [np.nan, -1])
@@ -96,7 +96,6 @@ def test_imputers_add_indicator_sparse(imputer, marker):
     assert_allclose_dense_sparse(X_trans[:, :-4], X_trans_no_indicator)
 
 
-# TODO: changes shape
 # ConvergenceWarning will be raised by the IterativeImputer
 @pytest.mark.filterwarnings("ignore::sklearn.exceptions.ConvergenceWarning")
 @pytest.mark.parametrize("imputer", IMPUTERS)
@@ -164,3 +163,19 @@ def test_imputers_feature_names_out_pandas(imputer, add_indicator):
     else:
         expected_names = ["a", "b", "c", "d", "f"]
         assert_array_equal(expected_names, names)
+
+
+@pytest.mark.parametrize("keep_missing_features", [True, False])
+@pytest.mark.parametrize("imputer", IMPUTERS, ids=lambda x: x.__class__.__name__)
+def test_keep_missing_features(imputer, keep_missing_features):
+    """Check that the imputer keeps features with only missing values."""
+    X = np.array([[np.nan, 1], [np.nan, 2], [np.nan, 3]])
+    imputer = clone(imputer)
+    imputer = imputer.set_params(
+        add_indicator=False, keep_missing_features=keep_missing_features
+    )
+    X_imputed = imputer.fit_transform(X)
+    if keep_missing_features:
+        assert X_imputed.shape == X.shape
+    else:
+        assert X_imputed.shape == (X.shape[0], X.shape[1] - 1)
