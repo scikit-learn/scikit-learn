@@ -34,6 +34,9 @@ def test_build_histogram(build_func):
     assert_array_equal(hist["count"], [2, 1, 0])
     assert_allclose(hist["sum_gradients"], [1, 3, 0])
     assert_allclose(hist["sum_hessians"], [2, 2, 0])
+    assert_allclose(hist["sum_gradients_squared"], [1, 9, 0])
+    assert_allclose(hist["sum_hessians_squared"], [2, 4, 0])
+    assert_allclose(hist["sum_gradients_hessians"], [1, 6, 0])
 
     # Larger sample_indices (above unrolling threshold)
     sample_indices = np.array([0, 2, 3, 6, 7], dtype=np.uint32)
@@ -48,6 +51,9 @@ def test_build_histogram(build_func):
     assert_array_equal(hist["count"], [2, 2, 1])
     assert_allclose(hist["sum_gradients"], [1, 4, 0])
     assert_allclose(hist["sum_hessians"], [2, 2, 1])
+    assert_allclose(hist["sum_gradients_squared"], [1, 10, 0])
+    assert_allclose(hist["sum_hessians_squared"], [2, 4, 1])
+    assert_allclose(hist["sum_gradients_hessians"], [1, 6, 0])
 
 
 def test_histogram_sample_order_independence():
@@ -100,10 +106,28 @@ def test_histogram_sample_order_independence():
     hist_ghc_perm = hist_ghc_perm[0]
 
     assert_allclose(hist_gc["sum_gradients"], hist_gc_perm["sum_gradients"])
+    assert_allclose(
+        hist_gc["sum_gradients_squared"], hist_gc_perm["sum_gradients_squared"]
+    )
+    assert_allclose(
+        hist_gc["sum_hessians_squared"], hist_gc_perm["sum_hessians_squared"]
+    )
+    assert_allclose(
+        hist_gc["sum_gradients_hessians"], hist_gc_perm["sum_gradients_hessians"]
+    )
     assert_array_equal(hist_gc["count"], hist_gc_perm["count"])
 
     assert_allclose(hist_ghc["sum_gradients"], hist_ghc_perm["sum_gradients"])
     assert_allclose(hist_ghc["sum_hessians"], hist_ghc_perm["sum_hessians"])
+    assert_allclose(
+        hist_ghc["sum_gradients_squared"], hist_ghc_perm["sum_gradients_squared"]
+    )
+    assert_allclose(
+        hist_ghc["sum_hessians_squared"], hist_ghc_perm["sum_hessians_squared"]
+    )
+    assert_allclose(
+        hist_ghc["sum_gradients_hessians"], hist_ghc_perm["sum_gradients_hessians"]
+    )
     assert_array_equal(hist_ghc["count"], hist_ghc_perm["count"])
 
 
@@ -155,10 +179,21 @@ def test_unrolled_equivalent_to_naive(constant_hessian):
     for hist in (hist_gc_root, hist_ghc_root, hist_gc, hist_ghc):
         assert_array_equal(hist["count"], hist_naive["count"])
         assert_allclose(hist["sum_gradients"], hist_naive["sum_gradients"])
+        assert_allclose(
+            hist["sum_gradients_squared"], hist_naive["sum_gradients_squared"]
+        )
     for hist in (hist_ghc_root, hist_ghc):
         assert_allclose(hist["sum_hessians"], hist_naive["sum_hessians"])
+        assert_allclose(
+            hist["sum_hessians_squared"], hist_naive["sum_hessians_squared"]
+        )
+        assert_allclose(
+            hist["sum_gradients_hessians"], hist_naive["sum_gradients_hessians"]
+        )
     for hist in (hist_gc_root, hist_gc):
         assert_array_equal(hist["sum_hessians"], np.zeros(n_bins))
+        assert_array_equal(hist["sum_hessians_squared"], np.zeros(n_bins))
+        assert_allclose(hist["sum_gradients_hessians"], np.zeros(n_bins))
 
 
 @pytest.mark.parametrize("constant_hessian", [True, False])
@@ -234,6 +269,13 @@ def test_hist_subtraction(constant_hessian):
     _subtract_histograms(0, n_bins, hist_parent, hist_right, hist_left_sub)
     _subtract_histograms(0, n_bins, hist_parent, hist_left, hist_right_sub)
 
-    for key in ("count", "sum_hessians", "sum_gradients"):
+    for key in (
+        "count",
+        "sum_hessians",
+        "sum_gradients",
+        "sum_gradients_squared",
+        "sum_hessians_squared",
+        "sum_gradients_hessians",
+    ):
         assert_allclose(hist_left[key], hist_left_sub[key], rtol=1e-6)
         assert_allclose(hist_right[key], hist_right_sub[key], rtol=1e-6)

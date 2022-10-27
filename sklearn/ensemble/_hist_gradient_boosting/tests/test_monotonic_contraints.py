@@ -295,6 +295,9 @@ def test_bounded_value_min_gain_to_split():
     all_gradients = np.array([1, 1, 100, 1, 1], dtype=G_H_DTYPE)
     sum_gradients = all_gradients.sum()
     sum_hessians = all_hessians.sum()
+    sum_gradients_squared = np.square(all_gradients).sum()
+    sum_hessians_squared = np.square(all_hessians).sum()
+    sum_gradients_hessians = (all_gradients * all_hessians).sum()
     hessians_are_constant = False
 
     builder = HistogramBuilder(
@@ -345,6 +348,9 @@ def test_bounded_value_min_gain_to_split():
         histograms,
         sum_gradients,
         sum_hessians,
+        sum_gradients_squared,
+        sum_hessians_squared,
+        sum_gradients_hessians,
         value,
         lower_bound=children_lower_bound,
         upper_bound=children_upper_bound,
@@ -369,6 +375,9 @@ def test_bounded_value_min_gain_to_split():
         histograms,
         sum_gradients,
         sum_hessians,
+        sum_gradients_squared,
+        sum_hessians_squared,
+        sum_gradients_hessians,
         value,
         lower_bound=children_lower_bound,
         upper_bound=children_upper_bound,

@@ -15,6 +15,9 @@ cdef packed struct hist_struct:
     # to be packed since by default numpy dtypes aren't aligned
     Y_DTYPE_C sum_gradients
     Y_DTYPE_C sum_hessians
+    Y_DTYPE_C sum_gradients_squared
+    Y_DTYPE_C sum_hessians_squared
+    Y_DTYPE_C sum_gradients_hessians
     unsigned int count
 
 
@@ -22,6 +25,7 @@ cdef packed struct node_struct:
     # Equivalent struct to PREDICTOR_RECORD_DTYPE to use in memory views. It
     # needs to be packed since by default numpy dtypes aren't aligned
     Y_DTYPE_C value
+    Y_DTYPE_C variance
     unsigned int count
     unsigned int feature_idx
     X_DTYPE_C num_threshold

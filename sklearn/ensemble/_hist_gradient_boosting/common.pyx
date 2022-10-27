@@ -13,11 +13,15 @@ X_BITSET_INNER_DTYPE = np.uint32
 HISTOGRAM_DTYPE = np.dtype([
     ('sum_gradients', Y_DTYPE),  # sum of sample gradients in bin
     ('sum_hessians', Y_DTYPE),  # sum of sample hessians in bin
+    ('sum_gradients_squared', Y_DTYPE),  # sum of squared sample gradients in bin
+    ('sum_hessians_squared', Y_DTYPE),  # sum of squared sample hessians in bin
+    ('sum_gradients_hessians', Y_DTYPE),  # sum of product of gradients and hessians in bin
     ('count', np.uint32),  # number of samples in bin
 ])
 
 PREDICTOR_RECORD_DTYPE = np.dtype([
     ('value', Y_DTYPE),
+    ('variance', Y_DTYPE),
     ('count', np.uint32),
     ('feature_idx', np.uint32),
     ('num_threshold', X_DTYPE),

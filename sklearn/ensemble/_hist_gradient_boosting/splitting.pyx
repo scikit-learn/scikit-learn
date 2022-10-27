@@ -36,10 +36,18 @@ cdef struct split_info_struct:
     Y_DTYPE_C sum_gradient_right
     Y_DTYPE_C sum_hessian_left
     Y_DTYPE_C sum_hessian_right
+    Y_DTYPE_C sum_gradient_squared_left
+    Y_DTYPE_C sum_gradient_squared_right
+    Y_DTYPE_C sum_hessian_squared_left
+    Y_DTYPE_C sum_hessian_squared_right
+    Y_DTYPE_C sum_gradient_hessian_left
+    Y_DTYPE_C sum_gradient_hessian_right
     unsigned int n_samples_left
     unsigned int n_samples_right
     Y_DTYPE_C value_left
     Y_DTYPE_C value_right
+    Y_DTYPE_C variance_left
+    Y_DTYPE_C variance_right
     unsigned char is_categorical
     BITSET_DTYPE_C left_cat_bitset
 
@@ -75,6 +83,18 @@ class SplitInfo:
         The sum of the gradients of all the samples in the right child.
     sum_hessian_right : float
         The sum of the hessians of all the samples in the right child.
+    sum_gradient_squared_left : float
+        The sum of the squared gradients of all the samples in the left child.
+    sum_hessian_squared_left : float
+        The sum of the squared hessians of all the samples in the left child.
+    sum_gradient_hessian_left : float
+        The sum of the product of gradients and hessians of all the samples in the left child.
+    sum_gradient_squared_right : float
+        The sum of the squared gradients of all the samples in the right child.
+    sum_hessian_squared_right : float
+        The sum of the squared hessians of all the samples in the right child.
+    sum_gradient_hessian_right : float
+        The sum of the product of gradients and hessians of all the samples in the right child.
     n_samples_left : int, default=0
         The number of samples in the left child.
     n_samples_right : int
@@ -91,8 +111,11 @@ class SplitInfo:
     """
     def __init__(self, gain, feature_idx, bin_idx,
                  missing_go_to_left, sum_gradient_left, sum_hessian_left,
-                 sum_gradient_right, sum_hessian_right, n_samples_left,
-                 n_samples_right, value_left, value_right,
+                 sum_gradient_right, sum_hessian_right, sum_gradient_squared_left,
+                 sum_hessian_squared_left, sum_gradient_hessian_left,
+                 sum_gradient_squared_right, sum_hessian_squared_right, sum_gradient_hessian_right,
+                 n_samples_left, n_samples_right, value_left, value_right,
+                 variance_left, variance_right,
                  is_categorical, left_cat_bitset):
         self.gain = gain
         self.feature_idx = feature_idx
@@ -102,10 +125,18 @@ class SplitInfo:
         self.sum_hessian_left = sum_hessian_left
         self.sum_gradient_right = sum_gradient_right
         self.sum_hessian_right = sum_hessian_right
+        self.sum_gradient_squared_left = sum_gradient_squared_left
+        self.sum_hessian_squared_left = sum_hessian_squared_left
+        self.sum_gradient_hessian_left = sum_gradient_hessian_left
+        self.sum_gradient_squared_right = sum_gradient_squared_right
+        self.sum_hessian_squared_right = sum_hessian_squared_right
+        self.sum_gradient_hessian_right = sum_gradient_hessian_right
         self.n_samples_left = n_samples_left
         self.n_samples_right = n_samples_right
         self.value_left = value_left
         self.value_right = value_right
+        self.variance_left = variance_left
+        self.variance_right = variance_right
         self.is_categorical = is_categorical
         self.left_cat_bitset = left_cat_bitset
 
@@ -418,6 +449,9 @@ cdef class Splitter:
             hist_struct [:, ::1] histograms,  # IN
             const Y_DTYPE_C sum_gradients,
             const Y_DTYPE_C sum_hessians,
+            const Y_DTYPE_C sum_gradients_squared,
+            const Y_DTYPE_C sum_hessians_squared,
+            const Y_DTYPE_C sum_gradients_hessians,
             const Y_DTYPE_C value,
             const Y_DTYPE_C lower_bound=-INFINITY,
             const Y_DTYPE_C upper_bound=INFINITY,
@@ -437,6 +471,12 @@ cdef class Splitter:
             The sum of the gradients for each sample at the node.
         sum_hessians : float
             The sum of the hessians for each sample at the node.
+        sum_gradients_squared : float
+            The sum of the squared gradients for each sample at the node.
+        sum_hessians_squared : float
+            The sum of the squared hessians for each sample at the node.
+        sum_gradients_hessians : float
+            The sum of the product of gradients and hessians for each sample at the node.
         value : float
             The bounded value of the current node. We directly pass the value
             instead of re-computing it from sum_gradients and sum_hessians,
@@ -491,6 +531,8 @@ cdef class Splitter:
                     self._find_best_bin_to_split_category(
                         feature_idx, has_missing_values[feature_idx],
                         histograms, n_samples, sum_gradients, sum_hessians,
+                        sum_gradients_squared, sum_hessians_squared,
+                        sum_gradients_hessians,
                         value, monotonic_cst[feature_idx], lower_bound,
                         upper_bound, &split_infos[feature_idx])
                 else:
@@ -507,6 +549,8 @@ cdef class Splitter:
                     self._find_best_bin_to_split_left_to_right(
                         feature_idx, has_missing_values[feature_idx],
                         histograms, n_samples, sum_gradients, sum_hessians,
+                        sum_gradients_squared, sum_hessians_squared,
+                        sum_gradients_hessians,
                         value, monotonic_cst[feature_idx],
                         lower_bound, upper_bound, &split_infos[feature_idx])
 
@@ -517,6 +561,8 @@ cdef class Splitter:
                         self._find_best_bin_to_split_right_to_left(
                             feature_idx, histograms, n_samples,
                             sum_gradients, sum_hessians,
+                            sum_gradients_squared, sum_hessians_squared,
+                            sum_gradients_hessians,
                             value, monotonic_cst[feature_idx],
                             lower_bound, upper_bound, &split_infos[feature_idx])
 
@@ -534,10 +580,18 @@ cdef class Splitter:
             split_info.sum_hessian_left,
             split_info.sum_gradient_right,
             split_info.sum_hessian_right,
+            split_info.sum_gradient_squared_left,
+            split_info.sum_hessian_squared_left,
+            split_info.sum_gradient_hessian_left,
+            split_info.sum_gradient_squared_right,
+            split_info.sum_hessian_squared_right,
+            split_info.sum_gradient_hessian_right,
             split_info.n_samples_left,
             split_info.n_samples_right,
             split_info.value_left,
             split_info.value_right,
+            split_info.variance_left,
+            split_info.variance_right,
             split_info.is_categorical,
             None,  # left_cat_bitset will only be set if the split is categorical
         )
@@ -570,6 +624,9 @@ cdef class Splitter:
             unsigned int n_samples,
             Y_DTYPE_C sum_gradients,
             Y_DTYPE_C sum_hessians,
+            Y_DTYPE_C sum_gradients_squared,
+            Y_DTYPE_C sum_hessians_squared,
+            Y_DTYPE_C sum_gradients_hessians,
             Y_DTYPE_C value,
             signed char monotonic_cst,
             Y_DTYPE_C lower_bound,
@@ -599,17 +656,31 @@ cdef class Splitter:
             Y_DTYPE_C sum_hessian_right
             Y_DTYPE_C sum_gradient_left
             Y_DTYPE_C sum_gradient_right
+            Y_DTYPE_C sum_hessian_squared_left
+            Y_DTYPE_C sum_hessian_squared_right
+            Y_DTYPE_C sum_gradient_squared_left
+            Y_DTYPE_C sum_gradient_squared_right
+            Y_DTYPE_C sum_gradient_hessian_left
+            Y_DTYPE_C sum_gradient_hessian_right
             Y_DTYPE_C loss_current_node
             Y_DTYPE_C gain
             unsigned char found_better_split = False
 
             Y_DTYPE_C best_sum_hessian_left
             Y_DTYPE_C best_sum_gradient_left
+            Y_DTYPE_C best_sum_hessian_squared_left
+            Y_DTYPE_C best_sum_gradient_squared_left
+            Y_DTYPE_C best_sum_gradient_hessian_left
+
             unsigned int best_bin_idx
             unsigned int best_n_samples_left
             Y_DTYPE_C best_gain = -1
 
         sum_gradient_left, sum_hessian_left = 0., 0.
+        sum_gradient_squared_left, sum_hessian_squared_left = 0., 0.
+        sum_gradient_squared_right, sum_hessian_squared_right = 0., 0.
+        sum_gradient_hessian_left, sum_gradient_hessian_right = 0., 0.
+
         n_samples_left = 0
 
         loss_current_node = _loss_from_value(value, sum_gradients)
@@ -620,13 +691,23 @@ cdef class Splitter:
 
             if self.hessians_are_constant:
                 sum_hessian_left += histograms[feature_idx, bin_idx].count
+                sum_hessian_squared_left += histograms[feature_idx, bin_idx].count
+                sum_gradient_hessian_left += histograms[feature_idx, bin_idx].sum_gradients
             else:
                 sum_hessian_left += \
                     histograms[feature_idx, bin_idx].sum_hessians
+                sum_hessian_squared_left += \
+                    histograms[feature_idx, bin_idx].sum_hessians_squared
+                sum_gradient_hessian_left += histograms[feature_idx, bin_idx].sum_gradients_hessians
             sum_hessian_right = sum_hessians - sum_hessian_left
 
             sum_gradient_left += histograms[feature_idx, bin_idx].sum_gradients
             sum_gradient_right = sum_gradients - sum_gradient_left
+
+            sum_hessian_squared_right = sum_hessians_squared - sum_hessian_squared_left
+            sum_gradient_squared_left += histograms[feature_idx, bin_idx].sum_gradients_squared
+            sum_gradient_squared_right = sum_gradients_squared - sum_gradient_squared_left
+            sum_gradient_hessian_right = sum_gradients_hessians - sum_gradient_hessian_left
 
             if n_samples_left < self.min_samples_leaf:
                 continue
@@ -654,6 +735,9 @@ cdef class Splitter:
                 best_bin_idx = bin_idx
                 best_sum_gradient_left = sum_gradient_left
                 best_sum_hessian_left = sum_hessian_left
+                best_sum_gradient_squared_left = sum_gradient_squared_left
+                best_sum_hessian_squared_left = sum_hessian_squared_left
+                best_sum_gradient_hessian_left = sum_gradient_hessian_left
                 best_n_samples_left = n_samples_left
 
         if found_better_split:
@@ -665,16 +749,26 @@ cdef class Splitter:
             split_info.sum_gradient_right = sum_gradients - best_sum_gradient_left
             split_info.sum_hessian_left = best_sum_hessian_left
             split_info.sum_hessian_right = sum_hessians - best_sum_hessian_left
+            split_info.sum_gradient_squared_left = best_sum_gradient_squared_left
+            split_info.sum_gradient_squared_right = sum_gradients_squared - best_sum_gradient_squared_left
+            split_info.sum_hessian_squared_left = best_sum_hessian_squared_left
+            split_info.sum_hessian_squared_right = sum_hessians_squared - best_sum_hessian_squared_left
+            split_info.sum_gradient_hessian_left = best_sum_gradient_hessian_left
+            split_info.sum_gradient_hessian_right = sum_gradients_hessians - best_sum_gradient_hessian_left
             split_info.n_samples_left = best_n_samples_left
             split_info.n_samples_right = n_samples - best_n_samples_left
 
             # We recompute best values here but it's cheap
-            split_info.value_left = compute_node_value(
+            split_info.value_left, split_info.variance_left = compute_node_value_variance(
                 split_info.sum_gradient_left, split_info.sum_hessian_left,
+                split_info.sum_gradient_squared_left, split_info.sum_hessian_squared_left,
+                split_info.sum_gradient_hessian_left, split_info.n_samples_left,
                 lower_bound, upper_bound, self.l2_regularization)
 
-            split_info.value_right = compute_node_value(
+            split_info.value_right, split_info.variance_right = compute_node_value_variance(
                 split_info.sum_gradient_right, split_info.sum_hessian_right,
+                split_info.sum_gradient_squared_right, split_info.sum_hessian_squared_right,
+                split_info.sum_gradient_hessian_right, split_info.n_samples_right,
                 lower_bound, upper_bound, self.l2_regularization)
 
     cdef void _find_best_bin_to_split_right_to_left(
@@ -684,6 +778,9 @@ cdef class Splitter:
             unsigned int n_samples,
             Y_DTYPE_C sum_gradients,
             Y_DTYPE_C sum_hessians,
+            Y_DTYPE_C sum_gradients_squared,
+            Y_DTYPE_C sum_hessians_squared,
+            Y_DTYPE_C sum_gradients_hessians,
             Y_DTYPE_C value,
             signed char monotonic_cst,
             Y_DTYPE_C lower_bound,
@@ -711,6 +808,12 @@ cdef class Splitter:
             Y_DTYPE_C sum_hessian_right
             Y_DTYPE_C sum_gradient_left
             Y_DTYPE_C sum_gradient_right
+            Y_DTYPE_C sum_hessian_squared_left
+            Y_DTYPE_C sum_hessian_squared_right
+            Y_DTYPE_C sum_gradient_squared_left
+            Y_DTYPE_C sum_gradient_squared_right
+            Y_DTYPE_C sum_gradient_hessian_left
+            Y_DTYPE_C sum_gradient_hessian_right
             Y_DTYPE_C loss_current_node
             Y_DTYPE_C gain
             unsigned int start = self.n_bins_non_missing[feature_idx] - 2
@@ -718,11 +821,16 @@ cdef class Splitter:
 
             Y_DTYPE_C best_sum_hessian_left
             Y_DTYPE_C best_sum_gradient_left
+            Y_DTYPE_C best_sum_hessian_squared_left
+            Y_DTYPE_C best_sum_gradient_squared_left
+            Y_DTYPE_C best_sum_gradient_hessian_left
             unsigned int best_bin_idx
             unsigned int best_n_samples_left
             Y_DTYPE_C best_gain = split_info.gain  # computed during previous scan
 
         sum_gradient_right, sum_hessian_right = 0., 0.
+        sum_gradient_squared_right, sum_hessian_squared_right = 0., 0.
+        sum_gradient_hessian_right = 0.
         n_samples_right = 0
 
         loss_current_node = _loss_from_value(value, sum_gradients)
@@ -733,14 +841,27 @@ cdef class Splitter:
 
             if self.hessians_are_constant:
                 sum_hessian_right += histograms[feature_idx, bin_idx + 1].count
+                sum_hessian_squared_right += histograms[feature_idx, bin_idx + 1].count
+                sum_gradient_hessian_right += histograms[feature_idx, bin_idx + 1].sum_gradients
             else:
                 sum_hessian_right += \
                     histograms[feature_idx, bin_idx + 1].sum_hessians
+                sum_hessian_squared_right += \
+                    histograms[feature_idx, bin_idx + 1].sum_hessians_squared
+                sum_gradient_hessian_right += \
+                    histograms[feature_idx, bin_idx + 1].sum_gradients_hessians
+
             sum_hessian_left = sum_hessians - sum_hessian_right
 
             sum_gradient_right += \
                 histograms[feature_idx, bin_idx + 1].sum_gradients
             sum_gradient_left = sum_gradients - sum_gradient_right
+
+            sum_hessian_squared_left = sum_hessians - sum_hessian_squared_right
+            sum_gradient_squared_right += \
+                histograms[feature_idx, bin_idx + 1].sum_gradients_squared
+            sum_gradient_squared_left = sum_gradients_squared - sum_gradient_squared_right
+            sum_gradient_hessian_left = sum_gradients_hessians - sum_gradient_hessian_right
 
             if n_samples_right < self.min_samples_leaf:
                 continue
@@ -768,6 +889,9 @@ cdef class Splitter:
                 best_bin_idx = bin_idx
                 best_sum_gradient_left = sum_gradient_left
                 best_sum_hessian_left = sum_hessian_left
+                best_sum_gradient_squared_left = sum_gradient_squared_left
+                best_sum_hessian_squared_left = sum_hessian_squared_left
+                best_sum_gradient_hessian_left = sum_gradient_hessian_left
                 best_n_samples_left = n_samples_left
 
         if found_better_split:
@@ -779,16 +903,26 @@ cdef class Splitter:
             split_info.sum_gradient_right = sum_gradients - best_sum_gradient_left
             split_info.sum_hessian_left = best_sum_hessian_left
             split_info.sum_hessian_right = sum_hessians - best_sum_hessian_left
+            split_info.sum_gradient_squared_left = best_sum_gradient_squared_left
+            split_info.sum_gradient_squared_right = sum_gradients_squared - best_sum_gradient_squared_left
+            split_info.sum_hessian_squared_left = best_sum_hessian_squared_left
+            split_info.sum_hessian_squared_right = sum_hessians_squared - best_sum_hessian_squared_left
+            split_info.sum_gradient_hessian_left = best_sum_gradient_hessian_left
+            split_info.sum_gradient_hessian_right = sum_gradients_hessians - best_sum_gradient_hessian_left
             split_info.n_samples_left = best_n_samples_left
             split_info.n_samples_right = n_samples - best_n_samples_left
 
             # We recompute best values here but it's cheap
-            split_info.value_left = compute_node_value(
+            split_info.value_left, split_info.variance_left = compute_node_value_variance(
                 split_info.sum_gradient_left, split_info.sum_hessian_left,
+                split_info.sum_gradient_squared_left, split_info.sum_hessian_squared_left,
+                split_info.sum_gradient_hessian_left, split_info.n_samples_left,
                 lower_bound, upper_bound, self.l2_regularization)
 
-            split_info.value_right = compute_node_value(
+            split_info.value_right, split_info.variance_right = compute_node_value_variance(
                 split_info.sum_gradient_right, split_info.sum_hessian_right,
+                split_info.sum_gradient_squared_right, split_info.sum_hessian_squared_right,
+                split_info.sum_gradient_hessian_right, split_info.n_samples_right,
                 lower_bound, upper_bound, self.l2_regularization)
 
     cdef void _find_best_bin_to_split_category(
@@ -799,6 +933,9 @@ cdef class Splitter:
             unsigned int n_samples,
             Y_DTYPE_C sum_gradients,
             Y_DTYPE_C sum_hessians,
+            Y_DTYPE_C sum_gradients_squared,
+            Y_DTYPE_C sum_hessians_squared,
+            Y_DTYPE_C sum_gradients_hessians,
             Y_DTYPE_C value,
             char monotonic_cst,
             Y_DTYPE_C lower_bound,
@@ -827,15 +964,24 @@ cdef class Splitter:
             const hist_struct[::1] feature_hist = histograms[feature_idx, :]
             Y_DTYPE_C sum_gradients_bin
             Y_DTYPE_C sum_hessians_bin
+            Y_DTYPE_C sum_gradients_squared_bin
+            Y_DTYPE_C sum_hessians_squared_bin
+            Y_DTYPE_C sum_gradients_hessians_bin
             Y_DTYPE_C loss_current_node
             Y_DTYPE_C sum_gradient_left, sum_hessian_left
             Y_DTYPE_C sum_gradient_right, sum_hessian_right
+            Y_DTYPE_C sum_gradient_squared_left, sum_hessian_squared_left
+            Y_DTYPE_C sum_gradient_squared_right, sum_hessian_squared_right
+            Y_DTYPE_C sum_gradient_hessian_left, sum_gradient_hessian_right
             unsigned int n_samples_left, n_samples_right
             Y_DTYPE_C gain
             Y_DTYPE_C best_gain = -1.0
             unsigned char found_better_split = False
             Y_DTYPE_C best_sum_hessian_left
             Y_DTYPE_C best_sum_gradient_left
+            Y_DTYPE_C best_sum_hessian_squared_left
+            Y_DTYPE_C best_sum_gradient_squared_left
+            Y_DTYPE_C best_sum_gradient_hessian_left
             unsigned int best_n_samples_left
             unsigned int best_cat_infos_thresh
             # Reduces the effect of noises in categorical features,
@@ -888,11 +1034,20 @@ cdef class Splitter:
         for bin_idx in range(n_bins_non_missing):
             if self.hessians_are_constant:
                 sum_hessians_bin = feature_hist[bin_idx].count
+                sum_hessians_squared_bin = feature_hist[bin_idx].count
             else:
                 sum_hessians_bin = feature_hist[bin_idx].sum_hessians
+                sum_hessians_squared_bin = feature_hist[bin_idx].sum_hessians_squared
             if sum_hessians_bin * support_factor >= MIN_CAT_SUPPORT:
                 cat_infos[n_used_bins].bin_idx = bin_idx
                 sum_gradients_bin = feature_hist[bin_idx].sum_gradients
+                sum_gradients_squared_bin = feature_hist[bin_idx].sum_gradients_squared
+                if self.hessians_are_constant:
+                    sum_gradients_hessians_bin = feature_hist[bin_idx].sum_gradients
+                else:
+                    sum_gradients_hessians_bin = (
+                        feature_hist[bin_idx].sum_gradients_hessians
+                    )
 
                 cat_infos[n_used_bins].value = (
                     sum_gradients_bin / (sum_hessians_bin + MIN_CAT_SUPPORT)
@@ -903,13 +1058,24 @@ cdef class Splitter:
         if has_missing_values:
             if self.hessians_are_constant:
                 sum_hessians_bin = feature_hist[missing_values_bin_idx].count
+                sum_hessians_squared_bin = feature_hist[missing_values_bin_idx].count
             else:
                 sum_hessians_bin = feature_hist[missing_values_bin_idx].sum_hessians
+                sum_hessians_squared_bin = feature_hist[missing_values_bin_idx].sum_hessians_squared
             if sum_hessians_bin * support_factor >= MIN_CAT_SUPPORT:
                 cat_infos[n_used_bins].bin_idx = missing_values_bin_idx
                 sum_gradients_bin = (
                     feature_hist[missing_values_bin_idx].sum_gradients
                 )
+                sum_gradients_squared_bin = (
+                    feature_hist[missing_values_bin_idx].sum_gradients_squared
+                )
+                if self.hessians_are_constant:
+                    sum_gradients_hessians_bin = feature_hist[missing_values_bin_idx].sum_gradients
+                else:
+                    sum_gradients_hessians_bin = (
+                        feature_hist[missing_values_bin_idx].sum_gradients_hessians
+                    )
 
                 cat_infos[n_used_bins].value = (
                     sum_gradients_bin / (sum_hessians_bin + MIN_CAT_SUPPORT)
@@ -936,6 +1102,9 @@ cdef class Splitter:
             # The categories we'll consider will go to the left child
             sum_gradient_left, sum_hessian_left = 0., 0.
             n_samples_left = 0
+            sum_gradient_squared_left, sum_hessian_squared_left = 0., 0.
+            sum_gradient_squared_right, sum_hessian_squared_right = 0., 0.
+            sum_gradient_hessian_left, sum_gradient_hessian_right = 0., 0.
 
             for i in range(middle):
                 sorted_cat_idx = i if direction == 1 else n_used_bins - 1 - i
@@ -946,12 +1115,21 @@ cdef class Splitter:
 
                 if self.hessians_are_constant:
                     sum_hessian_left += feature_hist[bin_idx].count
+                    sum_hessian_squared_left += feature_hist[bin_idx].count
+                    sum_gradient_hessian_left += feature_hist[bin_idx].sum_gradients
                 else:
                     sum_hessian_left += feature_hist[bin_idx].sum_hessians
+                    sum_hessian_squared_left += feature_hist[bin_idx].sum_hessians_squared
+                    sum_gradient_hessian_left += feature_hist[bin_idx].sum_gradients_hessians
                 sum_hessian_right = sum_hessians - sum_hessian_left
 
                 sum_gradient_left += feature_hist[bin_idx].sum_gradients
                 sum_gradient_right = sum_gradients - sum_gradient_left
+
+                sum_hessian_squared_right = sum_hessians_squared - sum_hessian_squared_left
+                sum_gradient_squared_left += feature_hist[bin_idx].sum_gradients_squared
+                sum_gradient_squared_right = sum_gradients_squared - sum_gradient_squared_left
+                sum_gradient_hessian_right = sum_gradients_hessians - sum_gradient_hessian_left
 
                 if (n_samples_left < self.min_samples_leaf or
                     sum_hessian_left < self.min_hessian_to_split):
@@ -971,6 +1149,9 @@ cdef class Splitter:
                     best_cat_infos_thresh = sorted_cat_idx
                     best_sum_gradient_left = sum_gradient_left
                     best_sum_hessian_left = sum_hessian_left
+                    best_sum_gradient_squared_left = sum_gradient_squared_left
+                    best_sum_hessian_squared_left = sum_hessian_squared_left
+                    best_sum_gradient_hessian_left = sum_gradient_hessian_left
                     best_n_samples_left = n_samples_left
                     best_direction = direction
 
@@ -986,16 +1167,26 @@ cdef class Splitter:
             split_info.sum_gradient_right = sum_gradients - best_sum_gradient_left
             split_info.sum_hessian_left = best_sum_hessian_left
             split_info.sum_hessian_right = sum_hessians - best_sum_hessian_left
+            split_info.sum_gradient_squared_left = best_sum_gradient_squared_left
+            split_info.sum_gradient_squared_right = sum_gradients_squared - best_sum_gradient_squared_left
+            split_info.sum_hessian_squared_left = best_sum_hessian_squared_left
+            split_info.sum_hessian_squared_right = sum_hessians_squared - best_sum_hessian_squared_left
+            split_info.sum_gradient_hessian_left = best_sum_gradient_hessian_left
+            split_info.sum_gradient_hessian_right = sum_gradients_hessians - best_sum_gradient_hessian_left
             split_info.n_samples_left = best_n_samples_left
             split_info.n_samples_right = n_samples - best_n_samples_left
 
             # We recompute best values here but it's cheap
-            split_info.value_left = compute_node_value(
+            split_info.value_left, split_info.variance_left = compute_node_value_variance(
                 split_info.sum_gradient_left, split_info.sum_hessian_left,
+                split_info.sum_gradient_squared_left, split_info.sum_hessian_squared_left,
+                split_info.sum_gradient_hessian_left, split_info.n_samples_left,
                 lower_bound, upper_bound, self.l2_regularization)
 
-            split_info.value_right = compute_node_value(
+            split_info.value_right, split_info.variance_right = compute_node_value_variance(
                 split_info.sum_gradient_right, split_info.sum_hessian_right,
+                split_info.sum_gradient_squared_right, split_info.sum_hessian_squared_right,
+                split_info.sum_gradient_hessian_right, split_info.n_samples_right,
                 lower_bound, upper_bound, self.l2_regularization)
 
             # create bitset with values from best_cat_infos_thresh
@@ -1129,3 +1320,94 @@ cpdef inline Y_DTYPE_C compute_node_value(
         value = upper_bound
 
     return value
+
+cpdef inline (Y_DTYPE_C, Y_DTYPE_C)  compute_node_value_variance(
+        Y_DTYPE_C sum_gradient,
+        Y_DTYPE_C sum_hessian,
+        Y_DTYPE_C sum_gradient_squared,
+        Y_DTYPE_C sum_hessian_squared,
+        Y_DTYPE_C sum_gradient_hessian,
+        Y_DTYPE_C n_samples,
+        Y_DTYPE_C lower_bound,
+        Y_DTYPE_C upper_bound,
+        Y_DTYPE_C l2_regularization) nogil:
+    """Compute a node's value & variance
+
+    The value is capped in the [lower_bound, upper_bound] interval to respect
+    monotonic constraints. Shrinkage is ignored.
+
+    See Equation 13 & 14 of:
+    :arxiv:`O.Sprangers, S. Schelter, M. de Rijke, (2021) Probabilistic Gradient Boosting
+    Machines, <2106.01682>.`
+
+    For the mean, we don't include the second and third term of Eq. 13 from the paper above, just to
+    keep mean predictions the same as the default from Chen et al.
+
+    For computing the (co)variance of the gradient and hessian, we leverage the following
+    identities:
+    Var(X) = E[(X - E(X))^2] = E[X^2] - E[X]^2.
+    Cov(X) = E[(X - E(X) * (Y - E[Y])] = E[XY] - E[X]E[Y]
+
+    These identities allows us to efficiently compute the (co)variance for the gradient and hessian
+    without requiring a loop over all samples. In turn, it requires us to keep track of:
+        (i) the sum of the squared_gradient,
+        (ii) the sum of the squared_hessian,
+        (iii) the sum of the gradient hessian product (i.e. gradient * hessian).
+
+    Note that these identities are numerically unprecise when E[X^2] ~= E[X]^2.
+    In that case, it would be better to use a more expensive two-pass algorithm where we loop over the
+    individual gradients and hessians once more. Hence, care must be taken when very high precision is
+    required and when using datasets with extremely high value targets (i.e. up to FP64 max)
+
+    We apply Bessel's correction to obtain an unbiased estimate for the sample (co)variance:
+    Var_sample(X) = (n_samples / (n_samples - 1)) * Var(X).
+    Cov_sample(X) = (n_samples / (n_samples - 1)) * Cov(X).
+
+    For the gradient, the estimates for the sample mean, squared sample mean and sample covariance are:
+    E[X^2] ~= sum(gradient**2) / n_samples,
+    E[X]^2 ~= (sum_gradient / n_samples)**2,
+    E[XY] ~= sum_gradient_hessian / n_samples,
+    and analogous for the hessian.
+
+    See also:
+    https://dl.acm.org/doi/pdf/10.1145/3221269.3223036
+    https://en.wikipedia.org/wiki/Standard_deviation#Identities_and_mathematical_properties
+    https://en.wikipedia.org/wiki/Covariance#Numerical_computation
+
+    """
+
+    cdef:
+        Y_DTYPE_C gradient_mean
+        Y_DTYPE_C hessian_mean
+        Y_DTYPE_C gradient_variance
+        Y_DTYPE_C hessian_variance
+        Y_DTYPE_C gradient_hessian_covariance
+        Y_DTYPE_C l2_regularization_scaled
+        Y_DTYPE_C value
+        Y_DTYPE_C variance
+
+    value = -sum_gradient / (sum_hessian + l2_regularization + 1e-15)
+    # Capture edge case where we have single value leafs
+    if n_samples == 1:
+        variance = 1e-15
+    else:
+        gradient_mean = sum_gradient / n_samples
+        hessian_mean = sum_hessian / n_samples
+        l2_regularization_scaled = l2_regularization / n_samples
+
+        gradient_variance = (n_samples / (n_samples - 1)) * ( (sum_gradient_squared / n_samples) - gradient_mean**2 )
+        hessian_variance = (n_samples / (n_samples - 1)) * ( (sum_hessian_squared / n_samples) - hessian_mean**2 )
+        gradient_hessian_covariance = (n_samples / (n_samples - 1)) * ((sum_gradient_hessian / n_samples) - gradient_mean * hessian_mean)
+
+        variance = value**2 * ( gradient_variance / (gradient_mean + 1e-15)**2 +\
+                    hessian_variance / (hessian_mean + l2_regularization_scaled + 1e-15)**2 -\
+                    2 * gradient_hessian_covariance / (gradient_mean * (hessian_mean + l2_regularization_scaled) + 1e-15)
+                )
+        variance = max(variance, 1e-15)
+
+    if value < lower_bound:
+        value = lower_bound
+    elif value > upper_bound:
+        value = upper_bound
+
+    return (value, variance)

@@ -14,7 +14,10 @@ import numbers
 from .splitting import Splitter
 from .histogram import HistogramBuilder
 from .predictor import TreePredictor
-from .utils import sum_parallel
+from .utils import (
+    sum_parallel_with_squares,
+    sum_parallel_with_squares_two_arrays,
+)
 from .common import PREDICTOR_RECORD_DTYPE
 from .common import X_BITSET_INNER_DTYPE
 from .common import Y_DTYPE
@@ -42,6 +45,12 @@ class TreeNode:
         The sum of the gradients of the samples at the node.
     sum_hessians : float
         The sum of the hessians of the samples at the node.
+    sum_gradients_squared : float
+        The sum of the squared gradients of the samples at the node.
+    sum_hessians_squared : float
+        The sum of the squared hessians of the samples at the node.
+    sum_gradients_hessians : float
+        The sum of the gradient-hessian product of the samples at the node.
 
     Attributes
     ----------
@@ -53,6 +62,12 @@ class TreeNode:
         The sum of the gradients of the samples at the node.
     sum_hessians : float
         The sum of the hessians of the samples at the node.
+    sum_gradients_squared : float
+        The sum of the squared gradients of the samples at the node.
+    sum_hessians_squared : float
+        The sum of the squared hessians of the samples at the node.
+    sum_gradients_hessians : float
+        The sum of the gradient-hessian product of the samples at the node.
     split_info : SplitInfo or None
         The result of the split evaluation.
     left_child : TreeNode or None
@@ -61,6 +76,9 @@ class TreeNode:
         The right child of the node. None for leaves.
     value : float or None
         The value of the leaf, as computed in finalize_leaf(). None for
+        non-leaf nodes.
+    variance : float or None
+        The variance of the leaf, as computed in finalize_leaf(). None for
         non-leaf nodes.
     partition_start : int
         start position of the node's sample_indices in splitter.partition.
@@ -84,13 +102,28 @@ class TreeNode:
     partition_start = 0
     partition_stop = 0
 
-    def __init__(self, depth, sample_indices, sum_gradients, sum_hessians, value=None):
+    def __init__(
+        self,
+        depth,
+        sample_indices,
+        sum_gradients,
+        sum_hessians,
+        sum_gradients_squared,
+        sum_hessians_squared,
+        sum_gradients_hessians,
+        value=None,
+        variance=None,
+    ):
         self.depth = depth
         self.sample_indices = sample_indices
         self.n_samples = sample_indices.shape[0]
         self.sum_gradients = sum_gradients
         self.sum_hessians = sum_hessians
+        self.sum_gradients_squared = sum_gradients_squared
+        self.sum_hessians_squared = sum_hessians_squared
+        self.sum_gradients_hessians = sum_gradients_hessians
         self.value = value
+        self.variance = variance
         self.is_leaf = False
         self.set_children_bounds(float("-inf"), float("+inf"))
 
@@ -375,17 +408,33 @@ class TreeGrower:
         """Initialize root node and finalize it if needed."""
         n_samples = self.X_binned.shape[0]
         depth = 0
-        sum_gradients = sum_parallel(gradients, self.n_threads)
         if self.histogram_builder.hessians_are_constant:
             sum_hessians = hessians[0] * n_samples
+            sum_gradients, sum_gradients_squared = sum_parallel_with_squares(
+                gradients, self.n_threads
+            )
+            sum_hessians_squared = hessians[0] ** 2 * n_samples
+            sum_gradients_hessians = hessians[0] * sum_gradients
         else:
-            sum_hessians = sum_parallel(hessians, self.n_threads)
+            (
+                sum_gradients,
+                sum_hessians,
+                sum_gradients_squared,
+                sum_hessians_squared,
+                sum_gradients_hessians,
+            ) = sum_parallel_with_squares_two_arrays(
+                gradients, hessians, self.n_threads
+            )
         self.root = TreeNode(
             depth=depth,
             sample_indices=self.splitter.partition,
             sum_gradients=sum_gradients,
             sum_hessians=sum_hessians,
-            value=0,
+            sum_gradients_squared=sum_gradients_squared,
+            sum_hessians_squared=sum_hessians_squared,
+            sum_gradients_hessians=sum_gradients_hessians,
+            value=0.0,
+            variance=0.0,
         )
 
         self.root.partition_start = 0
@@ -418,6 +467,9 @@ class TreeGrower:
             node.histograms,
             node.sum_gradients,
             node.sum_hessians,
+            node.sum_gradients_squared,
+            node.sum_hessians_squared,
+            node.sum_gradients_hessians,
             node.value,
             node.children_lower_bound,
             node.children_upper_bound,
@@ -458,14 +510,22 @@ class TreeGrower:
             sample_indices_left,
             node.split_info.sum_gradient_left,
             node.split_info.sum_hessian_left,
+            node.split_info.sum_gradient_squared_left,
+            node.split_info.sum_hessian_squared_left,
+            node.split_info.sum_gradient_hessian_left,
             value=node.split_info.value_left,
+            variance=node.split_info.variance_left,
         )
         right_child_node = TreeNode(
             depth,
             sample_indices_right,
             node.split_info.sum_gradient_right,
             node.split_info.sum_hessian_right,
+            node.split_info.sum_gradient_squared_right,
+            node.split_info.sum_hessian_squared_right,
+            node.split_info.sum_gradient_hessian_right,
             value=node.split_info.value_right,
+            variance=node.split_info.variance_right,
         )
 
         node.right_child = right_child_node
@@ -649,6 +709,7 @@ def _fill_predictor_arrays(
         node["gain"] = -1
 
     node["value"] = grower_node.value
+    node["variance"] = grower_node.variance
 
     if grower_node.is_leaf:
         # Leaf node
