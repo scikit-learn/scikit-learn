@@ -344,11 +344,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             if self.n_outputs_ > 1:
                 raise ValueError(
-                    "Monotonic constraints are not supported with multiple output"
+                    "Monotonic constraints are not supported with multiple outputs."
                 )
             # Applying element-wise logical conjunction
             # for monotonic constraints' support.
-            monotonic_cst = np.asarray(self.monotonic_cst)
+            monotonic_cst = np.asarray(self.monotonic_cst, dtype=np.int8)
             unsatisfied_constraints_conditions = (
                 (monotonic_cst != -1) * (monotonic_cst != 0) * (monotonic_cst != 1)
             )
@@ -356,7 +356,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError(
                     "monotonic_cst must be None or an array-like of -1, 0 or 1."
                 )
-            monotonic_cst = np.asarray(self.monotonic_cst, dtype=np.int32)
             if is_classifier(self):
                 if self.n_classes_[0] > 2:
                     raise ValueError(
@@ -771,6 +770,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
           - 0: no constraint
           - -1: monotonically decreasing
 
+        If monotonic_cst is None, no constraints are applied.
+
         The constraints are only valid for binary classifications and hold
         over the probability of the positive class.
 
@@ -1155,6 +1156,10 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
           - 0: no constraint
           - -1: monotonically decreasing
 
+         If monotonic_cst is None, no constraints are applied.
+
+         Monotonic constraints are not supported for multioutput regression
+         (`n_outputs_>1`).
     Attributes
     ----------
     feature_importances_ : ndarray of shape (n_features,)
@@ -1481,6 +1486,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
           - 1: monotonically increasing
           - 0: no constraint
           - -1: monotonically decreasing
+
+        If monotonic_cst is None, no constraints are applied.
 
         The constraints are only valid for binary classifications and hold
         over the probability of the positive class.

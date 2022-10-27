@@ -20,16 +20,15 @@ def test_montonic_constraints_classifications(depth_first, global_random_seed):
         n_redundant=0,
         random_state=0,
     )
-    train = np.arange(n_samples_train)
-    test = np.arange(n_samples_train, n_samples)
-    X_train = X[train]
-    y_train = y[train]
-    X_test = np.copy(X[test])
+    X_train, y_train = X[:n_samples_train], y[:n_samples_train]
+    X_test, y_test = X[n_samples_train:], y[n_samples_train:]
 
-    X_test_incr = np.copy(X_test)
-    X_test_decr = np.copy(X_test)
-    X_test_incr[:, 0] += 10
-    X_test_decr[:, 1] += 10
+    X_test_0incr, X_test_0decr = np.copy(X_test), np.copy(X_test)
+    X_test_1incr, X_test_1decr = np.copy(X_test), np.copy(X_test)
+    X_test_0incr[:, 0] += 10
+    X_test_0decr[:, 0] -= 10
+    X_test_1incr[:, 1] += 10
+    X_test_1decr[:, 1] -= 10
     monotonic_cst = np.zeros(X.shape[1])
     monotonic_cst[0] = 1
     monotonic_cst[1] = -1
@@ -52,15 +51,13 @@ def test_montonic_constraints_classifications(depth_first, global_random_seed):
         est.fit(X_train, y_train)
         y = est.predict_proba(X_test)[:, 1]
 
-        # increasing constraint
-        y_incr = est.predict_proba(X_test_incr)[:, 1]
-        # y_incr should always be greater than y
-        assert np.all(y_incr >= y)
+        # increasing constraint, they apply to positive class
+        assert np.all(est.predict_proba(X_test_0incr)[:, 1] >= y)
+        assert np.all(est.predict_proba(X_test_0decr)[:, 1] <= y)
 
         # decreasing constraint
-        y_decr = est.predict_proba(X_test_decr)[:, 1]
-        # y_decr should always be lower than y
-        assert np.all(y_decr <= y)
+        assert np.all(est.predict_proba(X_test_1incr)[:, 1] <= y)
+        assert np.all(est.predict_proba(X_test_1decr)[:, 1] >= y)
 
 
 @pytest.mark.parametrize("depth_first", (True, False))
@@ -203,10 +200,11 @@ def test_1d_tree_nodes_values(
     monotonic_sign, splitter, depth_first, global_random_seed
 ):
     # Adaptation from test_nodes_values in test_montonic_constraints.py
+    # in sklearn.ensemble._hist_gradient_boosting
     # Build a single tree with only one feature, and make sure the nodes
     # values respect the monotonic constraints.
 
-    # Considering the following tree with a monotonic POS constraint, we
+    # Considering the following tree with a monotonic +1 constraint, we
     # should have:
     #
     #       root
