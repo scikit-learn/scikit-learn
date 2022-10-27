@@ -340,7 +340,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         splitter = self.splitter
         if self.monotonic_cst is None:
-            monotonic_cst = np.full(shape=X.shape[1], fill_value=0, dtype=np.int32)
+            monotonic_cst = np.zeros(shape=X.shape[1], dtype=np.int8)
         else:
             if self.n_outputs_ > 1:
                 raise ValueError(
