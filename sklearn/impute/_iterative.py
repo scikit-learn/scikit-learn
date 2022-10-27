@@ -144,7 +144,7 @@ class IterativeImputer(_BaseImputer):
         the missing indicator even if there are missing values at
         transform/test time.
 
-    keep_missing_features : bool, default=False
+    keep_empty_features : bool, default=False
         If true, features whose all values are missing during fit/train time
         are not removed during transform/test time.
 
@@ -280,12 +280,12 @@ class IterativeImputer(_BaseImputer):
         verbose=0,
         random_state=None,
         add_indicator=False,
-        keep_missing_features=False,
+        keep_empty_features=False,
     ):
         super().__init__(
             missing_values=missing_values,
             add_indicator=add_indicator,
-            keep_missing_features=keep_missing_features,
+            keep_empty_features=keep_empty_features,
         )
 
         self.estimator = estimator
@@ -573,7 +573,7 @@ class IterativeImputer(_BaseImputer):
             self.initial_imputer_ = SimpleImputer(
                 missing_values=self.missing_values,
                 strategy=self.initial_strategy,
-                keep_missing_features=self.keep_missing_features,
+                keep_empty_features=self.keep_empty_features,
             )
             X_filled = self.initial_imputer_.fit_transform(X)
             self.is_missing_feature_ = ~np.flatnonzero(
@@ -586,7 +586,7 @@ class IterativeImputer(_BaseImputer):
         valid_mask = ~self.is_missing_feature_
         Xt_valid = X[:, valid_mask]
         X_filled_valid = (
-            X_filled[:, valid_mask] if self.keep_missing_features else X_filled
+            X_filled[:, valid_mask] if self.keep_empty_features else X_filled
         )
         mask_missing_values_valid = mask_missing_values[:, valid_mask]
 
@@ -679,7 +679,7 @@ class IterativeImputer(_BaseImputer):
 
         if self.max_iter == 0 or np.all(mask_missing_values):
             self.n_iter_ = 0
-            if self.keep_missing_features:
+            if self.keep_empty_features:
                 Xc[:, valid_mask] = Xt
             else:
                 Xc = Xt
@@ -688,7 +688,7 @@ class IterativeImputer(_BaseImputer):
         # Edge case: a single feature. We return the initial ...
         if Xt.shape[1] == 1:
             self.n_iter_ = 0
-            if self.keep_missing_features:
+            if self.keep_empty_features:
                 Xc[:, valid_mask] = Xt
             else:
                 Xc = Xt
@@ -764,7 +764,7 @@ class IterativeImputer(_BaseImputer):
                     ConvergenceWarning,
                 )
         Xt[~mask_missing_values] = X[~mask_missing_values]
-        if self.keep_missing_features:
+        if self.keep_empty_features:
             Xc[:, valid_mask] = Xt
         else:
             Xc = Xt
@@ -800,7 +800,7 @@ class IterativeImputer(_BaseImputer):
         X_indicator = super()._transform_indicator(complete_mask)
 
         if self.n_iter_ == 0 or np.all(mask_missing_values):
-            if self.keep_missing_features:
+            if self.keep_empty_features:
                 Xc[:, valid_mask] = Xt
             else:
                 Xc = Xt
@@ -830,7 +830,7 @@ class IterativeImputer(_BaseImputer):
                 i_rnd += 1
 
         Xt[~mask_missing_values] = X[~mask_missing_values]
-        if self.keep_missing_features:
+        if self.keep_empty_features:
             Xc[:, valid_mask] = Xt
         else:
             Xc = Xt

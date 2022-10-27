@@ -72,7 +72,7 @@ class KNNImputer(_BaseImputer):
         missing indicator even if there are missing values at transform/test
         time.
 
-    keep_missing_features : bool, default=False
+    keep_empty_features : bool, default=False
         If true, features whose all values are missing during fit/train time
         are not removed during transform/test time.
 
@@ -137,12 +137,12 @@ class KNNImputer(_BaseImputer):
         metric="nan_euclidean",
         copy=True,
         add_indicator=False,
-        keep_missing_features=False,
+        keep_empty_features=False,
     ):
         super().__init__(
             missing_values=missing_values,
             add_indicator=add_indicator,
-            keep_missing_features=keep_missing_features,
+            keep_empty_features=keep_empty_features,
         )
         self.n_neighbors = n_neighbors
         self.weights = weights
@@ -275,7 +275,7 @@ class KNNImputer(_BaseImputer):
         if not np.any(mask):
             # No missing values in X
             # Remove columns where the training data is all nan
-            Xc = X if self.keep_missing_features else X[:, valid_mask]
+            Xc = X if self.keep_empty_features else X[:, valid_mask]
             return Xc
 
         row_missing_idx = np.flatnonzero(mask.any(axis=1))
@@ -352,7 +352,7 @@ class KNNImputer(_BaseImputer):
             # process_chunk modifies X in place. No return value.
             pass
 
-        Xc = X if self.keep_missing_features else X[:, valid_mask]
+        Xc = X if self.keep_empty_features else X[:, valid_mask]
         return super()._concatenate_indicator(Xc, X_indicator)
 
     def get_feature_names_out(self, input_features=None):

@@ -1535,12 +1535,12 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
 @pytest.mark.parametrize(
     "initial_strategy", ["mean", "median", "most_frequent", "constant"]
 )
-def test_iterative_imputer_keep_missing_features(initial_strategy):
+def test_iterative_imputer_keep_empty_features(initial_strategy):
     X = np.array([[1, np.nan, 2], [3, np.nan, np.nan]])
     X_missing = np.array([1])
 
     imputer = IterativeImputer(
-        initial_strategy=initial_strategy, keep_missing_features=True
+        initial_strategy=initial_strategy, keep_empty_features=True
     )
     X_ft = imputer.fit_transform(X)
     X_t = imputer.fit(X).transform(X)
@@ -1554,11 +1554,11 @@ def test_iterative_imputer_keep_missing_features(initial_strategy):
         assert (X_ft[:, X_missing] == 0).all()
 
 
-def test_knn_imputer_keep_missing_features():
+def test_knn_imputer_keep_empty_features():
     X = np.array([[1, np.nan, 2], [3, np.nan, np.nan]])
     X_missing = np.array([1])
 
-    imputer = KNNImputer(keep_missing_features=True)
+    imputer = KNNImputer(keep_empty_features=True)
     X_ft = imputer.fit_transform(X)
     X_t = imputer.fit(X).transform(X)
 
@@ -1673,11 +1673,9 @@ def test_imputer_transform_preserves_numeric_dtype(dtype_test):
 
 
 @pytest.mark.parametrize("array_type", ["array", "sparse"])
-@pytest.mark.parametrize("keep_missing_features", [True, False])
-def test_simple_imputer_constant_keep_missing_features(
-    array_type, keep_missing_features
-):
-    """Check the behaviour of `keep_missing_features` with `strategy='constant'.
+@pytest.mark.parametrize("keep_empty_features", [True, False])
+def test_simple_imputer_constant_keep_empty_features(array_type, keep_empty_features):
+    """Check the behaviour of `keep_empty_features` with `strategy='constant'.
     For backward compatibility, a column full of missing values will always be
     fill and never dropped.
     """
@@ -1687,7 +1685,7 @@ def test_simple_imputer_constant_keep_missing_features(
     imputer = SimpleImputer(
         strategy="constant",
         fill_value=fill_value,
-        keep_missing_features=keep_missing_features,
+        keep_empty_features=keep_empty_features,
     )
     X_imputed = imputer.fit_transform(X)
     assert X_imputed.shape == X.shape
@@ -1697,20 +1695,16 @@ def test_simple_imputer_constant_keep_missing_features(
 
 @pytest.mark.parametrize("array_type", ["array", "sparse"])
 @pytest.mark.parametrize("strategy", ["mean", "median", "most_frequent"])
-@pytest.mark.parametrize("keep_missing_features", [True, False])
-def test_simple_imputer_keep_missing_features(
-    strategy, array_type, keep_missing_features
-):
-    """Check the behaviour of `keep_missing_features` with all strategies but
+@pytest.mark.parametrize("keep_empty_features", [True, False])
+def test_simple_imputer_keep_empty_features(strategy, array_type, keep_empty_features):
+    """Check the behaviour of `keep_empty_features` with all strategies but
     'constant'.
     """
     X = np.array([[np.nan, 2], [np.nan, 3], [np.nan, 6]])
     X = _convert_container(X, array_type)
-    imputer = SimpleImputer(
-        strategy=strategy, keep_missing_features=keep_missing_features
-    )
+    imputer = SimpleImputer(strategy=strategy, keep_empty_features=keep_empty_features)
     X_imputed = imputer.fit_transform(X)
-    if keep_missing_features:
+    if keep_empty_features:
         assert X_imputed.shape == X.shape
         constant_feature = (
             X_imputed[:, 0].A if array_type == "sparse" else X_imputed[:, 0]

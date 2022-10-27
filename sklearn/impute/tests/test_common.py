@@ -165,17 +165,17 @@ def test_imputers_feature_names_out_pandas(imputer, add_indicator):
         assert_array_equal(expected_names, names)
 
 
-@pytest.mark.parametrize("keep_missing_features", [True, False])
+@pytest.mark.parametrize("keep_empty_features", [True, False])
 @pytest.mark.parametrize("imputer", IMPUTERS, ids=lambda x: x.__class__.__name__)
-def test_keep_missing_features(imputer, keep_missing_features):
+def test_keep_empty_features(imputer, keep_empty_features):
     """Check that the imputer keeps features with only missing values."""
     X = np.array([[np.nan, 1], [np.nan, 2], [np.nan, 3]])
     imputer = clone(imputer)
     imputer = imputer.set_params(
-        add_indicator=False, keep_missing_features=keep_missing_features
+        add_indicator=False, keep_empty_features=keep_empty_features
     )
     X_imputed = imputer.fit_transform(X)
-    if keep_missing_features:
+    if keep_empty_features:
         assert X_imputed.shape == X.shape
     else:
         assert X_imputed.shape == (X.shape[0], X.shape[1] - 1)

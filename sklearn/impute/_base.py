@@ -80,15 +80,15 @@ class _BaseImputer(TransformerMixin, BaseEstimator):
     _parameter_constraints: dict = {
         "missing_values": ["missing_values"],
         "add_indicator": ["boolean"],
-        "keep_missing_features": ["boolean"],
+        "keep_empty_features": ["boolean"],
     }
 
     def __init__(
-        self, *, missing_values=np.nan, add_indicator=False, keep_missing_features=False
+        self, *, missing_values=np.nan, add_indicator=False, keep_empty_features=False
     ):
         self.missing_values = missing_values
         self.add_indicator = add_indicator
-        self.keep_missing_features = keep_missing_features
+        self.keep_empty_features = keep_empty_features
 
     def _fit_indicator(self, X):
         """Fit a MissingIndicator."""
@@ -206,7 +206,7 @@ class SimpleImputer(_BaseImputer):
         the missing indicator even if there are missing values at
         transform/test time.
 
-    keep_missing_features : bool, default=False
+    keep_empty_features : bool, default=False
         If True, features whose all values are missing when calling `fit` are
         not removed when calling `transform`. The imputed value is always `0`
         apart from the case where `strategy="constant"` where `fill_value` will
@@ -283,12 +283,12 @@ class SimpleImputer(_BaseImputer):
         verbose="deprecated",
         copy=True,
         add_indicator=False,
-        keep_missing_features=False,
+        keep_empty_features=False,
     ):
         super().__init__(
             missing_values=missing_values,
             add_indicator=add_indicator,
-            keep_missing_features=keep_missing_features,
+            keep_empty_features=keep_empty_features,
         )
         self.strategy = strategy
         self.fill_value = fill_value
@@ -453,7 +453,7 @@ class SimpleImputer(_BaseImputer):
                 n_explicit_zeros = mask_zeros.sum()
                 n_zeros = n_implicit_zeros[i] + n_explicit_zeros
 
-                if len(column) == 0 and self.keep_missing_features:
+                if len(column) == 0 and self.keep_empty_features:
                     # in case we want to keep columns with only missing values.
                     statistics[i] = 0
                 else:
@@ -483,9 +483,7 @@ class SimpleImputer(_BaseImputer):
             mean_masked = np.ma.mean(masked_X, axis=0)
             # Avoid the warning "Warning: converting a masked element to nan."
             mean = np.ma.getdata(mean_masked)
-            mean[np.ma.getmask(mean_masked)] = (
-                0 if self.keep_missing_features else np.nan
-            )
+            mean[np.ma.getmask(mean_masked)] = 0 if self.keep_empty_features else np.nan
 
             return mean
 
@@ -495,7 +493,7 @@ class SimpleImputer(_BaseImputer):
             # Avoid the warning "Warning: converting a masked element to nan."
             median = np.ma.getdata(median_masked)
             median[np.ma.getmaskarray(median_masked)] = (
-                0 if self.keep_missing_features else np.nan
+                0 if self.keep_empty_features else np.nan
             )
 
             return median
@@ -518,7 +516,7 @@ class SimpleImputer(_BaseImputer):
             for i, (row, row_mask) in enumerate(zip(X[:], mask[:])):
                 row_mask = np.logical_not(row_mask).astype(bool)
                 row = row[row_mask]
-                if len(row) == 0 and self.keep_missing_features:
+                if len(row) == 0 and self.keep_empty_features:
                     most_frequent[i] = 0
                 else:
                     most_frequent[i] = _most_frequent(row, np.nan, 0)
@@ -560,7 +558,7 @@ class SimpleImputer(_BaseImputer):
         missing_mask = _get_mask(X, self.missing_values)
 
         # Decide whether to keep missing features
-        if self.strategy == "constant" or self.keep_missing_features:
+        if self.strategy == "constant" or self.keep_empty_features:
             valid_statistics = statistics
             valid_statistics_indexes = None
         else:
