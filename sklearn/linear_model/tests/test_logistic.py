@@ -1163,7 +1163,7 @@ def test_n_iter(solver):
     assert clf_cv.n_iter_.shape == (1, n_cv_fold, n_Cs)
 
 
-@pytest.mark.parametrize("solver", set(SOLVERS) - set(["liblinear"]))
+@pytest.mark.parametrize("solver", sorted(set(SOLVERS) - set(["liblinear"])))
 @pytest.mark.parametrize("warm_start", (True, False))
 @pytest.mark.parametrize("fit_intercept", (True, False))
 @pytest.mark.parametrize("multi_class", ["ovr", "multinomial"])
@@ -1750,7 +1750,7 @@ def test_logistic_regression_multi_class_auto(est, solver):
         )
 
 
-@pytest.mark.parametrize("solver", set(SOLVERS) - set(["liblinear"]))
+@pytest.mark.parametrize("solver", sorted(set(SOLVERS) - set(["liblinear"])))
 def test_penalty_none(solver):
     # - Make sure warning is raised if penalty=None and C is set to a
     #   non-default value.
