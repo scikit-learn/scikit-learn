@@ -51,11 +51,11 @@ def test_montonic_constraints_classifications(depth_first, global_random_seed):
         est.fit(X_train, y_train)
         y = est.predict_proba(X_test)[:, 1]
 
-        # increasing constraint, they apply to positive class
+        # Monotonic increase constraint, it applies to the positive class
         assert np.all(est.predict_proba(X_test_0incr)[:, 1] >= y)
         assert np.all(est.predict_proba(X_test_0decr)[:, 1] <= y)
 
-        # decreasing constraint
+        # Monotonic decrease constraint, it applies to the positive class
         assert np.all(est.predict_proba(X_test_1incr)[:, 1] <= y)
         assert np.all(est.predict_proba(X_test_1decr)[:, 1] >= y)
 
@@ -98,12 +98,12 @@ def test_montonic_constraints_regressions(depth_first, global_random_seed):
             est.set_params(**{"n_estimators": 5})
         est.fit(X_train, y_train)
         y = est.predict(X_test)
-        # increasing constraint
+        # Monotonic increase constraint
         y_incr = est.predict(X_test_incr)
         # y_incr should always be greater than y
         assert np.all(y_incr >= y)
 
-        # decreasing constraint
+        # Monotonic decrease constraint
         y_decr = est.predict(X_test_decr)
         # y_decr should always be lower than y
         assert np.all(y_decr <= y)
@@ -169,7 +169,7 @@ def test_bad_monotonic_cst_raises():
 
 
 def assert_1d_reg_tree_children_monotonic_bounded(tree_, monotonic_sign):
-    # Flip values to always check for increasing constraint
+    # Flip values to always check for monotonic increase constraint
     values = monotonic_sign * tree_.value
     for i in range(tree_.node_count):
         if tree_.children_left[i] > i and tree_.children_right[i] > i:
