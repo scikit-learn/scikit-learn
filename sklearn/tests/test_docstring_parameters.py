@@ -18,7 +18,7 @@ from sklearn.utils._testing import _get_func_name
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils import all_estimators
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
-from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
+from sklearn.utils.estimator_checks import _enforce_estimator_tags_X
 from sklearn.utils.estimator_checks import _construct_instance
 from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.utils.deprecation import _is_deprecated
@@ -234,22 +234,9 @@ def test_fit_docstring_attributes(name, Estimator):
     ):
         # default="auto" raises an error with the shape of `X`
         est.set_params(n_components=2)
-
-    # FIXME: TO BE REMOVED in 1.4 (avoid FutureWarning)
-    if Estimator.__name__ in (
-        "OrthogonalMatchingPursuit",
-        "OrthogonalMatchingPursuitCV",
-        "Lars",
-        "LarsCV",
-        "LassoLars",
-        "LassoLarsCV",
-        "LassoLarsIC",
-    ):
-        est.set_params(normalize=False)
-
-    # FIXME: TO BE REMOVED for 1.2 (avoid FutureWarning)
-    if Estimator.__name__ == "TSNE":
-        est.set_params(learning_rate=200.0, init="random", perplexity=2)
+    elif Estimator.__name__ == "TSNE":
+        # default raises an error, perplexity must be less than n_samples
+        est.set_params(perplexity=2)
 
     # FIXME: TO BE REMOVED for 1.3 (avoid FutureWarning)
     if Estimator.__name__ == "SequentialFeatureSelector":
@@ -313,7 +300,7 @@ def test_fit_docstring_attributes(name, Estimator):
         )
 
         y = _enforce_estimator_tags_y(est, y)
-        X = _enforce_estimator_tags_x(est, X)
+        X = _enforce_estimator_tags_X(est, X)
 
     if "1dlabels" in est._get_tags()["X_types"]:
         est.fit(y)
