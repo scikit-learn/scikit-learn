@@ -873,8 +873,12 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
               'lbfgs' handle multinomial loss;
             - 'liblinear' and is limited to one-versus-rest schemes.
-            - 'newton-cholesky' is a good choice for n_samples >> n_features, but is
-              limited to one-versus-rest schemes.
+            - 'newton-cholesky' is a good choice for n_samples >> n_features,
+              especially with one-hot encoded categorical features with rare
+              categories. Note that it is limited to binary classification and the
+              one-versus-rest reduction for multiclass classification. Be aware that
+              the memory usage of this solver has a quadratic dependency on
+              `n_features` because it explicitly computes the Hessian matrix.
 
         .. warning::
            The choice of the algorithm depends on the penalty chosen.
@@ -1463,8 +1467,12 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             - 'liblinear' might be slower in :class:`LogisticRegressionCV`
               because it does not handle warm-starting. 'liblinear' is
               limited to one-versus-rest schemes.
-            - 'newton-cholesky' is a good choice for n_samples >> n_features, but is
-              limited to one-versus-rest schemes.
+            - 'newton-cholesky' is a good choice for n_samples >> n_features,
+              especially with one-hot encoded categorical features with rare
+              categories. Note that it is limited to binary classification and the
+              one-versus-rest reduction for multiclass classification. Be aware that
+              the memory usage of this solver has a quadratic dependency on
+              `n_features` because it explicitly computes the Hessian matrix.
 
         .. warning::
            The choice of the algorithm depends on the penalty chosen.
