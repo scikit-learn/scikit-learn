@@ -1270,8 +1270,12 @@ class RandomForestClassifier(ForestClassifier):
           - 0: no constraint
           - -1: monotonically decreasing
 
+        If monotonic_cst is None, no constraints are applied.
+
         The constraints are only valid for binary classification and hold
         over the probability of the positive class.
+
+        .. versionadded:: 1.2
 
     Attributes
     ----------
@@ -1632,6 +1636,13 @@ class RandomForestRegressor(ForestRegressor):
           - 0: no constraint
           - -1: monotonically decreasing
 
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonic constraints are not supported for multioutput regression
+        (`n_outputs_>1`).
+
+        .. versionadded:: 1.2
+
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.DecisionTreeRegressor`
@@ -1988,8 +1999,13 @@ class ExtraTreesClassifier(ForestClassifier):
           - 0: no constraint
           - -1: monotonically decreasing
 
+        If monotonic_cst is None, no constraints are applied.
+
         The constraints are only valid for binary classification and hold
         over the probability of the positive class.
+
+        .. versionadded:: 1.2
+
 
     Attributes
     ----------
@@ -2340,6 +2356,13 @@ class ExtraTreesRegressor(ForestRegressor):
           - 1: monotonically increasing
           - 0: no constraint
           - -1: monotonically decreasing
+
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonic constraints are not supported for multioutput regression
+        (`n_outputs_>1`).
+
+        .. versionadded:: 1.2
 
     Attributes
     ----------

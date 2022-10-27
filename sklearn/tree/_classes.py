@@ -775,6 +775,8 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         The constraints are only valid for binary classifications and hold
         over the probability of the positive class.
 
+        .. versionadded:: 1.2
+
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,) or list of ndarray
@@ -1156,10 +1158,13 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
           - 0: no constraint
           - -1: monotonically decreasing
 
-         If monotonic_cst is None, no constraints are applied.
+        If monotonic_cst is None, no constraints are applied.
 
-         Monotonic constraints are not supported for multioutput regression
-         (`n_outputs_>1`).
+        Monotonic constraints are not supported for multioutput regression
+        (`n_outputs_>1`).
+
+        .. versionadded:: 1.2
+
     Attributes
     ----------
     feature_importances_ : ndarray of shape (n_features,)
@@ -1492,6 +1497,8 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         The constraints are only valid for binary classifications and hold
         over the probability of the positive class.
 
+        .. versionadded:: 1.2
+
     Attributes
     ----------
     classes_ : ndarray of shape (n_classes,) or list of ndarray
@@ -1753,6 +1760,9 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         Monotonic constraints are not supported for multioutput regression
         (`n_outputs_>1`).
+
+        .. versionadded:: 1.2
+
     Attributes
     ----------
     max_features_ : int
