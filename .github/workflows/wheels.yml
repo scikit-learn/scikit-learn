@@ -57,62 +57,64 @@ jobs:
           # https://github.com/scikit-learn/scikit-learn/issues/22530
           - os: windows-2019
             python: 38
-            bitness: 64
             platform_id: win_amd64
           - os: windows-latest
             python: 39
-            bitness: 64
             platform_id: win_amd64
           - os: windows-latest
             python: 310
-            bitness: 64
+            platform_id: win_amd64
+          - os: windows-latest
+            python: 311
             platform_id: win_amd64
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
             python: 38
-            bitness: 64
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
           - os: ubuntu-latest
             python: 39
-            bitness: 64
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
 
           # NumPy on Python 3.10 only supports 64bit and is only available with manylinux2014
           - os: ubuntu-latest
             python: 310
-            bitness: 64
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
+
+          - os: ubuntu-latest
+            python: 311
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
 
           # MacOS x86_64
           - os: macos-latest
-            bitness: 64
             python: 38
             platform_id: macosx_x86_64
           - os: macos-latest
-            bitness: 64
             python: 39
             platform_id: macosx_x86_64
           - os: macos-latest
-            bitness: 64
             python: 310
+            platform_id: macosx_x86_64
+          - os: macos-latest
+            python: 311
             platform_id: macosx_x86_64
 
           # MacOS arm64
           - os: macos-latest
-            bitness: 64
             python: 38
             platform_id: macosx_arm64
           - os: macos-latest
-            bitness: 64
             python: 39
             platform_id: macosx_arm64
           - os: macos-latest
-            bitness: 64
             python: 310
+            platform_id: macosx_arm64
+          - os: macos-latest
+            python: 311
             platform_id: macosx_arm64
 
     steps:
@@ -137,11 +139,11 @@ jobs:
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_TEST_SKIP: "*-macosx_arm64"
-          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir} ${{ matrix.bitness }}
-          CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }} ${{ matrix.bitness }}
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir}
+          CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }}
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
           CIBW_TEST_COMMAND: bash {project}/build_tools/github/test_wheels.sh
-          CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }} ${{ matrix.bitness }}
+          CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }}
           CIBW_BUILD_VERBOSITY: 1
 
         run: bash build_tools/github/build_wheels.sh
