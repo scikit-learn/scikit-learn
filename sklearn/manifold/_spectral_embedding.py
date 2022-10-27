@@ -5,6 +5,7 @@
 # License: BSD 3 clause
 
 
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
@@ -22,11 +23,10 @@ from ..utils import (
 )
 from ..utils._arpack import _init_arpack_v0
 from ..utils.extmath import _deterministic_vector_sign_flip
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.fixes import lobpcg
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph, NearestNeighbors
-from ..utils.validation import _deprecate_positional_args
-from ..utils.deprecation import deprecated
 
 
 def _graph_connected_component(graph, node_id):
@@ -73,7 +73,7 @@ def _graph_connected_component(graph, node_id):
 
 
 def _graph_is_connected(graph):
-    """ Return whether the graph is connected (True) or Not (False).
+    """Return whether the graph is connected (True) or Not (False).
 
     Parameters
     ----------
@@ -121,11 +121,11 @@ def _set_diag(laplacian, value, norm_laplacian):
     # We need all entries in the diagonal to values
     if not sparse.isspmatrix(laplacian):
         if norm_laplacian:
-            laplacian.flat[::n_nodes + 1] = value
+            laplacian.flat[:: n_nodes + 1] = value
     else:
         laplacian = laplacian.tocoo()
         if norm_laplacian:
-            diag_idx = (laplacian.row == laplacian.col)
+            diag_idx = laplacian.row == laplacian.col
             laplacian.data[diag_idx] = value
         # If the matrix has a small number of diagonals (as in the
         # case of structured matrices coming from images), the
@@ -141,10 +141,16 @@ def _set_diag(laplacian, value, norm_laplacian):
     return laplacian
 
 
-@_deprecate_positional_args
-def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
-                       random_state=None, eigen_tol=0.0,
-                       norm_laplacian=True, drop_first=True):
+def spectral_embedding(
+    adjacency,
+    *,
+    n_components=8,
+    eigen_solver=None,
+    random_state=None,
+    eigen_tol="auto",
+    norm_laplacian=True,
+    drop_first=True,
+):
     """Project the sample on the first eigenvectors of the graph Laplacian.
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -180,17 +186,38 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
         used.
 
     random_state : int, RandomState instance or None, default=None
-        Determines the random number generator used for the initialization of
-        the lobpcg eigenvectors decomposition when ``solver`` == 'amg'. Pass
-        an int for reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        A pseudo random number generator used for the initialization
+        of the lobpcg eigen vectors decomposition when `eigen_solver ==
+        'amg'`, and for the K-Means initialization. Use an int to make
+        the results deterministic across calls (See
+        :term:`Glossary <random_state>`).
 
-    eigen_tol : float, default=0.0
-        Stopping criterion for eigendecomposition of the Laplacian matrix
-        when using arpack eigen_solver.
+        .. note::
+            When using `eigen_solver == 'amg'`,
+            it is necessary to also fix the global numpy seed with
+            `np.random.seed(int)` to get deterministic results. See
+            https://github.com/pyamg/pyamg/issues/139 for further
+            information.
+
+    eigen_tol : float, default="auto"
+        Stopping criterion for eigendecomposition of the Laplacian matrix.
+        If `eigen_tol="auto"` then the passed tolerance will depend on the
+        `eigen_solver`:
+
+        - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
+        - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
+          `eigen_tol=None` which configures the underlying `lobpcg` solver to
+          automatically resolve the value according to their heuristics. See,
+          :func:`scipy.sparse.linalg.lobpcg` for details.
+
+        Note that when using `eigen_solver="amg"` values of `tol<1e-5` may lead
+        to convergence issues and should be avoided.
+
+        .. versionadded:: 1.2
+           Added 'auto' option.
 
     norm_laplacian : bool, default=True
-        If True, then compute normalized Laplacian.
+        If True, then compute symmetric normalized Laplacian.
 
     drop_first : bool, default=True
         Whether to drop the first eigenvector. For spectral embedding, this
@@ -213,10 +240,10 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
     ----------
     * https://en.wikipedia.org/wiki/LOBPCG
 
-    * Toward the Optimal Preconditioned Eigensolver: Locally Optimal
-      Block Preconditioned Conjugate Gradient Method
+    * :doi:`"Toward the Optimal Preconditioned Eigensolver: Locally Optimal
+      Block Preconditioned Conjugate Gradient Method",
       Andrew V. Knyazev
-      https://doi.org/10.1137%2FS1064827500366124
+      <10.1137/S1064827500366124>`
     """
     adjacency = check_symmetric(adjacency)
 
@@ -224,15 +251,17 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
         from pyamg import smoothed_aggregation_solver
     except ImportError as e:
         if eigen_solver == "amg":
-            raise ValueError("The eigen_solver was set to 'amg', but pyamg is "
-                             "not available.") from e
+            raise ValueError(
+                "The eigen_solver was set to 'amg', but pyamg is not available."
+            ) from e
 
     if eigen_solver is None:
-        eigen_solver = 'arpack'
-    elif eigen_solver not in ('arpack', 'lobpcg', 'amg'):
-        raise ValueError("Unknown value for eigen_solver: '%s'."
-                         "Should be 'amg', 'arpack', or 'lobpcg'"
-                         % eigen_solver)
+        eigen_solver = "arpack"
+    elif eigen_solver not in ("arpack", "lobpcg", "amg"):
+        raise ValueError(
+            "Unknown value for eigen_solver: '%s'."
+            "Should be 'amg', 'arpack', or 'lobpcg'" % eigen_solver
+        )
 
     random_state = check_random_state(random_state)
 
@@ -242,13 +271,18 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
         n_components = n_components + 1
 
     if not _graph_is_connected(adjacency):
-        warnings.warn("Graph is not fully connected, spectral embedding"
-                      " may not work as expected.")
+        warnings.warn(
+            "Graph is not fully connected, spectral embedding may not work as expected."
+        )
 
-    laplacian, dd = csgraph_laplacian(adjacency, normed=norm_laplacian,
-                                      return_diag=True)
-    if (eigen_solver == 'arpack' or eigen_solver != 'lobpcg' and
-       (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)):
+    laplacian, dd = csgraph_laplacian(
+        adjacency, normed=norm_laplacian, return_diag=True
+    )
+    if (
+        eigen_solver == "arpack"
+        or eigen_solver != "lobpcg"
+        and (not sparse.isspmatrix(laplacian) or n_nodes < 5 * n_components)
+    ):
         # lobpcg used with eigen_solver='amg' has bugs for low number of nodes
         # for details see the source code in scipy:
         # https://github.com/scipy/scipy/blob/v0.11.0/scipy/sparse/linalg/eigen
@@ -274,13 +308,15 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
         try:
             # We are computing the opposite of the laplacian inplace so as
             # to spare a memory allocation of a possibly very large array
+            tol = 0 if eigen_tol == "auto" else eigen_tol
             laplacian *= -1
             v0 = _init_arpack_v0(laplacian.shape[0], random_state)
             _, diffusion_map = eigsh(
-                laplacian, k=n_components, sigma=1.0, which='LM',
-                tol=eigen_tol, v0=v0)
+                laplacian, k=n_components, sigma=1.0, which="LM", tol=tol, v0=v0
+            )
             embedding = diffusion_map.T[n_components::-1]
             if norm_laplacian:
+                # recover u = D^-1/2 x from the eigenvector output x
                 embedding = embedding / dd
         except RuntimeError:
             # When submatrices are exactly singular, an LU decomposition
@@ -289,14 +325,14 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
             # Revert the laplacian to its opposite to have lobpcg work
             laplacian *= -1
 
-    elif eigen_solver == 'amg':
+    elif eigen_solver == "amg":
         # Use AMG to get a preconditioner and speed up the eigenvalue
         # problem.
         if not sparse.issparse(laplacian):
             warnings.warn("AMG works better for sparse matrices")
-        # lobpcg needs double precision floats
-        laplacian = check_array(laplacian, dtype=np.float64,
-                                accept_sparse=True)
+        laplacian = check_array(
+            laplacian, dtype=[np.float64, np.float32], accept_sparse=True
+        )
         laplacian = _set_diag(laplacian, 1, norm_laplacian)
 
         # The Laplacian matrix is always singular, having at least one zero
@@ -310,25 +346,28 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
         # matrix to the solver and afterward set it back to the original.
         diag_shift = 1e-5 * sparse.eye(laplacian.shape[0])
         laplacian += diag_shift
-        ml = smoothed_aggregation_solver(check_array(laplacian,
-                                                     accept_sparse='csr'))
+        ml = smoothed_aggregation_solver(check_array(laplacian, accept_sparse="csr"))
         laplacian -= diag_shift
 
         M = ml.aspreconditioner()
-        X = random_state.rand(laplacian.shape[0], n_components + 1)
+        # Create initial approximation X to eigenvectors
+        X = random_state.standard_normal(size=(laplacian.shape[0], n_components + 1))
         X[:, 0] = dd.ravel()
-        _, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-5,
-                                  largest=False)
+        X = X.astype(laplacian.dtype)
+
+        tol = None if eigen_tol == "auto" else eigen_tol
+        _, diffusion_map = lobpcg(laplacian, X, M=M, tol=tol, largest=False)
         embedding = diffusion_map.T
         if norm_laplacian:
+            # recover u = D^-1/2 x from the eigenvector output x
             embedding = embedding / dd
         if embedding.shape[0] == 1:
             raise ValueError
 
     if eigen_solver == "lobpcg":
-        # lobpcg needs double precision floats
-        laplacian = check_array(laplacian, dtype=np.float64,
-                                accept_sparse=True)
+        laplacian = check_array(
+            laplacian, dtype=[np.float64, np.float32], accept_sparse=True
+        )
         if n_nodes < 5 * n_components + 1:
             # see note above under arpack why lobpcg has problems with small
             # number of nodes
@@ -338,17 +377,25 @@ def spectral_embedding(adjacency, *, n_components=8, eigen_solver=None,
             _, diffusion_map = eigh(laplacian, check_finite=False)
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
+                # recover u = D^-1/2 x from the eigenvector output x
                 embedding = embedding / dd
         else:
             laplacian = _set_diag(laplacian, 1, norm_laplacian)
             # We increase the number of eigenvectors requested, as lobpcg
-            # doesn't behave well in low dimension
-            X = random_state.rand(laplacian.shape[0], n_components + 1)
+            # doesn't behave well in low dimension and create initial
+            # approximation X to eigenvectors
+            X = random_state.standard_normal(
+                size=(laplacian.shape[0], n_components + 1)
+            )
             X[:, 0] = dd.ravel()
-            _, diffusion_map = lobpcg(laplacian, X, tol=1e-15,
-                                      largest=False, maxiter=2000)
+            X = X.astype(laplacian.dtype)
+            tol = None if eigen_tol == "auto" else eigen_tol
+            _, diffusion_map = lobpcg(
+                laplacian, X, tol=tol, largest=False, maxiter=2000
+            )
             embedding = diffusion_map.T[:n_components]
             if norm_laplacian:
+                # recover u = D^-1/2 x from the eigenvector output x
                 embedding = embedding / dd
             if embedding.shape[0] == 1:
                 raise ValueError
@@ -398,15 +445,40 @@ class SpectralEmbedding(BaseEstimator):
         1/n_features.
 
     random_state : int, RandomState instance or None, default=None
-        Determines the random number generator used for the initialization of
-        the lobpcg eigenvectors when ``solver`` == 'amg'.  Pass an int for
-        reproducible results across multiple function calls.
-        See :term: `Glossary <random_state>`.
+        A pseudo random number generator used for the initialization
+        of the lobpcg eigen vectors decomposition when `eigen_solver ==
+        'amg'`, and for the K-Means initialization. Use an int to make
+        the results deterministic across calls (See
+        :term:`Glossary <random_state>`).
+
+        .. note::
+            When using `eigen_solver == 'amg'`,
+            it is necessary to also fix the global numpy seed with
+            `np.random.seed(int)` to get deterministic results. See
+            https://github.com/pyamg/pyamg/issues/139 for further
+            information.
 
     eigen_solver : {'arpack', 'lobpcg', 'amg'}, default=None
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems.
         If None, then ``'arpack'`` is used.
+
+    eigen_tol : float, default="auto"
+        Stopping criterion for eigendecomposition of the Laplacian matrix.
+        If `eigen_tol="auto"` then the passed tolerance will depend on the
+        `eigen_solver`:
+
+        - If `eigen_solver="arpack"`, then `eigen_tol=0.0`;
+        - If `eigen_solver="lobpcg"` or `eigen_solver="amg"`, then
+          `eigen_tol=None` which configures the underlying `lobpcg` solver to
+          automatically resolve the value according to their heuristics. See,
+          :func:`scipy.sparse.linalg.lobpcg` for details.
+
+        Note that when using `eigen_solver="lobpcg"` or `eigen_solver="amg"`
+        values of `tol<1e-5` may lead to convergence issues and should be
+        avoided.
+
+        .. versionadded:: 1.2
 
     n_neighbors : int, default=None
         Number of nearest neighbors for nearest_neighbors graph building.
@@ -426,8 +498,38 @@ class SpectralEmbedding(BaseEstimator):
     affinity_matrix_ : ndarray of shape (n_samples, n_samples)
         Affinity_matrix constructed from samples or precomputed.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_neighbors_ : int
         Number of nearest neighbors effectively used.
+
+    See Also
+    --------
+    Isomap : Non-linear dimensionality reduction through Isometric Mapping.
+
+    References
+    ----------
+
+    - :doi:`A Tutorial on Spectral Clustering, 2007
+      Ulrike von Luxburg
+      <10.1007/s11222-007-9033-z>`
+
+    - On Spectral Clustering: Analysis and an algorithm, 2001
+      Andrew Y. Ng, Michael I. Jordan, Yair Weiss
+      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100
+
+    - :doi:`Normalized cuts and image segmentation, 2000
+      Jianbo Shi, Jitendra Malik
+      <10.1109/34.868688>`
 
     Examples
     --------
@@ -440,54 +542,63 @@ class SpectralEmbedding(BaseEstimator):
     >>> X_transformed = embedding.fit_transform(X[:100])
     >>> X_transformed.shape
     (100, 2)
-
-    References
-    ----------
-
-    - A Tutorial on Spectral Clustering, 2007
-      Ulrike von Luxburg
-      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.165.9323
-
-    - On Spectral Clustering: Analysis and an algorithm, 2001
-      Andrew Y. Ng, Michael I. Jordan, Yair Weiss
-      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100
-
-    - Normalized cuts and image segmentation, 2000
-      Jianbo Shi, Jitendra Malik
-      http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.160.2324
     """
-    @_deprecate_positional_args
-    def __init__(self, n_components=2, *, affinity="nearest_neighbors",
-                 gamma=None, random_state=None, eigen_solver=None,
-                 n_neighbors=None, n_jobs=None):
+
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "affinity": [
+            StrOptions(
+                {
+                    "nearest_neighbors",
+                    "rbf",
+                    "precomputed",
+                    "precomputed_nearest_neighbors",
+                },
+            ),
+            callable,
+        ],
+        "gamma": [Interval(Real, 0, None, closed="left"), None],
+        "random_state": ["random_state"],
+        "eigen_solver": [StrOptions({"arpack", "lobpcg", "amg"}), None],
+        "eigen_tol": [Interval(Real, 0, None, closed="left"), StrOptions({"auto"})],
+        "n_neighbors": [Interval(Integral, 1, None, closed="left"), None],
+        "n_jobs": [None, Integral],
+    }
+
+    def __init__(
+        self,
+        n_components=2,
+        *,
+        affinity="nearest_neighbors",
+        gamma=None,
+        random_state=None,
+        eigen_solver=None,
+        eigen_tol="auto",
+        n_neighbors=None,
+        n_jobs=None,
+    ):
         self.n_components = n_components
         self.affinity = affinity
         self.gamma = gamma
         self.random_state = random_state
         self.eigen_solver = eigen_solver
+        self.eigen_tol = eigen_tol
         self.n_neighbors = n_neighbors
         self.n_jobs = n_jobs
 
     def _more_tags(self):
-        return {'pairwise': self.affinity in ["precomputed",
-                                              "precomputed_nearest_neighbors"]}
-
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated("Attribute _pairwise was deprecated in "  # type: ignore
-                "version 0.24 and will be removed in 1.1 (renaming of 0.26).")
-    @property
-    def _pairwise(self):
-        return self.affinity in ["precomputed",
-                                 "precomputed_nearest_neighbors"]
+        return {
+            "pairwise": self.affinity
+            in ["precomputed", "precomputed_nearest_neighbors"]
+        }
 
     def _get_affinity_matrix(self, X, Y=None):
         """Calculate the affinity matrix from data
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
             If affinity is "precomputed"
             X : array-like of shape (n_samples, n_samples),
@@ -500,36 +611,40 @@ class SpectralEmbedding(BaseEstimator):
         -------
         affinity_matrix of shape (n_samples, n_samples)
         """
-        if self.affinity == 'precomputed':
+        if self.affinity == "precomputed":
             self.affinity_matrix_ = X
             return self.affinity_matrix_
-        if self.affinity == 'precomputed_nearest_neighbors':
-            estimator = NearestNeighbors(n_neighbors=self.n_neighbors,
-                                         n_jobs=self.n_jobs,
-                                         metric="precomputed").fit(X)
-            connectivity = estimator.kneighbors_graph(X=X, mode='connectivity')
+        if self.affinity == "precomputed_nearest_neighbors":
+            estimator = NearestNeighbors(
+                n_neighbors=self.n_neighbors, n_jobs=self.n_jobs, metric="precomputed"
+            ).fit(X)
+            connectivity = estimator.kneighbors_graph(X=X, mode="connectivity")
             self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
             return self.affinity_matrix_
-        if self.affinity == 'nearest_neighbors':
+        if self.affinity == "nearest_neighbors":
             if sparse.issparse(X):
-                warnings.warn("Nearest neighbors affinity currently does "
-                              "not support sparse input, falling back to "
-                              "rbf affinity")
+                warnings.warn(
+                    "Nearest neighbors affinity currently does "
+                    "not support sparse input, falling back to "
+                    "rbf affinity"
+                )
                 self.affinity = "rbf"
             else:
-                self.n_neighbors_ = (self.n_neighbors
-                                     if self.n_neighbors is not None
-                                     else max(int(X.shape[0] / 10), 1))
-                self.affinity_matrix_ = kneighbors_graph(X, self.n_neighbors_,
-                                                         include_self=True,
-                                                         n_jobs=self.n_jobs)
+                self.n_neighbors_ = (
+                    self.n_neighbors
+                    if self.n_neighbors is not None
+                    else max(int(X.shape[0] / 10), 1)
+                )
+                self.affinity_matrix_ = kneighbors_graph(
+                    X, self.n_neighbors_, include_self=True, n_jobs=self.n_jobs
+                )
                 # currently only symmetric affinity_matrix supported
-                self.affinity_matrix_ = 0.5 * (self.affinity_matrix_ +
-                                               self.affinity_matrix_.T)
+                self.affinity_matrix_ = 0.5 * (
+                    self.affinity_matrix_ + self.affinity_matrix_.T
+                )
                 return self.affinity_matrix_
-        if self.affinity == 'rbf':
-            self.gamma_ = (self.gamma
-                           if self.gamma is not None else 1.0 / X.shape[1])
+        if self.affinity == "rbf":
+            self.gamma_ = self.gamma if self.gamma is not None else 1.0 / X.shape[1]
             self.affinity_matrix_ = rbf_kernel(X, gamma=self.gamma_)
             return self.affinity_matrix_
         self.affinity_matrix_ = self.affinity(X)
@@ -541,8 +656,8 @@ class SpectralEmbedding(BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
             If affinity is "precomputed"
             X : {array-like, sparse matrix}, shape (n_samples, n_samples),
@@ -550,32 +665,27 @@ class SpectralEmbedding(BaseEstimator):
             samples.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
 
-        X = self._validate_data(X, accept_sparse='csr', ensure_min_samples=2,
-                                estimator=self)
+        X = self._validate_data(X, accept_sparse="csr", ensure_min_samples=2)
 
         random_state = check_random_state(self.random_state)
-        if isinstance(self.affinity, str):
-            if self.affinity not in {"nearest_neighbors", "rbf", "precomputed",
-                                     "precomputed_nearest_neighbors"}:
-                raise ValueError(("%s is not a valid affinity. Expected "
-                                  "'precomputed', 'rbf', 'nearest_neighbors' "
-                                  "or a callable.") % self.affinity)
-        elif not callable(self.affinity):
-            raise ValueError(("'affinity' is expected to be an affinity "
-                              "name or a callable. Got: %s") % self.affinity)
 
         affinity_matrix = self._get_affinity_matrix(X)
-        self.embedding_ = spectral_embedding(affinity_matrix,
-                                             n_components=self.n_components,
-                                             eigen_solver=self.eigen_solver,
-                                             random_state=random_state)
+        self.embedding_ = spectral_embedding(
+            affinity_matrix,
+            n_components=self.n_components,
+            eigen_solver=self.eigen_solver,
+            eigen_tol=self.eigen_tol,
+            random_state=random_state,
+        )
         return self
 
     def fit_transform(self, X, y=None):
@@ -584,8 +694,8 @@ class SpectralEmbedding(BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples
-            and n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
             If affinity is "precomputed"
             X : {array-like, sparse matrix} of shape (n_samples, n_samples),
@@ -593,10 +703,12 @@ class SpectralEmbedding(BaseEstimator):
             samples.
 
         y : Ignored
+            Not used, present for API consistency by convention.
 
         Returns
         -------
         X_new : array-like of shape (n_samples, n_components)
+            Spectral embedding of the training matrix.
         """
         self.fit(X)
         return self.embedding_

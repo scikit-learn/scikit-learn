@@ -20,7 +20,7 @@ from . import check_random_state
 from ._logistic_sigmoid import _log_logistic_sigmoid
 from .sparsefuncs_fast import csr_row_norms
 from .validation import check_array
-from .validation import _deprecate_positional_args
+from ._array_api import get_namespace
 
 
 def squared_norm(x):
@@ -31,6 +31,7 @@ def squared_norm(x):
     Parameters
     ----------
     x : array-like
+        The input array which could be either be a vector or a 2 dimensional array.
 
     Returns
     -------
@@ -38,11 +39,13 @@ def squared_norm(x):
         The Euclidean norm when x is a vector, the Frobenius norm when x
         is a matrix (2-d array).
     """
-    x = np.ravel(x, order='K')
+    x = np.ravel(x, order="K")
     if np.issubdtype(x.dtype, np.integer):
-        warnings.warn('Array type is integer, np.dot may overflow. '
-                      'Data should be float type to avoid this issue',
-                      UserWarning)
+        warnings.warn(
+            "Array type is integer, np.dot may overflow. "
+            "Data should be float type to avoid this issue",
+            UserWarning,
+        )
     return np.dot(x, x)
 
 
@@ -71,7 +74,7 @@ def row_norms(X, squared=False):
             X = sparse.csr_matrix(X)
         norms = csr_row_norms(X)
     else:
-        norms = np.einsum('ij,ij->i', X, X)
+        norms = np.einsum("ij,ij->i", X, X)
 
     if not squared:
         np.sqrt(norms, norms)
@@ -79,15 +82,37 @@ def row_norms(X, squared=False):
 
 
 def fast_logdet(A):
-    """Compute log(det(A)) for A symmetric.
+    """Compute logarithm of determinant of a square matrix.
 
-    Equivalent to : np.log(nl.det(A)) but more robust.
-    It returns -Inf if det(A) is non positive or is not defined.
+    The (natural) logarithm of the determinant of a square matrix
+    is returned if det(A) is non-negative and well defined.
+    If the determinant is zero or negative returns -Inf.
+
+    Equivalent to : np.log(np.det(A)) but more robust.
 
     Parameters
     ----------
-    A : array-like
-        The matrix.
+    A : array_like of shape (n, n)
+        The square matrix.
+
+    Returns
+    -------
+    logdet : float
+        When det(A) is strictly positive, log(det(A)) is returned.
+        When det(A) is non-positive or not defined, then -inf is returned.
+
+    See Also
+    --------
+    numpy.linalg.slogdet : Compute the sign and (natural) logarithm of the determinant
+        of an array.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.extmath import fast_logdet
+    >>> a = np.array([[5, 1], [2, 8]])
+    >>> fast_logdet(a)
+    3.6375861597263857
     """
     sign, ld = np.linalg.slogdet(A)
     if not sign > 0:
@@ -102,12 +127,25 @@ def density(w, **kwargs):
     ----------
     w : array-like
         The sparse vector.
+    **kwargs : keyword arguments
+        Ignored.
+
+        .. deprecated:: 1.2
+            ``**kwargs`` were deprecated in version 1.2 and will be removed in
+            1.4.
 
     Returns
     -------
     float
         The density of w, between 0 and 1.
     """
+    if kwargs:
+        warnings.warn(
+            "Additional keyword arguments are deprecated in version 1.2 and will be"
+            " removed in version 1.4.",
+            FutureWarning,
+        )
+
     if hasattr(w, "toarray"):
         d = float(w.nnz) / (w.shape[0] * w.shape[1])
     else:
@@ -115,7 +153,6 @@ def density(w, **kwargs):
     return d
 
 
-@_deprecate_positional_args
 def safe_sparse_dot(a, b, *, dense_output=False):
     """Dot product that handle the sparse matrix case correctly.
 
@@ -151,17 +188,20 @@ def safe_sparse_dot(a, b, *, dense_output=False):
     else:
         ret = a @ b
 
-    if (sparse.issparse(a) and sparse.issparse(b)
-            and dense_output and hasattr(ret, "toarray")):
+    if (
+        sparse.issparse(a)
+        and sparse.issparse(b)
+        and dense_output
+        and hasattr(ret, "toarray")
+    ):
         return ret.toarray()
     return ret
 
 
-@_deprecate_positional_args
-def randomized_range_finder(A, *, size, n_iter,
-                            power_iteration_normalizer='auto',
-                            random_state=None):
-    """Computes an orthonormal matrix whose range approximates the range of A.
+def randomized_range_finder(
+    A, *, size, n_iter, power_iteration_normalizer="auto", random_state=None
+):
+    """Compute an orthonormal matrix whose range approximates the range of A.
 
     Parameters
     ----------
@@ -200,9 +240,10 @@ def randomized_range_finder(A, *, size, n_iter,
     -----
 
     Follows Algorithm 4.3 of
-    Finding structure with randomness: Stochastic algorithms for constructing
-    approximate matrix decompositions
-    Halko, et al., 2009 (arXiv:909) https://arxiv.org/pdf/0909.4061.pdf
+    :arxiv:`"Finding structure with randomness:
+    Stochastic algorithms for constructing approximate matrix decompositions"
+    <0909.4061>`
+    Halko, et al. (2009)
 
     An implementation of a randomized algorithm for principal component
     analysis
@@ -212,41 +253,53 @@ def randomized_range_finder(A, *, size, n_iter,
 
     # Generating normal random vectors with shape: (A.shape[1], size)
     Q = random_state.normal(size=(A.shape[1], size))
-    if A.dtype.kind == 'f':
+    if hasattr(A, "dtype") and A.dtype.kind == "f":
         # Ensure f32 is preserved as f32
         Q = Q.astype(A.dtype, copy=False)
 
     # Deal with "auto" mode
-    if power_iteration_normalizer == 'auto':
+    if power_iteration_normalizer == "auto":
         if n_iter <= 2:
-            power_iteration_normalizer = 'none'
+            power_iteration_normalizer = "none"
         else:
-            power_iteration_normalizer = 'LU'
+            power_iteration_normalizer = "LU"
 
     # Perform power iterations with Q to further 'imprint' the top
     # singular vectors of A in Q
     for i in range(n_iter):
-        if power_iteration_normalizer == 'none':
+        if power_iteration_normalizer == "none":
             Q = safe_sparse_dot(A, Q)
             Q = safe_sparse_dot(A.T, Q)
-        elif power_iteration_normalizer == 'LU':
+        elif power_iteration_normalizer == "LU":
             Q, _ = linalg.lu(safe_sparse_dot(A, Q), permute_l=True)
             Q, _ = linalg.lu(safe_sparse_dot(A.T, Q), permute_l=True)
-        elif power_iteration_normalizer == 'QR':
-            Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode='economic')
-            Q, _ = linalg.qr(safe_sparse_dot(A.T, Q), mode='economic')
+        elif power_iteration_normalizer == "QR":
+            Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode="economic")
+            Q, _ = linalg.qr(safe_sparse_dot(A.T, Q), mode="economic")
 
     # Sample the range of A using by linear projection of Q
     # Extract an orthonormal basis
-    Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode='economic')
+    Q, _ = linalg.qr(safe_sparse_dot(A, Q), mode="economic")
+
     return Q
 
 
-@_deprecate_positional_args
-def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
-                   power_iteration_normalizer='auto', transpose='auto',
-                   flip_sign=True, random_state=0):
-    """Computes a truncated randomized SVD.
+def randomized_svd(
+    M,
+    n_components,
+    *,
+    n_oversamples=10,
+    n_iter="auto",
+    power_iteration_normalizer="auto",
+    transpose="auto",
+    flip_sign=True,
+    random_state=None,
+    svd_lapack_driver="gesdd",
+):
+    """Compute a truncated randomized SVD.
+
+    This method solves the fixed-rank approximation problem described in [1]_
+    (problem (1.5), p5).
 
     Parameters
     ----------
@@ -261,13 +314,23 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
         to ensure proper conditioning. The total number of random vectors
         used to find the range of M is n_components + n_oversamples. Smaller
         number can improve speed but can negatively impact the quality of
-        approximation of singular vectors and singular values.
+        approximation of singular vectors and singular values. Users might wish
+        to increase this parameter up to `2*k - n_components` where k is the
+        effective rank, for large matrices, noisy problems, matrices with
+        slowly decaying spectrums, or to increase precision accuracy. See [1]_
+        (pages 5, 23 and 26).
 
     n_iter : int or 'auto', default='auto'
         Number of power iterations. It can be used to deal with very noisy
         problems. When 'auto', it is set to 4, unless `n_components` is small
-        (< .1 * min(X.shape)) `n_iter` in which case is set to 7.
-        This improves precision with few components.
+        (< .1 * min(X.shape)) in which case `n_iter` is set to 7.
+        This improves precision with few components. Note that in general
+        users should rather increase `n_oversamples` before increasing `n_iter`
+        as the principle of the randomized method is to avoid usage of these
+        more costly power iterations steps. When `n_components` is equal
+        or greater to the effective matrix rank and the spectrum does not
+        present a slow decay, `n_iter=0` or `1` should even work fine in theory
+        (see [1]_ page 9).
 
         .. versionchanged:: 0.18
 
@@ -296,11 +359,31 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
         set to `True`, the sign ambiguity is resolved by making the largest
         loadings for each component in the left singular vectors positive.
 
-    random_state : int, RandomState instance or None, default=0
-        The seed of the pseudo random number generator to use when shuffling
-        the data, i.e. getting the random vectors to initialize the algorithm.
-        Pass an int for reproducible results across multiple function calls.
-        See :term:`Glossary <random_state>`.
+    random_state : int, RandomState instance or None, default='warn'
+        The seed of the pseudo random number generator to use when
+        shuffling the data, i.e. getting the random vectors to initialize
+        the algorithm. Pass an int for reproducible results across multiple
+        function calls. See :term:`Glossary <random_state>`.
+
+        .. versionchanged:: 1.2
+            The default value changed from 0 to None.
+
+    svd_lapack_driver : {"gesdd", "gesvd"}, default="gesdd"
+        Whether to use the more efficient divide-and-conquer approach
+        (`"gesdd"`) or more general rectangular approach (`"gesvd"`) to compute
+        the SVD of the matrix B, which is the projection of M into a low
+        dimensional subspace, as described in [1]_.
+
+        .. versionadded:: 1.2
+
+    Returns
+    -------
+    u : ndarray of shape (n_samples, n_components)
+        Unitary matrix having left singular vectors with signs flipped as columns.
+    s : ndarray of shape (n_components,)
+        The singular values, sorted in non-increasing order.
+    vh : ndarray of shape (n_components, n_features)
+        Unitary matrix having right singular vectors with signs flipped as rows.
 
     Notes
     -----
@@ -309,52 +392,70 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
     computations. It is particularly fast on large matrices on which
     you wish to extract only a small number of components. In order to
     obtain further speed up, `n_iter` can be set <=2 (at the cost of
-    loss of precision).
+    loss of precision). To increase the precision it is recommended to
+    increase `n_oversamples`, up to `2*k-n_components` where k is the
+    effective rank. Usually, `n_components` is chosen to be greater than k
+    so increasing `n_oversamples` up to `n_components` should be enough.
 
     References
     ----------
-    * Finding structure with randomness: Stochastic algorithms for constructing
-      approximate matrix decompositions
-      Halko, et al., 2009 https://arxiv.org/abs/0909.4061
+    .. [1] :arxiv:`"Finding structure with randomness:
+      Stochastic algorithms for constructing approximate matrix decompositions"
+      <0909.4061>`
+      Halko, et al. (2009)
 
-    * A randomized algorithm for the decomposition of matrices
+    .. [2] A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
 
-    * An implementation of a randomized algorithm for principal component
-      analysis
-      A. Szlam et al. 2014
+    .. [3] An implementation of a randomized algorithm for principal component
+      analysis A. Szlam et al. 2014
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils.extmath import randomized_svd
+    >>> a = np.array([[1, 2, 3, 5],
+    ...               [3, 4, 5, 6],
+    ...               [7, 8, 9, 10]])
+    >>> U, s, Vh = randomized_svd(a, n_components=2, random_state=0)
+    >>> U.shape, s.shape, Vh.shape
+    ((3, 2), (2,), (2, 4))
     """
     if isinstance(M, (sparse.lil_matrix, sparse.dok_matrix)):
-        warnings.warn("Calculating SVD of a {} is expensive. "
-                      "csr_matrix is more efficient.".format(
-                          type(M).__name__),
-                      sparse.SparseEfficiencyWarning)
+        warnings.warn(
+            "Calculating SVD of a {} is expensive. "
+            "csr_matrix is more efficient.".format(type(M).__name__),
+            sparse.SparseEfficiencyWarning,
+        )
 
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
 
-    if n_iter == 'auto':
+    if n_iter == "auto":
         # Checks if the number of iterations is explicitly specified
         # Adjust n_iter. 7 was found a good compromise for PCA. See #5299
-        n_iter = 7 if n_components < .1 * min(M.shape) else 4
+        n_iter = 7 if n_components < 0.1 * min(M.shape) else 4
 
-    if transpose == 'auto':
+    if transpose == "auto":
         transpose = n_samples < n_features
     if transpose:
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
     Q = randomized_range_finder(
-        M, size=n_random, n_iter=n_iter,
+        M,
+        size=n_random,
+        n_iter=n_iter,
         power_iteration_normalizer=power_iteration_normalizer,
-        random_state=random_state)
+        random_state=random_state,
+    )
 
     # project M to the (k + p) dimensional space using the basis vectors
     B = safe_sparse_dot(Q.T, M)
 
     # compute the SVD on the thin matrix: (k + p) wide
-    Uhat, s, Vt = linalg.svd(B, full_matrices=False)
+    Uhat, s, Vt = linalg.svd(B, full_matrices=False, lapack_driver=svd_lapack_driver)
 
     del B
     U = np.dot(Q, Uhat)
@@ -374,9 +475,163 @@ def randomized_svd(M, n_components, *, n_oversamples=10, n_iter='auto',
         return U[:, :n_components], s[:n_components], Vt[:n_components, :]
 
 
-@_deprecate_positional_args
+def _randomized_eigsh(
+    M,
+    n_components,
+    *,
+    n_oversamples=10,
+    n_iter="auto",
+    power_iteration_normalizer="auto",
+    selection="module",
+    random_state=None,
+):
+    """Computes a truncated eigendecomposition using randomized methods
+
+    This method solves the fixed-rank approximation problem described in the
+    Halko et al paper.
+
+    The choice of which components to select can be tuned with the `selection`
+    parameter.
+
+    .. versionadded:: 0.24
+
+    Parameters
+    ----------
+    M : ndarray or sparse matrix
+        Matrix to decompose, it should be real symmetric square or complex
+        hermitian
+
+    n_components : int
+        Number of eigenvalues and vectors to extract.
+
+    n_oversamples : int, default=10
+        Additional number of random vectors to sample the range of M so as
+        to ensure proper conditioning. The total number of random vectors
+        used to find the range of M is n_components + n_oversamples. Smaller
+        number can improve speed but can negatively impact the quality of
+        approximation of eigenvectors and eigenvalues. Users might wish
+        to increase this parameter up to `2*k - n_components` where k is the
+        effective rank, for large matrices, noisy problems, matrices with
+        slowly decaying spectrums, or to increase precision accuracy. See Halko
+        et al (pages 5, 23 and 26).
+
+    n_iter : int or 'auto', default='auto'
+        Number of power iterations. It can be used to deal with very noisy
+        problems. When 'auto', it is set to 4, unless `n_components` is small
+        (< .1 * min(X.shape)) in which case `n_iter` is set to 7.
+        This improves precision with few components. Note that in general
+        users should rather increase `n_oversamples` before increasing `n_iter`
+        as the principle of the randomized method is to avoid usage of these
+        more costly power iterations steps. When `n_components` is equal
+        or greater to the effective matrix rank and the spectrum does not
+        present a slow decay, `n_iter=0` or `1` should even work fine in theory
+        (see Halko et al paper, page 9).
+
+    power_iteration_normalizer : {'auto', 'QR', 'LU', 'none'}, default='auto'
+        Whether the power iterations are normalized with step-by-step
+        QR factorization (the slowest but most accurate), 'none'
+        (the fastest but numerically unstable when `n_iter` is large, e.g.
+        typically 5 or larger), or 'LU' factorization (numerically stable
+        but can lose slightly in accuracy). The 'auto' mode applies no
+        normalization if `n_iter` <= 2 and switches to LU otherwise.
+
+    selection : {'value', 'module'}, default='module'
+        Strategy used to select the n components. When `selection` is `'value'`
+        (not yet implemented, will become the default when implemented), the
+        components corresponding to the n largest eigenvalues are returned.
+        When `selection` is `'module'`, the components corresponding to the n
+        eigenvalues with largest modules are returned.
+
+    random_state : int, RandomState instance, default=None
+        The seed of the pseudo random number generator to use when shuffling
+        the data, i.e. getting the random vectors to initialize the algorithm.
+        Pass an int for reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    Notes
+    -----
+    This algorithm finds a (usually very good) approximate truncated
+    eigendecomposition using randomized methods to speed up the computations.
+
+    This method is particularly fast on large matrices on which
+    you wish to extract only a small number of components. In order to
+    obtain further speed up, `n_iter` can be set <=2 (at the cost of
+    loss of precision). To increase the precision it is recommended to
+    increase `n_oversamples`, up to `2*k-n_components` where k is the
+    effective rank. Usually, `n_components` is chosen to be greater than k
+    so increasing `n_oversamples` up to `n_components` should be enough.
+
+    Strategy 'value': not implemented yet.
+    Algorithms 5.3, 5.4 and 5.5 in the Halko et al paper should provide good
+    condidates for a future implementation.
+
+    Strategy 'module':
+    The principle is that for diagonalizable matrices, the singular values and
+    eigenvalues are related: if t is an eigenvalue of A, then :math:`|t|` is a
+    singular value of A. This method relies on a randomized SVD to find the n
+    singular components corresponding to the n singular values with largest
+    modules, and then uses the signs of the singular vectors to find the true
+    sign of t: if the sign of left and right singular vectors are different
+    then the corresponding eigenvalue is negative.
+
+    Returns
+    -------
+    eigvals : 1D array of shape (n_components,) containing the `n_components`
+        eigenvalues selected (see ``selection`` parameter).
+    eigvecs : 2D array of shape (M.shape[0], n_components) containing the
+        `n_components` eigenvectors corresponding to the `eigvals`, in the
+        corresponding order. Note that this follows the `scipy.linalg.eigh`
+        convention.
+
+    See Also
+    --------
+    :func:`randomized_svd`
+
+    References
+    ----------
+    * :arxiv:`"Finding structure with randomness:
+      Stochastic algorithms for constructing approximate matrix decompositions"
+      (Algorithm 4.3 for strategy 'module') <0909.4061>`
+      Halko, et al. (2009)
+    """
+    if selection == "value":  # pragma: no cover
+        # to do : an algorithm can be found in the Halko et al reference
+        raise NotImplementedError()
+
+    elif selection == "module":
+        # Note: no need for deterministic U and Vt (flip_sign=True),
+        # as we only use the dot product UVt afterwards
+        U, S, Vt = randomized_svd(
+            M,
+            n_components=n_components,
+            n_oversamples=n_oversamples,
+            n_iter=n_iter,
+            power_iteration_normalizer=power_iteration_normalizer,
+            flip_sign=False,
+            random_state=random_state,
+        )
+
+        eigvecs = U[:, :n_components]
+        eigvals = S[:n_components]
+
+        # Conversion of Singular values into Eigenvalues:
+        # For any eigenvalue t, the corresponding singular value is |t|.
+        # So if there is a negative eigenvalue t, the corresponding singular
+        # value will be -t, and the left (U) and right (V) singular vectors
+        # will have opposite signs.
+        # Fastest way: see <https://stackoverflow.com/a/61974002/7262247>
+        diag_VtU = np.einsum("ji,ij->j", Vt[:n_components, :], U[:, :n_components])
+        signs = np.sign(diag_VtU)
+        eigvals = eigvals * signs
+
+    else:  # pragma: no cover
+        raise ValueError("Invalid `selection`: %r" % selection)
+
+    return eigvals, eigvecs
+
+
 def weighted_mode(a, w, *, axis=0):
-    """Returns an array of the weighted modal (most common) value in a.
+    """Return an array of the weighted modal (most common) value in the passed array.
 
     If there is more than one such value, only the first is returned.
     The bin-count for the modal bins is also returned.
@@ -385,10 +640,10 @@ def weighted_mode(a, w, *, axis=0):
 
     Parameters
     ----------
-    a : array-like
-        n-dimensional array of which to find mode(s).
-    w : array-like
-        n-dimensional array of weights for each value.
+    a : array-like of shape (n_samples,)
+        Array of which values to find mode(s).
+    w : array-like of shape (n_samples,)
+        Array of weights for each value.
     axis : int, default=0
         Axis along which to operate. Default is 0, i.e. the first axis.
 
@@ -398,6 +653,11 @@ def weighted_mode(a, w, *, axis=0):
         Array of modal values.
     score : ndarray
         Array of weighted counts for each mode.
+
+    See Also
+    --------
+    scipy.stats.mode: Calculates the Modal (most common) value of array elements
+        along specified axis.
 
     Examples
     --------
@@ -416,10 +676,6 @@ def weighted_mode(a, w, *, axis=0):
 
     The value 2 has the highest score: it appears twice with weights of
     1.5 and 2: the sum of these is 3.5.
-
-    See Also
-    --------
-    scipy.stats.mode
     """
     if axis is None:
         a = np.ravel(a)
@@ -432,14 +688,14 @@ def weighted_mode(a, w, *, axis=0):
     if a.shape != w.shape:
         w = np.full(a.shape, w, dtype=w.dtype)
 
-    scores = np.unique(np.ravel(a))       # get ALL unique values
+    scores = np.unique(np.ravel(a))  # get ALL unique values
     testshape = list(a.shape)
     testshape[axis] = 1
     oldmostfreq = np.zeros(testshape)
     oldcounts = np.zeros(testshape)
     for score in scores:
         template = np.zeros(a.shape)
-        ind = (a == score)
+        ind = a == score
         template[ind] = w[ind]
         counts = np.expand_dims(np.sum(template, axis), axis)
         mostfrequent = np.where(counts > oldcounts, score, oldmostfreq)
@@ -455,17 +711,22 @@ def cartesian(arrays, out=None):
     ----------
     arrays : list of array-like
         1-D arrays to form the cartesian product of.
-    out : ndarray, default=None
+    out : ndarray of shape (M, len(arrays)), default=None
         Array to place the cartesian product in.
 
     Returns
     -------
-    out : ndarray
-        2-D array of shape (M, len(arrays)) containing cartesian products
-        formed of input arrays.
+    out : ndarray of shape (M, len(arrays))
+        Array containing the cartesian products formed of input arrays.
+
+    Notes
+    -----
+    This function may not be used on more than 32 arrays
+    because the underlying numpy functions do not support it.
 
     Examples
     --------
+    >>> from sklearn.utils.extmath import cartesian
     >>> cartesian(([1, 2, 3], [4, 5], [6, 7]))
     array([[1, 4, 6],
            [1, 4, 7],
@@ -479,11 +740,6 @@ def cartesian(arrays, out=None):
            [3, 4, 7],
            [3, 5, 6],
            [3, 5, 7]])
-
-    Notes
-    -----
-    This function may not be used on more than 32 arrays
-    because the underlying numpy functions do not support it.
     """
     arrays = [np.asarray(x) for x in arrays]
     shape = (len(x) for x in arrays)
@@ -510,27 +766,29 @@ def svd_flip(u, v, u_based_decision=True):
     Parameters
     ----------
     u : ndarray
-        u and v are the output of `linalg.svd` or
+        Parameters u and v are the output of `linalg.svd` or
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`.
 
     v : ndarray
-        u and v are the output of `linalg.svd` or
+        Parameters u and v are the output of `linalg.svd` or
         :func:`~sklearn.utils.extmath.randomized_svd`, with matching inner
         dimensions so one can compute `np.dot(u * s, v)`.
         The input v should really be called vt to be consistent with scipy's
-        ouput.
+        output.
 
     u_based_decision : bool, default=True
         If True, use the columns of u as the basis for sign flipping.
         Otherwise, use the rows of v. The choice of which variable to base the
         decision on is generally algorithm dependent.
 
-
     Returns
     -------
-    u_adjusted, v_adjusted : arrays with the same dimensions as the input.
+    u_adjusted : ndarray
+        Array u with adjusted columns and the same dimensions as u.
 
+    v_adjusted : ndarray
+        Array v with adjusted rows and the same dimensions as v.
     """
     if u_based_decision:
         # columns of u, rows of v
@@ -616,12 +874,20 @@ def softmax(X, copy=True):
     out : ndarray of shape (M, N)
         Softmax function evaluated at every point in x.
     """
+    xp, is_array_api = get_namespace(X)
     if copy:
-        X = np.copy(X)
-    max_prob = np.max(X, axis=1).reshape((-1, 1))
+        X = xp.asarray(X, copy=True)
+    max_prob = xp.reshape(xp.max(X, axis=1), (-1, 1))
     X -= max_prob
-    np.exp(X, X)
-    sum_prob = np.sum(X, axis=1).reshape((-1, 1))
+
+    if xp.__name__ in {"numpy", "numpy.array_api"}:
+        # optimization for NumPy arrays
+        np.exp(X, out=np.asarray(X))
+    else:
+        # array_api does not have `out=`
+        X = xp.exp(X)
+
+    sum_prob = xp.reshape(xp.sum(X, axis=1), (-1, 1))
     X /= sum_prob
     return X
 
@@ -649,10 +915,12 @@ def make_nonnegative(X, min_value=0):
     min_ = X.min()
     if min_ < min_value:
         if sparse.issparse(X):
-            raise ValueError("Cannot make the data matrix"
-                             " nonnegative because it is sparse."
-                             " Adding a value to every entry would"
-                             " make it no longer sparse.")
+            raise ValueError(
+                "Cannot make the data matrix"
+                " nonnegative because it is sparse."
+                " Adding a value to every entry would"
+                " make it no longer sparse."
+            )
         X = X + (min_value - min_)
     return X
 
@@ -690,8 +958,9 @@ def _safe_accumulator_op(op, x, *args, **kwargs):
     return result
 
 
-def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
-                              sample_weight=None):
+def _incremental_mean_and_var(
+    X, last_mean, last_variance, last_sample_count, sample_weight=None
+):
     """Calculate mean update and a Youngs and Cramer variance update.
 
     If sample_weight is given, the weighted mean and variance is computed.
@@ -748,14 +1017,24 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
     # new = the current increment
     # updated = the aggregated stats
     last_sum = last_mean * last_sample_count
-    if sample_weight is not None:
-        new_sum = _safe_accumulator_op(np.nansum, X * sample_weight[:, None],
-                                       axis=0)
-        new_sample_count = np.sum(sample_weight[:, None] * (~np.isnan(X)),
-                                  axis=0)
+    X_nan_mask = np.isnan(X)
+    if np.any(X_nan_mask):
+        sum_op = np.nansum
     else:
-        new_sum = _safe_accumulator_op(np.nansum, X, axis=0)
-        new_sample_count = np.sum(~np.isnan(X), axis=0)
+        sum_op = np.sum
+    if sample_weight is not None:
+        # equivalent to np.nansum(X * sample_weight, axis=0)
+        # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
+        new_sum = _safe_accumulator_op(
+            np.matmul, sample_weight, np.where(X_nan_mask, 0, X)
+        )
+        new_sample_count = _safe_accumulator_op(
+            np.sum, sample_weight[:, None] * (~X_nan_mask), axis=0
+        )
+    else:
+        new_sum = _safe_accumulator_op(sum_op, X, axis=0)
+        n_samples = X.shape[0]
+        new_sample_count = n_samples - np.sum(X_nan_mask, axis=0)
 
     updated_sample_count = last_sample_count + new_sample_count
 
@@ -765,19 +1044,38 @@ def _incremental_mean_and_var(X, last_mean, last_variance, last_sample_count,
         updated_variance = None
     else:
         T = new_sum / new_sample_count
+        temp = X - T
         if sample_weight is not None:
-            new_unnormalized_variance = np.nansum(sample_weight[:, None] *
-                                                  (X - T)**2, axis=0)
+            # equivalent to np.nansum((X-T)**2 * sample_weight, axis=0)
+            # safer because np.float64(X*W) != np.float64(X)*np.float64(W)
+            correction = _safe_accumulator_op(
+                np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
+            )
+            temp **= 2
+            new_unnormalized_variance = _safe_accumulator_op(
+                np.matmul, sample_weight, np.where(X_nan_mask, 0, temp)
+            )
         else:
-            new_unnormalized_variance = np.nansum((X - T)**2, axis=0)
+            correction = _safe_accumulator_op(sum_op, temp, axis=0)
+            temp **= 2
+            new_unnormalized_variance = _safe_accumulator_op(sum_op, temp, axis=0)
+
+        # correction term of the corrected 2 pass algorithm.
+        # See "Algorithms for computing the sample variance: analysis
+        # and recommendations", by Chan, Golub, and LeVeque.
+        new_unnormalized_variance -= correction**2 / new_sample_count
+
         last_unnormalized_variance = last_variance * last_sample_count
 
-        with np.errstate(divide='ignore', invalid='ignore'):
+        with np.errstate(divide="ignore", invalid="ignore"):
             last_over_new_count = last_sample_count / new_sample_count
             updated_unnormalized_variance = (
-                last_unnormalized_variance + new_unnormalized_variance +
-                last_over_new_count / updated_sample_count *
-                (last_sum / last_over_new_count - new_sum) ** 2)
+                last_unnormalized_variance
+                + new_unnormalized_variance
+                + last_over_new_count
+                / updated_sample_count
+                * (last_sum / last_over_new_count - new_sum) ** 2
+            )
 
         zeros = last_sample_count == 0
         updated_unnormalized_variance[zeros] = new_unnormalized_variance[zeros]
@@ -811,6 +1109,9 @@ def _deterministic_vector_sign_flip(u):
 def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
     """Use high precision for cumsum and check that final value matches sum.
 
+    Warns if the final cumulative sum does not match the sum (up to the chosen
+    tolerance).
+
     Parameters
     ----------
     arr : array-like
@@ -822,12 +1123,22 @@ def stable_cumsum(arr, axis=None, rtol=1e-05, atol=1e-08):
         Relative tolerance, see ``np.allclose``.
     atol : float, default=1e-08
         Absolute tolerance, see ``np.allclose``.
+
+    Returns
+    -------
+    out : ndarray
+        Array with the cumulative sums along the chosen axis.
     """
     out = np.cumsum(arr, axis=axis, dtype=np.float64)
     expected = np.sum(arr, axis=axis, dtype=np.float64)
-    if not np.all(np.isclose(out.take(-1, axis=axis), expected, rtol=rtol,
-                             atol=atol, equal_nan=True)):
-        warnings.warn('cumsum was found to be unstable: '
-                      'its last element does not correspond to sum',
-                      RuntimeWarning)
+    if not np.all(
+        np.isclose(
+            out.take(-1, axis=axis), expected, rtol=rtol, atol=atol, equal_nan=True
+        )
+    ):
+        warnings.warn(
+            "cumsum was found to be unstable: "
+            "its last element does not correspond to sum",
+            RuntimeWarning,
+        )
     return out

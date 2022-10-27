@@ -64,7 +64,7 @@ Set :math:`X_1` to :math:`X` and :math:`Y_1` to :math:`Y`. Then, for each
   :math:`C = X_k^T Y_k`.
   :math:`u_k` and :math:`v_k` are called the *weights*.
   By definition, :math:`u_k` and :math:`v_k` are
-  choosen so that they maximize the covariance between the projected
+  chosen so that they maximize the covariance between the projected
   :math:`X_k` and the projected target, that is :math:`\text{Cov}(X_k u_k,
   Y_k v_k)`.
 - b) Project :math:`X_k` and :math:`Y_k` on the singular vectors to obtain
@@ -185,7 +185,7 @@ targets is greater than the number of samples.
 
    .. [1] `A survey of Partial Least Squares (PLS) methods, with emphasis on
       the two-block case
-      <https://www.stat.washington.edu/research/reports/2000/tr371.pdf>`_
+      <https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf>`_
       JA Wegelin
 
 .. topic:: Examples:

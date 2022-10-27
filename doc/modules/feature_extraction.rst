@@ -1,4 +1,4 @@
-﻿.. _feature_extraction:
+.. _feature_extraction:
 
 ==================
 Feature extraction
@@ -33,7 +33,7 @@ need not be stored) and storing feature names in addition to values.
 :class:`DictVectorizer` implements what is called one-of-K or "one-hot"
 coding for categorical (aka nominal, discrete) features. Categorical
 features are "attribute-value" pairs where the value is restricted
-to a list of discrete of possibilities without ordering (e.g. topic
+to a list of discrete possibilities without ordering (e.g. topic
 identifiers, types of objects, tags, names...).
 
 In the following, "city" is a categorical attribute while "temperature"
@@ -53,8 +53,8 @@ is a traditional numerical feature::
          [ 0.,  1.,  0., 12.],
          [ 0.,  0.,  1., 18.]])
 
-  >>> vec.get_feature_names()
-  ['city=Dubai', 'city=London', 'city=San Francisco', 'temperature']
+  >>> vec.get_feature_names_out()
+  array(['city=Dubai', 'city=London', 'city=San Francisco', 'temperature'], ...)
 
 :class:`DictVectorizer` accepts multiple string values for one
 feature, like, e.g., multiple categories for a movie.
@@ -69,10 +69,9 @@ and its year of release.
     array([[0.000e+00, 1.000e+00, 0.000e+00, 1.000e+00, 2.003e+03],
            [1.000e+00, 0.000e+00, 1.000e+00, 0.000e+00, 2.011e+03],
            [0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 1.974e+03]])
-    >>> vec.get_feature_names() == ['category=animation', 'category=drama',
-    ...                             'category=family', 'category=thriller',
-    ...                             'year']
-    True
+    >>> vec.get_feature_names_out()
+    array(['category=animation', 'category=drama', 'category=family',
+           'category=thriller', 'year'], ...)
     >>> vec.transform({'category': ['thriller'],
     ...                'unseen_feature': '3'}).toarray()
     array([[0., 0., 0., 1., 0.]])
@@ -111,8 +110,9 @@ suitable for feeding into a classifier (maybe after being piped into a
       with 6 stored elements in Compressed Sparse ... format>
   >>> pos_vectorized.toarray()
   array([[1., 1., 1., 1., 1., 1.]])
-  >>> vec.get_feature_names()
-  ['pos+1=PP', 'pos-1=NN', 'pos-2=DT', 'word+1=on', 'word-1=cat', 'word-2=the']
+  >>> vec.get_feature_names_out()
+  array(['pos+1=PP', 'pos-1=NN', 'pos-2=DT', 'word+1=on', 'word-1=cat',
+         'word-2=the'], ...)
 
 As you can imagine, if one extracts such a context around each individual
 word of a corpus of documents the resulting matrix will be very wide
@@ -340,10 +340,9 @@ Each term found by the analyzer during the fit is assigned a unique
 integer index corresponding to a column in the resulting matrix. This
 interpretation of the columns can be retrieved as follows::
 
-  >>> vectorizer.get_feature_names() == (
-  ...     ['and', 'document', 'first', 'is', 'one',
-  ...      'second', 'the', 'third', 'this'])
-  True
+  >>> vectorizer.get_feature_names_out()
+  array(['and', 'document', 'first', 'is', 'one', 'second', 'the',
+         'third', 'this'], ...)
 
   >>> X.toarray()
   array([[0, 1, 1, 1, 0, 0, 1, 0, 1],
@@ -406,8 +405,8 @@ however, similar words are useful for prediction, such as in classifying
 writing style or personality.
 
 There are several known issues in our provided 'english' stop word list. It
-does not aim to be a general, 'one-size-fits-all' solution as some tasks 
-may require a more custom solution. See [NQY18]_ for more details. 
+does not aim to be a general, 'one-size-fits-all' solution as some tasks
+may require a more custom solution. See [NQY18]_ for more details.
 
 Please take care in choosing a stop word list.
 Popular stop word lists may include words that are highly informative to
@@ -608,7 +607,7 @@ As usual the best way to adjust the feature extraction parameters
 is to use a cross-validated grid search, for instance by pipelining the
 feature extractor with a classifier:
 
- * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
+ * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
 
 
 Decoding text files
@@ -742,9 +741,8 @@ decide better::
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(2, 2))
   >>> counts = ngram_vectorizer.fit_transform(['words', 'wprds'])
-  >>> ngram_vectorizer.get_feature_names() == (
-  ...     [' w', 'ds', 'or', 'pr', 'rd', 's ', 'wo', 'wp'])
-  True
+  >>> ngram_vectorizer.get_feature_names_out()
+  array([' w', 'ds', 'or', 'pr', 'rd', 's ', 'wo', 'wp'], ...)
   >>> counts.toarray().astype(int)
   array([[1, 1, 1, 0, 1, 1, 1, 0],
          [1, 1, 0, 1, 1, 1, 0, 1]])
@@ -758,17 +756,15 @@ span across words::
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   <1x4 sparse matrix of type '<... 'numpy.int64'>'
      with 4 stored elements in Compressed Sparse ... format>
-  >>> ngram_vectorizer.get_feature_names() == (
-  ...     [' fox ', ' jump', 'jumpy', 'umpy '])
-  True
+  >>> ngram_vectorizer.get_feature_names_out()
+  array([' fox ', ' jump', 'jumpy', 'umpy '], ...)
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char', ngram_range=(5, 5))
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   <1x5 sparse matrix of type '<... 'numpy.int64'>'
       with 5 stored elements in Compressed Sparse ... format>
-  >>> ngram_vectorizer.get_feature_names() == (
-  ...     ['jumpy', 'mpy f', 'py fo', 'umpy ', 'y fox'])
-  True
+  >>> ngram_vectorizer.get_feature_names_out()
+  array(['jumpy', 'mpy f', 'py fo', 'umpy ', 'y fox'], ...)
 
 The word boundaries-aware variant ``char_wb`` is especially interesting
 for languages that use white-spaces for word separation as it generates
@@ -999,7 +995,7 @@ Patch extraction
 The :func:`extract_patches_2d` function extracts patches from an image stored
 as a two-dimensional array, or three-dimensional with color information along
 the third axis. For rebuilding an image from all its patches, use
-:func:`reconstruct_from_patches_2d`. For example let use generate a 4x4 pixel
+:func:`reconstruct_from_patches_2d`. For example let us generate a 4x4 pixel
 picture with 3 color channels (e.g. in RGB format)::
 
     >>> import numpy as np

@@ -1,6 +1,4 @@
 #!/bin/bash
 
-set -e
-
-python -m pip install cibuildwheel
-python -m cibuildwheel --output-dir wheelhouse
+python -m pip install cibuildwheel || travis_terminate $?
+python -m cibuildwheel --output-dir wheelhouse || travis_terminate $?

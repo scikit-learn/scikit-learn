@@ -18,10 +18,7 @@ from sklearn.utils._testing import assert_array_equal
 # Feature 0 is highly informative for class 1;
 # feature 1 is the same everywhere;
 # feature 2 is a bit informative for class 2.
-X = [[2, 1, 2],
-     [9, 1, 1],
-     [6, 1, 2],
-     [0, 1, 2]]
+X = [[2, 1, 2], [9, 1, 1], [6, 1, 2], [0, 1, 2]]
 y = [0, 1, 2, 2]
 
 
@@ -73,21 +70,19 @@ def test_chi2_unused_feature():
     # Unused feature should evaluate to NaN
     # and should issue no runtime warning
     with warnings.catch_warnings(record=True) as warned:
-        warnings.simplefilter('always')
+        warnings.simplefilter("always")
         chi, p = chi2([[1, 0], [0, 0]], [1, 0])
         for w in warned:
-            if 'divide by zero' in repr(w):
-                raise AssertionError('Found unexpected warning %s' % w)
+            if "divide by zero" in repr(w):
+                raise AssertionError("Found unexpected warning %s" % w)
     assert_array_equal(chi, [1, np.nan])
     assert_array_equal(p[1], np.nan)
 
 
 def test_chisquare():
     # Test replacement for scipy.stats.chisquare against the original.
-    obs = np.array([[2., 2.],
-                    [1., 1.]])
-    exp = np.array([[1.5, 1.5],
-                    [1.5, 1.5]])
+    obs = np.array([[2.0, 2.0], [1.0, 1.0]])
+    exp = np.array([[1.5, 1.5], [1.5, 1.5]])
     # call SciPy first because our version overwrites obs
     chi_scp, p_scp = scipy.stats.chisquare(obs, exp)
     chi_our, p_our = _chisquare(obs, exp)

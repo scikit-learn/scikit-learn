@@ -33,12 +33,13 @@ This example shows that these two transformers are well suited to model
 non-linear effects with a linear model, using a pipeline to add non-linear
 features. Kernel methods extend this idea and can induce very high (even
 infinite) dimensional feature spaces.
+
 """
-print(__doc__)
 
 # Author: Mathieu Blondel
 #         Jake Vanderplas
 #         Christian Lorentzen
+#         Malte Londschien
 # License: BSD 3 clause
 
 import numpy as np
@@ -50,8 +51,9 @@ from sklearn.pipeline import make_pipeline
 
 
 # %%
-# We start by defining a function that we intent to approximate and prepare
+# We start by defining a function that we intend to approximate and prepare
 # plotting it.
+
 
 def f(x):
     """Function to be approximated by polynomial interpolation."""
@@ -80,9 +82,9 @@ X_plot = x_plot[:, np.newaxis]
 # plot function
 lw = 2
 fig, ax = plt.subplots()
-ax.set_prop_cycle(color=[
-    "black", "teal", "yellowgreen", "gold", "darkorange", "tomato"
-])
+ax.set_prop_cycle(
+    color=["black", "teal", "yellowgreen", "gold", "darkorange", "tomato"]
+)
 ax.plot(x_plot, f(x_plot), linewidth=lw, label="ground truth")
 
 # plot training points
@@ -96,13 +98,12 @@ for degree in [3, 4, 5]:
     ax.plot(x_plot, y_plot, label=f"degree {degree}")
 
 # B-spline with 4 + 3 - 1 = 6 basis functions
-model = make_pipeline(SplineTransformer(n_knots=4, degree=3),
-                      Ridge(alpha=1e-3))
+model = make_pipeline(SplineTransformer(n_knots=4, degree=3), Ridge(alpha=1e-3))
 model.fit(X_train, y_train)
 
 y_plot = model.predict(X_plot)
 ax.plot(x_plot, y_plot, label="B-spline")
-ax.legend(loc='lower center')
+ax.legend(loc="lower center")
 ax.set_ylim(-20, 10)
 plt.show()
 
@@ -127,17 +128,17 @@ axes[0].set_title("PolynomialFeatures")
 
 splt = SplineTransformer(n_knots=4, degree=3).fit(X_train)
 axes[1].plot(x_plot, splt.transform(X_plot))
-axes[1].legend(axes[1].lines, [f"spline {n}" for n in range(4)])
+axes[1].legend(axes[1].lines, [f"spline {n}" for n in range(6)])
 axes[1].set_title("SplineTransformer")
 
 # plot knots of spline
 knots = splt.bsplines_[0].t
-axes[1].vlines(knots[3:-3], ymin=0, ymax=0.8, linestyles='dashed')
+axes[1].vlines(knots[3:-3], ymin=0, ymax=0.8, linestyles="dashed")
 plt.show()
 
 # %%
 # In the left plot, we recognize the lines corresponding to simple monomials
-# from ``x**0`` to ``x**3``. In the right figure, we see the four B-spline
+# from ``x**0`` to ``x**3``. In the right figure, we see the six B-spline
 # basis functions of ``degree=3`` and also the four knot positions that were
 # chosen during ``fit``. Note that there are ``degree`` number of additional
 # knots each to the left and to the right of the fitted interval. These are
@@ -145,3 +146,71 @@ plt.show()
 # function has local support and is continued as a constant beyond the fitted
 # range. This extrapolating behaviour could be changed by the argument
 # ``extrapolation``.
+
+# %%
+# Periodic Splines
+# ----------------
+# In the previous example we saw the limitations of polynomials and splines for
+# extrapolation beyond the range of the training observations. In some
+# settings, e.g. with seasonal effects, we expect a periodic continuation of
+# the underlying signal. Such effects can be modelled using periodic splines,
+# which have equal function value and equal derivatives at the first and last
+# knot. In the following case we show how periodic splines provide a better fit
+# both within and outside of the range of training data given the additional
+# information of periodicity. The splines period is the distance between
+# the first and last knot, which we specify manually.
+#
+# Periodic splines can also be useful for naturally periodic features (such as
+# day of the year), as the smoothness at the boundary knots prevents a jump in
+# the transformed values (e.g. from Dec 31st to Jan 1st). For such naturally
+# periodic features or more generally features where the period is known, it is
+# advised to explicitly pass this information to the `SplineTransformer` by
+# setting the knots manually.
+
+
+# %%
+def g(x):
+    """Function to be approximated by periodic spline interpolation."""
+    return np.sin(x) - 0.7 * np.cos(x * 3)
+
+
+y_train = g(x_train)
+
+# Extend the test data into the future:
+x_plot_ext = np.linspace(-1, 21, 200)
+X_plot_ext = x_plot_ext[:, np.newaxis]
+
+lw = 2
+fig, ax = plt.subplots()
+ax.set_prop_cycle(color=["black", "tomato", "teal"])
+ax.plot(x_plot_ext, g(x_plot_ext), linewidth=lw, label="ground truth")
+ax.scatter(x_train, y_train, label="training points")
+
+for transformer, label in [
+    (SplineTransformer(degree=3, n_knots=10), "spline"),
+    (
+        SplineTransformer(
+            degree=3,
+            knots=np.linspace(0, 2 * np.pi, 10)[:, None],
+            extrapolation="periodic",
+        ),
+        "periodic spline",
+    ),
+]:
+    model = make_pipeline(transformer, Ridge(alpha=1e-3))
+    model.fit(X_train, y_train)
+    y_plot_ext = model.predict(X_plot_ext)
+    ax.plot(x_plot_ext, y_plot_ext, label=label)
+
+ax.legend()
+fig.show()
+
+# %% We again plot the underlying splines.
+fig, ax = plt.subplots()
+knots = np.linspace(0, 2 * np.pi, 4)
+splt = SplineTransformer(knots=knots[:, None], degree=3, extrapolation="periodic").fit(
+    X_train
+)
+ax.plot(x_plot_ext, splt.transform(X_plot_ext))
+ax.legend(ax.lines, [f"spline {n}" for n in range(3)])
+plt.show()

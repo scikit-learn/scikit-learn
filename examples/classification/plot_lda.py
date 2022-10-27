@@ -5,7 +5,9 @@ Normal, Ledoit-Wolf and OAS Linear Discriminant Analysis for classification
 
 This example illustrates how the Ledoit-Wolf and Oracle Shrinkage
 Approximating (OAS) estimators of covariance can improve classification.
+
 """
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -45,13 +47,12 @@ for n_features in n_features_range:
     for _ in range(n_averages):
         X, y = generate_data(n_train, n_features)
 
-        clf1 = LinearDiscriminantAnalysis(solver='lsqr',
-                                          shrinkage='auto').fit(X, y)
-        clf2 = LinearDiscriminantAnalysis(solver='lsqr',
-                                          shrinkage=None).fit(X, y)
+        clf1 = LinearDiscriminantAnalysis(solver="lsqr", shrinkage="auto").fit(X, y)
+        clf2 = LinearDiscriminantAnalysis(solver="lsqr", shrinkage=None).fit(X, y)
         oa = OAS(store_precision=False, assume_centered=False)
-        clf3 = LinearDiscriminantAnalysis(solver='lsqr',
-                                          covariance_estimator=oa).fit(X, y)
+        clf3 = LinearDiscriminantAnalysis(solver="lsqr", covariance_estimator=oa).fit(
+            X, y
+        )
 
         X, y = generate_data(n_test, n_features)
         score_clf1 += clf1.score(X, y)
@@ -64,18 +65,40 @@ for n_features in n_features_range:
 
 features_samples_ratio = np.array(n_features_range) / n_train
 
-plt.plot(features_samples_ratio, acc_clf1, linewidth=2,
-         label="Linear Discriminant Analysis with Ledoit Wolf", color='navy')
-plt.plot(features_samples_ratio, acc_clf2, linewidth=2,
-         label="Linear Discriminant Analysis", color='gold')
-plt.plot(features_samples_ratio, acc_clf3, linewidth=2,
-         label="Linear Discriminant Analysis with OAS", color='red')
+plt.plot(
+    features_samples_ratio,
+    acc_clf1,
+    linewidth=2,
+    label="Linear Discriminant Analysis with Ledoit Wolf",
+    color="navy",
+    linestyle="dashed",
+)
+plt.plot(
+    features_samples_ratio,
+    acc_clf2,
+    linewidth=2,
+    label="Linear Discriminant Analysis",
+    color="gold",
+    linestyle="solid",
+)
+plt.plot(
+    features_samples_ratio,
+    acc_clf3,
+    linewidth=2,
+    label="Linear Discriminant Analysis with OAS",
+    color="red",
+    linestyle="dotted",
+)
 
-plt.xlabel('n_features / n_samples')
-plt.ylabel('Classification accuracy')
+plt.xlabel("n_features / n_samples")
+plt.ylabel("Classification accuracy")
 
-plt.legend(loc=3, prop={'size': 12})
-plt.suptitle('Linear Discriminant Analysis vs. ' + '\n'
-             + 'Shrinkage Linear Discriminant Analysis vs. ' + '\n'
-             + 'OAS Linear Discriminant Analysis (1 discriminative feature)')
+plt.legend(loc=3, prop={"size": 12})
+plt.suptitle(
+    "Linear Discriminant Analysis vs. "
+    + "\n"
+    + "Shrinkage Linear Discriminant Analysis vs. "
+    + "\n"
+    + "OAS Linear Discriminant Analysis (1 discriminative feature)"
+)
 plt.show()

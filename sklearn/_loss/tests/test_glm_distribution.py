@@ -1,6 +1,8 @@
 # Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
 #
 # License: BSD 3 clause
+#
+# TODO(1.3): remove file
 import numpy as np
 from numpy.testing import (
     assert_allclose,
@@ -11,20 +13,25 @@ import pytest
 
 from sklearn._loss.glm_distribution import (
     TweedieDistribution,
-    NormalDistribution, PoissonDistribution,
-    GammaDistribution, InverseGaussianDistribution,
-    DistributionBoundary
+    NormalDistribution,
+    PoissonDistribution,
+    GammaDistribution,
+    InverseGaussianDistribution,
+    DistributionBoundary,
 )
 
 
 @pytest.mark.parametrize(
-    'family, expected',
-    [(NormalDistribution(), [True, True, True]),
-     (PoissonDistribution(), [False, True, True]),
-     (TweedieDistribution(power=1.5), [False, True, True]),
-     (GammaDistribution(), [False, False, True]),
-     (InverseGaussianDistribution(), [False, False, True]),
-     (TweedieDistribution(power=4.5), [False, False, True])])
+    "family, expected",
+    [
+        (NormalDistribution(), [True, True, True]),
+        (PoissonDistribution(), [False, True, True]),
+        (TweedieDistribution(power=1.5), [False, True, True]),
+        (GammaDistribution(), [False, False, True]),
+        (InverseGaussianDistribution(), [False, False, True]),
+        (TweedieDistribution(power=4.5), [False, False, True]),
+    ],
+)
 def test_family_bounds(family, expected):
     """Test the valid range of distributions at -1, 0, 1."""
     result = family.in_y_range([-1, 0, 1])
@@ -34,8 +41,7 @@ def test_family_bounds(family, expected):
 def test_invalid_distribution_bound():
     dist = TweedieDistribution()
     dist._lower_bound = 0
-    with pytest.raises(TypeError,
-                       match="must be of type DistributionBoundary"):
+    with pytest.raises(TypeError, match="must be of type DistributionBoundary"):
         dist.in_y_range([-1, 0, 1])
 
 
@@ -61,16 +67,19 @@ def test_tweedie_distribution_power():
 
 
 @pytest.mark.parametrize(
-    'family, chk_values',
-    [(NormalDistribution(), [-1.5, -0.1, 0.1, 2.5]),
-     (PoissonDistribution(), [0.1, 1.5]),
-     (GammaDistribution(), [0.1, 1.5]),
-     (InverseGaussianDistribution(), [0.1, 1.5]),
-     (TweedieDistribution(power=-2.5), [0.1, 1.5]),
-     (TweedieDistribution(power=-1), [0.1, 1.5]),
-     (TweedieDistribution(power=1.5), [0.1, 1.5]),
-     (TweedieDistribution(power=2.5), [0.1, 1.5]),
-     (TweedieDistribution(power=-4), [0.1, 1.5])])
+    "family, chk_values",
+    [
+        (NormalDistribution(), [-1.5, -0.1, 0.1, 2.5]),
+        (PoissonDistribution(), [0.1, 1.5]),
+        (GammaDistribution(), [0.1, 1.5]),
+        (InverseGaussianDistribution(), [0.1, 1.5]),
+        (TweedieDistribution(power=-2.5), [0.1, 1.5]),
+        (TweedieDistribution(power=-1), [0.1, 1.5]),
+        (TweedieDistribution(power=1.5), [0.1, 1.5]),
+        (TweedieDistribution(power=2.5), [0.1, 1.5]),
+        (TweedieDistribution(power=-4), [0.1, 1.5]),
+    ],
+)
 def test_deviance_zero(family, chk_values):
     """Test deviance(y,y) = 0 for different families."""
     for x in chk_values:
@@ -78,26 +87,28 @@ def test_deviance_zero(family, chk_values):
 
 
 @pytest.mark.parametrize(
-    'family',
-    [NormalDistribution(),
-     PoissonDistribution(),
-     GammaDistribution(),
-     InverseGaussianDistribution(),
-     TweedieDistribution(power=-2.5),
-     TweedieDistribution(power=-1),
-     TweedieDistribution(power=1.5),
-     TweedieDistribution(power=2.5),
-     TweedieDistribution(power=-4)],
-    ids=lambda x: x.__class__.__name__
+    "family",
+    [
+        NormalDistribution(),
+        PoissonDistribution(),
+        GammaDistribution(),
+        InverseGaussianDistribution(),
+        TweedieDistribution(power=-2.5),
+        TweedieDistribution(power=-1),
+        TweedieDistribution(power=1.5),
+        TweedieDistribution(power=2.5),
+        TweedieDistribution(power=-4),
+    ],
+    ids=lambda x: x.__class__.__name__,
 )
-def test_deviance_derivative(family):
+def test_deviance_derivative(family, global_random_seed):
     """Test deviance derivative for different families."""
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     y_true = rng.rand(10)
     # make data positive
     y_true += np.abs(y_true.min()) + 1e-2
 
-    y_pred = y_true + np.fmax(rng.rand(10), 0.)
+    y_pred = y_true + np.fmax(rng.rand(10), 0.0)
 
     dev = family.deviance(y_true, y_pred)
     assert isinstance(dev, float)
@@ -105,8 +116,8 @@ def test_deviance_derivative(family):
     assert dev_derivative.shape == y_pred.shape
 
     err = check_grad(
-            lambda y_pred: family.deviance(y_true, y_pred),
-            lambda y_pred: family.deviance_derivative(y_true, y_pred),
-            y_pred,
+        lambda y_pred: family.deviance(y_true, y_pred),
+        lambda y_pred: family.deviance_derivative(y_true, y_pred),
+        y_pred,
     ) / np.linalg.norm(dev_derivative)
-    assert abs(err) < 1e-6
+    assert abs(err) < 3e-6

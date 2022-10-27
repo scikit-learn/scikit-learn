@@ -27,7 +27,7 @@ def _numpy_to_cython(dtype):
 
 
 RTOL = {np.float32: 1e-6, np.float64: 1e-12}
-ORDER = {RowMajor: 'C', ColMajor: 'F'}
+ORDER = {RowMajor: "C", ColMajor: "F"}
 
 
 def _no_op(x):
@@ -132,7 +132,7 @@ def test_rotg(dtype):
             c, s, r, z = (1, 0, 0, 0)
         else:
             r = np.sqrt(a**2 + b**2) * (1 if roe >= 0 else -1)
-            c, s = a/r, b/r
+            c, s = a / r, b / r
             z = s if roe == a else (1 if c == 0 else 1 / c)
         return r, z, c, s
 
@@ -162,17 +162,17 @@ def test_rot(dtype):
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("opA, transA",
-                         [(_no_op, NoTrans), (np.transpose, Trans)],
-                         ids=["NoTrans", "Trans"])
-@pytest.mark.parametrize("order", [RowMajor, ColMajor],
-                         ids=["RowMajor", "ColMajor"])
+@pytest.mark.parametrize(
+    "opA, transA", [(_no_op, NoTrans), (np.transpose, Trans)], ids=["NoTrans", "Trans"]
+)
+@pytest.mark.parametrize("order", [RowMajor, ColMajor], ids=["RowMajor", "ColMajor"])
 def test_gemv(dtype, opA, transA, order):
     gemv = _gemv_memview[_numpy_to_cython(dtype)]
 
     rng = np.random.RandomState(0)
-    A = np.asarray(opA(rng.random_sample((20, 10)).astype(dtype, copy=False)),
-                   order=ORDER[order])
+    A = np.asarray(
+        opA(rng.random_sample((20, 10)).astype(dtype, copy=False)), order=ORDER[order]
+    )
     x = rng.random_sample(10).astype(dtype, copy=False)
     y = rng.random_sample(20).astype(dtype, copy=False)
     alpha, beta = 2.5, -0.5
@@ -184,16 +184,16 @@ def test_gemv(dtype, opA, transA, order):
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("order", [RowMajor, ColMajor],
-                         ids=["RowMajor", "ColMajor"])
+@pytest.mark.parametrize("order", [RowMajor, ColMajor], ids=["RowMajor", "ColMajor"])
 def test_ger(dtype, order):
     ger = _ger_memview[_numpy_to_cython(dtype)]
 
     rng = np.random.RandomState(0)
     x = rng.random_sample(10).astype(dtype, copy=False)
     y = rng.random_sample(20).astype(dtype, copy=False)
-    A = np.asarray(rng.random_sample((10, 20)).astype(dtype, copy=False),
-                   order=ORDER[order])
+    A = np.asarray(
+        rng.random_sample((10, 20)).astype(dtype, copy=False), order=ORDER[order]
+    )
     alpha = 2.5
 
     expected = alpha * np.outer(x, y) + A
@@ -203,24 +203,26 @@ def test_ger(dtype, order):
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-@pytest.mark.parametrize("opB, transB",
-                         [(_no_op, NoTrans), (np.transpose, Trans)],
-                         ids=["NoTrans", "Trans"])
-@pytest.mark.parametrize("opA, transA",
-                         [(_no_op, NoTrans), (np.transpose, Trans)],
-                         ids=["NoTrans", "Trans"])
-@pytest.mark.parametrize("order", [RowMajor, ColMajor],
-                         ids=["RowMajor", "ColMajor"])
+@pytest.mark.parametrize(
+    "opB, transB", [(_no_op, NoTrans), (np.transpose, Trans)], ids=["NoTrans", "Trans"]
+)
+@pytest.mark.parametrize(
+    "opA, transA", [(_no_op, NoTrans), (np.transpose, Trans)], ids=["NoTrans", "Trans"]
+)
+@pytest.mark.parametrize("order", [RowMajor, ColMajor], ids=["RowMajor", "ColMajor"])
 def test_gemm(dtype, opA, transA, opB, transB, order):
     gemm = _gemm_memview[_numpy_to_cython(dtype)]
 
     rng = np.random.RandomState(0)
-    A = np.asarray(opA(rng.random_sample((30, 10)).astype(dtype, copy=False)),
-                   order=ORDER[order])
-    B = np.asarray(opB(rng.random_sample((10, 20)).astype(dtype, copy=False)),
-                   order=ORDER[order])
-    C = np.asarray(rng.random_sample((30, 20)).astype(dtype, copy=False),
-                   order=ORDER[order])
+    A = np.asarray(
+        opA(rng.random_sample((30, 10)).astype(dtype, copy=False)), order=ORDER[order]
+    )
+    B = np.asarray(
+        opB(rng.random_sample((10, 20)).astype(dtype, copy=False)), order=ORDER[order]
+    )
+    C = np.asarray(
+        rng.random_sample((30, 20)).astype(dtype, copy=False), order=ORDER[order]
+    )
     alpha, beta = 2.5, -0.5
 
     expected = alpha * opA(A).dot(opB(B)) + beta * C

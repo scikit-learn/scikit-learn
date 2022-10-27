@@ -3,6 +3,7 @@
 
 import os
 import re
+import platform
 from pathlib import Path
 
 import pytest
@@ -16,10 +17,15 @@ def test_min_dependencies_readme():
     # consistent with the minimum dependencies defined at the file:
     # sklearn/_min_dependencies.py
 
-    pattern = re.compile(r"(\.\. \|)" +
-                         r"(([A-Za-z]+\-?)+)" +
-                         r"(MinVersion\| replace::)" +
-                         r"( [0-9]+\.[0-9]+(\.[0-9]+)?)")
+    if platform.python_implementation() == "PyPy":
+        pytest.skip("PyPy does not always share the same minimum deps")
+
+    pattern = re.compile(
+        r"(\.\. \|)"
+        + r"(([A-Za-z]+\-?)+)"
+        + r"(MinVersion\| replace::)"
+        + r"( [0-9]+\.[0-9]+(\.[0-9]+)?)"
+    )
 
     readme_path = Path(sklearn.__path__[0]).parents[0]
     readme_file = readme_path / "README.rst"
@@ -37,9 +43,10 @@ def test_min_dependencies_readme():
                 continue
 
             package, version = matched.group(2), matched.group(5)
+            package = package.lower()
 
             if package in dependent_packages:
                 version = parse_version(version)
                 min_version = parse_version(dependent_packages[package][0])
 
-                assert version == min_version
+                assert version == min_version, f"{package} has a mismatched version"

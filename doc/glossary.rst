@@ -171,7 +171,7 @@ General Concepts
         one-hot encode categorical features.
         See also :ref:`preprocessing_categorical_features` and the
         `categorical-encoding
-        <https://contrib.scikit-learn.org/categorical-encoding>`_
+        <https://github.com/scikit-learn-contrib/category_encoders>`_
         package for tools related to encoding categorical features.
 
     clone
@@ -207,7 +207,7 @@ General Concepts
 
     deprecation
         We use deprecation to slowly violate our :term:`backwards
-        compatibility` assurances, usually to to:
+        compatibility` assurances, usually to:
 
         * change the default value of a parameter; or
         * remove a parameter, attribute, method, class, etc.
@@ -284,7 +284,7 @@ General Concepts
               >>> from sklearn.model_selection import GridSearchCV
               >>> from sklearn.linear_model import SGDClassifier
               >>> clf = GridSearchCV(SGDClassifier(),
-              ...                    param_grid={'loss': ['log', 'hinge']})
+              ...                    param_grid={'loss': ['log_loss', 'hinge']})
 
           This means that we can only check for duck-typed attributes after
           fitting, and that we must be careful to make :term:`meta-estimators`
@@ -382,23 +382,6 @@ General Concepts
                 :class:`base.ClassifierMixin`, but needs to be more explicitly
                 adopted on a :term:`meta-estimator`.  Its value should usually be
                 checked by way of a helper such as :func:`base.is_classifier`.
-
-            ``_pairwise``
-                This boolean attribute indicates whether the data (``X``) passed to
-                :func:`fit` and similar methods consists of pairwise measures over
-                samples rather than a feature representation for each sample.  It
-                is usually ``True`` where an estimator has a ``metric`` or
-                ``affinity`` or ``kernel`` parameter with value 'precomputed'.
-                Its primary purpose is that when a :term:`meta-estimator`
-                extracts a sub-sample of data intended for a pairwise estimator,
-                the data needs to be indexed on both axes, while other data is
-                indexed only on the first axis.
-
-                .. deprecated:: 0.24
-
-                    The _pairwise attribute is deprecated in 0.24. From 1.1
-                    (renaming of 0.26) onward, the `pairwise` estimator tag
-                    should be used instead.
 
         For more detailed info, see :ref:`estimator_tags`.
 
@@ -612,10 +595,10 @@ General Concepts
         meta-estimator.  Ordinarily, these nested parameters are denoted by
         using a :term:`double underscore` (``__``) to separate between the
         estimator-as-parameter and its parameter.  Thus ``clf =
-        BaggingClassifier(base_estimator=DecisionTreeClassifier(max_depth=3))``
-        has a deep parameter ``base_estimator__max_depth`` with value ``3``,
-        which is accessible with ``clf.base_estimator.max_depth`` or
-        ``clf.get_params()['base_estimator__max_depth']``.
+        BaggingClassifier(estimator=DecisionTreeClassifier(max_depth=3))``
+        has a deep parameter ``estimator__max_depth`` with value ``3``,
+        which is accessible with ``clf.estimator.max_depth`` or
+        ``clf.get_params()['estimator__max_depth']``.
 
         The list of parameters and their current values can be retrieved from
         an :term:`estimator instance` using its :term:`get_params` method.
@@ -644,9 +627,8 @@ General Concepts
 
         Note that for most distance metrics, we rely on implementations from
         :mod:`scipy.spatial.distance`, but may reimplement for efficiency in
-        our context.  The :mod:`neighbors` module also duplicates some metric
-        implementations for integration with efficient binary tree search data
-        structures.
+        our context. The :class:`metrics.DistanceMetric` interface is used to implement
+        distance metrics for integration with efficient neighbors search.
 
     pd
         A shorthand for `Pandas <https://pandas.pydata.org>`_ due to the
@@ -712,7 +694,7 @@ General Concepts
         decision-making process outlined in :ref:`governance`.
         For all votes, a proposal must have been made public and discussed before the
         vote. Such a proposal must be a consolidated document, in the form of a
-        ‘Scikit-Learn Enhancement Proposal’ (SLEP), rather than a long discussion on an
+        "Scikit-Learn Enhancement Proposal" (SLEP), rather than a long discussion on an
         issue. A SLEP must be submitted as a pull-request to
         `enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_ using the
         `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_.
@@ -853,7 +835,13 @@ Class APIs and Estimator Types
         * :term:`predict` if :term:`inductive`
 
     density estimator
-        TODO
+        An :term:`unsupervised` estimation of input probability density
+        function. Commonly used techniques are:
+
+        * :ref:`kernel_density` - uses a kernel function, controlled by the
+          bandwidth parameter to represent density;
+        * :ref:`Gaussian mixture <mixture>` - uses mixture of Gaussian models
+          to represent density.
 
     estimator
     estimators
@@ -893,7 +881,7 @@ Class APIs and Estimator Types
 
         * :term:`fit`
         * :term:`transform`
-        * :term:`get_feature_names`
+        * :term:`get_feature_names_out`
 
     meta-estimator
     meta-estimators
@@ -923,7 +911,7 @@ Class APIs and Estimator Types
         possible to identify which methods are provided by the underlying
         estimator until the meta-estimator has been :term:`fitted` (see also
         :term:`duck typing`), for which
-        :func:`utils.metaestimators.if_delegate_has_method` may help.  It
+        :func:`utils.metaestimators.available_if` may help.  It
         should also provide (or modify) the :term:`estimator tags` and
         :term:`classes_` attribute provided by the base estimator.
 
@@ -1012,7 +1000,10 @@ such as:
         results in the previous steps of the cross-validation process. This
         generally leads to speed improvements. An exception is the
         :class:`RidgeCV <linear_model.RidgeCV>` class, which can instead
-        perform efficient Leave-One-Out CV.
+        perform efficient Leave-One-Out (LOO) CV. By default, all these
+        estimators, apart from :class:`RidgeCV <linear_model.RidgeCV>` with an
+        LOO-CV, will be refitted on the full training dataset after finding the
+        best combination of hyper-parameters.
 
     scorer
         A non-estimator callable object which evaluates an estimator on given
@@ -1022,7 +1013,7 @@ such as:
 
 Further examples:
 
-* :class:`neighbors.DistanceMetric`
+* :class:`metrics.DistanceMetric`
 * :class:`gaussian_process.kernels.Kernel`
 * ``tree.Criterion``
 
@@ -1093,7 +1084,7 @@ Target Types
         For semi-supervised classification, :term:`unlabeled` samples should
         have the special label -1 in ``y``.
 
-        Within sckit-learn, all estimators supporting binary classification
+        Within scikit-learn, all estimators supporting binary classification
         also support multiclass classification, using One-vs-Rest by default.
 
         A :class:`preprocessing.LabelEncoder` helps to canonicalize multiclass
@@ -1185,18 +1176,19 @@ Methods
             predicted class.  Columns are ordered according to
             :term:`classes_`.
         multilabel classification
-            Scikit-learn is inconsistent in its representation of multilabel
-            decision functions.  Some estimators represent it like multiclass
-            multioutput, i.e. a list of 2d arrays, each with two columns. Others
-            represent it with a single 2d array, whose columns correspond to
-            the individual binary classification decisions. The latter
-            representation is ambiguously identical to the multiclass
-            classification format, though its semantics differ: it should be
-            interpreted, like in the binary case, by thresholding at 0.
+            Scikit-learn is inconsistent in its representation of :term:`multilabel`
+            decision functions. It may be represented one of two ways:
 
-            TODO: `This gist
-            <https://gist.github.com/jnothman/4807b1b0266613c20ba4d1f88d0f8cf5>`_
-            highlights the use of the different formats for multilabel.
+            - List of 2d arrays, each array of shape: (`n_samples`, 2), like in
+              multiclass multioutput. List is of length `n_labels`.
+
+            - Single 2d array of shape (`n_samples`, `n_labels`), with each
+              'column' in the array corresponding to the individual binary
+              classification decisions. This is identical to the
+              multiclass classification format, though its semantics differ: it
+              should be interpreted, like in the binary case, by thresholding at
+              0.
+
         multioutput classification
             A list of 2d arrays, corresponding to each multiclass decision
             function.
@@ -1254,13 +1246,16 @@ Methods
         (i.e. training and test data together) before further modelling, as
         this results in :term:`data leakage`.
 
-    ``get_feature_names``
+    ``get_feature_names_out``
         Primarily for :term:`feature extractors`, but also used for other
         transformers to provide string names for each column in the output of
-        the estimator's :term:`transform` method.  It outputs a list of
-        strings and may take a list of strings as input, corresponding
+        the estimator's :term:`transform` method.  It outputs an array of
+        strings and may take an array-like of strings as input, corresponding
         to the names of input columns from which output column names can
-        be generated.  By default input features are named x0, x1, ....
+        be generated.  If `input_features` is not passed in, then the
+        `feature_names_in_` attribute will be used. If the
+        `feature_names_in_` attribute is not defined, then the
+        input names are named `[x0, x1, ..., x(n_features_in_ - 1)]`.
 
     ``get_n_splits``
         On a :term:`CV splitter` (not an estimator), returns the number of
@@ -1388,7 +1383,11 @@ Methods
         often the likelihood of the data under the model.
 
     ``score_samples``
-        TODO
+        A method that returns a score for each given sample. The exact
+        definition of *score* varies from one class to another. In the case of
+        density estimation, it can be the log density model on the data, and in
+        the case of outlier detection, it can be the opposite of the outlier
+        factor of the data.
 
         If the estimator was not already :term:`fitted`, calling this method
         should raise a :class:`exceptions.NotFittedError`.
@@ -1495,7 +1494,13 @@ functions or non-estimator constructors.
         ``cv`` values are validated and interpreted with :func:`utils.check_cv`.
 
     ``kernel``
-        TODO
+        Specifies the kernel function to be used by Kernel Method algorithms.
+        For example, the estimators :class:`SVC` and
+        :class:`GaussianProcessClassifier` both have a ``kernel`` parameter
+        that takes the name of the kernel to use as string or a callable
+        kernel function used to compute the kernel matrix. For more reference,
+        see the :ref:`kernel_approximation` and the :ref:`gaussian_process`
+        user guides.
 
     ``max_iter``
         For estimators involving iterative optimization, this determines the
@@ -1558,6 +1563,9 @@ functions or non-estimator constructors.
         generally be interpreted as ``n_jobs=1``, unless the current
         :class:`joblib.Parallel` backend context specifies otherwise.
 
+        Note that even if ``n_jobs=1``, low-level parallelism (via Numpy and OpenMP)
+        might be used in some configuration.
+
         For more details on the use of ``joblib`` and its interactions with
         scikit-learn, please refer to our :ref:`parallelism notes
         <parallelism>`.
@@ -1593,6 +1601,7 @@ functions or non-estimator constructors.
             number of different distinct random seeds. Popular integer
             random seeds are 0 and `42
             <https://en.wikipedia.org/wiki/Answer_to_the_Ultimate_Question_of_Life%2C_the_Universe%2C_and_Everything>`_.
+            Integer values must be in the range `[0, 2**32 - 1]`.
 
         A :class:`numpy.random.RandomState` instance
             Use the provided random state, only affecting other users
@@ -1695,7 +1704,7 @@ See concept :term:`attribute`.
         predictors.
 
     ``coef_``
-        The weight/coefficient matrix of a generalised linear model
+        The weight/coefficient matrix of a generalized linear model
         :term:`predictor`, of shape ``(n_features,)`` for binary classification
         and single-output regression, ``(n_classes, n_features)`` for
         multiclass classification and ``(n_targets, n_features)`` for

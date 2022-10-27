@@ -100,6 +100,10 @@ between bias and variance in the result.  A large bandwidth leads to a very
 smooth (i.e. high-bias) density distribution.  A small bandwidth leads
 to an unsmooth (i.e. high-variance) density distribution.
 
+The parameter `bandwidth` controls this smoothing. One can either set
+manually this parameter or use Scott's and Silvermann's estimation
+methods.
+
 :class:`~sklearn.neighbors.KernelDensity` implements several common kernel
 forms, which are shown in the following figure:
 
@@ -136,9 +140,9 @@ The form of these kernels is as follows:
   :math:`K(x; h) \propto \cos(\frac{\pi x}{2h})` if :math:`x < h`
 
 The kernel density estimator can be used with any of the valid distance
-metrics (see :class:`~sklearn.neighbors.DistanceMetric` for a list of available metrics), though
-the results are properly normalized only for the Euclidean metric.  One
-particularly useful metric is the
+metrics (see :class:`~sklearn.metrics.DistanceMetric` for a list of
+available metrics), though the results are properly normalized only
+for the Euclidean metric.  One particularly useful metric is the
 `Haversine distance <https://en.wikipedia.org/wiki/Haversine_formula>`_
 which measures the angular distance between points on a sphere.  Here
 is an example of using a kernel density estimate for a visualization
