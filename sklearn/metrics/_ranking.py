@@ -222,11 +222,15 @@ def average_precision_score(
         return -np.sum(np.diff(recall) * np.array(precision)[:-1])
 
     y_type = type_of_target(y_true, input_name="y_true")
-    if y_type == "multilabel-indicator" and pos_label != 1:
+    # For multiclass we can reuse the multi-label case
+    if y_type == "multiclass":
+        y_true = label_binarize(y_true, classes=np.unique(y_true))
+
+    if y_type in ["multiclass", "multilabel-indicator"] and pos_label != 1:
         raise ValueError(
             "Parameter pos_label is fixed to 1 for "
-            "multilabel-indicator y_true. Do not set "
-            "pos_label or set pos_label to 1."
+            "multiclass or multilabel-indicator y_true. Do not "
+            "set pos_label or set pos_label to 1."
         )
     elif y_type == "binary":
         # Convert to Python primitive type to avoid NumPy type / Python str
