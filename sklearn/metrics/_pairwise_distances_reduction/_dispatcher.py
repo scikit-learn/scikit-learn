@@ -26,7 +26,7 @@ def sqeuclidean_row_norms(X, num_threads):
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features)
+    X : ndarray or CSR matrix of shape (n_samples, n_features)
         Input data. Must be c-contiguous.
 
     num_threads : int

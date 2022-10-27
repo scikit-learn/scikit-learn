@@ -92,8 +92,10 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
         ):
             # Specialized implementation with improved arithmetic intensity
             # and vector instructions (SIMD) by processing several vectors
-            # at time to leverage a call to the BLAS GEMM routine as explained
-            # in more details in GEMMTermComputer docstring.
+            # at time to leverage a call to a matrix multiplication routine.
+            # Decomposing the euclidean distance into as a sum of squared
+            # matrices and a middle term cross product is explained in more
+            # details in the docstring of MiddleTermComputer.
             use_squared_distances = metric == "sqeuclidean"
             pda = EuclideanRadiusNeighbors{{name_suffix}}(
                 X=X, Y=Y, radius=radius,

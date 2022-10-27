@@ -72,18 +72,19 @@ cdef void _middle_term_sparse_sparse_{{name_suffix}}(
 
 
 cdef class MiddleTermComputer{{name_suffix}}:
-    """Component for `EuclideanDistance` specialisation wrapping the logic for the call to GEMM.
+    """Abstract base class for the `EuclideanDistance` specialisation
+    components wrapping the computation of the distance matrix chunks.
 
-    `EuclideanDistance` subclasses internally compute the squared Euclidean distances
-    between chunks of vectors X_c and Y_c using the following decomposition:
+    `EuclideanDistance` subclasses relies on the squared Euclidean
+    distances between chunks of vectors X_c and Y_c using the
+    following decomposition for the (i,j) pair :
 
 
-                ||X_c_i - Y_c_j||² = ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
+         ||X_c_i - Y_c_j||² = ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
 
 
     This helper class is in charge of wrapping the common logic to compute
-    the middle term `- 2 X_c_i.Y_c_j^T` with a call to GEMM, which has a high
-    arithmetic intensity.
+    the middle term, i.e. `- 2 X_c_i.Y_c_j^T`.
     """
 
     @classmethod
@@ -224,6 +225,13 @@ cdef class MiddleTermComputer{{name_suffix}}:
 
 
 cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_suffix}}):
+    """Computes the middle term of the Euclidean distance between two chunked dense matrices
+    X_c and Y_c.
+
+            dist_middle_terms = - 2 X_c_i.Y_c_j^T
+
+    This class use the BLAS gemm routine to efficiently perform the dot product.
+    """
 
     def __init__(
         self,
@@ -384,6 +392,15 @@ cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_
 
 
 cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_suffix}}):
+    """Computes the middle term of the Euclidean distance between two chunked CSR matrices X_c and Y_c
+    and returns the result as a contiguous array.
+
+            dist_middle_terms = - 2 X_c_i.Y_c_j^T
+
+    The logic of the computation is wrapped in the routine _middle_term_sparse_sparse_{{name_suffix}}.
+    This routine iterates over the data, indices and indptr arrays of the sparse matrices without
+    densifying them.
+    """
 
     def __init__(
         self,

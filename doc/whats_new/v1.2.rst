@@ -94,7 +94,8 @@ Changes impacting all modules
   - :func:`sklearn.manifold.trustworthiness`
 
   :pr:`23604` and :pr:`23585` by :user:`Julien Jerphanion <jjerphan>`,
-  :user:`Olivier Grisel <ogrisel>`, and `Thomas Fan`_.
+  :user:`Olivier Grisel <ogrisel>`, and `Thomas Fan`_,
+  :pr:`24556` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
 - |Fix| Systematically check the sha256 digest of dataset tarballs used in code
   examples in the documentation.
