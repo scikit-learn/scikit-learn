@@ -36,36 +36,30 @@ X = iris.data
 y = iris.target
 
 estimators = [
-    ("k_means_iris_8", KMeans(n_clusters=8)),
-    ("k_means_iris_3", KMeans(n_clusters=3)),
+    ("k_means_iris_8", KMeans(n_clusters=8, n_init="auto")),
+    ("k_means_iris_3", KMeans(n_clusters=3, n_init="auto")),
     ("k_means_iris_bad_init", KMeans(n_clusters=3, n_init=1, init="random")),
 ]
 
-fignum = 1
+fig = plt.figure(figsize=(10, 8))
 titles = ["8 clusters", "3 clusters", "3 clusters, bad initialization"]
-for name, est in estimators:
-    fig = plt.figure(fignum, figsize=(4, 3))
-    ax = fig.add_subplot(111, projection="3d", elev=48, azim=134)
-    ax.set_position([0, 0, 0.95, 1])
+for idx, (name, est) in enumerate(estimators):
+    ax = fig.add_subplot(2, 2, idx + 1, projection="3d", elev=48, azim=134)
     est.fit(X)
     labels = est.labels_
 
     ax.scatter(X[:, 3], X[:, 0], X[:, 2], c=labels.astype(float), edgecolor="k")
 
-    ax.w_xaxis.set_ticklabels([])
-    ax.w_yaxis.set_ticklabels([])
-    ax.w_zaxis.set_ticklabels([])
+    ax.xaxis.set_ticklabels([])
+    ax.yaxis.set_ticklabels([])
+    ax.zaxis.set_ticklabels([])
     ax.set_xlabel("Petal width")
     ax.set_ylabel("Sepal length")
     ax.set_zlabel("Petal length")
-    ax.set_title(titles[fignum - 1])
-    ax.dist = 12
-    fignum = fignum + 1
+    ax.set_title(titles[idx - 1])
 
 # Plot the ground truth
-fig = plt.figure(fignum, figsize=(4, 3))
-ax = fig.add_subplot(111, projection="3d", elev=48, azim=134)
-ax.set_position([0, 0, 0.95, 1])
+ax = fig.add_subplot(2, 2, 4, projection="3d", elev=48, azim=134)
 
 for name, label in [("Setosa", 0), ("Versicolour", 1), ("Virginica", 2)]:
     ax.text3D(
@@ -80,13 +74,13 @@ for name, label in [("Setosa", 0), ("Versicolour", 1), ("Virginica", 2)]:
 y = np.choose(y, [1, 2, 0]).astype(float)
 ax.scatter(X[:, 3], X[:, 0], X[:, 2], c=y, edgecolor="k")
 
-ax.w_xaxis.set_ticklabels([])
-ax.w_yaxis.set_ticklabels([])
-ax.w_zaxis.set_ticklabels([])
+ax.xaxis.set_ticklabels([])
+ax.yaxis.set_ticklabels([])
+ax.zaxis.set_ticklabels([])
 ax.set_xlabel("Petal width")
 ax.set_ylabel("Sepal length")
 ax.set_zlabel("Petal length")
 ax.set_title("Ground Truth")
-ax.dist = 12
 
-fig.show()
+plt.subplots_adjust(wspace=0.25, hspace=0.25)
+plt.show()

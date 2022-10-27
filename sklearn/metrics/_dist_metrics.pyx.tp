@@ -35,13 +35,6 @@ cimport numpy as cnp
 
 cnp.import_array()  # required in order to use C-API
 
-
-# First, define a function to get an ndarray from a memory buffer
-cdef extern from "arrayobject.h":
-    object PyArray_SimpleNewFromData(int nd, cnp.npy_intp* dims,
-                                     int typenum, void* data)
-
-
 from libc.math cimport fabs, sqrt, exp, pow, cos, sin, asin
 
 from scipy.sparse import csr_matrix, issparse
@@ -127,7 +120,7 @@ cdef inline cnp.ndarray _buffer_to_ndarray{{name_suffix}}(const {{INPUT_DTYPE_t}
     # a possibility of this for our use-case, this should be safe.
 
     # Note: this Segfaults unless np.import_array() is called above
-    return PyArray_SimpleNewFromData(1, &n, DTYPECODE, <void*>x)
+    return cnp.PyArray_SimpleNewFromData(1, &n, DTYPECODE, <void*>x)
 
 
 cdef {{INPUT_DTYPE_t}} INF{{name_suffix}} = np.inf

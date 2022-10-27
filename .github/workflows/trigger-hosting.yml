@@ -16,7 +16,7 @@ jobs:
     if: github.repository == 'scikit-learn/scikit-learn' && github.event.workflow_run.conclusion == 'success'
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Trigger hosting jobs
         run: bash build_tools/github/trigger_hosting.sh
