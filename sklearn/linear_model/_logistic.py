@@ -904,6 +904,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            SAGA solver.
         .. versionchanged:: 0.22
             The default solver changed from 'liblinear' to 'lbfgs' in 0.22.
+        .. versionadded:: 1.2
+           newton-cholesky solver.
 
     max_iter : int, default=100
         Maximum number of iterations taken for the solvers to converge.
@@ -1484,6 +1486,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            Stochastic Average Gradient descent solver.
         .. versionadded:: 0.19
            SAGA solver.
+        .. versionadded:: 1.2
+           newton-cholesky solver.
 
     tol : float, default=1e-4
         Tolerance for stopping criteria.
