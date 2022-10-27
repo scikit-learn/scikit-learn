@@ -14,41 +14,20 @@ prediction-time.
 
 This example illustrates both methods on an artificial dataset, which
 consists of a sinusoidal target function and strong noise added to every fifth
-datapoint. The first figure compares the learned model of KRR and SVR when both
-complexity/regularization and bandwidth of the RBF kernel are optimized using
-grid-search. The learned functions are very similar; however, fitting KRR is
-approx. seven times faster than fitting SVR (both with grid-search). However,
-prediction of 100000 target values is more than tree times faster with SVR
-since it has learned a sparse model using only approx. 1/3 of the 100 training
-datapoints as support vectors.
-
-The next figure compares the time for fitting and prediction of KRR and SVR for
-different sizes of the training set. Fitting KRR is faster than SVR for medium-
-sized training sets (less than 1000 samples); however, for larger training sets
-SVR scales better. With regard to prediction time, SVR is faster than
-KRR for all sizes of the training set because of the learned sparse
-solution. Note that the degree of sparsity and thus the prediction time depends
-on the parameters epsilon and C of the SVR.
+datapoint.
 
 """
-
+# %%
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
 
-import time
-
+# %%
+# Generate sample data
+# --------------------
 import numpy as np
-
-from sklearn.svm import SVR
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import learning_curve
-from sklearn.kernel_ridge import KernelRidge
-import matplotlib.pyplot as plt
 
 rng = np.random.RandomState(42)
 
-# #############################################################################
-# Generate sample data
 X = 5 * rng.rand(10000, 1)
 y = np.sin(X).ravel()
 
@@ -57,9 +36,16 @@ y[::5] += 3 * (0.5 - rng.rand(X.shape[0] // 5))
 
 X_plot = np.linspace(0, 5, 100000)[:, None]
 
-# #############################################################################
-# Fit regression model
+# %%
+# Construct the kernel-based regression models
+# --------------------------------------------
+
+from sklearn.model_selection import GridSearchCV
+from sklearn.svm import SVR
+from sklearn.kernel_ridge import KernelRidge
+
 train_size = 100
+
 svr = GridSearchCV(
     SVR(kernel="rbf", gamma=0.1),
     param_grid={"C": [1e0, 1e1, 1e2, 1e3], "gamma": np.logspace(-2, 2, 5)},
@@ -70,14 +56,22 @@ kr = GridSearchCV(
     param_grid={"alpha": [1e0, 0.1, 1e-2, 1e-3], "gamma": np.logspace(-2, 2, 5)},
 )
 
+# %%
+# Compare times of SVR and Kernel Ridge Regression
+# ------------------------------------------------
+
+import time
+
 t0 = time.time()
 svr.fit(X[:train_size], y[:train_size])
 svr_fit = time.time() - t0
+print(f"Best SVR with params: {svr.best_params_} and R2 score: {svr.best_score_:.3f}")
 print("SVR complexity and bandwidth selected and model fitted in %.3f s" % svr_fit)
 
 t0 = time.time()
 kr.fit(X[:train_size], y[:train_size])
 kr_fit = time.time() - t0
+print(f"Best KRR with params: {kr.best_params_} and R2 score: {kr.best_score_:.3f}")
 print("KRR complexity and bandwidth selected and model fitted in %.3f s" % kr_fit)
 
 sv_ratio = svr.best_estimator_.support_.shape[0] / train_size
@@ -93,9 +87,12 @@ y_kr = kr.predict(X_plot)
 kr_predict = time.time() - t0
 print("KRR prediction for %d inputs in %.3f s" % (X_plot.shape[0], kr_predict))
 
-
-# #############################################################################
+# %%
 # Look at the results
+# -------------------
+
+import matplotlib.pyplot as plt
+
 sv_ind = svr.best_estimator_.support_
 plt.scatter(
     X[sv_ind],
@@ -119,15 +116,28 @@ plt.plot(
 plt.xlabel("data")
 plt.ylabel("target")
 plt.title("SVR versus Kernel Ridge")
-plt.legend()
+_ = plt.legend()
 
-# Visualize training and prediction time
+# %%
+# The previous figure compares the learned model of KRR and SVR when both
+# complexity/regularization and bandwidth of the RBF kernel are optimized using
+# grid-search. The learned functions are very similar; however, fitting KRR is
+# approximatively 3-4 times faster than fitting SVR (both with grid-search).
+#
+# Prediction of 100000 target values could be in theory approximately three
+# times faster with SVR since it has learned a sparse model using only
+# approximately 1/3 of the training datapoints as support vectors. However, in
+# practice, this is not necessarily the case because of implementation details
+# in the way the kernel function is computed for each model that can make the
+# KRR model as fast or even faster despite computing more arithmetic
+# operations.
+
+# %%
+# Visualize training and prediction times
+# ---------------------------------------
+
 plt.figure()
 
-# Generate sample data
-X = 5 * rng.rand(10000, 1)
-y = np.sin(X).ravel()
-y[::5] += 3 * (0.5 - rng.rand(X.shape[0] // 5))
 sizes = np.logspace(1, 3.8, 7).astype(int)
 for name, estimator in {
     "KRR": KernelRidge(kernel="rbf", alpha=0.01, gamma=10),
@@ -164,9 +174,24 @@ plt.yscale("log")
 plt.xlabel("Train size")
 plt.ylabel("Time (seconds)")
 plt.title("Execution Time")
-plt.legend(loc="best")
+_ = plt.legend(loc="best")
 
-# Visualize learning curves
+# %%
+# This figure compares the time for fitting and prediction of KRR and SVR for
+# different sizes of the training set. Fitting KRR is faster than SVR for
+# medium-sized training sets (less than a few thousand samples); however, for
+# larger training sets SVR scales better. With regard to prediction time, SVR
+# should be faster than KRR for all sizes of the training set because of the
+# learned sparse solution, however this is not necessarily the case in practice
+# because of implementation details. Note that the degree of sparsity and thus
+# the prediction time depends on the parameters epsilon and C of the SVR.
+
+# %%
+# Visualize the learning curves
+# -----------------------------
+
+from sklearn.model_selection import learning_curve
+
 plt.figure()
 
 svr = SVR(kernel="rbf", C=1e1, gamma=0.1)
@@ -188,8 +213,8 @@ train_sizes_abs, train_scores_kr, test_scores_kr = learning_curve(
     cv=10,
 )
 
-plt.plot(train_sizes, -test_scores_svr.mean(1), "o-", color="r", label="SVR")
-plt.plot(train_sizes, -test_scores_kr.mean(1), "o-", color="g", label="KRR")
+plt.plot(train_sizes, -test_scores_kr.mean(1), "o--", color="g", label="KRR")
+plt.plot(train_sizes, -test_scores_svr.mean(1), "o--", color="r", label="SVR")
 plt.xlabel("Train size")
 plt.ylabel("Mean Squared Error")
 plt.title("Learning curves")

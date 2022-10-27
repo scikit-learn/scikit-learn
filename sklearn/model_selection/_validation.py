@@ -360,7 +360,7 @@ def _warn_or_raise_about_fit_failures(results, error_score):
         if num_failed_fits == num_fits:
             all_fits_failed_message = (
                 f"\nAll the {num_fits} fits failed.\n"
-                "It is is very likely that your model is misconfigured.\n"
+                "It is very likely that your model is misconfigured.\n"
                 "You can try to debug the error by setting error_score='raise'.\n\n"
                 f"Below are more details about the failures:\n{fit_errors_summary}"
             )
@@ -1180,7 +1180,7 @@ def permutation_test_score(
     scoring=None,
     fit_params=None,
 ):
-    """Evaluate the significance of a cross-validated score with permutations
+    """Evaluate the significance of a cross-validated score with permutations.
 
     Permutes targets to generate 'randomized data' and compute the empirical
     p-value against the null hypothesis that features and targets are
@@ -1217,12 +1217,6 @@ def permutation_test_score(
         also passed on to the ``split`` method of the cross-validator. The
         cross-validator uses them for grouping the samples  while splitting
         the dataset into train/test set.
-
-    scoring : str or callable, default=None
-        A single str (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
-
-        If `None` the estimator's score method is used.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -1261,6 +1255,12 @@ def permutation_test_score(
     verbose : int, default=0
         The verbosity level.
 
+    scoring : str or callable, default=None
+        A single str (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
+
+        If `None` the estimator's score method is used.
+
     fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
@@ -1292,7 +1292,6 @@ def permutation_test_score(
         Performance
         <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
         Journal of Machine Learning Research (2010) vol. 11
-
     """
     X, y, groups = indexable(X, y, groups)
 
@@ -1497,10 +1496,31 @@ def learning_curve(
         Times spent for scoring in seconds. Only present if ``return_times``
         is True.
 
-    Notes
-    -----
-    See :ref:`examples/model_selection/plot_learning_curve.py
-    <sphx_glr_auto_examples_model_selection_plot_learning_curve.py>`
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> from sklearn.model_selection import learning_curve
+    >>> X, y = make_classification(n_samples=100, n_features=10, random_state=42)
+    >>> tree = DecisionTreeClassifier(max_depth=4, random_state=42)
+    >>> train_size_abs, train_scores, test_scores = learning_curve(
+    ...     tree, X, y, train_sizes=[0.3, 0.6, 0.9]
+    ... )
+    >>> for train_size, cv_train_scores, cv_test_scores in zip(
+    ...     train_size_abs, train_scores, test_scores
+    ... ):
+    ...     print(f"{train_size} samples were used to train the model")
+    ...     print(f"The average train accuracy is {cv_train_scores.mean():.2f}")
+    ...     print(f"The average test accuracy is {cv_test_scores.mean():.2f}")
+    24 samples were used to train the model
+    The average train accuracy is 1.00
+    The average test accuracy is 0.85
+    48 samples were used to train the model
+    The average train accuracy is 1.00
+    The average test accuracy is 0.90
+    72 samples were used to train the model
+    The average train accuracy is 1.00
+    The average test accuracy is 0.93
     """
     if exploit_incremental_learning and not hasattr(estimator, "partial_fit"):
         raise ValueError(
@@ -1805,17 +1825,17 @@ def validation_curve(
     verbose : int, default=0
         Controls the verbosity: the higher, the more messages.
 
-    fit_params : dict, default=None
-        Parameters to pass to the fit method of the estimator.
-
-        .. versionadded:: 0.24
-
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised.
 
         .. versionadded:: 0.20
+
+    fit_params : dict, default=None
+        Parameters to pass to the fit method of the estimator.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -1828,7 +1848,6 @@ def validation_curve(
     Notes
     -----
     See :ref:`sphx_glr_auto_examples_model_selection_plot_validation_curve.py`
-
     """
     X, y, groups = indexable(X, y, groups)
 

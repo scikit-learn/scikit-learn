@@ -133,7 +133,7 @@ Linear model: from regression to sparsity
 .. topic:: Diabetes dataset
 
     The diabetes dataset consists of 10 physiological variables (age,
-    sex, weight, blood pressure) measure on 442 patients, and an
+    sex, weight, blood pressure) measured on 442 patients, and an
     indication of disease progression after one year::
 
         >>> diabetes_X, diabetes_y = datasets.load_diabetes(return_X_y=True)
@@ -309,7 +309,7 @@ informative features and set non-informative ones, like feature 2 to 0. Ridge
 regression will decrease their contribution, but not set them to zero. Another
 penalization approach, called :ref:`lasso` (least absolute shrinkage and
 selection operator), can set some coefficients to zero. Such methods are
-called **sparse method** and sparsity can be seen as an
+called **sparse methods** and sparsity can be seen as an
 application of Occam's razor: *prefer simpler models*.
 
 ::

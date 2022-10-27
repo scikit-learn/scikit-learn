@@ -4,17 +4,17 @@
 from copy import deepcopy
 
 import numpy as np
-import numbers
+from numbers import Integral, Real
 
 from ._base import SelectorMixin
 from ._base import _get_feature_importances
 from ..base import BaseEstimator, clone, MetaEstimatorMixin
 from ..utils._tags import _safe_tags
-from ..utils.validation import check_is_fitted
+from ..utils.validation import check_is_fitted, check_scalar, _num_features
+from ..utils._param_validation import HasMethods, Interval, Options
 
 from ..exceptions import NotFittedError
 from ..utils.metaestimators import available_if
-from ..utils.validation import check_scalar
 
 
 def _calculate_threshold(estimator, importances, threshold):
@@ -23,9 +23,13 @@ def _calculate_threshold(estimator, importances, threshold):
     if threshold is None:
         # determine default from estimator
         est_name = estimator.__class__.__name__
-        if (
-            hasattr(estimator, "penalty") and estimator.penalty == "l1"
-        ) or "Lasso" in est_name:
+        is_l1_penalized = hasattr(estimator, "penalty") and estimator.penalty == "l1"
+        is_lasso = "Lasso" in est_name
+        is_elasticnet_l1_penalized = "ElasticNet" in est_name and (
+            (hasattr(estimator, "l1_ratio_") and np.isclose(estimator.l1_ratio_, 1.0))
+            or (hasattr(estimator, "l1_ratio") and np.isclose(estimator.l1_ratio, 1.0))
+        )
+        if is_l1_penalized or is_lasso or is_elasticnet_l1_penalized:
             # the natural default threshold is 0 when l1 penalty was used
             threshold = 1e-5
         else:
@@ -94,9 +98,9 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
 
     threshold : str or float, default=None
         The threshold value to use for feature selection. Features whose
-        importance is greater or equal are kept while the others are
-        discarded. If "median" (resp. "mean"), then the ``threshold`` value is
-        the median (resp. the mean) of the feature importances. A scaling
+        absolute importance value is greater or equal are kept while the others
+        are discarded. If "median" (resp. "mean"), then the ``threshold`` value
+        is the median (resp. the mean) of the feature importances. A scaling
         factor (e.g., "1.25*mean") may also be used. If None and if the
         estimator has a parameter penalty set to l1, either explicitly
         or implicitly (e.g, Lasso), the threshold used is 1e-5.
@@ -120,7 +124,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         - If an integer, then it specifies the maximum number of features to
           allow.
         - If a callable, then it specifies how to calculate the maximum number of
-          features allowed by using the output of `max_feaures(X)`.
+          features allowed by using the output of `max_features(X)`.
         - If `None`, then all features are kept.
 
         To only select based on ``max_features``, set ``threshold=-np.inf``.
@@ -226,6 +230,19 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
     2
     """
 
+    _parameter_constraints: dict = {
+        "estimator": [HasMethods("fit")],
+        "threshold": [Interval(Real, None, None, closed="both"), str, None],
+        "prefit": ["boolean"],
+        "norm_order": [
+            Interval(Integral, None, -1, closed="right"),
+            Interval(Integral, 1, None, closed="left"),
+            Options(Real, {np.inf, -np.inf}),
+        ],
+        "max_features": [Interval(Integral, 0, None, closed="left"), callable, None],
+        "importance_getter": [str, callable],
+    }
+
     def __init__(
         self,
         estimator,
@@ -263,9 +280,7 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 "When `prefit=True` and `max_features` is a callable, call `fit` "
                 "before calling `transform`."
             )
-        elif max_features is not None and not isinstance(
-            max_features, numbers.Integral
-        ):
+        elif max_features is not None and not isinstance(max_features, Integral):
             raise ValueError(
                 f"`max_features` must be an integer. Got `max_features={max_features}` "
                 "instead."
@@ -287,6 +302,24 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         mask[scores < threshold] = False
         return mask
 
+    def _check_max_features(self, X):
+        if self.max_features is not None:
+            n_features = _num_features(X)
+
+            if callable(self.max_features):
+                max_features = self.max_features(X)
+            else:  # int
+                max_features = self.max_features
+
+            check_scalar(
+                max_features,
+                "max_features",
+                Integral,
+                min_val=0,
+                max_val=n_features,
+            )
+            self.max_features_ = max_features
+
     def fit(self, X, y=None, **fit_params):
         """Fit the SelectFromModel meta-transformer.
 
@@ -307,31 +340,8 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
-        if self.max_features is not None:
-            if isinstance(self.max_features, numbers.Integral):
-                check_scalar(
-                    self.max_features,
-                    "max_features",
-                    numbers.Integral,
-                    min_val=0,
-                    max_val=len(X[0]),
-                )
-                self.max_features_ = self.max_features
-            elif callable(self.max_features):
-                max_features = self.max_features(X)
-                check_scalar(
-                    max_features,
-                    "max_features(X)",
-                    numbers.Integral,
-                    min_val=0,
-                    max_val=len(X[0]),
-                )
-                self.max_features_ = max_features
-            else:
-                raise TypeError(
-                    "'max_features' must be either an int or a callable that takes"
-                    f" 'X' as input. Got {self.max_features} instead."
-                )
+        self._validate_params()
+        self._check_max_features(X)
 
         if self.prefit:
             try:
@@ -385,8 +395,14 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
         self : object
             Fitted estimator.
         """
+        first_call = not hasattr(self, "estimator_")
+
+        if first_call:
+            self._validate_params()
+            self._check_max_features(X)
+
         if self.prefit:
-            if not hasattr(self, "estimator_"):
+            if first_call:
                 try:
                     check_is_fitted(self.estimator)
                 except NotFittedError as exc:
@@ -397,9 +413,15 @@ class SelectFromModel(MetaEstimatorMixin, SelectorMixin, BaseEstimator):
                 self.estimator_ = deepcopy(self.estimator)
             return self
 
-        if not hasattr(self, "estimator_"):
+        if first_call:
             self.estimator_ = clone(self.estimator)
         self.estimator_.partial_fit(X, y, **fit_params)
+
+        if hasattr(self.estimator_, "feature_names_in_"):
+            self.feature_names_in_ = self.estimator_.feature_names_in_
+        else:
+            self._check_feature_names(X, reset=first_call)
+
         return self
 
     @property

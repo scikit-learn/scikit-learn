@@ -144,8 +144,6 @@ embeddings = {
     ),
     "t-SNE embeedding": TSNE(
         n_components=2,
-        init="pca",
-        learning_rate="auto",
         n_iter=500,
         n_iter_without_progress=150,
         n_jobs=2,
