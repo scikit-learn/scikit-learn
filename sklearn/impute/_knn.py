@@ -73,8 +73,10 @@ class KNNImputer(_BaseImputer):
         time.
 
     keep_empty_features : bool, default=False
-        If true, features whose all values are missing during fit/train time
-        are not removed during transform/test time.
+        If True, features whose all values are missing when calling `fit` are
+        not removed when calling `transform`. The imputed value is `0`.
+
+        .. versionadded:: 1.2
 
     Attributes
     ----------
@@ -274,8 +276,11 @@ class KNNImputer(_BaseImputer):
         # Removes columns where the training data is all nan
         if not np.any(mask):
             # No missing values in X
-            # Remove columns where the training data is all nan
-            Xc = X if self.keep_empty_features else X[:, valid_mask]
+            if self.keep_empty_features:
+                Xc = X
+                Xc[:, ~valid_mask] = 0
+            else:
+                Xc = X[:, valid_mask]
             return Xc
 
         row_missing_idx = np.flatnonzero(mask.any(axis=1))
@@ -352,7 +357,12 @@ class KNNImputer(_BaseImputer):
             # process_chunk modifies X in place. No return value.
             pass
 
-        Xc = X if self.keep_empty_features else X[:, valid_mask]
+        if self.keep_empty_features:
+            Xc = X
+            Xc[:, ~valid_mask] = 0
+        else:
+            Xc = X[:, valid_mask]
+
         return super()._concatenate_indicator(Xc, X_indicator)
 
     def get_feature_names_out(self, input_features=None):

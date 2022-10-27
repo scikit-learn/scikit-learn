@@ -1554,17 +1554,19 @@ def test_iterative_imputer_keep_empty_features(initial_strategy):
         assert (X_ft[:, X_missing] == 0).all()
 
 
-def test_knn_imputer_keep_empty_features():
+@pytest.mark.parametrize("keep_empty_features", [True, False])
+def test_knn_imputer_keep_empty_features(keep_empty_features):
+    """Check the behaviour of `keep_empty_features` for `KNNImputer`."""
     X = np.array([[1, np.nan, 2], [3, np.nan, np.nan]])
-    X_missing = np.array([1])
 
-    imputer = KNNImputer(keep_empty_features=True)
-    X_ft = imputer.fit_transform(X)
-    X_t = imputer.fit(X).transform(X)
+    imputer = KNNImputer(keep_empty_features=keep_empty_features)
+    X_imputed = imputer.fit_transform(X)
 
-    assert array_with_nan_equal(X_ft, X_t).all()
-    assert X.shape == X_ft.shape
-    assert array_with_nan_equal(X_ft[:, X_missing], np.nan).all()
+    if keep_empty_features:
+        assert X_imputed.shape == X.shape
+        assert_array_equal(X_imputed[:, 1], 0)
+    else:
+        assert X_imputed.shape == (X.shape[0], X.shape[1] - 1)
 
 
 def test_simple_impute_pd_na():

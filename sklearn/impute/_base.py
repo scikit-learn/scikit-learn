@@ -212,6 +212,8 @@ class SimpleImputer(_BaseImputer):
         apart from the case where `strategy="constant"` where `fill_value` will
         be used instead.
 
+        .. versionadded:: 1.2
+
     Attributes
     ----------
     statistics_ : array of shape (n_features,)
