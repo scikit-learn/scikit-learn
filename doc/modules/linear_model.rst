@@ -848,15 +848,15 @@ Ridge Regression`_, see the example below.
 Logistic regression
 ===================
 
-LogisticRegression, despite its name, is implemented as a linear model for
-classification rather than regression in terms of scikit-learn/ML nomenclature.
-Logistic regression is also known in the literature as logit regression,
+The logistic regression is implemented in :class:`LogisticRegression`. Despite
+its name, it is implemented as a linear model for classification rather than
+regression in terms of the scikit-learn/ML nomenclature. The logistic
+regression is also known in the literature as logit regression,
 maximum-entropy classification (MaxEnt) or the log-linear classifier. In this
-model, the probabilities describing the possible outcomes of a single trial are
-modeled using a `logistic function
+model, the probabilities describing the possible outcomes of a single trial
+are modeled using a `logistic function
 <https://en.wikipedia.org/wiki/Logistic_function>`_.
 
-Logistic regression is implemented in :class:`LogisticRegression`.
 This implementation can fit binary, One-vs-Rest, or multinomial logistic
 regression with optional :math:`\ell_1`, :math:`\ell_2` or Elastic-Net
 regularization.
