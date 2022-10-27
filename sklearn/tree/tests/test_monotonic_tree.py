@@ -21,7 +21,7 @@ def test_montonic_constraints_classifications(depth_first, global_random_seed):
         random_state=0,
     )
     X_train, y_train = X[:n_samples_train], y[:n_samples_train]
-    X_test, y_test = X[n_samples_train:], y[n_samples_train:]
+    X_test, _ = X[n_samples_train:], y[n_samples_train:]
 
     X_test_0incr, X_test_0decr = np.copy(X_test), np.copy(X_test)
     X_test_1incr, X_test_1decr = np.copy(X_test), np.copy(X_test)
