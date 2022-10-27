@@ -285,10 +285,6 @@ METRIC_UNDEFINED_MULTICLASS = {
     "partial_roc_auc",
     "roc_auc_score",
     "weighted_roc_auc",
-    "average_precision_score",
-    "weighted_average_precision_score",
-    "micro_average_precision_score",
-    "samples_average_precision_score",
     "jaccard_score",
     # with default average='binary', multiclass is prohibited
     "precision_score",
