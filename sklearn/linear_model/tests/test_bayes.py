@@ -6,14 +6,12 @@
 from math import log
 
 import numpy as np
-from scipy.linalg import pinvh
 import pytest
 
 
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_less
-from sklearn.utils._testing import assert_raise_message
 from sklearn.utils import check_random_state
 from sklearn.linear_model import BayesianRidge, ARDRegression
 from sklearn.linear_model import Ridge
@@ -21,15 +19,6 @@ from sklearn import datasets
 from sklearn.utils.extmath import fast_logdet
 
 diabetes = datasets.load_diabetes()
-
-
-def test_n_iter():
-    """Check value of n_iter."""
-    X = np.array([[1], [2], [6], [8], [10]])
-    y = np.array([1, 2, 6, 8, 10])
-    clf = BayesianRidge(n_iter=0)
-    msg = "n_iter should be greater than or equal to 1."
-    assert_raise_message(ValueError, msg, clf.fit, X, y)
 
 
 def test_bayesian_ridge_scores():
@@ -60,8 +49,8 @@ def test_bayesian_ridge_score_values():
     n_samples = X.shape[0]
     # check with initial values of alpha and lambda (see code for the values)
     eps = np.finfo(np.float64).eps
-    alpha_ = 1. / (np.var(y) + eps)
-    lambda_ = 1.
+    alpha_ = 1.0 / (np.var(y) + eps)
+    lambda_ = 1.0
 
     # value of the parameters of the Gamma hyperpriors
     alpha_1 = 0.1
@@ -72,15 +61,22 @@ def test_bayesian_ridge_score_values():
     # compute score using formula of docstring
     score = lambda_1 * log(lambda_) - lambda_2 * lambda_
     score += alpha_1 * log(alpha_) - alpha_2 * alpha_
-    M = 1. / alpha_ * np.eye(n_samples) + 1. / lambda_ * np.dot(X, X.T)
-    M_inv = pinvh(M)
-    score += - 0.5 * (fast_logdet(M) + np.dot(y.T, np.dot(M_inv, y)) +
-                      n_samples * log(2 * np.pi))
+    M = 1.0 / alpha_ * np.eye(n_samples) + 1.0 / lambda_ * np.dot(X, X.T)
+    M_inv_dot_y = np.linalg.solve(M, y)
+    score += -0.5 * (
+        fast_logdet(M) + np.dot(y.T, M_inv_dot_y) + n_samples * log(2 * np.pi)
+    )
 
     # compute score with BayesianRidge
-    clf = BayesianRidge(alpha_1=alpha_1, alpha_2=alpha_2,
-                        lambda_1=lambda_1, lambda_2=lambda_2,
-                        n_iter=1, fit_intercept=False, compute_score=True)
+    clf = BayesianRidge(
+        alpha_1=alpha_1,
+        alpha_2=alpha_2,
+        lambda_1=lambda_1,
+        lambda_2=lambda_2,
+        n_iter=1,
+        fit_intercept=False,
+        compute_score=True,
+    )
     clf.fit(X, y)
 
     assert_almost_equal(clf.scores_[0], score, decimal=9)
@@ -109,7 +105,8 @@ def test_bayesian_sample_weights():
     # lambda_ and alpha_ from the Bayesian Ridge model must be identical
     br_model = BayesianRidge(compute_score=True).fit(X, y, sample_weight=w)
     rr_model = Ridge(alpha=br_model.lambda_ / br_model.alpha_).fit(
-        X, y, sample_weight=w)
+        X, y, sample_weight=w
+    )
     assert_array_almost_equal(rr_model.coef_, br_model.coef_)
     assert_almost_equal(rr_model.intercept_, br_model.intercept_)
 
@@ -129,14 +126,14 @@ def test_toy_bayesian_ridge_object():
 def test_bayesian_initial_params():
     # Test BayesianRidge with initial values (alpha_init, lambda_init)
     X = np.vander(np.linspace(0, 4, 5), 4)
-    y = np.array([0., 1., 0., -1., 0.])    # y = (x^3 - 6x^2 + 8x) / 3
+    y = np.array([0.0, 1.0, 0.0, -1.0, 0.0])  # y = (x^3 - 6x^2 + 8x) / 3
 
     # In this case, starting from the default initial values will increase
     # the bias of the fitted curve. So, lambda_init should be small.
-    reg = BayesianRidge(alpha_init=1., lambda_init=1e-3)
+    reg = BayesianRidge(alpha_init=1.0, lambda_init=1e-3)
     # Check the R2 score nearly equals to one.
     r2 = reg.fit(X, y).score(X, y)
-    assert_almost_equal(r2, 1.)
+    assert_almost_equal(r2, 1.0)
 
 
 def test_prediction_bayesian_ridge_ard_with_constant_input():
@@ -147,10 +144,8 @@ def test_prediction_bayesian_ridge_ard_with_constant_input():
     random_state = check_random_state(42)
     constant_value = random_state.rand()
     X = random_state.random_sample((n_samples, n_features))
-    y = np.full(n_samples, constant_value,
-                dtype=np.array(constant_value).dtype)
-    expected = np.full(n_samples, constant_value,
-                       dtype=np.array(constant_value).dtype)
+    y = np.full(n_samples, constant_value, dtype=np.array(constant_value).dtype)
+    expected = np.full(n_samples, constant_value, dtype=np.array(constant_value).dtype)
 
     for clf in [BayesianRidge(), ARDRegression()]:
         y_pred = clf.fit(X, y).predict(X)
@@ -166,8 +161,7 @@ def test_std_bayesian_ridge_ard_with_constant_input():
     random_state = check_random_state(42)
     constant_value = random_state.rand()
     X = random_state.random_sample((n_samples, n_features))
-    y = np.full(n_samples, constant_value,
-                dtype=np.array(constant_value).dtype)
+    y = np.full(n_samples, constant_value, dtype=np.array(constant_value).dtype)
     expected_upper_boundary = 0.01
 
     for clf in [BayesianRidge(), ARDRegression()]:
@@ -178,8 +172,7 @@ def test_std_bayesian_ridge_ard_with_constant_input():
 def test_update_of_sigma_in_ard():
     # Checks that `sigma_` is updated correctly after the last iteration
     # of the ARDRegression algorithm. See issue #10128.
-    X = np.array([[1, 0],
-                  [0, 0]])
+    X = np.array([[1, 0], [0, 0]])
     y = np.array([0, 0])
     clf = ARDRegression(n_iter=1)
     clf.fit(X, y)
@@ -202,12 +195,11 @@ def test_toy_ard_object():
     assert_array_almost_equal(clf.predict(test), [1, 3, 4], 2)
 
 
-@pytest.mark.parametrize('seed', range(100))
-@pytest.mark.parametrize('n_samples, n_features', ((10, 100), (100, 10)))
-def test_ard_accuracy_on_easy_problem(seed, n_samples, n_features):
+@pytest.mark.parametrize("n_samples, n_features", ((10, 100), (100, 10)))
+def test_ard_accuracy_on_easy_problem(global_random_seed, n_samples, n_features):
     # Check that ARD converges with reasonable accuracy on an easy problem
     # (Github issue #14055)
-    X = np.random.RandomState(seed=seed).normal(size=(250, 3))
+    X = np.random.RandomState(global_random_seed).normal(size=(250, 3))
     y = X[:, 1]
 
     regressor = ARDRegression()
@@ -249,13 +241,12 @@ def test_return_std():
         assert_array_almost_equal(y_std2, noise_mult, decimal=decimal)
 
 
-@pytest.mark.parametrize('seed', range(10))
-def test_update_sigma(seed):
+def test_update_sigma(global_random_seed):
     # make sure the two update_sigma() helpers are equivalent. The woodbury
     # formula is used when n_samples < n_features, and the other one is used
     # otherwise.
 
-    rng = np.random.RandomState(seed)
+    rng = np.random.RandomState(global_random_seed)
 
     # set n_samples == n_features to avoid instability issues when inverting
     # the matrices. Using the woodbury formula would be unstable when
@@ -274,11 +265,30 @@ def test_update_sigma(seed):
     np.testing.assert_allclose(sigma, sigma_woodbury)
 
 
-def test_ard_regression_predict_normalize_true():
-    """Check that we can predict with `normalize=True` and `return_std=True`.
-    Non-regression test for:
-    https://github.com/scikit-learn/scikit-learn/issues/18605
-    """
-    clf = ARDRegression(normalize=True)
-    clf.fit([[0, 0], [1, 1], [2, 2]], [0, 1, 2])
-    clf.predict([[1, 1]], return_std=True)
+@pytest.mark.parametrize("dtype", [np.float32, np.float64])
+@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
+def test_dtype_match(dtype, Estimator):
+    # Test that np.float32 input data is not cast to np.float64 when possible
+    X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]], dtype=dtype)
+    y = np.array([1, 2, 3, 2, 0, 4, 5]).T
+
+    model = Estimator()
+    # check type consistency
+    model.fit(X, y)
+    attributes = ["coef_", "sigma_"]
+    for attribute in attributes:
+        assert getattr(model, attribute).dtype == X.dtype
+
+    y_mean, y_std = model.predict(X, return_std=True)
+    assert y_mean.dtype == X.dtype
+    assert y_std.dtype == X.dtype
+
+
+@pytest.mark.parametrize("Estimator", [BayesianRidge, ARDRegression])
+def test_dtype_correctness(Estimator):
+    X = np.array([[1, 1], [3, 4], [5, 7], [4, 1], [2, 6], [3, 10], [3, 2]])
+    y = np.array([1, 2, 3, 2, 0, 4, 5]).T
+    model = Estimator()
+    coef_32 = model.fit(X.astype(np.float32), y).coef_
+    coef_64 = model.fit(X.astype(np.float64), y).coef_
+    np.testing.assert_allclose(coef_32, coef_64, rtol=1e-4)

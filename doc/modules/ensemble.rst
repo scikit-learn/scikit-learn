@@ -61,7 +61,7 @@ way they draw random subsets of the training set:
 
 In scikit-learn, bagging methods are offered as a unified
 :class:`BaggingClassifier` meta-estimator  (resp. :class:`BaggingRegressor`),
-taking as input a user-specified base estimator along with parameters
+taking as input a user-specified estimator along with parameters
 specifying the strategy to draw random subsets. In particular, ``max_samples``
 and ``max_features`` control the size of the subsets (in terms of samples and
 features), while ``bootstrap`` and ``bootstrap_features`` control whether
@@ -69,7 +69,7 @@ samples and features are drawn with or without replacement. When using a subset
 of the available samples the generalization accuracy can be estimated with the
 out-of-bag samples by setting ``oob_score=True``. As an example, the
 snippet below illustrates how to instantiate a bagging ensemble of
-:class:`KNeighborsClassifier` base estimators, each built on random subsets of
+:class:`KNeighborsClassifier` estimators, each built on random subsets of
 50% of the samples and 50% of the features.
 
     >>> from sklearn.ensemble import BaggingClassifier
@@ -207,19 +207,22 @@ results will stop getting significantly better beyond a critical number of
 trees. The latter is the size of the random subsets of features to consider
 when splitting a node. The lower the greater the reduction of variance, but
 also the greater the increase in bias. Empirical good default values are
-``max_features=None`` (always considering all features instead of a random
-subset) for regression problems, and ``max_features="sqrt"`` (using a random
-subset of size ``sqrt(n_features)``) for classification tasks (where
-``n_features`` is the number of features in the data). Good results are often
-achieved when setting ``max_depth=None`` in combination with
-``min_samples_split=2`` (i.e., when fully developing the trees). Bear in mind
-though that these values are usually not optimal, and might result in models
-that consume a lot of RAM. The best parameter values should always be
-cross-validated. In addition, note that in random forests, bootstrap samples
-are used by default (``bootstrap=True``) while the default strategy for
-extra-trees is to use the whole dataset (``bootstrap=False``). When using
-bootstrap sampling the generalization accuracy can be estimated on the left out
-or out-of-bag samples. This can be enabled by setting ``oob_score=True``.
+``max_features=1.0`` or equivalently ``max_features=None`` (always considering
+all features instead of a random subset) for regression problems, and
+``max_features="sqrt"`` (using a random subset of size ``sqrt(n_features)``)
+for classification tasks (where ``n_features`` is the number of features in
+the data). The default value of ``max_features=1.0`` is equivalent to bagged
+trees and more randomness can be achieved by setting smaller values (e.g. 0.3
+is a typical default in the literature). Good results are often achieved when
+setting ``max_depth=None`` in combination with ``min_samples_split=2`` (i.e.,
+when fully developing the trees). Bear in mind though that these values are
+usually not optimal, and might result in models that consume a lot of RAM.
+The best parameter values should always be cross-validated. In addition, note
+that in random forests, bootstrap samples are used by default
+(``bootstrap=True``) while the default strategy for extra-trees is to use the
+whole dataset (``bootstrap=False``). When using bootstrap sampling the
+generalization error can be estimated on the left out or out-of-bag samples.
+This can be enabled by setting ``oob_score=True``.
 
 .. note::
 
@@ -314,9 +317,9 @@ to the prediction function.
 
 .. topic:: References
 
- .. [L2014] G. Louppe,
-         "Understanding Random Forests: From Theory to Practice",
-         PhD Thesis, U. of Liege, 2014.
+ .. [L2014] G. Louppe, :arxiv:`"Understanding Random Forests: From Theory to
+    Practice" <1407.7502>`,
+    PhD Thesis, U. of Liege, 2014.
 
 .. _random_trees_embedding:
 
@@ -413,7 +416,7 @@ learners::
 The number of weak learners is controlled by the parameter ``n_estimators``. The
 ``learning_rate`` parameter controls the contribution of the weak learners in
 the final combination. By default, weak learners are decision stumps. Different
-weak learners can be specified through the ``base_estimator`` parameter.
+weak learners can be specified through the ``estimator`` parameter.
 The main parameters to tune to obtain good results are ``n_estimators`` and
 the complexity of the base estimators (e.g., its depth ``max_depth`` or
 minimum required number of samples to consider a split ``min_samples_split``).
@@ -455,10 +458,9 @@ Gradient Tree Boosting
 
 `Gradient Tree Boosting <https://en.wikipedia.org/wiki/Gradient_boosting>`_
 or Gradient Boosted Decision Trees (GBDT) is a generalization
-of boosting to arbitrary
-differentiable loss functions. GBDT is an accurate and effective
-off-the-shelf procedure that can be used for both regression and
-classification problems in a
+of boosting to arbitrary differentiable loss functions, see the seminal work of
+[Friedman2001]_. GBDT is an accurate and effective off-the-shelf procedure that can be
+used for both regression and classification problems in a
 variety of areas including Web search ranking and ecology.
 
 The module :mod:`sklearn.ensemble` provides methods
@@ -560,7 +562,7 @@ for regression which can be specified via the argument
 The figure below shows the results of applying :class:`GradientBoostingRegressor`
 with least squares loss and 500 base learners to the diabetes dataset
 (:func:`sklearn.datasets.load_diabetes`).
-The plot on the left shows the train and test error at each iteration.
+The plot shows the train and test error at each iteration.
 The train error at each iteration is stored in the
 :attr:`~GradientBoostingRegressor.train_score_` attribute
 of the gradient boosting model. The test error at each iterations can be obtained
@@ -620,7 +622,7 @@ We found that ``max_leaf_nodes=k`` gives comparable results to ``max_depth=k-1``
 but is significantly faster to train at the expense of a slightly higher
 training error.
 The parameter ``max_leaf_nodes`` corresponds to the variable ``J`` in the
-chapter on gradient boosting in [F2001]_ and is related to the parameter
+chapter on gradient boosting in [Friedman2001]_ and is related to the parameter
 ``interaction.depth`` in R's gbm package where ``max_leaf_nodes == interaction.depth + 1`` .
 
 Mathematical formulation
@@ -632,12 +634,12 @@ case.
 Regression
 ^^^^^^^^^^
 
-GBRT regressors are additive models whose prediction :math:`y_i` for a
+GBRT regressors are additive models whose prediction :math:`\hat{y}_i` for a
 given input :math:`x_i` is of the following form:
 
   .. math::
 
-    \hat{y_i} = F_M(x_i) = \sum_{m=1}^{M} h_m(x_i)
+    \hat{y}_i = F_M(x_i) = \sum_{m=1}^{M} h_m(x_i)
 
 where the :math:`h_m` are estimators called *weak learners* in the context
 of boosting. Gradient Tree Boosting uses :ref:`decision tree regressors
@@ -679,7 +681,7 @@ approximated as follows:
 .. note::
 
   Briefly, a first-order Taylor approximation says that
-  :math:`l(z) \approx l(a) + (z - a) \frac{\partial l(a)}{\partial a}`.
+  :math:`l(z) \approx l(a) + (z - a) \frac{\partial l}{\partial z}(a)`.
   Here, :math:`z` corresponds to :math:`F_{m - 1}(x_i) + h_m(x_i)`, and
   :math:`a` corresponds to :math:`F_{m-1}(x_i)`
 
@@ -704,13 +706,13 @@ space.
 
 .. note::
 
-  For some losses, e.g. the least absolute deviation (LAD) where the gradients
+  For some losses, e.g. ``'absolute_error'`` where the gradients
   are :math:`\pm 1`, the values predicted by a fitted :math:`h_m` are not
   accurate enough: the tree can only output integer values. As a result, the
   leaves values of the tree :math:`h_m` are modified once the tree is
   fitted, such that the leaves values minimize the loss :math:`L_m`. The
-  update is loss-dependent: for the LAD loss, the value of a leaf is updated
-  to the median of the samples in that leaf.
+  update is loss-dependent: for the absolute error loss, the value of
+  a leaf is updated to the median of the samples in that leaf.
 
 Classification
 ^^^^^^^^^^^^^^
@@ -721,9 +723,9 @@ homogeneous to a prediction: it cannot be a class, since the trees predict
 continuous values.
 
 The mapping from the value :math:`F_M(x_i)` to a class or a probability is
-loss-dependent. For the deviance (or log-loss), the probability that
+loss-dependent. For the log-loss, the probability that
 :math:`x_i` belongs to the positive class is modeled as :math:`p(y_i = 1 |
-x_i) = \sigma(F_M(x_i))` where :math:`\sigma` is the sigmoid function.
+x_i) = \sigma(F_M(x_i))` where :math:`\sigma` is the sigmoid or expit function.
 
 For multiclass classification, K trees (for K classes) are built at each of
 the :math:`M` iterations. The probability that :math:`x_i` belongs to class
@@ -747,12 +749,12 @@ the parameter ``loss``:
     * Squared error (``'squared_error'``): The natural choice for regression
       due to its superior computational properties. The initial model is
       given by the mean of the target values.
-    * Least absolute deviation (``'lad'``): A robust loss function for
+    * Absolute error (``'absolute_error'``): A robust loss function for
       regression. The initial model is given by the median of the
       target values.
     * Huber (``'huber'``): Another robust loss function that combines
       least squares and least absolute deviation; use ``alpha`` to
-      control the sensitivity with regards to outliers (see [F2001]_ for
+      control the sensitivity with regards to outliers (see [Friedman2001]_ for
       more details).
     * Quantile (``'quantile'``): A loss function for quantile regression.
       Use ``0 < alpha < 1`` to specify the quantile. This loss function
@@ -761,12 +763,12 @@ the parameter ``loss``:
 
   * Classification
 
-    * Binomial deviance (``'deviance'``): The negative binomial
-      log-likelihood loss function for binary classification (provides
-      probability estimates).  The initial model is given by the
+    * Binary log-loss (``'log-loss'``): The binomial
+      negative log-likelihood loss function for binary classification. It provides
+      probability estimates.  The initial model is given by the
       log odds-ratio.
-    * Multinomial deviance (``'deviance'``): The negative multinomial
-      log-likelihood loss function for multi-class classification with
+    * Multi-class log-loss (``'log-loss'``): The multinomial
+      negative log-likelihood loss function for multi-class classification with
       ``n_classes`` mutually exclusive classes. It provides
       probability estimates.  The initial model is given by the
       prior probability of each class. At each iteration ``n_classes``
@@ -774,7 +776,7 @@ the parameter ``loss``:
       inefficient for data sets with a large number of classes.
     * Exponential loss (``'exponential'``): The same loss function
       as :class:`AdaBoostClassifier`. Less robust to mislabeled
-      examples than ``'deviance'``; can only be used for binary
+      examples than ``'log-loss'``; can only be used for binary
       classification.
 
 .. _gradient_boosting_shrinkage:
@@ -782,7 +784,7 @@ the parameter ``loss``:
 Shrinkage via learning rate
 ---------------------------
 
-[F2001]_ proposed a simple regularization strategy that scales
+[Friedman2001]_ proposed a simple regularization strategy that scales
 the contribution of each weak learner by a constant factor :math:`\nu`:
 
 .. math::
@@ -806,7 +808,7 @@ stopping. For a more detailed discussion of the interaction between
 Subsampling
 -----------
 
-[F1999]_ proposed stochastic gradient boosting, which combines gradient
+[Friedman2002]_ proposed stochastic gradient boosting, which combines gradient
 boosting with bootstrap averaging (bagging). At each iteration
 the base classifier is trained on a fraction ``subsample`` of
 the available training data. The subsample is drawn without replacement.
@@ -824,7 +826,7 @@ does poorly.
    :scale: 75
 
 Another strategy to reduce the variance is by subsampling the features
-analogous to the random splits in :class:`RandomForestClassifier` .
+analogous to the random splits in :class:`RandomForestClassifier`.
 The number of subsampled features can be controlled via the ``max_features``
 parameter.
 
@@ -893,6 +895,19 @@ based on permutation of the features.
 
  * :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_regression.py`
 
+.. topic:: References
+
+  .. [Friedman2001] Friedman, J.H. (2001). :doi:`Greedy function approximation: A gradient
+      boosting machine <10.1214/aos/1013203451>`.
+      Annals of Statistics, 29, 1189-1232.
+
+  .. [Friedman2002] Friedman, J.H. (2002). `Stochastic gradient boosting.
+     <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_.
+     Computational Statistics & Data Analysis, 38, 367-378.
+
+  .. [R2007] G. Ridgeway (2006). `Generalized Boosted Models: A guide to the gbm
+     package <https://cran.r-project.org/web/packages/gbm/vignettes/gbm.pdf>`_
+
 .. _histogram_based_gradient_boosting:
 
 Histogram-Based Gradient Boosting
@@ -944,12 +959,13 @@ controls the number of iterations of the boosting process::
   0.8965
 
 Available losses for regression are 'squared_error',
-'least_absolute_deviation', which is less sensitive to outliers, and
+'absolute_error', which is less sensitive to outliers, and
 'poisson', which is well suited to model counts and frequencies. For
-classification, 'binary_crossentropy' is used for binary classification and
-'categorical_crossentropy' is used for multiclass classification. By default
-the loss is 'auto' and will select the appropriate loss depending on
-:term:`y` passed to :term:`fit`.
+classification, 'log_loss' is the only option. For binary classification it uses the
+binary log loss, also kown as binomial deviance or binary cross-entropy. For
+`n_classes >= 3`, it uses the multi-class log loss function, with multinomial deviance
+and categorical cross-entropy as alternative names. The appropriate loss version is
+selected based on :term:`y` passed to :term:`fit`.
 
 The size of the trees can be controlled through the ``max_leaf_nodes``,
 ``max_depth``, and ``min_samples_leaf`` parameters.
@@ -963,7 +979,7 @@ corresponds to :math:`\lambda` in equation (2) of [XGBoost]_.
 
 Note that **early-stopping is enabled by default if the number of samples is
 larger than 10,000**. The early-stopping behaviour is controlled via the
-``early-stopping``, ``scoring``, ``validation_fraction``,
+``early_stopping``, ``scoring``, ``validation_fraction``,
 ``n_iter_no_change``, and ``tol`` parameters. It is possible to early-stop
 using an arbitrary :term:`scorer`, or just the training or validation loss.
 Note that for technical reasons, using a scorer is significantly slower than
@@ -1117,33 +1133,38 @@ score should increase the probability of getting approved for a loan.
 Monotonic constraints allow you to incorporate such prior knowledge into the
 model.
 
-A positive monotonic constraint is a constraint of the form:
+For a predictor :math:`F` with two features:
 
-:math:`x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2)`,
-where :math:`F` is the predictor with two features.
+ - a **monotonic increase constraint** is a constraint of the form:
+    .. math::
+        x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2)
 
-Similarly, a negative monotonic constraint is of the form:
-
-:math:`x_1 \leq x_1' \implies F(x_1, x_2) \geq F(x_1', x_2)`.
-
-Note that monotonic constraints only constraint the output "all else being
-equal". Indeed, the following relation **is not enforced** by a positive
-constraint: :math:`x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2')`.
+ - a **monotonic decrease constraint** is a constraint of the form:
+    .. math::
+        x_1 \leq x_1' \implies F(x_1, x_2) \geq F(x_1', x_2)
 
 You can specify a monotonic constraint on each feature using the
 `monotonic_cst` parameter. For each feature, a value of 0 indicates no
-constraint, while -1 and 1 indicate a negative and positive constraint,
-respectively::
+constraint, while 1 and -1 indicate a monotonic increase and
+monotonic decrease constraint, respectively::
 
   >>> from sklearn.ensemble import HistGradientBoostingRegressor
 
-  ... # positive, negative, and no constraint on the 3 features
+  ... # monotonic increase, monotonic decrease, and no constraint on the 3 features
   >>> gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1, 0])
 
-In a binary classification context, imposing a monotonic constraint means
-that the feature is supposed to have a positive / negative effect on the
-probability to belong to the positive class. Monotonic constraints are not
-supported for multiclass context.
+In a binary classification context, imposing a monotonic increase (decrease) constraint means that higher values of the feature are supposed
+to have a positive (negative) effect on the probability of samples
+to belong to the positive class.
+
+Nevertheless, monotonic constraints only marginally constrain feature effects on the output.
+For instance, monotonic increase and decrease constraints cannot be used to enforce the
+following modelling constraint:
+
+    .. math::
+        x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2')
+
+Also, monotonic constraints are not supported for multiclass classification.
 
 .. note::
     Since categories are unordered quantities, it is not possible to enforce
@@ -1152,6 +1173,44 @@ supported for multiclass context.
 .. topic:: Examples:
 
   * :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
+
+.. _interaction_cst_hgbt:
+
+Interaction constraints
+-----------------------
+
+A priori, the histogram gradient boosting trees are allowed to use any feature
+to split a node into child nodes. This creates so called interactions between
+features, i.e. usage of different features as split along a branch. Sometimes,
+one wants to restrict the possible interactions, see [Mayer2022]_. This can be
+done by the parameter ``interaction_cst``, where one can specify the indices
+of features that are allowed to interact.
+For instance, with 3 features in total, ``interaction_cst=[{0}, {1}, {2}]``
+forbids all interactions.
+The constraints ``[{0, 1}, {1, 2}]`` specifies two groups of possibly
+interacting features. Features 0 and 1 may interact with each other, as well
+as features 1 and 2. But note that features 0 and 2 are forbidden to interact.
+The following depicts a tree and the possible splits of the tree:
+
+.. code-block:: none
+
+      1      <- Both constraint groups could be applied from now on
+     / \
+    1   2    <- Left split still fulfills both constraint groups.
+   / \ / \      Right split at feature 2 has only group {1, 2} from now on.
+
+LightGBM uses the same logic for overlapping groups.
+
+Note that features not listed in ``interaction_cst`` are automatically
+assigned an interaction group for themselves. With again 3 features, this
+means that ``[{0}]`` is equivalent to ``[{0}, {1, 2}]``.
+
+.. topic:: References
+
+  .. [Mayer2022] M. Mayer, S.C. Bourassa, M. Hoesli, and D.F. Scognamiglio.
+     2022. :doi:`Machine Learning Applications to Land and Structure Valuation
+     <10.3390/jrfm15050193>`.
+     Journal of Risk and Financial Management 15, no. 5: 193
 
 Low-level parallelism
 ---------------------
@@ -1206,17 +1265,16 @@ Finally, many parts of the implementation of
 
 .. topic:: References
 
-  .. [F1999] Friedmann, Jerome H., 2007, `"Stochastic Gradient Boosting"
-     <https://statweb.stanford.edu/~jhf/ftp/stobst.pdf>`_
-  .. [R2007] G. Ridgeway, "Generalized Boosted Models: A guide to the gbm
-     package", 2007
-  .. [XGBoost] Tianqi Chen, Carlos Guestrin, `"XGBoost: A Scalable Tree
-     Boosting System" <https://arxiv.org/abs/1603.02754>`_
+  .. [XGBoost] Tianqi Chen, Carlos Guestrin, :arxiv:`"XGBoost: A Scalable Tree
+     Boosting System" <1603.02754>`
+
   .. [LightGBM] Ke et. al. `"LightGBM: A Highly Efficient Gradient
      BoostingDecision Tree" <https://papers.nips.cc/paper/
      6907-lightgbm-a-highly-efficient-gradient-boosting-decision-tree>`_
-  .. [Fisher1958] Walter D. Fisher. `"On Grouping for Maximum Homogeneity"
-     <http://www.csiss.org/SPACE/workshops/2004/SAC/files/fisher.pdf>`_
+
+  .. [Fisher1958] Fisher, W.D. (1958). `"On Grouping for Maximum Homogeneity"
+     <http://csiss.ncgia.ucsb.edu/SPACE/workshops/2004/SAC/files/fisher.pdf>`_
+     Journal of the American Statistical Association, 53, 789-798.
 
 .. _voting_classifier:
 
@@ -1226,7 +1284,7 @@ Voting Classifier
 The idea behind the :class:`VotingClassifier` is to combine
 conceptually different machine learning classifiers and use a majority vote
 or the average predicted probabilities (soft vote) to predict the class labels.
-Such a classifier can be useful for a set of equally well performing model
+Such a classifier can be useful for a set of equally well performing models
 in order to balance out their individual weaknesses.
 
 
@@ -1318,7 +1376,7 @@ Here, the predicted class label is 2, since it has the
 highest average probability.
 
 The following example illustrates how the decision regions may change
-when a soft :class:`VotingClassifier` is used based on an linear Support
+when a soft :class:`VotingClassifier` is used based on a linear Support
 Vector Machine, a Decision Tree, and a K-nearest neighbor classifier::
 
    >>> from sklearn import datasets

@@ -2,6 +2,7 @@
 #          Thomas J Fan <thomasjpfan@gmail.com>
 # License: BSD 3 clause
 
+from numbers import Integral
 import numpy as np
 
 from ._base import _BaseImputer
@@ -9,11 +10,11 @@ from ..utils.validation import FLOAT_DTYPES
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import _NAN_METRICS
 from ..neighbors._base import _get_weights
-from ..neighbors._base import _check_weights
 from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
 from ..utils.validation import check_is_fitted
-from ..utils.validation import _deprecate_positional_args
+from ..utils.validation import _check_feature_names_in
+from ..utils._param_validation import Hidden, Interval, StrOptions
 
 
 class KNNImputer(_BaseImputer):
@@ -77,6 +78,24 @@ class KNNImputer(_BaseImputer):
         Indicator used to add binary indicators for missing values.
         ``None`` if add_indicator is False.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    SimpleImputer : Univariate imputer for completing missing values
+        with simple strategies.
+    IterativeImputer : Multivariate imputer that estimates values to impute for
+        each feature with missing values from all the others.
+
     References
     ----------
     * Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown, Trevor
@@ -96,21 +115,32 @@ class KNNImputer(_BaseImputer):
            [5.5, 6. , 5. ],
            [8. , 8. , 7. ]])
     """
-    @_deprecate_positional_args
-    def __init__(self, *, missing_values=np.nan, n_neighbors=5,
-                 weights="uniform", metric="nan_euclidean", copy=True,
-                 add_indicator=False):
-        super().__init__(
-            missing_values=missing_values,
-            add_indicator=add_indicator
-        )
+
+    _parameter_constraints: dict = {
+        **_BaseImputer._parameter_constraints,
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "weights": [StrOptions({"uniform", "distance"}), callable, Hidden(None)],
+        "metric": [StrOptions(set(_NAN_METRICS)), callable],
+        "copy": ["boolean"],
+    }
+
+    def __init__(
+        self,
+        *,
+        missing_values=np.nan,
+        n_neighbors=5,
+        weights="uniform",
+        metric="nan_euclidean",
+        copy=True,
+        add_indicator=False,
+    ):
+        super().__init__(missing_values=missing_values, add_indicator=add_indicator)
         self.n_neighbors = n_neighbors
         self.weights = weights
         self.metric = metric
         self.copy = copy
 
-    def _calc_impute(self, dist_pot_donors, n_neighbors,
-                     fit_X_col, mask_fit_X_col):
+    def _calc_impute(self, dist_pot_donors, n_neighbors, fit_X_col, mask_fit_X_col):
         """Helper function to impute a single column.
 
         Parameters
@@ -135,12 +165,14 @@ class KNNImputer(_BaseImputer):
             Imputed values for receiver.
         """
         # Get donors
-        donors_idx = np.argpartition(dist_pot_donors, n_neighbors - 1,
-                                     axis=1)[:, :n_neighbors]
+        donors_idx = np.argpartition(dist_pot_donors, n_neighbors - 1, axis=1)[
+            :, :n_neighbors
+        ]
 
-        # Get weight matrix from from distance matrix
+        # Get weight matrix from distance matrix
         donors_dist = dist_pot_donors[
-            np.arange(donors_idx.shape[0])[:, None], donors_idx]
+            np.arange(donors_idx.shape[0])[:, None], donors_idx
+        ]
 
         weight_matrix = _get_weights(donors_dist, self.weights)
 
@@ -164,29 +196,32 @@ class KNNImputer(_BaseImputer):
             Input data, where `n_samples` is the number of samples and
             `n_features` is the number of features.
 
+        y : Ignored
+            Not used, present here for API consistency by convention.
+
         Returns
         -------
         self : object
+            The fitted `KNNImputer` class instance.
         """
+        self._validate_params()
         # Check data integrity and calling arguments
         if not is_scalar_nan(self.missing_values):
             force_all_finite = True
         else:
             force_all_finite = "allow-nan"
-            if self.metric not in _NAN_METRICS and not callable(self.metric):
-                raise ValueError(
-                    "The selected metric does not support NaN values")
-        if self.n_neighbors <= 0:
-            raise ValueError(
-                "Expected n_neighbors > 0. Got {}".format(self.n_neighbors))
 
-        X = self._validate_data(X, accept_sparse=False, dtype=FLOAT_DTYPES,
-                                force_all_finite=force_all_finite,
-                                copy=self.copy)
+        X = self._validate_data(
+            X,
+            accept_sparse=False,
+            dtype=FLOAT_DTYPES,
+            force_all_finite=force_all_finite,
+            copy=self.copy,
+        )
 
-        _check_weights(self.weights)
         self._fit_X = X
         self._mask_fit_X = _get_mask(self._fit_X, self.missing_values)
+        self._valid_mask = ~np.all(self._mask_fit_X, axis=0)
 
         super()._fit_indicator(self._mask_fit_X)
 
@@ -212,13 +247,18 @@ class KNNImputer(_BaseImputer):
             force_all_finite = True
         else:
             force_all_finite = "allow-nan"
-        X = self._validate_data(X, accept_sparse=False, dtype=FLOAT_DTYPES,
-                                force_all_finite=force_all_finite,
-                                copy=self.copy, reset=False)
+        X = self._validate_data(
+            X,
+            accept_sparse=False,
+            dtype=FLOAT_DTYPES,
+            force_all_finite=force_all_finite,
+            copy=self.copy,
+            reset=False,
+        )
 
         mask = _get_mask(X, self.missing_values)
         mask_fit_X = self._mask_fit_X
-        valid_mask = ~np.all(mask_fit_X, axis=0)
+        valid_mask = self._valid_mask
 
         X_indicator = super()._transform_indicator(mask)
 
@@ -237,7 +277,7 @@ class KNNImputer(_BaseImputer):
         dist_idx_map[row_missing_idx] = np.arange(row_missing_idx.shape[0])
 
         def process_chunk(dist_chunk, start):
-            row_missing_chunk = row_missing_idx[start:start + len(dist_chunk)]
+            row_missing_chunk = row_missing_idx[start : start + len(dist_chunk)]
 
             # Find and impute missing by column
             for col in range(X.shape[1]):
@@ -250,22 +290,24 @@ class KNNImputer(_BaseImputer):
                     # column has no missing values
                     continue
 
-                potential_donors_idx, = np.nonzero(non_missing_fix_X[:, col])
+                (potential_donors_idx,) = np.nonzero(non_missing_fix_X[:, col])
 
                 # receivers_idx are indices in X
                 receivers_idx = row_missing_chunk[np.flatnonzero(col_mask)]
 
                 # distances for samples that needed imputation for column
-                dist_subset = (dist_chunk[dist_idx_map[receivers_idx] - start]
-                               [:, potential_donors_idx])
+                dist_subset = dist_chunk[dist_idx_map[receivers_idx] - start][
+                    :, potential_donors_idx
+                ]
 
                 # receivers with all nan distances impute with mean
                 all_nan_dist_mask = np.isnan(dist_subset).all(axis=1)
                 all_nan_receivers_idx = receivers_idx[all_nan_dist_mask]
 
                 if all_nan_receivers_idx.size:
-                    col_mean = np.ma.array(self._fit_X[:, col],
-                                           mask=mask_fit_X[:, col]).mean()
+                    col_mean = np.ma.array(
+                        self._fit_X[:, col], mask=mask_fit_X[:, col]
+                    ).mean()
                     X[all_nan_receivers_idx, col] = col_mean
 
                     if len(all_nan_receivers_idx) == len(receivers_idx):
@@ -274,16 +316,17 @@ class KNNImputer(_BaseImputer):
 
                     # receivers with at least one defined distance
                     receivers_idx = receivers_idx[~all_nan_dist_mask]
-                    dist_subset = (dist_chunk[dist_idx_map[receivers_idx]
-                                              - start]
-                                   [:, potential_donors_idx])
+                    dist_subset = dist_chunk[dist_idx_map[receivers_idx] - start][
+                        :, potential_donors_idx
+                    ]
 
                 n_neighbors = min(self.n_neighbors, len(potential_donors_idx))
                 value = self._calc_impute(
                     dist_subset,
                     n_neighbors,
                     self._fit_X[potential_donors_idx, col],
-                    mask_fit_X[potential_donors_idx, col])
+                    mask_fit_X[potential_donors_idx, col],
+                )
                 X[receivers_idx, col] = value
 
         # process in fixed-memory chunks
@@ -293,9 +336,34 @@ class KNNImputer(_BaseImputer):
             metric=self.metric,
             missing_values=self.missing_values,
             force_all_finite=force_all_finite,
-            reduce_func=process_chunk)
+            reduce_func=process_chunk,
+        )
         for chunk in gen:
             # process_chunk modifies X in place. No return value.
             pass
 
         return super()._concatenate_indicator(X[:, valid_mask], X_indicator)
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Input features.
+
+            - If `input_features` is `None`, then `feature_names_in_` is
+              used as feature names in. If `feature_names_in_` is not defined,
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
+            - If `input_features` is an array-like, then `input_features` must
+              match `feature_names_in_` if `feature_names_in_` is defined.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        input_features = _check_feature_names_in(self, input_features)
+        names = input_features[self._valid_mask]
+        return self._concatenate_indicator_feature_names_out(names, input_features)

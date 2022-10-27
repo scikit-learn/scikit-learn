@@ -20,16 +20,28 @@ from ._voting import VotingRegressor
 from ._stacking import StackingClassifier
 from ._stacking import StackingRegressor
 from ._hist_gradient_boosting.gradient_boosting import (
-    HistGradientBoostingRegressor, HistGradientBoostingClassifier
+    HistGradientBoostingRegressor,
+    HistGradientBoostingClassifier,
 )
 
-__all__ = ["BaseEnsemble",
-           "RandomForestClassifier", "RandomForestRegressor",
-           "RandomTreesEmbedding", "ExtraTreesClassifier",
-           "ExtraTreesRegressor", "BaggingClassifier",
-           "BaggingRegressor", "IsolationForest", "GradientBoostingClassifier",
-           "GradientBoostingRegressor", "AdaBoostClassifier",
-           "AdaBoostRegressor", "VotingClassifier", "VotingRegressor",
-           "StackingClassifier", "StackingRegressor",
-           'HistGradientBoostingClassifier', 'HistGradientBoostingRegressor',
-           ]
+__all__ = [
+    "BaseEnsemble",
+    "RandomForestClassifier",
+    "RandomForestRegressor",
+    "RandomTreesEmbedding",
+    "ExtraTreesClassifier",
+    "ExtraTreesRegressor",
+    "BaggingClassifier",
+    "BaggingRegressor",
+    "IsolationForest",
+    "GradientBoostingClassifier",
+    "GradientBoostingRegressor",
+    "AdaBoostClassifier",
+    "AdaBoostRegressor",
+    "VotingClassifier",
+    "VotingRegressor",
+    "StackingClassifier",
+    "StackingRegressor",
+    "HistGradientBoostingClassifier",
+    "HistGradientBoostingRegressor",
+]

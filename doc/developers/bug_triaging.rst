@@ -50,10 +50,10 @@ Reviewing code is also encouraged. Contributors and users are welcome to
 participate to the review process following our :ref:`review guidelines
 <code_review>`.
 
-Triaging operations for members of the core and triage teams
-------------------------------------------------------------
+Triaging operations for members of the core and contributor experience teams
+----------------------------------------------------------------------------
 
-In addition to the above, members of the core team and the triage team
+In addition to the above, members of the core team and the contributor experience team
 can do the following important tasks:
 
 - Update :ref:`labels for issues and PRs <issue_tracker_tags>`: see the list of
@@ -63,6 +63,10 @@ can do the following important tasks:
 - :ref:`Determine if a PR must be relabeled as stalled <stalled_pull_request>`
   or needs help (this is typically very important in the context
   of sprints, where the risk is to create many unfinished PRs)
+
+- If a stalled PR is taken over by a newer PR, then label the stalled PR as
+  "Superseded", leave a comment on the stalled PR linking to the new PR, and
+  likely close the stalled PR.
 
 - Triage issues:
 
@@ -97,7 +101,7 @@ The following workflow [1]_ is a good way to approach issue triaging:
 
 #. Thank the reporter for opening an issue
 
-   The issue tracker is many people’s first interaction with the
+   The issue tracker is many people's first interaction with the
    scikit-learn project itself, beyond just using the library. As such,
    we want it to be a welcoming, pleasant experience.
 
@@ -149,5 +153,7 @@ The following workflow [1]_ is a good way to approach issue triaging:
    An additional useful step can be to tag the corresponding module e.g.
    `sklearn.linear_models` when relevant.
 
+#. Remove the "Needs Triage" label from the issue if the label exists.
+
 .. [1] Adapted from the pandas project `maintainers guide
-       <https://dev.pandas.io/docs/development/maintaining.html>`_
+       <https://pandas.pydata.org/docs/development/maintaining.html>`_

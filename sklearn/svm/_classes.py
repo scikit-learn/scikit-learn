@@ -1,18 +1,17 @@
+from numbers import Integral, Real
+
 import numpy as np
 
 from ._base import _fit_liblinear, BaseSVC, BaseLibSVM
 from ..base import BaseEstimator, RegressorMixin, OutlierMixin
-from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, \
-    LinearModel
+from ..linear_model._base import LinearClassifierMixin, SparseCoefMixin, LinearModel
+from ..utils import deprecated
 from ..utils.validation import _num_samples
-from ..utils.validation import _deprecate_positional_args
 from ..utils.multiclass import check_classification_targets
-from ..utils.deprecation import deprecated
+from ..utils._param_validation import Interval, StrOptions
 
 
-class LinearSVC(LinearClassifierMixin,
-                SparseCoefMixin,
-                BaseEstimator):
+class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     """Linear Support Vector Classification.
 
     Similar to SVC with parameter kernel='linear', but implemented in terms of
@@ -65,7 +64,7 @@ class LinearSVC(LinearClassifierMixin,
         to false, no intercept will be used in calculations
         (i.e. data is expected to be already centered).
 
-    intercept_scaling : float, default=1
+    intercept_scaling : float, default=1.0
         When self.fit_intercept is True, instance vector x becomes
         ``[x, self.intercept_scaling]``,
         i.e. a "synthetic" feature with constant value equals to
@@ -115,6 +114,17 @@ class LinearSVC(LinearClassifierMixin,
 
     classes_ : ndarray of shape (n_classes,)
         The unique classes labels.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     n_iter_ : int
         Maximum number of iterations run across all classes.
@@ -179,11 +189,38 @@ class LinearSVC(LinearClassifierMixin,
     >>> print(clf.predict([[0, 0, 0, 0]]))
     [1]
     """
-    @_deprecate_positional_args
-    def __init__(self, penalty='l2', loss='squared_hinge', *, dual=True,
-                 tol=1e-4, C=1.0, multi_class='ovr', fit_intercept=True,
-                 intercept_scaling=1, class_weight=None, verbose=0,
-                 random_state=None, max_iter=1000):
+
+    _parameter_constraints: dict = {
+        "penalty": [StrOptions({"l1", "l2"})],
+        "loss": [StrOptions({"hinge", "squared_hinge"})],
+        "dual": ["boolean"],
+        "tol": [Interval(Real, 0.0, None, closed="neither")],
+        "C": [Interval(Real, 0.0, None, closed="neither")],
+        "multi_class": [StrOptions({"ovr", "crammer_singer"})],
+        "fit_intercept": ["boolean"],
+        "intercept_scaling": [Interval(Real, 0, None, closed="neither")],
+        "class_weight": [None, dict, StrOptions({"balanced"})],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+    }
+
+    def __init__(
+        self,
+        penalty="l2",
+        loss="squared_hinge",
+        *,
+        dual=True,
+        tol=1e-4,
+        C=1.0,
+        multi_class="ovr",
+        fit_intercept=True,
+        intercept_scaling=1,
+        class_weight=None,
+        verbose=0,
+        random_state=None,
+        max_iter=1000,
+    ):
         self.dual = dual
         self.tol = tol
         self.C = C
@@ -203,8 +240,8 @@ class LinearSVC(LinearClassifierMixin,
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
             Target vector relative to X.
@@ -221,21 +258,41 @@ class LinearSVC(LinearClassifierMixin,
         self : object
             An instance of the estimator.
         """
-        if self.C < 0:
-            raise ValueError("Penalty term must be positive; got (C=%r)"
-                             % self.C)
+        self._validate_params()
 
-        X, y = self._validate_data(X, y, accept_sparse='csr',
-                                   dtype=np.float64, order="C",
-                                   accept_large_sparse=False)
+        X, y = self._validate_data(
+            X,
+            y,
+            accept_sparse="csr",
+            dtype=np.float64,
+            order="C",
+            accept_large_sparse=False,
+        )
         check_classification_targets(y)
         self.classes_ = np.unique(y)
 
-        self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
-            X, y, self.C, self.fit_intercept, self.intercept_scaling,
-            self.class_weight, self.penalty, self.dual, self.verbose,
-            self.max_iter, self.tol, self.random_state, self.multi_class,
-            self.loss, sample_weight=sample_weight)
+        self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
+            X,
+            y,
+            self.C,
+            self.fit_intercept,
+            self.intercept_scaling,
+            self.class_weight,
+            self.penalty,
+            self.dual,
+            self.verbose,
+            self.max_iter,
+            self.tol,
+            self.random_state,
+            self.multi_class,
+            self.loss,
+            sample_weight=sample_weight,
+        )
+        # Backward compatibility: _fit_liblinear is used both by LinearSVC/R
+        # and LogisticRegression but LogisticRegression sets a structured
+        # `n_iter_` attribute with information about the underlying OvR fits
+        # while LinearSVC/R only reports the maximum value.
+        self.n_iter_ = n_iter_.max().item()
 
         if self.multi_class == "crammer_singer" and len(self.classes_) == 2:
             self.coef_ = (self.coef_[1] - self.coef_[0]).reshape(1, -1)
@@ -247,9 +304,10 @@ class LinearSVC(LinearClassifierMixin,
 
     def _more_tags(self):
         return {
-            '_xfail_checks': {
-                'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+            "_xfail_checks": {
+                "check_sample_weights_invariance": (
+                    "zero sample_weight is not equivalent to removing samples"
+                ),
             }
         }
 
@@ -293,7 +351,7 @@ class LinearSVR(RegressorMixin, LinearModel):
         to false, no intercept will be used in calculations
         (i.e. data is expected to be already centered).
 
-    intercept_scaling : float, default=1.
+    intercept_scaling : float, default=1.0
         When self.fit_intercept is True, instance vector x becomes
         [x, self.intercept_scaling],
         i.e. a "synthetic" feature with constant value equals to
@@ -334,8 +392,34 @@ class LinearSVR(RegressorMixin, LinearModel):
     intercept_ : ndarray of shape (1) if n_classes == 2 else (n_classes)
         Constants in decision function.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_iter_ : int
         Maximum number of iterations run across all classes.
+
+    See Also
+    --------
+    LinearSVC : Implementation of Support Vector Machine classifier using the
+        same library as this class (liblinear).
+
+    SVR : Implementation of Support Vector Machine regression using libsvm:
+        the kernel can be non-linear but its SMO algorithm does not
+        scale to large number of samples as LinearSVC does.
+
+    sklearn.linear_model.SGDRegressor : SGDRegressor can optimize the same cost
+        function as LinearSVR
+        by adjusting the penalty and loss parameters. In addition it requires
+        less memory, allows incremental (online) learning, and implements
+        various loss functions and regularization regimes.
 
     Examples
     --------
@@ -356,29 +440,35 @@ class LinearSVR(RegressorMixin, LinearModel):
     [-4...]
     >>> print(regr.predict([[0, 0, 0, 0]]))
     [-2.384...]
-
-
-    See Also
-    --------
-    LinearSVC : Implementation of Support Vector Machine classifier using the
-        same library as this class (liblinear).
-
-    SVR : Implementation of Support Vector Machine regression using libsvm:
-        the kernel can be non-linear but its SMO algorithm does not
-        scale to large number of samples as LinearSVC does.
-
-    sklearn.linear_model.SGDRegressor : SGDRegressor can optimize the same cost
-        function as LinearSVR
-        by adjusting the penalty and loss parameters. In addition it requires
-        less memory, allows incremental (online) learning, and implements
-        various loss functions and regularization regimes.
     """
 
-    @_deprecate_positional_args
-    def __init__(self, *, epsilon=0.0, tol=1e-4, C=1.0,
-                 loss='epsilon_insensitive', fit_intercept=True,
-                 intercept_scaling=1., dual=True, verbose=0,
-                 random_state=None, max_iter=1000):
+    _parameter_constraints: dict = {
+        "epsilon": [Real],
+        "tol": [Interval(Real, 0.0, None, closed="neither")],
+        "C": [Interval(Real, 0.0, None, closed="neither")],
+        "loss": [StrOptions({"epsilon_insensitive", "squared_epsilon_insensitive"})],
+        "fit_intercept": ["boolean"],
+        "intercept_scaling": [Interval(Real, 0, None, closed="neither")],
+        "dual": ["boolean"],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+    }
+
+    def __init__(
+        self,
+        *,
+        epsilon=0.0,
+        tol=1e-4,
+        C=1.0,
+        loss="epsilon_insensitive",
+        fit_intercept=True,
+        intercept_scaling=1.0,
+        dual=True,
+        verbose=0,
+        random_state=None,
+        max_iter=1000,
+    ):
         self.tol = tol
         self.C = C
         self.epsilon = epsilon
@@ -396,11 +486,11 @@ class LinearSVR(RegressorMixin, LinearModel):
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Training vector, where n_samples in the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
-            Target vector relative to X
+            Target vector relative to X.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Array of weights that are assigned to individual
@@ -414,28 +504,49 @@ class LinearSVR(RegressorMixin, LinearModel):
         self : object
             An instance of the estimator.
         """
-        if self.C < 0:
-            raise ValueError("Penalty term must be positive; got (C=%r)"
-                             % self.C)
+        self._validate_params()
 
-        X, y = self._validate_data(X, y, accept_sparse='csr',
-                                   dtype=np.float64, order="C",
-                                   accept_large_sparse=False)
-        penalty = 'l2'  # SVR only accepts l2 penalty
-        self.coef_, self.intercept_, self.n_iter_ = _fit_liblinear(
-            X, y, self.C, self.fit_intercept, self.intercept_scaling,
-            None, penalty, self.dual, self.verbose,
-            self.max_iter, self.tol, self.random_state, loss=self.loss,
-            epsilon=self.epsilon, sample_weight=sample_weight)
+        X, y = self._validate_data(
+            X,
+            y,
+            accept_sparse="csr",
+            dtype=np.float64,
+            order="C",
+            accept_large_sparse=False,
+        )
+        penalty = "l2"  # SVR only accepts l2 penalty
+        self.coef_, self.intercept_, n_iter_ = _fit_liblinear(
+            X,
+            y,
+            self.C,
+            self.fit_intercept,
+            self.intercept_scaling,
+            None,
+            penalty,
+            self.dual,
+            self.verbose,
+            self.max_iter,
+            self.tol,
+            self.random_state,
+            loss=self.loss,
+            epsilon=self.epsilon,
+            sample_weight=sample_weight,
+        )
         self.coef_ = self.coef_.ravel()
+        # Backward compatibility: _fit_liblinear is used both by LinearSVC/R
+        # and LogisticRegression but LogisticRegression sets a structured
+        # `n_iter_` attribute with information about the underlying OvR fits
+        # while LinearSVC/R only reports the maximum value.
+        self.n_iter_ = n_iter_.max().item()
 
         return self
 
     def _more_tags(self):
         return {
-            '_xfail_checks': {
-                'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+            "_xfail_checks": {
+                "check_sample_weights_invariance": (
+                    "zero sample_weight is not equivalent to removing samples"
+                ),
             }
         }
 
@@ -466,24 +577,24 @@ class SVC(BaseSVC):
         inversely proportional to C. Must be strictly positive. The penalty
         is a squared l2 penalty.
 
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
         Specifies the kernel type to be used in the algorithm.
-        It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-        a callable.
         If none is given, 'rbf' will be used. If a callable is given it is
         used to pre-compute the kernel matrix from data matrices; that matrix
         should be an array of shape ``(n_samples, n_samples)``.
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
-        Ignored by all other kernels.
+        Must be non-negative. Ignored by all other kernels.
 
     gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         - if ``gamma='scale'`` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
-        - if 'auto', uses 1 / n_features.
+        - if 'auto', uses 1 / n_features
+        - if float, must be non-negative.
 
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
@@ -514,7 +625,7 @@ class SVC(BaseSVC):
         weight one.
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as ``n_samples / (n_classes * np.bincount(y))``.
 
     verbose : bool, default=False
         Enable verbose output. Note that this setting takes advantage of a
@@ -528,9 +639,10 @@ class SVC(BaseSVC):
         Whether to return a one-vs-rest ('ovr') decision function of shape
         (n_samples, n_classes) as all other classifiers, or the original
         one-vs-one ('ovo') decision function of libsvm which has shape
-        (n_samples, n_classes * (n_classes - 1) / 2). However, one-vs-one
-        ('ovo') is always used as multi-class strategy. The parameter is
-        ignored for binary classification.
+        (n_samples, n_classes * (n_classes - 1) / 2). However, note that
+        internally, one-vs-one ('ovo') is always used as a multi-class strategy
+        to train models; an ovr matrix is only constructed from the ovo matrix.
+        The parameter is ignored for binary classification.
 
         .. versionchanged:: 0.19
             decision_function_shape is 'ovr' by default.
@@ -587,6 +699,24 @@ class SVC(BaseSVC):
     intercept_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
         Constants in decision function.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    n_iter_ : ndarray of shape (n_classes * (n_classes - 1) // 2,)
+        Number of iterations run by the optimization routine to fit the model.
+        The shape of this attribute depends on the number of models optimized
+        which in turn depends on the number of classes.
+
+        .. versionadded:: 1.1
+
     support_ : ndarray of shape (n_SV)
         Indices of support vectors.
 
@@ -610,22 +740,6 @@ class SVC(BaseSVC):
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.pipeline import make_pipeline
-    >>> from sklearn.preprocessing import StandardScaler
-    >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
-    >>> y = np.array([1, 1, 2, 2])
-    >>> from sklearn.svm import SVC
-    >>> clf = make_pipeline(StandardScaler(), SVC(gamma='auto'))
-    >>> clf.fit(X, y)
-    Pipeline(steps=[('standardscaler', StandardScaler()),
-                    ('svc', SVC(gamma='auto'))])
-
-    >>> print(clf.predict([[-0.8, -1]]))
-    [1]
-
     See Also
     --------
     SVR : Support Vector Machine for Regression implemented using libsvm.
@@ -642,32 +756,71 @@ class SVC(BaseSVC):
     .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
         machines and comparison to regularizedlikelihood methods."
         <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
+    >>> y = np.array([1, 1, 2, 2])
+    >>> from sklearn.svm import SVC
+    >>> clf = make_pipeline(StandardScaler(), SVC(gamma='auto'))
+    >>> clf.fit(X, y)
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('svc', SVC(gamma='auto'))])
+
+    >>> print(clf.predict([[-0.8, -1]]))
+    [1]
     """
 
-    _impl = 'c_svc'
+    _impl = "c_svc"
 
-    @_deprecate_positional_args
-    def __init__(self, *, C=1.0, kernel='rbf', degree=3, gamma='scale',
-                 coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=200, class_weight=None,
-                 verbose=False, max_iter=-1, decision_function_shape='ovr',
-                 break_ties=False,
-                 random_state=None):
+    def __init__(
+        self,
+        *,
+        C=1.0,
+        kernel="rbf",
+        degree=3,
+        gamma="scale",
+        coef0=0.0,
+        shrinking=True,
+        probability=False,
+        tol=1e-3,
+        cache_size=200,
+        class_weight=None,
+        verbose=False,
+        max_iter=-1,
+        decision_function_shape="ovr",
+        break_ties=False,
+        random_state=None,
+    ):
 
         super().__init__(
-            kernel=kernel, degree=degree, gamma=gamma,
-            coef0=coef0, tol=tol, C=C, nu=0., shrinking=shrinking,
-            probability=probability, cache_size=cache_size,
-            class_weight=class_weight, verbose=verbose, max_iter=max_iter,
+            kernel=kernel,
+            degree=degree,
+            gamma=gamma,
+            coef0=coef0,
+            tol=tol,
+            C=C,
+            nu=0.0,
+            shrinking=shrinking,
+            probability=probability,
+            cache_size=cache_size,
+            class_weight=class_weight,
+            verbose=verbose,
+            max_iter=max_iter,
             decision_function_shape=decision_function_shape,
             break_ties=break_ties,
-            random_state=random_state)
+            random_state=random_state,
+        )
 
     def _more_tags(self):
         return {
-            '_xfail_checks': {
-                'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+            "_xfail_checks": {
+                "check_sample_weights_invariance": (
+                    "zero sample_weight is not equivalent to removing samples"
+                ),
             }
         }
 
@@ -689,23 +842,23 @@ class NuSVC(BaseSVC):
         <nu_svc>`) and a lower bound of the fraction of support vectors.
         Should be in the interval (0, 1].
 
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
-        Ignored by all other kernels.
+        Must be non-negative. Ignored by all other kernels.
 
     gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         - if ``gamma='scale'`` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
-        - if 'auto', uses 1 / n_features.
+        - if 'auto', uses 1 / n_features
+        - if float, must be non-negative.
 
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
@@ -735,7 +888,7 @@ class NuSVC(BaseSVC):
         SVC. If not given, all classes are supposed to have
         weight one. The "balanced" mode uses the values of y to automatically
         adjust weights inversely proportional to class frequencies as
-        ``n_samples / (n_classes * np.bincount(y))``
+        ``n_samples / (n_classes * np.bincount(y))``.
 
     verbose : bool, default=False
         Enable verbose output. Note that this setting takes advantage of a
@@ -808,6 +961,24 @@ class NuSVC(BaseSVC):
     intercept_ : ndarray of shape (n_classes * (n_classes - 1) / 2,)
         Constants in decision function.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    n_iter_ : ndarray of shape (n_classes * (n_classes - 1) // 2,)
+        Number of iterations run by the optimization routine to fit the model.
+        The shape of this attribute depends on the number of models optimized
+        which in turn depends on the number of classes.
+
+        .. versionadded:: 1.1
+
     support_ : ndarray of shape (n_SV,)
         Indices of support vectors.
 
@@ -834,20 +1005,6 @@ class NuSVC(BaseSVC):
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
 
-    Examples
-    --------
-    >>> import numpy as np
-    >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
-    >>> y = np.array([1, 1, 2, 2])
-    >>> from sklearn.pipeline import make_pipeline
-    >>> from sklearn.preprocessing import StandardScaler
-    >>> from sklearn.svm import NuSVC
-    >>> clf = make_pipeline(StandardScaler(), NuSVC())
-    >>> clf.fit(X, y)
-    Pipeline(steps=[('standardscaler', StandardScaler()), ('nusvc', NuSVC())])
-    >>> print(clf.predict([[-0.8, -1]]))
-    [1]
-
     See Also
     --------
     SVC : Support Vector Machine for classification using libsvm.
@@ -863,34 +1020,79 @@ class NuSVC(BaseSVC):
     .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
         machines and comparison to regularizedlikelihood methods."
         <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
+    >>> y = np.array([1, 1, 2, 2])
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> from sklearn.svm import NuSVC
+    >>> clf = make_pipeline(StandardScaler(), NuSVC())
+    >>> clf.fit(X, y)
+    Pipeline(steps=[('standardscaler', StandardScaler()), ('nusvc', NuSVC())])
+    >>> print(clf.predict([[-0.8, -1]]))
+    [1]
     """
 
-    _impl = 'nu_svc'
+    _impl = "nu_svc"
 
-    @_deprecate_positional_args
-    def __init__(self, *, nu=0.5, kernel='rbf', degree=3, gamma='scale',
-                 coef0=0.0, shrinking=True, probability=False, tol=1e-3,
-                 cache_size=200, class_weight=None, verbose=False, max_iter=-1,
-                 decision_function_shape='ovr', break_ties=False,
-                 random_state=None):
+    _parameter_constraints: dict = {
+        **BaseSVC._parameter_constraints,
+        "nu": [Interval(Real, 0.0, 1.0, closed="right")],
+    }
+    _parameter_constraints.pop("C")
+
+    def __init__(
+        self,
+        *,
+        nu=0.5,
+        kernel="rbf",
+        degree=3,
+        gamma="scale",
+        coef0=0.0,
+        shrinking=True,
+        probability=False,
+        tol=1e-3,
+        cache_size=200,
+        class_weight=None,
+        verbose=False,
+        max_iter=-1,
+        decision_function_shape="ovr",
+        break_ties=False,
+        random_state=None,
+    ):
 
         super().__init__(
-            kernel=kernel, degree=degree, gamma=gamma,
-            coef0=coef0, tol=tol, C=0., nu=nu, shrinking=shrinking,
-            probability=probability, cache_size=cache_size,
-            class_weight=class_weight, verbose=verbose, max_iter=max_iter,
+            kernel=kernel,
+            degree=degree,
+            gamma=gamma,
+            coef0=coef0,
+            tol=tol,
+            C=0.0,
+            nu=nu,
+            shrinking=shrinking,
+            probability=probability,
+            cache_size=cache_size,
+            class_weight=class_weight,
+            verbose=verbose,
+            max_iter=max_iter,
             decision_function_shape=decision_function_shape,
             break_ties=break_ties,
-            random_state=random_state)
+            random_state=random_state,
+        )
 
     def _more_tags(self):
         return {
-            '_xfail_checks': {
-                'check_methods_subset_invariance':
-                'fails for the decision_function method',
-                'check_class_weight_classifiers': 'class_weight is ignored.',
-                'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+            "_xfail_checks": {
+                "check_methods_subset_invariance": (
+                    "fails for the decision_function method"
+                ),
+                "check_class_weight_classifiers": "class_weight is ignored.",
+                "check_sample_weights_invariance": (
+                    "zero sample_weight is not equivalent to removing samples"
+                ),
             }
         }
 
@@ -911,23 +1113,23 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     Parameters
     ----------
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
-        Ignored by all other kernels.
+        Must be non-negative. Ignored by all other kernels.
 
     gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         - if ``gamma='scale'`` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
-        - if 'auto', uses 1 / n_features.
+        - if 'auto', uses 1 / n_features
+        - if float, must be non-negative.
 
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
@@ -948,7 +1150,7 @@ class SVR(RegressorMixin, BaseLibSVM):
          Epsilon in the epsilon-SVR model. It specifies the epsilon-tube
          within which no penalty is associated in the training loss function
          with points predicted within a distance epsilon from the actual
-         value.
+         value. Must be non-negative.
 
     shrinking : bool, default=True
         Whether to use the shrinking heuristic.
@@ -971,6 +1173,9 @@ class SVR(RegressorMixin, BaseLibSVM):
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
 
+        .. deprecated:: 1.2
+            `class_weight_` was deprecated in version 1.2 and will be removed in 1.4.
+
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
@@ -987,8 +1192,24 @@ class SVR(RegressorMixin, BaseLibSVM):
     intercept_ : ndarray of shape (1,)
         Constants in decision function.
 
-    n_support_ : ndarray of shape (n_classes,), dtype=int32
-        Number of support vectors for each class.
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    n_iter_ : int
+        Number of iterations run by the optimization routine to fit the model.
+
+        .. versionadded:: 1.1
+
+    n_support_ : ndarray of shape (1,), dtype=int32
+        Number of support vectors.
 
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
@@ -998,21 +1219,6 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     support_vectors_ : ndarray of shape (n_SV, n_features)
         Support vectors.
-
-    Examples
-    --------
-    >>> from sklearn.svm import SVR
-    >>> from sklearn.pipeline import make_pipeline
-    >>> from sklearn.preprocessing import StandardScaler
-    >>> import numpy as np
-    >>> n_samples, n_features = 10, 5
-    >>> rng = np.random.RandomState(0)
-    >>> y = rng.randn(n_samples)
-    >>> X = rng.randn(n_samples, n_features)
-    >>> regr = make_pipeline(StandardScaler(), SVR(C=1.0, epsilon=0.2))
-    >>> regr.fit(X, y)
-    Pipeline(steps=[('standardscaler', StandardScaler()),
-                    ('svr', SVR(epsilon=0.2))])
 
     See Also
     --------
@@ -1030,42 +1236,78 @@ class SVR(RegressorMixin, BaseLibSVM):
     .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
         machines and comparison to regularizedlikelihood methods."
         <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+
+    Examples
+    --------
+    >>> from sklearn.svm import SVR
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> import numpy as np
+    >>> n_samples, n_features = 10, 5
+    >>> rng = np.random.RandomState(0)
+    >>> y = rng.randn(n_samples)
+    >>> X = rng.randn(n_samples, n_features)
+    >>> regr = make_pipeline(StandardScaler(), SVR(C=1.0, epsilon=0.2))
+    >>> regr.fit(X, y)
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('svr', SVR(epsilon=0.2))])
     """
 
-    _impl = 'epsilon_svr'
+    _impl = "epsilon_svr"
 
-    @_deprecate_positional_args
-    def __init__(self, *, kernel='rbf', degree=3, gamma='scale',
-                 coef0=0.0, tol=1e-3, C=1.0, epsilon=0.1, shrinking=True,
-                 cache_size=200, verbose=False, max_iter=-1):
+    _parameter_constraints: dict = {**BaseLibSVM._parameter_constraints}
+    for unused_param in ["class_weight", "nu", "probability", "random_state"]:
+        _parameter_constraints.pop(unused_param)
+
+    def __init__(
+        self,
+        *,
+        kernel="rbf",
+        degree=3,
+        gamma="scale",
+        coef0=0.0,
+        tol=1e-3,
+        C=1.0,
+        epsilon=0.1,
+        shrinking=True,
+        cache_size=200,
+        verbose=False,
+        max_iter=-1,
+    ):
 
         super().__init__(
-            kernel=kernel, degree=degree, gamma=gamma,
-            coef0=coef0, tol=tol, C=C, nu=0., epsilon=epsilon, verbose=verbose,
-            shrinking=shrinking, probability=False, cache_size=cache_size,
-            class_weight=None, max_iter=max_iter, random_state=None)
+            kernel=kernel,
+            degree=degree,
+            gamma=gamma,
+            coef0=coef0,
+            tol=tol,
+            C=C,
+            nu=0.0,
+            epsilon=epsilon,
+            verbose=verbose,
+            shrinking=shrinking,
+            probability=False,
+            cache_size=cache_size,
+            class_weight=None,
+            max_iter=max_iter,
+            random_state=None,
+        )
 
-    # mypy error: Decorated property not supported
+    # TODO(1.4): Remove
     @deprecated(  # type: ignore
-        "The probA_ attribute is deprecated in version 0.23 and will be "
-        "removed in version 1.0 (renaming of 0.25).")
+        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
+        " 1.4."
+    )
     @property
-    def probA_(self):
-        return self._probA
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The probB_ attribute is deprecated in version 0.23 and will be "
-        "removed in version 1.0 (renaming of 0.25).")
-    @property
-    def probB_(self):
-        return self._probB
+    def class_weight_(self):
+        return np.empty(0)
 
     def _more_tags(self):
         return {
-            '_xfail_checks': {
-                'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+            "_xfail_checks": {
+                "check_sample_weights_invariance": (
+                    "zero sample_weight is not equivalent to removing samples"
+                ),
             }
         }
 
@@ -1091,23 +1333,23 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     C : float, default=1.0
         Penalty parameter C of the error term.
 
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
-        Ignored by all other kernels.
+        Must be non-negative. Ignored by all other kernels.
 
     gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         - if ``gamma='scale'`` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
-        - if 'auto', uses 1 / n_features.
+        - if 'auto', uses 1 / n_features
+        - if float, must be non-negative.
 
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
@@ -1140,6 +1382,9 @@ class NuSVR(RegressorMixin, BaseLibSVM):
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
 
+        .. deprecated:: 1.2
+            `class_weight_` was deprecated in version 1.2 and will be removed in 1.4.
+
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
@@ -1156,8 +1401,24 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     intercept_ : ndarray of shape (1,)
         Constants in decision function.
 
-    n_support_ : ndarray of shape (n_classes,), dtype=int32
-        Number of support vectors for each class.
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    n_iter_ : int
+        Number of iterations run by the optimization routine to fit the model.
+
+        .. versionadded:: 1.1
+
+    n_support_ : ndarray of shape (1,), dtype=int32
+        Number of support vectors.
 
     shape_fit_ : tuple of int of shape (n_dimensions_of_X,)
         Array dimensions of training vector ``X``.
@@ -1167,21 +1428,6 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     support_vectors_ : ndarray of shape (n_SV, n_features)
         Support vectors.
-
-    Examples
-    --------
-    >>> from sklearn.svm import NuSVR
-    >>> from sklearn.pipeline import make_pipeline
-    >>> from sklearn.preprocessing import StandardScaler
-    >>> import numpy as np
-    >>> n_samples, n_features = 10, 5
-    >>> np.random.seed(0)
-    >>> y = np.random.randn(n_samples)
-    >>> X = np.random.randn(n_samples, n_features)
-    >>> regr = make_pipeline(StandardScaler(), NuSVR(C=1.0, nu=0.1))
-    >>> regr.fit(X, y)
-    Pipeline(steps=[('standardscaler', StandardScaler()),
-                    ('nusvr', NuSVR(nu=0.1))])
 
     See Also
     --------
@@ -1199,26 +1445,78 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
         machines and comparison to regularizedlikelihood methods."
         <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+
+    Examples
+    --------
+    >>> from sklearn.svm import NuSVR
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> import numpy as np
+    >>> n_samples, n_features = 10, 5
+    >>> np.random.seed(0)
+    >>> y = np.random.randn(n_samples)
+    >>> X = np.random.randn(n_samples, n_features)
+    >>> regr = make_pipeline(StandardScaler(), NuSVR(C=1.0, nu=0.1))
+    >>> regr.fit(X, y)
+    Pipeline(steps=[('standardscaler', StandardScaler()),
+                    ('nusvr', NuSVR(nu=0.1))])
     """
 
-    _impl = 'nu_svr'
+    _impl = "nu_svr"
 
-    @_deprecate_positional_args
-    def __init__(self, *, nu=0.5, C=1.0, kernel='rbf', degree=3,
-                 gamma='scale', coef0=0.0, shrinking=True,
-                 tol=1e-3, cache_size=200, verbose=False, max_iter=-1):
+    _parameter_constraints: dict = {**BaseLibSVM._parameter_constraints}
+    for unused_param in ["class_weight", "epsilon", "probability", "random_state"]:
+        _parameter_constraints.pop(unused_param)
+
+    def __init__(
+        self,
+        *,
+        nu=0.5,
+        C=1.0,
+        kernel="rbf",
+        degree=3,
+        gamma="scale",
+        coef0=0.0,
+        shrinking=True,
+        tol=1e-3,
+        cache_size=200,
+        verbose=False,
+        max_iter=-1,
+    ):
 
         super().__init__(
-            kernel=kernel, degree=degree, gamma=gamma, coef0=coef0,
-            tol=tol, C=C, nu=nu, epsilon=0., shrinking=shrinking,
-            probability=False, cache_size=cache_size, class_weight=None,
-            verbose=verbose, max_iter=max_iter, random_state=None)
+            kernel=kernel,
+            degree=degree,
+            gamma=gamma,
+            coef0=coef0,
+            tol=tol,
+            C=C,
+            nu=nu,
+            epsilon=0.0,
+            shrinking=shrinking,
+            probability=False,
+            cache_size=cache_size,
+            class_weight=None,
+            verbose=verbose,
+            max_iter=max_iter,
+            random_state=None,
+        )
+
+    # TODO(1.4): Remove
+    @deprecated(  # type: ignore
+        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
+        " 1.4."
+    )
+    @property
+    def class_weight_(self):
+        return np.empty(0)
 
     def _more_tags(self):
         return {
-            '_xfail_checks': {
-                'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+            "_xfail_checks": {
+                "check_sample_weights_invariance": (
+                    "zero sample_weight is not equivalent to removing samples"
+                ),
             }
         }
 
@@ -1234,23 +1532,23 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     Parameters
     ----------
-    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'}, default='rbf'
+    kernel : {'linear', 'poly', 'rbf', 'sigmoid', 'precomputed'} or callable,  \
+        default='rbf'
          Specifies the kernel type to be used in the algorithm.
-         It must be one of 'linear', 'poly', 'rbf', 'sigmoid', 'precomputed' or
-         a callable.
          If none is given, 'rbf' will be used. If a callable is given it is
          used to precompute the kernel matrix.
 
     degree : int, default=3
         Degree of the polynomial kernel function ('poly').
-        Ignored by all other kernels.
+        Must be non-negative. Ignored by all other kernels.
 
     gamma : {'scale', 'auto'} or float, default='scale'
         Kernel coefficient for 'rbf', 'poly' and 'sigmoid'.
 
         - if ``gamma='scale'`` (default) is passed then it uses
           1 / (n_features * X.var()) as value of gamma,
-        - if 'auto', uses 1 / n_features.
+        - if 'auto', uses 1 / n_features
+        - if float, must be non-negative.
 
         .. versionchanged:: 0.22
            The default value of ``gamma`` changed from 'auto' to 'scale'.
@@ -1289,6 +1587,9 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         Multipliers of parameter C for each class.
         Computed based on the ``class_weight`` parameter.
 
+        .. deprecated:: 1.2
+            `class_weight_` was deprecated in version 1.2 and will be removed in 1.4.
+
     coef_ : ndarray of shape (1, n_features)
         Weights assigned to the features (coefficients in the primal
         problem). This is only available in the case of a linear kernel.
@@ -1304,6 +1605,22 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     intercept_ : ndarray of shape (1,)
         Constant in the decision function.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    n_iter_ : int
+        Number of iterations run by the optimization routine to fit the model.
+
+        .. versionadded:: 1.1
 
     n_support_ : ndarray of shape (n_classes,), dtype=int32
         Number of support vectors for each class.
@@ -1325,6 +1642,14 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     support_vectors_ : ndarray of shape (n_SV, n_features)
         Support vectors.
 
+    See Also
+    --------
+    sklearn.linear_model.SGDOneClassSVM : Solves linear One-Class SVM using
+        Stochastic Gradient Descent.
+    sklearn.neighbors.LocalOutlierFactor : Unsupervised Outlier Detection using
+        Local Outlier Factor (LOF).
+    sklearn.ensemble.IsolationForest : Isolation Forest Algorithm.
+
     Examples
     --------
     >>> from sklearn.svm import OneClassSVM
@@ -1334,51 +1659,82 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     array([-1,  1,  1,  1, -1])
     >>> clf.score_samples(X)
     array([1.7798..., 2.0547..., 2.0556..., 2.0561..., 1.7332...])
-
-    See also
-    --------
-    sklearn.linear_model.SGDOneClassSVM
     """
 
-    _impl = 'one_class'
+    _impl = "one_class"
 
-    @_deprecate_positional_args
-    def __init__(self, *, kernel='rbf', degree=3, gamma='scale',
-                 coef0=0.0, tol=1e-3, nu=0.5, shrinking=True, cache_size=200,
-                 verbose=False, max_iter=-1):
+    _parameter_constraints: dict = {**BaseLibSVM._parameter_constraints}
+    for unused_param in ["C", "class_weight", "epsilon", "probability", "random_state"]:
+        _parameter_constraints.pop(unused_param)
+
+    def __init__(
+        self,
+        *,
+        kernel="rbf",
+        degree=3,
+        gamma="scale",
+        coef0=0.0,
+        tol=1e-3,
+        nu=0.5,
+        shrinking=True,
+        cache_size=200,
+        verbose=False,
+        max_iter=-1,
+    ):
 
         super().__init__(
-            kernel, degree, gamma, coef0, tol, 0., nu, 0.,
-            shrinking, False, cache_size, None, verbose, max_iter,
-            random_state=None)
+            kernel,
+            degree,
+            gamma,
+            coef0,
+            tol,
+            0.0,
+            nu,
+            0.0,
+            shrinking,
+            False,
+            cache_size,
+            None,
+            verbose,
+            max_iter,
+            random_state=None,
+        )
 
-    def fit(self, X, y=None, sample_weight=None, **params):
-        """Detects the soft boundary of the set of samples X.
+    # TODO(1.4): Remove
+    @deprecated(  # type: ignore
+        "Attribute `class_weight_` was deprecated in version 1.2 and will be removed in"
+        " 1.4."
+    )
+    @property
+    def class_weight_(self):
+        return np.empty(0)
+
+    def fit(self, X, y=None, sample_weight=None):
+        """Detect the soft boundary of the set of samples X.
 
         Parameters
         ----------
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
-            Set of samples, where n_samples is the number of samples and
-            n_features is the number of features.
+            Set of samples, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Per-sample weights. Rescale C per sample. Higher weights
             force the classifier to put more emphasis on these points.
 
-        y : Ignored
-            not used, present for API consistency by convention.
-
         Returns
         -------
         self : object
+            Fitted estimator.
 
         Notes
         -----
         If X is not a C-ordered contiguous array it is copied.
-
         """
-        super().fit(X, np.ones(_num_samples(X)),
-                    sample_weight=sample_weight, **params)
+        super().fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight)
         self.offset_ = -self._intercept_
         return self
 
@@ -1435,26 +1791,11 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         y = super().predict(X)
         return np.asarray(y, dtype=np.intp)
 
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The probA_ attribute is deprecated in version 0.23 and will be "
-        "removed in version 1.0.")
-    @property
-    def probA_(self):
-        return self._probA
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The probB_ attribute is deprecated in version 0.23 and will be "
-        "removed in version 1.0.")
-    @property
-    def probB_(self):
-        return self._probB
-
     def _more_tags(self):
         return {
-            '_xfail_checks': {
-                'check_sample_weights_invariance':
-                'zero sample_weight is not equivalent to removing samples',
+            "_xfail_checks": {
+                "check_sample_weights_invariance": (
+                    "zero sample_weight is not equivalent to removing samples"
+                ),
             }
         }

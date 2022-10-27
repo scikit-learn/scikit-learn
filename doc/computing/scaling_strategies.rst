@@ -80,6 +80,7 @@ Here is a list of incremental estimators for different tasks:
       + :class:`sklearn.decomposition.MiniBatchDictionaryLearning`
       + :class:`sklearn.decomposition.IncrementalPCA`
       + :class:`sklearn.decomposition.LatentDirichletAllocation`
+      + :class:`sklearn.decomposition.MiniBatchNMF`
   - Preprocessing
       + :class:`sklearn.preprocessing.StandardScaler`
       + :class:`sklearn.preprocessing.MinMaxScaler`

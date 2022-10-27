@@ -31,7 +31,7 @@ class deprecated:
     # Adapted from https://wiki.python.org/moin/PythonDecoratorLibrary,
     # but with many changes.
 
-    def __init__(self, extra=''):
+    def __init__(self, extra=""):
         self.extra = extra
 
     def __call__(self, obj):
@@ -66,10 +66,10 @@ class deprecated:
         def wrapped(*args, **kwargs):
             warnings.warn(msg, category=FutureWarning)
             return init(*args, **kwargs)
+
         cls.__init__ = wrapped
 
-        wrapped.__name__ = '__init__'
-        wrapped.__doc__ = self._update_doc(init.__doc__)
+        wrapped.__name__ = "__init__"
         wrapped.deprecated_original = init
 
         return cls
@@ -86,7 +86,6 @@ class deprecated:
             warnings.warn(msg, category=FutureWarning)
             return fun(*args, **kwargs)
 
-        wrapped.__doc__ = self._update_doc(wrapped.__doc__)
         # Add a reference to the wrapped function so that we can introspect
         # on function arguments in Python 2 (already works in Python 3)
         wrapped.__wrapped__ = fun
@@ -97,27 +96,20 @@ class deprecated:
         msg = self.extra
 
         @property
+        @functools.wraps(prop)
         def wrapped(*args, **kwargs):
             warnings.warn(msg, category=FutureWarning)
             return prop.fget(*args, **kwargs)
 
         return wrapped
 
-    def _update_doc(self, olddoc):
-        newdoc = "DEPRECATED"
-        if self.extra:
-            newdoc = "%s: %s" % (newdoc, self.extra)
-        if olddoc:
-            newdoc = "%s\n\n    %s" % (newdoc, olddoc)
-        return newdoc
-
 
 def _is_deprecated(func):
     """Helper to check if func is wrapped by our deprecated decorator"""
-    closures = getattr(func, '__closure__', [])
+    closures = getattr(func, "__closure__", [])
     if closures is None:
         closures = []
-    is_deprecated = ('deprecated' in ''.join([c.cell_contents
-                                              for c in closures
-                     if isinstance(c.cell_contents, str)]))
+    is_deprecated = "deprecated" in "".join(
+        [c.cell_contents for c in closures if isinstance(c.cell_contents, str)]
+    )
     return is_deprecated

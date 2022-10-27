@@ -48,6 +48,10 @@ h1 code, h2 code, h3 code, h4 code, h5 code, h6 code {
   background-color: transparent;
 }
 
+h4 .section-number, h5 .section-number, h6 .section-number {
+  display: none;
+}
+
 h1:hover a.headerlink,
 h2:hover a.headerlink,
 h3:hover a.headerlink,
@@ -200,6 +204,28 @@ ul.search li div.context {
 @media screen and (min-width: 768px) {
   ul.search li div.context {
     margin-left: 1rem;
+  }
+
+  .sk-search-text-input {
+    width: 5rem;
+  }
+}
+
+@media screen and (min-width: 806px) {
+  .sk-search-text-input {
+    width: 7rem;
+  }
+}
+
+@media screen and (min-width: 820px) {
+  .sk-search-text-input {
+    width: 8rem;
+  }
+}
+
+@media screen and (min-width: 886px) {
+  .sk-search-text-input {
+    width: 12rem;
   }
 }
 
@@ -650,14 +676,16 @@ table.longtable tr.row-odd {
   overflow: auto;
 }
 
-code.descname {
+span.descname {
   font-weight: bold;
   background-color: transparent;
   padding: 0;
+  font-family: monospace;
 }
 
-code.descclassname {
+span.descclassname {
   background-color: transparent;
+  font-family: monospace;
 }
 
 .viewcode-link {
@@ -704,18 +732,15 @@ dt.field-odd, dt.field-even {
   box-sizing: border-box;
 }
 
-dl.field-list > dt:after {
-  content: ":";
-}
-
 .classifier {
   font-style: italic;
 }
 
 .classifier::before {
   font-style: normal;
-  margin: 0.3em;
+  margin: 0 0.3em;
   content: ":";
+  display: inline-block;
 }
 
 dd {
@@ -803,8 +828,12 @@ div.admonition {
   background-color: #eee;
 }
 
-div.admonition p, div.admonition dl, div.admonition dd,
-div.deprecated p, div.versionchanged p, div.versionadded p{
+div.admonition p:last-child,
+div.admonition dl:last-child,
+div.admonition dd:last-child,
+div.deprecated p:last-child,
+div.versionchanged p:last-child,
+div.versionadded p:last-child{
   margin-bottom: 0
 }
 
@@ -830,7 +859,7 @@ dt.label {
   padding-right: 0.5rem;
 }
 
-/* copy buttonn */
+/* copy button */
 div.highlight:hover span.copybutton {
   background-color: #3F556B;
   color: white;
@@ -849,7 +878,8 @@ div.body dd > p {
     hyphens: none;
 }
 
-img.align-center, .figure.align-center, object.align-center {
+img.align-center, figure.align-center,
+.figure.align-center, object.align-center {
   display: block;
   margin-left: auto;
   margin-right: auto;
@@ -857,7 +887,8 @@ img.align-center, .figure.align-center, object.align-center {
   text-align: center;
 }
 
-img.align-right, .figure.align-right, object.align-right {
+img.align-right, figure.align-right,
+.figure.align-right, object.align-right {
   clear: right;
   float: right;
   margin-left: 1em;
@@ -1157,8 +1188,8 @@ div.highlight span.sk-expandable:before {
   display: block;
 }
 
-#quickstart-conda:checked ~ label[for="quickstart-venv"]:before  {
-  content: "Use conda environment";
+#quickstart-conda:checked ~ #quickstart-venv ~ label[for="quickstart-venv"] {
+  display: none;
 }
 
 /* for pip */
@@ -1235,7 +1266,7 @@ table.sk-sponsor-table td {
   text-align: center
 }
 
-/* pygments - highlightning */
+/* pygments - highlighting */
 
 .highlight .hll { background-color: #ffffcc }
 .highlight  { background: #f8f8f8; }

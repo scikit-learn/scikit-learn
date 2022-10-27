@@ -1,12 +1,10 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 """
 =============================================================
 Compare the effect of different scalers on data with outliers
 =============================================================
 
-Feature 0 (median income in a block) and feature 5 (number of households) of
+Feature 0 (median income in a block) and feature 5 (average house occupancy) of
 the :ref:`california_housing_dataset` have very
 different scales and contain some very large outliers. These two
 characteristics lead to difficulties to visualize the data and, more
@@ -65,46 +63,61 @@ from sklearn.preprocessing import PowerTransformer
 
 from sklearn.datasets import fetch_california_housing
 
-print(__doc__)
-
 dataset = fetch_california_housing()
 X_full, y_full = dataset.data, dataset.target
+feature_names = dataset.feature_names
+
+feature_mapping = {
+    "MedInc": "Median income in block",
+    "HousAge": "Median house age in block",
+    "AveRooms": "Average number of rooms",
+    "AveBedrms": "Average number of bedrooms",
+    "Population": "Block population",
+    "AveOccup": "Average house occupancy",
+    "Latitude": "House block latitude",
+    "Longitude": "House block longitude",
+}
 
 # Take only 2 features to make visualization easier
-# Feature of 0 has a long tail distribution.
-# Feature 5 has a few but very large outliers.
-
-X = X_full[:, [0, 5]]
-
+# Feature MedInc has a long tail distribution.
+# Feature AveOccup has a few but very large outliers.
+features = ["MedInc", "AveOccup"]
+features_idx = [feature_names.index(feature) for feature in features]
+X = X_full[:, features_idx]
 distributions = [
-    ('Unscaled data', X),
-    ('Data after standard scaling',
-        StandardScaler().fit_transform(X)),
-    ('Data after min-max scaling',
-        MinMaxScaler().fit_transform(X)),
-    ('Data after max-abs scaling',
-        MaxAbsScaler().fit_transform(X)),
-    ('Data after robust scaling',
-        RobustScaler(quantile_range=(25, 75)).fit_transform(X)),
-    ('Data after power transformation (Yeo-Johnson)',
-     PowerTransformer(method='yeo-johnson').fit_transform(X)),
-    ('Data after power transformation (Box-Cox)',
-     PowerTransformer(method='box-cox').fit_transform(X)),
-    ('Data after quantile transformation (uniform pdf)',
-        QuantileTransformer(output_distribution='uniform')
-        .fit_transform(X)),
-    ('Data after quantile transformation (gaussian pdf)',
-        QuantileTransformer(output_distribution='normal')
-        .fit_transform(X)),
-    ('Data after sample-wise L2 normalizing',
-        Normalizer().fit_transform(X)),
+    ("Unscaled data", X),
+    ("Data after standard scaling", StandardScaler().fit_transform(X)),
+    ("Data after min-max scaling", MinMaxScaler().fit_transform(X)),
+    ("Data after max-abs scaling", MaxAbsScaler().fit_transform(X)),
+    (
+        "Data after robust scaling",
+        RobustScaler(quantile_range=(25, 75)).fit_transform(X),
+    ),
+    (
+        "Data after power transformation (Yeo-Johnson)",
+        PowerTransformer(method="yeo-johnson").fit_transform(X),
+    ),
+    (
+        "Data after power transformation (Box-Cox)",
+        PowerTransformer(method="box-cox").fit_transform(X),
+    ),
+    (
+        "Data after quantile transformation (uniform pdf)",
+        QuantileTransformer(output_distribution="uniform").fit_transform(X),
+    ),
+    (
+        "Data after quantile transformation (gaussian pdf)",
+        QuantileTransformer(output_distribution="normal").fit_transform(X),
+    ),
+    ("Data after sample-wise L2 normalizing", Normalizer().fit_transform(X)),
 ]
 
 # scale the output between 0 and 1 for the colorbar
 y = minmax_scale(y_full)
 
 # plasma does not exist in matplotlib < 1.5
-cmap = getattr(cm, 'plasma_r', cm.hot_r)
+cmap = getattr(cm, "plasma_r", cm.hot_r)
+
 
 def create_axes(title, figsize=(16, 6)):
     fig = plt.figure(figsize=figsize)
@@ -142,13 +155,14 @@ def create_axes(title, figsize=(16, 6)):
     rect_colorbar = [left, bottom, width, height]
     ax_colorbar = plt.axes(rect_colorbar)
 
-    return ((ax_scatter, ax_histy, ax_histx),
-            (ax_scatter_zoom, ax_histy_zoom, ax_histx_zoom),
-            ax_colorbar)
+    return (
+        (ax_scatter, ax_histy, ax_histx),
+        (ax_scatter_zoom, ax_histy_zoom, ax_histx_zoom),
+        ax_colorbar,
+    )
 
 
-def plot_distribution(axes, X, y, hist_nbins=50, title="",
-                      x0_label="", x1_label=""):
+def plot_distribution(axes, X, y, hist_nbins=50, title="", x0_label="", x1_label=""):
     ax, hist_X1, hist_X0 = axes
 
     ax.set_title(title)
@@ -157,28 +171,31 @@ def plot_distribution(axes, X, y, hist_nbins=50, title="",
 
     # The scatter plot
     colors = cmap(y)
-    ax.scatter(X[:, 0], X[:, 1], alpha=0.5, marker='o', s=5, lw=0, c=colors)
+    ax.scatter(X[:, 0], X[:, 1], alpha=0.5, marker="o", s=5, lw=0, c=colors)
 
     # Removing the top and the right spine for aesthetics
     # make nice axis layout
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
     ax.get_xaxis().tick_bottom()
     ax.get_yaxis().tick_left()
-    ax.spines['left'].set_position(('outward', 10))
-    ax.spines['bottom'].set_position(('outward', 10))
+    ax.spines["left"].set_position(("outward", 10))
+    ax.spines["bottom"].set_position(("outward", 10))
 
     # Histogram for axis X1 (feature 5)
     hist_X1.set_ylim(ax.get_ylim())
-    hist_X1.hist(X[:, 1], bins=hist_nbins, orientation='horizontal',
-                 color='grey', ec='grey')
-    hist_X1.axis('off')
+    hist_X1.hist(
+        X[:, 1], bins=hist_nbins, orientation="horizontal", color="grey", ec="grey"
+    )
+    hist_X1.axis("off")
 
     # Histogram for axis X0 (feature 0)
     hist_X0.set_xlim(ax.get_xlim())
-    hist_X0.hist(X[:, 0], bins=hist_nbins, orientation='vertical',
-                 color='grey', ec='grey')
-    hist_X0.axis('off')
+    hist_X0.hist(
+        X[:, 0], bins=hist_nbins, orientation="vertical", color="grey", ec="grey"
+    )
+    hist_X0.axis("off")
+
 
 # %%
 # Two plots will be shown for each scaler/normalizer/transformer. The left
@@ -192,29 +209,42 @@ def make_plot(item_idx):
     title, X = distributions[item_idx]
     ax_zoom_out, ax_zoom_in, ax_colorbar = create_axes(title)
     axarr = (ax_zoom_out, ax_zoom_in)
-    plot_distribution(axarr[0], X, y, hist_nbins=200,
-                      x0_label="Median Income",
-                      x1_label="Number of households",
-                      title="Full data")
+    plot_distribution(
+        axarr[0],
+        X,
+        y,
+        hist_nbins=200,
+        x0_label=feature_mapping[features[0]],
+        x1_label=feature_mapping[features[1]],
+        title="Full data",
+    )
 
     # zoom-in
     zoom_in_percentile_range = (0, 99)
     cutoffs_X0 = np.percentile(X[:, 0], zoom_in_percentile_range)
     cutoffs_X1 = np.percentile(X[:, 1], zoom_in_percentile_range)
 
-    non_outliers_mask = (
-        np.all(X > [cutoffs_X0[0], cutoffs_X1[0]], axis=1) &
-        np.all(X < [cutoffs_X0[1], cutoffs_X1[1]], axis=1))
-    plot_distribution(axarr[1], X[non_outliers_mask], y[non_outliers_mask],
-                      hist_nbins=50,
-                      x0_label="Median Income",
-                      x1_label="Number of households",
-                      title="Zoom-in")
+    non_outliers_mask = np.all(X > [cutoffs_X0[0], cutoffs_X1[0]], axis=1) & np.all(
+        X < [cutoffs_X0[1], cutoffs_X1[1]], axis=1
+    )
+    plot_distribution(
+        axarr[1],
+        X[non_outliers_mask],
+        y[non_outliers_mask],
+        hist_nbins=50,
+        x0_label=feature_mapping[features[0]],
+        x1_label=feature_mapping[features[1]],
+        title="Zoom-in",
+    )
 
     norm = mpl.colors.Normalize(y_full.min(), y_full.max())
-    mpl.colorbar.ColorbarBase(ax_colorbar, cmap=cmap,
-                              norm=norm, orientation='vertical',
-                              label='Color mapping for values of y')
+    mpl.colorbar.ColorbarBase(
+        ax_colorbar,
+        cmap=cmap,
+        norm=norm,
+        orientation="vertical",
+        label="Color mapping for values of y",
+    )
 
 
 # %%
@@ -227,11 +257,11 @@ def make_plot(item_idx):
 # left plot showing the entire dataset, and the right zoomed-in to show the
 # dataset without the marginal outliers. A large majority of the samples are
 # compacted to a specific range, [0, 10] for the median income and [0, 6] for
-# the number of households. Note that there are some marginal outliers (some
-# blocks have more than 1200 households). Therefore, a specific pre-processing
-# can be very beneficial depending of the application. In the following, we
-# present some insights and behaviors of those pre-processing methods in the
-# presence of marginal outliers.
+# the average house occupancy. Note that there are some marginal outliers (some
+# blocks have average occupancy of more than 1200). Therefore, a specific
+# pre-processing can be very beneficial depending of the application. In the
+# following, we present some insights and behaviors of those pre-processing
+# methods in the presence of marginal outliers.
 
 make_plot(0)
 
@@ -247,7 +277,7 @@ make_plot(0)
 # feature have different magnitudes, the spread of the transformed data on
 # each feature is very different: most of the data lie in the [-2, 4] range for
 # the transformed median income feature while the same data is squeezed in the
-# smaller [-0.2, 0.2] range for the transformed number of households.
+# smaller [-0.2, 0.2] range for the transformed average house occupancy.
 #
 # :class:`~sklearn.preprocessing.StandardScaler` therefore cannot guarantee
 # balanced feature scales in the
@@ -263,7 +293,7 @@ make_plot(1)
 # all feature values are in
 # the range [0, 1] as shown in the right panel below. However, this scaling
 # compresses all inliers into the narrow range [0, 0.005] for the transformed
-# number of households.
+# average house occupancy.
 #
 # Both :class:`~sklearn.preprocessing.StandardScaler` and
 # :class:`~sklearn.preprocessing.MinMaxScaler` are very sensitive to the
@@ -277,8 +307,12 @@ make_plot(2)
 #
 # :class:`~sklearn.preprocessing.MaxAbsScaler` is similar to
 # :class:`~sklearn.preprocessing.MinMaxScaler` except that the
-# values are mapped in the range [0, 1]. On positive only data, both scalers
-# behave similarly.
+# values are mapped across several ranges depending on whether negative
+# OR positive values are present. If only positive values are present, the
+# range is [0, 1]. If only negative values are present, the range is [-1, 0].
+# If both negative and positive values are present, the range is [-1, 1].
+# On positive only data, both :class:`~sklearn.preprocessing.MinMaxScaler`
+# and :class:`~sklearn.preprocessing.MaxAbsScaler` behave similarly.
 # :class:`~sklearn.preprocessing.MaxAbsScaler` therefore also suffers from
 # the presence of large outliers.
 
@@ -290,7 +324,7 @@ make_plot(3)
 #
 # Unlike the previous scalers, the centering and scaling statistics of
 # :class:`~sklearn.preprocessing.RobustScaler`
-# is based on percentiles and are therefore not influenced by a few
+# are based on percentiles and are therefore not influenced by a small
 # number of very large marginal outliers. Consequently, the resulting range of
 # the transformed feature values is larger than for the previous scalers and,
 # more importantly, are approximately similar: for both features most of the
@@ -312,9 +346,9 @@ make_plot(4)
 # scaling factor is determined via maximum likelihood estimation in both
 # methods. By default, :class:`~sklearn.preprocessing.PowerTransformer` applies
 # zero-mean, unit variance normalization. Note that
-# Box-Cox can only be applied to strictly positive data. Income and number of
-# households happen to be strictly positive, but if negative values are present
-# the Yeo-Johnson transformed is preferred.
+# Box-Cox can only be applied to strictly positive data. Income and average
+# house occupancy happen to be strictly positive, but if negative values are
+# present the Yeo-Johnson transformed is preferred.
 
 make_plot(5)
 make_plot(6)

@@ -37,10 +37,10 @@ needs to be preprocessed in order to be used by scikit-learn.
         >>> digits = datasets.load_digits()
         >>> digits.images.shape
         (1797, 8, 8)
-        >>> import matplotlib.pyplot as plt #doctest: +SKIP
+        >>> import matplotlib.pyplot as plt
         >>> plt.imshow(digits.images[-1],
-        ...            cmap=plt.cm.gray_r) #doctest: +SKIP
-        <matplotlib.image.AxesImage object at ...>
+        ...            cmap=plt.cm.gray_r)
+        <...>
     
     .. image:: /auto_examples/datasets/images/sphx_glr_plot_digits_last_image_001.png
         :target: ../../auto_examples/datasets/plot_digits_last_image.html

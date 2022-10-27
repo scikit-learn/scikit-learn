@@ -1,6 +1,7 @@
 import typing
 
 from ._split import BaseCrossValidator
+from ._split import BaseShuffleSplit
 from ._split import KFold
 from ._split import GroupKFold
 from ._split import StratifiedKFold
@@ -30,42 +31,56 @@ from ._search import GridSearchCV
 from ._search import RandomizedSearchCV
 from ._search import ParameterGrid
 from ._search import ParameterSampler
-from ._search import fit_grid_point
 
 if typing.TYPE_CHECKING:
     # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
     # TODO: remove this check once the estimator is no longer experimental.
     from ._search_successive_halving import (  # noqa
-        HalvingGridSearchCV, HalvingRandomSearchCV
+        HalvingGridSearchCV,
+        HalvingRandomSearchCV,
     )
 
 
-__all__ = ['BaseCrossValidator',
-           'GridSearchCV',
-           'TimeSeriesSplit',
-           'KFold',
-           'GroupKFold',
-           'GroupShuffleSplit',
-           'LeaveOneGroupOut',
-           'LeaveOneOut',
-           'LeavePGroupsOut',
-           'LeavePOut',
-           'RepeatedKFold',
-           'RepeatedStratifiedKFold',
-           'ParameterGrid',
-           'ParameterSampler',
-           'PredefinedSplit',
-           'RandomizedSearchCV',
-           'ShuffleSplit',
-           'StratifiedKFold',
-           'StratifiedGroupKFold',
-           'StratifiedShuffleSplit',
-           'check_cv',
-           'cross_val_predict',
-           'cross_val_score',
-           'cross_validate',
-           'fit_grid_point',
-           'learning_curve',
-           'permutation_test_score',
-           'train_test_split',
-           'validation_curve']
+__all__ = [
+    "BaseCrossValidator",
+    "BaseShuffleSplit",
+    "GridSearchCV",
+    "TimeSeriesSplit",
+    "KFold",
+    "GroupKFold",
+    "GroupShuffleSplit",
+    "LeaveOneGroupOut",
+    "LeaveOneOut",
+    "LeavePGroupsOut",
+    "LeavePOut",
+    "RepeatedKFold",
+    "RepeatedStratifiedKFold",
+    "ParameterGrid",
+    "ParameterSampler",
+    "PredefinedSplit",
+    "RandomizedSearchCV",
+    "ShuffleSplit",
+    "StratifiedKFold",
+    "StratifiedGroupKFold",
+    "StratifiedShuffleSplit",
+    "check_cv",
+    "cross_val_predict",
+    "cross_val_score",
+    "cross_validate",
+    "learning_curve",
+    "permutation_test_score",
+    "train_test_split",
+    "validation_curve",
+]
+
+
+# TODO: remove this check once the estimator is no longer experimental.
+def __getattr__(name):
+    if name in {"HalvingGridSearchCV", "HalvingRandomSearchCV"}:
+        raise ImportError(
+            f"{name} is experimental and the API might change without any "
+            "deprecation cycle. To use it, you need to explicitly import "
+            "enable_halving_search_cv:\n"
+            "from sklearn.experimental import enable_halving_search_cv"
+        )
+    raise AttributeError(f"module {__name__} has no attribute {name}")

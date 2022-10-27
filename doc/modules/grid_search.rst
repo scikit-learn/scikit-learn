@@ -77,7 +77,7 @@ evaluated and the best combination is retained.
     - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py` for an example of
       Grid Search computation on the digits dataset.
 
-    - See :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py` for an example
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py` for an example
       of Grid Search coupling parameters from a text documents feature
       extractor (n-gram count vectorizer and TF-IDF transformer) with a
       classifier (here a linear SVM trained with SGD with either elastic
@@ -108,7 +108,7 @@ Randomized Parameter Optimization
 =================================
 While using a grid of parameter settings is currently the most widely used
 method for parameter optimization, other search methods have more
-favourable properties.
+favorable properties.
 :class:`RandomizedSearchCV` implements a randomized search over parameters,
 where each setting is sampled from a distribution over possible parameter values.
 This has two main benefits over an exhaustive search:
@@ -152,8 +152,8 @@ A continuous log-uniform random variable is available through
 :class:`~sklearn.utils.fixes.loguniform`. This is a continuous version of
 log-spaced parameters. For example to specify ``C`` above, ``loguniform(1,
 100)`` can be used instead of ``[1, 10, 100]`` or ``np.logspace(0, 2,
-num=1000)``. This is an alias to SciPy's `stats.reciprocal
-<https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.reciprocal.html>`_.
+num=1000)``. This is an alias to `scipy.stats.loguniform
+<https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.loguniform.html>`_.
 
 Mirroring the example above in grid search, we can specify a continuous random
 variable that is log-uniformly distributed between ``1e0`` and ``1e3``::
@@ -495,10 +495,10 @@ min_resources = 20``.
 
 .. _successive_halving_cv_results:
 
-Analysing results with the `cv_results_` attribute
+Analyzing results with the `cv_results_` attribute
 --------------------------------------------------
 
-The ``cv_results_`` attribute contains useful information for analysing the
+The ``cv_results_`` attribute contains useful information for analyzing the
 results of a search. It can be converted to a pandas dataframe with ``df =
 pd.DataFrame(est.cv_results_)``. The ``cv_results_`` attribute of
 :class:`HalvingGridSearchCV` and :class:`HalvingRandomSearchCV` is similar
@@ -507,27 +507,27 @@ additional information related to the successive halving process.
 
 Here is an example with some of the columns of a (truncated) dataframe:
 
-====  ======  ===============  =================  =======================================================================================
+====  ======  ===============  =================  ========================================================================================
   ..    iter      n_resources    mean_test_score  params
-====  ======  ===============  =================  =======================================================================================
-   0       0              125           0.983667  {'criterion': 'entropy', 'max_depth': None, 'max_features': 9, 'min_samples_split': 5}
+====  ======  ===============  =================  ========================================================================================
+   0       0              125           0.983667  {'criterion': 'log_loss', 'max_depth': None, 'max_features': 9, 'min_samples_split': 5}
    1       0              125           0.983667  {'criterion': 'gini', 'max_depth': None, 'max_features': 8, 'min_samples_split': 7}
    2       0              125           0.983667  {'criterion': 'gini', 'max_depth': None, 'max_features': 10, 'min_samples_split': 10}
-   3       0              125           0.983667  {'criterion': 'entropy', 'max_depth': None, 'max_features': 6, 'min_samples_split': 6}
+   3       0              125           0.983667  {'criterion': 'log_loss', 'max_depth': None, 'max_features': 6, 'min_samples_split': 6}
  ...     ...              ...                ...  ...
-  15       2              500           0.951958  {'criterion': 'entropy', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}
+  15       2              500           0.951958  {'criterion': 'log_loss', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}
   16       2              500           0.947958  {'criterion': 'gini', 'max_depth': None, 'max_features': 10, 'min_samples_split': 10}
   17       2              500           0.951958  {'criterion': 'gini', 'max_depth': None, 'max_features': 10, 'min_samples_split': 4}
-  18       3             1000           0.961009  {'criterion': 'entropy', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}
+  18       3             1000           0.961009  {'criterion': 'log_loss', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}
   19       3             1000           0.955989  {'criterion': 'gini', 'max_depth': None, 'max_features': 10, 'min_samples_split': 4}
-====  ======  ===============  =================  =======================================================================================
+====  ======  ===============  =================  ========================================================================================
 
 Each row corresponds to a given parameter combination (a candidate) and a given
 iteration. The iteration is given by the ``iter`` column. The ``n_resources``
 column tells you how many resources were used.
 
 In the example above, the best parameter combination is ``{'criterion':
-'entropy', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}``
+'log_loss', 'max_depth': None, 'max_features': 9, 'min_samples_split': 10}``
 since it has reached the last iteration (3) with the highest score:
 0.96.
 
@@ -538,9 +538,8 @@ since it has reached the last iteration (3) with the highest score:
        Optimization <http://proceedings.mlr.press/v51/jamieson16.html>`_, in
        proc. of Machine Learning Research, 2016.
     .. [2] L. Li, K. Jamieson, G. DeSalvo, A. Rostamizadeh, A. Talwalkar,
-       `Hyperband: A Novel Bandit-Based Approach to Hyperparameter Optimization
-       <https://arxiv.org/abs/1603.06560>`_, in Machine Learning Research
-       18, 2018.
+       :arxiv:`Hyperband: A Novel Bandit-Based Approach to Hyperparameter Optimization
+       <1603.06560>`, in Machine Learning Research 18, 2018.
 
 .. _grid_search_tips:
 
@@ -603,17 +602,17 @@ parameters of composite or nested estimators such as
   >>> from sklearn.datasets import make_moons
   >>> X, y = make_moons()
   >>> calibrated_forest = CalibratedClassifierCV(
-  ...    base_estimator=RandomForestClassifier(n_estimators=10))
+  ...    estimator=RandomForestClassifier(n_estimators=10))
   >>> param_grid = {
-  ...    'base_estimator__max_depth': [2, 4, 6, 8]}
+  ...    'estimator__max_depth': [2, 4, 6, 8]}
   >>> search = GridSearchCV(calibrated_forest, param_grid, cv=5)
   >>> search.fit(X, y)
   GridSearchCV(cv=5,
                estimator=CalibratedClassifierCV(...),
-               param_grid={'base_estimator__max_depth': [2, 4, 6, 8]})
+               param_grid={'estimator__max_depth': [2, 4, 6, 8]})
 
 Here, ``<estimator>`` is the parameter name of the nested estimator,
-in this case ``base_estimator``.
+in this case ``estimator``.
 If the meta-estimator is constructed as a collection of estimators as in
 `pipeline.Pipeline`, then ``<estimator>`` refers to the name of the estimator,
 see :ref:`pipeline_nested_parameters`.  In practice, there can be several
@@ -626,7 +625,7 @@ levels of nesting::
   ...    ('model', calibrated_forest)])
   >>> param_grid = {
   ...    'select__k': [1, 2],
-  ...    'model__base_estimator__max_depth': [2, 4, 6, 8]}
+  ...    'model__estimator__max_depth': [2, 4, 6, 8]}
   >>> search = GridSearchCV(pipe, param_grid, cv=5).fit(X, y)
 
 Please refer to :ref:`pipeline` for performing parameter searches over

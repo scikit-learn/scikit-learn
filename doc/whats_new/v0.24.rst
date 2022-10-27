@@ -15,8 +15,8 @@ Changelog
 :mod:`sklearn.compose`
 ......................
 
-- |Fix| :meth:`compose.ColumnTransformer.get_feature_names` does not call
-  :term:`get_feature_names` on transformers with an empty column selection.
+- |Fix| `compose.ColumnTransformer.get_feature_names` does not call
+  `get_feature_names` on transformers with an empty column selection.
   :pr:`19579` by `Thomas Fan`_.
 
 :mod:`sklearn.cross_decomposition`
@@ -42,8 +42,22 @@ Changelog
   with `sample_weight` parameter and `least_absolute_deviation` loss function.
   :pr:`19407` by :user:`Vadim Ushtanit <vadim-ushtanit>`.
 
+:mod:`feature_extraction`
+.........................
+
+- |Fix| Fixed a bug to support multiple strings for a category when
+  `sparse=False` in :class:`feature_extraction.DictVectorizer`.
+  :pr:`19982` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.gaussian_process`
 ...............................
+
+- |Fix| Avoid explicitly forming inverse covariance matrix in
+  :class:`gaussian_process.GaussianProcessRegressor` when set to output
+  standard deviation. With certain covariance matrices this inverse is unstable
+  to compute explicitly. Calling Cholesky solver mitigates this issue in
+  computation.
+  :pr:`19939` by :user:`Ian Halvic <iwhalvic>`.
 
 - |Fix| Avoid division by zero when scaling constant target in
   :class:`gaussian_process.GaussianProcessRegressor`. It was due to a std. dev.
@@ -59,6 +73,14 @@ Changelog
 - |Fix|: Fixed a bug in :class:`linear_model.LogisticRegression`: the
   sample_weight object is not modified anymore. :pr:`19182` by
   :user:`Yosuke KOBAYASHI <m7142yosuke>`.
+
+:mod:`sklearn.metrics`
+......................
+
+- |Fix| :func:`metrics.top_k_accuracy_score` now supports multiclass
+  problems where only two classes appear in `y_true` and all the classes
+  are specified in `labels`.
+  :pr:`19721` by :user:`Joris Clement <flyingdutchman23>`.
 
 :mod:`sklearn.model_selection`
 ..............................
@@ -193,6 +215,9 @@ random sampling procedures.
   a `random_state` parameter.
 
 - |Fix| :class:`linear_model.Perceptron` when `penalty='elasticnet'`.
+
+- |Fix| Change in the random sampling procedures for the center initialization
+  of :class:`cluster.KMeans`.
 
 Details are listed in the changelog below.
 
@@ -345,13 +370,13 @@ Changelog
   unless data is sparse.
   :pr:`17396` by :user:`Jiaxiang <fujiaxiang>`.
 
-- |Enhancement| :func:`datasets.fetch_covtype` now now supports the optional
+- |Enhancement| :func:`datasets.fetch_covtype` now supports the optional
   argument `as_frame`; when it is set to True, the returned Bunch object's
   `data` and `frame` members are pandas DataFrames, and the `target` member is
   a pandas Series.
   :pr:`17491` by :user:`Alex Liang <tianchuliang>`.
 
-- |Enhancement| :func:`datasets.fetch_kddcup99` now now supports the optional
+- |Enhancement| :func:`datasets.fetch_kddcup99` now supports the optional
   argument `as_frame`; when it is set to True, the returned Bunch object's
   `data` and `frame` members are pandas DataFrames, and the `target` member is
   a pandas Series.
@@ -688,7 +713,7 @@ Changelog
   :user:`Joseph Willard <josephwillard>`
 
 - |Fix| bug in :func:`metrics.hinge_loss` where error occurs when
-  ``y_true`` is missing some labels that are provided explictly in the
+  ``y_true`` is missing some labels that are provided explicitly in the
   ``labels`` parameter.
   :pr:`17935` by :user:`Cary Goltermann <Ultramann>`.
 

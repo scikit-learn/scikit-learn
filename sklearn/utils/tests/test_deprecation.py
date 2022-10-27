@@ -6,18 +6,24 @@ import pickle
 
 from sklearn.utils.deprecation import _is_deprecated
 from sklearn.utils.deprecation import deprecated
-from sklearn.utils._testing import assert_warns_message
+import pytest
 
 
-@deprecated('qwerty')
+@deprecated("qwerty")
 class MockClass1:
     pass
 
 
 class MockClass2:
-    @deprecated('mockclass2_method')
+    @deprecated("mockclass2_method")
     def method(self):
         pass
+
+    @deprecated("n_features_ is deprecated")  # type: ignore
+    @property
+    def n_features_(self):
+        """Number of input features."""
+        return 10
 
 
 class MockClass3:
@@ -36,12 +42,14 @@ def mock_function():
 
 
 def test_deprecated():
-    assert_warns_message(FutureWarning, 'qwerty', MockClass1)
-    assert_warns_message(FutureWarning, 'mockclass2_method',
-                         MockClass2().method)
-    assert_warns_message(FutureWarning, 'deprecated', MockClass3)
-    val = assert_warns_message(FutureWarning, 'deprecated',
-                               mock_function)
+    with pytest.warns(FutureWarning, match="qwerty"):
+        MockClass1()
+    with pytest.warns(FutureWarning, match="mockclass2_method"):
+        MockClass2().method()
+    with pytest.warns(FutureWarning, match="deprecated"):
+        MockClass3()
+    with pytest.warns(FutureWarning, match="deprecated"):
+        val = mock_function()
     assert val == 10
 
 

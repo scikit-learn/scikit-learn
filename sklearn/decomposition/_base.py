@@ -11,17 +11,20 @@
 import numpy as np
 from scipy import linalg
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..utils.validation import check_is_fitted
 from abc import ABCMeta, abstractmethod
 
 
-class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
+class _BasePCA(
+    ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator, metaclass=ABCMeta
+):
     """Base class for PCA methods.
 
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
+
     def get_covariance(self):
         """Compute data covariance with the generative model.
 
@@ -31,16 +34,16 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        cov : array, shape=(n_features, n_features)
+        cov : array of shape=(n_features, n_features)
             Estimated covariance of data.
         """
         components_ = self.components_
         exp_var = self.explained_variance_
         if self.whiten:
             components_ = components_ * np.sqrt(exp_var[:, np.newaxis])
-        exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.)
+        exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.0)
         cov = np.dot(components_.T * exp_var_diff, components_)
-        cov.flat[::len(cov) + 1] += self.noise_variance_  # modify diag inplace
+        cov.flat[:: len(cov) + 1] += self.noise_variance_  # modify diag inplace
         return cov
 
     def get_precision(self):
@@ -59,7 +62,8 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         # handle corner cases first
         if self.n_components_ == 0:
             return np.eye(n_features) / self.noise_variance_
-        if self.n_components_ == n_features:
+
+        if np.isclose(self.noise_variance_, 0.0, atol=0.0):
             return linalg.inv(self.get_covariance())
 
         # Get precision using matrix inversion lemma
@@ -67,13 +71,12 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         exp_var = self.explained_variance_
         if self.whiten:
             components_ = components_ * np.sqrt(exp_var[:, np.newaxis])
-        exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.)
+        exp_var_diff = np.maximum(exp_var - self.noise_variance_, 0.0)
         precision = np.dot(components_, components_.T) / self.noise_variance_
-        precision.flat[::len(precision) + 1] += 1. / exp_var_diff
-        precision = np.dot(components_.T,
-                           np.dot(linalg.inv(precision), components_))
-        precision /= -(self.noise_variance_ ** 2)
-        precision.flat[::len(precision) + 1] += 1. / self.noise_variance_
+        precision.flat[:: len(precision) + 1] += 1.0 / exp_var_diff
+        precision = np.dot(components_.T, np.dot(linalg.inv(precision), components_))
+        precision /= -(self.noise_variance_**2)
+        precision.flat[:: len(precision) + 1] += 1.0 / self.noise_variance_
         return precision
 
     @abstractmethod
@@ -84,9 +87,9 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples and
-            n_features is the number of features.
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         Returns
         -------
@@ -102,13 +105,15 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_features)
-            New data, where n_samples is the number of samples
-            and n_features is the number of features.
+        X : array-like of shape (n_samples, n_features)
+            New data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         Returns
         -------
-        X_new : array-like, shape (n_samples, n_components)
+        X_new : array-like of shape (n_samples, n_components)
+            Projection of X in the first principal components, where `n_samples`
+            is the number of samples and `n_components` is the number of the components.
         """
         check_is_fitted(self)
 
@@ -123,17 +128,19 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
     def inverse_transform(self, X):
         """Transform data back to its original space.
 
-        In other words, return an input X_original whose transform would be X.
+        In other words, return an input `X_original` whose transform would be X.
 
         Parameters
         ----------
-        X : array-like, shape (n_samples, n_components)
-            New data, where n_samples is the number of samples
-            and n_components is the number of components.
+        X : array-like of shape (n_samples, n_components)
+            New data, where `n_samples` is the number of samples
+            and `n_components` is the number of components.
 
         Returns
         -------
-        X_original array-like, shape (n_samples, n_features)
+        X_original array-like of shape (n_samples, n_features)
+            Original data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
 
         Notes
         -----
@@ -141,7 +148,17 @@ class _BasePCA(TransformerMixin, BaseEstimator, metaclass=ABCMeta):
         exact inverse operation, which includes reversing whitening.
         """
         if self.whiten:
-            return np.dot(X, np.sqrt(self.explained_variance_[:, np.newaxis]) *
-                            self.components_) + self.mean_
+            return (
+                np.dot(
+                    X,
+                    np.sqrt(self.explained_variance_[:, np.newaxis]) * self.components_,
+                )
+                + self.mean_
+            )
         else:
             return np.dot(X, self.components_) + self.mean_
+
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.components_.shape[0]

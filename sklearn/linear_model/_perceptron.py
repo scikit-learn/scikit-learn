@@ -1,12 +1,13 @@
 # Author: Mathieu Blondel
 # License: BSD 3 clause
+from numbers import Real
 
-from ..utils.validation import _deprecate_positional_args
 from ._stochastic_gradient import BaseSGDClassifier
+from ..utils._param_validation import StrOptions, Interval
 
 
 class Perceptron(BaseSGDClassifier):
-    """Perceptron
+    """Linear perceptron classifier.
 
     Read more in the :ref:`User Guide <perceptron>`.
 
@@ -38,7 +39,7 @@ class Perceptron(BaseSGDClassifier):
 
         .. versionadded:: 0.19
 
-    tol : float, default=1e-3
+    tol : float or None, default=1e-3
         The stopping criterion. If it is not None, the iterations will stop
         when (loss > previous_loss - tol).
 
@@ -48,9 +49,9 @@ class Perceptron(BaseSGDClassifier):
         Whether or not the training data should be shuffled after each epoch.
 
     verbose : int, default=0
-        The verbosity level
+        The verbosity level.
 
-    eta0 : double, default=1
+    eta0 : float, default=1
         Constant by which the updates are multiplied.
 
     n_jobs : int, default=None
@@ -60,7 +61,7 @@ class Perceptron(BaseSGDClassifier):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=0
         Used to shuffle the training data, when ``shuffle`` is set to
         ``True``. Pass an int for reproducible output across multiple
         function calls.
@@ -95,7 +96,7 @@ class Perceptron(BaseSGDClassifier):
 
         The "balanced" mode uses the values of y to automatically adjust
         weights inversely proportional to class frequencies in the input data
-        as ``n_samples / (n_classes * np.bincount(y))``
+        as ``n_samples / (n_classes * np.bincount(y))``.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
@@ -118,21 +119,40 @@ class Perceptron(BaseSGDClassifier):
         The function that determines the loss, or difference between the
         output of the algorithm and the target values.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
     n_iter_ : int
         The actual number of iterations to reach the stopping criterion.
         For multiclass fits, it is the maximum over every binary fit.
 
     t_ : int
         Number of weight updates performed during training.
-        Same as ``(n_iter_ * n_samples)``.
+        Same as ``(n_iter_ * n_samples + 1)``.
+
+    See Also
+    --------
+    sklearn.linear_model.SGDClassifier : Linear classifiers
+        (SVM, logistic regression, etc.) with SGD training.
 
     Notes
     -----
-
     ``Perceptron`` is a classification algorithm which shares the same
     underlying implementation with ``SGDClassifier``. In fact,
     ``Perceptron()`` is equivalent to `SGDClassifier(loss="perceptron",
     eta0=1, learning_rate="constant", penalty=None)`.
+
+    References
+    ----------
+    https://en.wikipedia.org/wiki/Perceptron and references therein.
 
     Examples
     --------
@@ -144,28 +164,58 @@ class Perceptron(BaseSGDClassifier):
     Perceptron()
     >>> clf.score(X, y)
     0.939...
-
-    See Also
-    --------
-    SGDClassifier
-
-    References
-    ----------
-
-    https://en.wikipedia.org/wiki/Perceptron and references therein.
     """
-    @_deprecate_positional_args
-    def __init__(self, *, penalty=None, alpha=0.0001, l1_ratio=0.15,
-                 fit_intercept=True,
-                 max_iter=1000, tol=1e-3, shuffle=True, verbose=0, eta0=1.0,
-                 n_jobs=None, random_state=0, early_stopping=False,
-                 validation_fraction=0.1, n_iter_no_change=5,
-                 class_weight=None, warm_start=False):
+
+    _parameter_constraints: dict = {**BaseSGDClassifier._parameter_constraints}
+    _parameter_constraints.pop("loss")
+    _parameter_constraints.pop("average")
+    _parameter_constraints.update(
+        {
+            "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
+            "alpha": [Interval(Real, 0, None, closed="left")],
+            "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+            "eta0": [Interval(Real, 0, None, closed="left")],
+        }
+    )
+
+    def __init__(
+        self,
+        *,
+        penalty=None,
+        alpha=0.0001,
+        l1_ratio=0.15,
+        fit_intercept=True,
+        max_iter=1000,
+        tol=1e-3,
+        shuffle=True,
+        verbose=0,
+        eta0=1.0,
+        n_jobs=None,
+        random_state=0,
+        early_stopping=False,
+        validation_fraction=0.1,
+        n_iter_no_change=5,
+        class_weight=None,
+        warm_start=False,
+    ):
         super().__init__(
-            loss="perceptron", penalty=penalty, alpha=alpha, l1_ratio=l1_ratio,
-            fit_intercept=fit_intercept, max_iter=max_iter, tol=tol,
-            shuffle=shuffle, verbose=verbose, random_state=random_state,
-            learning_rate="constant", eta0=eta0, early_stopping=early_stopping,
+            loss="perceptron",
+            penalty=penalty,
+            alpha=alpha,
+            l1_ratio=l1_ratio,
+            fit_intercept=fit_intercept,
+            max_iter=max_iter,
+            tol=tol,
+            shuffle=shuffle,
+            verbose=verbose,
+            random_state=random_state,
+            learning_rate="constant",
+            eta0=eta0,
+            early_stopping=early_stopping,
             validation_fraction=validation_fraction,
-            n_iter_no_change=n_iter_no_change, power_t=0.5,
-            warm_start=warm_start, class_weight=class_weight, n_jobs=n_jobs)
+            n_iter_no_change=n_iter_no_change,
+            power_t=0.5,
+            warm_start=warm_start,
+            class_weight=class_weight,
+            n_jobs=n_jobs,
+        )
