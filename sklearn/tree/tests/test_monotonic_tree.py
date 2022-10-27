@@ -258,7 +258,7 @@ def assert_nd_reg_tree_children_monotonic_bounded(tree_, monotonic_cst):
             if monotonic_cst[feature] == 0:
                 # Feature without monotonicity constraint: propagate bounds
                 # down the tree to both children.
-                # Otherwise with 2 features and a POS constraint on feature 0
+                # Otherwise with 2 features and a +1 constraint on feature 0
                 # the following tree can be accepted, although it does not
                 # respect the positive monotonicity constraint:
                 #

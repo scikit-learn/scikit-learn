@@ -1270,7 +1270,7 @@ class RandomForestClassifier(ForestClassifier):
           - 0: no constraint
           - -1: monotonically decreasing
 
-        The constraints are only valid for binary classifications and hold
+        The constraints are only valid for binary classification and hold
         over the probability of the positive class.
 
     Attributes

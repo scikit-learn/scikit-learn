@@ -475,11 +475,14 @@ Changelog
 :mod:`sklearn.tree`
 ...................
 
-- |Feature| :class:`tree.DecisionTreeClassifier` and
-  :class:`tree.DecisionTreeRegressor` now support monotonic
-  constraints, useful when features are supposed to have a positive/negative
-  effect on the target. :pr:`13649` by :user:`Samuel Ronsin <samronsin>`,
-  initiated by :user:`Patrick O'Reilly <pat-oreilly>`.
+- |Feature| :class:`tree.DecisionTreeClassifier`,
+  :class:`tree.DecisionTreeRegressor`,
+  :class:`tree.ExtraTreeClassifier` and
+  :class:`tree.ExtraTreeRegressor` now support monotonic
+  constraints, useful when features are supposed to have a positive or
+  negative effect on the target.
+  :pr:`13649` by :user:`Samuel Ronsin <samronsin>`, initiated by
+  :user:`Patrick O'Reilly <pat-oreilly>`.
 
 - |Enhancement| :func:`tree.plot_tree`, :func:`tree.export_graphviz` now uses
   a lower case `x[i]` to represent feature `i`. :pr:`23480` by `Thomas Fan`_.

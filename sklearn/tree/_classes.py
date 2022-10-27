@@ -1749,6 +1749,10 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
           - 0: no constraint
           - -1: monotonically decreasing
 
+        If monotonic_cst is None, no constraints are applied.
+
+        Monotonic constraints are not supported for multioutput regression
+        (`n_outputs_>1`).
     Attributes
     ----------
     max_features_ : int
