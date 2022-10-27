@@ -414,6 +414,9 @@ Changelog
   `eigen_tol="auto"` in version 1.3.
   :pr:`23210` by :user:`Meekail Zain <micky774>`.
 
+- |Enhancement| :class:`manifold.Isomap` now preserves
+  dtype for `np.float32` inputs. :pr:`24714` by :user:`Rahil Parikh <rprkh>`.
+
 :mod:`sklearn.metrics`
 ......................
 
@@ -522,6 +525,10 @@ Changelog
   be used when one of the transformers in the :class:`pipeline.FeatureUnion` is
   `"passthrough"`. :pr:`24058` by :user:`Diederik Perdok <diederikwp>`
 
+- |Enhancement| The :class:`FeatureUnion` class now has a `named_transformers`
+  attribute for accessing transformers by name.
+  :pr:`20331` by :user:`Christopher Flynn <crflynn>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -577,6 +584,9 @@ Changelog
   `metric=True`. `"auto"` will become the default value foor `normalized_stress`
   in version 1.4.
   :pr:`23834` by :user:`Meekail Zain <micky774>`
+
+- |FIX| :func:`utils.estimator_checks.check_estimator` now takes into account
+  the `requires_positive_X` tag correctly. :pr:`24667` by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
