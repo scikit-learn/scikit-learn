@@ -2600,15 +2600,6 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         and add more estimators to the ensemble, otherwise, just fit a whole
         new forest. See :term:`the Glossary <warm_start>`.
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature.
-          - 1: monotonically increasing
-          - 0: no constraint
-          - -1: monotonically decreasing
-
-        The constraints are only valid for binary classifications and hold
-        over the probability of the positive class.
-
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.ExtraTreeRegressor` instance
@@ -2691,7 +2682,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         **BaseDecisionTree._parameter_constraints,
         "sparse_output": ["boolean"],
     }
-    for param in ("max_features", "ccp_alpha", "splitter"):
+    for param in ("max_features", "ccp_alpha", "splitter", "monotonic_cst"):
         _parameter_constraints.pop(param)
 
     criterion = "squared_error"
@@ -2712,7 +2703,6 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         random_state=None,
         verbose=0,
         warm_start=False,
-        monotonic_cst=None,
     ):
         super().__init__(
             estimator=ExtraTreeRegressor(),
@@ -2727,7 +2717,6 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
                 "max_leaf_nodes",
                 "min_impurity_decrease",
                 "random_state",
-                "monotonic_cst",
             ),
             bootstrap=False,
             oob_score=False,
@@ -2745,7 +2734,6 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         self.max_leaf_nodes = max_leaf_nodes
         self.min_impurity_decrease = min_impurity_decrease
         self.sparse_output = sparse_output
-        self.monotonic_cst = monotonic_cst
 
     def _set_oob_score_and_attributes(self, X, y):
         raise NotImplementedError("OOB score not supported by tree embedding")
