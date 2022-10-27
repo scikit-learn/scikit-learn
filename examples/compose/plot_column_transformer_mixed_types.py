@@ -181,7 +181,7 @@ selector(dtype_include="category")(X_train)
 # and the regularization parameter of the logistic regression using
 # :class:`~sklearn.model_selection.RandomizedSearchCV`. This
 # hyperparameter search randomly selects a fixed number of parameter
-# settings configured by `n_iter`. Alternatively, one can use the
+# settings configured by `n_iter`. Alternatively, one can use
 # :class:`~sklearn.model_selection.GridSearchCV` but the cartesian product of
 # the parameter space will be evaluated.
 
