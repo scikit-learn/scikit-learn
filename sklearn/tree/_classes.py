@@ -340,7 +340,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         splitter = self.splitter
         if self.monotonic_cst is None:
-            monotonic_cst = np.zeros(shape=X.shape[1], dtype=np.int8)
+            monotonic_cst = None
         else:
             if self.n_outputs_ > 1:
                 raise ValueError(
@@ -349,6 +349,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # Check to correct monotonicity constraint' specification,
             # by applying element-wise logical conjunction
             monotonic_cst = np.asarray(self.monotonic_cst)
+            if monotonic_cst.shape[0] != X.shape[1]:
+                raise ValueError(
+                    "monotonic_cst has shape {} but the input data "
+                    "X has {} features.".format(monotonic_cst.shape[0], X.shape[1])
+                )
             unsatisfied_constraints_conditions = (
                 (monotonic_cst != -1) * (monotonic_cst != 0) * (monotonic_cst != 1)
             )
@@ -368,11 +373,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 # Imposing the constraint on the probability of the positive class
                 monotonic_cst *= -1
 
-        if monotonic_cst.shape[0] != X.shape[1]:
-            raise ValueError(
-                "monotonic_cst has shape {} but the input data "
-                "X has {} features.".format(monotonic_cst.shape[0], X.shape[1])
-            )
         if not isinstance(self.splitter, Splitter):
             splitter = SPLITTERS[self.splitter](
                 criterion,

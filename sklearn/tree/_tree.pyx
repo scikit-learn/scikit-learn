@@ -278,7 +278,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 middle_value = tree._get_middle_value(node_id)
 
                 if not is_leaf:
-                    if splitter.monotonic_cst[split.feature] == 0:
+                    if not splitter.with_monotonic_cst or splitter.monotonic_cst[split.feature] == 0:
                         # Split on a feature with no monotonicity constraint
                         # Current bounds must always be propagated to both children
                         # Splitting criterion will always check them in check_monotonicity
@@ -473,7 +473,7 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                     # Node is expandable
 
                     middle_value = tree._get_middle_value(record.node_id)
-                    if splitter.monotonic_cst[node.feature] == 0:
+                    if not splitter.with_monotonic_cst or splitter.monotonic_cst[node.feature] == 0:
                         # Split on a feature with no monotonicity constraint
                         # Current bounds must always be propagated to both children
                         # Splitting criterion will always check them in check_monotonicity

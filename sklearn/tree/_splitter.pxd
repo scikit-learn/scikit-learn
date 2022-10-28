@@ -65,6 +65,7 @@ cdef class Splitter:
     #    0: no constraint
     #   +1: monotonic increase
     cdef const cnp.int8_t[:] monotonic_cst
+    cdef bint with_monotonic_cst
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,

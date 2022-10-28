@@ -99,6 +99,7 @@ cdef class Splitter:
         self.min_weight_leaf = min_weight_leaf
         self.random_state = random_state
         self.monotonic_cst = monotonic_cst
+        self.with_monotonic_cst = monotonic_cst is not None
 
     def __getstate__(self):
         return {}
@@ -307,8 +308,6 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t n_total_constants = n_known_constants
         cdef SIZE_t partition_end
 
-        cdef cnp.int8_t monotonic_constraint
-
         _init_split(&best, end)
 
         # Sample up to max_features without replacement using a
@@ -355,7 +354,6 @@ cdef class BestSplitter(BaseDenseSplitter):
             # f_j in the interval [n_total_constants, f_i[
             current.feature = features[f_j]
 
-            monotonic_constraint = self.monotonic_cst[current.feature]
             # Sort samples along that feature; by
             # copying the values into an array and
             # sorting the array in a manner which utilizes the cache more
@@ -402,7 +400,14 @@ cdef class BestSplitter(BaseDenseSplitter):
                 self.criterion.update(current.pos)
 
                 # Reject if monotonicity constraints are not satisfied
-                if not self.criterion.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
+                if (
+                    self.with_monotonic_cst and
+                    not self.criterion.check_monotonicity(
+                        self.monotonic_cst[current.feature],
+                        lower_bound,
+                        upper_bound,
+                    )
+                ):
                     continue
 
                 # Reject if min_weight_leaf is not satisfied
@@ -634,8 +639,6 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef DTYPE_t max_feature_value
         cdef DTYPE_t current_feature_value
 
-        cdef cnp.int8_t monotonic_constraint
-
         _init_split(&best, end)
 
         # Sample up to max_features without replacement using a
@@ -680,8 +683,6 @@ cdef class RandomSplitter(BaseDenseSplitter):
             # f_j in the interval [n_total_constants, f_i[
 
             current.feature = features[f_j]
-
-            monotonic_constraint = self.monotonic_cst[current.feature]
 
             # Find min, max
             min_feature_value = self.X[samples[start], current.feature]
@@ -743,7 +744,14 @@ cdef class RandomSplitter(BaseDenseSplitter):
                 continue
 
             # Reject if monotonicity constraints are not satisfied
-            if not self.criterion.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
+            if (
+                self.with_monotonic_cst and
+                not self.criterion.check_monotonicity(
+                    self.monotonic_cst[current.feature],
+                    lower_bound,
+                    upper_bound,
+                )
+            ):
                 continue
 
             current_proxy_improvement = self.criterion.proxy_impurity_improvement()
@@ -810,7 +818,6 @@ cdef class BaseSparseSplitter(Splitter):
     ):
         # Parent __cinit__ is automatically called
         self.n_total_samples = 0
-        self.monotonic_cst = monotonic_cst
 
     cdef int init(self,
                   object X,
@@ -1165,8 +1172,6 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
         cdef SIZE_t start_positive
         cdef SIZE_t end_negative
 
-        cdef INT32_t monotonic_constraint
-
         # Sample up to max_features without replacement using a
         # Fisher-Yates-based algorithm (using the local variables `f_i` and
         # `f_j` to compute a permutation of the `features` array).
@@ -1213,8 +1218,6 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
             current.feature = features[f_j]
             self.extract_nnz(current.feature, &end_negative, &start_positive,
                              &is_samples_sorted)
-
-            monotonic_constraint = self.monotonic_cst[current.feature]
 
             # Sort the positive and negative parts of `Xf`
             sort(&Xf[start], &samples[start], end_negative - start)
@@ -1291,7 +1294,14 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
                     continue
 
                 # Reject if monotonicity constraints are not satisfied
-                if not self.criterion.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
+                if (
+                    self.with_monotonic_cst and
+                    not self.criterion.check_monotonicity(
+                        self.monotonic_cst[current.feature],
+                        lower_bound,
+                        upper_bound,
+                    )
+                ):
                     continue
 
                 current_proxy_improvement = self.criterion.proxy_impurity_improvement()
@@ -1407,8 +1417,6 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
         cdef SIZE_t start_positive
         cdef SIZE_t end_negative
 
-        cdef INT32_t monotonic_constraint
-
         # Sample up to max_features without replacement using a
         # Fisher-Yates-based algorithm (using the local variables `f_i` and
         # `f_j` to compute a permutation of the `features` array).
@@ -1457,8 +1465,6 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
             self.extract_nnz(current.feature,
                              &end_negative, &start_positive,
                              &is_samples_sorted)
-
-            monotonic_constraint = self.monotonic_cst[current.feature]
 
             if end_negative != start_positive:
                 # There is a zero
@@ -1526,7 +1532,14 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
                 continue
 
             # Reject if monotonicity constraints are not satisfied
-            if not self.criterion.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
+            if (
+                self.with_monotonic_cst and
+                not self.criterion.check_monotonicity(
+                    self.monotonic_cst[current.feature],
+                    lower_bound,
+                    upper_bound,
+                )
+            ):
                 continue
 
             current_proxy_improvement = self.criterion.proxy_impurity_improvement()
