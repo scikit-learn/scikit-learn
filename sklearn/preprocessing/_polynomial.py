@@ -575,8 +575,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         may slow down subsequent estimators.
 
     sparse_output : bool, default=False
-        Will return sparse csr matrix if set True else will return an array. This option
-        is only available with `scipy>=1.8`.
+        Will return sparse CSR matrix if set True else will return an array. This
+        option is only available with `scipy>=1.8`.
 
         .. versionadded:: 1.2
 
@@ -830,7 +830,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         if self.sparse_output and sp_version < parse_version("1.8.0"):
             raise ValueError(
                 "Option sparse_output=True is only available with scipy>=1.8.0, "
-                f"got {sp_version}."
+                f"but here scipy=={sp_version} is used."
             )
 
         # number of knots for base interval
@@ -989,7 +989,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                     # later.
                     x[mask_inv] = spl.t[self.degree]
                     XBS_sparse = BSpline.design_matrix(x, spl.t, spl.k)
-                    # Note: Without concerting to lil_matrix we would get:
+                    # Note: Without converting to lil_matrix we would get:
                     # scipy.sparse._base.SparseEfficiencyWarning: Changing the sparsity
                     # structure of a csr_matrix is expensive. lil_matrix is more
                     # efficient.

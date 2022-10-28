@@ -314,8 +314,8 @@ Changelog
 ............................
 
 - |Enhancement| A new parameter `sparse` was added to :class:`SplineTransformer`,
-  available with scipy version at least 1.8. If set to `True`, the spline transformer
-  returns a sparse csc matrix.
+  available as of SciPy 1.8. If `sparse=True`, :class:`SplineTransformer` returns
+  a sparse CSR matrix.
   :pr:`24145` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.svm`
