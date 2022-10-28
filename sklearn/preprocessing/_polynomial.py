@@ -592,6 +592,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         ],
         "include_bias": ["boolean"],
         "order": [StrOptions({"C", "F"})],
+        "sparse_output": ["boolean"],
     }
 
     def __init__(
