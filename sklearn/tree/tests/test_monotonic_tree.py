@@ -2,12 +2,22 @@ import numpy as np
 import pytest
 
 from sklearn.datasets import make_classification, make_regression
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.tree.tests.test_tree import REG_TREES, CLF_TREES
+from sklearn.tree import (
+    DecisionTreeRegressor,
+    DecisionTreeClassifier,
+    ExtraTreeRegressor,
+    ExtraTreeClassifier,
+)
+
+TREE_CLASSIFIER_CLASSES = [DecisionTreeClassifier, ExtraTreeClassifier]
+TREE_REGRESSOR_CLASSES = [DecisionTreeRegressor, ExtraTreeRegressor]
 
 
+@pytest.mark.parametrize("TreeClassifier", TREE_CLASSIFIER_CLASSES)
 @pytest.mark.parametrize("depth_first", (True, False))
-def test_montonic_constraints_classifications(depth_first, global_random_seed):
+def test_montonic_constraints_classifications(
+    TreeClassifier, depth_first, global_random_seed
+):
     n_samples = 1000
     n_samples_train = 900
     X, y = make_classification(
@@ -31,34 +41,35 @@ def test_montonic_constraints_classifications(depth_first, global_random_seed):
     monotonic_cst[0] = 1
     monotonic_cst[1] = -1
 
-    classifiers = CLF_TREES.copy()
-    for name, TreeClassifier in classifiers.items():
-        if depth_first:
-            est = TreeClassifier(max_depth=None, monotonic_cst=monotonic_cst)
-        else:
-            est = TreeClassifier(
-                max_depth=None,
-                monotonic_cst=monotonic_cst,
-                max_leaf_nodes=n_samples_train,
-            )
-        if hasattr(est, "random_state"):
-            est.set_params(**{"random_state": global_random_seed})
-        if hasattr(est, "n_estimators"):
-            est.set_params(**{"n_estimators": 5})
-        est.fit(X_train, y_train)
-        y = est.predict_proba(X_test)[:, 1]
+    if depth_first:
+        est = TreeClassifier(max_depth=None, monotonic_cst=monotonic_cst)
+    else:
+        est = TreeClassifier(
+            max_depth=None,
+            monotonic_cst=monotonic_cst,
+            max_leaf_nodes=n_samples_train,
+        )
+    if hasattr(est, "random_state"):
+        est.set_params(**{"random_state": global_random_seed})
+    if hasattr(est, "n_estimators"):
+        est.set_params(**{"n_estimators": 5})
+    est.fit(X_train, y_train)
+    y = est.predict_proba(X_test)[:, 1]
 
-        # Monotonic increase constraint, it applies to the positive class
-        assert np.all(est.predict_proba(X_test_0incr)[:, 1] >= y)
-        assert np.all(est.predict_proba(X_test_0decr)[:, 1] <= y)
+    # Monotonic increase constraint, it applies to the positive class
+    assert np.all(est.predict_proba(X_test_0incr)[:, 1] >= y)
+    assert np.all(est.predict_proba(X_test_0decr)[:, 1] <= y)
 
-        # Monotonic decrease constraint, it applies to the positive class
-        assert np.all(est.predict_proba(X_test_1incr)[:, 1] <= y)
-        assert np.all(est.predict_proba(X_test_1decr)[:, 1] >= y)
+    # Monotonic decrease constraint, it applies to the positive class
+    assert np.all(est.predict_proba(X_test_1incr)[:, 1] <= y)
+    assert np.all(est.predict_proba(X_test_1decr)[:, 1] >= y)
 
 
+@pytest.mark.parametrize("TreeRegressor", TREE_REGRESSOR_CLASSES)
 @pytest.mark.parametrize("depth_first", (True, False))
-def test_montonic_constraints_regressions(depth_first, global_random_seed):
+def test_montonic_constraints_regressions(
+    TreeRegressor, depth_first, global_random_seed
+):
     n_samples = 1000
     n_samples_train = 900
     # Build a classification task using 3 informative features
@@ -77,35 +88,34 @@ def test_montonic_constraints_regressions(depth_first, global_random_seed):
     monotonic_cst = np.zeros(X.shape[1])
     monotonic_cst[0] = 1
     monotonic_cst[1] = -1
-    regressors = REG_TREES.copy()
 
-    for name, TreeRegressor in regressors.items():
-        if depth_first:
-            est = TreeRegressor(max_depth=None, monotonic_cst=monotonic_cst)
-        else:
-            est = TreeRegressor(
-                max_depth=None,
-                monotonic_cst=monotonic_cst,
-                max_leaf_nodes=n_samples_train,
-            )
-        if hasattr(est, "random_state"):
-            est.set_params(random_state=global_random_seed)
-        if hasattr(est, "n_estimators"):
-            est.set_params(**{"n_estimators": 5})
-        est.fit(X_train, y_train)
-        y = est.predict(X_test)
-        # Monotonic increase constraint
-        y_incr = est.predict(X_test_incr)
-        # y_incr should always be greater than y
-        assert np.all(y_incr >= y)
+    if depth_first:
+        est = TreeRegressor(max_depth=None, monotonic_cst=monotonic_cst)
+    else:
+        est = TreeRegressor(
+            max_depth=None,
+            monotonic_cst=monotonic_cst,
+            max_leaf_nodes=n_samples_train,
+        )
+    if hasattr(est, "random_state"):
+        est.set_params(random_state=global_random_seed)
+    if hasattr(est, "n_estimators"):
+        est.set_params(**{"n_estimators": 5})
+    est.fit(X_train, y_train)
+    y = est.predict(X_test)
+    # Monotonic increase constraint
+    y_incr = est.predict(X_test_incr)
+    # y_incr should always be greater than y
+    assert np.all(y_incr >= y)
 
-        # Monotonic decrease constraint
-        y_decr = est.predict(X_test_decr)
-        # y_decr should always be lower than y
-        assert np.all(y_decr <= y)
+    # Monotonic decrease constraint
+    y_decr = est.predict(X_test_decr)
+    # y_decr should always be lower than y
+    assert np.all(y_decr <= y)
 
 
-def test_multiclass_raises():
+@pytest.mark.parametrize("TreeClassifier", TREE_CLASSIFIER_CLASSES)
+def test_multiclass_raises(TreeClassifier):
     X, y = make_classification(
         n_samples=100, n_features=5, n_classes=3, n_informative=3, random_state=0
     )
@@ -113,57 +123,52 @@ def test_multiclass_raises():
     monotonic_cst = np.zeros(X.shape[1])
     monotonic_cst[0] = -1
     monotonic_cst[1] = 1
-    for name, TreeClassifier in CLF_TREES.items():
-        est = TreeClassifier(
-            max_depth=None, monotonic_cst=monotonic_cst, random_state=0
-        )
-        if hasattr(est, "random_state"):
-            est.set_params(**{"random_state": 0})
+    est = TreeClassifier(max_depth=None, monotonic_cst=monotonic_cst, random_state=0)
+    if hasattr(est, "random_state"):
+        est.set_params(**{"random_state": 0})
 
-        msg = (
-            "Monotonicity constraints are not supported with multiclass classification"
-        )
-        with pytest.raises(ValueError, match=msg):
-            est.fit(X, y)
+    msg = "Monotonicity constraints are not supported with multiclass classification"
+    with pytest.raises(ValueError, match=msg):
+        est.fit(X, y)
 
 
-def test_multiple_output_raises():
+@pytest.mark.parametrize("TreeClassifier", TREE_CLASSIFIER_CLASSES)
+def test_multiple_output_raises(TreeClassifier):
     X = [[1, 2, 3, 4, 5], [6, 7, 8, 9, 10]]
     y = [[1, 0, 1, 0, 1], [1, 0, 1, 0, 1]]
 
-    for name, TreeClassifier in CLF_TREES.items():
-        est = TreeClassifier(
-            max_depth=None, monotonic_cst=np.array([-1, 1]), random_state=0
-        )
-        msg = "Monotonicity constraints are not supported with multiple output"
-        with pytest.raises(ValueError, match=msg):
-            est.fit(X, y)
+    est = TreeClassifier(
+        max_depth=None, monotonic_cst=np.array([-1, 1]), random_state=0
+    )
+    msg = "Monotonicity constraints are not supported with multiple output"
+    with pytest.raises(ValueError, match=msg):
+        est.fit(X, y)
 
 
-def test_bad_monotonic_cst_raises():
+@pytest.mark.parametrize("TreeClassifier", TREE_CLASSIFIER_CLASSES)
+def test_bad_monotonic_cst_raises(TreeClassifier):
     X = [[1, 2], [3, 4], [5, 6], [7, 8], [9, 10]]
     y = [1, 0, 1, 0, 1]
 
-    for name, TreeClassifier in CLF_TREES.items():
-        msg = "monotonic_cst has shape 3 but the input data X has 2 features."
-        est = TreeClassifier(
-            max_depth=None, monotonic_cst=np.array([-1, 1, 0]), random_state=0
-        )
-        with pytest.raises(ValueError, match=msg):
-            est.fit(X, y)
+    msg = "monotonic_cst has shape 3 but the input data X has 2 features."
+    est = TreeClassifier(
+        max_depth=None, monotonic_cst=np.array([-1, 1, 0]), random_state=0
+    )
+    with pytest.raises(ValueError, match=msg):
+        est.fit(X, y)
 
-        msg = "monotonic_cst must be None or an array-like of -1, 0 or 1."
-        est = TreeClassifier(
-            max_depth=None, monotonic_cst=np.array([-2, 2]), random_state=0
-        )
-        with pytest.raises(ValueError, match=msg):
-            est.fit(X, y)
+    msg = "monotonic_cst must be None or an array-like of -1, 0 or 1."
+    est = TreeClassifier(
+        max_depth=None, monotonic_cst=np.array([-2, 2]), random_state=0
+    )
+    with pytest.raises(ValueError, match=msg):
+        est.fit(X, y)
 
-        est = TreeClassifier(
-            max_depth=None, monotonic_cst=np.array([-1, 0.8]), random_state=0
-        )
-        with pytest.raises(ValueError, match=msg):
-            est.fit(X, y)
+    est = TreeClassifier(
+        max_depth=None, monotonic_cst=np.array([-1, 0.8]), random_state=0
+    )
+    with pytest.raises(ValueError, match=msg):
+        est.fit(X, y)
 
 
 def assert_1d_reg_tree_children_monotonic_bounded(tree_, monotonic_sign):
@@ -191,11 +196,12 @@ def assert_1d_reg_monotonic(clf, monotonic_sign, min_x, max_x, n_steps):
     assert (monotonic_sign * np.diff(y_pred_grid) >= 0.0).all()
 
 
+@pytest.mark.parametrize("TreeRegressor", TREE_REGRESSOR_CLASSES)
 @pytest.mark.parametrize("monotonic_sign", (-1, 1))
 @pytest.mark.parametrize("splitter", ("best", "random"))
 @pytest.mark.parametrize("depth_first", (True, False))
 def test_1d_tree_nodes_values(
-    monotonic_sign, splitter, depth_first, global_random_seed
+    TreeRegressor, monotonic_sign, splitter, depth_first, global_random_seed
 ):
     # Adaptation from test_nodes_values in test_montonic_constraints.py
     # in sklearn.ensemble._hist_gradient_boosting
@@ -221,14 +227,14 @@ def test_1d_tree_nodes_values(
 
     if depth_first:
         # No max_leaf_nodes, default depth first tree builder
-        clf = DecisionTreeRegressor(
+        clf = TreeRegressor(
             splitter=splitter,
             monotonic_cst=[monotonic_sign],
             random_state=global_random_seed,
         )
     else:
         # max_leaf_nodes triggers best first tree builder
-        clf = DecisionTreeRegressor(
+        clf = TreeRegressor(
             splitter=splitter,
             monotonic_cst=[monotonic_sign],
             max_leaf_nodes=n_samples,
@@ -292,11 +298,12 @@ def assert_nd_reg_tree_children_monotonic_bounded(tree_, monotonic_cst):
                     lower_bound[i_right] = lower_bound[i]
 
 
+@pytest.mark.parametrize("TreeRegressor", TREE_REGRESSOR_CLASSES)
 @pytest.mark.parametrize("monotonic_sign", (-1, 1))
 @pytest.mark.parametrize("splitter", ("best", "random"))
 @pytest.mark.parametrize("depth_first", (True, False))
 def test_nd_tree_nodes_values(
-    monotonic_sign, splitter, depth_first, global_random_seed
+    TreeRegressor, monotonic_sign, splitter, depth_first, global_random_seed
 ):
     # Build tree with several features, and make sure the nodes
     # values respect the monotonicity constraints.
@@ -327,14 +334,14 @@ def test_nd_tree_nodes_values(
 
     if depth_first:
         # No max_leaf_nodes, default depth first tree builder
-        clf = DecisionTreeRegressor(
+        clf = TreeRegressor(
             splitter=splitter,
             monotonic_cst=monotonic_cst,
             random_state=global_random_seed,
         )
     else:
         # max_leaf_nodes triggers best first tree builder
-        clf = DecisionTreeRegressor(
+        clf = TreeRegressor(
             splitter=splitter,
             monotonic_cst=monotonic_cst,
             max_leaf_nodes=n_samples,
