@@ -61,9 +61,9 @@ cdef class Splitter:
     cdef DOUBLE_t* sample_weight
     # Monotonicity constraints for each feature.
     # The encoding is as follows:
-    #   -1: monotonically decreasing
+    #   -1: monotonic decrease
     #    0: no constraint
-    #   +1: monotonically increasing
+    #   +1: monotonic increase
     cdef const cnp.int8_t[:] monotonic_cst
 
     # The samples vector `samples` is maintained by the Splitter object such

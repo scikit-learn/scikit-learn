@@ -472,7 +472,7 @@ cdef class ClassificationCriterion(Criterion):
         double lower_bound,
         double upper_bound,
     ) nogil:
-        """Check monotonic constraint is satisfied at the current classification split"""
+        """Check monotonicity constraint is satisfied at the current classification split"""
         cdef:
             double sum_left = self.sum_left[0][0]
             double sum_right = self.sum_right[0][0]
@@ -824,7 +824,7 @@ cdef class RegressionCriterion(Criterion):
         double lower_bound,
         double upper_bound,
     ) nogil:
-        """Check monotonic constraint is satisfied at the current regression split"""
+        """Check monotonicity constraint is satisfied at the current regression split"""
         cdef:
             double sum_left = self.sum_left[0]
             double sum_right = self.sum_right[0]

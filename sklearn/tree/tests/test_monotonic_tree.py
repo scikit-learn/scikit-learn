@@ -120,7 +120,9 @@ def test_multiclass_raises():
         if hasattr(est, "random_state"):
             est.set_params(**{"random_state": 0})
 
-        msg = "Monotonic constraints are not supported with multiclass classification"
+        msg = (
+            "Monotonicity constraints are not supported with multiclass classification"
+        )
         with pytest.raises(ValueError, match=msg):
             est.fit(X, y)
 
@@ -133,7 +135,7 @@ def test_multiple_output_raises():
         est = TreeClassifier(
             max_depth=None, monotonic_cst=np.array([-1, 1]), random_state=0
         )
-        msg = "Monotonic constraints are not supported with multiple output"
+        msg = "Monotonicity constraints are not supported with multiple output"
         with pytest.raises(ValueError, match=msg):
             est.fit(X, y)
 
@@ -198,7 +200,7 @@ def test_1d_tree_nodes_values(
     # Adaptation from test_nodes_values in test_montonic_constraints.py
     # in sklearn.ensemble._hist_gradient_boosting
     # Build a single tree with only one feature, and make sure the nodes
-    # values respect the monotonic constraints.
+    # values respect the monotonicity constraints.
 
     # Considering the following tree with a monotonic +1 constraint, we
     # should have:
@@ -254,9 +256,9 @@ def assert_nd_reg_tree_children_monotonic_bounded(tree_, monotonic_cst):
             if monotonic_cst[feature] == 0:
                 # Feature without monotonicity constraint: propagate bounds
                 # down the tree to both children.
-                # Otherwise with 2 features and a +1 constraint on feature 0
-                # the following tree can be accepted, although it does not
-                # respect the positive monotonicity constraint:
+                # Otherwise, with 2 features and a monotonic increase constraint
+                # (encoded by +1) on feature 0, the following tree can be accepted,
+                # although it does not respect the monotonic increase constraint:
                 #
                 #                      X[0] <= 0
                 #                      value = 100
@@ -297,9 +299,9 @@ def test_nd_tree_nodes_values(
     monotonic_sign, splitter, depth_first, global_random_seed
 ):
     # Build tree with several features, and make sure the nodes
-    # values respect the monotonic constraints.
+    # values respect the monotonicity constraints.
 
-    # Considering the following tree with a monotonic POS constraint on X[0],
+    # Considering the following tree with a monotonic increase constraint on X[0],
     # we should have:
     #
     #            root

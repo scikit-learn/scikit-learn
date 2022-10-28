@@ -344,9 +344,9 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             if self.n_outputs_ > 1:
                 raise ValueError(
-                    "Monotonic constraints are not supported with multiple outputs."
+                    "Monotonicity constraints are not supported with multiple outputs."
                 )
-            # Check to correct monotonic constraints' specification,
+            # Check to correct monotonicity constraint' specification,
             # by applying element-wise logical conjunction
             monotonic_cst = np.asarray(self.monotonic_cst)
             unsatisfied_constraints_conditions = (
@@ -362,7 +362,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if is_classifier(self):
                 if self.n_classes_[0] > 2:
                     raise ValueError(
-                        "Monotonic constraints are not supported with multiclass "
+                        "Monotonicity constraints are not supported with multiclass "
                         "classification"
                     )
                 # Imposing the constraint on the probability of the positive class
@@ -768,10 +768,10 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         .. versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature.
-          - 1: monotonically increasing
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonic increase
           - 0: no constraint
-          - -1: monotonically decreasing
+          - -1: monotonic decrease
 
         If monotonic_cst is None, no constraints are applied.
 
@@ -1156,15 +1156,15 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
         .. versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature.
-          - 1: monotonically increasing
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonic increase
           - 0: no constraint
-          - -1: monotonically decreasing
+          - -1: monotonic decrease
 
         If monotonic_cst is None, no constraints are applied.
 
-        Monotonic constraints are not supported for multioutput regression
-        (`n_outputs_>1`).
+        Monotonicity constraints are not supported for multioutput regression
+        (i.e. when `n_outputs_ > 1`).
 
         .. versionadded:: 1.2
 
@@ -1490,10 +1490,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         .. versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature.
-          - 1: monotonically increasing
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonic increase
           - 0: no constraint
-          - -1: monotonically decreasing
+          - -1: monotonic decrease
 
         If monotonic_cst is None, no constraints are applied.
 
@@ -1754,15 +1754,15 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
         .. versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature.
-          - 1: monotonically increasing
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonic increase
           - 0: no constraint
-          - -1: monotonically decreasing
+          - -1: monotonic decrease
 
         If monotonic_cst is None, no constraints are applied.
 
-        Monotonic constraints are not supported for multioutput regression
-        (`n_outputs_>1`).
+        Monotonicity constraints are not supported for multioutput regression
+        (i.e. when `n_outputs_ > 1`).
 
         .. versionadded:: 1.2
 

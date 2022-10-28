@@ -1265,10 +1265,10 @@ class RandomForestClassifier(ForestClassifier):
         .. versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature.
-          - 1: monotonically increasing
+        Indicates the monotonicity constraint to enforce on each feature.
+          - 1: monotonic increase
           - 0: no constraint
-          - -1: monotonically decreasing
+          - -1: monotonic decrease
 
         If monotonic_cst is None, no constraints are applied.
 
@@ -1631,7 +1631,7 @@ class RandomForestRegressor(ForestRegressor):
         .. versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature.
+        Indicates the monotonicity constraint to enforce on each feature.
           - 1: monotonically increasing
           - 0: no constraint
           - -1: monotonically decreasing
@@ -1994,7 +1994,7 @@ class ExtraTreesClassifier(ForestClassifier):
         .. versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature.
+        Indicates the monotonicity constraint to enforce on each feature.
           - 1: monotonically increasing
           - 0: no constraint
           - -1: monotonically decreasing
@@ -2351,7 +2351,7 @@ class ExtraTreesRegressor(ForestRegressor):
         .. versionadded:: 0.22
 
     monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature.
+        Indicates the monotonicity constraint to enforce on each feature.
           - 1: monotonically increasing
           - 0: no constraint
           - -1: monotonically decreasing
