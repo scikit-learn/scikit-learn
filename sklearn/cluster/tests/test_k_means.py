@@ -896,7 +896,7 @@ def test_unit_weights_vs_no_weights(Estimator, data, global_random_seed):
 def test_scaled_weights(Estimator, data, global_random_seed):
     # Check that scaling all sample weights by a common factor
     # shouldn't change the result
-    sample_weight = np.random.RandomState(global_random_seed).uniform(n_samples)
+    sample_weight = np.random.RandomState(global_random_seed).uniform(size=n_samples)
 
     km = Estimator(n_clusters=n_clusters, random_state=global_random_seed, n_init=1)
     km_orig = clone(km).fit(data, sample_weight=sample_weight)
