@@ -736,21 +736,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             elif not np.all(np.diff(base_knots, axis=0) > 0):
                 raise ValueError("knots must be sorted without duplicates.")
 
-        if self.extrapolation not in (
-            "error",
-            "constant",
-            "linear",
-            "continue",
-            "periodic",
-        ):
-            raise ValueError(
-                "extrapolation must be one of 'error', "
-                "'constant', 'linear', 'continue' or 'periodic'."
-            )
-
-        if not isinstance(self.include_bias, (bool, np.bool_)):
-            raise ValueError("include_bias must be bool.")
-
         if self.sparse_output and sp_version < parse_version("1.8.0"):
             raise ValueError(
                 "Option sparse_output=True is only available with scipy>=1.8.0, "
