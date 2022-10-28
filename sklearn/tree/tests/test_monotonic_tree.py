@@ -202,7 +202,7 @@ def assert_1d_reg_monotonic(clf, monotonic_sign, min_x, max_x, n_steps):
 def test_1d_tree_nodes_values(
     TreeRegressor, monotonic_sign, splitter, depth_first, global_random_seed
 ):
-    # Adaptation from test_nodes_values in test_montonic_constraints.py
+    # Adaptation from test_nodes_values in test_monotonic_constraints.py
     # in sklearn.ensemble._hist_gradient_boosting
     # Build a single tree with only one feature, and make sure the node
     # values respect the monotonicity constraints.

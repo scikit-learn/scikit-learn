@@ -1281,19 +1281,35 @@ cdef class Tree:
         return arr
 
     cdef inline double _get_middle_value(self, int node_id) nogil:
+        """Returns the new bound when a monotonic constraint is active
+
+        For regression, this is the average target value of the samples in
+        the parent node.
+
+        For binary classification, this is the proportion of the negative
+        class of samples in the parent node.
+        """
         cdef:
             int i
             double middle_value = 0
 
+        # self.value has shape: [node_count, n_outputs, max_n_classes]
+        # Monotonic constraints are only supported for single-output trees so
+        # we can safely assume n_outputs == 1.
+
+        # Furthermore, we assume that for
+        # classification trees, max_n_classes == 2 as we only support binary
+        # classification (and so self.value_stride == 2).
+
         if self.max_n_classes == 1:
-            # Regression
+            # Regression: self.max_n_classes == 1, so self.value_stride == 1
             middle_value = self.value[node_id]
         else:
-            # Classification
+            # Binary classification: self.max_n_classes == 2
 
-            # This performs some raw pointers arithmetic
-            # Ideally a memory view could wrap self.value so that's
-            # indexing on several axis can be used.
+            # This performs some raw pointers arithmetic. Ideally a memory view
+            # could wrap self.value so that indexing on several axis can be
+            # used.
             for i in range(self.max_n_classes):
                 middle_value += self.value[node_id * self.value_stride + i]
 
