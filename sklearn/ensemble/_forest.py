@@ -2006,7 +2006,6 @@ class ExtraTreesClassifier(ForestClassifier):
 
         .. versionadded:: 1.2
 
-
     Attributes
     ----------
     estimator_ : :class:`~sklearn.tree.ExtraTreesClassifier`
