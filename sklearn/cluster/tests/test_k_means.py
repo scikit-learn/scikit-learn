@@ -93,18 +93,26 @@ def test_kmeans_relocated_clusters(array_constr, algo):
     # second center too far from others points will be empty at first iter
     init_centers = np.array([[0.5, 0.5], [3, 3]])
 
-    expected_labels = [0, 0, 1, 1]
-    expected_inertia = 0.25
-    expected_centers = [[0.25, 0], [0.75, 1]]
-    expected_n_iter = 3
-
     kmeans = KMeans(n_clusters=2, n_init=1, init=init_centers, algorithm=algo)
     kmeans.fit(X)
 
-    assert_array_equal(kmeans.labels_, expected_labels)
+    expected_n_iter = 3
+    expected_inertia = 0.25
     assert_allclose(kmeans.inertia_, expected_inertia)
-    assert_allclose(kmeans.cluster_centers_, expected_centers)
     assert kmeans.n_iter_ == expected_n_iter
+
+    # There are two acceptable ways of relocating clusters in this example, the output
+    # depends on how the argpartition strategy break ties. We accept both outputs.
+    try:
+        expected_labels = [0, 0, 1, 1]
+        expected_centers = [[0.25, 0], [0.75, 1]]
+        assert_array_equal(kmeans.labels_, expected_labels)
+        assert_allclose(kmeans.cluster_centers_, expected_centers)
+    except AssertionError:
+        expected_labels = [1, 1, 0, 0]
+        expected_centers = [[0.75, 1.0], [0.25, 0.0]]
+        assert_array_equal(kmeans.labels_, expected_labels)
+        assert_allclose(kmeans.cluster_centers_, expected_centers)
 
 
 @pytest.mark.parametrize(
@@ -674,7 +682,7 @@ def test_predict_dense_sparse(Estimator, init):
 @pytest.mark.parametrize("dtype", [np.int32, np.int64])
 @pytest.mark.parametrize("init", ["k-means++", "ndarray"])
 @pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
-def test_integer_input(Estimator, array_constr, dtype, init):
+def test_integer_input(Estimator, array_constr, dtype, init, global_random_seed):
     # Check that KMeans and MiniBatchKMeans work with integer input.
     X_dense = np.array([[0, 0], [10, 10], [12, 9], [-1, 1], [2, 0], [8, 10]])
     X = array_constr(X_dense, dtype=dtype)
@@ -682,7 +690,9 @@ def test_integer_input(Estimator, array_constr, dtype, init):
     n_init = 1 if init == "ndarray" else 10
     init = X_dense[:2] if init == "ndarray" else init
 
-    km = Estimator(n_clusters=2, init=init, n_init=n_init, random_state=0)
+    km = Estimator(
+        n_clusters=2, init=init, n_init=n_init, random_state=global_random_seed
+    )
     if Estimator is MiniBatchKMeans:
         km.set_params(batch_size=2)
 
@@ -692,7 +702,7 @@ def test_integer_input(Estimator, array_constr, dtype, init):
     assert km.cluster_centers_.dtype == np.float64
 
     expected_labels = [0, 1, 1, 0, 0, 1]
-    assert_array_equal(km.labels_, expected_labels)
+    assert v_measure_score(km.labels_, expected_labels) == 1.0
 
     # Same with partial_fit (#14314)
     if Estimator is MiniBatchKMeans:
@@ -819,10 +829,10 @@ def test_kmeans_init_fitted_centers(data):
     assert_allclose(km1.cluster_centers_, km2.cluster_centers_)
 
 
-def test_kmeans_warns_less_centers_than_unique_points():
+def test_kmeans_warns_less_centers_than_unique_points(global_random_seed):
     # Check KMeans when the number of found clusters is smaller than expected
     X = np.asarray([[0, 0], [0, 1], [1, 0], [1, 0]])  # last point is duplicated
-    km = KMeans(n_clusters=4)
+    km = KMeans(n_clusters=4, random_state=global_random_seed)
 
     # KMeans should warn that fewer labels than cluster centers have been used
     msg = (
@@ -833,7 +843,7 @@ def test_kmeans_warns_less_centers_than_unique_points():
         km.fit(X)
         # only three distinct points, so only three clusters
         # can have points assigned to them
-        assert set(km.labels_) == set(range(3))
+        assert len(set(km.labels_)) == 3
 
 
 def _sort_centers(centers):
