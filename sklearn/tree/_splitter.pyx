@@ -402,14 +402,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                 self.criterion.update(current.pos)
 
                 # Reject if monotonicity constraints are not satisfied
-                if (
-                    monotonic_constraint != 0 and not
-                    self.criterion.check_monotonicity(
-                        monotonic_constraint,
-                        lower_bound,
-                        upper_bound,
-                    )
-                ):
+                if not self.criterion.check_monotonicity(monotonic_constraint, lower_bound, upper_bound):
                     continue
 
                 # Reject if min_weight_leaf is not satisfied
