@@ -69,6 +69,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
             metric in ("euclidean", "sqeuclidean")
             and not (issparse(X) ^ issparse(Y))
         ):
+            # Specialized implementation of ArgKmin for the Euclidean distance.
             # This implementation processes the computation of the chunks of the
             # distance using a decomposition of the chunks of the distance matrix
             # for the Squared Euclidean distance.
