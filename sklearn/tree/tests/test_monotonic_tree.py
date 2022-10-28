@@ -208,7 +208,7 @@ def test_1d_tree_nodes_values(
 ):
     # Adaptation from test_nodes_values in test_montonic_constraints.py
     # in sklearn.ensemble._hist_gradient_boosting
-    # Build a single tree with only one feature, and make sure the nodes
+    # Build a single tree with only one feature, and make sure the node
     # values respect the monotonicity constraints.
 
     # Considering the following tree with a monotonic +1 constraint, we
