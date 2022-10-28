@@ -702,7 +702,7 @@ def test_integer_input(Estimator, array_constr, dtype, init, global_random_seed)
     assert km.cluster_centers_.dtype == np.float64
 
     expected_labels = [0, 1, 1, 0, 0, 1]
-    assert v_measure_score(km.labels_, expected_labels) == 1.0
+    assert_allclose(v_measure_score(km.labels_, expected_labels), 1.0)
 
     # Same with partial_fit (#14314)
     if Estimator is MiniBatchKMeans:
@@ -843,7 +843,7 @@ def test_kmeans_warns_less_centers_than_unique_points(global_random_seed):
         km.fit(X)
         # only three distinct points, so only three clusters
         # can have points assigned to them
-        assert len(set(km.labels_)) == 3
+        assert set(km.labels_) == set(range(3))
 
 
 def _sort_centers(centers):
