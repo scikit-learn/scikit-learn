@@ -8,6 +8,7 @@
 # License: BSD 3 clause
 
 # See _splitter.pyx for details.
+cimport numpy as cnp
 
 from ._criterion cimport Criterion
 
@@ -63,7 +64,7 @@ cdef class Splitter:
     #   -1: monotonically decreasing
     #    0: no constraint
     #   +1: monotonically increasing
-    cdef const INT32_t[:] monotonic_cst
+    cdef const cnp.int8_t[:] monotonic_cst
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,

@@ -192,13 +192,22 @@ cdef class Criterion:
                                  - (self.weighted_n_left /
                                     self.weighted_n_node_samples * impurity_left)))
 
-    cdef bint check_monotonicity(self, INT32_t monotonic_cst,
-                                       double lower_bound, double upper_bound) nogil:
+    cdef bint check_monotonicity(
+        self,
+        cnp.int8_t monotonic_cst,
+        double lower_bound,
+        double upper_bound,
+    ) nogil:
         pass
 
-    cdef inline bint _check_monotonicity(self, INT32_t monotonic_cst,
-                                        double lower_bound, double upper_bound,
-                                        double sum_left, double sum_right) nogil:
+    cdef inline bint _check_monotonicity(
+        self,
+        cnp.int8_t monotonic_cst,
+        double lower_bound,
+        double upper_bound,
+        double sum_left,
+        double sum_right,
+    ) nogil:
         cdef:
             double weighted_n_left = self.weighted_n_left
             double weighted_n_right = self.weighted_n_right
@@ -457,7 +466,12 @@ cdef class ClassificationCriterion(Criterion):
             memcpy(dest, &self.sum_total[k, 0], self.n_classes[k] * sizeof(double))
             dest += self.max_n_classes
 
-    cdef inline bint check_monotonicity(self, INT32_t monotonic_cst, double lower_bound, double upper_bound) nogil:
+    cdef inline bint check_monotonicity(
+        self,
+        cnp.int8_t monotonic_cst,
+        double lower_bound,
+        double upper_bound,
+    ) nogil:
         """Check monotonic constraint is satisfied at the current classification split"""
         cdef:
             double sum_left = self.sum_left[0][0]
@@ -804,7 +818,12 @@ cdef class RegressionCriterion(Criterion):
         for k in range(self.n_outputs):
             dest[k] = self.sum_total[k] / self.weighted_n_node_samples
 
-    cdef inline bint check_monotonicity(self, INT32_t monotonic_cst, double lower_bound, double upper_bound) nogil:
+    cdef inline bint check_monotonicity(
+        self,
+        cnp.int8_t monotonic_cst,
+        double lower_bound,
+        double upper_bound,
+    ) nogil:
         """Check monotonic constraint is satisfied at the current regression split"""
         cdef:
             double sum_left = self.sum_left[0]

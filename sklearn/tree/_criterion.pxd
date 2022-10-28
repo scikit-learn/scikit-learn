@@ -8,6 +8,7 @@
 # License: BSD 3 clause
 
 # See _criterion.pyx for implementation details.
+cimport numpy as cnp
 
 from ._tree cimport DTYPE_t          # Type of X
 from ._tree cimport DOUBLE_t         # Type of y, sample_weight
@@ -55,10 +56,20 @@ cdef class Criterion:
                                      double impurity_left,
                                      double impurity_right) nogil
     cdef double proxy_impurity_improvement(self) nogil
-    cdef bint check_monotonicity(self, INT32_t monotonic_cst,
-                                 double lower_bound, double upper_bound) nogil
-    cdef inline bint _check_monotonicity(self, INT32_t monotonic_cst, double lower_bound, double upper_bound,
-                                         double sum_left, double sum_right) nogil
+    cdef bint check_monotonicity(
+        self,
+        cnp.int8_t monotonic_cst,
+        double lower_bound,
+        double upper_bound,
+    ) nogil
+    cdef inline bint _check_monotonicity(
+        self,
+        cnp.int8_t monotonic_cst,
+        double lower_bound,
+        double upper_bound,
+        double sum_left,
+        double sum_right,
+    ) nogil
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""

@@ -346,16 +346,19 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 raise ValueError(
                     "Monotonic constraints are not supported with multiple outputs."
                 )
-            # Applying element-wise logical conjunction
-            # for monotonic constraints' support.
-            monotonic_cst = np.asarray(self.monotonic_cst, dtype=np.int8)
+            # Check to correct monotonic constraints' specification,
+            # by applying element-wise logical conjunction
+            monotonic_cst = np.asarray(self.monotonic_cst)
             unsatisfied_constraints_conditions = (
                 (monotonic_cst != -1) * (monotonic_cst != 0) * (monotonic_cst != 1)
             )
             if np.any(unsatisfied_constraints_conditions):
+                unique_constaints_value = np.unique(monotonic_cst)
                 raise ValueError(
-                    "monotonic_cst must be None or an array-like of -1, 0 or 1."
+                    "monotonic_cst must be None or an array-like of -1, 0 or 1, but"
+                    f" got {unique_constaints_value}"
                 )
+            monotonic_cst = np.asarray(monotonic_cst, dtype=np.int8)
             if is_classifier(self):
                 if self.n_classes_[0] > 2:
                     raise ValueError(

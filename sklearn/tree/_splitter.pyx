@@ -11,6 +11,8 @@
 #
 # License: BSD 3 clause
 
+cimport numpy as cnp
+
 from ._criterion cimport Criterion
 
 from libc.stdlib cimport qsort
@@ -49,9 +51,15 @@ cdef class Splitter:
     sparse and dense data, one split at a time.
     """
 
-    def __cinit__(self, Criterion criterion, SIZE_t max_features,
-                  SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, const INT32_t[:] monotonic_cst):
+    def __cinit__(
+        self,
+        Criterion criterion,
+        SIZE_t max_features,
+        SIZE_t min_samples_leaf,
+        double min_weight_leaf,
+        object random_state,
+        const cnp.int8_t[:] monotonic_cst,
+    ):
         """
         Parameters
         ----------
@@ -74,7 +82,7 @@ cdef class Splitter:
         random_state : object
             The user inputted random state to be used for pseudo-randomness
 
-        monotonic_cst : INT32_t[:]
+        monotonic_cst : const cnp.int8_t[:]
             Monotonicity constraints
 
         """
@@ -299,7 +307,7 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t n_total_constants = n_known_constants
         cdef SIZE_t partition_end
 
-        cdef INT32_t monotonic_constraint
+        cdef cnp.int8_t monotonic_constraint
 
         _init_split(&best, end)
 
@@ -626,7 +634,7 @@ cdef class RandomSplitter(BaseDenseSplitter):
         cdef DTYPE_t max_feature_value
         cdef DTYPE_t current_feature_value
 
-        cdef INT32_t monotonic_constraint
+        cdef cnp.int8_t monotonic_constraint
 
         _init_split(&best, end)
 
@@ -793,7 +801,7 @@ cdef class BaseSparseSplitter(Splitter):
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state, const INT32_t[:] monotonic_cst):
+                  object random_state, const cnp.int8_t[:] monotonic_cst):
         # Parent __cinit__ is automatically called
         self.n_total_samples = 0
         self.monotonic_cst = monotonic_cst
