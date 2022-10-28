@@ -38,16 +38,13 @@ cdef extern from "<algorithm>" namespace "std" nogil:
     void fill[Iter, T](Iter first, Iter last, const T& value) except + #noqa
 
 
-{{for name_suffix, upcast_to_float64, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
-
-
-cdef void _middle_term_sparse_sparse_{{name_suffix}}(
-    const {{INPUT_DTYPE_t}}[:] X_data,
+cdef void _middle_term_sparse_sparse_64(
+    const DTYPE_t[:] X_data,
     const SPARSE_INDEX_TYPE_t[:] X_indices,
     const SPARSE_INDEX_TYPE_t[:] X_indptr,
     ITYPE_t X_start,
     ITYPE_t X_end,
-    const {{INPUT_DTYPE_t}}[:] Y_data,
+    const DTYPE_t[:] Y_data,
     const SPARSE_INDEX_TYPE_t[:] Y_indices,
     const SPARSE_INDEX_TYPE_t[:] Y_indptr,
     ITYPE_t Y_start,
@@ -69,6 +66,9 @@ cdef void _middle_term_sparse_sparse_{{name_suffix}}(
                     Y_j_col_idx = Y_indices[Y_j_ptr]
                     if X_i_col_idx == Y_j_col_idx:
                         D[k] += -2 * X_data[X_i_ptr] * Y_data[Y_j_ptr]
+
+
+{{for name_suffix, upcast_to_float64, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
 
 cdef class MiddleTermComputer{{name_suffix}}:
@@ -147,7 +147,9 @@ cdef class MiddleTermComputer{{name_suffix}}:
     @classmethod
     def unpack_csr_matrix(cls, X: csr_matrix):
         """Ensure that the CSR matrix is indexed with SPARSE_INDEX_TYPE."""
-        X_data = np.asarray(X.data, dtype={{INPUT_DTYPE}})
+        print("DEBUG before casting", X.data.dtype)
+        X_data = np.asarray(X.data, dtype=DTYPE)
+        print("DEBUG after casting", X_data.dtype)
         X_indices = np.asarray(X.indices, dtype=SPARSE_INDEX_TYPE)
         X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
         return X_data, X_indices, X_indptr
@@ -398,7 +400,7 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
 
             dist_middle_terms = - 2 X_c_i.Y_c_j^T
 
-    The logic of the computation is wrapped in the routine _middle_term_sparse_sparse_{{name_suffix}}.
+    The logic of the computation is wrapped in the routine _middle_term_sparse_sparse_64.
     This routine iterates over the data, indices and indptr arrays of the sparse matrices without
     densifying them.
     """
@@ -466,7 +468,7 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
                 self.dist_middle_terms_chunks[thread_num].data()
             )
 
-        _middle_term_sparse_sparse_{{name_suffix}}(
+        _middle_term_sparse_sparse_64(
             self.X_data,
             self.X_indices,
             self.X_indptr,
@@ -481,5 +483,6 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
         )
 
         return dist_middle_terms
+
 
 {{endfor}}
