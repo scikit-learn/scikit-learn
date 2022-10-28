@@ -230,7 +230,8 @@ cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_
 
             dist_middle_terms = - 2 X_c_i.Y_c_j^T
 
-    This class use the BLAS gemm routine to efficiently perform the dot product.
+    This class use the BLAS gemm routine to perform the dot product of each chunks
+    of the distance matrix with improved arithmetic intensity and vector instruction (SIMD).
     """
 
     def __init__(

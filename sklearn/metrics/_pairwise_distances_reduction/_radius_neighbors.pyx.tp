@@ -90,12 +90,16 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
             metric in ("euclidean", "sqeuclidean")
             and not (issparse(X) ^ issparse(Y))
         ):
-            # Specialized implementation with improved arithmetic intensity
-            # and vector instructions (SIMD) by processing several vectors
-            # at time to leverage a call to a matrix multiplication routine.
-            # Decomposing the euclidean distance into as a sum of squared
-            # matrices and a middle term cross product is explained in more
-            # details in the docstring of MiddleTermComputer.
+            # Specialized implementation of RadiusNeighbors for the Euclidean
+            # distance.
+            # This implementation processes the computation of the chunks of the
+            # distance using a decomposition of the chunks of the distance matrix
+            # for the Squared Euclidean distance.
+            # This specialisation has an improved arithmetic intensity for both
+            # the dense and sparse settings, allowing in most case speed-ups of
+            # several orders of magnitude compared to the generic RadiusNeighbors
+            # implementation.
+            # For more information see MiddleTermComputer.
             use_squared_distances = metric == "sqeuclidean"
             pda = EuclideanRadiusNeighbors{{name_suffix}}(
                 X=X, Y=Y, radius=radius,

@@ -69,12 +69,14 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
             metric in ("euclidean", "sqeuclidean")
             and not (issparse(X) ^ issparse(Y))
         ):
-            # Specialized implementation with improved arithmetic intensity
-            # and vector instructions (SIMD) by processing several vectors
-            # at time to leverage a call to a matrix multiplication routine.
-            # Decomposing the euclidean distance into as a sum of squared
-            # matrices and a middle term cross product is explained in more
-            # details in the docstring of MiddleTermComputer.
+            # This implementation processes the computation of the chunks of the
+            # distance using a decomposition of the chunks of the distance matrix
+            # for the Squared Euclidean distance.
+            # This specialisation has an improved arithmetic intensity for both
+            # the dense and sparse settings, allowing in most case speed-ups of
+            # several orders of magnitude compared to the generic ArgKmin
+            # implementation.
+            # For more information see MiddleTermComputer.
             use_squared_distances = metric == "sqeuclidean"
             pda = EuclideanArgKmin{{name_suffix}}(
                 X=X, Y=Y, k=k,
@@ -84,8 +86,8 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
                 metric_kwargs=metric_kwargs,
             )
         else:
-             # Fall back on a generic implementation that handles most scipy
-             # metrics by computing the distances between 2 vectors at a time.
+            # Fall back on a generic implementation that handles most scipy
+            # metrics by computing the distances between 2 vectors at a time.
             pda = ArgKmin{{name_suffix}}(
                 datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, metric, metric_kwargs),
                 k=k,
