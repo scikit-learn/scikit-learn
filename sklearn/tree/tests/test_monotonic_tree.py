@@ -51,8 +51,6 @@ def test_montonic_constraints_classifications(
         )
     if hasattr(est, "random_state"):
         est.set_params(**{"random_state": global_random_seed})
-    if hasattr(est, "n_estimators"):
-        est.set_params(**{"n_estimators": 5})
     est.fit(X_train, y_train)
     y = est.predict_proba(X_test)[:, 1]
 
@@ -127,8 +125,6 @@ def test_multiclass_raises(TreeClassifier):
     monotonic_cst[0] = -1
     monotonic_cst[1] = 1
     est = TreeClassifier(max_depth=None, monotonic_cst=monotonic_cst, random_state=0)
-    if hasattr(est, "random_state"):
-        est.set_params(**{"random_state": 0})
 
     msg = "Monotonicity constraints are not supported with multiclass classification"
     with pytest.raises(ValueError, match=msg):
