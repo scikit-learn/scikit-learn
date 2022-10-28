@@ -13,7 +13,7 @@ import numpy as np
 from scipy import sparse
 from joblib import Parallel
 
-from ..base import clone, TransformerMixin
+from ..base import clone, TransformerMixin/
 from ..utils._estimator_html_repr import _VisualBlock
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
@@ -881,6 +881,11 @@ def _get_transformer_list(estimators):
     Construct (name, trans, column) tuples from list
 
     """
+    # The `zip(*items)` idiom doesn't work right if the `items` sequence
+    # is empty, so check for it here and return early.
+    if not estimators:
+        return []
+
     transformers, columns = zip(*estimators)
     names, _ = zip(*_name_estimators(transformers))
 
