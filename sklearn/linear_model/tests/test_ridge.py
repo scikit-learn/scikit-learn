@@ -1988,11 +1988,6 @@ def test_ridge_sample_weight_consistentcy(fit_intercept, sparseX, data, solver):
     if sparseX:
         if solver == "svd" or (solver in ("cholesky", "saga") and fit_intercept):
             pytest.skip("unsupported configuration")
-        if solver in ("sparse_cg", "sag") and fit_intercept:
-            pytest.xfail(
-                f"{solver} with with sparse input and fit_intercept=True does"
-                " not meet tolerace critetia"
-            )
 
     rng = np.random.RandomState(42)
     n_samples = 12
