@@ -1638,8 +1638,8 @@ class RandomForestRegressor(ForestRegressor):
 
         If monotonic_cst is None, no constraints are applied.
 
-        Monotonic constraints are not supported for multioutput regression
-        (`n_outputs_>1`).
+        Monotonicity constraints are not supported for multioutput regression
+        (i.e. when `n_outputs_ > 1`).
 
         .. versionadded:: 1.2
 
@@ -2358,8 +2358,8 @@ class ExtraTreesRegressor(ForestRegressor):
 
         If monotonic_cst is None, no constraints are applied.
 
-        Monotonic constraints are not supported for multioutput regression
-        (`n_outputs_>1`).
+        Monotonicity constraints are not supported for multioutput regression
+        (i.e. when `n_outputs_ > 1`).
 
         .. versionadded:: 1.2
 
