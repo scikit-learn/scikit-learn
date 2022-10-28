@@ -107,6 +107,7 @@ class LossFunction(metaclass=ABCMeta):
              ``learning_rate``.
         k : int, default=0
             The index of the estimator being updated.
+
         """
         # compute leaf for each sample in ``X``.
         terminal_regions = tree.apply(X)
