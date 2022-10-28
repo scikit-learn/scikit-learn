@@ -350,7 +350,7 @@ def test_random_search_discrete_distributions(
         ({"min_resources": -10}, "min_resources must be either"),
         (
             {"max_resources": "auto", "resource": "b"},
-             "resource can only be 'n_samples' when max_resources='auto'"
+            "resource can only be 'n_samples' when max_resources='auto'",
         ),
         (
             {"min_resources": 15, "max_resources": 14},
