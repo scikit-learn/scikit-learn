@@ -26,7 +26,7 @@ def test_montonic_constraints_classifications(
         n_features=5,
         n_informative=5,
         n_redundant=0,
-        random_state=0,
+        random_state=global_random_seed,
     )
     X_train, y_train = X[:n_samples_train], y[:n_samples_train]
     X_test, _ = X[n_samples_train:], y[n_samples_train:]
@@ -74,7 +74,10 @@ def test_montonic_constraints_regressions(
     n_samples_train = 900
     # Build a classification task using 3 informative features
     X, y = make_regression(
-        n_samples=n_samples, n_features=5, n_informative=5, random_state=0
+        n_samples=n_samples,
+        n_features=5,
+        n_informative=5,
+        random_state=global_random_seed,
     )
     train = np.arange(n_samples_train)
     test = np.arange(n_samples_train, n_samples)
