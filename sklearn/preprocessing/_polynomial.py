@@ -997,6 +997,26 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 output_list.append(XBS_sparse)
 
         if use_sparse:
+            # `scipy.sparse.hstack` breaks in scipy<1.9.2
+            # when `n_output_features_ > max_int32`
+            max_int32 = np.iinfo(np.int32).max
+            all_int32 = True
+            for mat in output_list:
+                all_int32 &= mat.indices.dtype == np.int32
+            if (
+                sp_version < parse_version("1.9.2")
+                and self.n_output_features_ > max_int32
+                and all_int32
+            ):
+                raise ValueError(
+                    "In scipy versions `<1.9.2`, the function `scipy.sparse.hstack`"
+                    " produces negative columns when:\n1. The output shape contains"
+                    " `n_cols` too large to be represented by a 32bit signed"
+                    " integer.\n2. All sub-matrices to be stacked have indices of"
+                    " dtype `np.int32`.\nTo avoid this error, either use a version"
+                    " of scipy `>=1.9.2` or alter the `PolynomialFeatures`"
+                    " transformer to produce fewer than 2^31 output features"
+                )
             XBS = sparse.hstack(output_list)
         elif self.sparse_output:
             # TODO: Remove with scipy 1.10. See comment above.
