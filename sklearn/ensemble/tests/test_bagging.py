@@ -5,6 +5,7 @@ Testing for the bagging ensemble module (sklearn.ensemble.bagging).
 # Author: Gilles Louppe
 # License: BSD 3 clause
 import re
+import warnings
 from itertools import product
 
 import numpy as np
@@ -12,7 +13,6 @@ import joblib
 import pytest
 
 from sklearn.base import BaseEstimator
-
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -29,8 +29,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_diabetes, load_iris, make_hastie_10_2
 from sklearn.utils import check_random_state
 from sklearn.utils._mocking import CheckingClassifier
-from sklearn.utils._testing import _convert_container
-from sklearn.utils.validation import _num_samples, check_array
+from sklearn.utils.metadata_routing import RequestType
 from sklearn.preprocessing import FunctionTransformer, scale
 from itertools import cycle
 
@@ -626,88 +625,247 @@ def test_bagging_sample_weight_unsupported_but_passed(estimator_cls):
 
 
 @pytest.mark.parametrize("estimator_cls", [BaggingClassifier, BaggingRegressor])
-@pytest.mark.parametrize("fit_params_type", ["list", "array"])
-@pytest.mark.parametrize("use_sample_weight", [True, False])
-def test_bagging_with_arbitrary_fit_params(
-    estimator_cls, fit_params_type, use_sample_weight
-):
-    """Tests that sample_weight and other fit_params are passed to the
-    underlying base estimator."""
+def test_sample_weight_none_and_base_estimator_supports_it_directly(estimator_cls):
     # Using iris even for regression, which is fine for the purpose of this test
     X, y = iris.data, iris.target
-    sample_weight = np.ones(len(y))
-    other_fit_param = 2 * sample_weight
-    fit_params = {
-        "other_fit_param": _convert_container(other_fit_param, fit_params_type),
-    }
-    if use_sample_weight:
-        fit_params["sample_weight"] = _convert_container(sample_weight, fit_params_type)
+    # sample bagging is achieved through the use of sample weights because the
+    # base estimator supports it, thus expect sample weights
+    base_estimator = CheckingClassifier(expected_sample_weight=True)
+    estimator = estimator_cls(base_estimator)
 
-    # Hypothetically, we would need a regressor for BaggingRegressor, but
-    # CheckingRegressor does not exist. Using CheckingClassifier here does the
-    # job for the purpose of the test, so we take that.
-    base_estimator = CheckingClassifier(
-        expected_sample_weight=True,
-        expected_fit_params=["other_fit_param"],
-    ).set_fit_request(sample_weight=use_sample_weight, other_fit_param=True)
-    estimator = estimator_cls(base_estimator=base_estimator)
-    estimator.fit(X, y, **fit_params)
+    # there are no warnings and no errors
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        estimator.fit(X, y)
 
 
 @pytest.mark.parametrize("estimator_cls", [BaggingClassifier, BaggingRegressor])
-@pytest.mark.parametrize("fit_params_type", ["list", "array"])
-def test_bagging_with_arbitrary_fit_params_base_estimator_no_sample_weight_support(
-    estimator_cls, fit_params_type
-):
-    """Tests that fit_params are passed to the underlying base estimator even if
-    it doesn't support sample_weight.
+def test_sample_weight_none_and_base_estimator_supports_it_indirectly(estimator_cls):
+    # Even though "sample_weight" is not in the fit signature, it is still
+    # passed. This test exists because bagging used to determine if
+    # sample_weight should be passed by inspecting the fit signature.
+    from sklearn.utils.metadata_routing import RequestType
 
-    """
-    # Using iris even for regression, which is fine for the purpose of this test
-    X, y = iris.data, iris.target
-    other_fit_param = np.ones(len(y))
-    fit_params = {
-        "other_fit_param": _convert_container(other_fit_param, fit_params_type),
-    }
+    class MyEstimator(BaseEstimator):
+        # This attribute indicates that the estimator indeed supports
+        # sample_weight
+        __metadata_request__fit = {"sample_weight": RequestType.ERROR_IF_PASSED}
 
-    # We need a custom CheckingClassifier that does _not_ have a sample_weight
-    # argument in fit. This is because BaggingClassifier and BaggingRegressor
-    # force the use of sample_weight if it is supported. However, here we want
-    # to test if fit_params are correctly routed even if the base estimator does
-    # not (forcefully) use sample_weight.
-    class MyCheckingClassifier(CheckingClassifier):
-        def fit(self, X, y, **fit_params):
-            assert _num_samples(X) == _num_samples(y)
-            if self.methods_to_check == "all" or "fit" in self.methods_to_check:
-                X, y = self._check_X_y(X, y, should_be_fitted=False)
-            self.n_features_in_ = np.shape(X)[1]
-            self.classes_ = np.unique(check_array(y, ensure_2d=False, allow_nd=True))
-            if self.expected_fit_params:
-                missing = set(self.expected_fit_params) - set(fit_params)
-                if missing:
-                    raise AssertionError(
-                        f"Expected fit parameter(s) {list(missing)} not seen."
-                    )
-                for key, value in fit_params.items():
-                    if _num_samples(value) != _num_samples(X):
-                        raise AssertionError(
-                            f"Fit parameter {key} has length {_num_samples(value)}"
-                            f"; expected {_num_samples(X)}."
-                        )
-            if self.expected_sample_weight:
-                raise ValueError("Never expect sample weight with this class")
-
+        def fit(self, X, y, **kwargs):
+            assert kwargs.get("sample_weight") is not None
             return self
 
-    # Hypothetically, we would need a regressor for BaggingRegressor, but
-    # CheckingRegressor does not exist. Using CheckingClassifier here does the
-    # job for the purpose of the test, so we take that.
-    base_estimator = MyCheckingClassifier(
-        expected_sample_weight=False,
-        expected_fit_params=["other_fit_param"],
-    ).set_fit_request(other_fit_param=True)
-    estimator = estimator_cls(base_estimator=base_estimator)
-    estimator.fit(X, y, **fit_params)
+        def predict(self, X):
+            return np.ones(len(X))
+
+    # Using iris even for regression, which is fine for the purpose of this test
+    X, y = iris.data, iris.target
+    # sample bagging is achieved through the use of sample weights because the
+    # base estimator supports it
+    base_estimator = MyEstimator()
+    estimator = estimator_cls(base_estimator)
+
+    # there are no warnings and no errors
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        estimator.fit(X, y)
+
+
+@pytest.mark.parametrize("estimator_cls", [BaggingClassifier, BaggingRegressor])
+def test_sample_weight_none_and_base_estimator_does_not_support_it(estimator_cls):
+    # sample bagging is achieved through indexing because the base estimator
+    # does not support it
+
+    # Using iris even for regression, which is fine for the purpose of this test
+    X, y = iris.data, iris.target
+    n_samples = len(y)
+
+    class MyEstimator(BaseEstimator):
+        def fit(self, X, y, **fit_params):
+            # check that the indexing method was used to achieve subsampling,
+            # i.e. no sample_weight are passed but instead fewer samples
+            assert "sample_weight" not in fit_params
+            assert len(y) == 0.5 * n_samples
+            return self
+
+        def predict(self, X):
+            return np.ones(len(X))
+
+    base_estimator = MyEstimator()
+    estimator = estimator_cls(base_estimator, max_samples=0.5)
+
+    # there are no warnings and no errors
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        estimator.fit(X, y)
+
+
+@pytest.mark.parametrize("estimator_cls", [BaggingClassifier, BaggingRegressor])
+def test_sample_weight_not_none_and_base_estimator_supports_it_directly(estimator_cls):
+    # sample bagging is achieved through the use of sample weights because the
+    # base estimator supports it (but has to request it)
+
+    # Using iris even for regression, which is fine for the purpose of this test
+    X, y = iris.data, iris.target
+    sample_weight = np.ones_like(y)
+
+    base_estimator = _weighted(CheckingClassifier(expected_sample_weight=False))
+    estimator = estimator_cls(base_estimator)
+
+    # there are no warnings and no errors
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        estimator.fit(X, y, sample_weight=sample_weight)
+
+
+@pytest.mark.parametrize("estimator_cls", [BaggingClassifier, BaggingRegressor])
+def test_sample_weight_not_none_and_base_estimator_supports_it_indirectly(
+    estimator_cls,
+):
+    # sample bagging is achieved through the use of sample weights because the
+    # base estimator supports it indirectly (but has to request it)
+
+    class MyEstimator(BaseEstimator):
+        __metadata_request__fit = {"sample_weight": RequestType.ERROR_IF_PASSED}
+
+        def fit(self, X, y, **kwargs):
+            sw = kwargs.get("sample_weight")
+            # to test that subsampling via sample_weight is used, not only check
+            # that sample_weight was passed but also that it's not just 1s (the
+            # original sample_weight).
+            assert sw is not None
+            assert not np.allclose(sw, 1.0)
+            return self
+
+        def predict(self, X):
+            return np.ones(len(X))
+
+    # Using iris even for regression, which is fine for the purpose of this test
+    X, y = iris.data, iris.target
+    sample_weight = np.ones_like(y)
+    # sample bagging is achieved through the use of sample weights because the
+    # base estimator supports it (but has to request it)
+    base_estimator = _weighted(MyEstimator())
+    estimator = estimator_cls(base_estimator)
+
+    # there are no warnings and no errors
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        estimator.fit(X, y, sample_weight=sample_weight)
+
+
+@pytest.mark.parametrize("estimator_cls", [BaggingClassifier, BaggingRegressor])
+@pytest.mark.parametrize("use_sw", [True, False])
+@pytest.mark.parametrize("base_estimator_supports_sw", [True, False])
+def test_sample_weight_supported_and_used_and_base_estimator_is_metaestimator(
+    estimator_cls, use_sw, base_estimator_supports_sw
+):
+    # Check bagging when the base estimator is itself a meta estimator. The
+    # logic is that as long as that meta estimator supports SW, it is assumed
+    # that it works correctly and passes it on to its own base estimator if
+    # necessary. We need to write custom estimator classes to check that if
+    # supported, the sample weight method is used for bagging, not the indexing
+    # method, and vice versa.
+
+    # Using iris even for regression, which is fine for the purpose of this test
+    X, y = iris.data, iris.target
+    num_samples = len(y)
+    sample_weight = np.ones_like(y)
+
+    from sklearn.base import MetaEstimatorMixin
+    from sklearn.utils.metadata_routing import (
+        MetadataRouter,
+        MethodMapping,
+        process_routing,
+    )
+
+    class MetaEstimatorWithoutSW(BaseEstimator, MetaEstimatorMixin):
+        def __init__(self, estimator):
+            self.estimator = estimator
+
+        def check(self, X, y, **fit_params):
+            assert "sample_weight" not in fit_params
+            assert len(y) == 0.5 * num_samples  # check that indexing was used
+
+        def fit(self, X, y, **fit_params):
+            self.check(X, y, **fit_params)
+            routed_params = process_routing(
+                obj=self,
+                method="fit",
+                other_params=fit_params,
+            )
+            self.estimator.fit(X, y, **routed_params.estimator.fit)
+            return self
+
+        def predict(self, X):
+            return np.ones(len(X))
+
+        def get_metadata_routing(self):
+            router = (
+                MetadataRouter(owner=self.__class__.__name__)
+                .add(
+                    estimator=self.estimator,
+                    method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+                )
+                .warn_on(child="estimator", method="fit", params=["sample_weight"])
+            )
+            return router
+
+    class MetaEstimatorWithSW(MetaEstimatorWithoutSW):
+        def check(self, X, y, **fit_params):
+            sw = fit_params.get("sample_weight")
+            assert sw is not None
+            # ensure that indexing was not used
+            assert len(sw) == num_samples
+            # ensure that the SW method was used for bagging by checking that
+            # the passed SW are not just the original one, which was all 1s
+            assert not np.allclose(sw, 1.0)
+
+        def fit(self, X, y, sample_weight=None, **fit_params):
+            self.check(X, y, sample_weight=sample_weight, **fit_params)
+            return super().fit(X, y, sample_weight=sample_weight, **fit_params)
+
+    class BaseEstimatorWithoutSW(BaseEstimator):
+        def fit(self, X, y):
+            assert len(y) == 0.5 * num_samples  # check that indexing was used
+            return self
+
+        def predict(self, X):
+            return np.ones(len(X))
+
+    class BaseEstimatorWithSW(BaseEstimatorWithoutSW):
+        def fit(self, X, y, sample_weight=None):
+            assert sample_weight is not None
+            # ensure that indexing was not used
+            assert len(sample_weight) == num_samples
+            # ensure that the SW method was used for bagging by checking that
+            # the passed SW are not just the original one, which was all 1s
+            assert not np.allclose(sample_weight, 1.0)
+            return self
+
+    if base_estimator_supports_sw:
+        base_base_estimator = BaseEstimatorWithSW().set_fit_request(sample_weight=True)
+        # TODO: should line below warn when not explicitly requesting SW for fit?
+        base_estimator = MetaEstimatorWithSW(base_base_estimator)
+    else:
+        base_base_estimator = BaseEstimatorWithoutSW()
+        base_estimator = MetaEstimatorWithoutSW(base_base_estimator)
+
+    estimator = estimator_cls(base_estimator, max_samples=0.5)
+
+    if use_sw and not base_estimator_supports_sw:
+        # this case is covered by metadata routing, not specific to bagging
+        with pytest.raises(TypeError):
+            estimator.fit(X, y, sample_weight=sample_weight)
+        return
+
+    # there are no warnings and no errors
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        if use_sw:
+            estimator.fit(X, y, sample_weight=sample_weight)
+        else:
+            estimator.fit(X, y)
 
 
 def test_warm_start(random_state=42):

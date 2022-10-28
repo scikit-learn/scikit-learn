@@ -84,7 +84,7 @@ class CheckingClassifier(ClassifierMixin, BaseEstimator):
         A `foo` param. When `foo > 1`, the output of :meth:`score` will be 1
         otherwise it is 0.
 
-    expected_sample_weight : bool, default=False
+    expected_sample_weight : bool, default=None
         Whether to check if a valid `sample_weight` was passed to `fit`.
 
     expected_fit_params : list of str, default=None

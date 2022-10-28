@@ -495,7 +495,7 @@ class ExampleTransformer(TransformerMixin, BaseEstimator):
 
 est = SimplePipeline(
     transformer=ExampleTransformer()
-    # we transformer's fit to receive sample_weight
+    # we want transformer's fit to receive sample_weight
     .set_fit_request(sample_weight=True)
     # we want transformer's transform to receive groups
     .set_transform_request(groups=True),

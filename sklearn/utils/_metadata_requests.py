@@ -424,6 +424,30 @@ class MetadataRequest:
         """
         return getattr(self, method)._route_params(params=params)
 
+    def supports(self, *, method, param):
+        """If the given method supports the given parameter.
+
+        E.g., check if the "fit" method supports "sample_weight".
+
+        Parameters
+        ----------
+        method : str
+            The name of the method for which the parameters is requested.
+
+        param : str
+            The name of the parameter.
+
+        Returns
+        -------
+        result : bool
+            Whether the parameter is supported by the method.
+
+        """
+        result = param in self._get_param_names(
+            method=method, return_alias=True, ignore_self=False
+        )
+        return result
+
     def _check_warnings(self, *, method, params):
         """Check whether metadata is passed which is marked as WARN.
 
@@ -873,6 +897,30 @@ class MetadataRouter:
                 FutureWarning,
             )
         return routed_params
+
+    def supports(self, *, method, param):
+        """If the given method supports the given parameter.
+
+        E.g., check if the "fit" method supports "sample_weight".
+
+        Parameters
+        ----------
+        method : str
+            The name of the method for which the parameters is requested.
+
+        param : str
+            The name of the parameter.
+
+        Returns
+        -------
+        result : bool
+            Whether the parameter is supported by the method.
+
+        """
+        result = param in self._get_param_names(
+            method=method, return_alias=True, ignore_self=False
+        )
+        return result
 
     def validate_metadata(self, *, method, params):
         """Validate given metadata for a method.
@@ -1343,7 +1391,7 @@ def process_routing(obj, method, other_params, **kwargs):
             f"while the passed method is: {method}."
         )
 
-    # We take the extra params (**fit_params) which is passed as `other_params`
+    # We take the extra params (**fit_params) which are passed as `other_params`
     # and add the explicitly passed parameters (passed as **kwargs) to it. This
     # is equivalent to a code such as this in a router:
     # if sample_weight is not None:

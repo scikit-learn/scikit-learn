@@ -18,14 +18,28 @@ from ._base import BaseEnsemble, _partition_estimators
 from ..base import ClassifierMixin, RegressorMixin
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_random_state, column_or_1d
-from ..utils import indices_to_mask
+from ..utils import (
+    _safe_indexing,
+    check_random_state,
+    column_or_1d,
+    indices_to_mask,
+)
 from ..utils.metaestimators import available_if
 from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
 from ..utils._param_validation import Interval, HasMethods, StrOptions
-from ..utils.metadata_routing import MetadataRouter, MethodMapping, process_routing
-from ..utils.validation import has_fit_parameter, check_is_fitted, _check_sample_weight
+from ..utils.metadata_routing import (
+    MetadataRouter,
+    MethodMapping,
+    get_routing_for_object,
+    process_routing,
+)
+from ..utils.validation import (
+    _check_sample_weight,
+    _check_fit_params,
+    check_is_fitted,
+    has_fit_parameter,
+)
 from ..utils.fixes import delayed
 
 
@@ -122,10 +136,17 @@ def _parallel_build_estimators(
             max_samples,
         )
 
-        # Draw samples, using sample weights, and then fit
-        support_sample_weight = has_fit_parameter(ensemble.estimator_, "sample_weight")
-        if support_sample_weight:
-            sample_weight = fit_params.pop("sample_weight", None)
+        fit_params_ = fit_params.copy()
+        # Row sampling can be achieved either through setting sample_weight or
+        # by indexing. The former is more efficient. Therefore, use this method
+        # if possible, otherwise use indexing.
+        request_or_router = get_routing_for_object(ensemble.estimator_)
+        supports_sample_weight = request_or_router.supports(
+            method="fit", param="sample_weight"
+        )
+        if supports_sample_weight:
+            # row subsampling via sample_weight
+            sample_weight = fit_params_.pop("sample_weight", None)
             if sample_weight is None:
                 curr_sample_weight = np.ones((n_samples,))
             else:
@@ -139,10 +160,15 @@ def _parallel_build_estimators(
                 curr_sample_weight[not_indices_mask] = 0
 
             X_ = X[:, features] if requires_feature_indexing else X
-            estimator_fit(X_, y, sample_weight=curr_sample_weight, **fit_params)
+            estimator_fit(X_, y, sample_weight=curr_sample_weight, **fit_params_)
         else:
-            X_ = X[indices][:, features] if requires_feature_indexing else X[indices]
-            estimator_fit(X_, y[indices], **fit_params)
+            # cannot use sample_weight, use indexing
+            y_ = _safe_indexing(y, indices)
+            X_ = _safe_indexing(X, indices)
+            fit_params_ = _check_fit_params(X, fit_params_, indices=indices)
+            if requires_feature_indexing:
+                X_ = X_[:, features]
+            estimator_fit(X_, y_, **fit_params_)
 
         estimators.append(estimator)
         estimators_features.append(features)
