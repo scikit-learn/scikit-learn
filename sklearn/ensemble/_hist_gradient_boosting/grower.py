@@ -55,6 +55,8 @@ class TreeNode:
         The sum of the hessians of the samples at the node.
     split_info : SplitInfo or None
         The result of the split evaluation.
+    is_leaf : bool
+        True if node is a leaf
     left_child : TreeNode or None
         The left child of the node. None for leaves.
     right_child : TreeNode or None
@@ -66,6 +68,14 @@ class TreeNode:
         start position of the node's sample_indices in splitter.partition.
     partition_stop : int
         stop position of the node's sample_indices in splitter.partition.
+    allowed_features : None or ndarray, dtype=int
+        Indices of features allowed to split for children.
+    interaction_cst_indices : None or list of ints
+        Indices of the interaction sets that have to be applied on splits of
+        child nodes. The fewer sets the stronger the constraint as fewer sets
+        contain fewer features.
+    children_lower_bound : float
+    children_upper_bound : float
     """
 
     split_info = None
@@ -92,6 +102,8 @@ class TreeNode:
         self.sum_hessians = sum_hessians
         self.value = value
         self.is_leaf = False
+        self.allowed_features = None
+        self.interaction_cst_indices = None
         self.set_children_bounds(float("-inf"), float("+inf"))
 
     def set_children_bounds(self, lower, upper):
@@ -163,11 +175,15 @@ class TreeGrower:
         If it's a bool, the same value is used for all features.
     is_categorical : ndarray of bool of shape (n_features,), default=None
         Indicates categorical features.
-    monotonic_cst : array-like of shape (n_features,), dtype=int, default=None
-        Indicates the monotonic constraint to enforce on each feature. -1, 1
-        and 0 respectively correspond to a positive constraint, negative
-        constraint and no constraint. Read more in the :ref:`User Guide
-        <monotonic_cst_gbdt>`.
+    monotonic_cst : array-like of int of shape (n_features,), dtype=int, default=None
+        Indicates the monotonic constraint to enforce on each feature.
+          - 1: monotonic increase
+          - 0: no constraint
+          - -1: monotonic decrease
+
+        Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
+    interaction_cst : list of sets of integers, default=None
+        List of interaction constraints.
     l2_regularization : float, default=0.
         The L2 regularization parameter.
     min_hessian_to_split : float, default=1e-3
@@ -220,6 +236,7 @@ class TreeGrower:
         has_missing_values=False,
         is_categorical=None,
         monotonic_cst=None,
+        interaction_cst=None,
         l2_regularization=0.0,
         min_hessian_to_split=1e-3,
         shrinkage=1.0,
@@ -306,6 +323,7 @@ class TreeGrower:
         self.max_leaf_nodes = max_leaf_nodes
         self.has_missing_values = has_missing_values
         self.monotonic_cst = monotonic_cst
+        self.interaction_cst = interaction_cst
         self.is_categorical = is_categorical
         self.l2_regularization = l2_regularization
         self.n_features = X_binned.shape[1]
@@ -400,6 +418,14 @@ class TreeGrower:
         self.root.histograms = self.histogram_builder.compute_histograms_brute(
             self.root.sample_indices
         )
+
+        if self.interaction_cst is not None:
+            self.root.interaction_cst_indices = range(len(self.interaction_cst))
+            allowed_features = set().union(*self.interaction_cst)
+            self.root.allowed_features = np.fromiter(
+                allowed_features, dtype=np.uint32, count=len(allowed_features)
+            )
+
         self._compute_best_split_and_push(self.root)
 
     def _compute_best_split_and_push(self, node):
@@ -412,13 +438,14 @@ class TreeGrower:
         """
 
         node.split_info = self.splitter.find_node_split(
-            node.n_samples,
-            node.histograms,
-            node.sum_gradients,
-            node.sum_hessians,
-            node.value,
-            node.children_lower_bound,
-            node.children_upper_bound,
+            n_samples=node.n_samples,
+            histograms=node.histograms,
+            sum_gradients=node.sum_gradients,
+            sum_hessians=node.sum_hessians,
+            value=node.value,
+            lower_bound=node.children_lower_bound,
+            upper_bound=node.children_upper_bound,
+            allowed_features=node.allowed_features,
         )
 
         if node.split_info.gain <= 0:  # no valid split
@@ -474,6 +501,19 @@ class TreeGrower:
         left_child_node.partition_stop = node.partition_start + right_child_pos
         right_child_node.partition_start = left_child_node.partition_stop
         right_child_node.partition_stop = node.partition_stop
+
+        # set interaction constraints (the indices of the constraints sets)
+        if self.interaction_cst is not None:
+            # Calculate allowed_features and interaction_cst_indices only once. Child
+            # nodes inherit them before they get split.
+            (
+                left_child_node.allowed_features,
+                left_child_node.interaction_cst_indices,
+            ) = self._compute_interactions(node)
+            right_child_node.interaction_cst_indices = (
+                left_child_node.interaction_cst_indices
+            )
+            right_child_node.allowed_features = left_child_node.allowed_features
 
         if not self.has_missing_values[node.split_info.feature_idx]:
             # If no missing values are encountered at fit time, then samples
@@ -575,6 +615,48 @@ class TreeGrower:
         del node.histograms
 
         return left_child_node, right_child_node
+
+    def _compute_interactions(self, node):
+        r"""Compute features allowed by interactions to be inherited by child nodes.
+
+        Example: Assume constraints [{0, 1}, {1, 2}].
+           1      <- Both constraint groups could be applied from now on
+          / \
+         1   2    <- Left split still fulfills both constraint groups.
+        / \ / \      Right split at feature 2 has only group {1, 2} from now on.
+
+        LightGBM uses the same logic for overlapping groups. See
+        https://github.com/microsoft/LightGBM/issues/4481 for details.
+
+        Parameters:
+        ----------
+        node : TreeNode
+            A node that might have children. Based on its feature_idx, the interaction
+            constraints for possible child nodes are computed.
+
+        Returns
+        -------
+        allowed_features : ndarray, dtype=uint32
+            Indices of features allowed to split for children.
+        interaction_cst_indices : list of ints
+            Indices of the interaction sets that have to be applied on splits of
+            child nodes. The fewer sets the stronger the constraint as fewer sets
+            contain fewer features.
+        """
+        # Note:
+        #  - Case of no interactions is already captured before function call.
+        #  - This is for nodes that are already split and have a
+        #    node.split_info.feature_idx.
+        allowed_features = set()
+        interaction_cst_indices = []
+        for i in node.interaction_cst_indices:
+            if node.split_info.feature_idx in self.interaction_cst[i]:
+                interaction_cst_indices.append(i)
+                allowed_features.update(self.interaction_cst[i])
+        return (
+            np.fromiter(allowed_features, dtype=np.uint32, count=len(allowed_features)),
+            interaction_cst_indices,
+        )
 
     def _finalize_leaf(self, node):
         """Make node a leaf of the tree being grown."""

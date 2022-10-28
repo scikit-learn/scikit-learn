@@ -1,18 +1,3 @@
-{{py:
-
-implementation_specific_values = [
-    # Values are the following ones:
-    #
-    #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
-    #
-    # We also use the float64 dtype and C-type names as defined in
-    # `sklearn.utils._typedefs` to maintain consistency.
-    #
-    ('64', 'DTYPE_t', 'DTYPE'),
-    ('32', 'cnp.float32_t', 'np.float32')
-]
-
-}}
 cimport numpy as cnp
 import numpy as np
 import warnings
@@ -56,10 +41,10 @@ cdef cnp.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
     return nd_arrays_of_nd_arrays
 
 #####################
-{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
+{{for name_suffix in ['64', '32']}}
 
 from ._base cimport (
-    PairwiseDistancesReduction{{name_suffix}},
+    BaseDistancesReduction{{name_suffix}},
     _sqeuclidean_row_norms{{name_suffix}}
 )
 
@@ -71,8 +56,8 @@ from ._datasets_pair cimport (
 from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
 
 
-cdef class PairwiseDistancesRadiusNeighborhood{{name_suffix}}(PairwiseDistancesReduction{{name_suffix}}):
-    """{{name_suffix}}bit implementation of PairwiseDistancesRadiusNeighborhood."""
+cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
+    """float{{name_suffix}} implementation of the RadiusNeighbors."""
 
     @classmethod
     def compute(
@@ -91,7 +76,7 @@ cdef class PairwiseDistancesRadiusNeighborhood{{name_suffix}}(PairwiseDistancesR
 
         This classmethod is responsible for introspecting the arguments
         values to dispatch to the most appropriate implementation of
-        :class:`PairwiseDistancesRadiusNeighborhood{{name_suffix}}`.
+        :class:`RadiusNeighbors{{name_suffix}}`.
 
         This allows decoupling the API entirely from the implementation details
         whilst maintaining RAII: all temporarily allocated datastructures necessary
@@ -110,22 +95,21 @@ cdef class PairwiseDistancesRadiusNeighborhood{{name_suffix}}(PairwiseDistancesR
             # at time to leverage a call to the BLAS GEMM routine as explained
             # in more details in GEMMTermComputer docstring.
             use_squared_distances = metric == "sqeuclidean"
-            pda = FastEuclideanPairwiseDistancesRadiusNeighborhood{{name_suffix}}(
+            pda = EuclideanRadiusNeighbors{{name_suffix}}(
                 X=X, Y=Y, radius=radius,
                 use_squared_distances=use_squared_distances,
                 chunk_size=chunk_size,
-                metric_kwargs=metric_kwargs,
                 strategy=strategy,
                 sort_results=sort_results,
+                metric_kwargs=metric_kwargs,
             )
         else:
              # Fall back on a generic implementation that handles most scipy
              # metrics by computing the distances between 2 vectors at a time.
-            pda = PairwiseDistancesRadiusNeighborhood{{name_suffix}}(
+            pda = RadiusNeighbors{{name_suffix}}(
                 datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, metric, metric_kwargs),
                 radius=radius,
                 chunk_size=chunk_size,
-                metric_kwargs=metric_kwargs,
                 strategy=strategy,
                 sort_results=sort_results,
             )
@@ -148,7 +132,6 @@ cdef class PairwiseDistancesRadiusNeighborhood{{name_suffix}}(PairwiseDistancesR
         chunk_size=None,
         strategy=None,
         sort_results=False,
-        metric_kwargs=None,
     ):
         super().__init__(
             datasets_pair=datasets_pair,
@@ -177,7 +160,7 @@ cdef class PairwiseDistancesRadiusNeighborhood{{name_suffix}}(PairwiseDistancesR
         )
 
         # Temporary datastructures which will be coerced to numpy arrays on before
-        # PairwiseDistancesRadiusNeighborhood.compute "return" and will be then freed.
+        # RadiusNeighbors.compute "return" and will be then freed.
         self.neigh_distances = make_shared[vector[vector[DTYPE_t]]](self.n_samples_X)
         self.neigh_indices = make_shared[vector[vector[ITYPE_t]]](self.n_samples_X)
 
@@ -232,7 +215,7 @@ cdef class PairwiseDistancesRadiusNeighborhood{{name_suffix}}(PairwiseDistancesR
         ITYPE_t X_end,
     ) nogil:
         cdef:
-            ITYPE_t idx, jdx
+            ITYPE_t idx
 
         # Sorting neighbors for each query vector of X
         if self.sort_results:
@@ -293,7 +276,7 @@ cdef class PairwiseDistancesRadiusNeighborhood{{name_suffix}}(PairwiseDistancesR
         self,
     ) nogil:
         cdef:
-            ITYPE_t idx, jdx, thread_num, idx_n_element, idx_current
+            ITYPE_t idx
 
         with nogil, parallel(num_threads=self.effective_n_threads):
             # Merge vectors used in threads into the main ones.
@@ -333,12 +316,12 @@ cdef class PairwiseDistancesRadiusNeighborhood{{name_suffix}}(PairwiseDistancesR
                 )
 
 
-cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood{{name_suffix}}(PairwiseDistancesRadiusNeighborhood{{name_suffix}}):
-    """EuclideanDistance-specialized {{name_suffix}}bit implementation for PairwiseDistancesRadiusNeighborhood."""
+cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}}):
+    """EuclideanDistance-specialisation of RadiusNeighbors{{name_suffix}}."""
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
-        return (PairwiseDistancesRadiusNeighborhood{{name_suffix}}.is_usable_for(X, Y, metric)
+        return (RadiusNeighbors{{name_suffix}}.is_usable_for(X, Y, metric)
                 and not _in_unstable_openblas_configuration())
 
     def __init__(
@@ -359,7 +342,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood{{name_suffix}}(Pairw
         ):
             warnings.warn(
                 f"Some metric_kwargs have been passed ({metric_kwargs}) but aren't "
-                f"usable for this case (FastEuclideanPairwiseDistancesRadiusNeighborhood) and will be ignored.",
+                f"usable for this case (EuclideanRadiusNeighbors64) and will be ignored.",
                 UserWarning,
                 stacklevel=3,
             )
@@ -371,7 +354,6 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood{{name_suffix}}(Pairw
             chunk_size=chunk_size,
             strategy=strategy,
             sort_results=sort_results,
-            metric_kwargs=metric_kwargs,
         )
         # X and Y are checked by the DatasetsPair{{name_suffix}} implemented
         # as a DenseDenseDatasetsPair{{name_suffix}}
@@ -418,7 +400,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood{{name_suffix}}(Pairw
         self,
         ITYPE_t thread_num,
     ) nogil:
-        PairwiseDistancesRadiusNeighborhood{{name_suffix}}._parallel_on_X_parallel_init(self, thread_num)
+        RadiusNeighbors{{name_suffix}}._parallel_on_X_parallel_init(self, thread_num)
         self.gemm_term_computer._parallel_on_X_parallel_init(thread_num)
 
     @final
@@ -428,7 +410,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood{{name_suffix}}(Pairw
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
-        PairwiseDistancesRadiusNeighborhood{{name_suffix}}._parallel_on_X_init_chunk(self, thread_num, X_start, X_end)
+        RadiusNeighbors{{name_suffix}}._parallel_on_X_init_chunk(self, thread_num, X_start, X_end)
         self.gemm_term_computer._parallel_on_X_init_chunk(thread_num, X_start, X_end)
 
     @final
@@ -440,7 +422,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood{{name_suffix}}(Pairw
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
-        PairwiseDistancesRadiusNeighborhood{{name_suffix}}._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
+        RadiusNeighbors{{name_suffix}}._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
             self,
             X_start, X_end,
             Y_start, Y_end,
@@ -454,8 +436,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood{{name_suffix}}(Pairw
     cdef void _parallel_on_Y_init(
         self,
     ) nogil:
-        cdef ITYPE_t thread_num
-        PairwiseDistancesRadiusNeighborhood{{name_suffix}}._parallel_on_Y_init(self)
+        RadiusNeighbors{{name_suffix}}._parallel_on_Y_init(self)
         self.gemm_term_computer._parallel_on_Y_init()
 
     @final
@@ -465,7 +446,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood{{name_suffix}}(Pairw
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
-        PairwiseDistancesRadiusNeighborhood{{name_suffix}}._parallel_on_Y_parallel_init(self, thread_num, X_start, X_end)
+        RadiusNeighbors{{name_suffix}}._parallel_on_Y_parallel_init(self, thread_num, X_start, X_end)
         self.gemm_term_computer._parallel_on_Y_parallel_init(thread_num, X_start, X_end)
 
     @final
@@ -477,7 +458,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood{{name_suffix}}(Pairw
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
-        PairwiseDistancesRadiusNeighborhood{{name_suffix}}._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
+        RadiusNeighbors{{name_suffix}}._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
             self,
             X_start, X_end,
             Y_start, Y_end,
@@ -490,7 +471,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood{{name_suffix}}(Pairw
     @final
     cdef void compute_exact_distances(self) nogil:
         if not self.use_squared_distances:
-            PairwiseDistancesRadiusNeighborhood{{name_suffix}}.compute_exact_distances(self)
+            RadiusNeighbors{{name_suffix}}.compute_exact_distances(self)
 
     @final
     cdef void _compute_and_reduce_distances_on_chunks(
@@ -506,7 +487,7 @@ cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood{{name_suffix}}(Pairw
             DTYPE_t squared_dist_i_j
             ITYPE_t n_X = X_end - X_start
             ITYPE_t n_Y = Y_end - Y_start
-            DTYPE_t *dist_middle_terms = self.gemm_term_computer._compute_distances_on_chunks(
+            DTYPE_t *dist_middle_terms = self.gemm_term_computer._compute_dist_middle_terms(
                 X_start, X_end, Y_start, Y_end, thread_num
             )
 

@@ -216,19 +216,21 @@ def test_isomap_clone_bug():
         assert model.nbrs_.n_neighbors == n_neighbors
 
 
-def test_sparse_input():
+@pytest.mark.parametrize("eigen_solver", eigen_solvers)
+@pytest.mark.parametrize("path_method", path_methods)
+def test_sparse_input(eigen_solver, path_method):
+    # TODO: compare results on dense and sparse data as proposed in:
+    # https://github.com/scikit-learn/scikit-learn/pull/23585#discussion_r968388186
     X = sparse_rand(100, 3, density=0.1, format="csr")
 
-    # Should not error
-    for eigen_solver in eigen_solvers:
-        for path_method in path_methods:
-            clf = manifold.Isomap(
-                n_components=2,
-                eigen_solver=eigen_solver,
-                path_method=path_method,
-                n_neighbors=8,
-            )
-            clf.fit(X)
+    clf = manifold.Isomap(
+        n_components=2,
+        eigen_solver=eigen_solver,
+        path_method=path_method,
+        n_neighbors=8,
+    )
+    clf.fit(X)
+    clf.transform(X)
 
 
 def test_isomap_fit_precomputed_radius_graph():
@@ -246,6 +248,32 @@ def test_isomap_fit_precomputed_radius_graph():
     isomap = manifold.Isomap(n_neighbors=None, radius=radius, metric="minkowski")
     result = isomap.fit_transform(X)
     assert_allclose(precomputed_result, result)
+
+
+def test_isomap_fitted_attributes_dtype(global_dtype):
+    """Check that the fitted attributes are stored accordingly to the
+    data type of X."""
+    iso = manifold.Isomap(n_neighbors=2)
+
+    X = np.array([[1, 2], [3, 4], [5, 6]], dtype=global_dtype)
+
+    iso.fit(X)
+
+    assert iso.dist_matrix_.dtype == global_dtype
+    assert iso.embedding_.dtype == global_dtype
+
+
+def test_isomap_dtype_equivalence():
+    """Check the equivalence of the results with 32 and 64 bits input."""
+    iso_32 = manifold.Isomap(n_neighbors=2)
+    X_32 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
+    iso_32.fit(X_32)
+
+    iso_64 = manifold.Isomap(n_neighbors=2)
+    X_64 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float64)
+    iso_64.fit(X_64)
+
+    assert_allclose(iso_32.dist_matrix_, iso_64.dist_matrix_)
 
 
 def test_isomap_raise_error_when_neighbor_and_radius_both_set():

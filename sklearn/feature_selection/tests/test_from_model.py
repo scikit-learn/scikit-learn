@@ -73,7 +73,6 @@ def test_input_estimator_unchanged():
 @pytest.mark.parametrize(
     "max_features, err_type, err_msg",
     [
-        (-1, ValueError, "max_features =="),
         (
             data.shape[1] + 1,
             ValueError,
@@ -82,17 +81,17 @@ def test_input_estimator_unchanged():
         (
             lambda X: 1.5,
             TypeError,
-            "max_features(X) must be an instance of int, not float.",
+            "max_features must be an instance of int, not float.",
         ),
         (
-            "gobbledigook",
-            TypeError,
-            "'max_features' must be either an int or a callable",
+            lambda X: data.shape[1] + 1,
+            ValueError,
+            "max_features ==",
         ),
         (
-            "all",
-            TypeError,
-            "'max_features' must be either an int or a callable",
+            lambda X: -1,
+            ValueError,
+            "max_features ==",
         ),
     ],
 )
@@ -629,8 +628,7 @@ def test_estimator_does_not_support_feature_names():
     "error, err_msg, max_features",
     (
         [ValueError, "max_features == 10, must be <= 4", 10],
-        [TypeError, "'max_features' must be either an int or a callable", "a"],
-        [ValueError, r"max_features\(X\) == 5, must be <= 4", lambda x: x.shape[1] + 1],
+        [ValueError, "max_features == 5, must be <= 4", lambda x: x.shape[1] + 1],
     ),
 )
 def test_partial_fit_validate_max_features(error, err_msg, max_features):

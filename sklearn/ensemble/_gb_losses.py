@@ -35,9 +35,9 @@ class LossFunction(metaclass=ABCMeta):
     def __init__(self, n_classes):
         self.K = n_classes
 
+    @abstractmethod
     def init_estimator(self):
         """Default ``init`` estimator for loss function."""
-        raise NotImplementedError()
 
     @abstractmethod
     def __call__(self, y, raw_predictions, sample_weight=None):
@@ -584,6 +584,7 @@ class QuantileLossFunction(RegressionLossFunction):
 class ClassificationLossFunction(LossFunction, metaclass=ABCMeta):
     """Base class for classification loss functions."""
 
+    @abstractmethod
     def _raw_prediction_to_proba(self, raw_predictions):
         """Template method to convert raw predictions into probabilities.
 
@@ -986,14 +987,12 @@ class ExponentialLoss(ClassificationLossFunction):
         return raw_predictions.reshape(-1, 1).astype(np.float64)
 
 
-# TODO: Remove entry 'ls' and 'lad' in version 1.2.
 LOSS_FUNCTIONS = {
     "squared_error": LeastSquaresError,
-    "ls": LeastSquaresError,
     "absolute_error": LeastAbsoluteError,
-    "lad": LeastAbsoluteError,
     "huber": HuberLossFunction,
     "quantile": QuantileLossFunction,
+    # TODO(1.3): Remove deviance
     "deviance": None,  # for both, multinomial and binomial
     "log_loss": None,  # for both, multinomial and binomial
     "exponential": ExponentialLoss,

@@ -34,6 +34,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
         - callable
         - None, meaning that None is a valid value for the parameter
         - any type, meaning that any instance of this type is valid
+        - an Options object, representing a set of elements of a given type
         - a StrOptions object, representing a set of strings
         - the string "boolean"
         - the string "verbose"
@@ -122,7 +123,7 @@ def make_constraint(constraint):
         return _NoneConstraint()
     if isinstance(constraint, type):
         return _InstancesOf(constraint)
-    if isinstance(constraint, (Interval, StrOptions, HasMethods)):
+    if isinstance(constraint, (Interval, StrOptions, Options, HasMethods)):
         return constraint
     if isinstance(constraint, str) and constraint == "boolean":
         return _Booleans()
@@ -191,6 +192,19 @@ def validate_params(parameter_constraints):
     return decorator
 
 
+def _type_name(t):
+    """Convert type into human readable string."""
+    module = t.__module__
+    qualname = t.__qualname__
+    if module == "builtins":
+        return qualname
+    elif t == Real:
+        return "float"
+    elif t == Integral:
+        return "int"
+    return f"{module}.{qualname}"
+
+
 class _Constraint(ABC):
     """Base class for the constraint objects."""
 
@@ -230,23 +244,11 @@ class _InstancesOf(_Constraint):
         super().__init__()
         self.type = type
 
-    def _type_name(self, t):
-        """Convert type into human readable string."""
-        module = t.__module__
-        qualname = t.__qualname__
-        if module == "builtins":
-            return qualname
-        elif t == Real:
-            return "float"
-        elif t == Integral:
-            return "int"
-        return f"{module}.{qualname}"
-
     def is_satisfied_by(self, val):
         return isinstance(val, self.type)
 
     def __str__(self):
-        return f"an instance of {self._type_name(self.type)!r}"
+        return f"an instance of {_type_name(self.type)!r}"
 
 
 class _NoneConstraint(_Constraint):
@@ -284,21 +286,24 @@ class _PandasNAConstraint(_Constraint):
         return "pandas.NA"
 
 
-class StrOptions(_Constraint):
-    """Constraint representing a set of strings.
+class Options(_Constraint):
+    """Constraint representing a finite set of instances of a given type.
 
     Parameters
     ----------
-    options : set of str
-        The set of valid strings.
+    type : type
 
-    deprecated : set of str or None, default=None
-        A subset of the `options` to mark as deprecated in the repr of the constraint.
+    options : set
+        The set of valid scalars.
+
+    deprecated : set or None, default=None
+        A subset of the `options` to mark as deprecated in the string
+        representation of the constraint.
     """
 
-    @validate_params({"options": [set], "deprecated": [set, None]})
-    def __init__(self, options, deprecated=None):
+    def __init__(self, type, options, *, deprecated=None):
         super().__init__()
+        self.type = type
         self.options = options
         self.deprecated = deprecated or set()
 
@@ -306,7 +311,7 @@ class StrOptions(_Constraint):
             raise ValueError("The deprecated options must be a subset of the options.")
 
     def is_satisfied_by(self, val):
-        return isinstance(val, str) and val in self.options
+        return isinstance(val, self.type) and val in self.options
 
     def _mark_if_deprecated(self, option):
         """Add a deprecated mark to an option if needed."""
@@ -319,7 +324,24 @@ class StrOptions(_Constraint):
         options_str = (
             f"{', '.join([self._mark_if_deprecated(o) for o in self.options])}"
         )
-        return f"a str among {{{options_str}}}"
+        return f"a {_type_name(self.type)} among {{{options_str}}}"
+
+
+class StrOptions(Options):
+    """Constraint representing a finite set of strings.
+
+    Parameters
+    ----------
+    options : set of str
+        The set of valid strings.
+
+    deprecated : set of str or None, default=None
+        A subset of the `options` to mark as deprecated in the string
+        representation of the constraint.
+    """
+
+    def __init__(self, options, *, deprecated=None):
+        super().__init__(type=str, options=options, deprecated=deprecated)
 
 
 class Interval(_Constraint):
@@ -868,7 +890,7 @@ def generate_valid_param(constraint):
     if isinstance(constraint, _CVObjects):
         return 5
 
-    if isinstance(constraint, StrOptions):
+    if isinstance(constraint, Options):  # includes StrOptions
         for option in constraint.options:
             return option
 

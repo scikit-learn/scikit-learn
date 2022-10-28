@@ -617,7 +617,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         random_state=0)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_clusters": [Interval(Integral, 1, None, closed="left")],
         "eigen_solver": [StrOptions({"arpack", "lobpcg", "amg"}), None],
         "n_components": [Interval(Integral, 1, None, closed="left"), None],

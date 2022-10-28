@@ -70,6 +70,16 @@ jobs:
         - CIBW_BUILD=cp310-manylinux_aarch64
         - BUILD_WHEEL=true
 
+    - os: linux
+      arch: arm64-graviton2
+      dist: focal
+      virt: vm
+      group: edge
+      if: type = cron or commit_message =~ /\[cd build\]/
+      env:
+        - CIBW_BUILD=cp311-manylinux_aarch64
+        - BUILD_WHEEL=true
+
 install: source build_tools/travis/install.sh || travis_terminate 1
 script: source build_tools/travis/script.sh || travis_terminate 1
 after_success: source build_tools/travis/after_success.sh || travis_terminate 1
