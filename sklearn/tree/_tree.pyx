@@ -216,7 +216,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 "impurity": INFINITY,
                 "n_constant_features": 0,
                 "lower_bound": -INFINITY,
-                "upper_bound": INFINITY})
+                "upper_bound": INFINITY,
+            })
 
             while not builder_stack.empty():
                 stack_record = builder_stack.top()
@@ -249,11 +250,11 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
 
                 if not is_leaf:
                     splitter.node_split(
-                                        impurity,
-                                        &split,
-                                        &n_constant_features,
-                                        lower_bound,
-                                        upper_bound
+                        impurity,
+                        &split,
+                        &n_constant_features,
+                        lower_bound,
+                        upper_bound
                     )
                     # If EPSILON=0 in the below comparison, float precision
                     # issues stop splitting, producing trees that are
@@ -314,7 +315,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         "impurity": split.impurity_right,
                         "n_constant_features": n_constant_features,
                         "lower_bound": right_child_min,
-                        "upper_bound": right_child_max})
+                        "upper_bound": right_child_max,
+                    })
 
                     # Push left child on stack
                     builder_stack.push({
@@ -326,7 +328,8 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                         "impurity": split.impurity_left,
                         "n_constant_features": n_constant_features,
                         "lower_bound": left_child_min,
-                        "upper_bound": left_child_max})
+                        "upper_bound": left_child_max,
+                    })
 
                 if depth > max_depth_seen:
                     max_depth_seen = depth
@@ -595,11 +598,11 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
         if not is_leaf:
             splitter.node_split(
-                                impurity,
-                                &split,
-                                &n_constant_features,
-                                lower_bound,
-                                upper_bound
+                impurity,
+                &split,
+                &n_constant_features,
+                lower_bound,
+                upper_bound
             )
             # If EPSILON=0 in the below comparison, float precision issues stop
             # splitting early, producing trees that are dissimilar to v0.18
