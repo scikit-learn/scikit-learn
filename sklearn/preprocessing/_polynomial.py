@@ -2,7 +2,7 @@
 This file contains preprocessing tools based on polynomials.
 """
 import collections
-import numbers
+from numbers import Integral
 from itertools import chain, combinations
 from itertools import combinations_with_replacement as combinations_w_r
 
@@ -13,10 +13,10 @@ from scipy.special import comb
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
-from ..utils.deprecation import deprecated
 from ..utils.fixes import sp_version, parse_version
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
 from ..utils.validation import _check_feature_names_in
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.stats import _weighted_percentile
 
 from ._csr_polynomial_expansion import _csr_polynomial_expansion
@@ -72,13 +72,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     powers_ : ndarray of shape (`n_output_features_`, `n_features_in_`)
         `powers_[i, j]` is the exponent of the jth input in the ith output.
 
-    n_input_features_ : int
-        The total number of input features.
-
-        .. deprecated:: 1.0
-            This attribute is deprecated in 1.0 and will be removed in 1.2.
-            Refer to `n_features_in_` instead.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -129,6 +122,13 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
            [ 1.,  2.,  3.,  6.],
            [ 1.,  4.,  5., 20.]])
     """
+
+    _parameter_constraints: dict = {
+        "degree": [Interval(Integral, 0, None, closed="left"), "array-like"],
+        "interaction_only": ["boolean"],
+        "include_bias": ["boolean"],
+        "order": [StrOptions({"C", "F"})],
+    }
 
     def __init__(
         self, degree=2, *, interaction_only=False, include_bias=True, order="C"
@@ -195,42 +195,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             [np.bincount(c, minlength=self.n_features_in_) for c in combinations]
         )
 
-    @deprecated(
-        "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. Please use get_feature_names_out instead."
-    )
-    def get_feature_names(self, input_features=None):
-        """Return feature names for output features.
-
-        Parameters
-        ----------
-        input_features : list of str of shape (n_features,), default=None
-            String names for input features if available. By default,
-            "x0", "x1", ... "xn_features" is used.
-
-        Returns
-        -------
-        output_feature_names : list of str of shape (n_output_features,)
-            Transformed feature names.
-        """
-        powers = self.powers_
-        if input_features is None:
-            input_features = ["x%d" % i for i in range(powers.shape[1])]
-        feature_names = []
-        for row in powers:
-            inds = np.where(row)[0]
-            if len(inds):
-                name = " ".join(
-                    "%s^%d" % (input_features[ind], exp)
-                    if exp != 1
-                    else input_features[ind]
-                    for ind, exp in zip(inds, row[inds])
-                )
-            else:
-                name = "1"
-            feature_names.append(name)
-        return feature_names
-
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
@@ -285,14 +249,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
+        self._validate_params()
         _, n_features = self._validate_data(X, accept_sparse=True).shape
 
-        if isinstance(self.degree, numbers.Integral):
-            if self.degree < 0:
-                raise ValueError(
-                    f"degree must be a non-negative integer, got {self.degree}."
-                )
-            elif self.degree == 0 and not self.include_bias:
+        if isinstance(self.degree, Integral):
+            if self.degree == 0 and not self.include_bias:
                 raise ValueError(
                     "Setting degree to zero and include_bias to False would result in"
                     " an empty output array."
@@ -305,8 +266,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         ):
             self._min_degree, self._max_degree = self.degree
             if not (
-                isinstance(self._min_degree, numbers.Integral)
-                and isinstance(self._max_degree, numbers.Integral)
+                isinstance(self._min_degree, Integral)
+                and isinstance(self._max_degree, Integral)
                 and self._min_degree >= 0
                 and self._min_degree <= self._max_degree
             ):
@@ -318,7 +279,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 )
             elif self._max_degree == 0 and not self.include_bias:
                 raise ValueError(
-                    "Setting both min_deree and max_degree to zero and include_bias to"
+                    "Setting both min_degree and max_degree to zero and include_bias to"
                     " False would result in an empty output array."
                 )
         else:
@@ -501,16 +462,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 XP = Xout
         return XP
 
-    # TODO: Remove in 1.2
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The attribute `n_input_features_` was "
-        "deprecated in version 1.0 and will be removed in 1.2."
-    )
-    @property
-    def n_input_features_(self):
-        return self.n_features_in_
-
 
 class SplineTransformer(TransformerMixin, BaseEstimator):
     """Generate univariate B-spline bases for features.
@@ -632,6 +583,17 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
            [0.  , 0.  , 0.5 , 0.5 ]])
     """
 
+    _parameter_constraints: dict = {
+        "n_knots": [Interval(Integral, 2, None, closed="left")],
+        "degree": [Interval(Integral, 0, None, closed="left")],
+        "knots": [StrOptions({"uniform", "quantile"}), "array-like"],
+        "extrapolation": [
+            StrOptions({"error", "constant", "linear", "continue", "periodic"})
+        ],
+        "include_bias": ["boolean"],
+        "order": [StrOptions({"C", "F"})],
+    }
+
     def __init__(
         self,
         n_knots=5,
@@ -698,33 +660,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         return knots
 
-    @deprecated(
-        "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. Please use get_feature_names_out instead."
-    )
-    def get_feature_names(self, input_features=None):
-        """Return feature names for output features.
-
-        Parameters
-        ----------
-        input_features : list of str of shape (n_features,), default=None
-            String names for input features if available. By default,
-            "x0", "x1", ... "xn_features" is used.
-
-        Returns
-        -------
-        output_feature_names : list of str of shape (n_output_features,)
-            Transformed feature names.
-        """
-        n_splines = self.bsplines_[0].c.shape[0]
-        if input_features is None:
-            input_features = ["x%d" % i for i in range(self.n_features_in_)]
-        feature_names = []
-        for i in range(self.n_features_in_):
-            for j in range(n_splines - 1 + self.include_bias):
-                feature_names.append(f"{input_features[i]}_sp_{j}")
-        return feature_names
-
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
@@ -774,6 +709,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         self : object
             Fitted transformer.
         """
+        self._validate_params()
+
         X = self._validate_data(
             X,
             reset=True,
@@ -786,20 +723,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         _, n_features = X.shape
 
-        if not (isinstance(self.degree, numbers.Integral) and self.degree >= 0):
-            raise ValueError(
-                f"degree must be a non-negative integer, got {self.degree}."
-            )
-
-        if isinstance(self.knots, str) and self.knots in [
-            "uniform",
-            "quantile",
-        ]:
-            if not (isinstance(self.n_knots, numbers.Integral) and self.n_knots >= 2):
-                raise ValueError(
-                    f"n_knots must be a positive integer >= 2, got: {self.n_knots}"
-                )
-
+        if isinstance(self.knots, str):
             base_knots = self._get_base_knot_positions(
                 X, n_knots=self.n_knots, knots=self.knots, sample_weight=sample_weight
             )
@@ -959,7 +883,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             spl = self.bsplines_[i]
 
             if self.extrapolation in ("continue", "error", "periodic"):
-
                 if self.extrapolation == "periodic":
                     # With periodic extrapolation we map x to the segment
                     # [spl.t[k], spl.t[n]].

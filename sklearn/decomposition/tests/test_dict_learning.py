@@ -260,13 +260,6 @@ def test_dict_learning_nonzero_coefs():
     assert len(np.flatnonzero(code)) == 3
 
 
-def test_dict_learning_unknown_fit_algorithm():
-    n_components = 5
-    dico = DictionaryLearning(n_components, fit_algorithm="<unknown>")
-    with pytest.raises(ValueError):
-        dico.fit(X)
-
-
 def test_dict_learning_split():
     n_components = 5
     dico = DictionaryLearning(
@@ -668,26 +661,6 @@ def test_sparse_coder_n_features_in():
     assert sc.n_features_in_ == d.shape[1]
 
 
-# default value of batch_size changed. FIXME: remove in 1.3
-@pytest.mark.filterwarnings("ignore:The default value of batch_size will change")
-@pytest.mark.parametrize(
-    "param, match",
-    [
-        ({"n_components": 0}, "n_components == 0, must be >= 1"),
-        ({"fit_algorithm": "wrong"}, "Coding method 'wrong' not supported"),
-        ({"batch_size": 0}, "batch_size == 0, must be >= 1"),
-        ({"n_iter": -1}, "n_iter == -1, must be >= 0"),
-        ({"max_iter": -1}, "max_iter == -1, must be >= 0"),
-        ({"max_no_improvement": -1}, "max_no_improvement == -1, must be >= 0"),
-    ],
-)
-def test_minibatch_dict_learning_wrong_params(param, match):
-    # Check that error are raised with clear error message when wrong values
-    # are passed for the parameters of MiniBatchDictionaryLearning
-    with pytest.raises(ValueError, match=match):
-        MiniBatchDictionaryLearning(**param).fit(X)
-
-
 @pytest.mark.parametrize("attr", ["iter_offset_", "inner_stats_", "random_state_"])
 def test_minibatch_dict_learning_deprecated_attributes(attr):
     # check that we raise a deprecation warning when accessing the deprecated
@@ -787,15 +760,6 @@ def test_update_dict():
     _update_dict(newd_online, X, code, A, B)
 
     assert_allclose(newd_batch, newd_online)
-
-
-# default value of batch_size changed. FIXME: remove in 1.3
-@pytest.mark.filterwarnings("ignore:The default value of batch_size will change")
-@pytest.mark.parametrize("Estimator", [DictionaryLearning, MiniBatchDictionaryLearning])
-def test_warning_default_transform_alpha(Estimator):
-    dl = Estimator(alpha=0.1, max_iter=5)
-    with pytest.warns(FutureWarning, match="default transform_alpha"):
-        dl.fit_transform(X)
 
 
 # FIXME: remove in 1.3

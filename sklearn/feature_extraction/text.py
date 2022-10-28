@@ -15,7 +15,6 @@ import array
 from collections import defaultdict
 from collections.abc import Mapping
 from functools import partial
-import numbers
 from numbers import Integral, Real
 from operator import itemgetter
 import re
@@ -25,12 +24,11 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
+from ..base import BaseEstimator, TransformerMixin, OneToOneFeatureMixin
 from ..preprocessing import normalize
 from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
 from ..utils.validation import check_is_fitted, check_array, FLOAT_DTYPES
-from ..utils.deprecation import deprecated
 from ..utils import _IS_32BIT
 from ..exceptions import NotFittedError
 from ..utils._param_validation import StrOptions, Interval, HasMethods
@@ -425,8 +423,7 @@ class _VectorizerMixin:
     def build_analyzer(self):
         """Return a callable to process input data.
 
-        The callable handles that handles preprocessing, tokenization, and
-        n-grams generation.
+        The callable handles preprocessing, tokenization, and n-grams generation.
 
         Returns
         -------
@@ -569,7 +566,9 @@ class _VectorizerMixin:
                 )
 
 
-class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
+class HashingVectorizer(
+    TransformerMixin, _VectorizerMixin, BaseEstimator, auto_wrap_output_keys=None
+):
     r"""Convert a collection of text documents to a matrix of token occurrences.
 
     It turns a collection of text documents into a scipy.sparse matrix holding
@@ -631,12 +630,12 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         'strict', meaning that a UnicodeDecodeError will be raised. Other
         values are 'ignore' and 'replace'.
 
-    strip_accents : {'ascii', 'unicode'}, default=None
+    strip_accents : {'ascii', 'unicode'} or callable, default=None
         Remove accents and perform other character normalization
         during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
         a direct ASCII mapping.
-        'unicode' is a slightly slower method that works on any characters.
+        'unicode' is a slightly slower method that works on any character.
         None (default) does nothing.
 
         Both 'ascii' and 'unicode' use NFKD normalization from
@@ -664,7 +663,7 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         will be removed from the resulting tokens.
         Only applies if ``analyzer == 'word'``.
 
-    token_pattern : str, default=r"(?u)\\b\\w\\w+\\b"
+    token_pattern : str or None, default=r"(?u)\\b\\w\\w+\\b"
         Regular expression denoting what constitutes a "token", only used
         if ``analyzer == 'word'``. The default regexp selects tokens of 2
         or more alphanumeric characters (punctuation is completely ignored
@@ -740,6 +739,25 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
     (4, 16)
     """
 
+    _parameter_constraints: dict = {
+        "input": [StrOptions({"filename", "file", "content"})],
+        "encoding": [str],
+        "decode_error": [StrOptions({"strict", "ignore", "replace"})],
+        "strip_accents": [StrOptions({"ascii", "unicode"}), None, callable],
+        "lowercase": ["boolean"],
+        "preprocessor": [callable, None],
+        "tokenizer": [callable, None],
+        "stop_words": [StrOptions({"english"}), list, None],
+        "token_pattern": [str, None],
+        "ngram_range": [tuple],
+        "analyzer": [StrOptions({"word", "char", "char_wb"}), callable],
+        "n_features": [Interval(Integral, 1, np.iinfo(np.int32).max, closed="left")],
+        "binary": ["boolean"],
+        "norm": [StrOptions({"l1", "l2"}), None],
+        "alternate_sign": ["boolean"],
+        "dtype": "no_validation",  # delegate to numpy
+    }
+
     def __init__(
         self,
         *,
@@ -796,6 +814,8 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         self : object
             HashingVectorizer instance.
         """
+        # TODO: only validate during the first call
+        self._validate_params()
         return self
 
     def fit(self, X, y=None):
@@ -814,6 +834,8 @@ class HashingVectorizer(TransformerMixin, _VectorizerMixin, BaseEstimator):
         self : object
             HashingVectorizer instance.
         """
+        self._validate_params()
+
         # triggers a parameter validation
         if isinstance(X, str):
             raise ValueError(
@@ -935,7 +957,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
         Remove accents and perform other character normalization
         during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
-        an direct ASCII mapping.
+        a direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
 
@@ -1102,7 +1124,7 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
      [0 0 1 0 1 0 1 0 0 0 0 0 1]]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "input": [StrOptions({"filename", "file", "content"})],
         "encoding": [str],
         "decode_error": [StrOptions({"strict", "ignore", "replace"})],
@@ -1359,12 +1381,8 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
 
         if not self.fixed_vocabulary_:
             n_doc = X.shape[0]
-            max_doc_count = (
-                max_df if isinstance(max_df, numbers.Integral) else max_df * n_doc
-            )
-            min_doc_count = (
-                min_df if isinstance(min_df, numbers.Integral) else min_df * n_doc
-            )
+            max_doc_count = max_df if isinstance(max_df, Integral) else max_df * n_doc
+            min_doc_count = min_df if isinstance(min_df, Integral) else min_df * n_doc
             if max_doc_count < min_doc_count:
                 raise ValueError("max_df corresponds to < documents than min_df")
             if max_features is not None:
@@ -1439,22 +1457,6 @@ class CountVectorizer(_VectorizerMixin, BaseEstimator):
                 for i in range(n_samples)
             ]
 
-    @deprecated(
-        "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. Please use get_feature_names_out instead."
-    )
-    def get_feature_names(self):
-        """Array mapping from feature integer indices to feature name.
-
-        Returns
-        -------
-        feature_names : list
-            A list of feature names.
-        """
-        self._check_vocabulary()
-
-        return [t for t, i in sorted(self.vocabulary_.items(), key=itemgetter(1))]
-
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
@@ -1483,7 +1485,9 @@ def _make_int_array():
     return array.array(str("i"))
 
 
-class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
+class TfidfTransformer(
+    OneToOneFeatureMixin, TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
+):
     """Transform a count matrix to a normalized tf or tf-idf representation.
 
     Tf means term-frequency while tf-idf means term-frequency times inverse
@@ -1612,7 +1616,7 @@ class TfidfTransformer(_OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     (4, 8)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "norm": [StrOptions({"l1", "l2"}), None],
         "use_idf": ["boolean"],
         "smooth_idf": ["boolean"],
@@ -1771,11 +1775,11 @@ class TfidfVectorizer(CountVectorizer):
         'strict', meaning that a UnicodeDecodeError will be raised. Other
         values are 'ignore' and 'replace'.
 
-    strip_accents : {'ascii', 'unicode'}, default=None
+    strip_accents : {'ascii', 'unicode'} or callable, default=None
         Remove accents and perform other character normalization
         during the preprocessing step.
         'ascii' is a fast method that only works on characters that have
-        an direct ASCII mapping.
+        a direct ASCII mapping.
         'unicode' is a slightly slower method that works on any characters.
         None (default) does nothing.
 
@@ -1950,7 +1954,7 @@ class TfidfVectorizer(CountVectorizer):
     (4, 9)
     """
 
-    _parameter_constraints = {**CountVectorizer._parameter_constraints}
+    _parameter_constraints: dict = {**CountVectorizer._parameter_constraints}
     _parameter_constraints.update(
         {
             "norm": [StrOptions({"l1", "l2"}), None],
