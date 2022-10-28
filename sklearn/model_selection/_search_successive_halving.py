@@ -183,7 +183,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
         if self.max_resources_ == "auto":
             if not self.resource == "n_samples":
                 raise ValueError(
-                    "resource can only be 'n_samples' if max_resources='auto'"
+                    "resource can only be 'n_samples' when max_resources='auto'"
                 )
             self.max_resources_ = _num_samples(X)
 
