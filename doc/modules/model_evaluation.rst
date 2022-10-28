@@ -997,6 +997,7 @@ Jaccard index, between pairs of label sets.
 
 The Jaccard similarity coefficient with a ground truth label set :math:`y` and
 predicted label set :math:`\hat{y}`, is defined as
+
 .. math::
 
     J(y, \hat{y}) = \frac{|y \cap \hat{y}|}{|y \cup \hat{y}|}.
