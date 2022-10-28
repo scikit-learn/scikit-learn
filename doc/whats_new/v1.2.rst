@@ -350,6 +350,10 @@ Changelog
 - |Enhancement| :class:`kernel_approximation.SkewedChi2Sampler` now preserves
   dtype for `numpy.float32` inputs. :pr:`24350` by :user:`Rahil Parikh <rprkh>`.
 
+- |Enhancement| :class:`kernel_approximation.RBFSampler` now accepts
+  `'scale'` option for parameter `gamma`.
+  :pr:`24755` by :user:`Gleb Levitski <GLevV>`
+
 :mod:`sklearn.linear_model`
 ...........................
 
