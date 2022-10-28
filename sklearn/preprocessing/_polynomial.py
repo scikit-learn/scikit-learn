@@ -931,8 +931,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 if np.any(mask):
                     if use_sparse:
                         # Note: See comment about SparseEfficiencyWarning above.
-                        if not sparse.isspmatrix_lil(XBS_sparse):
-                            XBS_sparse = XBS_sparse.tolil()
+                        XBS_sparse = XBS_sparse.tolil()
                         XBS_sparse[mask, :degree] = f_min[:degree]
 
                     else:
@@ -944,8 +943,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 if np.any(mask):
                     if use_sparse:
                         # Note: See comment about SparseEfficiencyWarning above.
-                        if not sparse.isspmatrix_lil(XBS_sparse):
-                            XBS_sparse = XBS_sparse.tolil()
+                        XBS_sparse = XBS_sparse.tolil()
                         XBS_sparse[mask, -degree:] = f_max[-degree:]
                     else:
                         XBS[
@@ -973,8 +971,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         linear_extr = f_min[j] + (X[mask, i] - xmin) * fp_min[j]
                         if use_sparse:
                             # Note: See comment about SparseEfficiencyWarning above.
-                            if not sparse.isspmatrix_lil(XBS_sparse):
-                                XBS_sparse = XBS_sparse.tolil()
+                            XBS_sparse = XBS_sparse.tolil()
                             XBS_sparse[mask, j] = linear_extr
                         else:
                             XBS[mask, i * n_splines + j] = linear_extr
@@ -985,8 +982,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                         linear_extr = f_max[k] + (X[mask, i] - xmax) * fp_max[k]
                         if use_sparse:
                             # Note: See comment about SparseEfficiencyWarning above.
-                            if not sparse.isspmatrix_lil(XBS_sparse):
-                                XBS_sparse = XBS_sparse.tolil()
+                            XBS_sparse = XBS_sparse.tolil()
                             XBS_sparse[mask, k : k + 1] = linear_extr[:, None]
                         else:
                             XBS[mask, i * n_splines + k] = linear_extr
