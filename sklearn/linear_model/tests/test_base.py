@@ -728,51 +728,34 @@ def test_fused_types_make_dataset():
     assert_array_equal(yi_64, yicsr_64)
 
 
-# FIXME: 'normalize' to be removed in 1.2
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
-@pytest.mark.parametrize("normalize", [False, True])
 @pytest.mark.parametrize("sparseX", [False, True])
 @pytest.mark.parametrize("fit_intercept", [False, True])
-@pytest.mark.parametrize("data", ["tall", "wide"])
-def test_linear_regression_sample_weight_consistency(
-    normalize, sparseX, fit_intercept, data
-):
+def test_linear_regression_sample_weight_consistency(sparseX, fit_intercept):
     """Test that the impact of sample_weight is consistent.
 
     Note that this test is stricter than the common test
     check_sample_weights_invariance alone.
     """
-    tol = 1e-4
-    if fit_intercept:
-        tol = 1e-1
-    n_samples = 100
-    if data == "tall":
-        n_features = n_samples // 2
-    else:
-        n_features = n_samples * 2
     rng = np.random.RandomState(42)
-    X, y = make_regression(
-        n_samples=n_samples,
-        n_features=n_features,
-        effective_rank=None,
-        n_informative=50,
-        bias=int(fit_intercept),
-        random_state=rng,
-    )
+    n_samples, n_features = 10, 5
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.rand(n_samples)
     if sparseX:
         X = sparse.csr_matrix(X)
     params = dict(fit_intercept=fit_intercept)
 
-    # 1) sample_weight=np.ones(..) should be equivalent to sample_weight=None
-    # same check as check_sample_weights_invariance(name, reg, kind="ones"), but we also
-    # test with sparse input.
     reg = LinearRegression(**params).fit(X, y, sample_weight=None)
     coef = reg.coef_.copy()
     if fit_intercept:
         intercept = reg.intercept_
+
+    # 1) sample_weight=np.ones(..) should be equivalent to sample_weight=None
+    # same check as check_sample_weights_invariance(name, reg, kind="ones"), but we also
+    # test with sparse input.
     sample_weight = np.ones_like(y)
     reg.fit(X, y, sample_weight=sample_weight)
-    assert_allclose(reg.coef_, coef, rtol=tol)
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg.intercept_, intercept)
 
@@ -787,17 +770,17 @@ def test_linear_regression_sample_weight_consistency(
     if fit_intercept:
         intercept = reg.intercept_
     reg.fit(X[:-5, :], y[:-5], sample_weight=sample_weight[:-5])
-    assert_allclose(reg.coef_, coef, rtol=tol)
+    assert_allclose(reg.coef_, coef, rtol=1e-6)
     if fit_intercept:
-        assert_allclose(reg.intercept_, intercept, atol=1e-14, rtol=1e-6)
+        assert_allclose(reg.intercept_, intercept)
 
     # 3) scaling of sample_weight should have no effect
     # Note: For models with penalty, scaling the penalty term might work.
     reg2 = LinearRegression(**params)
     reg2.fit(X, y, sample_weight=np.pi * sample_weight)
-    assert_allclose(reg2.coef_, coef, rtol=tol)
+    assert_allclose(reg2.coef_, coef, rtol=1e-5 if sparseX else 1e-6)
     if fit_intercept:
-        assert_allclose(reg2.intercept_, intercept, atol=1e-14, rtol=1e-5)
+        assert_allclose(reg2.intercept_, intercept)
 
     # 4) check that multiplying sample_weight by 2 is equivalent
     # to repeating correspoding samples twice
@@ -815,6 +798,6 @@ def test_linear_regression_sample_weight_consistency(
         X2 = sparse.csr_matrix(X2)
     reg1 = LinearRegression(**params).fit(X, y, sample_weight=sample_weight_1)
     reg2 = LinearRegression(**params).fit(X2, y2, sample_weight=sample_weight_2)
-    assert_allclose(reg1.coef_, reg2.coef_, rtol=tol)
+    assert_allclose(reg1.coef_, reg2.coef_, rtol=1e-6)
     if fit_intercept:
-        assert_allclose(reg1.intercept_, reg2.intercept_, atol=1e-14, rtol=1e-6)
+        assert_allclose(reg1.intercept_, reg2.intercept_)

@@ -48,7 +48,7 @@ from sklearn.preprocessing import minmax_scale
 from sklearn.utils import check_random_state
 
 
-SOLVERS = ("svd", "sparse_cg", "cholesky", "lsqr", "sag", "saga")
+SOLVERS = ["svd", "sparse_cg", "cholesky", "lsqr", "sag", "saga"]
 SPARSE_SOLVERS_WITH_INTERCEPT = ("sparse_cg", "sag")
 SPARSE_SOLVERS_WITHOUT_INTERCEPT = ("sparse_cg", "cholesky", "lsqr", "sag", "saga")
 
@@ -1974,75 +1974,44 @@ def test_lbfgs_solver_error():
         model.fit(X, y)
 
 
-@pytest.mark.parametrize(
-    "solver", ["cholesky", "lsqr", "sparse_cg", "svd", "sag", "saga", "lbfgs"]
-)
-def test_ridge_sample_weight_invariance(solver):
-    """Test that Ridge fulfils sample weight invariance.
+@pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("sparseX", [False, True])
+@pytest.mark.parametrize("data", ["tall", "wide"])
+@pytest.mark.parametrize("solver", SOLVERS + ["lbfgs"])
+def test_ridge_sample_weight_consistentcy(fit_intercept, sparseX, data, solver):
+    """Test that the impact of sample_weight is consistent.
 
     Note that this test is stricter than the common test
     check_sample_weights_invariance alone.
     """
-    params = dict(
-        alpha=1.0,
-        solver=solver,
-        tol=1e-12,
-        positive=(solver == "lbfgs"),
-    )
-    reg = Ridge(**params)
-    name = reg.__class__.__name__
-    check_sample_weights_invariance(name, reg, kind="ones")
-    check_sample_weights_invariance(name, reg, kind="zeros")
+    # filter out solver that do not support sparse input
+    if sparseX:
+        if solver == "svd" or (solver in ("cholesky", "saga") and fit_intercept):
+            pytest.skip("unsupported configuration")
+        if solver in ("sparse_cg", "sag") and fit_intercept:
+            pytest.xfail(
+                f"{solver} with with sparse input and fit_intercept=True does"
+                " not meet tolerace critetia"
+            )
 
-    # Check that duplicating the training dataset is equivalent to multiplying
-    # the weights by 2:
-
-    n_samples = 100
+    rng = np.random.RandomState(42)
+    n_samples = 12
     if data == "tall":
         n_features = n_samples // 2
     else:
         n_features = n_samples * 2
-    rng = np.random.RandomState(42)
-    X, y = make_regression(
-        n_samples=n_samples,
-        n_features=n_features,
-        effective_rank=10,
-        n_informative=50,
-        random_state=rng,
-    )
-    sw = rng.uniform(low=0.01, high=2, size=X.shape[0])
-    X_dup = np.concatenate([X, X], axis=0)
-    y_dup = np.concatenate([y, y], axis=0)
-    sw_dup = np.concatenate([sw, sw], axis=0)
-
-    ridge_2sw = Ridge(**params).fit(X, y, sample_weight=2 * sw)
-    ridge_dup = Ridge(**params).fit(X_dup, y_dup, sample_weight=sw_dup)
-
-    assert_allclose(ridge_2sw.coef_, ridge_dup.coef_)
-    assert_allclose(ridge_2sw.intercept_, ridge_dup.intercept_)
-    Ridge(solver='sag').fit(X, y)
-
-
-@pytest.mark.parametrize(
-    'sparseX', [False,
-                pytest.param(True,
-                             marks=pytest.mark.xfail(
-                                reason='Compare issue #15438: sparse with '
-                                       'sample weight gives wrong results.'))
-                ])
-@pytest.mark.parametrize('fit_intercept', [False, True])
-@pytest.mark.parametrize('normalize', [False, True])
-def test_ridge_sample_weight_consistentcy(
-        sparseX, fit_intercept, normalize):
-    """Test that the impact of sample_weight is consistent."""
-    rng = np.random.RandomState(0)
-    n_samples, n_features = 10, 5
 
     X = rng.rand(n_samples, n_features)
     y = rng.rand(n_samples)
     if sparseX:
         X = sp.csr_matrix(X)
-    params = dict(fit_intercept=fit_intercept, alpha=1.0, solver=solver, tol=1e-12)
+    params = dict(
+        fit_intercept=fit_intercept,
+        alpha=1.0,
+        solver=solver,
+        positive=(solver == "lbfgs"),
+        tol=1e-12,
+    )
 
     # 1) sample_weight=np.ones(..) should be equivalent to sample_weight=None
     # same check as check_sample_weights_invariance(name, reg, kind="ones"), but we also
@@ -2074,11 +2043,10 @@ def test_ridge_sample_weight_consistentcy(
 
     # 3) scaling of sample_weight should have no effect
     # Note: For models with penalty, scaling the penalty term might work.
-    sample_weight = np.pi * np.ones_like(y)
-    params['alpha'] = np.pi * params['alpha']
-    reg2 = Ridge(**params).fit(X, y)
-    params['alpha'] = 1/np.pi * params['alpha']
-    reg2.fit(X, y, sample_weight=sample_weight)
+    reg2 = Ridge(**params).set_params(alpha=np.pi * params["alpha"])
+    reg2.fit(X, y, sample_weight=np.pi * sample_weight)
+    if solver in ("sag", "saga") and not fit_intercept:
+        pytest.xfail(f"Solver {solver} does fail test for scaling of sample_weight.")
     assert_allclose(reg2.coef_, coef, rtol=1e-6)
     if fit_intercept:
         assert_allclose(reg2.intercept_, intercept)
