@@ -147,9 +147,7 @@ cdef class MiddleTermComputer{{name_suffix}}:
     @classmethod
     def unpack_csr_matrix(cls, X: csr_matrix):
         """Ensure that the CSR matrix is indexed with SPARSE_INDEX_TYPE."""
-        print("DEBUG before casting", X.data.dtype)
         X_data = np.asarray(X.data, dtype=DTYPE)
-        print("DEBUG after casting", X_data.dtype)
         X_indices = np.asarray(X.indices, dtype=SPARSE_INDEX_TYPE)
         X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
         return X_data, X_indices, X_indptr
