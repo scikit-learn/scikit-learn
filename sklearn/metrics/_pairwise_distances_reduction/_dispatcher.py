@@ -6,7 +6,7 @@ from typing import List
 
 from scipy.sparse import isspmatrix_csr
 
-from .._dist_metrics import BOOL_METRICS
+from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING
 
 from ._base import (
     _sqeuclidean_row_norms64,
@@ -22,36 +22,6 @@ from ._radius_neighbors import (
 )
 
 from ... import get_config
-
-_VALID_METRICS = [
-    "euclidean",
-    "l2",
-    "l1",
-    "manhattan",
-    "cityblock",
-    "braycurtis",
-    "canberra",
-    "chebyshev",
-    "correlation",
-    "cosine",
-    "dice",
-    "hamming",
-    "jaccard",
-    "kulsinski",
-    "mahalanobis",
-    "matching",
-    "minkowski",
-    "rogerstanimoto",
-    "russellrao",
-    "seuclidean",
-    "sokalmichener",
-    "sokalsneath",
-    "sqeuclidean",
-    "yule",
-    "wminkowski",
-    "nan_euclidean",
-    "haversine",
-]
 
 
 def sqeuclidean_row_norms(X, num_threads):
@@ -103,7 +73,7 @@ class BaseDistancesReductionDispatcher:
             "hamming",
             *BOOL_METRICS,
         }
-        return sorted(set(_VALID_METRICS) - excluded)
+        return sorted(({"sqeuclidean"} | set(METRIC_MAPPING.keys())) - excluded)
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
