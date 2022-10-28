@@ -993,6 +993,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
                 output_list.append(XBS_sparse)
 
         if use_sparse:
+            # TODO: Remove this conditional error when the minimum supported version of
+            # SciPy is 1.9.2
             # `scipy.sparse.hstack` breaks in scipy<1.9.2
             # when `n_output_features_ > max_int32`
             max_int32 = np.iinfo(np.int32).max
