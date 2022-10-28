@@ -4,11 +4,6 @@ from libcpp.memory cimport shared_ptr
 from libcpp.vector cimport vector
 from cython cimport final
 
-from ._base cimport (
-    PairwiseDistancesReduction64,
-)
-from ._gemm_term_computer cimport GEMMTermComputer64
-
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
 cnp.import_array()
@@ -31,14 +26,18 @@ cdef cnp.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
 )
 
 #####################
+{{for name_suffix in ['64', '32']}}
 
-cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
-    """64bit implementation of PairwiseDistancesRadiusNeighborhood ."""
+from ._base cimport BaseDistancesReduction{{name_suffix}}
+from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
+
+cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
+    """float{{name_suffix}} implementation of the RadiusNeighbors."""
 
     cdef:
         DTYPE_t radius
 
-        # DistanceMetric compute rank-preserving surrogate distance via rdist
+        # DistanceMetric{{name_suffix}} compute rank-preserving surrogate distance via rdist
         # which are proxies necessitating less computations.
         # We get the equivalent for the radius to be able to compare it against
         # vectors' rank-preserving surrogate distances.
@@ -79,11 +78,13 @@ cdef class PairwiseDistancesRadiusNeighborhood64(PairwiseDistancesReduction64):
     ) nogil
 
 
-cdef class FastEuclideanPairwiseDistancesRadiusNeighborhood64(PairwiseDistancesRadiusNeighborhood64):
-    """EuclideanDistance-specialized 64bit implementation for PairwiseDistancesRadiusNeighborhood."""
+cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}}):
+    """EuclideanDistance-specialisation of RadiusNeighbors{{name_suffix}}."""
     cdef:
-        GEMMTermComputer64 gemm_term_computer
+        GEMMTermComputer{{name_suffix}} gemm_term_computer
         const DTYPE_t[::1] X_norm_squared
         const DTYPE_t[::1] Y_norm_squared
 
         bint use_squared_distances
+
+{{endfor}}

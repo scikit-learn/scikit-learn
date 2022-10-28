@@ -6,7 +6,6 @@
 import numpy as np
 from scipy import sparse
 from scipy import linalg
-from scipy import stats
 from scipy.sparse.linalg import eigsh
 from scipy.special import expit
 
@@ -19,6 +18,7 @@ from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils.fixes import _mode
 
 from sklearn.utils.extmath import density, _safe_accumulator_op
 from sklearn.utils.extmath import randomized_svd, _randomized_eigsh
@@ -49,6 +49,20 @@ def test_density():
         assert density(X_) == density(X)
 
 
+# TODO(1.4): Remove test
+def test_density_deprecated_kwargs():
+    """Check that future warning is raised when user enters keyword arguments."""
+    test_array = np.array([[1, 2, 3], [4, 5, 6]])
+    with pytest.warns(
+        FutureWarning,
+        match=(
+            "Additional keyword arguments are deprecated in version 1.2 and will be"
+            " removed in version 1.4."
+        ),
+    ):
+        density(test_array, a=1)
+
+
 def test_uniform_weights():
     # with uniform weights, results should be identical to stats.mode
     rng = np.random.RandomState(0)
@@ -56,7 +70,7 @@ def test_uniform_weights():
     weights = np.ones(x.shape)
 
     for axis in (None, 0, 1):
-        mode, score = stats.mode(x, axis)
+        mode, score = _mode(x, axis)
         mode2, score2 = weighted_mode(x, weights, axis=axis)
 
         assert_array_equal(mode, mode2)

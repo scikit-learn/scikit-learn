@@ -108,6 +108,13 @@ conda_build_metadata_list = [
         "conda_dependencies": common_dependencies + ["ccache"],
         "package_constraints": {
             "blas": "[build=mkl]",
+            # 2022-06-09 currently mamba install 1.23 and scipy 1.7 which
+            # should be compatible but actually are not. This pin can be
+            # removed when scipy 1.8 is available in conda defaults channel.
+            # For more details, see
+            # https://github.com/scikit-learn/scikit-learn/pull/24363#issuecomment-1236927660
+            # and https://github.com/scipy/scipy/issues/16964
+            "numpy": "1.22",
             # XXX: coverage is temporary pinned to 6.2 because 6.3 is not
             # fork-safe and 6.4 is not available yet (July 2022) in conda
             # defaults channel. For more details, see:
@@ -146,7 +153,7 @@ conda_build_metadata_list = [
         },
     },
     {
-        "build_name": "py38_conda_forge_openblas_ubuntu_1804",
+        "build_name": "py38_conda_forge_openblas_ubuntu_2204",
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
@@ -188,6 +195,7 @@ conda_build_metadata_list = [
                 "pillow",
             ],
         )
+        + ["pooch"]
         + docstring_test_dependencies
         # python-dateutil is a dependency of pandas and pandas is removed from
         # the environment.yml. Adding python-dateutil so it is pinned
@@ -198,12 +206,15 @@ conda_build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "conda-forge",
-        "conda_dependencies": ["pypy"]
+        "conda_dependencies": ["pypy", "python"]
         + remove_from(
             common_dependencies_without_coverage, ["python", "pandas", "pillow"]
         )
         + ["ccache"],
-        "package_constraints": {"blas": "[build=openblas]"},
+        "package_constraints": {
+            "blas": "[build=openblas]",
+            "python": "3.9",
+        },
     },
     {
         "build_name": "py38_conda_forge_mkl",
@@ -229,6 +240,8 @@ conda_build_metadata_list = [
             "sphinx-gallery",
             "numpydoc",
             "sphinx-prompt",
+            "plotly",
+            "pooch",
         ],
         "pip_dependencies": ["sphinxext-opengraph"],
         "package_constraints": {
@@ -244,6 +257,7 @@ conda_build_metadata_list = [
             "numpydoc": "min",
             "sphinx-prompt": "min",
             "sphinxext-opengraph": "min",
+            "plotly": "min",
         },
     },
     {
@@ -261,6 +275,8 @@ conda_build_metadata_list = [
             "sphinx-gallery",
             "numpydoc",
             "sphinx-prompt",
+            "plotly",
+            "pooch",
         ],
         "pip_dependencies": ["sphinxext-opengraph"],
         "package_constraints": {
@@ -313,25 +329,6 @@ pip_build_metadata_list = [
         # osx-arm64 machines. This should not matter for pining versions with
         # pip-compile
         "python_version": "3.8.5",
-    },
-    {
-        "build_name": "py38_pip_openblas_32bit",
-        "folder": "build_tools/azure",
-        "pip_dependencies": [
-            "numpy",
-            "scipy",
-            "cython",
-            "joblib",
-            "threadpoolctl",
-            "pytest",
-            "pytest-xdist",
-            "pillow",
-            "wheel",
-        ],
-        # The Windows 32bit build use 3.8.10. No cross-compilation support for
-        # pip-compile, we are going to assume the pip lock file on a Linux
-        # 64bit machine gives appropriate versions
-        "python_version": "3.8.10",
     },
 ]
 

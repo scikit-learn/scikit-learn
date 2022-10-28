@@ -19,7 +19,6 @@ from sklearn.model_selection import (
     train_test_split,
 )
 from sklearn.pipeline import make_pipeline
-from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.utils._testing import assert_allclose
@@ -27,15 +26,10 @@ from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils._testing import _convert_container
 
 from sklearn.utils._testing import TempMemmap
-from sklearn.utils import check_random_state
-from sklearn.utils.sparsefuncs import mean_variance_axis
 
 from sklearn.linear_model import (
-    ARDRegression,
-    BayesianRidge,
     ElasticNet,
     ElasticNetCV,
     enet_path,
@@ -61,49 +55,6 @@ from sklearn.linear_model import (
 
 from sklearn.linear_model._coordinate_descent import _set_order
 from sklearn.utils import check_array
-
-
-# FIXME: 'normalize' to be removed in 1.2
-filterwarnings_normalize = pytest.mark.filterwarnings(
-    "ignore:'normalize' was deprecated in version 1.0"
-)
-
-
-# FIXME: 'normalize' to be removed in 1.2
-@pytest.mark.parametrize(
-    "CoordinateDescentModel",
-    [
-        ElasticNet,
-        Lasso,
-        LassoCV,
-        ElasticNetCV,
-        MultiTaskElasticNet,
-        MultiTaskLasso,
-        MultiTaskElasticNetCV,
-        MultiTaskLassoCV,
-    ],
-)
-@pytest.mark.parametrize(
-    "normalize, n_warnings", [(True, 1), (False, 1), ("deprecated", 0)]
-)
-def test_assure_warning_when_normalize(CoordinateDescentModel, normalize, n_warnings):
-    # check that we issue a FutureWarning when normalize was set
-    rng = check_random_state(0)
-    n_samples = 200
-    n_features = 2
-    X = rng.randn(n_samples, n_features)
-    X[X < 0.1] = 0.0
-    y = rng.rand(n_samples)
-
-    if "MultiTask" in CoordinateDescentModel.__name__:
-        y = np.stack((y, y), axis=1)
-
-    model = CoordinateDescentModel(normalize=normalize)
-    with warnings.catch_warnings(record=True) as rec:
-        warnings.simplefilter("always", FutureWarning)
-        model.fit(X, y)
-
-    assert len([w.message for w in rec]) == n_warnings
 
 
 @pytest.mark.parametrize("order", ["C", "F"])
@@ -302,7 +253,7 @@ def test_lasso_cv():
 
     # Check that the lars and the coordinate descent implementation
     # select a similar alpha
-    lars = LassoLarsCV(normalize=False, max_iter=30, cv=3).fit(X, y)
+    lars = LassoLarsCV(max_iter=30, cv=3).fit(X, y)
     # for this we check that they don't fall in the grid of
     # clf.alphas further than 1
     assert (
@@ -411,30 +362,15 @@ def _scale_alpha_inplace(estimator, n_samples):
     estimator.set_params(alpha=alpha)
 
 
-# FIXME: 'normalize' to be removed in 1.2 for all the models excluding:
-# OrthogonalMatchingPursuit, Lars, LassoLars, LarsCV, LassoLarsCV
-# for which it is to be removed in 1.4
+# TODO(1.4): remove 'normalize'
 @pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     "LinearModel, params",
     [
-        (Lasso, {"tol": 1e-16, "alpha": 0.1}),
         (LassoLars, {"alpha": 0.1}),
-        (RidgeClassifier, {"solver": "sparse_cg", "alpha": 0.1}),
-        (ElasticNet, {"tol": 1e-16, "l1_ratio": 1, "alpha": 0.1}),
-        (ElasticNet, {"tol": 1e-16, "l1_ratio": 0, "alpha": 0.1}),
-        (Ridge, {"solver": "sparse_cg", "tol": 1e-12, "alpha": 0.1}),
-        (BayesianRidge, {}),
-        (ARDRegression, {}),
         (OrthogonalMatchingPursuit, {}),
-        (MultiTaskElasticNet, {"tol": 1e-16, "l1_ratio": 1, "alpha": 0.1}),
-        (MultiTaskElasticNet, {"tol": 1e-16, "l1_ratio": 0, "alpha": 0.1}),
-        (MultiTaskLasso, {"tol": 1e-16, "alpha": 0.1}),
         (Lars, {}),
-        (LinearRegression, {}),
         (LassoLarsIC, {}),
-        (RidgeCV, {"alphas": [0.1, 0.4]}),
-        (RidgeClassifierCV, {"alphas": [0.1, 0.4]}),
     ],
 )
 def test_model_pipeline_same_as_normalize_true(LinearModel, params):
@@ -484,103 +420,6 @@ def test_model_pipeline_same_as_normalize_true(LinearModel, params):
     assert_allclose(y_pred_normalize, y_pred_standardize)
 
 
-# FIXME: 'normalize' to be removed in 1.2
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
-@pytest.mark.parametrize(
-    "estimator, params",
-    [
-        (Lasso, {"tol": 1e-16, "alpha": 0.1}),
-        (RidgeClassifier, {"solver": "sparse_cg", "alpha": 0.1}),
-        (ElasticNet, {"tol": 1e-16, "l1_ratio": 1, "alpha": 0.1}),
-        (ElasticNet, {"tol": 1e-16, "l1_ratio": 0, "alpha": 0.1}),
-        (Ridge, {"solver": "sparse_cg", "tol": 1e-12, "alpha": 0.1}),
-        (LinearRegression, {}),
-        (RidgeCV, {"alphas": [0.1, 0.4]}),
-        (RidgeClassifierCV, {"alphas": [0.1, 0.4]}),
-    ],
-)
-@pytest.mark.parametrize(
-    "is_sparse, with_mean",
-    [
-        (False, True),
-        (False, False),
-        (True, False)
-        # No need to test sparse and with_mean=True
-    ],
-)
-def test_linear_model_sample_weights_normalize_in_pipeline(
-    is_sparse, with_mean, estimator, params
-):
-    # Test that the results for running linear model with sample_weight
-    # and with normalize set to True gives similar results as the same linear
-    # model with normalize set to False in a pipeline with
-    # a StandardScaler and sample_weight.
-    model_name = estimator.__name__
-
-    rng = np.random.RandomState(0)
-    X, y = make_regression(n_samples=20, n_features=5, noise=1e-2, random_state=rng)
-
-    if is_classifier(estimator):
-        y = np.sign(y)
-
-    # make sure the data is not centered to make the problem more
-    # difficult + add 0s for the sparse case
-    X[X < 0] = 0
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.5, random_state=rng
-    )
-    if is_sparse:
-        X_train = sparse.csr_matrix(X_train)
-        X_test = _convert_container(X_train, "sparse")
-
-    sample_weight = rng.uniform(low=0.1, high=100, size=X_train.shape[0])
-
-    # linear estimator with built-in feature normalization
-    reg_with_normalize = estimator(normalize=True, fit_intercept=True, **params)
-    reg_with_normalize.fit(X_train, y_train, sample_weight=sample_weight)
-
-    # linear estimator in a pipeline with a StandardScaler, normalize=False
-    linear_regressor = estimator(normalize=False, fit_intercept=True, **params)
-
-    # rescale alpha
-    if model_name in ["Lasso", "ElasticNet"]:
-        _scale_alpha_inplace(linear_regressor, y_test.shape[0])
-    else:
-        _scale_alpha_inplace(linear_regressor, sample_weight.sum())
-    reg_with_scaler = Pipeline(
-        [
-            ("scaler", StandardScaler(with_mean=with_mean)),
-            ("linear_regressor", linear_regressor),
-        ]
-    )
-
-    fit_params = {
-        "scaler__sample_weight": sample_weight,
-        "linear_regressor__sample_weight": sample_weight,
-    }
-
-    reg_with_scaler.fit(X_train, y_train, **fit_params)
-
-    # Check that the 2 regressions models are exactly equivalent in the
-    # sense that they predict exactly the same outcome.
-    y_pred_normalize = reg_with_normalize.predict(X_test)
-    y_pred_scaler = reg_with_scaler.predict(X_test)
-    assert_allclose(y_pred_normalize, y_pred_scaler)
-
-    # Check intercept computation when normalize is True
-    y_train_mean = np.average(y_train, weights=sample_weight)
-    if is_sparse:
-        X_train_mean, _ = mean_variance_axis(X_train, axis=0, weights=sample_weight)
-    else:
-        X_train_mean = np.average(X_train, weights=sample_weight, axis=0)
-    assert reg_with_normalize.intercept_ == pytest.approx(
-        y_train_mean - reg_with_normalize.coef_.dot(X_train_mean)
-    )
-
-
-# FIXME: 'normalize' to be removed in 1.2
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     "LinearModel, params",
     [
@@ -601,13 +440,9 @@ def test_model_pipeline_same_dense_and_sparse(LinearModel, params):
     # with normalize set to False gives the same y_pred and the same .coef_
     # given X sparse or dense
 
-    model_dense = make_pipeline(
-        StandardScaler(with_mean=False), LinearModel(normalize=False, **params)
-    )
+    model_dense = make_pipeline(StandardScaler(with_mean=False), LinearModel(**params))
 
-    model_sparse = make_pipeline(
-        StandardScaler(with_mean=False), LinearModel(normalize=False, **params)
-    )
+    model_sparse = make_pipeline(StandardScaler(with_mean=False), LinearModel(**params))
 
     # prepare the data
     rng = np.random.RandomState(0)
@@ -1226,69 +1061,63 @@ def test_lasso_non_float_y(model):
     assert_array_equal(clf.coef_, clf_float.coef_)
 
 
-# FIXME: 'normalize' to be removed in 1.2
-@filterwarnings_normalize
 def test_enet_float_precision():
     # Generate dataset
     X, y, X_test, y_test = build_dataset(n_samples=20, n_features=10)
     # Here we have a small number of iterations, and thus the
     # ElasticNet might not converge. This is to speed up tests
 
-    for normalize in [True, False]:
-        for fit_intercept in [True, False]:
-            coef = {}
-            intercept = {}
-            for dtype in [np.float64, np.float32]:
-                clf = ElasticNet(
-                    alpha=0.5,
-                    max_iter=100,
-                    precompute=False,
-                    fit_intercept=fit_intercept,
-                    normalize=normalize,
-                )
+    for fit_intercept in [True, False]:
+        coef = {}
+        intercept = {}
+        for dtype in [np.float64, np.float32]:
+            clf = ElasticNet(
+                alpha=0.5,
+                max_iter=100,
+                precompute=False,
+                fit_intercept=fit_intercept,
+            )
 
-                X = dtype(X)
-                y = dtype(y)
-                ignore_warnings(clf.fit)(X, y)
+            X = dtype(X)
+            y = dtype(y)
+            ignore_warnings(clf.fit)(X, y)
 
-                coef[("simple", dtype)] = clf.coef_
-                intercept[("simple", dtype)] = clf.intercept_
+            coef[("simple", dtype)] = clf.coef_
+            intercept[("simple", dtype)] = clf.intercept_
 
-                assert clf.coef_.dtype == dtype
+            assert clf.coef_.dtype == dtype
 
-                # test precompute Gram array
-                Gram = X.T.dot(X)
-                clf_precompute = ElasticNet(
-                    alpha=0.5,
-                    max_iter=100,
-                    precompute=Gram,
-                    fit_intercept=fit_intercept,
-                    normalize=normalize,
-                )
-                ignore_warnings(clf_precompute.fit)(X, y)
-                assert_array_almost_equal(clf.coef_, clf_precompute.coef_)
-                assert_array_almost_equal(clf.intercept_, clf_precompute.intercept_)
+            # test precompute Gram array
+            Gram = X.T.dot(X)
+            clf_precompute = ElasticNet(
+                alpha=0.5,
+                max_iter=100,
+                precompute=Gram,
+                fit_intercept=fit_intercept,
+            )
+            ignore_warnings(clf_precompute.fit)(X, y)
+            assert_array_almost_equal(clf.coef_, clf_precompute.coef_)
+            assert_array_almost_equal(clf.intercept_, clf_precompute.intercept_)
 
-                # test multi task enet
-                multi_y = np.hstack((y[:, np.newaxis], y[:, np.newaxis]))
-                clf_multioutput = MultiTaskElasticNet(
-                    alpha=0.5,
-                    max_iter=100,
-                    fit_intercept=fit_intercept,
-                    normalize=normalize,
-                )
-                clf_multioutput.fit(X, multi_y)
-                coef[("multi", dtype)] = clf_multioutput.coef_
-                intercept[("multi", dtype)] = clf_multioutput.intercept_
-                assert clf.coef_.dtype == dtype
+            # test multi task enet
+            multi_y = np.hstack((y[:, np.newaxis], y[:, np.newaxis]))
+            clf_multioutput = MultiTaskElasticNet(
+                alpha=0.5,
+                max_iter=100,
+                fit_intercept=fit_intercept,
+            )
+            clf_multioutput.fit(X, multi_y)
+            coef[("multi", dtype)] = clf_multioutput.coef_
+            intercept[("multi", dtype)] = clf_multioutput.intercept_
+            assert clf.coef_.dtype == dtype
 
-            for v in ["simple", "multi"]:
-                assert_array_almost_equal(
-                    coef[(v, np.float32)], coef[(v, np.float64)], decimal=4
-                )
-                assert_array_almost_equal(
-                    intercept[(v, np.float32)], intercept[(v, np.float64)], decimal=4
-                )
+        for v in ["simple", "multi"]:
+            assert_array_almost_equal(
+                coef[(v, np.float32)], coef[(v, np.float64)], decimal=4
+            )
+            assert_array_almost_equal(
+                intercept[(v, np.float32)], intercept[(v, np.float64)], decimal=4
+            )
 
 
 def test_enet_l1_ratio():
@@ -1384,10 +1213,6 @@ def test_convergence_warnings():
     random_state = np.random.RandomState(0)
     X = random_state.standard_normal((1000, 500))
     y = random_state.standard_normal((1000, 3))
-
-    # check that the model fails to converge (a negative dual gap cannot occur)
-    with pytest.warns(ConvergenceWarning):
-        MultiTaskElasticNet(max_iter=1, tol=-1).fit(X, y)
 
     # check that the model converges w/o convergence warnings
     with warnings.catch_warnings():
@@ -1694,11 +1519,8 @@ def test_enet_sample_weight_does_not_overwrite_sample_weight(check_input):
     assert_array_equal(sample_weight, sample_weight_1_25)
 
 
-# FIXME: 'normalize' to be removed in 1.2
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize("ridge_alpha", [1e-1, 1.0, 1e6])
-@pytest.mark.parametrize("normalize", [True, False])
-def test_enet_ridge_consistency(normalize, ridge_alpha):
+def test_enet_ridge_consistency(ridge_alpha):
     # Check that ElasticNet(l1_ratio=0) converges to the same solution as Ridge
     # provided that the value of alpha is adapted.
     #
@@ -1719,14 +1541,11 @@ def test_enet_ridge_consistency(normalize, ridge_alpha):
     sw = rng.uniform(low=0.01, high=10, size=X.shape[0])
     alpha = 1.0
     common_params = dict(
-        normalize=normalize,
         tol=1e-12,
     )
     ridge = Ridge(alpha=alpha, **common_params).fit(X, y, sample_weight=sw)
-    if normalize:
-        alpha_enet = alpha / n_samples
-    else:
-        alpha_enet = alpha / sw.sum()
+
+    alpha_enet = alpha / sw.sum()
     enet = ElasticNet(alpha=alpha_enet, l1_ratio=0, **common_params).fit(
         X, y, sample_weight=sw
     )
@@ -1741,7 +1560,6 @@ def test_enet_ridge_consistency(normalize, ridge_alpha):
         ElasticNet(alpha=1.0, l1_ratio=0.1),
     ],
 )
-@filterwarnings_normalize
 def test_sample_weight_invariance(estimator):
     rng = np.random.RandomState(42)
     X, y = make_regression(
@@ -1751,9 +1569,8 @@ def test_sample_weight_invariance(estimator):
         n_informative=50,
         random_state=rng,
     )
-    normalize = False  # These tests don't work for normalize=True.
     sw = rng.uniform(low=0.01, high=2, size=X.shape[0])
-    params = dict(normalize=normalize, tol=1e-12)
+    params = dict(tol=1e-12)
 
     # Check that setting some weights to 0 is equivalent to trimming the
     # samples:

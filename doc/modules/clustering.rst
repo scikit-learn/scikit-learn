@@ -779,9 +779,9 @@ divisive hierarchical clustering. Instead of creating all centroids at once, cen
 are picked progressively based on a previous clustering: a cluster is split into two
 new clusters repeatedly until the target number of clusters is reached.
 
-:class:`BisectingKMeans` is more efficient than :class:`KMeans` when the number the
-number of clusters is large since it only works on a subset of the data at each
-bisection while :class:`KMeans` always works on the entire dataset.
+:class:`BisectingKMeans` is more efficient than :class:`KMeans` when the number of
+clusters is large since it only works on a subset of the data at each bisection
+while :class:`KMeans` always works on the entire dataset.
 
 Although :class:`BisectingKMeans` can't benefit from the advantages of the `"k-means++"`
 initialization by design, it will still produce comparable results than
@@ -936,13 +936,14 @@ by black points below.
 
 .. topic:: References:
 
- * "A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases
-   with Noise"
+ * `"A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases
+   with Noise" <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_
    Ester, M., H. P. Kriegel, J. Sander, and X. Xu,
    In Proceedings of the 2nd International Conference on Knowledge Discovery
    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
 
- * "DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
+ * :doi:`"DBSCAN revisited, revisited: why and how you should (still) use DBSCAN."
+   <10.1145/3068335>`
    Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
    In ACM Transactions on Database Systems (TODS), 42(3), 19.
 
@@ -2109,6 +2110,5 @@ diagonal entries::
 
 .. topic:: References
 
- * L. Hubert and P. Arabie, Comparing Partitions, Journal of
-   Classification 1985
-   <https://link.springer.com/article/10.1007%2FBF01908075>_
+ * :doi:`"Comparing Partitions" <10.1007/BF01908075>` 
+   L. Hubert and P. Arabie, Journal of Classification 1985

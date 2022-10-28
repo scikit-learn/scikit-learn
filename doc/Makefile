@@ -9,9 +9,9 @@ BUILDDIR      = _build
 
 # Disable multiple jobs on OSX
 ifeq ($(shell uname), Darwin)
-	SPHINX_NUMJOBS = 1
+	SPHINX_NUMJOBS ?= 1
 else
-	SPHINX_NUMJOBS = auto
+	SPHINX_NUMJOBS ?= auto
 endif
 
 ifneq ($(EXAMPLES_PATTERN),)

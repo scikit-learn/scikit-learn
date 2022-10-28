@@ -25,13 +25,6 @@ X /= X.sum(axis=1)[:, np.newaxis]
 Y /= Y.sum(axis=1)[:, np.newaxis]
 
 
-@pytest.mark.parametrize("degree", [-1, 0])
-def test_polynomial_count_sketch_raises_if_degree_lower_than_one(degree):
-    with pytest.raises(ValueError, match=f"degree={degree} should be >=1."):
-        ps_transform = PolynomialCountSketch(degree=degree)
-        ps_transform.fit(X, Y)
-
-
 @pytest.mark.parametrize("gamma", [0.1, 1, 2.5])
 @pytest.mark.parametrize("degree, n_components", [(1, 500), (2, 500), (3, 5000)])
 @pytest.mark.parametrize("coef0", [0, 2.5])
@@ -220,6 +213,72 @@ def test_rbf_sampler():
     np.abs(error, out=error)
     assert np.max(error) <= 0.1  # nothing too far off
     assert np.mean(error) <= 0.05  # mean is fairly close
+
+
+def test_rbf_sampler_fitted_attributes_dtype(global_dtype):
+    """Check that the fitted attributes are stored accordingly to the
+    data type of X."""
+    rbf = RBFSampler()
+
+    X = np.array([[1, 2], [3, 4], [5, 6]], dtype=global_dtype)
+
+    rbf.fit(X)
+
+    assert rbf.random_offset_.dtype == global_dtype
+    assert rbf.random_weights_.dtype == global_dtype
+
+
+def test_rbf_sampler_dtype_equivalence():
+    """Check the equivalence of the results with 32 and 64 bits input."""
+    rbf32 = RBFSampler(random_state=42)
+    X32 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
+    rbf32.fit(X32)
+
+    rbf64 = RBFSampler(random_state=42)
+    X64 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float64)
+    rbf64.fit(X64)
+
+    assert_allclose(rbf32.random_offset_, rbf64.random_offset_)
+    assert_allclose(rbf32.random_weights_, rbf64.random_weights_)
+
+
+def test_rbf_sampler_gamma_scale():
+    """Check the inner value computed when `gamma='scale'`."""
+    X, y = [[0.0], [1.0]], [0, 1]
+    rbf = RBFSampler(gamma="scale")
+    rbf.fit(X, y)
+    assert rbf._gamma == pytest.approx(4)
+
+
+def test_skewed_chi2_sampler_fitted_attributes_dtype(global_dtype):
+    """Check that the fitted attributes are stored accordingly to the
+    data type of X."""
+    skewed_chi2_sampler = SkewedChi2Sampler()
+
+    X = np.array([[1, 2], [3, 4], [5, 6]], dtype=global_dtype)
+
+    skewed_chi2_sampler.fit(X)
+
+    assert skewed_chi2_sampler.random_offset_.dtype == global_dtype
+    assert skewed_chi2_sampler.random_weights_.dtype == global_dtype
+
+
+def test_skewed_chi2_sampler_dtype_equivalence():
+    """Check the equivalence of the results with 32 and 64 bits input."""
+    skewed_chi2_sampler_32 = SkewedChi2Sampler(random_state=42)
+    X_32 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float32)
+    skewed_chi2_sampler_32.fit(X_32)
+
+    skewed_chi2_sampler_64 = SkewedChi2Sampler(random_state=42)
+    X_64 = np.array([[1, 2], [3, 4], [5, 6]], dtype=np.float64)
+    skewed_chi2_sampler_64.fit(X_64)
+
+    assert_allclose(
+        skewed_chi2_sampler_32.random_offset_, skewed_chi2_sampler_64.random_offset_
+    )
+    assert_allclose(
+        skewed_chi2_sampler_32.random_weights_, skewed_chi2_sampler_64.random_weights_
+    )
 
 
 def test_input_validation():
