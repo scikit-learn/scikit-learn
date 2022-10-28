@@ -15,7 +15,7 @@ from ..base import (
     BaseEstimator,
     TransformerMixin,
     _UnstableArchMixin,
-    _ClassNamePrefixFeaturesOutMixin,
+    ClassNamePrefixFeaturesOutMixin,
 )
 from ..utils import check_random_state, check_array
 from ..utils._arpack import _init_arpack_v0
@@ -551,7 +551,7 @@ def locally_linear_embedding(
 
 
 class LocallyLinearEmbedding(
-    _ClassNamePrefixFeaturesOutMixin,
+    ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _UnstableArchMixin,
     BaseEstimator,

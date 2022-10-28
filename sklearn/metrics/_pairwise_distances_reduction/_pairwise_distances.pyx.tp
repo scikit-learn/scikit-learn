@@ -40,7 +40,7 @@ def _precompute_metric_params(X, Y, metric=None, **kwds):
 {{for name_suffix, INPUT_DTYPE in (('64', 'DTYPE'),('32', 'np.float32'))}}
 
 from ._base cimport (
-    BaseDistanceReducer{{name_suffix}},
+    BaseDistancesReduction{{name_suffix}},
     _sqeuclidean_row_norms{{name_suffix}},
 )
 
@@ -52,7 +52,7 @@ from ._datasets_pair cimport (
 from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
 
 
-cdef class PairwiseDistances{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
+cdef class PairwiseDistances{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
     """float{{name_suffix}} implementation of PairwiseDistances."""
 
     @classmethod
@@ -330,7 +330,7 @@ cdef class EuclideanPairwiseDistances{{name_suffix}}(PairwiseDistances{{name_suf
             ITYPE_t pair_index = 0
             DTYPE_t sq_dist_i_j = 0.
 
-            DTYPE_t *dist_middle_terms = self.gemm_term_computer._compute_distances_on_chunks(
+            DTYPE_t *dist_middle_terms = self.gemm_term_computer._compute_dist_middle_terms(
                 X_start, X_end, Y_start, Y_end, thread_num
             )
 

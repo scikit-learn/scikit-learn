@@ -16,11 +16,11 @@ cimport numpy as cnp
 from ...utils._typedefs cimport DTYPE_t
 {{for name_suffix, INPUT_DTYPE_t in implementation_specific_values}}
 
-from ._base cimport BaseDistanceReducer{{name_suffix}}
+from ._base cimport BaseDistancesReduction{{name_suffix}}
 from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
 
 
-cdef class PairwiseDistances{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
+cdef class PairwiseDistances{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
     """float{{name_suffix}} implementation of PairwiseDistances."""
 
     cdef:

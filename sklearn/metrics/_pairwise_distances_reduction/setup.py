@@ -23,8 +23,8 @@ def configuration(parent_package="", top_path=None):
         "sklearn/metrics/_pairwise_distances_reduction/_argkmin.pxd.tp",
         "sklearn/metrics/_pairwise_distances_reduction/_pairwise_distances.pyx.tp",
         "sklearn/metrics/_pairwise_distances_reduction/_pairwise_distances.pxd.tp",
-        "sklearn/metrics/_pairwise_distances_reduction/_radius_neighborhood.pyx.tp",
-        "sklearn/metrics/_pairwise_distances_reduction/_radius_neighborhood.pxd.tp",
+        "sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors.pyx.tp",
+        "sklearn/metrics/_pairwise_distances_reduction/_radius_neighbors.pxd.tp",
     ]
 
     gen_from_templates(templates)
@@ -35,7 +35,7 @@ def configuration(parent_package="", top_path=None):
         "_base.pyx",
         "_argkmin.pyx",
         "_pairwise_distances.pyx",
-        "_radius_neighborhood.pyx",
+        "_radius_neighbors.pyx",
     ]
 
     for source_file in cython_sources:
