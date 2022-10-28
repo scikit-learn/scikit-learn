@@ -833,7 +833,7 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
 
         Returns
         -------
-        XBS : array-like of shape (n_samples, n_features * n_splines)
+        XBS : {ndarray, sparse matrix} of shape (n_samples, n_features * n_splines)
             The matrix of features, where n_splines is the number of bases
             elements of the B-splines, n_knots + degree - 1.
         """
