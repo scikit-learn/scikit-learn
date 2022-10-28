@@ -688,6 +688,9 @@ def test_make_column_transformer_remainder_transformer():
     )
     assert ct.remainder == remainder
 
+    ct_all_same = make_column_transformer(remainder=remainder)
+    assert ct_all_same.remainder == remainder
+
 
 def test_column_transformer_get_set_params():
     ct = ColumnTransformer(
