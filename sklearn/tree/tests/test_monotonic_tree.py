@@ -2,8 +2,6 @@ import numpy as np
 import pytest
 
 from sklearn.datasets import make_classification, make_regression
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.tree.tests.test_tree import REG_TREES, CLF_TREES
 
@@ -34,7 +32,6 @@ def test_montonic_constraints_classifications(depth_first, global_random_seed):
     monotonic_cst[1] = -1
 
     classifiers = CLF_TREES.copy()
-    classifiers.update({"GradientBoostingClassifier": GradientBoostingClassifier})
     for name, TreeClassifier in classifiers.items():
         if depth_first:
             est = TreeClassifier(max_depth=None, monotonic_cst=monotonic_cst)
@@ -81,7 +78,6 @@ def test_montonic_constraints_regressions(depth_first, global_random_seed):
     monotonic_cst[0] = 1
     monotonic_cst[1] = -1
     regressors = REG_TREES.copy()
-    regressors.update({"GradientBoostingRegressor": GradientBoostingRegressor})
 
     for name, TreeRegressor in regressors.items():
         if depth_first:

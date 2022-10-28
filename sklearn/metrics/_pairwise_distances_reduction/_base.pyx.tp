@@ -112,7 +112,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         if chunk_size is None:
             chunk_size = get_config().get("pairwise_dist_chunk_size", 256)
 
-        self.chunk_size = check_scalar(chunk_size, "chunk_size", Integral, min_val=20)
+        self.chunk_size = check_scalar(chunk_size, "chunk_size", Integral, min_val=1)
 
         self.effective_n_threads = _openmp_effective_n_threads()
 

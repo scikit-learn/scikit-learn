@@ -148,6 +148,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         "tol": [Interval(Real, 0.0, None, closed="left")],
     }
     _parameter_constraints.pop("splitter")
+    _parameter_constraints.pop("monotonic_cst")
 
     @abstractmethod
     def __init__(
@@ -174,7 +175,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         validation_fraction=0.1,
         n_iter_no_change=None,
         tol=1e-4,
-        monotonic_cst=None,
     ):
 
         self.n_estimators = n_estimators
@@ -198,7 +198,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self.validation_fraction = validation_fraction
         self.n_iter_no_change = n_iter_no_change
         self.tol = tol
-        self.monotonic_cst = monotonic_cst
 
     @abstractmethod
     def _validate_y(self, y, sample_weight=None):
@@ -249,7 +248,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 max_leaf_nodes=self.max_leaf_nodes,
                 random_state=random_state,
                 ccp_alpha=self.ccp_alpha,
-                monotonic_cst=self.monotonic_cst,
             )
 
             if self.subsample < 1.0:
@@ -260,7 +258,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             tree.fit(X, residual, sample_weight=sample_weight, check_input=False)
 
             # update tree leaves
-            perform_line_search = self.monotonic_cst is None
             loss.update_terminal_regions(
                 tree.tree_,
                 X,
@@ -271,7 +268,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 sample_mask,
                 learning_rate=self.learning_rate,
                 k=k,
-                perform_line_search=perform_line_search,
             )
 
             # add tree to ensemble
@@ -1050,15 +1046,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.22
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature.
-          - 1: monotonically increasing
-          - 0: no constraint
-          - -1: monotonically decreasing
-
-        The constraints are only valid for binary classifications and hold
-        over the probability of the positive class.
-
     Attributes
     ----------
     n_estimators_ : int
@@ -1210,7 +1197,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         n_iter_no_change=None,
         tol=1e-4,
         ccp_alpha=0.0,
-        monotonic_cst=None,
     ):
 
         super().__init__(
@@ -1234,7 +1220,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
             n_iter_no_change=n_iter_no_change,
             tol=tol,
             ccp_alpha=ccp_alpha,
-            monotonic_cst=monotonic_cst,
         )
 
     def _validate_y(self, y, sample_weight):
@@ -1630,12 +1615,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
 
         .. versionadded:: 0.22
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature.
-          - 1: monotonically increasing
-          - 0: no constraint
-          - -1: monotonically decreasing
-
     Attributes
     ----------
     feature_importances_ : ndarray of shape (n_features,)
@@ -1768,7 +1747,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         n_iter_no_change=None,
         tol=1e-4,
         ccp_alpha=0.0,
-        monotonic_cst=None,
     ):
 
         super().__init__(
@@ -1793,7 +1771,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
             n_iter_no_change=n_iter_no_change,
             tol=tol,
             ccp_alpha=ccp_alpha,
-            monotonic_cst=monotonic_cst,
         )
 
     def _validate_y(self, y, sample_weight=None):
