@@ -175,6 +175,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     in the `passthrough` keyword. Those columns specified with `passthrough`
     are added at the right to the output of the transformers.
 
+    The ``transformers`` list is allowed to be empty, in which case the
+    behavior is governed entirely by the ``remainder`` parameter.
+
     Examples
     --------
     >>> import numpy as np
@@ -208,6 +211,17 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     ...     [("text_preprocess", FeatureHasher(input_type="string"), "documents"),
     ...      ("num_preprocess", MinMaxScaler(), ["width"])])
     >>> X_trans = ct.fit_transform(X)  # doctest: +SKIP
+
+    If you want to apply the same transformer to each column, you may pass an
+    empty list of transformers and use ``remainder`` parameter:
+
+    >>> X = pd.DataFrame({
+    ...     "x": [1, 2, 3],
+    ...     "y": [11, 12, 13],
+    ...     "z": [101, 102, 103],
+    ... })  # doctest: +SKIP
+    >>> ct_all_scaled = ColumnTransformer([], remainder=MinMaxScaler())
+    >>> X_trans = ct_all_scaled.fit_transform(X)  # doctest: +SKIP
     """
 
     _required_parameters = ["transformers"]
@@ -903,10 +917,10 @@ def make_column_transformer(
 ):
     """Construct a ColumnTransformer from the given transformers.
 
-    This is a shorthand for the ColumnTransformer constructor; it does not
-    require, and does not permit, naming the transformers. Instead, they will
-    be given names automatically based on their types. It also does not allow
-    weighting with ``transformer_weights``.
+    This is a shorthand for the :class:`ColumnTransformer` constructor; it does
+    not require, and does not permit, naming the transformers. Instead, they
+    will be given names automatically based on their types. It also does not
+    allow weighting with ``transformer_weights``.
 
     Read more in the :ref:`User Guide <make_column_transformer>`.
 
@@ -981,6 +995,11 @@ def make_column_transformer(
         outputs of multiple transformer objects used on column subsets
         of the data into a single feature space.
 
+    Notes
+    -----
+    The ``*transformers`` may be omitted entirely, in which case the behavior
+    is governed entirely by the ``remainder`` parameter.
+
     Examples
     --------
     >>> from sklearn.preprocessing import StandardScaler, OneHotEncoder
@@ -992,6 +1011,18 @@ def make_column_transformer(
                                      ['numerical_column']),
                                     ('onehotencoder', OneHotEncoder(...),
                                      ['categorical_column'])])
+
+    If you want to apply the same transformer to each column, you may use the
+    ``remainder`` parameter without any other transformers:
+
+    >>> import pandas as pd  # doctest: +SKIP
+    >>> X = pd.DataFrame({
+    ...     "x": [1, 2, 3],
+    ...     "y": [11, 12, 13],
+    ...     "z": [101, 102, 103],
+    ... })  # doctest: +SKIP
+    >>> ct_all_scaled = make_column_transformer(remainder=StandardScaler())
+    >>> X_trans = ct_all_scaled.fit_transform(X)  # doctest: +SKIP
     """
     # transformer_weights keyword is not passed through because the user
     # would need to know the automatically generated names of the transformers
