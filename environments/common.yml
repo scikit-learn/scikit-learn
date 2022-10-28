@@ -4,5 +4,7 @@ dependencies:
     - numpy
     - scipy
     - cython
+    - joblib
+    - threadpoolctl
 channels:
     - conda-forge

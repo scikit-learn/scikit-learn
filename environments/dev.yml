@@ -1,9 +1,5 @@
-name: sklearn-dev
+name: sklearn-env
 dependencies:
-    - python=3.9
-    - numpy
-    - scipy
-    - cython
     - pytest
     - pytest-cov
     - flake8

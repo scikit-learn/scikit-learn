@@ -254,7 +254,13 @@ how to set up your git repository:
 
    .. prompt:: bash $
 
-        pip install pytest pytest-cov flake8 mypy numpydoc black==22.3.0
+        conda env update -f environments/dev.yml
+
+   OR
+
+   .. prompt:: bash $
+
+        pip install -r requirements/dev.txt
 
 .. _upstream:
 
@@ -711,9 +717,13 @@ Building the documentation requires installing some additional packages:
 
 .. prompt:: bash $
 
-    pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
-                scikit-image packaging seaborn sphinx-prompt \
-                sphinxext-opengraph
+    conda env update -f environments/doc.yml
+
+OR
+
+.. prompt:: bash $
+
+    pip install -r requirements/doc.txt
 
 To build the documentation, you need to be in the ``doc`` folder:
 

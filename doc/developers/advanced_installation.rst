@@ -63,7 +63,7 @@ feature, code or documentation improvement).
 
    .. prompt:: bash $
 
-     conda create -n sklearn-env -c conda-forge python=3.9 numpy scipy cython
+     conda env create -f environments/common.yml
      conda activate sklearn-env
 
 #. **Alternative to conda:** If you run Linux or similar, you can instead use
@@ -75,7 +75,7 @@ feature, code or documentation improvement).
 
      python3 -m venv sklearn-env
      source sklearn-env/bin/activate
-     pip install wheel numpy scipy cython
+     pip install -r requirements/common.txt
 
 #. Install a compiler with OpenMP_ support for your platform. See instructions
    for :ref:`compiler_windows`, :ref:`compiler_macos`, :ref:`compiler_linux`
@@ -274,9 +274,9 @@ scikit-learn from source:
 
 .. prompt:: bash $
 
-    conda create -n sklearn-dev -c conda-forge python numpy scipy cython \
-        joblib threadpoolctl pytest compilers llvm-openmp
-    conda activate sklearn-dev
+    conda env create -f environments/common.yml
+    conda env update -f environments/compilers
+    conda activate sklearn-env
     make clean
     pip install --verbose --no-build-isolation --editable .
 

@@ -1,9 +1,5 @@
-name: sklearn-doc
+name: sklearn-env
 dependencies:
-    - python=3.9
-    - numpy
-    - scipy
-    - cython
     - sphinx
     - sphinx-gallery
     - numpydoc
