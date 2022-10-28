@@ -13,7 +13,7 @@ import numpy as np
 from scipy import sparse
 from joblib import Parallel
 
-from ..base import clone, TransformerMixin/
+from ..base import clone, TransformerMixin
 from ..utils._estimator_html_repr import _VisualBlock
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
 from ..preprocessing import FunctionTransformer
