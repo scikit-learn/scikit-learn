@@ -546,6 +546,9 @@ Changelog
   is now deprecated and will be removed in version 1.4. Use `sparse_output` instead.
   :pr:`24412` by :user:`Rushil Desai <rusdes>`.
 
+- |Fix| :class:`preprocessing.LabelEncoder` correctly encodes NaNs in `transform`.
+  :pr:`22629` by `Thomas Fan`_.
+
 :mod:`sklearn.svm`
 ..................
 
@@ -566,6 +569,9 @@ Changelog
   `lapack_svd_driver`, to specify the lapack driver used in the internal
   deterministic SVD used by the randomized SVD algorithm.
   :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
+
+- |Enhancement| :func:`utils.validation.column_or_1d` now accepts a `dtype`
+  parameter to specific `y`'s dtype. :pr:`22629` by `Thomas Fan`_.
 
 - |FIX| :func:`utils.multiclass.type_of_target` now properly handles sparse matrices.
   :pr:`14862` by :user:`Léonard Binet <leonardbinet>`.
