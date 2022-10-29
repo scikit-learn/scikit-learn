@@ -1,5 +1,4 @@
 from numbers import Integral, Real
-import warnings
 
 import numpy as np
 
@@ -1710,7 +1709,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     def class_weight_(self):
         return np.empty(0)
 
-    def fit(self, X, y=None, sample_weight=None, **params):
+    def fit(self, X, y=None, sample_weight=None):
         """Detect the soft boundary of the set of samples X.
 
         Parameters
@@ -1726,14 +1725,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
             Per-sample weights. Rescale C per sample. Higher weights
             force the classifier to put more emphasis on these points.
 
-        **params : dict
-            Additional fit parameters.
-
-            .. deprecated:: 1.0
-                The `fit` method will not longer accept extra keyword
-                parameters in 1.2. These keyword parameters were
-                already discarded.
-
         Returns
         -------
         self : object
@@ -1743,15 +1734,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         -----
         If X is not a C-ordered contiguous array it is copied.
         """
-        # TODO: Remove in v1.2
-        if len(params) > 0:
-            warnings.warn(
-                "Passing additional keyword parameters has no effect and is "
-                "deprecated in 1.0. An error will be raised from 1.2 and "
-                "beyond. The ignored keyword parameter(s) are: "
-                f"{params.keys()}.",
-                FutureWarning,
-            )
         super().fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight)
         self.offset_ = -self._intercept_
         return self

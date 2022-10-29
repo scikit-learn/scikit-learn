@@ -936,13 +936,14 @@ by black points below.
 
 .. topic:: References:
 
- * "A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases
-   with Noise"
+ * `"A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases
+   with Noise" <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_
    Ester, M., H. P. Kriegel, J. Sander, and X. Xu,
    In Proceedings of the 2nd International Conference on Knowledge Discovery
    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
 
- * "DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
+ * :doi:`"DBSCAN revisited, revisited: why and how you should (still) use DBSCAN."
+   <10.1145/3068335>`
    Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
    In ACM Transactions on Database Systems (TODS), 42(3), 19.
 
@@ -2109,6 +2110,5 @@ diagonal entries::
 
 .. topic:: References
 
- * L. Hubert and P. Arabie, Comparing Partitions, Journal of
-   Classification 1985
-   <https://link.springer.com/article/10.1007%2FBF01908075>_
+ * :doi:`"Comparing Partitions" <10.1007/BF01908075>` 
+   L. Hubert and P. Arabie, Journal of Classification 1985
