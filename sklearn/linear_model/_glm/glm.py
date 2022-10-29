@@ -616,7 +616,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     Its optimization objective is::
 
         \sum_i Xw_i + y_i \exp(-Xw_i) - \log(y_i) - 1
-        + alpha || w ||_2^2
+        + 0.5 * alpha || w ||_2^2
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
