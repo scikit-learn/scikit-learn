@@ -220,6 +220,11 @@ Changelog
 - |Enhancement| :func:`datasets.dump_svmlight_file` is now accelerated with a
   Cython implementation, providing 2-4x speedups.
   :pr:`23127` by :user:`Meekail Zain <micky774>`
+  
+- |Enhancement| Path-like objects, such as those created with pathlib are now
+  allowed as paths in :func:`datasets.load_svmlight_file` and
+  :func:`datasets.load_svmlight_files`.
+  :pr:`19075` by :user:`Carlos Ramos Carreño <vnmabus>`
 
 :mod:`sklearn.decomposition`
 ............................
@@ -350,6 +355,10 @@ Changelog
 - |Enhancement| :class:`kernel_approximation.SkewedChi2Sampler` now preserves
   dtype for `numpy.float32` inputs. :pr:`24350` by :user:`Rahil Parikh <rprkh>`.
 
+- |Enhancement| :class:`kernel_approximation.RBFSampler` now accepts
+  `'scale'` option for parameter `gamma`.
+  :pr:`24755` by :user:`Gleb Levitski <GLevV>`
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -377,6 +386,10 @@ Changelog
 - |API| String option `"none"` is deprecated for `penalty` argument
   in :class:`linear_model.LogisticRegression`, and will be removed in version 1.4.
   Use `None` instead. :pr:`23877` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+- |Fix| :class:`linear_model.SGDClassifier` and :class:`linear_model.SGDRegressor` will
+  raise an error when all the validation samples have zero sample weight.
+  :pr:`23275` by `Zhehao Liu <MaxwellLZH>`.
 
 - |API| The default value of `tol` was changed from `1e-3` to `1e-4` for
   :func:`linear_model.ridge_regression`, :class:`linear_model.Ridge` and
@@ -412,6 +425,9 @@ Changelog
   and begins deprecation to change the default from `eigen_tol=0` to
   `eigen_tol="auto"` in version 1.3.
   :pr:`23210` by :user:`Meekail Zain <micky774>`.
+
+- |Enhancement| :class:`manifold.Isomap` now preserves
+  dtype for `np.float32` inputs. :pr:`24714` by :user:`Rahil Parikh <rprkh>`.
 
 :mod:`sklearn.metrics`
 ......................
@@ -541,6 +557,9 @@ Changelog
   is now deprecated and will be removed in version 1.4. Use `sparse_output` instead.
   :pr:`24412` by :user:`Rushil Desai <rusdes>`.
 
+- |Fix| :class:`preprocessing.LabelEncoder` correctly encodes NaNs in `transform`.
+  :pr:`22629` by `Thomas Fan`_.
+
 :mod:`sklearn.svm`
 ..................
 
@@ -561,6 +580,9 @@ Changelog
   `lapack_svd_driver`, to specify the lapack driver used in the internal
   deterministic SVD used by the randomized SVD algorithm.
   :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
+
+- |Enhancement| :func:`utils.validation.column_or_1d` now accepts a `dtype`
+  parameter to specific `y`'s dtype. :pr:`22629` by `Thomas Fan`_.
 
 - |FIX| :func:`utils.multiclass.type_of_target` now properly handles sparse matrices.
   :pr:`14862` by :user:`Léonard Binet <leonardbinet>`.
