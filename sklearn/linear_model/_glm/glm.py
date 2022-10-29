@@ -613,6 +613,10 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     """Generalized Linear Model with a Gamma distribution.
 
     This regressor uses the 'log' link function.
+    The optimization objective for ``GammaRegressor`` is ..math::
+
+        \sum_i Xw_i + y_i * exp(-Xw_i) - \log(y_i) - 1
+        + \alpha \| w \|_2^2
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
@@ -621,7 +625,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     Parameters
     ----------
     alpha : float, default=1
-        Constant that multiplies the penalty term and thus determines the
+        Constant that multiplies the L2 penalty term and determines the
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
@@ -629,7 +633,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added to the linear predictor (X @ coef + intercept).
+        added to the linear predictor ``X @ coef_ + intercept_``.
 
     solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
@@ -666,8 +670,8 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     Attributes
     ----------
     coef_ : array of shape (n_features,)
-        Estimated coefficients for the linear predictor (`X * coef_ +
-        intercept_`) in the GLM.
+        Estimated coefficients for the linear predictor (``X @ coef_ +
+        intercept_``) in the GLM.
 
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
