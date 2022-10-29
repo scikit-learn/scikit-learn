@@ -610,13 +610,13 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
 
 
 class GammaRegressor(_GeneralizedLinearRegressor):
-    """Generalized Linear Model with a Gamma distribution.
+    r"""Generalized Linear Model with a Gamma distribution.
 
     This regressor uses the 'log' link function.
-    The optimization objective for ``GammaRegressor`` is ..math::
+    Its optimization objective is::
 
-        \sum_i Xw_i + y_i * exp(-Xw_i) - \log(y_i) - 1
-        + \alpha \| w \|_2^2
+        \sum_i Xw_i + y_i \exp(-Xw_i) - \log(y_i) - 1
+        + alpha || w ||_2^2
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
@@ -624,12 +624,12 @@ class GammaRegressor(_GeneralizedLinearRegressor):
 
     Parameters
     ----------
-    alpha : float, default=1
+    alpha : float, default=1.
         Constant that multiplies the L2 penalty term and determines the
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
-        Values must be in the range `[0.0, inf)`.
+        Values of ``alpha`` must be in the range `[0.0, inf)`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -661,7 +661,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
 
     warm_start : bool, default=False
         If set to ``True``, reuse the solution of the previous call to ``fit``
-        as initialization for ``coef_`` and ``intercept_`` .
+        as initialization for ``coef_`` and ``intercept_``.
 
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
