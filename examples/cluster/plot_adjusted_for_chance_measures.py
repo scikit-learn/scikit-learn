@@ -121,7 +121,6 @@ style.use("seaborn-colorblind")
 plt.figure(1)
 
 for marker, (score_name, score_func) in zip("d^vx.,", score_funcs):
-
     scores = fixed_classes_uniform_labelings_scores(
         score_func, n_samples, n_clusters_range, n_classes=n_classes
     )
@@ -144,7 +143,7 @@ plt.title(
 plt.xlabel(f"Number of clusters (Number of samples is fixed to {n_samples})")
 plt.ylabel("Score value")
 plt.ylim(bottom=-0.05, top=1.05)
-plt.legend(plots, names)
+plt.legend(plots, names, bbox_to_anchor=(0.5, 0.5))
 plt.show()
 
 # %%
@@ -189,7 +188,6 @@ plots = []
 names = []
 
 for marker, (score_name, score_func) in zip("d^vx.,", score_funcs):
-
     scores = uniform_labelings_scores(score_func, n_samples, n_clusters_range)
     plots.append(
         plt.errorbar(
