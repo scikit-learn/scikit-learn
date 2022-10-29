@@ -624,7 +624,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
 
     Parameters
     ----------
-    alpha : float, default=1.
+    alpha : float, default=1
         Constant that multiplies the L2 penalty term and determines the
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
