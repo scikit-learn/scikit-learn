@@ -1131,7 +1131,7 @@ Distribution       Target Domain                    Unit Deviance :math:`d(y, \h
 ================= ================================  ============================================
 Normal            :math:`y \in (-\infty, \infty)`   :math:`(y-\hat{y})^2`
 Bernoulli         :math:`y \in \{0, 1\}`            :math:`2({y}\log\frac{y}{\hat{y}}+({1}-{y})\log\frac{{1}-{y}}{{1}-\hat{y}})`
-Categorical       :math:`y \in \{0, 1, ..., k-1\}`  :math:`2\sum_{i \in \{0, 1, ..., k-1\}} I(y = i) y_\text{i}\log\frac{I(y = i)}{\hat{I(y = i)}}`
+Categorical       :math:`y \in \{0, 1, ..., k\}`    :math:`2\sum_{i \in \{0, 1, ..., k\}} I(y = i) y_\text{i}\log\frac{I(y = i)}{\hat{I(y = i)}}`
 Poisson           :math:`y \in [0, \infty)`         :math:`2(y\log\frac{y}{\hat{y}}-y+\hat{y})`
 Gamma             :math:`y \in (0, \infty)`         :math:`2(\log\frac{y}{\hat{y}}+\frac{y}{\hat{y}}-1)`
 Inverse Gaussian  :math:`y \in (0, \infty)`         :math:`\frac{(y-\hat{y})^2}{y\hat{y}^2}`
@@ -1150,13 +1150,13 @@ in the following figure,
    distribution, but not for the Gamma distribution which has a strictly
    positive target domain.
    
-.. figure:: ./glm_data/bernoulli_distribution.png
-   :align: center
-   :scale: 100%
-
-   PMF of a random variable Y following Bernoulli Distributions with probability
-   of success (p). Bernoulli Distribution is a special case of the Categorical
-   Distribution where the number of categories are 2.
+The Bernoulli distribution is a discrete probability distribution modelling a
+Bernoulli trial - an event that has only two mutually exclusive outcomes.
+The Categorical distribution is a generalization of the Bernoulli distribution
+for a categorical random variable. While a random variable in a Bernoulli
+distribution has two possible outcomes, a Categorical random variable can take
+on one of K possible categories, with the probability of each category 
+specified separately.
 
 The choice of the distribution depends on the problem at hand:
 
@@ -1190,7 +1190,7 @@ Examples of use cases include:
 * Medical Drug Testing: probability of curing a patient in a set of trials /
   probability that a patient will experience side effects (Bernoulli)
 * News Classification: Classification of news articles into three categories
-  namely Business News, Politics and Entertainment news.
+  namely Business News, Politics and Entertainment news. (Categorical)
 
 .. topic:: References:
 
