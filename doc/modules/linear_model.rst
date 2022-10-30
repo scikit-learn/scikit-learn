@@ -1187,9 +1187,10 @@ Examples of use cases include:
 * Predictive maintenance: number of production interruption events per year
   (Poisson), duration of interruption (Gamma), total interruption time per year
   (Tweedie / Compound Poisson Gamma).
-* Medical Drug Testing: number of cured patients in a set of trials / number of
-  patients experiencing side effects (Bernoulli)
-
+* Medical Drug Testing: probability of curing a patient in a set of trials /
+  probability that a patient will experience side effects (Bernoulli)
+* News Classification: Classification of news articles into three categories
+  namely Business News, Politics and Entertainment news.
 
 .. topic:: References:
 
