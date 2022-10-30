@@ -1131,7 +1131,7 @@ Distribution       Target Domain                    Unit Deviance :math:`d(y, \h
 ================= ================================  ============================================
 Normal            :math:`y \in (-\infty, \infty)`   :math:`(y-\hat{y})^2`
 Bernoulli         :math:`y \in \{0, 1\}`            :math:`2({y}\log\frac{y}{\hat{y}}+({1}-{y})\log\frac{{1}-{y}}{{1}-\hat{y}})`
-Categorical       :math:`y \in \{0, 1, ..., k-1\}`  :math:`2\sum_{i=0}^{k_\text{classes}-1} y_\text{i}\log\frac{y_\text{i}}{\hat{y_\text{i}}}`
+Categorical       :math:`y \in \{0, 1, ..., k-1\}`  :math:`2\sum_{i \in \{0, 1, ..., k-1\}} I(y = i) y_\text{i}\log\frac{I(y = i)}{\hat{I(y = i)}}`
 Poisson           :math:`y \in [0, \infty)`         :math:`2(y\log\frac{y}{\hat{y}}-y+\hat{y})`
 Gamma             :math:`y \in (0, \infty)`         :math:`2(\log\frac{y}{\hat{y}}+\frac{y}{\hat{y}}-1)`
 Inverse Gaussian  :math:`y \in (0, \infty)`         :math:`\frac{(y-\hat{y})^2}{y\hat{y}^2}`
