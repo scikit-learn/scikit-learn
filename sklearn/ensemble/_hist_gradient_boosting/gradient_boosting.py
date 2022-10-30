@@ -376,6 +376,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         acc_find_split_time = 0.0  # time spent finding the best splits
         acc_apply_split_time = 0.0  # time spent splitting nodes
         acc_compute_hist_time = 0.0  # time spent computing histograms
+        time_hist_subtract = 0.0
+        time_hist_copy_gradients = 0.0
+        time_hist_root = 0.0
+        time_hist_node = 0.0
         # time spent predicting X for gradient and hessians update
         acc_prediction_time = 0.0
         X, y = self._validate_data(X, y, dtype=[X_DTYPE], force_all_finite=False)
@@ -708,6 +712,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 acc_apply_split_time += grower.total_apply_split_time
                 acc_find_split_time += grower.total_find_split_time
                 acc_compute_hist_time += grower.total_compute_hist_time
+                time_hist_subtract += grower.time_hist_subtract
+                time_hist_copy_gradients += grower.time_hist_copy_gradients
+                time_hist_root += grower.time_hist_root
+                time_hist_node += grower.time_hist_node
 
                 if not self._loss.differentiable:
                     _update_leaves_values(
@@ -788,6 +796,27 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             print(
                 "{:<32} {:.3f}s".format(
                     "Time spent computing histograms:", acc_compute_hist_time
+                )
+            )
+            print(
+                "{:<32} {:.3f}s".format(
+                    "  Of wich time spent computing histograms subtractions:",
+                    time_hist_subtract,
+                )
+            )
+            print(
+                "{:<32} {:.3f}s".format(
+                    "  Of wich time spent copying gradients:", time_hist_copy_gradients
+                )
+            )
+            print(
+                "{:<32} {:.3f}s".format(
+                    "  Of wich time spent computing root histograms:", time_hist_root
+                )
+            )
+            print(
+                "{:<32} {:.3f}s".format(
+                    "  Of wich time spent computing node histograms:", time_hist_node
                 )
             )
             print(

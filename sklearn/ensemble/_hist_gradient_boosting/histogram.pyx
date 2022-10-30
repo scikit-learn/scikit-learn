@@ -12,6 +12,10 @@ from .common cimport hist_struct
 from .common cimport X_BINNED_DTYPE_C
 from .common cimport G_H_DTYPE_C
 
+from timeit import default_timer as time
+from libc.time cimport time as libc_time
+from libc.time cimport time_t, difftime
+
 
 # Notes:
 # - IN views are read-only, OUT views are write-only
@@ -143,6 +147,7 @@ cdef class HistogramBuilder:
             bint has_interaction_cst = allowed_features is not None
             int n_threads = self.n_threads
             unsigned int n_feature_groups = self.n_features // 4
+            double [:] time_vec = np.zeros(shape=(2,), dtype=np.float64)
 
         if has_interaction_cst:
             n_allowed_features = allowed_features.shape[0]
@@ -150,6 +155,8 @@ cdef class HistogramBuilder:
             # interaction constraints
             n_feature_groups = 0  # (n_allowed_features // 4)
 
+        time_hist_copy_gradients = 0.0
+        tic = time()
         with nogil:
             n_samples = sample_indices.shape[0]
 
@@ -167,9 +174,11 @@ cdef class HistogramBuilder:
                         ordered_gradients[i] = gradients[sample_indices[i]]
                         ordered_hessians[i] = hessians[sample_indices[i]]
 
+        time_hist_copy_gradients += time() - tic
+        with nogil:
             # do it for 4 features at once
             for feature_idx in prange(n_feature_groups, schedule='static', num_threads=n_threads):
-                self._compute_histogram_brute_4_features(4 * feature_idx, sample_indices, histograms)
+                self._compute_histogram_brute_4_features(4 * feature_idx, sample_indices, histograms, time_vec)
 
             for f_idx in prange(4 * n_feature_groups, n_allowed_features, schedule='static', num_threads=n_threads):
                 if has_interaction_cst:
@@ -178,15 +187,17 @@ cdef class HistogramBuilder:
                     feature_idx = f_idx
                 # Compute histogram of each feature
                 self._compute_histogram_brute_single_feature(
-                    feature_idx, sample_indices, histograms)
+                    feature_idx, sample_indices, histograms, time_vec)
 
-        return histograms
+        return histograms, time_hist_copy_gradients, time_vec[0], time_vec[1]
 
     cdef void _compute_histogram_brute_single_feature(
             HistogramBuilder self,
             const int feature_idx,
             const unsigned int [::1] sample_indices,  # IN
-            hist_struct [:, ::1] histograms) noexcept nogil:  # OUT
+            hist_struct [:, ::1] histograms,          # OUT
+            double [:] time_vec,                      # OUT
+    ) noexcept nogil:
         """Compute the histogram for a given feature."""
 
         cdef:
@@ -201,6 +212,8 @@ cdef class HistogramBuilder:
             unsigned char hessians_are_constant = \
                 self.hessians_are_constant
             unsigned int bin_idx = 0
+            time_t tic1 = 0
+            time_t tic2 = 0
 
         for bin_idx in range(self.n_bins):
             histograms[feature_idx, bin_idx].sum_gradients = 0.
@@ -208,6 +221,7 @@ cdef class HistogramBuilder:
             histograms[feature_idx, bin_idx].count = 0
 
         if root_node:
+            libc_time(&tic1)
             if hessians_are_constant:
                 _build_histogram_root_no_hessian(feature_idx, X_binned,
                                                  ordered_gradients,
@@ -216,7 +230,10 @@ cdef class HistogramBuilder:
                 _build_histogram_root(feature_idx, X_binned,
                                       ordered_gradients, ordered_hessians,
                                       histograms)
+            libc_time(&tic2)
+            time_vec[0] += difftime(tic2, tic1)
         else:
+            libc_time(&tic1)
             if hessians_are_constant:
                 _build_histogram_no_hessian(feature_idx,
                                             sample_indices, X_binned,
@@ -225,12 +242,16 @@ cdef class HistogramBuilder:
                 _build_histogram(feature_idx, sample_indices,
                                  X_binned, ordered_gradients,
                                  ordered_hessians, histograms)
+            libc_time(&tic2)
+            time_vec[1] += difftime(tic2, tic1)
 
     cdef void _compute_histogram_brute_4_features(
             HistogramBuilder self,
             const int feature_idx,
             const unsigned int [::1] sample_indices,  # IN
-            hist_struct [:, ::1] histograms) nogil:  # OUT
+            hist_struct [:, ::1] histograms,          # OUT
+            double [:] time_vec,                      # OUT
+    ) nogil:
         """Compute the histogram for a given feature."""
 
         cdef:
@@ -248,6 +269,8 @@ cdef class HistogramBuilder:
             unsigned char hessians_are_constant = \
                 self.hessians_are_constant
             unsigned int bin_idx = 0
+            time_t tic1 = 0
+            time_t tic2 = 0
 
         for bin_idx in range(self.n_bins):
             histograms[feature_idx    , bin_idx].sum_gradients = 0.
@@ -264,6 +287,7 @@ cdef class HistogramBuilder:
             histograms[feature_idx + 3, bin_idx].count = 0
 
         if root_node:
+            libc_time(&tic1)
             if hessians_are_constant:
                 _build_histogram_root_no_hessian(feature_idx    , X_binned, ordered_gradients, histograms)
                 _build_histogram_root_no_hessian(feature_idx + 1, X_binned1, ordered_gradients, histograms)
@@ -271,7 +295,10 @@ cdef class HistogramBuilder:
                 _build_histogram_root_no_hessian(feature_idx + 3, X_binned3, ordered_gradients, histograms)
             else:
                 _build_histogram_root4(feature_idx, X_binned_full, ordered_gradients, ordered_hessians, histograms)
+            libc_time(&tic2)
+            time_vec[0] += difftime(tic2, tic1)
         else:
+            libc_time(&tic1)
             if hessians_are_constant:
                 _build_histogram_no_hessian(feature_idx    , sample_indices, X_binned, ordered_gradients, histograms)
                 _build_histogram_no_hessian(feature_idx + 1, sample_indices, X_binned1, ordered_gradients, histograms)
@@ -279,6 +306,8 @@ cdef class HistogramBuilder:
                 _build_histogram_no_hessian(feature_idx + 3, sample_indices, X_binned3, ordered_gradients, histograms)
             else:
                 _build_histogram4(feature_idx, sample_indices, X_binned_full, ordered_gradients, ordered_hessians, histograms)
+            libc_time(&tic2)
+            time_vec[1] += difftime(tic2, tic1)
 
     def compute_histograms_subtraction(
         HistogramBuilder self,

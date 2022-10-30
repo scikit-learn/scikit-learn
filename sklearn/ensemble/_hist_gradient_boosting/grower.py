@@ -329,6 +329,10 @@ class TreeGrower:
         self.finalized_leaves = []
         self.total_find_split_time = 0.0  # time spent finding the best splits
         self.total_compute_hist_time = 0.0  # time spent computing histograms
+        self.time_hist_subtract = 0.0  # time spent subtracting
+        self.time_hist_copy_gradients = 0.0  # time spent copying gradients
+        self.time_hist_root = 0.0  # time spent computing root histograms
+        self.time_hist_node = 0.0  # time spent computing histograms
         self.total_apply_split_time = 0.0  # time spent splitting nodes
         self.n_categorical_splits = 0
         self._intilialize_root(gradients, hessians, hessians_are_constant)
@@ -415,10 +419,18 @@ class TreeGrower:
             )
 
         tic = time()
-        self.root.histograms = self.histogram_builder.compute_histograms_brute(
+        (
+            self.root.histograms,
+            time_hist_copy_gradients,
+            time_hist_root,
+            time_hist_node,
+        ) = self.histogram_builder.compute_histograms_brute(
             self.root.sample_indices, self.root.allowed_features
         )
         self.total_compute_hist_time += time() - tic
+        self.time_hist_copy_gradients += time_hist_copy_gradients
+        self.time_hist_root += time_hist_root
+        self.time_hist_node += time_hist_node
 
         tic = time()
         self._compute_best_split_and_push(self.root)
@@ -583,9 +595,15 @@ class TreeGrower:
             # on the other one.
             # Note that both left and right child have the same allowed_features.
             tic = time()
-            smallest_child.histograms = self.histogram_builder.compute_histograms_brute(
+            (
+                smallest_child.histograms,
+                time_hist_copy_gradients,
+                time_hist_root,
+                time_hist_node,
+            ) = self.histogram_builder.compute_histograms_brute(
                 smallest_child.sample_indices, smallest_child.allowed_features
             )
+            tic2 = time()
             largest_child.histograms = (
                 self.histogram_builder.compute_histograms_subtraction(
                     node.histograms,
@@ -593,7 +611,12 @@ class TreeGrower:
                     smallest_child.allowed_features,
                 )
             )
-            self.total_compute_hist_time += time() - tic
+            end_time = time()
+            self.time_hist_subtract = end_time - tic2
+            self.total_compute_hist_time += end_time - tic
+            self.time_hist_copy_gradients += time_hist_copy_gradients
+            self.time_hist_root += time_hist_root
+            self.time_hist_node += time_hist_node
 
             tic = time()
             if should_split_left:

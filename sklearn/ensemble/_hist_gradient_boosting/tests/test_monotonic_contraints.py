@@ -383,7 +383,7 @@ def test_bounded_value_min_gain_to_split():
         hessians_are_constant,
     )
 
-    histograms = builder.compute_histograms_brute(sample_indices)
+    histograms, *_ = builder.compute_histograms_brute(sample_indices)
 
     # Since the gradient array is [1, 1, 100, 1, 1]
     # the max possible gain happens on the 3rd bin (or equivalently in the 2nd)

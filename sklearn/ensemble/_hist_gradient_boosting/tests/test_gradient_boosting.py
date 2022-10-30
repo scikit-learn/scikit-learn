@@ -803,7 +803,7 @@ def test_sum_hessians_are_sample_weight(Loss):
     grower = TreeGrower(
         X_binned, gradients[:, 0], hessians[:, 0], n_bins=bin_mapper.n_bins
     )
-    histograms = grower.histogram_builder.compute_histograms_brute(
+    histograms, *_ = grower.histogram_builder.compute_histograms_brute(
         grower.root.sample_indices
     )
 

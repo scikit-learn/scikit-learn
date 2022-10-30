@@ -75,7 +75,7 @@ def test_histogram_split(n_bins):
                 hessians_are_constant,
             )
 
-            histograms = builder.compute_histograms_brute(sample_indices)
+            histograms, *_ = builder.compute_histograms_brute(sample_indices)
             value = compute_node_value(
                 sum_gradients, sum_hessians, -np.inf, np.inf, l2_regularization
             )
@@ -153,7 +153,7 @@ def test_gradient_and_hessian_sanity(constant_hessian):
         constant_hessian,
     )
 
-    hists_parent = builder.compute_histograms_brute(sample_indices)
+    hists_parent, *_ = builder.compute_histograms_brute(sample_indices)
     value_parent = compute_node_value(
         sum_gradients, sum_hessians, -np.inf, np.inf, l2_regularization
     )
@@ -164,7 +164,7 @@ def test_gradient_and_hessian_sanity(constant_hessian):
         si_parent, sample_indices
     )
 
-    hists_left = builder.compute_histograms_brute(sample_indices_left)
+    hists_left, *_ = builder.compute_histograms_brute(sample_indices_left)
     value_left = compute_node_value(
         si_parent.sum_gradient_left,
         si_parent.sum_hessian_left,
@@ -172,7 +172,7 @@ def test_gradient_and_hessian_sanity(constant_hessian):
         np.inf,
         l2_regularization,
     )
-    hists_right = builder.compute_histograms_brute(sample_indices_right)
+    hists_right, *_ = builder.compute_histograms_brute(sample_indices_right)
     value_right = compute_node_value(
         si_parent.sum_gradient_right,
         si_parent.sum_hessian_right,
@@ -298,7 +298,7 @@ def test_split_indices():
 
     assert np.all(sample_indices == splitter.partition)
 
-    histograms = builder.compute_histograms_brute(sample_indices)
+    histograms, *_ = builder.compute_histograms_brute(sample_indices)
     value = compute_node_value(
         sum_gradients, sum_hessians, -np.inf, np.inf, l2_regularization
     )
@@ -372,7 +372,7 @@ def test_min_gain_to_split():
         hessians_are_constant,
     )
 
-    histograms = builder.compute_histograms_brute(sample_indices)
+    histograms, *_ = builder.compute_histograms_brute(sample_indices)
     value = compute_node_value(
         sum_gradients, sum_hessians, -np.inf, np.inf, l2_regularization
     )
@@ -543,7 +543,7 @@ def test_splitting_missing_values(
         hessians_are_constant,
     )
 
-    histograms = builder.compute_histograms_brute(sample_indices)
+    histograms, *_ = builder.compute_histograms_brute(sample_indices)
     value = compute_node_value(
         sum_gradients, sum_hessians, -np.inf, np.inf, l2_regularization
     )
@@ -648,7 +648,7 @@ def test_splitting_categorical_cat_smooth(
         hessians_are_constant,
     )
 
-    histograms = builder.compute_histograms_brute(sample_indices)
+    histograms, *_ = builder.compute_histograms_brute(sample_indices)
     value = compute_node_value(
         sum_gradients, sum_hessians, -np.inf, np.inf, l2_regularization
     )
@@ -835,7 +835,7 @@ def test_splitting_categorical_sanity(
         hessians_are_constant,
     )
 
-    histograms = builder.compute_histograms_brute(sample_indices)
+    histograms, *_ = builder.compute_histograms_brute(sample_indices)
 
     value = compute_node_value(
         sum_gradients, sum_hessians, -np.inf, np.inf, l2_regularization
@@ -928,7 +928,7 @@ def test_split_interaction_constraints():
 
         assert np.all(sample_indices == splitter.partition)
 
-        histograms = builder.compute_histograms_brute(sample_indices)
+        histograms, *_ = builder.compute_histograms_brute(sample_indices)
         value = compute_node_value(
             sum_gradients, sum_hessians, -np.inf, np.inf, l2_regularization
         )
