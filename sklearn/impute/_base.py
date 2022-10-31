@@ -209,8 +209,8 @@ class SimpleImputer(_BaseImputer):
     keep_empty_features : bool, default=False
         If True, features whose all values are missing when calling `fit` are
         not removed when calling `transform`. The imputed value is always `0`
-        apart from the case where `strategy="constant"` where `fill_value` will
-        be used instead.
+        except when `strategy="constant"` for which `fill_value` will be used
+        instead.
 
         .. versionadded:: 1.2
 
