@@ -50,8 +50,8 @@ algorithms. The simplest clustering algorithm is :ref:`k_means`.
     For instance, on the image above, we can observe the difference between the
     ground-truth (bottom right figure) and different clustering. We do not
     recover the expected labels, either because the number of cluster was
-    chosen to be to large (top left figure) or suffer from a bad initialization
-    (top right figure).
+    chosen to be to large (top right figure) or suffer from a bad initialization
+    (top left figure).
 
     **It is therefore important to not over-interpret clustering results.**
 
@@ -78,20 +78,20 @@ algorithms. The simplest clustering algorithm is :ref:`k_means`.
     	>>> face_compressed = np.choose(labels, values)
     	>>> face_compressed.shape = face.shape
 
-       **Raw image**
+**Raw image**
 
-    .. figure:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_001.png
-       :target: ../../auto_examples/cluster/plot_face_compress.html
+.. figure:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_001.png
+   :target: ../../auto_examples/cluster/plot_face_compress.html
 
-       **K-means quantization**
+**K-means quantization**
 
-    .. figure:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_004.png
-       :target: ../../auto_examples/cluster/plot_face_compress.html
+.. figure:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_004.png
+   :target: ../../auto_examples/cluster/plot_face_compress.html
 
-       **Equal bins**
+**Equal bins**
 
-    .. figure:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_002.png
-       :target: ../../auto_examples/cluster/plot_face_compress.html
+.. figure:: /auto_examples/cluster/images/sphx_glr_plot_face_compress_002.png
+   :target: ../../auto_examples/cluster/plot_face_compress.html
 
 Hierarchical agglomerative clustering: Ward
 ---------------------------------------------
