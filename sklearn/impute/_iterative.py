@@ -530,19 +530,14 @@ class IterativeImputer(_BaseImputer):
 
         Returns
         -------
+        Xt : ndarray of shape (n_samples, n_features)
+            Input data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
         X_filled : ndarray of shape (n_samples, n_features)
             Input data with the most recent imputations.
 
-        Xt_valid : ndarray of shape (n_samples, n_features)
-            Input data, where `n_samples` is the number of samples and
-            `n_features` is the number of features, masked by non-missing
-            features.
-
-        X_filled_valid : ndarray of shape (n_samples, n_features)
-            Input data with the most recent imputations, masked by non-missing
-            features.
-
-        mask_missing_values_valid : ndarray of shape (n_samples, n_features)
+        mask_missing_values : ndarray of shape (n_samples, n_features)
             Input data's missing indicator matrix, where `n_samples` is the
             number of samples and `n_features` is the number of features,
             masked by non-missing features.
