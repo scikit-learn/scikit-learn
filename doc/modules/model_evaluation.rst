@@ -2733,11 +2733,13 @@ predicts a specific quantile, e.g. using
 
 The right-hand side plot shows the residuals, i.e. the difference between the
 actual values and the predicted values, vs. the predicted values. This type of
-plot give an indication of the homoscedasticity of the model. A perfect
-regression model will display data points uniformly distributed around the
-horizontal axis. If the distribution is not uniform, then it indicates us that
-there is a relationship between the value of the target and the residuals, e.g.
-the error increases when the true target increases.
+plot give an indication of the `homoscedasticity
+<https://en.wikipedia.org/wiki/Homoscedasticity_and_heteroscedasticity>`_ of
+the model. A perfect regression model will display data points uniformly
+distributed around the horizontal axis. If the distribution is not uniform,
+then it indicates us that there is a relationship between the value of the
+target and the residuals, e.g. the error increases when the true target
+increases.
 
 Refer to the example below to see a model evaluation that make use of this
 display.

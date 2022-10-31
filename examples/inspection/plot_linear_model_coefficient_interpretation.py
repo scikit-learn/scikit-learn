@@ -193,7 +193,7 @@ plt.tight_layout()
 # %%
 # The model learnt is far from being a good model making accurate predictions:
 # this is obvious when looking at the plot above, where good predictions
-# should lie on the red line.
+# should lie on the black dashed line.
 #
 # In the following section, we will interpret the coefficients of the model.
 # While we do so, we should keep in mind that any conclusion we draw is
