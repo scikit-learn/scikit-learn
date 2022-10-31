@@ -30,20 +30,6 @@ from sklearn.exceptions import ConvergenceWarning
 from sklearn.impute._base import _most_frequent
 
 
-# TODO: maybe move this to sklearn.utils._testing
-@np.vectorize
-def _is_np_nan(x):
-    try:
-        return np.isnan(x)
-    except TypeError:
-        return False
-
-
-# TODO: maybe move this to sklearn.utils._testing
-def array_with_nan_equal(x, y):
-    return (x == y) | (_is_np_nan(x) & _is_np_nan(y))
-
-
 def _assert_array_equal_and_same_dtype(x, y):
     assert_array_equal(x, y)
     assert x.dtype == y.dtype
@@ -1536,22 +1522,16 @@ def test_most_frequent(expected, array, dtype, extra_value, n_repeat):
     "initial_strategy", ["mean", "median", "most_frequent", "constant"]
 )
 def test_iterative_imputer_keep_empty_features(initial_strategy):
+    """Check the behaviour of the iterative imputer with different initial strategy
+    and keeping empty features (i.e. features containing only missing values).
+    """
     X = np.array([[1, np.nan, 2], [3, np.nan, np.nan]])
-    X_missing = np.array([1])
 
     imputer = IterativeImputer(
         initial_strategy=initial_strategy, keep_empty_features=True
     )
-    X_ft = imputer.fit_transform(X)
-    X_t = imputer.fit(X).transform(X)
-
-    assert array_with_nan_equal(X_ft, X_t).all()
-    assert X.shape == X_ft.shape
-
-    if initial_strategy != "constant":
-        assert array_with_nan_equal(X_ft[:, X_missing], np.nan).all()
-    else:
-        assert (X_ft[:, X_missing] == 0).all()
+    X_imputed = imputer.fit_transform(X)
+    assert_allclose(X_imputed[:, 1], 0)
 
 
 @pytest.mark.parametrize("keep_empty_features", [True, False])

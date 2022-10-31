@@ -179,5 +179,3 @@ def test_keep_empty_features(imputer, keep_empty_features):
         assert X_imputed.shape == X.shape
     else:
         assert X_imputed.shape == (X.shape[0], X.shape[1] - 1)
-
-    print(X_imputed)

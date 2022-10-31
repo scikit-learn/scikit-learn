@@ -578,13 +578,18 @@ class IterativeImputer(_BaseImputer):
         else:
             X_filled = self.initial_imputer_.transform(X)
 
+        valid_mask = np.flatnonzero(
+            np.logical_not(np.isnan(self.initial_imputer_.statistics_))
+        )
+
         if not self.keep_empty_features:
-            valid_mask = np.flatnonzero(
-                np.logical_not(np.isnan(self.initial_imputer_.statistics_))
-            )
+            # drop empty features
             Xt = X[:, valid_mask]
             mask_missing_values = mask_missing_values[:, valid_mask]
         else:
+            # mark empty features as not missing and keep the original
+            # imputation
+            mask_missing_values[:, valid_mask] = True
             Xt = X
 
         return Xt, X_filled, mask_missing_values, X_missing_mask
