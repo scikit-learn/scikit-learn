@@ -2706,9 +2706,10 @@ be assessed using two different plots as shown below:
    :scale: 75
    :align: center
 
-The left-hand side plot shows the predicted values vs. the actual values. A
-perfect regression model will display data point on the diagonal of this plot.
-Further away from this optimal line, the larger the error of the model.
+The plot on the left shows the predicted values vs. the actual values. A
+perfect regression model would display data point on the diagonal defined by
+predicted = actual values. The further away from this optimal line, the larger
+the error of the model.
 
 The right-hand side plot shows the residuals, i.e. the difference between the
 actual values and the predicted values, vs. the predicted values. This type of
