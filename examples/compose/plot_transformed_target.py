@@ -58,8 +58,7 @@ ax1.set_ylabel("Probability")
 ax1.set_xlabel("Target")
 ax1.set_title("Transformed target distribution")
 
-f.suptitle("Synthetic data", y=0.06, x=0.53)
-f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
+f.suptitle("Synthetic data", y=1.05)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
@@ -115,8 +114,7 @@ for ax, y_pred in zip([ax0, ax1], [y_pred_ridge, y_pred_ridge_with_trans_target]
 
 ax0.set_title("Ridge regression \n without target transformation")
 ax1.set_title("Ridge regression \n with target transformation")
-f.suptitle("Synthetic data", y=0.035)
-f.tight_layout(rect=[0.05, 0.05, 0.95, 0.95])
+f.suptitle("Synthetic data", y=1.05)
 
 # %%
 # Real-world data set
@@ -156,8 +154,7 @@ ax1.set_ylabel("Probability")
 ax1.set_xlabel("Target")
 ax1.set_title("Transformed target distribution")
 
-f.suptitle("Ames housing data: selling price", y=0)
-f.tight_layout()
+f.suptitle("Ames housing data: selling price", y=1.05)
 
 # %%
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
@@ -226,8 +223,5 @@ PredictionErrorDisplay.from_predictions(
 ax1[0].set_title("Ridge regression \n without target transformation")
 ax1[1].set_title("Ridge regression \n with target transformation")
 
-f.suptitle("Ames housing data: selling price", y=0)
-plt.tight_layout()
+f.suptitle("Ames housing data: selling price", y=1.05)
 plt.show()
-
-# %%
