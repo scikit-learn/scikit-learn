@@ -2714,9 +2714,9 @@ Here are some usage examples of the :func:`d2_absolute_error_score` function::
 Visual evaluation of regression models
 --------------------------------------
 
-The :class:`~sklearn.metrics.PredictionErrorDisplay` displays allows to visually
-inspect the quality of regression models. The quality of a regression model can
-be assessed using two different plots as shown below:
+The :class:`~sklearn.metrics.PredictionErrorDisplay` displays allows to
+visually inspect the quality of regression models. The quality of a regression
+model can be assessed using two different plots as shown below:
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_predict_001.png
    :target: ../auto_examples/model_selection/plot_cv_predict.html
@@ -2726,7 +2726,10 @@ be assessed using two different plots as shown below:
 The plot on the left shows the predicted values vs. the actual values. A
 perfect regression model would display data point on the diagonal defined by
 predicted = actual values. The further away from this optimal line, the larger
-the error of the model.
+the error of the model. Note that this analysis is only meaningful when the
+predicted values is the expectation. This plot cannot be used when the model
+predicts a specific quantile, e.g. using
+:class:`~sklearn.linear_model.QuantileRegressor`.
 
 The right-hand side plot shows the residuals, i.e. the difference between the
 actual values and the predicted values, vs. the predicted values. This type of
@@ -2736,7 +2739,7 @@ horizontal axis. If the distribution is not uniform, then it indicates us that
 there is a relationship between the value of the target and the residuals, e.g.
 the error increases when the true target increases.
 
-Refer to the example below to see an model evaluation that make use of this
+Refer to the example below to see a model evaluation that make use of this
 display.
 
 .. topic:: Example:
