@@ -1532,6 +1532,8 @@ def test_iterative_imputer_keep_empty_features(initial_strategy):
     )
     X_imputed = imputer.fit_transform(X)
     assert_allclose(X_imputed[:, 1], 0)
+    X_imputed = imputer.transform(X)
+    assert_allclose(X_imputed[:, 1], 0)
 
 
 @pytest.mark.parametrize("keep_empty_features", [True, False])
@@ -1540,13 +1542,14 @@ def test_knn_imputer_keep_empty_features(keep_empty_features):
     X = np.array([[1, np.nan, 2], [3, np.nan, np.nan]])
 
     imputer = KNNImputer(keep_empty_features=keep_empty_features)
-    X_imputed = imputer.fit_transform(X)
 
-    if keep_empty_features:
-        assert X_imputed.shape == X.shape
-        assert_array_equal(X_imputed[:, 1], 0)
-    else:
-        assert X_imputed.shape == (X.shape[0], X.shape[1] - 1)
+    for method in ["fit_transform", "transform"]:
+        X_imputed = getattr(imputer, method)(X)
+        if keep_empty_features:
+            assert X_imputed.shape == X.shape
+            assert_array_equal(X_imputed[:, 1], 0)
+        else:
+            assert X_imputed.shape == (X.shape[0], X.shape[1] - 1)
 
 
 def test_simple_impute_pd_na():
@@ -1669,10 +1672,14 @@ def test_simple_imputer_constant_keep_empty_features(array_type, keep_empty_feat
         fill_value=fill_value,
         keep_empty_features=keep_empty_features,
     )
-    X_imputed = imputer.fit_transform(X)
-    assert X_imputed.shape == X.shape
-    constant_feature = X_imputed[:, 0].A if array_type == "sparse" else X_imputed[:, 0]
-    assert_array_equal(constant_feature, fill_value)
+
+    for method in ["fit_transform", "transform"]:
+        X_imputed = getattr(imputer, method)(X)
+        assert X_imputed.shape == X.shape
+        constant_feature = (
+            X_imputed[:, 0].A if array_type == "sparse" else X_imputed[:, 0]
+        )
+        assert_array_equal(constant_feature, fill_value)
 
 
 @pytest.mark.parametrize("array_type", ["array", "sparse"])
@@ -1685,12 +1692,14 @@ def test_simple_imputer_keep_empty_features(strategy, array_type, keep_empty_fea
     X = np.array([[np.nan, 2], [np.nan, 3], [np.nan, 6]])
     X = _convert_container(X, array_type)
     imputer = SimpleImputer(strategy=strategy, keep_empty_features=keep_empty_features)
-    X_imputed = imputer.fit_transform(X)
-    if keep_empty_features:
-        assert X_imputed.shape == X.shape
-        constant_feature = (
-            X_imputed[:, 0].A if array_type == "sparse" else X_imputed[:, 0]
-        )
-        assert_array_equal(constant_feature, 0)
-    else:
-        assert X_imputed.shape == (X.shape[0], X.shape[1] - 1)
+
+    for method in ["fit_transform", "transform"]:
+        X_imputed = getattr(imputer, method)(X)
+        if keep_empty_features:
+            assert X_imputed.shape == X.shape
+            constant_feature = (
+                X_imputed[:, 0].A if array_type == "sparse" else X_imputed[:, 0]
+            )
+            assert_array_equal(constant_feature, 0)
+        else:
+            assert X_imputed.shape == (X.shape[0], X.shape[1] - 1)

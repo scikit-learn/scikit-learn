@@ -174,8 +174,10 @@ def test_keep_empty_features(imputer, keep_empty_features):
     imputer = imputer.set_params(
         add_indicator=False, keep_empty_features=keep_empty_features
     )
-    X_imputed = imputer.fit_transform(X)
-    if keep_empty_features:
-        assert X_imputed.shape == X.shape
-    else:
-        assert X_imputed.shape == (X.shape[0], X.shape[1] - 1)
+
+    for method in ["fit_transform", "transform"]:
+        X_imputed = getattr(imputer, method)(X)
+        if keep_empty_features:
+            assert X_imputed.shape == X.shape
+        else:
+            assert X_imputed.shape == (X.shape[0], X.shape[1] - 1)
