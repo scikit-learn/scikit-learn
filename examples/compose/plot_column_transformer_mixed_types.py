@@ -229,5 +229,6 @@ cv_results[
 # not used for hyperparameter tuning.
 #
 print(
-    f"best logistic regression from grid search: {search_cv.score(X_test, y_test):.3f}"
+    "accuracy of the best model from randomized search: "
+    f"{search_cv.score(X_test, y_test):.3f}"
 )
