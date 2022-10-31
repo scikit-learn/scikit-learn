@@ -36,11 +36,13 @@ from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 from sklearn.decomposition import PCA, NMF
 from sklearn.feature_selection import SelectKBest, mutual_info_classif
+from sklearn.preprocessing import MinMaxScaler
 
 X, y = load_digits(return_X_y=True)
 
 pipe = Pipeline(
     [
+        ("scaling", MinMaxScaler()),
         # the reduce_dim stage is populated by the param_grid
         ("reduce_dim", "passthrough"),
         ("classify", LinearSVC(dual=False, max_iter=10000)),
@@ -51,7 +53,7 @@ N_FEATURES_OPTIONS = [2, 4, 8]
 C_OPTIONS = [1, 10, 100, 1000]
 param_grid = [
     {
-        "reduce_dim": [PCA(iterated_power=7), NMF()],
+        "reduce_dim": [PCA(iterated_power=7), NMF(max_iter=1_000)],
         "reduce_dim__n_components": N_FEATURES_OPTIONS,
         "classify__C": C_OPTIONS,
     },
