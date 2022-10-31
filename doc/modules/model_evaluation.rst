@@ -2724,9 +2724,10 @@ display.
 
 .. topic:: Example:
 
-  * See :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py`
-    for an example showing effect of transforming the target before learning
-    a regression model.
+  * See :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py` for
+    an example on how to use :class:`~sklearn.metrics.PredictionErrorDisplay`
+    to visualize the prediction quality improvement of a regression model
+    obtained by transforming the target before learning.
 
 .. _clustering_metrics:
 

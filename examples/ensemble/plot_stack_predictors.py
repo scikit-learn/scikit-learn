@@ -24,7 +24,7 @@ stacking strategy. Stacking slightly improves the overall performance.
 # Download the dataset
 ######################
 #
-# We will use `Ames Housing`_ dataset which was first compiled by Dean De Cock
+# We will use the `Ames Housing`_ dataset which was first compiled by Dean De Cock
 # and became better known after it was used in Kaggle challenge. It is a set
 # of 1460 residential homes in Ames, Iowa, each described by 80 features. We
 # will use it to predict the final logarithmic price of the houses. In this

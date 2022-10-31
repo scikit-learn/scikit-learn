@@ -451,7 +451,6 @@ _, ax = plt.subplots(figsize=(5, 5))
 display = PredictionErrorDisplay.from_predictions(
     y_true=y_test, y_pred=y_pred, ax=ax, scatter_kwargs={"alpha": 0.5}
 )
-ax.set_title("Ridge model, small regularization, normalized variables")
 ax.set_title("Ridge model, small regularization")
 for name, score in scores.items():
     ax.plot([], [], " ", label=f"{name}: {score}")
@@ -546,8 +545,7 @@ _, ax = plt.subplots(figsize=(5, 5))
 display = PredictionErrorDisplay.from_predictions(
     y_true=y_test, y_pred=y_pred, ax=ax, scatter_kwargs={"alpha": 0.5}
 )
-ax.set_title("Ridge model, optimum regularization, normalized variables")
-ax.set_title("Ridge model, small regularization")
+ax.set_title("Ridge model, optimum regularization")
 for name, score in scores.items():
     ax.plot([], [], " ", label=f"{name}: {score}")
 ax.legend(loc="upper left")
@@ -651,8 +649,7 @@ _, ax = plt.subplots(figsize=(6, 6))
 display = PredictionErrorDisplay.from_predictions(
     y_true=y_test, y_pred=y_pred, ax=ax, scatter_kwargs={"alpha": 0.5}
 )
-ax.set_title("Lasso model, regularization, normalized variables")
-ax.set_title("Ridge model, small regularization")
+ax.set_title("Lasso model, optimum regularization")
 for name, score in scores.items():
     ax.plot([], [], " ", label=f"{name}: {score}")
 ax.legend(loc="upper left")
