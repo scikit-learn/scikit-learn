@@ -31,9 +31,10 @@ from ._base cimport (
 from ._datasets_pair cimport (
     DatasetsPair{{name_suffix}},
     DenseDenseDatasetsPair{{name_suffix}},
+    SparseSparseDatasetsPair{{name_suffix}},
 )
 
-from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
+from ._middle_term_computer cimport MiddleTermComputer{{name_suffix}}
 
 
 cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
@@ -66,13 +67,17 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
         """
         if (
             metric in ("euclidean", "sqeuclidean")
-            and not issparse(X)
-            and not issparse(Y)
+            and not (issparse(X) or issparse(Y))
         ):
-            # Specialized implementation with improved arithmetic intensity
-            # and vector instructions (SIMD) by processing several vectors
-            # at time to leverage a call to the BLAS GEMM routine as explained
-            # in more details in the docstring.
+            # Specialized implementation of ArgKmin for the Euclidean distance.
+            # This implementation processes the computation of the chunks of the
+            # distance using a decomposition of the chunks of the distance matrix
+            # for the Squared Euclidean distance.
+            # This specialisation has an improved arithmetic intensity for both
+            # the dense and sparse settings, allowing in most case speed-ups of
+            # several orders of magnitude compared to the generic ArgKmin
+            # implementation.
+            # For more information see MiddleTermComputer.
             use_squared_distances = metric == "sqeuclidean"
             pda = EuclideanArgKmin{{name_suffix}}(
                 X=X, Y=Y, k=k,
@@ -82,8 +87,8 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
                 metric_kwargs=metric_kwargs,
             )
         else:
-             # Fall back on a generic implementation that handles most scipy
-             # metrics by computing the distances between 2 vectors at a time.
+            # Fall back on a generic implementation that handles most scipy
+            # metrics by computing the distances between 2 vectors at a time.
             pda = ArgKmin{{name_suffix}}(
                 datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, metric, metric_kwargs),
                 k=k,
@@ -355,9 +360,9 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
         )
             ITYPE_t dist_middle_terms_chunks_size = self.Y_n_samples_chunk * self.X_n_samples_chunk
 
-        self.gemm_term_computer = GEMMTermComputer{{name_suffix}}(
-            datasets_pair.X,
-            datasets_pair.Y,
+        self.middle_term_computer = MiddleTermComputer{{name_suffix}}.get_for(
+            X,
+            Y,
             self.effective_n_threads,
             self.chunks_n_threads,
             dist_middle_terms_chunks_size,
@@ -373,12 +378,16 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
                 dtype=np.float64
             )
         else:
-            self.Y_norm_squared = _sqeuclidean_row_norms{{name_suffix}}(datasets_pair.Y, self.effective_n_threads)
+            self.Y_norm_squared = _sqeuclidean_row_norms{{name_suffix}}(
+                Y, self.effective_n_threads
+            )
 
         # Do not recompute norms if datasets are identical.
         self.X_norm_squared = (
             self.Y_norm_squared if X is Y else
-            _sqeuclidean_row_norms{{name_suffix}}(datasets_pair.X, self.effective_n_threads)
+            _sqeuclidean_row_norms{{name_suffix}}(
+                X, self.effective_n_threads
+            )
         )
         self.use_squared_distances = use_squared_distances
 
@@ -393,7 +402,7 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
         ITYPE_t thread_num,
     ) nogil:
         ArgKmin{{name_suffix}}._parallel_on_X_parallel_init(self, thread_num)
-        self.gemm_term_computer._parallel_on_X_parallel_init(thread_num)
+        self.middle_term_computer._parallel_on_X_parallel_init(thread_num)
 
 
     @final
@@ -404,7 +413,7 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
         ITYPE_t X_end,
     ) nogil:
         ArgKmin{{name_suffix}}._parallel_on_X_init_chunk(self, thread_num, X_start, X_end)
-        self.gemm_term_computer._parallel_on_X_init_chunk(thread_num, X_start, X_end)
+        self.middle_term_computer._parallel_on_X_init_chunk(thread_num, X_start, X_end)
 
 
     @final
@@ -422,7 +431,7 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
             Y_start, Y_end,
             thread_num,
         )
-        self.gemm_term_computer._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
+        self.middle_term_computer._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
             X_start, X_end, Y_start, Y_end, thread_num,
         )
 
@@ -432,7 +441,7 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
         self,
     ) nogil:
         ArgKmin{{name_suffix}}._parallel_on_Y_init(self)
-        self.gemm_term_computer._parallel_on_Y_init()
+        self.middle_term_computer._parallel_on_Y_init()
 
 
     @final
@@ -443,7 +452,7 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
         ITYPE_t X_end,
     ) nogil:
         ArgKmin{{name_suffix}}._parallel_on_Y_parallel_init(self, thread_num, X_start, X_end)
-        self.gemm_term_computer._parallel_on_Y_parallel_init(thread_num, X_start, X_end)
+        self.middle_term_computer._parallel_on_Y_parallel_init(thread_num, X_start, X_end)
 
 
     @final
@@ -461,7 +470,7 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
             Y_start, Y_end,
             thread_num,
         )
-        self.gemm_term_computer._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
+        self.middle_term_computer._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
             X_start, X_end, Y_start, Y_end, thread_num
         )
 
@@ -480,12 +489,11 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
             DTYPE_t squared_dist_i_j
             ITYPE_t n_X = X_end - X_start
             ITYPE_t n_Y = Y_end - Y_start
-            DTYPE_t * dist_middle_terms = self.gemm_term_computer._compute_dist_middle_terms(
+            DTYPE_t * dist_middle_terms = self.middle_term_computer._compute_dist_middle_terms(
                 X_start, X_end, Y_start, Y_end, thread_num
             )
             DTYPE_t * heaps_r_distances = self.heaps_r_distances_chunks[thread_num]
             ITYPE_t * heaps_indices = self.heaps_indices_chunks[thread_num]
-
 
         # Pushing the distance and their associated indices on heaps
         # which keep tracks of the argkmin.

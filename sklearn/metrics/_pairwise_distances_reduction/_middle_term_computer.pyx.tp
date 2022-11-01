@@ -17,8 +17,6 @@ cimport numpy as cnp
 
 from libcpp.vector cimport vector
 
-from ...utils._typedefs cimport DTYPE_t, ITYPE_t
-
 from ...utils._cython_blas cimport (
   BLAS_Order,
   BLAS_Trans,
@@ -27,25 +25,177 @@ from ...utils._cython_blas cimport (
   Trans,
   _gemm,
 )
+from ...utils._typedefs cimport DTYPE_t, ITYPE_t, SPARSE_INDEX_TYPE_t
+
+import numpy as np
+from scipy.sparse import issparse, csr_matrix
+from ...utils._typedefs import DTYPE, SPARSE_INDEX_TYPE
+
+# TODO: change for `libcpp.algorithm.fill` once Cython 3 is used
+# Introduction in Cython:
+# https://github.com/cython/cython/blob/05059e2a9b89bf6738a7750b905057e5b1e3fe2e/Cython/Includes/libcpp/algorithm.pxd#L50 #noqa
+cdef extern from "<algorithm>" namespace "std" nogil:
+    void fill[Iter, T](Iter first, Iter last, const T& value) except + #noqa
+
 
 {{for name_suffix, upcast_to_float64, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
-cdef class GEMMTermComputer{{name_suffix}}:
-    """Component for `EuclideanDistance` specialisation wrapping the logic for the call to GEMM.
 
-    `EuclideanDistance` subclasses internally compute the squared Euclidean distances
-    between chunks of vectors X_c and Y_c using the following decomposition:
+cdef class MiddleTermComputer{{name_suffix}}:
+    """Abstract base class for the `EuclideanDistance` specialisation
+    components wrapping the computation of the distance matrix chunks.
+
+    `EuclideanDistance` subclasses relies on the squared Euclidean
+    distances between chunks of vectors X_c and Y_c using the
+    following decomposition for the (i,j) pair :
 
 
-                ||X_c_i - Y_c_j||² = ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
+         ||X_c_i - Y_c_j||² = ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
 
 
     This helper class is in charge of wrapping the common logic to compute
-    the middle term `- 2 X_c_i.Y_c_j^T` with a call to GEMM, which has a high
-    arithmetic intensity.
+    the middle term, i.e. `- 2 X_c_i.Y_c_j^T`.
     """
 
-    def __init__(self,
+    @classmethod
+    def get_for(
+        cls,
+        X,
+        Y,
+        effective_n_threads,
+        chunks_n_threads,
+        dist_middle_terms_chunks_size,
+        n_features,
+        chunk_size,
+    ) -> MiddleTermComputer{{name_suffix}}:
+        """Return the DatasetsPair implementation for the given arguments.
+
+        Parameters
+        ----------
+        X : {ndarray, sparse matrix} of shape (n_samples_X, n_features)
+            Input data.
+            If provided as a ndarray, it must be C-contiguous.
+            If provided as a sparse matrix, it must be in CSR format.
+
+        Y : {ndarray, sparse matrix} of shape (n_samples_Y, n_features)
+            Input data.
+            If provided as a ndarray, it must be C-contiguous.
+            If provided as a sparse matrix, it must be in CSR format.
+
+        Returns
+        -------
+        middle_term_computer: MiddleTermComputer{{name_suffix}}
+            The suited MiddleTermComputer{{name_suffix}} implementation.
+        """
+        X_is_sparse = issparse(X)
+        Y_is_sparse = issparse(Y)
+
+        if not X_is_sparse and not Y_is_sparse:
+            return DenseDenseMiddleTermComputer{{name_suffix}}(
+                X,
+                Y,
+                effective_n_threads,
+                chunks_n_threads,
+                dist_middle_terms_chunks_size,
+                n_features,
+                chunk_size,
+            )
+
+        raise NotImplementedError("X and Y must be both dense")
+
+
+    @classmethod
+    def unpack_csr_matrix(cls, X: csr_matrix):
+        """Ensure that the CSR matrix is indexed with SPARSE_INDEX_TYPE."""
+        X_data = np.asarray(X.data, dtype=DTYPE)
+        X_indices = np.asarray(X.indices, dtype=SPARSE_INDEX_TYPE)
+        X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
+        return X_data, X_indices, X_indptr
+
+    def __init__(
+        self,
+        ITYPE_t effective_n_threads,
+        ITYPE_t chunks_n_threads,
+        ITYPE_t dist_middle_terms_chunks_size,
+        ITYPE_t n_features,
+        ITYPE_t chunk_size,
+    ):
+        self.effective_n_threads = effective_n_threads
+        self.chunks_n_threads = chunks_n_threads
+        self.dist_middle_terms_chunks_size = dist_middle_terms_chunks_size
+        self.n_features = n_features
+        self.chunk_size = chunk_size
+
+        self.dist_middle_terms_chunks = vector[vector[DTYPE_t]](self.effective_n_threads)
+
+    cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num,
+    ) nogil:
+        return
+
+    cdef void _parallel_on_X_parallel_init(self, ITYPE_t thread_num) nogil:
+        self.dist_middle_terms_chunks[thread_num].resize(self.dist_middle_terms_chunks_size)
+
+    cdef void _parallel_on_X_init_chunk(
+        self,
+        ITYPE_t thread_num,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+    ) nogil:
+        return
+
+    cdef void _parallel_on_Y_init(self) nogil:
+        for thread_num in range(self.chunks_n_threads):
+            self.dist_middle_terms_chunks[thread_num].resize(
+                self.dist_middle_terms_chunks_size
+            )
+
+    cdef void _parallel_on_Y_parallel_init(
+        self,
+        ITYPE_t thread_num,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+    ) nogil:
+        return
+
+    cdef void _parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num
+    ) nogil:
+        return
+
+    cdef DTYPE_t * _compute_dist_middle_terms(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num,
+    ) nogil:
+        return NULL
+
+
+cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_suffix}}):
+    """Computes the middle term of the Euclidean distance between two chunked dense matrices
+    X_c and Y_c.
+
+            dist_middle_terms = - 2 X_c_i.Y_c_j^T
+
+    This class use the BLAS gemm routine to perform the dot product of each chunks
+    of the distance matrix with improved arithmetic intensity and vector instruction (SIMD).
+    """
+
+    def __init__(
+        self,
         const {{INPUT_DTYPE_t}}[:, ::1] X,
         const {{INPUT_DTYPE_t}}[:, ::1] Y,
         ITYPE_t effective_n_threads,
@@ -54,15 +204,15 @@ cdef class GEMMTermComputer{{name_suffix}}:
         ITYPE_t n_features,
         ITYPE_t chunk_size,
     ):
+        super().__init__(
+            effective_n_threads,
+            chunks_n_threads,
+            dist_middle_terms_chunks_size,
+            n_features,
+            chunk_size,
+        )
         self.X = X
         self.Y = Y
-        self.effective_n_threads = effective_n_threads
-        self.chunks_n_threads = chunks_n_threads
-        self.dist_middle_terms_chunks_size = dist_middle_terms_chunks_size
-        self.n_features = n_features
-        self.chunk_size = chunk_size
-
-        self.dist_middle_terms_chunks = vector[vector[DTYPE_t]](self.effective_n_threads)
 
 {{if upcast_to_float64}}
         # We populate the buffer for upcasting chunks of X and Y from float32 to float64.
@@ -97,10 +247,6 @@ cdef class GEMMTermComputer{{name_suffix}}:
         return
 {{endif}}
 
-
-    cdef void _parallel_on_X_parallel_init(self, ITYPE_t thread_num) nogil:
-        self.dist_middle_terms_chunks[thread_num].resize(self.dist_middle_terms_chunks_size)
-
     cdef void _parallel_on_X_init_chunk(
         self,
         ITYPE_t thread_num,
@@ -119,12 +265,6 @@ cdef class GEMMTermComputer{{name_suffix}}:
 {{else}}
         return
 {{endif}}
-
-    cdef void _parallel_on_Y_init(self) nogil:
-        for thread_num in range(self.chunks_n_threads):
-            self.dist_middle_terms_chunks[thread_num].resize(
-                self.dist_middle_terms_chunks_size
-            )
 
     cdef void _parallel_on_Y_parallel_init(
         self,
@@ -210,5 +350,6 @@ cdef class GEMMTermComputer{{name_suffix}}:
         _gemm(order, ta, tb, m, n, K, alpha, A, lda, B, ldb, beta, dist_middle_terms, ldc)
 
         return dist_middle_terms
+
 
 {{endfor}}
