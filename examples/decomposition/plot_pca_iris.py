@@ -52,8 +52,8 @@ for name, label in [("Setosa", 0), ("Versicolour", 1), ("Virginica", 2)]:
 y = np.choose(y, [1, 2, 0]).astype(float)
 ax.scatter(X[:, 0], X[:, 1], X[:, 2], c=y, cmap=plt.cm.nipy_spectral, edgecolor="k")
 
-ax.w_xaxis.set_ticklabels([])
-ax.w_yaxis.set_ticklabels([])
-ax.w_zaxis.set_ticklabels([])
+ax.xaxis.set_ticklabels([])
+ax.yaxis.set_ticklabels([])
+ax.zaxis.set_ticklabels([])
 
 plt.show()
