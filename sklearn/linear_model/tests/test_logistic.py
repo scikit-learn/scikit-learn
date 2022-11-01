@@ -692,15 +692,15 @@ def test_logistic_regressioncv_class_weights(weight, class_weight):
         multi_class="ovr",
         class_weight=class_weight,
     )
-    clf_lbf = LogisticRegressionCV(solver="lbfgs", **params)
-    clf_lbf.fit(X, y)
+    clf_lbfgs = LogisticRegressionCV(solver="lbfgs", **params)
+    clf_lbfgs.fit(X, y)
 
     for solver in set(SOLVERS) - set(["lbfgs"]):
         clf = LogisticRegressionCV(solver=solver, **params)
         if solver in ("sag", "saga"):
             clf.set_params(tol=1e-5, max_iter=10000, random_state=0)
         clf.fit(X, y)
-        assert_array_almost_equal(clf.coef_, clf_lbf.coef_, decimal=4)
+        assert_array_almost_equal(clf.coef_, clf_lbfgs.coef_, decimal=4)
 
 
 def test_logistic_regression_sample_weights():
