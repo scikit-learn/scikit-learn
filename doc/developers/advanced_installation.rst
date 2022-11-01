@@ -66,6 +66,14 @@ feature, code or documentation improvement).
      conda env create -f environments/common.yml
      conda activate sklearn-env
 
+    .. note::
+        The default name for the environment is `sklearn-env` however you may
+        customize this by setting the `-n` flag to whatever your desired name
+        is. For example to name your environment `sklearn-custom`, you would run
+        `conda env create -f environments/common.yml -n sklearn-custom`. Note that
+        doing this requires you to carry on the `-n <env_name>` flag to any potential
+        `conda env update` commands when installing additional dependencies.
+
 #. **Alternative to conda:** If you run Linux or similar, you can instead use
    your system's Python provided it is recent enough (3.8 or higher
    at the time of writing). In this case, we recommend to create a dedicated
@@ -275,7 +283,6 @@ scikit-learn from source:
 .. prompt:: bash $
 
     conda env create -f environments/common.yml
-    conda env update -f environments/compilers
     conda activate sklearn-env
     make clean
     pip install --verbose --no-build-isolation --editable .
