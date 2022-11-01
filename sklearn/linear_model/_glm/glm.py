@@ -613,8 +613,8 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     r"""Generalized Linear Model with a Gamma distribution.
 
     This regressor uses the 'log' link function.
-    Its optimization objective is 
-    
+    Its optimization objective is
+
     .. math::
 
         \sum_i (Xw_i + y_i  \exp(-Xw_i) - \log(y_i) - 1)
