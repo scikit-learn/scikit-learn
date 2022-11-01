@@ -40,7 +40,7 @@ X, _ = make_blobs(
 
 @pytest.mark.parametrize("eigen_solver", ("arpack", "lobpcg"))
 @pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
-def test_spectral_clustering(eigen_solver, assign_labels):
+def test_spectral_clustering(eigen_solver, assign_labels, global_random_seed):
     S = np.array(
         [
             [1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
@@ -55,7 +55,7 @@ def test_spectral_clustering(eigen_solver, assign_labels):
 
     for mat in (S, sparse.csr_matrix(S)):
         model = SpectralClustering(
-            random_state=0,
+            random_state=global_random_seed,
             n_clusters=2,
             affinity="precomputed",
             eigen_solver=eigen_solver,
@@ -74,9 +74,9 @@ def test_spectral_clustering(eigen_solver, assign_labels):
 
 
 @pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
-def test_spectral_clustering_sparse(assign_labels):
+def test_spectral_clustering_sparse(assign_labels, global_random_seed):
     X, y = make_blobs(
-        n_samples=20, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
+        n_samples=20, random_state=global_random_seed, centers=[[1, 1], [-1, -1]], cluster_std=0.01
     )
 
     S = rbf_kernel(X, gamma=1)
@@ -85,7 +85,7 @@ def test_spectral_clustering_sparse(assign_labels):
 
     labels = (
         SpectralClustering(
-            random_state=0,
+            random_state=global_random_seed,
             n_clusters=2,
             affinity="precomputed",
             assign_labels=assign_labels,
@@ -96,10 +96,10 @@ def test_spectral_clustering_sparse(assign_labels):
     assert adjusted_rand_score(y, labels) == 1
 
 
-def test_precomputed_nearest_neighbors_filtering():
+def test_precomputed_nearest_neighbors_filtering(global_random_seed):
     # Test precomputed graph filtering when containing too many neighbors
     X, y = make_blobs(
-        n_samples=200, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
+        n_samples=200, random_state=global_random_seed, centers=[[1, 1], [-1, -1]], cluster_std=0.01
     )
 
     n_neighbors = 2
@@ -109,7 +109,7 @@ def test_precomputed_nearest_neighbors_filtering():
         graph = nn.kneighbors_graph(X, mode="connectivity")
         labels = (
             SpectralClustering(
-                random_state=0,
+                random_state=global_random_seed,
                 n_clusters=2,
                 affinity="precomputed_nearest_neighbors",
                 n_neighbors=n_neighbors,
@@ -122,7 +122,7 @@ def test_precomputed_nearest_neighbors_filtering():
     assert_array_equal(results[0], results[1])
 
 
-def test_affinities():
+def test_affinities(global_random_seed):
     # Note: in the following, random_state has been selected to have
     # a dataset that yields a stable eigen decomposition both when built
     # on OSX and Linux
@@ -135,7 +135,7 @@ def test_affinities():
         sp.fit(X)
     assert adjusted_rand_score(y, sp.labels_) == 1
 
-    sp = SpectralClustering(n_clusters=2, gamma=2, random_state=0)
+    sp = SpectralClustering(n_clusters=2, gamma=2, random_state=global_random_seed)
     labels = sp.fit(X).labels_
     assert adjusted_rand_score(y, labels) == 1
 
@@ -169,12 +169,12 @@ def test_affinities():
         sp.fit(X)
 
 
-def test_cluster_qr():
+def test_cluster_qr(global_random_seed):
     # cluster_qr by itself should not be used for clustering generic data
     # other than the rows of the eigenvectors within spectral clustering,
     # but cluster_qr must still preserve the labels for different dtypes
     # of the generic fixed input even if the labels may be meaningless.
-    random_state = np.random.RandomState(seed=8)
+    random_state = np.random.RandomState(seed=global_random_seed)
     n_samples, n_components = 10, 5
     data = random_state.randn(n_samples, n_components)
     labels_float64 = cluster_qr(data.astype(np.float64))
@@ -187,9 +187,9 @@ def test_cluster_qr():
     assert np.array_equal(labels_float64, labels_float32)
 
 
-def test_cluster_qr_permutation_invariance():
+def test_cluster_qr_permutation_invariance(global_random_seed):
     # cluster_qr must be invariant to sample permutation.
-    random_state = np.random.RandomState(seed=8)
+    random_state = np.random.RandomState(seed=global_random_seed)
     n_samples, n_components = 100, 5
     data = random_state.randn(n_samples, n_components)
     perm = random_state.permutation(n_samples)
@@ -200,9 +200,9 @@ def test_cluster_qr_permutation_invariance():
 
 
 @pytest.mark.parametrize("n_samples", [50, 100, 150, 500])
-def test_discretize(n_samples):
+def test_discretize(n_samples, global_random_seed):
     # Test the discretize using a noise assignment matrix
-    random_state = np.random.RandomState(seed=8)
+    random_state = np.random.RandomState(seed=global_random_seed)
     for n_class in range(2, 10):
         # random class labels
         y_true = random_state.randint(0, n_class + 1, n_samples)
@@ -232,7 +232,7 @@ def test_discretize(n_samples):
 @pytest.mark.filterwarnings(
     "ignore:scipy.linalg.pinv2 is deprecated:DeprecationWarning:pyamg.*"
 )
-def test_spectral_clustering_with_arpack_amg_solvers():
+def test_spectral_clustering_with_arpack_amg_solvers(global_random_seed):
     # Test that spectral_clustering is the same for arpack and amg solver
     # Based on toy example from plot_segmentation_toy.py
 
@@ -253,14 +253,14 @@ def test_spectral_clustering_with_arpack_amg_solvers():
     graph.data = np.exp(-graph.data / graph.data.std())
 
     labels_arpack = spectral_clustering(
-        graph, n_clusters=2, eigen_solver="arpack", random_state=0
+        graph, n_clusters=2, eigen_solver="arpack", random_state=global_random_seed
     )
 
     assert len(np.unique(labels_arpack)) == 2
 
     if amg_loaded:
         labels_amg = spectral_clustering(
-            graph, n_clusters=2, eigen_solver="amg", random_state=0
+            graph, n_clusters=2, eigen_solver="amg", random_state=global_random_seed
         )
         assert adjusted_rand_score(labels_arpack, labels_amg) == 1
     else:
@@ -268,17 +268,17 @@ def test_spectral_clustering_with_arpack_amg_solvers():
             spectral_clustering(graph, n_clusters=2, eigen_solver="amg", random_state=0)
 
 
-def test_n_components():
+def test_n_components(global_random_seed):
     # Test that after adding n_components, result is different and
     # n_components = n_clusters by default
     X, y = make_blobs(
-        n_samples=20, random_state=0, centers=[[1, 1], [-1, -1]], cluster_std=0.01
+        n_samples=20, random_state=global_random_seed, centers=[[1, 1], [-1, -1]], cluster_std=0.01
     )
-    sp = SpectralClustering(n_clusters=2, random_state=0)
+    sp = SpectralClustering(n_clusters=2, random_state=global_random_seed)
     labels = sp.fit(X).labels_
     # set n_components = n_cluster and test if result is the same
     labels_same_ncomp = (
-        SpectralClustering(n_clusters=2, n_components=2, random_state=0).fit(X).labels_
+        SpectralClustering(n_clusters=2, n_components=2, random_state=global_random_seed).fit(X).labels_
     )
     # test that n_components=n_clusters by default
     assert_array_equal(labels, labels_same_ncomp)
@@ -286,7 +286,7 @@ def test_n_components():
     # test that n_components affect result
     # n_clusters=8 by default, and set n_components=2
     labels_diff_ncomp = (
-        SpectralClustering(n_components=2, random_state=0).fit(X).labels_
+        SpectralClustering(n_components=2, random_state=global_random_seed).fit(X).labels_
     )
     assert not np.array_equal(labels, labels_diff_ncomp)
 
