@@ -7,6 +7,7 @@
 #
 # License: BSD 3 clause
 
+from numbers import Integral
 import warnings
 from inspect import signature
 from functools import partial
@@ -36,6 +37,7 @@ from .utils import (
 
 from .utils.multiclass import check_classification_targets
 from .utils.fixes import delayed
+from .utils._param_validation import StrOptions, HasMethods, Hidden
 from .utils.validation import (
     _check_fit_params,
     _check_sample_weight,
@@ -242,6 +244,24 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
     array([[0.936..., 0.063...]])
     """
 
+    _parameter_constraints: dict = {
+        "estimator": [
+            HasMethods(["fit", "predict_proba"]),
+            HasMethods(["fit", "decision_function"]),
+            None,
+        ],
+        "method": [StrOptions({"isotonic", "sigmoid"})],
+        "cv": ["cv_object", StrOptions({"prefit"})],
+        "n_jobs": [Integral, None],
+        "ensemble": ["boolean"],
+        "base_estimator": [
+            HasMethods(["fit", "predict_proba"]),
+            HasMethods(["fit", "decision_function"]),
+            None,
+            Hidden(StrOptions({"deprecated"})),
+        ],
+    }
+
     def __init__(
         self,
         estimator=None,
@@ -282,6 +302,8 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
         self : object
             Returns an instance of self.
         """
+        self._validate_params()
+
         check_classification_targets(y)
         X, y = indexable(X, y)
         if sample_weight is not None:
@@ -587,13 +609,10 @@ def _get_prediction_method(clf):
     if hasattr(clf, "decision_function"):
         method = getattr(clf, "decision_function")
         return method, "decision_function"
-    elif hasattr(clf, "predict_proba"):
+
+    if hasattr(clf, "predict_proba"):
         method = getattr(clf, "predict_proba")
         return method, "predict_proba"
-    else:
-        raise RuntimeError(
-            "'estimator' has no 'decision_function' or 'predict_proba' method."
-        )
 
 
 def _compute_predictions(pred_method, method_name, X, n_classes):
@@ -673,12 +692,8 @@ def _fit_calibrator(clf, predictions, y, classes, method, sample_weight=None):
     for class_idx, this_pred in zip(pos_class_indices, predictions.T):
         if method == "isotonic":
             calibrator = IsotonicRegression(out_of_bounds="clip")
-        elif method == "sigmoid":
+        else:  # "sigmoid"
             calibrator = _SigmoidCalibration()
-        else:
-            raise ValueError(
-                f"'method' should be one of: 'sigmoid' or 'isotonic'. Got {method}."
-            )
         calibrator.fit(this_pred, Y[:, class_idx], sample_weight)
         calibrators.append(calibrator)
 
