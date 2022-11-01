@@ -13,6 +13,7 @@ dependencies:
     - seaborn
     - sphinx-prompt
     - sphinxext-opengraph
+    - plotly
 channels:
     - conda-forge
     - anaconda

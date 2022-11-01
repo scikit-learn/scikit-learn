@@ -10,3 +10,4 @@ packaging
 seaborn
 sphinx-prompt
 sphinxext-opengraph
+plotly
