@@ -610,13 +610,15 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
 
 
 class GammaRegressor(_GeneralizedLinearRegressor):
-    """Generalized Linear Model with a Gamma distribution.
+    r"""Generalized Linear Model with a Gamma distribution.
 
     This regressor uses the 'log' link function.
-    Its optimization objective is::
+    Its optimization objective is 
+    
+    .. math::
 
-        sum(Xw_i + y_i * exp(-Xw_i) - log(y_i) - 1)
-        + 1/2 * alpha * ||w||_2^2
+        \sum_i (Xw_i + y_i  \exp(-Xw_i) - \log(y_i) - 1)
+        + \frac{\alpha}{2} ||w||_2^2
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
