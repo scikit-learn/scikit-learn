@@ -796,7 +796,7 @@ is more robust to ill-posed problems.
 
     * David J. C. MacKay, `Bayesian Interpolation <https://citeseerx.ist.psu.edu/doc_view/pid/b14c7cc3686e82ba40653c6dff178356a33e5e2c>`_, 1992.
 
-    * Michael E. Tipping, `Sparse Bayesian Learning and the Relevance Vector Machine <https://citeseerx.ist.psu.edu/doc_view/pid/d68725804eadecf83d707d89e12c5132bf376187>`_, 2001.
+    * Michael E. Tipping, `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_, 2001.
 
 .. _automatic_relevance_determination:
 
