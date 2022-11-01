@@ -42,8 +42,7 @@ preprocessor = ColumnTransformer(
         ("kbin", KBinsDiscretizer(encode="ordinal"), petal_cols),
     ],
     verbose_feature_names_out=False,
-)
-preprocessor.set_output(transform="pandas")
+).set_output(transform="pandas")
 
 X_out = preprocessor.fit_transform(X)
 X_out.sample(n=5, random_state=0)
