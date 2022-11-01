@@ -30,7 +30,7 @@ class FastClassifier(DummyClassifier):
     grid searching."""
 
     # update the constraints such that we accept all parameters from a to z
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **DummyClassifier._parameter_constraints,
         **{
             chr(key): "no_validation"  # type: ignore
@@ -350,7 +350,7 @@ def test_random_search_discrete_distributions(
         ({"min_resources": -10}, "min_resources must be either"),
         (
             {"max_resources": "auto", "resource": "b"},
-            "max_resources can only be 'auto' if resource='n_samples'",
+            "resource can only be 'n_samples' when max_resources='auto'",
         ),
         (
             {"min_resources": 15, "max_resources": 14},

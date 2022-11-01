@@ -322,7 +322,7 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
     array([-31.5871...])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "fit_intercept": ["boolean"],
         "copy_X": ["boolean"],
         # target_type should be Integral but can accept Real for backward compatibility
