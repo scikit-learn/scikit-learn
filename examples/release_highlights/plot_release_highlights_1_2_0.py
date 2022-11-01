@@ -25,8 +25,9 @@ or with conda::
 # Pandas output with `set_output` API
 # -----------------------------------
 # scikit-learn's transformers now support pandas output with the `set_output` API.
-# See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`, to learn more
-# about how to use the API.
+# To learn more about the `set_output` API see the example:
+# :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py` and
+# this `YouTube video <https://www.youtube.com/watch?v=J4KCu9WWDTo>`__.
 import numpy as np
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
@@ -55,18 +56,15 @@ X_out.sample(n=5, random_state=0)
 # with the `interaction_cst` parameter. For details, see the
 # :ref:`User Guide <interaction_cst_hgbt>`. In the following example, features are not
 # allowed to interact.
-import matplotlib.pyplot as plt
 from sklearn.datasets import load_diabetes
 from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.inspection import PartialDependenceDisplay
 
 X, y = load_diabetes(return_X_y=True, as_frame=True)
 
-hist = HistGradientBoostingRegressor(interaction_cst=[[i] for i in range(X.shape[1])])
-hist.fit(X, y)
-
-_, ax = plt.subplots(figsize=(12, 4))
-PartialDependenceDisplay.from_estimator(hist, X, ["bp", "bmi"], n_cols=2, ax=ax)
+hist_no_interact = HistGradientBoostingRegressor(
+    interaction_cst=[[i] for i in range(X.shape[1])], random_state=0
+)
+hist_no_interact.fit(X, y)
 
 # %%
 # Experimental Array API support in :class:`~discriminant_analysis.LinearDiscriminantAnalysis`
