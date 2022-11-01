@@ -1,4 +1,6 @@
 name: sklearn-env
+
+# These should be 1-1 with environments/dev.txt
 dependencies:
     - pytest
     - pytest-cov
@@ -7,6 +9,8 @@ dependencies:
     - numpydoc
     - black=22.3.0
     - pre-commit
+    - compilers
+    - llvm-openmp
 channels:
     - conda-forge
     - anaconda

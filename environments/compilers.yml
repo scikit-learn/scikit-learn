@@ -1,4 +1,0 @@
-name: sklearn-env
-dependencies:
-    - compilers
-    - llvm-openmp

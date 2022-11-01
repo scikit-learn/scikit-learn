@@ -1,4 +1,7 @@
+# These should be 1-1 with environments/common.yml
 wheel
 numpy
 scipy
 cython
+joblib
+threadpoolctl

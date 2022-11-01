@@ -1,4 +1,6 @@
 name: sklearn-env
+
+# These should be 1-1 with requirements/doc.txt
 dependencies:
     - sphinx
     - sphinx-gallery
