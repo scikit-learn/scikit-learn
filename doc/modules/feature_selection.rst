@@ -303,8 +303,8 @@ fit and requires no iterations.
 
 .. topic:: References:
 
-   .. [sfs] Ferri et al, `Comparative Study of Techniques for
-      Large-Scale Feature Selection
+   .. [sfs] Ferri et al, `Comparative study of techniques for
+      large-scale feature selection
       <https://citeseerx.ist.psu.edu/doc_view/pid/5fedabbb3957bbb442802e012d829ee0629a01b6>`_.
 
 Feature selection as part of a pipeline
