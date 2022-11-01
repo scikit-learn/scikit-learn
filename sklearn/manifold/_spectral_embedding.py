@@ -525,7 +525,7 @@ class SpectralEmbedding(BaseEstimator):
 
     - On Spectral Clustering: Analysis and an algorithm, 2001
       Andrew Y. Ng, Michael I. Jordan, Yair Weiss
-      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100
+      https://citeseerx.ist.psu.edu/doc_view/pid/796c5d6336fc52aa84db575fb821c78918b65f58
 
     - :doi:`Normalized cuts and image segmentation, 2000
       Jianbo Shi, Jitendra Malik

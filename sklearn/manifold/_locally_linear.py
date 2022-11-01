@@ -303,7 +303,7 @@ def locally_linear_embedding(
         Proc Natl Acad Sci U S A.  100:5591 (2003).
     .. [3] Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
         Embedding Using Multiple Weights.
-        http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382
+        https://citeseerx.ist.psu.edu/doc_view/pid/0b060fdbd92cbcc66b383bcaa9ba5e5e624d7ee3
     .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
@@ -670,7 +670,7 @@ class LocallyLinearEmbedding(
         Proc Natl Acad Sci U S A.  100:5591 (2003).
     .. [3] Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
         Embedding Using Multiple Weights.
-        http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382
+        https://citeseerx.ist.psu.edu/doc_view/pid/0b060fdbd92cbcc66b383bcaa9ba5e5e624d7ee3
     .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)

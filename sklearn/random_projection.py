@@ -103,7 +103,7 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
 
     .. [2] Sanjoy Dasgupta and Anupam Gupta, 1999,
            "An elementary proof of the Johnson-Lindenstrauss Lemma."
-           http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.45.3654
+           https://citeseerx.ist.psu.edu/doc_view/pid/95cd464d27c25c9c8690b378b894d337cdf021f9
 
     Examples
     --------
