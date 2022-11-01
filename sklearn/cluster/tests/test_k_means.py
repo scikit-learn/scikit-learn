@@ -102,7 +102,7 @@ def test_kmeans_relocated_clusters(array_constr, algo):
     assert kmeans.n_iter_ == expected_n_iter
 
     # There are two acceptable ways of relocating clusters in this example, the output
-    # depends on how the argpartition strategy break ties. We accept both outputs.
+    # depends on how the argpartition strategy breaks ties. We accept both outputs.
     try:
         expected_labels = [0, 0, 1, 1]
         expected_centers = [[0.25, 0], [0.75, 1]]
