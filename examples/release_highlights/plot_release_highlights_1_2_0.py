@@ -38,7 +38,7 @@ petal_cols = ["petal length (cm)", "petal width (cm)"]
 
 preprocessor = ColumnTransformer(
     [
-        ("scalar", StandardScaler(), sepal_cols),
+        ("scaler", StandardScaler(), sepal_cols),
         ("kbin", KBinsDiscretizer(encode="ordinal"), petal_cols),
     ],
     verbose_feature_names_out=False,
