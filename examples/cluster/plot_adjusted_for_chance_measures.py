@@ -117,7 +117,7 @@ n_clusters_range = np.linspace(2, 100, 10).astype(int)
 plots = []
 names = []
 
-style.use("seaborn-colorblind")
+style.use("seaborn-v0_8-colorblind")
 plt.figure(1)
 
 for marker, (score_name, score_func) in zip("d^vx.,", score_funcs):
