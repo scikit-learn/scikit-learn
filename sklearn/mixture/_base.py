@@ -40,6 +40,30 @@ def _check_shape(param, param_shape, name):
             % (name, param_shape, param.shape)
         )
 
+def get_responsibilities(n_samples, n_components, indices):
+    """Get responsibilities from indices.
+
+    Parameters
+    ----------
+    n_samples : int
+        Number of samples.
+
+    n_components : int
+        Number of components.
+
+    indices : array-like of shape (n_clusters,)
+        The index location of the chosen values (centers) in the data array X 
+        of shape (n_samples, n_components). For a given index and value, X[index] = 1. 
+
+    Returns
+    -------
+    responsibilities : array, shape (n_samples, n_components)
+        Responsibilities of each sample in each component.
+    """
+    resp = np.zeros((n_samples, n_components))
+    resp[indices, np.arange(n_components)] = 1
+    return resp
+
 class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for mixture models.
 
@@ -240,7 +264,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
 
         random_state = check_random_state(self.random_state)
 
-        n_samples, _ = X.shape
         for init in range(n_init):
             self._print_verbose_msg_init_beg(init)
 
