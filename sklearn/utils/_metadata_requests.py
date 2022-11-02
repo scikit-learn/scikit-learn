@@ -299,6 +299,7 @@ class MethodMetadataRequest:
         params = {} if params is None else params
         args = {arg: value for arg, value in params.items() if value is not None}
         res = Bunch()
+        unrequested.update(self._get_unrequested_parameters_for_score_method(args=args))
         for prop, alias in self._requests.items():
             if RequestType.is_valid(alias):
                 alias = RequestType(alias)
@@ -335,6 +336,13 @@ class MethodMetadataRequest:
             prop: RequestType(alias) if RequestType.is_valid(alias) else alias
             for prop, alias in self._requests.items()
         }
+
+    def _get_unrequested_parameters_for_score_method(self, args: dict):
+        unrequested: dict = {}
+        if self.method == "score" and args and not self._requests:
+            for key, value in args.items():
+                unrequested[key] = value
+        return unrequested
 
     def __repr__(self):
         return str(self._serialize())

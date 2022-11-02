@@ -1995,3 +1995,14 @@ def test_logistic_regression_cv_scorer_receives_sample_weight():
     scorer.set_score_request(sample_weight=True)
     lr_cv = LogisticRegressionCV(scoring=scorer)
     lr_cv.fit(X, y, sample_weight=sample_weight)
+
+
+def test_logistic_regression_cv_scorer_error_sample_weight():
+    X, y = make_classification(n_samples=10)
+    sample_weight = np.ones(len(y))
+    sample_weight[len(y) // 2 :] = 2
+
+    scorer = get_scorer("accuracy")
+    lr_cv = LogisticRegressionCV(scoring=scorer)
+    with pytest.warns(FutureWarning):
+        lr_cv.fit(X, y, sample_weight=sample_weight)
