@@ -532,9 +532,6 @@ class BaseEstimator:
         if no_val_X and no_val_y:
             raise ValueError("Validation should be done on X, y or both.")
         elif not no_val_X and no_val_y:
-            if ((0.1 * len(X)) < 2):
-                msg = "10% of input training samples must be at least 2 by default for `R2` scores to be computed."
-                raise ValueError(msg)
             X = check_array(X, input_name="X", **check_params)
             out = X
         elif no_val_X and not no_val_y:
