@@ -8,6 +8,7 @@ import sys
 import copy
 import warnings
 import pytest
+from functools import partial
 
 import numpy as np
 from scipy import stats, linalg
@@ -27,6 +28,7 @@ from sklearn.mixture._gaussian_mixture import (
     _compute_precision_cholesky,
     _compute_log_det_cholesky,
 )
+from sklearn.mixture._base import get_responsibilities
 from sklearn.exceptions import ConvergenceWarning, NotFittedError
 from sklearn.utils.extmath import fast_logdet
 from sklearn.utils._testing import assert_allclose
@@ -1204,8 +1206,17 @@ def test_gaussian_mixture_setting_best_params():
         assert hasattr(gmm, attr)
 
 
+def callable_init(X, n_components, n_samples, rng):
+    """Callable init for GaussianMixture"""
+    kmean_ = KMeans(n_clusters=n_components, n_init=1, random_state=rng)
+    kmean_.fit(X)
+    labels = kmean_.labels_
+
+    return get_responsibilities(n_samples=n_samples, n_components=n_components, labels=labels)
+
+
 @pytest.mark.parametrize(
-    "init_params", ["random", "random_from_data", "k-means++", "kmeans"]
+    "init_params", ["random", "random_from_data", "k-means++", "kmeans", "callable"]
 )
 def test_init_means_not_duplicated(init_params, global_random_seed):
     # Check that all initialisations provide not duplicated starting means
@@ -1213,6 +1224,9 @@ def test_init_means_not_duplicated(init_params, global_random_seed):
     rand_data = RandomData(rng, scale=5)
     n_components = rand_data.n_components
     X = rand_data.X["full"]
+
+    if init_params == "callable":
+        init_params = partial(callable_init, n_components=n_components, n_samples=X.shape[0], rng=rng)
 
     gmm = GaussianMixture(
         n_components=n_components, init_params=init_params, random_state=rng, max_iter=0
@@ -1225,7 +1239,7 @@ def test_init_means_not_duplicated(init_params, global_random_seed):
 
 
 @pytest.mark.parametrize(
-    "init_params", ["random", "random_from_data", "k-means++", "kmeans"]
+    "init_params", ["random", "random_from_data", "k-means++", "kmeans", "callable"]
 )
 def test_means_for_all_inits(init_params, global_random_seed):
     # Check fitted means properties for all initializations
@@ -1233,6 +1247,9 @@ def test_means_for_all_inits(init_params, global_random_seed):
     rand_data = RandomData(rng, scale=5)
     n_components = rand_data.n_components
     X = rand_data.X["full"]
+
+    if init_params == "callable":
+        init_params = partial(callable_init, n_components=n_components, n_samples=X.shape[0], rng=rng)
 
     gmm = GaussianMixture(
         n_components=n_components, init_params=init_params, random_state=rng
