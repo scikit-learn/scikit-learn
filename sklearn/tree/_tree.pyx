@@ -275,33 +275,35 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 # inspection and interpretation
                 splitter.node_value(tree.value + node_id * tree.value_stride)
 
-                middle_value = tree._get_middle_value(node_id)
-
                 if not is_leaf:
-                    if not splitter.with_monotonic_cst or splitter.monotonic_cst[split.feature] == 0:
+                    if (
+                        not splitter.with_monotonic_cst or
+                        splitter.monotonic_cst[split.feature] == 0
+                    ):
                         # Split on a feature with no monotonicity constraint
+
                         # Current bounds must always be propagated to both children
                         # Splitting criterion will always check them in check_monotonicity
-                        left_child_min = lower_bound
-                        left_child_max = upper_bound
-                        right_child_min = lower_bound
-                        right_child_max = upper_bound
+                        left_child_min = right_child_min = lower_bound
+                        left_child_max = right_child_max = upper_bound
                     elif splitter.monotonic_cst[split.feature] == 1:
-                        # Split on a feature with increasing monotonicity constraint
-                        # Lower bound for left child is the current lower bound
+                        # Split on a feature with monotonic increase constraint
                         left_child_min = lower_bound
-                        # Upper bound for right child is the current upper bound
                         right_child_max = upper_bound
-                        # Lower bound for right child and upper bound for left child are set to the same value
+
+                        # Lower bound for right child and upper bound for left child
+                        # are set to the same value.
+                        middle_value = tree._get_middle_value(node_id)
                         right_child_min = middle_value
                         left_child_max = middle_value
                     else:  # i.e. splitter.monotonic_cst[split.feature] == -1
-                        # Split on a feature with decreasing monotonicity constraint
-                        # Lower bound for right child is the current lower bound
+                        # Split on a feature with monotonic decrease constraint
                         right_child_min = lower_bound
-                        # Upper bound for left child is the current upper bound
                         left_child_max = upper_bound
-                        # Lower bound for left child and upper bound for right child are set to the same value
+
+                        # Lower bound for left child and upper bound for right child
+                        # are set to the same value.
+                        middle_value = tree._get_middle_value(node_id)
                         left_child_min = middle_value
                         right_child_max = middle_value
 
@@ -472,31 +474,34 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
                 else:
                     # Node is expandable
 
-                    middle_value = tree._get_middle_value(record.node_id)
-                    if not splitter.with_monotonic_cst or splitter.monotonic_cst[node.feature] == 0:
+                    if (
+                        not splitter.with_monotonic_cst or
+                        splitter.monotonic_cst[node.feature] == 0
+                    ):
                         # Split on a feature with no monotonicity constraint
-                        # Current bounds must always be propagated to both children
+
+                        # Current bounds must always be propagated to both children.
                         # Splitting criterion will always check them in check_monotonicity
-                        left_child_min = record.lower_bound
-                        left_child_max = record.upper_bound
-                        right_child_min = record.lower_bound
-                        right_child_max = record.upper_bound
+                        left_child_min = right_child_min = record.lower_bound
+                        left_child_max = right_child_max = record.upper_bound
                     elif splitter.monotonic_cst[node.feature] == 1:
-                        # Split on a feature with increasing monotonicity constraint
-                        # Lower bound for left child is the current lower bound
+                        # Split on a feature with monotonic increase constraint
                         left_child_min = record.lower_bound
-                        # Upper bound for right child is the current upper bound
                         right_child_max = record.upper_bound
-                        # Lower bound for right child and upper bound for left child and are set to the same value
+
+                        # Lower bound for right child and upper bound for left child
+                        # are set to the same value.
+                        middle_value = tree._get_middle_value(record.node_id)
                         right_child_min = middle_value
                         left_child_max = middle_value
-                    else:  # i.e. splitter.monotonic_cst[node.feature] == -1
-                        # Split on a feature with decreasing monotonicity constraint
-                        # Lower bound for right child is the current lower bound
+                    else:  # i.e. splitter.monotonic_cst[split.feature] == -1
+                        # Split on a feature with monotonic decrease constraint
                         right_child_min = record.lower_bound
-                        # Upper bound for left child is the current upper bound
                         left_child_max = record.upper_bound
-                        # Lower bound for left child and upper bound for right child and are set to the same value
+
+                        # Lower bound for left child and upper bound for right child
+                        # are set to the same value.
+                        middle_value = tree._get_middle_value(record.node_id)
                         left_child_min = middle_value
                         right_child_max = middle_value
 
