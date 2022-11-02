@@ -11,7 +11,7 @@ from scipy import linalg
 from ._base import BaseMixture, _check_shape
 from ..utils import check_array
 from ..utils.extmath import row_norms
-from ..utils._param_validation import StrOptions
+from ..utils._param_validation import StrOptions, _Callables
 
 
 ###############################################################################
@@ -493,7 +493,7 @@ class GaussianMixture(BaseMixture):
     n_init : int, default=1
         The number of initializations to perform. The best results are kept.
 
-    init_params : {'kmeans', 'k-means++', 'random', 'random_from_data'}, \
+    init_params : {'kmeans', 'k-means++', 'random', 'random_from_data', 'callable'}, \
     default='kmeans'
         The method used to initialize the weights, the means and the
         precisions.
@@ -503,10 +503,17 @@ class GaussianMixture(BaseMixture):
         - 'k-means++' : use the k-means++ method to initialize.
         - 'random' : responsibilities are initialized randomly.
         - 'random_from_data' : initial means are randomly selected data points.
+        - 'callable' : a callable that takes in `X`: array-like of shape (n_samples, n_features),
+        and returns array of `responsibilites`: array-like of shape (n_samples, n_components),
+        such as custom instance of `sklearn.cluster.KMeans` wrapped to return responsibilites.
 
         .. versionchanged:: v1.1
             `init_params` now accepts 'random_from_data' and 'k-means++' as
             initialization methods.
+        .. versionchanged:: v1.X  # @TODO: replace with version number for docs.
+            `init_params` now accepts a callable which takes in array-like of shape 
+            (n_samples, n_features) and returns array-like of (n_samples, n_components)
+            as initialization method.
 
     weights_init : array-like of shape (n_components, ), default=None
         The user-provided initial weights.

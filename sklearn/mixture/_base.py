@@ -17,7 +17,7 @@ from ..cluster import kmeans_plusplus
 from ..base import BaseEstimator
 from ..base import DensityMixin
 from ..exceptions import ConvergenceWarning
-from ..utils import check_random_state
+from ..utils import check_random_state, check_array
 from ..utils.validation import check_is_fitted
 from ..utils._param_validation import Interval, StrOptions
 
@@ -40,7 +40,6 @@ def _check_shape(param, param_shape, name):
             % (name, param_shape, param.shape)
         )
 
-
 class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for mixture models.
 
@@ -55,7 +54,12 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "n_init": [Interval(Integral, 1, None, closed="left")],
         "init_params": [
-            StrOptions({"kmeans", "random", "random_from_data", "k-means++"})
+            StrOptions({"kmeans", "random", "random_from_data", "k-means++"}),
+            callable  # With input X: array-like of shape (n_samples, n_features),
+            # should return resp: array-like of shape (n_samples, n_components).
+            # Future child Mixture might have different shape requirements, so
+            # `_check_shape` should only be checked in child, such as in GMM,
+            # at _check_parameters. @TODO: Add possibility to directly pass in resp.
         ],
         "random_state": ["random_state"],
         "warm_start": ["boolean"],
@@ -137,6 +141,9 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 random_state=random_state,
             )
             resp[indices, np.arange(self.n_components)] = 1
+        elif callable(self.init_params):
+            resp = check_array(self.init_params(X, random_state))
+
         else:
             raise ValueError(
                 "Unimplemented initialization method '%s'" % self.init_params
