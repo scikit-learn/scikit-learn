@@ -1358,3 +1358,30 @@ def test_gaussian_mixture_single_component_stable():
     X = rng.multivariate_normal(np.zeros(2), np.identity(2), size=3)
     gm = GaussianMixture(n_components=1)
     gm.fit(X).sample()
+
+
+def test_responsibilities_vary_X(global_random_seed):
+    # Test that the responsibilities are invariant by a permutation of the
+    # data
+    rng = np.random.RandomState(global_random_seed)
+    rand_data = RandomData(rng, n_samples=200, scale=7)
+    n_components = rand_data.n_components
+    X = rand_data.X["full"]
+
+    label = KMeans(n_clusters=n_components, n_init=1, random_state=rng).fit(X).labels_
+    resp = get_responsibilities(
+        n_components=n_components, n_samples=X.shape[0], labels=label
+    )
+
+    gmm = GaussianMixture(
+        n_components=n_components,
+        random_state=rng,
+        responsibilities_init=resp,
+        max_iter=0,
+    )
+    gmm.fit(X)
+
+    # Permute the data
+    rand_data = RandomData(rng, n_samples=150, scale=7)
+    X = rand_data.X["full"]
+    gmm.fit(X)  # should not raise an error

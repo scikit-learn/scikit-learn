@@ -546,7 +546,8 @@ class GaussianMixture(BaseMixture):
         is not agnostic to input sample data, and requires matching shapes.
         To initialize responsibilites more generically while having user control,
         pass a callable to `init_params` which returns responsibilities of the
-        right shape. See `sklearn.mixture.get_responsibilities` for help.
+        right shape. See `sklearn.mixture.get_responsibilities` for help. Will
+        set `warm_start` to True after initialization to avoid re-initialization.
 
     random_state : int, RandomState instance or None, default=None
         Controls the random seed given to the method chosen to initialize the
@@ -724,10 +725,16 @@ class GaussianMixture(BaseMixture):
                 n_features,
             )
 
-        if self.responsibilities_init is not None:
-            self.responsibilities_init = _check_responsibilities(
-                self.responsibilities_init, self.n_components, n_samples
-            )
+    def _initialize_resp(self, X, resp):
+        """Initialize the model from the responsibilities."""
+        user_resp = self.responsibilities_init is not None
+        resp = self.responsibilities_init if user_resp else resp
+        if user_resp:
+            # If user provided resp, do not repeat initialization.
+            self.warm_start = True
+        n_samples, _ = X.shape
+        resp = _check_responsibilities(resp, self.n_components, n_samples)
+        return resp
 
     def _initialize(self, X, resp):
         """Initialization of the Gaussian mixture parameters.
@@ -740,9 +747,8 @@ class GaussianMixture(BaseMixture):
         """
         n_samples, _ = X.shape
 
-        resp = (
-            resp if self.responsibilities_init is None else self.responsibilities_init
-        )
+        # Use the responsibilities to initialize the weights, means and precisions.
+        resp = self._initialize_resp(X, resp)
         weights, means, covariances = _estimate_gaussian_parameters(
             X, resp, self.reg_covar, self.covariance_type
         )
