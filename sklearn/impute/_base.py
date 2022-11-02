@@ -207,10 +207,10 @@ class SimpleImputer(_BaseImputer):
         transform/test time.
 
     keep_empty_features : bool, default=False
-        If True, features that consist exclusively of missing values `fit` is
-        called not removed when calling `transform`. The imputed value is
-        always `0` except when `strategy="constant"` for which `fill_value`
-        will be used instead.
+        If True, features that consist exclusively of missing values when
+        `fit` is called are returned in results when `transform` is called.
+        The imputed value is always `0` except when `strategy="constant"`
+        in which case `fill_value` will be used instead.
 
         .. versionadded:: 1.2
 

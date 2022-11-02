@@ -73,8 +73,9 @@ class KNNImputer(_BaseImputer):
         time.
 
     keep_empty_features : bool, default=False
-        If True, features that consist exclusively of missing values `fit` is
-        called not removed when calling `transform`. The imputed value is `0`.
+        If True, features that consist exclusively of missing values when
+        `fit` is called are returned in results when `transform` is called.
+        The imputed value is always `0`.
 
         .. versionadded:: 1.2
 
