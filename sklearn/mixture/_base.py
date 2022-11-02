@@ -40,8 +40,11 @@ def _check_shape(param, param_shape, name):
             % (name, param_shape, param.shape)
         )
 
-def get_responsibilities(n_samples, n_components, indices):
-    """Get responsibilities from indices.
+def get_responsibilities(n_samples, n_components, indices=None, labels=None):
+    """Get responsibilities from indices. Responsibilities are 1 for the
+    component of the corresponding index and 0 for others. Note that
+    `n_components` is not the number of features in the data, but the 
+    number of components in the mixture model.
 
     Parameters
     ----------
@@ -51,17 +54,28 @@ def get_responsibilities(n_samples, n_components, indices):
     n_components : int
         Number of components.
 
-    indices : array-like of shape (n_clusters,)
-        The index location of the chosen values (centers) in the data array X 
-        of shape (n_samples, n_components). For a given index and value, X[index] = 1. 
+    indices : array-like of shape (n_components,)
+        The index location of the chosen components (centers) in the data array X 
+        of shape (n_samples, n_components), will be set to 1 in the output. Either
+        `indices` or `labels` must be provided.
+
+    labels : array-like of shape (n_samples,), default `None`. Will be used over
+        indices if not `None`. The labels i=0 to n_components-1 will be set to 1
+        for each sample in the ouput. Either `indices` or `labels` must be provided.
 
     Returns
     -------
     responsibilities : array, shape (n_samples, n_components)
         Responsibilities of each sample in each component.
     """
-    resp = np.zeros((n_samples, n_components))
-    resp[indices, np.arange(n_components)] = 1
+    resp = np.zeros((n_samples, n_components), dtype=np.int32)
+    if labels is not None:
+        _check_shape(labels, (n_samples,), 'labels')  # will raise if incompatible    
+        resp[indices, np.arange(n_components)] = 1
+    elif indices is not None:
+        resp[np.arange(n_samples), labels] = 1
+    else:
+        raise ValueError('Either `indices` or `labels` must be provided.')
     return resp
 
 class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
@@ -139,7 +153,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
         n_samples, _ = X.shape
 
         if self.init_params == "kmeans":
-            resp = np.zeros((n_samples, self.n_components))
             label = (
                 cluster.KMeans(
                     n_clusters=self.n_components, n_init=1, random_state=random_state
@@ -147,24 +160,23 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
                 .fit(X)
                 .labels_
             )
-            resp[np.arange(n_samples), label] = 1
+
+            resp = get_responsibilities(n_samples, self.n_components, labels=label)
         elif self.init_params == "random":
             resp = random_state.uniform(size=(n_samples, self.n_components))
             resp /= resp.sum(axis=1)[:, np.newaxis]
         elif self.init_params == "random_from_data":
-            resp = np.zeros((n_samples, self.n_components))
             indices = random_state.choice(
                 n_samples, size=self.n_components, replace=False
             )
-            resp[indices, np.arange(self.n_components)] = 1
+            resp = get_responsibilities(n_samples, self.n_components, indices=indices)
         elif self.init_params == "k-means++":
-            resp = np.zeros((n_samples, self.n_components))
             _, indices = kmeans_plusplus(
                 X,
                 self.n_components,
                 random_state=random_state,
             )
-            resp[indices, np.arange(self.n_components)] = 1
+            resp = get_responsibilities(n_samples, self.n_components, indices=indices)
         elif callable(self.init_params):
             resp = check_array(self.init_params(X, random_state))
 
