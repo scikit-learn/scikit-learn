@@ -702,7 +702,7 @@ class GaussianMixture(BaseMixture):
         self.weights_init = weights_init
         self.means_init = means_init
         self.precisions_init = precisions_init
-        self.resp_init = responsibilities_init
+        self.responsibilities_init = responsibilities_init
 
     def _check_parameters(self, X):
         """Check the Gaussian mixture parameters are well defined."""
@@ -724,9 +724,9 @@ class GaussianMixture(BaseMixture):
                 n_features,
             )
 
-        if self.resp_init is not None:
-            self.resp_init = _check_responsibilities(
-                self.resp_init,
+        if self.responsibilities_init is not None:
+            self.responsibilities_init = _check_responsibilities(
+                self.responsibilities_init,
                 self.n_components,
                 n_samples
             )
@@ -743,7 +743,7 @@ class GaussianMixture(BaseMixture):
         """
         n_samples, _ = X.shape
 
-        resp = resp if self.resp_init is None else self.resp_init
+        resp = resp if self.responsibilities_init is None else self.responsibilities_init
         weights, means, covariances = _estimate_gaussian_parameters(
             X, resp, self.reg_covar, self.covariance_type
         )
