@@ -8,7 +8,7 @@ import numpy as np
 
 from scipy import linalg
 
-from ._base import BaseMixture, _check_shape
+from ._base import BaseMixture, _check_shape, _check_responsibilities
 from ..utils import check_array
 from ..utils.extmath import row_norms
 from ..utils._param_validation import StrOptions, _Callables
@@ -493,19 +493,23 @@ class GaussianMixture(BaseMixture):
     n_init : int, default=1
         The number of initializations to perform. The best results are kept.
 
-    init_params : {'kmeans', 'k-means++', 'random', 'random_from_data', 'callable'}, \
+    init_params : {'kmeans', 'k-means++', 'random', 'random_from_data', callable}, \
     default='kmeans'
         The method used to initialize the weights, the means and the
-        precisions.
-        String must be one of:
+        precisions. Will only be used if user-provided initializations
+        are not given (`weights_init`, `means_init`, `precisions_init`) 
+        or `responsibilities_init`.
+        Must be one of:
 
         - 'kmeans' : responsibilities are initialized using kmeans.
         - 'k-means++' : use the k-means++ method to initialize.
         - 'random' : responsibilities are initialized randomly.
         - 'random_from_data' : initial means are randomly selected data points.
-        - 'callable' : a callable that takes in `X`: array-like of shape (n_samples, n_features),
-        and returns array of `responsibilites`: array-like of shape (n_samples, n_components),
-        such as custom instance of `sklearn.cluster.KMeans` wrapped to return responsibilites.
+        - callable : a callable that takes in `X`: array-like of shape 
+        (n_samples, n_features), and returns array of `responsibilites`: 
+        array-like of shape (n_samples, n_components), such as custom instance 
+        of `sklearn.cluster.KMeans` wrapped to return responsibilites.
+        See `sklearn.mixture.get_responsibilities` for help.
 
         .. versionchanged:: v1.1
             `init_params` now accepts 'random_from_data' and 'k-means++' as
@@ -534,6 +538,15 @@ class GaussianMixture(BaseMixture):
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
+
+    responsibilities_init : array-like, of shape (n_samples, n_components), 
+        default=None. The user-provided initial responsibilities. Can be used to 
+        calculate precisions, means, and weights if user_provided values are None, 
+        instead of using `init_params` method. Unlike the above, this parameter 
+        is not agnostic to input sample data, and requires matching shapes.
+        To initialize responsibilites more generically while having user control, 
+        pass a callable to `init_params` which returns responsibilities of the
+        right shape. See `sklearn.mixture.get_responsibilities` for help.
 
     random_state : int, RandomState instance or None, default=None
         Controls the random seed given to the method chosen to initialize the
@@ -650,6 +663,7 @@ class GaussianMixture(BaseMixture):
         "weights_init": ["array-like", None],
         "means_init": ["array-like", None],
         "precisions_init": ["array-like", None],
+        "responsibilities_init": ["array-like", None],
     }
 
     def __init__(
@@ -665,6 +679,7 @@ class GaussianMixture(BaseMixture):
         weights_init=None,
         means_init=None,
         precisions_init=None,
+        responsibilities_init=None,
         random_state=None,
         warm_start=False,
         verbose=0,
@@ -687,10 +702,11 @@ class GaussianMixture(BaseMixture):
         self.weights_init = weights_init
         self.means_init = means_init
         self.precisions_init = precisions_init
+        self.resp_init = responsibilities_init
 
     def _check_parameters(self, X):
         """Check the Gaussian mixture parameters are well defined."""
-        _, n_features = X.shape
+        n_samples, n_features = X.shape
 
         if self.weights_init is not None:
             self.weights_init = _check_weights(self.weights_init, self.n_components)
@@ -708,6 +724,14 @@ class GaussianMixture(BaseMixture):
                 n_features,
             )
 
+        if self.resp_init is not None:
+            self.resp_init = _check_responsibilities(
+                self.resp_init,
+                self.n_components,
+                n_samples
+            )
+
+
     def _initialize(self, X, resp):
         """Initialization of the Gaussian mixture parameters.
 
@@ -719,6 +743,7 @@ class GaussianMixture(BaseMixture):
         """
         n_samples, _ = X.shape
 
+        resp = resp if self.resp_init is None else self.resp_init
         weights, means, covariances = _estimate_gaussian_parameters(
             X, resp, self.reg_covar, self.covariance_type
         )
