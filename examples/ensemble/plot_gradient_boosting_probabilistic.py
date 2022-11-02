@@ -342,7 +342,6 @@ for i in range(n_quantile_pairs):
 # to evaluate probabilistic estimates (i.e., a cloud of estimates).
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics._scorer import _BaseScorer
-from numba import njit
 
 
 def make_probabilistic_scorer(
@@ -363,7 +362,6 @@ class _ProbabilisticScorer(_BaseScorer):
         return self._sign * self._score_func(y_true, yhat_dist)
 
 
-@njit(fastmath=True)
 def crps_score(y, yhat_dist):
     """Calculate the empirical Continuously Ranked Probability Score (CRPS)
     for a set of forecasts for a number of samples (lower is better).
@@ -423,7 +421,7 @@ param_grid = dict(
     learning_rate=[0.05, 0.1, 0.2],
     max_depth=[2, 5, 10],
     min_samples_leaf=[1, 5, 10, 20],
-    tree_correlation=np.linspace(-0.1, 0.1, 20),
+    tree_correlation=np.linspace(-0.05, 0.05, 10),
     distribution=["normal", "gumbel"],
 )
 gbr = HistGradientBoostingRegressor(random_state=0, with_variance=True)
