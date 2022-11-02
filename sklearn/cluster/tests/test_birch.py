@@ -107,6 +107,9 @@ def test_sparse_X(global_random_seed, global_dtype):
     brc_sparse = Birch(n_clusters=10)
     brc_sparse.fit(csr)
 
+    # Birch must preserve inputs' dtype
+    assert brc_sparse.subcluster_centers_.dtype == global_dtype
+
     assert_array_equal(brc.labels_, brc_sparse.labels_)
     assert_allclose(brc.subcluster_centers_, brc_sparse.subcluster_centers_)
 
