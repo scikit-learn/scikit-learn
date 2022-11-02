@@ -1367,16 +1367,16 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         When set to `True`, the variance of each leaf value is stored during
         training. In Regressor models, this can be used to generate
         probabilistic estimates.
+    distribution : {'normal', 'studentt', 'laplace', 'logistic', 'lognormal',
+        'gamma', 'gumbel', 'poisson', 'negativebinomial'},\
+        default='normal'
+        Choice of output distribution when sampling
     tree_correlation : float, default=None
         Tree correlation hyperparameter. This controls the amount of correlation
         we assume to exist between each subsequent tree in the ensemble. Only
         used when computing the standard deviations of the predictions. If None,
         defaults to np.log10(n_samples_train) / 100. Must be between -1 and 1.
-        Only used in Regressor models.
-    distribution : {'normal', 'studentt', 'laplace', 'logistic', 'lognormal',
-        'gamma', 'gumbel', 'poisson', 'negativebinomial'},\
-        default='normal'
-        Choice of output distribution when sampling.
+        Only used in Regressor models..
     studentt_degrees_of_freedom : int, default=3.
         Degrees of freedom, only used for Student-t distribution when sampling
         probabilistic predictions using the `sample` method.
@@ -1546,8 +1546,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         return super().fit(X, y, sample_weight, self.with_variance)
 
     def predict(self, X, return_std=False):
-        """Predict values for X. Optionally also returns the standard
-        deviation (`return_std=True`) of the predictions.
+        """Predict values for X.
+
+        Optionally also returns the standard deviation
+        (`return_std=True`) of the predictions.
 
         Parameters
         ----------
@@ -1604,8 +1606,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         n_estimates=1,
         random_state=0,
     ):
-        """Draw estimates from a distribution parameterized with an empirical
-        mean and standard deviation.
+        """Draw estimates from a distribution.
+
+        This allows to draw samples from a distribution parameterized
+        with an empirical mean and standard deviation.
 
         Parameters
         ----------
@@ -1620,10 +1624,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             Pass an int for reproducible results across multiple function
             calls.
             See :term:`Glossary <random_state>`.
-
-        See also:
-        :arxiv:`O.Sprangers, S. Schelter, M. de Rijke, (2021) Probabilistic
-        Gradient Boosting Machines, <2106.01682>.`
 
         Returns
         -------
@@ -1905,7 +1905,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         through the fit method) if `sample_weight` is specified.
 
         .. versionadded:: 1.2
-
 
     Attributes
     ----------
