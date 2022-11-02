@@ -2,7 +2,7 @@ cimport numpy as cnp
 
 from cython cimport final
 
-from ...utils._typedefs cimport ITYPE_t, DTYPE_t, SPARSE_INDEX_TYPE_t
+from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
 cnp.import_array()
 

@@ -25,17 +25,9 @@ from ...utils._cython_blas cimport (
   Trans,
   _gemm,
 )
-from ...utils._typedefs cimport DTYPE_t, ITYPE_t, SPARSE_INDEX_TYPE_t
+from ...utils._typedefs cimport DTYPE_t, ITYPE_t
 
-import numpy as np
-from scipy.sparse import issparse, csr_matrix
-from ...utils._typedefs import DTYPE, SPARSE_INDEX_TYPE
-
-# TODO: change for `libcpp.algorithm.fill` once Cython 3 is used
-# Introduction in Cython:
-# https://github.com/cython/cython/blob/05059e2a9b89bf6738a7750b905057e5b1e3fe2e/Cython/Includes/libcpp/algorithm.pxd#L50 #noqa
-cdef extern from "<algorithm>" namespace "std" nogil:
-    void fill[Iter, T](Iter first, Iter last, const T& value) except + #noqa
+from scipy.sparse import issparse
 
 
 {{for name_suffix, upcast_to_float64, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
@@ -102,15 +94,6 @@ cdef class MiddleTermComputer{{name_suffix}}:
             )
 
         raise NotImplementedError("X and Y must be both dense")
-
-
-    @classmethod
-    def unpack_csr_matrix(cls, X: csr_matrix):
-        """Ensure that the CSR matrix is indexed with SPARSE_INDEX_TYPE."""
-        X_data = np.asarray(X.data, dtype=DTYPE)
-        X_indices = np.asarray(X.indices, dtype=SPARSE_INDEX_TYPE)
-        X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
-        return X_data, X_indices, X_indptr
 
     def __init__(
         self,
@@ -188,7 +171,7 @@ cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_
     """Computes the middle term of the Euclidean distance between two chunked dense matrices
     X_c and Y_c.
 
-            dist_middle_terms = - 2 X_c_i.Y_c_j^T
+                        dist_middle_terms = - 2 X_c_i.Y_c_j^T
 
     This class use the BLAS gemm routine to perform the dot product of each chunks
     of the distance matrix with improved arithmetic intensity and vector instruction (SIMD).
@@ -350,6 +333,5 @@ cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_
         _gemm(order, ta, tb, m, n, K, alpha, A, lda, B, ldb, beta, dist_middle_terms, ldc)
 
         return dist_middle_terms
-
 
 {{endfor}}

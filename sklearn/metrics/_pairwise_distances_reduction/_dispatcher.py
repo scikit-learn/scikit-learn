@@ -8,7 +8,10 @@ from scipy.sparse import isspmatrix_csr
 
 from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING
 
-from ._base import _sqeuclidean_row_norms32, _sqeuclidean_row_norms64
+from ._base import (
+    _sqeuclidean_row_norms64,
+    _sqeuclidean_row_norms32,
+)
 from ._argkmin import (
     ArgKmin64,
     ArgKmin32,
@@ -131,7 +134,7 @@ class BaseDistancesReductionDispatcher:
         # TODO: implement specialisation for (sq)euclidean on fused sparse-dense
         # using sparse-dense routines for matrix-vector multiplications.
         fused_sparse_dense_euclidean_case_guard = not (
-            (is_valid_sparse_matrix(X) ^ is_valid_sparse_matrix(Y))
+            (is_valid_sparse_matrix(X) or is_valid_sparse_matrix(Y))
             and isinstance(metric, str)
             and "euclidean" in metric
         )
