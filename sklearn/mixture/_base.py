@@ -229,7 +229,7 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             )
             resp = get_responsibilities(n_samples, self.n_components, indices=indices)
         elif callable(self.init_params):
-            resp = self.init_params(X, random_state)
+            resp = self.init_params(X)
             resp = _check_responsibilities(resp, self.n_components, n_samples)
 
         else:
