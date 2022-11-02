@@ -72,7 +72,7 @@ def get_responsibilities(n_samples, n_components, indices=None, labels=None):
     responsibilities : array, shape (n_samples, n_components)
         Responsibilities of each sample in each component.
     """
-    resp = np.zeros((n_samples, n_components), dtype=np.int32)
+    resp = np.zeros((n_samples, n_components))
     if labels is not None:
         _check_shape(labels, (n_samples,), 'labels')  # will raise if incompatible    
         resp[np.arange(n_samples), labels] = 1
