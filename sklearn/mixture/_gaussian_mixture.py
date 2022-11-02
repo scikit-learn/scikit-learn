@@ -11,7 +11,7 @@ from scipy import linalg
 from ._base import BaseMixture, _check_shape, _check_responsibilities
 from ..utils import check_array
 from ..utils.extmath import row_norms
-from ..utils._param_validation import StrOptions, _Callables
+from ..utils._param_validation import StrOptions
 
 
 ###############################################################################
@@ -497,7 +497,7 @@ class GaussianMixture(BaseMixture):
     default='kmeans'
         The method used to initialize the weights, the means and the
         precisions. Will only be used if user-provided initializations
-        are not given (`weights_init`, `means_init`, `precisions_init`) 
+        are not given (`weights_init`, `means_init`, `precisions_init`)
         or `responsibilities_init`.
         Must be one of:
 
@@ -505,9 +505,9 @@ class GaussianMixture(BaseMixture):
         - 'k-means++' : use the k-means++ method to initialize.
         - 'random' : responsibilities are initialized randomly.
         - 'random_from_data' : initial means are randomly selected data points.
-        - callable : a callable that takes in `X`: array-like of shape 
-        (n_samples, n_features), and returns array of `responsibilites`: 
-        array-like of shape (n_samples, n_components), such as custom instance 
+        - callable : a callable that takes in `X`: array-like of shape
+        (n_samples, n_features), and returns array of `responsibilites`:
+        array-like of shape (n_samples, n_components), such as custom instance
         of `sklearn.cluster.KMeans` wrapped to return responsibilites.
         See `sklearn.mixture.get_responsibilities` for help.
 
@@ -515,7 +515,7 @@ class GaussianMixture(BaseMixture):
             `init_params` now accepts 'random_from_data' and 'k-means++' as
             initialization methods.
         .. versionchanged:: v1.2
-            `init_params` now also accepts a callable which takes in array-like of shape 
+            `init_params` now also accepts a callable which takes in array-like of shape
             (n_samples, n_features) and returns array-like of (n_samples, n_components)
             as initialization method.
 
@@ -539,12 +539,12 @@ class GaussianMixture(BaseMixture):
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
 
-    responsibilities_init : array-like, of shape (n_samples, n_components), 
-        default=None. The user-provided initial responsibilities. Can be used to 
-        calculate precisions, means, and weights if user_provided values are None, 
-        instead of using `init_params` method. Unlike the above, this parameter 
+    responsibilities_init : array-like, of shape (n_samples, n_components),
+        default=None. The user-provided initial responsibilities. Can be used to
+        calculate precisions, means, and weights if user_provided values are None,
+        instead of using `init_params` method. Unlike the above, this parameter
         is not agnostic to input sample data, and requires matching shapes.
-        To initialize responsibilites more generically while having user control, 
+        To initialize responsibilites more generically while having user control,
         pass a callable to `init_params` which returns responsibilities of the
         right shape. See `sklearn.mixture.get_responsibilities` for help.
 

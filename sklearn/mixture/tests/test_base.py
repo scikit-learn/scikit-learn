@@ -3,8 +3,6 @@ from functools import partial
 import numpy as np
 
 from sklearn.mixture._base import (
-    BaseMixture,
-    _check_shape,
     _check_responsibilities,
     get_responsibilities,
 )
@@ -36,7 +34,7 @@ def kmeans_resp(random_data):
     resp[np.arange(n_samples), label] = 1
     # new resp
     labels = np.argmax(resp, axis=1)
-    new_resp = get_responsibilities(n_samples, n_components, labels=label)
+    new_resp = get_responsibilities(n_samples, n_components, labels=labels)
     return resp, new_resp
 
 
@@ -116,8 +114,9 @@ def test_check_responsibilities(random_data):
 
 def test_random_init(random_data):
     """
-    Test that random initialization works as expected with check responsibilities.
-    This is separate because random is only default that uses non-binary responsibilities."""
+    Test that random initialization works as expected with check
+    responsibilities. This is separate because random is only default
+    that uses non-binary responsibilities."""
 
     rng, n_components, X, n_samples = random_data
 
