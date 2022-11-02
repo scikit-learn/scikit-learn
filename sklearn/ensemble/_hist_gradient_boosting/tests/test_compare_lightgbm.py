@@ -19,7 +19,10 @@ from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estima
         (1000, 8),
     ],
 )
-def test_same_predictions_regression(seed, min_samples_leaf, n_samples, max_leaf_nodes):
+@pytest.mark.parametrize("with_variance", [True, False])
+def test_same_predictions_regression(
+    seed, min_samples_leaf, n_samples, max_leaf_nodes, with_variance
+):
     # Make sure sklearn has the same predictions as lightgbm for easy targets.
     #
     # In particular when the size of the trees are bound and the number of
@@ -66,6 +69,7 @@ def test_same_predictions_regression(seed, min_samples_leaf, n_samples, max_leaf
         early_stopping=False,
         min_samples_leaf=min_samples_leaf,
         max_leaf_nodes=max_leaf_nodes,
+        with_variance=with_variance,
     )
     est_lightgbm = get_equivalent_estimator(est_sklearn, lib="lightgbm")
 

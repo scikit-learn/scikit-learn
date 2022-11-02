@@ -15,11 +15,16 @@ cdef packed struct hist_struct:
     # to be packed since by default numpy dtypes aren't aligned
     Y_DTYPE_C sum_gradients
     Y_DTYPE_C sum_hessians
+    unsigned int count
+
+cdef packed struct hist_struct_with_variance:
+    # Same as hist_struct but with variables to calculate the variances of the leafs.
+    Y_DTYPE_C sum_gradients
+    Y_DTYPE_C sum_hessians
+    unsigned int count
     Y_DTYPE_C sum_gradients_squared
     Y_DTYPE_C sum_hessians_squared
     Y_DTYPE_C sum_gradients_hessians
-    unsigned int count
-
 
 cdef packed struct node_struct:
     # Equivalent struct to PREDICTOR_RECORD_DTYPE to use in memory views. It

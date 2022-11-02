@@ -107,8 +107,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "scoring": [str, callable, None],
         "verbose": ["verbose"],
         "random_state": ["random_state"],
-        "with_variance": ["boolean"],
-        "tree_correlation": [Interval(Real, -1, 1, closed="neither"), None],
     }
 
     @abstractmethod
@@ -134,8 +132,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         tol,
         verbose,
         random_state,
-        with_variance,
-        tree_correlation,
     ):
         self.loss = loss
         self.learning_rate = learning_rate
@@ -156,8 +152,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.tol = tol
         self.verbose = verbose
         self.random_state = random_state
-        self.with_variance = with_variance
-        self.tree_correlation = tree_correlation
 
     def _validate_parameters(self):
         """Validate parameters passed to __init__.
@@ -298,7 +292,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         return constraints
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, with_variance=False):
         """Fit the gradient boosting model.
 
         Parameters
@@ -313,6 +307,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             Weights of training data.
 
             .. versionadded:: 0.23
+
+        with_variance : boolean, default=False
+            If True, stores the variances of the leaf values.
 
         Returns
         -------
@@ -370,7 +367,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # We need to store whether we store the variances during training
         # so that these variances can be used for probabilistic predictions
         # after training
-        self._is_fitted_with_variance = self.with_variance
+        self._is_fitted_with_variance = with_variance
 
         # `_openmp_effective_n_threads` is used to take cgroups CPU quotes
         # into account when determine the maximum number of threads to use.
@@ -462,9 +459,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         n_samples = X_binned_train.shape[0]
 
-        # Save tree correlation based on training samples if it is None
-        if self.tree_correlation is None:
-            self.tree_correlation = np.log10(n_samples) / 100
+        # Save tree correlation based on training samples
+        self._tree_correlation = np.log10(n_samples) / 100
 
         # First time calling fit, or no warm start
         if not (self._is_fitted() and self.warm_start):
@@ -660,7 +656,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     l2_regularization=self.l2_regularization,
                     shrinkage=self.learning_rate,
                     n_threads=n_threads,
-                    with_variance=self.with_variance,
+                    with_variance=with_variance,
                 )
                 grower.grow()
 
@@ -1091,7 +1087,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                         :, k
                     ] += self.learning_rate**2 * raw_variances_k - 2 * (
                         self.learning_rate
-                        * self.tree_correlation
+                        * self._tree_correlation
                         * np.sqrt(raw_variances[:, k])
                         * np.sqrt(raw_variances_k)
                     )
@@ -1377,6 +1373,13 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         used when computing the standard deviations of the predictions. If None,
         defaults to np.log10(n_samples_train) / 100. Must be between -1 and 1.
         Only used in Regressor models.
+    distribution : {'normal', 'studentt', 'laplace', 'logistic', 'lognormal',
+        'gamma', 'gumbel', 'poisson', 'negativebinomial'},\
+        default='normal'
+        Choice of output distribution when sampling.
+    studentt_degrees_of_freedom : int, default=3.
+        Degrees of freedom, only used for Student-t distribution when sampling
+        probabilistic predictions using the `sample` method.
 
     Attributes
     ----------
@@ -1444,6 +1447,24 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             BaseLoss,
         ],
         "quantile": [Interval(Real, 0, 1, closed="both"), None],
+        "with_variance": ["boolean"],
+        "distribution": [
+            StrOptions(
+                {
+                    "normal",
+                    "studentt",
+                    "laplace",
+                    "logistic",
+                    "lognormal",
+                    "gamma",
+                    "gumbel",
+                    "poisson",
+                    "negativebinomial",
+                }
+            )
+        ],
+        "tree_correlation": [Interval(Real, -1, 1, closed="neither"), None],
+        "studentt_degrees_of_freedom": [Interval(Integral, 1, None, closed="neither")],
     }
 
     def __init__(
@@ -1470,7 +1491,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         verbose=0,
         random_state=None,
         with_variance=False,
+        distribution="normal",
         tree_correlation=None,
+        studentt_degrees_of_freedom=3,
     ):
         super(HistGradientBoostingRegressor, self).__init__(
             loss=loss,
@@ -1492,10 +1515,35 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             tol=tol,
             verbose=verbose,
             random_state=random_state,
-            with_variance=with_variance,
-            tree_correlation=tree_correlation,
         )
         self.quantile = quantile
+        self.with_variance = with_variance
+        self.distribution = distribution
+        self.tree_correlation = tree_correlation
+        self.studentt_degrees_of_freedom = studentt_degrees_of_freedom
+
+    def fit(self, X, y, sample_weight=None):
+        """Fit the gradient boosting model.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The input samples.
+
+        y : array-like of shape (n_samples,)
+            Target values.
+
+        sample_weight : array-like of shape (n_samples,) default=None
+            Weights of training data.
+
+            .. versionadded:: 0.23
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
+        return super().fit(X, y, sample_weight, self.with_variance)
 
     def predict(self, X, return_std=False):
         """Predict values for X. Optionally also returns the standard
@@ -1524,6 +1572,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
                     "The model was not fit with variance. Set "
                     "'with_variance=True' at model initialization."
                 )
+            if self.tree_correlation is not None:
+                self._tree_correlation = self.tree_correlation
             # Get raw predictions and raw variances
             mean_raw, variance_raw = self._raw_predict(X, return_var=True)
             mean_raw, variance_raw = mean_raw.ravel(), variance_raw.ravel()
@@ -1549,21 +1599,19 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
     def sample(
         self,
-        mean,
-        std,
+        y,
+        y_std,
         n_estimates=1,
         random_state=0,
-        distribution="normal",
-        studentt_degrees_of_freedom=3,
     ):
         """Draw estimates from a distribution parameterized with an empirical
         mean and standard deviation.
 
         Parameters
         ----------
-        mean : array-like, shape (n_samples,)
+        y : array-like, shape (n_samples,)
             The empirical mean of the predicted values.
-        std : array-like, shape (n_samples,)
+        y_std : array-like, shape (n_samples,)
             The empirical standard deviation of the predicted values.
         n_estimates : int, default=1
             Number of estimates drawn from the distribution.
@@ -1572,12 +1620,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             Pass an int for reproducible results across multiple function
             calls.
             See :term:`Glossary <random_state>`.
-        distribution : {'normal', 'studentt', 'laplace', 'logistic', 'lognormal',
-                'gamma', 'gumbel', 'poisson', 'negativebinomial'},\
-                default='normal'
-            Choice of output distribution when sampling.
-        studentt_degrees_of_freedom : int, default=3.
-            Degrees of freedom, only used for Student-t distribution.
 
         See also:
         :arxiv:`O.Sprangers, S. Schelter, M. de Rijke, (2021) Probabilistic
@@ -1590,64 +1632,64 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         """
         check_is_fitted(self)
         assert (
-            mean.shape == std.shape
+            y.shape == y_std.shape
         ), "Mean and standard deviation should have equal shapes."
-        assert np.all(std > 0.0), "Standard deviation should be strictly positive."
+        assert np.all(y_std > 0.0), "Standard deviation should be strictly positive."
 
         # Parameterize a distribution and sample from the distribution
         rng = check_random_state(random_state)
-        variance = std**2
-        if distribution == "normal":
-            loc = mean
+        variance = y_std**2
+        if self.distribution == "normal":
+            loc = y
             scale = np.sqrt(variance)
             yhat = rng.normal(loc, scale, (n_estimates, loc.shape[0]))
-        elif distribution == "studentt":
-            v = studentt_degrees_of_freedom
-            loc = mean
+        elif self.distribution == "studentt":
+            v = self.studentt_degrees_of_freedom
+            loc = y
             factor = v / (v - 2)
             yhat = (
                 rng.standard_t(v, (n_estimates, loc.shape[0]))
                 * np.sqrt(variance / factor)
                 + loc
             )
-        elif distribution == "laplace":
-            loc = mean
+        elif self.distribution == "laplace":
+            loc = y
             scale = np.sqrt(0.5 * variance)
             yhat = rng.laplace(loc, scale, (n_estimates, loc.shape[0]))
-        elif distribution == "logistic":
-            loc = mean
+        elif self.distribution == "logistic":
+            loc = y
             scale = np.sqrt((3 * variance) / np.pi**2)
             yhat = rng.logistic(loc, scale, (n_estimates, loc.shape[0]))
-        elif distribution == "lognormal":
-            loc = np.log(mean**2 / np.sqrt(variance + mean**2))
-            scale = np.log(1 + variance / mean**2)
+        elif self.distribution == "lognormal":
+            loc = np.log(y**2 / np.sqrt(variance + y**2))
+            scale = np.log(1 + variance / y**2)
             yhat = np.exp(rng.normal(loc, np.sqrt(scale), (n_estimates, loc.shape[0])))
-        elif distribution == "gumbel":
+        elif self.distribution == "gumbel":
             scale = np.sqrt(6 * variance / np.pi**2)
-            loc = mean - scale * np.euler_gamma
-            yhat = rng.gumbel(loc, scale, (n_estimates, mean.shape[0]))
-        elif distribution == "gamma":
+            loc = y - scale * np.euler_gamma
+            yhat = rng.gumbel(loc, scale, (n_estimates, y.shape[0]))
+        elif self.distribution == "gamma":
             assert np.all(
-                mean > 0.0
+                y > 0.0
             ), "Mean should be strictly positive for Gamma distribution."
-            shape = mean**2 / variance
-            scale = mean / shape
-            yhat = rng.gamma(shape, scale, (n_estimates, mean.shape[0]))
-        elif distribution == "poisson":
+            shape = y**2 / variance
+            scale = y / shape
+            yhat = rng.gamma(shape, scale, (n_estimates, y.shape[0]))
+        elif self.distribution == "poisson":
             assert np.all(
-                mean > 0.0
+                y > 0.0
             ), "Mean should be strictly positive for Poisson distribution."
-            lam = mean
-            yhat = rng.poisson(lam, (n_estimates, mean.shape[0]))
-        elif distribution == "negativebinomial":
+            lam = y
+            yhat = rng.poisson(lam, (n_estimates, y.shape[0]))
+        elif self.distribution == "negativebinomial":
             assert np.all(
-                mean > 0.0
+                y > 0.0
             ), "Mean should be strictly positive for Negative Binomial distribution."
-            loc = mean
+            loc = y
             scale = np.maximum(loc + 1e-15, variance)
             p = np.clip(loc / scale, 1e-15, 1 - 1e-15)
             n = np.clip(-(loc**2) / (loc - scale), 1e-15, None)
-            yhat = rng.negative_binomial(n, p, (n_estimates, mean.shape[0]))
+            yhat = rng.negative_binomial(n, p, (n_estimates, y.shape[0]))
         else:
             raise NotImplementedError("Distribution not supported")
 
@@ -1864,17 +1906,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         .. versionadded:: 1.2
 
-    with_variance : bool, default=False
-        When set to `True`, the variance of each leaf value is stored during
-        training. In Regressor models, this can be used to generate
-        probabilistic estimates.
-    tree_correlation : float, default=None
-        Tree correlation hyperparameter. This controls the amount of correlation
-        we assume to exist between each subsequent tree in the ensemble. Only
-        used when computing the standard deviations of the predictions. If None,
-        defaults to np.log10(n_samples_train) / 100. Must be between -1 and 1.
-        Only used in Regressor models.
-
 
     Attributes
     ----------
@@ -1981,8 +2012,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         tol=1e-7,
         verbose=0,
         random_state=None,
-        with_variance=False,
-        tree_correlation=None,
         class_weight=None,
     ):
         super(HistGradientBoostingClassifier, self).__init__(
@@ -2005,8 +2034,6 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             tol=tol,
             verbose=verbose,
             random_state=random_state,
-            with_variance=with_variance,
-            tree_correlation=tree_correlation,
         )
         self.class_weight = class_weight
 
@@ -2021,6 +2048,29 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             return sample_weight * expanded_class_weight
         else:
             return expanded_class_weight
+
+    def fit(self, X, y, sample_weight=None):
+        """Fit the gradient boosting model.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The input samples.
+
+        y : array-like of shape (n_samples,)
+            Target values.
+
+        sample_weight : array-like of shape (n_samples,) default=None
+            Weights of training data.
+
+            .. versionadded:: 0.23
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
+        return super().fit(X, y, sample_weight, with_variance=False)
 
     def predict(self, X):
         """Predict classes for X.

@@ -314,7 +314,7 @@ def test_poisson():
         X, y, test_size=n_test, random_state=rng
     )
     gbdt_pois = HistGradientBoostingRegressor(
-        loss="poisson", random_state=rng, with_variance=True
+        loss="poisson", random_state=rng, with_variance=True, distribution="poisson"
     )
     gbdt_ls = HistGradientBoostingRegressor(loss="squared_error", random_state=rng)
     gbdt_pois.fit(X_train, y_train)
@@ -324,7 +324,7 @@ def test_poisson():
     for X, y in [(X_train, y_train), (X_test, y_test)]:
         yhat_mean_pois, yhat_std_pois = gbdt_pois.predict(X, return_std=True)
         yhat_dist_pois = gbdt_pois.sample(
-            yhat_mean_pois, yhat_std_pois, n_estimates=10_000, distribution="poisson"
+            yhat_mean_pois, yhat_std_pois, n_estimates=10_000
         )
         yhat_mean_pois_sampled = yhat_dist_pois.mean(axis=0)
         metric_pois = mean_poisson_deviance(y, yhat_mean_pois)
@@ -1368,9 +1368,8 @@ def test_distribution_means_and_variances():
     for distribution in distributions:
         error = np.zeros((len(samples_array), len(X)))
         for i, samples in enumerate(samples_array):
-            yhat_dist = gbdt.sample(
-                yhat_mean, yhat_std, n_estimates=samples, distribution=distribution
-            )
+            gbdt.distribution = distribution
+            yhat_dist = gbdt.sample(yhat_mean, yhat_std, n_estimates=samples)
             yhat_mean_sampled = yhat_dist.mean(axis=0)
             error[i] = np.abs(yhat_mean_sampled - yhat_mean)
         assert np.all(np.diff(error.mean(axis=1)) < 0)

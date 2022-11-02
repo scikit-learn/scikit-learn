@@ -2,15 +2,22 @@ import numpy as np
 import pytest
 from numpy.testing import assert_array_equal
 
-from sklearn.ensemble._hist_gradient_boosting.common import HISTOGRAM_DTYPE
+from sklearn.ensemble._hist_gradient_boosting.common import (
+    HISTOGRAM_DTYPE,
+    HISTOGRAM_DTYPE_WITH_VAR,
+)
 from sklearn.ensemble._hist_gradient_boosting.common import G_H_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import X_BINNED_DTYPE
 from sklearn.ensemble._hist_gradient_boosting.common import MonotonicConstraint
 from sklearn.ensemble._hist_gradient_boosting.splitting import (
     Splitter,
     compute_node_value,
+    SplitterWithVariance,
 )
-from sklearn.ensemble._hist_gradient_boosting.histogram import HistogramBuilder
+from sklearn.ensemble._hist_gradient_boosting.histogram import (
+    HistogramBuilder,
+    HistogramBuilderWithVariance,
+)
 from sklearn.utils._testing import skip_if_32bit
 from sklearn.utils._openmp_helpers import _openmp_effective_n_threads
 
@@ -18,8 +25,14 @@ n_threads = _openmp_effective_n_threads()
 
 
 @pytest.mark.parametrize("n_bins", [3, 32, 256])
-@pytest.mark.parametrize("with_variance", [True, False])
-def test_histogram_split(n_bins, with_variance):
+@pytest.mark.parametrize(
+    "with_variance, hist_build_func, splitter_func",
+    [
+        (True, HistogramBuilderWithVariance, SplitterWithVariance),
+        (False, HistogramBuilder, Splitter),
+    ],
+)
+def test_histogram_split(n_bins, with_variance, hist_build_func, splitter_func):
     rng = np.random.RandomState(42)
     feature_idx = 0
     l2_regularization = 0
@@ -46,14 +59,13 @@ def test_histogram_split(n_bins, with_variance):
             sum_gradients_squared = np.square(all_gradients).sum()
             sum_gradients_hessians = (all_gradients * all_hessians).sum()
 
-            builder = HistogramBuilder(
+            builder = hist_build_func(
                 X_binned,
                 n_bins,
                 all_gradients,
                 all_hessians,
                 hessians_are_constant,
                 n_threads,
-                with_variance,
             )
             n_bins_non_missing = np.array(
                 [n_bins - 1] * X_binned.shape[1], dtype=np.uint32
@@ -64,7 +76,7 @@ def test_histogram_split(n_bins, with_variance):
             )
             is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
             missing_values_bin_idx = n_bins - 1
-            splitter = Splitter(
+            splitter = splitter_func(
                 X_binned,
                 n_bins_non_missing,
                 missing_values_bin_idx,
@@ -76,23 +88,31 @@ def test_histogram_split(n_bins, with_variance):
                 min_samples_leaf,
                 min_gain_to_split,
                 hessians_are_constant,
-                with_variance,
             )
 
             histograms = builder.compute_histograms_brute(sample_indices)
             value = compute_node_value(
                 sum_gradients, sum_hessians, -np.inf, np.inf, l2_regularization
             )
-            split_info = splitter.find_node_split(
-                sample_indices.shape[0],
-                histograms,
-                sum_gradients,
-                sum_hessians,
-                sum_gradients_squared,
-                sum_hessians_squared,
-                sum_gradients_hessians,
-                value,
-            )
+            if with_variance:
+                split_info = splitter.find_node_split(
+                    sample_indices.shape[0],
+                    histograms,
+                    sum_gradients,
+                    sum_hessians,
+                    sum_gradients_squared,
+                    sum_hessians_squared,
+                    sum_gradients_hessians,
+                    value,
+                )
+            else:
+                split_info = splitter.find_node_split(
+                    sample_indices.shape[0],
+                    histograms,
+                    sum_gradients,
+                    sum_hessians,
+                    value,
+                )
 
             assert split_info.bin_idx == true_bin
             assert split_info.gain >= 0
@@ -107,8 +127,17 @@ def test_histogram_split(n_bins, with_variance):
 
 @skip_if_32bit
 @pytest.mark.parametrize("constant_hessian", [True, False])
-@pytest.mark.parametrize("with_variance", [True, False])
-def test_gradient_and_hessian_sanity(constant_hessian, with_variance):
+@pytest.mark.parametrize("n_bins", [3, 32, 256])
+@pytest.mark.parametrize(
+    "with_variance, hist_build_func, splitter_func",
+    [
+        (True, HistogramBuilderWithVariance, SplitterWithVariance),
+        (False, HistogramBuilder, Splitter),
+    ],
+)
+def test_gradient_and_hessian_sanity(
+    constant_hessian, n_bins, with_variance, hist_build_func, splitter_func
+):
     # This test checks that the values of gradients and hessians are
     # consistent in different places:
     # - in split_info: si.sum_gradient_left + si.sum_gradient_right must be
@@ -146,14 +175,13 @@ def test_gradient_and_hessian_sanity(constant_hessian, with_variance):
         sum_hessians_squared = np.square(all_hessians).sum()
         sum_gradients_hessians = (all_gradients * all_hessians).sum()
 
-    builder = HistogramBuilder(
+    builder = hist_build_func(
         X_binned,
         n_bins,
         all_gradients,
         all_hessians,
         constant_hessian,
         n_threads,
-        with_variance,
     )
     n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1], dtype=np.uint32)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
@@ -162,7 +190,7 @@ def test_gradient_and_hessian_sanity(constant_hessian, with_variance):
     )
     is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
     missing_values_bin_idx = n_bins - 1
-    splitter = Splitter(
+    splitter = splitter_func(
         X_binned,
         n_bins_non_missing,
         missing_values_bin_idx,
@@ -175,23 +203,31 @@ def test_gradient_and_hessian_sanity(constant_hessian, with_variance):
         min_gain_to_split,
         constant_hessian,
         n_threads,
-        with_variance,
     )
 
     hists_parent = builder.compute_histograms_brute(sample_indices)
     value_parent = compute_node_value(
         sum_gradients, sum_hessians, -np.inf, np.inf, l2_regularization
     )
-    si_parent = splitter.find_node_split(
-        n_samples,
-        hists_parent,
-        sum_gradients,
-        sum_hessians,
-        sum_gradients_squared,
-        sum_hessians_squared,
-        sum_gradients_hessians,
-        value_parent,
-    )
+    if with_variance:
+        si_parent = splitter.find_node_split(
+            n_samples,
+            hists_parent,
+            sum_gradients,
+            sum_hessians,
+            sum_gradients_squared,
+            sum_hessians_squared,
+            sum_gradients_hessians,
+            value_parent,
+        )
+    else:
+        si_parent = splitter.find_node_split(
+            n_samples,
+            hists_parent,
+            sum_gradients,
+            sum_hessians,
+            value_parent,
+        )
     sample_indices_left, sample_indices_right, _ = splitter.split_indices(
         si_parent, sample_indices
     )
@@ -212,26 +248,42 @@ def test_gradient_and_hessian_sanity(constant_hessian, with_variance):
         np.inf,
         l2_regularization,
     )
-    si_left = splitter.find_node_split(
-        n_samples,
-        hists_left,
-        si_parent.sum_gradient_left,
-        si_parent.sum_hessian_left,
-        si_parent.sum_gradient_squared_left,
-        si_parent.sum_hessian_squared_left,
-        si_parent.sum_gradient_hessian_left,
-        value_left,
-    )
-    si_right = splitter.find_node_split(
-        n_samples,
-        hists_right,
-        si_parent.sum_gradient_right,
-        si_parent.sum_hessian_right,
-        si_parent.sum_gradient_squared_right,
-        si_parent.sum_hessian_squared_right,
-        si_parent.sum_gradient_hessian_right,
-        value_right,
-    )
+    if with_variance:
+        si_left = splitter.find_node_split(
+            n_samples,
+            hists_left,
+            si_parent.sum_gradient_left,
+            si_parent.sum_hessian_left,
+            si_parent.sum_gradient_squared_left,
+            si_parent.sum_hessian_squared_left,
+            si_parent.sum_gradient_hessian_left,
+            value_left,
+        )
+        si_right = splitter.find_node_split(
+            n_samples,
+            hists_right,
+            si_parent.sum_gradient_right,
+            si_parent.sum_hessian_right,
+            si_parent.sum_gradient_squared_right,
+            si_parent.sum_hessian_squared_right,
+            si_parent.sum_gradient_hessian_right,
+            value_right,
+        )
+    else:
+        si_left = splitter.find_node_split(
+            n_samples,
+            hists_left,
+            si_parent.sum_gradient_left,
+            si_parent.sum_hessian_left,
+            value_left,
+        )
+        si_right = splitter.find_node_split(
+            n_samples,
+            hists_right,
+            si_parent.sum_gradient_right,
+            si_parent.sum_hessian_right,
+            value_right,
+        )
 
     # make sure that si.sum_gradient_left + si.sum_gradient_right have their
     # expected value, same for hessians
@@ -241,12 +293,17 @@ def test_gradient_and_hessian_sanity(constant_hessian, with_variance):
         (si_right, sample_indices_right),
     ):
         gradient = si.sum_gradient_right + si.sum_gradient_left
-        gradient_squared = si.sum_gradient_squared_right + si.sum_gradient_squared_left
         expected_gradient = all_gradients[indices].sum()
-        expected_gradient_squared = np.square(all_gradients[indices]).sum()
         hessian = si.sum_hessian_right + si.sum_hessian_left
-        hessian_squared = si.sum_hessian_squared_right + si.sum_hessian_squared_left
-        gradient_hessian = si.sum_gradient_hessian_right + si.sum_gradient_hessian_left
+        if with_variance:
+            gradient_squared = (
+                si.sum_gradient_squared_right + si.sum_gradient_squared_left
+            )
+            expected_gradient_squared = np.square(all_gradients[indices]).sum()
+            hessian_squared = si.sum_hessian_squared_right + si.sum_hessian_squared_left
+            gradient_hessian = (
+                si.sum_gradient_hessian_right + si.sum_gradient_hessian_left
+            )
         if constant_hessian:
             expected_hessian = indices.shape[0] * all_hessians[0]
             expected_hessian_squared = indices.shape[0] * np.square(all_hessians[0])
@@ -267,9 +324,17 @@ def test_gradient_and_hessian_sanity(constant_hessian, with_variance):
 
     # make sure sum of gradients in histograms are the same for all features,
     # and make sure they're equal to their expected value
-    hists_parent = np.asarray(hists_parent, dtype=HISTOGRAM_DTYPE)
-    hists_left = np.asarray(hists_left, dtype=HISTOGRAM_DTYPE)
-    hists_right = np.asarray(hists_right, dtype=HISTOGRAM_DTYPE)
+    hists_parent = np.asarray(
+        hists_parent,
+        dtype=HISTOGRAM_DTYPE_WITH_VAR if with_variance else HISTOGRAM_DTYPE,
+    )
+    hists_left = np.asarray(
+        hists_left, dtype=HISTOGRAM_DTYPE_WITH_VAR if with_variance else HISTOGRAM_DTYPE
+    )
+    hists_right = np.asarray(
+        hists_right,
+        dtype=HISTOGRAM_DTYPE_WITH_VAR if with_variance else HISTOGRAM_DTYPE,
+    )
     for hists, indices in (
         (hists_parent, sample_indices),
         (hists_left, sample_indices_left),
@@ -280,13 +345,17 @@ def test_gradient_and_hessian_sanity(constant_hessian, with_variance):
         # making sure that all the entries are equal across features.
         gradients = hists["sum_gradients"].sum(axis=1)  # shape = (n_features,)
         expected_gradient = all_gradients[indices].sum()  # scalar
-        gradients_squared = hists["sum_gradients_squared"].sum(
-            axis=1
-        )  # shape = (n_features,)
-        expected_gradient_squared = np.square(all_gradients[indices]).sum()  # scalar
         hessians = hists["sum_hessians"].sum(axis=1)
-        hessians_squared = hists["sum_hessians_squared"].sum(axis=1)
-        gradient_hessian = hists["sum_gradients_hessians"].sum(axis=1)
+
+        if with_variance:
+            gradients_squared = hists["sum_gradients_squared"].sum(
+                axis=1
+            )  # shape = (n_features,)
+            expected_gradient_squared = np.square(
+                all_gradients[indices]
+            ).sum()  # scalar
+            hessians_squared = hists["sum_hessians_squared"].sum(axis=1)
+            gradient_hessian = hists["sum_gradients_hessians"].sum(axis=1)
         if constant_hessian:
             # 0 is not the actual hessian, but it's not computed in this case
             expected_hessian = 0.0
@@ -307,8 +376,14 @@ def test_gradient_and_hessian_sanity(constant_hessian, with_variance):
             assert np.allclose(gradient_hessian, expected_gradient_hessian)
 
 
-@pytest.mark.parametrize("with_variance", [True, False])
-def test_split_indices(with_variance):
+@pytest.mark.parametrize(
+    "with_variance, hist_build_func, splitter_func",
+    [
+        (True, HistogramBuilderWithVariance, SplitterWithVariance),
+        (False, HistogramBuilder, Splitter),
+    ],
+)
+def test_split_indices(with_variance, hist_build_func, splitter_func):
     # Check that split_indices returns the correct splits and that
     # splitter.partition is consistent with what is returned.
     rng = np.random.RandomState(421)
@@ -344,14 +419,13 @@ def test_split_indices(with_variance):
     sum_gradients_hessians = all_gradients.sum() * 1
     hessians_are_constant = True
 
-    builder = HistogramBuilder(
+    builder = hist_build_func(
         X_binned,
         n_bins,
         all_gradients,
         all_hessians,
         hessians_are_constant,
         n_threads,
-        with_variance,
     )
     n_bins_non_missing = np.array([n_bins] * X_binned.shape[1], dtype=np.uint32)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
@@ -360,7 +434,7 @@ def test_split_indices(with_variance):
     )
     is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
     missing_values_bin_idx = n_bins - 1
-    splitter = Splitter(
+    splitter = splitter_func(
         X_binned,
         n_bins_non_missing,
         missing_values_bin_idx,
@@ -381,16 +455,25 @@ def test_split_indices(with_variance):
     value = compute_node_value(
         sum_gradients, sum_hessians, -np.inf, np.inf, l2_regularization
     )
-    si_root = splitter.find_node_split(
-        n_samples,
-        histograms,
-        sum_gradients,
-        sum_hessians,
-        sum_gradients_squared,
-        sum_hessians_squared,
-        sum_gradients_hessians,
-        value,
-    )
+    if with_variance:
+        si_root = splitter.find_node_split(
+            n_samples,
+            histograms,
+            sum_gradients,
+            sum_hessians,
+            sum_gradients_squared,
+            sum_hessians_squared,
+            sum_gradients_hessians,
+            value,
+        )
+    else:
+        si_root = splitter.find_node_split(
+            n_samples,
+            histograms,
+            sum_gradients,
+            sum_hessians,
+            value,
+        )
 
     # sanity checks for best split
     assert si_root.feature_idx == 1
@@ -411,8 +494,14 @@ def test_split_indices(with_variance):
     assert samples_right.shape[0] == si_root.n_samples_right
 
 
-@pytest.mark.parametrize("with_variance", [True, False])
-def test_min_gain_to_split(with_variance):
+@pytest.mark.parametrize(
+    "with_variance, hist_build_func, splitter_func",
+    [
+        (True, HistogramBuilderWithVariance, SplitterWithVariance),
+        (False, HistogramBuilder, Splitter),
+    ],
+)
+def test_min_gain_to_split(with_variance, hist_build_func, splitter_func):
     # Try to split a pure node (all gradients are equal, same for hessians)
     # with min_gain_to_split = 0 and make sure that the node is not split (best
     # possible gain = -1). Note: before the strict inequality comparison, this
@@ -438,14 +527,13 @@ def test_min_gain_to_split(with_variance):
     sum_gradients_hessians = (all_gradients * all_hessians).sum()
     hessians_are_constant = False
 
-    builder = HistogramBuilder(
+    builder = hist_build_func(
         X_binned,
         n_bins,
         all_gradients,
         all_hessians,
         hessians_are_constant,
         n_threads,
-        with_variance,
     )
     n_bins_non_missing = np.array([n_bins - 1] * X_binned.shape[1], dtype=np.uint32)
     has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
@@ -454,7 +542,7 @@ def test_min_gain_to_split(with_variance):
     )
     is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
     missing_values_bin_idx = n_bins - 1
-    splitter = Splitter(
+    splitter = splitter_func(
         X_binned,
         n_bins_non_missing,
         missing_values_bin_idx,
@@ -467,23 +555,31 @@ def test_min_gain_to_split(with_variance):
         min_gain_to_split,
         hessians_are_constant,
         n_threads,
-        with_variance,
     )
 
     histograms = builder.compute_histograms_brute(sample_indices)
     value = compute_node_value(
         sum_gradients, sum_hessians, -np.inf, np.inf, l2_regularization
     )
-    split_info = splitter.find_node_split(
-        n_samples,
-        histograms,
-        sum_gradients,
-        sum_hessians,
-        sum_gradients_squared,
-        sum_hessians_squared,
-        sum_gradients_hessians,
-        value,
-    )
+    if with_variance:
+        split_info = splitter.find_node_split(
+            n_samples,
+            histograms,
+            sum_gradients,
+            sum_hessians,
+            sum_gradients_squared,
+            sum_hessians_squared,
+            sum_gradients_hessians,
+            value,
+        )
+    else:
+        split_info = splitter.find_node_split(
+            n_samples,
+            histograms,
+            sum_gradients,
+            sum_hessians,
+            value,
+        )
     assert split_info.gain == -1
 
 
@@ -587,7 +683,13 @@ def test_min_gain_to_split(with_variance):
         ),  # missing values go to right
     ],
 )
-@pytest.mark.parametrize("with_variance", [True, False])
+@pytest.mark.parametrize(
+    "with_variance, hist_build_func, splitter_func",
+    [
+        (True, HistogramBuilderWithVariance, SplitterWithVariance),
+        (False, HistogramBuilder, Splitter),
+    ],
+)
 def test_splitting_missing_values(
     X_binned,
     all_gradients,
@@ -597,6 +699,8 @@ def test_splitting_missing_values(
     expected_bin_idx,
     expected_go_to_left,
     with_variance,
+    hist_build_func,
+    splitter_func,
 ):
     # Make sure missing values are properly supported.
     # we build an artificial example with gradients such that the best split
@@ -627,14 +731,13 @@ def test_splitting_missing_values(
     sum_gradients_hessians = all_gradients.sum() * 1
     hessians_are_constant = True
 
-    builder = HistogramBuilder(
+    builder = hist_build_func(
         X_binned,
         n_bins,
         all_gradients,
         all_hessians,
         hessians_are_constant,
         n_threads,
-        with_variance,
     )
     n_bins_non_missing = np.array([n_bins_non_missing], dtype=np.uint32)
     monotonic_cst = np.array(
@@ -642,7 +745,7 @@ def test_splitting_missing_values(
     )
     is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
     missing_values_bin_idx = n_bins - 1
-    splitter = Splitter(
+    splitter = splitter_func(
         X_binned,
         n_bins_non_missing,
         missing_values_bin_idx,
@@ -655,24 +758,31 @@ def test_splitting_missing_values(
         min_gain_to_split,
         hessians_are_constant,
         n_threads,
-        with_variance,
     )
 
     histograms = builder.compute_histograms_brute(sample_indices)
     value = compute_node_value(
         sum_gradients, sum_hessians, -np.inf, np.inf, l2_regularization
     )
-    split_info = splitter.find_node_split(
-        n_samples,
-        histograms,
-        sum_gradients,
-        sum_hessians,
-        sum_gradients_squared,
-        sum_hessians_squared,
-        sum_gradients_hessians,
-        value,
-    )
-
+    if with_variance:
+        split_info = splitter.find_node_split(
+            n_samples,
+            histograms,
+            sum_gradients,
+            sum_hessians,
+            sum_gradients_squared,
+            sum_hessians_squared,
+            sum_gradients_hessians,
+            value,
+        )
+    else:
+        split_info = splitter.find_node_split(
+            n_samples,
+            histograms,
+            sum_gradients,
+            sum_hessians,
+            value,
+        )
     assert split_info.bin_idx == expected_bin_idx
     if has_missing_values:
         assert split_info.missing_go_to_left == expected_go_to_left
@@ -721,9 +831,20 @@ def test_splitting_missing_values(
         ([9] * 11, True, 0),
     ],
 )
-@pytest.mark.parametrize("with_variance", [True, False])
+@pytest.mark.parametrize(
+    "with_variance, hist_build_func, splitter_func",
+    [
+        (True, HistogramBuilderWithVariance, SplitterWithVariance),
+        (False, HistogramBuilder, Splitter),
+    ],
+)
 def test_splitting_categorical_cat_smooth(
-    X_binned, has_missing_values, n_bins_non_missing, with_variance
+    X_binned,
+    has_missing_values,
+    n_bins_non_missing,
+    with_variance,
+    hist_build_func,
+    splitter_func,
 ):
     # Checks categorical splits are correct when the MIN_CAT_SUPPORT constraint
     # isn't respected: there are no splits
@@ -749,14 +870,13 @@ def test_splitting_categorical_cat_smooth(
     sum_gradients_hessians = all_gradients.sum() * 1
     hessians_are_constant = True
 
-    builder = HistogramBuilder(
+    builder = hist_build_func(
         X_binned,
         n_bins,
         all_gradients,
         all_hessians,
         hessians_are_constant,
         n_threads,
-        with_variance,
     )
 
     n_bins_non_missing = np.array([n_bins_non_missing], dtype=np.uint32)
@@ -766,7 +886,7 @@ def test_splitting_categorical_cat_smooth(
     is_categorical = np.ones_like(monotonic_cst, dtype=np.uint8)
     missing_values_bin_idx = n_bins - 1
 
-    splitter = Splitter(
+    splitter = splitter_func(
         X_binned,
         n_bins_non_missing,
         missing_values_bin_idx,
@@ -779,23 +899,31 @@ def test_splitting_categorical_cat_smooth(
         min_gain_to_split,
         hessians_are_constant,
         n_threads,
-        with_variance,
     )
 
     histograms = builder.compute_histograms_brute(sample_indices)
     value = compute_node_value(
         sum_gradients, sum_hessians, -np.inf, np.inf, l2_regularization
     )
-    split_info = splitter.find_node_split(
-        n_samples,
-        histograms,
-        sum_gradients,
-        sum_hessians,
-        sum_gradients_squared,
-        sum_hessians_squared,
-        sum_gradients_hessians,
-        value,
-    )
+    if with_variance:
+        split_info = splitter.find_node_split(
+            n_samples,
+            histograms,
+            sum_gradients,
+            sum_hessians,
+            sum_gradients_squared,
+            sum_hessians_squared,
+            sum_gradients_hessians,
+            value,
+        )
+    else:
+        split_info = splitter.find_node_split(
+            n_samples,
+            histograms,
+            sum_gradients,
+            sum_hessians,
+            value,
+        )
 
     # no split found
     assert split_info.gain == -1
@@ -920,7 +1048,13 @@ def _assert_categories_equals_bitset(categories, bitset):
         ),  # expected_missing_go_to_left
     ],
 )
-@pytest.mark.parametrize("with_variance", [True, False])
+@pytest.mark.parametrize(
+    "with_variance, hist_build_func, splitter_func",
+    [
+        (True, HistogramBuilderWithVariance, SplitterWithVariance),
+        (False, HistogramBuilder, Splitter),
+    ],
+)
 def test_splitting_categorical_sanity(
     X_binned,
     all_gradients,
@@ -930,6 +1064,8 @@ def test_splitting_categorical_sanity(
     has_missing_values,
     expected_missing_go_to_left,
     with_variance,
+    hist_build_func,
+    splitter_func,
 ):
     # Tests various combinations of categorical splits
 
@@ -955,14 +1091,13 @@ def test_splitting_categorical_sanity(
     sum_gradients_hessians = all_gradients.sum() * 1
     hessians_are_constant = True
 
-    builder = HistogramBuilder(
+    builder = hist_build_func(
         X_binned,
         n_bins,
         all_gradients,
         all_hessians,
         hessians_are_constant,
         n_threads,
-        with_variance,
     )
 
     n_bins_non_missing = np.array([n_bins_non_missing], dtype=np.uint32)
@@ -971,7 +1106,7 @@ def test_splitting_categorical_sanity(
     )
     is_categorical = np.ones_like(monotonic_cst, dtype=np.uint8)
 
-    splitter = Splitter(
+    splitter = splitter_func(
         X_binned,
         n_bins_non_missing,
         missing_values_bin_idx,
@@ -984,7 +1119,6 @@ def test_splitting_categorical_sanity(
         min_gain_to_split,
         hessians_are_constant,
         n_threads,
-        with_variance,
     )
 
     histograms = builder.compute_histograms_brute(sample_indices)
@@ -992,16 +1126,25 @@ def test_splitting_categorical_sanity(
     value = compute_node_value(
         sum_gradients, sum_hessians, -np.inf, np.inf, l2_regularization
     )
-    split_info = splitter.find_node_split(
-        n_samples,
-        histograms,
-        sum_gradients,
-        sum_hessians,
-        sum_gradients_squared,
-        sum_hessians_squared,
-        sum_gradients_hessians,
-        value,
-    )
+    if with_variance:
+        split_info = splitter.find_node_split(
+            n_samples,
+            histograms,
+            sum_gradients,
+            sum_hessians,
+            sum_gradients_squared,
+            sum_hessians_squared,
+            sum_gradients_hessians,
+            value,
+        )
+    else:
+        split_info = splitter.find_node_split(
+            n_samples,
+            histograms,
+            sum_gradients,
+            sum_hessians,
+            value,
+        )
 
     assert split_info.is_categorical
     assert split_info.gain > 0
@@ -1023,8 +1166,14 @@ def test_splitting_categorical_sanity(
     assert_array_equal(sample_indices[~left_mask], samples_right)
 
 
-@pytest.mark.parametrize("with_variance", [True, False])
-def test_split_interaction_constraints(with_variance):
+@pytest.mark.parametrize(
+    "with_variance, hist_build_func, splitter_func",
+    [
+        (True, HistogramBuilderWithVariance, SplitterWithVariance),
+        (False, HistogramBuilder, Splitter),
+    ],
+)
+def test_split_interaction_constraints(with_variance, hist_build_func, splitter_func):
     """Check that allowed_features are respected."""
     n_features = 4
     # features 1 and 2 are not allowed to be split on
@@ -1060,14 +1209,13 @@ def test_split_interaction_constraints(with_variance):
         sum_gradients_squared = (all_gradients**2).sum()
         sum_gradients_hessians = (all_gradients * all_hessians).sum()
 
-        builder = HistogramBuilder(
+        builder = hist_build_func(
             X_binned,
             n_bins,
             all_gradients,
             all_hessians,
             hessians_are_constant,
             n_threads,
-            with_variance,
         )
         n_bins_non_missing = np.array([n_bins] * X_binned.shape[1], dtype=np.uint32)
         has_missing_values = np.array([False] * X_binned.shape[1], dtype=np.uint8)
@@ -1076,7 +1224,7 @@ def test_split_interaction_constraints(with_variance):
         )
         is_categorical = np.zeros_like(monotonic_cst, dtype=np.uint8)
         missing_values_bin_idx = n_bins - 1
-        splitter = Splitter(
+        splitter = splitter_func(
             X_binned,
             n_bins_non_missing,
             missing_values_bin_idx,
@@ -1088,7 +1236,6 @@ def test_split_interaction_constraints(with_variance):
             min_samples_leaf,
             min_gain_to_split,
             hessians_are_constant,
-            with_variance,
         )
 
         assert np.all(sample_indices == splitter.partition)
@@ -1100,33 +1247,56 @@ def test_split_interaction_constraints(with_variance):
 
         # with all features allowed, feature 1 should be split on as it is the most
         # important one by construction of the gradients
-        si_root = splitter.find_node_split(
-            n_samples,
-            histograms,
-            sum_gradients,
-            sum_hessians,
-            sum_gradients_squared,
-            sum_hessians_squared,
-            sum_gradients_hessians,
-            value,
-            allowed_features=None,
-        )
-        assert si_root.feature_idx == 1
+        if with_variance:
+            si_root = splitter.find_node_split(
+                n_samples,
+                histograms,
+                sum_gradients,
+                sum_hessians,
+                sum_gradients_squared,
+                sum_hessians_squared,
+                sum_gradients_hessians,
+                value,
+                allowed_features=None,
+            )
+            assert si_root.feature_idx == 1
 
-        # only features 0 and 3 are allowed to be split on
-        si_root = splitter.find_node_split(
-            n_samples,
-            histograms,
-            sum_gradients,
-            sum_hessians,
-            sum_gradients_squared,
-            sum_hessians_squared,
-            sum_gradients_hessians,
-            value,
-            allowed_features=allowed_features,
-        )
-        split_features.append(si_root.feature_idx)
-        assert si_root.feature_idx in allowed_features
+            # only features 0 and 3 are allowed to be split on
+            si_root = splitter.find_node_split(
+                n_samples,
+                histograms,
+                sum_gradients,
+                sum_hessians,
+                sum_gradients_squared,
+                sum_hessians_squared,
+                sum_gradients_hessians,
+                value,
+                allowed_features=allowed_features,
+            )
+            split_features.append(si_root.feature_idx)
+            assert si_root.feature_idx in allowed_features
+        else:
+            si_root = splitter.find_node_split(
+                n_samples,
+                histograms,
+                sum_gradients,
+                sum_hessians,
+                value,
+                allowed_features=None,
+            )
+            assert si_root.feature_idx == 1
+
+            # only features 0 and 3 are allowed to be split on
+            si_root = splitter.find_node_split(
+                n_samples,
+                histograms,
+                sum_gradients,
+                sum_hessians,
+                value,
+                allowed_features=allowed_features,
+            )
+            split_features.append(si_root.feature_idx)
+            assert si_root.feature_idx in allowed_features
 
     # make sure feature 0 and feature 3 are split on in the constraint setting
     assert set(allowed_features) == set(split_features)

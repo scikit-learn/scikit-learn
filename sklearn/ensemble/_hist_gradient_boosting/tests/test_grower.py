@@ -81,7 +81,8 @@ def _check_children_consistency(parent, left, right):
         (256, True, "max_leaf_nodes", 0.1),
     ],
 )
-def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
+@pytest.mark.parametrize("with_variance", [True, False])
+def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage, with_variance):
     X_binned, all_gradients, all_hessians = _make_training_data(
         n_bins=n_bins, constant_hessian=constant_hessian
     )
@@ -99,6 +100,7 @@ def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
         n_bins=n_bins,
         shrinkage=shrinkage,
         min_samples_leaf=1,
+        with_variance=with_variance,
         **stopping_param,
     )
 
@@ -154,9 +156,13 @@ def test_grow_tree(n_bins, constant_hessian, stopping_param, shrinkage):
     assert grower.root.left_child.value == approx(shrinkage)
     assert grower.root.right_child.left_child.value == approx(shrinkage)
     assert grower.root.right_child.right_child.value == approx(-shrinkage, rel=1e-3)
+    # Assert the value of the variance
+    if with_variance:
+        assert grower.root.right_child.right_child.variance == approx(1e-15, rel=1e-3)
 
 
-def test_predictor_from_grower():
+@pytest.mark.parametrize("with_variance", [True, False])
+def test_predictor_from_grower(with_variance):
     # Build a tree on the toy 3-leaf dataset to extract the predictor.
     n_bins = 256
     X_binned, all_gradients, all_hessians = _make_training_data(n_bins=n_bins)
@@ -168,6 +174,7 @@ def test_predictor_from_grower():
         shrinkage=1.0,
         max_leaf_nodes=3,
         min_samples_leaf=5,
+        with_variance=with_variance,
     )
     grower.grow()
     assert grower.n_nodes == 5  # (2 decision nodes + 3 leaves)
@@ -205,8 +212,18 @@ def test_predictor_from_grower():
     assert np.allclose(predictions, expected_targets)
 
     # Check that training set can be recovered exactly:
-    predictions = predictor.predict_binned(X_binned, missing_values_bin_idx, n_threads)
-    assert np.allclose(predictions, -all_gradients)
+    if with_variance:
+        predictions, variances = predictor.predict_binned(
+            X_binned, missing_values_bin_idx, n_threads, return_var=True
+        )
+        assert np.allclose(predictions, -all_gradients)
+        # Because each leaf is pure, the variance should be zero (i.e. 1e-15)
+        assert np.allclose(variances, 1e-15)
+    else:
+        predictions = predictor.predict_binned(
+            X_binned, missing_values_bin_idx, n_threads
+        )
+        assert np.allclose(predictions, -all_gradients)
 
 
 @pytest.mark.parametrize(
@@ -390,7 +407,8 @@ def test_missing_value_predict_only():
     assert np.all(y_pred == prediction_main_path)
 
 
-def test_split_on_nan_with_infinite_values():
+@pytest.mark.parametrize("with_variance", [True, False])
+def test_split_on_nan_with_infinite_values(with_variance):
     # Make sure the split on nan situations are respected even when there are
     # samples with +inf values (we set the threshold to +inf when we have a
     # split on nan so this test makes sure this does not introduce edge-case
@@ -415,6 +433,7 @@ def test_split_on_nan_with_infinite_values():
         has_missing_values=has_missing_values,
         min_samples_leaf=1,
         n_threads=n_threads,
+        with_variance=with_variance,
     )
 
     grower.grow()
@@ -430,14 +449,29 @@ def test_split_on_nan_with_infinite_values():
     # Make sure in particular that the +inf sample is mapped to the left child
     # Note that lightgbm "fails" here and will assign the inf sample to the
     # right child, even though it's a "split on nan" situation.
-    predictions = predictor.predict(X, known_cat_bitsets, f_idx_map, n_threads)
-    predictions_binned = predictor.predict_binned(
-        X_binned,
-        missing_values_bin_idx=bin_mapper.missing_values_bin_idx_,
-        n_threads=n_threads,
-    )
-    np.testing.assert_allclose(predictions, -gradients)
-    np.testing.assert_allclose(predictions_binned, -gradients)
+    if with_variance:
+        predictions, variances = predictor.predict(
+            X, known_cat_bitsets, f_idx_map, n_threads, return_var=True
+        )
+        predictions_binned, variances_binned = predictor.predict_binned(
+            X_binned,
+            missing_values_bin_idx=bin_mapper.missing_values_bin_idx_,
+            n_threads=n_threads,
+            return_var=True,
+        )
+        np.testing.assert_allclose(predictions, -gradients)
+        np.testing.assert_allclose(predictions_binned, -gradients)
+        np.testing.assert_allclose(variances, 1e-15)
+        np.testing.assert_allclose(variances_binned, 1e-15)
+    else:
+        predictions = predictor.predict(X, known_cat_bitsets, f_idx_map, n_threads)
+        predictions_binned = predictor.predict_binned(
+            X_binned,
+            missing_values_bin_idx=bin_mapper.missing_values_bin_idx_,
+            n_threads=n_threads,
+        )
+        np.testing.assert_allclose(predictions, -gradients)
+        np.testing.assert_allclose(predictions_binned, -gradients)
 
 
 def test_grow_tree_categories():
