@@ -466,6 +466,22 @@ Changelog
   and will be removed in 1.4.
   :pr:`24630` by :user:`Rushil Desai <rusdes>`.
 
+:mod:`sklearn.mixture`
+......................
+
+- |Feature| :func:`mixture.GaussianMixture` now supports more robust initialization
+  via user provided callables passed into `init_params`.
+  :pr:`24812` by :user:`Emir Karamehmetoglu <emirkmo>`.
+
+- |Enhancement| :func:`mixture.GaussianMixture` now supports passing in `responsibilities_init`
+  to exactly initialize the EM algorithm with user provided responsibilities, calculating
+  the previously required `means_init`, `weights_init`, and `precisions_init` internally.
+  :pr:`24812` by :user:`Emir Karamehmetoglu <emirkmo>`.
+
+- |Feature| Added helper :func:`mixture.get_responsibilities` to generically calculate the
+  responsibilities from pre-computed fits, or for using as custom initialization.
+  :pr:`24812` by :user:`Emir Karamehmetoglu <emirkmo>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
