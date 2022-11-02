@@ -64,15 +64,13 @@ cdef class MiddleTermComputer{{name_suffix}}:
 
         Parameters
         ----------
-        X : {ndarray, sparse matrix} of shape (n_samples_X, n_features)
+        X : ndarray or CSR sparse matrix of shape (n_samples_X, n_features)
             Input data.
             If provided as a ndarray, it must be C-contiguous.
-            If provided as a sparse matrix, it must be in CSR format.
 
-        Y : {ndarray, sparse matrix} of shape (n_samples_Y, n_features)
+        Y : ndarray or CSR sparse matrix of shape (n_samples_Y, n_features)
             Input data.
             If provided as a ndarray, it must be C-contiguous.
-            If provided as a sparse matrix, it must be in CSR format.
 
         Returns
         -------

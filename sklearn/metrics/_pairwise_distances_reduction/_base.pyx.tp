@@ -108,7 +108,7 @@ from ._datasets_pair cimport DatasetsPair{{name_suffix}}
 
 
 cpdef DTYPE_t[::1] _sqeuclidean_row_norms{{name_suffix}}(
-    X,
+    const {{INPUT_DTYPE_t}}[:, ::1] X,
     ITYPE_t num_threads,
 ):
     return _sqeuclidean_row_norms{{name_suffix}}_dense(X, num_threads)
