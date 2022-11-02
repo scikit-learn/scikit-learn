@@ -40,13 +40,14 @@ def _check_shape(param, param_shape, name):
             % (name, param_shape, param.shape)
         )
 
+
 def get_responsibilities(n_samples, n_components, indices=None, labels=None):
-    """Create correct shaped responsibilities from array of `indices` or `labels`. 
-    
+    """Create correct shaped responsibilities from array of `indices` or `labels`.
+
     Responsibilities are 1 for the component of the corresponding index or label,
     and 0 otherwise. Note that `n_components` is not the number of features
     in the data, but the number of components in the mixture model. Responsibilities
-    can be used to calculate initial weights, means, and precisions of the mixture 
+    can be used to calculate initial weights, means, and precisions of the mixture
     model components. Either `indices` or `labels` must be provided.
 
     Parameters
@@ -58,13 +59,13 @@ def get_responsibilities(n_samples, n_components, indices=None, labels=None):
         Number of components.
 
     indices : array-like of shape (n_components,), default=None.
-        The index location of the chosen components (centers) in the data array X 
-        of shape (n_samples, n_components), will be set to 1 in the output. 
+        The index location of the chosen components (centers) in the data array X
+        of shape (n_samples, n_components), will be set to 1 in the output.
         Either `indices` or `labels` must be provided.
 
-    labels : array-like of shape (n_samples,), default=None. 
+    labels : array-like of shape (n_samples,), default=None.
         Will be used over `indices` if not `None`. The labels i=0 to n_components-1
-        will be set to 1 for each sample in the ouput. 
+        will be set to 1 for each sample in the ouput.
         Either `indices` or `labels` must be provided.
 
     Returns
@@ -74,12 +75,14 @@ def get_responsibilities(n_samples, n_components, indices=None, labels=None):
     """
     resp = np.zeros((n_samples, n_components))
     if labels is not None:
-        _check_shape(labels, (n_samples,), 'labels')  # will raise if incompatible    
+        _check_shape(labels, (n_samples,), "labels")  # will raise if incompatible
         resp[np.arange(n_samples), labels] = 1
     elif indices is not None:
         resp[indices, np.arange(n_components)] = 1
     else:
-        raise ValueError('Either `indices` or `labels` must be provided, both were `None`.')
+        raise ValueError(
+            "Either `indices` or `labels` must be provided, both were `None`."
+        )
     return resp
 
 

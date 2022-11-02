@@ -1212,7 +1212,9 @@ def callable_init(X, n_components, n_samples, rng):
     kmean_.fit(X)
     labels = kmean_.labels_
 
-    return get_responsibilities(n_samples=n_samples, n_components=n_components, labels=labels)
+    return get_responsibilities(
+        n_samples=n_samples, n_components=n_components, labels=labels
+    )
 
 
 @pytest.mark.parametrize(
@@ -1226,7 +1228,9 @@ def test_init_means_not_duplicated(init_params, global_random_seed):
     X = rand_data.X["full"]
 
     if init_params == "callable":
-        init_params = partial(callable_init, n_components=n_components, n_samples=X.shape[0], rng=rng)
+        init_params = partial(
+            callable_init, n_components=n_components, n_samples=X.shape[0], rng=rng
+        )
 
     gmm = GaussianMixture(
         n_components=n_components, init_params=init_params, random_state=rng, max_iter=0
@@ -1249,7 +1253,9 @@ def test_means_for_all_inits(init_params, global_random_seed):
     X = rand_data.X["full"]
 
     if init_params == "callable":
-        init_params = partial(callable_init, n_components=n_components, n_samples=X.shape[0], rng=rng)
+        init_params = partial(
+            callable_init, n_components=n_components, n_samples=X.shape[0], rng=rng
+        )
 
     gmm = GaussianMixture(
         n_components=n_components, init_params=init_params, random_state=rng

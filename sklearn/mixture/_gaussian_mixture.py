@@ -726,11 +726,8 @@ class GaussianMixture(BaseMixture):
 
         if self.responsibilities_init is not None:
             self.responsibilities_init = _check_responsibilities(
-                self.responsibilities_init,
-                self.n_components,
-                n_samples
+                self.responsibilities_init, self.n_components, n_samples
             )
-
 
     def _initialize(self, X, resp):
         """Initialization of the Gaussian mixture parameters.
@@ -743,7 +740,9 @@ class GaussianMixture(BaseMixture):
         """
         n_samples, _ = X.shape
 
-        resp = resp if self.responsibilities_init is None else self.responsibilities_init
+        resp = (
+            resp if self.responsibilities_init is None else self.responsibilities_init
+        )
         weights, means, covariances = _estimate_gaussian_parameters(
             X, resp, self.reg_covar, self.covariance_type
         )
