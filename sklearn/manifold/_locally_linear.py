@@ -301,9 +301,9 @@ def locally_linear_embedding(
     .. [2] Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
         linear embedding techniques for high-dimensional data.
         Proc Natl Acad Sci U S A.  100:5591 (2003).
-    .. [3] Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
+    .. [3] `Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
         Embedding Using Multiple Weights.
-        https://citeseerx.ist.psu.edu/doc_view/pid/0b060fdbd92cbcc66b383bcaa9ba5e5e624d7ee3
+        <https://citeseerx.ist.psu.edu/doc_view/pid/0b060fdbd92cbcc66b383bcaa9ba5e5e624d7ee3>`_
     .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
@@ -668,9 +668,9 @@ class LocallyLinearEmbedding(
     .. [2] Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
         linear embedding techniques for high-dimensional data.
         Proc Natl Acad Sci U S A.  100:5591 (2003).
-    .. [3] Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
+    .. [3] `Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
         Embedding Using Multiple Weights.
-        https://citeseerx.ist.psu.edu/doc_view/pid/0b060fdbd92cbcc66b383bcaa9ba5e5e624d7ee3
+        <https://citeseerx.ist.psu.edu/doc_view/pid/0b060fdbd92cbcc66b383bcaa9ba5e5e624d7ee3>`_
     .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
