@@ -1377,7 +1377,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         used when computing the standard deviations of the predictions. If None,
         defaults to np.log10(n_samples_train) / 100. Must be between -1 and 1.
         Only used in Regressor models..
-    studentt_degrees_of_freedom : int, default=3.
+    studentt_degrees_of_freedom : int, default=3
         Degrees of freedom, only used for Student-t distribution when sampling
         probabilistic predictions using the `sample` method.
 

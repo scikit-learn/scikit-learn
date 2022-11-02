@@ -293,7 +293,7 @@ plt.show()
 # a bit better, however it also seems to miss some of the points at the bottom
 # of the curve.
 #
-# Let's check the calibration of the confidence intervals on the test set
+# Let's check the calibration of the confidence intervals on the test set.
 y_mean, y_std = all_models["mse"].predict(X_test, return_std=True)
 all_models["mse"].distribution = "normal"
 y_dist_test_normal = all_models["mse"].sample(y_mean, y_std, n_estimates=1_000)
@@ -319,9 +319,9 @@ for i in range(n_quantile_pairs):
         f" Gumbel distribution   : {cov_fraction_gumbel*100:0.0f}%"
     )
 # %%
-# The calibration of the Gumbel is slightly worse than the Normal. Let's see
-# whether we can further improve performance by tuning hyperparameters of
-# our model.
+# The calibration of the Gumbel is slightly worse than the Normal, mostly
+# at the larger confidence interval sizes. Let's see whether we can further
+# improve performance by tuning hyperparameters of our model.
 #
 # Tuning hyperparameters of our probabilistic predictions
 # -------------------------------------------------------
@@ -330,7 +330,7 @@ for i in range(n_quantile_pairs):
 # 1. `tree_correlation` This value embodies the correlation we assume to exist
 # between subsequent trees in the tree ensemble, and it is used to combine the
 # variances of all the leaf values of every separate tree. By default, it is
-# set at np.log10(n_training_samples) / 100.
+# set at `np.log10(n_training_samples) / 100`.
 # 2. `distribution` This is our distribution of choice that we choose to
 # sample from.
 #
@@ -362,6 +362,8 @@ class _ProbabilisticScorer(_BaseScorer):
         return self._sign * self._score_func(y_true, yhat_dist)
 
 
+# Note: the below function is quite slow; to speed it up it is recommended to use
+# e.g. Numba (just add @njit above the function definition) to speed it up
 def crps_score(y, yhat_dist):
     """Calculate the empirical Continuously Ranked Probability Score (CRPS)
     for a set of forecasts for a number of samples (lower is better).
@@ -485,9 +487,15 @@ ax[1].set_title("Optimized hyperparameters")
 plt.show()
 # %%
 # We can see that our optimized probabilistic forecast tracks the
-# distribution of output values a bit better.
+# distribution of output values a bit better. The optimized parameters are:
+
+search.best_params_
+
+# %%
+# Our optimization procedure also picked the Gumbel distribution as the
+# distribution that best fits the data.
 #
-# Let's check the calibration of the confidence intervals on the test set
+# Let's check the calibration of the confidence intervals on the test set.
 y_mean, y_std = all_models["mse"].predict(X_test, return_std=True)
 y_dist_test_unoptimized = all_models["mse"].sample(y_mean, y_std, n_estimates=1_000)
 y_mean, y_std = search.best_estimator_.predict(X_test, return_std=True)
@@ -512,6 +520,7 @@ for i in range(n_quantile_pairs):
         f"  Optimized hyperparameters   : {cov_fraction_gumbel*100:0.0f}%"
     )
 
+# %%
 # The coverage overall seems quite similar compared to our base case, except
 # at the smaller confidence intervals, where the optimized version seems
 # better.
@@ -522,6 +531,11 @@ for i in range(n_quantile_pairs):
 crps_unoptimized = crps_score(y_test, y_dist_test_unoptimized)
 crps_optimized = crps_score(y_test, y_dist_test_optimized)
 
+print(
+    f"Unoptimized CRPS: {crps_unoptimized:.2f} \nOptimized CRPS  : {crps_optimized:.2f}"
+)
+
+# %%
 # We find that the optimized CRPS is lower than the unoptimized CRPS, which
 # means that our optimized model better captures the true distribution than
 # the unoptimized version in terms of CRPS, which is what we aimed for!
