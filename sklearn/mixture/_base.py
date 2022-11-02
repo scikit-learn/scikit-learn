@@ -148,7 +148,6 @@ class BaseMixture(DensityMixin, BaseEstimator, metaclass=ABCMeta):
             # Future child Mixture might have different shape requirements, so
             # `_check_shape` should only be checked in child, such as in GMM,
             # at _check_parameters. See `get_responsibilities` for help.
-            # @TODO: Add possibility to directly pass in resp.
         ],
         "random_state": ["random_state"],
         "warm_start": ["boolean"],

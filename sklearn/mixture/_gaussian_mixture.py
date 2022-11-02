@@ -514,8 +514,8 @@ class GaussianMixture(BaseMixture):
         .. versionchanged:: v1.1
             `init_params` now accepts 'random_from_data' and 'k-means++' as
             initialization methods.
-        .. versionchanged:: v1.X  # @TODO: replace with version number for docs.
-            `init_params` now accepts a callable which takes in array-like of shape 
+        .. versionchanged:: v1.2
+            `init_params` now also accepts a callable which takes in array-like of shape 
             (n_samples, n_features) and returns array-like of (n_samples, n_components)
             as initialization method.
 
