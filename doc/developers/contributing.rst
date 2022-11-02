@@ -713,7 +713,7 @@ Building the documentation requires installing some additional packages:
 
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
                 scikit-image packaging seaborn sphinx-prompt \
-                sphinxext-opengraph
+                sphinxext-opengraph plotly
 
 To build the documentation, you need to be in the ``doc`` folder:
 

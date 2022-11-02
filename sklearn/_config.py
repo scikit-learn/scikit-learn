@@ -15,6 +15,7 @@ _global_config = {
     "enable_cython_pairwise_dist": True,
     "array_api_dispatch": False,
     "engine_provider": (),
+    "transform_output": "default",
 }
 _threadlocal = threading.local()
 
@@ -54,6 +55,7 @@ def set_config(
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
     engine_provider=None,
+    transform_output=None,
 ):
     """Set global scikit-learn configuration
 
@@ -131,6 +133,18 @@ def set_config(
 
         .. versionadded:: 1.3
 
+    transform_output : str, default=None
+        Configure output of `transform` and `fit_transform`.
+
+        See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
+        for an example on how to use the API.
+
+        - `"default"`: Default output format of a transformer
+        - `"pandas"`: DataFrame output
+        - `None`: Transform configuration is unchanged
+
+        .. versionadded:: 1.2
+
     See Also
     --------
     config_context : Context manager for global scikit-learn configuration.
@@ -154,6 +168,8 @@ def set_config(
         local_config["array_api_dispatch"] = array_api_dispatch
     if engine_provider is not None:
         local_config["engine_provider"] = engine_provider
+    if transform_output is not None:
+        local_config["transform_output"] = transform_output
 
 
 @contextmanager
@@ -167,6 +183,7 @@ def config_context(
     enable_cython_pairwise_dist=None,
     array_api_dispatch=None,
     engine_provider=None,
+    transform_output=None,
 ):
     """Context manager for global scikit-learn configuration.
 
@@ -243,6 +260,18 @@ def config_context(
 
         .. versionadded:: 1.3
 
+    transform_output : str, default=None
+        Configure output of `transform` and `fit_transform`.
+
+        See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
+        for an example on how to use the API.
+
+        - `"default"`: Default output format of a transformer
+        - `"pandas"`: DataFrame output
+        - `None`: Transform configuration is unchanged
+
+        .. versionadded:: 1.2
+
     Yields
     ------
     None.
@@ -280,6 +309,7 @@ def config_context(
         enable_cython_pairwise_dist=enable_cython_pairwise_dist,
         array_api_dispatch=array_api_dispatch,
         engine_provider=engine_provider,
+        transform_output=transform_output,
     )
 
     try:

@@ -9,9 +9,8 @@ import warnings
 import numpy as np
 from scipy import sparse
 
-from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
+from ..base import BaseEstimator, TransformerMixin, OneToOneFeatureMixin
 from ..utils import check_array, is_scalar_nan
-from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
 from ..utils._param_validation import Interval, StrOptions, Hidden
@@ -1021,47 +1020,6 @@ class OneHotEncoder(_BaseEncoder):
 
         return X_tr
 
-    @deprecated(
-        "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. Please use get_feature_names_out instead."
-    )
-    def get_feature_names(self, input_features=None):
-        """Return feature names for output features.
-
-        For a given input feature, if there is an infrequent category, the most
-        'infrequent_sklearn' will be used as a feature name.
-
-        Parameters
-        ----------
-        input_features : list of str of shape (n_features,)
-            String names for input features if available. By default,
-            "x0", "x1", ... "xn_features" is used.
-
-        Returns
-        -------
-        output_feature_names : ndarray of shape (n_output_features,)
-            Array of feature names.
-        """
-        check_is_fitted(self)
-        cats = [
-            self._compute_transformed_categories(i)
-            for i, _ in enumerate(self.categories_)
-        ]
-        if input_features is None:
-            input_features = ["x%d" % i for i in range(len(cats))]
-        elif len(input_features) != len(cats):
-            raise ValueError(
-                "input_features should have length equal to number of "
-                "features ({}), got {}".format(len(cats), len(input_features))
-            )
-
-        feature_names = []
-        for i in range(len(cats)):
-            names = [input_features[i] + "_" + str(t) for t in cats[i]]
-            feature_names.extend(names)
-
-        return np.array(feature_names, dtype=object)
-
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
@@ -1097,7 +1055,7 @@ class OneHotEncoder(_BaseEncoder):
         return np.array(feature_names, dtype=object)
 
 
-class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
+class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     """
     Encode categorical features as an integer array.
 
