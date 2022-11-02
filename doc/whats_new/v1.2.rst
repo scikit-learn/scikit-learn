@@ -220,7 +220,7 @@ Changelog
 - |Enhancement| :func:`datasets.dump_svmlight_file` is now accelerated with a
   Cython implementation, providing 2-4x speedups.
   :pr:`23127` by :user:`Meekail Zain <micky774>`
-  
+
 - |Enhancement| Path-like objects, such as those created with pathlib are now
   allowed as paths in :func:`datasets.load_svmlight_file` and
   :func:`datasets.load_svmlight_files`.
@@ -297,6 +297,12 @@ Changelog
   :pr:`24146` by :user:`Nicolas Peretti <nicoperetti>`,
   :user:`Nestor Navarro <nestornav>`, :user:`Nati Tomattis <natitomattis>`,
   and :user:`Vincent Maladiere <Vincent-Maladiere>`.
+
+- |Enhancement| :class:`ensemble.HistGradientBoostingRegressor` now includes the
+  possibility to produce probabilistic estimates by storing the variances of the
+  estimates during training by setting `with_variance=True`. Probabilistic estimates
+  can be subsequently generated using the new `sample` method.
+  :pr:`24810` by :user:`Olivier Sprangers <elephaint>`.
 
 - |Fix| Fixed the issue where :class:`ensemble.AdaBoostClassifier` outputs
   NaN in feature importance when fitted with very small sample weight.
