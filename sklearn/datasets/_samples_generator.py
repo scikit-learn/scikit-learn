@@ -48,6 +48,7 @@ def make_classification(
     n_clusters_per_class=2,
     weights=None,
     flip_y=0.01,
+    permute_y=False,
     class_sep=1.0,
     hypercube=True,
     shift=0.0,
@@ -122,6 +123,12 @@ def make_classification(
         values introduce noise in the labels and make the classification
         task harder. Note that the default setting flip_y > 0 might lead
         to less than ``n_classes`` in y in some cases.
+
+    permute_y : bool, default=False
+        If True and `flip_y > 0`, then labels are permuted instead of assigned
+        randomly, which perverse `n_classes` in y.
+
+        .. versionadded: 1.2
 
     class_sep : float, default=1.0
         The factor multiplying the hypercube size.  Larger values spread
@@ -265,7 +272,10 @@ def make_classification(
     # Randomly replace labels
     if flip_y >= 0.0:
         flip_mask = generator.uniform(size=n_samples) < flip_y
-        y[flip_mask] = generator.randint(n_classes, size=flip_mask.sum())
+        if permute_y:
+            y[flip_mask] = generator.permutation(y[flip_mask])
+        else:
+            y[flip_mask] = generator.randint(n_classes, size=flip_mask.sum())
 
     # Randomly shift and scale
     if shift is None:

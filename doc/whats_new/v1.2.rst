@@ -226,6 +226,10 @@ Changelog
   :func:`datasets.load_svmlight_files`.
   :pr:`19075` by :user:`Carlos Ramos Carreño <vnmabus>`
 
+- |Enhancement| Introduces `permute_y` to :func:`datasets.make_classification`,
+  which permutes a fraction of `y` according to `flip_y`, which perverse
+  `n_classes` in y. :pr:`17052` by `Thomas Fan`_.
+
 :mod:`sklearn.decomposition`
 ............................
 
