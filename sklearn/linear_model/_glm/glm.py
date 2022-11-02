@@ -610,15 +610,13 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
 
 
 class GammaRegressor(_GeneralizedLinearRegressor):
-    r"""Generalized Linear Model with a Gamma distribution.
+    """Generalized Linear Model with a Gamma distribution.
 
     This regressor uses the 'log' link function.
-    Its optimization objective is
+    Its optimization objective is::
 
-    .. math::
-
-        \sum_i (Xw_i + y_i  \exp(-Xw_i) - \log(y_i) - 1)
-        + \frac{\alpha}{2} ||w||_2^2
+        sum(Xw_i + y_i * exp(-Xw_i) - log(y_i) - 1)
+        + (1/2) * alpha ||w||_2^2
 
     Read more in the :ref:`User Guide <Generalized_linear_regression>`.
 
@@ -631,11 +629,11 @@ class GammaRegressor(_GeneralizedLinearRegressor):
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
-        Values of ``alpha`` must be in the range `[0.0, inf)`.
+        Values of `alpha` must be in the range `[0.0, inf)`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added to the linear predictor ``X @ coef_ + intercept_``.
+        added to the linear predictor `X @ coef_ + intercept_`.
 
     solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
@@ -663,7 +661,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
 
     warm_start : bool, default=False
         If set to ``True``, reuse the solution of the previous call to ``fit``
-        as initialization for ``coef_`` and ``intercept_``.
+        as initialization for `coef_` and `intercept_`.
 
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
@@ -672,8 +670,8 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     Attributes
     ----------
     coef_ : array of shape (n_features,)
-        Estimated coefficients for the linear predictor (``X @ coef_ +
-        intercept_``) in the GLM.
+        Estimated coefficients for the linear predictor (`X @ coef_ +
+        intercept_`) in the GLM.
 
     intercept_ : float
         Intercept (a.k.a. bias) added to linear predictor.
