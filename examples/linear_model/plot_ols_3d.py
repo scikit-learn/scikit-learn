@@ -60,9 +60,9 @@ def plot_figs(fig_num, elev, azim, X_train, clf):
     ax.set_xlabel("X_1")
     ax.set_ylabel("X_2")
     ax.set_zlabel("Y")
-    ax.w_xaxis.set_ticklabels([])
-    ax.w_yaxis.set_ticklabels([])
-    ax.w_zaxis.set_ticklabels([])
+    ax.xaxis.set_ticklabels([])
+    ax.yaxis.set_ticklabels([])
+    ax.zaxis.set_ticklabels([])
 
 
 # Generate the three different figures from different views
