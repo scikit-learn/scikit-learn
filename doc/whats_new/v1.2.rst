@@ -487,6 +487,13 @@ Changelog
   scores will all be set to the maximum possible rank.
   :pr:`24543` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| Adds `'walk_forward'` feature to
+  :class:`model_selection.TimeSeriesSplit`. This feature enables rolling window
+  support, enabled by passing the value of `'walk_forward'` for the `n_splits`
+  variable.
+  :pr:`23780` by :user:`Sean Atukorala <ShehanAT>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.multioutput`
 ..........................
 
@@ -614,14 +621,6 @@ Changelog
 
 - |FIX| :func:`utils.estimator_checks.check_estimator` now takes into account
   the `requires_positive_X` tag correctly. :pr:`24667` by `Thomas Fan`_.
-
-:mod:`sklearn.model_selection`
-......................
-
-- |Enhancement| Adds `'walk_forward'` feature to :class:`model_selection.TimeSeriesSplit`.
-  This feature enables rolling window support, enabled by passing the value of `'walk_forward'`
-  for the `n_splits` variable
-  :pr:`23780` by :user:`Sean Atukorala <ShehanAT>` and :user:`Guillaume Lemaitre <glemaitre>`
 
 Code and Documentation Contributors
 -----------------------------------
