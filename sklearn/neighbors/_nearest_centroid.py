@@ -13,7 +13,7 @@ from numbers import Real
 from scipy import sparse as sp
 
 from ..base import BaseEstimator, ClassifierMixin
-from ..metrics.pairwise import pairwise_distances
+from ..metrics.pairwise import pairwise_distances_argmin
 from ..preprocessing import LabelEncoder
 from ..utils.validation import check_is_fitted
 from ..utils.sparsefuncs import csc_median_axis_0
@@ -234,5 +234,5 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
 
         X = self._validate_data(X, accept_sparse="csr", reset=False)
         return self.classes_[
-            pairwise_distances(X, self.centroids_, metric=self.metric).argmin(axis=1)
+            pairwise_distances_argmin(X, self.centroids_, metric=self.metric)
         ]

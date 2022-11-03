@@ -737,8 +737,7 @@ def check_array(
         raise TypeError(
             "np.matrix is not supported. Please convert to a numpy array with "
             "np.asarray. For more information see: "
-            "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html",
-            FutureWarning,
+            "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html"
         )
 
     xp, is_array_api = get_namespace(array)
@@ -1141,13 +1140,18 @@ def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
     return y
 
 
-def column_or_1d(y, *, warn=False):
+def column_or_1d(y, *, dtype=None, warn=False):
     """Ravel column or 1d numpy array, else raises an error.
 
     Parameters
     ----------
     y : array-like
        Input data.
+
+    dtype : data-type, default=None
+        Data type for `y`.
+
+        .. versionadded:: 1.2
 
     warn : bool, default=False
        To control display of warnings.
@@ -1163,7 +1167,7 @@ def column_or_1d(y, *, warn=False):
         If `y` is not a 1D array or a 2D array with a single row or column.
     """
     xp, _ = get_namespace(y)
-    y = xp.asarray(y)
+    y = xp.asarray(y, dtype=dtype)
     shape = y.shape
     if len(shape) == 1:
         return _asarray_with_order(xp.reshape(y, -1), order="C", xp=xp)

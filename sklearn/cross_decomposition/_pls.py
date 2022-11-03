@@ -15,7 +15,7 @@ from scipy.linalg import svd
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
 from ..base import MultiOutputMixin
-from ..base import _ClassNamePrefixFeaturesOutMixin
+from ..base import ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_consistent_length
 from ..utils.fixes import sp_version
 from ..utils.fixes import parse_version
@@ -159,7 +159,7 @@ def _svd_flip_1d(u, v):
 
 
 class _PLS(
-    _ClassNamePrefixFeaturesOutMixin,
+    ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     RegressorMixin,
     MultiOutputMixin,
@@ -901,7 +901,7 @@ class CCA(_PLS):
         )
 
 
-class PLSSVD(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class PLSSVD(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Partial Least Square SVD.
 
     This transformer simply performs a SVD on the cross-covariance matrix

@@ -35,7 +35,7 @@ cdef class GEMMTermComputer{{name_suffix}}:
         vector[vector[DTYPE_t]] dist_middle_terms_chunks
 
 {{if upcast_to_float64}}
-        # Buffers for upcasting chunks of X and Y from 32bit to 64bit
+        # Buffers for upcasting chunks of X and Y from float32 to float64
         vector[vector[DTYPE_t]] X_c_upcast
         vector[vector[DTYPE_t]] Y_c_upcast
 {{endif}}
@@ -76,7 +76,7 @@ cdef class GEMMTermComputer{{name_suffix}}:
         ITYPE_t thread_num
     ) nogil
 
-    cdef DTYPE_t * _compute_distances_on_chunks(
+    cdef DTYPE_t * _compute_dist_middle_terms(
         self,
         ITYPE_t X_start,
         ITYPE_t X_end,

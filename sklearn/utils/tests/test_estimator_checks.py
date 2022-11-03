@@ -36,6 +36,7 @@ from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
 from sklearn.exceptions import SkipTestWarning
 from sklearn.utils.metaestimators import available_if
+from sklearn.utils.estimator_checks import check_decision_proba_consistency
 from sklearn.utils._param_validation import Interval, StrOptions
 
 from sklearn.utils.estimator_checks import (
@@ -402,6 +403,17 @@ class EstimatorMissingDefaultTags(BaseEstimator):
         return tags
 
 
+class RequiresPositiveXRegressor(LinearRegression):
+    def fit(self, X, y):
+        X, y = self._validate_data(X, y, multi_output=True)
+        if (X < 0).any():
+            raise ValueError("negative X values not supported!")
+        return super().fit(X, y)
+
+    def _more_tags(self):
+        return {"requires_positive_X": True}
+
+
 class RequiresPositiveYRegressor(LinearRegression):
     def fit(self, X, y):
         X, y = self._validate_data(X, y, multi_output=True)
@@ -573,6 +585,7 @@ def test_check_estimator():
 
     # doesn't error on binary_only tagged estimator
     check_estimator(TaggedBinaryClassifier())
+    check_estimator(RequiresPositiveXRegressor())
 
     # Check regressor with requires_positive_y estimator tag
     msg = "negative y values not supported!"
@@ -1158,3 +1171,13 @@ def test_check_outlier_contamination():
         detector = OutlierDetectorWithConstraint()
         with raises(AssertionError, match=err_msg):
             check_outlier_contamination(detector.__class__.__name__, detector)
+
+
+def test_decision_proba_tie_ranking():
+    """Check that in case with some probabilities ties, we relax the
+    ranking comparison with the decision function.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/24025
+    """
+    estimator = SGDClassifier(loss="log_loss")
+    check_decision_proba_consistency("SGDClassifier", estimator)
