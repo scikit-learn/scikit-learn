@@ -89,9 +89,8 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
         ):
             # Specialized implementation of RadiusNeighbors for the Euclidean
             # distance.
-            # This implementation processes the computation of the chunks of the
-            # distance using a decomposition of the chunks of the distance matrix
-            # for the Squared Euclidean distance.
+            # This implementation computes the distances by chunk using
+            # a decomposition of the Squared Euclidean distance.
             # This specialisation has an improved arithmetic intensity for both
             # the dense and sparse settings, allowing in most case speed-ups of
             # several orders of magnitude compared to the generic RadiusNeighbors

@@ -34,8 +34,10 @@ from scipy.sparse import issparse
 
 
 cdef class MiddleTermComputer{{name_suffix}}:
-    """Abstract base class for the `EuclideanDistance` specialisation
-    components wrapping the computation of the distance matrix chunks.
+    """Helper class to compute a Euclidean distance matrix in chunks. 
+
+    This is an abstract base class that is further specialized depending
+    on the type of data (dense or sparse).
 
     `EuclideanDistance` subclasses relies on the squared Euclidean
     distances between chunks of vectors X_c and Y_c using the
