@@ -906,13 +906,14 @@ To obtain a cross-validation with a constant number of samples in the training
 set in a rolling-window fashion, set the parameter `n_splits` to
 `"walk_forward"`. The cross-validation splits will therefore look like::
 
-  >>> tscv = TimeSeriesSplit(n_splits="walk_forward", max_train_size=2, test_size=1)
+  >>> tscv = TimeSeriesSplit(
+  ...    n_splits="walk_forward", max_train_size=2, test_size=1, gap=1
+  ... )
   >>> for train, test in tscv.split(X):
   ...     print(train, test)
-  [0 1] [2]
-  [1 2] [3]
-  [2 3] [4]
-  [3 4] [5]
+  [0 1] [3]
+  [1 2] [4]
+  [2 3] [5]
 
 A note on shuffling
 ===================
