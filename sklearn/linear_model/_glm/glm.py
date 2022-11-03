@@ -307,7 +307,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             coef = sol.solve(X, y, sample_weight)
             self.n_iter_ = sol.iteration
         else:
-            raise TypeError(f"Invalid solver={self.solver}.")
+            raise ValueError(f"Invalid solver={self.solver}.")
 
         if self.fit_intercept:
             self.intercept_ = coef[-1]
