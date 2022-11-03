@@ -2531,7 +2531,7 @@ def log_loss(
 
     eps : float or "auto", default="auto"
         Log loss is undefined for p=0 or p=1, so probabilities are
-        clipped to max(eps, min(1 - eps, p)). The default will depend on the
+        clipped to `max(eps, min(1 - eps, p))`. The default will depend on the
         data type of `y_pred` and set to `np.finfo(y_pred.dtype).eps`.
 
         .. versionadded:: 1.2
