@@ -17,6 +17,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.model_selection import cross_val_score
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.utils import compute_class_weight, _IS_32BIT
+from sklearn.utils._metadata_requests import process_routing
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils import shuffle
 from sklearn.linear_model import SGDClassifier
@@ -1986,12 +1987,31 @@ def test_warning_on_penalty_string_none():
         lr.fit(iris.data, target)
 
 
-def test_logistic_regression_cv_scorer_receives_sample_weight():
+def test_lr_cv_scorer_does_not_receive_sample_weight_when_score_request_is_not_set():
     X, y = make_classification(n_samples=10)
     sample_weight = np.ones(len(y))
     sample_weight[len(y) // 2 :] = 2
+    other_params = {}
+
+    scorer = get_scorer("accuracy")
+    lr_cv = LogisticRegressionCV(scoring=scorer)
+    routed_params = process_routing(
+        obj=lr_cv, method="fit", sample_weight=sample_weight, other_params=other_params
+    )
+    assert not routed_params.scorer.score
+
+
+def test_lr_cv_scorer_receives_sample_weight_when_score_request_is_set():
+    X, y = make_classification(n_samples=10)
+    sample_weight = np.ones(len(y))
+    sample_weight[len(y) // 2 :] = 2
+    other_params = {}
 
     scorer = get_scorer("accuracy")
     scorer.set_score_request(sample_weight=True)
     lr_cv = LogisticRegressionCV(scoring=scorer)
-    lr_cv.fit(X, y, sample_weight=sample_weight)
+    routed_params = process_routing(
+        obj=lr_cv, method="fit", sample_weight=sample_weight, other_params=other_params
+    )
+    assert routed_params.scorer.score
+    assert_array_equal(routed_params.scorer.score["sample_weight"], sample_weight)
