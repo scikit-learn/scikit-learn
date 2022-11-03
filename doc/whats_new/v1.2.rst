@@ -275,6 +275,9 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
+- |Feature| :class:`~sklearn.ensemble.EnsembleSelection` estimator added.
+  :pr:`24751` by :user:`Pierrick Pochelu <PierrickPochelu>`.
+
 - |Feature| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
   :class:`~sklearn.ensemble.HistGradientBoostingRegressor` now support
   interaction constraints via the argument `interaction_cst` of their
