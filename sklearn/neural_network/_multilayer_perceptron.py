@@ -427,6 +427,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         )
 
         X, y = self._validate_input(X, y, incremental, reset=first_pass)
+        if (self.validation_fraction * X.shape[0] < 2):
+            raise ValueError("The validation set is too small. Increase the validation_fraction or the size of your dataset.")
 
         n_samples, n_features = X.shape
 
@@ -733,9 +735,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns a trained MLP model.
         """
-        if (self.validation_fraction * len(X) < 2):
-            msg = "10% of input training samples must be at least 2 by default for `R2` scores to be computed."
-            raise ValueError(msg)
         self._validate_params()
 
         return self._fit(X, y, incremental=False)
