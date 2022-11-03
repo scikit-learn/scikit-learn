@@ -205,6 +205,11 @@ conda_build_metadata_list = [
         # python-dateutil is a dependency of pandas and pandas is removed from
         # the environment.yml. Adding python-dateutil so it is pinned
         + ["python-dateutil"],
+        "package_constraints": {
+            # XXX: pin pytest-xdist to workaround:
+            # https://github.com/pytest-dev/pytest-xdist/issues/840
+            "pytest-xdist": "2.5.0",
+        },
     },
     {
         "build_name": "pypy3",
