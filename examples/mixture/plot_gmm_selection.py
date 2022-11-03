@@ -41,6 +41,7 @@ import matplotlib.pyplot as plt
 plt.scatter(component_1[:, 0], component_1[:, 1], 0.8)
 plt.scatter(component_2[:, 0], component_2[:, 1], 0.8)
 plt.title("Gaussian Mixture components")
+plt.axis("equal")
 plt.show()
 
 # %%
@@ -158,4 +159,5 @@ plt.title(
     f"Selected GMM: {grid_search.best_params_['covariance_type']} model, "
     f"{grid_search.best_params_['n_components']} components"
 )
+plt.axis("equal")
 plt.show()
