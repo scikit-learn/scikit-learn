@@ -1110,7 +1110,7 @@ def test_precision_recall_curve_toydata(drop):
 
 
 def test_precision_recall_curve_drop_intermediate():
-    # Test that drop_intermediate drops the correct thresholds
+    """Check the behaviour of the `drop_intermediate` parameter."""
     y_true = [0, 0, 0, 0, 1, 1]
     y_score = [0.0, 0.2, 0.5, 0.6, 0.7, 1.0]
     precision, recall, thresholds = precision_recall_curve(
