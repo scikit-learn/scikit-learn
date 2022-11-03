@@ -701,7 +701,7 @@ class ClusterMixin:
 
     _estimator_type = "clusterer"
 
-    def fit_predict(self, X, y=None):
+    def fit_predict(self, X, y=None, **kwargs):
         """
         Perform clustering on `X` and returns cluster labels.
 
@@ -713,6 +713,11 @@ class ClusterMixin:
         y : Ignored
             Not used, present for API consistency by convention.
 
+        **kwargs: dict
+            Arguments to be passed to ``fit``.
+
+            .. versionadded: 1.2
+
         Returns
         -------
         labels : ndarray of shape (n_samples,), dtype=np.int64
@@ -720,7 +725,7 @@ class ClusterMixin:
         """
         # non-optimized default implementation; override when a better
         # method is possible for a given clustering algorithm
-        self.fit(X)
+        self.fit(X, **kwargs)
         return self.labels_
 
     def _more_tags(self):
@@ -925,7 +930,7 @@ class OutlierMixin:
 
     _estimator_type = "outlier_detector"
 
-    def fit_predict(self, X, y=None):
+    def fit_predict(self, X, y=None, **kwargs):
         """Perform fit on X and returns labels for X.
 
         Returns -1 for outliers and 1 for inliers.
@@ -938,13 +943,18 @@ class OutlierMixin:
         y : Ignored
             Not used, present for API consistency by convention.
 
+        **kwargs: dict
+            Arguments to be passed to ``fit``.
+
+            .. versionadded: 1.2
+
         Returns
         -------
         y : ndarray of shape (n_samples,)
             1 for inliers, -1 for outliers.
         """
         # override for transductive outlier detectors like LocalOulierFactor
-        return self.fit(X).predict(X)
+        return self.fit(X, **kwargs).predict(X)
 
 
 class MetaEstimatorMixin:
