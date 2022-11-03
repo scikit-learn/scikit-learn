@@ -476,7 +476,8 @@ Changelog
   nan score is correctly set to the maximum possible rank, rather than
   `np.iinfo(np.int32).min`. :pr:`24141` by :user:`Loïc Estève <lesteve>`.
 
-- |Fix| In both `HalvingGridSearchCV` and `HalvingRandomSearchCV` parameter
+- |Fix| In both :class:`model_selection.HalvingGridSearchCV` and
+  :class:`model_selection.HalvingRandomSearchCV` parameter
   combinations with a NaN score now share the lowest rank.
   :pr:`24539` by :user:`Tim Head <betatim>`.
 
