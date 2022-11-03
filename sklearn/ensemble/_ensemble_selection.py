@@ -17,36 +17,47 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
 
     Parameters
     ----------
-    estimators : list of (string, estimator) tuples
+    estimators: list of (string, estimator) tuples
         The estimators from which the ensemble selection classifier is built.
         These estimators must be fitted.
 
-    score_metric : callable.
+    score_metric: callable.
         Classification or regression
 
     min_estimators: integer, optional (default=1)
         The minimum number of base estimators.
-        The calibration dataset may be overfitted. We may hypothesis big ensembles
-        generalize better. So min_estimators value allows to regularize.
+        The ensemble selection estimator may overfit the calibration dataset.
+        We may assume big ensemble generalize better. So min_estimators
+        value allows to regularize.
 
-    max_estimators : integer, optional (default=50)
+    max_estimators: integer, optional (default=50)
         The maximum number of base estimators. It allows to control the final
-        ensemble size.
+        ensemble size, and the ensemble selection computing time.
 
-    pruning_factor : float, optional (default=0.6)
+    pruning_factor: float, optional (default=0.6)
         The worst pruning_factor estimators are remove to reduce the number of
         combinations
+
+    with_replacement: bool, optional (defaut=True)
+        If the same model can be replaced multiple times in the ensemble.
+        When enabled, the prediction is the weighted averaging.
+        The number of potential ensembles is given by the Combination formula:
+        C(n,max_estimators) with n base estimators and min_estimators=0.
+        When disabled, the  ensemble's prediction is the simple averaging.
+        The number of potential ensembles is 2**n with n base estimators,
+        min_estimators=0 and large max_estimators.
+
 
     is_base_estimator_proba: bool, optional (default=True)
         If True, estimators call "predict_proba(X)", otherwise, "predict(X)"
 
-    n_jobs : int, default=None
+    n_jobs: int, default=None
         The number of jobs to run in parallel for ``fit``.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose : bool, default=False
+    verbose: bool, default=False
         Computing time may take a long time
         If True, the model's selection will be printed.
 
@@ -84,7 +95,7 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
         self.prune_fraction = pruning_factor
         self.verbose = verbose
         self.with_replacement = with_replacement
-        self.score_metric_ = score_metric
+        self.score_metric = score_metric
         self.is_base_estimator_proba = is_base_estimator_proba
         self.score_direction = score_direction
         self.n_jobs = n_jobs
@@ -175,7 +186,7 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
             ens_preds += proba * weight
 
         ens_preds /= ensemble_size
-        ens_score = self.score_metric_(y, ens_preds)
+        ens_score = self.score_metric(y, ens_preds)
         return ens_score, ens_preds
 
     def _estimator_predict(self, X, est):
@@ -187,7 +198,7 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
 
     def _get_score_of_model(self, X, y, estimator):
         pred = self._estimator_predict(X, estimator)
-        score = self.score_metric_(y, pred)
+        score = self.score_metric(y, pred)
         return score, pred
 
     def _greedy_combi_ensemble(self, y, estimators_name):
@@ -296,5 +307,5 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
         candidate_ens_pred = (
             current_ensemble_pred * prev_ensemble_size + candidate_pred
         ) / (prev_ensemble_size + 1.0)
-        new_ens_score = self.score_metric_(y, candidate_ens_pred)
+        new_ens_score = self.score_metric(y, candidate_ens_pred)
         return {added_estimator_name: (new_ens_score, candidate_ens_pred)}
