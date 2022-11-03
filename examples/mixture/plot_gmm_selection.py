@@ -4,7 +4,7 @@ Gaussian Mixture Model Selection
 ================================
 
 This example shows that model selection can be performed with Gaussian Mixture
-Models using :ref:`information-theory criteria <aic_bic>`. Model selection
+Models (GMM) using :ref:`information-theory criteria <aic_bic>`. Model selection
 concerns both the covariance type and the number of components in the model.
 
 In this case, both the Akaike Information Criterion (AIC) and the Bayes
