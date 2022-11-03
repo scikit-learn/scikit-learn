@@ -39,14 +39,15 @@ def test_ensemble_selection_regressor():
 
     # build estimators
     estimators = []
-    estimators.append(GaussianProcessRegressor(random_state=seed))
-    estimators.append(RandomForestRegressor(random_state=seed))
-    estimators.append(KNeighborsRegressor())
-    estimators.append(MLPClassifier(random_state=seed))
-    estimators.append(LinearSVR(random_state=seed))
+    # wait : [("lr", LogisticRegression()), ("svc", LinearSVC())]
+    estimators.append(("est1",GaussianProcessRegressor(random_state=seed)))
+    estimators.append(("est2",RandomForestRegressor(random_state=seed)))
+    estimators.append(("est3",KNeighborsRegressor()))
+    estimators.append(("est4",MLPClassifier(random_state=seed)))
+    estimators.append(("est",LinearSVR(random_state=seed)))
 
     # fit estimators
-    for i, base_model in enumerate(estimators):
+    for _, base_model in estimators:
         base_model.fit(X_train, y_train)
 
     # fit ensemble_selector
@@ -82,14 +83,14 @@ def test_ensemble_selection_classifier():
 
     # instantiate estimators
     estimators = []
-    estimators.append(GaussianProcessClassifier(random_state=seed))
-    estimators.append(SVC(random_state=seed, probability=True))
-    estimators.append(RandomForestClassifier(random_state=seed))
-    estimators.append(KNeighborsClassifier())
-    estimators.append(MLPClassifier(random_state=seed))
+    estimators.append(("est1",GaussianProcessClassifier(random_state=seed)))
+    estimators.append(("est2",SVC(random_state=seed, probability=True)))
+    estimators.append(("est3",RandomForestClassifier(random_state=seed)))
+    estimators.append(("est4",KNeighborsClassifier()))
+    estimators.append(("est5",MLPClassifier(random_state=seed)))
 
     # fit estimators
-    for i, base_model in enumerate(estimators):
+    for name, base_model in estimators:
         base_model.fit(X_train, y_train)
 
     clf = EnsembleSelection(

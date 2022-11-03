@@ -2,13 +2,20 @@
 
 # Authors: Pierrick Pochelu <pierrick.pochelu@gmail.com>
 
+from numbers import Integral
 import math
 import numpy as np
 from joblib import Parallel, delayed
+
+from ..base import clone
+from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
+from ..exceptions import NotFittedError
 
+from ..utils._param_validation import StrOptions
+from ..utils.validation import check_is_fitted
 
 class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsemble):
     """
@@ -70,7 +77,17 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
 
     """
 
-    _parameter_constraints: dict = {"estimators": [list], "score_metric": [callable]}
+    _parameter_constraints: dict = {
+        "estimators": [list],
+        "score_metric": [callable],
+        "score_direction": [StrOptions({"min", "max"})],
+        "max_estimators": [Integral],
+        "min_estimators": [Integral],
+        "n_jobs":  [None, Integral],
+        "with_replacement": "boolean",
+        "is_base_estimator_proba": "boolean",
+        "verbose":"verbose"
+    }
 
     def __init__(
         self,
@@ -85,10 +102,7 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
         is_base_estimator_proba=True,
         verbose=False,
     ):
-        estimators_as_dict = {}
-        for i, d in enumerate(estimators):
-            estimators_as_dict[f"e{i}"] = d
-        super().__init__(estimators_as_dict)
+        super().__init__(estimators)
         self.max_estimators = max_estimators
         self.min_estimators = min_estimators
         self.pruning_factor = pruning_factor
@@ -100,6 +114,29 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
         self.score_direction = score_direction
         self.n_jobs = n_jobs
 
+    def _validate_estimators(self):
+        """Overload the method of `_BaseHeterogeneousEnsemble` to be more
+        lenient towards the type of `estimators`.
+
+        Regressors can be accepted for some cases such as ordinal regression.
+        """
+        if len(self.estimators) == 0:
+            raise ValueError(
+                "Invalid 'estimators' attribute, 'estimators' should be a "
+                "non-empty list of (string, estimator) tuples."
+            )
+        names, estimators = zip(*self.estimators)
+        self._validate_names(names)
+
+        has_estimator = any(est != "drop" for est in estimators)
+        if not has_estimator:
+            raise ValueError(
+                "All estimators are dropped. At least one is required "
+                "to be an estimator."
+            )
+
+        return names, estimators
+
     def fit(self, X, y, sample_weight=None):
         """Conduct ensemble selection on the validation set (X, y).
         Parameters
@@ -108,10 +145,16 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
             calibration data
         y : array-like, shape = [n_samples]
             Target values.
+
+        sample_weight : array-like
+
         Returns
         -------
         self : object
         """
+        #self._validate_params()
+        #self._validate_estimators()
+
         if self.estimators is None or len(self.estimators) == 0:
             raise AttributeError(
                 "Invalid `estimators` attribute, `estimators`"
@@ -119,12 +162,27 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
                 " (string, fitted_estimator) tuples"
             )
 
-        self.output_shape = list(y[0].shape)
+        # TODO uses check_classification_targets(y) instead
+        if len(np.array(y).shape)==0:
+            self.log(f"The labels are 0-dimensional")
+            return {}
+
+        # Fit estimator if not already done
+        estimator_to_fit=[]
+        for _,estimator in self.estimators:
+            try:
+                check_is_fitted(estimator)
+            except NotFittedError as nfe:
+                estimator_to_fit.append(estimator)
+        self.estimators = Parallel(n_jobs=self.n_jobs)(
+            delayed(_fit_single_estimator)(clone(est), X, y, sample_weight)
+            for est in estimator_to_fit
+        )
 
         # Cache score and predict results on X
         self.base_model_score_ = {}
         self.base_model_preds_ = {}
-        for name, est in self.named_estimators.items():
+        for name, est in self.estimators:
             score, pred = self._get_score_of_model(X, y, est)
             self.base_model_score_[name] = score
             self.base_model_preds_[name] = pred
@@ -161,14 +219,15 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
 
     def predict(self, X):
         ensemble_size = sum(self.ensemble.values())
-        ens_pred = np.zeros([X.shape[0]] + self.output_shape)  # For instance
+        ens_pred = np.zeros([X.shape[0]] + self.output_shape)  # TODO check if compatible with sparse data
 
-        for estimator_name, estimator_weight in self.ensemble.items():
-            est = self.estimators[estimator_name]
+        for estimator_name, estimator in self.estimators:
+            estimator_weight=self.ensemble.get(estimator_name, 0)
+            if estimator_weight>0:
 
-            pred = self._estimator_predict(X, est)
+                pred = self._estimator_predict(X, estimator)
 
-            ens_pred += pred * estimator_weight
+                ens_pred += pred * estimator_weight
 
         ens_pred /= ensemble_size
         return ens_pred
@@ -190,11 +249,10 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
         return ens_score, ens_preds
 
     def _estimator_predict(self, X, est):
-        if self.is_base_estimator_proba:
+        if self.is_base_estimator_proba and hasattr(est,"predict_proba"):
             return est.predict_proba(X)
         else:
             return est.predict(X)
-        # return est.predict(X)
 
     def _get_score_of_model(self, X, y, estimator):
         pred = self._estimator_predict(X, estimator)
