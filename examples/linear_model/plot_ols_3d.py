@@ -41,8 +41,10 @@ _ = ols.fit(X_train, y_train)
 # Finally we plot the figure from three different views.
 
 import matplotlib.pyplot as plt
+
 # unused but required import for doing 3d projections with matplotlib < 3.2
 import mpl_toolkits.mplot3d  # noqa: F401
+
 
 def plot_figs(fig_num, elev, azim, X_train, clf):
     fig = plt.figure(fig_num, figsize=(4, 3))
