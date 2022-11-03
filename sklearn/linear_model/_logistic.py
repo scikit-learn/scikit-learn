@@ -296,7 +296,18 @@ def _logistic_regression_path(
     sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype, copy=True)
 
     if solver == "newton-cholesky":
+        # IMPORTANT NOTE: Rescaling of sample_weight:
         # Same as in _GeneralizedLinearRegressor.fit().
+        # We want to minimize
+        #     obj = 1/(2*sum(sample_weight)) * sum(sample_weight * deviance)
+        #         + 1/2 * alpha * L2,
+        # with
+        #     deviance = 2 * log_loss.
+        # The objective is invariant to multiplying sample_weight by a constant. We
+        # choose this constant such that sum(sample_weight) = 1. Thus, we end up with
+        #     obj = sum(sample_weight * loss) + 1/2 * alpha * L2.
+        # Note that LinearModelLoss.loss() computes sum(sample_weight * loss).
+        #
         # This rescaling has to be done before multiplying by class_weights.
         sw_sum = sample_weight.sum()  # needed to rescale penalty, nasty matter!
         sample_weight = sample_weight / sw_sum
@@ -458,6 +469,8 @@ def _logistic_regression_path(
                 hess, func, grad, w0, args=args, maxiter=max_iter, tol=tol
             )
         elif solver == "newton-cholesky":
+            # The division by sw_sum is a consequence of the rescaling of
+            # sample_weight, see comment above.
             l2_reg_strength = 1.0 / C / sw_sum
             sol = NewtonCholeskySolver(
                 coef=w0,
