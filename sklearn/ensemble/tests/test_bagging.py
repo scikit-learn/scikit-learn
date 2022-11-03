@@ -136,7 +136,7 @@ def test_sparse_classification(sparse_format, params, method, use_sample_weight)
         base_estimator = _weighted(base_estimator)
     # Trained on sparse format
     sparse_classifier = BaggingClassifier(
-        base_estimator=base_estimator,
+        estimator=base_estimator,
         random_state=1,
         **params,
     )
@@ -149,7 +149,7 @@ def test_sparse_classification(sparse_format, params, method, use_sample_weight)
 
     # Trained on dense format
     dense_classifier = BaggingClassifier(
-        base_estimator=base_estimator,
+        estimator=base_estimator,
         random_state=1,
         **params,
     )
