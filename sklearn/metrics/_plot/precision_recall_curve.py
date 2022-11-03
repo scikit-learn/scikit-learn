@@ -221,6 +221,8 @@ class PrecisionRecallDisplay:
 
             .. versionadded:: 1.2
 
+            .. versionadded:: 1.2
+
         response_method : {'predict_proba', 'decision_function', 'auto'}, \
             default='auto'
             Specifies whether to use :term:`predict_proba` or
