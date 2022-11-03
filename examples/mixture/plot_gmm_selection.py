@@ -57,59 +57,57 @@ plt.title("Gaussian Mixture components")
 # We score the different models and keep the best model (the lowest BIC).
 
 from sklearn.mixture import GaussianMixture
+from sklearn.model_selection import GridSearchCV
 
-lowest_bic = np.infty
-bic = []
-n_components_range = range(1, 7)
-cov_types = ["spherical", "tied", "diag", "full"]
-for cov_type in cov_types:
-    for n_components in n_components_range:
-        # Fit a Gaussian mixture with EM
-        gmm = GaussianMixture(n_components=n_components, covariance_type=cov_type)
-        gmm.fit(X)
-        bic.append(gmm.bic(X))
-        if bic[-1] < lowest_bic:
-            lowest_bic = bic[-1]
-            best_gmm = gmm
 
-bic = np.array(bic)
-clf = best_gmm
+def gmm_bic_score(estimator, X):
+    """Callable to pass to GridSearchCV that will use the BIC score."""
+    # Make it negative since GridSearchCV expects a score to maximize
+    return -estimator.bic(X)
+
+
+param_grid = {
+    "n_components": range(1, 7),
+    "covariance_type": ["spherical", "tied", "diag", "full"],
+}
+grid_search = GridSearchCV(
+    GaussianMixture(), param_grid=param_grid, scoring=gmm_bic_score
+)
+grid_search.fit(X)
 
 # %%
 # Plot the BIC scores
 # -------------------
 #
-# We draw a `*` to highlight the model with the lowest BIC score. In the present
-# case, the model with 2 components and full covariance (which corresponds to
-# the true generative model) is selected.
+# In the present case, the model with 2 components and full covariance
+# (which corresponds to the true generative model) has the lowest BIC
+# score is therefore selected.
 
-import itertools
-import matplotlib.pyplot as plt
+import pandas as pd
 
-color_iter = itertools.cycle(["navy", "darkorange", "cornflowerblue", "turquoise"])
-bars = []
-
-for i, (cov_type, color) in enumerate(zip(cov_types, color_iter)):
-    xpos = np.array(n_components_range) + 0.2 * (i - 2)
-    bars.append(
-        plt.bar(
-            xpos,
-            bic[i * len(n_components_range) : (i + 1) * len(n_components_range)],
-            width=0.2,
-            color=color,
-        )
-    )
-plt.xticks(n_components_range)
-plt.ylim([bic.min() * 1.01 - 0.01 * bic.max(), bic.max()])
-plt.title("BIC score per model")
-xpos = (
-    np.mod(bic.argmin(), len(n_components_range))
-    + 0.65
-    + 0.2 * np.floor(bic.argmin() / len(n_components_range))
+df = pd.DataFrame(grid_search.cv_results_)[
+    ["param_n_components", "param_covariance_type", "mean_test_score"]
+]
+df["mean_test_score"] = -df["mean_test_score"]
+df = df.rename(
+    columns={
+        "param_n_components": "Number of components",
+        "param_covariance_type": "Type of covariance",
+        "mean_test_score": "BIC score",
+    }
 )
-plt.text(xpos, bic.min() * 0.97 + 0.03 * bic.max(), "*", fontsize=14)
-plt.xlabel("Number of components")
-plt.legend([b[0] for b in bars], cov_types)
+df.head()
+
+# %%
+import seaborn as sns
+
+sns.catplot(
+    data=df,
+    kind="bar",
+    x="Number of components",
+    y="BIC score",
+    hue="Type of covariance",
+)
 plt.show()
 
 # %%
@@ -126,12 +124,22 @@ plt.show()
 # - `"diag"`: (n_components, n_features)
 # - `"spherical"`: (n_components,)
 
+import itertools
 from matplotlib.patches import Ellipse
 from scipy import linalg
 
+color_iter = itertools.cycle(["darkorange", "C0"])
+Y_ = grid_search.predict(X)
+
 fig, ax = plt.subplots()
-Y_ = clf.predict(X)
-for i, (mean, cov, color) in enumerate(zip(clf.means_, clf.covariances_, color_iter)):
+
+for i, (mean, cov, color) in enumerate(
+    zip(
+        grid_search.best_estimator_.means_,
+        grid_search.best_estimator_.covariances_,
+        color_iter,
+    )
+):
     v, w = linalg.eigh(cov)
     if not np.any(Y_ == i):
         continue
@@ -146,7 +154,7 @@ for i, (mean, cov, color) in enumerate(zip(clf.means_, clf.covariances_, color_i
     ax.add_artist(ellipse)
 
 plt.title(
-    f"Selected GMM: {best_gmm.covariance_type} model, "
-    f"{best_gmm.n_components} components"
+    f"Selected GMM: {grid_search.best_params_['covariance_type']} model, "
+    f"{grid_search.best_params_['n_components']} components"
 )
 plt.show()
