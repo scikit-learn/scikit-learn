@@ -1190,7 +1190,7 @@ Examples of use cases include:
 * Medical Drug Testing: probability of curing a patient in a set of trials /
   probability that a patient will experience side effects (Bernoulli).
 * News Classification: Classification of news articles into three categories
-  namely Business News, Politics and Entertainment news. (Categorical).
+  namely Business News, Politics and Entertainment news (Categorical).
 
 .. topic:: References:
 
