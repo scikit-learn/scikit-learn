@@ -1689,8 +1689,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             If not provided, then each sample is given unit weight.
 
         **fit_params : dict
-            Parameters to pass to the `fit` method of the underlying
-            classifier.
+            Parameters to pass to the underlying splitter and scorer.
 
         Returns
         -------
