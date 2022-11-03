@@ -126,9 +126,9 @@ its ``coef_`` member::
     >>> reg.intercept_
     0.13636...
 
-Note that the class :class:`Ridge` allows for the user to specify that the 
-solver be automatically chosen by setting `solver="auto"`. When this option 
-is specified, :class:`Ridge` will choose between the `"lbfgs"`, `"cholesky"`, 
+Note that the class :class:`Ridge` allows for the user to specify that the
+solver be automatically chosen by setting `solver="auto"`. When this option
+is specified, :class:`Ridge` will choose between the `"lbfgs"`, `"cholesky"`,
 and `"sparse_cg"` solvers. :class:`Ridge` will begin checking the conditions
 shown in the following table from top to bottom. If the condition is true,
 the corresponding solver is chosen.
@@ -794,7 +794,7 @@ is more robust to ill-posed problems.
 
     * Section 3.3 in Christopher M. Bishop: Pattern Recognition and Machine Learning, 2006
 
-    * David J. C. MacKay, `Bayesian Interpolation <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.27.9072&rep=rep1&type=pdf>`_, 1992.
+    * David J. C. MacKay, `Bayesian Interpolation <https://citeseerx.ist.psu.edu/doc_view/pid/b14c7cc3686e82ba40653c6dff178356a33e5e2c>`_, 1992.
 
     * Michael E. Tipping, `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_, 2001.
 
@@ -836,11 +836,11 @@ Ridge Regression`_, see the example below.
 
     .. [1] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 7.2.1
 
-    .. [2] David Wipf and Srikantan Nagarajan: `A new view of automatic relevance determination <https://papers.nips.cc/paper/3372-a-new-view-of-automatic-relevance-determination.pdf>`_
+    .. [2] David Wipf and Srikantan Nagarajan: `A New View of Automatic Relevance Determination <https://papers.nips.cc/paper/3372-a-new-view-of-automatic-relevance-determination.pdf>`_
 
     .. [3] Michael E. Tipping: `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_
 
-    .. [4] Tristan Fletcher: `Relevance Vector Machines explained <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.651.8603&rep=rep1&type=pdf>`_
+    .. [4] Tristan Fletcher: `Relevance Vector Machines Explained <https://citeseerx.ist.psu.edu/doc_view/pid/3dc9d625404fdfef6eaccc3babddefe4c176abd4>`_
 
 
 .. _Logistic_regression:
@@ -1031,7 +1031,7 @@ The following table summarizes the penalties supported by each solver:
 The "lbfgs" solver is used by default for its robustness. For large datasets
 the "saga" solver is usually faster.
 For large dataset, you may also consider using :class:`SGDClassifier`
-with 'log' loss, which might be even faster but requires more tuning.
+with `loss="log_loss"`, which might be even faster but requires more tuning.
 
 .. topic:: Examples:
 

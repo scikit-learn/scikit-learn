@@ -249,8 +249,13 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
 
     Parameters
     ----------
-    gamma : float, default=1.0
+    gamma : 'scale' or float, default=1.0
         Parameter of RBF kernel: exp(-gamma * x^2).
+        If ``gamma='scale'`` is passed then it uses
+        1 / (n_features * X.var()) as value of gamma.
+
+        .. versionadded:: 1.2
+           The option `"scale"` was added in 1.2.
 
     n_components : int, default=100
         Number of Monte Carlo samples per original feature.
@@ -319,7 +324,10 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
     """
 
     _parameter_constraints: dict = {
-        "gamma": [Interval(Real, 0, None, closed="left")],
+        "gamma": [
+            StrOptions({"scale"}),
+            Interval(Real, 0.0, None, closed="left"),
+        ],
         "n_components": [Interval(Integral, 1, None, closed="left")],
         "random_state": ["random_state"],
     }
@@ -354,8 +362,14 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         X = self._validate_data(X, accept_sparse="csr")
         random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
-
-        self.random_weights_ = np.sqrt(2 * self.gamma) * random_state.normal(
+        sparse = sp.isspmatrix(X)
+        if self.gamma == "scale":
+            # var = E[X^2] - E[X]^2 if sparse
+            X_var = (X.multiply(X)).mean() - (X.mean()) ** 2 if sparse else X.var()
+            self._gamma = 1.0 / (n_features * X_var) if X_var != 0 else 1.0
+        else:
+            self._gamma = self.gamma
+        self.random_weights_ = (2.0 * self._gamma) ** 0.5 * random_state.normal(
             size=(n_features, self.n_components)
         )
 
@@ -390,7 +404,7 @@ class RBFSampler(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         projection = safe_sparse_dot(X, self.random_weights_)
         projection += self.random_offset_
         np.cos(projection, projection)
-        projection *= np.sqrt(2.0) / np.sqrt(self.n_components)
+        projection *= (2.0 / self.n_components) ** 0.5
         return projection
 
     def _more_tags(self):
