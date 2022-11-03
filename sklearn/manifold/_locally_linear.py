@@ -15,7 +15,7 @@ from ..base import (
     BaseEstimator,
     TransformerMixin,
     _UnstableArchMixin,
-    _ClassNamePrefixFeaturesOutMixin,
+    ClassNamePrefixFeaturesOutMixin,
 )
 from ..utils import check_random_state, check_array
 from ..utils._arpack import _init_arpack_v0
@@ -42,7 +42,7 @@ def barycenter_weights(X, Y, indices, reg=1e-3):
             Indices of the points in Y used to compute the barycenter
 
     reg : float, default=1e-3
-        amount of regularization to add for the problem to be
+        Amount of regularization to add for the problem to be
         well-posed in the case of n_neighbors > n_dim
 
     Returns
@@ -228,13 +228,13 @@ def locally_linear_embedding(
         numpy array or a NearestNeighbors object.
 
     n_neighbors : int
-        number of neighbors to consider for each point.
+        Number of neighbors to consider for each point.
 
     n_components : int
-        number of coordinates for the manifold.
+        Number of coordinates for the manifold.
 
     reg : float, default=1e-3
-        regularization constant, multiplies the trace of the local covariance
+        Regularization constant, multiplies the trace of the local covariance
         matrix of the distances.
 
     eigen_solver : {'auto', 'arpack', 'dense'}, default='auto'
@@ -256,7 +256,7 @@ def locally_linear_embedding(
         Not used if eigen_solver=='dense'.
 
     max_iter : int, default=100
-        maximum number of iterations for the arpack solver.
+        Maximum number of iterations for the arpack solver.
 
     method : {'standard', 'hessian', 'modified', 'ltsa'}, default='standard'
         standard : use the standard locally linear embedding algorithm.
@@ -271,11 +271,11 @@ def locally_linear_embedding(
 
     hessian_tol : float, default=1e-4
         Tolerance for Hessian eigenmapping method.
-        Only used if method == 'hessian'
+        Only used if method == 'hessian'.
 
     modified_tol : float, default=1e-12
         Tolerance for modified LLE method.
-        Only used if method == 'modified'
+        Only used if method == 'modified'.
 
     random_state : int, RandomState instance, default=None
         Determines the random number generator when ``solver`` == 'arpack'.
@@ -305,9 +305,9 @@ def locally_linear_embedding(
     .. [2] Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
         linear embedding techniques for high-dimensional data.
         Proc Natl Acad Sci U S A.  100:5591 (2003).
-    .. [3] Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
+    .. [3] `Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
         Embedding Using Multiple Weights.
-        http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382
+        <https://citeseerx.ist.psu.edu/doc_view/pid/0b060fdbd92cbcc66b383bcaa9ba5e5e624d7ee3>`_
     .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
@@ -555,7 +555,7 @@ def locally_linear_embedding(
 
 
 class LocallyLinearEmbedding(
-    _ClassNamePrefixFeaturesOutMixin,
+    ClassNamePrefixFeaturesOutMixin,
     TransformerMixin,
     _UnstableArchMixin,
     BaseEstimator,
@@ -672,9 +672,9 @@ class LocallyLinearEmbedding(
     .. [2] Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
         linear embedding techniques for high-dimensional data.
         Proc Natl Acad Sci U S A.  100:5591 (2003).
-    .. [3] Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
+    .. [3] `Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
         Embedding Using Multiple Weights.
-        http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382
+        <https://citeseerx.ist.psu.edu/doc_view/pid/0b060fdbd92cbcc66b383bcaa9ba5e5e624d7ee3>`_
     .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)

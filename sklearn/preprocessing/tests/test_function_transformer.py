@@ -6,6 +6,7 @@ from scipy import sparse
 from sklearn.utils import _safe_indexing
 
 from sklearn.preprocessing import FunctionTransformer
+from sklearn.pipeline import make_pipeline
 from sklearn.utils._testing import (
     assert_array_equal,
     assert_allclose_dense_sparse,
@@ -291,15 +292,16 @@ def test_function_transformer_raise_error_with_mixed_dtype(X_type):
         ),
     ],
 )
+@pytest.mark.parametrize("validate", [True, False])
 def test_function_transformer_get_feature_names_out(
-    X, feature_names_out, input_features, expected
+    X, feature_names_out, input_features, expected, validate
 ):
     if isinstance(X, dict):
         pd = pytest.importorskip("pandas")
         X = pd.DataFrame(X)
 
     transformer = FunctionTransformer(
-        feature_names_out=feature_names_out, validate=True
+        feature_names_out=feature_names_out, validate=validate
     )
     transformer.fit_transform(X)
     names = transformer.get_feature_names_out(input_features)
@@ -312,10 +314,6 @@ def test_function_transformer_get_feature_names_out_without_validation():
     transformer = FunctionTransformer(feature_names_out="one-to-one", validate=False)
     X = np.random.rand(100, 2)
     transformer.fit_transform(X)
-
-    msg = "When 'feature_names_out' is 'one-to-one', either"
-    with pytest.raises(ValueError, match=msg):
-        transformer.get_feature_names_out()
 
     names = transformer.get_feature_names_out(("a", "b"))
     assert isinstance(names, np.ndarray)
@@ -379,3 +377,60 @@ def test_function_transformer_validate_inverse():
 
     trans.inverse_transform(X_trans)
     assert trans.n_features_in_ == X.shape[1]
+
+
+@pytest.mark.parametrize(
+    "feature_names_out, expected",
+    [
+        ("one-to-one", ["pet", "color"]),
+        [lambda est, names: [f"{n}_out" for n in names], ["pet_out", "color_out"]],
+    ],
+)
+@pytest.mark.parametrize("in_pipeline", [True, False])
+def test_get_feature_names_out_dataframe_with_string_data(
+    feature_names_out, expected, in_pipeline
+):
+    """Check that get_feature_names_out works with DataFrames with string data."""
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"pet": ["dog", "cat"], "color": ["red", "green"]})
+
+    transformer = FunctionTransformer(feature_names_out=feature_names_out)
+    if in_pipeline:
+        transformer = make_pipeline(transformer)
+
+    X_trans = transformer.fit_transform(X)
+    assert isinstance(X_trans, pd.DataFrame)
+
+    names = transformer.get_feature_names_out()
+    assert isinstance(names, np.ndarray)
+    assert names.dtype == object
+    assert_array_equal(names, expected)
+
+
+def test_set_output_func():
+    """Check behavior of set_output with different settings."""
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame({"a": [1, 2, 3], "b": [10, 20, 100]})
+
+    ft = FunctionTransformer(np.log, feature_names_out="one-to-one")
+
+    # no warning is raised when feature_names_out is defined
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        ft.set_output(transform="pandas")
+
+    X_trans = ft.fit_transform(X)
+    assert isinstance(X_trans, pd.DataFrame)
+    assert_array_equal(X_trans.columns, ["a", "b"])
+
+    # If feature_names_out is not defined, then a warning is raised in
+    # `set_output`
+    ft = FunctionTransformer(lambda x: 2 * x)
+    msg = "should return a DataFrame to follow the set_output API"
+    with pytest.warns(UserWarning, match=msg):
+        ft.set_output(transform="pandas")
+
+    X_trans = ft.fit_transform(X)
+    assert isinstance(X_trans, pd.DataFrame)
+    assert_array_equal(X_trans.columns, ["a", "b"])

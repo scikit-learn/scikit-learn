@@ -11,7 +11,7 @@ import warnings
 import sys
 import re
 import pkgutil
-from inspect import isgenerator, signature, Parameter
+from inspect import isgenerator, signature
 from itertools import product, chain
 from functools import partial
 
@@ -34,6 +34,7 @@ from sklearn.neighbors import (
     RadiusNeighborsClassifier,
     RadiusNeighborsRegressor,
 )
+from sklearn.preprocessing import FunctionTransformer
 from sklearn.semi_supervised import LabelPropagation, LabelSpreading
 
 from sklearn.utils import all_estimators
@@ -45,6 +46,7 @@ from sklearn.utils.estimator_checks import check_estimator
 import sklearn
 
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler, MinMaxScaler, OneHotEncoder
 from sklearn.linear_model._base import LinearClassifierMixin
 from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import Ridge
@@ -72,6 +74,8 @@ from sklearn.utils.estimator_checks import (
     check_param_validation,
     check_transformer_get_feature_names_out,
     check_transformer_get_feature_names_out_pandas,
+    check_set_output_transform,
+    check_set_output_transform_pandas,
 )
 
 
@@ -431,26 +435,13 @@ def test_transformers_get_feature_names_out(transformer):
         )
 
 
-VALIDATE_ESTIMATOR_INIT = [
-    "SGDOneClassSVM",
-]
-VALIDATE_ESTIMATOR_INIT = set(VALIDATE_ESTIMATOR_INIT)
-
-
 @pytest.mark.parametrize(
     "Estimator",
-    [est for name, est in all_estimators() if name not in VALIDATE_ESTIMATOR_INIT],
+    [est for name, est in all_estimators()],
 )
 def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
     """Check that init or set_param does not raise errors."""
-
-    # Remove parameters with **kwargs by filtering out Parameter.VAR_KEYWORD
-    # TODO: Remove in 1.2 when **kwargs is removed in RadiusNeighborsClassifier
-    params = [
-        name
-        for name, param in signature(Estimator).parameters.items()
-        if param.kind != Parameter.VAR_KEYWORD
-    ]
+    params = signature(Estimator).parameters
 
     smoke_test_values = [-1, 3.0, "helloworld", np.array([1.0, 4.0]), [1], {}, []]
     for value in smoke_test_values:
@@ -463,40 +454,15 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
         est.set_params(**new_params)
 
 
-PARAM_VALIDATION_ESTIMATORS_TO_IGNORE = [
-    "DictionaryLearning",
-    "MiniBatchDictionaryLearning",
-    "MultiTaskElasticNet",
-    "MultiTaskLasso",
-    "Nystroem",
-    "OAS",
-    "OPTICS",
-    "OneVsOneClassifier",
-    "OneVsRestClassifier",
-    "PatchExtractor",
-    "RANSACRegressor",
-    "RidgeCV",
-    "RidgeClassifierCV",
-    "SelectFromModel",
-]
-
-
 @pytest.mark.parametrize(
     "estimator", _tested_estimators(), ids=_get_check_estimator_ids
 )
 def test_check_param_validation(estimator):
     name = estimator.__class__.__name__
-    if name in PARAM_VALIDATION_ESTIMATORS_TO_IGNORE:
-        pytest.skip(
-            f"Skipping check_param_validation for {name}: Does not use the "
-            "appropriate API for parameter validation yet."
-        )
     _set_checking_parameters(estimator)
     check_param_validation(name, estimator)
 
 
-# TODO: remove this filter in 1.2
-@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "Estimator",
     [
@@ -534,3 +500,45 @@ def test_f_contiguous_array_estimator(Estimator):
 
     if hasattr(est, "predict"):
         est.predict(X)
+
+
+SET_OUTPUT_ESTIMATORS = list(
+    chain(
+        _tested_estimators("transformer"),
+        [
+            make_pipeline(StandardScaler(), MinMaxScaler()),
+            OneHotEncoder(sparse_output=False),
+            FunctionTransformer(feature_names_out="one-to-one"),
+        ],
+    )
+)
+
+
+@pytest.mark.parametrize(
+    "estimator", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
+)
+def test_set_output_transform(estimator):
+    name = estimator.__class__.__name__
+    if not hasattr(estimator, "set_output"):
+        pytest.skip(
+            f"Skipping check_set_output_transform for {name}: Does not support"
+            " set_output API"
+        )
+    _set_checking_parameters(estimator)
+    with ignore_warnings(category=(FutureWarning)):
+        check_set_output_transform(estimator.__class__.__name__, estimator)
+
+
+@pytest.mark.parametrize(
+    "estimator", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
+)
+def test_set_output_transform_pandas(estimator):
+    name = estimator.__class__.__name__
+    if not hasattr(estimator, "set_output"):
+        pytest.skip(
+            f"Skipping check_set_output_transform_pandas for {name}: Does not support"
+            " set_output API yet"
+        )
+    _set_checking_parameters(estimator)
+    with ignore_warnings(category=(FutureWarning)):
+        check_set_output_transform_pandas(estimator.__class__.__name__, estimator)

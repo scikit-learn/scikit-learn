@@ -22,7 +22,7 @@ from scipy import optimize
 from scipy.sparse import linalg as sp_linalg
 
 from ._base import LinearClassifierMixin, LinearModel
-from ._base import _deprecate_normalize, _preprocess_data, _rescale_data
+from ._base import _preprocess_data, _rescale_data
 from ._sag import sag_solver
 from ..base import MultiOutputMixin, RegressorMixin, is_classifier
 from ..utils.extmath import safe_sparse_dot
@@ -36,10 +36,10 @@ from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
 from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
-from ..utils._param_validation import Hidden
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..metrics import check_scoring
+from ..metrics import get_scorer_names
 from ..exceptions import ConvergenceWarning
 from ..utils.sparsefuncs import mean_variance_axis
 
@@ -65,7 +65,7 @@ def _solve_sparse_cg(
     y,
     alpha,
     max_iter=None,
-    tol=1e-3,
+    tol=1e-4,
     verbose=0,
     X_offset=None,
     X_scale=None,
@@ -152,7 +152,7 @@ def _solve_lsqr(
     alpha,
     fit_intercept=True,
     max_iter=None,
-    tol=1e-3,
+    tol=1e-4,
     X_offset=None,
     X_scale=None,
     sample_weight_sqrt=None,
@@ -302,7 +302,7 @@ def _solve_lbfgs(
     alpha,
     positive=True,
     max_iter=None,
-    tol=1e-3,
+    tol=1e-4,
     X_offset=None,
     X_scale=None,
     sample_weight_sqrt=None,
@@ -380,7 +380,7 @@ def ridge_regression(
     sample_weight=None,
     solver="auto",
     max_iter=None,
-    tol=1e-3,
+    tol=1e-4,
     verbose=0,
     positive=False,
     random_state=None,
@@ -470,8 +470,13 @@ def ridge_regression(
         by scipy.sparse.linalg. For 'sag' and saga solver, the default value is
         1000. For 'lbfgs' solver, the default value is 15000.
 
-    tol : float, default=1e-3
-        Precision of the solution.
+    tol : float, default=1e-4
+        Precision of the solution. Note that `tol` has no effect for solvers 'svd' and
+        'cholesky'.
+
+        .. versionchanged:: 1.2
+           Default value changed from 1e-3 to 1e-4 for consistency with other linear
+           models.
 
     verbose : int, default=0
         Verbosity level. Setting verbose > 0 will display additional
@@ -555,7 +560,7 @@ def _ridge_regression(
     sample_weight=None,
     solver="auto",
     max_iter=None,
-    tol=1e-3,
+    tol=1e-4,
     verbose=0,
     positive=False,
     random_state=None,
@@ -780,7 +785,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
     _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
         "fit_intercept": ["boolean"],
-        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
         "copy_X": ["boolean"],
         "max_iter": [Interval(Integral, 1, None, closed="left"), None],
         "tol": [Interval(Real, 0, None, closed="left")],
@@ -799,17 +803,15 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         alpha=1.0,
         *,
         fit_intercept=True,
-        normalize="deprecated",
         copy_X=True,
         max_iter=None,
-        tol=1e-3,
+        tol=1e-4,
         solver="auto",
         positive=False,
         random_state=None,
     ):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.copy_X = copy_X
         self.max_iter = max_iter
         self.tol = tol
@@ -818,10 +820,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
-
-        self._normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
-        )
 
         if self.solver == "lbfgs" and not self.positive:
             raise ValueError(
@@ -869,8 +867,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             X,
             y,
             self.fit_intercept,
-            self._normalize,
-            self.copy_X,
+            copy=self.copy_X,
             sample_weight=sample_weight,
         )
 
@@ -955,18 +952,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         to false, no intercept will be used in calculations
         (i.e. ``X`` and ``y`` are expected to be centered).
 
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and
-            will be removed in 1.2.
-
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
@@ -976,8 +961,13 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         by scipy.sparse.linalg. For 'sag' solver, the default value is 1000.
         For 'lbfgs' solver, the default value is 15000.
 
-    tol : float, default=1e-3
-        Precision of the solution.
+    tol : float, default=1e-4
+        Precision of the solution. Note that `tol` has no effect for solvers 'svd' and
+        'cholesky'.
+
+        .. versionchanged:: 1.2
+           Default value changed from 1e-3 to 1e-4 for consistency with other linear
+           models.
 
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', \
             'sag', 'saga', 'lbfgs'}, default='auto'
@@ -1092,10 +1082,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         alpha=1.0,
         *,
         fit_intercept=True,
-        normalize="deprecated",
         copy_X=True,
         max_iter=None,
-        tol=1e-3,
+        tol=1e-4,
         solver="auto",
         positive=False,
         random_state=None,
@@ -1103,7 +1092,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             copy_X=copy_X,
             max_iter=max_iter,
             tol=tol,
@@ -1256,18 +1244,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         intercept will be used in calculations (e.g. data is expected to be
         already centered).
 
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and
-            will be removed in 1.2.
-
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
@@ -1275,8 +1251,13 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         Maximum number of iterations for conjugate gradient solver.
         The default value is determined by scipy.sparse.linalg.
 
-    tol : float, default=1e-3
-        Precision of the solution.
+    tol : float, default=1e-4
+        Precision of the solution. Note that `tol` has no effect for solvers 'svd' and
+        'cholesky'.
+
+        .. versionchanged:: 1.2
+           Default value changed from 1e-3 to 1e-4 for consistency with other linear
+           models.
 
     class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -1393,10 +1374,9 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         alpha=1.0,
         *,
         fit_intercept=True,
-        normalize="deprecated",
         copy_X=True,
         max_iter=None,
-        tol=1e-3,
+        tol=1e-4,
         class_weight=None,
         solver="auto",
         positive=False,
@@ -1405,7 +1385,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             copy_X=copy_X,
             max_iter=max_iter,
             tol=tol,
@@ -1447,13 +1426,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
 
 def _check_gcv_mode(X, gcv_mode):
-    possible_gcv_modes = [None, "auto", "svd", "eigen"]
-    if gcv_mode not in possible_gcv_modes:
-        raise ValueError(
-            "Unknown value for 'gcv_mode'. Got {} instead of one of {}".format(
-                gcv_mode, possible_gcv_modes
-            )
-        )
     if gcv_mode in ["eigen", "svd"]:
         return gcv_mode
     # if X has more rows than columns, use decomposition of X^T.X,
@@ -1618,7 +1590,6 @@ class _RidgeGCV(LinearModel):
         alphas=(0.1, 1.0, 10.0),
         *,
         fit_intercept=True,
-        normalize="deprecated",
         scoring=None,
         copy_X=True,
         gcv_mode=None,
@@ -1628,7 +1599,6 @@ class _RidgeGCV(LinearModel):
     ):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.scoring = scoring
         self.copy_X = copy_X
         self.gcv_mode = gcv_mode
@@ -1964,10 +1934,6 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-        _normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
-        )
-
         X, y = self._validate_data(
             X,
             y,
@@ -1991,8 +1957,7 @@ class _RidgeGCV(LinearModel):
             X,
             y,
             self.fit_intercept,
-            _normalize,
-            self.copy_X,
+            copy=self.copy_X,
             sample_weight=sample_weight,
         )
 
@@ -2106,12 +2071,22 @@ class _RidgeGCV(LinearModel):
 
 
 class _BaseRidgeCV(LinearModel):
+
+    _parameter_constraints: dict = {
+        "alphas": ["array-like", Interval(Real, 0, None, closed="neither")],
+        "fit_intercept": ["boolean"],
+        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "cv": ["cv_object"],
+        "gcv_mode": [StrOptions({"auto", "svd", "eigen"}), None],
+        "store_cv_values": ["boolean"],
+        "alpha_per_target": ["boolean"],
+    }
+
     def __init__(
         self,
         alphas=(0.1, 1.0, 10.0),
         *,
         fit_intercept=True,
-        normalize="deprecated",
         scoring=None,
         cv=None,
         gcv_mode=None,
@@ -2120,7 +2095,6 @@ class _BaseRidgeCV(LinearModel):
     ):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.scoring = scoring
         self.cv = cv
         self.gcv_mode = gcv_mode
@@ -2172,17 +2146,12 @@ class _BaseRidgeCV(LinearModel):
                     alpha = check_scalar_alpha(alpha, f"alphas[{index}]")
             else:
                 self.alphas[0] = check_scalar_alpha(self.alphas[0], "alphas")
-        else:
-            # check for single non-iterable item
-            self.alphas = check_scalar_alpha(self.alphas, "alphas")
-
         alphas = np.asarray(self.alphas)
 
         if cv is None:
             estimator = _RidgeGCV(
                 alphas,
                 fit_intercept=self.fit_intercept,
-                normalize=self.normalize,
                 scoring=self.scoring,
                 gcv_mode=self.gcv_mode,
                 store_cv_values=self.store_cv_values,
@@ -2206,7 +2175,6 @@ class _BaseRidgeCV(LinearModel):
             gs = GridSearchCV(
                 model(
                     fit_intercept=self.fit_intercept,
-                    normalize=self.normalize,
                     solver=solver,
                 ),
                 parameters,
@@ -2238,7 +2206,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     Parameters
     ----------
-    alphas : ndarray of shape (n_alphas,), default=(0.1, 1.0, 10.0)
+    alphas : array-like of shape (n_alphas,), default=(0.1, 1.0, 10.0)
         Array of alpha values to try.
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
@@ -2252,18 +2220,6 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
-
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and will be removed in
-            1.2.
 
     scoring : str, callable, default=None
         A string (see model evaluation documentation) or
@@ -2370,6 +2326,40 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     0.5166...
     """
 
+    def fit(self, X, y, sample_weight=None):
+        """Fit Ridge regression model with cv.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Training data. If using GCV, will be cast to float64
+            if necessary.
+
+        y : ndarray of shape (n_samples,) or (n_samples, n_targets)
+            Target values. Will be cast to X's dtype if necessary.
+
+        sample_weight : float or ndarray of shape (n_samples,), default=None
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+
+        Notes
+        -----
+        When sample_weight is provided, the selected hyperparameter may depend
+        on whether we use leave-one-out cross-validation (cv=None or cv='auto')
+        or another form of cross-validation, because only leave-one-out
+        cross-validation takes the sample weights into account when computing
+        the validation score.
+        """
+        self._validate_params()
+
+        super().fit(X, y, sample_weight=sample_weight)
+        return self
+
 
 class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
     """Ridge classifier with built-in cross-validation.
@@ -2383,7 +2373,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
 
     Parameters
     ----------
-    alphas : ndarray of shape (n_alphas,), default=(0.1, 1.0, 10.0)
+    alphas : array-like of shape (n_alphas,), default=(0.1, 1.0, 10.0)
         Array of alpha values to try.
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
@@ -2396,18 +2386,6 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
-
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and
-            will be removed in 1.2.
 
     scoring : str, callable, default=None
         A string (see model evaluation documentation) or
@@ -2501,12 +2479,18 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
     0.9630...
     """
 
+    _parameter_constraints: dict = {
+        **_BaseRidgeCV._parameter_constraints,
+        "class_weight": [dict, StrOptions({"balanced"}), None],
+    }
+    for param in ("gcv_mode", "alpha_per_target"):
+        _parameter_constraints.pop(param)
+
     def __init__(
         self,
         alphas=(0.1, 1.0, 10.0),
         *,
         fit_intercept=True,
-        normalize="deprecated",
         scoring=None,
         cv=None,
         class_weight=None,
@@ -2515,7 +2499,6 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         super().__init__(
             alphas=alphas,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             scoring=scoring,
             cv=cv,
             store_cv_values=store_cv_values,
@@ -2544,6 +2527,8 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
+
         # `RidgeClassifier` does not accept "sag" or "saga" solver and thus support
         # csr, csc, and coo sparse matrices. By using solver="eigen" we force to accept
         # all sparse format.

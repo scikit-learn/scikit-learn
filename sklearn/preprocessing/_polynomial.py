@@ -13,7 +13,6 @@ from scipy.special import comb
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import check_array
-from ..utils.deprecation import deprecated
 from ..utils.validation import check_is_fitted, FLOAT_DTYPES, _check_sample_weight
 from ..utils.validation import _check_feature_names_in
 from ..utils._param_validation import Interval, StrOptions
@@ -71,13 +70,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
     ----------
     powers_ : ndarray of shape (`n_output_features_`, `n_features_in_`)
         `powers_[i, j]` is the exponent of the jth input in the ith output.
-
-    n_input_features_ : int
-        The total number of input features.
-
-        .. deprecated:: 1.0
-            This attribute is deprecated in 1.0 and will be removed in 1.2.
-            Refer to `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -201,42 +193,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
         return np.vstack(
             [np.bincount(c, minlength=self.n_features_in_) for c in combinations]
         )
-
-    @deprecated(
-        "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. Please use get_feature_names_out instead."
-    )
-    def get_feature_names(self, input_features=None):
-        """Return feature names for output features.
-
-        Parameters
-        ----------
-        input_features : list of str of shape (n_features,), default=None
-            String names for input features if available. By default,
-            "x0", "x1", ... "xn_features" is used.
-
-        Returns
-        -------
-        output_feature_names : list of str of shape (n_output_features,)
-            Transformed feature names.
-        """
-        powers = self.powers_
-        if input_features is None:
-            input_features = ["x%d" % i for i in range(powers.shape[1])]
-        feature_names = []
-        for row in powers:
-            inds = np.where(row)[0]
-            if len(inds):
-                name = " ".join(
-                    "%s^%d" % (input_features[ind], exp)
-                    if exp != 1
-                    else input_features[ind]
-                    for ind, exp in zip(inds, row[inds])
-                )
-            else:
-                name = "1"
-            feature_names.append(name)
-        return feature_names
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -505,16 +461,6 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 XP = Xout
         return XP
 
-    # TODO: Remove in 1.2
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The attribute `n_input_features_` was "
-        "deprecated in version 1.0 and will be removed in 1.2."
-    )
-    @property
-    def n_input_features_(self):
-        return self.n_features_in_
-
 
 # TODO:
 # - sparse support (either scipy or own cython solution)?
@@ -706,33 +652,6 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             )
 
         return knots
-
-    @deprecated(
-        "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. Please use get_feature_names_out instead."
-    )
-    def get_feature_names(self, input_features=None):
-        """Return feature names for output features.
-
-        Parameters
-        ----------
-        input_features : list of str of shape (n_features,), default=None
-            String names for input features if available. By default,
-            "x0", "x1", ... "xn_features" is used.
-
-        Returns
-        -------
-        output_feature_names : list of str of shape (n_output_features,)
-            Transformed feature names.
-        """
-        n_splines = self.bsplines_[0].c.shape[0]
-        if input_features is None:
-            input_features = ["x%d" % i for i in range(self.n_features_in_)]
-        feature_names = []
-        for i in range(self.n_features_in_):
-            for j in range(n_splines - 1 + self.include_bias):
-                feature_names.append(f"{input_features[i]}_sp_{j}")
-        return feature_names
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.

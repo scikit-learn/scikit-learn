@@ -16,14 +16,13 @@ from ..utils.validation import (
     _check_psd_eigenvalues,
 )
 from ..utils._param_validation import Interval, StrOptions
-from ..utils.deprecation import deprecated
 from ..exceptions import NotFittedError
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
+from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
 
 
-class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Kernel Principal component analysis (KPCA) [1]_.
 
     Non-linear dimensionality reduction through the use of kernels (see
@@ -155,23 +154,9 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         If `n_components` and `remove_zero_eig` are not set,
         then all values are stored.
 
-    lambdas_ : ndarray of shape (n_components,)
-        Same as `eigenvalues_` but this attribute is deprecated.
-
-        .. deprecated:: 1.0
-           `lambdas_` was renamed to `eigenvalues_` in version 1.0 and will be
-           removed in 1.2.
-
     eigenvectors_ : ndarray of shape (n_samples, n_components)
         Eigenvectors of the centered kernel matrix. If `n_components` and
         `remove_zero_eig` are not set, then all components are stored.
-
-    alphas_ : ndarray of shape (n_samples, n_components)
-        Same as `eigenvectors_` but this attribute is deprecated.
-
-        .. deprecated:: 1.0
-           `alphas_` was renamed to `eigenvectors_` in version 1.0 and will be
-           removed in 1.2.
 
     dual_coef_ : ndarray of shape (n_samples, n_features)
         Inverse transform matrix. Only available when
@@ -309,25 +294,6 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         self.random_state = random_state
         self.n_jobs = n_jobs
         self.copy_X = copy_X
-
-    # TODO: Remove in 1.2
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `lambdas_` was deprecated in version 1.0 and will be "
-        "removed in 1.2. Use `eigenvalues_` instead."
-    )
-    @property
-    def lambdas_(self):
-        return self.eigenvalues_
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `alphas_` was deprecated in version 1.0 and will be "
-        "removed in 1.2. Use `eigenvectors_` instead."
-    )
-    @property
-    def alphas_(self):
-        return self.eigenvectors_
 
     def _get_kernel(self, X, Y=None):
         if callable(self.kernel):

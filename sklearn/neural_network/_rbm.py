@@ -16,7 +16,7 @@ from scipy.special import expit  # logistic function
 
 from ..base import BaseEstimator
 from ..base import TransformerMixin
-from ..base import _ClassNamePrefixFeaturesOutMixin
+from ..base import ClassNamePrefixFeaturesOutMixin
 from ..utils import check_random_state
 from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
@@ -25,7 +25,7 @@ from ..utils.validation import check_is_fitted
 from ..utils._param_validation import Interval
 
 
-class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Bernoulli Restricted Boltzmann Machine (RBM).
 
     A Restricted Boltzmann Machine with binary visible units and
@@ -447,5 +447,6 @@ class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
                 "check_methods_sample_order_invariance": (
                     "fails for the score_samples method"
                 ),
-            }
+            },
+            "preserves_dtype": [np.float64, np.float32],
         }

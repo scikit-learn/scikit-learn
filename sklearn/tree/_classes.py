@@ -33,7 +33,6 @@ from ..base import is_classifier
 from ..base import MultiOutputMixin
 from ..utils import Bunch
 from ..utils import check_random_state
-from ..utils.deprecation import deprecated
 from ..utils.validation import _check_sample_weight
 from ..utils import compute_sample_weight
 from ..utils.multiclass import check_classification_targets
@@ -69,13 +68,10 @@ CRITERIA_CLF = {
     "log_loss": _criterion.Entropy,
     "entropy": _criterion.Entropy,
 }
-# TODO(1.2): Remove "mse" and "mae".
 CRITERIA_REG = {
     "squared_error": _criterion.MSE,
-    "mse": _criterion.MSE,
     "friedman_mse": _criterion.FriedmanMSE,
     "absolute_error": _criterion.MAE,
-    "mae": _criterion.MAE,
     "poisson": _criterion.Poisson,
 }
 
@@ -332,21 +328,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
             else:
                 criterion = CRITERIA_REG[self.criterion](self.n_outputs_, n_samples)
-            # TODO(1.2): Remove "mse" and "mae"
-            if self.criterion == "mse":
-                warnings.warn(
-                    "Criterion 'mse' was deprecated in v1.0 and will be "
-                    "removed in version 1.2. Use `criterion='squared_error'` "
-                    "which is equivalent.",
-                    FutureWarning,
-                )
-            elif self.criterion == "mae":
-                warnings.warn(
-                    "Criterion 'mae' was deprecated in v1.0 and will be "
-                    "removed in version 1.2. Use `criterion='absolute_error'` "
-                    "which is equivalent.",
-                    FutureWarning,
-                )
         else:
             # Make a deepcopy in case the criterion has mutable attributes that
             # might be shared and modified concurrently during parallel fitting
@@ -434,7 +415,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         check_input : bool, default=True
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you're doing.
 
         Returns
         -------
@@ -483,7 +464,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         check_input : bool, default=True
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you're doing.
 
         Returns
         -------
@@ -511,7 +492,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         check_input : bool, default=True
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you're doing.
 
         Returns
         -------
@@ -773,13 +754,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
         or a list containing the number of classes for each
         output (for multi-output problems).
 
-    n_features_ : int
-        The number of features when ``fit`` is performed.
-
-        .. deprecated:: 1.0
-           `n_features_` is deprecated in 1.0 and will be removed in
-           1.2. Use `n_features_in_` instead.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -904,7 +878,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         check_input : bool, default=True
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you're doing.
 
         Returns
         -------
@@ -935,7 +909,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         check_input : bool, default=True
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you're doing.
 
         Returns
         -------
@@ -996,14 +970,6 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
             return proba
 
-    @deprecated(  # type: ignore
-        "The attribute `n_features_` is deprecated in 1.0 and will be removed "
-        "in 1.2. Use `n_features_in_` instead."
-    )
-    @property
-    def n_features_(self):
-        return self.n_features_in_
-
     def _more_tags(self):
         return {"multilabel": True}
 
@@ -1031,14 +997,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         .. versionadded:: 0.24
             Poisson deviance criterion.
-
-        .. deprecated:: 1.0
-            Criterion "mse" was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion="squared_error"` which is equivalent.
-
-        .. deprecated:: 1.0
-            Criterion "mae" was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion="absolute_error"` which is equivalent.
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
@@ -1160,13 +1118,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     max_features_ : int
         The inferred value of max_features.
 
-    n_features_ : int
-        The number of features when ``fit`` is performed.
-
-        .. deprecated:: 1.0
-           `n_features_` is deprecated in 1.0 and will be removed in
-           1.2. Use `n_features_in_` instead.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -1230,17 +1181,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
     _parameter_constraints: dict = {
         **BaseDecisionTree._parameter_constraints,
         "criterion": [
-            StrOptions(
-                {
-                    "squared_error",
-                    "friedman_mse",
-                    "absolute_error",
-                    "poisson",
-                    "mse",
-                    "mae",
-                },
-                deprecated={"mse", "mae"},
-            ),
+            StrOptions({"squared_error", "friedman_mse", "absolute_error", "poisson"}),
             Hidden(Criterion),
         ],
     }
@@ -1295,7 +1236,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         check_input : bool, default=True
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you're doing.
 
         Returns
         -------
@@ -1337,14 +1278,6 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             grid, target_features, averaged_predictions
         )
         return averaged_predictions
-
-    @deprecated(  # type: ignore
-        "The attribute `n_features_` is deprecated in 1.0 and will be removed "
-        "in 1.2. Use `n_features_in_` instead."
-    )
-    @property
-    def n_features_(self):
-        return self.n_features_in_
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
@@ -1513,13 +1446,6 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
         high cardinality features (many unique values). See
         :func:`sklearn.inspection.permutation_importance` as an alternative.
 
-    n_features_ : int
-        The number of features when ``fit`` is performed.
-
-        .. deprecated:: 1.0
-           `n_features_` is deprecated in 1.0 and will be removed in
-           1.2. Use `n_features_in_` instead.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -1628,25 +1554,22 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     Parameters
     ----------
-    criterion : {"squared_error", "friedman_mse"}, default="squared_error"
+    criterion : {"squared_error", "friedman_mse", "absolute_error", "poisson"}, \
+            default="squared_error"
         The function to measure the quality of a split. Supported criteria
         are "squared_error" for the mean squared error, which is equal to
-        variance reduction as feature selection criterion and "mae" for the
-        mean absolute error.
+        variance reduction as feature selection criterion and minimizes the L2
+        loss using the mean of each terminal node, "friedman_mse", which uses
+        mean squared error with Friedman's improvement score for potential
+        splits, "absolute_error" for the mean absolute error, which minimizes
+        the L1 loss using the median of each terminal node, and "poisson" which
+        uses reduction in Poisson deviance to find splits.
 
         .. versionadded:: 0.18
            Mean Absolute Error (MAE) criterion.
 
         .. versionadded:: 0.24
             Poisson deviance criterion.
-
-        .. deprecated:: 1.0
-            Criterion "mse" was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion="squared_error"` which is equivalent.
-
-        .. deprecated:: 1.0
-            Criterion "mae" was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion="absolute_error"` which is equivalent.
 
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
@@ -1751,13 +1674,6 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     ----------
     max_features_ : int
         The inferred value of max_features.
-
-    n_features_ : int
-        The number of features when ``fit`` is performed.
-
-        .. deprecated:: 1.0
-           `n_features_` is deprecated in 1.0 and will be removed in
-           1.2. Use `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
