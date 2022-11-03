@@ -629,7 +629,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # they are semimetrics.
             # algo="kd_tree" and algo="ball_tree" can't be used because
             # KDTree and BallTree require distance metric to work properly.
-            # However, the brute-force algorithm supports semimetrics.
+            # However, the brute-force algorithm supports semi-metrics.
             if self._fit_method == "brute":
                 warnings.warn(
                     "Mind that for 0 < p < 1, Minkowski metrics are not distance"
