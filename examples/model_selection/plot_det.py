@@ -57,9 +57,9 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.4, random_
 # ----------------------
 #
 # Here we define two different classifiers. The goal is to visualy compare their
-# performance across thresholds using the ROC and DET curves. There is no
-# particular reason why these classifiers are chosen other classifiers available
-# in scikit-learn.
+# statistical performance across thresholds using the ROC and DET curves. There
+# is no particular reason why these classifiers are chosen other classifiers
+# available in scikit-learn.
 
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import make_pipeline
