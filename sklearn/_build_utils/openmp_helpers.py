@@ -18,12 +18,8 @@ def get_openmp_flag(compiler):
     else:
         compiler = compiler.__class__.__name__
 
-    if sys.platform == "win32" and ("icc" in compiler or "icl" in compiler):
-        return ["/Qopenmp"]
-    elif sys.platform == "win32":
+    if sys.platform == "win32":
         return ["/openmp"]
-    elif sys.platform in ("darwin", "linux") and "icc" in compiler:
-        return ["-qopenmp"]
     elif sys.platform == "darwin" and "openmp" in os.getenv("CPPFLAGS", ""):
         # -fopenmp can't be passed as compile flag when using Apple-clang.
         # OpenMP support has to be enabled during preprocessing.
