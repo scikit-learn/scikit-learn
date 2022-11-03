@@ -266,8 +266,9 @@ Changelog
 
 :mod:`sklearn.ensemble`
 .......................
-- |Enhancement| :class:`ensemble.StackingClassifier` now accepts any kind of base
-  estimator. :pr:`24538` by :user:`Guillem G Subies <GuillemGSubies>`.
+- |Enhancement| :class:`ensemble.StackingClassifier` now accepts any kind of
+  base estimator.
+  :pr:`24538` by :user:`Guillem G Subies <GuillemGSubies>`.
 
 - |Feature| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
   :class:`~sklearn.ensemble.HistGradientBoostingRegressor` now support

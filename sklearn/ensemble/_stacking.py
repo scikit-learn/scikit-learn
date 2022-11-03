@@ -521,11 +521,11 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     of a binary classification problem. Indeed, both feature will be perfectly
     collinear.
 
-    In some cases (e.g. ordinal regression), one can pass regressors as the first layer
-    of the :class:`StackingClassifier`. However, note that `y` will be internally
-    encoded in a numerically increasing order or lexicographic order. If this ordering
-    is not adequate, one should manually numerically encode the classes in the desired
-    order.
+    In some cases (e.g. ordinal regression), one can pass regressors as the
+    first layer of the :class:`StackingClassifier`. However, note that `y` will
+    be internally encoded in a numerically increasing order or lexicographic
+    order. If this ordering is not adequate, one should manually numerically
+    encode the classes in the desired order.
 
     References
     ----------
@@ -628,10 +628,10 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
-            Target values. Note that `y` will be internally encoded in numerically
-            increasing order or lexicographic order. If the order matter (e.g. for
-            ordinal regression), one should numerically encode the target `y` before
-            calling :term:`fit`.
+            Target values. Note that `y` will be internally encoded in
+            numerically increasing order or lexicographic order. If the order
+            matter (e.g. for ordinal regression), one should numerically encode
+            the target `y` before calling :term:`fit`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
