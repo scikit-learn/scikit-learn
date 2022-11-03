@@ -628,7 +628,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             # metric as they do not satisfy triangular inequality:
             # they are semimetrics.
             # algo="kd_tree" and algo="ball_tree" can't be used because
-            # KDTree and BallTree require distance metric to work properly.
+            # KDTree and BallTree require a proper distance metric to work properly.
             # However, the brute-force algorithm supports semi-metrics.
             if self._fit_method == "brute":
                 warnings.warn(
