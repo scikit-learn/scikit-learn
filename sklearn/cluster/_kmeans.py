@@ -54,7 +54,7 @@ from ._k_means_elkan import init_bounds_dense
 from ._k_means_elkan import init_bounds_sparse
 from ._k_means_elkan import elkan_iter_chunked_dense
 from ._k_means_elkan import elkan_iter_chunked_sparse
-from .._engine import get_engine_class
+from .._engine import get_engine_classes
 
 
 ###############################################################################
@@ -274,7 +274,11 @@ class KMeansCythonEngine:
     def __init__(self, estimator):
         self.estimator = estimator
 
-    def prepare_fit(self, X, y=None, sample_weight=None):
+    def accepts(self, X, y=None, sample_weight=None):
+        # The default engine accepts everything
+        return True
+
+    def pre_fit(self, X, y=None, sample_weight=None):
         estimator = self.estimator
         X = estimator._validate_data(
             X,
@@ -362,23 +366,65 @@ class KMeansCythonEngine:
     def is_same_clustering(self, labels, best_labels, n_clusters):
         return _is_same_clustering(labels, best_labels, n_clusters)
 
-    def kmeans_single(self, X, sample_weight, centers_init):
-        return self.kmeans_single_func(
-            X,
-            sample_weight,
-            centers_init,
-            max_iter=self.estimator.max_iter,
-            tol=self.tol,
-            n_threads=self._n_threads,
-            verbose=self.estimator.verbose,
-        )
+    def fit(self, X, y=None, sample_weight=None):
+        centers_init = self.init_centroids(X)
+        if self.estimator.verbose:
+            print("Initialization complete")
 
-    def prepare_prediction(self, X, sample_weight):
+        best_inertia, best_labels = None, None
+
+        for i in range(self.estimator._n_init):
+            labels, inertia, centers, n_iter_ = self.kmeans_single_func(
+                X,
+                sample_weight,
+                centers_init,
+                max_iter=self.estimator.max_iter,
+                tol=self.tol,
+                n_threads=self._n_threads,
+                verbose=self.estimator.verbose,
+            )
+
+            # determine if these results are the best so far
+            # we chose a new run if it has a better inertia and the clustering is
+            # different from the best so far (it's possible that the inertia is
+            # slightly better even if the clustering is the same with potentially
+            # permuted labels, due to rounding errors)
+            if best_inertia is None or (
+                inertia < best_inertia
+                and not self.is_same_clustering(labels, best_labels, self.n_clusters)
+            ):
+                self.best_labels = labels
+                self.best_centers = centers
+                self.best_inertia = inertia
+                self.best_n_iter = n_iter_
+
+        # return best_labels, best_inertia, best_centers, best_n_iter
+
+    def post_fit(self, X, y=None, sample_weight=None):
+        self.unshift_centers(X, self.best_centers)
+
+        distinct_clusters = len(set(self.best_labels))
+        if distinct_clusters < self.estimator.n_clusters:
+            warnings.warn(
+                "Number of distinct clusters ({}) found smaller than "
+                "n_clusters ({}). Possibly due to duplicate points "
+                "in X.".format(distinct_clusters, self.estimator.n_clusters),
+                ConvergenceWarning,
+                stacklevel=2,
+            )
+
+        self.estimator.cluster_centers_ = self.best_centers
+        self.estimator._n_features_out = self.best_centers.shape[0]
+        self.estimator.labels_ = self.best_labels
+        self.estimator.inertia_ = self.best_inertia
+        self.estimator.n_iter_ = self.best_n_iter
+
+    def pre_predict(self, X, sample_weight):
         X = self.estimator._check_test_data(X)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         return X, sample_weight
 
-    def get_labels(self, X, sample_weight):
+    def predict(self, X, sample_weight=None):
         labels, _ = _labels_inertia_threadpool_limit(
             X,
             sample_weight,
@@ -388,13 +434,13 @@ class KMeansCythonEngine:
 
         return labels
 
-    def prepare_transform(self, X):
+    def pre_transform(self, X):
         return self.estimator._check_test_data(X)
 
-    def get_euclidean_distances(self, X):
+    def transform(self, X):
         return euclidean_distances(X, self.estimator.cluster_centers_)
 
-    def get_score(self, X, sample_weight):
+    def score(self, X, sample_weight):
         _, scores = _labels_inertia_threadpool_limit(
             X, sample_weight, self.estimator.cluster_centers_, self.estimator._n_threads
         )
@@ -1504,11 +1550,13 @@ class KMeans(_BaseKMeans):
             )
             self._algorithm = "lloyd"
 
-    def _get_engine(self):
-        engine_class = get_engine_class(
+    def _get_engine(self, X, y=None, sample_weight=None):
+        for engine_class in get_engine_classes(
             "kmeans", default=KMeansCythonEngine, verbose=self.verbose
-        )
-        return engine_class(self)
+        ):
+            engine = engine_class(self)
+            if engine.accepts(X, y=y, sample_weight=sample_weight):
+                return engine
 
     def _warn_mkl_vcomp(self, n_active_threads):
         """Warn when vcomp and mkl are both present"""
@@ -1546,61 +1594,30 @@ class KMeans(_BaseKMeans):
             Fitted estimator.
         """
         self._validate_params()
-        engine = self._get_engine()
+        self._check_params_vs_input(X)
 
-        X, y, sample_weight = engine.prepare_fit(
+        engine = self._get_engine(X, y, sample_weight)
+
+        if hasattr(engine, "pre_fit"):
+            X, y, sample_weight = engine.pre_fit(
+                X,
+                y=y,
+                sample_weight=sample_weight,
+            )
+
+        engine.fit(
             X,
             y=y,
             sample_weight=sample_weight,
         )
-        self._check_params_vs_input(X)
 
-        best_inertia, best_labels = None, None
-
-        for i in range(self._n_init):
-            # Initialize centers
-            centers_init = engine.init_centroids(X)
-            if self.verbose:
-                print("Initialization complete")
-
-            # run a k-means once
-            labels, inertia, centers, n_iter_ = engine.kmeans_single(
+        if hasattr(engine, "post_fit"):
+            engine.post_fit(
                 X,
-                sample_weight,
-                centers_init,
+                y=y,
+                sample_weight=sample_weight,
             )
 
-            # determine if these results are the best so far
-            # we chose a new run if it has a better inertia and the clustering is
-            # different from the best so far (it's possible that the inertia is
-            # slightly better even if the clustering is the same with potentially
-            # permuted labels, due to rounding errors)
-            if best_inertia is None or (
-                inertia < best_inertia
-                and not engine.is_same_clustering(labels, best_labels, self.n_clusters)
-            ):
-                best_labels = labels
-                best_centers = centers
-                best_inertia = inertia
-                best_n_iter = n_iter_
-
-        engine.unshift_centers(X, best_centers)
-
-        distinct_clusters = len(set(best_labels))
-        if distinct_clusters < self.n_clusters:
-            warnings.warn(
-                "Number of distinct clusters ({}) found smaller than "
-                "n_clusters ({}). Possibly due to duplicate points "
-                "in X.".format(distinct_clusters, self.n_clusters),
-                ConvergenceWarning,
-                stacklevel=2,
-            )
-
-        self.cluster_centers_ = best_centers
-        self._n_features_out = self.cluster_centers_.shape[0]
-        self.labels_ = best_labels
-        self.inertia_ = best_inertia
-        self.n_iter_ = best_n_iter
         return self
 
     def predict(self, X, sample_weight=None):
@@ -1625,9 +1642,16 @@ class KMeans(_BaseKMeans):
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
-        engine = self._get_engine()
-        X, sample_weight = engine.prepare_prediction(X, sample_weight)
-        return engine.get_labels(X, sample_weight)
+        engine = self._get_engine(X)
+        if hasattr(engine, "pre_predict"):
+            X, sample_weight = engine.pre_predict(X, sample_weight)
+
+        y_pred = engine.predict(X, sample_weight)
+
+        if hasattr(engine, "post_predict"):
+            engine.post_predict(X, sample_weight)
+
+        return y_pred
 
     def fit_transform(self, X, y=None, sample_weight=None):
         """Compute clustering and transform X to cluster-distance space.
@@ -1651,8 +1675,9 @@ class KMeans(_BaseKMeans):
         X_new : ndarray of shape (n_samples, n_clusters)
             X transformed in the new space.
         """
+        # XXX pre_transform() is not called because fit() calls pre_fit()
         self.fit(X, sample_weight=sample_weight)
-        engine = self._get_engine()
+        engine = self._get_engine(X)
         return self._transform(X, engine)
 
     def transform(self, X):
@@ -1673,13 +1698,17 @@ class KMeans(_BaseKMeans):
             X transformed in the new space.
         """
         check_is_fitted(self)
-        engine = self._get_engine()
-        X = engine.prepare_transform(X)
+        engine = self._get_engine(X)
+        if hasattr(engine, "pre_transform"):
+            X = engine.pre_transform(X)
         return self._transform(X, engine)
 
     def _transform(self, X, engine):
         """Guts of transform method; no input validation."""
-        return engine.get_euclidean_distances(X)
+        X_ = engine.transform(X)
+        if hasattr(engine, "post_transform"):
+            engine.post_transform(X_)
+        return X_
 
     def score(self, X, y=None, sample_weight=None):
         """Opposite of the value of X on the K-means objective.
@@ -1702,11 +1731,11 @@ class KMeans(_BaseKMeans):
             Opposite of the value of X on the K-means objective.
         """
         check_is_fitted(self)
-        engine = self._get_engine()
+        engine = self._get_engine(X)
 
-        X, sample_weight = engine.prepare_prediction(X, sample_weight)
+        X, sample_weight = engine.pre_predict(X, sample_weight)
 
-        return -engine.get_score(X, sample_weight)
+        return -engine.score(X, sample_weight)
 
 
 def _mini_batch_step(
