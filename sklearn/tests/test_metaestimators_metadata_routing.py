@@ -7,12 +7,14 @@ import pytest
 from sklearn.base import RegressorMixin, ClassifierMixin, BaseEstimator
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.exceptions import UnsetMetadataPassedError
+from sklearn.linear_model import LogisticRegressionCV
 from sklearn.multioutput import (
     MultiOutputRegressor,
     MultiOutputClassifier,
     ClassifierChain,
     RegressorChain,
 )
+from sklearn.utils._metadata_requests import _MetadataRequester, MetadataRequest
 from sklearn.utils.metadata_routing import MetadataRouter
 from sklearn.tests.test_metadata_routing import (
     record_metadata,
@@ -149,6 +151,29 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
             self, "predict_log_proba", sample_weight=sample_weight, metadata=metadata
         )
         return np.zeros(shape=(len(X), 2))
+
+
+class ConsumingScorer(_MetadataRequester):
+    def __init__(self, registry=None):
+        self.registry = registry
+
+    def __call__(
+        self, estimator, X, y_true, sample_weight="default", metadata="default"
+    ):
+        if self.registry is not None:
+            self.registry.append(self)
+
+        record_metadata_not_default(
+            self, "score", sample_weight=sample_weight, metadata=metadata
+        )
+
+        return 0.0
+
+    def set_score_request(self, **kwargs):
+        self._metadata_request = MetadataRequest(owner=self.__class__.__name__)
+        for param, alias in kwargs.items():
+            self._metadata_request.score.add_request(param=param, alias=alias)
+        return self
 
 
 METAESTIMATORS = [
@@ -365,3 +390,39 @@ def test_setting_request_removes_warning_or_error(metaestimator):
             # changed without amending this test, the test would pass trivially.
             future_warnings = [w for w in rec if isinstance(w, FutureWarning)]
             assert not any("metadata" in w.message for w in future_warnings)
+
+
+CV_ESTIMATORS = [
+    {
+        "cv_estimator": LogisticRegressionCV,
+        "scorer_name": "scoring",
+        "scorer": ConsumingScorer,
+        "X": X,
+        "y": y,
+        "routing_methods": ["fit", "score"],
+        "warns_on": {},
+    },
+]
+
+
+@pytest.mark.parametrize(
+    "cv_estimator",
+    CV_ESTIMATORS,
+)
+def test_metadata_is_routed_correctly_to_scorer(cv_estimator):
+    registry = _Registry()
+    cls = cv_estimator["cv_estimator"]
+    scorer_name = cv_estimator["scorer_name"]
+    scorer = cv_estimator["scorer"](registry=registry)
+    scorer.set_score_request(sample_weight=True)
+    X = cv_estimator["X"]
+    y = cv_estimator["y"]
+    routing_methods = cv_estimator["routing_methods"]
+
+    for method_name in routing_methods:
+        instance = cls(**{scorer_name: scorer})
+        method = getattr(instance, method_name)
+        kwargs = {"sample_weight": sample_weight}
+        method(X, y, **kwargs)
+        for _scorer in registry:
+            check_recorded_metadata(obj=_scorer, method="score", **kwargs)
