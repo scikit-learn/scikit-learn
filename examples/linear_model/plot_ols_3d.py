@@ -41,7 +41,7 @@ _ = ols.fit(X_train, y_train)
 # Finally we plot the figure from three different views.
 
 import matplotlib.pyplot as plt
-
+from mpl_toolkits.mplot3d import Axes3D
 
 def plot_figs(fig_num, elev, azim, X_train, clf):
     fig = plt.figure(fig_num, figsize=(4, 3))
