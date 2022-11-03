@@ -954,7 +954,7 @@ Solvers
 -------
 
 The solvers implemented in the class :class:`LogisticRegression`
-are "liblinear", "newton-cg", "lbfgs", "sag" and "saga":
+are "lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag" and "saga":
 
 The solver "liblinear" uses a coordinate descent (CD) algorithm, and relies
 on the excellent C++ `LIBLINEAR library
@@ -968,7 +968,7 @@ classifiers. For :math:`\ell_1` regularization :func:`sklearn.svm.l1_min_c` allo
 calculate the lower bound for C in order to get a non "null" (all feature
 weights to zero) model.
 
-The "lbfgs", "sag" and "newton-cg" solvers only support :math:`\ell_2`
+The "lbfgs", "newton-cg" and "sag" solvers only support :math:`\ell_2`
 regularization or no regularization, and are found to converge faster for some
 high-dimensional data. Setting `multi_class` to "multinomial" with these solvers
 learns a true multinomial logistic regression model [5]_, which means that its
@@ -989,33 +989,41 @@ Broyden–Fletcher–Goldfarb–Shanno algorithm [8]_, which belongs to
 quasi-Newton methods. The "lbfgs" solver is recommended for use for
 small data-sets but for larger datasets its performance suffers. [9]_
 
+The "newton-cholesky" solver is an exact Newton solver that calculates the hessian
+matrix and solves the resulting linear system. It is a very good choice for
+`n_samples` >> `n_features`, but has a few shortcomings: Only :math:`\ell_2`
+regularization is supported. Furthermore, because the hessian matrix is explicitly
+computed, the memory usage has a quadratic dependency on `n_features` as well as on
+`n_classes`. As a consequence, only the one-vs-rest scheme is implemented for the
+multiclass case.
+
 The following table summarizes the penalties supported by each solver:
 
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-|                              |                       **Solvers**                                        |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| **Penalties**                | **'liblinear'** | **'lbfgs'** | **'newton-cg'** | **'sag'** | **'saga'** |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| Multinomial + L2 penalty     |       no        |     yes     |       yes       |    yes    |    yes     |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| OVR + L2 penalty             |       yes       |     yes     |       yes       |    yes    |    yes     |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| Multinomial + L1 penalty     |       no        |     no      |       no        |    no     |    yes     |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| OVR + L1 penalty             |       yes       |     no      |       no        |    no     |    yes     |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| Elastic-Net                  |       no        |     no      |       no        |    no     |    yes     |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| No penalty ('none')          |       no        |     yes     |       yes       |    yes    |    yes     |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| **Behaviors**                |                                                                          |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| Penalize the intercept (bad) |       yes       |     no      |       no        |    no     |    no      |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| Faster for large datasets    |       no        |     no      |       no        |    yes    |    yes     |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
-| Robust to unscaled datasets  |       yes       |     yes     |       yes       |    no     |    no      |
-+------------------------------+-----------------+-------------+-----------------+-----------+------------+
++------------------------------+-----------------+-------------+-----------------+-----------------------+-----------+------------+
+|                              |                       **Solvers**                                                                |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| **Penalties**                | **'lbfgs'** | **'liblinear'** | **'newton-cg'** | **'newton-cholesky'** | **'sag'** | **'saga'** |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| Multinomial + L2 penalty     |     yes     |       no        |       yes       |     no                |    yes    |    yes     |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| OVR + L2 penalty             |     yes     |       yes       |       yes       |     yes               |    yes    |    yes     |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| Multinomial + L1 penalty     |     no      |       no        |       no        |     no                |    no     |    yes     |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| OVR + L1 penalty             |     no      |       yes       |       no        |     no                |    no     |    yes     |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| Elastic-Net                  |     no      |       no        |       no        |     no                |    no     |    yes     |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| No penalty ('none')          |     yes     |       no        |       yes       |     yes               |    yes    |    yes     |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| **Behaviors**                |                                                                                                  |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| Penalize the intercept (bad) |     no      |       yes       |       no        |     no                |    no     |    no      |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| Faster for large datasets    |     no      |       no        |       no        |     no                |    yes    |    yes     |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
+| Robust to unscaled datasets  |     yes     |       yes       |       yes       |     yes               |    no     |    no      |
++------------------------------+-------------+-----------------+-----------------+-----------------------+-----------+------------+
 
 The "lbfgs" solver is used by default for its robustness. For large datasets
 the "saga" solver is usually faster.
