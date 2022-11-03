@@ -75,10 +75,10 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         'newton-cholesky'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
             iterated reweighted least squares) with an inner Cholesky based solver.
-            This solver is a good choice for n_samples >> n_features, especially with
-            one-hot encoded categorical features with rare categories. Be aware that
-            the memory usage of this solver has a quadratic dependency on `n_features`
-            because it explicitly computes the Hessian matrix.
+            This solver is a good choice for `n_samples` >> `n_features`, especially
+            with one-hot encoded categorical features with rare categories. Be aware
+            that the memory usage of this solver has a quadratic dependency on
+            `n_features` because it explicitly computes the Hessian matrix.
 
             .. versionadded:: 1.2
 
@@ -515,10 +515,10 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
         'newton-cholesky'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
             iterated reweighted least squares) with an inner Cholesky based solver.
-            This solver is a good choice for n_samples >> n_features, especially with
-            one-hot encoded categorical features with rare categories. Be aware that
-            the memory usage of this solver has a quadratic dependency on `n_features`
-            because it explicitly computes the Hessian matrix.
+            This solver is a good choice for `n_samples` >> `n_features`, especially
+            with one-hot encoded categorical features with rare categories. Be aware
+            that the memory usage of this solver has a quadratic dependency on
+            `n_features` because it explicitly computes the Hessian matrix.
 
             .. versionadded:: 1.2
 
@@ -646,10 +646,10 @@ class GammaRegressor(_GeneralizedLinearRegressor):
         'newton-cholesky'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
             iterated reweighted least squares) with an inner Cholesky based solver.
-            This solver is a good choice for n_samples >> n_features, especially with
-            one-hot encoded categorical features with rare categories. Be aware that
-            the memory usage of this solver has a quadratic dependency on `n_features`
-            because it explicitly computes the Hessian matrix.
+            This solver is a good choice for `n_samples` >> `n_features`, especially
+            with one-hot encoded categorical features with rare categories. Be aware
+            that the memory usage of this solver has a quadratic dependency on
+            `n_features` because it explicitly computes the Hessian matrix.
 
             .. versionadded:: 1.2
 
@@ -808,10 +808,10 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         'newton-cholesky'
             Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
             iterated reweighted least squares) with an inner Cholesky based solver.
-            This solver is a good choice for n_samples >> n_features, especially with
-            one-hot encoded categorical features with rare categories. Be aware that
-            the memory usage of this solver has a quadratic dependency on `n_features`
-            because it explicitly computes the Hessian matrix.
+            This solver is a good choice for `n_samples` >> `n_features`, especially
+            with one-hot encoded categorical features with rare categories. Be aware
+            that the memory usage of this solver has a quadratic dependency on
+            `n_features` because it explicitly computes the Hessian matrix.
 
             .. versionadded:: 1.2
 

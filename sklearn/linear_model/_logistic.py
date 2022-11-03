@@ -76,7 +76,7 @@ def _check_solver(solver, penalty, dual):
 def _check_multi_class(multi_class, solver, n_classes):
     """Computes the multi class type, either "multinomial" or "ovr".
 
-    For n_classes > 2 and solver that support it, returns "multinomial".
+    For `n_classes` > 2 and a solver that supports it, returns "multinomial".
     For all other cases, in particular binary classification, return "ovr".
     """
     if multi_class == "auto":
@@ -873,7 +873,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
               'lbfgs' handle multinomial loss;
             - 'liblinear' and is limited to one-versus-rest schemes.
-            - 'newton-cholesky' is a good choice for n_samples >> n_features,
+            - 'newton-cholesky' is a good choice for `n_samples` >> `n_features`,
               especially with one-hot encoded categorical features with rare
               categories. Note that it is limited to binary classification and the
               one-versus-rest reduction for multiclass classification. Be aware that
@@ -1067,7 +1067,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         "random_state": ["random_state"],
         "solver": [
             StrOptions(
-                {"newton-cg", "newton-cholesky", "lbfgs", "liblinear", "sag", "saga"}
+                {"lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga"}
             )
         ],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
@@ -1467,7 +1467,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             - 'liblinear' might be slower in :class:`LogisticRegressionCV`
               because it does not handle warm-starting. 'liblinear' is
               limited to one-versus-rest schemes.
-            - 'newton-cholesky' is a good choice for n_samples >> n_features,
+            - 'newton-cholesky' is a good choice for `n_samples` >> `n_features`,
               especially with one-hot encoded categorical features with rare
               categories. Note that it is limited to binary classification and the
               one-versus-rest reduction for multiclass classification. Be aware that
