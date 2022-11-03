@@ -58,9 +58,6 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
     # removes its usage
     TEST_CMD="$TEST_CMD -Wignore:tostring:DeprecationWarning"
 
-    # Python 3.10 deprecates distutils, which is imported by numpy internally
-    TEST_CMD="$TEST_CMD -Wignore:The\ distutils:DeprecationWarning"
-
     # Ignore distutils deprecation warning, used by joblib internally
     TEST_CMD="$TEST_CMD -Wignore:distutils\ Version\ classes\ are\ deprecated:DeprecationWarning"
 
