@@ -2578,7 +2578,7 @@ def log_loss(
     y_pred = check_array(
         y_pred, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
     )
-    eps = np.finfo(y_pred.dtype).eps * 1.0001 if eps == "auto" else eps
+    eps = np.finfo(y_pred.dtype).eps if eps == "auto" else eps
 
     check_consistent_length(y_pred, y_true, sample_weight)
     lb = LabelBinarizer()
