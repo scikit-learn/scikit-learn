@@ -22,12 +22,11 @@ except ImportError:
     # Python 2 compat: just to be able to declare that Python >=3.8 is needed.
     import __builtin__ as builtins
 
-# This is a bit (!) hackish: we are setting a global variable so that the
-# main sklearn __init__ can detect if it is being loaded by the setup
-# routine, to avoid attempting to load components that aren't built yet:
-# the numpy distutils extensions that are used by scikit-learn to
-# recursively build the compiled extensions in sub-packages is based on the
-# Python import machinery.
+# This is a bit (!) hackish: we are setting a global variable so that the main
+# sklearn __init__ can detect if it is being loaded by the setup routine, to
+# avoid attempting to load components that aren't built yet.
+# TODO: can this be simplified or removed since the switch to setuptools
+# away from numpy.distutils?
 builtins.__SKLEARN_SETUP__ = True
 
 
