@@ -292,7 +292,10 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         )
 
         # This allows preserving input dtype for all attributes.
-        self._distances_fit_X_ = self._distances_fit_X_.astype(X.dtype, copy=False)
+        self._distances_fit_X_ = self._distances_fit_X_.astype(
+            self._fit_X.dtype,
+            copy=False,
+        )
 
         self._lrd = self._local_reachability_density(
             self._distances_fit_X_, _neighbors_indices_fit_X_
@@ -465,7 +468,15 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
         distances_X, neighbors_indices_X = self.kneighbors(
             X, n_neighbors=self.n_neighbors_
         )
-        X_lrd = self._local_reachability_density(distances_X, neighbors_indices_X)
+
+        # To preserves inputs dtype for outputs.
+        # This might downcast distances_X from np.float64 to np.float32.
+        distances_X = distances_X.astype(X.dtype, copy=False)
+
+        X_lrd = self._local_reachability_density(
+            distances_X,
+            neighbors_indices_X,
+        )
 
         lrd_ratios_array = self._lrd[neighbors_indices_X] / X_lrd[:, np.newaxis]
 

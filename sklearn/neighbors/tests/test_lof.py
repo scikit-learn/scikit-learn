@@ -143,15 +143,28 @@ def test_score_samples(global_dtype):
         n_neighbors=2, contamination=0.1, novelty=True
     ).fit(X_train)
     clf2 = neighbors.LocalOutlierFactor(n_neighbors=2, novelty=True).fit(X_train)
+
+    clf1_scores = clf1.score_samples(X_test)
+    clf1_decisions = clf1.decision_function(X_test)
+
+    clf2_scores = clf2.score_samples(X_test)
+    clf2_decisions = clf2.decision_function(X_test)
+
+    assert clf1_scores.dtype == global_dtype
+    assert clf1_decisions.dtype == global_dtype
+
+    assert clf2_scores.dtype == global_dtype
+    assert clf2_decisions.dtype == global_dtype
+
     assert_allclose(
-        clf1.score_samples(X_test),
-        clf1.decision_function(X_test) + clf1.offset_,
+        clf1_scores,
+        clf1_decisions + clf1.offset_,
     )
     assert_allclose(
-        clf2.score_samples(X_test),
-        clf2.decision_function(X_test) + clf2.offset_,
+        clf2_scores,
+        clf2_decisions + clf2.offset_,
     )
-    assert_allclose(clf1.score_samples(X_test), clf2.score_samples(X_test))
+    assert_allclose(clf1_scores, clf2_scores)
 
 
 def test_novelty_errors():
