@@ -89,15 +89,20 @@ def check_openmp_support():
         else:
             openmp_supported = False
 
-    except Exception as exception:
-        exception_msg = str(exception)
+    except Exception as openmp_exception:
+        # We could be more specific and only catch: CompileError, LinkError,
+        # and subprocess.CalledProcessError.
+        # setuptools introduced CompileError and LinkError, but that requires
+        # version 61.1. Even the latest version of Ubuntu (22.04LTS) only
+        # ships with 59.6. So for now we catch all exceptions and reraise a
+        # generic exception with the original error message instead:
         openmp_supported = False
 
     if not openmp_supported:
         if os.getenv("SKLEARN_FAIL_NO_OPENMP"):
             raise Exception(
-                f"Failed to build with OpenMP, with error message: {exception_msg}"
-            )
+                f"Failed to build scikit-learn with OpenMP support"
+            ) from openmp_exception
         else:
             message = textwrap.dedent(
                 """
