@@ -814,7 +814,7 @@ class OneHotEncoder(_BaseEncoder):
         if self.sparse != "deprecated":
             warnings.warn(
                 "`sparse` was renamed to `sparse_output` in version 1.2 and "
-                "will be removed in 1.4. `sparse_out` is ignored unless you "
+                "will be removed in 1.4. `sparse_output` is ignored unless you "
                 "leave `sparse` to its default value.",
                 FutureWarning,
             )
