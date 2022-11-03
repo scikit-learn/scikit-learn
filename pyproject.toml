@@ -3,13 +3,18 @@
 requires = [
     "setuptools<60.0",
     "wheel",
-    "Cython>=0.28.5",
+    "Cython>=0.29.24",
 
     # use oldest-supported-numpy which provides the oldest numpy version with
     # wheels on PyPI
     #
     # see: https://github.com/scipy/oldest-supported-numpy/blob/main/setup.cfg
-    "oldest-supported-numpy",
+    "oldest-supported-numpy; python_version!='3.10' or platform_system!='Windows' or platform_python_implementation=='PyPy'",
+    # For CPython 3.10 under Windows, SciPy requires NumPy 1.22.3 while the
+    # oldest supported NumPy is defined as 1.21.6. We therefore need to force
+    # it for this specific configuration. For details, see
+    # https://github.com/scipy/scipy/blob/c58b608c83d30800aceee6a4dab5c3464cb1de7d/pyproject.toml#L38-L41
+    "numpy==1.22.3; python_version=='3.10' and platform_system=='Windows' and platform_python_implementation != 'PyPy'",
 
     "scipy>=1.3.2",
 ]

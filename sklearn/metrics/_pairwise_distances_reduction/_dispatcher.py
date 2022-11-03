@@ -3,12 +3,23 @@ from abc import abstractmethod
 import numpy as np
 
 from typing import List
-from scipy.sparse import issparse
+
+from scipy.sparse import isspmatrix_csr
+
 from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING
 
-from ._base import _sqeuclidean_row_norms64
-from ._argkmin import PairwiseDistancesArgKmin64
-from ._radius_neighborhood import PairwiseDistancesRadiusNeighborhood64
+from ._base import (
+    _sqeuclidean_row_norms64,
+    _sqeuclidean_row_norms32,
+)
+from ._argkmin import (
+    ArgKmin64,
+    ArgKmin32,
+)
+from ._radius_neighbors import (
+    RadiusNeighbors64,
+    RadiusNeighbors32,
+)
 
 from ... import get_config
 
@@ -18,7 +29,7 @@ def sqeuclidean_row_norms(X, num_threads):
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features)
+    X : ndarray or CSR matrix of shape (n_samples, n_features)
         Input data. Must be c-contiguous.
 
     num_threads : int
@@ -30,28 +41,35 @@ def sqeuclidean_row_norms(X, num_threads):
         Arrays containing the squared euclidean norm of each row of X.
     """
     if X.dtype == np.float64:
-        return _sqeuclidean_row_norms64(X, num_threads)
+        return np.asarray(_sqeuclidean_row_norms64(X, num_threads))
+    if X.dtype == np.float32:
+        return np.asarray(_sqeuclidean_row_norms32(X, num_threads))
+
     raise ValueError(
-        f"Only 64bit float datasets are supported at this time, got: X.dtype={X.dtype}."
+        "Only float64 or float32 datasets are supported at this time, "
+        f"got: X.dtype={X.dtype}."
     )
 
 
-class PairwiseDistancesReduction:
+class BaseDistancesReductionDispatcher:
     """Abstract base dispatcher for pairwise distance computation & reduction.
 
-    Each dispatcher extending the base :class:`PairwiseDistancesReduction`
+    Each dispatcher extending the base :class:`BaseDistancesReductionDispatcher`
     dispatcher must implement the :meth:`compute` classmethod.
     """
 
     @classmethod
     def valid_metrics(cls) -> List[str]:
         excluded = {
-            "pyfunc",  # is relatively slow because we need to coerce data as np arrays
+            # PyFunc cannot be supported because it necessitates interacting with
+            # the CPython interpreter to call user defined functions.
+            "pyfunc",
             "mahalanobis",  # is numerically unstable
-            # TODO: In order to support discrete distance metrics, we need to have a
-            # stable simultaneous sort which preserves the order of the input.
-            # The best might be using std::stable_sort and a Comparator taking an
-            # Arrays of Structures instead of Structure of Arrays (currently used).
+            # In order to support discrete distance metrics, we need to have a
+            # stable simultaneous sort which preserves the order of the indices
+            # because there generally is a lot of occurrences for a given values
+            # of distances in this case.
+            # TODO: implement a stable simultaneous_sort.
             "hamming",
             *BOOL_METRICS,
         }
@@ -59,7 +77,7 @@ class PairwiseDistancesReduction:
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
-        """Return True if the PairwiseDistancesReduction can be used for the
+        """Return True if the dispatcher can be used for the
         given parameters.
 
         Parameters
@@ -77,16 +95,51 @@ class PairwiseDistancesReduction:
 
         Returns
         -------
-        True if the PairwiseDistancesReduction can be used, else False.
+        True if the dispatcher can be used, else False.
         """
-        dtypes_validity = X.dtype == Y.dtype == np.float64
-        return (
+
+        def is_numpy_c_ordered(X):
+            return hasattr(X, "flags") and X.flags.c_contiguous
+
+        def is_valid_sparse_matrix(X):
+            return (
+                isspmatrix_csr(X)
+                and
+                # TODO: support CSR matrices without non-zeros elements
+                X.nnz > 0
+                and
+                # TODO: support CSR matrices with int64 indices and indptr
+                # See: https://github.com/scikit-learn/scikit-learn/issues/23653
+                X.indices.dtype == X.indptr.dtype == np.int32
+            )
+
+        is_usable = (
             get_config().get("enable_cython_pairwise_dist", True)
-            and not issparse(X)
-            and not issparse(Y)
-            and dtypes_validity
+            and (is_numpy_c_ordered(X) or is_valid_sparse_matrix(X))
+            and (is_numpy_c_ordered(Y) or is_valid_sparse_matrix(Y))
+            and X.dtype == Y.dtype
+            and X.dtype in (np.float32, np.float64)
             and metric in cls.valid_metrics()
         )
+
+        # The other joblib-based back-end might be more efficient on fused sparse-dense
+        # datasets' pairs on metric="(sq)euclidean" for some configurations because it
+        # uses the Squared Euclidean matrix decomposition, i.e.:
+        #
+        #       ||X_c_i - Y_c_j||² = ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
+        #
+        # calling efficient sparse-dense routines for matrix and vectors multiplication
+        # implemented in SciPy we do not use yet here.
+        # See: https://github.com/scikit-learn/scikit-learn/pull/23585#issuecomment-1247996669  # noqa
+        # TODO: implement specialisation for (sq)euclidean on fused sparse-dense
+        # using sparse-dense routines for matrix-vector multiplications.
+        fused_sparse_dense_euclidean_case_guard = not (
+            (is_valid_sparse_matrix(X) or is_valid_sparse_matrix(Y))
+            and isinstance(metric, str)
+            and "euclidean" in metric
+        )
+
+        return is_usable and fused_sparse_dense_euclidean_case_guard
 
     @classmethod
     @abstractmethod
@@ -115,13 +168,13 @@ class PairwiseDistancesReduction:
         """
 
 
-class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
+class ArgKmin(BaseDistancesReductionDispatcher):
     """Compute the argkmin of row vectors of X on the ones of Y.
 
     For each row vector of X, computes the indices of k first the rows
     vectors of Y with the smallest distances.
 
-    PairwiseDistancesArgKmin is typically used to perform
+    ArgKmin is typically used to perform
     bruteforce k-nearest neighbors queries.
 
     This class is not meant to be instanciated, one should only use
@@ -191,8 +244,6 @@ class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
                 'parallel_on_X' is usually the most efficient strategy.
                 When `X.shape[0]` is small but `Y.shape[0]` is large, 'parallel_on_Y'
                 brings more opportunity for parallelism and is therefore more efficient
-                despite the synchronization step at each iteration of the outer loop
-                on chunks of `X`.
 
               - None (default) looks-up in scikit-learn configuration for
                 `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
@@ -215,22 +266,16 @@ class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
 
         Notes
         -----
-        This classmethod is responsible for introspecting the arguments
-        values to dispatch to the most appropriate implementation of
-        :class:`PairwiseDistancesArgKmin`.
+        This classmethod inspects the arguments values to dispatch to the
+        dtype-specialized implementation of :class:`ArgKmin`.
 
         This allows decoupling the API entirely from the implementation details
         whilst maintaining RAII: all temporarily allocated datastructures necessary
         for the concrete implementation are therefore freed when this classmethod
         returns.
         """
-        # Note (jjerphan): Some design thoughts for future extensions.
-        # This factory comes to handle specialisations for the given arguments.
-        # For future work, this might can be an entrypoint to specialise operations
-        # for various backend and/or hardware and/or datatypes, and/or fused
-        # {sparse, dense}-datasetspair etc.
         if X.dtype == Y.dtype == np.float64:
-            return PairwiseDistancesArgKmin64.compute(
+            return ArgKmin64.compute(
                 X=X,
                 Y=Y,
                 k=k,
@@ -240,13 +285,26 @@ class PairwiseDistancesArgKmin(PairwiseDistancesReduction):
                 strategy=strategy,
                 return_distance=return_distance,
             )
+
+        if X.dtype == Y.dtype == np.float32:
+            return ArgKmin32.compute(
+                X=X,
+                Y=Y,
+                k=k,
+                metric=metric,
+                chunk_size=chunk_size,
+                metric_kwargs=metric_kwargs,
+                strategy=strategy,
+                return_distance=return_distance,
+            )
+
         raise ValueError(
-            "Only 64bit float datasets are supported at this time, "
+            "Only float64 or float32 datasets pairs are supported at this time, "
             f"got: X.dtype={X.dtype} and Y.dtype={Y.dtype}."
         )
 
 
-class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
+class RadiusNeighbors(BaseDistancesReductionDispatcher):
     """Compute radius-based neighbors for two sets of vectors.
 
     For each row-vector X[i] of the queries X, find all the indices j of
@@ -352,23 +410,16 @@ class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
 
         Notes
         -----
-        This public classmethod is responsible for introspecting the arguments
-        values to dispatch to the private dtype-specialized implementation of
-        :class:`PairwiseDistancesRadiusNeighborhood`.
+        This classmethod inspects the arguments values to dispatch to the
+        dtype-specialized implementation of :class:`RadiusNeighbors`.
 
-        All temporarily allocated datastructures necessary for the concrete
-        implementation are therefore freed when this classmethod returns.
-
-        This allows entirely decoupling the API entirely from the
-        implementation details whilst maintaining RAII.
+        This allows decoupling the API entirely from the implementation details
+        whilst maintaining RAII: all temporarily allocated datastructures necessary
+        for the concrete implementation are therefore freed when this classmethod
+        returns.
         """
-        # Note (jjerphan): Some design thoughts for future extensions.
-        # This factory comes to handle specialisations for the given arguments.
-        # For future work, this might can be an entrypoint to specialise operations
-        # for various backend and/or hardware and/or datatypes, and/or fused
-        # {sparse, dense}-datasetspair etc.
         if X.dtype == Y.dtype == np.float64:
-            return PairwiseDistancesRadiusNeighborhood64.compute(
+            return RadiusNeighbors64.compute(
                 X=X,
                 Y=Y,
                 radius=radius,
@@ -379,7 +430,21 @@ class PairwiseDistancesRadiusNeighborhood(PairwiseDistancesReduction):
                 sort_results=sort_results,
                 return_distance=return_distance,
             )
+
+        if X.dtype == Y.dtype == np.float32:
+            return RadiusNeighbors32.compute(
+                X=X,
+                Y=Y,
+                radius=radius,
+                metric=metric,
+                chunk_size=chunk_size,
+                metric_kwargs=metric_kwargs,
+                strategy=strategy,
+                sort_results=sort_results,
+                return_distance=return_distance,
+            )
+
         raise ValueError(
-            "Only 64bit float datasets are supported at this time, "
+            "Only float64 or float32 datasets pairs are supported at this time, "
             f"got: X.dtype={X.dtype} and Y.dtype={Y.dtype}."
         )

@@ -17,6 +17,10 @@ on:
   # Manual run
   workflow_dispatch:
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   # Check whether to build the wheels and the source tarball
   check_build_trigger:
@@ -28,7 +32,7 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
@@ -53,80 +57,72 @@ jobs:
           # https://github.com/scikit-learn/scikit-learn/issues/22530
           - os: windows-2019
             python: 38
-            bitness: 64
             platform_id: win_amd64
           - os: windows-latest
             python: 39
-            bitness: 64
             platform_id: win_amd64
           - os: windows-latest
             python: 310
-            bitness: 64
             platform_id: win_amd64
-
-          # Window 32 bit
           - os: windows-latest
-            python: 38
-            bitness: 32
-            platform_id: win32
-          - os: windows-latest
-            python: 39
-            bitness: 32
-            platform_id: win32
+            python: 311
+            platform_id: win_amd64
 
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
             python: 38
-            bitness: 64
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
           - os: ubuntu-latest
             python: 39
-            bitness: 64
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
 
           # NumPy on Python 3.10 only supports 64bit and is only available with manylinux2014
           - os: ubuntu-latest
             python: 310
-            bitness: 64
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
+
+          - os: ubuntu-latest
+            python: 311
             platform_id: manylinux_x86_64
             manylinux_image: manylinux2014
 
           # MacOS x86_64
           - os: macos-latest
-            bitness: 64
             python: 38
             platform_id: macosx_x86_64
           - os: macos-latest
-            bitness: 64
             python: 39
             platform_id: macosx_x86_64
           - os: macos-latest
-            bitness: 64
             python: 310
+            platform_id: macosx_x86_64
+          - os: macos-latest
+            python: 311
             platform_id: macosx_x86_64
 
           # MacOS arm64
           - os: macos-latest
-            bitness: 64
             python: 38
             platform_id: macosx_arm64
           - os: macos-latest
-            bitness: 64
             python: 39
             platform_id: macosx_arm64
           - os: macos-latest
-            bitness: 64
             python: 310
+            platform_id: macosx_arm64
+          - os: macos-latest
+            python: 311
             platform_id: macosx_arm64
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v1
+        uses: actions/checkout@v3
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.9'  # update once build dependencies are available
 
@@ -143,17 +139,17 @@ jobs:
           CIBW_MANYLINUX_X86_64_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_MANYLINUX_I686_IMAGE: ${{ matrix.manylinux_image }}
           CIBW_TEST_SKIP: "*-macosx_arm64"
-          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir} ${{ matrix.bitness }}
-          CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }} ${{ matrix.bitness }}
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: bash build_tools/github/repair_windows_wheels.sh {wheel} {dest_dir}
+          CIBW_BEFORE_TEST_WINDOWS: bash build_tools/github/build_minimal_windows_image.sh ${{ matrix.python }}
           CIBW_TEST_REQUIRES: pytest pandas threadpoolctl
           CIBW_TEST_COMMAND: bash {project}/build_tools/github/test_wheels.sh
-          CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }} ${{ matrix.bitness }}
+          CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }}
           CIBW_BUILD_VERBOSITY: 1
 
         run: bash build_tools/github/build_wheels.sh
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           path: wheelhouse/*.whl
 
@@ -175,10 +171,10 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v1
+        uses: actions/checkout@v3
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
         with:
           python-version: '3.9'  # update once build dependencies are available
 
@@ -195,7 +191,7 @@ jobs:
           SKLEARN_SKIP_NETWORK_TESTS: 1
 
       - name: Store artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           path: dist/*.tar.gz
 
@@ -209,15 +205,15 @@ jobs:
 
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v1
+        uses: actions/checkout@v3
 
       - name: Download artifacts
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           path: dist
 
       - name: Setup Python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v4
 
       - name: Upload artifacts
         env:

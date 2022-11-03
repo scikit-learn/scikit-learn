@@ -346,22 +346,6 @@ def test_oneclass_score_samples():
     )
 
 
-# TODO: Remove in v1.2
-def test_oneclass_fit_params_is_deprecated():
-    clf = svm.OneClassSVM()
-    params = {
-        "unused_param": "",
-        "extra_param": None,
-    }
-    msg = (
-        "Passing additional keyword parameters has no effect and is deprecated "
-        "in 1.0. An error will be raised from 1.2 and beyond. The ignored "
-        f"keyword parameter(s) are: {params.keys()}."
-    )
-    with pytest.warns(FutureWarning, match=re.escape(msg)):
-        clf.fit(X, **params)
-
-
 def test_tweak_params():
     # Make sure some tweaking of parameters works.
     # We change clf.dual_coef_ at run time and expect .predict() to change
@@ -454,9 +438,6 @@ def test_decision_function_shape(SVM):
     clf = SVM(kernel="linear", decision_function_shape="ovo").fit(X_train, y_train)
     dec = clf.decision_function(X_train)
     assert dec.shape == (len(X_train), 10)
-
-    with pytest.raises(ValueError, match="must be either 'ovr' or 'ovo'"):
-        SVM(decision_function_shape="bad").fit(X_train, y_train)
 
 
 def test_svr_predict():
@@ -685,19 +666,10 @@ def test_auto_weight():
 
 
 def test_bad_input():
-    # Test that it gives proper exception on deficient input
-    # impossible value of C
-    with pytest.raises(ValueError):
-        svm.SVC(C=-1).fit(X, Y)
-
-    # impossible value of nu
-    clf = svm.NuSVC(nu=0.0)
-    with pytest.raises(ValueError):
-        clf.fit(X, Y)
-
+    # Test dimensions for labels
     Y2 = Y[:-1]  # wrong dimensions for labels
     with pytest.raises(ValueError):
-        clf.fit(X, Y2)
+        svm.SVC().fit(X, Y2)
 
     # Test with arrays that are non-contiguous.
     for clf in (svm.SVC(), svm.LinearSVC(random_state=0)):
@@ -745,60 +717,6 @@ def test_svc_nonfinite_params():
         clf.fit(X, y)
 
 
-@pytest.mark.parametrize(
-    "Estimator, data",
-    [
-        (svm.SVC, datasets.load_iris(return_X_y=True)),
-        (svm.NuSVC, datasets.load_iris(return_X_y=True)),
-        (svm.SVR, datasets.load_diabetes(return_X_y=True)),
-        (svm.NuSVR, datasets.load_diabetes(return_X_y=True)),
-        (svm.OneClassSVM, datasets.load_iris(return_X_y=True)),
-    ],
-)
-@pytest.mark.parametrize(
-    "gamma, err_msg",
-    [
-        (
-            "auto_deprecated",
-            "When 'gamma' is a string, it should be either 'scale' or 'auto'",
-        ),
-        (
-            -1,
-            "gamma value must be > 0; -1 is invalid. Use"
-            " a positive number or use 'auto' to set gamma to a"
-            " value of 1 / n_features.",
-        ),
-        (
-            0.0,
-            "gamma value must be > 0; 0.0 is invalid. Use"
-            " a positive number or use 'auto' to set gamma to a"
-            " value of 1 / n_features.",
-        ),
-        (
-            np.array([1.0, 4.0]),
-            "The gamma value should be set to 'scale',"
-            f" 'auto' or a positive float value. {np.array([1.0, 4.0])!r}"
-            " is not a valid option",
-        ),
-        (
-            [],
-            "The gamma value should be set to 'scale', 'auto' or a positive"
-            f" float value. {[]} is not a valid option",
-        ),
-        (
-            {},
-            "The gamma value should be set to 'scale', 'auto' or a positive"
-            " float value. {} is not a valid option",
-        ),
-    ],
-)
-def test_svm_gamma_error(Estimator, data, gamma, err_msg):
-    X, y = data
-    est = Estimator(gamma=gamma)
-    with pytest.raises(ValueError, match=(re.escape(err_msg))):
-        est.fit(X, y)
-
-
 def test_unicode_kernel():
     # Test that a unicode kernel name does not cause a TypeError
     clf = svm.SVC(kernel="linear", probability=True)
@@ -834,9 +752,9 @@ def test_sparse_fit_support_vectors_empty():
 def test_linearsvc_parameters(loss, penalty, dual):
     # Test possible parameter combinations in LinearSVC
     # Generate list of possible parameter combinations
-    X, y = make_classification(n_samples=5, n_features=5)
+    X, y = make_classification(n_samples=5, n_features=5, random_state=0)
 
-    clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
+    clf = svm.LinearSVC(penalty=penalty, loss=loss, dual=dual, random_state=0)
     if (
         (loss, penalty) == ("hinge", "l1")
         or (loss, penalty, dual) == ("hinge", "l2", False)

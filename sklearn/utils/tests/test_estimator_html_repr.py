@@ -309,3 +309,25 @@ def test_show_arrow_pipeline():
         'class="sk-toggleable__label sk-toggleable__label-arrow">Pipeline'
         in html_output
     )
+
+
+def test_invalid_parameters_in_stacking():
+    """Invalidate stacking configuration uses default repr.
+
+    Non-regression test for #24009.
+    """
+    stacker = StackingClassifier(estimators=[])
+
+    html_output = estimator_html_repr(stacker)
+    assert html.escape(str(stacker)) in html_output
+
+
+def test_estimator_get_params_return_cls():
+    """Check HTML repr works where a value in get_params is a class."""
+
+    class MyEstimator:
+        def get_params(self, deep=False):
+            return {"inner_cls": LogisticRegression}
+
+    est = MyEstimator()
+    assert "MyEstimator" in estimator_html_repr(est)

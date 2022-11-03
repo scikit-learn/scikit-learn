@@ -316,6 +316,8 @@ Recommendation Engine packages
 Domain specific packages
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
+- `scikit-network <https://scikit-network.readthedocs.io/>`_ Machine learning on graphs.
+
 - `scikit-image <https://scikit-image.org/>`_ Image processing and computer
   vision in python.
 
@@ -335,7 +337,7 @@ Domain specific packages
 Translations of scikit-learn documentation
 ------------------------------------------
 
-Translation’s purpose is to ease reading and understanding in languages
+Translation's purpose is to ease reading and understanding in languages
 other than English. Its aim is to help people who do not understand English
 or have doubts about its interpretation. Additionally, some people prefer
 to read documentation in their native language, but please bear in mind that

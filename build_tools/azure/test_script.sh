@@ -9,12 +9,6 @@ if [[ "$DISTRIB" =~ ^conda.* ]]; then
     source activate $VIRTUALENV
 elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" || "$DISTRIB" == "pip-nogil" ]]; then
     source $VIRTUALENV/bin/activate
-elif [[ "$DISTRIB" == "pip-windows" ]]; then
-    source $VIRTUALENV/Scripts/activate
-fi
-
-if [[ "$BUILD_WITH_ICC" == "true" ]]; then
-    source /opt/intel/oneapi/setvars.sh
 fi
 
 if [[ "$BUILD_REASON" == "Schedule" ]]; then
@@ -26,6 +20,13 @@ if [[ "$BUILD_REASON" == "Schedule" ]]; then
     # Enable global dtype fixture for all nightly builds to discover
     # numerical-sensitive tests.
     # https://scikit-learn.org/stable/computing/parallelism.html#environment-variables
+    export SKLEARN_RUN_FLOAT32_TESTS=1
+fi
+
+COMMIT_MESSAGE=$(python build_tools/azure/get_commit_message.py --only-show-message)
+
+if [[ "$COMMIT_MESSAGE" =~ \[float32\] ]]; then
+    echo "float32 tests will be run due to commit message"
     export SKLEARN_RUN_FLOAT32_TESTS=1
 fi
 
@@ -51,17 +52,21 @@ if [[ "$COVERAGE" == "true" ]]; then
 fi
 
 if [[ -n "$CHECK_WARNINGS" ]]; then
-    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
+    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Werror::numpy.VisibleDeprecationWarning"
 
     # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib
     # removes its usage
     TEST_CMD="$TEST_CMD -Wignore:tostring:DeprecationWarning"
 
-    # Python 3.10 deprecates distutils, which is imported by numpy internally
-    TEST_CMD="$TEST_CMD -Wignore:The\ distutils:DeprecationWarning"
-
     # Ignore distutils deprecation warning, used by joblib internally
     TEST_CMD="$TEST_CMD -Wignore:distutils\ Version\ classes\ are\ deprecated:DeprecationWarning"
+
+    # In some case, exceptions are raised (by bug) in tests, and captured by pytest,
+    # but not raised again. This is for instance the case when Cython directives are
+    # activated: IndexErrors (which aren't fatal) are raised on out-of-bound accesses.
+    # In those cases, pytest instead raises pytest.PytestUnraisableExceptionWarnings,
+    # which we must treat as errors on the CI.
+    TEST_CMD="$TEST_CMD -Werror::pytest.PytestUnraisableExceptionWarning"
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then

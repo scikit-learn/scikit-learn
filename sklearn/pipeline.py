@@ -24,10 +24,11 @@ from .utils import (
     Bunch,
     _print_elapsed_time,
 )
-from .utils.deprecation import deprecated
 from .utils._tags import _safe_tags
 from .utils.validation import check_memory
 from .utils.validation import check_is_fitted
+from .utils import check_pandas_support
+from .utils._set_output import _safe_set_output, _get_output_config
 from .utils.fixes import delayed
 from .exceptions import NotFittedError
 
@@ -75,8 +76,8 @@ class Pipeline(_BaseComposition):
     ----------
     steps : list of tuple
         List of (name, transform) tuples (implementing `fit`/`transform`) that
-        are chained, in the order in which they are chained, with the last
-        object an estimator.
+        are chained in sequential order. The last transform must be an
+        estimator.
 
     memory : str or object with the joblib.Memory interface, default=None
         Used to cache the fitted transformers of the pipeline. By default,
@@ -146,6 +147,29 @@ class Pipeline(_BaseComposition):
         self.steps = steps
         self.memory = memory
         self.verbose = verbose
+
+    def set_output(self, transform=None):
+        """Set the output container when `"transform"` and `"fit_transform"` are called.
+
+        Calling `set_output` will set the output of all estimators in `steps`.
+
+        Parameters
+        ----------
+        transform : {"default", "pandas"}, default=None
+            Configure output of `transform` and `fit_transform`.
+
+            - `"default"`: Default output format of a transformer
+            - `"pandas"`: DataFrame output
+            - `None`: Transform configuration is unchanged
+
+        Returns
+        -------
+        self : estimator instance
+            Estimator instance.
+        """
+        for _, _, step in self._iter():
+            _safe_set_output(step, transform=transform)
+        return self
 
     def get_params(self, deep=True):
         """Get parameters for this estimator.
@@ -935,6 +959,14 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     Attributes
     ----------
+    named_transformers : :class:`~sklearn.utils.Bunch`
+        Dictionary-like object, with the following attributes.
+        Read-only attribute to access any transformer parameter by user
+        given name. Keys are transformer names and values are
+        transformer parameters.
+
+        .. versionadded:: 1.2
+
     n_features_in_ : int
         Number of features seen during :term:`fit`. Only defined if the
         underlying first transformer in `transformer_list` exposes such an
@@ -969,6 +1001,35 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self.transformer_weights = transformer_weights
         self.verbose = verbose
 
+    def set_output(self, transform=None):
+        """Set the output container when `"transform"` and `"fit_transform"` are called.
+
+        `set_output` will set the output of all estimators in `transformer_list`.
+
+        Parameters
+        ----------
+        transform : {"default", "pandas"}, default=None
+            Configure output of `transform` and `fit_transform`.
+
+            - `"default"`: Default output format of a transformer
+            - `"pandas"`: DataFrame output
+            - `None`: Transform configuration is unchanged
+
+        Returns
+        -------
+        self : estimator instance
+            Estimator instance.
+        """
+        super().set_output(transform=transform)
+        for _, step, _ in self._iter():
+            _safe_set_output(step, transform=transform)
+        return self
+
+    @property
+    def named_transformers(self):
+        # Use Bunch object to improve autocomplete
+        return Bunch(**dict(self.transformer_list))
+
     def get_params(self, deep=True):
         """Get parameters for this estimator.
 
@@ -994,7 +1055,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         Valid parameter keys can be listed with ``get_params()``. Note that
         you can directly set the parameters of the estimators contained in
-        `tranformer_list`.
+        `transformer_list`.
 
         Parameters
         ----------
@@ -1053,30 +1114,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             if trans == "drop":
                 continue
             if trans == "passthrough":
-                trans = FunctionTransformer()
+                trans = FunctionTransformer(feature_names_out="one-to-one")
             yield (name, trans, get_weight(name))
-
-    @deprecated(
-        "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. Please use get_feature_names_out instead."
-    )
-    def get_feature_names(self):
-        """Get feature names from all transformers.
-
-        Returns
-        -------
-        feature_names : list of strings
-            Names of the features produced by transform.
-        """
-        feature_names = []
-        for name, trans, weight in self._iter():
-            if not hasattr(trans, "get_feature_names"):
-                raise AttributeError(
-                    "Transformer %s (type %s) does not provide get_feature_names."
-                    % (str(name), type(trans).__name__)
-                )
-            feature_names.extend([name + "__" + f for f in trans.get_feature_names()])
-        return feature_names
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -1212,6 +1251,11 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         return self._hstack(Xs)
 
     def _hstack(self, Xs):
+        config = _get_output_config("transform", self)
+        if config["dense"] == "pandas" and all(hasattr(X, "iloc") for X in Xs):
+            pd = check_pandas_support("transform")
+            return pd.concat(Xs, axis=1)
+
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:
@@ -1244,8 +1288,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
 
 def make_union(*transformers, n_jobs=None, verbose=False):
-    """
-    Construct a FeatureUnion from the given transformers.
+    """Construct a FeatureUnion from the given transformers.
 
     This is a shorthand for the FeatureUnion constructor; it does not require,
     and does not permit, naming the transformers. Instead, they will be given
@@ -1254,6 +1297,7 @@ def make_union(*transformers, n_jobs=None, verbose=False):
     Parameters
     ----------
     *transformers : list of estimators
+        One or more estimators.
 
     n_jobs : int, default=None
         Number of jobs to run in parallel.
@@ -1262,7 +1306,7 @@ def make_union(*transformers, n_jobs=None, verbose=False):
         for more details.
 
         .. versionchanged:: v0.20
-           `n_jobs` default changed from 1 to None
+           `n_jobs` default changed from 1 to None.
 
     verbose : bool, default=False
         If True, the time elapsed while fitting each transformer will be
@@ -1271,6 +1315,8 @@ def make_union(*transformers, n_jobs=None, verbose=False):
     Returns
     -------
     f : FeatureUnion
+        A :class:`FeatureUnion` object for concatenating the results of multiple
+        transformer objects.
 
     See Also
     --------
