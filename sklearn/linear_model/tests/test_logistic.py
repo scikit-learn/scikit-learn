@@ -707,7 +707,7 @@ def test_logistic_regressioncv_class_weights(weight, class_weight):
         if solver in ("sag", "saga"):
             clf.set_params(tol=1e-5, max_iter=10000, random_state=0)
         clf.fit(X, y)
-        assert_array_almost_equal(clf.coef_, clf_lbfgs.coef_, decimal=4)
+        assert_allclose(clf.coef_, clf_lbfgs.coef_, rtol=1e-3)
 
 
 def test_logistic_regression_sample_weights():
