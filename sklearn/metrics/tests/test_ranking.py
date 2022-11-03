@@ -1116,7 +1116,7 @@ def test_precision_recall_curve_drop_intermediate():
     precision, recall, thresholds = precision_recall_curve(
         y_true, y_score, drop_intermediate=True
     )
-    assert_array_almost_equal(thresholds, [0.0, 0.7, 1.0])
+    assert_allclose(thresholds, [0.0, 0.7, 1.0])
 
     # Test dropping thresholds with repeating scores
     y_true = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
