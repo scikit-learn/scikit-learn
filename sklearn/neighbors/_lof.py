@@ -469,7 +469,7 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
             X, n_neighbors=self.n_neighbors_
         )
 
-        # To preserves inputs dtype for outputs.
+        # To preserve inputs dtype for outputs.
         # This might downcast distances_X from np.float64 to np.float32.
         distances_X = distances_X.astype(X.dtype, copy=False)
 
