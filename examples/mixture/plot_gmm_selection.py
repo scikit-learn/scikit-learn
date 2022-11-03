@@ -28,10 +28,19 @@ import numpy as np
 n_samples = 500
 np.random.seed(0)
 C = np.array([[0.0, -0.1], [1.7, 0.4]])
-component_1 = np.dot(np.random.randn(n_samples, 2), C)
-component_2 = 0.7 * np.random.randn(n_samples, 2) + np.array([-6, 3])
+component_1 = np.dot(np.random.randn(n_samples, 2), C)  # general
+component_2 = 0.7 * np.random.randn(n_samples, 2) + np.array([-6, 3])  # spherical
 
 X = np.concatenate([component_1, component_2])
+
+# %%
+# We can visualize the different components:
+
+import matplotlib.pyplot as plt
+
+plt.scatter(component_1[:, 0], component_1[:, 1], 0.8)
+plt.scatter(component_2[:, 0], component_2[:, 1], 0.8)
+plt.title("Gaussian Mixture components")
 
 # %%
 # Model training and selection
