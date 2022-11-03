@@ -275,22 +275,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         return raw_predictions
 
     def _check_params(self):
-        # TODO(1.2): Remove
-        if self.loss == "ls":
-            warnings.warn(
-                "The loss 'ls' was deprecated in v1.0 and "
-                "will be removed in version 1.2. Use 'squared_error'"
-                " which is equivalent.",
-                FutureWarning,
-            )
-        elif self.loss == "lad":
-            warnings.warn(
-                "The loss 'lad' was deprecated in v1.0 and "
-                "will be removed in version 1.2. Use "
-                "'absolute_error' which is equivalent.",
-                FutureWarning,
-            )
-
         # TODO(1.3): Remove
         if self.loss == "deviance":
             warnings.warn(
@@ -1451,14 +1435,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         combination of the two. 'quantile' allows quantile regression (use
         `alpha` to specify the quantile).
 
-        .. deprecated:: 1.0
-            The loss 'ls' was deprecated in v1.0 and will be removed in
-            version 1.2. Use `loss='squared_error'` which is equivalent.
-
-        .. deprecated:: 1.0
-            The loss 'lad' was deprecated in v1.0 and will be removed in
-            version 1.2. Use `loss='absolute_error'` which is equivalent.
-
     learning_rate : float, default=0.1
         Learning rate shrinks the contribution of each tree by `learning_rate`.
         There is a trade-off between learning_rate and n_estimators.
@@ -1739,15 +1715,9 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     0.4...
     """
 
-    # TODO(1.2): remove "ls" and "lad"
     _parameter_constraints: dict = {
         **BaseGradientBoosting._parameter_constraints,
-        "loss": [
-            StrOptions(
-                {"squared_error", "ls", "absolute_error", "lad", "huber", "quantile"},
-                deprecated={"ls", "lad"},
-            )
-        ],
+        "loss": [StrOptions({"squared_error", "absolute_error", "huber", "quantile"})],
         "init": [StrOptions({"zero"}), None, HasMethods(["fit", "predict"])],
         "alpha": [Interval(Real, 0.0, 1.0, closed="neither")],
     }

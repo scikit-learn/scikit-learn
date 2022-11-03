@@ -250,13 +250,17 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                 self._standard_intercept.shape, dtype=np.float64, order="C"
             )
 
-    def _make_validation_split(self, y):
+    def _make_validation_split(self, y, sample_mask):
         """Split the dataset between training set and validation set.
 
         Parameters
         ----------
         y : ndarray of shape (n_samples, )
             Target values.
+
+        sample_mask : ndarray of shape (n_samples, )
+            A boolean array indicating whether each sample should be included
+            for validation set.
 
         Returns
         -------
@@ -277,6 +281,13 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             test_size=self.validation_fraction, random_state=self.random_state
         )
         idx_train, idx_val = next(cv.split(np.zeros(shape=(y.shape[0], 1)), y))
+
+        if not np.any(sample_mask[idx_val]):
+            raise ValueError(
+                "The sample weights for validation set are all zero, consider using a"
+                " different random state."
+            )
+
         if idx_train.shape[0] == 0 or idx_val.shape[0] == 0:
             raise ValueError(
                 "Splitting %d samples into a train set and a validation set "
@@ -422,7 +433,7 @@ def fit_binary(
     learning_rate_type = est._get_learning_rate_type(learning_rate)
 
     if validation_mask is None:
-        validation_mask = est._make_validation_split(y_i)
+        validation_mask = est._make_validation_split(y_i, sample_mask=sample_weight > 0)
     classes = np.array([-1, 1], dtype=y_i.dtype)
     validation_score_cb = est._make_validation_score_cb(
         validation_mask, X, y_i, sample_weight, classes=classes
@@ -740,7 +751,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         """
         # Precompute the validation split using the multiclass labels
         # to ensure proper balancing of the classes.
-        validation_mask = self._make_validation_split(y)
+        validation_mask = self._make_validation_split(y, sample_mask=sample_weight > 0)
 
         # Use joblib to fit OvA in parallel.
         # Pick the random seed for each job outside of fit_binary to avoid
@@ -1630,7 +1641,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         if not hasattr(self, "t_"):
             self.t_ = 1.0
 
-        validation_mask = self._make_validation_split(y)
+        validation_mask = self._make_validation_split(y, sample_mask=sample_weight > 0)
         validation_score_cb = self._make_validation_score_cb(
             validation_mask, X, y, sample_weight
         )
@@ -2160,13 +2171,10 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         warm_start=False,
         average=False,
     ):
-
-        alpha = nu / 2
         self.nu = nu
         super(SGDOneClassSVM, self).__init__(
             loss="hinge",
             penalty="l2",
-            alpha=alpha,
             C=1.0,
             l1_ratio=0,
             fit_intercept=fit_intercept,
@@ -2203,7 +2211,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         # validation_mask and validation_score_cb will be set to values
         # associated to early_stopping=False in _make_validation_split and
         # _make_validation_score_cb respectively.
-        validation_mask = self._make_validation_split(y)
+        validation_mask = self._make_validation_split(y, sample_mask=sample_weight > 0)
         validation_score_cb = self._make_validation_score_cb(
             validation_mask, X, y, sample_weight
         )

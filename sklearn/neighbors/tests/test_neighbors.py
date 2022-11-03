@@ -29,7 +29,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.tests.test_dist_metrics import BOOL_METRICS
 from sklearn.metrics.tests.test_pairwise_distances_reduction import (
-    assert_radius_neighborhood_results_equality,
+    assert_radius_neighbors_results_equality,
 )
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
@@ -726,21 +726,6 @@ def test_radius_neighbors_classifier(
     neigh.fit(X, y_str)
     y_pred = neigh.predict(X[:n_test_pts] + epsilon)
     assert_array_equal(y_pred, y_str[:n_test_pts])
-
-
-# TODO: Remove in v1.2
-def test_radius_neighbors_classifier_kwargs_is_deprecated():
-    extra_kwargs = {
-        "unused_param": "",
-        "extra_param": None,
-    }
-    msg = (
-        "Passing additional keyword parameters has no effect and is deprecated "
-        "in 1.0. An error will be raised from 1.2 and beyond. The ignored "
-        f"keyword parameter(s) are: {extra_kwargs.keys()}."
-    )
-    with pytest.warns(FutureWarning, match=re.escape(msg)):
-        neighbors.RadiusNeighborsClassifier(**extra_kwargs)
 
 
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
@@ -2189,7 +2174,7 @@ def test_radius_neighbors_brute_backend(
                     X_test, return_distance=True
                 )
 
-        assert_radius_neighborhood_results_equality(
+        assert_radius_neighbors_results_equality(
             legacy_brute_dst,
             pdr_brute_dst,
             legacy_brute_idx,

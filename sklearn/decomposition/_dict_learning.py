@@ -15,7 +15,7 @@ import numpy as np
 from scipy import linalg
 from joblib import Parallel, effective_n_jobs
 
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
+from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils import deprecated
 from ..utils._param_validation import Hidden, Interval, StrOptions
@@ -148,7 +148,6 @@ def _sparse_encode(
                 alpha=alpha,
                 fit_intercept=False,
                 verbose=verbose,
-                normalize=False,
                 precompute=gram,
                 fit_path=False,
                 positive=positive,
@@ -168,7 +167,6 @@ def _sparse_encode(
         clf = Lasso(
             alpha=alpha,
             fit_intercept=False,
-            normalize="deprecated",  # as it was False by default
             precompute=gram,
             max_iter=max_iter,
             warm_start=True,
@@ -190,7 +188,6 @@ def _sparse_encode(
             lars = Lars(
                 fit_intercept=False,
                 verbose=verbose,
-                normalize=False,
                 precompute=gram,
                 n_nonzero_coefs=int(regularization),
                 fit_path=False,
@@ -1155,7 +1152,7 @@ def dict_learning_online(
         return dictionary
 
 
-class _BaseSparseCoding(_ClassNamePrefixFeaturesOutMixin, TransformerMixin):
+class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
     """Base class from SparseCoder and DictionaryLearning algorithms."""
 
     def __init__(
@@ -1181,19 +1178,8 @@ class _BaseSparseCoding(_ClassNamePrefixFeaturesOutMixin, TransformerMixin):
         SparseCoder."""
         X = self._validate_data(X, reset=False)
 
-        # transform_alpha has to be changed in _transform
-        # this is done for consistency with the value of alpha
-        if (
-            hasattr(self, "alpha")
-            and self.alpha != 1.0
-            and self.transform_alpha is None
-        ):
-            warnings.warn(
-                "By default transform_alpha will be equal to"
-                "alpha instead of 1.0 starting from version 1.2",
-                FutureWarning,
-            )
-            transform_alpha = 1.0  # TODO change to self.alpha in 1.2
+        if hasattr(self, "alpha") and self.transform_alpha is None:
+            transform_alpha = self.alpha
         else:
             transform_alpha = self.transform_alpha
 
@@ -1523,6 +1509,9 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         threshold below which coefficients will be squashed to zero.
         If `None`, defaults to `alpha`.
 
+        .. versionchanged:: 1.2
+            When None, default value changed from 1.0 to `alpha`.
+
     n_jobs : int or None, default=None
         Number of parallel jobs to run.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
@@ -1847,6 +1836,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         If `algorithm='threshold'`, `alpha` is the absolute value of the
         threshold below which coefficients will be squashed to zero.
         If `None`, defaults to `alpha`.
+
+        .. versionchanged:: 1.2
+            When None, default value changed from 1.0 to `alpha`.
 
     verbose : bool or int, default=False
         To control the verbosity of the procedure.
