@@ -543,7 +543,7 @@ def _log_reg_scoring_path(
     max_squared_sum=None,
     sample_weight=None,
     l1_ratio=None,
-    **score_params,
+    score_params=None,
 ):
     """Computes scores across logistic_regression_path
 
@@ -655,7 +655,7 @@ def _log_reg_scoring_path(
         to using ``penalty='l1'``. For ``0 < l1_ratio <1``, the penalty is a
         combination of L1 and L2.
 
-    **score_params : dict
+    score_params : dict
         Parameters to pass to the `score` method of the underlying scorer.
 
     Returns
@@ -738,6 +738,7 @@ def _log_reg_scoring_path(
         if scoring is None:
             scores.append(log_reg.score(X_test, y_test))
         else:
+            score_params = score_params or {}
             scores.append(scoring(log_reg, X_test, y_test, **score_params))
 
     return coefs, Cs, np.array(scores), n_iter
@@ -1813,11 +1814,6 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         else:
             prefer = "processes"
 
-        # Remove the sample_weight parameter from score_params as it is
-        # explicitly being passed in the path_func.
-        score_params = routed_params.scorer.score
-        score_params.pop("sample_weight", None)
-
         fold_coefs_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, prefer=prefer)(
             path_func(
                 X,
@@ -1841,7 +1837,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
                 max_squared_sum=max_squared_sum,
                 sample_weight=sample_weight,
                 l1_ratio=l1_ratio,
-                **score_params,
+                score_params=routed_params.scorer.score,
             )
             for label in iter_encoded_labels
             for train, test in folds
