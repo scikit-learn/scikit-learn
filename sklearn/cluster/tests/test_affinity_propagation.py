@@ -183,10 +183,10 @@ def test_affinity_propagation_equal_mutual_similarities(global_dtype):
     assert_array_equal([0, 0], labels)
 
 
-def test_affinity_propagation_predict_non_convergence():
+def test_affinity_propagation_predict_non_convergence(global_dtype):
     # In case of non-convergence of affinity_propagation(), the cluster
     # centers should be an empty array
-    X = np.array([[0, 0], [1, 1], [-2, -2]])
+    X = np.array([[0, 0], [1, 1], [-2, -2]], dtype=global_dtype)
 
     # Force non-convergence by allowing only a single iteration
     with pytest.warns(ConvergenceWarning):
@@ -200,8 +200,10 @@ def test_affinity_propagation_predict_non_convergence():
     assert_array_equal(np.array([-1, -1, -1]), y)
 
 
-def test_affinity_propagation_non_convergence_regressiontest():
-    X = np.array([[1, 0, 0, 0, 0, 0], [0, 1, 1, 1, 0, 0], [0, 0, 1, 0, 0, 1]])
+def test_affinity_propagation_non_convergence_regressiontest(global_dtype):
+    X = np.array(
+        [[1, 0, 0, 0, 0, 0], [0, 1, 1, 1, 0, 0], [0, 0, 1, 0, 0, 1]], dtype=global_dtype
+    )
     af = AffinityPropagation(affinity="euclidean", max_iter=2, random_state=34)
     msg = (
         "Affinity propagation did not converge, this model may return degenerate"
