@@ -994,11 +994,15 @@ class TimeSeriesSplit(_BaseKFold):
 
     Parameters
     ----------
-    n_splits : int, default=5
-        Number of splits. Must be at least 2.
+    n_splits : "walk_forward" or int, default=5
+        Number of splits. Must be at least 2. If `"walk_forward"`, the number
+        of splits is automatically set to obtain a rolling window.
 
         .. versionchanged:: 0.22
             ``n_splits`` default value changed from 3 to 5.
+
+        .. versionadded:: 1.2
+           Added the option `"walk_forward"` for rolling window support.
 
     max_train_size : int, default=None
         Maximum size for a single training set.
@@ -1078,31 +1082,33 @@ class TimeSeriesSplit(_BaseKFold):
       Test:  index=[10 11]
     >>> # Showing rolling window support with via `n_splits='walk_forward'`
     >>> X = np.random.randn(15, 2)
-    >>> y = np.random.randint(0, 2, 15)
     >>> tscv = TimeSeriesSplit(n_splits='walk_forward', max_train_size=10, test_size=3)
     >>> for i, (train_index, test_index) in enumerate(tscv.split(X)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}")
     ...     print(f"  Test:  index={test_index}")
     Fold 0:
+      Train: index=[0 1 2]
+      Test:  index=[3 4 5]
+    Fold 1:
       Train: index=[0 1 2 3 4 5]
       Test:  index=[6 7 8]
-    Fold 1:
+    Fold 2:
       Train: index=[0 1 2 3 4 5 6 7 8]
       Test:  index=[ 9 10 11]
-    Fold 2:
+    Fold 3:
       Train: index=[ 2  3  4  5  6  7  8  9 10 11]
       Test:  index=[12 13 14]
 
     Notes
     -----
-    -   The training set has size ``i * n_samples // (n_splits + 1)
-        + n_samples % (n_splits + 1)`` in the ``i`` th split,
-        with a test set of size ``n_samples//(n_splits + 1)`` by default,
-        where ``n_samples`` is the number of samples.
-    -   To use the rolling window support where the train set does not grow
-        and the `n_splits` value is automatically computed:
-        Set `n_splits='walk_forward'`.
+    - The training set has size ``i * n_samples // (n_splits + 1) + n_samples %
+      (n_splits + 1)`` in the ``i`` th split, with a test set of size
+      ``n_samples//(n_splits + 1)`` by default, where ``n_samples`` is the
+      number of samples.
+    - To use the rolling window support where the train set does not grow and
+      the `n_splits` value is automatically computed, set
+      `n_splits='walk_forward'`.
     """
 
     def __init__(self, n_splits=5, *, max_train_size=None, test_size=None, gap=0):
@@ -1111,8 +1117,8 @@ class TimeSeriesSplit(_BaseKFold):
             max_train_size is None or test_size is None
         ):
             raise ValueError(
-                "If n_splits is 'walk_forward', then max_train_size and test_size must"
-                " be specified."
+                "If `n_splits='walk_forward', then `max_train_size` and `test_size` "
+                "must be specified."
             )
         self.max_train_size = max_train_size
         self.test_size = test_size
@@ -1149,6 +1155,7 @@ class TimeSeriesSplit(_BaseKFold):
         test_size = (
             self.test_size if self.test_size is not None else n_samples // n_folds
         )
+
         # Make sure we have enough samples for the given split parameters
         if n_folds > n_samples:
             raise ValueError(
@@ -1178,11 +1185,12 @@ class TimeSeriesSplit(_BaseKFold):
                 )
 
     def get_n_splits(self, X=None, y=None, groups=None):
-        """Returns the number of splitting iterations in the cross-validator
+        """Returns the number of splitting iterations in the cross-validator.
+
         Parameters
         ----------
-        X : object
-            Always ignored, exists for compatibility.
+        X : array-like of shape (n_samples, n_features)
+            Used when `n_splits='walk_forward'` to compute the number of splits.
 
         y : object
             Always ignored, exists for compatibility.
@@ -1196,7 +1204,7 @@ class TimeSeriesSplit(_BaseKFold):
             Returns the number of splitting iterations in the cross-validator.
         """
         if self.n_splits == "walk_forward":
-            return X.shape[0] - (self.max_train_size + self.test_size) + 1
+            return (_num_samples(X) - self.max_train_size) // self.test_size
         return self.n_splits
 
 
