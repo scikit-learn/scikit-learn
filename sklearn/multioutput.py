@@ -661,6 +661,8 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
 
         del Y_pred_chain
 
+        routed_params = process_routing(obj=self, method="fit", other_params=fit_params)
+
         for chain_idx, estimator in enumerate(self.estimators_):
             message = self._log_message(
                 estimator_idx=chain_idx + 1,
@@ -669,7 +671,12 @@ class _BaseChain(BaseEstimator, metaclass=ABCMeta):
             )
             y = Y[:, self.order_[chain_idx]]
             with _print_elapsed_time("Chain", message):
-                estimator.fit(X_aug[:, : (X.shape[1] + chain_idx)], y, **fit_params)
+                estimator.fit(
+                    X_aug[:, : (X.shape[1] + chain_idx)],
+                    y,
+                    **routed_params.estimator.fit,
+                )
+
             if self.cv is not None and chain_idx < len(self.estimators_) - 1:
                 col_idx = X.shape[1] + chain_idx
                 cv_result = cross_val_predict(
@@ -832,7 +839,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
            [0.0321..., 0.9935..., 0.0625...]])
     """
 
-    def fit(self, X, Y):
+    def fit(self, X, Y, **fit_params):
         """Fit the model to data matrix X and targets Y.
 
         Parameters
@@ -843,6 +850,11 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Y : array-like of shape (n_samples, n_classes)
             The target values.
 
+        **fit_params : dict of string -> object
+            Parameters passed to the `fit` method of each step.
+
+            .. versionadded:: 1.2
+
         Returns
         -------
         self : object
@@ -850,7 +862,7 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         """
         self._validate_params()
 
-        super().fit(X, Y)
+        super().fit(X, Y, **fit_params)
         self.classes_ = [
             estimator.classes_ for chain_idx, estimator in enumerate(self.estimators_)
         ]
@@ -919,6 +931,24 @@ class ClassifierChain(MetaEstimatorMixin, ClassifierMixin, _BaseChain):
         Y_decision = Y_decision_chain[:, inv_order]
 
         return Y_decision
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = MetadataRouter(owner=self.__class__.__name__).add(
+            estimator=self.base_estimator,
+            method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+        )
+        return router
 
     def _more_tags(self):
         return {"_skip_test": True, "multioutput_only": True}
@@ -1046,6 +1076,28 @@ class RegressorChain(MetaEstimatorMixin, RegressorMixin, _BaseChain):
 
         super().fit(X, Y, **fit_params)
         return self
+
+    def get_metadata_routing(self):
+        """Get metadata routing of this object.
+
+        Please check :ref:`User Guide <metadata_routing>` on how the routing
+        mechanism works.
+
+        Returns
+        -------
+        routing : MetadataRouter
+            A :class:`~utils.metadata_routing.MetadataRouter` encapsulating
+            routing information.
+        """
+        router = (
+            MetadataRouter(owner=self.__class__.__name__)
+            .add(
+                estimator=self.base_estimator,
+                method_mapping=MethodMapping().add(callee="fit", caller="fit"),
+            )
+            .warn_on(child="estimator", method="fit", params=None)
+        )
+        return router
 
     def _more_tags(self):
         return {"multioutput_only": True}

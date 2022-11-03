@@ -1,19 +1,3 @@
-{{py:
-
-implementation_specific_values = [
-    # Values are the following ones:
-    #
-    #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
-    #
-    # We also use the float64 dtype and C-type names as defined in
-    # `sklearn.utils._typedefs` to maintain consistency.
-    #
-    ('64', 'DTYPE_t', 'DTYPE'),
-    ('32', 'cnp.float32_t', 'np.float32')
-]
-
-}}
-
 cimport numpy as cnp
 
 from libc.stdlib cimport free, malloc
@@ -37,10 +21,10 @@ from ...utils._typedefs import ITYPE, DTYPE
 
 cnp.import_array()
 
-{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
+{{for name_suffix in ['64', '32']}}
 
 from ._base cimport (
-    BaseDistanceReducer{{name_suffix}},
+    BaseDistancesReduction{{name_suffix}},
     _sqeuclidean_row_norms{{name_suffix}},
 )
 
@@ -52,8 +36,8 @@ from ._datasets_pair cimport (
 from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
 
 
-cdef class ArgKmin{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
-    """{{name_suffix}}bit implementation of the pairwise-distance reduction BaseDistanceReducer{{name_suffix}}."""
+cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
+    """float{{name_suffix}} implementation of the ArgKmin."""
 
     @classmethod
     def compute(
@@ -204,7 +188,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
         ITYPE_t X_end,
     ) nogil:
         cdef:
-            ITYPE_t idx, jdx
+            ITYPE_t idx
 
         # Sorting the main heaps portion associated to `X[X_start:X_end]`
         # in ascending order w.r.t the distances.
@@ -303,7 +287,6 @@ cdef class ArgKmin{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
     cdef void compute_exact_distances(self) nogil:
         cdef:
             ITYPE_t i, j
-            ITYPE_t[:, ::1] Y_indices = self.argkmin_indices
             DTYPE_t[:, ::1] distances = self.argkmin_distances
         for i in prange(self.n_samples_X, schedule='static', nogil=True,
                         num_threads=self.effective_n_threads):
@@ -328,7 +311,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
 
 
 cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
-    """EuclideanDistance-specialized implementation for ArgKmin{{name_suffix}}."""
+    """EuclideanDistance-specialisation of ArgKmin{{name_suffix}}."""
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
@@ -448,7 +431,6 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
     cdef void _parallel_on_Y_init(
         self,
     ) nogil:
-        cdef ITYPE_t thread_num
         ArgKmin{{name_suffix}}._parallel_on_Y_init(self)
         self.gemm_term_computer._parallel_on_Y_init()
 
@@ -498,7 +480,7 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
             DTYPE_t squared_dist_i_j
             ITYPE_t n_X = X_end - X_start
             ITYPE_t n_Y = Y_end - Y_start
-            DTYPE_t * dist_middle_terms = self.gemm_term_computer._compute_distances_on_chunks(
+            DTYPE_t * dist_middle_terms = self.gemm_term_computer._compute_dist_middle_terms(
                 X_start, X_end, Y_start, Y_end, thread_num
             )
             DTYPE_t * heaps_r_distances = self.heaps_r_distances_chunks[thread_num]

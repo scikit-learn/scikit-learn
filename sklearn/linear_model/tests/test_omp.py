@@ -38,12 +38,12 @@ G, Xy = np.dot(X.T, X), np.dot(X.T, y)
 # and y (n_samples, 3)
 
 
-# FIXME: 'normalize' to set to False in 1.2 and removed in 1.4
+# TODO(1.4): remove
 @pytest.mark.parametrize(
     "OmpModel", [OrthogonalMatchingPursuit, OrthogonalMatchingPursuitCV]
 )
 @pytest.mark.parametrize(
-    "normalize, n_warnings", [(True, 0), (False, 0), ("deprecated", 1)]
+    "normalize, n_warnings", [(True, 1), (False, 1), ("deprecated", 0)]
 )
 def test_assure_warning_when_normalize(OmpModel, normalize, n_warnings):
     # check that we issue a FutureWarning when normalize was set
@@ -152,8 +152,8 @@ def test_orthogonal_mp_gram_readonly():
     assert_array_almost_equal(gamma[:, 0], gamma_gram, decimal=2)
 
 
-# FIXME: 'normalize' to be removed in 1.4
-@pytest.mark.filterwarnings("ignore:The default of 'normalize'")
+# TODO(1.4): 'normalize' to be removed
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_estimator():
     omp = OrthogonalMatchingPursuit(n_nonzero_coefs=n_nonzero_coefs)
     omp.fit(X, y[:, 0])
@@ -167,11 +167,11 @@ def test_estimator():
     assert np.count_nonzero(omp.coef_) <= n_targets * n_nonzero_coefs
 
     coef_normalized = omp.coef_[0].copy()
-    omp.set_params(fit_intercept=True, normalize=False)
+    omp.set_params(fit_intercept=True)
     omp.fit(X, y[:, 0])
     assert_array_almost_equal(coef_normalized, omp.coef_)
 
-    omp.set_params(fit_intercept=False, normalize=False)
+    omp.set_params(fit_intercept=False)
     omp.fit(X, y[:, 0])
     assert np.count_nonzero(omp.coef_) <= n_nonzero_coefs
     assert omp.coef_.shape == (n_features,)
@@ -240,8 +240,8 @@ def test_omp_return_path_prop_with_gram():
     assert_array_almost_equal(path[:, :, -1], last)
 
 
-# FIXME: 'normalize' to be removed in 1.4
-@pytest.mark.filterwarnings("ignore:The default of 'normalize'")
+# TODO(1.4): 'normalize' to be removed
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_omp_cv():
     y_ = y[:, 0]
     gamma_ = gamma[:, 0]
@@ -258,8 +258,8 @@ def test_omp_cv():
     assert_array_almost_equal(ompcv.coef_, omp.coef_)
 
 
-# FIXME: 'normalize' to be removed in 1.4
-@pytest.mark.filterwarnings("ignore:The default of 'normalize'")
+# TODO(1.4): 'normalize' to be removed
+@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 def test_omp_reaches_least_squares():
     # Use small simple data; it's a sanity check but OMP can stop early
     rng = check_random_state(0)

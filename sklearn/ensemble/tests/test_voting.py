@@ -24,11 +24,13 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.dummy import DummyRegressor
-
+from sklearn.preprocessing import StandardScaler
 
 # Load datasets
 iris = datasets.load_iris()
 X, y = iris.data[:, 1:3], iris.target
+# Scaled to solve ConvergenceWarning throw by Logistic Regression
+X_scaled = StandardScaler().fit_transform(X)
 
 X_r, y_r = datasets.load_diabetes(return_X_y=True)
 
@@ -62,7 +64,7 @@ def test_predictproba_hardvoting():
         eclf.predict_proba
 
     assert not hasattr(eclf, "predict_proba")
-    eclf.fit(X, y)
+    eclf.fit(X_scaled, y)
     assert not hasattr(eclf, "predict_proba")
 
 
@@ -88,16 +90,17 @@ def test_notfitted():
         ereg.transform(X_r)
 
 
-def test_majority_label_iris():
+def test_majority_label_iris(global_random_seed):
     """Check classification by majority label on dataset iris."""
-    clf1 = LogisticRegression(solver="liblinear", random_state=123)
-    clf2 = RandomForestClassifier(n_estimators=10, random_state=123)
+    clf1 = LogisticRegression(solver="liblinear", random_state=global_random_seed)
+    clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
     clf3 = GaussianNB()
     eclf = VotingClassifier(
         estimators=[("lr", clf1), ("rf", clf2), ("gnb", clf3)], voting="hard"
     )
     scores = cross_val_score(eclf, X, y, scoring="accuracy")
-    assert_almost_equal(scores.mean(), 0.95, decimal=2)
+
+    assert scores.mean() >= 0.9
 
 
 def test_tie_situation():
@@ -110,18 +113,18 @@ def test_tie_situation():
     assert eclf.fit(X, y).predict(X)[73] == 1
 
 
-def test_weights_iris():
+def test_weights_iris(global_random_seed):
     """Check classification by average probabilities on dataset iris."""
-    clf1 = LogisticRegression(random_state=123)
-    clf2 = RandomForestClassifier(random_state=123)
+    clf1 = LogisticRegression(random_state=global_random_seed)
+    clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
     clf3 = GaussianNB()
     eclf = VotingClassifier(
         estimators=[("lr", clf1), ("rf", clf2), ("gnb", clf3)],
         voting="soft",
         weights=[1, 2, 10],
     )
-    scores = cross_val_score(eclf, X, y, scoring="accuracy")
-    assert_almost_equal(scores.mean(), 0.93, decimal=2)
+    scores = cross_val_score(eclf, X_scaled, y, scoring="accuracy")
+    assert scores.mean() >= 0.9
 
 
 def test_weights_regressor():
@@ -160,10 +163,10 @@ def test_weights_regressor():
     assert_almost_equal(ereg_none_pred, ereg_equal_pred, decimal=2)
 
 
-def test_predict_on_toy_problem():
+def test_predict_on_toy_problem(global_random_seed):
     """Manually check predicted class labels for toy dataset."""
-    clf1 = LogisticRegression(random_state=123)
-    clf2 = RandomForestClassifier(random_state=123)
+    clf1 = LogisticRegression(random_state=global_random_seed)
+    clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
     clf3 = GaussianNB()
 
     X = np.array(
@@ -271,13 +274,13 @@ def test_gridsearch():
     }
 
     grid = GridSearchCV(estimator=eclf, param_grid=params, cv=2)
-    grid.fit(iris.data, iris.target)
+    grid.fit(X_scaled, y)
 
 
-def test_parallel_fit():
+def test_parallel_fit(global_random_seed):
     """Check parallel backend of VotingClassifier on toy dataset."""
-    clf1 = LogisticRegression(random_state=123)
-    clf2 = RandomForestClassifier(random_state=123)
+    clf1 = LogisticRegression(random_state=global_random_seed)
+    clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
     clf3 = GaussianNB()
     X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
     y = np.array([1, 1, 2, 2])
@@ -293,26 +296,29 @@ def test_parallel_fit():
     assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
 
 
-def test_sample_weight():
+def test_sample_weight(global_random_seed):
     """Tests sample_weight parameter of VotingClassifier"""
-    clf1 = LogisticRegression(random_state=123)
-    clf2 = RandomForestClassifier(random_state=123)
-    clf3 = SVC(probability=True, random_state=123)
+    clf1 = LogisticRegression(random_state=global_random_seed)
+    clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
+    clf3 = SVC(probability=True, random_state=global_random_seed)
     eclf1 = VotingClassifier(
         estimators=[("lr", clf1), ("rf", clf2), ("svc", clf3)], voting="soft"
-    ).fit(X, y, sample_weight=np.ones((len(y),)))
+    ).fit(X_scaled, y, sample_weight=np.ones((len(y),)))
     eclf2 = VotingClassifier(
         estimators=[("lr", clf1), ("rf", clf2), ("svc", clf3)], voting="soft"
-    ).fit(X, y)
-    assert_array_equal(eclf1.predict(X), eclf2.predict(X))
-    assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
-
-    sample_weight = np.random.RandomState(123).uniform(size=(len(y),))
+    ).fit(X_scaled, y)
+    assert_array_equal(eclf1.predict(X_scaled), eclf2.predict(X_scaled))
+    assert_array_almost_equal(
+        eclf1.predict_proba(X_scaled), eclf2.predict_proba(X_scaled)
+    )
+    sample_weight = np.random.RandomState(global_random_seed).uniform(size=(len(y),))
     eclf3 = VotingClassifier(estimators=[("lr", clf1)], voting="soft")
-    eclf3.fit(X, y, sample_weight)
-    clf1.fit(X, y, sample_weight)
-    assert_array_equal(eclf3.predict(X), clf1.predict(X))
-    assert_array_almost_equal(eclf3.predict_proba(X), clf1.predict_proba(X))
+    eclf3.fit(X_scaled, y, sample_weight)
+    clf1.fit(X_scaled, y, sample_weight)
+    assert_array_equal(eclf3.predict(X_scaled), clf1.predict(X_scaled))
+    assert_array_almost_equal(
+        eclf3.predict_proba(X_scaled), clf1.predict_proba(X_scaled)
+    )
 
     # check that an error is raised and indicative if sample_weight is not
     # supported.
@@ -322,17 +328,17 @@ def test_sample_weight():
     )
     msg = "Underlying estimator KNeighborsClassifier does not support sample weights."
     with pytest.raises(TypeError, match=msg):
-        eclf3.fit(X, y, sample_weight)
+        eclf3.fit(X_scaled, y, sample_weight)
 
     # check that _fit_single_estimator will raise the right error
     # it should raise the original error if this is not linked to sample_weight
     class ClassifierErrorFit(ClassifierMixin, BaseEstimator):
-        def fit(self, X, y, sample_weight):
+        def fit(self, X_scaled, y, sample_weight):
             raise TypeError("Error unrelated to sample_weight.")
 
     clf = ClassifierErrorFit()
     with pytest.raises(TypeError, match="Error unrelated to sample_weight"):
-        clf.fit(X, y, sample_weight=sample_weight)
+        clf.fit(X_scaled, y, sample_weight=sample_weight)
 
 
 def test_sample_weight_kwargs():
@@ -351,22 +357,26 @@ def test_sample_weight_kwargs():
     eclf.fit(X, y, sample_weight=np.ones((len(y),)))
 
 
-def test_voting_classifier_set_params():
+def test_voting_classifier_set_params(global_random_seed):
     # check equivalence in the output when setting underlying estimators
-    clf1 = LogisticRegression(random_state=123, C=1.0)
-    clf2 = RandomForestClassifier(random_state=123, max_depth=None)
+    clf1 = LogisticRegression(random_state=global_random_seed)
+    clf2 = RandomForestClassifier(
+        n_estimators=10, random_state=global_random_seed, max_depth=None
+    )
     clf3 = GaussianNB()
 
     eclf1 = VotingClassifier(
         [("lr", clf1), ("rf", clf2)], voting="soft", weights=[1, 2]
-    ).fit(X, y)
+    ).fit(X_scaled, y)
     eclf2 = VotingClassifier(
         [("lr", clf1), ("nb", clf3)], voting="soft", weights=[1, 2]
     )
-    eclf2.set_params(nb=clf2).fit(X, y)
+    eclf2.set_params(nb=clf2).fit(X_scaled, y)
 
-    assert_array_equal(eclf1.predict(X), eclf2.predict(X))
-    assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
+    assert_array_equal(eclf1.predict(X_scaled), eclf2.predict(X_scaled))
+    assert_array_almost_equal(
+        eclf1.predict_proba(X_scaled), eclf2.predict_proba(X_scaled)
+    )
     assert eclf2.estimators[0][1].get_params() == clf1.get_params()
     assert eclf2.estimators[1][1].get_params() == clf2.get_params()
 
@@ -436,25 +446,27 @@ def test_set_estimator_drop():
     assert_array_equal(eclf2.transform(X1), np.array([[0], [1]]))
 
 
-def test_estimator_weights_format():
+def test_estimator_weights_format(global_random_seed):
     # Test estimator weights inputs as list and array
-    clf1 = LogisticRegression(random_state=123)
-    clf2 = RandomForestClassifier(random_state=123)
+    clf1 = LogisticRegression(random_state=global_random_seed)
+    clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
     eclf1 = VotingClassifier(
         estimators=[("lr", clf1), ("rf", clf2)], weights=[1, 2], voting="soft"
     )
     eclf2 = VotingClassifier(
         estimators=[("lr", clf1), ("rf", clf2)], weights=np.array((1, 2)), voting="soft"
     )
-    eclf1.fit(X, y)
-    eclf2.fit(X, y)
-    assert_array_almost_equal(eclf1.predict_proba(X), eclf2.predict_proba(X))
+    eclf1.fit(X_scaled, y)
+    eclf2.fit(X_scaled, y)
+    assert_array_almost_equal(
+        eclf1.predict_proba(X_scaled), eclf2.predict_proba(X_scaled)
+    )
 
 
-def test_transform():
+def test_transform(global_random_seed):
     """Check transform method of VotingClassifier on toy dataset."""
-    clf1 = LogisticRegression(random_state=123)
-    clf2 = RandomForestClassifier(random_state=123)
+    clf1 = LogisticRegression(random_state=global_random_seed)
+    clf2 = RandomForestClassifier(n_estimators=10, random_state=global_random_seed)
     clf3 = GaussianNB()
     X = np.array([[-1.1, -1.5], [-1.2, -1.4], [-3.4, -2.2], [1.1, 1.2]])
     y = np.array([1, 1, 2, 2])
@@ -512,10 +524,12 @@ def test_none_estimator_with_weights(X, y, voter):
     # regression test for
     # https://github.com/scikit-learn/scikit-learn/issues/13777
     voter = clone(voter)
-    voter.fit(X, y, sample_weight=np.ones(y.shape))
+    # Scaled to solve ConvergenceWarning throw by Logistic Regression
+    X_scaled = StandardScaler().fit_transform(X)
+    voter.fit(X_scaled, y, sample_weight=np.ones(y.shape))
     voter.set_params(lr="drop")
-    voter.fit(X, y, sample_weight=np.ones(y.shape))
-    y_pred = voter.predict(X)
+    voter.fit(X_scaled, y, sample_weight=np.ones(y.shape))
+    y_pred = voter.predict(X_scaled)
     assert y_pred.shape == y.shape
 
 

@@ -35,6 +35,8 @@ Base classes
    base.RegressorMixin
    base.TransformerMixin
    base.MetaEstimatorMixin
+   base.OneToOneFeatureMixin
+   base.ClassNamePrefixFeaturesOutMixin
    feature_selection.SelectorMixin
 
 Functions
@@ -251,7 +253,6 @@ Loaders
    datasets.fetch_rcv1
    datasets.fetch_species_distributions
    datasets.get_data_home
-   datasets.load_boston
    datasets.load_breast_cancer
    datasets.load_diabetes
    datasets.load_digits
@@ -1637,13 +1638,22 @@ Plotting
    utils.validation.check_symmetric
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter
-   utils.all_estimators
    utils.metadata_routing.RequestType
    utils.metadata_routing.get_routing_for_object
    utils.metadata_routing.MetadataRouter
    utils.metadata_routing.MetadataRequest
    utils.metadata_routing.MethodMapping
    utils.metadata_routing.process_routing
+
+Specific utilities to list scikit-learn components:
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.discovery.all_estimators
+   utils.discovery.all_displays
+   utils.discovery.all_functions
 
 Utilities from joblib:
 
