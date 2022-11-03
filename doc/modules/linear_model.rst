@@ -1182,14 +1182,14 @@ Examples of use cases include:
 * Risk modeling / insurance policy pricing:  number of claim events /
   policyholder per year (Poisson), cost per event (Gamma), total cost per
   policyholder per year (Tweedie / Compound Poisson Gamma).
-* Credit Default / Fraud Detection: number of fraudulent transactions from a
-  region (Bernoulli).
+* Credit Default / Fraud Detection: probability of transaction being fraudulent
+  (Bernoulli).
 * Predictive maintenance: number of production interruption events per year
   (Poisson), duration of interruption (Gamma), total interruption time per year
   (Tweedie / Compound Poisson Gamma).
 * Medical Drug Testing: probability of curing a patient in a set of trials or
   probability that a patient will experience side effects (Bernoulli).
-* News Classification: Classification of news articles into three categories
+* News Classification: classification of news articles into three categories
   namely Business News, Politics and Entertainment news (Categorical).
 
 .. topic:: References:
