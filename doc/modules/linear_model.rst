@@ -997,8 +997,10 @@ multinomial logistic regression. It is also the only solver that supports
 
 The "lbfgs" is an optimization algorithm that approximates the
 Broyden–Fletcher–Goldfarb–Shanno algorithm [8]_, which belongs to
-quasi-Newton methods. The "lbfgs" solver is recommended for use for
-small data-sets but for larger datasets its performance suffers. [9]_
+quasi-Newton methods. As such, it can deal with a wide range of different training
+data and is therefore the default solver. Its performance, however, suffers on poorly
+scaled datasets and on datasets with one-hot encoded categorical features with rare
+categories.
 
 The "newton-cholesky" solver is an exact Newton solver that calculates the hessian
 matrix and solves the resulting linear system. It is a very good choice for
@@ -1007,6 +1009,8 @@ regularization is supported. Furthermore, because the hessian matrix is explicit
 computed, the memory usage has a quadratic dependency on `n_features` as well as on
 `n_classes`. As a consequence, only the one-vs-rest scheme is implemented for the
 multiclass case.
+
+For a comparison of some of these solvers, see [9]_.
 
 The following table summarizes the penalties supported by each solver:
 
@@ -1100,8 +1104,8 @@ to warm-starting (see :term:`Glossary <warm_start>`).
 
     .. [8] https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm
 
-    .. [9] `"Performance Evaluation of Lbfgs vs other solvers"
-            <http://www.fuzihao.org/blog/2016/01/16/Comparison-of-Gradient-Descent-Stochastic-Gradient-Descent-and-L-BFGS/>`_
+    .. [9] Thomas P. Minka `"A comparison of numerical optimizers for logistic regression"
+           <https://tminka.github.io/papers/logreg/minka-logreg.pdf/>`_
 
     .. [16] :arxiv:`Simon, Noah, J. Friedman and T. Hastie.
         "A Blockwise Descent Algorithm for Group-penalized Multiresponse and
