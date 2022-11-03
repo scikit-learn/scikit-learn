@@ -42,7 +42,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 X, y = make_classification(
-    n_samples=1000,
+    n_samples=1_000,
     n_features=2,
     n_redundant=0,
     n_informative=2,
