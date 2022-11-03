@@ -1204,7 +1204,7 @@ class TimeSeriesSplit(_BaseKFold):
             Returns the number of splitting iterations in the cross-validator.
         """
         if self.n_splits == "walk_forward":
-            return (_num_samples(X) - self.max_train_size) // self.test_size
+            return (_num_samples(X) - self.max_train_size - self.gap) // self.test_size
         return self.n_splits
 
 

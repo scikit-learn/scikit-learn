@@ -1706,6 +1706,35 @@ def test_time_series_rolling_windows():
         assert_array_equal(test_idx, expected_splits[i][1])
 
 
+def test_time_series_rolling_windows_with_gap():
+    """Check the behaviour of the `TimeSeriesSplit` with `n_splits='walk_forward'`
+    with some gap the between train and test sets."""
+    X = np.random.randn(15, 2)
+
+    max_train_size, test_size = 3, 2
+    tscv = TimeSeriesSplit(
+        n_splits="walk_forward",
+        max_train_size=max_train_size,
+        test_size=test_size,
+        gap=2,
+    )
+    assert tscv.get_n_splits(X) == 5
+
+    expected_splits = [
+        [[0, 1, 2], [5, 6]],
+        [[2, 3, 4], [7, 8]],
+        [[4, 5, 6], [9, 10]],
+        [[6, 7, 8], [11, 12]],
+        [[8, 9, 10], [13, 14]],
+    ]
+
+    for i, (train_idx, test_idx) in enumerate(tscv.split(X)):
+        assert len(train_idx) == max_train_size
+        assert len(test_idx) == test_size
+        assert_array_equal(train_idx, expected_splits[i][0])
+        assert_array_equal(test_idx, expected_splits[i][1])
+
+
 def _check_time_series_max_train_size(splits, check_splits, max_train_size):
     for (train, test), (check_train, check_test) in zip(splits, check_splits):
         assert_array_equal(test, check_test)
