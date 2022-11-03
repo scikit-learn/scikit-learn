@@ -220,6 +220,11 @@ Changelog
 - |Enhancement| :func:`datasets.dump_svmlight_file` is now accelerated with a
   Cython implementation, providing 2-4x speedups.
   :pr:`23127` by :user:`Meekail Zain <micky774>`
+  
+- |Enhancement| Path-like objects, such as those created with pathlib are now
+  allowed as paths in :func:`datasets.load_svmlight_file` and
+  :func:`datasets.load_svmlight_files`.
+  :pr:`19075` by :user:`Carlos Ramos Carreño <vnmabus>`
 
 :mod:`sklearn.decomposition`
 ............................
@@ -274,6 +279,9 @@ Changelog
 
 :mod:`sklearn.ensemble`
 .......................
+- |Enhancement| :class:`ensemble.StackingClassifier` now accepts any kind of
+  base estimator.
+  :pr:`24538` by :user:`Guillem G Subies <GuillemGSubies>`.
 
 - |Feature| :class:`~sklearn.ensemble.EnsembleSelection` estimator added.
   :pr:`24751` by :user:`Pierrick Pochelu <PierrickPochelu>`.
@@ -384,6 +392,10 @@ Changelog
 - |API| String option `"none"` is deprecated for `penalty` argument
   in :class:`linear_model.LogisticRegression`, and will be removed in version 1.4.
   Use `None` instead. :pr:`23877` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+- |Fix| :class:`linear_model.SGDClassifier` and :class:`linear_model.SGDRegressor` will
+  raise an error when all the validation samples have zero sample weight.
+  :pr:`23275` by `Zhehao Liu <MaxwellLZH>`.
 
 - |API| The default value of `tol` was changed from `1e-3` to `1e-4` for
   :func:`linear_model.ridge_regression`, :class:`linear_model.Ridge` and

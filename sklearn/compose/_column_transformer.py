@@ -255,7 +255,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             self.transformers = value
 
     def set_output(self, transform=None):
-        """Set the output container when `"transform`" and `"fit_transform"` are called.
+        """Set the output container when `"transform"` and `"fit_transform"` are called.
 
         Calling `set_output` will set the output of all estimators in `transformers`
         and `transformers_`.
