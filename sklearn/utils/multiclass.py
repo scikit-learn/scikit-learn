@@ -300,12 +300,14 @@ def type_of_target(y, input_name=""):
 
     # DeprecationWarning will be replaced by ValueError, see NEP 34
     # https://numpy.org/neps/nep-0034-infer-dtype-is-object.html
+    # We therefore catch both deprecation (NumPy < 1.24) warning and
+    # value error (NumPy >= 1.24).
     with warnings.catch_warnings():
         warnings.simplefilter("error", np.VisibleDeprecationWarning)
         if not issparse(y):
             try:
                 y = xp.asarray(y)
-            except np.VisibleDeprecationWarning:
+            except (np.VisibleDeprecationWarning, ValueError):
                 # dtype=object should be provided explicitly for ragged arrays,
                 # see NEP 34
                 y = xp.asarray(y, dtype=object)

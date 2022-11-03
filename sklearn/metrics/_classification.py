@@ -28,6 +28,7 @@ import numpy as np
 
 from scipy.sparse import coo_matrix
 from scipy.sparse import csr_matrix
+from scipy.special import xlogy
 
 from ..preprocessing import LabelBinarizer
 from ..preprocessing import LabelEncoder
@@ -2629,8 +2630,9 @@ def log_loss(
             )
 
     # Renormalize
-    y_pred /= y_pred.sum(axis=1)[:, np.newaxis]
-    loss = -(transformed_labels * np.log(y_pred)).sum(axis=1)
+    y_pred_sum = y_pred.sum(axis=1)
+    y_pred = y_pred / y_pred_sum[:, np.newaxis]
+    loss = -xlogy(transformed_labels, y_pred).sum(axis=1)
 
     return _weighted_sum(loss, sample_weight, normalize)
 

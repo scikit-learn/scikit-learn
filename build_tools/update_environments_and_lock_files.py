@@ -195,6 +195,7 @@ conda_build_metadata_list = [
                 "pillow",
             ],
         )
+        + ["pooch"]
         + docstring_test_dependencies
         # python-dateutil is a dependency of pandas and pandas is removed from
         # the environment.yml. Adding python-dateutil so it is pinned
@@ -212,10 +213,7 @@ conda_build_metadata_list = [
         + ["ccache"],
         "package_constraints": {
             "blas": "[build=openblas]",
-            # XXX: this can be removed when cloudpickle issues with PyPy > 3.7
-            # issues are fixed.  For more details see
-            # https://github.com/cloudpipe/cloudpickle/pull/461
-            "python": "3.7",
+            "python": "3.9",
         },
     },
     {
@@ -243,6 +241,7 @@ conda_build_metadata_list = [
             "numpydoc",
             "sphinx-prompt",
             "plotly",
+            "pooch",
         ],
         "pip_dependencies": ["sphinxext-opengraph"],
         "package_constraints": {
@@ -277,6 +276,7 @@ conda_build_metadata_list = [
             "numpydoc",
             "sphinx-prompt",
             "plotly",
+            "pooch",
         ],
         "pip_dependencies": ["sphinxext-opengraph"],
         "package_constraints": {
@@ -329,25 +329,6 @@ pip_build_metadata_list = [
         # osx-arm64 machines. This should not matter for pining versions with
         # pip-compile
         "python_version": "3.8.5",
-    },
-    {
-        "build_name": "py38_pip_openblas_32bit",
-        "folder": "build_tools/azure",
-        "pip_dependencies": [
-            "numpy",
-            "scipy",
-            "cython",
-            "joblib",
-            "threadpoolctl",
-            "pytest",
-            "pytest-xdist",
-            "pillow",
-            "wheel",
-        ],
-        # The Windows 32bit build use 3.8.10. No cross-compilation support for
-        # pip-compile, we are going to assume the pip lock file on a Linux
-        # 64bit machine gives appropriate versions
-        "python_version": "3.8.10",
     },
 ]
 

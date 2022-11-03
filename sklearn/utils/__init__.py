@@ -1,10 +1,6 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
-import pkgutil
-import inspect
-from importlib import import_module
-from operator import itemgetter
 from collections.abc import Sequence
 from contextlib import contextmanager
 from itertools import compress
@@ -14,7 +10,6 @@ import numbers
 import platform
 import struct
 import timeit
-from pathlib import Path
 from contextlib import suppress
 
 import warnings
@@ -26,6 +21,7 @@ from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
+from .discovery import all_estimators
 from .fixes import parse_version, threadpool_info
 from ._estimator_html_repr import estimator_html_repr
 from .validation import (
@@ -143,7 +139,8 @@ def safe_mask(X, mask):
 
 
 def axis0_safe_slice(X, mask, len_mask):
-    """
+    """Return a mask which is safer to use on X than safe_mask.
+
     This mask is safer than safe_mask since it returns an
     empty array, when a sparse matrix is sliced with a boolean mask
     with all False, instead of raising an unhelpful error in older
@@ -170,7 +167,8 @@ def axis0_safe_slice(X, mask, len_mask):
 
     Returns
     -------
-        mask
+    mask : ndarray
+        Array that is safe to use on X.
     """
     if len_mask != 0:
         return X[safe_mask(X, mask), :]
@@ -407,7 +405,7 @@ def _get_column_indices(X, key):
                 stop = all_columns.get_loc(stop) + 1
             else:
                 stop = n_columns + 1
-            return list(range(n_columns)[slice(start, stop)])
+            return list(islice(range(n_columns), start, stop))
         else:
             columns = list(key)
 
@@ -695,22 +693,23 @@ def _chunk_generator(gen, chunksize):
 
 
 def gen_batches(n, batch_size, *, min_batch_size=0):
-    """Generator to create slices containing batch_size elements, from 0 to n.
+    """Generator to create slices containing `batch_size` elements from 0 to `n`.
 
-    The last slice may contain less than batch_size elements, when batch_size
-    does not divide n.
+    The last slice may contain less than `batch_size` elements, when
+    `batch_size` does not divide `n`.
 
     Parameters
     ----------
     n : int
+        Size of the sequence.
     batch_size : int
-        Number of element in each batch.
+        Number of elements in each batch.
     min_batch_size : int, default=0
-        Minimum batch size to produce.
+        Minimum number of elements in each batch.
 
     Yields
     ------
-    slice of batch_size elements
+    slice of `batch_size` elements
 
     See Also
     --------
@@ -748,21 +747,25 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
 
 
 def gen_even_slices(n, n_packs, *, n_samples=None):
-    """Generator to create n_packs slices going up to n.
+    """Generator to create `n_packs` evenly spaced slices going up to `n`.
+
+    If `n_packs` does not divide `n`, except for the first `n % n_packs`
+    slices, remaining slices may contain fewer elements.
 
     Parameters
     ----------
     n : int
+        Size of the sequence.
     n_packs : int
         Number of slices to generate.
     n_samples : int, default=None
-        Number of samples. Pass n_samples when the slices are to be used for
+        Number of samples. Pass `n_samples` when the slices are to be used for
         sparse matrix indexing; slicing off-the-end raises an exception, while
         it works for NumPy arrays.
 
     Yields
     ------
-    slice
+    `slice` representing a set of indices from 0 to n.
 
     See Also
     --------
@@ -1005,7 +1008,7 @@ def _is_pandas_na(x):
 
 
 def is_scalar_nan(x):
-    """Tests if x is NaN.
+    """Test if x is NaN.
 
     This function is meant to overcome the issue that np.isnan does not allow
     non-numerical types as input, and that np.nan is not float('nan').
@@ -1013,10 +1016,12 @@ def is_scalar_nan(x):
     Parameters
     ----------
     x : any type
+        Any scalar value.
 
     Returns
     -------
-    boolean
+    bool
+        Returns true if x is NaN, and false otherwise.
 
     Examples
     --------
@@ -1147,112 +1152,3 @@ def check_pandas_support(caller_name):
         return pandas
     except ImportError as e:
         raise ImportError("{} requires pandas.".format(caller_name)) from e
-
-
-def all_estimators(type_filter=None):
-    """Get a list of all estimators from sklearn.
-
-    This function crawls the module and gets all classes that inherit
-    from BaseEstimator. Classes that are defined in test-modules are not
-    included.
-
-    Parameters
-    ----------
-    type_filter : {"classifier", "regressor", "cluster", "transformer"} \
-            or list of such str, default=None
-        Which kind of estimators should be returned. If None, no filter is
-        applied and all estimators are returned.  Possible values are
-        'classifier', 'regressor', 'cluster' and 'transformer' to get
-        estimators only of these specific types, or a list of these to
-        get the estimators that fit at least one of the types.
-
-    Returns
-    -------
-    estimators : list of tuples
-        List of (name, class), where ``name`` is the class name as string
-        and ``class`` is the actual type of the class.
-    """
-    # lazy import to avoid circular imports from sklearn.base
-    from ._testing import ignore_warnings
-    from ..base import (
-        BaseEstimator,
-        ClassifierMixin,
-        RegressorMixin,
-        TransformerMixin,
-        ClusterMixin,
-    )
-
-    def is_abstract(c):
-        if not (hasattr(c, "__abstractmethods__")):
-            return False
-        if not len(c.__abstractmethods__):
-            return False
-        return True
-
-    all_classes = []
-    modules_to_ignore = {
-        "tests",
-        "externals",
-        "setup",
-        "conftest",
-        "enable_hist_gradient_boosting",
-    }
-    root = str(Path(__file__).parent.parent)  # sklearn package
-    # Ignore deprecation warnings triggered at import time and from walking
-    # packages
-    with ignore_warnings(category=FutureWarning):
-        for importer, modname, ispkg in pkgutil.walk_packages(
-            path=[root], prefix="sklearn."
-        ):
-            mod_parts = modname.split(".")
-            if any(part in modules_to_ignore for part in mod_parts) or "._" in modname:
-                continue
-            module = import_module(modname)
-            classes = inspect.getmembers(module, inspect.isclass)
-            classes = [
-                (name, est_cls) for name, est_cls in classes if not name.startswith("_")
-            ]
-            all_classes.extend(classes)
-
-    all_classes = set(all_classes)
-
-    estimators = [
-        c
-        for c in all_classes
-        if (issubclass(c[1], BaseEstimator) and c[0] != "BaseEstimator")
-    ]
-    # get rid of abstract base classes
-    estimators = [c for c in estimators if not is_abstract(c[1])]
-
-    if type_filter is not None:
-        if not isinstance(type_filter, list):
-            type_filter = [type_filter]
-        else:
-            type_filter = list(type_filter)  # copy
-        filtered_estimators = []
-        filters = {
-            "classifier": ClassifierMixin,
-            "regressor": RegressorMixin,
-            "transformer": TransformerMixin,
-            "cluster": ClusterMixin,
-        }
-        for name, mixin in filters.items():
-            if name in type_filter:
-                type_filter.remove(name)
-                filtered_estimators.extend(
-                    [est for est in estimators if issubclass(est[1], mixin)]
-                )
-        estimators = filtered_estimators
-        if type_filter:
-            raise ValueError(
-                "Parameter type_filter must be 'classifier', "
-                "'regressor', 'transformer', 'cluster' or "
-                "None, got"
-                " %s."
-                % repr(type_filter)
-            )
-
-    # drop duplicates, sort for reproducibility
-    # itemgetter is used to ensure the sort does not extend to the 2nd item of
-    # the tuple
-    return sorted(set(estimators), key=itemgetter(0))
