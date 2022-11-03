@@ -1,5 +1,6 @@
 import itertools
 import os
+import warnings
 import numpy as np
 from numpy.testing import assert_allclose, assert_almost_equal
 from numpy.testing import assert_array_almost_equal, assert_array_equal
@@ -155,14 +156,20 @@ def test_predict_iris(clf):
     n_samples, n_features = iris.data.shape
     target = iris.target_names[iris.target]
 
-    clf.fit(iris.data, target)
+    if clf.solver == "lbfgs":
+        # lbfgs has convergence issues on the iris data with its default max_iter=100
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", ConvergenceWarning)
+            clf.fit(iris.data, target)
+    else:
+        clf.fit(iris.data, target)
     assert_array_equal(np.unique(target), clf.classes_)
 
     pred = clf.predict(iris.data)
     assert np.mean(pred == target) > 0.95
 
     probabilities = clf.predict_proba(iris.data)
-    assert_array_almost_equal(probabilities.sum(axis=1), np.ones(n_samples))
+    assert_allclose(probabilities.sum(axis=1), np.ones(n_samples))
 
     pred = iris.target_names[probabilities.argmax(axis=1)]
     assert np.mean(pred == target) > 0.95
@@ -819,7 +826,6 @@ def test_logistic_regression_class_weights():
     # Binary case: remove 90% of class 0 and 100% of class 2
     X = iris.data[45:100, :]
     y = iris.target[45:100]
-    # solvers = ("lbfgs", "liblinear", "newton-cg", "newton-cholesky")
     class_weight_dict = _compute_class_weight_dictionary(y)
 
     for solver in set(SOLVERS) - set(("sag", "saga")):
@@ -1260,7 +1266,7 @@ def test_dtype_match(solver, multi_class, fit_intercept):
     # and that the output is approximately the same no matter the input format.
 
     if solver in ("liblinear", "newton-cholesky") and multi_class == "multinomial":
-        pytest.skip("solver does not support multinomial logistic")
+        pytest.skip(f"Solver={solver} does not support multinomial logistic.")
 
     out32_type = np.float64 if solver == "liblinear" else np.float32
 
