@@ -28,6 +28,9 @@ corner) is the "ideal" point.
       :ref:`sphx_glr_auto_examples_classification_plot_classifier_comparison.py`
       example.
 
+    - See :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py` for
+      an example estimating the variance of the ROC curves and ROC-AUC.
+
 """
 
 # %%
