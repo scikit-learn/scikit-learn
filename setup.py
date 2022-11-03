@@ -192,6 +192,8 @@ class build_ext_subclass(build_ext):
         build_ext.build_extensions(self)
 
     def run(self):
+        # Specifying `build_clib` allows running `python setup.py develop`
+        # fully from a fresh clone.
         self.run_command("build_clib")
         build_ext.run(self)
 
