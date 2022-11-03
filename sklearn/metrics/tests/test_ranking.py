@@ -1124,7 +1124,7 @@ def test_precision_recall_curve_drop_intermediate():
     precision, recall, thresholds = precision_recall_curve(
         y_true, y_score, drop_intermediate=True
     )
-    assert_array_almost_equal(thresholds, [0.0, 0.6, 0.7, 0.8, 0.9, 1.0])
+    assert_allclose(thresholds, [0.0, 0.6, 0.7, 0.8, 0.9, 1.0])
 
 
 def test_average_precision_constant_values():
