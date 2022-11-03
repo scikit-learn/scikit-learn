@@ -633,7 +633,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
             if self._fit_method == "brute":
                 warnings.warn(
                     "Mind that for 0 < p < 1, Minkowski metrics are not distance"
-                    " metric. Continuing the execution with `algo='brute'`."
+                    " metrics. Continuing the execution with `algo='brute'`."
                 )
             else:  # self._fit_method in ("kd_tree", "ball_tree")
                 raise ValueError(
