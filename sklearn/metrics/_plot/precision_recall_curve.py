@@ -186,7 +186,7 @@ class PrecisionRecallDisplay:
         *,
         sample_weight=None,
         pos_label=None,
-        drop_intermediate=True,
+        drop_intermediate=False,
         response_method="auto",
         name=None,
         ax=None,
