@@ -159,9 +159,6 @@ def test_configure():
             # The configuration spits out warnings when not finding
             # Blas/Atlas development headers
             warnings.simplefilter("ignore", UserWarning)
-            # TODO: remove the following filter once replace numpy.distutils
-            # by setuptools.
-            warnings.simplefilter("ignore", DeprecationWarning)
             with open("setup.py") as f:
                 exec(f.read(), dict(__name__="__main__"))
     finally:
