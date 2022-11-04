@@ -120,7 +120,7 @@ https://conda.anaconda.org/conda-forge/linux-64/gst-plugins-base-1.20.2-hcf0ee16
 https://conda.anaconda.org/conda-forge/linux-64/pandas-1.5.1-py38h8f669ce_1.tar.bz2#75f37fc81d6513ba5db1e05301671a2e
 https://conda.anaconda.org/conda-forge/noarch/pytest-7.2.0-pyhd8ed1ab_2.tar.bz2#ac82c7aebc282e6ac0450fca012ca78c
 https://conda.anaconda.org/conda-forge/linux-64/scipy-1.9.3-py38h8ce737c_1.tar.bz2#7b69c1e959b9f2ef360d2927284042cc
-https://conda.anaconda.org/conda-forge/linux-64/matplotlib-base-3.6.1-py38hb021067_1.tar.bz2#c4d6a40038af11440cdb21170669a42b
+https://conda.anaconda.org/conda-forge/linux-64/matplotlib-base-3.6.2-py38hb021067_0.tar.bz2#72422499195d8aded0dfd461c6e3e86f
 https://conda.anaconda.org/conda-forge/linux-64/pyamg-4.2.3-py38h4e30db6_2.tar.bz2#71e8ccc750d0e6e9a55c63bc39a4e5b8
 https://conda.anaconda.org/conda-forge/noarch/pytest-xdist-3.0.2-pyhd8ed1ab_0.tar.bz2#18bdfe034d1187a34d860ed8e6fec788
 https://conda.anaconda.org/conda-forge/linux-64/qt-5.12.9-h1304e3e_6.tar.bz2#f2985d160b8c43dd427923c04cd732fe
@@ -128,4 +128,4 @@ https://conda.anaconda.org/conda-forge/linux-64/pyqt-impl-5.12.3-py38h0ffb2e6_8.
 https://conda.anaconda.org/conda-forge/linux-64/pyqtchart-5.12-py38h7400c14_8.tar.bz2#78a2a6cb4ef31f997c1bee8223a9e579
 https://conda.anaconda.org/conda-forge/linux-64/pyqtwebengine-5.12.1-py38h7400c14_8.tar.bz2#857894ea9c5e53c962c3a0932efa71ea
 https://conda.anaconda.org/conda-forge/linux-64/pyqt-5.12.3-py38h578d9bd_8.tar.bz2#88368a5889f31dff922a2d57bbfc3f5b
-https://conda.anaconda.org/conda-forge/linux-64/matplotlib-3.6.1-py38h578d9bd_1.tar.bz2#cd81b06cc1d9f631b969bf59633c95b0
+https://conda.anaconda.org/conda-forge/linux-64/matplotlib-3.6.2-py38h578d9bd_0.tar.bz2#e1a19f0d4686a701d4a4acce2b625acb
