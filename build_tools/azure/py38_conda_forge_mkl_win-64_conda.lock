@@ -58,7 +58,7 @@ https://conda.anaconda.org/conda-forge/noarch/certifi-2022.9.24-pyhd8ed1ab_0.tar
 https://conda.anaconda.org/conda-forge/noarch/charset-normalizer-2.1.1-pyhd8ed1ab_0.tar.bz2#c1d5b294fbf9a795dec349a6f4d8be8e
 https://conda.anaconda.org/conda-forge/noarch/colorama-0.4.6-pyhd8ed1ab_0.tar.bz2#3faab06a954c2a04039983f2c4a50d99
 https://conda.anaconda.org/conda-forge/noarch/cycler-0.11.0-pyhd8ed1ab_0.tar.bz2#a50559fad0affdbb33729a68669ca1cb
-https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.0.0-pyhd8ed1ab_0.tar.bz2#da409b864dc21631820c81973df42587
+https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.0.1-pyhd8ed1ab_0.tar.bz2#e6415d628310f067a205448f43421739
 https://conda.anaconda.org/conda-forge/noarch/execnet-1.9.0-pyhd8ed1ab_0.tar.bz2#0e521f7a5e60d508b121d38b04874fb2
 https://conda.anaconda.org/conda-forge/win-64/glib-tools-2.74.1-h12be248_0.tar.bz2#7f6c1debae26e1a4e9c326154fb8c009
 https://conda.anaconda.org/conda-forge/noarch/idna-3.4-pyhd8ed1ab_0.tar.bz2#34272b248891bddccc64479f9a7fffed
@@ -80,7 +80,7 @@ https://conda.anaconda.org/conda-forge/noarch/six-1.16.0-pyh6c4a22f_0.tar.bz2#e5
 https://conda.anaconda.org/conda-forge/noarch/threadpoolctl-3.1.0-pyh8a188c0_0.tar.bz2#a2995ee828f65687ac5b1e71a2ab1e0c
 https://conda.anaconda.org/conda-forge/noarch/toml-0.10.2-pyhd8ed1ab_0.tar.bz2#f832c45a477c78bebd107098db465095
 https://conda.anaconda.org/conda-forge/noarch/tomli-2.0.1-pyhd8ed1ab_0.tar.bz2#5844808ffab9ebdb694585b50ba02a96
-https://conda.anaconda.org/conda-forge/noarch/wheel-0.37.1-pyhd8ed1ab_0.tar.bz2#1ca02aaf78d9c70d9a81a3bed5752022
+https://conda.anaconda.org/conda-forge/noarch/wheel-0.38.1-pyhd8ed1ab_0.tar.bz2#378143e35844908162bca2488436887a
 https://conda.anaconda.org/conda-forge/noarch/win_inet_pton-1.1.0-pyhd8ed1ab_6.tar.bz2#30878ecc4bd36e8deeea1e3c151b2e0b
 https://conda.anaconda.org/conda-forge/win-64/cffi-1.15.1-py38h57701bc_2.tar.bz2#4e290e24ff3aa60183f928d4e144c4fb
 https://conda.anaconda.org/conda-forge/win-64/coverage-6.5.0-py38h91455d4_1.tar.bz2#7ba1bb13999b89fdce5f3385d5e28c2b
@@ -105,7 +105,7 @@ https://conda.anaconda.org/conda-forge/win-64/fonttools-4.38.0-py38h91455d4_1.ta
 https://conda.anaconda.org/conda-forge/win-64/gstreamer-1.21.1-h6b5321d_1.tar.bz2#eae4466b54bc52ad997f91ceee98e3b4
 https://conda.anaconda.org/conda-forge/noarch/pytest-7.2.0-pyhd8ed1ab_2.tar.bz2#ac82c7aebc282e6ac0450fca012ca78c
 https://conda.anaconda.org/conda-forge/win-64/scipy-1.9.3-py38h0f6ee2a_1.tar.bz2#648370cb15951bb4dd039080bc6d07c1
-https://conda.anaconda.org/conda-forge/win-64/sip-6.7.3-py38hd3f51b4_0.tar.bz2#056370be97eb79dc0bef8fa6cca4d996
+https://conda.anaconda.org/conda-forge/win-64/sip-6.7.4-py38hd3f51b4_0.tar.bz2#d952730c0f00803c012b9c2dab4e6afc
 https://conda.anaconda.org/conda-forge/win-64/blas-2.116-mkl.tar.bz2#7529860b43278247a278c6f56a191d2e
 https://conda.anaconda.org/conda-forge/win-64/gst-plugins-base-1.21.1-h001b923_1.tar.bz2#aa8ae7deb87ffaf96a6f8cd70e1de1fb
 https://conda.anaconda.org/conda-forge/win-64/matplotlib-base-3.6.2-py38h528a6c7_0.tar.bz2#c72de8aadeb6468b23ccfd5be1107c3b

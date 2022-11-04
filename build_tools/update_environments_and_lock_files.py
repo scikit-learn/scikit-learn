@@ -71,7 +71,11 @@ common_dependencies = common_dependencies_without_coverage + [
 
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
-default_package_constraints = {}
+default_package_constraints = {
+    # XXX: pin pytest-xdist to workaround:
+    # https://github.com/pytest-dev/pytest-xdist/issues/840
+    "pytest-xdist": "2.5.0",
+}
 
 
 def remove_from(alist, to_remove):
@@ -171,9 +175,6 @@ conda_build_metadata_list = [
         + ["lightgbm", "scikit-image"],
         "package_constraints": {
             "python": "3.9",
-            # XXX: pin pytest-xdist to workaround:
-            # https://github.com/pytest-dev/pytest-xdist/issues/840
-            "pytest-xdist": "2.5.0",
         },
     },
     {
@@ -205,11 +206,6 @@ conda_build_metadata_list = [
         # python-dateutil is a dependency of pandas and pandas is removed from
         # the environment.yml. Adding python-dateutil so it is pinned
         + ["python-dateutil"],
-        "package_constraints": {
-            # XXX: pin pytest-xdist to workaround:
-            # https://github.com/pytest-dev/pytest-xdist/issues/840
-            "pytest-xdist": "2.5.0",
-        },
     },
     {
         "build_name": "pypy3",
@@ -236,9 +232,6 @@ conda_build_metadata_list = [
         "package_constraints": {
             "python": "3.8",
             "blas": "[build=mkl]",
-            # XXX: pin pytest-xdist to workaround:
-            # https://github.com/pytest-dev/pytest-xdist/issues/840
-            "pytest-xdist": "2.5.0",
         },
     },
     {
