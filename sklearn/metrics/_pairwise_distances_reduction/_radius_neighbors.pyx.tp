@@ -48,11 +48,7 @@ from ._base cimport (
     _sqeuclidean_row_norms{{name_suffix}}
 )
 
-from ._datasets_pair cimport (
-    DatasetsPair{{name_suffix}},
-    DenseDenseDatasetsPair{{name_suffix}},
-    SparseSparseDatasetsPair{{name_suffix}},
-)
+from ._datasets_pair cimport DatasetsPair{{name_suffix}}
 
 from ._middle_term_computer cimport MiddleTermComputer{{name_suffix}}
 
@@ -92,9 +88,8 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
         ):
             # Specialized implementation of RadiusNeighbors for the Euclidean
             # distance.
-            # This implementation processes the computation of the chunks of the
-            # distance using a decomposition of the chunks of the distance matrix
-            # for the Squared Euclidean distance.
+            # This implementation computes the distances by chunk using
+            # a decomposition of the Squared Euclidean distance.
             # This specialisation has an improved arithmetic intensity for both
             # the dense and sparse settings, allowing in most case speed-ups of
             # several orders of magnitude compared to the generic RadiusNeighbors
@@ -277,7 +272,6 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
             )
             last_element_idx += deref(self.neigh_distances_chunks[thread_num])[idx].size()
 
-
     cdef void _parallel_on_Y_finalize(
         self,
     ) nogil:
@@ -361,12 +355,7 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
             strategy=strategy,
             sort_results=sort_results,
         )
-        # X and Y are checked by the DatasetsPair{{name_suffix}} implemented
-        # as a DenseDenseDatasetsPair{{name_suffix}}
         cdef:
-            DenseDenseDatasetsPair{{name_suffix}} datasets_pair = (
-                <DenseDenseDatasetsPair{{name_suffix}}> self.datasets_pair
-            )
             ITYPE_t dist_middle_terms_chunks_size = self.Y_n_samples_chunk * self.X_n_samples_chunk
 
         self.middle_term_computer = MiddleTermComputer{{name_suffix}}.get_for(
@@ -375,7 +364,7 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
             self.effective_n_threads,
             self.chunks_n_threads,
             dist_middle_terms_chunks_size,
-            n_features=datasets_pair.X.shape[1],
+            n_features=X.shape[1],
             chunk_size=self.chunk_size,
         )
 

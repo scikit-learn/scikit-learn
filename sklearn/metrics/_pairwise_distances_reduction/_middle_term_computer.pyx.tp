@@ -72,8 +72,10 @@ cdef void _middle_term_sparse_sparse_64(
 
 
 cdef class MiddleTermComputer{{name_suffix}}:
-    """Abstract base class for the `EuclideanDistance` specialisation
-    components wrapping the computation of the distance matrix chunks.
+    """Helper class to compute a Euclidean distance matrix in chunks.
+
+    This is an abstract base class that is further specialized depending
+    on the type of data (dense or sparse).
 
     `EuclideanDistance` subclasses relies on the squared Euclidean
     distances between chunks of vectors X_c and Y_c using the
@@ -102,15 +104,13 @@ cdef class MiddleTermComputer{{name_suffix}}:
 
         Parameters
         ----------
-        X : {ndarray, sparse matrix} of shape (n_samples_X, n_features)
+        X : ndarray or CSR sparse matrix of shape (n_samples_X, n_features)
             Input data.
             If provided as a ndarray, it must be C-contiguous.
-            If provided as a sparse matrix, it must be in CSR format.
 
-        Y : {ndarray, sparse matrix} of shape (n_samples_Y, n_features)
+        Y : ndarray or CSR sparse matrix of shape (n_samples_Y, n_features)
             Input data.
             If provided as a ndarray, it must be C-contiguous.
-            If provided as a sparse matrix, it must be in CSR format.
 
         Returns
         -------
@@ -228,7 +228,7 @@ cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_
     """Computes the middle term of the Euclidean distance between two chunked dense matrices
     X_c and Y_c.
 
-            dist_middle_terms = - 2 X_c_i.Y_c_j^T
+                        dist_middle_terms = - 2 X_c_i.Y_c_j^T
 
     This class use the BLAS gemm routine to perform the dot product of each chunks
     of the distance matrix with improved arithmetic intensity and vector instruction (SIMD).

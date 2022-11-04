@@ -3,7 +3,7 @@
 implementation_specific_values = [
     # Values are the following ones:
     #
-    #       name_suffix, upcast_to_float64, INPUT_DTYPE_t, INPUT_DTYPE
+    #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
     #
     # We also use the float64 dtype and C-type names as defined in
     # `sklearn.utils._typedefs` to maintain consistency.
