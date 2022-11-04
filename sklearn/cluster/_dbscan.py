@@ -139,13 +139,15 @@ def dbscan(
 
     References
     ----------
-    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, "A Density-Based
-    Algorithm for Discovering Clusters in Large Spatial Databases with Noise".
+    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, `"A Density-Based
+    Algorithm for Discovering Clusters in Large Spatial Databases with Noise"
+    <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_.
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
     and Data Mining, Portland, OR, AAAI Press, pp. 226-231. 1996
 
     Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
-    DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
+    :doi:`"DBSCAN revisited, revisited: why and how you should (still) use DBSCAN."
+    <10.1145/3068335>`
     ACM Transactions on Database Systems (TODS), 42(3), 19.
     """
 
@@ -277,13 +279,15 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
     References
     ----------
-    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, "A Density-Based
-    Algorithm for Discovering Clusters in Large Spatial Databases with Noise".
+    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, `"A Density-Based
+    Algorithm for Discovering Clusters in Large Spatial Databases with Noise"
+    <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_.
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
     and Data Mining, Portland, OR, AAAI Press, pp. 226-231. 1996
 
     Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
-    DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
+    :doi:`"DBSCAN revisited, revisited: why and how you should (still) use DBSCAN."
+    <10.1145/3068335>`
     ACM Transactions on Database Systems (TODS), 42(3), 19.
 
     Examples

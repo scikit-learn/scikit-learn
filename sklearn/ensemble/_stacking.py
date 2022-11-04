@@ -406,6 +406,10 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         list is defined as a tuple of string (i.e. name) and an estimator
         instance. An estimator can be set to 'drop' using `set_params`.
 
+        The type of estimator is generally expected to be a classifier.
+        However, one can pass a regressor for some use case (e.g. ordinal
+        regression).
+
     final_estimator : estimator, default=None
         A classifier which will be used to combine the base estimators.
         The default classifier is a
@@ -517,6 +521,12 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     of a binary classification problem. Indeed, both feature will be perfectly
     collinear.
 
+    In some cases (e.g. ordinal regression), one can pass regressors as the
+    first layer of the :class:`StackingClassifier`. However, note that `y` will
+    be internally encoded in a numerically increasing order or lexicographic
+    order. If this ordering is not adequate, one should manually numerically
+    encode the classes in the desired order.
+
     References
     ----------
     .. [1] Wolpert, David H. "Stacked generalization." Neural networks 5.2
@@ -585,6 +595,29 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
                 )
             )
 
+    def _validate_estimators(self):
+        """Overload the method of `_BaseHeterogeneousEnsemble` to be more
+        lenient towards the type of `estimators`.
+
+        Regressors can be accepted for some cases such as ordinal regression.
+        """
+        if len(self.estimators) == 0:
+            raise ValueError(
+                "Invalid 'estimators' attribute, 'estimators' should be a "
+                "non-empty list of (string, estimator) tuples."
+            )
+        names, estimators = zip(*self.estimators)
+        self._validate_names(names)
+
+        has_estimator = any(est != "drop" for est in estimators)
+        if not has_estimator:
+            raise ValueError(
+                "All estimators are dropped. At least one is required "
+                "to be an estimator."
+            )
+
+        return names, estimators
+
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
 
@@ -595,7 +628,10 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
-            Target values.
+            Target values. Note that `y` will be internally encoded in
+            numerically increasing order or lexicographic order. If the order
+            matter (e.g. for ordinal regression), one should numerically encode
+            the target `y` before calling :term:`fit`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
