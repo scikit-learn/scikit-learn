@@ -215,7 +215,7 @@ plt.show()
 # samples used to compute the measure. Furthermore, raw Mutual Information is
 # unbounded from above and its scale depends on the dimensions of the clustering
 # problem and the cardinality of the ground truth classes. This is why the
-# curve is going outside the plot.
+# curve goes off the chart.
 #
 # Only adjusted measures can hence be safely used as a consensus index to
 # evaluate the average stability of clustering algorithms for a given value of k
