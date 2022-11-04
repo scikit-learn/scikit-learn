@@ -258,6 +258,7 @@ def assert_nd_reg_tree_children_monotonic_bounded(tree_, monotonic_cst):
         else:
             i_left = tree_.children_left[i]
             i_right = tree_.children_right[i]
+
             if monotonic_cst[feature] == 0:
                 # Feature without monotonicity constraint: propagate bounds
                 # down the tree to both children.
@@ -278,23 +279,29 @@ def assert_nd_reg_tree_children_monotonic_bounded(tree_, monotonic_cst):
                 lower_bound[i_left] = lower_bound[i]
                 upper_bound[i_right] = upper_bound[i]
                 lower_bound[i_right] = lower_bound[i]
-            else:
+
+            elif monotonic_cst[feature] == 1:
                 # Feature with constraint: check monotonicity
-                assert (
-                    monotonic_cst[feature] * tree_.value[i_left]
-                    <= monotonic_cst[feature] * tree_.value[i_right]
-                )
+                assert tree_.value[i_left] <= tree_.value[i_right]
+
+                # Propagate bounds down the tree to both children.
+                upper_bound[i_left] = tree_.value[i]
+                lower_bound[i_left] = lower_bound[i]
+                upper_bound[i_right] = upper_bound[i]
+                lower_bound[i_right] = tree_.value[i]
+
+            elif monotonic_cst[feature] == -1:
+                # Feature with constraint: check monotonicity
+                assert tree_.value[i_left] >= tree_.value[i_right]
+
                 # Update and propagate bounds down the tree to both children.
-                if monotonic_cst[feature] == 1:
-                    upper_bound[i_left] = tree_.value[i]
-                    lower_bound[i_left] = lower_bound[i]
-                    upper_bound[i_right] = upper_bound[i]
-                    lower_bound[i_right] = tree_.value[i]
-                else:
-                    upper_bound[i_left] = upper_bound[i]
-                    lower_bound[i_left] = tree_.value[i]
-                    upper_bound[i_right] = tree_.value[i]
-                    lower_bound[i_right] = lower_bound[i]
+                upper_bound[i_left] = upper_bound[i]
+                lower_bound[i_left] = tree_.value[i]
+                upper_bound[i_right] = tree_.value[i]
+                lower_bound[i_right] = lower_bound[i]
+
+            else:  # pragma: no cover
+                raise ValueError(f"monotonic_cst[{feature}]={monotonic_cst[feature]}")
 
 
 @pytest.mark.parametrize("TreeRegressor", TREE_REGRESSOR_CLASSES)
