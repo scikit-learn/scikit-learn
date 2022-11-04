@@ -329,7 +329,7 @@ class PrecisionRecallDisplay:
             The class considered as the positive class when computing the
             precision and recall metrics.
 
-        drop_intermediate : bool, default=True
+        drop_intermediate : bool, default=False
             Whether to drop some suboptimal thresholds which would not appear
             on a plotted precision-recall curve. This is useful in order to
             create lighter precision-recall curves.
