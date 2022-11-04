@@ -26,12 +26,12 @@ from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
 import numpy as np
 
-from scipy.sparse import issparse, csr_matrix
+from scipy.sparse import issparse
 from numbers import Integral
 from sklearn import get_config
 from sklearn.utils import check_scalar
 from ...utils._openmp_helpers import _openmp_effective_n_threads
-from ...utils._typedefs import ITYPE, DTYPE, SPARSE_INDEX_TYPE
+from ...utils._typedefs import DTYPE, SPARSE_INDEX_TYPE
 
 cnp.import_array()
 
@@ -111,7 +111,6 @@ cdef DTYPE_t[::1] _sqeuclidean_row_norms64_sparse(
     cdef:
         ITYPE_t n = X_indptr.shape[0] - 1
         ITYPE_t idx = 0
-        ITYPE_t thread_num
         ITYPE_t X_i_ptr
         DTYPE_t[::1] squared_row_norms = np.zeros(n, dtype=DTYPE)
 
@@ -156,7 +155,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         strategy=None,
      ):
         cdef:
-            ITYPE_t n_samples_chunk, X_n_full_chunks, Y_n_full_chunks
+            ITYPE_t X_n_full_chunks, Y_n_full_chunks
 
         if chunk_size is None:
             chunk_size = get_config().get("pairwise_dist_chunk_size", 256)
