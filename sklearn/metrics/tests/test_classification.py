@@ -2542,13 +2542,13 @@ def test_log_loss():
     assert_almost_equal(loss, 1.0630345, decimal=6)
 
 
-def test_log_loss_eps_auto(global_dtype):
+def test_log_loss_eps_auto(float_dtype):
     """Check the behaviour of `eps="auto"` that changes depending on the input
     array dtype.
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/24315
     """
-    y_true = np.array([0, 1], dtype=global_dtype)
+    y_true = np.array([0, 1], dtype=float_dtype)
     y_pred = y_true.copy()
 
     loss = log_loss(y_true, y_pred, eps="auto")
