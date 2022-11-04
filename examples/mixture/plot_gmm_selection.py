@@ -38,8 +38,8 @@ X = np.concatenate([component_1, component_2])
 
 import matplotlib.pyplot as plt
 
-plt.scatter(component_1[:, 0], component_1[:, 1], 0.8)
-plt.scatter(component_2[:, 0], component_2[:, 1], 0.8)
+plt.scatter(component_1[:, 0], component_1[:, 1], s=0.8)
+plt.scatter(component_2[:, 0], component_2[:, 1], s=0.8)
 plt.title("Gaussian Mixture components")
 plt.axis("equal")
 plt.show()
@@ -98,7 +98,7 @@ df = df.rename(
         "mean_test_score": "BIC score",
     }
 )
-df.head()
+df.sort_values(by="BIC score").head()
 
 # %%
 import seaborn as sns
@@ -130,7 +130,7 @@ import itertools
 from matplotlib.patches import Ellipse
 from scipy import linalg
 
-color_iter = itertools.cycle(["darkorange", "C0"])
+color_iter = itertools.cycle(["tab10:blue", "tab10:orange"])
 Y_ = grid_search.predict(X)
 
 fig, ax = plt.subplots()
