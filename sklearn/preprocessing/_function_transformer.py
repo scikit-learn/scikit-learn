@@ -316,12 +316,11 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         transform : {"default", "pandas"}, default=None
-            Configure output of the following estimator's methods:
+            Configure output of `transform` and `fit_transform`.
 
-            - `"transform"`
-            - `"fit_transform"`
-
-            If `None`, this operation is a no-op.
+            - `"default"`: Default output format of a transformer
+            - `"pandas"`: DataFrame output
+            - `None`: Transform configuration is unchanged
 
         Returns
         -------

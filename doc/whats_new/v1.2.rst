@@ -115,6 +115,14 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.base`
+-------------------
+
+- |Enhancement| Introduces :class:`base.ClassNamePrefixFeaturesOutMixin` and
+  :class:`base.ClassNamePrefixFeaturesOutMixin` mixins that defines
+  :term:`get_feature_names_out` for common transformer uses cases.
+  :pr:`24688` by `Thomas Fan`_.
+
 :mod:`sklearn.calibration`
 ..........................
 
@@ -213,6 +221,11 @@ Changelog
   Cython implementation, providing 2-4x speedups.
   :pr:`23127` by :user:`Meekail Zain <micky774>`
 
+- |Enhancement| Path-like objects, such as those created with pathlib are now
+  allowed as paths in :func:`datasets.load_svmlight_file` and
+  :func:`datasets.load_svmlight_files`.
+  :pr:`19075` by :user:`Carlos Ramos Carreño <vnmabus>`
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -266,6 +279,9 @@ Changelog
 
 :mod:`sklearn.ensemble`
 .......................
+- |Enhancement| :class:`ensemble.StackingClassifier` now accepts any kind of
+  base estimator.
+  :pr:`24538` by :user:`Guillem G Subies <GuillemGSubies>`.
 
 - |Feature| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
   :class:`~sklearn.ensemble.HistGradientBoostingRegressor` now support
@@ -342,8 +358,23 @@ Changelog
 - |Enhancement| :class:`kernel_approximation.SkewedChi2Sampler` now preserves
   dtype for `numpy.float32` inputs. :pr:`24350` by :user:`Rahil Parikh <rprkh>`.
 
+- |Enhancement| :class:`kernel_approximation.RBFSampler` now accepts
+  `'scale'` option for parameter `gamma`.
+  :pr:`24755` by :user:`Gleb Levitski <GLevV>`
+
 :mod:`sklearn.linear_model`
 ...........................
+
+- |Enhancement| :class:`linear_model.LogisticRegression`,
+  :class:`linear_model.LogisticRegressionCV`, :class:`linear_model.GammaRegressor`,
+  :class:`linear_model.PoissonRegressor` and :class:`linear_model.TweedieRegressor` got
+  a new solver `solver="newton-cholesky"`. This is a 2nd order (Newton) optimisation
+  routine that uses a Cholesky decomposition of the hessian matrix.
+  When `n_samples >> n_features`, the `"newton-cholesky"` solver has been observed to
+  converge both faster and to a higher precision solution than the `"lbfgs"` solver on
+  problems with one-hot encoded categorical variables with some rare categorical
+  levels.
+  :pr:`24637` and :pr:`24767` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Enhancement| :class:`linear_model.GammaRegressor`,
   :class:`linear_model.PoissonRegressor` and :class:`linear_model.TweedieRegressor`
@@ -359,6 +390,10 @@ Changelog
 - |API| String option `"none"` is deprecated for `penalty` argument
   in :class:`linear_model.LogisticRegression`, and will be removed in version 1.4.
   Use `None` instead. :pr:`23877` by :user:`Zhehao Liu <MaxwellLZH>`.
+
+- |Fix| :class:`linear_model.SGDClassifier` and :class:`linear_model.SGDRegressor` will
+  raise an error when all the validation samples have zero sample weight.
+  :pr:`23275` by `Zhehao Liu <MaxwellLZH>`.
 
 - |API| The default value of `tol` was changed from `1e-3` to `1e-4` for
   :func:`linear_model.ridge_regression`, :class:`linear_model.Ridge` and
@@ -394,6 +429,9 @@ Changelog
   and begins deprecation to change the default from `eigen_tol=0` to
   `eigen_tol="auto"` in version 1.3.
   :pr:`23210` by :user:`Meekail Zain <micky774>`.
+
+- |Enhancement| :class:`manifold.Isomap` now preserves
+  dtype for `np.float32` inputs. :pr:`24714` by :user:`Rahil Parikh <rprkh>`.
 
 :mod:`sklearn.metrics`
 ......................
@@ -446,6 +484,11 @@ Changelog
 - |Fix| For all `SearchCV` classes and scipy >= 1.10, rank corresponding to a
   nan score is correctly set to the maximum possible rank, rather than
   `np.iinfo(np.int32).min`. :pr:`24141` by :user:`Loïc Estève <lesteve>`.
+
+- |Fix| In both :class:`model_selection.HalvingGridSearchCV` and
+  :class:`model_selection.HalvingRandomSearchCV` parameter
+  combinations with a NaN score now share the lowest rank.
+  :pr:`24539` by :user:`Tim Head <betatim>`.
 
 - |Fix| For :class:`model_selection.GridSearchCV` and
   :class:`model_selection.RandomizedSearchCV` ranks corresponding to nan
@@ -511,6 +554,10 @@ Changelog
   be used when one of the transformers in the :class:`pipeline.FeatureUnion` is
   `"passthrough"`. :pr:`24058` by :user:`Diederik Perdok <diederikwp>`
 
+- |Enhancement| The :class:`FeatureUnion` class now has a `named_transformers`
+  attribute for accessing transformers by name.
+  :pr:`20331` by :user:`Christopher Flynn <crflynn>`.
+
 :mod:`sklearn.preprocessing`
 ............................
 
@@ -521,6 +568,9 @@ Changelog
 - |API| The `sparse` parameter of :class:`preprocessing.OneHotEncoder`
   is now deprecated and will be removed in version 1.4. Use `sparse_output` instead.
   :pr:`24412` by :user:`Rushil Desai <rusdes>`.
+
+- |Fix| :class:`preprocessing.LabelEncoder` correctly encodes NaNs in `transform`.
+  :pr:`22629` by `Thomas Fan`_.
 
 :mod:`sklearn.svm`
 ..................
@@ -542,6 +592,9 @@ Changelog
   `lapack_svd_driver`, to specify the lapack driver used in the internal
   deterministic SVD used by the randomized SVD algorithm.
   :pr:`20617` by :user:`Srinath Kailasa <skailasa>`
+
+- |Enhancement| :func:`utils.validation.column_or_1d` now accepts a `dtype`
+  parameter to specific `y`'s dtype. :pr:`22629` by `Thomas Fan`_.
 
 - |FIX| :func:`utils.multiclass.type_of_target` now properly handles sparse matrices.
   :pr:`14862` by :user:`Léonard Binet <leonardbinet>`.
@@ -566,6 +619,9 @@ Changelog
   `metric=True`. `"auto"` will become the default value foor `normalized_stress`
   in version 1.4.
   :pr:`23834` by :user:`Meekail Zain <micky774>`
+
+- |FIX| :func:`utils.estimator_checks.check_estimator` now takes into account
+  the `requires_positive_X` tag correctly. :pr:`24667` by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------

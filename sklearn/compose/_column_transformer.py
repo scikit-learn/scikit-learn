@@ -255,7 +255,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             self.transformers = value
 
     def set_output(self, transform=None):
-        """Set the output container when `"transform`" and `"fit_transform"` are called.
+        """Set the output container when `"transform"` and `"fit_transform"` are called.
 
         Calling `set_output` will set the output of all estimators in `transformers`
         and `transformers_`.
@@ -264,6 +264,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         ----------
         transform : {"default", "pandas"}, default=None
             Configure output of `transform` and `fit_transform`.
+
+            - `"default"`: Default output format of a transformer
+            - `"pandas"`: DataFrame output
+            - `None`: Transform configuration is unchanged
 
         Returns
         -------

@@ -3,108 +3,171 @@
 Gaussian Mixture Model Selection
 ================================
 
-This example shows that model selection can be performed with
-Gaussian Mixture Models using :ref:`information-theoretic criteria (BIC) <aic_bic>`.
-Model selection concerns both the covariance type
-and the number of components in the model.
-In that case, AIC also provides the right result (not shown to save time),
-but BIC is better suited if the problem is to identify the right model.
-Unlike Bayesian procedures, such inferences are prior-free.
+This example shows that model selection can be performed with Gaussian Mixture
+Models (GMM) using :ref:`information-theory criteria <aic_bic>`. Model selection
+concerns both the covariance type and the number of components in the model.
 
-In that case, the model with 2 components and full covariance
-(which corresponds to the true generative model) is selected.
+In this case, both the Akaike Information Criterion (AIC) and the Bayes
+Information Criterion (BIC) provide the right result, but we only demo the
+latter as BIC is better suited to identify the true model among a set of
+candidates. Unlike Bayesian procedures, such inferences are prior-free.
 
 """
 
+# %%
+# Data generation
+# ---------------
+#
+# We generate two components (each one containing `n_samples`) by randomly
+# sampling the standard normal distribution as returned by `numpy.random.randn`.
+# One component is kept spherical yet shifted and re-scaled. The other one is
+# deformed to have a more general covariance matrix.
+
 import numpy as np
-import itertools
 
-from scipy import linalg
-import matplotlib.pyplot as plt
-import matplotlib as mpl
-
-from sklearn import mixture
-
-# Number of samples per component
 n_samples = 500
-
-# Generate random sample, two components
 np.random.seed(0)
 C = np.array([[0.0, -0.1], [1.7, 0.4]])
-X = np.r_[
-    np.dot(np.random.randn(n_samples, 2), C),
-    0.7 * np.random.randn(n_samples, 2) + np.array([-6, 3]),
-]
+component_1 = np.dot(np.random.randn(n_samples, 2), C)  # general
+component_2 = 0.7 * np.random.randn(n_samples, 2) + np.array([-4, 1])  # spherical
 
-lowest_bic = np.infty
-bic = []
-n_components_range = range(1, 7)
-cv_types = ["spherical", "tied", "diag", "full"]
-for cv_type in cv_types:
-    for n_components in n_components_range:
-        # Fit a Gaussian mixture with EM
-        gmm = mixture.GaussianMixture(
-            n_components=n_components, covariance_type=cv_type
-        )
-        gmm.fit(X)
-        bic.append(gmm.bic(X))
-        if bic[-1] < lowest_bic:
-            lowest_bic = bic[-1]
-            best_gmm = gmm
+X = np.concatenate([component_1, component_2])
 
-bic = np.array(bic)
-color_iter = itertools.cycle(["navy", "turquoise", "cornflowerblue", "darkorange"])
-clf = best_gmm
-bars = []
+# %%
+# We can visualize the different components:
 
-# Plot the BIC scores
-plt.figure(figsize=(8, 6))
-spl = plt.subplot(2, 1, 1)
-for i, (cv_type, color) in enumerate(zip(cv_types, color_iter)):
-    xpos = np.array(n_components_range) + 0.2 * (i - 2)
-    bars.append(
-        plt.bar(
-            xpos,
-            bic[i * len(n_components_range) : (i + 1) * len(n_components_range)],
-            width=0.2,
-            color=color,
-        )
-    )
-plt.xticks(n_components_range)
-plt.ylim([bic.min() * 1.01 - 0.01 * bic.max(), bic.max()])
-plt.title("BIC score per model")
-xpos = (
-    np.mod(bic.argmin(), len(n_components_range))
-    + 0.65
-    + 0.2 * np.floor(bic.argmin() / len(n_components_range))
+import matplotlib.pyplot as plt
+
+plt.scatter(component_1[:, 0], component_1[:, 1], s=0.8)
+plt.scatter(component_2[:, 0], component_2[:, 1], s=0.8)
+plt.title("Gaussian Mixture components")
+plt.axis("equal")
+plt.show()
+
+# %%
+# Model training and selection
+# ----------------------------
+#
+# We vary the number of components from 1 to 6 and the type of covariance
+# parameters to use:
+#
+# - `"full"`: each component has its own general covariance matrix.
+# - `"tied"`: all components share the same general covariance matrix.
+# - `"diag"`: each component has its own diagonal covariance matrix.
+# - `"spherical"`: each component has its own single variance.
+#
+# We score the different models and keep the best model (the lowest BIC). This
+# is done by using :class:`~sklearn.model_selection.GridSearchCV` and a
+# user-defined score function which returns the negative BIC score, as
+# :class:`~sklearn.model_selection.GridSearchCV` is designed to **maximize** a
+# score (maximizing the negative BIC is equivalent to minimizing the BIC).
+#
+# The best set of parameters and estimator are stored in `best_parameters_` and
+# `best_estimator_`, respectively.
+
+from sklearn.mixture import GaussianMixture
+from sklearn.model_selection import GridSearchCV
+
+
+def gmm_bic_score(estimator, X):
+    """Callable to pass to GridSearchCV that will use the BIC score."""
+    # Make it negative since GridSearchCV expects a score to maximize
+    return -estimator.bic(X)
+
+
+param_grid = {
+    "n_components": range(1, 7),
+    "covariance_type": ["spherical", "tied", "diag", "full"],
+}
+grid_search = GridSearchCV(
+    GaussianMixture(), param_grid=param_grid, scoring=gmm_bic_score
 )
-plt.text(xpos, bic.min() * 0.97 + 0.03 * bic.max(), "*", fontsize=14)
-spl.set_xlabel("Number of components")
-spl.legend([b[0] for b in bars], cv_types)
+grid_search.fit(X)
 
-# Plot the winner
-splot = plt.subplot(2, 1, 2)
-Y_ = clf.predict(X)
-for i, (mean, cov, color) in enumerate(zip(clf.means_, clf.covariances_, color_iter)):
+# %%
+# Plot the BIC scores
+# -------------------
+#
+# To ease the plotting we can create a `pandas.DataFrame` from the results of
+# the cross-validation done by the grid search. We re-inverse the sign of the
+# BIC score to show the effect of minimizing it.
+
+import pandas as pd
+
+df = pd.DataFrame(grid_search.cv_results_)[
+    ["param_n_components", "param_covariance_type", "mean_test_score"]
+]
+df["mean_test_score"] = -df["mean_test_score"]
+df = df.rename(
+    columns={
+        "param_n_components": "Number of components",
+        "param_covariance_type": "Type of covariance",
+        "mean_test_score": "BIC score",
+    }
+)
+df.sort_values(by="BIC score").head()
+
+# %%
+import seaborn as sns
+
+sns.catplot(
+    data=df,
+    kind="bar",
+    x="Number of components",
+    y="BIC score",
+    hue="Type of covariance",
+)
+plt.show()
+
+# %%
+# In the present case, the model with 2 components and full covariance (which
+# corresponds to the true generative model) has the lowest BIC score and is
+# therefore selected by the grid search.
+#
+# Plot the best model
+# -------------------
+#
+# We plot an ellipse to show each Gaussian component of the selected model. For
+# such purpose, one needs to find the eigenvalues of the covariance matrices as
+# returned by the `covariances_` attribute. The shape of such matrices depends
+# on the `covariance_type`:
+#
+# - `"full"`: (`n_components`, `n_features`, `n_features`)
+# - `"tied"`: (`n_features`, `n_features`)
+# - `"diag"`: (`n_components`, `n_features`)
+# - `"spherical"`: (`n_components`,)
+
+from matplotlib.patches import Ellipse
+from scipy import linalg
+
+color_iter = sns.color_palette("tab10", 2)[::-1]
+Y_ = grid_search.predict(X)
+
+fig, ax = plt.subplots()
+
+for i, (mean, cov, color) in enumerate(
+    zip(
+        grid_search.best_estimator_.means_,
+        grid_search.best_estimator_.covariances_,
+        color_iter,
+    )
+):
     v, w = linalg.eigh(cov)
     if not np.any(Y_ == i):
         continue
     plt.scatter(X[Y_ == i, 0], X[Y_ == i, 1], 0.8, color=color)
 
-    # Plot an ellipse to show the Gaussian component
     angle = np.arctan2(w[0][1], w[0][0])
     angle = 180.0 * angle / np.pi  # convert to degrees
     v = 2.0 * np.sqrt(2.0) * np.sqrt(v)
-    ell = mpl.patches.Ellipse(mean, v[0], v[1], 180.0 + angle, color=color)
-    ell.set_clip_box(splot.bbox)
-    ell.set_alpha(0.5)
-    splot.add_artist(ell)
+    ellipse = Ellipse(mean, v[0], v[1], angle=180.0 + angle, color=color)
+    ellipse.set_clip_box(fig.bbox)
+    ellipse.set_alpha(0.5)
+    ax.add_artist(ellipse)
 
-plt.xticks(())
-plt.yticks(())
 plt.title(
-    f"Selected GMM: {best_gmm.covariance_type} model, "
-    f"{best_gmm.n_components} components"
+    f"Selected GMM: {grid_search.best_params_['covariance_type']} model, "
+    f"{grid_search.best_params_['n_components']} components"
 )
-plt.subplots_adjust(hspace=0.35, bottom=0.02)
+plt.axis("equal")
 plt.show()
