@@ -132,10 +132,10 @@ plt.show()
 # returned by the `covariances_` attribute. The shape of such matrices depends
 # on the `covariance_type`:
 #
-# - `"full"`: (n_components, n_features, n_features)
-# - `"tied"`: (n_features, n_features)
-# - `"diag"`: (n_components, n_features)
-# - `"spherical"`: (n_components,)
+# - `"full"`: (`n_components`, `n_features`, `n_features`)
+# - `"tied"`: (`n_features`, `n_features`)
+# - `"diag"`: (`n_components`, `n_features`)
+# - `"spherical"`: (`n_components`,)
 
 from matplotlib.patches import Ellipse
 from scipy import linalg
