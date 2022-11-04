@@ -27,17 +27,25 @@ from ...utils._cython_blas cimport (
 )
 from ...utils._typedefs cimport DTYPE_t, ITYPE_t, SPARSE_INDEX_TYPE_t
 
-import numpy as np
-from scipy.sparse import issparse, csr_matrix
-from ...utils._typedefs import DTYPE, SPARSE_INDEX_TYPE
-
 # TODO: change for `libcpp.algorithm.fill` once Cython 3 is used
 # Introduction in Cython:
+#
 # https://github.com/cython/cython/blob/05059e2a9b89bf6738a7750b905057e5b1e3fe2e/Cython/Includes/libcpp/algorithm.pxd#L50 #noqa
 cdef extern from "<algorithm>" namespace "std" nogil:
     void fill[Iter, T](Iter first, Iter last, const T& value) except + #noqa
 
+import numpy as np
+from scipy.sparse import issparse, csr_matrix
+from ...utils._typedefs import DTYPE, SPARSE_INDEX_TYPE
 
+# TODO: If possible optimize this routine to efficiently treat cases where
+# `n_samples_X << n_samples_Y` met in practise when X_test consists of a
+# few samples, and thus when there's a single chunk of X whose number of
+# samples is less that the default chunk size.
+
+# TODO: compare this routine with the similar ones in SciPy, especially
+# `csr_matmat` which might implement a better algorithm.
+# See: https://github.com/scipy/scipy/blob/e58292e066ba2cb2f3d1e0563ca9314ff1f4f311/scipy/sparse/sparsetools/csr.h#L603-L669  # noqa
 cdef void _middle_term_sparse_sparse_64(
     const DTYPE_t[:] X_data,
     const SPARSE_INDEX_TYPE_t[:] X_indices,
@@ -51,6 +59,9 @@ cdef void _middle_term_sparse_sparse_64(
     ITYPE_t Y_end,
     DTYPE_t * D,
 ) nogil:
+    # This routine assumes that D points to the first element of a
+    # zeroed buffer of length at least equal to n_X × n_Y, conceptually
+    # representing a 2-d C-ordered array.
     cdef:
         ITYPE_t i, j, k
         ITYPE_t n_X = X_end - X_start
@@ -141,7 +152,9 @@ cdef class MiddleTermComputer{{name_suffix}}:
                 chunk_size,
             )
 
-        raise NotImplementedError("X and Y must be both sparse or dense")
+        raise NotImplementedError(
+            "Both X and Y must be CSR sparse matrices xor numpy arrays."
+        )
 
 
     @classmethod
