@@ -56,7 +56,14 @@ plt.show()
 # - `"diag"`: each component has its own diagonal covariance matrix.
 # - `"spherical"`: each component has its own single variance.
 #
-# We score the different models and keep the best model (the lowest BIC).
+# We score the different models and keep the best model (the lowest BIC). This
+# is done by using :class:`~sklearn.model_selection.GridSearchCV` and a
+# user-defined score function which returns the negative BIC score, as
+# :class:`~sklearn.model_selection.GridSearchCV` is designed to **maximize** a
+# score (maximizing the negative BIC is equivalent to minimizing the BIC).
+#
+# The best set of parameters and estimator are stored in `best_parameters_` and
+# `best_estimator_`, respectively.
 
 from sklearn.mixture import GaussianMixture
 from sklearn.model_selection import GridSearchCV
@@ -81,9 +88,9 @@ grid_search.fit(X)
 # Plot the BIC scores
 # -------------------
 #
-# In the present case, the model with 2 components and full covariance
-# (which corresponds to the true generative model) has the lowest BIC
-# score is therefore selected.
+# To ease the plotting we can create a `pandas.DataFrame` from the results of
+# the cross-validation done by the grid search. We re-inverse the sign of the
+# BIC score to show the effect of minimizing it.
 
 import pandas as pd
 
@@ -113,6 +120,10 @@ sns.catplot(
 plt.show()
 
 # %%
+# In the present case, the model with 2 components and full covariance (which
+# corresponds to the true generative model) has the lowest BIC score and is
+# therefore selected by the grid search.
+#
 # Plot the best model
 # -------------------
 #
