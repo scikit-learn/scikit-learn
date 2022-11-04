@@ -214,7 +214,7 @@ class PrecisionRecallDisplay:
             precision and recall metrics. By default, `estimators.classes_[1]`
             is considered as the positive class.
 
-        drop_intermediate : bool, default=True
+        drop_intermediate : bool, default=False
             Whether to drop some suboptimal thresholds which would not appear
             on a plotted precision-recall curve. This is useful in order to
             create lighter precision-recall curves.
