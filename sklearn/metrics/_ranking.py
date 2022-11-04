@@ -838,7 +838,7 @@ def precision_recall_curve(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    drop_intermediate : bool, default=True
+    drop_intermediate : bool, default=False
         Whether to drop some suboptimal thresholds which would not appear
         on a plotted precision-recall curve. This is useful in order to create
         lighter precision-recall curves.
