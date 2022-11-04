@@ -2,19 +2,16 @@
 ==========================================================
 Adjustment for chance in clustering performance evaluation
 ==========================================================
-
 This notebook explores the impact of uniformly-distributed random labeling on
 the behavior of some clustering evaluation metrics. For such purpose, the
 metrics are computed with a fixed number of samples and as a function of the number
 of clusters assigned by the estimator. The example is divided into two
 experiments:
-
 - a first experiment with fixed "ground truth labels" (and therefore fixed
   number of classes) and randomly "predicted labels";
 - a second experiment with varying "ground truth labels", randomly "predicted
   labels". The "predicted labels" have the same number of classes and clusters
   as the "ground truth labels".
-
 """
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
@@ -109,7 +106,7 @@ def fixed_classes_uniform_labelings_scores(
 # `n_clusters_range`.
 
 import matplotlib.pyplot as plt
-import matplotlib.style as style
+import seaborn as sns
 
 n_samples = 1000
 n_classes = 10
@@ -117,7 +114,7 @@ n_clusters_range = np.linspace(2, 100, 10).astype(int)
 plots = []
 names = []
 
-style.use("seaborn-colorblind")
+sns.color_palette("colorblind")
 plt.figure(1)
 
 for marker, (score_name, score_func) in zip("d^vx.,", score_funcs):
@@ -217,7 +214,8 @@ plt.show()
 # significantly as the number of clusters is closer to the total number of
 # samples used to compute the measure. Furthermore, raw Mutual Information is
 # unbounded from above and its scale depends on the dimensions of the clustering
-# problem and the cardinality of the ground truth classes.
+# problem and the cardinality of the ground truth classes. This is why the
+# curve is going outside the plot.
 #
 # Only adjusted measures can hence be safely used as a consensus index to
 # evaluate the average stability of clustering algorithms for a given value of k
