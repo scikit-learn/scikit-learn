@@ -8,13 +8,13 @@ from sklearn.base import RegressorMixin, ClassifierMixin, BaseEstimator
 from sklearn.calibration import CalibratedClassifierCV
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.linear_model import LogisticRegressionCV
+from sklearn.metrics._scorer import _BaseScorer
 from sklearn.multioutput import (
     MultiOutputRegressor,
     MultiOutputClassifier,
     ClassifierChain,
     RegressorChain,
 )
-from sklearn.utils._metadata_requests import _MetadataRequester, MetadataRequest
 from sklearn.utils.metadata_routing import MetadataRouter
 from sklearn.tests.test_metadata_routing import (
     record_metadata,
@@ -153,8 +153,9 @@ class ConsumingClassifier(ClassifierMixin, BaseEstimator):
         return np.zeros(shape=(len(X), 2))
 
 
-class ConsumingScorer(_MetadataRequester):
+class ConsumingScorer(_BaseScorer):
     def __init__(self, registry=None):
+        super().__init__(score_func="test", sign=1, kwargs={})
         self.registry = registry
 
     def __call__(
@@ -168,12 +169,6 @@ class ConsumingScorer(_MetadataRequester):
         )
 
         return 0.0
-
-    def set_score_request(self, **kwargs):
-        self._metadata_request = MetadataRequest(owner=self.__class__.__name__)
-        for param, alias in kwargs.items():
-            self._metadata_request.score.add_request(param=param, alias=alias)
-        return self
 
 
 METAESTIMATORS = [
