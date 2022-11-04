@@ -838,6 +838,13 @@ def precision_recall_curve(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+    drop_intermediate : bool, default=True
+        Whether to drop some suboptimal thresholds which would not appear
+        on a plotted precision-recall curve. This is useful in order to create
+        lighter precision-recall curves.
+
+        .. versionadded:: 1.2
+
     Returns
     -------
     precision : ndarray of shape (n_thresholds + 1,)
@@ -851,13 +858,6 @@ def precision_recall_curve(
     thresholds : ndarray of shape (n_thresholds,)
         Increasing thresholds on the decision function used to compute
         precision and recall where `n_thresholds = len(np.unique(probas_pred))`.
-
-    drop_intermediate : bool, default=True
-        Whether to drop some suboptimal thresholds which would not appear
-        on a plotted precision-recall curve. This is useful in order to create
-        lighter precision-recall curves.
-
-        .. versionadded:: 1.2
 
     See Also
     --------
