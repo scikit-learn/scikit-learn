@@ -795,7 +795,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
 
 
 def precision_recall_curve(
-    y_true, probas_pred, *, pos_label=None, sample_weight=None, drop_intermediate=True
+    y_true, probas_pred, *, pos_label=None, sample_weight=None, drop_intermediate=False
 ):
     """Compute precision-recall pairs for different probability thresholds.
 
@@ -895,7 +895,9 @@ def precision_recall_curve(
         # with the same tps value have the same recall and thus x coordinate.
         # They appear as a vertical line on the plot.
         optimal_idxs = np.where(
-            np.r_[True, np.logical_or(np.diff(tps[:-1]), np.diff(tps[1:])), True]
+            np.concatenate(
+                [[True], np.logical_or(np.diff(tps[:-1]), np.diff(tps[1:])), [True]]
+            )
         )[0]
         fps = fps[optimal_idxs]
         tps = tps[optimal_idxs]

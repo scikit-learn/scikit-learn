@@ -432,6 +432,14 @@ Changelog
   and will be removed in 1.4.
   :pr:`24630` by :user:`Rushil Desai <rusdes>`.
 
+- |Enhancement| A new parameter `drop_intermediate` was added to
+  :func:`metrics.precision_recall_curve`,
+  :func:`metrics.PrecisionRecallDisplay.from_estimator`,
+  :func:`metrics.PrecisionRecallDisplay.from_predictions`,
+  which drops some suboptimal thresholds to create lighter precision-recall
+  curves.
+  :pr:`24668` by :user:`dberenbaum`.
+
 :mod:`sklearn.model_selection`
 ..............................
 

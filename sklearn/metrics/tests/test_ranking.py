@@ -912,13 +912,13 @@ def test_precision_recall_curve(drop):
     predict_probas = [1, 2, 3, 4]
     p, r, t = precision_recall_curve(labels, predict_probas, drop_intermediate=drop)
     if drop:
-        assert_array_almost_equal(p, np.array([0.5, 0.33333333, 1.0, 1.0]))
-        assert_array_almost_equal(r, np.array([1.0, 0.5, 0.5, 0.0]))
-        assert_array_almost_equal(t, np.array([1, 2, 4]))
+        assert_allclose(p, [0.5, 0.33333333, 1.0, 1.0])
+        assert_allclose(r, [1.0, 0.5, 0.5, 0.0])
+        assert_allclose(t, [1, 2, 4])
     else:
-        assert_array_almost_equal(p, np.array([0.5, 0.33333333, 0.5, 1.0, 1.0]))
-        assert_array_almost_equal(r, np.array([1.0, 0.5, 0.5, 0.5, 0.0]))
-        assert_array_almost_equal(t, np.array([1, 2, 3, 4]))
+        assert_allclose(p, [0.5, 0.33333333, 0.5, 1.0, 1.0])
+        assert_allclose(r, [1.0, 0.5, 0.5, 0.5, 0.0])
+        assert_allclose(t, [1, 2, 3, 4])
     assert p.size == r.size
     assert p.size == t.size + 1
 
@@ -1125,6 +1125,22 @@ def test_precision_recall_curve_drop_intermediate():
         y_true, y_score, drop_intermediate=True
     )
     assert_allclose(thresholds, [0.0, 0.6, 0.7, 0.8, 0.9, 1.0])
+
+    # Test all false keeps only endpoints
+    y_true = [0, 0, 0, 0]
+    y_score = [0.0, 0.1, 0.2, 0.3]
+    precision, recall, thresholds = precision_recall_curve(
+        y_true, y_score, drop_intermediate=True
+    )
+    assert_allclose(thresholds, [0.0, 0.3])
+
+    # Test all true keeps all thresholds
+    y_true = [1, 1, 1, 1]
+    y_score = [0.0, 0.1, 0.2, 0.3]
+    precision, recall, thresholds = precision_recall_curve(
+        y_true, y_score, drop_intermediate=True
+    )
+    assert_allclose(thresholds, [0.0, 0.1, 0.2, 0.3])
 
 
 def test_average_precision_constant_values():
