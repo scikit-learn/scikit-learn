@@ -5,8 +5,8 @@ Plotting Learning Curves and Checking Models' Scalability
 
 In this example, we show how to use the class
 :class:`~sklearn.model_selection.LearningCurveDisplay` to easily plot learning
-curves. In addition, we provide two interpretation of the learning curves
-obtained for a naive Bayes and SVM classifiers.
+curves. In addition, we give an interpretation to the learning curves obtained
+for a naive Bayes and SVM classifiers.
 
 Then, we go into details by looking at the scalability of these predictive
 models by looking at their computation cost and not only at their statistical
@@ -18,12 +18,11 @@ models.
 # Learning Curve
 # ==============
 #
-# Learning curves show the effect on adding more samples during the training
+# Learning curves show the effect of adding more samples during the training
 # process. The effect is depicted by checking the statistical performance of
-# the model in terms of training score and testing score (also called
-# cross-validation score).
+# the model in terms of training score and testing score.
 #
-# Here, we compute the learning curve of a naive Bayes classifier and an SVM
+# Here, we compute the learning curve of a naive Bayes classifier and a SVM
 # classifier with a RBF kernel using the digits dataset.
 from sklearn.datasets import load_digits
 from sklearn.naive_bayes import GaussianNB
@@ -59,25 +58,24 @@ common_params = {
 for ax_idx, estimator in enumerate([naive_bayes, svc]):
     LearningCurveDisplay.from_estimator(estimator, **common_params, ax=ax[ax_idx])
     handles, label = ax[ax_idx].get_legend_handles_labels()
-    ax[ax_idx].legend(handles[:2], ["Training Score", "Cross-Validation Score"])
+    ax[ax_idx].legend(handles[:2], ["Training Score", "Test Score"])
     ax[ax_idx].set_title(f"Learning Curve for {estimator.__class__.__name__}")
 
 # %%
-# We first analyze the learning curve of the naive Bayes classifier. We observe
-# that the training and cross-validation scores are not very good when all the
-# samples are used for training.
-#
-# However, the shape of the curve can be found in more complex datasets very
-# often: the training score is very high at the beginning and decreases and the
-# cross-validation score is very low at the beginning and increases.
+# We first analyze the learning curve of the naive Bayes classifier. Its shape
+# can be found in more complex datasets very often: the training score is very
+# high when using few samples for training and decreases when increasing the
+# number of samples, whereas the test score is very low at the beginning and
+# then increases when adding samples. The training and test scores become more
+# realistic when all the samples are used for training.
 #
 # We see another typical learning curve for the SVM classifier with RBF kernel.
-# The training score remains high whatever the size of the training dataset.
-# The cross-validation, on the other hand, is increasing with the size of the
-# training dataset. Indeed, it increases up to a point where the
-# cross-validation score reach a plateau. Observing such a plateau inform us
-# that it might not be useful to acquire new data to train the model since the
-# generalization performance of the model will not increase anymore.
+# The training score remains high regardless of the size of the training set.
+# On the other hand, the test score increases with the size of the training
+# dataset. Indeed, it increases up to a point where it reaches a plateau.
+# Observing such a plateau is an indication that it might not be useful to
+# acquire new data to train the model since the generalization performance of
+# the model will not increase anymore.
 #
 # Complexity analysis
 # ===================
