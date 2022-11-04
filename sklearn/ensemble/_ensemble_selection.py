@@ -7,17 +7,63 @@ import math
 import numpy as np
 from joblib import Parallel, delayed
 
-from ..base import clone
+from ..utils._array_api import get_namespace
+from ..base import is_classifier, is_regressor
 from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
-from ..base import ClassifierMixin
-from ..base import RegressorMixin
+from ..utils.validation import column_or_1d
 from ..exceptions import NotFittedError
+
+from ..preprocessing import LabelEncoder
+from ..utils.multiclass import type_of_target
 
 from ..utils._param_validation import StrOptions
 from ..utils.validation import check_is_fitted
+from sklearn.metrics import log_loss, mean_squared_error
+from sklearn import preprocessing
 
-class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsemble):
+DEFAULT_REGRESSION_METRIC = mean_squared_error
+DEFAULT_REGRESSION_DIRECTION = "min"
+DEFAULT_CLASSFIER_METRIC = log_loss
+DEFAULT_CLASSIFIER_DIRECTION = "min"
+
+
+def check_and_convert_estimators(estimators):
+    # convert estimators to a list of (name,estimator).
+    # This bloc of code allows CI compliance.
+    format = "named_est"
+    if isinstance(estimators, list) and len(estimators) > 0:
+        first_obj = estimators[0]
+        if isinstance(first_obj, tuple) and len(first_obj) == 2:
+            format = "named_est"
+        else:
+            format = "list_of_est"
+    else:
+        raise ValueError("Not expected container type")
+
+    # conversion if required
+    default_prefix = "est"
+    if format == "list_of_est":
+        named_estimators = []
+        for i, e in enumerate(estimators):
+            named_estimators.append((default_prefix + str(i), e))
+        estimators = named_estimators
+    return estimators
+
+
+def get_task_type(estimators):
+    if len(estimators) == 0:
+        raise ValueError("No estimator")
+    est = estimators[0][1]
+    if is_classifier(est):
+        return "classification"
+    elif is_regressor(est):
+        return "regression"
+    else:
+        raise ValueError("Unknown task type")
+
+
+class EnsembleSelection(_BaseHeterogeneousEnsemble):
     """
     An ensemble classifier built by greedy stepwise selection.
     # Bagged Ensemble Selection (section 2.3) of the original paper is not implemented.
@@ -80,13 +126,14 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
     _parameter_constraints: dict = {
         "estimators": [list],
         "score_metric": [callable],
-        "score_direction": [StrOptions({"min", "max"})],
+        "score_direction": [None, StrOptions({"min", "max"})],
         "max_estimators": [Integral],
         "min_estimators": [Integral],
-        "n_jobs":  [None, Integral],
+        "pruning_factor": [Integral],
+        "n_jobs": [None, Integral],
         "with_replacement": "boolean",
         "is_base_estimator_proba": "boolean",
-        "verbose":"verbose"
+        "verbose": "verbose",
     }
 
     def __init__(
@@ -103,16 +150,30 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
         verbose=False,
     ):
         super().__init__(estimators)
+        self.estimators = check_and_convert_estimators(estimators)
         self.max_estimators = max_estimators
         self.min_estimators = min_estimators
         self.pruning_factor = pruning_factor
-        self.prune_fraction = pruning_factor
         self.verbose = verbose
         self.with_replacement = with_replacement
         self.score_metric = score_metric
         self.is_base_estimator_proba = is_base_estimator_proba
         self.score_direction = score_direction
         self.n_jobs = n_jobs
+
+        # Detect the task
+        task_type = get_task_type(self.estimators)
+
+        # Default metric
+        if self.score_metric is None or self.score_direction is None:
+            if task_type == "regression":
+                self.score_metric = DEFAULT_REGRESSION_METRIC
+                self.score_direction = DEFAULT_REGRESSION_DIRECTION
+            elif task_type == "classification":
+                self.score_metric = DEFAULT_CLASSFIER_METRIC
+                self.score_direction = DEFAULT_CLASSIFIER_DIRECTION
+            else:
+                raise ValueError("Unknown metric in this case")
 
     def _validate_estimators(self):
         """Overload the method of `_BaseHeterogeneousEnsemble` to be more
@@ -152,8 +213,8 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
         -------
         self : object
         """
-        #self._validate_params()
-        #self._validate_estimators()
+        # self._validate_params()
+        # self._validate_estimators()
 
         if self.estimators is None or len(self.estimators) == 0:
             raise AttributeError(
@@ -163,21 +224,33 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
             )
 
         # TODO uses check_classification_targets(y) instead
-        if len(np.array(y).shape)==0:
-            self.log(f"The labels are 0-dimensional")
+        if len(np.array(y).shape) == 0:
+            self.log("The labels are 0-dimensional")
             return {}
 
         # Fit estimator if not already done
-        estimator_to_fit=[]
-        for _,estimator in self.estimators:
+        named_estimator_to_fit = []
+        for name, estimator in self.estimators:
             try:
                 check_is_fitted(estimator)
-            except NotFittedError as nfe:
-                estimator_to_fit.append(estimator)
-        self.estimators = Parallel(n_jobs=self.n_jobs)(
+            except NotFittedError:
+                named_estimator_to_fit.append((name, estimator))
+        """
+        fitted_estimators = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_single_estimator)(clone(est), X, y, sample_weight)
-            for est in estimator_to_fit
+            for name, est in named_estimator_to_fit
         )
+        """
+        _ = Parallel(n_jobs=self.n_jobs)(
+            delayed(_fit_single_estimator)(est, X, y, sample_weight)
+            for name, est in named_estimator_to_fit
+        )  # estimators are updated
+
+        # converse sparse representation into one-hot vector
+        if get_task_type(self.estimators) == "classification":
+            y = self.y_preprocess_for_classification(y)
+        else:
+            y = self.y_preproces_for_regression(y)
 
         # Cache score and predict results on X
         self.base_model_score_ = {}
@@ -195,7 +268,7 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
                 self.base_model_score_.items(), key=lambda t: t[1], reverse=is_reverse
             )
         )
-        nb_to_kept = math.ceil(1.0 - self.pruning_factor * len(sorted_estimators))
+        nb_to_kept = math.ceil((1.0 - self.pruning_factor) * len(sorted_estimators))
         pruned_estimator = sorted_estimators[
             :nb_to_kept
         ]  # contains [(name_A,score_A),(name_B,score_B),...]
@@ -204,55 +277,97 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
 
         # Build the ensemble
         (
-            self.ensemble,
+            self.ensemble_,
             self.ensemble_score,
             self.ensemble_pred,
         ) = self._greedy_combi_ensemble(y, pruned_est_name)
 
-        self.log(f"Ensemble :{self.ensemble}, score: {self.ensemble_score}")
+        self.log(f"Ensemble :{self.ensemble_}, score: {self.ensemble_score}")
 
-        return self.ensemble
+        return self
+
+    def transform(self, X):
+        preds_weights = []
+        for estimator_name, estimator in self.estimators:
+            estimator_weight = self.ensemble_.get(estimator_name, 0)
+            if estimator_weight > 0:
+
+                pred = self._estimator_predict(X, estimator)
+
+                preds_weights.append((pred, estimator_weight))
+        return preds_weights
+
+    def decision_function(self, X):
+        check_is_fitted(self)
+        return self.transform(X)
 
     def log(self, txt):
         if self.verbose:
             print(txt)
 
+    def _predict_proba_and_regression(self, X):
+        preds_weights = self.transform(X)
+        ensemble_preds = self._combination_rule(preds_weights)
+        return ensemble_preds
+
+    def predict_proba(self, X):
+        return self._predict_proba_and_regression(X)
+
     def predict(self, X):
-        ensemble_size = sum(self.ensemble.values())
-        ens_pred = np.zeros([X.shape[0]] + self.output_shape)  # TODO check if compatible with sparse data
-
-        for estimator_name, estimator in self.estimators:
-            estimator_weight=self.ensemble.get(estimator_name, 0)
-            if estimator_weight>0:
-
-                pred = self._estimator_predict(X, estimator)
-
-                ens_pred += pred * estimator_weight
-
-        ens_pred /= ensemble_size
-        return ens_pred
+        task = get_task_type(self.estimators)
+        if task == "classification":
+            proba = self.predict_proba(X)
+            pred = np.argmax(proba, axis=1)
+        else:
+            pred = self._predict_proba_and_regression(X)
+        return pred
 
     def fit_predict(self, X, y, sample_weight=None):
         self.fit(X, y, sample_weight)
         return self.ensemble_pred
 
     def _get_score_of_ensemble(self, X, y, ensemble):
-        ensemble_size = sum(ensemble.values())
-        ens_preds = np.zeros([X.shape[0]] + self.output_shape)
+        preds_weights = []
 
         for estimator_name, weight in ensemble.items():
             proba = self.base_model_preds_[estimator_name]
-            ens_preds += proba * weight
-
-        ens_preds /= ensemble_size
+            preds_weights.append((proba, weight))
+        ens_preds = self._combination_rule(preds_weights)
         ens_score = self.score_metric(y, ens_preds)
         return ens_score, ens_preds
 
     def _estimator_predict(self, X, est):
-        if self.is_base_estimator_proba and hasattr(est,"predict_proba"):
+        if self.is_base_estimator_proba and hasattr(est, "predict_proba"):
             return est.predict_proba(X)
         else:
             return est.predict(X)
+
+    def _combination_rule(self, preds_weights):
+        final_predictions = None
+        sum_weights = 0
+        for p, w in preds_weights:
+            if final_predictions is None:
+                final_predictions = p * w
+            else:
+                final_predictions += p * w
+            sum_weights += w
+        final_predictions /= sum_weights
+        return final_predictions  # if final_predictions is not None else None
+
+    def _sliding_combination_rule(
+        self, current_ensemble_pred, prev_ensemble_size, added_estimator_name, y
+    ):
+        candidate_pred = self.base_model_preds_[added_estimator_name]
+
+        if current_ensemble_pred is None:
+            sliding_ensemble_pred = candidate_pred
+        else:
+            sliding_ensemble_pred = (
+                current_ensemble_pred * prev_ensemble_size + candidate_pred
+            ) / (prev_ensemble_size + 1.0)
+
+        new_ens_score = self.score_metric(y, sliding_ensemble_pred)
+        return {added_estimator_name: (new_ens_score, sliding_ensemble_pred)}
 
     def _get_score_of_model(self, X, y, estimator):
         pred = self._estimator_predict(X, estimator)
@@ -272,25 +387,32 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
         current_ensemble = dict()
         for n in estimators_name:
             current_ensemble[n] = 0
-        current_ensemble_score = -np.inf if self.score_direction == "max" else np.inf
-        current_ensemble_pred = np.zeros(self.output_shape)
+        current_ensemble_score = (
+            -np.inf if self.score_direction == "max" else np.inf
+        )  # worst
+        current_ensemble_pred = None
+
+        if len(estimators_name) == 0:
+            return current_ensemble, current_ensemble_score, current_ensemble_pred
 
         with Parallel(n_jobs=self.n_jobs) as parallel:
 
             e = 0  # number of select model
-            while e < self.max_estimators:
+            while (
+                e < self.max_estimators
+            ):  # while max iterations is not reached or no more improvement
 
                 # Scan all potential model
                 if self.n_jobs == 1:
                     list_info = [
-                        self.evaluate_candidate_ensemble(
-                            current_ensemble_pred, e, estimator, y
+                        self._sliding_combination_rule(
+                            current_ensemble_pred, e, name, y
                         )
-                        for estimator in estimators_name
+                        for name in estimators_name
                     ]
                 else:
                     list_info = parallel(
-                        delayed(self.evaluate_candidate_ensemble)(
+                        delayed(self._sliding_combination_rule)(
                             current_ensemble_pred, e, estimator, y
                         )
                         for estimator in estimators_name
@@ -358,12 +480,61 @@ class EnsembleSelection(ClassifierMixin, RegressorMixin, _BaseHeterogeneousEnsem
 
         return current_ensemble, current_ensemble_score, current_ensemble_pred
 
-    def evaluate_candidate_ensemble(
-        self, current_ensemble_pred, prev_ensemble_size, added_estimator_name, y
-    ):
-        candidate_pred = self.base_model_preds_[added_estimator_name]
-        candidate_ens_pred = (
-            current_ensemble_pred * prev_ensemble_size + candidate_pred
-        ) / (prev_ensemble_size + 1.0)
-        new_ens_score = self.score_metric(y, candidate_ens_pred)
-        return {added_estimator_name: (new_ens_score, candidate_ens_pred)}
+    def get_classif_y_format(self, y):
+        xp, _ = get_namespace(y)
+        y = xp.asarray(y)
+        shape = y.shape
+
+        if len(shape) == 1:
+            return "sparse"
+        elif len(shape) == 2:
+            if shape[1] == 1:
+                return "sparse"
+            elif shape[1] > 1:
+                return "onehot"
+            else:
+                raise ValueError("y shape unexpected")
+        else:
+            raise ValueError("Y format not handled")
+
+    def y_preproces_for_regression(self, y):
+        return column_or_1d(y)
+
+    """
+    def y_preproces_for_classification(self, y):
+        yfmt = self.get_classif_y_format(y)
+        if yfmt == "sparse":
+            classes=[]
+            for _, est in self.estimators:
+                classes.append(est.classes_)
+            seen_classes=set.union( *list(set(c) for c in classes) )
+            categ=list(range(max(seen_classes)+1))
+
+            y = y.reshape((-1, 1))
+            y = preprocessing.OneHotEncoder() \
+                .fit_transform(y) \
+                .toarray() \
+                .squeeze()
+        return y
+    """
+
+    def y_preprocess_for_classification(self, y):
+        if type_of_target(y) == "multilabel-indicator":
+            self._label_encoder = [LabelEncoder().fit(yk) for yk in y.T]
+            self.classes_ = [le.classes_ for le in self._label_encoder]
+            y = np.array(
+                [
+                    self._label_encoder[target_idx].transform(target)
+                    for target_idx, target in enumerate(y.T)
+                ]
+            ).T
+        else:
+            # convert
+            self._label_encoder = LabelEncoder().fit(y)
+            self.classes_ = self._label_encoder.classes_
+            y = self._label_encoder.transform(y)
+
+            # TODO check if it is usefull
+            y = y.reshape((-1, 1))
+            y = preprocessing.OneHotEncoder().fit_transform(y).toarray().squeeze()
+        return y
