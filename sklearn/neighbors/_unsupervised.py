@@ -49,7 +49,8 @@ class NearestNeighbors(KNeighborsMixin, RadiusNeighborsMixin, NeighborsBase):
 
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square during fit. X may be a :term:`sparse graph`, in which
-        case only "nonzero" elements may be considered neighbors.
+        case only "nonzero" elements may be considered neighbors. Note that
+        X must satisfy metric axioms in any case.
 
         If metric is a callable function, it takes two arrays representing 1D
         vectors as inputs and must return one value indicating the distance
