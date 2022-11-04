@@ -126,11 +126,10 @@ plt.show()
 # - `"diag"`: (n_components, n_features)
 # - `"spherical"`: (n_components,)
 
-import itertools
 from matplotlib.patches import Ellipse
 from scipy import linalg
 
-color_iter = itertools.cycle(["tab10:blue", "tab10:orange"])
+color_iter = sns.color_palette("tab10", 2)[::-1]
 Y_ = grid_search.predict(X)
 
 fig, ax = plt.subplots()
