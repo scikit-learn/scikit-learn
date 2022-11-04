@@ -291,11 +291,11 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
             n_neighbors=self.n_neighbors_
         )
 
-        # This allows preserving input dtype for all attributes.
-        self._distances_fit_X_ = self._distances_fit_X_.astype(
-            self._fit_X.dtype,
-            copy=False,
-        )
+        if self._fit_X.dtype == np.float32:
+            self._distances_fit_X_ = self._distances_fit_X_.astype(
+                self._fit_X.dtype,
+                copy=False,
+            )
 
         self._lrd = self._local_reachability_density(
             self._distances_fit_X_, _neighbors_indices_fit_X_
@@ -469,9 +469,8 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
             X, n_neighbors=self.n_neighbors_
         )
 
-        # To preserve inputs dtype for outputs.
-        # This might downcast distances_X from np.float64 to np.float32.
-        distances_X = distances_X.astype(X.dtype, copy=False)
+        if X.dtype == np.float32:
+            distances_X = distances_X.astype(X.dtype, copy=False)
 
         X_lrd = self._local_reachability_density(
             distances_X,
@@ -509,3 +508,8 @@ class LocalOutlierFactor(KNeighborsMixin, OutlierMixin, NeighborsBase):
 
         # 1e-10 to avoid `nan' when nb of duplicates > n_neighbors_:
         return 1.0 / (np.mean(reach_dist_array, axis=1) + 1e-10)
+
+    def _more_tags(self):
+        return {
+            "preserves_dtype": [np.float64, np.float32],
+        }
