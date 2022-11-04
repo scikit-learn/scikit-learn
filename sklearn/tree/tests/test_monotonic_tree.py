@@ -250,58 +250,101 @@ def assert_nd_reg_tree_children_monotonic_bounded(tree_, monotonic_cst):
     lower_bound = np.full(tree_.node_count, -np.inf)
     for i in range(tree_.node_count):
         feature = tree_.feature[i]
-        assert tree_.value[i] <= upper_bound[i]
-        assert tree_.value[i] >= lower_bound[i]
+        node_value = tree_.value[i][0][0]  # unpack value from nx1x1 array
+        assert node_value <= upper_bound[i]
+        assert node_value >= lower_bound[i]
+
         if feature < 0:
             # Leaf: nothing to do
             continue
-        else:
-            i_left = tree_.children_left[i]
-            i_right = tree_.children_right[i]
 
-            if monotonic_cst[feature] == 0:
-                # Feature without monotonicity constraint: propagate bounds
-                # down the tree to both children.
-                # Otherwise, with 2 features and a monotonic increase constraint
-                # (encoded by +1) on feature 0, the following tree can be accepted,
-                # although it does not respect the monotonic increase constraint:
-                #
-                #                      X[0] <= 0
-                #                      value = 100
-                #                     /            \
-                #          X[0] <= -1                X[1] <= 0
-                #          value = 50                value = 150
-                #        /            \             /            \
-                #    leaf           leaf           leaf          leaf
-                #    value = 25     value = 75     value = 50    value = 250
+        # Split node: check and update bounds for the children.
+        i_left = tree_.children_left[i]
+        i_right = tree_.children_right[i]
 
-                upper_bound[i_left] = upper_bound[i]
-                lower_bound[i_left] = lower_bound[i]
-                upper_bound[i_right] = upper_bound[i]
-                lower_bound[i_right] = lower_bound[i]
+        if monotonic_cst[feature] == 0:
+            # Feature without monotonicity constraint: propagate bounds
+            # down the tree to both children.
+            # Otherwise, with 2 features and a monotonic increase constraint
+            # (encoded by +1) on feature 0, the following tree can be accepted,
+            # although it does not respect the monotonic increase constraint:
+            #
+            #                      X[0] <= 0
+            #                      value = 100
+            #                     /            \
+            #          X[0] <= -1                X[1] <= 0
+            #          value = 50                value = 150
+            #        /            \             /            \
+            #    leaf           leaf           leaf          leaf
+            #    value = 25     value = 75     value = 50    value = 250
 
-            elif monotonic_cst[feature] == 1:
-                # Feature with constraint: check monotonicity
-                assert tree_.value[i_left] <= tree_.value[i_right]
+            lower_bound[i_left] = lower_bound[i]
+            upper_bound[i_left] = upper_bound[i]
+            lower_bound[i_right] = lower_bound[i]
+            upper_bound[i_right] = upper_bound[i]
 
-                # Propagate bounds down the tree to both children.
-                upper_bound[i_left] = tree_.value[i]
-                lower_bound[i_left] = lower_bound[i]
-                upper_bound[i_right] = upper_bound[i]
-                lower_bound[i_right] = tree_.value[i]
+        elif monotonic_cst[feature] == 1:
+            # Feature with constraint: check monotonicity
+            assert tree_.value[i_left] <= tree_.value[i_right]
 
-            elif monotonic_cst[feature] == -1:
-                # Feature with constraint: check monotonicity
-                assert tree_.value[i_left] >= tree_.value[i_right]
+            # Propagate bounds down the tree to both children.
+            lower_bound[i_left] = lower_bound[i]
+            upper_bound[i_left] = node_value
+            lower_bound[i_right] = node_value
+            upper_bound[i_right] = upper_bound[i]
 
-                # Update and propagate bounds down the tree to both children.
-                upper_bound[i_left] = upper_bound[i]
-                lower_bound[i_left] = tree_.value[i]
-                upper_bound[i_right] = tree_.value[i]
-                lower_bound[i_right] = lower_bound[i]
+        elif monotonic_cst[feature] == -1:
+            # Feature with constraint: check monotonicity
+            assert tree_.value[i_left] >= tree_.value[i_right]
 
-            else:  # pragma: no cover
-                raise ValueError(f"monotonic_cst[{feature}]={monotonic_cst[feature]}")
+            # Update and propagate bounds down the tree to both children.
+            lower_bound[i_left] = node_value
+            upper_bound[i_left] = upper_bound[i]
+            lower_bound[i_right] = lower_bound[i]
+            upper_bound[i_right] = node_value
+
+        else:  # pragma: no cover
+            raise ValueError(f"monotonic_cst[{feature}]={monotonic_cst[feature]}")
+
+
+def test_assert_nd_reg_tree_children_monotonic_bounded():
+    # Check that assert_nd_reg_tree_children_monotonic_bounded can detect
+    # non-monotonic tree predictions.
+    X = np.linspace(0, 2 * np.pi, 30).reshape(-1, 1)
+    y = np.sin(X).ravel()
+    reg = DecisionTreeRegressor(max_depth=None, random_state=0).fit(X, y)
+
+    with pytest.raises(AssertionError):
+        assert_nd_reg_tree_children_monotonic_bounded(reg.tree_, [1])
+
+    with pytest.raises(AssertionError):
+        assert_nd_reg_tree_children_monotonic_bounded(reg.tree_, [-1])
+
+    assert_nd_reg_tree_children_monotonic_bounded(reg.tree_, [0])
+
+    # Check that assert_nd_reg_tree_children_monotonic_bounded does not raise
+    # when the data (and therefore the model) is naturally monotonic in the
+    # right direction.
+    X = np.linspace(-5, 5, 5).reshape(-1, 1)
+    y = X.ravel() ** 3
+    reg = DecisionTreeRegressor(max_depth=None, random_state=0).fit(X, y)
+
+    assert_nd_reg_tree_children_monotonic_bounded(reg.tree_, [1])
+
+    with pytest.raises(AssertionError):
+        assert_nd_reg_tree_children_monotonic_bounded(reg.tree_, [-1])
+
+    assert_nd_reg_tree_children_monotonic_bounded(reg.tree_, [0])
+
+    # For completeness, check that the converse holds when swapping the sign.
+    reg = DecisionTreeRegressor(max_depth=None, random_state=0).fit(X, -y)
+
+    with pytest.raises(AssertionError):
+        assert_nd_reg_tree_children_monotonic_bounded(reg.tree_, [1])
+
+    assert_nd_reg_tree_children_monotonic_bounded(reg.tree_, [-1])
+
+    assert_nd_reg_tree_children_monotonic_bounded(reg.tree_, [0])
 
 
 @pytest.mark.parametrize("TreeRegressor", TREE_REGRESSOR_CLASSES)
