@@ -84,8 +84,8 @@ def setup_module():
 
         for i in range(5):
             first_name, second_name = random_state.sample(FAKE_NAMES, 2)
-            first_index = random_state.choice(np.arange(counts[first_name]))
-            second_index = random_state.choice(np.arange(counts[second_name]))
+            first_index = np_rng.choice(np.arange(counts[first_name]))
+            second_index = np_rng.choice(np.arange(counts[second_name]))
             f.write(
                 (
                     "%s\t%d\t%s\t%d\n"
