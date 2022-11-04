@@ -7,6 +7,7 @@ the behavior of some clustering evaluation metrics. For such purpose, the
 metrics are computed with a fixed number of samples and as a function of the number
 of clusters assigned by the estimator. The example is divided into two
 experiments:
+
 - a first experiment with fixed "ground truth labels" (and therefore fixed
   number of classes) and randomly "predicted labels";
 - a second experiment with varying "ground truth labels", randomly "predicted
