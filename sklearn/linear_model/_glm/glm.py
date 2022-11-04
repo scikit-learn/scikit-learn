@@ -11,7 +11,7 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.optimize
 
-from ._newton_solver import NewtonCholeskySolver, NewtonSolver
+from ._newton_solver import NewtonCholeskySolver, NewtonLSMRSolver, NewtonSolver
 from ..._loss.glm_distribution import TweedieDistribution
 from ..._loss.loss import (
     HalfGammaLoss,
@@ -27,6 +27,12 @@ from ...utils._param_validation import Hidden, Interval, StrOptions
 from ...utils.optimize import _check_optimize_result
 from ...utils.validation import _check_sample_weight, check_is_fitted
 from .._linear_loss import LinearModelLoss
+
+
+NEWTON_SOLVER = {
+    "newton-cholesky": NewtonCholeskySolver,
+    "newton-lsmr": NewtonLSMRSolver,
+}
 
 
 class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
@@ -66,7 +72,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X @ coef + intercept).
 
-    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cholesky', 'newton-lsmr'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
@@ -81,6 +87,10 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             `n_features` because it explicitly computes the Hessian matrix.
 
             .. versionadded:: 1.2
+
+        'newton-lsmr'
+            Uses Newton-Raphson steps, but formulated as iterated least squares (IRLS)
+            problem, which is solve by LSMR.
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -141,7 +151,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         "alpha": [Interval(Real, 0.0, None, closed="left")],
         "fit_intercept": ["boolean"],
         "solver": [
-            StrOptions({"lbfgs", "newton-cholesky"}),
+            StrOptions({"lbfgs", "newton-cholesky", "newton-lsmr"}),
             Hidden(type),
         ],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
@@ -283,8 +293,8 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             )
             self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
             coef = opt_res.x
-        elif self.solver == "newton-cholesky":
-            sol = NewtonCholeskySolver(
+        elif self.solver in NEWTON_SOLVER.keys():
+            sol = NEWTON_SOLVER[self.solver](
                 coef=coef,
                 linear_loss=linear_loss,
                 l2_reg_strength=l2_reg_strength,
@@ -506,7 +516,7 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (`X @ coef + intercept`).
 
-    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cholesky', 'newton-lsmr'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
@@ -521,6 +531,10 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
             `n_features` because it explicitly computes the Hessian matrix.
 
             .. versionadded:: 1.2
+
+        'newton-lsmr'
+            Uses Newton-Raphson steps, but formulated as iterated least squares (IRLS)
+            problem, which is solve by LSMR.
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -637,7 +651,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor `X @ coef_ + intercept_`.
 
-    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cholesky', 'newton-lsmr'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
@@ -652,6 +666,10 @@ class GammaRegressor(_GeneralizedLinearRegressor):
             `n_features` because it explicitly computes the Hessian matrix.
 
             .. versionadded:: 1.2
+
+        'newton-lsmr'
+            Uses Newton-Raphson steps, but formulated as iterated least squares (IRLS)
+            problem, which is solve by LSMR.
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -799,7 +817,7 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         - 'log' for ``power > 0``, e.g. for Poisson, Gamma and Inverse Gaussian
           distributions
 
-    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+    solver : {'lbfgs', 'newton-cholesky', 'newton-lsmr'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
@@ -814,6 +832,10 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
             `n_features` because it explicitly computes the Hessian matrix.
 
             .. versionadded:: 1.2
+
+        'newton-lsmr'
+            Uses Newton-Raphson steps, but formulated as iterated least squares (IRLS)
+            problem, which is solve by LSMR.
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.

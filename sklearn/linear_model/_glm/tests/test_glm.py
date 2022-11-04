@@ -33,7 +33,7 @@ from sklearn.metrics import d2_tweedie_score, mean_poisson_deviance
 from sklearn.model_selection import train_test_split
 
 
-SOLVERS = ["lbfgs", "newton-cholesky"]
+SOLVERS = ["lbfgs", "newton-cholesky", "newton-lsmr"]
 
 
 class BinomialRegressor(_GeneralizedLinearRegressor):
@@ -394,7 +394,7 @@ def test_glm_regression_unpenalized(solver, fit_intercept, glm_dataset):
 
         norm_solution = np.linalg.norm(np.r_[intercept, coef])
         norm_model = np.linalg.norm(np.r_[model.intercept_, model.coef_])
-        if solver == "newton-cholesky":
+        if solver in ("newton-cholesky", "newton-lsmr"):
             # XXX: This solver shows random behaviour. Sometimes it finds solutions
             # with norm_model <= norm_solution! So we check conditionally.
             if norm_model < (1 + 1e-12) * norm_solution:
@@ -487,7 +487,10 @@ def test_glm_regression_unpenalized_hstacked_X(solver, fit_intercept, glm_datase
         # we get a solution, i.e. a (non-unique) minimum of the objective function ...
         rtol = 1e-6 if solver == "lbfgs" else 5e-6
         assert_allclose(model.predict(X), y, rtol=rtol)
-        if (solver == "lbfgs" and fit_intercept) or solver == "newton-cholesky":
+        if (solver == "lbfgs" and fit_intercept) or solver in (
+            "newton-cholesky",
+            "newton-lsmr",
+        ):
             # Same as in test_glm_regression_unpenalized.
             # But it is not the minimum norm solution. Otherwise the norms would be
             # equal.
@@ -561,7 +564,7 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
 
         norm_solution = np.linalg.norm(np.r_[intercept, coef])
         norm_model = np.linalg.norm(np.r_[model.intercept_, model.coef_])
-        if solver == "newton-cholesky":
+        if solver in ("newton-cholesky", "newton-lsmr"):
             # XXX: This solver shows random behaviour. Sometimes it finds solutions
             # with norm_model <= norm_solution! So we check conditionally.
             if not (norm_model > (1 + 1e-12) * norm_solution):
@@ -573,7 +576,7 @@ def test_glm_regression_unpenalized_vstacked_X(solver, fit_intercept, glm_datase
             # equal.
             assert norm_model > (1 + 1e-12) * norm_solution
         else:
-            rtol = 1e-5 if solver == "newton-cholesky" else 1e-4
+            rtol = 1e-5 if solver in ("newton-cholesky", "newton-lsmr") else 1e-4
             assert model.intercept_ == pytest.approx(intercept, rel=rtol)
             assert_allclose(model.coef_, coef, rtol=rtol)
 
@@ -840,7 +843,7 @@ def test_normal_ridge_comparison(
     assert_allclose(glm.predict(X_test), ridge.predict(X_test), rtol=2e-4)
 
 
-@pytest.mark.parametrize("solver", ["lbfgs", "newton-cholesky"])
+@pytest.mark.parametrize("solver", ["lbfgs", "newton-cholesky", "newton-lsmr"])
 def test_poisson_glmnet(solver):
     """Compare Poisson regression with L2 regularization and LogLink to glmnet"""
     # library("glmnet")
@@ -951,8 +954,8 @@ def test_family_deprecation(est, family):
             assert est.family.power == family.power
 
 
-def test_linalg_warning_with_newton_solver(global_random_seed):
-    newton_solver = "newton-cholesky"
+@pytest.mark.parametrize("newton_solver", ["newton-cholesky", "newton-lsmr"])
+def test_linalg_warning_with_newton_solver(newton_solver, global_random_seed):
     rng = np.random.RandomState(global_random_seed)
     # Use at least 20 samples to reduce the likelihood of getting a degenerate
     # dataset for any global_random_seed.
@@ -1003,11 +1006,17 @@ def test_linalg_warning_with_newton_solver(global_random_seed):
     # Fitting a Newton solver on the collinear version of the training data
     # without regularization should raise an informative warning and fallback
     # to the LBFGS solver.
-    msg = (
-        "The inner solver of .*Newton.*Solver stumbled upon a singular or very "
-        "ill-conditioned Hessian matrix"
-    )
-    with pytest.warns(scipy.linalg.LinAlgWarning, match=msg):
+    if newton_solver == "newton-cholesky":
+        msg = (
+            "The inner solver of .*Newton.*Solver stumbled upon a singular or very "
+            "ill-conditioned Hessian matrix"
+        )
+        with pytest.warns(scipy.linalg.LinAlgWarning, match=msg):
+            reg = PoissonRegressor(solver=newton_solver, alpha=0.0, tol=tol).fit(
+                X_collinear, y
+            )
+    else:
+        # newton-lsmr has no problems with collinearity
         reg = PoissonRegressor(solver=newton_solver, alpha=0.0, tol=tol).fit(
             X_collinear, y
         )
