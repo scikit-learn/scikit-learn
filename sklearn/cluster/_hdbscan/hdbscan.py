@@ -122,7 +122,7 @@ def _hdbscan_brute(
                 f" it has shape {X.shape}. Please verify that the"
                 " distance matrix was constructed correctly."
             )
-        if np.allclose(X, X.T):
+        if not np.allclose(X, X.T):
             raise ValueError(
                 "The precomputed distance matrix is expected to be symmetric, however"
                 " its values appear to be asymmetric. Please verify that the distance"
