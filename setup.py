@@ -88,7 +88,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.manifold._barnes_hut_tsne",
     "sklearn.metrics.cluster._expected_mutual_info_fast",
     "sklearn.metrics._pairwise_distances_reduction._datasets_pair",
-    "sklearn.metrics._pairwise_distances_reduction._gemm_term_computer",
+    "sklearn.metrics._pairwise_distances_reduction._middle_term_computer",
     "sklearn.metrics._pairwise_distances_reduction._base",
     "sklearn.metrics._pairwise_distances_reduction._argkmin",
     "sklearn.metrics._pairwise_distances_reduction._radius_neighbors",
@@ -316,7 +316,7 @@ extension_config = {
             "extra_compile_args": ["-std=c++11"],
         },
         {
-            "sources": ["_gemm_term_computer.pyx.tp", "_gemm_term_computer.pxd.tp"],
+            "sources": ["_middle_term_computer.pyx.tp", "_middle_term_computer.pxd.tp"],
             "language": "c++",
             "include_np": True,
             "extra_compile_args": ["-std=c++11"],
