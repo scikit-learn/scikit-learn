@@ -10,6 +10,7 @@ from numpy.testing import assert_allclose
 
 import pytest
 
+from sklearn.exceptions import NotFittedError
 from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 
@@ -238,3 +239,19 @@ def test_dict_vectorizer_get_feature_names_out():
     assert isinstance(feature_names, np.ndarray)
     assert feature_names.dtype == object
     assert_array_equal(feature_names, ["1", "2", "3"])
+
+
+def test_dict_vectorizer_not_fitted_error():
+    """Check that unfitted DictVectorizer instance raises NotFittedError."""
+
+    X = [{1: 2, 3: 4}, {2: 4}]
+    dv = DictVectorizer(sparse=False)
+
+    with pytest.raises(NotFittedError):
+        dv.transform(X)
+    with pytest.raises(NotFittedError):
+        dv.inverse_transform(X)
+    with pytest.raises(NotFittedError):
+        dv.get_feature_names_out()
+    with pytest.raises(NotFittedError):
+        dv.restrict(support=[True, False, True])
