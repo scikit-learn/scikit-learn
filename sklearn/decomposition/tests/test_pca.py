@@ -17,9 +17,7 @@ from sklearn.decomposition._pca import _infer_dimension
 iris = datasets.load_iris()
 PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
 
-SPARSE_PCA_SOLVERS = PCA_SOLVERS
-SPARSE_M, SPARSE_N = iris.data.shape
-SPARSE_RANDOM_SEED = 0
+SPARSE_M, SPARSE_N = 400, 300  # arbitrary
 
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
@@ -71,13 +69,14 @@ def test_linear_operator_reversed_matmul():
     result = (B.T @ A.T).T
     assert np.allclose(result, [[38, 44, 50, 56], [83, 98, 113, 128]])
 
-
-@pytest.mark.parametrize("n_components", range(1, min(SPARSE_M, SPARSE_N)))
+@pytest.mark.parametrize("density", [0.01, 0.05, 0.10, 0.30])
+@pytest.mark.parametrize("n_components", [1, 2, 3, 10, min(SPARSE_M, SPARSE_N)])
 @pytest.mark.parametrize("format", ["csr", "csc"])
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-def test_pca_sparse(svd_solver, n_components, format):
+def test_pca_sparse(global_random_seed, svd_solver, format, n_components, density):
+    random_state = np.random.RandomState(global_random_seed)
     X = sp.sparse.random(
-        SPARSE_M, SPARSE_N, format=format, random_state=SPARSE_RANDOM_SEED
+        SPARSE_M, SPARSE_N, format=format, random_state=random_state
     )
     pca = PCA(n_components=n_components, svd_solver=svd_solver)
     pca.fit(X)
