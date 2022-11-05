@@ -203,6 +203,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             feature_names = []
             vocab = {}
         else:
+            check_is_fitted(self, ["feature_names_", "vocabulary_"])
             feature_names = self.feature_names_
             vocab = self.vocabulary_
 
@@ -335,6 +336,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         D : list of dict_type objects of shape (n_samples,)
             Feature mappings for the samples in X.
         """
+        check_is_fitted(self, "feature_names_")
+
         # COO matrix is not subscriptable
         X = check_array(X, accept_sparse=["csr", "csc"])
         n_samples = X.shape[0]
@@ -425,6 +428,8 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         >>> v.get_feature_names_out()
         array(['bar', 'foo'], ...)
         """
+        check_is_fitted(self, "feature_names_")
+
         if not indices:
             support = np.where(support)[0]
 
