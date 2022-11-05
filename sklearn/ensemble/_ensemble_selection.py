@@ -1,15 +1,17 @@
 """Ensemble selection of classifiers and regressors"""
 
 # Authors: Pierrick Pochelu <pierrick.pochelu@gmail.com>
-
-from numbers import Integral
+from abc import ABCMeta
+from numbers import Integral, Real
 import math
 import numpy as np
+import pandas as pd
 from joblib import Parallel, delayed
 
 from ..base import clone
 from ..utils._array_api import get_namespace
 from ..base import is_classifier, is_regressor
+from ..base import TransformerMixin
 from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 from ..utils.validation import column_or_1d
@@ -57,42 +59,44 @@ def get_task_type(estimators):
         raise ValueError("No estimator")
     est = estimators[0][1]
     if is_classifier(est):
-        return "classification"
+        return "classifier"
     elif is_regressor(est):
-        return "regression"
+        return "regressor"
     else:
         raise ValueError("Unknown task type")
 
 
-class EnsembleSelection(_BaseHeterogeneousEnsemble):
+class EnsembleSelection(
+    TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCMeta
+):
     """
     An ensemble classifier built by greedy stepwise selection.
     # Bagged Ensemble Selection (section 2.3) of the original paper is not implemented.
 
     Parameters
     ----------
-    estimators: list of (string, estimator) tuples
+    estimators : list of (string, estimator) tuples
         The estimators from which the ensemble selection classifier is built.
         These estimators must be fitted.
 
-    score_metric: callable.
+    score_metric : callable.
         Classification or regression
 
-    min_estimators: integer, optional (default=1)
+    min_estimators : integer, optional (default=1)
         The minimum number of base estimators.
         The ensemble selection estimator may overfit the calibration dataset.
         We may assume big ensemble generalize better. So min_estimators
         value allows to regularize.
 
-    max_estimators: integer, optional (default=50)
+    max_estimators : integer, optional (default=50)
         The maximum number of base estimators. It allows to control the final
         ensemble size, and the ensemble selection computing time.
 
-    pruning_factor: float, optional (default=0.6)
+    pruning_factor : float, optional (default=0.6)
         The worst pruning_factor estimators are remove to reduce the number of
         combinations
 
-    with_replacement: bool, optional (defaut=True)
+    with_replacement : bool, optional (defaut=True)
         If the same model can be replaced multiple times in the ensemble.
         When enabled, the prediction is the weighted averaging.
         The number of potential ensembles is given by the Combination formula:
@@ -102,18 +106,26 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
         min_estimators=0 and large max_estimators.
 
 
-    is_base_estimator_proba: bool, optional (default=True)
+    is_base_estimator_proba : bool, optional (default=True)
         If True, estimators call "predict_proba(X)", otherwise, "predict(X)"
 
-    n_jobs: int, default=None
+    n_jobs : int, default=None
         The number of jobs to run in parallel for ``fit``.
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    verbose: bool, default=False
+    verbose : bool, default=False
         Computing time may take a long time
         If True, the model's selection will be printed.
+
+    Attributes
+    ----------
+    TODO add the other ones
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if the
+        underlying estimators expose such an attribute when fit.
+
 
     References
     ----------
@@ -126,15 +138,15 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
 
     _parameter_constraints: dict = {
         "estimators": [list],
-        "score_metric": [callable],
+        "score_metric": [None, callable],
         "score_direction": [None, StrOptions({"min", "max"})],
         "max_estimators": [Integral],
         "min_estimators": [Integral],
-        "pruning_factor": [Integral],
+        "pruning_factor": [Real],
         "n_jobs": [None, Integral],
-        "with_replacement": "boolean",
-        "is_base_estimator_proba": "boolean",
-        "verbose": "verbose",
+        "with_replacement": ["boolean"],
+        "is_base_estimator_proba": ["boolean"],
+        "verbose": ["verbose"],
     }
 
     def __init__(
@@ -151,7 +163,6 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
         verbose=False,
     ):
         super().__init__(estimators)
-        self.estimators = check_and_convert_estimators(estimators)
         self.max_estimators = max_estimators
         self.min_estimators = min_estimators
         self.pruning_factor = pruning_factor
@@ -162,42 +173,55 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
         self.score_direction = score_direction
         self.n_jobs = n_jobs
 
-        # Detect the task
-        task_type = get_task_type(self.estimators)
+    def _init_estimators_and_metrics(self):
+        self.estimators = check_and_convert_estimators(self.estimators)
 
+        # Detect the task
+        self._estimator_type = get_task_type(self.estimators)
         # Default metric
-        if self.score_metric is None or self.score_direction is None:
-            if task_type == "regression":
-                self.score_metric = DEFAULT_REGRESSION_METRIC
-                self.score_direction = DEFAULT_REGRESSION_DIRECTION
-            elif task_type == "classification":
-                self.score_metric = DEFAULT_CLASSFIER_METRIC
-                self.score_direction = DEFAULT_CLASSIFIER_DIRECTION
+        if self.score_metric is None:
+            if self._estimator_type == "regressor":
+                self.score_metric_ = DEFAULT_REGRESSION_METRIC
+            elif self._estimator_type == "classifier":
+                self.score_metric_ = DEFAULT_CLASSFIER_METRIC
             else:
                 raise ValueError("Unknown metric in this case")
+        else:
+            self.score_metric_ = self.score_metric
+
+        # TODO same thing for self.score_direction ?
 
     def _validate_estimators(self):
-        """Overload the method of `_BaseHeterogeneousEnsemble` to be more
-        lenient towards the type of `estimators`.
-
-        Regressors can be accepted for some cases such as ordinal regression.
-        """
+        if self.estimators is None:
+            raise ValueError("estimators cannot be None")
+        if not isinstance(self.estimators, list):
+            err_msg = (
+                "The 'estimators' parameter of EnsembleSelection must be"
+                f" List[Estimator] Got {type(self.estimators)} instead."
+            )
+            raise ValueError(err_msg)
         if len(self.estimators) == 0:
-            raise ValueError(
-                "Invalid 'estimators' attribute, 'estimators' should be a "
-                "non-empty list of (string, estimator) tuples."
+            raise ValueError("estimators cannot be empty")
+
+        if self.estimators is None or len(self.estimators) == 0:
+            raise AttributeError(
+                "Invalid `estimators` attribute, `estimators`"
+                " should be a list of"
+                " (string, fitted_estimator) tuples"
             )
         names, estimators = zip(*self.estimators)
-        self._validate_names(names)
-
-        has_estimator = any(est != "drop" for est in estimators)
-        if not has_estimator:
-            raise ValueError(
-                "All estimators are dropped. At least one is required "
-                "to be an estimator."
-            )
-
         return names, estimators
+
+    """
+    def n_features_in_(self):
+        try:
+            check_is_fitted(self)
+        except NotFittedError as nfe:
+            raise AttributeError(
+                f"{self.__class__.__name__} object has no attribute n_features_in_"
+            ) from nfe
+        return self.estimators[0][1].n_features_in_
+    """
 
     def fit(self, X, y, sample_weight=None):
         """Conduct ensemble selection on the validation set (X, y).
@@ -214,20 +238,33 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
         -------
         self : object
         """
-        # self._validate_params()
-        # self._validate_estimators()
 
-        if self.estimators is None or len(self.estimators) == 0:
-            raise AttributeError(
-                "Invalid `estimators` attribute, `estimators`"
-                " should be a list of"
-                " (string, fitted_estimator) tuples"
-            )
+        # self._validate_estimators()
+        self._validate_params()
 
         # TODO uses check_classification_targets(y) instead
         if len(np.array(y).shape) == 0:
             self.log("The labels are 0-dimensional")
             return self
+
+        self._init_estimators_and_metrics()
+
+        # Convert y to array
+        y = np.asarray(y)
+
+        # sample_weight to array
+        if sample_weight is not None:
+            sample_weight = column_or_1d(sample_weight)
+            sample_weight = np.asarray(sample_weight)
+            if sample_weight.shape[0] != y.shape[0]:
+                raise ValueError("sample_weight and y should be the same size")
+            # if len(np.array(sample_weight).shape) != 1:
+            #    raise ValueError("sample_weight should be 1D or None")
+
+        # Get X info
+        if isinstance(X, pd.DataFrame):
+            header = list(X.head())
+            self.feature_names_in_ = np.array(header, dtype=object)
 
         # Fit estimator if not already done
         named_estimator_to_fit = []
@@ -242,32 +279,21 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
             for name, est in named_estimator_to_fit
         )
         """
-
-        # Convert not an array to array
-        y=np.asarray(y)
-        if sample_weight is not None:
-            sample_weight=column_or_1d(sample_weight)
-            sample_weight=np.asarray(sample_weight)
-            if sample_weight.shape[0]!=y.shape[0]:
-                raise ValueError("sample_weight and y should be the same size")
-            #if len(np.array(sample_weight).shape) != 1:
-            #    raise ValueError("sample_weight should be 1D or None")
-
-        self.fit_those_estimators_by_copy(named_estimator_to_fit, X, y, sample_weight)
-
+        self.fitted_estimators_ = self.fit_those_estimators_by_copy(
+            named_estimator_to_fit, X, y, sample_weight
+        )
+        self.n_features_in_ = self.fitted_estimators_[0][1].n_features_in_
 
         # converse sparse representation into one-hot vector
-        if get_task_type(self.estimators) == "classification":
+        if get_task_type(self.fitted_estimators_) == "classifier":
             y = self.y_preprocess_for_classification(y)
         else:
             y = self.y_preproces_for_regression(y)
 
-
-
         # Cache score and predict results on X
         self.base_model_score_ = {}
         self.base_model_preds_ = {}
-        for name, est in self.estimators:
+        for name, est in self.fitted_estimators_:
             score, pred = self._get_score_of_model(X, y, est, sample_weight)
             self.base_model_score_[name] = score
             self.base_model_preds_[name] = pred
@@ -290,20 +316,23 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
         # Build the ensemble
         (
             self.ensemble_,
-            self.ensemble_score,
-            self.ensemble_pred,
+            self.ensemble_score_,
+            self.ensemble_pred_,
         ) = self._greedy_combi_ensemble(y, pruned_est_name, sample_weight)
 
-        self.log(f"Ensemble :{self.ensemble_}, score: {self.ensemble_score}")
+        self.log(f"Ensemble :{self.ensemble_}, score: {self.ensemble_score_}")
 
         return self
 
-    def _fit_one_estimator(self,est,X,y,sample_weight):
+    def _fit_one_estimator(self, est, X, y, sample_weight):
         try:
-            _fit_single_estimator(est,X,y,sample_weight)
-        except TypeError: #not compatible with sample_weight
-            _fit_single_estimator(est,X,y)
+            _fit_single_estimator(est, X, y, sample_weight)
+        except TypeError:
+            # TODO clean check if compatible with sample_weight
+            # For example Gaussian estimator cannot handle weights
+            _fit_single_estimator(est, X, y)
         return est
+
     def fit_those_estimators_by_copy(self, named_estimator_to_fit, X, y, sample_weight):
         """
         update self.estimators but not estimators in it
@@ -314,29 +343,37 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
             delayed(self._fit_one_estimator)(clone(est), X, y, sample_weight)
             for name, est in named_estimator_to_fit
         )
-        new_fitted_est_name=[named_est[0] for named_est in named_estimator_to_fit]
+        new_fitted_est_name = [named_est[0] for named_est in named_estimator_to_fit]
 
-        new_named_est=dict()
+        new_named_est = dict()
         for name, est in zip(new_fitted_est_name, new_fitted_est):
-            new_named_est[name]=est
+            new_named_est[name] = est
 
-        self.estimators2=[]
+        fitted_estimators = []
         for i, (n, old_estimator) in enumerate(self.estimators):
             if n in new_named_est:
-                self.estimators2.append((n,new_named_est[n]))
+                fitted_estimators.append((n, new_named_est[n]))
             else:
-                self.estimators2.append((n,old_estimator))
-        self.estimators=self.estimators2
+                fitted_estimators.append((n, old_estimator))
+        return fitted_estimators
 
     def transform(self, X):
+        """
+        return: transform data samples, the shape is (n_sample, n_estimators, n_output)
+        """
         preds_weights = self._get_pred_weights(X)
-        preds=np.array([pw[0] for pw in preds_weights])
+        list_of_preds = np.array(
+            [(pw[0]) for pw in preds_weights]
+        )  # shape: n_estimators, n_sample, n_output
+        preds = np.transpose(
+            list_of_preds, axes=(1, 0, 2)
+        )  # shape: n_sample, n_estimators, n_output
         return preds
 
-    def _get_pred_weights(self,X):
+    def _get_pred_weights(self, X):
         check_is_fitted(self)
         preds_weights = []
-        for estimator_name, estimator in self.estimators:
+        for estimator_name, estimator in self.fitted_estimators_:
             estimator_weight = self.ensemble_.get(estimator_name, 0)
             if estimator_weight > 0:
 
@@ -363,7 +400,7 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
 
     def predict(self, X):
         task = get_task_type(self.estimators)
-        if task == "classification":
+        if task == "classifier":
             proba = self.predict_proba(X)
             pred = np.argmax(proba, axis=1)
         else:
@@ -372,7 +409,7 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
 
     def fit_predict(self, X, y, sample_weight=None):
         self.fit(X, y, sample_weight)
-        return self.ensemble_pred
+        return self.ensemble_pred_
 
     def _get_score_of_ensemble(self, X, y, ensemble, sample_weight):
         preds_weights = []
@@ -385,6 +422,7 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
         return ens_score, ens_preds
 
     def _estimator_predict(self, X, est):
+        # TODO check if is_base_estimator_proba is usefull
         if self.is_base_estimator_proba and hasattr(est, "predict_proba"):
             return est.predict_proba(X)
         else:
@@ -403,7 +441,12 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
         return final_predictions  # if final_predictions is not None else None
 
     def _progressive_metric(
-        self, current_ensemble_pred, prev_ensemble_size, added_estimator_name, y, sample_weight
+        self,
+        current_ensemble_pred,
+        prev_ensemble_size,
+        added_estimator_name,
+        y,
+        sample_weight,
     ):
         candidate_pred = self.base_model_preds_[added_estimator_name]
 
@@ -415,27 +458,29 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
             ) / (prev_ensemble_size + 1.0)
 
         # uniform
-        new_ens_score = self.weighted_score_metric(y, sliding_ensemble_pred, sample_weight)
+        new_ens_score = self.weighted_score_metric(
+            y, sliding_ensemble_pred, sample_weight
+        )
 
         return {added_estimator_name: (new_ens_score, sliding_ensemble_pred)}
 
     def _get_score_of_model(self, X, y, estimator, sample_weight):
         pred = self._estimator_predict(X, estimator)
-        score=self.weighted_score_metric(y,pred,sample_weight)
+        score = self.weighted_score_metric(y, pred, sample_weight)
         return score, pred
 
-    def weighted_score_metric(self,y,pred,sample_weight):
+    def weighted_score_metric(self, y, pred, sample_weight):
         if sample_weight is None:
-            score = self.score_metric(y, pred)
+            score = self.score_metric_(y, pred)
         else:
-            n=len(y)
-            weighted_data_score=np.zeros((n,))
+            n = len(y)
+            weighted_data_score = np.zeros((n,))
             for i in range(n):
-                yi=np.array([y[i]])
-                predi=np.array([pred[i]])
-                wi=sample_weight[i]
-                weighted_data_score[i]=self.score_metric(yi, predi)*wi
-            score=np.mean(weighted_data_score)
+                yi = np.array([y[i]])
+                predi = np.array([pred[i]])
+                wi = sample_weight[i]
+                weighted_data_score[i] = self.score_metric_(yi, predi) * wi
+            score = np.mean(weighted_data_score)
         return score
 
     def _greedy_combi_ensemble(self, y, estimators_name, sample_weight):
@@ -602,5 +647,3 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
             y = y.reshape((-1, 1))
             y = preprocessing.OneHotEncoder().fit_transform(y).toarray().squeeze()
         return y
-
-

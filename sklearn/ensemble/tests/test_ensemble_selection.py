@@ -1,6 +1,7 @@
 """Test the ensemble_selection classifier and regressor."""
 
 import numpy as np
+import pytest
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_diabetes
 from sklearn.model_selection import train_test_split
@@ -12,6 +13,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import KNeighborsRegressor
+from sklearn.neural_network import MLPRegressor
 from sklearn.neural_network import MLPClassifier
 from sklearn.gaussian_process import GaussianProcessClassifier
 from sklearn.gaussian_process import GaussianProcessRegressor
@@ -43,7 +45,7 @@ def test_ensemble_selection_regressor():
     estimators.append(("est1", GaussianProcessRegressor(random_state=seed)))
     estimators.append(("est2", RandomForestRegressor(random_state=seed)))
     estimators.append(("est3", KNeighborsRegressor()))
-    estimators.append(("est4", MLPClassifier(random_state=seed)))
+    estimators.append(("est4", MLPRegressor(random_state=seed)))
     estimators.append(("est5", LinearSVR(random_state=seed)))
 
     # fit estimators
@@ -70,6 +72,79 @@ def test_ensemble_selection_regressor():
 
     loss = mean_squared_error(y_test, y_pred)
     assert loss <= np.min(indiv_score)
+
+
+def test_ensemble_selection_regressor_weights():
+    seed = 1
+    X_train, X_test, y_train, y_test = train_test_split(
+        scale(X_diabetes), y_diabetes, random_state=seed
+    )
+
+    # build estimators
+    estimators = []
+    estimators.append(("est1", GaussianProcessRegressor(random_state=seed)))
+    estimators.append(("est2", RandomForestRegressor(random_state=seed)))
+    estimators.append(("est3", KNeighborsRegressor()))
+    estimators.append(("est4", MLPRegressor(random_state=seed)))
+    estimators.append(("est5", LinearSVR(random_state=seed)))
+
+    # fit estimators
+    indiv_score = []
+    for _, base_model in estimators:
+        base_model.fit(X_train, y_train)
+        y_pred = base_model.predict(X_test)
+        loss = mean_squared_error(y_test, y_pred)
+        indiv_score.append(loss)
+
+    # fit ensemble_selector
+    clf = EnsembleSelection(
+        estimators=estimators,
+        score_metric=mean_squared_error,
+        score_direction="min",
+        is_base_estimator_proba=False,
+        min_estimators=2,
+        max_estimators=10,
+        with_replacement=True,
+        verbose=True,
+    )
+    weights1 = np.ones((y_test.shape[0],))
+    clf.fit(X_test, y_test, weights1)
+    y_pred = clf.predict(X_test)
+
+    loss = mean_squared_error(y_test, y_pred)
+    assert loss <= np.min(indiv_score)
+
+
+def test_ensemble_selection_regressor_unfitted_estimators():
+    seed = 1
+    X_train, X_test, y_train, y_test = train_test_split(
+        scale(X_diabetes), y_diabetes, random_state=seed
+    )
+
+    # build estimators
+    estimators = []
+    estimators.append(("est1", GaussianProcessRegressor(random_state=seed)))
+    estimators.append(("est2", RandomForestRegressor(random_state=seed)))
+    estimators.append(("est3", KNeighborsRegressor()))
+    estimators.append(("est4", MLPRegressor(random_state=seed)))
+    estimators.append(("est5", LinearSVR(random_state=seed)))
+
+    # fit ensemble_selector
+    clf = EnsembleSelection(
+        estimators=estimators,
+        score_metric=mean_squared_error,
+        score_direction="min",
+        is_base_estimator_proba=False,
+        min_estimators=2,
+        max_estimators=10,
+        with_replacement=True,
+        verbose=True,
+    )
+    clf.fit(X_test, y_test)
+    y_pred = clf.predict(X_test)
+
+    loss = mean_squared_error(y_test, y_pred)
+    assert loss <= 500
 
 
 def test_ensemble_selection_classifier():
@@ -194,3 +269,44 @@ def test_ensemble_selection_classifier_sparse_labels_given():
 
     loss = log_loss(y_test, y_pred)
     assert loss < 0.2  # not so bad
+
+
+def test_ensemble_selection_sample_weights_shape():
+    seed = 1
+    estimators = []
+    estimators.append(("A", GaussianProcessClassifier(random_state=seed)))
+    estimators.append(("B", SVC(random_state=seed, probability=True)))
+    estimators.append(("C", RandomForestClassifier(random_state=seed)))
+    estimators.append(("D", KNeighborsClassifier()))
+    estimators.append(("E", MLPClassifier(random_state=seed)))
+
+    X = np.array(
+        [
+            [1, 3],
+            [1, 3],
+            [1, 3],
+            [1, 3],
+            [2, 1],
+            [2, 1],
+            [2, 1],
+            [2, 1],
+            [3, 3],
+            [3, 3],
+            [3, 3],
+            [3, 3],
+            [4, 1],
+            [4, 1],
+            [4, 1],
+            [4, 1],
+        ]
+    )
+    y = np.array([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2])
+    estimator = EnsembleSelection(estimators)
+
+    estimator.fit(X, y, sample_weight=np.ones(len(y)))
+
+    with pytest.raises(ValueError):
+        estimator.fit(X, y, sample_weight=np.ones(2 * len(y)))
+
+    with pytest.raises(ValueError):
+        estimator.fit(X, y, sample_weight=np.ones((len(y), 2)))
