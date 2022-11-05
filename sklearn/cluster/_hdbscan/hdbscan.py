@@ -362,7 +362,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         Outliers are labeled as follows:
         - Noisy samples are given the label -1.
         - Samples with infinite elements (+/- np.inf) are given the label -2.
-        - Samples with missing data are given the label -3.
+        - Samples with missing data are given the label -3, even if they
+          also have infinite elements.
 
     probabilities_ : ndarray of shape (n_samples,)
         The strength with which each sample is a member of its assigned
@@ -664,7 +665,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             self._single_linkage_tree_ = remap_single_linkage_tree(
                 self._single_linkage_tree_,
                 internal_to_raw,
-                non_finite=infinite_index + missing_index,
+                # There may be overlap for points w/ both `np.inf` and `np.nan`
+                non_finite=set(infinite_index + missing_index),
             )
             new_labels = np.empty(self._raw_data.shape[0], dtype=np.int32)
             new_labels[finite_index] = self.labels_
@@ -769,7 +771,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
             Outliers are labeled as follows:
             - Noisy samples are given the label -1.
             - Samples with infinite elements (+/- np.inf) are given the label -2.
-            - Samples with missing data are given the label -3.
+            - Samples with missing data are given the label -3, even if they
+              also have infinite elements.
         """
         labels = labelling_at_cut(
             self._single_linkage_tree_, cut_distance, min_cluster_size

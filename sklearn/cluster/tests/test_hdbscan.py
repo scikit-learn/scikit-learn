@@ -150,26 +150,26 @@ def test_dbscan_clustering():
     assert n_clusters == n_clusters_true
 
 
-@pytest.mark.parametrize("outlier_type", _OUTLIER_ENCODING)
 @pytest.mark.parametrize("cut_distance", (0.1, 0.5, 1))
-def test_dbscan_clustering_outlier_data(outlier_type, cut_distance):
+def test_dbscan_clustering_outlier_data(cut_distance):
     """
     Tests if np.inf and np.nan data are each treated as special outliers.
     """
-    outlier = {
-        "infinite": np.inf,
-        "missing": np.nan,
-    }[outlier_type]
-    label = _OUTLIER_ENCODING[outlier_type]["label"]
+    missing_label = _OUTLIER_ENCODING["missing"]["label"]
+    infinite_label = _OUTLIER_ENCODING["infinite"]["label"]
 
     X_outlier = X.copy()
-    X_outlier[0] = [outlier, 1]
-    X_outlier[5] = [outlier, outlier]
+    X_outlier[0] = [np.inf, 1]
+    X_outlier[2] = [1, np.nan]
+    X_outlier[5] = [np.inf, np.nan]
     model = HDBSCAN().fit(X_outlier)
     labels = model.dbscan_clustering(cut_distance=cut_distance)
 
-    (missing_labels_idx,) = (labels == label).nonzero()
-    assert_array_equal(missing_labels_idx, [0, 5])
+    (missing_labels_idx,) = (labels == missing_label).nonzero()
+    assert_array_equal(missing_labels_idx, [2, 5])
+
+    (infinite_labels_idx,) = (labels == infinite_label).nonzero()
+    assert_array_equal(infinite_labels_idx, [0])
 
     clean_indices = list(range(1, 5)) + list(range(6, 200))
     clean_model = HDBSCAN().fit(X_outlier[clean_indices])
