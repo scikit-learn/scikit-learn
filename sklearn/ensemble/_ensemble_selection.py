@@ -7,6 +7,7 @@ import math
 import numpy as np
 from joblib import Parallel, delayed
 
+from ..base import clone
 from ..utils._array_api import get_namespace
 from ..base import is_classifier, is_regressor
 from ._base import _fit_single_estimator
@@ -226,7 +227,7 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
         # TODO uses check_classification_targets(y) instead
         if len(np.array(y).shape) == 0:
             self.log("The labels are 0-dimensional")
-            return {}
+            return self
 
         # Fit estimator if not already done
         named_estimator_to_fit = []
@@ -241,10 +242,19 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
             for name, est in named_estimator_to_fit
         )
         """
-        _ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_single_estimator)(est, X, y, sample_weight)
-            for name, est in named_estimator_to_fit
-        )  # estimators are updated
+
+        # Convert not an array to array
+        y=np.asarray(y)
+        if sample_weight is not None:
+            sample_weight=column_or_1d(sample_weight)
+            sample_weight=np.asarray(sample_weight)
+            if sample_weight.shape[0]!=y.shape[0]:
+                raise ValueError("sample_weight and y should be the same size")
+            #if len(np.array(sample_weight).shape) != 1:
+            #    raise ValueError("sample_weight should be 1D or None")
+
+        self.fit_those_estimators_by_copy(named_estimator_to_fit, X, y, sample_weight)
+
 
         # converse sparse representation into one-hot vector
         if get_task_type(self.estimators) == "classification":
@@ -252,11 +262,13 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
         else:
             y = self.y_preproces_for_regression(y)
 
+
+
         # Cache score and predict results on X
         self.base_model_score_ = {}
         self.base_model_preds_ = {}
         for name, est in self.estimators:
-            score, pred = self._get_score_of_model(X, y, est)
+            score, pred = self._get_score_of_model(X, y, est, sample_weight)
             self.base_model_score_[name] = score
             self.base_model_preds_[name] = pred
         self.log(f"Base estimators score:{self.base_model_score_}")
@@ -280,13 +292,49 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
             self.ensemble_,
             self.ensemble_score,
             self.ensemble_pred,
-        ) = self._greedy_combi_ensemble(y, pruned_est_name)
+        ) = self._greedy_combi_ensemble(y, pruned_est_name, sample_weight)
 
         self.log(f"Ensemble :{self.ensemble_}, score: {self.ensemble_score}")
 
         return self
 
+    def _fit_one_estimator(self,est,X,y,sample_weight):
+        try:
+            _fit_single_estimator(est,X,y,sample_weight)
+        except TypeError: #not compatible with sample_weight
+            _fit_single_estimator(est,X,y)
+        return est
+    def fit_those_estimators_by_copy(self, named_estimator_to_fit, X, y, sample_weight):
+        """
+        update self.estimators but not estimators in it
+
+        named_estimator_to_fit list of (name,estimator)
+        """
+        new_fitted_est = Parallel(n_jobs=self.n_jobs)(
+            delayed(self._fit_one_estimator)(clone(est), X, y, sample_weight)
+            for name, est in named_estimator_to_fit
+        )
+        new_fitted_est_name=[named_est[0] for named_est in named_estimator_to_fit]
+
+        new_named_est=dict()
+        for name, est in zip(new_fitted_est_name, new_fitted_est):
+            new_named_est[name]=est
+
+        self.estimators2=[]
+        for i, (n, old_estimator) in enumerate(self.estimators):
+            if n in new_named_est:
+                self.estimators2.append((n,new_named_est[n]))
+            else:
+                self.estimators2.append((n,old_estimator))
+        self.estimators=self.estimators2
+
     def transform(self, X):
+        preds_weights = self._get_pred_weights(X)
+        preds=np.array([pw[0] for pw in preds_weights])
+        return preds
+
+    def _get_pred_weights(self,X):
+        check_is_fitted(self)
         preds_weights = []
         for estimator_name, estimator in self.estimators:
             estimator_weight = self.ensemble_.get(estimator_name, 0)
@@ -306,7 +354,7 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
             print(txt)
 
     def _predict_proba_and_regression(self, X):
-        preds_weights = self.transform(X)
+        preds_weights = self._get_pred_weights(X)
         ensemble_preds = self._combination_rule(preds_weights)
         return ensemble_preds
 
@@ -326,14 +374,14 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
         self.fit(X, y, sample_weight)
         return self.ensemble_pred
 
-    def _get_score_of_ensemble(self, X, y, ensemble):
+    def _get_score_of_ensemble(self, X, y, ensemble, sample_weight):
         preds_weights = []
 
         for estimator_name, weight in ensemble.items():
             proba = self.base_model_preds_[estimator_name]
             preds_weights.append((proba, weight))
         ens_preds = self._combination_rule(preds_weights)
-        ens_score = self.score_metric(y, ens_preds)
+        ens_score = self.weighted_score_metric(y, ens_preds, sample_weight)
         return ens_score, ens_preds
 
     def _estimator_predict(self, X, est):
@@ -354,8 +402,8 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
         final_predictions /= sum_weights
         return final_predictions  # if final_predictions is not None else None
 
-    def _sliding_combination_rule(
-        self, current_ensemble_pred, prev_ensemble_size, added_estimator_name, y
+    def _progressive_metric(
+        self, current_ensemble_pred, prev_ensemble_size, added_estimator_name, y, sample_weight
     ):
         candidate_pred = self.base_model_preds_[added_estimator_name]
 
@@ -366,15 +414,31 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
                 current_ensemble_pred * prev_ensemble_size + candidate_pred
             ) / (prev_ensemble_size + 1.0)
 
-        new_ens_score = self.score_metric(y, sliding_ensemble_pred)
+        # uniform
+        new_ens_score = self.weighted_score_metric(y, sliding_ensemble_pred, sample_weight)
+
         return {added_estimator_name: (new_ens_score, sliding_ensemble_pred)}
 
-    def _get_score_of_model(self, X, y, estimator):
+    def _get_score_of_model(self, X, y, estimator, sample_weight):
         pred = self._estimator_predict(X, estimator)
-        score = self.score_metric(y, pred)
+        score=self.weighted_score_metric(y,pred,sample_weight)
         return score, pred
 
-    def _greedy_combi_ensemble(self, y, estimators_name):
+    def weighted_score_metric(self,y,pred,sample_weight):
+        if sample_weight is None:
+            score = self.score_metric(y, pred)
+        else:
+            n=len(y)
+            weighted_data_score=np.zeros((n,))
+            for i in range(n):
+                yi=np.array([y[i]])
+                predi=np.array([pred[i]])
+                wi=sample_weight[i]
+                weighted_data_score[i]=self.score_metric(yi, predi)*wi
+            score=np.mean(weighted_data_score)
+        return score
+
+    def _greedy_combi_ensemble(self, y, estimators_name, sample_weight):
         """
         Greedy Combinatorial Optimization to build ensembles
         Search the best subset estimators_name
@@ -405,15 +469,15 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
                 # Scan all potential model
                 if self.n_jobs == 1:
                     list_info = [
-                        self._sliding_combination_rule(
-                            current_ensemble_pred, e, name, y
+                        self._progressive_metric(
+                            current_ensemble_pred, e, name, y, sample_weight
                         )
                         for name in estimators_name
                     ]
                 else:
                     list_info = parallel(
-                        delayed(self._sliding_combination_rule)(
-                            current_ensemble_pred, e, estimator, y
+                        delayed(self._progressive_metric)(
+                            current_ensemble_pred, e, estimator, y, sample_weight
                         )
                         for estimator in estimators_name
                     )
@@ -538,3 +602,5 @@ class EnsembleSelection(_BaseHeterogeneousEnsemble):
             y = y.reshape((-1, 1))
             y = preprocessing.OneHotEncoder().fit_transform(y).toarray().squeeze()
         return y
+
+
