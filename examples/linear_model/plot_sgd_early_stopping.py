@@ -141,7 +141,7 @@ plot_list = [
 nrows = 2
 ncols = int(np.ceil(len(plot_list) / 2.0))
 fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(6 * ncols, 4 * nrows))
-axes[0, 0].get_shared_y_axes().join(axes[0, 0], axes[0, 1])
+axes[0, 0].sharey(axes[0, 1])
 
 for ax, (x_axis, y_axis) in zip(axes.ravel(), plot_list):
     for criterion, group_df in results_df.groupby(lines):
