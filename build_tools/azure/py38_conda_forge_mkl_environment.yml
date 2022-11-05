@@ -13,7 +13,7 @@ dependencies:
   - threadpoolctl
   - matplotlib
   - pytest
-  - pytest-xdist
+  - pytest-xdist=2.5.0
   - pillow
   - codecov
   - pytest-cov
