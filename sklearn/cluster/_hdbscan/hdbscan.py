@@ -22,7 +22,7 @@ from ...neighbors import BallTree, KDTree, NearestNeighbors
 from ...utils._param_validation import Interval, StrOptions
 from ...utils.validation import _assert_all_finite
 from ._linkage import label, mst_from_distance_matrix, mst_from_data_matrix
-from ._reachability import mutual_reachability
+from ._reachability import mutual_reachability_graph
 from ._tree import compute_stability, condense_tree, get_clusters, labelling_at_cut
 
 FAST_METRICS = KDTree.valid_metrics + BallTree.valid_metrics
@@ -46,8 +46,8 @@ _OUTLIER_ENCODING = {
 }
 
 
-def _brute_mst(mutual_reachability, min_samples, sparse=False):
-    if not sparse:
+def _brute_mst(mutual_reachability, min_samples):
+    if not issparse(mutual_reachability):
         return mst_from_distance_matrix(mutual_reachability)
 
     # Check connected component on mutual reachability
@@ -63,7 +63,7 @@ def _brute_mst(mutual_reachability, min_samples, sparse=False):
             f"There exists points with fewer than {min_samples} neighbors. Ensure"
             " your distance matrix has non-zero values for at least"
             f" `min_sample`={min_samples} neighbors for each points (i.e. K-nn"
-            " graph), or specify a `max_dist` in `metric_params` to use when"
+            " graph), or specify a `max_distance` in `metric_params` to use when"
             " distances are missing."
         )
 
@@ -116,10 +116,6 @@ def _hdbscan_brute(
     **metric_params,
 ):
     if metric == "precomputed":
-        # Treating this case explicitly, instead of letting
-        # sklearn.metrics.pairwise_distances handle it,
-        # enables the usage of numpy.inf in the distance
-        # matrix to indicate missing distance information.
         distance_matrix = X.copy() if copy else X
     else:
         distance_matrix = pairwise_distances(
@@ -127,28 +123,18 @@ def _hdbscan_brute(
         )
     distance_matrix /= alpha
 
-    # max_dist is only relevant for sparse and is ignored for dense
-    max_dist = metric_params.get("max_dist", 0.0)
-    sparse = issparse(distance_matrix)
-
-    # TODO: Investigate whether it is worth implementing a PWD backend for the
-    # combined operations of:
-    #   - The pairwise distance calculation
-    #   - The element-wise mutual-reachability calculation
-    # I suspect this would be better handled as one composite Cython routine to
-    # minimize memory-movement, however I (@micky774) am unsure whether it is
-    # narrow enough of a scope for the current PWD backend, or if it is better
-    # as a separate utility.
-    distance_matrix = distance_matrix.tolil() if sparse else distance_matrix
+    max_distance = metric_params.get("max_distance", 0.0)
+    if issparse(distance_matrix) and distance_matrix.format != "csr":
+        # we need CSR format to avoid a conversion in `_brute_mst` when calling
+        # `csgraph.connected_components`
+        distance_matrix = distance_matrix.tocsr()
 
     # Note that `distance_matrix` is manipulated in-place, however we do not
     # need it for anything else past this point, hence the operation is safe.
-    mutual_reachability_ = mutual_reachability(
-        distance_matrix, min_points=min_samples, max_dist=max_dist
+    mutual_reachability_ = mutual_reachability_graph(
+        distance_matrix, min_samples=min_samples, max_distance=max_distance
     )
-    min_spanning_tree = _brute_mst(
-        mutual_reachability_, min_samples=min_samples, sparse=sparse
-    )
+    min_spanning_tree = _brute_mst(mutual_reachability_, min_samples=min_samples)
     # Warn if the MST couldn't be constructed around the missing distances
     if np.isinf(min_spanning_tree.T[2]).any():
         warn(
@@ -358,10 +344,9 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     copy : bool, default=False
         If `copy=True` then any time an in-place modifications would be made
         that would overwrite data passed to :term:`fit`, a copy will first be
-        made, guaranteeing that the original data will be unchanged. Currently
-        this only makes a difference when passing in a dense precomputed
-        distance array (i.e. when `metric="precomputed"`) and using the
-        `"brute"` algorithm (see `algorithm` for details).
+        made, guaranteeing that the original data will be unchanged.
+        Currently, it only applies with `metric="precomputed"`, passing a dense
+        array or a sparse matrix of format CSR and algorithm used is `"brute"`.
 
     Attributes
     ----------
