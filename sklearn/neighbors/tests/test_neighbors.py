@@ -1508,51 +1508,48 @@ def test_neighbors_validate_parameters(Estimator):
     ],
 )
 @pytest.mark.parametrize("n_features", [2, 100])
-def test_neighbors_minkowski_semimetric(Estimator, n_features):
+@pytest.mark.parametrize("algorithm", ["auto", "brute"])
+def test_neighbors_minkowski_semimetric_algo_warn(Estimator, n_features, algorithm):
     """
     Validation of all classes extending NeighborsBase with
-    Minkowski semi-metrics (i.e. when 0 < p < 1).
+    Minkowski semi-metrics (i.e. when 0 < p < 1). That proper
+    Warning is raised for algorith "auto" and "brute"
     """
     X = rng.random_sample((10, n_features))
     y = np.ones(10)
 
-    model = Estimator(p=0)
-    with pytest.raises(ValueError):
-        # This Exception will be raised by _validate_params called in fit method
-        model.fit(X, y)
-
-    model = Estimator(p=0.1, algorithm="auto")
+    model = Estimator(p=0.1, algorithm=algorithm)
     msg = (
-        "Mind that for 0 < p < 1, Minkowski metrics are not distance metric. Continuing"
-        " the execution with `algo='brute'`."
+        "Mind that for 0 < p < 1, Minkowski metrics are not distance"
+        " metrics. Continuing the execution with `algorithm='brute'`."
     )
     with pytest.warns(UserWarning, match=msg):
         model.fit(X, y)
 
     assert model._fit_method == "brute"
 
-    model = Estimator(p=0.1, algorithm="brute")
-    msg = (
-        "Mind that for 0 < p < 1, Minkowski metrics are not distance metric. Continuing"
-        " the execution with `algo='brute'`."
-    )
-    with pytest.warns(UserWarning, match=msg):
-        model.fit(X, y)
 
-    model = Estimator(algorithm="kd_tree", p=0.1)
-    msg = (
-        'algo="kd_tree" does not support 0 < p < 1 for '
-        "the Minkowski metric. To resolve this problem either "
-        'set p >= 1 or algo="brute".'
-    )
-    with pytest.raises(ValueError, match=msg):
-        model.fit(X, y)
+@pytest.mark.parametrize(
+    "Estimator",
+    [
+        neighbors.KNeighborsClassifier,
+        neighbors.RadiusNeighborsClassifier,
+        neighbors.KNeighborsRegressor,
+        neighbors.RadiusNeighborsRegressor,
+    ],
+)
+@pytest.mark.parametrize("n_features", [2, 100])
+@pytest.mark.parametrize("algorithm", ["kd_tree", "ball_tree"])
+def test_neighbors_minkowski_semimetric_algo_error(Estimator, n_features, algorithm):
+    """Check that we raise a proper error if `algorithm!='brute'` and `p<1`."""
+    X = rng.random_sample((10, 2))
+    y = np.ones(10)
 
-    model = Estimator(algorithm="ball_tree", p=0.1)
+    model = Estimator(algorithm=algorithm, p=0.1)
     msg = (
-        'algo="ball_tree" does not support 0 < p < 1 for '
+        f'algorithm="{algorithm}" does not support 0 < p < 1 for '
         "the Minkowski metric. To resolve this problem either "
-        'set p >= 1 or algo="brute".'
+        'set p >= 1 or algorithm="brute".'
     )
     with pytest.raises(ValueError, match=msg):
         model.fit(X, y)
