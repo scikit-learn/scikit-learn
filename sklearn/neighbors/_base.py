@@ -626,7 +626,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         ):
             # For 0 < p < 1 Minkowski distances aren't valid distance
             # metric as they do not satisfy triangular inequality:
-            # they are semimetrics.
+            # they are semi-metrics.
             # algorithm="kd_tree" and algorithm="ball_tree" can't be used because
             # KDTree and BallTree require a proper distance metric to work properly.
             # However, the brute-force algorithm supports semi-metrics.
