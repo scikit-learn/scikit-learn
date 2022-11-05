@@ -116,6 +116,19 @@ def _hdbscan_brute(
     **metric_params,
 ):
     if metric == "precomputed":
+        if X.shape[0] != X.shape[1]:
+            raise ValueError(
+                "The precomputed distance matrix is expected to be symmetric, however"
+                f" it has shape {X.shape}. Please verify that the"
+                " distance matrix was constructed correctly."
+            )
+        if np.allclose(X, X.T):
+            raise ValueError(
+                "The precomputed distance matrix is expected to be symmetric, however"
+                " its values appear to be asymmetric. Please verify that the distance"
+                " matrix was constructed correctly."
+            )
+
         distance_matrix = X.copy() if copy else X
     else:
         distance_matrix = pairwise_distances(
