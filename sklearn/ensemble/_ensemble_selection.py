@@ -6,7 +6,7 @@ from numbers import Integral, Real
 import math
 import numpy as np
 import pandas as pd
-from joblib import Parallel, delayed
+import joblib
 
 from ..base import clone
 from ..utils._array_api import get_namespace
@@ -339,8 +339,8 @@ class EnsembleSelection(
 
         named_estimator_to_fit list of (name,estimator)
         """
-        new_fitted_est = Parallel(n_jobs=self.n_jobs)(
-            delayed(self._fit_one_estimator)(clone(est), X, y, sample_weight)
+        new_fitted_est = joblib.Parallel(n_jobs=self.n_jobs)(
+            joblib.delayed(self._fit_one_estimator)(clone(est), X, y, sample_weight)
             for name, est in named_estimator_to_fit
         )
         new_fitted_est_name = [named_est[0] for named_est in named_estimator_to_fit]
@@ -504,7 +504,7 @@ class EnsembleSelection(
         if len(estimators_name) == 0:
             return current_ensemble, current_ensemble_score, current_ensemble_pred
 
-        with Parallel(n_jobs=self.n_jobs) as parallel:
+        with joblib.Parallel(n_jobs=self.n_jobs) as parallel:
 
             e = 0  # number of select model
             while (
@@ -521,7 +521,7 @@ class EnsembleSelection(
                     ]
                 else:
                     list_info = parallel(
-                        delayed(self._progressive_metric)(
+                        joblib.delayed(self._progressive_metric)(
                             current_ensemble_pred, e, estimator, y, sample_weight
                         )
                         for estimator in estimators_name
