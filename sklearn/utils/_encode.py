@@ -1,5 +1,6 @@
 from contextlib import suppress
 from collections import Counter
+from itertools import filterfalse
 from typing import NamedTuple
 
 import numpy as np
@@ -88,6 +89,22 @@ def _unique_np(values, return_inverse=False, return_counts=False):
     return ret[0] if len(ret) == 1 else ret
 
 
+def _extract_set_with_possibly_nan(values):
+    """Compute a Python set by first filtering NaN values and adding it back.
+
+    Since `nan != nan`, creating a Python set would populate it with all NaN
+    occurrences. It will therefore slow down any operation since each new values
+    will be compared with all existing NaN values present in the set.
+
+    We first filter out NaN values and later add it back to the set if needed.
+    """
+    values_filtered = list(filterfalse(is_scalar_nan, values))
+    uniques_set = set(values_filtered)
+    if len(values_filtered) != len(values):
+        uniques_set.add(float("nan"))
+    return uniques_set
+
+
 class MissingValues(NamedTuple):
     """Data class for missing data information"""
 
@@ -167,7 +184,7 @@ def _map_to_integer(values, uniques):
 def _unique_python(values, *, return_inverse, return_counts):
     # Only used in `_uniques`, see docstring there for details
     try:
-        uniques_set = set(values)
+        uniques_set = _extract_set_with_possibly_nan(values)
         uniques_set, missing_values = _extract_missing(uniques_set)
 
         uniques = sorted(uniques_set)
@@ -260,10 +277,10 @@ def _check_unknown(values, known_values, return_mask=False):
     valid_mask = None
 
     if values.dtype.kind in "OUS":
-        values_set = set(values)
+        values_set = _extract_set_with_possibly_nan(values)
         values_set, missing_in_values = _extract_missing(values_set)
 
-        uniques_set = set(known_values)
+        uniques_set = _extract_set_with_possibly_nan(known_values)
         uniques_set, missing_in_uniques = _extract_missing(uniques_set)
         diff = values_set - uniques_set
 
