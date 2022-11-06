@@ -1041,6 +1041,110 @@ def test_linalg_warning_with_newton_solver(newton_solver, global_random_seed):
     )
 
 
+@pytest.mark.parametrize(
+    "solver, warn1, msg1, warn2, msg2",
+    [
+        (
+            "lbfgs",
+            None,
+            None,
+            [RuntimeWarning],
+            ["invalid value encountered in matmul"],
+        ),
+        (
+            "newton-cholesky",
+            scipy.linalg.LinAlgWarning,
+            "The inner solver of .*Newton.*Solver stumbled upon a singular or very "
+            "ill-conditioned Hessian matrix",
+            [scipy.linalg.LinAlgWarning, RuntimeWarning],
+            [
+                "The inner solver of .*Newton.*Solver stumbled upon a singular or very "
+                "ill-conditioned Hessian matrix",
+                "invalid value encountered in matmul",
+            ],
+        ),
+        (
+            "newton-lsmr",
+            None,
+            None,
+            [ConvergenceWarning],
+            ["Newton solver did not converge after .* iterations"],
+        ),
+    ],
+)
+def test_solver_on_ill_conditioned_X(
+    solver, warn1, msg1, warn2, msg2, global_random_seed
+):
+    """Test GLM solvers on ill conditioned X with high condition number.
+
+    Note that numbers in this test are tuned such that is passes for all global random
+    seeds.
+    """
+    rng = np.random.RandomState(global_random_seed)
+    # Use at least 20 samples to reduce the likelihood of getting a degenerate
+    # dataset for any global_random_seed.
+    X_orig = rng.uniform(low=-1, high=1, size=(20, 3))
+    y = rng.poisson(
+        np.exp(X_orig @ np.ones(X_orig.shape[1])), size=X_orig.shape[0]
+    ).astype(np.float64)
+
+    tol = 1e-7
+    model = PoissonRegressor(solver=solver, alpha=0.0, tol=tol)
+
+    # No warning raised on well-conditioned design, even without regularization.
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        reg = clone(model).fit(X_orig, y)
+    original_deviance = mean_poisson_deviance(y, reg.predict(X_orig))
+
+    # Construct an ill-conditioned problem by some almost identical columns.
+    X_ill_conditioned = X_orig.copy()
+    X_ill_conditioned[:, 1] = X_ill_conditioned[:, 0]
+    X_ill_conditioned[0, 1] += 1e-10
+    X_ill_conditioned[-1, 1] -= 1e-10
+    # Make sure that it is ill-conditioned <=> large condition number.
+    assert np.linalg.cond(X_ill_conditioned) > 1e10 * np.linalg.cond(X_orig)
+
+    if warn1 is None:
+        # Assert that no warning is raised.
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            reg = clone(model).fit(X_ill_conditioned, y)
+    else:
+        # Assert that the given warning is raised.
+        with pytest.warns(warn1, match=msg1):
+            reg = clone(model).fit(X_ill_conditioned, y)
+
+    # Construct another ill-conditioned problem by scaling of features.
+    X_ill_conditioned = X_orig.copy()
+    X_ill_conditioned[:, 0] *= 1e-4
+    X_ill_conditioned[:, 1] *= 1e4
+    # Make sure that it is ill conditioned >=> large condition number.
+    assert np.linalg.cond(X_ill_conditioned) > 1e5 * np.linalg.cond(X_orig)
+
+    if warn2 is None:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error")
+            reg = clone(model).fit(X_ill_conditioned, y)
+    else:
+        # Whether or not a warning is raised depends on global_random_seed.
+        with warnings.catch_warnings(record=True) as w:
+            for warn in warn2:
+                warnings.simplefilter("ignore", warn)
+            reg = clone(model).fit(X_ill_conditioned, y)
+            test_loss = True
+            assert len(w) == 0
+
+    if test_loss:
+        # Without penalty, scaling of columns has no effect on predictions.
+        ill_cond_deviance = mean_poisson_deviance(y, reg.predict(X_ill_conditioned))
+        if solver in ("lbfgs", "newton-cholesky"):
+            pytest.xfail(
+                f"Solver {solver} does not converge but does so without warning."
+            )
+        assert ill_cond_deviance == pytest.approx(original_deviance, rel=1e-2)
+
+
 @pytest.mark.parametrize("verbose", [0, 1, 2])
 def test_newton_solver_verbosity(capsys, verbose):
     """Test the std output of verbose newton solvers."""
