@@ -1,6 +1,7 @@
-"""Ensemble selection of classifiers and regressors"""
+"""Ensemble selection of classifiers and regressors."""
 
 # Authors: Pierrick Pochelu <pierrick.pochelu@gmail.com>
+
 from abc import ABCMeta
 from numbers import Integral, Real
 import math
@@ -41,7 +42,7 @@ class EnsembleSelection(
 
     Parameters
     ----------
-    estimators : list of (string, estimator) tuples
+    estimators : list of (str, Estimator) tuples
         The estimators from which the ensemble selection classifier is built.
         These estimators must be fitted.
 
@@ -49,19 +50,22 @@ class EnsembleSelection(
         Classification or regression 2 args function.
         If no value is given, log_loss or MSE is used automatically.
 
-    min_estimators : integer, optional (default=1)
+    score_direction : str in {"min","max"}, optional (default="min")
+        If the score metric should be minimized or maximized.
+
+    min_estimators : int, optional (default=1)
         The minimum number of base estimators.
         The ensemble selection estimator may overfit the calibration dataset.
         We may assume big ensemble generalize better. So min_estimators
         value allows to regularize.
 
-    max_estimators : integer, optional (default=50)
+    max_estimators : int, optional (default=50)
         The maximum number of base estimators. It allows to control the final
         ensemble size, and the ensemble selection computing time.
 
     pruning_factor : float, optional (default=0.6)
         The worst pruning_factor estimators are remove to reduce the number of
-        combinations
+        combinations.
 
     with_replacement : bool, optional (defaut=True)
         If the same model can be replaced multiple times in the ensemble.
@@ -72,9 +76,9 @@ class EnsembleSelection(
         The number of potential ensembles is 2**n with n base estimators,
         min_estimators=0 and large max_estimators.
 
-
     is_base_estimator_proba : bool, optional (default=True)
-        If True, estimators call "predict_proba(X)", otherwise, "predict(X)"
+        If True, estimators call `predict_proba(X)`, otherwise, `predict(X)`.
+        In the doubt, let it to True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel for ``fit``.
@@ -89,7 +93,7 @@ class EnsembleSelection(
     Attributes
     ----------
     _estimator_type : string
-        Type of the ensemble to buid. Either "classifier" or "regressor".
+        Type of the ensemble to build. Either "classifier" or "regressor".
 
     fitted_estimators_ : list of estimators
         The elements of the `estimators` parameter, having been fitted on the
@@ -127,6 +131,10 @@ class EnsembleSelection(
     ensemble_pred_ : ndarray(n_samples, n_outputs)
         cached predictions of the ensemble `ensemble_`  computed during :term:`fit`.
 
+    See also
+    ----------
+    Stacking : Stack of estimators with a supervised learner as combination rule.
+
     References
     ----------
     .. [1] R. Caruana, A. Niculescu-Mizil, G. Crew, A. Ksikes, "Ensemble
@@ -134,6 +142,24 @@ class EnsembleSelection(
     .. [2] R. Caruana, A. Munson, A. Niculescu-Mizil, "Getting the Most Out
            of Ensemble Selection", 2006.
 
+    Examples
+    --------
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.neural_network import MLPClassifier
+    >>> from sklearn.preprocessing import StandardScaler
+    >>> from sklearn.pipeline import make_pipeline
+    >>> from sklearn.ensemble import EnsembleSelection
+    >>> from sklearn.model_selection import train_test_split
+    >>> X, y = load_iris(return_X_y=True)
+    >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state = 42)
+    >>> rf=RandomForestClassifier(n_estimators=10, random_state=42)
+    >>> mlp=make_pipeline(StandardScaler(), MLPClassifier(random_state=42))
+    >>> estimators = [('rf', rf),('mlp', mlp)]
+    >>> clf=EnsembleSelection(estimators)
+    >>> score=clf.fit(X_train, y_train).score(X_test, y_test)
+    >>> print(score)
+    0.02...
     """
 
     _parameter_constraints: dict = {
@@ -245,7 +271,6 @@ class EnsembleSelection(
         self : object
             Returns a fitted instance of estimator.
         """
-
         super()._validate_params()
 
         if len(np.array(y).shape) == 0:
@@ -443,6 +468,35 @@ class EnsembleSelection(
         self.fit(X, y, sample_weight)
         return self.ensemble_pred_
 
+    def score(self, X, y, sample_weight=None):
+        """Score given input data `X` and target `y`.
+
+        The metric used is given by `score_metric_`.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Training vectors, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
+
+        y : array-like of shape (n_samples, n_features)
+            Target values.
+
+        sample_weight : array-like of shape (n_samples,), default=None
+            Sample weights. If None, then samples are equally weighted.
+            Note that this is supported only if all underlying estimators
+            support sample weights.
+
+        Returns
+        -------
+        score : float
+            Score given by ``, samples importance are weighted with `sample_weight`.
+        """
+        check_is_fitted(self)
+        pred = self._predict_proba_and_regression(X)
+        score = self._weighted_score_metric(y, pred, sample_weight)
+        return score
+
     def _log(self, txt):
         if self.verbose:
             print(txt)
@@ -481,11 +535,11 @@ class EnsembleSelection(
     def _fit_those_estimators_by_copy(
         self, named_estimator_to_fit, X, y, sample_weight
     ):
+        """`named_estimator_to_fit` is the list of (name, Estimator) with name a str.
+        Fit the unfitted estimators.
         """
-        update self.estimators but not estimators in it
 
-        named_estimator_to_fit list of (name,estimator)
-        """
+        # Parallel training of estimators
         new_fitted_est = joblib.Parallel(n_jobs=self.n_jobs)(
             joblib.delayed(self._fit_one_estimator)(clone(est), X, y, sample_weight)
             for name, est in named_estimator_to_fit
