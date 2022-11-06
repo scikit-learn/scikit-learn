@@ -648,7 +648,7 @@ Changelog
   :func:`feature_extraction.DictVectorizer.inverse_transform`, 
   :func:`feature_extraction.DictVectorizer.restrict`, 
   :func:`feature_extraction.DictVectorizer.transform`.
-  :pr:`42838` by :user:`Lorenz Hertel <LoHertel>`.
+  :pr:`24838` by :user:`Lorenz Hertel <LoHertel>`.
 
 :mod:`sklearn.feature_selection`
 ................................
