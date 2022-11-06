@@ -219,7 +219,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse-matrix, dataframe} of shape (n_samples, n_features) \
-        if `validate`=True else Iterable
+        if validate=True else Iterable
             Input array.
 
         Returns
