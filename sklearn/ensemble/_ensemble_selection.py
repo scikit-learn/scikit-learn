@@ -35,9 +35,9 @@ DEFAULT_CLASSIFIER_DIRECTION = "min"
 class EnsembleSelection(
     TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCMeta
 ):
-    """
-    An ensemble classifier built by greedy stepwise selection.
-    # Bagged Ensemble Selection (section 2.3) of the original paper is not implemented.
+    """An ensemble classifier built by greedy stepwise selection.
+
+    Bagged Ensemble Selection (section 2.3) of the original paper is not implemented.
 
     Parameters
     ----------
@@ -88,11 +88,8 @@ class EnsembleSelection(
 
     Attributes
     ----------
-
-    Attributes
-    ----------
-    _estimators_type : string
-        Either "classifier" or "regressor".
+    _estimator_type : string
+        Type of the ensemble to buid. Either "classifier" or "regressor".
 
     fitted_estimators_ : list of estimators
         The elements of the `estimators` parameter, having been fitted on the
@@ -105,7 +102,6 @@ class EnsembleSelection(
 
     score_direction_ : string in set("min", "max")
         Direction to optimize `score_metric_`.
-    List of (string,Estimator)
 
     n_features_in_ : ndarray of shape (`n_features_in_`,)
         Number of features seen during :term:`fit`.
@@ -115,10 +111,10 @@ class EnsembleSelection(
         underlying estimators expose such an attribute when fit.
 
     base_model_score_ : dict[str, float]
-        associates the score to estimators name
+        Associates the score to estimators name.
 
     base_model_preds_ : dict[str, ndarray(n_samples, n_outputs)]
-        associates the predictions to estimators name
+        Associates the predictions to estimators name.
 
     ensemble_ : dict[str, int]
         associates the number of times an estimator is selected.
@@ -126,11 +122,10 @@ class EnsembleSelection(
         0 value or is not in the dict.
 
     ensemble_score_ : float
-        the score of the current ensemble `ensemble_` computed during :term:`fit`
+        the score of the current ensemble `ensemble_` computed during :term:`fit`.
 
     ensemble_pred_ : ndarray(n_samples, n_outputs)
-        cached predictions of the ensemble `ensemble_`  computed during :term:`fit`
-
+        cached predictions of the ensemble `ensemble_`  computed during :term:`fit`.
 
     References
     ----------
