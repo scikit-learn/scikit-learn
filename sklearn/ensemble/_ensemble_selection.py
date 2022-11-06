@@ -228,6 +228,7 @@ class EnsembleSelection(
 
     def fit(self, X, y, sample_weight=None):
         """Fit the estimator.
+
         If base estimators are not already fitted they are also fitted on X, y.
 
         Parameters
@@ -267,8 +268,6 @@ class EnsembleSelection(
             sample_weight = np.asarray(sample_weight)
             if sample_weight.shape[0] != y.shape[0]:
                 raise ValueError("sample_weight and y should be the same size")
-            # if len(np.array(sample_weight).shape) != 1:
-            #    raise ValueError("sample_weight should be 1D or None")
 
         # Get X info
         if X.__class__.__name__ == "DataFrame":
@@ -289,12 +288,7 @@ class EnsembleSelection(
                 check_is_fitted(estimator)
             except NotFittedError:
                 named_estimator_to_fit.append((name, estimator))
-        """
-        fitted_estimators = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_single_estimator)(clone(est), X, y, sample_weight)
-            for name, est in named_estimator_to_fit
-        )
-        """
+
         self.fitted_estimators_ = self._fit_those_estimators_by_copy(
             named_estimator_to_fit, X, y, sample_weight
         )
@@ -355,9 +349,8 @@ class EnsembleSelection(
 
         Returns
         -------
-        y_preds : ndarray of shape (n_samples, n_estimators) or \
-                (n_samples, n_estimators, n_outputs)
-            Prediction outputs for each estimator.
+        y_preds : ndarray of shape (n_samples, n_estimators, n_outputs)
+            Predictions for each estimator.
         """
         preds_weights = self._get_pred_weights(X)
         list_of_preds = np.array(
@@ -380,13 +373,15 @@ class EnsembleSelection(
         Returns
         -------
         decisions : ndarray of shape (n_samples, n_samples, n_outputs)
+            Predictions for each estimator.
         """
         check_is_fitted(self)
         return self.transform(X)
 
     def predict_proba(self, X):
         """Predict class probabilities for `X` using the selected ensemble.
-        If estimators are regressors, calling it is equivalent to `predict`
+
+        If estimators are regressors, calling it is equivalent to `predict`.
 
         Parameters
         ----------
@@ -396,8 +391,7 @@ class EnsembleSelection(
 
         Returns
         -------
-        probabilities : ndarray of shape (n_samples, n_classes) or \
-            list of ndarray of shape (n_output,)
+        probabilities : ndarray of shape (n_samples, n_classes) or (n_output,)
             The class probabilities of the input samples.
         """
         return self._predict_proba_and_regression(X)
@@ -428,6 +422,7 @@ class EnsembleSelection(
 
     def fit_predict(self, X, y, sample_weight=None):
         """Fit and predict target for X.
+
         It is faster than `fit(X,y).predict(X)` because predictions computed in `fit`
         are directly returned.
 
@@ -445,11 +440,10 @@ class EnsembleSelection(
             Note that this is supported only if all underlying estimators
             support sample weights.
 
-
         Returns
         -------
         y_pred : ndarray of shape (n_samples,) or (n_samples, n_outputs)
-            Predicted targets for X
+            Predicted targets for X.
         """
         self.fit(X, y, sample_weight)
         return self.ensemble_pred_
