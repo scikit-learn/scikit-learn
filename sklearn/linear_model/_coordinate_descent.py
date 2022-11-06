@@ -1208,6 +1208,15 @@ class Lasso(ElasticNet):
     If so, then additionally check whether the dual gap is smaller than `tol` times
     :math:`||y||_2^2 / n_{\text{samples}}`.
 
+    The target can be a 2-dimensional array, resulting in the optimization of the
+    following objective:
+    :math:`(1 / (2 * n_samples)) * ||Y - XW||^2_F + alpha * ||W||_{1,1}`, where
+    :math:`||W||_{1,1}` denotes the :math:`\ell_1` norm of the matrix :math:`W` - that
+    is, the sum of the magnitude of its coefficients. It should not be confounded with
+    :class:`~sklearn.linear_model.MultiTaskLasso` which instead optimizes the
+    :math:`\ell_{2,1}` norm of the coefficients, yielding structured sparsity in the
+    coefficients.
+
     Examples
     --------
     >>> from sklearn import linear_model
