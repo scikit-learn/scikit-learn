@@ -5,7 +5,6 @@ from abc import ABCMeta
 from numbers import Integral, Real
 import math
 import numpy as np
-import pandas as pd
 import joblib
 
 from ..base import clone
@@ -262,9 +261,16 @@ class EnsembleSelection(
             #    raise ValueError("sample_weight should be 1D or None")
 
         # Get X info
-        if isinstance(X, pd.DataFrame):
+        if X.__class__.__name__ == "DataFrame":
             header = list(X.head())
             self.feature_names_in_ = np.array(header, dtype=object)
+        elif X.__class__.__name__ == "ndarray":
+            if len(X.shape) == 1:
+                self.n_features_in_ = 1
+            elif len(X.shape) == 2:
+                self.n_features_in_ = X.shape[1]
+            else:
+                raise ValueError("Unexpected X shape")
 
         # Fit estimator if not already done
         named_estimator_to_fit = []
@@ -282,7 +288,6 @@ class EnsembleSelection(
         self.fitted_estimators_ = self.fit_those_estimators_by_copy(
             named_estimator_to_fit, X, y, sample_weight
         )
-        self.n_features_in_ = self.fitted_estimators_[0][1].n_features_in_
 
         # converse sparse representation into one-hot vector
         if get_task_type(self.fitted_estimators_) == "classifier":
