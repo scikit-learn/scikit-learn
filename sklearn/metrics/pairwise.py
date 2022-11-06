@@ -1918,8 +1918,7 @@ def pairwise_distances(
     If the input is a vector array, the distances are computed.
     If the input is a distances matrix, it is returned instead.
     If the input is list of strings, a custom metric must be passed and
-    `check_length_only` should be set to `True` for distances to be computed
-
+    `check_length_only` should be set to `True` for distances to be computed.
 
     This method provides a safe way to take a distance matrix as input, while
     preserving compatibility with many other algorithms that take a vector
