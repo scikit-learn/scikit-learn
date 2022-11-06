@@ -638,6 +638,18 @@ Changelog
   :pr:`23819` by :user:`Adrian Trujillo <trujillo9616>` and
   :user:`Edoardo Abati <EdAbati>`.
 
+:mod:`feature_extraction`
+.........................
+
+- |API| Changed error type from :class:`AttributeError` to 
+  :class:`exceptions.NotFittedError` in unfitted instances of 
+  :class:`feature_extraction.DictVectorizer` for the following methods:
+  :func:`feature_extraction.DictVectorizer.get_feature_names_out`, 
+  :func:`feature_extraction.DictVectorizer.inverse_transform`, 
+  :func:`feature_extraction.DictVectorizer.restrict`, 
+  :func:`feature_extraction.DictVectorizer.transform`.
+  :pr:`42838` by :user:`Lorenz Hertel <LoHertel>`.
+
 :mod:`sklearn.feature_selection`
 ................................
 
