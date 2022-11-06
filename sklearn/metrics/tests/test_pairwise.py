@@ -1,3 +1,4 @@
+import re
 import warnings
 from types import GeneratorType
 
@@ -1553,13 +1554,44 @@ def test_numeric_pairwise_distances_datatypes(metric, global_dtype, y_is_x):
 
 def test_pairwise_dist_custom_scoring_for_string():
     X = [
-        "This is my first sentences",
-        "my second dummy sentence",
-        "This is my third one",
+        "a",
+        "ab",
+        "abc",
     ]
 
     def dummy_string_similarity(x, y):
         return np.abs(len(x) - len(y))
 
-    dist = pairwise_distances(X, metric=dummy_string_similarity, check_length_only=True)
-    assert dist.max() == 6.0
+    actual_distance = pairwise_distances(
+        X, metric=dummy_string_similarity, check_length_only=True
+    )
+    expected_distance = np.array(
+        [
+            [0.0, 1.0, 2.0],
+            [1.0, 0.0, 1.0],
+            [2.0, 1.0, 0.0],
+        ]
+    )
+    assert_array_equal(actual_distance, expected_distance)
+
+    Y = ["a", "a", "a"]
+    actual_distance = pairwise_distances(
+        X, Y, metric=dummy_string_similarity, check_length_only=True
+    )
+
+    expected_distance = np.array(
+        [
+            [0.0, 0.0, 0.0],
+            [1.0, 1.0, 1.0],
+            [2.0, 2.0, 2.0],
+        ]
+    )
+    assert_array_equal(actual_distance, expected_distance)
+
+    Y.append("a")
+    msg = re.escape(
+        "Incompatible length for X and Y matrices: len(X) == %d while len(Y) == %d"
+        % (len(X), len(Y))
+    )
+    with pytest.raises(ValueError, match=msg):
+        pairwise_distances(X, Y, metric=dummy_string_similarity, check_length_only=True)
