@@ -1,3 +1,4 @@
+import itertools
 import warnings
 
 import re
@@ -1187,6 +1188,10 @@ def test_uint8_predict(Est):
     [
         (None, 931, None),
         ([{0, 1}], 2, [{0, 1}]),
+        ("pairwise", 2, [{0, 1}]),
+        ("pairwise", 4, [{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 3}, {2, 3}]),
+        ("no interactions", 2, [{0}, {1}]),
+        ("no interactions", 4, [{0}, {1}, {2}, {3}]),
         ([(1, 0), [5, 1]], 6, [{0, 1}, {1, 5}, {2, 3, 4}]),
     ],
 )
@@ -1195,6 +1200,35 @@ def test_check_interaction_cst(interaction_cst, n_features, result):
     est = HistGradientBoostingRegressor()
     est.set_params(interaction_cst=interaction_cst)
     assert est._check_interaction_cst(n_features) == result
+
+
+@pytest.mark.parametrize(
+    "Est, shortcut, expected_message",
+    [
+        (combination[0], *combination[1])
+        for combination in itertools.product(
+            (HistGradientBoostingRegressor, HistGradientBoostingClassifier),
+            (
+                ("no interactions", None),
+                ("pairwise", None),
+                ("pairwiseS", "not a valid interaction constraint"),
+            ),
+        )
+    ],
+)
+def test_interaction_cst_shortcuts(Est, shortcut, expected_message):
+    rng = np.random.RandomState(42)
+    X = rng.uniform(size=(20, 4))
+    y = np.hstack((X, 5 * X[:, [0]] * X[:, [1]])).sum(axis=1, dtype=int)
+
+    est = Est(interaction_cst=shortcut)
+
+    if expected_message is not None:
+        with pytest.raises(ValueError, match=expected_message):
+            est.fit(X, y)
+
+    else:
+        est.fit(X, y)
 
 
 def test_interaction_cst_numerically():

@@ -3,6 +3,7 @@
 
 from abc import ABC, abstractmethod
 from functools import partial
+import itertools
 from numbers import Real, Integral
 import warnings
 
@@ -92,7 +93,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "min_samples_leaf": [Interval(Integral, 1, None, closed="left")],
         "l2_regularization": [Interval(Real, 0, None, closed="left")],
         "monotonic_cst": ["array-like", dict, None],
-        "interaction_cst": [list, tuple, None],
+        "interaction_cst": [list, tuple, str, None],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "validation_fraction": [
             Interval(Real, 0, 1, closed="neither"),
@@ -288,8 +289,20 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if self.interaction_cst is None:
             return None
 
+        if isinstance(self.interaction_cst, str):
+            if self.interaction_cst == "no interactions":
+                interaction_cst = [[i] for i in range(n_features)]
+
+            elif self.interaction_cst == "pairwise":
+                interaction_cst = itertools.combinations(range(n_features), 2)
+            else:
+                raise ValueError(
+                    f"'{self.interaction_cst}' is not a valid interaction constraint. "
+                    "Use 'no interactions', 'pairwise' or specify them explicitly."
+                )
+
         try:
-            constraints = [set(group) for group in self.interaction_cst]
+            constraints = [set(group) for group in interaction_cst]
         except TypeError:
             raise ValueError(
                 "Interaction constraints must be a sequence of tuples or lists, got:"
