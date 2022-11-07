@@ -299,6 +299,11 @@ Changelog
   Using interaction constraints also makes fitting faster.
   :pr:`24856` by :user:`Christian Lorentzen <lorentzenchr>`.
 
+- |Enhancement| Interaction constraints for :class:`~sklearn.ensemble.HistGradientBoostingClassifier`
+  and :class:`~sklearn.ensemble.HistGradientBoostingRegressor` can now be specified
+  as strings for two common cases: no interactions and pairwise interactions.
+  :pr:`24849` by :user:`Tim Head <betatim>`.
+
 - |Feature| Adds `class_weight` to :class:`ensemble.HistGradientBoostingClassifier`.
   :pr:`22014` by `Thomas Fan`_.
 
