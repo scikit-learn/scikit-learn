@@ -19,6 +19,56 @@ from ._base import _get_weights
 from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import ClassifierMixin
 from ..utils._param_validation import StrOptions
+from .._engine import get_engine_classes
+
+
+class KNeighborsClassifierCythonEngine:
+    def __init__(self, estimator):
+        self.estimator = estimator
+
+    def accepts(self, X, y=None, sample_weight=None):
+        # The default engine accepts everything
+        return True
+
+    def pre_fit(self, X, y=None, sample_weight=None):
+        return X, y, sample_weight
+
+    def fit(self, X, y=None, sample_weight=None):
+        return self.estimator._fit(X, y)
+
+    def predict(self, X, sample_weight=None):
+        if self.estimator.weights == "uniform":
+            # In that case, we do not need the distances to perform
+            # the weighting so we do not compute them.
+            neigh_ind = self.estimator.kneighbors(X, return_distance=False)
+            neigh_dist = None
+        else:
+            neigh_dist, neigh_ind = self.kneighbors(X)
+
+        classes_ = self.classes_
+        _y = self._y
+        if not self.outputs_2d_:
+            _y = self._y.reshape((-1, 1))
+            classes_ = [self.classes_]
+
+        n_outputs = len(classes_)
+        n_queries = _num_samples(X)
+        weights = _get_weights(neigh_dist, self.weights)
+
+        y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
+        for k, classes_k in enumerate(classes_):
+            if weights is None:
+                mode, _ = _mode(_y[neigh_ind, k], axis=1)
+            else:
+                mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
+
+            mode = np.asarray(mode.ravel(), dtype=np.intp)
+            y_pred[:, k] = classes_k.take(mode)
+
+        if not self.outputs_2d_:
+            y_pred = y_pred.ravel()
+
+        return y_pred
 
 
 class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
@@ -212,7 +262,29 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         """
         self._validate_params()
 
-        return self._fit(X, y)
+        engine = self._get_engine(X, y, sample_weight)
+
+        if hasattr(engine, "pre_fit"):
+            X, y, sample_weight = engine.pre_fit(
+                X,
+                y=y,
+                sample_weight=sample_weight,
+            )
+
+        engine.fit(
+            X,
+            y=y,
+            sample_weight=sample_weight,
+        )
+
+        if hasattr(engine, "post_fit"):
+            engine.post_fit(
+                X,
+                y=y,
+                sample_weight=sample_weight,
+            )
+
+        return self
 
     def predict(self, X):
         """Predict the class labels for the provided data.
@@ -228,38 +300,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs)
             Class labels for each data sample.
         """
-        if self.weights == "uniform":
-            # In that case, we do not need the distances to perform
-            # the weighting so we do not compute them.
-            neigh_ind = self.kneighbors(X, return_distance=False)
-            neigh_dist = None
-        else:
-            neigh_dist, neigh_ind = self.kneighbors(X)
-
-        classes_ = self.classes_
-        _y = self._y
-        if not self.outputs_2d_:
-            _y = self._y.reshape((-1, 1))
-            classes_ = [self.classes_]
-
-        n_outputs = len(classes_)
-        n_queries = _num_samples(X)
-        weights = _get_weights(neigh_dist, self.weights)
-
-        y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
-        for k, classes_k in enumerate(classes_):
-            if weights is None:
-                mode, _ = _mode(_y[neigh_ind, k], axis=1)
-            else:
-                mode, _ = weighted_mode(_y[neigh_ind, k], weights, axis=1)
-
-            mode = np.asarray(mode.ravel(), dtype=np.intp)
-            y_pred[:, k] = classes_k.take(mode)
-
-        if not self.outputs_2d_:
-            y_pred = y_pred.ravel()
-
-        return y_pred
+        pass
 
     def predict_proba(self, X):
         """Return probability estimates for the test data X.
@@ -321,6 +362,14 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
     def _more_tags(self):
         return {"multilabel": True}
+
+    def _get_engine(self, X, y=None, sample_weight=None):
+        for engine_class in get_engine_classes(
+            "kneigborsclassifier", default=KNeighborsClassifierCythonEngine, verbose=self.verbose
+        ):
+            engine = engine_class(self)
+            if engine.accepts(X, y=y, sample_weight=sample_weight):
+                return engine
 
 
 class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, NeighborsBase):
