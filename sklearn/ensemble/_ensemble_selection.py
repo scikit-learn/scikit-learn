@@ -33,12 +33,12 @@ DEFAULT_CLASSFIER_METRIC = log_loss
 DEFAULT_CLASSIFIER_DIRECTION = "min"
 
 
-class EnsembleSelection(
-    TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCMeta
-):
+class EnsembleSelection(TransformerMixin, _BaseHeterogeneousEnsemble,
+                        metaclass=ABCMeta):
     """An ensemble classifier built by greedy stepwise selection.
 
-    Bagged Ensemble Selection (section 2.3) of the original paper is not implemented.
+    Bagged Ensemble Selection (section 2.3) of the original paper is not
+    implemented.
 
     Parameters
     ----------
@@ -53,19 +53,25 @@ class EnsembleSelection(
     score_direction : str in {"min","max"}, optional (default="min")
         If the score metric should be minimized or maximized.
 
+    max_estimators : int, optional (default=50)
+        The maximum number of base estimators. It allows to control the final
+        ensemble size, and the ensemble selection computing time.
+
     min_estimators : int, optional (default=1)
         The minimum number of base estimators.
         The ensemble selection estimator may overfit the calibration dataset.
         We may assume big ensemble generalize better. So min_estimators
         value allows to regularize.
 
-    max_estimators : int, optional (default=50)
-        The maximum number of base estimators. It allows to control the final
-        ensemble size, and the ensemble selection computing time.
-
     pruning_factor : float, optional (default=0.6)
         The worst pruning_factor estimators are remove to reduce the number of
         combinations.
+
+    n_jobs : int, default=None
+        The number of jobs to run in parallel for ``fit``.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
 
     with_replacement : bool, optional (defaut=True)
         If the same model can be replaced multiple times in the ensemble.
@@ -79,12 +85,6 @@ class EnsembleSelection(
     is_base_estimator_proba : bool, optional (default=True)
         If True, estimators call `predict_proba(X)`, otherwise, `predict(X)`.
         In the doubt, let it to True.
-
-    n_jobs : int, default=None
-        The number of jobs to run in parallel for ``fit``.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
 
     verbose : bool, default=False
         Computing time may take a long time
@@ -131,8 +131,16 @@ class EnsembleSelection(
     ensemble_pred_ : ndarray(n_samples, n_outputs)
         cached predictions of the ensemble `ensemble_`  computed during :term:`fit`.
 
-    See also
-    ----------
+    classes_ : list of int
+        Classes seen during :term:`fit`.
+        Cached it allow future speed improvement.
+
+    _label_encoder : LabelEncoder
+        LabelEncoder fitted during EnsembleSelection :term:`fit`.
+        Cached it allow future speed improvement.
+
+    See Also
+    --------
     Stacking : Stack of estimators with a supervised learner as combination rule.
 
     References
@@ -535,10 +543,11 @@ class EnsembleSelection(
     def _fit_those_estimators_by_copy(
         self, named_estimator_to_fit, X, y, sample_weight
     ):
-        """`named_estimator_to_fit` is the list of (name, Estimator) with name a str.
-        Fit the unfitted estimators.
-        """
+        """Fit the unfitted estimators.
 
+        `named_estimator_to_fit` is the list of (name, estimator) with 'name' a str,
+        and estimator an Estimator. Unfitted estimators will be copied/fitted.
+        """
         # Parallel training of estimators
         new_fitted_est = joblib.Parallel(n_jobs=self.n_jobs)(
             joblib.delayed(self._fit_one_estimator)(clone(est), X, y, sample_weight)
@@ -564,7 +573,7 @@ class EnsembleSelection(
         return ensemble_preds
 
     def _get_score_of_ensemble(self, y, ensemble, sample_weight):
-        """Not used in this file because an optimized version is implemented in"""
+        """Not used in this file."""
         preds_weights = []
         for estimator_name, weight in ensemble.items():
             proba = self.base_model_preds_[estimator_name]
@@ -642,14 +651,10 @@ class EnsembleSelection(
         return score
 
     def _greedy_combi_ensemble(self, y, estimators_name, sample_weight):
-        """
-        Greedy Combinatorial Optimization to build ensembles
-        Search the best subset estimators_name
-        """
+        """Greedy Combinatorial Optimization to build ensembles.
 
-        # cur_ens_score, cur_ens_score = self._get_score_of_ensemble(X, y, ensemble)
-        # n_clfs = sum(ensemble.values())
-
+        Search the best subset estimators_name.
+        """
         # Init data structure
         current_ensemble = dict()
         for n in estimators_name:
@@ -777,7 +782,6 @@ class EnsembleSelection(
                 ]
             ).T
         else:
-            # convert
             self._label_encoder = LabelEncoder().fit(y)
             self.classes_ = self._label_encoder.classes_
             y = self._label_encoder.transform(y)
