@@ -334,9 +334,7 @@ total cost over the entire trees (by summing the cost at each node) of
 Tips on practical use
 =====================
 
-  * Decision trees tend to overfit on data with a large number of features.
-    Getting the right ratio of samples to number of features is important, since
-    a tree with few samples in high dimensional space is very likely to overfit.
+  * For more complicated problems, you need a larger depth decision tree, which results in overfitting.
 
   * Consider performing  dimensionality reduction (:ref:`PCA <PCA>`,
     :ref:`ICA <ICA>`, or :ref:`feature_selection`) beforehand to
