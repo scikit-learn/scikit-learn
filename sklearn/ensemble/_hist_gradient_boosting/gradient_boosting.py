@@ -1581,8 +1581,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         .. versionadded:: 0.23
 
         .. versionchanged:: 1.2
-
-            Accept dict of constraints with feature names as keys.
+           Accept dict of constraints with feature names as keys.
 
     interaction_cst : iterable of iterables of int, default=None
         Specify interaction constraints, i.e. sets of features which can
