@@ -277,6 +277,4 @@ def test_lof_input_dtype_preservation(global_dtype, algorithm, contamination, no
     )
     iso.fit(X)
 
-    assert iso.dist_matrix_.dtype == global_dtype
-    assert iso.embedding_.dtype == global_dtype
     assert iso.negative_outlier_factor_.dtype == global_dtype
