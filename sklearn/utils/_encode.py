@@ -98,7 +98,10 @@ def _extract_set_with_possibly_nan(values):
 
     We first filter out NaN values and later add it back to the set if needed.
     """
-    values_filtered = list(filterfalse(is_scalar_nan, values))
+    if any(map(is_scalar_nan, values)):
+        values_filtered = list(filterfalse(is_scalar_nan, values))
+    else:
+        values_filtered = values
     uniques_set = set(values_filtered)
     if len(values_filtered) != len(values):
         uniques_set.add(float("nan"))
