@@ -50,7 +50,8 @@ def expected_mutual_information(contingency, int n_samples):
     gln_N = gammaln(N + 1)
     gln_nij = gammaln(nijs + 1)
     # start and end values for nij terms for each summation.
-    start = np.array([[v - N + w for w in b] for v in a], dtype='int')
+    start = np.array(np.meshgrid(a, b), dtype='int').T
+    start = np.array([start[i].sum(axis=1) - N for i in range(len(start))])
     start = np.maximum(start, 1)
     end = np.minimum(np.resize(a, (C, R)).T, np.resize(b, (R, C))) + 1
     # emi itself is a summation over the various values.
