@@ -430,7 +430,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                         " of scipy `>=1.9.2` or alter the `PolynomialFeatures`"
                         " transformer to produce fewer than 2^31 output features"
                     )
-                XP = sparse.hstack(to_stack, dtype=X.dtype)
+                XP = sparse.hstack(to_stack, dtype=X.dtype, format="csr")
         elif sparse.isspmatrix_csc(X) and self._max_degree < 4:
             return self.transform(X.tocsr()).tocsc()
         elif sparse.isspmatrix(X):
