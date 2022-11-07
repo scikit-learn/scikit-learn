@@ -43,7 +43,6 @@ def test_lof(global_dtype):
     clf = neighbors.LocalOutlierFactor(n_neighbors=5)
     score = clf.fit(X).negative_outlier_factor_
     assert_array_equal(clf._fit_X, X)
-    assert score.dtype == global_dtype
 
     # Assert largest outlier score is smaller than smallest inlier score:
     assert np.min(score[:-2]) > np.max(score[-2:])
@@ -264,3 +263,20 @@ def test_sparse():
 
     lof = neighbors.LocalOutlierFactor(novelty=False)
     lof.fit_predict(X)
+
+
+@pytest.mark.parametrize("algorithm", ["auto", "ball_tree", "kd_tree", "brute"])
+@pytest.mark.parametrize("novelty", [True, False])
+@pytest.mark.parametrize("contamination", [0.5, "auto"])
+def test_lof_input_dtype_preservation(global_dtype, algorithm, contamination, novelty):
+    """Check that the fitted attributes are stored using the data type of X."""
+    X = iris.data.astype(global_dtype, copy=False)
+
+    iso = neighbors.LocalOutlierFactor(
+        n_neighbors=5, algorithm=algorithm, contamination=contamination, novelty=novelty
+    )
+    iso.fit(X)
+
+    assert iso.dist_matrix_.dtype == global_dtype
+    assert iso.embedding_.dtype == global_dtype
+    assert iso.negative_outlier_factor_.dtype == global_dtype
