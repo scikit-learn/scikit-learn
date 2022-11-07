@@ -448,6 +448,15 @@ class MetadataRequest:
         )
         return result
 
+    def is_param_aliased(self, *, method, param):
+        """TODO"""
+        is_aliased = any(
+            isinstance(alias, str) and (prop != alias)
+            for prop, alias in getattr(self, method)._requests.items()
+            if (prop == param)
+        )
+        return is_aliased
+
     def _check_warnings(self, *, method, params):
         """Check whether metadata is passed which is marked as WARN.
 
@@ -921,6 +930,16 @@ class MetadataRouter:
             method=method, return_alias=True, ignore_self=False
         )
         return result
+
+    def is_param_aliased(self, *, method, param):
+        """TODO"""
+        is_aliased = any(
+            isinstance(alias, str) and (prop != alias)
+            for _, router in self
+            for prop, alias in getattr(router.router, method).requests.items()
+            if (prop == param)
+        )
+        return is_aliased
 
     def validate_metadata(self, *, method, params):
         """Validate given metadata for a method.

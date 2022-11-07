@@ -13,6 +13,7 @@ import joblib
 import pytest
 
 from sklearn.base import BaseEstimator
+from sklearn.calibration import CalibratedClassifierCV
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -230,7 +231,6 @@ def test_sparse_regression():
         X_train_sparse = sparse_format(X_train)
         X_test_sparse = sparse_format(X_test)
         for params in parameter_sets:
-
             # Trained on sparse format
             sparse_classifier = BaggingRegressor(
                 estimator=CustomSVR(), random_state=1, **params
@@ -1249,3 +1249,74 @@ def test_deprecated_base_estimator_has_decision_function():
     with pytest.warns(FutureWarning, match=warn_msg):
         y_decision = clf.fit(X, y).decision_function(X)
     assert y_decision.shape == (150, 3)
+
+
+# TODO(1.4): remove in 1.4
+@pytest.mark.parametrize(
+    "Bagging, Estimator",
+    [
+        (BaggingClassifier, DecisionTreeClassifier),
+        (BaggingRegressor, DecisionTreeRegressor),
+    ],
+)
+def test_base_estimator_argument_missing_fit_request_warns(Bagging, Estimator):
+    # When using the deprecated base_estimator, there should still be a warning
+    # when not setting the fit request
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    sample_weight = np.array([1.0, 1.0])
+    model = Bagging(base_estimator=Estimator(), n_estimators=10)
+
+    warn_msg = (
+        "You are passing metadata for which the request values are not "
+        "explicitly set: sample_weight"
+    )
+    with pytest.warns(FutureWarning, match=warn_msg):
+        model.fit(X, y, sample_weight=sample_weight)
+
+    # When setting the fit request, the warning disappears. To check that, it's
+    # not possible to check for the absence of FutureWarnings, since there will
+    # still be the deprecation for base_estimator. Therefore, catch all warnings
+    # and check the warning message.
+    model = Bagging(base_estimator=_weighted(Estimator()), n_estimators=10)
+    with pytest.warns(FutureWarning) as record:
+        model.fit(X, y, sample_weight=sample_weight)
+        assert not any(warn_msg in w.message.args[0] for w in record.list)
+
+
+@pytest.mark.parametrize("estimator_cls", [BaggingClassifier, BaggingRegressor])
+def test_base_estimator_aliases_sample_weight_raises(estimator_cls):
+    # Aliasing sample weight on the base estimator is not supported because it
+    # means that there are potentially two different sample weights and it's
+    # unclear what to do with them. Since aliasing was not possible before
+    # introducing metadata routing, this does not preclude something that was
+    # possible before.
+
+    # Using iris even for regression, which is fine for the purpose of this test
+    X, y = iris.data, iris.target
+    sample_weight = np.ones_like(y)
+
+    estimator = SVC().set_fit_request(sample_weight="my_sample_weight")
+    estimator = estimator_cls(estimator, max_samples=0.5)
+
+    # there are no warnings and no errors
+    with pytest.raises(ValueError):
+        estimator.fit(X, y, my_sample_weight=sample_weight)
+
+
+@pytest.mark.parametrize("estimator_cls", [BaggingClassifier, BaggingRegressor])
+def test_base_estimator_metaestimator_aliases_sample_weight_raises(estimator_cls):
+    # Same reasoning as previous test but using metaestimator as base estimator
+
+    # Using iris even for regression, which is fine for the purpose of this test
+    X, y = iris.data, iris.target
+    sample_weight = np.ones_like(y)
+
+    estimator = CalibratedClassifierCV(SVC()).set_fit_request(
+        sample_weight="my_sample_weight"
+    )
+    estimator = estimator_cls(estimator, max_samples=0.5)
+
+    # there are no warnings and no errors
+    with pytest.raises(ValueError):
+        estimator.fit(X, y, my_sample_weight=sample_weight)

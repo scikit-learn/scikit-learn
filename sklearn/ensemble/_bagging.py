@@ -141,16 +141,16 @@ def _parallel_build_estimators(
         # by indexing. The former is more efficient. Therefore, use this method
         # if possible, otherwise use indexing.
         request_or_router = get_routing_for_object(ensemble.estimator_)
+        if request_or_router.is_param_aliased(method="fit", param="sample_weight"):
+            raise ValueError("TODO")
         supports_sample_weight = request_or_router.supports(
             method="fit", param="sample_weight"
         )
         if supports_sample_weight:
             # row subsampling via sample_weight
-            sample_weight = fit_params_.pop("sample_weight", None)
-            if sample_weight is None:
-                curr_sample_weight = np.ones((n_samples,))
-            else:
-                curr_sample_weight = sample_weight.copy()
+            curr_sample_weight = _check_sample_weight(
+                fit_params_.pop("sample_weight", None), X
+            ).copy()
 
             if bootstrap:
                 sample_counts = np.bincount(indices, minlength=n_samples)
@@ -535,7 +535,7 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
                 total_n_estimators=total_n_estimators,
                 verbose=self.verbose,
                 check_input=check_input,
-                fit_params=routed_params.base_estimator.fit,
+                fit_params=routed_params.estimator.fit,
             )
             for i in range(n_jobs)
         )
@@ -606,18 +606,18 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
             A :class:`~sklearn.utils.metadata_routing.MetadataRouter` encapsulating
             routing information.
         """
-        base_estimator = self._validate_estimator(self._get_estimator())
+        estimator = self._validate_estimator(self._get_estimator())
         router = (
             MetadataRouter(owner=self.__class__.__name__)
             # no add_self(self) because the bagging meta-estimator does not use
             # fit_params
             .add(
-                base_estimator=base_estimator,
+                estimator=estimator,
                 method_mapping=MethodMapping().add(callee="fit", caller="fit"),
             )
             # warn on sample_weight because that was already supported, the rest
             # raises
-            .warn_on(child="base_estimator", method="fit", params=["sample_weight"])
+            .warn_on(child="estimator", method="fit", params=["sample_weight"])
         )
         return router
 
@@ -820,7 +820,6 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         verbose=0,
         base_estimator="deprecated",
     ):
-
         super().__init__(
             estimator=estimator,
             n_estimators=n_estimators,
