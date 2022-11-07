@@ -23,6 +23,7 @@ from ...utils.validation import (
     check_is_fitted,
     check_consistent_length,
     _check_sample_weight,
+    _check_monotonic_cst,
 )
 from ...utils._param_validation import Interval, StrOptions
 from ...utils._openmp_helpers import _openmp_effective_n_threads
@@ -91,7 +92,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "max_depth": [Interval(Integral, 1, None, closed="left"), None],
         "min_samples_leaf": [Interval(Integral, 1, None, closed="left")],
         "l2_regularization": [Interval(Real, 0, None, closed="left")],
-        "monotonic_cst": ["array-like", None],
+        "monotonic_cst": ["array-like", dict, None],
         "interaction_cst": [Iterable, None],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "validation_fraction": [
@@ -342,6 +343,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._random_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
 
         self._validate_parameters()
+        monotonic_cst = _check_monotonic_cst(self, self.monotonic_cst)
 
         # used for validation in predict
         n_samples, self._n_features = X.shape
@@ -637,7 +639,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
                     is_categorical=self.is_categorical_,
-                    monotonic_cst=self.monotonic_cst,
+                    monotonic_cst=monotonic_cst,
                     interaction_cst=interaction_cst,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
@@ -1559,8 +1561,15 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         .. versionadded:: 0.24
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature.
+    monotonic_cst : dict of str, array-like of int of shape (n_features), \
+            default=None
+
+        If a dict with str keys, map feature names to monotonic constraints by
+        feature names. If an array, the feature are mapped to constraints by
+        position.
+
+        Monotonic constraint to enforce on each feature are specified using the
+        following integer values:
           - 1: monotonic increase
           - 0: no constraint
           - -1: monotonic decrease
@@ -1570,6 +1579,10 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
         .. versionadded:: 0.23
+
+        .. versionchanged:: 1.2
+
+            Accept dict of constraints with feature names as keys.
 
     interaction_cst : iterable of iterables of int, default=None
         Specify interaction constraints, i.e. sets of features which can

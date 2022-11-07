@@ -1,3 +1,4 @@
+import re
 import numpy as np
 import pytest
 
@@ -258,15 +259,13 @@ def test_input_error():
 
     gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, 0, -1])
     with pytest.raises(
-        ValueError, match="monotonic_cst has shape 3 but the input data"
+        ValueError, match=re.escape("monotonic_cst has shape (3,) but the input data")
     ):
         gbdt.fit(X, y)
 
     for monotonic_cst in ([1, 3], [1, -3]):
         gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
-        with pytest.raises(
-            ValueError, match="must be None or an array-like of -1, 0 or 1"
-        ):
+        with pytest.raises(ValueError, match="must be an array-like of -1, 0 or 1"):
             gbdt.fit(X, y)
 
     gbdt = HistGradientBoostingClassifier(monotonic_cst=[0, 1])
