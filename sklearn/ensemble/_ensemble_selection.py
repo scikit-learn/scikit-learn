@@ -19,7 +19,6 @@ from ..exceptions import NotFittedError
 from ..preprocessing import LabelEncoder
 from .. import preprocessing
 
-from ..utils._array_api import get_namespace
 from ..utils.validation import column_or_1d
 from ..utils.multiclass import type_of_target
 from ..utils._param_validation import StrOptions
@@ -33,8 +32,9 @@ DEFAULT_CLASSFIER_METRIC = log_loss
 DEFAULT_CLASSIFIER_DIRECTION = "min"
 
 
-class EnsembleSelection(TransformerMixin, _BaseHeterogeneousEnsemble,
-                        metaclass=ABCMeta):
+class EnsembleSelection(
+    TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCMeta
+):
     """An ensemble classifier built by greedy stepwise selection.
 
     Bagged Ensemble Selection (section 2.3) of the original paper is not
@@ -211,19 +211,18 @@ class EnsembleSelection(TransformerMixin, _BaseHeterogeneousEnsemble,
     def _check_and_convert_estimators(estimators):
         # convert estimators to a list of (name,estimator).
         # This bloc of code allows CI compliance.
-        format = "named_est"
         if isinstance(estimators, list) and len(estimators) > 0:
             first_obj = estimators[0]
             if isinstance(first_obj, tuple) and len(first_obj) == 2:
-                format = "named_est"
+                estimators_format = "named_est"
             else:
-                format = "list_of_est"
+                estimators_format = "list_of_est"
         else:
             raise ValueError("Not expected container type")
 
         # conversion if required
         default_prefix = "est"
-        if format == "list_of_est":
+        if estimators_format == "list_of_est":
             named_estimators = []
             for i, e in enumerate(estimators):
                 named_estimators.append((default_prefix + str(i), e))
@@ -239,8 +238,7 @@ class EnsembleSelection(TransformerMixin, _BaseHeterogeneousEnsemble,
             return "classifier"
         elif is_regressor(est):
             return "regressor"
-        else:
-            raise ValueError("Unknown task type")
+        raise ValueError("Unknown task type")
 
     @staticmethod
     def _combination_rule(preds_weights):
@@ -254,6 +252,16 @@ class EnsembleSelection(TransformerMixin, _BaseHeterogeneousEnsemble,
             sum_weights += w
         final_predictions /= sum_weights
         return final_predictions
+
+    @staticmethod
+    def _fit_one_estimator(est, X, y, sample_weight):
+        try:
+            _fit_single_estimator(est, X, y, sample_weight)
+        except TypeError:
+            # TODO clean check if compatible with sample_weight
+            # For example Gaussian estimator cannot handle weights
+            _fit_single_estimator(est, X, y)
+        return est
 
     def fit(self, X, y, sample_weight=None):
         """Fit the estimator.
@@ -531,15 +539,6 @@ class EnsembleSelection(TransformerMixin, _BaseHeterogeneousEnsemble,
             self.score_metric_ = self.score_metric
             self.score_direction_ = self.score_direction
 
-    def _fit_one_estimator(self, est, X, y, sample_weight):
-        try:
-            _fit_single_estimator(est, X, y, sample_weight)
-        except TypeError:
-            # TODO clean check if compatible with sample_weight
-            # For example Gaussian estimator cannot handle weights
-            _fit_single_estimator(est, X, y)
-        return est
-
     def _fit_those_estimators_by_copy(
         self, named_estimator_to_fit, X, y, sample_weight
     ):
@@ -550,17 +549,19 @@ class EnsembleSelection(TransformerMixin, _BaseHeterogeneousEnsemble,
         """
         # Parallel training of estimators
         new_fitted_est = joblib.Parallel(n_jobs=self.n_jobs)(
-            joblib.delayed(self._fit_one_estimator)(clone(est), X, y, sample_weight)
+            joblib.delayed(EnsembleSelection._fit_one_estimator)(
+                clone(est), X, y, sample_weight
+            )
             for name, est in named_estimator_to_fit
         )
         new_fitted_est_name = [named_est[0] for named_est in named_estimator_to_fit]
 
-        new_named_est = dict()
+        new_named_est = {}
         for name, est in zip(new_fitted_est_name, new_fitted_est):
             new_named_est[name] = est
 
         fitted_estimators = []
-        for i, (n, old_estimator) in enumerate(self.estimators):
+        for _, (n, old_estimator) in enumerate(self.estimators):
             if n in new_named_est:
                 fitted_estimators.append((n, new_named_est[n]))
             else:
@@ -588,7 +589,6 @@ class EnsembleSelection(TransformerMixin, _BaseHeterogeneousEnsemble,
         for estimator_name, estimator in self.fitted_estimators_:
             estimator_weight = self.ensemble_.get(estimator_name, 0)
             if estimator_weight > 0:
-
                 pred = self._estimator_predict(X, estimator)
 
                 preds_weights.append((pred, estimator_weight))
@@ -597,8 +597,7 @@ class EnsembleSelection(TransformerMixin, _BaseHeterogeneousEnsemble,
     def _estimator_predict(self, X, est):
         if self.is_base_estimator_proba and hasattr(est, "predict_proba"):
             return est.predict_proba(X)
-        else:
-            return est.predict(X)
+        return est.predict(X)
 
     def _progressive_metric(
         self,
@@ -656,7 +655,7 @@ class EnsembleSelection(TransformerMixin, _BaseHeterogeneousEnsemble,
         Search the best subset estimators_name.
         """
         # Init data structure
-        current_ensemble = dict()
+        current_ensemble = {}
         for n in estimators_name:
             current_ensemble[n] = 0
         current_ensemble_score = (
@@ -668,12 +667,10 @@ class EnsembleSelection(TransformerMixin, _BaseHeterogeneousEnsemble,
             return current_ensemble, current_ensemble_score, current_ensemble_pred
 
         with joblib.Parallel(n_jobs=self.n_jobs) as parallel:
-
             e = 0  # number of select model
             while (
                 e < self.max_estimators
             ):  # while max iterations is not reached or no more improvement
-
                 # Scan all potential model
                 if self.n_jobs == 1:
                     list_info = [
@@ -751,22 +748,6 @@ class EnsembleSelection(TransformerMixin, _BaseHeterogeneousEnsemble,
                         estimators_name.remove(best_candidate_ens_name)
 
         return current_ensemble, current_ensemble_score, current_ensemble_pred
-
-    def _get_classif_y_format(self, y):
-        xp, _ = get_namespace(y)
-        y = xp.asarray(y)
-        shape = y.shape
-        if len(shape) == 1:
-            return "sparse"
-        elif len(shape) == 2:
-            if shape[1] == 1:
-                return "sparse"
-            elif shape[1] > 1:
-                return "onehot"
-            else:
-                raise ValueError("y shape unexpected")
-        else:
-            raise ValueError("Y format not handled")
 
     def _y_preproces_for_regression(self, y):
         return column_or_1d(y)
