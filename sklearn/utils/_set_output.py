@@ -171,6 +171,8 @@ class _SetOutputMixin:
     """
 
     def __init_subclass__(cls, auto_wrap_output_keys=("transform",), **kwargs):
+        super().__init_subclass__(**kwargs)
+
         # Dynamically wraps `transform` and `fit_transform` and configure it's
         # output based on `set_output`.
         if not (

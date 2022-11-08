@@ -199,3 +199,20 @@ def test_auto_wrap_output_keys_errors_with_incorrect_input():
 
         class BadEstimator(_SetOutputMixin, auto_wrap_output_keys="bad_parameter"):
             pass
+
+
+class AnotherMixin:
+    def __init_subclass__(cls, custom_parameter, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.custom_parameter = custom_parameter
+
+
+def test_set_output_mixin_custom_mixin():
+    """Check that multiple init_subclasses passes parameters up."""
+
+    class BothMixinEstimator(_SetOutputMixin, AnotherMixin, custom_parameter=123):
+        def transform(self, X, y=None):
+            return X
+
+    est = BothMixinEstimator()
+    assert est.custom_parameter == 123
