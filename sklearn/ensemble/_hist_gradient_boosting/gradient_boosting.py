@@ -2,6 +2,7 @@
 # Author: Nicolas Hug
 
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from functools import partial
 from numbers import Real, Integral
 import warnings
@@ -91,6 +92,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "min_samples_leaf": [Interval(Integral, 1, None, closed="left")],
         "l2_regularization": [Interval(Real, 0, None, closed="left")],
         "monotonic_cst": ["array-like", None],
+        "interaction_cst": [Iterable, None],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "validation_fraction": [
             Interval(Real, 0, 1, closed="neither"),
@@ -121,6 +123,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         max_bins,
         categorical_features,
         monotonic_cst,
+        interaction_cst,
         warm_start,
         early_stopping,
         scoring,
@@ -139,6 +142,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         self.l2_regularization = l2_regularization
         self.max_bins = max_bins
         self.monotonic_cst = monotonic_cst
+        self.interaction_cst = interaction_cst
         self.categorical_features = categorical_features
         self.warm_start = warm_start
         self.early_stopping = early_stopping
@@ -252,6 +256,42 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         return is_categorical, known_categories
 
+    def _check_interaction_cst(self, n_features):
+        """Check and validation for interaction constraints."""
+        if self.interaction_cst is None:
+            return None
+
+        if not (
+            isinstance(self.interaction_cst, Iterable)
+            and all(isinstance(x, Iterable) for x in self.interaction_cst)
+        ):
+            raise ValueError(
+                "Interaction constraints must be None or an iterable of iterables, "
+                f"got: {self.interaction_cst!r}."
+            )
+
+        invalid_indices = [
+            x
+            for cst_set in self.interaction_cst
+            for x in cst_set
+            if not (isinstance(x, Integral) and 0 <= x < n_features)
+        ]
+        if invalid_indices:
+            raise ValueError(
+                "Interaction constraints must consist of integer indices in [0,"
+                f" n_features - 1] = [0, {n_features - 1}], specifying the position of"
+                f" features, got invalid indices: {invalid_indices!r}"
+            )
+
+        constraints = [set(group) for group in self.interaction_cst]
+
+        # Add all not listed features as own group by default.
+        rest = set(range(n_features)) - set().union(*constraints)
+        if len(rest) > 0:
+            constraints.append(rest)
+
+        return constraints
+
     def fit(self, X, y, sample_weight=None):
         """Fit the gradient boosting model.
 
@@ -307,6 +347,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         n_samples, self._n_features = X.shape
 
         self.is_categorical_, known_categories = self._check_categories(X)
+
+        # Encode constraints into a list of sets of features indices (integers).
+        interaction_cst = self._check_interaction_cst(self._n_features)
 
         # we need this stateful variable to tell raw_predict() that it was
         # called from fit() (this current method), and that the data it has
@@ -595,6 +638,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     has_missing_values=has_missing_values,
                     is_categorical=self.is_categorical_,
                     monotonic_cst=self.monotonic_cst,
+                    interaction_cst=interaction_cst,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
                     min_samples_leaf=self.min_samples_leaf,
@@ -1193,6 +1237,22 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
         .. versionadded:: 0.23
 
+    interaction_cst : iterable of iterables of int, default=None
+        Specify interaction constraints, the sets of features which can
+        interact with each other in child node splits.
+
+        Each iterable materializes a constraint by the set of indices of
+        the features that are allowed to interact with each other.
+        If there are more features than specified in these constraints,
+        they are treated as if they were specified as an additional set.
+
+        For instance, with 5 features in total, `interaction_cst=[{0, 1}]`
+        is equivalent to `interaction_cst=[{0, 1}, {2, 3, 4}]`,
+        and specifies that each branch of a tree will either only split
+        on features 0 and 1 or only split on features 2, 3 and 4.
+
+        .. versionadded:: 1.2
+
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
@@ -1317,6 +1377,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         max_bins=255,
         categorical_features=None,
         monotonic_cst=None,
+        interaction_cst=None,
         warm_start=False,
         early_stopping="auto",
         scoring="loss",
@@ -1336,6 +1397,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             l2_regularization=l2_regularization,
             max_bins=max_bins,
             monotonic_cst=monotonic_cst,
+            interaction_cst=interaction_cst,
             categorical_features=categorical_features,
             early_stopping=early_stopping,
             warm_start=warm_start,
@@ -1509,6 +1571,22 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         .. versionadded:: 0.23
 
+    interaction_cst : iterable of iterables of int, default=None
+        Specify interaction constraints, the sets of features which can
+        interact with each other in child node splits.
+
+        Each iterable materializes a constraint by the set of indices of
+        the features that are allowed to interact with each other.
+        If there are more features than specified in these constraints,
+        they are treated as if they were specified as an additional set.
+
+        For instance, with 5 features in total, `interaction_cst=[{0, 1}]`
+        is equivalent to `interaction_cst=[{0, 1}, {2, 3, 4}]`,
+        and specifies that each branch of a tree will either only split
+        on features 0 and 1 or only split on features 2, 3 and 4.
+
+        .. versionadded:: 1.2
+
     warm_start : bool, default=False
         When set to ``True``, reuse the solution of the previous call to fit
         and add more estimators to the ensemble. For results to be valid, the
@@ -1657,6 +1735,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         max_bins=255,
         categorical_features=None,
         monotonic_cst=None,
+        interaction_cst=None,
         warm_start=False,
         early_stopping="auto",
         scoring="loss",
@@ -1678,6 +1757,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             max_bins=max_bins,
             categorical_features=categorical_features,
             monotonic_cst=monotonic_cst,
+            interaction_cst=interaction_cst,
             warm_start=warm_start,
             early_stopping=early_stopping,
             scoring=scoring,

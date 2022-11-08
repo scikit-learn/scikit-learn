@@ -14,6 +14,8 @@ from sklearn.utils._testing import ignore_warnings
 
 from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
+from sklearn.utils._set_output import _get_output_config
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import GridSearchCV
 
@@ -613,7 +615,7 @@ def test_feature_names_in():
     trans.fit(df)
     msg = "The feature names should match those that were passed"
     df_bad = pd.DataFrame(X_np, columns=iris.feature_names[::-1])
-    with pytest.warns(FutureWarning, match=msg):
+    with pytest.raises(ValueError, match=msg):
         trans.transform(df_bad)
 
     # warns when fitted on dataframe and transforming a ndarray
@@ -645,8 +647,7 @@ def test_feature_names_in():
             warnings.simplefilter("error", UserWarning)
             trans.transform(X)
 
-    # TODO: Convert to a error in 1.2
-    # fit on dataframe with feature names that are mixed warns:
+    # fit on dataframe with feature names that are mixed raises an error:
     df_mixed = pd.DataFrame(X_np, columns=["a", "b", 1, 2])
     trans = NoOpTransformer()
     msg = re.escape(
@@ -656,6 +657,17 @@ def test_feature_names_in():
     with pytest.raises(TypeError, match=msg):
         trans.fit(df_mixed)
 
-    # transform on feature names that are mixed also warns:
+    # transform on feature names that are mixed also raises:
     with pytest.raises(TypeError, match=msg):
         trans.transform(df_mixed)
+
+
+def test_clone_keeps_output_config():
+    """Check that clone keeps the set_output config."""
+
+    ss = StandardScaler().set_output(transform="pandas")
+    config = _get_output_config("transform", ss)
+
+    ss_clone = clone(ss)
+    config_clone = _get_output_config("transform", ss_clone)
+    assert config == config_clone
