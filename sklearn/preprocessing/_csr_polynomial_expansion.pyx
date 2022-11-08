@@ -12,18 +12,22 @@ ctypedef cnp.int8_t FLAG_t
 
 # This is (approximately) the maximum value before the intermediate computation
 # i**2 + 3*i blows out.
+# (Approximate) solution to i**2 + 3*i = maxint32
 cdef cnp.int64_t MAX_SAFE_INDEX_DEG2 = <cnp.int64_t> sqrt(LONG_MAX) - 4
 
 # This is (approximately) the maximum value before the intermediate computation
-# 3 * d**2 * i + i**3 blows out, since d is the upper bound of i.
+# 3 * d**2 * d + d**3 blows out, since d is the upper bound of i.
+# (Approximate) solution to 3 * d**2 * d + d**3 = maxint32
 cdef cnp.int64_t MAX_SAFE_INDEX_DEG3 = <cnp.int64_t> pow(LONG_MAX, 1/3)/4
 
 # This is the maximum value before the intermediate computation
 # d**2 + d blows out
+# Solution to d**2 + d = maxint32
 cdef cnp.int64_t MAX_SAFE_INDEX_CALC_DEG2 = <cnp.int64_t> sqrt(LONG_MAX)
 
 # This is the maximum value before the intermediate computation
 # d**3 + 3 * d**2 + 2*d blows out
+# Solution to d**3 + 3 * d**2 + 2*d = maxint32
 cdef cnp.int64_t MAX_SAFE_INDEX_CALC_DEG3 = 2097151
 
 # INDEX_{A,B}_t are defined to generate a proper Cartesian product
