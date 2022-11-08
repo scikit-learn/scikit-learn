@@ -2036,7 +2036,7 @@ def _check_monotonic_cst(estimator, monotonic_cst=None):
                     "monotonic_cst contains unexpected feature names: "
                     f"{unexpected_feature_names}"
                 )
-            for feature_idx, feature_name in estimator.feature_names_in_:
+            for feature_idx, feature_name in enumerate(estimator.feature_names_in_):
                 if feature_name in original_monotonic_cst:
                     cst = original_monotonic_cst[feature_name]
                     if cst not in [-1, 0, 1]:

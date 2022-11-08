@@ -198,24 +198,33 @@ def test_nodes_values(monotonic_cst, seed):
     assert_leaves_values_monotonic(predictor, monotonic_cst)
 
 
-@pytest.mark.parametrize("seed", range(3))
-def test_predictions(seed):
+@pytest.mark.parametrize("use_feature_names", (True, False))
+def test_predictions(global_random_seed, use_feature_names):
     # Train a model with a POS constraint on the first feature and a NEG
     # constraint on the second feature, and make sure the constraints are
     # respected by checking the predictions.
     # test adapted from lightgbm's test_monotone_constraint(), itself inspired
     # by https://xgboost.readthedocs.io/en/latest/tutorials/monotonic.html
 
-    rng = np.random.RandomState(seed)
+    rng = np.random.RandomState(global_random_seed)
 
     n_samples = 1000
     f_0 = rng.rand(n_samples)  # positive correlation with y
     f_1 = rng.rand(n_samples)  # negative correslation with y
     X = np.c_[f_0, f_1]
+    if use_feature_names:
+        pd = pytest.importorskip("pandas")
+        X = pd.DataFrame(X, columns=["f_0", "f_1"])
+
     noise = rng.normal(loc=0.0, scale=0.01, size=n_samples)
     y = 5 * f_0 + np.sin(10 * np.pi * f_0) - 5 * f_1 - np.cos(10 * np.pi * f_1) + noise
 
-    gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1])
+    if use_feature_names:
+        monotonic_cst = {"f_0": +1, "f_1": -1}
+    else:
+        monotonic_cst = [+1, -1]
+
+    gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
     gbdt.fit(X, y)
 
     linspace = np.linspace(0, 1, 100)
