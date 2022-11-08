@@ -214,5 +214,9 @@ def test_set_output_mixin_custom_mixin():
         def transform(self, X, y=None):
             return X
 
+        def get_feature_names_out(self, input_features=None):
+            return input_features
+
     est = BothMixinEstimator()
     assert est.custom_parameter == 123
+    assert hasattr(est, "set_output")
