@@ -17,7 +17,7 @@ from ..utils._param_validation import validate_params
         "y": ["array-like"],
         "loss": [StrOptions({"squared_hinge", "log"})],
         "fit_intercept": ["boolean"],
-        "intercept_scaling": [float],
+        "intercept_scaling": [Interval(Real, 0, None, closed="neither")],
     }
 )
 def l1_min_c(X, y, *, loss="squared_hinge", fit_intercept=True, intercept_scaling=1.0):
