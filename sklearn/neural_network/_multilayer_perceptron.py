@@ -581,6 +581,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                 test_size=self.validation_fraction,
                 stratify=stratify,
             )
+            if X_val.shape[0] < 2:
+                raise ValueError("The validation set is too small. Increase the validation_fraction or the size of your dataset.")
             if is_classifier(self):
                 y_val = self._label_binarizer.inverse_transform(y_val)
         else:
