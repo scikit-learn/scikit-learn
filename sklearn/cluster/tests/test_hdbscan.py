@@ -165,10 +165,10 @@ def test_dbscan_clustering_outlier_data(cut_distance):
     model = HDBSCAN().fit(X_outlier)
     labels = model.dbscan_clustering(cut_distance=cut_distance)
 
-    (missing_labels_idx,) = (labels == missing_label).nonzero()
+    missing_labels_idx = np.flatnonzero(labels == missing_label)
     assert_array_equal(missing_labels_idx, [2, 5])
 
-    (infinite_labels_idx,) = (labels == infinite_label).nonzero()
+    infinite_labels_idx = np.flatnonzero(labels == infinite_label)
     assert_array_equal(infinite_labels_idx, [0])
 
     clean_indices = list(range(1, 5)) + list(range(6, 200))
