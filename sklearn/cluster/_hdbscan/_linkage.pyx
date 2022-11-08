@@ -1,6 +1,7 @@
 # Minimum spanning tree single linkage implementation for hdbscan
 # Authors: Leland McInnes <leland.mcinnes@gmail.com>
 #          Steve Astels <sastels@gmail.com>
+#          Meekail Zain <zainmeekail@gmail.com>
 # License: 3-clause BSD
 
 cimport numpy as cnp
