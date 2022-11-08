@@ -55,7 +55,7 @@ random sampling procedures.
   :pr:`24543` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Enhancement| The default of `eps` in :func:`metrics.logloss` is will change
-  from `1e-15` to `"auto"` that default to `np.finfo(y_pred.dtype).eps`.
+  from `1e-15` to `"auto"` that defaults to `np.finfo(y_pred.dtype).eps`.
   :pr:`24354` by :user:`Safiuddin Khaja <Safikh>` and :user:`gsiisg <gsiisg>`.
 
 Changes impacting all modules
