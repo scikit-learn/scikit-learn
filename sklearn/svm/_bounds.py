@@ -2,13 +2,14 @@
 # Author: Paolo Losi
 # License: BSD 3 clause
 
+from numbers import Real
+
 import numpy as np
 
 from ..preprocessing import LabelBinarizer
 from ..utils.validation import check_consistent_length, check_array
 from ..utils.extmath import safe_sparse_dot
-from ..utils._param_validation import StrOptions
-from ..utils._param_validation import validate_params
+from ..utils._param_validation import StrOptions, Interval, validate_params
 
 
 @validate_params(
