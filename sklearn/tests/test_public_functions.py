@@ -10,6 +10,7 @@ from sklearn.utils._param_validation import make_constraint
 
 PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.cluster.kmeans_plusplus",
+    "sklearn.cluster.affinity_propagation",
 ]
 
 

@@ -13,7 +13,9 @@ import numpy as np
 from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array, check_random_state
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
+from ..utils._param_validation import validate_params
 from ..utils.validation import check_is_fitted
 from ..metrics import euclidean_distances
 from ..metrics import pairwise_distances_argmin
@@ -34,6 +36,23 @@ def _equal_similarities_and_preferences(S, preference):
     return all_equal_preferences() and all_equal_similarities()
 
 
+@validate_params(
+    {
+        "S": ["array-like"],
+        "preference": [
+            "array-like",
+            Interval(Real, None, None, closed="neither"),
+            None,
+        ],
+        "convergence_iter": [Interval(Integral, 1, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "damping": [Interval(Real, 0.5, 1.0, closed="both")],
+        "copy": ["boolean"],
+        "verbose": ["boolean"],
+        "return_n_iter": ["boolean"],
+        "random_state": ["random_state"],
+    }
+)
 def affinity_propagation(
     S,
     *,
