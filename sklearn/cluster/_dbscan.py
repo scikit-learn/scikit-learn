@@ -17,11 +17,28 @@ from scipy import sparse
 from ..metrics.pairwise import _VALID_METRICS
 from ..base import BaseEstimator, ClusterMixin
 from ..utils.validation import _check_sample_weight
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..neighbors import NearestNeighbors
 from ._dbscan_inner import dbscan_inner
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "eps": [Interval(Real, 0.0, None, closed="neither")],
+        "min_samples": [Interval(Integral, 1, None, closed="left")],
+        "metric": [
+            StrOptions(set(_VALID_METRICS) | {"precomputed"}),
+            callable,
+        ],
+        "metric_params": [dict, None],
+        "algorithm": [StrOptions({"auto", "ball_tree", "kd_tree", "brute"})],
+        "leaf_size": [Interval(Integral, 1, None, closed="left")],
+        "p": [Interval(Real, 0.0, None, closed="left"), None],
+        "sample_weight": ["array-like", None],
+        "n_jobs": [Integral, None],
+    }
+)
 def dbscan(
     X,
     eps=0.5,
