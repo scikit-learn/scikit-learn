@@ -7,8 +7,19 @@ import numpy as np
 from ..preprocessing import LabelBinarizer
 from ..utils.validation import check_consistent_length, check_array
 from ..utils.extmath import safe_sparse_dot
+from ..utils._param_validation import StrOptions
+from ..utils._param_validation import validate_params
 
 
+@validate_params(
+    {
+        "X": ["array-like", "sparse matrix"],
+        "y": "array-like",
+        "loss": StrOptions({"squared_hinge", "log"}),
+        "fit_intercept": "boolean",
+        "intercept_scaling": float,
+    }
+)
 def l1_min_c(X, y, *, loss="squared_hinge", fit_intercept=True, intercept_scaling=1.0):
     """Return the lowest bound for C.
 
@@ -49,8 +60,6 @@ def l1_min_c(X, y, *, loss="squared_hinge", fit_intercept=True, intercept_scalin
     l1_min_c : float
         Minimum value for C.
     """
-    if loss not in ("squared_hinge", "log"):
-        raise ValueError('loss type not in ("squared_hinge", "log")')
 
     X = check_array(X, accept_sparse="csc")
     check_consistent_length(X, y)
