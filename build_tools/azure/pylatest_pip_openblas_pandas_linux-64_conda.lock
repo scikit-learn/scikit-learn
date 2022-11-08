@@ -12,7 +12,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/_openmp_mutex-5.1-1_gnu.conda#71d28
 https://repo.anaconda.com/pkgs/main/linux-64/libgcc-ng-11.2.0-h1234567_1.conda#a87728dabf3151fb9cfa990bd2eb0464
 https://repo.anaconda.com/pkgs/main/linux-64/libffi-3.3-he6710b0_2.conda#88a54b8f50e351c650e16f4ee781440c
 https://repo.anaconda.com/pkgs/main/linux-64/ncurses-6.3-h5eee18b_3.conda#0c616f387885c1bbb57ec0bd1e779ced
-https://repo.anaconda.com/pkgs/main/linux-64/openssl-1.1.1q-h7f8727e_0.conda#2ac47797afee2ece8d339c18b095b8d8
+https://repo.anaconda.com/pkgs/main/linux-64/openssl-1.1.1s-h7f8727e_0.conda#25f9c4e2394976be98d01cccef2ce43a
 https://repo.anaconda.com/pkgs/main/linux-64/xz-5.2.6-h5eee18b_0.conda#8abc704d4a473839d5351b43deb793bb
 https://repo.anaconda.com/pkgs/main/linux-64/zlib-1.2.13-h5eee18b_0.conda#333e31fbfbb5057c92fa845ad6adef93
 https://repo.anaconda.com/pkgs/main/linux-64/ccache-3.7.9-hfe4627d_0.conda#bef6fc681c273bb7bd0c67d1a591365e
@@ -30,7 +30,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-22.2.2-py39h06a4308_0.conda#cb9
 # pip cycler @ https://files.pythonhosted.org/packages/5c/f9/695d6bedebd747e5eb0fe8fad57b72fdf25411273a39791cde838d5a8f51/cycler-0.11.0-py3-none-any.whl#sha256=3a27e95f763a428a739d2add979fa7494c912a32c17c4c38c4d5f082cad165a3
 # pip cython @ https://files.pythonhosted.org/packages/c3/8f/bb0a7182dc081fbc6608e98a8184970e7d903acfc1ec58680d46f5c915ce/Cython-0.29.32-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.manylinux_2_24_x86_64.whl#sha256=f3fd44cc362eee8ae569025f070d56208908916794b6ab21e139cea56470a2b3
 # pip docutils @ https://files.pythonhosted.org/packages/93/69/e391bd51bc08ed9141ecd899a0ddb61ab6465309f1eb470905c0c8868081/docutils-0.19-py3-none-any.whl#sha256=5e1de4d849fee02c63b040a4a3fd567f4ab104defd8a5511fbbc24a8a017efbc
-# pip exceptiongroup @ https://files.pythonhosted.org/packages/de/4c/2854d9e3dcce78108126aa3634186a64ddbfd06d4d69af74954665529e52/exceptiongroup-1.0.0-py3-none-any.whl#sha256=2ac84b496be68464a2da60da518af3785fff8b7ec0d090a581604bc870bdee41
+# pip exceptiongroup @ https://files.pythonhosted.org/packages/66/c7/564f6fb7412070356a31b03d53ee3c8f2d3695c2babe261a5cc1b75cf1a3/exceptiongroup-1.0.1-py3-none-any.whl#sha256=4d6c0aa6dd825810941c792f53d7b8d71da26f5e5f84f20f9508e8f2d33b140a
 # pip execnet @ https://files.pythonhosted.org/packages/81/c0/3072ecc23f4c5e0a1af35e3a222855cfd9c80a1a105ca67be3b6172637dd/execnet-1.9.0-py2.py3-none-any.whl#sha256=a295f7cc774947aac58dde7fdc85f4aa00c42adf5d8f5468fc630c1acf30a142
 # pip fonttools @ https://files.pythonhosted.org/packages/e3/d9/e9bae85e84737e76ebbcbea13607236da0c0699baed0ae4f1151b728a608/fonttools-4.38.0-py3-none-any.whl#sha256=820466f43c8be8c3009aef8b87e785014133508f0de64ec469e4efb643ae54fb
 # pip idna @ https://files.pythonhosted.org/packages/fc/34/3030de6f1370931b9dbb4dad48f6ab1015ab1d32447850b9fc94e60097be/idna-3.4-py3-none-any.whl#sha256=90b77e79eaa3eba6de819a0c442c0b4ceefc341a7a2ab77d7562bf49f425c5c2
