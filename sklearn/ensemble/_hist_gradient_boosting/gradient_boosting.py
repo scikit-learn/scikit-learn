@@ -1577,9 +1577,10 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
         .. versionadded:: 0.23
+           Support for monotonic constraints via array of integers.
 
         .. versionchanged:: 1.2
-            Accept dict of constraints with feature names as keys.
+           Accept dict of constraints with feature names as keys.
 
     interaction_cst : iterable of iterables of int, default=None
         Specify interaction constraints, i.e. sets of features which can
