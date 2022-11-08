@@ -21,7 +21,12 @@ from ...metrics._dist_metrics import DistanceMetric
 from ...neighbors import BallTree, KDTree, NearestNeighbors
 from ...utils._param_validation import Interval, StrOptions
 from ...utils.validation import _assert_all_finite
-from ._linkage import label, mst_from_distance_matrix, mst_from_data_matrix
+from ._linkage import (
+    label,
+    mst_from_distance_matrix,
+    mst_from_data_matrix,
+    MST_edge_dtype,
+)
 from ._reachability import mutual_reachability
 from ._tree import compute_stability, condense_tree, get_clusters, labelling_at_cut
 
@@ -100,8 +105,8 @@ def _tree_to_labels(
 
 def _process_mst(min_spanning_tree):
     # Sort edges of the min_spanning_tree by weight
-    row_order = np.argsort(min_spanning_tree.T[2])
-    min_spanning_tree = min_spanning_tree[row_order, :]
+    row_order = np.argsort(min_spanning_tree["distance"])
+    min_spanning_tree = min_spanning_tree[row_order]
     # Convert edge list into standard hierarchical clustering format
     return label(min_spanning_tree)
 
@@ -141,7 +146,7 @@ def _hdbscan_brute(
         mutual_reachability_, min_samples=min_samples, sparse=sparse
     )
     # Warn if the MST couldn't be constructed around the missing distances
-    if np.isinf(min_spanning_tree.T[2]).any():
+    if np.isinf(min_spanning_tree["distance"]).any():
         warn(
             "The minimum spanning tree contains edge weights with value "
             "infinity. Potentially, you are missing too many distances "

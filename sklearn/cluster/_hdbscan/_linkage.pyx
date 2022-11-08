@@ -15,22 +15,21 @@ from ...cluster._hierarchical_fast cimport UnionFind
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 from ...utils._typedefs import ITYPE, DTYPE
 
-cpdef cnp.ndarray[cnp.float64_t, ndim=2] mst_from_distance_matrix(
+cpdef cnp.ndarray[MST_edge_t, ndim=2] mst_from_distance_matrix(
     cnp.ndarray[cnp.float64_t, ndim=2] distance_matrix
 ):
-
     cdef:
         cnp.ndarray[cnp.intp_t, ndim=1] node_labels
         cnp.ndarray[cnp.intp_t, ndim=1] current_labels
         cnp.ndarray[cnp.float64_t, ndim=1] current_distances, left, right
-        cnp.ndarray[cnp.float64_t, ndim=2] result
+        cnp.ndarray[MST_edge_t, ndim=1] result
 
         cnp.ndarray label_filter
 
         cnp.intp_t n_samples = distance_matrix.shape[0]
         cnp.intp_t current_node, new_node_index, new_node, i
 
-    result = np.zeros((n_samples - 1, 3))
+    result = np.empty(n_samples - 1, dtype=MST_edge_dtype)
     node_labels = np.arange(n_samples, dtype=np.intp)
     current_node = 0
     current_distances = np.infty * np.ones(n_samples)
@@ -44,9 +43,9 @@ cpdef cnp.ndarray[cnp.float64_t, ndim=2] mst_from_distance_matrix(
 
         new_node_index = np.argmin(current_distances)
         new_node = current_labels[new_node_index]
-        result[i - 1, 0] = <cnp.float64_t> current_node
-        result[i - 1, 1] = <cnp.float64_t> new_node
-        result[i - 1, 2] = current_distances[new_node_index]
+        result[i - 1].current_node = current_node
+        result[i - 1].next_node = new_node
+        result[i - 1].distance = current_distances[new_node_index]
         current_node = new_node
 
     return result
