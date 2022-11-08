@@ -22,22 +22,23 @@ MST_edge_dtype = np.dtype([
     ("distance", np.float64),
 ])
 
-ctypedef struct MST_edge_t:
+# Packed shouldn't make a difference since they're all 8-byte quantities,
+# but it's included just to be safe.
+ctypedef packed struct MST_edge_t:
     cnp.intp_t current_node
     cnp.intp_t next_node
     cnp.float64_t distance
 
-# TODO add contiguous constraint where possible
-cpdef cnp.ndarray[MST_edge_t, ndim=1] mst_from_mutual_reachability(
+cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_mutual_reachability(
     cnp.ndarray[cnp.float64_t, ndim=2] mutual_reachability
 ):
     cdef:
-        cnp.ndarray[cnp.intp_t, ndim=1] node_labels
-        cnp.ndarray[cnp.intp_t, ndim=1] current_labels
-        cnp.ndarray[cnp.float64_t, ndim=1] min_reachability, left, right
-        cnp.ndarray[MST_edge_t, ndim=1] mst
+        cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] node_labels
+        cnp.ndarray[cnp.intp_t, ndim=1, mode='c'] current_labels
+        cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] min_reachability, left, right
+        cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst
 
-        cnp.ndarray[cnp.uint8_t] label_filter
+        cnp.ndarray[cnp.uint8_t, mode='c'] label_filter
 
         cnp.intp_t n_samples = mutual_reachability.shape[0]
         cnp.intp_t current_node, new_node_index, new_node, i
@@ -76,10 +77,10 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1] mst_from_data_matrix(
         cnp.float64_t[::1] min_reachability, current_sources
         cnp.float64_t[::1] current_core_distances = core_distances
         cnp.float64_t[:, ::1] raw_data_view = raw_data
-        cnp.ndarray[MST_edge_t, ndim=1] mst
-        cnp.ndarray[cnp.float64_t, ndim=2] mst_arr
+        cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst
+        cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] mst_arr
 
-        cnp.ndarray[cnp.uint8_t] label_filter
+        cnp.ndarray[cnp.uint8_t, mode='c'] label_filter
 
         cnp.intp_t current_node, source_node, right_node, left_node, new_node
         cnp.intp_t i, j, n_samples, num_features
@@ -158,10 +159,10 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1] mst_from_data_matrix(
     return mst
 
 @cython.wraparound(True)
-cpdef cnp.ndarray[cnp.float64_t, ndim=2] label(MST_edge_t[:] mst):
+cpdef cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] label(MST_edge_t[::1] mst):
 
     cdef:
-        cnp.ndarray[cnp.float64_t, ndim=2] single_linkage
+        cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] single_linkage
 
         # Note mst.shape[0] is one fewer than the number of samples
         cnp.intp_t n_samples = mst.shape[0] + 1
