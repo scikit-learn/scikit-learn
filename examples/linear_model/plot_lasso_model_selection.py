@@ -20,11 +20,6 @@ In what follows, we will discuss in details the different strategies.
 # License: BSD 3 clause
 
 # %%
-import sklearn
-
-sklearn.set_config(display="diagram")
-
-# %%
 # Dataset
 # -------
 # In this example, we will use the diabetes dataset.
@@ -69,9 +64,7 @@ from sklearn.linear_model import LassoLarsIC
 from sklearn.pipeline import make_pipeline
 
 start_time = time.time()
-lasso_lars_ic = make_pipeline(
-    StandardScaler(), LassoLarsIC(criterion="aic", normalize=False)
-).fit(X, y)
+lasso_lars_ic = make_pipeline(StandardScaler(), LassoLarsIC(criterion="aic")).fit(X, y)
 fit_time = time.time() - start_time
 
 # %%
@@ -198,7 +191,7 @@ _ = plt.title(
 from sklearn.linear_model import LassoLarsCV
 
 start_time = time.time()
-model = make_pipeline(StandardScaler(), LassoLarsCV(cv=20, normalize=False)).fit(X, y)
+model = make_pipeline(StandardScaler(), LassoLarsCV(cv=20)).fit(X, y)
 fit_time = time.time() - start_time
 
 # %%

@@ -17,8 +17,8 @@
 .. |Nightly wheels| image:: https://github.com/scikit-learn/scikit-learn/workflows/Wheel%20builder/badge.svg?event=schedule
 .. _`Nightly wheels`: https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Wheel+builder%22+event%3Aschedule
 
-.. |PythonVersion| image:: https://img.shields.io/badge/python-3.7%20%7C%203.8%20%7C%203.9-blue
-.. _PythonVersion: https://img.shields.io/badge/python-3.7%20%7C%203.8%20%7C%203.9-blue
+.. |PythonVersion| image:: https://img.shields.io/badge/python-3.8%20%7C%203.9%20%7C%203.10-blue
+.. _PythonVersion: https://pypi.org/project/scikit-learn/
 
 .. |PyPi| image:: https://img.shields.io/pypi/v/scikit-learn
 .. _PyPi: https://pypi.org/project/scikit-learn
@@ -32,16 +32,17 @@
 .. |Benchmark| image:: https://img.shields.io/badge/Benchmarked%20by-asv-blue
 .. _`Benchmark`: https://scikit-learn.org/scikit-learn-benchmarks/
 
-.. |PythonMinVersion| replace:: 3.7
-.. |NumPyMinVersion| replace:: 1.14.6
-.. |SciPyMinVersion| replace:: 1.1.0
-.. |JoblibMinVersion| replace:: 0.11
+.. |PythonMinVersion| replace:: 3.8
+.. |NumPyMinVersion| replace:: 1.17.3
+.. |SciPyMinVersion| replace:: 1.3.2
+.. |JoblibMinVersion| replace:: 1.1.1
 .. |ThreadpoolctlMinVersion| replace:: 2.0.0
-.. |MatplotlibMinVersion| replace:: 2.2.3
-.. |Scikit-ImageMinVersion| replace:: 0.14.5
-.. |PandasMinVersion| replace:: 0.25.0
+.. |MatplotlibMinVersion| replace:: 3.1.3
+.. |Scikit-ImageMinVersion| replace:: 0.16.2
+.. |PandasMinVersion| replace:: 1.0.5
 .. |SeabornMinVersion| replace:: 0.9.0
-.. |PytestMinVersion| replace:: 5.0.1
+.. |PytestMinVersion| replace:: 5.3.1
+.. |PlotlyMinVersion| replace:: 5.10.0
 
 .. image:: https://raw.githubusercontent.com/scikit-learn/scikit-learn/main/doc/logos/scikit-learn-logo.png
   :target: https://scikit-learn.org/
@@ -75,21 +76,21 @@ scikit-learn requires:
 =======
 
 **Scikit-learn 0.20 was the last version to support Python 2.7 and Python 3.4.**
-scikit-learn 0.23 and later require Python 3.6 or newer.
 scikit-learn 1.0 and later require Python 3.7 or newer.
+scikit-learn 1.1 and later require Python 3.8 or newer.
 
 Scikit-learn plotting capabilities (i.e., functions start with ``plot_`` and
 classes end with "Display") require Matplotlib (>= |MatplotlibMinVersion|).
 For running the examples Matplotlib >= |MatplotlibMinVersion| is required.
 A few examples require scikit-image >= |Scikit-ImageMinVersion|, a few examples
 require pandas >= |PandasMinVersion|, some examples require seaborn >=
-|SeabornMinVersion|.
+|SeabornMinVersion| and plotly >= |PlotlyMinVersion|.
 
 User installation
 ~~~~~~~~~~~~~~~~~
 
 If you already have a working installation of numpy and scipy,
-the easiest way to install scikit-learn is using ``pip``   ::
+the easiest way to install scikit-learn is using ``pip``::
 
     pip install -U scikit-learn
 
@@ -144,7 +145,7 @@ directory (you will need to have ``pytest`` >= |PyTestMinVersion| installed)::
 
     pytest sklearn
 
-See the web page https://scikit-learn.org/dev/developers/advanced_installation.html#testing
+See the web page https://scikit-learn.org/dev/developers/contributing.html#testing-and-improving-test-coverage
 for more information.
 
     Random number generation can be controlled during testing by setting
@@ -184,6 +185,9 @@ Communication
 
 - Mailing list: https://mail.python.org/mailman/listinfo/scikit-learn
 - Gitter: https://gitter.im/scikit-learn/scikit-learn
+- Logos & Branding: https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos
+- Blog: https://blog.scikit-learn.org
+- Calendar: https://blog.scikit-learn.org/calendar/
 - Twitter: https://twitter.com/scikit_learn
 - Twitter (commits): https://twitter.com/sklearn_commits
 - Stack Overflow: https://stackoverflow.com/questions/tagged/scikit-learn
@@ -193,6 +197,7 @@ Communication
 - YouTube: https://www.youtube.com/channel/UCJosFjYm0ZYVUARxuOZqnnw/playlists
 - Facebook: https://www.facebook.com/scikitlearnofficial/
 - Instagram: https://www.instagram.com/scikitlearnofficial/
+- TikTok: https://www.tiktok.com/@scikit.learn
 
 Citation
 ~~~~~~~~

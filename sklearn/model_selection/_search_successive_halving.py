@@ -50,7 +50,11 @@ def _top_k(results, k, itr):
         for a in (results["iter"], results["mean_test_score"], results["params"])
     )
     iter_indices = np.flatnonzero(iteration == itr)
-    sorted_indices = np.argsort(mean_test_score[iter_indices])
+    scores = mean_test_score[iter_indices]
+    # argsort() places NaNs at the end of the array so we move NaNs to the
+    # front of the array so the last `k` items are the those with the
+    # highest scores.
+    sorted_indices = np.roll(np.argsort(scores), np.count_nonzero(np.isnan(scores)))
     return np.array(params[iter_indices][sorted_indices[-k:]])
 
 
@@ -183,7 +187,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
         if self.max_resources_ == "auto":
             if not self.resource == "n_samples":
                 raise ValueError(
-                    "max_resources can only be 'auto' if resource='n_samples'"
+                    "resource can only be 'n_samples' when max_resources='auto'"
                 )
             self.max_resources_ = _num_samples(X)
 
@@ -216,7 +220,15 @@ class BaseSuccessiveHalving(BaseSearchCV):
         """
         last_iter = np.max(results["iter"])
         last_iter_indices = np.flatnonzero(results["iter"] == last_iter)
-        best_idx = np.argmax(results["mean_test_score"][last_iter_indices])
+
+        test_scores = results["mean_test_score"][last_iter_indices]
+        # If all scores are NaNs there is no way to pick between them,
+        # so we (arbitrarily) declare the zero'th entry the best one
+        if np.isnan(test_scores).all():
+            best_idx = 0
+        else:
+            best_idx = np.nanargmax(test_scores)
+
         return last_iter_indices[best_idx]
 
     def fit(self, X, y=None, groups=None, **fit_params):
@@ -288,7 +300,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
             last_iteration = n_required_iterations - 1
             self.min_resources_ = max(
                 self.min_resources_,
-                self.max_resources_ // self.factor ** last_iteration,
+                self.max_resources_ // self.factor**last_iteration,
             )
 
         # n_possible_iterations is the number of iterations that we can
@@ -327,7 +339,7 @@ class BaseSuccessiveHalving(BaseSearchCV):
                 # eliminated), and then go on as usual.
                 power = max(0, itr - n_required_iterations + n_possible_iterations)
 
-            n_resources = int(self.factor ** power * self.min_resources_)
+            n_resources = int(self.factor**power * self.min_resources_)
             # guard, probably not needed
             n_resources = min(n_resources, self.max_resources_)
             self.n_resources_.append(n_resources)
@@ -654,6 +666,8 @@ class HalvingGridSearchCV(BaseSuccessiveHalving):
     -----
     The parameters selected are those that maximize the score of the held-out
     data, according to the scoring parameter.
+
+    All parameter combinations scored with a NaN will share the lowest rank.
 
     Examples
     --------
@@ -991,6 +1005,8 @@ class HalvingRandomSearchCV(BaseSuccessiveHalving):
     -----
     The parameters selected are those that maximize the score of the held-out
     data, according to the scoring parameter.
+
+    All parameter combinations scored with a NaN will share the lowest rank.
 
     Examples
     --------

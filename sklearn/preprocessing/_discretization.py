@@ -1,24 +1,22 @@
-# -*- coding: utf-8 -*-
-
 # Author: Henry Lin <hlin117@gmail.com>
 #         Tom Dupré la Tour
 
 # License: BSD
 
 
-import numbers
+from numbers import Integral
 import numpy as np
 import warnings
 
 from . import OneHotEncoder
 
 from ..base import BaseEstimator, TransformerMixin
+from ..utils._param_validation import Hidden, Interval, StrOptions, Options
 from ..utils.validation import check_array
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_random_state
 from ..utils.validation import _check_feature_names_in
 from ..utils.validation import _check_sample_weight
-from ..utils.validation import check_scalar
 from ..utils.stats import _weighted_percentile
 from ..utils import _safe_indexing
 
@@ -156,6 +154,19 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
            [ 0.5,  3.5, -1.5,  1.5]])
     """
 
+    _parameter_constraints: dict = {
+        "n_bins": [Interval(Integral, 2, None, closed="left"), "array-like"],
+        "encode": [StrOptions({"onehot", "onehot-dense", "ordinal"})],
+        "strategy": [StrOptions({"uniform", "quantile", "kmeans"})],
+        "dtype": [Options(type, {np.float64, np.float32}), None],
+        "subsample": [
+            Interval(Integral, 1, None, closed="left"),
+            None,
+            Hidden(StrOptions({"warn"})),
+        ],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         n_bins=5,
@@ -194,19 +205,13 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         X = self._validate_data(X, dtype="numeric")
 
-        supported_dtype = (np.float64, np.float32)
-        if self.dtype in supported_dtype:
+        if self.dtype in (np.float64, np.float32):
             output_dtype = self.dtype
-        elif self.dtype is None:
+        else:  # self.dtype is None
             output_dtype = X.dtype
-        else:
-            raise ValueError(
-                "Valid options for 'dtype' are "
-                f"{supported_dtype + (None,)}. Got dtype={self.dtype} "
-                " instead."
-            )
 
         n_samples, n_features = X.shape
 
@@ -228,19 +233,13 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                         FutureWarning,
                     )
             else:
-                self.subsample = check_scalar(
-                    self.subsample, "subsample", numbers.Integral, min_val=1
-                )
                 rng = check_random_state(self.random_state)
                 if n_samples > self.subsample:
                     subsample_idx = rng.choice(
                         n_samples, size=self.subsample, replace=False
                     )
                     X = _safe_indexing(X, subsample_idx)
-
-        elif self.strategy != "quantile" and isinstance(
-            self.subsample, numbers.Integral
-        ):
+        elif self.strategy != "quantile" and isinstance(self.subsample, Integral):
             raise ValueError(
                 f"Invalid parameter for `strategy`: {self.strategy}. "
                 '`subsample` must be used with `strategy="quantile"`.'
@@ -329,7 +328,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         if "onehot" in self.encode:
             self._encoder = OneHotEncoder(
                 categories=[np.arange(i) for i in self.n_bins_],
-                sparse=self.encode == "onehot",
+                sparse_output=self.encode == "onehot",
                 dtype=output_dtype,
             )
             # Fit the OneHotEncoder with toy datasets
@@ -341,21 +340,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
     def _validate_n_bins(self, n_features):
         """Returns n_bins_, the number of bins per feature."""
         orig_bins = self.n_bins
-        if isinstance(orig_bins, numbers.Number):
-            if not isinstance(orig_bins, numbers.Integral):
-                raise ValueError(
-                    "{} received an invalid n_bins type. "
-                    "Received {}, expected int.".format(
-                        KBinsDiscretizer.__name__, type(orig_bins).__name__
-                    )
-                )
-            if orig_bins < 2:
-                raise ValueError(
-                    "{} received an invalid number "
-                    "of bins. Received {}, expected at least 2.".format(
-                        KBinsDiscretizer.__name__, orig_bins
-                    )
-                )
+        if isinstance(orig_bins, Integral):
             return np.full(n_features, orig_bins, dtype=int)
 
         n_bins = check_array(orig_bins, dtype=int, copy=True, ensure_2d=False)
@@ -400,15 +385,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         bin_edges = self.bin_edges_
         for jj in range(Xt.shape[1]):
-            # Values which are close to a bin edge are susceptible to numeric
-            # instability. Add eps to X so these values are binned correctly
-            # with respect to their decimal truncation. See documentation of
-            # numpy.isclose for an explanation of ``rtol`` and ``atol``.
-            rtol = 1.0e-5
-            atol = 1.0e-8
-            eps = atol + rtol * np.abs(Xt[:, jj])
-            Xt[:, jj] = np.digitize(Xt[:, jj] + eps, bin_edges[jj][1:])
-        np.clip(Xt, 0, self.n_bins_ - 1, out=Xt)
+            Xt[:, jj] = np.searchsorted(bin_edges[jj][1:-1], Xt[:, jj], side="right")
 
         if self.encode == "ordinal":
             return Xt
@@ -472,7 +449,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
             - If `input_features` is `None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
-              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 
@@ -482,4 +460,8 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Transformed feature names.
         """
         input_features = _check_feature_names_in(self, input_features)
-        return self._encoder.get_feature_names_out(input_features)
+        if hasattr(self, "_encoder"):
+            return self._encoder.get_feature_names_out(input_features)
+
+        # ordinal encoding
+        return input_features

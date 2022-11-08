@@ -5,12 +5,12 @@ estimator.
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD 3 clause
 # Copyright: INRIA
-from collections.abc import Sequence
 import warnings
 import operator
 import sys
 import time
 
+from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
 from joblib import Parallel
@@ -18,14 +18,18 @@ from joblib import Parallel
 from . import empirical_covariance, EmpiricalCovariance, log_likelihood
 
 from ..exceptions import ConvergenceWarning
-from ..utils.validation import check_random_state
+from ..utils.validation import (
+    _is_arraylike_not_scalar,
+    check_random_state,
+    check_scalar,
+)
 from ..utils.fixes import delayed
+from ..utils._param_validation import Interval, StrOptions
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from ..linear_model import _cd_fast as cd_fast  # type: ignore
 from ..linear_model import lars_path_gram
 from ..model_selection import check_cv, cross_val_score
-from ..utils.deprecation import deprecated
 
 
 # Helper functions to compute the objective and dual objective functions
@@ -74,29 +78,6 @@ def alpha_max(emp_cov):
     return np.max(np.abs(A))
 
 
-class _DictWithDeprecatedKeys(dict):
-    """Dictionary with deprecated keys.
-
-    Currently only be used in GraphicalLassoCV to deprecate keys"""
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self._deprecated_key_to_new_key = {}
-
-    def __getitem__(self, key):
-        if key in self._deprecated_key_to_new_key:
-            warnings.warn(
-                f"Key: '{key}', is deprecated in 1.0 and will be "
-                f"removed in 1.2. Use '{self._deprecated_key_to_new_key[key]}' instead",
-                FutureWarning,
-            )
-        return super().__getitem__(key)
-
-    def _set_deprecated(self, value, *, new_key, deprecated_key):
-        self._deprecated_key_to_new_key[deprecated_key] = new_key
-        self[new_key] = self[deprecated_key] = value
-
-
 # The g-lasso algorithm
 def graphical_lasso(
     emp_cov,
@@ -112,7 +93,7 @@ def graphical_lasso(
     eps=np.finfo(np.float64).eps,
     return_n_iter=False,
 ):
-    """l1-penalized covariance estimator
+    """L1-penalized covariance estimator.
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
 
@@ -184,7 +165,10 @@ def graphical_lasso(
 
     See Also
     --------
-    GraphicalLasso, GraphicalLassoCV
+    GraphicalLasso : Sparse inverse covariance estimation
+        with an l1-penalized estimator.
+    GraphicalLassoCV : Sparse inverse covariance with
+        cross-validated choice of the l1 penalty.
 
     Notes
     -----
@@ -270,8 +254,7 @@ def graphical_lasso(
                             check_random_state(None),
                             False,
                         )
-                    else:
-                        # Use LARS
+                    else:  # mode == "lars"
                         _, _, coefs = lars_path_gram(
                             Xy=row,
                             Gram=sub_covariance,
@@ -333,7 +316,35 @@ def graphical_lasso(
             return covariance_, precision_
 
 
-class GraphicalLasso(EmpiricalCovariance):
+class BaseGraphicalLasso(EmpiricalCovariance):
+    _parameter_constraints: dict = {
+        **EmpiricalCovariance._parameter_constraints,
+        "tol": [Interval(Real, 0, None, closed="right")],
+        "enet_tol": [Interval(Real, 0, None, closed="right")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "mode": [StrOptions({"cd", "lars"})],
+        "verbose": ["verbose"],
+    }
+    _parameter_constraints.pop("store_precision")
+
+    def __init__(
+        self,
+        tol=1e-4,
+        enet_tol=1e-4,
+        max_iter=100,
+        mode="cd",
+        verbose=False,
+        assume_centered=False,
+    ):
+        super().__init__(assume_centered=assume_centered)
+        self.tol = tol
+        self.enet_tol = enet_tol
+        self.max_iter = max_iter
+        self.mode = mode
+        self.verbose = verbose
+
+
+class GraphicalLasso(BaseGraphicalLasso):
     """Sparse inverse covariance estimation with an l1-penalized estimator.
 
     Read more in the :ref:`User Guide <sparse_inverse_covariance>`.
@@ -429,6 +440,11 @@ class GraphicalLasso(EmpiricalCovariance):
     array([0.073, 0.04 , 0.038, 0.143])
     """
 
+    _parameter_constraints: dict = {
+        **BaseGraphicalLasso._parameter_constraints,
+        "alpha": [Interval(Real, 0, None, closed="right")],
+    }
+
     def __init__(
         self,
         alpha=0.01,
@@ -440,13 +456,15 @@ class GraphicalLasso(EmpiricalCovariance):
         verbose=False,
         assume_centered=False,
     ):
-        super().__init__(assume_centered=assume_centered)
+        super().__init__(
+            tol=tol,
+            enet_tol=enet_tol,
+            max_iter=max_iter,
+            mode=mode,
+            verbose=verbose,
+            assume_centered=assume_centered,
+        )
         self.alpha = alpha
-        self.mode = mode
-        self.tol = tol
-        self.enet_tol = enet_tol
-        self.max_iter = max_iter
-        self.verbose = verbose
 
     def fit(self, X, y=None):
         """Fit the GraphicalLasso model to X.
@@ -464,6 +482,7 @@ class GraphicalLasso(EmpiricalCovariance):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         # Covariance does not make sense for a single feature
         X = self._validate_data(X, ensure_min_features=2, ensure_min_samples=2)
 
@@ -605,7 +624,7 @@ def graphical_lasso_path(
     return covariances_, precisions_
 
 
-class GraphicalLassoCV(GraphicalLasso):
+class GraphicalLassoCV(BaseGraphicalLasso):
     """Sparse inverse covariance w/ cross-validated choice of the l1 penalty.
 
     See glossary entry for :term:`cross-validation estimator`.
@@ -621,7 +640,8 @@ class GraphicalLassoCV(GraphicalLasso):
         If an integer is given, it fixes the number of points on the
         grids of alpha to be used. If a list is given, it gives the
         grid to be used. See the notes in the class docstring for
-        more details. Range is (0, inf] when floats given.
+        more details. Range is [1, inf) for an integer.
+        Range is (0, inf] for an array-like of floats.
 
     n_refinements : int, default=4
         The number of times the grid is refined. Not used if explicit
@@ -696,22 +716,6 @@ class GraphicalLassoCV(GraphicalLasso):
     alpha_ : float
         Penalization parameter selected.
 
-    cv_alphas_ : list of shape (n_alphas,), dtype=float
-        All penalization parameters explored.
-
-        .. deprecated:: 0.24
-            The `cv_alphas_` attribute is deprecated in version 0.24 in favor
-            of `cv_results_['alphas']` and will be removed in version
-            1.1 (renaming of 0.26).
-
-    grid_scores_ : ndarray of shape (n_alphas, n_folds)
-        Log-likelihood score on left-out data across folds.
-
-        .. deprecated:: 0.24
-            The `grid_scores_` attribute is deprecated in version 0.24 in favor
-            of `cv_results_` and will be removed in version
-            1.1 (renaming of 0.26).
-
     cv_results_ : dict of ndarrays
         A dict with keys:
 
@@ -733,29 +737,6 @@ class GraphicalLassoCV(GraphicalLasso):
 
             .. versionadded:: 1.0
 
-        split(k)_score : ndarray of shape (n_alphas,)
-            Log-likelihood score on left-out data across (k)th fold.
-
-            .. deprecated:: 1.0
-                `split(k)_score` is deprecated in 1.0 and will be removed in 1.2.
-                Use `split(k)_test_score` instead.
-
-        mean_score : ndarray of shape (n_alphas,)
-            Mean of scores over the folds.
-
-            .. deprecated:: 1.0
-                `mean_score` is deprecated in 1.0 and will be removed in 1.2.
-                Use `mean_test_score` instead.
-
-        std_score : ndarray of shape (n_alphas,)
-            Standard deviation of scores over the folds.
-
-            .. deprecated:: 1.0
-                `std_score` is deprecated in 1.0 and will be removed in 1.2.
-                Use `std_test_score` instead.
-
-        .. versionadded:: 0.24
-
     n_iter_ : int
         Number of iterations run for the optimal alpha.
 
@@ -773,20 +754,23 @@ class GraphicalLassoCV(GraphicalLasso):
     See Also
     --------
     graphical_lasso : L1-penalized covariance estimator.
-    GraphicalLasso : Sparse inverse covariance with
-        cross-validated choice of the l1 penalty.
+    GraphicalLasso : Sparse inverse covariance estimation
+        with an l1-penalized estimator.
 
     Notes
     -----
-    The search for the optimal penalization parameter (alpha) is done on an
+    The search for the optimal penalization parameter (`alpha`) is done on an
     iteratively refined grid: first the cross-validated scores on a grid are
     computed, then a new refined grid is centered around the maximum, and so
     on.
 
     One of the challenges which is faced here is that the solvers can
     fail to converge to a well-conditioned estimate. The corresponding
-    values of alpha then come out as missing values, but the optimum may
+    values of `alpha` then come out as missing values, but the optimum may
     be close to these missing values.
+
+    In `fit`, once the best parameter `alpha` is found through
+    cross-validation, the model is fit again using the entire training set.
 
     Examples
     --------
@@ -810,6 +794,14 @@ class GraphicalLassoCV(GraphicalLasso):
     array([0.073, 0.04 , 0.038, 0.143])
     """
 
+    _parameter_constraints: dict = {
+        **BaseGraphicalLasso._parameter_constraints,
+        "alphas": [Interval(Integral, 1, None, closed="left"), "array-like"],
+        "n_refinements": [Interval(Integral, 1, None, closed="left")],
+        "cv": ["cv_object"],
+        "n_jobs": [Integral, None],
+    }
+
     def __init__(
         self,
         *,
@@ -825,11 +817,11 @@ class GraphicalLassoCV(GraphicalLasso):
         assume_centered=False,
     ):
         super().__init__(
-            mode=mode,
             tol=tol,
-            verbose=verbose,
             enet_tol=enet_tol,
             max_iter=max_iter,
+            mode=mode,
+            verbose=verbose,
             assume_centered=assume_centered,
         )
         self.alphas = alphas
@@ -853,6 +845,7 @@ class GraphicalLassoCV(GraphicalLasso):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         # Covariance does not make sense for a single feature
         X = self._validate_data(X, ensure_min_features=2)
         if self.assume_centered:
@@ -868,7 +861,16 @@ class GraphicalLassoCV(GraphicalLasso):
         n_alphas = self.alphas
         inner_verbose = max(0, self.verbose - 1)
 
-        if isinstance(n_alphas, Sequence):
+        if _is_arraylike_not_scalar(n_alphas):
+            for alpha in self.alphas:
+                check_scalar(
+                    alpha,
+                    "alpha",
+                    Real,
+                    min_val=0,
+                    max_val=np.inf,
+                    include_boundaries="right",
+                )
             alphas = self.alphas
             n_refinements = 1
         else:
@@ -944,7 +946,7 @@ class GraphicalLassoCV(GraphicalLasso):
                 alpha_1 = path[best_index - 1][0]
                 alpha_0 = path[best_index + 1][0]
 
-            if not isinstance(n_alphas, Sequence):
+            if not _is_arraylike_not_scalar(n_alphas):
                 alphas = np.logspace(np.log10(alpha_1), np.log10(alpha_0), n_alphas + 2)
                 alphas = alphas[1:-1]
 
@@ -970,26 +972,13 @@ class GraphicalLassoCV(GraphicalLasso):
         )
         grid_scores = np.array(grid_scores)
 
-        # TODO(1.2): Use normal dict for cv_results_ instead of _DictWithDeprecatedKeys
-        self.cv_results_ = _DictWithDeprecatedKeys(alphas=np.array(alphas))
+        self.cv_results_ = {"alphas": np.array(alphas)}
 
         for i in range(grid_scores.shape[1]):
-            self.cv_results_._set_deprecated(
-                grid_scores[:, i],
-                new_key=f"split{i}_test_score",
-                deprecated_key=f"split{i}_score",
-            )
+            self.cv_results_[f"split{i}_test_score"] = grid_scores[:, i]
 
-        self.cv_results_._set_deprecated(
-            np.mean(grid_scores, axis=1),
-            new_key="mean_test_score",
-            deprecated_key="mean_score",
-        )
-        self.cv_results_._set_deprecated(
-            np.std(grid_scores, axis=1),
-            new_key="std_test_score",
-            deprecated_key="std_score",
-        )
+        self.cv_results_["mean_test_score"] = np.mean(grid_scores, axis=1)
+        self.cv_results_["std_test_score"] = np.std(grid_scores, axis=1)
 
         best_alpha = alphas[best_index]
         self.alpha_ = best_alpha
@@ -1006,34 +995,3 @@ class GraphicalLassoCV(GraphicalLasso):
             return_n_iter=True,
         )
         return self
-
-    # TODO: Remove in 1.1 when grid_scores_ is deprecated
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The `grid_scores_` attribute is deprecated in version 0.24 in favor "
-        "of `cv_results_` and will be removed in version 1.1 "
-        "(renaming of 0.26)."
-    )
-    @property
-    def grid_scores_(self):
-        n_splits = len(
-            [
-                key
-                for key in self.cv_results_
-                if key.startswith("split") and key.endswith("_test_score")
-            ]
-        )
-        return np.asarray(
-            [self.cv_results_["split{}_test_score".format(i)] for i in range(n_splits)]
-        ).T
-
-    # TODO: Remove in 1.1 when cv_alphas_ is deprecated
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "The `cv_alphas_` attribute is deprecated in version 0.24 in favor "
-        "of `cv_results_['alpha']` and will be removed in version 1.1 "
-        "(renaming of 0.26)."
-    )
-    @property
-    def cv_alphas_(self):
-        return self.cv_results_["alphas"].tolist()

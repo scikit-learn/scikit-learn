@@ -4,14 +4,22 @@
 #         Jake Vanderplas  -- <vanderplas@astro.washington.edu>
 # License: BSD 3 clause (C) INRIA 2011
 
+from numbers import Integral, Real
+
 import numpy as np
 from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
 from scipy.sparse.linalg import eigsh
 
-from ..base import BaseEstimator, TransformerMixin, _UnstableArchMixin
+from ..base import (
+    BaseEstimator,
+    TransformerMixin,
+    _UnstableArchMixin,
+    ClassNamePrefixFeaturesOutMixin,
+)
 from ..utils import check_random_state, check_array
 from ..utils._arpack import _init_arpack_v0
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
@@ -34,7 +42,7 @@ def barycenter_weights(X, Y, indices, reg=1e-3):
             Indices of the points in Y used to compute the barycenter
 
     reg : float, default=1e-3
-        amount of regularization to add for the problem to be
+        Amount of regularization to add for the problem to be
         well-posed in the case of n_neighbors > n_dim
 
     Returns
@@ -67,7 +75,7 @@ def barycenter_weights(X, Y, indices, reg=1e-3):
         else:
             R = reg
         G.flat[:: n_neighbors + 1] += R
-        w = solve(G, v, sym_pos=True)
+        w = solve(G, v, assume_a="pos")
         B[i, :] = w / np.sum(w)
     return B
 
@@ -216,13 +224,13 @@ def locally_linear_embedding(
         numpy array or a NearestNeighbors object.
 
     n_neighbors : int
-        number of neighbors to consider for each point.
+        Number of neighbors to consider for each point.
 
     n_components : int
-        number of coordinates for the manifold.
+        Number of coordinates for the manifold.
 
     reg : float, default=1e-3
-        regularization constant, multiplies the trace of the local covariance
+        Regularization constant, multiplies the trace of the local covariance
         matrix of the distances.
 
     eigen_solver : {'auto', 'arpack', 'dense'}, default='auto'
@@ -244,7 +252,7 @@ def locally_linear_embedding(
         Not used if eigen_solver=='dense'.
 
     max_iter : int, default=100
-        maximum number of iterations for the arpack solver.
+        Maximum number of iterations for the arpack solver.
 
     method : {'standard', 'hessian', 'modified', 'ltsa'}, default='standard'
         standard : use the standard locally linear embedding algorithm.
@@ -259,11 +267,11 @@ def locally_linear_embedding(
 
     hessian_tol : float, default=1e-4
         Tolerance for Hessian eigenmapping method.
-        Only used if method == 'hessian'
+        Only used if method == 'hessian'.
 
     modified_tol : float, default=1e-12
         Tolerance for modified LLE method.
-        Only used if method == 'modified'
+        Only used if method == 'modified'.
 
     random_state : int, RandomState instance, default=None
         Determines the random number generator when ``solver`` == 'arpack'.
@@ -293,9 +301,9 @@ def locally_linear_embedding(
     .. [2] Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
         linear embedding techniques for high-dimensional data.
         Proc Natl Acad Sci U S A.  100:5591 (2003).
-    .. [3] Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
+    .. [3] `Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
         Embedding Using Multiple Weights.
-        http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382
+        <https://citeseerx.ist.psu.edu/doc_view/pid/0b060fdbd92cbcc66b383bcaa9ba5e5e624d7ee3>`_
     .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
@@ -542,7 +550,12 @@ def locally_linear_embedding(
     )
 
 
-class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator):
+class LocallyLinearEmbedding(
+    ClassNamePrefixFeaturesOutMixin,
+    TransformerMixin,
+    _UnstableArchMixin,
+    BaseEstimator,
+):
     """Locally Linear Embedding.
 
     Read more in the :ref:`User Guide <locally_linear_embedding>`.
@@ -655,9 +668,9 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
     .. [2] Donoho, D. & Grimes, C. Hessian eigenmaps: Locally
         linear embedding techniques for high-dimensional data.
         Proc Natl Acad Sci U S A.  100:5591 (2003).
-    .. [3] Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
+    .. [3] `Zhang, Z. & Wang, J. MLLE: Modified Locally Linear
         Embedding Using Multiple Weights.
-        http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382
+        <https://citeseerx.ist.psu.edu/doc_view/pid/0b060fdbd92cbcc66b383bcaa9ba5e5e624d7ee3>`_
     .. [4] Zhang, Z. & Zha, H. Principal manifolds and nonlinear
         dimensionality reduction via tangent space alignment.
         Journal of Shanghai Univ.  8:406 (2004)
@@ -674,6 +687,21 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
     >>> X_transformed.shape
     (100, 2)
     """
+
+    _parameter_constraints: dict = {
+        "n_neighbors": [Interval(Integral, 1, None, closed="left")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "reg": [Interval(Real, 0, None, closed="left")],
+        "eigen_solver": [StrOptions({"auto", "arpack", "dense"})],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "method": [StrOptions({"standard", "hessian", "modified", "ltsa"})],
+        "hessian_tol": [Interval(Real, 0, None, closed="left")],
+        "modified_tol": [Interval(Real, 0, None, closed="left")],
+        "neighbors_algorithm": [StrOptions({"auto", "brute", "kd_tree", "ball_tree"})],
+        "random_state": ["random_state"],
+        "n_jobs": [None, Integral],
+    }
 
     def __init__(
         self,
@@ -728,6 +756,7 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
             reg=self.reg,
             n_jobs=self.n_jobs,
         )
+        self._n_features_out = self.embedding_.shape[1]
 
     def fit(self, X, y=None):
         """Compute the embedding vectors for data X.
@@ -745,6 +774,7 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
         self : object
             Fitted `LocallyLinearEmbedding` class instance.
         """
+        self._validate_params()
         self._fit_transform(X)
         return self
 
@@ -764,6 +794,7 @@ class LocallyLinearEmbedding(TransformerMixin, _UnstableArchMixin, BaseEstimator
         X_new : array-like, shape (n_samples, n_components)
             Returns the instance itself.
         """
+        self._validate_params()
         self._fit_transform(X)
         return self.embedding_
 

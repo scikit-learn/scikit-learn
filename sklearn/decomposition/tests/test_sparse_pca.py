@@ -206,6 +206,53 @@ def test_spca_n_components_(SPCA, n_components):
         assert model.n_components_ == n_features
 
 
+@pytest.mark.parametrize("SPCA", (SparsePCA, MiniBatchSparsePCA))
+@pytest.mark.parametrize("method", ("lars", "cd"))
+@pytest.mark.parametrize(
+    "data_type, expected_type",
+    (
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
+    ),
+)
+def test_sparse_pca_dtype_match(SPCA, method, data_type, expected_type):
+    # Verify output matrix dtype
+    n_samples, n_features, n_components = 12, 10, 3
+    rng = np.random.RandomState(0)
+    input_array = rng.randn(n_samples, n_features).astype(data_type)
+    model = SPCA(n_components=n_components, method=method)
+    transformed = model.fit_transform(input_array)
+
+    assert transformed.dtype == expected_type
+    assert model.components_.dtype == expected_type
+
+
+@pytest.mark.parametrize("SPCA", (SparsePCA, MiniBatchSparsePCA))
+@pytest.mark.parametrize("method", ("lars", "cd"))
+def test_sparse_pca_numerical_consistency(SPCA, method):
+    # Verify numericall consistentency among np.float32 and np.float64
+    rtol = 1e-3
+    alpha = 2
+    n_samples, n_features, n_components = 12, 10, 3
+    rng = np.random.RandomState(0)
+    input_array = rng.randn(n_samples, n_features)
+
+    model_32 = SPCA(
+        n_components=n_components, alpha=alpha, method=method, random_state=0
+    )
+    transformed_32 = model_32.fit_transform(input_array.astype(np.float32))
+
+    model_64 = SPCA(
+        n_components=n_components, alpha=alpha, method=method, random_state=0
+    )
+    transformed_64 = model_64.fit_transform(input_array.astype(np.float64))
+
+    assert_allclose(transformed_64, transformed_32, rtol=rtol)
+    assert_allclose(model_64.components_, model_32.components_, rtol=rtol)
+
+
 @pytest.mark.parametrize("SPCA", [SparsePCA, MiniBatchSparsePCA])
 def test_spca_feature_names_out(SPCA):
     """Check feature names out for *SparsePCA."""
@@ -218,3 +265,119 @@ def test_spca_feature_names_out(SPCA):
 
     estimator_name = SPCA.__name__.lower()
     assert_array_equal([f"{estimator_name}{i}" for i in range(4)], names)
+
+
+# TODO (1.4): remove this test
+def test_spca_n_iter_deprecation():
+    """Check that we raise a warning for the deprecation of `n_iter` and it is ignored
+    when `max_iter` is specified.
+    """
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 12, 10
+    X = rng.randn(n_samples, n_features)
+
+    warn_msg = "'n_iter' is deprecated in version 1.1 and will be removed"
+    with pytest.warns(FutureWarning, match=warn_msg):
+        MiniBatchSparsePCA(n_iter=2).fit(X)
+
+    n_iter, max_iter = 1, 100
+    with pytest.warns(FutureWarning, match=warn_msg):
+        model = MiniBatchSparsePCA(
+            n_iter=n_iter, max_iter=max_iter, random_state=0
+        ).fit(X)
+    assert model.n_iter_ > 1
+    assert model.n_iter_ <= max_iter
+
+
+def test_pca_n_features_deprecation():
+    X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
+    pca = PCA(n_components=2).fit(X)
+    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
+        pca.n_features_
+
+
+def test_spca_early_stopping(global_random_seed):
+    """Check that `tol` and `max_no_improvement` act as early stopping."""
+    rng = np.random.RandomState(global_random_seed)
+    n_samples, n_features = 50, 10
+    X = rng.randn(n_samples, n_features)
+
+    # vary the tolerance to force the early stopping of one of the model
+    model_early_stopped = MiniBatchSparsePCA(
+        max_iter=100, tol=0.5, random_state=global_random_seed
+    ).fit(X)
+    model_not_early_stopped = MiniBatchSparsePCA(
+        max_iter=100, tol=1e-3, random_state=global_random_seed
+    ).fit(X)
+    assert model_early_stopped.n_iter_ < model_not_early_stopped.n_iter_
+
+    # force the max number of no improvement to a large value to check that
+    # it does help to early stop
+    model_early_stopped = MiniBatchSparsePCA(
+        max_iter=100, tol=1e-6, max_no_improvement=2, random_state=global_random_seed
+    ).fit(X)
+    model_not_early_stopped = MiniBatchSparsePCA(
+        max_iter=100, tol=1e-6, max_no_improvement=100, random_state=global_random_seed
+    ).fit(X)
+    assert model_early_stopped.n_iter_ < model_not_early_stopped.n_iter_
+
+
+def test_equivalence_components_pca_spca(global_random_seed):
+    """Check the equivalence of the components found by PCA and SparsePCA.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/23932
+    """
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.randn(50, 4)
+
+    n_components = 2
+    pca = PCA(
+        n_components=n_components,
+        svd_solver="randomized",
+        random_state=0,
+    ).fit(X)
+    spca = SparsePCA(
+        n_components=n_components,
+        method="lars",
+        ridge_alpha=0,
+        alpha=0,
+        random_state=0,
+    ).fit(X)
+
+    assert_allclose(pca.components_, spca.components_)
+
+
+def test_sparse_pca_inverse_transform():
+    """Check that `inverse_transform` in `SparsePCA` and `PCA` are similar."""
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 10, 5
+    X = rng.randn(n_samples, n_features)
+
+    n_components = 2
+    spca = SparsePCA(
+        n_components=n_components, alpha=1e-12, ridge_alpha=1e-12, random_state=0
+    )
+    pca = PCA(n_components=n_components, random_state=0)
+    X_trans_spca = spca.fit_transform(X)
+    X_trans_pca = pca.fit_transform(X)
+    assert_allclose(
+        spca.inverse_transform(X_trans_spca), pca.inverse_transform(X_trans_pca)
+    )
+
+
+@pytest.mark.parametrize("SPCA", [SparsePCA, MiniBatchSparsePCA])
+def test_transform_inverse_transform_round_trip(SPCA):
+    """Check the `transform` and `inverse_transform` round trip with no loss of
+    information.
+    """
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 10, 5
+    X = rng.randn(n_samples, n_features)
+
+    n_components = n_features
+    spca = SPCA(
+        n_components=n_components, alpha=1e-12, ridge_alpha=1e-12, random_state=0
+    )
+    X_trans_spca = spca.fit_transform(X)
+    assert_allclose(spca.inverse_transform(X_trans_spca), X)

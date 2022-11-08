@@ -15,7 +15,6 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.cluster import SpectralClustering, spectral_clustering
 from sklearn.cluster._spectral import discretize, cluster_qr
 from sklearn.feature_extraction import img_to_graph
-from sklearn.metrics import pairwise_distances
 from sklearn.metrics import adjusted_rand_score
 from sklearn.metrics.pairwise import kernel_metrics, rbf_kernel
 from sklearn.neighbors import NearestNeighbors
@@ -27,6 +26,16 @@ try:
     amg_loaded = True
 except ImportError:
     amg_loaded = False
+
+centers = np.array([[1, 1], [-1, -1], [1, -1]]) + 10
+X, _ = make_blobs(
+    n_samples=60,
+    n_features=2,
+    centers=centers,
+    cluster_std=0.4,
+    shuffle=True,
+    random_state=0,
+)
 
 
 @pytest.mark.parametrize("eigen_solver", ("arpack", "lobpcg"))
@@ -62,44 +71,6 @@ def test_spectral_clustering(eigen_solver, assign_labels):
         assert model_copy.n_clusters == model.n_clusters
         assert model_copy.eigen_solver == model.eigen_solver
         assert_array_equal(model_copy.labels_, model.labels_)
-
-
-def test_spectral_unknown_mode():
-    # Test that SpectralClustering fails with an unknown mode set.
-    centers = np.array(
-        [
-            [0.0, 0.0, 0.0],
-            [10.0, 10.0, 10.0],
-            [20.0, 20.0, 20.0],
-        ]
-    )
-    X, true_labels = make_blobs(
-        n_samples=100, centers=centers, cluster_std=1.0, random_state=42
-    )
-    D = pairwise_distances(X)  # Distance matrix
-    S = np.max(D) - D  # Similarity matrix
-    S = sparse.coo_matrix(S)
-    with pytest.raises(ValueError):
-        spectral_clustering(S, n_clusters=2, random_state=0, eigen_solver="<unknown>")
-
-
-def test_spectral_unknown_assign_labels():
-    # Test that SpectralClustering fails with an unknown assign_labels set.
-    centers = np.array(
-        [
-            [0.0, 0.0, 0.0],
-            [10.0, 10.0, 10.0],
-            [20.0, 20.0, 20.0],
-        ]
-    )
-    X, true_labels = make_blobs(
-        n_samples=100, centers=centers, cluster_std=1.0, random_state=42
-    )
-    D = pairwise_distances(X)  # Distance matrix
-    S = np.max(D) - D  # Similarity matrix
-    S = sparse.coo_matrix(S)
-    with pytest.raises(ValueError):
-        spectral_clustering(S, n_clusters=2, random_state=0, assign_labels="<unknown>")
 
 
 @pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
@@ -192,11 +163,6 @@ def test_affinities():
     labels = sp.fit(X).labels_
     assert (X.shape[0],) == labels.shape
 
-    # raise error on unknown affinity
-    sp = SpectralClustering(n_clusters=2, affinity="<unknown>")
-    with pytest.raises(ValueError):
-        sp.fit(X)
-
 
 def test_cluster_qr():
     # cluster_qr by itself should not be used for clustering generic data
@@ -271,8 +237,8 @@ def test_spectral_clustering_with_arpack_amg_solvers():
     center1, center2 = (14, 12), (20, 25)
     radius1, radius2 = 8, 7
 
-    circle1 = (x - center1[0]) ** 2 + (y - center1[1]) ** 2 < radius1 ** 2
-    circle2 = (x - center2[0]) ** 2 + (y - center2[1]) ** 2 < radius2 ** 2
+    circle1 = (x - center1[0]) ** 2 + (y - center1[1]) ** 2 < radius1**2
+    circle2 = (x - center2[0]) ** 2 + (y - center2[1]) ** 2 < radius2**2
 
     circles = circle1 | circle2
     mask = circles.copy()
@@ -336,15 +302,6 @@ def test_verbose(assign_labels, capsys):
     if assign_labels == "kmeans":
         assert re.search(r"Initialization complete", captured.out)
         assert re.search(r"Iteration [0-9]+, inertia", captured.out)
-
-
-# TODO: Remove in 1.1
-@pytest.mark.parametrize("affinity", ["precomputed", "precomputed_nearest_neighbors"])
-def test_pairwise_is_deprecated(affinity):
-    sp = SpectralClustering(affinity=affinity)
-    msg = r"Attribute `_pairwise` was deprecated in version 0\.24"
-    with pytest.warns(FutureWarning, match=msg):
-        sp._pairwise
 
 
 def test_spectral_clustering_np_matrix_raises():

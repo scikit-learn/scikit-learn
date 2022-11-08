@@ -23,7 +23,6 @@ import numpy as np
 from scipy import sparse as sp
 
 from ._expected_mutual_info_fast import expected_mutual_information
-from ...utils.fixes import _astype_copy_false
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
 
@@ -160,7 +159,7 @@ def contingency_matrix(
 
 
 def pair_confusion_matrix(labels_true, labels_pred):
-    """Pair confusion matrix arising from two clusterings.
+    """Pair confusion matrix arising from two clusterings [1]_.
 
     The pair confusion matrix :math:`C` computes a 2 by 2 similarity matrix
     between two clusterings by considering all pairs of samples and counting
@@ -189,9 +188,15 @@ def pair_confusion_matrix(labels_true, labels_pred):
 
     See Also
     --------
-    rand_score: Rand Score
-    adjusted_rand_score: Adjusted Rand Score
-    adjusted_mutual_info_score: Adjusted Mutual Information
+    rand_score: Rand Score.
+    adjusted_rand_score: Adjusted Rand Score.
+    adjusted_mutual_info_score: Adjusted Mutual Information.
+
+    References
+    ----------
+    .. [1] :doi:`Hubert, L., Arabie, P. "Comparing partitions."
+           Journal of Classification 2, 193–218 (1985).
+           <10.1007/BF01908075>`
 
     Examples
     --------
@@ -212,12 +217,6 @@ def pair_confusion_matrix(labels_true, labels_pred):
              [0, 2]]...
 
     Note that the matrix is not symmetric.
-
-    References
-    ----------
-    .. L. Hubert and P. Arabie, Comparing Partitions, Journal of
-      Classification 1985
-      https://link.springer.com/article/10.1007%2FBF01908075
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples = np.int64(labels_true.shape[0])
@@ -228,12 +227,12 @@ def pair_confusion_matrix(labels_true, labels_pred):
     )
     n_c = np.ravel(contingency.sum(axis=1))
     n_k = np.ravel(contingency.sum(axis=0))
-    sum_squares = (contingency.data ** 2).sum()
+    sum_squares = (contingency.data**2).sum()
     C = np.empty((2, 2), dtype=np.int64)
     C[1, 1] = sum_squares - n_samples
     C[0, 1] = contingency.dot(n_k).sum() - sum_squares
     C[1, 0] = contingency.transpose().dot(n_c).sum() - sum_squares
-    C[0, 0] = n_samples ** 2 - C[0, 1] - C[1, 0] - sum_squares
+    C[0, 0] = n_samples**2 - C[0, 1] - C[1, 0] - sum_squares
     return C
 
 
@@ -243,9 +242,9 @@ def rand_score(labels_true, labels_pred):
     The Rand Index computes a similarity measure between two clusterings
     by considering all pairs of samples and counting pairs that are
     assigned in the same or different clusters in the predicted and
-    true clusterings.
+    true clusterings [1]_ [2]_.
 
-    The raw RI score is:
+    The raw RI score [3]_ is:
 
         RI = (number of agreeing pairs) / (number of pairs)
 
@@ -267,8 +266,19 @@ def rand_score(labels_true, labels_pred):
 
     See Also
     --------
-    adjusted_rand_score: Adjusted Rand Score
-    adjusted_mutual_info_score: Adjusted Mutual Information
+    adjusted_rand_score: Adjusted Rand Score.
+    adjusted_mutual_info_score: Adjusted Mutual Information.
+
+    References
+    ----------
+    .. [1] :doi:`Hubert, L., Arabie, P. "Comparing partitions."
+       Journal of Classification 2, 193–218 (1985).
+       <10.1007/BF01908075>`.
+
+    .. [2] `Wikipedia: Simple Matching Coefficient
+        <https://en.wikipedia.org/wiki/Simple_matching_coefficient>`_
+
+    .. [3] `Wikipedia: Rand Index <https://en.wikipedia.org/wiki/Rand_index>`_
 
     Examples
     --------
@@ -283,16 +293,6 @@ def rand_score(labels_true, labels_pred):
 
       >>> rand_score([0, 0, 1, 2], [0, 0, 1, 1])
       0.83...
-
-    References
-    ----------
-    .. L. Hubert and P. Arabie, Comparing Partitions, Journal of
-      Classification 1985
-      https://link.springer.com/article/10.1007%2FBF01908075
-
-    .. https://en.wikipedia.org/wiki/Simple_matching_coefficient
-
-    .. https://en.wikipedia.org/wiki/Rand_index
     """
     contingency = pair_confusion_matrix(labels_true, labels_pred)
     numerator = contingency.diagonal().sum()
@@ -323,7 +323,8 @@ def adjusted_rand_score(labels_true, labels_pred):
     The adjusted Rand index is thus ensured to have a value close to
     0.0 for random labeling independently of the number of clusters and
     samples and exactly 1.0 when the clusterings are identical (up to
-    a permutation).
+    a permutation). The adjusted Rand index is bounded below by -0.5 for
+    especially discordant clusterings.
 
     ARI is a symmetric measure::
 
@@ -334,16 +335,34 @@ def adjusted_rand_score(labels_true, labels_pred):
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        Ground truth class labels to be used as a reference
+        Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        Cluster labels to evaluate
+        Cluster labels to evaluate.
 
     Returns
     -------
     ARI : float
-       Similarity score between -1.0 and 1.0. Random labelings have an ARI
+       Similarity score between -0.5 and 1.0. Random labelings have an ARI
        close to 0.0. 1.0 stands for perfect match.
+
+    See Also
+    --------
+    adjusted_mutual_info_score : Adjusted Mutual Information.
+
+    References
+    ----------
+    .. [Hubert1985] L. Hubert and P. Arabie, Comparing Partitions,
+      Journal of Classification 1985
+      https://link.springer.com/article/10.1007%2FBF01908075
+
+    .. [Steinley2004] D. Steinley, Properties of the Hubert-Arabie
+      adjusted Rand index, Psychological Methods 2004
+
+    .. [wk] https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
+
+    .. [Chacon] :doi:`Minimum adjusted Rand index for two clusterings of a given size,
+      2022, J. E. Chacón and A. I. Rastrojo <10.1007/s11634-022-00491-w>`
 
     Examples
     --------
@@ -373,20 +392,11 @@ def adjusted_rand_score(labels_true, labels_pred):
       >>> adjusted_rand_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
 
-    References
-    ----------
-    .. [Hubert1985] L. Hubert and P. Arabie, Comparing Partitions,
-      Journal of Classification 1985
-      https://link.springer.com/article/10.1007%2FBF01908075
+    ARI may take a negative value for especially discordant labelings that
+    are a worse choice than the expected value of random labels::
 
-    .. [Steinley2004] D. Steinley, Properties of the Hubert-Arabie
-      adjusted Rand index, Psychological Methods 2004
-
-    .. [wk] https://en.wikipedia.org/wiki/Rand_index#Adjusted_Rand_index
-
-    See Also
-    --------
-    adjusted_mutual_info_score : Adjusted Mutual Information.
+      >>> adjusted_rand_score([0, 0, 1, 1], [0, 1, 0, 1])
+      -0.5
     """
     (tn, fp), (fn, tp) = pair_confusion_matrix(labels_true, labels_pred)
     # convert to Python integer types, to avoid overflow or underflow
@@ -430,10 +440,10 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        ground truth class labels to be used as a reference
+        Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        cluster labels to evaluate
+        Gluster labels to evaluate.
 
     beta : float, default=1.0
         Ratio of weight attributed to ``homogeneity`` vs ``completeness``.
@@ -444,19 +454,19 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred, *, beta=1.0):
     Returns
     -------
     homogeneity : float
-       score between 0.0 and 1.0. 1.0 stands for perfectly homogeneous labeling
+        Score between 0.0 and 1.0. 1.0 stands for perfectly homogeneous labeling.
 
     completeness : float
-       score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
+        Score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling.
 
     v_measure : float
-        harmonic mean of the first two
+        Harmonic mean of the first two.
 
     See Also
     --------
-    homogeneity_score
-    completeness_score
-    v_measure_score
+    homogeneity_score : Homogeneity metric of cluster labeling.
+    completeness_score : Completeness metric of cluster labeling.
+    v_measure_score : V-Measure (NMI with arithmetic mean option).
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
 
@@ -504,15 +514,20 @@ def homogeneity_score(labels_true, labels_pred):
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        ground truth class labels to be used as a reference
+        Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        cluster labels to evaluate
+        Cluster labels to evaluate.
 
     Returns
     -------
     homogeneity : float
-       score between 0.0 and 1.0. 1.0 stands for perfectly homogeneous labeling
+       Score between 0.0 and 1.0. 1.0 stands for perfectly homogeneous labeling.
+
+    See Also
+    --------
+    completeness_score : Completeness metric of cluster labeling.
+    v_measure_score : V-Measure (NMI with arithmetic mean option).
 
     References
     ----------
@@ -520,11 +535,6 @@ def homogeneity_score(labels_true, labels_pred):
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
        <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
-
-    See Also
-    --------
-    completeness_score
-    v_measure_score
 
     Examples
     --------
@@ -555,7 +565,7 @@ def homogeneity_score(labels_true, labels_pred):
 
 
 def completeness_score(labels_true, labels_pred):
-    """Completeness metric of a cluster labeling given a ground truth.
+    """Compute completeness metric of a cluster labeling given a ground truth.
 
     A clustering result satisfies completeness if all the data points
     that are members of a given class are elements of the same cluster.
@@ -573,15 +583,20 @@ def completeness_score(labels_true, labels_pred):
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        ground truth class labels to be used as a reference
+        Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        cluster labels to evaluate
+        Cluster labels to evaluate.
 
     Returns
     -------
     completeness : float
-       score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
+       Score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling.
+
+    See Also
+    --------
+    homogeneity_score : Homogeneity metric of cluster labeling.
+    v_measure_score : V-Measure (NMI with arithmetic mean option).
 
     References
     ----------
@@ -589,11 +604,6 @@ def completeness_score(labels_true, labels_pred):
     .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
        conditional entropy-based external cluster evaluation measure
        <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
-
-    See Also
-    --------
-    homogeneity_score
-    v_measure_score
 
     Examples
     --------
@@ -643,16 +653,15 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
 
-
     Read more in the :ref:`User Guide <homogeneity_completeness>`.
 
     Parameters
     ----------
     labels_true : int array, shape = [n_samples]
-        ground truth class labels to be used as a reference
+        Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)
-        cluster labels to evaluate
+        Cluster labels to evaluate.
 
     beta : float, default=1.0
         Ratio of weight attributed to ``homogeneity`` vs ``completeness``.
@@ -663,7 +672,13 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
     Returns
     -------
     v_measure : float
-       score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
+       Score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling.
+
+    See Also
+    --------
+    homogeneity_score : Homogeneity metric of cluster labeling.
+    completeness_score : Completeness metric of cluster labeling.
+    normalized_mutual_info_score : Normalized Mutual Information.
 
     References
     ----------
@@ -672,15 +687,8 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
        conditional entropy-based external cluster evaluation measure
        <https://aclweb.org/anthology/D/D07/D07-1043.pdf>`_
 
-    See Also
-    --------
-    homogeneity_score
-    completeness_score
-    normalized_mutual_info_score
-
     Examples
     --------
-
     Perfect labelings are both homogeneous and complete, hence have score 1.0::
 
       >>> from sklearn.metrics.cluster import v_measure_score
@@ -690,7 +698,7 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
       1.0
 
     Labelings that assign all classes members to the same clusters
-    are complete be not homogeneous, hence penalized::
+    are complete but not homogeneous, hence penalized::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 2], [0, 0, 1, 1]))
       0.8...
@@ -698,7 +706,7 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
       0.66...
 
     Labelings that have pure clusters with members coming from the same
-    classes are homogeneous but un-necessary splits harms completeness
+    classes are homogeneous but un-necessary splits harm completeness
     and thus penalize V-measure as well::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 1, 2]))
@@ -769,14 +777,14 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
        Mutual information, a non-negative value, measured in nats using the
        natural logarithm.
 
-    Notes
-    -----
-    The logarithm used is the natural logarithm (base-e).
-
     See Also
     --------
     adjusted_mutual_info_score : Adjusted against chance Mutual Information.
     normalized_mutual_info_score : Normalized Mutual Information.
+
+    Notes
+    -----
+    The logarithm used is the natural logarithm (base-e).
     """
     if contingency is None:
         labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
@@ -801,6 +809,12 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     contingency_sum = contingency.sum()
     pi = np.ravel(contingency.sum(axis=1))
     pj = np.ravel(contingency.sum(axis=0))
+
+    # Since MI <= min(H(X), H(Y)), any labelling with zero entropy, i.e. containing a
+    # single cluster, implies MI = 0
+    if pi.size == 1 or pj.size == 1:
+        return 0.0
+
     log_contingency_nm = np.log(nz_val)
     contingency_nm = nz_val / contingency_sum
     # Don't need to calculate the full outer product, just for non-zeroes
@@ -876,6 +890,16 @@ def adjusted_mutual_info_score(
     adjusted_rand_score : Adjusted Rand Index.
     mutual_info_score : Mutual Information (not adjusted for chance).
 
+    References
+    ----------
+    .. [1] `Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
+       Clusterings Comparison: Variants, Properties, Normalization and
+       Correction for Chance, JMLR
+       <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>`_
+
+    .. [2] `Wikipedia entry for the Adjusted Mutual Information
+       <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
+
     Examples
     --------
 
@@ -896,30 +920,23 @@ def adjusted_mutual_info_score(
       >>> adjusted_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
       ... # doctest: +SKIP
       0.0
-
-    References
-    ----------
-    .. [1] `Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
-       Clusterings Comparison: Variants, Properties, Normalization and
-       Correction for Chance, JMLR
-       <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>`_
-
-    .. [2] `Wikipedia entry for the Adjusted Mutual Information
-       <https://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     n_samples = labels_true.shape[0]
     classes = np.unique(labels_true)
     clusters = np.unique(labels_pred)
+
     # Special limit cases: no clustering since the data is not split.
+    # It corresponds to both labellings having zero entropy.
     # This is a perfect match hence return 1.0.
     if (
         classes.shape[0] == clusters.shape[0] == 1
         or classes.shape[0] == clusters.shape[0] == 0
     ):
         return 1.0
+
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    contingency = contingency.astype(np.float64, **_astype_copy_false(contingency))
+    contingency = contingency.astype(np.float64, copy=False)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred, contingency=contingency)
     # Calculate the expected value for the mutual information
@@ -1022,24 +1039,30 @@ def normalized_mutual_info_score(
     clusters = np.unique(labels_pred)
 
     # Special limit cases: no clustering since the data is not split.
+    # It corresponds to both labellings having zero entropy.
     # This is a perfect match hence return 1.0.
     if (
         classes.shape[0] == clusters.shape[0] == 1
         or classes.shape[0] == clusters.shape[0] == 0
     ):
         return 1.0
+
     contingency = contingency_matrix(labels_true, labels_pred, sparse=True)
-    contingency = contingency.astype(np.float64, **_astype_copy_false(contingency))
+    contingency = contingency.astype(np.float64, copy=False)
     # Calculate the MI for the two clusterings
     mi = mutual_info_score(labels_true, labels_pred, contingency=contingency)
-    # Calculate the expected value for the mutual information
+
+    # At this point mi = 0 can't be a perfect match (the special case of a single
+    # cluster has been dealt with before). Hence, if mi = 0, the nmi must be 0 whatever
+    # the normalization.
+    if mi == 0:
+        return 0.0
+
     # Calculate entropy for each labeling
     h_true, h_pred = entropy(labels_true), entropy(labels_pred)
+
     normalizer = _generalized_average(h_true, h_pred, average_method)
-    # Avoid 0.0 / 0.0 when either entropy is zero.
-    normalizer = max(normalizer, np.finfo("float64").eps)
-    nmi = mi / normalizer
-    return nmi
+    return mi / normalizer
 
 
 def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
@@ -1081,6 +1104,16 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
     score : float
        The resulting Fowlkes-Mallows score.
 
+    References
+    ----------
+    .. [1] `E. B. Fowkles and C. L. Mallows, 1983. "A method for comparing two
+       hierarchical clusterings". Journal of the American Statistical
+       Association
+       <https://www.tandfonline.com/doi/abs/10.1080/01621459.1983.10478008>`_
+
+    .. [2] `Wikipedia entry for the Fowlkes-Mallows Index
+           <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
+
     Examples
     --------
 
@@ -1098,22 +1131,12 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
       >>> fowlkes_mallows_score([0, 0, 0, 0], [0, 1, 2, 3])
       0.0
-
-    References
-    ----------
-    .. [1] `E. B. Fowkles and C. L. Mallows, 1983. "A method for comparing two
-       hierarchical clusterings". Journal of the American Statistical
-       Association
-       <https://www.tandfonline.com/doi/abs/10.1080/01621459.1983.10478008>`_
-
-    .. [2] `Wikipedia entry for the Fowlkes-Mallows Index
-           <https://en.wikipedia.org/wiki/Fowlkes-Mallows_index>`_
     """
     labels_true, labels_pred = check_clusterings(labels_true, labels_pred)
     (n_samples,) = labels_true.shape
 
     c = contingency_matrix(labels_true, labels_pred, sparse=True)
-    c = c.astype(np.int64, **_astype_copy_false(c))
+    c = c.astype(np.int64, copy=False)
     tk = np.dot(c.data, c.data) - n_samples
     pk = np.sum(np.asarray(c.sum(axis=0)).ravel() ** 2) - n_samples
     qk = np.sum(np.asarray(c.sum(axis=1)).ravel() ** 2) - n_samples
@@ -1121,12 +1144,17 @@ def fowlkes_mallows_score(labels_true, labels_pred, *, sparse=False):
 
 
 def entropy(labels):
-    """Calculates the entropy for a labeling.
+    """Calculate the entropy for a labeling.
 
     Parameters
     ----------
-    labels : int array, shape = [n_samples]
-        The labels
+    labels : array-like of shape (n_samples,), dtype=int
+        The labels.
+
+    Returns
+    -------
+    entropy : float
+       The entropy for a labeling.
 
     Notes
     -----
@@ -1137,6 +1165,11 @@ def entropy(labels):
     label_idx = np.unique(labels, return_inverse=True)[1]
     pi = np.bincount(label_idx).astype(np.float64)
     pi = pi[pi > 0]
+
+    # single cluster => zero entropy
+    if pi.size == 1:
+        return 0.0
+
     pi_sum = np.sum(pi)
     # log(a / b) should be calculated as log(a) - log(b) for
     # possible loss of precision

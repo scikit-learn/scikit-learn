@@ -211,12 +211,6 @@ Making a release
 
    https://github.com/scikit-learn/scikit-learn/actions?query=workflow%3A%22Publish+to+Pypi%22
 
-4.1 You can test the conda-forge builds by submitting a PR to the feedstock
-    repo: https://github.com/conda-forge/scikit-learn-feedstock. If you want to
-    publish an RC release on conda-forge, the PR should target the `rc` branch
-    as opposed to the `master` branch. The two branches need to be kept sync
-    together otherwise.
-
 5. If this went fine, you can proceed with tagging. Proceed with caution.
    Ideally, tags should be created when you're almost certain that the release
    is ready, since adding a tag to the main repo can trigger certain automated
@@ -230,12 +224,18 @@ Making a release
      git tag -a 0.99.0  # in the 0.99.X branch
      git push git@github.com:scikit-learn/scikit-learn.git 0.99.0
 
-6. Trigger the GitHub Actions workflow again but this time to upload the artifacts
+6. Confirm that the bot has detected the tag on the conda-forge feedstock repo:
+   https://github.com/conda-forge/scikit-learn-feedstock. If not, submit a PR for the
+   release. If you want to publish an RC release on conda-forge, the PR should target
+   the `rc` branch as opposed to the `main` branch. The two branches need to be kept
+   sync together otherwise.
+
+7. Trigger the GitHub Actions workflow again but this time to upload the artifacts
    to the real https://pypi.org (replace "testpypi" by "pypi" in the "Run
    workflow" form).
 
-7. Alternatively, it's possible to collect locally the generated binary wheel
-   packages and source tarball and upload them all to PyPI by running the
+8. **Alternative to step 7**: it's possible to collect locally the generated binary
+   wheel packages and source tarball and upload them all to PyPI by running the
    following commands in the scikit-learn source folder (checked out at the
    release tag):
 
@@ -243,7 +243,11 @@ Making a release
 
        rm -r dist
        pip install -U wheelhouse_uploader twine
-       python setup.py fetch_artifacts
+       python -m wheelhouse_uploader fetch \
+         --version 0.99.0 \
+         --local-folder dist \
+         scikit-learn \
+         https://pypi.anaconda.org/scikit-learn-wheels-staging/simple/scikit-learn/
 
    This command will download all the binary packages accumulated in the
    `staging area on the anaconda.org hosting service
@@ -268,8 +272,8 @@ Making a release
 
        twine upload dist/*
 
-8. For major/minor (not bug-fix release), update the symlink for ``stable``
-   and the ``latestStable`` variable in
+9. For major/minor (not bug-fix release or release candidates), update the symlink for
+   ``stable`` and the ``latestStable`` variable in
    https://github.com/scikit-learn/scikit-learn.github.io:
 
    .. prompt:: bash $
@@ -284,7 +288,9 @@ Making a release
        sed -i "s/latestStable = '.*/latestStable = '0.999';/" versionwarning.js
        git add stable versionwarning.js
        git commit -m "Update stable to point to 0.999"
-       git push origin master
+       git push origin main
+
+10. Update ``SECURITY.md`` to reflect the latest supported version.
 
 .. _release_checklist:
 
@@ -302,7 +308,7 @@ The following GitHub checklist might be helpful in a release PR::
     * [ ] confirm bot detected at
       https://github.com/conda-forge/scikit-learn-feedstock and wait for merge
     * [ ] upload the wheels and source tarball to PyPI
-    * [ ] https://github.com/scikit-learn/scikit-learn/releases publish
+    * [ ] https://github.com/scikit-learn/scikit-learn/releases publish (except for RC)
     * [ ] announce on mailing list and on Twitter, and LinkedIn
 
 Merging Pull Requests

@@ -32,37 +32,75 @@ necessarily related to visualisation.
 
 """
 
-from time import time
-
-import matplotlib.pyplot as plt
+# %%
+# Generate distorted image
+# ------------------------
 import numpy as np
-import scipy as sp
-
-from sklearn.decomposition import MiniBatchDictionaryLearning
-from sklearn.feature_extraction.image import extract_patches_2d
-from sklearn.feature_extraction.image import reconstruct_from_patches_2d
 
 
-try:  # SciPy >= 0.16 have face in misc
+try:  # Scipy >= 1.10
+    from scipy.datasets import face
+except ImportError:
     from scipy.misc import face
 
-    face = face(gray=True)
-except ImportError:
-    face = sp.face(gray=True)
+raccoon_face = face(gray=True)
 
 # Convert from uint8 representation with values between 0 and 255 to
 # a floating point representation with values between 0 and 1.
-face = face / 255.0
+raccoon_face = raccoon_face / 255.0
 
 # downsample for higher speed
-face = face[::4, ::4] + face[1::4, ::4] + face[::4, 1::4] + face[1::4, 1::4]
-face /= 4.0
-height, width = face.shape
+raccoon_face = (
+    raccoon_face[::4, ::4]
+    + raccoon_face[1::4, ::4]
+    + raccoon_face[::4, 1::4]
+    + raccoon_face[1::4, 1::4]
+)
+raccoon_face /= 4.0
+height, width = raccoon_face.shape
 
 # Distort the right half of the image
 print("Distorting image...")
-distorted = face.copy()
+distorted = raccoon_face.copy()
 distorted[:, width // 2 :] += 0.075 * np.random.randn(height, width // 2)
+
+
+# %%
+# Display the distorted image
+# ---------------------------
+import matplotlib.pyplot as plt
+
+
+def show_with_diff(image, reference, title):
+    """Helper function to display denoising"""
+    plt.figure(figsize=(5, 3.3))
+    plt.subplot(1, 2, 1)
+    plt.title("Image")
+    plt.imshow(image, vmin=0, vmax=1, cmap=plt.cm.gray, interpolation="nearest")
+    plt.xticks(())
+    plt.yticks(())
+    plt.subplot(1, 2, 2)
+    difference = image - reference
+
+    plt.title("Difference (norm: %.2f)" % np.sqrt(np.sum(difference**2)))
+    plt.imshow(
+        difference, vmin=-0.5, vmax=0.5, cmap=plt.cm.PuOr, interpolation="nearest"
+    )
+    plt.xticks(())
+    plt.yticks(())
+    plt.suptitle(title, size=16)
+    plt.subplots_adjust(0.02, 0.02, 0.98, 0.79, 0.02, 0.2)
+
+
+show_with_diff(distorted, raccoon_face, "Distorted image")
+
+
+# %%
+# Extract reference patches
+# ----------------------------
+from time import time
+
+from sklearn.feature_extraction.image import extract_patches_2d
 
 # Extract all reference patches from the left half of the image
 print("Extracting reference patches...")
@@ -72,17 +110,27 @@ data = extract_patches_2d(distorted[:, : width // 2], patch_size)
 data = data.reshape(data.shape[0], -1)
 data -= np.mean(data, axis=0)
 data /= np.std(data, axis=0)
-print("done in %.2fs." % (time() - t0))
+print(f"{data.shape[0]} patches extracted in %.2fs." % (time() - t0))
 
-# #############################################################################
+
+# %%
 # Learn the dictionary from reference patches
+# -------------------------------------------
+from sklearn.decomposition import MiniBatchDictionaryLearning
 
 print("Learning the dictionary...")
 t0 = time()
-dico = MiniBatchDictionaryLearning(n_components=50, alpha=1, n_iter=250)
+dico = MiniBatchDictionaryLearning(
+    # increase to 300 for higher quality results at the cost of slower
+    # training times.
+    n_components=50,
+    batch_size=200,
+    alpha=1.0,
+    max_iter=10,
+)
 V = dico.fit(data).components_
 dt = time() - t0
-print("done in %.2fs." % dt)
+print(f"{dico.n_iter_} iterations / {dico.n_steps_} steps in {dt:.2f}.")
 
 plt.figure(figsize=(4.2, 4))
 for i, comp in enumerate(V[:100]):
@@ -98,35 +146,10 @@ plt.suptitle(
 plt.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
 
 
-# #############################################################################
-# Display the distorted image
-
-
-def show_with_diff(image, reference, title):
-    """Helper function to display denoising"""
-    plt.figure(figsize=(5, 3.3))
-    plt.subplot(1, 2, 1)
-    plt.title("Image")
-    plt.imshow(image, vmin=0, vmax=1, cmap=plt.cm.gray, interpolation="nearest")
-    plt.xticks(())
-    plt.yticks(())
-    plt.subplot(1, 2, 2)
-    difference = image - reference
-
-    plt.title("Difference (norm: %.2f)" % np.sqrt(np.sum(difference ** 2)))
-    plt.imshow(
-        difference, vmin=-0.5, vmax=0.5, cmap=plt.cm.PuOr, interpolation="nearest"
-    )
-    plt.xticks(())
-    plt.yticks(())
-    plt.suptitle(title, size=16)
-    plt.subplots_adjust(0.02, 0.02, 0.98, 0.79, 0.02, 0.2)
-
-
-show_with_diff(distorted, face, "Distorted image")
-
-# #############################################################################
+# %%
 # Extract noisy patches and reconstruct them using the dictionary
+# ---------------------------------------------------------------
+from sklearn.feature_extraction.image import reconstruct_from_patches_2d
 
 print("Extracting noisy patches... ")
 t0 = time()
@@ -146,7 +169,7 @@ transform_algorithms = [
 reconstructions = {}
 for title, transform_algorithm, kwargs in transform_algorithms:
     print(title + "...")
-    reconstructions[title] = face.copy()
+    reconstructions[title] = raccoon_face.copy()
     t0 = time()
     dico.set_params(transform_algorithm=transform_algorithm, **kwargs)
     code = dico.transform(data)
@@ -162,6 +185,6 @@ for title, transform_algorithm, kwargs in transform_algorithms:
     )
     dt = time() - t0
     print("done in %.2fs." % dt)
-    show_with_diff(reconstructions[title], face, title + " (time: %.1fs)" % dt)
+    show_with_diff(reconstructions[title], raccoon_face, title + " (time: %.1fs)" % dt)
 
 plt.show()

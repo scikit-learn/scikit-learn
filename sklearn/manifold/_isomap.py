@@ -5,21 +5,24 @@
 import warnings
 
 import numpy as np
-import scipy
+from numbers import Integral, Real
+
 from scipy.sparse import issparse
 from scipy.sparse.csgraph import shortest_path
 from scipy.sparse.csgraph import connected_components
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
+from ..neighbors import radius_neighbors_graph
 from ..utils.validation import check_is_fitted
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
 from ..utils.graph import _fix_connected_components
-from ..externals._packaging.version import parse as parse_version
+from ..utils._param_validation import Interval, StrOptions
+from ..metrics.pairwise import _VALID_METRICS
 
 
-class Isomap(TransformerMixin, BaseEstimator):
+class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Isomap Embedding.
 
     Non-linear dimensionality reduction through Isometric Mapping
@@ -28,8 +31,15 @@ class Isomap(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    n_neighbors : int, default=5
-        Number of neighbors to consider for each point.
+    n_neighbors : int or None, default=5
+        Number of neighbors to consider for each point. If `n_neighbors` is an int,
+        then `radius` must be `None`.
+
+    radius : float or None, default=None
+        Limiting distance of neighbors to return. If `radius` is a float,
+        then `n_neighbors` must be set to `None`.
+
+        .. versionadded:: 1.1
 
     n_components : int, default=2
         Number of coordinates for the manifold.
@@ -152,10 +162,26 @@ class Isomap(TransformerMixin, BaseEstimator):
     (100, 2)
     """
 
+    _parameter_constraints: dict = {
+        "n_neighbors": [Interval(Integral, 1, None, closed="left"), None],
+        "radius": [Interval(Real, 0, None, closed="both"), None],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "eigen_solver": [StrOptions({"auto", "arpack", "dense"})],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left"), None],
+        "path_method": [StrOptions({"auto", "FW", "D"})],
+        "neighbors_algorithm": [StrOptions({"auto", "brute", "kd_tree", "ball_tree"})],
+        "n_jobs": [Integral, None],
+        "p": [Interval(Real, 1, None, closed="left")],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "metric_params": [dict, None],
+    }
+
     def __init__(
         self,
         *,
         n_neighbors=5,
+        radius=None,
         n_components=2,
         eigen_solver="auto",
         tol=0,
@@ -168,6 +194,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         metric_params=None,
     ):
         self.n_neighbors = n_neighbors
+        self.radius = radius
         self.n_components = n_components
         self.eigen_solver = eigen_solver
         self.tol = tol
@@ -180,8 +207,16 @@ class Isomap(TransformerMixin, BaseEstimator):
         self.metric_params = metric_params
 
     def _fit_transform(self, X):
+        if self.n_neighbors is not None and self.radius is not None:
+            raise ValueError(
+                "Both n_neighbors and radius are provided. Use"
+                f" Isomap(radius={self.radius}, n_neighbors=None) if intended to use"
+                " radius-based neighbors"
+            )
+
         self.nbrs_ = NearestNeighbors(
             n_neighbors=self.n_neighbors,
+            radius=self.radius,
             algorithm=self.neighbors_algorithm,
             metric=self.metric,
             p=self.p,
@@ -202,21 +237,32 @@ class Isomap(TransformerMixin, BaseEstimator):
             n_jobs=self.n_jobs,
         )
 
-        kng = kneighbors_graph(
-            self.nbrs_,
-            self.n_neighbors,
-            metric=self.metric,
-            p=self.p,
-            metric_params=self.metric_params,
-            mode="distance",
-            n_jobs=self.n_jobs,
-        )
+        if self.n_neighbors is not None:
+            nbg = kneighbors_graph(
+                self.nbrs_,
+                self.n_neighbors,
+                metric=self.metric,
+                p=self.p,
+                metric_params=self.metric_params,
+                mode="distance",
+                n_jobs=self.n_jobs,
+            )
+        else:
+            nbg = radius_neighbors_graph(
+                self.nbrs_,
+                radius=self.radius,
+                metric=self.metric,
+                p=self.p,
+                metric_params=self.metric_params,
+                mode="distance",
+                n_jobs=self.n_jobs,
+            )
 
         # Compute the number of connected components, and connect the different
         # components to be able to compute a shortest path between all pairs
         # of samples in the graph.
         # Similar fix to cluster._agglomerative._fix_connectivity.
-        n_connected_components, labels = connected_components(kng)
+        n_connected_components, labels = connected_components(nbg)
         if n_connected_components > 1:
             if self.metric == "precomputed" and issparse(X):
                 raise RuntimeError(
@@ -236,9 +282,9 @@ class Isomap(TransformerMixin, BaseEstimator):
             )
 
             # use array validated by NearestNeighbors
-            kng = _fix_connected_components(
+            nbg = _fix_connected_components(
                 X=self.nbrs_._fit_X,
-                graph=kng,
+                graph=nbg,
                 n_connected_components=n_connected_components,
                 component_labels=labels,
                 mode="distance",
@@ -246,17 +292,18 @@ class Isomap(TransformerMixin, BaseEstimator):
                 **self.nbrs_.effective_metric_params_,
             )
 
-        if parse_version(scipy.__version__) < parse_version("1.3.2"):
-            # make identical samples have a nonzero distance, to account for
-            # issues in old scipy Floyd-Warshall implementation.
-            kng.data += 1e-15
+        self.dist_matrix_ = shortest_path(nbg, method=self.path_method, directed=False)
 
-        self.dist_matrix_ = shortest_path(kng, method=self.path_method, directed=False)
+        if self.nbrs_._fit_X.dtype == np.float32:
+            self.dist_matrix_ = self.dist_matrix_.astype(
+                self.nbrs_._fit_X.dtype, copy=False
+            )
 
-        G = self.dist_matrix_ ** 2
+        G = self.dist_matrix_**2
         G *= -0.5
 
         self.embedding_ = self.kernel_pca_.fit_transform(G)
+        self._n_features_out = self.embedding_.shape[1]
 
     def reconstruction_error(self):
         """Compute the reconstruction error for the embedding.
@@ -278,19 +325,19 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         ``K(D) = -0.5 * (I - 1/n_samples) * D^2 * (I - 1/n_samples)``
         """
-        G = -0.5 * self.dist_matrix_ ** 2
+        G = -0.5 * self.dist_matrix_**2
         G_center = KernelCenterer().fit_transform(G)
         evals = self.kernel_pca_.eigenvalues_
-        return np.sqrt(np.sum(G_center ** 2) - np.sum(evals ** 2)) / G.shape[0]
+        return np.sqrt(np.sum(G_center**2) - np.sum(evals**2)) / G.shape[0]
 
     def fit(self, X, y=None):
         """Compute the embedding vectors for data X.
 
         Parameters
         ----------
-        X : {array-like, sparse graph, BallTree, KDTree, NearestNeighbors}
+        X : {array-like, sparse matrix, BallTree, KDTree, NearestNeighbors}
             Sample data, shape = (n_samples, n_features), in the form of a
-            numpy array, sparse graph, precomputed tree, or NearestNeighbors
+            numpy array, sparse matrix, precomputed tree, or NearestNeighbors
             object.
 
         y : Ignored
@@ -301,6 +348,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
+        self._validate_params()
         self._fit_transform(X)
         return self
 
@@ -309,7 +357,7 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : {array-like, sparse graph, BallTree, KDTree}
+        X : {array-like, sparse matrix, BallTree, KDTree}
             Training vector, where `n_samples` is the number of samples
             and `n_features` is the number of features.
 
@@ -321,6 +369,7 @@ class Isomap(TransformerMixin, BaseEstimator):
         X_new : array-like, shape (n_samples, n_components)
             X transformed in the new space.
         """
+        self._validate_params()
         self._fit_transform(X)
         return self.embedding_
 
@@ -337,7 +386,7 @@ class Isomap(TransformerMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : array-like, shape (n_queries, n_features)
+        X : {array-like, sparse matrix}, shape (n_queries, n_features)
             If neighbors_algorithm='precomputed', X is assumed to be a
             distance matrix or a sparse graph of shape
             (n_queries, n_samples_fit).
@@ -348,7 +397,10 @@ class Isomap(TransformerMixin, BaseEstimator):
             X transformed in the new space.
         """
         check_is_fitted(self)
-        distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
+        if self.n_neighbors is not None:
+            distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
+        else:
+            distances, indices = self.nbrs_.radius_neighbors(X, return_distance=True)
 
         # Create the graph of shortest distances from X to
         # training data via the nearest neighbors of X.
@@ -365,3 +417,6 @@ class Isomap(TransformerMixin, BaseEstimator):
         G_X *= -0.5
 
         return self.kernel_pca_.transform(G_X)
+
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}

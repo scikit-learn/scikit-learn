@@ -52,14 +52,15 @@ sample_weight_constant = np.ones(len(X))
 sample_weight_last_ten[15:] *= 5
 sample_weight_last_ten[9] *= 15
 
-# for reference, first fit without sample weights
+# Fit the models.
 
-# fit the model
-clf_weights = svm.SVC(gamma=1)
-clf_weights.fit(X, y, sample_weight=sample_weight_last_ten)
-
+# This model does not take into account sample weights.
 clf_no_weights = svm.SVC(gamma=1)
 clf_no_weights.fit(X, y)
+
+# This other model takes into account some dedicated sample weights.
+clf_weights = svm.SVC(gamma=1)
+clf_weights.fit(X, y, sample_weight=sample_weight_last_ten)
 
 fig, axes = plt.subplots(1, 2, figsize=(14, 6))
 plot_decision_function(

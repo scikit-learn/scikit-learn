@@ -233,6 +233,8 @@ def test_gaussian_kde(Cls, n_samples=1000):
         assert_array_almost_equal(dens_tree, dens_gkde, decimal=3)
 
 
+# TODO: Remove filterwarnings in 1.3 when wminkowski is removed
+@pytest.mark.filterwarnings("ignore:WMinkowskiDistance:FutureWarning:sklearn")
 @pytest.mark.parametrize(
     "Cls, metric",
     itertools.chain(

@@ -15,9 +15,9 @@ import numpy as np
 from . import __version__
 from ._config import get_config
 from .utils import _IS_32BIT
+from .utils._set_output import _SetOutputMixin
 from .utils._tags import (
     _DEFAULT_TAGS,
-    _safe_tags,
 )
 from .utils.validation import check_X_y
 from .utils.validation import check_array
@@ -26,8 +26,9 @@ from .utils.validation import _num_features
 from .utils.validation import _check_feature_names_in
 from .utils.validation import _generate_get_feature_names_out
 from .utils.validation import check_is_fitted
-from .utils._estimator_html_repr import estimator_html_repr
 from .utils.validation import _get_feature_names
+from .utils._estimator_html_repr import estimator_html_repr
+from .utils._param_validation import validate_parameter_constraints
 
 
 def clone(estimator, *, safe=True):
@@ -98,57 +99,14 @@ def clone(estimator, *, safe=True):
                 "Cannot clone object %s, as the constructor "
                 "either does not set or modifies parameter %s" % (estimator, name)
             )
+
+    # _sklearn_output_config is used by `set_output` to configure the output
+    # container of an estimator.
+    if hasattr(estimator, "_sklearn_output_config"):
+        new_object._sklearn_output_config = copy.deepcopy(
+            estimator._sklearn_output_config
+        )
     return new_object
-
-
-def _pprint(params, offset=0, printer=repr):
-    """Pretty print the dictionary 'params'
-
-    Parameters
-    ----------
-    params : dict
-        The dictionary to pretty print
-
-    offset : int, default=0
-        The offset in characters to add at the begin of each line.
-
-    printer : callable, default=repr
-        The function to convert entries to strings, typically
-        the builtin str or repr
-
-    """
-    # Do a multi-line justified repr:
-    options = np.get_printoptions()
-    np.set_printoptions(precision=5, threshold=64, edgeitems=2)
-    params_list = list()
-    this_line_length = offset
-    line_sep = ",\n" + (1 + offset // 2) * " "
-    for i, (k, v) in enumerate(sorted(params.items())):
-        if type(v) is float:
-            # use str for representing floating point numbers
-            # this way we get consistent representation across
-            # architectures and versions.
-            this_repr = "%s=%s" % (k, str(v))
-        else:
-            # use repr of the rest
-            this_repr = "%s=%s" % (k, printer(v))
-        if len(this_repr) > 500:
-            this_repr = this_repr[:300] + "..." + this_repr[-100:]
-        if i > 0:
-            if this_line_length + len(this_repr) >= 75 or "\n" in this_repr:
-                params_list.append(line_sep)
-                this_line_length = len(line_sep)
-            else:
-                params_list.append(", ")
-                this_line_length += 2
-        params_list.append(this_repr)
-        this_line_length += len(this_repr)
-
-    np.set_printoptions(**options)
-    lines = "".join(params_list)
-    # Strip trailing space to avoid nightmare in doctests
-    lines = "\n".join(l.rstrip(" ") for l in lines.split("\n"))
-    return lines
 
 
 class BaseEstimator:
@@ -210,7 +168,7 @@ class BaseEstimator:
         out = dict()
         for key in self._get_param_names():
             value = getattr(self, key)
-            if deep and hasattr(value, "get_params"):
+            if deep and hasattr(value, "get_params") and not isinstance(value, type):
                 deep_items = value.get_params().items()
                 out.update((key + "__" + k, val) for k, val in deep_items)
             out[key] = value
@@ -332,8 +290,8 @@ class BaseEstimator:
                     "using version {2}. This might lead to breaking code or "
                     "invalid results. Use at your own risk. "
                     "For more info please refer to:\n"
-                    "https://scikit-learn.org/stable/modules/model_persistence"
-                    ".html#security-maintainability-limitations".format(
+                    "https://scikit-learn.org/stable/model_persistence.html"
+                    "#security-maintainability-limitations".format(
                         self.__class__.__name__, pickle_version, __version__
                     ),
                     UserWarning,
@@ -459,8 +417,7 @@ class BaseEstimator:
             fitted_feature_names != X_feature_names
         ):
             message = (
-                "The feature names should match those that were "
-                "passed during fit. Starting version 1.2, an error will be raised.\n"
+                "The feature names should match those that were passed during fit.\n"
             )
             fitted_feature_names_set = set(fitted_feature_names)
             X_feature_names_set = set(X_feature_names)
@@ -486,12 +443,12 @@ class BaseEstimator:
                 message += "Feature names seen at fit time, yet now missing:\n"
                 message += add_names(missing_names)
 
-            if not missing_names and not missing_names:
+            if not missing_names and not unexpected_names:
                 message += (
                     "Feature names must be in the same order as they were in fit.\n"
                 )
 
-            warnings.warn(message, FutureWarning)
+            raise ValueError(message)
 
     def _validate_data(
         self,
@@ -601,6 +558,20 @@ class BaseEstimator:
             self._check_n_features(X, reset=reset)
 
         return out
+
+    def _validate_params(self):
+        """Validate types and values of constructor parameters
+
+        The expected type and values must be defined in the `_parameter_constraints`
+        class attribute, which is a dictionary `param_name: list of constraints`. See
+        the docstring of `validate_parameter_constraints` for a description of the
+        accepted constraints.
+        """
+        validate_parameter_constraints(
+            self._parameter_constraints,
+            self.get_params(deep=False),
+            caller_name=self.__class__.__name__,
+        )
 
     @property
     def _repr_html_(self):
@@ -834,8 +805,17 @@ class BiclusterMixin:
         return data[row_ind[:, np.newaxis], col_ind]
 
 
-class TransformerMixin:
-    """Mixin class for all transformers in scikit-learn."""
+class TransformerMixin(_SetOutputMixin):
+    """Mixin class for all transformers in scikit-learn.
+
+    If :term:`get_feature_names_out` is defined, then `BaseEstimator` will
+    automatically wrap `transform` and `fit_transform` to follow the `set_output`
+    API. See the :ref:`developer_api_set_output` for details.
+
+    :class:`base.OneToOneFeatureMixin` and
+    :class:`base.ClassNamePrefixFeaturesOutMixin` are helpful mixins for
+    defining :term:`get_feature_names_out`.
+    """
 
     def fit_transform(self, X, y=None, **fit_params):
         """
@@ -871,11 +851,11 @@ class TransformerMixin:
             return self.fit(X, y, **fit_params).transform(X)
 
 
-class _OneToOneFeatureMixin:
+class OneToOneFeatureMixin:
     """Provides `get_feature_names_out` for simple transformers.
 
-    Assumes there's a 1-to-1 correspondence between input features
-    and output features.
+    This mixin assumes there's a 1-to-1 correspondence between input features
+    and output features, such as :class:`~preprocessing.StandardScaler`.
     """
 
     def get_feature_names_out(self, input_features=None):
@@ -888,7 +868,8 @@ class _OneToOneFeatureMixin:
 
             - If `input_features` is `None`, then `feature_names_in_` is
               used as feature names in. If `feature_names_in_` is not defined,
-              then names are generated: `[x0, x1, ..., x(n_features_in_)]`.
+              then the following input feature names are generated:
+              `["x0", "x1", ..., "x(n_features_in_ - 1)"]`.
             - If `input_features` is an array-like, then `input_features` must
               match `feature_names_in_` if `feature_names_in_` is defined.
 
@@ -900,14 +881,25 @@ class _OneToOneFeatureMixin:
         return _check_feature_names_in(self, input_features)
 
 
-class _ClassNamePrefixFeaturesOutMixin:
+class ClassNamePrefixFeaturesOutMixin:
     """Mixin class for transformers that generate their own names by prefixing.
 
-    Assumes that `_n_features_out` is defined for the estimator.
+    This mixin is useful when the transformer needs to generate its own feature
+    names out, such as :class:`~decomposition.PCA`. For example, if
+    :class:`~decomposition.PCA` outputs 3 features, then the generated feature
+    names out are: `["pca0", "pca1", "pca2"]`.
+
+    This mixin assumes that a `_n_features_out` attribute is defined when the
+    transformer is fitted. `_n_features_out` is the number of output features
+    that the transformer will return in `transform` of `fit_transform`.
     """
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
+
+        The feature names out will prefixed by the lowercased class name. For
+        example, if the transformer outputs 3 features, then the feature names
+        out are: `["class_name0", "class_name1", "class_name2"]`.
 
         Parameters
         ----------
@@ -1044,44 +1036,3 @@ def is_outlier_detector(estimator):
         True if estimator is an outlier detector and False otherwise.
     """
     return getattr(estimator, "_estimator_type", None) == "outlier_detector"
-
-
-def _is_pairwise(estimator):
-    """Returns True if estimator is pairwise.
-
-    - If the `_pairwise` attribute and the tag are present and consistent,
-      then use the value and not issue a warning.
-    - If the `_pairwise` attribute and the tag are present and not
-      consistent, use the `_pairwise` value and issue a deprecation
-      warning.
-    - If only the `_pairwise` attribute is present and it is not False,
-      issue a deprecation warning and use the `_pairwise` value.
-
-    Parameters
-    ----------
-    estimator : object
-        Estimator object to test.
-
-    Returns
-    -------
-    out : bool
-        True if the estimator is pairwise and False otherwise.
-    """
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=FutureWarning)
-        has_pairwise_attribute = hasattr(estimator, "_pairwise")
-        pairwise_attribute = getattr(estimator, "_pairwise", False)
-    pairwise_tag = _safe_tags(estimator, key="pairwise")
-
-    if has_pairwise_attribute:
-        if pairwise_attribute != pairwise_tag:
-            warnings.warn(
-                "_pairwise was deprecated in 0.24 and will be removed in 1.1 "
-                "(renaming of 0.26). Set the estimator tags of your estimator "
-                "instead",
-                FutureWarning,
-            )
-        return pairwise_attribute
-
-    # use pairwise tag when the attribute is not present
-    return pairwise_tag

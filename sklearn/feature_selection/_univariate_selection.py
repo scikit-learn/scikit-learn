@@ -8,6 +8,7 @@
 import numpy as np
 import warnings
 
+from numbers import Integral, Real
 from scipy import special, stats
 from scipy.sparse import issparse
 
@@ -16,6 +17,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import as_float_array, check_array, check_X_y, safe_sqr, safe_mask
 from ..utils.extmath import safe_sparse_dot, row_norms
 from ..utils.validation import check_is_fitted
+from ..utils._param_validation import Interval, StrOptions
 from ._base import SelectorMixin
 
 
@@ -39,7 +41,7 @@ def _clean_nans(scores):
 # Contrary to the scipy.stats.f_oneway implementation it does not
 # copy the data while keeping the inputs unchanged.
 def f_oneway(*args):
-    """Performs a 1-way ANOVA.
+    """Perform a 1-way ANOVA.
 
     The one-way ANOVA tests the null hypothesis that 2 or more groups have
     the same population mean. The test is applied to samples from two or
@@ -50,7 +52,7 @@ def f_oneway(*args):
     Parameters
     ----------
     *args : {array-like, sparse matrix}
-        sample1, sample2... The sample measurements should be given as
+        Sample1, sample2... The sample measurements should be given as
         arguments.
 
     Returns
@@ -81,13 +83,11 @@ def f_oneway(*args):
 
     References
     ----------
-
     .. [1] Lowry, Richard.  "Concepts and Applications of Inferential
            Statistics". Chapter 14.
            http://faculty.vassar.edu/lowry/ch14pt1.html
 
     .. [2] Heiman, G.W.  Research Methods in Statistics. 2002.
-
     """
     n_classes = len(args)
     args = [as_float_array(a) for a in args]
@@ -96,7 +96,7 @@ def f_oneway(*args):
     ss_alldata = sum(safe_sqr(a).sum(axis=0) for a in args)
     sums_args = [np.asarray(a.sum(axis=0)) for a in args]
     square_of_sums_alldata = sum(sums_args) ** 2
-    square_of_sums_args = [s ** 2 for s in sums_args]
+    square_of_sums_args = [s**2 for s in sums_args]
     sstot = ss_alldata - square_of_sums_alldata / float(n_samples)
     ssbn = 0.0
     for k, _ in enumerate(args):
@@ -198,27 +198,39 @@ def chi2(X, y):
     p_values : ndarray of shape (n_features,)
         P-values for each feature.
 
-    Notes
-    -----
-    Complexity of this algorithm is O(n_classes * n_features).
-
     See Also
     --------
     f_classif : ANOVA F-value between label/feature for classification tasks.
     f_regression : F-value between label/feature for regression tasks.
+
+    Notes
+    -----
+    Complexity of this algorithm is O(n_classes * n_features).
     """
 
     # XXX: we might want to do some of the following in logspace instead for
     # numerical stability.
-    X = check_array(X, accept_sparse="csr")
+    # Converting X to float allows getting better performance for the
+    # safe_sparse_dot call made below.
+    X = check_array(X, accept_sparse="csr", dtype=(np.float64, np.float32))
     if np.any((X.data if issparse(X) else X) < 0):
         raise ValueError("Input X must be non-negative.")
 
-    Y = LabelBinarizer().fit_transform(y)
+    # Use a sparse representation for Y by default to reduce memory usage when
+    # y has many unique classes.
+    Y = LabelBinarizer(sparse_output=True).fit_transform(y)
     if Y.shape[1] == 1:
+        Y = Y.toarray()
         Y = np.append(1 - Y, Y, axis=1)
 
     observed = safe_sparse_dot(Y.T, X)  # n_classes * n_features
+
+    if issparse(observed):
+        # convert back to a dense array before calling _chisquare
+        # XXX: could _chisquare be reimplement to accept sparse matrices for
+        # cases where both n_classes and n_features are large (and X is
+        # sparse)?
+        observed = observed.toarray()
 
     feature_count = X.sum(axis=0).reshape(1, -1)
     class_prob = Y.mean(axis=0).reshape(1, -1)
@@ -237,7 +249,9 @@ def r_regression(X, y, *, center=True, force_finite=True):
     a free standing feature selection procedure.
 
     The cross correlation between each regressor and the target is computed
-    as ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) * std(y)).
+    as::
+
+        E[(X[:, i] - mean(X[:, i])) * (y - mean(y))] / (std(X[:, i]) * std(y))
 
     For more on usage see the :ref:`User Guide <univariate_feature_selection>`.
 
@@ -273,7 +287,7 @@ def r_regression(X, y, *, center=True, force_finite=True):
     See Also
     --------
     f_regression: Univariate linear regression tests returning f-statistic
-        and p-values
+        and p-values.
     mutual_info_regression: Mutual information for a continuous target.
     f_classif: ANOVA F-value between label/feature for classification tasks.
     chi2: Chi-squared stats of non-negative features for classification tasks.
@@ -291,7 +305,7 @@ def r_regression(X, y, *, center=True, force_finite=True):
         else:
             X_means = X.mean(axis=0)
         # Compute the scaled standard deviations via moments
-        X_norms = np.sqrt(row_norms(X.T, squared=True) - n_samples * X_means ** 2)
+        X_norms = np.sqrt(row_norms(X.T, squared=True) - n_samples * X_means**2)
     else:
         X_norms = row_norms(X.T)
 
@@ -316,9 +330,11 @@ def f_regression(X, y, *, center=True, force_finite=True):
 
     This is done in 2 steps:
 
-    1. The cross correlation between each regressor and the target is computed,
-       that is, ((X[:, i] - mean(X[:, i])) * (y - mean_y)) / (std(X[:, i]) *
-       std(y)) using r_regression function.
+    1. The cross correlation between each regressor and the target is computed
+       using :func:`r_regression` as::
+
+           E[(X[:, i] - mean(X[:, i])) * (y - mean(y))] / (std(X[:, i]) * std(y))
+
     2. It is converted to an F score and then to a p-value.
 
     :func:`f_regression` is derived from :func:`r_regression` and will rank
@@ -358,7 +374,7 @@ def f_regression(X, y, *, center=True, force_finite=True):
           `np.nan` values in the F-statistic and p-value. When
           `force_finite=True`, the F-statistic is set to `0.0` and the
           associated p-value is set to `1.0`.
-        - when the a feature in `X` is perfectly correlated (or
+        - when a feature in `X` is perfectly correlated (or
           anti-correlated) with the target `y`. In this case, the F-statistic
           is expected to be `np.inf`. When `force_finite=True`, the F-statistic
           is set to `np.finfo(dtype).max` and the associated p-value is set to
@@ -391,7 +407,7 @@ def f_regression(X, y, *, center=True, force_finite=True):
     )
     deg_of_freedom = y.size - (2 if center else 1)
 
-    corr_coef_squared = correlation_coefficient ** 2
+    corr_coef_squared = correlation_coefficient**2
 
     with np.errstate(divide="ignore", invalid="ignore"):
         f_statistic = corr_coef_squared / (1 - corr_coef_squared) * deg_of_freedom
@@ -424,6 +440,8 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         (scores, pvalues) or a single array with scores.
     """
 
+    _parameter_constraints: dict = {"score_func": [callable]}
+
     def __init__(self, score_func):
         self.score_func = score_func
 
@@ -444,15 +462,11 @@ class _BaseFilter(SelectorMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
+
         X, y = self._validate_data(
             X, y, accept_sparse=["csr", "csc"], multi_output=True
         )
-
-        if not callable(self.score_func):
-            raise TypeError(
-                "The score function should be a callable, %s (%s) was passed."
-                % (self.score_func, type(self.score_func))
-            )
 
         self._check_params(X, y)
         score_func_ret = self.score_func(X, y)
@@ -545,15 +559,14 @@ class SelectPercentile(_BaseFilter):
     (1797, 7)
     """
 
+    _parameter_constraints: dict = {
+        **_BaseFilter._parameter_constraints,
+        "percentile": [Interval(Real, 0, 100, closed="both")],
+    }
+
     def __init__(self, score_func=f_classif, *, percentile=10):
         super().__init__(score_func=score_func)
         self.percentile = percentile
-
-    def _check_params(self, X, y):
-        if not 0 <= self.percentile <= 100:
-            raise ValueError(
-                "percentile should be >=0, <=100; got %r" % self.percentile
-            )
 
     def _get_support_mask(self):
         check_is_fitted(self)
@@ -645,15 +658,20 @@ class SelectKBest(_BaseFilter):
     (1797, 20)
     """
 
+    _parameter_constraints: dict = {
+        **_BaseFilter._parameter_constraints,
+        "k": [StrOptions({"all"}), Interval(Integral, 0, None, closed="left")],
+    }
+
     def __init__(self, score_func=f_classif, *, k=10):
         super().__init__(score_func=score_func)
         self.k = k
 
     def _check_params(self, X, y):
-        if not (self.k == "all" or 0 <= self.k <= X.shape[1]):
+        if not isinstance(self.k, str) and self.k > X.shape[1]:
             raise ValueError(
-                "k should be >=0, <= n_features = %d; got %r. "
-                "Use k='all' to return all features." % (X.shape[1], self.k)
+                f"k should be <= n_features = {X.shape[1]}; "
+                f"got {self.k}. Use k='all' to return all features."
             )
 
     def _get_support_mask(self):
@@ -738,6 +756,11 @@ class SelectFpr(_BaseFilter):
     (569, 16)
     """
 
+    _parameter_constraints: dict = {
+        **_BaseFilter._parameter_constraints,
+        "alpha": [Interval(Real, 0, 1, closed="both")],
+    }
+
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
         super().__init__(score_func=score_func)
         self.alpha = alpha
@@ -817,6 +840,11 @@ class SelectFdr(_BaseFilter):
     (569, 16)
     """
 
+    _parameter_constraints: dict = {
+        **_BaseFilter._parameter_constraints,
+        "alpha": [Interval(Real, 0, 1, closed="both")],
+    }
+
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
         super().__init__(score_func=score_func)
         self.alpha = alpha
@@ -893,6 +921,11 @@ class SelectFwe(_BaseFilter):
     >>> X_new.shape
     (569, 15)
     """
+
+    _parameter_constraints: dict = {
+        **_BaseFilter._parameter_constraints,
+        "alpha": [Interval(Real, 0, 1, closed="both")],
+    }
 
     def __init__(self, score_func=f_classif, *, alpha=5e-2):
         super().__init__(score_func=score_func)
@@ -982,6 +1015,12 @@ class GenericUnivariateSelect(_BaseFilter):
         "fwe": SelectFwe,
     }
 
+    _parameter_constraints: dict = {
+        **_BaseFilter._parameter_constraints,
+        "mode": [StrOptions(set(_selection_modes.keys()))],
+        "param": [Interval(Real, 0, None, closed="left")],
+    }
+
     def __init__(self, score_func=f_classif, *, mode="percentile", param=1e-5):
         super().__init__(score_func=score_func)
         self.mode = mode
@@ -998,13 +1037,10 @@ class GenericUnivariateSelect(_BaseFilter):
 
         return selector
 
-    def _check_params(self, X, y):
-        if self.mode not in self._selection_modes:
-            raise ValueError(
-                "The mode passed should be one of %s, %r, (type %s) was passed."
-                % (self._selection_modes.keys(), self.mode, type(self.mode))
-            )
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
 
+    def _check_params(self, X, y):
         self._make_selector()._check_params(X, y)
 
     def _get_support_mask(self):
