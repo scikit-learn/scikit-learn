@@ -48,6 +48,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib
+from sklearn.externals._packaging.version import parse as parse_version
 from sklearn import linear_model
 from sklearn.datasets import fetch_openml
 from sklearn.model_selection import train_test_split
@@ -142,8 +143,8 @@ nrows = 2
 ncols = int(np.ceil(len(plot_list) / 2.0))
 fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(6 * ncols, 4 * nrows))
 # check for matplotlib version to define axis merge method (assuming matplotlib >= 3.x)
-matplotlib_version = matplotlib.__version__.split(".")
-if int(matplotlib_version[1]) >= 3 or int(matplotlib_version[0]) > 3:
+matplotlib_version = parse_version(matplotlib.__version__)
+if matplotlib_version >= parse_version("3.3"):
     axes[0, 0].sharey(axes[0, 1])
 else:
     axes[0, 0].get_shared_y_axes().join(axes[0, 0], axes[0, 1])
