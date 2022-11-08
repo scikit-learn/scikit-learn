@@ -40,8 +40,8 @@ def _get_trained_evaluated_estimators(library_name, seed=1, X=None, y=None):
         estimators.append(("est1", GaussianProcessClassifier(random_state=seed)))
         estimators.append(("est2", SVC(random_state=seed, probability=True)))
         estimators.append(("est3", RandomForestClassifier(random_state=seed)))
-        estimators.append(("est5", MLPClassifier(random_state=seed)))
-        estimators.append(("est4", KNeighborsClassifier()))
+        estimators.append(("est4", MLPClassifier(random_state=seed)))
+        estimators.append(("est5", KNeighborsClassifier()))
     elif library_name == "short_regressor":
         estimators.append(("est1", MLPRegressor(random_state=seed)))
         estimators.append(("est2", LinearSVR(random_state=seed)))
@@ -294,7 +294,11 @@ def test_ensemble_selection_custom_metric():
 
     # custom metrics
     def acc(y, y_pred):
-        return np.mean(y == np.argmax(y_pred, axis=1))
+        y_pred_sparse = np.argmax(y_pred, axis=1)
+        if y.shape != y_pred_sparse.shape:
+            # y is converted from one hot encoding to sparse encoding
+            y = np.argmax(y, axis=1)
+        return np.mean(y == y_pred_sparse)
 
     def mae(y, y_pred):
         return 1.0 - np.mean(np.abs(y - y_pred))
@@ -408,7 +412,7 @@ def test_ensemble_selection_regressor_transform():
     df = es.decision_function(X)
     shape_if_one_selected = (y.shape[0], 1)
     shape_if_two_selected = (y.shape[0], 2)
-    assert df.shape == shape_if_one_selected or df.shape == shape_if_two_selected
+    assert df.shape in {shape_if_one_selected, shape_if_two_selected}
 
     # classifier case
     estimators = _get_trained_evaluated_estimators("short_classifier")
