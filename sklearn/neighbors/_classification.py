@@ -26,34 +26,31 @@ class KNeighborsClassifierCythonEngine:
     def __init__(self, estimator):
         self.estimator = estimator
 
-    def accepts(self, X, y=None, sample_weight=None):
+    def accepts(self, X, y=None):
         # The default engine accepts everything
         return True
 
-    def pre_fit(self, X, y=None, sample_weight=None):
-        return X, y, sample_weight
-
-    def fit(self, X, y=None, sample_weight=None):
+    def fit(self, X, y=None):
         return self.estimator._fit(X, y)
 
-    def predict(self, X, sample_weight=None):
+    def predict(self, X):
         if self.estimator.weights == "uniform":
             # In that case, we do not need the distances to perform
             # the weighting so we do not compute them.
             neigh_ind = self.estimator.kneighbors(X, return_distance=False)
             neigh_dist = None
         else:
-            neigh_dist, neigh_ind = self.kneighbors(X)
+            neigh_dist, neigh_ind = self.estimator.kneighbors(X)
 
-        classes_ = self.classes_
-        _y = self._y
-        if not self.outputs_2d_:
-            _y = self._y.reshape((-1, 1))
-            classes_ = [self.classes_]
+        classes_ = self.estimator.classes_
+        _y = self.estimator._y
+        if not self.estimator.outputs_2d_:
+            _y = self.estimator._y.reshape((-1, 1))
+            classes_ = [self.estimator.classes_]
 
         n_outputs = len(classes_)
         n_queries = _num_samples(X)
-        weights = _get_weights(neigh_dist, self.weights)
+        weights = _get_weights(neigh_dist, self.estimator.weights)
 
         y_pred = np.empty((n_queries, n_outputs), dtype=classes_[0].dtype)
         for k, classes_k in enumerate(classes_):
@@ -65,10 +62,58 @@ class KNeighborsClassifierCythonEngine:
             mode = np.asarray(mode.ravel(), dtype=np.intp)
             y_pred[:, k] = classes_k.take(mode)
 
-        if not self.outputs_2d_:
+        if not self.estimator.outputs_2d_:
             y_pred = y_pred.ravel()
 
         return y_pred
+
+    def predict_proba(self, X):
+        if self.estimator.weights == "uniform":
+            # In that case, we do not need the distances to perform
+            # the weighting so we do not compute them.
+            neigh_ind = self.estimator.kneighbors(X, return_distance=False)
+            neigh_dist = None
+        else:
+            neigh_dist, neigh_ind = self.estimator.kneighbors(X)
+
+        classes_ = self.estimator.classes_
+        _y = self.estimator._y
+        if not self.estimator.outputs_2d_:
+            _y = self.estimator._y.reshape((-1, 1))
+            classes_ = [self.estimator.classes_]
+
+        n_queries = _num_samples(X)
+
+        weights = _get_weights(neigh_dist, self.estimator.weights)
+        if weights is None:
+            weights = np.ones_like(neigh_ind)
+
+        all_rows = np.arange(n_queries)
+        probabilities = []
+        for k, classes_k in enumerate(classes_):
+            pred_labels = _y[:, k][neigh_ind]
+            proba_k = np.zeros((n_queries, classes_k.size))
+
+            # a simple ':' index doesn't work right
+            for i, idx in enumerate(pred_labels.T):  # loop is O(n_neighbors)
+                proba_k[all_rows, idx] += weights[:, i]
+
+            # normalize 'votes' into real [0,1] probabilities
+            normalizer = proba_k.sum(axis=1)[:, np.newaxis]
+            normalizer[normalizer == 0.0] = 1.0
+            proba_k /= normalizer
+
+            probabilities.append(proba_k)
+
+        if not self.estimator.outputs_2d_:
+            probabilities = probabilities[0]
+
+        return probabilities
+
+    def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
+        return self.estimator._kneighbors(
+            X=X, n_neighbors=n_neighbors, return_distance=return_distance
+        )
 
 
 class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
@@ -262,26 +307,23 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         """
         self._validate_params()
 
-        engine = self._get_engine(X, y, sample_weight)
+        engine = self._get_engine(X, y)
 
         if hasattr(engine, "pre_fit"):
             X, y, sample_weight = engine.pre_fit(
                 X,
                 y=y,
-                sample_weight=sample_weight,
             )
 
         engine.fit(
             X,
             y=y,
-            sample_weight=sample_weight,
         )
 
         if hasattr(engine, "post_fit"):
             engine.post_fit(
                 X,
                 y=y,
-                sample_weight=sample_weight,
             )
 
         return self
@@ -300,7 +342,21 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         y : ndarray of shape (n_queries,) or (n_queries, n_outputs)
             Class labels for each data sample.
         """
-        pass
+        engine = self._get_engine(X)
+
+        if hasattr(engine, "pre_predict"):
+            X = engine.pre_predict(
+                X,
+            )
+
+        y_pred = engine.predict(X)
+
+        if hasattr(engine, "post_predict"):
+            engine.post_predict(
+                X,
+            )
+
+        return y_pred
 
     def predict_proba(self, X):
         """Return probability estimates for the test data X.
@@ -318,45 +374,89 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             The class probabilities of the input samples. Classes are ordered
             by lexicographic order.
         """
-        if self.weights == "uniform":
-            # In that case, we do not need the distances to perform
-            # the weighting so we do not compute them.
-            neigh_ind = self.kneighbors(X, return_distance=False)
-            neigh_dist = None
-        else:
-            neigh_dist, neigh_ind = self.kneighbors(X)
+        engine = self._get_engine(X)
 
-        classes_ = self.classes_
-        _y = self._y
-        if not self.outputs_2d_:
-            _y = self._y.reshape((-1, 1))
-            classes_ = [self.classes_]
+        if hasattr(engine, "pre_predict_proba"):
+            X = engine.pre_predict_proba(
+                X,
+            )
 
-        n_queries = _num_samples(X)
+        probabilities = engine.predict_proba(X)
 
-        weights = _get_weights(neigh_dist, self.weights)
-        if weights is None:
-            weights = np.ones_like(neigh_ind)
+        if hasattr(engine, "post_predict_proba"):
+            engine.post_predict_proba(
+                X,
+            )
 
-        all_rows = np.arange(n_queries)
-        probabilities = []
-        for k, classes_k in enumerate(classes_):
-            pred_labels = _y[:, k][neigh_ind]
-            proba_k = np.zeros((n_queries, classes_k.size))
+        return probabilities
 
-            # a simple ':' index doesn't work right
-            for i, idx in enumerate(pred_labels.T):  # loop is O(n_neighbors)
-                proba_k[all_rows, idx] += weights[:, i]
+    def kneighbors(self, X=None, n_neighbors=None, return_distance=True):
+        """Find the K-neighbors of a point.
 
-            # normalize 'votes' into real [0,1] probabilities
-            normalizer = proba_k.sum(axis=1)[:, np.newaxis]
-            normalizer[normalizer == 0.0] = 1.0
-            proba_k /= normalizer
+        Returns indices of and distances to the neighbors of each point.
 
-            probabilities.append(proba_k)
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape (n_queries, n_features), \
+            or (n_queries, n_indexed) if metric == 'precomputed', default=None
+            The query point or points.
+            If not provided, neighbors of each indexed point are returned.
+            In this case, the query point is not considered its own neighbor.
 
-        if not self.outputs_2d_:
-            probabilities = probabilities[0]
+        n_neighbors : int, default=None
+            Number of neighbors required for each sample. The default is the
+            value passed to the constructor.
+
+        return_distance : bool, default=True
+            Whether or not to return the distances.
+
+        Returns
+        -------
+        neigh_dist : ndarray of shape (n_queries, n_neighbors)
+            Array representing the lengths to points, only present if
+            return_distance=True.
+
+        neigh_ind : ndarray of shape (n_queries, n_neighbors)
+            Indices of the nearest points in the population matrix.
+
+        Examples
+        --------
+        In the following example, we construct a NearestNeighbors
+        class from an array representing our data set and ask who's
+        the closest point to [1,1,1]
+
+        >>> samples = [[0., 0., 0.], [0., .5, 0.], [1., 1., .5]]
+        >>> from sklearn.neighbors import NearestNeighbors
+        >>> neigh = NearestNeighbors(n_neighbors=1)
+        >>> neigh.fit(samples)
+        NearestNeighbors(n_neighbors=1)
+        >>> print(neigh.kneighbors([[1., 1., 1.]]))
+        (array([[0.5]]), array([[2]]))
+
+        As you can see, it returns [[0.5]], and [[2]], which means that the
+        element is at distance 0.5 and is the third element of samples
+        (indexes start at 0). You can also query for multiple points:
+
+        >>> X = [[0., 1., 0.], [1., 0., 1.]]
+        >>> neigh.kneighbors(X, return_distance=False)
+        array([[1],
+               [2]]...)
+        """
+        engine = self._get_engine(X)
+
+        if hasattr(engine, "pre_kneighbors"):
+            X = engine.pre_kneighbors(
+                X=X, n_neighbors=n_neighbors, return_distance=return_distance
+            )
+
+        probabilities = engine.kneighbors(
+            X=X, n_neighbors=n_neighbors, return_distance=return_distance
+        )
+
+        if hasattr(engine, "post_kneighbors"):
+            engine.post_kneighbors(
+                X=X, n_neighbors=n_neighbors, return_distance=return_distance
+            )
 
         return probabilities
 
@@ -365,10 +465,10 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
 
     def _get_engine(self, X, y=None, sample_weight=None):
         for engine_class in get_engine_classes(
-            "kneigborsclassifier", default=KNeighborsClassifierCythonEngine, verbose=self.verbose
+            "kneigborsclassifier", default=KNeighborsClassifierCythonEngine
         ):
             engine = engine_class(self)
-            if engine.accepts(X, y=y, sample_weight=sample_weight):
+            if engine.accepts(X, y=y):
                 return engine
 
 
