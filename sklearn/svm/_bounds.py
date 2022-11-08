@@ -14,10 +14,10 @@ from ..utils._param_validation import validate_params
 @validate_params(
     {
         "X": ["array-like", "sparse matrix"],
-        "y": "array-like",
-        "loss": StrOptions({"squared_hinge", "log"}),
-        "fit_intercept": "boolean",
-        "intercept_scaling": float,
+        "y": ["array-like"],
+        "loss": [StrOptions({"squared_hinge", "log"})],
+        "fit_intercept": ["boolean"],
+        "intercept_scaling": [float],
     }
 )
 def l1_min_c(X, y, *, loss="squared_hinge", fit_intercept=True, intercept_scaling=1.0):
