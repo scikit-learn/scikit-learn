@@ -477,4 +477,3 @@ def test_ensemble_selection_sequential():
     es.fit(X, y)
     score = es.score(X, y)
     assert score < 0.5
-
