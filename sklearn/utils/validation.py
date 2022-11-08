@@ -2034,7 +2034,7 @@ def _check_monotonic_cst(estimator, monotonic_cst=None):
                     unexpected_feature_names.append("...")
                 raise ValueError(
                     "monotonic_cst contains unexpected feature names: "
-                    f"{unexpected_feature_names}"
+                    f"{unexpected_feature_names}."
                 )
             for feature_idx, feature_name in enumerate(estimator.feature_names_in_):
                 if feature_name in original_monotonic_cst:
@@ -2042,7 +2042,7 @@ def _check_monotonic_cst(estimator, monotonic_cst=None):
                     if cst not in [-1, 0, 1]:
                         raise ValueError(
                             f"monotonic_cst[{feature_name}] must be either "
-                            f"-1, 0 or 1. Got {cst}."
+                            f"-1, 0 or 1. Got {cst!r}."
                         )
                     monotonic_cst[feature_idx] = cst
     else:

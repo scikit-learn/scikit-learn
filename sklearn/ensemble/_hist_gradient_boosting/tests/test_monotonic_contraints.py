@@ -285,6 +285,35 @@ def test_input_error():
         gbdt.fit(X, y)
 
 
+def test_input_error_related_to_feature_names():
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame({"a": [0, 1, 2], "b": [0, 1, 2]})
+    y = np.array([0, 1, 0])
+
+    monotonic_cst = {"d": 1, "a": 1, "c": -1}
+    gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
+    expected_msg = re.escape(
+        "monotonic_cst contains unexpected feature names: ['c', 'd']."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        gbdt.fit(X, y)
+
+    monotonic_cst = {"a": 1}
+    gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
+    expected_msg = re.escape(
+        "HistGradientBoostingRegressor was not fitted on data with feature "
+        "names. Pass monotonic_cst as an integer array instead."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        gbdt.fit(X.values, y)
+
+    monotonic_cst = {"b": -1, "a": "+"}
+    gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
+    expected_msg = re.escape("monotonic_cst[a] must be either -1, 0 or 1. Got '+'.")
+    with pytest.raises(ValueError, match=expected_msg):
+        gbdt.fit(X, y)
+
+
 def test_bounded_value_min_gain_to_split():
     # The purpose of this test is to show that when computing the gain at a
     # given split, the value of the current node should be properly bounded to
