@@ -141,7 +141,7 @@ plot_list = [
 nrows = 2
 ncols = int(np.ceil(len(plot_list) / 2.0))
 fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(6 * ncols, 4 * nrows))
-# check for matplotlib version to define axis merge method (assuming matplotlib >= 3.x.x)
+# check for matplotlib version to define axis merge method (assuming matplotlib >= 3.x)
 matplotlib_version = matplotlib.__version__.split(".")
 if int(matplotlib_version[1]) >= 3 or int(matplotlib_version[0]) > 3:
     axes[0, 0].sharey(axes[0, 1])
