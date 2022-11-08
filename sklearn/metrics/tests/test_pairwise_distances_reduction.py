@@ -564,7 +564,7 @@ def test_pairwise_distances_reduction_is_usable_for():
     assert not BaseDistancesReductionDispatcher.is_usable_for(
         X_csr, Y_csr, metric="sqeuclidean"
     )
-    # TODO: add this assertion once #24542 and #24715 are merged. 
+    # TODO: add this assertion once #24542 and #24715 are merged.
     # assert BaseDistancesReductionDispatcher.is_usable_for(
     #     X_csr, Y_csr, metric="euclidean"
     # )
