@@ -50,13 +50,6 @@ def global_dtype(request):
     yield request.param
 
 
-@pytest.fixture(
-    params=[np.float16, pytest.param(np.float32, marks=_SKIP32_MARK), np.float64]
-)
-def float_dtype(request):
-    yield request.param
-
-
 def _fetch_fixture(f):
     """Fetch dataset (download if missing and requested by environment)."""
     download_if_missing = environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "0"
