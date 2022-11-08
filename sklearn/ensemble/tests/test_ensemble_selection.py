@@ -3,10 +3,8 @@ import numpy as np
 from scipy import sparse
 import pytest
 
-from sklearn.datasets import load_iris
 from sklearn.datasets import load_diabetes
 from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.model_selection import train_test_split
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.svm import LinearSVR
@@ -23,64 +21,96 @@ from sklearn import preprocessing
 from sklearn.preprocessing import scale
 from sklearn.metrics import log_loss, mean_squared_error
 
+from sklearn.cluster import KMeans, DBSCAN
+
 from sklearn.ensemble import EnsembleSelection
 from sklearn.pipeline import Pipeline
 
-# Regression class
-diabetes = load_diabetes()
-X_diabetes, y_diabetes = diabetes.data, diabetes.target
 
-# Classification task
-iris = load_iris()
-X_iris, y_iris = iris.data, iris.target
-
-
-def _get_trained_evaluated_regressor(
-    seed, estimator_type, X_train, y_train, X_test, y_test, is_trained=True
-):
+def _get_trained_evaluated_estimators(library_name, seed=1, X=None, y=None):
     # build estimators
     estimators = []
-
-    if estimator_type == "regressor":
+    if library_name == "regressor":
         estimators.append(("est1", GaussianProcessRegressor(random_state=seed)))
         estimators.append(("est2", RandomForestRegressor(random_state=seed)))
         estimators.append(("est3", KNeighborsRegressor()))
         estimators.append(("est4", MLPRegressor(random_state=seed)))
         estimators.append(("est5", LinearSVR(random_state=seed)))
-    elif estimator_type == "classifier":
+    elif library_name == "classifier":
         estimators.append(("est1", GaussianProcessClassifier(random_state=seed)))
         estimators.append(("est2", SVC(random_state=seed, probability=True)))
         estimators.append(("est3", RandomForestClassifier(random_state=seed)))
-        estimators.append(("est4", KNeighborsClassifier()))
         estimators.append(("est5", MLPClassifier(random_state=seed)))
-    else:
-        raise ValueError(f"estimator_type {estimator_type} not understood")
+        estimators.append(("est4", KNeighborsClassifier()))
+    elif library_name == "short_regressor":
+        estimators.append(("est1", MLPRegressor(random_state=seed)))
+        estimators.append(("est2", LinearSVR(random_state=seed)))
+    elif library_name == "short_classifier":
+        estimators.append(("est1", LogisticRegression(C=0.1, random_state=seed)))
+        estimators.append(("est2", LogisticRegression(C=1, random_state=seed)))
 
-    # fit estimators
-    indiv_score = []
-
-    if is_trained:
+    # fit estimators if data is given
+    if X is not None and y is not None:
         for _, base_model in estimators:
-            base_model.fit(X_train, y_train)
-            y_pred = base_model.predict(X_test)
-            loss = mean_squared_error(y_test, y_pred)
-            indiv_score.append(loss)
-
-    return estimators, indiv_score
+            base_model.fit(X, y)
+    return estimators
 
 
-def test_ensemble_selection_regressor():
+def _get_simple_data():
+    dtype = float
+    X = np.array(
+        [[0, 1], [0, 2], [0, 3], [0, 4], [1, 1], [1, 3], [1, 5], [1, 6]], dtype=dtype
+    )
+    y = np.array([0, 0, 0, 0, 1, 1, 1, 1], dtype=dtype)
+    return X, y
+
+
+def test_ensemble_selection_realistic_example():
     seed = 1
-    X_train, X_test, y_train, y_test = train_test_split(
-        scale(X_diabetes), y_diabetes, random_state=seed
-    )
 
-    estimators, indiv_score = _get_trained_evaluated_regressor(
-        seed, "regressor", X_train, y_train, X_test, y_test, True
-    )
+    diabetes = load_diabetes()
+    X, y = diabetes.data, diabetes.target
+    X = scale(X)
+    y = scale(y)
+
+    X_train, y_train = X[:200], y[:200]  # 200 samples
+    X_valid, y_valid = X[200:300], y[200:300]  # 100 samples
+    X_test, y_test = X[300:], y[300:]  # 142 samples
+
+    estimators = _get_trained_evaluated_estimators("regressor", seed, X_train, y_train)
+
+    base_score = []
+    for _, est in estimators:
+        base_score.append(est.score(X_test, y_test))
 
     # fit ensemble_selector
-    clf = EnsembleSelection(
+    es = EnsembleSelection(
+        estimators=estimators,
+        score_metric=mean_squared_error,
+        score_direction="min",
+        min_estimators=2,
+        max_estimators=10,
+        pruning_factor=0.2,
+        with_replacement=True,
+        verbose=True,
+    )
+    es.fit(X_valid, y_valid)
+
+    # predict
+    score = es.score(X_test, y_test)
+
+    # at least better than the worst one + margin
+    assert score < np.max(base_score) + 0.1
+
+
+def test_ensemble_selection_predict_regressor():
+    seed = 1
+    X, y = _get_simple_data()
+
+    estimators = _get_trained_evaluated_estimators("regressor", seed, X, y)
+
+    # fit ensemble_selector
+    es = EnsembleSelection(
         estimators=estimators,
         score_metric=mean_squared_error,
         score_direction="min",
@@ -90,87 +120,32 @@ def test_ensemble_selection_regressor():
         with_replacement=True,
         verbose=True,
     )
-    clf.fit(X_test, y_test)
-    y_pred = clf.predict(X_test)
+    es.fit(X, y)
 
-    loss = mean_squared_error(y_test, y_pred)
-    assert loss <= np.mean(indiv_score)
+    # predict
+    y_pred = es.predict(X)
+    loss1 = mean_squared_error(y, y_pred)
+    assert loss1 < 5
 
-
-def test_ensemble_selection_regressor_weights():
-    seed = 1
-    X_train, X_test, y_train, y_test = train_test_split(
-        scale(X_diabetes), y_diabetes, random_state=seed
-    )
-
-    estimators, indiv_score = _get_trained_evaluated_regressor(
-        seed, "regressor", X_train, y_train, X_test, y_test, True
-    )
-
-    # fit ensemble_selector
-    clf = EnsembleSelection(
-        estimators=estimators,
-        score_metric=mean_squared_error,
-        score_direction="min",
-        is_base_estimator_proba=False,
-        min_estimators=2,
-        max_estimators=10,
-        with_replacement=True,
-        verbose=True,
-    )
-    weights1 = np.ones((y_test.shape[0],))
-    clf.fit(X_test, y_test, weights1)
-    y_pred = clf.predict(X_test)
-
-    loss = mean_squared_error(y_test, y_pred)
-    assert loss <= np.mean(indiv_score)
+    # predict_proba is implemented like predict for regressors
+    y_pred = es.predict(X)
+    loss2 = mean_squared_error(y, y_pred)
+    assert loss2 == loss1
 
 
-def test_ensemble_selection_regressor_unfitted_estimators():
-    seed = 1
-    X_train, X_test, y_train, y_test = train_test_split(
-        scale(X_diabetes), y_diabetes, random_state=seed
-    )
-
-    estimators, indiv_score = _get_trained_evaluated_regressor(
-        seed, "regressor", X_train, y_train, X_test, y_test, False
-    )
-
-    # fit ensemble_selector
-    clf = EnsembleSelection(
-        estimators=estimators,
-        score_metric=mean_squared_error,
-        score_direction="min",
-        is_base_estimator_proba=False,
-        min_estimators=2,
-        max_estimators=10,
-        with_replacement=True,
-        verbose=True,
-    )
-    clf.fit(X_test, y_test)
-    y_pred = clf.predict(X_test)
-
-    loss = mean_squared_error(y_test, y_pred)
-    assert loss <= 0.2  # not so bad
-
-
-def test_ensemble_selection_classifier_yone_hot():
+def test_ensemble_selection_predict_classifier_yone_hot():
     seed = 3
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        scale(X_iris), y_iris, stratify=y_iris, test_size=0.5, random_state=seed
-    )
+    X, y = _get_simple_data()
 
     # convert label id to one-hot vector
-    y_test_one_hot = (
-        preprocessing.OneHotEncoder().fit_transform(y_test.reshape((-1, 1))).toarray()
+    y_one_hot = (
+        preprocessing.OneHotEncoder().fit_transform(y.reshape((-1, 1))).toarray()
     )
 
-    estimators, indiv_score = _get_trained_evaluated_regressor(
-        seed, "classifier", X_train, y_train, X_test, y_test, True
-    )
+    estimators = _get_trained_evaluated_estimators("classifier", seed, X, y)
 
-    clf = EnsembleSelection(
+    es = EnsembleSelection(
         estimators=estimators,
         score_metric=log_loss,
         score_direction="min",
@@ -180,61 +155,188 @@ def test_ensemble_selection_classifier_yone_hot():
         with_replacement=True,
         verbose=True,
     )
-    clf.fit(X_test, y_test_one_hot)
-    y_pred = clf.predict_proba(X_test)
+    es.fit(X, y_one_hot)
+    y_pred = es.predict_proba(X)
+    loss1 = log_loss(y, y_pred)
+    assert loss1 < 0.5  # not so bad
 
-    loss = log_loss(y_test, y_pred)
+    y_pred = es.predict(X)
+    loss2 = np.mean(y_pred == y)
+    assert loss2 > 0.5  # not so bad
+
+
+def test_ensemble_selection_classifier_without_replacement():
+    seed = 3
+
+    X, y = _get_simple_data()
+
+    estimators = _get_trained_evaluated_estimators("classifier", seed, X, y)
+
+    es = EnsembleSelection(
+        estimators=estimators,
+        score_direction="min",
+        is_base_estimator_proba=True,
+        min_estimators=1,
+        max_estimators=5,
+        with_replacement=False,
+        verbose=False,
+    )
+    es.fit(X, y)
+    y_pred = es.predict_proba(X)
+    loss = log_loss(y, y_pred)
     assert loss < 0.2  # not so bad
 
 
-def test_ensemble_selection_classifier_unamed_estimators():
-    seed = 3
+def test_ensemble_selection_regressor_weights():
+    seed = 1
+    X, y = _get_simple_data()
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        scale(X_iris), y_iris, stratify=y_iris, test_size=0.5, random_state=seed
+    estimators = _get_trained_evaluated_estimators("regressor", seed, X, y)
+
+    # fit ensemble_selector
+    es = EnsembleSelection(estimators=estimators)
+    weights1 = np.ones((y.shape[0],))
+    es.fit(X, y, weights1)
+    y_pred = es.predict(X)
+
+    loss = mean_squared_error(y, y_pred)
+    assert loss < 0.5
+
+
+def test_ensemble_selection_regressor_weights_gaussian():
+    seed = 1
+    X, y = _get_simple_data()
+    weights = np.ones((len(y),))
+
+    estimators = []
+    estimators.append(("est1", GaussianProcessRegressor(random_state=seed)))
+    estimators.append(("est2", GaussianProcessRegressor(random_state=seed + 1)))
+
+    # fit ensemble_selector
+    es = EnsembleSelection(estimators=estimators)
+
+    # Gaussian are not compatible with weigths, so weights are ignored
+    es.fit(X, y, weights)
+
+    assert es.score(X, y) < 0.5
+
+
+def test_ensemble_selection_regressor_unfitted_estimators():
+    seed = 1
+    X, y = _get_simple_data()
+
+    estimators = _get_trained_evaluated_estimators("regressor", seed, X, y)
+
+    # fit ensemble_selector
+    es = EnsembleSelection(
+        estimators=estimators,
+        score_metric=mean_squared_error,
+        score_direction="min",
+        is_base_estimator_proba=False,
+        min_estimators=2,
+        max_estimators=10,
+        with_replacement=True,
+        verbose=True,
     )
+    es.fit(X, y)
+    y_pred = es.predict(X)
+
+    loss = mean_squared_error(y, y_pred)
+    assert loss < 0.5  # not so bad
+
+
+def test_ensemble_selection_classifier_unamed_estimators():
+    X, y = _get_simple_data()
 
     # instantiate estimators
+    estimators = _get_trained_evaluated_estimators("short_classifier")
+    unamed_est = [named_est[1] for named_est in estimators]  # remove name
+
+    es = EnsembleSelection(estimators=unamed_est)
+    es.fit(X, y)
+    loss = es.score(X, y)
+
+    assert loss < 0.5  # not so bad
+
+
+def test_ensemble_selection_fit_predict_classifier():
+    X, y = _get_simple_data()
+
+    # instantiate estimators
+    estimators = _get_trained_evaluated_estimators("short_classifier")
+    es = EnsembleSelection(estimators=estimators)
+    es.fit(X, y)
+    pred1 = es.predict(X)
+
+    es = EnsembleSelection(estimators=estimators)
+    pred2 = es.fit_predict(X, y)
+    assert np.mean(np.abs(pred1 - pred2)) < 0.001
+    assert es.score(X, y) < 0.5  # not so bad
+
+
+def test_ensemble_selection_fit_predict_regressor():
+    X, y = _get_simple_data()
+
+    # instantiate estimators
+    estimators = _get_trained_evaluated_estimators("short_regressor")
+    es = EnsembleSelection(estimators=estimators)
+    es.fit(X, y)
+    pred1 = es.predict(X)
+
+    es = EnsembleSelection(estimators=estimators)
+    pred2 = es.fit_predict(X, y)
+    assert np.mean(np.abs(pred1 - pred2)) < 0.001
+    assert es.score(X, y) < 0.5  # not so bad
+
+
+def test_ensemble_selection_custom_metric():
+    X, y = _get_simple_data()
+
+    # custom metrics
+    def acc(y, y_pred):
+        return np.mean(y == np.argmax(y_pred, axis=1))
+
+    def mae(y, y_pred):
+        return 1.0 - np.mean(np.abs(y - y_pred))
+
+    # classifier
+    estimators = _get_trained_evaluated_estimators("short_classifier")
+    es = EnsembleSelection(
+        estimators=estimators, score_metric=acc, score_direction="max"
+    )
+    loss = es.fit(X, y).score(X, y)
+    assert loss > 0.5  # not so bad
+
+    # regressor custom metric
+    estimators = _get_trained_evaluated_estimators("short_regressor")
+    es = EnsembleSelection(
+        estimators=estimators, score_metric=mae, score_direction="max"
+    )
+    loss = es.fit(X, y).score(X, y)
+    assert loss > 0.5  # not so bad
+
+
+def test_ensemble_selection_classifier_not_proba():
+    seed = 3
+
+    X, y = _get_simple_data()
+
+    # base estimators may predict proba or directly the class id.
     estimators = []
-    estimators.append(GaussianProcessClassifier(random_state=seed))
-    estimators.append(SVC(random_state=seed, probability=True))
+    estimators.append(("est1", MLPClassifier(random_state=seed)))
+    estimators.append(("est2", SVC(random_state=seed, probability=True)))
 
-    clf = EnsembleSelection(estimators=estimators)
-    clf.fit(X_test, y_test)
-    y_pred = clf.predict_proba(X_test)
+    # Not using proba is forced
+    es = EnsembleSelection(estimators=estimators, is_base_estimator_proba=False)
+    loss = es.fit(X, y).score(X, y)
 
-    loss = log_loss(y_test, y_pred)
     assert loss < 0.2  # not so bad
 
 
 def test_ensemble_selection_sample_weights_shape():
-    X = np.array(
-        [
-            [1, 3],
-            [1, 3],
-            [1, 3],
-            [1, 3],
-            [2, 1],
-            [2, 1],
-            [2, 1],
-            [2, 1],
-            [3, 3],
-            [3, 3],
-            [3, 3],
-            [3, 3],
-            [4, 1],
-            [4, 1],
-            [4, 1],
-            [4, 1],
-        ]
-    )
-    y = np.array([1, 1, 1, 1, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2])
-    estimator = EnsembleSelection(
-        estimators=[
-            ("est1", LogisticRegression(C=0.1)),
-            ("est2", LogisticRegression(C=1)),
-        ]
-    )
+    X, y = _get_simple_data()
+    estimators = _get_trained_evaluated_estimators("short_classifier")
+    estimator = EnsembleSelection(estimators)
 
     estimator.fit(X, y, sample_weight=np.ones(len(y)))
 
@@ -247,13 +349,8 @@ def test_ensemble_selection_sample_weights_shape():
 
 def test_ensemble_selection_sparse_data():
     seed = 1
-
-    est = EnsembleSelection(
-        estimators=[
-            ("est1", LogisticRegression(C=0.1)),
-            ("est2", LogisticRegression(C=1)),
-        ]
-    )
+    estimators = _get_trained_evaluated_estimators("short_classifier")
+    es = EnsembleSelection(estimators)
     rng = np.random.RandomState(seed)
     X = rng.uniform(size=(40, 3))
     X[X < 0.8] = 0
@@ -261,10 +358,70 @@ def test_ensemble_selection_sparse_data():
     X_csr = sparse.csr_matrix(X)
     y = (4 * rng.uniform(size=40)).astype(int)
 
-    est.fit(X_csr, y)
+    es.fit(X_csr, y)
 
 
-def test_ensemble_selection_pipeline_classifier():
+def test_ensemble_selection_panda():
+    seed = 1
+    try:
+        import pandas as pd
+
+        estimators = _get_trained_evaluated_estimators("short_classifier", seed)
+        es = EnsembleSelection(estimators)
+        X, y = _get_simple_data()
+
+        col_names = ["col_" + str(i) for i in range(X.shape[1])]
+        pandas_x = pd.DataFrame(X, columns=col_names)
+        pandas_y = pd.DataFrame(y)
+
+        es.fit(pandas_x, pandas_y)
+
+    except ImportError:
+        print("Pandas compatibility not tested")
+
+
+def test_ensemble_selection_3D():
+    X = np.zeros((5, 5, 5))
+    y = np.zeros((5, 5, 5))
+    estimators = _get_trained_evaluated_estimators("short_classifier")
+    es = EnsembleSelection(estimators)
+    with pytest.raises(ValueError):
+        es.fit(X, y)
+
+
+def test_ensemble_selection_empty():
+    X = np.zeros((0,))
+    y = np.zeros((0,))
+    estimators = _get_trained_evaluated_estimators("short_regressor")
+    es = EnsembleSelection(estimators)
+    with pytest.raises(ValueError):
+        es.fit(X, y)
+
+
+def test_ensemble_selection_regressor_transform():
+    X, y = _get_simple_data()
+
+    # regressor case
+    estimators = _get_trained_evaluated_estimators("short_regressor")
+    es = EnsembleSelection(estimators)
+    es.fit(X, y)
+    df = es.decision_function(X)
+    shape_if_one_selected = (y.shape[0], 1)
+    shape_if_two_selected = (y.shape[0], 2)
+    assert df.shape == shape_if_one_selected or df.shape == shape_if_two_selected
+
+    # classifier case
+    estimators = _get_trained_evaluated_estimators("short_classifier")
+    es = EnsembleSelection(estimators)
+    es.fit(X, y)
+    df = es.decision_function(X)
+    nb_classes = np.max(y) + 1
+    shape_if_one_selected = (y.shape[0], 1, nb_classes)
+    shape_if_two_selected = (y.shape[0], 2, nb_classes)
+    assert df.shape == shape_if_one_selected or df.shape == shape_if_two_selected
+
+
+def test_ensemble_selection_text_pipeline_classifier():
     seed = 1
     rng = np.random.RandomState(seed)
 
@@ -290,3 +447,34 @@ def test_ensemble_selection_pipeline_classifier():
 
     estimator = EnsembleSelection(estimators=estimators)
     estimator.fit(X, y)
+
+
+def test_ensemble_selection_no_estimators():
+    X, y = _get_simple_data()
+
+    # fit ensemble_selector
+    es = EnsembleSelection([])
+    with pytest.raises(ValueError):
+        es.fit(X, y)
+
+
+def test_ensemble_selection_clustering():
+    X, y = _get_simple_data()
+    estimators = []
+    estimators.append(("est1", KMeans(n_clusters=2)))
+    estimators.append(("est2", DBSCAN(eps=0.5)))
+    es = EnsembleSelection(estimators=estimators)
+
+    # Not compatible compatible with clustering
+    with pytest.raises(ValueError):
+        es.fit(X, y)
+
+
+def test_ensemble_selection_sequential():
+    X, y = _get_simple_data()
+    estimators = _get_trained_evaluated_estimators("short_regressor")
+    es = EnsembleSelection(estimators=estimators, n_jobs=1)
+    es.fit(X, y)
+    score = es.score(X, y)
+    assert score < 0.5
+
