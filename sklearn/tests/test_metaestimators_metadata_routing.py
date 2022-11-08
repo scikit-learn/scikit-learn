@@ -9,6 +9,8 @@ from sklearn.calibration import CalibratedClassifierCV
 from sklearn.exceptions import UnsetMetadataPassedError
 from sklearn.linear_model import LogisticRegressionCV
 from sklearn.metrics._scorer import _BaseScorer
+from sklearn.model_selection import BaseCrossValidator
+from sklearn.model_selection._split import GroupsComsumerMixin
 from sklearn.multioutput import (
     MultiOutputRegressor,
     MultiOutputClassifier,
@@ -28,7 +30,7 @@ y = np.random.randint(0, 2, size=N)
 y_multi = np.random.randint(0, 2, size=(N, 3))
 metadata = np.random.randint(0, 10, size=N)
 sample_weight = np.random.rand(N)
-
+groups = np.array([0, 1] * (len(y) // 2))
 
 record_metadata_not_default = partial(record_metadata, record_default=False)
 
@@ -169,6 +171,28 @@ class ConsumingScorer(_BaseScorer):
         )
 
         return 0.0
+
+
+class ConsumingSplitter(BaseCrossValidator, GroupsComsumerMixin):
+    def __init__(self, registry=None):
+        self.registry = registry
+
+    def split(self, X, y=None, groups="default"):
+        if self.registry is not None:
+            self.registry.append(self)
+
+        record_metadata_not_default(self, "split", groups=groups)
+
+        split_index = len(X) - 10
+        train_indices = range(0, split_index)
+        test_indices = range(split_index, len(X))
+        yield test_indices, train_indices
+
+    def get_n_splits(self, X=None, y=None, groups=None):
+        pass
+
+    def _iter_test_indices(self, X=None, y=None, groups=None):
+        pass
 
 
 METAESTIMATORS = [
@@ -387,32 +411,34 @@ def test_setting_request_removes_warning_or_error(metaestimator):
             assert not any("metadata" in w.message for w in future_warnings)
 
 
-CV_ESTIMATORS = [
+CV_SCORERS = [
     {
         "cv_estimator": LogisticRegressionCV,
         "scorer_name": "scoring",
-        "scorer": ConsumingScorer,
-        "X": X,
-        "y": y,
         "routing_methods": ["fit", "score"],
-        "warns_on": {},
     },
+]
+
+CV_SPLITTERS = [
+    {
+        "cv_estimator": LogisticRegressionCV,
+        "splitter_name": "cv",
+        "routing_methods": ["fit"],
+    }
 ]
 
 
 @pytest.mark.parametrize(
-    "cv_estimator",
-    CV_ESTIMATORS,
+    "cv_scorer",
+    CV_SCORERS,
 )
-def test_metadata_is_routed_correctly_to_scorer(cv_estimator):
+def test_metadata_is_routed_correctly_to_scorer(cv_scorer):
     registry = _Registry()
-    cls = cv_estimator["cv_estimator"]
-    scorer_name = cv_estimator["scorer_name"]
-    scorer = cv_estimator["scorer"](registry=registry)
+    cls = cv_scorer["cv_estimator"]
+    scorer_name = cv_scorer["scorer_name"]
+    scorer = ConsumingScorer(registry=registry)
     scorer.set_score_request(sample_weight=True)
-    X = cv_estimator["X"]
-    y = cv_estimator["y"]
-    routing_methods = cv_estimator["routing_methods"]
+    routing_methods = cv_scorer["routing_methods"]
 
     for method_name in routing_methods:
         instance = cls(**{scorer_name: scorer})
@@ -421,3 +447,23 @@ def test_metadata_is_routed_correctly_to_scorer(cv_estimator):
         method(X, y, **kwargs)
         for _scorer in registry:
             check_recorded_metadata(obj=_scorer, method="score", **kwargs)
+
+
+@pytest.mark.parametrize(
+    "cv_splitter",
+    CV_SPLITTERS,
+)
+def test_metadata_is_routed_correctly_to_splitter(cv_splitter):
+    registry = _Registry()
+    cls = cv_splitter["cv_estimator"]
+    splitter_name = cv_splitter["splitter_name"]
+    splitter = ConsumingSplitter(registry=registry)
+    routing_methods = cv_splitter["routing_methods"]
+
+    for method_name in routing_methods:
+        instance = cls(**{splitter_name: splitter})
+        method = getattr(instance, method_name)
+        kwargs = {"groups": groups}
+        method(X, y, **kwargs)
+        for _splitter in registry:
+            check_recorded_metadata(obj=_splitter, method="split", **kwargs)
