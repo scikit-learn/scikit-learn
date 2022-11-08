@@ -506,10 +506,10 @@ class GaussianMixture(BaseMixture):
         - 'random' : responsibilities are initialized randomly.
         - 'random_from_data' : initial means are randomly selected data points.
         - callable : a callable that takes in `X`: array-like of shape
-        (n_samples, n_features), and returns array of `responsibilites`:
-        array-like of shape (n_samples, n_components), such as custom instance
-        of `sklearn.cluster.KMeans` wrapped to return responsibilites.
-        See `sklearn.mixture.get_responsibilities` for help.
+          (n_samples, n_features), and returns array of `responsibilites`:
+          array-like of shape (n_samples, n_components), such as custom instance
+          of `sklearn.cluster.KMeans` wrapped to return responsibilites.
+          See `sklearn.mixture.get_responsibilities` for help.
 
         .. versionchanged:: v1.1
             `init_params` now accepts 'random_from_data' and 'k-means++' as

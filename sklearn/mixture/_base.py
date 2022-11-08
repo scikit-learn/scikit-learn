@@ -58,12 +58,12 @@ def get_responsibilities(n_samples, n_components, indices=None, labels=None):
     n_components : int
         Number of components.
 
-    indices : array-like of shape (n_components,), default=None.
+    indices : array-like of shape (n_components,), default=None
         The index location of the chosen components (centers) in the data array X
         of shape (n_samples, n_components), will be set to 1 in the output.
         Either `indices` or `labels` must be provided.
 
-    labels : array-like of shape (n_samples,), default=None.
+    labels : array-like of shape (n_samples,), default=None
         Will be used over `indices` if not `None`. The labels i=0 to n_components-1
         will be set to 1 for each sample in the ouput.
         Either `indices` or `labels` must be provided.
