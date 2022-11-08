@@ -23,7 +23,7 @@ from ...utils._param_validation import Interval, StrOptions
 from ...utils.validation import _assert_all_finite
 from ._linkage import (
     label,
-    mst_from_distance_matrix,
+    mst_from_mutual_reachability,
     mst_from_data_matrix,
     MST_edge_dtype,
 )
@@ -53,7 +53,7 @@ _OUTLIER_ENCODING = {
 
 def _brute_mst(mutual_reachability, min_samples, sparse=False):
     if not sparse:
-        return mst_from_distance_matrix(mutual_reachability)
+        return mst_from_mutual_reachability(mutual_reachability)
 
     # Check connected component on mutual reachability
     # If more than one component, it means that even if the distance matrix X
@@ -75,7 +75,9 @@ def _brute_mst(mutual_reachability, min_samples, sparse=False):
     # Compute the minimum spanning tree for the sparse graph
     sparse_min_spanning_tree = csgraph.minimum_spanning_tree(mutual_reachability)
     rows, cols = sparse_min_spanning_tree.nonzero()
-    return np.vstack((rows, cols, sparse_min_spanning_tree.data)).T
+    mst = np.vstack((rows, cols, sparse_min_spanning_tree.data))
+    mst = np.core.records.fromarrays(mst, dtype=MST_edge_dtype, shape=(mst.shape[1],))
+    return mst
 
 
 def _tree_to_labels(
@@ -154,7 +156,6 @@ def _hdbscan_brute(
             "size.",
             UserWarning,
         )
-
     return _process_mst(min_spanning_tree)
 
 
