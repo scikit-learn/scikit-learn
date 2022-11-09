@@ -494,7 +494,7 @@ def _update_dict(
     {
         "X": ["array-like"],
         "n_components": [Interval(Integral, 1, None, closed="left")],
-        "alpha": [Interval(Integral, 0, None, closed="left")],
+        "alpha": [Interval(Real, 0, None, closed="left")],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "method": [StrOptions({"lars", "cd"})],
@@ -638,9 +638,6 @@ def dict_learning(
     SparsePCA : Sparse Principal Components Analysis.
     MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
     """
-    if method not in ("lars", "cd"):
-        raise ValueError("Coding method %r not supported as a fit algorithm." % method)
-
     _check_positive_coding(method, positive_code)
 
     method = "lasso_" + method
