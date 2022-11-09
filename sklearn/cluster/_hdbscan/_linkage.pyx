@@ -30,6 +30,27 @@ ctypedef packed struct MST_edge_t:
 cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_mutual_reachability(
     cnp.ndarray[cnp.float64_t, ndim=2] mutual_reachability
 ):
+    """Compute the Minimum Spanning Tree (MST) representation of the mutual-
+    reachability graph using Prim's algorithm.
+
+    Parameters
+    ----------
+    mutual_reachability : ndarray of shape (n_samples, n_samples)
+        Array of mutual-reachabilities between samples.
+
+    Returns
+    -------
+    mst: ndarray of shape (n_samples - 1,)
+        The MST representation of the mutual-reahability graph. The MST is
+        represented as a collecteion of edges. Each edge is an instance of a
+        custom dtype `MST_edge_dtype` with the following specification:
+
+        MST_edge_dtype = np.dtype([
+            ("current_node", np.int64),
+            ("next_node", np.int64),
+            ("distance", np.float64),
+        ])
+    """
     cdef:
         cnp.ndarray[cnp.int64_t, ndim=1, mode='c'] current_labels
         cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] min_reachability, left, right
@@ -65,8 +86,37 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
     const cnp.float64_t[:, ::1] raw_data,
     const cnp.float64_t[::1] core_distances,
     DistanceMetric dist_metric,
-    cnp.float64_t alpha=1.0
 ):
+    """Compute the Minimum Spanning Tree (MST) representation of the mutual-
+    reachability graph generated from the provided `raw_data` and
+    `core_distances` using Prim's algorithm.
+
+    Parameters
+    ----------
+    raw_data : ndarray of shape (n_samples, n_features)
+        Input array of data samples.
+
+    core_distances : ndarray of shape (n_samples,)
+        An array containing the core-distance calculated for each corresponding
+        sample.
+
+    dist_metric : DistanceMetric
+        The distance metric to use when calculating pairwise distances for
+        determining mutual-reachability.
+
+    Returns
+    -------
+    mst: ndarray of shape (n_samples - 1,)
+        The MST representation of the mutual-reahability graph. The MST is
+        represented as a collecteion of edges. Each edge is an instance of a
+        custom dtype `MST_edge_dtype` with the following specification:
+
+        MST_edge_dtype = np.dtype([
+            ("current_node", np.int64),
+            ("next_node", np.int64),
+            ("distance", np.float64),
+        ])
+    """
 
     cdef:
         cnp.int8_t[::1] in_tree
@@ -114,9 +164,6 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
                 num_features
             )
 
-            if alpha != 1.0:
-                pair_distance /= alpha
-
             next_node_core_dist = core_distances[j]
             mutual_reachability_distance = max(
                 current_node_core_dist,
@@ -150,7 +197,7 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
 
     return mst
 
-cpdef cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] label(const MST_edge_t[::1] mst):
+cpdef cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] make_single_linkage(const MST_edge_t[::1] mst):
 
     cdef:
         cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] single_linkage
