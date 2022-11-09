@@ -40,7 +40,7 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_mutual_reachability(
 
     Returns
     -------
-    mst: ndarray of shape (n_samples - 1,)
+    mst : ndarray of shape (n_samples - 1,)
         The MST representation of the mutual-reahability graph. The MST is
         represented as a collecteion of edges. Each edge is an instance of a
         custom dtype `MST_edge_dtype` with the following specification:
@@ -106,7 +106,7 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
 
     Returns
     -------
-    mst: ndarray of shape (n_samples - 1,)
+    mst : ndarray of shape (n_samples - 1,)
         The MST representation of the mutual-reahability graph. The MST is
         represented as a collecteion of edges. Each edge is an instance of a
         custom dtype `MST_edge_dtype` with the following specification:
@@ -198,7 +198,32 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
     return mst
 
 cpdef cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] make_single_linkage(const MST_edge_t[::1] mst):
+    """Construct a single-linkage tree from an MST.
 
+    Parameters
+    ----------
+    mst : ndarray of shape (n_samples - 1,)
+        The MST representation of the mutual-reahability graph. The MST is
+        represented as a collecteion of edges. Each edge is an instance of a
+        custom dtype `MST_edge_dtype` with the following specification:
+
+        MST_edge_dtype = np.dtype([
+            ("current_node", np.int64),
+            ("next_node", np.int64),
+            ("distance", np.float64),
+        ])
+
+    Returns
+    -------
+    single_linkage : ndarray of shape (n_samples - 1, 4)
+        The single-linkage tree tree (dendrogram) built from the MST. Each
+        of the array represents the following:
+
+        - left node/cluster
+        - right node/cluster
+        - distance
+        - new cluster size
+    """
     cdef:
         cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] single_linkage
 
