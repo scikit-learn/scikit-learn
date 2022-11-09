@@ -323,6 +323,11 @@ class MethodMetadataRequest:
             )
         return res
 
+    def is_param_aliased(self, param):
+        """Check if the parameter of this method has an alias"""
+        request = self._requests.get(param)
+        return isinstance(request, str)
+
     def _serialize(self):
         """Serialize the object.
 
@@ -424,38 +429,9 @@ class MetadataRequest:
         """
         return getattr(self, method)._route_params(params=params)
 
-    def supports(self, *, method, param):
-        """If the given method supports the given parameter.
-
-        E.g., check if the "fit" method supports "sample_weight".
-
-        Parameters
-        ----------
-        method : str
-            The name of the method for which the parameters is requested.
-
-        param : str
-            The name of the parameter.
-
-        Returns
-        -------
-        result : bool
-            Whether the parameter is supported by the method.
-
-        """
-        result = param in self._get_param_names(
-            method=method, return_alias=True, ignore_self=False
-        )
-        return result
-
     def is_param_aliased(self, *, method, param):
-        """TODO"""
-        is_aliased = any(
-            isinstance(alias, str) and (prop != alias)
-            for prop, alias in getattr(self, method)._requests.items()
-            if (prop == param)
-        )
-        return is_aliased
+        """Check if the parameter of this method has an alias"""
+        return getattr(self, method).is_param_aliased(param)
 
     def _check_warnings(self, *, method, params):
         """Check whether metadata is passed which is marked as WARN.
@@ -907,39 +883,25 @@ class MetadataRouter:
             )
         return routed_params
 
-    def supports(self, *, method, param):
-        """If the given method supports the given parameter.
-
-        E.g., check if the "fit" method supports "sample_weight".
-
-        Parameters
-        ----------
-        method : str
-            The name of the method for which the parameters is requested.
-
-        param : str
-            The name of the parameter.
-
-        Returns
-        -------
-        result : bool
-            Whether the parameter is supported by the method.
-
-        """
-        result = param in self._get_param_names(
-            method=method, return_alias=True, ignore_self=False
-        )
-        return result
-
     def is_param_aliased(self, *, method, param):
-        """TODO"""
-        is_aliased = any(
-            isinstance(alias, str) and (prop != alias)
-            for _, router in self
-            for prop, alias in getattr(router.router, method).requests.items()
-            if (prop == param)
-        )
-        return is_aliased
+        """Check if the parameter of this method has an alias"""
+        # check if there is an alias in own params
+        if self._self and getattr(self._self, method).is_param_aliased(param):
+            return True
+
+        # check if there is an alias in any routed params
+        for route_mapping in self._route_mappings.values():
+            router, mapping = route_mapping.router, route_mapping.mapping
+
+            for _callee, _caller in mapping:
+                if _caller != method:
+                    continue
+
+                if getattr(router, method).is_param_aliased(param):
+                    # if any alias, returning early
+                    return True
+
+        return False
 
     def validate_metadata(self, *, method, params):
         """Validate given metadata for a method.

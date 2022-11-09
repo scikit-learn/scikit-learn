@@ -1285,7 +1285,7 @@ def test_base_estimator_argument_missing_fit_request_warns(Bagging, Estimator):
 
 
 @pytest.mark.parametrize("estimator_cls", [BaggingClassifier, BaggingRegressor])
-def test_base_estimator_aliases_sample_weight_raises(estimator_cls):
+def test_base_estimator_with_aliased_sample_weight_raises(estimator_cls):
     # Aliasing sample weight on the base estimator is not supported because it
     # means that there are potentially two different sample weights and it's
     # unclear what to do with them. Since aliasing was not possible before
@@ -1299,13 +1299,13 @@ def test_base_estimator_aliases_sample_weight_raises(estimator_cls):
     estimator = SVC().set_fit_request(sample_weight="my_sample_weight")
     estimator = estimator_cls(estimator, max_samples=0.5)
 
-    # there are no warnings and no errors
-    with pytest.raises(ValueError):
+    msg = "Aliasing sample_weight is not allowed when using Bagging"
+    with pytest.raises(ValueError, match=msg):
         estimator.fit(X, y, my_sample_weight=sample_weight)
 
 
 @pytest.mark.parametrize("estimator_cls", [BaggingClassifier, BaggingRegressor])
-def test_base_estimator_metaestimator_aliases_sample_weight_raises(estimator_cls):
+def test_base_estimator_metaestimator_with_aliased_sample_weight_raises(estimator_cls):
     # Same reasoning as previous test but using metaestimator as base estimator
 
     # Using iris even for regression, which is fine for the purpose of this test
@@ -1317,6 +1317,27 @@ def test_base_estimator_metaestimator_aliases_sample_weight_raises(estimator_cls
     )
     estimator = estimator_cls(estimator, max_samples=0.5)
 
-    # there are no warnings and no errors
-    with pytest.raises(ValueError):
+    msg = "Aliasing sample_weight is not allowed when using Bagging"
+    with pytest.raises(ValueError, match=msg):
+        estimator.fit(X, y, my_sample_weight=sample_weight)
+
+
+@pytest.mark.parametrize("estimator_cls", [BaggingClassifier, BaggingRegressor])
+def test_base_base_estimator_metaestimator_with_aliased_sample_weight_raises(
+    estimator_cls,
+):
+    # Same reasoning as previous test but using metaestimator as base estimator
+    # whose own base estimator aliases sample_weight.
+
+    # Using iris even for regression, which is fine for the purpose of this test
+    X, y = iris.data, iris.target
+    sample_weight = np.ones_like(y)
+
+    estimator = CalibratedClassifierCV(
+        SVC().set_fit_request(sample_weight="my_sample_weight")
+    )
+    estimator = estimator_cls(estimator, max_samples=0.5)
+
+    msg = "Aliasing sample_weight is not allowed when using Bagging"
+    with pytest.raises(ValueError, match=msg):
         estimator.fit(X, y, my_sample_weight=sample_weight)

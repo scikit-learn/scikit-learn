@@ -1122,3 +1122,46 @@ def test_method_generation():
 
     for method in METHODS:
         assert hasattr(SimpleEstimator(), f"set_{method}_request")
+
+
+@pytest.mark.parametrize("fit_sw", [False, True])
+@pytest.mark.parametrize("fit_brand", [False, True])
+@pytest.mark.parametrize("transform_sw", [False, True])
+def test_is_param_aliased_simple_estimator(fit_sw, fit_brand, transform_sw):
+    est = TransformerMetadata()
+    if fit_sw:
+        est.set_fit_request(sample_weight="my_sample_weight")
+    if fit_brand:
+        est.set_fit_request(brand="my_brand")
+    if transform_sw:
+        est.set_transform_request(sample_weight="other_sample_weight")
+
+    req = get_routing_for_object(est)
+    assert req.is_param_aliased(method="fit", param="sample_weight") is fit_sw
+    assert req.is_param_aliased(method="fit", param="brand") is fit_brand
+    assert (
+        req.is_param_aliased(method="transform", param="sample_weight") is transform_sw
+    )
+
+
+@pytest.mark.parametrize("fit_sw", [False, True])
+@pytest.mark.parametrize("fit_brand", [False, True])
+@pytest.mark.parametrize("transform_sw", [False, True])
+def test_is_param_aliased_meta_estimator(fit_sw, fit_brand, transform_sw):
+    est = TransformerMetadata()
+    if fit_sw:
+        est.set_fit_request(sample_weight="my_sample_weight")
+    if fit_brand:
+        est.set_fit_request(brand="my_brand")
+    if transform_sw:
+        est.set_transform_request(sample_weight="other_sample_weight")
+
+    meta = MetaTransformer(est)
+
+    router = get_routing_for_object(meta)
+    assert router.is_param_aliased(method="fit", param="sample_weight") is fit_sw
+    assert router.is_param_aliased(method="fit", param="brand") is fit_brand
+    assert (
+        router.is_param_aliased(method="transform", param="sample_weight")
+        is transform_sw
+    )

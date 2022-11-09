@@ -85,6 +85,14 @@ def _generate_bagging_indices(
     return feature_indices, sample_indices
 
 
+def _supports_sample_weight(request_or_router):
+    """Check if the fit method supports sample_weight"""
+    param_names = request_or_router._get_param_names(
+        method="fit", return_alias=True, ignore_self=False
+    )
+    return "sample_weight" in param_names
+
+
 def _parallel_build_estimators(
     n_estimators,
     ensemble,
@@ -142,11 +150,12 @@ def _parallel_build_estimators(
         # if possible, otherwise use indexing.
         request_or_router = get_routing_for_object(ensemble.estimator_)
         if request_or_router.is_param_aliased(method="fit", param="sample_weight"):
-            raise ValueError("TODO")
-        supports_sample_weight = request_or_router.supports(
-            method="fit", param="sample_weight"
-        )
-        if supports_sample_weight:
+            raise ValueError(
+                "Aliasing sample_weight is not allowed when using "
+                f"{type(ensemble).__name__}"
+            )
+
+        if _supports_sample_weight(request_or_router):
             # row subsampling via sample_weight
             curr_sample_weight = _check_sample_weight(
                 fit_params_.pop("sample_weight", None), X
