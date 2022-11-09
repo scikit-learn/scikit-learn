@@ -23,7 +23,7 @@ from ..base import (
 from ..base import is_classifier
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
-from ..metrics import accuracy_score
+from ..metrics import accuracy_score, r2_score
 from ..model_selection import train_test_split
 from ..preprocessing import LabelBinarizer
 from ..utils import gen_batches, check_random_state
@@ -1557,10 +1557,17 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             The predicted values.
         """
         check_is_fitted(self)
-        y_pred = self._forward_pass_fast(X)
+        return self._predict(X)
+
+    def _predict(self, X, validation=True):
+        y_pred = self._forward_pass_fast(X, validation=validation)
         if y_pred.shape[1] == 1:
             return y_pred.ravel()
         return y_pred
+
+    def _score(self, X, y):
+        y_pred = self._predict(X, validation=False)
+        return r2_score(y, y_pred)
 
     def _validate_input(self, X, y, incremental, reset):
         X, y = self._validate_data(
