@@ -539,8 +539,8 @@ class GaussianMixture(BaseMixture):
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
 
-    responsibilities_init : array-like, of shape (n_samples, n_components),
-        default=None. The user-provided initial responsibilities. Can be used to
+    responsibilities_init : array-like of shape (n_samples, n_components), default=None
+        The user-provided initial responsibilities. Can be used to
         calculate precisions, means, and weights if user_provided values are None,
         instead of using `init_params` method. Unlike the above, this parameter
         is not agnostic to input sample data, and requires matching shapes.
