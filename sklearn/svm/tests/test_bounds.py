@@ -37,7 +37,7 @@ def test_l1_min_c(loss, X_label, Y_label, intercept_label):
 
 def test_l1_min_c_l2_loss():
     # loss='l2' should raise ValueError
-    msg = "loss type not in"
+    msg = "must be a str among"
     with pytest.raises(ValueError, match=msg):
         l1_min_c(dense_X, Y1, loss="l2")
 
