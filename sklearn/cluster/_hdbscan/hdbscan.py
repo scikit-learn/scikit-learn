@@ -20,7 +20,7 @@ from ...metrics import pairwise_distances
 from ...metrics._dist_metrics import DistanceMetric
 from ...neighbors import BallTree, KDTree, NearestNeighbors
 from ...utils._param_validation import Interval, StrOptions
-from ...utils.validation import _assert_all_finite
+from ...utils.validation import _assert_all_finite, _allclose_dense_sparse
 from ._linkage import label, mst_from_distance_matrix, mst_from_data_matrix
 from ._reachability import mutual_reachability_graph
 from ._tree import compute_stability, condense_tree, get_clusters, labelling_at_cut
@@ -122,7 +122,7 @@ def _hdbscan_brute(
                 f" it has shape {X.shape}. Please verify that the"
                 " distance matrix was constructed correctly."
             )
-        if not np.allclose(X, X.T):
+        if not _allclose_dense_sparse(X, X.T):
             raise ValueError(
                 "The precomputed distance matrix is expected to be symmetric, however"
                 " its values appear to be asymmetric. Please verify that the distance"
