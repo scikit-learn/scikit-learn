@@ -18,7 +18,7 @@ from joblib import Parallel, effective_n_jobs
 from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils import deprecated
-from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
 from ..utils.fixes import delayed
@@ -490,26 +490,6 @@ def _update_dict(
         print(f"{n_unused} unused atoms resampled.")
 
 
-@validate_params(
-    {
-        "X": ["array-like"],
-        "n_components": [Interval(Integral, 1, None, closed="left")],
-        "alpha": [Interval(Integral, 0, None, closed="left")],
-        "max_iter": [Interval(Integral, 0, None, closed="left")],
-        "tol": [Interval(Real, 0, None, closed="left")],
-        "method": [StrOptions({"lars", "cd"})],
-        "n_jobs": [Integral, None],
-        "dict_init": [np.ndarray, None],
-        "code_init": [np.ndarray, None],
-        "callback": [None, callable],
-        "verbose": ["verbose"],
-        "random_state": ["random_state", None],
-        "return_n_iter": ["boolean"],
-        "positive_dict": ["boolean"],
-        "positive_code": ["boolean"],
-        "method_max_iter": [Interval(Integral, 0, None, closed="left")],
-    }
-)
 def dict_learning(
     X,
     n_components,
