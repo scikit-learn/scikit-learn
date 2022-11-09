@@ -11,6 +11,7 @@ import warnings
 import re
 
 import numpy as np
+import pandas as pd
 import joblib
 
 from numpy.testing import (
@@ -876,3 +877,17 @@ def test_mlp_loading_from_joblib_partial_fit(tmp_path):
     # finetuned model learned the new target
     predicted_value = load_estimator.predict(fine_tune_features)
     assert_allclose(predicted_value, fine_tune_target, rtol=1e-4)
+
+
+def test_preserve_feature_names(recwarn):
+    # Non-regression test for #24846
+    X = pd.DataFrame(
+        data=[[i, i] for i in range(10)], columns=["colname_a", "colname_b"]
+    )
+    y = pd.DataFrame(data=[[1] for i in range(10)], columns=["colname_y"])
+
+    model = MLPClassifier(early_stopping=True, validation_fraction=0.2)
+
+    model.fit(X, y["colname_y"])
+
+    assert len(recwarn) == 0
