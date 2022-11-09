@@ -89,7 +89,7 @@ print(f"Silhouette Coefficient: {metrics.silhouette_score(X, labels):.3f}")
 # Plot results
 # ------------
 #
-# Core samples (bigger dots) and non-core samples (smaller dots) are color-coded
+# Core samples (large dots) and non-core samples (small dots) are color-coded
 # according to the asigned cluster. Samples tagged as noise are represented in
 # black.
 
