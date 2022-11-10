@@ -326,8 +326,8 @@ class MethodMetadataRequest:
     def is_param_aliased(self, param):
         """Check if the parameter of this method has an alias.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         param : str
             The name of the parameter to check.
 
@@ -444,8 +444,8 @@ class MetadataRequest:
     def is_param_aliased(self, *, method, param):
         """Check if the parameter of this method has an alias.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         method : str
             The name of method whose parameters should be checked for aliases.
 
@@ -913,8 +913,8 @@ class MetadataRouter:
     def is_param_aliased(self, *, method, param):
         """Check if the parameter of this method has an alias.
 
-        Parameter
-        ---------
+        Parameters
+        ----------
         method : str
             The name of method whose parameters should be checked for aliases.
 
