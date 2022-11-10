@@ -1237,16 +1237,14 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         - 0: no constraint
         - -1: monotonic decrease
 
-        If a dict with str keys, map feature names to monotonic constraints by
-        feature names. If an array, the feature are mapped to constraints by
-        position.
+        If a dict with str keys, map feature to monotonic constraints by name.
+        If an array, the feature are mapped to constraints by position.
 
         The constraints are only valid for binary classifications and hold
         over the probability of the positive class.
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
         .. versionadded:: 0.23
-           Support for monotonic constraints via array of integers.
 
         .. versionchanged:: 1.2
            Accept dict of constraints with feature names as keys.
@@ -1581,16 +1579,14 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         - 0: no constraint
         - -1: monotonic decrease
 
-        If a dict with str keys, map feature names to monotonic constraints by
-        feature names. If an array, the feature are mapped to constraints by
-        position.
+        If a dict with str keys, map feature to monotonic constraints by name.
+        If an array, the feature are mapped to constraints by position.
 
         The constraints are only valid for binary classifications and hold
         over the probability of the positive class.
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
         .. versionadded:: 0.23
-           Support for monotonic constraints via array of integers.
 
         .. versionchanged:: 1.2
            Accept dict of constraints with feature names as keys.
