@@ -39,14 +39,15 @@ y = 5 * f_0 + np.sin(10 * np.pi * f_0) - 5 * f_1 - np.cos(10 * np.pi * f_1) + no
 
 
 # %%
-# Fit a first model on this dataset without any constraint
+# Fit a first model on this dataset without any constraints.
 gbdt_no_cst = HistGradientBoostingRegressor()
 gbdt_no_cst.fit(X, y)
 
 # %%
-# With monotonic increase (1) and a monotonic decrease (-1) constraints, respectively.
-gbdt_monotonic = HistGradientBoostingRegressor(monotonic_cst=[1, -1])
-gbdt_monotonic.fit(X, y)
+# Fit a second model on this dataset with monotonic increase (1)
+# and a monotonic decrease (-1) constraints, respectively.
+gbdt_with_monotonic_cst = HistGradientBoostingRegressor(monotonic_cst=[1, -1])
+gbdt_with_monotonic_cst.fit(X, y)
 
 
 # %%
@@ -64,7 +65,7 @@ disp = PartialDependenceDisplay.from_estimator(
     ax=ax,
 )
 PartialDependenceDisplay.from_estimator(
-    gbdt_monotonic,
+    gbdt_with_monotonic_cst,
     X,
     features=[0, 1],
     line_kw={"linewidth": 4, "label": "constrained", "color": "tab:orange"},
@@ -83,7 +84,7 @@ plt.show()
 
 # %%
 # We can see that the predictions of the unconstrained model capture the
-# oscillations of the the data while the constrained model follows the general
+# oscillations of the data while the constrained model follows the general
 # trend and ignores the local variations.
 
 # %%
@@ -93,8 +94,8 @@ import pandas as pd
 
 X_df = pd.DataFrame(X, columns=["f_0", "f_1"])
 
-gbdt_monotonic_df = HistGradientBoostingRegressor(
+gbdt_with_monotonic_cst_df = HistGradientBoostingRegressor(
     monotonic_cst={"f_0": 1, "f_1": -1}
 ).fit(X_df, y)
 
-np.allclose(gbdt_monotonic_df.predict(X_df), gbdt_monotonic.predict(X))
+np.allclose(gbdt_with_monotonic_cst_df.predict(X_df), gbdt_monotonic.predict(X))
