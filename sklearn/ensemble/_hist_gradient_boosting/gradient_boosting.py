@@ -1561,16 +1561,16 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         .. versionadded:: 0.24
 
-    monotonic_cst : dict, array-like of int of shape (n_features), default=None
-        If a dict with str keys, map feature names to monotonic constraints by
-        feature names. If an array, the feature are mapped to constraints by
-        position.
-
+    monotonic_cst : array-like of int of shape (n_features) or dict, default=None
         Monotonic constraint to enforce on each feature are specified using the
         following integer values:
           - 1: monotonic increase
           - 0: no constraint
           - -1: monotonic decrease
+
+        If a dict with str keys, map feature names to monotonic constraints by
+        feature names. If an array, the feature are mapped to constraints by
+        position.
 
         The constraints are only valid for binary classifications and hold
         over the probability of the positive class.
