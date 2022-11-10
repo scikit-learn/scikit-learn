@@ -272,9 +272,12 @@ def test_input_error():
     ):
         gbdt.fit(X, y)
 
-    for monotonic_cst in ([1, 3], [1, -3]):
+    for monotonic_cst in ([1, 3], [1, -3], [0.3, -0.7]):
         gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
-        with pytest.raises(ValueError, match="must be an array-like of -1, 0 or 1"):
+        expected_msg = re.escape(
+            "must be an array-like of -1, 0 or 1. Observed values:"
+        )
+        with pytest.raises(ValueError, match=expected_msg):
             gbdt.fit(X, y)
 
     gbdt = HistGradientBoostingClassifier(monotonic_cst=[0, 1])

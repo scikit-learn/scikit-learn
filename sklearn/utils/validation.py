@@ -2046,17 +2046,17 @@ def _check_monotonic_cst(estimator, monotonic_cst=None):
                         )
                     monotonic_cst[feature_idx] = cst
     else:
-        monotonic_cst = np.asarray(monotonic_cst, dtype=np.int8)
-
-        if monotonic_cst.shape[0] != estimator.n_features_in_:
-            raise ValueError(
-                f"monotonic_cst has shape {monotonic_cst.shape} but the input data "
-                f"X has {estimator.n_features_in_} features."
-            )
         unexpected_cst = np.setdiff1d(monotonic_cst, [-1, 0, 1])
         if unexpected_cst.shape[0]:
             raise ValueError(
                 "monotonic_cst must be an array-like of -1, 0 or 1. Observed "
                 f"values: {unexpected_cst.tolist()}."
+            )
+
+        monotonic_cst = np.asarray(monotonic_cst, dtype=np.int8)
+        if monotonic_cst.shape[0] != estimator.n_features_in_:
+            raise ValueError(
+                f"monotonic_cst has shape {monotonic_cst.shape} but the input data "
+                f"X has {estimator.n_features_in_} features."
             )
     return monotonic_cst
