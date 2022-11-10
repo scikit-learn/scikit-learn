@@ -12,7 +12,7 @@ import numpy as np
 
 from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import Bunch, as_float_array, check_random_state
+from ..utils import as_float_array, check_random_state
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import check_is_fitted
 from ..metrics import euclidean_distances
@@ -45,47 +45,7 @@ def _affinity_propagation(
     return_n_iter,
     random_state,
 ):
-    """Same function than `affinity_propagation` but without input validation.
-
-    Parameters
-    ----------
-    S : array-like of shape (n_samples, n_samples), dtype={np.float32, np.float64}
-        Matrix of similarities between points.
-
-    preference : ndarray of shape (n_samples,) or (1,)
-        Preferences for each point.
-
-    convergence_iter : int
-        Number of iterations with no change in the number of estimated clusters
-        that stops the convergence.
-
-    max_iter : int
-        Maximum number of iterations.
-
-    damping : float
-        Damping factor between 0.5 and 1.
-
-    verbose : bool, default=False
-        The verbosity level.
-
-    return_n_iter : bool
-        Whether or not to return the number of iterations.
-
-    random_state : RandomState instance
-        Pseudo-random number generator to control the starting state.
-
-    Returns
-    -------
-    cluster_centers_indices : ndarray of shape (n_clusters,)
-        Index of clusters centers.
-
-    labels : ndarray of shape (n_samples,)
-        Cluster labels for each point.
-
-    n_iter : int
-        Number of iterations run. Returned only if `return_n_iter` is
-        set to True.
-    """
+    """Main affinity propagation algorithm."""
     n_samples = S.shape[0]
     if n_samples == 1 or _equal_similarities_and_preferences(S, preference):
         # It makes no sense to run the algorithm in this case, so return 1 or
@@ -214,25 +174,8 @@ def _affinity_propagation(
         return cluster_centers_indices, labels
 
 
-def _validate_init_common_params(params):
-    """Validate common parameters for init methods and public function."""
-    if params.S.shape[0] != params.S.shape[1]:
-        raise ValueError(
-            f"The matrix of similarities must be a square array. Got {params.S.shape} "
-            "instead."
-        )
-
-    if params.preference is None:
-        preference = np.median(params.S)
-    else:
-        preference = params.preference
-    preference = np.array(preference, copy=False)
-
-    random_state = check_random_state(params.random_state)
-    return {
-        "preference": preference,
-        "random_state": random_state,
-    }
+###############################################################################
+# Public API
 
 
 def affinity_propagation(
@@ -328,19 +271,20 @@ def affinity_propagation(
     """
     S = as_float_array(S, copy=copy)
 
-    params = _validate_init_common_params(
-        Bunch(**{"S": S, "preference": preference, "random_state": random_state})
-    )
-
-    return _affinity_propagation(
-        S,
-        convergence_iter=convergence_iter,
-        max_iter=max_iter,
+    estimator = AffinityPropagation(
         damping=damping,
+        max_iter=max_iter,
+        convergence_iter=convergence_iter,
+        copy=False,
+        preference=preference,
+        affinity="precomputed",
         verbose=verbose,
-        return_n_iter=return_n_iter,
-        **params,
-    )
+        random_state=random_state,
+    ).fit(S)
+
+    if return_n_iter:
+        return estimator.cluster_centers_indices_, estimator.labels_, estimator.n_iter_
+    return estimator.cluster_centers_indices_, estimator.labels_
 
 
 class AffinityPropagation(ClusterMixin, BaseEstimator):
@@ -549,15 +493,19 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         else:  # self.affinity == "euclidean"
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
 
-        params = _validate_init_common_params(
-            Bunch(
-                **{
-                    "S": self.affinity_matrix_,
-                    "preference": self.preference,
-                    "random_state": self.random_state,
-                }
+        if self.affinity_matrix_.shape[0] != self.affinity_matrix_.shape[1]:
+            raise ValueError(
+                "The matrix of similarities must be a square array. "
+                f"Got {self.affinity_matrix_.shape} instead."
             )
-        )
+
+        if self.preference is None:
+            preference = np.median(self.affinity_matrix_)
+        else:
+            preference = self.preference
+        preference = np.array(preference, copy=False)
+
+        random_state = check_random_state(self.random_state)
 
         (
             self.cluster_centers_indices_,
@@ -567,10 +515,11 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             self.affinity_matrix_,
             max_iter=self.max_iter,
             convergence_iter=self.convergence_iter,
+            preference=preference,
             damping=self.damping,
             verbose=self.verbose,
             return_n_iter=True,
-            **params,
+            random_state=random_state,
         )
 
         if self.affinity != "precomputed":
