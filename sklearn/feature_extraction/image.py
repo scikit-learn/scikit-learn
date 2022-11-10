@@ -97,7 +97,6 @@ def _to_graph(
     """Auxiliary function for img_to_graph and grid_to_graph"""
     edges = _make_edges_3d(n_x, n_y, n_z)
 
-    
     if dtype is None:  # To not overwrite input dtype
         if img is None:
             dtype = int
@@ -143,17 +142,14 @@ def _to_graph(
     {
         "img": ["array-like"],  # Could it also be "sparse matrix"?
         "mask": [None, "array-like"],
-        "return_as": [
-            type(np.ndarray),
-            type(sparse.spmatrix)
-        ],
+        "return_as": [type(np.ndarray), type(sparse.spmatrix)],
         "dtype": [
             None,
             type(float),
             type(int),
             type(bool),
-            type(str), # for str valued dtypes
-            type(type), # Any type is allowed by numpy DTypeLike at the moment.
+            type(str),  # for str valued dtypes
+            type(type),  # Any type is allowed by numpy DTypeLike at the moment.
         ],
     }
 )
