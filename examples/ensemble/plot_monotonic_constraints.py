@@ -19,7 +19,7 @@ This example was inspired by the `XGBoost documentation
 <https://xgboost.readthedocs.io/en/latest/tutorials/monotonic.html>`_.
 
 """
-
+# %%
 from sklearn.ensemble import HistGradientBoostingRegressor
 from sklearn.inspection import PartialDependenceDisplay
 import numpy as np
@@ -28,7 +28,7 @@ import matplotlib.pyplot as plt
 
 rng = np.random.RandomState(0)
 
-n_samples = 5000
+n_samples = 1000
 f_0 = rng.rand(n_samples)
 f_1 = rng.rand(n_samples)
 X = np.c_[f_0, f_1]
@@ -37,14 +37,23 @@ noise = rng.normal(loc=0.0, scale=0.01, size=n_samples)
 # y is positively correlated with f_0, and negatively correlated with f_1
 y = 5 * f_0 + np.sin(10 * np.pi * f_0) - 5 * f_1 - np.cos(10 * np.pi * f_1) + noise
 
+
+# %%
+# Fit a first model on this dataset without any constraint
+gbdt_no_cst = HistGradientBoostingRegressor()
+gbdt_no_cst.fit(X, y)
+
+# %%
+# With monotonic increase (1) and a monotonic decrease (-1) constraints, respectively.
+gbdt_monotonic = HistGradientBoostingRegressor(monotonic_cst=[1, -1])
+gbdt_monotonic.fit(X, y)
+
+
+# %%
+# Let's display the partial dependence of the predictions on the two features.
 fig, ax = plt.subplots()
-
-
-# Without any constraint
-gbdt = HistGradientBoostingRegressor()
-gbdt.fit(X, y)
 disp = PartialDependenceDisplay.from_estimator(
-    gbdt,
+    gbdt_no_cst,
     X,
     features=[0, 1],
     feature_names=(
@@ -54,13 +63,8 @@ disp = PartialDependenceDisplay.from_estimator(
     line_kw={"linewidth": 4, "label": "unconstrained", "color": "tab:blue"},
     ax=ax,
 )
-
-# With monotonic increase (1) and a monotonic decrease (-1) constraints, respectively.
-gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1])
-gbdt.fit(X, y)
-
 PartialDependenceDisplay.from_estimator(
-    gbdt,
+    gbdt_monotonic,
     X,
     features=[0, 1],
     line_kw={"linewidth": 4, "label": "constrained", "color": "tab:orange"},
@@ -75,5 +79,22 @@ for f_idx in (0, 1):
 
 plt.legend()
 fig.suptitle("Monotonic constraints effect on partial dependences")
-
 plt.show()
+
+# %%
+# We can see that the predictions of the unconstrained model capture the
+# oscillations of the the data while the constrained model follows the general
+# trend and ignores the local variations.
+
+# %%
+# Note that if the training data has feature names, it's possible to specifiy the
+# monotonic constraints by passing a dictionary:
+import pandas as pd
+
+X_df = pd.DataFrame(X, columns=["f_0", "f_1"])
+
+gbdt_monotonic_df = HistGradientBoostingRegressor(
+    monotonic_cst={"f_0": 1, "f_1": -1}
+).fit(X_df, y)
+
+np.allclose(gbdt_monotonic_df.predict(X_df), gbdt_monotonic.predict(X))
