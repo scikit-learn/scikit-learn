@@ -54,6 +54,10 @@ random sampling procedures.
   scores will all be set to the maximum possible rank.
   :pr:`24543` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| The default of `eps` in :func:`metrics.logloss` is will change
+  from `1e-15` to `"auto"` that defaults to `np.finfo(y_pred.dtype).eps`.
+  :pr:`24354` by :user:`Safiuddin Khaja <Safikh>` and :user:`gsiisg <gsiisg>`.
+
 Changes impacting all modules
 -----------------------------
 
@@ -456,6 +460,12 @@ Changelog
   values for `y_true` will raise an error.
   :pr:`22710` by :user:`Conroy Trinh <trinhcon>` and
   :pr:`23461` by :user:`Meekail Zain <micky774>`.
+
+- |Enhancement| Adds an `"auto"` option to `eps` in :func:`metrics.logloss`.
+  This option will automatically set the `eps` value depending on the data
+  type of `y_pred`. In addition, the default value of `eps` is changed from
+  `1e-15` to the new `"auto"` option.
+  :pr:`24354` by :user:`Safiuddin Khaja <Safikh>` and :user:`gsiisg <gsiisg>`.
 
 - |FIX| :func:`metrics.log_loss` with `eps=0` now returns a correct value of 0 or
   `np.inf` instead of `nan` for predictions at the boundaries (0 or 1). It also accepts

@@ -585,7 +585,6 @@ NOT_SYMMETRIC_METRICS = {
     "macro_tpr_fpr_tnr_fnr_score",
     "macro_specificity_score",
     "macro_npv_score",
-    "log_loss",
     "hinge_loss",
     "mean_gamma_deviance",
     "mean_poisson_deviance",
