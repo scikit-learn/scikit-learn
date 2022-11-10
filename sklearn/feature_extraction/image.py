@@ -179,21 +179,22 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
     n_x, n_y, n_z = img.shape
     return _to_graph(n_x, n_y, n_z, mask, img, return_as, dtype)
 
+
 @validate_params(
     {
-        "n_x": [Interval(Integral, left=1, right=None, closed='left')],
-        "n_y": [Interval(Integral, left=1, right=None, closed='left')],
-        "n_z": [Interval(Integral, left=1, right=None, closed='left')],
-        "mask": [None, 'array-like'],
+        "n_x": [Interval(Integral, left=1, right=None, closed="left")],
+        "n_y": [Interval(Integral, left=1, right=None, closed="left")],
+        "n_z": [Interval(Integral, left=1, right=None, closed="left")],
+        "mask": [None, "array-like"],
         "return_as": [type(np.ndarray), type(sparse.spmatrix)],
         "dtype": [
             None,
             type(float),
             type(int),
             type(bool),
-            type(str), 
-            type(type), #Any type is allowed by numpy DTypeLike at the moment.
-        ]
+            type(str),
+            type(type),  # Any type is allowed by numpy DTypeLike at the moment.
+        ],
     }
 )
 def grid_to_graph(
