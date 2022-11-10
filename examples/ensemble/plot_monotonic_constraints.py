@@ -98,4 +98,6 @@ gbdt_with_monotonic_cst_df = HistGradientBoostingRegressor(
     monotonic_cst={"f_0": 1, "f_1": -1}
 ).fit(X_df, y)
 
-np.allclose(gbdt_with_monotonic_cst_df.predict(X_df), gbdt_monotonic.predict(X))
+np.allclose(
+    gbdt_with_monotonic_cst_df.predict(X_df), gbdt_with_monotonic_cst.predict(X)
+)
