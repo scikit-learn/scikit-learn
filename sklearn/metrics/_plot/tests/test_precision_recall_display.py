@@ -48,7 +48,7 @@ def test_precision_recall_display_validation(pyplot):
         # Force `y_true` to be seen as a regression problem
         PrecisionRecallDisplay.from_predictions(y + 0.5, y_pred_classifier, pos_label=1)
     with pytest.raises(ValueError, match=err_msg.format("multiclass")):
-        PrecisionRecallDisplay.from_predictions(y, y_pred_regressor, pos_label=1)
+        PrecisionRecallDisplay.from_predictions(y, y_pred_classifier, pos_label=1)
 
     err_msg = "Found input variables with inconsistent numbers of samples"
     with pytest.raises(ValueError, match=err_msg):
