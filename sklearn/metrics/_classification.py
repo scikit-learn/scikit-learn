@@ -2498,7 +2498,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
 
 
 def log_loss(
-    y_true, y_pred, *, eps=1e-15, normalize=True, sample_weight=None, labels=None
+    y_true, y_pred, *, eps="auto", normalize=True, sample_weight=None, labels=None
 ):
     r"""Log loss, aka logistic loss or cross-entropy loss.
 
@@ -2529,9 +2529,16 @@ def log_loss(
         ordered alphabetically, as done by
         :class:`preprocessing.LabelBinarizer`.
 
-    eps : float, default=1e-15
+    eps : float or "auto", default="auto"
         Log loss is undefined for p=0 or p=1, so probabilities are
-        clipped to max(eps, min(1 - eps, p)).
+        clipped to `max(eps, min(1 - eps, p))`. The default will depend on the
+        data type of `y_pred` and is set to `np.finfo(y_pred.dtype).eps`.
+
+        .. versionadded:: 1.2
+
+        .. versionchanged:: 1.2
+           The default value changed from `1e-15` to `"auto"` that is
+           equivalent to `np.finfo(y_pred.dtype).eps`.
 
     normalize : bool, default=True
         If true, return the mean loss per sample.
@@ -2568,9 +2575,12 @@ def log_loss(
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616...
     """
-    y_pred = check_array(y_pred, ensure_2d=False)
-    check_consistent_length(y_pred, y_true, sample_weight)
+    y_pred = check_array(
+        y_pred, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
+    )
+    eps = np.finfo(y_pred.dtype).eps if eps == "auto" else eps
 
+    check_consistent_length(y_pred, y_true, sample_weight)
     lb = LabelBinarizer()
 
     if labels is not None:
