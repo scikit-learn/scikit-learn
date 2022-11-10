@@ -110,6 +110,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.utils._isfinite",
     "sklearn.svm._newrand",
     "sklearn._isotonic",
+    "sklearn.linear_model._sgd_fast",
 )
 
 

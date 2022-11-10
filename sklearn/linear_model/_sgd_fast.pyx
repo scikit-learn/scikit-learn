@@ -18,7 +18,6 @@ cdef extern from "_sgd_fast_helpers.h":
 from ..utils._weight_vector cimport WeightVector64 as WeightVector
 from ..utils._seq_dataset cimport SequentialDataset64 as SequentialDataset
 
-cnp.import_array()
 
 # Penalty constants
 DEF NO_PENALTY = 0
@@ -360,16 +359,16 @@ cdef class SquaredEpsilonInsensitive(Regression):
         return SquaredEpsilonInsensitive, (self.epsilon,)
 
 
-def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
+def _plain_sgd(double[::1] weights,
                double intercept,
-               cnp.ndarray[double, ndim=1, mode='c'] average_weights,
+               double[::1] average_weights,
                double average_intercept,
                LossFunction loss,
                int penalty_type,
                double alpha, double C,
                double l1_ratio,
                SequentialDataset dataset,
-               cnp.ndarray[unsigned char, ndim=1, mode='c'] validation_mask,
+               unsigned char[::1] validation_mask,
                bint early_stopping, validation_score_cb,
                int n_iter_no_change,
                int max_iter, double tol, int fit_intercept,
@@ -500,7 +499,7 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
     cdef double sample_weight
     cdef double class_weight = 1.0
     cdef unsigned int count = 0
-    cdef unsigned int train_count = n_samples - validation_mask.sum()
+    cdef unsigned int train_count = n_samples - np.sum(validation_mask)
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
     cdef int is_hinge = isinstance(loss, Hinge)
@@ -514,11 +513,11 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
     cdef unsigned char [:] validation_mask_view = validation_mask
 
     # q vector is only used for L1 regularization
-    cdef cnp.ndarray[double, ndim = 1, mode = "c"] q = None
+    cdef double[::1] q = None
     cdef double * q_data_ptr = NULL
     if penalty_type == L1 or penalty_type == ELASTICNET:
         q = np.zeros((n_features,), dtype=np.float64, order="c")
-        q_data_ptr = <double * > q.data
+        q_data_ptr = &q[0]
     cdef double u = 0.0
 
     if penalty_type == L2:
@@ -638,14 +637,14 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
 
             # floating-point under-/overflow check.
             if (not skl_isfinite(intercept)
-                or any_nonfinite(<double *>weights.data, n_features)):
+                or any_nonfinite(&weights[0], n_features)):
                 infinity = True
                 break
 
             # evaluate the score on the validation set
             if early_stopping:
                 with gil:
-                    score = validation_score_cb(weights, intercept)
+                    score = validation_score_cb(np.asarray(weights), intercept)
                 if tol > -INFINITY and score < best_score + tol:
                     no_improvement_count += 1
                 else:
@@ -680,7 +679,7 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
 
     w.reset_wscale()
 
-    return weights, intercept, average_weights, average_intercept, epoch + 1
+    return np.asarray(weights), intercept, np.asarray(average_weights), average_intercept, epoch + 1
 
 
 cdef bint any_nonfinite(double *w, int n) nogil:
