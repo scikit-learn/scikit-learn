@@ -12,7 +12,7 @@ import numpy as np
 
 from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import as_float_array, check_random_state
+from ..utils import Bunch, as_float_array, check_random_state
 from ..utils._param_validation import Interval, StrOptions
 from ..utils.validation import check_is_fitted
 from ..metrics import euclidean_distances
@@ -32,120 +32,6 @@ def _equal_similarities_and_preferences(S, preference):
         return np.all(S[mask].flat == S[mask].flat[0])
 
     return all_equal_preferences() and all_equal_similarities()
-
-
-def affinity_propagation(
-    S,
-    *,
-    preference=None,
-    convergence_iter=15,
-    max_iter=200,
-    damping=0.5,
-    copy=True,
-    verbose=False,
-    return_n_iter=False,
-    random_state=None,
-):
-    """Perform Affinity Propagation Clustering of data.
-
-    Read more in the :ref:`User Guide <affinity_propagation>`.
-
-    Parameters
-    ----------
-    S : array-like of shape (n_samples, n_samples)
-        Matrix of similarities between points.
-
-    preference : array-like of shape (n_samples,) or float, default=None
-        Preferences for each point - points with larger values of
-        preferences are more likely to be chosen as exemplars. The number of
-        exemplars, i.e. of clusters, is influenced by the input preferences
-        value. If the preferences are not passed as arguments, they will be
-        set to the median of the input similarities (resulting in a moderate
-        number of clusters). For a smaller amount of clusters, this can be set
-        to the minimum value of the similarities.
-
-    convergence_iter : int, default=15
-        Number of iterations with no change in the number
-        of estimated clusters that stops the convergence.
-
-    max_iter : int, default=200
-        Maximum number of iterations.
-
-    damping : float, default=0.5
-        Damping factor between 0.5 and 1.
-
-    copy : bool, default=True
-        If copy is False, the affinity matrix is modified inplace by the
-        algorithm, for memory efficiency.
-
-    verbose : bool, default=False
-        The verbosity level.
-
-    return_n_iter : bool, default=False
-        Whether or not to return the number of iterations.
-
-    random_state : int, RandomState instance or None, default=None
-        Pseudo-random number generator to control the starting state.
-        Use an int for reproducible results across function calls.
-        See the :term:`Glossary <random_state>`.
-
-        .. versionadded:: 0.23
-            this parameter was previously hardcoded as 0.
-
-    Returns
-    -------
-    cluster_centers_indices : ndarray of shape (n_clusters,)
-        Index of clusters centers.
-
-    labels : ndarray of shape (n_samples,)
-        Cluster labels for each point.
-
-    n_iter : int
-        Number of iterations run. Returned only if `return_n_iter` is
-        set to True.
-
-    Notes
-    -----
-    For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
-    <sphx_glr_auto_examples_cluster_plot_affinity_propagation.py>`.
-
-    When the algorithm does not converge, it will still return a arrays of
-    ``cluster_center_indices`` and labels if there are any exemplars/clusters,
-    however they may be degenerate and should be used with caution.
-
-    When all training samples have equal similarities and equal preferences,
-    the assignment of cluster centers and labels depends on the preference.
-    If the preference is smaller than the similarities, a single cluster center
-    and label ``0`` for every sample will be returned. Otherwise, every
-    training sample becomes its own cluster center and is assigned a unique
-    label.
-
-    References
-    ----------
-    Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
-    Between Data Points", Science Feb. 2007
-    """
-    S = as_float_array(S, copy=copy)
-
-    if S.shape[0] != S.shape[1]:
-        raise ValueError(f"S must be a square array (shape={S.shape})")
-
-    if preference is None:
-        preference = np.median(S)
-    preference = np.array(preference, copy=False)
-
-    random_state = check_random_state(random_state)
-
-    return _affinity_propagation(
-        S,
-        preference=preference,
-        convergence_iter=convergence_iter,
-        max_iter=max_iter,
-        damping=damping,
-        verbose=verbose,
-        return_n_iter=return_n_iter,
-        random_state=random_state,
-    )
 
 
 def _affinity_propagation(
@@ -328,7 +214,133 @@ def _affinity_propagation(
         return cluster_centers_indices, labels
 
 
-###############################################################################
+def _validate_init_common_params(params):
+    """Validate common parameters for init methods and public function."""
+    if params.S.shape[0] != params.S.shape[1]:
+        raise ValueError(
+            f"The matrix of similarities must be a square array. Got {params.S.shape} "
+            "instead."
+        )
+
+    if params.preference is None:
+        preference = np.median(params.S)
+    else:
+        preference = params.preference
+    preference = np.array(preference, copy=False)
+
+    random_state = check_random_state(params.random_state)
+    return {
+        "preference": preference,
+        "random_state": random_state,
+    }
+
+
+def affinity_propagation(
+    S,
+    *,
+    preference=None,
+    convergence_iter=15,
+    max_iter=200,
+    damping=0.5,
+    copy=True,
+    verbose=False,
+    return_n_iter=False,
+    random_state=None,
+):
+    """Perform Affinity Propagation Clustering of data.
+
+    Read more in the :ref:`User Guide <affinity_propagation>`.
+
+    Parameters
+    ----------
+    S : array-like of shape (n_samples, n_samples)
+        Matrix of similarities between points.
+
+    preference : array-like of shape (n_samples,) or float, default=None
+        Preferences for each point - points with larger values of
+        preferences are more likely to be chosen as exemplars. The number of
+        exemplars, i.e. of clusters, is influenced by the input preferences
+        value. If the preferences are not passed as arguments, they will be
+        set to the median of the input similarities (resulting in a moderate
+        number of clusters). For a smaller amount of clusters, this can be set
+        to the minimum value of the similarities.
+
+    convergence_iter : int, default=15
+        Number of iterations with no change in the number
+        of estimated clusters that stops the convergence.
+
+    max_iter : int, default=200
+        Maximum number of iterations.
+
+    damping : float, default=0.5
+        Damping factor between 0.5 and 1.
+
+    copy : bool, default=True
+        If copy is False, the affinity matrix is modified inplace by the
+        algorithm, for memory efficiency.
+
+    verbose : bool, default=False
+        The verbosity level.
+
+    return_n_iter : bool, default=False
+        Whether or not to return the number of iterations.
+
+    random_state : int, RandomState instance or None, default=None
+        Pseudo-random number generator to control the starting state.
+        Use an int for reproducible results across function calls.
+        See the :term:`Glossary <random_state>`.
+
+        .. versionadded:: 0.23
+            this parameter was previously hardcoded as 0.
+
+    Returns
+    -------
+    cluster_centers_indices : ndarray of shape (n_clusters,)
+        Index of clusters centers.
+
+    labels : ndarray of shape (n_samples,)
+        Cluster labels for each point.
+
+    n_iter : int
+        Number of iterations run. Returned only if `return_n_iter` is
+        set to True.
+
+    Notes
+    -----
+    For an example, see :ref:`examples/cluster/plot_affinity_propagation.py
+    <sphx_glr_auto_examples_cluster_plot_affinity_propagation.py>`.
+
+    When the algorithm does not converge, it will still return a arrays of
+    ``cluster_center_indices`` and labels if there are any exemplars/clusters,
+    however they may be degenerate and should be used with caution.
+
+    When all training samples have equal similarities and equal preferences,
+    the assignment of cluster centers and labels depends on the preference.
+    If the preference is smaller than the similarities, a single cluster center
+    and label ``0`` for every sample will be returned. Otherwise, every
+    training sample becomes its own cluster center and is assigned a unique
+    label.
+
+    References
+    ----------
+    Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
+    Between Data Points", Science Feb. 2007
+    """
+    S = as_float_array(S, copy=copy)
+
+    params = _validate_init_common_params(
+        Bunch(**{"S": S, "preference": preference, "random_state": random_state})
+    )
+
+    return _affinity_propagation(
+        S,
+        convergence_iter=convergence_iter,
+        max_iter=max_iter,
+        damping=damping,
+        verbose=verbose,
+        return_n_iter=return_n_iter,
+        **params,
+    )
 
 
 class AffinityPropagation(ClusterMixin, BaseEstimator):
@@ -537,13 +549,15 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
         else:  # self.affinity == "euclidean"
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
 
-        if self.preference is None:
-            preference = np.median(self.affinity_matrix_)
-        else:
-            preference = self.preference
-        preference = np.array(preference, copy=False)
-
-        random_state = check_random_state(self.random_state)
+        params = _validate_init_common_params(
+            Bunch(
+                **{
+                    "S": self.affinity_matrix_,
+                    "preference": self.preference,
+                    "random_state": self.random_state,
+                }
+            )
+        )
 
         (
             self.cluster_centers_indices_,
@@ -551,13 +565,12 @@ class AffinityPropagation(ClusterMixin, BaseEstimator):
             self.n_iter_,
         ) = _affinity_propagation(
             self.affinity_matrix_,
-            preference=preference,
             max_iter=self.max_iter,
             convergence_iter=self.convergence_iter,
             damping=self.damping,
             verbose=self.verbose,
             return_n_iter=True,
-            random_state=random_state,
+            **params,
         )
 
         if self.affinity != "precomputed":
