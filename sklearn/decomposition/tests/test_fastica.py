@@ -79,6 +79,7 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
     if (
         global_random_seed == 20
         and global_dtype == np.float32
+        and not add_noise
         and os.getenv("DISTRIB") == "ubuntu"
     ):
         pytest.xfail(
