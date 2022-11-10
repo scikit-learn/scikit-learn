@@ -347,7 +347,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if hasattr(self, "oob_improvement_"):
             del self.oob_improvement_
         if hasattr(self, "oob_scores_ "):
-            del self.oob_scores_ 
+            del self.oob_scores_
         if hasattr(self, "oob_score_"):
             del self.oob_score_
         if hasattr(self, "init_"):
@@ -375,16 +375,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 self.oob_improvement_ = np.resize(
                     self.oob_improvement_, total_n_estimators
                 )
-                self.oob_scores_ = np.resize(
-                    self.oob_scores_, total_n_estimators
-                )
+                self.oob_scores_ = np.resize(self.oob_scores_, total_n_estimators)
             else:
                 self.oob_improvement_ = np.zeros(
                     (total_n_estimators,), dtype=np.float64
                 )
-                self.oob_scores_ = np.zeros(
-                    (total_n_estimators,), dtype=np.float64
-                )
+                self.oob_scores_ = np.zeros((total_n_estimators,), dtype=np.float64)
 
     def _is_initialized(self):
         return len(getattr(self, "estimators_", [])) > 0
@@ -647,9 +643,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                     sample_weight[~sample_mask],
                 )
                 if i == 0:
-                  self.oob_scores_[i] = old_oob_score
+                    self.oob_scores_[i] = old_oob_score
                 else:
-                  self.oob_scores_[i] = old_oob_score - self.oob_improvement_[i]
+                    self.oob_scores_[i] = old_oob_score - self.oob_improvement_[i]
                 self.oob_oob_score_ = self.oob_scores_[-1]
             else:
                 # no need to fancy index w/ no subsampling
