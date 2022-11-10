@@ -143,14 +143,7 @@ def _to_graph(
         "img": ["array-like"],  # Could it also be "sparse matrix"?
         "mask": [None, "array-like"],
         "return_as": [type(np.ndarray), type(sparse.spmatrix)],
-        "dtype": [
-            None,
-            type(float),
-            type(int),
-            type(bool),
-            type(str),  # for str valued dtypes
-            type(type),  # Any type is allowed by numpy DTypeLike at the moment.
-        ],
+        "dtype": "no_validation"  # validation delegated to numpy
     }
 )
 def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
