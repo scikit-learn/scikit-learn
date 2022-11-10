@@ -324,7 +324,19 @@ class MethodMetadataRequest:
         return res
 
     def is_param_aliased(self, param):
-        """Check if the parameter of this method has an alias"""
+        """Check if the parameter of this method has an alias.
+
+        Parameter
+        ---------
+        param : str
+            The name of the parameter to check.
+
+        Returns
+        -------
+        bool
+            Whether there is an alias.
+
+        """
         request = self._requests.get(param)
         return isinstance(request, str)
 
@@ -430,7 +442,22 @@ class MetadataRequest:
         return getattr(self, method)._route_params(params=params)
 
     def is_param_aliased(self, *, method, param):
-        """Check if the parameter of this method has an alias"""
+        """Check if the parameter of this method has an alias.
+
+        Parameter
+        ---------
+        method : str
+            The name of method whose parameters should be checked for aliases.
+
+        param : str
+            The name of the parameter to check.
+
+        Returns
+        -------
+        bool
+            Whether there is an alias.
+
+        """
         return getattr(self, method).is_param_aliased(param)
 
     def _check_warnings(self, *, method, params):
@@ -884,7 +911,22 @@ class MetadataRouter:
         return routed_params
 
     def is_param_aliased(self, *, method, param):
-        """Check if the parameter of this method has an alias"""
+        """Check if the parameter of this method has an alias.
+
+        Parameter
+        ---------
+        method : str
+            The name of method whose parameters should be checked for aliases.
+
+        param : str
+            The name of the parameter to check.
+
+        Returns
+        -------
+        bool
+            Whether there is an alias.
+
+        """
         # check if there is an alias in own params
         if self._self and getattr(self._self, method).is_param_aliased(param):
             return True
