@@ -296,7 +296,7 @@ def test_input_error_related_to_feature_names():
     monotonic_cst = {"d": 1, "a": 1, "c": -1}
     gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
     expected_msg = re.escape(
-        "monotonic_cst contains unexpected feature names: ['c', 'd']."
+        "monotonic_cst contains 2 unexpected feature names: ['c', 'd']."
     )
     with pytest.raises(ValueError, match=expected_msg):
         gbdt.fit(X, y)

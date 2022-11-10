@@ -2028,13 +2028,14 @@ def _check_monotonic_cst(estimator, monotonic_cst=None):
                 set(original_monotonic_cst) - set(estimator.feature_names_in_)
             )
             unexpected_feature_names.sort()  # deterministic error message
+            n_unexpeced = len(unexpected_feature_names)
             if unexpected_feature_names:
                 if len(unexpected_feature_names) > 5:
                     unexpected_feature_names = unexpected_feature_names[:5]
                     unexpected_feature_names.append("...")
                 raise ValueError(
-                    "monotonic_cst contains unexpected feature names: "
-                    f"{unexpected_feature_names}."
+                    f"monotonic_cst contains {n_unexpeced} unexpected feature "
+                    f"names: {unexpected_feature_names}."
                 )
             for feature_idx, feature_name in enumerate(estimator.feature_names_in_):
                 if feature_name in original_monotonic_cst:
