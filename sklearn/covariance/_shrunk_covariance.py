@@ -20,7 +20,7 @@ import numpy as np
 from . import empirical_covariance, EmpiricalCovariance
 from .._config import config_context
 from ..utils import check_array
-from ..utils._param_validation import Interval, validate_params
+from ..utils._param_validation import Interval
 
 
 # ShrunkCovariance estimator
@@ -288,13 +288,6 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     return shrinkage
 
 
-@validate_params(
-    {
-        "X": ["array-like"],
-        "assume_centered": ["boolean"],
-        "block_size": [Interval(Integral, 1, None, closed="left")],
-    }
-)
 def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     """Estimate the shrunk Ledoit-Wolf covariance matrix.
 
@@ -331,6 +324,10 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
+
+    Note that the input parameters will not be validated, to optimize execution time.
+    If you wish to validate the parameters, use the :class:`LedoitWolf` instead.
+    It will validate the input parameters when calling the method :term:`fit`.
     """
     X = check_array(X)
     # for only one feature, the result is the same whatever the shrinkage
