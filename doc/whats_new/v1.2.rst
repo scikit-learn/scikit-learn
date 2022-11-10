@@ -522,7 +522,7 @@ Changelog
 
 - |Enhancement| :class:`neighbors.NeighborsBase` now accepts
   Minkowski semi-metric (i.e. when :math:`0 < p < 1` for
-  `metric="minkowski"`) for `algo="auto"` or `algo="brute"`.
+  `metric="minkowski"`) for `algorithm="auto"` or `algorithm="brute"`.
   :pr:`24750` by :user:`Rudresh Veerkhare <RudreshVeerkhare>`
 
 - |Efficiency| :class:`neighbors.NearestCentroid` is faster and requires

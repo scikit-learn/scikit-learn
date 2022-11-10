@@ -1513,7 +1513,7 @@ def test_neighbors_minkowski_semimetric_algo_warn(Estimator, n_features, algorit
     """
     Validation of all classes extending NeighborsBase with
     Minkowski semi-metrics (i.e. when 0 < p < 1). That proper
-    Warning is raised for algorithm "auto" and "brute"
+    Warning is raised for `algorithm="auto"` and "brute".
     """
     X = rng.random_sample((10, n_features))
     y = np.ones(10)
