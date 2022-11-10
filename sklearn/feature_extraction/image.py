@@ -16,7 +16,7 @@ from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
 from ..utils import check_array, check_random_state
-from ..utils._param_validation import Interval
+from ..utils._param_validation import Interval, validate_params
 from ..base import BaseEstimator
 
 __all__ = [
@@ -97,7 +97,8 @@ def _to_graph(
     """Auxiliary function for img_to_graph and grid_to_graph"""
     edges = _make_edges_3d(n_x, n_y, n_z)
 
-    if dtype is None:
+    
+    if dtype is None:  # To not overwrite input dtype
         if img is None:
             dtype = int
         else:
@@ -115,7 +116,6 @@ def _to_graph(
     else:
         if mask is not None:
             mask = mask.astype(dtype=bool, copy=False)
-            mask = np.asarray(mask, dtype=bool)
             edges = _mask_edges_weights(mask, edges)
             n_voxels = np.sum(mask)
         else:
@@ -139,6 +139,24 @@ def _to_graph(
     return return_as(graph)
 
 
+@validate_params(
+    {
+        "img": ["array-like"],  # Could it also be "sparse matrix"?
+        "mask": [None, "array-like"],
+        "return_as": [
+            type(np.ndarray),
+            type(sparse.spmatrix)
+        ],
+        "dtype": [
+            None,
+            type(float),
+            type(int),
+            type(bool),
+            type(str), # for str valued dtypes
+            type(type), # Any type is allowed by numpy DTypeLike at the moment.
+        ],
+    }
+)
 def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
     """Graph of the pixel-to-pixel gradient connections.
 
