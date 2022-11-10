@@ -631,8 +631,6 @@ def enet_path(
                 positive,
             )
         elif precompute is False:
-            if l1_reg < 0.1:
-                print(coef_[:5])
             model = cd_fast.enet_coordinate_descent(
                 coef_, l1_reg, l2_reg, X, y, max_iter, tol, rng, random, positive
             )
