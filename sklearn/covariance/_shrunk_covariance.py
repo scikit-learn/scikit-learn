@@ -19,10 +19,89 @@ import numpy as np
 
 from . import empirical_covariance, EmpiricalCovariance
 from .._config import config_context
-from ..utils import check_array
+from ..utils import check_array, as_float_array
 from ..utils._param_validation import Interval
 
 
+def _ledoit_wolf_shrinkage(X, assume_centered, block_size):
+    """Estimate Ledoit-Wolf shrinkage."""
+    # for only one feature, the result is the same whatever the shrinkage
+    if len(X.shape) == 2 and X.shape[1] == 1:
+        return 0.0
+    n_samples, n_features = X.shape
+
+    # optionally center data
+    if not assume_centered:
+        X = X - X.mean(0)
+
+    # A non-blocked version of the computation is present in the tests
+    # in tests/test_covariance.py
+
+    # number of blocks to split the covariance matrix into
+    n_splits = int(n_features / block_size)
+    X2 = X**2
+    emp_cov_trace = np.sum(X2, axis=0) / n_samples
+    mu = np.sum(emp_cov_trace) / n_features
+    beta_ = 0.0  # sum of the coefficients of <X2.T, X2>
+    delta_ = 0.0  # sum of the *squared* coefficients of <X.T, X>
+    # starting block computation
+    for i in range(n_splits):
+        for j in range(n_splits):
+            rows = slice(block_size * i, block_size * (i + 1))
+            cols = slice(block_size * j, block_size * (j + 1))
+            beta_ += np.sum(np.dot(X2.T[rows], X2[:, cols]))
+            delta_ += np.sum(np.dot(X.T[rows], X[:, cols]) ** 2)
+        rows = slice(block_size * i, block_size * (i + 1))
+        beta_ += np.sum(np.dot(X2.T[rows], X2[:, block_size * n_splits :]))
+        delta_ += np.sum(np.dot(X.T[rows], X[:, block_size * n_splits :]) ** 2)
+    for j in range(n_splits):
+        cols = slice(block_size * j, block_size * (j + 1))
+        beta_ += np.sum(np.dot(X2.T[block_size * n_splits :], X2[:, cols]))
+        delta_ += np.sum(np.dot(X.T[block_size * n_splits :], X[:, cols]) ** 2)
+    delta_ += np.sum(
+        np.dot(X.T[block_size * n_splits :], X[:, block_size * n_splits :]) ** 2
+    )
+    delta_ /= n_samples**2
+    beta_ += np.sum(
+        np.dot(X2.T[block_size * n_splits :], X2[:, block_size * n_splits :])
+    )
+    # use delta_ to compute beta
+    beta = 1.0 / (n_features * n_samples) * (beta_ / n_samples - delta_)
+    # delta is the sum of the squared coefficients of (<X.T,X> - mu*Id) / p
+    delta = delta_ - 2.0 * mu * emp_cov_trace.sum() + n_features * mu**2
+    delta /= n_features
+    # get final beta as the min between beta and delta
+    # We do this to prevent shrinking more than "1", which would invert
+    # the value of covariances
+    beta = min(beta, delta)
+    # finally get shrinkage
+    shrinkage = 0 if beta == 0 else beta / delta
+    return shrinkage
+
+
+def _ledoit_wolf(X, *, assume_centered, block_size):
+    """Estimate the shrunk Ledoit-Wolf covariance matrix."""
+    # for only one feature, the result is the same whatever the shrinkage
+    if len(X.shape) == 2 and X.shape[1] == 1:
+        if not assume_centered:
+            X = X - X.mean()
+        return np.atleast_2d((X**2).mean()), 0.0
+    n_features = X.shape[1]
+
+    # get Ledoit-Wolf shrinkage
+    shrinkage = _ledoit_wolf_shrinkage(
+        X, assume_centered=assume_centered, block_size=block_size
+    )
+    emp_cov = empirical_covariance(X, assume_centered=assume_centered)
+    mu = np.sum(np.trace(emp_cov)) / n_features
+    shrunk_cov = (1.0 - shrinkage) * emp_cov
+    shrunk_cov.flat[:: n_features + 1] += shrinkage * mu
+
+    return shrunk_cov, shrinkage
+
+
+###############################################################################
+# Public API
 # ShrunkCovariance estimator
 
 
@@ -193,101 +272,6 @@ class ShrunkCovariance(EmpiricalCovariance):
 # Ledoit-Wolf estimator
 
 
-def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
-    """Estimate the shrunk Ledoit-Wolf covariance matrix.
-
-    Read more in the :ref:`User Guide <shrunk_covariance>`.
-
-    Parameters
-    ----------
-    X : array-like of shape (n_samples, n_features)
-        Data from which to compute the Ledoit-Wolf shrunk covariance shrinkage.
-
-    assume_centered : bool, default=False
-        If True, data will not be centered before computation.
-        Useful to work with data whose mean is significantly equal to
-        zero but is not exactly zero.
-        If False, data will be centered before computation.
-
-    block_size : int, default=1000
-        Size of blocks into which the covariance matrix will be split.
-
-    Returns
-    -------
-    shrinkage : float
-        Coefficient in the convex combination used for the computation
-        of the shrunk estimate.
-
-    Notes
-    -----
-    The regularized (shrunk) covariance is:
-
-    (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
-
-    where mu = trace(cov) / n_features
-    """
-    X = check_array(X)
-    # for only one feature, the result is the same whatever the shrinkage
-    if len(X.shape) == 2 and X.shape[1] == 1:
-        return 0.0
-    if X.ndim == 1:
-        X = np.reshape(X, (1, -1))
-
-    if X.shape[0] == 1:
-        warnings.warn(
-            "Only one sample available. You may want to reshape your data array"
-        )
-    n_samples, n_features = X.shape
-
-    # optionally center data
-    if not assume_centered:
-        X = X - X.mean(0)
-
-    # A non-blocked version of the computation is present in the tests
-    # in tests/test_covariance.py
-
-    # number of blocks to split the covariance matrix into
-    n_splits = int(n_features / block_size)
-    X2 = X**2
-    emp_cov_trace = np.sum(X2, axis=0) / n_samples
-    mu = np.sum(emp_cov_trace) / n_features
-    beta_ = 0.0  # sum of the coefficients of <X2.T, X2>
-    delta_ = 0.0  # sum of the *squared* coefficients of <X.T, X>
-    # starting block computation
-    for i in range(n_splits):
-        for j in range(n_splits):
-            rows = slice(block_size * i, block_size * (i + 1))
-            cols = slice(block_size * j, block_size * (j + 1))
-            beta_ += np.sum(np.dot(X2.T[rows], X2[:, cols]))
-            delta_ += np.sum(np.dot(X.T[rows], X[:, cols]) ** 2)
-        rows = slice(block_size * i, block_size * (i + 1))
-        beta_ += np.sum(np.dot(X2.T[rows], X2[:, block_size * n_splits :]))
-        delta_ += np.sum(np.dot(X.T[rows], X[:, block_size * n_splits :]) ** 2)
-    for j in range(n_splits):
-        cols = slice(block_size * j, block_size * (j + 1))
-        beta_ += np.sum(np.dot(X2.T[block_size * n_splits :], X2[:, cols]))
-        delta_ += np.sum(np.dot(X.T[block_size * n_splits :], X[:, cols]) ** 2)
-    delta_ += np.sum(
-        np.dot(X.T[block_size * n_splits :], X[:, block_size * n_splits :]) ** 2
-    )
-    delta_ /= n_samples**2
-    beta_ += np.sum(
-        np.dot(X2.T[block_size * n_splits :], X2[:, block_size * n_splits :])
-    )
-    # use delta_ to compute beta
-    beta = 1.0 / (n_features * n_samples) * (beta_ / n_samples - delta_)
-    # delta is the sum of the squared coefficients of (<X.T,X> - mu*Id) / p
-    delta = delta_ - 2.0 * mu * emp_cov_trace.sum() + n_features * mu**2
-    delta /= n_features
-    # get final beta as the min between beta and delta
-    # We do this to prevent shrinking more than "1", which would invert
-    # the value of covariances
-    beta = min(beta, delta)
-    # finally get shrinkage
-    shrinkage = 0 if beta == 0 else beta / delta
-    return shrinkage
-
-
 def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     """Estimate the shrunk Ledoit-Wolf covariance matrix.
 
@@ -324,36 +308,15 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
 
     where mu = trace(cov) / n_features
-
-    Note that the input parameters will not be validated, to optimize execution time.
-    If you wish to validate the parameters, use the :class:`LedoitWolf` instead.
-    It will validate the input parameters when calling the method :term:`fit`.
     """
-    X = check_array(X)
-    # for only one feature, the result is the same whatever the shrinkage
-    if len(X.shape) == 2 and X.shape[1] == 1:
-        if not assume_centered:
-            X = X - X.mean()
-        return np.atleast_2d((X**2).mean()), 0.0
-    if X.ndim == 1:
-        X = np.reshape(X, (1, -1))
-        warnings.warn(
-            "Only one sample available. You may want to reshape your data array"
-        )
-        n_features = X.size
-    else:
-        _, n_features = X.shape
+    X = as_float_array(X)
 
-    # get Ledoit-Wolf shrinkage
-    shrinkage = ledoit_wolf_shrinkage(
-        X, assume_centered=assume_centered, block_size=block_size
-    )
-    emp_cov = empirical_covariance(X, assume_centered=assume_centered)
-    mu = np.sum(np.trace(emp_cov)) / n_features
-    shrunk_cov = (1.0 - shrinkage) * emp_cov
-    shrunk_cov.flat[:: n_features + 1] += shrinkage * mu
+    estimator = LedoitWolf(
+        assume_centered=assume_centered,
+        block_size=block_size,
+    ).fit(X)
 
-    return shrunk_cov, shrinkage
+    return estimator.covariance_, estimator.shrinkage_
 
 
 class LedoitWolf(EmpiricalCovariance):
@@ -488,12 +451,16 @@ class LedoitWolf(EmpiricalCovariance):
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
         X = self._validate_data(X)
+        if X.shape[0] == 1:
+            warnings.warn(
+                "Only one sample available. You may want to reshape your data array"
+            )
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
             self.location_ = X.mean(0)
         with config_context(assume_finite=True):
-            covariance, shrinkage = ledoit_wolf(
+            covariance, shrinkage = _ledoit_wolf(
                 X - self.location_, assume_centered=True, block_size=self.block_size
             )
         self.shrinkage_ = shrinkage
