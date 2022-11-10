@@ -588,6 +588,21 @@ def test_oob_improvement():
     )
 
 
+def test_oob_scores():
+    # Test if oob scores has correct shape and regression test.
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1, subsample=0.5)
+    clf.fit(X, y)
+    assert clf.oob_scores_.shape[0] == 100
+
+
+def test_oob_scores_raise():
+    # Test if oob improvement has correct shape.
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1, subsample=1.0)
+    clf.fit(X, y)
+    with pytest.raises(AttributeError):
+        clf.oob_scores_
+
+
 def test_oob_improvement_raise():
     # Test if oob improvement has correct shape.
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1, subsample=1.0)
@@ -605,6 +620,7 @@ def test_oob_multilcass_iris():
     score = clf.score(iris.data, iris.target)
     assert score > 0.9
     assert clf.oob_improvement_.shape[0] == clf.n_estimators
+    assert clf.oob_scores_.shape[0] == clf.n_estimators
     # hard-coded regression test - change if modification in OOB computation
     # FIXME: the following snippet does not yield the same results on 32 bits
     # assert_array_almost_equal(clf.oob_improvement_[:5],
