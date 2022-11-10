@@ -54,6 +54,10 @@ random sampling procedures.
   scores will all be set to the maximum possible rank.
   :pr:`24543` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Enhancement| The default of `eps` in :func:`metrics.logloss` is will change
+  from `1e-15` to `"auto"` that defaults to `np.finfo(y_pred.dtype).eps`.
+  :pr:`24354` by :user:`Safiuddin Khaja <Safikh>` and :user:`gsiisg <gsiisg>`.
+
 Changes impacting all modules
 -----------------------------
 
@@ -457,6 +461,12 @@ Changelog
   :pr:`22710` by :user:`Conroy Trinh <trinhcon>` and
   :pr:`23461` by :user:`Meekail Zain <micky774>`.
 
+- |Enhancement| Adds an `"auto"` option to `eps` in :func:`metrics.logloss`.
+  This option will automatically set the `eps` value depending on the data
+  type of `y_pred`. In addition, the default value of `eps` is changed from
+  `1e-15` to the new `"auto"` option.
+  :pr:`24354` by :user:`Safiuddin Khaja <Safikh>` and :user:`gsiisg <gsiisg>`.
+
 - |FIX| :func:`metrics.log_loss` with `eps=0` now returns a correct value of 0 or
   `np.inf` instead of `nan` for predictions at the boundaries (0 or 1). It also accepts
   integer input.
@@ -519,6 +529,11 @@ Changelog
   definition using Scott's and Silverman's estimation methods.
   :pr:`10468` by :user:`Ruben <icfly2>` and :pr:`22993` by
   :user:`Jovan Stojanovic <jovan-stojanovic>`.
+
+- |Enhancement| :class:`neighbors.NeighborsBase` now accepts
+  Minkowski semi-metric (i.e. when :math:`0 < p < 1` for
+  `metric="minkowski"`) for `algorithm="auto"` or `algorithm="brute"`.
+  :pr:`24750` by :user:`Rudresh Veerkhare <RudreshVeerkhare>`
 
 - |Efficiency| :class:`neighbors.NearestCentroid` is faster and requires
   less memory as it better leverages CPUs' caches to compute predictions.
