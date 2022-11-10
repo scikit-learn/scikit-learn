@@ -530,6 +530,11 @@ Changelog
   :pr:`10468` by :user:`Ruben <icfly2>` and :pr:`22993` by
   :user:`Jovan Stojanovic <jovan-stojanovic>`.
 
+- |Enhancement| :class:`neighbors.NeighborsBase` now accepts
+  Minkowski semi-metric (i.e. when :math:`0 < p < 1` for
+  `metric="minkowski"`) for `algorithm="auto"` or `algorithm="brute"`.
+  :pr:`24750` by :user:`Rudresh Veerkhare <RudreshVeerkhare>`
+
 - |Efficiency| :class:`neighbors.NearestCentroid` is faster and requires
   less memory as it better leverages CPUs' caches to compute predictions.
   :pr:`24645` by :user:`Olivier Grisel <ogrisel>`.
