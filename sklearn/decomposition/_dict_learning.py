@@ -552,7 +552,7 @@ def dict_learning(
     n_components : int
         Number of dictionary atoms to extract.
 
-    alpha : int
+    alpha : float
         Sparsity controlling parameter.
 
     max_iter : int, default=100
