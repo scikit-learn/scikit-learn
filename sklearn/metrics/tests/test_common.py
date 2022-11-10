@@ -509,7 +509,6 @@ NOT_SYMMETRIC_METRICS = {
     "macro_f2_score",
     "macro_precision_score",
     "macro_recall_score",
-    "log_loss",
     "hinge_loss",
     "mean_gamma_deviance",
     "mean_poisson_deviance",

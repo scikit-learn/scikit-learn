@@ -894,14 +894,6 @@ img.align-right, figure.align-right,
   margin-left: 1em;
 }
 
-a.brackets::after, span.brackets > a::after {
-  content: "]";
-}
-
-a.brackets::before, span.brackets > a::before {
-    content: "[";
-}
-
 /* copybutton */
 
 .copybutton {
