@@ -494,7 +494,10 @@ def _update_dict(
     {
         "X": ["array-like"],
         "n_components": [Interval(Integral, 1, None, closed="left")],
-        "alpha": [Interval(Real, 0, None, closed="left")],
+        "alpha": [
+            Interval(Real, 0, None, closed="left"),
+            Interval(Integral, 1, None, closed="left"),
+        ],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
         "method": [StrOptions({"lars", "cd"})],
@@ -552,7 +555,7 @@ def dict_learning(
     n_components : int
         Number of dictionary atoms to extract.
 
-    alpha : float
+    alpha : int or float
         Sparsity controlling parameter.
 
     max_iter : int, default=100
