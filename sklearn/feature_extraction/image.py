@@ -187,7 +187,7 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
         "n_z": [Interval(Integral, left=1, right=None, closed="left")],
         "mask": [None, "array-like"],
         "return_as": [type(np.ndarray), type(sparse.spmatrix)],
-        "dtype": "no_validation"  # validation delegated to numpy
+        "dtype": "no_validation",  # validation delegated to numpy
     }
 )
 def grid_to_graph(
