@@ -209,9 +209,10 @@ gbrt_pipeline = make_pipeline(
             ("categorical", ordinal_encoder, categorical_columns),
         ],
         remainder="passthrough",
-    ),
+        verbose_feature_names_out=False,
+    ).set_output("pandas"),
     HistGradientBoostingRegressor(
-        categorical_features=range(4),
+        categorical_features=categorical_columns,
     ),
 )
 
@@ -263,7 +264,7 @@ from sklearn.linear_model import RidgeCV
 import numpy as np
 
 
-one_hot_encoder = OneHotEncoder(handle_unknown="ignore", sparse=False)
+one_hot_encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
 alphas = np.logspace(-6, 6, 25)
 naive_linear_pipeline = make_pipeline(
     ColumnTransformer(
