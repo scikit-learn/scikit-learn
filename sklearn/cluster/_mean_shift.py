@@ -42,8 +42,10 @@ from .._config import config_context
 def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_jobs=None):
     """Estimate the bandwidth to use with the mean-shift algorithm.
 
-    That this function takes time at least quadratic in n_samples. For large
-    datasets, it's wise to set that parameter to a small value.
+    This function takes time at least quadratic in `n_samples`. For large
+    datasets, it is wise to subsample by setting `n_samples`. Alternatively,
+    the parameter `bandwidth` can be set to a small value without estimating
+    it.
 
     Parameters
     ----------
