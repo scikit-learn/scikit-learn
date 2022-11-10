@@ -1082,22 +1082,19 @@ class TimeSeriesSplit(_BaseKFold):
       Test:  index=[10 11]
     >>> # Showing rolling window support with via `n_splits='walk_forward'`
     >>> X = np.random.randn(15, 2)
-    >>> tscv = TimeSeriesSplit(n_splits='walk_forward', max_train_size=10, test_size=3)
+    >>> tscv = TimeSeriesSplit(n_splits='walk_forward', max_train_size=4, test_size=3)
     >>> for i, (train_index, test_index) in enumerate(tscv.split(X)):
     ...     print(f"Fold {i}:")
     ...     print(f"  Train: index={train_index}")
     ...     print(f"  Test:  index={test_index}")
     Fold 0:
-      Train: index=[0 1 2]
-      Test:  index=[3 4 5]
-    Fold 1:
-      Train: index=[0 1 2 3 4 5]
+      Train: index=[2 3 4 5]
       Test:  index=[6 7 8]
-    Fold 2:
-      Train: index=[0 1 2 3 4 5 6 7 8]
+    Fold 1:
+      Train: index=[5 6 7 8]
       Test:  index=[ 9 10 11]
-    Fold 3:
-      Train: index=[ 2  3  4  5  6  7  8  9 10 11]
+    Fold 2:
+      Train: index=[ 8  9 10 11]
       Test:  index=[12 13 14]
 
     Notes
