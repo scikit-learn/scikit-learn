@@ -326,6 +326,33 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         self.transduction_ = transduction.ravel()
         return self
 
+    def fit_predict(self, X, y):
+        """Fit a semi-supervised label propagation model to X and perform inductive inference.
+
+        The input samples (labeled and unlabeled) are provided by matrix X,
+        and target labels are provided by matrix y. We conventionally apply the
+        label -1 to unlabeled samples in matrix y in a semi-supervised
+        classification.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        y : array-like of shape (n_samples,)
+            Target class values with unlabeled points marked as -1.
+            All unlabeled samples will be transductively assigned labels
+            internally.
+
+        Returns
+        -------
+        y : ndarray of shape (n_samples,)
+            Predictions for input data.
+        """
+        self.fit(X, y)
+        return self.transduction_
+
 
 class LabelPropagation(BaseLabelPropagation):
     """Label Propagation classifier.
