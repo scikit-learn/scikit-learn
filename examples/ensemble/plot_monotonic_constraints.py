@@ -88,6 +88,11 @@ plt.show()
 # trend and ignores the local variations.
 
 # %%
+# .. monotonic_cst_features_names:
+#
+# Using feature names to specify monotonic constraints
+# ----------------------------------------------------
+#
 # Note that if the training data has feature names, it's possible to specifiy the
 # monotonic constraints by passing a dictionary:
 import pandas as pd
