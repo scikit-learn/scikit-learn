@@ -204,7 +204,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             if types != {str}:
                 raise ValueError(
                     "categorical_features must be an array-like of bool, int or "
-                    f"str, got: {', '.join(t.__name__ for t in types)}."
+                    f"str, got: {', '.join(sorted(t.__name__ for t in types))}."
                 )
 
         n_features = X.shape[1]
