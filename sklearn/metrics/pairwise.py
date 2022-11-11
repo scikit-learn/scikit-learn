@@ -873,7 +873,7 @@ def haversine_distances(X, Y=None):
     return DistanceMetric.get_metric("haversine").pairwise(X, Y)
 
 
-def manhattan_distances(X, Y=None, *, sum_over_features=True):
+def manhattan_distances(X, Y=None, *, sum_over_features="deprecated"):
     """Compute the L1 distances between the vectors in X and Y.
 
     With sum_over_features equal to False it returns the componentwise
@@ -894,6 +894,10 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
         If True the function returns the pairwise distance matrix
         else it returns the componentwise L1 pairwise-distances.
         Not supported for sparse matrix inputs.
+
+        .. deprecated:: 1.2
+            ``sum_over_features`` was deprecated in version 1.2 and will be removed in
+            1.4.
 
     Returns
     -------
@@ -924,13 +928,17 @@ def manhattan_distances(X, Y=None, *, sum_over_features=True):
          [[1, 2], [0, 3]])
     array([[0., 2.],
            [4., 4.]])
-    >>> import numpy as np
-    >>> X = np.ones((1, 2))
-    >>> y = np.full((2, 2), 2.)
-    >>> manhattan_distances(X, y, sum_over_features=False)
-    array([[1., 1.],
-           [1., 1.]])
     """
+    # TODO(1.4): remove sum_over_features
+    if sum_over_features != "deprecated":
+        warnings.warn(
+            "`sum_over_features` is deprecated in version 1.2 and will be"
+            " removed in version 1.4.",
+            FutureWarning,
+        )
+    else:
+        sum_over_features = True
+
     X, Y = check_pairwise_arrays(X, Y)
 
     if issparse(X) or issparse(Y):
@@ -1194,7 +1202,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     """
     Compute the polynomial kernel between X and Y.
 
-    :math:`K(X, Y) = (gamma <X, Y> + coef0)^degree`
+    :math:`K(X, Y) = (gamma <X, Y> + coef0)^{degree}`
 
     Read more in the :ref:`User Guide <polynomial_kernel>`.
 
