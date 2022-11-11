@@ -1119,7 +1119,7 @@ def test_categorical_spec_errors_with_feature_names(Est):
         "names."
     )
     with pytest.raises(ValueError, match=expected_msg):
-        est.fit(X.values, y)
+        est.fit(X.to_numpy(), y)
 
 
 @pytest.mark.parametrize(
