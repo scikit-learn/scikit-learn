@@ -214,7 +214,7 @@ gbrt_pipeline = make_pipeline(
     HistGradientBoostingRegressor(
         categorical_features=categorical_columns,
     ),
-).set_output("pandas")
+).set_output(transform="pandas")
 
 # %%
 #

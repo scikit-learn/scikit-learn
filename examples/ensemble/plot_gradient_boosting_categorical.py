@@ -154,7 +154,7 @@ hist_native = make_pipeline(
         random_state=42,
         categorical_features=categorical_columns,
     ),
-).set_output("pandas")
+).set_output(transform="pandas")
 
 # %%
 # Model comparison
