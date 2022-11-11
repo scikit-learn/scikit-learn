@@ -415,9 +415,11 @@ class TreeGrower:
             self._finalize_leaf(self.root)
             return
 
+        tic = time()
         self.root.histograms = self.histogram_builder.compute_histograms_brute(
             self.root.sample_indices
         )
+        self.total_compute_hist_time += time() - tic
 
         if self.interaction_cst is not None:
             self.root.interaction_cst_indices = range(len(self.interaction_cst))
@@ -426,7 +428,9 @@ class TreeGrower:
                 allowed_features, dtype=np.uint32, count=len(allowed_features)
             )
 
+        tic = time()
         self._compute_best_split_and_push(self.root)
+        self.total_find_split_time += time() - tic
 
     def _compute_best_split_and_push(self, node):
         """Compute the best possible split (SplitInfo) of a given node.
