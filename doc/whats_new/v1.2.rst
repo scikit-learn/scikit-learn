@@ -301,7 +301,7 @@ Changelog
 
 - |Enhancement| Interaction constraints for :class:`~sklearn.ensemble.HistGradientBoostingClassifier`
   and :class:`~sklearn.ensemble.HistGradientBoostingRegressor` can now be specified
-  as strings for two common cases: no interactions and pairwise interactions.
+  as strings for two common cases: "no_interactions" and "pairwise" interactions.
   :pr:`24849` by :user:`Tim Head <betatim>`.
 
 - |Feature| Adds `class_weight` to :class:`ensemble.HistGradientBoostingClassifier`.
