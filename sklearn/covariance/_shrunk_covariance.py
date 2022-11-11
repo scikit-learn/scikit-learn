@@ -218,27 +218,35 @@ class ShrunkCovariance(EmpiricalCovariance):
 
 def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     """Estimate the shrunk Ledoit-Wolf covariance matrix.
+
     Read more in the :ref:`User Guide <shrunk_covariance>`.
+
     Parameters
     ----------
     X : array-like of shape (n_samples, n_features)
         Data from which to compute the Ledoit-Wolf shrunk covariance shrinkage.
+
     assume_centered : bool, default=False
         If True, data will not be centered before computation.
         Useful to work with data whose mean is significantly equal to
         zero but is not exactly zero.
         If False, data will be centered before computation.
+
     block_size : int, default=1000
         Size of blocks into which the covariance matrix will be split.
+
     Returns
     -------
     shrinkage : float
         Coefficient in the convex combination used for the computation
         of the shrunk estimate.
+
     Notes
     -----
     The regularized (shrunk) covariance is:
+
     (1 - shrinkage) * cov + shrinkage * mu * np.identity(n_features)
+
     where mu = trace(cov) / n_features
     """
     X = check_array(X)
