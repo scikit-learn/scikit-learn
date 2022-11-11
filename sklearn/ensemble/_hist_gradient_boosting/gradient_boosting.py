@@ -1295,8 +1295,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         specified in these constraints, they are treated as if they were
         specified as an additional set.
 
-        Alternatively, "pairwise" or "no_interactions" are shorthands for
-        allowing only pairwise/no interactions.
+        The strings "pairwise" and "no_interactions" are shorthands for
+        allowing only pairwise or no interactions, respectively.
 
         For instance, with 5 features in total, `interaction_cst=[{0, 1}]`
         is equivalent to `interaction_cst=[{0, 1}, {2, 3, 4}]`,
@@ -1646,8 +1646,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         specified in these constraints, they are treated as if they were
         specified as an additional set.
 
-        Alternatively, "pairwise" or "no_interactions" are shorthands for
-        allowing only pairwise/no interactions.
+        The strings "pairwise" and "no_interactions" are shorthands for
+        allowing only pairwise or no interactions, respectively.
 
         For instance, with 5 features in total, `interaction_cst=[{0, 1}]`
         is equivalent to `interaction_cst=[{0, 1}, {2, 3, 4}]`,
