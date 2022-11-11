@@ -327,7 +327,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         return self
 
     def fit_predict(self, X, y):
-        """Fit a semi-supervised label propagation model to X and perform inductive inference.
+        """Fit semi-supervised label propagation to X and perform inductive inference.
 
         The input samples (labeled and unlabeled) are provided by matrix X,
         and target labels are provided by matrix y. We conventionally apply the
