@@ -299,7 +299,7 @@ Changelog
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
 
-- |Enchancement| Make it possible to pass the `categorical_features` parameter
+- |Enhancement| Make it possible to pass the `categorical_features` parameter
   of :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` as feature names.
   :pr:`24889` by :user:`Olivier Grisel <ogrisel>`.
