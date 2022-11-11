@@ -480,7 +480,7 @@ class LedoitWolf(EmpiricalCovariance):
         self._validate_params()
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
-        X = self._validate_data(X, ensure_2d=False)
+        X = self._validate_data(X)
         if X.ndim == 1:
             X = np.reshape(X, (1, -1))
             warnings.warn(
