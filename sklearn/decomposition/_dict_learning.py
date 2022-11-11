@@ -1075,7 +1075,7 @@ def dict_learning(
     n_components : int
         Number of dictionary atoms to extract.
 
-    alpha : float
+    alpha : int or float
         Sparsity controlling parameter.
 
     max_iter : int, default=100
@@ -1161,6 +1161,7 @@ def dict_learning(
     SparsePCA : Sparse Principal Components Analysis.
     MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
     """
+    alpha = float(alpha)  # Avoid integer division problems
     estimator = DictionaryLearning(
         n_components=n_components,
         alpha=alpha,
