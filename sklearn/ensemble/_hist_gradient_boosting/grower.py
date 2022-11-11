@@ -264,8 +264,7 @@ class TreeGrower:
             has_missing_values = [has_missing_values] * X_binned.shape[1]
         has_missing_values = np.asarray(has_missing_values, dtype=np.uint8)
 
-        # Shallow validation of monotonic_cst to make TreeGrower easier to
-        # test. A more complete validation is done in _validate_monotonic_cst
+        # `monotonic_cst` validation is done in _validate_monotonic_cst
         # at the estimator level and therefore the following should not be
         # needed when using the public API.
         if monotonic_cst is None:
