@@ -19,7 +19,7 @@ import numpy as np
 
 from . import empirical_covariance, EmpiricalCovariance
 from .._config import config_context
-from ..utils import check_array, as_float_array
+from ..utils import check_array
 from ..utils._param_validation import Interval
 
 
