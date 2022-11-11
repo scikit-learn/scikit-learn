@@ -37,7 +37,7 @@ import matplotlib.pyplot as plt
 
 
 fig, ax = plt.subplots(figsize=(12, 4))
-average_week_demand = df.groupby(["weekday", "hour"]).mean(numeric_only=True)["count"]
+average_week_demand = df.groupby(["weekday", "hour"])["count"].mean()
 average_week_demand.plot(ax=ax)
 _ = ax.set(
     title="Average hourly bike demand during the week",
