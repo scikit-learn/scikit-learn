@@ -93,7 +93,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "min_samples_leaf": [Interval(Integral, 1, None, closed="left")],
         "l2_regularization": [Interval(Real, 0, None, closed="left")],
         "monotonic_cst": ["array-like", dict, None],
-        "interaction_cst": [list, tuple, str, None],
+        "interaction_cst": [list, tuple, StrOptions({"pairwise", "no_interactions"}), None],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "validation_fraction": [
             Interval(Real, 0, 1, closed="neither"),
@@ -290,7 +290,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             return None
 
         if isinstance(self.interaction_cst, str):
-            if self.interaction_cst == "no interactions":
+            if self.interaction_cst == "no_interactions":
                 interaction_cst = [[i] for i in range(n_features)]
 
             elif self.interaction_cst == "pairwise":
@@ -298,7 +298,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             else:
                 raise ValueError(
                     f"'{self.interaction_cst}' is not a valid interaction constraint. "
-                    "Use 'no interactions', 'pairwise' or specify them explicitly."
+                    "Use 'no_interactions', 'pairwise' or specify them explicitly."
                 )
 
         try:
@@ -1301,7 +1301,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         specified in these constraints, they are treated as if they were
         specified as an additional set.
 
-        Alternatively, "pairwise" or "no interactions" are shorthands for
+        Alternatively, "pairwise" or "no_interactions" are shorthands for
         allowing only pairwise/no interactions.
 
         For instance, with 5 features in total, `interaction_cst=[{0, 1}]`
@@ -1652,7 +1652,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         specified in these constraints, they are treated as if they were
         specified as an additional set.
 
-        Alternatively, "pairwise" or "no interactions" are shorthands for
+        Alternatively, "pairwise" or "no_interactions" are shorthands for
         allowing only pairwise/no interactions.
 
         For instance, with 5 features in total, `interaction_cst=[{0, 1}]`
