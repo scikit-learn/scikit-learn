@@ -340,11 +340,10 @@ def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
 
     where mu = trace(cov) / n_features
     """
-    X = as_float_array(X)
-
     estimator = LedoitWolf(
         assume_centered=assume_centered,
         block_size=block_size,
+        store_precision=False,
     ).fit(X)
 
     return estimator.covariance_, estimator.shrinkage_
@@ -482,6 +481,11 @@ class LedoitWolf(EmpiricalCovariance):
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
         X = self._validate_data(X, ensure_2d=False)
+        if X.ndim == 1:
+            X = np.reshape(X, (1, -1))
+            warnings.warn(
+                "Only one sample available. You may want to reshape your data array"
+            )
         if X.shape[0] == 1:
             X = X.reshape(1, -1)
             warnings.warn(
