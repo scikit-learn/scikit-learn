@@ -88,7 +88,7 @@ plt.show()
 # trend and ignores the local variations.
 
 # %%
-# .. monotonic_cst_features_names:
+# .. _monotonic_cst_features_names:
 #
 # Using feature names to specify monotonic constraints
 # ----------------------------------------------------

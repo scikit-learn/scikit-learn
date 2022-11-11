@@ -1239,7 +1239,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
         If a dict with str keys, map feature to monotonic constraints by name.
         If an array, the feature are mapped to constraints by position. See
-        example usage :ref:`monotonic_cst_features_names`.
+        :ref:`monotonic_cst_features_names` for a usage example.
 
         The constraints are only valid for binary classifications and hold
         over the probability of the positive class.
@@ -1582,7 +1582,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         If a dict with str keys, map feature to monotonic constraints by name.
         If an array, the feature are mapped to constraints by position. See
-        example usage in :ref:`monotonic_cst_features_names`.
+        :ref:`monotonic_cst_features_names` for a usage example.
 
         The constraints are only valid for binary classifications and hold
         over the probability of the positive class.
