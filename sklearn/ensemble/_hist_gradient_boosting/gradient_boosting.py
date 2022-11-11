@@ -289,17 +289,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if self.interaction_cst is None:
             return None
 
-        if isinstance(self.interaction_cst, str):
-            if self.interaction_cst == "no_interactions":
-                interaction_cst = [[i] for i in range(n_features)]
+        if self.interaction_cst == "no_interactions":
+            interaction_cst = [[i] for i in range(n_features)]
 
-            elif self.interaction_cst == "pairwise":
-                interaction_cst = itertools.combinations(range(n_features), 2)
-            else:
-                raise ValueError(
-                    f"'{self.interaction_cst}' is not a valid interaction constraint. "
-                    "Use 'no_interactions', 'pairwise' or specify them explicitly."
-                )
+        elif self.interaction_cst == "pairwise":
+            interaction_cst = itertools.combinations(range(n_features), 2)
 
         try:
             constraints = [set(group) for group in interaction_cst]
