@@ -70,6 +70,7 @@ DEFINE_MACRO_NUMPY_C_API = (
 USE_NEWEST_NUMPY_C_API = (
     "sklearn.__check_build._check_build",
     "sklearn._loss._loss",
+    "sklearn.clusters._dbscan_inner",
     "sklearn.cluster._k_means_common",
     "sklearn.cluster._k_means_lloyd",
     "sklearn.cluster._k_means_elkan",
@@ -110,7 +111,6 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.utils._isfinite",
     "sklearn.svm._newrand",
     "sklearn._isotonic",
-    "sklearn.clusters._dbscan_inner",
 )
 
 
