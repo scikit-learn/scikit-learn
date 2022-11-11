@@ -140,7 +140,7 @@ def _to_graph(
 
 @validate_params(
     {
-        "img": ["array-like"],  # Could it also be "sparse matrix"?
+        "img": ["array-like"],
         "mask": [None, np.ndarray],
         "return_as": [type(np.ndarray), type(sparse.spmatrix)],
         "dtype": "no_validation",  # validation delegated to numpy
