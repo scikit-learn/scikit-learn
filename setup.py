@@ -85,6 +85,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.ensemble._hist_gradient_boosting.common",
     "sklearn.ensemble._hist_gradient_boosting.utils",
     "sklearn.feature_extraction._hashing_fast",
+    "sklearn.linear_model._sgd_fast",
     "sklearn.manifold._barnes_hut_tsne",
     "sklearn.metrics.cluster._expected_mutual_info_fast",
     "sklearn.metrics._pairwise_distances_reduction._datasets_pair",
@@ -110,7 +111,6 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.utils._isfinite",
     "sklearn.svm._newrand",
     "sklearn._isotonic",
-    "sklearn.linear_model._sgd_fast",
 )
 
 

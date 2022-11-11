@@ -536,7 +536,7 @@ def _plain_sgd(double[::1] weights,
 
     t_start = time()
     with nogil:
-        for epoch in range(max_iter):
+        for epoch in range(<Py_ssize_t>max_iter):
             sumloss = 0
             if verbose > 0:
                 with gil:
@@ -679,7 +679,13 @@ def _plain_sgd(double[::1] weights,
 
     w.reset_wscale()
 
-    return np.asarray(weights), intercept, np.asarray(average_weights), average_intercept, epoch + 1
+    return (
+        np.asarray(weights),
+        intercept,
+        np.asarray(average_weights),
+        average_intercept,
+        epoch + 1
+    )
 
 
 cdef bint any_nonfinite(double *w, int n) nogil:
