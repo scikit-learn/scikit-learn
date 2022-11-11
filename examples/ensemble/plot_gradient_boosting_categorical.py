@@ -149,12 +149,12 @@ hist_ordinal = make_pipeline(
 # continuous (passed-through) features
 
 hist_native = make_pipeline(
-    ordinal_encoder.set_output("pandas"),
+    ordinal_encoder,
     HistGradientBoostingRegressor(
         random_state=42,
         categorical_features=categorical_columns,
     ),
-)
+).set_output("pandas")
 
 # %%
 # Model comparison

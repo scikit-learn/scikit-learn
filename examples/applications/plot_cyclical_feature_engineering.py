@@ -210,11 +210,11 @@ gbrt_pipeline = make_pipeline(
         ],
         remainder="passthrough",
         verbose_feature_names_out=False,
-    ).set_output("pandas"),
+    ),
     HistGradientBoostingRegressor(
         categorical_features=categorical_columns,
     ),
-)
+).set_output("pandas")
 
 # %%
 #
