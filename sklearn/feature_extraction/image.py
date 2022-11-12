@@ -155,7 +155,7 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
 
     Parameters
     ----------
-    img : ndarray of shape (height, width) or (height, width, channel)
+    img : array-like of shape (height, width) or (height, width, channel)
         2D or 3D image.
     mask : ndarray of shape (height, width) or \
             (height, width, channel), dtype=bool, default=None
