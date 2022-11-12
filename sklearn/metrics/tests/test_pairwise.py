@@ -56,6 +56,8 @@ from sklearn.metrics.pairwise import _euclidean_distances_upcast
 from sklearn.preprocessing import normalize
 from sklearn.exceptions import DataConversionWarning
 
+from joblib import parallel_backend
+
 
 def test_pairwise_distances(global_dtype):
     # Test the pairwise_distance helper function.
@@ -194,6 +196,20 @@ def test_pairwise_distances(global_dtype):
     # Test that a value error is raised if the metric is unknown
     with pytest.raises(ValueError):
         pairwise_distances(X, Y, metric="blah")
+
+    # Test using custom metrics, serial and parallel
+    def customMetric(x0, x1):
+        return np.abs(x0-x1)
+    x = np.arange(0, 100, .1)
+    x = np.expand_dims(x, 1)
+    expDistFromFirstPoint = x[:,0]
+    n_jobs = 2
+    with parallel_backend('loky', n_jobs=n_jobs):
+        Dpar = pairwise_distances(x, metric=customMetric, n_jobs=n_jobs)
+    Dser = pairwise_distances(x, metric=customMetric)
+    assert_allclose(expDistFromFirstPoint, Dser[:,0])
+    assert_allclose(Dser, Dpar)
+
 
 
 # TODO(1.4): Remove test when `sum_over_features` parameter is removed
