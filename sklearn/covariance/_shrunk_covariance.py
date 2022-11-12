@@ -24,6 +24,7 @@ from ..utils._param_validation import Interval
 
 
 def _oas(X, *, assume_centered=False):
+    """Estimate covariance with the Oracle Approximating Shrinkage algorithm."""
     # for only one feature, the result is the same whatever the shrinkage
     if len(X.shape) == 2 and X.shape[1] == 1:
         if not assume_centered:
