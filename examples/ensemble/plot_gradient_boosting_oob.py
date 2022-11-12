@@ -2,7 +2,6 @@
 ======================================
 Gradient Boosting Out-of-Bag estimates
 ======================================
-
 Out-of-bag (OOB) estimates can be a useful heuristic to estimate
 the "optimal" number of boosting iterations.
 OOB estimates are almost identical to cross-validation estimates but
@@ -14,7 +13,6 @@ in loss based on the examples not included in the bootstrap sample
 (the so-called out-of-bag examples).
 The OOB estimator is a pessimistic estimator of the true
 test loss, but remains a fairly good approximation for a small number of trees.
-
 The figure shows the cumulative sum of the negative OOB improvements
 as a function of the boosting iteration. As you can see, it tracks the test
 loss for the first hundred iterations but then diverges in a
@@ -22,7 +20,6 @@ pessimistic way.
 The figure also shows the performance of 3-fold cross validation which
 usually gives a better estimate of the test loss
 but is computationally more demanding.
-
 """
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
@@ -116,13 +113,19 @@ oob_color = list(map(lambda x: x / 256.0, (190, 174, 212)))
 test_color = list(map(lambda x: x / 256.0, (127, 201, 127)))
 cv_color = list(map(lambda x: x / 256.0, (253, 192, 134)))
 
+# line type for the three curves
+oob_line = "dashed"
+test_line = "solid"
+cv_line = "dashdot"
+
 # plot curves and vertical lines for best iterations
-plt.plot(x, cumsum, label="OOB loss", color=oob_color)
-plt.plot(x, test_score, label="Test loss", color=test_color)
-plt.plot(x, cv_score, label="CV loss", color=cv_color)
-plt.axvline(x=oob_best_iter, color=oob_color)
-plt.axvline(x=test_best_iter, color=test_color)
-plt.axvline(x=cv_best_iter, color=cv_color)
+plt.figure(figsize=(8, 4.8))
+plt.plot(x, cumsum, label="OOB loss", color=oob_color, linestyle=oob_line)
+plt.plot(x, test_score, label="Test loss", color=test_color, linestyle=test_line)
+plt.plot(x, cv_score, label="CV loss", color=cv_color, linestyle=cv_line)
+plt.axvline(x=oob_best_iter, color=oob_color, linestyle=oob_line)
+plt.axvline(x=test_best_iter, color=test_color, linestyle=test_line)
+plt.axvline(x=cv_best_iter, color=cv_color, linestyle=cv_line)
 
 # add three vertical lines to xticks
 xticks = plt.xticks()
@@ -133,9 +136,9 @@ xticks_label = np.array(list(map(lambda t: int(t), xticks[0])) + ["OOB", "CV", "
 ind = np.argsort(xticks_pos)
 xticks_pos = xticks_pos[ind]
 xticks_label = xticks_label[ind]
-plt.xticks(xticks_pos, xticks_label)
+plt.xticks(xticks_pos, xticks_label, rotation=90)
 
-plt.legend(loc="upper right")
+plt.legend(loc="upper center")
 plt.ylabel("normalized loss")
 plt.xlabel("number of iterations")
 
