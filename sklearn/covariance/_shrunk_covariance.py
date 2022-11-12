@@ -499,6 +499,33 @@ class LedoitWolf(EmpiricalCovariance):
 
 
 # OAS estimator
+def _oas(X, *, assume_centered=False):
+    # for only one feature, the result is the same whatever the shrinkage
+    if len(X.shape) == 2 and X.shape[1] == 1:
+        if not assume_centered:
+            X = X - X.mean()
+        return np.atleast_2d((X**2).mean()), 0.0
+    if X.ndim == 1:
+        n_samples = 1
+        n_features = X.size
+    else:
+        n_samples, n_features = X.shape
+
+    emp_cov = empirical_covariance(X, assume_centered=assume_centered)
+    mu = np.trace(emp_cov) / n_features
+
+    # formula from Chen et al.'s **implementation**
+    alpha = np.mean(emp_cov**2)
+    num = alpha + mu**2
+    den = (n_samples + 1.0) * (alpha - (mu**2) / n_features)
+
+    shrinkage = 1.0 if den == 0 else min(num / den, 1.0)
+    shrunk_cov = (1.0 - shrinkage) * emp_cov
+    shrunk_cov.flat[:: n_features + 1] += shrinkage * mu
+
+    return shrunk_cov, shrinkage
+
+
 def oas(X, *, assume_centered=False):
     """Estimate covariance with the Oracle Approximating Shrinkage algorithm.
 
@@ -533,35 +560,10 @@ def oas(X, *, assume_centered=False):
     The formula we used to implement the OAS is slightly modified compared
     to the one given in the article. See :class:`OAS` for more details.
     """
-    X = np.asarray(X)
-    # for only one feature, the result is the same whatever the shrinkage
-    if len(X.shape) == 2 and X.shape[1] == 1:
-        if not assume_centered:
-            X = X - X.mean()
-        return np.atleast_2d((X**2).mean()), 0.0
-    if X.ndim == 1:
-        X = np.reshape(X, (1, -1))
-        warnings.warn(
-            "Only one sample available. You may want to reshape your data array"
-        )
-        n_samples = 1
-        n_features = X.size
-    else:
-        n_samples, n_features = X.shape
-
-    emp_cov = empirical_covariance(X, assume_centered=assume_centered)
-    mu = np.trace(emp_cov) / n_features
-
-    # formula from Chen et al.'s **implementation**
-    alpha = np.mean(emp_cov**2)
-    num = alpha + mu**2
-    den = (n_samples + 1.0) * (alpha - (mu**2) / n_features)
-
-    shrinkage = 1.0 if den == 0 else min(num / den, 1.0)
-    shrunk_cov = (1.0 - shrinkage) * emp_cov
-    shrunk_cov.flat[:: n_features + 1] += shrinkage * mu
-
-    return shrunk_cov, shrinkage
+    estimator = OAS(
+        assume_centered=assume_centered,
+    ).fit(X)
+    return estimator.covariance_, estimator.shrinkage_
 
 
 class OAS(EmpiricalCovariance):
@@ -686,6 +688,11 @@ class OAS(EmpiricalCovariance):
         self._validate_params()
 
         X = self._validate_data(X)
+        if X.ndim == 1:
+            X = np.reshape(X, (1, -1))
+            warnings.warn(
+                "Only one sample available. You may want to reshape your data array"
+            )
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
         if self.assume_centered:
@@ -693,7 +700,7 @@ class OAS(EmpiricalCovariance):
         else:
             self.location_ = X.mean(0)
 
-        covariance, shrinkage = oas(X - self.location_, assume_centered=True)
+        covariance, shrinkage = _oas(X - self.location_, assume_centered=True)
         self.shrinkage_ = shrinkage
         self._set_covariance(covariance)
 
