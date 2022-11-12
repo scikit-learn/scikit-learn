@@ -27,7 +27,7 @@ or with conda::
 # scikit-learn's transformers now support pandas output with the `set_output` API.
 # To learn more about the `set_output` API see the example:
 # :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py` and
-# this `YouTube video <https://www.youtube.com/watch?v=J4KCu9WWDTo>`__.
+# this `YouTube video <https://youtu.be/5bCg8VfX2x8>`__.
 import numpy as np
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
