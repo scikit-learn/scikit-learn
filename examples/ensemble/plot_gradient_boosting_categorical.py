@@ -124,7 +124,7 @@ ordinal_encoder = make_column_transformer(
     ),
     remainder="passthrough",
     # Use short feature names to make it easier to specify the categorical
-    # variables to the HistGradientBoostingRegressor estimator in the next step
+    # variables in the HistGradientBoostingRegressor in the next step
     # of the pipeline.
     verbose_feature_names_out=False,
 )
