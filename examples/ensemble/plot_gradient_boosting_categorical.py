@@ -33,7 +33,8 @@ from sklearn.datasets import fetch_openml
 X, y = fetch_openml(data_id=42165, as_frame=True, return_X_y=True, parser="pandas")
 
 # Select only a subset of features of X to make the example faster to run
-categorical_columns_subset = [
+column_subset = [
+    # Categorical features:
     "BldgType",
     "GarageFinish",
     "LotConfig",
@@ -44,9 +45,7 @@ categorical_columns_subset = [
     "ExterCond",
     "ExterQual",
     "PoolQC",
-]
-
-numerical_columns_subset = [
+    # Numerical features:
     "3SsnPorch",
     "Fireplaces",
     "BsmtHalfBath",
@@ -59,8 +58,12 @@ numerical_columns_subset = [
     "ScreenPorch",
 ]
 
-X = X[categorical_columns_subset + numerical_columns_subset]
-X[categorical_columns_subset] = X[categorical_columns_subset].astype("category")
+# Comment the line below to run the example on the full dataset:
+X = X[column_subset]
+
+# Explicitly type the categorical columns as such.
+object_dtyped_columns = X.select_dtypes(include=["object"]).columns
+X[object_dtyped_columns] = X[object_dtyped_columns].astype("category")
 
 categorical_columns = X.select_dtypes(include="category").columns
 n_categorical_features = len(categorical_columns)
@@ -140,24 +143,14 @@ hist_ordinal = make_pipeline(
 # that will natively handle categorical features. This estimator will not treat
 # categorical features as ordered quantities.
 #
-# Since the :class:`~ensemble.HistGradientBoostingRegressor` requires category
-# values to be encoded in `[0, n_unique_categories - 1]`, we still rely on an
-# :class:`~preprocessing.OrdinalEncoder` to pre-process the data.
+# To benefit from this, the categorical features need to be encoded using the
+# pandas categorical dtype which we already did at the beginning of this
+# example with the call to `.astype("category")`.
 #
-# The main difference between this pipeline and the previous one is that in
-# this one, we let the :class:`~ensemble.HistGradientBoostingRegressor` know
-# which features are categorical.
-
-# The ordinal encoder will first output the categorical features, and then the
-# continuous (passed-through) features
-
-hist_native = make_pipeline(
-    ordinal_encoder,
-    HistGradientBoostingRegressor(
-        random_state=42,
-        categorical_features=categorical_columns,
-    ),
-).set_output(transform="pandas")
+# Note that this is equivalent to using the ordinal encoder and then passing
+# the name of the categorical features to the ``categorical_features``
+# constructor parameter of :class:`~ensemble.HistGradientBoostingRegressor`.
+hist_native = HistGradientBoostingRegressor(random_state=42)
 
 # %%
 # Model comparison
@@ -254,11 +247,12 @@ plot_results("Gradient Boosting on Ames Housing")
 # we artificially limit the total number of splits by both limiting the number
 # of trees and the depth of each tree.
 
-for pipe in (hist_dropped, hist_one_hot, hist_ordinal, hist_native):
+for pipe in (hist_dropped, hist_one_hot, hist_ordinal):
     pipe.set_params(
         histgradientboostingregressor__max_depth=3,
         histgradientboostingregressor__max_iter=15,
     )
+hist_native.set_params(max_depth=3, max_iter=15)
 
 dropped_result = cross_validate(hist_dropped, X, y, cv=n_cv_folds, scoring=scoring)
 one_hot_result = cross_validate(hist_one_hot, X, y, cv=n_cv_folds, scoring=scoring)
@@ -272,6 +266,5 @@ plt.show()
 # %%
 # The results for these under-fitting models confirm our previous intuition:
 # the native category handling strategy performs the best when the splitting
-# budget is constrained. The two other strategies (one-hot encoding and
-# treating categories as ordinal values) lead to error values comparable
-# to the baseline model that just dropped the categorical features altogether.
+# budget is constrained. Note that this effect is even more pronounced when
+# we include all the features from the original dataset.

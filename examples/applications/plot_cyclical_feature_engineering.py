@@ -171,58 +171,24 @@ X.iloc[train_4]
 # efficiently handle heteorogenous tabular data with a mix of categorical and
 # numerical features as long as the number of samples is large enough.
 #
-# Here, we do minimal ordinal encoding for the categorical variables and then
-# let the model know that it should treat those as categorical variables by
-# using a dedicated tree splitting rule. Since we use an ordinal encoder, we
-# pass the list of categorical values explicitly to use a logical order when
-# encoding the categories as integers instead of the lexicographical order.
-# This also has the added benefit of preventing any issue with unknown
-# categories when using cross-validation.
-#
-# The numerical variables need no preprocessing and, for the sake of simplicity,
-# we only try the default hyper-parameters for this model:
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import OrdinalEncoder
-from sklearn.compose import ColumnTransformer
+# The categorical variables are already typed as such in the pandas dataframe.
+# As a result, the gradient boosted trees model will automatically treat them
+# as categorical internally:
+categorical_columns = X.select_dtypes("category").columns.tolist()
+categorical_columns
+
+# %%
+# The numerical variables do not need any preprocessing either and, for the
+# sake of simplicity, we only try the default hyper-parameters for this model:
 from sklearn.ensemble import HistGradientBoostingRegressor
-from sklearn.model_selection import cross_validate
 
-
-categorical_columns = [
-    "weather",
-    "season",
-    "holiday",
-    "workingday",
-]
-categories = [
-    ["clear", "misty", "rain"],
-    ["spring", "summer", "fall", "winter"],
-    ["False", "True"],
-    ["False", "True"],
-]
-ordinal_encoder = OrdinalEncoder(categories=categories)
-
-
-gbrt_pipeline = make_pipeline(
-    ColumnTransformer(
-        transformers=[
-            ("categorical", ordinal_encoder, categorical_columns),
-        ],
-        remainder="passthrough",
-        # Use short feature names to make it easier to specify the categorical
-        # variables in the HistGradientBoostingRegressor in the next
-        # step of the pipeline.
-        verbose_feature_names_out=False,
-    ),
-    HistGradientBoostingRegressor(
-        categorical_features=categorical_columns,
-    ),
-).set_output(transform="pandas")
+gbrt = HistGradientBoostingRegressor()
 
 # %%
 #
 # Lets evaluate our gradient boosting model with the mean absolute error of the
 # relative demand averaged across our 5 time-based cross-validation splits:
+from sklearn.model_selection import cross_validate
 
 
 def evaluate(model, X, y, cv):
@@ -241,15 +207,18 @@ def evaluate(model, X, y, cv):
     )
 
 
-evaluate(gbrt_pipeline, X, y, cv=ts_cv)
+evaluate(gbrt, X, y, cv=ts_cv)
 
 # %%
 # This model has an average error around 4 to 5% of the maximum demand. This is
-# quite good for a first trial without any hyper-parameter tuning! We just had
-# to make the categorical variables explicit. Note that the time related
-# features are passed as is, i.e. without processing them. But this is not much
-# of a problem for tree-based models as they can learn a non-monotonic
-# relationship between ordinal input features and the target.
+# quite good for a first trial without any feature engineering nor
+# hyper-parameter tuning! We just had to make the categorical variables
+# explicit.
+#
+# Note that the time related features are passed as is, i.e. without processing
+# them. But this is not much of a problem for tree-based models as they can
+# learn a non-monotonic relationship between ordinal input features and the
+# target.
 #
 # This is not the case for linear regression models as we will see in the
 # following.
@@ -261,6 +230,8 @@ evaluate(gbrt_pipeline, X, y, cv=ts_cv)
 # For consistency, we scale the numerical features to the same 0-1 range using
 # class:`sklearn.preprocessing.MinMaxScaler`, although in this case it does not
 # impact the results much because they are already on comparable scales:
+from sklearn.pipeline import make_pipeline
+from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.linear_model import RidgeCV
@@ -712,8 +683,8 @@ evaluate(one_hot_poly_pipeline, X, y, cv=ts_cv)
 # Let us now have a qualitative look at the predictions of the kernel models
 # and of the gradient boosted trees that should be able to better model
 # non-linear interactions between features:
-gbrt_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
-gbrt_predictions = gbrt_pipeline.predict(X.iloc[test_0])
+gbrt.fit(X.iloc[train_0], y.iloc[train_0])
+gbrt_predictions = gbrt.predict(X.iloc[test_0])
 
 one_hot_poly_pipeline.fit(X.iloc[train_0], y.iloc[train_0])
 one_hot_poly_predictions = one_hot_poly_pipeline.predict(X.iloc[test_0])
