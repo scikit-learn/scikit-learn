@@ -107,7 +107,6 @@ def _to_graph(
         img = np.atleast_3d(img)
         weights = _compute_gradient_3d(edges, img)
         if mask is not None:
-            mask = np.asarray(mask, dtype=bool)
             edges, weights = _mask_edges_weights(mask, edges, weights)
             diag = img.squeeze()[mask]
         else:
@@ -115,7 +114,7 @@ def _to_graph(
         n_voxels = diag.size
     else:
         if mask is not None:
-            mask = np.asarray(mask, dtype=bool)
+            mask = mask.astype(dtype=bool, copy=False)
             edges = _mask_edges_weights(mask, edges)
             n_voxels = np.sum(mask)
         else:
@@ -142,7 +141,7 @@ def _to_graph(
 @validate_params(
     {
         "img": ["array-like"],
-        "mask": [None, "array-like"],
+        "mask": [None, np.ndarray],
         "return_as": [type(np.ndarray), type(sparse.spmatrix)],
         "dtype": "no_validation",  # validation delegated to numpy
     }
@@ -158,10 +157,10 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
     ----------
     img : array-like of shape (height, width) or (height, width, channel)
         2D or 3D image.
-    mask : array-like of shape (height, width) or \
+    mask : ndarray of shape (height, width) or \
             (height, width, channel), dtype=bool, default=None
         An optional mask of the image, to consider only part of the
-        pixels. Must be castable to a boolean.
+        pixels.
     return_as : np.ndarray or a sparse matrix class, \
             default=sparse.coo_matrix
         The class to use to build the returned adjacency matrix.
