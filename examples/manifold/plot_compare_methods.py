@@ -163,7 +163,7 @@ plot_2d(S_isomap, S_color, "Isomap Embedding")
 # Read more in the :ref:`User Guide <multidimensional_scaling>`.
 
 md_scaling = manifold.MDS(
-    n_components=n_components, max_iter=50, n_init=4, random_state=0
+    n_components=n_components, max_iter=50, n_init=4, random_state=0, normalized_stress=False
 )
 S_scaling = md_scaling.fit_transform(S_points)
 
