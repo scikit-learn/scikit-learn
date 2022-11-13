@@ -299,6 +299,13 @@ Changelog
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
 
+- |Enhancement| Make it possible to pass a `pandas.DataFrame` instance with
+  explicitly categorical dtyped columns directly to
+  :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` without having to manually
+  ordinally encode such columns ahead of time.
+  :pr:`24907` by :user:`Olivier Grisel <ogrisel>`.
+
 - |Enhancement| Make it possible to pass the `categorical_features` parameter
   of :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` as feature names.
