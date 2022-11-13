@@ -210,7 +210,7 @@ gbrt_pipeline = make_pipeline(
         ],
         remainder="passthrough",
         # Use short feature names to make it easier to specify the categorical
-        # variables to the HistGradientBoostingRegressor estimator in the next
+        # variables in the HistGradientBoostingRegressor in the next
         # step of the pipeline.
         verbose_feature_names_out=False,
     ),
