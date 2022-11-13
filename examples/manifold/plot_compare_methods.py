@@ -167,7 +167,7 @@ md_scaling = manifold.MDS(
     max_iter=50,
     n_init=4,
     random_state=0,
-    normalized_stress=False
+    normalized_stress=False,
 )
 S_scaling = md_scaling.fit_transform(S_points)
 
