@@ -76,7 +76,10 @@ def test_spectral_clustering(eigen_solver, assign_labels, global_random_seed):
 @pytest.mark.parametrize("assign_labels", ("kmeans", "discretize", "cluster_qr"))
 def test_spectral_clustering_sparse(assign_labels, global_random_seed):
     X, y = make_blobs(
-        n_samples=20, random_state=global_random_seed, centers=[[1, 1], [-1, -1]], cluster_std=0.01
+        n_samples=20,
+        random_state=global_random_seed,
+        centers=[[1, 1], [-1, -1]],
+        cluster_std=0.01,
     )
 
     S = rbf_kernel(X, gamma=1)
@@ -99,7 +102,10 @@ def test_spectral_clustering_sparse(assign_labels, global_random_seed):
 def test_precomputed_nearest_neighbors_filtering(global_random_seed):
     # Test precomputed graph filtering when containing too many neighbors
     X, y = make_blobs(
-        n_samples=200, random_state=global_random_seed, centers=[[1, 1], [-1, -1]], cluster_std=0.01
+        n_samples=200,
+        random_state=global_random_seed,
+        centers=[[1, 1], [-1, -1]],
+        cluster_std=0.01,
     )
 
     n_neighbors = 2
@@ -237,8 +243,8 @@ def test_spectral_clustering_with_arpack_amg_solvers(global_random_seed):
     center1, center2 = (14, 12), (20, 25)
     radius1, radius2 = 8, 7
 
-    circle1 = (x - center1[0]) ** 2 + (y - center1[1]) ** 2 < radius1 ** 2
-    circle2 = (x - center2[0]) ** 2 + (y - center2[1]) ** 2 < radius2 ** 2
+    circle1 = (x - center1[0]) ** 2 + (y - center1[1]) ** 2 < radius1**2
+    circle2 = (x - center2[0]) ** 2 + (y - center2[1]) ** 2 < radius2**2
 
     circles = circle1 | circle2
     mask = circles.copy()
@@ -267,13 +273,20 @@ def test_n_components(global_random_seed):
     # Test that after adding n_components, result is different and
     # n_components = n_clusters by default
     X, y = make_blobs(
-        n_samples=20, random_state=global_random_seed, centers=[[1, 1], [-1, -1]], cluster_std=0.01
+        n_samples=20,
+        random_state=global_random_seed,
+        centers=[[1, 1], [-1, -1]],
+        cluster_std=0.01,
     )
     sp = SpectralClustering(n_clusters=2, random_state=global_random_seed)
     labels = sp.fit(X).labels_
     # set n_components = n_cluster and test if result is the same
     labels_same_ncomp = (
-        SpectralClustering(n_clusters=2, n_components=2, random_state=global_random_seed).fit(X).labels_
+        SpectralClustering(
+            n_clusters=2, n_components=2, random_state=global_random_seed
+        )
+        .fit(X)
+        .labels_
     )
     # test that n_components=n_clusters by default
     assert_array_equal(labels, labels_same_ncomp)
@@ -281,7 +294,9 @@ def test_n_components(global_random_seed):
     # test that n_components affect result
     # n_clusters=8 by default, and set n_components=2
     labels_diff_ncomp = (
-        SpectralClustering(n_components=2, random_state=global_random_seed).fit(X).labels_
+        SpectralClustering(n_components=2, random_state=global_random_seed)
+        .fit(X)
+        .labels_
     )
     assert not np.array_equal(labels, labels_diff_ncomp)
 
