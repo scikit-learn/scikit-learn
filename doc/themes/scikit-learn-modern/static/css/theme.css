@@ -732,10 +732,6 @@ dt.field-odd, dt.field-even {
   box-sizing: border-box;
 }
 
-dl.field-list > dt:after {
-  content: ":";
-}
-
 .classifier {
   font-style: italic;
 }
