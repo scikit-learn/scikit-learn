@@ -209,11 +209,15 @@ gbrt_pipeline = make_pipeline(
             ("categorical", ordinal_encoder, categorical_columns),
         ],
         remainder="passthrough",
+        # Use short feature names to make it easier to specify the categorical
+        # variables in the HistGradientBoostingRegressor in the next
+        # step of the pipeline.
+        verbose_feature_names_out=False,
     ),
     HistGradientBoostingRegressor(
-        categorical_features=range(4),
+        categorical_features=categorical_columns,
     ),
-)
+).set_output(transform="pandas")
 
 # %%
 #
