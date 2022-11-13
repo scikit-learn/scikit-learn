@@ -37,7 +37,7 @@ import matplotlib.pyplot as plt
 
 
 fig, ax = plt.subplots(figsize=(12, 4))
-average_week_demand = df.groupby(["weekday", "hour"]).mean()["count"]
+average_week_demand = df.groupby(["weekday", "hour"])["count"].mean()
 average_week_demand.plot(ax=ax)
 _ = ax.set(
     title="Average hourly bike demand during the week",
@@ -263,7 +263,7 @@ from sklearn.linear_model import RidgeCV
 import numpy as np
 
 
-one_hot_encoder = OneHotEncoder(handle_unknown="ignore", sparse=False)
+one_hot_encoder = OneHotEncoder(handle_unknown="ignore", sparse_output=False)
 alphas = np.logspace(-6, 6, 25)
 naive_linear_pipeline = make_pipeline(
     ColumnTransformer(

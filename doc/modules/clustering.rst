@@ -563,11 +563,11 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
    Jianbo Shi, Jitendra Malik, 2000
 
  * `"A Random Walks View of Spectral Segmentation"
-   <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.33.1501>`_
+   <https://citeseerx.ist.psu.edu/doc_view/pid/84a86a69315e994cfd1e0c7debb86d62d7bd1f44>`_
    Marina Meila, Jianbo Shi, 2001
 
  * `"On Spectral Clustering: Analysis and an algorithm"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100>`_
+   <https://citeseerx.ist.psu.edu/doc_view/pid/796c5d6336fc52aa84db575fb821c78918b65f58>`_
    Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
 
  * :arxiv:`"Preconditioned Spectral Clustering for Stochastic

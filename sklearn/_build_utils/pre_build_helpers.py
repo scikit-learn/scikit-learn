@@ -5,52 +5,15 @@ import sys
 import glob
 import tempfile
 import textwrap
-import setuptools  # noqa
 import subprocess
-import warnings
 
-from distutils.dist import Distribution
-from distutils.sysconfig import customize_compiler
-
-# NumPy 1.23 deprecates numpy.distutils
-with warnings.catch_warnings():
-    warnings.filterwarnings("ignore", category=DeprecationWarning)
-    from numpy.distutils.ccompiler import new_compiler
-    from numpy.distutils.command.config_compiler import config_cc
-
-
-def _get_compiler():
-    """Get a compiler equivalent to the one that will be used to build sklearn
-
-    Handles compiler specified as follows:
-        - python setup.py build_ext --compiler=<compiler>
-        - CC=<compiler> python setup.py build_ext
-    """
-    dist = Distribution(
-        {
-            "script_name": os.path.basename(sys.argv[0]),
-            "script_args": sys.argv[1:],
-            "cmdclass": {"config_cc": config_cc},
-        }
-    )
-    dist.parse_config_files()
-    dist.parse_command_line()
-
-    cmd_opts = dist.command_options.get("build_ext")
-    if cmd_opts is not None and "compiler" in cmd_opts:
-        compiler = cmd_opts["compiler"][1]
-    else:
-        compiler = None
-
-    ccompiler = new_compiler(compiler=compiler)
-    customize_compiler(ccompiler)
-
-    return ccompiler
+from setuptools.command.build_ext import customize_compiler, new_compiler
 
 
 def compile_test_program(code, extra_preargs=[], extra_postargs=[]):
     """Check that some C code can be compiled and run"""
-    ccompiler = _get_compiler()
+    ccompiler = new_compiler()
+    customize_compiler(ccompiler)
 
     # extra_(pre/post)args can be a callable to make it possible to get its
     # value from the compiler

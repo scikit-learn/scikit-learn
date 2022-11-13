@@ -96,7 +96,7 @@ from sklearn.preprocessing import OneHotEncoder
 
 one_hot_encoder = make_column_transformer(
     (
-        OneHotEncoder(sparse=False, handle_unknown="ignore"),
+        OneHotEncoder(sparse_output=False, handle_unknown="ignore"),
         make_column_selector(dtype_include="category"),
     ),
     remainder="passthrough",
