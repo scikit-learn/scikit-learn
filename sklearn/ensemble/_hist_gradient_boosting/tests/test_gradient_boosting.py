@@ -12,11 +12,17 @@ from sklearn._loss.loss import (
 )
 from sklearn.datasets import make_classification, make_regression
 from sklearn.datasets import make_low_rank_matrix
-from sklearn.preprocessing import KBinsDiscretizer, MinMaxScaler, OneHotEncoder
+from sklearn.preprocessing import (
+    KBinsDiscretizer,
+    MinMaxScaler,
+    OneHotEncoder,
+    OrdinalEncoder,
+)
 from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.base import clone, BaseEstimator, TransformerMixin
 from sklearn.base import is_regressor
 from sklearn.pipeline import make_pipeline
+from sklearn.compose import ColumnTransformer
 from sklearn.metrics import mean_poisson_deviance
 from sklearn.dummy import DummyRegressor
 from sklearn.exceptions import NotFittedError
@@ -1369,3 +1375,75 @@ def test_unknown_category_that_are_negative():
     X_test_nan = np.asarray([[1, np.nan], [3, np.nan]])
 
     assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
+
+
+@pytest.mark.parametrize(
+    "Est", (HistGradientBoostingClassifier, HistGradientBoostingRegressor)
+)
+def test_categorical_features_from_pandas_categorical_dtype(Est, global_random_seed):
+    pd = pytest.importorskip("pandas")
+    rng = np.random.RandomState(global_random_seed)
+    n_samples = 100
+    X = pd.DataFrame(
+        {
+            "int_col": rng.randint(0, 5, size=n_samples),
+            "float_col": rng.normal(size=n_samples),
+            "cat_without_missing": pd.Categorical(
+                rng.choice(["a", "b", "c"], replace=True, size=n_samples)
+            ),
+            "cat_with_missing": pd.Categorical(
+                rng.choice(["a", "b", "c", pd.NA], replace=True, size=n_samples)
+            ),
+        }
+    )
+
+    def generate_ground_truth(X, rng):
+        cat_mask = X["cat_without_missing"] == X["cat_with_missing"]
+        int_mask = X["int_col"] == 0
+        # the "float_col" variable is a nuisance variable
+        y = (cat_mask | int_mask).astype(np.int32)
+
+        # add some noise to make the learning problem impossible to solve with
+        # 100% accuracy on the test set and make the equivalence assertion
+        # below stronger.
+        flip_mask = rng.choice([True, False], size=n_samples, p=[0.1, 0.9])
+        y[flip_mask] = 1 - y[flip_mask]
+        return y
+
+    y = generate_ground_truth(X, rng)
+
+    # Check that the problem is not degenerate
+    assert 0.2 <= y.mean() <= 0.8
+
+    X_train, X_test, y_train, _ = train_test_split(
+        X, y, random_state=global_random_seed
+    )
+
+    hgbdt_params = {"max_depth": 3, "max_iter": 5}
+    model = Est(**hgbdt_params).fit(X_train, y_train)
+    assert_array_equal(model.is_categorical_, [False, False, True, True])
+
+    # Check that all categories are present in the training set:
+    X_train["cat_without_missing"].nunique() == 3
+    X_train["cat_with_missing"].nunique() == 3
+
+    # Check that this is equivalent to using a ColumnTransformer to manually
+    # ordinal encode the categorical variables.
+    categorical_features = ["cat_without_missing", "cat_with_missing"]
+    manual_pipeline = make_pipeline(
+        ColumnTransformer(
+            [
+                ("passthrough", "passthrough", ["int_col", "float_col"]),
+                ("categorical", OrdinalEncoder(), categorical_features),
+            ],
+            verbose_feature_names_out=False,
+        ),
+        Est(categorical_features=categorical_features, **hgbdt_params),
+    ).set_output(transform="pandas")
+    manual_pipeline.fit(X_train, y_train)
+
+    # Check that the ordering of the input features of the GBDT models is the
+    # same: this can be important in case of tied splits.
+    assert_array_equal(model.feature_names_in_, manual_pipeline[-1].feature_names_in_)
+    assert_allclose(model.predict(X_train), manual_pipeline.predict(X_train))
+    assert_allclose(model.predict(X_test), manual_pipeline.predict(X_test))
