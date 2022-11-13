@@ -193,16 +193,43 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if categorical_features.size == 0:
             return None, None
 
-        if categorical_features.dtype.kind not in ("i", "b"):
+        if categorical_features.dtype.kind not in ("i", "b", "U", "O"):
             raise ValueError(
-                "categorical_features must be an array-like of "
-                "bools or array-like of ints."
+                "categorical_features must be an array-like of bool, int or "
+                f"str, got: {categorical_features.dtype.name}."
             )
+
+        if categorical_features.dtype.kind == "O":
+            types = set(type(f) for f in categorical_features)
+            if types != {str}:
+                raise ValueError(
+                    "categorical_features must be an array-like of bool, int or "
+                    f"str, got: {', '.join(sorted(t.__name__ for t in types))}."
+                )
 
         n_features = X.shape[1]
 
-        # check for categorical features as indices
-        if categorical_features.dtype.kind == "i":
+        if categorical_features.dtype.kind in ("U", "O"):
+            # check for feature names
+            if not hasattr(self, "feature_names_in_"):
+                raise ValueError(
+                    "categorical_features should be passed as an array of "
+                    "integers or as a boolean mask when the model is fitted "
+                    "on data without feature names."
+                )
+            is_categorical = np.zeros(n_features, dtype=bool)
+            feature_names = self.feature_names_in_.tolist()
+            for feature_name in categorical_features:
+                try:
+                    is_categorical[feature_names.index(feature_name)] = True
+                except ValueError as e:
+                    raise ValueError(
+                        f"categorical_features has a item value '{feature_name}' "
+                        "which is not a valid feature name of the training "
+                        f"data. Observed feature names: {feature_names}"
+                    ) from e
+        elif categorical_features.dtype.kind == "i":
+            # check for categorical features as indices
             if (
                 np.max(categorical_features) >= n_features
                 or np.min(categorical_features) < 0
@@ -1209,7 +1236,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         Features with a small number of unique values may use less than
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
-    categorical_features : array-like of {bool, int} of shape (n_features) \
+    categorical_features : array-like of {bool, int, str} of shape (n_features) \
             or shape (n_categorical_features,), default=None
         Indicates the categorical features.
 
@@ -1217,6 +1244,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         - boolean array-like : boolean mask indicating categorical features.
         - integer array-like : integer indices indicating categorical
           features.
+        - str array-like: names of categorical features (assuming the training
+          data has feature names).
 
         For each categorical feature, there must be at most `max_bins` unique
         categories, and each categorical value must be in [0, max_bins -1].
@@ -1226,6 +1255,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
         .. versionadded:: 0.24
+
+        .. versionchanged:: 1.2
+           Added support for feature names.
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonic constraint to enforce on each feature.
@@ -1541,7 +1573,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         Features with a small number of unique values may use less than
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
-    categorical_features : array-like of {bool, int} of shape (n_features) \
+    categorical_features : array-like of {bool, int, str} of shape (n_features) \
             or shape (n_categorical_features,), default=None
         Indicates the categorical features.
 
@@ -1549,6 +1581,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         - boolean array-like : boolean mask indicating categorical features.
         - integer array-like : integer indices indicating categorical
           features.
+        - str array-like: names of categorical features (assuming the training
+          data has feature names).
 
         For each categorical feature, there must be at most `max_bins` unique
         categories, and each categorical value must be in [0, max_bins -1].
@@ -1558,6 +1592,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
 
         .. versionadded:: 0.24
+
+        .. versionchanged:: 1.2
+           Added support for feature names.
 
     monotonic_cst : array-like of int of shape (n_features), default=None
         Indicates the monotonic constraint to enforce on each feature.
