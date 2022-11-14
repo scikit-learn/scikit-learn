@@ -11,7 +11,6 @@ import warnings
 import re
 
 import numpy as np
-import pandas as pd
 import joblib
 
 from numpy.testing import (
@@ -882,6 +881,9 @@ def test_mlp_loading_from_joblib_partial_fit(tmp_path):
 @pytest.mark.parametrize("Estimator", [MLPClassifier, MLPRegressor])
 def test_preserve_feature_names(recwarn, Estimator):
     # Non-regression test for #24846
+
+    pd = pytest.importorskip("pandas")
+
     X = pd.DataFrame(
         data=[[i, i] for i in range(10)], columns=["colname_a", "colname_b"]
     )
