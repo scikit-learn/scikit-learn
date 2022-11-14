@@ -153,7 +153,7 @@ def enet_coordinate_descent(
     cdef floating A_norm2
     cdef unsigned int ii
     cdef unsigned int i
-    cdef unsigned int n_iter = 0
+    cdef int n_iter = 0
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
@@ -171,7 +171,7 @@ def enet_coordinate_descent(
         # tol *= np.dot(y, y)
         tol *= _dot(n_samples, &y[0], 1, &y[0], 1)
 
-        for n_iter in range(<Py_ssize_t>max_iter):
+        for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
             for f_iter in range(n_features):  # Loop over coordinates
@@ -210,7 +210,7 @@ def enet_coordinate_descent(
 
             if (w_max == 0.0 or
                 d_w_max / w_max < d_w_tol or
-                n_iter == <Py_ssize_t>max_iter - 1):
+                n_iter == max_iter - 1):
                 # the biggest coordinate update of this iteration was smaller
                 # than the tolerance: check the duality gap as ultimate
                 # stopping criterion
@@ -365,12 +365,13 @@ def sparse_enet_coordinate_descent(
     cdef floating d_w_tol = tol
     cdef floating dual_norm_XtA
     cdef unsigned int jj
-    cdef unsigned int n_iter = 0
+    cdef int n_iter = 0
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
     cdef bint center = False
     cdef bint no_sample_weights = sample_weight is None
+    cdef int kk
 
     if no_sample_weights:
         yw = y
@@ -419,7 +420,7 @@ def sparse_enet_coordinate_descent(
         # with sample weights: tol *= y @ (sw * y)
         tol *= _dot(n_samples, &y[0], 1, &yw[0], 1)
 
-        for n_iter in range(<Py_ssize_t>max_iter):
+        for n_iter in range(max_iter):
 
             w_max = 0.0
             d_w_max = 0.0
@@ -493,7 +494,7 @@ def sparse_enet_coordinate_descent(
 
                 w_max = fmax(w_max, fabs(w[ii]))
 
-            if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == <Py_ssize_t>max_iter - 1:
+            if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
@@ -507,8 +508,8 @@ def sparse_enet_coordinate_descent(
                 # XtA = X.T @ R - beta * w
                 for ii in range(n_features):
                     XtA[ii] = 0.0
-                    for jj in range(<Py_ssize_t>X_indptr[ii], <Py_ssize_t>X_indptr[ii + 1]):
-                        XtA[ii] += X_data[jj] * R[X_indices[jj]]
+                    for kk in range(X_indptr[ii], X_indptr[ii + 1]):
+                        XtA[ii] += X_data[kk] * R[X_indices[kk]]
 
                     if center:
                         XtA[ii] -= X_mean[ii] * R_sum
@@ -623,7 +624,7 @@ def enet_coordinate_descent_gram(
     cdef floating d_w_tol = tol
     cdef floating dual_norm_XtA
     cdef unsigned int ii
-    cdef unsigned int n_iter = 0
+    cdef int n_iter = 0
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
@@ -642,7 +643,7 @@ def enet_coordinate_descent_gram(
             "Set l1_ratio > 0 to add L1 regularization.")
 
     with nogil:
-        for n_iter in range(<Py_ssize_t>max_iter):
+        for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
             for f_iter in range(n_features):  # Loop over coordinates
@@ -682,7 +683,7 @@ def enet_coordinate_descent_gram(
                 if fabs(w[ii]) > w_max:
                     w_max = fabs(w[ii])
 
-            if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == <Py_ssize_t>max_iter - 1:
+            if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
@@ -799,7 +800,7 @@ def enet_coordinate_descent_multi_task(
     cdef floating l21_norm
     cdef unsigned int ii
     cdef unsigned int jj
-    cdef unsigned int n_iter = 0
+    cdef int n_iter = 0
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
@@ -827,7 +828,7 @@ def enet_coordinate_descent_multi_task(
         # tol = tol * linalg.norm(Y, ord='fro') ** 2
         tol = tol * _nrm2(n_samples * n_tasks, Y_ptr, 1) ** 2
 
-        for n_iter in range(<Py_ssize_t>max_iter):
+        for n_iter in range(max_iter):
             w_max = 0.0
             d_w_max = 0.0
             for f_iter in range(n_features):  # Loop over coordinates
@@ -896,7 +897,7 @@ def enet_coordinate_descent_multi_task(
                 if W_ii_abs_max > w_max:
                     w_max = W_ii_abs_max
 
-            if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == <Py_ssize_t>max_iter - 1:
+            if w_max == 0.0 or d_w_max / w_max < d_w_tol or n_iter == max_iter - 1:
                 # the biggest coordinate update of this iteration was smaller than
                 # the tolerance: check the duality gap as ultimate stopping
                 # criterion
