@@ -23,45 +23,92 @@ particular samples, they are highly likely to be anomalies.
 
 """
 
+# %%
+# Data generation
+# ---------------
+#
+# We generate two clusters (each one containing `n_samples`) by randomly
+# sampling the standard normal distribution as returned by `numpy.random.randn`.
+# One of them is spherical and the other one is slightly deformed.
+#
+# For consistency with the :class:`~sklearn.ensemble.IsolationForest` notation,
+# the inliers (i.e. the gaussian clusters) are assigned a ground truth label `1`
+# whereas the outliers (created with `numpy.random.uniform`) are assigned the
+# label `-1`.
+
 import numpy as np
+from sklearn.model_selection import train_test_split
+
+n_samples = 120
+n_outliers = 40
+rng = np.random.RandomState(0)
+C = np.array([[0.5, -0.1], [0.7, 0.4]])
+cluster_1 = 0.4 * np.dot(rng.randn(n_samples, 2), C) + np.array([2, 2])  # general
+cluster_2 = 0.3 * rng.randn(n_samples, 2) + np.array([-2, -2])  # spherical
+outliers = rng.uniform(low=-4, high=4, size=(n_outliers, 2))
+
+X = np.concatenate([cluster_1, cluster_2, outliers])
+y = np.concatenate(
+    [np.ones((2 * n_samples), dtype=int), -np.ones((n_outliers), dtype=int)]
+)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_state=42)
+
+# %%
+# We can visualize the resulting clusters:
+
 import matplotlib.pyplot as plt
+
+plt.scatter(X[:, 0], X[:, 1], c=y, s=20, edgecolor="k")
+plt.title("Gaussian Mixture clusters")
+plt.show()
+
+# %%
+# We train the model and use the class
+# :class:`~sklearn.inspection.DecisionBoundaryDisplay` to visualize a discrete
+# decision boundary to determine whether a particular sample is an outlier or
+# not.
+
+import matplotlib.pyplot as plt
+from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.ensemble import IsolationForest
 
-rng = np.random.RandomState(42)
-
-# Generate train data
-X = 0.3 * rng.randn(100, 2)
-X_train = np.r_[X + 2, X - 2]
-# Generate some regular novel observations
-X = 0.3 * rng.randn(20, 2)
-X_test = np.r_[X + 2, X - 2]
-# Generate some abnormal novel observations
-X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
-
-# fit the model
 clf = IsolationForest(max_samples=100, random_state=rng)
 clf.fit(X_train)
-y_pred_train = clf.predict(X_train)
-y_pred_test = clf.predict(X_test)
-y_pred_outliers = clf.predict(X_outliers)
 
-# plot the line, the samples, and the nearest vectors to the plane
-xx, yy = np.meshgrid(np.linspace(-5, 5, 50), np.linspace(-5, 5, 50))
-Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
-Z = Z.reshape(xx.shape)
-
-plt.title("IsolationForest")
-plt.contourf(xx, yy, Z, cmap=plt.cm.Blues_r)
-
-b1 = plt.scatter(X_train[:, 0], X_train[:, 1], c="white", s=20, edgecolor="k")
-b2 = plt.scatter(X_test[:, 0], X_test[:, 1], c="green", s=20, edgecolor="k")
-c = plt.scatter(X_outliers[:, 0], X_outliers[:, 1], c="red", s=20, edgecolor="k")
-plt.axis("tight")
-plt.xlim((-5, 5))
-plt.ylim((-5, 5))
-plt.legend(
-    [b1, b2, c],
-    ["training observations", "new regular observations", "new abnormal observations"],
+disp = DecisionBoundaryDisplay.from_estimator(
+    clf,
+    X,
+    response_method="predict",
+    alpha=0.5,
+)
+scatter = disp.ax_.scatter(X[:, 0], X[:, 1], c=y, s=20, edgecolor="k")
+disp.ax_.legend(
+    *scatter.legend_elements(),
+    title="True class",
     loc="upper left",
 )
+disp.ax_.set_title("Binary decision boundary of IsolationForest")
+plt.show()
+
+# %%
+# By setting the `response_method="decision_function"`, the
+# :class:`~sklearn.inspection.DecisionBoundaryDisplay` plots instead the measure
+# of normality of an observation, which is given by the depth of the leaf (or
+# equivalently the number of splits) required to isolate a sample in a given
+# position.
+
+disp = DecisionBoundaryDisplay.from_estimator(
+    clf,
+    X,
+    response_method="decision_function",
+    alpha=0.5,
+)
+scatter = disp.ax_.scatter(X[:, 0], X[:, 1], c=y, s=20, edgecolor="k")
+disp.ax_.legend(
+    *scatter.legend_elements(),
+    title="True class",
+    loc="upper left",
+)
+disp.ax_.set_title("Path length decision boundary of IsolationForest")
 plt.show()
