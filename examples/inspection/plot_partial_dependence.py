@@ -270,9 +270,7 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 
 print("Training interaction constraint HistGradientBoostingRegressor...")
 tic = time()
-est_no_interactions = HistGradientBoostingRegressor(
-    interaction_cst="no_interactions"
-)
+est_no_interactions = HistGradientBoostingRegressor(interaction_cst="no_interactions")
 est_no_interactions.fit(X_train, y_train)
 print(f"done in {time() - tic:.3f}s")
 
