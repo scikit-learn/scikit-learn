@@ -29,11 +29,11 @@ from numpy.math cimport INFINITY
 ###############################################################################
 # Utilities for computing the ward momentum
 
-def compute_ward_dist(cnp.ndarray[DOUBLE, ndim=1, mode='c'] m_1,
-                      cnp.ndarray[DOUBLE, ndim=2, mode='c'] m_2,
-                      cnp.ndarray[INTP, ndim=1, mode='c'] coord_row,
-                      cnp.ndarray[INTP, ndim=1, mode='c'] coord_col,
-                      cnp.ndarray[DOUBLE, ndim=1, mode='c'] res):
+def compute_ward_dist(DOUBLE[::1] m_1,
+                      DOUBLE[:, ::1] m_2,
+                      INTP[::1] coord_row,
+                      INTP[::1] coord_col,
+                      DOUBLE[::1] res):
     cdef INTP size_max = coord_row.shape[0]
     cdef INTP n_features = m_2.shape[1]
     cdef INTP i, j, row, col
@@ -95,7 +95,7 @@ def _hc_get_descendent(INTP node, children, INTP n_leaves):
     return descendent
 
 
-def hc_get_heads(cnp.ndarray[INTP, ndim=1] parents, copy=True):
+def hc_get_heads(INTP[:] parents, copy=True):
     """Returns the heads of the forest, as defined by parents.
 
     Parameters
@@ -127,8 +127,8 @@ def hc_get_heads(cnp.ndarray[INTP, ndim=1] parents, copy=True):
     return parents
 
 
-def _get_parents(nodes, heads, cnp.ndarray[INTP, ndim=1] parents,
-                 cnp.ndarray[INT8, ndim=1, mode='c'] not_visited):
+def _get_parents(nodes, heads, INTP[:] parents,
+                 INT8[::1] not_visited):
     """Returns the heads of the given nodes, as defined by parents.
 
     Modifies 'heads' and 'not_visited' in-place.
@@ -167,7 +167,7 @@ def _get_parents(nodes, heads, cnp.ndarray[INTP, ndim=1] parents,
 
 
 def max_merge(IntFloatDict a, IntFloatDict b,
-              cnp.ndarray[ITYPE_t, ndim=1] mask,
+              ITYPE_t[:] mask,
               ITYPE_t n_a, ITYPE_t n_b):
     """Merge two IntFloatDicts with the max strategy: when the same key is
     present in the two dicts, the max of the two values is used.
@@ -220,7 +220,7 @@ def max_merge(IntFloatDict a, IntFloatDict b,
 
 
 def average_merge(IntFloatDict a, IntFloatDict b,
-              cnp.ndarray[ITYPE_t, ndim=1] mask,
+              ITYPE_t[:] mask,
               ITYPE_t n_a, ITYPE_t n_b):
     """Merge two IntFloatDicts with the average strategy: when the
     same key is present in the two dicts, the weighted average of the two
@@ -354,8 +354,7 @@ cdef class UnionFind(object):
         return n
 
 
-cpdef cnp.ndarray[DTYPE_t, ndim=2] _single_linkage_label(
-    cnp.ndarray[DTYPE_t, ndim=2] L):
+def _single_linkage_label(DTYPE_t[:, :] L):
     """
     Convert an linkage array or MST to a tree by labelling clusters at merges.
     This is done by using a Union find structure to keep track of merges
@@ -375,7 +374,7 @@ cpdef cnp.ndarray[DTYPE_t, ndim=2] _single_linkage_label(
     A tree in the format used by scipy.cluster.hierarchy.
     """
 
-    cdef cnp.ndarray[DTYPE_t, ndim=2] result_arr
+    cdef DTYPE_t[:, ::1] result_arr
     cdef DTYPE_t[:, ::1] result
 
     cdef ITYPE_t left, left_cluster, right, right_cluster, index
@@ -401,7 +400,7 @@ cpdef cnp.ndarray[DTYPE_t, ndim=2] _single_linkage_label(
 
         U.union(left_cluster, right_cluster)
 
-    return result_arr
+    return np.asarray(result_arr)
 
 
 @cython.wraparound(True)
@@ -471,8 +470,6 @@ def mst_linkage_core(
         ITYPE_t n_samples = raw_data.shape[0]
         cnp.int8_t[:] in_tree = np.zeros(n_samples, dtype=np.int8)
         DTYPE_t[:, ::1] result = np.zeros((n_samples - 1, 3))
-
-        cnp.ndarray label_filter
 
         ITYPE_t current_node = 0
         ITYPE_t new_node
