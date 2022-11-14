@@ -18,6 +18,7 @@ cdef extern from "_sgd_fast_helpers.h":
 from ..utils._weight_vector cimport WeightVector64 as WeightVector
 from ..utils._seq_dataset cimport SequentialDataset64 as SequentialDataset
 
+cnp.import_array()
 
 # Penalty constants
 DEF NO_PENALTY = 0
