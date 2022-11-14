@@ -2,7 +2,6 @@
 # Author: Nicolas Hug
 
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
 from functools import partial
 from numbers import Real, Integral
 import warnings
