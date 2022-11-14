@@ -321,7 +321,7 @@ def test_input_error_related_to_feature_names():
 
     monotonic_cst = {"b": -1, "a": "+"}
     gbdt = HistGradientBoostingRegressor(monotonic_cst=monotonic_cst)
-    expected_msg = re.escape("monotonic_cst[a] must be either -1, 0 or 1. Got '+'.")
+    expected_msg = re.escape("monotonic_cst['a'] must be either -1, 0 or 1. Got '+'.")
     with pytest.raises(ValueError, match=expected_msg):
         gbdt.fit(X, y)
 

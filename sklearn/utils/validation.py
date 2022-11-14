@@ -2042,7 +2042,7 @@ def _check_monotonic_cst(estimator, monotonic_cst=None):
                     cst = original_monotonic_cst[feature_name]
                     if cst not in [-1, 0, 1]:
                         raise ValueError(
-                            f"monotonic_cst[{feature_name}] must be either "
+                            f"monotonic_cst['{feature_name}'] must be either "
                             f"-1, 0 or 1. Got {cst!r}."
                         )
                     monotonic_cst[feature_idx] = cst
