@@ -12,8 +12,8 @@ cdef extern from "numpy/npy_math.h":
 cdef float EPSILON_DBL = 1e-8
 cdef float PERPLEXITY_TOLERANCE = 1e-5
 
-cpdef cnp.ndarray[cnp.float32_t, ndim=2] _binary_search_perplexity(
-        cnp.ndarray[cnp.float32_t, ndim=2] sqdistances,
+def _binary_search_perplexity(
+        cnp.float32_t[:, :] sqdistances,
         float desired_perplexity,
         int verbose):
     """Binary search for sigmas of conditional Gaussians.
@@ -63,7 +63,7 @@ cpdef cnp.ndarray[cnp.float32_t, ndim=2] _binary_search_perplexity(
 
     # This array is later used as a 32bit array. It has multiple intermediate
     # floating point additions that benefit from the extra precision
-    cdef cnp.ndarray[cnp.float64_t, ndim=2] P = np.zeros(
+    cdef cnp.float64_t[:, :] P = np.zeros(
         (n_samples, n_neighbors), dtype=np.float64)
 
     for i in range(n_samples):
