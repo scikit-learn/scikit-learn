@@ -28,7 +28,7 @@ particular samples, they are highly likely to be anomalies.
 # ---------------
 #
 # We generate two clusters (each one containing `n_samples`) by randomly
-# sampling the standard normal distribution as returned by `numpy.random.randn`.
+# sampling the standard normal distribution as returned by :func:`numpy.random.randn`.
 # One of them is spherical and the other one is slightly deformed.
 #
 # For consistency with the :class:`~sklearn.ensemble.IsolationForest` notation,
@@ -39,11 +39,10 @@ particular samples, they are highly likely to be anomalies.
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-n_samples = 120
-n_outliers = 40
+n_samples, n_outliers = 120, 40
 rng = np.random.RandomState(0)
-C = np.array([[0.5, -0.1], [0.7, 0.4]])
-cluster_1 = 0.4 * np.dot(rng.randn(n_samples, 2), C) + np.array([2, 2])  # general
+covariance = np.array([[0.5, -0.1], [0.7, 0.4]])
+cluster_1 = 0.4 * rng.randn(n_samples, 2) @ covariance + np.array([2, 2])  # general
 cluster_2 = 0.3 * rng.randn(n_samples, 2) + np.array([-2, -2])  # spherical
 outliers = rng.uniform(low=-4, high=4, size=(n_outliers, 2))
 
@@ -73,7 +72,7 @@ import matplotlib.pyplot as plt
 from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.ensemble import IsolationForest
 
-clf = IsolationForest(max_samples=100, random_state=rng)
+clf = IsolationForest(max_samples=100, random_state=0)
 clf.fit(X_train)
 
 disp = DecisionBoundaryDisplay.from_estimator(
