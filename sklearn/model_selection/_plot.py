@@ -87,7 +87,7 @@ class LearningCurveDisplay:
         self,
         ax=None,
         *,
-        negate_score=True,
+        negate_score=False,
         score_name=None,
         score_type="test",
         log_scale=False,
@@ -231,7 +231,7 @@ class LearningCurveDisplay:
         ax.legend()
         if log_scale:
             ax.set_xscale("log")
-        ax.set_xlabel("Number of samples in the training set")
+        ax.set_xlabel("Number of samples used for training")
         ax.set_ylabel(f"{score_name}")
 
         self.ax_ = ax
@@ -318,9 +318,9 @@ class LearningCurveDisplay:
             cross-validation strategies that can be used here.
 
         scoring : str or callable, default=None
-            A str (see model evaluation documentation) or
+            A strring (see :ref:`scoring_parameter`) or
             a scorer callable object / function with signature
-            `scorer(estimator, X, y)`.
+            `scorer(estimator, X, y)` (see :ref:`scoring`).
 
         exploit_incremental_learning : bool, default=False
             If the estimator supports incremental learning, this will be
