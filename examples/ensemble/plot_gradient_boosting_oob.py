@@ -70,9 +70,7 @@ x = np.arange(n_estimators) + 1
 
 
 def binomial_deviance(y, raw_predictions):
-    return -2 * np.mean(
-        (y * raw_predictions) - np.logaddexp(0, raw_predictions)
-    )
+    return -2 * np.mean((y * raw_predictions) - np.logaddexp(0, raw_predictions))
 
 
 def heldout_score(clf, X_test, y_test):
