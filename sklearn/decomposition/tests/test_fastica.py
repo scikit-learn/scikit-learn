@@ -83,7 +83,7 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
         and os.getenv("DISTRIB") == "ubuntu"
     ):
         pytest.xfail(
-            "fastica instability with Ubuntu Atlas build with float32 "
+            "FastICA instability with Ubuntu Atlas build with float32 "
             "global_dtype. For more details, see "
             "https://github.com/scikit-learn/scikit-learn/issues/24131#issuecomment-1208091119"  # noqa
         )
