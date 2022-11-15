@@ -72,7 +72,7 @@ def load_ames_housing():
         "MoSold",
     ]
 
-    X = X.loc[:,features]
+    X = X.loc[:, features]
     X, y = shuffle(X, y, random_state=0)
 
     X = X.iloc[:600]
