@@ -3,7 +3,7 @@ from importlib import import_module
 from functools import lru_cache
 import warnings
 
-from sklearn._config import get_config
+from .._config import get_config
 
 SKLEARN_ENGINES_ENTRY_POINT = "sklearn_engines"
 
@@ -85,9 +85,9 @@ def _get_engine_classes(engine_name, provider_names, engine_specs, default):
         spec = specs_by_provider.get(provider_name)
         if spec is not None:
             # XXX: should we return an instance or the class itself?
-            yield spec.get_engine_class()
+            yield spec.provider_name, spec.get_engine_class()
 
-    yield default
+    yield "default", default
 
 
 def get_engine_classes(engine_name, default, verbose=False):
@@ -99,10 +99,10 @@ def get_engine_classes(engine_name, default, verbose=False):
         # lru cache to hash them.
         provider_names = tuple(provider_names)
     if not provider_names:
-        yield default
+        yield "default", default
         return
     engine_specs = _parse_entry_points(provider_names=provider_names)
-    for engine_class in _get_engine_classes(
+    for provider, engine_class in _get_engine_classes(
         engine_name=engine_name,
         provider_names=provider_names,
         engine_specs=engine_specs,
@@ -112,4 +112,4 @@ def get_engine_classes(engine_name, default, verbose=False):
             print(
                 f"trying engine {engine_class.__module__}.{engine_class.__qualname__} ."
             )
-        yield engine_class
+        yield provider, engine_class

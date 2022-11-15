@@ -55,7 +55,7 @@ from ._k_means_elkan import init_bounds_sparse
 from ._k_means_elkan import elkan_iter_chunked_dense
 from ._k_means_elkan import elkan_iter_chunked_sparse
 from .._engine import get_engine_classes
-
+from .._config import get_config
 
 ###############################################################################
 # Initialization heuristic
@@ -1550,13 +1550,25 @@ class KMeans(_BaseKMeans):
             )
             self._algorithm = "lloyd"
 
-    def _get_engine(self, X, y=None, sample_weight=None):
-        for engine_class in get_engine_classes(
-            "kmeans", default=KMeansCythonEngine, verbose=self.verbose
+    def _get_engine(self, X, y=None, sample_weight=None, reset=False):
+        for provider, engine_class in get_engine_classes(
+            "kmeans", default=KMeansCythonEngine
         ):
+            if hasattr(self, "_engine_provider") and not reset:
+                if self._engine_provider != provider:
+                    continue
+
             engine = engine_class(self)
-            if engine.accepts(X, y=y, sample_weight=sample_weight):
+            if engine.accepts(X, y=y):
+                self._engine_provider = provider
                 return engine
+
+        if hasattr(self, "_engine_provider"):
+            raise RuntimeError(
+                "Estimator was previously fitted with the"
+                f" {self._engine_provider} engine, but it is not available. Currently"
+                f" configured engines: {get_config()['engine_provider']}"
+            )
 
     def _warn_mkl_vcomp(self, n_active_threads):
         """Warn when vcomp and mkl are both present"""
@@ -1596,7 +1608,7 @@ class KMeans(_BaseKMeans):
         self._validate_params()
         self._check_params_vs_input(X)
 
-        engine = self._get_engine(X, y, sample_weight)
+        engine = self._get_engine(X, y, sample_weight, reset=True)
 
         if hasattr(engine, "pre_fit"):
             X, y, sample_weight = engine.pre_fit(

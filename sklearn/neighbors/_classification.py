@@ -20,6 +20,7 @@ from ._base import NeighborsBase, KNeighborsMixin, RadiusNeighborsMixin
 from ..base import ClassifierMixin
 from ..utils._param_validation import StrOptions
 from .._engine import get_engine_classes
+from .._config import get_config
 
 
 class KNeighborsClassifierCythonEngine:
@@ -307,7 +308,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         """
         self._validate_params()
 
-        engine = self._get_engine(X, y)
+        engine = self._get_engine(X, y, reset=True)
 
         if hasattr(engine, "pre_fit"):
             X, y, sample_weight = engine.pre_fit(
@@ -463,13 +464,25 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
     def _more_tags(self):
         return {"multilabel": True}
 
-    def _get_engine(self, X, y=None, sample_weight=None):
-        for engine_class in get_engine_classes(
+    def _get_engine(self, X, y=None, sample_weight=None, reset=False):
+        for provider, engine_class in get_engine_classes(
             "kneigborsclassifier", default=KNeighborsClassifierCythonEngine
         ):
+            if hasattr(self, "_engine_provider") and not reset:
+                if self._engine_provider != provider:
+                    continue
+
             engine = engine_class(self)
             if engine.accepts(X, y=y):
+                self._engine_provider = provider
                 return engine
+
+        if hasattr(self, "_engine_provider"):
+            raise RuntimeError(
+                "Estimator was previously fitted with the"
+                f" {self._engine_provider} engine, but it is not available. Currently"
+                f" configured engines: {get_config()['engine_provider']}"
+            )
 
 
 class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, NeighborsBase):

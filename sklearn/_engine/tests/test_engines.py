@@ -61,7 +61,7 @@ def test_get_engine_class_with_default():
         engine_classes = list(
             get_engine_classes("test_missing_engine_name", default=FakeEngine)
         )
-    assert engine_classes == [FakeEngine]
+    assert engine_classes == [("default", FakeEngine)]
 
 
 def test_get_engine_class():
@@ -85,7 +85,7 @@ def test_get_engine_class():
             default=FakeDefaultEngine,
         )
     )
-    assert engine_class == [FakeDefaultEngine]
+    assert engine_class == [("default", FakeDefaultEngine)]
 
     engine_class = list(
         _get_engine_classes(
@@ -96,9 +96,9 @@ def test_get_engine_class():
         )
     )
     assert engine_class == [
-        FakeEngine,
-        FakeEngineHolder.NestedFakeEngine,
-        FakeDefaultEngine,
+        ("provider3", FakeEngine),
+        ("provider4", FakeEngineHolder.NestedFakeEngine),
+        ("default", FakeDefaultEngine),
     ]
 
     engine_class = list(
@@ -110,9 +110,9 @@ def test_get_engine_class():
         )
     )
     assert engine_class == [
-        FakeEngineHolder.NestedFakeEngine,
-        FakeEngine,
-        FakeDefaultEngine,
+        ("provider4", FakeEngineHolder.NestedFakeEngine),
+        ("provider3", FakeEngine),
+        ("default", FakeDefaultEngine),
     ]
 
     engine_specs = engine_specs + (
