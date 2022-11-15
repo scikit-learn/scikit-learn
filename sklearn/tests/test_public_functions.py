@@ -10,6 +10,21 @@ from sklearn.utils._param_validation import make_constraint
 
 PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.cluster.kmeans_plusplus",
+    "sklearn.metrics.mean_absolute_error",
+    "sklearn.metrics.mean_pinball_loss",
+    "sklearn.metrics.mean_absolute_percentage_error",
+    "sklearn.metrics.mean_squared_error",
+    "sklearn.metrics.mean_squared_log_error",
+    "sklearn.metrics.median_absolute_error",
+    "sklearn.metrics.explained_variance_score",
+    "sklearn.metrics.r2_score",
+    "sklearn.metrics.max_error",
+    "sklearn.metrics.mean_tweedie_deviance",
+    "sklearn.metrics.mean_poisson_deviance",
+    "sklearn.metrics.mean_gamma_deviance",
+    "sklearn.metrics.d2_tweedie_score",
+    "sklearn.metrics.d2_pinball_score",
+    "sklearn.metrics.d2_absolute_error_score",
 ]
 
 

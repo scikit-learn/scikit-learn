@@ -33,6 +33,7 @@ import numpy as np
 from scipy.special import xlogy
 
 from ..exceptions import UndefinedMetricWarning
+from ..utils._param_validation import validate_params
 from ..utils.validation import (
     check_array,
     check_consistent_length,
@@ -138,6 +139,14 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
     return y_type, y_true, y_pred, multioutput
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [str, "array-like"],
+    }
+)
 def mean_absolute_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
@@ -208,6 +217,15 @@ def mean_absolute_error(
     return np.average(output_errors, weights=multioutput)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "alpha": [float],
+        "multioutput": [str, "array-like"],
+    }
+)
 def mean_pinball_loss(
     y_true, y_pred, *, sample_weight=None, alpha=0.5, multioutput="uniform_average"
 ):
@@ -293,6 +311,14 @@ def mean_pinball_loss(
     return np.average(output_errors, weights=multioutput)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [str, "array-like"],
+    }
+)
 def mean_absolute_percentage_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
@@ -379,6 +405,15 @@ def mean_absolute_percentage_error(
     return np.average(output_errors, weights=multioutput)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [str, "array-like"],
+        "squared": ["boolean"],
+    }
+)
 def mean_squared_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", squared=True
 ):
@@ -458,6 +493,15 @@ def mean_squared_error(
     return np.average(output_errors, weights=multioutput)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [str, "array-like"],
+        "squared": ["boolean"],
+    }
+)
 def mean_squared_log_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average", squared=True
 ):
@@ -536,8 +580,20 @@ def mean_squared_log_error(
     )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [str, "array-like"],
+    }
+)
 def median_absolute_error(
-    y_true, y_pred, *, multioutput="uniform_average", sample_weight=None
+    y_true,
+    y_pred,
+    *,
+    sample_weight=None,
+    multioutput="uniform_average",
 ):
     """Median absolute error regression loss.
 
@@ -552,6 +608,9 @@ def median_absolute_error(
     y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
         Estimated target values.
 
+    sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights.
+
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
             (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values. Array-like value defines
@@ -562,9 +621,6 @@ def median_absolute_error(
 
         'uniform_average' :
             Errors of all outputs are averaged with uniform weight.
-
-    sample_weight : array-like of shape (n_samples,), default=None
-        Sample weights.
 
         .. versionadded:: 0.24
 
@@ -656,6 +712,15 @@ def _assemble_r2_explained_variance(
     return np.average(output_scores, weights=avg_weights)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [str, "array-like"],
+        "force_finite": ["boolean"],
+    }
+)
 def explained_variance_score(
     y_true,
     y_pred,
@@ -781,6 +846,15 @@ def explained_variance_score(
     )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [str, "array-like"],
+        "force_finite": ["boolean"],
+    }
+)
 def r2_score(
     y_true,
     y_pred,
@@ -938,6 +1012,12 @@ def r2_score(
     )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+    }
+)
 def max_error(y_true, y_pred):
     """
     The max_error metric calculates the maximum residual error.
@@ -1000,6 +1080,14 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
     return np.average(dev, weights=sample_weight)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "power": [float],
+    }
+)
 def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     """Mean Tweedie deviance regression loss.
 
@@ -1092,6 +1180,13 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+    }
+)
 def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
     """Mean Poisson deviance regression loss.
 
@@ -1127,6 +1222,13 @@ def mean_poisson_deviance(y_true, y_pred, *, sample_weight=None):
     return mean_tweedie_deviance(y_true, y_pred, sample_weight=sample_weight, power=1)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+    }
+)
 def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
     """Mean Gamma deviance regression loss.
 
@@ -1163,6 +1265,14 @@ def mean_gamma_deviance(y_true, y_pred, *, sample_weight=None):
     return mean_tweedie_deviance(y_true, y_pred, sample_weight=sample_weight, power=2)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "power": [float],
+    }
+)
 def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     """D^2 regression score function, fraction of Tweedie deviance explained.
 
@@ -1263,6 +1373,15 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     return 1 - numerator / denominator
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "alpha": [float],
+        "multioutput": [str, "array-like"],
+    }
+)
 def d2_pinball_score(
     y_true, y_pred, *, sample_weight=None, alpha=0.5, multioutput="uniform_average"
 ):
@@ -1408,6 +1527,14 @@ def d2_pinball_score(
     return np.average(output_scores, weights=avg_weights)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [str, "array-like"],
+    }
+)
 def d2_absolute_error_score(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
