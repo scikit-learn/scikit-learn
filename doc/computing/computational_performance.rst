@@ -278,11 +278,9 @@ BLAS implementation and lead to orders of magnitude speedup over a
 non-optimized BLAS.
 
 You can display the BLAS / LAPACK implementation used by your NumPy / SciPy /
-scikit-learn install with the following commands::
+scikit-learn install with the following command::
 
-    from numpy.distutils.system_info import get_info
-    print(get_info('blas_opt'))
-    print(get_info('lapack_opt'))
+    python -c "import sklearn; sklearn.show_versions()"
 
 Optimized BLAS / LAPACK implementations include:
  - Atlas (need hardware specific tuning by rebuilding on the target machine)

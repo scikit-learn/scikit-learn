@@ -18,7 +18,7 @@ from sklearn.utils._testing import _get_func_name
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils import all_estimators
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
-from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
+from sklearn.utils.estimator_checks import _enforce_estimator_tags_X
 from sklearn.utils.estimator_checks import _construct_instance
 from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.utils.deprecation import _is_deprecated
@@ -300,7 +300,7 @@ def test_fit_docstring_attributes(name, Estimator):
         )
 
         y = _enforce_estimator_tags_y(est, y)
-        X = _enforce_estimator_tags_x(est, X)
+        X = _enforce_estimator_tags_X(est, X)
 
     if "1dlabels" in est._get_tags()["X_types"]:
         est.fit(y)
