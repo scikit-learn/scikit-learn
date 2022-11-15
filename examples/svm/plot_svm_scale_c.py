@@ -135,8 +135,7 @@ X = rng.randn(n_samples, n_features // 5) + y[:, np.newaxis]
 X += 5 * rng.randn(n_samples, n_features // 5)
 
 # %%
-penalty = "l2"
-model_l2 = LinearSVC(penalty=penalty, loss=loss, dual=True)
+model_l2 = LinearSVC(penalty="l2", loss="squared_hinge", dual=True)
 Cs = np.logspace(-4.5, -2, 10)
 
 results = {"C": Cs}
@@ -151,7 +150,7 @@ results = pd.DataFrame(results).set_index("C")
 # %%
 import matplotlib.pyplot as plt
 
-fig, axes = plt.subplots(nrows=2, sharey=True, figsize=(9, 10))
+fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(12, 6))
 
 # plot results without scaling C
 results.plot(ax=axes[0], logx=True)
