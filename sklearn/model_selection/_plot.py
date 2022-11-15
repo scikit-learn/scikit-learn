@@ -231,7 +231,7 @@ class LearningCurveDisplay:
         ax.legend()
         if log_scale:
             ax.set_xscale("log")
-        ax.set_xlabel("Number of samples used for training")
+        ax.set_xlabel("Number of samples in the training set")
         ax.set_ylabel(f"{score_name}")
 
         self.ax_ = ax
