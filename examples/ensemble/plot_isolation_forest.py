@@ -59,8 +59,11 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_sta
 
 import matplotlib.pyplot as plt
 
-plt.scatter(X[:, 0], X[:, 1], c=y, s=20, edgecolor="k")
-plt.title("Gaussian Mixture clusters")
+scatter = plt.scatter(X[:, 0], X[:, 1], c=y, s=20, edgecolor="k")
+handles, labels = scatter.legend_elements()
+plt.axis("square")
+plt.legend(handles=handles, labels=["outliers", "inliers"], title="true class")
+plt.title("Gaussian inliers with \nuniformly distributed outliers")
 plt.show()
 
 # %%
@@ -82,13 +85,10 @@ disp = DecisionBoundaryDisplay.from_estimator(
     response_method="predict",
     alpha=0.5,
 )
-scatter = disp.ax_.scatter(X[:, 0], X[:, 1], c=y, s=20, edgecolor="k")
-disp.ax_.legend(
-    *scatter.legend_elements(),
-    title="True class",
-    loc="upper left",
-)
-disp.ax_.set_title("Binary decision boundary of IsolationForest")
+disp.ax_.scatter(X[:, 0], X[:, 1], c=y, s=20, edgecolor="k")
+plt.axis("square")
+plt.legend(handles=handles, labels=["outliers", "inliers"], title="true class")
+disp.ax_.set_title("Binary decision boundary \nof IsolationForest")
 plt.show()
 
 # %%
@@ -104,11 +104,8 @@ disp = DecisionBoundaryDisplay.from_estimator(
     response_method="decision_function",
     alpha=0.5,
 )
-scatter = disp.ax_.scatter(X[:, 0], X[:, 1], c=y, s=20, edgecolor="k")
-disp.ax_.legend(
-    *scatter.legend_elements(),
-    title="True class",
-    loc="upper left",
-)
-disp.ax_.set_title("Path length decision boundary of IsolationForest")
+disp.ax_.scatter(X[:, 0], X[:, 1], c=y, s=20, edgecolor="k")
+plt.axis("square")
+plt.legend(handles=handles, labels=["outliers", "inliers"], title="true class")
+disp.ax_.set_title("Path length decision boundary \nof IsolationForest")
 plt.show()
