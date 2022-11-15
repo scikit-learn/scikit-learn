@@ -2,6 +2,7 @@ from sklearn.ensemble import (
     RandomForestClassifier,
     GradientBoostingClassifier,
     HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
 )
 
 from .common import Benchmark, Estimator, Predictor
@@ -9,8 +10,12 @@ from .datasets import (
     _20newsgroups_highdim_dataset,
     _20newsgroups_lowdim_dataset,
     _synth_classification_dataset,
+    _synth_regression_dataset,
 )
-from .utils import make_gen_classif_scorers
+from .utils import (
+    make_gen_classif_scorers,
+    make_gen_reg_scorers,
+)
 
 
 class RandomForestClassifierBenchmark(Predictor, Estimator, Benchmark):
@@ -119,3 +124,30 @@ class HistGradientBoostingClassifierBenchmark(Predictor, Estimator, Benchmark):
 
     def make_scorers(self):
         make_gen_classif_scorers(self)
+
+
+class HistGradientBoostingRegressorBenchmark(Predictor, Estimator, Benchmark):
+    """
+    Benchmarks for HistGradientBoostingRegressor.
+    """
+
+    param_names = []
+    params = ()
+
+    def setup_cache(self):
+        super().setup_cache()
+
+    def make_data(self, params):
+        data = _synth_regression_dataset(n_samples=10000, n_features=100)
+
+        return data
+
+    def make_estimator(self, params):
+        estimator = HistGradientBoostingRegressor(
+            max_iter=100, max_leaf_nodes=15, early_stopping=False, random_state=0
+        )
+
+        return estimator
+
+    def make_scorers(self):
+        make_gen_reg_scorers(self)

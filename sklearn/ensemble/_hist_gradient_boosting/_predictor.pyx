@@ -20,20 +20,30 @@ def _predict_from_raw_data(  # raw data = non-binned data
         const BITSET_INNER_DTYPE_C [:, ::1] known_cat_bitsets,
         const unsigned int [::1] f_idx_map,
         int n_threads,
-        Y_DTYPE_C [:] out):
+        Y_DTYPE_C [:] out,
+        Y_DTYPE_C [:] out_variance,
+        unsigned char return_var):
 
     cdef:
         int i
 
-    for i in prange(numeric_data.shape[0], schedule='static', nogil=True,
+    if return_var:
+        for i in prange(numeric_data.shape[0], schedule='static', nogil=True,
                     num_threads=n_threads):
-        out[i] = _predict_one_from_raw_data(
-            nodes, numeric_data, raw_left_cat_bitsets,
-            known_cat_bitsets,
-            f_idx_map, i)
+            out[i], out_variance[i] = _predict_one_from_raw_data(
+                nodes, numeric_data, raw_left_cat_bitsets,
+                known_cat_bitsets,
+                f_idx_map, i)
+    else:
+        for i in prange(numeric_data.shape[0], schedule='static', nogil=True,
+                    num_threads=n_threads):
+            out[i] = _predict_one_from_raw_data(
+                nodes, numeric_data, raw_left_cat_bitsets,
+                known_cat_bitsets,
+                f_idx_map, i)[0]
 
 
-cdef inline Y_DTYPE_C _predict_one_from_raw_data(
+cdef inline (Y_DTYPE_C, Y_DTYPE_C) _predict_one_from_raw_data(
         node_struct [:] nodes,
         const X_DTYPE_C [:, :] numeric_data,
         const BITSET_INNER_DTYPE_C [:, ::1] raw_left_cat_bitsets,
@@ -50,7 +60,7 @@ cdef inline Y_DTYPE_C _predict_one_from_raw_data(
 
     while True:
         if node.is_leaf:
-            return node.value
+            return (node.value, node.variance)
 
         data_val = numeric_data[row, node.feature_idx]
 
@@ -90,20 +100,30 @@ def _predict_from_binned_data(
         BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
         const unsigned char missing_values_bin_idx,
         int n_threads,
-        Y_DTYPE_C [:] out):
+        Y_DTYPE_C [:] out,
+        Y_DTYPE_C [:] out_variance,
+        unsigned char return_var):
 
     cdef:
         int i
 
-    for i in prange(binned_data.shape[0], schedule='static', nogil=True,
-                    num_threads=n_threads):
-        out[i] = _predict_one_from_binned_data(nodes,
-                                               binned_data,
-                                               binned_left_cat_bitsets, i,
-                                               missing_values_bin_idx)
+    if return_var:
+        for i in prange(binned_data.shape[0], schedule='static', nogil=True,
+                        num_threads=n_threads):
+            out[i], out_variance[i] = _predict_one_from_binned_data(nodes,
+                                                binned_data,
+                                                binned_left_cat_bitsets, i,
+                                                missing_values_bin_idx)
+    else:
+        for i in prange(binned_data.shape[0], schedule='static', nogil=True,
+                        num_threads=n_threads):
+            out[i] = _predict_one_from_binned_data(nodes,
+                                    binned_data,
+                                    binned_left_cat_bitsets, i,
+                                    missing_values_bin_idx)[0]
 
 
-cdef inline Y_DTYPE_C _predict_one_from_binned_data(
+cdef inline (Y_DTYPE_C, Y_DTYPE_C) _predict_one_from_binned_data(
         node_struct [:] nodes,
         const X_BINNED_DTYPE_C [:, :] binned_data,
         const BITSET_INNER_DTYPE_C [:, :] binned_left_cat_bitsets,
@@ -119,7 +139,7 @@ cdef inline Y_DTYPE_C _predict_one_from_binned_data(
 
     while True:
         if node.is_leaf:
-            return node.value
+            return (node.value, node.variance)
 
         data_val = binned_data[row, node.feature_idx]
 

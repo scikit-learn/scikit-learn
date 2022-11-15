@@ -150,3 +150,38 @@ def sum_parallel(G_H_DTYPE_C [:] array, int n_threads):
         out += array[i]
 
     return out
+
+def sum_parallel_with_squares(G_H_DTYPE_C [:] array, int n_threads):
+
+    cdef:
+        Y_DTYPE_C sum_out = 0.
+        Y_DTYPE_C sum_squared_out = 0.
+        int i = 0
+
+    for i in prange(array.shape[0], schedule='static', nogil=True,
+                    num_threads=n_threads):
+        sum_out += array[i]
+        sum_squared_out += array[i]**2
+
+    return (sum_out, sum_squared_out)
+
+def sum_parallel_with_squares_two_arrays(G_H_DTYPE_C [:] array_x,
+        G_H_DTYPE_C [:] array_y, int n_threads):
+
+    cdef:
+        Y_DTYPE_C sum_x_out = 0.
+        Y_DTYPE_C sum_x_squared_out = 0.
+        Y_DTYPE_C sum_y_out = 0.
+        Y_DTYPE_C sum_y_squared_out = 0.
+        Y_DTYPE_C sum_xy_out = 0.
+        int i = 0
+
+    for i in prange(array_x.shape[0], schedule='static', nogil=True,
+                    num_threads=n_threads):
+        sum_x_out += array_x[i]
+        sum_x_squared_out += array_x[i]**2
+        sum_y_out += array_y[i]
+        sum_y_squared_out += array_y[i]**2
+        sum_xy_out += array_x[i] * array_y[i]
+
+    return (sum_x_out, sum_y_out, sum_x_squared_out, sum_y_squared_out, sum_xy_out)

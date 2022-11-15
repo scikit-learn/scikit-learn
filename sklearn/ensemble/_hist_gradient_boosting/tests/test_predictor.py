@@ -26,7 +26,8 @@ n_threads = _openmp_effective_n_threads()
 
 
 @pytest.mark.parametrize("n_bins", [200, 256])
-def test_regression_dataset(n_bins):
+@pytest.mark.parametrize("with_variance", [True, False])
+def test_regression_dataset(n_bins, with_variance):
     X, y = make_regression(
         n_samples=500, n_features=10, n_informative=5, random_state=42
     )
@@ -49,6 +50,7 @@ def test_regression_dataset(n_bins):
         max_leaf_nodes=max_leaf_nodes,
         n_bins=n_bins,
         n_bins_non_missing=mapper.n_bins_non_missing_,
+        with_variance=with_variance,
     )
     grower.grow()
 

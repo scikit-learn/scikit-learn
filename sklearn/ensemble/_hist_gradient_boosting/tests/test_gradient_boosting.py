@@ -314,19 +314,29 @@ def test_poisson():
     X_train, X_test, y_train, y_test = train_test_split(
         X, y, test_size=n_test, random_state=rng
     )
-    gbdt_pois = HistGradientBoostingRegressor(loss="poisson", random_state=rng)
+    gbdt_pois = HistGradientBoostingRegressor(
+        loss="poisson", random_state=rng, with_variance=True, distribution="poisson"
+    )
     gbdt_ls = HistGradientBoostingRegressor(loss="squared_error", random_state=rng)
     gbdt_pois.fit(X_train, y_train)
     gbdt_ls.fit(X_train, y_train)
     dummy = DummyRegressor(strategy="mean").fit(X_train, y_train)
 
     for X, y in [(X_train, y_train), (X_test, y_test)]:
-        metric_pois = mean_poisson_deviance(y, gbdt_pois.predict(X))
+        yhat_mean_pois, yhat_std_pois = gbdt_pois.predict(X, return_std=True)
+        yhat_dist_pois = gbdt_pois.sample(
+            yhat_mean_pois, yhat_std_pois, n_estimates=10_000
+        )
+        yhat_mean_pois_sampled = yhat_dist_pois.mean(axis=0)
+        metric_pois = mean_poisson_deviance(y, yhat_mean_pois)
+        metric_pois_sampled = mean_poisson_deviance(y, yhat_mean_pois_sampled)
         # squared_error might produce non-positive predictions => clip
         metric_ls = mean_poisson_deviance(y, np.clip(gbdt_ls.predict(X), 1e-15, None))
         metric_dummy = mean_poisson_deviance(y, dummy.predict(X))
         assert metric_pois < metric_ls
         assert metric_pois < metric_dummy
+        assert metric_pois_sampled < metric_ls
+        assert metric_pois_sampled < metric_dummy
 
 
 def test_binning_train_validation_are_separated():
@@ -1369,3 +1379,56 @@ def test_unknown_category_that_are_negative():
     X_test_nan = np.asarray([[1, np.nan], [3, np.nan]])
 
     assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))
+
+
+def test_distribution_means_and_variances():
+    """Check that the sampled mean and variances from the output of a distribution
+    are approximately equal to the empirical mean and variances from the model.
+
+    In other words, this tests whether we correctly convert the empirical mean
+    and variance from our model to appropriate parameters to parameterize a
+    distribution.
+
+    We test it by verifying that the difference between the sampled mean/variance
+    and the true mean/variance is reducing if the number of sampled predictions
+    increases. Note that this is not perfect, we only establish a reduction of
+    errors. For some distributions we could also use an inequality
+    (e.g. Hoeffdings) to check if the error makes sense.
+    """
+    rng = np.random.RandomState(42)
+    # We use the same synthetic data as with the Poisson test
+    n_train, n_test, n_features = 500, 100, 100
+    X = make_low_rank_matrix(
+        n_samples=n_train + n_test, n_features=n_features, random_state=rng
+    )
+    # We create a log-linear Poisson model and downscale coef as it will get
+    # exponentiated.
+    coef = rng.uniform(low=-2, high=2, size=n_features) / np.max(X, axis=0)
+    y = rng.poisson(lam=np.exp(X @ coef))
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=n_test, random_state=rng
+    )
+    gbdt = HistGradientBoostingRegressor(loss="squared_error", with_variance=True)
+    gbdt.fit(X_train, y_train)
+    samples_array = [1, 10, 100, 1_000, 10_000, 100_000]
+    distributions = [
+        "normal",
+        "studentt",
+        "laplace",
+        "logistic",
+        "lognormal",
+        "gamma",
+        "gumbel",
+        "poisson",
+        "negativebinomial",
+    ]
+    yhat_mean, yhat_std = gbdt.predict(X, return_std=True)
+    yhat_mean = np.clip(yhat_mean, 1e-15, None)
+    for distribution in distributions:
+        error = np.zeros((len(samples_array), len(X)))
+        for i, samples in enumerate(samples_array):
+            gbdt.distribution = distribution
+            yhat_dist = gbdt.sample(yhat_mean, yhat_std, n_estimates=samples)
+            yhat_mean_sampled = yhat_dist.mean(axis=0)
+            error[i] = np.abs(yhat_mean_sampled - yhat_mean)
+        assert np.all(np.diff(error.mean(axis=1)) < 0)

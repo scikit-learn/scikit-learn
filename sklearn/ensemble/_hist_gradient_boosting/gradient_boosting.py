@@ -319,7 +319,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         return constraints
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, with_variance=False):
         """Fit the gradient boosting model.
 
         Parameters
@@ -334,6 +334,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             Weights of training data.
 
             .. versionadded:: 0.23
+
+        with_variance : boolean, default=False
+            If True, stores the variances of the leaf values.
 
         Returns
         -------
@@ -387,6 +390,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         # there's no way to tell the scorer that it needs to predict binned
         # data.
         self._in_fit = True
+
+        # We need to store whether we store the variances during training
+        # so that these variances can be used for probabilistic predictions
+        # after training
+        self._is_fitted_with_variance = with_variance
 
         # `_openmp_effective_n_threads` is used to take cgroups CPU quotes
         # into account when determine the maximum number of threads to use.
@@ -477,6 +485,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             print("Fitting gradient boosted rounds:")
 
         n_samples = X_binned_train.shape[0]
+
+        # Save tree correlation based on training samples
+        self._tree_correlation = np.log10(n_samples) / 100
 
         # First time calling fit, or no warm start
         if not (self._is_fitted() and self.warm_start):
@@ -672,6 +683,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     l2_regularization=self.l2_regularization,
                     shrinkage=self.learning_rate,
                     n_threads=n_threads,
+                    with_variance=with_variance,
                 )
                 grower.grow()
 
@@ -988,7 +1000,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         print(log_msg)
 
-    def _raw_predict(self, X, n_threads=None):
+    def _raw_predict(self, X, n_threads=None, return_var=False):
         """Return the sum of the leaves values over all predictors.
 
         Parameters
@@ -1000,11 +1012,17 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             to determine the effective number of threads use, which takes cgroups CPU
             quotes into account. See the docstring of `_openmp_effective_n_threads`
             for details.
+        return_var : bool, default=False
+            If True, the variance of the raw predictions are returned
+            along with the mean of the raw predictions.
 
         Returns
         -------
         raw_predictions : array, shape (n_samples, n_trees_per_iteration)
             The raw predicted values.
+        raw_variances : array, shape (n_samples, n_trees_per_iteration)
+            The raw predicted variances of the predicted values. Only returned when
+            `return_var=True`.
         """
         is_binned = getattr(self, "_in_fit", False)
         if not is_binned:
@@ -1025,16 +1043,46 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         )
         raw_predictions += self._baseline_prediction
 
+        if return_var:
+            raw_variances = np.zeros(
+                shape=(n_samples, self.n_trees_per_iteration_),
+                dtype=self._baseline_prediction.dtype,
+                order="F",
+            )
+        else:
+            raw_variances = np.zeros(
+                shape=1,
+                dtype=self._baseline_prediction.dtype,
+                order="F",
+            )
         # We intentionally decouple the number of threads used at prediction
         # time from the number of threads used at fit time because the model
         # can be deployed on a different machine for prediction purposes.
         n_threads = _openmp_effective_n_threads(n_threads)
         self._predict_iterations(
-            X, self._predictors, raw_predictions, is_binned, n_threads
+            X,
+            self._predictors,
+            raw_predictions,
+            raw_variances,
+            is_binned,
+            n_threads,
+            return_var,
         )
-        return raw_predictions
+        if return_var:
+            return raw_predictions, raw_variances
+        else:
+            return raw_predictions
 
-    def _predict_iterations(self, X, predictors, raw_predictions, is_binned, n_threads):
+    def _predict_iterations(
+        self,
+        X,
+        predictors,
+        raw_predictions,
+        raw_variances,
+        is_binned,
+        n_threads,
+        return_var,
+    ):
         """Add the predictions of the predictors to raw_predictions."""
         if not is_binned:
             (
@@ -1049,6 +1097,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                         predictor.predict_binned,
                         missing_values_bin_idx=self._bin_mapper.missing_values_bin_idx_,
                         n_threads=n_threads,
+                        return_var=return_var,
                     )
                 else:
                     predict = partial(
@@ -1056,8 +1105,21 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                         known_cat_bitsets=known_cat_bitsets,
                         f_idx_map=f_idx_map,
                         n_threads=n_threads,
+                        return_var=return_var,
                     )
-                raw_predictions[:, k] += predict(X)
+                if return_var:
+                    raw_predictions_k, raw_variances_k = predict(X)
+                    raw_predictions[:, k] += raw_predictions_k
+                    raw_variances[
+                        :, k
+                    ] += self.learning_rate**2 * raw_variances_k - 2 * (
+                        self.learning_rate
+                        * self._tree_correlation
+                        * np.sqrt(raw_variances[:, k])
+                        * np.sqrt(raw_variances_k)
+                    )
+                else:
+                    raw_predictions[:, k] += predict(X)
 
     def _staged_raw_predict(self, X):
         """Compute raw predictions of ``X`` for each iteration.
@@ -1091,6 +1153,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             order="F",
         )
         raw_predictions += self._baseline_prediction
+        raw_variances = np.zeros(
+            shape=1,
+            dtype=self._baseline_prediction.dtype,
+            order="F",
+        )
 
         # We intentionally decouple the number of threads used at prediction
         # time from the number of threads used at fit time because the model
@@ -1101,8 +1168,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 X,
                 self._predictors[iteration : iteration + 1],
                 raw_predictions,
+                raw_variances,
                 is_binned=False,
                 n_threads=n_threads,
+                return_var=False,
             )
             yield raw_predictions.copy()
 
@@ -1326,6 +1395,23 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         is enabled.
         Pass an int for reproducible output across multiple function calls.
         See :term:`Glossary <random_state>`.
+    with_variance : bool, default=False
+        When set to `True`, the variance of each leaf value is stored during
+        training. In Regressor models, this can be used to generate
+        probabilistic estimates.
+    distribution : {'normal', 'studentt', 'laplace', 'logistic', 'lognormal',
+        'gamma', 'gumbel', 'poisson', 'negativebinomial'},\
+        default='normal'
+        Choice of output distribution when sampling
+    tree_correlation : float, default=None
+        Tree correlation hyperparameter. This controls the amount of correlation
+        we assume to exist between each subsequent tree in the ensemble. Only
+        used when computing the standard deviations of the predictions. If None,
+        defaults to np.log10(n_samples_train) / 100. Must be between -1 and 1.
+        Only used in Regressor models..
+    studentt_degrees_of_freedom : int, default=3
+        Degrees of freedom, only used for Student-t distribution when sampling
+        probabilistic predictions using the `sample` method.
 
     Attributes
     ----------
@@ -1393,6 +1479,24 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             BaseLoss,
         ],
         "quantile": [Interval(Real, 0, 1, closed="both"), None],
+        "with_variance": ["boolean"],
+        "distribution": [
+            StrOptions(
+                {
+                    "normal",
+                    "studentt",
+                    "laplace",
+                    "logistic",
+                    "lognormal",
+                    "gamma",
+                    "gumbel",
+                    "poisson",
+                    "negativebinomial",
+                }
+            )
+        ],
+        "tree_correlation": [Interval(Real, -1, 1, closed="neither"), None],
+        "studentt_degrees_of_freedom": [Interval(Integral, 1, None, closed="neither")],
     }
 
     def __init__(
@@ -1418,6 +1522,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         tol=1e-7,
         verbose=0,
         random_state=None,
+        with_variance=False,
+        distribution="normal",
+        tree_correlation=None,
+        studentt_degrees_of_freedom=3,
     ):
         super(HistGradientBoostingRegressor, self).__init__(
             loss=loss,
@@ -1441,24 +1549,183 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
             random_state=random_state,
         )
         self.quantile = quantile
+        self.with_variance = with_variance
+        self.distribution = distribution
+        self.tree_correlation = tree_correlation
+        self.studentt_degrees_of_freedom = studentt_degrees_of_freedom
 
-    def predict(self, X):
+    def fit(self, X, y, sample_weight=None):
+        """Fit the gradient boosting model.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The input samples.
+
+        y : array-like of shape (n_samples,)
+            Target values.
+
+        sample_weight : array-like of shape (n_samples,) default=None
+            Weights of training data.
+
+            .. versionadded:: 0.23
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
+        return super().fit(X, y, sample_weight, self.with_variance)
+
+    def predict(self, X, return_std=False):
         """Predict values for X.
+
+        Optionally also returns the standard deviation
+        (`return_std=True`) of the predictions.
 
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
             The input samples.
+        return_std : bool, default=False
+            If True, the standard deviation of the input samples are returned
+            along with the mean of the predicted values.
 
         Returns
         -------
         y : ndarray, shape (n_samples,)
             The predicted values.
+        y_std : ndarray, shape (n_samples,), optional
+            The standard deviation of the predicted values.
+            Only returned when `return_std=True`.
         """
         check_is_fitted(self)
-        # Return inverse link of raw predictions after converting
-        # shape (n_samples, 1) to (n_samples,)
-        return self._loss.link.inverse(self._raw_predict(X).ravel())
+        if return_std:
+            if not self._is_fitted_with_variance:
+                raise ValueError(
+                    "The model was not fit with variance. Set "
+                    "'with_variance=True' at model initialization."
+                )
+            if self.tree_correlation is not None:
+                self._tree_correlation = self.tree_correlation
+            # Get raw predictions and raw variances
+            mean_raw, variance_raw = self._raw_predict(X, return_var=True)
+            mean_raw, variance_raw = mean_raw.ravel(), variance_raw.ravel()
+
+            # Invert the link to get the empirical mean and variances.
+            # For the variance, we use a second-order Taylor expansion to approximate
+            # the variance based on the raw variance
+            # See also: https://en.wikipedia.org/wiki/Taylor_expansions_for_\
+            # the_moments_of_functions_of_random_variables
+            # (Note: for the identity link, raw_variance==variance)
+            y = self._loss.link.inverse(mean_raw)
+            y_var = (
+                self._loss.link.derivative(y) ** 2 * variance_raw
+                - 0.25 * self._loss.link.second_derivative(y) ** 2 * variance_raw**2
+            )
+            # Ensure the variance is positive, and sqrt to get std
+            y_std = np.sqrt(np.clip(y_var, 1e-15, None))
+            return y, y_std
+        else:
+            # Return inverse link of raw predictions after converting
+            # shape (n_samples, 1) to (n_samples,)
+            return self._loss.link.inverse(self._raw_predict(X).ravel())
+
+    def sample(
+        self,
+        y,
+        y_std,
+        n_estimates=1,
+        random_state=0,
+    ):
+        """Draw estimates from a distribution.
+
+        This allows to draw samples from a distribution parameterized
+        with an empirical mean and standard deviation.
+
+        Parameters
+        ----------
+        y : array-like, shape (n_samples,)
+            The empirical mean of the predicted values.
+        y_std : array-like, shape (n_samples,)
+            The empirical standard deviation of the predicted values.
+        n_estimates : int, default=1
+            Number of estimates drawn from the distribution.
+        random_state : int, RandomState instance or None, default=0
+            Determines random number generation to randomly draw estimates.
+            Pass an int for reproducible results across multiple function
+            calls.
+            See :term:`Glossary <random_state>`.
+
+        Returns
+        -------
+        y : ndarray, shape (n_estimates, n_samples)
+            The predicted distribution of values for each sample.
+        """
+        check_is_fitted(self)
+        assert (
+            y.shape == y_std.shape
+        ), "Mean and standard deviation should have equal shapes."
+        assert np.all(y_std > 0.0), "Standard deviation should be strictly positive."
+
+        # Parameterize a distribution and sample from the distribution
+        rng = check_random_state(random_state)
+        variance = y_std**2
+        if self.distribution == "normal":
+            loc = y
+            scale = np.sqrt(variance)
+            yhat = rng.normal(loc, scale, (n_estimates, loc.shape[0]))
+        elif self.distribution == "studentt":
+            v = self.studentt_degrees_of_freedom
+            loc = y
+            factor = v / (v - 2)
+            yhat = (
+                rng.standard_t(v, (n_estimates, loc.shape[0]))
+                * np.sqrt(variance / factor)
+                + loc
+            )
+        elif self.distribution == "laplace":
+            loc = y
+            scale = np.sqrt(0.5 * variance)
+            yhat = rng.laplace(loc, scale, (n_estimates, loc.shape[0]))
+        elif self.distribution == "logistic":
+            loc = y
+            scale = np.sqrt((3 * variance) / np.pi**2)
+            yhat = rng.logistic(loc, scale, (n_estimates, loc.shape[0]))
+        elif self.distribution == "lognormal":
+            loc = np.log(y**2 / np.sqrt(variance + y**2))
+            scale = np.log(1 + variance / y**2)
+            yhat = np.exp(rng.normal(loc, np.sqrt(scale), (n_estimates, loc.shape[0])))
+        elif self.distribution == "gumbel":
+            scale = np.sqrt(6 * variance / np.pi**2)
+            loc = y - scale * np.euler_gamma
+            yhat = rng.gumbel(loc, scale, (n_estimates, y.shape[0]))
+        elif self.distribution == "gamma":
+            assert np.all(
+                y > 0.0
+            ), "Mean should be strictly positive for Gamma distribution."
+            shape = y**2 / variance
+            scale = y / shape
+            yhat = rng.gamma(shape, scale, (n_estimates, y.shape[0]))
+        elif self.distribution == "poisson":
+            assert np.all(
+                y > 0.0
+            ), "Mean should be strictly positive for Poisson distribution."
+            lam = y
+            yhat = rng.poisson(lam, (n_estimates, y.shape[0]))
+        elif self.distribution == "negativebinomial":
+            assert np.all(
+                y > 0.0
+            ), "Mean should be strictly positive for Negative Binomial distribution."
+            loc = y
+            scale = np.maximum(loc + 1e-15, variance)
+            p = np.clip(loc / scale, 1e-15, 1 - 1e-15)
+            n = np.clip(-(loc**2) / (loc - scale), 1e-15, None)
+            yhat = rng.negative_binomial(n, p, (n_estimates, y.shape[0]))
+        else:
+            raise NotImplementedError("Distribution not supported")
+
+        return yhat
 
     def staged_predict(self, X):
         """Predict regression target for each iteration.
@@ -1817,6 +2084,29 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
             return sample_weight * expanded_class_weight
         else:
             return expanded_class_weight
+
+    def fit(self, X, y, sample_weight=None):
+        """Fit the gradient boosting model.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The input samples.
+
+        y : array-like of shape (n_samples,)
+            Target values.
+
+        sample_weight : array-like of shape (n_samples,) default=None
+            Weights of training data.
+
+            .. versionadded:: 0.23
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+        """
+        return super().fit(X, y, sample_weight, with_variance=False)
 
     def predict(self, X):
         """Predict classes for X.

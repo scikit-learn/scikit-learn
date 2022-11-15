@@ -149,6 +149,50 @@ class BaseLink(ABC):
             Output array, element-wise inverse link function.
         """
 
+    @abstractmethod
+    def derivative(self, y_pred, out=None):
+        """Compute the derivative of the link function dg/dy_pred.
+
+        The derivative of the link function can be used to map statistics
+        obtained in link-space back to non-link-space, such as variance.
+
+        Parameters
+        ----------
+        y_pred : array
+            Predicted target values.
+        out : array
+            A location into which the result is stored. If provided, it must
+            have a shape that the inputs broadcast to. If not provided or None,
+            a freshly-allocated array is returned.
+
+        Returns
+        -------
+        out : array
+            Output array, element-wise derivative of link function.
+        """
+
+    @abstractmethod
+    def second_derivative(self, y_pred, out=None):
+        """Compute the second derivative of the link function d^2g/dy_pred^2.
+
+        The second derivative of the link function can be used to map statistics
+        obtained in link-space back to non-link-space, such as variance.
+
+        Parameters
+        ----------
+        y_pred : array
+            Predicted target values.
+        out : array
+            A location into which the result is stored. If provided, it must
+            have a shape that the inputs broadcast to. If not provided or None,
+            a freshly-allocated array is returned.
+
+        Returns
+        -------
+        out : array
+            Output array, element-wise second-derivative of link function.
+        """
+
 
 class IdentityLink(BaseLink):
     """The identity link function g(x)=x."""
@@ -162,6 +206,20 @@ class IdentityLink(BaseLink):
 
     inverse = link
 
+    def derivative(self, y_pred, out=None):
+        if out is not None:
+            np.copyto(out, 1)
+            return out
+        else:
+            return np.ones_like(y_pred)
+
+    def second_derivative(self, y_pred, out=None):
+        if out is not None:
+            np.copyto(out, 0)
+            return out
+        else:
+            return np.zeros_like(y_pred)
+
 
 class LogLink(BaseLink):
     """The log link function g(x)=log(x)."""
@@ -174,6 +232,12 @@ class LogLink(BaseLink):
     def inverse(self, raw_prediction, out=None):
         return np.exp(raw_prediction, out=out)
 
+    def derivative(self, y_pred, out=None):
+        return np.divide(1, y_pred, out=out)
+
+    def second_derivative(self, y_pred, out=None):
+        return np.divide(-1, y_pred**2, out=out)
+
 
 class LogitLink(BaseLink):
     """The logit link function g(x)=logit(x)."""
@@ -185,6 +249,12 @@ class LogitLink(BaseLink):
 
     def inverse(self, raw_prediction, out=None):
         return expit(raw_prediction, out=out)
+
+    def derivative(self, y_pred, out=None):
+        return np.divide(-1, y_pred * (y_pred - 1), out=out)
+
+    def second_derivative(self, y_pred, out=None):
+        return np.divide(2 * y_pred - 1, y_pred**2 * (y_pred - 1) ** 2, out=out)
 
 
 class MultinomialLogit(BaseLink):
@@ -251,6 +321,12 @@ class MultinomialLogit(BaseLink):
             np.copyto(out, raw_prediction)
             softmax(out, copy=False)
             return out
+
+    def derivative(self, y_pred, out=None):
+        raise NotImplementedError
+
+    def second_derivative(self, y_pred, out=None):
+        raise NotImplementedError
 
 
 _LINKS = {

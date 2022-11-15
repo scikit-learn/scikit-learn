@@ -42,7 +42,7 @@ class TreePredictor:
         """Return maximum depth among all leaves."""
         return int(self.nodes["depth"].max())
 
-    def predict(self, X, known_cat_bitsets, f_idx_map, n_threads):
+    def predict(self, X, known_cat_bitsets, f_idx_map, n_threads, return_var=False):
         """Predict raw values for non-binned data.
 
         Parameters
@@ -60,24 +60,51 @@ class TreePredictor:
         n_threads : int
             Number of OpenMP threads to use.
 
+        return_var : bool, default=False
+            If True, the variance of the raw predictions are returned
+            along with the mean of the raw predictions.
+
         Returns
         -------
         y : ndarray, shape (n_samples,)
             The raw predicted values.
-        """
-        out = np.empty(X.shape[0], dtype=Y_DTYPE)
-        _predict_from_raw_data(
-            self.nodes,
-            X,
-            self.raw_left_cat_bitsets,
-            known_cat_bitsets,
-            f_idx_map,
-            n_threads,
-            out,
-        )
-        return out
+        y_var : ndarray, shape (n_samples,)
+            The raw variance of the predicted values. Only returned when
+            `return_var`=True.
 
-    def predict_binned(self, X, missing_values_bin_idx, n_threads):
+        """
+        if return_var:
+            out = np.empty(X.shape[0], dtype=Y_DTYPE)
+            out_variance = np.empty(X.shape[0], dtype=Y_DTYPE)
+            _predict_from_raw_data(
+                self.nodes,
+                X,
+                self.raw_left_cat_bitsets,
+                known_cat_bitsets,
+                f_idx_map,
+                n_threads,
+                out,
+                out_variance,
+                return_var,
+            )
+            return out, out_variance
+        else:
+            out = np.empty(X.shape[0], dtype=Y_DTYPE)
+            out_variance = np.empty(1, dtype=Y_DTYPE)
+            _predict_from_raw_data(
+                self.nodes,
+                X,
+                self.raw_left_cat_bitsets,
+                known_cat_bitsets,
+                f_idx_map,
+                n_threads,
+                out,
+                out_variance,
+                return_var,
+            )
+            return out
+
+    def predict_binned(self, X, missing_values_bin_idx, n_threads, return_var=False):
         """Predict raw values for binned data.
 
         Parameters
@@ -90,22 +117,48 @@ class TreePredictor:
             to the GBDT classes), or equivalently to n_bins - 1.
         n_threads : int
             Number of OpenMP threads to use.
+        return_var : bool, default=False
+            If True, the variance of the raw predictions are returned
+            along with the mean of the raw predictions.
+
 
         Returns
         -------
         y : ndarray, shape (n_samples,)
             The raw predicted values.
+        y_var : ndarray, shape (n_samples,)
+            The raw variance of the predicted values. Only returned when
+            `return_var`=True.
+
         """
-        out = np.empty(X.shape[0], dtype=Y_DTYPE)
-        _predict_from_binned_data(
-            self.nodes,
-            X,
-            self.binned_left_cat_bitsets,
-            missing_values_bin_idx,
-            n_threads,
-            out,
-        )
-        return out
+        if return_var:
+            out = np.empty(X.shape[0], dtype=Y_DTYPE)
+            out_variance = np.empty(X.shape[0], dtype=Y_DTYPE)
+            _predict_from_binned_data(
+                self.nodes,
+                X,
+                self.binned_left_cat_bitsets,
+                missing_values_bin_idx,
+                n_threads,
+                out,
+                out_variance,
+                return_var,
+            )
+            return out, out_variance
+        else:
+            out = np.empty(X.shape[0], dtype=Y_DTYPE)
+            out_variance = np.empty(1, dtype=Y_DTYPE)
+            _predict_from_binned_data(
+                self.nodes,
+                X,
+                self.binned_left_cat_bitsets,
+                missing_values_bin_idx,
+                n_threads,
+                out,
+                out_variance,
+                return_var,
+            )
+            return out
 
     def compute_partial_dependence(self, grid, target_features, out):
         """Fast partial dependence computation.

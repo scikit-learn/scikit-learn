@@ -310,6 +310,12 @@ Changelog
   :user:`Nestor Navarro <nestornav>`, :user:`Nati Tomattis <natitomattis>`,
   and :user:`Vincent Maladiere <Vincent-Maladiere>`.
 
+- |Enhancement| :class:`ensemble.HistGradientBoostingRegressor` now includes the
+  possibility to produce probabilistic estimates by storing the variances of the
+  estimates during training by setting `with_variance=True`. Probabilistic estimates
+  can be subsequently generated using the new `sample` method.
+  :pr:`24810` by :user:`Olivier Sprangers <elephaint>`.
+
 - |Fix| Fixed the issue where :class:`ensemble.AdaBoostClassifier` outputs
   NaN in feature importance when fitted with very small sample weight.
   :pr:`20415` by :user:`Zhehao Liu <MaxwellLZH>`.
