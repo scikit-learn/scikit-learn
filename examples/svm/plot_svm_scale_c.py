@@ -80,36 +80,34 @@ from sklearn.model_selection import validation_curve, ShuffleSplit
 
 Cs = np.logspace(-2.3, -1.3, 10)
 train_sizes = np.linspace(0.3, 0.7, 3)
+labels = [f"fraction: {train_size}" for train_size in train_sizes]
 
 results = {"C": Cs}
-for train_size in train_sizes:
+for label, train_size in zip(labels, train_sizes):
     cv = ShuffleSplit(train_size=train_size, test_size=0.3, n_splits=50, random_state=1)
     train_scores, test_scores = validation_curve(
         model_l1, X, y, param_name="C", param_range=Cs, cv=cv
     )
-    results[f"fraction: {train_size}"] = test_scores.mean(axis=1)
-results = pd.DataFrame(results).set_index("C")
+    results[label] = test_scores.mean(axis=1)
+results = pd.DataFrame(results)
 
 # %%
-# Finally, we can plot the results with and without scaling the parameter `C`
-# depending of the size of the training set.
 import matplotlib.pyplot as plt
 
 fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(12, 6))
 
 # plot results without scaling C
-results.plot(ax=axes[0], logx=True)
+results.plot(x="C", ax=axes[0], logx=True)
 axes[0].set_ylabel("CV score")
-axes[0].set_title(f"scaling=No scaling, penalty={penalty!r}, loss={loss!r}")
+axes[0].set_title("No scaling")
 
 # plot results by scaling C
-for train_size_idx, fraction in enumerate(results):
-    results_scaled = results[fraction]
-    results_scaled.index *= float(n_samples * train_sizes[train_size_idx])
-    results_scaled.plot(ax=axes[1], logx=True, label=fraction)
-axes[1].legend()
-axes[1].set_title(f"scaling=1/n_samples, penalty={penalty!r}, loss={loss!r}")
-axes[1].set_ylabel("CV score")
+for train_size_idx, label in enumerate(labels):
+    results_scaled = results[[label]].assign(
+        C_scaled=Cs * float(n_samples * train_sizes[train_size_idx])
+    )
+    results_scaled.plot(x="C_scaled", ax=axes[1], logx=True, label=label)
+axes[1].set_title("Scaling C by 1 / n_samples")
 
 _ = fig.suptitle("Effect of scaling C with L1 penalty")
 
@@ -138,14 +136,15 @@ X += 5 * rng.randn(n_samples, n_features // 5)
 model_l2 = LinearSVC(penalty="l2", loss="squared_hinge", dual=True)
 Cs = np.logspace(-4.5, -2, 10)
 
+labels = [f"fraction: {train_size}" for train_size in train_sizes]
 results = {"C": Cs}
-for train_size in train_sizes:
+for label, train_size in zip(labels, train_sizes):
     cv = ShuffleSplit(train_size=train_size, test_size=0.3, n_splits=50, random_state=1)
     train_scores, test_scores = validation_curve(
         model_l2, X, y, param_name="C", param_range=Cs, cv=cv
     )
-    results[f"fraction: {train_size}"] = test_scores.mean(axis=1)
-results = pd.DataFrame(results).set_index("C")
+    results[label] = test_scores.mean(axis=1)
+results = pd.DataFrame(results)
 
 # %%
 import matplotlib.pyplot as plt
@@ -153,18 +152,17 @@ import matplotlib.pyplot as plt
 fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(12, 6))
 
 # plot results without scaling C
-results.plot(ax=axes[0], logx=True)
+results.plot(x="C", ax=axes[0], logx=True)
 axes[0].set_ylabel("CV score")
-axes[0].set_title(f"scaling=No scaling, penalty={penalty!r}, loss={loss!r}")
+axes[0].set_title("No scaling")
 
 # plot results by scaling C
-for train_size_idx, fraction in enumerate(results):
-    results_scaled = results[fraction]
-    results_scaled.index *= float(n_samples * train_sizes[train_size_idx])
-    results_scaled.plot(ax=axes[1], logx=True, label=fraction)
-axes[1].legend()
-axes[1].set_title(f"scaling=1/n_samples, penalty={penalty!r}, loss={loss!r}")
-axes[1].set_ylabel("CV score")
+for train_size_idx, label in enumerate(labels):
+    results_scaled = results[[label]].assign(
+        C_scaled=Cs * float(n_samples * train_sizes[train_size_idx])
+    )
+    results_scaled.plot(x="C_scaled", ax=axes[1], logx=True, label=label)
+axes[1].set_title("Scaling C by 1 / n_samples")
 
 _ = fig.suptitle("Effect of scaling C with L2 penalty")
 
