@@ -1196,10 +1196,6 @@ Changelog
   then `get_output_feature_names` is not defined.
   :pr:`21569` by :user:`Aurélien Geron <ageron>`.
 
-- |Enhancement| Added support for `sample_weight` in :class:`preprocessing.KBinsDiscretizer`.
-  This allows specifying the parameter weights for each sample to be used while
-  fitting. The option is only available when `strategy` is set to `quantile`.
-  :pr:`22048` by :user:`Seladus <seladus>`.
 - |Enhancement| Adds :term:`get_feature_names_out` to
   :class:`preprocessing.Normalizer`,
   :class:`preprocessing.KernelCenterer`,

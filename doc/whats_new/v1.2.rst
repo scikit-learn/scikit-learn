@@ -564,6 +564,11 @@ Changelog
 - |Fix| :class:`preprocessing.LabelEncoder` correctly encodes NaNs in `transform`.
   :pr:`22629` by `Thomas Fan`_.
 
+- |Enhancement| Added support for `sample_weight` in :class:`preprocessing.KBinsDiscretizer`.
+  This allows specifying the parameter weights for each sample to be used while
+  fitting. The option is only available when `strategy` is set to `quantile`.
+  :pr:`22048` by :user:`Seladus <seladus>`.
+
 :mod:`sklearn.svm`
 ..................
 

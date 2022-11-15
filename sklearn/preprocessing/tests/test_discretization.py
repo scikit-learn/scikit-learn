@@ -50,24 +50,6 @@ def test_valid_n_bins():
     assert KBinsDiscretizer(n_bins=2).fit(X).n_bins_.dtype == np.dtype(int)
 
 
-def test_invalid_n_bins():
-    est = KBinsDiscretizer(n_bins=1)
-    err_msg = (
-        "KBinsDiscretizer received an invalid number of bins. Received 1, expected at"
-        " least 2."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        est.fit_transform(X)
-
-    est = KBinsDiscretizer(n_bins=1.1)
-    err_msg = (
-        "KBinsDiscretizer received an invalid n_bins type. Received float, expected"
-        " int."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        est.fit_transform(X)
-
-
 def test_invalid_sample_weight():
     # sample_weight parameter is used with wrong strategy (other than quantile)
     strategy = ["uniform", "kmeans"]
