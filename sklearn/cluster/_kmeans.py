@@ -1606,7 +1606,6 @@ class KMeans(_BaseKMeans):
             Fitted estimator.
         """
         self._validate_params()
-        self._check_params_vs_input(X)
 
         engine = self._get_engine(X, y, sample_weight, reset=True)
 
