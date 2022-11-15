@@ -159,7 +159,9 @@ def _load_imgs(file_paths, slice_, color, resize):
         # Checks if jpeg reading worked. Refer to issue #3594 for more
         # details.
         pil_img = Image.open(file_path)
-        pil_img.crop((w_slice.start, h_slice.start, w_slice.stop, h_slice.stop))
+        pil_img = pil_img.crop(
+            (w_slice.start, h_slice.start, w_slice.stop, h_slice.stop)
+        )
         if resize is not None:
             pil_img = pil_img.resize((w, h))
         face = np.asarray(pil_img, dtype=np.float32)
