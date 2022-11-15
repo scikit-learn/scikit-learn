@@ -204,7 +204,6 @@ common_params = {
     "negate_score": True,
     "score_name": "Mean Squared Error",
     "std_display_style": None,
-    "cv": 10,
     "ax": ax,
 }
 
