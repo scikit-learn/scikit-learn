@@ -6,20 +6,13 @@ IsolationForest example
 An example using :class:`~sklearn.ensemble.IsolationForest` for anomaly
 detection.
 
-The IsolationForest 'isolates' observations by randomly selecting a feature and
-then randomly selecting a split value between the maximum and minimum values of
-the selected feature.
+The :ref:`isolation_forest` is an ensemble of "Isolation Trees" that "isolate"
+observations by recursive random partitioning, which can be represented by a
+tree structure. The number of splittings required to isolate a sample is lower
+for outliers and higher for inliers.
 
-Since recursive partitioning can be represented by a tree structure, the number
-of splittings required to isolate a sample is equivalent to the path length from
-the root node to the terminating node.
-
-This path length, averaged over a forest of such random trees, is a measure of
-normality and our decision function.
-
-Random partitioning produces noticeable shorter paths for anomalies. Hence, when
-a forest of random trees collectively produce shorter path lengths for
-particular samples, they are highly likely to be anomalies.
+In the present example we demo two ways to visualize the decision boundary of an
+Isolation Forest trained on a toy dataset.
 
 """
 
@@ -34,8 +27,8 @@ particular samples, they are highly likely to be anomalies.
 #
 # For consistency with the :class:`~sklearn.ensemble.IsolationForest` notation,
 # the inliers (i.e. the gaussian clusters) are assigned a ground truth label `1`
-# whereas the outliers (created with `numpy.random.uniform`) are assigned the
-# label `-1`.
+# whereas the outliers (created with :func:`numpy.random.uniform`) are assigned
+# the label `-1`.
 
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -67,17 +60,25 @@ plt.title("Gaussian inliers with \nuniformly distributed outliers")
 plt.show()
 
 # %%
-# We train the model and use the class
-# :class:`~sklearn.inspection.DecisionBoundaryDisplay` to visualize a discrete
-# decision boundary to determine whether a particular sample is an outlier or
-# not.
+# Training of the model
+# ---------------------
 
-import matplotlib.pyplot as plt
-from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.ensemble import IsolationForest
 
 clf = IsolationForest(max_samples=100, random_state=0)
 clf.fit(X_train)
+
+# %%
+# Plot discrete decision boundary
+# -------------------------------
+#
+# We use the class :class:`~sklearn.inspection.DecisionBoundaryDisplay` to
+# visualize a discrete decision boundary. The background color represents
+# whether a sample in that given area is predicted to be an outlier
+# or not. The scatter plot displays the true labels.
+
+import matplotlib.pyplot as plt
+from sklearn.inspection import DecisionBoundaryDisplay
 
 disp = DecisionBoundaryDisplay.from_estimator(
     clf,
@@ -92,11 +93,19 @@ plt.legend(handles=handles, labels=["outliers", "inliers"], title="true class")
 plt.show()
 
 # %%
-# By setting the `response_method="decision_function"`, the
-# :class:`~sklearn.inspection.DecisionBoundaryDisplay` plots instead the measure
-# of normality of an observation, which is given by the depth of the leaf (or
-# equivalently the number of splits) required to isolate a sample in a given
-# position.
+# Plot path length decision boundary
+# ----------------------------------
+#
+# By setting the `response_method="decision_function"`, the background of the
+# :class:`~sklearn.inspection.DecisionBoundaryDisplay` represents the measure of
+# normality of an observation. Such score is given by the path length averaged
+# over a forest of random trees, which itself is given by the depth of the leaf
+# (or equivalently the number of splits) required to isolate a given sample.
+#
+# When a forest of random trees collectively produce short path lengths for
+# isolating some particular samples, they are highly likely to be anomalies and
+# the measure of normality is close to `0`. Similarly, large paths correspond to
+# values close to `1` and are more likely to be inliers.
 
 disp = DecisionBoundaryDisplay.from_estimator(
     clf,
