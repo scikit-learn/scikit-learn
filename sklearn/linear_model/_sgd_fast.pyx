@@ -360,16 +360,16 @@ cdef class SquaredEpsilonInsensitive(Regression):
         return SquaredEpsilonInsensitive, (self.epsilon,)
 
 
-def _plain_sgd(double[::1] weights,
+def _plain_sgd(const double[::1] weights,
                double intercept,
-               double[::1] average_weights,
+               const double[::1] average_weights,
                double average_intercept,
                LossFunction loss,
                int penalty_type,
                double alpha, double C,
                double l1_ratio,
                SequentialDataset dataset,
-               unsigned char[::1] validation_mask,
+               const unsigned char[::1] validation_mask,
                bint early_stopping, validation_score_cb,
                int n_iter_no_change,
                int max_iter, double tol, int fit_intercept,
@@ -479,10 +479,8 @@ def _plain_sgd(double[::1] weights,
     cdef Py_ssize_t n_features = weights.shape[0]
 
     cdef WeightVector w = WeightVector(weights, average_weights)
-    cdef double* w_ptr = &weights[0]
     cdef double *x_data_ptr = NULL
     cdef int *x_ind_ptr = NULL
-    cdef double* ps_ptr = NULL
 
     # helper variables
     cdef int no_improvement_count = 0
@@ -501,17 +499,14 @@ def _plain_sgd(double[::1] weights,
     cdef double class_weight = 1.0
     cdef unsigned int count = 0
     cdef unsigned int train_count = n_samples - np.sum(validation_mask)
-    cdef unsigned int epoch = 0
+    cdef int epoch = 0
     cdef unsigned int i = 0
     cdef int is_hinge = isinstance(loss, Hinge)
     cdef double optimal_init = 0.0
     cdef double dloss = 0.0
     cdef double MAX_DLOSS = 1e12
-    cdef double max_change = 0.0
-    cdef double max_weight = 0.0
 
     cdef long long sample_index
-    cdef unsigned char [:] validation_mask_view = validation_mask
 
     # q vector is only used for L1 regularization
     cdef double[::1] q = None
@@ -537,7 +532,7 @@ def _plain_sgd(double[::1] weights,
 
     t_start = time()
     with nogil:
-        for epoch in range(<Py_ssize_t>max_iter):
+        for epoch in range(max_iter):
             sumloss = 0
             if verbose > 0:
                 with gil:
@@ -549,7 +544,7 @@ def _plain_sgd(double[::1] weights,
                              &y, &sample_weight)
 
                 sample_index = dataset.index_data_ptr[dataset.current_index]
-                if validation_mask_view[sample_index]:
+                if validation_mask[sample_index]:
                     # do not learn on the validation set
                     continue
 
@@ -645,7 +640,7 @@ def _plain_sgd(double[::1] weights,
             # evaluate the score on the validation set
             if early_stopping:
                 with gil:
-                    score = validation_score_cb(np.asarray(weights), intercept)
+                    score = validation_score_cb(weights.base, intercept)
                 if tol > -INFINITY and score < best_score + tol:
                     no_improvement_count += 1
                 else:
@@ -681,15 +676,15 @@ def _plain_sgd(double[::1] weights,
     w.reset_wscale()
 
     return (
-        np.asarray(weights),
+        weights.base,
         intercept,
-        np.asarray(average_weights),
+        None if average_weights is None else average_weights.base,
         average_intercept,
         epoch + 1
     )
 
 
-cdef bint any_nonfinite(double *w, int n) nogil:
+cdef bint any_nonfinite(const double *w, int n) nogil:
     for i in range(n):
         if not skl_isfinite(w[i]):
             return True
