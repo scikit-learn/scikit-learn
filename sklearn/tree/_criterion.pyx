@@ -17,8 +17,8 @@ from libc.string cimport memset
 from libc.math cimport fabs
 
 import numpy as np
-cimport numpy as np
-np.import_array()
+cimport numpy as cnp
+cnp.import_array()
 
 from numpy.math cimport INFINITY
 from scipy.special.cython_special cimport xlogy
@@ -197,7 +197,7 @@ cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
 
     def __cinit__(self, SIZE_t n_outputs,
-                  np.ndarray[SIZE_t, ndim=1] n_classes):
+                  cnp.ndarray[SIZE_t, ndim=1] n_classes):
         """Initialize attributes for this criterion.
 
         Parameters
@@ -364,7 +364,6 @@ cdef class ClassificationCriterion(Criterion):
         cdef SIZE_t p
         cdef SIZE_t k
         cdef SIZE_t c
-        cdef SIZE_t label_index
         cdef DOUBLE_t w = 1.0
 
         # Update statistics up to new_pos
@@ -874,8 +873,8 @@ cdef class MAE(RegressionCriterion):
        MAE = (1 / n)*(\sum_i |y_i - f_i|), where y_i is the true
        value and f_i is the predicted value."""
 
-    cdef np.ndarray left_child
-    cdef np.ndarray right_child
+    cdef cnp.ndarray left_child
+    cdef cnp.ndarray right_child
     cdef DOUBLE_t[::1] node_medians
 
     def __cinit__(self, SIZE_t n_outputs, SIZE_t n_samples):
@@ -1298,15 +1297,9 @@ cdef class Poisson(RegressionCriterion):
         i.e. the impurity of the left child (samples[start:pos]) and the
         impurity of the right child (samples[pos:end]) for Poisson.
         """
-        cdef const DOUBLE_t[:, ::1] y = self.y
-
         cdef SIZE_t start = self.start
         cdef SIZE_t pos = self.pos
         cdef SIZE_t end = self.end
-
-        cdef SIZE_t i, p, k
-        cdef DOUBLE_t y_mean = 0.
-        cdef DOUBLE_t w = 1.0
 
         impurity_left[0] = self.poisson_loss(start, pos, self.sum_left,
                                              self.weighted_n_left)

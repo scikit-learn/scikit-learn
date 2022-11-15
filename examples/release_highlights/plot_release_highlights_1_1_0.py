@@ -26,7 +26,6 @@ or with conda::
 # ----------------------------------------------------------------
 # :class:`ensemble.HistGradientBoostingRegressor` can model quantiles with
 # `loss="quantile"` and the new parameter `quantile`.
-from sklearn.datasets import make_regression
 from sklearn.ensemble import HistGradientBoostingRegressor
 import numpy as np
 import matplotlib.pyplot as plt
@@ -67,7 +66,9 @@ from sklearn.feature_selection import SelectKBest
 from sklearn.datasets import fetch_openml
 from sklearn.linear_model import LogisticRegression
 
-X, y = fetch_openml("titanic", version=1, as_frame=True, return_X_y=True)
+X, y = fetch_openml(
+    "titanic", version=1, as_frame=True, return_X_y=True, parser="pandas"
+)
 numeric_features = ["age", "fare"]
 numeric_transformer = make_pipeline(SimpleImputer(strategy="median"), StandardScaler())
 categorical_features = ["embarked", "pclass"]
@@ -77,7 +78,7 @@ preprocessor = ColumnTransformer(
         ("num", numeric_transformer, numeric_features),
         (
             "cat",
-            OneHotEncoder(handle_unknown="ignore", sparse=False),
+            OneHotEncoder(handle_unknown="ignore", sparse_output=False),
             categorical_features,
         ),
     ],
@@ -112,7 +113,7 @@ import numpy as np
 X = np.array(
     [["dog"] * 5 + ["cat"] * 20 + ["rabbit"] * 10 + ["snake"] * 3], dtype=object
 ).T
-enc = OneHotEncoder(min_frequency=6, sparse=False).fit(X)
+enc = OneHotEncoder(min_frequency=6, sparse_output=False).fit(X)
 enc.infrequent_categories_
 
 # %%
@@ -210,7 +211,7 @@ import matplotlib.pyplot as plt
 
 X, _ = make_blobs(n_samples=1000, centers=2, random_state=0)
 
-km = KMeans(n_clusters=5, random_state=0).fit(X)
+km = KMeans(n_clusters=5, random_state=0, n_init="auto").fit(X)
 bisect_km = BisectingKMeans(n_clusters=5, random_state=0).fit(X)
 
 fig, ax = plt.subplots(1, 2, figsize=(10, 5))

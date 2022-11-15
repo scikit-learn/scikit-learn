@@ -46,7 +46,7 @@ import seaborn as sns
 
 from sklearn.datasets import fetch_openml
 
-survey = fetch_openml(data_id=534, as_frame=True)
+survey = fetch_openml(data_id=534, as_frame=True, parser="pandas")
 
 # %%
 # Then, we identify features `X` and targets `y`: the column WAGE is our
@@ -330,7 +330,7 @@ coefs = pd.DataFrame(
 
 # %%
 plt.figure(figsize=(9, 7))
-sns.stripplot(data=coefs, orient="h", color="k", alpha=0.5)
+sns.stripplot(data=coefs, orient="h", palette="dark:k", alpha=0.5)
 sns.boxplot(data=coefs, orient="h", color="cyan", saturation=0.5, whis=10)
 plt.axvline(x=0, color=".5")
 plt.xlabel("Coefficient importance")
@@ -389,7 +389,7 @@ coefs = pd.DataFrame(
 
 # %%
 plt.figure(figsize=(9, 7))
-sns.stripplot(data=coefs, orient="h", color="k", alpha=0.5)
+sns.stripplot(data=coefs, orient="h", palette="dark:k", alpha=0.5)
 sns.boxplot(data=coefs, orient="h", color="cyan", saturation=0.5)
 plt.axvline(x=0, color=".5")
 plt.title("Coefficient importance and its variability")
@@ -492,7 +492,7 @@ coefs = pd.DataFrame(
 
 # %%
 plt.figure(figsize=(9, 7))
-sns.stripplot(data=coefs, orient="h", color="k", alpha=0.5)
+sns.stripplot(data=coefs, orient="h", palette="dark:k", alpha=0.5)
 sns.boxplot(data=coefs, orient="h", color="cyan", saturation=0.5, whis=10)
 plt.axvline(x=0, color=".5")
 plt.title("Coefficient variability")
@@ -699,7 +699,7 @@ coefs = pd.DataFrame(
 
 # %%
 plt.figure(figsize=(9, 7))
-sns.stripplot(data=coefs, orient="h", color="k", alpha=0.5)
+sns.stripplot(data=coefs, orient="h", palette="dark:k", alpha=0.5)
 sns.boxplot(data=coefs, orient="h", color="cyan", saturation=0.5, whis=100)
 plt.axvline(x=0, color=".5")
 plt.title("Coefficient variability")

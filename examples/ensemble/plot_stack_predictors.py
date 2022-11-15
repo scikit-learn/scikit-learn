@@ -45,7 +45,7 @@ from sklearn.utils import shuffle
 
 
 def load_ames_housing():
-    df = fetch_openml(name="house_prices", as_frame=True)
+    df = fetch_openml(name="house_prices", as_frame=True, parser="pandas")
     X = df.data
     y = df.target
 
@@ -72,11 +72,11 @@ def load_ames_housing():
         "MoSold",
     ]
 
-    X = X[features]
+    X = X.loc[:, features]
     X, y = shuffle(X, y, random_state=0)
 
-    X = X[:600]
-    y = y[:600]
+    X = X.iloc[:600]
+    y = y.iloc[:600]
     return X, np.log(y)
 
 
@@ -117,7 +117,9 @@ from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import OrdinalEncoder
 
 cat_tree_processor = OrdinalEncoder(
-    handle_unknown="use_encoded_value", unknown_value=-1
+    handle_unknown="use_encoded_value",
+    unknown_value=-1,
+    encoded_missing_value=-2,
 )
 num_tree_processor = SimpleImputer(strategy="mean", add_indicator=True)
 

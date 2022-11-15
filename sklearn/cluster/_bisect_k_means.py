@@ -17,7 +17,7 @@ from ..utils._openmp_helpers import _openmp_effective_n_threads
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
 from ..utils.validation import check_random_state
-from ..utils.validation import _is_arraylike_not_scalar
+from ..utils._param_validation import StrOptions
 
 
 class _BisectingTree:
@@ -183,7 +183,7 @@ class BisectingKMeans(_BaseKMeans):
 
     Notes
     -----
-    It might be inefficient when n_cluster is less than 3, due to unnecassary
+    It might be inefficient when n_cluster is less than 3, due to unnecessary
     calculations for that case.
 
     Examples
@@ -203,6 +203,14 @@ class BisectingKMeans(_BaseKMeans):
            [10.,  8.],
            [ 1., 2.]])
     """
+
+    _parameter_constraints: dict = {
+        **_BaseKMeans._parameter_constraints,
+        "init": [StrOptions({"k-means++", "random"}), callable],
+        "copy_x": ["boolean"],
+        "algorithm": [StrOptions({"lloyd", "elkan"})],
+        "bisecting_strategy": [StrOptions({"biggest_inertia", "largest_cluster"})],
+    }
 
     def __init__(
         self,
@@ -232,27 +240,6 @@ class BisectingKMeans(_BaseKMeans):
         self.copy_x = copy_x
         self.algorithm = algorithm
         self.bisecting_strategy = bisecting_strategy
-
-    def _check_params(self, X):
-        super()._check_params(X)
-
-        # algorithm
-        if self.algorithm not in ("lloyd", "elkan"):
-            raise ValueError(
-                "Algorithm must be either 'lloyd' or 'elkan', "
-                f"got {self.algorithm} instead."
-            )
-
-        # bisecting_strategy
-        if self.bisecting_strategy not in ["biggest_inertia", "largest_cluster"]:
-            raise ValueError(
-                "Bisect Strategy must be 'biggest_inertia' or 'largest_cluster'. "
-                f"Got {self.bisecting_strategy} instead."
-            )
-
-        # init
-        if _is_arraylike_not_scalar(self.init):
-            raise ValueError("BisectingKMeans does not support init as array.")
 
     def _warn_mkl_vcomp(self, n_active_threads):
         """Warn when vcomp and mkl are both present"""
@@ -332,7 +319,6 @@ class BisectingKMeans(_BaseKMeans):
                 max_iter=self.max_iter,
                 verbose=self.verbose,
                 tol=self.tol,
-                x_squared_norms=x_squared_norms,
                 n_threads=self._n_threads,
             )
 
@@ -380,6 +366,8 @@ class BisectingKMeans(_BaseKMeans):
         self
             Fitted estimator.
         """
+        self._validate_params()
+
         X = self._validate_data(
             X,
             accept_sparse="csr",
@@ -389,7 +377,8 @@ class BisectingKMeans(_BaseKMeans):
             accept_large_sparse=False,
         )
 
-        self._check_params(X)
+        self._check_params_vs_input(X)
+
         self._random_state = check_random_state(self.random_state)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         self._n_threads = _openmp_effective_n_threads()
@@ -473,13 +462,11 @@ class BisectingKMeans(_BaseKMeans):
         # sample weights are unused but necessary in cython helpers
         sample_weight = np.ones_like(x_squared_norms)
 
-        labels = self._predict_recursive(
-            X, x_squared_norms, sample_weight, self._bisecting_tree
-        )
+        labels = self._predict_recursive(X, sample_weight, self._bisecting_tree)
 
         return labels
 
-    def _predict_recursive(self, X, x_squared_norms, sample_weight, cluster_node):
+    def _predict_recursive(self, X, sample_weight, cluster_node):
         """Predict recursively by going down the hierarchical tree.
 
         Parameters
@@ -487,9 +474,6 @@ class BisectingKMeans(_BaseKMeans):
         X : {ndarray, csr_matrix} of shape (n_samples, n_features)
             The data points, currently assigned to `cluster_node`, to predict between
             the subclusters of this node.
-
-        x_squared_norms : ndarray of shape (n_samples,)
-            Squared euclidean norm of each data point.
 
         sample_weight : ndarray of shape (n_samples,)
             The weights for each observation in X.
@@ -514,7 +498,6 @@ class BisectingKMeans(_BaseKMeans):
         cluster_labels = _labels_inertia_threadpool_limit(
             X,
             sample_weight,
-            x_squared_norms,
             centers,
             self._n_threads,
             return_inertia=False,
@@ -525,11 +508,11 @@ class BisectingKMeans(_BaseKMeans):
         labels = np.full(X.shape[0], -1, dtype=np.int32)
 
         labels[mask] = self._predict_recursive(
-            X[mask], x_squared_norms[mask], sample_weight[mask], cluster_node.left
+            X[mask], sample_weight[mask], cluster_node.left
         )
 
         labels[~mask] = self._predict_recursive(
-            X[~mask], x_squared_norms[~mask], sample_weight[~mask], cluster_node.right
+            X[~mask], sample_weight[~mask], cluster_node.right
         )
 
         return labels

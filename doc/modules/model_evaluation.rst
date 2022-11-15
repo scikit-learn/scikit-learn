@@ -311,6 +311,7 @@ Some of these are restricted to the binary classification case:
 
    precision_recall_curve
    roc_curve
+   class_likelihood_ratios
    det_curve
 
 
@@ -693,10 +694,6 @@ and inferred labels::
     for an example of classification report usage for
     hand-written digits.
 
-  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-    for an example of classification report usage for text
-    documents.
-
   * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
     for an example of classification report usage for
     grid search with nested cross-validation.
@@ -710,17 +707,21 @@ The :func:`hamming_loss` computes the average Hamming loss or `Hamming
 distance <https://en.wikipedia.org/wiki/Hamming_distance>`_ between two sets
 of samples.
 
-If :math:`\hat{y}_j` is the predicted value for the :math:`j`-th label of
-a given sample, :math:`y_j` is the corresponding true value, and
-:math:`n_\text{labels}` is the number of classes or labels, then the
-Hamming loss :math:`L_{Hamming}` between two samples is defined as:
+If :math:`\hat{y}_{i,j}` is the predicted value for the :math:`j`-th label of a
+given sample :math:`i`, :math:`y_{i,j}` is the corresponding true value,
+:math:`n_\text{samples}` is the number of samples and :math:`n_\text{labels}`
+is the number of labels, then the Hamming loss :math:`L_{Hamming}` is defined
+as:
 
 .. math::
 
-   L_{Hamming}(y, \hat{y}) = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} 1(\hat{y}_j \not= y_j)
+   L_{Hamming}(y, \hat{y}) = \frac{1}{n_\text{samples} * n_\text{labels}} \sum_{i=0}^{n_\text{samples}-1} \sum_{j=0}^{n_\text{labels} - 1} 1(\hat{y}_{i,j} \not= y_{i,j})
 
 where :math:`1(x)` is the `indicator function
-<https://en.wikipedia.org/wiki/Indicator_function>`_. ::
+<https://en.wikipedia.org/wiki/Indicator_function>`_.
+
+The equation above does not hold true in the case of multiclass classification.
+Please refer to the note below for more information. ::
 
   >>> from sklearn.metrics import hamming_loss
   >>> y_pred = [1, 2, 3, 4]
@@ -813,10 +814,6 @@ precision-recall curve as follows.
 
 .. topic:: Examples:
 
-  * See :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`
-    for an example of :func:`f1_score` usage to classify  text
-    documents.
-
   * See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
     for an example of :func:`precision_score` and :func:`recall_score` usage
     to estimate parameters using grid search with nested cross-validation.
@@ -833,7 +830,7 @@ precision-recall curve as follows.
      2008.
   .. [Everingham2010] M. Everingham, L. Van Gool, C.K.I. Williams, J. Winn, A. Zisserman,
      `The Pascal Visual Object Classes (VOC) Challenge
-     <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_,
+     <https://citeseerx.ist.psu.edu/doc_view/pid/b6bebfd529b233f00cb854b7d8070319600cf59d>`_,
      IJCV 2010.
   .. [Davis2006] J. Davis, M. Goadrich, `The Relationship Between Precision-Recall and ROC Curves
      <https://www.biostat.wisc.edu/~page/rocpr.pdf>`_,
@@ -875,6 +872,8 @@ In this context, we can define the notions of precision, recall and F-measure:
 .. math::
 
    F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\beta^2 \text{precision} + \text{recall}}.
+
+Sometimes recall is also called ''sensitivity''.
 
 Here are some small examples in binary classification::
 
@@ -996,17 +995,16 @@ The :func:`jaccard_score` function computes the average of `Jaccard similarity
 coefficients <https://en.wikipedia.org/wiki/Jaccard_index>`_, also called the
 Jaccard index, between pairs of label sets.
 
-The Jaccard similarity coefficient of the :math:`i`-th samples,
-with a ground truth label set :math:`y_i` and predicted label set
-:math:`\hat{y}_i`, is defined as
+The Jaccard similarity coefficient with a ground truth label set :math:`y` and
+predicted label set :math:`\hat{y}`, is defined as
 
 .. math::
 
-    J(y_i, \hat{y}_i) = \frac{|y_i \cap \hat{y}_i|}{|y_i \cup \hat{y}_i|}.
+    J(y, \hat{y}) = \frac{|y \cap \hat{y}|}{|y \cup \hat{y}|}.
 
-:func:`jaccard_score` works like :func:`precision_recall_fscore_support` as a
-naively set-wise measure applying natively to binary targets, and extended to
-apply to multilabel and multiclass through the use of `average` (see
+The :func:`jaccard_score` (like :func:`precision_recall_fscore_support`) applies
+natively to binary targets. By computing it set-wise it can be extended to apply
+to multilabel and multiclass through the use of `average` (see
 :ref:`above <average>`).
 
 In the binary case::
@@ -1057,29 +1055,35 @@ the model and the data using
 that considers only prediction errors. (Hinge
 loss is used in maximal margin classifiers such as support vector machines.)
 
-If the labels are encoded with +1 and -1,  :math:`y`: is the true
-value, and :math:`w` is the predicted decisions as output by
-``decision_function``, then the hinge loss is defined as:
+If the true label :math:`y_i` of a binary classification task is encoded as
+:math:`y_i=\left\{-1, +1\right\}` for every sample :math:`i`; and :math:`w_i`
+is the corresponding predicted decision (an array of shape (`n_samples`,) as
+output by the `decision_function` method), then the hinge loss is defined as:
 
 .. math::
 
-  L_\text{Hinge}(y, w) = \max\left\{1 - wy, 0\right\} = \left|1 - wy\right|_+
+  L_\text{Hinge}(y, w) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} \max\left\{1 - w_i y_i, 0\right\}
 
 If there are more than two labels, :func:`hinge_loss` uses a multiclass variant
 due to Crammer & Singer.
 `Here <http://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_ is
 the paper describing it.
 
-If :math:`y_w` is the predicted decision for true label and :math:`y_t` is the
-maximum of the predicted decisions for all other labels, where predicted
-decisions are output by decision function, then multiclass hinge loss is defined
-by:
+In this case the predicted decision is an array of shape (`n_samples`,
+`n_labels`). If :math:`w_{i, y_i}` is the predicted decision for the true label
+:math:`y_i` of the :math:`i`-th sample; and
+:math:`\hat{w}_{i, y_i} = \max\left\{w_{i, y_j}~|~y_j \ne y_i \right\}`
+is the maximum of the
+predicted decisions for all the other labels, then the multi-class hinge loss
+is defined by:
 
 .. math::
 
-  L_\text{Hinge}(y_w, y_t) = \max\left\{1 + y_t - y_w, 0\right\}
+  L_\text{Hinge}(y, w) = \frac{1}{n_\text{samples}}
+  \sum_{i=0}^{n_\text{samples}-1} \max\left\{1 + \hat{w}_{i, y_i}
+  - w_{i, y_i}, 0\right\}
 
-Here a small example demonstrating the use of the :func:`hinge_loss` function
+Here is a small example demonstrating the use of the :func:`hinge_loss` function
 with a svm classifier in a binary class problem::
 
   >>> from sklearn import svm
@@ -1347,10 +1351,10 @@ Quoting Wikipedia :
   positive rate), at various threshold settings. TPR is also known as
   sensitivity, and FPR is one minus the specificity or true negative rate."
 
-This function requires the true binary
-value and the target scores, which can either be probability estimates of the
-positive class, confidence values, or binary decisions.
-Here is a small example of how to use the :func:`roc_curve` function::
+This function requires the true binary value and the target scores, which can
+either be probability estimates of the positive class, confidence values, or
+binary decisions. Here is a small example of how to use the :func:`roc_curve`
+function::
 
     >>> import numpy as np
     >>> from sklearn.metrics import roc_curve
@@ -1364,22 +1368,26 @@ Here is a small example of how to use the :func:`roc_curve` function::
     >>> thresholds
     array([1.8 , 0.8 , 0.4 , 0.35, 0.1 ])
 
-This figure shows an example of such an ROC curve:
+Compared to metrics such as the subset accuracy, the Hamming loss, or the
+F1 score, ROC doesn't require optimizing a threshold for each label.
+
+The :func:`roc_auc_score` function, denoted by ROC-AUC or AUROC, computes the
+area under the ROC curve. By doing so, the curve information is summarized in
+one number.
+
+The following figure shows the ROC curve and ROC-AUC score for a classifier
+aimed to distinguish the virginica flower from the rest of the species in the
+:ref:`iris_dataset`:
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_001.png
    :target: ../auto_examples/model_selection/plot_roc.html
    :scale: 75
    :align: center
 
-The :func:`roc_auc_score` function computes the area under the receiver
-operating characteristic (ROC) curve, which is also denoted by
-AUC or AUROC.  By computing the
-area under the roc curve, the curve information is summarized in one number.
+
+
 For more information see the `Wikipedia article on AUC
 <https://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_the_curve>`_.
-
-Compared to metrics such as the subset accuracy, the Hamming loss, or the
-F1 score, ROC doesn't require optimizing a threshold for each label.
 
 .. _roc_auc_binary:
 
@@ -1460,13 +1468,16 @@ as described in [FC2009]_.
 **One-vs-rest Algorithm**: Computes the AUC of each class against the rest
 [PD2000]_. The algorithm is functionally the same as the multilabel case. To
 enable this algorithm set the keyword argument ``multiclass`` to ``'ovr'``.
-Like OvO, OvR supports two types of averaging: ``'macro'`` [F2006]_ and
-``'weighted'`` [F2001]_.
+Additionally to ``'macro'`` [F2006]_ and ``'weighted'`` [F2001]_ averaging, OvR
+supports ``'micro'`` averaging.
 
 In applications where a high false positive rate is not tolerable the parameter
 ``max_fpr`` of :func:`roc_auc_score` can be used to summarize the ROC curve up
 to the given limit.
 
+The following figure shows the micro-averaged ROC curve and its corresponding
+ROC-AUC score for a classifier aimed to distinguish the the different species in
+the :ref:`iris_dataset`:
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_002.png
    :target: ../auto_examples/model_selection/plot_roc.html
@@ -1578,8 +1589,8 @@ same classification task:
 
 * DET curves form a linear curve in normal deviate scale if the detection
   scores are normally (or close-to normally) distributed.
-  It was shown by [Navratil2007]_ that the reverse it not necessarily true and
-  even more general distributions are able produce linear DET curves.
+  It was shown by [Navratil2007]_ that the reverse is not necessarily true and
+  even more general distributions are able to produce linear DET curves.
 
 * The normal deviate scale transformation spreads out the points such that a
   comparatively larger space of plot is occupied.
@@ -1650,10 +1661,11 @@ then the 0-1 loss :math:`L_{0-1}` is defined as:
 
 .. math::
 
-   L_{0-1}(y_i, \hat{y}_i) = 1(\hat{y}_i \not= y_i)
+   L_{0-1}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i \not= y_i)
 
 where :math:`1(x)` is the `indicator function
-<https://en.wikipedia.org/wiki/Indicator_function>`_.
+<https://en.wikipedia.org/wiki/Indicator_function>`_. The zero one
+loss can also be computed as :math:`zero-one loss = 1 - accuracy`.
 
 
   >>> from sklearn.metrics import zero_one_loss
@@ -1755,6 +1767,133 @@ the same does a lower Brier score loss always mean better calibration"
   .. [Flach2008] Flach, Peter, and Edson Matsubara. `"On classification, ranking,
     and probability estimation." <https://drops.dagstuhl.de/opus/volltexte/2008/1382/>`_
     Dagstuhl Seminar Proceedings. Schloss Dagstuhl-Leibniz-Zentrum fr Informatik (2008).
+
+.. _class_likelihood_ratios:
+
+Class likelihood ratios
+-----------------------
+
+The :func:`class_likelihood_ratios` function computes the `positive and negative
+likelihood ratios
+<https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_
+:math:`LR_\pm` for binary classes, which can be interpreted as the ratio of
+post-test to pre-test odds as explained below. As a consequence, this metric is
+invariant w.r.t. the class prevalence (the number of samples in the positive
+class divided by the total number of samples) and **can be extrapolated between
+populations regardless of any possible class imbalance.**
+
+The :math:`LR_\pm` metrics are therefore very useful in settings where the data
+available to learn and evaluate a classifier is a study population with nearly
+balanced classes, such as a case-control study, while the target application,
+i.e. the general population, has very low prevalence.
+
+The positive likelihood ratio :math:`LR_+` is the probability of a classifier to
+correctly predict that a sample belongs to the positive class divided by the
+probability of predicting the positive class for a sample belonging to the
+negative class:
+
+.. math::
+
+   LR_+ = \frac{\text{PR}(P+|T+)}{\text{PR}(P+|T-)}.
+
+The notation here refers to predicted (:math:`P`) or true (:math:`T`) label and
+the sign :math:`+` and :math:`-` refer to the positive and negative class,
+respectively, e.g. :math:`P+` stands for "predicted positive".
+
+Analogously, the negative likelihood ratio :math:`LR_-` is the probability of a
+sample of the positive class being classified as belonging to the negative class
+divided by the probability of a sample of the negative class being correctly
+classified:
+
+.. math::
+
+   LR_- = \frac{\text{PR}(P-|T+)}{\text{PR}(P-|T-)}.
+
+For classifiers above chance :math:`LR_+` above 1 **higher is better**, while
+:math:`LR_-` ranges from 0 to 1 and **lower is better**.
+Values of :math:`LR_\pm\approx 1` correspond to chance level.
+
+Notice that probabilities differ from counts, for instance
+:math:`\operatorname{PR}(P+|T+)` is not equal to the number of true positive
+counts ``tp`` (see `the wikipedia page
+<https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_ for
+the actual formulas).
+
+**Interpretation across varying prevalence:**
+
+Both class likelihood ratios are interpretable in terms of an odds ratio
+(pre-test and post-tests):
+
+.. math::
+
+   \text{post-test odds} = \text{Likelihood ratio} \times \text{pre-test odds}.
+
+Odds are in general related to probabilities via
+
+.. math::
+
+   \text{odds} = \frac{\text{probability}}{1 - \text{probability}},
+
+or equivalently
+
+.. math::
+
+   \text{probability} = \frac{\text{odds}}{1 + \text{odds}}.
+
+On a given population, the pre-test probability is given by the prevalence. By
+converting odds to probabilities, the likelihood ratios can be translated into a
+probability of truly belonging to either class before and after a classifier
+prediction:
+
+.. math::
+
+   \text{post-test odds} = \text{Likelihood ratio} \times
+   \frac{\text{pre-test probability}}{1 - \text{pre-test probability}},
+
+.. math::
+
+   \text{post-test probability} = \frac{\text{post-test odds}}{1 + \text{post-test odds}}.
+
+**Mathematical divergences:**
+
+The positive likelihood ratio is undefined when :math:`fp = 0`, which can be
+interpreted as the classifier perfectly identifying positive cases. If :math:`fp
+= 0` and additionally :math:`tp = 0`, this leads to a zero/zero division. This
+happens, for instance, when using a `DummyClassifier` that always predicts the
+negative class and therefore the interpretation as a perfect classifier is lost.
+
+The negative likelihood ratio is undefined when :math:`tn = 0`. Such divergence
+is invalid, as :math:`LR_- > 1` would indicate an increase in the odds of a
+sample belonging to the positive class after being classified as negative, as if
+the act of classifying caused the positive condition. This includes the case of
+a `DummyClassifier` that always predicts the positive class (i.e. when
+:math:`tn=fn=0`).
+
+Both class likelihood ratios are undefined when :math:`tp=fn=0`, which means
+that no samples of the positive class were present in the testing set. This can
+also happen when cross-validating highly imbalanced data.
+
+In all the previous cases the :func:`class_likelihood_ratios` function raises by
+default an appropriate warning message and returns `nan` to avoid pollution when
+averaging over cross-validation folds.
+
+For a worked-out demonstration of the :func:`class_likelihood_ratios` function,
+see the example below.
+
+.. topic:: Examples:
+
+  * :ref:`sphx_glr_auto_examples_model_selection_plot_likelihood_ratios.py`
+
+.. topic:: References:
+
+  * `Wikipedia entry for Likelihood ratios in diagnostic testing
+    <https://en.wikipedia.org/wiki/Likelihood_ratios_in_diagnostic_testing>`_
+
+  * Brenner, H., & Gefeller, O. (1997).
+    Variation of sensitivity, specificity, likelihood ratios and predictive
+    values with disease prevalence.
+    Statistics in medicine, 16(9), 981-991.
+
 
 .. _multilabel_ranking_metrics:
 
@@ -1976,13 +2115,13 @@ to handle the multioutput case: :func:`mean_squared_error`,
 and :func:`d2_absolute_error_score`.
 
 
-These functions have an ``multioutput`` keyword argument which specifies the
+These functions have a ``multioutput`` keyword argument which specifies the
 way the scores or losses for each individual target should be averaged. The
 default is ``'uniform_average'``, which specifies a uniformly weighted mean
 over outputs. If an ``ndarray`` of shape ``(n_outputs,)`` is passed, then its
 entries are interpreted as weights and an according weighted average is
-returned. If ``multioutput`` is ``'raw_values'`` is specified, then all
-unaltered individual scores or losses will be returned in an array of shape
+returned. If ``multioutput`` is ``'raw_values'``, then all unaltered
+individual scores or losses will be returned in an array of shape
 ``(n_outputs,)``.
 
 
@@ -1991,7 +2130,7 @@ value ``'variance_weighted'`` for the ``multioutput`` parameter. This option
 leads to a weighting of each individual score by the variance of the
 corresponding target variable. This setting quantifies the globally captured
 unscaled variance. If the target variables are of different scale, then this
-score puts more importance on well explaining the higher variance variables.
+score puts more importance on explaining the higher variance variables.
 ``multioutput='variance_weighted'`` is the default value for :func:`r2_score`
 for backward compatibility. This will be changed to ``uniform_average`` in the
 future.
@@ -2003,14 +2142,14 @@ R² score, the coefficient of determination
 
 The :func:`r2_score` function computes the `coefficient of
 determination <https://en.wikipedia.org/wiki/Coefficient_of_determination>`_,
-usually denoted as R².
+usually denoted as :math:`R^2`.
 
 It represents the proportion of variance (of y) that has been explained by the
 independent variables in the model. It provides an indication of goodness of
 fit and therefore a measure of how well unseen samples are likely to be
 predicted by the model, through the proportion of explained variance.
 
-As such variance is dataset dependent, R² may not be meaningfully comparable
+As such variance is dataset dependent, :math:`R^2` may not be meaningfully comparable
 across different datasets. Best possible score is 1.0 and it can be negative
 (because the model can be arbitrarily worse). A constant model that always
 predicts the expected (average) value of y, disregarding the input features,
@@ -2021,7 +2160,7 @@ the :ref:`explained_variance_score` are identical.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
 and :math:`y_i` is the corresponding true value for total :math:`n` samples,
-the estimated R² is defined as:
+the estimated :math:`R^2` is defined as:
 
 .. math::
 
@@ -2029,7 +2168,7 @@ the estimated R² is defined as:
 
 where :math:`\bar{y} = \frac{1}{n} \sum_{i=1}^{n} y_i` and :math:`\sum_{i=1}^{n} (y_i - \hat{y}_i)^2 = \sum_{i=1}^{n} \epsilon_i^2`.
 
-Note that :func:`r2_score` calculates unadjusted R² without correcting for
+Note that :func:`r2_score` calculates unadjusted :math:`R^2` without correcting for
 bias in sample variance of y.
 
 In the particular case where the true target is constant, the :math:`R^2` score is
@@ -2425,14 +2564,16 @@ Pinball loss
 ------------
 
 The :func:`mean_pinball_loss` function is used to evaluate the predictive
-performance of quantile regression models. The `pinball loss
-<https://en.wikipedia.org/wiki/Quantile_regression#Computation>`_ is equivalent
-to :func:`mean_absolute_error` when the quantile parameter ``alpha`` is set to
-0.5.
+performance of `quantile regression
+<https://en.wikipedia.org/wiki/Quantile_regression>`_ models.
 
 .. math::
 
   \text{pinball}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1}  \alpha \max(y_i - \hat{y}_i, 0) + (1 - \alpha) \max(\hat{y}_i - y_i, 0)
+
+The value of pinball loss is equivalent to half of :func:`mean_absolute_error` when the quantile
+parameter ``alpha`` is set to 0.5.
+
 
 Here is a small example of usage of the :func:`mean_pinball_loss` function::
 
@@ -2479,7 +2620,7 @@ explained in the example linked below.
 .. topic:: Example:
 
   * See :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_quantile.py`
-    for an example of using a the pinball loss to evaluate and tune the
+    for an example of using the pinball loss to evaluate and tune the
     hyper-parameters of quantile regression models on data with non-symmetric
     noise and outliers.
 
