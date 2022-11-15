@@ -876,3 +876,15 @@ def test_mlp_loading_from_joblib_partial_fit(tmp_path):
     # finetuned model learned the new target
     predicted_value = load_estimator.predict(fine_tune_features)
     assert_allclose(predicted_value, fine_tune_target, rtol=1e-4)
+
+
+def test_minimum_input_sample_size():
+    #This test checks that the 10% of input sample size (i.e., of X) is at least 2.
+    X = np.random.rand(20, 2)
+    y = np.random.rand(2, 1)
+    model = MLPRegressor(
+            hidden_layer_sizes=(10), activation='tanh', batch_size=1000, 
+            learning_rate_init=0.1, max_iter=5000, momentum=.9, solver='adam', early_stopping=True,
+            random_state=1, verbose=1)
+    with pytest.raises(ValueError):
+        model.fit(X, y)
