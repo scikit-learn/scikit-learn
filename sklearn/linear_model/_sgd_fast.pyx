@@ -372,7 +372,7 @@ def _plain_sgd(const double[::1] weights,
                const unsigned char[::1] validation_mask,
                bint early_stopping, validation_score_cb,
                int n_iter_no_change,
-               int max_iter, double tol, int fit_intercept,
+               unsigned int max_iter, double tol, int fit_intercept,
                int verbose, bint shuffle, cnp.uint32_t seed,
                double weight_pos, double weight_neg,
                int learning_rate, double eta0,
@@ -499,7 +499,7 @@ def _plain_sgd(const double[::1] weights,
     cdef double class_weight = 1.0
     cdef unsigned int count = 0
     cdef unsigned int train_count = n_samples - np.sum(validation_mask)
-    cdef int epoch = 0
+    cdef unsigned int epoch = 0
     cdef unsigned int i = 0
     cdef int is_hinge = isinstance(loss, Hinge)
     cdef double optimal_init = 0.0
