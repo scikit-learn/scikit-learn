@@ -86,9 +86,9 @@ disp = DecisionBoundaryDisplay.from_estimator(
     alpha=0.5,
 )
 disp.ax_.scatter(X[:, 0], X[:, 1], c=y, s=20, edgecolor="k")
+disp.ax_.set_title("Binary decision boundary \nof IsolationForest")
 plt.axis("square")
 plt.legend(handles=handles, labels=["outliers", "inliers"], title="true class")
-disp.ax_.set_title("Binary decision boundary \nof IsolationForest")
 plt.show()
 
 # %%
@@ -105,7 +105,8 @@ disp = DecisionBoundaryDisplay.from_estimator(
     alpha=0.5,
 )
 disp.ax_.scatter(X[:, 0], X[:, 1], c=y, s=20, edgecolor="k")
+disp.ax_.set_title("Path length decision boundary \nof IsolationForest")
 plt.axis("square")
 plt.legend(handles=handles, labels=["outliers", "inliers"], title="true class")
-disp.ax_.set_title("Path length decision boundary \nof IsolationForest")
+plt.colorbar(disp.ax_.collections[1])
 plt.show()
