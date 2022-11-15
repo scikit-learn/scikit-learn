@@ -58,7 +58,7 @@ nmds = manifold.MDS(
     random_state=seed,
     n_jobs=1,
     n_init=1,
-    normalized_stress="auto"
+    normalized_stress="auto",
 )
 npos = nmds.fit_transform(similarities, init=pos)
 
