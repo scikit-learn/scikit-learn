@@ -36,7 +36,7 @@ plt.title("Incorrect Number of Blobs")
 # Anisotropicly distributed data
 transformation = [[0.60834549, -0.63667341], [-0.40887718, 0.85253229]]
 X_aniso = np.dot(X, transformation)
-y_pred = KMeans(n_clusters=3, n_init="auto", random_state=random_state).fit_predict(
+y_pred = KMeans(n_clusters=3, n_init=10, random_state=random_state).fit_predict(
     X_aniso
 )
 
@@ -58,7 +58,7 @@ plt.title("Unequal Variance")
 
 # Unevenly sized blobs
 X_filtered = np.vstack((X[y == 0][:500], X[y == 1][:100], X[y == 2][:10]))
-y_pred = KMeans(n_clusters=3, n_init="auto", random_state=random_state).fit_predict(
+y_pred = KMeans(n_clusters=3, n_init=10, random_state=random_state).fit_predict(
     X_filtered
 )
 
