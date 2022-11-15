@@ -21,6 +21,7 @@ from ..preprocessing import scale
 from ..utils import Bunch
 from ..utils import check_random_state
 from ..utils import check_pandas_support
+from .._appdirs import user_cache_dir
 
 import numpy as np
 
@@ -52,7 +53,7 @@ def get_data_home(data_home=None) -> str:
     ----------
     data_home : str, default=None
         The path to scikit-learn data directory. If `None`, the default path
-        is `~/sklearn_learn_data`.
+        is `user_cache_dir("sklearn")`.
 
     Returns
     -------
@@ -60,7 +61,7 @@ def get_data_home(data_home=None) -> str:
         The path to scikit-learn data directory.
     """
     if data_home is None:
-        data_home = environ.get("SCIKIT_LEARN_DATA", join("~", "scikit_learn_data"))
+        data_home = environ.get("SCIKIT_LEARN_DATA", user_cache_dir("sklearn"))
     data_home = expanduser(data_home)
     makedirs(data_home, exist_ok=True)
     return data_home
