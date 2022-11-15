@@ -1211,11 +1211,10 @@ class Lasso(ElasticNet):
     The target can be a 2-dimensional array, resulting in the optimization of the
     following objective:
     :math:`(1 / (2 * n_samples)) * ||Y - XW||^2_F + alpha * ||W||_{1,1}`, where
-    :math:`||W||_{1,1}` denotes the :math:`\ell_1` norm of the matrix :math:`W` - that
-    is, the sum of the magnitude of its coefficients. It should not be confounded with
-    :class:`~sklearn.linear_model.MultiTaskLasso` which instead optimizes the
-    :math:`L_{2,1}` norm of the coefficients, yielding structured sparsity in the
-    coefficients.
+    :math:`||W||_{1,1}` is the sum of the magnitude of the matrix coefficients.
+    It should not be confounded with :class:`~sklearn.linear_model.MultiTaskLasso` which
+    instead optimizes the :math:`L_{2,1}` norm of the coefficients, yielding structured
+    sparsity in the coefficients.
 
     Examples
     --------
