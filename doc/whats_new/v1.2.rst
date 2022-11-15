@@ -310,6 +310,14 @@ Changelog
   :user:`Nestor Navarro <nestornav>`, :user:`Nati Tomattis <natitomattis>`,
   and :user:`Vincent Maladiere <Vincent-Maladiere>`.
 
+- |Enhancement| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingClassifier` now accept their
+  `monotonic_cst` parameter to be passed as a dictionary in addition
+  to the previously supported array-like format.
+  Such dictionary have feature names as keys and one of `-1`, `0`, `1`
+  as value to specify monotonicity constraints for each feature.
+  :pr:`24855` by :user:`Olivier Grisel <ogrisel>`.
+
 - |Fix| Fixed the issue where :class:`ensemble.AdaBoostClassifier` outputs
   NaN in feature importance when fitted with very small sample weight.
   :pr:`20415` by :user:`Zhehao Liu <MaxwellLZH>`.
