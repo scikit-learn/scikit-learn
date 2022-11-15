@@ -30,6 +30,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from sklearn import ensemble
+from sklearn.metrics import log_loss
 from sklearn.model_selection import KFold
 from sklearn.model_selection import train_test_split
 
@@ -73,7 +74,7 @@ def heldout_score(clf, X_test, y_test):
     """compute deviance scores on ``X_test`` and ``y_test``."""
     score = np.zeros((n_estimators,), dtype=np.float64)
     for i, y_pred in enumerate(clf.staged_decision_function(X_test)):
-        score[i] = clf.loss_(y_test, y_pred)
+        score[i] = log_loss(y_test, y_pred)
     return score
 
 
