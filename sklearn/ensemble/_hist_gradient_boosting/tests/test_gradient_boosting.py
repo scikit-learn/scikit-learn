@@ -1,5 +1,6 @@
 import warnings
 
+import re
 import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
@@ -45,6 +46,47 @@ def _make_dumb_dataset(n_samples):
     X_dumb = rng.randn(n_samples, 1)
     y_dumb = (X_dumb[:, 0] > 0).astype("int64")
     return X_dumb, y_dumb
+
+
+@pytest.mark.parametrize(
+    "GradientBoosting, X, y",
+    [
+        (HistGradientBoostingClassifier, X_classification, y_classification),
+        (HistGradientBoostingRegressor, X_regression, y_regression),
+    ],
+)
+@pytest.mark.parametrize(
+    "params, err_msg",
+    [
+        (
+            {"interaction_cst": "string"},
+            "",
+        ),
+        (
+            {"interaction_cst": [0, 1]},
+            "Interaction constraints must be None or an iterable of iterables",
+        ),
+        (
+            {"interaction_cst": [{0, 9999}]},
+            r"Interaction constraints must consist of integer indices in \[0,"
+            r" n_features - 1\] = \[.*\], specifying the position of features,",
+        ),
+        (
+            {"interaction_cst": [{-1, 0}]},
+            r"Interaction constraints must consist of integer indices in \[0,"
+            r" n_features - 1\] = \[.*\], specifying the position of features,",
+        ),
+        (
+            {"interaction_cst": [{0.5}]},
+            r"Interaction constraints must consist of integer indices in \[0,"
+            r" n_features - 1\] = \[.*\], specifying the position of features,",
+        ),
+    ],
+)
+def test_init_parameters_validation(GradientBoosting, X, y, params, err_msg):
+
+    with pytest.raises(ValueError, match=err_msg):
+        GradientBoosting(**params).fit(X, y)
 
 
 # TODO(1.3): remove
@@ -938,13 +980,26 @@ def test_categorical_encoding_strategies():
     # influence predictions too much with max_iter = 1
     assert 0.49 < y.mean() < 0.51
 
-    clf_cat = HistGradientBoostingClassifier(
-        max_iter=1, max_depth=1, categorical_features=[False, True]
-    )
+    native_cat_specs = [
+        [False, True],
+        [1],
+    ]
+    try:
+        import pandas as pd
 
-    # Using native categorical encoding, we get perfect predictions with just
-    # one split
-    assert cross_val_score(clf_cat, X, y).mean() == 1
+        X = pd.DataFrame(X, columns=["f_0", "f_1"])
+        native_cat_specs.append(["f_1"])
+    except ImportError:
+        pass
+
+    for native_cat_spec in native_cat_specs:
+        clf_cat = HistGradientBoostingClassifier(
+            max_iter=1, max_depth=1, categorical_features=native_cat_spec
+        )
+
+        # Using native categorical encoding, we get perfect predictions with just
+        # one split
+        assert cross_val_score(clf_cat, X, y).mean() == 1
 
     # quick sanity check for the bitset: 0, 2, 4 = 2**0 + 2**2 + 2**4 = 21
     expected_left_bitset = [21, 0, 0, 0, 0, 0, 0, 0]
@@ -981,24 +1036,36 @@ def test_categorical_encoding_strategies():
     "categorical_features, monotonic_cst, expected_msg",
     [
         (
-            ["hello", "world"],
+            [b"hello", b"world"],
             None,
-            "categorical_features must be an array-like of bools or array-like of "
-            "ints.",
+            re.escape(
+                "categorical_features must be an array-like of bool, int or str, "
+                "got: bytes40."
+            ),
+        ),
+        (
+            np.array([b"hello", 1.3], dtype=object),
+            None,
+            re.escape(
+                "categorical_features must be an array-like of bool, int or str, "
+                "got: bytes, float."
+            ),
         ),
         (
             [0, -1],
             None,
-            (
-                r"categorical_features set as integer indices must be in "
-                r"\[0, n_features - 1\]"
+            re.escape(
+                "categorical_features set as integer indices must be in "
+                "[0, n_features - 1]"
             ),
         ),
         (
             [True, True, False, False, True],
             None,
-            r"categorical_features set as a boolean mask must have shape "
-            r"\(n_features,\)",
+            re.escape(
+                "categorical_features set as a boolean mask must have shape "
+                "(n_features,)"
+            ),
         ),
         (
             [True, True, False, False],
@@ -1020,6 +1087,39 @@ def test_categorical_spec_errors(
 
     with pytest.raises(ValueError, match=expected_msg):
         est.fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "Est", (HistGradientBoostingClassifier, HistGradientBoostingRegressor)
+)
+def test_categorical_spec_errors_with_feature_names(Est):
+    pd = pytest.importorskip("pandas")
+    n_samples = 10
+    X = pd.DataFrame(
+        {
+            "f0": range(n_samples),
+            "f1": range(n_samples),
+            "f2": [1.0] * n_samples,
+        }
+    )
+    y = [0, 1] * (n_samples // 2)
+
+    est = Est(categorical_features=["f0", "f1", "f3"])
+    expected_msg = re.escape(
+        "categorical_features has a item value 'f3' which is not a valid "
+        "feature name of the training data."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        est.fit(X, y)
+
+    est = Est(categorical_features=["f0", "f1"])
+    expected_msg = re.escape(
+        "categorical_features should be passed as an array of integers or "
+        "as a boolean mask when the model is fitted on data without feature "
+        "names."
+    )
+    with pytest.raises(ValueError, match=expected_msg):
+        est.fit(X.to_numpy(), y)
 
 
 @pytest.mark.parametrize(
@@ -1080,6 +1180,72 @@ def test_uint8_predict(Est):
     est = Est()
     est.fit(X, y)
     est.predict(X)
+
+
+@pytest.mark.parametrize(
+    "interaction_cst, n_features, result",
+    [
+        (None, 931, None),
+        ([{0, 1}], 2, [{0, 1}]),
+        ([(1, 0), [5, 1]], 6, [{0, 1}, {1, 5}, {2, 3, 4}]),
+    ],
+)
+def test_check_interaction_cst(interaction_cst, n_features, result):
+    """Check that _check_interaction_cst returns the expected list of sets"""
+    est = HistGradientBoostingRegressor()
+    est.set_params(interaction_cst=interaction_cst)
+    assert est._check_interaction_cst(n_features) == result
+
+
+def test_interaction_cst_numerically():
+    """Check that interaction constraints have no forbidden interactions."""
+    rng = np.random.RandomState(42)
+    n_samples = 1000
+    X = rng.uniform(size=(n_samples, 2))
+    # Construct y with a strong interaction term
+    # y = x0 + x1 + 5 * x0 * x1
+    y = np.hstack((X, 5 * X[:, [0]] * X[:, [1]])).sum(axis=1)
+
+    est = HistGradientBoostingRegressor(random_state=42)
+    est.fit(X, y)
+    est_no_interactions = HistGradientBoostingRegressor(
+        interaction_cst=[{0}, {1}], random_state=42
+    )
+    est_no_interactions.fit(X, y)
+
+    delta = 0.25
+    # Make sure we do not extrapolate out of the training set as tree-based estimators
+    # are very bad in doing so.
+    X_test = X[(X[:, 0] < 1 - delta) & (X[:, 1] < 1 - delta)]
+    X_delta_d_0 = X_test + [delta, 0]
+    X_delta_0_d = X_test + [0, delta]
+    X_delta_d_d = X_test + [delta, delta]
+
+    # Note: For the y from above as a function of x0 and x1, we have
+    # y(x0+d, x1+d) = y(x0, x1) + 5 * d * (2/5 + x0 + x1) + 5 * d**2
+    # y(x0+d, x1)   = y(x0, x1) + 5 * d * (1/5 + x1)
+    # y(x0,   x1+d) = y(x0, x1) + 5 * d * (1/5 + x0)
+    # Without interaction constraints, we would expect a result of 5 * d**2 for the
+    # following expression, but zero with constraints in place.
+    assert_allclose(
+        est_no_interactions.predict(X_delta_d_d)
+        + est_no_interactions.predict(X_test)
+        - est_no_interactions.predict(X_delta_d_0)
+        - est_no_interactions.predict(X_delta_0_d),
+        0,
+        atol=1e-12,
+    )
+
+    # Correct result of the expressions is 5 * delta**2. But this is hard to achieve by
+    # a fitted tree-based model. However, with 100 iterations the expression should
+    # at least be positive!
+    assert np.all(
+        est.predict(X_delta_d_d)
+        + est.predict(X_test)
+        - est.predict(X_delta_d_0)
+        - est.predict(X_delta_0_d)
+        > 0.01
+    )
 
 
 # TODO(1.3): Remove
@@ -1178,3 +1344,28 @@ def test_class_weights():
         clf_balanced.decision_function(X_imb),
         clf_sample_weight.decision_function(X_imb),
     )
+
+
+def test_unknown_category_that_are_negative():
+    """Check that unknown categories that are negative does not error.
+
+    Non-regression test for #24274.
+    """
+    rng = np.random.RandomState(42)
+    n_samples = 1000
+    X = np.c_[rng.rand(n_samples), rng.randint(4, size=n_samples)]
+    y = np.zeros(shape=n_samples)
+    y[X[:, 1] % 2 == 0] = 1
+
+    hist = HistGradientBoostingRegressor(
+        random_state=0,
+        categorical_features=[False, True],
+        max_iter=10,
+    ).fit(X, y)
+
+    # Check that negative values from the second column are treated like a
+    # missing category
+    X_test_neg = np.asarray([[1, -2], [3, -4]])
+    X_test_nan = np.asarray([[1, np.nan], [3, np.nan]])
+
+    assert_allclose(hist.predict(X_test_neg), hist.predict(X_test_nan))

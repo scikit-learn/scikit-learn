@@ -290,6 +290,8 @@ Making a release
        git commit -m "Update stable to point to 0.999"
        git push origin main
 
+10. Update ``SECURITY.md`` to reflect the latest supported version.
+
 .. _release_checklist:
 
 Release checklist
