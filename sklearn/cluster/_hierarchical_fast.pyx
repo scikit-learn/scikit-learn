@@ -29,11 +29,13 @@ from numpy.math cimport INFINITY
 ###############################################################################
 # Utilities for computing the ward momentum
 
-def compute_ward_dist(DOUBLE[::1] m_1,
-                      DOUBLE[:, ::1] m_2,
-                      INTP[::1] coord_row,
-                      INTP[::1] coord_col,
-                      DOUBLE[::1] res):
+cpdef void compute_ward_dist(
+    cnp.float64_t[::1] m_1,
+    cnp.float64_t[:, ::1] m_2,
+    cnp.npy_intp[::1] coord_row,
+    cnp.npy_intp[::1] coord_col,
+    cnp.float64_t[::1] res
+) nogil:
     cdef INTP size_max = coord_row.shape[0]
     cdef INTP n_features = m_2.shape[1]
     cdef INTP i, j, row, col
@@ -47,7 +49,6 @@ def compute_ward_dist(DOUBLE[::1] m_1,
         for j in range(n_features):
             pa += (m_2[row, j] / m_1[row] - m_2[col, j] / m_1[col]) ** 2
         res[i] = pa * n
-    return res
 
 
 ###############################################################################
