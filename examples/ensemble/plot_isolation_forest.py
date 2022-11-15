@@ -28,8 +28,9 @@ particular samples, they are highly likely to be anomalies.
 # ---------------
 #
 # We generate two clusters (each one containing `n_samples`) by randomly
-# sampling the standard normal distribution as returned by :func:`numpy.random.randn`.
-# One of them is spherical and the other one is slightly deformed.
+# sampling the standard normal distribution as returned by
+# :func:`numpy.random.randn`. One of them is spherical and the other one is
+# slightly deformed.
 #
 # For consistency with the :class:`~sklearn.ensemble.IsolationForest` notation,
 # the inliers (i.e. the gaussian clusters) are assigned a ground truth label `1`
