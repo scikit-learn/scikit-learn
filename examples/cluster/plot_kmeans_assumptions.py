@@ -36,7 +36,7 @@ plt.title("Incorrect Number of Blobs")
 # Anisotropicly distributed data
 transformation = [[0.60834549, -0.63667341], [-0.40887718, 0.85253229]]
 X_aniso = np.dot(X, transformation)
-y_pred = KMeans(n_clusters=3, n_init=10, random_state=random_state).fit_predict(
+y_pred = KMeans(n_clusters=3, n_init="auto", random_state=random_state).fit_predict(
     X_aniso
 )
 
