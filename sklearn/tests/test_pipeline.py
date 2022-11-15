@@ -12,7 +12,6 @@ import numpy as np
 from scipy import sparse
 import joblib
 
-from sklearn.utils.fixes import parse_version
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
@@ -22,6 +21,7 @@ from sklearn.utils._testing import (
     MinimalTransformer,
 )
 from sklearn.exceptions import NotFittedError
+from sklearn.model_selection import train_test_split
 from sklearn.utils.validation import check_is_fitted
 from sklearn.base import clone, is_classifier, BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -165,20 +165,23 @@ class DummyEstimatorParams(BaseEstimator):
         return self
 
 
-def test_pipeline_init():
-    # Test the various init parameters of the pipeline.
+def test_pipeline_invalid_parameters():
+    # Test the various init parameters of the pipeline in fit
+    # method
+    pipeline = Pipeline([(1, 1)])
     with pytest.raises(TypeError):
-        Pipeline()
+        pipeline.fit([[1]], [1])
 
-    # Check that we can't instantiate pipelines with objects without fit
+    # Check that we can't fit pipelines with objects without fit
     # method
     msg = (
         "Last step of Pipeline should implement fit "
         "or be the string 'passthrough'"
         ".*NoFit.*"
     )
+    pipeline = Pipeline([("clf", NoFit())])
     with pytest.raises(TypeError, match=msg):
-        Pipeline([("clf", NoFit())])
+        pipeline.fit([[1]], [1])
 
     # Smoke test with only an estimator
     clf = NoTrans()
@@ -203,11 +206,12 @@ def test_pipeline_init():
     assert pipe.named_steps["anova"] is filter1
     assert pipe.named_steps["svc"] is clf
 
-    # Check that we can't instantiate with non-transformers on the way
+    # Check that we can't fit with non-transformers on the way
     # Note that NoTrans implements fit, but not transform
     msg = "All intermediate steps should be transformers.*\\bNoTrans\\b.*"
+    pipeline = Pipeline([("t", NoTrans()), ("svc", clf)])
     with pytest.raises(TypeError, match=msg):
-        Pipeline([("t", NoTrans()), ("svc", clf)])
+        pipeline.fit([[1]], [1])
 
     # Check that params are set
     pipe.set_params(svc__C=0.1)
@@ -216,13 +220,15 @@ def test_pipeline_init():
     repr(pipe)
 
     # Check that params are not set when naming them wrong
-    msg = "Invalid parameter C for estimator SelectKBest"
+    msg = re.escape(
+        "Invalid parameter 'C' for estimator SelectKBest(). Valid parameters are: ['k',"
+        " 'score_func']."
+    )
     with pytest.raises(ValueError, match=msg):
         pipe.set_params(anova__C=0.1)
 
     # Test clone
-    with pytest.warns(None):
-        pipe2 = clone(pipe)
+    pipe2 = clone(pipe)
     assert not pipe.named_steps["svc"] is pipe2.named_steps["svc"]
 
     # Check that apart from estimators, the parameters are the same
@@ -316,17 +322,24 @@ def test_pipeline_raise_set_params_error():
 
     # expected error message
     error_msg = re.escape(
-        f"Invalid parameter fake for estimator {pipe}. "
-        "Check the list of available parameters "
-        "with `estimator.get_params().keys()`."
+        "Invalid parameter 'fake' for estimator Pipeline(steps=[('cls',"
+        " LinearRegression())]). Valid parameters are: ['memory', 'steps', 'verbose']."
     )
-
     with pytest.raises(ValueError, match=error_msg):
         pipe.set_params(fake="nope")
 
-    # nested model check
+    # invalid outer parameter name for compound parameter: the expected error message
+    # is the same as above.
     with pytest.raises(ValueError, match=error_msg):
         pipe.set_params(fake__estimator="nope")
+
+    # expected error message for invalid inner parameter
+    error_msg = re.escape(
+        "Invalid parameter 'invalid_param' for estimator LinearRegression(). Valid"
+        " parameters are: ['copy_X', 'fit_intercept', 'n_jobs', 'positive']."
+    )
+    with pytest.raises(ValueError, match=error_msg):
+        pipe.set_params(cls__invalid_param="nope")
 
 
 def test_pipeline_methods_pca_svm():
@@ -409,11 +422,11 @@ def test_fit_predict_on_pipeline():
     # test that the fit_predict on pipeline yields same results as applying
     # transform and clustering steps separately
     scaler = StandardScaler()
-    km = KMeans(random_state=0)
+    km = KMeans(random_state=0, n_init="auto")
     # As pipeline doesn't clone estimators on construction,
     # it must have its own estimators
     scaler_for_pipeline = StandardScaler()
-    km_for_pipeline = KMeans(random_state=0)
+    km_for_pipeline = KMeans(random_state=0, n_init="auto")
 
     # first compute the transform and clustering step separately
     scaled = scaler.fit_transform(iris.data)
@@ -488,8 +501,7 @@ def test_feature_union():
     assert_array_almost_equal(X_transformed, X_sp_transformed.toarray())
 
     # Test clone
-    with pytest.warns(None):
-        fs2 = clone(fs)
+    fs2 = clone(fs)
     assert fs.transformer_list[0][1] is not fs2.transformer_list[0][1]
 
     # test setting parameters
@@ -503,12 +515,26 @@ def test_feature_union():
 
     # test error if some elements do not support transform
     msg = "All estimators should implement fit and transform.*\\bNoTrans\\b"
+    fs = FeatureUnion([("transform", Transf()), ("no_transform", NoTrans())])
     with pytest.raises(TypeError, match=msg):
-        FeatureUnion([("transform", Transf()), ("no_transform", NoTrans())])
+        fs.fit(X)
 
     # test that init accepts tuples
     fs = FeatureUnion((("svd", svd), ("select", select)))
     fs.fit(X, y)
+
+
+def test_feature_union_named_transformers():
+    """Check the behaviour of `named_transformers` attribute."""
+    transf = Transf()
+    noinvtransf = NoInvTransf()
+    fs = FeatureUnion([("transf", transf), ("noinvtransf", noinvtransf)])
+    assert fs.named_transformers["transf"] == transf
+    assert fs.named_transformers["noinvtransf"] == noinvtransf
+
+    # test named attribute
+    assert fs.named_transformers.transf == transf
+    assert fs.named_transformers.noinvtransf == noinvtransf
 
 
 def test_make_union():
@@ -886,16 +912,18 @@ def test_feature_union_feature_names():
     char_vect = CountVectorizer(analyzer="char_wb", ngram_range=(3, 3))
     ft = FeatureUnion([("chars", char_vect), ("words", word_vect)])
     ft.fit(JUNK_FOOD_DOCS)
-    feature_names = ft.get_feature_names()
+    feature_names = ft.get_feature_names_out()
     for feat in feature_names:
         assert "chars__" in feat or "words__" in feat
     assert len(feature_names) == 35
 
     ft = FeatureUnion([("tr1", Transf())]).fit([[1]])
 
-    msg = re.escape("Transformer tr1 (type Transf) does not provide get_feature_names")
+    msg = re.escape(
+        "Transformer tr1 (type Transf) does not provide get_feature_names_out"
+    )
     with pytest.raises(AttributeError, match=msg):
-        ft.get_feature_names()
+        ft.get_feature_names_out()
 
 
 def test_classes_property():
@@ -916,71 +944,201 @@ def test_classes_property():
 
 def test_set_feature_union_steps():
     mult2 = Mult(2)
-    mult2.get_feature_names = lambda: ["x2"]
     mult3 = Mult(3)
-    mult3.get_feature_names = lambda: ["x3"]
     mult5 = Mult(5)
-    mult5.get_feature_names = lambda: ["x5"]
+
+    mult3.get_feature_names_out = lambda input_features: ["x3"]
+    mult2.get_feature_names_out = lambda input_features: ["x2"]
+    mult5.get_feature_names_out = lambda input_features: ["x5"]
 
     ft = FeatureUnion([("m2", mult2), ("m3", mult3)])
     assert_array_equal([[2, 3]], ft.transform(np.asarray([[1]])))
-    assert ["m2__x2", "m3__x3"] == ft.get_feature_names()
+    assert_array_equal(["m2__x2", "m3__x3"], ft.get_feature_names_out())
 
     # Directly setting attr
     ft.transformer_list = [("m5", mult5)]
     assert_array_equal([[5]], ft.transform(np.asarray([[1]])))
-    assert ["m5__x5"] == ft.get_feature_names()
+    assert_array_equal(["m5__x5"], ft.get_feature_names_out())
 
     # Using set_params
     ft.set_params(transformer_list=[("mock", mult3)])
     assert_array_equal([[3]], ft.transform(np.asarray([[1]])))
-    assert ["mock__x3"] == ft.get_feature_names()
+    assert_array_equal(["mock__x3"], ft.get_feature_names_out())
 
     # Using set_params to replace single step
     ft.set_params(mock=mult5)
     assert_array_equal([[5]], ft.transform(np.asarray([[1]])))
-    assert ["mock__x5"] == ft.get_feature_names()
+    assert_array_equal(["mock__x5"], ft.get_feature_names_out())
 
 
 def test_set_feature_union_step_drop():
     mult2 = Mult(2)
-    mult2.get_feature_names = lambda: ["x2"]
     mult3 = Mult(3)
-    mult3.get_feature_names = lambda: ["x3"]
+
+    mult2.get_feature_names_out = lambda input_features: ["x2"]
+    mult3.get_feature_names_out = lambda input_features: ["x3"]
+
     X = np.asarray([[1]])
 
     ft = FeatureUnion([("m2", mult2), ("m3", mult3)])
     assert_array_equal([[2, 3]], ft.fit(X).transform(X))
     assert_array_equal([[2, 3]], ft.fit_transform(X))
-    assert ["m2__x2", "m3__x3"] == ft.get_feature_names()
+    assert_array_equal(["m2__x2", "m3__x3"], ft.get_feature_names_out())
 
-    with pytest.warns(None) as record:
-        ft.set_params(m2="drop")
-        assert_array_equal([[3]], ft.fit(X).transform(X))
-        assert_array_equal([[3]], ft.fit_transform(X))
-    assert ["m3__x3"] == ft.get_feature_names()
-    assert not record
+    ft.set_params(m2="drop")
+    assert_array_equal([[3]], ft.fit(X).transform(X))
+    assert_array_equal([[3]], ft.fit_transform(X))
+    assert_array_equal(["m3__x3"], ft.get_feature_names_out())
 
-    with pytest.warns(None) as record:
-        ft.set_params(m3="drop")
-        assert_array_equal([[]], ft.fit(X).transform(X))
-        assert_array_equal([[]], ft.fit_transform(X))
-    assert [] == ft.get_feature_names()
-    assert not record
+    ft.set_params(m3="drop")
+    assert_array_equal([[]], ft.fit(X).transform(X))
+    assert_array_equal([[]], ft.fit_transform(X))
+    assert_array_equal([], ft.get_feature_names_out())
 
-    with pytest.warns(None) as record:
-        # check we can change back
-        ft.set_params(m3=mult3)
-        assert_array_equal([[3]], ft.fit(X).transform(X))
-    assert not record
+    # check we can change back
+    ft.set_params(m3=mult3)
+    assert_array_equal([[3]], ft.fit(X).transform(X))
 
-    with pytest.warns(None) as record:
-        # Check 'drop' step at construction time
-        ft = FeatureUnion([("m2", "drop"), ("m3", mult3)])
-        assert_array_equal([[3]], ft.fit(X).transform(X))
-        assert_array_equal([[3]], ft.fit_transform(X))
-    assert ["m3__x3"] == ft.get_feature_names()
-    assert not record
+    # Check 'drop' step at construction time
+    ft = FeatureUnion([("m2", "drop"), ("m3", mult3)])
+    assert_array_equal([[3]], ft.fit(X).transform(X))
+    assert_array_equal([[3]], ft.fit_transform(X))
+    assert_array_equal(["m3__x3"], ft.get_feature_names_out())
+
+
+def test_set_feature_union_passthrough():
+    """Check the behaviour of setting a transformer to `"passthrough"`."""
+    mult2 = Mult(2)
+    mult3 = Mult(3)
+
+    # We only test get_features_names_out, as get_feature_names is unsupported by
+    # FunctionTransformer, and hence unsupported by FeatureUnion passthrough.
+    mult2.get_feature_names_out = lambda input_features: ["x2"]
+    mult3.get_feature_names_out = lambda input_features: ["x3"]
+
+    X = np.asarray([[1]])
+
+    ft = FeatureUnion([("m2", mult2), ("m3", mult3)])
+    assert_array_equal([[2, 3]], ft.fit(X).transform(X))
+    assert_array_equal([[2, 3]], ft.fit_transform(X))
+    assert_array_equal(["m2__x2", "m3__x3"], ft.get_feature_names_out())
+
+    ft.set_params(m2="passthrough")
+    assert_array_equal([[1, 3]], ft.fit(X).transform(X))
+    assert_array_equal([[1, 3]], ft.fit_transform(X))
+    assert_array_equal(["m2__myfeat", "m3__x3"], ft.get_feature_names_out(["myfeat"]))
+
+    ft.set_params(m3="passthrough")
+    assert_array_equal([[1, 1]], ft.fit(X).transform(X))
+    assert_array_equal([[1, 1]], ft.fit_transform(X))
+    assert_array_equal(
+        ["m2__myfeat", "m3__myfeat"], ft.get_feature_names_out(["myfeat"])
+    )
+
+    # check we can change back
+    ft.set_params(m3=mult3)
+    assert_array_equal([[1, 3]], ft.fit(X).transform(X))
+    assert_array_equal([[1, 3]], ft.fit_transform(X))
+    assert_array_equal(["m2__myfeat", "m3__x3"], ft.get_feature_names_out(["myfeat"]))
+
+    # Check 'passthrough' step at construction time
+    ft = FeatureUnion([("m2", "passthrough"), ("m3", mult3)])
+    assert_array_equal([[1, 3]], ft.fit(X).transform(X))
+    assert_array_equal([[1, 3]], ft.fit_transform(X))
+    assert_array_equal(["m2__myfeat", "m3__x3"], ft.get_feature_names_out(["myfeat"]))
+
+    X = iris.data
+    columns = X.shape[1]
+    pca = PCA(n_components=2, svd_solver="randomized", random_state=0)
+
+    ft = FeatureUnion([("passthrough", "passthrough"), ("pca", pca)])
+    assert_array_equal(X, ft.fit(X).transform(X)[:, :columns])
+    assert_array_equal(X, ft.fit_transform(X)[:, :columns])
+    assert_array_equal(
+        [
+            "passthrough__f0",
+            "passthrough__f1",
+            "passthrough__f2",
+            "passthrough__f3",
+            "pca__pca0",
+            "pca__pca1",
+        ],
+        ft.get_feature_names_out(["f0", "f1", "f2", "f3"]),
+    )
+
+    ft.set_params(pca="passthrough")
+    X_ft = ft.fit(X).transform(X)
+    assert_array_equal(X_ft, np.hstack([X, X]))
+    X_ft = ft.fit_transform(X)
+    assert_array_equal(X_ft, np.hstack([X, X]))
+    assert_array_equal(
+        [
+            "passthrough__f0",
+            "passthrough__f1",
+            "passthrough__f2",
+            "passthrough__f3",
+            "pca__f0",
+            "pca__f1",
+            "pca__f2",
+            "pca__f3",
+        ],
+        ft.get_feature_names_out(["f0", "f1", "f2", "f3"]),
+    )
+
+    ft.set_params(passthrough=pca)
+    assert_array_equal(X, ft.fit(X).transform(X)[:, -columns:])
+    assert_array_equal(X, ft.fit_transform(X)[:, -columns:])
+    assert_array_equal(
+        [
+            "passthrough__pca0",
+            "passthrough__pca1",
+            "pca__f0",
+            "pca__f1",
+            "pca__f2",
+            "pca__f3",
+        ],
+        ft.get_feature_names_out(["f0", "f1", "f2", "f3"]),
+    )
+
+    ft = FeatureUnion(
+        [("passthrough", "passthrough"), ("pca", pca)],
+        transformer_weights={"passthrough": 2},
+    )
+    assert_array_equal(X * 2, ft.fit(X).transform(X)[:, :columns])
+    assert_array_equal(X * 2, ft.fit_transform(X)[:, :columns])
+    assert_array_equal(
+        [
+            "passthrough__f0",
+            "passthrough__f1",
+            "passthrough__f2",
+            "passthrough__f3",
+            "pca__pca0",
+            "pca__pca1",
+        ],
+        ft.get_feature_names_out(["f0", "f1", "f2", "f3"]),
+    )
+
+
+def test_feature_union_passthrough_get_feature_names_out():
+    """Check that get_feature_names_out works with passthrough without
+    passing input_features.
+    """
+    X = iris.data
+    pca = PCA(n_components=2, svd_solver="randomized", random_state=0)
+
+    ft = FeatureUnion([("pca", pca), ("passthrough", "passthrough")])
+    ft.fit(X)
+    assert_array_equal(
+        [
+            "pca__pca0",
+            "pca__pca1",
+            "passthrough__x0",
+            "passthrough__x1",
+            "passthrough__x2",
+            "passthrough__x3",
+        ],
+        ft.get_feature_names_out(),
+    )
 
 
 def test_step_name_validation():
@@ -1000,7 +1158,7 @@ def test_step_name_validation():
             # three ways to make invalid:
             # - construction
             with pytest.raises(ValueError, match=message):
-                cls(**{param: bad_steps})
+                cls(**{param: bad_steps}).fit([[1]], [1])
 
             # - setattr
             est = cls(**{param: [("a", Mult(1))]})
@@ -1072,11 +1230,7 @@ def test_pipeline_memory():
     y = iris.target
     cachedir = mkdtemp()
     try:
-        if parse_version(joblib.__version__) < parse_version("0.12"):
-            # Deal with change of API in joblib
-            memory = joblib.Memory(cachedir=cachedir, verbose=10)
-        else:
-            memory = joblib.Memory(location=cachedir, verbose=10)
+        memory = joblib.Memory(location=cachedir, verbose=10)
         # Test with Transformer + SVC
         clf = SVC(probability=True, random_state=0)
         transf = DummyTransf()
@@ -1136,11 +1290,7 @@ def test_pipeline_memory():
 
 def test_make_pipeline_memory():
     cachedir = mkdtemp()
-    if parse_version(joblib.__version__) < parse_version("0.12"):
-        # Deal with change of API in joblib
-        memory = joblib.Memory(cachedir=cachedir, verbose=10)
-    else:
-        memory = joblib.Memory(location=cachedir, verbose=10)
+    memory = joblib.Memory(location=cachedir, verbose=10)
     pipeline = make_pipeline(DummyTransf(), SVC(), memory=memory)
     assert pipeline.memory is memory
     pipeline = make_pipeline(DummyTransf(), SVC())
@@ -1148,6 +1298,61 @@ def test_make_pipeline_memory():
     assert len(pipeline) == 2
 
     shutil.rmtree(cachedir)
+
+
+class FeatureNameSaver(BaseEstimator):
+    def fit(self, X, y=None):
+        self._check_feature_names(X, reset=True)
+        return self
+
+    def transform(self, X, y=None):
+        return X
+
+    def get_feature_names_out(self, input_features=None):
+        return input_features
+
+
+def test_features_names_passthrough():
+    """Check pipeline.get_feature_names_out with passthrough"""
+    pipe = Pipeline(
+        steps=[
+            ("names", FeatureNameSaver()),
+            ("pass", "passthrough"),
+            ("clf", LogisticRegression()),
+        ]
+    )
+    iris = load_iris()
+    pipe.fit(iris.data, iris.target)
+    assert_array_equal(
+        pipe[:-1].get_feature_names_out(iris.feature_names), iris.feature_names
+    )
+
+
+def test_feature_names_count_vectorizer():
+    """Check pipeline.get_feature_names_out with vectorizers"""
+    pipe = Pipeline(steps=[("vect", CountVectorizer()), ("clf", LogisticRegression())])
+    y = ["pizza" in x for x in JUNK_FOOD_DOCS]
+    pipe.fit(JUNK_FOOD_DOCS, y)
+    assert_array_equal(
+        pipe[:-1].get_feature_names_out(),
+        ["beer", "burger", "coke", "copyright", "pizza", "the"],
+    )
+    assert_array_equal(
+        pipe[:-1].get_feature_names_out("nonsense_is_ignored"),
+        ["beer", "burger", "coke", "copyright", "pizza", "the"],
+    )
+
+
+def test_pipeline_feature_names_out_error_without_definition():
+    """Check that error is raised when a transformer does not define
+    `get_feature_names_out`."""
+    pipe = Pipeline(steps=[("notrans", NoTrans())])
+    iris = load_iris()
+    pipe.fit(iris.data, iris.target)
+
+    msg = "does not provide get_feature_names_out"
+    with pytest.raises(AttributeError, match=msg):
+        pipe.get_feature_names_out()
 
 
 def test_pipeline_param_error():
@@ -1375,3 +1580,81 @@ def test_pipeline_check_if_fitted():
         check_is_fitted(pipeline)
     pipeline.fit(iris.data, iris.target)
     check_is_fitted(pipeline)
+
+
+def test_feature_union_check_if_fitted():
+    """Check __sklearn_is_fitted__ is defined correctly."""
+
+    X = [[1, 2], [3, 4], [5, 6]]
+    y = [0, 1, 2]
+
+    union = FeatureUnion([("clf", MinimalTransformer())])
+    with pytest.raises(NotFittedError):
+        check_is_fitted(union)
+
+    union.fit(X, y)
+    check_is_fitted(union)
+
+    # passthrough is stateless
+    union = FeatureUnion([("pass", "passthrough")])
+    check_is_fitted(union)
+
+    union = FeatureUnion([("clf", MinimalTransformer()), ("pass", "passthrough")])
+    with pytest.raises(NotFittedError):
+        check_is_fitted(union)
+
+    union.fit(X, y)
+    check_is_fitted(union)
+
+
+def test_pipeline_get_feature_names_out_passes_names_through():
+    """Check that pipeline passes names through.
+
+    Non-regresion test for #21349.
+    """
+    X, y = iris.data, iris.target
+
+    class AddPrefixStandardScalar(StandardScaler):
+        def get_feature_names_out(self, input_features=None):
+            names = super().get_feature_names_out(input_features=input_features)
+            return np.asarray([f"my_prefix_{name}" for name in names], dtype=object)
+
+    pipe = make_pipeline(AddPrefixStandardScalar(), StandardScaler())
+    pipe.fit(X, y)
+
+    input_names = iris.feature_names
+    feature_names_out = pipe.get_feature_names_out(input_names)
+
+    assert_array_equal(feature_names_out, [f"my_prefix_{name}" for name in input_names])
+
+
+def test_pipeline_set_output_integration():
+    """Test pipeline's set_output with feature names."""
+    pytest.importorskip("pandas")
+
+    X, y = load_iris(as_frame=True, return_X_y=True)
+
+    pipe = make_pipeline(StandardScaler(), LogisticRegression())
+    pipe.set_output(transform="pandas")
+    pipe.fit(X, y)
+
+    feature_names_in_ = pipe[:-1].get_feature_names_out()
+    log_reg_feature_names = pipe[-1].feature_names_in_
+
+    assert_array_equal(feature_names_in_, log_reg_feature_names)
+
+
+def test_feature_union_set_output():
+    """Test feature union with set_output API."""
+    pd = pytest.importorskip("pandas")
+
+    X, _ = load_iris(as_frame=True, return_X_y=True)
+    X_train, X_test = train_test_split(X, random_state=0)
+    union = FeatureUnion([("scalar", StandardScaler()), ("pca", PCA())])
+    union.set_output(transform="pandas")
+    union.fit(X_train)
+
+    X_trans = union.transform(X_test)
+    assert isinstance(X_trans, pd.DataFrame)
+    assert_array_equal(X_trans.columns, union.get_feature_names_out())
+    assert_array_equal(X_trans.index, X_test.index)

@@ -3,13 +3,17 @@ Kernel Density Estimation
 -------------------------
 """
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
+import itertools
+from numbers import Integral, Real
 
 import numpy as np
 from scipy.special import gammainc
+
 from ..base import BaseEstimator
+from ..neighbors._base import VALID_METRICS
 from ..utils import check_random_state
 from ..utils.validation import _check_sample_weight, check_is_fitted
-
+from ..utils._param_validation import Interval, StrOptions
 from ..utils.extmath import row_norms
 from ._ball_tree import BallTree, DTYPE
 from ._kd_tree import KDTree
@@ -23,11 +27,11 @@ VALID_KERNELS = [
     "linear",
     "cosine",
 ]
+
 TREE_DICT = {"ball_tree": BallTree, "kd_tree": KDTree}
 
 
 # TODO: implement a brute force version for testing purposes
-# TODO: bandwidth estimation
 # TODO: create a density estimation base class?
 class KernelDensity(BaseEstimator):
     """Kernel Density Estimation.
@@ -36,8 +40,10 @@ class KernelDensity(BaseEstimator):
 
     Parameters
     ----------
-    bandwidth : float, default=1.0
-        The bandwidth of the kernel.
+    bandwidth : float or {"scott", "silverman"}, default=1.0
+        The bandwidth of the kernel. If bandwidth is a float, it defines the
+        bandwidth of the kernel. If bandwidth is a string, one of the estimation
+        methods is implemented.
 
     algorithm : {'kd_tree', 'ball_tree', 'auto'}, default='auto'
         The tree algorithm to use.
@@ -47,12 +53,17 @@ class KernelDensity(BaseEstimator):
         The kernel to use.
 
     metric : str, default='euclidean'
-        The distance metric to use.  Note that not all metrics are
-        valid with all algorithms.  Refer to the documentation of
-        :class:`BallTree` and :class:`KDTree` for a description of
-        available algorithms.  Note that the normalization of the density
-        output is correct only for the Euclidean distance metric. Default
-        is 'euclidean'.
+        Metric to use for distance computation. See the
+        documentation of `scipy.spatial.distance
+        <https://docs.scipy.org/doc/scipy/reference/spatial.distance.html>`_ and
+        the metrics listed in
+        :class:`~sklearn.metrics.pairwise.distance_metrics` for valid metric
+        values.
+
+        Not all metrics are valid with all algorithms: refer to the
+        documentation of :class:`BallTree` and :class:`KDTree`. Note that the
+        normalization of the density output is correct only for the Euclidean
+        distance metric.
 
     atol : float, default=0
         The desired absolute tolerance of the result.  A larger tolerance will
@@ -85,6 +96,16 @@ class KernelDensity(BaseEstimator):
     tree_ : ``BinaryTree`` instance
         The tree algorithm for fast generalized N-point problems.
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+    bandwidth_ : float
+        Value of the bandwidth, given directly by the bandwidth parameter or
+        estimated using the 'scott' or 'silverman' method.
+
+        .. versionadded:: 1.0
+
     See Also
     --------
     sklearn.neighbors.KDTree : K-dimensional tree for fast generalized N-point
@@ -96,6 +117,7 @@ class KernelDensity(BaseEstimator):
     --------
     Compute a gaussian kernel density estimate with a fixed bandwidth.
 
+    >>> from sklearn.neighbors import KernelDensity
     >>> import numpy as np
     >>> rng = np.random.RandomState(42)
     >>> X = rng.random_sample((100, 3))
@@ -104,6 +126,25 @@ class KernelDensity(BaseEstimator):
     >>> log_density
     array([-1.52955942, -1.51462041, -1.60244657])
     """
+
+    _parameter_constraints: dict = {
+        "bandwidth": [
+            Interval(Real, 0, None, closed="neither"),
+            StrOptions({"scott", "silverman"}),
+        ],
+        "algorithm": [StrOptions(set(TREE_DICT.keys()) | {"auto"})],
+        "kernel": [StrOptions(set(VALID_KERNELS))],
+        "metric": [
+            StrOptions(
+                set(itertools.chain(*[VALID_METRICS[alg] for alg in TREE_DICT.keys()]))
+            )
+        ],
+        "atol": [Interval(Real, 0, None, closed="left")],
+        "rtol": [Interval(Real, 0, None, closed="left")],
+        "breadth_first": ["boolean"],
+        "leaf_size": [Interval(Integral, 1, None, closed="left")],
+        "metric_params": [None, dict],
+    }
 
     def __init__(
         self,
@@ -128,16 +169,6 @@ class KernelDensity(BaseEstimator):
         self.leaf_size = leaf_size
         self.metric_params = metric_params
 
-        # run the choose algorithm code so that exceptions will happen here
-        # we're using clone() in the GenerativeBayes classifier,
-        # so we can't do this kind of logic in __init__
-        self._choose_algorithm(self.algorithm, self.metric)
-
-        if bandwidth <= 0:
-            raise ValueError("bandwidth must be positive")
-        if kernel not in VALID_KERNELS:
-            raise ValueError("invalid kernel: '{0}'".format(kernel))
-
     def _choose_algorithm(self, algorithm, metric):
         # given the algorithm string + metric string, choose the optimal
         # algorithm to compute the result.
@@ -147,16 +178,12 @@ class KernelDensity(BaseEstimator):
                 return "kd_tree"
             elif metric in BallTree.valid_metrics:
                 return "ball_tree"
-            else:
-                raise ValueError("invalid metric: '{0}'".format(metric))
-        elif algorithm in TREE_DICT:
+        else:  # kd_tree or ball_tree
             if metric not in TREE_DICT[algorithm].valid_metrics:
                 raise ValueError(
                     "invalid metric for {0}: '{1}'".format(TREE_DICT[algorithm], metric)
                 )
             return algorithm
-        else:
-            raise ValueError("invalid algorithm: '{0}'".format(algorithm))
 
     def fit(self, X, y=None, sample_weight=None):
         """Fit the Kernel Density model on the data.
@@ -179,15 +206,28 @@ class KernelDensity(BaseEstimator):
         Returns
         -------
         self : object
-            Returns instance of object.
+            Returns the instance itself.
         """
+        self._validate_params()
+
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
+
+        if isinstance(self.bandwidth, str):
+            if self.bandwidth == "scott":
+                self.bandwidth_ = X.shape[0] ** (-1 / (X.shape[1] + 4))
+            elif self.bandwidth == "silverman":
+                self.bandwidth_ = (X.shape[0] * (X.shape[1] + 2) / 4) ** (
+                    -1 / (X.shape[1] + 4)
+                )
+        else:
+            self.bandwidth_ = self.bandwidth
+
         X = self._validate_data(X, order="C", dtype=DTYPE)
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(sample_weight, X, DTYPE)
-            if sample_weight.min() <= 0:
-                raise ValueError("sample_weight must have positive values")
+            sample_weight = _check_sample_weight(
+                sample_weight, X, DTYPE, only_non_negative=True
+            )
 
         kwargs = self.metric_params
         if kwargs is None:
@@ -202,7 +242,7 @@ class KernelDensity(BaseEstimator):
         return self
 
     def score_samples(self, X):
-        """Evaluate the log density model on the data.
+        """Compute the log-likelihood of each sample under the model.
 
         Parameters
         ----------
@@ -213,7 +253,7 @@ class KernelDensity(BaseEstimator):
         Returns
         -------
         density : ndarray of shape (n_samples,)
-            The array of log(density) evaluations. These are normalized to be
+            Log-likelihood of each sample in `X`. These are normalized to be
             probability densities, so values will be low for high-dimensional
             data.
         """
@@ -229,7 +269,7 @@ class KernelDensity(BaseEstimator):
         atol_N = self.atol * N
         log_density = self.tree_.kernel_density(
             X,
-            h=self.bandwidth,
+            h=self.bandwidth_,
             kernel=self.kernel,
             atol=atol_N,
             rtol=self.rtol,
@@ -240,7 +280,7 @@ class KernelDensity(BaseEstimator):
         return log_density
 
     def score(self, X, y=None):
-        """Compute the total log probability density under the model.
+        """Compute the total log-likelihood under the model.
 
         Parameters
         ----------
@@ -275,7 +315,7 @@ class KernelDensity(BaseEstimator):
             Determines random number generation used to generate
             random samples. Pass an int for reproducible results
             across multiple function calls.
-            See :term: `Glossary <random_state>`.
+            See :term:`Glossary <random_state>`.
 
         Returns
         -------
@@ -298,7 +338,7 @@ class KernelDensity(BaseEstimator):
             sum_weight = cumsum_weight[-1]
             i = np.searchsorted(cumsum_weight, u * sum_weight)
         if self.kernel == "gaussian":
-            return np.atleast_2d(rng.normal(data[i], self.bandwidth))
+            return np.atleast_2d(rng.normal(data[i], self.bandwidth_))
 
         elif self.kernel == "tophat":
             # we first draw points from a d-dimensional normal distribution,
@@ -309,7 +349,7 @@ class KernelDensity(BaseEstimator):
             s_sq = row_norms(X, squared=True)
             correction = (
                 gammainc(0.5 * dim, 0.5 * s_sq) ** (1.0 / dim)
-                * self.bandwidth
+                * self.bandwidth_
                 / np.sqrt(s_sq)
             )
             return data[i] + X * correction[:, np.newaxis]

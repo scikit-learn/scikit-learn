@@ -11,8 +11,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.svm import SVC
-from sklearn.svm import SVR
+from sklearn.svm import SVC, SVR
 
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import confusion_matrix
@@ -30,6 +29,9 @@ def test_confusion_matrix_display_validation(pyplot):
     X, y = make_classification(
         n_samples=100, n_informative=5, n_classes=5, random_state=0
     )
+
+    with pytest.raises(NotFittedError):
+        ConfusionMatrixDisplay.from_estimator(SVC(), X, y)
 
     regressor = SVR().fit(X, y)
     y_pred_regressor = regressor.predict(X)
@@ -363,3 +365,43 @@ def test_colormap_max(pyplot):
 
     color = disp.text_[1, 0].get_color()
     assert_allclose(color, [1.0, 1.0, 1.0, 1.0])
+
+
+def test_im_kw_adjust_vmin_vmax(pyplot):
+    """Check that im_kw passes kwargs to imshow"""
+
+    confusion_matrix = np.array([[0.48, 0.04], [0.08, 0.4]])
+    disp = ConfusionMatrixDisplay(confusion_matrix)
+    disp.plot(im_kw=dict(vmin=0.0, vmax=0.8))
+
+    clim = disp.im_.get_clim()
+    assert clim[0] == pytest.approx(0.0)
+    assert clim[1] == pytest.approx(0.8)
+
+
+def test_confusion_matrix_text_kw(pyplot):
+    """Check that text_kw is passed to the text call."""
+    font_size = 15.0
+    X, y = make_classification(random_state=0)
+    classifier = SVC().fit(X, y)
+
+    # from_estimator passes the font size
+    disp = ConfusionMatrixDisplay.from_estimator(
+        classifier, X, y, text_kw={"fontsize": font_size}
+    )
+    for text in disp.text_.reshape(-1):
+        assert text.get_fontsize() == font_size
+
+    # plot adjusts plot to new font size
+    new_font_size = 20.0
+    disp.plot(text_kw={"fontsize": new_font_size})
+    for text in disp.text_.reshape(-1):
+        assert text.get_fontsize() == new_font_size
+
+    # from_predictions passes the font size
+    y_pred = classifier.predict(X)
+    disp = ConfusionMatrixDisplay.from_predictions(
+        y, y_pred, text_kw={"fontsize": font_size}
+    )
+    for text in disp.text_.reshape(-1):
+        assert text.get_fontsize() == font_size

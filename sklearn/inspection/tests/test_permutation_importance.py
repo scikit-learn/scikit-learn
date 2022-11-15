@@ -247,7 +247,7 @@ def test_permutation_importance_linear_regresssion():
     lr = LinearRegression().fit(X, y)
 
     # this relationship can be computed in closed form
-    expected_importances = 2 * lr.coef_ ** 2
+    expected_importances = 2 * lr.coef_**2
     results = permutation_importance(
         lr, X, y, n_repeats=50, scoring="neg_mean_squared_error"
     )
@@ -328,7 +328,7 @@ def test_permutation_importance_equivalence_array_dataframe(n_jobs, max_samples)
     X_df[new_col_idx] = cat_column
     assert X_df[new_col_idx].dtype == cat_column.dtype
 
-    # Stich an aribtrary index to the dataframe:
+    # Stich an arbitrary index to the dataframe:
     X_df.index = np.arange(len(X_df)).astype(str)
 
     rf = RandomForestRegressor(n_estimators=5, max_depth=3, random_state=0)
@@ -437,7 +437,7 @@ def test_permutation_importance_sample_weight():
     # the two features importance should equal to 2 on expectation (when using
     # mean absolutes error as the loss function).
     w = np.hstack(
-        [np.repeat(10.0 ** 10, n_half_samples), np.repeat(1.0, n_half_samples)]
+        [np.repeat(10.0**10, n_half_samples), np.repeat(1.0, n_half_samples)]
     )
     lr.fit(x, y, w)
     pi = permutation_importance(

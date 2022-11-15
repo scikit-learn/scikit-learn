@@ -53,9 +53,9 @@ Validation curve
 
 To validate a model we need a scoring function (see :ref:`model_evaluation`),
 for example accuracy for classifiers. The proper way of choosing multiple
-hyperparameters of an estimator are of course grid search or similar methods
+hyperparameters of an estimator is of course grid search or similar methods
 (see :ref:`grid_search`) that select the hyperparameter with the maximum score
-on a validation set or multiple validation sets. Note that if we optimized
+on a validation set or multiple validation sets. Note that if we optimize
 the hyperparameters based on a validation score the validation score is biased
 and not a good estimate of the generalization any longer. To get a proper
 estimate of the generalization we have to compute the score on another test

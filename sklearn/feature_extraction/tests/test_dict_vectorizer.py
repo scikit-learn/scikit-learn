@@ -51,7 +51,7 @@ def test_feature_selection():
         sel = SelectKBest(chi2, k=2).fit(X, [0, 1])
 
         v.restrict(sel.get_support(indices=indices), indices=indices)
-        assert v.get_feature_names() == ["useful1", "useful2"]
+        assert_array_equal(v.get_feature_names_out(), ["useful1", "useful2"])
 
 
 def test_one_of_k():
@@ -67,7 +67,7 @@ def test_one_of_k():
     D_out = v.inverse_transform(X)
     assert D_out[0] == {"version=1": 1, "ham": 2}
 
-    names = v.get_feature_names()
+    names = v.get_feature_names_out()
     assert "version=2" in names
     assert "version" not in names
 
@@ -92,9 +92,9 @@ def test_iterable_value():
     D_out = v.inverse_transform(X)
     assert D_out[0] == {"version=1": 2, "version=2": 1, "ham": 2}
 
-    names = v.get_feature_names()
+    names = v.get_feature_names_out()
 
-    assert names == D_names
+    assert_array_equal(names, D_names)
 
 
 def test_iterable_not_string_error():
@@ -141,10 +141,8 @@ def test_unseen_or_no_features():
             X = X.toarray()
         assert_array_equal(X, np.zeros((1, 2)))
 
-        try:
+        with pytest.raises(ValueError, match="empty"):
             v.transform([])
-        except ValueError as e:
-            assert "empty" in str(e)
 
 
 def test_deterministic_vocabulary():
@@ -227,3 +225,16 @@ def test_dict_vectorizer_unsupported_value_type():
     err_msg = "Unsupported value Type"
     with pytest.raises(TypeError, match=err_msg):
         vectorizer.fit_transform(X)
+
+
+def test_dict_vectorizer_get_feature_names_out():
+    """Check that integer feature names are converted to strings in
+    feature_names_out."""
+
+    X = [{1: 2, 3: 4}, {2: 4}]
+    dv = DictVectorizer(sparse=False).fit(X)
+
+    feature_names = dv.get_feature_names_out()
+    assert isinstance(feature_names, np.ndarray)
+    assert feature_names.dtype == object
+    assert_array_equal(feature_names, ["1", "2", "3"])

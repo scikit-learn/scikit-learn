@@ -6,12 +6,14 @@
 import numpy as np
 from scipy import interpolate
 from scipy.stats import spearmanr
+from numbers import Real
 import warnings
 import math
 
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import check_array, check_consistent_length
 from .utils.validation import _check_sample_weight
+from .utils._param_validation import Interval, StrOptions
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 
 
@@ -103,7 +105,7 @@ def isotonic_regression(
 
     increasing : bool, default=True
         Whether to compute ``y_`` is increasing (if set to True) or decreasing
-        (if set to False)
+        (if set to False).
 
     Returns
     -------
@@ -116,7 +118,7 @@ def isotonic_regression(
     by Michael J. Best and Nilotpal Chakravarti, section 3.
     """
     order = np.s_[:] if increasing else np.s_[::-1]
-    y = check_array(y, ensure_2d=False, dtype=[np.float64, np.float32])
+    y = check_array(y, ensure_2d=False, input_name="y", dtype=[np.float64, np.float32])
     y = np.array(y[order], dtype=y.dtype)
     sample_weight = _check_sample_weight(sample_weight, y, dtype=y.dtype, copy=True)
     sample_weight = np.ascontiguousarray(sample_weight[order])
@@ -226,6 +228,13 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
     array([1.8628..., 3.7256...])
     """
 
+    _parameter_constraints: dict = {
+        "y_min": [Interval(Real, None, None, closed="both"), None],
+        "y_max": [Interval(Real, None, None, closed="both"), None],
+        "increasing": ["boolean", StrOptions({"auto"})],
+        "out_of_bounds": [StrOptions({"nan", "clip", "raise"})],
+    }
+
     def __init__(self, *, y_min=None, y_max=None, increasing=True, out_of_bounds="nan"):
         self.y_min = y_min
         self.y_max = y_max
@@ -242,13 +251,6 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
 
     def _build_f(self, X, y):
         """Build the f_ interp1d function."""
-
-        # Handle the out_of_bounds argument by setting bounds_error
-        if self.out_of_bounds not in ["raise", "nan", "clip"]:
-            raise ValueError(
-                "The argument ``out_of_bounds`` must be in "
-                "'nan', 'clip', 'raise'; got {0}".format(self.out_of_bounds)
-            )
 
         bounds_error = self.out_of_bounds == "raise"
         if len(y) == 1:
@@ -336,9 +338,12 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         X is stored for future use, as :meth:`transform` needs X to interpolate
         new input data.
         """
+        self._validate_params()
         check_params = dict(accept_sparse=False, ensure_2d=False)
-        X = check_array(X, dtype=[np.float64, np.float32], **check_params)
-        y = check_array(y, dtype=X.dtype, **check_params)
+        X = check_array(
+            X, input_name="X", dtype=[np.float64, np.float32], **check_params
+        )
+        y = check_array(y, input_name="y", dtype=X.dtype, **check_params)
         check_consistent_length(X, y, sample_weight)
 
         # Transform y by running the isotonic regression algorithm and
@@ -382,13 +387,6 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         self._check_input_data_shape(T)
         T = T.reshape(-1)  # use 1d view
 
-        # Handle the out_of_bounds argument by clipping if needed
-        if self.out_of_bounds not in ["raise", "nan", "clip"]:
-            raise ValueError(
-                "The argument ``out_of_bounds`` must be in "
-                "'nan', 'clip', 'raise'; got {0}".format(self.out_of_bounds)
-            )
-
         if self.out_of_bounds == "clip":
             T = np.clip(T, self.X_min_, self.X_max_)
 
@@ -413,6 +411,26 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
             Transformed data.
         """
         return self.transform(T)
+
+    # We implement get_feature_names_out here instead of using
+    # `ClassNamePrefixFeaturesOutMixin`` because `input_features` are ignored.
+    # `input_features` are ignored because `IsotonicRegression` accepts 1d
+    # arrays and the semantics of `feature_names_in_` are not clear for 1d arrays.
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Ignored.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            An ndarray with one string i.e. ["isotonicregression0"].
+        """
+        class_name = self.__class__.__name__.lower()
+        return np.asarray([f"{class_name}0"], dtype=object)
 
     def __getstate__(self):
         """Pickle-protocol - return state of the estimator."""

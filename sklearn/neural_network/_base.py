@@ -16,8 +16,8 @@ def inplace_identity(X):
     Parameters
     ----------
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
-        Data, where n_samples is the number of samples
-        and n_features is the number of features.
+        Data, where `n_samples` is the number of samples
+        and `n_features` is the number of features.
     """
     # Nothing to do
 
@@ -126,7 +126,7 @@ def inplace_tanh_derivative(Z, delta):
     delta : {array-like}, shape (n_samples, n_features)
          The backpropagated error signal to be modified inplace.
     """
-    delta *= 1 - Z ** 2
+    delta *= 1 - Z**2
 
 
 def inplace_relu_derivative(Z, delta):

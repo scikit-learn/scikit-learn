@@ -187,7 +187,7 @@ an estimate for the covariance matrix). Setting this parameter to a value
 between these two extrema will estimate a shrunk version of the covariance
 matrix.
 
-The shrinked Ledoit and Wolf estimator of covariance may not always be the
+The shrunk Ledoit and Wolf estimator of covariance may not always be the
 best choice. For example if the distribution of the data
 is normally distributed, the
 Oracle Shrinkage Approximating estimator :class:`sklearn.covariance.OAS`
@@ -234,7 +234,7 @@ For QDA, the use of the SVD solver relies on the fact that the covariance
 matrix :math:`\Sigma_k` is, by definition, equal to :math:`\frac{1}{n - 1}
 X_k^tX_k = \frac{1}{n - 1} V S^2 V^t` where :math:`V` comes from the SVD of the (centered)
 matrix: :math:`X_k = U S V^t`. It turns out that we can compute the
-log-posterior above without having to explictly compute :math:`\Sigma`:
+log-posterior above without having to explicitly compute :math:`\Sigma`:
 computing :math:`S` and :math:`V` via the SVD of :math:`X` is enough. For
 LDA, two SVDs are computed: the SVD of the centered input matrix :math:`X`
 and the SVD of the class-wise mean vectors.

@@ -2,28 +2,42 @@
 
 set -e
 
+# defines the show_installed_libraries function
+source build_tools/shared.sh
+
 if [[ "$DISTRIB" =~ ^conda.* ]]; then
     source activate $VIRTUALENV
-elif [[ "$DISTRIB" == "ubuntu" ]] || [[ "$DISTRIB" == "debian-32" ]]; then
+elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" || "$DISTRIB" == "pip-nogil" ]]; then
     source $VIRTUALENV/bin/activate
 fi
 
-if [[ "$BUILD_WITH_ICC" == "true" ]]; then
-    source /opt/intel/oneapi/setvars.sh
+if [[ "$BUILD_REASON" == "Schedule" ]]; then
+    # Enable global random seed randomization to discover seed-sensitive tests
+    # only on nightly builds.
+    # https://scikit-learn.org/stable/computing/parallelism.html#environment-variables
+    export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="any"
+
+    # Enable global dtype fixture for all nightly builds to discover
+    # numerical-sensitive tests.
+    # https://scikit-learn.org/stable/computing/parallelism.html#environment-variables
+    export SKLEARN_RUN_FLOAT32_TESTS=1
 fi
 
-python --version
-python -c "import numpy; print('numpy %s' % numpy.__version__)"
-python -c "import scipy; print('scipy %s' % scipy.__version__)"
-python -c "\
-try:
-    import pandas
-    print('pandas %s' % pandas.__version__)
-except ImportError:
-    print('pandas not installed')
-"
-python -c "import multiprocessing as mp; print('%d CPUs' % mp.cpu_count())"
-pip list
+COMMIT_MESSAGE=$(python build_tools/azure/get_commit_message.py --only-show-message)
+
+if [[ "$COMMIT_MESSAGE" =~ \[float32\] ]]; then
+    echo "float32 tests will be run due to commit message"
+    export SKLEARN_RUN_FLOAT32_TESTS=1
+fi
+
+mkdir -p $TEST_DIR
+cp setup.cfg $TEST_DIR
+cd $TEST_DIR
+
+python -c "import joblib; print(f'Number of cores: {joblib.cpu_count()}')"
+python -c "import sklearn; sklearn.show_versions()"
+
+show_installed_libraries
 
 TEST_CMD="python -m pytest --showlocals --durations=20 --junitxml=$JUNITXML"
 
@@ -34,22 +48,42 @@ if [[ "$COVERAGE" == "true" ]]; then
     # report that otherwise hides the test failures and forces long scrolls in
     # the CI logs.
     export COVERAGE_PROCESS_START="$BUILD_SOURCESDIRECTORY/.coveragerc"
-    TEST_CMD="$TEST_CMD --cov-config=$COVERAGE_PROCESS_START --cov sklearn --cov-report="
+    TEST_CMD="$TEST_CMD --cov-config='$COVERAGE_PROCESS_START' --cov sklearn --cov-report="
 fi
 
 if [[ -n "$CHECK_WARNINGS" ]]; then
-    # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib removes its usage
-    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Wignore:tostring:DeprecationWarning"
+    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Werror::numpy.VisibleDeprecationWarning"
+
+    # numpy's 1.19.0's tostring() deprecation is ignored until scipy and joblib
+    # removes its usage
+    TEST_CMD="$TEST_CMD -Wignore:tostring:DeprecationWarning"
+
+    # Ignore distutils deprecation warning, used by joblib internally
+    TEST_CMD="$TEST_CMD -Wignore:distutils\ Version\ classes\ are\ deprecated:DeprecationWarning"
+
+    # In some case, exceptions are raised (by bug) in tests, and captured by pytest,
+    # but not raised again. This is for instance the case when Cython directives are
+    # activated: IndexErrors (which aren't fatal) are raised on out-of-bound accesses.
+    # In those cases, pytest instead raises pytest.PytestUnraisableExceptionWarnings,
+    # which we must treat as errors on the CI.
+    TEST_CMD="$TEST_CMD -Werror::pytest.PytestUnraisableExceptionWarning"
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then
-    TEST_CMD="$TEST_CMD -n2"
+    TEST_CMD="$TEST_CMD -n$CPU_COUNT"
 fi
 
-mkdir -p $TEST_DIR
-cp setup.cfg $TEST_DIR
-cd $TEST_DIR
+if [[ "$SHOW_SHORT_SUMMARY" == "true" ]]; then
+    TEST_CMD="$TEST_CMD -ra"
+fi
+
+if [[ -n "$SELECTED_TESTS" ]]; then
+    TEST_CMD="$TEST_CMD -k $SELECTED_TESTS"
+
+    # Override to make selected tests run on all random seeds
+    export SKLEARN_TESTS_GLOBAL_RANDOM_SEED="all"
+fi
 
 set -x
-$TEST_CMD --pyargs sklearn
+eval "$TEST_CMD --pyargs sklearn"
 set +x

@@ -17,14 +17,15 @@ palette.
 
 For comparison, a quantized image using a random codebook (colors picked up
 randomly) is also shown.
+
 """
+
 # Authors: Robert Layton <robertlayton@gmail.com>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #
 # License: BSD 3 clause
 
-print(__doc__)
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
@@ -51,7 +52,9 @@ image_array = np.reshape(china, (w * h, d))
 print("Fitting model on a small sub-sample of the data")
 t0 = time()
 image_array_sample = shuffle(image_array, random_state=0, n_samples=1_000)
-kmeans = KMeans(n_clusters=n_colors, random_state=0).fit(image_array_sample)
+kmeans = KMeans(n_clusters=n_colors, n_init="auto", random_state=0).fit(
+    image_array_sample
+)
 print(f"done in {time() - t0:0.3f}s.")
 
 # Get labels for all points
@@ -64,9 +67,7 @@ print(f"done in {time() - t0:0.3f}s.")
 codebook_random = shuffle(image_array, random_state=0, n_samples=n_colors)
 print("Predicting color indices on the full image (random)")
 t0 = time()
-labels_random = pairwise_distances_argmin(codebook_random,
-                                          image_array,
-                                          axis=0)
+labels_random = pairwise_distances_argmin(codebook_random, image_array, axis=0)
 print(f"done in {time() - t0:0.3f}s.")
 
 
@@ -78,19 +79,19 @@ def recreate_image(codebook, labels, w, h):
 # Display all results, alongside original image
 plt.figure(1)
 plt.clf()
-plt.axis('off')
-plt.title('Original image (96,615 colors)')
+plt.axis("off")
+plt.title("Original image (96,615 colors)")
 plt.imshow(china)
 
 plt.figure(2)
 plt.clf()
-plt.axis('off')
-plt.title(f'Quantized image ({n_colors} colors, K-Means)')
+plt.axis("off")
+plt.title(f"Quantized image ({n_colors} colors, K-Means)")
 plt.imshow(recreate_image(kmeans.cluster_centers_, labels, w, h))
 
 plt.figure(3)
 plt.clf()
-plt.axis('off')
-plt.title(f'Quantized image ({n_colors} colors, Random)')
+plt.axis("off")
+plt.title(f"Quantized image ({n_colors} colors, Random)")
 plt.imshow(recreate_image(codebook_random, labels_random, w, h))
 plt.show()

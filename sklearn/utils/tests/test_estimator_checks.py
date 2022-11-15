@@ -5,12 +5,13 @@
 import unittest
 import sys
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
 import joblib
 
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin
 from sklearn.datasets import make_multilabel_classification
 from sklearn.utils import deprecated
 from sklearn.utils._testing import (
@@ -21,13 +22,13 @@ from sklearn.utils._testing import (
     MinimalTransformer,
     SkipTest,
 )
-from sklearn.utils.validation import check_is_fitted
-from sklearn.utils.fixes import np_version, parse_version
-from sklearn.ensemble import RandomForestClassifier
+
+from sklearn.utils.validation import check_is_fitted, check_X_y
+from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.linear_model import LinearRegression, SGDClassifier
 from sklearn.mixture import GaussianMixture
 from sklearn.cluster import MiniBatchKMeans
-from sklearn.decomposition import NMF
+from sklearn.decomposition import PCA
 from sklearn.linear_model import MultiTaskElasticNet, LogisticRegression
 from sklearn.svm import SVC, NuSVC
 from sklearn.neighbors import KNeighborsRegressor
@@ -35,6 +36,8 @@ from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
 from sklearn.exceptions import SkipTestWarning
 from sklearn.utils.metaestimators import available_if
+from sklearn.utils.estimator_checks import check_decision_proba_consistency
+from sklearn.utils._param_validation import Interval, StrOptions
 
 from sklearn.utils.estimator_checks import (
     _NotAnArray,
@@ -51,9 +54,14 @@ from sklearn.utils.estimator_checks import (
     check_fit_score_takes_y,
     check_no_attributes_set_in_init,
     check_regressor_data_not_an_array,
+    check_requires_y_none,
     check_outlier_corruption,
+    check_outlier_contamination,
     set_random_state,
     check_fit_check_is_fitted,
+    check_methods_sample_order_invariance,
+    check_methods_subset_invariance,
+    _yield_all_checks,
 )
 
 
@@ -395,6 +403,17 @@ class EstimatorMissingDefaultTags(BaseEstimator):
         return tags
 
 
+class RequiresPositiveXRegressor(LinearRegression):
+    def fit(self, X, y):
+        X, y = self._validate_data(X, y, multi_output=True)
+        if (X < 0).any():
+            raise ValueError("negative X values not supported!")
+        return super().fit(X, y)
+
+    def _more_tags(self):
+        return {"requires_positive_X": True}
+
+
 class RequiresPositiveYRegressor(LinearRegression):
     def fit(self, X, y):
         X, y = self._validate_data(X, y, multi_output=True)
@@ -427,8 +446,6 @@ class PartialFitChecksName(BaseEstimator):
 
 
 def test_not_an_array_array_function():
-    if np_version < parse_version("1.17"):
-        raise SkipTest("array_function protocol not supported in numpy <1.17")
     not_array = _NotAnArray(np.ones(10))
     msg = "Don't want to call array_function sum!"
     with raises(TypeError, match=msg):
@@ -496,7 +513,7 @@ def test_check_estimator():
     except ImportError:
         pass
     # check that predict does input validation (doesn't accept dicts in input)
-    msg = "Estimator doesn't check for NaN and inf in predict"
+    msg = "Estimator NoCheckinPredict doesn't check for NaN and inf in predict"
     with raises(AssertionError, match=msg):
         check_estimator(NoCheckinPredict())
     # check that estimator state does not change
@@ -504,7 +521,7 @@ def test_check_estimator():
     msg = "Estimator changes __dict__ during predict"
     with raises(AssertionError, match=msg):
         check_estimator(ChangesDict())
-    # check that `fit` only changes attribures that
+    # check that `fit` only changes attributes that
     # are private (start with an _ or end with a _).
     msg = (
         "Estimator ChangesWrongAttribute should not change or mutate  "
@@ -568,6 +585,7 @@ def test_check_estimator():
 
     # doesn't error on binary_only tagged estimator
     check_estimator(TaggedBinaryClassifier())
+    check_estimator(RequiresPositiveXRegressor())
 
     # Check regressor with requires_positive_y estimator tag
     msg = "negative y values not supported!"
@@ -603,9 +621,9 @@ def test_check_estimator_clones():
     for Estimator in [
         GaussianMixture,
         LinearRegression,
-        RandomForestClassifier,
-        NMF,
         SGDClassifier,
+        PCA,
+        ExtraTreesClassifier,
         MiniBatchKMeans,
     ]:
         with ignore_warnings(category=FutureWarning):
@@ -718,6 +736,15 @@ def test_check_dataframe_column_names_consistency():
         check_dataframe_column_names_consistency("estimator_name", BaseBadClassifier())
     check_dataframe_column_names_consistency("estimator_name", PartialFitChecksName())
 
+    lr = LogisticRegression()
+    check_dataframe_column_names_consistency(lr.__class__.__name__, lr)
+    lr.__doc__ = "Docstring that does not document the estimator's attributes"
+    err_msg = (
+        "Estimator LogisticRegression does not document its feature_names_in_ attribute"
+    )
+    with raises(ValueError, match=err_msg):
+        check_dataframe_column_names_consistency(lr.__class__.__name__, lr)
+
 
 class _BaseMultiLabelClassifierMock(ClassifierMixin, BaseEstimator):
     def __init__(self, response_output):
@@ -793,7 +820,7 @@ def test_check_classifiers_multilabel_output_format_predict_proba():
     # 1. unknown output type
     clf = MultiLabelClassifierPredictProba(response_output=sp.csr_matrix(y_test))
     err_msg = (
-        r"Unknown returned type <class 'scipy.sparse.csr.csr_matrix'> by "
+        "Unknown returned type .*csr_matrix.* by "
         r"MultiLabelClassifierPredictProba.predict_proba. A list or a Numpy "
         r"array is expected."
     )
@@ -1033,3 +1060,109 @@ def test_check_fit_check_is_fitted():
 
     check_fit_check_is_fitted("estimator", Estimator(behavior="method"))
     check_fit_check_is_fitted("estimator", Estimator(behavior="attribute"))
+
+
+def test_check_requires_y_none():
+    class Estimator(BaseEstimator):
+        def fit(self, X, y):
+            X, y = check_X_y(X, y)
+
+    with warnings.catch_warnings(record=True) as record:
+        check_requires_y_none("estimator", Estimator())
+
+    # no warnings are raised
+    assert not [r.message for r in record]
+
+
+# TODO: Remove in 1.3 when Estimator is removed
+def test_deprecated_Estimator_check_estimator():
+    err_msg = "'Estimator' was deprecated in favor of"
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", FutureWarning)
+        with raises(FutureWarning, match=err_msg, may_pass=True):
+            check_estimator(Estimator=NuSVC())
+
+    err_msg = "Either estimator or Estimator should be passed"
+    with raises(ValueError, match=err_msg, may_pass=False):
+        check_estimator()
+
+
+def test_non_deterministic_estimator_skip_tests():
+    # check estimators with non_deterministic tag set to True
+    # will skip certain tests, refer to issue #22313 for details
+    for est in [MinimalTransformer, MinimalRegressor, MinimalClassifier]:
+        all_tests = list(_yield_all_checks(est()))
+        assert check_methods_sample_order_invariance in all_tests
+        assert check_methods_subset_invariance in all_tests
+
+        class Estimator(est):
+            def _more_tags(self):
+                return {"non_deterministic": True}
+
+        all_tests = list(_yield_all_checks(Estimator()))
+        assert check_methods_sample_order_invariance not in all_tests
+        assert check_methods_subset_invariance not in all_tests
+
+
+def test_check_outlier_contamination():
+    """Check the test for the contamination parameter in the outlier detectors."""
+
+    # Without any parameter constraints, the estimator will early exit the test by
+    # returning None.
+    class OutlierDetectorWithoutConstraint(OutlierMixin, BaseEstimator):
+        """Outlier detector without parameter validation."""
+
+        def __init__(self, contamination=0.1):
+            self.contamination = contamination
+
+        def fit(self, X, y=None, sample_weight=None):
+            return self  # pragma: no cover
+
+        def predict(self, X, y=None):
+            return np.ones(X.shape[0])
+
+    detector = OutlierDetectorWithoutConstraint()
+    assert check_outlier_contamination(detector.__class__.__name__, detector) is None
+
+    # Now, we check that with the parameter constraints, the test should only be valid
+    # if an Interval constraint with bound in [0, 1] is provided.
+    class OutlierDetectorWithConstraint(OutlierDetectorWithoutConstraint):
+        _parameter_constraints = {"contamination": [StrOptions({"auto"})]}
+
+    detector = OutlierDetectorWithConstraint()
+    err_msg = "contamination constraints should contain a Real Interval constraint."
+    with raises(AssertionError, match=err_msg):
+        check_outlier_contamination(detector.__class__.__name__, detector)
+
+    # Add a correct interval constraint and check that the test passes.
+    OutlierDetectorWithConstraint._parameter_constraints["contamination"] = [
+        Interval(Real, 0, 0.5, closed="right")
+    ]
+    detector = OutlierDetectorWithConstraint()
+    check_outlier_contamination(detector.__class__.__name__, detector)
+
+    incorrect_intervals = [
+        Interval(Integral, 0, 1, closed="right"),  # not an integral interval
+        Interval(Real, -1, 1, closed="right"),  # lower bound is negative
+        Interval(Real, 0, 2, closed="right"),  # upper bound is greater than 1
+        Interval(Real, 0, 0.5, closed="left"),  # lower bound include 0
+    ]
+
+    err_msg = r"contamination constraint should be an interval in \(0, 0.5\]"
+    for interval in incorrect_intervals:
+        OutlierDetectorWithConstraint._parameter_constraints["contamination"] = [
+            interval
+        ]
+        detector = OutlierDetectorWithConstraint()
+        with raises(AssertionError, match=err_msg):
+            check_outlier_contamination(detector.__class__.__name__, detector)
+
+
+def test_decision_proba_tie_ranking():
+    """Check that in case with some probabilities ties, we relax the
+    ranking comparison with the decision function.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/24025
+    """
+    estimator = SGDClassifier(loss="log_loss")
+    check_decision_proba_consistency("SGDClassifier", estimator)

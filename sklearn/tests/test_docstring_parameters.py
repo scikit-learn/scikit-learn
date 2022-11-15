@@ -18,10 +18,10 @@ from sklearn.utils._testing import _get_func_name
 from sklearn.utils._testing import ignore_warnings
 from sklearn.utils import all_estimators
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
-from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
+from sklearn.utils.estimator_checks import _enforce_estimator_tags_X
 from sklearn.utils.estimator_checks import _construct_instance
+from sklearn.utils.fixes import sp_version, parse_version
 from sklearn.utils.deprecation import _is_deprecated
-from sklearn.externals._pep562 import Pep562
 from sklearn.datasets import make_classification
 from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import FunctionTransformer
@@ -162,12 +162,6 @@ def test_tabs():
         # because we don't import
         mod = importlib.import_module(modname)
 
-        # TODO: Remove when minimum python version is 3.7
-        # unwrap to get module because Pep562 backport wraps the original
-        # module
-        if isinstance(mod, Pep562):
-            mod = mod._module
-
         try:
             source = inspect.getsource(mod)
         except IOError:  # user probably should have run "make clean"
@@ -240,29 +234,45 @@ def test_fit_docstring_attributes(name, Estimator):
     ):
         # default="auto" raises an error with the shape of `X`
         est.set_params(n_components=2)
+    elif Estimator.__name__ == "TSNE":
+        # default raises an error, perplexity must be less than n_samples
+        est.set_params(perplexity=2)
 
-    # FIXME: TO BE REMOVED in 1.4 (avoid FutureWarning)
+    # FIXME: TO BE REMOVED for 1.3 (avoid FutureWarning)
+    if Estimator.__name__ == "SequentialFeatureSelector":
+        est.set_params(n_features_to_select="auto")
+
+    # FIXME: TO BE REMOVED for 1.3 (avoid FutureWarning)
+    if Estimator.__name__ == "FastICA":
+        est.set_params(whiten="unit-variance")
+
+    # FIXME: TO BE REMOVED for 1.3 (avoid FutureWarning)
+    if Estimator.__name__ == "MiniBatchDictionaryLearning":
+        est.set_params(batch_size=5)
+
+    # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
+    if Estimator.__name__ in ("KMeans", "MiniBatchKMeans"):
+        est.set_params(n_init="auto")
+
+    # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
     if Estimator.__name__ in (
-        "OrthogonalMatchingPursuit",
-        "OrthogonalMatchingPursuitCV",
-        "Lars",
-        "LarsCV",
-        "LassoLars",
-        "LassoLarsCV",
-        "LassoLarsIC",
+        "MultinomialNB",
+        "ComplementNB",
+        "BernoulliNB",
+        "CategoricalNB",
     ):
-        est.set_params(normalize=False)
+        est.set_params(force_alpha=True)
 
-    # FIXME: TO BE REMOVED for 1.1 (avoid FutureWarning)
-    if Estimator.__name__ == "NMF":
-        est.set_params(init="nndsvda")
+    if Estimator.__name__ == "QuantileRegressor":
+        solver = "highs" if sp_version >= parse_version("1.6.0") else "interior-point"
+        est.set_params(solver=solver)
 
-    # FIXME: TO BE REMOVED for 1.2 (avoid FutureWarning)
-    if Estimator.__name__ == "TSNE":
-        est.set_params(learning_rate=200.0, init="random")
+    # TODO(1.4): TO BE REMOVED for 1.4 (avoid FutureWarning)
+    if Estimator.__name__ == "MDS":
+        est.set_params(normalized_stress="auto")
 
-    # For PLS, TODO remove in 1.1
-    skipped_attributes = {"x_scores_", "y_scores_"}
+    # In case we want to deprecate some attributes in the future
+    skipped_attributes = {}
 
     if Estimator.__name__.endswith("Vectorizer"):
         # Vectorizer require some specific input data
@@ -290,7 +300,7 @@ def test_fit_docstring_attributes(name, Estimator):
         )
 
         y = _enforce_estimator_tags_y(est, y)
-        X = _enforce_estimator_tags_x(est, X)
+        X = _enforce_estimator_tags_X(est, X)
 
     if "1dlabels" in est._get_tags()["X_types"]:
         est.fit(y)

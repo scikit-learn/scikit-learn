@@ -10,8 +10,8 @@ and posterior distributions.
 
 Here, we only give some illustration. To know more about kernels' formulation,
 refer to the :ref:`User Guide <gp_kernels>`.
+
 """
-print(__doc__)
 
 # Authors: Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 #          Guillaume Lemaitre <g.lemaitre58@gmail.com>
@@ -53,9 +53,6 @@ def plot_gpr_samples(gpr_model, n_samples, ax):
     """
     x = np.linspace(0, 5, 100)
     X = x.reshape(-1, 1)
-
-    y_mean, y_std = gpr_model.predict(X, return_std=True)
-    y_samples = gpr_model.sample_y(X, n_samples)
 
     y_mean, y_std = gpr_model.predict(X, return_std=True)
     y_samples = gpr_model.sample_y(X, n_samples)
@@ -161,8 +158,8 @@ print(
 )
 
 # %%
-# Periodic kernel
-# ...............
+# Exp-Sine-Squared kernel
+# .......................
 from sklearn.gaussian_process.kernels import ExpSineSquared
 
 kernel = 1.0 * ExpSineSquared(
@@ -186,7 +183,7 @@ axs[1].scatter(X_train[:, 0], y_train, color="red", zorder=10, label="Observatio
 axs[1].legend(bbox_to_anchor=(1.05, 1.5), loc="upper left")
 axs[1].set_title("Samples from posterior distribution")
 
-fig.suptitle("Periodic kernel", fontsize=18)
+fig.suptitle("Exp-Sine-Squared kernel", fontsize=18)
 plt.tight_layout()
 
 # %%
@@ -197,7 +194,7 @@ print(
 )
 
 # %%
-# Dot product kernel
+# Dot-product kernel
 # ..................
 from sklearn.gaussian_process.kernels import ConstantKernel, DotProduct
 
@@ -219,7 +216,7 @@ axs[1].scatter(X_train[:, 0], y_train, color="red", zorder=10, label="Observatio
 axs[1].legend(bbox_to_anchor=(1.05, 1.5), loc="upper left")
 axs[1].set_title("Samples from posterior distribution")
 
-fig.suptitle("Dot product kernel", fontsize=18)
+fig.suptitle("Dot-product kernel", fontsize=18)
 plt.tight_layout()
 
 # %%
@@ -230,7 +227,7 @@ print(
 )
 
 # %%
-# Mattern kernel
+# Matérn kernel
 # ..............
 from sklearn.gaussian_process.kernels import Matern
 
@@ -250,7 +247,7 @@ axs[1].scatter(X_train[:, 0], y_train, color="red", zorder=10, label="Observatio
 axs[1].legend(bbox_to_anchor=(1.05, 1.5), loc="upper left")
 axs[1].set_title("Samples from posterior distribution")
 
-fig.suptitle("Mattern kernel", fontsize=18)
+fig.suptitle("Matérn kernel", fontsize=18)
 plt.tight_layout()
 
 # %%

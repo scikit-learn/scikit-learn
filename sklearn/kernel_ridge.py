@@ -3,14 +3,15 @@
 # Authors: Mathieu Blondel <mathieu@mblondel.org>
 #          Jan Hendrik Metzen <jhm@informatik.uni-bremen.de>
 # License: BSD 3 clause
+from numbers import Integral, Real
 
 import numpy as np
 
 from .base import BaseEstimator, RegressorMixin, MultiOutputMixin
-from .metrics.pairwise import pairwise_kernels
+from .utils._param_validation import Interval, StrOptions
+from .metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS, pairwise_kernels
 from .linear_model._ridge import _solve_cholesky_kernel
 from .utils.validation import check_is_fitted, _check_sample_weight
-from .utils.deprecation import deprecated
 
 
 class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
@@ -52,7 +53,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Kernel mapping used internally. This parameter is directly passed to
         :class:`~sklearn.metrics.pairwise.pairwise_kernel`.
         If `kernel` is a string, it must be one of the metrics
-        in `pairwise.PAIRWISE_KERNEL_FUNCTIONS`.
+        in `pairwise.PAIRWISE_KERNEL_FUNCTIONS` or "precomputed".
         If `kernel` is "precomputed", X is assumed to be a kernel matrix.
         Alternatively, if `kernel` is a callable function, it is called on
         each pair of instances (rows) and the resulting value recorded. The
@@ -68,14 +69,14 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         the kernel; see the documentation for sklearn.metrics.pairwise.
         Ignored by other kernels.
 
-    degree : float, default=3
+    degree : int, default=3
         Degree of the polynomial kernel. Ignored by other kernels.
 
     coef0 : float, default=1
         Zero coefficient for polynomial and sigmoid kernels.
         Ignored by other kernels.
 
-    kernel_params : mapping of str to any, default=None
+    kernel_params : dict, default=None
         Additional parameters (keyword arguments) for kernel function passed
         as callable object.
 
@@ -93,6 +94,12 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
 
     See Also
     --------
@@ -119,10 +126,22 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     >>> rng = np.random.RandomState(0)
     >>> y = rng.randn(n_samples)
     >>> X = rng.randn(n_samples, n_features)
-    >>> clf = KernelRidge(alpha=1.0)
-    >>> clf.fit(X, y)
+    >>> krr = KernelRidge(alpha=1.0)
+    >>> krr.fit(X, y)
     KernelRidge(alpha=1.0)
     """
+
+    _parameter_constraints: dict = {
+        "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
+        "kernel": [
+            StrOptions(set(PAIRWISE_KERNEL_FUNCTIONS.keys()) | {"precomputed"}),
+            callable,
+        ],
+        "gamma": [Interval(Real, 0, None, closed="left"), None],
+        "degree": [Interval(Integral, 0, None, closed="left")],
+        "coef0": [Interval(Real, None, None, closed="neither")],
+        "kernel_params": [dict, None],
+    }
 
     def __init__(
         self,
@@ -151,16 +170,6 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     def _more_tags(self):
         return {"pairwise": self.kernel == "precomputed"}
 
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        return self.kernel == "precomputed"
-
     def fit(self, X, y, sample_weight=None):
         """Fit Kernel Ridge regression model.
 
@@ -181,6 +190,8 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
+
         # Convert data
         X, y = self._validate_data(
             X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True

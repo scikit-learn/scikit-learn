@@ -31,18 +31,17 @@ from ._validation import _fit_and_score
 from ._validation import _aggregate_score_dicts
 from ._validation import _insert_error_scores
 from ._validation import _normalize_score_results
-from ._validation import _warn_about_fit_failures
+from ._validation import _warn_or_raise_about_fit_failures
 from ..exceptions import NotFittedError
 from joblib import Parallel
 from ..utils import check_random_state
 from ..utils.random import sample_without_replacement
 from ..utils._tags import _safe_tags
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
-from ..utils.metaestimators import if_delegate_has_method
+from ..utils.metaestimators import available_if
 from ..utils.fixes import delayed
 from ..metrics._scorer import _check_multimetric_scoring
 from ..metrics import check_scoring
-from ..utils import deprecated
 
 __all__ = ["GridSearchCV", "ParameterGrid", "ParameterSampler", "RandomizedSearchCV"]
 
@@ -94,7 +93,8 @@ class ParameterGrid:
     def __init__(self, param_grid):
         if not isinstance(param_grid, (Mapping, Iterable)):
             raise TypeError(
-                "Parameter grid is not a dict or a list ({!r})".format(param_grid)
+                f"Parameter grid should be a dict or a list, got: {param_grid!r} of"
+                f" type {type(param_grid).__name__}"
             )
 
         if isinstance(param_grid, Mapping):
@@ -105,12 +105,26 @@ class ParameterGrid:
         # check if all entries are dictionaries of lists
         for grid in param_grid:
             if not isinstance(grid, dict):
-                raise TypeError("Parameter grid is not a dict ({!r})".format(grid))
-            for key in grid:
-                if not isinstance(grid[key], Iterable):
+                raise TypeError(f"Parameter grid is not a dict ({grid!r})")
+            for key, value in grid.items():
+                if isinstance(value, np.ndarray) and value.ndim > 1:
+                    raise ValueError(
+                        f"Parameter array for {key!r} should be one-dimensional, got:"
+                        f" {value!r} with shape {value.shape}"
+                    )
+                if isinstance(value, str) or not isinstance(
+                    value, (np.ndarray, Sequence)
+                ):
                     raise TypeError(
-                        "Parameter grid value is not iterable "
-                        "(key={!r}, value={!r})".format(key, grid[key])
+                        f"Parameter grid for parameter {key!r} needs to be a list or a"
+                        f" numpy array, but got {value!r} (of type "
+                        f"{type(value).__name__}) instead. Single values "
+                        "need to be wrapped in a list with one element."
+                    )
+                if len(value) == 0:
+                    raise ValueError(
+                        f"Parameter grid for parameter {key!r} need "
+                        f"to be a non-empty sequence, got: {value!r}"
                     )
 
         self.param_grid = param_grid
@@ -244,9 +258,9 @@ class ParameterSampler:
     def __init__(self, param_distributions, n_iter, *, random_state=None):
         if not isinstance(param_distributions, (Mapping, Iterable)):
             raise TypeError(
-                "Parameter distribution is not a dict or a list ({!r})".format(
-                    param_distributions
-                )
+                "Parameter distribution is not a dict or a list,"
+                f" got: {param_distributions!r} of type "
+                f"{type(param_distributions).__name__}"
             )
 
         if isinstance(param_distributions, Mapping):
@@ -264,8 +278,8 @@ class ParameterSampler:
                     dist[key], "rvs"
                 ):
                     raise TypeError(
-                        "Parameter value is not iterable "
-                        "or distribution (key={!r}, value={!r})".format(key, dist[key])
+                        f"Parameter grid for parameter {key!r} is not iterable "
+                        f"or a distribution (value={dist[key]})"
                     )
         self.n_iter = n_iter
         self.random_state = random_state
@@ -321,28 +335,38 @@ class ParameterSampler:
             return self.n_iter
 
 
-def _check_param_grid(param_grid):
-    if hasattr(param_grid, "items"):
-        param_grid = [param_grid]
+def _check_refit(search_cv, attr):
+    if not search_cv.refit:
+        raise AttributeError(
+            f"This {type(search_cv).__name__} instance was initialized with "
+            f"`refit=False`. {attr} is available only after refitting on the best "
+            "parameters. You can refit an estimator manually using the "
+            "`best_params_` attribute"
+        )
 
-    for p in param_grid:
-        for name, v in p.items():
-            if isinstance(v, np.ndarray) and v.ndim > 1:
-                raise ValueError("Parameter array should be one-dimensional.")
 
-            if isinstance(v, str) or not isinstance(v, (np.ndarray, Sequence)):
-                raise ValueError(
-                    "Parameter grid for parameter ({0}) needs to"
-                    " be a list or numpy array, but got ({1})."
-                    " Single values need to be wrapped in a list"
-                    " with one element.".format(name, type(v))
-                )
+def _estimator_has(attr):
+    """Check if we can delegate a method to the underlying estimator.
 
-            if len(v) == 0:
-                raise ValueError(
-                    "Parameter values for parameter ({0}) need "
-                    "to be a non-empty sequence.".format(name)
-                )
+    Calling a prediction method will only be available if `refit=True`. In
+    such case, we check first the fitted best estimator. If it is not
+    fitted, we check the unfitted estimator.
+
+    Checking the unfitted estimator allows to use `hasattr` on the `SearchCV`
+    instance even before calling `fit`.
+    """
+
+    def check(self):
+        _check_refit(self, attr)
+        if hasattr(self, "best_estimator_"):
+            # raise an AttributeError if `attr` does not exist
+            getattr(self.best_estimator_, attr)
+            return True
+        # raise an AttributeError if `attr` does not exist
+        getattr(self.estimator, attr)
+        return True
+
+    return check
 
 
 class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
@@ -386,19 +410,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             },
         }
 
-    # TODO: Remove in 1.1
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `_pairwise` was deprecated in "
-        "version 0.24 and will be removed in 1.1 (renaming of 0.26)."
-    )
-    @property
-    def _pairwise(self):
-        # allows cross-validation to see 'precomputed' metrics
-        return getattr(self.estimator, "_pairwise", False)
-
     def score(self, X, y=None):
-        """Returns the score on the given data, if the estimator has been refit.
+        """Return the score on the given data, if the estimator has been refit.
 
         This uses the score defined by ``scoring`` where provided, and the
         ``best_estimator_.score`` method otherwise.
@@ -406,8 +419,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         Parameters
         ----------
         X : array-like of shape (n_samples, n_features)
-            Input data, where n_samples is the number of samples and
-            n_features is the number of features.
+            Input data, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples, n_output) \
             or (n_samples,), default=None
@@ -417,8 +430,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         score : float
+            The score defined by ``scoring`` if provided, and the
+            ``best_estimator_.score`` method otherwise.
         """
-        self._check_is_fitted("score")
+        _check_refit(self, "score")
+        check_is_fitted(self)
         if self.scorer_ is None:
             raise ValueError(
                 "No score function explicitly defined, "
@@ -438,7 +454,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             score = score[self.refit]
         return score
 
-    @if_delegate_has_method(delegate=("best_estimator_", "estimator"))
+    @available_if(_estimator_has("score_samples"))
     def score_samples(self, X):
         """Call score_samples on the estimator with the best found parameters.
 
@@ -456,24 +472,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         Returns
         -------
         y_score : ndarray of shape (n_samples,)
+            The ``best_estimator_.score_samples`` method.
         """
-        self._check_is_fitted("score_samples")
+        check_is_fitted(self)
         return self.best_estimator_.score_samples(X)
 
-    def _check_is_fitted(self, method_name):
-        if not self.refit:
-            raise NotFittedError(
-                "This %s instance was initialized "
-                "with refit=False. %s is "
-                "available only after refitting on the best "
-                "parameters. You can refit an estimator "
-                "manually using the ``best_params_`` "
-                "attribute" % (type(self).__name__, method_name)
-            )
-        else:
-            check_is_fitted(self)
-
-    @if_delegate_has_method(delegate=("best_estimator_", "estimator"))
+    @available_if(_estimator_has("predict"))
     def predict(self, X):
         """Call predict on the estimator with the best found parameters.
 
@@ -486,11 +490,16 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Must fulfill the input assumptions of the
             underlying estimator.
 
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,)
+            The predicted labels or values for `X` based on the estimator with
+            the best found parameters.
         """
-        self._check_is_fitted("predict")
+        check_is_fitted(self)
         return self.best_estimator_.predict(X)
 
-    @if_delegate_has_method(delegate=("best_estimator_", "estimator"))
+    @available_if(_estimator_has("predict_proba"))
     def predict_proba(self, X):
         """Call predict_proba on the estimator with the best found parameters.
 
@@ -503,11 +512,17 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Must fulfill the input assumptions of the
             underlying estimator.
 
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Predicted class probabilities for `X` based on the estimator with
+            the best found parameters. The order of the classes corresponds
+            to that in the fitted attribute :term:`classes_`.
         """
-        self._check_is_fitted("predict_proba")
+        check_is_fitted(self)
         return self.best_estimator_.predict_proba(X)
 
-    @if_delegate_has_method(delegate=("best_estimator_", "estimator"))
+    @available_if(_estimator_has("predict_log_proba"))
     def predict_log_proba(self, X):
         """Call predict_log_proba on the estimator with the best found parameters.
 
@@ -520,11 +535,17 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Must fulfill the input assumptions of the
             underlying estimator.
 
+        Returns
+        -------
+        y_pred : ndarray of shape (n_samples,) or (n_samples, n_classes)
+            Predicted class log-probabilities for `X` based on the estimator
+            with the best found parameters. The order of the classes
+            corresponds to that in the fitted attribute :term:`classes_`.
         """
-        self._check_is_fitted("predict_log_proba")
+        check_is_fitted(self)
         return self.best_estimator_.predict_log_proba(X)
 
-    @if_delegate_has_method(delegate=("best_estimator_", "estimator"))
+    @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
         """Call decision_function on the estimator with the best found parameters.
 
@@ -537,11 +558,17 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Must fulfill the input assumptions of the
             underlying estimator.
 
+        Returns
+        -------
+        y_score : ndarray of shape (n_samples,) or (n_samples, n_classes) \
+                or (n_samples, n_classes * (n_classes-1) / 2)
+            Result of the decision function for `X` based on the estimator with
+            the best found parameters.
         """
-        self._check_is_fitted("decision_function")
+        check_is_fitted(self)
         return self.best_estimator_.decision_function(X)
 
-    @if_delegate_has_method(delegate=("best_estimator_", "estimator"))
+    @available_if(_estimator_has("transform"))
     def transform(self, X):
         """Call transform on the estimator with the best found parameters.
 
@@ -554,11 +581,16 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Must fulfill the input assumptions of the
             underlying estimator.
 
+        Returns
+        -------
+        Xt : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            `X` transformed in the new space based on the estimator with
+            the best found parameters.
         """
-        self._check_is_fitted("transform")
+        check_is_fitted(self)
         return self.best_estimator_.transform(X)
 
-    @if_delegate_has_method(delegate=("best_estimator_", "estimator"))
+    @available_if(_estimator_has("inverse_transform"))
     def inverse_transform(self, Xt):
         """Call inverse_transform on the estimator with the best found params.
 
@@ -571,12 +603,21 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             Must fulfill the input assumptions of the
             underlying estimator.
 
+        Returns
+        -------
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            Result of the `inverse_transform` function for `Xt` based on the
+            estimator with the best found parameters.
         """
-        self._check_is_fitted("inverse_transform")
+        check_is_fitted(self)
         return self.best_estimator_.inverse_transform(Xt)
 
     @property
     def n_features_in_(self):
+        """Number of features seen during :term:`fit`.
+
+        Only available when `refit=True`.
+        """
         # For consistency with other estimators we raise a AttributeError so
         # that hasattr() fails if the search estimator isn't fitted.
         try:
@@ -592,14 +633,18 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
     @property
     def classes_(self):
-        self._check_is_fitted("classes_")
+        """Class labels.
+
+        Only available when `refit=True` and the estimator is a classifier.
+        """
+        _estimator_has("classes_")(self)
         return self.best_estimator_.classes_
 
     def _run_search(self, evaluate_candidates):
         """Repeatedly calls `evaluate_candidates` to conduct a search.
 
         This method, implemented in sub-classes, makes it possible to
-        customize the the scheduling of evaluations: GridSearchCV and
+        customize the scheduling of evaluations: GridSearchCV and
         RandomizedSearchCV schedule evaluations for their whole parameter
         search space at once but other more sequential approaches are also
         possible: for instance is possible to iteratively schedule evaluations
@@ -697,8 +742,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         ----------
 
         X : array-like of shape (n_samples, n_features)
-            Training vector, where n_samples is the number of samples and
-            n_features is the number of features.
+            Training vector, where `n_samples` is the number of samples and
+            `n_features` is the number of features.
 
         y : array-like of shape (n_samples, n_output) \
             or (n_samples,), default=None
@@ -711,7 +756,17 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             instance (e.g., :class:`~sklearn.model_selection.GroupKFold`).
 
         **fit_params : dict of str -> object
-            Parameters passed to the ``fit`` method of the estimator
+            Parameters passed to the `fit` method of the estimator.
+
+            If a fit parameter is an array-like whose length is equal to
+            `num_samples` then it will be split across CV groups along with `X`
+            and `y`. For example, the :term:`sample_weight` parameter is split
+            because `len(sample_weights) = len(X)`.
+
+        Returns
+        -------
+        self : object
+            Instance of fitted estimator.
         """
         estimator = self.estimator
         refit_metric = "score"
@@ -794,7 +849,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                         "splits, got {}".format(n_splits, len(out) // n_candidates)
                     )
 
-                _warn_about_fit_failures(out, self.error_score)
+                _warn_or_raise_about_fit_failures(out, self.error_score)
 
                 # For callable self.scoring, the return type is only know after
                 # calling. If the return type is a dictionary, the error scores
@@ -858,6 +913,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             refit_end_time = time.time()
             self.refit_time_ = refit_end_time - refit_start_time
 
+            if hasattr(self.best_estimator_, "feature_names_in_"):
+                self.feature_names_in_ = self.best_estimator_.feature_names_in_
+
         # Store the only scorer not as a dict for single metric evaluation
         self.scorer_ = scorers
 
@@ -907,9 +965,19 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             results["std_%s" % key_name] = array_stds
 
             if rank:
-                results["rank_%s" % key_name] = np.asarray(
-                    rankdata(-array_means, method="min"), dtype=np.int32
-                )
+                # When the fit/scoring fails `array_means` contains NaNs, we
+                # will exclude them from the ranking process and consider them
+                # as tied with the worst performers.
+                if np.isnan(array_means).all():
+                    # All fit/scoring routines failed.
+                    rank_result = np.ones_like(array_means, dtype=np.int32)
+                else:
+                    min_array_means = np.nanmin(array_means) - 1
+                    array_means = np.nan_to_num(array_means, nan=min_array_means)
+                    rank_result = rankdata(-array_means, method="min").astype(
+                        np.int32, copy=False
+                    )
+                results["rank_%s" % key_name] = rank_result
 
         _store("fit_time", out["fit_time"])
         _store("score_time", out["score_time"])
@@ -977,7 +1045,7 @@ class GridSearchCV(BaseSearchCV):
 
     Parameters
     ----------
-    estimator : estimator object.
+    estimator : estimator object
         This is assumed to implement the scikit-learn estimator interface.
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
@@ -1042,6 +1110,10 @@ class GridSearchCV(BaseSearchCV):
 
         See ``scoring`` parameter to know more about multiple metric
         evaluation.
+
+        See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`
+        to see how to design a custom selection strategy using a callable
+        via `refit`.
 
         .. versionchanged:: 0.20
             Support for callable added.
@@ -1111,25 +1183,6 @@ class GridSearchCV(BaseSearchCV):
 
         .. versionchanged:: 0.21
             Default value was changed from ``True`` to ``False``
-
-
-    Examples
-    --------
-    >>> from sklearn import svm, datasets
-    >>> from sklearn.model_selection import GridSearchCV
-    >>> iris = datasets.load_iris()
-    >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
-    >>> svc = svm.SVC()
-    >>> clf = GridSearchCV(svc, parameters)
-    >>> clf.fit(iris.data, iris.target)
-    GridSearchCV(estimator=SVC(),
-                 param_grid={'C': [1, 10], 'kernel': ('linear', 'rbf')})
-    >>> sorted(clf.cv_results_.keys())
-    ['mean_fit_time', 'mean_score_time', 'mean_test_score',...
-     'param_C', 'param_kernel', 'params',...
-     'rank_test_score', 'split0_test_score',...
-     'split2_test_score', ...
-     'std_fit_time', 'std_score_time', 'std_test_score']
 
     Attributes
     ----------
@@ -1246,10 +1299,29 @@ class GridSearchCV(BaseSearchCV):
         the underlying estimator is a classifier.
 
     n_features_in_ : int
-        Number of features seen during :term:`fit`. Only defined if the
-        underlying estimator exposes such an attribute when fit.
+        Number of features seen during :term:`fit`. Only defined if
+        `best_estimator_` is defined (see the documentation for the `refit`
+        parameter for more details) and that `best_estimator_` exposes
+        `n_features_in_` when fit.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if
+        `best_estimator_` is defined (see the documentation for the `refit`
+        parameter for more details) and that `best_estimator_` exposes
+        `feature_names_in_` when fit.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    ParameterGrid : Generates all the combinations of a hyperparameter grid.
+    train_test_split : Utility function to split the data into a development
+        set usable for fitting a GridSearchCV instance and an evaluation set
+        for its final evaluation.
+    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
+        loss function.
 
     Notes
     -----
@@ -1264,15 +1336,23 @@ class GridSearchCV(BaseSearchCV):
     `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
     n_jobs`.
 
-    See Also
-    ---------
-    ParameterGrid : Generates all the combinations of a hyperparameter grid.
-    train_test_split : Utility function to split the data into a development
-        set usable for fitting a GridSearchCV instance and an evaluation set
-        for its final evaluation.
-    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
-        loss function.
-
+    Examples
+    --------
+    >>> from sklearn import svm, datasets
+    >>> from sklearn.model_selection import GridSearchCV
+    >>> iris = datasets.load_iris()
+    >>> parameters = {'kernel':('linear', 'rbf'), 'C':[1, 10]}
+    >>> svc = svm.SVC()
+    >>> clf = GridSearchCV(svc, parameters)
+    >>> clf.fit(iris.data, iris.target)
+    GridSearchCV(estimator=SVC(),
+                 param_grid={'C': [1, 10], 'kernel': ('linear', 'rbf')})
+    >>> sorted(clf.cv_results_.keys())
+    ['mean_fit_time', 'mean_score_time', 'mean_test_score',...
+     'param_C', 'param_kernel', 'params',...
+     'rank_test_score', 'split0_test_score',...
+     'split2_test_score', ...
+     'std_fit_time', 'std_score_time', 'std_test_score']
     """
 
     _required_parameters = ["estimator", "param_grid"]
@@ -1303,7 +1383,6 @@ class GridSearchCV(BaseSearchCV):
             return_train_score=return_train_score,
         )
         self.param_grid = param_grid
-        _check_param_grid(param_grid)
 
     def _run_search(self, evaluate_candidates):
         """Search all candidates in param_grid"""
@@ -1338,7 +1417,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Parameters
     ----------
-    estimator : estimator object.
+    estimator : estimator object
         A object of that type is instantiated for each grid point.
         This is assumed to implement the scikit-learn estimator interface.
         Either estimator needs to provide a ``score`` function,
@@ -1437,6 +1516,12 @@ class RandomizedSearchCV(BaseSearchCV):
 
     verbose : int
         Controls the verbosity: the higher, the more messages.
+
+        - >1 : the computation time for each fold and parameter candidate is
+          displayed;
+        - >2 : the score is also displayed;
+        - >3 : the fold and candidate parameter indexes are also displayed
+          together with the starting time of the computation.
 
     pre_dispatch : int, or str, default='2*n_jobs'
         Controls the number of jobs that get dispatched during parallel
@@ -1595,10 +1680,26 @@ class RandomizedSearchCV(BaseSearchCV):
         the underlying estimator is a classifier.
 
     n_features_in_ : int
-        Number of features seen during :term:`fit`. Only defined if the
-        underlying estimator exposes such an attribute when fit.
+        Number of features seen during :term:`fit`. Only defined if
+        `best_estimator_` is defined (see the documentation for the `refit`
+        parameter for more details) and that `best_estimator_` exposes
+        `n_features_in_` when fit.
 
         .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Only defined if
+        `best_estimator_` is defined (see the documentation for the `refit`
+        parameter for more details) and that `best_estimator_` exposes
+        `feature_names_in_` when fit.
+
+        .. versionadded:: 1.0
+
+    See Also
+    --------
+    GridSearchCV : Does exhaustive search over a grid of parameters.
+    ParameterSampler : A generator over parameter settings, constructed from
+        param_distributions.
 
     Notes
     -----
@@ -1612,12 +1713,6 @@ class RandomizedSearchCV(BaseSearchCV):
     this case is to set `pre_dispatch`. Then, the memory is copied only
     `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
     n_jobs`.
-
-    See Also
-    --------
-    GridSearchCV : Does exhaustive search over a grid of parameters.
-    ParameterSampler : A generator over parameter settings, constructed from
-        param_distributions.
 
     Examples
     --------

@@ -1,6 +1,5 @@
 import warnings
 import unittest
-import sys
 import os
 import atexit
 
@@ -11,10 +10,10 @@ from scipy import sparse
 import pytest
 
 from sklearn.utils.deprecation import deprecated
-from sklearn.utils.metaestimators import if_delegate_has_method
+from sklearn.utils.metaestimators import available_if, if_delegate_has_method
+from sklearn.utils._readonly_array_wrapper import _test_sum
 from sklearn.utils._testing import (
     assert_raises,
-    assert_warns,
     assert_no_warnings,
     set_random_state,
     assert_raise_message,
@@ -27,6 +26,7 @@ from sklearn.utils._testing import (
     _delete_folder,
     _convert_container,
     raises,
+    assert_allclose,
 )
 
 from sklearn.tree import DecisionTreeClassifier
@@ -221,44 +221,9 @@ class TestWarns(unittest.TestCase):
             warnings.warn("yo")
             return 3
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
-            filters_orig = warnings.filters[:]
-
-            # TODO: remove in 1.2
-            with pytest.warns(FutureWarning):
-                assert assert_warns(UserWarning, f) == 3
-
-            # test that assert_warns doesn't have side effects on warnings
-            # filters
-            assert warnings.filters == filters_orig
         with pytest.raises(AssertionError):
             assert_no_warnings(f)
         assert assert_no_warnings(lambda x: x, 1) == 1
-
-    # TODO: remove in 1.2
-    @ignore_warnings(category=FutureWarning)
-    def test_warn_wrong_warning(self):
-        def f():
-            warnings.warn("yo", FutureWarning)
-
-        failed = False
-        filters = sys.modules["warnings"].filters[:]
-        try:
-            try:
-                # Should raise an AssertionError
-
-                # assert_warns has a special handling of "FutureWarning" that
-                # pytest.warns does not have
-                assert_warns(UserWarning, f)
-                failed = True
-            except AssertionError:
-                pass
-        finally:
-            sys.modules["warnings"].filters = filters
-
-        if failed:
-            raise AssertionError("wrong warning caught by assert_warn")
 
 
 # Tests for docstrings:
@@ -369,7 +334,7 @@ def f_check_param_definition(a, b, c, d, e):
     b:
         Parameter b
     c :
-        Parameter c
+        This is parsed correctly in numpydoc 1.2
     d:int
         Parameter d
     e
@@ -386,7 +351,7 @@ class Klass:
         """Function f
 
         Parameter
-        ----------
+        ---------
         a : int
             Parameter a
         b : float
@@ -418,6 +383,55 @@ class MockEst:
 
 
 class MockMetaEstimator:
+    def __init__(self, delegate):
+        """MetaEstimator to check if doctest on delegated methods work.
+
+        Parameters
+        ---------
+        delegate : estimator
+            Delegated estimator.
+        """
+        self.delegate = delegate
+
+    @available_if(lambda self: hasattr(self.delegate, "predict"))
+    def predict(self, X):
+        """This is available only if delegate has predict.
+
+        Parameters
+        ----------
+        y : ndarray
+            Parameter y
+        """
+        return self.delegate.predict(X)
+
+    @available_if(lambda self: hasattr(self.delegate, "score"))
+    @deprecated("Testing a deprecated delegated method")
+    def score(self, X):
+        """This is available only if delegate has score.
+
+        Parameters
+        ---------
+        y : ndarray
+            Parameter y
+        """
+
+    @available_if(lambda self: hasattr(self.delegate, "predict_proba"))
+    def predict_proba(self, X):
+        """This is available only if delegate has predict_proba.
+
+        Parameters
+        ---------
+        X : ndarray
+            Parameter X
+        """
+        return X
+
+    @deprecated("Testing deprecated function with wrong params")
+    def fit(self, X, y):
+        """Incorrect docstring but should not be tested"""
+
+
+class MockMetaEstimatorDeprecatedDelegation:
     def __init__(self, delegate):
         """MetaEstimator to check if doctest on delegated methods work.
 
@@ -466,9 +480,19 @@ class MockMetaEstimator:
         """Incorrect docstring but should not be tested"""
 
 
-def test_check_docstring_parameters():
+@pytest.mark.filterwarnings("ignore:if_delegate_has_method was deprecated")
+@pytest.mark.parametrize(
+    "mock_meta",
+    [
+        MockMetaEstimator(delegate=MockEst()),
+        MockMetaEstimatorDeprecatedDelegation(delegate=MockEst()),
+    ],
+)
+def test_check_docstring_parameters(mock_meta):
     pytest.importorskip(
-        "numpydoc", reason="numpydoc is required to test the docstrings"
+        "numpydoc",
+        reason="numpydoc is required to test the docstrings",
+        minversion="1.2.0",
     )
 
     incorrect = check_docstring_parameters(f_ok)
@@ -483,13 +507,12 @@ def test_check_docstring_parameters():
         check_docstring_parameters(Klass.f_bad_sections)
 
     incorrect = check_docstring_parameters(f_check_param_definition)
+    mock_meta_name = mock_meta.__class__.__name__
     assert incorrect == [
         "sklearn.utils.tests.test_testing.f_check_param_definition There "
         "was no space between the param name and colon ('a: int')",
         "sklearn.utils.tests.test_testing.f_check_param_definition There "
         "was no space between the param name and colon ('b:')",
-        "sklearn.utils.tests.test_testing.f_check_param_definition "
-        "Parameter 'c :' has an empty type spec. Remove the colon",
         "sklearn.utils.tests.test_testing.f_check_param_definition There "
         "was no space between the param name and colon ('d:int')",
     ]
@@ -531,7 +554,7 @@ def test_check_docstring_parameters():
         ],
         [
             "In function: "
-            + "sklearn.utils.tests.test_testing.MockMetaEstimator.predict",
+            + f"sklearn.utils.tests.test_testing.{mock_meta_name}.predict",
             "There's a parameter name mismatch in function docstring w.r.t."
             " function signature, at index 0 diff: 'X' != 'y'",
             "Full diff:",
@@ -542,25 +565,21 @@ def test_check_docstring_parameters():
         ],
         [
             "In function: "
-            + "sklearn.utils.tests.test_testing.MockMetaEstimator."
+            + f"sklearn.utils.tests.test_testing.{mock_meta_name}."
             + "predict_proba",
-            "Parameters in function docstring have less items w.r.t. function"
-            " signature, first missing item: X",
-            "Full diff:",
-            "- ['X']",
-            "+ []",
+            "potentially wrong underline length... ",
+            "Parameters ",
+            "--------- in ",
         ],
         [
             "In function: "
-            + "sklearn.utils.tests.test_testing.MockMetaEstimator.score",
-            "Parameters in function docstring have less items w.r.t. function"
-            " signature, first missing item: X",
-            "Full diff:",
-            "- ['X']",
-            "+ []",
+            + f"sklearn.utils.tests.test_testing.{mock_meta_name}.score",
+            "potentially wrong underline length... ",
+            "Parameters ",
+            "--------- in ",
         ],
         [
-            "In function: " + "sklearn.utils.tests.test_testing.MockMetaEstimator.fit",
+            "In function: " + f"sklearn.utils.tests.test_testing.{mock_meta_name}.fit",
             "Parameters in function docstring have less items w.r.t. function"
             " signature, first missing item: X",
             "Full diff:",
@@ -568,8 +587,6 @@ def test_check_docstring_parameters():
             "+ []",
         ],
     ]
-
-    mock_meta = MockMetaEstimator(delegate=MockEst())
 
     for msg, f in zip(
         messages,
@@ -625,30 +642,62 @@ def test_tempmemmap(monkeypatch):
     assert registration_counter.nb_calls == 2
 
 
-def test_create_memmap_backed_data(monkeypatch):
+@pytest.mark.parametrize("aligned", [False, True])
+def test_create_memmap_backed_data(monkeypatch, aligned):
     registration_counter = RegistrationCounter()
     monkeypatch.setattr(atexit, "register", registration_counter)
 
     input_array = np.ones(3)
-    data = create_memmap_backed_data(input_array)
+    data = create_memmap_backed_data(input_array, aligned=aligned)
     check_memmap(input_array, data)
     assert registration_counter.nb_calls == 1
 
-    data, folder = create_memmap_backed_data(input_array, return_folder=True)
+    data, folder = create_memmap_backed_data(
+        input_array, return_folder=True, aligned=aligned
+    )
     check_memmap(input_array, data)
     assert folder == os.path.dirname(data.filename)
     assert registration_counter.nb_calls == 2
 
     mmap_mode = "r+"
-    data = create_memmap_backed_data(input_array, mmap_mode=mmap_mode)
+    data = create_memmap_backed_data(input_array, mmap_mode=mmap_mode, aligned=aligned)
     check_memmap(input_array, data, mmap_mode)
     assert registration_counter.nb_calls == 3
 
     input_list = [input_array, input_array + 1, input_array + 2]
-    mmap_data_list = create_memmap_backed_data(input_list)
+    mmap_data_list = create_memmap_backed_data(input_list, aligned=aligned)
     for input_array, data in zip(input_list, mmap_data_list):
         check_memmap(input_array, data)
     assert registration_counter.nb_calls == 4
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "When creating aligned memmap-backed arrays, input must be a single array"
+            " or a sequence of arrays"
+        ),
+    ):
+        create_memmap_backed_data([input_array, "not-an-array"], aligned=True)
+
+
+@pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
+def test_memmap_on_contiguous_data(dtype):
+    """Test memory mapped array on contiguous memoryview."""
+    x = np.arange(10).astype(dtype)
+    assert x.flags["C_CONTIGUOUS"]
+    assert x.flags["ALIGNED"]
+
+    # _test_sum consumes contiguous arrays
+    # def _test_sum(NUM_TYPES[::1] x):
+    sum_origin = _test_sum(x)
+
+    # now on memory mapped data
+    # aligned=True so avoid https://github.com/joblib/joblib/issues/563
+    # without alignment, this can produce segmentation faults, see
+    # https://github.com/scikit-learn/scikit-learn/pull/21654
+    x_mmap = create_memmap_backed_data(x, mmap_mode="r+", aligned=True)
+    sum_mmap = _test_sum(x_mmap)
+    assert sum_mmap == pytest.approx(sum_origin, rel=1e-11)
 
 
 @pytest.mark.parametrize(
@@ -773,3 +822,21 @@ def test_raises():
     with pytest.raises(AssertionError):
         with raises((TypeError, ValueError)):
             pass
+
+
+def test_float32_aware_assert_allclose():
+    # The relative tolerance for float32 inputs is 1e-4
+    assert_allclose(np.array([1.0 + 2e-5], dtype=np.float32), 1.0)
+    with pytest.raises(AssertionError):
+        assert_allclose(np.array([1.0 + 2e-4], dtype=np.float32), 1.0)
+
+    # The relative tolerance for other inputs is left to 1e-7 as in
+    # the original numpy version.
+    assert_allclose(np.array([1.0 + 2e-8], dtype=np.float64), 1.0)
+    with pytest.raises(AssertionError):
+        assert_allclose(np.array([1.0 + 2e-7], dtype=np.float64), 1.0)
+
+    # atol is left to 0.0 by default, even for float32
+    with pytest.raises(AssertionError):
+        assert_allclose(np.array([1e-5], dtype=np.float32), 0.0)
+    assert_allclose(np.array([1e-5], dtype=np.float32), 0.0, atol=2e-5)

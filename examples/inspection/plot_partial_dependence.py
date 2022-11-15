@@ -27,13 +27,12 @@ California housing dataset. The example is taken from [1]_.
 .. [2] For classification you can think of it as the regression score before
        the link function.
 
-.. [3] Goldstein, A., Kapelner, A., Bleich, J., and Pitkin, E., Peeking Inside
-       the Black Box: Visualizing Statistical Learning With Plots of
-       Individual Conditional Expectation. (2015) Journal of Computational and
-       Graphical Statistics, 24(1): 44-65 (https://arxiv.org/abs/1309.6392)
-"""
+.. [3] :arxiv:`Goldstein, A., Kapelner, A., Bleich, J., and Pitkin, E. (2015).
+       "Peeking Inside the Black Box: Visualizing Statistical Learning With Plots of
+       Individual Conditional Expectation". Journal of Computational and
+       Graphical Statistics, 24(1): 44-65 <1309.6392>`
 
-print(__doc__)
+"""
 
 # %%
 # California Housing data preprocessing
@@ -81,7 +80,10 @@ tic = time()
 est = make_pipeline(
     QuantileTransformer(),
     MLPRegressor(
-        hidden_layer_sizes=(50, 50), learning_rate_init=0.01, early_stopping=True
+        hidden_layer_sizes=(30, 15),
+        learning_rate_init=0.01,
+        early_stopping=True,
+        random_state=0,
     ),
 )
 est.fit(X_train, y_train)
@@ -109,24 +111,24 @@ print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
 # We will plot the partial dependence, both individual (ICE) and averaged one
 # (PDP). We limit to only 50 ICE curves to not overcrowd the plot.
 
-import matplotlib.pyplot as plt
-from sklearn.inspection import partial_dependence
-from sklearn.inspection import plot_partial_dependence
+from sklearn.inspection import PartialDependenceDisplay
+
+common_params = {
+    "subsample": 50,
+    "n_jobs": 2,
+    "grid_resolution": 20,
+    "centered": True,
+    "random_state": 0,
+}
 
 print("Computing partial dependence plots...")
 tic = time()
-features = ["MedInc", "AveOccup", "HouseAge", "AveRooms"]
-display = plot_partial_dependence(
+display = PartialDependenceDisplay.from_estimator(
     est,
     X_train,
-    features,
+    features=["MedInc", "AveOccup", "HouseAge", "AveRooms"],
     kind="both",
-    subsample=50,
-    n_jobs=3,
-    grid_resolution=20,
-    random_state=0,
-    ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
-    pd_line_kw={"color": "tab:orange", "linestyle": "--"},
+    **common_params,
 )
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
@@ -146,7 +148,7 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 
 print("Training HistGradientBoostingRegressor...")
 tic = time()
-est = HistGradientBoostingRegressor()
+est = HistGradientBoostingRegressor(random_state=0)
 est.fit(X_train, y_train)
 print(f"done in {time() - tic:.3f}s")
 print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
@@ -166,17 +168,12 @@ print(f"Test R2 score: {est.score(X_test, y_test):.2f}")
 
 print("Computing partial dependence plots...")
 tic = time()
-display = plot_partial_dependence(
+display = PartialDependenceDisplay.from_estimator(
     est,
     X_train,
-    features,
+    features=["MedInc", "AveOccup", "HouseAge", "AveRooms"],
     kind="both",
-    subsample=50,
-    n_jobs=3,
-    grid_resolution=20,
-    random_state=0,
-    ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
-    pd_line_kw={"color": "tab:orange", "linestyle": "--"},
+    **common_params,
 )
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
@@ -189,7 +186,7 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # Analysis of the plots
 # .....................
 #
-# We can clearly see on the PDPs (thick blue line) that the median house price
+# We can clearly see on the PDPs (dashed orange line) that the median house price
 # shows a linear relationship with the median income (top left) and that the
 # house price drops when the average occupants per household increases (top
 # middle). The top right plot shows that the house age in a district does not
@@ -197,10 +194,12 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # rooms per household.
 #
 # The ICE curves (light blue lines) complement the analysis: we can see that
-# there are some exceptions, where the house price remain constant with median
-# income and average occupants. On the other hand, while the house age (top
-# right) does not have a strong influence on the median house price on average,
-# there seems to be a number of exceptions where the house price increase when
+# there are some exceptions (which are better highlighted with the option
+# `centered=True`), where the house price remains constant with respect to
+# median income and average occupants variations.
+# On the other hand, while the house age (top right) does not have a strong
+# influence on the median house price on average, there seems to be a number
+# of exceptions where the house price increases when
 # between the ages 15-25. Similar exceptions can be observed for the average
 # number of rooms (bottom left). Therefore, ICE plots show some individual
 # effect which are attenuated by taking the averages.
@@ -224,20 +223,23 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # Another consideration is linked to the performance to compute the PDPs. With
 # the tree-based algorithm, when only PDPs are requested, they can be computed
 # on an efficient way using the `'recursion'` method.
+import matplotlib.pyplot as plt
 
-features = ["AveOccup", "HouseAge", ("AveOccup", "HouseAge")]
 print("Computing partial dependence plots...")
 tic = time()
 _, ax = plt.subplots(ncols=3, figsize=(9, 4))
-display = plot_partial_dependence(
+
+# Note that we could have called the method `from_estimator` three times and
+# provide one feature, one kind of plot, and one axis for each call.
+display = PartialDependenceDisplay.from_estimator(
     est,
     X_train,
-    features,
-    kind="average",
-    n_jobs=3,
-    grid_resolution=20,
+    features=["AveOccup", "HouseAge", ("AveOccup", "HouseAge")],
+    kind=["both", "both", "average"],
     ax=ax,
+    **common_params,
 )
+
 print(f"done in {time() - tic:.3f}s")
 display.figure_.suptitle(
     "Partial dependence of house value on non-location features\n"
@@ -253,25 +255,108 @@ display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
 # house age, whereas for values less than two there is a strong dependence on
 # age.
 #
+# Interaction constraints
+# .......................
+#
+# The histogram gradient boosters have an interesting option to constrain
+# possible interactions among features. In the following, we do not allow any
+# interactions and thus render the model as a version of a tree-based boosted
+# generalized additive model (GAM). This makes the model more interpretable
+# as the effect of each feature can be investigated independently of all others.
+#
+# We train the :class:`~sklearn.ensemble.HistGradientBoostingRegressor` again,
+# now with `interaction_cst`, where we  pass for each feature a list containing
+# only its own index, e.g. `[[0], [1], [2], ..]`.
+
+print("Training interaction constraint HistGradientBoostingRegressor...")
+tic = time()
+est_no_interactions = HistGradientBoostingRegressor(
+    interaction_cst=[[i] for i in range(X_train.shape[1])]
+)
+est_no_interactions.fit(X_train, y_train)
+print(f"done in {time() - tic:.3f}s")
+
+# %%
+# The easiest way to show the effect of forbidden interactions is again the
+# ICE plots.
+
+print("Computing partial dependence plots...")
+tic = time()
+display = PartialDependenceDisplay.from_estimator(
+    est_no_interactions,
+    X_train,
+    ["MedInc", "AveOccup", "HouseAge", "AveRooms"],
+    kind="both",
+    subsample=50,
+    n_jobs=3,
+    grid_resolution=20,
+    random_state=0,
+    ice_lines_kw={"color": "tab:blue", "alpha": 0.2, "linewidth": 0.5},
+    pd_line_kw={"color": "tab:orange", "linestyle": "--"},
+)
+
+print(f"done in {time() - tic:.3f}s")
+display.figure_.suptitle(
+    "Partial dependence of house value with Gradient Boosting\n"
+    "and no interactions allowed"
+)
+display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
+
+# %%
+# All 4 plots have parallel ICE lines meaning there is no interaction in the
+# model.
+# Let us also have a look at the corresponding 2D-plot.
+
+print("Computing partial dependence plots...")
+tic = time()
+_, ax = plt.subplots(ncols=3, figsize=(9, 4))
+display = PartialDependenceDisplay.from_estimator(
+    est_no_interactions,
+    X_train,
+    ["AveOccup", "HouseAge", ("AveOccup", "HouseAge")],
+    kind="average",
+    n_jobs=3,
+    grid_resolution=20,
+    ax=ax,
+)
+print(f"done in {time() - tic:.3f}s")
+display.figure_.suptitle(
+    "Partial dependence of house value with Gradient Boosting\n"
+    "and no interactions allowed"
+)
+display.figure_.subplots_adjust(wspace=0.4, hspace=0.3)
+
+# %%
+# Although the 2D-plot shows much less interaction compared with the 2D-plot
+# from above, it is much harder to come to the conclusion that there is no
+# interaction at all. This might be a cause of the discrete predictions of
+# trees in combination with numerically precision of partial dependence.
+# We also observe that the univariate dependence plots have slightly changed
+# as the model tries to compensate for the forbidden interactions.
+#
 # 3D interaction plots
 # --------------------
 #
 # Let's make the same partial dependence plot for the 2 features interaction,
 # this time in 3 dimensions.
-
 import numpy as np
-from mpl_toolkits.mplot3d import Axes3D
+
+# unused but required import for doing 3d projections with matplotlib < 3.2
+import mpl_toolkits.mplot3d  # noqa: F401
+
+from sklearn.inspection import partial_dependence
 
 fig = plt.figure()
 
 features = ("AveOccup", "HouseAge")
 pdp = partial_dependence(
-    est, X_train, features=features, kind="average", grid_resolution=20
+    est, X_train, features=features, kind="average", grid_resolution=10
 )
 XX, YY = np.meshgrid(pdp["values"][0], pdp["values"][1])
 Z = pdp.average[0].T
-ax = Axes3D(fig)
+ax = fig.add_subplot(projection="3d")
 fig.add_axes(ax)
+
 surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1, cmap=plt.cm.BuPu, edgecolor="k")
 ax.set_xlabel(features[0])
 ax.set_ylabel(features[1])
