@@ -91,7 +91,7 @@ class DecisionBoundaryDisplay:
     surface_ : matplotlib `QuadContourSet` or `QuadMesh`
         If `plot_method` is 'contour' or 'contourf', `surface_` is a
         :class:`QuadContourSet <matplotlib.contour.QuadContourSet>`. If
-        `plot_method is "pcolormesh"`, `surface_` is a
+        `plot_method` is 'pcolormesh', `surface_` is a
         :class:`QuadMesh <matplotlib.collections.QuadMesh>`.
 
     ax_ : matplotlib Axes
