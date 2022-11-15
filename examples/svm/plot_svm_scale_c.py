@@ -56,9 +56,9 @@ that are appropriate for each type of regularization.
 # of non-zero parameters as well as their signs, can be achieved by scaling
 # `C`.
 #
-# We will now check if by using synthetic data, we can show this effect. Let's
-# first generate some synthetic data. This dataset will be sparse, meaning
-# that only a few features will be informative and useful for the model.
+# We will demonstrate this effect by using a synthetic dataset. This
+# dataset will be sparse, meaning that only a few features will be informative
+# and useful for the model.
 from sklearn.datasets import make_classification
 
 n_samples, n_features = 100, 300
@@ -70,8 +70,7 @@ X, y = make_classification(
 # Now, we can define a linear SVC with the `l1` penalty.
 from sklearn.svm import LinearSVC
 
-penalty, loss = "l1", "squared_hinge"
-model_l1 = LinearSVC(penalty=penalty, loss=loss, dual=False, tol=1e-3)
+model_l1 = LinearSVC(penalty="l1", loss="squared_hinge", dual=False, tol=1e-3)
 
 # %%
 # We will compute the mean test score for different values of `C`.
@@ -80,7 +79,7 @@ import pandas as pd
 from sklearn.model_selection import validation_curve, ShuffleSplit
 
 Cs = np.logspace(-2.3, -1.3, 10)
-train_sizes = np.linspace(0.3, 0.7, 3)[::-1]
+train_sizes = np.linspace(0.3, 0.7, 3)
 
 results = {"C": Cs}
 for train_size in train_sizes:
@@ -96,7 +95,7 @@ results = pd.DataFrame(results).set_index("C")
 # depending of the size of the training set.
 import matplotlib.pyplot as plt
 
-fig, axes = plt.subplots(nrows=2, sharey=True, figsize=(9, 10))
+fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(12, 6))
 
 # plot results without scaling C
 results.plot(ax=axes[0], logx=True)
