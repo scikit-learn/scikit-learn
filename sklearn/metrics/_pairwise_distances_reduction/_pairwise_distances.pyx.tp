@@ -49,7 +49,7 @@ from ._datasets_pair cimport (
     DenseDenseDatasetsPair{{name_suffix}},
 )
 
-from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
+from ._middle_term_computer cimport MiddleTermComputer{{name_suffix}}
 
 
 cdef class PairwiseDistances{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
@@ -83,10 +83,14 @@ cdef class PairwiseDistances{{name_suffix}}(BaseDistancesReduction{{name_suffix}
             and not issparse(X)
             and not issparse(Y)
         ):
-            # Specialized implementation with improved arithmetic intensity
-            # and vector instructions (SIMD) by processing several vectors
-            # at time to leverage a call to the BLAS GEMM routine as explained
-            # in more details in the docstring.
+            # Specialized implementation of PairwiseDistances for the Euclidean distance.
+            # This implementation computes the distances by chunk using
+            # a decomposition of the Squared Euclidean distance.
+            # This specialisation has an improved arithmetic intensity for both
+            # the dense and sparse settings, allowing in most case speed-ups of
+            # several orders of magnitude compared to the generic RadiusNeighbors
+            # implementation.
+            # For more information see MiddleTermComputer.
             use_squared_distances = metric == "sqeuclidean"
             pdr = EuclideanPairwiseDistances{{name_suffix}}(
                 X=X, Y=Y,
@@ -198,7 +202,7 @@ cdef class EuclideanPairwiseDistances{{name_suffix}}(PairwiseDistances{{name_suf
                 self.Y_n_samples_chunk * self.X_n_samples_chunk
             )
 
-        self.gemm_term_computer = GEMMTermComputer{{name_suffix}}(
+        self.middle_term_computer = MiddleTermComputer{{name_suffix}}.get_for(
             X,
             Y,
             self.effective_n_threads,
@@ -247,7 +251,7 @@ cdef class EuclideanPairwiseDistances{{name_suffix}}(PairwiseDistances{{name_suf
         ITYPE_t thread_num,
     ) nogil:
         PairwiseDistances{{name_suffix}}._parallel_on_X_parallel_init(self, thread_num)
-        self.gemm_term_computer._parallel_on_X_parallel_init(thread_num)
+        self.middle_term_computer._parallel_on_X_parallel_init(thread_num)
 
     @final
     cdef void _parallel_on_X_init_chunk(
@@ -257,7 +261,7 @@ cdef class EuclideanPairwiseDistances{{name_suffix}}(PairwiseDistances{{name_suf
         ITYPE_t X_end,
     ) nogil:
         PairwiseDistances{{name_suffix}}._parallel_on_X_init_chunk(self, thread_num, X_start, X_end)
-        self.gemm_term_computer._parallel_on_X_init_chunk(thread_num, X_start, X_end)
+        self.middle_term_computer._parallel_on_X_init_chunk(thread_num, X_start, X_end)
 
     @final
     cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
@@ -274,7 +278,7 @@ cdef class EuclideanPairwiseDistances{{name_suffix}}(PairwiseDistances{{name_suf
             Y_start, Y_end,
             thread_num,
         )
-        self.gemm_term_computer._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
+        self.middle_term_computer._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
             X_start, X_end, Y_start, Y_end, thread_num,
         )
 
@@ -284,7 +288,7 @@ cdef class EuclideanPairwiseDistances{{name_suffix}}(PairwiseDistances{{name_suf
     ) nogil:
         cdef ITYPE_t thread_num
         PairwiseDistances{{name_suffix}}._parallel_on_Y_init(self)
-        self.gemm_term_computer._parallel_on_Y_init()
+        self.middle_term_computer._parallel_on_Y_init()
 
     @final
     cdef void _parallel_on_Y_parallel_init(
@@ -294,7 +298,7 @@ cdef class EuclideanPairwiseDistances{{name_suffix}}(PairwiseDistances{{name_suf
         ITYPE_t X_end,
     ) nogil:
         PairwiseDistances{{name_suffix}}._parallel_on_Y_parallel_init(self, thread_num, X_start, X_end)
-        self.gemm_term_computer._parallel_on_Y_parallel_init(thread_num, X_start, X_end)
+        self.middle_term_computer._parallel_on_Y_parallel_init(thread_num, X_start, X_end)
 
     @final
     cdef void _parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
@@ -311,7 +315,7 @@ cdef class EuclideanPairwiseDistances{{name_suffix}}(PairwiseDistances{{name_suf
             Y_start, Y_end,
             thread_num,
         )
-        self.gemm_term_computer._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
+        self.middle_term_computer._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
             X_start, X_end, Y_start, Y_end, thread_num
         )
 
@@ -330,7 +334,7 @@ cdef class EuclideanPairwiseDistances{{name_suffix}}(PairwiseDistances{{name_suf
             ITYPE_t pair_index = 0
             DTYPE_t sq_dist_i_j = 0.
 
-            DTYPE_t *dist_middle_terms = self.gemm_term_computer._compute_dist_middle_terms(
+            DTYPE_t *dist_middle_terms = self.middle_term_computer._compute_dist_middle_terms(
                 X_start, X_end, Y_start, Y_end, thread_num
             )
 

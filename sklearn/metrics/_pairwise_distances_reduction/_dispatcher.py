@@ -35,7 +35,7 @@ def sqeuclidean_row_norms(X, num_threads):
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features)
+    X : ndarray or CSR matrix of shape (n_samples, n_features)
         Input data. Must be c-contiguous.
 
     num_threads : int
@@ -47,9 +47,9 @@ def sqeuclidean_row_norms(X, num_threads):
         Arrays containing the squared euclidean norm of each row of X.
     """
     if X.dtype == np.float64:
-        return _sqeuclidean_row_norms64(X, num_threads)
+        return np.asarray(_sqeuclidean_row_norms64(X, num_threads))
     if X.dtype == np.float32:
-        return _sqeuclidean_row_norms32(X, num_threads)
+        return np.asarray(_sqeuclidean_row_norms32(X, num_threads))
 
     raise ValueError(
         "Only float64 or float32 datasets are supported at this time, "

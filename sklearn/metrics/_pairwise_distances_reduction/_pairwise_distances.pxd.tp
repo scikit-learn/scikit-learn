@@ -17,7 +17,7 @@ from ...utils._typedefs cimport DTYPE_t
 {{for name_suffix, INPUT_DTYPE_t in implementation_specific_values}}
 
 from ._base cimport BaseDistancesReduction{{name_suffix}}
-from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
+from ._middle_term_computer cimport MiddleTermComputer{{name_suffix}}
 
 
 cdef class PairwiseDistances{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
@@ -30,7 +30,7 @@ cdef class PairwiseDistances{{name_suffix}}(BaseDistancesReduction{{name_suffix}
 cdef class EuclideanPairwiseDistances{{name_suffix}}(PairwiseDistances{{name_suffix}}):
     """EuclideanDistance-specialized float{{name_suffix}} implementation for PairwiseDistances."""
     cdef:
-        GEMMTermComputer{{name_suffix}} gemm_term_computer
+        MiddleTermComputer{{name_suffix}} middle_term_computer
         const DTYPE_t[::1] X_norm_squared
         const DTYPE_t[::1] Y_norm_squared
 
