@@ -48,9 +48,6 @@ def all_estimators(type_filter=None):
         ClusterMixin,
     )
 
-    # make it possible to discover experimental estimators
-    from ..experimental import enable_iterative_imputer  # noqa
-
     def is_abstract(c):
         if not (hasattr(c, "__abstractmethods__")):
             return False
