@@ -211,7 +211,7 @@ import matplotlib.pyplot as plt
 
 X, _ = make_blobs(n_samples=1000, centers=2, random_state=0)
 
-km = KMeans(n_clusters=5, random_state=0, n_init=10).fit(X)
+km = KMeans(n_clusters=5, random_state=0, n_init="auto").fit(X)
 bisect_km = BisectingKMeans(n_clusters=5, random_state=0).fit(X)
 
 fig, ax = plt.subplots(1, 2, figsize=(10, 5))
