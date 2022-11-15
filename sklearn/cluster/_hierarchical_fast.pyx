@@ -96,7 +96,7 @@ def _hc_get_descendent(INTP node, children, INTP n_leaves):
     return descendent
 
 
-def hc_get_heads(INTP[:] parents, copy=True):
+def hc_get_heads(cnp.npy_intp[:] parents, copy=True):
     """Returns the heads of the forest, as defined by parents.
 
     Parameters
@@ -128,8 +128,12 @@ def hc_get_heads(INTP[:] parents, copy=True):
     return parents
 
 
-def _get_parents(nodes, heads, INTP[:] parents,
-                 INT8[::1] not_visited):
+cpdef void _get_parents(
+    nodes,
+    heads,
+    cnp.npy_intp[:] parents,
+    cnp.int8_t[::1] not_visited
+):
     """Returns the heads of the given nodes, as defined by parents.
 
     Modifies 'heads' and 'not_visited' in-place.
@@ -156,7 +160,6 @@ def _get_parents(nodes, heads, INTP[:] parents,
         if not_visited[node]:
             not_visited[node] = 0
             heads.append(node)
-    return heads
 
 
 ###############################################################################
@@ -167,9 +170,13 @@ def _get_parents(nodes, heads, INTP[:] parents,
 # as keys and edge weights as values.
 
 
-def max_merge(IntFloatDict a, IntFloatDict b,
-              ITYPE_t[:] mask,
-              ITYPE_t n_a, ITYPE_t n_b):
+def max_merge(
+    IntFloatDict a,
+    IntFloatDict b,
+    cnp.intp_t[:] mask,
+    cnp.intp_t n_a,
+    cnp.intp_t n_b
+):
     """Merge two IntFloatDicts with the max strategy: when the same key is
     present in the two dicts, the max of the two values is used.
 
@@ -220,9 +227,13 @@ def max_merge(IntFloatDict a, IntFloatDict b,
     return out_obj
 
 
-def average_merge(IntFloatDict a, IntFloatDict b,
-              ITYPE_t[:] mask,
-              ITYPE_t n_a, ITYPE_t n_b):
+def average_merge(
+    IntFloatDict a,
+    IntFloatDict b,
+    cnp.intp_t[:] mask,
+    cnp.intp_t n_a,
+    cnp.intp_t n_b
+):
     """Merge two IntFloatDicts with the average strategy: when the
     same key is present in the two dicts, the weighted average of the two
     values is used.
@@ -355,7 +366,7 @@ cdef class UnionFind(object):
         return n
 
 
-def _single_linkage_label(DTYPE_t[:, :] L):
+def _single_linkage_label(cnp.float64_t[:, :] L):
     """
     Convert an linkage array or MST to a tree by labelling clusters at merges.
     This is done by using a Union find structure to keep track of merges
@@ -376,13 +387,11 @@ def _single_linkage_label(DTYPE_t[:, :] L):
     """
 
     cdef DTYPE_t[:, ::1] result_arr
-    cdef DTYPE_t[:, ::1] result
 
     cdef ITYPE_t left, left_cluster, right, right_cluster, index
     cdef DTYPE_t delta
 
     result_arr = np.zeros((L.shape[0], 4), dtype=DTYPE)
-    result = result_arr
     U = UnionFind(L.shape[0] + 1)
 
     for index in range(L.shape[0]):
@@ -394,14 +403,14 @@ def _single_linkage_label(DTYPE_t[:, :] L):
         left_cluster = U.fast_find(left)
         right_cluster = U.fast_find(right)
 
-        result[index][0] = left_cluster
-        result[index][1] = right_cluster
-        result[index][2] = delta
-        result[index][3] = U.size[left_cluster] + U.size[right_cluster]
+        result_arr[index][0] = left_cluster
+        result_arr[index][1] = right_cluster
+        result_arr[index][2] = delta
+        result_arr[index][3] = U.size[left_cluster] + U.size[right_cluster]
 
         U.union(left_cluster, right_cluster)
 
-    return np.asarray(result_arr)
+    return result_arr.base
 
 
 @cython.wraparound(True)
