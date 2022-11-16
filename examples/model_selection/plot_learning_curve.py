@@ -142,11 +142,13 @@ for ax_idx, (fit_times, score_times, estimator) in enumerate(
     ax[1, ax_idx].set_xlabel("Number of training samples")
 
 # %%
-# We see that the scalability of the naive Bayes and SVM classifiers is very
-# different. The naive Bayes classifier complexity at fit and score time
-# remains constant in relation to the number of training samples. In contrast,
-# the SVM classifier complexity at fit and score time increases linearly with
-# the number of training samples.
+# We see that the scalability of the SVM and naive Bayes classifiers is very
+# different. The SVM classifier complexity at fit and score time increases
+# rapidly with the number of samples. Indeed, it is known that the fit time
+# complexity of this classifier is more than quadratic with the number of
+# samples which makes it hard to scale to dataset with more than a couple of
+# 10,000 samples. In contrast, the naive Bayes classifier scales much better
+# with a lower complexity at fit and score time.
 #
 # Subsequently, we can check the trade-off between increased training time and
 # the cross-validation score.
