@@ -16,14 +16,15 @@ from ._argkmin import (
     ArgKmin64,
     ArgKmin32,
 )
-from ._radius_neighborhood import (
-    RadiusNeighbors64,
-    RadiusNeighbors32,
-)
 
 from ._argkminlabels import (
     ArgKminLabels64,
     ArgKminLabels32,
+)
+
+from ._radius_neighbors import (
+    RadiusNeighbors64,
+    RadiusNeighbors32,
 )
 
 from ... import get_config
@@ -34,7 +35,7 @@ def sqeuclidean_row_norms(X, num_threads):
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features)
+    X : ndarray or CSR matrix of shape (n_samples, n_features)
         Input data. Must be c-contiguous.
 
     num_threads : int
@@ -46,9 +47,9 @@ def sqeuclidean_row_norms(X, num_threads):
         Arrays containing the squared euclidean norm of each row of X.
     """
     if X.dtype == np.float64:
-        return _sqeuclidean_row_norms64(X, num_threads)
+        return np.asarray(_sqeuclidean_row_norms64(X, num_threads))
     if X.dtype == np.float32:
-        return _sqeuclidean_row_norms32(X, num_threads)
+        return np.asarray(_sqeuclidean_row_norms32(X, num_threads))
 
     raise ValueError(
         "Only float64 or float32 datasets are supported at this time, "
@@ -56,22 +57,25 @@ def sqeuclidean_row_norms(X, num_threads):
     )
 
 
-class BaseDistanceReductionDispatcher:
+class BaseDistancesReductionDispatcher:
     """Abstract base dispatcher for pairwise distance computation & reduction.
 
-    Each dispatcher extending the base :class:`BaseDistanceReductionDispatcher`
+    Each dispatcher extending the base :class:`BaseDistancesReductionDispatcher`
     dispatcher must implement the :meth:`compute` classmethod.
     """
 
     @classmethod
     def valid_metrics(cls) -> List[str]:
         excluded = {
-            "pyfunc",  # is relatively slow because we need to coerce data as np arrays
+            # PyFunc cannot be supported because it necessitates interacting with
+            # the CPython interpreter to call user defined functions.
+            "pyfunc",
             "mahalanobis",  # is numerically unstable
-            # TODO: In order to support discrete distance metrics, we need to have a
-            # stable simultaneous sort which preserves the order of the input.
-            # The best might be using std::stable_sort and a Comparator taking an
-            # Arrays of Structures instead of Structure of Arrays (currently used).
+            # In order to support discrete distance metrics, we need to have a
+            # stable simultaneous sort which preserves the order of the indices
+            # because there generally is a lot of occurrences for a given values
+            # of distances in this case.
+            # TODO: implement a stable simultaneous_sort.
             "hamming",
             *BOOL_METRICS,
         }
@@ -174,7 +178,7 @@ class BaseDistanceReductionDispatcher:
         """
 
 
-class ArgKmin(BaseDistanceReductionDispatcher):
+class ArgKmin(BaseDistancesReductionDispatcher):
     """Compute the argkmin of row vectors of X on the ones of Y.
 
     For each row vector of X, computes the indices of k first the rows
@@ -250,8 +254,6 @@ class ArgKmin(BaseDistanceReductionDispatcher):
                 'parallel_on_X' is usually the most efficient strategy.
                 When `X.shape[0]` is small but `Y.shape[0]` is large, 'parallel_on_Y'
                 brings more opportunity for parallelism and is therefore more efficient
-                despite the synchronization step at each iteration of the outer loop
-                on chunks of `X`.
 
               - None (default) looks-up in scikit-learn configuration for
                 `pairwise_dist_parallel_strategy`, and use 'auto' if it is not set.
@@ -274,20 +276,14 @@ class ArgKmin(BaseDistanceReductionDispatcher):
 
         Notes
         -----
-        This classmethod is responsible for introspecting the arguments
-        values to dispatch to the most appropriate implementation of
-        :class:`ArgKmin64`.
+        This classmethod inspects the arguments values to dispatch to the
+        dtype-specialized implementation of :class:`ArgKmin`.
 
         This allows decoupling the API entirely from the implementation details
         whilst maintaining RAII: all temporarily allocated datastructures necessary
         for the concrete implementation are therefore freed when this classmethod
         returns.
         """
-        # Note (jjerphan): Some design thoughts for future extensions.
-        # This factory comes to handle specialisations for the given arguments.
-        # For future work, this might can be an entrypoint to specialise operations
-        # for various backend and/or hardware and/or datatypes, and/or fused
-        # {sparse, dense}-datasetspair etc.
         if X.dtype == Y.dtype == np.float64:
             return ArgKmin64.compute(
                 X=X,
@@ -318,7 +314,7 @@ class ArgKmin(BaseDistanceReductionDispatcher):
         )
 
 
-class RadiusNeighbors(BaseDistanceReductionDispatcher):
+class RadiusNeighbors(BaseDistancesReductionDispatcher):
     """Compute radius-based neighbors for two sets of vectors.
 
     For each row-vector X[i] of the queries X, find all the indices j of
@@ -424,21 +420,14 @@ class RadiusNeighbors(BaseDistanceReductionDispatcher):
 
         Notes
         -----
-        This public classmethod is responsible for introspecting the arguments
-        values to dispatch to the private dtype-specialized implementation of
-        :class:`RadiusNeighbors64`.
+        This classmethod inspects the arguments values to dispatch to the
+        dtype-specialized implementation of :class:`RadiusNeighbors`.
 
-        All temporarily allocated datastructures necessary for the concrete
-        implementation are therefore freed when this classmethod returns.
-
-        This allows entirely decoupling the API entirely from the
-        implementation details whilst maintaining RAII.
+        This allows decoupling the API entirely from the implementation details
+        whilst maintaining RAII: all temporarily allocated datastructures necessary
+        for the concrete implementation are therefore freed when this classmethod
+        returns.
         """
-        # Note (jjerphan): Some design thoughts for future extensions.
-        # This factory comes to handle specialisations for the given arguments.
-        # For future work, this might can be an entrypoint to specialise operations
-        # for various backend and/or hardware and/or datatypes, and/or fused
-        # {sparse, dense}-datasetspair etc.
         if X.dtype == Y.dtype == np.float64:
             return RadiusNeighbors64.compute(
                 X=X,
@@ -471,7 +460,7 @@ class RadiusNeighbors(BaseDistanceReductionDispatcher):
         )
 
 
-class ArgKminLabels(BaseDistanceReductionDispatcher):
+class ArgKminLabels(BaseDistancesReductionDispatcher):
     """Compute the argkmin of row vectors of X on the ones of Y with labels.
 
     For each row vector of X, computes the indices of k first the rows
