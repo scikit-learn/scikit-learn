@@ -11,7 +11,6 @@ from sklearn import preprocessing
 from sklearn.datasets import make_blobs
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.utils._testing import (
-    assert_almost_equal,
     assert_allclose,
     assert_allclose_dense_sparse,
     assert_array_equal,
@@ -65,7 +64,8 @@ def test_isomap_simple_grid(
         G_iso = neighbors.radius_neighbors_graph(
             clf.embedding_, radius, mode="distance"
         )
-    assert_allclose_dense_sparse(G, G_iso)
+    atol = 1e-5 if global_dtype == np.float32 else 0
+    assert_allclose_dense_sparse(G, G_iso, atol=atol)
 
 
 @pytest.mark.parametrize("n_neighbors, radius", [(24, None), (None, np.inf)])
@@ -107,7 +107,8 @@ def test_isomap_reconstruction_error(
 
     # make sure error agrees
     reconstruction_error = np.linalg.norm(K - K_iso) / n_pts
-    assert_almost_equal(reconstruction_error, clf.reconstruction_error())
+    atol = 1e-5 if global_dtype == np.float32 else 0
+    assert_allclose(reconstruction_error, clf.reconstruction_error(), atol=atol)
 
 
 @pytest.mark.parametrize("n_neighbors, radius", [(2, None), (None, 0.5)])
@@ -263,7 +264,8 @@ def test_isomap_fit_precomputed_radius_graph(global_dtype):
 
     isomap = manifold.Isomap(n_neighbors=None, radius=radius, metric="minkowski")
     result = isomap.fit_transform(X)
-    assert_allclose(precomputed_result, result)
+    atol = 1e-5 if global_dtype == np.float32 else 0
+    assert_allclose(precomputed_result, result, atol=atol)
 
 
 def test_isomap_fitted_attributes_dtype(global_dtype):
