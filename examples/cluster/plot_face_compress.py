@@ -91,7 +91,7 @@ ax[1].hist(compressed_raccoon_uniform.ravel(), bins=256)
 ax[1].set_xlabel("Pixel value")
 ax[1].set_ylabel("Count of pixels")
 ax[1].set_title("Sub-sampled distribution of the pixel values")
-_ = fig.suptitle("Raccoon face compressed using 1-bit and a uniform strategy")
+_ = fig.suptitle("Raccoon face compressed using 3 bits and a uniform strategy")
 
 # %%
 # Qualitatively, we can spot some small regions where we see the effect of the
@@ -136,7 +136,7 @@ ax[1].hist(compressed_raccoon_kmeans.ravel(), bins=256)
 ax[1].set_xlabel("Pixel value")
 ax[1].set_ylabel("Number of pixels")
 ax[1].set_title("Distribution of the pixel values")
-_ = fig.suptitle("Raccoon face compressed using 1-bit and a K-means strategy")
+_ = fig.suptitle("Raccoon face compressed using 3 bits and a K-means strategy")
 
 # %%
 bin_edges = encoder.bin_edges_[0]
