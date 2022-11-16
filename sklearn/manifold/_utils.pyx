@@ -116,4 +116,4 @@ cpdef float[:, :] _binary_search_perplexity(
     if verbose:
         print("[t-SNE] Mean sigma: %f"
               % np.mean(math.sqrt(n_samples / beta_sum)))
-    return P.astype(np.float32)
+    return np.array(P, dtype=np.float32)
