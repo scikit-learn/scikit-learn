@@ -12,7 +12,7 @@ cdef enum:
     # Max value for our rand_r replacement (near the bottom).
     # We don't use RAND_MAX because it's different across platforms and
     # particularly tiny on Windows/MSVC. It corresponds to the maximum of
-    # a 32-bit signed integer.
+    # a 32-bit signed integer (i.e. 2^31 - 1)
     RAND_R_MAX = 0x7FFFFFFF
 
 
@@ -33,7 +33,7 @@ cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
     seed[0] ^= <UINT32_t>(seed[0] << 5)
 
     # Use the modulo to make sure that we don't return a values greater than
-    # 2^32 - 1 since we use a unsinged 32bit integer.
+    # (2^31 - 1) since we use a unsinged 32bit integer.
     # Note that the paranthesis are important to avoid overflow. We need first
     # to cast RAND_R_MAX and then add 1.
     return seed[0] % ((<UINT32_t>RAND_R_MAX) + 1)
