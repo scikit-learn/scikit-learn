@@ -3,7 +3,7 @@ import numpy as np
 import math
 import pytest
 
-from sklearn import datasets
+from sklearn import datasets, clone
 from sklearn import manifold
 from sklearn import neighbors
 from sklearn import pipeline
@@ -20,8 +20,6 @@ from scipy.sparse import rand as sparse_rand
 
 eigen_solvers = ["auto", "dense", "arpack"]
 path_methods = ["auto", "FW", "D"]
-
-# TODO: Isomap fit/fit_transform must preserve dtype
 
 
 def create_sample_data(dtype, n_pts=25, add_noise=False):
@@ -224,19 +222,30 @@ def test_isomap_clone_bug():
 
 @pytest.mark.parametrize("eigen_solver", eigen_solvers)
 @pytest.mark.parametrize("path_method", path_methods)
-def test_sparse_input(global_dtype, eigen_solver, path_method):
+def test_sparse_input(global_dtype, eigen_solver, path_method, global_random_seed):
     # TODO: compare results on dense and sparse data as proposed in:
     # https://github.com/scikit-learn/scikit-learn/pull/23585#discussion_r968388186
-    X = sparse_rand(100, 3, density=0.1, format="csr", dtype=global_dtype)
-    # Must not error
-    clf = manifold.Isomap(
+    X = sparse_rand(
+        100,
+        3,
+        density=0.1,
+        format="csr",
+        dtype=global_dtype,
+        random_state=global_random_seed,
+    )
+
+    iso_dense = manifold.Isomap(
         n_components=2,
         eigen_solver=eigen_solver,
         path_method=path_method,
         n_neighbors=8,
     )
-    clf.fit(X)
-    clf.transform(X)
+    iso_sparse = clone(iso_dense)
+
+    X_trans_dense = iso_dense.fit_transform(X.toarray())
+    X_trans_sparse = iso_sparse.fit_transform(X)
+
+    assert_allclose(X_trans_sparse, X_trans_dense, rtol=1e-4, atol=1e-4)
 
 
 def test_isomap_fit_precomputed_radius_graph(global_dtype):
