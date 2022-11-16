@@ -19,7 +19,6 @@ from sklearn.covariance import (
     shrunk_covariance,
     LedoitWolf,
     ledoit_wolf,
-    _ledoit_wolf,
     ledoit_wolf_shrinkage,
     OAS,
     oas,
@@ -159,7 +158,6 @@ def test_ledoit_wolf():
     assert_almost_equal(lw.shrinkage_, shrinkage_, 4)
     assert_almost_equal(lw.shrinkage_, ledoit_wolf_shrinkage(X))
     assert_almost_equal(lw.shrinkage_, ledoit_wolf(X)[1])
-    assert_almost_equal(lw.shrinkage_, _ledoit_wolf(X, False, 1000)[1])
     assert_almost_equal(lw.score(X), score_, 4)
     # compare shrunk covariance obtained from data and from MLE estimate
     lw_cov_from_mle, lw_shrinkage_from_mle = ledoit_wolf(X)
