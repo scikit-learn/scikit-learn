@@ -275,14 +275,14 @@ class LearningCurveDisplay:
             An object of that type which is cloned for each validation.
 
         X : array-like of shape (n_samples, n_features)
-            Training vector, where `n_samples` is the number of samples and
+            Training data, where `n_samples` is the number of samples and
             `n_features` is the number of features.
 
-        y : array-like of shape (n_samples,) or (n_samples, n_outputs)
+        y : array-like of shape (n_samples,) or (n_samples, n_outputs) or None
             Target relative to X for classification or regression;
             None for unsupervised learning.
 
-        groups : array-like of  shape (n_samples,), default=None
+        groups : array-like of shape (n_samples,), default=None
             Group labels for the samples used while splitting the dataset into
             train/test set. Only used in conjunction with a "Group" :term:`cv`
             instance (e.g., :class:`GroupKFold`).
@@ -318,7 +318,7 @@ class LearningCurveDisplay:
             cross-validation strategies that can be used here.
 
         scoring : str or callable, default=None
-            A strring (see :ref:`scoring_parameter`) or
+            A string (see :ref:`scoring_parameter`) or
             a scorer callable object / function with signature
             `scorer(estimator, X, y)` (see :ref:`scoring`).
 
