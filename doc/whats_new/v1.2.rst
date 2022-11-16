@@ -228,7 +228,11 @@ Changelog
 - |Enhancement| Path-like objects, such as those created with pathlib are now
   allowed as paths in :func:`datasets.load_svmlight_file` and
   :func:`datasets.load_svmlight_files`.
-  :pr:`19075` by :user:`Carlos Ramos Carreño <vnmabus>`
+  :pr:`19075` by :user:`Carlos Ramos Carreño <vnmabus>`.
+
+- |Fix| Make sure that :func:`datasets.fetch_lfw_people` internally crops images
+  based on the `slice_` parameter.
+  :pr:`24951` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.decomposition`
 ............................

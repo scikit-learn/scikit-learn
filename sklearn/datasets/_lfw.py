@@ -265,8 +265,9 @@ def fetch_lfw_people(
     funneled : bool, default=True
         Download and use the funneled variant of the dataset.
 
-    resize : float, default=0.5
-        Ratio used to resize the each face picture.
+    resize : float or None, default=0.5
+        Ratio used to resize the each face picture. If `None`, no resizing is
+        performed.
 
     min_faces_per_person : int, default=None
         The extracted dataset will only retain pictures of people that have at
