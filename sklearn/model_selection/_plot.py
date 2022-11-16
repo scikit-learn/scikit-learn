@@ -71,7 +71,7 @@ class LearningCurveDisplay:
     >>> train_sizes, train_scores, test_scores = learning_curve(
     ...     tree, X, y)
     >>> display = LearningCurveDisplay(train_sizes=train_sizes,
-    ...     train_scores=train_scores, test_scores=test_scores)
+    ...     train_scores=train_scores, test_scores=test_scores, score_name="Score")
     >>> display.plot()
     <...>
     >>> plt.show()
