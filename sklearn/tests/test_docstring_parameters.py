@@ -11,6 +11,10 @@ from inspect import signature
 
 import numpy as np
 
+# make it possible to discover experimental estimators when calling `all_estimators`
+from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa
+
 import sklearn
 from sklearn.utils import IS_PYPY
 from sklearn.utils._testing import check_docstring_parameters
