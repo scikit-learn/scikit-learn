@@ -17,6 +17,31 @@ values, i.e., to infer them from the known part of the data. See the
 glossary entry on :term:`imputation`.
 
 
+Missing value mechanisms
+========================
+Three mechanisms model data missingness.
+
+* **Missing Completely At Random (MCAR)**: the missingness does not depend on data.
+* **Missing At Random (MAR)**: the missingness does not depend on underlying
+  missing values but can depend on observed ones.
+* **Missing Not At Random (MNAR)**: the missingness depends on underlying missing
+  values.
+
+.. figure:: ../images/missing_value_mechanisms.png
+   :align: center
+   :scale: 20%
+
+In the above example, X1 is always observed. In the first plot, X2 is masked
+independently of the values of (X1, X2), hence MCAR. In the second, X2 is
+masked when X1 (observed) reaches some threshold, hence MAR. In the last, X2 is
+masked when X2 reaches some threshold, hence MNAR.
+
+Conditional imputation (e.g. :class:`~sklearn.impute.IterativeImputer` or
+:class:`~sklearn.impute.KNNImputer`) is guaranteed to work only for ignorable
+missingness (i.e. MCAR or MAR settings). When missingness is seldom ignored,
+i.e. MNAR setting, adding the mask (`add_indicator=True`) is needed as the missingness is
+informative. In practice, real-world data are often MNAR.
+
 Univariate vs. Multivariate Imputation
 ======================================
 
@@ -317,8 +342,8 @@ wrap this in a :class:`Pipeline` with a classifier (e.g., a
 Estimators that handle NaN values
 =================================
 
-Some estimators are designed to handle NaN values without preprocessing. 
-Below is the list of these estimators, classified by type 
+Some estimators are designed to handle NaN values without preprocessing.
+Below is the list of these estimators, classified by type
 (cluster, regressor, classifier, transform) :
 
 .. allow_nan_estimators::
