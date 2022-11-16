@@ -97,7 +97,7 @@ def enet_coordinate_descent(
     floating beta,
     floating[::1, :] X,
     floating[::1] y,
-    int max_iter,
+    unsigned int max_iter,
     floating tol,
     object rng,
     bint random=0,
@@ -153,7 +153,7 @@ def enet_coordinate_descent(
     cdef floating A_norm2
     cdef unsigned int ii
     cdef unsigned int i
-    cdef int n_iter = 0
+    cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
@@ -283,7 +283,7 @@ def sparse_enet_coordinate_descent(
     floating[::1] y,
     floating[::1] sample_weight,
     floating[::1] X_mean,
-    int max_iter,
+    unsigned int max_iter,
     floating tol,
     object rng,
     bint random=0,
@@ -365,7 +365,7 @@ def sparse_enet_coordinate_descent(
     cdef floating d_w_tol = tol
     cdef floating dual_norm_XtA
     cdef unsigned int jj
-    cdef int n_iter = 0
+    cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
@@ -571,7 +571,7 @@ def enet_coordinate_descent_gram(
     cnp.ndarray[floating, ndim=2, mode='c'] Q,
     cnp.ndarray[floating, ndim=1, mode='c'] q,
     cnp.ndarray[floating, ndim=1] y,
-    int max_iter,
+    unsigned int max_iter,
     floating tol,
     object rng,
     bint random=0,
@@ -624,7 +624,7 @@ def enet_coordinate_descent_gram(
     cdef floating d_w_tol = tol
     cdef floating dual_norm_XtA
     cdef unsigned int ii
-    cdef int n_iter = 0
+    cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
@@ -742,7 +742,7 @@ def enet_coordinate_descent_multi_task(
     # TODO: use const qualified fused-typed memoryview when Cython 3.0 is used.
     cnp.ndarray[floating, ndim=2, mode='fortran'] X,
     cnp.ndarray[floating, ndim=2, mode='fortran'] Y,
-    int max_iter,
+    unsigned int max_iter,
     floating tol,
     object rng,
     bint random=0
@@ -800,7 +800,7 @@ def enet_coordinate_descent_multi_task(
     cdef floating l21_norm
     cdef unsigned int ii
     cdef unsigned int jj
-    cdef int n_iter = 0
+    cdef unsigned int n_iter = 0
     cdef unsigned int f_iter
     cdef UINT32_t rand_r_state_seed = rng.randint(0, RAND_R_MAX)
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
