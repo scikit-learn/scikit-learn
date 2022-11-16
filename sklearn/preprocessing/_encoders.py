@@ -1133,8 +1133,8 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     Notes
     -----
-    In presence of `nan` values, inferring categories can become slow with
-    version of Python below 3.10. The handling of `nan` values was improved
+    With a high proportion of `nan` values, inferring categories becomes slow with
+    Python versions before 3.10. The handling of `nan` values was improved
     from Python 3.10 onwards, (c.f.
     `bpo-43475 <https://github.com/python/cpython/issues/87641>`_).
 
