@@ -230,8 +230,9 @@ Changelog
   :func:`datasets.load_svmlight_files`.
   :pr:`19075` by :user:`Carlos Ramos Carreño <vnmabus>`.
 
-- |Fix| Make sure that :func:`datasets.fetch_lfw_people` internally crops images
-  based on the `slice_` parameter.
+- |Fix| Make sure that :func:`datasets.fetch_lfw_people` and
+  :func:`datasets.fetch_lfw_pairs` internally crops images based on the
+  `slice_` parameter.
   :pr:`24951` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.decomposition`
