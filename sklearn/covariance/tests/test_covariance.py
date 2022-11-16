@@ -24,6 +24,8 @@ from sklearn.covariance import (
     oas,
 )
 
+from .._shrunk_covariance import _oas
+
 X, _ = datasets.load_diabetes(return_X_y=True)
 X_1d = X[:, 0]
 n_samples, n_features = X.shape
@@ -326,6 +328,16 @@ def test_oas():
     oa.fit(X)
     assert_almost_equal(oa.score(X), score_, 4)
     assert oa.precision_ is None
+
+    # test function _oas without assuming centered data
+    X_1d = X[:, 0:1]
+    oa = OAS()
+    oa.fit(X_1d)
+    # compare shrunk covariance obtained from data and from MLE estimate
+    _oa_cov_from_mle, _oa_shrinkage_from_mle = _oas(X_1d)
+    assert_array_almost_equal(_oa_cov_from_mle, oa.covariance_, 4)
+    assert_almost_equal(_oa_shrinkage_from_mle, oa.shrinkage_)
+    assert_array_almost_equal((X_1d**2).sum() / n_samples, oa.covariance_, 4)
 
 
 def test_EmpiricalCovariance_validates_mahalanobis():
