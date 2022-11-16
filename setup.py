@@ -110,6 +110,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.utils._sorting",
     "sklearn.utils._vector_sentinel",
     "sklearn.utils._isfinite",
+    "sklearn.utils.murmurhash",
     "sklearn.svm._newrand",
     "sklearn._isotonic",
 )
