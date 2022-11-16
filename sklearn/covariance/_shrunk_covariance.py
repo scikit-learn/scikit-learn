@@ -489,16 +489,6 @@ class LedoitWolf(EmpiricalCovariance):
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
         X = self._validate_data(X)
-        if X.ndim == 1:
-            X = np.reshape(X, (1, -1))
-            warnings.warn(
-                "Only one sample available. You may want to reshape your data array"
-            )
-        if X.shape[0] == 1:
-            X = X.reshape(1, -1)
-            warnings.warn(
-                "Only one sample available. You may want to reshape your data array"
-            )
         if self.assume_centered:
             self.location_ = np.zeros(X.shape[1])
         else:
