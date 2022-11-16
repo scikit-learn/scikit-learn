@@ -11,10 +11,10 @@ cdef inline UINT32_t DEFAULT_SEED = 1
 cdef enum:
     # Max value for our rand_r replacement (near the bottom).
     # We don't use RAND_MAX because it's different across platforms and
-    # particularly tiny on Windows/MSVC. It corresponds to the maximum of
-    # a 32-bit signed integer (i.e. 2^31 - 1)
+    # particularly tiny on Windows/MSVC.
+    # It corresponds to the maximum representable value for
+    # 32-bit signed integers (i.e. 2^31 - 1).
     RAND_R_MAX = 0x7FFFFFFF
-
 
 cpdef sample_without_replacement(cnp.int_t n_population,
                                  cnp.int_t n_samples,
@@ -32,8 +32,8 @@ cdef inline UINT32_t our_rand_r(UINT32_t* seed) nogil:
     seed[0] ^= <UINT32_t>(seed[0] >> 17)
     seed[0] ^= <UINT32_t>(seed[0] << 5)
 
-    # Use the modulo to make sure that we don't return a values greater than
-    # (2^31 - 1) since we use a unsinged 32bit integer.
-    # Note that the paranthesis are important to avoid overflow. We need first
-    # to cast RAND_R_MAX and then add 1.
+    # Use the modulo to make sure that we don't return a values greater than the
+    # maximum representable value for signed 32bit integers (i.e. 2^31 - 1).
+    # Note that the parenthesis are needed to avoid overflow: here
+    # RAND_R_MAX is cast to UINT32_t before 1 is added.
     return seed[0] % ((<UINT32_t>RAND_R_MAX) + 1)
