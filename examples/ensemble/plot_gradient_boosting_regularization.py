@@ -49,6 +49,9 @@ original_params = {
 }
 
 plt.figure()
+def binomial_deviance(y, raw_predictions):
+    return -2 * np.mean((y * raw_predictions) - np.logaddexp(0, raw_predictions))
+
 
 for label, color, setting in [
     ("No shrinkage", "orange", {"learning_rate": 1.0, "subsample": 1.0}),
@@ -76,7 +79,7 @@ for label, color, setting in [
 
     for i, y_pred in enumerate(clf.staged_decision_function(X_test)):
         # clf.loss_ assumes that y_test[i] in {0, 1}
-        test_deviance[i] = clf.loss_(y_test, y_pred)
+        test_deviance[i] = binomial_deviance(y_test, y_pred.ravel())
 
     plt.plot(
         (np.arange(test_deviance.shape[0]) + 1)[::5],
