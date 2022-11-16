@@ -85,9 +85,9 @@ def plot_figs(fig_num, elev, azim):
     y_pca_plane.shape = (2, 2)
     z_pca_plane.shape = (2, 2)
     ax.plot_surface(x_pca_plane, y_pca_plane, z_pca_plane)
-    ax.w_xaxis.set_ticklabels([])
-    ax.w_yaxis.set_ticklabels([])
-    ax.w_zaxis.set_ticklabels([])
+    ax.xaxis.set_ticklabels([])
+    ax.yaxis.set_ticklabels([])
+    ax.zaxis.set_ticklabels([])
 
 
 elev = -40

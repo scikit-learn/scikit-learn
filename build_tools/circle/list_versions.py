@@ -5,7 +5,7 @@ import json
 import re
 import sys
 
-from distutils.version import LooseVersion
+from sklearn.utils.fixes import parse_version
 from urllib.request import urlopen
 
 
@@ -37,8 +37,8 @@ def get_file_extension(version):
         # The 'dev' branch should be explicitly handled
         return "zip"
 
-    current_version = LooseVersion(version)
-    min_zip_version = LooseVersion("0.24")
+    current_version = parse_version(version)
+    min_zip_version = parse_version("0.24")
 
     return "zip" if current_version >= min_zip_version else "pdf"
 
@@ -94,7 +94,7 @@ for src, dst in symlinks.items():
 # Output in order: dev, stable, decreasing other version
 seen = set()
 for name in NAMED_DIRS + sorted(
-    (k for k in dirs if k[:1].isdigit()), key=LooseVersion, reverse=True
+    (k for k in dirs if k[:1].isdigit()), key=parse_version, reverse=True
 ):
     version_num, file_size = dirs[name]
     if version_num in seen:
