@@ -69,7 +69,7 @@ from sklearn.pipeline import Pipeline
 pipeline = Pipeline(
     [
         ("vect", TfidfVectorizer()),
-        ("clf", ComplementNB()),
+        ("clf", ComplementNB(force_alpha=True)),
     ]
 )
 pipeline
