@@ -7,11 +7,14 @@ K-means Clustering
 The plot shows:
 
 - top left: What a K-means algorithm would yield using 8 clusters.
+
 - top right: What the effect of a bad initialization does
-on the classification process: By setting n_init to only 1
-(default is 10), the amount of times that the algorithm will
-be run with different centroid seeds is reduced.
+  on the classification process: By setting n_init to only 1
+  (default is 10), the amount of times that the algorithm will
+  be run with different centroid seeds is reduced.
+
 - bottom left: What using eight clusters would deliver.
+
 - bottom right: The ground truth.
 
 """
