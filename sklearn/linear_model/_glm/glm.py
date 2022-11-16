@@ -627,15 +627,15 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     Parameters
     ----------
     alpha : float, default=1
-        Constant that multiplies the penalty term and thus determines the
+        Constant that multiplies the L2 penalty term and determines the
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
-        Values must be in the range `[0.0, inf)`.
+        Values of `alpha` must be in the range `[0.0, inf)`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added to the linear predictor (X @ coef + intercept).
+        added to the linear predictor `X @ coef_ + intercept_`.
 
     solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
@@ -666,7 +666,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
 
     warm_start : bool, default=False
         If set to ``True``, reuse the solution of the previous call to ``fit``
-        as initialization for ``coef_`` and ``intercept_`` .
+        as initialization for `coef_` and `intercept_`.
 
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
@@ -675,7 +675,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     Attributes
     ----------
     coef_ : array of shape (n_features,)
-        Estimated coefficients for the linear predictor (`X * coef_ +
+        Estimated coefficients for the linear predictor (`X @ coef_ +
         intercept_`) in the GLM.
 
     intercept_ : float
