@@ -308,4 +308,4 @@ def test_lof_dtype_equivalence(algorithm, novelty, contamination):
         if hasattr(lof_32, method):
             y_pred_32 = getattr(lof_32, method)(X_32)
             y_pred_64 = getattr(lof_64, method)(X_64)
-            assert_allclose(y_pred_32, y_pred_64)
+            assert_allclose(y_pred_32, y_pred_64, atol=0.0002)
