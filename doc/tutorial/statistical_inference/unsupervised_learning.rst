@@ -50,8 +50,8 @@ algorithms. The simplest clustering algorithm is :ref:`k_means`.
     For instance, on the image above, we can observe the difference between the
     ground-truth (bottom right figure) and different clustering. We do not
     recover the expected labels, either because the number of cluster was
-    chosen to be to large (top right figure) or suffer from a bad initialization
-    (top left figure).
+    chosen to be to large (top left figure) or suffer from a bad initialization
+    (bottom left figure).
 
     **It is therefore important to not over-interpret clustering results.**
 
