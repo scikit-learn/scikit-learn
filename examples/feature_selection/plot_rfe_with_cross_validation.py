@@ -15,19 +15,19 @@ number of features selected with cross-validation.
 # We build a classification task using 3 informative features. The introduction
 # of 2 additional redundant (i.e. correlated) features has the effect that the
 # selected features vary depending on the cross-validation fold. The remaining
-# features are drawn at random and discarding them should not considerably
-# affect the test scores.
+# features are non-informative as they are drawn at random.
 
 from sklearn.datasets import make_classification
 
 X, y = make_classification(
-    n_samples=1000,
-    n_features=25,
+    n_samples=500,
+    n_features=15,
     n_informative=3,
     n_redundant=2,
     n_repeated=0,
     n_classes=8,
     n_clusters_per_class=1,
+    class_sep=0.8,
     random_state=0,
 )
 
@@ -40,18 +40,19 @@ X, y = make_classification(
 
 from sklearn.feature_selection import RFECV
 from sklearn.model_selection import StratifiedKFold
-from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression
 
 min_features_to_select = 1  # Minimum number of features to consider
-svc = SVC(kernel="linear")
-cv = StratifiedKFold(10)
+clf = LogisticRegression()
+cv = StratifiedKFold(5)
 
 rfecv = RFECV(
-    estimator=svc,
+    estimator=clf,
     step=1,
     cv=cv,
     scoring="accuracy",
     min_features_to_select=min_features_to_select,
+    n_jobs=2,
 )
 rfecv.fit(X, y)
 
@@ -75,11 +76,14 @@ plt.errorbar(
     rfecv.cv_results_["mean_test_score"],
     yerr=rfecv.cv_results_["std_test_score"],
 )
+plt.title("Recursive Feature Elimination \nwith correlated features")
 plt.show()
 
 # %%
-# From the plot above one can further notice a plateau with equally good scores
-# for 3 to 5 selected features, which is the result of introducing correlated
-# features. Indeed, the optimal model selected by the RFE can lie within this
-# range. Above 5 selected features, the variance of the cross-validated test
-# errors increase and the models' statistical performances decrease.
+# From the plot above one can further notice a plateau of equivalent scores
+# (similar mean value and overlapping errorbars) for 3 to 5 selected features.
+# This is the result of introducing correlated features. Indeed, the optimal
+# model selected by the RFE can lie within this range, depending on the
+# cross-validation technique. The test accuracy decreases above 5 selected
+# features, this is, keeping non-informative features leads to over-fitting and
+# is therefore detrimental for the statistical performance of the models.
