@@ -351,8 +351,8 @@ Changelog
 
 - |Enhancement| Added `keep_empty_features` parameter to
   :class:`impute.SimpleImputer`, :class:`impute.KNNImputer` and
-  :class:`impute.IterativeImputer`, preventing missing features
-  removal when transforming.
+  :class:`impute.IterativeImputer`, preventing removal of features
+  containing only missing values when transforming.
   :pr:`16695` by :user:`Vitor Santa Rosa <vitorsrg>`.
 
 :mod:`sklearn.kernel_approximation`
