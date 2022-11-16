@@ -47,6 +47,11 @@ original_params = {
     "random_state": 2,
     "min_samples_split": 5,
 }
+<<<<<<< Updated upstream
+=======
+def binomial_deviance(y, raw_predictions):
+    return -2 * np.mean((y * raw_predictions) - np.logaddexp(0, raw_predictions))
+>>>>>>> Stashed changes
 
 plt.figure()
 
@@ -76,7 +81,12 @@ for label, color, setting in [
 
     for i, y_pred in enumerate(clf.staged_decision_function(X_test)):
         # clf.loss_ assumes that y_test[i] in {0, 1}
+<<<<<<< Updated upstream
         test_deviance[i] = clf.loss_(y_test, y_pred)
+=======
+        test_deviance[i] = binomial_deviance(y_test, y_pred.ravel())
+
+>>>>>>> Stashed changes
 
     plt.plot(
         (np.arange(test_deviance.shape[0]) + 1)[::5],
@@ -90,4 +100,8 @@ plt.legend(loc="upper right")
 plt.xlabel("Boosting Iterations")
 plt.ylabel("Test Set Deviance")
 
+<<<<<<< Updated upstream
 plt.show()
+=======
+plt.show()
+>>>>>>> Stashed changes
