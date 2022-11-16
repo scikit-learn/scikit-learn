@@ -19,6 +19,7 @@ from sklearn.covariance import (
     shrunk_covariance,
     LedoitWolf,
     ledoit_wolf,
+    _ledoit_wolf,
     ledoit_wolf_shrinkage,
     OAS,
     oas,
@@ -158,6 +159,7 @@ def test_ledoit_wolf():
     assert_almost_equal(lw.shrinkage_, shrinkage_, 4)
     assert_almost_equal(lw.shrinkage_, ledoit_wolf_shrinkage(X))
     assert_almost_equal(lw.shrinkage_, ledoit_wolf(X)[1])
+    assert_almost_equal(lw.shrinkage_, _ledoit_wolf(X, False, 1000)[1])
     assert_almost_equal(lw.score(X), score_, 4)
     # compare shrunk covariance obtained from data and from MLE estimate
     lw_cov_from_mle, lw_shrinkage_from_mle = ledoit_wolf(X)
@@ -176,17 +178,6 @@ def test_ledoit_wolf():
     assert_array_almost_equal(lw_cov_from_mle, lw.covariance_, 4)
     assert_almost_equal(lw_shrinkage_from_mle, lw.shrinkage_)
     assert_array_almost_equal(empirical_covariance(X_1d), lw.covariance_, 4)
-
-    # test with one sample
-    # warning should be raised when using only 1 sample
-    X_1sample = np.arange(5).reshape(1, 5)
-    lw = LedoitWolf()
-
-    warn_msg = "Only one sample available. You may want to reshape your data array"
-    with pytest.warns(UserWarning, match=warn_msg):
-        lw.fit(X_1sample)
-
-    assert_array_almost_equal(lw.covariance_, np.zeros(shape=(5, 5), dtype=np.float64))
 
     # test shrinkage coeff on a simple data set (without saving precision)
     lw = LedoitWolf(store_precision=False)
