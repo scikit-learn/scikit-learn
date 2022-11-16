@@ -744,7 +744,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
                 params["coef0"] = self.coef0
             self.affinity_matrix_ = pairwise_kernels(
                 X, metric=self.affinity, filter_params=True, **params
-            )
+            ).astype(X.dtype, copy=False)
 
         random_state = check_random_state(self.random_state)
         self.labels_ = spectral_clustering(
@@ -787,5 +787,6 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
     def _more_tags(self):
         return {
             "pairwise": self.affinity
-            in ["precomputed", "precomputed_nearest_neighbors"]
+            in ["precomputed", "precomputed_nearest_neighbors"],
+            "preserves_dtype": [np.float64, np.float32],
         }
