@@ -149,12 +149,6 @@ def test_score_samples(global_dtype):
     clf2_scores = clf2.score_samples(X_test)
     clf2_decisions = clf2.decision_function(X_test)
 
-    assert clf1_scores.dtype == global_dtype
-    assert clf1_decisions.dtype == global_dtype
-
-    assert clf2_scores.dtype == global_dtype
-    assert clf2_decisions.dtype == global_dtype
-
     assert_allclose(
         clf1_scores,
         clf1_decisions + clf1.offset_,
@@ -201,7 +195,6 @@ def test_novelty_training_scores(global_dtype):
     scores_2 = clf_2.negative_outlier_factor_
 
     assert_allclose(scores_1, scores_2)
-    assert scores_1.dtype == scores_2.dtype == global_dtype
 
 
 def test_hasattr_prediction():
@@ -278,3 +271,41 @@ def test_lof_input_dtype_preservation(global_dtype, algorithm, contamination, no
     iso.fit(X)
 
     assert iso.negative_outlier_factor_.dtype == global_dtype
+
+    for method in ("score_samples", "decision_function"):
+        if hasattr(iso, method):
+            y_pred = getattr(iso, method)(X)
+            assert y_pred.dtype == global_dtype
+
+
+@pytest.mark.parametrize("algorithm", ["auto", "ball_tree", "kd_tree", "brute"])
+@pytest.mark.parametrize("novelty", [True, False])
+@pytest.mark.parametrize("contamination", [0.5, "auto"])
+def test_lof_dtype_equivalence(algorithm, novelty, contamination):
+    """Check the equivalence of the results with 32 and 64 bits input."""
+
+    inliers = iris.data[:50]  # setosa iris are really distinct from others
+    outliers = iris.data[-5:]  # virginica will be considered as outliers
+    # lower the precision of the input data to check that we have an equivalence when
+    # making the computation in 32 and 64 bits.
+    X = np.concatenate([inliers, outliers], axis=0).astype(np.float32)
+
+    lof_32 = neighbors.LocalOutlierFactor(
+        algorithm=algorithm, novelty=novelty, contamination=contamination
+    )
+    X_32 = X.astype(np.float32, copy=True)
+    lof_32.fit(X_32)
+
+    lof_64 = neighbors.LocalOutlierFactor(
+        algorithm=algorithm, novelty=novelty, contamination=contamination
+    )
+    X_64 = X.astype(np.float64, copy=True)
+    lof_64.fit(X_64)
+
+    assert_allclose(lof_32.negative_outlier_factor_, lof_64.negative_outlier_factor_)
+
+    for method in ("score_samples", "decision_function", "predict", "fit_predict"):
+        if hasattr(lof_32, method):
+            y_pred_32 = getattr(lof_32, method)(X_32)
+            y_pred_64 = getattr(lof_64, method)(X_64)
+            assert_allclose(y_pred_32, y_pred_64)
