@@ -264,28 +264,18 @@ class TreeGrower:
             has_missing_values = [has_missing_values] * X_binned.shape[1]
         has_missing_values = np.asarray(has_missing_values, dtype=np.uint8)
 
+        # `monotonic_cst` validation is done in _validate_monotonic_cst
+        # at the estimator level and therefore the following should not be
+        # needed when using the public API.
         if monotonic_cst is None:
-            self.with_monotonic_cst = False
             monotonic_cst = np.full(
                 shape=X_binned.shape[1],
                 fill_value=MonotonicConstraint.NO_CST,
                 dtype=np.int8,
             )
         else:
-            self.with_monotonic_cst = True
             monotonic_cst = np.asarray(monotonic_cst, dtype=np.int8)
-
-            if monotonic_cst.shape[0] != X_binned.shape[1]:
-                raise ValueError(
-                    "monotonic_cst has shape {} but the input data "
-                    "X has {} features.".format(
-                        monotonic_cst.shape[0], X_binned.shape[1]
-                    )
-                )
-            if np.any(monotonic_cst < -1) or np.any(monotonic_cst > 1):
-                raise ValueError(
-                    "monotonic_cst must be None or an array-like of -1, 0 or 1."
-                )
+        self.with_monotonic_cst = np.any(monotonic_cst != MonotonicConstraint.NO_CST)
 
         if is_categorical is None:
             is_categorical = np.zeros(shape=X_binned.shape[1], dtype=np.uint8)
