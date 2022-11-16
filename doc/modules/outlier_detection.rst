@@ -131,6 +131,12 @@ sections hereunder.
     :class:`neighbors.LocalOutlierFactor` and
     :class:`covariance.EllipticEnvelope`.
 
+  * See :ref:`sphx_glr_auto_examples_miscellaneous_plot_outlier_detection_bench.py`
+    for an example showing how to evaluate outlier detection estimators,
+    the :class:`neighbors.LocalOutlierFactor` and the
+    :class:`ensemble.IsolationForest`, using ROC curves from
+    :class:`metrics.RocCurveDisplay`.
+
 Novelty Detection
 =================
 
@@ -164,7 +170,7 @@ but regular, observation outside the frontier.
 .. topic:: References:
 
     * `Estimating the support of a high-dimensional distribution
-      <http://www.recognition.mccme.ru/pub/papers/SVM/sch99estimating.pdf>`_
+      <https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-99-87.pdf>`_
       Schölkopf, Bernhard, et al. Neural computation 13.7 (2001): 1443-1471.
 
 .. topic:: Examples:
@@ -275,7 +281,7 @@ the maximum depth of each tree is set to :math:`\lceil \log_2(n) \rceil` where
 
 This algorithm is illustrated below.
 
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_isolation_forest_001.png
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_isolation_forest_003.png
    :target: ../auto_examples/ensemble/plot_isolation_forest.html
    :align: center
    :scale: 75%
@@ -310,6 +316,7 @@ allows you to add more trees to an already fitted model::
     * Liu, Fei Tony, Ting, Kai Ming and Zhou, Zhi-Hua. "Isolation forest."
       Data Mining, 2008. ICDM'08. Eighth IEEE International Conference on.
 
+.. _local_outlier_factor:
 
 Local Outlier Factor
 --------------------
@@ -325,7 +332,7 @@ lower density than their neighbors.
 
 In practice the local density is obtained from the k-nearest neighbors.
 The LOF score of an observation is equal to the ratio of the
-average local density of his k-nearest neighbors, and its own local density:
+average local density of its k-nearest neighbors, and its own local density:
 a normal instance is expected to have a local density similar to that of its
 neighbors, while abnormal data are expected to have much smaller local density.
 

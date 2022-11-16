@@ -89,7 +89,7 @@ maybeComma = Optional(Literal(',')).suppress()
 
 coordinateSequence = Sequence(coordinate)
 
-coordinatePair = (coordinate + maybeComma + coordinate).setParseAction(lambda t: tuple(t))
+coordinatePair = (coordinate + maybeComma + coordinate).setParseAction(tuple)
 coordinatePairSequence = Sequence(coordinatePair)
 
 coordinatePairPair = coordinatePair + maybeComma + coordinatePair
@@ -111,9 +111,9 @@ flag = oneOf("1 0").setParseAction(lambda t: bool(int((t[0]))))
 arcRadius = (
     nonnegativeNumber + maybeComma + #rx
     nonnegativeNumber #ry
-).setParseAction(lambda t: tuple(t))
+).setParseAction(tuple)
 
-arcFlags = (flag + maybeComma + flag).setParseAction(lambda t: tuple(t))
+arcFlags = (flag + maybeComma + flag).setParseAction(tuple)
 
 ellipticalArcArgument = Group(
     arcRadius + maybeComma + #rx, ry

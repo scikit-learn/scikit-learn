@@ -19,10 +19,7 @@ from sklearn.datasets import fetch_covtype
 from sklearn.datasets import fetch_kddcup99
 from sklearn.datasets import fetch_olivetti_faces
 from sklearn.datasets import fetch_rcv1
-
-
-# This plugin is necessary to define the random seed fixture
-pytest_plugins = ("sklearn.tests.random_seed",)
+from sklearn.tests import random_seed
 
 
 if parse_version(pytest.__version__) < parse_version(PYTEST_MIN_VERSION):
@@ -121,17 +118,8 @@ def pytest_collection_modifyitems(config, items):
             dataset_fetchers[name]()
 
     for item in items:
-        # FeatureHasher is not compatible with PyPy
-        if (
-            item.name.endswith(("_hash.FeatureHasher", "text.HashingVectorizer"))
-            and platform.python_implementation() == "PyPy"
-        ):
-            marker = pytest.mark.skip(
-                reason="FeatureHasher is not compatible with PyPy"
-            )
-            item.add_marker(marker)
         # Known failure on with GradientBoostingClassifier on ARM64
-        elif (
+        if (
             item.name.endswith("GradientBoostingClassifier")
             and platform.machine() == "aarch64"
         ):
@@ -249,3 +237,7 @@ def pytest_configure(config):
         matplotlib.use("agg")
     except ImportError:
         pass
+
+    # Register global_random_seed plugin if it is not already registered
+    if not config.pluginmanager.hasplugin("sklearn.tests.random_seed"):
+        config.pluginmanager.register(random_seed)

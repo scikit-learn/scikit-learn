@@ -174,7 +174,7 @@ import matplotlib.pyplot as plt
 
 plt.figure(figsize=(8, 6))
 xx, yy = np.meshgrid(np.linspace(-3, 3, 200), np.linspace(-3, 3, 200))
-for (k, (C, gamma, clf)) in enumerate(classifiers):
+for k, (C, gamma, clf) in enumerate(classifiers):
     # evaluate decision function in a grid
     Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
     Z = Z.reshape(xx.shape)

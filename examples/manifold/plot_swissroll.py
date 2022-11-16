@@ -44,9 +44,9 @@ sr_lle, sr_err = manifold.locally_linear_embedding(
     sr_points, n_neighbors=12, n_components=2
 )
 
-sr_tsne = manifold.TSNE(
-    n_components=2, learning_rate="auto", perplexity=40, init="pca", random_state=0
-).fit_transform(sr_points)
+sr_tsne = manifold.TSNE(n_components=2, perplexity=40, random_state=0).fit_transform(
+    sr_points
+)
 
 fig, axs = plt.subplots(figsize=(8, 8), nrows=2)
 axs[0].scatter(sr_lle[:, 0], sr_lle[:, 1], c=sr_color)
@@ -96,7 +96,7 @@ sh_lle, sh_err = manifold.locally_linear_embedding(
 )
 
 sh_tsne = manifold.TSNE(
-    n_components=2, learning_rate="auto", perplexity=40, init="random", random_state=0
+    n_components=2, perplexity=40, init="random", random_state=0
 ).fit_transform(sh_points)
 
 fig, axs = plt.subplots(figsize=(8, 8), nrows=2)

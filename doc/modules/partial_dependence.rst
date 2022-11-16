@@ -11,10 +11,10 @@ Partial dependence plots (PDP) and individual conditional expectation (ICE)
 plots can be used to visualize and analyze interaction between the target
 response [1]_ and a set of input features of interest.
 
-Both PDPs and ICEs assume that the input features of interest are independent
-from the complement features, and this assumption is often violated in practice.
-Thus, in the case of correlated features, we will create absurd data points to
-compute the PDP/ICE.
+Both PDPs [H2009]_ and ICEs [G2015]_ assume that the input features of interest
+are independent from the complement features, and this assumption is often
+violated in practice. Thus, in the case of correlated features, we will
+create absurd data points to compute the PDP/ICE [M2019]_.
 
 Partial dependence plots
 ========================
@@ -164,6 +164,18 @@ PDPs. They can be plotted together with
     ...     kind='both')
     <...>
 
+If there are too many lines in an ICE plot, it can be difficult to see
+differences between individual samples and interpret the model. Centering the
+ICE at the first value on the x-axis, produces centered Individual Conditional
+Expectation (cICE) plots [G2015]_. This puts emphasis on the divergence of
+individual conditional expectations from the mean line, thus making it easier
+to explore heterogeneous relationships. cICE plots can be plotted by setting
+`centered=True`:
+
+    >>> PartialDependenceDisplay.from_estimator(clf, X, features,
+    ...     kind='both', centered=True)
+    <...>
+
 Mathematical Definition
 =======================
 
@@ -255,15 +267,19 @@ estimators that support it, and 'brute' is used for the rest.
 
 .. topic:: References
 
-    T. Hastie, R. Tibshirani and J. Friedman, `The Elements of
-    Statistical Learning <https://web.stanford.edu/~hastie/ElemStatLearn//>`_,
-    Second Edition, Section 10.13.2, Springer, 2009.
+    .. [H2009] T. Hastie, R. Tibshirani and J. Friedman,
+               `The Elements of Statistical Learning
+               <https://web.stanford.edu/~hastie/ElemStatLearn//>`_,
+               Second Edition, Section 10.13.2, Springer, 2009.
 
-    C. Molnar, `Interpretable Machine Learning
-    <https://christophm.github.io/interpretable-ml-book/>`_, Section 5.1, 2019.
+    .. [M2019] C. Molnar,
+               `Interpretable Machine Learning
+               <https://christophm.github.io/interpretable-ml-book/>`_,
+               Section 5.1, 2019.
 
-    A. Goldstein, A. Kapelner, J. Bleich, and E. Pitkin, :arxiv:`Peeking Inside the
-    Black Box: Visualizing Statistical Learning With Plots of Individual
-    Conditional Expectation <1309.6392>`,
-    Journal of Computational and Graphical Statistics, 24(1): 44-65, Springer,
-    2015.
+    .. [G2015] :arxiv:`A. Goldstein, A. Kapelner, J. Bleich, and E. Pitkin,
+               "Peeking Inside the Black Box: Visualizing Statistical
+               Learning With Plots of Individual Conditional Expectation"
+               Journal of Computational and Graphical Statistics,
+               24(1): 44-65, Springer, 2015.
+               <1309.6392>`

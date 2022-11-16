@@ -68,19 +68,19 @@ up" on issues that others reported and that are relevant to you.  It also helps
 us if you spread the word: reference the project from your blog and articles,
 link to it from your website, or simply star to say "I use it":
 
-In case a contribution/issue involves changes to the API principles
-or changes to dependencies or supported versions, it must be backed by a
-:ref:`slep`, where a SLEP must be submitted as a pull-request to
-`enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_
-using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_
-and follows the decision-making process outlined in :ref:`governance`.
-
 .. raw:: html
 
    <a class="github-button" href="https://github.com/scikit-learn/scikit-learn"
    data-icon="octicon-star" data-size="large" data-show-count="true" aria-label="Star
    scikit-learn/scikit-learn on GitHub">Star</a>
    <script async defer src="https://buttons.github.io/buttons.js"></script>
+
+In case a contribution/issue involves changes to the API principles
+or changes to dependencies or supported versions, it must be backed by a
+:ref:`slep`, where a SLEP must be submitted as a pull-request to
+`enhancement proposals <https://scikit-learn-enhancement-proposals.readthedocs.io>`_
+using the `SLEP template <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep_template.html>`_
+and follows the decision-making process outlined in :ref:`governance`.
 
 .. topic:: Contributing to related projects
 
@@ -91,7 +91,7 @@ and follows the decision-making process outlined in :ref:`governance`.
    * `joblib <https://github.com/joblib/joblib/issues>`__
    * `sphinx-gallery <https://github.com/sphinx-gallery/sphinx-gallery/issues>`__
    * `numpydoc <https://github.com/numpy/numpydoc/issues>`__
-   * `liac-arff <https://github.com/renatopp/liac-arff>`__
+   * `liac-arff <https://github.com/renatopp/liac-arff/issues>`__
 
    and larger projects:
 
@@ -254,7 +254,7 @@ how to set up your git repository:
 
    .. prompt:: bash $
 
-        pip install pytest pytest-cov flake8 mypy numpydoc black==22.1.0
+        pip install pytest pytest-cov flake8 mypy numpydoc black==22.3.0
 
 .. _upstream:
 
@@ -381,9 +381,9 @@ In order to ease the reviewing process, we recommend that your contribution
 complies with the following rules before marking a PR as ``[MRG]``. The
 **bolded** ones are especially important:
 
-1. **Give your pull request a helpful title** that summarises what your
+1. **Give your pull request a helpful title** that summarizes what your
    contribution does. This title will often become the commit message once
-   merged so it should summarise your contribution for posterity. In some
+   merged so it should summarize your contribution for posterity. In some
    cases "Fix <ISSUE TITLE>" is enough. "Fix #<ISSUE NUMBER>" is never a
    good title.
 
@@ -435,15 +435,11 @@ complies with the following rules before marking a PR as ``[MRG]``. The
    `editor integration documentation <https://black.readthedocs.io/en/stable/integrations/editors.html>`_
    to configure your editor to run `black`.
 
-6. **Make sure that your PR does not add PEP8 violations**. To check the
-   code that you changed, you can run the following command (see
-   :ref:`above <upstream>` to set up the ``upstream`` remote):
+6. Run `flake8` to make sure you followed the project coding conventions.
 
    .. prompt:: bash $
 
-        git diff upstream/main -u -- "*.py" | flake8 --diff
-
-   or `make flake8-diff` which should work on unix-like system.
+        flake8 .
 
 7. Follow the :ref:`coding-guidelines`.
 
@@ -528,7 +524,7 @@ profiling and Cython optimizations.
 
    For two very well documented and more detailed guides on development
    workflow, please pay a visit to the `Scipy Development Workflow
-   <https://docs.scipy.org/doc/scipy/reference/dev/contributor/development_workflow.html>`_ -
+   <http://scipy.github.io/devdocs/dev/dev_quickstart.html>`_ -
    and the `Astropy Workflow for Developers
    <https://astropy.readthedocs.io/en/latest/development/workflow/development_workflow.html>`_
    sections.
@@ -552,8 +548,9 @@ message, the following actions are taken.
     [cd build gh]          CD is run only for GitHub Actions
     [lint skip]            Azure pipeline skips linting
     [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc ...) development builds
-    [icc-build]            Build & test with the Intel C compiler (ICC)
+    [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy...
     [pypy]                 Build & test with PyPy
+    [float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
     [doc build]            Docs built including example gallery plots (very long)
@@ -671,16 +668,34 @@ underestimate how easy an issue is to solve!
 Documentation
 =============
 
-We are glad to accept any sort of documentation: function docstrings,
-reStructuredText documents (like this one), tutorials, etc. reStructuredText
-documents live in the source code repository under the ``doc/`` directory.
+We are glad to accept any sort of documentation:
+
+* **function/method/class docstrings** (also known as "API documentation") -
+  these describe what the object does and details any parameters, attributes and
+  methods. Docstrings live alongside the code in
+  `sklearn/ <https://github.com/scikit-learn/scikit-learn/tree/main/sklearn>`_.
+* **user guide** - these provide more detailed information about the algorithms
+  implemented in scikit-learn and generally live in the root
+  `doc/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc>`_ directory
+  and
+  `doc/modules/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc/modules>`_.
+* **tutorials** - these introduce various statistical learning and machine learning
+  concepts and are located in
+  `doc/tutorial <https://github.com/scikit-learn/scikit-learn/tree/main/doc/tutorial>`_.
+* **examples** - these provide full code examples that may demonstrate the use
+  of scikit-learn modules, compare different algorithms or discuss their
+  interpretation etc. Examples live in
+  `examples/ <https://github.com/scikit-learn/scikit-learn/tree/main/examples>`_
+* **other reStructuredText documents** (like this one) - provide various other
+  useful information (e.g., our guide to contributing) and live in
+  `doc/ <https://github.com/scikit-learn/scikit-learn/tree/main/doc>`_.
 
 You can edit the documentation using any text editor, and then generate the
-HTML output by typing ``make`` from the ``doc/`` directory. Alternatively,
-``make html`` may be used to generate the documentation **with** the example
-gallery (which takes quite some time). The resulting HTML files will be
-placed in ``_build/html/stable`` and are viewable in a web browser.
+HTML output by following :ref:`building_documentation`. The resulting HTML files
+will be placed in ``_build/html/stable`` and are viewable in a web browser, for
+instance by opening the local ``_build/html/stable/index.html`` file.
 
+.. _building_documentation:
 
 Building the documentation
 --------------------------
@@ -697,7 +712,7 @@ Building the documentation requires installing some additional packages:
 
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
                 scikit-image packaging seaborn sphinx-prompt \
-                sphinxext-opengraph
+                sphinxext-opengraph plotly
 
 To build the documentation, you need to be in the ``doc`` folder:
 
@@ -712,7 +727,9 @@ without the example gallery:
 
     make
 
-The documentation will be generated in the ``_build/html/stable`` directory.
+The documentation will be generated in the ``_build/html/stable`` directory
+and are viewable in a web browser, for instance by opening the local
+``_build/html/stable/index.html`` file.
 To also generate the example gallery you can use:
 
 .. prompt:: bash $
@@ -848,21 +865,84 @@ Finally, follow the formatting rules below to make it consistently good:
 * When editing reStructuredText (``.rst``) files, try to keep line length under
   80 characters when possible (exceptions include links and tables).
 
-* Do not modify sphinx labels as this would break existing cross references and
-  external links pointing to specific sections in the
-  scikit-learn documentation.
+* In scikit-learn reStructuredText files both single and double backticks
+  surrounding text will render as inline literal (often used for code, e.g.,
+  `list`). This is due to specific configurations we have set. Single
+  backticks should be used nowadays.
 
 * Before submitting your pull request check if your modifications have
   introduced new sphinx warnings and try to fix them.
 
+Cross-referencing
+-----------------
+
+It is often useful to cross-reference to other pages in the scikit-learn
+documentation. This should be done with reStructuredText cross-referencing
+syntax:
+
+* Section - to link to an arbitrary section in the documentation, use reference
+  labels (see
+  `Sphinx docs <https://www.sphinx-doc.org/en/master/usage/restructuredtext/roles.html#ref-role>`_).
+  For example:
+
+  .. code-block:: rst
+
+      .. _my-section:
+
+      My section
+      ----------
+
+      This is the text of the section.
+
+      To refer to itself use :ref:`my-section`.
+
+  You should not modify existing sphinx reference labels as this would break
+  existing cross references and external links pointing to specific sections in
+  the scikit-learn documentation.
+
+* Glossary - linking to a term in the :ref:`glossary`:
+
+  .. code-block:: rst
+
+      :term:`cross_validation`
+
+* Function - to link to the documentation of a function, use the full
+  import path to the function:
+
+  .. code-block:: rst
+
+      :func:`~sklearn.model_selection.cross_val_score`
+
+  However, if there is a 'currentmodule' directive above you in the document,
+  you will only need to use the path to the function succeeding the current
+  module specified. For example:
+
+  .. code-block:: rst
+
+      .. currentmodule:: sklearn.model_selection
+
+      :func:`cross_val_score`
+
+* Class - to link to documentation of a class, use the full import path to the
+  class, unless there is a 'currentmodule' directive in the document above
+  (see above):
+
+  .. code-block:: rst
+
+      :class:`~sklearn.preprocessing.StandardScaler`
+
 .. _generated_doc_CI:
 
-Generated documentation on CircleCI
------------------------------------
+Generated documentation on GitHub Actions
+-----------------------------------------
 
-When you change the documentation in a pull request, CircleCI automatically
-builds it. To view the documentation generated by CircleCI, simply go at the
-bottom of your PR page and look for the "ci/circleci: doc artifact" link.
+When you change the documentation in a pull request, GitHub Actions automatically
+builds it. To view the documentation generated by GitHub Actions, simply go to the
+bottom of your PR page, look for the item "Check the rendered docs here!" and
+click on 'details' next to it:
+
+.. image:: ../images/generated-doc-ci.png
+   :align: center
 
 .. _testing_coverage:
 
@@ -923,7 +1003,7 @@ Monitoring performance
 ======================
 
 *This section is heavily inspired from the* `pandas documentation
-<https://pandas.pydata.org/docs/development/contributing.html#running-the-performance-test-suite>`_.
+<https://pandas.pydata.org/docs/development/contributing_codebase.html#running-the-performance-test-suite>`_.
 
 When proposing changes to the existing code base, it's important to make sure
 that they don't introduce performance regressions. Scikit-learn uses
@@ -1208,9 +1288,17 @@ When the change is in a class, we validate and raise warning in ``fit``::
 
 Similar to deprecations, the warning message should always give both the
 version in which the change happened and the version in which the old behavior
-will be removed. The docstring needs to be updated accordingly. We need a test
-which ensures that the warning is raised in relevant cases but not in other
-cases. The warning should be caught in all other tests
+will be removed.
+
+The parameter description in the docstring needs to be updated accordingly by adding
+a `versionchanged` directive with the old and new default value, pointing to the
+version when the change will be effective::
+
+    .. versionchanged:: 0.22
+       The default value for `n_clusters` will change from 5 to 10 in version 0.22.
+
+Finally, we need a test which ensures that the warning is raised in relevant cases but
+not in other cases. The warning should be caught in all other tests
 (using e.g., ``@pytest.mark.filterwarnings``), and there should be no warning
 in the examples.
 
@@ -1298,7 +1386,7 @@ contributor to keep involved in the project. [1]_
 - Every PR, good or bad, is an act of generosity. Opening with a positive
   comment will help the author feel rewarded, and your subsequent remarks may
   be heard more clearly. You may feel good also.
-- Begin if possible with the large issues, so the author knows they’ve been
+- Begin if possible with the large issues, so the author knows they've been
   understood. Resist the temptation to immediately go line by line, or to open
   with small pervasive issues.
 - Do not let perfect be the enemy of the good. If you find yourself making

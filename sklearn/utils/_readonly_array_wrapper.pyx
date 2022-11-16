@@ -14,18 +14,17 @@ This way, we can use it on arrays that we don't touch.
 from cpython cimport Py_buffer
 from cpython.buffer cimport PyObject_GetBuffer, PyBuffer_Release, PyBUF_WRITABLE
 
-import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 
 
-np.import_array()
+cnp.import_array()
 
 
 ctypedef fused NUM_TYPES:
-    np.npy_float64
-    np.npy_float32
-    np.npy_int64
-    np.npy_int32
+    cnp.npy_float64
+    cnp.npy_float32
+    cnp.npy_int64
+    cnp.npy_int32
 
 
 cdef class ReadonlyArrayWrapper:

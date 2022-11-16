@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import pytest
 
@@ -456,9 +458,9 @@ def test_adjusted_rand_score_overflow():
     rng = np.random.RandomState(0)
     y_true = rng.randint(0, 2, 100_000, dtype=np.int8)
     y_pred = rng.randint(0, 2, 100_000, dtype=np.int8)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
         adjusted_rand_score(y_true, y_pred)
-    assert not [w.message for w in record]
 
 
 @pytest.mark.parametrize("average_method", ["min", "arithmetic", "geometric", "max"])

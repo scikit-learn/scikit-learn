@@ -657,7 +657,7 @@ def test_make_moons_unbalanced():
 def test_make_circles():
     factor = 0.3
 
-    for (n_samples, n_outer, n_inner) in [(7, 3, 4), (8, 4, 4)]:
+    for n_samples, n_outer, n_inner in [(7, 3, 4), (8, 4, 4)]:
         # Testing odd and even case, because in the past make_circles always
         # created an even number of samples.
         X, y = make_circles(n_samples, shuffle=False, noise=None, factor=factor)
