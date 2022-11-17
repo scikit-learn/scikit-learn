@@ -30,16 +30,16 @@ from numpy.math cimport INFINITY
 # Utilities for computing the ward momentum
 
 cpdef void compute_ward_dist(
-    cnp.float64_t[::1] m_1,
-    cnp.float64_t[:, ::1] m_2,
-    cnp.npy_intp[::1] coord_row,
-    cnp.npy_intp[::1] coord_col,
+    const cnp.float64_t[::1] m_1,
+    const cnp.float64_t[:, ::1] m_2,
+    const cnp.npy_intp[::1] coord_row,
+    const cnp.npy_intp[::1] coord_col,
     cnp.float64_t[::1] res
 ) nogil:
-    cdef INTP size_max = coord_row.shape[0]
-    cdef INTP n_features = m_2.shape[1]
-    cdef INTP i, j, row, col
-    cdef DOUBLE pa, n
+    cdef cnp.npy_intp size_max = coord_row.shape[0]
+    cdef cnp.npy_intp n_features = m_2.shape[1]
+    cdef cnp.npy_intp i, j, row, col
+    cdef cnp.float64_t pa, n
 
     for i in range(size_max):
         row = coord_row[i]
@@ -112,7 +112,7 @@ def hc_get_heads(cnp.npy_intp[:] parents, copy=True):
         The indices in the 'parents' of the tree heads
 
     """
-    cdef INTP parent, node0, node, size
+    cdef cnp.npy_intp parent, node0, node, size
     if copy:
         parents = np.copy(parents)
     size = parents.size
@@ -131,7 +131,7 @@ def hc_get_heads(cnp.npy_intp[:] parents, copy=True):
 cpdef void _get_parents(
     nodes,
     heads,
-    cnp.npy_intp[:] parents,
+    const cnp.npy_intp[:] parents,
     cnp.int8_t[::1] not_visited
 ):
     """Returns the heads of the given nodes, as defined by parents.
@@ -150,7 +150,7 @@ cpdef void _get_parents(
         The tree nodes to consider (modified inplace)
 
     """
-    cdef INTP parent, node
+    cdef cnp.npy_intp parent, node
 
     for node in nodes:
         parent = parents[node]
@@ -173,7 +173,7 @@ cpdef void _get_parents(
 def max_merge(
     IntFloatDict a,
     IntFloatDict b,
-    cnp.intp_t[:] mask,
+    const cnp.intp_t[:] mask,
     cnp.intp_t n_a,
     cnp.intp_t n_b
 ):
@@ -230,7 +230,7 @@ def max_merge(
 def average_merge(
     IntFloatDict a,
     IntFloatDict b,
-    cnp.intp_t[:] mask,
+    const cnp.intp_t[:] mask,
     cnp.intp_t n_a,
     cnp.intp_t n_b
 ):
@@ -366,7 +366,7 @@ cdef class UnionFind(object):
         return n
 
 
-def _single_linkage_label(cnp.float64_t[:, :] L):
+def _single_linkage_label(const cnp.float64_t[:, :] L):
     """
     Convert an linkage array or MST to a tree by labelling clusters at merges.
     This is done by using a Union find structure to keep track of merges
