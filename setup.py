@@ -568,8 +568,8 @@ def configure_extension_modules():
 
 
 def setup_package():
-    python_requires = ">=3.8"
-    required_python_version = (3, 8)
+    python_requires = ">=3.7"
+    required_python_version = (3, 7)
 
     metadata = dict(
         name=DISTNAME,
