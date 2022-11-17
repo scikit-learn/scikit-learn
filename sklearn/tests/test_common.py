@@ -45,6 +45,10 @@ from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
 
+# make it possible to discover experimental estimators when calling `all_estimators`
+from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa
+
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, OneHotEncoder
 from sklearn.linear_model._base import LinearClassifierMixin
@@ -52,7 +56,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
-from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.model_selection import HalvingGridSearchCV
 from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.pipeline import make_pipeline
