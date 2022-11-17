@@ -880,7 +880,7 @@ indicating core samples found by the algorithm. Smaller circles are non-core
 samples that are still part of a cluster. Moreover, the outliers are indicated
 by black points below.
 
-.. |dbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_dbscan_001.png
+.. |dbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_dbscan_002.png
         :target: ../auto_examples/cluster/plot_dbscan.html
         :scale: 50
 
@@ -2110,5 +2110,5 @@ diagonal entries::
 
 .. topic:: References
 
- * :doi:`"Comparing Partitions" <10.1007/BF01908075>` 
+ * :doi:`"Comparing Partitions" <10.1007/BF01908075>`
    L. Hubert and P. Arabie, Journal of Classification 1985
