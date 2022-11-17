@@ -6,7 +6,6 @@ import warnings
 from scipy import stats
 import numpy as np
 
-from .. import config_context
 from ..base import clone
 from ..exceptions import ConvergenceWarning
 from ..preprocessing import normalize
@@ -363,8 +362,16 @@ class IterativeImputer(_BaseImputer):
 
         missing_row_mask = mask_missing_values[:, feat_idx]
         if fit_mode:
-            X_train = _safe_indexing(X_filled[:, neighbor_feat_idx], ~missing_row_mask)
-            y_train = _safe_indexing(X_filled[:, feat_idx], ~missing_row_mask)
+            X_train = _safe_indexing(
+                _safe_indexing(X_filled, neighbor_feat_idx, axis=1),
+                ~missing_row_mask,
+                axis=0,
+            )
+            y_train = _safe_indexing(
+                _safe_indexing(X_filled, feat_idx, axis=1),
+                ~missing_row_mask,
+                axis=0,
+            )
             estimator.fit(X_train, y_train)
 
         # if no missing values, don't predict
@@ -372,7 +379,11 @@ class IterativeImputer(_BaseImputer):
             return X_filled, estimator
 
         # get posterior samples if there is at least one missing value
-        X_test = _safe_indexing(X_filled[:, neighbor_feat_idx], missing_row_mask)
+        X_test = _safe_indexing(
+            _safe_indexing(X_filled, neighbor_feat_idx, axis=1),
+            missing_row_mask,
+            axis=0,
+        )
         if self.sample_posterior:
             mus, sigmas = estimator.predict(X_test, return_std=True)
             imputed_values = np.zeros(mus.shape, dtype=X_filled.dtype)
@@ -403,7 +414,12 @@ class IterativeImputer(_BaseImputer):
             )
 
         # update the feature
-        X_filled[missing_row_mask, feat_idx] = imputed_values
+        if hasattr(self, "iloc"):
+            X_filled.iloc[missing_row_mask, feat_idx] = imputed_values
+        else:
+            print(X_filled[missing_row_mask, feat_idx].shape)
+            print(imputed_values.shape)
+            X_filled[missing_row_mask, feat_idx] = imputed_values
         return X_filled, estimator
 
     def _get_neighbor_feat_idx(self, n_features, feat_idx, abs_corr_mat):
@@ -567,16 +583,15 @@ class IterativeImputer(_BaseImputer):
 
         X_missing_mask = _get_mask(X, self.missing_values)
         mask_missing_values = X_missing_mask.copy()
-        with config_context(transform_output="default"):
-            if self.initial_imputer_ is None:
-                self.initial_imputer_ = SimpleImputer(
-                    missing_values=self.missing_values,
-                    strategy=self.initial_strategy,
-                    keep_empty_features=self.keep_empty_features,
-                )
-                X_filled = self.initial_imputer_.fit_transform(X)
-            else:
-                X_filled = self.initial_imputer_.transform(X)
+        if self.initial_imputer_ is None:
+            self.initial_imputer_ = SimpleImputer(
+                missing_values=self.missing_values,
+                strategy=self.initial_strategy,
+                keep_empty_features=self.keep_empty_features,
+            )
+            X_filled = self.initial_imputer_.fit_transform(X)
+        else:
+            X_filled = self.initial_imputer_.transform(X)
 
         valid_mask = np.flatnonzero(
             np.logical_not(np.isnan(self.initial_imputer_.statistics_))
@@ -709,7 +724,7 @@ class IterativeImputer(_BaseImputer):
                 Xt, estimator = self._impute_one_feature(
                     Xt,
                     mask_missing_values,
-                    feat_idx,
+                    int(feat_idx),
                     neighbor_feat_idx,
                     estimator=None,
                     fit_mode=True,
@@ -745,7 +760,11 @@ class IterativeImputer(_BaseImputer):
                     "[IterativeImputer] Early stopping criterion not reached.",
                     ConvergenceWarning,
                 )
-        Xt[~mask_missing_values] = X[~mask_missing_values]
+        if hasattr(Xt, "iloc"):
+            for feat_idx, feat_mask in enumerate(mask_missing_values.T):
+                Xt.iloc[~feat_mask, feat_idx] = X[~feat_mask, feat_idx]
+        else:
+            Xt[~mask_missing_values] = X[~mask_missing_values]
         return super()._concatenate_indicator(Xt, X_indicator)
 
     def transform(self, X):
@@ -798,7 +817,11 @@ class IterativeImputer(_BaseImputer):
                     )
                 i_rnd += 1
 
-        Xt[~mask_missing_values] = X[~mask_missing_values]
+        if hasattr(Xt, "iloc"):
+            for feat_idx, feat_mask in enumerate(mask_missing_values.T):
+                Xt.iloc[~feat_mask, feat_idx] = X[~feat_mask, feat_idx]
+        else:
+            Xt[~mask_missing_values] = X[~mask_missing_values]
         return super()._concatenate_indicator(Xt, X_indicator)
 
     def fit(self, X, y=None):
