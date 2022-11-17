@@ -47,6 +47,7 @@ original_params = {
     "random_state": 2,
     "min_samples_split": 5,
 }
+
 plt.figure()
 
 for label, color, setting in [
