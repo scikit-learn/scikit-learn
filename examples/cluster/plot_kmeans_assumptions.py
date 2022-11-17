@@ -4,10 +4,23 @@ Demonstration of k-means assumptions
 ====================================
 
 This example is meant to illustrate situations where k-means will produce
-unintuitive and possibly unexpected clusters. In the first three plots, the
-input data does not conform to some implicit assumption that k-means makes and
-undesirable clusters are produced as a result. In the last plot, k-means
-returns intuitive clusters despite unevenly sized blobs.
+unintuitive and possibly undesirable clusters.
+
+- Incorrect number of blobs: in a real setting there is no uniquely defined
+  **true** number of clusters. An appropriate number of clusters has to be
+  decided from data-based criteria and knowledge of aim.
+- Anisotropically distributed blobs: k-means consists of minimizing sample's
+  euclidean distances to the centroid of the cluster they are assigned
+  to. As a consequence, k-means is more appropriated for clusters that are
+  normally distributed with a spherical covariance matrix.
+- Unequal variance: k-means is equivalent to taking the maximum likelihood
+  estimator for a "mixture" of k gaussian distributions with the same variances
+  but with possibly different means.
+- Unevenly sized blobs: there is no theoretical result about k-means that states
+  that it requires similar cluster sizes to perform well, yet minimizing
+  euclidean distances does mean that the more sparse and high-dimensional the
+  problem is, the higher is the need to run the algorithm with different
+  centroid seeds to ensure a minimal inertia.
 
 """
 
@@ -54,7 +67,7 @@ axs[0, 0].set_title("Incorrect Number of Blobs")
 
 y_pred = KMeans(n_clusters=3, **common_params).fit_predict(X_aniso)
 axs[0, 1].scatter(X_aniso[:, 0], X_aniso[:, 1], c=y_pred)
-axs[0, 1].set_title("Anisotropicly Distributed Blobs")
+axs[0, 1].set_title("Anisotropically Distributed Blobs")
 
 y_pred = KMeans(n_clusters=3, **common_params).fit_predict(X_varied)
 axs[1, 0].scatter(X_varied[:, 0], X_varied[:, 1], c=y_pred)
@@ -65,3 +78,14 @@ axs[1, 1].scatter(X_filtered[:, 0], X_filtered[:, 1], c=y_pred)
 axs[1, 1].set_title("Unevenly Sized Blobs")
 
 plt.show()
+
+# %%
+# For an example on how to find a correct number of blobs, see the example
+# :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py`.
+#
+# For an example on how other clustering methods deal with anisotropic or
+# unequal variance blobs, see the example
+# :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`.
+#
+# For more details on how to deal with unevenly sized blobs, see
+# :ref:`kmeans_sparse_high_dim`.
