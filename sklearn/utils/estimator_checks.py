@@ -4163,6 +4163,12 @@ def check_set_output_transform(name, transformer_orig):
 
 
 def _output_from_fit_transform(transformer, name, X, df, y):
+    """Generate output to set test `set_output` for different configuration:
+
+    - calling either `fit.transform` or `fit_transform`;
+    - passing either a dataframe or a numpy array to fit;
+    - passing either a dataframe or a numpy array to transform.
+    """
     outputs = {}
 
     # fit then transform case:
@@ -4201,6 +4207,9 @@ def _check_generated_dataframe(name, case, outputs_default, outputs_pandas):
     df_trans, feature_names_pandas = outputs_pandas
 
     assert isinstance(df_trans, pd.DataFrame)
+    # We always rely on the output of `get_feature_names_out` of the
+    # transformer used to generate the dataframe as a ground-truth of the
+    # columns.
     expected_dataframe = pd.DataFrame(X_trans, columns=feature_names_pandas)
 
     try:
