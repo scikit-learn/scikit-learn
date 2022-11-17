@@ -344,7 +344,8 @@ def test_oas():
     X_1d = np.arange(5)
     warn_msg = "Only one sample available. You may want to reshape your data array"
     with pytest.warns(UserWarning, match=warn_msg):
-       _x, _y = oas(X_1d)
+        _x, _y = oas(X_1d)
+
 
 def test_EmpiricalCovariance_validates_mahalanobis():
     """Checks that EmpiricalCovariance validates data with mahalanobis."""
