@@ -156,6 +156,21 @@ def _cube(x, fun_args):
 
 @validate_params(
     {
+        "X": ["array-like"],
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "algorithm": [StrOptions({"parallel", "deflation"})],
+        "whiten": [
+            Hidden(StrOptions({"warn"})),
+            StrOptions({"arbitrary-variance", "unit-variance"}),
+            "boolean",
+        ],
+        "fun": [StrOptions({"logcosh", "exp", "cube"}), callable],
+        "fun_args": [dict, None],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "tol": [Interval(Real, 0.0, None, closed="left")],
+        "w_init": ["array-like", None],
+        "whiten_solver": [StrOptions({"eigh", "svd"})],
+        "random_state": ["random_state"],
         "return_X_mean": ["boolean"],
         "compute_sources": ["boolean"],
         "return_n_iter": ["boolean"],
@@ -326,11 +341,7 @@ def fastica(
         whiten_solver=whiten_solver,
         random_state=random_state,
     )
-    if compute_sources:
-        S = est.fit_transform(X)
-    else:
-        est.fit(X)
-        S = None
+    S = est._fit_transform(X, compute_sources=compute_sources)
 
     if est._whiten in ["unit-variance", "arbitrary-variance"]:
         K = est.whitening_
