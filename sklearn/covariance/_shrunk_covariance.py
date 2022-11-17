@@ -20,7 +20,7 @@ import numpy as np
 from . import empirical_covariance, EmpiricalCovariance
 from .._config import config_context
 from ..utils import check_array
-from ..utils._param_validation import Interval
+from ..utils._param_validation import Interval, validate_params
 
 
 def _ledoit_wolf(X, *, assume_centered, block_size):
@@ -311,6 +311,13 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     return shrinkage
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "assume_centered": ["boolean"],
+        "block_size": [Interval(Integral, 1, None, closed="left")],
+    }
+)
 def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     """Estimate the shrunk Ledoit-Wolf covariance matrix.
 
