@@ -228,7 +228,12 @@ Changelog
 - |Enhancement| Path-like objects, such as those created with pathlib are now
   allowed as paths in :func:`datasets.load_svmlight_file` and
   :func:`datasets.load_svmlight_files`.
-  :pr:`19075` by :user:`Carlos Ramos Carreño <vnmabus>`
+  :pr:`19075` by :user:`Carlos Ramos Carreño <vnmabus>`.
+
+- |Fix| Make sure that :func:`datasets.fetch_lfw_people` and
+  :func:`datasets.fetch_lfw_pairs` internally crops images based on the
+  `slice_` parameter.
+  :pr:`24951` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -354,6 +359,12 @@ Changelog
 :mod:`sklearn.feature_selection`
 ................................
 
+- |Fix| Fix a bug in :func:`feature_selection.mutual_info_regression` and
+  :func:`feature_selction.mutual_info_classif`, where the continuous features
+  in `X` should be scaled to a unit variance independently if the target `y` is
+  continuous or discrete.
+  :pr:`24747` by :user:`Guillaume Lemaitre <glemaitre>`
+
 :mod:`sklearn.gaussian_process`
 ...............................
 
@@ -365,6 +376,15 @@ Changelog
   will not modify the input X in case a custom kernel is used, with a `diag`
   method that returns part of the input X. :pr:`24405`
   by :user:`Omar Salman <OmarManzoor>`.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Enhancement| Added `keep_empty_features` parameter to
+  :class:`impute.SimpleImputer`, :class:`impute.KNNImputer` and
+  :class:`impute.IterativeImputer`, preventing removal of features
+  containing only missing values when transforming.
+  :pr:`16695` by :user:`Vitor Santa Rosa <vitorsrg>`.
 
 :mod:`sklearn.kernel_approximation`
 ...................................
