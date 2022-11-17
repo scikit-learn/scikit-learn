@@ -201,6 +201,27 @@ def test_auto_wrap_output_keys_errors_with_incorrect_input():
             pass
 
 
+class AnotherMixin:
+    def __init_subclass__(cls, custom_parameter, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.custom_parameter = custom_parameter
+
+
+def test_set_output_mixin_custom_mixin():
+    """Check that multiple init_subclasses passes parameters up."""
+
+    class BothMixinEstimator(_SetOutputMixin, AnotherMixin, custom_parameter=123):
+        def transform(self, X, y=None):
+            return X
+
+        def get_feature_names_out(self, input_features=None):
+            return input_features
+
+    est = BothMixinEstimator()
+    assert est.custom_parameter == 123
+    assert hasattr(est, "set_output")
+
+
 def test__wrap_in_pandas_container_column_errors():
     """If a callable `columns` errors, it has the same semantics as columns=None."""
     pd = pytest.importorskip("pandas")

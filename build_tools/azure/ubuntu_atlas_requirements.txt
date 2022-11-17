@@ -5,4 +5,4 @@ cython
 joblib==1.1.1  # min
 threadpoolctl==2.0.0  # min
 pytest
-pytest-xdist
+pytest-xdist==2.5.0

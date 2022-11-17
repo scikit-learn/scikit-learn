@@ -24,7 +24,7 @@ import warnings
 import numpy as np
 import scipy.sparse as sp
 
-from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
+from ..base import BaseEstimator, TransformerMixin, OneToOneFeatureMixin
 from ..preprocessing import normalize
 from ._hash import FeatureHasher
 from ._stop_words import ENGLISH_STOP_WORDS
@@ -1486,7 +1486,7 @@ def _make_int_array():
 
 
 class TfidfTransformer(
-    _OneToOneFeatureMixin, TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
+    OneToOneFeatureMixin, TransformerMixin, BaseEstimator, auto_wrap_output_keys=None
 ):
     """Transform a count matrix to a normalized tf or tf-idf representation.
 

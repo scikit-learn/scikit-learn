@@ -172,10 +172,12 @@ class _SetOutputMixin:
     it based on `set_output` of the global configuration.
 
     `set_output` is only defined if `get_feature_names_out` is defined and
-    `auto_wrap_output` is True.
+    `auto_wrap_output_keys` is the default value.
     """
 
     def __init_subclass__(cls, auto_wrap_output_keys=("transform",), **kwargs):
+        super().__init_subclass__(**kwargs)
+
         # Dynamically wraps `transform` and `fit_transform` and configure it's
         # output based on `set_output`.
         if not (
@@ -211,12 +213,11 @@ class _SetOutputMixin:
         Parameters
         ----------
         transform : {"default", "pandas"}, default=None
-            Configure output of the following estimator's methods:
+            Configure output of `transform` and `fit_transform`.
 
-            - `"transform"`
-            - `"fit_transform"`
-
-            If `None`, this operation is a no-op.
+            - `"default"`: Default output format of a transformer
+            - `"pandas"`: DataFrame output
+            - `None`: Transform configuration is unchanged
 
         Returns
         -------
