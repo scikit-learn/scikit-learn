@@ -69,11 +69,15 @@ n_estimators = params["n_estimators"]
 x = np.arange(n_estimators) + 1
 
 
+def binomial_deviance(y, raw_predictions):
+    return -2 * np.mean((y * raw_predictions) - np.logaddexp(0, raw_predictions))
+
+
 def heldout_score(clf, X_test, y_test):
     """compute deviance scores on ``X_test`` and ``y_test``."""
     score = np.zeros((n_estimators,), dtype=np.float64)
     for i, y_pred in enumerate(clf.staged_decision_function(X_test)):
-        score[i] = clf.loss_(y_test, y_pred)
+        score[i] = binomial_deviance(y_test, y_pred.ravel())
     return score
 
 
