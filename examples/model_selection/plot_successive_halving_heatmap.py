@@ -54,10 +54,10 @@ gs_time = time() - tic
 
 def make_heatmap(ax, gs, is_sh=False, make_cbar=False):
     """Helper to make a heatmap."""
-    results = pd.DataFrame.from_dict(gs.cv_results_)
+    results = pd.DataFrame(gs.cv_results_)
     results["params_str"] = results["params"].apply(str)
-    results[["param_C", "param_gamma"]] = results[["param_C", "param_gamma"]].apply(
-        pd.to_numeric
+    results[["param_C", "param_gamma"]] = results[["param_C", "param_gamma"]].astype(
+        np.float64
     )
     if is_sh:
         # SH dataframe: get mean_test_score values for the highest iter
