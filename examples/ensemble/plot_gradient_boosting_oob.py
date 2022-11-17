@@ -73,10 +73,8 @@ x = np.arange(n_estimators) + 1
 def heldout_score(clf, X_test, y_test):
     """compute deviance scores on ``X_test`` and ``y_test``."""
     score = np.zeros((n_estimators,), dtype=np.float64)
-    for i, y_pred in enumerate(clf.staged_decision_function(X_test)):
-        # transform raw predictions into probabilities estimates
-        y_proba = 1.0 / (1.0 + np.exp(-y_pred.ravel()))
-        score[i] = 2 * log_loss(y_test, y_proba)
+    for i, y_proba in enumerate(clf.staged_predict_proba(X_test)):
+        score[i] = 2 * log_loss(y_test, y_proba[:, 1])
     return score
 
 
