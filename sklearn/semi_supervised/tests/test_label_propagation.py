@@ -62,7 +62,7 @@ def test_predict(global_dtype, Estimator, parameters):
 
 @pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
 def test_fit_predict(global_dtype, Estimator, parameters):
-    samples = np.random.uniform(0, 1, (10, 2), dtype=global_dtype)
+    samples = np.random.uniform(0, 1, (10, 2)).astype(global_dtype)
     labels = np.random.choice([0, 1, -1], 10, replace=True)
     clf = Estimator(**parameters).fit(samples, labels)
     assert_array_equal(clf.predict(samples), clf.fit_predict(samples, labels))
