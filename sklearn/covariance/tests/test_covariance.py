@@ -330,15 +330,21 @@ def test_oas():
     assert oa.precision_ is None
 
     # test function _oas without assuming centered data
-    X_1d = X[:, 0:1]
+    X_1f = X[:, 0:1]
     oa = OAS()
-    oa.fit(X_1d)
+    oa.fit(X_1f)
     # compare shrunk covariance obtained from data and from MLE estimate
-    _oa_cov_from_mle, _oa_shrinkage_from_mle = _oas(X_1d)
+    _oa_cov_from_mle, _oa_shrinkage_from_mle = _oas(X_1f)
     assert_array_almost_equal(_oa_cov_from_mle, oa.covariance_, 4)
     assert_almost_equal(_oa_shrinkage_from_mle, oa.shrinkage_)
-    assert_array_almost_equal((X_1d**2).sum() / n_samples, oa.covariance_, 4)
+    assert_array_almost_equal((X_1f**2).sum() / n_samples, oa.covariance_, 4)
 
+    # test with X.ndim=1
+    # warning should be raised when using 1D input.
+    X_1d = np.arange(5)
+    warn_msg = "Only one sample available. You may want to reshape your data array"
+    with pytest.warns(UserWarning, match=warn_msg):
+       _x, _y = oas(X_1d)
 
 def test_EmpiricalCovariance_validates_mahalanobis():
     """Checks that EmpiricalCovariance validates data with mahalanobis."""

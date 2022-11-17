@@ -20,7 +20,7 @@ import numpy as np
 from . import empirical_covariance, EmpiricalCovariance
 from .._config import config_context
 from ..utils import check_array
-from ..utils._param_validation import Interval
+from ..utils._param_validation import Interval, validate_params
 
 
 def _oas(X, *, assume_centered=False):
@@ -30,11 +30,8 @@ def _oas(X, *, assume_centered=False):
         if not assume_centered:
             X = X - X.mean()
         return np.atleast_2d((X**2).mean()), 0.0
-    if X.ndim == 1:
-        n_samples = 1
-        n_features = X.size
-    else:
-        n_samples, n_features = X.shape
+
+    n_samples, n_features = X.shape
 
     emp_cov = empirical_covariance(X, assume_centered=assume_centered)
     mu = np.trace(emp_cov) / n_features
@@ -529,6 +526,12 @@ class LedoitWolf(EmpiricalCovariance):
 
 
 # OAS estimator
+@validate_params(
+    {
+        "X": ["array-like"],
+        "assume_centered": ["boolean"],
+    }
+)
 def oas(X, *, assume_centered=False):
     """Estimate covariance with the Oracle Approximating Shrinkage algorithm.
 
