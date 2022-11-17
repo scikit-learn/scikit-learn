@@ -144,6 +144,15 @@ class IterativeImputer(_BaseImputer):
         the missing indicator even if there are missing values at
         transform/test time.
 
+    keep_empty_features : bool, default=False
+        If True, features that consist exclusively of missing values when
+        `fit` is called are returned in results when `transform` is called.
+        The imputed value is always `0` except when
+        `initial_strategy="constant"` in which case `fill_value` will be
+        used instead.
+
+        .. versionadded:: 1.2
+
     Attributes
     ----------
     initial_imputer_ : object of type :class:`~sklearn.impute.SimpleImputer`
@@ -273,8 +282,13 @@ class IterativeImputer(_BaseImputer):
         verbose=0,
         random_state=None,
         add_indicator=False,
+        keep_empty_features=False,
     ):
-        super().__init__(missing_values=missing_values, add_indicator=add_indicator)
+        super().__init__(
+            missing_values=missing_values,
+            add_indicator=add_indicator,
+            keep_empty_features=keep_empty_features,
+        )
 
         self.estimator = estimator
         self.sample_posterior = sample_posterior
@@ -510,7 +524,7 @@ class IterativeImputer(_BaseImputer):
 
         Parameters
         ----------
-        X : ndarray, shape (n_samples, n_features)
+        X : ndarray of shape (n_samples, n_features)
             Input data, where `n_samples` is the number of samples and
             `n_features` is the number of features.
 
@@ -519,16 +533,17 @@ class IterativeImputer(_BaseImputer):
 
         Returns
         -------
-        Xt : ndarray, shape (n_samples, n_features)
+        Xt : ndarray of shape (n_samples, n_features)
             Input data, where `n_samples` is the number of samples and
             `n_features` is the number of features.
 
-        X_filled : ndarray, shape (n_samples, n_features)
+        X_filled : ndarray of shape (n_samples, n_features)
             Input data with the most recent imputations.
 
-        mask_missing_values : ndarray, shape (n_samples, n_features)
+        mask_missing_values : ndarray of shape (n_samples, n_features)
             Input data's missing indicator matrix, where `n_samples` is the
-            number of samples and `n_features` is the number of features.
+            number of samples and `n_features` is the number of features,
+            masked by non-missing features.
 
         X_missing_mask : ndarray, shape (n_samples, n_features)
             Input data's mask matrix indicating missing datapoints, where
@@ -553,7 +568,9 @@ class IterativeImputer(_BaseImputer):
         mask_missing_values = X_missing_mask.copy()
         if self.initial_imputer_ is None:
             self.initial_imputer_ = SimpleImputer(
-                missing_values=self.missing_values, strategy=self.initial_strategy
+                missing_values=self.missing_values,
+                strategy=self.initial_strategy,
+                keep_empty_features=self.keep_empty_features,
             )
             X_filled = self.initial_imputer_.fit_transform(X)
         else:
@@ -562,8 +579,16 @@ class IterativeImputer(_BaseImputer):
         valid_mask = np.flatnonzero(
             np.logical_not(np.isnan(self.initial_imputer_.statistics_))
         )
-        Xt = X[:, valid_mask]
-        mask_missing_values = mask_missing_values[:, valid_mask]
+
+        if not self.keep_empty_features:
+            # drop empty features
+            Xt = X[:, valid_mask]
+            mask_missing_values = mask_missing_values[:, valid_mask]
+        else:
+            # mark empty features as not missing and keep the original
+            # imputation
+            mask_missing_values[:, valid_mask] = True
+            Xt = X
 
         return Xt, X_filled, mask_missing_values, X_missing_mask
 
@@ -739,7 +764,9 @@ class IterativeImputer(_BaseImputer):
         """
         check_is_fitted(self)
 
-        X, Xt, mask_missing_values, complete_mask = self._initial_imputation(X)
+        X, Xt, mask_missing_values, complete_mask = self._initial_imputation(
+            X, in_fit=False
+        )
 
         X_indicator = super()._transform_indicator(complete_mask)
 
@@ -770,7 +797,6 @@ class IterativeImputer(_BaseImputer):
                 i_rnd += 1
 
         Xt[~mask_missing_values] = X[~mask_missing_values]
-
         return super()._concatenate_indicator(Xt, X_indicator)
 
     def fit(self, X, y=None):
