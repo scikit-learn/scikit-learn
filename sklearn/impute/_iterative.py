@@ -417,8 +417,6 @@ class IterativeImputer(_BaseImputer):
         if hasattr(self, "iloc"):
             X_filled.iloc[missing_row_mask, feat_idx] = imputed_values
         else:
-            print(X_filled[missing_row_mask, feat_idx].shape)
-            print(imputed_values.shape)
             X_filled[missing_row_mask, feat_idx] = imputed_values
         return X_filled, estimator
 
