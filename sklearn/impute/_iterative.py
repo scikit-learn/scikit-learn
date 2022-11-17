@@ -6,6 +6,7 @@ import warnings
 from scipy import stats
 import numpy as np
 
+from .. import config_context
 from ..base import clone
 from ..exceptions import ConvergenceWarning
 from ..preprocessing import normalize
@@ -566,15 +567,16 @@ class IterativeImputer(_BaseImputer):
 
         X_missing_mask = _get_mask(X, self.missing_values)
         mask_missing_values = X_missing_mask.copy()
-        if self.initial_imputer_ is None:
-            self.initial_imputer_ = SimpleImputer(
-                missing_values=self.missing_values,
-                strategy=self.initial_strategy,
-                keep_empty_features=self.keep_empty_features,
-            )
-            X_filled = self.initial_imputer_.fit_transform(X)
-        else:
-            X_filled = self.initial_imputer_.transform(X)
+        with config_context(transform_output="default"):
+            if self.initial_imputer_ is None:
+                self.initial_imputer_ = SimpleImputer(
+                    missing_values=self.missing_values,
+                    strategy=self.initial_strategy,
+                    keep_empty_features=self.keep_empty_features,
+                )
+                X_filled = self.initial_imputer_.fit_transform(X)
+            else:
+                X_filled = self.initial_imputer_.transform(X)
 
         valid_mask = np.flatnonzero(
             np.logical_not(np.isnan(self.initial_imputer_.statistics_))
