@@ -377,6 +377,15 @@ Changelog
   method that returns part of the input X. :pr:`24405`
   by :user:`Omar Salman <OmarManzoor>`.
 
+:mod:`sklearn.impute`
+.....................
+
+- |Enhancement| Added `keep_empty_features` parameter to
+  :class:`impute.SimpleImputer`, :class:`impute.KNNImputer` and
+  :class:`impute.IterativeImputer`, preventing removal of features
+  containing only missing values when transforming.
+  :pr:`16695` by :user:`Vitor Santa Rosa <vitorsrg>`.
+
 :mod:`sklearn.kernel_approximation`
 ...................................
 
