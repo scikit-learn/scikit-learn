@@ -72,6 +72,13 @@ class KNNImputer(_BaseImputer):
         missing indicator even if there are missing values at transform/test
         time.
 
+    keep_empty_features : bool, default=False
+        If True, features that consist exclusively of missing values when
+        `fit` is called are returned in results when `transform` is called.
+        The imputed value is always `0`.
+
+        .. versionadded:: 1.2
+
     Attributes
     ----------
     indicator_ : :class:`~sklearn.impute.MissingIndicator`
@@ -133,8 +140,13 @@ class KNNImputer(_BaseImputer):
         metric="nan_euclidean",
         copy=True,
         add_indicator=False,
+        keep_empty_features=False,
     ):
-        super().__init__(missing_values=missing_values, add_indicator=add_indicator)
+        super().__init__(
+            missing_values=missing_values,
+            add_indicator=add_indicator,
+            keep_empty_features=keep_empty_features,
+        )
         self.n_neighbors = n_neighbors
         self.weights = weights
         self.metric = metric
@@ -265,8 +277,12 @@ class KNNImputer(_BaseImputer):
         # Removes columns where the training data is all nan
         if not np.any(mask):
             # No missing values in X
-            # Remove columns where the training data is all nan
-            return X[:, valid_mask]
+            if self.keep_empty_features:
+                Xc = X
+                Xc[:, ~valid_mask] = 0
+            else:
+                Xc = X[:, valid_mask]
+            return Xc
 
         row_missing_idx = np.flatnonzero(mask.any(axis=1))
 
@@ -342,7 +358,13 @@ class KNNImputer(_BaseImputer):
             # process_chunk modifies X in place. No return value.
             pass
 
-        return super()._concatenate_indicator(X[:, valid_mask], X_indicator)
+        if self.keep_empty_features:
+            Xc = X
+            Xc[:, ~valid_mask] = 0
+        else:
+            Xc = X[:, valid_mask]
+
+        return super()._concatenate_indicator(Xc, X_indicator)
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
