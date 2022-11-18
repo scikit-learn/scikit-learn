@@ -88,7 +88,7 @@ plt.show()
 # Possible solution
 # -----------------
 #
-# For an example on how to find a correct number of blobs, see the example
+# For an example on how to find a correct number of blobs, see
 # :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py`.
 # In this case it suffices to set `n_clusters=3`.
 #
@@ -101,7 +101,7 @@ plt.show()
 # :class:`~sklearn.mixture.GaussianMixture`, which also assume gaussian clusters
 # but has no constraints on their variances. Notice that one still has to find
 # the correct number of blobs (see
-# :ref:`sphx_glr_auto_examples_model_selection_plot_gmm_selection.py`).
+# :ref:`sphx_glr_auto_examples_mixture_plot_gmm_selection.py`).
 #
 # For an example on how other clustering methods deal with anisotropic or
 # unequal variance blobs, see the example
