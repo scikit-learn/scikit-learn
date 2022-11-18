@@ -53,8 +53,8 @@ X_filtered = np.vstack(
 )  # Unevenly sized blobs
 
 # %%
-# Plot results
-# ------------
+# Fit models and plot results
+# ---------------------------
 
 import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
