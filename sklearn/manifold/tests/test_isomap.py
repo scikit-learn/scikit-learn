@@ -208,7 +208,7 @@ def test_different_metric(global_dtype, metric, p, is_euclidean):
     if is_euclidean:
         assert_allclose(embedding, reference)
     else:
-        with pytest.raises(AssertionError, match="Not equal to tolerance rtol=1e-07"):
+        with pytest.raises(AssertionError, match="Not equal to tolerance"):
             assert_allclose(embedding, reference)
 
 
