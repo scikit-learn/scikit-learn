@@ -4,10 +4,6 @@ import numpy as np
 cimport numpy as cnp
 cimport cython
 
-ctypedef cnp.float64_t DOUBLE
-ctypedef cnp.npy_intp INTP
-ctypedef cnp.int8_t INT8
-
 cnp.import_array()
 
 from ..metrics._dist_metrics cimport DistanceMetric
@@ -54,7 +50,7 @@ cpdef void compute_ward_dist(
 ###############################################################################
 # Utilities for cutting and exploring a hierarchical tree
 
-def _hc_get_descendent(INTP node, children, INTP n_leaves):
+def _hc_get_descendent(cnp.npy_intp node, children, cnp.npy_intp n_leaves):
     """
     Function returning all the descendent leaves of a set of nodes in the tree.
 
@@ -83,7 +79,7 @@ def _hc_get_descendent(INTP node, children, INTP n_leaves):
     # It is actually faster to do the accounting of the number of
     # elements is the list ourselves: len is a lengthy operation on a
     # chained list
-    cdef INTP i, n_indices = 1
+    cdef cnp.npy_intp i, n_indices = 1
 
     while n_indices:
         i = ind.pop()
