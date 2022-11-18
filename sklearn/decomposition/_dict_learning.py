@@ -1044,7 +1044,7 @@ def dict_learning_online(
         "alpha": [Interval(Real, 0, None, closed="left")],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "fit_algorithm": [StrOptions({"lars", "cd"})],
+        "method": [StrOptions({"lars", "cd"})],
         "n_jobs": [Integral, None],
         "dict_init": [np.ndarray, None],
         "code_init": [np.ndarray, None],
@@ -1054,7 +1054,7 @@ def dict_learning_online(
         "return_n_iter": ["boolean"],
         "positive_dict": ["boolean"],
         "positive_code": ["boolean"],
-        "method_max_iter": [[Interval(Integral, 0, None, closed="left")]],
+        "method_max_iter": [Interval(Integral, 0, None, closed="left")],
     }
 )
 def dict_learning(
