@@ -500,10 +500,9 @@ class LedoitWolf(EmpiricalCovariance):
             self.location_ = np.zeros(X.shape[1])
         else:
             self.location_ = X.mean(0)
-        with config_context(assume_finite=True):
-            covariance, shrinkage = _ledoit_wolf(
-                X - self.location_, assume_centered=True, block_size=self.block_size
-            )
+        covariance, shrinkage = _ledoit_wolf(
+            X - self.location_, assume_centered=True, block_size=self.block_size
+        )
         self.shrinkage_ = shrinkage
         self._set_covariance(covariance)
 
