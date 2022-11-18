@@ -84,19 +84,27 @@ axs[1, 1].set_title("Unevenly Sized Blobs")
 plt.show()
 
 # %%
+# Possible solution
+# -----------------
+#
 # For an example on how to find a correct number of blobs, see the example
 # :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py`.
+# In this case it suffices to set `n_clusters=3`.
+#
+# To deal with unevenly sized blobs one can increase the number of random
+# initializations. In this case we set `n_init=10` to avoid finding a
+# sub-optimal local minimum. For more details see :ref:`kmeans_sparse_high_dim`.
+#
+# As anisotropic and unequal variances are real limitations of the k-means
+# algorithmn, here we propose instead the use of
+# :class:`~sklearn.mixture.GaussianMixture`, which also assume gaussian clusters
+# but has no constraints on their variances. Notice that one still has to find
+# the correct number of blobs (see
+# :ref:`sphx_glr_auto_examples_model_selection_plot_gmm_selection.py`).
 #
 # For an example on how other clustering methods deal with anisotropic or
 # unequal variance blobs, see the example
 # :ref:`sphx_glr_auto_examples_cluster_plot_cluster_comparison.py`.
-#
-# For more details on how to deal with unevenly sized blobs, see
-# :ref:`kmeans_sparse_high_dim`.
-
-# %%
-# Possible solution
-# -----------------
 
 from sklearn.mixture import GaussianMixture
 
