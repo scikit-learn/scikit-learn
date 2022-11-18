@@ -323,6 +323,7 @@ def sag{{name_suffix}}(
 
     # the multipliative scale needed for JIT params
     cdef {{c_type}}[::1] cumulative_sums_prox
+    cdef {{c_type}}* cumulative_sums_prox_ptr
 
     cdef bint prox = beta > 0 and saga
 
@@ -347,8 +348,10 @@ def sag{{name_suffix}}(
 
     if prox:
         cumulative_sums_prox = np.empty(n_samples, dtype={{np_type}}, order="c")
+        cumulative_sums_prox_ptr = &cumulative_sums_prox[0]
     else:
         cumulative_sums_prox = None
+        cumulative_sums_prox_ptr = NULL
 
     with nogil:
         start_time = time(NULL)
@@ -375,7 +378,7 @@ def sag{{name_suffix}}(
                        n_classes,
                        sample_itr,
                        &cumulative_sums[0],
-                       &cumulative_sums_prox[0],
+                       cumulative_sums_prox_ptr,
                        &feature_hist[0],
                        prox,
                        sum_gradient,
@@ -476,7 +479,7 @@ def sag{{name_suffix}}(
                         n_classes,
                         sample_itr,
                         &cumulative_sums[0],
-                        &cumulative_sums_prox[0],
+                        cumulative_sums_prox_ptr,
                         &feature_hist[0],
                         prox,
                         sum_gradient,
@@ -500,7 +503,7 @@ def sag{{name_suffix}}(
                 n_classes,
                 n_samples - 1,
                 &cumulative_sums[0],
-                &cumulative_sums_prox[0],
+                cumulative_sums_prox_ptr,
                 &feature_hist[0],
                 prox,
                 sum_gradient,
