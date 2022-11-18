@@ -132,12 +132,13 @@ results_df = pd.DataFrame(results, columns=columns)
 # Define what to plot
 lines = "Stopping criterion"
 x_axis = "max_iter"
+styles = ["-", "--", "-"]
 
 # First plot: train and test scores
 fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(12, 4))
 for ax, y_axis in zip(axes, ["Train score", "Test score"]):
-    for criterion, group_df in results_df.groupby(lines):
-        group_df.plot(x=x_axis, y=y_axis, label=criterion, ax=ax)
+    for style, (criterion, group_df) in zip(styles, results_df.groupby(lines)):
+        group_df.plot(x=x_axis, y=y_axis, label=criterion, ax=ax, style=style)
     ax.set_title(y_axis)
     ax.legend(title=lines)
 fig.tight_layout()
@@ -145,8 +146,8 @@ fig.tight_layout()
 # Second plot: n_iter and fit time
 fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(12, 4))
 for ax, y_axis in zip(axes, ["n_iter_", "Fit time (sec)"]):
-    for criterion, group_df in results_df.groupby(lines):
-        group_df.plot(x=x_axis, y=y_axis, label=criterion, ax=ax)
+    for style, (criterion, group_df) in zip(styles, results_df.groupby(lines)):
+        group_df.plot(x=x_axis, y=y_axis, label=criterion, ax=ax, style=style)
     ax.set_title(y_axis)
     ax.legend(title=lines)
 fig.tight_layout()
