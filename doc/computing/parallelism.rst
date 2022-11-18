@@ -10,22 +10,25 @@ Parallelism, resource management, and configuration
 Parallelism
 -----------
 
-Some scikit-learn estimators and utilities can parallelize costly operations
-using multiple CPU cores, thanks to the following components:
+Some scikit-learn estimators and utilities parallelize costly operations
+using multiple CPU cores.
 
-- via the `joblib <https://joblib.readthedocs.io/en/latest/>`_ library. In
-  this case the number of threads or processes can be controlled with the
+This can be either done:
+
+- with higher-level parallelism via `joblib <https://joblib.readthedocs.io/en/latest/>`_.
+  In this case, the number of threads or processes can be controlled with the
   ``n_jobs`` parameter.
-- via OpenMP, used in C or Cython code.
+- with lower-level parallelism via OpenMP, used in C or Cython code.
+  In this case, parallelism is always done using threads and specifying
+  ``n_jobs`` *has no effect*. Implementations relying on this parallelism are generally
+  more performant by several orders of magnitude.
+- with lower-level parallelism via BLAS, used by NumPy and SciPy for generic operations
+  on arrays.
 
-In addition, some of the numpy routines that are used internally by
-scikit-learn may also be parallelized if numpy is installed with specific
-numerical libraries such as MKL, OpenBLAS, or BLIS.
+We describe these 3 types of parallelism in the following subsections in more details.
 
-We describe these 3 scenarios in the following subsections.
-
-Joblib-based parallelism
-........................
+Higher-level parallelism with joblib
+....................................
 
 When the underlying implementation uses joblib, the number of workers
 (threads or processes) that are spawned in parallel can be controlled via the
@@ -33,15 +36,16 @@ When the underlying implementation uses joblib, the number of workers
 
 .. note::
 
-    Where (and how) parallelization happens in the estimators is currently
-    poorly documented. Please help us by improving our docs and tackle `issue
-    14228 <https://github.com/scikit-learn/scikit-learn/issues/14228>`_!
+    Where (and how) parallelization happens in the estimators using joblib by
+    specifying `n_jobs` is currently poorly documented.
+    Please help us by improving our docs and tackle `issue 14228
+    <https://github.com/scikit-learn/scikit-learn/issues/14228>`_!
 
 Joblib is able to support both multi-processing and multi-threading. Whether
 joblib chooses to spawn a thread or a process depends on the **backend**
 that it's using.
 
-Scikit-learn generally relies on the ``loky`` backend, which is joblib's
+scikit-learn generally relies on the ``loky`` backend, which is joblib's
 default backend. Loky is a multi-processing backend. When doing
 multi-processing, in order to avoid duplicating the memory in each process
 (which isn't reasonable with big datasets), joblib will create a `memmap
@@ -70,40 +74,46 @@ that increasing the number of workers is always a good thing. In some cases
 it can be highly detrimental to performance to run multiple copies of some
 estimators or functions in parallel (see oversubscription below).
 
-OpenMP-based parallelism
-........................
+Lower-level parallelism with OpenMP
+...................................
 
 OpenMP is used to parallelize code written in Cython or C, relying on
-multi-threading exclusively. By default (and unless joblib is trying to
-avoid oversubscription), the implementation will use as many threads as
-possible.
+multi-threading exclusively. By default, the implementations using OpenMP
+will use as many threads as possible, i.e. as many threads as logical cores.
 
-You can control the exact number of threads that are used via the
-``OMP_NUM_THREADS`` environment variable:
+You can control the exact number of threads that are used either:
 
-.. prompt:: bash $
+ - via the ``OMP_NUM_THREADS`` environment variable, e.g. for instance when:
+   running a python script:
 
-    OMP_NUM_THREADS=4 python my_script.py
+   .. prompt:: bash $
 
-Parallel Numpy routines from numerical libraries
-................................................
+        OMP_NUM_THREADS=4 python my_script.py
 
-Scikit-learn relies heavily on NumPy and SciPy, which internally call
-multi-threaded linear algebra routines implemented in libraries such as MKL,
-OpenBLAS or BLIS.
+ - or via `threadpoolctl` as explained by `this piece of documentation
+   <https://github.com/joblib/threadpoolctl/#setting-the-maximum-size-of-thread-pools>`_.
 
-The number of threads used by the OpenBLAS, MKL or BLIS libraries can be set
-via the ``MKL_NUM_THREADS``, ``OPENBLAS_NUM_THREADS``, and
-``BLIS_NUM_THREADS`` environment variables.
+Parallel NumPy and SciPy routines from numerical libraries
+..........................................................
 
-Please note that scikit-learn has no direct control over these
-implementations. Scikit-learn solely relies on Numpy and Scipy.
+scikit-learn relies heavily on NumPy and SciPy, which internally call
+multi-threaded linear algebra routines of BLAS implemented in libraries
+such as MKL, OpenBLAS or BLIS.
+
+You can control the exact number of threads used by BLAS for each library
+using environment variables, namely:
+  - ``MKL_NUM_THREADS`` sets the number of thread MKL uses,
+  - ``OPENBLAS_NUM_THREADS`` sets the number of threads OpenBLAS uses
+  - ``BLIS_NUM_THREADS`` sets the number of threads BLIS uses
 
 .. note::
-    At the time of writing (2019), NumPy and SciPy packages distributed on
-    pypi.org (used by ``pip``) and on the conda-forge channel are linked
-    with OpenBLAS, while conda packages shipped on the "defaults" channel
-    from anaconda.org are linked by default with MKL.
+    At the time of writing (2022), NumPy and SciPy packages which are
+    distributed on pypi.org (i.e. the ones installed via ``pip install``)
+    and on the conda-forge channel (i.e. the ones installed via
+    ``conda install --channel conda-forge``) are linked with OpenBLAS, while
+    NumPy and SciPy packages packages shipped on the ``defaults`` conda
+    channel from Anaconda.org (i.e. the ones installed via ``conda install``)
+    are linked by default with MKL.
 
 
 Oversubscription: spawning too many threads
@@ -120,8 +130,8 @@ with ``n_jobs=8`` over a
 OpenMP). Each instance of
 :class:`~sklearn.ensemble.HistGradientBoostingClassifier` will spawn 8 threads
 (since you have 8 CPUs). That's a total of ``8 * 8 = 64`` threads, which
-leads to oversubscription of physical CPU resources and to scheduling
-overhead.
+leads to oversubscription of threads for physical CPU resources and thus
+to scheduling overhead.
 
 Oversubscription can arise in the exact same fashion with parallelized
 routines from MKL, OpenBLAS or BLIS that are nested in joblib calls.
@@ -146,14 +156,15 @@ Note that:
   only use ``<LIB>_NUM_THREADS``. Joblib exposes a context manager for
   finer control over the number of threads in its workers (see joblib docs
   linked below).
-- Joblib is currently unable to avoid oversubscription in a
-  multi-threading context. It can only do so with the ``loky`` backend
-  (which spawns processes).
+- `threadpoolctl` internally manages the numbers of threads used by OpenMP
+  and BLAS implementations for scikit-learn implementations.
 
 You will find additional details about joblib mitigation of oversubscription
 in `joblib documentation
 <https://joblib.readthedocs.io/en/latest/parallel.html#avoiding-over-subscription-of-cpu-resources>`_.
 
+You will find additional details about parallelism in numerical python libraries
+in `this document from Thomas J. Fan <https://thomasjpfan.github.io/parallelism-python-libraries-design/>`_.
 
 Configuration switches
 -----------------------
@@ -161,18 +172,7 @@ Configuration switches
 Python runtime
 ..............
 
-:func:`sklearn.set_config` controls the following behaviors:
-
-`assume_finite`
-~~~~~~~~~~~~~~~
-
-Used to skip validation, which enables faster computations but may lead to
-segmentation faults if the data contains NaNs.
-
-`working_memory`
-~~~~~~~~~~~~~~~~
-
-The optimal size of temporary arrays used by some algorithms.
+:func:`sklearn.set_config` controls the following behaviors.
 
 .. _environment_variable:
 
