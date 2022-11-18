@@ -11,7 +11,7 @@ unintuitive and possibly undesirable clusters.
   decided from data-based criteria and knowledge of aim.
 - Anisotropically distributed blobs: k-means consists of minimizing sample's
   euclidean distances to the centroid of the cluster they are assigned
-  to. As a consequence, k-means is more appropriated for clusters that are
+  to. As a consequence, k-means is more appropriate for clusters that are
   normally distributed with a spherical covariance matrix.
 - Unequal variance: k-means is equivalent to taking the maximum likelihood
   estimator for a "mixture" of k gaussian distributions with the same variances
