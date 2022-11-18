@@ -18,7 +18,6 @@ from numbers import Real, Integral
 import numpy as np
 
 from . import empirical_covariance, EmpiricalCovariance
-from .._config import config_context
 from ..utils import check_array
 from ..utils._param_validation import Interval, validate_params
 
