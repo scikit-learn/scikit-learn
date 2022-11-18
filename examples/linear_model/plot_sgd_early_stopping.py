@@ -149,5 +149,6 @@ for ax, y_axis in zip(axes, ["n_iter_", "Fit time (sec)"]):
         group_df.plot(x=x_axis, y=y_axis, label=criterion, ax=ax)
     ax.set_title(y_axis)
     ax.legend(title=lines)
+fig.tight_layout()
 
 plt.show()
