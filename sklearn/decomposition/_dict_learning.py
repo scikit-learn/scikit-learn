@@ -1587,13 +1587,13 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         Initial values for the dictionary, for warm restart. Only used if
         `code_init` and `dict_init` are not None.
 
-    verbose : bool, default=False
-        To control the verbosity of the procedure.
-
     callback : callable, default=None
         Callable that gets invoked every five iterations.
 
         .. versionadded:: 1.2
+
+    verbose : bool, default=False
+        To control the verbosity of the procedure.
 
     split_sign : bool, default=False
         Whether to split the sparse feature vector into the concatenation of
