@@ -356,7 +356,7 @@ Changelog
   `base_estimator_` is deprecated in 1.2 and will be removed in 1.4.
   :pr:`23819` by :user:`Adrian Trujillo <trujillo9616>` and :user:`Edoardo Abati <EdAbati>`.
 
-- |FIX| :class:`HistGradientBoostingClassifier` and
+- |Fix| :class:`HistGradientBoostingClassifier` and
   :class:`HistGradientBoostingRegressor`, with `verbose>=1`, print detailed timing
   information on computing histograms and finding best splits. The time spent in the
   root node were previously missing and is now included in the printed information.
