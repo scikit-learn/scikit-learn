@@ -492,10 +492,7 @@ def partial_dependence(
 
     n_features = X.shape[1]
     if categorical_features is None:
-        is_categorical = [
-            (False, False) if isinstance(fxs, Iterable) else False
-            for fxs in features_indices
-        ]
+        is_categorical = [False] * len(features_indices)
     else:
         categorical_features = np.array(categorical_features, copy=False)
         if categorical_features.dtype.kind == "b":
