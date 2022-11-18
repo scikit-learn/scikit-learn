@@ -50,7 +50,8 @@ from sklearn.linear_model import (
         LassoLarsCV(),
         LassoLarsIC(),
         LinearRegression(),
-        # TODO: SAGA fails badly with sample_weights. This is a kown liimitation, see
+        # TODO: FIx SAGA which fails badly with sample_weights.
+        # This is a known limitation, see:
         # https://github.com/scikit-learn/scikit-learn/issues/21305
         pytest.param(
             LogisticRegression(
@@ -87,6 +88,9 @@ def test_balance_property(model, with_sample_weight, global_random_seed):
     #     - Poisson deviance with log link
     #     - log loss with logit link
     # This is known as balance property or unconditional calibration/unbiasedness.
+    # For reference, see Corollary 3.18, 3.20 and Chapter 5.1.5 of
+    # M.V. Wuthrich and M. Merz, "Statistical Foundations of Actuarial Learning and its
+    # Applications" (June 3, 2022). http://doi.org/10.2139/ssrn.3822407
 
     if (
         with_sample_weight
@@ -132,6 +136,7 @@ def test_balance_property(model, with_sample_weight, global_random_seed):
     else:
         model.fit(X, y)
 
+    # Assert balance property.
     if is_classifier(model):
         assert np.average(model.predict_proba(X)[:, 1], weights=sw) == pytest.approx(
             np.average(y, weights=sw), rel=rel
