@@ -11,7 +11,7 @@ import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
 
-from ._pd_utils import _get_feature_index
+from ._pd_utils import _check_feature_names, _get_feature_index
 from ..base import is_classifier, is_regressor
 from ..utils.extmath import cartesian
 from ..utils import check_array
@@ -265,7 +265,7 @@ def partial_dependence(
         also to generate values for the complement features when the
         `method` is 'brute'.
 
-    features : array-like of {int, str} or tuple of 2 {int, str}
+    features : array-like of {int, str}
         The feature (e.g. `[0]`) or pair of interacting features
         (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
 
@@ -489,6 +489,8 @@ def partial_dependence(
     features_indices = np.asarray(
         _get_column_indices(X, features), dtype=np.int32, order="C"
     ).ravel()
+
+    feature_names = _check_feature_names(X, feature_names)
 
     n_features = X.shape[1]
     if categorical_features is None:

@@ -9,7 +9,7 @@ from scipy.stats.mstats import mquantiles
 from joblib import Parallel
 
 from .. import partial_dependence
-from .._pd_utils import _get_feature_index
+from .._pd_utils import _check_feature_names, _get_feature_index
 from ...base import is_regressor
 from ...utils import Bunch
 from ...utils import check_array
@@ -546,20 +546,7 @@ class PartialDependenceDisplay:
             X = check_array(X, force_all_finite="allow-nan", dtype=object)
         n_features = X.shape[1]
 
-        # convert feature_names to list
-        if feature_names is None:
-            if hasattr(X, "loc"):
-                # get the column names for a pandas dataframe
-                feature_names = X.columns.tolist()
-            else:
-                # define a list of numbered indices for a numpy array
-                feature_names = [str(i) for i in range(n_features)]
-        elif hasattr(feature_names, "tolist"):
-            # convert numpy array or pandas index to a list
-            feature_names = feature_names.tolist()
-        if len(set(feature_names)) != len(feature_names):
-            raise ValueError("feature_names should not contain duplicates.")
-
+        feature_names = _check_feature_names(X, feature_names)
         # expand kind to always be a list of str
         kind_ = [kind] * len(features) if isinstance(kind, str) else kind
         if len(kind_) != len(features):
