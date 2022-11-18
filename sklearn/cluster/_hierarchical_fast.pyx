@@ -25,13 +25,13 @@ from numpy.math cimport INFINITY
 ###############################################################################
 # Utilities for computing the ward momentum
 
-cpdef void compute_ward_dist(
+def compute_ward_dist(
     const cnp.float64_t[::1] m_1,
     const cnp.float64_t[:, ::1] m_2,
     const cnp.intp_t[::1] coord_row,
     const cnp.intp_t[::1] coord_col,
     cnp.float64_t[::1] res
-) nogil:
+):
     cdef cnp.intp_t size_max = coord_row.shape[0]
     cdef cnp.intp_t n_features = m_2.shape[1]
     cdef cnp.intp_t i, j, row, col
@@ -124,7 +124,7 @@ def hc_get_heads(cnp.intp_t[:] parents, copy=True):
     return parents
 
 
-cpdef void _get_parents(
+def _get_parents(
     nodes,
     heads,
     const cnp.intp_t[:] parents,
