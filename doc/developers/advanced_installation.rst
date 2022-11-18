@@ -28,6 +28,7 @@ Installing a nightly build is the quickest way to:
 
 .. prompt:: bash $
 
+  pip uninstall scikit-learn --yes
   pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
 
 
