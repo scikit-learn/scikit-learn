@@ -63,9 +63,10 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
         """
         if (
             metric in ("euclidean", "sqeuclidean")
-            and not (issparse(X) ^ issparse(Y))
+            and not (issparse(X) ^ issparse(Y))  # "^" is the XOR operator
         ):
-            # Specialized implementation of ArgKmin for the Euclidean distance.
+            # Specialized implementation of ArgKmin for the Euclidean distance
+            # for the dense-dense and sparse-sparse cases.
             # This implementation computes the distances by chunk using
             # a decomposition of the Squared Euclidean distance.
             # This specialisation has an improved arithmetic intensity for both

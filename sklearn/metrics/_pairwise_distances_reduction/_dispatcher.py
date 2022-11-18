@@ -130,8 +130,10 @@ class BaseDistancesReductionDispatcher:
         # See: https://github.com/scikit-learn/scikit-learn/pull/23585#issuecomment-1247996669  # noqa
         # TODO: implement specialisation for (sq)euclidean on fused sparse-dense
         # using sparse-dense routines for matrix-vector multiplications.
+        # Currently, only dense-dense and sparse-sparse are optimized for
+        # the Euclidean case.
         fused_sparse_dense_euclidean_case_guard = not (
-            (is_valid_sparse_matrix(X) ^ is_valid_sparse_matrix(Y))
+            (is_valid_sparse_matrix(X) ^ is_valid_sparse_matrix(Y))  # "^" is XOR
             and isinstance(metric, str)
             and "euclidean" in metric
         )

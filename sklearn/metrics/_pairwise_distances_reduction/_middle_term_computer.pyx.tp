@@ -153,7 +153,7 @@ cdef class MiddleTermComputer{{name_suffix}}:
             )
 
         raise NotImplementedError(
-            "Both X and Y must be CSR sparse matrices xor numpy arrays."
+            "X and Y must be both CSR sparse matrices or both numpy arrays."
         )
 
 
@@ -406,8 +406,9 @@ cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_
 
 
 cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_suffix}}):
-    """Computes the middle term of the Euclidean distance between two chunked CSR matrices X_c and Y_c
-    and returns the result as a contiguous array.
+    """Middle term of the Euclidean distance between two chunked CSR matrices.
+
+    The result is return as a contiguous array.
 
             dist_middle_terms = - 2 X_c_i.Y_c_j^T
 

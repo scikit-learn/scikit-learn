@@ -564,10 +564,9 @@ def test_pairwise_distances_reduction_is_usable_for():
     assert not BaseDistancesReductionDispatcher.is_usable_for(
         X_csr, Y_csr, metric="sqeuclidean"
     )
-    # TODO: add this assertion once #24542 and #24715 are merged.
-    # assert BaseDistancesReductionDispatcher.is_usable_for(
-    #     X_csr, Y_csr, metric="euclidean"
-    # )
+    assert BaseDistancesReductionDispatcher.is_usable_for(
+        X_csr, Y_csr, metric="euclidean"
+    )
 
     # CSR matrices without non-zeros elements aren't currently supported
     # TODO: support CSR matrices without non-zeros elements
