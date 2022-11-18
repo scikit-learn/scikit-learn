@@ -350,7 +350,7 @@ class PartialDependenceDisplay:
             If `features[i]` is an integer or a string, a one-way PDP is created;
             if `features[i]` is a tuple, a two-way PDP is created (only supported
             with `kind='average'`). Each tuple must be of size 2.
-            if any entry is a string, then it must be in ``feature_names``.
+            If any entry is a string, then it must be in ``feature_names``.
 
         categorical_features : array-like of shape (n_features,) or shape \
                 (n_categorical_features,), dtype={bool, int, str}, default=None

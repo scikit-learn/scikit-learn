@@ -339,11 +339,11 @@ def partial_dependence(
 
     kind : {'average', 'individual', 'both'}, default='average'
         Whether to return the partial dependence averaged across all the
-        samples in the dataset or one line per sample or both.
+        samples in the dataset or one value per sample or both.
         See Returns below.
 
         Note that the fast `method='recursion'` option is only available for
-        `kind='average'`. Plotting individual dependencies requires using the
+        `kind='average'`. Computing individual dependencies requires using the
         slower `method='brute'` option.
 
         .. versionadded:: 0.24
