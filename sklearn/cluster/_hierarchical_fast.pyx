@@ -28,13 +28,13 @@ from numpy.math cimport INFINITY
 cpdef void compute_ward_dist(
     const cnp.float64_t[::1] m_1,
     const cnp.float64_t[:, ::1] m_2,
-    const cnp.npy_intp[::1] coord_row,
-    const cnp.npy_intp[::1] coord_col,
+    const cnp.intp_t[::1] coord_row,
+    const cnp.intp_t[::1] coord_col,
     cnp.float64_t[::1] res
 ) nogil:
-    cdef cnp.npy_intp size_max = coord_row.shape[0]
-    cdef cnp.npy_intp n_features = m_2.shape[1]
-    cdef cnp.npy_intp i, j, row, col
+    cdef cnp.intp_t size_max = coord_row.shape[0]
+    cdef cnp.intp_t n_features = m_2.shape[1]
+    cdef cnp.intp_t i, j, row, col
     cdef cnp.float64_t pa, n
 
     for i in range(size_max):
@@ -50,7 +50,7 @@ cpdef void compute_ward_dist(
 ###############################################################################
 # Utilities for cutting and exploring a hierarchical tree
 
-def _hc_get_descendent(cnp.npy_intp node, children, cnp.npy_intp n_leaves):
+def _hc_get_descendent(cnp.intp_t node, children, cnp.intp_t n_leaves):
     """
     Function returning all the descendent leaves of a set of nodes in the tree.
 
@@ -79,7 +79,7 @@ def _hc_get_descendent(cnp.npy_intp node, children, cnp.npy_intp n_leaves):
     # It is actually faster to do the accounting of the number of
     # elements is the list ourselves: len is a lengthy operation on a
     # chained list
-    cdef cnp.npy_intp i, n_indices = 1
+    cdef cnp.intp_t i, n_indices = 1
 
     while n_indices:
         i = ind.pop()
@@ -92,7 +92,7 @@ def _hc_get_descendent(cnp.npy_intp node, children, cnp.npy_intp n_leaves):
     return descendent
 
 
-def hc_get_heads(cnp.npy_intp[:] parents, copy=True):
+def hc_get_heads(cnp.intp_t[:] parents, copy=True):
     """Returns the heads of the forest, as defined by parents.
 
     Parameters
@@ -108,7 +108,7 @@ def hc_get_heads(cnp.npy_intp[:] parents, copy=True):
         The indices in the 'parents' of the tree heads
 
     """
-    cdef cnp.npy_intp parent, node0, node, size
+    cdef cnp.intp_t parent, node0, node, size
     if copy:
         parents = np.copy(parents)
     size = parents.size
@@ -127,7 +127,7 @@ def hc_get_heads(cnp.npy_intp[:] parents, copy=True):
 cpdef void _get_parents(
     nodes,
     heads,
-    const cnp.npy_intp[:] parents,
+    const cnp.intp_t[:] parents,
     cnp.int8_t[::1] not_visited
 ):
     """Returns the heads of the given nodes, as defined by parents.
@@ -146,7 +146,7 @@ cpdef void _get_parents(
         The tree nodes to consider (modified inplace)
 
     """
-    cdef cnp.npy_intp parent, node
+    cdef cnp.intp_t parent, node
 
     for node in nodes:
         parent = parents[node]
