@@ -35,7 +35,7 @@ cdef class DatasetsPair{{name_suffix}}:
 
     The handling of parallelization over chunks to compute the distances
     and aggregation for several rows at a time is done in dedicated
-    subclasses of :class:`BaseDistanceReductionDispatcher` that in-turn rely on
+    subclasses of :class:`BaseDistancesReductionDispatcher` that in-turn rely on
     subclasses of :class:`DatasetsPair` for each pair of rows in the data. The
     goal is to make it possible to decouple the generic parallelization and
     aggregation logic from metric-specific computation as much as possible.
