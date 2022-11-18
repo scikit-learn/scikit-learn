@@ -143,8 +143,7 @@ nrows = 2
 ncols = int(np.ceil(len(plot_list) / 2.0))
 fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=(6 * ncols, 4 * nrows))
 # check for matplotlib version to define axis merge method.
-matplotlib_version = parse_version(matplotlib.__version__)
-if matplotlib_version >= parse_version("3.3"):
+if parse_version(matplotlib.__version__) >= parse_version("3.3"):
     axes[0, 0].sharey(axes[0, 1])
 else:
     axes[0, 0].get_shared_y_axes().join(axes[0, 0], axes[0, 1])
