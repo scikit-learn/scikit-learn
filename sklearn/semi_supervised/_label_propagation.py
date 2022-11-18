@@ -276,7 +276,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         y : array-like of shape (n_samples,)
             Target class values with unlabeled points marked as -1.
             All unlabeled samples will be transductively assigned labels
-            internally, which are stored in :term:`transduction_`.
+            internally, which are stored in `transduction_`.
 
         Returns
         -------
@@ -498,7 +498,7 @@ class LabelPropagation(BaseLabelPropagation):
         y : array-like of shape (n_samples,)
             Target class values with unlabeled points marked as -1.
             All unlabeled samples will be transductively assigned labels
-            internally, which are stored in :term:`transduction_`.
+            internally, which are stored in `transduction_`.
 
         Returns
         -------
