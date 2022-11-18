@@ -729,7 +729,7 @@ class PartialDependenceDisplay:
                 percentiles=percentiles,
                 kind=kind_plot,
             )
-            for kind_plot, fxs, is_cat in zip(kind_, features, is_categorical)
+            for kind_plot, fxs in zip(kind_, features)
         )
 
         # For multioutput regression, we can only check the validity of target
