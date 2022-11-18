@@ -144,7 +144,7 @@ def test_ledoit_wolf():
     lw_cov_from_mle, lw_shrinkage_from_mle = ledoit_wolf(X_1d, assume_centered=True)
     assert_array_almost_equal(lw_cov_from_mle, lw.covariance_, 4)
     assert_almost_equal(lw_shrinkage_from_mle, lw.shrinkage_)
-    assert_array_almost_equal((X_1d**2).sum() / n_samples, lw.covariance_, 4)
+    assert_array_almost_equal((X_1d**2).mean(), lw.covariance_, 4)
 
     # test shrinkage coeff on a simple data set (without saving precision)
     lw = LedoitWolf(store_precision=False, assume_centered=True)
@@ -176,6 +176,10 @@ def test_ledoit_wolf():
     X_1d = X[:, 0].reshape((-1, 1))
     lw = LedoitWolf()
     lw.fit(X_1d)
+    assert_almost_equal(
+        X_1d.var(ddof=0),
+        _ledoit_wolf(X=X_1d, assume_centered=False, block_size=10000)[1]
+    )
     lw_cov_from_mle, lw_shrinkage_from_mle = ledoit_wolf(X_1d)
     assert_array_almost_equal(lw_cov_from_mle, lw.covariance_, 4)
     assert_almost_equal(lw_shrinkage_from_mle, lw.shrinkage_)
