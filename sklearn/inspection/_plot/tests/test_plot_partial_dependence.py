@@ -686,6 +686,7 @@ def test_plot_partial_dependence_with_categorical(
     model = make_pipeline(preprocessor, LinearRegression())
     model.fit(X, y)
 
+    # single feature
     disp = PartialDependenceDisplay.from_estimator(
         model,
         X,
@@ -697,6 +698,28 @@ def test_plot_partial_dependence_with_categorical(
     assert disp.figure_ is pyplot.gcf()
     assert disp.bars_.shape == (1, 1)
     assert disp.bars_[0][0] is not None
+    assert disp.lines_.shape == (1, 1)
+    assert disp.lines_[0][0] is None
+    assert disp.contours_.shape == (1, 1)
+    assert disp.contours_[0][0] is None
+    assert disp.deciles_vlines_.shape == (1, 1)
+    assert disp.deciles_vlines_[0][0] is None
+    assert disp.deciles_hlines_.shape == (1, 1)
+    assert disp.deciles_hlines_[0][0] is None
+    assert disp.axes_[0, 0].get_legend() is None
+
+    # interaction between two features
+    disp = PartialDependenceDisplay.from_estimator(
+        model,
+        X,
+        features=[("col_A", "col_C")],
+        feature_names=column_name,
+        categorical_features=categorical_features,
+    )
+
+    assert disp.figure_ is pyplot.gcf()
+    assert disp.bars_.shape == (1, 1)
+    assert disp.bars_[0][0] is None
     assert disp.lines_.shape == (1, 1)
     assert disp.lines_[0][0] is None
     assert disp.contours_.shape == (1, 1)
