@@ -142,10 +142,9 @@ cdef class HistogramBuilder:
                 shape=(self.n_features, self.n_bins),
                 dtype=HISTOGRAM_DTYPE
             )
-            bint has_interaction_cst = False
+            bint has_interaction_cst = allowed_features is not None
             int n_threads = self.n_threads
 
-        has_interaction_cst = allowed_features is not None
         if has_interaction_cst:
             n_allowed_features = allowed_features.shape[0]
 
@@ -266,10 +265,9 @@ cdef class HistogramBuilder:
                 shape=(self.n_features, self.n_bins),
                 dtype=HISTOGRAM_DTYPE
             )
-            bint has_interaction_cst = False
+            bint has_interaction_cst = allowed_features is not None
             int n_threads = self.n_threads
 
-        has_interaction_cst = allowed_features is not None
         if has_interaction_cst:
             n_allowed_features = allowed_features.shape[0]
 
@@ -281,11 +279,13 @@ cdef class HistogramBuilder:
             else:
                 feature_idx = f_idx
 
-            _subtract_histograms(feature_idx,
-                                self.n_bins,
-                                parent_histograms,
-                                sibling_histograms,
-                                histograms)
+            _subtract_histograms(
+                feature_idx,
+                self.n_bins,
+                parent_histograms,
+                sibling_histograms,
+                histograms,
+            )
         return histograms
 
 
