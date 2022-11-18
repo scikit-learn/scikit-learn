@@ -808,9 +808,13 @@ class BiclusterMixin:
 class TransformerMixin(_SetOutputMixin):
     """Mixin class for all transformers in scikit-learn.
 
-    If :term:`get_feature_names_out` is defined and `auto_wrap_output` is True,
-    then `BaseEstimator` will automatically wrap `transform` and `fit_transform` to
-    follow the `set_output` API. See the :ref:`developer_api_set_output` for details.
+    If :term:`get_feature_names_out` is defined, then `BaseEstimator` will
+    automatically wrap `transform` and `fit_transform` to follow the `set_output`
+    API. See the :ref:`developer_api_set_output` for details.
+
+    :class:`base.OneToOneFeatureMixin` and
+    :class:`base.ClassNamePrefixFeaturesOutMixin` are helpful mixins for
+    defining :term:`get_feature_names_out`.
     """
 
     def fit_transform(self, X, y=None, **fit_params):
@@ -847,11 +851,11 @@ class TransformerMixin(_SetOutputMixin):
             return self.fit(X, y, **fit_params).transform(X)
 
 
-class _OneToOneFeatureMixin:
+class OneToOneFeatureMixin:
     """Provides `get_feature_names_out` for simple transformers.
 
-    Assumes there's a 1-to-1 correspondence between input features
-    and output features.
+    This mixin assumes there's a 1-to-1 correspondence between input features
+    and output features, such as :class:`~preprocessing.StandardScaler`.
     """
 
     def get_feature_names_out(self, input_features=None):
@@ -877,14 +881,25 @@ class _OneToOneFeatureMixin:
         return _check_feature_names_in(self, input_features)
 
 
-class _ClassNamePrefixFeaturesOutMixin:
+class ClassNamePrefixFeaturesOutMixin:
     """Mixin class for transformers that generate their own names by prefixing.
 
-    Assumes that `_n_features_out` is defined for the estimator.
+    This mixin is useful when the transformer needs to generate its own feature
+    names out, such as :class:`~decomposition.PCA`. For example, if
+    :class:`~decomposition.PCA` outputs 3 features, then the generated feature
+    names out are: `["pca0", "pca1", "pca2"]`.
+
+    This mixin assumes that a `_n_features_out` attribute is defined when the
+    transformer is fitted. `_n_features_out` is the number of output features
+    that the transformer will return in `transform` of `fit_transform`.
     """
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
+
+        The feature names out will prefixed by the lowercased class name. For
+        example, if the transformer outputs 3 features, then the feature names
+        out are: `["class_name0", "class_name1", "class_name2"]`.
 
         Parameters
         ----------
