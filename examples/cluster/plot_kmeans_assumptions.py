@@ -12,7 +12,7 @@ unintuitive and possibly undesirable clusters.
 - Anisotropically distributed blobs: k-means consists of minimizing sample's
   euclidean distances to the centroid of the cluster they are assigned
   to. As a consequence, k-means is more appropriate for clusters that are
-  normally distributed with a spherical covariance matrix.
+  isotropic and normally distributed (i.e. spherical gaussians).
 - Unequal variance: k-means is equivalent to taking the maximum likelihood
   estimator for a "mixture" of k gaussian distributions with the same variances
   but with possibly different means.
@@ -20,7 +20,7 @@ unintuitive and possibly undesirable clusters.
   that it requires similar cluster sizes to perform well, yet minimizing
   euclidean distances does mean that the more sparse and high-dimensional the
   problem is, the higher is the need to run the algorithm with different
-  centroid seeds to ensure a minimal inertia.
+  centroid seeds to ensure a global minimal inertia.
 
 """
 
@@ -30,6 +30,10 @@ unintuitive and possibly undesirable clusters.
 # %%
 # Data generation
 # ---------------
+#
+# The function :func:`~sklearn.datasets.make_blobs` generates isotropic gaussian
+# blobs. To obtain anisotropic (elliptical) gaussian blobs one has to define a
+# linear `transformation`.
 
 import numpy as np
 from sklearn.datasets import make_blobs
