@@ -220,3 +220,20 @@ def test_set_output_mixin_custom_mixin():
     est = BothMixinEstimator()
     assert est.custom_parameter == 123
     assert hasattr(est, "set_output")
+
+
+def test__wrap_in_pandas_container_column_errors():
+    """If a callable `columns` errors, it has the same semantics as columns=None."""
+    pd = pytest.importorskip("pandas")
+
+    def get_columns():
+        raise ValueError("No feature names defined")
+
+    X_df = pd.DataFrame({"feat1": [1, 2, 3], "feat2": [3, 4, 5]})
+
+    X_wrapped = _wrap_in_pandas_container(X_df, columns=get_columns)
+    assert_array_equal(X_wrapped.columns, X_df.columns)
+
+    X_np = np.asarray([[1, 3], [2, 4], [3, 5]])
+    X_wrapped = _wrap_in_pandas_container(X_np, columns=get_columns)
+    assert_array_equal(X_wrapped.columns, range(X_np.shape[1]))
