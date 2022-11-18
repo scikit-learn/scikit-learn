@@ -132,7 +132,7 @@ results_df = pd.DataFrame(results, columns=columns)
 # Define what to plot
 lines = "Stopping criterion"
 x_axis = "max_iter"
-styles = ["-", "--", "-"]
+styles = ["-.", "--", "-"]
 
 # First plot: train and test scores
 fig, axes = plt.subplots(nrows=1, ncols=2, sharey=True, figsize=(12, 4))
