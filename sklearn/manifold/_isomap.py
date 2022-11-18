@@ -399,11 +399,6 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
-        if self.metric == "precomputed":
-            X = _check_precomputed(X)
-        else:
-            X = self._validate_data(X, accept_sparse="csr", order="C", reset=False)
-
         if self.n_neighbors is not None:
             distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
         else:
@@ -416,7 +411,13 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         n_samples_fit = self.nbrs_.n_samples_fit_
         n_queries = distances.shape[0]
-        G_X = np.zeros((n_queries, n_samples_fit), X.dtype)
+
+        if hasattr(X, "dtype") and X.dtype == np.float32:
+            dtype = np.float32
+        else:
+            dtype = np.float64
+
+        G_X = np.zeros((n_queries, n_samples_fit), dtype)
         for i in range(n_queries):
             G_X[i] = np.min(self.dist_matrix_[indices[i]] + distances[i][:, None], 0)
 
