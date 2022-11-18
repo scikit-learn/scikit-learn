@@ -359,7 +359,7 @@ Changelog
 - |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor`, with `verbose>=1`, print detailed timing
   information on computing histograms and finding best splits. The time spent in the
-  root node were previously missing and is now included in the printed information.
+  root node was previously missing and is now included in the printed information.
   :pr:`24894` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.feature_selection`
