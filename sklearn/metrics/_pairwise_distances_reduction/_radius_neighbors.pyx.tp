@@ -84,11 +84,10 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
         """
         if (
             metric in ("euclidean", "sqeuclidean")
-            and not issparse(X)
-            and not issparse(Y)
+            and not (issparse(X) ^ issparse(Y))  # "^" is XOR
         ):
             # Specialized implementation of RadiusNeighbors for the Euclidean
-            # distance.
+            # distance for the dense-dense and sparse-sparse cases.
             # This implementation computes the distances by chunk using
             # a decomposition of the Squared Euclidean distance.
             # This specialisation has an improved arithmetic intensity for both
@@ -311,7 +310,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
             for j in range(deref(self.neigh_indices)[i].size()):
                 deref(self.neigh_distances)[i][j] = (
                         self.datasets_pair.distance_metric._rdist_to_dist(
-                            # Guard against eventual -0., causing nan production.
+                            # Guard against potential -0., causing nan production.
                             max(deref(self.neigh_distances)[i][j], 0.)
                         )
                 )
@@ -338,8 +337,10 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
     ):
         if (
             metric_kwargs is not None and
-            len(metric_kwargs) > 0 and
-            "Y_norm_squared" not in metric_kwargs
+            len(metric_kwargs) > 0 and (
+                "Y_norm_squared" not in metric_kwargs or
+                "X_norm_squared" not in metric_kwargs
+            )
         ):
             warnings.warn(
                 f"Some metric_kwargs have been passed ({metric_kwargs}) but aren't "
@@ -374,16 +375,31 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
                 metric_kwargs.pop("Y_norm_squared"),
                 ensure_2d=False,
                 input_name="Y_norm_squared",
-                dtype=np.float64
+                dtype=np.float64,
             )
         else:
-            self.Y_norm_squared = _sqeuclidean_row_norms{{name_suffix}}(Y, self.effective_n_threads)
+            self.Y_norm_squared = _sqeuclidean_row_norms{{name_suffix}}(
+                Y,
+                self.effective_n_threads,
+            )
 
-        # Do not recompute norms if datasets are identical.
-        self.X_norm_squared = (
-            self.Y_norm_squared if X is Y else
-            _sqeuclidean_row_norms{{name_suffix}}(X, self.effective_n_threads)
-        )
+        if metric_kwargs is not None and "X_norm_squared" in metric_kwargs:
+            self.X_norm_squared = check_array(
+                metric_kwargs.pop("X_norm_squared"),
+                ensure_2d=False,
+                input_name="X_norm_squared",
+                dtype=np.float64,
+            )
+        else:
+            # Do not recompute norms if datasets are identical.
+            self.X_norm_squared = (
+                self.Y_norm_squared if X is Y else
+                _sqeuclidean_row_norms{{name_suffix}}(
+                    X,
+                    self.effective_n_threads,
+                )
+            )
+
         self.use_squared_distances = use_squared_distances
 
         if use_squared_distances:
@@ -480,7 +496,7 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
     ) nogil:
         cdef:
             ITYPE_t i, j
-            DTYPE_t squared_dist_i_j
+            DTYPE_t sqeuclidean_dist_i_j
             ITYPE_t n_X = X_end - X_start
             ITYPE_t n_Y = Y_end - Y_start
             DTYPE_t *dist_middle_terms = self.middle_term_computer._compute_dist_middle_terms(
@@ -490,17 +506,18 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
         # Pushing the distance and their associated indices in vectors.
         for i in range(n_X):
             for j in range(n_Y):
-                # Using the squared euclidean distance as the rank-preserving distance:
-                #
-                #             ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
-                #
-                squared_dist_i_j = (
+                sqeuclidean_dist_i_j = (
                     self.X_norm_squared[i + X_start]
                     + dist_middle_terms[i * n_Y + j]
                     + self.Y_norm_squared[j + Y_start]
                 )
-                if squared_dist_i_j <= self.r_radius:
-                    deref(self.neigh_distances_chunks[thread_num])[i + X_start].push_back(squared_dist_i_j)
+
+                # Catastrophic cancellation might cause -0. to be present,
+                # e.g. when computing d(x_i, y_i) when X is Y.
+                sqeuclidean_dist_i_j = max(0., sqeuclidean_dist_i_j)
+
+                if sqeuclidean_dist_i_j <= self.r_radius:
+                    deref(self.neigh_distances_chunks[thread_num])[i + X_start].push_back(sqeuclidean_dist_i_j)
                     deref(self.neigh_indices_chunks[thread_num])[i + X_start].push_back(j + Y_start)
 
 {{endfor}}
