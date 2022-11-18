@@ -950,7 +950,7 @@ class OneHotEncoder(_BaseEncoder):
         ]
 
         # create resulting array of appropriate dtype
-        dt = np.find_common_type([cat.dtype for cat in transformed_features], [])
+        dt = np.result_type(*[cat.dtype for cat in transformed_features])
         X_tr = np.empty((n_samples, n_features), dtype=dt)
 
         j = 0
@@ -1353,7 +1353,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
             raise ValueError(msg.format(n_features, X.shape[1]))
 
         # create resulting array of appropriate dtype
-        dt = np.find_common_type([cat.dtype for cat in self.categories_], [])
+        dt = np.result_type(*[cat.dtype for cat in self.categories_])
         X_tr = np.empty((n_samples, n_features), dtype=dt)
 
         found_unknown = {}
