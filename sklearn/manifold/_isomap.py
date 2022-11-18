@@ -14,7 +14,6 @@ from scipy.sparse.csgraph import connected_components
 from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..neighbors import radius_neighbors_graph
-from ..neighbors._base import _check_precomputed
 from ..utils.validation import check_is_fitted
 from ..decomposition import KernelPCA
 from ..preprocessing import KernelCenterer
@@ -398,7 +397,6 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             X transformed in the new space.
         """
         check_is_fitted(self)
-
         if self.n_neighbors is not None:
             distances, indices = self.nbrs_.kneighbors(X, return_distance=True)
         else:
