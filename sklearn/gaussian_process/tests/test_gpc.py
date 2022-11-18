@@ -122,8 +122,7 @@ def test_random_starts(global_random_seed):
     # Test that an increasing number of random-starts of GP fitting only
     # increases the log marginal likelihood of the chosen theta.
     n_samples, n_features = 25, 2
-    random_seed = global_random_seed % 10
-    rng = np.random.RandomState(random_seed)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.randn(n_samples, n_features) * 2 - 1
     y = (np.sin(X).sum(axis=1) + np.sin(3 * X).sum(axis=1)) > 0
 
@@ -135,7 +134,7 @@ def test_random_starts(global_random_seed):
         gp = GaussianProcessClassifier(
             kernel=kernel,
             n_restarts_optimizer=n_restarts_optimizer,
-            random_state=random_seed,
+            random_state=global_random_seed,
         ).fit(X, y)
         lml = gp.log_marginal_likelihood(gp.kernel_.theta)
         assert lml > last_lml - np.finfo(np.float32).eps
@@ -149,7 +148,7 @@ def test_custom_optimizer(kernel, global_random_seed):
     # Test that GPC can use externally defined optimizers.
     # Define a dummy optimizer that simply tests 10 random hyperparameters
     def optimizer(obj_func, initial_theta, bounds):
-        rng = np.random.RandomState(global_random_seed % 10)
+        rng = np.random.RandomState(global_random_seed)
         theta_opt, func_min = initial_theta, obj_func(
             initial_theta, eval_gradient=False
         )
