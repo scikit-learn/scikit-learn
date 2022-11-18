@@ -25,7 +25,7 @@ of all other input features (the 'complement' features). Intuitively, we can
 interpret the partial dependence as the expected target response as a
 function of the input features of interest.
 
-Due to the limits of human perception, the size of the set of input feature of
+Due to the limits of human perception, the size of the set of input features of
 interest must be small (usually, one or two) thus the input features of interest
 are usually chosen among the most important features.
 
@@ -73,9 +73,9 @@ and a two-way PDP between the two features::
 You can access the newly created figure and Axes objects using ``plt.gcf()``
 and ``plt.gca()``.
 
-If you wish to plot partial dependence of categorical features, you need to specify
-which features to be considered as such using the parameter `categorical_features`. This
-parameters takes a list of indices or names of the categorical features or a boolean
+To make a partial dependence plot with categorical features, you need to specify
+which features are categorical using the parameter `categorical_features`. This
+parameter takes a list of indices, names of the categorical features or a boolean
 mask. The graphical representation of partial dependence for categorical features is
 a bar plot or a 2D heatmap.
 

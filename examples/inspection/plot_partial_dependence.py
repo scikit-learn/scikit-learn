@@ -47,7 +47,7 @@ bikes = fetch_openml("Bike_Sharing_Demand", version=2, as_frame=True, parser="pa
 X, y = bikes.data.copy(), bikes.target
 
 # %%
-# The feature `"weather"` have a particularity: the category `"heavy_rain"` is a rare
+# The feature `"weather"` has a particularity: the category `"heavy_rain"` is a rare
 # category.
 X["weather"].value_counts()
 
@@ -68,7 +68,7 @@ X_train, y_train = X[mask_training], y[mask_training]
 X_test, y_test = X[~mask_training], y[~mask_training]
 
 # %%
-# We can check the dataset information to see that we have heterogeneous data type. We
+# We can check the dataset information to see that we have heterogeneous data types. We
 # will have to preprocess the different columns accordingly.
 X_train.info()
 
@@ -77,7 +77,7 @@ X_train.info()
 # categorical features. In addition, we will consider the date and time information as
 # categorical features as well.
 #
-# So we will manually defined the columns containing the numerical and categorical
+# We will manually define the columns containing numerical and categorical
 # features.
 numerical_features = [
     "temp",
@@ -88,9 +88,9 @@ numerical_features = [
 categorical_features = X_train.columns.drop(numerical_features)
 
 # %%
-# Before to go into details regarding the preprocessing of the different machine
-# learning pipeline, we will try to get some additional intuitions regarding the dataset
-# that could be helpful to understand the model statistical performance and results of
+# Before we go into the details regarding the preprocessing of the different machine
+# learning pipelines, we will try to get some additional intuition regarding the dataset
+# that will be helpful to understand the model's statistical performance and results of
 # the partial dependence analysis.
 #
 # We will plot the average number of bike rentals by grouping the data by season and
@@ -168,8 +168,8 @@ mlp_preprocessor
 # Preprocessor for the gradient boosting model
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
-# For the gradient boosting model, we let the numerical features as-is and only
-# end-encode the categorical features using a
+# For the gradient boosting model, we leave the numerical features as-is and only
+# encode the categorical features using a
 # :class:`~sklearn.preprocessing.OrdinalEncoder`.
 from sklearn.preprocessing import OrdinalEncoder
 
@@ -335,16 +335,16 @@ _ = display.figure_.suptitle(
 # We observe that the spring season is the lowest bar for the season feature. With the
 # weather feature, the rain category is the lowest bar. Regarding the hour feature,
 # we see two peaks around the 7 am and 6 pm. These findings are in line with the
-# with the observations we made earlier on the dataset.
+# the observations we made earlier on the dataset.
 #
 # However, it is worth noting that we are creating potential meaningless
 # synthetic samples if features are correlated.
 #
 # ICE vs. PDP
 # """""""""""
-# PDP is an average of the marginal effects of the features. Indeed, we averaging the
+# PDP is an average of the marginal effects of the features. We are averaging the
 # response of all samples of the provided set. Thus, some effects could be hidden. In
-# this regards, it is possible to plot each individual response. This representation is
+# this regard, it is possible to plot each individual response. This representation is
 # called the Individual Effect Plot (ICE). In the plot below, we plot 50 randomly
 # selected ICEs for the temperature and humidity features.
 print("Computing partial dependence plots and individual conditional expectation...")
@@ -369,14 +369,14 @@ _ = display.figure_.suptitle("ICE and PDP representations", fontsize=16)
 
 # %%
 # We see that the ICE for the temperature feature gives us some additional information:
-# Some of the ICE lines are flat while some others shows a decrease of the dependence
+# Some of the ICE lines are flat while some others show a decrease of the dependence
 # for temperature above 35 degrees Celsius. We observe a similar pattern for the
 # humidity feature: some of the ICEs lines show a sharp decrease when the humidity is
 # above 80%.
 #
-# Since that all ICE lines are not parallel also indicates us that the model find
-# interactions between features. We can repeat the experiment by constraining this
-# gradient boosting models to not find any interaction between features using the
+# Not all ICE lines are parallel, this indicates that the model finds
+# interactions between features. We can repeat the experiment by constraining the
+# gradient boosting model to not use any interactions between features using the
 # parameter `interaction_cst`:
 from sklearn.base import clone
 
@@ -436,7 +436,7 @@ plt.subplots_adjust(wspace=0.3)
 # rentals. For a temperature lower than 20 degrees Celsius, both the temperature and
 # humidity will have an impact on the number of bike rentals.
 #
-# We can reuse the gradient boosting model that constrained the interaction between
+# We can reuse the gradient boosting model with interaction constraints between
 # features to see the difference:
 print("Computing partial dependence plots...")
 features_info = {

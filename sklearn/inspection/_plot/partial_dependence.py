@@ -154,7 +154,7 @@ class PartialDependenceDisplay:
 
         .. versionadded:: 0.24
 
-    is_categorical : list of (bool,) or list of (bool, bool)
+    is_categorical : list of (bool,) or list of (bool, bool), default=None
         Whether each target feature in `features` is categorical or not.
         The list should be same size as `features`. If `None`, all features
         are assumed to be continuous.
@@ -644,7 +644,7 @@ class PartialDependenceDisplay:
                 (False,) if len(fxs) == 1 else (False, False) for fxs in features
             ]
         else:
-            # we need to create a boolean indicator of which feature are
+            # we need to create a boolean indicator of which features are
             # categorical from the categorical_features list.
             categorical_features = np.array(categorical_features, copy=False)
             if categorical_features.dtype.kind == "b":

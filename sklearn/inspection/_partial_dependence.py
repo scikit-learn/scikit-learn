@@ -85,7 +85,7 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
         raise ValueError("'grid_resolution' must be strictly greater than 1.")
 
     values = []
-    for is_cat, feature in zip(is_categorical, range(X.shape[1])):
+    for feature, is_cat in enumerate(is_categorical):
         uniques = np.unique(_safe_indexing(X, feature, axis=1))
         if is_cat or uniques.shape[0] < grid_resolution:
             # Use the unique values either because:
@@ -268,11 +268,13 @@ def partial_dependence(
         (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
 
     is_categorical : array-like of bool or tuple of 2 bool, default=None
-        Specifies if the `features` provided are categorical or continuous.
+        Specifies whether the `features` provided are categorical or not.
         When a feature is declared as categorical, the grid values will be
         the category of this feature, ignoring the `grid_resolution` parameter.
         This array has the same design has `features`. If `None`, all features
         are considered as continuous.
+        
+        .. versionadded:: 1.2
 
     response_method : {'auto', 'predict_proba', 'decision_function'}, \
             default='auto'
