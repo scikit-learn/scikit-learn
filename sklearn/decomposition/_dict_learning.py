@@ -18,7 +18,7 @@ from joblib import Parallel, effective_n_jobs
 from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils import deprecated
-from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
 from ..utils.fixes import delayed
@@ -510,6 +510,10 @@ def _dict_learning(
     method_max_iter,
 ):
     """Main dictionary learning algorithm"""
+    _check_positive_coding(method, positive_code)
+
+    method = "lasso_" + method
+
     t0 = time.time()
     # Init the code and the dictionary with SVD of Y
     if code_init is not None and dict_init is not None:
@@ -1033,6 +1037,26 @@ def dict_learning_online(
         return dictionary
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "fit_algorithm": [StrOptions({"lars", "cd"})],
+        "n_jobs": [Integral, None],
+        "dict_init": [np.ndarray, None],
+        "code_init": [np.ndarray, None],
+        "callback": [callable, None],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+        "return_n_iter": ["boolean"],
+        "positive_dict": ["boolean"],
+        "positive_code": ["boolean"],
+        "method_max_iter": [[Interval(Integral, 0, None, closed="left")]],
+    }
+)
 def dict_learning(
     X,
     n_components,
@@ -1069,7 +1093,7 @@ def dict_learning(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Data matrix.
 
     n_components : int
@@ -1161,7 +1185,6 @@ def dict_learning(
     SparsePCA : Sparse Principal Components Analysis.
     MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
     """
-    alpha = float(alpha)  # Avoid integer division problems
     estimator = DictionaryLearning(
         n_components=n_components,
         alpha=alpha,
@@ -1178,14 +1201,14 @@ def dict_learning(
         positive_dict=positive_dict,
         transform_max_iter=method_max_iter,
     )
-    estimator.fit(X=X)
+    estimator.fit(X)
 
     if return_n_iter:
         return (
             estimator.code_,
             estimator.components_,
             estimator.error_,
-            estimator.n_iter_ + 1,
+            estimator.n_iter_,
         )
     return estimator.code_, estimator.components_, estimator.error_
 
@@ -1567,6 +1590,11 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     verbose : bool, default=False
         To control the verbosity of the procedure.
 
+    callback : callable, default=None
+        Callable that gets invoked every five iterations.
+
+        .. versionadded:: 1.2
+
     split_sign : bool, default=False
         Whether to split the sparse feature vector into the concatenation of
         its negative part and its positive part. This can improve the
@@ -1595,9 +1623,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         .. versionadded:: 0.22
 
-    callback : callable, default=None
-        Callable that gets invoked every five iterations.
-
     Attributes
     ----------
     components_ : ndarray of shape (n_components, n_features)
@@ -1605,6 +1630,11 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     error_ : array
         vector of errors at each iteration
+
+    code_ : ndarray of shape (n_samples, n_components)
+        Sparse code factor extracted from the data.
+
+        .. versionadded:: 1.2
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1619,9 +1649,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     n_iter_ : int
         Number of iterations run.
-
-    code_ : ndarray of shape (n_samples, n_components)
-        Sparse code factor extracted from the data.
 
     See Also
     --------
@@ -1681,13 +1708,13 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         "n_jobs": [Integral, None],
         "code_init": [np.ndarray, None],
         "dict_init": [np.ndarray, None],
+        "callback": [callable, None],
         "verbose": ["verbose"],
         "split_sign": ["boolean"],
         "random_state": ["random_state"],
         "positive_code": ["boolean"],
         "positive_dict": ["boolean"],
         "transform_max_iter": [Interval(Integral, 0, None, closed="left")],
-        "callback": [callable, None],
     }
 
     def __init__(
@@ -1704,13 +1731,13 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         n_jobs=None,
         code_init=None,
         dict_init=None,
+        callback=None,
         verbose=False,
         split_sign=False,
         random_state=None,
         positive_code=False,
         positive_dict=False,
         transform_max_iter=1000,
-        callback=None,
     ):
 
         super().__init__(
@@ -1729,10 +1756,10 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.fit_algorithm = fit_algorithm
         self.code_init = code_init
         self.dict_init = dict_init
+        self.callback = callback
         self.verbose = verbose
         self.random_state = random_state
         self.positive_dict = positive_dict
-        self.callback = callback
 
     def fit(self, X, y=None):
         """Fit the model from data in X.
@@ -1753,12 +1780,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         """
         self._validate_params()
 
-        _check_positive_coding(method=self.fit_algorithm, positive=self.positive_code)
-
-        method = "lasso_" + self.fit_algorithm
-
         random_state = check_random_state(self.random_state)
-
         X = self._validate_data(X)
         if self.n_components is None:
             n_components = X.shape[1]
@@ -1771,7 +1793,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
             alpha=self.alpha,
             tol=self.tol,
             max_iter=self.max_iter,
-            method=method,
+            method=self.fit_algorithm,
             method_max_iter=self.transform_max_iter,
             n_jobs=self.n_jobs,
             code_init=self.code_init,
