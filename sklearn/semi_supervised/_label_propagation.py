@@ -105,6 +105,34 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
          ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
          ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
          for more details.
+
+    Attributes
+    ----------
+    X_ : ndarray of shape (n_samples, n_features)
+        Input array.
+
+    classes_ : ndarray of shape (n_classes,)
+        The distinct labels used in classifying instances.
+
+    label_distributions_ : ndarray of shape (n_samples, n_classes)
+        Categorical distribution for each item.
+
+    transduction_ : ndarray of shape (n_samples,)
+        Label assigned to each item during :term:`fit`.
+
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
+        .. versionadded:: 0.24
+
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when `X`
+        has feature names that are all strings.
+
+        .. versionadded:: 1.0
+
+    n_iter_ : int
+        Number of iterations run.
     """
 
     _parameter_constraints: dict = {
@@ -244,7 +272,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         y : array-like of shape (n_samples,)
             Target class values with unlabeled points marked as -1.
             All unlabeled samples will be transductively assigned labels
-            internally.
+            internally, which are stored in :term:`transduction_`.
 
         Returns
         -------
@@ -371,7 +399,7 @@ class LabelPropagation(BaseLabelPropagation):
         Categorical distribution for each item.
 
     transduction_ : ndarray of shape (n_samples)
-        Label assigned to each item via the transduction.
+        Label assigned to each item during :term:`fit`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -466,7 +494,7 @@ class LabelPropagation(BaseLabelPropagation):
         y : array-like of shape (n_samples,)
             Target class values with unlabeled points marked as -1.
             All unlabeled samples will be transductively assigned labels
-            internally.
+            internally, which are stored in :term:`transduction_`.
 
         Returns
         -------
@@ -531,7 +559,7 @@ class LabelSpreading(BaseLabelPropagation):
         Categorical distribution for each item.
 
     transduction_ : ndarray of shape (n_samples,)
-        Label assigned to each item via the transduction.
+        Label assigned to each item during :term:`fit`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
