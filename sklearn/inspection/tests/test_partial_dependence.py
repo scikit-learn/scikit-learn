@@ -547,11 +547,6 @@ class NoPredictProbaNoDecisionFunction(ClassifierMixin, BaseEstimator):
             {"features": [0], "method": "recursion"},
             "Only the following estimators support the 'recursion' method:",
         ),
-        (
-            LinearRegression(),
-            {"features": [0, 1], "is_categorical": [False, True, False]},
-            "`is_categorical` should contain the same number of elements as `features`",
-        ),
     ],
 )
 def test_partial_dependence_error(estimator, params, err_msg):

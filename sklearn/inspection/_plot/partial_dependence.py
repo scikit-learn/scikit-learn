@@ -9,6 +9,7 @@ from scipy.stats.mstats import mquantiles
 from joblib import Parallel
 
 from .. import partial_dependence
+from .._pd_utils import _get_feature_index
 from ...base import is_regressor
 from ...utils import Bunch
 from ...utils import check_array
@@ -17,35 +18,6 @@ from ...utils import check_random_state
 from ...utils import _safe_indexing
 from ...utils.fixes import delayed
 from ...utils._encode import _unique
-
-
-def _get_feature_index(fx, feature_names=None):
-    """Get feature index.
-
-    Parameters
-    ----------
-    fx : int or str
-        Feature index or feature name.
-
-    feature_names : list of str, default=None
-        All feature names from which to search the indices.
-
-    Returns
-    -------
-    idx : int
-        Feature index.
-    """
-    if isinstance(fx, str):
-        if feature_names is None:
-            raise ValueError(
-                "When the feature is a string, `feature_names` should be a "
-                "list of feature names."
-            )
-        try:
-            fx = feature_names.index(fx)
-        except ValueError as e:
-            raise ValueError(f"Feature {fx} not in feature_names") from e
-    return int(fx)
 
 
 class PartialDependenceDisplay:
@@ -749,7 +721,8 @@ class PartialDependenceDisplay:
                 estimator,
                 X,
                 fxs,
-                is_categorical=is_cat,
+                feature_names=feature_names,
+                categorical_features=categorical_features,
                 response_method=response_method,
                 method=method,
                 grid_resolution=grid_resolution,

@@ -11,6 +11,7 @@ import numpy as np
 from scipy import sparse
 from scipy.stats.mstats import mquantiles
 
+from ._pd_utils import _get_feature_index
 from ..base import is_classifier, is_regressor
 from ..utils.extmath import cartesian
 from ..utils import check_array
@@ -218,7 +219,8 @@ def partial_dependence(
     X,
     features,
     *,
-    is_categorical=None,
+    feature_names=None,
+    categorical_features=None,
     response_method="auto",
     percentiles=(0.05, 0.95),
     grid_resolution=100,
@@ -267,13 +269,25 @@ def partial_dependence(
         The feature (e.g. `[0]`) or pair of interacting features
         (e.g. `[(0, 1)]`) for which the partial dependency should be computed.
 
-    is_categorical : array-like of bool or tuple of 2 bool, default=None
-        Specifies whether the `features` provided are categorical or not.
-        When a feature is declared as categorical, the grid values will be
-        the category of this feature, ignoring the `grid_resolution` parameter.
-        This array has the same design has `features`. If `None`, all features
-        are considered as continuous.
-        
+    categorical_features : array-like of shape (n_features,) or shape \
+            (n_categorical_features,), dtype={bool, int, str}, default=None
+        Indicates the categorical features.
+
+        - `None`: no feature will be considered categorical;
+        - boolean array-like: boolean mask of shape `(n_features,)`
+            indicating which features are categorical. Thus, this array has
+            the same shape has `X.shape[1]`;
+        - integer or string array-like: integer indices or strings
+            indicating categorical features.
+
+        .. versionadded:: 1.2
+
+    feature_names : array-like of shape (n_features,), dtype=str, default=None
+        Name of each feature; `feature_names[i]` holds the name of the feature
+        with index `i`.
+        By default, the name of the feature corresponds to their numerical
+        index for NumPy array and their column name for pandas dataframe.
+
         .. versionadded:: 1.2
 
     response_method : {'auto', 'predict_proba', 'decision_function'}, \
@@ -476,18 +490,38 @@ def partial_dependence(
         _get_column_indices(X, features), dtype=np.int32, order="C"
     ).ravel()
 
-    if is_categorical is None:
+    n_features = X.shape[1]
+    if categorical_features is None:
         is_categorical = [
             (False, False) if isinstance(fxs, Iterable) else False
             for fxs in features_indices
         ]
-
-    if len(is_categorical) != len(features_indices):
-        raise ValueError(
-            "`is_categorical` should contain the same number of elements as "
-            f"`features`. Got {len(is_categorical)} in `is_categorical` and "
-            f"`features` {len(features_indices)}."
-        )
+    else:
+        categorical_features = np.array(categorical_features, copy=False)
+        if categorical_features.dtype.kind == "b":
+            # categorical features provided as a list of boolean
+            if categorical_features.size != n_features:
+                raise ValueError(
+                    "When `categorical_features` is a boolean array-like, "
+                    "the array should be of shape (n_features,). Got "
+                    f"{categorical_features.size} elements while `X` contains "
+                    f"{n_features} features."
+                )
+            is_categorical = [categorical_features[idx] for idx in features_indices]
+        elif categorical_features.dtype.kind in ("i", "O", "U"):
+            # categorical features provided as a list of indices or feature names
+            categorical_features_idx = [
+                _get_feature_index(cat, feature_names=feature_names)
+                for cat in categorical_features
+            ]
+            is_categorical = [
+                idx in categorical_features_idx for idx in features_indices
+            ]
+        else:
+            raise ValueError(
+                "Expected `categorical_features` to be an array-like of boolean,"
+                f" integer, or string. Got {categorical_features.dtype} instead."
+            )
 
     grid, values = _grid_from_X(
         _safe_indexing(X, features_indices, axis=1),
