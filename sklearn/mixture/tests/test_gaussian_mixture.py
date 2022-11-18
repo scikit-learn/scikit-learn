@@ -639,9 +639,9 @@ def test_gaussian_mixture_fit():
             assert_allclose(ecov.error_norm(prec_pred[k]), 0, atol=0.15)
 
 
-def test_gaussian_mixture_fit_best_params():
-    rng = np.random.RandomState(0)
-    rand_data = RandomData(rng)
+def test_gaussian_mixture_fit_best_params(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
+    rand_data = RandomData(rng, n_samples=400, n_features=3, scale=70)
     n_components = rand_data.n_components
     n_init = 10
     for covar_type in COVARIANCE_TYPE:
