@@ -385,20 +385,28 @@ def test_calibration_curve():
         calibration_curve([1], [-0.1])
 
     # test that quantiles work as expected
-    y_true2 = np.array([0, 0, 0, 0, 1, 1])
-    y_pred2 = np.array([0.0, 0.1, 0.2, 0.5, 0.9, 1.0])
-    prob_true_quantile, prob_pred_quantile = calibration_curve(
-        y_true2, y_pred2, n_bins=2, strategy="quantile"
+    y_true = np.array([0, 0, 0, 0, 1, 1])
+    y_pred = np.array([0.0, 0.1, 0.2, 0.5, 0.9, 1.0])
+    prob_true, prob_pred = calibration_curve(
+        y_true, y_pred, n_bins=2, strategy="quantile"
     )
 
-    assert len(prob_true_quantile) == len(prob_pred_quantile)
-    assert len(prob_true_quantile) == 2
-    assert_almost_equal(prob_true_quantile, [0, 2 / 3])
-    assert_almost_equal(prob_pred_quantile, [0.1, 0.8])
+    assert len(prob_true) == len(prob_pred)
+    assert len(prob_true) == 2
+    assert_almost_equal(prob_true, [0, 2 / 3])
+    assert_almost_equal(prob_pred, [0.1, 0.8])
+
+    # test that isotonic work as expected
+    prob_true, prob_pred = calibration_curve(y_true, y_pred, strategy="isotonic")
+
+    assert len(prob_true) == len(prob_pred)
+    assert len(prob_true) == 4
+    assert_almost_equal(prob_true, [0.0, 0.0, 1.0, 1.0])
+    assert_almost_equal(prob_pred, [0.0, 0.5, 0.9, 1.0])
 
     # Check that error is raised when invalid strategy is selected
     with pytest.raises(ValueError):
-        calibration_curve(y_true2, y_pred2, strategy="percentile")
+        calibration_curve(y_true, y_pred, strategy="percentile")
 
 
 # TODO(1.3): Remove this test.
@@ -652,7 +660,7 @@ def test_calibration_display_non_binary(pyplot, iris_data, constructor_name):
 
 
 @pytest.mark.parametrize("n_bins", [5, 10])
-@pytest.mark.parametrize("strategy", ["uniform", "quantile"])
+@pytest.mark.parametrize("strategy", ["uniform", "quantile", "isotonic"])
 def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy):
     # Ensure `CalibrationDisplay.from_predictions` and `calibration_curve`
     # compute the same results. Also checks attributes of the

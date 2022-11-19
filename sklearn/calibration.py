@@ -931,7 +931,7 @@ def calibration_curve(
         True targets.
 
     y_prob : array-like of shape (n_samples,)
-        Probabilities of the positive class.
+        Predicted probabilities of the positive class.
 
     pos_label : int or str, default=None
         The label of the positive class.
@@ -955,29 +955,38 @@ def calibration_curve(
         corresponding values in `y_prob`) will not be returned, thus the
         returned arrays may have less than `n_bins` values.
 
-    strategy : {'uniform', 'quantile'}, default='uniform'
+    strategy : {'uniform', 'quantile', 'isotonic'}, default='uniform'
         Strategy used to define the widths of the bins.
 
         uniform
             The bins have identical widths.
         quantile
             The bins have the same number of samples and depend on `y_prob`.
+        isotonic
+            Use isotonic regression to select bins automatically. This corresponds to
+            the CORP approach of [2]_. `n_bins` is ignored.
+
+            .. versionadded:: 1.2
 
     Returns
     -------
     prob_true : ndarray of shape (n_bins,) or smaller
         The proportion of samples whose class is the positive class, in each
-        bin (fraction of positives).
+        bin (fraction of positives), aka conditional event probability.
 
     prob_pred : ndarray of shape (n_bins,) or smaller
         The mean predicted probability in each bin.
 
     References
     ----------
-    Alexandru Niculescu-Mizil and Rich Caruana (2005) Predicting Good
-    Probabilities With Supervised Learning, in Proceedings of the 22nd
-    International Conference on Machine Learning (ICML).
-    See section 4 (Qualitative Analysis of Predictions).
+    .. [1] Alexandru Niculescu-Mizil and Rich Caruana (2005) Predicting Good
+           Probabilities With Supervised Learning, in Proceedings of the 22nd
+           International Conference on Machine Learning (ICML).
+           See section 4 (Qualitative Analysis of Predictions).
+    .. [2] :doi:`T. Dimitriadis, T. Gneiting and A. I. Jordan. (2021) "Stable
+           reliability diagrams for probabilistic classifiers." Proceedings of the
+           National Academy of Sciences of the United States of America 118 (2021):
+           n. pag. <10.1073/pnas.2016191118>`
 
     Examples
     --------
@@ -1024,6 +1033,11 @@ def calibration_curve(
         bins = np.percentile(y_prob, quantiles * 100)
     elif strategy == "uniform":
         bins = np.linspace(0.0, 1.0, n_bins + 1)
+    elif strategy == "isotonic":
+        iso = IsotonicRegression(y_min=0, y_max=1).fit(y_prob, y_true)
+        prob_true = iso.y_thresholds_
+        prob_pred = iso.X_thresholds_
+        return prob_true, prob_pred
     else:
         raise ValueError(
             "Invalid entry to 'strategy' input. Strategy "
@@ -1060,7 +1074,7 @@ class CalibrationDisplay:
     ----------
     prob_true : ndarray of shape (n_bins,)
         The proportion of samples whose class is the positive class (fraction
-        of positives), in each bin.
+        of positives), in each bin, aka conditional event probability.
 
     prob_pred : ndarray of shape (n_bins,)
         The mean predicted probability in each bin.
@@ -1235,12 +1249,14 @@ class CalibrationDisplay:
             calculating the calibration curve. A bigger number requires more
             data.
 
-        strategy : {'uniform', 'quantile'}, default='uniform'
+        strategy : {'uniform', 'quantile', 'isotonic'}, default='uniform'
             Strategy used to define the widths of the bins.
 
             - `'uniform'`: The bins have identical widths.
             - `'quantile'`: The bins have the same number of samples and depend
               on predicted probabilities.
+            - `'isotonic'`: Use isotonic regression to select bins automatically. This
+              corresponds to the CORP approach of [1]_. `n_bins` is ignored.
 
         pos_label : str or int, default=None
             The positive class when computing the calibration curve.
@@ -1273,6 +1289,13 @@ class CalibrationDisplay:
         --------
         CalibrationDisplay.from_predictions : Plot calibration curve using true
             and predicted labels.
+
+        References
+        ----------
+        .. [1] :doi:`T. Dimitriadis, T. Gneiting and A. I. Jordan. (2021) "Stable
+           reliability diagrams for probabilistic classifiers." Proceedings of the
+           National Academy of Sciences of the United States of America 118 (2021):
+           n. pag. <10.1073/pnas.2016191118>`
 
         Examples
         --------
@@ -1348,19 +1371,21 @@ class CalibrationDisplay:
             True labels.
 
         y_prob : array-like of shape (n_samples,)
-            The predicted probabilities of the positive class.
+            Predicted probabilities of the positive class.
 
         n_bins : int, default=5
             Number of bins to discretize the [0, 1] interval into when
             calculating the calibration curve. A bigger number requires more
             data.
 
-        strategy : {'uniform', 'quantile'}, default='uniform'
+        strategy : {'uniform', 'quantile', 'isotonic'}, default='uniform'
             Strategy used to define the widths of the bins.
 
             - `'uniform'`: The bins have identical widths.
             - `'quantile'`: The bins have the same number of samples and depend
               on predicted probabilities.
+            - `'isotonic'`: Use isotonic regression to select bins automatically. This
+              corresponds to the CORP approach of [1]_. `n_bins` is ignored.
 
         pos_label : str or int, default=None
             The positive class when computing the calibration curve.
@@ -1392,6 +1417,13 @@ class CalibrationDisplay:
         --------
         CalibrationDisplay.from_estimator : Plot calibration curve using an
             estimator and data.
+
+        References
+        ----------
+        .. [1] :doi:`T. Dimitriadis, T. Gneiting and A. I. Jordan. (2021) "Stable
+           reliability diagrams for probabilistic classifiers." Proceedings of the
+           National Academy of Sciences of the United States of America 118 (2021):
+           n. pag. <10.1073/pnas.2016191118>`
 
         Examples
         --------

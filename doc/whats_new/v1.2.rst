@@ -172,6 +172,10 @@ Changelog
 
   :pr:`23865` by :user:`Julien Jerphanion <jjerphan>`.
 
+- |Enhancement| :func:`calibration_curve` and :class:`CalibrationDisplay` have the new
+  option `strategy="isotonic"`.
+  :pr:`23824` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.cluster`
 ......................
 
