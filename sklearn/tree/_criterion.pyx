@@ -43,7 +43,7 @@ cdef class BaseCriterion:
     Samples in the "current" node are stored in `samples[start:end]` which is
     partitioned around `pos` (an index in `start:end`) so that:
 
-       - the samples of left child node are stored in `samples[stard:pos]`
+       - the samples of left child node are stored in `samples[start:pos]`
        - the samples of right child node are stored in `samples[pos:end]`
     """
     def __getstate__(self):
