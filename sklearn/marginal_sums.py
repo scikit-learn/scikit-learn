@@ -1,8 +1,12 @@
+import warnings
+from numbers import Real, Integral
 import numpy as np
-from sklearn.utils import check_array
+from .base import BaseEstimator
+from .utils import check_array
+from .utils._param_validation import Interval
 
 
-class MarginalSumsRegression:
+class MarginalSumsRegression(BaseEstimator):
     """
     Marginal Sums Regression for aggregated and non aggreagted data.
 
@@ -17,7 +21,7 @@ class MarginalSumsRegression:
     calculated by X.T dot y. These sums are fixed for the rest of the algorithm. For
     each feature X gets masked, such that all rows with the current feature = 1 are
     selected and all columns except for the current feature. This masked X gets
-    multiplied elementwise with the corresponding weights and current factors of the 
+    multiplied elementwise with the corresponding weights and current factors of the
     other features.
     SUM(weights * PROD(factors) * y_mean)
     The original marginal sum for the current feature gets divided by this estimated
@@ -40,15 +44,21 @@ class MarginalSumsRegression:
 
     min_factor_change : float, default=0.001
         Criteria for early stopping. Minimal change of at least one factor in the last
-        iteration. 
+        iteration.
     """
+
+    _parameter_constraints: dict = {
+        "add_weights":["boolean"],
+        "max_iter":[Interval(Integral, 1, None, closed="left")],
+        "min_factor_change":[Interval(Real, 0, None, closed="left")],
+    }
 
     def __init__(self, add_weights=False, max_iter=100, min_factor_change=0.001):
         self.add_weights = add_weights
         self.max_iter = max_iter
         self.min_factor_change = min_factor_change
 
-    def fit_(self, X, y):
+    def _fit(self, X, y):
         """
         Fit the estimator by iterativly optimizing the factors for each feature.
 
@@ -94,7 +104,9 @@ class MarginalSumsRegression:
                 break
 
             if i == self.max_iter - 1:
-                print(f"Did not converge after {self.max_iter} iterations.")
+                warnings.warn(
+                    f"Did not converge after {self.max_iter} iterations.", UserWarning
+                )
 
     def fit(self, X, y):
         """
@@ -107,11 +119,14 @@ class MarginalSumsRegression:
         X : array of shape (n,m)
             Input array with n observations and either m features (no weight vector) or
             m - 1 features if the first row is a weight vector. All features, except
-            for the weight vector, need to be onehot encoded.
+            for the weight vector, need to be onehot encoded. The weights must not
+            contain zeros.
 
         y : array of shape (n,1)
             Target variable.
         """
+
+        self._validate_params()
 
         # ensure ndarray
         if hasattr(X, "toarray"):
@@ -125,7 +140,16 @@ class MarginalSumsRegression:
             self.weights = np.ones(X.shape[0])
         else:
             self.weights = X[:, 0]
+            if 0 in self.weights:
+                raise ValueError("0 detected in first column. Expected weights > 0.")
             X = X[:, 1:]
+
+        # check if array is onehot encoded
+        if not ((X == 0) | (X == 1)).all():
+            raise ValueError(
+                "Value different from 1 or 0 detected. Only onehot encoded values"
+                " expected."
+            )
 
         # init factors
         self.factors = np.ones(X.shape[1])
@@ -137,7 +161,7 @@ class MarginalSumsRegression:
         # calculate mean y
         self.y_mean = np.sum(y) / np.sum(self.weights)
 
-        self.fit_(X, y)
+        self._fit(X, y)
 
     def predict(self, X):
         """
