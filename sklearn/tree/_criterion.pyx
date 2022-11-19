@@ -30,15 +30,21 @@ from ._utils cimport WeightedMedianCalculator
 cdef double EPSILON = 10 * np.finfo('double').eps
 
 cdef class BaseCriterion:
-    """Abstract interface for any criterion.
+    """This is an abstract interface for criterion. For example, a tree model could
+    be either supervisedly, or unsupervisedly computing impurity on samples of
+    covariates, or labels, or both.
+
+    The downstream classes _must_ implement methods to compute the impurity
+    in current node and in children nodes.
 
     This object stores methods on how to calculate how good a split is using
     a set API. 
 
-    The criterion object is maintained such that left and right collected
-    statistics correspond to samples[start:pos] and samples[pos:end]. So the samples in
-    the "current" node is samples[start:end], while left and right children nodes are
-    split with the pointer 'pos' variable.
+    Samples in the "current" node are stored in `samples[start:end]` which is
+    partitioned around `pos` (an index in `start:end`) so that:
+
+       - the samples of left child node are stored in `samples[stard:pos]`
+       - the samples of right child node are stored in `samples[pos:end]`
     """
     def __getstate__(self):
         return {}
@@ -173,9 +179,15 @@ cdef class BaseCriterion:
 cdef class Criterion(BaseCriterion):
     """Interface for impurity criteria.
 
-    This object stores methods on how to calculate how good a split is using
-    different metrics. This is the base class for any supervised tree criterion
-    model with a homogeneous float64 dtyped y.
+    The supervised criterion computes the impurity of a node and the reduction of
+    impurity of a split on that node using the distribution of labels in parent and
+    children nodes. It also computes the output statistics
+    such as the mean in regression and class probabilities in classification.
+
+    Instances of this class are responsible for compute splits' impurity difference
+
+    Criterion is the base class for criteria used in supervised tree-based models
+    with a homogeneous float64-dtyped y.
     """
     cdef int init(self, const DOUBLE_t[:, ::1] y, DOUBLE_t* sample_weight,
                   double weighted_n_samples, SIZE_t* samples, SIZE_t start,
