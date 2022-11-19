@@ -48,9 +48,9 @@ class MarginalSumsRegression(BaseEstimator):
     """
 
     _parameter_constraints: dict = {
-        "add_weights":["boolean"],
-        "max_iter":[Interval(Integral, 1, None, closed="left")],
-        "min_factor_change":[Interval(Real, 0, None, closed="left")],
+        "add_weights": ["boolean"],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "min_factor_change": [Interval(Real, 0, None, closed="left")],
     }
 
     def __init__(self, add_weights=False, max_iter=100, min_factor_change=0.001):

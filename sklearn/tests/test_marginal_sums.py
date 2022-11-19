@@ -1,4 +1,3 @@
-import warnings
 import numpy as np
 import pytest
 import scipy
