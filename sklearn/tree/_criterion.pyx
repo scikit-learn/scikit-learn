@@ -209,9 +209,9 @@ cdef class Criterion(BaseCriterion):
             Indices of the samples in X and y, where samples[start:end]
             correspond to the samples in this node
         start : SIZE_t
-	            The index of first sample in `samples` to be considered in this node.
-	        end : SIZE_t
-	            The index of  last sample in `samples` to be considered in this node.
+            The index of first sample in `samples` to be considered in this node.
+        end : SIZE_t
+            The index of last sample in `samples` to be considered in this node.
         """
         pass
 
