@@ -103,6 +103,7 @@ else:
         "kernel_ridge",
         "linear_model",
         "manifold",
+        "marginal_sums",
         "metrics",
         "mixture",
         "model_selection",
