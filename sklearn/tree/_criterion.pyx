@@ -200,19 +200,18 @@ cdef class Criterion(BaseCriterion):
         Parameters
         ----------
         y : array-like, dtype=DOUBLE_t
-            y is a buffer that can store values for n_outputs target variables
-        sample_weight : array-like, dtype=DOUBLE_t
-            The weight of each sample
+            y is a buffer that can store values for the `n_outputs` target variables
+        sample_weight : pointer to a buffer of DOUBLE_t
+            The pointer to the buffer storing each sample weight.
         weighted_n_samples : double
-            The total weight of the samples being considered
+            The sum of the weights of the samples being considered.
         samples : array-like, dtype=SIZE_t
             Indices of the samples in X and y, where samples[start:end]
             correspond to the samples in this node
         start : SIZE_t
-            The first sample to be used on this node
-        end : SIZE_t
-            The last sample used on this node
-
+	            The index of first sample in `samples` to be considered in this node.
+	        end : SIZE_t
+	            The index of  last sample in `samples` to be considered in this node.
         """
         pass
 
