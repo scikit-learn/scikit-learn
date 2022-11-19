@@ -15,7 +15,7 @@ import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
-from joblib import Parallel, effective_n_jobs
+from joblib.parallel import Parallel, effective_n_jobs, get_active_backend
 
 from .. import config_context
 from ..utils.validation import _num_samples
@@ -1556,9 +1556,14 @@ def distance_metrics():
     return PAIRWISE_DISTANCE_FUNCTIONS
 
 
-def _dist_wrapper(dist_func, slice_, *args, **kwargs):
+def _dist_wrapper_mltprc(dist_func, slice_, *args, **kwargs):
     """Computing a slice of distance matrix."""
     return dist_func(*args, **kwargs)
+
+
+def _dist_wrapper_mlthrd(dist_func, dist_matrix, slice_, *args, **kwargs):
+    """Write in-place to a slice of a distance matrix."""
+    dist_matrix[:, slice_] = dist_func(*args, **kwargs)
 
 
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
@@ -1573,13 +1578,26 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
         return func(X, Y, **kwds)
 
     # preferring a threading backend to prevent data communication overhead
-    fd = delayed(_dist_wrapper)
-    ret = np.empty((X.shape[0], Y.shape[0]), dtype=dtype, order="F")
-    distchunks = Parallel(n_jobs=n_jobs, prefer="threads")(
-        fd(func, s, X, Y[s], **kwds) for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
-    )
-    for slice_, chunk in zip(gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs)), distchunks):
-        ret[:, slice_] = chunk
+    active_backend, _ = get_active_backend(prefer="threads")
+    uses_threads = getattr(active_backend, 'uses_threads', False)
+
+    if uses_threads:
+        # adopting a faster write-in-place approach
+        fd = delayed(_dist_wrapper_mlthrd)
+        ret = np.empty((X.shape[0], Y.shape[0]), dtype=dtype, order="F")
+        Parallel(backend="threading", n_jobs=n_jobs)(
+            fd(func, ret, s, X, Y[s], **kwds)
+            for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
+        )
+    else:
+        # each process returns its chunk of data
+        fd = delayed(_dist_wrapper_mltprc)
+        ret = np.empty((X.shape[0], Y.shape[0]), dtype=dtype, order="F")
+        distchunks = Parallel(n_jobs=n_jobs)(
+            fd(func, s, X, Y[s], **kwds) for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
+        )
+        for slice_, chunk in zip(gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs)), distchunks):
+            ret[:, slice_] = chunk
 
 
     if (X is Y or Y is None) and func is euclidean_distances:

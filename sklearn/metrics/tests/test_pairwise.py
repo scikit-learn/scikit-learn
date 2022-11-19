@@ -204,11 +204,15 @@ def test_pairwise_distances(global_dtype):
     x = np.expand_dims(x, 1)
     expDistFromFirstPoint = x[:,0]
     n_jobs = 2
+    # default parallel approach, preferring multithread
+    Dpar_mlthrd = pairwise_distances(x, metric=customMetric, n_jobs=n_jobs)
+    # parallel with multiprocesses
     with parallel_backend('loky', n_jobs=n_jobs):
-        Dpar = pairwise_distances(x, metric=customMetric, n_jobs=n_jobs)
+        Dpar_mltprcs = pairwise_distances(x, metric=customMetric, n_jobs=n_jobs)
     Dser = pairwise_distances(x, metric=customMetric)
     assert_allclose(expDistFromFirstPoint, Dser[:,0])
-    assert_allclose(Dser, Dpar)
+    assert_allclose(expDistFromFirstPoint, Dpar_mlthrd[:,0])
+    assert_allclose(expDistFromFirstPoint, Dpar_mltprcs[:,0])
 
 
 
