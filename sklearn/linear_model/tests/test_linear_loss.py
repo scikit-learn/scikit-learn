@@ -8,6 +8,7 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 from scipy import linalg, optimize, sparse
+from scipy.special import logit
 
 from sklearn._loss.loss import (
     HalfBinomialLoss,
@@ -15,7 +16,10 @@ from sklearn._loss.loss import (
     HalfPoissonLoss,
 )
 from sklearn.datasets import make_low_rank_matrix
-from sklearn.linear_model._linear_loss import LinearModelLoss
+from sklearn.linear_model._linear_loss import (
+    LinearModelLoss,
+    Multinomial_LDL_Decomposition,
+)
 from sklearn.utils.extmath import squared_norm
 
 
@@ -351,5 +355,275 @@ def test_multinomial_coef_shape(fit_intercept):
     assert_allclose(g_r, g1_r)
     assert_allclose(g_r, g2_r)
 
-    assert_allclose(g, g_r.reshape(loss.base_loss.n_classes, -1, order="F"))
-    assert_allclose(h, h_r.reshape(loss.base_loss.n_classes, -1, order="F"))
+    assert_allclose(g, g_r.reshape((loss.base_loss.n_classes, -1), order="F"))
+    assert_allclose(h, h_r.reshape((loss.base_loss.n_classes, -1), order="F"))
+
+
+def test_multinomial_identifiability_properties(global_random_seed):
+    """Test that multinomial LinearModelLoss fulfills identifiability properties.
+
+    In our symmetrical overdetermined parametrization, we always expect
+    np.sum(coef, axis=0) = 0. But if we add the same value cj to all classes, i.e.
+    coef[:, j] += cj, certain properties hold:
+      1. The unpenalized loss in invariant.
+      2. The unpenalized Hessian @ c gives zero.
+      3. The unpenalized Gradient @ c gives zero.
+    """
+    n_samples, n_features, n_classes = 30, 4, 6
+    l2_reg_strength = 0
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.standard_normal((n_samples, n_features))
+    y = rng.randint(low=0, high=n_classes, size=(n_samples)).astype(float)
+    coef = rng.standard_normal((n_classes, n_features))
+    coef -= np.mean(coef, axis=0)
+    assert_allclose(np.mean(coef, axis=0), 0, atol=1e-15)
+
+    multinomial_loss = LinearModelLoss(
+        base_loss=HalfMultinomialLoss(n_classes=n_classes),
+        fit_intercept=False,
+    )
+    gradient, hessp = multinomial_loss.gradient_hessian_product(
+        coef=coef,
+        X=X,
+        y=y,
+        l2_reg_strength=l2_reg_strength,
+    )
+
+    # Construct a coef-like array with same values for all classes, e.g.
+    # c = [[1, 2, 3],
+    #      [1, 2, 3]]
+    c = np.tile(rng.standard_normal(n_features), (n_classes, 1))
+    assert_allclose(hessp(c), 0, atol=1e-14)
+    assert_allclose(gradient.ravel() @ c.ravel(), 0, atol=1e-14)
+
+    loss1 = multinomial_loss.loss(coef=coef, X=X, y=y, l2_reg_strength=l2_reg_strength)
+    loss2 = multinomial_loss.loss(
+        coef=coef + c, X=X, y=y, l2_reg_strength=l2_reg_strength
+    )
+    assert_allclose(loss1, loss2)
+
+
+def test_multinomial_LDL_decomposition_operates_inplace(global_random_seed):
+    n_samples, n_classes = 3, 5
+    rng = np.random.RandomState(global_random_seed)
+    p = rng.uniform(low=0, high=1, size=(n_samples, n_classes))
+    p /= np.sum(p, axis=1)[:, None]
+    assert_allclose(np.sum(p, axis=1), np.ones(shape=n_samples))
+
+    LDL = Multinomial_LDL_Decomposition(proba=p)
+    v = rng.standard_normal(size=(n_samples, n_classes))
+    res = LDL.sqrt_D_Lt_matmul(v)
+    assert res is v
+
+    v = rng.standard_normal(size=(n_samples, n_classes))
+    res = LDL.L_sqrt_D_matmul(v)
+    assert res is v
+
+    v = rng.standard_normal(size=(n_samples, n_classes))
+    res = LDL.inverse_L_sqrt_D_matmul(v)
+    assert res is v
+
+
+def test_multinomial_LDL_decomposition_binomial_single_point():
+    """Test LDL' decomposition of multinomial hessian for simple cases.
+
+    For the binomial case, we have p0 = 1 - p1
+    LDL = [p0 * (1 - p0),      -p0 * p1] = p0 * (1 - p0) * [1, -1]
+          [     -p0 * p1, p1 * (1 - p1)]                   [-1, 1]
+
+    L = [ 1, 0]    D = [p0 * (1 - p0), 0]
+        [-1, 1]        [            0, 0]
+    """
+    p0, p1 = 0.2, 0.8
+    p = np.array([[p0, p1]])
+
+    LDL = Multinomial_LDL_Decomposition(proba=p)
+    assert_allclose(LDL.q[0, :], [1 - p0, 0])
+    assert_allclose(LDL.sqrt_d[0, :] ** 2, [p0 * (1 - p0), 0])
+
+    # C = diag(D) L' x with x = [[1, 0]] (n_samples=1, n_classes=2)
+    C = LDL.sqrt_D_Lt_matmul(np.array([[1.0, 0.0]]))
+    assert_allclose(C[0, :], [np.sqrt(p0 * (1 - p0)), 0])
+
+    # C = diag(D) L' x with x = [[0, 1]] (n_samples=1, n_classes=2)
+    C = LDL.sqrt_D_Lt_matmul(np.array([[0.0, 1.0]]))
+    assert_allclose(C[0, :], [-np.sqrt(p1 * (1 - p1)), 0])
+
+    # Test with hessian product (hessp) of LinearModelLoss with X = [[1]] and coef such
+    # that probabilities are again (p0, p1).
+    # Hessian = X' LDL X
+    loss = LinearModelLoss(
+        base_loss=HalfMultinomialLoss(n_classes=2),
+        fit_intercept=False,
+    )
+    # Note that y has no effect on the hessian.
+    coef = 0.5 * np.array([[logit(p0)], [logit(p1)]])  # tested below
+    X = np.array([[1.0]])
+    raw = X @ coef.T  # raw.shape = (n_samples, n_classes) = (1, 2)
+    assert_allclose(loss.base_loss.predict_proba(raw), [[p0, p1]])
+    C = LDL.sqrt_D_Lt_matmul(raw.copy())
+    grad, hessp = loss.gradient_hessian_product(
+        coef=coef,
+        X=X,
+        y=np.array([0.0]),
+        l2_reg_strength=0.0,
+    )
+    # Note: hessp(coef).shape = (n_classes, n_features) = (2, 1)
+    assert_allclose(
+        hessp(coef),
+        p0
+        * (1 - p0)
+        * np.array([raw[0, 0] - raw[0, 1], -raw[0, 0] + raw[0, 1]])[:, None],
+    )
+    assert_allclose(C @ C.T, coef.T @ hessp(coef))
+
+
+def test_multinomial_LDL_decomposition_3_classes():
+    """Test LDL' decomposition of multinomial hessian for 3 classes and 2 points.
+
+    For n_classes = 3 and n_samples = 2, we have
+      p0 = [p0_0, p0_1]
+      p1 = [p1_0, p1_1]
+      p2 = [p2_0, p2_1]
+    and with 2 x 2 diagonal subblocks
+      LDL = [p0 * (1-p0),    -p0 * p1,    -p0 * p2]
+            [   -p0 * p1, p1 * (1-p1),    -p1 * p2]
+            [   -p0 * p2,    -p1 * p2, p2 * (1-p2)]
+
+      L = [         1,                 0, 0]
+          [-p1 / (1-p0),               1, 0]
+          [-p2 / (1-p0), -p2 / (1-p0-p1), 1]
+
+      D = [p0 * (1-p0),                       0, 0]
+          [          0, p1 * (1-p0-p1) / (1-p0), 0]
+          [          0,                       0, 0]
+    """
+    n = 2 * 3  # n_samples * n_classes
+    p0 = np.array([0.7, 0.6])
+    p1 = np.array([0.2, 0.25])
+    p2 = np.array([0.1, 0.15])
+    one = np.ones(2)
+    zero = np.zeros(2)
+    p0d, p1d, p2d, oned, zerod = (
+        np.diag(p0),
+        np.diag(p1),
+        np.diag(p2),
+        np.diag(one),
+        np.diag(zero),
+    )
+    H = np.block(
+        [
+            [p0d * (oned - p0d), -p0d * p1d, -p0d * p2d],
+            [-p0d * p1d, p1d * (oned - p1d), -p1d * p2d],
+            [-p0d * p2d, -p1d * p2d, p2d * (oned - p2d)],
+        ]
+    )
+    L = np.block(
+        [
+            [oned, zerod, zerod],
+            [np.diag(-p1 / (one - p0)), oned, zerod],
+            [np.diag(-p2 / (one - p0)), np.diag(-p2 / (one - p0 - p1)), oned],
+        ]
+    )
+    D = np.diag(np.r_[p0 * (1 - p0), p1 * (1 - p0 - p1) / (1 - p0), zero])
+    L_inv = np.block(
+        [
+            [oned, zerod, zerod],
+            [np.diag(p1 / (one - p0)), oned, zerod],
+            [np.diag(p2 / (one - p0 - p1)), np.diag(p2 / (one - p0 - p1)), oned],
+        ]
+    )
+    D_inv = np.zeros_like(D)
+    D_inv[D > 0] = 1 / np.sqrt(D[D > 0])
+
+    lu, d, perm = linalg.ldl(H)
+    assert_allclose(lu @ d @ lu.T, H)
+    assert_allclose(L @ D @ L.T, H)
+    assert_allclose(L, lu)
+    assert_allclose(D, d, atol=1e-14)
+    assert_allclose(L_inv @ L, np.eye(n), atol=1e-14)
+    assert_allclose(L @ L_inv, np.eye(n), atol=1e-14)
+
+    LDL = Multinomial_LDL_Decomposition(proba=np.c_[p0, p1, p2])
+    v = 1.0 + np.arange(2 * 3)
+    DLt_v = LDL.sqrt_D_Lt_matmul(v.copy().reshape((2, 3), order="F"))
+    assert_allclose(DLt_v.ravel(order="F"), np.sqrt(D) @ L.T @ v)
+    LDL_v = LDL.L_sqrt_D_matmul(DLt_v.copy())
+    assert_allclose(LDL_v.ravel(order="F"), H @ v)
+
+    LD_v = LDL.L_sqrt_D_matmul(v.copy().reshape((2, 3), order="F"))
+    assert_allclose(LD_v.ravel(order="F"), L @ np.sqrt(D) @ v)
+
+    x1 = LDL.inverse_L_sqrt_D_matmul(v.copy().reshape((2, 3), order="F"))
+    # This does not work as L @ D is singular.
+    #   x2 = linalg.solve(L @ np.sqrt(D), v)
+    # We can just neglect the last class as it is redundant.
+    x2 = linalg.solve(L[:-2, :-2] @ np.sqrt(D[:-2, :-2]), v[:-2])
+    assert_allclose(x1.ravel(order="F")[:-2], x2)
+    assert_allclose(x1.ravel(order="F"), D_inv @ L_inv @ v)
+
+    # Test consistency of L_sqrt_D_matmul, sqrt_D_Lt_matmul and inverse_L_sqrt_D_matmul,
+    # i.e. reconstructing the matrices based on X @ unit_vector and compare with
+    # explicit matrices D and L.
+    unit_vec = np.zeros(n)
+    for op, result in (
+        (LDL.sqrt_D_Lt_matmul, np.sqrt(D) @ L.T),
+        (LDL.L_sqrt_D_matmul, L @ np.sqrt(D)),
+        (LDL.inverse_L_sqrt_D_matmul, D_inv @ L_inv),
+    ):
+        X = np.zeros((n, n))
+        for i in range(n):
+            unit_vec[i] = 1
+            X[:, i] = op(unit_vec.copy().reshape((2, 3), order="F")).ravel(order="F")
+            unit_vec[i] = 0
+        assert_allclose(X, result)
+
+
+def test_multinomial_LDL_decomposition(global_random_seed):
+    """Test LDL' decomposition of multinomial hessian."""
+    n_samples, n_features, n_classes = 3, 4, 5
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.standard_normal(size=(n_samples, n_features))
+    coef = rng.standard_normal(size=(n_classes, n_features))
+    raw_prediction = X @ coef.T  # shape = (n_samples, n_classes)
+    loss = LinearModelLoss(
+        base_loss=HalfMultinomialLoss(n_classes=n_classes),
+        fit_intercept=False,
+    )
+    p = loss.base_loss.predict_proba(raw_prediction=raw_prediction)
+    assert_allclose(np.sum(p, axis=1), np.ones(shape=n_samples))
+
+    LDL = Multinomial_LDL_Decomposition(proba=p)
+    assert_allclose(LDL.q, 1 - np.cumsum(LDL.p, axis=1))
+
+    # C = diag(D) L' x with x = X @ coef = raw_prediction
+    C = LDL.sqrt_D_Lt_matmul(raw_prediction.copy())
+
+    # Note that y has no effect on the hessian.
+    grad, hessp = loss.gradient_hessian_product(
+        coef=coef,
+        X=X,
+        y=rng.randint(low=0, high=n_classes, size=n_samples).astype(X.dtype),
+        l2_reg_strength=0.0,
+    )
+    # C.shape = (n_samples, n_classes), hessp(coef).shape = (n_classes, n_features)
+    assert_allclose(np.tensordot(C, C, axes=2), np.tensordot(coef, hessp(coef), axes=2))
+    CtC = LDL.L_sqrt_D_matmul(C.copy())
+    CtC = np.tensordot(raw_prediction, CtC, axes=2)
+    assert_allclose(CtC, np.tensordot(C, C, axes=2))
+
+
+def test_multinomial_LDL_inverse_sqrt_D_Lt_matmul(global_random_seed):
+    """Test inverse of LDL' decomposition of multinomial hessian."""
+    n_samples, n_classes = 4, 5
+    rng = np.random.RandomState(global_random_seed)
+    p = rng.uniform(low=0, high=1, size=(n_samples, n_classes))
+    p /= np.sum(p, axis=1)[:, None]
+    LDL = Multinomial_LDL_Decomposition(proba=p)
+    x = rng.standard_normal(size=(n_samples, n_classes))
+    # Without centering, the last class, x[:, -1] would fail in the assert below.
+    x -= np.mean(x, axis=1)[:, None]
+
+    invDL_x = LDL.inverse_L_sqrt_D_matmul(x.copy())
+    LD_invDL_x = LDL.L_sqrt_D_matmul(invDL_x.copy())
+    assert_allclose(LD_invDL_x, x)

@@ -12,13 +12,19 @@ import pytest
 import scipy
 from scipy import linalg
 from scipy.optimize import minimize, root
+from scipy.sparse.linalg import lsmr
 
 from sklearn.base import clone
-from sklearn._loss import HalfBinomialLoss, HalfPoissonLoss, HalfTweedieLoss
+from sklearn._loss import (
+    HalfBinomialLoss,
+    HalfPoissonLoss,
+    HalfTweedieLoss,
+    HalfMultinomialLoss,
+)
 from sklearn._loss.glm_distribution import TweedieDistribution
 from sklearn._loss.link import IdentityLink, LogLink
 
-from sklearn.datasets import make_low_rank_matrix, make_regression
+from sklearn.datasets import make_low_rank_matrix, make_regression, make_classification
 from sklearn.linear_model import (
     GammaRegressor,
     PoissonRegressor,
@@ -26,8 +32,14 @@ from sklearn.linear_model import (
     TweedieRegressor,
 )
 from sklearn.linear_model._glm import _GeneralizedLinearRegressor
-from sklearn.linear_model._glm._newton_solver import NewtonCholeskySolver
-from sklearn.linear_model._linear_loss import LinearModelLoss
+from sklearn.linear_model._glm._newton_solver import (
+    NewtonCholeskySolver,
+    NewtonLSMRSolver,
+)
+from sklearn.linear_model._linear_loss import (
+    LinearModelLoss,
+    Multinomial_LDL_Decomposition,
+)
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.metrics import d2_tweedie_score, mean_poisson_deviance
 from sklearn.model_selection import train_test_split
@@ -1247,3 +1259,321 @@ def test_newton_solver_verbosity(capsys, verbose):
             " and resorts to lbfgs instead."
             in captured.out
         )
+
+
+@pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("l2_reg_strength", [0, 1.5])
+def test_NewtonLSMRSolver_multinomial_A_b(
+    fit_intercept, l2_reg_strength, global_random_seed
+):
+    """Test NewtonLSMRSolver.compute_A_b for multinomial case"""
+    n_samples, n_features, n_classes = 12, 10, 5
+    n_dof = n_features + fit_intercept
+    rng = np.random.RandomState(global_random_seed)
+    X, y = make_classification(
+        n_samples=n_samples,
+        n_features=n_features,
+        n_classes=n_classes,
+        n_informative=n_features - 1,
+        n_redundant=1,
+        random_state=rng,
+    )
+    y = y.astype(float)
+    coef = rng.standard_normal(size=(n_classes, n_features + fit_intercept))
+    coef -= np.mean(coef, axis=0)
+
+    multinomial_loss = LinearModelLoss(
+        base_loss=HalfMultinomialLoss(n_classes=n_classes), fit_intercept=fit_intercept
+    )
+    gradient, hessp = multinomial_loss.gradient_hessian_product(
+        coef=coef,
+        X=X,
+        y=y,
+        sample_weight=None,
+        l2_reg_strength=l2_reg_strength,
+    )
+    sol = NewtonLSMRSolver(
+        coef=coef,
+        linear_loss=multinomial_loss,
+        l2_reg_strength=l2_reg_strength,
+    )
+    sol.setup(X=X, y=y, sample_weight=None)
+    sol.update_gradient_hessian(X=X, y=y, sample_weight=None)
+
+    # Hessian @ coef
+    # with hessp
+    H_coef = hessp(coef)  # shape = (n_classes, n_dof)
+    # with A
+    A, b = sol.compute_A_b(X=X, y=y, sample_weight=None)
+    At_A_coef = A.T @ A @ coef.ravel(order="C")
+    # The results are differently ravelled, we restore the 2-d arrays with n_classes
+    # on the 1st (=last) axis.
+    assert_allclose(At_A_coef.reshape(-1, n_classes, order="F"), H_coef.T)
+    assert_allclose(A.rmatvec(b).reshape(-1, n_classes, order="F"), -gradient.T)
+
+    # Test consistency of A, i.e. reconstructing the matrix based on
+    # A @ unit_vector and A.T @ unit_vector should give the same matrix.
+    unit_vec = np.zeros(n_dof * n_classes)
+    A_matrix1 = np.zeros(((n_samples + n_features) * n_classes, n_dof * n_classes))
+    for i in range(n_dof * n_classes):
+        unit_vec[i] = 1
+        A_matrix1[:, i] = A @ unit_vec
+        unit_vec[i] = 0
+    unit_vec = np.zeros((n_samples + n_features) * n_classes)
+    A_matrix2 = np.zeros(((n_samples + n_features) * n_classes, n_dof * n_classes))
+    for j in range((n_samples + n_features) * n_classes):
+        unit_vec[j] = 1
+        A_matrix2[j, :] = A.rmatvec(unit_vec)
+        unit_vec[j] = 0
+    assert_allclose(A_matrix1, A_matrix2)
+
+
+@pytest.mark.parametrize("fit_intercept", (False, True))
+@pytest.mark.parametrize("with_sample_weight", (False, True))
+def test_NewtonLSMRSolver_multinomial_A_b_on_3_classes(
+    fit_intercept, with_sample_weight, global_random_seed
+):
+    """Test NewtonLSMRSolver.compute_A_b for multinomial case with 3 classes."""
+    n_samples, n_features, n_classes = 5, 2, 3
+    n_dof = n_features + fit_intercept
+    rng = np.random.RandomState(global_random_seed)
+    X = np.array([[1.0, 0], [1, 1], [1, 2], [1, 3], [1, 4]])
+    Xi = X
+    # coef.shape = (n_classes, n_dof) and coef.sum(axis=0) = 0
+    coef = np.array([[1.0, -1], [1, 0], [-2, 1]])
+    if fit_intercept:
+        X[0, 0] = -1  # to make Xi positive definite
+        coef = np.c_[coef, [[2], [1], [-3]]]
+        Xi = np.c_[X, np.ones(n_samples)]
+    assert np.linalg.matrix_rank(Xi) == n_dof
+    y = np.array([0.0, 1, 1, 1, 2])
+
+    if with_sample_weight:
+        sw = 1.0 + np.arange(n_samples)
+    else:
+        sw = None
+
+    multinomial_loss = LinearModelLoss(
+        base_loss=HalfMultinomialLoss(n_classes=n_classes, sample_weight=sw),
+        fit_intercept=fit_intercept,
+    )
+    sol = NewtonLSMRSolver(
+        coef=coef,
+        linear_loss=multinomial_loss,
+        l2_reg_strength=0,
+    )
+    sol.setup(X=X, y=y, sample_weight=sw)
+    sol.update_gradient_hessian(X=X, y=y, sample_weight=sw)
+    A, b = sol.compute_A_b(X=X, y=y, sample_weight=sw)
+
+    _, _, raw_prediction = multinomial_loss.weight_intercept_raw(coef, X)
+    # p.shape = (n_samples, n_classes)
+    p = multinomial_loss.base_loss.predict_proba(raw_prediction)
+    assert_allclose(np.sum(p, axis=1), 1)  # consequence of coef.sum(axis=0) = 0
+
+    # Extended vectors for 3 classes:
+    # For y_ext and p_ext, we append the vectors for different classes one after the
+    # other.
+    y_ext = np.r_[y == 0, y == 1, y == 2]
+    p_ext = p.ravel(order="F")
+    coef_ext = coef.ravel(order="C")
+    sw_ext = np.tile(sw, 3)
+    # Extended matrices for 3 classes:
+    # X_ext = [X, 0, 0]  W = [W00, W01, W02]
+    #         [0, X, 0]      [W10, W11, W12]
+    #         [0, 0, X]      [W20, W21, W22]
+    # X_ext.shape = (n_classes * n_samples, n_classes * n_features)
+    # W.shape = (n_classes * n_samples, n_classes * n_samples)
+    # Each Wij is a diagonal matrix with elements pi * (delta_ij - pj).
+    X_ext = linalg.block_diag(Xi, Xi, Xi)
+    W00 = np.diag(p[:, 0] * (1 - p[:, 0]))
+    W11 = np.diag(p[:, 1] * (1 - p[:, 1]))
+    W22 = np.diag(p[:, 2] * (1 - p[:, 2]))
+    W01 = np.diag(-p[:, 0] * p[:, 1])
+    W02 = np.diag(-p[:, 0] * p[:, 2])
+    W12 = np.diag(-p[:, 1] * p[:, 2])
+    W_ext = np.block([[W00, W01, W02], [W01, W11, W12], [W02, W12, W22]])
+    g_ext = p_ext - y_ext  # pointwise gradient
+    if with_sample_weight:
+        W_ext *= sw_ext[:, None]
+        g_ext *= sw_ext
+    G_ext = X_ext.T @ g_ext  # full gradient
+    H_ext = X_ext.T @ W_ext @ X_ext  # full hessian
+
+    assert_allclose(g_ext.reshape((n_samples, n_classes), order="F"), sol.g)
+
+    # Note that both X_ext @ v and A @ v need v = coef.ravel(order="C") for
+    # coef.shape = (n_classes, n_dof).
+
+    # v is like a coefficient
+    v = rng.standard_normal(size=(n_classes, n_dof))
+    # u is a test vector for A', i.e. we test A.T @ u
+    u = rng.standard_normal(size=(n_samples + n_features, n_classes))
+
+    # Check that A is a square root of H, i.e. H = A'A.
+    H_ext_v = H_ext @ v.ravel(order="C")
+    A_v = A @ v.ravel(order="C")
+    At_A_v = A.T @ A_v
+    assert_allclose(At_A_v, H_ext_v)
+
+    # Check that A'b = -G
+    assert_allclose(A.T @ b, -G_ext)
+
+    # Check that A is constructed from LDL decomposition.
+    LDL = Multinomial_LDL_Decomposition(proba=p)
+    D_Lt_X_v = LDL.sqrt_D_Lt_matmul(Xi @ v.T)
+    if with_sample_weight:
+        D_Lt_X_v *= np.sqrt(sw)[:, None]
+    assert_allclose(A_v.reshape((-1, n_classes), order="F")[:n_samples, :], D_Lt_X_v)
+    assert_allclose(A_v[n_classes * n_samples :], 0)
+    assert_allclose(
+        A_v.reshape((-1, n_classes), order="F")[:n_samples, :], D_Lt_X_v, atol=1e-8
+    )
+
+    # Check LDL decomposition of W explicitly.
+    L, D, perm = linalg.ldl(W_ext, lower=True)
+    # D should be diagonal (and not block diagonal) and non-negative.
+    assert_allclose(np.diag(np.diag(D)), D)
+    assert np.all(D >= -1e-15)
+    D[D < 1e-15] = 0  # Tiny values would be zero in exact arithmetic.
+    assert_allclose(L @ D @ L.T, W_ext)
+    D_Lt_X = np.sqrt(D) @ L.T @ X_ext
+    assert_allclose(D_Lt_X.T @ D_Lt_X, H_ext)
+    assert_allclose(D_Lt_X @ v.ravel(order="C"), D_Lt_X_v.ravel(order="F"), atol=1e-8)
+
+    # Construct matrix A explicitly. Note: no intercept, penalty is zero.
+    A_ext = np.r_[D_Lt_X, np.zeros((n_classes * n_dof, n_classes * n_dof))]
+    assert_allclose(A_ext.T @ A_ext, H_ext)
+    D_inv = np.sqrt(D)
+    D_inv[D_inv > 0] = 1 / D_inv[D_inv > 0]
+    D_inv[D_inv <= 0] = 0
+    assert_allclose(L @ np.sqrt(D) @ D_inv @ linalg.solve(L, g_ext), g_ext)
+    assert_allclose(X_ext.T @ L @ np.sqrt(D) @ D_inv @ linalg.solve(L, g_ext), G_ext)
+    # Note that A_ext needs slicing u in a way not possible with ravel, i.e.
+    # treat u[:n_samples * n_classes, :] and u[n_samples * n_classes:, :] differently.
+    assert_allclose(
+        A_ext[: n_classes * n_samples, :].T @ u[:n_samples, :].ravel(order="F"),
+        A.T @ u.ravel(order="F"),
+    )
+
+    # Construct b explicitly.
+    b_ext = np.r_[-D_inv @ linalg.solve(L, g_ext), np.zeros(n_dof * n_classes)]
+    assert_allclose(
+        b_ext[: n_samples * n_classes],
+        b.reshape((-1, n_classes), order="F")[:n_samples, :].ravel(order="F"),
+        atol=1e-15,
+    )
+    assert_allclose(A_ext.T @ b_ext, -G_ext)
+
+    # Check equivalence of linear equation H @ x = H_v to least squares problem
+    # ||D_Lt_X @ x - D_Lt_X_v||. Note that H (unpenalized with all classes) is
+    # singular and we use `lstsq` instead of `solve`.
+    res = linalg.lstsq(H_ext, H_ext_v)[0].reshape((n_classes, -1))
+    assert_allclose(res, v - np.mean(v, axis=0))
+    res = linalg.lstsq(D_Lt_X, D_Lt_X_v.ravel(order="F"))[0].reshape((n_classes, -1))
+    assert_allclose(res - np.mean(res, axis=0), v - np.mean(v, axis=0))
+
+    # Check Newton step, i.e. H @ x = -G.
+    # Here, we need to add a penalty term. Otherwise, the linear system would be
+    # singular.
+    alpha = 1e-4
+    sol = NewtonLSMRSolver(
+        coef=coef,
+        linear_loss=multinomial_loss,
+        l2_reg_strength=alpha,
+    )
+    sol.setup(X=X, y=y, sample_weight=sw)
+    sol.update_gradient_hessian(X=X, y=y, sample_weight=sw)
+    A, b = sol.compute_A_b(X=X, y=y, sample_weight=sw)
+    pen_ext = alpha * np.identity(n_classes * n_dof)
+    if fit_intercept:
+        pen_ext[:, n_dof - 1 :: n_dof] = 0
+    assert_allclose(
+        A.T @ A @ v.ravel(order="C"), (H_ext + pen_ext) @ v.ravel(order="C")
+    )
+    assert_allclose(A.T @ b, -(G_ext + pen_ext @ coef_ext))
+
+    # Check Newton step.
+    # Note: This works despite the fact that W=LDL is a singular matrix and therefore
+    # D has some zeros on the diagonal and is not strictly invertible. But this does
+    # not seem to matter.
+    if fit_intercept:
+        with warnings.catch_warnings():
+            # Due to the intercept term not being penalized, the linear system might
+            # still be singular.
+            warnings.simplefilter("ignore", scipy.linalg.LinAlgWarning)
+            res1 = linalg.solve(H_ext + pen_ext, -(G_ext + pen_ext @ coef_ext)).reshape(
+                (n_classes, -1)
+            )
+        # For the same reasons, the intercept might need class centering.
+        res1[:, -1] -= np.mean(res1[:, -1])
+    else:
+        res1 = linalg.solve(H_ext + pen_ext, -(G_ext + pen_ext @ coef_ext)).reshape(
+            (n_classes, -1)
+        )
+    # sum over classes = 0
+    assert_allclose(res1.sum(axis=0), 0, atol=5e-10)
+    assert_allclose((H_ext + pen_ext) @ res1.ravel(), -(G_ext + pen_ext @ coef_ext))
+    assert_allclose(A.T @ A @ res1.ravel(order="C"), A.T @ b)
+    res2 = lsmr(A, b, maxiter=(n_features + n_samples) * n_classes, show=True)
+    res2 = res2[0].reshape((n_classes, -1))
+    assert_allclose(res1, res2)
+
+
+@pytest.mark.parametrize("fit_intercept", [False, True])
+@pytest.mark.parametrize("l2_reg_strength", [0, 5.5])
+def test_NewtonLSMRSolver_multinomial_on_binary_problem(
+    fit_intercept, l2_reg_strength, global_random_seed
+):
+    """Test NewtonLSMRSolver multinomial case on a binary problem."""
+    n_samples, n_features, n_classes = 100, 3, 2
+    rng = np.random.RandomState(global_random_seed)
+    X, y = make_classification(
+        n_samples=n_samples,
+        n_features=n_features,
+        n_classes=n_classes,
+        n_informative=n_features - 1 * 0,
+        n_redundant=1 * 0,
+        flip_y=0.1,
+        random_state=rng,
+    )
+    y = y.astype(float)
+
+    # Note that the factor of 2 for BinomialRegressor is to adjust for the
+    # parametrization difference to the multinomial loss.
+    # The factor 1/n_samples is due to the scaling happening in BinomialRegressor
+    # in contrast to NewtonLSMRSolver.
+    bin = BinomialRegressor(
+        fit_intercept=fit_intercept,
+        alpha=l2_reg_strength / 2 / n_samples,
+        solver="newton-cholesky",
+        tol=1e-8,
+    ).fit(X, y)
+    bin_loss = LinearModelLoss(
+        base_loss=HalfBinomialLoss(),
+        fit_intercept=fit_intercept,
+    )
+
+    linear_loss = LinearModelLoss(
+        base_loss=HalfMultinomialLoss(n_classes=n_classes),
+        fit_intercept=fit_intercept,
+    )
+    sol = NewtonLSMRSolver(
+        coef=linear_loss.init_zero_coef(X),
+        linear_loss=linear_loss,
+        l2_reg_strength=l2_reg_strength,
+        tol=1e-8,
+        verbose=0,
+    )
+    sol.solve(X, y, None)
+
+    assert_allclose(np.mean(sol.coef, axis=0), 0, atol=1e-15)
+    if fit_intercept:
+        coef_bin = np.r_[bin.coef_, bin.intercept_]
+    else:
+        coef_bin = bin.coef_
+    assert_allclose(
+        linear_loss.loss(coef=sol.coef, X=X, y=y, l2_reg_strength=l2_reg_strength),
+        bin_loss.loss(coef=coef_bin, X=X, y=y, l2_reg_strength=l2_reg_strength / 2),
+    )
+    assert_allclose(sol.coef[1, :], coef_bin / 2)
