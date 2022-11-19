@@ -9,6 +9,8 @@
 #          Fares Hedayati <fares.hedayati@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
 #          Nelson Liu <nelson@nelsonliu.me>
+#          Adam Li <adam2392@gmail.com>
+#          Jong Shin <jshinm@gmail.com>
 #
 # License: BSD 3 clause
 
