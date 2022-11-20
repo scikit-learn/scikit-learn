@@ -693,7 +693,7 @@ class OAS(EmpiricalCovariance):
         """
         self._validate_params()
 
-        X = self._validate_data(X, ensure_2d=False)
+        X = self._validate_data(X)
         if X.ndim == 1:
             X = np.reshape(X, (1, -1))
             warnings.warn(
