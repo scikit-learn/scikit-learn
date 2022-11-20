@@ -176,7 +176,7 @@ def test_ledoit_wolf():
     X_1d = X[:, 0].reshape((-1, 1))
     lw = LedoitWolf()
     lw.fit(X_1d)
-    assert_almost_equal(
+    assert_allclose(
         X_1d.var(ddof=0),
         _ledoit_wolf(X=X_1d, assume_centered=False, block_size=10000)[0],
     )
