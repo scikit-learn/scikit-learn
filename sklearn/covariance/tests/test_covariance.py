@@ -159,8 +159,8 @@ def test_ledoit_wolf():
     assert_almost_equal(lw.shrinkage_, shrinkage_, 4)
     assert_almost_equal(lw.shrinkage_, ledoit_wolf_shrinkage(X))
     assert_almost_equal(lw.shrinkage_, ledoit_wolf(X)[1])
-    assert_almost_equal(
-        lw.shrinkage_, _ledoit_wolf(X=X, assume_centered=False, block_size=10000)[1]
+    assert lw.shrinkage_ == pytest.approx(
+        _ledoit_wolf(X=X, assume_centered=False, block_size=10000)[1]
     )
     assert_almost_equal(lw.score(X), score_, 4)
     # compare shrunk covariance obtained from data and from MLE estimate
