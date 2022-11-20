@@ -19,7 +19,6 @@ from libc.math cimport fabs
 import numpy as np
 cimport numpy as cnp
 cnp.import_array()
-from cpython.ref cimport PyObject
 
 from numpy.math cimport INFINITY
 from scipy.special.cython_special cimport xlogy

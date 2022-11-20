@@ -15,7 +15,6 @@ from ._criterion cimport Criterion
 
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
-from cpython.ref cimport PyObject
 
 import numpy as np
 
