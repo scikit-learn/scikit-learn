@@ -49,7 +49,7 @@ cdef class BaseCriterion:
     cdef double proxy_impurity_improvement(self) nogil
 
 cdef class Criterion(BaseCriterion):
-    '''Interface for impurity criteria.'''
+    """Abstract interface for supervised impurity criteria."""
 
     # Internal structures
     cdef const DOUBLE_t[:, ::1] y        # Values of y
