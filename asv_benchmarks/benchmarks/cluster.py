@@ -11,10 +11,7 @@ class KMeansBenchmark(Predictor, Transformer, Estimator, Benchmark):
     """
 
     param_names = ["representation", "algorithm", "init"]
-    params = ([
-        # "dense",
-        "sparse"
-        ], ["lloyd", "elkan"], ["random", "k-means++"])
+    params = (["dense", "sparse"], ["lloyd", "elkan"], ["random", "k-means++"])
 
     def setup_cache(self):
         super().setup_cache()
@@ -23,7 +20,7 @@ class KMeansBenchmark(Predictor, Transformer, Estimator, Benchmark):
         representation, algorithm, init = params
 
         if representation == "sparse":
-            data = _20newsgroups_highdim_dataset(n_samples=20000)
+            data = _20newsgroups_highdim_dataset(n_samples=8000)
         else:
             data = _blobs_dataset(n_clusters=20)
 
@@ -63,9 +60,7 @@ class MiniBatchKMeansBenchmark(Predictor, Transformer, Estimator, Benchmark):
     """
 
     param_names = ["representation", "init"]
-    params = ([
-        # "dense", 
-        "sparse"], ["random", "k-means++"])
+    params = (["dense", "sparse"], ["random", "k-means++"])
 
     def setup_cache(self):
         super().setup_cache()
