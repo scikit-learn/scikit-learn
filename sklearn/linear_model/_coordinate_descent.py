@@ -1210,7 +1210,7 @@ class Lasso(ElasticNet):
 
     The target can be a 2-dimensional array, resulting in the optimization of the
     following objective:
-    :math:`(1 / (2 * n_samples)) * ||Y - XW||^2_F + alpha * ||W||_{1,1}`, where
+    :math:`(1 / (2 * n_{samples})) * ||Y - XW||^2_F + \alpha * ||W||_{1,1}`, where
     :math:`||W||_{1,1}` is the sum of the magnitude of the matrix coefficients.
     It should not be confused with :class:`~sklearn.linear_model.MultiTaskLasso` which
     instead penalizes the :math:`L_{2,1}` norm of the coefficients, yielding row-wise
