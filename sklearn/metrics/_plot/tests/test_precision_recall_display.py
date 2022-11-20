@@ -31,7 +31,6 @@ def test_precision_recall_display_validation(pyplot):
         PrecisionRecallDisplay.from_estimator(SVC(), X, y)
 
     regressor = SVR().fit(X, y)
-    y_pred_regressor = regressor.predict(X)
     classifier = SVC(probability=True).fit(X, y)
     y_pred_classifier = classifier.predict_proba(X)[:, -1]
 
