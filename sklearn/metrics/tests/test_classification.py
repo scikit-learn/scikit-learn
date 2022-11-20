@@ -350,8 +350,15 @@ def test_precision_recall_f_ignored_labels():
             assert recall_13(average=average) != recall_all(average=average)
 
 
-def test_average_precision_score_score_non_binary_class():
-    y_true = [0, 2, 1, 1, 2, 0]
+def test_average_precision_score_non_binary_class():
+    # Test MultiClass MultiOuptut for average_precision_score
+    y_true = np.array([[2, 2, 1],
+                        [1, 2, 0],
+                        [0, 1, 2],
+                        [1, 2, 1],
+                        [2, 0, 1],
+                        [1, 2, 1],
+                        ])
     y_score = np.array([[0.7, 0.2, 0.1],
                         [0.4, 0.3, 0.3],
                         [0.1, 0.8, 0.1],
@@ -359,9 +366,9 @@ def test_average_precision_score_score_non_binary_class():
                         [0.4, 0.4, 0.2],
                         [0.1, 0.2, 0.7],
                         ])
-    err_msg = "multiclass format is not supported"
+    err_msg = "multiclass-multioutput format is not supported"
     with pytest.raises(ValueError, match=err_msg):
-        average_precision_score(y_true, y_score)
+        average_precision_score(y_true, y_score, pos_label=2)
 
 def test_average_precision_score_duplicate_values():
     # Duplicate values with precision-recall require a different
