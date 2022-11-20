@@ -15,6 +15,7 @@ from ._criterion cimport Criterion
 
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
+from cpython.ref cimport PyObject
 
 import numpy as np
 
@@ -80,8 +81,6 @@ cdef class Splitter:
         self.n_samples = 0
         self.n_features = 0
 
-        self.sample_weight = NULL
-
         self.max_features = max_features
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
@@ -96,7 +95,7 @@ cdef class Splitter:
     cdef int init(self,
                    object X,
                    const DOUBLE_t[:, ::1] y,
-                   DOUBLE_t* sample_weight) except -1:
+                   const DOUBLE_t[:] sample_weight) except -1:
         """Initialize the splitter.
 
         Take in the input data X, the target Y, and optional sample weights.
@@ -112,7 +111,7 @@ cdef class Splitter:
         y : ndarray, dtype=DOUBLE_t
             This is the vector of targets, or true labels, for the samples
 
-        sample_weight : DOUBLE_t*
+        sample_weight : ndarray, dtype=DOUBLE_t
             The weights of the samples, where higher weighted samples are fit
             closer than lower weight samples. If not provided, all samples
             are assumed to have uniform weight.
@@ -132,11 +131,11 @@ cdef class Splitter:
 
         for i in range(n_samples):
             # Only work with positively weighted samples
-            if sample_weight == NULL or sample_weight[i] != 0.0:
+            if sample_weight == None or sample_weight[i] != 0.0:
                 samples[j] = i
                 j += 1
 
-            if sample_weight != NULL:
+            if sample_weight != None:
                 weighted_n_samples += sample_weight[i]
             else:
                 weighted_n_samples += 1.0
@@ -218,7 +217,7 @@ cdef class BaseDenseSplitter(Splitter):
     cdef int init(self,
                   object X,
                   const DOUBLE_t[:, ::1] y,
-                  DOUBLE_t* sample_weight) except -1:
+                  const DOUBLE_t[:] sample_weight) except -1:
         """Initialize the splitter
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -762,7 +761,7 @@ cdef class BaseSparseSplitter(Splitter):
     cdef int init(self,
                   object X,
                   const DOUBLE_t[:, ::1] y,
-                  DOUBLE_t* sample_weight) except -1:
+                  const DOUBLE_t[:] sample_weight) except -1:
         """Initialize the splitter
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
