@@ -148,7 +148,7 @@ def _weighted_sum(sample_score, sample_weight, normalize=False):
         "y_true": ["array-like", "sparse matrix"],
         "y_pred": ["array-like", "sparse matrix"],
         "normalize": ["boolean"],
-        "sample_weight": ["array-like"],
+        "sample_weight": ["array-like", None],
     }
 )
 def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
