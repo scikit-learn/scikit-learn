@@ -273,6 +273,10 @@ Changelog
   `n_features_in_` and will be removed in 1.4. :pr:`24421` by
   :user:`Kshitij Mathur <Kshitij68>`.
 
+- |Enhancement| :class:`decomposition.DictionaryLearning` now accepts the parameter
+  `callback` and exposes the attribute `code_` which is the sparse code factor
+  extracted from the data. :pr:`24871` by :user:`Omar Salman <OmarManzoor>`
+
 :mod:`sklearn.discriminant_analysis`
 ....................................
 
