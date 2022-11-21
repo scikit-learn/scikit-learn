@@ -905,15 +905,34 @@ def test_dict_learning_dtype_match(data_type, expected_type, method):
     # Verify output matrix dtype
     rng = np.random.RandomState(0)
     n_components = 8
+    common_params = {"n_components": n_components, "alpha": 1, "random_state": rng}
     code, dictionary, _ = dict_learning(
         X.astype(data_type),
-        n_components=n_components,
-        alpha=1,
-        random_state=rng,
+        **common_params,
         method=method,
     )
     assert code.dtype == expected_type
     assert dictionary.dtype == expected_type
+
+    dico = DictionaryLearning(**common_params, fit_algorithm=method)
+    dico.fit(X.astype(data_type))
+    assert dico.code_.dtype == expected_type
+    assert dico.components_.dtype == expected_type
+
+
+def assert_numerical_consistency(u_64, v_64, u_32, v_32, rtol):
+    # Optimal solution (U*, V*) is not unique.
+    # If (U*, V*) is optimal solution, (-U*,-V*) is also optimal,
+    # and (column permutated U*, row permutated V*) are also optional
+    # as long as holding UV.
+    # So here UV, ||U||_1,1 and sum(||V_k||_2^2) are verified
+    # instead of comparing directly U and V.
+    assert_allclose(np.matmul(u_64, v_64), np.matmul(u_32, v_32), rtol=rtol)
+    assert_allclose(np.sum(np.abs(u_64)), np.sum(np.abs(u_32)), rtol=rtol)
+    assert_allclose(np.sum(v_64**2), np.sum(v_32**2), rtol=rtol)
+    # verify an obtained solution is not degenerate
+    assert np.mean(u_64 != 0.0) > 0.05
+    assert np.count_nonzero(u_64 != 0.0) == np.count_nonzero(u_32 != 0.0)
 
 
 @pytest.mark.parametrize("method", ("lars", "cd"))
@@ -922,34 +941,20 @@ def test_dict_learning_numerical_consistency(method):
     rtol = 1e-6
     n_components = 4
     alpha = 2
+    common_params = {"n_components": n_components, "alpha": alpha, "random_state": 0}
+    U_64, V_64, _ = dict_learning(X.astype(np.float64), **common_params, method=method)
+    U_32, V_32, _ = dict_learning(X.astype(np.float32), **common_params, method=method)
+    assert_numerical_consistency(u_64=U_64, v_64=V_64, u_32=U_32, v_32=V_32, rtol=rtol)
 
-    U_64, V_64, _ = dict_learning(
-        X.astype(np.float64),
-        n_components=n_components,
-        alpha=alpha,
-        random_state=0,
-        method=method,
-    )
-    U_32, V_32, _ = dict_learning(
-        X.astype(np.float32),
-        n_components=n_components,
-        alpha=alpha,
-        random_state=0,
-        method=method,
-    )
+    dico = DictionaryLearning(**common_params, fit_algorithm=method)
+    dico.fit(X.astype(np.float64))
+    code_64, components_64 = dico.code_, dico.components_
 
-    # Optimal solution (U*, V*) is not unique.
-    # If (U*, V*) is optimal solution, (-U*,-V*) is also optimal,
-    # and (column permutated U*, row permutated V*) are also optional
-    # as long as holding UV.
-    # So here UV, ||U||_1,1 and sum(||V_k||_2^2) are verified
-    # instead of comparing directly U and V.
-    assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=rtol)
-    assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=rtol)
-    assert_allclose(np.sum(V_64**2), np.sum(V_32**2), rtol=rtol)
-    # verify an obtained solution is not degenerate
-    assert np.mean(U_64 != 0.0) > 0.05
-    assert np.count_nonzero(U_64 != 0.0) == np.count_nonzero(U_32 != 0.0)
+    dico.fit(X.astype(np.float32))
+    code_32, components_32 = dico.code_, dico.components_
+    assert_numerical_consistency(
+        u_64=code_64, v_64=components_64, u_32=code_32, v_32=components_32, rtol=rtol
+    )
 
 
 @pytest.mark.parametrize("method", ("lars", "cd"))
@@ -1002,18 +1007,7 @@ def test_dict_learning_online_numerical_consistency(method):
         method=method,
     )
 
-    # Optimal solution (U*, V*) is not unique.
-    # If (U*, V*) is optimal solution, (-U*,-V*) is also optimal,
-    # and (column permutated U*, row permutated V*) are also optional
-    # as long as holding UV.
-    # So here UV, ||U||_1,1 and sum(||V_k||_2) are verified
-    # instead of comparing directly U and V.
-    assert_allclose(np.matmul(U_64, V_64), np.matmul(U_32, V_32), rtol=rtol)
-    assert_allclose(np.sum(np.abs(U_64)), np.sum(np.abs(U_32)), rtol=rtol)
-    assert_allclose(np.sum(V_64**2), np.sum(V_32**2), rtol=rtol)
-    # verify an obtained solution is not degenerate
-    assert np.mean(U_64 != 0.0) > 0.05
-    assert np.count_nonzero(U_64 != 0.0) == np.count_nonzero(U_32 != 0.0)
+    assert_numerical_consistency(u_64=U_64, v_64=V_64, u_32=U_32, v_32=V_32, rtol=rtol)
 
 
 @pytest.mark.parametrize(
