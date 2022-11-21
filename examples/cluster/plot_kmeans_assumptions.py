@@ -157,3 +157,9 @@ axs[1, 1].set_title("Unevenly Sized Blobs")
 
 plt.suptitle("KMeans and gaussian mixture clusters").set_y(0.95)
 plt.show()
+
+# %%
+# In the case where clusters are known to be isotropic and have similar
+# variance, the k-means algorithm is quite effective and is one of the fastest
+# clustering algorithms available. This advantage is lost if one has to restart
+# it several times to avoid convergence to a local minimum.
