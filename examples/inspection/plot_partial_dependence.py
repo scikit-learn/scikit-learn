@@ -52,15 +52,15 @@ X, y = bikes.data.copy(), bikes.target
 X["weather"].value_counts()
 
 # %%
-# Because of this rare category, we will collapse it into `"rain"`.
+# Because of this rare category, we collapse it into `"rain"`.
 X["weather"].replace(to_replace="heavy_rain", value="rain", inplace=True)
 
 # %%
-# We will have a closer look regarding the `"year"` feature.
+# We now have a closer look at the `"year"` feature:
 X["year"].value_counts()
 
 # %%
-# We see that we have data from two years. We will use the first year to train the
+# We see that we have data from two years. We use the first year to train the
 # model and the second year to test the model.
 mask_training = X["year"] == 0.0
 X = X.drop(columns=["year"])
@@ -69,7 +69,7 @@ X_test, y_test = X[~mask_training], y[~mask_training]
 
 # %%
 # We can check the dataset information to see that we have heterogeneous data types. We
-# will have to preprocess the different columns accordingly.
+# have to preprocess the different columns accordingly.
 X_train.info()
 
 # %%
@@ -77,7 +77,7 @@ X_train.info()
 # categorical features. In addition, we will consider the date and time information as
 # categorical features as well.
 #
-# We will manually define the columns containing numerical and categorical
+# We manually define the columns containing numerical and categorical
 # features.
 numerical_features = [
     "temp",
@@ -93,7 +93,7 @@ categorical_features = X_train.columns.drop(numerical_features)
 # that will be helpful to understand the model's statistical performance and results of
 # the partial dependence analysis.
 #
-# We will plot the average number of bike rentals by grouping the data by season and
+# We plot the average number of bike rentals by grouping the data by season and
 # by year.
 from itertools import product
 import numpy as np
@@ -132,7 +132,7 @@ for ax, (idx, df) in zip(axs, average_bike_rentals.groupby("year")):
 # %%
 # The first striking difference between the train and test set is that the number of
 # bike rentals is higher in the test set. For this reason, it will not be surprising to
-# get a machine learning model that will underestimate the number of bike rentals. We
+# get a machine learning model that underestimates the number of bike rentals. We
 # also observe that the number of bike rentals is lower during the spring season. In
 # addition, we see that during working days, there is a specific pattern around 6-7
 # am and 5-6 pm with some peaks of bike rentals. We can keep in mind these different
@@ -188,7 +188,7 @@ hgbdt_preprocessor
 #
 # In this section, we will compute 1-way partial dependence with two different
 # machine-learning models: (i) a multi-layer perceptron and (ii) a
-# gradient-boosting. With these two models, we illustrate how to compute and
+# gradient-boosting model. With these two models, we illustrate how to compute and
 # interpret both partial dependence plot (PDP) for both numerical and categorical
 # features and individual conditional expectation (ICE).
 #
@@ -232,7 +232,8 @@ print(f"Test R2 score: {mlp_model.score(X_test, y_test):.2f}")
 # Note that it is important to check that the model is accurate enough on a
 # test set before plotting the partial dependence since there would be little
 # use in explaining the impact of a given feature on the prediction function of
-# a poor model. In this regard, our model is working reasonably well.
+# a model with poor predictive performance. In this regard, our MLP model works
+# reasonably well.
 #
 # We will plot the averaged partial dependence.
 import matplotlib.pyplot as plt
@@ -275,7 +276,7 @@ _ = display.figure_.suptitle(
 # """""""""""""""""
 #
 # Let's now fit a :class:`~sklearn.ensemble.HistGradientBoostingRegressor` and
-# compute the partial dependence on the same features. We will also use the
+# compute the partial dependence on the same features. We also use the
 # specific preprocessor we created for this model.
 from sklearn.ensemble import HistGradientBoostingRegressor
 
@@ -386,7 +387,9 @@ hgbdt_model_without_interactions = (
     .set_params(histgradientboostingregressor__interaction_cst=interaction_cst)
     .fit(X_train, y_train)
 )
+print(f"Test R2 score: {hgbdt_model_without_interactions.score(X_test, y_test):.2f}")
 
+# %%
 _, ax = plt.subplots(ncols=2, figsize=(6, 4), sharey=True)
 
 features_info["centered"] = False
@@ -432,12 +435,19 @@ plt.subplots_adjust(wspace=0.3)
 # The two-way partial dependence plot shows the dependence of the number of bike rentals
 # on joint values of temperature and humidity.
 # We clearly see an interaction between the two features. For a temperature higher than
-# 20 degrees Celcius, the humidity will have a greater impact of the number of bike
-# rentals. For a temperature lower than 20 degrees Celsius, both the temperature and
-# humidity will have an impact on the number of bike rentals.
+# 20 degrees Celsius, the humidity has a impact on the number of bike rentals 
+# that seems independent on the temperature.
 #
-# We can reuse the gradient boosting model with interaction constraints between
-# features to see the difference:
+# On the other hand, for temperatures lower than 20 degrees Celsius, both the
+# temperature and humidity continuously impact the number of bike rentals.
+# 
+# Furthermore, the slope of the of the impact ridge of the 20 degrees Celsius
+# threshold is very dependent on the humidity level: the ridge is steep under
+# dry conditions but much smoother under wetter conditions above 70% of humidity. 
+#
+# We now contrast those results with the same plots computed for the model
+# constrained to learn a prediction function that does not depend on such
+# non-linear feature interactions.
 print("Computing partial dependence plots...")
 features_info = {
     "features": ["temp", "humidity", ("temp", "humidity")],
@@ -459,12 +469,23 @@ _ = display.figure_.suptitle(
 plt.subplots_adjust(wspace=0.3)
 
 # %%
-# Although the 2D-plot shows much less interaction compared with the 2D-plot from
-# above, it is much harder to come to the conclusion that there is no interaction at
-# all. This might be a cause of the discrete predictions of trees in combination with
-# numerically precision of partial dependence. We also observe that the univariate
-# dependence plots have slightly changed as the model tries to compensate for the
-# forbidden interactions (spikes in the "humidity" PD plot).
+# The 1D partial dependence plots for the model constrained to not model feature
+# interactions show local spikes for each features individually, in particular for
+# for the "humidity" feature. Those spikes might be reflecting a degraded behavior
+# of the model that attempts to somehow compensate for the forbidden interactions
+# by overfitting particular training points. Note that the predictive performance
+# of this model as measured on the test set is significantly worse than that of
+# the original, unconstrained model.
+#
+# Also note that the number of local spikes visible on those plots is depends on
+# the grid resolution parameter of the PD plot itself.
+#
+# Those local spikes result in a noisily gridded 2D PD plot. It is quite
+# challenging to tell whether or not there are no interaction between those
+# features because of the high frequency oscillations in the humidity feature.
+# However it can clearly be seen that the simple interaction effect observed when
+# the temperature crosses the 20 degrees boundary is no longer visible for this
+# model.
 #
 # The partial dependence between categorical features will provide a discrete
 # reprensentation that can be shown as a heatmap. For instance the interaction between

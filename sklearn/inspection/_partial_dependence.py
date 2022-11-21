@@ -48,7 +48,7 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_target_features)
+    X : array-like of shape (n_samples, n_target_features)
         The data.
 
     percentiles : tuple of float
