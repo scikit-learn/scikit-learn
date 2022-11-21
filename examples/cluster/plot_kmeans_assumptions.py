@@ -35,7 +35,7 @@ X_varied, y_varied = make_blobs(
 X_filtered = np.vstack(
     (X[y == 0][:500], X[y == 1][:100], X[y == 2][:10])
 )  # Unevenly sized blobs
-y_filtered = [[0] * 500 + [1] * 100 + [2] * 10]
+y_filtered = [0] * 500 + [1] * 100 + [2] * 10
 
 # %%
 # We can visualize the resulting data:
