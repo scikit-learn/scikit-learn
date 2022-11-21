@@ -102,6 +102,7 @@ such as MKL, OpenBLAS or BLIS.
 
 You can control the exact number of threads used by BLAS for each library
 using environment variables, namely:
+
   - ``MKL_NUM_THREADS`` sets the number of thread MKL uses,
   - ``OPENBLAS_NUM_THREADS`` sets the number of threads OpenBLAS uses
   - ``BLIS_NUM_THREADS`` sets the number of threads BLIS uses
