@@ -9,7 +9,13 @@ import numpy as np
 from ..base import clone
 from ..exceptions import ConvergenceWarning
 from ..preprocessing import normalize
-from ..utils import check_array, check_random_state, _safe_indexing, is_scalar_nan
+from ..utils import (
+    check_array,
+    check_random_state,
+    is_scalar_nan,
+    _safe_assign,
+    _safe_indexing,
+)
 from ..utils.validation import FLOAT_DTYPES, check_is_fitted
 from ..utils.validation import _check_feature_names_in
 from ..utils._mask import _get_mask
@@ -414,10 +420,12 @@ class IterativeImputer(_BaseImputer):
             )
 
         # update the feature
-        if hasattr(self, "iloc"):
-            X_filled.iloc[missing_row_mask, feat_idx] = imputed_values
-        else:
-            X_filled[missing_row_mask, feat_idx] = imputed_values
+        _safe_assign(
+            X_filled,
+            imputed_values,
+            row_indexer=missing_row_mask,
+            column_indexer=feat_idx,
+        )
         return X_filled, estimator
 
     def _get_neighbor_feat_idx(self, n_features, feat_idx, abs_corr_mat):
@@ -758,11 +766,17 @@ class IterativeImputer(_BaseImputer):
                     "[IterativeImputer] Early stopping criterion not reached.",
                     ConvergenceWarning,
                 )
-        if hasattr(Xt, "iloc"):
-            for feat_idx, feat_mask in enumerate(mask_missing_values.T):
-                Xt.iloc[~feat_mask, feat_idx] = X[~feat_mask, feat_idx]
-        else:
-            Xt[~mask_missing_values] = X[~mask_missing_values]
+        for feat_idx, feat_mask in enumerate(mask_missing_values.T):
+            _safe_assign(
+                Xt,
+                _safe_indexing(
+                    _safe_indexing(X, feat_idx, axis=1),
+                    ~feat_mask,
+                    axis=0,
+                ),
+                row_indexer=~feat_mask,
+                column_indexer=feat_idx,
+            )
         return super()._concatenate_indicator(Xt, X_indicator)
 
     def transform(self, X):
@@ -815,11 +829,17 @@ class IterativeImputer(_BaseImputer):
                     )
                 i_rnd += 1
 
-        if hasattr(Xt, "iloc"):
-            for feat_idx, feat_mask in enumerate(mask_missing_values.T):
-                Xt.iloc[~feat_mask, feat_idx] = X[~feat_mask, feat_idx]
-        else:
-            Xt[~mask_missing_values] = X[~mask_missing_values]
+        for feat_idx, feat_mask in enumerate(mask_missing_values.T):
+            _safe_assign(
+                Xt,
+                _safe_indexing(
+                    _safe_indexing(X, feat_idx, axis=1),
+                    ~feat_mask,
+                    axis=0,
+                ),
+                row_indexer=~feat_mask,
+                column_indexer=feat_idx,
+            )
         return super()._concatenate_indicator(Xt, X_indicator)
 
     def fit(self, X, y=None):
