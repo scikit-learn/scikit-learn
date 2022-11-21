@@ -170,7 +170,7 @@ It suffers from various drawbacks:
   k-means clustering can alleviate this problem and speed up the
   computations.
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_kmeans_assumptions_001.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_kmeans_assumptions_002.png
    :target: ../auto_examples/cluster/plot_kmeans_assumptions.html
    :align: center
    :scale: 50
@@ -2110,5 +2110,5 @@ diagonal entries::
 
 .. topic:: References
 
- * :doi:`"Comparing Partitions" <10.1007/BF01908075>` 
+ * :doi:`"Comparing Partitions" <10.1007/BF01908075>`
    L. Hubert and P. Arabie, Journal of Classification 1985

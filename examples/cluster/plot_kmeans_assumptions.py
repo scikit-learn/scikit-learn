@@ -51,12 +51,34 @@ X_varied, y_varied = make_blobs(
 X_filtered = np.vstack(
     (X[y == 0][:500], X[y == 1][:100], X[y == 2][:10])
 )  # Unevenly sized blobs
+y_filtered = [[0] * 500 + [1] * 100 + [2] * 10]
+
+# %%
+# We can visualize the resulting data:
+
+import matplotlib.pyplot as plt
+
+fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(12, 12))
+
+axs[0, 0].scatter(X[:, 0], X[:, 1], c=y)
+axs[0, 0].set_title("Incorrect Number of Blobs")
+
+axs[0, 1].scatter(X_aniso[:, 0], X_aniso[:, 1], c=y)
+axs[0, 1].set_title("Anisotropically Distributed Blobs")
+
+axs[1, 0].scatter(X_varied[:, 0], X_varied[:, 1], c=y_varied)
+axs[1, 0].set_title("Unequal Variance")
+
+axs[1, 1].scatter(X_filtered[:, 0], X_filtered[:, 1], c=y_filtered)
+axs[1, 1].set_title("Unevenly Sized Blobs")
+
+plt.suptitle("Ground truth clusters").set_y(0.95)
+plt.show()
 
 # %%
 # Fit models and plot results
 # ---------------------------
 
-import matplotlib.pyplot as plt
 from sklearn.cluster import KMeans
 
 common_params = {
@@ -82,6 +104,7 @@ y_pred = KMeans(n_clusters=3, **common_params).fit_predict(X_filtered)
 axs[1, 1].scatter(X_filtered[:, 0], X_filtered[:, 1], c=y_pred)
 axs[1, 1].set_title("Unevenly Sized Blobs")
 
+plt.suptitle("Unexpected KMeans clusters").set_y(0.95)
 plt.show()
 
 # %%
@@ -129,4 +152,5 @@ y_pred = KMeans(n_clusters=3, n_init=10, random_state=random_state).fit_predict(
 axs[1, 1].scatter(X_filtered[:, 0], X_filtered[:, 1], c=y_pred)
 axs[1, 1].set_title("Unevenly Sized Blobs")
 
+plt.suptitle("KMeans and gaussian mixture clusters").set_y(0.95)
 plt.show()
