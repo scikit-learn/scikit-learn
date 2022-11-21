@@ -371,34 +371,34 @@ def sag{{name_suffix}}(
                 # make the weight updates
                 if sample_itr > 0:
                    status = lagged_update{{name_suffix}}(
-                       weights,
-                       wscale,
-                       xnnz,
-                       n_samples,
-                       n_classes,
-                       sample_itr,
-                       &cumulative_sums[0],
-                       cumulative_sums_prox_ptr,
-                       &feature_hist[0],
-                       prox,
-                       sum_gradient,
-                       x_ind_ptr,
-                       False,
-                       n_iter
+                       weights=weights,
+                       wscale=wscale,
+                       xnnz=xnnz,
+                       n_samples=n_samples,
+                       n_classes=n_classes,
+                       sample_itr=sample_itr,
+                       cumulative_sums=&cumulative_sums[0],
+                       cumulative_sums_prox=cumulative_sums_prox_ptr,
+                       feature_hist=&feature_hist[0],
+                       prox=prox,
+                       sum_gradient=sum_gradient,
+                       x_ind_ptr=x_ind_ptr,
+                       reset=False,
+                       n_iter=n_iter
                    )
                    if status == -1:
                        break
 
                 # find the current prediction
                 predict_sample{{name_suffix}}(
-                    x_data_ptr,
-                    x_ind_ptr,
-                    xnnz,
-                    weights,
-                    wscale,
-                    &intercept_array[0],
-                    &prediction[0],
-                    n_classes
+                    x_data_ptr=x_data_ptr,
+                    x_ind_ptr=x_ind_ptr,
+                    xnnz=xnnz,
+                    w_data_ptr=weights,
+                    wscale=wscale,
+                    intercept=&intercept_array[0],
+                    prediction=&prediction[0],
+                    n_classes=n_classes
                 )
 
                 # compute the gradient for this sample, given the prediction
@@ -472,18 +472,18 @@ def sag{{name_suffix}}(
                         with gil:
                             print("rescaling...")
                     status = scale_weights{{name_suffix}}(
-                        weights,
-                        &wscale,
-                        n_features,
-                        n_samples,
-                        n_classes,
-                        sample_itr,
-                        &cumulative_sums[0],
-                        cumulative_sums_prox_ptr,
-                        &feature_hist[0],
-                        prox,
-                        sum_gradient,
-                        n_iter
+                        weights=weights,
+                        wscale=&wscale,
+                        n_features=n_features,
+                        n_samples=n_samples,
+                        n_classes=n_classes,
+                        sample_itr=sample_itr,
+                        cumulative_sums=&cumulative_sums[0],
+                        cumulative_sums_prox=cumulative_sums_prox_ptr,
+                        feature_hist=&feature_hist[0],
+                        prox=prox,
+                        sum_gradient=sum_gradient,
+                        n_iter=n_iter
                     )
                     if status == -1:
                         break
@@ -496,18 +496,18 @@ def sag{{name_suffix}}(
             # we scale the weights every n_samples iterations and reset the
             # just-in-time update system for numerical stability.
             status = scale_weights{{name_suffix}}(
-                weights,
-                &wscale,
-                n_features,
-                n_samples,
-                n_classes,
-                n_samples - 1,
-                &cumulative_sums[0],
-                cumulative_sums_prox_ptr,
-                &feature_hist[0],
-                prox,
-                sum_gradient,
-                n_iter
+                weights=weights,
+                wscale=&wscale,
+                n_features=n_features,
+                n_samples=n_samples,
+                n_classes=n_classes,
+                sample_itr=n_samples - 1,
+                cumulative_sums=&cumulative_sums[0],
+                cumulative_sums_prox=cumulative_sums_prox_ptr,
+                feature_hist=&feature_hist[0],
+                prox=prox,
+                sum_gradient=sum_gradient,
+                n_iter=n_iter
             )
 
             if status == -1:
