@@ -1126,12 +1126,35 @@ def test_average_precision_score_pos_label_errors():
     y_true = np.array([[1, 0], [0, 1], [0, 1], [1, 0]])
     y_pred = np.array([[0.9, 0.1], [0.1, 0.9], [0.8, 0.2], [0.2, 0.8]])
     err_msg = (
-        "Parameter pos_label is fixed to 1 for multiclass or "
-        "multilabel-indicator y_true. Do not set pos_label or set pos_label "
-        "to 1."
+        "Parameter pos_label is fixed to 1 for multilabel-indicator y_true. "
+        "Do not set pos_label or set pos_label to 1."
+        #"Parameter pos_label is fixed to 1 for multiclass or "
+        #"multilabel-indicator y_true. Do not set pos_label or set pos_label "
+        #"to 1."
     )
     with pytest.raises(ValueError, match=err_msg):
         average_precision_score(y_true, y_pred, pos_label=0)
+
+
+def test_average_precision_score_multiclass_pos_label_errors():
+    # Raise an error when pos_label is not in y_true
+    y_true = np.array([0, 1, 2, 0, 1, 2])
+    y_pred = np.array(
+        [
+            [0.5, 0.2, 0.1],
+            [0.4, 0.5, 0.3],
+            [0.1, 0.2, 0.6],
+            [0.2, 0.3, 0.5],
+            [0.2, 0.3, 0.5],
+            [0.2, 0.3, 0.5]
+         ])
+    err_msg = (
+        "Parameter pos_label is fixed to 1 for multiclass or "
+        "multilabel-indicator y_true. Do not set pos_label or set pos_label "
+        "to 1"
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        average_precision_score(y_true, y_pred, pos_label=2)
 
 
 def test_score_scale_invariance():

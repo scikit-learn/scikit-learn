@@ -351,7 +351,7 @@ def test_precision_recall_f_ignored_labels():
 
 
 def test_average_precision_score_non_binary_class():
-    """Test multiclass-multiouptut for `avergae_precision_score`."""
+    """Test multiclass-multiouptut for `average_precision_score`."""
     y_true = np.array(
         [
             [2, 2, 1],
@@ -378,11 +378,13 @@ def test_average_precision_score_non_binary_class():
 
 
 def test_average_precision_score_multiclass_duplicate_values():
-    # Duplicate values with precision-recall require a different
-    # processing than when computing the AUC of a ROC, because the
-    # precision-recall curve is a decreasing curve
-    # The following situation corresponds to a perfect
-    # test statistic, the average_precision_score should be 1
+    """
+    Duplicate values with precision-recall require a different
+    processing than when computing the AUC of a ROC, because the
+    precision-recall curve is a decreasing curve
+    The following situation corresponds to a perfect
+    test statistic, the average_precision_score should be 1.
+    """
     y_true = [0, 0, 1, 2]
     y_score = np.array(
         [
@@ -396,46 +398,51 @@ def test_average_precision_score_multiclass_duplicate_values():
 
 
 def test_average_precision_score_duplicate_values():
-    # Duplicate values with precision-recall require a different
-    # processing than when computing the AUC of a ROC, because the
-    # precision-recall curve is a decreasing curve
-    # The following situation corresponds to a perfect
-    # test statistic, the average_precision_score should be 1
+    """
+    Duplicate values with precision-recall require a different
+    processing than when computing the AUC of a ROC, because the
+    precision-recall curve is a decreasing curve
+    The following situation corresponds to a perfect
+    test statistic, the average_precision_score should be 1.
+    """
     y_true = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1]
     y_score = [0, 0.1, 0.1, 0.4, 0.5, 0.6, 0.6, 0.9, 0.9, 1, 1]
     assert average_precision_score(y_true, y_score) == 1
 
 
 def test_average_precision_score_multiclass_tied_values():
-    # Here if we go from left to right in y_true, the 0 values are
-    # are separated from the 1 values, so it appears that we've
-    # Correctly sorted our classifications. But in fact the first two
-    # values have the same score (0.5) and so the first two values
-    # could be swapped around, creating an imperfect sorting. This
-    # imperfection should come through in the end score, making it less
-    # than one.
-    y_true = [0, 1, 1, 2]
+    """
+    Here if we go from left to right in y_true, the 0 values are
+    are separated from the 1 values, so it appears that we've
+    Correctly sorted our classifications. But in fact the first two
+    values have the same score (0.5) and so the first two values
+    could be swapped around, creating an imperfect sorting. This
+    imperfection should come through in the end score, making it less
+    than one.
+    """
+    y_true = [2, 2, 1, 1, 0]
     y_score = np.array(
         [
-            [0.5, 0.2, 0.1],
-            [0.4, 0.5, 0.3],
-            [0.1, 0.8, 0.1],
             [0.2, 0.3, 0.5],
+            [0.2, 0.3, 0.5],
+            [0.4, 0.5, 0.3],
+            [0.4, 0.5, 0.3],
+            [0.8, 0.5, 0.3],
         ]
     )
-    y_true = [0, 1, 1]
-    y_score = [0.5, 0.5, 0.6]
     assert average_precision_score(y_true, y_score) != 1.0
 
 
 def test_average_precision_score_tied_values():
-    # Here if we go from left to right in y_true, the 0 values are
-    # are separated from the 1 values, so it appears that we've
-    # Correctly sorted our classifications. But in fact the first two
-    # values have the same score (0.5) and so the first two values
-    # could be swapped around, creating an imperfect sorting. This
-    # imperfection should come through in the end score, making it less
-    # than one.
+    """
+    Here if we go from left to right in y_true, the 0 values are
+    are separated from the 1 values, so it appears that we've
+    Correctly sorted our classifications. But in fact the first two
+    values have the same score (0.5) and so the first two values
+    could be swapped around, creating an imperfect sorting. This
+    imperfection should come through in the end score, making it less
+    than one.
+    """
     y_true = [0, 1, 1]
     y_score = [0.5, 0.5, 0.6]
     assert average_precision_score(y_true, y_score) != 1.0
