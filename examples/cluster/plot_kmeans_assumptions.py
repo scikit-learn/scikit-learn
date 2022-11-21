@@ -159,7 +159,13 @@ plt.suptitle("KMeans and gaussian mixture clusters").set_y(0.95)
 plt.show()
 
 # %%
-# In the case where clusters are known to be isotropic and have similar
-# variance, the k-means algorithm is quite effective and is one of the fastest
-# clustering algorithms available. This advantage is lost if one has to restart
-# it several times to avoid convergence to a local minimum.
+# In sparse high-dimensional spaces, Euclidean distances tend to become inflated
+# (not shown in this example). Running a dimensionality reduction algorithm
+# prior to k-means clustering can alleviate this problem and speed up the
+# computations (see the example
+# :ref:`sphx_glr_auto_examples_text_plot_document_clustering.py`).
+#
+# In the case where clusters are known to be isotropic, have similar variance
+# and are not too sparse, the k-means algorithm is quite effective and is one of
+# the fastest clustering algorithms available. This advantage is lost if one has
+# to restart it several times to avoid convergence to a local minimum.
