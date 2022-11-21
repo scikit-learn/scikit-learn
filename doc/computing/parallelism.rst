@@ -83,7 +83,7 @@ will use as many threads as possible, i.e. as many threads as logical cores.
 
 You can control the exact number of threads that are used either:
 
- - via the ``OMP_NUM_THREADS`` environment variable, e.g. for instance when:
+ - via the ``OMP_NUM_THREADS`` environment variable, for instance when:
    running a python script:
 
    .. prompt:: bash $
