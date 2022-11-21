@@ -510,10 +510,6 @@ def _dict_learning(
     method_max_iter,
 ):
     """Main dictionary learning algorithm"""
-    _check_positive_coding(method, positive_code)
-
-    method = "lasso_" + method
-
     t0 = time.time()
     # Init the code and the dictionary with SVD of Y
     if code_init is not None and dict_init is not None:
@@ -1780,6 +1776,10 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         """
         self._validate_params()
 
+        _check_positive_coding(method=self.fit_algorithm, positive=self.positive_code)
+
+        method = "lasso_" + self.fit_algorithm
+
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X)
         if self.n_components is None:
@@ -1793,7 +1793,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
             alpha=self.alpha,
             tol=self.tol,
             max_iter=self.max_iter,
-            method=self.fit_algorithm,
+            method=method,
             method_max_iter=self.transform_max_iter,
             n_jobs=self.n_jobs,
             code_init=self.code_init,
