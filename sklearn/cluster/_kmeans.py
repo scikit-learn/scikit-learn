@@ -72,7 +72,7 @@ from ._k_means_elkan import elkan_iter_chunked_sparse
 def kmeans_plusplus(
     X, n_clusters, *, x_squared_norms=None, random_state=None, n_local_trials=None
 ):
-    """Init n_clusters seeds according to k-means++.
+    """Init n_clusters seeds according to greedy k-means++ (default) or k-means++.
 
     .. versionadded:: 0.24
 
@@ -96,7 +96,8 @@ def kmeans_plusplus(
         The number of seeding trials for each center (except the first),
         of which the one reducing inertia the most is greedily chosen.
         Set to None to make the number of trials depend logarithmically
-        on the number of seeds (2+log(k)).
+        on the number of seeds (2+log(k)). Set to 1 to obtain the original
+        k-means++ algorithm. Set to > 1 (or None) to obtain greedy k-means++.
 
     Returns
     -------
@@ -1173,9 +1174,9 @@ class KMeans(_BaseKMeans):
 
         'k-means++' : selects initial cluster centroids using sampling based on
         an empirical probability distribution of the points' contribution to the
-        overall inertia. This technique speeds up convergence, and is
-        theoretically proven to be :math:`\\mathcal{O}(\\log k)`-optimal.
-        See the description of `n_init` for more details.
+        overall inertia. This technique speeds up convergence. The algorithm 
+        implemented is "greedy k-means++". It differs from the original k-means++
+        by making several trials at each sampling step and chosing the best centroid among them.
 
         'random': choose `n_clusters` observations (rows) at random from data
         for the initial centroids.
@@ -1648,9 +1649,9 @@ class MiniBatchKMeans(_BaseKMeans):
 
         'k-means++' : selects initial cluster centroids using sampling based on
         an empirical probability distribution of the points' contribution to the
-        overall inertia. This technique speeds up convergence, and is
-        theoretically proven to be :math:`\\mathcal{O}(\\log k)`-optimal.
-        See the description of `n_init` for more details.
+        overall inertia. This technique speeds up convergence. The algorithm 
+        implemented is "greedy k-means++". It differs from the original k-means++
+        by making several trials at each sampling step and chosing the best centroid among them.
 
         'random': choose `n_clusters` observations (rows) at random from data
         for the initial centroids.
