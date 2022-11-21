@@ -10,7 +10,7 @@ import numpy as np
 from scipy import sparse
 
 from ..base import BaseEstimator, TransformerMixin, OneToOneFeatureMixin
-from ..utils import check_array, is_scalar_nan
+from ..utils import check_array, is_scalar_nan, _safe_indexing
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
 from ..utils._param_validation import Interval, StrOptions, Hidden
@@ -67,11 +67,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         return X_columns, n_samples, n_features
 
     def _get_feature(self, X, feature_idx):
-        if hasattr(X, "iloc"):
-            # pandas dataframes
-            return X.iloc[:, feature_idx]
-        # numpy arrays, sparse arrays
-        return X[:, feature_idx]
+        return _safe_indexing(X, feature_idx, axis=1)
 
     def _fit(
         self, X, handle_unknown="error", force_all_finite=True, return_counts=False
