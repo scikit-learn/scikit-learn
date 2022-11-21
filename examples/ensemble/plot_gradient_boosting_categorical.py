@@ -143,7 +143,7 @@ hist_ordinal = make_pipeline(
 # that will natively handle categorical features. This estimator will not treat
 # categorical features as ordered quantities.
 #
-# To benefit from this, the categorical features need to be encoded using the
+# To benefit from this, one option is to encode the categorical features using the
 # pandas categorical dtype which we already did at the beginning of this
 # example with the call to `.astype("category")`.
 #
