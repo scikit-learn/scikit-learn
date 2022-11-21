@@ -3,24 +3,8 @@
 Demonstration of k-means assumptions
 ====================================
 
-This example is meant to illustrate situations where k-means will produce
+This example is meant to illustrate situations where k-means produces
 unintuitive and possibly undesirable clusters.
-
-- Incorrect number of blobs: in a real setting there is no uniquely defined
-  **true** number of clusters. An appropriate number of clusters has to be
-  decided from data-based criteria and knowledge of aim.
-- Anisotropically distributed blobs: k-means consists of minimizing sample's
-  euclidean distances to the centroid of the cluster they are assigned
-  to. As a consequence, k-means is more appropriate for clusters that are
-  isotropic and normally distributed (i.e. spherical gaussians).
-- Unequal variance: k-means is equivalent to taking the maximum likelihood
-  estimator for a "mixture" of k gaussian distributions with the same variances
-  but with possibly different means.
-- Unevenly sized blobs: there is no theoretical result about k-means that states
-  that it requires similar cluster sizes to perform well, yet minimizing
-  euclidean distances does mean that the more sparse and high-dimensional the
-  problem is, the higher is the need to run the algorithm with different
-  centroid seeds to ensure a global minimal inertia.
 
 """
 
@@ -32,9 +16,9 @@ unintuitive and possibly undesirable clusters.
 # Data generation
 # ---------------
 #
-# The function :func:`~sklearn.datasets.make_blobs` generates isotropic gaussian
-# blobs. To obtain anisotropic (elliptical) gaussian blobs one has to define a
-# linear `transformation`.
+# The function :func:`~sklearn.datasets.make_blobs` generates isotropic
+# (spherical) gaussian blobs. To obtain anisotropic (elliptical) gaussian blobs
+# one has to define a linear `transformation`.
 
 import numpy as np
 from sklearn.datasets import make_blobs
@@ -78,6 +62,25 @@ plt.show()
 # %%
 # Fit models and plot results
 # ---------------------------
+#
+# The previously generated data is now used for showing how
+# :class:`~sklearn.cluster.KMeans` behaves in the following scenarios:
+#
+# - Incorrect number of blobs: in a real setting there is no uniquely defined
+#   **true** number of clusters. An appropriate number of clusters has to be
+#   decided from data-based criteria and knowledge of aim.
+# - Anisotropically distributed blobs: k-means consists of minimizing sample's
+#   euclidean distances to the centroid of the cluster they are assigned to. As
+#   a consequence, k-means is more appropriate for clusters that are isotropic
+#   and normally distributed (i.e. spherical gaussians).
+# - Unequal variance: k-means is equivalent to taking the maximum likelihood
+#   estimator for a "mixture" of k gaussian distributions with the same
+#   variances but with possibly different means.
+# - Unevenly sized blobs: there is no theoretical result about k-means that
+#   states that it requires similar cluster sizes to perform well, yet
+#   minimizing euclidean distances does mean that the more sparse and
+#   high-dimensional the problem is, the higher is the need to run the algorithm
+#   with different centroid seeds to ensure a global minimal inertia.
 
 from sklearn.cluster import KMeans
 
