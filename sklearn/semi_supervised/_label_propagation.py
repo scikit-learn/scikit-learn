@@ -186,7 +186,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         """
         # Note: since `predict` does not accept semi-supervised labels as input,
         # `fit(X, y).predict(X) != fit(X, y).transduction_`.
-        # Hence, `fit_predict` is not implemented. 
+        # Hence, `fit_predict` is not implemented.
         # See https://github.com/scikit-learn/scikit-learn/pull/24898
         probas = self.predict_proba(X)
         return self.classes_[np.argmax(probas, axis=1)].ravel()
