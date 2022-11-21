@@ -490,6 +490,11 @@ Changelog
   of a binary classification problem. :pr:`22518` by
   :user:`Arturo Amor <ArturoAmorQ>`.
 
+- |Feature| :func:`metrics.average_precision_score` now supports the
+  multiclass case.
+  :pr:`17388` by :user:`Geoffrey Bolmier <gbolmier>` and
+  :pr:`24769` by :user:`Ashwin Mathur <awinml>`.
+
 - |Fix| Allows `csr_matrix` as input for parameter: `y_true` of
    the :func:`metrics.label_ranking_average_precision_score` metric.
    :pr:`23442` by :user:`Sean Atukorala <ShehanAT>`
@@ -519,11 +524,6 @@ Changelog
 - |API| The parameter `sum_over_features` of :func:`metrics.pairwise.manhattan_distances` is deprecated
   and will be removed in 1.4.
   :pr:`24630` by :user:`Rushil Desai <rusdes>`.
-
-- |Enhancement| :func:`metrics.average_precision_score` now supports the
-  multiclass case.
-  :pr:`17388` by :user:`Geoffrey Bolmier <gbolmier>` and
-  :pr:`24769` by :user:`Ashwin Mathur <awinml>`.
 
 :mod:`sklearn.model_selection`
 ..............................
