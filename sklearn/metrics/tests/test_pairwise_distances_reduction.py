@@ -561,8 +561,11 @@ def test_pairwise_distances_reduction_is_usable_for():
     assert not BaseDistancesReductionDispatcher.is_usable_for(
         X_csr, Y, metric="euclidean"
     )
-    assert not BaseDistancesReductionDispatcher.is_usable_for(
+    assert BaseDistancesReductionDispatcher.is_usable_for(
         X_csr, Y_csr, metric="sqeuclidean"
+    )
+    assert BaseDistancesReductionDispatcher.is_usable_for(
+        X_csr, Y_csr, metric="euclidean"
     )
 
     # CSR matrices without non-zeros elements aren't currently supported
@@ -974,6 +977,9 @@ def test_pairwise_distances_argkmin(
     X = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
     Y = translation + rng.rand(n_samples, n_features).astype(dtype) * spread
 
+    X_csr = csr_matrix(X)
+    Y_csr = csr_matrix(Y)
+
     # Haversine distance only accepts 2D data
     if metric == "haversine":
         X = np.ascontiguousarray(X[:, :2])
@@ -996,24 +1002,25 @@ def test_pairwise_distances_argkmin(
             row_idx, argkmin_indices_ref[row_idx]
         ]
 
-    argkmin_distances, argkmin_indices = ArgKmin.compute(
-        X,
-        Y,
-        k,
-        metric=metric,
-        metric_kwargs=metric_kwargs,
-        return_distance=True,
-        # So as to have more than a chunk, forcing parallelism.
-        chunk_size=n_samples // 4,
-        strategy=strategy,
-    )
+    for _X, _Y in [(X, Y), (X_csr, Y_csr)]:
+        argkmin_distances, argkmin_indices = ArgKmin.compute(
+            _X,
+            _Y,
+            k,
+            metric=metric,
+            metric_kwargs=metric_kwargs,
+            return_distance=True,
+            # So as to have more than a chunk, forcing parallelism.
+            chunk_size=n_samples // 4,
+            strategy=strategy,
+        )
 
-    ASSERT_RESULT[(ArgKmin, dtype)](
-        argkmin_distances,
-        argkmin_distances_ref,
-        argkmin_indices,
-        argkmin_indices_ref,
-    )
+        ASSERT_RESULT[(ArgKmin, dtype)](
+            argkmin_distances,
+            argkmin_distances_ref,
+            argkmin_indices,
+            argkmin_indices_ref,
+        )
 
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
@@ -1148,10 +1155,15 @@ def test_sqeuclidean_row_norms(
     spread = 100
     X = rng.rand(n_samples, n_features).astype(dtype) * spread
 
+    X_csr = csr_matrix(X)
+
     sq_row_norm_reference = np.linalg.norm(X, axis=1) ** 2
-    sq_row_norm = np.asarray(sqeuclidean_row_norms(X, num_threads=num_threads))
+    sq_row_norm = sqeuclidean_row_norms(X, num_threads=num_threads)
+
+    sq_row_norm_csr = sqeuclidean_row_norms(X_csr, num_threads=num_threads)
 
     assert_allclose(sq_row_norm_reference, sq_row_norm)
+    assert_allclose(sq_row_norm_reference, sq_row_norm_csr)
 
     with pytest.raises(ValueError):
         X = np.asfortranarray(X)

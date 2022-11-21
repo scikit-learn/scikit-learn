@@ -174,7 +174,7 @@ not allowed to change the number of samples. Therefore multiple imputations
 cannot be achieved by a single call to ``transform``.
 
 References
-==========
+----------
 
 .. [1] Stef van Buuren, Karin Groothuis-Oudshoorn (2011). "mice: Multivariate
    Imputation by Chained Equations in R". Journal of Statistical Software 45:
@@ -219,10 +219,39 @@ neighbors of samples with missing values::
            [5.5, 6. , 5. ],
            [8. , 8. , 7. ]])
 
-.. [OL2001] Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown,
-    Trevor Hastie, Robert Tibshirani, David Botstein and Russ B. Altman,
-    Missing value estimation methods for DNA microarrays, BIOINFORMATICS
-    Vol. 17 no. 6, 2001 Pages 520-525.
+.. topic:: References
+
+  .. [OL2001] Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown,
+      Trevor Hastie, Robert Tibshirani, David Botstein and Russ B. Altman,
+      Missing value estimation methods for DNA microarrays, BIOINFORMATICS
+      Vol. 17 no. 6, 2001 Pages 520-525.
+
+Keeping the number of features constants
+========================================
+
+By default, the scikit-learn imputers will drop fully empty features, i.e.
+columns containing only missing values. For instance::
+
+  >>> imputer = SimpleImputer()
+  >>> X = np.array([[np.nan, 1], [np.nan, 2], [np.nan, 3]])
+  >>> imputer.fit_transform(X)
+  array([[1.],
+         [2.],
+         [3.]])
+
+The first feature in `X` containing only `np.nan` was dropped after the
+imputation. While this feature will not help in predictive setting, dropping
+the columns will change the shape of `X` which could be problematic when using
+imputers in a more complex machine-learning pipeline. The parameter
+`keep_empty_features` offers the option to keep the empty features by imputing
+with a constant values. In most of the cases, this constant value is zero::
+
+  >>> imputer.set_params(keep_empty_features=True)
+  SimpleImputer(keep_empty_features=True)
+  >>> imputer.fit_transform(X)
+  array([[0., 1.],
+         [0., 2.],
+         [0., 3.]])
 
 .. _missing_indicator:
 
@@ -317,8 +346,8 @@ wrap this in a :class:`Pipeline` with a classifier (e.g., a
 Estimators that handle NaN values
 =================================
 
-Some estimators are designed to handle NaN values without preprocessing. 
-Below is the list of these estimators, classified by type 
-(cluster, regressor, classifier, transform) :
+Some estimators are designed to handle NaN values without preprocessing.
+Below is the list of these estimators, classified by type
+(cluster, regressor, classifier, transform):
 
 .. allow_nan_estimators::

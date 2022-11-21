@@ -950,7 +950,7 @@ class OneHotEncoder(_BaseEncoder):
         ]
 
         # create resulting array of appropriate dtype
-        dt = np.find_common_type([cat.dtype for cat in transformed_features], [])
+        dt = np.result_type(*[cat.dtype for cat in transformed_features])
         X_tr = np.empty((n_samples, n_features), dtype=dt)
 
         j = 0
@@ -1130,6 +1130,13 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     OneHotEncoder : Performs a one-hot encoding of categorical features.
     LabelEncoder : Encodes target labels with values between 0 and
         ``n_classes-1``.
+
+    Notes
+    -----
+    With a high proportion of `nan` values, inferring categories becomes slow with
+    Python versions before 3.10. The handling of `nan` values was improved
+    from Python 3.10 onwards, (c.f.
+    `bpo-43475 <https://github.com/python/cpython/issues/87641>`_).
 
     Examples
     --------
@@ -1346,7 +1353,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
             raise ValueError(msg.format(n_features, X.shape[1]))
 
         # create resulting array of appropriate dtype
-        dt = np.find_common_type([cat.dtype for cat in self.categories_], [])
+        dt = np.result_type(*[cat.dtype for cat in self.categories_])
         X_tr = np.empty((n_samples, n_features), dtype=dt)
 
         found_unknown = {}

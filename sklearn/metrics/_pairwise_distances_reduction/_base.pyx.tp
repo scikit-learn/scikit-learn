@@ -26,11 +26,12 @@ from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
 import numpy as np
 
+from scipy.sparse import issparse
 from numbers import Integral
 from sklearn import get_config
 from sklearn.utils import check_scalar
 from ...utils._openmp_helpers import _openmp_effective_n_threads
-from ...utils._typedefs import DTYPE
+from ...utils._typedefs import DTYPE, SPARSE_INDEX_TYPE
 
 cnp.import_array()
 
@@ -102,16 +103,40 @@ cdef DTYPE_t[::1] _sqeuclidean_row_norms32_dense(
     return squared_row_norms
 
 
+cdef DTYPE_t[::1] _sqeuclidean_row_norms64_sparse(
+    const DTYPE_t[:] X_data,
+    const SPARSE_INDEX_TYPE_t[:] X_indptr,
+    ITYPE_t num_threads,
+):
+    cdef:
+        ITYPE_t n = X_indptr.shape[0] - 1
+        SPARSE_INDEX_TYPE_t X_i_ptr, idx = 0
+        DTYPE_t[::1] squared_row_norms = np.zeros(n, dtype=DTYPE)
+
+    for idx in prange(n, schedule='static', nogil=True, num_threads=num_threads):
+        for X_i_ptr in range(X_indptr[idx], X_indptr[idx+1]):
+            squared_row_norms[idx] += X_data[X_i_ptr] * X_data[X_i_ptr]
+
+    return squared_row_norms
+
+
 {{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
 from ._datasets_pair cimport DatasetsPair{{name_suffix}}
 
 
 cpdef DTYPE_t[::1] _sqeuclidean_row_norms{{name_suffix}}(
-    const {{INPUT_DTYPE_t}}[:, ::1] X,
+    X,
     ITYPE_t num_threads,
 ):
-    return _sqeuclidean_row_norms{{name_suffix}}_dense(X, num_threads)
+    if issparse(X):
+        # TODO: remove this instruction which is a cast in the float32 case
+        # by moving squared row norms computations in MiddleTermComputer. 
+        X_data = np.asarray(X.data, dtype=DTYPE)
+        X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
+        return _sqeuclidean_row_norms64_sparse(X_data, X_indptr, num_threads)
+    else:
+        return _sqeuclidean_row_norms{{name_suffix}}_dense(X, num_threads)
 
 
 cdef class BaseDistancesReduction{{name_suffix}}:
@@ -131,7 +156,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         strategy=None,
      ):
         cdef:
-            ITYPE_t n_samples_chunk, X_n_full_chunks, Y_n_full_chunks
+            ITYPE_t X_n_full_chunks, Y_n_full_chunks
 
         if chunk_size is None:
             chunk_size = get_config().get("pairwise_dist_chunk_size", 256)
