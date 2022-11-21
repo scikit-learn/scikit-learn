@@ -186,7 +186,14 @@ def _array_indexing(array, key, key_dtype, axis):
 
 def _pandas_indexing(X, key, key_dtype, axis):
     """Index a pandas dataframe or a series."""
-    if isinstance(key, tuple):
+    if hasattr(key, "shape") and not np.isscalar(key):
+        # Surprisingly `np.int64` will have a `shape` attribute while being
+        # a scalar.
+        # Work-around for indexing with read-only key in pandas
+        # FIXME: solved in pandas 0.25
+        key = np.asarray(key)
+        key = key if key.flags.writeable else key.copy()
+    elif isinstance(key, tuple):
         key = list(key)
 
     if key_dtype == "int" and not (isinstance(key, slice) or np.isscalar(key)):
