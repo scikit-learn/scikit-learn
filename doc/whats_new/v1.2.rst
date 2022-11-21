@@ -585,9 +585,11 @@ Changelog
   :pr:`22629` by `Thomas Fan`_.
 
 - |Enhancement| Added support for `sample_weight` in :class:`preprocessing.KBinsDiscretizer`.
-  This allows specifying the parameter weights for each sample to be used while
+  This allows specifying the parameter `sample_weight` for each sample to be used while
   fitting. The option is only available when `strategy` is set to `quantile`.
-  :pr:`22048` by :user:`Seladus <seladus>`.
+  :pr:`24935` by :user:`Seladus <seladus>`,
+  :user:`Guillaume Lemaitre <glemaitre>`, and
+  :user:`Dea María Léon <deamarialeon>`.
 
 :mod:`sklearn.svm`
 ..................

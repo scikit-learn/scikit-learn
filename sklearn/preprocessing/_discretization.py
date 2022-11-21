@@ -199,6 +199,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         sample_weight : ndarray of shape (n_samples,)
             Contains weight values to be associated with each sample.
+            Only possible when `strategy`is set to `"quantile"`.
 
         Returns
         -------
@@ -214,13 +215,6 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             output_dtype = X.dtype
 
         n_samples, n_features = X.shape
-
-        valid_strategy = ("uniform", "quantile", "kmeans")
-        if self.strategy not in valid_strategy:
-            raise ValueError(
-                f"Valid options for 'strategy' are {valid_strategy}. "
-                f"Got strategy={self.strategy!r} instead."
-            )
 
         if self.strategy == "quantile" and self.subsample is not None:
             if self.subsample == "warn":
@@ -245,27 +239,17 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
                 '`subsample` must be used with `strategy="quantile"`.'
             )
 
-        elif self.strategy != "quantile" and sample_weight is not None:
+        elif sample_weight is not None and self.strategy != "quantile":
             raise ValueError(
                 "`sample_weight` was provided but it can be only used with"
                 f"strategy='quantile'. Got strategy={self.strategy!r} instead."
-            )
-
-        valid_encode = ("onehot", "onehot-dense", "ordinal")
-        if self.encode not in valid_encode:
-            raise ValueError(
-                "Valid options for 'encode' are {}. Got encode={!r} instead.".format(
-                    valid_encode, self.encode
-                )
             )
 
         n_features = X.shape[1]
         n_bins = self._validate_n_bins(n_features)
 
         if sample_weight is not None:
-            sample_weight = _check_sample_weight(
-                sample_weight, X, dtype=X.dtype, copy=True
-            )
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         bin_edges = np.zeros(n_features, dtype=object)
         for jj in range(n_features):

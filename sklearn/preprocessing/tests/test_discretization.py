@@ -50,18 +50,17 @@ def test_valid_n_bins():
     assert KBinsDiscretizer(n_bins=2).fit(X).n_bins_.dtype == np.dtype(int)
 
 
-def test_invalid_sample_weight():
-    # sample_weight parameter is used with wrong strategy (other than quantile)
-    strategy = ["uniform", "kmeans"]
-    sample_weight = [1, 1, 1, 1]
-    for s in strategy:
-        est = KBinsDiscretizer(n_bins=3, strategy=s)
-        err_msg = (
-            "`sample_weight` was provided but it can be only used with"
-            f"strategy='quantile'. Got strategy={s!r} instead."
-        )
-        with pytest.raises(ValueError, match=err_msg):
-            est.fit_transform(X, sample_weight=sample_weight)
+@pytest.mark.parametrize("strategy", ["uniform", "kmeans"])
+def test_kbinsdiscretizer_wrong_strategy_with_weights(strategy):
+    """Check that we raise an error message when the wrong strategy
+    is used."""
+    sample_weight = np.ones(shape=(len(X)))
+    est = KBinsDiscretizer(n_bins=3, strategy=strategy)
+    err_msg = (
+        "`sample_weight` was provided but it can be only used withstrategy='quantile'."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        est.fit(X, sample_weight=sample_weight)
 
 
 def test_invalid_n_bins_array():
