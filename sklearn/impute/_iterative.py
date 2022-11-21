@@ -730,7 +730,7 @@ class IterativeImputer(_BaseImputer):
                 Xt, estimator = self._impute_one_feature(
                     Xt,
                     mask_missing_values,
-                    int(feat_idx),
+                    feat_idx,
                     neighbor_feat_idx,
                     estimator=None,
                     fit_mode=True,
