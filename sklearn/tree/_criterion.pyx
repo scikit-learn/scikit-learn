@@ -41,9 +41,15 @@ cdef class Criterion:
     def __setstate__(self, d):
         pass
 
-    cdef int init(self, const DOUBLE_t[:, ::1] y, const DOUBLE_t[:] sample_weight,
-                  double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                  SIZE_t end) nogil except -1:
+    cdef int init(
+        self,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight,
+        double weighted_n_samples,
+        SIZE_t* samples,
+        SIZE_t start,
+        SIZE_t end,
+    ) nogil except -1:
         """Placeholder for a method which will initialize the criterion.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -293,7 +299,6 @@ cdef class ClassificationCriterion(Criterion):
 
             # w is originally set to be 1.0, meaning that if no sample weights
             # are given, the default weight of each sample is 1.0.
-            # see: https://cython.readthedocs.io/en/latest/src/userguide/memoryviews.html#syntax
             if sample_weight is not None:
                 w = sample_weight[i]
 
@@ -633,9 +638,15 @@ cdef class RegressionCriterion(Criterion):
     def __reduce__(self):
         return (type(self), (self.n_outputs, self.n_samples), self.__getstate__())
 
-    cdef int init(self, const DOUBLE_t[:, ::1] y, const DOUBLE_t[:] sample_weight,
-                  double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                  SIZE_t end) nogil except -1:
+    cdef int init(
+        self,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight,
+        double weighted_n_samples,
+        SIZE_t* samples,
+        SIZE_t start,
+        SIZE_t end,
+    ) nogil except -1:
         """Initialize the criterion.
 
         This initializes the criterion at node samples[start:end] and children
@@ -908,9 +919,15 @@ cdef class MAE(RegressionCriterion):
             self.left_child[k] = WeightedMedianCalculator(n_samples)
             self.right_child[k] = WeightedMedianCalculator(n_samples)
 
-    cdef int init(self, const DOUBLE_t[:, ::1] y, const DOUBLE_t[:] sample_weight ,
-                  double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                  SIZE_t end) nogil except -1:
+    cdef int init(
+        self,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight,
+        double weighted_n_samples,
+        SIZE_t* samples,
+        SIZE_t start,
+        SIZE_t end,
+    ) nogil except -1:
         """Initialize the criterion.
 
         This initializes the criterion at node samples[start:end] and children
