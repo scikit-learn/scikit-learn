@@ -72,7 +72,7 @@ from ._k_means_elkan import elkan_iter_chunked_sparse
 def kmeans_plusplus(
     X, n_clusters, *, x_squared_norms=None, random_state=None, n_local_trials=None
 ):
-    """Init n_clusters seeds according to greedy k-means++ (default) or k-means++.
+    """Init n_clusters seeds according to k-means++.
 
     .. versionadded:: 0.24
 
