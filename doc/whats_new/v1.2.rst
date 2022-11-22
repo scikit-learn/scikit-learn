@@ -298,6 +298,8 @@ Changelog
   interaction constraints via the argument `interaction_cst` of their
   constructors.
   :pr:`21020` by :user:`Christian Lorentzen <lorentzenchr>`.
+  Using interaction constraints also makes fitting faster.
+  :pr:`24856` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Feature| Adds `class_weight` to :class:`ensemble.HistGradientBoostingClassifier`.
   :pr:`22014` by `Thomas Fan`_.
