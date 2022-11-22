@@ -196,7 +196,7 @@ cdef class Criterion(BaseCriterion):
     cdef int init(
         self,
         const DOUBLE_t[:, ::1] y,
-        DOUBLE_t* sample_weight,
+        const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
         SIZE_t* samples,
         SIZE_t start,
@@ -209,19 +209,21 @@ cdef class Criterion(BaseCriterion):
 
         Parameters
         ----------
-        y : array-like, dtype=DOUBLE_t
-            y is a buffer that can store values for the `n_outputs` target variables
-        sample_weight : pointer to a buffer of DOUBLE_t
-            The pointer to the buffer storing each sample weight.
+        y : ndarray, dtype=DOUBLE_t
+            y is a buffer that can store values for n_outputs target variables
+            stored as a Cython memoryview.
+        sample_weight : ndarray, dtype=DOUBLE_t
+            The weight of each sample stored as a Cython memoryview.
         weighted_n_samples : double
-            The sum of the weights of the samples being considered.
+            The total weight of the samples being considered
         samples : array-like, dtype=SIZE_t
             Indices of the samples in X and y, where samples[start:end]
             correspond to the samples in this node
         start : SIZE_t
-            The index of first sample in `samples` to be considered in this node.
+            The first sample to be used on this node
         end : SIZE_t
-            The index of last sample in `samples` to be considered in this node.
+            The last sample used on this node
+
         """
         pass
 
@@ -241,8 +243,6 @@ cdef class ClassificationCriterion(Criterion):
         n_classes : numpy.ndarray, dtype=SIZE_t
             The number of unique classes in each target
         """
-        self.sample_weight = NULL
-
         self.samples = NULL
         self.start = 0
         self.pos = 0
@@ -279,9 +279,15 @@ cdef class ClassificationCriterion(Criterion):
         return (type(self),
                 (self.n_outputs, np.asarray(self.n_classes)), self.__getstate__())
 
-    cdef int init(self, const DOUBLE_t[:, ::1] y,
-                  DOUBLE_t* sample_weight, double weighted_n_samples,
-                  SIZE_t* samples, SIZE_t start, SIZE_t end) nogil except -1:
+    cdef int init(
+        self,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight,
+        double weighted_n_samples,
+        SIZE_t* samples,
+        SIZE_t start,
+        SIZE_t end
+    ) nogil except -1:
         """Initialize the criterion.
 
         This initializes the criterion at node samples[start:end] and children
@@ -292,10 +298,10 @@ cdef class ClassificationCriterion(Criterion):
 
         Parameters
         ----------
-        y : array-like, dtype=DOUBLE_t
-            The target stored as a buffer for memory efficiency
-        sample_weight : array-like, dtype=DOUBLE_t
-            The weight of each sample
+        y : ndarray, dtype=DOUBLE_t
+            The target stored as a buffer for memory efficiency.
+        sample_weight : ndarray, dtype=DOUBLE_t
+            The weight of each sample stored as a Cython memoryview.
         weighted_n_samples : double
             The total weight of all samples
         samples : array-like, dtype=SIZE_t
@@ -327,8 +333,8 @@ cdef class ClassificationCriterion(Criterion):
             i = samples[p]
 
             # w is originally set to be 1.0, meaning that if no sample weights
-            # are given, the default weight of each sample is 1.0
-            if sample_weight != NULL:
+            # are given, the default weight of each sample is 1.0.
+            if sample_weight is not None:
                 w = sample_weight[i]
 
             # Count weighted class frequency for each target
@@ -392,7 +398,7 @@ cdef class ClassificationCriterion(Criterion):
         cdef SIZE_t end = self.end
 
         cdef SIZE_t* samples = self.samples
-        cdef DOUBLE_t* sample_weight = self.sample_weight
+        cdef const DOUBLE_t[:] sample_weight = self.sample_weight
 
         cdef SIZE_t i
         cdef SIZE_t p
@@ -411,7 +417,7 @@ cdef class ClassificationCriterion(Criterion):
             for p in range(pos, new_pos):
                 i = samples[p]
 
-                if sample_weight != NULL:
+                if sample_weight is not None:
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
@@ -425,7 +431,7 @@ cdef class ClassificationCriterion(Criterion):
             for p in range(end - 1, new_pos - 1, -1):
                 i = samples[p]
 
-                if sample_weight != NULL:
+                if sample_weight is not None:
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
@@ -646,8 +652,6 @@ cdef class RegressionCriterion(Criterion):
             The total number of samples to fit on
         """
         # Default values
-        self.sample_weight = NULL
-
         self.samples = NULL
         self.start = 0
         self.pos = 0
@@ -669,9 +673,15 @@ cdef class RegressionCriterion(Criterion):
     def __reduce__(self):
         return (type(self), (self.n_outputs, self.n_samples), self.__getstate__())
 
-    cdef int init(self, const DOUBLE_t[:, ::1] y, DOUBLE_t* sample_weight,
-                  double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                  SIZE_t end) nogil except -1:
+    cdef int init(
+        self,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight,
+        double weighted_n_samples,
+        SIZE_t* samples,
+        SIZE_t start,
+        SIZE_t end,
+    ) nogil except -1:
         """Initialize the criterion.
 
         This initializes the criterion at node samples[start:end] and children
@@ -699,7 +709,7 @@ cdef class RegressionCriterion(Criterion):
         for p in range(start, end):
             i = samples[p]
 
-            if sample_weight != NULL:
+            if sample_weight is not None:
                 w = sample_weight[i]
 
             for k in range(self.n_outputs):
@@ -738,7 +748,7 @@ cdef class RegressionCriterion(Criterion):
 
     cdef int update(self, SIZE_t new_pos) nogil except -1:
         """Updated statistics by moving samples[pos:new_pos] to the left."""
-        cdef double* sample_weight = self.sample_weight
+        cdef const DOUBLE_t[:] sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
 
         cdef SIZE_t pos = self.pos
@@ -759,7 +769,7 @@ cdef class RegressionCriterion(Criterion):
             for p in range(pos, new_pos):
                 i = samples[p]
 
-                if sample_weight != NULL:
+                if sample_weight is not None:
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
@@ -772,7 +782,7 @@ cdef class RegressionCriterion(Criterion):
             for p in range(end - 1, new_pos - 1, -1):
                 i = samples[p]
 
-                if sample_weight != NULL:
+                if sample_weight is not None:
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
@@ -863,7 +873,7 @@ cdef class MSE(RegressionCriterion):
         i.e. the impurity of the left child (samples[start:pos]) and the
         impurity the right child (samples[pos:end]).
         """
-        cdef DOUBLE_t* sample_weight = self.sample_weight
+        cdef const DOUBLE_t[:] sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t pos = self.pos
         cdef SIZE_t start = self.start
@@ -881,7 +891,7 @@ cdef class MSE(RegressionCriterion):
         for p in range(start, pos):
             i = samples[p]
 
-            if sample_weight != NULL:
+            if sample_weight is not None:
                 w = sample_weight[i]
 
             for k in range(self.n_outputs):
@@ -923,8 +933,6 @@ cdef class MAE(RegressionCriterion):
             The total number of samples to fit on
         """
         # Default values
-        self.sample_weight = NULL
-
         self.samples = NULL
         self.start = 0
         self.pos = 0
@@ -946,9 +954,15 @@ cdef class MAE(RegressionCriterion):
             self.left_child[k] = WeightedMedianCalculator(n_samples)
             self.right_child[k] = WeightedMedianCalculator(n_samples)
 
-    cdef int init(self, const DOUBLE_t[:, ::1] y, DOUBLE_t* sample_weight,
-                  double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                  SIZE_t end) nogil except -1:
+    cdef int init(
+        self,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight,
+        double weighted_n_samples,
+        SIZE_t* samples,
+        SIZE_t start,
+        SIZE_t end,
+    ) nogil except -1:
         """Initialize the criterion.
 
         This initializes the criterion at node samples[start:end] and children
@@ -980,7 +994,7 @@ cdef class MAE(RegressionCriterion):
         for p in range(start, end):
             i = samples[p]
 
-            if sample_weight != NULL:
+            if sample_weight is not None:
                 w = sample_weight[i]
 
             for k in range(self.n_outputs):
@@ -1063,7 +1077,7 @@ cdef class MAE(RegressionCriterion):
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
-        cdef DOUBLE_t* sample_weight = self.sample_weight
+        cdef const DOUBLE_t[:] sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
 
         cdef void** left_child = <void**> self.left_child.data
@@ -1083,7 +1097,7 @@ cdef class MAE(RegressionCriterion):
             for p in range(pos, new_pos):
                 i = samples[p]
 
-                if sample_weight != NULL:
+                if sample_weight is not None:
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
@@ -1099,7 +1113,7 @@ cdef class MAE(RegressionCriterion):
             for p in range(end - 1, new_pos - 1, -1):
                 i = samples[p]
 
-                if sample_weight != NULL:
+                if sample_weight is not None:
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
@@ -1127,7 +1141,7 @@ cdef class MAE(RegressionCriterion):
         i.e. the impurity of samples[start:end]. The smaller the impurity the
         better.
         """
-        cdef DOUBLE_t* sample_weight = self.sample_weight
+        cdef const DOUBLE_t[:] sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
         cdef SIZE_t i, p, k
         cdef DOUBLE_t w = 1.0
@@ -1137,7 +1151,7 @@ cdef class MAE(RegressionCriterion):
             for p in range(self.start, self.end):
                 i = samples[p]
 
-                if sample_weight != NULL:
+                if sample_weight is not None:
                     w = sample_weight[i]
 
                 impurity += fabs(self.y[i, k] - self.node_medians[k]) * w
@@ -1151,7 +1165,7 @@ cdef class MAE(RegressionCriterion):
         i.e. the impurity of the left child (samples[start:pos]) and the
         impurity the right child (samples[pos:end]).
         """
-        cdef DOUBLE_t* sample_weight = self.sample_weight
+        cdef const DOUBLE_t[:] sample_weight = self.sample_weight
         cdef SIZE_t* samples = self.samples
 
         cdef SIZE_t start = self.start
@@ -1172,7 +1186,7 @@ cdef class MAE(RegressionCriterion):
             for p in range(start, pos):
                 i = samples[p]
 
-                if sample_weight != NULL:
+                if sample_weight is not None:
                     w = sample_weight[i]
 
                 impurity_left += fabs(self.y[i, k] - median) * w
@@ -1184,7 +1198,7 @@ cdef class MAE(RegressionCriterion):
             for p in range(pos, end):
                 i = samples[p]
 
-                if sample_weight != NULL:
+                if sample_weight is not None:
                     w = sample_weight[i]
 
                 impurity_right += fabs(self.y[i, k] - median) * w
@@ -1349,7 +1363,7 @@ cdef class Poisson(RegressionCriterion):
         """Helper function to compute Poisson loss (~deviance) of a given node.
         """
         cdef const DOUBLE_t[:, ::1] y = self.y
-        cdef DOUBLE_t* weight = self.sample_weight
+        cdef const DOUBLE_t[:] sample_weight = self.sample_weight
 
         cdef DOUBLE_t y_mean = 0.
         cdef DOUBLE_t poisson_loss = 0.
@@ -1370,8 +1384,8 @@ cdef class Poisson(RegressionCriterion):
             for p in range(start, end):
                 i = self.samples[p]
 
-                if weight != NULL:
-                    w = weight[i]
+                if sample_weight is not None:
+                    w = sample_weight[i]
 
                 poisson_loss += w * xlogy(y[i, k], y[i, k] / y_mean)
         return poisson_loss / (weight_sum * n_outputs)
