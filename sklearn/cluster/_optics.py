@@ -19,7 +19,7 @@ from ..exceptions import DataConversionWarning
 from ..metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
 from ..metrics.pairwise import _VALID_METRICS
 from ..utils import gen_batches, get_chunk_n_rows
-from ..utils._param_validation import Interval, HasMethods, StrOptions
+from ..utils._param_validation import Interval, HasMethods, StrOptions, validate_params
 from ..utils.validation import check_memory
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
@@ -649,6 +649,14 @@ def _set_reach_dist(
     predecessor_[unproc[improved]] = point_index
 
 
+@validate_params(
+    {
+        "reachability": [None, np.ndarray],
+        "core_distances": [None, np.ndarray],
+        "ordering": [None, np.ndarray],
+        "eps": [Interval(Real, 0, None, closed="neither")],
+    }
+)
 def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
     """Perform DBSCAN extraction for an arbitrary epsilon.
 
@@ -658,13 +666,13 @@ def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
 
     Parameters
     ----------
-    reachability : array of shape (n_samples,)
+    reachability : ndarray of shape (n_samples,)
         Reachability distances calculated by OPTICS (``reachability_``).
 
-    core_distances : array of shape (n_samples,)
+    core_distances : ndarray of shape (n_samples,)
         Distances at which points become core (``core_distances_``).
 
-    ordering : array of shape (n_samples,)
+    ordering : ndarray of shape (n_samples,)
         OPTICS ordered point indices (``ordering_``).
 
     eps : float
