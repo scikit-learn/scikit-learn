@@ -1743,18 +1743,20 @@ def check_transformer_preserve_dtypes(name, transformer_orig):
         X_cast = X.astype(dtype)
         transformer = clone(transformer_orig)
         set_random_state(transformer)
-        X_trans = transformer.fit_transform(X_cast, y)
+        X_trans1 = transformer.fit_transform(X_cast, y)
+        X_trans2 = transformer.fit(X_cast, y).transform(X_cast)
 
-        if isinstance(X_trans, tuple):
-            # cross-decompostion returns a tuple of (x_scores, y_scores)
-            # when given y with fit_transform; only check the first element
-            X_trans = X_trans[0]
+        for Xt, method in zip([X_trans1, X_trans2], ["fit_transform", "transform"]):
+            if isinstance(Xt, tuple):
+                # cross-decompostion returns a tuple of (x_scores, y_scores)
+                # when given y with fit_transform; only check the first element
+                Xt = Xt[0]
 
-        # check that the output dtype is preserved
-        assert X_trans.dtype == dtype, (
-            f"Estimator transform dtype: {X_trans.dtype} - "
-            f"original/expected dtype: {dtype.__name__}"
-        )
+            # check that the output dtype is preserved
+            assert Xt.dtype == dtype, (
+                f"{name} (method={method}) does not preserve dtype. "
+                f"Original/Expected dtype={dtype.__name__}, got dtype={Xt.dtype}."
+            )
 
 
 @ignore_warnings(category=FutureWarning)
