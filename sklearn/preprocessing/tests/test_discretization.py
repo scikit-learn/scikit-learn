@@ -145,6 +145,21 @@ def test_fit_transform_n_bins_array(strategy, expected, sample_weight):
         assert bin_edges.shape == (n_bins + 1,)
 
 
+def test_zero_sample_weight():
+    X = np.array([[-2], [-1], [1], [3], [500], [1000]])
+    est = KBinsDiscretizer(n_bins=2, encode='ordinal', strategy='quantile')
+    est.fit(X, sample_weight=[1, 1, 1, 1, 0, 0])
+    assert_array_equal([[0.], [1.], [1.], [1.], [1.], [1.]], est.transform(X))
+
+
+def test_sample_weight():
+    est = KBinsDiscretizer(n_bins=3, encode='ordinal', strategy='quantile')
+    sample_weight = [1, 3, 1, 2]
+    sample_weight_copy = np.array(sample_weight)
+    est.fit(X, sample_weight=sample_weight)
+    assert_array_equal(sample_weight, sample_weight_copy)
+
+
 @pytest.mark.parametrize("strategy", ["uniform", "kmeans", "quantile"])
 def test_same_min_max(strategy):
     warnings.simplefilter("always")
