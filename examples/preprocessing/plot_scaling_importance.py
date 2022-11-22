@@ -209,7 +209,7 @@ print(f"{accuracy_score(y_test, y_pred_scaled):.2%}\n")
 # Notice that in this case the models with scaled features perform better than
 # the models with non-scaled features because all the variables are expected to
 # be predictive and we rather avoid some of them being comparatively ignored.
-
+#
 # If the variables in lower scales were not predictive, one may experience a
 # decrease of the performance after scaling the features: noisy features would
 # contribute more to the prediction after scaling and therefore scaling would
