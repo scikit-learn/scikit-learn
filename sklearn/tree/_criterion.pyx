@@ -193,9 +193,15 @@ cdef class Criterion(BaseCriterion):
     Criterion is the base class for criteria used in supervised tree-based models
     with a homogeneous float64-dtyped y.
     """
-    cdef int init(self, const DOUBLE_t[:, ::1] y, DOUBLE_t* sample_weight,
-                  double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                  SIZE_t end) nogil except -1:
+    cdef int init(
+        self,
+        const DOUBLE_t[:, ::1] y,
+        DOUBLE_t* sample_weight,
+        double weighted_n_samples,
+        SIZE_t* samples,
+        SIZE_t start,
+        SIZE_t end,
+    ) nogil except -1:
         """Placeholder for a method which will initialize the criterion.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
