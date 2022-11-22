@@ -130,11 +130,11 @@ cdef class Splitter:
 
         for i in range(n_samples):
             # Only work with positively weighted samples
-            if sample_weight == None or sample_weight[i] != 0.0:
+            if sample_weight is None or sample_weight[i] != 0.0:
                 samples[j] = i
                 j += 1
 
-            if sample_weight != None:
+            if sample_weight is not None:
                 weighted_n_samples += sample_weight[i]
             else:
                 weighted_n_samples += 1.0

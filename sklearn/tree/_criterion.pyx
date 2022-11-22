@@ -259,7 +259,7 @@ cdef class ClassificationCriterion(Criterion):
         y : array-like, dtype=DOUBLE_t
             The target stored as a buffer for memory efficiency
         sample_weight : array-like, dtype=DOUBLE_t
-            The weight of each sample stored as a buffer for memory efficiency.
+            The weight of each sample.
         weighted_n_samples : double
             The total weight of all samples
         samples : array-like, dtype=SIZE_t
@@ -292,8 +292,8 @@ cdef class ClassificationCriterion(Criterion):
 
             # w is originally set to be 1.0, meaning that if no sample weights
             # are given, the default weight of each sample is 1.0.
-            # see: https://stackoverflow.com/questions/63144139/how-to-check-whether-a-memmoryview-in-null-in-cython
-            if sample_weight != None:
+            # see: https://cython.readthedocs.io/en/latest/src/userguide/memoryviews.html#syntax
+            if sample_weight is not None:
                 w = sample_weight[i]
 
             # Count weighted class frequency for each target
@@ -376,7 +376,7 @@ cdef class ClassificationCriterion(Criterion):
             for p in range(pos, new_pos):
                 i = samples[p]
 
-                if sample_weight != None:
+                if sample_weight is not None:
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
@@ -390,7 +390,7 @@ cdef class ClassificationCriterion(Criterion):
             for p in range(end - 1, new_pos - 1, -1):
                 i = samples[p]
 
-                if sample_weight != None:
+                if sample_weight is not None:
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
@@ -662,7 +662,7 @@ cdef class RegressionCriterion(Criterion):
         for p in range(start, end):
             i = samples[p]
 
-            if sample_weight != None:
+            if sample_weight is not None:
                 w = sample_weight[i]
 
             for k in range(self.n_outputs):
@@ -722,7 +722,7 @@ cdef class RegressionCriterion(Criterion):
             for p in range(pos, new_pos):
                 i = samples[p]
 
-                if sample_weight != None:
+                if sample_weight is not None:
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
@@ -735,7 +735,7 @@ cdef class RegressionCriterion(Criterion):
             for p in range(end - 1, new_pos - 1, -1):
                 i = samples[p]
 
-                if sample_weight != None:
+                if sample_weight is not None:
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
@@ -844,7 +844,7 @@ cdef class MSE(RegressionCriterion):
         for p in range(start, pos):
             i = samples[p]
 
-            if sample_weight != None:
+            if sample_weight is not None:
                 w = sample_weight[i]
 
             for k in range(self.n_outputs):
@@ -941,7 +941,7 @@ cdef class MAE(RegressionCriterion):
         for p in range(start, end):
             i = samples[p]
 
-            if sample_weight != None:
+            if sample_weight is not None:
                 w = sample_weight[i]
 
             for k in range(self.n_outputs):
@@ -1044,7 +1044,7 @@ cdef class MAE(RegressionCriterion):
             for p in range(pos, new_pos):
                 i = samples[p]
 
-                if sample_weight != None:
+                if sample_weight is not None:
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
@@ -1060,7 +1060,7 @@ cdef class MAE(RegressionCriterion):
             for p in range(end - 1, new_pos - 1, -1):
                 i = samples[p]
 
-                if sample_weight != None:
+                if sample_weight is not None:
                     w = sample_weight[i]
 
                 for k in range(self.n_outputs):
@@ -1098,7 +1098,7 @@ cdef class MAE(RegressionCriterion):
             for p in range(self.start, self.end):
                 i = samples[p]
 
-                if sample_weight != None:
+                if sample_weight is not None:
                     w = sample_weight[i]
 
                 impurity += fabs(self.y[i, k] - self.node_medians[k]) * w
@@ -1133,7 +1133,7 @@ cdef class MAE(RegressionCriterion):
             for p in range(start, pos):
                 i = samples[p]
 
-                if sample_weight != None:
+                if sample_weight is not None:
                     w = sample_weight[i]
 
                 impurity_left += fabs(self.y[i, k] - median) * w
@@ -1145,7 +1145,7 @@ cdef class MAE(RegressionCriterion):
             for p in range(pos, end):
                 i = samples[p]
 
-                if sample_weight != None:
+                if sample_weight is not None:
                     w = sample_weight[i]
 
                 impurity_right += fabs(self.y[i, k] - median) * w
@@ -1331,7 +1331,7 @@ cdef class Poisson(RegressionCriterion):
             for p in range(start, end):
                 i = self.samples[p]
 
-                if sample_weight != None:
+                if sample_weight is not None:
                     w = sample_weight[i]
 
                 poisson_loss += w * xlogy(y[i, k], y[i, k] / y_mean)
