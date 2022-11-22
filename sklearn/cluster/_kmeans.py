@@ -96,8 +96,10 @@ def kmeans_plusplus(
         The number of seeding trials for each center (except the first),
         of which the one reducing inertia the most is greedily chosen.
         Set to None to make the number of trials depend logarithmically
-        on the number of seeds (2+log(k)). Set to 1 to obtain the original
-        k-means++ algorithm. Set to > 1 (or None) to obtain greedy k-means++.
+        on the number of seeds (2+log(k)) which is the recommend setting.
+        Setting to 1 disables the greedy cluster selection and recovers the
+        vanilla k-means++ algorithm which was empirically shown to work less
+        well than its greedy variant. 
 
     Returns
     -------
