@@ -51,10 +51,8 @@ cdef class BaseCriterion:
 cdef class Criterion(BaseCriterion):
     """Abstract interface for supervised impurity criteria."""
 
-    # Internal structures
-    cdef const DOUBLE_t[:, ::1] y        # Values of y
+    cdef const DOUBLE_t[:, ::1] y
 
-    # Methods
     cdef int init(
         self,
         const DOUBLE_t[:, ::1] y,
