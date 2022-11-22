@@ -108,12 +108,14 @@ cdef class Splitter:
             This contains the inputs. Usually it is a 2d numpy array.
 
         y : ndarray, dtype=DOUBLE_t
-            This is the vector of targets, or true labels, for the samples
+            This is the vector of targets, or true labels, for the samples represented
+            as a Cython memoryview.
 
         sample_weight : ndarray, dtype=DOUBLE_t
             The weights of the samples, where higher weighted samples are fit
             closer than lower weight samples. If not provided, all samples
-            are assumed to have uniform weight.
+            are assumed to have uniform weight. This is represented
+            as a Cython memoryview.
         """
 
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)

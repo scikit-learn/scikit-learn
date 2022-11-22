@@ -51,10 +51,11 @@ cdef class Criterion:
 
         Parameters
         ----------
-        y : array-like, dtype=DOUBLE_t
+        y : ndarray, dtype=DOUBLE_t
             y is a buffer that can store values for n_outputs target variables
-        sample_weight : array-like, dtype=DOUBLE_t
-            The weight of each sample
+            stored as a Cython memoryview.
+        sample_weight : ndarray, dtype=DOUBLE_t
+            The weight of each sample stored as a Cython memoryview.
         weighted_n_samples : double
             The total weight of the samples being considered
         samples : array-like, dtype=SIZE_t
@@ -256,10 +257,10 @@ cdef class ClassificationCriterion(Criterion):
 
         Parameters
         ----------
-        y : array-like, dtype=DOUBLE_t
-            The target stored as a buffer for memory efficiency
-        sample_weight : array-like, dtype=DOUBLE_t
-            The weight of each sample.
+        y : ndarray, dtype=DOUBLE_t
+            The target stored as a buffer for memory efficiency.
+        sample_weight : ndarray, dtype=DOUBLE_t
+            The weight of each sample stored as a Cython memoryview.
         weighted_n_samples : double
             The total weight of all samples
         samples : array-like, dtype=SIZE_t
