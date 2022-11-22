@@ -62,34 +62,13 @@ def _get_deps_info():
         "sklearn": __version__,
     }
 
-    if sys.version_info < (3, 8):
-        # Backwards compatibility with Python < 3.8, primarily for PyPy.
-        # TODO: remove once PyPy 3.8 is available on conda-forge and
-        # therefore on our CI.
-        # https://github.com/conda-forge/conda-forge-pinning-feedstock/issues/2089
+    from importlib.metadata import version, PackageNotFoundError
+
+    for modname in deps:
         try:
-            from pkg_resources import get_distribution, DistributionNotFound
-
-            for modname in deps:
-                try:
-                    deps_info[modname] = get_distribution(modname).version
-                except DistributionNotFound:
-                    deps_info[modname] = None
-
-        except ImportError:
-            # Setuptools not installed
-            for modname in deps:
-                deps_info[modname] = None
-
-    else:
-        from importlib.metadata import version, PackageNotFoundError
-
-        for modname in deps:
-            try:
-                deps_info[modname] = version(modname)
-            except PackageNotFoundError:
-                deps_info[modname] = None
-
+            deps_info[modname] = version(modname)
+        except PackageNotFoundError:
+            deps_info[modname] = None
     return deps_info
 
 

@@ -11,11 +11,11 @@ dependencies:
   - cython
   - joblib
   - threadpoolctl=2.2.0
-  - matplotlib=3.1.2  # min
+  - matplotlib=3.1.3  # min
   - pandas
   - pyamg
   - pytest
-  - pytest-xdist
+  - pytest-xdist=2.5.0
   - pillow
   - codecov
   - pytest-cov

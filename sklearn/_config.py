@@ -13,6 +13,8 @@ _global_config = {
         os.environ.get("SKLEARN_PAIRWISE_DIST_CHUNK_SIZE", 256)
     ),
     "enable_cython_pairwise_dist": True,
+    "array_api_dispatch": False,
+    "transform_output": "default",
 }
 _threadlocal = threading.local()
 
@@ -50,6 +52,8 @@ def set_config(
     display=None,
     pairwise_dist_chunk_size=None,
     enable_cython_pairwise_dist=None,
+    array_api_dispatch=None,
+    transform_output=None,
 ):
     """Set global scikit-learn configuration
 
@@ -110,6 +114,26 @@ def set_config(
 
         .. versionadded:: 1.1
 
+    array_api_dispatch : bool, default=None
+        Use Array API dispatching when inputs follow the Array API standard.
+        Default is False.
+
+        See the :ref:`User Guide <array_api>` for more details.
+
+        .. versionadded:: 1.2
+
+    transform_output : str, default=None
+        Configure output of `transform` and `fit_transform`.
+
+        See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
+        for an example on how to use the API.
+
+        - `"default"`: Default output format of a transformer
+        - `"pandas"`: DataFrame output
+        - `None`: Transform configuration is unchanged
+
+        .. versionadded:: 1.2
+
     See Also
     --------
     config_context : Context manager for global scikit-learn configuration.
@@ -129,6 +153,10 @@ def set_config(
         local_config["pairwise_dist_chunk_size"] = pairwise_dist_chunk_size
     if enable_cython_pairwise_dist is not None:
         local_config["enable_cython_pairwise_dist"] = enable_cython_pairwise_dist
+    if array_api_dispatch is not None:
+        local_config["array_api_dispatch"] = array_api_dispatch
+    if transform_output is not None:
+        local_config["transform_output"] = transform_output
 
 
 @contextmanager
@@ -140,6 +168,8 @@ def config_context(
     display=None,
     pairwise_dist_chunk_size=None,
     enable_cython_pairwise_dist=None,
+    array_api_dispatch=None,
+    transform_output=None,
 ):
     """Context manager for global scikit-learn configuration.
 
@@ -199,6 +229,26 @@ def config_context(
 
         .. versionadded:: 1.1
 
+    array_api_dispatch : bool, default=None
+        Use Array API dispatching when inputs follow the Array API standard.
+        Default is False.
+
+        See the :ref:`User Guide <array_api>` for more details.
+
+        .. versionadded:: 1.2
+
+    transform_output : str, default=None
+        Configure output of `transform` and `fit_transform`.
+
+        See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
+        for an example on how to use the API.
+
+        - `"default"`: Default output format of a transformer
+        - `"pandas"`: DataFrame output
+        - `None`: Transform configuration is unchanged
+
+        .. versionadded:: 1.2
+
     Yields
     ------
     None.
@@ -234,6 +284,8 @@ def config_context(
         display=display,
         pairwise_dist_chunk_size=pairwise_dist_chunk_size,
         enable_cython_pairwise_dist=enable_cython_pairwise_dist,
+        array_api_dispatch=array_api_dispatch,
+        transform_output=transform_output,
     )
 
     try:

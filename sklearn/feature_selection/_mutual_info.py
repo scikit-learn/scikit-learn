@@ -137,13 +137,13 @@ def _compute_mi_cd(c, d, n_neighbors):
 
     kd = KDTree(c)
     m_all = kd.query_radius(c, radius, count_only=True, return_distance=False)
-    m_all = np.array(m_all) - 1.0
+    m_all = np.array(m_all)
 
     mi = (
         digamma(n_samples)
         + np.mean(digamma(k_all))
         - np.mean(digamma(label_counts))
-        - np.mean(digamma(m_all + 1))
+        - np.mean(digamma(m_all))
     )
 
     return max(0, mi)
@@ -280,10 +280,9 @@ def _estimate_mi(
         if copy:
             X = X.copy()
 
-        if not discrete_target:
-            X[:, continuous_mask] = scale(
-                X[:, continuous_mask], with_mean=False, copy=False
-            )
+        X[:, continuous_mask] = scale(
+            X[:, continuous_mask], with_mean=False, copy=False
+        )
 
         # Add small noise to continuous features as advised in Kraskov et. al.
         X = X.astype(np.float64, copy=False)

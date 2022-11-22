@@ -1,7 +1,7 @@
 include *.rst
 recursive-include doc *
 recursive-include examples *
-recursive-include sklearn *.c *.h *.pyx *.pxd *.pxi *.tp
+recursive-include sklearn *.c *.cpp *.h *.pyx *.pxd *.pxi *.tp
 recursive-include sklearn/datasets *.csv *.csv.gz *.rst *.jpg *.txt *.arff.gz *.json.gz
 include COPYING
 include README.rst
@@ -27,7 +27,6 @@ exclude .git-blame-ignore-revs
 exclude .mailmap
 exclude .pre-commit-config.yaml
 exclude azure-pipelines.yml
-exclude lgtm.yml
 exclude CODE_OF_CONDUCT.md
 exclude CONTRIBUTING.md
 exclude SECURITY.md

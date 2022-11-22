@@ -28,7 +28,6 @@ from scipy.special import expit
 from joblib import Parallel
 from numbers import Integral
 
-from ..utils._param_validation import StrOptions, Hidden
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin, MultiOutputMixin
 from ..preprocessing._data import _is_constant_feature
 from ..utils import check_array
@@ -37,6 +36,7 @@ from ..utils import check_random_state
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import _incremental_mean_and_var
 from ..utils.sparsefuncs import mean_variance_axis, inplace_column_scale
+from ..utils._array_api import get_namespace
 from ..utils._seq_dataset import ArrayDataset32, CSRDataset32
 from ..utils._seq_dataset import ArrayDataset64, CSRDataset64
 from ..utils.validation import check_is_fitted, _check_sample_weight
@@ -50,10 +50,9 @@ SPARSE_INTERCEPT_DECAY = 0.01
 # intercept oscillation.
 
 
-# FIXME in 1.2: parameter 'normalize' should be removed from linear models
-# in cases where now normalize=False. The default value of 'normalize' should
-# be changed to False in linear models where now normalize=True
-def _deprecate_normalize(normalize, default, estimator_name):
+# TODO(1.4): remove
+# parameter 'normalize' should be removed from linear models
+def _deprecate_normalize(normalize, estimator_name):
     """Normalize is to be deprecated from linear models and a use of
     a pipeline with a StandardScaler is to be recommended instead.
     Here the appropriate message is selected to be displayed to the user
@@ -64,9 +63,6 @@ def _deprecate_normalize(normalize, default, estimator_name):
     ----------
     normalize : bool,
         normalize value passed by the user
-
-    default : bool,
-        default normalize value used by the estimator
 
     estimator_name : str
         name of the linear estimator which calls this function.
@@ -80,15 +76,6 @@ def _deprecate_normalize(normalize, default, estimator_name):
 
     Notes
     -----
-    This function should be updated in 1.2 depending on the value of
-    `normalize`:
-    - True, warning: `normalize` was deprecated in 1.2 and will be removed in
-      1.4. Suggest to use pipeline instead.
-    - False, `normalize` was deprecated in 1.2 and it will be removed in 1.4.
-      Leave normalize to its default value.
-    - `deprecated` - this should only be possible with default == False as from
-      1.2 `normalize` in all the linear models should be either removed or the
-      default should be set to False.
     This function should be completely removed in 1.4.
     """
 
@@ -98,7 +85,7 @@ def _deprecate_normalize(normalize, default, estimator_name):
         )
 
     if normalize == "deprecated":
-        _normalize = default
+        _normalize = False
     else:
         _normalize = normalize
 
@@ -115,41 +102,21 @@ def _deprecate_normalize(normalize, default, estimator_name):
         "model.fit(X, y, **kwargs)\n\n"
     )
 
-    if estimator_name == "Ridge" or estimator_name == "RidgeClassifier":
-        alpha_msg = "Set parameter alpha to: original_alpha * n_samples. "
-    elif "Lasso" in estimator_name:
+    alpha_msg = ""
+    if "LassoLars" in estimator_name:
         alpha_msg = "Set parameter alpha to: original_alpha * np.sqrt(n_samples). "
-    elif "ElasticNet" in estimator_name:
-        alpha_msg = (
-            "Set parameter alpha to original_alpha * np.sqrt(n_samples) if "
-            "l1_ratio is 1, and to original_alpha * n_samples if l1_ratio is "
-            "0. For other values of l1_ratio, no analytic formula is "
-            "available."
-        )
-    elif estimator_name in ("RidgeCV", "RidgeClassifierCV", "_RidgeGCV"):
-        alpha_msg = "Set parameter alphas to: original_alphas * n_samples. "
-    else:
-        alpha_msg = ""
 
-    if default and normalize == "deprecated":
+    if normalize != "deprecated" and normalize:
         warnings.warn(
-            "The default of 'normalize' will be set to False in version 1.2 "
-            "and deprecated in version 1.4.\n"
+            "'normalize' was deprecated in version 1.2 and will be removed in 1.4.\n"
             + pipeline_msg
             + alpha_msg,
             FutureWarning,
         )
-    elif normalize != "deprecated" and normalize and not default:
+    elif not normalize:
         warnings.warn(
-            "'normalize' was deprecated in version 1.0 and will be removed in 1.2.\n"
-            + pipeline_msg
-            + alpha_msg,
-            FutureWarning,
-        )
-    elif not normalize and not default:
-        warnings.warn(
-            "'normalize' was deprecated in version 1.0 and will be "
-            "removed in 1.2. "
+            "'normalize' was deprecated in version 1.2 and will be "
+            "removed in 1.4. "
             "Please leave the normalize parameter to its default value to "
             "silence this warning. The default behavior of this estimator "
             "is to not do any normalization. If normalization is needed "
@@ -429,10 +396,11 @@ class LinearClassifierMixin(ClassifierMixin):
             this class would be predicted.
         """
         check_is_fitted(self)
+        xp, _ = get_namespace(X)
 
         X = self._validate_data(X, accept_sparse="csr", reset=False)
         scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
-        return scores.ravel() if scores.shape[1] == 1 else scores
+        return xp.reshape(scores, -1) if scores.shape[1] == 1 else scores
 
     def predict(self, X):
         """
@@ -448,12 +416,14 @@ class LinearClassifierMixin(ClassifierMixin):
         y_pred : ndarray of shape (n_samples,)
             Vector containing the class labels for each sample.
         """
+        xp, _ = get_namespace(X)
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
-            indices = (scores > 0).astype(int)
+            indices = xp.astype(scores > 0, int)
         else:
-            indices = scores.argmax(axis=1)
-        return self.classes_[indices]
+            indices = xp.argmax(scores, axis=1)
+
+        return xp.take(self.classes_, indices, axis=0)
 
     def _predict_proba_lr(self, X):
         """Probability estimation for OvR logistic regression.
@@ -545,18 +515,6 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         to False, no intercept will be used in calculations
         (i.e. data is expected to be centered).
 
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-           `normalize` was deprecated in version 1.0 and will be
-           removed in 1.2.
-
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
@@ -640,7 +598,6 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
     _parameter_constraints: dict = {
         "fit_intercept": ["boolean"],
-        "normalize": [Hidden(StrOptions({"deprecated"})), "boolean"],
         "copy_X": ["boolean"],
         "n_jobs": [None, Integral],
         "positive": ["boolean"],
@@ -650,13 +607,11 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
         self,
         *,
         fit_intercept=True,
-        normalize="deprecated",
         copy_X=True,
         n_jobs=None,
         positive=False,
     ):
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.copy_X = copy_X
         self.n_jobs = n_jobs
         self.positive = positive
@@ -687,10 +642,6 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
 
         self._validate_params()
 
-        _normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
-        )
-
         n_jobs_ = self.n_jobs
 
         accept_sparse = False if self.positive else ["csr", "csc", "coo"]
@@ -707,7 +658,6 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
             X,
             y,
             fit_intercept=self.fit_intercept,
-            normalize=_normalize,
             copy=self.copy_X,
             sample_weight=sample_weight,
         )
@@ -835,12 +785,6 @@ def _pre_fit(
 
     This function applies _preprocess_data and additionally computes the gram matrix
     `precompute` as needed as well as `Xy`.
-
-    Parameters
-    ----------
-    order : 'F', 'C' or None, default=None
-        Whether X and y will be forced to be fortran or c-style. Only relevant
-        if sample_weight is not None.
     """
     n_samples, n_features = X.shape
 
@@ -873,7 +817,7 @@ def _pre_fit(
             # This triggers copies anyway.
             X, y, _ = _rescale_data(X, y, sample_weight=sample_weight)
 
-    # FIXME: 'normalize' to be removed in 1.2
+    # FIXME: 'normalize' to be removed in 1.4
     if hasattr(precompute, "__array__"):
         if (
             fit_intercept
@@ -907,7 +851,7 @@ def _pre_fit(
         Xy = None  # cannot use Xy if precompute is not Gram
 
     if hasattr(precompute, "__array__") and Xy is None:
-        common_dtype = np.find_common_type([X.dtype, y.dtype], [])
+        common_dtype = np.result_type(X.dtype, y.dtype)
         if y.ndim == 1:
             # Xy is 1d, make sure it is contiguous.
             Xy = np.empty(shape=n_features, dtype=common_dtype, order="C")

@@ -15,7 +15,7 @@ dependencies:
   - pandas
   - pyamg
   - pytest
-  - pytest-xdist
+  - pytest-xdist=2.5.0
   - pillow
   - scikit-image
   - seaborn
@@ -25,6 +25,8 @@ dependencies:
   - sphinx-gallery
   - numpydoc
   - sphinx-prompt
+  - plotly
+  - pooch
   - pip
   - pip:
     - sphinxext-opengraph
