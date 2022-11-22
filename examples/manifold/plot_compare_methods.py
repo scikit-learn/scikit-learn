@@ -119,7 +119,7 @@ S_ltsa = lle_ltsa.fit_transform(S_points)
 lle_hessian = manifold.LocallyLinearEmbedding(method="hessian", **params)
 S_hessian = lle_hessian.fit_transform(S_points)
 
-lle_mod = manifold.LocallyLinearEmbedding(method="modified", modified_tol=0.8, **params)
+lle_mod = manifold.LocallyLinearEmbedding(method="modified", **params)
 S_mod = lle_mod.fit_transform(S_points)
 
 # %%
@@ -163,7 +163,11 @@ plot_2d(S_isomap, S_color, "Isomap Embedding")
 # Read more in the :ref:`User Guide <multidimensional_scaling>`.
 
 md_scaling = manifold.MDS(
-    n_components=n_components, max_iter=50, n_init=4, random_state=0
+    n_components=n_components,
+    max_iter=50,
+    n_init=4,
+    random_state=0,
+    normalized_stress=False,
 )
 S_scaling = md_scaling.fit_transform(S_points)
 

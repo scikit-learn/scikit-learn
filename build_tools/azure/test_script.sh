@@ -9,12 +9,6 @@ if [[ "$DISTRIB" =~ ^conda.* ]]; then
     source activate $VIRTUALENV
 elif [[ "$DISTRIB" == "ubuntu" || "$DISTRIB" == "debian-32" || "$DISTRIB" == "pip-nogil" ]]; then
     source $VIRTUALENV/bin/activate
-elif [[ "$DISTRIB" == "pip-windows" ]]; then
-    source $VIRTUALENV/Scripts/activate
-fi
-
-if [[ "$BUILD_WITH_ICC" == "true" ]]; then
-    source /opt/intel/oneapi/setvars.sh
 fi
 
 if [[ "$BUILD_REASON" == "Schedule" ]]; then
@@ -64,11 +58,15 @@ if [[ -n "$CHECK_WARNINGS" ]]; then
     # removes its usage
     TEST_CMD="$TEST_CMD -Wignore:tostring:DeprecationWarning"
 
-    # Python 3.10 deprecates distutils, which is imported by numpy internally
-    TEST_CMD="$TEST_CMD -Wignore:The\ distutils:DeprecationWarning"
-
     # Ignore distutils deprecation warning, used by joblib internally
     TEST_CMD="$TEST_CMD -Wignore:distutils\ Version\ classes\ are\ deprecated:DeprecationWarning"
+
+    # In some case, exceptions are raised (by bug) in tests, and captured by pytest,
+    # but not raised again. This is for instance the case when Cython directives are
+    # activated: IndexErrors (which aren't fatal) are raised on out-of-bound accesses.
+    # In those cases, pytest instead raises pytest.PytestUnraisableExceptionWarnings,
+    # which we must treat as errors on the CI.
+    TEST_CMD="$TEST_CMD -Werror::pytest.PytestUnraisableExceptionWarning"
 fi
 
 if [[ "$PYTEST_XDIST_VERSION" != "none" ]]; then

@@ -7,6 +7,7 @@ import re
 
 import numpy as np
 from scipy import linalg
+from scipy.stats import bernoulli
 import pytest
 
 from sklearn import datasets
@@ -2470,7 +2471,8 @@ def test_log_loss():
         [[0.5, 0.5], [0.1, 0.9], [0.01, 0.99], [0.9, 0.1], [0.75, 0.25], [0.001, 0.999]]
     )
     loss = log_loss(y_true, y_pred)
-    assert_almost_equal(loss, 1.8817971)
+    loss_true = -np.mean(bernoulli.logpmf(np.array(y_true) == "yes", y_pred[:, 1]))
+    assert_almost_equal(loss, loss_true)
 
     # multiclass case; adapted from http://bit.ly/RJJHWA
     y_true = [1, 0, 2]
@@ -2489,6 +2491,15 @@ def test_log_loss():
     y_pred = np.asarray(y_pred) > 0.5
     loss = log_loss(y_true, y_pred, normalize=True, eps=0.1)
     assert_almost_equal(loss, log_loss(y_true, np.clip(y_pred, 0.1, 0.9)))
+
+    # binary case: check correct boundary values for eps = 0
+    assert log_loss([0, 1], [0, 1], eps=0) == 0
+    assert log_loss([0, 1], [0, 0], eps=0) == np.inf
+    assert log_loss([0, 1], [1, 1], eps=0) == np.inf
+
+    # multiclass case: check correct boundary values for eps = 0
+    assert log_loss([0, 1, 2], [[1, 0, 0], [0, 1, 0], [0, 0, 1]], eps=0) == 0
+    assert log_loss([0, 1, 2], [[0, 0.5, 0.5], [0, 1, 0], [0, 0, 1]], eps=0) == np.inf
 
     # raise error if number of classes are not equal.
     y_true = [1, 0, 2]
@@ -2529,6 +2540,28 @@ def test_log_loss():
     y_score2 = [[0.2, 0.7, 0.3], [0.6, 0.5, 0.3], [0.3, 0.9, 0.1]]
     loss = log_loss(y_true, y_score2, labels=[1, 2, 3])
     assert_almost_equal(loss, 1.0630345, decimal=6)
+
+
+def test_log_loss_eps_auto(global_dtype):
+    """Check the behaviour of `eps="auto"` that changes depending on the input
+    array dtype.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/24315
+    """
+    y_true = np.array([0, 1], dtype=global_dtype)
+    y_pred = y_true.copy()
+
+    loss = log_loss(y_true, y_pred, eps="auto")
+    assert np.isfinite(loss)
+
+
+def test_log_loss_eps_auto_float16():
+    """Check the behaviour of `eps="auto"` for np.float16"""
+    y_true = np.array([0, 1], dtype=np.float16)
+    y_pred = y_true.copy()
+
+    loss = log_loss(y_true, y_pred, eps="auto")
+    assert np.isfinite(loss)
 
 
 def test_log_loss_pandas_input():

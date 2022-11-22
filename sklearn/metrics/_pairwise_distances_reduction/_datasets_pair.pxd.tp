@@ -5,24 +5,25 @@ implementation_specific_values = [
     #
     #       name_suffix, DistanceMetric, INPUT_DTYPE_t, INPUT_DTYPE
     #
-    # We also use the float64 dtype and C-type names as defined in
-    # `sklearn.utils._typedefs` to maintain consistency.
+    # We use DistanceMetric for float64 for backward naming compatibility.
     #
-    ('64', 'DistanceMetric', 'DTYPE_t', 'DTYPE'),
-    ('32', 'DistanceMetric32', 'cnp.float32_t', 'np.float32')
+    ('64', 'DistanceMetric', 'DTYPE_t'),
+    ('32', 'DistanceMetric32', 'cnp.float32_t')
 ]
 
 }}
 cimport numpy as cnp
 
-from ...utils._typedefs cimport DTYPE_t, ITYPE_t
+from ...utils._typedefs cimport DTYPE_t, ITYPE_t, SPARSE_INDEX_TYPE_t
 from ...metrics._dist_metrics cimport DistanceMetric, DistanceMetric32
 
-{{for name_suffix, DistanceMetric, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
+{{for name_suffix, DistanceMetric, INPUT_DTYPE_t in implementation_specific_values}}
 
 
 cdef class DatasetsPair{{name_suffix}}:
-    cdef {{DistanceMetric}} distance_metric
+    cdef:
+        {{DistanceMetric}} distance_metric
+        ITYPE_t n_features
 
     cdef ITYPE_t n_samples_X(self) nogil
 
@@ -37,5 +38,35 @@ cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     cdef:
         const {{INPUT_DTYPE_t}}[:, ::1] X
         const {{INPUT_DTYPE_t}}[:, ::1] Y
-        ITYPE_t d
+
+
+cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
+    cdef:
+        const {{INPUT_DTYPE_t}}[:] X_data
+        const SPARSE_INDEX_TYPE_t[:] X_indices
+        const SPARSE_INDEX_TYPE_t[:] X_indptr
+
+        const {{INPUT_DTYPE_t}}[:] Y_data
+        const SPARSE_INDEX_TYPE_t[:] Y_indices
+        const SPARSE_INDEX_TYPE_t[:] Y_indptr
+
+
+cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
+    cdef:
+        const {{INPUT_DTYPE_t}}[:] X_data
+        const SPARSE_INDEX_TYPE_t[:] X_indices
+        const SPARSE_INDEX_TYPE_t[:] X_indptr
+
+        const {{INPUT_DTYPE_t}}[:] Y_data
+        const SPARSE_INDEX_TYPE_t[:] Y_indices
+        ITYPE_t n_Y
+
+
+cdef class DenseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
+    cdef:
+        # As distance metrics are commutative, we can simply rely
+        # on the implementation of SparseDenseDatasetsPair and
+        # swap arguments.
+        DatasetsPair{{name_suffix}} datasets_pair
+
 {{endfor}}

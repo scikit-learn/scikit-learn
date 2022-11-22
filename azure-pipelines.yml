@@ -106,27 +106,6 @@ jobs:
         LOCK_FILE: './build_tools/azure/python_nogil_lock.txt'
         COVERAGE: 'false'
 
-# Check compilation with intel C++ compiler (ICC)
-- template: build_tools/azure/posix.yml
-  parameters:
-    name: Linux_Nightly_ICC
-    vmImage: ubuntu-20.04
-    dependsOn: [git_commit, linting]
-    condition: |
-      and(
-        succeeded(),
-        not(contains(dependencies['git_commit']['outputs']['commit.message'], '[ci skip]')),
-        or(eq(variables['Build.Reason'], 'Schedule'),
-           contains(dependencies['git_commit']['outputs']['commit.message'], '[icc-build]')
-        )
-      )
-    matrix:
-      pylatest_conda_forge_mkl:
-        DISTRIB: 'conda'
-        LOCK_FILE: 'build_tools/azure/pylatest_conda_forge_mkl_no_coverage_linux-64_conda.lock'
-        COVERAGE: 'false'
-        BUILD_WITH_ICC: 'true'
-
 - template: build_tools/azure/posix-docker.yml
   parameters:
     name: Linux_Nightly_PyPy
@@ -182,7 +161,6 @@ jobs:
         DISTRIB: 'conda'
         LOCK_FILE: './build_tools/azure/py38_conda_forge_openblas_ubuntu_2204_linux-64_conda.lock'
         COVERAGE: 'false'
-        BUILD_WITH_ICC: 'false'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '0'  # non-default seed
 
 - template: build_tools/azure/posix.yml
@@ -278,10 +256,5 @@ jobs:
         LOCK_FILE: ./build_tools/azure/py38_conda_forge_mkl_win-64_conda.lock
         CHECK_WARNINGS: 'true'
         COVERAGE: 'true'
+        SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES: '1'
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '7'  # non-default seed
-      py38_pip_openblas_32bit:
-        DISTRIB: 'pip-windows'
-        PYTHON_VERSION: '3.8'
-        PYTHON_ARCH: '32'
-        LOCK_FILE: ./build_tools/azure/py38_pip_openblas_32bit_lock.txt
-        SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '8'  # non-default seed
