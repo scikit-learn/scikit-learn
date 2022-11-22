@@ -21,7 +21,7 @@ This can be either done:
 - with lower-level parallelism via OpenMP, used in C or Cython code.
   In this case, parallelism is always done using threads and specifying
   ``n_jobs`` *has no effect*. Implementations relying on this parallelism are generally
-  more performant by several orders of magnitude.
+  more performant than joblib-based implementations by up to two orders of magnitude.
 - with lower-level parallelism via BLAS, used by NumPy and SciPy for generic operations
   on arrays.
 
