@@ -535,7 +535,7 @@ def check_conda_lock_version():
     installed_conda_lock_version = version("conda-lock")
     if installed_conda_lock_version != expected_conda_lock_version:
         raise RuntimeError(
-            f"Expected conda-lock version: {expected_conda_lock_version}, Got:"
+            f"Expected conda-lock version: {expected_conda_lock_version}, got:"
             f" {installed_conda_lock_version}"
         )
 
