@@ -693,12 +693,7 @@ class OAS(EmpiricalCovariance):
         """
         self._validate_params()
 
-        X = self._validate_data(X, ensure_2d=False)
-        if X.ndim == 1:
-            X = np.reshape(X, (1, -1))
-            warnings.warn(
-                "Only one sample available. You may want to reshape your data array"
-            )
+        X = self._validate_data(X)
         # Not calling the parent object to fit, to avoid computing the
         # covariance matrix (and potentially the precision)
         if self.assume_centered:

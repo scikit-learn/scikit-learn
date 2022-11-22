@@ -339,13 +339,6 @@ def test_oas():
     assert_almost_equal(_oa_shrinkage_from_mle, oa.shrinkage_)
     assert_array_almost_equal((X_1f**2).sum() / n_samples, oa.covariance_, 4)
 
-    # test with X.ndim=1
-    # warning should be raised when using 1D input.
-    X_1d = np.arange(5)
-    warn_msg = "Only one sample available. You may want to reshape your data array"
-    with pytest.warns(UserWarning, match=warn_msg):
-        _x, _y = oas(X_1d)
-
 
 def test_EmpiricalCovariance_validates_mahalanobis():
     """Checks that EmpiricalCovariance validates data with mahalanobis."""
