@@ -1176,9 +1176,9 @@ class KMeans(_BaseKMeans):
 
         'k-means++' : selects initial cluster centroids using sampling based on
         an empirical probability distribution of the points' contribution to the
-        overall inertia. This technique speeds up convergence. The algorithm 
+        overall inertia. This technique speeds up convergence. The algorithm
         implemented is "greedy k-means++". It differs from the vanilla k-means++
-        by making several trials at each sampling step and choosing the best centroid
+        by making several trials at each sampling step and choosing the bestcentroid
         among them.
 
         'random': choose `n_clusters` observations (rows) at random from data
@@ -1652,7 +1652,7 @@ class MiniBatchKMeans(_BaseKMeans):
 
         'k-means++' : selects initial cluster centroids using sampling based on
         an empirical probability distribution of the points' contribution to the
-        overall inertia. This technique speeds up convergence. The algorithm 
+        overall inertia. This technique speeds up convergence. The algorithm
         implemented is "greedy k-means++". It differs from the vanilla k-means++
         by making several trials at each sampling step and choosing the best centroid
         among them.
