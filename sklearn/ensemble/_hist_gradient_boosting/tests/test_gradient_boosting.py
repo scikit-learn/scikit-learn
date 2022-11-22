@@ -64,7 +64,7 @@ def _make_dumb_dataset(n_samples):
         ),
         (
             {"interaction_cst": [0, 1]},
-            "Interaction constraints must be None or an iterable of iterables",
+            "Interaction constraints must be a sequence of tuples or lists",
         ),
         (
             {"interaction_cst": [{0, 9999}]},
