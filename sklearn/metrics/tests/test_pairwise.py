@@ -122,7 +122,7 @@ def test_pairwise_distances(global_dtype):
     Y = np.tile(X[0, :], (5, 1))
     S = haversine_distances(X, Y[0].reshape(1, -1)).ravel()
     S2 = paired_haversine_distances(X, Y).ravel()
-    assert_array_almost_equal(S, S2)
+    assert_allclose(S, S2)
 
     # "cityblock" uses scikit-learn metric, cityblock (function) is
     # scipy.spatial.
