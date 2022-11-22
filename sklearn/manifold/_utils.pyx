@@ -10,6 +10,7 @@ cdef extern from "numpy/npy_math.h":
 cdef float EPSILON_DBL = 1e-8
 cdef float PERPLEXITY_TOLERANCE = 1e-5
 
+# TODO: have this function support float32 and float64 and preserve inputs' dtypes.
 cpdef float[:, :] _binary_search_perplexity(
         const float[:, :] sqdistances,
         float desired_perplexity,
@@ -116,4 +117,4 @@ cpdef float[:, :] _binary_search_perplexity(
     if verbose:
         print("[t-SNE] Mean sigma: %f"
               % np.mean(math.sqrt(n_samples / beta_sum)))
-    return P.base
+    return np.asarray(P, dtype=np.float32)
