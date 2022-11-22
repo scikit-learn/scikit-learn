@@ -250,9 +250,15 @@ cdef class ClassificationCriterion(Criterion):
         return (type(self),
                 (self.n_outputs, np.asarray(self.n_classes)), self.__getstate__())
 
-    cdef int init(self, const DOUBLE_t[:, ::1] y,
-                  const DOUBLE_t[:] sample_weight, double weighted_n_samples,
-                  SIZE_t* samples, SIZE_t start, SIZE_t end) nogil except -1:
+    cdef int init(
+        self,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight,
+        double weighted_n_samples,
+        SIZE_t* samples,
+        SIZE_t start,
+        SIZE_t end
+    ) nogil except -1:
         """Initialize the criterion.
 
         This initializes the criterion at node samples[start:end] and children

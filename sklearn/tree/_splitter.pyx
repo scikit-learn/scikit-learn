@@ -91,10 +91,12 @@ cdef class Splitter:
     def __setstate__(self, d):
         pass
 
-    cdef int init(self,
-                   object X,
-                   const DOUBLE_t[:, ::1] y,
-                   const DOUBLE_t[:] sample_weight) except -1:
+    cdef int init(
+        self,
+        object X,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight
+    ) except -1:
         """Initialize the splitter.
 
         Take in the input data X, the target Y, and optional sample weights.
@@ -215,10 +217,12 @@ cdef class BaseDenseSplitter(Splitter):
 
     cdef SIZE_t n_total_samples
 
-    cdef int init(self,
-                  object X,
-                  const DOUBLE_t[:, ::1] y,
-                  const DOUBLE_t[:] sample_weight) except -1:
+    cdef int init(
+        self,
+        object X,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight
+    ) except -1:
         """Initialize the splitter
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -759,10 +763,12 @@ cdef class BaseSparseSplitter(Splitter):
         # Parent __cinit__ is automatically called
         self.n_total_samples = 0
 
-    cdef int init(self,
-                  object X,
-                  const DOUBLE_t[:, ::1] y,
-                  const DOUBLE_t[:] sample_weight) except -1:
+    cdef int init(
+        self,
+        object X,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight
+    ) except -1:
         """Initialize the splitter
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
