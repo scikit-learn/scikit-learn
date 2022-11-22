@@ -99,7 +99,7 @@ def kmeans_plusplus(
         on the number of seeds (2+log(k)) which is the recommend setting.
         Setting to 1 disables the greedy cluster selection and recovers the
         vanilla k-means++ algorithm which was empirically shown to work less
-        well than its greedy variant. 
+        well than its greedy variant.
 
     Returns
     -------
