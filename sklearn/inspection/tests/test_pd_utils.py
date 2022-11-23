@@ -9,7 +9,7 @@ from sklearn.inspection._pd_utils import _check_feature_names, _get_feature_inde
 @pytest.mark.parametrize(
     "feature_names, array_type, expected_feature_names",
     [
-        (None, "array", ["0", "1", "2"]),
+        (None, "array", ["x0", "x1", "x2"]),
         (None, "dataframe", ["a", "b", "c"]),
         (np.array(["a", "b", "c"]), "array", ["a", "b", "c"]),
     ],
@@ -39,8 +39,8 @@ def test_get_feature_index(fx, idx):
 @pytest.mark.parametrize(
     "fx, feature_names, err_msg",
     [
-        ("a", None, "When the feature is a string"),
-        ("d", ["a", "b", "c"], "Feature d not in feature_names"),
+        ("a", None, "Cannot plot partial dependence for feature 'a'"),
+        ("d", ["a", "b", "c"], "Feature 'd' not in feature_names"),
     ],
 )
 def test_get_feature_names_error(fx, feature_names, err_msg):

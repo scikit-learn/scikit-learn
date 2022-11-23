@@ -17,7 +17,6 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.pipeline import make_pipeline
 
 from sklearn.inspection import PartialDependenceDisplay
-from sklearn.inspection._plot.partial_dependence import _get_feature_index
 
 
 # TODO: Remove when https://github.com/numpy/numpy/issues/14397 is resolved
@@ -829,31 +828,6 @@ def test_partial_dependence_overwrite_labels(
             legend_text = ax.get_legend().get_texts()
             assert len(legend_text) == 1
             assert legend_text[0].get_text() == label
-
-
-def test_get_feature_index():
-    """Check that the behaviour of `_get_feature_index`."""
-    # test when features is already an integer index
-    feature = 1
-    for feature_names in (None, ["a", "b", "c"]):
-        assert _get_feature_index(feature, feature_names) == feature
-
-    # test when features is a string and no feature_names are provided
-    feature = "a"
-    feature_names = None
-    err_msg = "When the feature is a string, `feature_names` should be a list"
-    with pytest.raises(ValueError, match=err_msg):
-        _get_feature_index(feature, feature_names)
-
-    # test when features_names is provided
-    feature = "b"
-    feature_names = ["a", "b", "c"]
-    assert _get_feature_index(feature, feature_names) == 1
-
-    feature = "x"
-    err_msg = "Feature x not in feature_names"
-    with pytest.raises(ValueError, match=err_msg):
-        _get_feature_index(feature, feature_names)
 
 
 @pytest.mark.parametrize(

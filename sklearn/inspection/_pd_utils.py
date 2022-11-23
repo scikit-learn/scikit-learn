@@ -12,16 +12,18 @@ def _check_feature_names(X, feature_names=None):
     Returns
     -------
     feature_names : list of str
-        Feature names validated. If `feature_names` is `None`, then
-        a series of string integers is returned.
+        Feature names validated. If `feature_names` is `None`, then a list of
+        feature names is provided, i.e. the column names of a pandas dataframe
+        or a generic list of feature names (e.g. `["x0", "x1", ...]`) for a
+        NumPy array.
     """
     if feature_names is None:
-        if hasattr(X, "loc"):
+        if hasattr(X, "columns") and hasattr(X.columns, "tolist"):
             # get the column names for a pandas dataframe
             feature_names = X.columns.tolist()
         else:
             # define a list of numbered indices for a numpy array
-            feature_names = [str(i) for i in range(X.shape[1])]
+            feature_names = [f"x{i}" for i in range(X.shape[1])]
     elif hasattr(feature_names, "tolist"):
         # convert numpy array or pandas index to a list
         feature_names = feature_names.tolist()
@@ -36,8 +38,8 @@ def _get_feature_index(fx, feature_names=None):
 
     Parameters
     ----------
-    fx : int, str or bool
-        Feature index, name or mask.
+    fx : int or str
+        Feature index or name.
 
     feature_names : list of str, default=None
         All feature names from which to search the indices.
@@ -50,13 +52,13 @@ def _get_feature_index(fx, feature_names=None):
     if isinstance(fx, str):
         if feature_names is None:
             raise ValueError(
-                "Cannot plot partial dependence for feature {fx!r} since "
+                f"Cannot plot partial dependence for feature {fx!r} since "
                 "the list of feature names was not provided, neither as "
                 "column names of a pandas data-frame nor via the feature_names "
                 "parameter."
             )
         try:
-            fx = feature_names.index(fx)
+            return feature_names.index(fx)
         except ValueError as e:
-            raise ValueError(f"Feature {fx} not in feature_names") from e
-    return int(fx)
+            raise ValueError(f"Feature {fx!r} not in feature_names") from e
+    return fx
