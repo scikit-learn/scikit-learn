@@ -35,7 +35,7 @@ print(__doc__)
 import numpy as np
 from sklearn.datasets import make_regression
 
-X, y = make_regression(n_samples=10000, noise=100, random_state=0)
+X, y = make_regression(n_samples=10_000, noise=100, random_state=0)
 y = np.expm1((y + abs(y.min())) / 200)
 y_trans = np.log1p(y)
 
@@ -125,8 +125,6 @@ plt.tight_layout()
 # In a similar manner, the Ames housing data set is used to show the impact
 # of transforming the targets before learning a model. In this example, the
 # target to be predicted is the selling price of each house.
-
-# %%
 from sklearn.datasets import fetch_openml
 from sklearn.preprocessing import quantile_transform
 
@@ -140,6 +138,7 @@ y = ames.target / 1000
 y_trans = quantile_transform(
     y.to_frame(), n_quantiles=900, output_distribution="normal", copy=True
 ).squeeze()
+
 # %%
 # A :class:`~sklearn.preprocessing.QuantileTransformer` is used to normalize
 # the target distribution before applying a
@@ -165,7 +164,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=1)
 # %%
 # The effect of the transformer is weaker than on the synthetic data. However,
 # the transformation results in an increase in :math:`R^2` and large decrease
-# of the MAE. The residual plot (predicted target - true target vs predicted
+# of the MedAE. The residual plot (predicted target - true target vs predicted
 # target) without target transformation takes on a curved, 'reverse smile'
 # shape due to residual values that vary depending on the value of predicted
 # target. With target transformation, the shape is more linear indicating
