@@ -182,7 +182,7 @@ def test_grid_from_X_with_categorical(grid_resolution):
     pd = pytest.importorskip("pandas")
     percentiles = (0.05, 0.95)
     is_categorical = [True]
-    X = pd.DataFrame(["A", "B", "C", "A", "B", "D", "E"])
+    X = pd.DataFrame({"cat_feature": ["A", "B", "C", "A", "B", "D", "E"]})
     grid, axes = _grid_from_X(
         X, percentiles, is_categorical, grid_resolution=grid_resolution
     )
