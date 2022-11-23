@@ -63,8 +63,7 @@ def test_learning_curve_display_default_usage(pyplot, data):
     assert display.ax_.get_ylabel() == "Score"
 
     _, legend_labels = display.ax_.get_legend_handles_labels()
-    # one label for the line and the fill-between
-    assert legend_labels == ["Testing metric", "Testing metric"]
+    assert legend_labels == ["Testing metric"]
 
     train_sizes_abs, train_scores, test_scores = learning_curve(
         estimator, X, y, train_sizes=train_sizes
@@ -296,7 +295,7 @@ def test_learning_curve_display_std_display_style(pyplot, data):
     assert len(display.fill_between_) == 1
     assert isinstance(display.fill_between_[0], mpl.collections.PolyCollection)
     _, legend_label = display.ax_.get_legend_handles_labels()
-    assert len(legend_label) == 2
+    assert len(legend_label) == 1
 
     std_display_style = "errorbar"
     display = LearningCurveDisplay.from_estimator(
