@@ -76,3 +76,14 @@ hist_no_interact.fit(X, y)
 # The estimator can now run on any Array API compliant libraries such as
 # `CuPy <https://docs.cupy.dev/en/stable/overview.html>`__, a GPU-accelerated array
 # library. For details, see the :ref:`User Guide <array_api>`.
+
+# %%
+# Improved efficiency of many estimators
+# --------------------------------------
+# In version 1.1 the efficiency of many estimators relying on the computation of
+# pairwise distances was greatly improved for float64 dense input. In version 1.2,
+# the efficiency of these estimators was further improved for all combinations of
+# float32/float64 and dense/sparse input. It concerns essentially clustering, manifold
+# learning and neighbor search algorithms. A detailed list of the impacted estimators
+# can be found in the :ref:`changelog <changes_1_2>`. The main benefits are a reduced
+# memory footprint and a much better scalability on multi-core machines.
