@@ -31,10 +31,9 @@ random sampling procedures.
   to a tiny value. Moreover, `verbose` is now properly propagated to L-BFGS-B.
   :pr:`23619` by :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |API| The default value of `tol` was changed from `1e-3` to `1e-4` for
-  :func:`linear_model.ridge_regression`, :class:`linear_model.Ridge` and
-  :class:`linear_model.`RidgeClassifier`.
-  :pr:`24465` by :user:`Christian Lorentzen <lorentzenchr>`.
+- |Enhancement| The default of `eps` in :func:`metrics.logloss` is will change
+  from `1e-15` to `"auto"` that defaults to `np.finfo(y_pred.dtype).eps`.
+  :pr:`24354` by :user:`Safiuddin Khaja <Safikh>` and :user:`gsiisg <gsiisg>`.
 
 - |Fix| Make sign of `components_` deterministic in :class:`decomposition.SparsePCA`.
   :pr:`23935` by :user:`Guillaume Lemaitre <glemaitre>`.
@@ -55,9 +54,10 @@ random sampling procedures.
   scores will all be set to the maximum possible rank.
   :pr:`24543` by :user:`Guillaume Lemaitre <glemaitre>`.
 
-- |Enhancement| The default of `eps` in :func:`metrics.logloss` is will change
-  from `1e-15` to `"auto"` that defaults to `np.finfo(y_pred.dtype).eps`.
-  :pr:`24354` by :user:`Safiuddin Khaja <Safikh>` and :user:`gsiisg <gsiisg>`.
+- |API| The default value of `tol` was changed from `1e-3` to `1e-4` for
+  :func:`linear_model.ridge_regression`, :class:`linear_model.Ridge` and
+  :class:`linear_model.`RidgeClassifier`.
+  :pr:`24465` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 Changes impacting all modules
 -----------------------------
