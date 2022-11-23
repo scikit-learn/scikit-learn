@@ -1038,9 +1038,6 @@ def dict_learning_online(
     if n_components is None:
         n_components = X.shape[1]
 
-    if method not in ("lars", "cd"):
-        raise ValueError("Coding method not supported as a fit algorithm.")
-
     _check_positive_coding(method, positive_code)
 
     method = "lasso_" + method
