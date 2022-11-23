@@ -32,24 +32,23 @@ y_pred = cross_val_predict(lr, X, y, cv=10)
 # :class:`~sklearn.metrics.PredictionErrorDisplay` to visualize the
 # prediction errors.
 #
-# On the left axis, we plot the true values of `y` vs. the predicted values
-# given by the models. On the right axis, we plot the residuals (i.e. the
-# difference between the true values and the predicted values) vs. the
-# predicted values.
+# On the left axis, we plot the true values :math:`y` vs. the predicted values
+# :math:`\hat{y}` given by the models. On the right axis, we plot the residuals
+# (i.e. the difference between the true values and the predicted values) vs.
+# the predicted values.
 import matplotlib.pyplot as plt
 from sklearn.metrics import PredictionErrorDisplay
 
-fig, axs = plt.subplots(ncols=2, figsize=(10, 4))
+fig, axs = plt.subplots(ncols=2, figsize=(8, 4))
 PredictionErrorDisplay.from_predictions(
     y,
     y_pred=y_pred,
     kind="predictions",
-    x_axis="predicted_targets",
     subsample=100,
     ax=axs[0],
     random_state=0,
 )
-axs[0].set_title("Predicted vs. True Values")
+axs[0].set_title("Actual vs. Predicted values")
 PredictionErrorDisplay.from_predictions(
     y, y_pred=y_pred, kind="residuals", subsample=100, ax=axs[1], random_state=0
 )
