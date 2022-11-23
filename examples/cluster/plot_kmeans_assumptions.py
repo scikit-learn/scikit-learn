@@ -93,7 +93,7 @@ fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(12, 12))
 
 y_pred = KMeans(n_clusters=2, **common_params).fit_predict(X)
 axs[0, 0].scatter(X[:, 0], X[:, 1], c=y_pred)
-axs[0, 0].set_title("Incorrect Number of clusters")
+axs[0, 0].set_title("Incorrect Number of Clusters")
 
 y_pred = KMeans(n_clusters=3, **common_params).fit_predict(X_aniso)
 axs[0, 1].scatter(X_aniso[:, 0], X_aniso[:, 1], c=y_pred)
