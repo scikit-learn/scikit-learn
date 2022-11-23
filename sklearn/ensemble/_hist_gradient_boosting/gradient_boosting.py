@@ -809,7 +809,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     if return_categorical_features:
                         categorical_features[col_idx] = True
         else:
-            # passthough for other kinds of data to be validated by
+            # passthrough for other kinds of data to be validated by
             # the usual _validate_data method.
             categorical_features = self.categorical_features
 
