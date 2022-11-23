@@ -2,24 +2,19 @@ cimport numpy as cnp
 
 from cython cimport final
 
-from ...utils._typedefs cimport ITYPE_t, DTYPE_t
+from ...utils._typedefs cimport ITYPE_t, DTYPE_t, SPARSE_INDEX_TYPE_t
 
 cnp.import_array()
 
-cpdef DTYPE_t[::1] _sqeuclidean_row_norms64(
-    const DTYPE_t[:, ::1] X,
-    ITYPE_t num_threads,
-)
-
-cpdef DTYPE_t[::1] _sqeuclidean_row_norms32(
-    const cnp.float32_t[:, ::1] X,
-    ITYPE_t num_threads,
-)
-
-{{for name_suffix in ['64', '32']}}
+{{for name_suffix, INPUT_DTYPE_t in [('64', 'DTYPE_t'), ('32', 'cnp.float32_t')]}}
 
 from ._datasets_pair cimport DatasetsPair{{name_suffix}}
 
+
+cpdef DTYPE_t[::1] _sqeuclidean_row_norms{{name_suffix}}(
+    X,
+    ITYPE_t num_threads,
+)
 
 cdef class BaseDistancesReduction{{name_suffix}}:
     """
