@@ -1342,7 +1342,7 @@ cdef class Poisson(RegressionCriterion):
         cdef SIZE_t n_outputs = self.n_outputs
 
         for output_idx in range(n_outputs):
-            if y_sum[k] <= EPSILON:
+            if y_sum[output_idx] <= EPSILON:
                 # y_sum could be computed from the subtraction
                 # sum_right = sum_total - sum_left leading to a potential
                 # floating point rounding error.
