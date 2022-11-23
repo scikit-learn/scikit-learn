@@ -46,7 +46,7 @@ cdef class Criterion:
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        SIZE_t* samples,
+        const SIZE_t[:] samples,
         SIZE_t start,
         SIZE_t end,
     ) nogil except -1:
@@ -64,9 +64,9 @@ cdef class Criterion:
             The weight of each sample stored as a Cython memoryview.
         weighted_n_samples : double
             The total weight of the samples being considered
-        samples : array-like, dtype=SIZE_t
+        samples : ndarray, dtype=SIZE_t
             Indices of the samples in X and y, where samples[start:end]
-            correspond to the samples in this node
+            correspond to the samples in this node stored as a Cython memoryview.
         start : SIZE_t
             The first sample to be used on this node
         end : SIZE_t
@@ -214,7 +214,6 @@ cdef class ClassificationCriterion(Criterion):
         n_classes : numpy.ndarray, dtype=SIZE_t
             The number of unique classes in each target
         """
-        self.samples = NULL
         self.start = 0
         self.pos = 0
         self.end = 0
@@ -255,7 +254,7 @@ cdef class ClassificationCriterion(Criterion):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        SIZE_t* samples,
+        const SIZE_t[:] samples,
         SIZE_t start,
         SIZE_t end
     ) nogil except -1:
@@ -275,8 +274,9 @@ cdef class ClassificationCriterion(Criterion):
             The weight of each sample stored as a Cython memoryview.
         weighted_n_samples : double
             The total weight of all samples
-        samples : array-like, dtype=SIZE_t
-            A mask on the samples, showing which ones we want to use
+        samples : ndarray, dtype=SIZE_t
+            A mask on the samples, showing which ones we want to use stored
+            as a Cython memoryview.
         start : SIZE_t
             The first sample to use in the mask
         end : SIZE_t
@@ -368,7 +368,7 @@ cdef class ClassificationCriterion(Criterion):
         cdef SIZE_t pos = self.pos
         cdef SIZE_t end = self.end
 
-        cdef SIZE_t* samples = self.samples
+        cdef const SIZE_t[:] samples = self.samples
         cdef const DOUBLE_t[:] sample_weight = self.sample_weight
 
         cdef SIZE_t i
@@ -623,7 +623,6 @@ cdef class RegressionCriterion(Criterion):
             The total number of samples to fit on
         """
         # Default values
-        self.samples = NULL
         self.start = 0
         self.pos = 0
         self.end = 0
@@ -649,7 +648,7 @@ cdef class RegressionCriterion(Criterion):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        SIZE_t* samples,
+        const SIZE_t[:] samples,
         SIZE_t start,
         SIZE_t end,
     ) nogil except -1:
@@ -720,7 +719,7 @@ cdef class RegressionCriterion(Criterion):
     cdef int update(self, SIZE_t new_pos) nogil except -1:
         """Updated statistics by moving samples[pos:new_pos] to the left."""
         cdef const DOUBLE_t[:] sample_weight = self.sample_weight
-        cdef SIZE_t* samples = self.samples
+        cdef const SIZE_t[:] samples = self.samples
 
         cdef SIZE_t pos = self.pos
         cdef SIZE_t end = self.end
@@ -845,7 +844,7 @@ cdef class MSE(RegressionCriterion):
         impurity the right child (samples[pos:end]).
         """
         cdef const DOUBLE_t[:] sample_weight = self.sample_weight
-        cdef SIZE_t* samples = self.samples
+        cdef const SIZE_t[:] samples = self.samples
         cdef SIZE_t pos = self.pos
         cdef SIZE_t start = self.start
 
@@ -904,7 +903,6 @@ cdef class MAE(RegressionCriterion):
             The total number of samples to fit on
         """
         # Default values
-        self.samples = NULL
         self.start = 0
         self.pos = 0
         self.end = 0
@@ -930,7 +928,7 @@ cdef class MAE(RegressionCriterion):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        SIZE_t* samples,
+        const SIZE_t[:] samples,
         SIZE_t start,
         SIZE_t end,
     ) nogil except -1:
@@ -1049,7 +1047,7 @@ cdef class MAE(RegressionCriterion):
         or 0 otherwise.
         """
         cdef const DOUBLE_t[:] sample_weight = self.sample_weight
-        cdef SIZE_t* samples = self.samples
+        cdef const SIZE_t[:] samples = self.samples
 
         cdef void** left_child = <void**> self.left_child.data
         cdef void** right_child = <void**> self.right_child.data
@@ -1113,7 +1111,7 @@ cdef class MAE(RegressionCriterion):
         better.
         """
         cdef const DOUBLE_t[:] sample_weight = self.sample_weight
-        cdef SIZE_t* samples = self.samples
+        cdef const SIZE_t[:] samples = self.samples
         cdef SIZE_t i, p, k
         cdef DOUBLE_t w = 1.0
         cdef DOUBLE_t impurity = 0.0
@@ -1137,7 +1135,7 @@ cdef class MAE(RegressionCriterion):
         impurity the right child (samples[pos:end]).
         """
         cdef const DOUBLE_t[:] sample_weight = self.sample_weight
-        cdef SIZE_t* samples = self.samples
+        cdef const SIZE_t[:] samples = self.samples
 
         cdef SIZE_t start = self.start
         cdef SIZE_t pos = self.pos
@@ -1335,10 +1333,12 @@ cdef class Poisson(RegressionCriterion):
         """
         cdef const DOUBLE_t[:, ::1] y = self.y
         cdef const DOUBLE_t[:] sample_weight = self.sample_weight
+        cdef const SIZE_t[:] samples = self.samples
 
         cdef DOUBLE_t y_mean = 0.
         cdef DOUBLE_t poisson_loss = 0.
         cdef DOUBLE_t w = 1.0
+        cdef SIZE_t i, k, p
         cdef SIZE_t n_outputs = self.n_outputs
 
         for k in range(n_outputs):
@@ -1353,7 +1353,7 @@ cdef class Poisson(RegressionCriterion):
             y_mean = y_sum[k] / weight_sum
 
             for p in range(start, end):
-                i = self.samples[p]
+                i = samples[p]
 
                 if sample_weight is not None:
                     w = sample_weight[i]
