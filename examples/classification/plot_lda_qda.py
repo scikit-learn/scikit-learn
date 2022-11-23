@@ -139,7 +139,7 @@ def plot_ellipse(splot, mean, cov, color):
         mean,
         2 * v[0] ** 0.5,
         2 * v[1] ** 0.5,
-        180 + angle,
+        angle=180 + angle,
         facecolor=color,
         edgecolor="black",
         linewidth=2,
