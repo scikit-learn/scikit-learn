@@ -8,10 +8,9 @@ In this example, we show how to use the class
 curves. In addition, we give an interpretation to the learning curves obtained
 for a naive Bayes and SVM classifiers.
 
-Then, we go into details by looking at the scalability of these predictive
-models by looking at their computation cost and not only at their statistical
-accuracy. We therefore draw some conclusions about the scalability of these
-models.
+Then, we explore and draw some conclusions about the scalability of these predictive
+models by looking at their computational cost and not only at their statistical
+accuracy.
 """
 
 # %%
@@ -146,7 +145,7 @@ for ax_idx, (fit_times, score_times, estimator) in enumerate(
 # different. The SVM classifier complexity at fit and score time increases
 # rapidly with the number of samples. Indeed, it is known that the fit time
 # complexity of this classifier is more than quadratic with the number of
-# samples which makes it hard to scale to dataset with more than a couple of
+# samples which makes it hard to scale to datasets with more than a couple of
 # 10,000 samples. In contrast, the naive Bayes classifier scales much better
 # with a lower complexity at fit and score time.
 #
