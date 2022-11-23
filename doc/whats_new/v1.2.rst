@@ -66,7 +66,7 @@ Changes impacting all modules
   or :class:`compose.ColumnTransformer` also define a `set_output`.
   For details, see
   `SLEP018 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep018/proposal.html>`__.
-  :pr:`23734` by `Thomas Fan`_.
+  :pr:`23734` and :pr:`24699` by `Thomas Fan`_.
 
 - |Enhancement| Finiteness checks (detection of NaN and infinite values) in all
   estimators are now significantly more efficient for float32 data by leveraging
@@ -98,7 +98,8 @@ Changes impacting all modules
   - :func:`sklearn.manifold.trustworthiness`
 
   :pr:`23604` and :pr:`23585` by :user:`Julien Jerphanion <jjerphan>`,
-  :user:`Olivier Grisel <ogrisel>`, and `Thomas Fan`_.
+  :user:`Olivier Grisel <ogrisel>`, and `Thomas Fan`_,
+  :pr:`24556` by :user:`Vincent Maladière <Vincent-Maladiere>`.
 
 - |Fix| Systematically check the sha256 digest of dataset tarballs used in code
   examples in the documentation.
@@ -228,7 +229,12 @@ Changelog
 - |Enhancement| Path-like objects, such as those created with pathlib are now
   allowed as paths in :func:`datasets.load_svmlight_file` and
   :func:`datasets.load_svmlight_files`.
-  :pr:`19075` by :user:`Carlos Ramos Carreño <vnmabus>`
+  :pr:`19075` by :user:`Carlos Ramos Carreño <vnmabus>`.
+
+- |Fix| Make sure that :func:`datasets.fetch_lfw_people` and
+  :func:`datasets.fetch_lfw_pairs` internally crops images based on the
+  `slice_` parameter.
+  :pr:`24951` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.decomposition`
 ............................
@@ -292,6 +298,8 @@ Changelog
   interaction constraints via the argument `interaction_cst` of their
   constructors.
   :pr:`21020` by :user:`Christian Lorentzen <lorentzenchr>`.
+  Using interaction constraints also makes fitting faster.
+  :pr:`24856` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 - |Feature| Adds `class_weight` to :class:`ensemble.HistGradientBoostingClassifier`.
   :pr:`22014` by `Thomas Fan`_.
@@ -299,11 +307,24 @@ Changelog
 - |Efficiency| Improve runtime performance of :class:`ensemble.IsolationForest`
   by avoiding data copies. :pr:`23252` by :user:`Zhehao Liu <MaxwellLZH>`.
 
+- |Enhancement| Make it possible to pass the `categorical_features` parameter
+  of :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` as feature names.
+  :pr:`24889` by :user:`Olivier Grisel <ogrisel>`.
+
 - |Enhancement| :class:`ensemble.StackingClassifier` now supports
   multilabel-indicator target
   :pr:`24146` by :user:`Nicolas Peretti <nicoperetti>`,
   :user:`Nestor Navarro <nestornav>`, :user:`Nati Tomattis <natitomattis>`,
   and :user:`Vincent Maladiere <Vincent-Maladiere>`.
+
+- |Enhancement| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingClassifier` now accept their
+  `monotonic_cst` parameter to be passed as a dictionary in addition
+  to the previously supported array-like format.
+  Such dictionary have feature names as keys and one of `-1`, `0`, `1`
+  as value to specify monotonicity constraints for each feature.
+  :pr:`24855` by :user:`Olivier Grisel <ogrisel>`.
 
 - |Fix| Fixed the issue where :class:`ensemble.AdaBoostClassifier` outputs
   NaN in feature importance when fitted with very small sample weight.
@@ -338,8 +359,20 @@ Changelog
   `base_estimator_` is deprecated in 1.2 and will be removed in 1.4.
   :pr:`23819` by :user:`Adrian Trujillo <trujillo9616>` and :user:`Edoardo Abati <EdAbati>`.
 
+- |Fix| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor`, with `verbose>=1`, print detailed timing
+  information on computing histograms and finding best splits. The time spent in the
+  root node was previously missing and is now included in the printed information.
+  :pr:`24894` by :user:`Christian Lorentzen <lorentzenchr>`.
+
 :mod:`sklearn.feature_selection`
 ................................
+
+- |Fix| Fix a bug in :func:`feature_selection.mutual_info_regression` and
+  :func:`feature_selction.mutual_info_classif`, where the continuous features
+  in `X` should be scaled to a unit variance independently if the target `y` is
+  continuous or discrete.
+  :pr:`24747` by :user:`Guillaume Lemaitre <glemaitre>`
 
 :mod:`sklearn.gaussian_process`
 ...............................
@@ -352,6 +385,15 @@ Changelog
   will not modify the input X in case a custom kernel is used, with a `diag`
   method that returns part of the input X. :pr:`24405`
   by :user:`Omar Salman <OmarManzoor>`.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Enhancement| Added `keep_empty_features` parameter to
+  :class:`impute.SimpleImputer`, :class:`impute.KNNImputer` and
+  :class:`impute.IterativeImputer`, preventing removal of features
+  containing only missing values when transforming.
+  :pr:`16695` by :user:`Vitor Santa Rosa <vitorsrg>`.
 
 :mod:`sklearn.kernel_approximation`
 ...................................
