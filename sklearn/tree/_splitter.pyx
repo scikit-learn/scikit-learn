@@ -182,7 +182,7 @@ cdef class Splitter:
         self.criterion.init(self.y,
                             self.sample_weight,
                             self.weighted_n_samples,
-                            &self.samples[0],
+                            self.samples,
                             start,
                             end)
 
