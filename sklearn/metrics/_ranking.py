@@ -33,6 +33,7 @@ from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
+from ..utils._param_validation import validate_params
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..utils._encode import _encode, _unique
@@ -44,6 +45,12 @@ from ._base import (
 )
 
 
+@validate_params(
+    {
+        "x": ["array-like"],
+        "y": ["array-like"],
+    }
+)
 def auc(x, y):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule.
 
