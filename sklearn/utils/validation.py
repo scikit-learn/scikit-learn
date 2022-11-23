@@ -1884,8 +1884,9 @@ def _get_feature_names(X):
     # mixed type of string and non-string is not supported
     if len(types) > 1 and "str" in types:
         raise TypeError(
-            "Feature names only support names that are all strings. "
-            f"Got feature names with dtypes: {types}."
+            "Feature names only support names that are all strings. Got feature names"
+            f" with dtypes: {types}. Please convert to a common type, for example using"
+            " X.columns = X.columns.astype(str)"
         )
 
     # Only feature names of all strings are supported
