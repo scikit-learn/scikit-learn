@@ -538,13 +538,13 @@ fig.add_axes(ax)
 surf = ax.plot_surface(XX, YY, Z, rstride=1, cstride=1, cmap=plt.cm.BuPu, edgecolor="k")
 ax.set_xlabel(features[0])
 ax.set_ylabel(features[1])
-# pretty init view
-ax.view_init(elev=22, azim=122)
-clb = plt.colorbar(surf)
-clb.ax.set_title("Partial dependence")
-plt.suptitle(
+fig.suptitle(
     "PD of number of bike rentals on\nthe temperature and humidity GBDT model",
     fontsize=16,
     x=0.7,
 )
+# pretty init view
+ax.view_init(elev=22, azim=122)
+clb = plt.colorbar(surf, shrink=0.6, aspect=5)
+clb.ax.set_title("Partial dependence")
 plt.show()

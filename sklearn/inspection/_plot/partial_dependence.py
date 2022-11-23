@@ -217,13 +217,12 @@ class PartialDependenceDisplay:
     >>> X, y = make_friedman1()
     >>> clf = GradientBoostingRegressor(n_estimators=10).fit(X, y)
     >>> features, feature_names = [(0,)], [f"Features #{i}" for i in range(X.shape[1])]
-    >>> is_categorical = [(False,) for _ in range(len(features))]
     >>> deciles = {0: np.linspace(0, 1, num=5)}
     >>> pd_results = partial_dependence(
     ...     clf, X, features=0, kind="average", grid_resolution=5)
     >>> display = PartialDependenceDisplay(
     ...     [pd_results], features=features, feature_names=feature_names,
-    ...     target_idx=0, deciles=deciles, is_categorical=is_categorical
+    ...     target_idx=0, deciles=deciles
     ... )
     >>> display.plot(pdp_lim={1: (-1.38, 0.66)})
     <...>
@@ -1211,6 +1210,13 @@ class PartialDependenceDisplay:
         else:
             kind = self.kind
 
+        if self.is_categorical is None:
+            is_categorical = [
+                (False,) if len(fx) == 1 else (False, False) for fx in self.features
+            ]
+        else:
+            is_categorical = self.is_categorical
+
         if len(kind) != len(self.features):
             raise ValueError(
                 "When `kind` is provided as a list of strings, it should "
@@ -1381,7 +1387,7 @@ class PartialDependenceDisplay:
             zip(
                 self.axes_.ravel(),
                 self.features,
-                self.is_categorical,
+                is_categorical,
                 pd_results_,
                 kind,
             )
