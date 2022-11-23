@@ -496,7 +496,7 @@ features_info = {
     "kind": "average",
     "categorical_features": categorical_features,
 }
-_, ax = plt.subplots(ncols=3, figsize=(14, 4))
+_, ax = plt.subplots(ncols=3, figsize=(14, 6), constrained_layout=True)
 tic = time()
 display = PartialDependenceDisplay.from_estimator(
     hgbdt_model,
@@ -510,7 +510,6 @@ print(f"done in {time() - tic:.3f}s")
 _ = display.figure_.suptitle(
     "1-way vs 2-way PDP of categorical features using gradient boosting", fontsize=16
 )
-plt.subplots_adjust(wspace=0.3)
 
 # %%
 # 3D representation
@@ -543,10 +542,9 @@ ax.set_ylabel(features[1])
 ax.view_init(elev=22, azim=122)
 clb = plt.colorbar(surf)
 clb.ax.set_title("Partial dependence")
-# plt.suptitle(
-#     "PD of number of bike rentals on\nthe temperature and humidity "
-#     "GBDT model",
-#     fontsize=16,
-# )
-plt.subplots_adjust(top=0.9)
+plt.suptitle(
+    "PD of number of bike rentals on\nthe temperature and humidity GBDT model",
+    fontsize=16,
+    x=0.7,
+)
 plt.show()
