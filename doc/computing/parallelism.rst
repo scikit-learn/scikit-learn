@@ -13,7 +13,8 @@ Parallelism
 Some scikit-learn estimators and utilities parallelize costly operations
 using multiple CPU cores.
 
-This can be either done:
+Depending on the type of estimator and sometimes the values of the
+constructor parameters, this is either done:
 
 - with higher-level parallelism via `joblib <https://joblib.readthedocs.io/en/latest/>`_.
   In this case, the number of threads or processes can be controlled with the
@@ -97,7 +98,7 @@ Parallel NumPy and SciPy routines from numerical libraries
 ..........................................................
 
 scikit-learn relies heavily on NumPy and SciPy, which internally call
-multi-threaded linear algebra routines of BLAS implemented in libraries
+multi-threaded linear algebra routines (BLAS & LAPACK) implemented in libraries
 such as MKL, OpenBLAS or BLIS.
 
 You can control the exact number of threads used by BLAS for each library
@@ -106,6 +107,16 @@ using environment variables, namely:
   - ``MKL_NUM_THREADS`` sets the number of thread MKL uses,
   - ``OPENBLAS_NUM_THREADS`` sets the number of threads OpenBLAS uses
   - ``BLIS_NUM_THREADS`` sets the number of threads BLIS uses
+
+Note that BLAS & LAPACK implementations can also be impacted by
+`OMP_NUM_THREADS`. To check whether this is the case in your environment,
+you can inspect how the number of threads effectively used by those libraries
+is affected when running the the following command in a bash or zsh terminal
+for different values of `OMP_NUM_THREADS`::
+
+.. prompt:: bash $
+
+    OMP_NUM_THREADS=2 python -m threadpoolctl -i numpy scipy
 
 .. note::
     At the time of writing (2022), NumPy and SciPy packages which are
@@ -157,8 +168,13 @@ Note that:
   only use ``<LIB>_NUM_THREADS``. Joblib exposes a context manager for
   finer control over the number of threads in its workers (see joblib docs
   linked below).
-- `threadpoolctl` internally manages the numbers of threads used by OpenMP
-  and BLAS implementations for scikit-learn implementations.
+- When joblib is configured to use the ``threading`` backend, there is no
+  mechanism to avoid oversubscriptions when calling into parallel native
+  libraries in the joblib-managed threads.
+- All scikit-learn estimators that explicitly rely on OpenMP in their Cython code
+  always use `threadpoolctl` internally to automatically adapt the numbers of
+  threads used by OpenMP and potentially nested BLAS calls so as to avoid
+  oversubscription.
 
 You will find additional details about joblib mitigation of oversubscription
 in `joblib documentation

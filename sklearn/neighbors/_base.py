@@ -842,7 +842,8 @@ class KNeighborsMixin:
             # Joblib-based backend, which is used when user-defined callable
             # are passed for metric.
 
-            # This won't be used in the future once PairwiseDistancesReductions support:
+            # This won't be used in the future once PairwiseDistancesReductions
+            # supports:
             #   - DistanceMetrics which work on supposedly binary data
             #   - CSR-dense and dense-CSR case if 'euclidean' in metric.
             reduce_func = partial(
@@ -1179,7 +1180,8 @@ class RadiusNeighborsMixin:
             # Joblib-based backend, which is used when user-defined callable
             # are passed for metric.
 
-            # This won't be used in the future once PairwiseDistancesReductions support:
+            # This won't be used in the future once PairwiseDistancesReductions
+            # supports:
             #   - DistanceMetrics which work on supposedly binary data
             #   - CSR-dense and dense-CSR case if 'euclidean' in metric.
 
