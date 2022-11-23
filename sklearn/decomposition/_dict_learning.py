@@ -18,7 +18,7 @@ from joblib import Parallel, effective_n_jobs
 from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils import deprecated
-from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
 from ..utils.fixes import delayed
@@ -734,7 +734,42 @@ def _check_warn_deprecated(param, name, default, additional_message=None):
     else:
         return default
 
-
+@validate_params(
+    {
+        "X": ["array-like"],
+        "n_components": [Interval(Integral, 1, None, closed="left"), None],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "n_iter": [
+            Interval(Integral, 0, None, closed="left"),
+            Hidden(StrOptions({"deprecated"})),
+        ],
+        "max_iter": [Interval(Integral, 0, None, closed="left"), None],
+        "return_code": ["boolean"],
+        "dict_init": [np.ndarray, None],
+        "callback": [callable, None],
+        "batch_size": [
+            Interval(Integral, 1, None, closed="left"),
+            Hidden(StrOptions({"warn"})),
+        ],
+        "verbose": ["verbose"],
+        "shuffle": ["boolean"],
+        "n_jobs": [Integral, None],
+        "method": [StrOptions({"lars", "cd"})],
+        "iter_offset": [
+            Interval(Integral, 0, None, closed="left"),
+            Hidden(StrOptions({"deprecated"})),
+        ],
+        "random_state": ["random_state"],
+        "return_inner_stats": ["boolean", Hidden(StrOptions({"deprecated"}))],
+        "inner_stats": ["array-like", Hidden(StrOptions({"deprecated"}))],
+        "return_n_iter": ["boolean", Hidden(StrOptions({"deprecated"}))],
+        "positive_dict": ["boolean"],
+        "positive_code": ["boolean"],
+        "method_max_iter": [Interval(Integral, 0, None, closed="left")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "max_no_improvement": [Interval(Integral, 0, None, closed="left"), None],
+    }
+)
 def dict_learning_online(
     X,
     n_components=2,
