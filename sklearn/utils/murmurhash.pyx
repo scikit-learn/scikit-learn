@@ -16,9 +16,7 @@ and can be found here:
 
 
 cimport numpy as cnp
-
 import numpy as np
-from .validation import _is_arraylike
 
 cdef extern from "src/MurmurHash3.h":
     void MurmurHash3_x86_32(void *key, int len, cnp.uint32_t seed, void *out)
@@ -121,7 +119,7 @@ def murmurhash3_32(key, seed=0, positive=False):
             return murmurhash3_int_u32(<cnp.int32_t>key, seed)
         else:
             return murmurhash3_int_s32(<cnp.int32_t>key, seed)
-    elif _is_arraylike(key):
+    elif isinstance(key, np.ndarray):
         if key.dtype != np.int32:
             raise TypeError(
                 "key.dtype should be int32, got %s" % key.dtype)
