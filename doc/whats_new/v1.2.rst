@@ -464,7 +464,7 @@ Changelog
 :mod:`sklearn.manifold`
 .......................
 
-- |Feature| Adds option to use the normalized stress in `manifold.MDS`. This is
+- |Feature| Adds option to use the normalized stress in :class:`manifold.MDS`. This is
   enabled by setting the new `normalize` parameter to `True`.
   :pr:`10168` by :user:`Łukasz Borchmann <Borchmann>`,
   :pr:`12285` by :user:`Matthias Miltenberger <mattmilten>`,
