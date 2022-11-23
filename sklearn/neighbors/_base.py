@@ -843,7 +843,7 @@ class KNeighborsMixin:
             # are passed for metric.
 
             # This won't be used in the future once PairwiseDistancesReductions
-            # supports:
+            # support:
             #   - DistanceMetrics which work on supposedly binary data
             #   - CSR-dense and dense-CSR case if 'euclidean' in metric.
             reduce_func = partial(
@@ -1181,7 +1181,7 @@ class RadiusNeighborsMixin:
             # are passed for metric.
 
             # This won't be used in the future once PairwiseDistancesReductions
-            # supports:
+            # support:
             #   - DistanceMetrics which work on supposedly binary data
             #   - CSR-dense and dense-CSR case if 'euclidean' in metric.
 

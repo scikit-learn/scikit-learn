@@ -17,14 +17,17 @@ Depending on the type of estimator and sometimes the values of the
 constructor parameters, this is either done:
 
 - with higher-level parallelism via `joblib <https://joblib.readthedocs.io/en/latest/>`_.
-  In this case, the number of threads or processes can be controlled with the
-  ``n_jobs`` parameter.
 - with lower-level parallelism via OpenMP, used in C or Cython code.
-  In this case, parallelism is always done using threads and specifying
-  ``n_jobs`` *has no effect*. Implementations relying on this parallelism are generally
-  more performant than joblib-based implementations by up to two orders of magnitude.
 - with lower-level parallelism via BLAS, used by NumPy and SciPy for generic operations
   on arrays.
+
+The `n_jobs` parameters of estimators always controls the amount of parallelism
+managed by joblib (processes or threads depending on the joblib backend).
+The thread-level parallelism managed by OpenMP in scikit-learn's own Cython code
+or by BLAS & LAPACK libraries used by NumPy and SciPy operations used in scikit-learn
+is always controlled by environment variables or `threadpoolctl` as explained below.
+Note that some estimators can leverage all three kinds of parallelism at different
+points of their training and prediction methods.
 
 We describe these 3 types of parallelism in the following subsections in more details.
 
