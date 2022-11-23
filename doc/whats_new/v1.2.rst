@@ -69,6 +69,42 @@ Changes impacting all modules
   `SLEP018 <https://scikit-learn-enhancement-proposals.readthedocs.io/en/latest/slep018/proposal.html>`__.
   :pr:`23734` and :pr:`24699` by `Thomas Fan`_.
 
+- |Efficiency| Low-level routines for reductions on pairwise distances
+  for dense float32 datasets have been refactored. The following functions
+  and estimators now benefit from improved performances in terms of hardware
+  scalability and speed-ups:
+
+  - :func:`sklearn.metrics.pairwise_distances_argmin`
+  - :func:`sklearn.metrics.pairwise_distances_argmin_min`
+  - :class:`sklearn.cluster.AffinityPropagation`
+  - :class:`sklearn.cluster.Birch`
+  - :class:`sklearn.cluster.MeanShift`
+  - :class:`sklearn.cluster.OPTICS`
+  - :class:`sklearn.cluster.SpectralClustering`
+  - :func:`sklearn.feature_selection.mutual_info_regression`
+  - :class:`sklearn.neighbors.KNeighborsClassifier`
+  - :class:`sklearn.neighbors.KNeighborsRegressor`
+  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
+  - :class:`sklearn.neighbors.RadiusNeighborsRegressor`
+  - :class:`sklearn.neighbors.LocalOutlierFactor`
+  - :class:`sklearn.neighbors.NearestNeighbors`
+  - :class:`sklearn.manifold.Isomap`
+  - :class:`sklearn.manifold.LocallyLinearEmbedding`
+  - :class:`sklearn.manifold.TSNE`
+  - :func:`sklearn.manifold.trustworthiness`
+  - :class:`sklearn.semi_supervised.LabelPropagation`
+  - :class:`sklearn.semi_supervised.LabelSpreading`
+
+  For instance :class:`sklearn.neighbors.NearestNeighbors.kneighbors` and
+  :class:`sklearn.neighbors.NearestNeighbors.radius_neighbors`
+  can respectively be up to ×20 and ×5 faster than previously on a laptop.
+
+  Moreover, implementations of those two algorithms are now suitable
+  for machine with many cores, making them usable for datasets consisting
+  of millions of samples.
+
+  :pr:`23865` by :user:`Julien Jerphanion <jjerphan>`.
+
 - |Enhancement| Finiteness checks (detection of NaN and infinite values) in all
   estimators are now significantly more efficient for float32 data by leveraging
   NumPy's SIMD optimized primitives.
@@ -122,7 +158,7 @@ Changelog
     where 123456 is the *pull request* number, not the issue number.
 
 :mod:`sklearn.base`
--------------------
+...................
 
 - |Enhancement| Introduces :class:`base.ClassNamePrefixFeaturesOutMixin` and
   :class:`base.ClassNamePrefixFeaturesOutMixin` mixins that defines
@@ -132,45 +168,9 @@ Changelog
 :mod:`sklearn.calibration`
 ..........................
 
-- |Efficiency| Low-level routines for reductions on pairwise distances
-  for dense float32 datasets have been refactored. The following functions
-  and estimators now benefit from improved performances in terms of hardware
-  scalability and speed-ups:
-
-  - :func:`sklearn.metrics.pairwise_distances_argmin`
-  - :func:`sklearn.metrics.pairwise_distances_argmin_min`
-  - :class:`sklearn.cluster.AffinityPropagation`
-  - :class:`sklearn.cluster.Birch`
-  - :class:`sklearn.cluster.MeanShift`
-  - :class:`sklearn.cluster.OPTICS`
-  - :class:`sklearn.cluster.SpectralClustering`
-  - :func:`sklearn.feature_selection.mutual_info_regression`
-  - :class:`sklearn.neighbors.KNeighborsClassifier`
-  - :class:`sklearn.neighbors.KNeighborsRegressor`
-  - :class:`sklearn.neighbors.RadiusNeighborsClassifier`
-  - :class:`sklearn.neighbors.RadiusNeighborsRegressor`
-  - :class:`sklearn.neighbors.LocalOutlierFactor`
-  - :class:`sklearn.neighbors.NearestNeighbors`
-  - :class:`sklearn.manifold.Isomap`
-  - :class:`sklearn.manifold.LocallyLinearEmbedding`
-  - :class:`sklearn.manifold.TSNE`
-  - :func:`sklearn.manifold.trustworthiness`
-  - :class:`sklearn.semi_supervised.LabelPropagation`
-  - :class:`sklearn.semi_supervised.LabelSpreading`
-
-  For instance :class:`sklearn.neighbors.NearestNeighbors.kneighbors` and
-  :class:`sklearn.neighbors.NearestNeighbors.radius_neighbors`
-  can respectively be up to ×20 and ×5 faster than previously on a laptop.
-
-  Moreover, implementations of those two algorithms are now suitable
-  for machine with many cores, making them usable for datasets consisting
-  of millions of samples.
-
-  :pr:`23865` by :user:`Julien Jerphanion <jjerphan>`.
-
 - |API| Rename `base_estimator` to `estimator` in
-  :class:`CalibratedClassifierCV` to improve readability and consistency. The
-  parameter `base_estimator` is deprecated and will be removed in 1.4.
+  :class:`calibration.CalibratedClassifierCV` to improve readability and consistency.
+  The parameter `base_estimator` is deprecated and will be removed in 1.4.
   :pr:`22054` by :user:`Kevin Roice <kevroi>`.
 
 :mod:`sklearn.cluster`
@@ -291,8 +291,8 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
-- |Feature| :class:`~sklearn.ensemble.HistGradientBoostingClassifier` and
-  :class:`~sklearn.ensemble.HistGradientBoostingRegressor` now support
+- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+  :class:`ensemble.HistGradientBoostingRegressor` now support
   interaction constraints via the argument `interaction_cst` of their
   constructors.
   :pr:`21020` by :user:`Christian Lorentzen <lorentzenchr>`.
@@ -373,7 +373,7 @@ Changelog
 ................................
 
 - |Fix| Fix a bug in :func:`feature_selection.mutual_info_regression` and
-  :func:`feature_selction.mutual_info_classif`, where the continuous features
+  :func:`feature_selection.mutual_info_classif`, where the continuous features
   in `X` should be scaled to a unit variance independently if the target `y` is
   continuous or discrete.
   :pr:`24747` by :user:`Guillaume Lemaitre <glemaitre>`
@@ -458,7 +458,7 @@ Changelog
 
 - |API| The default value of `tol` was changed from `1e-3` to `1e-4` for
   :func:`linear_model.ridge_regression`, :class:`linear_model.Ridge` and
-  :class:`linear_model.`RidgeClassifier`.
+  :class:`linear_model.RidgeClassifier`.
   :pr:`24465` by :user:`Christian Lorentzen <lorentzenchr>`.
 
 :mod:`sklearn.manifold`
@@ -482,6 +482,14 @@ Changelog
 
 - |Enhancement| :class:`manifold.Isomap` now preserves
   dtype for `np.float32` inputs. :pr:`24714` by :user:`Rahil Parikh <rprkh>`.
+
+- |API| Added an `"auto"` option to the `normalized_stress` argument in
+  :class:`manifold.MDS` and :func:`manifold.smacof`. Note that
+  `normalized_stress` is only valid for non-metric MDS, therefore the `"auto"`
+  option enables `normalized_stress` when `metric=False` and disables it when
+  `metric=True`. `"auto"` will become the default value foor `normalized_stress`
+  in version 1.4.
+  :pr:`23834` by :user:`Meekail Zain <micky774>`
 
 :mod:`sklearn.metrics`
 ......................
@@ -591,7 +599,7 @@ Changelog
   `metric="minkowski"`) for `algorithm="auto"` or `algorithm="brute"`.
   :pr:`24750` by :user:`Rudresh Veerkhare <RudreshVeerkhare>`
 
-- |Fix| :class:`NearestCentroid` now raises an informative error message at fit-time
+- |Fix| :class:`neighbors.NearestCentroid` now raises an informative error message at fit-time
   instead of failing with a low-level error message at predict-time.
   :pr:`23874` by :user:`Juan Gomez <2357juan>`.
 
@@ -607,7 +615,7 @@ Changelog
   be used when one of the transformers in the :class:`pipeline.FeatureUnion` is
   `"passthrough"`. :pr:`24058` by :user:`Diederik Perdok <diederikwp>`
 
-- |Enhancement| The :class:`FeatureUnion` class now has a `named_transformers`
+- |Enhancement| The :class:`pipeline.FeatureUnion` class now has a `named_transformers`
   attribute for accessing transformers by name.
   :pr:`20331` by :user:`Christopher Flynn <crflynn>`.
 
@@ -667,14 +675,6 @@ Changelog
 - |API| The extra keyword parameters of :func:`utils.extmath.density` are deprecated
   and will be removed in 1.4.
   :pr:`24523` by :user:`Mia Bajic <clytaemnestra>`.
-
-- |API| Added an `"auto"` option to the `normalized_stress` argument in
-  :class:`manifold.MDS` and :func:`manifold.smacof`. Note that
-  `normalized_stress` is only valid for non-metric MDS, therefore the `"auto"`
-  option enables `normalized_stress` when `metric=False` and disables it when
-  `metric=True`. `"auto"` will become the default value foor `normalized_stress`
-  in version 1.4.
-  :pr:`23834` by :user:`Meekail Zain <micky774>`
 
 Code and Documentation Contributors
 -----------------------------------
