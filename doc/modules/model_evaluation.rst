@@ -2714,7 +2714,7 @@ Here are some usage examples of the :func:`d2_absolute_error_score` function::
 Visual evaluation of regression models
 --------------------------------------
 
-The :class:`~sklearn.metrics.PredictionErrorDisplay` displays allows to
+The :class:`~sklearn.metrics.PredictionErrorDisplay` class allows to
 visually inspect the quality of regression models. The quality of a regression
 model can be assessed using two different plots as shown below:
 
@@ -2723,23 +2723,48 @@ model can be assessed using two different plots as shown below:
    :scale: 75
    :align: center
 
-The plot on the left shows the predicted values vs. the actual values. A
-perfect regression model would display data point on the diagonal defined by
-predicted = actual values. The further away from this optimal line, the larger
-the error of the model. Note that this analysis is only meaningful when the
-predicted values is the expectation. This plot cannot be used when the model
-predicts a specific quantile, e.g. using
-:class:`~sklearn.linear_model.QuantileRegressor`.
+The plot on the left shows the actual values vs predicted values. For a
+noise-free regression task, a perfect regression model would display data points
+on the diagonal defined by predicted = actual values. The further away from this
+optimal line, the larger the error of the model. In a more realistic setting with
+irreducible noise, that is, when not all the variations of `y` can be explained
+by features in `X`, then the best model would lead to a cloud of points densely
+arranged around the diagonal.
+
+Note that the above holds when the predicted values is the expected value of `y`
+given `X`. This is typically the case for regression model that asymptotically
+minimize the mean squared error objective function or more generally the
+:ref:`mean Tweedie deviance <mean_tweedie_deviance>` for any value
+of its "power" parameter.
+
+When plotting the predictions of an estimator that predicts a quantile
+of `y` given `X`, e.g. :class:`~sklearn.linear_model.QuantileRegressor`
+or any other model asymptotically minimizing the :ref:`pinball loss
+<pinball_loss>`, a fraction of the points are either expected to lie above or
+below the diagonal depending on the estimated quantile.
+
+All in all, while intuitive to read, this plot does not really inform us on what
+to do to obtain a better model. 
 
 The right-hand side plot shows the residuals, i.e. the difference between the
-actual values and the predicted values, vs. the predicted values. This type of
-plot give an indication of the `homoscedasticity
-<https://en.wikipedia.org/wiki/Homoscedasticity_and_heteroscedasticity>`_ of
-the model. A perfect regression model will display data points uniformly
-distributed around the horizontal axis. If the distribution is not uniform,
-then it indicates us that there is a relationship between the value of the
-target and the residuals, e.g. the error increases when the true target
-increases.
+actual values and the predicted values, vs. the predicted values.
+
+This plot makes it easier to visualize if the residuals follow
+and `homoscedastic or heteroschedastic
+<https://en.wikipedia.org/wiki/Homoscedasticity_and_heteroscedasticity>`_
+distribution. In particular, if the true distribution of `y|X` is Poisson
+or Gamma distributed, it is expected that the variance of the residuals
+of the optimal model to grow with the predicted value of `E[y|X]` (either linearly
+for Poisson or quadratically for Gamma).
+
+We can also use this plot to check if the residuals are Gaussian distributed
+with a constant variance (homeschedastic residuals) which is the assumption made
+when fitting linear least squares regression model (see
+:class:`sklearn.linear_mnodel.LinearRegression` and
+:class:`sklearn.linear_mnodel.Ridge`). If this is not the case, and in particular if
+the residual plot some banana-shaped structure, this is a hint that the model is
+likely mis-specified and that non-linear feature engineering or switching to a
+non-linear regression model might be useful.
 
 Refer to the example below to see a model evaluation that make use of this
 display.
