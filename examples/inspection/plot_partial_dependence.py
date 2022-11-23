@@ -525,7 +525,7 @@ import mpl_toolkits.mplot3d  # noqa: F401
 
 from sklearn.inspection import partial_dependence
 
-fig = plt.figure(figsize=(10, 5))
+fig = plt.figure(figsize=(10, 5), constrained_layout=True)
 
 features = ("temp", "humidity")
 pdp = partial_dependence(
@@ -543,10 +543,10 @@ ax.set_ylabel(features[1])
 ax.view_init(elev=22, azim=122)
 clb = plt.colorbar(surf)
 clb.ax.set_title("Partial dependence")
-plt.suptitle(
-    "Partial dependence of number of bike rentals on\nthe temperature and humidity "
-    "gradient boosting decision tree model",
-    fontsize=16,
-)
+# plt.suptitle(
+#     "PD of number of bike rentals on\nthe temperature and humidity "
+#     "GBDT model",
+#     fontsize=16,
+# )
 plt.subplots_adjust(top=0.9)
 plt.show()
