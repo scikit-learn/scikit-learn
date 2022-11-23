@@ -1447,3 +1447,35 @@ def test_categorical_features_from_pandas_categorical_dtype(Est, global_random_s
     assert_array_equal(model.feature_names_in_, manual_pipeline[-1].feature_names_in_)
     assert_allclose(model.predict(X_train), manual_pipeline.predict(X_train))
     assert_allclose(model.predict(X_test), manual_pipeline.predict(X_test))
+
+
+def test_categorical_feature_consistent():
+    """Check that pandas categorical features in predict are consistent with fit."""
+    pd = pytest.importorskip("pandas")
+
+    hist = HistGradientBoostingRegressor(random_state=0)
+    X_fit = pd.DataFrame({"cat_col": pd.Categorical(["a", "b", "c"])})
+    y = [0, 1, 2]
+    hist.fit(X_fit, y)
+
+    # Does not error
+    hist.predict(X_fit)
+
+    X_incorrect_order = pd.DataFrame(
+        {"cat_col": pd.Categorical(["a", "b", "c"], categories=["b", "c", "a"])}
+    )
+    X_unknown_categorical = pd.DataFrame(
+        {"cat_col": pd.Categorical(["a", "d", "b"], categories=["a", "b", "c", "d"])}
+    )
+    X_not_enough_categories = pd.DataFrame(
+        {"cat_col": pd.Categorical(["a", "b", "b"], categories=["a", "b"])}
+    )
+    X_bad_inputs = [X_incorrect_order, X_unknown_categorical, X_not_enough_categories]
+
+    msg = re.escape(
+        "The following features have categories that is inconsistent with categories"
+        " during fit: ['cat_col']"
+    )
+    for X_bad_input in X_bad_inputs:
+        with pytest.raises(ValueError, match=msg):
+            hist.predict(X_bad_input)

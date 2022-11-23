@@ -344,7 +344,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         acc_prediction_time = 0.0
 
         X, categorical_features = self._ordinal_encode_df(
-            X, return_categorical_features=True
+            X, return_categorical_features=True, in_fit=True
         )
         X, y = self._validate_data(X, y, dtype=[X_DTYPE], force_all_finite=False)
         y = self._encode_y(y)
@@ -781,12 +781,32 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         del self._in_fit  # hard delete so we're sure it can't be used anymore
         return self
 
-    def _ordinal_encode_df(self, X, return_categorical_features=False):
+    def _ordinal_encode_df(self, X, *, return_categorical_features=False, in_fit=True):
         if (
             self.categorical_features is None
             and hasattr(X, "columns")
             and hasattr(X, "assign")
         ):
+            if in_fit:
+                self._column_name_to_categories = {}
+            else:
+                # Check that categorical features are consistent with the ones seen in
+                # fit
+                inconsistent_columns = []
+                for (
+                    col,
+                    expected_cat,
+                ) in self._column_name_to_categories.items():
+                    X_cat = X[col].dtype.categories
+                    if len(X_cat) != len(expected_cat) or np.any(X_cat != expected_cat):
+                        inconsistent_columns.append(col)
+
+                if inconsistent_columns:
+                    raise ValueError(
+                        "The following features have categories that is inconsistent"
+                        f" with categories during fit: {inconsistent_columns}"
+                    )
+
             # pandas dataframe: find explicitly typed categorical columns,
             # extract their inner ordinal encoding and record the indices of
             # the categorical columns before calling _validate_data and
@@ -795,6 +815,10 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 categorical_features = np.zeros(X.shape[1], dtype=bool)
             for col_idx, col in enumerate(X.columns):
                 if X[col].dtype.name == "category":
+                    if in_fit:
+                        # Store categorical feature to check during non-fit calls
+                        self._column_name_to_categories[col] = X[col].dtype.categories
+
                     # As of now, missing values are always encoded as np.nan in
                     # this estimator, therefore we need to use a floating point
                     # dtype to encode the categories.
@@ -1047,7 +1071,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         """
         is_binned = getattr(self, "_in_fit", False)
         if not is_binned:
-            X = self._ordinal_encode_df(X)
+            X = self._ordinal_encode_df(X, in_fit=False)
             X = self._validate_data(
                 X, dtype=X_DTYPE, force_all_finite=False, reset=False
             )
@@ -1117,7 +1141,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             The raw predictions of the input samples. The order of the
             classes corresponds to that in the attribute :term:`classes_`.
         """
-        X = self._ordinal_encode_df(X)
+        X = self._ordinal_encode_df(X, in_fit=False)
         X = self._validate_data(X, dtype=X_DTYPE, force_all_finite=False, reset=False)
         check_is_fitted(self)
         if X.shape[1] != self._n_features:
