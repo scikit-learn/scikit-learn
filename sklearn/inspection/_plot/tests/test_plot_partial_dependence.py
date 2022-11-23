@@ -503,7 +503,7 @@ def test_plot_partial_dependence_multioutput(pyplot, target):
     for i, pos in enumerate(positions):
         ax = disp.axes_[pos]
         assert ax.get_ylabel() == expected_label[i]
-        assert ax.get_xlabel() == "{}".format(i)
+        assert ax.get_xlabel() == f"x{i}"
 
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
@@ -547,12 +547,12 @@ dummy_classification_data = make_classification(random_state=0)
         (
             dummy_classification_data,
             {"features": ["foobar"], "feature_names": None},
-            "Feature foobar not in feature_names",
+            "Feature 'foobar' not in feature_names",
         ),
         (
             dummy_classification_data,
             {"features": ["foobar"], "feature_names": ["abcd", "def"]},
-            "Feature foobar not in feature_names",
+            "Feature 'foobar' not in feature_names",
         ),
         (
             dummy_classification_data,
