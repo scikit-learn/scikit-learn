@@ -50,8 +50,10 @@ def _get_feature_index(fx, feature_names=None):
     if isinstance(fx, str):
         if feature_names is None:
             raise ValueError(
-                "When the feature is a string, `feature_names` should be a "
-                "list of feature names."
+                "Cannot plot partial dependence for feature {fx!r} since "
+                "the list of feature names was not provided, neither as "
+                "column names of a pandas data-frame nor via the feature_names "
+                "parameter."
             )
         try:
             fx = feature_names.index(fx)
