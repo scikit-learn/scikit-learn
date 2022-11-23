@@ -189,15 +189,16 @@ in `this document from Thomas J. Fan <https://thomasjpfan.github.io/parallelism-
 Configuration switches
 -----------------------
 
-Python runtime
-..............
+Python API
+..........
 
-:func:`sklearn.set_config` controls the following behaviors.
+:func:`sklearn.set_config` and :func:`sklearn.config_context` can be used to change
+parameters of the configuration which control aspect of parallelism.
 
 .. _environment_variable:
 
 Environment variables
-......................
+.....................
 
 These environment variables should be set before importing scikit-learn.
 
@@ -297,3 +298,14 @@ float64 data.
 When this environment variable is set to a non zero value, the `Cython`
 derivative, `boundscheck` is set to `True`. This is useful for finding
 segfaults.
+
+`SKLEARN_PAIRWISE_DIST_CHUNK_SIZE`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+This sets the size of chunk to be used by the underlying `PairwiseDistancesReductions`
+implementations. The default value is `256` which has been showed to be adequate on
+most machines.
+
+Users looking for the best performance might want to tune this variable using
+powers of 2 so as to get the best parallelism behavior for their hardware,
+especially with respect to their caches' sizes.
