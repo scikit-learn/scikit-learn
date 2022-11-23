@@ -18,7 +18,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/zlib-1.2.13-h5eee18b_0.conda#333e31
 https://repo.anaconda.com/pkgs/main/linux-64/ccache-3.7.9-hfe4627d_0.conda#bef6fc681c273bb7bd0c67d1a591365e
 https://repo.anaconda.com/pkgs/main/linux-64/readline-8.2-h5eee18b_0.conda#be42180685cce6e6b0329201d9f48efb
 https://repo.anaconda.com/pkgs/main/linux-64/tk-8.6.12-h1ccaba5_0.conda#fa10ff4aa631fa4aa090a6234d7770b9
-https://repo.anaconda.com/pkgs/main/linux-64/sqlite-3.39.3-h5082296_0.conda#1fd3c10003776a5c0ebd14205327f541
+https://repo.anaconda.com/pkgs/main/linux-64/sqlite-3.40.0-h5082296_0.conda#d1300b056e728ea61a0bf135b035e60d
 https://repo.anaconda.com/pkgs/main/linux-64/python-3.9.15-haa1d7c7_0.conda#dacae2189e4ec6083804b07b44f1a342
 https://repo.anaconda.com/pkgs/main/linux-64/certifi-2022.9.24-py39h06a4308_0.conda#1e3ca01764ce78e609ab61b8067734eb
 https://repo.anaconda.com/pkgs/main/noarch/wheel-0.37.1-pyhd3eb1b0_0.conda#ab85e96e26da8d5797c2458232338b86
@@ -73,7 +73,7 @@ https://repo.anaconda.com/pkgs/main/linux-64/pip-22.2.2-py39h06a4308_0.conda#cb9
 # pip scipy @ https://files.pythonhosted.org/packages/bb/b7/380c9e4cd71263f03d16f8a92c0e44c9bdef38777e1a7dde1f47ba996bac/scipy-1.9.3-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=c68db6b290cbd4049012990d7fe71a2abd9ffbe82c0056ebe0f01df8be5436b0
 # pip tifffile @ https://files.pythonhosted.org/packages/d2/cb/1ecf9f39113a7ad0529a0441a16982791e7b37a4efdba2f89a687fdf15c9/tifffile-2022.10.10-py3-none-any.whl#sha256=87f3aee8a0d06b74655269a105de75c1958a24653e1930d523eb516100043503
 # pip codecov @ https://files.pythonhosted.org/packages/dc/e2/964d0881eff5a67bf5ddaea79a13c7b34a74bc4efe917b368830b475a0b9/codecov-2.1.12-py2.py3-none-any.whl#sha256=585dc217dc3d8185198ceb402f85d5cb5dbfa0c5f350a5abcdf9e347776a5b47
-# pip pandas @ https://files.pythonhosted.org/packages/c9/80/207c30c09d0b650214f7826227d32236e3259e2ad2b8e0075b3feae4266c/pandas-1.5.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=b156a971bc451c68c9e1f97567c94fd44155f073e3bceb1b0d195fd98ed12048
+# pip pandas @ https://files.pythonhosted.org/packages/5e/ed/5c9cdaa5d48c7194bef4335eab3cdc2f8afa868a5546027e018ea9deb4c3/pandas-1.5.2-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=344021ed3e639e017b452aa8f5f6bf38a8806f5852e217a7594417fb9bbfa00e
 # pip pyamg @ https://files.pythonhosted.org/packages/8e/08/d512b6e34d502152723b5a4ad9d962a6141dfe83cd8bcd01af4cb6e84f28/pyamg-4.2.3-cp39-cp39-manylinux_2_12_x86_64.manylinux2010_x86_64.whl#sha256=18af99d2551df07951c35cf270dc76703f8c5d30b16ea8e61657fda098f57dd7
 # pip pytest @ https://files.pythonhosted.org/packages/67/68/a5eb36c3a8540594b6035e6cdae40c1ef1b6a2bfacbecc3d1a544583c078/pytest-7.2.0-py3-none-any.whl#sha256=892f933d339f068883b6fd5a459f03d85bfcb355e4981e146d2c7616c21fef71
 # pip scikit-image @ https://files.pythonhosted.org/packages/0f/29/d157cd648b87212e498189c183a32f0f48e24fe22e9673dacd97594f39fa/scikit_image-0.19.3-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl#sha256=ff3b1025356508d41f4fe48528e509d95f9e4015e90cf158cd58c56dc63e0ac5

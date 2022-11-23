@@ -76,7 +76,7 @@ https://conda.anaconda.org/conda-forge/noarch/pycparser-2.21-pyhd8ed1ab_0.tar.bz
 https://conda.anaconda.org/conda-forge/noarch/pyparsing-3.0.9-pyhd8ed1ab_0.tar.bz2#e8fbc1b54b25f4b08281467bc13b70cc
 https://conda.anaconda.org/conda-forge/noarch/pysocks-1.7.1-pyha2e5f31_6.tar.bz2#2a7de29fb590ca14b5243c4c812c8025
 https://conda.anaconda.org/conda-forge/noarch/pytz-2022.6-pyhd8ed1ab_0.tar.bz2#b1f26ad83328e486910ef7f6e81dc061
-https://conda.anaconda.org/conda-forge/noarch/setuptools-65.6.0-pyhd8ed1ab_0.conda#a78be949ee957032a2efeadec53e3d7d
+https://conda.anaconda.org/conda-forge/noarch/setuptools-65.5.1-pyhd8ed1ab_0.tar.bz2#cfb8dc4d9d285ca5fb1177b9dd450e33
 https://conda.anaconda.org/conda-forge/noarch/six-1.16.0-pyh6c4a22f_0.tar.bz2#e5f25f8dbc060e9a8d912e432202afc2
 https://conda.anaconda.org/conda-forge/noarch/threadpoolctl-3.1.0-pyh8a188c0_0.tar.bz2#a2995ee828f65687ac5b1e71a2ab1e0c
 https://conda.anaconda.org/conda-forge/noarch/toml-0.10.2-pyhd8ed1ab_0.tar.bz2#f832c45a477c78bebd107098db465095
@@ -106,7 +106,7 @@ https://conda.anaconda.org/conda-forge/noarch/pytest-7.2.0-pyhd8ed1ab_2.tar.bz2#
 https://conda.anaconda.org/conda-forge/osx-64/blas-devel-3.9.0-16_osx64_mkl.tar.bz2#2fb6331f94446754c896d1f11d3afa1c
 https://conda.anaconda.org/conda-forge/noarch/compiler-rt_osx-64-14.0.6-hab78ec2_0.tar.bz2#4fdde3f4ed31722a1c811723f5db82f0
 https://conda.anaconda.org/conda-forge/osx-64/contourpy-1.0.6-py311hd2070f0_0.tar.bz2#7aff06dca8dc89b96ba3b8caeb6dc2c9
-https://conda.anaconda.org/conda-forge/osx-64/pandas-1.5.1-py311hd84f3f5_1.tar.bz2#350619c6699839575eaf7fbf64d4199f
+https://conda.anaconda.org/conda-forge/osx-64/pandas-1.5.2-py311hd84f3f5_0.conda#c061bfc7a65e7b7a1757d2476056acc3
 https://conda.anaconda.org/conda-forge/noarch/pyopenssl-22.1.0-pyhd8ed1ab_0.tar.bz2#fbfa0a180d48c800f922a10a114a8632
 https://conda.anaconda.org/conda-forge/noarch/pytest-cov-4.0.0-pyhd8ed1ab_0.tar.bz2#c9e3f8bfdb9bfc34aa1836a6ed4b25d7
 https://conda.anaconda.org/conda-forge/noarch/pytest-forked-1.4.0-pyhd8ed1ab_1.tar.bz2#60958bab291681d9c3ba69e80f1434cf
