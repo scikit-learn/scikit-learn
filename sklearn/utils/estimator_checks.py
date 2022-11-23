@@ -4163,7 +4163,7 @@ def check_set_output_transform(name, transformer_orig):
 
 
 def _output_from_fit_transform(transformer, name, X, df, y):
-    """Generate output to set test `set_output` for different configuration:
+    """Generate output to test `set_output` for different configuration:
 
     - calling either `fit.transform` or `fit_transform`;
     - passing either a dataframe or a numpy array to fit;
@@ -4173,28 +4173,33 @@ def _output_from_fit_transform(transformer, name, X, df, y):
 
     # fit then transform case:
     cases = [
-        "fit.transform/fit_df/transform_df",
-        "fit.transform/fit_df/transform_array",
-        "fit.transform/fit_array/transform_df",
-        "fit.transform/fit_array/transform_array",
+        ("fit.transform/df/df", df, df),
+        ("fit.transform/df/array", df, X),
+        ("fit.transform/array/df", X, df),
+        ("fit.transform/array/array", X, X),
     ]
-    for case, data_fit, data_transform, target in zip(
-        cases, [df, df, X, X], [df, X, df, X], [y, y, y, y]
-    ):
-        transformer.fit(data_fit, target)
+    for (
+        case,
+        data_fit,
+        data_transform,
+    ) in cases:
+        transformer.fit(data_fit, y)
         if name in CROSS_DECOMPOSITION:
-            X_trans = transformer.transform(data_transform, target)[0]
+            X_trans, _ = transformer.transform(data_transform, y)
         else:
             X_trans = transformer.transform(data_transform)
         outputs[case] = (X_trans, transformer.get_feature_names_out())
 
     # fit_transform case:
-    cases = ["fit_transform/df", "fit_transform/array"]
-    for case, data, target in zip(cases, [df, X], [y, y]):
+    cases = [
+        ("fit_transform/df", df),
+        ("fit_transform/array", X),
+    ]
+    for case, data in cases:
         if name in CROSS_DECOMPOSITION:
-            X_trans = transformer.fit_transform(data, target)[0]
+            X_trans, _ = transformer.fit_transform(data, y)
         else:
-            X_trans = transformer.fit_transform(data, target)
+            X_trans = transformer.fit_transform(data, y)
         outputs[case] = (X_trans, transformer.get_feature_names_out())
 
     return outputs

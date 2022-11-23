@@ -35,6 +35,7 @@ from .validation import (
     indexable,
     check_symmetric,
     check_scalar,
+    _is_arraylike_not_scalar,
 )
 from .. import get_config
 from ._bunch import Bunch
@@ -186,15 +187,8 @@ def _array_indexing(array, key, key_dtype, axis):
 
 def _pandas_indexing(X, key, key_dtype, axis):
     """Index a pandas dataframe or a series."""
-    if hasattr(key, "shape") and not np.isscalar(key):
-        # Surprisingly `np.int64` will have a `shape` attribute while being
-        # a scalar.
-        # Work-around for indexing with read-only key in pandas
-        # FIXME: solved in pandas 0.25
+    if _is_arraylike_not_scalar(key):
         key = np.asarray(key)
-        key = key if key.flags.writeable else key.copy()
-    elif isinstance(key, tuple):
-        key = list(key)
 
     if key_dtype == "int" and not (isinstance(key, slice) or np.isscalar(key)):
         # using take() instead of iloc[] ensures the return value is a "proper"
@@ -388,9 +382,9 @@ def _safe_assign(X, values, *, row_indexer=None, column_indexer=None):
         slice(None, None, None) if column_indexer is None else column_indexer
     )
 
-    if hasattr(X, "iloc"):
+    if hasattr(X, "iloc"):  # pandas dataframe
         X.iloc[row_indexer, column_indexer] = values
-    else:
+    else:  # numpy array or sparse matrix
         X[row_indexer, column_indexer] = values
 
 

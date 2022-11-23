@@ -31,6 +31,26 @@ _ImputerTriplet = namedtuple(
 )
 
 
+def _assign_where(X1, X2, cond):
+    """Assign X2 to X1 where cond is True.
+
+    Parameters
+    ----------
+    X1 : ndarray or dataframe of shape (n_samples, n_features)
+        Data.
+
+    X2 : ndarray of shape (n_samples, n_features)
+        Data to be assigned.
+
+    cond : ndarray of shape (n_samples, n_features)
+        Boolean mask to assign data.
+    """
+    if hasattr(X1, "mask"):  # pandas dataframes
+        X1.mask(cond=cond, other=X2, inplace=True)
+    else:  # ndarrays
+        X1[cond] = X2[cond]
+
+
 class IterativeImputer(_BaseImputer):
     """Multivariate imputer that estimates each feature from all the others.
 
@@ -766,17 +786,8 @@ class IterativeImputer(_BaseImputer):
                     "[IterativeImputer] Early stopping criterion not reached.",
                     ConvergenceWarning,
                 )
-        for feat_idx, feat_mask in enumerate(mask_missing_values.T):
-            _safe_assign(
-                Xt,
-                _safe_indexing(
-                    _safe_indexing(X, feat_idx, axis=1),
-                    ~feat_mask,
-                    axis=0,
-                ),
-                row_indexer=~feat_mask,
-                column_indexer=feat_idx,
-            )
+        _assign_where(Xt, X, cond=~mask_missing_values)
+
         return super()._concatenate_indicator(Xt, X_indicator)
 
     def transform(self, X):
@@ -829,17 +840,8 @@ class IterativeImputer(_BaseImputer):
                     )
                 i_rnd += 1
 
-        for feat_idx, feat_mask in enumerate(mask_missing_values.T):
-            _safe_assign(
-                Xt,
-                _safe_indexing(
-                    _safe_indexing(X, feat_idx, axis=1),
-                    ~feat_mask,
-                    axis=0,
-                ),
-                row_indexer=~feat_mask,
-                column_indexer=feat_idx,
-            )
+        _assign_where(Xt, X, cond=~mask_missing_values)
+
         return super()._concatenate_indicator(Xt, X_indicator)
 
     def fit(self, X, y=None):

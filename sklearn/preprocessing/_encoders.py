@@ -58,16 +58,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         X_columns = []
 
         for i in range(n_features):
-            Xi = self._get_feature(X, feature_idx=i)
+            Xi = _safe_indexing(X, indices=i, axis=1)
             Xi = check_array(
                 Xi, ensure_2d=False, dtype=None, force_all_finite=needs_validation
             )
             X_columns.append(Xi)
 
         return X_columns, n_samples, n_features
-
-    def _get_feature(self, X, feature_idx):
-        return _safe_indexing(X, feature_idx, axis=1)
 
     def _fit(
         self, X, handle_unknown="error", force_all_finite=True, return_counts=False
