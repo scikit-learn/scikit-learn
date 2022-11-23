@@ -1233,6 +1233,11 @@ Model validation
    model_selection.permutation_test_score
    model_selection.validation_curve
 
+Visualization
+-------------
+
+.. currentmodule:: sklearn
+
 .. autosummary::
    :toctree: generated/
    :template: class.rst

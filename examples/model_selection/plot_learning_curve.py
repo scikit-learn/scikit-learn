@@ -145,7 +145,7 @@ for ax_idx, (fit_times, score_times, estimator) in enumerate(
 # different. The SVM classifier complexity at fit and score time increases
 # rapidly with the number of samples. Indeed, it is known that the fit time
 # complexity of this classifier is more than quadratic with the number of
-# samples which makes it hard to scale to datasets with more than a couple of
+# samples which makes it hard to scale to dataset with more than a few
 # 10,000 samples. In contrast, the naive Bayes classifier scales much better
 # with a lower complexity at fit and score time.
 #
