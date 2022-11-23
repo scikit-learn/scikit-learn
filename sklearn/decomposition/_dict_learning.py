@@ -734,6 +734,7 @@ def _check_warn_deprecated(param, name, default, additional_message=None):
     else:
         return default
 
+
 @validate_params(
     {
         "X": ["array-like"],
