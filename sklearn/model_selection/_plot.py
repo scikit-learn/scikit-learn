@@ -221,7 +221,6 @@ class LearningCurveDisplay:
                         self.train_sizes,
                         score.mean(axis=1) - score.std(axis=1),
                         score.mean(axis=1) + score.std(axis=1),
-                        label=line_label,
                         **fill_between_kw,
                     )
                 )
