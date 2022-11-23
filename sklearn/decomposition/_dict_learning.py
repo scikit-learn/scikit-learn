@@ -762,7 +762,7 @@ def _check_warn_deprecated(param, name, default, additional_message=None):
         ],
         "random_state": ["random_state"],
         "return_inner_stats": ["boolean", Hidden(StrOptions({"deprecated"}))],
-        "inner_stats": ["array-like", Hidden(StrOptions({"deprecated"}))],
+        "inner_stats": ["array-like", Hidden(StrOptions({"deprecated"})), None],
         "return_n_iter": ["boolean", Hidden(StrOptions({"deprecated"}))],
         "positive_dict": ["boolean"],
         "positive_code": ["boolean"],
