@@ -145,19 +145,25 @@ def test_fit_transform_n_bins_array(strategy, expected, sample_weight):
         assert bin_edges.shape == (n_bins + 1,)
 
 
-def test_zero_sample_weight():
+@pytest.mark.filterwarnings("ignore: Bins whose width are too small")
+def test_kbinsdiscretizer_effect_sample_weight():
+    """Check that we take into account `sample_weight` when computing the quantiles."""
     X = np.array([[-2], [-1], [1], [3], [500], [1000]])
-    est = KBinsDiscretizer(n_bins=2, encode="ordinal", strategy="quantile")
+    # add a large number of bins such that each sample with a non-null weight
+    # will be used as bin edge
+    est = KBinsDiscretizer(n_bins=10, encode="ordinal", strategy="quantile")
     est.fit(X, sample_weight=[1, 1, 1, 1, 0, 0])
-    assert_array_equal([[0.0], [1.0], [1.0], [1.0], [1.0], [1.0]], est.transform(X))
+    assert_allclose(est.bin_edges_[0], [-2, -1, 1, 3])
+    assert_allclose(est.transform(X), [[0.0], [1.0], [2.0], [2.0], [2.0], [2.0]])
 
 
-def test_sample_weight():
+def test_kbinsdiscretizer_no_mutating_sample_weight():
+    """Check to make sure that `sample_weight` is no changed in place."""
     est = KBinsDiscretizer(n_bins=3, encode="ordinal", strategy="quantile")
-    sample_weight = [1, 3, 1, 2]
-    sample_weight_copy = np.array(sample_weight)
+    sample_weight = np.array([1, 3, 1, 2], dtype=np.float64)
+    sample_weight_copy = np.copy(sample_weight)
     est.fit(X, sample_weight=sample_weight)
-    assert_array_equal(sample_weight, sample_weight_copy)
+    assert_allclose(sample_weight, sample_weight_copy)
 
 
 @pytest.mark.parametrize("strategy", ["uniform", "kmeans", "quantile"])
