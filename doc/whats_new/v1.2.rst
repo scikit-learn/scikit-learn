@@ -31,8 +31,8 @@ random sampling procedures.
   to a tiny value. Moreover, `verbose` is now properly propagated to L-BFGS-B.
   :pr:`23619` by :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |Enhancement| The default of `eps` in :func:`metrics.logloss` is will change
-  from `1e-15` to `"auto"` that defaults to `np.finfo(y_pred.dtype).eps`.
+- |Enhancement| The default value for `eps` :func:`metrics.logloss` has changed
+  from `1e-15` to `"auto"`. `"auto"` sets `eps` to `np.finfo(y_pred.dtype).eps`.
   :pr:`24354` by :user:`Safiuddin Khaja <Safikh>` and :user:`gsiisg <gsiisg>`.
 
 - |Fix| Make sign of `components_` deterministic in :class:`decomposition.SparsePCA`.
