@@ -492,12 +492,12 @@ Changelog
   of a binary classification problem. :pr:`22518` by
   :user:`Arturo Amor <ArturoAmorQ>`.
 
-- |Feature| Add :class:`metrics.PredictionErrorDisplay` to plot residuals vs predicted and actual vs predicted
-   to qualitatively assess the behavior of a regressor. The
-  display can be created with the class methods
+- |Feature| Add :class:`metrics.PredictionErrorDisplay` to plot residuals vs
+  predicted and actual vs predicted to qualitatively assess the behavior of a
+  regressor. The display can be created with the class methods
   :func:`metrics.PredictionErrorDisplay.from_estimator` and
-  :func:`metrics.PredictionErrorDisplay.from_predictions`.
-  :pr:`18020` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :func:`metrics.PredictionErrorDisplay.from_predictions`. :pr:`18020` by
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| Allows `csr_matrix` as input for parameter: `y_true` of
    the :func:`metrics.label_ranking_average_precision_score` metric.
