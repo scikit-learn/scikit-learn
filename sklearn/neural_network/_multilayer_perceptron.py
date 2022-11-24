@@ -179,7 +179,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         return activations
 
-    def _forward_pass_fast(self, X, validation=True):
+    def _forward_pass_fast(self, X, check_input=True):
         """Predict using the trained model
 
         This is the same as _forward_pass but does not record the activations
@@ -190,7 +190,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
 
-        validation : boolean, default=True
+        check_input : bool, default=True
             Perform input data validation or not.
 
         Returns
@@ -198,7 +198,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         y_pred : ndarray of shape (n_samples,) or (n_samples, n_outputs)
             The decision function of the samples for each class in the model.
         """
-        if validation:
+        if check_input:
             X = self._validate_data(X, accept_sparse=["csr", "csc"], reset=False)
 
         # Initialize first layer
@@ -1137,8 +1137,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         check_is_fitted(self)
         return self._predict(X)
 
-    def _predict(self, X, validation=True):
-        y_pred = self._forward_pass_fast(X, validation=validation)
+    def _predict(self, X, check_input=True):
+        y_pred = self._forward_pass_fast(X, check_input=check_input)
 
         if self.n_outputs_ == 1:
             y_pred = y_pred.ravel()
@@ -1146,7 +1146,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         return self._label_binarizer.inverse_transform(y_pred)
 
     def _score(self, X, y):
-        return accuracy_score(y, self._predict(X, validation=False))
+        return accuracy_score(y, self._predict(X, check_input=False))
 
     @available_if(lambda est: est._check_solver())
     def partial_fit(self, X, y, classes=None):
@@ -1559,14 +1559,14 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         check_is_fitted(self)
         return self._predict(X)
 
-    def _predict(self, X, validation=True):
-        y_pred = self._forward_pass_fast(X, validation=validation)
+    def _predict(self, X, check_input=True):
+        y_pred = self._forward_pass_fast(X, check_input=check_input)
         if y_pred.shape[1] == 1:
             return y_pred.ravel()
         return y_pred
 
     def _score(self, X, y):
-        y_pred = self._predict(X, validation=False)
+        y_pred = self._predict(X, check_input=False)
         return r2_score(y, y_pred)
 
     def _validate_input(self, X, y, incremental, reset):

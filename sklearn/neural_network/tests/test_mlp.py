@@ -887,9 +887,10 @@ def test_preserve_feature_names(recwarn, Estimator):
     X = pd.DataFrame(
         data=[[i, i] for i in range(10)], columns=["colname_a", "colname_b"]
     )
-    y = pd.DataFrame(data=[[1] for i in range(10)], columns=["colname_y"])
+    y = pd.Series(data=[1] * 10, name="colname_y")
 
     model = Estimator(early_stopping=True, validation_fraction=0.2)
-    model.fit(X, y["colname_y"])
 
-    assert len(recwarn) == 0
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        model.fit(X, y)
