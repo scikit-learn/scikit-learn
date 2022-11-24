@@ -20,7 +20,7 @@ lr = LinearRegression()
 
 # %%
 # :func:`~sklearn.model_selection.cross_val_predict` returns an array of the
-# same size as `y` where each entry is a prediction obtained by cross
+# same size of `y` where each entry is a prediction obtained by cross
 # validation.
 from sklearn.model_selection import cross_val_predict
 
@@ -58,11 +58,16 @@ plt.tight_layout()
 plt.show()
 
 # %%
-# It is important to note that
-# :func:`~sklearn.model_selection.cross_val_predict` is a tool that should be
-# used for visualization but not for evaluating the performance of the
-# predictive models by computing a metric on the aggregated predictions.
+# It is important to note that we used
+# :func:`~sklearn.model_selection.cross_val_predict` for visualization
+# purpose only in this example.
 #
-# A proper validation should use either
+# It would be problematic to
+# quantitatively assess the model performance by computing a single
+# performance metric from the concatenated predictions returned by
+# :func:`~sklearn.model_selection.cross_val_predict`
+# when the different CV folds vary by size and distributions.
+#
+# In is recommended to compute per-fold performance metrics using:
 # :func:`~sklearn.model_selection.cross_val_score` or
 # :func:`~sklearn.model_selection.cross_validate` instead.

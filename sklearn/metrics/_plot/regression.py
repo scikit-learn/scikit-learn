@@ -8,9 +8,13 @@ from ...utils import _safe_indexing
 
 
 class PredictionErrorDisplay:
-    """Prediction error visualization.
+    """Visualization of the prediction error of a regression model.
 
-    It is recommended to use
+    This tool can display "residuals vs predicted" or "actual vs predicted"
+    using scatter plots to qualitatively assess the behavior of a regressor,
+    preferably on held-out data points.
+
+    See the details in the docstrings of
     :func:`~sklearn.metrics.PredictionErrorDisplay.from_estimator` or
     :func:`~sklearn.metrics.PredictionErrorDisplay.from_predictions` to
     create a visualizer. All parameters are stored as attributes.

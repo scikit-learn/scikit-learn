@@ -2724,15 +2724,15 @@ model can be assessed using two different plots as shown below:
    :align: center
 
 The plot on the left shows the actual values vs predicted values. For a
-noise-free regression task, a perfect regression model would display data points
+noise-free regression task aiming to predict the (conditional) expectation of y, a perfect regression model would display data points
 on the diagonal defined by predicted = actual values. The further away from this
 optimal line, the larger the error of the model. In a more realistic setting with
 irreducible noise, that is, when not all the variations of `y` can be explained
 by features in `X`, then the best model would lead to a cloud of points densely
 arranged around the diagonal.
 
-Note that the above holds when the predicted values is the expected value of `y`
-given `X`. This is typically the case for regression model that asymptotically
+Note that the above only holds when the predicted values is the expected value of `y`
+given `X`. This is typically the case for regression models that asymptotically
 minimize the mean squared error objective function or more generally the
 :ref:`mean Tweedie deviance <mean_tweedie_deviance>` for any value
 of its "power" parameter.
@@ -2741,7 +2741,7 @@ When plotting the predictions of an estimator that predicts a quantile
 of `y` given `X`, e.g. :class:`~sklearn.linear_model.QuantileRegressor`
 or any other model asymptotically minimizing the :ref:`pinball loss
 <pinball_loss>`, a fraction of the points are either expected to lie above or
-below the diagonal depending on the estimated quantile.
+below the diagonal depending on the estimated quantile level.
 
 All in all, while intuitive to read, this plot does not really inform us on what
 to do to obtain a better model. 
@@ -2766,7 +2766,7 @@ the residual plot some banana-shaped structure, this is a hint that the model is
 likely mis-specified and that non-linear feature engineering or switching to a
 non-linear regression model might be useful.
 
-Refer to the example below to see a model evaluation that make use of this
+Refer to the example below to see a model evaluation that makes use of this
 display.
 
 .. topic:: Example:

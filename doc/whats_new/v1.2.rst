@@ -492,8 +492,8 @@ Changelog
   of a binary classification problem. :pr:`22518` by
   :user:`Arturo Amor <ArturoAmorQ>`.
 
-- |Feature| Add :class:`metrics.PredictionErrorDisplay` to plot the predicted
-  and actual values to qualitatively assess the behavior of a regressor. The
+- |Feature| Add :class:`metrics.PredictionErrorDisplay` to plot residuals vs predicted and actual vs predicted
+   to qualitatively assess the behavior of a regressor. The
   display can be created with the class methods
   :func:`metrics.PredictionErrorDisplay.from_estimator` and
   :func:`metrics.PredictionErrorDisplay.from_predictions`.
