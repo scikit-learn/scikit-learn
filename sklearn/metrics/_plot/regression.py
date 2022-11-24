@@ -220,8 +220,9 @@ class PredictionErrorDisplay:
 
             - "actual_vs_predicted" draws the the observed values (y-axis) vs.
               the predicted values (x-axis).
-            - "residuals" draws the residuals, i.e difference between observed
-              and predicted values, (y-axis) vs. the predicted values (x-axis).
+            - "residual_vs_predicted" draws the residuals, i.e difference
+              between observed and predicted values, (y-axis) vs. the predicted
+              values (x-axis).
 
         subsample : float, int or None, default=1_000
             Sampling the samples to be shown on the scatter plot. If `float`,
@@ -319,8 +320,9 @@ class PredictionErrorDisplay:
 
             - "actual_vs_predicted" draws the the observed values (y-axis) vs.
               the predicted values (x-axis).
-            - "residuals" draws the residuals, i.e difference between observed
-              and predicted values, (y-axis) vs. the predicted values (x-axis).
+            - "residual_vs_predicted" draws the residuals, i.e difference
+              between observed and predicted values, (y-axis) vs. the predicted
+              values (x-axis).
 
         subsample : float, int or None, default=1_000
             Sampling the samples to be shown on the scatter plot. If `float`,
