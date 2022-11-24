@@ -825,7 +825,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # XXX: using integers would be more efficient but would
                     # make the code more complex.
                     codes = X[col].values.codes.astype(np.float64)
-                    codes[codes == -1] = np.nan
+                    codes[codes < 0] = np.nan
 
                     # Use assign to recode the column without mutating the
                     # original dataframe object passed by the caller.
@@ -1314,8 +1314,12 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
           data has feature names).
 
         For each categorical feature, there must be at most `max_bins` unique
-        categories, and each categorical value must be in [0, max_bins -1].
-        During prediction, categories encoded as a negative value are treated as
+        categories, and each categorical value must be in [0, max_bins - 1]. If
+        this is not the case, it is recommended to either group some categories
+        via a preprocessing step, or to use a numerical encoding (for instance
+        via an impact/target encoder, not yet part of scikit-learn) of the
+        categorical feature and treat is a numerical feature. During
+        prediction, categories encoded as a negative value are treated as
         missing values.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
@@ -1664,8 +1668,12 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
           data has feature names).
 
         For each categorical feature, there must be at most `max_bins` unique
-        categories, and each categorical value must be in [0, max_bins -1].
-        During prediction, categories encoded as a negative value are treated as
+        categories, and each categorical value must be in [0, max_bins - 1]. If
+        this is not the case, it is recommended to either group some categories
+        via a preprocessing step, or to use a numerical encoding (for instance
+        via an impact/target encoder, not yet part of scikit-learn) of the
+        categorical feature and treat is a numerical feature. During
+        prediction, categories encoded as a negative value are treated as
         missing values.
 
         Read more in the :ref:`User Guide <categorical_support_gbdt>`.
