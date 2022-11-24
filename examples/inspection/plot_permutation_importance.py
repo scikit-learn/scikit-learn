@@ -242,8 +242,3 @@ for name, importances in zip(["train", "test"], [train_importances, test_importa
 # features have a lower importance compared to the overfitting random forest.
 # However, the conclusions regarding the importance of the other features are
 # still valid.
-
-import matplotlib.pyplot as plt
-plt.show()
-
-
