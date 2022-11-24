@@ -539,6 +539,11 @@ Changelog
   scores will all be set to the maximum possible rank.
   :pr:`24543` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Feature| Added the class :class:`model_selection.LearningCurveDisplay`
+  that allows to make easy plotting of learning curves obtained by the function
+  :func:`model_selection.learning_curve`.
+  :pr:`24084` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.multioutput`
 ..........................
 
