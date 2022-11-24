@@ -541,10 +541,11 @@ ax.set_ylabel(features[1])
 fig.suptitle(
     "PD of number of bike rentals on\nthe temperature and humidity GBDT model",
     fontsize=16,
-    x=0.7,
 )
 # pretty init view
 ax.view_init(elev=22, azim=122)
 clb = plt.colorbar(surf, pad=0.08, shrink=0.6, aspect=10)
 clb.ax.set_title("Partial\ndependence")
 plt.show()
+
+# %%
