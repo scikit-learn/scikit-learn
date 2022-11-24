@@ -103,8 +103,9 @@ class PredictionErrorDisplay:
 
             - "actual_vs_predicted" draws the the observed values (y-axis) vs.
               the predicted values (x-axis).
-            - "residuals" draws the residuals, i.e difference between observed
-              and predicted values, (y-axis) vs. the predicted values (x-axis).
+            - "residual_vs_predicted" draws the residuals, i.e difference
+              between observed and predicted values, (y-axis) vs. the predicted
+              values (x-axis).
 
         scatter_kwargs : dict, default=None
             Dictionary with keywords passed to the `matplotlib.pyplot.scatter`

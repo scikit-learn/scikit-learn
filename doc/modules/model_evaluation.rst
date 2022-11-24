@@ -2736,15 +2736,15 @@ arranged around the diagonal.
 
 Note that the above only holds when the predicted values is the expected value
 of `y` given `X`. This is typically the case for regression models that
-asymptotically minimize the mean squared error objective function or more
-generally the :ref:`mean Tweedie deviance <mean_tweedie_deviance>` for any
-value of its "power" parameter.
+minimize the mean squared error objective function or more generally the
+:ref:`mean Tweedie deviance <mean_tweedie_deviance>` for any value of its
+"power" parameter.
 
 When plotting the predictions of an estimator that predicts a quantile
 of `y` given `X`, e.g. :class:`~sklearn.linear_model.QuantileRegressor`
-or any other model asymptotically minimizing the :ref:`pinball loss
-<pinball_loss>`, a fraction of the points are either expected to lie above or
-below the diagonal depending on the estimated quantile level.
+or any other model minimizing the :ref:`pinball loss <pinball_loss>`, a
+fraction of the points are either expected to lie above or below the diagonal
+depending on the estimated quantile level.
 
 All in all, while intuitive to read, this plot does not really inform us on
 what to do to obtain a better model.
@@ -2759,22 +2759,22 @@ distribution.
 
 In particular, if the true distribution of `y|X` is Poisson or Gamma
 distributed, it is expected that the variance of the residuals of the optimal
-model to grow with the predicted value of `E[y|X]` (either linearly for
+model would grow with the predicted value of `E[y|X]` (either linearly for
 Poisson or quadratically for Gamma).
 
-Since a predictive models do not adapt themselves to the particularities of the
-true distribution, it comes to us at choosing the optimal modelisation given
-the data at hand. This plot is therefore useful for making a choice between
-different family of models.
-
-We can also use this plot to check if the residuals are Gaussian distributed
-with a constant variance (homeschedastic residuals) which is the assumption
-made when fitting linear least squares regression model (see
+When fitting a linear least squares regression model (see
 :class:`sklearn.linear_mnodel.LinearRegression` and
-:class:`sklearn.linear_mnodel.Ridge`). If this is not the case, and in
-particular if the residual plot some banana-shaped structure, this is a hint
-that the model is likely mis-specified and that non-linear feature engineering
-or switching to a non-linear regression model might be useful.
+:class:`sklearn.linear_mnodel.Ridge`), we can use this plot to check
+if some of the `model assumptions
+<https://en.wikipedia.org/wiki/Ordinary_least_squares#Assumptions>`_
+are met, in particular that the residuals should be uncorrelated, their
+expected value should be null and that their variance should be constant
+(homoschedasticity).
+
+If this is not the case, and in particular if the residuals plot show some
+banana-shaped structure, this is a hint that the model is likely mis-specified
+and that non-linear feature engineering or switching to a non-linear regression
+model might be useful.
 
 Refer to the example below to see a model evaluation that makes use of this
 display.
