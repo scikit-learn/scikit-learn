@@ -36,7 +36,7 @@ print(f"The number of bytes taken in RAM is {raccoon_face.nbytes}")
 # %%
 # Thus the image is a 2D array of 768 pixels in height and 1024 pixels in width. Each
 # value is a 8-bit unsigned integer, which means that the image is encoded using 8
-# bits per pixel. The total memory usage of the image is 786 kilobytes (1 bytes equals
+# bits per pixel. The total memory usage of the image is 786 kilobytes (1 byte equals
 # 8 bits).
 #
 # Using 8-bit unsigned integer means that the image is encoded using 256 different
@@ -60,9 +60,9 @@ _ = fig.suptitle("Original image of a raccoon face")
 #
 # The idea behind compression via vector quantization is to reduce the number of
 # gray levels to represent an image. For instance, we can use 8 values instead
-# of 256 values. Therefore, it means that we could efficiently use 1 bit instead
+# of 256 values. Therefore, it means that we could efficiently use 3 bits instead
 # of 8 bits to encode a single pixel and therefore reduce the memory usage by a
-# factor of 8. We will later discuss about this memory usage.
+# factor of approximately 2.5. We will later discuss about this memory usage.
 #
 # Encoding strategy
 # """""""""""""""""
@@ -91,7 +91,7 @@ ax[1].hist(compressed_raccoon_uniform.ravel(), bins=256)
 ax[1].set_xlabel("Pixel value")
 ax[1].set_ylabel("Count of pixels")
 ax[1].set_title("Sub-sampled distribution of the pixel values")
-_ = fig.suptitle("Raccoon face compressed using 1-bit and a uniform strategy")
+_ = fig.suptitle("Raccoon face compressed using 3 bits and a uniform strategy")
 
 # %%
 # Qualitatively, we can spot some small regions where we see the effect of the
@@ -136,7 +136,7 @@ ax[1].hist(compressed_raccoon_kmeans.ravel(), bins=256)
 ax[1].set_xlabel("Pixel value")
 ax[1].set_ylabel("Number of pixels")
 ax[1].set_title("Distribution of the pixel values")
-_ = fig.suptitle("Raccoon face compressed using 1-bit and a K-means strategy")
+_ = fig.suptitle("Raccoon face compressed using 3 bits and a K-means strategy")
 
 # %%
 bin_edges = encoder.bin_edges_[0]
@@ -176,8 +176,8 @@ print(f"Type of the compressed image: {compressed_raccoon_kmeans.dtype}")
 # Indeed, the output of the :class:`~sklearn.preprocessing.KBinsDiscretizer` is
 # an array of 64-bit float. It means that it takes x8 more memory. However, we
 # use this 64-bit float representation to encode 8 values. Indeed, we will save
-# memory only if we cast the compressed image into an array of 1-bit integer. We
-# could use the method `numpy.ndarray.astype`. However, a 1-bit integer
+# memory only if we cast the compressed image into an array of 3-bits integers. We
+# could use the method `numpy.ndarray.astype`. However, a 3-bits integer
 # representation does not exist and to encode the 8 values, we would need to use
 # the 8-bit unsigned integer representation as well.
 #
