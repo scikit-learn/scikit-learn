@@ -45,12 +45,7 @@ from ._base import (
 )
 
 
-@validate_params(
-    {
-        "x": ["array-like"],
-        "y": ["array-like"],
-    }
-)
+@validate_params({"x": ["array-like"], "y": ["array-like"]})
 def auc(x, y):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule.
 
@@ -61,10 +56,10 @@ def auc(x, y):
 
     Parameters
     ----------
-    x : ndarray of shape (n,)
+    x : array-like of shape (n,)
         X coordinates. These must be either monotonic increasing or monotonic
         decreasing.
-    y : ndarray of shape, (n,)
+    y : array-like of shape (n,)
         Y coordinates.
 
     Returns
