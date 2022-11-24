@@ -13,7 +13,7 @@ import numpy as np
 from ..exceptions import ConvergenceWarning
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import as_float_array, check_random_state
-from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import Interval, StrOptions, validate_params
 from ..utils.validation import check_is_fitted
 from ..metrics import euclidean_distances
 from ..metrics import pairwise_distances_argmin
@@ -178,6 +178,12 @@ def _affinity_propagation(
 # Public API
 
 
+@validate_params(
+    {
+        "S": ["array-like"],
+        "return_n_iter": ["boolean"],
+    }
+)
 def affinity_propagation(
     S,
     *,
