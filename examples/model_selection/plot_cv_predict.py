@@ -27,15 +27,15 @@ from sklearn.model_selection import cross_val_predict
 y_pred = cross_val_predict(lr, X, y, cv=10)
 
 # %%
-# Since `cv=10`, it means that we trained 10 models and each of the model was
+# Since `cv=10`, it means that we trained 10 models and each model was
 # used to predict on one of the 10 folds. We can now use the
 # :class:`~sklearn.metrics.PredictionErrorDisplay` to visualize the
 # prediction errors.
 #
-# On the left axis, we plot the true values :math:`y` vs. the predicted values
-# :math:`\hat{y}` given by the models. On the right axis, we plot the residuals
-# (i.e. the difference between the true values and the predicted values) vs.
-# the predicted values.
+# On the left axis, we plot the observed values :math:`y` vs. the predicted
+# values :math:`\hat{y}` given by the models. On the right axis, we plot the
+# residuals (i.e. the difference between the observed values and the predicted
+# values) vs. the predicted values.
 import matplotlib.pyplot as plt
 from sklearn.metrics import PredictionErrorDisplay
 
