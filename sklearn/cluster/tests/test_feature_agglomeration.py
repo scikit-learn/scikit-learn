@@ -6,7 +6,7 @@ import numpy as np
 
 from numpy.testing import assert_array_equal
 from sklearn.cluster import FeatureAgglomeration
-from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose, assert_array_almost_equal
 from sklearn.datasets import make_blobs
 
 
@@ -53,3 +53,18 @@ def test_feature_agglomeration_feature_names_out():
     assert_array_equal(
         [f"featureagglomeration{i}" for i in range(n_clusters)], names_out
     )
+
+
+def test_feature_agglomeration_numerical_consistency(global_random_seed):
+    """Ensure numerical consistency among np.float32 and np.float64"""
+    rng = np.random.RandomState(global_random_seed)
+    X_64, _ = make_blobs(n_features=12, random_state=rng)
+    X_32 = X_64.astype(np.float32)
+
+    agglo_32 = FeatureAgglomeration(n_clusters=3)
+    agglo_64 = FeatureAgglomeration(n_clusters=3)
+
+    X_trans_64 = agglo_64.fit_transform(X_64)
+    X_trans_32 = agglo_32.fit_transform(X_32)
+
+    assert_allclose(X_trans_32, X_trans_64)

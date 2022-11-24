@@ -1322,7 +1322,9 @@ class FeatureAgglomeration(
             Returns the transformer.
         """
         self._validate_params()
-        X = self._validate_data(X, ensure_min_features=2)
+        X = self._validate_data(
+            X, ensure_min_features=2, dtype=[np.float64, np.float32]
+        )
         super()._fit(X.T)
         self._n_features_out = self.n_clusters_
         return self
@@ -1331,3 +1333,6 @@ class FeatureAgglomeration(
     def fit_predict(self):
         """Fit and return the result of each sample's clustering assignment."""
         raise AttributeError
+
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}

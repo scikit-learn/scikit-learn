@@ -38,20 +38,21 @@ class AgglomerationTransform(TransformerMixin):
         """
         check_is_fitted(self)
 
-        X = self._validate_data(X, reset=False)
+        X = self._validate_data(X, reset=False, dtype=[np.float64, np.float32])
         if self.pooling_func == np.mean and not issparse(X):
             size = np.bincount(self.labels_)
             n_samples = X.shape[0]
             # a fast way to compute the mean of grouped features
             nX = np.array(
-                [np.bincount(self.labels_, X[i, :]) / size for i in range(n_samples)]
+                [np.bincount(self.labels_, X[i, :]) / size for i in range(n_samples)],
+                dtype=X.dtype,
             )
         else:
             nX = [
                 self.pooling_func(X[:, self.labels_ == l], axis=1)
                 for l in np.unique(self.labels_)
             ]
-            nX = np.array(nX).T
+            nX = np.array(nX, dtype=X.dtype).T
         return nX
 
     def inverse_transform(self, Xred):
