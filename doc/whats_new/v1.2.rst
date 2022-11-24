@@ -603,6 +603,10 @@ Changelog
   :class:`neighbors.RadiusNeighborsTransformer`.
   :pr:`24075` by :user:`Valentin Laurent <Valentin-Laurent>`.
 
+- |Enhancement| :class:`neighbors.LocalOutlierFactor` now preserves
+  dtype for `numpy.float32` inputs.
+  :pr:`22665` by :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.pipeline`
 .......................
 
