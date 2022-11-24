@@ -194,10 +194,10 @@ scaled_clf = make_pipeline(scaler, pca, LogisticRegression())
 scaled_clf.fit(X_train, y_train)
 y_pred_scaled = scaled_clf.predict(X_test)
 
-print("\nPrediction accuracy for the normal test dataset with PCA")
+print("Prediction accuracy for the normal test dataset with PCA")
 print(f"{accuracy_score(y_test, y_pred):.2%}\n")
 
-print("\nPrediction accuracy for the standardized test dataset with PCA")
+print("Prediction accuracy for the standardized test dataset with PCA")
 print(f"{accuracy_score(y_test, y_pred_scaled):.2%}\n")
 
 # %%
