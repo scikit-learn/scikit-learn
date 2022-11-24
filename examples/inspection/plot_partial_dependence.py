@@ -524,7 +524,7 @@ import mpl_toolkits.mplot3d  # noqa: F401
 
 from sklearn.inspection import partial_dependence
 
-fig = plt.figure(figsize=(10, 5))
+fig = plt.figure(figsize=(5.5, 5))
 
 features = ("temp", "humidity")
 pdp = partial_dependence(
