@@ -97,12 +97,14 @@ y_pred_ridge_with_trans_target = ridge_cv_with_trans_target.predict(X_test)
 PredictionErrorDisplay.from_predictions(
     y_test,
     y_pred_ridge,
+    kind="actual_vs_predicted",
     ax=ax0,
     scatter_kwargs={"alpha": 0.5},
 )
 PredictionErrorDisplay.from_predictions(
     y_test,
     y_pred_ridge_with_trans_target,
+    kind="actual_vs_predicted",
     ax=ax1,
     scatter_kwargs={"alpha": 0.5},
 )
@@ -186,12 +188,14 @@ y_pred_ridge_with_trans_target = ridge_cv_with_trans_target.predict(X_test)
 PredictionErrorDisplay.from_predictions(
     y_test,
     y_pred_ridge,
+    kind="actual_vs_predicted",
     ax=ax0[0],
     scatter_kwargs={"alpha": 0.5},
 )
 PredictionErrorDisplay.from_predictions(
     y_test,
     y_pred_ridge_with_trans_target,
+    kind="actual_vs_predicted",
     ax=ax0[1],
     scatter_kwargs={"alpha": 0.5},
 )
@@ -209,14 +213,14 @@ ax0[1].set_title("Ridge regression \n with target transformation")
 PredictionErrorDisplay.from_predictions(
     y_test,
     y_pred_ridge,
-    kind="residuals",
+    kind="residual_vs_predicted",
     ax=ax1[0],
     scatter_kwargs={"alpha": 0.5},
 )
 PredictionErrorDisplay.from_predictions(
     y_test,
     y_pred_ridge_with_trans_target,
-    kind="residuals",
+    kind="residual_vs_predicted",
     ax=ax1[1],
     scatter_kwargs={"alpha": 0.5},
 )

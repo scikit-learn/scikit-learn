@@ -68,7 +68,7 @@ def test_from_estimator_not_fitted(pyplot):
 
 
 @pytest.mark.parametrize("class_method", ["from_estimator", "from_predictions"])
-@pytest.mark.parametrize("kind", ["predictions", "residuals"])
+@pytest.mark.parametrize("kind", ["actual_vs_predicted", "residual_vs_predicted"])
 def test_prediction_error_display(pyplot, regressor_fitted, class_method, kind):
     """Check the default behaviour of the display."""
     if class_method == "from_estimator":
@@ -81,14 +81,14 @@ def test_prediction_error_display(pyplot, regressor_fitted, class_method, kind):
             y_true=y, y_pred=y_pred, kind=kind
         )
 
-    if kind == "predictions":
+    if kind == "actual_vs_predicted":
         assert_allclose(display.line_.get_xdata(), display.line_.get_ydata())
         assert display.ax_.get_xlabel() == "Predicted values"
         assert display.ax_.get_ylabel() == "Actual values"
         assert display.line_ is not None
     else:
         assert display.ax_.get_xlabel() == "Predicted values"
-        assert display.ax_.get_ylabel() == "Residuals"
+        assert display.ax_.get_ylabel() == "Residuals (actual - predicted)"
         assert display.line_ is not None
 
     assert display.ax_.get_legend() is None
@@ -133,7 +133,7 @@ def test_plot_prediction_error_ax(pyplot, regressor_fitted, class_method):
 def test_prediction_error_custom_artist(pyplot, regressor_fitted, class_method):
     """Check that we can tune the style of the lines."""
     extra_params = {
-        "kind": "predictions",
+        "kind": "actual_vs_predicted",
         "scatter_kwargs": {"color": "red"},
         "line_kwargs": {"color": "black"},
     }

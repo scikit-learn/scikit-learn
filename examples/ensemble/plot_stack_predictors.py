@@ -236,6 +236,7 @@ for ax, (name, est) in zip(
     display = PredictionErrorDisplay.from_predictions(
         y_true=y,
         y_pred=y_pred,
+        kind="actual_vs_predicted",
         ax=ax,
         scatter_kwargs={"alpha": 0.2, "color": "tab:blue"},
         line_kwargs={"color": "tab:red"},

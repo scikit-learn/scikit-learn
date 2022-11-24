@@ -19,7 +19,10 @@ class PredictionErrorDisplay:
     :func:`~sklearn.metrics.PredictionErrorDisplay.from_predictions` to
     create a visualizer. All parameters are stored as attributes.
 
-    Read more in the :ref:`User Guide <visualizations>`.
+    For general information regarding `scikit-learn` visualization tools, read
+    more in the :ref:`Visualization Guide <visualizations>`.
+    For details regarding interpreting these plots, refer to the
+    :ref`Model Evaluation Guide <visualization_regression_evaluation>`.
 
     .. versionadded:: 1.2
 
@@ -80,7 +83,7 @@ class PredictionErrorDisplay:
         self,
         ax=None,
         *,
-        kind="predictions",
+        kind="residual_vs_predicted",
         scatter_kwargs=None,
         line_kwargs=None,
     ):
@@ -94,13 +97,14 @@ class PredictionErrorDisplay:
             Axes object to plot on. If `None`, a new figure and axes is
             created.
 
-        kind : {"predictions", "residuals"}, default="predictions"
+        kind : {"actual_vs_predicted", "residual_vs_predicted"}, \
+                default="residual_vs_predicted"
             The type of plot to draw:
 
-            - "predictions" draws the the true values (y-axis) vs. the
-              predicted values (x-axis).
-            - "residuals" draws the residuals (y-axis) vs. the predicted values
-              (x-axis).
+            - "actual_vs_predicted" draws the the observed values (y-axis) vs.
+              the predicted values (x-axis).
+            - "residuals" draws the residuals, i.e difference between observed
+              and predicted values, (y-axis) vs. the predicted values (x-axis).
 
         scatter_kwargs : dict, default=None
             Dictionary with keywords passed to the `matplotlib.pyplot.scatter`
@@ -117,7 +121,7 @@ class PredictionErrorDisplay:
         """
         check_matplotlib_support(f"{self.__class__.__name__}.plot")
 
-        expected_kind = ("predictions", "residuals")
+        expected_kind = ("actual_vs_predicted", "residual_vs_predicted")
         if kind not in expected_kind:
             raise ValueError(
                 f"`kind` must be one of {', '.join(expected_kind)}. "
@@ -140,7 +144,7 @@ class PredictionErrorDisplay:
         if ax is None:
             _, ax = plt.subplots()
 
-        if kind == "predictions":
+        if kind == "actual_vs_predicted":
             max_value = max(np.max(self.y_true), np.max(self.y_pred))
             min_value = min(np.min(self.y_true), np.min(self.y_pred))
             self.line_ = ax.plot(
@@ -156,16 +160,16 @@ class PredictionErrorDisplay:
             ax.set_aspect("equal", adjustable="datalim")
             ax.set_xticks(np.linspace(min_value, max_value, num=5))
             ax.set_yticks(np.linspace(min_value, max_value, num=5))
-        else:  # kind == "residuals"
+        else:  # kind == "residual_vs_predicted"
             self.line_ = ax.plot(
                 [np.min(self.y_pred), np.max(self.y_pred)],
                 [0, 0],
                 **line_kwargs,
             )[0]
             self.scatter_ = ax.scatter(
-                self.y_pred, self.y_pred - self.y_true, **scatter_kwargs
+                self.y_pred, self.y_true - self.y_pred, **scatter_kwargs
             )
-            xlabel, ylabel = "Predicted values", "Residuals"
+            xlabel, ylabel = "Predicted values", "Residuals (actual - predicted)"
 
         ax.set(xlabel=xlabel, ylabel=ylabel)
 
@@ -181,7 +185,7 @@ class PredictionErrorDisplay:
         X,
         y,
         *,
-        kind="predictions",
+        kind="residual_vs_predicted",
         subsample=1_000,
         random_state=None,
         ax=None,
@@ -190,7 +194,10 @@ class PredictionErrorDisplay:
     ):
         """Plot the prediction error given a regressor and some data.
 
-        Read more in the :ref:`User Guide <visualizations>`.
+        For general information regarding `scikit-learn` visualization tools,
+        read more in the :ref:`Visualization Guide <visualizations>`.
+        For details regarding interpreting these plots, refer to the
+        :ref`Model Evaluation Guide <visualization_regression_evaluation>`.
 
         .. versionadded:: 1.2
 
@@ -206,13 +213,14 @@ class PredictionErrorDisplay:
         y : array-like of shape (n_samples,)
             Target values.
 
-        kind : {"predictions", "residuals"}, default="predictions"
+        kind : {"actual_vs_predicted", "residual_vs_predicted"}, \
+                default="residual_vs_predicted"
             The type of plot to draw:
 
-            - "predictions" draws the the true values (y-axis) vs. the
-              predicted values (x-axis).
-            - "residuals" draws the residuals (y-axis) vs. the predicted values
-              (x-axis).
+            - "actual_vs_predicted" draws the the observed values (y-axis) vs.
+              the predicted values (x-axis).
+            - "residuals" draws the residuals, i.e difference between observed
+              and predicted values, (y-axis) vs. the predicted values (x-axis).
 
         subsample : float, int or None, default=1_000
             Sampling the samples to be shown on the scatter plot. If `float`,
@@ -280,7 +288,7 @@ class PredictionErrorDisplay:
         y_true,
         y_pred,
         *,
-        kind="predictions",
+        kind="residual_vs_predicted",
         subsample=1_000,
         random_state=None,
         ax=None,
@@ -289,7 +297,10 @@ class PredictionErrorDisplay:
     ):
         """Plot the prediction error given the true and predicted targets.
 
-        Read more in the :ref:`User Guide <visualizations>`.
+        For general information regarding `scikit-learn` visualization tools,
+        read more in the :ref:`Visualization Guide <visualizations>`.
+        For details regarding interpreting these plots, refer to the
+        :ref`Model Evaluation Guide <visualization_regression_evaluation>`.
 
         .. versionadded:: 1.2
 
@@ -301,13 +312,14 @@ class PredictionErrorDisplay:
         y_pred : array-like of shape (n_samples,)
             Predicted target values.
 
-        kind : {"predictions","residuals"}, default="predictions"
+        kind : {"actual_vs_predicted", "residual_vs_predicted"}, \
+                default="residual_vs_predicted"
             The type of plot to draw:
 
-            - "predictions" draws the the true values (y-axis) vs. the
-              predicted values (x-axis).
-            - "residuals" draws the residuals (y-axis) vs. the predicted values
-              (x-axis).
+            - "actual_vs_predicted" draws the the observed values (y-axis) vs.
+              the predicted values (x-axis).
+            - "residuals" draws the residuals, i.e difference between observed
+              and predicted values, (y-axis) vs. the predicted values (x-axis).
 
         subsample : float, int or None, default=1_000
             Sampling the samples to be shown on the scatter plot. If `float`,

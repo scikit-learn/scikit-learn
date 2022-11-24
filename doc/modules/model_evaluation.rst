@@ -2711,6 +2711,8 @@ Here are some usage examples of the :func:`d2_absolute_error_score` function::
   >>> d2_absolute_error_score(y_true, y_pred)
   0.0
 
+.. _visualization_regression_evaluation:
+
 Visual evaluation of regression models
 --------------------------------------
 
