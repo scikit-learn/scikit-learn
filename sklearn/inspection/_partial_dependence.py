@@ -17,6 +17,7 @@ from ..utils.extmath import cartesian
 from ..utils import check_array
 from ..utils import check_matplotlib_support  # noqa
 from ..utils import _safe_indexing
+from ..utils import _safe_assign
 from ..utils import _determine_key_type
 from ..utils import _get_column_indices
 from ..utils.validation import check_is_fitted
@@ -159,10 +160,7 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
     X_eval = X.copy()
     for new_values in grid:
         for i, variable in enumerate(features):
-            if hasattr(X_eval, "iloc"):
-                X_eval.iloc[:, variable] = new_values[i]
-            else:
-                X_eval[:, variable] = new_values[i]
+            _safe_assign(X_eval, new_values[i], column_indexer=variable)
 
         try:
             # Note: predictions is of shape
