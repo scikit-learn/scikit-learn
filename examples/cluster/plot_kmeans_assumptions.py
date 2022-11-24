@@ -45,7 +45,7 @@ import matplotlib.pyplot as plt
 fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(12, 12))
 
 axs[0, 0].scatter(X[:, 0], X[:, 1], c=y)
-axs[0, 0].set_title("Incorrect Number of Blobs")
+axs[0, 0].set_title("Mixture of Gaussian Blobs")
 
 axs[0, 1].scatter(X_aniso[:, 0], X_aniso[:, 1], c=y)
 axs[0, 1].set_title("Anisotropically Distributed Blobs")
@@ -66,9 +66,9 @@ plt.show()
 # The previously generated data is now used for showing how
 # :class:`~sklearn.cluster.KMeans` behaves in the following scenarios:
 #
-# - Incorrect number of blobs: in a real setting there is no uniquely defined
-#   **true** number of clusters. An appropriate number of clusters has to be
-#   decided from data-based criteria and knowledge of aim.
+# - Non-optimal number of clusters: in a real setting there is no uniquely
+#   defined **true** number of clusters. An appropriate number of clusters has
+#   to be decided from data-based criteria and knowledge of aim.
 # - Anisotropically distributed blobs: k-means consists of minimizing sample's
 #   euclidean distances to the centroid of the cluster they are assigned to. As
 #   a consequence, k-means is more appropriate for clusters that are isotropic
@@ -93,7 +93,7 @@ fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(12, 12))
 
 y_pred = KMeans(n_clusters=2, **common_params).fit_predict(X)
 axs[0, 0].scatter(X[:, 0], X[:, 1], c=y_pred)
-axs[0, 0].set_title("Incorrect Number of Clusters")
+axs[0, 0].set_title("Non-optimal Number of Clusters")
 
 y_pred = KMeans(n_clusters=3, **common_params).fit_predict(X_aniso)
 axs[0, 1].scatter(X_aniso[:, 0], X_aniso[:, 1], c=y_pred)
@@ -139,7 +139,7 @@ fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(12, 12))
 
 y_pred = KMeans(n_clusters=3, **common_params).fit_predict(X)
 axs[0, 0].scatter(X[:, 0], X[:, 1], c=y_pred)
-axs[0, 0].set_title("Incorrect Number of Blobs")
+axs[0, 0].set_title("Optimal Number of Clusters")
 
 y_pred = GaussianMixture(n_components=3).fit_predict(X_aniso)
 axs[0, 1].scatter(X_aniso[:, 0], X_aniso[:, 1], c=y_pred)
