@@ -195,10 +195,10 @@ scaled_clf.fit(X_train, y_train)
 y_pred_scaled = scaled_clf.predict(X_test)
 
 print("Prediction accuracy for the normal test dataset with PCA")
-print(f"{accuracy_score(y_test, y_pred):.2%}\n")
-
+print(f"{accuracy_score(y_test, y_pred):.2%}")
+print()
 print("Prediction accuracy for the standardized test dataset with PCA")
-print(f"{accuracy_score(y_test, y_pred_scaled):.2%}\n")
+print(f"{accuracy_score(y_test, y_pred_scaled):.2%}")
 
 # %%
 # A clear difference in prediction accuracies is observed when the data is
