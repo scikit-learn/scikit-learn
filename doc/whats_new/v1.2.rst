@@ -551,6 +551,11 @@ Changelog
   scores will all be set to the maximum possible rank.
   :pr:`24543` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Feature| Added the class :class:`model_selection.LearningCurveDisplay`
+  that allows to make easy plotting of learning curves obtained by the function
+  :func:`model_selection.learning_curve`.
+  :pr:`24084` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.multioutput`
 ..........................
 
@@ -607,6 +612,10 @@ Changelog
   :class:`neighbors.KNeighborsTransformer` and
   :class:`neighbors.RadiusNeighborsTransformer`.
   :pr:`24075` by :user:`Valentin Laurent <Valentin-Laurent>`.
+
+- |Enhancement| :class:`neighbors.LocalOutlierFactor` now preserves
+  dtype for `numpy.float32` inputs.
+  :pr:`22665` by :user:`Julien Jerphanion <jjerphan>`.
 
 :mod:`sklearn.pipeline`
 .......................
