@@ -79,7 +79,7 @@ def _murmurhash3_bytes_array_s32(
         Py_ssize_t i
     for i in range(key.shape[0]):
         out[i] = murmurhash3_int_s32(key[i], seed)
-    return out.base
+    return np.asarray(out)
 
 
 def murmurhash3_32(key, seed=0, positive=False):
