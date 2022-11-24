@@ -326,9 +326,9 @@ _ = display.figure_.suptitle(
 # general trend of the PDP of the temperature is that the number of bike rentals is
 # increasing with temperature. We can make a similar analysis but with the opposite
 # trend for the humidity features. The number of bike rentals is decreasing when the
-# humidity increases. Finally, we see the same trend for the windspeed feature. The
-# number of bike rentals is decreasing when the windspeed is increasing for both models.
-# We also observe that :class:`~sklearn.neural_network.MLPRegressor` has much
+# humidity increases. Finally, we see the same trend for the wind speed feature. The
+# number of bike rentals is decreasing when the wind speed is increasing for both
+# models. We also observe that :class:`~sklearn.neural_network.MLPRegressor` has much
 # smoother predictions than :class:`~sklearn.ensemble.HistGradientBoostingRegressor`.
 #
 # Now, we will look at the partial dependence plots for the categorical features.
@@ -488,7 +488,7 @@ plt.subplots_adjust(wspace=0.3)
 # model.
 #
 # The partial dependence between categorical features will provide a discrete
-# reprensentation that can be shown as a heatmap. For instance the interaction between
+# representation that can be shown as a heatmap. For instance the interaction between
 # the season, the weather, and the target would be as follow:
 print("Computing partial dependence plots...")
 features_info = {
@@ -524,7 +524,7 @@ import mpl_toolkits.mplot3d  # noqa: F401
 
 from sklearn.inspection import partial_dependence
 
-fig = plt.figure(figsize=(10, 5), constrained_layout=True)
+fig = plt.figure(figsize=(10, 5))
 
 features = ("temp", "humidity")
 pdp = partial_dependence(
@@ -545,6 +545,6 @@ fig.suptitle(
 )
 # pretty init view
 ax.view_init(elev=22, azim=122)
-clb = plt.colorbar(surf, shrink=0.6, aspect=5)
-clb.ax.set_title("Partial dependence")
+clb = plt.colorbar(surf, pad=0.08, shrink=0.6, aspect=10)
+clb.ax.set_title("Partial\ndependence")
 plt.show()
