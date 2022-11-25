@@ -82,10 +82,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
 
         No instance should directly be created outside of this class method.
         """
-        if (
-            metric in ("euclidean", "sqeuclidean")
-            and not (issparse(X) ^ issparse(Y))  # "^" is XOR
-        ):
+        if metric in ("euclidean", "sqeuclidean"):
             # Specialized implementation of RadiusNeighbors for the Euclidean
             # distance for the dense-dense and sparse-sparse cases.
             # This implementation computes the distances by chunk using

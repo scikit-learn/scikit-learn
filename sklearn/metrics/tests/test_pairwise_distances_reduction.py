@@ -1,4 +1,3 @@
-import itertools
 import re
 import warnings
 from collections import defaultdict
@@ -553,15 +552,11 @@ def test_pairwise_distances_reduction_is_usable_for():
         np.asfortranarray(X), Y, metric
     )
 
-    # We prefer not to use those implementations for fused sparse-dense when
-    # metric="(sq)euclidean" because it's not yet the most efficient one on
-    # all configurations of datasets.
-    # See: https://github.com/scikit-learn/scikit-learn/pull/23585#issuecomment-1247996669  # noqa
-    # TODO: implement specialisation for (sq)euclidean on fused sparse-dense
-    # using sparse-dense routines for matrix-vector multiplications.
-    assert not BaseDistancesReductionDispatcher.is_usable_for(
-        X_csr, Y, metric="euclidean"
+    assert BaseDistancesReductionDispatcher.is_usable_for(X_csr, Y, metric="euclidean")
+    assert BaseDistancesReductionDispatcher.is_usable_for(
+        X, Y_csr, metric="sqeuclidean"
     )
+
     assert BaseDistancesReductionDispatcher.is_usable_for(
         X_csr, Y_csr, metric="sqeuclidean"
     )
@@ -906,24 +901,53 @@ def test_format_agnosticism(
         **compute_parameters,
     )
 
-    for _X, _Y in itertools.product((X, X_csr), (Y, Y_csr)):
-        if _X is X and _Y is Y:
-            continue
-        dist, indices = Dispatcher.compute(
-            _X,
-            _Y,
-            parameter,
-            chunk_size=50,
-            return_distance=True,
-            **compute_parameters,
-        )
-        ASSERT_RESULT[(Dispatcher, dtype)](
-            dist_dense,
-            dist,
-            indices_dense,
-            indices,
-            **check_parameters,
-        )
+    dist, indices = Dispatcher.compute(
+        X_csr,
+        Y_csr,
+        parameter,
+        chunk_size=50,
+        return_distance=True,
+        **compute_parameters,
+    )
+    ASSERT_RESULT[(Dispatcher, dtype)](
+        dist_dense,
+        dist,
+        indices_dense,
+        indices,
+        **check_parameters,
+    )
+
+    dist, indices = Dispatcher.compute(
+        X_csr,
+        Y,
+        parameter,
+        chunk_size=50,
+        return_distance=True,
+        **compute_parameters,
+    )
+    ASSERT_RESULT[(Dispatcher, dtype)](
+        dist_dense,
+        dist,
+        indices_dense,
+        indices,
+        **check_parameters,
+    )
+
+    dist, indices = Dispatcher.compute(
+        X,
+        Y_csr,
+        parameter,
+        chunk_size=50,
+        return_distance=True,
+        **compute_parameters,
+    )
+    ASSERT_RESULT[(Dispatcher, dtype)](
+        dist_dense,
+        dist,
+        indices_dense,
+        indices,
+        **check_parameters,
+    )
 
 
 @pytest.mark.parametrize(
