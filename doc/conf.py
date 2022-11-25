@@ -630,7 +630,6 @@ linkcheck_ignore = [
     "https://microsoft.com/",
     "https://www.jstor.org/stable/2984099",
     "https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf",
-    "https://devguide.python.org/triage/triaging/index.html#becoming-a-member-of-the-python-triage-team",
     # Broken links from testimonials
     "http://www.bestofmedia.com",
     "http://www.data-publica.com/",
