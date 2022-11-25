@@ -123,7 +123,7 @@ X.head()
 # pairwise distances (essentially estimators related to clustering, manifold
 # learning and neighbors search algorithms) was greatly improved for float64
 # dense input. Efficiency improvement especially were a reduced memory footprint
-# a much better scalability on multi-core machines.
+# and a much better scalability on multi-core machines.
 # In version 1.2, the efficiency of these estimators was further improved for all
 # combinations of dense and CSR inputs on float32 and float64 datasets, except
 # the CSR-dense and dense-CSR combinations for the Euclidean and Squared Euclidean
