@@ -1675,9 +1675,9 @@ def test_get_feature_names_invalid_dtypes(names, dtypes):
     X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
 
     msg = re.escape(
-        "Feature names only support names that are all strings. Got feature names with"
-        f" dtypes: {dtypes}. Please convert to a common type, for example using"
-        " X.columns = X.columns.astype(str)"
+        "Feature names only support column names that are all strings, but got dtypes:"
+        f" {dtypes}. If you want support for feature names, convert the"
+        " columns to strings."
     )
     with pytest.raises(TypeError, match=msg):
         names = _get_feature_names(X)
