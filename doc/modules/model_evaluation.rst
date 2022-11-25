@@ -2763,8 +2763,8 @@ model would grow with the predicted value of `E[y|X]` (either linearly for
 Poisson or quadratically for Gamma).
 
 When fitting a linear least squares regression model (see
-:class:`sklearn.linear_mnodel.LinearRegression` and
-:class:`sklearn.linear_mnodel.Ridge`), we can use this plot to check
+:class:`~sklearn.linear_mnodel.LinearRegression` and
+:class:`~sklearn.linear_mnodel.Ridge`), we can use this plot to check
 if some of the `model assumptions
 <https://en.wikipedia.org/wiki/Ordinary_least_squares#Assumptions>`_
 are met, in particular that the residuals should be uncorrelated, their
