@@ -2077,7 +2077,7 @@ class MiniBatchKMeans(_BaseKMeans):
 
         if self.tol > 0:
             if sp.issparse(X):
-            _, variances, _ = mean_variance_axis(X, axis=0)
+                _, variances, _ = mean_variance_axis(X, axis=0)
             else:
                 variances = np.var(X, axis=0)
             self._tol = np.mean(variances) * self.tol
