@@ -299,11 +299,6 @@ Changelog
   Using interaction constraints also makes fitting faster.
   :pr:`24856` by :user:`Christian Lorentzen <lorentzenchr>`.
 
-- |Enhancement| Interaction constraints for :class:`~sklearn.ensemble.HistGradientBoostingClassifier`
-  and :class:`~sklearn.ensemble.HistGradientBoostingRegressor` can now be specified
-  as strings for two common cases: "no_interactions" and "pairwise" interactions.
-  :pr:`24849` by :user:`Tim Head <betatim>`.
-
 - |Feature| Adds `class_weight` to :class:`ensemble.HistGradientBoostingClassifier`.
   :pr:`22014` by `Thomas Fan`_.
 
@@ -332,6 +327,12 @@ Changelog
   Such dictionary have feature names as keys and one of `-1`, `0`, `1`
   as value to specify monotonicity constraints for each feature.
   :pr:`24855` by :user:`Olivier Grisel <ogrisel>`.
+
+- |Enhancement| Interaction constraints for
+  :class:`ensemble.HistGradientBoostingClassifier`
+  and :class:`ensemble.HistGradientBoostingRegressor` can now be specified
+  as strings for two common cases: "no_interactions" and "pairwise" interactions.
+  :pr:`24849` by :user:`Tim Head <betatim>`.
 
 - |Fix| Fixed the issue where :class:`ensemble.AdaBoostClassifier` outputs
   NaN in feature importance when fitted with very small sample weight.
