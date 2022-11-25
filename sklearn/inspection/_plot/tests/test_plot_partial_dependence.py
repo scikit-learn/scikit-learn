@@ -939,16 +939,20 @@ def test_partial_dependence_plot_limits_two_way(
         feature_names=diabetes.feature_names,
     )
 
-    range_pd = np.array([-1, 1])
+    range_pd = np.array([-1, 1], dtype=np.float64)
     for pd in disp.pd_results:
         pd["average"][...] = range_pd[1]
         pd["average"][0, 0] = range_pd[0]
 
     disp.plot(centered=centered)
-    coutour = disp.contours_[0, 0]
+    contours = disp.contours_[0, 0]
     levels = range_pd - range_pd[0] if centered else range_pd
+
+    padding = 0.05 * (levels[1] - levels[0])
+    levels[0] -= padding
+    levels[1] += padding
     expect_levels = np.linspace(*levels, num=8)
-    assert_allclose(coutour.levels, expect_levels)
+    assert_allclose(contours.levels, expect_levels)
 
 
 def test_partial_dependence_kind_list(
