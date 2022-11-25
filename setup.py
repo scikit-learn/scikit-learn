@@ -96,6 +96,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.metrics._pairwise_distances_reduction._radius_neighbors",
     "sklearn.metrics._pairwise_fast",
     "sklearn.neighbors._partition_nodes",
+    "sklearn.preprocessing._csr_polynomial_expansion",
     "sklearn.tree._splitter",
     "sklearn.tree._utils",
     "sklearn.utils._cython_blas",
