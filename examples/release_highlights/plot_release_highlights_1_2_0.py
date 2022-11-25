@@ -125,8 +125,8 @@ X.head()
 # dense input. Efficiency improvement especially were a reduced memory footprint
 # and a much better scalability on multi-core machines.
 # In version 1.2, the efficiency of these estimators was further improved for all
-# combinations of dense and CSR inputs on float32 and float64 datasets, except
-# the CSR-dense and dense-CSR combinations for the Euclidean and Squared Euclidean
-# Distance metrics.
+# combinations of dense and sparse inputs on float32 and float64 datasets, except
+# the sparse-dense and dense-sparse combinations for the Euclidean and Squared
+# Euclidean Distance metrics.
 # A detailed list of the impacted estimators can be found in the
 # :ref:`changelog <changes_1_2>`.
