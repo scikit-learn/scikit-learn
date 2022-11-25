@@ -1549,7 +1549,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
         ("int8", "byte", np.integer),
         ("short", "int16", np.integer),
         ("intc", "int32", np.integer),
-        ("int0", "long", np.integer),
+        ("intp", "long", np.integer),
         ("int", "long", np.integer),
         ("int64", "longlong", np.integer),
         ("int_", "intp", np.integer),

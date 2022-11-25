@@ -45,6 +45,10 @@ from sklearn.utils.estimator_checks import check_estimator
 
 import sklearn
 
+# make it possible to discover experimental estimators when calling `all_estimators`
+from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa
+
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, OneHotEncoder
 from sklearn.linear_model._base import LinearClassifierMixin
@@ -52,7 +56,6 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
-from sklearn.experimental import enable_halving_search_cv  # noqa
 from sklearn.model_selection import HalvingGridSearchCV
 from sklearn.model_selection import HalvingRandomSearchCV
 from sklearn.pipeline import make_pipeline
@@ -76,6 +79,7 @@ from sklearn.utils.estimator_checks import (
     check_transformer_get_feature_names_out_pandas,
     check_set_output_transform,
     check_set_output_transform_pandas,
+    check_global_ouptut_transform_pandas,
 )
 
 
@@ -541,3 +545,18 @@ def test_set_output_transform_pandas(estimator):
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
         check_set_output_transform_pandas(estimator.__class__.__name__, estimator)
+
+
+@pytest.mark.parametrize(
+    "estimator", SET_OUTPUT_ESTIMATORS, ids=_get_check_estimator_ids
+)
+def test_global_output_transform_pandas(estimator):
+    name = estimator.__class__.__name__
+    if not hasattr(estimator, "set_output"):
+        pytest.skip(
+            f"Skipping check_global_ouptut_transform_pandas for {name}: Does not"
+            " support set_output API yet"
+        )
+    _set_checking_parameters(estimator)
+    with ignore_warnings(category=(FutureWarning)):
+        check_global_ouptut_transform_pandas(estimator.__class__.__name__, estimator)
