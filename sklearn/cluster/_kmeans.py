@@ -373,6 +373,9 @@ class KMeansCythonEngine:
             verbose=self.estimator.verbose,
         )
 
+    def get_nb_distinct_clusters(best_labels):
+        return len(set(best_labels))
+
     def prepare_prediction(self, X, sample_weight):
         X = self.estimator._check_test_data(X)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
@@ -1586,7 +1589,7 @@ class KMeans(_BaseKMeans):
 
         engine.unshift_centers(X, best_centers)
 
-        distinct_clusters = len(set(best_labels))
+        distinct_clusters = engine.get_nb_distinct_clusters(best_labels)
         if distinct_clusters < self.n_clusters:
             warnings.warn(
                 "Number of distinct clusters ({}) found smaller than "
