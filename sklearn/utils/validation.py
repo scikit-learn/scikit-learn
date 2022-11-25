@@ -1884,10 +1884,12 @@ def _get_feature_names(X):
     # mixed type of string and non-string is not supported
     if len(types) > 1 and "str" in types:
         raise TypeError(
-            "Feature names only support column names that are all strings, but got"
-            f" dtypes: {types}. If you want support for feature names, convert the"
-            " column names to strings. For example, by using X.columns ="
-            " X.columns.astype(str)."
+            "Feature names are only supported if all input features have string names, "
+            f"but your input has {types} as feature name / column name types. "
+            "If you want feature names to be stored and validated, you must convert "
+            "them all to strings. If you'd like to silence this warning, you can "
+            "remove the feature / column names from your input data, or convert them "
+            "all to a non-string data type."
         )
 
     # Only feature names of all strings are supported
