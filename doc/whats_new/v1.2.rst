@@ -405,6 +405,14 @@ Changelog
   containing only missing values when transforming.
   :pr:`16695` by :user:`Vitor Santa Rosa <vitorsrg>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Enhancement| Extended :func:`inspection.partial_dependence` and
+  :class:`inspection.PartialDependenceDisplay` to handle categorical features.
+  :pr:`18298` by :user:`Madhura Jayaratne <madhuracj>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.kernel_approximation`
 ...................................
 
@@ -416,7 +424,7 @@ Changelog
 
 - |Enhancement| :class:`kernel_approximation.RBFSampler` now accepts
   `'scale'` option for parameter `gamma`.
-  :pr:`24755` by :user:`Gleb Levitski <GLevV>`
+  :pr:`24755` by :user:`Gleb Levitski <GLevV>`.
 
 :mod:`sklearn.linear_model`
 ...........................
