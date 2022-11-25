@@ -179,7 +179,8 @@ hgbdt_preprocessor = ColumnTransformer(
         ("num", "passthrough", numerical_features),
     ],
     sparse_threshold=1,
-)
+    verbose_feature_names_out=False,
+).set_output(transform="pandas")
 hgbdt_preprocessor
 
 # %%
@@ -256,7 +257,7 @@ features_info = {
     "categorical_features": categorical_features,
 }
 tic = time()
-_, ax = plt.subplots(ncols=3, nrows=2, figsize=(9, 8))
+_, ax = plt.subplots(ncols=3, nrows=2, figsize=(9, 8), constrained_layout=True)
 display = PartialDependenceDisplay.from_estimator(
     mlp_model,
     X_train,
@@ -283,7 +284,10 @@ from sklearn.ensemble import HistGradientBoostingRegressor
 print("Training HistGradientBoostingRegressor...")
 tic = time()
 hgbdt_model = make_pipeline(
-    hgbdt_preprocessor, HistGradientBoostingRegressor(random_state=0)
+    hgbdt_preprocessor,
+    HistGradientBoostingRegressor(
+        categorical_features=categorical_features, random_state=0
+    ),
 )
 hgbdt_model.fit(X_train, y_train)
 print(f"done in {time() - tic:.3f}s")
@@ -303,7 +307,7 @@ print(f"Test R2 score: {hgbdt_model.score(X_test, y_test):.2f}")
 # features.
 print("Computing partial dependence plots...")
 tic = time()
-_, ax = plt.subplots(ncols=3, nrows=2, figsize=(9, 8))
+_, ax = plt.subplots(ncols=3, nrows=2, figsize=(9, 8), constrained_layout=True)
 display = PartialDependenceDisplay.from_estimator(
     hgbdt_model,
     X_train,
@@ -350,7 +354,7 @@ _ = display.figure_.suptitle(
 # selected ICEs for the temperature and humidity features.
 print("Computing partial dependence plots and individual conditional expectation...")
 tic = time()
-_, ax = plt.subplots(ncols=2, figsize=(6, 4), sharey=True)
+_, ax = plt.subplots(ncols=2, figsize=(6, 4), sharey=True, constrained_layout=True)
 
 features_info = {
     "features": ["temp", "humidity"],
@@ -390,7 +394,7 @@ hgbdt_model_without_interactions = (
 print(f"Test R2 score: {hgbdt_model_without_interactions.score(X_test, y_test):.2f}")
 
 # %%
-_, ax = plt.subplots(ncols=2, figsize=(6, 4), sharey=True)
+_, ax = plt.subplots(ncols=2, figsize=(6, 4), sharey=True, constrained_layout=True)
 
 features_info["centered"] = False
 display = PartialDependenceDisplay.from_estimator(
@@ -416,7 +420,7 @@ features_info = {
     "features": ["temp", "humidity", ("temp", "humidity")],
     "kind": "average",
 }
-_, ax = plt.subplots(ncols=3, figsize=(10, 4))
+_, ax = plt.subplots(ncols=3, figsize=(10, 4), constrained_layout=True)
 tic = time()
 display = PartialDependenceDisplay.from_estimator(
     hgbdt_model,
@@ -429,7 +433,6 @@ print(f"done in {time() - tic:.3f}s")
 _ = display.figure_.suptitle(
     "1-way vs 2-way of numerical PDP using gradient boosting", fontsize=16
 )
-plt.subplots_adjust(wspace=0.3)
 
 # %%
 # The two-way partial dependence plot shows the dependence of the number of bike rentals
@@ -453,7 +456,7 @@ features_info = {
     "features": ["temp", "humidity", ("temp", "humidity")],
     "kind": "average",
 }
-_, ax = plt.subplots(ncols=3, figsize=(10, 4))
+_, ax = plt.subplots(ncols=3, figsize=(10, 4), constrained_layout=True)
 tic = time()
 display = PartialDependenceDisplay.from_estimator(
     hgbdt_model_without_interactions,
@@ -466,7 +469,6 @@ print(f"done in {time() - tic:.3f}s")
 _ = display.figure_.suptitle(
     "1-way vs 2-way of numerical PDP using gradient boosting", fontsize=16
 )
-plt.subplots_adjust(wspace=0.3)
 
 # %%
 # The 1D partial dependence plots for the model constrained to not model feature
