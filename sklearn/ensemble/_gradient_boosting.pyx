@@ -27,7 +27,7 @@ from numpy import zeros as np_zeros
 cdef SIZE_t TREE_LEAF = -1
 
 cdef void _predict_regression_tree_inplace_fast_dense(
-    DTYPE_t[:, ::1] X,
+    const DTYPE_t[:, ::1] X,
     Node* root_node,
     double *value,
     double scale,
