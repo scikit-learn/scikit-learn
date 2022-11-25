@@ -1886,7 +1886,7 @@ def _get_feature_names(X):
         raise TypeError(
             "Feature names only support column names that are all strings, but got"
             f" dtypes: {types}. If you want support for feature names, convert the"
-            " columns to strings. For example, by using X.columns ="
+            " column names to strings. For example, by using X.columns ="
             " X.columns.astype(str)."
         )
 

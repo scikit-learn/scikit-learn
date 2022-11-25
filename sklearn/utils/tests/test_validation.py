@@ -1677,7 +1677,7 @@ def test_get_feature_names_invalid_dtypes(names, dtypes):
     msg = re.escape(
         "Feature names only support column names that are all strings, but got dtypes:"
         f" {dtypes}. If you want support for feature names, convert the"
-        " columns to strings."
+        " column names to strings."
     )
     with pytest.raises(TypeError, match=msg):
         names = _get_feature_names(X)
