@@ -77,10 +77,10 @@ import matplotlib.pyplot as plt
 from sklearn.metrics import PredictionErrorDisplay
 
 fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(12, 5))
-PredictionErrorDisplay.from_estimator(
+_ = PredictionErrorDisplay.from_estimator(
     hist_no_interact, X, y, kind="actual_vs_predicted", ax=axs[0]
 )
-PredictionErrorDisplay.from_estimator(
+_ = PredictionErrorDisplay.from_estimator(
     hist_no_interact, X, y, kind="residual_vs_predicted", ax=axs[1]
 )
 
@@ -89,7 +89,7 @@ PredictionErrorDisplay.from_estimator(
 # results from :func:`~model_selection.learning_curve`.
 from sklearn.model_selection import LearningCurveDisplay
 
-LearningCurveDisplay.from_estimator(
+_ = LearningCurveDisplay.from_estimator(
     hist_no_interact, X, y, cv=5, n_jobs=2, train_sizes=np.linspace(0.1, 1, 5)
 )
 
