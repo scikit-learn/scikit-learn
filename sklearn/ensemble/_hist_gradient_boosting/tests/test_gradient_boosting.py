@@ -1,4 +1,3 @@
-import itertools
 import warnings
 
 import re
