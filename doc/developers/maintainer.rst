@@ -301,7 +301,8 @@ The following GitHub checklist might be helpful in a release PR::
 
     * [ ] update news and what's new date in release branch
     * [ ] update news and what's new date and sklearn dev0 version in main branch
-    * [ ] check that the for the release wheels can be built successfully
+    * [ ] update SECURITY.md in release and main branch
+    * [ ] check that the wheels for the release can be built successfully
     * [ ] merge the PR with `[cd build]` commit message to upload wheels to the staging repo
     * [ ] upload the wheels and source tarball to https://test.pypi.org
     * [ ] create tag on the main github repo
