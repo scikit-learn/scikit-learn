@@ -504,6 +504,13 @@ Changelog
   of a binary classification problem. :pr:`22518` by
   :user:`Arturo Amor <ArturoAmorQ>`.
 
+- |Feature| Add :class:`metrics.PredictionErrorDisplay` to plot residuals vs
+  predicted and actual vs predicted to qualitatively assess the behavior of a
+  regressor. The display can be created with the class methods
+  :func:`metrics.PredictionErrorDisplay.from_estimator` and
+  :func:`metrics.PredictionErrorDisplay.from_predictions`. :pr:`18020` by
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |Feature| :func:`metrics.roc_auc_score` now supports micro-averaging
   (`average="micro"`) for the One-vs-Rest multiclass case (`multi_class="ovr"`).
   :pr:`24338` by :user:`Arturo Amor <ArturoAmorQ>`.
