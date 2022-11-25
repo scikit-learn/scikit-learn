@@ -1202,39 +1202,6 @@ def test_check_interaction_cst(interaction_cst, n_features, result):
     assert est._check_interaction_cst(n_features) == result
 
 
-@pytest.mark.parametrize(
-    "Est, shortcut, expected_message",
-    [
-        (combination[0], *combination[1])
-        for combination in itertools.product(
-            (HistGradientBoostingRegressor, HistGradientBoostingClassifier),
-            (
-                ("no_interactions", None),
-                ("pairwise", None),
-                (
-                    "pairwiseS",
-                    "a str among {'pairwise', 'no_interactions'} or None. Got"
-                    " 'pairwiseS' instead.",
-                ),
-            ),
-        )
-    ],
-)
-def test_interaction_cst_shortcuts(Est, shortcut, expected_message):
-    rng = np.random.RandomState(42)
-    X = rng.uniform(size=(20, 4))
-    y = np.hstack((X, 5 * X[:, [0]] * X[:, [1]])).sum(axis=1, dtype=int)
-
-    est = Est(interaction_cst=shortcut)
-
-    if expected_message is not None:
-        with pytest.raises(ValueError, match=expected_message):
-            est.fit(X, y)
-
-    else:
-        est.fit(X, y)
-
-
 def test_interaction_cst_numerically():
     """Check that interaction constraints have no forbidden interactions."""
     rng = np.random.RandomState(42)
