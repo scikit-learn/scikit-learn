@@ -94,8 +94,8 @@ The function :func:`validation_curve` can help in this case::
 If the training score and the validation score are both low, the estimator will
 be underfitting. If the training score is high and the validation score is low,
 the estimator is overfitting and otherwise it is working very well. A low
-training score and a high validation score is usually not possible. Underfitting, 
-overfitting, and a working model are shown in the in the plot below where we vary 
+training score and a high validation score is usually not possible. Underfitting,
+overfitting, and a working model are shown in the in the plot below where we vary
 the parameter :math:`\gamma` of an SVM on the digits dataset.
 
 .. figure:: ../auto_examples/model_selection/images/sphx_glr_plot_validation_curve_001.png
@@ -149,3 +149,21 @@ average scores on the validation sets)::
          [1. ,  0.96...,  1. ,  1. ,  0.96...],
          [1. ,  0.96...,  1. ,  1. ,  0.96...]])
 
+If you intend to plot the learning curves only, the class
+:class:`~sklearn.model_selection.LearningCurveDisplay` will be easier to use.
+You can use the method
+:meth:`~sklearn.model_selection.LearningCurveDisplay.from_estimator` similarly
+to :func:`learning_curve` to generate and plot the learning curve:
+
+.. plot::
+   :context: close-figs
+   :align: center
+
+      from sklearn.datasets import load_iris
+      from sklearn.model_selection import LearningCurveDisplay
+      from sklearn.svm import SVC
+      from sklearn.utils import shuffle
+      X, y = load_iris(return_X_y=True)
+      X, y = shuffle(X, y, random_state=0)
+      LearningCurveDisplay.from_estimator(
+         SVC(kernel="linear"), X, y, train_sizes=[50, 80, 110], cv=5)
