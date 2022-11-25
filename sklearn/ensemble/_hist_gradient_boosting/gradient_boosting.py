@@ -93,7 +93,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "min_samples_leaf": [Interval(Integral, 1, None, closed="left")],
         "l2_regularization": [Interval(Real, 0, None, closed="left")],
         "monotonic_cst": ["array-like", dict, None],
-        "interaction_cst": [list, tuple, StrOptions({"pairwise", "no_interactions"}), None],
+        "interaction_cst": [
+            list,
+            tuple,
+            StrOptions({"pairwise", "no_interactions"}),
+            None,
+        ],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "validation_fraction": [
             Interval(Real, 0, 1, closed="neither"),
@@ -294,6 +299,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         elif self.interaction_cst == "pairwise":
             interaction_cst = itertools.combinations(range(n_features), 2)
+
+        else:
+            interaction_cst = self.interaction_cst
 
         try:
             constraints = [set(group) for group in interaction_cst]

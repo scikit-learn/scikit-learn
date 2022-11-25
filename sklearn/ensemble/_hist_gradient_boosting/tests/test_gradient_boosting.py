@@ -1209,9 +1209,13 @@ def test_check_interaction_cst(interaction_cst, n_features, result):
         for combination in itertools.product(
             (HistGradientBoostingRegressor, HistGradientBoostingClassifier),
             (
-                ("no interactions", None),
+                ("no_interactions", None),
                 ("pairwise", None),
-                ("pairwiseS", "not a valid interaction constraint"),
+                (
+                    "pairwiseS",
+                    "a str among {'pairwise', 'no_interactions'} or None. Got"
+                    " 'pairwiseS' instead.",
+                ),
             ),
         )
     ],
