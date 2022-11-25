@@ -69,6 +69,31 @@ hist_no_interact = HistGradientBoostingRegressor(
 hist_no_interact.fit(X, y)
 
 # %%
+# New and enhanced displays
+# -------------------------
+# :class:`~metrics.PredictionErrorDisplay` provides a way to analyze regression
+# models in a qualitative manner.
+import matplotlib.pyplot as plt
+from sklearn.metrics import PredictionErrorDisplay
+
+fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(12, 5))
+PredictionErrorDisplay.from_estimator(
+    hist_no_interact, X, y, kind="actual_vs_predicted", ax=axs[0]
+)
+PredictionErrorDisplay.from_estimator(
+    hist_no_interact, X, y, kind="residual_vs_predicted", ax=axs[1]
+)
+
+# %%
+# :class:`~model_selection.LearningCurveDisplay` is now available to plot
+# results from :func:`~model_selection.learning_curve`.
+from sklearn.model_selection import LearningCurveDisplay
+
+LearningCurveDisplay.from_estimator(
+    hist_no_interact, X, y, cv=5, n_jobs=2, train_sizes=np.linspace(0.1, 1, 5)
+)
+
+# %%
 # Faster parser in :func:`~datasets.fetch_openml`
 # -----------------------------------------------
 # :func:`~datasets.fetch_openml` now supports a new `"pandas"` parser that is
