@@ -511,6 +511,16 @@ Changelog
   :func:`metrics.PredictionErrorDisplay.from_predictions`. :pr:`18020` by
   :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Feature| :func:`metrics.roc_auc_score` now supports micro-averaging
+  (`average="micro"`) for the One-vs-Rest multiclass case (`multi_class="ovr"`).
+  :pr:`24338` by :user:`Arturo Amor <ArturoAmorQ>`.
+
+- |Enhancement| Adds an `"auto"` option to `eps` in :func:`metrics.logloss`.
+  This option will automatically set the `eps` value depending on the data
+  type of `y_pred`. In addition, the default value of `eps` is changed from
+  `1e-15` to the new `"auto"` option.
+  :pr:`24354` by :user:`Safiuddin Khaja <Safikh>` and :user:`gsiisg <gsiisg>`.
+
 - |Fix| Allows `csr_matrix` as input for parameter: `y_true` of
    the :func:`metrics.label_ranking_average_precision_score` metric.
    :pr:`23442` by :user:`Sean Atukorala <ShehanAT>`
