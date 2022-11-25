@@ -296,10 +296,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         if self.interaction_cst == "no_interactions":
             interaction_cst = [[i] for i in range(n_features)]
-
         elif self.interaction_cst == "pairwise":
             interaction_cst = itertools.combinations(range(n_features), 2)
-
         else:
             interaction_cst = self.interaction_cst
 
