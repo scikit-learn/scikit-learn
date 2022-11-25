@@ -1678,9 +1678,8 @@ def test_get_feature_names_invalid_dtypes(names, dtypes):
         "Feature names are only supported if all input features have string names, "
         f"but your input has {dtypes} as feature name / column name types. "
         "If you want feature names to be stored and validated, you must convert "
-        "them all to strings. If you'd like to silence this warning, you can "
-        "remove the feature / column names from your input data, or convert them "
-        "all to a non-string data type."
+        "them all to strings, by using X.columns = X.columns.astype(str) for "
+        "example."
     )
     with pytest.raises(TypeError, match=msg):
         names = _get_feature_names(X)
