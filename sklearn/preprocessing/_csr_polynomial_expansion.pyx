@@ -53,7 +53,7 @@ cdef inline cnp.int32_t _deg3_column(
 
 
 def _csr_polynomial_expansion(
-    DATA_T[:] data,
+    cnp.ndarray[DATA_T, ndim=1] data,
     cnp.int32_t[:] indices,
     cnp.int32_t[:] indptr,
     cnp.int32_t d,
@@ -117,7 +117,7 @@ def _csr_polynomial_expansion(
                           - interaction_only * nnz ** 2)
 
     # Make the arrays that will form the CSR matrix of the expansion.
-    cdef DATA_T[:] expanded_data = np.empty(shape=total_nnz, dtype=data.base.dtype)
+    cdef DATA_T[:] expanded_data = np.empty(shape=total_nnz, dtype=data.dtype)
     cdef cnp.int32_t[:] expanded_indices = np.empty(shape=total_nnz, dtype=np.int32)
     cdef cnp.int32_t num_rows = indptr.shape[0] - 1
     cdef cnp.int32_t[:] expanded_indptr = np.empty(shape=num_rows + 1, dtype=np.int32)
