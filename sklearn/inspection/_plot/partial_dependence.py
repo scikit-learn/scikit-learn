@@ -968,7 +968,9 @@ class PartialDependenceDisplay:
                 color="k",
             )
         # reset ylim which was overwritten by vlines
-        ax.set_ylim(pdp_lim[1])
+        min_val = min(val[0] for val in pdp_lim.values())
+        max_val = max(val[1] for val in pdp_lim.values())
+        ax.set_ylim([min_val, max_val])
 
         # Set xlabel if it is not already set
         if not ax.get_xlabel():
@@ -1277,6 +1279,13 @@ class PartialDependenceDisplay:
                 preds = pdp.average if kind_plot == "average" else pdp.individual
                 min_pd = preds[self.target_idx].min()
                 max_pd = preds[self.target_idx].max()
+
+                # expand the limits to account so that the plotted lines do not touch
+                # the edges of the plot
+                span = max_pd - min_pd
+                min_pd -= 0.05 * span
+                max_pd += 0.05 * span
+
                 n_fx = len(values)
                 old_min_pd, old_max_pd = pdp_lim.get(n_fx, (min_pd, max_pd))
                 min_pd = min(min_pd, old_min_pd)
