@@ -77,6 +77,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.cluster._k_means_minibatch",
     "sklearn.datasets._svmlight_format_fast",
     "sklearn.decomposition._cdnmf_fast",
+    "sklearn.ensemble._gradient_boosting",
     "sklearn.ensemble._hist_gradient_boosting._gradient_boosting",
     "sklearn.ensemble._hist_gradient_boosting.histogram",
     "sklearn.ensemble._hist_gradient_boosting.splitting",
