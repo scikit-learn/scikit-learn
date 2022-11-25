@@ -41,8 +41,8 @@ class NotFittedError(ValueError, AttributeError):
 
 class NotSupportedByEngineError(NotImplementedError):
     """External plugins might not support all the combinations of parameters and
-    input types that the the vanilla sklearn implementation otherwise supports. In such
-    cases, plugins can raise this exception class. When running the sklearn test modules
+    input types that the vanilla sklearn implementation otherwise supports. In such
+    cases, plugins can raise this exception. When running the sklearn test modules
     using the sklearn pytest plugin, all the unit tests that fail by raising this
     exception class will be automatically marked as "xfail", this enables sorting out
     the tests that fail because they test features that are not supported by the plugin

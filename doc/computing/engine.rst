@@ -7,7 +7,7 @@
 Computation Engines (experimental)
 ==================================
 
-**This API is experiment** which means that it is subject to change without
+**This API is experimental** which means that it is subject to change without
 any backward compatibility guarantees.
 
 TODO: explain goals here

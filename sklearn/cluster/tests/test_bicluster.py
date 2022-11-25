@@ -253,6 +253,7 @@ def test_spectralbiclustering_parameter_validation(params, type_err, err_msg):
 
 @pytest.mark.parametrize("est", (SpectralBiclustering(), SpectralCoclustering()))
 def test_n_features_in_(est):
+
     X, _, _ = make_biclusters((3, 3), 3, random_state=0)
 
     assert not hasattr(est, "n_features_in_")

@@ -5,7 +5,7 @@
 
 TODO: move to doc/whats_new/v1.3.rst once it exists in main:
 
-- |Enhancement| Experimential engine API (no backward compatibility guarantees)
+- |Enhancement| Experimental engine API (no backward compatibility guarantees)
   to allow for external packages to contribute alternative implementations for
   the core computational routines of some selected scikit-learn estimators.
 
