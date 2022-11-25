@@ -1282,10 +1282,6 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.2
            Accept dict of constraints with feature names as keys.
 
-    interaction_cst : iterable of iterables of int, str, default=None
-        Specify interaction constraints, i.e. sets of features which can
-        only interact with each other in child nodes splits.
-
     interaction_cst : str or sequence of lists/tuples/sets of int, default=None
         Specify interaction constraints, the sets of features which can
         interact with each other in child node splits.
@@ -1637,7 +1633,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.2
            Accept dict of constraints with feature names as keys.
 
-    interaction_cst : sequence of lists/tuples/sets of int, default=None
+    interaction_cst : str or sequence of lists/tuples/sets of int, default=None
         Specify interaction constraints, the sets of features which can
         interact with each other in child node splits.
 
