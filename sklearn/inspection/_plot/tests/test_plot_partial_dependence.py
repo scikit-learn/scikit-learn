@@ -909,7 +909,7 @@ def test_partial_dependence_plot_limits_one_way(
         feature_names=diabetes.feature_names,
     )
 
-    range_pd = np.array([-1, 1])
+    range_pd = np.array([-1, 1], dtype=np.float64)
     for pd in disp.pd_results:
         if "average" in pd:
             pd["average"][...] = range_pd[1]
@@ -921,6 +921,9 @@ def test_partial_dependence_plot_limits_one_way(
     disp.plot(centered=centered)
     # check that we anchor to zero x-axis when centering
     y_lim = range_pd - range_pd[0] if centered else range_pd
+    padding = 0.05 * (y_lim[1] - y_lim[0])
+    y_lim[0] -= padding
+    y_lim[1] += padding
     for ax in disp.axes_.ravel():
         assert_allclose(ax.get_ylim(), y_lim)
 
