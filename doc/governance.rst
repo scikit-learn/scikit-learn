@@ -36,7 +36,7 @@ crucial to improve the communication in the project and limit the crowding
 of the issue tracker.
 
 Similarly to what has been decided in the `python project
-<https://devguide.python.org/triage/triaging/index.html>`_,
+<https://devguide.python.org/triage/triage-team/#becoming-a-member-of-the-python-triage-team>`_,
 any contributor may become a member of the scikit-learn contributor experience team,
 after showing some continuity in participating to scikit-learn
 development (with pull requests and reviews).
