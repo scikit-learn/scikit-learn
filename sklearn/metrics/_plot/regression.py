@@ -22,7 +22,7 @@ class PredictionErrorDisplay:
     For general information regarding `scikit-learn` visualization tools, read
     more in the :ref:`Visualization Guide <visualizations>`.
     For details regarding interpreting these plots, refer to the
-    :ref`Model Evaluation Guide <visualization_regression_evaluation>`.
+    :ref:`Model Evaluation Guide <visualization_regression_evaluation>`.
 
     .. versionadded:: 1.2
 
@@ -198,7 +198,7 @@ class PredictionErrorDisplay:
         For general information regarding `scikit-learn` visualization tools,
         read more in the :ref:`Visualization Guide <visualizations>`.
         For details regarding interpreting these plots, refer to the
-        :ref`Model Evaluation Guide <visualization_regression_evaluation>`.
+        :ref:`Model Evaluation Guide <visualization_regression_evaluation>`.
 
         .. versionadded:: 1.2
 
@@ -302,7 +302,7 @@ class PredictionErrorDisplay:
         For general information regarding `scikit-learn` visualization tools,
         read more in the :ref:`Visualization Guide <visualizations>`.
         For details regarding interpreting these plots, refer to the
-        :ref`Model Evaluation Guide <visualization_regression_evaluation>`.
+        :ref:`Model Evaluation Guide <visualization_regression_evaluation>`.
 
         .. versionadded:: 1.2
 
