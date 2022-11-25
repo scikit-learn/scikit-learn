@@ -376,7 +376,7 @@ class KMeansCythonEngine:
             verbose=self.estimator.verbose,
         )
 
-    def get_nb_distinct_clusters(best_labels):
+    def get_nb_distinct_clusters(self, best_labels):
         return len(set(best_labels))
 
     def prepare_prediction(self, X, sample_weight):
