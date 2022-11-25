@@ -83,6 +83,32 @@ X, y = fetch_openml(
 X.head()
 
 # %%
+# New and enhanced displays
+# -------------------------
+# The :class:`~metrics.PredictionErrorDisplay` provides a one way to analyze
+# regression models in a qualitative manner.
+import matplotlib.pyplot as plt
+from sklearn.metrics import PredictionErrorDisplay
+
+X, y = load_diabetes(return_X_y=True, as_frame=True)
+fig, axs = plt.subplots(nrows=1, ncols=2, figsize=(12, 5))
+PredictionErrorDisplay.from_estimator(
+    hist_no_interact, X, y, kind="actual_vs_predicted", ax=axs[0]
+)
+PredictionErrorDisplay.from_estimator(
+    hist_no_interact, X, y, kind="residual_vs_predicted", ax=axs[1]
+)
+
+# %%
+# The :class:`~model_selection.LearningCurveDisplay` is now available to plot
+# results from :func:`~model_selection.learning_curve`.
+from sklearn.model_selection import LearningCurveDisplay
+
+LearningCurveDisplay.from_estimator(
+    hist_no_interact, X, y, cv=5, n_jobs=2, train_sizes=np.linspace(0.1, 1, 5)
+)
+
+# %%
 # Experimental Array API support in :class:`~discriminant_analysis.LinearDiscriminantAnalysis`
 # --------------------------------------------------------------------------------------------
 # Experimental support for the `Array API <https://data-apis.org/array-api/latest/>`_
