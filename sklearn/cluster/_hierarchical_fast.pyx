@@ -406,7 +406,7 @@ def _single_linkage_label(const cnp.float64_t[:, :] L):
 
         U.union(left_cluster, right_cluster)
 
-    return result_arr.base
+    return np.asarray(result_arr)
 
 
 @cython.wraparound(True)
