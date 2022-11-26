@@ -26,10 +26,14 @@ Installing a nightly build is the quickest way to:
 
 - check whether a bug you encountered has been fixed since the last release.
 
+You can install the nightly build of scikit-learn using the `scipy-wheels-nightly`
+index from the PyPI registry of `anaconda.org`:
 .. prompt:: bash $
 
   pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
 
+Note that first uninstalling scikit-learn might be required to be able to
+install nightly builds of scikit-learn.
 
 .. _install_bleeding_edge:
 
