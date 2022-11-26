@@ -10,6 +10,7 @@ from sklearn.utils._testing import (
     assert_array_almost_equal,
     assert_array_equal,
     assert_allclose_dense_sparse,
+    assert_allclose,
 )
 
 X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]

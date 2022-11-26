@@ -35,6 +35,7 @@ from .validation import (
     indexable,
     check_symmetric,
     check_scalar,
+    _is_arraylike_not_scalar,
 )
 from .. import get_config
 from ._bunch import Bunch
@@ -186,13 +187,8 @@ def _array_indexing(array, key, key_dtype, axis):
 
 def _pandas_indexing(X, key, key_dtype, axis):
     """Index a pandas dataframe or a series."""
-    if hasattr(key, "shape"):
-        # Work-around for indexing with read-only key in pandas
-        # FIXME: solved in pandas 0.25
+    if _is_arraylike_not_scalar(key):
         key = np.asarray(key)
-        key = key if key.flags.writeable else key.copy()
-    elif isinstance(key, tuple):
-        key = list(key)
 
     if key_dtype == "int" and not (isinstance(key, slice) or np.isscalar(key)):
         # using take() instead of iloc[] ensures the return value is a "proper"
@@ -360,6 +356,36 @@ def _safe_indexing(X, indices, *, axis=0):
         return _array_indexing(X, indices, indices_dtype, axis=axis)
     else:
         return _list_indexing(X, indices, indices_dtype)
+
+
+def _safe_assign(X, values, *, row_indexer=None, column_indexer=None):
+    """Safe assignment to a numpy array, sparse matrix, or pandas dataframe.
+
+    Parameters
+    ----------
+    X : {ndarray, sparse-matrix, dataframe}
+        Array to be modified. It is expected to be 2-dimensional.
+
+    values : ndarray
+        The values to be assigned to `X`.
+
+    row_indexer : array-like, dtype={int, bool}, default=None
+        A 1-dimensional array to select the rows of interest. If `None`, all
+        rows are selected.
+
+    column_indexer : array-like, dtype={int, bool}, default=None
+        A 1-dimensional array to select the columns of interest. If `None`, all
+        columns are selected.
+    """
+    row_indexer = slice(None, None, None) if row_indexer is None else row_indexer
+    column_indexer = (
+        slice(None, None, None) if column_indexer is None else column_indexer
+    )
+
+    if hasattr(X, "iloc"):  # pandas dataframe
+        X.iloc[row_indexer, column_indexer] = values
+    else:  # numpy array or sparse matrix
+        X[row_indexer, column_indexer] = values
 
 
 def _get_column_indices(X, key):

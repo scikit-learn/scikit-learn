@@ -200,7 +200,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
         sample_weight : ndarray of shape (n_samples,)
             Contains weight values to be associated with each sample.
             Only possible when `strategy` is set to `"quantile"`.
-            
+
             .. versionadded:: 1.2
 
         Returns
