@@ -3,6 +3,7 @@
 
 from abc import ABC, abstractmethod
 from functools import partial
+import itertools
 from numbers import Real, Integral
 import warnings
 
@@ -92,7 +93,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "min_samples_leaf": [Interval(Integral, 1, None, closed="left")],
         "l2_regularization": [Interval(Real, 0, None, closed="left")],
         "monotonic_cst": ["array-like", dict, None],
-        "interaction_cst": [list, tuple, None],
+        "interaction_cst": [
+            list,
+            tuple,
+            StrOptions({"pairwise", "no_interactions"}),
+            None,
+        ],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "validation_fraction": [
             Interval(Real, 0, 1, closed="neither"),
@@ -288,8 +294,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if self.interaction_cst is None:
             return None
 
+        if self.interaction_cst == "no_interactions":
+            interaction_cst = [[i] for i in range(n_features)]
+        elif self.interaction_cst == "pairwise":
+            interaction_cst = itertools.combinations(range(n_features), 2)
+        else:
+            interaction_cst = self.interaction_cst
+
         try:
-            constraints = [set(group) for group in self.interaction_cst]
+            constraints = [set(group) for group in interaction_cst]
         except TypeError:
             raise ValueError(
                 "Interaction constraints must be a sequence of tuples or lists, got:"
@@ -1275,7 +1288,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.2
            Accept dict of constraints with feature names as keys.
 
-    interaction_cst : sequence of lists/tuples/sets of int, default=None
+    interaction_cst : {"pairwise", "no_interaction"} or sequence of lists/tuples/sets \
+            of int, default=None
         Specify interaction constraints, the sets of features which can
         interact with each other in child node splits.
 
@@ -1283,6 +1297,9 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         to interact with each other. If there are more features than
         specified in these constraints, they are treated as if they were
         specified as an additional set.
+
+        The strings "pairwise" and "no_interactions" are shorthands for
+        allowing only pairwise or no interactions, respectively.
 
         For instance, with 5 features in total, `interaction_cst=[{0, 1}]`
         is equivalent to `interaction_cst=[{0, 1}, {2, 3, 4}]`,
@@ -1623,7 +1640,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.2
            Accept dict of constraints with feature names as keys.
 
-    interaction_cst : sequence of lists/tuples/sets of int, default=None
+    interaction_cst : {"pairwise", "no_interaction"} or sequence of lists/tuples/sets \
+            of int, default=None
         Specify interaction constraints, the sets of features which can
         interact with each other in child node splits.
 
@@ -1631,6 +1649,9 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         to interact with each other. If there are more features than
         specified in these constraints, they are treated as if they were
         specified as an additional set.
+
+        The strings "pairwise" and "no_interactions" are shorthands for
+        allowing only pairwise or no interactions, respectively.
 
         For instance, with 5 features in total, `interaction_cst=[{0, 1}]`
         is equivalent to `interaction_cst=[{0, 1}, {2, 3, 4}]`,

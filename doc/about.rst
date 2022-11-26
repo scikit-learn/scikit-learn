@@ -538,7 +538,7 @@ Hug to work full-time on scikit-learn in 2020.
 ......................
 
 The following students were sponsored by `Google
-<https://developers.google.com/open-source/>`_ to work on scikit-learn through
+<https://opensource.google/>`_ to work on scikit-learn through
 the `Google Summer of Code <https://en.wikipedia.org/wiki/Google_Summer_of_Code>`_
 program.
 
