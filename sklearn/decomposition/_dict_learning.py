@@ -10,7 +10,6 @@ from numbers import Integral, Real
 import warnings
 
 from math import ceil
-
 import numpy as np
 from scipy import linalg
 from joblib import Parallel, effective_n_jobs
@@ -19,6 +18,7 @@ from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMi
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils import deprecated
 from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils._param_validation import validate_params
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
 from ..utils.fixes import delayed
@@ -220,7 +220,24 @@ def _sparse_encode(
         return new_code.reshape(n_samples, n_components)
     return new_code
 
-
+@validate_params(
+    {
+        "X": ["array-like"],
+        "dictionary": ["array-like"],
+        "gram": ["array-like", None],
+        "cov": ["array-like", None],
+        "algorithm": [StrOptions({"lasso_lars", "lasso_cd", "lars", "omp", "threshold"})],
+        "n_nonzero_coefs": [Interval(Real, 0, None, closed="neither")],
+        "alpha": [Interval(Integral, 0, None, closed="left")],
+        "copy_cov": ["boolean"],
+        "init": ["array-like", None],
+        "max_iter": [Interval(Real, 1, None, closed="left")],
+        "n_jobs": [Integral, None],
+        "check_input": ["boolean"],
+        "verbose": [Interval(Real, 0, None, closed="left")],
+        "positive": ["boolean"],
+    }
+)
 # XXX : could be moved to the linear_model module
 def sparse_encode(
     X,
