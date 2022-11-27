@@ -36,6 +36,7 @@ from pathlib import Path
 import shlex
 import json
 import logging
+from importlib.metadata import version
 
 import click
 
@@ -525,6 +526,20 @@ def write_all_pip_lock_files(build_metadata_list):
         write_pip_lock_file(build_metadata)
 
 
+def check_conda_lock_version():
+    # Check that the installed conda-lock version is consistent with _min_dependencies.
+    expected_conda_lock_version = execute_command(
+        [sys.executable, "sklearn/_min_dependencies.py", "conda-lock"]
+    ).strip()
+
+    installed_conda_lock_version = version("conda-lock")
+    if installed_conda_lock_version != expected_conda_lock_version:
+        raise RuntimeError(
+            f"Expected conda-lock version: {expected_conda_lock_version}, got:"
+            f" {installed_conda_lock_version}"
+        )
+
+
 @click.command()
 @click.option(
     "--select-build",
@@ -532,6 +547,7 @@ def write_all_pip_lock_files(build_metadata_list):
     help="Regex to restrict the builds we want to update environment and lock files",
 )
 def main(select_build):
+    check_conda_lock_version()
     filtered_conda_build_metadata_list = [
         each
         for each in conda_build_metadata_list

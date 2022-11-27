@@ -12,6 +12,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.cluster.kmeans_plusplus",
     "sklearn.decomposition.fastica",
     "sklearn.svm.l1_min_c",
+    "sklearn.metrics.accuracy_score",
 ]
 
 
