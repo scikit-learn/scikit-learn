@@ -25,6 +25,7 @@ from ..utils.validation import (
 )
 from ..utils.fixes import delayed
 from ..utils._param_validation import Interval, StrOptions
+from ..utils._param_validation import validate_params
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from ..linear_model import _cd_fast as cd_fast  # type: ignore
@@ -78,6 +79,21 @@ def alpha_max(emp_cov):
     return np.max(np.abs(A))
 
 
+@validate_params(
+    {
+        "emp_cov": ["array-like"],
+        "alpha": [Interval(Real, 0, None, closed="right")],
+        "cov_init": ["array-like", None],
+        "mode": [StrOptions({"cd", "lars"})],
+        "tol": [Interval(Real, 0, None, closed="right")],
+        "enet_tol": [Interval(Real, 0, None, closed="right")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "verbose": ["verbose"],
+        "return_costs": ["boolean"],
+        "eps": [Interval(Real, 0, None, closed="left")],
+        "return_n_iter": ["boolean"]
+    }
+)
 # The g-lasso algorithm
 def graphical_lasso(
     emp_cov,
