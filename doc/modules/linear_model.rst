@@ -1105,7 +1105,7 @@ to warm-starting (see :term:`Glossary <warm_start>`).
     .. [8] https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm
 
     .. [9] Thomas P. Minka `"A comparison of numerical optimizers for logistic regression"
-           <https://tminka.github.io/papers/logreg/minka-logreg.pdf/>`_
+           <https://tminka.github.io/papers/logreg/minka-logreg.pdf>`_
 
     .. [16] :arxiv:`Simon, Noah, J. Friedman and T. Hastie.
         "A Blockwise Descent Algorithm for Group-penalized Multiresponse and

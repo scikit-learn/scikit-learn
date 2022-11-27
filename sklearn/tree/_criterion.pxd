@@ -22,7 +22,7 @@ cdef class Criterion:
 
     # Internal structures
     cdef const DOUBLE_t[:, ::1] y        # Values of y
-    cdef DOUBLE_t* sample_weight         # Sample weights
+    cdef const DOUBLE_t[:] sample_weight # Sample weights
 
     cdef SIZE_t* samples                 # Sample indices in X, y
     cdef SIZE_t start                    # samples[start:pos] are the samples in the left node
@@ -41,19 +41,34 @@ cdef class Criterion:
     # statistics correspond to samples[start:pos] and samples[pos:end].
 
     # Methods
-    cdef int init(self, const DOUBLE_t[:, ::1] y, DOUBLE_t* sample_weight,
-                  double weighted_n_samples, SIZE_t* samples, SIZE_t start,
-                  SIZE_t end) nogil except -1
+    cdef int init(
+        self,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight,
+        double weighted_n_samples,
+        SIZE_t* samples,
+        SIZE_t start,
+        SIZE_t end
+    ) nogil except -1
     cdef int reset(self) nogil except -1
     cdef int reverse_reset(self) nogil except -1
     cdef int update(self, SIZE_t new_pos) nogil except -1
     cdef double node_impurity(self) nogil
-    cdef void children_impurity(self, double* impurity_left,
-                                double* impurity_right) nogil
-    cdef void node_value(self, double* dest) nogil
-    cdef double impurity_improvement(self, double impurity_parent,
-                                     double impurity_left,
-                                     double impurity_right) nogil
+    cdef void children_impurity(
+        self,
+        double* impurity_left,
+        double* impurity_right
+    ) nogil
+    cdef void node_value(
+        self,
+        double* dest
+    ) nogil
+    cdef double impurity_improvement(
+        self,
+        double impurity_parent,
+        double impurity_left,
+        double impurity_right
+    ) nogil
     cdef double proxy_impurity_improvement(self) nogil
 
 cdef class ClassificationCriterion(Criterion):
