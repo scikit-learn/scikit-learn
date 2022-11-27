@@ -82,7 +82,7 @@ def alpha_max(emp_cov):
 @validate_params(
     {
         "emp_cov": ["array-like"],
-        "alpha": [Interval(Real, 0, None, closed="right")],
+        "alpha": [Interval(Real, 0, None, closed="both")],
         "cov_init": ["array-like", None],
         "mode": [StrOptions({"cd", "lars"})],
         "tol": [Interval(Real, 0, None, closed="right")],
@@ -91,7 +91,7 @@ def alpha_max(emp_cov):
         "verbose": ["verbose"],
         "return_costs": ["boolean"],
         "eps": [Interval(Real, 0, None, closed="left")],
-        "return_n_iter": ["boolean"]
+        "return_n_iter": ["boolean"],
     }
 )
 # The g-lasso algorithm
