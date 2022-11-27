@@ -33,7 +33,7 @@ The figure below shows two one-way and one two-way partial dependence plots for
 the bike sharing dataset, with a
 :class:`~sklearn.ensemble.HistGradientBoostingRegressor`:
 
-.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_005.png
+.. figure:: ../auto_examples/inspection/images/sphx_glr_plot_partial_dependence_006.png
    :target: ../auto_examples/inspection/plot_partial_dependence.html
    :align: center
    :scale: 70
