@@ -10,6 +10,7 @@ from numbers import Integral, Real
 import warnings
 
 from math import ceil
+
 import numpy as np
 from scipy import linalg
 from joblib import Parallel, effective_n_jobs
