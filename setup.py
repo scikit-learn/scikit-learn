@@ -71,6 +71,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.__check_build._check_build",
     "sklearn._loss._loss",
     "sklearn.cluster._dbscan_inner",
+    "sklearn.cluster._hierarchical_fast",
     "sklearn.cluster._k_means_common",
     "sklearn.cluster._k_means_lloyd",
     "sklearn.cluster._k_means_elkan",
@@ -110,6 +111,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.utils._sorting",
     "sklearn.utils._vector_sentinel",
     "sklearn.utils._isfinite",
+    "sklearn.utils.murmurhash",
     "sklearn.svm._newrand",
     "sklearn._isotonic",
 )
