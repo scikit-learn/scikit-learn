@@ -813,6 +813,8 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # _check_categorical_features later.
             if return_categorical_features:
                 categorical_features = np.zeros(X.shape[1], dtype=bool)
+
+            col_to_codes = {}
             for col_idx, col in enumerate(X.columns):
                 if X[col].dtype.name == "category":
                     if in_fit:
@@ -826,12 +828,15 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     # make the code more complex.
                     codes = X[col].values.codes.astype(np.float64)
                     codes[codes < 0] = np.nan
+                    col_to_codes[col] = codes
 
-                    # Use assign to recode the column without mutating the
-                    # original dataframe object passed by the caller.
-                    X = X.assign(**{col: codes})
                     if return_categorical_features:
                         categorical_features[col_idx] = True
+
+            if col_to_codes:
+                # Use assign to recode the column without mutating the
+                # original dataframe object passed by the caller.
+                X = X.assign(**col_to_codes)
         else:
             # passthrough for other kinds of data to be validated by
             # the usual _validate_data method.
