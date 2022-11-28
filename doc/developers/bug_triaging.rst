@@ -40,7 +40,7 @@ The following actions are typically useful:
 
    Overall, it is useful to stay positive and assume good will. `The
    following article
-   <http://gael-varoquaux.info/programming/technical-discussions-are-hard-a-few-tips.html>`_
+   <https://gael-varoquaux.info/programming/technical-discussions-are-hard-a-few-tips.html>`_
    explores how to lead online discussions in the context of open source.
 
 Working on PRs to help review

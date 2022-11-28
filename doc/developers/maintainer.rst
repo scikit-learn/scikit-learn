@@ -333,7 +333,7 @@ Before merging,
 The scikit-learn.org web site
 -----------------------------
 
-The scikit-learn web site (http://scikit-learn.org) is hosted at GitHub,
+The scikit-learn web site (https://scikit-learn.org) is hosted at GitHub,
 but should rarely be updated manually by pushing to the
 https://github.com/scikit-learn/scikit-learn.github.io repository. Most
 updates can be made by pushing to master (for /dev) or a release branch
