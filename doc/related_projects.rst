@@ -310,7 +310,7 @@ Recommendation Engine packages
 - `Spotlight <https://github.com/maciejkula/spotlight>`_ Pytorch-based
   implementation of deep recommender models.
 
-- `Surprise Lib <http://surpriselib.com/>`_ Library for explicit feedback
+- `Surprise Lib <https://surpriselib.com/>`_ Library for explicit feedback
   datasets.
 
 Domain specific packages
@@ -362,4 +362,3 @@ and promote community efforts.
 
 .. [#f1] following `linux documentation Disclaimer
    <https://www.kernel.org/doc/html/latest/translations/index.html#disclaimer>`__
-
