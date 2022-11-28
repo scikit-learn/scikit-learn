@@ -38,13 +38,13 @@ One of the most straight-forward concerns one may have when using/choosing a
 machine learning toolkit is the latency at which predictions can be made in a
 production environment.
 
-The main factors that influence the prediction latency are
+The main factors that influence the prediction latency are:
   1. Number of features
   2. Input data representation and sparsity
   3. Model complexity
   4. Feature extraction
 
-A last major parameter is also the possibility to do predictions in bulk or
+A last major parameter (Feature extraction) is also the possibility to do predictions in bulk or
 one-at-a-time mode.
 
 Bulk versus Atomic mode
