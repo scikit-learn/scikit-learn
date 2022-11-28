@@ -221,13 +221,16 @@ def _sparse_encode(
         return new_code.reshape(n_samples, n_components)
     return new_code
 
+
 @validate_params(
     {
         "X": ["array-like"],
         "dictionary": ["array-like"],
         "gram": ["array-like", None],
         "cov": ["array-like", None],
-        "algorithm": [StrOptions({"lasso_lars", "lasso_cd", "lars", "omp", "threshold"})],
+        "algorithm": [
+            StrOptions({"lasso_lars", "lasso_cd", "lars", "omp", "threshold"})
+        ],
         "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
         "alpha": [Interval(Real, 0, None, closed="left"), None],
         "copy_cov": ["boolean"],
@@ -1687,7 +1690,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         positive_dict=False,
         transform_max_iter=1000,
     ):
-
         super().__init__(
             transform_algorithm,
             transform_n_nonzero_coefs,
@@ -2065,7 +2067,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         tol=1e-3,
         max_no_improvement=10,
     ):
-
         super().__init__(
             transform_algorithm,
             transform_n_nonzero_coefs,
@@ -2343,7 +2344,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         )
 
         if self.max_iter is not None:
-
             # Attributes to monitor the convergence
             self._ewa_cost = None
             self._ewa_cost_min = None
