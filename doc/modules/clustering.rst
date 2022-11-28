@@ -1479,7 +1479,7 @@ more broadly common names.
  .. [VEB2010] Vinh, Epps, and Bailey, (2010). "Information Theoretic Measures for
    Clusterings Comparison: Variants, Properties, Normalization and
    Correction for Chance". JMLR
-   <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
+   <https://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
 
  .. [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
    community
