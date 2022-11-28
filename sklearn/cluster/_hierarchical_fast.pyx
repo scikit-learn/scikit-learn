@@ -4,10 +4,6 @@ import numpy as np
 cimport numpy as cnp
 cimport cython
 
-ctypedef cnp.float64_t DOUBLE
-ctypedef cnp.npy_intp INTP
-ctypedef cnp.int8_t INT8
-
 cnp.import_array()
 
 from ..metrics._dist_metrics cimport DistanceMetric
@@ -29,15 +25,17 @@ from numpy.math cimport INFINITY
 ###############################################################################
 # Utilities for computing the ward momentum
 
-def compute_ward_dist(cnp.ndarray[DOUBLE, ndim=1, mode='c'] m_1,
-                      cnp.ndarray[DOUBLE, ndim=2, mode='c'] m_2,
-                      cnp.ndarray[INTP, ndim=1, mode='c'] coord_row,
-                      cnp.ndarray[INTP, ndim=1, mode='c'] coord_col,
-                      cnp.ndarray[DOUBLE, ndim=1, mode='c'] res):
-    cdef INTP size_max = coord_row.shape[0]
-    cdef INTP n_features = m_2.shape[1]
-    cdef INTP i, j, row, col
-    cdef DOUBLE pa, n
+def compute_ward_dist(
+    const cnp.float64_t[::1] m_1,
+    const cnp.float64_t[:, ::1] m_2,
+    const cnp.intp_t[::1] coord_row,
+    const cnp.intp_t[::1] coord_col,
+    cnp.float64_t[::1] res
+):
+    cdef cnp.intp_t size_max = coord_row.shape[0]
+    cdef cnp.intp_t n_features = m_2.shape[1]
+    cdef cnp.intp_t i, j, row, col
+    cdef cnp.float64_t pa, n
 
     for i in range(size_max):
         row = coord_row[i]
@@ -47,13 +45,12 @@ def compute_ward_dist(cnp.ndarray[DOUBLE, ndim=1, mode='c'] m_1,
         for j in range(n_features):
             pa += (m_2[row, j] / m_1[row] - m_2[col, j] / m_1[col]) ** 2
         res[i] = pa * n
-    return res
 
 
 ###############################################################################
 # Utilities for cutting and exploring a hierarchical tree
 
-def _hc_get_descendent(INTP node, children, INTP n_leaves):
+def _hc_get_descendent(cnp.intp_t node, children, cnp.intp_t n_leaves):
     """
     Function returning all the descendent leaves of a set of nodes in the tree.
 
@@ -82,7 +79,7 @@ def _hc_get_descendent(INTP node, children, INTP n_leaves):
     # It is actually faster to do the accounting of the number of
     # elements is the list ourselves: len is a lengthy operation on a
     # chained list
-    cdef INTP i, n_indices = 1
+    cdef cnp.intp_t i, n_indices = 1
 
     while n_indices:
         i = ind.pop()
@@ -95,7 +92,7 @@ def _hc_get_descendent(INTP node, children, INTP n_leaves):
     return descendent
 
 
-def hc_get_heads(cnp.ndarray[INTP, ndim=1] parents, copy=True):
+def hc_get_heads(cnp.intp_t[:] parents, copy=True):
     """Returns the heads of the forest, as defined by parents.
 
     Parameters
@@ -111,7 +108,7 @@ def hc_get_heads(cnp.ndarray[INTP, ndim=1] parents, copy=True):
         The indices in the 'parents' of the tree heads
 
     """
-    cdef INTP parent, node0, node, size
+    cdef cnp.intp_t parent, node0, node, size
     if copy:
         parents = np.copy(parents)
     size = parents.size
@@ -127,8 +124,12 @@ def hc_get_heads(cnp.ndarray[INTP, ndim=1] parents, copy=True):
     return parents
 
 
-def _get_parents(nodes, heads, cnp.ndarray[INTP, ndim=1] parents,
-                 cnp.ndarray[INT8, ndim=1, mode='c'] not_visited):
+def _get_parents(
+    nodes,
+    heads,
+    const cnp.intp_t[:] parents,
+    cnp.int8_t[::1] not_visited
+):
     """Returns the heads of the given nodes, as defined by parents.
 
     Modifies 'heads' and 'not_visited' in-place.
@@ -145,7 +146,7 @@ def _get_parents(nodes, heads, cnp.ndarray[INTP, ndim=1] parents,
         The tree nodes to consider (modified inplace)
 
     """
-    cdef INTP parent, node
+    cdef cnp.intp_t parent, node
 
     for node in nodes:
         parent = parents[node]
@@ -155,7 +156,6 @@ def _get_parents(nodes, heads, cnp.ndarray[INTP, ndim=1] parents,
         if not_visited[node]:
             not_visited[node] = 0
             heads.append(node)
-    return heads
 
 
 ###############################################################################
@@ -166,9 +166,13 @@ def _get_parents(nodes, heads, cnp.ndarray[INTP, ndim=1] parents,
 # as keys and edge weights as values.
 
 
-def max_merge(IntFloatDict a, IntFloatDict b,
-              cnp.ndarray[ITYPE_t, ndim=1] mask,
-              ITYPE_t n_a, ITYPE_t n_b):
+def max_merge(
+    IntFloatDict a,
+    IntFloatDict b,
+    const cnp.intp_t[:] mask,
+    cnp.intp_t n_a,
+    cnp.intp_t n_b
+):
     """Merge two IntFloatDicts with the max strategy: when the same key is
     present in the two dicts, the max of the two values is used.
 
@@ -219,9 +223,13 @@ def max_merge(IntFloatDict a, IntFloatDict b,
     return out_obj
 
 
-def average_merge(IntFloatDict a, IntFloatDict b,
-              cnp.ndarray[ITYPE_t, ndim=1] mask,
-              ITYPE_t n_a, ITYPE_t n_b):
+def average_merge(
+    IntFloatDict a,
+    IntFloatDict b,
+    const cnp.intp_t[:] mask,
+    cnp.intp_t n_a,
+    cnp.intp_t n_b
+):
     """Merge two IntFloatDicts with the average strategy: when the
     same key is present in the two dicts, the weighted average of the two
     values is used.
@@ -354,8 +362,7 @@ cdef class UnionFind(object):
         return n
 
 
-cpdef cnp.ndarray[DTYPE_t, ndim=2] _single_linkage_label(
-    cnp.ndarray[DTYPE_t, ndim=2] L):
+def _single_linkage_label(const cnp.float64_t[:, :] L):
     """
     Convert an linkage array or MST to a tree by labelling clusters at merges.
     This is done by using a Union find structure to keep track of merges
@@ -375,14 +382,12 @@ cpdef cnp.ndarray[DTYPE_t, ndim=2] _single_linkage_label(
     A tree in the format used by scipy.cluster.hierarchy.
     """
 
-    cdef cnp.ndarray[DTYPE_t, ndim=2] result_arr
-    cdef DTYPE_t[:, ::1] result
+    cdef DTYPE_t[:, ::1] result_arr
 
     cdef ITYPE_t left, left_cluster, right, right_cluster, index
     cdef DTYPE_t delta
 
     result_arr = np.zeros((L.shape[0], 4), dtype=DTYPE)
-    result = result_arr
     U = UnionFind(L.shape[0] + 1)
 
     for index in range(L.shape[0]):
@@ -394,14 +399,14 @@ cpdef cnp.ndarray[DTYPE_t, ndim=2] _single_linkage_label(
         left_cluster = U.fast_find(left)
         right_cluster = U.fast_find(right)
 
-        result[index][0] = left_cluster
-        result[index][1] = right_cluster
-        result[index][2] = delta
-        result[index][3] = U.size[left_cluster] + U.size[right_cluster]
+        result_arr[index][0] = left_cluster
+        result_arr[index][1] = right_cluster
+        result_arr[index][2] = delta
+        result_arr[index][3] = U.size[left_cluster] + U.size[right_cluster]
 
         U.union(left_cluster, right_cluster)
 
-    return result_arr
+    return np.asarray(result_arr)
 
 
 @cython.wraparound(True)
@@ -471,8 +476,6 @@ def mst_linkage_core(
         ITYPE_t n_samples = raw_data.shape[0]
         cnp.int8_t[:] in_tree = np.zeros(n_samples, dtype=np.int8)
         DTYPE_t[:, ::1] result = np.zeros((n_samples - 1, 3))
-
-        cnp.ndarray label_filter
 
         ITYPE_t current_node = 0
         ITYPE_t new_node

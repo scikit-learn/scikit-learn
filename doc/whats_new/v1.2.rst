@@ -328,6 +328,12 @@ Changelog
   as value to specify monotonicity constraints for each feature.
   :pr:`24855` by :user:`Olivier Grisel <ogrisel>`.
 
+- |Enhancement| Interaction constraints for
+  :class:`ensemble.HistGradientBoostingClassifier`
+  and :class:`ensemble.HistGradientBoostingRegressor` can now be specified
+  as strings for two common cases: "no_interactions" and "pairwise" interactions.
+  :pr:`24849` by :user:`Tim Head <betatim>`.
+
 - |Fix| Fixed the issue where :class:`ensemble.AdaBoostClassifier` outputs
   NaN in feature importance when fitted with very small sample weight.
   :pr:`20415` by :user:`Zhehao Liu <MaxwellLZH>`.
@@ -399,6 +405,14 @@ Changelog
   containing only missing values when transforming.
   :pr:`16695` by :user:`Vitor Santa Rosa <vitorsrg>`.
 
+:mod:`sklearn.inspection`
+.........................
+
+- |Enhancement| Extended :func:`inspection.partial_dependence` and
+  :class:`inspection.PartialDependenceDisplay` to handle categorical features.
+  :pr:`18298` by :user:`Madhura Jayaratne <madhuracj>` and
+  :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.kernel_approximation`
 ...................................
 
@@ -410,7 +424,7 @@ Changelog
 
 - |Enhancement| :class:`kernel_approximation.RBFSampler` now accepts
   `'scale'` option for parameter `gamma`.
-  :pr:`24755` by :user:`Gleb Levitski <GLevV>`
+  :pr:`24755` by :user:`Gleb Levitski <GLevV>`.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -503,6 +517,13 @@ Changelog
   negative likelihood ratios derived from the confusion matrix
   of a binary classification problem. :pr:`22518` by
   :user:`Arturo Amor <ArturoAmorQ>`.
+
+- |Feature| Add :class:`metrics.PredictionErrorDisplay` to plot residuals vs
+  predicted and actual vs predicted to qualitatively assess the behavior of a
+  regressor. The display can be created with the class methods
+  :func:`metrics.PredictionErrorDisplay.from_estimator` and
+  :func:`metrics.PredictionErrorDisplay.from_predictions`. :pr:`18020` by
+  :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Feature| :func:`metrics.roc_auc_score` now supports micro-averaging
   (`average="micro"`) for the One-vs-Rest multiclass case (`multi_class="ovr"`).
