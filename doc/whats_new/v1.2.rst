@@ -291,7 +291,7 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
-- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+- |MajorFeature| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` now support
   interaction constraints via the argument `interaction_cst` of their
   constructors.
