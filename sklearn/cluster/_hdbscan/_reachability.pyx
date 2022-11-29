@@ -4,21 +4,16 @@
 #          Guillaume Lemaitre <g.lemaitre58@gmail.com>
 # License: 3-clause BSD
 
+cimport cython
+cimport numpy as cnp
+
 import numpy as np
 from scipy.sparse import issparse
-
-cimport cython
-from cython cimport floating
-cimport numpy as cnp
+from cython cimport floating, integral
 from cython.parallel cimport prange
 from libc.math cimport isfinite, INFINITY
 
 cnp.import_array()
-
-ctypedef fused integral:
-    int
-    long long
-
 
 def mutual_reachability_graph(
     distance_matrix, min_samples=5, max_distance=0.0
