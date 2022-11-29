@@ -67,10 +67,10 @@ ax.scatter(
 
 ax.set_title("First three PCA directions")
 ax.set_xlabel("1st eigenvector")
-ax.w_xaxis.set_ticklabels([])
+ax.xaxis.set_ticklabels([])
 ax.set_ylabel("2nd eigenvector")
-ax.w_yaxis.set_ticklabels([])
+ax.yaxis.set_ticklabels([])
 ax.set_zlabel("3rd eigenvector")
-ax.w_zaxis.set_ticklabels([])
+ax.zaxis.set_ticklabels([])
 
 plt.show()

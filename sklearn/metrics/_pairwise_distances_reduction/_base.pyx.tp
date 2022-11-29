@@ -1,3 +1,18 @@
+{{py:
+
+implementation_specific_values = [
+    # Values are the following ones:
+    #
+    #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
+    #
+    # We also use the float64 dtype and C-type names as defined in
+    # `sklearn.utils._typedefs` to maintain consistency.
+    #
+    ('64', 'DTYPE_t', 'DTYPE'),
+    ('32', 'cnp.float32_t', 'np.float32')
+]
+
+}}
 cimport numpy as cnp
 
 from cython cimport final
@@ -11,17 +26,18 @@ from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
 import numpy as np
 
+from scipy.sparse import issparse
 from numbers import Integral
 from sklearn import get_config
 from sklearn.utils import check_scalar
 from ...utils._openmp_helpers import _openmp_effective_n_threads
-from ...utils._typedefs import DTYPE
+from ...utils._typedefs import DTYPE, SPARSE_INDEX_TYPE
 
 cnp.import_array()
 
 #####################
 
-cpdef DTYPE_t[::1] _sqeuclidean_row_norms64(
+cdef DTYPE_t[::1] _sqeuclidean_row_norms64_dense(
     const DTYPE_t[:, ::1] X,
     ITYPE_t num_threads,
 ):
@@ -46,7 +62,7 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms64(
     return squared_row_norms
 
 
-cpdef DTYPE_t[::1] _sqeuclidean_row_norms32(
+cdef DTYPE_t[::1] _sqeuclidean_row_norms32_dense(
     const cnp.float32_t[:, ::1] X,
     ITYPE_t num_threads,
 ):
@@ -86,9 +102,42 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms32(
 
     return squared_row_norms
 
-{{for name_suffix in ['64', '32']}}
+
+cdef DTYPE_t[::1] _sqeuclidean_row_norms64_sparse(
+    const DTYPE_t[:] X_data,
+    const SPARSE_INDEX_TYPE_t[:] X_indptr,
+    ITYPE_t num_threads,
+):
+    cdef:
+        ITYPE_t n = X_indptr.shape[0] - 1
+        SPARSE_INDEX_TYPE_t X_i_ptr, idx = 0
+        DTYPE_t[::1] squared_row_norms = np.zeros(n, dtype=DTYPE)
+
+    for idx in prange(n, schedule='static', nogil=True, num_threads=num_threads):
+        for X_i_ptr in range(X_indptr[idx], X_indptr[idx+1]):
+            squared_row_norms[idx] += X_data[X_i_ptr] * X_data[X_i_ptr]
+
+    return squared_row_norms
+
+
+{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
 from ._datasets_pair cimport DatasetsPair{{name_suffix}}
+
+
+cpdef DTYPE_t[::1] _sqeuclidean_row_norms{{name_suffix}}(
+    X,
+    ITYPE_t num_threads,
+):
+    if issparse(X):
+        # TODO: remove this instruction which is a cast in the float32 case
+        # by moving squared row norms computations in MiddleTermComputer. 
+        X_data = np.asarray(X.data, dtype=DTYPE)
+        X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
+        return _sqeuclidean_row_norms64_sparse(X_data, X_indptr, num_threads)
+    else:
+        return _sqeuclidean_row_norms{{name_suffix}}_dense(X, num_threads)
+
 
 cdef class BaseDistancesReduction{{name_suffix}}:
     """
@@ -107,7 +156,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         strategy=None,
      ):
         cdef:
-            ITYPE_t n_samples_chunk, X_n_full_chunks, Y_n_full_chunks
+            ITYPE_t X_n_full_chunks, Y_n_full_chunks
 
         if chunk_size is None:
             chunk_size = get_config().get("pairwise_dist_chunk_size", 256)
@@ -359,7 +408,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         In this method, EuclideanDistance specialisations of subclass of
         BaseDistancesReduction _must_ call:
 
-        self.gemm_term_computer._parallel_on_X_init_chunk(
+        self.middle_term_computer._parallel_on_X_init_chunk(
             thread_num, X_start, X_end,
         )
 
@@ -382,7 +431,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         In this method, EuclideanDistance specialisations of subclass of
         BaseDistancesReduction _must_ call:
 
-        self.gemm_term_computer._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
+        self.middle_term_computer._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
             X_start, X_end, Y_start, Y_end, thread_num,
         )
 
@@ -425,7 +474,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         In this method, EuclideanDistance specialisations of subclass of
         BaseDistancesReduction _must_ call:
 
-        self.gemm_term_computer._parallel_on_Y_parallel_init(
+        self.middle_term_computer._parallel_on_Y_parallel_init(
             thread_num, X_start, X_end,
         )
 
@@ -448,7 +497,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         In this method, EuclideanDistance specialisations of subclass of
         BaseDistancesReduction _must_ call:
 
-        self.gemm_term_computer._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
+        self.middle_term_computer._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
             X_start, X_end, Y_start, Y_end, thread_num,
         )
 

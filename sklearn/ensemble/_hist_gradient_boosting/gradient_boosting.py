@@ -2,8 +2,8 @@
 # Author: Nicolas Hug
 
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
 from functools import partial
+import itertools
 from numbers import Real, Integral
 import warnings
 
@@ -23,6 +23,7 @@ from ...utils.validation import (
     check_is_fitted,
     check_consistent_length,
     _check_sample_weight,
+    _check_monotonic_cst,
 )
 from ...utils._param_validation import Interval, StrOptions
 from ...utils._openmp_helpers import _openmp_effective_n_threads
@@ -91,8 +92,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "max_depth": [Interval(Integral, 1, None, closed="left"), None],
         "min_samples_leaf": [Interval(Integral, 1, None, closed="left")],
         "l2_regularization": [Interval(Real, 0, None, closed="left")],
-        "monotonic_cst": ["array-like", None],
-        "interaction_cst": [Iterable, None],
+        "monotonic_cst": ["array-like", dict, None],
+        "interaction_cst": [
+            list,
+            tuple,
+            StrOptions({"pairwise", "no_interactions"}),
+            None,
+        ],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "validation_fraction": [
             Interval(Real, 0, 1, closed="neither"),
@@ -193,16 +199,43 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if categorical_features.size == 0:
             return None, None
 
-        if categorical_features.dtype.kind not in ("i", "b"):
+        if categorical_features.dtype.kind not in ("i", "b", "U", "O"):
             raise ValueError(
-                "categorical_features must be an array-like of "
-                "bools or array-like of ints."
+                "categorical_features must be an array-like of bool, int or "
+                f"str, got: {categorical_features.dtype.name}."
             )
+
+        if categorical_features.dtype.kind == "O":
+            types = set(type(f) for f in categorical_features)
+            if types != {str}:
+                raise ValueError(
+                    "categorical_features must be an array-like of bool, int or "
+                    f"str, got: {', '.join(sorted(t.__name__ for t in types))}."
+                )
 
         n_features = X.shape[1]
 
-        # check for categorical features as indices
-        if categorical_features.dtype.kind == "i":
+        if categorical_features.dtype.kind in ("U", "O"):
+            # check for feature names
+            if not hasattr(self, "feature_names_in_"):
+                raise ValueError(
+                    "categorical_features should be passed as an array of "
+                    "integers or as a boolean mask when the model is fitted "
+                    "on data without feature names."
+                )
+            is_categorical = np.zeros(n_features, dtype=bool)
+            feature_names = self.feature_names_in_.tolist()
+            for feature_name in categorical_features:
+                try:
+                    is_categorical[feature_names.index(feature_name)] = True
+                except ValueError as e:
+                    raise ValueError(
+                        f"categorical_features has a item value '{feature_name}' "
+                        "which is not a valid feature name of the training "
+                        f"data. Observed feature names: {feature_names}"
+                    ) from e
+        elif categorical_features.dtype.kind == "i":
+            # check for categorical features as indices
             if (
                 np.max(categorical_features) >= n_features
                 or np.min(categorical_features) < 0
@@ -261,29 +294,30 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if self.interaction_cst is None:
             return None
 
-        if not (
-            isinstance(self.interaction_cst, Iterable)
-            and all(isinstance(x, Iterable) for x in self.interaction_cst)
-        ):
+        if self.interaction_cst == "no_interactions":
+            interaction_cst = [[i] for i in range(n_features)]
+        elif self.interaction_cst == "pairwise":
+            interaction_cst = itertools.combinations(range(n_features), 2)
+        else:
+            interaction_cst = self.interaction_cst
+
+        try:
+            constraints = [set(group) for group in interaction_cst]
+        except TypeError:
             raise ValueError(
-                "Interaction constraints must be None or an iterable of iterables, "
-                f"got: {self.interaction_cst!r}."
+                "Interaction constraints must be a sequence of tuples or lists, got:"
+                f" {self.interaction_cst!r}."
             )
 
-        invalid_indices = [
-            x
-            for cst_set in self.interaction_cst
-            for x in cst_set
-            if not (isinstance(x, Integral) and 0 <= x < n_features)
-        ]
-        if invalid_indices:
-            raise ValueError(
-                "Interaction constraints must consist of integer indices in [0,"
-                f" n_features - 1] = [0, {n_features - 1}], specifying the position of"
-                f" features, got invalid indices: {invalid_indices!r}"
-            )
-
-        constraints = [set(group) for group in self.interaction_cst]
+        for group in constraints:
+            for x in group:
+                if not (isinstance(x, Integral) and 0 <= x < n_features):
+                    raise ValueError(
+                        "Interaction constraints must consist of integer indices in"
+                        f" [0, n_features - 1] = [0, {n_features - 1}], specifying the"
+                        " position of features, got invalid indices:"
+                        f" {group!r}"
+                    )
 
         # Add all not listed features as own group by default.
         rest = set(range(n_features)) - set().union(*constraints)
@@ -342,6 +376,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._random_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
 
         self._validate_parameters()
+        monotonic_cst = _check_monotonic_cst(self, self.monotonic_cst)
 
         # used for validation in predict
         n_samples, self._n_features = X.shape
@@ -637,7 +672,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
                     is_categorical=self.is_categorical_,
-                    monotonic_cst=self.monotonic_cst,
+                    monotonic_cst=monotonic_cst,
                     interaction_cst=interaction_cst,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
@@ -1209,7 +1244,7 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         Features with a small number of unique values may use less than
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
-    categorical_features : array-like of {bool, int} of shape (n_features) \
+    categorical_features : array-like of {bool, int, str} of shape (n_features) \
             or shape (n_categorical_features,), default=None
         Indicates the categorical features.
 
@@ -1217,6 +1252,8 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         - boolean array-like : boolean mask indicating categorical features.
         - integer array-like : integer indices indicating categorical
           features.
+        - str array-like: names of categorical features (assuming the training
+          data has feature names).
 
         For each categorical feature, there must be at most `max_bins` unique
         categories, and each categorical value must be in [0, max_bins -1].
@@ -1227,24 +1264,42 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
 
         .. versionadded:: 0.24
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature.
-          - 1: monotonic increase
-          - 0: no constraint
-          - -1: monotonic decrease
+        .. versionchanged:: 1.2
+           Added support for feature names.
 
+    monotonic_cst : array-like of int of shape (n_features) or dict, default=None
+        Monotonic constraint to enforce on each feature are specified using the
+        following integer values:
+
+        - 1: monotonic increase
+        - 0: no constraint
+        - -1: monotonic decrease
+
+        If a dict with str keys, map feature to monotonic constraints by name.
+        If an array, the features are mapped to constraints by position. See
+        :ref:`monotonic_cst_features_names` for a usage example.
+
+        The constraints are only valid for binary classifications and hold
+        over the probability of the positive class.
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
         .. versionadded:: 0.23
 
-    interaction_cst : iterable of iterables of int, default=None
-        Specify interaction constraints, i.e. sets of features which can
-        only interact with each other in child nodes splits.
+        .. versionchanged:: 1.2
+           Accept dict of constraints with feature names as keys.
 
-        Each iterable materializes a constraint by the set of indices of
-        the features that are allowed to interact with each other.
-        If there are more features than specified in these constraints,
-        they are treated as if they were specified as an additional set.
+    interaction_cst : {"pairwise", "no_interaction"} or sequence of lists/tuples/sets \
+            of int, default=None
+        Specify interaction constraints, the sets of features which can
+        interact with each other in child node splits.
+
+        Each item specifies the set of feature indices that are allowed
+        to interact with each other. If there are more features than
+        specified in these constraints, they are treated as if they were
+        specified as an additional set.
+
+        The strings "pairwise" and "no_interactions" are shorthands for
+        allowing only pairwise or no interactions, respectively.
 
         For instance, with 5 features in total, `interaction_cst=[{0, 1}]`
         is equivalent to `interaction_cst=[{0, 1}, {2, 3, 4}]`,
@@ -1541,7 +1596,7 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         Features with a small number of unique values may use less than
         ``max_bins`` bins. In addition to the ``max_bins`` bins, one more bin
         is always reserved for missing values. Must be no larger than 255.
-    categorical_features : array-like of {bool, int} of shape (n_features) \
+    categorical_features : array-like of {bool, int, str} of shape (n_features) \
             or shape (n_categorical_features,), default=None
         Indicates the categorical features.
 
@@ -1549,6 +1604,8 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         - boolean array-like : boolean mask indicating categorical features.
         - integer array-like : integer indices indicating categorical
           features.
+        - str array-like: names of categorical features (assuming the training
+          data has feature names).
 
         For each categorical feature, there must be at most `max_bins` unique
         categories, and each categorical value must be in [0, max_bins -1].
@@ -1559,11 +1616,20 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         .. versionadded:: 0.24
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature.
-          - 1: monotonic increase
-          - 0: no constraint
-          - -1: monotonic decrease
+        .. versionchanged:: 1.2
+           Added support for feature names.
+
+    monotonic_cst : array-like of int of shape (n_features) or dict, default=None
+        Monotonic constraint to enforce on each feature are specified using the
+        following integer values:
+
+        - 1: monotonic increase
+        - 0: no constraint
+        - -1: monotonic decrease
+
+        If a dict with str keys, map feature to monotonic constraints by name.
+        If an array, the features are mapped to constraints by position. See
+        :ref:`monotonic_cst_features_names` for a usage example.
 
         The constraints are only valid for binary classifications and hold
         over the probability of the positive class.
@@ -1571,14 +1637,21 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         .. versionadded:: 0.23
 
-    interaction_cst : iterable of iterables of int, default=None
-        Specify interaction constraints, i.e. sets of features which can
-        only interact with each other in child nodes splits.
+        .. versionchanged:: 1.2
+           Accept dict of constraints with feature names as keys.
 
-        Each iterable materializes a constraint by the set of indices of
-        the features that are allowed to interact with each other.
-        If there are more features than specified in these constraints,
-        they are treated as if they were specified as an additional set.
+    interaction_cst : {"pairwise", "no_interaction"} or sequence of lists/tuples/sets \
+            of int, default=None
+        Specify interaction constraints, the sets of features which can
+        interact with each other in child node splits.
+
+        Each item specifies the set of feature indices that are allowed
+        to interact with each other. If there are more features than
+        specified in these constraints, they are treated as if they were
+        specified as an additional set.
+
+        The strings "pairwise" and "no_interactions" are shorthands for
+        allowing only pairwise or no interactions, respectively.
 
         For instance, with 5 features in total, `interaction_cst=[{0, 1}]`
         is equivalent to `interaction_cst=[{0, 1}, {2, 3, 4}]`,

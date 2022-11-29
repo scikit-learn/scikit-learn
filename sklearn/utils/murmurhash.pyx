@@ -54,26 +54,32 @@ cpdef cnp.int32_t murmurhash3_bytes_s32(bytes key, unsigned int seed):
     return out
 
 
-cpdef cnp.ndarray[cnp.uint32_t, ndim=1] murmurhash3_bytes_array_u32(
-    cnp.ndarray[cnp.int32_t] key, unsigned int seed):
+def _murmurhash3_bytes_array_u32(
+    const cnp.int32_t[:] key,
+    unsigned int seed,
+):
     """Compute 32bit murmurhash3 hashes of a key int array at seed."""
     # TODO make it possible to pass preallocated output array
-    cdef cnp.ndarray[cnp.uint32_t, ndim=1] out = np.zeros(key.size, np.uint32)
-    cdef Py_ssize_t i
+    cdef:
+        cnp.uint32_t[:] out = np.zeros(key.size, np.uint32)
+        Py_ssize_t i
     for i in range(key.shape[0]):
         out[i] = murmurhash3_int_u32(key[i], seed)
-    return out
+    return np.asarray(out)
 
 
-cpdef cnp.ndarray[cnp.int32_t, ndim=1] murmurhash3_bytes_array_s32(
-    cnp.ndarray[cnp.int32_t] key, unsigned int seed):
+def _murmurhash3_bytes_array_s32(
+    const cnp.int32_t[:] key,
+    unsigned int seed,
+):
     """Compute 32bit murmurhash3 hashes of a key int array at seed."""
     # TODO make it possible to pass preallocated output array
-    cdef cnp.ndarray[cnp.int32_t, ndim=1] out = np.zeros(key.size, np.int32)
-    cdef Py_ssize_t i
+    cdef:
+        cnp.int32_t[:] out = np.zeros(key.size, np.int32)
+        Py_ssize_t i
     for i in range(key.shape[0]):
         out[i] = murmurhash3_int_s32(key[i], seed)
-    return out
+    return np.asarray(out)
 
 
 def murmurhash3_32(key, seed=0, positive=False):
@@ -113,15 +119,15 @@ def murmurhash3_32(key, seed=0, positive=False):
             return murmurhash3_int_u32(<cnp.int32_t>key, seed)
         else:
             return murmurhash3_int_s32(<cnp.int32_t>key, seed)
-    elif isinstance(key, cnp.ndarray):
+    elif isinstance(key, np.ndarray):
         if key.dtype != np.int32:
             raise TypeError(
                 "key.dtype should be int32, got %s" % key.dtype)
         if positive:
-            return murmurhash3_bytes_array_u32(key.ravel(),
+            return _murmurhash3_bytes_array_u32(key.ravel(),
                                                seed).reshape(key.shape)
         else:
-            return murmurhash3_bytes_array_s32(key.ravel(),
+            return _murmurhash3_bytes_array_s32(key.ravel(),
                                                seed).reshape(key.shape)
     else:
         raise TypeError(
