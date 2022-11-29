@@ -45,6 +45,8 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_mutual_reachability(
         represented as a collecteion of edges.
     """
     cdef:
+        # Note: we utilize ndarray's over memory-views to make use of numpy
+        # binary indexing and sub-selection below.
         cnp.ndarray[cnp.int64_t, ndim=1, mode='c'] current_labels
         cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] min_reachability, left, right
         cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst
@@ -79,6 +81,7 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
     const cnp.float64_t[:, ::1] raw_data,
     const cnp.float64_t[::1] core_distances,
     DistanceMetric dist_metric,
+    cnp.float64_t alpha=1.0
 ):
     """Compute the Minimum Spanning Tree (MST) representation of the mutual-
     reachability graph generated from the provided `raw_data` and
@@ -149,6 +152,9 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
                 &raw_data[j, 0],
                 num_features
             )
+
+            if alpha != 1.0:
+                pair_distance /= alpha
 
             next_node_core_dist = core_distances[j]
             mutual_reachability_distance = max(

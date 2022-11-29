@@ -75,8 +75,10 @@ def _brute_mst(mutual_reachability, min_samples, sparse=False):
     # Compute the minimum spanning tree for the sparse graph
     sparse_min_spanning_tree = csgraph.minimum_spanning_tree(mutual_reachability)
     rows, cols = sparse_min_spanning_tree.nonzero()
-    mst = np.vstack((rows, cols, sparse_min_spanning_tree.data))
-    mst = np.core.records.fromarrays(mst, dtype=MST_edge_dtype, shape=(mst.shape[1],))
+    mst = np.core.records.fromarrays(
+        [rows, cols, sparse_min_spanning_tree.data],
+        dtype=MST_edge_dtype,
+    )
     return mst
 
 
@@ -116,6 +118,7 @@ def _process_mst(min_spanning_tree):
 def _hdbscan_brute(
     X,
     min_samples=5,
+    alpha=None,
     metric="euclidean",
     n_jobs=None,
     copy=False,
@@ -131,6 +134,7 @@ def _hdbscan_brute(
         distance_matrix = pairwise_distances(
             X, metric=metric, n_jobs=n_jobs, **metric_params
         )
+    distance_matrix /= alpha
 
     # max_dist is only relevant for sparse and is ignored for dense
     max_dist = metric_params.get("max_dist", 0.0)
@@ -161,6 +165,7 @@ def _hdbscan_prims(
     X,
     algo,
     min_samples=5,
+    alpha=1.0,
     metric="euclidean",
     leaf_size=40,
     n_jobs=None,
@@ -185,7 +190,7 @@ def _hdbscan_prims(
     dist_metric = DistanceMetric.get_metric(metric, **metric_params)
 
     # Mutual reachability distance is implicit in mst_from_data_matrix
-    min_spanning_tree = mst_from_data_matrix(X, core_distances, dist_metric)
+    min_spanning_tree = mst_from_data_matrix(X, core_distances, dist_metric, alpha)
     return _process_mst(min_spanning_tree)
 
 
@@ -289,6 +294,10 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
 
     metric_params : dict, default=None
         Arguments passed to the distance metric.
+
+    alpha : float, default=1.0
+        A distance scaling parameter as used in robust single linkage.
+        See [3]_ for more information.
 
     algorithm : {"auto", "brute", "kdtree", "balltree"}, default="auto"
         Exactly which algorithm to use for computing core distances; By default
@@ -450,6 +459,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         ],
         "metric": [StrOptions(set(FAST_METRICS + ["precomputed"])), callable],
         "metric_params": [dict, None],
+        "alpha": [Interval(Real, left=0, right=None, closed="neither")],
         "algorithm": [
             StrOptions(
                 {
@@ -476,6 +486,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         max_cluster_size=None,
         metric="euclidean",
         metric_params=None,
+        alpha=1.0,
         algorithm="auto",
         leaf_size=40,
         n_jobs=4,
@@ -486,6 +497,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
     ):
         self.min_cluster_size = min_cluster_size
         self.min_samples = min_samples
+        self.alpha = alpha
         self.max_cluster_size = max_cluster_size
         self.cluster_selection_epsilon = cluster_selection_epsilon
         self.metric = metric
@@ -586,6 +598,7 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         kwargs = dict(
             X=X,
             min_samples=self._min_samples,
+            alpha=self.alpha,
             metric=self.metric,
             n_jobs=self.n_jobs,
             **self._metric_params,
