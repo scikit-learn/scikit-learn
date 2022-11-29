@@ -13,6 +13,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.decomposition.sparse_encode",
     "sklearn.svm.l1_min_c",
     "sklearn.metrics.accuracy_score",
+    "sklearn.metrics.zero_one_loss",
 ]
 
 
