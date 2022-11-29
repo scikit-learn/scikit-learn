@@ -499,7 +499,7 @@ def configure_extension_modules():
     is_pypy = platform.python_implementation() == "PyPy"
     np_include = numpy.get_include()
     default_libraries = ["m"] if os.name == "posix" else []
-    default_extra_compile_args = ["-O3"]
+    default_extra_compile_args = ["-O2"]
 
     cython_exts = []
     for submodule, extensions in extension_config.items():
