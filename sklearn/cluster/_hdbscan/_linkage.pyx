@@ -40,16 +40,9 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_mutual_reachability(
 
     Returns
     -------
-    mst : ndarray of shape (n_samples - 1,)
+    mst : ndarray of shape (n_samples - 1,), dtype=MST_edge_dtype
         The MST representation of the mutual-reahability graph. The MST is
-        represented as a collecteion of edges. Each edge is an instance of a
-        custom dtype `MST_edge_dtype` with the following specification:
-
-        MST_edge_dtype = np.dtype([
-            ("current_node", np.int64),
-            ("next_node", np.int64),
-            ("distance", np.float64),
-        ])
+        represented as a collecteion of edges.
     """
     cdef:
         cnp.ndarray[cnp.int64_t, ndim=1, mode='c'] current_labels
@@ -64,7 +57,7 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_mutual_reachability(
     mst = np.empty(n_samples - 1, dtype=MST_edge_dtype)
     current_labels = np.arange(n_samples, dtype=np.int64)
     current_node = 0
-    min_reachability = np.infty * np.ones(n_samples, dtype=np.float64)
+    min_reachability = np.full(n_samples, fill_value=np.infty, dtype=np.float64)
     for i in range(0, n_samples - 1):
         label_filter = current_labels != current_node
         current_labels = current_labels[label_filter]
@@ -106,16 +99,9 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
 
     Returns
     -------
-    mst : ndarray of shape (n_samples - 1,)
+    mst : ndarray of shape (n_samples - 1,), dtype=MST_edge_dtype
         The MST representation of the mutual-reahability graph. The MST is
-        represented as a collecteion of edges. Each edge is an instance of a
-        custom dtype `MST_edge_dtype` with the following specification:
-
-        MST_edge_dtype = np.dtype([
-            ("current_node", np.int64),
-            ("next_node", np.int64),
-            ("distance", np.float64),
-        ])
+        represented as a collecteion of edges.
     """
 
     cdef:
@@ -136,7 +122,7 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
     mst = np.empty(n_samples - 1, dtype=MST_edge_dtype)
 
     in_tree = np.zeros(n_samples, dtype=np.int8)
-    min_reachability = np.infty * np.ones(n_samples, dtype=np.float64)
+    min_reachability = np.full(n_samples, fill_value=np.infty, dtype=np.float64)
     current_sources = np.ones(n_samples, dtype=np.int64)
 
     current_node = 0
@@ -202,16 +188,9 @@ cpdef cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] make_single_linkage(const MST
 
     Parameters
     ----------
-    mst : ndarray of shape (n_samples - 1,)
+    mst : ndarray of shape (n_samples - 1,), dtype=MST_edge_dtype
         The MST representation of the mutual-reahability graph. The MST is
-        represented as a collecteion of edges. Each edge is an instance of a
-        custom dtype `MST_edge_dtype` with the following specification:
-
-        MST_edge_dtype = np.dtype([
-            ("current_node", np.int64),
-            ("next_node", np.int64),
-            ("distance", np.float64),
-        ])
+        represented as a collecteion of edges.
 
     Returns
     -------
@@ -234,7 +213,7 @@ cpdef cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] make_single_linkage(const MST
         cnp.float64_t distance
         UnionFind U = UnionFind(n_samples)
 
-    single_linkage = np.zeros((n_samples - 1, 4))
+    single_linkage = np.zeros((n_samples - 1, 4), dtype=np.float64)
 
     for i in range(n_samples - 1):
 
@@ -242,10 +221,8 @@ cpdef cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] make_single_linkage(const MST
         next_node = mst[i].next_node
         distance = mst[i].distance
 
-        current_node_cluster, next_node_cluster = (
-            U.fast_find(current_node),
-            U.fast_find(next_node)
-        )
+        current_node_cluster = U.fast_find(current_node)
+        next_node_cluster = U.fast_find(next_node)
 
         # TODO: Update this to an array of structs (AoS).
         # Should be done simultaneously in _tree.pyx to ensure compatability.
