@@ -5,6 +5,11 @@ Beta-divergence loss functions
 
 A plot that compares the various Beta-divergence loss functions supported by
 the Multiplicative-Update ('mu') solver in :class:`~sklearn.decomposition.NMF`.
+When :math:`x = 1`, the loss is zero for all beta-divergence(1,:math:`x`).
+For larger values of `beta`, the loss is higher for :math:`x > 1` and the
+loss is lower for :math:`x < 1`. For smaller values of `beta`, the trend is
+reversed.
+
 
 """
 
