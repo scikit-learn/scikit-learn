@@ -11,7 +11,6 @@ Extended math utilities.
 #          Giorgio Patrini
 # License: BSD 3 clause
 
-import itertools
 import warnings
 
 import numpy as np
@@ -754,15 +753,7 @@ def cartesian(arrays, out=None):
     ix = ix.reshape(len(arrays), -1).T
 
     if out is None:
-        # find the most permissive dtype among all input arrays
-        dtypes = list({x.dtype for x in arrays})
-        can_cast = [
-            np.can_cast(from_, to_, casting="safe")
-            for from_, to_ in itertools.product(dtypes, repeat=2)
-        ]
-        # The most permissive dtype is the one that has a column full of True
-        can_cast = np.reshape(can_cast, (len(dtypes), len(dtypes))).all(axis=0)
-        dtype = dtypes[can_cast.argmax()]
+        dtype = np.result_type(*arrays)  # find the most permissive dtype
 
         out = np.empty_like(ix, dtype=dtype)
 
