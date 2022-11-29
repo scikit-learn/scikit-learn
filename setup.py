@@ -87,6 +87,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.ensemble._hist_gradient_boosting.common",
     "sklearn.ensemble._hist_gradient_boosting.utils",
     "sklearn.feature_extraction._hashing_fast",
+    "sklearn.linear_model._sag_fast",
     "sklearn.linear_model._sgd_fast",
     "sklearn.manifold._barnes_hut_tsne",
     "sklearn.metrics.cluster._expected_mutual_info_fast",
