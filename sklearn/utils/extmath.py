@@ -722,7 +722,7 @@ def cartesian(arrays, out=None):
         permissive `dtype` of the input arrays.
 
         .. versionadded:: 1.2
-           Add support for mixed type arrays.
+           Add support for arrays of different types.
 
     Notes
     -----
