@@ -754,7 +754,6 @@ def cartesian(arrays, out=None):
 
     if out is None:
         dtype = np.result_type(*arrays)  # find the most permissive dtype
-
         out = np.empty_like(ix, dtype=dtype)
 
     for n, arr in enumerate(arrays):
