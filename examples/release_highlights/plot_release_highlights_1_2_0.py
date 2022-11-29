@@ -94,14 +94,46 @@ _ = LearningCurveDisplay.from_estimator(
 )
 
 # %%
+# :class:`~inspection.PartialDependenceDisplay` is now accepting a
+# `categorical_features` parameter and uses bar plots and heatmaps to display
+# partial dependence for categorical features.
+from sklearn.datasets import fetch_openml
+
+X, y = fetch_openml(
+    "titanic", version=1, as_frame=True, return_X_y=True, parser="pandas"
+)
+X = X.select_dtypes(["number", "category"]).drop(columns=["body"])
+
+# %%
+from sklearn.preprocessing import OrdinalEncoder
+from sklearn.pipeline import make_pipeline
+
+categorical_features = ["pclass", "sex", "embarked"]
+model = make_pipeline(
+    ColumnTransformer(
+        transformers=[("cat", OrdinalEncoder(), categorical_features)],
+        remainder="passthrough",
+    ),
+    HistGradientBoostingRegressor(random_state=0),
+).fit(X, y)
+
+# %%
+from sklearn.inspection import PartialDependenceDisplay
+
+_ = PartialDependenceDisplay.from_estimator(
+    model,
+    X,
+    features=["sex", ("pclass", "sex")],
+    categorical_features=categorical_features,
+)
+
+# %%
 # Faster parser in :func:`~datasets.fetch_openml`
 # -----------------------------------------------
 # :func:`~datasets.fetch_openml` now supports a new `"pandas"` parser that is
 # more memory and CPU efficient. In v1.4, the default will change to
 # `parser="auto"` which will automatically use the `"pandas"` parser for dense
 # data and `"liac-arff"` for sparse data.
-from sklearn.datasets import fetch_openml
-
 X, y = fetch_openml(
     "titanic", version=1, as_frame=True, return_X_y=True, parser="pandas"
 )

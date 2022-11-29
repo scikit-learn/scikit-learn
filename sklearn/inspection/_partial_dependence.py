@@ -113,6 +113,7 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
             )
         values.append(axis)
 
+    print(cartesian(values))
     return cartesian(values), values
 
 
