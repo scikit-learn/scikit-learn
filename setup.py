@@ -70,6 +70,8 @@ DEFINE_MACRO_NUMPY_C_API = (
 USE_NEWEST_NUMPY_C_API = (
     "sklearn.__check_build._check_build",
     "sklearn._loss._loss",
+    "sklearn.cluster._dbscan_inner",
+    "sklearn.cluster._hierarchical_fast",
     "sklearn.cluster._k_means_common",
     "sklearn.cluster._k_means_lloyd",
     "sklearn.cluster._k_means_elkan",
@@ -85,6 +87,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.ensemble._hist_gradient_boosting.common",
     "sklearn.ensemble._hist_gradient_boosting.utils",
     "sklearn.feature_extraction._hashing_fast",
+    "sklearn.linear_model._sgd_fast",
     "sklearn.manifold._barnes_hut_tsne",
     "sklearn.metrics.cluster._expected_mutual_info_fast",
     "sklearn.metrics._pairwise_distances_reduction._datasets_pair",
@@ -108,6 +111,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.utils._sorting",
     "sklearn.utils._vector_sentinel",
     "sklearn.utils._isfinite",
+    "sklearn.utils.murmurhash",
     "sklearn.svm._newrand",
     "sklearn._isotonic",
 )
