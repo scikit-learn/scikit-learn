@@ -498,11 +498,13 @@ def configure_extension_modules():
 
     is_pypy = platform.python_implementation() == "PyPy"
     np_include = numpy.get_include()
+
+    optimization_level = "O2"
     if os.name == "posix":
-        default_extra_compile_args = ["-O2"]
+        default_extra_compile_args = [f"-{optimization_level}"]
         default_libraries = ["m"]
     else:
-        default_extra_compile_args = ["/O2"]
+        default_extra_compile_args = [f"/{optimization_level}"]
         default_libraries = []
 
     cython_exts = []
