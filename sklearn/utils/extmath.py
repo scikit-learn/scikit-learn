@@ -719,7 +719,8 @@ def cartesian(arrays, out=None):
     out : ndarray of shape (M, len(arrays))
         Array containing the cartesian products formed of input arrays.
         If not provided, the `dtype` of the output array is set to the most
-        permissive `dtype` of the input arrays.
+        permissive `dtype` of the input arrays, according to NumPy type
+        promotion.
 
         .. versionadded:: 1.2
            Add support for arrays of different types.
