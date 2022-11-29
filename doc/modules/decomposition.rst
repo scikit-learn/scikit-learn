@@ -951,7 +951,7 @@ is not readily available from the start, or when the data does not fit into memo
       D. Lee, S. Seung, 1999
 
     .. [2] `"Non-negative Matrix Factorization with Sparseness Constraints"
-      <http://www.jmlr.org/papers/volume5/hoyer04a/hoyer04a.pdf>`_
+      <https://www.jmlr.org/papers/volume5/hoyer04a/hoyer04a.pdf>`_
       P. Hoyer, 2004
 
     .. [4] `"SVD based initialization: A head start for nonnegative
@@ -1069,7 +1069,7 @@ when data can be fetched sequentially.
 .. topic:: References:
 
     * `"Latent Dirichlet Allocation"
-      <http://www.jmlr.org/papers/volume3/blei03a/blei03a.pdf>`_
+      <https://www.jmlr.org/papers/volume3/blei03a/blei03a.pdf>`_
       D. Blei, A. Ng, M. Jordan, 2003
 
     * `"Online Learning for Latent Dirichlet Allocation”
