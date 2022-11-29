@@ -206,7 +206,7 @@ def fit(
         shrinking,
         probability,
         <int> class_weight.shape[0],
-        <char*> &class_weight_label[0],
+        <char*> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
         <char*> &class_weight[0],
         max_iter,
         random_seed
