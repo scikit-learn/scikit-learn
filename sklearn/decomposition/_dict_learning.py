@@ -818,6 +818,9 @@ def dict_learning_online(
     batch_size : int, default=3
         The number of samples to take in each batch.
 
+        .. versionchanged:: 1.3
+           The default value of `batch_size` will change from 3 to 256 in version 1.3.
+
     verbose : bool, default=False
         To control the verbosity of the procedure.
 
@@ -1802,6 +1805,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     batch_size : int, default=3
         Number of samples in each mini-batch.
+
+        .. versionchanged:: 1.3
+           The default value of `batch_size` will change from 3 to 256 in version 1.3.
 
     shuffle : bool, default=True
         Whether to shuffle the samples before forming batches.

@@ -22,9 +22,9 @@ stacking strategy. Stacking slightly improves the overall performance.
 
 # %%
 # Download the dataset
-##############################################################################
+######################
 #
-# We will use `Ames Housing`_ dataset which was first compiled by Dean De Cock
+# We will use the `Ames Housing`_ dataset which was first compiled by Dean De Cock
 # and became better known after it was used in Kaggle challenge. It is a set
 # of 1460 residential homes in Ames, Iowa, each described by 80 features. We
 # will use it to predict the final logarithmic price of the houses. In this
@@ -72,20 +72,19 @@ def load_ames_housing():
         "MoSold",
     ]
 
-    X = X[features]
+    X = X.loc[:, features]
     X, y = shuffle(X, y, random_state=0)
 
-    X = X[:600]
-    y = y[:600]
+    X = X.iloc[:600]
+    y = y.iloc[:600]
     return X, np.log(y)
 
 
 X, y = load_ames_housing()
 
-
 # %%
 # Make pipeline to preprocess the data
-##############################################################################
+######################################
 #
 # Before we can use Ames dataset we still need to do some preprocessing.
 # First, we will select the categorical and numerical columns of the dataset to
@@ -147,7 +146,7 @@ linear_preprocessor
 
 # %%
 # Stack of predictors on a single data set
-##############################################################################
+##########################################
 #
 # It is sometimes tedious to find the model which will best perform on a given
 # dataset. Stacking provide an alternative by combining the outputs of several
@@ -199,45 +198,17 @@ stacking_regressor
 
 # %%
 # Measure and plot the results
-##############################################################################
+##############################
 #
 # Now we can use Ames Housing dataset to make the predictions. We check the
 # performance of each individual predictor as well as of the stack of the
 # regressors.
-#
-# The function ``plot_regression_results`` is used to plot the predicted and
-# true targets.
 
 
 import time
 import matplotlib.pyplot as plt
+from sklearn.metrics import PredictionErrorDisplay
 from sklearn.model_selection import cross_validate, cross_val_predict
-
-
-def plot_regression_results(ax, y_true, y_pred, title, scores, elapsed_time):
-    """Scatter plot of the predicted vs true targets."""
-    ax.plot(
-        [y_true.min(), y_true.max()], [y_true.min(), y_true.max()], "--r", linewidth=2
-    )
-    ax.scatter(y_true, y_pred, alpha=0.2)
-
-    ax.spines["top"].set_visible(False)
-    ax.spines["right"].set_visible(False)
-    ax.get_xaxis().tick_bottom()
-    ax.get_yaxis().tick_left()
-    ax.spines["left"].set_position(("outward", 10))
-    ax.spines["bottom"].set_position(("outward", 10))
-    ax.set_xlim([y_true.min(), y_true.max()])
-    ax.set_ylim([y_true.min(), y_true.max()])
-    ax.set_xlabel("Measured")
-    ax.set_ylabel("Predicted")
-    extra = plt.Rectangle(
-        (0, 0), 0, 0, fc="w", fill=False, edgecolor="none", linewidth=0
-    )
-    ax.legend([extra], [scores], loc="upper left")
-    title = title + "\n Evaluation in {:.2f} seconds".format(elapsed_time)
-    ax.set_title(title)
-
 
 fig, axs = plt.subplots(2, 2, figsize=(9, 7))
 axs = np.ravel(axs)
@@ -245,27 +216,36 @@ axs = np.ravel(axs)
 for ax, (name, est) in zip(
     axs, estimators + [("Stacking Regressor", stacking_regressor)]
 ):
+    scorers = {"R2": "r2", "MAE": "neg_mean_absolute_error"}
+
     start_time = time.time()
-    score = cross_validate(
-        est, X, y, scoring=["r2", "neg_mean_absolute_error"], n_jobs=2, verbose=0
+    scores = cross_validate(
+        est, X, y, scoring=list(scorers.values()), n_jobs=-1, verbose=0
     )
     elapsed_time = time.time() - start_time
 
-    y_pred = cross_val_predict(est, X, y, n_jobs=2, verbose=0)
+    y_pred = cross_val_predict(est, X, y, n_jobs=-1, verbose=0)
+    scores = {
+        key: (
+            f"{np.abs(np.mean(scores[f'test_{value}'])):.2f} +- "
+            f"{np.std(scores[f'test_{value}']):.2f}"
+        )
+        for key, value in scorers.items()
+    }
 
-    plot_regression_results(
-        ax,
-        y,
-        y_pred,
-        name,
-        (r"$R^2={:.2f} \pm {:.2f}$" + "\n" + r"$MAE={:.2f} \pm {:.2f}$").format(
-            np.mean(score["test_r2"]),
-            np.std(score["test_r2"]),
-            -np.mean(score["test_neg_mean_absolute_error"]),
-            np.std(score["test_neg_mean_absolute_error"]),
-        ),
-        elapsed_time,
+    display = PredictionErrorDisplay.from_predictions(
+        y_true=y,
+        y_pred=y_pred,
+        kind="actual_vs_predicted",
+        ax=ax,
+        scatter_kwargs={"alpha": 0.2, "color": "tab:blue"},
+        line_kwargs={"color": "tab:red"},
     )
+    ax.set_title(f"{name}\nEvaluation in {elapsed_time:.2f} seconds")
+
+    for name, score in scores.items():
+        ax.plot([], [], " ", label=f"{name}: {score}")
+    ax.legend(loc="upper left")
 
 plt.suptitle("Single predictors versus stacked predictors")
 plt.tight_layout()
