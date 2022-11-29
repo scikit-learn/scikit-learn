@@ -1206,7 +1206,17 @@ class Lasso(ElasticNet):
     that maximum coordinate update, i.e. :math:`\\max_j |w_j^{new} - w_j^{old}|`
     is smaller than `tol` times the maximum absolute coefficient, :math:`\\max_j |w_j|`.
     If so, then additionally check whether the dual gap is smaller than `tol` times
-    :math:`||y||_2^2 / n_{\text{samples}}`.
+    :math:`||y||_2^2 / n_{\\text{samples}}`.
+
+    The target can be a 2-dimensional array, resulting in the optimization of the
+    following objective::
+
+        (1 / (2 * n_samples)) * ||Y - XW||^2_F + alpha * ||W||_11
+
+    where :math:`||W||_{1,1}` is the sum of the magnitude of the matrix coefficients.
+    It should not be confused with :class:`~sklearn.linear_model.MultiTaskLasso` which
+    instead penalizes the :math:`L_{2,1}` norm of the coefficients, yielding row-wise
+    sparsity in the coefficients.
 
     Examples
     --------
