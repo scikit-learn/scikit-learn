@@ -11,6 +11,7 @@ Extended math utilities.
 #          Giorgio Patrini
 # License: BSD 3 clause
 
+import itertools
 import warnings
 
 import numpy as np
@@ -718,6 +719,11 @@ def cartesian(arrays, out=None):
     -------
     out : ndarray of shape (M, len(arrays))
         Array containing the cartesian products formed of input arrays.
+        If not provided, the `dtype` of the output array is set to the most
+        permissive `dtype` of the input arrays.
+
+        .. versionadded:: 1.2
+           Add support for mixed type arrays.
 
     Notes
     -----
@@ -743,12 +749,21 @@ def cartesian(arrays, out=None):
     """
     arrays = [np.asarray(x) for x in arrays]
     shape = (len(x) for x in arrays)
-    dtype = arrays[0].dtype
 
     ix = np.indices(shape)
     ix = ix.reshape(len(arrays), -1).T
 
     if out is None:
+        # find the most permissive dtype among all input arrays
+        dtypes = list({x.dtype for x in arrays})
+        can_cast = [
+            np.can_cast(from_, to_, casting="safe")
+            for from_, to_ in itertools.product(dtypes, repeat=2)
+        ]
+        # The most permissive dtype is the one that has a column full of True
+        can_cast = np.reshape(can_cast, (len(dtypes), len(dtypes))).all(axis=0)
+        dtype = dtypes[can_cast.argmax()]
+
         out = np.empty_like(ix, dtype=dtype)
 
     for n, arr in enumerate(arrays):
