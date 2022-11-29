@@ -56,7 +56,7 @@ import pandas as pd
 from sklearn.datasets import fetch_openml
 
 
-df = fetch_openml(data_id=41214, as_frame=True).frame
+df = fetch_openml(data_id=41214, as_frame=True, parser="pandas").frame
 df
 
 # %%
@@ -110,7 +110,11 @@ log_scale_transformer = make_pipeline(
 linear_model_preprocessor = ColumnTransformer(
     [
         ("passthrough_numeric", "passthrough", ["BonusMalus"]),
-        ("binned_numeric", KBinsDiscretizer(n_bins=10), ["VehAge", "DrivAge"]),
+        (
+            "binned_numeric",
+            KBinsDiscretizer(n_bins=10, subsample=int(2e5), random_state=0),
+            ["VehAge", "DrivAge"],
+        ),
         ("log_scaled_numeric", log_scale_transformer, ["Density"]),
         (
             "onehot_categorical",
@@ -247,7 +251,7 @@ n_samples = df_train.shape[0]
 poisson_glm = Pipeline(
     [
         ("preprocessor", linear_model_preprocessor),
-        ("regressor", PoissonRegressor(alpha=1e-12, max_iter=300)),
+        ("regressor", PoissonRegressor(alpha=1e-12, solver="newton-cholesky")),
     ]
 )
 poisson_glm.fit(

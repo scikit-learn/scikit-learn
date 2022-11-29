@@ -1,7 +1,7 @@
 """
 Module contains classes for invertible (and differentiable) link functions.
 """
-# Author: Christian Lorentzen <lorentzen.ch@googlemail.com>
+# Author: Christian Lorentzen <lorentzen.ch@gmail.com>
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -23,7 +23,7 @@ class Interval:
         """Check that low <= high"""
         if self.low > self.high:
             raise ValueError(
-                f"On must have low <= high; got low={self.low}, high={self.high}."
+                f"One must have low <= high; got low={self.low}, high={self.high}."
             )
 
     def includes(self, x):

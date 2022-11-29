@@ -35,7 +35,7 @@ def test_graphviz_toy():
         "digraph Tree {\n"
         'node [shape=box, fontname="helvetica"] ;\n'
         'edge [fontname="helvetica"] ;\n'
-        '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
+        '0 [label="x[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
         'value = [3, 3]"] ;\n'
         '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]"] ;\n'
         "0 -> 1 [labeldistance=2.5, labelangle=45, "
@@ -75,7 +75,7 @@ def test_graphviz_toy():
         "digraph Tree {\n"
         'node [shape=box, fontname="helvetica"] ;\n'
         'edge [fontname="helvetica"] ;\n'
-        '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
+        '0 [label="x[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
         'value = [3, 3]\\nclass = yes"] ;\n'
         '1 [label="gini = 0.0\\nsamples = 3\\nvalue = [3, 0]\\n'
         'class = yes"] ;\n'
@@ -106,7 +106,7 @@ def test_graphviz_toy():
         'node [shape=box, style="filled, rounded", color="black", '
         'fontname="sans"] ;\n'
         'edge [fontname="sans"] ;\n'
-        "0 [label=<X<SUB>0</SUB> &le; 0.0<br/>samples = 100.0%<br/>"
+        "0 [label=<x<SUB>0</SUB> &le; 0.0<br/>samples = 100.0%<br/>"
         'value = [0.5, 0.5]>, fillcolor="#ffffff"] ;\n'
         "1 [label=<samples = 50.0%<br/>value = [1.0, 0.0]>, "
         'fillcolor="#e58139"] ;\n'
@@ -127,7 +127,7 @@ def test_graphviz_toy():
         "digraph Tree {\n"
         'node [shape=box, fontname="helvetica"] ;\n'
         'edge [fontname="helvetica"] ;\n'
-        '0 [label="X[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
+        '0 [label="x[0] <= 0.0\\ngini = 0.5\\nsamples = 6\\n'
         'value = [3, 3]\\nclass = y[0]"] ;\n'
         '1 [label="(...)"] ;\n'
         "0 -> 1 ;\n"
@@ -147,7 +147,7 @@ def test_graphviz_toy():
         'node [shape=box, style="filled", color="black", '
         'fontname="helvetica"] ;\n'
         'edge [fontname="helvetica"] ;\n'
-        '0 [label="node #0\\nX[0] <= 0.0\\ngini = 0.5\\n'
+        '0 [label="node #0\\nx[0] <= 0.0\\ngini = 0.5\\n'
         'samples = 6\\nvalue = [3, 3]", fillcolor="#ffffff"] ;\n'
         '1 [label="(...)", fillcolor="#C0C0C0"] ;\n'
         "0 -> 1 ;\n"
@@ -170,14 +170,14 @@ def test_graphviz_toy():
         'node [shape=box, style="filled", color="black", '
         'fontname="helvetica"] ;\n'
         'edge [fontname="helvetica"] ;\n'
-        '0 [label="X[0] <= 0.0\\nsamples = 6\\n'
+        '0 [label="x[0] <= 0.0\\nsamples = 6\\n'
         "value = [[3.0, 1.5, 0.0]\\n"
         '[3.0, 1.0, 0.5]]", fillcolor="#ffffff"] ;\n'
         '1 [label="samples = 3\\nvalue = [[3, 0, 0]\\n'
         '[3, 0, 0]]", fillcolor="#e58139"] ;\n'
         "0 -> 1 [labeldistance=2.5, labelangle=45, "
         'headlabel="True"] ;\n'
-        '2 [label="X[0] <= 1.5\\nsamples = 3\\n'
+        '2 [label="x[0] <= 1.5\\nsamples = 3\\n'
         "value = [[0.0, 1.5, 0.0]\\n"
         '[0.0, 1.0, 0.5]]", fillcolor="#f1bd97"] ;\n'
         "0 -> 2 [labeldistance=2.5, labelangle=-45, "
@@ -215,7 +215,7 @@ def test_graphviz_toy():
         "graph [ranksep=equally, splines=polyline] ;\n"
         'edge [fontname="sans"] ;\n'
         "rankdir=LR ;\n"
-        '0 [label="X[0] <= 0.0\\nsquared_error = 1.0\\nsamples = 6\\n'
+        '0 [label="x[0] <= 0.0\\nsquared_error = 1.0\\nsamples = 6\\n'
         'value = 0.0", fillcolor="#f2c09c"] ;\n'
         '1 [label="squared_error = 0.0\\nsamples = 3\\'
         'nvalue = -1.0", '

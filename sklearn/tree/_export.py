@@ -113,9 +113,9 @@ def plot_tree(
         The maximum depth of the representation. If None, the tree is fully
         generated.
 
-    feature_names : list of strings, default=None
+    feature_names : list of str, default=None
         Names of each of the features.
-        If None, generic names will be used ("X[0]", "X[1]", ...).
+        If None, generic names will be used ("x[0]", "x[1]", ...).
 
     class_names : list of str or bool, default=None
         Names of each of the target classes in ascending numerical order.
@@ -174,7 +174,6 @@ def plot_tree(
     >>> clf = clf.fit(iris.data, iris.target)
     >>> tree.plot_tree(clf)
     [...]
-
     """
 
     check_is_fitted(decision_tree)
@@ -291,7 +290,7 @@ class _BaseTreeExporter:
             if self.feature_names is not None:
                 feature = self.feature_names[tree.feature[node_id]]
             else:
-                feature = "X%s%s%s" % (
+                feature = "x%s%s%s" % (
                     characters[1],
                     tree.feature[node_id],
                     characters[2],
@@ -789,7 +788,7 @@ def export_graphviz(
 
     feature_names : list of str, default=None
         Names of each of the features.
-        If None generic names will be used ("feature_0", "feature_1", ...).
+        If None, generic names will be used ("x[0]", "x[1]", ...).
 
     class_names : list of str or bool, default=None
         Names of each of the target classes in ascending numerical order.

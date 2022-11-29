@@ -115,12 +115,7 @@ def one_run(n_samples):
     loss = args.loss
     if args.problem == "classification":
         if loss == "default":
-            # loss='auto' does not work with get_equivalent_estimator()
-            loss = (
-                "binary_crossentropy"
-                if args.n_classes == 2
-                else "categorical_crossentropy"
-            )
+            loss = "log_loss"
     else:
         # regression
         if loss == "default":
@@ -159,7 +154,7 @@ def one_run(n_samples):
     xgb_score_duration = None
     if args.xgboost:
         print("Fitting an XGBoost model...")
-        xgb_est = get_equivalent_estimator(est, lib="xgboost")
+        xgb_est = get_equivalent_estimator(est, lib="xgboost", n_classes=args.n_classes)
 
         tic = time()
         xgb_est.fit(X_train, y_train, sample_weight=sample_weight_train)
@@ -176,7 +171,9 @@ def one_run(n_samples):
     cat_score_duration = None
     if args.catboost:
         print("Fitting a CatBoost model...")
-        cat_est = get_equivalent_estimator(est, lib="catboost")
+        cat_est = get_equivalent_estimator(
+            est, lib="catboost", n_classes=args.n_classes
+        )
 
         tic = time()
         cat_est.fit(X_train, y_train, sample_weight=sample_weight_train)

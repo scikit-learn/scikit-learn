@@ -11,6 +11,7 @@ Ridge regression
 
 from abc import ABCMeta, abstractmethod
 from functools import partial
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
@@ -21,7 +22,7 @@ from scipy import optimize
 from scipy.sparse import linalg as sp_linalg
 
 from ._base import LinearClassifierMixin, LinearModel
-from ._base import _deprecate_normalize, _preprocess_data, _rescale_data
+from ._base import _preprocess_data, _rescale_data
 from ._sag import sag_solver
 from ..base import MultiOutputMixin, RegressorMixin, is_classifier
 from ..utils.extmath import safe_sparse_dot
@@ -33,11 +34,30 @@ from ..utils import compute_sample_weight
 from ..utils import column_or_1d
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_sample_weight
+from ..utils._param_validation import Interval
+from ..utils._param_validation import StrOptions
 from ..preprocessing import LabelBinarizer
 from ..model_selection import GridSearchCV
 from ..metrics import check_scoring
+from ..metrics import get_scorer_names
 from ..exceptions import ConvergenceWarning
 from ..utils.sparsefuncs import mean_variance_axis
+
+
+def _get_rescaled_operator(X, X_offset, sample_weight_sqrt):
+    """Create LinearOperator for matrix products with implicit centering.
+
+    Matrix product `LinearOperator @ coef` returns `(X - X_offset) @ coef`.
+    """
+
+    def matvec(b):
+        return X.dot(b) - sample_weight_sqrt * b.dot(X_offset)
+
+    def rmatvec(b):
+        return X.T.dot(b) - X_offset * b.dot(sample_weight_sqrt)
+
+    X1 = sparse.linalg.LinearOperator(shape=X.shape, matvec=matvec, rmatvec=rmatvec)
+    return X1
 
 
 def _solve_sparse_cg(
@@ -45,7 +65,7 @@ def _solve_sparse_cg(
     y,
     alpha,
     max_iter=None,
-    tol=1e-3,
+    tol=1e-4,
     verbose=0,
     X_offset=None,
     X_scale=None,
@@ -54,25 +74,13 @@ def _solve_sparse_cg(
     if sample_weight_sqrt is None:
         sample_weight_sqrt = np.ones(X.shape[0], dtype=X.dtype)
 
-    def _get_rescaled_operator(X):
-
-        X_offset_scale = X_offset / X_scale
-
-        def matvec(b):
-            return X.dot(b) - sample_weight_sqrt * b.dot(X_offset_scale)
-
-        def rmatvec(b):
-            return X.T.dot(b) - X_offset_scale * b.dot(sample_weight_sqrt)
-
-        X1 = sparse.linalg.LinearOperator(shape=X.shape, matvec=matvec, rmatvec=rmatvec)
-        return X1
-
     n_samples, n_features = X.shape
 
     if X_offset is None or X_scale is None:
         X1 = sp_linalg.aslinearoperator(X)
     else:
-        X1 = _get_rescaled_operator(X)
+        X_offset_scale = X_offset / X_scale
+        X1 = _get_rescaled_operator(X, X_offset_scale, sample_weight_sqrt)
 
     coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
 
@@ -137,7 +145,44 @@ def _solve_sparse_cg(
     return coefs
 
 
-def _solve_lsqr(X, y, alpha, max_iter=None, tol=1e-3):
+def _solve_lsqr(
+    X,
+    y,
+    *,
+    alpha,
+    fit_intercept=True,
+    max_iter=None,
+    tol=1e-4,
+    X_offset=None,
+    X_scale=None,
+    sample_weight_sqrt=None,
+):
+    """Solve Ridge regression via LSQR.
+
+    We expect that y is always mean centered.
+    If X is dense, we expect it to be mean centered such that we can solve
+        ||y - Xw||_2^2 + alpha * ||w||_2^2
+
+    If X is sparse, we expect X_offset to be given such that we can solve
+        ||y - (X - X_offset)w||_2^2 + alpha * ||w||_2^2
+
+    With sample weights S=diag(sample_weight), this becomes
+        ||sqrt(S) (y - (X - X_offset) w)||_2^2 + alpha * ||w||_2^2
+    and we expect y and X to already be rescaled, i.e. sqrt(S) @ y, sqrt(S) @ X. In
+    this case, X_offset is the sample_weight weighted mean of X before scaling by
+    sqrt(S). The objective then reads
+       ||y - (X - sqrt(S) X_offset) w)||_2^2 + alpha * ||w||_2^2
+    """
+    if sample_weight_sqrt is None:
+        sample_weight_sqrt = np.ones(X.shape[0], dtype=X.dtype)
+
+    if sparse.issparse(X) and fit_intercept:
+        X_offset_scale = X_offset / X_scale
+        X1 = _get_rescaled_operator(X, X_offset_scale, sample_weight_sqrt)
+    else:
+        # No need to touch anything
+        X1 = X
+
     n_samples, n_features = X.shape
     coefs = np.empty((y.shape[1], n_features), dtype=X.dtype)
     n_iter = np.empty(y.shape[1], dtype=np.int32)
@@ -148,7 +193,7 @@ def _solve_lsqr(X, y, alpha, max_iter=None, tol=1e-3):
     for i in range(y.shape[1]):
         y_column = y[:, i]
         info = sp_linalg.lsqr(
-            X, y_column, damp=sqrt_alpha[i], atol=tol, btol=tol, iter_lim=max_iter
+            X1, y_column, damp=sqrt_alpha[i], atol=tol, btol=tol, iter_lim=max_iter
         )
         coefs[i] = info[0]
         n_iter[i] = info[2]
@@ -168,12 +213,12 @@ def _solve_cholesky(X, y, alpha):
 
     if one_alpha:
         A.flat[:: n_features + 1] += alpha[0]
-        return linalg.solve(A, Xy, sym_pos=True, overwrite_a=True).T
+        return linalg.solve(A, Xy, assume_a="pos", overwrite_a=True).T
     else:
         coefs = np.empty([n_targets, n_features], dtype=X.dtype)
         for coef, target, current_alpha in zip(coefs, Xy.T, alpha):
             A.flat[:: n_features + 1] += current_alpha
-            coef[:] = linalg.solve(A, target, sym_pos=True, overwrite_a=False).ravel()
+            coef[:] = linalg.solve(A, target, assume_a="pos", overwrite_a=False).ravel()
             A.flat[:: n_features + 1] -= current_alpha
         return coefs
 
@@ -205,7 +250,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
             # Note: we must use overwrite_a=False in order to be able to
             #       use the fall-back solution below in case a LinAlgError
             #       is raised
-            dual_coef = linalg.solve(K, y, sym_pos=True, overwrite_a=False)
+            dual_coef = linalg.solve(K, y, assume_a="pos", overwrite_a=False)
         except np.linalg.LinAlgError:
             warnings.warn(
                 "Singular matrix in solving dual problem. Using "
@@ -229,7 +274,7 @@ def _solve_cholesky_kernel(K, y, alpha, sample_weight=None, copy=False):
             K.flat[:: n_samples + 1] += current_alpha
 
             dual_coef[:] = linalg.solve(
-                K, target, sym_pos=True, overwrite_a=False
+                K, target, assume_a="pos", overwrite_a=False
             ).ravel()
 
             K.flat[:: n_samples + 1] -= current_alpha
@@ -257,7 +302,7 @@ def _solve_lbfgs(
     alpha,
     positive=True,
     max_iter=None,
-    tol=1e-3,
+    tol=1e-4,
     X_offset=None,
     X_scale=None,
     sample_weight_sqrt=None,
@@ -335,7 +380,7 @@ def ridge_regression(
     sample_weight=None,
     solver="auto",
     max_iter=None,
-    tol=1e-3,
+    tol=1e-4,
     verbose=0,
     positive=False,
     random_state=None,
@@ -351,7 +396,7 @@ def ridge_regression(
     ----------
     X : {ndarray, sparse matrix, LinearOperator} of shape \
         (n_samples, n_features)
-        Training data
+        Training data.
 
     y : ndarray of shape (n_samples,) or (n_samples, n_targets)
         Target values.
@@ -382,7 +427,8 @@ def ridge_regression(
         - 'auto' chooses the solver automatically based on the type of data.
 
         - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
-          coefficients. More stable for singular matrices than 'cholesky'.
+          coefficients. It is the most stable solver, in particular more stable
+          for singular matrices than 'cholesky' at the cost of being slower.
 
         - 'cholesky' uses the standard scipy.linalg.solve function to
           obtain a closed-form solution via a Cholesky decomposition of
@@ -409,9 +455,9 @@ def ridge_regression(
           `scipy.optimize.minimize`. It can be used only when `positive`
           is True.
 
-        All last six solvers support both dense and sparse data. However, only
-        'sag', 'sparse_cg', and 'lbfgs' support sparse input when `fit_intercept`
-        is True.
+        All solvers except 'svd' support both dense and sparse data. However, only
+        'lsqr', 'sag', 'sparse_cg', and 'lbfgs' support sparse input when
+        `fit_intercept` is True.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
@@ -424,8 +470,13 @@ def ridge_regression(
         by scipy.sparse.linalg. For 'sag' and saga solver, the default value is
         1000. For 'lbfgs' solver, the default value is 15000.
 
-    tol : float, default=1e-3
-        Precision of the solution.
+    tol : float, default=1e-4
+        Precision of the solution. Note that `tol` has no effect for solvers 'svd' and
+        'cholesky'.
+
+        .. versionchanged:: 1.2
+           Default value changed from 1e-3 to 1e-4 for consistency with other linear
+           models.
 
     verbose : int, default=0
         Verbosity level. Setting verbose > 0 will display additional
@@ -509,7 +560,7 @@ def _ridge_regression(
     sample_weight=None,
     solver="auto",
     max_iter=None,
-    tol=1e-3,
+    tol=1e-4,
     verbose=0,
     positive=False,
     random_state=None,
@@ -518,6 +569,7 @@ def _ridge_regression(
     X_scale=None,
     X_offset=None,
     check_input=True,
+    fit_intercept=False,
 ):
 
     has_sw = sample_weight is not None
@@ -594,7 +646,7 @@ def _ridge_regression(
 
     # Some callers of this method might pass alpha as single
     # element array which already has been validated.
-    if alpha is not None and not isinstance(alpha, (np.ndarray, tuple)):
+    if alpha is not None and not isinstance(alpha, np.ndarray):
         alpha = check_scalar(
             alpha,
             "alpha",
@@ -629,7 +681,17 @@ def _ridge_regression(
         )
 
     elif solver == "lsqr":
-        coef, n_iter = _solve_lsqr(X, y, alpha, max_iter, tol)
+        coef, n_iter = _solve_lsqr(
+            X,
+            y,
+            alpha=alpha,
+            fit_intercept=fit_intercept,
+            max_iter=max_iter,
+            tol=tol,
+            X_offset=X_offset,
+            X_scale=X_scale,
+            sample_weight_sqrt=sample_weight_sqrt if has_sw else None,
+        )
 
     elif solver == "cholesky":
         if n_features > n_samples:
@@ -719,23 +781,37 @@ def _ridge_regression(
 
 
 class _BaseRidge(LinearModel, metaclass=ABCMeta):
+
+    _parameter_constraints: dict = {
+        "alpha": [Interval(Real, 0, None, closed="left"), np.ndarray],
+        "fit_intercept": ["boolean"],
+        "copy_X": ["boolean"],
+        "max_iter": [Interval(Integral, 1, None, closed="left"), None],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "solver": [
+            StrOptions(
+                {"auto", "svd", "cholesky", "lsqr", "sparse_cg", "sag", "saga", "lbfgs"}
+            )
+        ],
+        "positive": ["boolean"],
+        "random_state": ["random_state"],
+    }
+
     @abstractmethod
     def __init__(
         self,
         alpha=1.0,
         *,
         fit_intercept=True,
-        normalize="deprecated",
         copy_X=True,
         max_iter=None,
-        tol=1e-3,
+        tol=1e-4,
         solver="auto",
         positive=False,
         random_state=None,
     ):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.copy_X = copy_X
         self.max_iter = max_iter
         self.tol = tol
@@ -744,10 +820,6 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
-
-        self._normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
-        )
 
         if self.solver == "lbfgs" and not self.positive:
             raise ValueError(
@@ -764,15 +836,15 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
             else:
                 solver = self.solver
         elif sparse.issparse(X) and self.fit_intercept:
-            if self.solver not in ["auto", "sparse_cg", "sag", "lbfgs"]:
+            if self.solver not in ["auto", "lbfgs", "lsqr", "sag", "sparse_cg"]:
                 raise ValueError(
                     "solver='{}' does not support fitting the intercept "
                     "on sparse data. Please set the solver to 'auto' or "
-                    "'sparse_cg', 'sag', 'lbfgs' "
+                    "'lsqr', 'sparse_cg', 'sag', 'lbfgs' "
                     "or set `fit_intercept=False`".format(self.solver)
                 )
-            if self.solver == "lbfgs":
-                solver = "lbfgs"
+            if self.solver in ["lsqr", "lbfgs"]:
+                solver = self.solver
             elif self.solver == "sag" and self.max_iter is None and self.tol > 1e-4:
                 warnings.warn(
                     '"sag" solver requires many iterations to fit '
@@ -790,22 +862,13 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
         if sample_weight is not None:
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        if self.max_iter is not None:
-            self.max_iter = check_scalar(
-                self.max_iter, "max_iter", target_type=numbers.Integral, min_val=1
-            )
-
-        self.tol = check_scalar(self.tol, "tol", target_type=numbers.Real, min_val=0.0)
-
         # when X is sparse we only remove offset from y
         X, y, X_offset, y_offset, X_scale = _preprocess_data(
             X,
             y,
             self.fit_intercept,
-            self._normalize,
-            self.copy_X,
+            copy=self.copy_X,
             sample_weight=sample_weight,
-            return_mean=True,
         )
 
         if solver == "sag" and sparse.issparse(X) and self.fit_intercept:
@@ -847,6 +910,7 @@ class _BaseRidge(LinearModel, metaclass=ABCMeta):
                 return_n_iter=True,
                 return_intercept=False,
                 check_input=False,
+                fit_intercept=self.fit_intercept,
                 **params,
             )
             self._set_intercept(X_offset, y_offset, X_scale)
@@ -888,18 +952,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         to false, no intercept will be used in calculations
         (i.e. ``X`` and ``y`` are expected to be centered).
 
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and
-            will be removed in 1.2.
-
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
@@ -909,8 +961,13 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         by scipy.sparse.linalg. For 'sag' solver, the default value is 1000.
         For 'lbfgs' solver, the default value is 15000.
 
-    tol : float, default=1e-3
-        Precision of the solution.
+    tol : float, default=1e-4
+        Precision of the solution. Note that `tol` has no effect for solvers 'svd' and
+        'cholesky'.
+
+        .. versionchanged:: 1.2
+           Default value changed from 1e-3 to 1e-4 for consistency with other linear
+           models.
 
     solver : {'auto', 'svd', 'cholesky', 'lsqr', 'sparse_cg', \
             'sag', 'saga', 'lbfgs'}, default='auto'
@@ -919,7 +976,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         - 'auto' chooses the solver automatically based on the type of data.
 
         - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
-          coefficients. More stable for singular matrices than 'cholesky'.
+          coefficients. It is the most stable solver, in particular more stable
+          for singular matrices than 'cholesky' at the cost of being slower.
 
         - 'cholesky' uses the standard scipy.linalg.solve function to
           obtain a closed-form solution.
@@ -945,9 +1003,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
           `scipy.optimize.minimize`. It can be used only when `positive`
           is True.
 
-        All last six solvers support both dense and sparse data. However, only
-        'sag', 'sparse_cg', and 'lbfgs' support sparse input when `fit_intercept`
-        is True.
+        All solvers except 'svd' support both dense and sparse data. However, only
+        'lsqr', 'sag', 'sparse_cg', and 'lbfgs' support sparse input when
+        `fit_intercept` is True.
 
         .. versionadded:: 0.17
            Stochastic Average Gradient descent solver.
@@ -1024,10 +1082,9 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         alpha=1.0,
         *,
         fit_intercept=True,
-        normalize="deprecated",
         copy_X=True,
         max_iter=None,
-        tol=1e-3,
+        tol=1e-4,
         solver="auto",
         positive=False,
         random_state=None,
@@ -1035,7 +1092,6 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             copy_X=copy_X,
             max_iter=max_iter,
             tol=tol,
@@ -1064,6 +1120,8 @@ class Ridge(MultiOutputMixin, RegressorMixin, _BaseRidge):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
+
         _accept_sparse = _get_valid_accept_sparse(sparse.issparse(X), self.solver)
         X, y = self._validate_data(
             X,
@@ -1186,18 +1244,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         intercept will be used in calculations (e.g. data is expected to be
         already centered).
 
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and
-            will be removed in 1.2.
-
     copy_X : bool, default=True
         If True, X will be copied; else, it may be overwritten.
 
@@ -1205,8 +1251,13 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         Maximum number of iterations for conjugate gradient solver.
         The default value is determined by scipy.sparse.linalg.
 
-    tol : float, default=1e-3
-        Precision of the solution.
+    tol : float, default=1e-4
+        Precision of the solution. Note that `tol` has no effect for solvers 'svd' and
+        'cholesky'.
+
+        .. versionchanged:: 1.2
+           Default value changed from 1e-3 to 1e-4 for consistency with other linear
+           models.
 
     class_weight : dict or 'balanced', default=None
         Weights associated with classes in the form ``{class_label: weight}``.
@@ -1223,7 +1274,8 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         - 'auto' chooses the solver automatically based on the type of data.
 
         - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
-          coefficients. More stable for singular matrices than 'cholesky'.
+          coefficients. It is the most stable solver, in particular more stable
+          for singular matrices than 'cholesky' at the cost of being slower.
 
         - 'cholesky' uses the standard scipy.linalg.solve function to
           obtain a closed-form solution.
@@ -1312,15 +1364,19 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
     0.9595...
     """
 
+    _parameter_constraints: dict = {
+        **_BaseRidge._parameter_constraints,
+        "class_weight": [dict, StrOptions({"balanced"}), None],
+    }
+
     def __init__(
         self,
         alpha=1.0,
         *,
         fit_intercept=True,
-        normalize="deprecated",
         copy_X=True,
         max_iter=None,
-        tol=1e-3,
+        tol=1e-4,
         class_weight=None,
         solver="auto",
         positive=False,
@@ -1329,7 +1385,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             copy_X=copy_X,
             max_iter=max_iter,
             tol=tol,
@@ -1362,6 +1417,8 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
         self : object
             Instance of the estimator.
         """
+        self._validate_params()
+
         X, y, sample_weight, Y = self._prepare_data(X, y, sample_weight, self.solver)
 
         super().fit(X, Y, sample_weight=sample_weight)
@@ -1369,13 +1426,6 @@ class RidgeClassifier(_RidgeClassifierMixin, _BaseRidge):
 
 
 def _check_gcv_mode(X, gcv_mode):
-    possible_gcv_modes = [None, "auto", "svd", "eigen"]
-    if gcv_mode not in possible_gcv_modes:
-        raise ValueError(
-            "Unknown value for 'gcv_mode'. Got {} instead of one of {}".format(
-                gcv_mode, possible_gcv_modes
-            )
-        )
     if gcv_mode in ["eigen", "svd"]:
         return gcv_mode
     # if X has more rows than columns, use decomposition of X^T.X,
@@ -1540,7 +1590,6 @@ class _RidgeGCV(LinearModel):
         alphas=(0.1, 1.0, 10.0),
         *,
         fit_intercept=True,
-        normalize="deprecated",
         scoring=None,
         copy_X=True,
         gcv_mode=None,
@@ -1550,7 +1599,6 @@ class _RidgeGCV(LinearModel):
     ):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.scoring = scoring
         self.copy_X = copy_X
         self.gcv_mode = gcv_mode
@@ -1886,10 +1934,6 @@ class _RidgeGCV(LinearModel):
         -------
         self : object
         """
-        _normalize = _deprecate_normalize(
-            self.normalize, default=False, estimator_name=self.__class__.__name__
-        )
-
         X, y = self._validate_data(
             X,
             y,
@@ -1913,8 +1957,7 @@ class _RidgeGCV(LinearModel):
             X,
             y,
             self.fit_intercept,
-            _normalize,
-            self.copy_X,
+            copy=self.copy_X,
             sample_weight=sample_weight,
         )
 
@@ -2011,7 +2054,10 @@ class _RidgeGCV(LinearModel):
         self.dual_coef_ = best_coef
         self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
 
-        X_offset += X_mean * X_scale
+        if sparse.issparse(X):
+            X_offset = X_mean * X_scale
+        else:
+            X_offset += X_mean * X_scale
         self._set_intercept(X_offset, y_offset, X_scale)
 
         if self.store_cv_values:
@@ -2025,12 +2071,22 @@ class _RidgeGCV(LinearModel):
 
 
 class _BaseRidgeCV(LinearModel):
+
+    _parameter_constraints: dict = {
+        "alphas": ["array-like", Interval(Real, 0, None, closed="neither")],
+        "fit_intercept": ["boolean"],
+        "scoring": [StrOptions(set(get_scorer_names())), callable, None],
+        "cv": ["cv_object"],
+        "gcv_mode": [StrOptions({"auto", "svd", "eigen"}), None],
+        "store_cv_values": ["boolean"],
+        "alpha_per_target": ["boolean"],
+    }
+
     def __init__(
         self,
         alphas=(0.1, 1.0, 10.0),
         *,
         fit_intercept=True,
-        normalize="deprecated",
         scoring=None,
         cv=None,
         gcv_mode=None,
@@ -2039,7 +2095,6 @@ class _BaseRidgeCV(LinearModel):
     ):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
-        self.normalize = normalize
         self.scoring = scoring
         self.cv = cv
         self.gcv_mode = gcv_mode
@@ -2091,17 +2146,12 @@ class _BaseRidgeCV(LinearModel):
                     alpha = check_scalar_alpha(alpha, f"alphas[{index}]")
             else:
                 self.alphas[0] = check_scalar_alpha(self.alphas[0], "alphas")
-        else:
-            # check for single non-iterable item
-            self.alphas = check_scalar_alpha(self.alphas, "alphas")
-
         alphas = np.asarray(self.alphas)
 
         if cv is None:
             estimator = _RidgeGCV(
                 alphas,
                 fit_intercept=self.fit_intercept,
-                normalize=self.normalize,
                 scoring=self.scoring,
                 gcv_mode=self.gcv_mode,
                 store_cv_values=self.store_cv_values,
@@ -2125,7 +2175,6 @@ class _BaseRidgeCV(LinearModel):
             gs = GridSearchCV(
                 model(
                     fit_intercept=self.fit_intercept,
-                    normalize=self.normalize,
                     solver=solver,
                 ),
                 parameters,
@@ -2157,7 +2206,7 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
 
     Parameters
     ----------
-    alphas : ndarray of shape (n_alphas,), default=(0.1, 1.0, 10.0)
+    alphas : array-like of shape (n_alphas,), default=(0.1, 1.0, 10.0)
         Array of alpha values to try.
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
@@ -2171,18 +2220,6 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
-
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and will be removed in
-            1.2.
 
     scoring : str, callable, default=None
         A string (see model evaluation documentation) or
@@ -2289,6 +2326,40 @@ class RidgeCV(MultiOutputMixin, RegressorMixin, _BaseRidgeCV):
     0.5166...
     """
 
+    def fit(self, X, y, sample_weight=None):
+        """Fit Ridge regression model with cv.
+
+        Parameters
+        ----------
+        X : ndarray of shape (n_samples, n_features)
+            Training data. If using GCV, will be cast to float64
+            if necessary.
+
+        y : ndarray of shape (n_samples,) or (n_samples, n_targets)
+            Target values. Will be cast to X's dtype if necessary.
+
+        sample_weight : float or ndarray of shape (n_samples,), default=None
+            Individual weights for each sample. If given a float, every sample
+            will have the same weight.
+
+        Returns
+        -------
+        self : object
+            Fitted estimator.
+
+        Notes
+        -----
+        When sample_weight is provided, the selected hyperparameter may depend
+        on whether we use leave-one-out cross-validation (cv=None or cv='auto')
+        or another form of cross-validation, because only leave-one-out
+        cross-validation takes the sample weights into account when computing
+        the validation score.
+        """
+        self._validate_params()
+
+        super().fit(X, y, sample_weight=sample_weight)
+        return self
+
 
 class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
     """Ridge classifier with built-in cross-validation.
@@ -2302,7 +2373,7 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
 
     Parameters
     ----------
-    alphas : ndarray of shape (n_alphas,), default=(0.1, 1.0, 10.0)
+    alphas : array-like of shape (n_alphas,), default=(0.1, 1.0, 10.0)
         Array of alpha values to try.
         Regularization strength; must be a positive float. Regularization
         improves the conditioning of the problem and reduces the variance of
@@ -2315,18 +2386,6 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         Whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (i.e. data is expected to be centered).
-
-    normalize : bool, default=False
-        This parameter is ignored when ``fit_intercept`` is set to False.
-        If True, the regressors X will be normalized before regression by
-        subtracting the mean and dividing by the l2-norm.
-        If you wish to standardize, please use
-        :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
-        on an estimator with ``normalize=False``.
-
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0 and
-            will be removed in 1.2.
 
     scoring : str, callable, default=None
         A string (see model evaluation documentation) or
@@ -2420,12 +2479,18 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
     0.9630...
     """
 
+    _parameter_constraints: dict = {
+        **_BaseRidgeCV._parameter_constraints,
+        "class_weight": [dict, StrOptions({"balanced"}), None],
+    }
+    for param in ("gcv_mode", "alpha_per_target"):
+        _parameter_constraints.pop(param)
+
     def __init__(
         self,
         alphas=(0.1, 1.0, 10.0),
         *,
         fit_intercept=True,
-        normalize="deprecated",
         scoring=None,
         cv=None,
         class_weight=None,
@@ -2434,7 +2499,6 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         super().__init__(
             alphas=alphas,
             fit_intercept=fit_intercept,
-            normalize=normalize,
             scoring=scoring,
             cv=cv,
             store_cv_values=store_cv_values,
@@ -2463,6 +2527,8 @@ class RidgeClassifierCV(_RidgeClassifierMixin, _BaseRidgeCV):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
+
         # `RidgeClassifier` does not accept "sag" or "saga" solver and thus support
         # csr, csc, and coo sparse matrices. By using solver="eigen" we force to accept
         # all sparse format.

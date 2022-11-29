@@ -30,7 +30,7 @@ import matplotlib.pyplot as plt
 
 from sklearn import ensemble
 from sklearn import datasets
-
+from sklearn.metrics import log_loss
 from sklearn.model_selection import train_test_split
 
 X, y = datasets.make_hastie_10_2(n_samples=4000, random_state=1)
@@ -74,9 +74,8 @@ for label, color, setting in [
     # compute test set deviance
     test_deviance = np.zeros((params["n_estimators"],), dtype=np.float64)
 
-    for i, y_pred in enumerate(clf.staged_decision_function(X_test)):
-        # clf.loss_ assumes that y_test[i] in {0, 1}
-        test_deviance[i] = clf.loss_(y_test, y_pred)
+    for i, y_proba in enumerate(clf.staged_predict_proba(X_test)):
+        test_deviance[i] = 2 * log_loss(y_test, y_proba[:, 1])
 
     plt.plot(
         (np.arange(test_deviance.shape[0]) + 1)[::5],
@@ -86,7 +85,7 @@ for label, color, setting in [
         label=label,
     )
 
-plt.legend(loc="upper left")
+plt.legend(loc="upper right")
 plt.xlabel("Boosting Iterations")
 plt.ylabel("Test Set Deviance")
 

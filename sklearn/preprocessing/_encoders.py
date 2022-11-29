@@ -3,16 +3,17 @@
 # License: BSD 3 clause
 
 import numbers
+from numbers import Integral, Real
 import warnings
 
 import numpy as np
 from scipy import sparse
 
-from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
-from ..utils import check_array, is_scalar_nan
-from ..utils.deprecation import deprecated
+from ..base import BaseEstimator, TransformerMixin, OneToOneFeatureMixin
+from ..utils import check_array, is_scalar_nan, _safe_indexing
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
+from ..utils._param_validation import Interval, StrOptions, Hidden
 from ..utils._mask import _get_mask
 
 from ..utils._encode import _encode, _check_unknown, _unique, _get_counts
@@ -57,20 +58,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         X_columns = []
 
         for i in range(n_features):
-            Xi = self._get_feature(X, feature_idx=i)
+            Xi = _safe_indexing(X, indices=i, axis=1)
             Xi = check_array(
                 Xi, ensure_2d=False, dtype=None, force_all_finite=needs_validation
             )
             X_columns.append(Xi)
 
         return X_columns, n_samples, n_features
-
-    def _get_feature(self, X, feature_idx):
-        if hasattr(X, "iloc"):
-            # pandas dataframes
-            return X.iloc[:, feature_idx]
-        # numpy arrays, sparse arrays
-        return X[:, feature_idx]
 
     def _fit(
         self, X, handle_unknown="error", force_all_finite=True, return_counts=False
@@ -206,7 +200,7 @@ class OneHotEncoder(_BaseEncoder):
     strings, denoting the values taken on by categorical (discrete) features.
     The features are encoded using a one-hot (aka 'one-of-K' or 'dummy')
     encoding scheme. This creates a binary column for each category and
-    returns a sparse matrix or dense array (depending on the ``sparse``
+    returns a sparse matrix or dense array (depending on the ``sparse_output``
     parameter)
 
     By default, the encoder derives the categories based on the unique values
@@ -268,6 +262,16 @@ class OneHotEncoder(_BaseEncoder):
     sparse : bool, default=True
         Will return sparse matrix if set True else will return an array.
 
+        .. deprecated:: 1.2
+           `sparse` is deprecated in 1.2 and will be removed in 1.4. Use
+           `sparse_output` instead.
+
+    sparse_output : bool, default=True
+        Will return sparse matrix if set True else will return an array.
+
+        .. versionadded:: 1.2
+           `sparse` was renamed to `sparse_output`
+
     dtype : number type, default=float
         Desired dtype of output.
 
@@ -328,7 +332,7 @@ class OneHotEncoder(_BaseEncoder):
         (if any).
 
     drop_idx_ : array of shape (n_features,)
-        - ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category
+        - ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category
           to be dropped for each feature.
         - ``drop_idx_[i] = None`` if no category is to be dropped from the
           feature with index ``i``, e.g. when `drop='if_binary'` and the
@@ -422,7 +426,7 @@ class OneHotEncoder(_BaseEncoder):
 
     >>> import numpy as np
     >>> X = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3], dtype=object).T
-    >>> ohe = OneHotEncoder(max_categories=3, sparse=False).fit(X)
+    >>> ohe = OneHotEncoder(max_categories=3, sparse_output=False).fit(X)
     >>> ohe.infrequent_categories_
     [array(['a', 'd'], dtype=object)]
     >>> ohe.transform([["a"], ["b"]])
@@ -430,19 +434,37 @@ class OneHotEncoder(_BaseEncoder):
            [1., 0., 0.]])
     """
 
+    _parameter_constraints: dict = {
+        "categories": [StrOptions({"auto"}), list],
+        "drop": [StrOptions({"first", "if_binary"}), "array-like", None],
+        "dtype": "no_validation",  # validation delegated to numpy
+        "handle_unknown": [StrOptions({"error", "ignore", "infrequent_if_exist"})],
+        "max_categories": [Interval(Integral, 1, None, closed="left"), None],
+        "min_frequency": [
+            Interval(Integral, 1, None, closed="left"),
+            Interval(Real, 0, 1, closed="neither"),
+            None,
+        ],
+        "sparse": [Hidden(StrOptions({"deprecated"})), "boolean"],  # deprecated
+        "sparse_output": ["boolean"],
+    }
+
     def __init__(
         self,
         *,
         categories="auto",
         drop=None,
-        sparse=True,
+        sparse="deprecated",
+        sparse_output=True,
         dtype=np.float64,
         handle_unknown="error",
         min_frequency=None,
         max_categories=None,
     ):
         self.categories = categories
+        # TODO(1.4): Remove self.sparse
         self.sparse = sparse
+        self.sparse_output = sparse_output
         self.dtype = dtype
         self.handle_unknown = handle_unknown
         self.drop = drop
@@ -459,33 +481,11 @@ class OneHotEncoder(_BaseEncoder):
             for category, indices in zip(self.categories_, infrequent_indices)
         ]
 
-    def _validate_keywords(self):
-
-        if self.handle_unknown not in {"error", "ignore", "infrequent_if_exist"}:
-            msg = (
-                "handle_unknown should be one of 'error', 'ignore', "
-                f"'infrequent_if_exist' got {self.handle_unknown}."
-            )
-            raise ValueError(msg)
-
-        if self.max_categories is not None and self.max_categories < 1:
-            raise ValueError("max_categories must be greater than 1")
-
-        if isinstance(self.min_frequency, numbers.Integral):
-            if not self.min_frequency >= 1:
-                raise ValueError(
-                    "min_frequency must be an integer at least "
-                    "1 or a float in (0.0, 1.0); got the "
-                    f"integer {self.min_frequency}"
-                )
-        elif isinstance(self.min_frequency, numbers.Real):
-            if not (0.0 < self.min_frequency < 1.0):
-                raise ValueError(
-                    "min_frequency must be an integer at least "
-                    "1 or a float in (0.0, 1.0); got the "
-                    f"float {self.min_frequency}"
-                )
-
+    def _check_infrequent_enabled(self):
+        """
+        This functions checks whether _infrequent_enabled is True or False.
+        This has to be called after parameter validation in the fit function.
+        """
         self._infrequent_enabled = (
             self.max_categories is not None and self.max_categories >= 1
         ) or self.min_frequency is not None
@@ -547,23 +547,11 @@ class OneHotEncoder(_BaseEncoder):
                     ],
                     dtype=object,
                 )
-            else:
-                msg = (
-                    "Wrong input for parameter `drop`. Expected "
-                    "'first', 'if_binary', None or array of objects, got {}"
-                )
-                raise ValueError(msg.format(type(self.drop)))
 
         else:
-            try:
-                drop_array = np.asarray(self.drop, dtype=object)
-                droplen = len(drop_array)
-            except (ValueError, TypeError):
-                msg = (
-                    "Wrong input for parameter `drop`. Expected "
-                    "'first', 'if_binary', None or array of objects, got {}"
-                )
-                raise ValueError(msg.format(type(drop_array)))
+            drop_array = np.asarray(self.drop, dtype=object)
+            droplen = len(drop_array)
+
             if droplen != len(self.categories_):
                 msg = (
                     "`drop` should have length equal to the number "
@@ -664,7 +652,7 @@ class OneHotEncoder(_BaseEncoder):
         to a single output:
         `_default_to_infrequent_mappings[7] = array([0, 3, 1, 3, 2, 3])`
 
-        Defines private attrite: `_infrequent_indices`. `_infrequent_indices[i]`
+        Defines private attribute: `_infrequent_indices`. `_infrequent_indices[i]`
         is an array of indices such that
         `categories_[i][_infrequent_indices[i]]` are all the infrequent category
         labels. If the feature `i` has no infrequent categories
@@ -814,7 +802,19 @@ class OneHotEncoder(_BaseEncoder):
         self
             Fitted encoder.
         """
-        self._validate_keywords()
+        self._validate_params()
+
+        if self.sparse != "deprecated":
+            warnings.warn(
+                "`sparse` was renamed to `sparse_output` in version 1.2 and "
+                "will be removed in 1.4. `sparse_output` is ignored unless you "
+                "leave `sparse` to its default value.",
+                FutureWarning,
+            )
+            self.sparse_output = self.sparse
+
+        self._check_infrequent_enabled()
+
         fit_results = self._fit(
             X,
             handle_unknown=self.handle_unknown,
@@ -828,31 +828,6 @@ class OneHotEncoder(_BaseEncoder):
         self.drop_idx_ = self._compute_drop_idx()
         self._n_features_outs = self._compute_n_features_outs()
         return self
-
-    def fit_transform(self, X, y=None):
-        """
-        Fit OneHotEncoder to X, then transform X.
-
-        Equivalent to fit(X).transform(X) but more convenient.
-
-        Parameters
-        ----------
-        X : array-like of shape (n_samples, n_features)
-            The data to encode.
-
-        y : None
-            Ignored. This parameter exists only for compatibility with
-            :class:`~sklearn.pipeline.Pipeline`.
-
-        Returns
-        -------
-        X_out : {ndarray, sparse matrix} of shape \
-                (n_samples, n_encoded_features)
-            Transformed input. If `sparse=True`, a sparse matrix will be
-            returned.
-        """
-        self._validate_keywords()
-        return super().fit_transform(X, y)
 
     def transform(self, X):
         """
@@ -870,7 +845,7 @@ class OneHotEncoder(_BaseEncoder):
         -------
         X_out : {ndarray, sparse matrix} of shape \
                 (n_samples, n_encoded_features)
-            Transformed input. If `sparse=True`, a sparse matrix will be
+            Transformed input. If `sparse_output=True`, a sparse matrix will be
             returned.
         """
         check_is_fitted(self)
@@ -919,7 +894,7 @@ class OneHotEncoder(_BaseEncoder):
             shape=(n_samples, feature_indices[-1]),
             dtype=self.dtype,
         )
-        if not self.sparse:
+        if not self.sparse_output:
             return out.toarray()
         else:
             return out
@@ -968,7 +943,7 @@ class OneHotEncoder(_BaseEncoder):
         ]
 
         # create resulting array of appropriate dtype
-        dt = np.find_common_type([cat.dtype for cat in transformed_features], [])
+        dt = np.result_type(*[cat.dtype for cat in transformed_features])
         X_tr = np.empty((n_samples, n_features), dtype=dt)
 
         j = 0
@@ -1038,47 +1013,6 @@ class OneHotEncoder(_BaseEncoder):
 
         return X_tr
 
-    @deprecated(
-        "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. Please use get_feature_names_out instead."
-    )
-    def get_feature_names(self, input_features=None):
-        """Return feature names for output features.
-
-        For a given input feature, if there is an infrequent category, the most
-        'infrequent_sklearn' will be used as a feature name.
-
-        Parameters
-        ----------
-        input_features : list of str of shape (n_features,)
-            String names for input features if available. By default,
-            "x0", "x1", ... "xn_features" is used.
-
-        Returns
-        -------
-        output_feature_names : ndarray of shape (n_output_features,)
-            Array of feature names.
-        """
-        check_is_fitted(self)
-        cats = [
-            self._compute_transformed_categories(i)
-            for i, _ in enumerate(self.categories_)
-        ]
-        if input_features is None:
-            input_features = ["x%d" % i for i in range(len(cats))]
-        elif len(input_features) != len(cats):
-            raise ValueError(
-                "input_features should have length equal to number of "
-                "features ({}), got {}".format(len(cats), len(input_features))
-            )
-
-        feature_names = []
-        for i in range(len(cats)):
-            names = [input_features[i] + "_" + str(t) for t in cats[i]]
-            feature_names.extend(names)
-
-        return np.array(feature_names, dtype=object)
-
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
@@ -1114,7 +1048,7 @@ class OneHotEncoder(_BaseEncoder):
         return np.array(feature_names, dtype=object)
 
 
-class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
+class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     """
     Encode categorical features as an integer array.
 
@@ -1190,6 +1124,13 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
     LabelEncoder : Encodes target labels with values between 0 and
         ``n_classes-1``.
 
+    Notes
+    -----
+    With a high proportion of `nan` values, inferring categories becomes slow with
+    Python versions before 3.10. The handling of `nan` values was improved
+    from Python 3.10 onwards, (c.f.
+    `bpo-43475 <https://github.com/python/cpython/issues/87641>`_).
+
     Examples
     --------
     Given a dataset with two features, we let the encoder find the unique
@@ -1228,6 +1169,14 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
            [ 0., -1.]])
     """
 
+    _parameter_constraints: dict = {
+        "categories": [StrOptions({"auto"}), list],
+        "dtype": "no_validation",  # validation delegated to numpy
+        "encoded_missing_value": [Integral, type(np.nan)],
+        "handle_unknown": [StrOptions({"error", "use_encoded_value"})],
+        "unknown_value": [Integral, type(np.nan), None],
+    }
+
     def __init__(
         self,
         *,
@@ -1261,12 +1210,7 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
         self : object
             Fitted encoder.
         """
-        handle_unknown_strategies = ("error", "use_encoded_value")
-        if self.handle_unknown not in handle_unknown_strategies:
-            raise ValueError(
-                "handle_unknown should be either 'error' or "
-                f"'use_encoded_value', got {self.handle_unknown}."
-            )
+        self._validate_params()
 
         if self.handle_unknown == "use_encoded_value":
             if is_scalar_nan(self.unknown_value):
@@ -1402,25 +1346,29 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
             raise ValueError(msg.format(n_features, X.shape[1]))
 
         # create resulting array of appropriate dtype
-        dt = np.find_common_type([cat.dtype for cat in self.categories_], [])
+        dt = np.result_type(*[cat.dtype for cat in self.categories_])
         X_tr = np.empty((n_samples, n_features), dtype=dt)
 
         found_unknown = {}
 
         for i in range(n_features):
-            labels = X[:, i].astype("int64", copy=False)
+            labels = X[:, i]
 
             # replace values of X[:, i] that were nan with actual indices
             if i in self._missing_indices:
-                X_i_mask = _get_mask(X[:, i], self.encoded_missing_value)
+                X_i_mask = _get_mask(labels, self.encoded_missing_value)
                 labels[X_i_mask] = self._missing_indices[i]
 
             if self.handle_unknown == "use_encoded_value":
-                unknown_labels = labels == self.unknown_value
-                X_tr[:, i] = self.categories_[i][np.where(unknown_labels, 0, labels)]
+                unknown_labels = _get_mask(labels, self.unknown_value)
+
+                known_labels = ~unknown_labels
+                X_tr[known_labels, i] = self.categories_[i][
+                    labels[known_labels].astype("int64", copy=False)
+                ]
                 found_unknown[i] = unknown_labels
             else:
-                X_tr[:, i] = self.categories_[i][labels]
+                X_tr[:, i] = self.categories_[i][labels.astype("int64", copy=False)]
 
         # insert None values for unknown values
         if found_unknown:

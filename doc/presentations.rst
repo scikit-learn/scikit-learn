@@ -9,7 +9,7 @@ New to Scientific Python?
 ==========================
 For those that are still new to the scientific Python ecosystem, we highly
 recommend the `Python Scientific Lecture Notes
-<https://www.scipy-lectures.org/>`_. This will help you find your footing a
+<https://scipy-lectures.org>`_. This will help you find your footing a
 bit and will definitely improve your scikit-learn experience.  A basic
 understanding of NumPy arrays is recommended to make the most of scikit-learn.
 
@@ -63,7 +63,7 @@ Videos
 
     3-hours long introduction to prediction tasks using scikit-learn.
 
-- `scikit-learn - Machine Learning in Python <https://newcircle.com/s/post/1152/scikit-learn_machine_learning_in_python>`_
+- `scikit-learn - Machine Learning in Python <https://www.youtube.com/watch?v=cHZONQ2-x7I>`_
   by `Jake Vanderplas`_ at the 2012 PyData workshop at Google
 
     Interactive demonstration of some scikit-learn features. 75 minutes.
@@ -73,6 +73,6 @@ Videos
     Presentation using the online tutorial, 45 minutes.
 
 
-.. _Gael Varoquaux: http://gael-varoquaux.info
-.. _Jake Vanderplas: https://staff.washington.edu/jakevdp
+.. _Gael Varoquaux: https://gael-varoquaux.info
+.. _Jake Vanderplas: http://www.vanderplas.com
 .. _Olivier Grisel: https://twitter.com/ogrisel

@@ -13,7 +13,7 @@ Visualizations
 Scikit-learn defines a simple API for creating visualizations for machine
 learning. The key feature of this API is to allow for quick plotting and
 visual adjustments without recalculation. We provide `Display` classes that
-exposes two methods allowing to make the plotting: `from_estimator` and
+expose two methods for creating plots: `from_estimator` and
 `from_predictions`. The `from_estimator` method will take a fitted estimator
 and some data (`X` and `y`) and create a `Display` object. Sometimes, we would
 like to only compute the predictions once and one should use `from_predictions`
@@ -21,7 +21,7 @@ instead. In the following example, we plot a ROC curve for a fitted support
 vector machine:
 
 .. plot::
-   :context:
+   :context: close-figs
    :align: center
 
     from sklearn.model_selection import train_test_split
@@ -42,7 +42,7 @@ ROC curve for SVC in future plots. In this case, the `svc_disp` is a
 :class:`~sklearn.metrics.RocCurveDisplay` that stores the computed values as
 attributes called `roc_auc`, `fpr`, and `tpr`. Be aware that we could get
 the predictions from the support vector machine and then use `from_predictions`
-instead of `from_estimator` Next, we train a random forest classifier and plot
+instead of `from_estimator`. Next, we train a random forest classifier and plot
 the previously computed roc curve again by using the `plot` method of the
 `Display` object.
 
@@ -73,20 +73,6 @@ values of the curves.
 Available Plotting Utilities
 ============================
 
-Functions
----------
-
-.. currentmodule:: sklearn
-
-.. autosummary::
-
-   inspection.plot_partial_dependence
-   metrics.plot_confusion_matrix
-   metrics.plot_det_curve
-   metrics.plot_precision_recall_curve
-   metrics.plot_roc_curve
-
-
 Display Objects
 ---------------
 
@@ -96,7 +82,10 @@ Display Objects
 
    calibration.CalibrationDisplay
    inspection.PartialDependenceDisplay
+   inspection.DecisionBoundaryDisplay
    metrics.ConfusionMatrixDisplay
    metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
+   metrics.PredictionErrorDisplay
    metrics.RocCurveDisplay
+   model_selection.LearningCurveDisplay
