@@ -698,7 +698,7 @@ Changelog
 
 - |Enhancement| :func:`utils.extmath.cartesian` now accepts arrays with different
   `dtype` and will cast the ouptut to the most permissive `dtype`.
-  :pr:`xxx` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`25067` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| :func:`utils.multiclass.type_of_target` now properly handles sparse matrices.
   :pr:`14862` by :user:`Léonard Binet <leonardbinet>`.
