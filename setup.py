@@ -499,8 +499,14 @@ def configure_extension_modules():
 
     is_pypy = platform.python_implementation() == "PyPy"
     np_include = numpy.get_include()
-    default_libraries = ["m"] if os.name == "posix" else []
-    default_extra_compile_args = ["-O3"]
+
+    optimization_level = "O2"
+    if os.name == "posix":
+        default_extra_compile_args = [f"-{optimization_level}"]
+        default_libraries = ["m"]
+    else:
+        default_extra_compile_args = [f"/{optimization_level}"]
+        default_libraries = []
 
     cython_exts = []
     for submodule, extensions in extension_config.items():
@@ -610,9 +616,8 @@ def setup_package():
         cmdclass=cmdclass,
         python_requires=python_requires,
         install_requires=min_deps.tag_to_packages["install"],
-        package_data={"": ["*.pxd"]},
+        package_data={"": ["*.csv", "*.gz", "*.txt", "*.pxd", "*.rst", "*.jpg"]},
         zip_safe=False,  # the package can run out of an .egg file
-        include_package_data=True,
         extras_require={
             key: min_deps.tag_to_packages[key]
             for key in ["examples", "docs", "tests", "benchmark"]
