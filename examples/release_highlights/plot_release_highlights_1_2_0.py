@@ -120,7 +120,7 @@ model = make_pipeline(
 # %%
 from sklearn.inspection import PartialDependenceDisplay
 
-fig, ax = plt.subplots(figsize=(12, 4))
+fig, ax = plt.subplots(figsize=(14, 4), constrained_layout=True)
 _ = PartialDependenceDisplay.from_estimator(
     model,
     X,
