@@ -358,8 +358,8 @@ class HDBSCAN(ClusterMixin, BaseEstimator):
         If `copy=True` then any time an in-place modifications would be made
         that would overwrite data passed to :term:`fit`, a copy will first be
         made, guaranteeing that the original data will be unchanged.
-        Currently, it only applies with `metric="precomputed"`, passing a dense
-        array or a sparse matrix of format CSR and algorithm used is `"brute"`.
+        Currently, it only applies when `metric="precomputed"`, when passing
+        a dense array or a CSR sparse matrix and when `algorithm="brute"`.
 
     Attributes
     ----------
