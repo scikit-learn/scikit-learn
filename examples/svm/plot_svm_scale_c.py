@@ -36,10 +36,10 @@ will influence the selected value of `C`.
 The question that arises is "How do we optimally adjust C to
 account for the different amount of training samples?"
 
-In the remainder of this example, we will investigate the effect of scaling
-the value of the regularization parameter `C` in regards to the number of
-samples for both L1 and L2 penalty. We will generate some synthetic datasets
-that are appropriate for each type of regularization.
+In this example we investigate the effect of scaling the regularization
+parameter `C` in regards to the number of samples for both L1 and L2 penalty.
+For such purpose we generate appropriate synthetic datasets for each type of
+regularization.
 """
 
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
@@ -56,9 +56,9 @@ that are appropriate for each type of regularization.
 # of non-zero parameters as well as their signs, can be achieved by scaling
 # `C`.
 #
-# We will demonstrate this effect by using a synthetic dataset. This
-# dataset will be sparse, meaning that only a few features will be informative
-# and useful for the model.
+# We demonstrate this effect by using a synthetic dataset with a large number of
+# features, out of which only a few will be informative. As a consequence, the
+# data will be sparse.
 from sklearn.datasets import make_classification
 
 n_samples, n_features = 100, 300
@@ -103,8 +103,9 @@ axes[0].set_title("No scaling")
 
 # plot results by scaling C
 for train_size_idx, label in enumerate(labels):
+    train_size = train_sizes[train_size_idx]
     results_scaled = results[[label]].assign(
-        C_scaled=Cs * float(n_samples * train_sizes[train_size_idx])
+        C_scaled=Cs * float(n_samples * train_size)
     )
     results_scaled.plot(x="C_scaled", ax=axes[1], logx=True, label=label)
 axes[1].set_title("Scaling C by 1 / n_samples")
@@ -113,7 +114,7 @@ _ = fig.suptitle("Effect of scaling C with L1 penalty")
 
 # %%
 # Here, we observe that the cross-validation-error correlates best with the
-# test-error, when scaling our `C` with the number of samples, `n`.
+# test-error, when scaling our `C` by the number of training samples.
 #
 # L2-penalty case
 # ---------------
@@ -164,9 +165,9 @@ for train_size_idx, label in enumerate(labels):
     results_scaled.plot(x="C_scaled", ax=axes[1], logx=True, label=label)
 axes[1].set_title("Scaling C by 1 / n_samples")
 
-_ = fig.suptitle("Effect of scaling C with L2 penalty")
+fig.suptitle("Effect of scaling C with L2 penalty")
+plt.show()
 
 # %%
-# So or the L2 penalty case, the best result comes from the case where `C` is
+# For the L2 penalty case, the best result comes from the case where `C` is
 # not scaled.
-plt.show()
