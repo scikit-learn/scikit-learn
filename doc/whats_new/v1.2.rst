@@ -15,7 +15,7 @@ Changelog
 
 - |Fix| :func:`utils.check_array` now supports Pandas Series with `pd.NA`
   by raising a better error message or returning a compatible `ndarray`.
-  :pr:`xxxxx` by `Thomas Fan`_.
+  :pr:`25080` by `Thomas Fan`_.
 
 .. _changes_1_2:
 
