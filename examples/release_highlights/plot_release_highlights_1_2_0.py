@@ -120,11 +120,13 @@ model = make_pipeline(
 # %%
 from sklearn.inspection import PartialDependenceDisplay
 
+fig, ax = plt.subplots(figsize=(12, 4))
 _ = PartialDependenceDisplay.from_estimator(
     model,
     X,
-    features=["sex", ("pclass", "sex")],
+    features=["age", "sex", ("pclass", "sex")],
     categorical_features=categorical_features,
+    ax=ax,
 )
 
 # %%
