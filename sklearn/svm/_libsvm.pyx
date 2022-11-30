@@ -247,7 +247,10 @@ def fit(
 
     cdef cnp.int32_t[::1] support
     support = np.empty (SV_len, dtype=np.int32)
-    copy_support (<char*> &support[0], model)
+    copy_support (
+        <char*> &support[0] if support.size > 0 else NULL,
+        model
+    )
 
     # copy model.SV
     cdef cnp.float64_t[:, ::1] support_vectors
