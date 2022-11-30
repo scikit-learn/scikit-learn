@@ -259,12 +259,19 @@ def fit(
         support_vectors = np.empty((0, 0), dtype=np.float64)
     else:
         support_vectors = np.empty((SV_len, X.shape[1]), dtype=np.float64)
-        copy_SV(<char*> &support_vectors[0, 0], model, <cnp.npy_intp*> support_vectors.shape)
+        copy_SV(
+            <char*> &support_vectors[0, 0] if support_vectors.size > 0 else NULL,
+            model,
+            <cnp.npy_intp*> support_vectors.shape
+        )
 
     cdef cnp.int32_t[::1] n_class_SV
     if svm_type == 0 or svm_type == 1:
         n_class_SV = np.empty(n_class, dtype=np.int32)
-        copy_nSV(<char*> &n_class_SV[0], model)
+        copy_nSV(
+            <char*> &n_class_SV[0] if n_class_SV.size > 0 else NULL,
+            model
+        )
     else:
         # OneClass and SVR are considered to have 2 classes
         n_class_SV = np.array([SV_len, SV_len], dtype=np.int32)
