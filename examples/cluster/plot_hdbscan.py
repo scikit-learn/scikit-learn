@@ -216,8 +216,9 @@ for i, param in enumerate(PARAM):
 # %%
 # `dbscan_clustering`
 # ^^^^^^^^^^^^^^^^^^^
-# When fitting `HDBSCAN` we build a single-linkage tree which encodes the
-# clustering of all points across all values of the DBSCAN* `eps` parameter.
+# During `fit`, `HDBSCAN` builds a single-linkage tree which encodes the
+# clustering of all points across all values of :class:`~cluster.DBSCAN`'s
+# `eps` parameter.
 # We can thus plot and evaluate these clusterings efficiently without fully
 # recomputing intermediate values such as core-distances, mutual-reachability,
 # and the minimum spanning tree. All we need to do is specify the `cut_distance`
