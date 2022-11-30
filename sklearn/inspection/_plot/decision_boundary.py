@@ -6,7 +6,9 @@ from ...preprocessing import LabelEncoder
 from ...utils import check_matplotlib_support
 from ...utils import _safe_indexing
 from ...base import is_regressor
-from ...utils.validation import check_is_fitted, _is_arraylike_not_scalar
+from ...utils.validation import check_is_fitted
+from ...utils.validation import _is_arraylike_not_scalar
+from ...utils.validation import _num_features
 
 
 def _check_boundary_response_method(estimator, response_method):
@@ -316,6 +318,12 @@ class DecisionBoundaryDisplay:
                 f"Got {plot_method} instead."
             )
 
+        num_features = _num_features(X)
+        if num_features != 2:
+            raise ValueError(
+                f"n_features must be equal to 2. Got {num_features} instead."
+            )
+
         x0, x1 = _safe_indexing(X, 0, axis=1), _safe_indexing(X, 1, axis=1)
 
         x0_min, x0_max = x0.min() - eps, x0.max() + eps
@@ -326,11 +334,6 @@ class DecisionBoundaryDisplay:
             np.linspace(x1_min, x1_max, grid_resolution),
         )
         if hasattr(X, "iloc"):
-            _, features_to_plot = X.shape
-            if features_to_plot != 2:
-                raise ValueError(
-                    f"n_features must be equal to 2. Got {features_to_plot} instead."
-                )
             # we need to preserve the feature names and therefore get an empty dataframe
             X_grid = X.iloc[[], :].copy()
             X_grid.iloc[:, 0] = xx0.ravel()
