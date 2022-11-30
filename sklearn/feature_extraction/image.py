@@ -142,7 +142,7 @@ def _to_graph(
     {
         "img": ["array-like"],
         "mask": [None, np.ndarray],
-        "return_as": [type(np.ndarray), type(sparse.spmatrix)],
+        "return_as": [type],
         "dtype": "no_validation",  # validation delegated to numpy
     }
 )
