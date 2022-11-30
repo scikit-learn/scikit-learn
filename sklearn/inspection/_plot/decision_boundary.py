@@ -6,9 +6,11 @@ from ...preprocessing import LabelEncoder
 from ...utils import check_matplotlib_support
 from ...utils import _safe_indexing
 from ...base import is_regressor
-from ...utils.validation import check_is_fitted
-from ...utils.validation import _is_arraylike_not_scalar
-from ...utils.validation import _num_features
+from ...utils.validation import (
+    check_is_fitted,
+    _is_arraylike_not_scalar,
+    _num_features,
+)
 
 
 def _check_boundary_response_method(estimator, response_method):
