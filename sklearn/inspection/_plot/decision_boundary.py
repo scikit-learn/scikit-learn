@@ -4,6 +4,7 @@ import numpy as np
 
 from ...preprocessing import LabelEncoder
 from ...utils import check_matplotlib_support
+from ...utils import check_array
 from ...utils import _safe_indexing
 from ...base import is_regressor
 from ...utils.validation import check_is_fitted, _is_arraylike_not_scalar
@@ -296,6 +297,7 @@ class DecisionBoundaryDisplay:
         """
         check_matplotlib_support(f"{cls.__name__}.from_estimator")
         check_is_fitted(estimator)
+        X = check_array(X)
 
         if not grid_resolution > 1:
             raise ValueError(
