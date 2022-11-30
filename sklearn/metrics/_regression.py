@@ -42,6 +42,7 @@ from ..utils.validation import (
     _check_sample_weight,
 )
 from ..utils.stats import _weighted_percentile
+from ..utils._param_validation import validate_params, StrOptions
 
 
 __ALL__ = [
@@ -138,6 +139,14 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
     return y_type, y_true, y_pred, multioutput
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+    }
+)
 def mean_absolute_error(
     y_true, y_pred, *, sample_weight=None, multioutput="uniform_average"
 ):
