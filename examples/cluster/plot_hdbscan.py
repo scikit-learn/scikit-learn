@@ -227,9 +227,9 @@ for i, param in enumerate(PARAM):
 # noise.
 
 PARAM = (
-    {"cut_distance": 0.1, "min_cluster_size": 5},
-    {"cut_distance": 0.5, "min_cluster_size": 10},
-    {"cut_distance": 1.0, "min_cluster_size": 2},
+    {"cut_distance": 0.1},
+    {"cut_distance": 0.5},
+    {"cut_distance": 1.0},
 )
 hdb = HDBSCAN()
 hdb.fit(X)
