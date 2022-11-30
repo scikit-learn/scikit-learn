@@ -335,8 +335,8 @@ TODO: html report, type declarations, bound checks, division by zero checks,
 memory alignment, direct blas calls...
 
 - https://www.youtube.com/watch?v=gMvkiQ-gOW8
-- http://conference.scipy.org/proceedings/SciPy2009/paper_1/
-- http://conference.scipy.org/proceedings/SciPy2009/paper_2/
+- https://conference.scipy.org/proceedings/SciPy2009/paper_1/
+- https://conference.scipy.org/proceedings/SciPy2009/paper_2/
 
 Using OpenMP
 ------------
@@ -383,7 +383,7 @@ Using yep and gperftools
 Easy profiling without special compilation options use yep:
 
 - https://pypi.org/project/yep/
-- http://fa.bianp.net/blog/2011/a-profiler-for-python-extensions
+- https://fa.bianp.net/blog/2011/a-profiler-for-python-extensions
 
 Using gprof
 -----------

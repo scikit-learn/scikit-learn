@@ -11,6 +11,9 @@ from sklearn.utils._param_validation import make_constraint
 PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.cluster.kmeans_plusplus",
     "sklearn.feature_extraction.grid_to_graph",
+    "sklearn.metrics.accuracy_score",
+    "sklearn.metrics.zero_one_loss",
+    "sklearn.svm.l1_min_c",
 ]
 
 
