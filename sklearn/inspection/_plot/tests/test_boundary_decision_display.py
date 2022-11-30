@@ -38,6 +38,18 @@ def fitted_clf():
     return LogisticRegression().fit(X, y)
 
 
+def test_input_data_dimension():
+    n_features, n_samples = 4, 10
+    X = np.random.randn(n_samples, n_features)
+    y = np.random.randint(0, 2, n_samples)
+
+    clf = LogisticRegression()
+    clf.fit(X, y)
+    msg = "n_features must be equal to 2. Got 4 instead."
+    with pytest.raises(ValueError, match=msg):
+        DecisionBoundaryDisplay.from_estimator(estimator=clf, X=X)
+
+
 def test_check_boundary_response_method_auto():
     """Check _check_boundary_response_method behavior with 'auto'."""
 
