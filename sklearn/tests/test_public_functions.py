@@ -9,11 +9,12 @@ from sklearn.utils._param_validation import make_constraint
 
 
 PARAM_VALIDATION_FUNCTION_LIST = [
-    "sklearn.cluster.kmeans_plusplus",
     "sklearn.cluster.estimate_bandwidth",
-    "sklearn.svm.l1_min_c",
+    "sklearn.cluster.kmeans_plusplus",
     "sklearn.metrics.accuracy_score",
+    "sklearn.metrics.mean_absolute_error",
     "sklearn.metrics.zero_one_loss",
+    "sklearn.svm.l1_min_c",
 ]
 
 
