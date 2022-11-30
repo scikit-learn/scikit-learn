@@ -301,7 +301,8 @@ The following GitHub checklist might be helpful in a release PR::
 
     * [ ] update news and what's new date in release branch
     * [ ] update news and what's new date and sklearn dev0 version in main branch
-    * [ ] check that the for the release wheels can be built successfully
+    * [ ] update SECURITY.md in release and main branch
+    * [ ] check that the wheels for the release can be built successfully
     * [ ] merge the PR with `[cd build]` commit message to upload wheels to the staging repo
     * [ ] upload the wheels and source tarball to https://test.pypi.org
     * [ ] create tag on the main github repo
@@ -332,7 +333,7 @@ Before merging,
 The scikit-learn.org web site
 -----------------------------
 
-The scikit-learn web site (http://scikit-learn.org) is hosted at GitHub,
+The scikit-learn web site (https://scikit-learn.org) is hosted at GitHub,
 but should rarely be updated manually by pushing to the
 https://github.com/scikit-learn/scikit-learn.github.io repository. Most
 updates can be made by pushing to master (for /dev) or a release branch

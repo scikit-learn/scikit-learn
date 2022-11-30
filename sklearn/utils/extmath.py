@@ -718,6 +718,12 @@ def cartesian(arrays, out=None):
     -------
     out : ndarray of shape (M, len(arrays))
         Array containing the cartesian products formed of input arrays.
+        If not provided, the `dtype` of the output array is set to the most
+        permissive `dtype` of the input arrays, according to NumPy type
+        promotion.
+
+        .. versionadded:: 1.2
+           Add support for arrays of different types.
 
     Notes
     -----
@@ -743,12 +749,12 @@ def cartesian(arrays, out=None):
     """
     arrays = [np.asarray(x) for x in arrays]
     shape = (len(x) for x in arrays)
-    dtype = arrays[0].dtype
 
     ix = np.indices(shape)
     ix = ix.reshape(len(arrays), -1).T
 
     if out is None:
+        dtype = np.result_type(*arrays)  # find the most permissive dtype
         out = np.empty_like(ix, dtype=dtype)
 
     for n, arr in enumerate(arrays):
