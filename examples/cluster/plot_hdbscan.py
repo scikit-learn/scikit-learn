@@ -222,9 +222,7 @@ for i, param in enumerate(PARAM):
 # We can thus plot and evaluate these clusterings efficiently without fully
 # recomputing intermediate values such as core-distances, mutual-reachability,
 # and the minimum spanning tree. All we need to do is specify the `cut_distance`
-# (equivalent to `eps`) we want to cluster with, along with `min_cluster_size`,
-# the minimum number of points in a cluster below which the cluster is considered
-# noise.
+# (equivalent to `eps`) we want to cluster with.
 
 PARAM = (
     {"cut_distance": 0.1},
