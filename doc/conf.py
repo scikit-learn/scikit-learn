@@ -642,6 +642,8 @@ linkcheck_ignore = [
     r"https://github.com/conda-forge/miniforge#miniforge",
     r"https://stackoverflow.com/questions/5836335/"
     "consistently-create-same-random-numpy-array/5837352#comment6712034_5837352",
+    r"https://github.com/joblib/threadpoolctl/"
+    "#setting-the-maximum-size-of-thread-pools",
 ]
 
 # Use a browser-like user agent to avoid some "403 Client Error: Forbidden for
