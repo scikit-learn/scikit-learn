@@ -13,7 +13,7 @@ from numbers import Integral, Real
 from warnings import warn
 
 import numpy as np
-from scipy.sparse import csgraph, issparse
+from scipy.sparse import csgraph, issparse, isspmatrix_csr
 
 from ...base import BaseEstimator, ClusterMixin
 from ...metrics import pairwise_distances
@@ -137,7 +137,7 @@ def _hdbscan_brute(
     distance_matrix /= alpha
 
     max_distance = metric_params.get("max_distance", 0.0)
-    if issparse(distance_matrix) and distance_matrix.format != "csr":
+    if isspmatrix_csr(distance_matrix):
         # we need CSR format to avoid a conversion in `_brute_mst` when calling
         # `csgraph.connected_components`
         distance_matrix = distance_matrix.tocsr()
