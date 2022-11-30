@@ -94,9 +94,9 @@ _ = LearningCurveDisplay.from_estimator(
 )
 
 # %%
-# :class:`~inspection.PartialDependenceDisplay` is now accepting a
-# `categorical_features` parameter and uses bar plots and heatmaps to display
-# partial dependence for categorical features.
+# :class:`~inspection.PartialDependenceDisplay` exposes a new parameter
+# `categorical_features` to display partial dependence for categorical features
+# using bar plots and heatmaps.
 from sklearn.datasets import fetch_openml
 
 X, y = fetch_openml(
