@@ -99,25 +99,26 @@ def _dense_mutual_reachability_graph(
     cdef:
         cnp.intp_t i, j, n_samples = distance_matrix.shape[0]
         floating mutual_reachibility_distance
-        floating[:] core_distances
+        floating[::1] core_distances
 
     # We assume that the distance matrix is symmetric. We choose to sort every
     # row to have the same implementation than the sparse case that requires
     # CSR matrix.
-    core_distances = np.partition(
-        distance_matrix, further_neighbor_idx, axis=1
-    )[:, further_neighbor_idx]
+    core_distances = np.ascontiguousarray(
+        np.partition(
+            distance_matrix, further_neighbor_idx, axis=1
+        )[:, further_neighbor_idx]
+    )
 
     with nogil:
-        for i in range(n_samples):
-            for j in prange(n_samples):
+        for i in prange(n_samples):
+            for j in range(n_samples):
                 mutual_reachibility_distance = max(
                     core_distances[i],
                     core_distances[j],
                     distance_matrix[i, j],
                 )
                 distance_matrix[i, j] = mutual_reachibility_distance
-
 
 def _sparse_mutual_reachability_graph(
     cnp.ndarray[floating, ndim=1, mode="c"] data,
