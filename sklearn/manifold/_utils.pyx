@@ -1,5 +1,6 @@
 from libc cimport math
 import numpy as np
+cimport numpy as cnp
 
 
 
@@ -11,8 +12,8 @@ cdef float EPSILON_DBL = 1e-8
 cdef float PERPLEXITY_TOLERANCE = 1e-5
 
 # TODO: have this function support float32 and float64 and preserve inputs' dtypes.
-cpdef float[:, :] _binary_search_perplexity(
-        const float[:, :] sqdistances,
+def _binary_search_perplexity(
+        const cnp.float32_t[:, :] sqdistances,
         float desired_perplexity,
         int verbose):
     """Binary search for sigmas of conditional Gaussians.
@@ -36,7 +37,7 @@ cpdef float[:, :] _binary_search_perplexity(
 
     Returns
     -------
-    P : ndarray of shape (n_samples, n_samples), dtype=np.float32
+    P : ndarray of shape (n_samples, n_samples), dtype=np.float64
         Probabilities of conditional Gaussian distributions p_i|j.
     """
     # Maximum number of binary search steps
@@ -62,7 +63,7 @@ cpdef float[:, :] _binary_search_perplexity(
 
     # This array is later used as a 32bit array. It has multiple intermediate
     # floating point additions that benefit from the extra precision
-    cdef double[:, :] P = np.zeros(
+    cdef cnp.float64_t[:, :] P = np.zeros(
         (n_samples, n_neighbors), dtype=np.float64)
 
     for i in range(n_samples):
@@ -117,4 +118,4 @@ cpdef float[:, :] _binary_search_perplexity(
     if verbose:
         print("[t-SNE] Mean sigma: %f"
               % np.mean(math.sqrt(n_samples / beta_sum)))
-    return np.asarray(P, dtype=np.float32)
+    return np.asarray(P)
