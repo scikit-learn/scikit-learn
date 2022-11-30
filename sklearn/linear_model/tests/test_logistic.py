@@ -1943,11 +1943,10 @@ def test_multinomial_identifiability_on_iris(fit_intercept):
     clf = LogisticRegression(
         C=len(iris.data),
         solver="lbfgs",
-        max_iter=300,
         multi_class="multinomial",
         fit_intercept=fit_intercept,
     )
-    clf.fit(iris.data, target)
+    clf.fit(scale(iris.data), target)
 
     # axis=0 is sum over classes
     assert_allclose(clf.coef_.sum(axis=0), 0, atol=1e-10)
