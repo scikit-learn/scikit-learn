@@ -281,7 +281,7 @@ the maximum depth of each tree is set to :math:`\lceil \log_2(n) \rceil` where
 
 This algorithm is illustrated below.
 
-.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_isolation_forest_001.png
+.. figure:: ../auto_examples/ensemble/images/sphx_glr_plot_isolation_forest_003.png
    :target: ../auto_examples/ensemble/plot_isolation_forest.html
    :align: center
    :scale: 75%
@@ -382,7 +382,7 @@ This strategy is illustrated below.
 
    *  Breunig, Kriegel, Ng, and Sander (2000)
       `LOF: identifying density-based local outliers.
-      <http://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf>`_
+      <https://www.dbs.ifi.lmu.de/Publikationen/Papers/LOF.pdf>`_
       Proc. ACM SIGMOD
 
 .. _novelty_with_lof:
