@@ -485,6 +485,8 @@ def _fit_coordinate_descent(
 
     rng = check_random_state(random_state)
 
+    n_iter = 0  # To allow max_iter = 0
+
     for n_iter in range(1, max_iter + 1):
         violation = 0.0
 
@@ -820,6 +822,9 @@ def _fit_multiplicative_update(
     previous_error = error_at_init
 
     H_sum, HHt, XHt = None, None, None
+
+    n_iter = 0  # To allow max_iter = 0
+
     for n_iter in range(1, max_iter + 1):
         # update W
         # H_sum, HHt and XHt are saved and reused if not update_H
@@ -890,25 +895,7 @@ def _fit_multiplicative_update(
         "X": ["array-like", "sparse matrix"],
         "W": ["array-like", None],
         "H": ["array-like", None],
-        "n_components": [Interval(Integral, 1, None, closed="left"), None],
-        "init": [
-            StrOptions({"random", "nndsvd", "nndsvda", "nndsvdar", "custom"}),
-            None,
-        ],
         "update_H": ["boolean"],
-        "solver": [StrOptions({"mu", "cd"})],
-        "beta_loss": [
-            StrOptions({"frobenius", "kullback-leibler", "itakura-saito"}),
-            Real,
-        ],
-        "tol": [Interval(Real, 0, None, closed="left")],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "alpha_W": [Interval(Real, 0, None, closed="left")],
-        "alpha_H": [Interval(Real, 0, None, closed="left"), StrOptions({"same"})],
-        "l1_ratio": [Interval(Real, 0, 1, closed="both")],
-        "random_state": ["random_state"],
-        "verbose": ["verbose"],
-        "shuffle": ["boolean"],
     }
 )
 def non_negative_factorization(
@@ -1107,7 +1094,8 @@ def non_negative_factorization(
     >>> W, H, n_iter = non_negative_factorization(
     ...     X, n_components=2, init='random', random_state=0)
     """
-    X = check_array(X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32])
+    if H is None and not update_H:
+        raise ValueError("H should be passed when update_H=False")
 
     est = NMF(
         n_components=n_components,
@@ -1124,10 +1112,12 @@ def non_negative_factorization(
         shuffle=shuffle,
     )
 
-    with config_context(assume_finite=True):
-        W, H, n_iter = est._fit_transform(X, W=W, H=H, update_H=update_H)
-
-    return W, H, n_iter
+    if update_H:
+        return est.fit_transform(X, W=W, H=H)
+    else:
+        est.set_params(max_iter=0).fit(X, W=W, H=H)
+        W = est.transform(X)
+        return W, H, est._n_iter_transform
 
 
 class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator, ABC):
@@ -1144,7 +1134,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
             Real,
         ],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
         "random_state": ["random_state"],
         "alpha_W": [Interval(Real, 0, None, closed="left")],
         "alpha_H": [Interval(Real, 0, None, closed="left"), StrOptions({"same"})],
@@ -1708,7 +1698,9 @@ class NMF(_BaseNMF):
         )
 
         with config_context(assume_finite=True):
-            W, *_ = self._fit_transform(X, H=self.components_, update_H=False)
+            W, _, n_iter = self._fit_transform(X, H=self.components_, update_H=False)
+
+        self._n_iter_transform = n_iter
 
         return W
 
