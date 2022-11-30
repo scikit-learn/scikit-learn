@@ -8,10 +8,7 @@ from scipy.sparse import isspmatrix_csr
 
 from .._dist_metrics import BOOL_METRICS, METRIC_MAPPING
 
-from ._base import (
-    _sqeuclidean_row_norms64,
-    _sqeuclidean_row_norms32,
-)
+from ._base import _sqeuclidean_row_norms32, _sqeuclidean_row_norms64
 from ._argkmin import (
     ArgKmin64,
     ArgKmin32,
@@ -73,7 +70,7 @@ class BaseDistancesReductionDispatcher:
             "hamming",
             *BOOL_METRICS,
         }
-        return sorted(set(METRIC_MAPPING.keys()) - excluded)
+        return sorted(({"sqeuclidean"} | set(METRIC_MAPPING.keys())) - excluded)
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
@@ -133,8 +130,10 @@ class BaseDistancesReductionDispatcher:
         # See: https://github.com/scikit-learn/scikit-learn/pull/23585#issuecomment-1247996669  # noqa
         # TODO: implement specialisation for (sq)euclidean on fused sparse-dense
         # using sparse-dense routines for matrix-vector multiplications.
+        # Currently, only dense-dense and sparse-sparse are optimized for
+        # the Euclidean case.
         fused_sparse_dense_euclidean_case_guard = not (
-            (is_valid_sparse_matrix(X) or is_valid_sparse_matrix(Y))
+            (is_valid_sparse_matrix(X) ^ is_valid_sparse_matrix(Y))  # "^" is XOR
             and isinstance(metric, str)
             and "euclidean" in metric
         )

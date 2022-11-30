@@ -2,8 +2,8 @@
 # Author: Nicolas Hug
 
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
 from functools import partial
+import itertools
 from numbers import Real, Integral
 import warnings
 
@@ -23,6 +23,7 @@ from ...utils.validation import (
     check_is_fitted,
     check_consistent_length,
     _check_sample_weight,
+    _check_monotonic_cst,
 )
 from ...utils._param_validation import Interval, StrOptions
 from ...utils._openmp_helpers import _openmp_effective_n_threads
@@ -91,8 +92,13 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "max_depth": [Interval(Integral, 1, None, closed="left"), None],
         "min_samples_leaf": [Interval(Integral, 1, None, closed="left")],
         "l2_regularization": [Interval(Real, 0, None, closed="left")],
-        "monotonic_cst": ["array-like", None],
-        "interaction_cst": [Iterable, None],
+        "monotonic_cst": ["array-like", dict, None],
+        "interaction_cst": [
+            list,
+            tuple,
+            StrOptions({"pairwise", "no_interactions"}),
+            None,
+        ],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "validation_fraction": [
             Interval(Real, 0, 1, closed="neither"),
@@ -288,29 +294,30 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if self.interaction_cst is None:
             return None
 
-        if not (
-            isinstance(self.interaction_cst, Iterable)
-            and all(isinstance(x, Iterable) for x in self.interaction_cst)
-        ):
+        if self.interaction_cst == "no_interactions":
+            interaction_cst = [[i] for i in range(n_features)]
+        elif self.interaction_cst == "pairwise":
+            interaction_cst = itertools.combinations(range(n_features), 2)
+        else:
+            interaction_cst = self.interaction_cst
+
+        try:
+            constraints = [set(group) for group in interaction_cst]
+        except TypeError:
             raise ValueError(
-                "Interaction constraints must be None or an iterable of iterables, "
-                f"got: {self.interaction_cst!r}."
+                "Interaction constraints must be a sequence of tuples or lists, got:"
+                f" {self.interaction_cst!r}."
             )
 
-        invalid_indices = [
-            x
-            for cst_set in self.interaction_cst
-            for x in cst_set
-            if not (isinstance(x, Integral) and 0 <= x < n_features)
-        ]
-        if invalid_indices:
-            raise ValueError(
-                "Interaction constraints must consist of integer indices in [0,"
-                f" n_features - 1] = [0, {n_features - 1}], specifying the position of"
-                f" features, got invalid indices: {invalid_indices!r}"
-            )
-
-        constraints = [set(group) for group in self.interaction_cst]
+        for group in constraints:
+            for x in group:
+                if not (isinstance(x, Integral) and 0 <= x < n_features):
+                    raise ValueError(
+                        "Interaction constraints must consist of integer indices in"
+                        f" [0, n_features - 1] = [0, {n_features - 1}], specifying the"
+                        " position of features, got invalid indices:"
+                        f" {group!r}"
+                    )
 
         # Add all not listed features as own group by default.
         rest = set(range(n_features)) - set().union(*constraints)
@@ -369,6 +376,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             self._random_seed = rng.randint(np.iinfo(np.uint32).max, dtype="u8")
 
         self._validate_parameters()
+        monotonic_cst = _check_monotonic_cst(self, self.monotonic_cst)
 
         # used for validation in predict
         n_samples, self._n_features = X.shape
@@ -664,7 +672,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     n_bins_non_missing=self._bin_mapper.n_bins_non_missing_,
                     has_missing_values=has_missing_values,
                     is_categorical=self.is_categorical_,
-                    monotonic_cst=self.monotonic_cst,
+                    monotonic_cst=monotonic_cst,
                     interaction_cst=interaction_cst,
                     max_leaf_nodes=self.max_leaf_nodes,
                     max_depth=self.max_depth,
@@ -1259,24 +1267,39 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.2
            Added support for feature names.
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature.
-          - 1: monotonic increase
-          - 0: no constraint
-          - -1: monotonic decrease
+    monotonic_cst : array-like of int of shape (n_features) or dict, default=None
+        Monotonic constraint to enforce on each feature are specified using the
+        following integer values:
 
+        - 1: monotonic increase
+        - 0: no constraint
+        - -1: monotonic decrease
+
+        If a dict with str keys, map feature to monotonic constraints by name.
+        If an array, the features are mapped to constraints by position. See
+        :ref:`monotonic_cst_features_names` for a usage example.
+
+        The constraints are only valid for binary classifications and hold
+        over the probability of the positive class.
         Read more in the :ref:`User Guide <monotonic_cst_gbdt>`.
 
         .. versionadded:: 0.23
 
-    interaction_cst : iterable of iterables of int, default=None
+        .. versionchanged:: 1.2
+           Accept dict of constraints with feature names as keys.
+
+    interaction_cst : {"pairwise", "no_interaction"} or sequence of lists/tuples/sets \
+            of int, default=None
         Specify interaction constraints, the sets of features which can
         interact with each other in child node splits.
 
-        Each iterable materializes a constraint by the set of indices of
-        the features that are allowed to interact with each other.
-        If there are more features than specified in these constraints,
-        they are treated as if they were specified as an additional set.
+        Each item specifies the set of feature indices that are allowed
+        to interact with each other. If there are more features than
+        specified in these constraints, they are treated as if they were
+        specified as an additional set.
+
+        The strings "pairwise" and "no_interactions" are shorthands for
+        allowing only pairwise or no interactions, respectively.
 
         For instance, with 5 features in total, `interaction_cst=[{0, 1}]`
         is equivalent to `interaction_cst=[{0, 1}, {2, 3, 4}]`,
@@ -1596,11 +1619,17 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.2
            Added support for feature names.
 
-    monotonic_cst : array-like of int of shape (n_features), default=None
-        Indicates the monotonic constraint to enforce on each feature.
-          - 1: monotonic increase
-          - 0: no constraint
-          - -1: monotonic decrease
+    monotonic_cst : array-like of int of shape (n_features) or dict, default=None
+        Monotonic constraint to enforce on each feature are specified using the
+        following integer values:
+
+        - 1: monotonic increase
+        - 0: no constraint
+        - -1: monotonic decrease
+
+        If a dict with str keys, map feature to monotonic constraints by name.
+        If an array, the features are mapped to constraints by position. See
+        :ref:`monotonic_cst_features_names` for a usage example.
 
         The constraints are only valid for binary classifications and hold
         over the probability of the positive class.
@@ -1608,14 +1637,21 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
 
         .. versionadded:: 0.23
 
-    interaction_cst : iterable of iterables of int, default=None
+        .. versionchanged:: 1.2
+           Accept dict of constraints with feature names as keys.
+
+    interaction_cst : {"pairwise", "no_interaction"} or sequence of lists/tuples/sets \
+            of int, default=None
         Specify interaction constraints, the sets of features which can
         interact with each other in child node splits.
 
-        Each iterable materializes a constraint by the set of indices of
-        the features that are allowed to interact with each other.
-        If there are more features than specified in these constraints,
-        they are treated as if they were specified as an additional set.
+        Each item specifies the set of feature indices that are allowed
+        to interact with each other. If there are more features than
+        specified in these constraints, they are treated as if they were
+        specified as an additional set.
+
+        The strings "pairwise" and "no_interactions" are shorthands for
+        allowing only pairwise or no interactions, respectively.
 
         For instance, with 5 features in total, `interaction_cst=[{0, 1}]`
         is equivalent to `interaction_cst=[{0, 1}, {2, 3, 4}]`,
