@@ -235,7 +235,10 @@ def fit(
 
     cdef cnp.float64_t[:, ::1] sv_coef
     sv_coef = np.empty((n_class-1, SV_len), dtype=np.float64)
-    copy_sv_coef (<char*> &sv_coef[0, 0], model)
+    copy_sv_coef (
+        <char*> &sv_coef[0, 0] if sv_coef.size > 0 else NULL,
+        model
+    )
 
     # the intercept is just model.rho but with sign changed
     cdef cnp.float64_t[::1] intercept
