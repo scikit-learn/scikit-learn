@@ -1286,6 +1286,10 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         names, transformers = zip(*self.transformer_list)
         return _VisualBlock("parallel", transformers, names=names)
 
+    def __getitem__(self, name):
+        """Return transformer with name."""
+        return self.named_transformers[name]
+
 
 def make_union(*transformers, n_jobs=None, verbose=False):
     """Construct a FeatureUnion from the given transformers.

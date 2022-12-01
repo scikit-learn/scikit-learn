@@ -1658,3 +1658,21 @@ def test_feature_union_set_output():
     assert isinstance(X_trans, pd.DataFrame)
     assert_array_equal(X_trans.columns, union.get_feature_names_out())
     assert_array_equal(X_trans.index, X_test.index)
+
+
+def test_feature_union_getitem():
+    """Check FeatureUnion.__getitem__ returns expected results."""
+    scalar = StandardScaler()
+    pca = PCA()
+    union = FeatureUnion(
+        [
+            ("scalar", scalar),
+            ("pca", pca),
+            ("pass", "passthrough"),
+            ("drop_me", "drop"),
+        ]
+    )
+    assert union["scalar"] is scalar
+    assert union["pca"] is pca
+    assert union["scalar"] is scalar
+    assert union["pass"] == "passthrough"
