@@ -68,7 +68,7 @@ plt.show()
 #
 # - Non-optimal number of clusters: in a real setting there is no uniquely
 #   defined **true** number of clusters. An appropriate number of clusters has
-#   to be decided from data-based criteria and knowledge of aim.
+#   to be decided from data-based criteria and knowledge of the intended goal.
 # - Anisotropically distributed blobs: k-means consists of minimizing sample's
 #   euclidean distances to the centroid of the cluster they are assigned to. As
 #   a consequence, k-means is more appropriate for clusters that are isotropic
