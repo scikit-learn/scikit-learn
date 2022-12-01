@@ -795,11 +795,7 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         return self
 
     def _ordinal_encode_df(self, X, *, return_categorical_features=False, in_fit=True):
-        if (
-            self.categorical_features is None
-            and hasattr(X, "columns")
-            and hasattr(X, "assign")
-        ):
+        if hasattr(X, "columns") and hasattr(X, "assign"):
             if in_fit:
                 self._column_name_to_categories = {}
             else:
@@ -850,6 +846,11 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 # Use assign to recode the column without mutating the
                 # original dataframe object passed by the caller.
                 X = X.assign(**col_to_codes)
+
+            if self.categorical_features is not None:
+                # ignore the automatically detected categorical features and
+                # respect the user provided ones.
+                categorical_features = self.categorical_features
         else:
             # passthrough for other kinds of data to be validated by
             # the usual _validate_data method.
