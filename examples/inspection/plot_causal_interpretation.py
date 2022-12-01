@@ -73,8 +73,6 @@ hourly_wages[hourly_wages < 0] = 0
 # The following plot shows the distribution of each variable, and pairwise
 # scatter plots. Key to our OVB story is the positive relationship between
 # ability and college degree.
-
-import pandas as pd
 import seaborn as sns
 
 df = pd.DataFrame(
