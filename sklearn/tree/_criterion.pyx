@@ -1338,6 +1338,7 @@ cdef class Poisson(RegressionCriterion):
         cdef DOUBLE_t y_mean = 0.
         cdef DOUBLE_t poisson_loss = 0.
         cdef DOUBLE_t w = 1.0
+        cdef SIZE_t i, k, p
         cdef SIZE_t n_outputs = self.n_outputs
 
         for k in range(n_outputs):
