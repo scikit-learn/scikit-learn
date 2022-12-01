@@ -459,11 +459,13 @@ def test_check_array_panadas_na_support_series():
 
     X_out = check_array(X_int64, force_all_finite=False, ensure_2d=False)
     assert_allclose(X_out, [1, 2, np.nan])
+    assert X_out.dtype == np.float64
 
     X_out = check_array(
         X_int64, force_all_finite=False, ensure_2d=False, dtype=np.float32
     )
     assert_allclose(X_out, [1, 2, np.nan])
+    assert X_out.dtype == np.float32
 
 
 def test_check_array_pandas_dtype_casting():
