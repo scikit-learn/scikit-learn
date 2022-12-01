@@ -464,8 +464,8 @@ def predict(
         <char*> &sv_coef[0, 0] if sv_coef.size > 0 else NULL,
         <char*> &intercept[0],
         <char*> &nSV[0],
-        <char*> &probA[0],
-        <char*> &probB[0],
+        <char*> &probA[0] if probA.size > 0 else NULL,
+        <char*> &probB[0] if probB.size > 0 else NULL,
     )
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
