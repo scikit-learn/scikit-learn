@@ -3151,7 +3151,7 @@ const char *PREFIX(check_parameter)(const PREFIX(problem) *prob, const svm_param
 			return "Invalid input - all samples have zero or negative weights.";
 		}
 		else if(prob->l != newprob.l && 
-				svm_type == C_SVC)
+		        svm_type == C_SVC)
 		{
 			bool only_one_label = true;
 			int first_label = newprob.y[0];
