@@ -123,9 +123,9 @@ plt.show()
 # sub-optimal local minimum. For more details see :ref:`kmeans_sparse_high_dim`.
 #
 # As anisotropic and unequal variances are real limitations of the k-means
-# algorithmn, here we propose instead the use of
-# :class:`~sklearn.mixture.GaussianMixture`, which also assume gaussian clusters
-# but has no constraints on their variances. Notice that one still has to find
+# algorithm, here we propose instead the use of
+# :class:`~sklearn.mixture.GaussianMixture`, which also assumes gaussian clusters
+# but does not impose any constraints on their variances. Notice that one still has to find
 # the correct number of blobs (see
 # :ref:`sphx_glr_auto_examples_mixture_plot_gmm_selection.py`).
 #
