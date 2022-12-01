@@ -24,6 +24,7 @@ parser.add_argument("--subsample", type=int, default=None)
 parser.add_argument("--max-bins", type=int, default=255)
 parser.add_argument("--no-predict", action="store_true", default=False)
 parser.add_argument("--cache-loc", type=str, default="/tmp")
+parser.add_argument("--no-interactions", type=bool, default=False)
 args = parser.parse_args()
 
 HERE = os.path.dirname(__file__)
@@ -88,6 +89,11 @@ if subsample is not None:
 n_samples, n_features = data_train.shape
 print(f"Training set with {n_samples} records with {n_features} features.")
 
+if args.no_interactions:
+    interaction_cst = [[i] for i in range(n_features)]
+else:
+    interaction_cst = None
+
 est = HistGradientBoostingClassifier(
     loss="log_loss",
     learning_rate=lr,
@@ -97,6 +103,7 @@ est = HistGradientBoostingClassifier(
     early_stopping=False,
     random_state=0,
     verbose=1,
+    interaction_cst=interaction_cst,
 )
 fit(est, data_train, target_train, "sklearn")
 predict(est, data_test, target_test)
