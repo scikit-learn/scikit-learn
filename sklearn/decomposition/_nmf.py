@@ -1094,6 +1094,8 @@ def non_negative_factorization(
     >>> W, H, n_iter = non_negative_factorization(
     ...     X, n_components=2, init='random', random_state=0)
     """
+    X = check_array(X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32])
+
     est = NMF(
         n_components=n_components,
         init=init,
@@ -1108,13 +1110,12 @@ def non_negative_factorization(
         verbose=verbose,
         shuffle=shuffle,
     )
+    est._validate_params()
 
-    if update_H:
-        return est.fit_transform(X, W=W, H=H)
-    else:
-        est.set_params(max_iter=0).fit(X, W=W, H=H)
-        W = est.transform(X)
-        return W, H, est._n_iter_transform
+    with config_context(assume_finite=True):
+        W, H, n_iter = est._fit_transform(X, W=W, H=H, update_H=update_H)
+
+    return W, H, n_iter
 
 
 class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator, ABC):
@@ -1131,7 +1132,7 @@ class _BaseNMF(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator,
             Real,
         ],
         "tol": [Interval(Real, 0, None, closed="left")],
-        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "max_iter": [Interval(Integral, 1, None, closed="left")],
         "random_state": ["random_state"],
         "alpha_W": [Interval(Real, 0, None, closed="left")],
         "alpha_H": [Interval(Real, 0, None, closed="left"), StrOptions({"same"})],
@@ -1695,9 +1696,7 @@ class NMF(_BaseNMF):
         )
 
         with config_context(assume_finite=True):
-            W, _, n_iter = self._fit_transform(X, H=self.components_, update_H=False)
-
-        self._n_iter_transform = n_iter
+            W, *_ = self._fit_transform(X, H=self.components_, update_H=False)
 
         return W
 
