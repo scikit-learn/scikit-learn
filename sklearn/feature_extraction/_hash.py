@@ -2,6 +2,7 @@
 # License: BSD 3 clause
 
 from numbers import Integral
+from itertools import chain
 
 import numpy as np
 import scipy.sparse as sp
@@ -80,6 +81,17 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     >>> f.toarray()
     array([[ 0.,  0., -4., -1.,  0.,  0.,  0.,  0.,  0.,  2.],
            [ 0.,  0.,  0., -2., -5.,  0.,  0.,  0.,  0.,  0.]])
+
+    With `input_type="string"`, the input must be an iterable over iterables of
+    strings:
+
+    >>> h = FeatureHasher(n_features=8, input_type="string")
+    >>> raw_X = [["dog", "cat", "snake"], ["snake", "dog"], ["cat", "bird"]]
+    >>> f = h.transform(raw_X)
+    >>> f.toarray()
+    array([[ 0.,  0.,  0., -1.,  0., -1.,  0.,  1.],
+           [ 0.,  0.,  0., -1.,  0., -1.,  0.,  0.],
+           [ 0., -1.,  0.,  0.,  0.,  0.,  0.,  1.]])
     """
 
     _parameter_constraints: dict = {
@@ -146,7 +158,15 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         if self.input_type == "dict":
             raw_X = (_iteritems(d) for d in raw_X)
         elif self.input_type == "string":
-            raw_X = (((f, 1) for f in x) for x in raw_X)
+            first_raw_X = next(raw_X)
+            if isinstance(first_raw_X, str):
+                raise ValueError(
+                    "Samples can not be a single string. The input must be an iterable"
+                    " over iterables of strings."
+                )
+            raw_X_ = chain([first_raw_X], raw_X)
+            raw_X = (((f, 1) for f in x) for x in raw_X_)
+
         indices, indptr, values = _hashing_transform(
             raw_X, self.n_features, self.dtype, self.alternate_sign, seed=0
         )
