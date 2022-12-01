@@ -11,6 +11,8 @@ answering questions to help others on mailing lists or issues, organizing and
 teaching tutorials, working on the website, improving the documentation, are
 all priceless contributions.
 
+Learn more about our culture of kindness here: https://youtu.be/wVIMK_794NE
+
 We abide by the principles of openness, respect, and consideration of others of
 the Python Software Foundation: https://www.python.org/psf/codeofconduct/
 
