@@ -1338,11 +1338,10 @@ cdef class Poisson(RegressionCriterion):
         cdef DOUBLE_t y_mean = 0.
         cdef DOUBLE_t poisson_loss = 0.
         cdef DOUBLE_t w = 1.0
-        cdef SIZE_t samples_idx, output_idx, index_pointer
         cdef SIZE_t n_outputs = self.n_outputs
 
-        for output_idx in range(n_outputs):
-            if y_sum[output_idx] <= EPSILON:
+        for k in range(n_outputs):
+            if y_sum[k] <= EPSILON:
                 # y_sum could be computed from the subtraction
                 # sum_right = sum_total - sum_left leading to a potential
                 # floating point rounding error.
@@ -1352,14 +1351,11 @@ cdef class Poisson(RegressionCriterion):
 
             y_mean = y_sum[output_idx] / weight_sum
 
-            for index_pointer in range(start, end):
-                samples_idx = sample_indices[index_pointer]
+            for p in range(start, end):
+                i = sample_indices[p]
 
                 if sample_weight is not None:
-                    w = sample_weight[samples_idx]
+                    w = sample_weight[i]
 
-                poisson_loss += w * xlogy(
-                    y[samples_idx, output_idx],
-                    y[samples_idx, output_idx] / y_mean
-                )
+                poisson_loss += w * xlogy(y[i, k], y[i, k] / y_mean)
         return poisson_loss / (weight_sum * n_outputs)
