@@ -7,6 +7,7 @@ from inspect import signature
 from numbers import Integral
 from numbers import Real
 import operator
+import re
 import warnings
 
 import numpy as np
@@ -14,6 +15,12 @@ from scipy.sparse import issparse
 from scipy.sparse import csr_matrix
 
 from .validation import _is_arraylike_not_scalar
+
+
+class InvalidParameterError(Exception):
+    """Custom exception to be raised when the parameter of a class/method/function
+    does not have a valid type or value.
+    """
 
 
 def validate_parameter_constraints(parameter_constraints, params, caller_name):
@@ -92,7 +99,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
                     f" {constraints[-1]}"
                 )
 
-            raise ValueError(
+            raise InvalidParameterError(
                 f"The {param_name!r} parameter of {caller_name} must be"
                 f" {constraints_str}. Got {param_val!r} instead."
             )
@@ -185,7 +192,20 @@ def validate_params(parameter_constraints):
             validate_parameter_constraints(
                 parameter_constraints, params, caller_name=func.__qualname__
             )
-            return func(*args, **kwargs)
+
+            try:
+                return func(*args, **kwargs)
+            except InvalidParameterError as e:
+                # When the function is just a wrapper around an estimator, we allow
+                # the function to delegate validation to the estimator, but we replace
+                # the name of the estimator by the name of the function in the error
+                # message to avoid confusion.
+                msg = re.sub(
+                    r"parameter of \w+ must be",
+                    f"parameter of {func.__qualname__} must be",
+                    str(e),
+                )
+                raise InvalidParameterError(msg) from e
 
         return wrapper
 

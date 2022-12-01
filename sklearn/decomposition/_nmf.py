@@ -1094,9 +1094,6 @@ def non_negative_factorization(
     >>> W, H, n_iter = non_negative_factorization(
     ...     X, n_components=2, init='random', random_state=0)
     """
-    if H is None and not update_H:
-        raise ValueError("H should be passed when update_H=False")
-
     est = NMF(
         n_components=n_components,
         init=init,
