@@ -36,6 +36,11 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.neural_network`
+............................
+
+- |Fix| :func `_fit_stochastic` in :class:`_multilayer_perceptron` now has a check `X_val.shape[0] < 2` to check for the minimum required size of the validation set. :pr:`24713` by `David Shumway <davidshumway>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
