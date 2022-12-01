@@ -285,11 +285,19 @@ def fit(
         if svm_type < 2: # SVC and NuSVC
             probA = np.empty(int(n_class*(n_class-1)/2), dtype=np.float64)
             probB = np.empty(int(n_class*(n_class-1)/2), dtype=np.float64)
-            copy_probB(<char*> &probB[0], model, <cnp.npy_intp*> probB.shape)
+            copy_probB(
+                <char*> &probB[0],
+                model,
+                <cnp.npy_intp*> probB.shape
+            )
         else:
             probA = np.empty(1, dtype=np.float64)
             probB = np.empty(0, dtype=np.float64)
-        copy_probA(<char*> &probA[0], model, <cnp.npy_intp*> probA.shape)
+        copy_probA(
+            <char*> &probA[0],
+            model,
+            <cnp.npy_intp*> probA.shape
+        )
     else:
         probA = np.empty(0, dtype=np.float64)
         probB = np.empty(0, dtype=np.float64)
@@ -442,18 +450,18 @@ def predict(
         cache_size,
         0,
         <int>class_weight.shape[0],
-        <char*> &class_weight_label[0],
-        <char*> &class_weight[0],
+        <char*> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
+        <char*> &class_weight[0] if class_weight.size > 0 else NULL,
     )
     model = set_model(
         &param,
         <int> nSV.shape[0],
-        <char*> &SV[0, 0],
+        <char*> &SV[0, 0] if SV.size > 0 else NULL,
         <cnp.npy_intp*> SV.shape,
-        <char*> &support[0],
+        <char*> &support[0] if support.size > 0 else NULL,
         <cnp.npy_intp*> support.shape,
         <cnp.npy_intp*> sv_coef.strides,
-        <char*> &sv_coef[0, 0],
+        <char*> &sv_coef[0, 0] if sv_coef.size > 0 else NULL,
         <char*> &intercept[0],
         <char*> &nSV[0],
         <char*> &probA[0],
