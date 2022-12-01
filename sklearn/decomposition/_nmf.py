@@ -485,8 +485,6 @@ def _fit_coordinate_descent(
 
     rng = check_random_state(random_state)
 
-    n_iter = 0  # To allow max_iter = 0
-
     for n_iter in range(1, max_iter + 1):
         violation = 0.0
 
@@ -822,8 +820,6 @@ def _fit_multiplicative_update(
     previous_error = error_at_init
 
     H_sum, HHt, XHt = None, None, None
-
-    n_iter = 0  # To allow max_iter = 0
 
     for n_iter in range(1, max_iter + 1):
         # update W
