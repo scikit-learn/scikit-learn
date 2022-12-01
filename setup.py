@@ -90,6 +90,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.linear_model._sag_fast",
     "sklearn.linear_model._sgd_fast",
     "sklearn.manifold._barnes_hut_tsne",
+    "sklearn.manifold._utils",
     "sklearn.metrics.cluster._expected_mutual_info_fast",
     "sklearn.metrics._pairwise_distances_reduction._datasets_pair",
     "sklearn.metrics._pairwise_distances_reduction._middle_term_computer",

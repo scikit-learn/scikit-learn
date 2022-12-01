@@ -411,7 +411,7 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
-- |Enhancement| Extended :func:`inspection.partial_dependence` and
+- |MajorFeature| Extended :func:`inspection.partial_dependence` and
   :class:`inspection.PartialDependenceDisplay` to handle categorical features.
   :pr:`18298` by :user:`Madhura Jayaratne <madhuracj>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
