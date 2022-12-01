@@ -820,7 +820,6 @@ def _fit_multiplicative_update(
     previous_error = error_at_init
 
     H_sum, HHt, XHt = None, None, None
-
     for n_iter in range(1, max_iter + 1):
         # update W
         # H_sum, HHt and XHt are saved and reused if not update_H
