@@ -176,9 +176,8 @@ def mean_shift(
         operation terminates (for that seed point), if has not converged yet.
 
     n_jobs : int, default=None
-        The number of jobs to use for the computation. This works by computing
-        each of the n_jobs runs in parallel. The number of jobs to use for the
-        computation. The following tasks benefit from the parallelization: the
+        The number of jobs to use for the computation. The number of jobs to use for
+        the computation. The following tasks benefit from the parallelization: the
         search of nearest neighbors for bandwidth estimation and label assignments,
         and the hill climbing optimization for all seeds.
 
@@ -315,9 +314,8 @@ class MeanShift(ClusterMixin, BaseEstimator):
         If false, then orphans are given cluster label -1.
 
     n_jobs : int, default=None
-        The number of jobs to use for the computation. This works by computing
-        each of the n_jobs runs in parallel. The number of jobs to use for the
-        computation. The following tasks benefit from the parallelization: the
+        The number of jobs to use for the computation. The number of jobs to use for
+        the computation. The following tasks benefit from the parallelization: the
         search of nearest neighbors for bandwidth estimation and label assignments,
         and the hill climbing optimization for all seeds.
 
