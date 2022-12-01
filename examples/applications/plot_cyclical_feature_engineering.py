@@ -212,8 +212,9 @@ evaluate(gbrt, X, y, cv=ts_cv)
 # %%
 # This model has an average error around 4 to 5% of the maximum demand. This is
 # quite good for a first trial without any feature engineering nor
-# hyper-parameter tuning! We just had to make the categorical variables
-# explicit by using the "category" dtype in the pandas dataframe.
+# hyper-parameter tuning! We just had to ensure that we use the
+# "category" dtype in the pandas dataframe for all the categorical
+# variables.
 #
 # Note that the time related features are passed as is, i.e. without processing
 # them. But this is not much of a problem for tree-based models as they can
