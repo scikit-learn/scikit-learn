@@ -39,7 +39,7 @@ Changelog
 :mod:`sklearn.pipeline`
 .......................
 - |Feature| :class:`pipeline.FeatureUnion` can now use indexing notation (e.g.
-  `feature_union["scalar"]`) to access transformers by name. :pr:`xxxxx` by
+  `feature_union["scalar"]`) to access transformers by name. :pr:`25093` by
   `Thomas Fan`_.
 
 Code and Documentation Contributors
