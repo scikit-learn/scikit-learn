@@ -177,7 +177,10 @@ def mean_shift(
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. This works by computing
-        each of the n_jobs runs in parallel.
+        each of the n_jobs runs in parallel. The number of jobs to use for the
+        computation. The following tasks benefit from the parallelization: the
+        search of nearest neighbors for bandwidth estimation and label assignments,
+        and the hill climbing optimization for all seeds.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
@@ -313,7 +316,10 @@ class MeanShift(ClusterMixin, BaseEstimator):
 
     n_jobs : int, default=None
         The number of jobs to use for the computation. This works by computing
-        each of the n_jobs runs in parallel.
+        each of the n_jobs runs in parallel. The number of jobs to use for the
+        computation. The following tasks benefit from the parallelization: the
+        search of nearest neighbors for bandwidth estimation and label assignments,
+        and the hill climbing optimization for all seeds.
 
         ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
