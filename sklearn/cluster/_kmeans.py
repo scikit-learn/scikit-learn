@@ -22,7 +22,7 @@ from ..base import (
     BaseEstimator,
     ClusterMixin,
     TransformerMixin,
-    _ClassNamePrefixFeaturesOutMixin,
+    ClassNamePrefixFeaturesOutMixin,
 )
 from ..metrics.pairwise import euclidean_distances
 from ..metrics.pairwise import _euclidean_distances
@@ -96,7 +96,10 @@ def kmeans_plusplus(
         The number of seeding trials for each center (except the first),
         of which the one reducing inertia the most is greedily chosen.
         Set to None to make the number of trials depend logarithmically
-        on the number of seeds (2+log(k)).
+        on the number of seeds (2+log(k)) which is the recommended setting.
+        Setting to 1 disables the greedy cluster selection and recovers the
+        vanilla k-means++ algorithm which was empirically shown to work less
+        well than its greedy variant.
 
     Returns
     -------
@@ -437,7 +440,6 @@ def _kmeans_single_elkan(
     centers_init,
     max_iter=300,
     verbose=False,
-    x_squared_norms=None,
     tol=1e-4,
     n_threads=1,
 ):
@@ -459,9 +461,6 @@ def _kmeans_single_elkan(
 
     verbose : bool, default=False
         Verbosity mode.
-
-    x_squared_norms : array-like, default=None
-        Precomputed x_squared_norms.
 
     tol : float, default=1e-4
         Relative tolerance with regards to Frobenius norm of the difference
@@ -606,7 +605,6 @@ def _kmeans_single_lloyd(
     centers_init,
     max_iter=300,
     verbose=False,
-    x_squared_norms=None,
     tol=1e-4,
     n_threads=1,
 ):
@@ -628,9 +626,6 @@ def _kmeans_single_lloyd(
 
     verbose : bool, default=False
         Verbosity mode
-
-    x_squared_norms : ndarray of shape (n_samples,), default=None
-        Precomputed x_squared_norms.
 
     tol : float, default=1e-4
         Relative tolerance with regards to Frobenius norm of the difference
@@ -686,7 +681,6 @@ def _kmeans_single_lloyd(
             lloyd_iter(
                 X,
                 sample_weight,
-                x_squared_norms,
                 centers,
                 centers_new,
                 weight_in_clusters,
@@ -725,7 +719,6 @@ def _kmeans_single_lloyd(
             lloyd_iter(
                 X,
                 sample_weight,
-                x_squared_norms,
                 centers,
                 centers,
                 weight_in_clusters,
@@ -740,9 +733,7 @@ def _kmeans_single_lloyd(
     return labels, inertia, centers, i + 1
 
 
-def _labels_inertia(
-    X, sample_weight, x_squared_norms, centers, n_threads=1, return_inertia=True
-):
+def _labels_inertia(X, sample_weight, centers, n_threads=1, return_inertia=True):
     """E step of the K-means EM algorithm.
 
     Compute the labels and the inertia of the given samples and centers.
@@ -784,8 +775,7 @@ def _labels_inertia(
     n_clusters = centers.shape[0]
 
     labels = np.full(n_samples, -1, dtype=np.int32)
-    weight_in_clusters = np.zeros(n_clusters, dtype=centers.dtype)
-    center_shift = np.zeros_like(weight_in_clusters)
+    center_shift = np.zeros(n_clusters, dtype=centers.dtype)
 
     if sp.issparse(X):
         _labels = lloyd_iter_chunked_sparse
@@ -795,16 +785,16 @@ def _labels_inertia(
         _inertia = _inertia_dense
         X = ReadonlyArrayWrapper(X)
 
+    centers = ReadonlyArrayWrapper(centers)
     _labels(
         X,
         sample_weight,
-        x_squared_norms,
         centers,
-        centers,
-        weight_in_clusters,
-        labels,
-        center_shift,
-        n_threads,
+        centers_new=None,
+        weight_in_clusters=None,
+        labels=labels,
+        center_shift=center_shift,
+        n_threads=n_threads,
         update_centers=False,
     )
 
@@ -816,23 +806,21 @@ def _labels_inertia(
 
 
 def _labels_inertia_threadpool_limit(
-    X, sample_weight, x_squared_norms, centers, n_threads=1, return_inertia=True
+    X, sample_weight, centers, n_threads=1, return_inertia=True
 ):
     """Same as _labels_inertia but in a threadpool_limits context."""
     with threadpool_limits(limits=1, user_api="blas"):
-        result = _labels_inertia(
-            X, sample_weight, x_squared_norms, centers, n_threads, return_inertia
-        )
+        result = _labels_inertia(X, sample_weight, centers, n_threads, return_inertia)
 
     return result
 
 
 class _BaseKMeans(
-    _ClassNamePrefixFeaturesOutMixin, TransformerMixin, ClusterMixin, BaseEstimator, ABC
+    ClassNamePrefixFeaturesOutMixin, TransformerMixin, ClusterMixin, BaseEstimator, ABC
 ):
     """Base class for KMeans and MiniBatchKMeans"""
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_clusters": [Interval(Integral, 1, None, closed="left")],
         "init": [StrOptions({"k-means++", "random"}), callable, "array-like"],
         "n_init": [
@@ -1068,15 +1056,14 @@ class _BaseKMeans(
         check_is_fitted(self)
 
         X = self._check_test_data(X)
-        x_squared_norms = row_norms(X, squared=True)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        labels, _ = _labels_inertia_threadpool_limit(
+        labels = _labels_inertia_threadpool_limit(
             X,
             sample_weight,
-            x_squared_norms,
             self.cluster_centers_,
             n_threads=self._n_threads,
+            return_inertia=False,
         )
 
         return labels
@@ -1154,11 +1141,10 @@ class _BaseKMeans(
         check_is_fitted(self)
 
         X = self._check_test_data(X)
-        x_squared_norms = row_norms(X, squared=True)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
         _, scores = _labels_inertia_threadpool_limit(
-            X, sample_weight, x_squared_norms, self.cluster_centers_, self._n_threads
+            X, sample_weight, self.cluster_centers_, self._n_threads
         )
         return -scores
 
@@ -1190,9 +1176,10 @@ class KMeans(_BaseKMeans):
 
         'k-means++' : selects initial cluster centroids using sampling based on
         an empirical probability distribution of the points' contribution to the
-        overall inertia. This technique speeds up convergence, and is
-        theoretically proven to be :math:`\\mathcal{O}(\\log k)`-optimal.
-        See the description of `n_init` for more details.
+        overall inertia. This technique speeds up convergence. The algorithm
+        implemented is "greedy k-means++". It differs from the vanilla k-means++
+        by making several trials at each sampling step and choosing the bestcentroid
+        among them.
 
         'random': choose `n_clusters` observations (rows) at random from data
         for the initial centroids.
@@ -1305,8 +1292,9 @@ class KMeans(_BaseKMeans):
     samples and T is the number of iteration.
 
     The worst case complexity is given by O(n^(k+2/p)) with
-    n = n_samples, p = n_features. (D. Arthur and S. Vassilvitskii,
-    'How slow is the k-means method?' SoCG2006)
+    n = n_samples, p = n_features.
+    Refer to :doi:`"How slow is the k-means method?" D. Arthur and S. Vassilvitskii -
+    SoCG2006.<10.1145/1137856.1137880>` for more details.
 
     In practice, the k-means algorithm is very fast (one of the fastest
     clustering algorithms available), but it falls in local minima. That's why
@@ -1336,7 +1324,7 @@ class KMeans(_BaseKMeans):
            [ 1.,  2.]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseKMeans._parameter_constraints,
         "copy_x": ["boolean"],
         "algorithm": [
@@ -1484,7 +1472,6 @@ class KMeans(_BaseKMeans):
                 max_iter=self.max_iter,
                 verbose=self.verbose,
                 tol=self._tol,
-                x_squared_norms=x_squared_norms,
                 n_threads=self._n_threads,
             )
 
@@ -1527,7 +1514,6 @@ class KMeans(_BaseKMeans):
 
 def _mini_batch_step(
     X,
-    x_squared_norms,
     sample_weight,
     centers,
     centers_new,
@@ -1593,9 +1579,7 @@ def _mini_batch_step(
     # Perform label assignment to nearest centers
     # For better efficiency, it's better to run _mini_batch_step in a
     # threadpool_limit context than using _labels_inertia_threadpool_limit here
-    labels, inertia = _labels_inertia(
-        X, sample_weight, x_squared_norms, centers, n_threads=n_threads
-    )
+    labels, inertia = _labels_inertia(X, sample_weight, centers, n_threads=n_threads)
 
     # Update centers according to the labels
     if sp.issparse(X):
@@ -1668,9 +1652,10 @@ class MiniBatchKMeans(_BaseKMeans):
 
         'k-means++' : selects initial cluster centroids using sampling based on
         an empirical probability distribution of the points' contribution to the
-        overall inertia. This technique speeds up convergence, and is
-        theoretically proven to be :math:`\\mathcal{O}(\\log k)`-optimal.
-        See the description of `n_init` for more details.
+        overall inertia. This technique speeds up convergence. The algorithm
+        implemented is "greedy k-means++". It differs from the vanilla k-means++
+        by making several trials at each sampling step and choosing the best centroid
+        among them.
 
         'random': choose `n_clusters` observations (rows) at random from data
         for the initial centroids.
@@ -1841,7 +1826,7 @@ class MiniBatchKMeans(_BaseKMeans):
     array([1, 0], dtype=int32)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **_BaseKMeans._parameter_constraints,
         "batch_size": [Interval(Integral, 1, None, closed="left")],
         "compute_labels": ["boolean"],
@@ -2061,7 +2046,6 @@ class MiniBatchKMeans(_BaseKMeans):
         validation_indices = random_state.randint(0, n_samples, self._init_size)
         X_valid = X[validation_indices]
         sample_weight_valid = sample_weight[validation_indices]
-        x_squared_norms_valid = x_squared_norms[validation_indices]
 
         # perform several inits with random subsets
         best_inertia = None
@@ -2083,7 +2067,6 @@ class MiniBatchKMeans(_BaseKMeans):
             _, inertia = _labels_inertia_threadpool_limit(
                 X_valid,
                 sample_weight_valid,
-                x_squared_norms_valid,
                 cluster_centers,
                 n_threads=self._n_threads,
             )
@@ -2119,7 +2102,6 @@ class MiniBatchKMeans(_BaseKMeans):
                 # Perform the actual update step on the minibatch data
                 batch_inertia = _mini_batch_step(
                     X=X[minibatch_indices],
-                    x_squared_norms=x_squared_norms[minibatch_indices],
                     sample_weight=sample_weight[minibatch_indices],
                     centers=centers,
                     centers_new=centers_new,
@@ -2154,7 +2136,6 @@ class MiniBatchKMeans(_BaseKMeans):
             self.labels_, self.inertia_ = _labels_inertia_threadpool_limit(
                 X,
                 sample_weight,
-                x_squared_norms,
                 self.cluster_centers_,
                 n_threads=self._n_threads,
             )
@@ -2241,7 +2222,6 @@ class MiniBatchKMeans(_BaseKMeans):
         with threadpool_limits(limits=1, user_api="blas"):
             _mini_batch_step(
                 X,
-                x_squared_norms=x_squared_norms,
                 sample_weight=sample_weight,
                 centers=self.cluster_centers_,
                 centers_new=self.cluster_centers_,
@@ -2257,7 +2237,6 @@ class MiniBatchKMeans(_BaseKMeans):
             self.labels_, self.inertia_ = _labels_inertia_threadpool_limit(
                 X,
                 sample_weight,
-                x_squared_norms,
                 self.cluster_centers_,
                 n_threads=self._n_threads,
             )

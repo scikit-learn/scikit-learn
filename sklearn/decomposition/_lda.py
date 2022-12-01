@@ -10,21 +10,23 @@ Link: https://github.com/blei-lab/onlineldavb
 
 # Author: Chyi-Kwei Yau
 # Author: Matthew D. Hoffman (original onlineldavb implementation)
+from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
 from scipy.special import gammaln, logsumexp
 from joblib import Parallel, effective_n_jobs
 
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
+from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..utils import check_random_state, gen_batches, gen_even_slices
 from ..utils.validation import check_non_negative
 from ..utils.validation import check_is_fitted
 from ..utils.fixes import delayed
+from ..utils._param_validation import Interval, StrOptions
 
 from ._online_lda_fast import (
-    mean_change,
-    _dirichlet_expectation_1d,
+    mean_change as cy_mean_change,
+    _dirichlet_expectation_1d as cy_dirichlet_expectation_1d,
     _dirichlet_expectation_2d,
 )
 
@@ -85,20 +87,33 @@ def _update_doc_distribution(
     n_topics = exp_topic_word_distr.shape[0]
 
     if random_state:
-        doc_topic_distr = random_state.gamma(100.0, 0.01, (n_samples, n_topics))
+        doc_topic_distr = random_state.gamma(100.0, 0.01, (n_samples, n_topics)).astype(
+            X.dtype, copy=False
+        )
     else:
-        doc_topic_distr = np.ones((n_samples, n_topics))
+        doc_topic_distr = np.ones((n_samples, n_topics), dtype=X.dtype)
 
     # In the literature, this is `exp(E[log(theta)])`
     exp_doc_topic = np.exp(_dirichlet_expectation_2d(doc_topic_distr))
 
     # diff on `component_` (only calculate it when `cal_diff` is True)
-    suff_stats = np.zeros(exp_topic_word_distr.shape) if cal_sstats else None
+    suff_stats = (
+        np.zeros(exp_topic_word_distr.shape, dtype=X.dtype) if cal_sstats else None
+    )
 
     if is_sparse_x:
         X_data = X.data
         X_indices = X.indices
         X_indptr = X.indptr
+
+    # These cython functions are called in a nested loop on usually very small arrays
+    # (lenght=n_topics). In that case, finding the appropriate signature of the
+    # fused-typed function can be more costly than its execution, hence the dispatch
+    # is done outside of the loop.
+    ctype = "float" if X.dtype == np.float32 else "double"
+    mean_change = cy_mean_change[ctype]
+    dirichlet_expectation_1d = cy_dirichlet_expectation_1d[ctype]
+    eps = np.finfo(X.dtype).eps
 
     for idx_d in range(n_samples):
         if is_sparse_x:
@@ -119,11 +134,11 @@ def _update_doc_distribution(
 
             # The optimal phi_{dwk} is proportional to
             # exp(E[log(theta_{dk})]) * exp(E[log(beta_{dw})]).
-            norm_phi = np.dot(exp_doc_topic_d, exp_topic_word_d) + EPS
+            norm_phi = np.dot(exp_doc_topic_d, exp_topic_word_d) + eps
 
             doc_topic_d = exp_doc_topic_d * np.dot(cnts / norm_phi, exp_topic_word_d.T)
             # Note: adds doc_topic_prior to doc_topic_d, in-place.
-            _dirichlet_expectation_1d(doc_topic_d, doc_topic_prior, exp_doc_topic_d)
+            dirichlet_expectation_1d(doc_topic_d, doc_topic_prior, exp_doc_topic_d)
 
             if mean_change(last_d, doc_topic_d) < mean_change_tol:
                 break
@@ -132,14 +147,14 @@ def _update_doc_distribution(
         # Contribution of document d to the expected sufficient
         # statistics for the M step.
         if cal_sstats:
-            norm_phi = np.dot(exp_doc_topic_d, exp_topic_word_d) + EPS
+            norm_phi = np.dot(exp_doc_topic_d, exp_topic_word_d) + eps
             suff_stats[:, ids] += np.outer(exp_doc_topic_d, cnts / norm_phi)
 
     return (doc_topic_distr, suff_stats)
 
 
 class LatentDirichletAllocation(
-    _ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
+    ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator
 ):
     """Latent Dirichlet Allocation with online variational Bayes algorithm.
 
@@ -320,6 +335,25 @@ class LatentDirichletAllocation(
            [0.15297572, 0.00362644, 0.44412786, 0.39568399, 0.003586  ]])
     """
 
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 0, None, closed="neither")],
+        "doc_topic_prior": [None, Interval(Real, 0, 1, closed="both")],
+        "topic_word_prior": [None, Interval(Real, 0, 1, closed="both")],
+        "learning_method": [StrOptions({"batch", "online"})],
+        "learning_decay": [Interval(Real, 0, 1, closed="both")],
+        "learning_offset": [Interval(Real, 1.0, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "batch_size": [Interval(Integral, 0, None, closed="neither")],
+        "evaluate_every": [Interval(Integral, None, None, closed="neither")],
+        "total_samples": [Interval(Real, 0, None, closed="neither")],
+        "perp_tol": [Interval(Real, 0, None, closed="left")],
+        "mean_change_tol": [Interval(Real, 0, None, closed="left")],
+        "max_doc_update_iter": [Interval(Integral, 0, None, closed="left")],
+        "n_jobs": [None, Integral],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+    }
+
     def __init__(
         self,
         n_components=10,
@@ -357,27 +391,7 @@ class LatentDirichletAllocation(
         self.verbose = verbose
         self.random_state = random_state
 
-    def _check_params(self):
-        """Check model parameters."""
-        if self.n_components <= 0:
-            raise ValueError("Invalid 'n_components' parameter: %r" % self.n_components)
-
-        if self.total_samples <= 0:
-            raise ValueError(
-                "Invalid 'total_samples' parameter: %r" % self.total_samples
-            )
-
-        if self.learning_offset < 0:
-            raise ValueError(
-                "Invalid 'learning_offset' parameter: %r" % self.learning_offset
-            )
-
-        if self.learning_method not in ("batch", "online"):
-            raise ValueError(
-                "Invalid 'learning_method' parameter: %r" % self.learning_method
-            )
-
-    def _init_latent_vars(self, n_features):
+    def _init_latent_vars(self, n_features, dtype=np.float64):
         """Initialize latent variables."""
 
         self.random_state_ = check_random_state(self.random_state)
@@ -399,7 +413,7 @@ class LatentDirichletAllocation(
         # In the literature, this is called `lambda`
         self.components_ = self.random_state_.gamma(
             init_gamma, init_var, (self.n_components, n_features)
-        )
+        ).astype(dtype, copy=False)
 
         # In the literature, this is `exp(E[log(beta)])`
         self.exp_dirichlet_component_ = np.exp(
@@ -463,7 +477,7 @@ class LatentDirichletAllocation(
         if cal_sstats:
             # This step finishes computing the sufficient statistics for the
             # M-step.
-            suff_stats = np.zeros(self.components_.shape)
+            suff_stats = np.zeros(self.components_.shape, dtype=self.components_.dtype)
             for sstats in sstats_list:
                 suff_stats += sstats
             suff_stats *= self.exp_dirichlet_component_
@@ -527,7 +541,10 @@ class LatentDirichletAllocation(
         return
 
     def _more_tags(self):
-        return {"requires_positive_X": True}
+        return {
+            "preserves_dtype": [np.float64, np.float32],
+            "requires_positive_X": True,
+        }
 
     def _check_non_neg_array(self, X, reset_n_features, whom):
         """check X format
@@ -539,8 +556,16 @@ class LatentDirichletAllocation(
         X :  array-like or sparse matrix
 
         """
-        X = self._validate_data(X, reset=reset_n_features, accept_sparse="csr")
+        dtype = [np.float64, np.float32] if reset_n_features else self.components_.dtype
+
+        X = self._validate_data(
+            X,
+            reset=reset_n_features,
+            accept_sparse="csr",
+            dtype=dtype,
+        )
         check_non_negative(X, whom)
+
         return X
 
     def partial_fit(self, X, y=None):
@@ -559,8 +584,11 @@ class LatentDirichletAllocation(
         self
             Partially fitted estimator.
         """
-        self._check_params()
         first_time = not hasattr(self, "components_")
+
+        if first_time:
+            self._validate_params()
+
         X = self._check_non_neg_array(
             X, reset_n_features=first_time, whom="LatentDirichletAllocation.partial_fit"
         )
@@ -569,7 +597,7 @@ class LatentDirichletAllocation(
 
         # initialize parameters or check
         if first_time:
-            self._init_latent_vars(n_features)
+            self._init_latent_vars(n_features, dtype=X.dtype)
 
         if n_features != self.components_.shape[1]:
             raise ValueError(
@@ -609,7 +637,7 @@ class LatentDirichletAllocation(
         self
             Fitted estimator.
         """
-        self._check_params()
+        self._validate_params()
         X = self._check_non_neg_array(
             X, reset_n_features=True, whom="LatentDirichletAllocation.fit"
         )
@@ -621,7 +649,7 @@ class LatentDirichletAllocation(
         batch_size = self.batch_size
 
         # initialize parameters
-        self._init_latent_vars(n_features)
+        self._init_latent_vars(n_features, dtype=X.dtype)
         # change to perplexity later
         last_bound = None
         n_jobs = effective_n_jobs(self.n_jobs)

@@ -61,7 +61,7 @@ way they draw random subsets of the training set:
 
 In scikit-learn, bagging methods are offered as a unified
 :class:`BaggingClassifier` meta-estimator  (resp. :class:`BaggingRegressor`),
-taking as input a user-specified base estimator along with parameters
+taking as input a user-specified estimator along with parameters
 specifying the strategy to draw random subsets. In particular, ``max_samples``
 and ``max_features`` control the size of the subsets (in terms of samples and
 features), while ``bootstrap`` and ``bootstrap_features`` control whether
@@ -69,7 +69,7 @@ samples and features are drawn with or without replacement. When using a subset
 of the available samples the generalization accuracy can be estimated with the
 out-of-bag samples by setting ``oob_score=True``. As an example, the
 snippet below illustrates how to instantiate a bagging ensemble of
-:class:`KNeighborsClassifier` base estimators, each built on random subsets of
+:class:`KNeighborsClassifier` estimators, each built on random subsets of
 50% of the samples and 50% of the features.
 
     >>> from sklearn.ensemble import BaggingClassifier
@@ -317,9 +317,9 @@ to the prediction function.
 
 .. topic:: References
 
- .. [L2014] G. Louppe,
-         "Understanding Random Forests: From Theory to Practice",
-         PhD Thesis, U. of Liege, 2014.
+ .. [L2014] G. Louppe, :arxiv:`"Understanding Random Forests: From Theory to
+    Practice" <1407.7502>`,
+    PhD Thesis, U. of Liege, 2014.
 
 .. _random_trees_embedding:
 
@@ -416,7 +416,7 @@ learners::
 The number of weak learners is controlled by the parameter ``n_estimators``. The
 ``learning_rate`` parameter controls the contribution of the weak learners in
 the final combination. By default, weak learners are decision stumps. Different
-weak learners can be specified through the ``base_estimator`` parameter.
+weak learners can be specified through the ``estimator`` parameter.
 The main parameters to tune to obtain good results are ``n_estimators`` and
 the complexity of the base estimators (e.g., its depth ``max_depth`` or
 minimum required number of samples to consider a split ``min_samples_split``).
@@ -706,13 +706,13 @@ space.
 
 .. note::
 
-  For some losses, e.g. the least absolute deviation (LAD) where the gradients
+  For some losses, e.g. ``'absolute_error'`` where the gradients
   are :math:`\pm 1`, the values predicted by a fitted :math:`h_m` are not
   accurate enough: the tree can only output integer values. As a result, the
   leaves values of the tree :math:`h_m` are modified once the tree is
   fitted, such that the leaves values minimize the loss :math:`L_m`. The
-  update is loss-dependent: for the LAD loss, the value of a leaf is updated
-  to the median of the samples in that leaf.
+  update is loss-dependent: for the absolute error loss, the value of
+  a leaf is updated to the median of the samples in that leaf.
 
 Classification
 ^^^^^^^^^^^^^^
@@ -749,7 +749,7 @@ the parameter ``loss``:
     * Squared error (``'squared_error'``): The natural choice for regression
       due to its superior computational properties. The initial model is
       given by the mean of the target values.
-    * Least absolute deviation (``'lad'``): A robust loss function for
+    * Absolute error (``'absolute_error'``): A robust loss function for
       regression. The initial model is given by the median of the
       target values.
     * Huber (``'huber'``): Another robust loss function that combines
@@ -1133,33 +1133,38 @@ score should increase the probability of getting approved for a loan.
 Monotonic constraints allow you to incorporate such prior knowledge into the
 model.
 
-A positive monotonic constraint is a constraint of the form:
+For a predictor :math:`F` with two features:
 
-:math:`x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2)`,
-where :math:`F` is the predictor with two features.
+ - a **monotonic increase constraint** is a constraint of the form:
+    .. math::
+        x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2)
 
-Similarly, a negative monotonic constraint is of the form:
-
-:math:`x_1 \leq x_1' \implies F(x_1, x_2) \geq F(x_1', x_2)`.
-
-Note that monotonic constraints only constraint the output "all else being
-equal". Indeed, the following relation **is not enforced** by a positive
-constraint: :math:`x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2')`.
+ - a **monotonic decrease constraint** is a constraint of the form:
+    .. math::
+        x_1 \leq x_1' \implies F(x_1, x_2) \geq F(x_1', x_2)
 
 You can specify a monotonic constraint on each feature using the
 `monotonic_cst` parameter. For each feature, a value of 0 indicates no
-constraint, while -1 and 1 indicate a negative and positive constraint,
-respectively::
+constraint, while 1 and -1 indicate a monotonic increase and
+monotonic decrease constraint, respectively::
 
   >>> from sklearn.ensemble import HistGradientBoostingRegressor
 
-  ... # positive, negative, and no constraint on the 3 features
+  ... # monotonic increase, monotonic decrease, and no constraint on the 3 features
   >>> gbdt = HistGradientBoostingRegressor(monotonic_cst=[1, -1, 0])
 
-In a binary classification context, imposing a monotonic constraint means
-that the feature is supposed to have a positive / negative effect on the
-probability to belong to the positive class. Monotonic constraints are not
-supported for multiclass context.
+In a binary classification context, imposing a monotonic increase (decrease) constraint means that higher values of the feature are supposed
+to have a positive (negative) effect on the probability of samples
+to belong to the positive class.
+
+Nevertheless, monotonic constraints only marginally constrain feature effects on the output.
+For instance, monotonic increase and decrease constraints cannot be used to enforce the
+following modelling constraint:
+
+    .. math::
+        x_1 \leq x_1' \implies F(x_1, x_2) \leq F(x_1', x_2')
+
+Also, monotonic constraints are not supported for multiclass classification.
 
 .. note::
     Since categories are unordered quantities, it is not possible to enforce
@@ -1168,6 +1173,44 @@ supported for multiclass context.
 .. topic:: Examples:
 
   * :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
+
+.. _interaction_cst_hgbt:
+
+Interaction constraints
+-----------------------
+
+A priori, the histogram gradient boosting trees are allowed to use any feature
+to split a node into child nodes. This creates so called interactions between
+features, i.e. usage of different features as split along a branch. Sometimes,
+one wants to restrict the possible interactions, see [Mayer2022]_. This can be
+done by the parameter ``interaction_cst``, where one can specify the indices
+of features that are allowed to interact.
+For instance, with 3 features in total, ``interaction_cst=[{0}, {1}, {2}]``
+forbids all interactions.
+The constraints ``[{0, 1}, {1, 2}]`` specifies two groups of possibly
+interacting features. Features 0 and 1 may interact with each other, as well
+as features 1 and 2. But note that features 0 and 2 are forbidden to interact.
+The following depicts a tree and the possible splits of the tree:
+
+.. code-block:: none
+
+      1      <- Both constraint groups could be applied from now on
+     / \
+    1   2    <- Left split still fulfills both constraint groups.
+   / \ / \      Right split at feature 2 has only group {1, 2} from now on.
+
+LightGBM uses the same logic for overlapping groups.
+
+Note that features not listed in ``interaction_cst`` are automatically
+assigned an interaction group for themselves. With again 3 features, this
+means that ``[{0}]`` is equivalent to ``[{0}, {1, 2}]``.
+
+.. topic:: References
+
+  .. [Mayer2022] M. Mayer, S.C. Bourassa, M. Hoesli, and D.F. Scognamiglio.
+     2022. :doi:`Machine Learning Applications to Land and Structure Valuation
+     <10.3390/jrfm15050193>`.
+     Journal of Risk and Financial Management 15, no. 5: 193
 
 Low-level parallelism
 ---------------------

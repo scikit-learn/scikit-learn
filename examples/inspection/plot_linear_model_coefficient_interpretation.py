@@ -66,6 +66,7 @@ X.head()
 # Our target for prediction: the wage.
 # Wages are described as floating-point number in dollars per hour.
 
+# %%
 y = survey.target.values.ravel()
 survey.target.head()
 
@@ -168,30 +169,31 @@ model.fit(X_train, y_train)
 # for example, the median absolute error of the model.
 
 from sklearn.metrics import median_absolute_error
+from sklearn.metrics import PredictionErrorDisplay
 
-y_pred = model.predict(X_train)
-
-mae = median_absolute_error(y_train, y_pred)
-string_score = f"MAE on training set: {mae:.2f} $/hour"
+mae_train = median_absolute_error(y_train, model.predict(X_train))
 y_pred = model.predict(X_test)
-mae = median_absolute_error(y_test, y_pred)
-string_score += f"\nMAE on testing set: {mae:.2f} $/hour"
+mae_test = median_absolute_error(y_test, y_pred)
+scores = {
+    "MedAE on training set": f"{mae_train:.2f} $/hour",
+    "MedAE on testing set": f"{mae_test:.2f} $/hour",
+}
 
 # %%
-fig, ax = plt.subplots(figsize=(5, 5))
-plt.scatter(y_test, y_pred)
-ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
-plt.text(3, 20, string_score)
-plt.title("Ridge model, small regularization")
-plt.ylabel("Model predictions")
-plt.xlabel("Truths")
-plt.xlim([0, 27])
-_ = plt.ylim([0, 27])
+_, ax = plt.subplots(figsize=(5, 5))
+display = PredictionErrorDisplay.from_predictions(
+    y_test, y_pred, kind="actual_vs_predicted", ax=ax, scatter_kwargs={"alpha": 0.5}
+)
+ax.set_title("Ridge model, small regularization")
+for name, score in scores.items():
+    ax.plot([], [], " ", label=f"{name}: {score}")
+ax.legend(loc="upper left")
+plt.tight_layout()
 
 # %%
 # The model learnt is far from being a good model making accurate predictions:
 # this is obvious when looking at the plot above, where good predictions
-# should lie on the red line.
+# should lie on the black dashed line.
 #
 # In the following section, we will interpret the coefficients of the model.
 # While we do so, we should keep in mind that any conclusion we draw is
@@ -330,7 +332,7 @@ coefs = pd.DataFrame(
 
 # %%
 plt.figure(figsize=(9, 7))
-sns.stripplot(data=coefs, orient="h", color="k", alpha=0.5)
+sns.stripplot(data=coefs, orient="h", palette="dark:k", alpha=0.5)
 sns.boxplot(data=coefs, orient="h", color="cyan", saturation=0.5, whis=10)
 plt.axvline(x=0, color=".5")
 plt.xlabel("Coefficient importance")
@@ -389,7 +391,7 @@ coefs = pd.DataFrame(
 
 # %%
 plt.figure(figsize=(9, 7))
-sns.stripplot(data=coefs, orient="h", color="k", alpha=0.5)
+sns.stripplot(data=coefs, orient="h", palette="dark:k", alpha=0.5)
 sns.boxplot(data=coefs, orient="h", color="cyan", saturation=0.5)
 plt.axvline(x=0, color=".5")
 plt.title("Coefficient importance and its variability")
@@ -437,25 +439,23 @@ model.fit(X_train, y_train)
 # model using, for example, the median absolute error of the model and the R
 # squared coefficient.
 
-y_pred = model.predict(X_train)
-mae = median_absolute_error(y_train, y_pred)
-string_score = f"MAE on training set: {mae:.2f} $/hour"
+mae_train = median_absolute_error(y_train, model.predict(X_train))
 y_pred = model.predict(X_test)
-mae = median_absolute_error(y_test, y_pred)
-string_score += f"\nMAE on testing set: {mae:.2f} $/hour"
+mae_test = median_absolute_error(y_test, y_pred)
+scores = {
+    "MedAE on training set": f"{mae_train:.2f} $/hour",
+    "MedAE on testing set": f"{mae_test:.2f} $/hour",
+}
 
-# %%
-fig, ax = plt.subplots(figsize=(6, 6))
-plt.scatter(y_test, y_pred)
-ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
-
-plt.text(3, 20, string_score)
-
-plt.title("Ridge model, small regularization, normalized variables")
-plt.ylabel("Model predictions")
-plt.xlabel("Truths")
-plt.xlim([0, 27])
-_ = plt.ylim([0, 27])
+_, ax = plt.subplots(figsize=(5, 5))
+display = PredictionErrorDisplay.from_predictions(
+    y_test, y_pred, kind="actual_vs_predicted", ax=ax, scatter_kwargs={"alpha": 0.5}
+)
+ax.set_title("Ridge model, small regularization")
+for name, score in scores.items():
+    ax.plot([], [], " ", label=f"{name}: {score}")
+ax.legend(loc="upper left")
+plt.tight_layout()
 
 # %%
 # For the coefficient analysis, scaling is not needed this time because it
@@ -492,7 +492,7 @@ coefs = pd.DataFrame(
 
 # %%
 plt.figure(figsize=(9, 7))
-sns.stripplot(data=coefs, orient="h", color="k", alpha=0.5)
+sns.stripplot(data=coefs, orient="h", palette="dark:k", alpha=0.5)
 sns.boxplot(data=coefs, orient="h", color="cyan", saturation=0.5, whis=10)
 plt.axvline(x=0, color=".5")
 plt.title("Coefficient variability")
@@ -533,26 +533,23 @@ model[-1].regressor_.alpha_
 
 # %%
 # Then we check the quality of the predictions.
-
-y_pred = model.predict(X_train)
-mae = median_absolute_error(y_train, y_pred)
-string_score = f"MAE on training set: {mae:.2f} $/hour"
+mae_train = median_absolute_error(y_train, model.predict(X_train))
 y_pred = model.predict(X_test)
-mae = median_absolute_error(y_test, y_pred)
-string_score += f"\nMAE on testing set: {mae:.2f} $/hour"
+mae_test = median_absolute_error(y_test, y_pred)
+scores = {
+    "MedAE on training set": f"{mae_train:.2f} $/hour",
+    "MedAE on testing set": f"{mae_test:.2f} $/hour",
+}
 
-# %%
-fig, ax = plt.subplots(figsize=(6, 6))
-plt.scatter(y_test, y_pred)
-ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
-
-plt.text(3, 20, string_score)
-
-plt.title("Ridge model, optimum regularization, normalized variables")
-plt.ylabel("Model predictions")
-plt.xlabel("Truths")
-plt.xlim([0, 27])
-_ = plt.ylim([0, 27])
+_, ax = plt.subplots(figsize=(5, 5))
+display = PredictionErrorDisplay.from_predictions(
+    y_test, y_pred, kind="actual_vs_predicted", ax=ax, scatter_kwargs={"alpha": 0.5}
+)
+ax.set_title("Ridge model, optimum regularization")
+for name, score in scores.items():
+    ax.plot([], [], " ", label=f"{name}: {score}")
+ax.legend(loc="upper left")
+plt.tight_layout()
 
 # %%
 # The ability to reproduce the data of the regularized model is similar to
@@ -640,25 +637,23 @@ model[-1].regressor_.alpha_
 # %%
 # Then we check the quality of the predictions.
 
-y_pred = model.predict(X_train)
-mae = median_absolute_error(y_train, y_pred)
-string_score = f"MAE on training set: {mae:.2f} $/hour"
+mae_train = median_absolute_error(y_train, model.predict(X_train))
 y_pred = model.predict(X_test)
-mae = median_absolute_error(y_test, y_pred)
-string_score += f"\nMAE on testing set: {mae:.2f} $/hour"
+mae_test = median_absolute_error(y_test, y_pred)
+scores = {
+    "MedAE on training set": f"{mae_train:.2f} $/hour",
+    "MedAE on testing set": f"{mae_test:.2f} $/hour",
+}
 
-# %%
-fig, ax = plt.subplots(figsize=(6, 6))
-plt.scatter(y_test, y_pred)
-ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
-
-plt.text(3, 20, string_score)
-
-plt.title("Lasso model, regularization, normalized variables")
-plt.ylabel("Model predictions")
-plt.xlabel("Truths")
-plt.xlim([0, 27])
-_ = plt.ylim([0, 27])
+_, ax = plt.subplots(figsize=(6, 6))
+display = PredictionErrorDisplay.from_predictions(
+    y_test, y_pred, kind="actual_vs_predicted", ax=ax, scatter_kwargs={"alpha": 0.5}
+)
+ax.set_title("Lasso model, optimum regularization")
+for name, score in scores.items():
+    ax.plot([], [], " ", label=f"{name}: {score}")
+ax.legend(loc="upper left")
+plt.tight_layout()
 
 # %%
 # For our dataset, again the model is not very predictive.
@@ -699,7 +694,7 @@ coefs = pd.DataFrame(
 
 # %%
 plt.figure(figsize=(9, 7))
-sns.stripplot(data=coefs, orient="h", color="k", alpha=0.5)
+sns.stripplot(data=coefs, orient="h", palette="dark:k", alpha=0.5)
 sns.boxplot(data=coefs, orient="h", color="cyan", saturation=0.5, whis=100)
 plt.axvline(x=0, color=".5")
 plt.title("Coefficient variability")

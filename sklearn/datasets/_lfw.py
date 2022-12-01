@@ -159,7 +159,9 @@ def _load_imgs(file_paths, slice_, color, resize):
         # Checks if jpeg reading worked. Refer to issue #3594 for more
         # details.
         pil_img = Image.open(file_path)
-        pil_img.crop((w_slice.start, h_slice.start, w_slice.stop, h_slice.stop))
+        pil_img = pil_img.crop(
+            (w_slice.start, h_slice.start, w_slice.stop, h_slice.stop)
+        )
         if resize is not None:
             pil_img = pil_img.resize((w, h))
         face = np.asarray(pil_img, dtype=np.float32)
@@ -263,8 +265,9 @@ def fetch_lfw_people(
     funneled : bool, default=True
         Download and use the funneled variant of the dataset.
 
-    resize : float, default=0.5
-        Ratio used to resize the each face picture.
+    resize : float or None, default=0.5
+        Ratio used to resize the each face picture. If `None`, no resizing is
+        performed.
 
     min_faces_per_person : int, default=None
         The extracted dataset will only retain pictures of people that have at

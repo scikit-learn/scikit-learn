@@ -610,7 +610,8 @@ def test_ridge_individual_penalties():
 
     # Test error is raised when number of targets and penalties do not match.
     ridge = Ridge(alpha=penalties[:-1])
-    with pytest.raises(ValueError):
+    err_msg = "Number of targets and number of penalties do not correspond: 4 != 5"
+    with pytest.raises(ValueError, match=err_msg):
         ridge.fit(X, y)
 
 
@@ -713,8 +714,6 @@ def _make_sparse_offset_regression(
     return X, y
 
 
-# FIXME: 'normalize' to be removed in 1.2
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     "solver, sparse_X",
     (
@@ -730,10 +729,9 @@ def _make_sparse_offset_regression(
     "n_samples,dtype,proportion_nonzero",
     [(20, "float32", 0.1), (40, "float32", 1.0), (20, "float64", 0.2)],
 )
-@pytest.mark.parametrize("normalize", [True, False])
 @pytest.mark.parametrize("seed", np.arange(3))
 def test_solver_consistency(
-    solver, proportion_nonzero, n_samples, dtype, sparse_X, seed, normalize
+    solver, proportion_nonzero, n_samples, dtype, sparse_X, seed
 ):
     alpha = 1.0
     noise = 50.0 if proportion_nonzero > 0.9 else 500.0
@@ -745,41 +743,40 @@ def test_solver_consistency(
         random_state=seed,
         n_samples=n_samples,
     )
-    if not normalize:
-        # Manually scale the data to avoid pathological cases. We use
-        # minmax_scale to deal with the sparse case without breaking
-        # the sparsity pattern.
-        X = minmax_scale(X)
-    svd_ridge = Ridge(solver="svd", normalize=normalize, alpha=alpha).fit(X, y)
+
+    # Manually scale the data to avoid pathological cases. We use
+    # minmax_scale to deal with the sparse case without breaking
+    # the sparsity pattern.
+    X = minmax_scale(X)
+
+    svd_ridge = Ridge(solver="svd", alpha=alpha).fit(X, y)
     X = X.astype(dtype, copy=False)
     y = y.astype(dtype, copy=False)
     if sparse_X:
         X = sp.csr_matrix(X)
     if solver == "ridgecv":
-        ridge = RidgeCV(alphas=[alpha], normalize=normalize)
+        ridge = RidgeCV(alphas=[alpha])
     else:
-        ridge = Ridge(solver=solver, tol=1e-10, normalize=normalize, alpha=alpha)
+        ridge = Ridge(solver=solver, tol=1e-10, alpha=alpha)
     ridge.fit(X, y)
     assert_allclose(ridge.coef_, svd_ridge.coef_, atol=1e-3, rtol=1e-3)
     assert_allclose(ridge.intercept_, svd_ridge.intercept_, atol=1e-3, rtol=1e-3)
 
 
-# FIXME: 'normalize' to be removed in 1.2
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize("gcv_mode", ["svd", "eigen"])
 @pytest.mark.parametrize("X_constructor", [np.asarray, sp.csr_matrix])
 @pytest.mark.parametrize("X_shape", [(11, 8), (11, 20)])
 @pytest.mark.parametrize("fit_intercept", [True, False])
 @pytest.mark.parametrize(
-    "y_shape, normalize, noise",
+    "y_shape, noise",
     [
-        ((11,), True, 1.0),
-        ((11, 1), False, 30.0),
-        ((11, 3), False, 150.0),
+        ((11,), 1.0),
+        ((11, 1), 30.0),
+        ((11, 3), 150.0),
     ],
 )
 def test_ridge_gcv_vs_ridge_loo_cv(
-    gcv_mode, X_constructor, X_shape, y_shape, fit_intercept, normalize, noise
+    gcv_mode, X_constructor, X_shape, y_shape, fit_intercept, noise
 ):
     n_samples, n_features = X_shape
     n_targets = y_shape[-1] if len(y_shape) == 2 else 1
@@ -800,13 +797,11 @@ def test_ridge_gcv_vs_ridge_loo_cv(
         fit_intercept=fit_intercept,
         alphas=alphas,
         scoring="neg_mean_squared_error",
-        normalize=normalize,
     )
     gcv_ridge = RidgeCV(
         gcv_mode=gcv_mode,
         fit_intercept=fit_intercept,
         alphas=alphas,
-        normalize=normalize,
     )
 
     loo_ridge.fit(X, y)
@@ -921,16 +916,6 @@ def test_ridge_gcv_sample_weights(
     assert_allclose(gcv_ridge.intercept_, kfold.intercept_, rtol=1e-3)
 
 
-@pytest.mark.parametrize("mode", [True, 1, 5, "bad", "gcv"])
-def test_check_gcv_mode_error(mode):
-    X, y = make_regression(n_samples=5, n_features=2)
-    gcv = RidgeCV(gcv_mode=mode)
-    with pytest.raises(ValueError, match="Unknown value for 'gcv_mode'"):
-        gcv.fit(X, y)
-    with pytest.raises(ValueError, match="Unknown value for 'gcv_mode'"):
-        _check_gcv_mode(X, mode)
-
-
 @pytest.mark.parametrize("sparse", [True, False])
 @pytest.mark.parametrize(
     "mode, mode_n_greater_than_p, mode_p_greater_than_n",
@@ -1003,20 +988,6 @@ def _test_ridge_loo(filter_):
     assert_allclose(np.vstack((y_pred, y_pred)).T, Y_pred, rtol=1e-5)
 
     return ret
-
-
-# FIXME: 'normalize' to be removed in 1.2
-def _test_ridge_cv_normalize(filter_):
-    ridge_cv = RidgeCV(normalize=True, cv=3)
-    ridge_cv.fit(filter_(10.0 * X_diabetes), y_diabetes)
-
-    gs = GridSearchCV(
-        Ridge(normalize=True, solver="sparse_cg"),
-        cv=3,
-        param_grid={"alpha": ridge_cv.alphas},
-    )
-    gs.fit(filter_(10.0 * X_diabetes), y_diabetes)
-    assert gs.best_estimator_.alpha == ridge_cv.alpha_
 
 
 def _test_ridge_cv(filter_):
@@ -1223,14 +1194,11 @@ def check_dense_sparse(test_func):
         assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 
-# FIXME: 'normalize' to be removed in 1.2
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
 @pytest.mark.parametrize(
     "test_func",
     (
         _test_ridge_loo,
         _test_ridge_cv,
-        _test_ridge_cv_normalize,
         _test_ridge_diabetes,
         _test_multi_ridge_diabetes,
         _test_ridge_classifiers,
@@ -1669,7 +1637,7 @@ def test_ridge_fit_intercept_sparse_sag(with_sample_weight, global_random_seed):
     assert_allclose(dense_ridge.intercept_, sparse_ridge.intercept_, rtol=1e-4)
     assert_allclose(dense_ridge.coef_, sparse_ridge.coef_, rtol=1e-4)
     with pytest.warns(UserWarning, match='"sag" solver requires.*'):
-        Ridge(solver="sag").fit(X_csr, y)
+        Ridge(solver="sag", fit_intercept=True, tol=1e-3, max_iter=None).fit(X_csr, y)
 
 
 @pytest.mark.parametrize("return_intercept", [False, True])
@@ -2007,13 +1975,10 @@ def test_lbfgs_solver_error():
         model.fit(X, y)
 
 
-# FIXME: 'normalize' to be removed in 1.2
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
-@pytest.mark.parametrize("normalize", [True, False])
 @pytest.mark.parametrize(
     "solver", ["cholesky", "lsqr", "sparse_cg", "svd", "sag", "saga", "lbfgs"]
 )
-def test_ridge_sample_weight_invariance(normalize, solver):
+def test_ridge_sample_weight_invariance(solver):
     """Test that Ridge fulfils sample weight invariance.
 
     Note that this test is stricter than the common test
@@ -2021,7 +1986,6 @@ def test_ridge_sample_weight_invariance(normalize, solver):
     """
     params = dict(
         alpha=1.0,
-        normalize=normalize,
         solver=solver,
         tol=1e-12,
         positive=(solver == "lbfgs"),
@@ -2033,8 +1997,6 @@ def test_ridge_sample_weight_invariance(normalize, solver):
 
     # Check that duplicating the training dataset is equivalent to multiplying
     # the weights by 2:
-    if solver.startswith("sag") and normalize:
-        pytest.xfail("sag/saga diverge on the second part of this test")
 
     rng = np.random.RandomState(42)
     X, y = make_regression(
@@ -2054,22 +2016,3 @@ def test_ridge_sample_weight_invariance(normalize, solver):
 
     assert_allclose(ridge_2sw.coef_, ridge_dup.coef_)
     assert_allclose(ridge_2sw.intercept_, ridge_dup.intercept_)
-
-
-@pytest.mark.parametrize(
-    "Estimator", [RidgeCV, RidgeClassifierCV], ids=["RidgeCV", "RidgeClassifierCV"]
-)
-def test_ridgecv_normalize_deprecated(Estimator):
-    """Check that the normalize deprecation warning mentions the rescaling of alphas
-
-    Non-regression test for issue #22540
-    """
-    X = np.array([[1, -1], [1, 1]])
-    y = np.array([0, 1])
-
-    estimator = Estimator(normalize=True)
-
-    with pytest.warns(
-        FutureWarning, match=r"Set parameter alphas to: original_alphas \* n_samples"
-    ):
-        estimator.fit(X, y)

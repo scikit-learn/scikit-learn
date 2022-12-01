@@ -5,6 +5,7 @@ channels:
   - conda-forge
 dependencies:
   - pypy
+  - python=3.9
   - numpy
   - blas[build=openblas]
   - scipy
@@ -14,5 +15,5 @@ dependencies:
   - matplotlib
   - pyamg
   - pytest
-  - pytest-xdist
+  - pytest-xdist=2.5.0
   - ccache

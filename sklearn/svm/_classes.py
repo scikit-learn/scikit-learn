@@ -1,5 +1,4 @@
 from numbers import Integral, Real
-import warnings
 
 import numpy as np
 
@@ -191,7 +190,7 @@ class LinearSVC(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
     [1]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "penalty": [StrOptions({"l1", "l2"})],
         "loss": [StrOptions({"hinge", "squared_hinge"})],
         "dual": ["boolean"],
@@ -443,7 +442,7 @@ class LinearSVR(RegressorMixin, LinearModel):
     [-2.384...]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "epsilon": [Real],
         "tol": [Interval(Real, 0.0, None, closed="neither")],
         "C": [Interval(Real, 0.0, None, closed="neither")],
@@ -754,9 +753,9 @@ class SVC(BaseSVC):
     .. [1] `LIBSVM: A Library for Support Vector Machines
         <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
 
-    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
-        machines and comparison to regularizedlikelihood methods."
-        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+    .. [2] `Platt, John (1999). "Probabilistic Outputs for Support Vector
+        Machines and Comparisons to Regularized Likelihood Methods"
+        <https://citeseerx.ist.psu.edu/doc_view/pid/42e5ed832d4310ce4378c44d05570439df28a393>`_
 
     Examples
     --------
@@ -1018,9 +1017,9 @@ class NuSVC(BaseSVC):
     .. [1] `LIBSVM: A Library for Support Vector Machines
         <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
 
-    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
-        machines and comparison to regularizedlikelihood methods."
-        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+    .. [2] `Platt, John (1999). "Probabilistic Outputs for Support Vector
+        Machines and Comparisons to Regularized Likelihood Methods"
+        <https://citeseerx.ist.psu.edu/doc_view/pid/42e5ed832d4310ce4378c44d05570439df28a393>`_
 
     Examples
     --------
@@ -1039,8 +1038,8 @@ class NuSVC(BaseSVC):
 
     _impl = "nu_svc"
 
-    _parameter_constraints = {
-        **BaseSVC._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **BaseSVC._parameter_constraints,
         "nu": [Interval(Real, 0.0, 1.0, closed="right")],
     }
     _parameter_constraints.pop("C")
@@ -1234,9 +1233,9 @@ class SVR(RegressorMixin, BaseLibSVM):
     .. [1] `LIBSVM: A Library for Support Vector Machines
         <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
 
-    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
-        machines and comparison to regularizedlikelihood methods."
-        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+    .. [2] `Platt, John (1999). "Probabilistic Outputs for Support Vector
+        Machines and Comparisons to Regularized Likelihood Methods"
+        <https://citeseerx.ist.psu.edu/doc_view/pid/42e5ed832d4310ce4378c44d05570439df28a393>`_
 
     Examples
     --------
@@ -1256,7 +1255,7 @@ class SVR(RegressorMixin, BaseLibSVM):
 
     _impl = "epsilon_svr"
 
-    _parameter_constraints = {**BaseLibSVM._parameter_constraints}  # type: ignore
+    _parameter_constraints: dict = {**BaseLibSVM._parameter_constraints}
     for unused_param in ["class_weight", "nu", "probability", "random_state"]:
         _parameter_constraints.pop(unused_param)
 
@@ -1443,9 +1442,9 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     .. [1] `LIBSVM: A Library for Support Vector Machines
         <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
 
-    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
-        machines and comparison to regularizedlikelihood methods."
-        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+    .. [2] `Platt, John (1999). "Probabilistic Outputs for Support Vector
+        Machines and Comparisons to Regularized Likelihood Methods"
+        <https://citeseerx.ist.psu.edu/doc_view/pid/42e5ed832d4310ce4378c44d05570439df28a393>`_
 
     Examples
     --------
@@ -1465,7 +1464,7 @@ class NuSVR(RegressorMixin, BaseLibSVM):
 
     _impl = "nu_svr"
 
-    _parameter_constraints = {**BaseLibSVM._parameter_constraints}  # type: ignore
+    _parameter_constraints: dict = {**BaseLibSVM._parameter_constraints}
     for unused_param in ["class_weight", "epsilon", "probability", "random_state"]:
         _parameter_constraints.pop(unused_param)
 
@@ -1664,7 +1663,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
 
     _impl = "one_class"
 
-    _parameter_constraints = {**BaseLibSVM._parameter_constraints}  # type: ignore
+    _parameter_constraints: dict = {**BaseLibSVM._parameter_constraints}
     for unused_param in ["C", "class_weight", "epsilon", "probability", "random_state"]:
         _parameter_constraints.pop(unused_param)
 
@@ -1710,7 +1709,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     def class_weight_(self):
         return np.empty(0)
 
-    def fit(self, X, y=None, sample_weight=None, **params):
+    def fit(self, X, y=None, sample_weight=None):
         """Detect the soft boundary of the set of samples X.
 
         Parameters
@@ -1726,14 +1725,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
             Per-sample weights. Rescale C per sample. Higher weights
             force the classifier to put more emphasis on these points.
 
-        **params : dict
-            Additional fit parameters.
-
-            .. deprecated:: 1.0
-                The `fit` method will not longer accept extra keyword
-                parameters in 1.2. These keyword parameters were
-                already discarded.
-
         Returns
         -------
         self : object
@@ -1743,15 +1734,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         -----
         If X is not a C-ordered contiguous array it is copied.
         """
-        # TODO: Remove in v1.2
-        if len(params) > 0:
-            warnings.warn(
-                "Passing additional keyword parameters has no effect and is "
-                "deprecated in 1.0. An error will be raised from 1.2 and "
-                "beyond. The ignored keyword parameter(s) are: "
-                f"{params.keys()}.",
-                FutureWarning,
-            )
         super().fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight)
         self.offset_ = -self._intercept_
         return self

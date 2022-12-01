@@ -38,7 +38,6 @@ from sklearn.utils import check_random_state
 
 # Unused but required import for doing 3d projections with matplotlib < 3.2
 import mpl_toolkits.mplot3d  # noqa: F401
-import warnings
 
 # Variables for manifold learning.
 n_neighbors = 10
@@ -112,7 +111,7 @@ plt.axis("tight")
 
 # Perform Multi-dimensional scaling.
 t0 = time()
-mds = manifold.MDS(2, max_iter=100, n_init=1)
+mds = manifold.MDS(2, max_iter=100, n_init=1, normalized_stress="auto")
 trans_data = mds.fit_transform(sphere_data).T
 t1 = time()
 print("MDS: %.2g sec" % (t1 - t0))
@@ -139,17 +138,10 @@ ax.yaxis.set_major_formatter(NullFormatter())
 plt.axis("tight")
 
 # Perform t-distributed stochastic neighbor embedding.
-# TODO(1.2) Remove warning handling.
-with warnings.catch_warnings():
-    warnings.filterwarnings(
-        "ignore", message="The PCA initialization", category=FutureWarning
-    )
-    t0 = time()
-    tsne = manifold.TSNE(
-        n_components=2, init="pca", random_state=0, learning_rate="auto"
-    )
-    trans_data = tsne.fit_transform(sphere_data).T
-    t1 = time()
+t0 = time()
+tsne = manifold.TSNE(n_components=2, random_state=0)
+trans_data = tsne.fit_transform(sphere_data).T
+t1 = time()
 print("t-SNE: %.2g sec" % (t1 - t0))
 
 ax = fig.add_subplot(2, 5, 10)

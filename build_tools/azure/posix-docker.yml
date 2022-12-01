@@ -69,7 +69,6 @@ jobs:
         -e CCACHE_DIR=/ccache
         -e DISTRIB
         -e LOCK_FILE
-        -e TEST_DIR
         -e JUNITXML
         -e VIRTUALENV
         -e PYTEST_XDIST_VERSION

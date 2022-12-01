@@ -131,7 +131,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
             Labels as normalized encodings.
         """
         check_is_fitted(self)
-        y = column_or_1d(y, warn=True)
+        y = column_or_1d(y, dtype=self.classes_.dtype, warn=True)
         # transform of empty array is empty array
         if _num_samples(y) == 0:
             return np.array([])
@@ -256,7 +256,7 @@ class LabelBinarizer(TransformerMixin, BaseEstimator):
            [0, 1, 0]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "neg_label": [Integral],
         "pos_label": [Integral],
         "sparse_output": ["boolean"],
@@ -743,7 +743,7 @@ class MultiLabelBinarizer(TransformerMixin, BaseEstimator):
     array(['comedy', 'sci-fi', 'thriller'], dtype=object)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "classes": ["array-like", None],
         "sparse_output": ["boolean"],
     }

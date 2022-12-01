@@ -29,7 +29,7 @@ from sklearn.exceptions import NotFittedError
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.tests.test_dist_metrics import BOOL_METRICS
 from sklearn.metrics.tests.test_pairwise_distances_reduction import (
-    assert_radius_neighborhood_results_equality,
+    assert_radius_neighbors_results_equality,
 )
 from sklearn.model_selection import cross_val_score
 from sklearn.model_selection import train_test_split
@@ -726,21 +726,6 @@ def test_radius_neighbors_classifier(
     neigh.fit(X, y_str)
     y_pred = neigh.predict(X[:n_test_pts] + epsilon)
     assert_array_equal(y_pred, y_str[:n_test_pts])
-
-
-# TODO: Remove in v1.2
-def test_radius_neighbors_classifier_kwargs_is_deprecated():
-    extra_kwargs = {
-        "unused_param": "",
-        "extra_param": None,
-    }
-    msg = (
-        "Passing additional keyword parameters has no effect and is deprecated "
-        "in 1.0. An error will be raised from 1.2 and beyond. The ignored "
-        f"keyword parameter(s) are: {extra_kwargs.keys()}."
-    )
-    with pytest.warns(FutureWarning, match=re.escape(msg)):
-        neighbors.RadiusNeighborsClassifier(**extra_kwargs)
 
 
 @pytest.mark.parametrize("algorithm", ALGORITHMS)
@@ -1513,6 +1498,63 @@ def test_neighbors_validate_parameters(Estimator):
         nbrs.predict([[]])
 
 
+@pytest.mark.parametrize(
+    "Estimator",
+    [
+        neighbors.KNeighborsClassifier,
+        neighbors.RadiusNeighborsClassifier,
+        neighbors.KNeighborsRegressor,
+        neighbors.RadiusNeighborsRegressor,
+    ],
+)
+@pytest.mark.parametrize("n_features", [2, 100])
+@pytest.mark.parametrize("algorithm", ["auto", "brute"])
+def test_neighbors_minkowski_semimetric_algo_warn(Estimator, n_features, algorithm):
+    """
+    Validation of all classes extending NeighborsBase with
+    Minkowski semi-metrics (i.e. when 0 < p < 1). That proper
+    Warning is raised for `algorithm="auto"` and "brute".
+    """
+    X = rng.random_sample((10, n_features))
+    y = np.ones(10)
+
+    model = Estimator(p=0.1, algorithm=algorithm)
+    msg = (
+        "Mind that for 0 < p < 1, Minkowski metrics are not distance"
+        " metrics. Continuing the execution with `algorithm='brute'`."
+    )
+    with pytest.warns(UserWarning, match=msg):
+        model.fit(X, y)
+
+    assert model._fit_method == "brute"
+
+
+@pytest.mark.parametrize(
+    "Estimator",
+    [
+        neighbors.KNeighborsClassifier,
+        neighbors.RadiusNeighborsClassifier,
+        neighbors.KNeighborsRegressor,
+        neighbors.RadiusNeighborsRegressor,
+    ],
+)
+@pytest.mark.parametrize("n_features", [2, 100])
+@pytest.mark.parametrize("algorithm", ["kd_tree", "ball_tree"])
+def test_neighbors_minkowski_semimetric_algo_error(Estimator, n_features, algorithm):
+    """Check that we raise a proper error if `algorithm!='brute'` and `p<1`."""
+    X = rng.random_sample((10, 2))
+    y = np.ones(10)
+
+    model = Estimator(algorithm=algorithm, p=0.1)
+    msg = (
+        f'algorithm="{algorithm}" does not support 0 < p < 1 for '
+        "the Minkowski metric. To resolve this problem either "
+        'set p >= 1 or algorithm="brute".'
+    )
+    with pytest.raises(ValueError, match=msg):
+        model.fit(X, y)
+
+
 # TODO: remove when NearestNeighbors methods uses parameter validation mechanism
 def test_nearest_neighbors_validate_params():
     """Validate parameter of NearestNeighbors."""
@@ -2189,7 +2231,7 @@ def test_radius_neighbors_brute_backend(
                     X_test, return_distance=True
                 )
 
-        assert_radius_neighborhood_results_equality(
+        assert_radius_neighbors_results_equality(
             legacy_brute_dst,
             pdr_brute_dst,
             legacy_brute_idx,
