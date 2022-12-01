@@ -40,9 +40,7 @@ def fitted_clf():
 
 def test_input_data_dimension():
     """Check that we raise an error when `X` does not have exactly 2 features."""
-    n_features, n_samples = 4, 10
-    X = np.random.randn(n_samples, n_features)
-    y = np.random.randint(0, 2, n_samples)
+    X, y = make_classification(n_samples=10, n_features=4, random_state=0)
 
     clf = LogisticRegression().fit(X, y)
     msg = "n_features must be equal to 2. Got 4 instead."
