@@ -111,7 +111,7 @@ plt.suptitle("Unexpected KMeans clusters").set_y(0.95)
 plt.show()
 
 # %%
-# Possible solution
+# Possible solutions
 # -----------------
 #
 # For an example on how to find a correct number of blobs, see
