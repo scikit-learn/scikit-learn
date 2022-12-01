@@ -266,7 +266,7 @@ def _random_sample_mask(
          the others are ``False``.
      """
      cdef cnp.float64_t[::1] rand = random_state.uniform(size=n_total_samples)
-     cdef cnp.uint8_t[::1] sample_mask = np_zeros((n_total_samples,), dtype=np.uint8)
+     cdef cnp.uint8_t[::1] sample_mask = np_zeros((n_total_samples,), dtype=bool)
 
      cdef cnp.npy_intp n_bagged = 0
      cdef cnp.npy_intp i = 0
