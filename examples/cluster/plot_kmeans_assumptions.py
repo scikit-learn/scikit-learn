@@ -112,7 +112,7 @@ plt.show()
 
 # %%
 # Possible solutions
-# -----------------
+# ------------------
 #
 # For an example on how to find a correct number of blobs, see
 # :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py`.
@@ -124,9 +124,9 @@ plt.show()
 #
 # As anisotropic and unequal variances are real limitations of the k-means
 # algorithm, here we propose instead the use of
-# :class:`~sklearn.mixture.GaussianMixture`, which also assumes gaussian clusters
-# but does not impose any constraints on their variances. Notice that one still has to find
-# the correct number of blobs (see
+# :class:`~sklearn.mixture.GaussianMixture`, which also assumes gaussian
+# clusters but does not impose any constraints on their variances. Notice that
+# one still has to find the correct number of blobs (see
 # :ref:`sphx_glr_auto_examples_mixture_plot_gmm_selection.py`).
 #
 # For an example on how other clustering methods deal with anisotropic or
