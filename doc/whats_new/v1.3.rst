@@ -40,7 +40,7 @@ Changelog
 .................................
 
 - |Fix| :class:`feature_extraction.FeatureHasher` raises an informative error
-  when the input is a list of strings. :pr:`xxxxx` by `Thomas Fan`_.
+  when the input is a list of strings. :pr:`25094` by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
