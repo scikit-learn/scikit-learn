@@ -33,10 +33,10 @@ print(__doc__)
 # and parental hourly wage. Finally, we model hourly wages as a linear function
 # of all the previous variables and a random component. Note that all variables
 # have a positive effect on hourly wages.
-
 import numpy as np
+import pandas as pd
 
-n_samples = 10000
+n_samples = 10_000
 rng = np.random.RandomState(32)
 
 experiences = rng.normal(20, 10, size=n_samples).astype(int)
@@ -44,16 +44,23 @@ experiences[experiences < 0] = 0
 abilities = rng.normal(0, 0.15, size=n_samples)
 parent_hourly_wages = 50 * rng.beta(2, 8, size=n_samples)
 parent_hourly_wages[parent_hourly_wages < 0] = 0
-
 college_degrees = (
     9 * abilities + 0.02 * parent_hourly_wages + rng.randn(n_samples) > 0.7
 ).astype(int)
 
+true_coef = pd.Series(
+    {
+        "college degree": 2.0,
+        "ability": 5.0,
+        "experience": 0.2,
+        "parent hourly wage": 1.0,
+    }
+)
 hourly_wages = (
-    0.2 * experiences
-    + parent_hourly_wages
-    + 2 * college_degrees
-    + 5 * abilities
+    true_coef["experience"] * experiences
+    + true_coef["parent hourly wage"] * parent_hourly_wages
+    + true_coef["college degree"] * college_degrees
+    + true_coef["ability"] * abilities
     + rng.normal(0, 1, size=n_samples)
 )
 
@@ -81,52 +88,86 @@ df = pd.DataFrame(
 )
 
 grid = sns.pairplot(df, diag_kind="kde", corner=True)
-# %%
-# Predicting income with and without the ability feature
-# ------------------------------------------------------
-#
-# Let's now train two :class:`~sklearn.linear_model.LinearRegression` models to
-# predict our hourly wage. We include the ability feature in the first model
-# and show that our estimate of the college degree coefficient is close to 2
-# which is the true causal effect from our data generating process. In real
-# life, intellectual ability is either never observed or only poorly measured
-# (e.g. IQ score). Researchers are forced to "omit" the ability feature from
-# their models, thereby inflating the estimate via a positive OVB. Despite an
-# excellent R2 score, the model omitting the ability feature shows a
-# coefficient that is far off the true value.
 
+# %%
+# In the next section, we train predictive models and we therefore split the
+# target column from over features and we split the data into a training and a
+# testing set.
 from sklearn.model_selection import train_test_split
+
+target_name = "hourly wage"
+X, y = df.drop(columns=target_name), df[target_name]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=0)
+
+# %%
+# Income prediction with fully observed variables
+# -----------------------------------------------
+#
+# First, we train a predictive model, a
+# :class:`~sklearn.linear_model.LinearRegression` model. In this experiment,
+# we assume that all variables used by the true generative model are available.
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score
 
-X = df[["experience", "parent hourly wage", "college degree", "ability"]]
-y = df["hourly wage"]
-
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=0.2, random_state=42
-)
+features_names = ["experience", "parent hourly wage", "college degree", "ability"]
 
 regressor_with_ability = LinearRegression()
-regressor_with_ability.fit(X_train, y_train)
-y_pred_with_ability = regressor_with_ability.predict(X_test)
+regressor_with_ability.fit(X_train[features_names], y_train)
+y_pred_with_ability = regressor_with_ability.predict(X_test[features_names])
 R2_with_ability = r2_score(y_test, y_pred_with_ability)
 
-regressor_without_ability = LinearRegression()
-regressor_without_ability.fit(X_train.drop(columns="ability"), y_train)
-y_pred_without_ability = regressor_without_ability.predict(
-    X_test.drop(columns="ability")
-)
-R2_without_ability = r2_score(y_test, y_pred_without_ability)
-
-print(f"R2 score with ability: {R2_with_ability}")
-print(f"College degree coefficient with ability: {regressor_with_ability.coef_[2]}")
-print(f"R2 score without ability: {R2_without_ability}")
-print(
-    f"College degree coefficient without ability: {regressor_without_ability.coef_[2]}"
-)
-
+print(f"R2 score with ability: {R2_with_ability:.3f}")
 
 # %%
+# This model predicts well the hourly wages as shown by the high R2 score. We
+# plot the model coefficients to show that we exactly recover the values of
+# the true generative model.
+model_coef = pd.Series(regressor_with_ability.coef_, index=features_names)
+coef = pd.concat(
+    [true_coef[features_names], model_coef],
+    keys=["Coefficients of true generative model", "Model coefficients"],
+    axis=1,
+)
+ax = coef.plot.barh()
+ax.set_xlabel("Coefficient values")
+_ = ax.set_title("Coefficients of the linear regression including the ability features")
+
+# %%
+# Income prediction with partial observations
+# -------------------------------------------
+#
+# In real life, intellectual ability is either never observed or only poorly
+# measured (e.g. IQ score). Researchers are forced to "omit" the ability
+# feature from their models, thereby inflating the estimate via a positive OVB.
+features_names = ["experience", "parent hourly wage", "college degree"]
+
+regressor_without_ability = LinearRegression()
+regressor_without_ability.fit(X_train[features_names], y_train)
+y_pred_without_ability = regressor_without_ability.predict(X_test[features_names])
+R2_without_ability = r2_score(y_test, y_pred_without_ability)
+
+print(f"R2 score without ability: {R2_without_ability:.3f}")
+
+# %%
+# The predictive power of our model is similar when we omit the ability feature
+# in terms of R2 score. We now check if the coefficient of the model are
+# different from the true generative model.
+
+model_coef = pd.Series(regressor_without_ability.coef_, index=features_names)
+coef = pd.concat(
+    [true_coef[features_names], model_coef],
+    keys=["Coefficients of true generative model", "Model coefficients"],
+    axis=1,
+)
+ax = coef.plot.barh()
+ax.set_xlabel("Coefficient values")
+_ = ax.set_title("Coefficients of the linear regression excluding the ability feature")
+
+# %%
+# To compensate for the omitted variable, the model inflates the coefficient of
+# the college degree feature. Therefore, interpreting this coefficient value
+# as a causal effect of the true generative model is incorrect.
+#
 # Lessons learned
 # ---------------
 #
