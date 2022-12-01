@@ -1077,10 +1077,13 @@ categorical features as continuous (ordinal), which happens for ordinal-encoded
 categorical data, since categories are nominal quantities where order does not
 matter.
 
-To enable categorical support, a boolean mask can be passed to the
-`categorical_features` parameter, indicating which feature is categorical. In
-the following, the first feature will be treated as categorical and the
-second feature as numerical::
+There are several ways to use the native categorical feature support for those
+estimators. The simplest way it to pass the training data as `pandas.DataFrame`
+where the categorical features are of type `category`.
+
+Alternatively it is possible to pass a boolean mask to the `categorical_features`
+parameter, indicating which feature is categorical. In the following, the first
+feature will be treated as categorical and the second feature as numerical::
 
   >>> gbdt = HistGradientBoostingClassifier(categorical_features=[True, False])
 
@@ -1089,10 +1092,18 @@ categorical features::
 
   >>> gbdt = HistGradientBoostingClassifier(categorical_features=[0])
 
-The cardinality of each categorical feature should be less than the `max_bins`
-parameter, and each categorical feature is expected to be encoded in
-`[0, max_bins - 1]`. To that end, it might be useful to pre-process the data
-with an :class:`~sklearn.preprocessing.OrdinalEncoder` as done in
+Finally, one can pass a list of strings indicating the names of the categorical
+if training data is passed as a dataframe with string column names::
+
+  >>> gbdt = HistGradientBoostingClassifier(categorical_features=['f0'])
+
+In any case, the cardinality of each categorical feature should be less than
+the `max_bins` parameter, and each categorical feature is expected to be
+encoded in `[0, max_bins - 1]`.
+
+If the original data is not already using numerical encoding for the
+categorical features, it can to pre-processed with an
+:class:`~sklearn.preprocessing.OrdinalEncoder` as done in
 :ref:`sphx_glr_auto_examples_ensemble_plot_gradient_boosting_categorical.py`.
 
 If there are missing values during training, the missing values will be

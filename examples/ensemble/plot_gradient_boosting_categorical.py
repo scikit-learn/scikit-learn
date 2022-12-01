@@ -126,10 +126,6 @@ ordinal_encoder = make_column_transformer(
         make_column_selector(dtype_include="category"),
     ),
     remainder="passthrough",
-    # Use short feature names to make it easier to specify the categorical
-    # variables in the HistGradientBoostingRegressor in the next step
-    # of the pipeline.
-    verbose_feature_names_out=False,
 )
 
 hist_ordinal = make_pipeline(
@@ -146,11 +142,32 @@ hist_ordinal = make_pipeline(
 # To benefit from this, one option is to encode the categorical features using the
 # pandas categorical dtype which we already did at the beginning of this
 # example with the call to `.astype("category")`.
-#
-# Note that this is equivalent to using the ordinal encoder and then passing
-# the name of the categorical features to the ``categorical_features``
-# constructor parameter of :class:`~ensemble.HistGradientBoostingRegressor`.
 hist_native = HistGradientBoostingRegressor(random_state=42)
+
+# %%
+# Note that this is equivalent to using the ordinal encoder that output pandas
+# dataframe with unchanged column names and then passing the name of the
+# categorical features to the ``categorical_features`` constructor parameter of
+# :class:`~ensemble.HistGradientBoostingRegressor`:
+
+ordinal_encoder = make_column_transformer(
+    (
+        OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=np.nan),
+        categorical_columns,
+    ),
+    remainder="passthrough",
+    # Use short feature names to make it easier to specify the categorical
+    # variables in the HistGradientBoostingRegressor in the next step
+    # of the pipeline.
+    verbose_feature_names_out=False,
+).set_output(transform="pandas")
+
+hist_native2 = make_pipeline(
+    ordinal_encoder,
+    HistGradientBoostingRegressor(
+        categorical_features=categorical_columns, random_state=42
+    ),
+)
 
 # %%
 # Model comparison
