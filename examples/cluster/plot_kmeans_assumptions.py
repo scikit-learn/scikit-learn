@@ -63,7 +63,7 @@ plt.show()
 # Fit models and plot results
 # ---------------------------
 #
-# The previously generated data is now used for showing how
+# The previously generated data is now used to show how
 # :class:`~sklearn.cluster.KMeans` behaves in the following scenarios:
 #
 # - Non-optimal number of clusters: in a real setting there is no uniquely
