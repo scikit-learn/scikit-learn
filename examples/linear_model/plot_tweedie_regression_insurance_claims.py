@@ -35,13 +35,14 @@ helper functions for loading the data and visualizing results.
 .. [1]  A. Noll, R. Salzmann and M.V. Wuthrich, Case Study: French Motor
     Third-Party Liability Claims (November 8, 2018). `doi:10.2139/ssrn.3164764
     <http://dx.doi.org/10.2139/ssrn.3164764>`_
-
 """
 
 # Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
 #          Roman Yurchak <rth.yurchak@gmail.com>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
+
+# %%
 
 from functools import partial
 
@@ -50,34 +51,27 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 from sklearn.datasets import fetch_openml
-from sklearn.compose import ColumnTransformer
-from sklearn.linear_model import PoissonRegressor, GammaRegressor
-from sklearn.linear_model import TweedieRegressor
 from sklearn.metrics import mean_tweedie_deviance
-from sklearn.model_selection import train_test_split
-from sklearn.pipeline import make_pipeline
-from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
-from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
-
-from sklearn.metrics import mean_absolute_error, mean_squared_error, auc
+from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_squared_error
 
 
-def load_mtpl2(n_samples=100000):
+def load_mtpl2(n_samples=None):
     """Fetch the French Motor Third-Party Liability Claims dataset.
 
     Parameters
     ----------
-    n_samples: int, default=100000
+    n_samples: int, default=None
       number of samples to select (for faster run time). Full dataset has
       678013 samples.
     """
     # freMTPL2freq dataset from https://www.openml.org/d/41214
-    df_freq = fetch_openml(data_id=41214, as_frame=True)["data"]
+    df_freq = fetch_openml(data_id=41214, as_frame=True, parser="pandas").data
     df_freq["IDpol"] = df_freq["IDpol"].astype(int)
     df_freq.set_index("IDpol", inplace=True)
 
     # freMTPL2sev dataset from https://www.openml.org/d/41215
-    df_sev = fetch_openml(data_id=41215, as_frame=True)["data"]
+    df_sev = fetch_openml(data_id=41215, as_frame=True, parser="pandas").data
 
     # sum ClaimAmount over identical IDs
     df_sev = df_sev.groupby("IDpol").sum()
@@ -215,8 +209,13 @@ def score_estimator(
 # containing the number of claims (``ClaimNb``), with the freMTPL2sev table,
 # containing the claim amount (``ClaimAmount``) for the same policy ids
 # (``IDpol``).
+from sklearn.pipeline import make_pipeline
+from sklearn.preprocessing import FunctionTransformer, OneHotEncoder
+from sklearn.preprocessing import StandardScaler, KBinsDiscretizer
+from sklearn.compose import ColumnTransformer
 
-df = load_mtpl2(n_samples=60000)
+
+df = load_mtpl2()
 
 # Note: filter out claims with zero amount, as the severity model
 # requires strictly positive target values.
@@ -234,7 +233,11 @@ log_scale_transformer = make_pipeline(
 
 column_trans = ColumnTransformer(
     [
-        ("binned_numeric", KBinsDiscretizer(n_bins=10), ["VehAge", "DrivAge"]),
+        (
+            "binned_numeric",
+            KBinsDiscretizer(n_bins=10, subsample=int(2e5), random_state=0),
+            ["VehAge", "DrivAge"],
+        ),
         (
             "onehot_categorical",
             OneHotEncoder(),
@@ -271,13 +274,32 @@ with pd.option_context("display.max_columns", 15):
 # constant rate in a given time interval (``Exposure``, in units of years).
 # Here we model the frequency ``y = ClaimNb / Exposure``, which is still a
 # (scaled) Poisson distribution, and use ``Exposure`` as `sample_weight`.
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import PoissonRegressor
+
 
 df_train, df_test, X_train, X_test = train_test_split(df, X, random_state=0)
 
+# %%
+#
+# Let us keep in mind that despite the seemingly large number of data points in
+# this dataset, the number of evaluation points where the claim amount is
+# non-zero is quite small:
+len(df_test)
+
+# %%
+len(df_test[df_test["ClaimAmount"] > 0])
+
+# %%
+#
+# As a consequence, we expect a significant variability in our
+# evaluation upon random resampling of the train test split.
+#
 # The parameters of the model are estimated by minimizing the Poisson deviance
-# on the training set via a quasi-Newton solver: l-BFGS. Some of the features
-# are collinear, we use a weak penalization to avoid numerical issues.
-glm_freq = PoissonRegressor(alpha=1e-3, max_iter=400)
+# on the training set via a Newton solver. Some of the features are collinear
+# (e.g. because we did not drop any categorical level in the `OneHotEncoder`),
+# we use a weak L2 penalization to avoid numerical issues.
+glm_freq = PoissonRegressor(alpha=1e-4, solver="newton-cholesky")
 glm_freq.fit(X_train, df_train["Frequency"], sample_weight=df_train["Exposure"])
 
 scores = score_estimator(
@@ -293,6 +315,12 @@ print("Evaluation of PoissonRegressor on target Frequency")
 print(scores)
 
 # %%
+#
+# Note that the score measured on the test set is surprisingly better than on
+# the training set. This might be specific to this random train-test split.
+# Proper cross-validation could help us to assess the sampling variability of
+# these results.
+#
 # We can visually compare observed and predicted values, aggregated by the
 # drivers age (``DrivAge``), vehicle age (``VehAge``) and the insurance
 # bonus/malus (``BonusMalus``).
@@ -366,11 +394,13 @@ plot_obs_pred(
 #   on :math:`(0, \infty)`, not :math:`[0, \infty)`.
 # - We use ``ClaimNb`` as `sample_weight` to account for policies that contain
 #   more than one claim.
+from sklearn.linear_model import GammaRegressor
+
 
 mask_train = df_train["ClaimAmount"] > 0
 mask_test = df_test["ClaimAmount"] > 0
 
-glm_sev = GammaRegressor(alpha=10.0, max_iter=10000)
+glm_sev = GammaRegressor(alpha=10.0, solver="newton-cholesky")
 
 glm_sev.fit(
     X_train[mask_train.values],
@@ -391,13 +421,44 @@ print("Evaluation of GammaRegressor on target AvgClaimAmount")
 print(scores)
 
 # %%
-# Here, the scores for the test data call for caution as they are
-# significantly worse than for the training data indicating an overfit despite
-# the strong regularization.
 #
-# Note that the resulting model is the average claim amount per claim. As
-# such, it is conditional on having at least one claim, and cannot be used to
-# predict the average claim amount per policy in general.
+# Those values of the metrics are not necessarily easy to interpret. It can be
+# insightful to compare them with a model that does not use any input
+# features and always predicts a constant value, i.e. the average claim
+# amount, in the same setting:
+
+from sklearn.dummy import DummyRegressor
+
+dummy_sev = DummyRegressor(strategy="mean")
+dummy_sev.fit(
+    X_train[mask_train.values],
+    df_train.loc[mask_train, "AvgClaimAmount"],
+    sample_weight=df_train.loc[mask_train, "ClaimNb"],
+)
+
+scores = score_estimator(
+    dummy_sev,
+    X_train[mask_train.values],
+    X_test[mask_test.values],
+    df_train[mask_train],
+    df_test[mask_test],
+    target="AvgClaimAmount",
+    weights="ClaimNb",
+)
+print("Evaluation of a mean predictor on target AvgClaimAmount")
+print(scores)
+
+# %%
+#
+# We conclude that the claim amount is very challenging to predict. Still, the
+# :class:`~sklearn.linear.GammaRegressor` is able to leverage some information
+# from the input features to slighly improve upon the mean baseline in terms
+# of D².
+#
+# Note that the resulting model is the average claim amount per claim. As such,
+# it is conditional on having at least one claim, and cannot be used to predict
+# the average claim amount per policy. For this, it needs to be combined with
+# a claims frequency model.
 
 print(
     "Mean AvgClaim Amount per policy:              %.2f "
@@ -411,7 +472,10 @@ print(
     "Predicted Mean AvgClaim Amount | NbClaim > 0: %.2f"
     % glm_sev.predict(X_train).mean()
 )
-
+print(
+    "Predicted Mean AvgClaim Amount (dummy) | NbClaim > 0: %.2f"
+    % dummy_sev.predict(X_train).mean()
+)
 
 # %%
 # We can visually compare observed and predicted values, aggregated for
@@ -474,8 +538,10 @@ plt.tight_layout()
 # models side by side, i.e. we compare them at identical values of `power`.
 # Ideally, we hope that one model will be consistently better than the other,
 # regardless of `power`.
+from sklearn.linear_model import TweedieRegressor
 
-glm_pure_premium = TweedieRegressor(power=1.9, alpha=0.1, max_iter=10000)
+
+glm_pure_premium = TweedieRegressor(power=1.9, alpha=0.1, solver="newton-cholesky")
 glm_pure_premium.fit(
     X_train, df_train["PurePremium"], sample_weight=df_train["Exposure"]
 )
@@ -545,29 +611,37 @@ for subset_label, X, df in [
 print(pd.DataFrame(res).set_index("subset").T)
 
 # %%
+#
 # Finally, we can compare the two models using a plot of cumulated claims: for
-# each model, the policyholders are ranked from safest to riskiest and the
-# fraction of observed total cumulated claims is plotted on the y axis. This
-# plot is often called the ordered Lorenz curve of the model.
+# each model, the policyholders are ranked from safest to riskiest based on the
+# model predictions and the fraction of observed total cumulated claims is
+# plotted on the y axis. This plot is often called the ordered Lorenz curve of
+# the model.
 #
-# The Gini coefficient (based on the area under the curve) can be used as a
-# model selection metric to quantify the ability of the model to rank
-# policyholders. Note that this metric does not reflect the ability of the
-# models to make accurate predictions in terms of absolute value of total
-# claim amounts but only in terms of relative amounts as a ranking metric.
+# The Gini coefficient (based on the area between the curve and the diagonal)
+# can be used as a model selection metric to quantify the ability of the model
+# to rank policyholders. Note that this metric does not reflect the ability of
+# the models to make accurate predictions in terms of absolute value of total
+# claim amounts but only in terms of relative amounts as a ranking metric. The
+# Gini coefficient is upper bounded by 1.0 but even an oracle model that ranks
+# the policyholders by the observed claim amounts cannot reach a score of 1.0.
 #
-# Both models are able to rank policyholders by risky-ness significantly
-# better than chance although they are also both far from perfect due to the
-# natural difficulty of the prediction problem from few features.
+# We observe that both models are able to rank policyholders by risky-ness
+# significantly better than chance although they are also both far from the
+# oracle model due to the natural difficulty of the prediction problem from a
+# few features: most accidents are not predictable and can be caused by
+# environmental circumstances that are not described at all by the input
+# features of the models.
 #
-# Note that the Gini index only characterize the ranking performance of the
-# model but not its calibration: any monotonic transformation of the
-# predictions leaves the Gini index of the model unchanged.
+# Note that the Gini index only characterizes the ranking performance of the
+# model but not its calibration: any monotonic transformation of the predictions
+# leaves the Gini index of the model unchanged.
 #
-# Finally one should highlight that the Compound Poisson Gamma model that
-# is directly fit on the pure premium is operationally simpler to develop and
-# maintain as it consists in a single scikit-learn estimator instead of a
-# pair of models, each with its own set of hyperparameters.
+# Finally one should highlight that the Compound Poisson Gamma model that is
+# directly fit on the pure premium is operationally simpler to develop and
+# maintain as it consists of a single scikit-learn estimator instead of a pair
+# of models, each with its own set of hyperparameters.
+from sklearn.metrics import auc
 
 
 def lorenz_curve(y_true, y_pred, exposure):

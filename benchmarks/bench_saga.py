@@ -112,7 +112,7 @@ def fit_single(
         train_time = time.clock() - t0
 
         scores = []
-        for (X, y) in [(X_train, y_train), (X_test, y_test)]:
+        for X, y in [(X_train, y_train), (X_test, y_test)]:
             try:
                 y_pred = lr.predict_proba(X)
             except NotImplementedError:

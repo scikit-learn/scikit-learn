@@ -28,15 +28,17 @@ The main theoretical result behind the efficiency of random projection is the
 
 import warnings
 from abc import ABCMeta, abstractmethod
+from numbers import Integral, Real
 
 import numpy as np
 from scipy import linalg
 import scipy.sparse as sp
 
 from .base import BaseEstimator, TransformerMixin
-from .base import _ClassNamePrefixFeaturesOutMixin
+from .base import ClassNamePrefixFeaturesOutMixin
 
 from .utils import check_random_state
+from .utils._param_validation import Interval, StrOptions
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
 from .utils.validation import check_array, check_is_fitted
@@ -94,6 +96,15 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
         The minimal number of components to guarantee with good probability
         an eps-embedding with n_samples.
 
+    References
+    ----------
+
+    .. [1] https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
+
+    .. [2] `Sanjoy Dasgupta and Anupam Gupta, 1999,
+           "An elementary proof of the Johnson-Lindenstrauss Lemma."
+           <https://citeseerx.ist.psu.edu/doc_view/pid/95cd464d27c25c9c8690b378b894d337cdf021f9>`_
+
     Examples
     --------
     >>> from sklearn.random_projection import johnson_lindenstrauss_min_dim
@@ -105,16 +116,6 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
 
     >>> johnson_lindenstrauss_min_dim([1e4, 1e5, 1e6], eps=0.1)
     array([ 7894,  9868, 11841])
-
-    References
-    ----------
-
-    .. [1] https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
-
-    .. [2] Sanjoy Dasgupta and Anupam Gupta, 1999,
-           "An elementary proof of the Johnson-Lindenstrauss Lemma."
-           http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.45.3654
-
     """
     eps = np.asarray(eps)
     n_samples = np.asarray(n_samples)
@@ -250,7 +251,7 @@ def _sparse_random_matrix(n_components, n_features, density="auto", random_state
            https://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
     .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
-           http://www.cs.ucsc.edu/~optas/papers/jl.pdf
+           https://cgi.di.uoa.gr/~optas/papers/jl.pdf
 
     """
     _check_input_size(n_components, n_features)
@@ -291,7 +292,7 @@ def _sparse_random_matrix(n_components, n_features, density="auto", random_state
 
 
 class BaseRandomProjection(
-    TransformerMixin, BaseEstimator, _ClassNamePrefixFeaturesOutMixin, metaclass=ABCMeta
+    TransformerMixin, BaseEstimator, ClassNamePrefixFeaturesOutMixin, metaclass=ABCMeta
 ):
     """Base class for random projections.
 
@@ -299,19 +300,27 @@ class BaseRandomProjection(
     Use derived classes instead.
     """
 
+    _parameter_constraints: dict = {
+        "n_components": [
+            Interval(Integral, 1, None, closed="left"),
+            StrOptions({"auto"}),
+        ],
+        "eps": [Interval(Real, 0, None, closed="neither")],
+        "compute_inverse_components": ["boolean"],
+        "random_state": ["random_state"],
+    }
+
     @abstractmethod
     def __init__(
         self,
         n_components="auto",
         *,
         eps=0.1,
-        dense_output=False,
         compute_inverse_components=False,
         random_state=None,
     ):
         self.n_components = n_components
         self.eps = eps
-        self.dense_output = dense_output
         self.compute_inverse_components = compute_inverse_components
         self.random_state = random_state
 
@@ -359,6 +368,7 @@ class BaseRandomProjection(
         self : object
             BaseRandomProjection class instance.
         """
+        self._validate_params()
         X = self._validate_data(
             X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
         )
@@ -384,12 +394,7 @@ class BaseRandomProjection(
                     % (self.eps, n_samples, self.n_components_, n_features)
                 )
         else:
-            if self.n_components <= 0:
-                raise ValueError(
-                    "n_components must be greater than 0, got %s" % self.n_components
-                )
-
-            elif self.n_components > n_features:
+            if self.n_components > n_features:
                 warnings.warn(
                     "The number of components is higher than the number of"
                     " features: n_features < n_components (%s < %s)."
@@ -405,50 +410,16 @@ class BaseRandomProjection(
             self.n_components_, n_features
         ).astype(X.dtype, copy=False)
 
-        # Check contract
-        assert self.components_.shape == (self.n_components_, n_features), (
-            "An error has occurred the self.components_ matrix has "
-            " not the proper shape."
-        )
-
         if self.compute_inverse_components:
             self.inverse_components_ = self._compute_inverse_components()
 
         return self
 
-    def transform(self, X):
-        """Project the data by using matrix product with the random matrix.
-
-        Parameters
-        ----------
-        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
-            The input data to project into a smaller dimensional space.
-
-        Returns
-        -------
-        X_new : {ndarray, sparse matrix} of shape (n_samples, n_components)
-            Projected array.
-        """
-        check_is_fitted(self)
-        X = self._validate_data(
-            X, accept_sparse=["csr", "csc"], reset=False, dtype=[np.float64, np.float32]
-        )
-
-        if X.shape[1] != self.components_.shape[1]:
-            raise ValueError(
-                "Impossible to perform projection:"
-                "X at fit stage had a different number of features. "
-                "(%s != %s)" % (X.shape[1], self.components_.shape[1])
-            )
-
-        X_new = safe_sparse_dot(X, self.components_.T, dense_output=self.dense_output)
-        return X_new
-
     @property
     def _n_features_out(self):
         """Number of transformed output features.
 
-        Used by _ClassNamePrefixFeaturesOutMixin.get_feature_names_out.
+        Used by ClassNamePrefixFeaturesOutMixin.get_feature_names_out.
         """
         return self.n_components
 
@@ -582,13 +553,12 @@ class GaussianRandomProjection(BaseRandomProjection):
         super().__init__(
             n_components=n_components,
             eps=eps,
-            dense_output=True,
             compute_inverse_components=compute_inverse_components,
             random_state=random_state,
         )
 
     def _make_random_matrix(self, n_components, n_features):
-        """ Generate the random projection matrix.
+        """Generate the random projection matrix.
 
         Parameters
         ----------
@@ -600,15 +570,33 @@ class GaussianRandomProjection(BaseRandomProjection):
 
         Returns
         -------
-        components : {ndarray, sparse matrix} of shape \
-                (n_components, n_features)
-            The generated random matrix. Sparse matrix will be of CSR format.
-
+        components : ndarray of shape (n_components, n_features)
+            The generated random matrix.
         """
         random_state = check_random_state(self.random_state)
         return _gaussian_random_matrix(
             n_components, n_features, random_state=random_state
         )
+
+    def transform(self, X):
+        """Project the data by using matrix product with the random matrix.
+
+        Parameters
+        ----------
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            The input data to project into a smaller dimensional space.
+
+        Returns
+        -------
+        X_new : ndarray of shape (n_samples, n_components)
+            Projected array.
+        """
+        check_is_fitted(self)
+        X = self._validate_data(
+            X, accept_sparse=["csr", "csc"], reset=False, dtype=[np.float64, np.float32]
+        )
+
+        return X @ self.components_.T
 
 
 class SparseRandomProjection(BaseRandomProjection):
@@ -729,7 +717,7 @@ class SparseRandomProjection(BaseRandomProjection):
            https://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
     .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
-           https://users.soe.ucsc.edu/~optas/papers/jl.pdf
+           https://cgi.di.uoa.gr/~optas/papers/jl.pdf
 
     Examples
     --------
@@ -746,6 +734,12 @@ class SparseRandomProjection(BaseRandomProjection):
     0.0182...
     """
 
+    _parameter_constraints: dict = {
+        **BaseRandomProjection._parameter_constraints,
+        "density": [Interval(Real, 0.0, 1.0, closed="right"), StrOptions({"auto"})],
+        "dense_output": ["boolean"],
+    }
+
     def __init__(
         self,
         n_components="auto",
@@ -759,15 +753,15 @@ class SparseRandomProjection(BaseRandomProjection):
         super().__init__(
             n_components=n_components,
             eps=eps,
-            dense_output=dense_output,
             compute_inverse_components=compute_inverse_components,
             random_state=random_state,
         )
 
+        self.dense_output = dense_output
         self.density = density
 
     def _make_random_matrix(self, n_components, n_features):
-        """ Generate the random projection matrix
+        """Generate the random projection matrix
 
         Parameters
         ----------
@@ -779,9 +773,8 @@ class SparseRandomProjection(BaseRandomProjection):
 
         Returns
         -------
-        components : {ndarray, sparse matrix} of shape \
-                (n_components, n_features)
-            The generated random matrix. Sparse matrix will be of CSR format.
+        components : sparse matrix of shape (n_components, n_features)
+            The generated random matrix in CSR format.
 
         """
         random_state = check_random_state(self.random_state)
@@ -789,3 +782,24 @@ class SparseRandomProjection(BaseRandomProjection):
         return _sparse_random_matrix(
             n_components, n_features, density=self.density_, random_state=random_state
         )
+
+    def transform(self, X):
+        """Project the data by using matrix product with the random matrix.
+
+        Parameters
+        ----------
+        X : {ndarray, sparse matrix} of shape (n_samples, n_features)
+            The input data to project into a smaller dimensional space.
+
+        Returns
+        -------
+        X_new : {ndarray, sparse matrix} of shape (n_samples, n_components)
+            Projected array. It is a sparse matrix only when the input is sparse and
+            `dense_output = False`.
+        """
+        check_is_fitted(self)
+        X = self._validate_data(
+            X, accept_sparse=["csr", "csc"], reset=False, dtype=[np.float64, np.float32]
+        )
+
+        return safe_sparse_dot(X, self.components_.T, dense_output=self.dense_output)

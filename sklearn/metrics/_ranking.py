@@ -23,7 +23,7 @@ import warnings
 from functools import partial
 
 import numpy as np
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, issparse
 from scipy.stats import rankdata
 
 from ..utils import assert_all_finite
@@ -33,6 +33,7 @@ from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
+from ..utils._param_validation import validate_params
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..utils._encode import _encode, _unique
@@ -44,6 +45,7 @@ from ._base import (
 )
 
 
+@validate_params({"x": ["array-like"], "y": ["array-like"]})
 def auc(x, y):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule.
 
@@ -54,15 +56,16 @@ def auc(x, y):
 
     Parameters
     ----------
-    x : ndarray of shape (n,)
-        x coordinates. These must be either monotonic increasing or monotonic
+    x : array-like of shape (n,)
+        X coordinates. These must be either monotonic increasing or monotonic
         decreasing.
-    y : ndarray of shape, (n,)
-        y coordinates.
+    y : array-like of shape (n,)
+        Y coordinates.
 
     Returns
     -------
     auc : float
+        Area Under the Curve.
 
     See Also
     --------
@@ -371,7 +374,7 @@ def roc_auc_score(
     multi_class="raise",
     labels=None,
 ):
-    """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC)
+    """Compute Area Under the Receiver Operating Characteristic Curve (ROC AUC) \
     from prediction scores.
 
     Note: this implementation can be used with binary, multiclass and
@@ -418,8 +421,9 @@ def roc_auc_score(
         If ``None``, the scores for each class are returned.
         Otherwise, this determines the type of averaging performed on the data.
         Note: multiclass ROC AUC currently only handles the 'macro' and
-        'weighted' averages. For multiclass targets, `average=None`
-        is only implemented for `multi_class='ovo'`.
+        'weighted' averages. For multiclass targets, `average=None` is only
+        implemented for `multi_class='ovo'` and `average='micro'` is only
+        implemented for `multi_class='ovr'`.
 
         ``'micro'``:
             Calculate metrics globally by considering each element of the label
@@ -470,6 +474,16 @@ def roc_auc_score(
     Returns
     -------
     auc : float
+        Area Under the Curve score.
+
+    See Also
+    --------
+    average_precision_score : Area under the precision-recall curve.
+    roc_curve : Compute Receiver operating characteristic (ROC) curve.
+    RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
+        (ROC) curve given an estimator and some data.
+    RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
+        (ROC) curve given the true and predicted values.
 
     References
     ----------
@@ -491,15 +505,6 @@ def roc_auc_score(
             Under the ROC Curve for Multiple Class Classification Problems.
             Machine Learning, 45(2), 171-186.
             <http://link.springer.com/article/10.1023/A:1010920819831>`_
-
-    See Also
-    --------
-    average_precision_score : Area under the precision-recall curve.
-    roc_curve : Compute Receiver operating characteristic (ROC) curve.
-    RocCurveDisplay.from_estimator : Plot Receiver Operating Characteristic
-        (ROC) curve given an estimator and some data.
-    RocCurveDisplay.from_predictions : Plot Receiver Operating Characteristic
-        (ROC) curve given the true and predicted values.
 
     Examples
     --------
@@ -610,9 +615,15 @@ def _multiclass_roc_auc_score(
             Calculate metrics for the multiclass case using the one-vs-one
             approach.
 
-    average : {'macro', 'weighted'}
+    average : {'micro', 'macro', 'weighted'}
         Determines the type of averaging performed on the pairwise binary
         metric scores
+        ``'micro'``:
+            Calculate metrics for the binarized-raveled classes. Only supported
+            for `multi_class='ovr'`.
+
+        .. versionadded:: 1.2
+
         ``'macro'``:
             Calculate metrics for each label, and find their unweighted
             mean. This does not take label imbalance into account. Classes
@@ -634,6 +645,8 @@ def _multiclass_roc_auc_score(
 
     # validation for multiclass parameter specifications
     average_options = ("macro", "weighted", None)
+    if multi_class == "ovr":
+        average_options = ("micro",) + average_options
     if average not in average_options:
         raise ValueError(
             "average must be one of {0} for multiclass problems".format(average_options)
@@ -801,6 +814,9 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
     have a corresponding threshold. This ensures that the graph starts on the
     y axis.
 
+    The first precision and recall values are precision=class balance and recall=1.0
+    which corresponds to a classifier that always predicts the positive class.
+
     Read more in the :ref:`User Guide <precision_recall_f_measure_metrics>`.
 
     Parameters
@@ -834,7 +850,7 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
 
     thresholds : ndarray of shape (n_thresholds,)
         Increasing thresholds on the decision function used to compute
-        precision and recall. n_thresholds <= len(np.unique(probas_pred)).
+        precision and recall where `n_thresholds = len(np.unique(probas_pred))`.
 
     See Also
     --------
@@ -855,25 +871,36 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
     >>> precision, recall, thresholds = precision_recall_curve(
     ...     y_true, y_scores)
     >>> precision
-    array([0.66666667, 0.5       , 1.        , 1.        ])
+    array([0.5       , 0.66666667, 0.5       , 1.        , 1.        ])
     >>> recall
-    array([1. , 0.5, 0.5, 0. ])
+    array([1. , 1. , 0.5, 0.5, 0. ])
     >>> thresholds
-    array([0.35, 0.4 , 0.8 ])
+    array([0.1 , 0.35, 0.4 , 0.8 ])
     """
     fps, tps, thresholds = _binary_clf_curve(
         y_true, probas_pred, pos_label=pos_label, sample_weight=sample_weight
     )
 
-    precision = tps / (tps + fps)
-    precision[np.isnan(precision)] = 0
-    recall = tps / tps[-1]
+    ps = tps + fps
+    # Initialize the result array with zeros to make sure that precision[ps == 0]
+    # does not contain uninitialized values.
+    precision = np.zeros_like(tps)
+    np.divide(tps, ps, out=precision, where=(ps != 0))
 
-    # stop when full recall attained
-    # and reverse the outputs so recall is decreasing
-    last_ind = tps.searchsorted(tps[-1])
-    sl = slice(last_ind, None, -1)
-    return np.r_[precision[sl], 1], np.r_[recall[sl], 0], thresholds[sl]
+    # When no positive label in y_true, recall is set to 1 for all thresholds
+    # tps[-1] == 0 <=> y_true == all negative labels
+    if tps[-1] == 0:
+        warnings.warn(
+            "No positive class found in y_true, "
+            "recall is set to one for all thresholds."
+        )
+        recall = np.ones_like(tps)
+    else:
+        recall = tps / tps[-1]
+
+    # reverse the outputs so recall is decreasing
+    sl = slice(None, None, -1)
+    return np.hstack((precision[sl], 1)), np.hstack((recall[sl], 0)), thresholds[sl]
 
 
 def roc_curve(
@@ -963,7 +990,6 @@ def roc_curve(
     array([0. , 0.5, 0.5, 1. , 1. ])
     >>> thresholds
     array([1.8 , 0.8 , 0.4 , 0.35, 0.1 ])
-
     """
     fps, tps, thresholds = _binary_clf_curve(
         y_true, y_score, pos_label=pos_label, sample_weight=sample_weight
@@ -1046,6 +1072,7 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     Returns
     -------
     score : float
+        Ranking-based average precision score.
 
     Examples
     --------
@@ -1055,10 +1082,9 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     >>> y_score = np.array([[0.75, 0.5, 1], [1, 0.2, 0.1]])
     >>> label_ranking_average_precision_score(y_true, y_score)
     0.416...
-
     """
     check_consistent_length(y_true, y_score, sample_weight)
-    y_true = check_array(y_true, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=False, accept_sparse="csr")
     y_score = check_array(y_score, ensure_2d=False)
 
     if y_true.shape != y_score.shape:
@@ -1071,7 +1097,9 @@ def label_ranking_average_precision_score(y_true, y_score, *, sample_weight=None
     ):
         raise ValueError("{0} format is not supported".format(y_type))
 
-    y_true = csr_matrix(y_true)
+    if not issparse(y_true):
+        y_true = csr_matrix(y_true)
+
     y_score = -y_score
 
     n_samples, n_labels = y_true.shape
@@ -1134,16 +1162,16 @@ def coverage_error(y_true, y_score, *, sample_weight=None):
     Returns
     -------
     coverage_error : float
+        The coverage error.
 
     References
     ----------
     .. [1] Tsoumakas, G., Katakis, I., & Vlahavas, I. (2010).
            Mining multi-label data. In Data mining and knowledge discovery
            handbook (pp. 667-685). Springer US.
-
     """
-    y_true = check_array(y_true, ensure_2d=False)
-    y_score = check_array(y_score, ensure_2d=False)
+    y_true = check_array(y_true, ensure_2d=True)
+    y_score = check_array(y_score, ensure_2d=True)
     check_consistent_length(y_true, y_score, sample_weight)
 
     y_type = type_of_target(y_true, input_name="y_true")
@@ -1462,7 +1490,6 @@ def dcg_score(
     >>> dcg_score(true_relevance,
     ...           scores, k=1, ignore_ties=True)
     5.0
-
     """
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
@@ -1542,7 +1569,11 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     ----------
     y_true : ndarray of shape (n_samples, n_labels)
         True targets of multilabel classification, or true scores of entities
-        to be ranked.
+        to be ranked. Negative values in `y_true` may result in an output
+        that is not between 0 and 1.
+
+        .. versionchanged:: 1.2
+            These negative values are deprecated, and will raise an error in v1.4.
 
     y_score : ndarray of shape (n_samples, n_labels)
         Target scores, can either be probability estimates, confidence values,
@@ -1606,23 +1637,31 @@ def ndcg_score(y_true, y_score, *, k=None, sample_weight=None, ignore_ties=False
     >>> # the normalization takes k into account so a perfect answer
     >>> # would still get 1.0
     >>> ndcg_score(true_relevance, true_relevance, k=4)
-    1.0
+    1.0...
     >>> # now we have some ties in our prediction
     >>> scores = np.asarray([[1, 0, 0, 0, 1]])
     >>> # by default ties are averaged, so here we get the average (normalized)
     >>> # true relevance of our top predictions: (10 / 10 + 5 / 10) / 2 = .75
     >>> ndcg_score(true_relevance, scores, k=1)
-    0.75
+    0.75...
     >>> # we can choose to ignore ties for faster results, but only
     >>> # if we know there aren't ties in our scores, otherwise we get
     >>> # wrong results:
     >>> ndcg_score(true_relevance,
     ...           scores, k=1, ignore_ties=True)
-    0.5
+    0.5...
     """
     y_true = check_array(y_true, ensure_2d=False)
     y_score = check_array(y_score, ensure_2d=False)
     check_consistent_length(y_true, y_score, sample_weight)
+
+    if y_true.min() < 0:
+        # TODO(1.4): Replace warning w/ ValueError
+        warnings.warn(
+            "ndcg_score should not be used on negative y_true values. ndcg_score will"
+            " raise a ValueError on negative y_true values starting from version 1.4.",
+            FutureWarning,
+        )
     _check_dcg_target_type(y_true)
     gain = _ndcg_sample_scores(y_true, y_score, k=k, ignore_ties=ignore_ties)
     return np.average(gain, weights=sample_weight)
@@ -1679,9 +1718,11 @@ def top_k_accuracy_score(
         `normalize == True` and the number of samples with
         `normalize == False`.
 
-    See also
+    See Also
     --------
-    accuracy_score
+    accuracy_score : Compute the accuracy score. By default, the function will
+        return the fraction of correct predictions divided by the total number
+        of predictions.
 
     Notes
     -----
@@ -1704,7 +1745,6 @@ def top_k_accuracy_score(
     >>> # Not normalizing gives the number of "correctly" classified samples
     >>> top_k_accuracy_score(y_true, y_score, k=2, normalize=False)
     3
-
     """
     y_true = check_array(y_true, ensure_2d=False, dtype=None)
     y_true = column_or_1d(y_true)

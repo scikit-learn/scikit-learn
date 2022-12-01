@@ -345,8 +345,8 @@ Alternatively, the user can work with the :class:`BallTree` class directly.
 
 .. topic:: References:
 
-   * `"Five balltree construction algorithms"
-     <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.91.8209>`_,
+   * `"Five Balltree Construction Algorithms"
+     <https://citeseerx.ist.psu.edu/doc_view/pid/17ac002939f8e950ffb32ec4dc8e86bdd8cb5ff1>`_,
      Omohundro, S.M., International Computer Science Institute
      Technical Report (1989)
 

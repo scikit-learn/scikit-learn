@@ -112,6 +112,13 @@ Overview of clustering methods
      - Large dataset, outlier removal, data reduction, inductive
      - Euclidean distance between points
 
+   * - :ref:`Bisecting K-Means <bisect_k_means>`
+     - number of clusters
+     - Very large ``n_samples``, medium ``n_clusters``
+     - General-purpose, even cluster size, flat geometry,
+       no empty clusters, inductive, hierarchical
+     - Distances between points
+
 Non-flat geometry clustering is useful when the clusters have a specific
 shape, i.e. a non-flat manifold, and the standard euclidean distance is
 not the right metric. This case arises in the two top rows of the figure
@@ -134,7 +141,7 @@ K-means
 The :class:`KMeans` algorithm clusters data by trying to separate samples in n
 groups of equal variance, minimizing a criterion known as the *inertia* or
 within-cluster sum-of-squares (see below). This algorithm requires the number
-of clusters to be specified. It scales well to large number of samples and has
+of clusters to be specified. It scales well to large numbers of samples and has
 been used across a large range of application areas in many different fields.
 
 The k-means algorithm divides a set of :math:`N` samples :math:`X` into
@@ -451,7 +458,7 @@ to be specified in advance. It works well for a small number of clusters,
 but is not advised for many clusters.
 
 For two clusters, SpectralClustering solves a convex relaxation of the
-`normalised cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_
+`normalized cuts <https://people.eecs.berkeley.edu/~malik/papers/SM-ncut.pdf>`_
 problem on the similarity graph: cutting the graph in two so that the weight of
 the edges cut is small compared to the weights of the edges inside each
 cluster. This criteria is especially interesting when working on images, where
@@ -525,7 +532,7 @@ below.
 .. topic:: References:
 
  * `"Multiclass spectral clustering"
-   <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
+   <https://people.eecs.berkeley.edu/~jordan/courses/281B-spring04/readings/yu-shi.pdf>`_
    Stella X. Yu, Jianbo Shi, 2003
 
  * :doi:`"Simple, direct, and efficient multi-way spectral clustering"<10.1093/imaiai/iay008>`
@@ -556,11 +563,11 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
    Jianbo Shi, Jitendra Malik, 2000
 
  * `"A Random Walks View of Spectral Segmentation"
-   <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.33.1501>`_
+   <https://citeseerx.ist.psu.edu/doc_view/pid/84a86a69315e994cfd1e0c7debb86d62d7bd1f44>`_
    Marina Meila, Jianbo Shi, 2001
 
  * `"On Spectral Clustering: Analysis and an algorithm"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100>`_
+   <https://citeseerx.ist.psu.edu/doc_view/pid/796c5d6336fc52aa84db575fb821c78918b65f58>`_
    Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
 
  * :arxiv:`"Preconditioned Spectral Clustering for Stochastic
@@ -762,6 +769,65 @@ each class.
 
  * :ref:`sphx_glr_auto_examples_cluster_plot_agglomerative_clustering_metrics.py`
 
+Bisecting K-Means
+-----------------
+
+.. _bisect_k_means:
+
+The :class:`BisectingKMeans` is an iterative variant of :class:`KMeans`, using
+divisive hierarchical clustering. Instead of creating all centroids at once, centroids
+are picked progressively based on a previous clustering: a cluster is split into two
+new clusters repeatedly until the target number of clusters is reached.
+
+:class:`BisectingKMeans` is more efficient than :class:`KMeans` when the number of
+clusters is large since it only works on a subset of the data at each bisection
+while :class:`KMeans` always works on the entire dataset.
+
+Although :class:`BisectingKMeans` can't benefit from the advantages of the `"k-means++"`
+initialization by design, it will still produce comparable results than
+`KMeans(init="k-means++")` in terms of inertia at cheaper computational costs, and will
+likely produce better results than `KMeans` with a random initialization.
+
+This variant is more efficient to agglomerative clustering if the number of clusters is
+small compared to the number of data points.
+
+This variant also does not produce empty clusters.
+
+There exist two strategies for selecting the cluster to split:
+ - ``bisecting_strategy="largest_cluster"`` selects the cluster having the most points
+ - ``bisecting_strategy="biggest_inertia"`` selects the cluster with biggest inertia
+   (cluster with biggest Sum of Squared Errors within)
+
+Picking by largest amount of data points in most cases produces result as
+accurate as picking by inertia and is faster (especially for larger amount of data
+points, where calculating error may be costly).
+
+Picking by largest amount of data points will also likely produce clusters of similar
+sizes while `KMeans` is known to produce clusters of different sizes.
+
+Difference between Bisecting K-Means and regular K-Means can be seen on example
+:ref:`sphx_glr_auto_examples_cluster_plot_bisect_kmeans.py`.
+While the regular K-Means algorithm tends to create non-related clusters,
+clusters from Bisecting K-Means are well ordered and create quite a visible hierarchy.
+
+.. topic:: References:
+
+ * `"A Comparison of Document Clustering Techniques"
+   <http://www.philippe-fournier-viger.com/spmf/bisectingkmeans.pdf>`_
+   Michael Steinbach, George Karypis and Vipin Kumar,
+   Department of Computer Science and Egineering, University of Minnesota
+   (June 2000)
+ * `"Performance Analysis of K-Means and Bisecting K-Means Algorithms in Weblog Data"
+   <https://ijeter.everscience.org/Manuscripts/Volume-4/Issue-8/Vol-4-issue-8-M-23.pdf>`_
+   K.Abirami and Dr.P.Mayilvahanan,
+   International Journal of Emerging Technologies in Engineering Research (IJETER)
+   Volume 4, Issue 8, (August 2016)
+ * `"Bisecting K-means Algorithm Based on K-valued Self-determining
+   and Clustering Center Optimization"
+   <http://www.jcomputers.us/vol13/jcp1306-01.pdf>`_
+   Jian Di, Xinyue Gou
+   School of Control and Computer Engineering,North China Electric Power University,
+   Baoding, Hebei, China (August 2017)
 
 .. _dbscan:
 
@@ -814,7 +880,7 @@ indicating core samples found by the algorithm. Smaller circles are non-core
 samples that are still part of a cluster. Moreover, the outliers are indicated
 by black points below.
 
-.. |dbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_dbscan_001.png
+.. |dbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_dbscan_002.png
         :target: ../auto_examples/cluster/plot_dbscan.html
         :scale: 50
 
@@ -870,13 +936,14 @@ by black points below.
 
 .. topic:: References:
 
- * "A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases
-   with Noise"
+ * `"A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases
+   with Noise" <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_
    Ester, M., H. P. Kriegel, J. Sander, and X. Xu,
    In Proceedings of the 2nd International Conference on Knowledge Discovery
    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
 
- * "DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
+ * :doi:`"DBSCAN revisited, revisited: why and how you should (still) use DBSCAN."
+   <10.1145/3068335>`
    Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
    In ACM Transactions on Database Systems (TODS), 42(3), 19.
 
@@ -1412,7 +1479,7 @@ more broadly common names.
  .. [VEB2010] Vinh, Epps, and Bailey, (2010). "Information Theoretic Measures for
    Clusterings Comparison: Variants, Properties, Normalization and
    Correction for Chance". JMLR
-   <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
+   <https://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
 
  .. [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
    community
@@ -2043,6 +2110,5 @@ diagonal entries::
 
 .. topic:: References
 
- * L. Hubert and P. Arabie, Comparing Partitions, Journal of
-   Classification 1985
-   <https://link.springer.com/article/10.1007%2FBF01908075>_
+ * :doi:`"Comparing Partitions" <10.1007/BF01908075>`
+   L. Hubert and P. Arabie, Journal of Classification 1985

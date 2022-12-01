@@ -19,6 +19,7 @@ from ._ranking import top_k_accuracy_score
 
 from ._classification import accuracy_score
 from ._classification import balanced_accuracy_score
+from ._classification import class_likelihood_ratios
 from ._classification import classification_report
 from ._classification import cohen_kappa_score
 from ._classification import confusion_matrix
@@ -77,22 +78,22 @@ from ._regression import mean_tweedie_deviance
 from ._regression import mean_poisson_deviance
 from ._regression import mean_gamma_deviance
 from ._regression import d2_tweedie_score
+from ._regression import d2_pinball_score
+from ._regression import d2_absolute_error_score
 
 
 from ._scorer import check_scoring
 from ._scorer import make_scorer
 from ._scorer import SCORERS
 from ._scorer import get_scorer
+from ._scorer import get_scorer_names
 
-from ._plot.det_curve import plot_det_curve
+
 from ._plot.det_curve import DetCurveDisplay
-from ._plot.roc_curve import plot_roc_curve
 from ._plot.roc_curve import RocCurveDisplay
-from ._plot.precision_recall_curve import plot_precision_recall_curve
 from ._plot.precision_recall_curve import PrecisionRecallDisplay
-
-from ._plot.confusion_matrix import plot_confusion_matrix
 from ._plot.confusion_matrix import ConfusionMatrixDisplay
+from ._plot.regression import PredictionErrorDisplay
 
 
 __all__ = [
@@ -104,6 +105,7 @@ __all__ = [
     "balanced_accuracy_score",
     "calinski_harabasz_score",
     "check_scoring",
+    "class_likelihood_ratios",
     "classification_report",
     "cluster",
     "cohen_kappa_score",
@@ -113,6 +115,8 @@ __all__ = [
     "consensus_score",
     "coverage_error",
     "d2_tweedie_score",
+    "d2_absolute_error_score",
+    "d2_pinball_score",
     "dcg_score",
     "davies_bouldin_score",
     "DetCurveDisplay",
@@ -155,14 +159,11 @@ __all__ = [
     "pairwise_distances_argmin_min",
     "pairwise_distances_chunked",
     "pairwise_kernels",
-    "plot_confusion_matrix",
-    "plot_det_curve",
-    "plot_precision_recall_curve",
-    "plot_roc_curve",
     "PrecisionRecallDisplay",
     "precision_recall_curve",
     "precision_recall_fscore_support",
     "precision_score",
+    "PredictionErrorDisplay",
     "r2_score",
     "rand_score",
     "recall_score",
@@ -170,6 +171,7 @@ __all__ = [
     "roc_auc_score",
     "roc_curve",
     "SCORERS",
+    "get_scorer_names",
     "silhouette_samples",
     "silhouette_score",
     "top_k_accuracy_score",

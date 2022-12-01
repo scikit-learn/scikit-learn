@@ -17,7 +17,6 @@ import sklearn
 import numpy as np
 import scipy
 import scipy.stats
-from scipy.sparse.linalg import lsqr as sparse_lsqr  # noqa
 import threadpoolctl
 from .._config import config_context, get_config
 from ..externals._packaging.version import parse as parse_version
@@ -164,3 +163,10 @@ def threadpool_info():
 
 
 threadpool_info.__doc__ = threadpoolctl.threadpool_info.__doc__
+
+
+# TODO: Remove when SciPy 1.9 is the minimum supported version
+def _mode(a, axis=0):
+    if sp_version >= parse_version("1.9.0"):
+        return scipy.stats.mode(a, axis=axis, keepdims=True)
+    return scipy.stats.mode(a, axis=axis)

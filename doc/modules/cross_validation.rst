@@ -278,7 +278,7 @@ can be used (otherwise, an exception is raised).
     over cross-validation folds, whereas :func:`cross_val_predict` simply
     returns the labels (or probabilities) from several distinct models
     undistinguished. Thus, :func:`cross_val_predict` is not an appropriate
-    measure of generalisation error.
+    measure of generalization error.
 
 
 The function :func:`cross_val_predict` is appropriate for:
@@ -295,7 +295,7 @@ section.
     * :ref:`sphx_glr_auto_examples_model_selection_plot_roc_crossval.py`,
     * :ref:`sphx_glr_auto_examples_feature_selection_plot_rfe_with_cross_validation.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_digits.py`,
-    * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`,
+    * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_plot_cv_predict.py`,
     * :ref:`sphx_glr_auto_examples_model_selection_plot_nested_cross_validation_iris.py`.
 
@@ -445,7 +445,7 @@ fold cross validation should be preferred to LOO.
  * T. Hastie, R. Tibshirani, J. Friedman,  `The Elements of Statistical Learning
    <https://web.stanford.edu/~hastie/ElemStatLearn/>`_, Springer 2009
  * L. Breiman, P. Spector `Submodel selection and evaluation in regression: The X-random case
-   <http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992;
+   <https://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992;
  * R. Kohavi, `A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection
    <https://www.ijcai.org/Proceedings/95-2/Papers/016.pdf>`_, Intl. Jnt. Conf. AI
  * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
@@ -592,8 +592,8 @@ Here is a visualization of the cross-validation behavior.
 
 .. _group_cv:
 
-Cross-validation iterators for grouped data.
---------------------------------------------
+Cross-validation iterators for grouped data
+-------------------------------------------
 
 The i.i.d. assumption is broken if the underlying generative process yield
 groups of dependent samples.
@@ -641,7 +641,8 @@ Imagine you have three subjects, each with an associated number from 1 to 3::
 
 Each subject is in a different testing fold, and the same subject is never in
 both testing and training. Notice that the folds do not have exactly the same
-size due to the imbalance in the data.
+size due to the imbalance in the data. If class proportions must be balanced
+across folds, :class:`StratifiedGroupKFold` is a better option.
 
 Here is a visualization of the cross-validation behavior.
 
@@ -649,6 +650,11 @@ Here is a visualization of the cross-validation behavior.
    :target: ../auto_examples/model_selection/plot_cv_indices.html
    :align: center
    :scale: 75%
+
+Similar to :class:`KFold`, the test sets from :class:`GroupKFold` will form a
+complete partition of all the data. Unlike :class:`KFold`, :class:`GroupKFold`
+is not randomized at all, whereas :class:`KFold` is randomized when
+``shuffle=True``.
 
 .. _stratified_group_k_fold:
 
@@ -707,13 +713,14 @@ Here is a visualization of cross-validation behavior for uneven groups:
 Leave One Group Out
 ^^^^^^^^^^^^^^^^^^^
 
-:class:`LeaveOneGroupOut` is a cross-validation scheme which holds out
-the samples according to a third-party provided array of integer groups. This
-group information can be used to encode arbitrary domain specific pre-defined
-cross-validation folds.
+:class:`LeaveOneGroupOut` is a cross-validation scheme where each split holds
+out samples belonging to one specific group. Group information is
+provided via an array that encodes the group of each sample.
 
 Each training set is thus constituted by all the samples except the ones
-related to a specific group.
+related to a specific group. This is the same as :class:`LeavePGroupsOut` with
+`n_groups=1` and the same as :class:`GroupKFold` with `n_splits` equal to the
+number of unique labels passed to the `groups` parameter.
 
 For example, in the cases of multiple experiments, :class:`LeaveOneGroupOut`
 can be used to create a cross-validation based on the different experiments:
@@ -741,7 +748,9 @@ Leave P Groups Out
 ^^^^^^^^^^^^^^^^^^
 
 :class:`LeavePGroupsOut` is similar as :class:`LeaveOneGroupOut`, but removes
-samples related to :math:`P` groups for each training/test set.
+samples related to :math:`P` groups for each training/test set. All possible
+combinations of :math:`P` groups are left out, meaning test sets will overlap
+for :math:`P>1`.
 
 Example of Leave-2-Group Out::
 
@@ -765,7 +774,8 @@ Group Shuffle Split
 The :class:`GroupShuffleSplit` iterator behaves as a combination of
 :class:`ShuffleSplit` and :class:`LeavePGroupsOut`, and generates a
 sequence of randomized partitions in which a subset of groups are held
-out for each split.
+out for each split. Each train/test split is performed independently meaning
+there is no guaranteed relationship between successive test sets.
 
 Here is a usage example::
 
@@ -844,13 +854,13 @@ cross-validation splitter. For example::
 Cross validation of time series data
 ------------------------------------
 
-Time series data is characterised by the correlation between observations
+Time series data is characterized by the correlation between observations
 that are near in time (*autocorrelation*). However, classical
 cross-validation techniques such as :class:`KFold` and
 :class:`ShuffleSplit` assume the samples are independent and
 identically distributed, and would result in unreasonable correlation
 between training and testing instances (yielding poor estimates of
-generalisation error) on time series data. Therefore, it is very important
+generalization error) on time series data. Therefore, it is very important
 to evaluate our model for time series data on the "future" observations
 least like those that are used to train the model. To achieve this, one
 solution is provided by :class:`TimeSeriesSplit`.

@@ -13,7 +13,7 @@ efficiently with the community.
 There are very good guidelines on the internet such as `this StackOverflow
 document <https://stackoverflow.com/help/mcve>`_ or `this blogpost by Matthew
 Rocklin <https://matthewrocklin.com/blog/work/2018/02/28/minimal-bug-reports>`_
-on crafting Minimal Complete Verifiable Examples (referred bellow as MCVE).
+on crafting Minimal Complete Verifiable Examples (referred below as MCVE).
 Our goal is not to be repetitive with those references but rather to provide a
 step-by-step guide on how to narrow down a bug until you have reached the
 shortest possible code to reproduce it.
@@ -353,7 +353,7 @@ as :class:`sklearn.preprocessing.StandardScaler`.
 Pandas
 ------
 
-Some scikit-learn objets expect pandas dataframes as input. In this case you can
+Some scikit-learn objects expect pandas dataframes as input. In this case you can
 transform numpy arrays into pandas objects using `pandas.DataFrame
 <https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.html>`_, or
 `pandas.Series

@@ -56,6 +56,7 @@ Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 #          Utkarsh Upadhyay <mail@musicallyut.in>
 # License: BSD
 from abc import ABCMeta, abstractmethod
+from numbers import Integral, Real
 
 import warnings
 import numpy as np
@@ -68,6 +69,7 @@ from ..neighbors import NearestNeighbors
 from ..utils.extmath import safe_sparse_dot
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
+from ..utils._param_validation import Interval, StrOptions
 from ..exceptions import ConvergenceWarning
 
 
@@ -104,6 +106,16 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
          ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
          for more details.
     """
+
+    _parameter_constraints: dict = {
+        "kernel": [StrOptions({"knn", "rbf"}), callable],
+        "gamma": [Interval(Real, 0, None, closed="left")],
+        "n_neighbors": [Interval(Integral, 0, None, closed="neither")],
+        "alpha": [None, Interval(Real, 0, 1, closed="neither")],
+        "max_iter": [Interval(Integral, 0, None, closed="neither")],
+        "tol": [Interval(Real, 0, None, closed="left")],
+        "n_jobs": [None, Integral],
+    }
 
     def __init__(
         self,
@@ -152,13 +164,6 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
                 return self.kernel(X, X)
             else:
                 return self.kernel(X, y)
-        else:
-            raise ValueError(
-                "%s is not a valid kernel. Only rbf and knn"
-                " or an explicit function "
-                " are supported at this time."
-                % self.kernel
-            )
 
     @abstractmethod
     def _build_graph(self):
@@ -179,6 +184,10 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         y : ndarray of shape (n_samples,)
             Predictions for input data.
         """
+        # Note: since `predict` does not accept semi-supervised labels as input,
+        # `fit(X, y).predict(X) != fit(X, y).transduction_`.
+        # Hence, `fit_predict` is not implemented.
+        # See https://github.com/scikit-learn/scikit-learn/pull/24898
         probas = self.predict_proba(X)
         return self.classes_[np.argmax(probas, axis=1)].ravel()
 
@@ -239,13 +248,14 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         y : array-like of shape (n_samples,)
             Target class values with unlabeled points marked as -1.
             All unlabeled samples will be transductively assigned labels
-            internally.
+            internally, which are stored in `transduction_`.
 
         Returns
         -------
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         X, y = self._validate_data(X, y)
         self.X_ = X
         check_classification_targets(y)
@@ -261,14 +271,6 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
 
         n_samples, n_classes = len(y), len(classes)
 
-        alpha = self.alpha
-        if self._variant == "spreading" and (
-            alpha is None or alpha <= 0.0 or alpha >= 1.0
-        ):
-            raise ValueError(
-                "alpha=%s is invalid: it must be inside the open interval (0, 1)"
-                % alpha
-            )
         y = np.asarray(y)
         unlabeled = y == -1
 
@@ -283,7 +285,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             y_static[unlabeled] = 0
         else:
             # LabelSpreading
-            y_static *= 1 - alpha
+            y_static *= 1 - self.alpha
 
         l_previous = np.zeros((self.X_.shape[0], n_classes))
 
@@ -310,7 +312,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
             else:
                 # clamp
                 self.label_distributions_ = (
-                    np.multiply(alpha, self.label_distributions_) + y_static
+                    np.multiply(self.alpha, self.label_distributions_) + y_static
                 )
         else:
             warnings.warn(
@@ -373,7 +375,7 @@ class LabelPropagation(BaseLabelPropagation):
         Categorical distribution for each item.
 
     transduction_ : ndarray of shape (n_samples)
-        Label assigned to each item via the transduction.
+        Label assigned to each item during :term:`fit`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -416,6 +418,9 @@ class LabelPropagation(BaseLabelPropagation):
     """
 
     _variant = "propagation"
+
+    _parameter_constraints: dict = {**BaseLabelPropagation._parameter_constraints}
+    _parameter_constraints.pop("alpha")
 
     def __init__(
         self,
@@ -465,7 +470,7 @@ class LabelPropagation(BaseLabelPropagation):
         y : array-like of shape (n_samples,)
             Target class values with unlabeled points marked as -1.
             All unlabeled samples will be transductively assigned labels
-            internally.
+            internally, which are stored in `transduction_`.
 
         Returns
         -------
@@ -530,7 +535,7 @@ class LabelSpreading(BaseLabelPropagation):
         Categorical distribution for each item.
 
     transduction_ : ndarray of shape (n_samples,)
-        Label assigned to each item via the transduction.
+        Label assigned to each item during :term:`fit`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -552,9 +557,9 @@ class LabelSpreading(BaseLabelPropagation):
 
     References
     ----------
-    Dengyong Zhou, Olivier Bousquet, Thomas Navin Lal, Jason Weston,
+    `Dengyong Zhou, Olivier Bousquet, Thomas Navin Lal, Jason Weston,
     Bernhard Schoelkopf. Learning with local and global consistency (2004)
-    http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.115.3219
+    <https://citeseerx.ist.psu.edu/doc_view/pid/d74c37aabf2d5cae663007cbd8718175466aea8c>`_
 
     Examples
     --------
@@ -572,6 +577,9 @@ class LabelSpreading(BaseLabelPropagation):
     """
 
     _variant = "spreading"
+
+    _parameter_constraints: dict = {**BaseLabelPropagation._parameter_constraints}
+    _parameter_constraints["alpha"] = [Interval(Real, 0, 1, closed="neither")]
 
     def __init__(
         self,

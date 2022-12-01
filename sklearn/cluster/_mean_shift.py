@@ -17,8 +17,10 @@ Seeding is performed using a binning technique for scalability.
 import numpy as np
 import warnings
 from joblib import Parallel
+from numbers import Integral, Real
 
 from collections import defaultdict
+from ..utils._param_validation import Interval, validate_params
 from ..utils.validation import check_is_fitted
 from ..utils.fixes import delayed
 from ..utils import check_random_state, gen_batches, check_array
@@ -28,11 +30,22 @@ from ..metrics.pairwise import pairwise_distances_argmin
 from .._config import config_context
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "quantile": [Interval(Real, 0, 1, closed="both")],
+        "n_samples": [Interval(Integral, 1, None, closed="left"), None],
+        "random_state": ["random_state"],
+        "n_jobs": [Integral, None],
+    }
+)
 def estimate_bandwidth(X, *, quantile=0.3, n_samples=None, random_state=0, n_jobs=None):
     """Estimate the bandwidth to use with the mean-shift algorithm.
 
-    That this function takes time at least quadratic in n_samples. For large
-    datasets, it's wise to set that parameter to a small value.
+    This function takes time at least quadratic in `n_samples`. For large
+    datasets, it is wise to subsample by setting `n_samples`. Alternatively,
+    the parameter `bandwidth` can be set to a small value without estimating
+    it.
 
     Parameters
     ----------
@@ -379,6 +392,16 @@ class MeanShift(ClusterMixin, BaseEstimator):
     MeanShift(bandwidth=2)
     """
 
+    _parameter_constraints: dict = {
+        "bandwidth": [Interval(Real, 0, None, closed="neither"), None],
+        "seeds": ["array-like", None],
+        "bin_seeding": ["boolean"],
+        "min_bin_freq": [Interval(Integral, 1, None, closed="left")],
+        "cluster_all": ["boolean"],
+        "n_jobs": [Integral, None],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+    }
+
     def __init__(
         self,
         *,
@@ -414,14 +437,11 @@ class MeanShift(ClusterMixin, BaseEstimator):
         self : object
                Fitted instance.
         """
+        self._validate_params()
         X = self._validate_data(X)
         bandwidth = self.bandwidth
         if bandwidth is None:
             bandwidth = estimate_bandwidth(X, n_jobs=self.n_jobs)
-        elif bandwidth <= 0:
-            raise ValueError(
-                "bandwidth needs to be greater than zero or None, got %f" % bandwidth
-            )
 
         seeds = self.seeds
         if seeds is None:

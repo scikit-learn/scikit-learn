@@ -50,7 +50,7 @@ def plot_ellipses(ax, weights, means, covars):
         # eigenvector normalization
         eig_vals = 2 * np.sqrt(2) * np.sqrt(eig_vals)
         ell = mpl.patches.Ellipse(
-            means[n], eig_vals[0], eig_vals[1], 180 + angle, edgecolor="black"
+            means[n], eig_vals[0], eig_vals[1], angle=180 + angle, edgecolor="black"
         )
         ell.set_clip_box(ax.bbox)
         ell.set_alpha(weights[n])
@@ -141,7 +141,7 @@ X = np.vstack(
 y = np.concatenate([np.full(samples[j], j, dtype=int) for j in range(n_components)])
 
 # Plot results in two different figures
-for (title, estimator, concentrations_prior) in estimators:
+for title, estimator, concentrations_prior in estimators:
     plt.figure(figsize=(4.7 * 3, 8))
     plt.subplots_adjust(
         bottom=0.04, top=0.90, hspace=0.05, wspace=0.05, left=0.03, right=0.99
