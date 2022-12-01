@@ -58,6 +58,11 @@ scaled_X_train = scaler.fit_transform(X_train)
 # For the sake of visualizing the decision boundary of a KNeighbors models, in
 # this section we select a subset of 2 features that have values with different
 # orders of magnitude.
+#
+# Keep in mind that using a subset of the features to train the model may likely
+# leave out predictive variables, resulting in a boundary decision that does not
+# represent the decisions nor the statistical performance of a model trained on
+# the full set of features.
 
 import matplotlib.pyplot as plt
 from sklearn.inspection import DecisionBoundaryDisplay
