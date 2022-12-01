@@ -106,9 +106,6 @@ def _predict_regression_tree_stages_sparse(
     cdef SIZE_t n_stages = estimators.shape[0]
     cdef SIZE_t n_outputs = estimators.shape[1]
 
-    # Initialize output
-    cdef cnp.float64_t* out_ptr = &out[0, 0]
-
     # Indices and temporary variables
     cdef SIZE_t sample_i
     cdef SIZE_t feature_i
@@ -169,7 +166,7 @@ def _predict_regression_tree_stages_sparse(
                         node = root_node + node.left_child
                     else:
                         node = root_node + node.right_child
-                out_ptr[sample_i * n_outputs + output_i] += scale * value[node - root_node]
+                out[sample_i, output_i] += scale * value[node - root_node]
 
     # Free auxiliary arrays
     free(X_sample)
@@ -199,7 +196,9 @@ def predict_stages(
         if X.format != 'csr':
             raise ValueError("When X is a sparse matrix, a CSR format is"
                              " expected, got {!r}".format(type(X)))
-        _predict_regression_tree_stages_sparse(estimators=estimators, X=X, scale=scale, out=out)
+        _predict_regression_tree_stages_sparse(
+            estimators=estimators, X=X, scale=scale, out=out
+        )
     else:
         if not isinstance(X, np.ndarray) or np.isfortran(X):
             raise ValueError(f"X should be C-ordered np.ndarray, got {type(X)}")
@@ -237,7 +236,9 @@ def predict_stage(
     Each estimator in the stage is scaled by ``scale`` before
     its prediction is added to ``out``.
     """
-    return predict_stages(estimators=estimators[stage:stage + 1], X=X, scale=scale, out=out)
+    return predict_stages(
+        estimators=estimators[stage:stage + 1], X=X, scale=scale, out=out
+    )
 
 
 def _random_sample_mask(
