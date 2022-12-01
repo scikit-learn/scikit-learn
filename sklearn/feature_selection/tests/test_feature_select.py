@@ -440,6 +440,14 @@ def test_select_kbest_all():
     univariate_filter = SelectKBest(f_classif, k="all")
     X_r = univariate_filter.fit(X, y).transform(X)
     assert_array_equal(X, X_r)
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/24949
+    X_r2 = (
+        GenericUnivariateSelect(f_classif, mode="k_best", param="all")
+        .fit(X, y)
+        .transform(X)
+    )
+    assert_array_equal(X_r, X_r2)
 
 
 @pytest.mark.parametrize("dtype_in", [np.float32, np.float64])
