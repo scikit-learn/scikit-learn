@@ -271,17 +271,25 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                     categories = categories[~missing]
 
                 if categories.size > self.max_bins:
+                    if hasattr(self, "feature_names_in_"):
+                        feature_name = f"'{self.feature_names_in_[f_idx]}'"
+                    else:
+                        feature_name = f"at index {f_idx}"
+
                     raise ValueError(
-                        f"Categorical feature at index {f_idx} is "
-                        "expected to have a "
-                        f"cardinality <= {self.max_bins}"
+                        f"Categorical feature {feature_name} is expected to "
+                        f"have a cardinality <= {self.max_bins}"
                     )
 
                 if (categories >= self.max_bins).any():
+                    if hasattr(self, "feature_names_in_"):
+                        feature_name = f"'{self.feature_names_in_[f_idx]}'"
+                    else:
+                        feature_name = f"at index {f_idx}"
+
                     raise ValueError(
-                        f"Categorical feature at index {f_idx} is "
-                        "expected to be encoded with "
-                        f"values < {self.max_bins}"
+                        f"Categorical feature {feature_name} is expected to "
+                        f"be encoded with values < {self.max_bins}"
                     )
             else:
                 categories = None
