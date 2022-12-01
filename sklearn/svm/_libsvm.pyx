@@ -74,7 +74,7 @@ def fit(
 
     Parameters
     ----------
-    X : 2d memory view on array, dtype=float64 of shape (n_samples, n_features)
+    X : memory view on array, dtype=float64 of shape (n_samples, n_features)
 
     Y : memory view on array, dtype=float64 of shape (n_samples,)
         target vector
@@ -229,24 +229,27 @@ def fit(
     SV_len  = get_l(model)
     n_class = get_nr(model)
 
-    cdef int[::1] n_iter
-    n_iter = np.empty(max(1, n_class * (n_class - 1) // 2), dtype=np.intc)
-    copy_n_iter(<char*> &n_iter[0], model)
+    cdef int[::1] n_iter = np.empty(max(1, n_class * (n_class - 1) // 2), dtype=np.intc)
+    copy_n_iter(
+        <char*> &n_iter[0],
+        model
+    )
 
-    cdef cnp.float64_t[:, ::1] sv_coef
-    sv_coef = np.empty((n_class-1, SV_len), dtype=np.float64)
+    cdef cnp.float64_t[:, ::1] sv_coef = np.empty((n_class-1, SV_len), dtype=np.float64)
     copy_sv_coef (
         <char*> &sv_coef[0, 0] if sv_coef.size > 0 else NULL,
         model
     )
 
     # the intercept is just model.rho but with sign changed
-    cdef cnp.float64_t[::1] intercept
-    intercept = np.empty(int((n_class*(n_class-1))/2), dtype=np.float64)
-    copy_intercept (<char*> &intercept[0], model, <cnp.npy_intp*> intercept.shape)
+    cdef cnp.float64_t[::1] intercept = np.empty(int((n_class*(n_class-1))/2), dtype=np.float64)
+    copy_intercept (
+        <char*> &intercept[0],
+        model,
+        <cnp.npy_intp*> intercept.shape
+    )
 
-    cdef cnp.int32_t[::1] support
-    support = np.empty (SV_len, dtype=np.int32)
+    cdef cnp.int32_t[::1] support = np.empty (SV_len, dtype=np.int32)
     copy_support (
         <char*> &support[0] if support.size > 0 else NULL,
         model
