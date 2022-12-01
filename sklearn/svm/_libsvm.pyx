@@ -311,9 +311,18 @@ def fit(
 
 
 cdef void set_predict_params(
-    svm_parameter *param, int svm_type, kernel, int degree, double gamma,
-    double coef0, double cache_size, int probability, int nr_weight,
-    char *weight_label, char *weight) except *:
+    svm_parameter *param,
+    int svm_type,
+    kernel,
+    int degree,
+    double gamma,
+    double coef0,
+    double cache_size,
+    int probability,
+    int nr_weight,
+    char *weight_label,
+    char *weight
+) except *:
     """Fill param with prediction time-only parameters."""
 
     # training-time only parameters
@@ -327,9 +336,26 @@ cdef void set_predict_params(
 
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
 
-    set_parameter(param, svm_type, kernel_index, degree, gamma, coef0, nu,
-                         cache_size, C, tol, epsilon, shrinking, probability,
-                         nr_weight, weight_label, weight, max_iter, random_seed)
+    set_parameter(
+        param,
+        svm_type,
+        kernel_index,
+        degree,
+        gamma,
+        coef0,
+        nu,
+        cache_size,
+        C,
+        tol,
+        epsilon,
+        shrinking,
+        probability,
+        nr_weight,
+        weight_label,
+        weight,
+        max_iter,
+        random_seed
+    )
 
 
 def predict(cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] X,
