@@ -22,7 +22,7 @@ cdef class BaseCriterion:
     # Internal structures
     cdef const DOUBLE_t[:] sample_weight # Sample weights
 
-    cdef SIZE_t* samples                 # Sample indices in X, y
+    cdef const SIZE_t[:] sample_indices  # Sample indices in X, y
     cdef SIZE_t start                    # samples[start:pos] are the samples in the left node
     cdef SIZE_t pos                      # samples[pos:end] are the samples in the right node
     cdef SIZE_t end
@@ -34,7 +34,7 @@ cdef class BaseCriterion:
     cdef double weighted_n_node_samples  # Weighted number of samples in the node
     cdef double weighted_n_left          # Weighted number of samples in the left node
     cdef double weighted_n_right         # Weighted number of samples in the right node
-    
+
     # Core methods that criterion class _must_ implement.
     cdef int reset(self) nogil except -1
     cdef int reverse_reset(self) nogil except -1
@@ -67,7 +67,7 @@ cdef class Criterion(BaseCriterion):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        SIZE_t* samples,
+        const SIZE_t[:] sample_indices,
         SIZE_t start,
         SIZE_t end
     ) nogil except -1
