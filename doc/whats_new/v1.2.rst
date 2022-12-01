@@ -416,6 +416,10 @@ Changelog
   :pr:`18298` by :user:`Madhura Jayaratne <madhuracj>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
 
+- |Fix| :class:`inspection.DecisionBoundaryDisplay` now raises error if input
+  data is not 2-dimensional.
+  :pr:`25077` by :user:`Arturo Amor <ArturoAmorQ>`.
+
 :mod:`sklearn.kernel_approximation`
 ...................................
 
