@@ -220,7 +220,7 @@ Changelog
 - |Enhancement| :func:`datasets.dump_svmlight_file` is now accelerated with a
   Cython implementation, providing 2-4x speedups.
   :pr:`23127` by :user:`Meekail Zain <micky774>`
-  
+
 - |Enhancement| Path-like objects, such as those created with pathlib are now
   allowed as paths in :func:`datasets.load_svmlight_file` and
   :func:`datasets.load_svmlight_files`.
@@ -605,6 +605,12 @@ Changelog
 
 - |FIX| :func:`utils.estimator_checks.check_estimator` now takes into account
   the `requires_positive_X` tag correctly. :pr:`24667` by `Thomas Fan`_.
+
+:mod:`sklearn.neural_network`
+...................
+
+- |Fix| :func:`_multilayer_perceptron._fit_stochastic` now uses a check
+  `X_val.shape[0] < 2` for the input validation set. :pr: `24713` by `David Shumway`.
 
 Code and Documentation Contributors
 -----------------------------------
