@@ -1089,8 +1089,6 @@ def non_negative_factorization(
     >>> W, H, n_iter = non_negative_factorization(
     ...     X, n_components=2, init='random', random_state=0)
     """
-    X = check_array(X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32])
-
     est = NMF(
         n_components=n_components,
         init=init,
@@ -1106,6 +1104,8 @@ def non_negative_factorization(
         shuffle=shuffle,
     )
     est._validate_params()
+
+    X = check_array(X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32])
 
     with config_context(assume_finite=True):
         W, H, n_iter = est._fit_transform(X, W=W, H=H, update_H=update_H)
