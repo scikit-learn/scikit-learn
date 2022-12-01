@@ -1349,7 +1349,7 @@ cdef class Poisson(RegressionCriterion):
                 # y_sum <= EPSILON.
                 return INFINITY
 
-            y_mean = y_sum[output_idx] / weight_sum
+            y_mean = y_sum[k] / weight_sum
 
             for p in range(start, end):
                 i = sample_indices[p]
