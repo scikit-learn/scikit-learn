@@ -117,11 +117,25 @@ plt.show()
 # For an example on how to find a correct number of blobs, see
 # :ref:`sphx_glr_auto_examples_cluster_plot_kmeans_silhouette_analysis.py`.
 # In this case it suffices to set `n_clusters=3`.
-#
+
+y_pred = KMeans(n_clusters=3, **common_params).fit_predict(X)
+plt.scatter(X[:, 0], X[:, 1], c=y_pred)
+plt.title("Optimal Number of Clusters")
+plt.show()
+
+# %%
 # To deal with unevenly sized blobs one can increase the number of random
 # initializations. In this case we set `n_init=10` to avoid finding a
 # sub-optimal local minimum. For more details see :ref:`kmeans_sparse_high_dim`.
-#
+
+y_pred = KMeans(n_clusters=3, n_init=10, random_state=random_state).fit_predict(
+    X_filtered
+)
+plt.scatter(X_filtered[:, 0], X_filtered[:, 1], c=y_pred)
+plt.title("Unevenly Sized Blobs \nwith several initializations")
+plt.show()
+
+# %%
 # As anisotropic and unequal variances are real limitations of the k-means
 # algorithm, here we propose instead the use of
 # :class:`~sklearn.mixture.GaussianMixture`, which also assumes gaussian
@@ -135,30 +149,23 @@ plt.show()
 
 from sklearn.mixture import GaussianMixture
 
-fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(12, 12))
-
-y_pred = KMeans(n_clusters=3, **common_params).fit_predict(X)
-axs[0, 0].scatter(X[:, 0], X[:, 1], c=y_pred)
-axs[0, 0].set_title("Optimal Number of Clusters")
+fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(12, 6))
 
 y_pred = GaussianMixture(n_components=3).fit_predict(X_aniso)
-axs[0, 1].scatter(X_aniso[:, 0], X_aniso[:, 1], c=y_pred)
-axs[0, 1].set_title("Anisotropically Distributed Blobs")
+ax1.scatter(X_aniso[:, 0], X_aniso[:, 1], c=y_pred)
+ax1.set_title("Anisotropically Distributed Blobs")
 
 y_pred = GaussianMixture(n_components=3).fit_predict(X_varied)
-axs[1, 0].scatter(X_varied[:, 0], X_varied[:, 1], c=y_pred)
-axs[1, 0].set_title("Unequal Variance")
+ax2.scatter(X_varied[:, 0], X_varied[:, 1], c=y_pred)
+ax2.set_title("Unequal Variance")
 
-y_pred = KMeans(n_clusters=3, n_init=10, random_state=random_state).fit_predict(
-    X_filtered
-)
-axs[1, 1].scatter(X_filtered[:, 0], X_filtered[:, 1], c=y_pred)
-axs[1, 1].set_title("Unevenly Sized Blobs")
-
-plt.suptitle("KMeans and gaussian mixture clusters").set_y(0.95)
+plt.suptitle("Gaussian mixture clusters").set_y(0.95)
 plt.show()
 
 # %%
+# Final remarks
+# -------------
+#
 # In sparse high-dimensional spaces, Euclidean distances tend to become inflated
 # (not shown in this example). Running a dimensionality reduction algorithm
 # prior to k-means clustering can alleviate this problem and speed up the
