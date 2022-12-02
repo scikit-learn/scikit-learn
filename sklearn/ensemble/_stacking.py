@@ -501,6 +501,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimators expose such an attribute when fit.
+
         .. versionadded:: 1.0
 
     final_estimator_ : estimator
@@ -860,6 +861,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimators expose such an attribute when fit.
+
         .. versionadded:: 1.0
 
     final_estimator_ : estimator
