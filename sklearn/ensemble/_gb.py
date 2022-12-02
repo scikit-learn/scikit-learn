@@ -1084,7 +1084,15 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         relative to the previous iteration.
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
-        Only available if ``subsample < 1.0``
+        Only available if ``subsample < 1.0``.
+
+    oob_scores_ : ndarray of shape (n_estimators,)
+        The full history of the loss (= deviance) values on the out-of-bag
+        samples. Only available if ``subsample < 1.0``.
+
+    oob_score_ : float
+        The last value of the loss (= deviance) on the out-of-bag samples. It is
+        the same as ``oob_scores_[-1]``. Only available if ``subsample < 1.0``.
 
     train_score_ : ndarray of shape (n_estimators,)
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
@@ -1646,7 +1654,15 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         relative to the previous iteration.
         ``oob_improvement_[0]`` is the improvement in
         loss of the first stage over the ``init`` estimator.
-        Only available if ``subsample < 1.0``
+        Only available if ``subsample < 1.0``.
+
+    oob_scores_ : ndarray of shape (n_estimators,)
+        The full history of the loss (= deviance) values on the out-of-bag
+        samples. Only available if ``subsample < 1.0``.
+
+    oob_score_ : float
+        The last value of the loss (= deviance) on the out-of-bag samples. It is
+        the same as ``oob_scores_[-1]``. Only available if ``subsample < 1.0``.
 
     train_score_ : ndarray of shape (n_estimators,)
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
