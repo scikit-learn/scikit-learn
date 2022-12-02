@@ -642,7 +642,7 @@ the internal structure of the data.
 .. topic:: References:
 
   * `"Visualizing High-Dimensional Data Using t-SNE"
-    <http://jmlr.org/papers/v9/vandermaaten08a.html>`_
+    <https://jmlr.org/papers/v9/vandermaaten08a.html>`_
     van der Maaten, L.J.P.; Hinton, G. Journal of Machine Learning Research
     (2008)
 
