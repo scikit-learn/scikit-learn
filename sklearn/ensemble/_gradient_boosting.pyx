@@ -32,10 +32,9 @@ cdef void _predict_regression_tree_inplace_fast_dense(
     double *value,
     double scale,
     Py_ssize_t k,
-    Py_ssize_t K,
     Py_ssize_t n_samples,
     Py_ssize_t n_features,
-    cnp.float64_t *out
+    cnp.float64_t[:, :] out
 ) nogil:
     """Predicts output for regression tree and stores it in ``out[i, k]``.
 
@@ -61,17 +60,13 @@ cdef void _predict_regression_tree_inplace_fast_dense(
     k : int
         The index of the tree output to be predicted. Must satisfy
         0 <= ``k`` < ``K``.
-    K : int
-        The number of regression tree outputs. For regression and
-        binary classification ``K == 1``, for multi-class
-        classification ``K == n_classes``.
     n_samples : int
         The number of samples in the input array ``X``;
         ``n_samples == X.shape[0]``.
     n_features : int
         The number of features; ``n_samples == X.shape[1]``.
-    out : np.float64_t pointer
-        The pointer to the data array where the predictions are stored.
+    out : memory view on array of type np.float64_t
+        The data array where the predictions are stored.
         ``out`` is assumed to be a two-dimensional array of
         shape ``(n_samples, K)``.
     """
@@ -85,7 +80,7 @@ cdef void _predict_regression_tree_inplace_fast_dense(
                 node = root_node + node.left_child
             else:
                 node = root_node + node.right_child
-        out[i * K + k] += scale * value[node - root_node]
+        out[i, k] += scale * value[node - root_node]
 
 def _predict_regression_tree_stages_sparse(
     object[:, :] estimators,
@@ -216,10 +211,9 @@ def predict_stages(
                     value=tree.value,
                     scale=scale,
                     k=k,
-                    K=K,
                     n_samples=X.shape[0],
                     n_features=X.shape[1],
-                    out=&out[0, 0]
+                    out=out
                 )
                 ## out[:, k] += scale * tree.predict(X).ravel()
 
