@@ -442,7 +442,7 @@ def test_high_perplexity_precomputed_sparse_distances():
 @ignore_warnings(category=EfficiencyWarning)
 def test_sparse_precomputed_distance(global_dtype):
     """Make sure that TSNE works identically for sparse and dense matrix"""
-    atol = 1e-5 if global_dtype == np.float32 else 0
+    atol = 1e-5 if global_dtype == np.float32 else 1e-7
     random_state = check_random_state(0)
     X = random_state.randn(100, 2)
 
