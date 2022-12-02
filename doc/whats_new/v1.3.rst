@@ -39,8 +39,8 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
-- |Feature| Add `oob_scores_` to class:`ensemble.GradientBoostingClassifier` to
-  store OOB Loss.
+- |Feature| :class:`ensemble.GradientBoostingClassifier` now exposes
+  out-of-bag scores via the `oob_scores_` or `oob_score_` attributes.
   :pr:`24882` by :user:`Ashwin Mathur <awinml>`.
 
 Code and Documentation Contributors
