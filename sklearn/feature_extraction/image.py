@@ -16,7 +16,7 @@ from scipy import sparse
 from numpy.lib.stride_tricks import as_strided
 
 from ..utils import check_array, check_random_state
-from ..utils._param_validation import Interval
+from ..utils._param_validation import Interval, validate_params
 from ..base import BaseEstimator
 
 __all__ = [
@@ -97,7 +97,7 @@ def _to_graph(
     """Auxiliary function for img_to_graph and grid_to_graph"""
     edges = _make_edges_3d(n_x, n_y, n_z)
 
-    if dtype is None:
+    if dtype is None:  # To not overwrite input dtype
         if img is None:
             dtype = int
         else:
@@ -115,7 +115,6 @@ def _to_graph(
     else:
         if mask is not None:
             mask = mask.astype(dtype=bool, copy=False)
-            mask = np.asarray(mask, dtype=bool)
             edges = _mask_edges_weights(mask, edges)
             n_voxels = np.sum(mask)
         else:
@@ -139,6 +138,14 @@ def _to_graph(
     return return_as(graph)
 
 
+@validate_params(
+    {
+        "img": ["array-like"],
+        "mask": [None, np.ndarray],
+        "return_as": [type],
+        "dtype": "no_validation",  # validation delegated to numpy
+    }
+)
 def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
     """Graph of the pixel-to-pixel gradient connections.
 
@@ -148,7 +155,7 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
 
     Parameters
     ----------
-    img : ndarray of shape (height, width) or (height, width, channel)
+    img : array-like of shape (height, width) or (height, width, channel)
         2D or 3D image.
     mask : ndarray of shape (height, width) or \
             (height, width, channel), dtype=bool, default=None
@@ -180,6 +187,16 @@ def img_to_graph(img, *, mask=None, return_as=sparse.coo_matrix, dtype=None):
     return _to_graph(n_x, n_y, n_z, mask, img, return_as, dtype)
 
 
+@validate_params(
+    {
+        "n_x": [Interval(Integral, left=1, right=None, closed="left")],
+        "n_y": [Interval(Integral, left=1, right=None, closed="left")],
+        "n_z": [Interval(Integral, left=1, right=None, closed="left")],
+        "mask": [None, np.ndarray],
+        "return_as": [type],
+        "dtype": "no_validation",  # validation delegated to numpy
+    }
+)
 def grid_to_graph(
     n_x, n_y, n_z=1, *, mask=None, return_as=sparse.coo_matrix, dtype=int
 ):

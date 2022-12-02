@@ -285,7 +285,7 @@ Other packages useful for data analysis and machine learning.
   statistical models. More focused on statistical tests and less on prediction
   than scikit-learn.
 
-- `PyMC <https://pymc-devs.github.io/pymc/>`_ Bayesian statistical models and
+- `PyMC <https://www.pymc.io/>`_ Bayesian statistical models and
   fitting algorithms.
 
 - `Seaborn <https://stanford.edu/~mwaskom/software/seaborn/>`_ Visualization library based on
@@ -310,7 +310,7 @@ Recommendation Engine packages
 - `Spotlight <https://github.com/maciejkula/spotlight>`_ Pytorch-based
   implementation of deep recommender models.
 
-- `Surprise Lib <http://surpriselib.com/>`_ Library for explicit feedback
+- `Surprise Lib <https://surpriselib.com/>`_ Library for explicit feedback
   datasets.
 
 Domain specific packages
@@ -362,4 +362,3 @@ and promote community efforts.
 
 .. [#f1] following `linux documentation Disclaimer
    <https://www.kernel.org/doc/html/latest/translations/index.html#disclaimer>`__
-
