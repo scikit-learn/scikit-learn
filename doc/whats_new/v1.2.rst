@@ -411,7 +411,7 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
-- |Enhancement| Extended :func:`inspection.partial_dependence` and
+- |MajorFeature| Extended :func:`inspection.partial_dependence` and
   :class:`inspection.PartialDependenceDisplay` to handle categorical features.
   :pr:`18298` by :user:`Madhura Jayaratne <madhuracj>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
@@ -695,6 +695,10 @@ Changelog
 
 - |Enhancement| :func:`utils.validation.column_or_1d` now accepts a `dtype`
   parameter to specific `y`'s dtype. :pr:`22629` by `Thomas Fan`_.
+
+- |Enhancement| :func:`utils.extmath.cartesian` now accepts arrays with different
+  `dtype` and will cast the ouptut to the most permissive `dtype`.
+  :pr:`25067` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 - |Fix| :func:`utils.multiclass.type_of_target` now properly handles sparse matrices.
   :pr:`14862` by :user:`Léonard Binet <leonardbinet>`.
