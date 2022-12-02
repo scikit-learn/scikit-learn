@@ -36,6 +36,13 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| :class:`neural_network.MLPClassifier` and :class:`neural_network.MLPRegressor`
+  no longer raise warnings when fitting data with feature names.
+  :pr:`24873` by :user:`Tim Head <betatim>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
