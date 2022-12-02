@@ -716,7 +716,7 @@ def decision_function(
     model = set_model(
         &param,
         <int> nSV.shape[0],
-        <char*> &SV[0, 0],
+        <char*> &SV[0, 0] if SV.size > 0 else NULL,
         <cnp.npy_intp*> SV.shape,
         <char*> &support[0],
         <cnp.npy_intp*> support.shape,
