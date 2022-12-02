@@ -580,7 +580,11 @@ def test_mem_layout():
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
 def test_oob_improvement(Cls):
     # Test if oob improvement has correct shape and regression test.
-    clf = Cls(n_estimators=100, random_state=1, subsample=0.5)
+    clf = GradientBoostingEstimator(
+        n_estimators=100,
+        random_state=1,
+        subsample=0.5,
+    )
     clf.fit(X, y)
     assert clf.oob_improvement_.shape[0] == 100
     # hard-coded regression test - change if modification in OOB computation
