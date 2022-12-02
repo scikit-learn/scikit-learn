@@ -91,14 +91,16 @@ cdef floating _euclidean_sparse_dense(
         The distance between 'a' and 'b'.
     """
     cdef:
-        int nnz = a_indices[a_indptr[sample_index] - offset:a_indptr[sample_index + 1] - offset].shape[0]
+        int a_indptr_start = a_indptr[sample_index]
+        int a_indptr_end = a_indptr[sample_index + 1]
+        int nnz = a_indptr_end - a_indptr_start
         int i
         floating tmp, bi
         floating result = 0.0
 
     for i in range(nnz):
-        bi = b_arr[b_index, a_indices[a_indptr[sample_index] - offset + i]]
-        tmp = a_data[a_indptr[sample_index] - offset + i] - bi
+        bi = b_arr[b_index, a_indices[a_indptr_start - offset + i]]
+        tmp = a_data[a_indptr_start - offset + i] - bi
         result += tmp * tmp - bi * bi
 
     result += b_squared_norms[b_index]
