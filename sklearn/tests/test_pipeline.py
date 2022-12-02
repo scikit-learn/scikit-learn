@@ -1674,5 +1674,5 @@ def test_feature_union_getitem():
     )
     assert union["scalar"] is scalar
     assert union["pca"] is pca
-    assert union["scalar"] is scalar
     assert union["pass"] == "passthrough"
+    assert union["drop_me"] == "drop"
