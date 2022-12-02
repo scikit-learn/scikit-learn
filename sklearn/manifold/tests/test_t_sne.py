@@ -479,7 +479,7 @@ def test_init_not_available():
     # 'init' must be 'pca', 'random', or numpy array.
     tsne = TSNE(init="not available", perplexity=1)
     m = (
-        "The 'init' parameter of TSNE must be a str among {'pca', 'random'}"
+        "The 'init' parameter of TSNE must be a str among {'random', 'pca'}"
         " or an instance of 'numpy.ndarray'"
     )
     with pytest.raises(ValueError, match=m):

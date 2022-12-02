@@ -518,6 +518,23 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             # No feature names
             return np.array([], dtype=object)
 
+        return self._add_prefix_for_feature_names_out(
+            transformer_with_feature_names_out
+        )
+
+    def _add_prefix_for_feature_names_out(self, transformer_with_feature_names_out):
+        """Add prefix for feature names out that includes the transformer names.
+
+        Parameters
+        ----------
+        transformer_with_feature_names_out : list of tuples of (str, array-like of str)
+            The tuple consistent of the transformer's name and its feature names out.
+
+        Returns
+        -------
+        feature_names_out : ndarray of shape (n_features,), dtype=str
+            Transformed feature names.
+        """
         if self.verbose_feature_names_out:
             # Prefix the feature names out with the transformers name
             names = list(
@@ -825,7 +842,26 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             config = _get_output_config("transform", self)
             if config["dense"] == "pandas" and all(hasattr(X, "iloc") for X in Xs):
                 pd = check_pandas_support("transform")
-                return pd.concat(Xs, axis=1)
+                output = pd.concat(Xs, axis=1)
+
+                # If all transformers define `get_feature_names_out`, then transform
+                # will adjust the column names to be consistent with
+                # verbose_feature_names_out. Here we prefix the feature names if
+                # verbose_feature_names_out=True.
+
+                if not self.verbose_feature_names_out:
+                    return output
+
+                transformer_names = [
+                    t[0] for t in self._iter(fitted=True, replace_strings=True)
+                ]
+                feature_names_outs = [X.columns for X in Xs]
+                names_out = self._add_prefix_for_feature_names_out(
+                    list(zip(transformer_names, feature_names_outs))
+                )
+                output.columns = names_out
+                return output
+
             return np.hstack(Xs)
 
     def _sk_visual_block_(self):
