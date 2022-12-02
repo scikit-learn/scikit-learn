@@ -594,7 +594,7 @@ def test_oob_improvement(GradientBoostingEstimator):
 
 
 @pytest.mark.parametrize("GradientBoostingEstimator", GRADIENT_BOOSTING_ESTIMATORS)
-def test_oob_scores(Cls):
+def test_oob_scores(GradientBoostingEstimator):
     # Test if oob scores has correct shape and regression test.
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     clf = GradientBoostingEstimator(
