@@ -709,6 +709,10 @@ Changelog
 - |Fix| :func:`utils.estimator_checks.check_estimator` now takes into account
   the `requires_positive_X` tag correctly. :pr:`24667` by `Thomas Fan`_.
 
+- |Fix| :func:`utils.check_array` now supports Pandas Series with `pd.NA`
+  by raising a better error message or returning a compatible `ndarray`.
+  :pr:`25080` by `Thomas Fan`_.
+
 - |API| The extra keyword parameters of :func:`utils.extmath.density` are deprecated
   and will be removed in 1.4.
   :pr:`24523` by :user:`Mia Bajic <clytaemnestra>`.
