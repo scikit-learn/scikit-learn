@@ -166,7 +166,7 @@ from ..utils._typedefs import DTYPE, ITYPE
 from ..utils._heap cimport heap_push
 from ..utils._sorting cimport simultaneous_sort as _simultaneous_sort
 
-# TODO: use cnp.PyArray_ENABLEFLAGS when cython >= 3.0 is used.
+# TODO: use cnp.PyArray_ENABLEFLAGS when Cython>=3.0 is used.
 cdef extern from "numpy/arrayobject.h":
     void PyArray_ENABLEFLAGS(cnp.ndarray arr, int flags)
 
