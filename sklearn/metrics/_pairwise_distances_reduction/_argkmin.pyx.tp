@@ -6,7 +6,7 @@ from cython cimport final
 from cython.parallel cimport parallel, prange
 
 from ...utils._heap cimport heap_push
-from ...utils._sorting cimport simultaneous_sort
+from ...utils._sorting cimport sort
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
 import numpy as np
@@ -194,7 +194,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
         # Sorting the main heaps portion associated to `X[X_start:X_end]`
         # in ascending order w.r.t the distances.
         for idx in range(X_end - X_start):
-            simultaneous_sort(
+            sort(
                 self.heaps_r_distances_chunks[thread_num] + idx * self.k,
                 self.heaps_indices_chunks[thread_num] + idx * self.k,
                 self.k
@@ -278,7 +278,7 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
             # Sorting the main in ascending order w.r.t the distances.
             # This is done in parallel sample-wise (no need for locks).
             for idx in prange(self.n_samples_X, schedule='static'):
-                simultaneous_sort(
+                sort(
                     &self.argkmin_distances[idx, 0],
                     &self.argkmin_indices[idx, 0],
                     self.k,

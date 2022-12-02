@@ -8,7 +8,7 @@ from cython cimport final
 from cython.operator cimport dereference as deref
 from cython.parallel cimport parallel, prange
 
-from ...utils._sorting cimport simultaneous_sort
+from ...utils._sorting cimport sort
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 from ...utils._vector_sentinel cimport vector_to_nd_array
 
@@ -221,7 +221,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
         # Sorting neighbors for each query vector of X
         if self.sort_results:
             for idx in range(X_start, X_end):
-                simultaneous_sort(
+                sort(
                     deref(self.neigh_distances)[idx].data(),
                     deref(self.neigh_indices)[idx].data(),
                     deref(self.neigh_indices)[idx].size()
@@ -292,7 +292,7 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
             # Sort in parallel in ascending order w.r.t the distances if requested.
             if self.sort_results:
                 for idx in prange(self.n_samples_X, schedule='static'):
-                    simultaneous_sort(
+                    sort(
                         deref(self.neigh_distances)[idx].data(),
                         deref(self.neigh_indices)[idx].data(),
                         deref(self.neigh_indices)[idx].size()
