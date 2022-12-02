@@ -451,7 +451,7 @@ def test_sparse_precomputed_distance(global_dtype):
     ).astype(global_dtype)
     D = pairwise_distances(X).astype(global_dtype)
     assert sp.issparse(D_sparse)
-    assert_allclose(D_sparse.A, D)
+    assert_allclose(D_sparse.A, D, atol=atol)
 
     tsne = TSNE(
         metric="precomputed", random_state=0, init="random", learning_rate="auto"
@@ -473,17 +473,6 @@ def test_non_positive_computed_distances():
     X = np.array([[0.0, 0.0], [1.0, 1.0]])
     with pytest.raises(ValueError, match="All distances .*metric given.*"):
         tsne.fit_transform(X)
-
-
-def test_init_not_available():
-    # 'init' must be 'pca', 'random', or numpy array.
-    tsne = TSNE(init="not available", perplexity=1)
-    m = (
-        "The 'init' parameter of TSNE must be a str among {'random', 'pca'}"
-        " or an instance of 'numpy.ndarray'"
-    )
-    with pytest.raises(ValueError, match=m):
-        tsne.fit_transform(np.array([[0.0], [1.0]]))
 
 
 def test_init_ndarray(global_dtype):
