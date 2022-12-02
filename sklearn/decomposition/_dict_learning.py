@@ -19,6 +19,7 @@ from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMi
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils import deprecated
 from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils._param_validation import validate_params
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
 from ..utils.fixes import delayed
@@ -221,6 +222,26 @@ def _sparse_encode(
     return new_code
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "dictionary": ["array-like"],
+        "gram": [np.ndarray, None],
+        "cov": [np.ndarray, None],
+        "algorithm": [
+            StrOptions({"lasso_lars", "lasso_cd", "lars", "omp", "threshold"})
+        ],
+        "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
+        "alpha": [Interval(Real, 0, None, closed="left"), None],
+        "copy_cov": ["boolean"],
+        "init": ["array-like", None],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "n_jobs": [Integral, None],
+        "check_input": ["boolean"],
+        "verbose": ["verbose"],
+        "positive": ["boolean"],
+    }
+)
 # XXX : could be moved to the linear_model module
 def sparse_encode(
     X,
@@ -1669,7 +1690,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         positive_dict=False,
         transform_max_iter=1000,
     ):
-
         super().__init__(
             transform_algorithm,
             transform_n_nonzero_coefs,
@@ -2047,7 +2067,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         tol=1e-3,
         max_no_improvement=10,
     ):
-
         super().__init__(
             transform_algorithm,
             transform_n_nonzero_coefs,
@@ -2325,7 +2344,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         )
 
         if self.max_iter is not None:
-
             # Attributes to monitor the convergence
             self._ewa_cost = None
             self._ewa_cost_min = None
