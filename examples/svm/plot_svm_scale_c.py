@@ -93,6 +93,7 @@ val_curve_params = {
     "y": y,
     "param_name": "C",
     "param_range": Cs,
+    "n_jobs": 2,
 }
 
 results = {"C": Cs}
