@@ -577,9 +577,10 @@ def test_mem_layout():
     assert 100 == len(clf.estimators_)
 
 
-def test_oob_improvement():
+@pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
+def test_oob_improvement(Cls):
     # Test if oob improvement has correct shape and regression test.
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1, subsample=0.5)
+    clf = Cls(n_estimators=100, random_state=1, subsample=0.5)
     clf.fit(X, y)
     assert clf.oob_improvement_.shape[0] == 100
     # hard-coded regression test - change if modification in OOB computation
@@ -588,24 +589,32 @@ def test_oob_improvement():
     )
 
 
-def test_oob_scores():
+@pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
+def test_oob_scores(Cls):
     # Test if oob scores has correct shape and regression test.
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1, subsample=0.5)
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    clf = Cls(n_estimators=100, random_state=1, subsample=0.5)
     clf.fit(X, y)
     assert clf.oob_scores_.shape[0] == 100
 
+    clf = Cls(n_estimators=100, random_state=1, subsample=0.5, n_iter_no_change=5)
+    clf.fit(X, y)
+    assert clf.oob_scores_.shape[0] < 100
 
-def test_oob_scores_raise():
-    # Test if oob improvement has correct shape.
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1, subsample=1.0)
+
+@pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
+def test_oob_scores_raise(Cls):
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    clf = Cls(n_estimators=100, random_state=1, subsample=1.0)
     clf.fit(X, y)
     with pytest.raises(AttributeError):
         clf.oob_scores_
 
 
-def test_oob_improvement_raise():
-    # Test if oob improvement has correct shape.
-    clf = GradientBoostingClassifier(n_estimators=100, random_state=1, subsample=1.0)
+@pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
+def test_oob_improvement_raise(Cls):
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    clf = Cls(n_estimators=100, random_state=1, subsample=1.0)
     clf.fit(X, y)
     with pytest.raises(AttributeError):
         clf.oob_improvement_
@@ -621,6 +630,19 @@ def test_oob_multilcass_iris():
     assert score > 0.9
     assert clf.oob_improvement_.shape[0] == clf.n_estimators
     assert clf.oob_scores_.shape[0] == clf.n_estimators
+
+    clf = GradientBoostingClassifier(
+        n_estimators=100,
+        loss="log_loss",
+        random_state=1,
+        subsample=0.5,
+        n_iter_no_change=5,
+    )
+    clf.fit(iris.data, iris.target)
+    score = clf.score(iris.data, iris.target)
+    assert clf.oob_improvement_.shape[0] < clf.n_estimators
+    assert clf.oob_scores_.shape[0] < clf.n_estimators
+
     # hard-coded regression test - change if modification in OOB computation
     # FIXME: the following snippet does not yield the same results on 32 bits
     # assert_array_almost_equal(clf.oob_improvement_[:5],
@@ -889,6 +911,7 @@ def test_monitor_early_stopping(Cls):
     assert est.estimators_.shape[0] == 10
     assert est.train_score_.shape[0] == 10
     assert est.oob_improvement_.shape[0] == 10
+    assert est.oob_scores_.shape[0] == 10
 
     # try refit
     est.set_params(n_estimators=30)
@@ -896,6 +919,8 @@ def test_monitor_early_stopping(Cls):
     assert est.n_estimators == 30
     assert est.estimators_.shape[0] == 30
     assert est.train_score_.shape[0] == 30
+    assert est.oob_improvement_.shape[0] == 30
+    assert est.oob_scores_.shape[0] == 30
 
     est = Cls(
         n_estimators=20, max_depth=1, random_state=1, subsample=0.5, warm_start=True
@@ -905,6 +930,7 @@ def test_monitor_early_stopping(Cls):
     assert est.estimators_.shape[0] == 10
     assert est.train_score_.shape[0] == 10
     assert est.oob_improvement_.shape[0] == 10
+    assert est.oob_scores_.shape[0] == 10
 
     # try refit
     est.set_params(n_estimators=30, warm_start=False)
@@ -913,6 +939,7 @@ def test_monitor_early_stopping(Cls):
     assert est.train_score_.shape[0] == 30
     assert est.estimators_.shape[0] == 30
     assert est.oob_improvement_.shape[0] == 30
+    assert est.oob_scores_.shape[0] == 30
 
 
 def test_complete_classification():
