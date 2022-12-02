@@ -577,8 +577,8 @@ def test_mem_layout():
     assert 100 == len(clf.estimators_)
 
 
-@pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
-def test_oob_improvement(Cls):
+@pytest.mark.parametrize("GradientBoostingEstimator", GRADIENT_BOOSTING_ESTIMATORS)
+def test_oob_improvement(GradientBoostingEstimator):
     # Test if oob improvement has correct shape and regression test.
     clf = GradientBoostingEstimator(
         n_estimators=100,
