@@ -49,8 +49,8 @@ account for the different amount of training samples?"
 # parameter `C` to account for the number of samples when using either L1 or L2
 # penalty. For such purpose we create a synthetic dataset with a large number of
 # features, out of which only a few will be informative. We therefore expect the
-# regularization to shrink the coefficients towards zero (`l2` penalty) or
-# exactly zero (`l1` penalty).
+# regularization to shrink the coefficients towards zero (L2 penalty) or
+# exactly zero (L1 penalty).
 
 from sklearn.datasets import make_classification
 
@@ -69,13 +69,16 @@ X, y = make_classification(
 # of non-zero parameters as well as their signs, can be achieved by scaling
 # `C`.
 #
-# We define a linear SVC with the `l1` penalty.
+# We define a linear SVC with the L1 penalty.
+
 from sklearn.svm import LinearSVC
 
 model_l1 = LinearSVC(penalty="l1", loss="squared_hinge", dual=False, tol=1e-3)
 
 # %%
-# We compute the mean test score for different values of `C`.
+# We compute the mean test score for different values of `C` via
+# cross-validation.
+
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import validation_curve, ShuffleSplit
@@ -126,18 +129,19 @@ axes[1].set_title("Scaling C by 1 / n_samples")
 _ = fig.suptitle("Effect of scaling C with L1 penalty")
 
 # %%
-# Here, we observe that the cross-validation-error correlates best with the
-# test-error, when scaling our `C` by the number of training samples.
+# In the region of small `C` (strong regularization) all the coefficients
+# learned by the models are zero, leading to severe underfitting. Indeed, the
+# accuracy in this region is at the chance level.
+#
+# Using the default scale results in a (somewhat) stable optimal value of `C`,
+# whereas the transition out of the underfitting region depends on the number of
+# training samples. The reparametrization shows the inverse behaviour.
 #
 # L2-penalty case
 # ---------------
-# We can repeat a similar experiment with the `l2` penalty. In this case, the
+# We can do a similar experiment with the L2 penalty. In this case, the
 # theory says that in order to achieve prediction consistency, the penalty
 # parameter should be kept constant as the number of samples grow.
-#
-# So we will repeat the same experiment by creating a linear SVC classifier
-# with the `l2` penalty and check the test score via cross-validation and
-# plot the results with and without scaling the parameter `C`.
 
 model_l2 = LinearSVC(penalty="l2", loss="squared_hinge", dual=True)
 Cs = np.logspace(-8, 4, 11)
@@ -180,5 +184,7 @@ fig.suptitle("Effect of scaling C with L2 penalty")
 plt.show()
 
 # %%
-# For the L2 penalty case, the best result comes from the case where `C` is
-# not scaled.
+# For the L2 penalty case, the reparametrization seems to have a smaller
+# impact on the stability of the optimal value for the regularization. The
+# transition out of the overfitting region occurs in a more spread range
+# and the accuracy does not seem to be degraded up to chance level.
