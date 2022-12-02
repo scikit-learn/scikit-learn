@@ -276,4 +276,4 @@ def _random_sample_mask(
              sample_mask[i] = 1
              n_bagged += 1
 
-     return sample_mask.base
+     return np.asarray(sample_mask)
