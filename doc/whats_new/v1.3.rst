@@ -36,6 +36,12 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.feature_selection`
+................................
+
+- |Enhancement| All selectors in :mod:`sklearn.feature_selection` will preserve
+  a DataFrame's dtype when transformed. :pr:`xxxxx` by `Thomas Fan`_.
+
 Code and Documentation Contributors
 -----------------------------------
 

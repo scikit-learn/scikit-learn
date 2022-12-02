@@ -14,10 +14,11 @@ from ..base import TransformerMixin
 from ..cross_decomposition._pls import _PLS
 from ..utils import (
     check_array,
-    safe_mask,
     safe_sqr,
 )
 from ..utils._tags import _safe_tags
+from ..utils._set_output import _get_output_config
+from ..utils import _safe_indexing
 from ..utils.validation import _check_feature_names_in
 
 
@@ -78,15 +79,23 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
-        # note: we use _safe_tags instead of _get_tags because this is a
-        # public Mixin.
-        X = self._validate_data(
-            X,
-            dtype=None,
-            accept_sparse="csr",
-            force_all_finite=not _safe_tags(self, key="allow_nan"),
-            reset=False,
-        )
+        output_config_dense = _get_output_config("transform", estimator=self)["dense"]
+        if hasattr(X, "iloc") and output_config_dense == "pandas":
+            # Only check feature names and n_features when output is a dataframe
+            # This allow _transform to preserve `X`'s dtype
+            self._check_feature_names(X, reset=False)
+            self._check_n_features(X, reset=False)
+        else:
+            # note: we use _safe_tags instead of _get_tags because this is a
+            # public Mixin.
+            X = self._validate_data(
+                X,
+                dtype=None,
+                accept_sparse="csr",
+                force_all_finite=not _safe_tags(self, key="allow_nan"),
+                reset=False,
+            )
+
         return self._transform(X)
 
     def _transform(self, X):
@@ -98,10 +107,10 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
                 " too noisy or the selection test too strict.",
                 UserWarning,
             )
+            if hasattr(X, "iloc"):
+                return X.iloc[:, :0]
             return np.empty(0, dtype=X.dtype).reshape((X.shape[0], 0))
-        if len(mask) != X.shape[1]:
-            raise ValueError("X has a different shape than during fitting.")
-        return X[:, safe_mask(X, mask)]
+        return _safe_indexing(X, mask, axis=1)
 
     def inverse_transform(self, X):
         """Reverse the transformation operation.
