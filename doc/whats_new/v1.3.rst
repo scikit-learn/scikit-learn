@@ -40,7 +40,7 @@ Changelog
 ................................
 
 - |Enhancement| All selectors in :mod:`sklearn.feature_selection` will preserve
-  a DataFrame's dtype when transformed. :pr:`xxxxx` by `Thomas Fan`_.
+  a DataFrame's dtype when transformed. :pr:`25102` by `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
