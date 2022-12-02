@@ -489,21 +489,23 @@ def predict(
 
 
 def predict_proba(
-    cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] X,
-    cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] support,
-    cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] SV,
-    cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] nSV,
-    cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] sv_coef,
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] intercept,
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] probA=np.empty(0),
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] probB=np.empty(0),
-    int svm_type=0, kernel='rbf', int degree=3,
-    double gamma=0.1, double coef0=0.,
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
-        class_weight=np.empty(0),
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
-        sample_weight=np.empty(0),
-    double cache_size=100.):
+    const cnp.float64_t[:, ::1] X,
+    const cnp.int32_t[::1] support,
+    const cnp.float64_t[:, ::1] SV,
+    const cnp.int32_t[::1] nSV,
+    cnp.float64_t[:, ::1] sv_coef,
+    cnp.float64_t[::1] intercept,
+    cnp.float64_t[::1] probA=np.empty(0),
+    cnp.float64_t[::1] probB=np.empty(0),
+    int svm_type=0,
+    kernel='rbf',
+    int degree=3,
+    double gamma=0.1,
+    double coef0=0.,
+    cnp.float64_t[::1] class_weight=np.empty(0),
+    cnp.float64_t[::1] sample_weight=np.empty(0),
+    double cache_size=100.
+):
     """
     Predict probabilities
 
@@ -563,20 +565,39 @@ def predict_proba(
     dec_values : array
         Predicted values.
     """
-    cdef cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] dec_values
+    cdef cnp.float64_t[:, ::1] dec_values
     cdef svm_parameter param
     cdef svm_model *model
-    cdef cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] \
-        class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
+    cdef cnp.int32_t[::1] class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
     cdef int rv
 
-    set_predict_params(&param, svm_type, kernel, degree, gamma, coef0,
-                       cache_size, 1, <int>class_weight.shape[0],
-                       class_weight_label.data, class_weight.data)
-    model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
-                      support.data, support.shape, sv_coef.strides,
-                      sv_coef.data, intercept.data, nSV.data,
-                      probA.data, probB.data)
+    set_predict_params(
+        &param,
+        svm_type,
+        kernel,
+        degree,
+        gamma,
+        coef0,
+        cache_size,
+        1,
+        <int>class_weight.shape[0],
+        <char*> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
+        <char*> &class_weight[0] if class_weight.size > 0 else NULL,
+    )
+    model = set_model(
+        &param,
+        <int> nSV.shape[0],
+        <char*> &SV[0, 0],
+        <cnp.npy_intp*> SV.shape,
+        <char*> &support[0],
+        <cnp.npy_intp*> support.shape,
+        <cnp.npy_intp*> sv_coef.strides,
+        <char*> &sv_coef[0, 0],
+        <char*> &intercept[0],
+        <char*> &nSV[0],
+        <char*> &probA[0] if probA.size > 0 else NULL,
+        <char*> &probB[0] if probB.size > 0 else NULL,
+    )
 
     cdef cnp.npy_intp n_class = get_nr(model)
     cdef BlasFunctions blas_functions
@@ -584,13 +605,19 @@ def predict_proba(
     try:
         dec_values = np.empty((X.shape[0], n_class), dtype=np.float64)
         with nogil:
-            rv = copy_predict_proba(X.data, model, X.shape, dec_values.data, &blas_functions)
+            rv = copy_predict_proba(
+                <char*> &X[0, 0],
+                model,
+                <cnp.npy_intp*> X.shape,
+                <char*> &dec_values[0, 0],
+                &blas_functions
+            )
         if rv < 0:
             raise MemoryError("We've run out of memory")
     finally:
         free_model(model)
 
-    return dec_values
+    return dec_values.base
 
 
 def decision_function(
