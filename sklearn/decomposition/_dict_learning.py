@@ -226,8 +226,8 @@ def _sparse_encode(
     {
         "X": ["array-like"],
         "dictionary": ["array-like"],
-        "gram": ["array-like", None],
-        "cov": ["array-like", None],
+        "gram": [np.ndarray, None],
+        "cov": [np.ndarray, None],
         "algorithm": [
             StrOptions({"lasso_lars", "lasso_cd", "lars", "omp", "threshold"})
         ],
