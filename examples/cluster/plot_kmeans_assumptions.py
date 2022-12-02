@@ -166,7 +166,7 @@ plt.show()
 # Final remarks
 # -------------
 #
-# In sparse high-dimensional spaces, Euclidean distances tend to become inflated
+# In high-dimensional spaces, Euclidean distances tend to become inflated
 # (not shown in this example). Running a dimensionality reduction algorithm
 # prior to k-means clustering can alleviate this problem and speed up the
 # computations (see the example
