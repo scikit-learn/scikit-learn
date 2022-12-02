@@ -796,7 +796,7 @@ is more robust to ill-posed problems.
 
     * David J. C. MacKay, `Bayesian Interpolation <https://citeseerx.ist.psu.edu/doc_view/pid/b14c7cc3686e82ba40653c6dff178356a33e5e2c>`_, 1992.
 
-    * Michael E. Tipping, `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_, 2001.
+    * Michael E. Tipping, `Sparse Bayesian Learning and the Relevance Vector Machine <https://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_, 2001.
 
 .. _automatic_relevance_determination:
 
@@ -838,7 +838,7 @@ Ridge Regression`_, see the example below.
 
     .. [2] David Wipf and Srikantan Nagarajan: `A New View of Automatic Relevance Determination <https://papers.nips.cc/paper/3372-a-new-view-of-automatic-relevance-determination.pdf>`_
 
-    .. [3] Michael E. Tipping: `Sparse Bayesian Learning and the Relevance Vector Machine <http://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_
+    .. [3] Michael E. Tipping: `Sparse Bayesian Learning and the Relevance Vector Machine <https://www.jmlr.org/papers/volume1/tipping01a/tipping01a.pdf>`_
 
     .. [4] Tristan Fletcher: `Relevance Vector Machines Explained <https://citeseerx.ist.psu.edu/doc_view/pid/3dc9d625404fdfef6eaccc3babddefe4c176abd4>`_
 
@@ -1161,13 +1161,13 @@ in the following figure,
    mass at :math:`Y=0` for the Poisson distribution and the Tweedie (power=1.5)
    distribution, but not for the Gamma distribution which has a strictly
    positive target domain.
-   
+
 The Bernoulli distribution is a discrete probability distribution modelling a
 Bernoulli trial - an event that has only two mutually exclusive outcomes.
 The Categorical distribution is a generalization of the Bernoulli distribution
 for a categorical random variable. While a random variable in a Bernoulli
 distribution has two possible outcomes, a Categorical random variable can take
-on one of K possible categories, with the probability of each category 
+on one of K possible categories, with the probability of each category
 specified separately.
 
 The choice of the distribution depends on the problem at hand:
