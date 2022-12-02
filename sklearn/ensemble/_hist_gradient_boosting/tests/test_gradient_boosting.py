@@ -1155,7 +1155,6 @@ def test_categorical_bad_encoding_errors(Est, use_pandas, feature_name):
     else:
         X = np.array([[0, 1, 2]]).T
     y = np.arange(3)
-
     msg = f"Categorical feature {feature_name} is expected to have a cardinality <= 2"
     with pytest.raises(ValueError, match=msg):
         gb.fit(X, y)
