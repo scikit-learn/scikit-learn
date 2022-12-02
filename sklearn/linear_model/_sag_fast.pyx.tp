@@ -368,7 +368,7 @@ def sag{{name_suffix}}(
                     num_seen += 1
                     seen_init[sample_ind] = 1
 
-                # make the weight updates
+                # make the weight updates (just-in-time gradient step, and prox operator)
                 if sample_itr > 0:
                    status = lagged_update{{name_suffix}}(
                        weights=weights,
@@ -420,6 +420,11 @@ def sag{{name_suffix}}(
                             val * (gradient[class_ind] -
                                    gradient_memory[s_idx + class_ind])
                         if saga:
+                            # Note that this is not the main gradient step,
+                            # which is performed just-in-time in lagged_update.
+                            # This part is done outside the JIT update
+                            # as it does not depend on the average gradient.
+                            # The prox operator is applied after the JIT update
                             weights[f_idx + class_ind] -= \
                                 (gradient_correction * step_size
                                  * (1 - 1. / num_seen) / wscale)
@@ -467,6 +472,7 @@ def sag{{name_suffix}}(
                         (cumulative_sums_prox[sample_itr - 1] +
                              step_size * beta / wscale)
                 # If wscale gets too small, we need to reset the scale.
+                # This also resets the just-in-time update system.
                 if wscale < 1e-9:
                     if verbose:
                         with gil:
@@ -493,8 +499,10 @@ def sag{{name_suffix}}(
             if status == -1:
                 break
 
-            # we scale the weights every n_samples iterations and reset the
+            # We scale the weights every n_samples iterations and reset the
             # just-in-time update system for numerical stability.
+            # Because this reset is done before every convergence check, we are
+            # sure there is no remaining lagged update when the algorithm stops.
             status = scale_weights{{name_suffix}}(
                 weights=weights,
                 wscale=&wscale,
@@ -509,9 +517,9 @@ def sag{{name_suffix}}(
                 sum_gradient=sum_gradient,
                 n_iter=n_iter
             )
-
             if status == -1:
                 break
+
             # check if the stopping criteria is reached
             max_change = 0.0
             max_weight = 0.0
@@ -565,7 +573,7 @@ cdef int scale_weights{{name_suffix}}(
     {{c_type}}* sum_gradient,
     int n_iter
 ) nogil:
-    """Scale the weights with wscale for numerical stability.
+    """Scale the weights and reset wscale to 1.0 for numerical stability.
 
     wscale = (1 - step_size * alpha) ** (n_iter * n_samples + sample_itr)
     can become very small, so we reset it every n_samples iterations to 1.0 for
@@ -618,6 +626,17 @@ cdef int lagged_update{{name_suffix}}(
     int n_iter
 ) nogil:
     """Hard perform the JIT updates for non-zero features of present sample.
+
+    In SAG(A), the average-gradient update is collinear with the drawn sample
+    X_i. Therefore, if the data is sparse, the random sample X_i will change
+    the average gradient only on features j where X_ij != 0. In some cases,
+    the average gradient on feature j might change only after k random samples
+    with no change. In these cases, instead of applying k times the same
+    gradient step on feature j, we apply the gradient step only once, scaled by
+    k. This is called the "Just-in-time (JIT) update", and it is performed in
+    this function. This function also applies the prox operator after the
+    gradient step if necessary.
+
     The updates that awaits are kept in memory using cumulative_sums,
     cumulative_sums_prox, wscale and feature_hist. See original SAGA paper
     (Defazio et al. 2014) for details. If reset=True, we also reset wscale to
