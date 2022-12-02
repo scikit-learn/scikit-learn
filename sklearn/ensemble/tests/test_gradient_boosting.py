@@ -605,7 +605,12 @@ def test_oob_scores(Cls):
     clf.fit(X, y)
     assert clf.oob_scores_.shape[0] == 100
 
-    clf = Cls(n_estimators=100, random_state=1, subsample=0.5, n_iter_no_change=5)
+    clf = GradientBoostingEstimator(
+        n_estimators=100,
+        random_state=1,
+        subsample=0.5,
+        n_iter_no_change=5,
+    )
     clf.fit(X, y)
     assert clf.oob_scores_.shape[0] < 100
 
