@@ -42,7 +42,7 @@ cdef inline void _init_split(SplitRecord* self, SIZE_t start_pos) nogil:
     self.threshold = 0.
     self.improvement = -INFINITY
 
-cdef class Splitter:
+cdef class BaseSplitter:
     """Abstract splitter class.
 
     Splitters are called by tree builders to find the best splits on both
@@ -91,6 +91,62 @@ cdef class Splitter:
     def __setstate__(self, d):
         pass
 
+    cdef int node_reset(self, SIZE_t start, SIZE_t end,
+                        double* weighted_n_node_samples) nogil except -1:
+        """Reset splitter on node samples[start:end].
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+
+        Parameters
+        ----------
+        start : SIZE_t
+            The index of the first sample to consider
+        end : SIZE_t
+            The index of the last sample to consider
+        weighted_n_node_samples : ndarray, dtype=double pointer
+            The total weight of those samples
+        """
+
+        self.start = start
+        self.end = end
+
+        self.criterion.init(
+            None,
+            self.sample_weight,
+            self.weighted_n_samples,
+            self.samples,
+            start,
+            end
+        )
+
+        weighted_n_node_samples[0] = self.criterion.weighted_n_node_samples
+        return 0
+
+    cdef int node_split(self, double impurity, SplitRecord* split,
+                        SIZE_t* n_constant_features) nogil except -1:
+        """Find the best split on node samples[start:end].
+
+        This is a placeholder method. The majority of computation will be done
+        here.
+
+        It should return -1 upon errors.
+        """
+
+        pass
+
+    cdef void node_value(self, double* dest) nogil:
+        """Copy the value of node samples[start:end] into dest."""
+
+        self.criterion.node_value(dest)
+
+    cdef double node_impurity(self) nogil:
+        """Return the impurity of the current node."""
+
+        return self.criterion.node_impurity()
+
+cdef class Splitter(BaseSplitter):
+
     cdef int init(
         self,
         object X,
@@ -119,7 +175,6 @@ cdef class Splitter:
             are assumed to have uniform weight. This is represented
             as a Cython memoryview.
         """
-
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
         cdef SIZE_t n_samples = X.shape[0]
 
@@ -157,61 +212,8 @@ cdef class Splitter:
         self.y = y
 
         self.sample_weight = sample_weight
+
         return 0
-
-    cdef int node_reset(self, SIZE_t start, SIZE_t end,
-                        double* weighted_n_node_samples) nogil except -1:
-        """Reset splitter on node samples[start:end].
-
-        Returns -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-
-        Parameters
-        ----------
-        start : SIZE_t
-            The index of the first sample to consider
-        end : SIZE_t
-            The index of the last sample to consider
-        weighted_n_node_samples : ndarray, dtype=double pointer
-            The total weight of those samples
-        """
-
-        self.start = start
-        self.end = end
-
-        self.criterion.init(
-            self.y,
-            self.sample_weight,
-            self.weighted_n_samples,
-            self.samples,
-            start,
-            end
-        )
-
-        weighted_n_node_samples[0] = self.criterion.weighted_n_node_samples
-        return 0
-
-    cdef int node_split(self, double impurity, SplitRecord* split,
-                        SIZE_t* n_constant_features) nogil except -1:
-        """Find the best split on node samples[start:end].
-
-        This is a placeholder method. The majority of computation will be done
-        here.
-
-        It should return -1 upon errors.
-        """
-
-        pass
-
-    cdef void node_value(self, double* dest) nogil:
-        """Copy the value of node samples[start:end] into dest."""
-
-        self.criterion.node_value(dest)
-
-    cdef double node_impurity(self) nogil:
-        """Return the impurity of the current node."""
-
-        return self.criterion.node_impurity()
 
 
 cdef class BaseDenseSplitter(Splitter):
