@@ -635,6 +635,6 @@ def test_third_party_estimator():
         def fit(self, X=None, y=None):
             super().fit(X, y)
 
-    # does not raise, niether because "b" is not in the constraints dict, neither
-    # because "a" is not a parameter of the estimator.
+    # does not raise, even though "b" is not in the constraints dict and "a" is not
+    # a parameter of the estimator.
     ThirdPartyEstimator(b=0).fit()
