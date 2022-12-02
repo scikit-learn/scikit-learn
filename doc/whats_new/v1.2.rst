@@ -411,10 +411,14 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
-- |Enhancement| Extended :func:`inspection.partial_dependence` and
+- |MajorFeature| Extended :func:`inspection.partial_dependence` and
   :class:`inspection.PartialDependenceDisplay` to handle categorical features.
   :pr:`18298` by :user:`Madhura Jayaratne <madhuracj>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :class:`inspection.DecisionBoundaryDisplay` now raises error if input
+  data is not 2-dimensional.
+  :pr:`25077` by :user:`Arturo Amor <ArturoAmorQ>`.
 
 :mod:`sklearn.kernel_approximation`
 ...................................
@@ -696,6 +700,10 @@ Changelog
 - |Enhancement| :func:`utils.validation.column_or_1d` now accepts a `dtype`
   parameter to specific `y`'s dtype. :pr:`22629` by `Thomas Fan`_.
 
+- |Enhancement| :func:`utils.extmath.cartesian` now accepts arrays with different
+  `dtype` and will cast the ouptut to the most permissive `dtype`.
+  :pr:`25067` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |Fix| :func:`utils.multiclass.type_of_target` now properly handles sparse matrices.
   :pr:`14862` by :user:`Léonard Binet <leonardbinet>`.
 
@@ -704,6 +712,10 @@ Changelog
 
 - |Fix| :func:`utils.estimator_checks.check_estimator` now takes into account
   the `requires_positive_X` tag correctly. :pr:`24667` by `Thomas Fan`_.
+
+- |Fix| :func:`utils.check_array` now supports Pandas Series with `pd.NA`
+  by raising a better error message or returning a compatible `ndarray`.
+  :pr:`25080` by `Thomas Fan`_.
 
 - |API| The extra keyword parameters of :func:`utils.extmath.density` are deprecated
   and will be removed in 1.4.
