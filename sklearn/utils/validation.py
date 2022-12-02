@@ -777,6 +777,13 @@ def check_array(
         if all(isinstance(dtype_iter, np.dtype) for dtype_iter in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
 
+    elif hasattr(array, "iloc") and hasattr(array, "dtype"):
+        # array is a pandas series
+        pandas_requires_conversion = _pandas_dtype_needs_early_conversion(array.dtype)
+        if pandas_requires_conversion:
+            # Set to None, to convert to a np.dtype that works with array.dtype
+            dtype_orig = None
+
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
             # if input is object, convert to float.
@@ -1884,8 +1891,12 @@ def _get_feature_names(X):
     # mixed type of string and non-string is not supported
     if len(types) > 1 and "str" in types:
         raise TypeError(
-            "Feature names only support names that are all strings. "
-            f"Got feature names with dtypes: {types}."
+            "Feature names are only supported if all input features have string names, "
+            f"but your input has {types} as feature name / column name types. "
+            "If you want feature names to be stored and validated, you must convert "
+            "them all to strings, by using X.columns = X.columns.astype(str) for "
+            "example. Otherwise you can remove feature / column names from your input "
+            "data, or convert them all to a non-string data type."
         )
 
     # Only feature names of all strings are supported
@@ -1979,3 +1990,85 @@ def _generate_get_feature_names_out(estimator, n_features_out, input_features=No
     return np.asarray(
         [f"{estimator_name}{i}" for i in range(n_features_out)], dtype=object
     )
+
+
+def _check_monotonic_cst(estimator, monotonic_cst=None):
+    """Check the monotonic constraints and return the corresponding array.
+
+    This helper function should be used in the `fit` method of an estimator
+    that supports monotonic constraints and called after the estimator has
+    introspected input data to set the `n_features_in_` and optionally the
+    `feature_names_in_` attributes.
+
+    .. versionadded:: 1.2
+
+    Parameters
+    ----------
+    estimator : estimator instance
+
+    monotonic_cst : array-like of int, dict of str or None, default=None
+        Monotonic constraints for the features.
+
+        - If array-like, then it should contain only -1, 0 or 1. Each value
+            will be checked to be in [-1, 0, 1]. If a value is -1, then the
+            corresponding feature is required to be monotonically decreasing.
+        - If dict, then it the keys should be the feature names occurring in
+            `estimator.feature_names_in_` and the values should be -1, 0 or 1.
+        - If None, then an array of 0s will be allocated.
+
+    Returns
+    -------
+    monotonic_cst : ndarray of int
+        Monotonic constraints for each feature.
+    """
+    original_monotonic_cst = monotonic_cst
+    if monotonic_cst is None or isinstance(monotonic_cst, dict):
+        monotonic_cst = np.full(
+            shape=estimator.n_features_in_,
+            fill_value=0,
+            dtype=np.int8,
+        )
+        if isinstance(original_monotonic_cst, dict):
+            if not hasattr(estimator, "feature_names_in_"):
+                raise ValueError(
+                    f"{estimator.__class__.__name__} was not fitted on data "
+                    "with feature names. Pass monotonic_cst as an integer "
+                    "array instead."
+                )
+            unexpected_feature_names = list(
+                set(original_monotonic_cst) - set(estimator.feature_names_in_)
+            )
+            unexpected_feature_names.sort()  # deterministic error message
+            n_unexpeced = len(unexpected_feature_names)
+            if unexpected_feature_names:
+                if len(unexpected_feature_names) > 5:
+                    unexpected_feature_names = unexpected_feature_names[:5]
+                    unexpected_feature_names.append("...")
+                raise ValueError(
+                    f"monotonic_cst contains {n_unexpeced} unexpected feature "
+                    f"names: {unexpected_feature_names}."
+                )
+            for feature_idx, feature_name in enumerate(estimator.feature_names_in_):
+                if feature_name in original_monotonic_cst:
+                    cst = original_monotonic_cst[feature_name]
+                    if cst not in [-1, 0, 1]:
+                        raise ValueError(
+                            f"monotonic_cst['{feature_name}'] must be either "
+                            f"-1, 0 or 1. Got {cst!r}."
+                        )
+                    monotonic_cst[feature_idx] = cst
+    else:
+        unexpected_cst = np.setdiff1d(monotonic_cst, [-1, 0, 1])
+        if unexpected_cst.shape[0]:
+            raise ValueError(
+                "monotonic_cst must be an array-like of -1, 0 or 1. Observed "
+                f"values: {unexpected_cst.tolist()}."
+            )
+
+        monotonic_cst = np.asarray(monotonic_cst, dtype=np.int8)
+        if monotonic_cst.shape[0] != estimator.n_features_in_:
+            raise ValueError(
+                f"monotonic_cst has shape {monotonic_cst.shape} but the input data "
+                f"X has {estimator.n_features_in_} features."
+            )
+    return monotonic_cst
