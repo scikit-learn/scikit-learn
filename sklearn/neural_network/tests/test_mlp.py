@@ -879,7 +879,7 @@ def test_mlp_loading_from_joblib_partial_fit(tmp_path):
 
 
 @pytest.mark.parametrize("Estimator", [MLPClassifier, MLPRegressor])
-def test_preserve_feature_names(recwarn, Estimator):
+def test_preserve_feature_names(Estimator):
     # Non-regression test for #24846
 
     pd = pytest.importorskip("pandas")
