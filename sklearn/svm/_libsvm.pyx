@@ -521,24 +521,24 @@ def predict_proba(
 
     Parameters
     ----------
-    X : array-like, dtype=float of shape (n_samples, n_features)
+    X : memory view on array, dtype=float of shape (n_samples, n_features)
 
-    support : array of shape (n_support,)
+    support : memory view on array of shape (n_support,)
         Index of support vectors in training set.
 
-    SV : array of shape (n_support, n_features)
+    SV : memory view on array of shape (n_support, n_features)
         Support vectors.
 
-    nSV : array of shape (n_class,)
+    nSV : memory view on array of shape (n_class,)
         Number of support vectors in each class.
 
-    sv_coef : array of shape (n_class-1, n_support)
+    sv_coef : memory view on array of shape (n_class-1, n_support)
         Coefficients of support vectors in decision function.
 
-    intercept : array of shape (n_class*(n_class-1)/2,)
+    intercept : memory view on array of shape (n_class*(n_class-1)/2,)
         Intercept in decision function.
 
-    probA, probB : array of shape (n_class*(n_class-1)/2,)
+    probA, probB : memory view on array of shape (n_class*(n_class-1)/2,)
         Probability estimates.
 
     svm_type : {0, 1, 2, 3, 4}, default=0
@@ -621,21 +621,23 @@ def predict_proba(
 
 
 def decision_function(
-    cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] X,
-    cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] support,
-    cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] SV,
-    cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] nSV,
-    cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] sv_coef,
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] intercept,
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] probA=np.empty(0),
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] probB=np.empty(0),
-    int svm_type=0, kernel='rbf', int degree=3,
-    double gamma=0.1, double coef0=0.,
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
-        class_weight=np.empty(0),
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
-         sample_weight=np.empty(0),
-    double cache_size=100.):
+    const cnp.float64_t[:,::1] X,
+    const cnp.int32_t[::1] support,
+    const cnp.float64_t[:, ::1] SV,
+    const cnp.int32_t[::1] nSV,
+    const cnp.float64_t[:, ::1] sv_coef,
+    const cnp.float64_t[::1] intercept,
+    const cnp.float64_t[::1] probA=np.empty(0),
+    const cnp.float64_t[::1] probB=np.empty(0),
+    int svm_type=0,
+    kernel='rbf',
+    int degree=3,
+    double gamma=0.1,
+    double coef0=0.,
+    const cnp.float64_t[::1] class_weight=np.empty(0),
+    const cnp.float64_t[::1] sample_weight=np.empty(0),
+    double cache_size=100.
+):
     """
     Predict margin (libsvm name for this is predict_values)
 
@@ -644,24 +646,24 @@ def decision_function(
 
     Parameters
     ----------
-    X : array-like, dtype=float, size=[n_samples, n_features]
+    X : memory view on array, dtype=float, size=[n_samples, n_features]
 
-    support : array, shape=[n_support]
+    support : memory view on array, shape=[n_support]
         Index of support vectors in training set.
 
-    SV : array, shape=[n_support, n_features]
+    SV : memory view on array, shape=[n_support, n_features]
         Support vectors.
 
-    nSV : array, shape=[n_class]
+    nSV : memory view on array, shape=[n_class]
         Number of support vectors in each class.
 
-    sv_coef : array, shape=[n_class-1, n_support]
+    sv_coef : memory view on array, shape=[n_class-1, n_support]
         Coefficients of support vectors in decision function.
 
-    intercept : array, shape=[n_class*(n_class-1)/2]
+    intercept : memory view on array, shape=[n_class*(n_class-1)/2]
         Intercept in decision function.
 
-    probA, probB : array, shape=[n_class*(n_class-1)/2]
+    probA, probB : memory view on array, shape=[n_class*(n_class-1)/2]
         Probability estimates.
 
     svm_type : {0, 1, 2, 3, 4}, optional
@@ -688,24 +690,43 @@ def decision_function(
     dec_values : array
         Predicted values.
     """
-    cdef cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] dec_values
+    cdef cnp.float64_t[:, ::1] dec_values
     cdef svm_parameter param
     cdef svm_model *model
     cdef cnp.npy_intp n_class
 
-    cdef cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] \
-        class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
+    cdef cnp.int32_t[::1] class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
 
     cdef int rv
 
-    set_predict_params(&param, svm_type, kernel, degree, gamma, coef0,
-                       cache_size, 0, <int>class_weight.shape[0],
-                       class_weight_label.data, class_weight.data)
+    set_predict_params(
+        &param,
+        svm_type,
+        kernel,
+        degree,
+        gamma,
+        coef0,
+        cache_size,
+        0,
+        <int> class_weight.shape[0],
+        <char*> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
+        <char*> &class_weight[0] if class_weight.size > 0 else NULL,
+    )
 
-    model = set_model(&param, <int> nSV.shape[0], SV.data, SV.shape,
-                      support.data, support.shape, sv_coef.strides,
-                      sv_coef.data, intercept.data, nSV.data,
-                      probA.data, probB.data)
+    model = set_model(
+        &param,
+        <int> nSV.shape[0],
+        <char*> &SV[0, 0],
+        <cnp.npy_intp*> SV.shape,
+        <char*> &support[0],
+        <cnp.npy_intp*> support.shape,
+        <cnp.npy_intp*> sv_coef.strides,
+        <char*> &sv_coef[0, 0],
+        <char*> &intercept[0],
+        <char*> &nSV[0],
+        <char*> &probA[0] if probA.size > 0 else NULL,
+        <char*> &probB[0] if probB.size > 0 else NULL,
+    )
 
     if svm_type > 1:
         n_class = 1
@@ -717,13 +738,20 @@ def decision_function(
     try:
         dec_values = np.empty((X.shape[0], n_class), dtype=np.float64)
         with nogil:
-            rv = copy_predict_values(X.data, model, X.shape, dec_values.data, n_class, &blas_functions)
+            rv = copy_predict_values(
+                <char*> &X[0, 0],
+                model,
+                <cnp.npy_intp*> X.shape,
+                <char*> &dec_values[0, 0],
+                n_class,
+                &blas_functions,
+            )
         if rv < 0:
             raise MemoryError("We've run out of memory")
     finally:
         free_model(model)
 
-    return dec_values
+    return dec_values.base
 
 
 def cross_validation(
