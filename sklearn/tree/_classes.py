@@ -40,7 +40,7 @@ from ..utils.validation import check_is_fitted
 from ..utils._param_validation import Hidden, Interval, StrOptions
 
 from ._criterion import BaseCriterion
-from ._splitter import Splitter
+from ._splitter import BaseSplitter
 from ._tree import DepthFirstTreeBuilder
 from ._tree import BestFirstTreeBuilder
 from ._tree import Tree
@@ -336,7 +336,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         SPLITTERS = SPARSE_SPLITTERS if issparse(X) else DENSE_SPLITTERS
 
         splitter = self.splitter
-        if not isinstance(self.splitter, Splitter):
+        if not isinstance(self.splitter, BaseSplitter):
             splitter = SPLITTERS[self.splitter](
                 criterion,
                 self.max_features_,
