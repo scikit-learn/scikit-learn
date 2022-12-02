@@ -103,7 +103,7 @@ cdef int simultaneous_sort(
 
 # Sort n-element arrays pointed to by Xf and samples, simultaneously,
 # by the values in Xf. Algorithm: Introsort (Musser, SP&E, 1997).
-cdef inline void sort(cnp.npy_float32* Xf, cnp.npy_intp* samples, cnp.npy_intp n) nogil:
+cdef inline void sort(floating* Xf, cnp.npy_intp* samples, cnp.npy_intp n) nogil:
     if n == 0:
       return
     cdef int maxd = 2 * <int>log(n)
@@ -111,7 +111,7 @@ cdef inline void sort(cnp.npy_float32* Xf, cnp.npy_intp* samples, cnp.npy_intp n
 
 
 cdef inline void swap(
-    cnp.npy_float32* Xf,
+    floating* Xf,
     cnp.npy_intp* samples,
     cnp.npy_intp i,
     cnp.npy_intp j,
@@ -121,10 +121,10 @@ cdef inline void swap(
     samples[i], samples[j] = samples[j], samples[i]
 
 
-cdef inline cnp.npy_float32 median3(cnp.npy_float32* Xf, cnp.npy_intp n) nogil:
+cdef inline floating median3(floating* Xf, cnp.npy_intp n) nogil:
     # Median of three pivot selection, after Bentley and McIlroy (1993).
     # Engineering a sort function. SP&E. Requires 8/3 comparisons on average.
-    cdef cnp.npy_float32 a = Xf[0], b = Xf[n / 2], c = Xf[n - 1]
+    cdef floating a = Xf[0], b = Xf[n / 2], c = Xf[n - 1]
     if a < b:
         if b < c:
             return b
@@ -143,8 +143,8 @@ cdef inline cnp.npy_float32 median3(cnp.npy_float32* Xf, cnp.npy_intp n) nogil:
 
 # Introsort with median of 3 pivot selection and 3-way partition function
 # (robust to repeated elements, e.g. lots of zero features).
-cdef void introsort(cnp.npy_float32* Xf, cnp.npy_intp *samples, cnp.npy_intp n, int maxd) nogil:
-    cdef cnp.npy_float32 pivot
+cdef void introsort(floating* Xf, cnp.npy_intp *samples, cnp.npy_intp n, int maxd) nogil:
+    cdef floating pivot
     cdef cnp.npy_intp i, l, r
 
     while n > 1:
@@ -176,7 +176,7 @@ cdef void introsort(cnp.npy_float32* Xf, cnp.npy_intp *samples, cnp.npy_intp n, 
 
 
 cdef inline void sift_down(
-    cnp.npy_float32* Xf,
+    floating* Xf,
     cnp.npy_intp* samples,
     cnp.npy_intp start,
     cnp.npy_intp end,
@@ -202,7 +202,7 @@ cdef inline void sift_down(
             root = maxind
 
 
-cdef void heapsort(cnp.npy_float32* Xf, cnp.npy_intp* samples, cnp.npy_intp n) nogil:
+cdef void heapsort(floating* Xf, cnp.npy_intp* samples, cnp.npy_intp n) nogil:
     cdef cnp.npy_intp start, end
 
     # heapify
