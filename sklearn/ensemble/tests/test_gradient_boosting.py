@@ -610,10 +610,14 @@ def test_oob_scores(Cls):
     assert clf.oob_scores_.shape[0] < 100
 
 
-@pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
-def test_oob_scores_raise(Cls):
+@pytest.mark.parametrize("GradientBoostingEstimator", GRADIENT_BOOSTING_ESTIMATORS)
+def test_oob_scores_raise(GradientBoostingEstimator):
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    clf = Cls(n_estimators=100, random_state=1, subsample=1.0)
+    clf = GradientBoostingEstimator(
+        n_estimators=100,
+        random_state=1,
+        subsample=1.0,
+    )
     clf.fit(X, y)
     with pytest.raises(AttributeError):
         clf.oob_scores_
