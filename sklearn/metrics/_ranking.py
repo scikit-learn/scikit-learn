@@ -242,7 +242,7 @@ def average_precision_score(
         )
 
     elif y_type == "multiclass":
-        y_true = label_binarize(y_true, classes=np.unique(y_true))
+        y_true = label_binarize(y_true, classes=present_labels)
         if pos_label not in present_labels:
             raise ValueError(
                 f"pos_label={pos_label} is not a valid label. It should be "
