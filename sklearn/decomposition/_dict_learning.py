@@ -236,7 +236,7 @@ def _sparse_encode(
         "copy_cov": ["boolean"],
         "init": ["array-like", None],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
-        "n_jobs": [Interval(Integral, -1, None, closed="left"), None],
+        "n_jobs": [Integral, None],
         "check_input": ["boolean"],
         "verbose": ["verbose"],
         "positive": ["boolean"],
