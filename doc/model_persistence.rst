@@ -99,7 +99,7 @@ For reproducibility and quality control needs, when different architectures
 and environments should be taken into account, exporting the model in
 `Open Neural Network
 Exchange <https://onnx.ai/>`_ format or `Predictive Model Markup Language
-(PMML) <http://dmg.org/pmml/v4-4-1/GeneralStructure.html>`_ format
+(PMML) <https://dmg.org/pmml/v4-4-1/GeneralStructure.html>`_ format
 might be a better approach than using `pickle` alone.
 These are helpful where you may want to use your model for prediction in a
 different environment from where the model was trained.
