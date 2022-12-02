@@ -755,27 +755,35 @@ def decision_function(
 
 
 def cross_validation(
-    cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] X,
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] Y,
-    int n_fold, svm_type=0, kernel='rbf', int degree=3,
-    double gamma=0.1, double coef0=0., double tol=1e-3,
-    double C=1., double nu=0.5, double epsilon=0.1,
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
-        class_weight=np.empty(0),
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
-        sample_weight=np.empty(0),
-    int shrinking=0, int probability=0, double cache_size=100.,
+    const cnp.float64_t[:, ::1] X,
+    const cnp.float64_t[::1] Y,
+    int n_fold,
+    svm_type=0,
+    kernel='rbf',
+    int degree=3,
+    double gamma=0.1,
+    double coef0=0.,
+    double tol=1e-3,
+    double C=1.,
+    double nu=0.5,
+    double epsilon=0.1,
+    cnp.float64_t[::1] class_weight=np.empty(0),
+    cnp.float64_t[::1] sample_weight=np.empty(0),
+    int shrinking=0,
+    int probability=0,
+    double cache_size=100.,
     int max_iter=-1,
-    int random_seed=0):
+    int random_seed=0
+):
     """
     Binding of the cross-validation routine (low-level routine)
 
     Parameters
     ----------
 
-    X : array-like, dtype=float of shape (n_samples, n_features)
+    X : memory view on array, dtype=float of shape (n_samples, n_features)
 
-    Y : array, dtype=float of shape (n_samples,)
+    Y : memory view on array, dtype=float of shape (n_samples,)
         target vector
 
     n_fold : int32
@@ -813,13 +821,13 @@ def cross_validation(
     epsilon : double, default=0.1
         Epsilon parameter in the epsilon-insensitive loss function.
 
-    class_weight : array, dtype=float64, shape (n_classes,), \
+    class_weight : memory view on array, dtype=float64, shape (n_classes,), \
             default=np.empty(0)
         Set the parameter C of class i to class_weight[i]*C for
         SVC. If not given, all classes are supposed to have
         weight one.
 
-    sample_weight : array, dtype=float64, shape (n_samples,), \
+    sample_weight : memory view on array, dtype=float64, shape (n_samples,), \
             default=np.empty(0)
         Weights assigned to each sample.
 
@@ -855,10 +863,11 @@ def cross_validation(
     if len(sample_weight) == 0:
         sample_weight = np.ones(X.shape[0], dtype=np.float64)
     else:
-        assert sample_weight.shape[0] == X.shape[0], \
-               "sample_weight and X have incompatible shapes: " + \
-               "sample_weight has %s samples while X has %s" % \
-               (sample_weight.shape[0], X.shape[0])
+        assert (
+            sample_weight.shape[0] == X.shape[0],
+            "sample_weight and X have incompatible shapes: " +
+            "sample_weight has %s samples while X has %s" % (sample_weight.shape[0], X.shape[0])
+        )
 
     if X.shape[0] < n_fold:
         raise ValueError("Number of samples is less than number of folds")
@@ -866,34 +875,60 @@ def cross_validation(
     # set problem
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
     set_problem(
-        &problem, X.data, Y.data, sample_weight.data, X.shape, kernel_index)
+        &problem,
+        <char*> &X[0, 0],
+        <char*> &Y[0],
+        <char*> &sample_weight[0] if sample_weight.size > 0 else NULL,
+        <cnp.npy_intp*> X.shape,
+        kernel_index
+    )
     if problem.x == NULL:
         raise MemoryError("Seems we've run out of memory")
-    cdef cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] \
-        class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
+    cdef cnp.int32_t[::1] class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
 
     # set parameters
     set_parameter(
-        &param, svm_type, kernel_index, degree, gamma, coef0, nu, cache_size,
-        C, tol, tol, shrinking, probability, <int>
-        class_weight.shape[0], class_weight_label.data,
-        class_weight.data, max_iter, random_seed)
+        &param,
+        svm_type,
+        kernel_index,
+        degree,
+        gamma,
+        coef0,
+        nu,
+        cache_size,
+        C,
+        tol,
+        tol,
+        shrinking,
+        probability,
+        <int> class_weight.shape[0],
+        <char*> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
+        <char*> &class_weight[0] if class_weight.size > 0 else NULL,
+        max_iter,
+        random_seed
+    )
 
     error_msg = svm_check_parameter(&problem, &param);
     if error_msg:
         raise ValueError(error_msg)
 
-    cdef cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] target
+    cdef cnp.float64_t[::1] target
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
     try:
         target = np.empty((X.shape[0]), dtype=np.float64)
         with nogil:
-            svm_cross_validation(&problem, &param, n_fold, <double *> target.data, &blas_functions)
+            svm_cross_validation(
+                &problem,
+                &param,
+                n_fold,
+                <double *> &target[0],
+                &blas_functions
+            )
     finally:
         free(problem.x)
 
-    return target
+    return target.base
 
 
 def set_verbosity_wrap(int verbosity):
