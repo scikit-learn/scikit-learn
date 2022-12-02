@@ -83,13 +83,22 @@ from sklearn.model_selection import validation_curve, ShuffleSplit
 Cs = np.logspace(-2.3, -1.3, 10)
 train_sizes = np.linspace(0.3, 0.7, 3)
 labels = [f"fraction: {train_size}" for train_size in train_sizes]
+shuffle_params = {
+    "test_size": 0.3,
+    "n_splits": 100,
+    "random_state": 1,
+}
+val_curve_params = {
+    "X": X,
+    "y": y,
+    "param_name": "C",
+    "param_range": Cs,
+}
 
 results = {"C": Cs}
 for label, train_size in zip(labels, train_sizes):
-    cv = ShuffleSplit(train_size=train_size, test_size=0.3, n_splits=50, random_state=1)
-    train_scores, test_scores = validation_curve(
-        model_l1, X, y, param_name="C", param_range=Cs, cv=cv
-    )
+    cv = ShuffleSplit(train_size=train_size, **shuffle_params)
+    train_scores, test_scores = validation_curve(model_l1, cv=cv, **val_curve_params)
     results[label] = test_scores.mean(axis=1)
 results = pd.DataFrame(results)
 
@@ -134,18 +143,8 @@ Cs = np.logspace(-8, 4, 11)
 labels = [f"fraction: {train_size}" for train_size in train_sizes]
 results = {"C": Cs}
 for label, train_size in zip(labels, train_sizes):
-    cv = ShuffleSplit(
-        train_size=train_size, test_size=0.3, n_splits=100, random_state=1
-    )
-    train_scores, test_scores = validation_curve(
-        model_l2,
-        X,
-        y,
-        param_name="C",
-        param_range=Cs,
-        cv=cv,
-        n_jobs=2,
-    )
+    cv = ShuffleSplit(train_size=train_size, **shuffle_params)
+    train_scores, test_scores = validation_curve(model_l2, cv=cv, **val_curve_params)
     results[label] = test_scores.mean(axis=1)
 results = pd.DataFrame(results)
 
