@@ -235,7 +235,7 @@ def _sparse_encode(
         "alpha": [Interval(Real, 0, None, closed="left"), None],
         "copy_cov": ["boolean"],
         "init": ["array-like", None],
-        "max_iter": [Interval(Integral, 1, None, closed="left")],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
         "n_jobs": [Integral, None],
         "check_input": ["boolean"],
         "verbose": ["verbose"],
