@@ -551,7 +551,7 @@ message, the following actions are taken.
     [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy...
     [icc-build]            Build & test with the Intel C compiler (ICC)
     [pypy]                 Build & test with PyPy
-    [azure parallel]   Run Azure CI in parallel
+    [azure parallel]       Run Azure CI jobs in parallel
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
     [doc build]            Docs built including example gallery plots (very long)

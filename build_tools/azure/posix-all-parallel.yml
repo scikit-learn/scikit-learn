@@ -8,8 +8,10 @@ parameters:
   commitMessage: ''
 
 jobs:
-# When [azure parallel] is *not* in the commit message, this build is enabled.
-# Later builds should check if this job succeeded or skipped by using:
+
+# When [azure parallel] is *not* in the commit message, sequential runs 
+# are performed via this jobs' template parametrisation.
+# Later runs should check if the first run succeeded or skipped by using:
 # in(dependencies[{{ parameters.name }}]['result'], 'Succeeded', 'Skipped')
 - template: posix.yml
   parameters:
@@ -23,9 +25,10 @@ jobs:
         not(contains(${{ parameters.commitMessage }}, '[azure parallel]'))
       )
 
-# This configures the "parallel" build. The build on top is skipped so
-# later builds can run in parallel with this "parallel" configuration.
-# When [azure parallel] is in the commit message, this build is enabled.
+# When [azure parallel] is in the commit message, parallel runs are
+# performed via this jobs' template parametrisation.
+# The job on top is skipped so later jobs can be run in parallel
+# with this jobs' template parametrisation.
 - template: posix.yml
   parameters:
     name: ${{ parameters.name }}_Parallel

@@ -167,6 +167,10 @@ jobs:
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '42'  # default global random seed
 
 # Check compilation with Ubuntu bionic 18.04 LTS and scipy from conda-forge
+# When the CI is run sequentially `Ubuntu_Bionic` runs first and
+# the others jobs are run only if `Ubuntu_Bionic` succeeds or is skipped.
+# `Ubuntu_Bionic` is not run when the CI is run in parallel
+# (i.e. when "[azure parallel]" is in the commit message).
 - template: build_tools/azure/posix-all-parallel.yml
   parameters:
     name: Ubuntu_Bionic
