@@ -7,7 +7,7 @@
 #
 # To enable this template, all dependent jobs should check if this job succeeded
 # or skipped by using:
-# in(dependencies[{{ parameters.name }}]['result'], 'Succeeded', 'Skipped')
+# dependsOn: in(dependencies[{{ parameters.name }}]['result'], 'Succeeded', 'Skipped')
 
 parameters:
   name: ''
