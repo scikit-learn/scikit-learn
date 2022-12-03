@@ -14,7 +14,6 @@ parameters:
   vmImage: ''
   matrix: []
   dependsOn: []
-  dependsOnParallel: []
   condition: ''
   commitMessage: ''
 
@@ -43,7 +42,7 @@ jobs:
     name: ${{ parameters.name }}_Parallel
     vmImage: ${{ parameters.vmImage }}
     matrix: ${{ parameters.matrix }}
-    dependsOn: ${{ parameters.dependsOnParallel }}
+    dependsOn: ${{ parameters.dependsOn }}
     condition: |
       and(
         ${{ parameters.condition }},
