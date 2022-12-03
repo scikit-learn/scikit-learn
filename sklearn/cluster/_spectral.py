@@ -92,7 +92,7 @@ def discretize(
 
     .. [1] `Multiclass spectral clustering, 2003
            Stella X. Yu, Jianbo Shi
-           <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
+           <https://people.eecs.berkeley.edu/~jordan/courses/281B-spring04/readings/yu-shi.pdf>`_
 
     Notes
     -----
@@ -323,7 +323,7 @@ def spectral_clustering(
 
     .. [3] `Multiclass spectral clustering, 2003
            Stella X. Yu, Jianbo Shi
-           <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
+           <https://people.eecs.berkeley.edu/~jordan/courses/281B-spring04/readings/yu-shi.pdf>`_
 
     .. [4] :doi:`Toward the Optimal Preconditioned Eigensolver:
            Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001
@@ -589,7 +589,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     .. [3] `Multiclass spectral clustering, 2003
            Stella X. Yu, Jianbo Shi
-           <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
+           <https://people.eecs.berkeley.edu/~jordan/courses/281B-spring04/readings/yu-shi.pdf>`_
 
     .. [4] :doi:`Toward the Optimal Preconditioned Eigensolver:
            Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001
@@ -617,13 +617,13 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         random_state=0)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_clusters": [Interval(Integral, 1, None, closed="left")],
         "eigen_solver": [StrOptions({"arpack", "lobpcg", "amg"}), None],
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
         "n_init": [Interval(Integral, 1, None, closed="left")],
-        "gamma": [Interval(Real, 0, None, closed="neither")],
+        "gamma": [Interval(Real, 0, None, closed="left")],
         "affinity": [
             callable,
             StrOptions(
@@ -637,7 +637,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
             StrOptions({"auto"}),
         ],
         "assign_labels": [StrOptions({"kmeans", "discretize", "cluster_qr"})],
-        "degree": [Interval(Integral, 1, None, closed="left")],
+        "degree": [Interval(Integral, 0, None, closed="left")],
         "coef0": [Interval(Real, None, None, closed="neither")],
         "kernel_params": [dict, None],
         "n_jobs": [Integral, None],

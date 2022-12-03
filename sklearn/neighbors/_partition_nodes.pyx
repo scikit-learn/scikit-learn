@@ -1,5 +1,3 @@
-# distutils : language = c++
-
 # BinaryTrees rely on partial sorts to partition their nodes during their
 # initialisation.
 #

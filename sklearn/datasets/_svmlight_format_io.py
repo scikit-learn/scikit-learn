@@ -53,7 +53,7 @@ def load_svmlight_file(
     offset=0,
     length=-1,
 ):
-    """Load datasets in the svmlight / libsvm format into sparse CSR matrix
+    """Load datasets in the svmlight / libsvm format into sparse CSR matrix.
 
     This format is a text-based format, with one sample per line. It does
     not store zero valued features hence is suitable for sparse dataset.
@@ -85,11 +85,14 @@ def load_svmlight_file(
 
     Parameters
     ----------
-    f : str, file-like or int
+    f : str, path-like, file-like or int
         (Path to) a file to load. If a path ends in ".gz" or ".bz2", it will
         be uncompressed on the fly. If an integer is passed, it is assumed to
         be a file descriptor. A file-like or file descriptor will not be closed
         by this function. A file-like object must be opened in binary mode.
+
+        .. versionchanged:: 1.2
+           Path-like objects are now accepted.
 
     n_features : int, default=None
         The number of features to use. If None, it will be inferred. This
@@ -106,7 +109,7 @@ def load_svmlight_file(
 
     multilabel : bool, default=False
         Samples may have several labels each (see
-        https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
+        https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html).
 
     zero_based : bool or "auto", default="auto"
         Whether column indices in f are zero-based (True) or one-based
@@ -135,12 +138,14 @@ def load_svmlight_file(
     Returns
     -------
     X : scipy.sparse matrix of shape (n_samples, n_features)
+        The data matrix.
 
-    y : ndarray of shape (n_samples,), or, in the multilabel a list of
-        tuples of length n_samples.
+    y : ndarray of shape (n_samples,), or a list of tuples of length n_samples
+        The target. It is a list of tuples when ``multilabel=True``, else a
+        ndarray.
 
     query_id : array of shape (n_samples,)
-       query_id for each sample. Only returned when query_id is set to
+       The query_id for each sample. Only returned when query_id is set to
        True.
 
     See Also
@@ -180,8 +185,10 @@ def load_svmlight_file(
 def _gen_open(f):
     if isinstance(f, int):  # file descriptor
         return io.open(f, "rb", closefd=False)
+    elif isinstance(f, os.PathLike):
+        f = os.fspath(f)
     elif not isinstance(f, str):
-        raise TypeError("expected {str, int, file-like}, got %s" % type(f))
+        raise TypeError("expected {str, int, path-like, file-like}, got %s" % type(f))
 
     _, ext = os.path.splitext(f)
     if ext == ".gz":
@@ -230,7 +237,7 @@ def load_svmlight_files(
     offset=0,
     length=-1,
 ):
-    """Load dataset from multiple files in SVMlight format
+    """Load dataset from multiple files in SVMlight format.
 
     This function is equivalent to mapping load_svmlight_file over a list of
     files, except that the results are concatenated into a single, flat list
@@ -247,12 +254,15 @@ def load_svmlight_files(
 
     Parameters
     ----------
-    files : array-like, dtype=str, file-like or int
+    files : array-like, dtype=str, path-like, file-like or int
         (Paths of) files to load. If a path ends in ".gz" or ".bz2", it will
         be uncompressed on the fly. If an integer is passed, it is assumed to
         be a file descriptor. File-likes and file descriptors will not be
         closed by this function. File-like objects must be opened in binary
         mode.
+
+        .. versionchanged:: 1.2
+           Path-like objects are now accepted.
 
     n_features : int, default=None
         The number of features to use. If None, it will be inferred from the
@@ -268,7 +278,7 @@ def load_svmlight_files(
 
     multilabel : bool, default=False
         Samples may have several labels each (see
-        https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
+        https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html).
 
     zero_based : bool or "auto", default="auto"
         Whether column indices in f are zero-based (True) or one-based
@@ -296,12 +306,15 @@ def load_svmlight_files(
 
     Returns
     -------
-    [X1, y1, ..., Xn, yn]
-    where each (Xi, yi) pair is the result from load_svmlight_file(files[i]).
+    [X1, y1, ..., Xn, yn] or [X1, y1, q1, ..., Xn, yn, qn]: list of arrays
+        Each (Xi, yi) pair is the result from load_svmlight_file(files[i]).
+        If query_id is set to True, this will return instead (Xi, yi, qi)
+        triplets.
 
-    If query_id is set to True, this will return instead [X1, y1, q1,
-    ..., Xn, yn, qn] where (Xi, yi, qi) is the result from
-    load_svmlight_file(files[i])
+    See Also
+    --------
+    load_svmlight_file: Similar function for loading a single file in this
+        format.
 
     Notes
     -----
@@ -309,10 +322,6 @@ def load_svmlight_files(
     matrix X_test, it is essential that X_train and X_test have the same
     number of features (X_train.shape[1] == X_test.shape[1]). This may not
     be the case if you load the files individually with load_svmlight_file.
-
-    See Also
-    --------
-    load_svmlight_file
     """
     if (offset != 0 or length > 0) and zero_based == "auto":
         # disable heuristic search to avoid getting inconsistent results on

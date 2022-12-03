@@ -163,11 +163,6 @@ def test_affinities():
     labels = sp.fit(X).labels_
     assert (X.shape[0],) == labels.shape
 
-    # raise error on unknown affinity
-    sp = SpectralClustering(n_clusters=2, affinity="<unknown>")
-    with pytest.raises(ValueError):
-        sp.fit(X)
-
 
 def test_cluster_qr():
     # cluster_qr by itself should not be used for clustering generic data

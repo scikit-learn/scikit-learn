@@ -532,7 +532,7 @@ below.
 .. topic:: References:
 
  * `"Multiclass spectral clustering"
-   <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
+   <https://people.eecs.berkeley.edu/~jordan/courses/281B-spring04/readings/yu-shi.pdf>`_
    Stella X. Yu, Jianbo Shi, 2003
 
  * :doi:`"Simple, direct, and efficient multi-way spectral clustering"<10.1093/imaiai/iay008>`
@@ -563,11 +563,11 @@ graph, and SpectralClustering is initialized with `affinity='precomputed'`::
    Jianbo Shi, Jitendra Malik, 2000
 
  * `"A Random Walks View of Spectral Segmentation"
-   <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.33.1501>`_
+   <https://citeseerx.ist.psu.edu/doc_view/pid/84a86a69315e994cfd1e0c7debb86d62d7bd1f44>`_
    Marina Meila, Jianbo Shi, 2001
 
  * `"On Spectral Clustering: Analysis and an algorithm"
-   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.19.8100>`_
+   <https://citeseerx.ist.psu.edu/doc_view/pid/796c5d6336fc52aa84db575fb821c78918b65f58>`_
    Andrew Y. Ng, Michael I. Jordan, Yair Weiss, 2001
 
  * :arxiv:`"Preconditioned Spectral Clustering for Stochastic
@@ -779,9 +779,9 @@ divisive hierarchical clustering. Instead of creating all centroids at once, cen
 are picked progressively based on a previous clustering: a cluster is split into two
 new clusters repeatedly until the target number of clusters is reached.
 
-:class:`BisectingKMeans` is more efficient than :class:`KMeans` when the number the
-number of clusters is large since it only works on a subset of the data at each
-bisection while :class:`KMeans` always works on the entire dataset.
+:class:`BisectingKMeans` is more efficient than :class:`KMeans` when the number of
+clusters is large since it only works on a subset of the data at each bisection
+while :class:`KMeans` always works on the entire dataset.
 
 Although :class:`BisectingKMeans` can't benefit from the advantages of the `"k-means++"`
 initialization by design, it will still produce comparable results than
@@ -880,7 +880,7 @@ indicating core samples found by the algorithm. Smaller circles are non-core
 samples that are still part of a cluster. Moreover, the outliers are indicated
 by black points below.
 
-.. |dbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_dbscan_001.png
+.. |dbscan_results| image:: ../auto_examples/cluster/images/sphx_glr_plot_dbscan_002.png
         :target: ../auto_examples/cluster/plot_dbscan.html
         :scale: 50
 
@@ -936,13 +936,14 @@ by black points below.
 
 .. topic:: References:
 
- * "A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases
-   with Noise"
+ * `"A Density-Based Algorithm for Discovering Clusters in Large Spatial Databases
+   with Noise" <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_
    Ester, M., H. P. Kriegel, J. Sander, and X. Xu,
    In Proceedings of the 2nd International Conference on Knowledge Discovery
    and Data Mining, Portland, OR, AAAI Press, pp. 226–231. 1996
 
- * "DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
+ * :doi:`"DBSCAN revisited, revisited: why and how you should (still) use DBSCAN."
+   <10.1145/3068335>`
    Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
    In ACM Transactions on Database Systems (TODS), 42(3), 19.
 
@@ -1478,7 +1479,7 @@ more broadly common names.
  .. [VEB2010] Vinh, Epps, and Bailey, (2010). "Information Theoretic Measures for
    Clusterings Comparison: Variants, Properties, Normalization and
    Correction for Chance". JMLR
-   <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
+   <https://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
 
  .. [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
    community
@@ -2109,6 +2110,5 @@ diagonal entries::
 
 .. topic:: References
 
- * L. Hubert and P. Arabie, Comparing Partitions, Journal of
-   Classification 1985
-   <https://link.springer.com/article/10.1007%2FBF01908075>_
+ * :doi:`"Comparing Partitions" <10.1007/BF01908075>`
+   L. Hubert and P. Arabie, Journal of Classification 1985

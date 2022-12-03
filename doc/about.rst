@@ -32,7 +32,7 @@ and maintenance:
 
 Please do not email the authors directly to ask for assistance or report issues.
 Instead, please see `What's the best way to ask questions about scikit-learn
-<http://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-get-help-on-scikit-learn-usage>`_
+<https://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-get-help-on-scikit-learn-usage>`_
 in the FAQ.
 
 .. seealso::
@@ -83,7 +83,7 @@ If you use scikit-learn in a scientific publication, we would appreciate
 citations to the following paper:
 
   `Scikit-learn: Machine Learning in Python
-  <http://jmlr.csail.mit.edu/papers/v12/pedregosa11a.html>`_, Pedregosa
+  <https://jmlr.csail.mit.edu/papers/v12/pedregosa11a.html>`_, Pedregosa
   *et al.*, JMLR 12, pp. 2825-2830, 2011.
 
   Bibtex entry::
@@ -538,7 +538,7 @@ Hug to work full-time on scikit-learn in 2020.
 ......................
 
 The following students were sponsored by `Google
-<https://developers.google.com/open-source/>`_ to work on scikit-learn through
+<https://opensource.google/>`_ to work on scikit-learn through
 the `Google Summer of Code <https://en.wikipedia.org/wiki/Google_Summer_of_Code>`_
 program.
 

@@ -29,6 +29,8 @@ from .. import get_config as _get_config
 from ..exceptions import PositiveSpectrumWarning
 from ..exceptions import NotFittedError
 from ..exceptions import DataConversionWarning
+from ..utils._array_api import get_namespace
+from ..utils._array_api import _asarray_with_order
 from ._isfinite import cy_isfinite, FiniteStatus
 
 FLOAT_DTYPES = (np.float64, np.float32, np.float16)
@@ -96,59 +98,67 @@ def _assert_all_finite(
 ):
     """Like assert_all_finite, but only for ndarray."""
 
+    xp, _ = get_namespace(X)
+
     if _get_config()["assume_finite"]:
         return
-    X = np.asanyarray(X)
+
+    X = xp.asarray(X)
+
+    # for object dtype data, we only check for NaNs (GH-13254)
+    if X.dtype == np.dtype("object") and not allow_nan:
+        if _object_dtype_isnan(X).any():
+            raise ValueError("Input contains NaN")
+
+    # We need only consider float arrays, hence can early return for all else.
+    if X.dtype.kind not in "fc":
+        return
+
     # First try an O(n) time, O(1) space solution for the common case that
     # everything is finite; fall back to O(n) space `np.isinf/isnan` or custom
     # Cython implementation to prevent false positives and provide a detailed
     # error message.
-    is_float = X.dtype.kind in "fc"
-    if is_float:
-        with np.errstate(over="ignore"):
-            first_pass_isfinite = np.isfinite(np.sum(X))
-        if first_pass_isfinite:
-            return
-        # Cython implementation doesn't support FP16 or complex numbers
-        use_cython = X.data.contiguous and X.dtype.type in {np.float32, np.float64}
-        if use_cython:
-            out = cy_isfinite(X.reshape(-1), allow_nan=allow_nan)
-            has_nan_error = False if allow_nan else out == FiniteStatus.has_nan
-            has_inf = out == FiniteStatus.has_infinite
+    with np.errstate(over="ignore"):
+        first_pass_isfinite = xp.isfinite(xp.sum(X))
+    if first_pass_isfinite:
+        return
+    # Cython implementation doesn't support FP16 or complex numbers
+    use_cython = (
+        xp is np and X.data.contiguous and X.dtype.type in {np.float32, np.float64}
+    )
+    if use_cython:
+        out = cy_isfinite(X.reshape(-1), allow_nan=allow_nan)
+        has_nan_error = False if allow_nan else out == FiniteStatus.has_nan
+        has_inf = out == FiniteStatus.has_infinite
+    else:
+        has_inf = np.isinf(X).any()
+        has_nan_error = False if allow_nan else xp.isnan(X).any()
+    if has_inf or has_nan_error:
+        if has_nan_error:
+            type_err = "NaN"
         else:
-            has_inf = np.isinf(X).any()
-            has_nan_error = False if allow_nan else np.isnan(X).any()
-        if has_inf or has_nan_error:
-            if has_nan_error:
-                type_err = "NaN"
-            else:
-                msg_dtype = msg_dtype if msg_dtype is not None else X.dtype
-                type_err = f"infinity or a value too large for {msg_dtype!r}"
-            padded_input_name = input_name + " " if input_name else ""
-            msg_err = f"Input {padded_input_name}contains {type_err}."
-            if estimator_name and input_name == "X" and has_nan_error:
-                # Improve the error message on how to handle missing values in
-                # scikit-learn.
-                msg_err += (
-                    f"\n{estimator_name} does not accept missing values"
-                    " encoded as NaN natively. For supervised learning, you might want"
-                    " to consider sklearn.ensemble.HistGradientBoostingClassifier and"
-                    " Regressor which accept missing values encoded as NaNs natively."
-                    " Alternatively, it is possible to preprocess the data, for"
-                    " instance by using an imputer transformer in a pipeline or drop"
-                    " samples with missing values. See"
-                    " https://scikit-learn.org/stable/modules/impute.html"
-                    " You can find a list of all estimators that handle NaN values"
-                    " at the following page:"
-                    " https://scikit-learn.org/stable/modules/impute.html"
-                    "#estimators-that-handle-nan-values"
-                )
-            raise ValueError(msg_err)
-
-    # for object dtype data, we only check for NaNs (GH-13254)
-    elif X.dtype == np.dtype("object") and not allow_nan:
-        if _object_dtype_isnan(X).any():
-            raise ValueError("Input contains NaN")
+            msg_dtype = msg_dtype if msg_dtype is not None else X.dtype
+            type_err = f"infinity or a value too large for {msg_dtype!r}"
+        padded_input_name = input_name + " " if input_name else ""
+        msg_err = f"Input {padded_input_name}contains {type_err}."
+        if estimator_name and input_name == "X" and has_nan_error:
+            # Improve the error message on how to handle missing values in
+            # scikit-learn.
+            msg_err += (
+                f"\n{estimator_name} does not accept missing values"
+                " encoded as NaN natively. For supervised learning, you might want"
+                " to consider sklearn.ensemble.HistGradientBoostingClassifier and"
+                " Regressor which accept missing values encoded as NaNs natively."
+                " Alternatively, it is possible to preprocess the data, for"
+                " instance by using an imputer transformer in a pipeline or drop"
+                " samples with missing values. See"
+                " https://scikit-learn.org/stable/modules/impute.html"
+                " You can find a list of all estimators that handle NaN values"
+                " at the following page:"
+                " https://scikit-learn.org/stable/modules/impute.html"
+                "#estimators-that-handle-nan-values"
+            )
+        raise ValueError(msg_err)
 
 
 def assert_all_finite(
@@ -724,13 +734,13 @@ def check_array(
         The converted and validated array.
     """
     if isinstance(array, np.matrix):
-        warnings.warn(
-            "np.matrix usage is deprecated in 1.0 and will raise a TypeError "
-            "in 1.2. Please convert to a numpy array with np.asarray. For "
-            "more information see: "
-            "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html",  # noqa
-            FutureWarning,
+        raise TypeError(
+            "np.matrix is not supported. Please convert to a numpy array with "
+            "np.asarray. For more information see: "
+            "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html"
         )
+
+    xp, is_array_api = get_namespace(array)
 
     # store reference to original array to check if copy is needed when
     # function returns
@@ -767,10 +777,17 @@ def check_array(
         if all(isinstance(dtype_iter, np.dtype) for dtype_iter in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
 
+    elif hasattr(array, "iloc") and hasattr(array, "dtype"):
+        # array is a pandas series
+        pandas_requires_conversion = _pandas_dtype_needs_early_conversion(array.dtype)
+        if pandas_requires_conversion:
+            # Set to None, to convert to a np.dtype that works with array.dtype
+            dtype_orig = None
+
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
             # if input is object, convert to float.
-            dtype = np.float64
+            dtype = xp.float64
         else:
             dtype = None
 
@@ -804,18 +821,22 @@ def check_array(
 
     # When all dataframe columns are sparse, convert to a sparse array
     if hasattr(array, "sparse") and array.ndim > 1:
-        # DataFrame.sparse only supports `to_coo`
-        array = array.sparse.to_coo()
-        if array.dtype == np.dtype("object"):
-            unique_dtypes = set([dt.subtype.name for dt in array_orig.dtypes])
-            if len(unique_dtypes) > 1:
-                raise ValueError(
-                    "Pandas DataFrame with mixed sparse extension arrays "
-                    "generated a sparse matrix with object dtype which "
-                    "can not be converted to a scipy sparse matrix."
-                    "Sparse extension arrays should all have the same "
-                    "numeric type."
-                )
+        with suppress(ImportError):
+            from pandas.api.types import is_sparse
+
+            if array.dtypes.apply(is_sparse).all():
+                # DataFrame.sparse only supports `to_coo`
+                array = array.sparse.to_coo()
+                if array.dtype == np.dtype("object"):
+                    unique_dtypes = set([dt.subtype.name for dt in array_orig.dtypes])
+                    if len(unique_dtypes) > 1:
+                        raise ValueError(
+                            "Pandas DataFrame with mixed sparse extension arrays "
+                            "generated a sparse matrix with object dtype which "
+                            "can not be converted to a scipy sparse matrix."
+                            "Sparse extension arrays should all have the same "
+                            "numeric type."
+                        )
 
     if sp.issparse(array):
         _ensure_no_complex_data(array)
@@ -842,7 +863,7 @@ def check_array(
                     # Conversion float -> int should not contain NaN or
                     # inf (numpy#14412). We cannot use casting='safe' because
                     # then conversion float -> int would be disallowed.
-                    array = np.asarray(array, order=order)
+                    array = _asarray_with_order(array, order=order, xp=xp)
                     if array.dtype.kind == "f":
                         _assert_all_finite(
                             array,
@@ -851,9 +872,9 @@ def check_array(
                             estimator_name=estimator_name,
                             input_name=input_name,
                         )
-                    array = array.astype(dtype, casting="unsafe", copy=False)
+                    array = xp.astype(array, dtype, copy=False)
                 else:
-                    array = np.asarray(array, order=order, dtype=dtype)
+                    array = _asarray_with_order(array, order=order, dtype=dtype, xp=xp)
             except ComplexWarning as complex_warning:
                 raise ValueError(
                     "Complex data not supported\n{}\n".format(array)
@@ -888,7 +909,6 @@ def check_array(
                 "dtype='numeric' is not compatible with arrays of bytes/strings."
                 "Convert your data to numeric values explicitly instead."
             )
-
         if not allow_nd and array.ndim >= 3:
             raise ValueError(
                 "Found array with dim %d. %s expected <= 2."
@@ -921,8 +941,18 @@ def check_array(
                 % (n_features, array.shape, ensure_min_features, context)
             )
 
-    if copy and np.may_share_memory(array, array_orig):
-        array = np.array(array, dtype=dtype, order=order)
+    if copy:
+        if xp.__name__ in {"numpy", "numpy.array_api"}:
+            # only make a copy if `array` and `array_orig` may share memory`
+            if np.may_share_memory(array, array_orig):
+                array = _asarray_with_order(
+                    array, dtype=dtype, order=order, copy=True, xp=xp
+                )
+        else:
+            # always make a copy for non-numpy arrays
+            array = _asarray_with_order(
+                array, dtype=dtype, order=order, copy=True, xp=xp
+            )
 
     return array
 
@@ -1117,13 +1147,18 @@ def _check_y(y, multi_output=False, y_numeric=False, estimator=None):
     return y
 
 
-def column_or_1d(y, *, warn=False):
+def column_or_1d(y, *, dtype=None, warn=False):
     """Ravel column or 1d numpy array, else raises an error.
 
     Parameters
     ----------
     y : array-like
        Input data.
+
+    dtype : data-type, default=None
+        Data type for `y`.
+
+        .. versionadded:: 1.2
 
     warn : bool, default=False
        To control display of warnings.
@@ -1138,10 +1173,11 @@ def column_or_1d(y, *, warn=False):
     ValueError
         If `y` is not a 1D array or a 2D array with a single row or column.
     """
-    y = np.asarray(y)
-    shape = np.shape(y)
+    xp, _ = get_namespace(y)
+    y = xp.asarray(y, dtype=dtype)
+    shape = y.shape
     if len(shape) == 1:
-        return np.ravel(y)
+        return _asarray_with_order(xp.reshape(y, -1), order="C", xp=xp)
     if len(shape) == 2 and shape[1] == 1:
         if warn:
             warnings.warn(
@@ -1151,7 +1187,7 @@ def column_or_1d(y, *, warn=False):
                 DataConversionWarning,
                 stacklevel=2,
             )
-        return np.ravel(y)
+        return _asarray_with_order(xp.reshape(y, -1), order="C", xp=xp)
 
     raise ValueError(
         "y should be a 1d array, got an array of shape {} instead.".format(shape)
@@ -1287,7 +1323,7 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     Parameters
     ----------
     estimator : estimator instance
-        estimator instance for which the check is performed.
+        Estimator instance for which the check is performed.
 
     attributes : str, list or tuple of str, default=None
         Attribute name(s) given as string or a list/tuple of strings
@@ -1310,12 +1346,11 @@ def check_is_fitted(estimator, attributes=None, *, msg=None, all_or_any=all):
     all_or_any : callable, {all, any}, default=all
         Specify whether all or any of the given attributes must exist.
 
-    Returns
-    -------
-    None
-
     Raises
     ------
+    TypeError
+        If the estimator is a class or not an estimator instance
+
     NotFittedError
         If the attributes are not found.
     """
@@ -1357,6 +1392,7 @@ def check_non_negative(X, whom):
     whom : str
         Who passed X to this function.
     """
+    xp, _ = get_namespace(X)
     # avoid X.min() on sparse matrix since it also sorts the indices
     if sp.issparse(X):
         if X.format in ["lil", "dok"]:
@@ -1366,7 +1402,7 @@ def check_non_negative(X, whom):
         else:
             X_min = X.data.min()
     else:
-        X_min = X.min()
+        X_min = xp.min(X)
 
     if X_min < 0:
         raise ValueError("Negative values in data passed to %s" % whom)
@@ -1852,16 +1888,16 @@ def _get_feature_names(X):
 
     types = sorted(t.__qualname__ for t in set(type(v) for v in feature_names))
 
-    # Warn when types are mixed and string is one of the types
+    # mixed type of string and non-string is not supported
     if len(types) > 1 and "str" in types:
-        # TODO: Convert to an error in 1.2
-        warnings.warn(
-            "Feature names only support names that are all strings. "
-            f"Got feature names with dtypes: {types}. An error will be raised "
-            "in 1.2.",
-            FutureWarning,
+        raise TypeError(
+            "Feature names are only supported if all input features have string names, "
+            f"but your input has {types} as feature name / column name types. "
+            "If you want feature names to be stored and validated, you must convert "
+            "them all to strings, by using X.columns = X.columns.astype(str) for "
+            "example. Otherwise you can remove feature / column names from your input "
+            "data, or convert them all to a non-string data type."
         )
-        return
 
     # Only feature names of all strings are supported
     if len(types) == 1 and types[0] == "str":
@@ -1954,3 +1990,85 @@ def _generate_get_feature_names_out(estimator, n_features_out, input_features=No
     return np.asarray(
         [f"{estimator_name}{i}" for i in range(n_features_out)], dtype=object
     )
+
+
+def _check_monotonic_cst(estimator, monotonic_cst=None):
+    """Check the monotonic constraints and return the corresponding array.
+
+    This helper function should be used in the `fit` method of an estimator
+    that supports monotonic constraints and called after the estimator has
+    introspected input data to set the `n_features_in_` and optionally the
+    `feature_names_in_` attributes.
+
+    .. versionadded:: 1.2
+
+    Parameters
+    ----------
+    estimator : estimator instance
+
+    monotonic_cst : array-like of int, dict of str or None, default=None
+        Monotonic constraints for the features.
+
+        - If array-like, then it should contain only -1, 0 or 1. Each value
+            will be checked to be in [-1, 0, 1]. If a value is -1, then the
+            corresponding feature is required to be monotonically decreasing.
+        - If dict, then it the keys should be the feature names occurring in
+            `estimator.feature_names_in_` and the values should be -1, 0 or 1.
+        - If None, then an array of 0s will be allocated.
+
+    Returns
+    -------
+    monotonic_cst : ndarray of int
+        Monotonic constraints for each feature.
+    """
+    original_monotonic_cst = monotonic_cst
+    if monotonic_cst is None or isinstance(monotonic_cst, dict):
+        monotonic_cst = np.full(
+            shape=estimator.n_features_in_,
+            fill_value=0,
+            dtype=np.int8,
+        )
+        if isinstance(original_monotonic_cst, dict):
+            if not hasattr(estimator, "feature_names_in_"):
+                raise ValueError(
+                    f"{estimator.__class__.__name__} was not fitted on data "
+                    "with feature names. Pass monotonic_cst as an integer "
+                    "array instead."
+                )
+            unexpected_feature_names = list(
+                set(original_monotonic_cst) - set(estimator.feature_names_in_)
+            )
+            unexpected_feature_names.sort()  # deterministic error message
+            n_unexpeced = len(unexpected_feature_names)
+            if unexpected_feature_names:
+                if len(unexpected_feature_names) > 5:
+                    unexpected_feature_names = unexpected_feature_names[:5]
+                    unexpected_feature_names.append("...")
+                raise ValueError(
+                    f"monotonic_cst contains {n_unexpeced} unexpected feature "
+                    f"names: {unexpected_feature_names}."
+                )
+            for feature_idx, feature_name in enumerate(estimator.feature_names_in_):
+                if feature_name in original_monotonic_cst:
+                    cst = original_monotonic_cst[feature_name]
+                    if cst not in [-1, 0, 1]:
+                        raise ValueError(
+                            f"monotonic_cst['{feature_name}'] must be either "
+                            f"-1, 0 or 1. Got {cst!r}."
+                        )
+                    monotonic_cst[feature_idx] = cst
+    else:
+        unexpected_cst = np.setdiff1d(monotonic_cst, [-1, 0, 1])
+        if unexpected_cst.shape[0]:
+            raise ValueError(
+                "monotonic_cst must be an array-like of -1, 0 or 1. Observed "
+                f"values: {unexpected_cst.tolist()}."
+            )
+
+        monotonic_cst = np.asarray(monotonic_cst, dtype=np.int8)
+        if monotonic_cst.shape[0] != estimator.n_features_in_:
+            raise ValueError(
+                f"monotonic_cst has shape {monotonic_cst.shape} but the input data "
+                f"X has {estimator.n_features_in_} features."
+            )
+    return monotonic_cst
