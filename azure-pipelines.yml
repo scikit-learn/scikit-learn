@@ -146,10 +146,11 @@ jobs:
         SKLEARN_TESTS_GLOBAL_RANDOM_SEED: '42'  # default global random seed
 
 # Check compilation with Ubuntu 22.04 LTS (Jammy Jellyfish) and scipy from conda-forge
-# When the CI is run sequentially `Ubuntu_Jammy_Jellyfish` runs first and
-# the others jobs are run only if `Ubuntu_Jammy_Jellyfish` succeeds or is skipped.
-# `Ubuntu_Jammy_Jellyfish` is not run when the CI is run in parallel
-# (i.e. when "[azure parallel]" is in the commit message).
+# By default the CI is sequential, where `Ubuntu_Jammy_Jellyfish` runs first and
+# the others jobs are run only if `Ubuntu_Jammy_Jellyfish` succeeds.
+# When "[azure parallel]" is in the commit message, `Ubuntu_Jammy_Jellyfish` will
+# run in parallel with the rest of the jobs. On Azure, the job's name will be
+# `Ubuntu_Jammy_Jellyfish_Parallel`.
 - template: build_tools/azure/posix-all-parallel.yml
   parameters:
     name: Ubuntu_Jammy_Jellyfish

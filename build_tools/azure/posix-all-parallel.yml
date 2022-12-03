@@ -1,3 +1,14 @@
+# This configuration allows enables a job based on `posix.yml` to have two modes:
+#
+# 1. When `[azure parallel]` *is not* in the commit message, then this job will
+#    run first. If this job succeeds, then all dependent jobs can run.
+# 2. When `[azure parallel]` *is* in the commit message, then this job will
+#    run with name `{{ parameters.name }}_Parallel` along with all other jobs.
+#
+# To enable this template, all dependent jobs should check if this job succeeded
+# or skipped by using:
+# in(dependencies[{{ parameters.name }}]['result'], 'Succeeded', 'Skipped')
+
 parameters:
   name: ''
   vmImage: ''
@@ -9,10 +20,8 @@ parameters:
 
 jobs:
 
-# When [azure parallel] is *not* in the commit message, sequential runs
-# are performed via this jobs' template parametrization.
-# Later runs should check if the first run succeeded or skipped by using:
-# in(dependencies[{{ parameters.name }}]['result'], 'Succeeded', 'Skipped')
+# When [azure parallel] *is not* in the commit message, this job will run
+# first.
 - template: posix.yml
   parameters:
     name: ${{ parameters.name }}
@@ -25,10 +34,10 @@ jobs:
         not(contains(${{ parameters.commitMessage }}, '[azure parallel]'))
       )
 
-# When [azure parallel] is in the commit message, parallel runs are
-# performed via this jobs' template parametrization.
-# The job on top is skipped so later jobs can be run in parallel
-# with this jobs' template parametrization.
+# When [azure parallel] *is* in the commit message, this job and dependent
+# jobs will run in parallel. Implementation-wise, the job above is skipped and
+# this job, named ${{ parameters.name }}_Parallel, will run in parallel with
+# the other jobs.
 - template: posix.yml
   parameters:
     name: ${{ parameters.name }}_Parallel
