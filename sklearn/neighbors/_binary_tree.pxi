@@ -512,24 +512,17 @@ cdef class NeighborsHeap:
     n_nbrs : int
         the size of each heap.
     """
-    cdef DTYPE_t[:, ::1] distances_arr
-    cdef ITYPE_t[:, ::1] indices_arr
-
     cdef DTYPE_t[:, ::1] distances
     cdef ITYPE_t[:, ::1] indices
 
     def __cinit__(self):
-        self.distances_arr = np.zeros((1, 1), dtype=DTYPE, order='C')
-        self.indices_arr = np.zeros((1, 1), dtype=ITYPE, order='C')
-        self.distances = self.distances_arr
-        self.indices = self.indices_arr
+        self.distances = np.zeros((1, 1), dtype=DTYPE, order='C')
+        self.indices = np.zeros((1, 1), dtype=ITYPE, order='C')
 
     def __init__(self, n_pts, n_nbrs):
-        self.distances_arr = np.full((n_pts, n_nbrs), np.inf, dtype=DTYPE,
+        self.distances = np.full((n_pts, n_nbrs), np.inf, dtype=DTYPE,
                                      order='C')
-        self.indices_arr = np.zeros((n_pts, n_nbrs), dtype=ITYPE, order='C')
-        self.distances = self.distances_arr
-        self.indices = self.indices_arr
+        self.indices = np.zeros((n_pts, n_nbrs), dtype=ITYPE, order='C')
 
     def get_arrays(self, sort=True):
         """Get the arrays of distances and indices within the heap.
@@ -539,7 +532,7 @@ cdef class NeighborsHeap:
         """
         if sort:
             self._sort()
-        return self.distances_arr.base, self.indices_arr.base
+        return self.distances.base, self.indices.base
 
     cdef inline DTYPE_t largest(self, ITYPE_t row) nogil except -1:
         """Return the largest distance in the given row"""
@@ -551,21 +544,23 @@ cdef class NeighborsHeap:
     cdef int _push(self, ITYPE_t row, DTYPE_t val,
                    ITYPE_t i_val) nogil except -1:
         """push (val, i_val) into the given row"""
-        cdef:
-            ITYPE_t size = self.distances.shape[1]
-            DTYPE_t* dist_arr = &self.distances[row, 0]
-            ITYPE_t* ind_arr = &self.indices[row, 0]
-        return heap_push(dist_arr, ind_arr, size, val, i_val)
+        return heap_push(
+            &self.distances[row, 0],
+            &self.indices[row, 0],
+            self.distances.shape[1],
+            val,
+            i_val,
+        )
 
     cdef int _sort(self) except -1:
         """simultaneously sort the distances and indices"""
-        cdef DTYPE_t[:, ::1] distances = self.distances
-        cdef ITYPE_t[:, ::1] indices = self.indices
         cdef ITYPE_t row
-        for row in range(distances.shape[0]):
-            _simultaneous_sort(&distances[row, 0],
-                               &indices[row, 0],
-                               distances.shape[1])
+        for row in range(self.distances.shape[0]):
+            _simultaneous_sort(
+                &self.distances[row, 0],
+                &self.indices[row, 0],
+                self.distances.shape[1],
+            )
         return 0
 
 #------------------------------------------------------------
