@@ -540,18 +540,6 @@ def test_sparse_encode_positivity(algo, positive):
         assert (code < 0).any()
 
 
-@pytest.mark.parametrize("algo", ["lars", "omp"])
-def test_sparse_encode_unavailable_positivity(algo):
-    n_components = 12
-    rng = np.random.RandomState(0)
-    V = rng.randn(n_components, n_features)  # random init
-    V /= np.sum(V**2, axis=1)[:, np.newaxis]
-    err_msg = "Positive constraint not supported for '{}' coding method."
-    err_msg = err_msg.format(algo)
-    with pytest.raises(ValueError, match=err_msg):
-        sparse_encode(X, V, algorithm=algo, positive=True)
-
-
 def test_sparse_encode_input():
     n_components = 100
     rng = np.random.RandomState(0)
@@ -580,14 +568,6 @@ def test_sparse_encode_error_default_sparsity():
     D = rng.randn(2, 64)
     code = ignore_warnings(sparse_encode)(X, D, algorithm="omp", n_nonzero_coefs=None)
     assert code.shape == (100, 2)
-
-
-def test_unknown_method():
-    n_components = 12
-    rng = np.random.RandomState(0)
-    V = rng.randn(n_components, n_features)  # random init
-    with pytest.raises(ValueError):
-        sparse_encode(X, V, algorithm="<unknown>")
 
 
 def test_sparse_coder_estimator():

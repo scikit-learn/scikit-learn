@@ -11,9 +11,9 @@ from sklearn.utils._param_validation import make_constraint
 PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.cluster.estimate_bandwidth",
     "sklearn.cluster.kmeans_plusplus",
+    "sklearn.decomposition.sparse_encode",
     "sklearn.feature_extraction.grid_to_graph",
     "sklearn.feature_extraction.img_to_graph",
-    "sklearn.decomposition.sparse_encode",
     "sklearn.metrics.accuracy_score",
     "sklearn.metrics.auc",
     "sklearn.metrics.mean_absolute_error",
