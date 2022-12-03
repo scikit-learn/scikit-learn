@@ -9,8 +9,8 @@ parameters:
 
 jobs:
 
-# When [azure parallel] is *not* in the commit message, sequential runs 
-# are performed via this jobs' template parametrisation.
+# When [azure parallel] is *not* in the commit message, sequential runs
+# are performed via this jobs' template parametrization.
 # Later runs should check if the first run succeeded or skipped by using:
 # in(dependencies[{{ parameters.name }}]['result'], 'Succeeded', 'Skipped')
 - template: posix.yml
@@ -26,9 +26,9 @@ jobs:
       )
 
 # When [azure parallel] is in the commit message, parallel runs are
-# performed via this jobs' template parametrisation.
+# performed via this jobs' template parametrization.
 # The job on top is skipped so later jobs can be run in parallel
-# with this jobs' template parametrisation.
+# with this jobs' template parametrization.
 - template: posix.yml
   parameters:
     name: ${{ parameters.name }}_Parallel
