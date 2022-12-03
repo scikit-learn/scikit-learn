@@ -639,18 +639,15 @@ cdef class NodeHeap:
 
         heap[i].val < min(heap[2 * i + 1].val, heap[2 * i + 2].val)
     """
-    cdef NodeHeapData_t[:] data_arr
     cdef NodeHeapData_t[:] data
     cdef ITYPE_t n
 
     def __cinit__(self):
-        self.data_arr = np.zeros(1, dtype=NodeHeapData, order='C')
-        self.data = self.data_arr
+        self.data = np.zeros(1, dtype=NodeHeapData, order='C')
 
     def __init__(self, size_guess=100):
         size_guess = max(size_guess, 1)  # need space for at least one item
-        self.data_arr = np.zeros(size_guess, dtype=NodeHeapData, order='C')
-        self.data = self.data_arr
+        self.data = np.zeros(size_guess, dtype=NodeHeapData, order='C')
         self.n = size_guess
         self.clear()
 
@@ -661,11 +658,10 @@ cdef class NodeHeap:
             NodeHeapData_t *new_data_ptr
             ITYPE_t i
             ITYPE_t size = self.data.shape[0]
-            NodeHeapData_t[:] new_data_arr = np.zeros(
+            NodeHeapData_t[:] new_data = np.zeros(
                 new_size,
                 dtype=NodeHeapData,
             )
-            NodeHeapData_t[:] new_data = new_data_arr
 
         if size > 0 and new_size > 0:
             data_ptr = &self.data[0]
@@ -677,7 +673,6 @@ cdef class NodeHeap:
             self.n = new_size
 
         self.data = new_data
-        self.data_arr = new_data_arr
         return 0
 
     cdef int push(self, NodeHeapData_t data) except -1:
