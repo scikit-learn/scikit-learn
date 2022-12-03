@@ -763,19 +763,10 @@ VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
 # Binary Tree class
 cdef class BinaryTree:
 
-    cdef const DTYPE_t[:, ::1] data_arr
-    cdef const DTYPE_t[::1] sample_weight_arr
-    cdef const ITYPE_t[::1] idx_array_arr
-    cdef const NodeData_t[::1] node_data_arr
-    cdef const DTYPE_t[:, :, ::1] node_bounds_arr
-
     cdef readonly const DTYPE_t[:, ::1] data
     cdef readonly const DTYPE_t[::1] sample_weight
     cdef public DTYPE_t sum_weight
 
-    # Even if those memoryviews attributes are const-qualified,
-    # they get modified via their numpy counterpart.
-    # For instance, `node_data` gets modified via `node_data_arr`.
     cdef public const ITYPE_t[::1] idx_array
     cdef public const NodeData_t[::1] node_data
     cdef public const DTYPE_t[:, :, ::1] node_bounds
@@ -798,17 +789,11 @@ cdef class BinaryTree:
     # Use cinit to initialize all arrays to empty: this will prevent memory
     # errors and seg-faults in rare cases where __init__ is not called
     def __cinit__(self):
-        self.data_arr = np.empty((1, 1), dtype=DTYPE, order='C')
-        self.sample_weight_arr = np.empty(1, dtype=DTYPE, order='C')
-        self.idx_array_arr = np.empty(1, dtype=ITYPE, order='C')
-        self.node_data_arr = np.empty(1, dtype=NodeData, order='C')
-        self.node_bounds_arr = np.empty((1, 1, 1), dtype=DTYPE)
-
-        self.data = self.data_arr
-        self.sample_weight = self.sample_weight_arr
-        self.idx_array = self.idx_array_arr
-        self.node_data = self.node_data_arr
-        self.node_bounds = self.node_bounds_arr
+        self.data = np.empty((1, 1), dtype=DTYPE, order='C')
+        self.sample_weight = np.empty(1, dtype=DTYPE, order='C')
+        self.idx_array = np.empty(1, dtype=ITYPE, order='C')
+        self.node_data = np.empty(1, dtype=NodeData, order='C')
+        self.node_bounds = np.empty((1, 1, 1), dtype=DTYPE)
 
         self.leaf_size = 0
         self.n_levels = 0
@@ -824,12 +809,12 @@ cdef class BinaryTree:
     def __init__(self, data,
                  leaf_size=40, metric='minkowski', sample_weight=None, **kwargs):
         # validate data
-        self.data_arr = check_array(data, dtype=DTYPE, order='C')
-        if self.data_arr.size == 0:
+        self.data = check_array(data, dtype=DTYPE, order='C')
+        if self.data.size == 0:
             raise ValueError("X is an empty array")
 
-        n_samples = self.data_arr.shape[0]
-        n_features = self.data_arr.shape[1]
+        n_samples = self.data.shape[0]
+        n_features = self.data.shape[1]
 
         if leaf_size < 1:
             raise ValueError("leaf_size must be greater than or equal to 1")
@@ -844,7 +829,7 @@ cdef class BinaryTree:
             raise ValueError('metric {metric} is not valid for '
                              '{BinaryTree}'.format(metric=metric,
                                                    **DOC_DICT))
-        self.dist_metric._validate_data(self.data_arr)
+        self.dist_metric._validate_data(self.data)
 
         # determine number of levels in the tree, and from this
         # the number of nodes in the tree.  This results in leaf nodes
@@ -854,16 +839,15 @@ cdef class BinaryTree:
         self.n_nodes = (2 ** self.n_levels) - 1
 
         # allocate arrays for storage
-        self.idx_array_arr = np.arange(n_samples, dtype=ITYPE)
-        self.node_data_arr = np.zeros(self.n_nodes, dtype=NodeData)
+        self.idx_array = np.arange(n_samples, dtype=ITYPE)
+        self.node_data = np.zeros(self.n_nodes, dtype=NodeData)
 
         self._update_sample_weight(n_samples, sample_weight)
-        self._update_memviews()
 
         # Allocate tree-specific data
         allocate_data(self, self.n_nodes, n_features)
         self._recursive_build(
-            node_data=self.node_data_arr.base,
+            node_data=self.node_data.base,
             i_node=0,
             idx_start=0,
             idx_end=n_samples
@@ -871,20 +855,12 @@ cdef class BinaryTree:
 
     def _update_sample_weight(self, n_samples, sample_weight):
         if sample_weight is not None:
-            self.sample_weight_arr = np.asarray(
+            self.sample_weight = np.asarray(
                 sample_weight, dtype=DTYPE, order='C')
-            self.sample_weight = self.sample_weight_arr
             self.sum_weight = np.sum(self.sample_weight)
         else:
             self.sample_weight = None
-            self.sample_weight_arr = np.empty(1, dtype=DTYPE, order='C')
             self.sum_weight = <DTYPE_t> n_samples
-
-    def _update_memviews(self):
-        self.data = self.data_arr
-        self.idx_array = self.idx_array_arr
-        self.node_data = self.node_data_arr
-        self.node_bounds = self.node_bounds_arr
 
 
     def __reduce__(self):
@@ -899,15 +875,15 @@ cdef class BinaryTree:
         """
         if self.sample_weight is not None:
             # pass the numpy array
-            sample_weight_arr = self.sample_weight_arr.base
+            sample_weight = self.sample_weight.base
         else:
             # pass None to avoid confusion with the empty place holder
             # of size 1 from __cinit__
-            sample_weight_arr = None
-        return (self.data_arr.base,
-                self.idx_array_arr.base,
-                self.node_data_arr.base,
-                self.node_bounds_arr.base,
+            sample_weight = None
+        return (self.data.base,
+                self.idx_array.base,
+                self.node_data.base,
+                self.node_bounds.base,
                 int(self.leaf_size),
                 int(self.n_levels),
                 int(self.n_nodes),
@@ -916,16 +892,16 @@ cdef class BinaryTree:
                 int(self.n_splits),
                 int(self.n_calls),
                 self.dist_metric,
-                sample_weight_arr)
+                sample_weight)
 
     def __setstate__(self, state):
         """
         set state for pickling
         """
-        self.data_arr = state[0]
-        self.idx_array_arr = state[1]
-        self.node_data_arr = state[2]
-        self.node_bounds_arr = state[3]
+        self.data = state[0]
+        self.idx_array = state[1]
+        self.node_data = state[2]
+        self.node_bounds = state[3]
         self.leaf_size = state[4]
         self.n_levels = state[5]
         self.n_nodes = state[6]
@@ -934,13 +910,12 @@ cdef class BinaryTree:
         self.n_splits = state[9]
         self.n_calls = state[10]
         self.dist_metric = state[11]
-        sample_weight_arr = state[12]
+        sample_weight = state[12]
 
         self.euclidean = (self.dist_metric.__class__.__name__
                           == 'EuclideanDistance')
-        n_samples = self.data_arr.shape[0]
-        self._update_sample_weight(n_samples, sample_weight_arr)
-        self._update_memviews()
+        n_samples = self.data.shape[0]
+        self._update_sample_weight(n_samples, sample_weight)
 
     def get_tree_stats(self):
         """
@@ -988,10 +963,10 @@ cdef class BinaryTree:
             Arrays for storing tree data, index, node data and node bounds.
         """
         return (
-            self.data_arr.base,
-            self.idx_array_arr.base,
-            self.node_data_arr.base,
-            self.node_bounds_arr.base,
+            self.data.base,
+            self.idx_array.base,
+            self.node_data.base,
+            self.node_bounds.base,
         )
 
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
