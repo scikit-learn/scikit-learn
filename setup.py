@@ -102,7 +102,6 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.tree._splitter",
     "sklearn.tree._utils",
     "sklearn.tree._oblique_splitter",
-    "sklearn.tree._oblique_tree",
     "sklearn.utils._cython_blas",
     "sklearn.utils._fast_dict",
     "sklearn.utils._openmp_helpers",
@@ -282,10 +281,10 @@ extension_config = {
         {"sources": ["_cdnmf_fast.pyx"], "include_np": True},
     ],
     "ensemble": [
-        {"sources": ["_gradient_boosting.pyx"], "include_np": True},
+        {"sources": ["_gradient_boosting.pyx"], "language": "c++", "include_np": True},
     ],
     "ensemble._hist_gradient_boosting": [
-        {"sources": ["_gradient_boosting.pyx"], "include_np": True},
+        {"sources": ["_gradient_boosting.pyx"], "language": "c++", "include_np": True},
         {"sources": ["histogram.pyx"], "include_np": True},
         {"sources": ["splitting.pyx"], "include_np": True},
         {"sources": ["_binning.pyx"], "include_np": True},
@@ -355,7 +354,7 @@ extension_config = {
         {"sources": ["_ball_tree.pyx"], "include_np": True},
         {"sources": ["_kd_tree.pyx"], "include_np": True},
         {"sources": ["_partition_nodes.pyx"], "language": "c++", "include_np": True},
-        {"sources": ["_quad_tree.pyx"], "include_np": True},
+        {"sources": ["_quad_tree.pyx"], "language": "c++", "include_np": True},
     ],
     "svm": [
         {
@@ -418,9 +417,9 @@ extension_config = {
     ],
     "tree": [
         {"sources": ["_tree.pyx"], "language": "c++", "include_np": True},
-        {"sources": ["_splitter.pyx"], "include_np": True},
-        {"sources": ["_criterion.pyx"], "include_np": True},
-        {"sources": ["_utils.pyx"], "include_np": True},
+        {"sources": ["_splitter.pyx"], "language": "c++",  "include_np": True},
+        {"sources": ["_criterion.pyx"], "language": "c++", "include_np": True},
+        {"sources": ["_utils.pyx"], "language": "c++", "include_np": True},
         {"sources": ["_oblique_tree.pyx"], "language": "c++", "include_np": True},
         {"sources": ["_oblique_splitter.pyx"], "language": "c++", "include_np": True},
     ],

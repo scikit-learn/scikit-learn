@@ -86,8 +86,6 @@ cdef class ObliqueSplitter(Splitter):
         self.n_samples = 0
         self.n_features = 0
 
-        self.sample_weight = NULL
-
         # Max features = output dimensionality of projection vectors
         self.max_features = max_features
         self.min_samples_leaf = min_samples_leaf
@@ -111,7 +109,7 @@ cdef class ObliqueSplitter(Splitter):
         pass
 
     cdef int init(self, object X, const DOUBLE_t[:, ::1] y,
-                  DOUBLE_t* sample_weight) except -1:
+                  const DOUBLE_t[:] sample_weight) except -1:
         Splitter.init(self, X, y, sample_weight)
 
         # create a helper array for allowing efficient Fisher-Yates
@@ -141,7 +139,7 @@ cdef class ObliqueSplitter(Splitter):
         self.criterion.init(self.y,
                             self.sample_weight,
                             self.weighted_n_samples,
-                            &self.samples[0],
+                            self.samples,
                             start,
                             end)
 
@@ -183,7 +181,7 @@ cdef class BaseDenseObliqueSplitter(ObliqueSplitter):
     cdef int init(self,
                   object X,
                   const DOUBLE_t[:, ::1] y,
-                  DOUBLE_t* sample_weight) except -1:
+                  const DOUBLE_t[:] sample_weight) except -1:
         """Initialize the splitter
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
