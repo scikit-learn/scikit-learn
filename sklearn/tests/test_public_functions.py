@@ -17,6 +17,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.auc",
     "sklearn.metrics.mean_absolute_error",
     "sklearn.metrics.zero_one_loss",
+    "sklearn.metrics.roc_curve",
     "sklearn.svm.l1_min_c",
 ]
 

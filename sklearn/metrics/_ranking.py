@@ -21,6 +21,7 @@ the lower the better.
 
 import warnings
 from functools import partial
+from numbers import Integral
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
@@ -903,6 +904,15 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
     return np.hstack((precision[sl], 1)), np.hstack((recall[sl], 0)), thresholds[sl]
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_score": ["array-like"],
+        "pos_label": [Integral, str, None],
+        "sample_weight": ["array-like", None],
+        "drop_intermediate": ["boolean"]
+    }
+)
 def roc_curve(
     y_true, y_score, *, pos_label=None, sample_weight=None, drop_intermediate=True
 ):
