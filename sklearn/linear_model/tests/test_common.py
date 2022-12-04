@@ -98,7 +98,7 @@ def test_balance_property(model, with_sample_weight, global_random_seed):
     ):
         pytest.skip("Estimator does not support sample_weight.")
 
-    rel = 1e-4  # test precision
+    rel = 2e-4  # test precision
     if isinstance(model, SGDRegressor):
         rel = 1e-1
     elif hasattr(model, "solver") and model.solver == "saga":

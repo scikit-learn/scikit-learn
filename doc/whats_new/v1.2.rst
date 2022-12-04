@@ -7,7 +7,10 @@
 Version 1.2.0
 =============
 
-**In Development**
+**December 2022**
+
+For a short description of the main highlights of the release, please refer to
+:ref:`sphx_glr_auto_examples_release_highlights_plot_release_highlights_1_2_0.py`.
 
 .. include:: changelog_legend.inc
 
@@ -291,7 +294,7 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
-- |Feature| :class:`ensemble.HistGradientBoostingClassifier` and
+- |MajorFeature| :class:`ensemble.HistGradientBoostingClassifier` and
   :class:`ensemble.HistGradientBoostingRegressor` now support
   interaction constraints via the argument `interaction_cst` of their
   constructors.
@@ -408,10 +411,14 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
-- |Enhancement| Extended :func:`inspection.partial_dependence` and
+- |MajorFeature| Extended :func:`inspection.partial_dependence` and
   :class:`inspection.PartialDependenceDisplay` to handle categorical features.
   :pr:`18298` by :user:`Madhura Jayaratne <madhuracj>` and
   :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Fix| :class:`inspection.DecisionBoundaryDisplay` now raises error if input
+  data is not 2-dimensional.
+  :pr:`25077` by :user:`Arturo Amor <ArturoAmorQ>`.
 
 :mod:`sklearn.kernel_approximation`
 ...................................
@@ -693,6 +700,10 @@ Changelog
 - |Enhancement| :func:`utils.validation.column_or_1d` now accepts a `dtype`
   parameter to specific `y`'s dtype. :pr:`22629` by `Thomas Fan`_.
 
+- |Enhancement| :func:`utils.extmath.cartesian` now accepts arrays with different
+  `dtype` and will cast the ouptut to the most permissive `dtype`.
+  :pr:`25067` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |Fix| :func:`utils.multiclass.type_of_target` now properly handles sparse matrices.
   :pr:`14862` by :user:`Léonard Binet <leonardbinet>`.
 
@@ -701,6 +712,10 @@ Changelog
 
 - |Fix| :func:`utils.estimator_checks.check_estimator` now takes into account
   the `requires_positive_X` tag correctly. :pr:`24667` by `Thomas Fan`_.
+
+- |Fix| :func:`utils.check_array` now supports Pandas Series with `pd.NA`
+  by raising a better error message or returning a compatible `ndarray`.
+  :pr:`25080` by `Thomas Fan`_.
 
 - |API| The extra keyword parameters of :func:`utils.extmath.density` are deprecated
   and will be removed in 1.4.
@@ -712,4 +727,52 @@ Code and Documentation Contributors
 Thanks to everyone who has contributed to the maintenance and improvement of
 the project since version 1.1, including:
 
-TODO: update at the time of the release.
+2357juan, 3lLobo, Adam J. Stewart, Adam Li, Aditya Anulekh, Adrin Jalali, Aiko,
+Akshita Prasanth, Alessandro Miola, Alex, Alexandr, Alexandre Perez-Lebel, aman
+kumar, Amit Bera, Andreas Grivas, Andreas Mueller, angela-maennel, Aniket
+Shirsat, Antony Lee, anupam, Apostolos Tsetoglou, Aravindh R, Arturo Amor,
+Ashwin Mathur, avm19, b0rxington, Badr MOUFAD, Bardiya Ak, Bartłomiej Gońda,
+BdeGraaff, Benjamin Carter, berkecanrizai, Bernd Fritzke, Bhoomika, Biswaroop
+Mitra, Brandon TH Chen, Brett Cannon, Bsh, carlo, Carlos Ramos Carreño, ceh,
+chalulu, Charles Zablit, Chiara Marmo, Christian Lorentzen, Christian Ritter,
+christianwaldmann, Christine P. Chai, Claudio Salvatore Arcidiacono, Clément
+Verrier, Daniela Fernandes, DanielGaerber, darioka, Darren Nguyen, David
+Gilbertson, David Poznik, Dev Khant, Dhanshree Arora, Diadochokinetic,
+diederikwp, Dimitri Papadopoulos Orfanos, drewhogg, Duarte OC, Dwight
+Lindquist, Eden Brekke, Edoardo Abati, Eleanore Denies, EliaSchiavon,
+ErmolaevPA, Fabrizio Damicelli, fcharras, Flynn, francesco-tuveri, Franck
+Charras, ftorres16, Gael Varoquaux, Geevarghese George, GeorgiaMayDay, Gianr
+Lazz, Gleb Levitski, Glòria Macià Muñoz, Guillaume Lemaitre, Guillem García
+Subies, Guitared, Hansin Ahuja, Hao Chun Chang, Harsh Agrawal, harshit5674,
+hasan-yaman, henrymooresc, Henry Sorsky, Hristo Vrigazov, htsedebenham, humahn,
+i-aki-y, Iglesys, Iliya Zhechev, Irene, ivanllt, Ivan Sedykh, jakirkham, Jason
+G, Jérémie du Boisberranger, Jiten Sidhpura, jkarolczak, João David, John Koumentis,
+John P, johnthagen, Jordan Fleming, Joshua Choo Yun Keat, Jovan Stojanovic,
+Juan Carlos Alfaro Jiménez, juanfe88, Juan Felipe Arias, Julien Jerphanion,
+Kanishk Sachdev, Kanissh, Kendall, Kenneth Prabakaran, kernc, Kevin Roice, Kian Eliasi,
+Kilian Lieret, Kirandevraj, Kraig, krishna kumar, krishna vamsi, Kshitij Kapadni,
+Kshitij Mathur, Lauren Burke, Léonard Binet, lingyi1110, Lisa Casino, Loic Esteve,
+Luciano Mantovani, Lucy Liu, Maascha, Madhura Jayaratne, madinak, Maksym, Malte
+S. Kurz, Mansi Agrawal, Marco Edward Gorelli, Marco Wurps, Maren Westermann,
+Maria Telenczuk, martin-kokos, mathurinm, mauroantonioserrano, Maxi Marufo,
+Maxim Smolskiy, Maxwell, Meekail Zain, Mehgarg, mehmetcanakbay, Mia Bajić,
+Michael Flaks, Michael Hornstein, Michel de Ruiter, Michelle Paradis, Misa
+Ogura, Moritz Wilksch, mrastgoo, Naipawat Poolsawat, Naoise Holohan, Nass,
+Nathan Jacobi, Nguyễn Văn Diễn, Nihal Thukarama Rao, Nikita Jare,
+nima10khodaveisi, Nima Sarajpoor, nitinramvelraj, Nwanna-Joseph, Nymark Kho,
+o-holman, Olivier Grisel, Olle Lukowski, Omar Hassoun, Omar Salman, osman
+tamer, Oyindamola Olatunji, Paulo Sergio  Soares, Petar Mlinarić, Peter
+Jansson, Peter Steinbach, Philipp Jung, Piet Brömmel, priyam kakati, puhuk,
+Rachel Freeland, Rachit Keerti Das, Rahil Parikh, Ravi Makhija, Rehan Guha,
+Reshama Shaikh, Richard Klima, Rob Crockett, Robert Hommes, Robert Juergens,
+Robin Lenz, Rocco Meli, Roman4oo, Ross Barnowski, Rowan Mankoo, Rudresh
+Veerkhare, Rushil Desai, Sabri Monaf Sabri, Safikh, Safiuddin Khaja,
+Salahuddin, Sam Adam Day, Sandra Yojana Meneses, Sandro Ephrem, Sangam,
+SangamSwadik, SarahRemus, SavkoMax, Sean Atukorala, sec65, SELEE, seljaks,
+Shane, shellyfung, Shinsuke Mori, Shoaib Khan, Shrankhla Srivastava, Shuangchi
+He, Simon, Srinath Kailasa, Stefanie Molin, stellalin7, Stéphane Collot, Steve
+Schmerler, Sven Stehle, TheDevPanda, the-syd-sre, Thomas Bonald, Thomas J. Fan,
+Ti-Ion, Tim Head, Timofei Kornev, toastedyeast, Tobias Pitters, Tom Dupré la
+Tour, Tom Mathews, Tom McTiernan, tspeng, Tyler Egashira, Valentin Laurent,
+Varun Jain, Vera Komeyer, Vicente Reyes-Puerta, Vincent M, Vishal, wattai,
+wchathura, WEN Hao, x110, Xiao Yuan, Xunius, yanhong-zhao-ef, Z Adil Khwaja

@@ -6,7 +6,11 @@ from ...preprocessing import LabelEncoder
 from ...utils import check_matplotlib_support
 from ...utils import _safe_indexing
 from ...base import is_regressor
-from ...utils.validation import check_is_fitted, _is_arraylike_not_scalar
+from ...utils.validation import (
+    check_is_fitted,
+    _is_arraylike_not_scalar,
+    _num_features,
+)
 
 
 def _check_boundary_response_method(estimator, response_method):
@@ -314,6 +318,12 @@ class DecisionBoundaryDisplay:
             raise ValueError(
                 f"plot_method must be one of {available_methods}. "
                 f"Got {plot_method} instead."
+            )
+
+        num_features = _num_features(X)
+        if num_features != 2:
+            raise ValueError(
+                f"n_features must be equal to 2. Got {num_features} instead."
             )
 
         x0, x1 = _safe_indexing(X, 0, axis=1), _safe_indexing(X, 1, axis=1)
