@@ -15,10 +15,10 @@ from sklearn.decomposition._pca import _assess_dimension
 from sklearn.decomposition._pca import _infer_dimension
 
 iris = datasets.load_iris()
-PCA_SOLVERS = ["full", "arpack", "randomized", "auto"]
+PCA_SOLVERS = ["full", "arpack", "randomized", "auto", "lobpcg"]
 
 SPARSE_M, SPARSE_N = 400, 300  # arbitrary
-
+SPARSE_MAX_COMPONENTS = min(SPARSE_M, SPARSE_N)
 
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
 @pytest.mark.parametrize("n_components", range(1, iris.data.shape[1]))
@@ -70,10 +70,12 @@ def test_linear_operator_reversed_matmul():
     assert np.allclose(result, [[38, 44, 50, 56], [83, 98, 113, 128]])
 
 @pytest.mark.parametrize("density", [0.01, 0.05, 0.10, 0.30])
-@pytest.mark.parametrize("n_components", [1, 2, 3, 10, min(SPARSE_M, SPARSE_N)])
+@pytest.mark.parametrize("n_components", [1, 2, 3, 10, SPARSE_MAX_COMPONENTS])
 @pytest.mark.parametrize("format", ["csr", "csc"])
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
 def test_pca_sparse(global_random_seed, svd_solver, format, n_components, density):
+    if svd_solver in ["lobpcg", "arpack"] and n_components==SPARSE_MAX_COMPONENTS:
+        pytest.skip("lobpcg and arpack don't support full solves")
     random_state = np.random.RandomState(global_random_seed)
     X = sp.sparse.random(
         SPARSE_M, SPARSE_N, format=format, random_state=random_state

@@ -399,7 +399,7 @@ class PCA(_BasePCA):
         ],
         "copy": ["boolean"],
         "whiten": ["boolean"],
-        "svd_solver": [StrOptions({"auto", "full", "arpack", "randomized"})],
+        "svd_solver": [StrOptions({"auto", "full", "arpack", "randomized", "lobpcg"})],
         "tol": [Interval(Real, 0, None, closed="left")],
         "iterated_power": [
             StrOptions({"auto"}),
@@ -536,7 +536,7 @@ class PCA(_BasePCA):
         # Call different fits for either full or truncated SVD
         if self._fit_svd_solver == "full":
             return self._fit_full(X, n_components)
-        elif self._fit_svd_solver in ["arpack", "randomized"]:
+        elif self._fit_svd_solver in ["arpack", "randomized", "lobpcg"]:
             return self._fit_truncated(X, n_components, self._fit_svd_solver)
 
     def _fit_full(self, X, n_components):
@@ -641,13 +641,19 @@ class PCA(_BasePCA):
 
         if svd_solver == "arpack":
             v0 = _init_arpack_v0(min(X.shape), random_state)
-            U, S, Vt = svds(X, k=n_components, tol=self.tol, v0=v0)
+            U, S, Vt = svds(X, k=n_components, tol=self.tol, v0=v0, solver=svd_solver)
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
             S = S[::-1]
             # flip eigenvectors' sign to enforce deterministic output
             U, Vt = svd_flip(U[:, ::-1], Vt[::-1])
-
+        elif svd_solver == "lobpcg":
+            U, S, Vt = svds(X, k=n_components, tol=self.tol, solver=svd_solver)
+            # svds doesn't abide by scipy.linalg.svd/randomized_svd
+            # conventions, so reverse its outputs.
+            S = S[::-1]
+            # flip eigenvectors' sign to enforce deterministic output
+            U, Vt = svd_flip(U[:, ::-1], Vt[::-1])
         elif svd_solver == "randomized":
             # sign flipping is done inside
             U, S, Vt = randomized_svd(
