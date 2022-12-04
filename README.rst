@@ -48,7 +48,7 @@
   :target: https://scikit-learn.org/
 
 **scikit-learn** is a Python module for machine learning built on top of
-SciPy and is distributed under the 3-Clause BSD license.
+SciPy and is distributed under the `3-Clause BSD license <https://github.com/scikit-learn/scikit-learn/blob/main/COPYING>`_.
 
 The project was started in 2007 by David Cournapeau as a Google Summer
 of Code project, and since then many volunteers have contributed. See
