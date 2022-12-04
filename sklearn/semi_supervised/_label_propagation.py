@@ -184,6 +184,10 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         y : ndarray of shape (n_samples,)
             Predictions for input data.
         """
+        # Note: since `predict` does not accept semi-supervised labels as input,
+        # `fit(X, y).predict(X) != fit(X, y).transduction_`.
+        # Hence, `fit_predict` is not implemented.
+        # See https://github.com/scikit-learn/scikit-learn/pull/24898
         probas = self.predict_proba(X)
         return self.classes_[np.argmax(probas, axis=1)].ravel()
 
@@ -244,7 +248,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         y : array-like of shape (n_samples,)
             Target class values with unlabeled points marked as -1.
             All unlabeled samples will be transductively assigned labels
-            internally.
+            internally, which are stored in `transduction_`.
 
         Returns
         -------
@@ -371,7 +375,7 @@ class LabelPropagation(BaseLabelPropagation):
         Categorical distribution for each item.
 
     transduction_ : ndarray of shape (n_samples)
-        Label assigned to each item via the transduction.
+        Label assigned to each item during :term:`fit`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -466,7 +470,7 @@ class LabelPropagation(BaseLabelPropagation):
         y : array-like of shape (n_samples,)
             Target class values with unlabeled points marked as -1.
             All unlabeled samples will be transductively assigned labels
-            internally.
+            internally, which are stored in `transduction_`.
 
         Returns
         -------
@@ -531,7 +535,7 @@ class LabelSpreading(BaseLabelPropagation):
         Categorical distribution for each item.
 
     transduction_ : ndarray of shape (n_samples,)
-        Label assigned to each item via the transduction.
+        Label assigned to each item during :term:`fit`.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -553,9 +557,9 @@ class LabelSpreading(BaseLabelPropagation):
 
     References
     ----------
-    Dengyong Zhou, Olivier Bousquet, Thomas Navin Lal, Jason Weston,
+    `Dengyong Zhou, Olivier Bousquet, Thomas Navin Lal, Jason Weston,
     Bernhard Schoelkopf. Learning with local and global consistency (2004)
-    http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.115.3219
+    <https://citeseerx.ist.psu.edu/doc_view/pid/d74c37aabf2d5cae663007cbd8718175466aea8c>`_
 
     Examples
     --------

@@ -49,6 +49,20 @@ def test_density():
         assert density(X_) == density(X)
 
 
+# TODO(1.4): Remove test
+def test_density_deprecated_kwargs():
+    """Check that future warning is raised when user enters keyword arguments."""
+    test_array = np.array([[1, 2, 3], [4, 5, 6]])
+    with pytest.warns(
+        FutureWarning,
+        match=(
+            "Additional keyword arguments are deprecated in version 1.2 and will be"
+            " removed in version 1.4."
+        ),
+    ):
+        density(test_array, a=1)
+
+
 def test_uniform_weights():
     # with uniform weights, results should be identical to stats.mode
     rng = np.random.RandomState(0)
@@ -621,6 +635,30 @@ def test_cartesian():
     # check single axis
     x = np.arange(3)
     assert_array_equal(x[:, np.newaxis], cartesian((x,)))
+
+
+@pytest.mark.parametrize(
+    "arrays, output_dtype",
+    [
+        (
+            [np.array([1, 2, 3], dtype=np.int32), np.array([4, 5], dtype=np.int64)],
+            np.dtype(np.int64),
+        ),
+        (
+            [np.array([1, 2, 3], dtype=np.int32), np.array([4, 5], dtype=np.float64)],
+            np.dtype(np.float64),
+        ),
+        (
+            [np.array([1, 2, 3], dtype=np.int32), np.array(["x", "y"], dtype=object)],
+            np.dtype(object),
+        ),
+    ],
+)
+def test_cartesian_mix_types(arrays, output_dtype):
+    """Check that the cartesian product works with mixed types."""
+    output = cartesian(arrays)
+
+    assert output.dtype == output_dtype
 
 
 def test_logistic_sigmoid():

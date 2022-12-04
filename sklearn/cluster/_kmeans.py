@@ -22,7 +22,7 @@ from ..base import (
     BaseEstimator,
     ClusterMixin,
     TransformerMixin,
-    _ClassNamePrefixFeaturesOutMixin,
+    ClassNamePrefixFeaturesOutMixin,
 )
 from ..metrics.pairwise import euclidean_distances
 from ..metrics.pairwise import _euclidean_distances
@@ -96,7 +96,10 @@ def kmeans_plusplus(
         The number of seeding trials for each center (except the first),
         of which the one reducing inertia the most is greedily chosen.
         Set to None to make the number of trials depend logarithmically
-        on the number of seeds (2+log(k)).
+        on the number of seeds (2+log(k)) which is the recommended setting.
+        Setting to 1 disables the greedy cluster selection and recovers the
+        vanilla k-means++ algorithm which was empirically shown to work less
+        well than its greedy variant.
 
     Returns
     -------
@@ -813,7 +816,7 @@ def _labels_inertia_threadpool_limit(
 
 
 class _BaseKMeans(
-    _ClassNamePrefixFeaturesOutMixin, TransformerMixin, ClusterMixin, BaseEstimator, ABC
+    ClassNamePrefixFeaturesOutMixin, TransformerMixin, ClusterMixin, BaseEstimator, ABC
 ):
     """Base class for KMeans and MiniBatchKMeans"""
 
@@ -1055,11 +1058,12 @@ class _BaseKMeans(
         X = self._check_test_data(X)
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
 
-        labels, _ = _labels_inertia_threadpool_limit(
+        labels = _labels_inertia_threadpool_limit(
             X,
             sample_weight,
             self.cluster_centers_,
             n_threads=self._n_threads,
+            return_inertia=False,
         )
 
         return labels
@@ -1172,9 +1176,10 @@ class KMeans(_BaseKMeans):
 
         'k-means++' : selects initial cluster centroids using sampling based on
         an empirical probability distribution of the points' contribution to the
-        overall inertia. This technique speeds up convergence, and is
-        theoretically proven to be :math:`\\mathcal{O}(\\log k)`-optimal.
-        See the description of `n_init` for more details.
+        overall inertia. This technique speeds up convergence. The algorithm
+        implemented is "greedy k-means++". It differs from the vanilla k-means++
+        by making several trials at each sampling step and choosing the bestcentroid
+        among them.
 
         'random': choose `n_clusters` observations (rows) at random from data
         for the initial centroids.
@@ -1287,8 +1292,9 @@ class KMeans(_BaseKMeans):
     samples and T is the number of iteration.
 
     The worst case complexity is given by O(n^(k+2/p)) with
-    n = n_samples, p = n_features. (D. Arthur and S. Vassilvitskii,
-    'How slow is the k-means method?' SoCG2006)
+    n = n_samples, p = n_features.
+    Refer to :doi:`"How slow is the k-means method?" D. Arthur and S. Vassilvitskii -
+    SoCG2006.<10.1145/1137856.1137880>` for more details.
 
     In practice, the k-means algorithm is very fast (one of the fastest
     clustering algorithms available), but it falls in local minima. That's why
@@ -1646,9 +1652,10 @@ class MiniBatchKMeans(_BaseKMeans):
 
         'k-means++' : selects initial cluster centroids using sampling based on
         an empirical probability distribution of the points' contribution to the
-        overall inertia. This technique speeds up convergence, and is
-        theoretically proven to be :math:`\\mathcal{O}(\\log k)`-optimal.
-        See the description of `n_init` for more details.
+        overall inertia. This technique speeds up convergence. The algorithm
+        implemented is "greedy k-means++". It differs from the vanilla k-means++
+        by making several trials at each sampling step and choosing the best centroid
+        among them.
 
         'random': choose `n_clusters` observations (rows) at random from data
         for the initial centroids.

@@ -338,9 +338,9 @@ to the prediction function.
 
 .. topic:: References
 
- .. [L2014] G. Louppe,
-         "Understanding Random Forests: From Theory to Practice",
-         PhD Thesis, U. of Liege, 2014.
+ .. [L2014] G. Louppe, :arxiv:`"Understanding Random Forests: From Theory to
+    Practice" <1407.7502>`,
+    PhD Thesis, U. of Liege, 2014.
 
 .. _random_trees_embedding:
 
@@ -732,7 +732,7 @@ space.
   accurate enough: the tree can only output integer values. As a result, the
   leaves values of the tree :math:`h_m` are modified once the tree is
   fitted, such that the leaves values minimize the loss :math:`L_m`. The
-  update is loss-dependent: for the absolute error loss, the value of 
+  update is loss-dependent: for the absolute error loss, the value of
   a leaf is updated to the median of the samples in that leaf.
 
 Classification
@@ -1194,6 +1194,44 @@ Also, monotonic constraints are not supported for multiclass classification.
 .. topic:: Examples:
 
   * :ref:`sphx_glr_auto_examples_ensemble_plot_monotonic_constraints.py`
+
+.. _interaction_cst_hgbt:
+
+Interaction constraints
+-----------------------
+
+A priori, the histogram gradient boosting trees are allowed to use any feature
+to split a node into child nodes. This creates so called interactions between
+features, i.e. usage of different features as split along a branch. Sometimes,
+one wants to restrict the possible interactions, see [Mayer2022]_. This can be
+done by the parameter ``interaction_cst``, where one can specify the indices
+of features that are allowed to interact.
+For instance, with 3 features in total, ``interaction_cst=[{0}, {1}, {2}]``
+forbids all interactions.
+The constraints ``[{0, 1}, {1, 2}]`` specifies two groups of possibly
+interacting features. Features 0 and 1 may interact with each other, as well
+as features 1 and 2. But note that features 0 and 2 are forbidden to interact.
+The following depicts a tree and the possible splits of the tree:
+
+.. code-block:: none
+
+      1      <- Both constraint groups could be applied from now on
+     / \
+    1   2    <- Left split still fulfills both constraint groups.
+   / \ / \      Right split at feature 2 has only group {1, 2} from now on.
+
+LightGBM uses the same logic for overlapping groups.
+
+Note that features not listed in ``interaction_cst`` are automatically
+assigned an interaction group for themselves. With again 3 features, this
+means that ``[{0}]`` is equivalent to ``[{0}, {1, 2}]``.
+
+.. topic:: References
+
+  .. [Mayer2022] M. Mayer, S.C. Bourassa, M. Hoesli, and D.F. Scognamiglio.
+     2022. :doi:`Machine Learning Applications to Land and Structure Valuation
+     <10.3390/jrfm15050193>`.
+     Journal of Risk and Financial Management 15, no. 5: 193
 
 Low-level parallelism
 ---------------------
