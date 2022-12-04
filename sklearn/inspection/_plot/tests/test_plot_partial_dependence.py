@@ -676,7 +676,7 @@ def test_plot_partial_dependence_does_not_override_ylabel(
 def test_plot_partial_dependence_with_categorical(
     pyplot, categorical_features, array_type
 ):
-    X = [["A", 1, "A"], ["B", 0, "C"], ["C", 2, "B"]]
+    X = [[1, 1, "A"], [2, 0, "C"], [3, 2, "B"]]
     column_name = ["col_A", "col_B", "col_C"]
     X = _convert_container(X, array_type, columns_name=column_name)
     y = np.array([1.2, 0.5, 0.45]).T
