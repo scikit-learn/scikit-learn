@@ -1078,7 +1078,7 @@ categorical data, since categories are nominal quantities where order does not
 matter.
 
 There are several ways to use the native categorical feature support for those
-estimators. The simplest way it to pass the training data as `pandas.DataFrame`
+estimators. The simplest way is to pass the training data as `pandas.DataFrame`
 where the categorical features are of type `category`.
 
 Alternatively it is possible to pass a boolean mask to the `categorical_features`
