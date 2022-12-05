@@ -17,10 +17,11 @@ from scipy.sparse import csr_matrix
 from .validation import _is_arraylike_not_scalar
 
 
-class InvalidParameterError(Exception):
+class InvalidParameterError(ValueError, TypeError):
     """Custom exception to be raised when the parameter of a class/method/function
     does not have a valid type or value.
     """
+    ### Inherits from ValueError and TypeError to keep backward compatibility.
 
 
 def validate_parameter_constraints(parameter_constraints, params, caller_name):
