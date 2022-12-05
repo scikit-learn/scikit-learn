@@ -573,7 +573,9 @@ cdef int scale_weights{{name_suffix}}(
     {{c_type}}* sum_gradient,
     int n_iter
 ) nogil:
-    """Scale the weights and reset wscale to 1.0 for numerical stability.
+    """Scale the weights and reset wscale to 1.0 for numerical stability
+    and for the Just-in-time update (see comment in
+    `lagged_update{{name_suffix}}`'s docstring).
 
     wscale = (1 - step_size * alpha) ** (n_iter * n_samples + sample_itr)
     can become very small, so we reset it every n_samples iterations to 1.0 for
