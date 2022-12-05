@@ -453,20 +453,6 @@ def test_validate_params():
         _func(0, *[1, 2, 3], c="four", **{"e": 5})
 
 
-def test_validate_params_match_error():
-    """Check that an informative error is raised when there are constraints
-    that have no matching function paramaters
-    """
-
-    @validate_params({"a": [int], "c": [int]})
-    def func(a, b):
-        pass
-
-    match = r"The parameter constraints .* contain unexpected parameters {'c'}"
-    with pytest.raises(ValueError, match=match):
-        func(1, 2)
-
-
 def test_validate_params_missing_params():
     """Check that no error is raised when there are parameters without
     constraints
@@ -633,3 +619,22 @@ def test_cv_objects():
     assert constraint.is_satisfied_by([([1, 2], [3, 4]), ([3, 4], [1, 2])])
     assert constraint.is_satisfied_by(None)
     assert not constraint.is_satisfied_by("not a CV object")
+
+
+def test_third_party_estimator():
+    """Check that the validation from a scikit-learn estimator inherited by a third
+    party estimator does not impose a match between the dict of constraints and the
+    parameters of the estimator.
+    """
+
+    class ThirdPartyEstimator(_Estimator):
+        def __init__(self, b):
+            self.b = b
+            super().__init__(a=0)
+
+        def fit(self, X=None, y=None):
+            super().fit(X, y)
+
+    # does not raise, even though "b" is not in the constraints dict and "a" is not
+    # a parameter of the estimator.
+    ThirdPartyEstimator(b=0).fit()
