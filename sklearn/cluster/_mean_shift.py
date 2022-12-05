@@ -180,7 +180,7 @@ def mean_shift(
         from the parallelization:
 
         - The search of nearest neighbors for bandwidth estimation and label assignments.
-        See the details in the docstring of the ``NearestNeighbors`` class.
+          See the details in the docstring of the ``NearestNeighbors`` class.
         - Hill-climbing optimization for all seeds.
 
         See :term:`Glossary <n_jobs>` for more details.
@@ -322,7 +322,7 @@ class MeanShift(ClusterMixin, BaseEstimator):
         from the parallelization:
 
         - The search of nearest neighbors for bandwidth estimation and label assignments.
-        See the details in the docstring of the ``NearestNeighbors`` class.
+          See the details in the docstring of the ``NearestNeighbors`` class.
         - Hill-climbing optimization for all seeds.
 
         See :term:`Glossary <n_jobs>` for more details.
