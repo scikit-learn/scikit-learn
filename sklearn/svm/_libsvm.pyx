@@ -74,9 +74,9 @@ def fit(
 
     Parameters
     ----------
-    X : memory view on array, dtype=float64 of shape (n_samples, n_features)
+    X : array-like, dtype=float64 of shape (n_samples, n_features)
 
-    Y : memory view on array, dtype=float64 of shape (n_samples,)
+    Y : array, dtype=float64 of shape (n_samples,)
         target vector
 
     svm_type : {0, 1, 2, 3, 4}, default=0
@@ -111,13 +111,13 @@ def fit(
     epsilon : double, default=0.1
         Epsilon parameter in the epsilon-insensitive loss function.
 
-    class_weight : memory view on array, dtype=float64, shape (n_classes,), \
+    class_weight : array, dtype=float64, shape (n_classes,), \
             default=np.empty(0)
         Set the parameter C of class i to class_weight[i]*C for
         SVC. If not given, all classes are supposed to have
         weight one.
 
-    sample_weight : memory view on array, dtype=float64, shape (n_samples,), \
+    sample_weight : array, dtype=float64, shape (n_samples,), \
             default=np.empty(0)
         Weights assigned to each sample.
 
@@ -389,24 +389,24 @@ def predict(
 
     Parameters
     ----------
-    X : memory view on array, dtype=float of shape (n_samples, n_features)
+    X : array-like, dtype=float of shape (n_samples, n_features)
 
-    support : memory view on array of shape (n_support,)
+    support : array of shape (n_support,)
         Index of support vectors in training set.
 
-    SV : memory view on array of shape (n_support, n_features)
+    SV : array of shape (n_support, n_features)
         Support vectors.
 
-    nSV : memory view on array of shape (n_class,)
+    nSV : array of shape (n_class,)
         Number of support vectors in each class.
 
-    sv_coef : memory view on array of shape (n_class-1, n_support)
+    sv_coef : array of shape (n_class-1, n_support)
         Coefficients of support vectors in decision function.
 
-    intercept : memory view on array of shape (n_class*(n_class-1)/2)
+    intercept : array of shape (n_class*(n_class-1)/2)
         Intercept in decision function.
 
-    probA, probB : memory view on array of shape (n_class*(n_class-1)/2,)
+    probA, probB : array of shape (n_class*(n_class-1)/2,)
         Probability estimates.
 
     svm_type : {0, 1, 2, 3, 4}, default=0
@@ -521,24 +521,24 @@ def predict_proba(
 
     Parameters
     ----------
-    X : memory view on array, dtype=float of shape (n_samples, n_features)
+    X : array-like, dtype=float of shape (n_samples, n_features)
 
-    support : memory view on array of shape (n_support,)
+    support : array of shape (n_support,)
         Index of support vectors in training set.
 
-    SV : memory view on array of shape (n_support, n_features)
+    SV : array of shape (n_support, n_features)
         Support vectors.
 
-    nSV : memory view on array of shape (n_class,)
+    nSV : array of shape (n_class,)
         Number of support vectors in each class.
 
-    sv_coef : memory view on array of shape (n_class-1, n_support)
+    sv_coef : array of shape (n_class-1, n_support)
         Coefficients of support vectors in decision function.
 
-    intercept : memory view on array of shape (n_class*(n_class-1)/2,)
+    intercept : array of shape (n_class*(n_class-1)/2,)
         Intercept in decision function.
 
-    probA, probB : memory view on array of shape (n_class*(n_class-1)/2,)
+    probA, probB : array of shape (n_class*(n_class-1)/2,)
         Probability estimates.
 
     svm_type : {0, 1, 2, 3, 4}, default=0
@@ -646,24 +646,24 @@ def decision_function(
 
     Parameters
     ----------
-    X : memory view on array, dtype=float, size=[n_samples, n_features]
+    X : array-like, dtype=float, size=[n_samples, n_features]
 
-    support : memory view on array, shape=[n_support]
+    support : array, shape=[n_support]
         Index of support vectors in training set.
 
-    SV : memory view on array, shape=[n_support, n_features]
+    SV : array, shape=[n_support, n_features]
         Support vectors.
 
-    nSV : memory view on array, shape=[n_class]
+    nSV : array, shape=[n_class]
         Number of support vectors in each class.
 
-    sv_coef : memory view on array, shape=[n_class-1, n_support]
+    sv_coef : array, shape=[n_class-1, n_support]
         Coefficients of support vectors in decision function.
 
-    intercept : memory view on array, shape=[n_class*(n_class-1)/2]
+    intercept : array, shape=[n_class*(n_class-1)/2]
         Intercept in decision function.
 
-    probA, probB : memory view on array, shape=[n_class*(n_class-1)/2]
+    probA, probB : array, shape=[n_class*(n_class-1)/2]
         Probability estimates.
 
     svm_type : {0, 1, 2, 3, 4}, optional
@@ -781,9 +781,9 @@ def cross_validation(
     Parameters
     ----------
 
-    X : memory view on array, dtype=float of shape (n_samples, n_features)
+    X : array-like, dtype=float of shape (n_samples, n_features)
 
-    Y : memory view on array, dtype=float of shape (n_samples,)
+    Y : array, dtype=float of shape (n_samples,)
         target vector
 
     n_fold : int32
@@ -821,13 +821,13 @@ def cross_validation(
     epsilon : double, default=0.1
         Epsilon parameter in the epsilon-insensitive loss function.
 
-    class_weight : memory view on array, dtype=float64, shape (n_classes,), \
+    class_weight : array, dtype=float64, shape (n_classes,), \
             default=np.empty(0)
         Set the parameter C of class i to class_weight[i]*C for
         SVC. If not given, all classes are supposed to have
         weight one.
 
-    sample_weight : memory view on array, dtype=float64, shape (n_samples,), \
+    sample_weight : array, dtype=float64, shape (n_samples,), \
             default=np.empty(0)
         Weights assigned to each sample.
 
