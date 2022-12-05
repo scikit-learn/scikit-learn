@@ -22,7 +22,7 @@ class InvalidParameterError(ValueError, TypeError):
     does not have a valid type or value.
     """
 
-    ### Inherits from ValueError and TypeError to keep backward compatibility.
+    # Inherits from ValueError and TypeError to keep backward compatibility.
 
 
 def validate_parameter_constraints(parameter_constraints, params, caller_name):
