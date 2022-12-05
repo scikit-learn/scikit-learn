@@ -910,7 +910,7 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
         "y_score": ["array-like"],
         "pos_label": [Integral, str, None],
         "sample_weight": ["array-like", None],
-        "drop_intermediate": ["boolean"]
+        "drop_intermediate": ["boolean"],
     }
 )
 def roc_curve(
