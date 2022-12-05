@@ -235,6 +235,29 @@ def sag{{name_suffix}}(
 
     Used in Ridge and LogisticRegression.
 
+    Some implementation details:
+
+    - Just-in-time (JIT) update: In SAG(A), the average-gradient update is
+    collinear with the drawn sample X_i. Therefore, if the data is sparse, the
+    random sample X_i will change the average gradient only on features j where
+    X_ij != 0. In some cases, the average gradient on feature j might change
+    only after k random samples with no change. In these cases, instead of
+    applying k times the same gradient step on feature j, we apply the gradient
+    step only once, scaled by k. This is called the "just-in-time update", and
+    it is performed in `lagged_update{{name_suffix}}`. This function also
+    applies the proximal operator after the gradient step (if L1 regularization
+    in SAGA).
+
+    - Weight scale: In SAG(A), the weights are scaled down at each iteration
+    due to the L2 regularization. To avoid updating all the weights at each
+    iteration, the weight scale is factored out in a separate variable `wscale`
+    which is only used in the JIT update. When this variable is too small, it
+    is reset for numerical stability using the function
+    `scale_weights{{name_suffix}}`. This reset requires applying all remaining
+    JIT updates. This reset is also performed every `n_samples` iterations
+    before each convergence check, so when the algorithm stops, we are sure
+    that there is no remaining JIT updates.
+
     Reference
     ---------
     Schmidt, M., Roux, N. L., & Bach, F. (2013).
@@ -573,9 +596,10 @@ cdef int scale_weights{{name_suffix}}(
     {{c_type}}* sum_gradient,
     int n_iter
 ) nogil:
-    """Scale the weights and reset wscale to 1.0 for numerical stability
-    and for the Just-in-time update (see comment in
-    `lagged_update{{name_suffix}}`'s docstring).
+    """Scale the weights and reset wscale to 1.0 for numerical stability, and
+    reset the just-in-time (JIT) update system.
+
+    (See `sag{{name_suffix}}`'s docstring about the JIT update system.)
 
     wscale = (1 - step_size * alpha) ** (n_iter * n_samples + sample_itr)
     can become very small, so we reset it every n_samples iterations to 1.0 for
@@ -629,15 +653,7 @@ cdef int lagged_update{{name_suffix}}(
 ) nogil:
     """Hard perform the JIT updates for non-zero features of present sample.
 
-    In SAG(A), the average-gradient update is collinear with the drawn sample
-    X_i. Therefore, if the data is sparse, the random sample X_i will change
-    the average gradient only on features j where X_ij != 0. In some cases,
-    the average gradient on feature j might change only after k random samples
-    with no change. In these cases, instead of applying k times the same
-    gradient step on feature j, we apply the gradient step only once, scaled by
-    k. This is called the "Just-in-time (JIT) update", and it is performed in
-    this function. This function also applies the prox operator after the
-    gradient step if necessary.
+    (See `sag{{name_suffix}}`'s docstring about the JIT update system.)
 
     The updates that awaits are kept in memory using cumulative_sums,
     cumulative_sums_prox, wscale and feature_hist. See original SAGA paper
