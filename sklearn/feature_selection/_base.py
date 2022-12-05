@@ -81,8 +81,8 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         """
         output_config_dense = _get_output_config("transform", estimator=self)["dense"]
         if hasattr(X, "iloc") and output_config_dense == "pandas":
-            # Only check feature names and n_features when output is a dataframe
-            # preserving the dataframe for _transform to mask
+            # Only perform input validation on feature names and n_features when the
+            # output is a dataframe, preserving the dataframe for _transform to mask
             self._check_feature_names(X, reset=False)
             self._check_n_features(X, reset=False)
         else:
