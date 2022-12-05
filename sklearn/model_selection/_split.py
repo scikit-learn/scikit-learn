@@ -2475,7 +2475,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
         ],
         "random_state": ["random_state"],
         "shuffle": ["boolean"],
-        "stratify": ["boolean"],
+        "stratify": ["array-like", None],
     }
 )
 def train_test_split(
