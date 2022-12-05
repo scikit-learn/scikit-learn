@@ -33,20 +33,13 @@ def train_wrap(
     cdef model *model
     cdef char_const_ptr error_msg
     cdef int len_w
-    cdef cnp.float64_t[::1] x_data
-    cdef cnp.int32_t[::1] x_indices
-    cdef cnp.int32_t[::1] x_indptr
-    cdef cnp.float64_t[:, ::1] x_array
 
     if is_sparse:
-        x_data = X.data
-        x_indices = X.indices
-        x_indptr = X.indptr
         problem = csr_set_problem(
-            <char*> &x_data[0],
+            X.data.tobytes(),
             X.dtype == np.float64,
-            <char*> &x_indices[0],
-            <char*> &x_indptr[0],
+            X.indices.tobytes(),
+            X.indptr.tobytes(),
             (<cnp.int32_t>X.shape[0]),
             (<cnp.int32_t>X.shape[1]),
             (<cnp.int32_t>X.nnz),
@@ -55,9 +48,8 @@ def train_wrap(
             <char*> &Y[0]
         )
     else:
-        x_array = X
         problem = set_problem(
-            <char*> &x_array[0, 0],
+            X.tobytes(),
             X.dtype == np.float64,
             (<cnp.int32_t>X.shape[0]),
             (<cnp.int32_t>X.shape[1]),
