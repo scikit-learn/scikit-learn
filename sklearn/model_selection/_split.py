@@ -2465,7 +2465,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
     {
         "test_size": [
             Interval(numbers.Real, 0, 1, closed="neither"),
-            Interval(numbers.Integral, 0, None, closed="neither"),
+            Interval(numbers.Integral, 1, None, closed="left"),
             None,
         ],
         "train_size": [
