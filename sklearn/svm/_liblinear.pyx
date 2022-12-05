@@ -66,7 +66,7 @@ def train_wrap(
         C,
         class_weight.shape[0],
         <char*> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
-        <char*> &class_weight[0],
+        <char*> &class_weight[0] if class_weight.size > 0 else NULL,
         max_iter,
         random_seed,
         epsilon
