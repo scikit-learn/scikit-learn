@@ -39,8 +39,13 @@ def test_function_param_validation(func_module):
     parameter_constraints = getattr(func, "_skl_parameter_constraints")
 
     # generate valid values for the required parameters
+    # Generate valid values for the required parameters
+    # The parameters `*args` and `**kwargs` are ignored since we cannot generate
+    # constraints.
     required_params = [
-        p.name for p in func_sig.parameters.values() if p.default is p.empty
+        p.name
+        for p in func_sig.parameters.values()
+        if p.default is p.empty and p.kind not in (p.VAR_POSITIONAL, p.VAR_KEYWORD)
     ]
     valid_required_params = {}
     for param_name in required_params:
