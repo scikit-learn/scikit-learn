@@ -246,7 +246,7 @@ def sag{{name_suffix}}(
     step only once, scaled by k. This is called the "just-in-time update", and
     it is performed in `lagged_update{{name_suffix}}`. This function also
     applies the proximal operator after the gradient step (if L1 regularization
-    in SAGA).
+    is used in SAGA).
 
     - Weight scale: In SAG(A), the weights are scaled down at each iteration
     due to the L2 regularization. To avoid updating all the weights at each
