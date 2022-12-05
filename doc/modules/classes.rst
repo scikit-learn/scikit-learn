@@ -1126,6 +1126,7 @@ See the :ref:`visualizations` section of the user guide for further details.
    metrics.ConfusionMatrixDisplay
    metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
+   metrics.PredictionErrorDisplay
    metrics.RocCurveDisplay
    calibration.CalibrationDisplay
 

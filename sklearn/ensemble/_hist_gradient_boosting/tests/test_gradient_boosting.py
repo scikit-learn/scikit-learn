@@ -1141,20 +1141,32 @@ def test_categorical_spec_no_categories(Est, categorical_features, as_array):
 @pytest.mark.parametrize(
     "Est", (HistGradientBoostingClassifier, HistGradientBoostingRegressor)
 )
-def test_categorical_bad_encoding_errors(Est):
+@pytest.mark.parametrize(
+    "use_pandas, feature_name", [(False, "at index 0"), (True, "'f0'")]
+)
+def test_categorical_bad_encoding_errors(Est, use_pandas, feature_name):
     # Test errors when categories are encoded incorrectly
 
     gb = Est(categorical_features=[True], max_bins=2)
 
-    X = np.array([[0, 1, 2]]).T
+    if use_pandas:
+        pd = pytest.importorskip("pandas")
+        X = pd.DataFrame({"f0": [0, 1, 2]})
+    else:
+        X = np.array([[0, 1, 2]]).T
     y = np.arange(3)
-    msg = "Categorical feature at index 0 is expected to have a cardinality <= 2"
+    msg = f"Categorical feature {feature_name} is expected to have a cardinality <= 2"
     with pytest.raises(ValueError, match=msg):
         gb.fit(X, y)
 
-    X = np.array([[0, 2]]).T
+    if use_pandas:
+        X = pd.DataFrame({"f0": [0, 2]})
+    else:
+        X = np.array([[0, 2]]).T
     y = np.arange(2)
-    msg = "Categorical feature at index 0 is expected to be encoded with values < 2"
+    msg = (
+        f"Categorical feature {feature_name} is expected to be encoded with values < 2"
+    )
     with pytest.raises(ValueError, match=msg):
         gb.fit(X, y)
 
@@ -1187,6 +1199,10 @@ def test_uint8_predict(Est):
     [
         (None, 931, None),
         ([{0, 1}], 2, [{0, 1}]),
+        ("pairwise", 2, [{0, 1}]),
+        ("pairwise", 4, [{0, 1}, {0, 2}, {0, 3}, {1, 2}, {1, 3}, {2, 3}]),
+        ("no_interactions", 2, [{0}, {1}]),
+        ("no_interactions", 4, [{0}, {1}, {2}, {3}]),
         ([(1, 0), [5, 1]], 6, [{0, 1}, {1, 5}, {2, 3, 4}]),
     ],
 )
