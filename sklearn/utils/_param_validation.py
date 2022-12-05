@@ -21,6 +21,7 @@ class InvalidParameterError(ValueError, TypeError):
     """Custom exception to be raised when the parameter of a class/method/function
     does not have a valid type or value.
     """
+
     ### Inherits from ValueError and TypeError to keep backward compatibility.
 
 
