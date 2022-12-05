@@ -27,9 +27,11 @@ def _wrap_in_pandas_container(
     columns : callable, ndarray, or None
         The column names or a callable that returns the column names. The
         callable is useful if the column names require some computation.
-        If `None` and `data_to_wrap` is already a dataframe, then the column
-        names are not changed. If `None` and `data_to_wrap` is **not** a
-        dataframe, then columns are `range(n_features)`.
+        If `columns` is a callable that raises an error, `columns` will have
+        the same semantics as `None`. If `None` and `data_to_wrap` is already a
+        dataframe, then the column names are not changed. If `None` and
+        `data_to_wrap` is **not** a dataframe, then columns are
+        `range(n_features)`.
 
     index : array-like, default=None
         Index for data.
@@ -43,7 +45,10 @@ def _wrap_in_pandas_container(
         raise ValueError("Pandas output does not support sparse data.")
 
     if callable(columns):
-        columns = columns()
+        try:
+            columns = columns()
+        except Exception:
+            columns = None
 
     pd = check_pandas_support("Setting output container to 'pandas'")
 
@@ -167,10 +172,12 @@ class _SetOutputMixin:
     it based on `set_output` of the global configuration.
 
     `set_output` is only defined if `get_feature_names_out` is defined and
-    `auto_wrap_output` is True.
+    `auto_wrap_output_keys` is the default value.
     """
 
     def __init_subclass__(cls, auto_wrap_output_keys=("transform",), **kwargs):
+        super().__init_subclass__(**kwargs)
+
         # Dynamically wraps `transform` and `fit_transform` and configure it's
         # output based on `set_output`.
         if not (
@@ -206,12 +213,11 @@ class _SetOutputMixin:
         Parameters
         ----------
         transform : {"default", "pandas"}, default=None
-            Configure output of the following estimator's methods:
+            Configure output of `transform` and `fit_transform`.
 
-            - `"transform"`
-            - `"fit_transform"`
-
-            If `None`, this operation is a no-op.
+            - `"default"`: Default output format of a transformer
+            - `"pandas"`: DataFrame output
+            - `None`: Transform configuration is unchanged
 
         Returns
         -------

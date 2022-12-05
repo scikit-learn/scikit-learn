@@ -34,6 +34,8 @@ Base classes
    base.DensityMixin
    base.RegressorMixin
    base.TransformerMixin
+   base.OneToOneFeatureMixin
+   base.ClassNamePrefixFeaturesOutMixin
    feature_selection.SelectorMixin
 
 Functions
@@ -1124,6 +1126,7 @@ See the :ref:`visualizations` section of the user guide for further details.
    metrics.ConfusionMatrixDisplay
    metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
+   metrics.PredictionErrorDisplay
    metrics.RocCurveDisplay
    calibration.CalibrationDisplay
 
@@ -1230,6 +1233,17 @@ Model validation
    model_selection.learning_curve
    model_selection.permutation_test_score
    model_selection.validation_curve
+
+Visualization
+-------------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   model_selection.LearningCurveDisplay
 
 .. _multiclass_ref:
 

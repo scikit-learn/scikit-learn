@@ -280,10 +280,9 @@ def _estimate_mi(
         if copy:
             X = X.copy()
 
-        if not discrete_target:
-            X[:, continuous_mask] = scale(
-                X[:, continuous_mask], with_mean=False, copy=False
-            )
+        X[:, continuous_mask] = scale(
+            X[:, continuous_mask], with_mean=False, copy=False
+        )
 
         # Add small noise to continuous features as advised in Kraskov et. al.
         X = X.astype(np.float64, copy=False)

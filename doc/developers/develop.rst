@@ -647,8 +647,18 @@ scikit-learn introduces the `set_output` API for configuring transformers to
 output pandas DataFrames. The `set_output` API is automatically defined if the
 transformer defines :term:`get_feature_names_out` and subclasses
 :class:`base.TransformerMixin`. :term:`get_feature_names_out` is used to get the
-column names of pandas output. You can opt-out of the `set_output` API by
-setting `auto_wrap_output_keys=None` when defining a custom subclass::
+column names of pandas output.
+
+:class:`base.OneToOneFeatureMixin` and
+:class:`base.ClassNamePrefixFeaturesOutMixin` are helpful mixins for defining
+:term:`get_feature_names_out`. :class:`base.OneToOneFeatureMixin` is useful when
+the transformer has a one-to-one correspondence between input features and output
+features, such as :class:`~preprocessing.StandardScaler`.
+:class:`base.ClassNamePrefixFeaturesOutMixin` is useful when the transformer
+needs to generate its own feature names out, such as :class:`~decomposition.PCA`.
+
+You can opt-out of the `set_output` API by setting `auto_wrap_output_keys=None`
+when defining a custom subclass::
 
     class MyTransformer(TransformerMixin, BaseEstimator, auto_wrap_output_keys=None):
 
@@ -658,6 +668,12 @@ setting `auto_wrap_output_keys=None` when defining a custom subclass::
             return X
         def get_feature_names_out(self, input_features=None):
             ...
+
+The default value for `auto_wrap_output_keys` is `("transform",)`, which automatically
+wraps `fit_transform` and `transform`. The `TransformerMixin` uses the
+`__init_subclass__` mechanism to consume `auto_wrap_output_keys` and pass all other
+keyword arguments to it's super class. Super classes' `__init_subclass__` should
+**not** depend on `auto_wrap_output_keys`.
 
 For transformers that return multiple arrays in `transform`, auto wrapping will
 only wrap the first array and not alter the other arrays.
