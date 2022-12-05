@@ -21,8 +21,12 @@ def _get_func_info(func_module):
         if p.kind not in (p.VAR_POSITIONAL, p.VAR_KEYWORD)
     ]
 
+    # The parameters `*args` and `**kwargs` are ignored since we cannot generate
+    # constraints.
     required_params = [
-        p.name for p in func_sig.parameters.values() if p.default is p.empty
+        p.name
+        for p in func_sig.parameters.values()
+        if p.default is p.empty and p.kind not in (p.VAR_POSITIONAL, p.VAR_KEYWORD)
     ]
 
     return func, func_name, func_params, required_params
@@ -98,6 +102,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.auc",
     "sklearn.metrics.mean_absolute_error",
     "sklearn.metrics.zero_one_loss",
+    "sklearn.model_selection.train_test_split",
     "sklearn.svm.l1_min_c",
 ]
 
