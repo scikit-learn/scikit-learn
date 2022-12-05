@@ -1288,6 +1288,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
     def __getitem__(self, name):
         """Return transformer with name."""
+        if not isinstance(name, str):
+            raise KeyError("Only string keys are supported")
         return self.named_transformers[name]
 
 

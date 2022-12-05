@@ -1676,3 +1676,14 @@ def test_feature_union_getitem():
     assert union["pca"] is pca
     assert union["pass"] == "passthrough"
     assert union["drop_me"] == "drop"
+
+
+@pytest.mark.parametrize("key", [0, slice(0, 2)])
+def test_feature_union_getitem_error(key):
+    """Raise error when __getitem__ gets a non-string input."""
+
+    union = FeatureUnion([("scalar", StandardScaler()), ("pca", PCA())])
+
+    msg = "Only string keys are supported"
+    with pytest.raises(KeyError, match=msg):
+        union[key]
