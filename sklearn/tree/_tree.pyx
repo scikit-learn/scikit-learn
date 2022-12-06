@@ -534,11 +534,11 @@ cdef class BestFirstTreeBuilder(TreeBuilder):
 
 cdef class BaseTree:
     """Base class for Cython tree models.
-    
-    Downstream classes must implement:
+
+    Downstream classes must implement 
     - initialization of attributes
-    - define 'value_stride' as the number of elements per output sample
-    - 
+        - define 'value_stride' as the number of elements per output sample
+        - define 'value' as the array of (n_nodes, <n_outputs>)
     """
 
     cdef int _resize(
@@ -704,6 +704,19 @@ cdef class BaseTree:
         DOUBLE_t* importance_data,
         Node* node
     ) nogil:
+        """Compute feature importances from a Node in the Tree.
+        
+        Wrapped in a private function to allow subclassing that
+        computes feature importances.
+
+        Parameters
+        ----------
+        importance_data : DOUBLE_t*
+            An array of importance data with shape (n_features,), containing the
+            importances computed of each feature.
+        node : Node*
+            The node.
+        """
         pass
 
     cpdef cnp.ndarray apply(self, object X):
