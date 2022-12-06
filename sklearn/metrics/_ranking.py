@@ -906,7 +906,7 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
 
 @validate_params(
     {
-        "y_true": ["array-like", "sparse matrix"],
+        "y_true": ["array-like"],
         "y_score": ["array-like"],
         "pos_label": [Integral, str, None],
         "sample_weight": ["array-like", None],
@@ -924,11 +924,11 @@ def roc_curve(
 
     Parameters
     ----------
-    y_true : ndarray of shape (n_samples,)
+    y_true : array-like of shape (n_samples,)
         True binary labels. If labels are not either {-1, 1} or {0, 1}, then
         pos_label should be explicitly given.
 
-    y_score : ndarray of shape (n_samples,)
+    y_score : array-like of shape (n_samples,)
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
