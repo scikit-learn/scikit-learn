@@ -34,39 +34,32 @@ cdef struct Node:
     DOUBLE_t weighted_n_node_samples     # Weighted number of samples at the node
 
 
-cdef class Tree:
-    # The Tree object is a binary tree structure constructed by the
-    # TreeBuilder. The tree structure is used for predictions and
-    # feature importances.
-
-    # Input/Output layout
-    cdef public SIZE_t n_features        # Number of features in X
-    cdef SIZE_t* n_classes               # Number of classes in y[:, k]
-    cdef public SIZE_t n_outputs         # Number of outputs in y
-    cdef public SIZE_t max_n_classes     # max(n_classes)
-
+cdef class BaseTree:
     # Inner structures: values are stored separately from node structure,
     # since size is determined at runtime.
     cdef public SIZE_t max_depth         # Max depth of the tree
     cdef public SIZE_t node_count        # Counter for node IDs
     cdef public SIZE_t capacity          # Capacity of tree, in terms of nodes
     cdef Node* nodes                     # Array of nodes
-    cdef double* value                   # (capacity, n_outputs, max_n_classes) array of values
-    cdef SIZE_t value_stride             # = n_outputs * max_n_classes
 
-    # Methods
-    cdef SIZE_t _add_node(self, SIZE_t parent, bint is_left, bint is_leaf,
-                          SIZE_t feature, double threshold, double impurity,
-                          SIZE_t n_node_samples,
-                          double weighted_n_node_samples) nogil except -1
+    cdef SIZE_t value_stride             # The dimensionality of a vectorized output per sample
+    cdef double* value                   # Array of values prediction values for each node        
+
+    # Generic Methods: These are generic methods used by any tree.
     cdef int _resize(self, SIZE_t capacity) nogil except -1
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
+    cdef SIZE_t _add_node(
+        self,
+        SIZE_t parent,
+        bint is_left,
+        bint is_leaf,
+        SplitRecord* split_node,
+        double impurity,
+        SIZE_t n_node_samples,
+        double weighted_n_node_samples
+    ) nogil except -1
 
-    cdef cnp.ndarray _get_value_ndarray(self)
-    cdef cnp.ndarray _get_node_ndarray(self)
-
-    cpdef cnp.ndarray predict(self, object X)
-
+    # Python API methods: These are methods exposed to Python
     cpdef cnp.ndarray apply(self, object X)
     cdef cnp.ndarray _apply_dense(self, object X)
     cdef cnp.ndarray _apply_sparse_csr(self, object X)
@@ -74,9 +67,52 @@ cdef class Tree:
     cpdef object decision_path(self, object X)
     cdef object _decision_path_dense(self, object X)
     cdef object _decision_path_sparse_csr(self, object X)
-
+    
     cpdef compute_feature_importances(self, normalize=*)
 
+    # Abstract methods: these functions must be implemented by any decision tree
+    cdef int _set_split_node(
+        self,
+        SplitRecord* split_node,
+        Node* node
+    ) nogil except -1
+    cdef int _set_leaf_node(
+        self,
+        SplitRecord* split_node,
+        Node* node
+    ) nogil except -1
+    cdef DTYPE_t _compute_feature(
+        self,
+        const DTYPE_t[:, :] X_ndarray,
+        SIZE_t sample_index,
+        Node *node,
+    ) nogil
+    cdef void _compute_feature_importances(
+        self,
+        DOUBLE_t* importance_data,
+        Node* node
+    ) nogil
+
+cdef class Tree(BaseTree):
+    # The Tree object is a binary tree structure constructed by the
+    # TreeBuilder. The tree structure is used for predictions and
+    # feature importances.
+    # 
+    # Value of upstream properties:
+    # - value_stride = n_outputs * max_n_classes
+    # - value = (capacity, n_outputs, max_n_classes) array of values          
+
+    # Input/Output layout for classification tree
+    cdef public SIZE_t n_features        # Number of features in X
+    cdef SIZE_t* n_classes               # Number of classes in y[:, k]
+    cdef public SIZE_t n_outputs         # Number of outputs in y
+    cdef public SIZE_t max_n_classes     # max(n_classes)
+
+    # Methods
+    cdef cnp.ndarray _get_value_ndarray(self)
+    cdef cnp.ndarray _get_node_ndarray(self)
+
+    cpdef cnp.ndarray predict(self, object X)
 
 # =============================================================================
 # Tree builder
@@ -98,6 +134,6 @@ cdef class TreeBuilder:
     cdef SIZE_t max_depth               # Maximal tree depth
     cdef double min_impurity_decrease   # Impurity threshold for early stopping
 
-    cpdef build(self, Tree tree, object X, cnp.ndarray y,
+    cpdef build(self, BaseTree tree, object X, cnp.ndarray y,
                 cnp.ndarray sample_weight=*)
     cdef _check_input(self, object X, cnp.ndarray y, cnp.ndarray sample_weight)

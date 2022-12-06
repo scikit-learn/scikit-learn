@@ -213,6 +213,14 @@ cdef class Splitter:
 
         return self.criterion.node_impurity()
 
+    cdef int pointer_size(self) nogil:
+        """Get size of a pointer to record for Splitter.
+        
+        Overriding this function allows one to define a 
+        """
+
+        return sizeof(SplitRecord)
+
 
 cdef class BaseDenseSplitter(Splitter):
     cdef const DTYPE_t[:, :] X
