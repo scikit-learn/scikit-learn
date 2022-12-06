@@ -546,6 +546,7 @@ message, the following actions are taken.
     [ci skip]              CI is skipped completely
     [cd build]             CD is run (wheels and source distribution are built)
     [cd build gh]          CD is run only for GitHub Actions
+    [cd build cirrus]      CD is run only for Cirrus CI
     [lint skip]            Azure pipeline skips linting
     [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc ...) development builds
     [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy...

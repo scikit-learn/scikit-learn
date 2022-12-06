@@ -3,7 +3,9 @@
 set -e
 set -x
 
-if [[ "$OSTYPE" != "linux-gnu" ]]; then
+UNAME=$(uname)
+
+if [[ "$UNAME" != "Linux" ]]; then
     # The Linux test environment is run in a Docker container and
     # it is not possible to copy the test configuration file (yet)
     cp $CONFTEST_PATH $CONFTEST_NAME
@@ -12,4 +14,9 @@ fi
 # Test that there are no links to system libraries in the
 # threadpoolctl output section of the show_versions output:
 python -c "import sklearn; sklearn.show_versions()"
-pytest --pyargs sklearn
+
+if [ ! -z "$CPU_COUNT" ]; then
+    pytest --pyargs sklearn -n $CPU_COUNT
+else
+    pytest --pyargs sklearn
+fi

@@ -1,0 +1,38 @@
+macos_arm64_wheel_task:
+  macos_instance:
+    image: ghcr.io/cirruslabs/macos-monterey-xcode
+  env:
+    CONFTEST_PATH: ${CIRRUS_WORKING_DIR}/conftest.py
+    CONFTEST_NAME: conftest.py
+    CIBW_ENVIRONMENT: OMP_NUM_THREADS=2
+                      OPENBLAS_NUM_THREADS=2
+                      SKLEARN_SKIP_NETWORK_TESTS=1
+                      SKLEARN_BUILD_PARALLEL=5
+                      CPU_COUNT=2
+    CIBW_TEST_COMMAND: bash {project}/build_tools/github/test_wheels.sh
+    CIBW_TEST_REQUIRES: pytest pandas threadpoolctl pytest-xdist
+    CIBW_BUILD_VERBOSITY: 1
+    PATH: $HOME/mambaforge/bin/:$PATH
+    CONDA_HOME: $HOME/mambaforge
+  matrix:
+    - env:
+        # cibuildwheel can not test on Python 3.8 even on a Apple Silicon machine.
+        # For details see: https://github.com/pypa/cibuildwheel/pull/1169
+        CIBW_BUILD: cp38-macosx_arm64
+        CIBW_TEST_SKIP: "*"
+    - env:
+        CIBW_BUILD: cp39-macosx_arm64
+    - env:
+        CIBW_BUILD: cp310-macosx_arm64
+    - env:
+        CIBW_BUILD: cp311-macosx_arm64
+
+  conda_script:
+    - curl -L -o ~/mambaforge.sh https://github.com/conda-forge/miniforge/releases/latest/download/Miniforge3-MacOSX-arm64.sh
+    - bash ~/mambaforge.sh -b -p ~/mambaforge
+
+  cibuildwheel_script:
+    - bash build_tools/github/build_wheels.sh
+
+  wheels_artifacts:
+    path: "wheelhouse/*"

@@ -4,14 +4,16 @@ set -e
 set -x
 
 # OpenMP is not present on macOS by default
-if [[ "$RUNNER_OS" == "macOS" ]]; then
+if [[ $(uname) == "Darwin" ]]; then
     # Make sure to use a libomp version binary compatible with the oldest
     # supported version of the macos SDK as libomp will be vendored into the
     # scikit-learn wheels for macos.
 
     if [[ "$CIBW_BUILD" == *-macosx_arm64 ]]; then
-        # arm64 builds must cross compile because CI is on x64
-        export PYTHON_CROSSENV=1
+        if [[ $(uname -m) == "x86_64" ]]; then
+            # arm64 builds must cross compile because CI is on x64
+            export PYTHON_CROSSENV=1
+        fi
         # SciPy requires 12.0 on arm to prevent kernel panics
         # https://github.com/scipy/scipy/issues/14688
         # We use the same deployment target to match SciPy.
@@ -23,7 +25,7 @@ if [[ "$RUNNER_OS" == "macOS" ]]; then
     fi
 
     sudo conda create -n build $OPENMP_URL
-    PREFIX="/usr/local/miniconda/envs/build"
+    PREFIX="$CONDA_HOME/envs/build"
 
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
