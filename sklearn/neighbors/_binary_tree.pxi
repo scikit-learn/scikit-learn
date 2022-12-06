@@ -794,6 +794,9 @@ cdef class BinaryTree:
 
     # Use cinit to initialize all arrays to empty: this will prevent memory
     # errors and seg-faults in rare cases where __init__ is not called
+    # A one-elements array is used as a placeholder to prevent
+    # any problem due to potential access to this attribute
+    # (e.g. assigning to NULL or a to value in another segment).
     def __cinit__(self):
         self.data = np.empty((1, 1), dtype=DTYPE, order='C')
         self.sample_weight = np.empty(1, dtype=DTYPE, order='C')
