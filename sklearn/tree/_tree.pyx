@@ -238,7 +238,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 is_leaf = is_leaf or impurity <= EPSILON
 
                 if not is_leaf:
-                    splitter.node_split(impurity, &split, &n_constant_features)
                     splitter.node_split(impurity, split_ptr, &n_constant_features)
 
                     # assign local copy of SplitRecord to assign
