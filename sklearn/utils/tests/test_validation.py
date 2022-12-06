@@ -447,6 +447,27 @@ def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
         check_array(X, force_all_finite=True)
 
 
+def test_check_array_panadas_na_support_series():
+    """Check check_array is correct with pd.NA in a series."""
+    pd = pytest.importorskip("pandas")
+
+    X_int64 = pd.Series([1, 2, pd.NA], dtype="Int64")
+
+    msg = "Input contains NaN"
+    with pytest.raises(ValueError, match=msg):
+        check_array(X_int64, force_all_finite=True, ensure_2d=False)
+
+    X_out = check_array(X_int64, force_all_finite=False, ensure_2d=False)
+    assert_allclose(X_out, [1, 2, np.nan])
+    assert X_out.dtype == np.float64
+
+    X_out = check_array(
+        X_int64, force_all_finite=False, ensure_2d=False, dtype=np.float32
+    )
+    assert_allclose(X_out, [1, 2, np.nan])
+    assert X_out.dtype == np.float32
+
+
 def test_check_array_pandas_dtype_casting():
     # test that data-frames with homogeneous dtype are not upcast
     pd = pytest.importorskip("pandas")
@@ -1675,8 +1696,12 @@ def test_get_feature_names_invalid_dtypes(names, dtypes):
     X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
 
     msg = re.escape(
-        "Feature names only support names that are all strings. "
-        f"Got feature names with dtypes: {dtypes}."
+        "Feature names are only supported if all input features have string names, "
+        f"but your input has {dtypes} as feature name / column name types. "
+        "If you want feature names to be stored and validated, you must convert "
+        "them all to strings, by using X.columns = X.columns.astype(str) for "
+        "example. Otherwise you can remove feature / column names from your input "
+        "data, or convert them all to a non-string data type."
     )
     with pytest.raises(TypeError, match=msg):
         names = _get_feature_names(X)

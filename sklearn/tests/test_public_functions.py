@@ -9,9 +9,16 @@ from sklearn.utils._param_validation import make_constraint
 
 
 PARAM_VALIDATION_FUNCTION_LIST = [
+    "sklearn.cluster.estimate_bandwidth",
     "sklearn.cluster.kmeans_plusplus",
-    "sklearn.svm.l1_min_c",
+    "sklearn.feature_extraction.grid_to_graph",
+    "sklearn.feature_extraction.img_to_graph",
     "sklearn.metrics.accuracy_score",
+    "sklearn.metrics.auc",
+    "sklearn.metrics.mean_absolute_error",
+    "sklearn.metrics.zero_one_loss",
+    "sklearn.model_selection.train_test_split",
+    "sklearn.svm.l1_min_c",
 ]
 
 
@@ -33,8 +40,12 @@ def test_function_param_validation(func_module):
     parameter_constraints = getattr(func, "_skl_parameter_constraints")
 
     # generate valid values for the required parameters
+    # The parameters `*args` and `**kwargs` are ignored since we cannot generate
+    # constraints.
     required_params = [
-        p.name for p in func_sig.parameters.values() if p.default is p.empty
+        p.name
+        for p in func_sig.parameters.values()
+        if p.default is p.empty and p.kind not in (p.VAR_POSITIONAL, p.VAR_KEYWORD)
     ]
     valid_required_params = {}
     for param_name in required_params:

@@ -92,7 +92,7 @@ def discretize(
 
     .. [1] `Multiclass spectral clustering, 2003
            Stella X. Yu, Jianbo Shi
-           <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
+           <https://people.eecs.berkeley.edu/~jordan/courses/281B-spring04/readings/yu-shi.pdf>`_
 
     Notes
     -----
@@ -323,7 +323,7 @@ def spectral_clustering(
 
     .. [3] `Multiclass spectral clustering, 2003
            Stella X. Yu, Jianbo Shi
-           <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
+           <https://people.eecs.berkeley.edu/~jordan/courses/281B-spring04/readings/yu-shi.pdf>`_
 
     .. [4] :doi:`Toward the Optimal Preconditioned Eigensolver:
            Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001
@@ -589,7 +589,7 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
 
     .. [3] `Multiclass spectral clustering, 2003
            Stella X. Yu, Jianbo Shi
-           <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
+           <https://people.eecs.berkeley.edu/~jordan/courses/281B-spring04/readings/yu-shi.pdf>`_
 
     .. [4] :doi:`Toward the Optimal Preconditioned Eigensolver:
            Locally Optimal Block Preconditioned Conjugate Gradient Method, 2001

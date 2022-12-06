@@ -1066,7 +1066,7 @@ output by the `decision_function` method), then the hinge loss is defined as:
 
 If there are more than two labels, :func:`hinge_loss` uses a multiclass variant
 due to Crammer & Singer.
-`Here <http://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_ is
+`Here <https://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_ is
 the paper describing it.
 
 In this case the predicted decision is an array of shape (`n_samples`,
@@ -1547,7 +1547,7 @@ And the decision values do not require such processing.
        Pattern Recognition Letters, 27(8), pp. 861-874.
 
     .. [F2001] Fawcett, T., 2001. `Using rule sets to maximize
-       ROC performance <http://ieeexplore.ieee.org/document/989510/>`_
+       ROC performance <https://ieeexplore.ieee.org/document/989510/>`_
        In Data Mining, 2001.
        Proceedings IEEE International Conference, pp. 131-138.
 
