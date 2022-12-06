@@ -1690,6 +1690,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         positive_dict=False,
         transform_max_iter=1000,
     ):
+
         super().__init__(
             transform_algorithm,
             transform_n_nonzero_coefs,
@@ -2067,6 +2068,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         tol=1e-3,
         max_no_improvement=10,
     ):
+
         super().__init__(
             transform_algorithm,
             transform_n_nonzero_coefs,
@@ -2344,6 +2346,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         )
 
         if self.max_iter is not None:
+
             # Attributes to monitor the convergence
             self._ewa_cost = None
             self._ewa_cost_min = None
