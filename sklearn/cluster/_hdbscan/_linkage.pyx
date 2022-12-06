@@ -153,8 +153,7 @@ cpdef cnp.ndarray[MST_edge_t, ndim=1, mode='c'] mst_from_data_matrix(
                 num_features
             )
 
-            if alpha != 1.0:
-                pair_distance /= alpha
+            pair_distance /= alpha
 
             next_node_core_dist = core_distances[j]
             mutual_reachability_distance = max(
