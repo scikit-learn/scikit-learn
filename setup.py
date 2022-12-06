@@ -503,7 +503,7 @@ def configure_extension_modules():
 
     optimization_level = "O2"
     if os.name == "posix":
-        default_extra_compile_args = [f"-{optimization_level}"]
+        default_extra_compile_args = [f"-{optimization_level}", "-g0"]
         default_libraries = ["m"]
     else:
         default_extra_compile_args = [f"/{optimization_level}"]
