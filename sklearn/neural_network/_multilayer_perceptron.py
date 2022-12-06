@@ -926,7 +926,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     best_loss_ : float or None
         The minimum loss reached by the solver throughout fitting.
         If `early_stopping=True`, this attribute is set ot `None`. Refer to
-        the fitted attribute `best_validation_score_` instead.
+        the `best_validation_score_` fitted attribute instead.
 
     loss_curve_ : list of shape (`n_iter_`,)
         The ith element in the list represents the loss at the ith iteration.
@@ -1405,7 +1405,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     best_loss_ : float
         The minimum loss reached by the solver throughout fitting.
         If `early_stopping=True`, this attribute is set ot `None`. Refer to
-        the fitted attribute `best_validation_score_` instead.
+        the `best_validation_score_` fitted attribute instead.
 
     loss_curve_ : list of shape (`n_iter_`,)
         Loss value evaluated at the end of each training step.
