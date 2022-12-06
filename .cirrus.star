@@ -15,10 +15,10 @@ def main(ctx):
     if env.get("CIRRUS_CRON", "") == "nightly":
         return fs.read(arm_wheel_yaml)
 
-    # Get commit message for event. There is not command line access in starlark,
-    # so we need to query the GitHub API for the commit message.
-    # Note that `CIRRUS_CHANGE_MESSAGE` can not be used because it is set to
-    # a the PR's title and not the latest commit message in the PR.
+    # Get commit message for event. We can not use `git` here because there is
+    # no command line access in starlark. Thus we need to query the GitHub API
+    # for the commit message. Note that `CIRRUS_CHANGE_MESSAGE` can not be used
+    # because it is set to the PR's title and not the latest commit message.
     SHA = env.get("CIRRUS_CHANGE_IN_REPO")
     REPO = env.get("CIRRUS_REPO_FULL_NAME")
     url = "https://api.github.com/repos/" + REPO + "/git/commits/" + SHA
