@@ -82,7 +82,7 @@ categorical_features = ["embarked", "sex", "pclass"]
 categorical_transformer = Pipeline(
     steps=[
         ("encoder", OneHotEncoder(handle_unknown="ignore")),
-        ("selecter", SelectPercentile(chi2, percentile=50)),
+        ("selector", SelectPercentile(chi2, percentile=50)),
     ]
 )
 preprocessor = ColumnTransformer(
@@ -187,7 +187,7 @@ selector(dtype_include="category")(X_train)
 
 param_grid = {
     "preprocessor__num__imputer__strategy": ["mean", "median"],
-    "preprocessor__cat__selecter__percentile": [10, 30, 50, 70],
+    "preprocessor__cat__selector__percentile": [10, 30, 50, 70],
     "classifier__C": [0.1, 1.0, 10, 100],
 }
 
@@ -218,7 +218,7 @@ cv_results[
         "mean_test_score",
         "std_test_score",
         "param_preprocessor__num__imputer__strategy",
-        "param_preprocessor__cat__selecter__percentile",
+        "param_preprocessor__cat__selector__percentile",
         "param_classifier__C",
     ]
 ].head(5)
