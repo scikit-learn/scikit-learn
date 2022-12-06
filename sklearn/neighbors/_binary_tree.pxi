@@ -549,7 +549,7 @@ cdef class NeighborsHeap:
         """push (val, i_val) into the given row"""
         return heap_push(
             values=&self.distances[row, 0],
-            indices-&self.indices[row, 0],
+            indices=&self.indices[row, 0],
             size=self.distances.shape[1],
             val=val,
             val_idx=i_val,
