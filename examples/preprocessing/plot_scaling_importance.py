@@ -28,7 +28,6 @@ accuracy of a model trained on PCA-reduced data.
 # Author: Tyler Lanigan <tylerlanigan@gmail.com>
 #         Sebastian Raschka <mail@sebastianraschka.com>
 #         Arturo Amor <david-arturo.amor-quiroz@inria.fr>
-#
 # License: BSD 3 clause
 
 # %%
@@ -60,7 +59,7 @@ scaled_X_train = scaler.fit_transform(X_train)
 # orders of magnitude.
 #
 # Keep in mind that using a subset of the features to train the model may likely
-# leave out predictive variables, resulting in a boundary decision that does not
+# leave out predictive variables, resulting in a decision boundary that does not
 # represent the decisions nor the statistical performance of a model trained on
 # the full set of features.
 
