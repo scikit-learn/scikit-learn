@@ -195,6 +195,12 @@ class build_ext_subclass(build_ext):
                 e.extra_compile_args += openmp_flag
                 e.extra_link_args += openmp_flag
 
+        # To build with debug symbols
+        # python setup.py build_ext -i --debug
+        if not self.debug and os.name == "posix":
+            for e in self.extensions:
+                e.extra_compile_args += ["-g0"]
+
         build_ext.build_extensions(self)
 
     def run(self):
@@ -503,7 +509,7 @@ def configure_extension_modules():
 
     optimization_level = "O2"
     if os.name == "posix":
-        default_extra_compile_args = [f"-{optimization_level}", "-g0"]
+        default_extra_compile_args = [f"-{optimization_level}"]
         default_libraries = ["m"]
     else:
         default_extra_compile_args = [f"/{optimization_level}"]
