@@ -481,7 +481,7 @@ class ValidationCurveDisplay:
         Name of the parameter that has been varied.
 
     param_range : ndarray of shape (n_ticks,)
-        The values of the parameter that have been evaluated
+        The values of the parameter that have been evaluated.
 
     train_scores : ndarray of shape (n_ticks, n_cv_folds)
         Scores on training sets.
@@ -788,10 +788,6 @@ class ValidationCurveDisplay:
             a scorer callable object / function with signature
             `scorer(estimator, X, y)` (see :ref:`scoring`).
 
-        exploit_incremental_learning : bool, default=False
-            If the estimator supports incremental learning, this will be
-            used to speed up fitting for different training set sizes.
-
         n_jobs : int, default=None
             Number of jobs to run in parallel. Training the estimator and
             computing the score are parallelized over the different training
@@ -806,15 +802,6 @@ class ValidationCurveDisplay:
 
         verbose : int, default=0
             Controls the verbosity: the higher, the more messages.
-
-        shuffle : bool, default=False
-            Whether to shuffle training data before taking prefixes of it
-            based on`train_sizes`.
-
-        random_state : int, RandomState instance or None, default=None
-            Used when `shuffle` is True. Pass an int for reproducible
-            output across multiple function calls.
-            See :term:`Glossary <random_state>`.
 
         error_score : 'raise' or numeric, default=np.nan
             Value to assign to the score if an error occurs in estimator
