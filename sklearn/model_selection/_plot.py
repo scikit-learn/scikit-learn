@@ -12,7 +12,10 @@ class LearningCurveDisplay:
     create a :class:`~sklearn.model_selection.LearningCurveDisplay` instance.
     All parameters are stored as attributes.
 
-    Read more in the :ref:`User Guide <visualizations>`.
+    Read more in the :ref:`User Guide <visualizations>` for general information
+    about the visualization API and
+    :ref:`detailed documentation <learning_curve>` regarding the learning
+    curve visualization.
 
     .. versionadded:: 1.2
 
@@ -268,6 +271,11 @@ class LearningCurveDisplay:
     ):
         """Create a learning curve display from an estimator.
 
+        Read more in the :ref:`User Guide <visualizations>` for general
+        information about the visualization API and :ref:`detailed
+        documentation <learning_curve>` regarding the learning curve
+        visualization.
+
         Parameters
         ----------
         estimator : object type that implements the "fit" and "predict" methods
@@ -461,7 +469,9 @@ class ValidationCurveDisplay:
     create a :class:`~sklearn.model_selection.ValidationCurveDisplay` instance.
     All parameters are stored as attributes.
 
-    Read more in the :ref:`User Guide <visualizations>`.
+    Read more in the :ref:`User Guide <visualizations>` for general information
+    about the visualization API and :ref:`detailed documentation
+    <validation_curve>` regarding the validation curve visualization.
 
     .. versionadded:: 1.3
 
@@ -724,6 +734,11 @@ class ValidationCurveDisplay:
         errorbar_kw=None,
     ):
         """Create a validation curve display from an estimator.
+
+        Read more in the :ref:`User Guide <visualizations>` for general
+        information about the visualization API and :ref:`detailed
+        documentation <validation_curve>` regarding the validation curve
+        visualization.
 
         Parameters
         ----------
