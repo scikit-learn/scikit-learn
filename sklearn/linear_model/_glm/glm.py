@@ -11,6 +11,7 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.optimize
 
+from ._newton_solver import NewtonCholeskySolver, NewtonSolver
 from ..._loss.glm_distribution import TweedieDistribution
 from ..._loss.loss import (
     HalfGammaLoss,
@@ -20,11 +21,11 @@ from ..._loss.loss import (
     HalfTweedieLossIdentity,
 )
 from ...base import BaseEstimator, RegressorMixin
-from ...utils.optimize import _check_optimize_result
 from ...utils import check_array, deprecated
-from ...utils.validation import check_is_fitted, _check_sample_weight
-from ...utils._param_validation import Interval, StrOptions
 from ...utils._openmp_helpers import _openmp_effective_n_threads
+from ...utils._param_validation import Hidden, Interval, StrOptions
+from ...utils.optimize import _check_optimize_result
+from ...utils.validation import _check_sample_weight, check_is_fitted
 from .._linear_loss import LinearModelLoss
 
 
@@ -48,7 +49,7 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     in them for performance reasons. We pick the loss functions that implement
     (1/2 times) EDM deviances.
 
-    Read more in the :ref:`User Guide <Generalized_linear_regression>`.
+    Read more in the :ref:`User Guide <Generalized_linear_models>`.
 
     .. versionadded:: 0.23
 
@@ -65,11 +66,21 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         Specifies if a constant (a.k.a. bias or intercept) should be
         added to the linear predictor (X @ coef + intercept).
 
-    solver : 'lbfgs', default='lbfgs'
+    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
         Algorithm to use in the optimization problem:
 
         'lbfgs'
             Calls scipy's L-BFGS-B optimizer.
+
+        'newton-cholesky'
+            Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
+            iterated reweighted least squares) with an inner Cholesky based solver.
+            This solver is a good choice for `n_samples` >> `n_features`, especially
+            with one-hot encoded categorical features with rare categories. Be aware
+            that the memory usage of this solver has a quadratic dependency on
+            `n_features` because it explicitly computes the Hessian matrix.
+
+            .. versionadded:: 1.2
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -123,10 +134,16 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
         we have `y_pred = exp(X @ coeff + intercept)`.
     """
 
+    # We allow for NewtonSolver classes for the "solver" parameter but do not
+    # make them public in the docstrings. This facilitates testing and
+    # benchmarking.
     _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0.0, None, closed="left")],
         "fit_intercept": ["boolean"],
-        "solver": [StrOptions({"lbfgs"})],
+        "solver": [
+            StrOptions({"lbfgs", "newton-cholesky"}),
+            Hidden(type),
+        ],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0.0, None, closed="neither")],
         "warm_start": ["boolean"],
@@ -233,20 +250,19 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
                 coef = self.coef_
             coef = coef.astype(loss_dtype, copy=False)
         else:
+            coef = linear_loss.init_zero_coef(X, dtype=loss_dtype)
             if self.fit_intercept:
-                coef = np.zeros(n_features + 1, dtype=loss_dtype)
                 coef[-1] = linear_loss.base_loss.link.link(
                     np.average(y, weights=sample_weight)
                 )
-            else:
-                coef = np.zeros(n_features, dtype=loss_dtype)
+
+        l2_reg_strength = self.alpha
+        n_threads = _openmp_effective_n_threads()
 
         # Algorithms for optimization:
         # Note again that our losses implement 1/2 * deviance.
         if self.solver == "lbfgs":
             func = linear_loss.loss_gradient
-            l2_reg_strength = self.alpha
-            n_threads = _openmp_effective_n_threads()
 
             opt_res = scipy.optimize.minimize(
                 func,
@@ -267,6 +283,31 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
             )
             self.n_iter_ = _check_optimize_result("lbfgs", opt_res)
             coef = opt_res.x
+        elif self.solver == "newton-cholesky":
+            sol = NewtonCholeskySolver(
+                coef=coef,
+                linear_loss=linear_loss,
+                l2_reg_strength=l2_reg_strength,
+                tol=self.tol,
+                max_iter=self.max_iter,
+                n_threads=n_threads,
+                verbose=self.verbose,
+            )
+            coef = sol.solve(X, y, sample_weight)
+            self.n_iter_ = sol.iteration
+        elif issubclass(self.solver, NewtonSolver):
+            sol = self.solver(
+                coef=coef,
+                linear_loss=linear_loss,
+                l2_reg_strength=l2_reg_strength,
+                tol=self.tol,
+                max_iter=self.max_iter,
+                n_threads=n_threads,
+            )
+            coef = sol.solve(X, y, sample_weight)
+            self.n_iter_ = sol.iteration
+        else:
+            raise ValueError(f"Invalid solver={self.solver}.")
 
         if self.fit_intercept:
             self.intercept_ = coef[-1]
@@ -424,7 +465,11 @@ class _GeneralizedLinearRegressor(RegressorMixin, BaseEstimator):
     )
     @property
     def family(self):
-        """Ensure backward compatibility for the time of deprecation."""
+        """Ensure backward compatibility for the time of deprecation.
+
+        .. deprecated:: 1.1
+            Will be removed in 1.3
+        """
         if isinstance(self, PoissonRegressor):
             return "poisson"
         elif isinstance(self, GammaRegressor):
@@ -444,22 +489,38 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
 
     This regressor uses the 'log' link function.
 
-    Read more in the :ref:`User Guide <Generalized_linear_regression>`.
+    Read more in the :ref:`User Guide <Generalized_linear_models>`.
 
     .. versionadded:: 0.23
 
     Parameters
     ----------
     alpha : float, default=1
-        Constant that multiplies the penalty term and thus determines the
+        Constant that multiplies the L2 penalty term and determines the
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
-        Values must be in the range `[0.0, inf)`.
+        Values of `alpha` must be in the range `[0.0, inf)`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added to the linear predictor (X @ coef + intercept).
+        added to the linear predictor (`X @ coef + intercept`).
+
+    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+        Algorithm to use in the optimization problem:
+
+        'lbfgs'
+            Calls scipy's L-BFGS-B optimizer.
+
+        'newton-cholesky'
+            Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
+            iterated reweighted least squares) with an inner Cholesky based solver.
+            This solver is a good choice for `n_samples` >> `n_features`, especially
+            with one-hot encoded categorical features with rare categories. Be aware
+            that the memory usage of this solver has a quadratic dependency on
+            `n_features` because it explicitly computes the Hessian matrix.
+
+            .. versionadded:: 1.2
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -528,13 +589,13 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
     _parameter_constraints: dict = {
         **_GeneralizedLinearRegressor._parameter_constraints
     }
-    _parameter_constraints.pop("solver")
 
     def __init__(
         self,
         *,
         alpha=1.0,
         fit_intercept=True,
+        solver="lbfgs",
         max_iter=100,
         tol=1e-4,
         warm_start=False,
@@ -543,6 +604,7 @@ class PoissonRegressor(_GeneralizedLinearRegressor):
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
+            solver=solver,
             max_iter=max_iter,
             tol=tol,
             warm_start=warm_start,
@@ -558,22 +620,38 @@ class GammaRegressor(_GeneralizedLinearRegressor):
 
     This regressor uses the 'log' link function.
 
-    Read more in the :ref:`User Guide <Generalized_linear_regression>`.
+    Read more in the :ref:`User Guide <Generalized_linear_models>`.
 
     .. versionadded:: 0.23
 
     Parameters
     ----------
     alpha : float, default=1
-        Constant that multiplies the penalty term and thus determines the
+        Constant that multiplies the L2 penalty term and determines the
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
-        Values must be in the range `[0.0, inf)`.
+        Values of `alpha` must be in the range `[0.0, inf)`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added to the linear predictor (X @ coef + intercept).
+        added to the linear predictor `X @ coef_ + intercept_`.
+
+    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+        Algorithm to use in the optimization problem:
+
+        'lbfgs'
+            Calls scipy's L-BFGS-B optimizer.
+
+        'newton-cholesky'
+            Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
+            iterated reweighted least squares) with an inner Cholesky based solver.
+            This solver is a good choice for `n_samples` >> `n_features`, especially
+            with one-hot encoded categorical features with rare categories. Be aware
+            that the memory usage of this solver has a quadratic dependency on
+            `n_features` because it explicitly computes the Hessian matrix.
+
+            .. versionadded:: 1.2
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -588,7 +666,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
 
     warm_start : bool, default=False
         If set to ``True``, reuse the solution of the previous call to ``fit``
-        as initialization for ``coef_`` and ``intercept_`` .
+        as initialization for `coef_` and `intercept_`.
 
     verbose : int, default=0
         For the lbfgs solver set verbose to any positive number for verbosity.
@@ -597,7 +675,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     Attributes
     ----------
     coef_ : array of shape (n_features,)
-        Estimated coefficients for the linear predictor (`X * coef_ +
+        Estimated coefficients for the linear predictor (`X @ coef_ +
         intercept_`) in the GLM.
 
     intercept_ : float
@@ -643,13 +721,13 @@ class GammaRegressor(_GeneralizedLinearRegressor):
     _parameter_constraints: dict = {
         **_GeneralizedLinearRegressor._parameter_constraints
     }
-    _parameter_constraints.pop("solver")
 
     def __init__(
         self,
         *,
         alpha=1.0,
         fit_intercept=True,
+        solver="lbfgs",
         max_iter=100,
         tol=1e-4,
         warm_start=False,
@@ -658,6 +736,7 @@ class GammaRegressor(_GeneralizedLinearRegressor):
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
+            solver=solver,
             max_iter=max_iter,
             tol=tol,
             warm_start=warm_start,
@@ -674,7 +753,7 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
     This estimator can be used to model different GLMs depending on the
     ``power`` parameter, which determines the underlying distribution.
 
-    Read more in the :ref:`User Guide <Generalized_linear_regression>`.
+    Read more in the :ref:`User Guide <Generalized_linear_models>`.
 
     .. versionadded:: 0.23
 
@@ -701,15 +780,15 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
             For ``0 < power < 1``, no distribution exists.
 
     alpha : float, default=1
-        Constant that multiplies the penalty term and thus determines the
+        Constant that multiplies the L2 penalty term and determines the
         regularization strength. ``alpha = 0`` is equivalent to unpenalized
         GLMs. In this case, the design matrix `X` must have full column rank
         (no collinearities).
-        Values must be in the range `[0.0, inf)`.
+        Values of `alpha` must be in the range `[0.0, inf)`.
 
     fit_intercept : bool, default=True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added to the linear predictor (X @ coef + intercept).
+        added to the linear predictor (`X @ coef + intercept`).
 
     link : {'auto', 'identity', 'log'}, default='auto'
         The link function of the GLM, i.e. mapping from linear predictor
@@ -719,6 +798,22 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         - 'identity' for ``power <= 0``, e.g. for the Normal distribution
         - 'log' for ``power > 0``, e.g. for Poisson, Gamma and Inverse Gaussian
           distributions
+
+    solver : {'lbfgs', 'newton-cholesky'}, default='lbfgs'
+        Algorithm to use in the optimization problem:
+
+        'lbfgs'
+            Calls scipy's L-BFGS-B optimizer.
+
+        'newton-cholesky'
+            Uses Newton-Raphson steps (in arbitrary precision arithmetic equivalent to
+            iterated reweighted least squares) with an inner Cholesky based solver.
+            This solver is a good choice for `n_samples` >> `n_features`, especially
+            with one-hot encoded categorical features with rare categories. Be aware
+            that the memory usage of this solver has a quadratic dependency on
+            `n_features` because it explicitly computes the Hessian matrix.
+
+            .. versionadded:: 1.2
 
     max_iter : int, default=100
         The maximal number of iterations for the solver.
@@ -790,7 +885,6 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         "power": [Interval(Real, None, None, closed="neither")],
         "link": [StrOptions({"auto", "identity", "log"})],
     }
-    _parameter_constraints.pop("solver")
 
     def __init__(
         self,
@@ -799,6 +893,7 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         alpha=1.0,
         fit_intercept=True,
         link="auto",
+        solver="lbfgs",
         max_iter=100,
         tol=1e-4,
         warm_start=False,
@@ -807,6 +902,7 @@ class TweedieRegressor(_GeneralizedLinearRegressor):
         super().__init__(
             alpha=alpha,
             fit_intercept=fit_intercept,
+            solver=solver,
             max_iter=max_iter,
             tol=tol,
             warm_start=warm_start,
