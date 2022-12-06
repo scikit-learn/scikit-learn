@@ -33,6 +33,7 @@ from ._search import ParameterGrid
 from ._search import ParameterSampler
 
 from ._plot import LearningCurveDisplay
+from ._plot import ValidationCurveDisplay
 
 if typing.TYPE_CHECKING:
     # Avoid errors in type checkers (e.g. mypy) for experimental estimators.
@@ -74,6 +75,7 @@ __all__ = [
     "permutation_test_score",
     "train_test_split",
     "validation_curve",
+    "ValidationCurveDisplay",
 ]
 
 
