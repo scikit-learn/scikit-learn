@@ -36,6 +36,15 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Feature| Added the class :class:`model_selection.ValidationCurveDisplay`
+  that allows to make easy plotting of validation curves obtained by the
+  function :func:`model_selection.validation_curve`.
+  :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+
 Code and Documentation Contributors
 -----------------------------------
 
