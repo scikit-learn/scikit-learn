@@ -71,7 +71,7 @@ The function :func:`validation_curve` can help in this case::
   >>> import numpy as np
   >>> from sklearn.model_selection import validation_curve
   >>> from sklearn.datasets import load_iris
-  >>> from sklearn.linear_model import Ridge
+  >>> from sklearn.svm import SVC
 
   >>> np.random.seed(0)
   >>> X, y = load_iris(return_X_y=True)
@@ -80,16 +80,16 @@ The function :func:`validation_curve` can help in this case::
   >>> X, y = X[indices], y[indices]
 
   >>> train_scores, valid_scores = validation_curve(
-  ...     Ridge(), X, y, param_name="alpha", param_range=np.logspace(-7, 3, 3),
-  ...     cv=5)
+  ...     SVC(kernel="linear"), X, y, param_name="C", param_range=np.logspace(-7, 3, 3),
+  ... )
   >>> train_scores
-  array([[0.93..., 0.94..., 0.92..., 0.91..., 0.92...],
-         [0.93..., 0.94..., 0.92..., 0.91..., 0.92...],
-         [0.51..., 0.52..., 0.49..., 0.47..., 0.49...]])
+  array([[0.90..., 0.94..., 0.91..., 0.89..., 0.92...],
+         [0.9... , 0.92..., 0.93..., 0.92..., 0.93...],
+         [0.97..., 1...   , 0.98..., 0.97..., 0.99...]])
   >>> valid_scores
-  array([[0.90..., 0.84..., 0.94..., 0.96..., 0.93...],
-         [0.90..., 0.84..., 0.94..., 0.96..., 0.93...],
-         [0.46..., 0.25..., 0.50..., 0.49..., 0.52...]])
+  array([[0.9..., 0.9... , 0.9... , 0.96..., 0.9... ],
+         [0.9..., 0.83..., 0.96..., 0.96..., 0.93...],
+         [1.... , 0.93..., 1....  , 1....  , 0.9... ]])
 
 If the training score and the validation score are both low, the estimator will
 be underfitting. If the training score is high and the validation score is low,
@@ -120,8 +120,7 @@ to :func:`validation_curve` to generate and plot the validation curve:
       X, y = load_iris(return_X_y=True)
       X, y = shuffle(X, y, random_state=0)
       ValidationCurveDisplay.from_estimator(
-         SVC(kernel="linear"), X, y, param_name="alpha",
-         param_range=np.logspace(-7, 3, 10))
+         SVC(kernel="linear"), X, y, param_name="C", param_range=np.logspace(-7, 3, 10))
 
 .. _learning_curve:
 
