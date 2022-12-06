@@ -516,6 +516,9 @@ cdef class NeighborsHeap:
     cdef ITYPE_t[:, ::1] indices
 
     def __cinit__(self):
+        # One-element arrays are used as placeholders to prevent
+        # any problem due to potential access to those attributes
+        # (e.g. assigning to NULL or a to value in another segment).
         self.distances = np.zeros((1, 1), dtype=DTYPE, order='C')
         self.indices = np.zeros((1, 1), dtype=ITYPE, order='C')
 
@@ -545,11 +548,11 @@ cdef class NeighborsHeap:
                    ITYPE_t i_val) nogil except -1:
         """push (val, i_val) into the given row"""
         return heap_push(
-            &self.distances[row, 0],
-            &self.indices[row, 0],
-            self.distances.shape[1],
-            val,
-            i_val,
+            values=&self.distances[row, 0],
+            indices-&self.indices[row, 0],
+            size=self.distances.shape[1],
+            val=val,
+            val_idx=i_val,
         )
 
     cdef int _sort(self) except -1:
@@ -557,9 +560,9 @@ cdef class NeighborsHeap:
         cdef ITYPE_t row
         for row in range(self.distances.shape[0]):
             _simultaneous_sort(
-                &self.distances[row, 0],
-                &self.indices[row, 0],
-                self.distances.shape[1],
+                dist=&self.distances[row, 0],
+                idx=&self.indices[row, 0],
+                size=self.distances.shape[1],
             )
         return 0
 
@@ -643,6 +646,9 @@ cdef class NodeHeap:
     cdef ITYPE_t n
 
     def __cinit__(self):
+        # A one-elements array is used as a placeholder to prevent
+        # any problem due to potential access to this attribute
+        # (e.g. assigning to NULL or a to value in another segment).
         self.data = np.zeros(1, dtype=NodeHeapData, order='C')
 
     def __init__(self, size_guess=100):
