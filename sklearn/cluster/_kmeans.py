@@ -54,7 +54,8 @@ from ._k_means_elkan import init_bounds_dense
 from ._k_means_elkan import init_bounds_sparse
 from ._k_means_elkan import elkan_iter_chunked_dense
 from ._k_means_elkan import elkan_iter_chunked_sparse
-from .._engine import get_engine_class
+from .._config import get_config
+from .._engine import get_engine_classes
 
 
 ###############################################################################
@@ -276,6 +277,10 @@ class KMeansCythonEngine:
 
     def __init__(self, estimator):
         self.estimator = estimator
+
+    def accepts(self, X, y=None, sample_weight=None):
+        # The default engine accepts everything
+        return True
 
     def prepare_fit(self, X, y=None, sample_weight=None):
         estimator = self.estimator
@@ -1511,11 +1516,25 @@ class KMeans(_BaseKMeans):
             )
             self._algorithm = "lloyd"
 
-    def _get_engine(self):
-        engine_class = get_engine_class(
-            "kmeans", default=KMeansCythonEngine, verbose=self.verbose
-        )
-        return engine_class(self)
+    def _get_engine(self, X, y=None, sample_weight=None, reset=False):
+        for provider, engine_class in get_engine_classes(
+            "kmeans", default=KMeansCythonEngine
+        ):
+            if hasattr(self, "_engine_provider") and not reset:
+                if self._engine_provider != provider:
+                    continue
+
+            engine = engine_class(self)
+            if engine.accepts(X, y=y):
+                self._engine_provider = provider
+                return engine
+
+        if hasattr(self, "_engine_provider"):
+            raise RuntimeError(
+                "Estimator was previously fitted with the"
+                f" {self._engine_provider} engine, but it is not available. Currently"
+                f" configured engines: {get_config()['engine_provider']}"
+            )
 
     def _warn_mkl_vcomp(self, n_active_threads):
         """Warn when vcomp and mkl are both present"""
@@ -1553,7 +1572,7 @@ class KMeans(_BaseKMeans):
             Fitted estimator.
         """
         self._validate_params()
-        engine = self._get_engine()
+        engine = self._get_engine(X, y, sample_weight, reset=True)
 
         X, y, sample_weight = engine.prepare_fit(
             X,
@@ -1632,7 +1651,7 @@ class KMeans(_BaseKMeans):
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
-        engine = self._get_engine()
+        engine = self._get_engine(X)
         X, sample_weight = engine.prepare_prediction(X, sample_weight)
         return engine.get_labels(X, sample_weight)
 
@@ -1659,7 +1678,7 @@ class KMeans(_BaseKMeans):
             X transformed in the new space.
         """
         self.fit(X, sample_weight=sample_weight)
-        engine = self._get_engine()
+        engine = self._get_engine(X, y=y, sample_weight=sample_weight)
         return self._transform(X, engine)
 
     def transform(self, X):
@@ -1680,7 +1699,7 @@ class KMeans(_BaseKMeans):
             X transformed in the new space.
         """
         check_is_fitted(self)
-        engine = self._get_engine()
+        engine = self._get_engine(X)
         X = engine.prepare_transform(X)
         return self._transform(X, engine)
 
@@ -1709,7 +1728,7 @@ class KMeans(_BaseKMeans):
             Opposite of the value of X on the K-means objective.
         """
         check_is_fitted(self)
-        engine = self._get_engine()
+        engine = self._get_engine(X, y=y, sample_weight=sample_weight)
 
         X, sample_weight = engine.prepare_prediction(X, sample_weight)
 

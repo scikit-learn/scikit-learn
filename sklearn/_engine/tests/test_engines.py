@@ -3,11 +3,15 @@ from collections import namedtuple
 import pytest
 
 from sklearn._engine import list_engine_provider_names
-from sklearn._engine import get_engine_class
+from sklearn._engine import get_engine_classes
 from sklearn._engine.base import _parse_entry_point
-from sklearn._engine.base import _get_engine_class
+from sklearn._engine.base import _get_engine_classes
 from sklearn._engine.base import EngineSpec
 from sklearn._config import config_context
+
+
+class FakeDefaultEngine:
+    pass
 
 
 class FakeEngine:
@@ -54,35 +58,14 @@ def test_get_engine_class_with_default():
     # Use config_context with an empty provider tuple to make sure that not provider
     # are available for test_missing_engine_name
     with config_context(engine_provider=()):
-        engine_class = get_engine_class("test_missing_engine_name", default=FakeEngine)
-    assert engine_class is FakeEngine
-
-
-def test_get_engine_class_for_invalid_provider():
-    expected_message = re.escape(
-        "Could not find any provider for the sklearn_engines entry point with"
-        " name(s): 'invalid_provider_name'"
-    )
-    with pytest.raises(RuntimeError, match=expected_message):
-        with config_context(engine_provider="invalid_provider_name"):
-            get_engine_class("kmeans")
-
-    expected_message = re.escape(
-        "Could not find any provider for the sklearn_engines entry point with"
-        " name(s): 'invalid_provider_name_1', 'invalid_provider_name_2'"
-    )
-    with pytest.raises(RuntimeError, match=expected_message):
-        with config_context(
-            engine_provider=("invalid_provider_name_1", "invalid_provider_name_2")
-        ):
-            get_engine_class("kmeans")
+        engine_classes = list(
+            get_engine_classes("test_missing_engine_name", default=FakeEngine)
+        )
+    assert engine_classes == [("default", FakeEngine)]
 
 
 def test_get_engine_class():
     engine_specs = (
-        EngineSpec("kmeans", "provider1", "sklearn.provider1.module", "KMeansEngine"),
-        EngineSpec("other", "provider1", "sklearn.provider1.module", "OtherEngine"),
-        EngineSpec("kmeans", "provider2", "sklearn.provider2.module", "KMeansEngine"),
         EngineSpec(
             "kmeans", "provider3", "sklearn._engine.tests.test_engines", "FakeEngine"
         ),
@@ -94,31 +77,62 @@ def test_get_engine_class():
         ),
     )
 
-    engine_class = _get_engine_class(
-        engine_name="missing",
-        provider_names=("provider1", "provider3"),
-        engine_specs=engine_specs,
-    )
-    assert engine_class is None
-
-    engine_class = _get_engine_class(
-        engine_name="kmeans",
-        provider_names=("provider3", "provider4", "provider1", "provider2"),
-        engine_specs=engine_specs,
-    )
-    assert engine_class == FakeEngine
-
-    engine_class = _get_engine_class(
-        engine_name="kmeans",
-        provider_names=("provider4", "provider3", "provider1", "provider2"),
-        engine_specs=engine_specs,
-    )
-    assert engine_class == FakeEngineHolder.NestedFakeEngine
-
-    with pytest.raises(ImportError, match=re.escape("sklearn.provider1")):
-        # Invalid imports are delayed until they are actually needed.
-        _get_engine_class(
-            engine_name="kmeans",
+    engine_class = list(
+        _get_engine_classes(
+            engine_name="missing",
             provider_names=("provider1", "provider3"),
             engine_specs=engine_specs,
+            default=FakeDefaultEngine,
         )
+    )
+    assert engine_class == [("default", FakeDefaultEngine)]
+
+    engine_class = list(
+        _get_engine_classes(
+            engine_name="kmeans",
+            provider_names=("provider3", "provider4"),
+            engine_specs=engine_specs,
+            default=FakeDefaultEngine,
+        )
+    )
+    assert engine_class == [
+        ("provider3", FakeEngine),
+        ("provider4", FakeEngineHolder.NestedFakeEngine),
+        ("default", FakeDefaultEngine),
+    ]
+
+    engine_class = list(
+        _get_engine_classes(
+            engine_name="kmeans",
+            provider_names=("provider4", "provider3"),
+            engine_specs=engine_specs,
+            default=FakeDefaultEngine,
+        )
+    )
+    assert engine_class == [
+        ("provider4", FakeEngineHolder.NestedFakeEngine),
+        ("provider3", FakeEngine),
+        ("default", FakeDefaultEngine),
+    ]
+
+    engine_specs = engine_specs + (
+        EngineSpec(
+            "kmeans",
+            "provider1",
+            "sklearn.provider1.somewhere",
+            "OtherEngine",
+        ),
+    )
+
+    # Invalid imports are delayed until they are actually needed.
+    engine_classes = _get_engine_classes(
+        engine_name="kmeans",
+        provider_names=("provider4", "provider3", "provider1"),
+        engine_specs=engine_specs,
+        default=FakeDefaultEngine,
+    )
+
+    next(engine_classes)
+    next(engine_classes)
+    with pytest.raises(ImportError, match=re.escape("sklearn.provider1")):
+        next(engine_classes)

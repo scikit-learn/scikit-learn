@@ -74,7 +74,7 @@ def list_engine_provider_names():
     return sorted({spec.provider_name for spec in _parse_entry_points()})
 
 
-def _get_engine_class(engine_name, provider_names, engine_specs, default=None):
+def _get_engine_classes(engine_name, provider_names, engine_specs, default):
     specs_by_provider = {}
     for spec in engine_specs:
         if spec.name != engine_name:
@@ -84,13 +84,12 @@ def _get_engine_class(engine_name, provider_names, engine_specs, default=None):
     for provider_name in provider_names:
         spec = specs_by_provider.get(provider_name)
         if spec is not None:
-            # XXX: should we return an instance or the class itself?
-            return spec.get_engine_class()
+            yield spec.provider_name, spec.get_engine_class()
 
-    return default
+    yield "default", default
 
 
-def get_engine_class(engine_name, default=None, verbose=False):
+def get_engine_classes(engine_name, default, verbose=False):
     provider_names = get_config()["engine_provider"]
     if isinstance(provider_names, str):
         provider_names = (provider_names,)
@@ -99,14 +98,17 @@ def get_engine_class(engine_name, default=None, verbose=False):
         # lru cache to hash them.
         provider_names = tuple(provider_names)
     if not provider_names:
-        return default
+        yield "default", default
+        return
     engine_specs = _parse_entry_points(provider_names=provider_names)
-    engine_class = _get_engine_class(
+    for provider, engine_class in _get_engine_classes(
         engine_name=engine_name,
         provider_names=provider_names,
         engine_specs=engine_specs,
         default=default,
-    )
-    if verbose:
-        print(f"Using engine {engine_class.__module__}.{engine_class.__qualname__} .")
-    return engine_class
+    ):
+        if verbose:
+            print(
+                f"trying engine {engine_class.__module__}.{engine_class.__qualname__} ."
+            )
+        yield provider, engine_class
