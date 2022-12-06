@@ -356,7 +356,7 @@ class KMeansCythonEngine:
         if tol == 0:
             return 0
         if sp.issparse(X):
-            _, variances, _ = mean_variance_axis(X, axis=0)
+            _, variances = mean_variance_axis(X, axis=0)
         else:
             variances = np.var(X, axis=0)
         return np.mean(variances) * tol
