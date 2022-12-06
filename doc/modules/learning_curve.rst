@@ -103,6 +103,25 @@ the parameter :math:`\gamma` of an SVM on the digits dataset.
    :align: center
    :scale: 50%
 
+If you intend to plot the validation curves only, the class
+:class:`~sklearn.model_selection.ValidationCurveDisplay` will be easier to use.
+You can use the method
+:meth:`~sklearn.model_selection.ValidationCurveDisplay.from_estimator` similarly
+to :func:`validation_curve` to generate and plot the validation curve:
+
+.. plot::
+   :context: close-figs
+   :align: center
+
+      from sklearn.datasets import load_iris
+      from sklearn.model_selection import ValidationCurveDisplay
+      from sklearn.svm import SVC
+      from sklearn.utils import shuffle
+      X, y = load_iris(return_X_y=True)
+      X, y = shuffle(X, y, random_state=0)
+      ValidationCurveDisplay.from_estimator(
+         SVC(kernel="linear"), X, y, param_name="alpha",
+         param_range=np.logspace(-7, 3, 10))
 
 .. _learning_curve:
 

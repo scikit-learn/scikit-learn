@@ -1244,6 +1244,7 @@ Visualization
    :template: class.rst
 
    model_selection.LearningCurveDisplay
+   model_selection.ValidationCurveDisplay
 
 .. _multiclass_ref:
 
