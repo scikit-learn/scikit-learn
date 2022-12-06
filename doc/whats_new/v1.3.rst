@@ -44,6 +44,11 @@ Changelog
   function :func:`model_selection.validation_curve`.
   :pr:`25120` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.pipeline`
+.......................
+- |Feature| :class:`pipeline.FeatureUnion` can now use indexing notation (e.g.
+  `feature_union["scalar"]`) to access transformers by name. :pr:`25093` by
+  `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
