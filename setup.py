@@ -198,6 +198,7 @@ class build_ext_subclass(build_ext):
         # To build with debug symbols run:
         # python setup.py build_ext -i --debug
         if not self.debug and os.name == "posix":
+            # Setting -g0 will strip symbols, reducing the binary size of extensions
             for e in self.extensions:
                 e.extra_compile_args += ["-g0"]
 
