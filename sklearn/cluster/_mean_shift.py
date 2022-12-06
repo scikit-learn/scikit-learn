@@ -179,8 +179,9 @@ def mean_shift(
         The number of jobs to use for the computation. The following tasks benefit
         from the parallelization:
 
-        - The search of nearest neighbors for bandwidth estimation and label assignments.
-          See the details in the docstring of the ``NearestNeighbors`` class.
+        - The search of nearest neighbors for bandwidth estimation and label
+          assignments. See the details in the docstring of the
+          ``NearestNeighbors`` class.
         - Hill-climbing optimization for all seeds.
 
         See :term:`Glossary <n_jobs>` for more details.
@@ -321,8 +322,9 @@ class MeanShift(ClusterMixin, BaseEstimator):
         The number of jobs to use for the computation. The following tasks benefit
         from the parallelization:
 
-        - The search of nearest neighbors for bandwidth estimation and label assignments.
-          See the details in the docstring of the ``NearestNeighbors`` class.
+        - The search of nearest neighbors for bandwidth estimation and label
+          assignments. See the details in the docstring of the
+          ``NearestNeighbors`` class.
         - Hill-climbing optimization for all seeds.
 
         See :term:`Glossary <n_jobs>` for more details.
