@@ -723,7 +723,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     y_score : ndarray of shape (n_samples,)
         Estimated probabilities or output of a decision function.
 
-    pos_label : int, float or str, default=None
+    pos_label : int, float, bool or str, default=None
         The label of the positive class.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -933,7 +933,7 @@ def roc_curve(
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
 
-    pos_label : int, float or str, default=None
+    pos_label : int, float, bool or str, default=None
         The label of the positive class.
         When ``pos_label=None``, if `y_true` is in {-1, 1} or {0, 1},
         ``pos_label`` is set to 1, otherwise an error will be raised.
