@@ -2,7 +2,6 @@ from libc cimport math
 import numpy as np
 cimport numpy as cnp
 
-cnp.import_array()
 
 
 cdef extern from "numpy/npy_math.h":
@@ -12,8 +11,9 @@ cdef extern from "numpy/npy_math.h":
 cdef float EPSILON_DBL = 1e-8
 cdef float PERPLEXITY_TOLERANCE = 1e-5
 
-cpdef cnp.ndarray[cnp.float32_t, ndim=2] _binary_search_perplexity(
-        cnp.ndarray[cnp.float32_t, ndim=2] sqdistances,
+# TODO: have this function support float32 and float64 and preserve inputs' dtypes.
+def _binary_search_perplexity(
+        const cnp.float32_t[:, :] sqdistances,
         float desired_perplexity,
         int verbose):
     """Binary search for sigmas of conditional Gaussians.
@@ -23,7 +23,7 @@ cpdef cnp.ndarray[cnp.float32_t, ndim=2] _binary_search_perplexity(
 
     Parameters
     ----------
-    sqdistances : array-like, shape (n_samples, n_neighbors)
+    sqdistances : ndarray of shape (n_samples, n_neighbors), dtype=np.float32
         Distances between training samples and their k nearest neighbors.
         When using the exact method, this is a square (n_samples, n_samples)
         distance matrix. The TSNE default metric is "euclidean" which is
@@ -37,7 +37,7 @@ cpdef cnp.ndarray[cnp.float32_t, ndim=2] _binary_search_perplexity(
 
     Returns
     -------
-    P : array, shape (n_samples, n_samples)
+    P : ndarray of shape (n_samples, n_samples), dtype=np.float64
         Probabilities of conditional Gaussian distributions p_i|j.
     """
     # Maximum number of binary search steps
@@ -63,7 +63,7 @@ cpdef cnp.ndarray[cnp.float32_t, ndim=2] _binary_search_perplexity(
 
     # This array is later used as a 32bit array. It has multiple intermediate
     # floating point additions that benefit from the extra precision
-    cdef cnp.ndarray[cnp.float64_t, ndim=2] P = np.zeros(
+    cdef cnp.float64_t[:, :] P = np.zeros(
         (n_samples, n_neighbors), dtype=np.float64)
 
     for i in range(n_samples):
@@ -118,4 +118,4 @@ cpdef cnp.ndarray[cnp.float32_t, ndim=2] _binary_search_perplexity(
     if verbose:
         print("[t-SNE] Mean sigma: %f"
               % np.mean(math.sqrt(n_samples / beta_sum)))
-    return P
+    return np.asarray(P)

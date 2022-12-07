@@ -9,8 +9,8 @@ import warnings
 import numpy as np
 from scipy import sparse
 
-from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
-from ..utils import check_array, is_scalar_nan
+from ..base import BaseEstimator, TransformerMixin, OneToOneFeatureMixin
+from ..utils import check_array, is_scalar_nan, _safe_indexing
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
 from ..utils._param_validation import Interval, StrOptions, Hidden
@@ -58,20 +58,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         X_columns = []
 
         for i in range(n_features):
-            Xi = self._get_feature(X, feature_idx=i)
+            Xi = _safe_indexing(X, indices=i, axis=1)
             Xi = check_array(
                 Xi, ensure_2d=False, dtype=None, force_all_finite=needs_validation
             )
             X_columns.append(Xi)
 
         return X_columns, n_samples, n_features
-
-    def _get_feature(self, X, feature_idx):
-        if hasattr(X, "iloc"):
-            # pandas dataframes
-            return X.iloc[:, feature_idx]
-        # numpy arrays, sparse arrays
-        return X[:, feature_idx]
 
     def _fit(
         self, X, handle_unknown="error", force_all_finite=True, return_counts=False
@@ -814,7 +807,7 @@ class OneHotEncoder(_BaseEncoder):
         if self.sparse != "deprecated":
             warnings.warn(
                 "`sparse` was renamed to `sparse_output` in version 1.2 and "
-                "will be removed in 1.4. `sparse_out` is ignored unless you "
+                "will be removed in 1.4. `sparse_output` is ignored unless you "
                 "leave `sparse` to its default value.",
                 FutureWarning,
             )
@@ -950,7 +943,7 @@ class OneHotEncoder(_BaseEncoder):
         ]
 
         # create resulting array of appropriate dtype
-        dt = np.find_common_type([cat.dtype for cat in transformed_features], [])
+        dt = np.result_type(*[cat.dtype for cat in transformed_features])
         X_tr = np.empty((n_samples, n_features), dtype=dt)
 
         j = 0
@@ -1055,7 +1048,7 @@ class OneHotEncoder(_BaseEncoder):
         return np.array(feature_names, dtype=object)
 
 
-class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
+class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     """
     Encode categorical features as an integer array.
 
@@ -1130,6 +1123,13 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
     OneHotEncoder : Performs a one-hot encoding of categorical features.
     LabelEncoder : Encodes target labels with values between 0 and
         ``n_classes-1``.
+
+    Notes
+    -----
+    With a high proportion of `nan` values, inferring categories becomes slow with
+    Python versions before 3.10. The handling of `nan` values was improved
+    from Python 3.10 onwards, (c.f.
+    `bpo-43475 <https://github.com/python/cpython/issues/87641>`_).
 
     Examples
     --------
@@ -1346,7 +1346,7 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
             raise ValueError(msg.format(n_features, X.shape[1]))
 
         # create resulting array of appropriate dtype
-        dt = np.find_common_type([cat.dtype for cat in self.categories_], [])
+        dt = np.result_type(*[cat.dtype for cat in self.categories_])
         X_tr = np.empty((n_samples, n_features), dtype=dt)
 
         found_unknown = {}

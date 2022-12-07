@@ -25,18 +25,18 @@ G = np.dot(X.T, X)
 Xy = np.dot(X.T, y)
 n_samples = y.size
 
-# FIXME: 'normalize' to be removed in 1.4
+# TODO(1.4): 'normalize' to be removed
 filterwarnings_normalize = pytest.mark.filterwarnings(
-    "ignore:The default of 'normalize'"
+    "ignore:'normalize' was deprecated"
 )
 
 
-# FIXME: 'normalize' to be removed in 1.4
+# TODO(1.4) 'normalize' to be removed
 @pytest.mark.parametrize(
     "LeastAngleModel", [Lars, LassoLars, LarsCV, LassoLarsCV, LassoLarsIC]
 )
 @pytest.mark.parametrize(
-    "normalize, n_warnings", [(True, 0), (False, 0), ("deprecated", 1)]
+    "normalize, n_warnings", [(True, 1), (False, 1), ("deprecated", 0)]
 )
 def test_assure_warning_when_normalize(LeastAngleModel, normalize, n_warnings):
     # check that we issue a FutureWarning when normalize was set
@@ -138,7 +138,7 @@ def test_all_precomputed():
             assert_array_almost_equal(expected, got)
 
 
-# FIXME: 'normalize' to be removed in 1.4
+# TODO(1.4): 'normalize' to be removed
 @filterwarnings_normalize
 @pytest.mark.filterwarnings("ignore: `rcond` parameter will change")
 # numpy deprecation
@@ -252,7 +252,6 @@ def test_singular_matrix():
     assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0]])
 
 
-@filterwarnings_normalize
 def test_rank_deficient_design():
     # consistency test that checks that LARS Lasso is handling rank
     # deficient input data (with n_features < rank) in the same way
@@ -261,7 +260,7 @@ def test_rank_deficient_design():
     for X in ([[5, 0], [0, 5], [10, 10]], [[10, 10, 0], [1e-32, 0, 0], [0, 0, 1]]):
         # To be able to use the coefs to compute the objective function,
         # we need to turn off normalization
-        lars = linear_model.LassoLars(0.1, normalize=False)
+        lars = linear_model.LassoLars(0.1)
         coef_lars_ = lars.fit(X, y).coef_
         obj_lars = 1.0 / (2.0 * 3.0) * linalg.norm(
             y - np.dot(X, coef_lars_)
@@ -274,7 +273,6 @@ def test_rank_deficient_design():
         assert obj_lars < obj_cd * (1.0 + 1e-8)
 
 
-@filterwarnings_normalize
 def test_lasso_lars_vs_lasso_cd():
     # Test that LassoLars and Lasso using coordinate descent give the
     # same results.
@@ -292,7 +290,7 @@ def test_lasso_lars_vs_lasso_cd():
 
     # similar test, with the classifiers
     for alpha in np.linspace(1e-2, 1 - 1e-2, 20):
-        clf1 = linear_model.LassoLars(alpha=alpha, normalize=False).fit(X, y)
+        clf1 = linear_model.LassoLars(alpha=alpha).fit(X, y)
         clf2 = linear_model.Lasso(alpha=alpha, tol=1e-8).fit(X, y)
         err = linalg.norm(clf1.coef_ - clf2.coef_)
         assert err < 1e-3
@@ -387,7 +385,6 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     assert_array_almost_equal(lars_coef, lasso_coef2, decimal=1)
 
 
-@filterwarnings_normalize
 def test_lasso_lars_vs_lasso_cd_ill_conditioned2():
     # Create an ill-conditioned situation in which the LARS has to go
     # far in the path to converge, and check that LARS and coordinate
@@ -404,7 +401,7 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned2():
             y - np.dot(X, coef)
         ) ** 2 + alpha * linalg.norm(coef, 1)
 
-    lars = linear_model.LassoLars(alpha=alpha, normalize=False)
+    lars = linear_model.LassoLars(alpha=alpha)
     warning_message = "Regressors in active set degenerate."
     with pytest.warns(ConvergenceWarning, match=warning_message):
         lars.fit(X, y)
@@ -489,7 +486,6 @@ def test_lars_cv():
     assert not hasattr(lars_cv, "n_nonzero_coefs")
 
 
-@filterwarnings_normalize
 def test_lars_cv_max_iter(recwarn):
     warnings.simplefilter("always")
     with np.errstate(divide="raise", invalid="raise"):
@@ -499,20 +495,18 @@ def test_lars_cv_max_iter(recwarn):
         x = rng.randn(len(y))
         X = diabetes.data
         X = np.c_[X, x, x]  # add correlated features
+        X = StandardScaler().fit_transform(X)
         lars_cv = linear_model.LassoLarsCV(max_iter=5, cv=5)
         lars_cv.fit(X, y)
+
     # Check that there is no warning in general and no ConvergenceWarning
     # in particular.
     # Materialize the string representation of the warning to get a more
     # informative error message in case of AssertionError.
     recorded_warnings = [str(w) for w in recwarn]
-    # FIXME: when 'normalize' is removed set exchange below for:
-    # assert len(recorded_warnings) == []
-    assert len(recorded_warnings) == 1
-    assert "normalize' will be set to False in version 1.2" in recorded_warnings[0]
+    assert len(recorded_warnings) == 0
 
 
-@filterwarnings_normalize
 def test_lasso_lars_ic():
     # Test the LassoLarsIC object by checking that
     # - some good features are selected.
@@ -523,6 +517,7 @@ def test_lasso_lars_ic():
     rng = np.random.RandomState(42)
     X = diabetes.data
     X = np.c_[X, rng.randn(X.shape[0], 5)]  # add 5 bad features
+    X = StandardScaler().fit_transform(X)
     lars_bic.fit(X, y)
     lars_aic.fit(X, y)
     nonzero_bic = np.where(lars_bic.coef_)[0]
@@ -604,7 +599,6 @@ def test_estimatorclasses_positive_constraint():
         assert min(estimator.coef_) >= 0
 
 
-@filterwarnings_normalize
 def test_lasso_lars_vs_lasso_cd_positive():
     # Test that LassoLars and Lasso using coordinate descent give the
     # same results when using the positive option
@@ -637,7 +631,7 @@ def test_lasso_lars_vs_lasso_cd_positive():
 
     for alpha in np.linspace(6e-1, 1 - 1e-2, 20):
         clf1 = linear_model.LassoLars(
-            fit_intercept=False, alpha=alpha, normalize=False, positive=True
+            fit_intercept=False, alpha=alpha, positive=True
         ).fit(X, y)
         clf2 = linear_model.Lasso(
             fit_intercept=False, alpha=alpha, tol=1e-8, positive=True
@@ -657,13 +651,9 @@ def test_lasso_lars_vs_lasso_cd_positive():
         assert error < 0.01
 
 
-@filterwarnings_normalize
 def test_lasso_lars_vs_R_implementation():
     # Test that sklearn LassoLars implementation agrees with the LassoLars
-    # implementation available in R (lars library) under the following
-    # scenarios:
-    # 1) fit_intercept=False and normalize=False
-    # 2) fit_intercept=True and normalize=True
+    # implementation available in R (lars library) when fit_intercept=False.
 
     # Let's generate the data used in the bug report 7778
     y = np.array([-6.45006793, -3.51251449, -8.52445396, 6.12277822, -19.42109366])
@@ -679,11 +669,6 @@ def test_lasso_lars_vs_R_implementation():
 
     X = x.T
 
-    ###########################################################################
-    # Scenario 1: Let's compare R vs sklearn when fit_intercept=False and
-    # normalize=False
-    ###########################################################################
-    #
     # The R result was obtained using the following code:
     #
     # library(lars)
@@ -746,60 +731,11 @@ def test_lasso_lars_vs_R_implementation():
         ]
     )
 
-    model_lasso_lars = linear_model.LassoLars(
-        alpha=0, fit_intercept=False, normalize=False
-    )
+    model_lasso_lars = linear_model.LassoLars(alpha=0, fit_intercept=False)
     model_lasso_lars.fit(X, y)
     skl_betas = model_lasso_lars.coef_path_
 
     assert_array_almost_equal(r, skl_betas, decimal=12)
-    ###########################################################################
-
-    ###########################################################################
-    # Scenario 2: Let's compare R vs sklearn when fit_intercept=True and
-    # normalize=True
-    #
-    # Note: When normalize is equal to True, R returns the coefficients in
-    # their original units, that is, they are rescaled back, whereas sklearn
-    # does not do that, therefore, we need to do this step before comparing
-    # their results.
-    ###########################################################################
-    #
-    # The R result was obtained using the following code:
-    #
-    # library(lars)
-    # model_lasso_lars2 = lars(X, t(y), type="lasso", intercept=TRUE,
-    #                           trace=TRUE, normalize=TRUE)
-    # r2 = t(model_lasso_lars2$beta)
-
-    r2 = np.array(
-        [
-            [0, 0, 0, 0, 0],
-            [0, 0, 0, 8.371887668009453, 19.463768371044026],
-            [0, 0, 0, 0, 9.901611055290553],
-            [
-                0,
-                7.495923132833733,
-                9.245133544334507,
-                17.389369207545062,
-                26.971656815643499,
-            ],
-            [0, 0, -1.569380717440311, -5.924804108067312, -7.996385265061972],
-        ]
-    )
-
-    model_lasso_lars2 = linear_model.LassoLars(alpha=0, normalize=True)
-    model_lasso_lars2.fit(X, y)
-    skl_betas2 = model_lasso_lars2.coef_path_
-
-    # Let's rescale back the coefficients returned by sklearn before comparing
-    # against the R result (read the note above)
-    temp = X - np.mean(X, axis=0)
-    normx = np.sqrt(np.sum(temp**2, axis=0))
-    skl_betas2 /= normx[:, np.newaxis]
-
-    assert_array_almost_equal(r2, skl_betas2, decimal=12)
-    ###########################################################################
 
 
 @filterwarnings_normalize
@@ -941,9 +877,7 @@ def test_lassolarsic_alpha_selection(criterion):
     (reference [1] in LassoLarsIC) In this example, only 7 features should be
     selected.
     """
-    model = make_pipeline(
-        StandardScaler(), LassoLarsIC(criterion=criterion, normalize=False)
-    )
+    model = make_pipeline(StandardScaler(), LassoLarsIC(criterion=criterion))
     model.fit(X, y)
 
     best_alpha_selected = np.argmin(model[-1].criterion_)
@@ -959,9 +893,7 @@ def test_lassolarsic_noise_variance(fit_intercept):
         n_samples=10, n_features=11 - fit_intercept, random_state=rng
     )
 
-    model = make_pipeline(
-        StandardScaler(), LassoLarsIC(fit_intercept=fit_intercept, normalize=False)
-    )
+    model = make_pipeline(StandardScaler(), LassoLarsIC(fit_intercept=fit_intercept))
 
     err_msg = (
         "You are using LassoLarsIC in the case where the number of samples is smaller"

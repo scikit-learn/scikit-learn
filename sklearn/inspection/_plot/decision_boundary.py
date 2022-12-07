@@ -6,7 +6,11 @@ from ...preprocessing import LabelEncoder
 from ...utils import check_matplotlib_support
 from ...utils import _safe_indexing
 from ...base import is_regressor
-from ...utils.validation import check_is_fitted, _is_arraylike_not_scalar
+from ...utils.validation import (
+    check_is_fitted,
+    _is_arraylike_not_scalar,
+    _num_features,
+)
 
 
 def _check_boundary_response_method(estimator, response_method):
@@ -91,7 +95,7 @@ class DecisionBoundaryDisplay:
     surface_ : matplotlib `QuadContourSet` or `QuadMesh`
         If `plot_method` is 'contour' or 'contourf', `surface_` is a
         :class:`QuadContourSet <matplotlib.contour.QuadContourSet>`. If
-        `plot_method is `pcolormesh`, `surface_` is a
+        `plot_method` is 'pcolormesh', `surface_` is a
         :class:`QuadMesh <matplotlib.collections.QuadMesh>`.
 
     ax_ : matplotlib Axes
@@ -148,7 +152,7 @@ class DecisionBoundaryDisplay:
             to the following matplotlib documentation for details:
             :func:`contourf <matplotlib.pyplot.contourf>`,
             :func:`contour <matplotlib.pyplot.contour>`,
-            :func:`pcolomesh <matplotlib.pyplot.pcolomesh>`.
+            :func:`pcolormesh <matplotlib.pyplot.pcolormesh>`.
 
         ax : Matplotlib axes, default=None
             Axes object to plot on. If `None`, a new figure and axes is
@@ -234,7 +238,7 @@ class DecisionBoundaryDisplay:
             to the following matplotlib documentation for details:
             :func:`contourf <matplotlib.pyplot.contourf>`,
             :func:`contour <matplotlib.pyplot.contour>`,
-            :func:`pcolomesh <matplotlib.pyplot.pcolomesh>`.
+            :func:`pcolormesh <matplotlib.pyplot.pcolormesh>`.
 
         response_method : {'auto', 'predict_proba', 'decision_function', \
                 'predict'}, default='auto'
@@ -314,6 +318,12 @@ class DecisionBoundaryDisplay:
             raise ValueError(
                 f"plot_method must be one of {available_methods}. "
                 f"Got {plot_method} instead."
+            )
+
+        num_features = _num_features(X)
+        if num_features != 2:
+            raise ValueError(
+                f"n_features must be equal to 2. Got {num_features} instead."
             )
 
         x0, x1 = _safe_indexing(X, 0, axis=1), _safe_indexing(X, 1, axis=1)
