@@ -16,7 +16,7 @@ import numpy as np
 from scipy import sparse
 from joblib import Parallel
 
-from .base import clone, TransformerMixin
+from .base import clone, TransformerMixin, _ParamValidationMixin
 from .preprocessing import FunctionTransformer
 from .utils._estimator_html_repr import _VisualBlock
 from .utils.metaestimators import available_if
@@ -28,6 +28,7 @@ from .utils._tags import _safe_tags
 from .utils.validation import check_memory
 from .utils.validation import check_is_fitted
 from .utils import check_pandas_support
+from .utils._param_validation import HasMethods
 from .utils._set_output import _safe_set_output, _get_output_config
 from .utils.fixes import delayed
 from .exceptions import NotFittedError
@@ -50,7 +51,7 @@ def _final_estimator_has(attr):
     return check
 
 
-class Pipeline(_BaseComposition):
+class Pipeline(_BaseComposition, _ParamValidationMixin):
     """
     Pipeline of transforms with a final estimator.
 
@@ -142,6 +143,12 @@ class Pipeline(_BaseComposition):
 
     # BaseEstimator interface
     _required_parameters = ["steps"]
+
+    _parameter_constraints: dict = {
+        "steps": "no_validation",  # validated in `_validate_steps`
+        "memory": [None, str, HasMethods(["cache"])],
+        "verbose": ["boolean"],
+    }
 
     def __init__(self, steps, *, memory=None, verbose=False):
         self.steps = steps
@@ -398,6 +405,7 @@ class Pipeline(_BaseComposition):
         self : object
             Pipeline with fitted steps.
         """
+        self._validate_params()
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
         with _print_elapsed_time("Pipeline", self._log_message(len(self.steps) - 1)):
@@ -434,6 +442,7 @@ class Pipeline(_BaseComposition):
         Xt : ndarray of shape (n_samples, n_transformed_features)
             Transformed samples.
         """
+        self._validate_params()
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
 
@@ -510,6 +519,7 @@ class Pipeline(_BaseComposition):
         y_pred : ndarray
             Result of calling `fit_predict` on the final estimator.
         """
+        self._validate_params()
         fit_params_steps = self._check_fit_params(**fit_params)
         Xt = self._fit(X, y, **fit_params_steps)
 
