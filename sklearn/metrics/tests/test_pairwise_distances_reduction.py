@@ -1,5 +1,6 @@
 import itertools
 import re
+import warnings
 from collections import defaultdict
 
 import numpy as np
@@ -620,18 +621,43 @@ def test_argkmin_factory_method_wrong_usages():
     with pytest.raises(ValueError, match="ndarray is not C-contiguous"):
         ArgKmin.compute(X=np.asfortranarray(X), Y=Y, k=k, metric=metric)
 
+    # A UserWarning must be raised in this case.
     unused_metric_kwargs = {"p": 3}
 
-    message = (
-        r"Some metric_kwargs have been passed \({'p': 3}\) but aren't usable for this"
-        r" case \("
-        r"EuclideanArgKmin64."
-    )
+    message = r"Some metric_kwargs have been passed \({'p': 3}\) but"
 
     with pytest.warns(UserWarning, match=message):
         ArgKmin.compute(
             X=X, Y=Y, k=k, metric=metric, metric_kwargs=unused_metric_kwargs
         )
+
+    # A UserWarning must be raised in this case.
+    metric_kwargs = {
+        "p": 3,  # unused
+        "Y_norm_squared": sqeuclidean_row_norms(Y, num_threads=2),
+    }
+
+    message = r"Some metric_kwargs have been passed \({'p': 3, 'Y_norm_squared'"
+
+    with pytest.warns(UserWarning, match=message):
+        ArgKmin.compute(X=X, Y=Y, k=k, metric=metric, metric_kwargs=metric_kwargs)
+
+    # No user warning must be raised in this case.
+    metric_kwargs = {
+        "X_norm_squared": sqeuclidean_row_norms(X, num_threads=2),
+    }
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", category=UserWarning)
+        ArgKmin.compute(X=X, Y=Y, k=k, metric=metric, metric_kwargs=metric_kwargs)
+
+    # No user warning must be raised in this case.
+    metric_kwargs = {
+        "X_norm_squared": sqeuclidean_row_norms(X, num_threads=2),
+        "Y_norm_squared": sqeuclidean_row_norms(Y, num_threads=2),
+    }
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", category=UserWarning)
+        ArgKmin.compute(X=X, Y=Y, k=k, metric=metric, metric_kwargs=metric_kwargs)
 
 
 def test_radius_neighbors_factory_method_wrong_usages():
@@ -683,14 +709,36 @@ def test_radius_neighbors_factory_method_wrong_usages():
 
     unused_metric_kwargs = {"p": 3}
 
-    message = (
-        r"Some metric_kwargs have been passed \({'p': 3}\) but aren't usable for this"
-        r" case \(EuclideanRadiusNeighbors64"
-    )
+    # A UserWarning must be raised in this case.
+    message = r"Some metric_kwargs have been passed \({'p': 3}\) but"
 
     with pytest.warns(UserWarning, match=message):
         RadiusNeighbors.compute(
             X=X, Y=Y, radius=radius, metric=metric, metric_kwargs=unused_metric_kwargs
+        )
+
+    # A UserWarning must be raised in this case.
+    metric_kwargs = {
+        "p": 3,  # unused
+        "Y_norm_squared": sqeuclidean_row_norms(Y, num_threads=2),
+    }
+
+    message = r"Some metric_kwargs have been passed \({'p': 3, 'Y_norm_squared'"
+
+    with pytest.warns(UserWarning, match=message):
+        RadiusNeighbors.compute(
+            X=X, Y=Y, radius=radius, metric=metric, metric_kwargs=metric_kwargs
+        )
+
+    # No user warning must be raised in this case.
+    metric_kwargs = {
+        "X_norm_squared": sqeuclidean_row_norms(X, num_threads=2),
+        "Y_norm_squared": sqeuclidean_row_norms(Y, num_threads=2),
+    }
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", category=UserWarning)
+        RadiusNeighbors.compute(
+            X=X, Y=Y, radius=radius, metric=metric, metric_kwargs=metric_kwargs
         )
 
 
