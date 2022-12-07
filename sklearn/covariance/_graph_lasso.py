@@ -737,29 +737,6 @@ class GraphicalLassoCV(BaseGraphicalLasso):
 
             .. versionadded:: 1.0
 
-        split(k)_score : ndarray of shape (n_alphas,)
-            Log-likelihood score on left-out data across (k)th fold.
-
-            .. deprecated:: 1.0
-                `split(k)_score` is deprecated in 1.0 and will be removed in 1.2.
-                Use `split(k)_test_score` instead.
-
-        mean_score : ndarray of shape (n_alphas,)
-            Mean of scores over the folds.
-
-            .. deprecated:: 1.0
-                `mean_score` is deprecated in 1.0 and will be removed in 1.2.
-                Use `mean_test_score` instead.
-
-        std_score : ndarray of shape (n_alphas,)
-            Standard deviation of scores over the folds.
-
-            .. deprecated:: 1.0
-                `std_score` is deprecated in 1.0 and will be removed in 1.2.
-                Use `std_test_score` instead.
-
-        .. versionadded:: 0.24
-
     n_iter_ : int
         Number of iterations run for the optimal alpha.
 
