@@ -16,7 +16,7 @@ import numpy as np
 from scipy import sparse
 from joblib import Parallel
 
-from .base import clone, TransformerMixin, _ParamValidationMixin
+from .base import clone, TransformerMixin
 from .preprocessing import FunctionTransformer
 from .utils._estimator_html_repr import _VisualBlock
 from .utils.metaestimators import available_if
@@ -51,7 +51,7 @@ def _final_estimator_has(attr):
     return check
 
 
-class Pipeline(_BaseComposition, _ParamValidationMixin):
+class Pipeline(_BaseComposition):
     """
     Pipeline of transforms with a final estimator.
 

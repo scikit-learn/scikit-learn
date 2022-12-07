@@ -109,29 +109,7 @@ def clone(estimator, *, safe=True):
     return new_object
 
 
-class _ParamValidationMixin:
-    """Mixin class for all estimators in scikit-learn that validate their parameters.
-
-    This mixin gives access to the `_validate_params` method, which is called
-    at `fit` at the beginning of the `fit` method.
-    """
-
-    def _validate_params(self):
-        """Validate types and values of constructor parameters
-
-        The expected type and values must be defined in the `_parameter_constraints`
-        class attribute, which is a dictionary `param_name: list of constraints`. See
-        the docstring of `validate_parameter_constraints` for a description of the
-        accepted constraints.
-        """
-        validate_parameter_constraints(
-            self._parameter_constraints,
-            self.get_params(deep=False),
-            caller_name=self.__class__.__name__,
-        )
-
-
-class BaseEstimator(_ParamValidationMixin):
+class BaseEstimator:
     """Base class for all estimators in scikit-learn.
 
     Notes
@@ -580,6 +558,20 @@ class BaseEstimator(_ParamValidationMixin):
             self._check_n_features(X, reset=reset)
 
         return out
+
+    def _validate_params(self):
+        """Validate types and values of constructor parameters
+
+        The expected type and values must be defined in the `_parameter_constraints`
+        class attribute, which is a dictionary `param_name: list of constraints`. See
+        the docstring of `validate_parameter_constraints` for a description of the
+        accepted constraints.
+        """
+        validate_parameter_constraints(
+            self._parameter_constraints,
+            self.get_params(deep=False),
+            caller_name=self.__class__.__name__,
+        )
 
     @property
     def _repr_html_(self):
