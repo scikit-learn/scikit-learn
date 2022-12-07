@@ -195,12 +195,18 @@ class build_ext_subclass(build_ext):
                 e.extra_compile_args += openmp_flag
                 e.extra_link_args += openmp_flag
 
-        # To build with debug symbols run:
-        # python setup.py build_ext -i --debug
-        if not self.debug and os.name == "posix":
-            # Setting -g0 will strip symbols, reducing the binary size of extensions
+        build_with_debug_symbols = (
+            os.environ.get("SKLEARN_BUILD_ENABLE_DEBUG_SYMBOLS", "0") != "0"
+        )
+        if os.name == "posix":
+            if build_with_debug_symbols:
+                debug_compile_arg = ["-g"]
+            else:
+                # Setting -g0 will strip symbols, reducing the binary size of extensions
+                debug_compile_arg = ["-g0"]
+
             for e in self.extensions:
-                e.extra_compile_args += ["-g0"]
+                e.extra_compile_args += debug_compile_arg
 
         build_ext.build_extensions(self)
 
