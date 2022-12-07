@@ -741,6 +741,16 @@ def test_radius_neighbors_factory_method_wrong_usages():
             X=X, Y=Y, radius=radius, metric=metric, metric_kwargs=metric_kwargs
         )
 
+    # No user warning must be raised in this case.
+    metric_kwargs = {
+        "X_norm_squared": sqeuclidean_row_norms(X, num_threads=2),
+    }
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", category=UserWarning)
+        RadiusNeighbors.compute(
+            X=X, Y=Y, radius=radius, metric=metric, metric_kwargs=metric_kwargs
+        )
+
 
 @pytest.mark.parametrize(
     "n_samples_X, n_samples_Y", [(100, 100), (500, 100), (100, 500)]
