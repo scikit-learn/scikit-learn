@@ -15,6 +15,7 @@ import numpy as np
 from . import __version__
 from ._config import get_config
 from .utils import _IS_32BIT
+from .utils._set_output import _SetOutputMixin
 from .utils._tags import (
     _DEFAULT_TAGS,
 )
@@ -98,6 +99,13 @@ def clone(estimator, *, safe=True):
                 "Cannot clone object %s, as the constructor "
                 "either does not set or modifies parameter %s" % (estimator, name)
             )
+
+    # _sklearn_output_config is used by `set_output` to configure the output
+    # container of an estimator.
+    if hasattr(estimator, "_sklearn_output_config"):
+        new_object._sklearn_output_config = copy.deepcopy(
+            estimator._sklearn_output_config
+        )
     return new_object
 
 
@@ -409,8 +417,7 @@ class BaseEstimator:
             fitted_feature_names != X_feature_names
         ):
             message = (
-                "The feature names should match those that were "
-                "passed during fit. Starting version 1.2, an error will be raised.\n"
+                "The feature names should match those that were passed during fit.\n"
             )
             fitted_feature_names_set = set(fitted_feature_names)
             X_feature_names_set = set(X_feature_names)
@@ -441,7 +448,7 @@ class BaseEstimator:
                     "Feature names must be in the same order as they were in fit.\n"
                 )
 
-            warnings.warn(message, FutureWarning)
+            raise ValueError(message)
 
     def _validate_data(
         self,
@@ -798,8 +805,17 @@ class BiclusterMixin:
         return data[row_ind[:, np.newaxis], col_ind]
 
 
-class TransformerMixin:
-    """Mixin class for all transformers in scikit-learn."""
+class TransformerMixin(_SetOutputMixin):
+    """Mixin class for all transformers in scikit-learn.
+
+    If :term:`get_feature_names_out` is defined, then `BaseEstimator` will
+    automatically wrap `transform` and `fit_transform` to follow the `set_output`
+    API. See the :ref:`developer_api_set_output` for details.
+
+    :class:`base.OneToOneFeatureMixin` and
+    :class:`base.ClassNamePrefixFeaturesOutMixin` are helpful mixins for
+    defining :term:`get_feature_names_out`.
+    """
 
     def fit_transform(self, X, y=None, **fit_params):
         """
@@ -835,11 +851,11 @@ class TransformerMixin:
             return self.fit(X, y, **fit_params).transform(X)
 
 
-class _OneToOneFeatureMixin:
+class OneToOneFeatureMixin:
     """Provides `get_feature_names_out` for simple transformers.
 
-    Assumes there's a 1-to-1 correspondence between input features
-    and output features.
+    This mixin assumes there's a 1-to-1 correspondence between input features
+    and output features, such as :class:`~preprocessing.StandardScaler`.
     """
 
     def get_feature_names_out(self, input_features=None):
@@ -865,14 +881,25 @@ class _OneToOneFeatureMixin:
         return _check_feature_names_in(self, input_features)
 
 
-class _ClassNamePrefixFeaturesOutMixin:
+class ClassNamePrefixFeaturesOutMixin:
     """Mixin class for transformers that generate their own names by prefixing.
 
-    Assumes that `_n_features_out` is defined for the estimator.
+    This mixin is useful when the transformer needs to generate its own feature
+    names out, such as :class:`~decomposition.PCA`. For example, if
+    :class:`~decomposition.PCA` outputs 3 features, then the generated feature
+    names out are: `["pca0", "pca1", "pca2"]`.
+
+    This mixin assumes that a `_n_features_out` attribute is defined when the
+    transformer is fitted. `_n_features_out` is the number of output features
+    that the transformer will return in `transform` of `fit_transform`.
     """
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
+
+        The feature names out will prefixed by the lowercased class name. For
+        example, if the transformer outputs 3 features, then the feature names
+        out are: `["class_name0", "class_name1", "class_name2"]`.
 
         Parameters
         ----------
