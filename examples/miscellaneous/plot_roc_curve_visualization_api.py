@@ -22,7 +22,7 @@ from sklearn.datasets import load_wine
 from sklearn.model_selection import train_test_split
 
 X, y = load_wine(return_X_y=True)
-y = y == 2
+y = (y == 2).astype(int)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 svc = SVC(random_state=42)
