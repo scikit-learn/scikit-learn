@@ -331,9 +331,9 @@ cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
     ):
         if (
             metric_kwargs is not None and
-            len(metric_kwargs) > 0 and (
-                "Y_norm_squared" not in metric_kwargs or
-                "X_norm_squared" not in metric_kwargs
+            len(metric_kwargs) > 0 and not (
+                "Y_norm_squared" in metric_kwargs or
+                "X_norm_squared" in metric_kwargs
             )
         ):
             warnings.warn(
