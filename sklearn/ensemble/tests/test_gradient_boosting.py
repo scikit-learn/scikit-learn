@@ -27,6 +27,7 @@ from sklearn.utils._mocking import NoSampleWeightWrapper
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils._param_validation import InvalidParameterError
 from sklearn.exceptions import DataConversionWarning
 from sklearn.exceptions import NotFittedError
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -1329,14 +1330,14 @@ def test_gradient_boosting_with_init_pipeline():
 
     # Passing sample_weight to a pipeline raises a ValueError. This test makes
     # sure we make the distinction between ValueError raised by a pipeline that
-    # was passed sample_weight, and a ValueError raised by a regular estimator
-    # whose input checking failed.
+    # was passed sample_weight, and a InvalidParameterError raised by a regular
+    # estimator whose input checking failed.
     invalid_nu = 1.5
     err_msg = (
         "The 'nu' parameter of NuSVR must be a float in the"
         f" range (0.0, 1.0]. Got {invalid_nu} instead."
     )
-    with pytest.raises(ValueError, match=re.escape(err_msg)):
+    with pytest.raises(InvalidParameterError, match=re.escape(err_msg)):
         # Note that NuSVR properly supports sample_weight
         init = NuSVR(gamma="auto", nu=invalid_nu)
         gb = GradientBoostingRegressor(init=init)

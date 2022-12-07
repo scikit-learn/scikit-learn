@@ -61,6 +61,7 @@ from ..utils.fixes import parse_version
 from ..utils.validation import check_is_fitted
 from ..utils._param_validation import make_constraint
 from ..utils._param_validation import generate_invalid_param_val
+from ..utils._param_validation import InvalidParameterError
 
 from . import shuffle
 from ._tags import (
@@ -4082,7 +4083,7 @@ def check_param_validation(name, estimator_orig):
                 # the method is not accessible with the current set of parameters
                 continue
 
-            with raises(ValueError, match=match, err_msg=err_msg):
+            with raises(InvalidParameterError, match=match, err_msg=err_msg):
                 if any(
                     isinstance(X_type, str) and X_type.endswith("labels")
                     for X_type in _safe_tags(estimator, key="X_types")
@@ -4110,7 +4111,7 @@ def check_param_validation(name, estimator_orig):
                     # the method is not accessible with the current set of parameters
                     continue
 
-                with raises(ValueError, match=match, err_msg=err_msg):
+                with raises(InvalidParameterError, match=match, err_msg=err_msg):
                     if any(
                         X_type.endswith("labels")
                         for X_type in _safe_tags(estimator, key="X_types")

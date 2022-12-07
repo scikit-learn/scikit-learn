@@ -38,10 +38,15 @@ Changelog
 
 :mod:`sklearn.ensemble`
 .......................
-
 - |Feature| :class:`ensemble.GradientBoostingClassifier` now exposes
   out-of-bag scores via the `oob_scores_` or `oob_score_` attributes.
   :pr:`24882` by :user:`Ashwin Mathur <awinml>`.
+
+:mod:`sklearn.pipeline`
+.......................
+- |Feature| :class:`pipeline.FeatureUnion` can now use indexing notation (e.g.
+  `feature_union["scalar"]`) to access transformers by name. :pr:`25093` by
+  `Thomas Fan`_.
 
 Code and Documentation Contributors
 -----------------------------------
