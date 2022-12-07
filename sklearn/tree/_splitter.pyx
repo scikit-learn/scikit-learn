@@ -289,7 +289,7 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t i
         cdef SIZE_t current_end
         cdef SIZE_t n_missing
-        cdef SIZE_t directions
+        cdef SIZE_t n_searches
         cdef SIZE_t end_non_missing
         cdef SIZE_t n_left, n_right
         cdef bint missing_go_to_left
@@ -351,7 +351,7 @@ cdef class BestSplitter(BaseDenseSplitter):
             current.feature = features[f_j]
 
             n_missing = 0
-            # Copying values into Xf and then sorting Xf in a matter which utilizes the
+            # Copying values into Xf and then sorting Xf in a manner which utilizes the
             # cache more effectively
             if has_missings[current.feature]:
                 # Missing values are placed at the end and do not participate in the sorting.
@@ -396,9 +396,12 @@ cdef class BestSplitter(BaseDenseSplitter):
             # Evaluate all splits
             self.criterion.init_missing(n_missing)
 
-            directions = 1 if n_missing == 0 else 2
-            for i in range(directions):
-                missing_go_to_left = i != 0
+            # If there are missing values, then search twice with missing values
+            # going to the right and then left node.
+            # If there are no missing values, then search only once.
+            n_searches = 1 if n_missing == 0 else 2
+            for i in range(n_searches):
+                missing_go_to_left = i == 1
                 self.criterion.missing_go_to_left = missing_go_to_left
                 self.criterion.reset()
 
@@ -460,7 +463,7 @@ cdef class BestSplitter(BaseDenseSplitter):
 
                         best = current  # copy
 
-            # Check edge cases when n_missing != 0 and all missing values goes
+            # Check edge cases when n_missing > 0 and all missing values goes
             # to the right node
             if n_missing > 0:
                 n_left = end - start - n_missing
