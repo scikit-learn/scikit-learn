@@ -337,7 +337,7 @@ cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}
     ):
         if (
             isinstance(metric_kwargs, dict) and
-            len(metric_kwargs.keys() - {"X_norm_squared", "Y_norm_squared"}) > 0
+            (metric_kwargs.keys() - {"X_norm_squared", "Y_norm_squared"})
         ):
             warnings.warn(
                 f"Some metric_kwargs have been passed ({metric_kwargs}) but aren't "
