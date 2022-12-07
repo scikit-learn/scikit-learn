@@ -488,8 +488,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                     try:
                         self.init_.fit(X, y, sample_weight=sample_weight)
                     except TypeError as e:
-                        # regular estimator without SW support
-                        raise ValueError(msg) from e
+                        if "unexpected keyword argument 'sample_weight'" in str(e):
+                            # regular estimator without SW support
+                            raise ValueError(msg) from e
+                        else:  # regular estimator whose input checking failed
+                            raise
                     except ValueError as e:
                         if (
                             "pass parameters to specific steps of "

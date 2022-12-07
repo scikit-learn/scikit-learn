@@ -148,8 +148,8 @@ class Pipeline(_BaseComposition):
         self.memory = memory
         self.verbose = verbose
 
-    def set_output(self, transform=None):
-        """Set the output container when `"transform`" and `"fit_transform"` are called.
+    def set_output(self, *, transform=None):
+        """Set the output container when `"transform"` and `"fit_transform"` are called.
 
         Calling `set_output` will set the output of all estimators in `steps`.
 
@@ -1001,8 +1001,8 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self.transformer_weights = transformer_weights
         self.verbose = verbose
 
-    def set_output(self, transform=None):
-        """Set the output container when `"transform`" and `"fit_transform"` are called.
+    def set_output(self, *, transform=None):
+        """Set the output container when `"transform"` and `"fit_transform"` are called.
 
         `set_output` will set the output of all estimators in `transformer_list`.
 
@@ -1285,6 +1285,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
     def _sk_visual_block_(self):
         names, transformers = zip(*self.transformer_list)
         return _VisualBlock("parallel", transformers, names=names)
+
+    def __getitem__(self, name):
+        """Return transformer with name."""
+        if not isinstance(name, str):
+            raise KeyError("Only string keys are supported")
+        return self.named_transformers[name]
 
 
 def make_union(*transformers, n_jobs=None, verbose=False):

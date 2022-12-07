@@ -84,8 +84,6 @@ cdef class Splitter:
         self.n_samples = 0
         self.n_features = 0
 
-        self.sample_weight = NULL
-
         self.max_features = max_features
         self.min_samples_leaf = min_samples_leaf
         self.min_weight_leaf = min_weight_leaf
@@ -97,10 +95,12 @@ cdef class Splitter:
     def __setstate__(self, d):
         pass
 
-    cdef int init(self,
-                   object X,
-                   const DOUBLE_t[:, ::1] y,
-                   DOUBLE_t* sample_weight) except -1:
+    cdef int init(
+        self,
+        object X,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight
+    ) except -1:
         """Initialize the splitter.
 
         Take in the input data X, the target Y, and optional sample weights.
@@ -114,12 +114,14 @@ cdef class Splitter:
             This contains the inputs. Usually it is a 2d numpy array.
 
         y : ndarray, dtype=DOUBLE_t
-            This is the vector of targets, or true labels, for the samples
+            This is the vector of targets, or true labels, for the samples represented
+            as a Cython memoryview.
 
-        sample_weight : DOUBLE_t*
+        sample_weight : ndarray, dtype=DOUBLE_t
             The weights of the samples, where higher weighted samples are fit
             closer than lower weight samples. If not provided, all samples
-            are assumed to have uniform weight.
+            are assumed to have uniform weight. This is represented
+            as a Cython memoryview.
         """
 
         self.rand_r_state = self.random_state.randint(0, RAND_R_MAX)
@@ -136,11 +138,11 @@ cdef class Splitter:
 
         for i in range(n_samples):
             # Only work with positively weighted samples
-            if sample_weight == NULL or sample_weight[i] != 0.0:
+            if sample_weight is None or sample_weight[i] != 0.0:
                 samples[j] = i
                 j += 1
 
-            if sample_weight != NULL:
+            if sample_weight is not None:
                 weighted_n_samples += sample_weight[i]
             else:
                 weighted_n_samples += 1.0
@@ -186,12 +188,14 @@ cdef class Splitter:
         self.start = start
         self.end = end
 
-        self.criterion.init(self.y,
-                            self.sample_weight,
-                            self.weighted_n_samples,
-                            &self.samples[0],
-                            start,
-                            end)
+        self.criterion.init(
+            self.y,
+            self.sample_weight,
+            self.weighted_n_samples,
+            self.samples,
+            start,
+            end
+        )
 
         weighted_n_node_samples[0] = self.criterion.weighted_n_node_samples
         return 0
@@ -224,10 +228,12 @@ cdef class BaseDenseSplitter(Splitter):
 
     cdef SIZE_t n_total_samples
 
-    cdef int init(self,
-                  object X,
-                  const DOUBLE_t[:, ::1] y,
-                  DOUBLE_t* sample_weight) except -1:
+    cdef int init(
+        self,
+        object X,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight
+    ) except -1:
         """Initialize the splitter
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
@@ -882,10 +888,12 @@ cdef class BaseSparseSplitter(Splitter):
         # Parent __cinit__ is automatically called
         self.n_total_samples = 0
 
-    cdef int init(self,
-                  object X,
-                  const DOUBLE_t[:, ::1] y,
-                  DOUBLE_t* sample_weight) except -1:
+    cdef int init(
+        self,
+        object X,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight
+    ) except -1:
         """Initialize the splitter
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
