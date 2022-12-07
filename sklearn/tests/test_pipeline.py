@@ -1186,46 +1186,6 @@ def test_set_params_nested_pipeline():
     estimator.set_params(a__steps=[("b", LogisticRegression())], a__b__C=5)
 
 
-def test_pipeline_wrong_memory():
-    # Test that an error is raised when memory is not a string or a Memory
-    # instance
-    X = iris.data
-    y = iris.target
-    # Define memory as an integer
-    memory = 1
-    cached_pipe = Pipeline([("transf", DummyTransf()), ("svc", SVC())], memory=memory)
-
-    msg = re.escape(
-        "'memory' should be None, a string or have the same interface "
-        "as joblib.Memory. Got memory='1' instead."
-    )
-    with pytest.raises(ValueError, match=msg):
-        cached_pipe.fit(X, y)
-
-
-class DummyMemory:
-    def cache(self, func):
-        return func
-
-
-class WrongDummyMemory:
-    pass
-
-
-def test_pipeline_with_cache_attribute():
-    X = np.array([[1, 2]])
-    pipe = Pipeline([("transf", Transf()), ("clf", Mult())], memory=DummyMemory())
-    pipe.fit(X, y=None)
-    dummy = WrongDummyMemory()
-    pipe = Pipeline([("transf", Transf()), ("clf", Mult())], memory=dummy)
-    msg = re.escape(
-        "'memory' should be None, a string or have the same interface "
-        f"as joblib.Memory. Got memory='{dummy}' instead."
-    )
-    with pytest.raises(ValueError, match=msg):
-        pipe.fit(X)
-
-
 def test_pipeline_memory():
     X = iris.data
     y = iris.target
