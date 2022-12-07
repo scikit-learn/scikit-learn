@@ -369,7 +369,7 @@ class RadiusNeighborsRegressor(RadiusNeighborsMixin, RegressorMixin, NeighborsBa
 
     See Also
     --------
-    NearestNeighbors : Regression based on nearest neighbors.
+    NearestNeighbors : Unsupervised learner for implementing neighbor searches.
     KNeighborsRegressor : Regression based on k-nearest neighbors.
     KNeighborsClassifier : Classifier based on the k-nearest neighbors.
     RadiusNeighborsClassifier : Classifier based on neighbors within a given radius.
