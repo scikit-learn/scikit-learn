@@ -268,6 +268,11 @@ extension_config = {
         {"sources": ["_k_means_elkan.pyx"], "include_np": True},
         {"sources": ["_k_means_minibatch.pyx"], "include_np": True},
     ],
+    "cluster._hdbscan": [
+        {"sources": ["_linkage.pyx"], "include_np": True},
+        {"sources": ["_reachability.pyx"], "include_np": True},
+        {"sources": ["_tree.pyx"], "include_np": True},
+    ],
     "datasets": [
         {
             "sources": ["_svmlight_format_fast.pyx"],
