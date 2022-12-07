@@ -79,7 +79,7 @@ cdef class Criterion:
         """Initalize sum_missing if there are missing values.
 
         This method assumes that caller placed the missing samples in
-        self.samples[-n_missing:]
+        self.sample_indices[-n_missing:]
 
         Parameters
         ----------
@@ -371,11 +371,9 @@ cdef class ClassificationCriterion(Criterion):
         """Initalize sum_missing if there are missing values.
 
         This method assumes that caller placed the missing samples in
-        self.samples[-n_missing:]
+        self.sample_indices[-n_missing:]
         """
         cdef SIZE_t i, p, k, c
-        cdef DOUBLE_t* sample_weight = self.sample_weight
-        cdef SIZE_t* samples = self.samples
         cdef DOUBLE_t w = 1.0
 
         self.n_missing = n_missing
@@ -387,11 +385,11 @@ cdef class ClassificationCriterion(Criterion):
 
         self.weighted_n_missing = 0.0
 
-        # The missing samples are assumed to be in self.samples[-n_missing:]
+        # The missing samples are assumed to be in self.sample_indices[-n_missing:]
         for p in range(self.end - n_missing, self.end):
-            i = samples[p]
-            if sample_weight != NULL:
-                w = sample_weight[i]
+            i = self.sample_indices[p]
+            if self.sample_weight is not None:
+                w = self.sample_weight[i]
 
             for k in range(self.n_outputs):
                 c = <SIZE_t> self.y[i, k]
@@ -800,11 +798,9 @@ cdef class RegressionCriterion(Criterion):
         """Initalize sum_missing if there are missing values.
 
         This method assumes that caller placed the missing samples in
-        self.samples[-n_missing:]
+        self.sample_indices[-n_missing:]
         """
         cdef SIZE_t i, p, k
-        cdef DOUBLE_t* sample_weight = self.sample_weight
-        cdef SIZE_t* samples = self.samples
         cdef DOUBLE_t w
 
         self.n_missing = n_missing
@@ -814,11 +810,11 @@ cdef class RegressionCriterion(Criterion):
         memset(&self.sum_missing[0], 0, self.n_outputs * sizeof(double))
         self.weighted_n_missing = 0.0
 
-        # The missing samples are assumed to be in self.samples[-n_missing:]
+        # The missing samples are assumed to be in self.sample_indices[-n_missing:]
         for p in range(self.end - n_missing, self.end):
-            i = samples[p]
-            if sample_weight != NULL:
-                w = sample_weight[i]
+            i = self.sample_indices[p]
+            if self.sample_weight is not None:
+                w = self.sample_weight[i]
 
             for k in range(self.n_outputs):
                 self.sum_missing[k] += w

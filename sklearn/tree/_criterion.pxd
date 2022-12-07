@@ -53,6 +53,7 @@ cdef class Criterion:
         SIZE_t start,
         SIZE_t end
     ) nogil except -1
+    cdef void init_missing(self, SIZE_t n_missing) nogil
     cdef int reset(self) nogil except -1
     cdef int reverse_reset(self) nogil except -1
     cdef int update(self, SIZE_t new_pos) nogil except -1
