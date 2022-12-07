@@ -86,6 +86,15 @@ cdef class ClassificationCriterion(Criterion):
     cdef double[:, ::1] sum_right   # Same as above, but for the right side of the split
     cdef double[:, ::1] sum_missing # Same as above, but for missing values in X
 
+    cdef void _move_sums(
+        self,
+        double[:, ::1] sum_1,
+        double[:, ::1] sum_2,
+        double* weighted_n_1,
+        double* weighted_n_2,
+        bint put_missing_in_1
+    ) nogil
+
 cdef class RegressionCriterion(Criterion):
     """Abstract regression criterion."""
 
@@ -95,3 +104,12 @@ cdef class RegressionCriterion(Criterion):
     cdef double[::1] sum_left    # Same as above, but for the left side of the split
     cdef double[::1] sum_right   # Same as above, but for the right side of the split
     cdef double[::1] sum_missing # Same as above, but for missing values in X
+
+    cdef void _move_sums(
+        self,
+        double[::1] sum_1,
+        double[::1] sum_2,
+        double* weighted_n_1,
+        double* weighted_n_2,
+        bint put_missing_in_1
+    ) nogil
