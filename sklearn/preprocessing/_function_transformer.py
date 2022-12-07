@@ -237,7 +237,7 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         X : {array-like, sparse-matrix, dataframe} of shape (n_samples, n_features) \
-        if validate=True else any object that ``func`` can handle
+        if validate=True else any object that ``inverse_func`` can handle
             Input array.
 
         Returns
