@@ -2,8 +2,8 @@
 # Author: Nicolas Hug
 
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
 from functools import partial
+import itertools
 from numbers import Real, Integral
 import warnings
 
@@ -93,7 +93,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         "min_samples_leaf": [Interval(Integral, 1, None, closed="left")],
         "l2_regularization": [Interval(Real, 0, None, closed="left")],
         "monotonic_cst": ["array-like", dict, None],
-        "interaction_cst": [Iterable, None],
+        "interaction_cst": [
+            list,
+            tuple,
+            StrOptions({"pairwise", "no_interactions"}),
+            None,
+        ],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
         "validation_fraction": [
             Interval(Real, 0, 1, closed="neither"),
@@ -265,18 +270,21 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
                 if missing.any():
                     categories = categories[~missing]
 
+                if hasattr(self, "feature_names_in_"):
+                    feature_name = f"'{self.feature_names_in_[f_idx]}'"
+                else:
+                    feature_name = f"at index {f_idx}"
+
                 if categories.size > self.max_bins:
                     raise ValueError(
-                        f"Categorical feature at index {f_idx} is "
-                        "expected to have a "
-                        f"cardinality <= {self.max_bins}"
+                        f"Categorical feature {feature_name} is expected to "
+                        f"have a cardinality <= {self.max_bins}"
                     )
 
                 if (categories >= self.max_bins).any():
                     raise ValueError(
-                        f"Categorical feature at index {f_idx} is "
-                        "expected to be encoded with "
-                        f"values < {self.max_bins}"
+                        f"Categorical feature {feature_name} is expected to "
+                        f"be encoded with values < {self.max_bins}"
                     )
             else:
                 categories = None
@@ -289,29 +297,30 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if self.interaction_cst is None:
             return None
 
-        if not (
-            isinstance(self.interaction_cst, Iterable)
-            and all(isinstance(x, Iterable) for x in self.interaction_cst)
-        ):
+        if self.interaction_cst == "no_interactions":
+            interaction_cst = [[i] for i in range(n_features)]
+        elif self.interaction_cst == "pairwise":
+            interaction_cst = itertools.combinations(range(n_features), 2)
+        else:
+            interaction_cst = self.interaction_cst
+
+        try:
+            constraints = [set(group) for group in interaction_cst]
+        except TypeError:
             raise ValueError(
-                "Interaction constraints must be None or an iterable of iterables, "
-                f"got: {self.interaction_cst!r}."
+                "Interaction constraints must be a sequence of tuples or lists, got:"
+                f" {self.interaction_cst!r}."
             )
 
-        invalid_indices = [
-            x
-            for cst_set in self.interaction_cst
-            for x in cst_set
-            if not (isinstance(x, Integral) and 0 <= x < n_features)
-        ]
-        if invalid_indices:
-            raise ValueError(
-                "Interaction constraints must consist of integer indices in [0,"
-                f" n_features - 1] = [0, {n_features - 1}], specifying the position of"
-                f" features, got invalid indices: {invalid_indices!r}"
-            )
-
-        constraints = [set(group) for group in self.interaction_cst]
+        for group in constraints:
+            for x in group:
+                if not (isinstance(x, Integral) and 0 <= x < n_features):
+                    raise ValueError(
+                        "Interaction constraints must consist of integer indices in"
+                        f" [0, n_features - 1] = [0, {n_features - 1}], specifying the"
+                        " position of features, got invalid indices:"
+                        f" {group!r}"
+                    )
 
         # Add all not listed features as own group by default.
         rest = set(range(n_features)) - set().union(*constraints)
@@ -1282,14 +1291,18 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.2
            Accept dict of constraints with feature names as keys.
 
-    interaction_cst : iterable of iterables of int, default=None
+    interaction_cst : {"pairwise", "no_interaction"} or sequence of lists/tuples/sets \
+            of int, default=None
         Specify interaction constraints, the sets of features which can
         interact with each other in child node splits.
 
-        Each iterable materializes a constraint by the set of indices of
-        the features that are allowed to interact with each other.
-        If there are more features than specified in these constraints,
-        they are treated as if they were specified as an additional set.
+        Each item specifies the set of feature indices that are allowed
+        to interact with each other. If there are more features than
+        specified in these constraints, they are treated as if they were
+        specified as an additional set.
+
+        The strings "pairwise" and "no_interactions" are shorthands for
+        allowing only pairwise or no interactions, respectively.
 
         For instance, with 5 features in total, `interaction_cst=[{0, 1}]`
         is equivalent to `interaction_cst=[{0, 1}, {2, 3, 4}]`,
@@ -1630,14 +1643,18 @@ class HistGradientBoostingClassifier(ClassifierMixin, BaseHistGradientBoosting):
         .. versionchanged:: 1.2
            Accept dict of constraints with feature names as keys.
 
-    interaction_cst : iterable of iterables of int, default=None
+    interaction_cst : {"pairwise", "no_interaction"} or sequence of lists/tuples/sets \
+            of int, default=None
         Specify interaction constraints, the sets of features which can
         interact with each other in child node splits.
 
-        Each iterable materializes a constraint by the set of indices of
-        the features that are allowed to interact with each other.
-        If there are more features than specified in these constraints,
-        they are treated as if they were specified as an additional set.
+        Each item specifies the set of feature indices that are allowed
+        to interact with each other. If there are more features than
+        specified in these constraints, they are treated as if they were
+        specified as an additional set.
+
+        The strings "pairwise" and "no_interactions" are shorthands for
+        allowing only pairwise or no interactions, respectively.
 
         For instance, with 5 features in total, `interaction_cst=[{0, 1}]`
         is equivalent to `interaction_cst=[{0, 1}, {2, 3, 4}]`,
