@@ -1,31 +1,15 @@
-{{py:
-
-implementation_specific_values = [
-    # Values are the following ones:
-    #
-    #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
-    #
-    # We also use the float64 dtype and C-type names as defined in
-    # `sklearn.utils._typedefs` to maintain consistency.
-    #
-    ('64', 'cnp.float64_t', 'np.float64'),
-    ('32', 'cnp.float32_t', 'np.float32')
-]
-
-}}
-
 cimport numpy as cnp
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
 cnp.import_array()
 
-{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
+{{for name_suffix in ['64', '32']}}
 
-from ._base cimport BaseDistanceReducer{{name_suffix}}
-from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
+from ._base cimport BaseDistancesReduction{{name_suffix}}
+from ._middle_term_computer cimport MiddleTermComputer{{name_suffix}}
 
-cdef class ArgKmin{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
-    """{{name_suffix}}bit implementation of BaseDistanceReducer{{name_suffix}} for the `ArgKmin` reduction."""
+cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
+    """float{{name_suffix}} implementation of the ArgKmin."""
 
     cdef:
         ITYPE_t k
@@ -39,9 +23,9 @@ cdef class ArgKmin{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
 
 
 cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
-    """EuclideanDistance-specialized {{name_suffix}}bit implementation of ArgKmin{{name_suffix}}."""
+    """EuclideanDistance-specialisation of ArgKmin{{name_suffix}}."""
     cdef:
-        GEMMTermComputer{{name_suffix}} gemm_term_computer
+        MiddleTermComputer{{name_suffix}} middle_term_computer
         const DTYPE_t[::1] X_norm_squared
         const DTYPE_t[::1] Y_norm_squared
 

@@ -11,7 +11,7 @@ from scipy.sparse import issparse
 from scipy.sparse.csgraph import shortest_path
 from scipy.sparse.csgraph import connected_components
 
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
+from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..neighbors import NearestNeighbors, kneighbors_graph
 from ..neighbors import radius_neighbors_graph
 from ..utils.validation import check_is_fitted
@@ -22,7 +22,7 @@ from ..utils._param_validation import Interval, StrOptions
 from ..metrics.pairwise import _VALID_METRICS
 
 
-class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Isomap Embedding.
 
     Non-linear dimensionality reduction through Isometric Mapping
@@ -294,6 +294,11 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         self.dist_matrix_ = shortest_path(nbg, method=self.path_method, directed=False)
 
+        if self.nbrs_._fit_X.dtype == np.float32:
+            self.dist_matrix_ = self.dist_matrix_.astype(
+                self.nbrs_._fit_X.dtype, copy=False
+            )
+
         G = self.dist_matrix_**2
         G *= -0.5
 
@@ -404,7 +409,13 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         n_samples_fit = self.nbrs_.n_samples_fit_
         n_queries = distances.shape[0]
-        G_X = np.zeros((n_queries, n_samples_fit))
+
+        if hasattr(X, "dtype") and X.dtype == np.float32:
+            dtype = np.float32
+        else:
+            dtype = np.float64
+
+        G_X = np.zeros((n_queries, n_samples_fit), dtype)
         for i in range(n_queries):
             G_X[i] = np.min(self.dist_matrix_[indices[i]] + distances[i][:, None], 0)
 
@@ -412,3 +423,6 @@ class Isomap(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         G_X *= -0.5
 
         return self.kernel_pca_.transform(G_X)
+
+    def _more_tags(self):
+        return {"preserves_dtype": [np.float64, np.float32]}
