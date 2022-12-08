@@ -301,7 +301,6 @@ The following GitHub checklist might be helpful in a release PR::
 
     * [ ] update news and what's new date in release branch
     * [ ] update news and what's new date and sklearn dev0 version in main branch
-    * [ ] update SECURITY.md in release and main branch
     * [ ] check that the wheels for the release can be built successfully
     * [ ] merge the PR with `[cd build]` commit message to upload wheels to the staging repo
     * [ ] upload the wheels and source tarball to https://test.pypi.org
@@ -311,6 +310,7 @@ The following GitHub checklist might be helpful in a release PR::
     * [ ] upload the wheels and source tarball to PyPI
     * [ ] https://github.com/scikit-learn/scikit-learn/releases publish (except for RC)
     * [ ] announce on mailing list and on Twitter, and LinkedIn
+    * [ ] update SECURITY.md in main branch (except for RC)
 
 Merging Pull Requests
 ---------------------
