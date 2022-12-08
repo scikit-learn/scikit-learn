@@ -72,9 +72,8 @@ cdef class Criterion(BaseCriterion):
         SIZE_t end
     ) nogil except -1
 
-    cdef int pointer_init(
+    cdef int pointer_reset(
         self,
-        const SIZE_t[:] sample_indices,
         SIZE_t start,
         SIZE_t end
     ) nogil except -1
