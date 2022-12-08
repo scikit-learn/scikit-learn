@@ -17,7 +17,7 @@ from ._tree cimport UINT32_t         # Unsigned 32 bit integer
 
 
 cdef class BaseCriterion:
-    """Abstract interface for criterion."""
+    """Abstract interface for criterion."""    
 
     # Internal structures
     cdef const DOUBLE_t[:] sample_weight # Sample weights
@@ -67,6 +67,13 @@ cdef class Criterion(BaseCriterion):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
+        const SIZE_t[:] sample_indices,
+        SIZE_t start,
+        SIZE_t end
+    ) nogil except -1
+
+    cdef int pointer_init(
+        self,
         const SIZE_t[:] sample_indices,
         SIZE_t start,
         SIZE_t end
