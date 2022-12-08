@@ -8,26 +8,21 @@ cdef inline double log(double x) nogil:
     return ln(x) / ln(2.0)
 
 
-cdef inline void dual_swap(
-    floating* darr,
-    ITYPE_t *iarr,
-    ITYPE_t a,
-    ITYPE_t b,
+cdef inline void simultaneous_swap(
+    floating* Xf,
+    cnp.intp_t* samples,
+    cnp.intp_t i,
+    cnp.intp_t j,
 ) nogil:
-    """Swap the values at index a and b of both darr and iarr"""
-    cdef floating dtmp = darr[a]
-    darr[a] = darr[b]
-    darr[b] = dtmp
-
-    cdef ITYPE_t itmp = iarr[a]
-    iarr[a] = iarr[b]
-    iarr[b] = itmp
+    # Helper for sort
+    Xf[i], Xf[j] = Xf[j], Xf[i]
+    samples[i], samples[j] = samples[j], samples[i]
 
 
 cdef int simultaneous_sort(
     floating* values,
-    ITYPE_t* indices,
-    ITYPE_t size,
+    cnp.intp_t* indices,
+    cnp.intp_t size,
 ) nogil:
     """
     Perform a recursive quicksort on the values array as to sort them ascendingly.
@@ -50,7 +45,7 @@ cdef int simultaneous_sort(
     # an Array of Structures (AoS) instead of the Structure of Arrays (SoA)
     # currently used.
     cdef:
-        ITYPE_t pivot_idx, i, store_idx
+        cnp.intp_t pivot_idx, i, store_idx
         floating pivot_val
 
     # in the small-array case, do things efficiently
@@ -58,14 +53,14 @@ cdef int simultaneous_sort(
         pass
     elif size == 2:
         if values[0] > values[1]:
-            dual_swap(values, indices, 0, 1)
+            simultaneous_swap(values, indices, 0, 1)
     elif size == 3:
         if values[0] > values[1]:
-            dual_swap(values, indices, 0, 1)
+            simultaneous_swap(values, indices, 0, 1)
         if values[1] > values[2]:
-            dual_swap(values, indices, 1, 2)
+            simultaneous_swap(values, indices, 1, 2)
             if values[0] > values[1]:
-                dual_swap(values, indices, 0, 1)
+                simultaneous_swap(values, indices, 0, 1)
     else:
         # Determine the pivot using the median-of-three rule.
         # The smallest of the three is moved to the beginning of the array,
@@ -73,11 +68,11 @@ cdef int simultaneous_sort(
         # is moved to the pivot index.
         pivot_idx = size // 2
         if values[0] > values[size - 1]:
-            dual_swap(values, indices, 0, size - 1)
+            simultaneous_swap(values, indices, 0, size - 1)
         if values[size - 1] > values[pivot_idx]:
-            dual_swap(values, indices, size - 1, pivot_idx)
+            simultaneous_swap(values, indices, size - 1, pivot_idx)
             if values[0] > values[size - 1]:
-                dual_swap(values, indices, 0, size - 1)
+                simultaneous_swap(values, indices, 0, size - 1)
         pivot_val = values[size - 1]
 
         # Partition indices about pivot.  At the end of this operation,
@@ -86,9 +81,9 @@ cdef int simultaneous_sort(
         store_idx = 0
         for i in range(size - 1):
             if values[i] < pivot_val:
-                dual_swap(values, indices, i, store_idx)
+                simultaneous_swap(values, indices, i, store_idx)
                 store_idx += 1
-        dual_swap(values, indices, store_idx, size - 1)
+        simultaneous_swap(values, indices, store_idx, size - 1)
         pivot_idx = store_idx
 
         # Recursively sort each side of the pivot
@@ -103,25 +98,14 @@ cdef int simultaneous_sort(
 
 # Sort n-element arrays pointed to by Xf and samples, simultaneously,
 # by the values in Xf. Algorithm: Introsort (Musser, SP&E, 1997).
-cdef inline void sort(floating* Xf, cnp.npy_intp* samples, cnp.npy_intp n) nogil:
+cdef inline void sort(floating* Xf, cnp.intp_t* samples, cnp.intp_t n) nogil:
     if n == 0:
       return
     cdef int maxd = 2 * <int>log(n)
     introsort(Xf, samples, n, maxd)
 
 
-cdef inline void swap(
-    floating* Xf,
-    cnp.npy_intp* samples,
-    cnp.npy_intp i,
-    cnp.npy_intp j,
-) nogil:
-    # Helper for sort
-    Xf[i], Xf[j] = Xf[j], Xf[i]
-    samples[i], samples[j] = samples[j], samples[i]
-
-
-cdef inline floating median3(floating* Xf, cnp.npy_intp n) nogil:
+cdef inline floating median3(floating* Xf, cnp.intp_t n) nogil:
     # Median of three pivot selection, after Bentley and McIlroy (1993).
     # Engineering a sort function. SP&E. Requires 8/3 comparisons on average.
     cdef floating a = Xf[0], b = Xf[n / 2], c = Xf[n - 1]
@@ -143,9 +127,9 @@ cdef inline floating median3(floating* Xf, cnp.npy_intp n) nogil:
 
 # Introsort with median of 3 pivot selection and 3-way partition function
 # (robust to repeated elements, e.g. lots of zero features).
-cdef void introsort(floating* Xf, cnp.npy_intp *samples, cnp.npy_intp n, int maxd) nogil:
+cdef void introsort(floating* Xf, cnp.intp_t *samples, cnp.intp_t n, int maxd) nogil:
     cdef floating pivot
-    cdef cnp.npy_intp i, l, r
+    cdef cnp.intp_t i, l, r
 
     while n > 1:
         if maxd <= 0:   # max depth limit exceeded ("gone quadratic")
@@ -160,12 +144,12 @@ cdef void introsort(floating* Xf, cnp.npy_intp *samples, cnp.npy_intp n, int max
         r = n
         while i < r:
             if Xf[i] < pivot:
-                swap(Xf, samples, i, l)
+                simultaneous_swap(Xf, samples, i, l)
                 i += 1
                 l += 1
             elif Xf[i] > pivot:
                 r -= 1
-                swap(Xf, samples, i, r)
+                simultaneous_swap(Xf, samples, i, r)
             else:
                 i += 1
 
@@ -177,12 +161,12 @@ cdef void introsort(floating* Xf, cnp.npy_intp *samples, cnp.npy_intp n, int max
 
 cdef inline void sift_down(
     floating* Xf,
-    cnp.npy_intp* samples,
-    cnp.npy_intp start,
-    cnp.npy_intp end,
+    cnp.intp_t* samples,
+    cnp.intp_t start,
+    cnp.intp_t end,
 ) nogil:
     # Restore heap order in Xf[start:end] by moving the max element to start.
-    cdef cnp.npy_intp child, maxind, root
+    cdef cnp.intp_t child, maxind, root
 
     root = start
     while True:
@@ -198,12 +182,12 @@ cdef inline void sift_down(
         if maxind == root:
             break
         else:
-            swap(Xf, samples, root, maxind)
+            simultaneous_swap(Xf, samples, root, maxind)
             root = maxind
 
 
-cdef void heapsort(floating* Xf, cnp.npy_intp* samples, cnp.npy_intp n) nogil:
-    cdef cnp.npy_intp start, end
+cdef void heapsort(floating* Xf, cnp.intp_t* samples, cnp.intp_t n) nogil:
+    cdef cnp.intp_t start, end
 
     # heapify
     start = (n - 2) / 2
@@ -217,6 +201,6 @@ cdef void heapsort(floating* Xf, cnp.npy_intp* samples, cnp.npy_intp n) nogil:
     # sort by shrinking the heap, putting the max element immediately after it
     end = n - 1
     while end > 0:
-        swap(Xf, samples, 0, end)
+        simultaneous_swap(Xf, samples, 0, end)
         sift_down(Xf, samples, 0, end)
         end = end - 1
