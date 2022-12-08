@@ -111,10 +111,7 @@ cdef class BaseSplitter:
         self.start = start
         self.end = end
 
-        self.criterion.init(
-            None,
-            self.sample_weight,
-            self.weighted_n_samples,
+        self.criterion.pointer_init(
             self.samples,
             start,
             end
