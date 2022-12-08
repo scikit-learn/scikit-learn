@@ -1025,6 +1025,28 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         return self
 
+    def predict_proba(self, X):
+        """Return faux probability estimates based upon euclidean distance
+        between the underlying estimators' predictions and the class code.
+
+        Parameters
+        ----------
+        X : (sparse) array-like of shape (n_samples, n_features)
+            Data.
+
+        Returns
+        -------
+        T : (sparse) array-like of shape (n_samples, n_classes)
+            Returns the score of the sample for each class in the model,
+            where classes are ordered as they are in `self.classes_`.
+        """
+        check_is_fitted(self)
+        Y = np.array([_predict_binary(e, X) for e in self.estimators_]).T
+        distance = euclidean_distances(Y, self.code_book_)
+        # Inverse distance weighting:
+        proba = (1. / distance) / np.sum(1. / distance, axis=1)[:, np.newaxis]
+        return proba
+
     def predict(self, X):
         """Predict multi-class targets using underlying estimators.
 
@@ -1038,7 +1060,5 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         y : ndarray of shape (n_samples,)
             Predicted multi-class targets.
         """
-        check_is_fitted(self)
-        Y = np.array([_predict_binary(e, X) for e in self.estimators_]).T
-        pred = euclidean_distances(Y, self.code_book_).argmin(axis=1)
+        pred = self.predict_proba(X).argmax(axis=1)
         return self.classes_[pred]
