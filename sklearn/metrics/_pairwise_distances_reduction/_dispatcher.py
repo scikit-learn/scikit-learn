@@ -79,7 +79,7 @@ class BaseDistancesReductionDispatcher:
         return sorted(({"sqeuclidean"} | set(METRIC_MAPPING.keys())) - excluded)
 
     @classmethod
-    def is_usable_for(cls, X, Y, metric) -> bool:
+    def is_usable_for(cls, X, Y, metric, validation_params=None) -> bool:
         """Return True if the dispatcher can be used for the
         given parameters.
 

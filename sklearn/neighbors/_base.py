@@ -475,7 +475,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
                 check_classification_targets(y)
                 self.classes_ = []
-                self._y = np.empty(y.shape, dtype=int)
+                self._y = np.empty(y.shape, dtype=np.int64)
                 for k in range(self._y.shape[1]):
                     classes, self._y[:, k] = np.unique(y[:, k], return_inverse=True)
                     self.classes_.append(classes)
