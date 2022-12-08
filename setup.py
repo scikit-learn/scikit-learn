@@ -98,6 +98,8 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.metrics._pairwise_distances_reduction._argkmin",
     "sklearn.metrics._pairwise_distances_reduction._radius_neighbors",
     "sklearn.metrics._pairwise_fast",
+    "sklearn.neighbors._ball_tree",
+    "sklearn.neighbors._kd_tree",
     "sklearn.neighbors._partition_nodes",
     "sklearn.svm._liblinear",
     "sklearn.tree._splitter",
@@ -509,6 +511,16 @@ def configure_extension_modules():
     else:
         default_extra_compile_args = [f"/{optimization_level}"]
         default_libraries = []
+
+    build_with_debug_symbols = (
+        os.environ.get("SKLEARN_BUILD_ENABLE_DEBUG_SYMBOLS", "0") != "0"
+    )
+    if os.name == "posix":
+        if build_with_debug_symbols:
+            default_extra_compile_args.append("-g")
+        else:
+            # Setting -g0 will strip symbols, reducing the binary size of extensions
+            default_extra_compile_args.append("-g0")
 
     cython_exts = []
     for submodule, extensions in extension_config.items():
