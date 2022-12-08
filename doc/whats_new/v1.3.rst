@@ -1,4 +1,4 @@
-.. include:: _contributors.rst
+ .. include:: _contributors.rst
 
 .. currentmodule:: sklearn
 
@@ -35,6 +35,12 @@ Changelog
     Entries should end with:
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.ensemble`
+.......................
+- |Fix|
+  :pr:`25140` by :user:`Da Lan Nguyen <Da-Lan>`, :user:`Mohit Singh Thakur <mohitthakur13>`
+  and :user:`Sabrine Bendimerad <sbendimerad>`.
 
 :mod:`sklearn.pipeline`
 .......................
