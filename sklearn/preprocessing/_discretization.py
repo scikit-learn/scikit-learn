@@ -243,8 +243,9 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
 
         elif sample_weight is not None and self.strategy != "quantile":
             raise ValueError(
-                "`sample_weight` was provided but it can be only used with"
-                f"strategy='quantile'. Got strategy={self.strategy!r} instead."
+                "`sample_weight` was provided but it can only be "
+                "used with strategy='quantile'. Got strategy="
+                f"{self.strategy!r} instead."
             )
 
         n_features = X.shape[1]

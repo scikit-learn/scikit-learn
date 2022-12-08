@@ -53,12 +53,11 @@ def test_valid_n_bins():
 
 @pytest.mark.parametrize("strategy", ["uniform", "kmeans"])
 def test_kbinsdiscretizer_wrong_strategy_with_weights(strategy):
-    """Check that we raise an error message when the wrong strategy
-    is used."""
+    """Check that we raise an error when the wrong strategy is used."""
     sample_weight = np.ones(shape=(len(X)))
     est = KBinsDiscretizer(n_bins=3, strategy=strategy)
     err_msg = (
-        "`sample_weight` was provided but it can be only used withstrategy='quantile'."
+        "`sample_weight` was provided but it can only be used with strategy='quantile'."
     )
     with pytest.raises(ValueError, match=err_msg):
         est.fit(X, sample_weight=sample_weight)
@@ -148,7 +147,7 @@ def test_fit_transform_n_bins_array(strategy, expected, sample_weight):
 
 @pytest.mark.filterwarnings("ignore: Bins whose width are too small")
 def test_kbinsdiscretizer_effect_sample_weight():
-    """Check that we take into account `sample_weight` when computing the quantiles."""
+    """Check the impact of `sample_weight` one computed quantiles."""
     X = np.array([[-2], [-1], [1], [3], [500], [1000]])
     # add a large number of bins such that each sample with a non-null weight
     # will be used as bin edge
@@ -159,7 +158,7 @@ def test_kbinsdiscretizer_effect_sample_weight():
 
 
 def test_kbinsdiscretizer_no_mutating_sample_weight():
-    """Check to make sure that `sample_weight` is no changed in place."""
+    """Make sure that `sample_weight` is not changed in place."""
     est = KBinsDiscretizer(n_bins=3, encode="ordinal", strategy="quantile")
     sample_weight = np.array([1, 3, 1, 2], dtype=np.float64)
     sample_weight_copy = np.copy(sample_weight)
