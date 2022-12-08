@@ -200,7 +200,7 @@ cdef class Criterion(BaseCriterion):
         double weighted_n_samples,
         const SIZE_t[:] sample_indices,
         SIZE_t start,
-        SIZE_t end,
+        SIZE_t end
     ) nogil except -1:
         """Placeholder for a method which will initialize the criterion.
 
@@ -225,6 +225,14 @@ cdef class Criterion(BaseCriterion):
             The last sample used on this node
 
         """
+        pass
+
+    cdef int pointer_init(
+        self,
+        const SIZE_t[:] sample_indices,
+        SIZE_t start,
+        SIZE_t end
+    ) nogil except -1:
         pass
 
 
