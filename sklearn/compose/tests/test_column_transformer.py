@@ -9,6 +9,7 @@ from scipy import sparse
 import pytest
 
 from numpy.testing import assert_allclose
+from sklearn.utils.estimator_checks import check_param_validation
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_almost_equal
@@ -812,15 +813,6 @@ def test_column_transformer_special_strings():
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] != "remainder"
 
-    # None itself / other string is not valid
-    for val in [None, "other"]:
-        ct = ColumnTransformer([("trans1", Trans(), [0]), ("trans2", None, [1])])
-        msg = "All estimators should implement"
-        with pytest.raises(TypeError, match=msg):
-            ct.fit_transform(X_array)
-        with pytest.raises(TypeError, match=msg):
-            ct.fit(X_array)
-
 
 def test_column_transformer_remainder():
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
@@ -864,15 +856,6 @@ def test_column_transformer_remainder():
     assert ct.transformers_[-1][0] == "remainder"
     assert ct.transformers_[-1][1] == "passthrough"
     assert_array_equal(ct.transformers_[-1][2], [1])
-
-    # error on invalid arg
-    ct = ColumnTransformer([("trans1", Trans(), [0])], remainder=1)
-    msg = "remainder keyword needs to be one of 'drop', 'passthrough', or estimator."
-    with pytest.raises(ValueError, match=msg):
-        ct.fit(X_array)
-
-    with pytest.raises(ValueError, match=msg):
-        ct.fit_transform(X_array)
 
     # check default for make_column_transformer
     ct = make_column_transformer((Trans(), [0]))
@@ -2130,3 +2113,15 @@ def test_transformers_with_pandas_out_but_not_feature_names_out(
     ct.set_params(verbose_feature_names_out=False)
     X_trans_df1 = ct.fit_transform(X_df)
     assert_array_equal(X_trans_df1.columns, expected_non_verbose_names)
+
+
+def test_column_transformer_param_validation():
+    """Run the param validation check for `ColumnTransformer`."""
+    column_transformer = ColumnTransformer(
+        transformers=[
+            ("num", StandardScaler(), [0, 1]),
+            ("cat", OneHotEncoder(), [2, 3]),
+        ]
+    )
+
+    check_param_validation("ColumnTransformer", column_transformer)
