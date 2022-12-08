@@ -33,54 +33,20 @@ def train_wrap(
     cdef model *model
     cdef char_const_ptr error_msg
     cdef int len_w
-
-    # The implementation for float32 and float64 uses a single interface.
-    # This is done by accepting the data as a pointer to a buffer of bytes.
-    # In this regard, we define a pointer to pass the address of the first
-    # element of the buffer seen as raw bytes (hence the use of `char *`).
-    #
-    # We proceed in two steps using intermediate memory views to have Cython
-    # have sufficient typing information not to use PyObjects.
-    cdef cnp.float64_t[::1] X_data_64
-    cdef cnp.float32_t[::1] X_data_32
-    cdef char * X_data_as_bytes_ptr = NULL
-
-    # The same is done for `indices` and `indptr` in the CSR case.
-    cdef cnp.int32_t[::1] X_indices
-    cdef char * X_indices_as_bytes_ptr = NULL
-
-    cdef cnp.int32_t[::1] X_indptr
-    cdef char * X_indptr_as_bytes_ptr = NULL
-
-    cdef bint X_stores_float64_data = X.dtype == np.float64
+    cdef char * x_data_bytes_ptr
+    cdef cnp.int32_t[::1] x_indices
+    cdef cnp.int32_t[::1] x_indptr
+    cdef bint x_has_type_float64 = X.dtype == np.float64
 
     if is_sparse:
-        # X is a CSR matrix here, a format which stores the values
-        # as a contiguous buffer via a NumPy array in a `data` attribute.
-        # We get the address of the first element of the buffer which
-        # we reference using a pointer to bytes.
-        if X_stores_float64_data:
-            X_data_64 = X.data
-            X_data_as_bytes_ptr = <char*> &X_data_64[0]
-        else:
-            X_data_32 = X.data
-            X_data_as_bytes_ptr = <char*> &X_data_32[0]
-
-        # Similar operations are to be performed for `indices` and `indptr`.
-        X_indices = X.indices
-        X_indices_as_bytes_ptr = <char *> &X_indices[0]
-
-        X_indptr = X.indptr
-        X_indptr_as_bytes_ptr = <char *> &X_indptr[0]
-
+        x_data_bytes_ptr = _get_sparse_x_data_bytes(x=X, x_has_type_float64=x_has_type_float64)
+        x_indices = X.indices
+        x_indptr = X.indptr
         problem = csr_set_problem(
-            # Underneath, the data will be statically re-interpreted as
-            # either float32 or float64 depending on the boolean passed as
-            # the second argument.
-            X_data_as_bytes_ptr,
-            X_stores_float64_data,
-            X_indices_as_bytes_ptr,
-            X_indptr_as_bytes_ptr,
+            x_data_bytes_ptr,
+            x_has_type_float64,
+            <char *> &x_indices[0],
+            <char *> &x_indptr[0],
             (<cnp.int32_t>X.shape[0]),
             (<cnp.int32_t>X.shape[1]),
             (<cnp.int32_t>X.nnz),
@@ -89,17 +55,9 @@ def train_wrap(
             <char *> &Y[0]
         )
     else:
-        # X simply is a 2D NumPy array in this case.
-        # This is reshapeable to a 1D NumPy array in O(1) (only strides are changed).
-        if X_stores_float64_data:
-            X_data_64 = X.reshape(-1)
-            X_data_as_bytes_ptr = <char*> &X_data_64[0]
-        else:
-            X_data_32 = X.reshape(-1)
-            X_data_as_bytes_ptr = <char*> &X_data_32[0]
-
+        x_data_bytes_ptr = _get_x_data_bytes(x=X, x_has_type_float64=x_has_type_float64)
         problem = set_problem(
-            X_data_as_bytes_ptr,
+            x_data_bytes_ptr,
             X.dtype == np.float64,
             (<cnp.int32_t>X.shape[0]),
             (<cnp.int32_t>X.shape[1]),
@@ -115,8 +73,8 @@ def train_wrap(
         eps,
         C,
         class_weight.shape[0],
-        <char*> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
-        <char*> &class_weight[0] if class_weight.size > 0 else NULL,
+        <char *> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
+        <char *> &class_weight[0] if class_weight.size > 0 else NULL,
         max_iter,
         random_seed,
         epsilon
@@ -166,6 +124,37 @@ def train_wrap(
     free_and_destroy_model(&model)
 
     return w.base, n_iter.base
+
+
+cdef char * _get_sparse_x_data_bytes(object x, bint x_has_type_float64):
+    cdef cnp.float64_t[::1] x_data_64
+    cdef cnp.float32_t[::1] x_data_32
+    cdef char * x_data_bytes_ptr
+
+    if x_has_type_float64:
+        x_data_64 = x.data
+        x_data_bytes_ptr = <char *> &x_data_64[0]
+    else:
+        x_data_32 = x.data
+        x_data_bytes_ptr = <char *> &x_data_32[0]
+
+    return x_data_bytes_ptr
+
+
+cdef char * _get_x_data_bytes(object x, bint x_has_type_float64):
+    cdef cnp.float64_t[::1] x_data_64
+    cdef cnp.float32_t[::1] x_data_32
+    cdef char * x_data_bytes_ptr
+
+    x_as_1d_array = x.reshape(-1)
+    if x_has_type_float64:
+        x_data_64 = x_as_1d_array
+        x_data_bytes_ptr = <char *> &x_data_64[0]
+    else:
+        x_data_32 = x_as_1d_array
+        x_data_bytes_ptr = <char *> &x_data_32[0]
+
+    return x_data_bytes_ptr
 
 
 def set_verbosity_wrap(int verbosity):
