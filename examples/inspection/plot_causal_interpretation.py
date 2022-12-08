@@ -13,21 +13,14 @@ effect of earning a college degree on hourly wages?** Although the answer to
 this question is crucial to policy makers, `Omitted-Variable Biases
 <https://en.wikipedia.org/wiki/Omitted-variable_bias>`_ (OVB) prevent us from
 identifying that causal effect.
-
-
-.. contents:: Table of Contents
-   :local:
-   :depth: 1
 """
-
-print(__doc__)
 
 # %%
 # The dataset: simulated hourly wages
 # -----------------------------------
 #
 # The data generating process is laid out in the code below. Work experience in
-# years and a measure of ability are drawn from a Normal distribution; the
+# years and a measure of ability are drawn from Normal distributions; the
 # hourly wage of one of the parents is drawn from Beta distribution. We then
 # create an indicator of college degree which is positively impacted by ability
 # and parental hourly wage. Finally, we model hourly wages as a linear function
@@ -120,6 +113,8 @@ print(f"R2 score with ability: {R2_with_ability:.3f}")
 # This model predicts well the hourly wages as shown by the high R2 score. We
 # plot the model coefficients to show that we exactly recover the values of
 # the true generative model.
+import matplotlib.pyplot as plt
+
 model_coef = pd.Series(regressor_with_ability.coef_, index=features_names)
 coef = pd.concat(
     [true_coef[features_names], model_coef],
@@ -128,15 +123,18 @@ coef = pd.concat(
 )
 ax = coef.plot.barh()
 ax.set_xlabel("Coefficient values")
-_ = ax.set_title("Coefficients of the linear regression including the ability features")
+ax.set_title("Coefficients of the linear regression including the ability features")
+plt.tight_layout()
+plt.show()
 
 # %%
 # Income prediction with partial observations
 # -------------------------------------------
 #
-# In real life, intellectual ability is either never observed or only poorly
-# measured (e.g. IQ score). Researchers are forced to "omit" the ability
-# feature from their models, thereby inflating the estimate via a positive OVB.
+# In practice, intellectual abilities are not observed or are only estimated
+# from proxies that inadvertently measure education as well (e.g. by IQ tests).
+# But omitting the "ability" feature from a linear model inflates the estimate
+# via a positive OVB.
 features_names = ["experience", "parent hourly wage", "college degree"]
 
 regressor_without_ability = LinearRegression()

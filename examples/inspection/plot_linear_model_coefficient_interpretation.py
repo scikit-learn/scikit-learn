@@ -707,16 +707,15 @@ plt.subplots_adjust(left=0.3)
 # Wrong causal interpretation
 # ---------------------------
 #
-# Policy makers might want to know the effect of education on wage to
-# assess whether or not a certain policy designed to entice people to
-# pursue more education would make economic sense.
-# While Machine Learning models are great for measuring statistical
-# associations, they are generally unable to infer causal effects.
+# Policy makers might want to know the effect of education on wage to assess
+# whether or not a certain policy designed to entice people to pursue more
+# education would make economic sense. While Machine Learning models are great
+# for measuring statistical associations, they are generally unable to infer
+# causal effects.
 #
-# It might be tempting to look at the coefficient of education on wage
-# from our last model (or any model for that matter) and conclude that it
-# captures the true effect of a change in the standardized education variable
-# on wages.
+# It might be tempting to look at the coefficient of education on wage from our
+# last model (or any model for that matter) and conclude that it captures the
+# true effect of a change in the standardized education variable on wages.
 #
 # Unfortunately there are likely unobserved confounding variables that either
 # inflate or deflate that coefficient. A confounding variable is a variable that
@@ -724,9 +723,8 @@ plt.subplots_adjust(left=0.3)
 # Presumably, more able people are more likely to pursue education while at the
 # same time being more likely to earn a higher hourly wage at any level of
 # education. In this case, ability induces a positive `Omitted Variable Bias
-# <https://en.wikipedia.org/wiki/Omitted-variable_bias>`_ (OVB)
-# on the EDUCATION coefficient, thereby exaggerating the effect of education
-# on wages.
+# <https://en.wikipedia.org/wiki/Omitted-variable_bias>`_ (OVB) on the EDUCATION
+# coefficient, thereby exaggerating the effect of education on wages.
 #
 # See the :ref:`sphx_glr_auto_examples_inspection_plot_causal_interpretation.py`
 # for a simulated case of ability OVB.
@@ -758,7 +756,7 @@ plt.subplots_adjust(left=0.3)
 #   coefficients could significantly vary from one another.
 # * Inspecting coefficients across the folds of a cross-validation loop
 #   gives an idea of their stability.
-# * Coefficient are unlikely to have any causal meaning. They tend
+# * Coefficients are unlikely to have any causal meaning. They tend
 #   to be biased by unobserved confounders.
 # * Inspection tools may not necessarily provide insights on the true
 #   data generating process.
