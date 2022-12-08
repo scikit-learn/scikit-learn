@@ -33,15 +33,23 @@ def train_wrap(
     cdef model *model
     cdef char_const_ptr error_msg
     cdef int len_w
+    cdef bint x_has_type_float64 = X.dtype == np.float64
     cdef char * x_data_bytes_ptr
+    cdef const cnp.float64_t[::1] x_data_64
+    cdef const cnp.float32_t[::1] x_data_32
     cdef cnp.int32_t[::1] x_indices
     cdef cnp.int32_t[::1] x_indptr
-    cdef bint x_has_type_float64 = X.dtype == np.float64
 
     if is_sparse:
-        x_data_bytes_ptr = _get_sparse_x_data_bytes(x=X, x_has_type_float64=x_has_type_float64)
         x_indices = X.indices
         x_indptr = X.indptr
+        if x_has_type_float64:
+            x_data_64 = X.data
+            x_data_bytes_ptr = <char *> &x_data_64[0]
+        else:
+            x_data_32 = X.data
+            x_data_bytes_ptr = <char *> &x_data_32[0]
+
         problem = csr_set_problem(
             x_data_bytes_ptr,
             x_has_type_float64,
@@ -55,7 +63,14 @@ def train_wrap(
             <char *> &Y[0]
         )
     else:
-        x_data_bytes_ptr = _get_x_data_bytes(x=X, x_has_type_float64=x_has_type_float64)
+        x_as_1d_array = X.reshape(-1)
+        if x_has_type_float64:
+            x_data_64 = x_as_1d_array
+            x_data_bytes_ptr = <char *> &x_data_64[0]
+        else:
+            x_data_32 = x_as_1d_array
+            x_data_bytes_ptr = <char *> &x_data_32[0]
+
         problem = set_problem(
             x_data_bytes_ptr,
             X.dtype == np.float64,
@@ -124,37 +139,6 @@ def train_wrap(
     free_and_destroy_model(&model)
 
     return w.base, n_iter.base
-
-
-cdef char * _get_sparse_x_data_bytes(object x, bint x_has_type_float64):
-    cdef cnp.float64_t[::1] x_data_64
-    cdef cnp.float32_t[::1] x_data_32
-    cdef char * x_data_bytes_ptr
-
-    if x_has_type_float64:
-        x_data_64 = x.data
-        x_data_bytes_ptr = <char *> &x_data_64[0]
-    else:
-        x_data_32 = x.data
-        x_data_bytes_ptr = <char *> &x_data_32[0]
-
-    return x_data_bytes_ptr
-
-
-cdef char * _get_x_data_bytes(object x, bint x_has_type_float64):
-    cdef cnp.float64_t[::1] x_data_64
-    cdef cnp.float32_t[::1] x_data_32
-    cdef char * x_data_bytes_ptr
-
-    x_as_1d_array = x.reshape(-1)
-    if x_has_type_float64:
-        x_data_64 = x_as_1d_array
-        x_data_bytes_ptr = <char *> &x_data_64[0]
-    else:
-        x_data_32 = x_as_1d_array
-        x_data_bytes_ptr = <char *> &x_data_32[0]
-
-    return x_data_bytes_ptr
 
 
 def set_verbosity_wrap(int verbosity):
