@@ -206,6 +206,15 @@ cdef class Splitter(BaseSplitter):
 
         self.sample_weight = sample_weight
 
+        self.criterion.init(
+            self.y,
+            self.sample_weight,
+            self.weighted_n_samples,
+            self.samples,
+            start,
+            end
+        )
+
         return 0
 
 
