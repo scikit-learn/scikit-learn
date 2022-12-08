@@ -21,6 +21,7 @@ the lower the better.
 
 import warnings
 from functools import partial
+from numbers import Real
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
@@ -33,6 +34,7 @@ from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
+from ..utils._param_validation import validate_params
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..utils._encode import _encode, _unique
@@ -44,6 +46,7 @@ from ._base import (
 )
 
 
+@validate_params({"x": ["array-like"], "y": ["array-like"]})
 def auc(x, y):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule.
 
@@ -54,10 +57,10 @@ def auc(x, y):
 
     Parameters
     ----------
-    x : ndarray of shape (n,)
+    x : array-like of shape (n,)
         X coordinates. These must be either monotonic increasing or monotonic
         decreasing.
-    y : ndarray of shape, (n,)
+    y : array-like of shape (n,)
         Y coordinates.
 
     Returns
@@ -720,7 +723,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None, sample_weight=None):
     y_score : ndarray of shape (n_samples,)
         Estimated probabilities or output of a decision function.
 
-    pos_label : int or str, default=None
+    pos_label : int, float, bool or str, default=None
         The label of the positive class.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -901,6 +904,15 @@ def precision_recall_curve(y_true, probas_pred, *, pos_label=None, sample_weight
     return np.hstack((precision[sl], 1)), np.hstack((recall[sl], 0)), thresholds[sl]
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "pos_label": [Real, str, "boolean", None],
+        "sample_weight": ["array-like", None],
+        "drop_intermediate": ["boolean"],
+    }
+)
 def roc_curve(
     y_true, y_score, *, pos_label=None, sample_weight=None, drop_intermediate=True
 ):
@@ -912,16 +924,16 @@ def roc_curve(
 
     Parameters
     ----------
-    y_true : ndarray of shape (n_samples,)
+    y_true : array-like of shape (n_samples,)
         True binary labels. If labels are not either {-1, 1} or {0, 1}, then
         pos_label should be explicitly given.
 
-    y_score : ndarray of shape (n_samples,)
+    y_score : array-like of shape (n_samples,)
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by "decision_function" on some classifiers).
 
-    pos_label : int or str, default=None
+    pos_label : int, float, bool or str, default=None
         The label of the positive class.
         When ``pos_label=None``, if `y_true` is in {-1, 1} or {0, 1},
         ``pos_label`` is set to 1, otherwise an error will be raised.

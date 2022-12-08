@@ -176,9 +176,10 @@ class SimpleImputer(_BaseImputer):
            strategy="constant" for fixed value imputation.
 
     fill_value : str or numerical value, default=None
-        When strategy == "constant", fill_value is used to replace all
-        occurrences of missing_values.
-        If left to the default, fill_value will be 0 when imputing numerical
+        When strategy == "constant", `fill_value` is used to replace all
+        occurrences of missing_values. For string or object data types,
+        `fill_value` must be a string.
+        If `None`, `fill_value` will be 0 when imputing numerical
         data and "missing_value" for strings or object data types.
 
     verbose : int, default=0

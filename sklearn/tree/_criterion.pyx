@@ -46,7 +46,7 @@ cdef class Criterion:
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        SIZE_t* samples,
+        const SIZE_t[:] sample_indices,
         SIZE_t start,
         SIZE_t end,
     ) nogil except -1:
@@ -64,9 +64,9 @@ cdef class Criterion:
             The weight of each sample stored as a Cython memoryview.
         weighted_n_samples : double
             The total weight of the samples being considered
-        samples : array-like, dtype=SIZE_t
-            Indices of the samples in X and y, where samples[start:end]
-            correspond to the samples in this node
+        sample_indices : ndarray, dtype=SIZE_t
+            A mask on the samples. Indices of the samples in X and y we want to use,
+            where sample_indices[start:end] correspond to the samples in this node.
         start : SIZE_t
             The first sample to be used on this node
         end : SIZE_t
@@ -90,16 +90,16 @@ cdef class Criterion:
         pass
 
     cdef int update(self, SIZE_t new_pos) nogil except -1:
-        """Updated statistics by moving samples[pos:new_pos] to the left child.
+        """Updated statistics by moving sample_indices[pos:new_pos] to the left child.
 
-        This updates the collected statistics by moving samples[pos:new_pos]
+        This updates the collected statistics by moving sample_indices[pos:new_pos]
         from the right child to the left child. It must be implemented by
         the subclass.
 
         Parameters
         ----------
         new_pos : SIZE_t
-            New starting index position of the samples in the right child
+            New starting index position of the sample_indices in the right child
         """
         pass
 
@@ -107,7 +107,7 @@ cdef class Criterion:
         """Placeholder for calculating the impurity of the node.
 
         Placeholder for a method which will evaluate the impurity of
-        the current node, i.e. the impurity of samples[start:end]. This is the
+        the current node, i.e. the impurity of sample_indices[start:end]. This is the
         primary function of the criterion class. The smaller the impurity the
         better.
         """
@@ -118,8 +118,8 @@ cdef class Criterion:
         """Placeholder for calculating the impurity of children.
 
         Placeholder for a method which evaluates the impurity in
-        children nodes, i.e. the impurity of samples[start:pos] + the impurity
-        of samples[pos:end].
+        children nodes, i.e. the impurity of sample_indices[start:pos] + the impurity
+        of sample_indices[pos:end].
 
         Parameters
         ----------
@@ -136,7 +136,7 @@ cdef class Criterion:
         """Placeholder for storing the node value.
 
         Placeholder for a method which will compute the node value
-        of samples[start:end] and save the value into dest.
+        of sample_indices[start:end] and save the value into dest.
 
         Parameters
         ----------
@@ -214,7 +214,6 @@ cdef class ClassificationCriterion(Criterion):
         n_classes : numpy.ndarray, dtype=SIZE_t
             The number of unique classes in each target
         """
-        self.samples = NULL
         self.start = 0
         self.pos = 0
         self.end = 0
@@ -255,14 +254,14 @@ cdef class ClassificationCriterion(Criterion):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        SIZE_t* samples,
+        const SIZE_t[:] sample_indices,
         SIZE_t start,
         SIZE_t end
     ) nogil except -1:
         """Initialize the criterion.
 
-        This initializes the criterion at node samples[start:end] and children
-        samples[start:start] and samples[start:end].
+        This initializes the criterion at node sample_indices[start:end] and children
+        sample_indices[start:start] and sample_indices[start:end].
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
@@ -275,8 +274,9 @@ cdef class ClassificationCriterion(Criterion):
             The weight of each sample stored as a Cython memoryview.
         weighted_n_samples : double
             The total weight of all samples
-        samples : array-like, dtype=SIZE_t
-            A mask on the samples, showing which ones we want to use
+        sample_indices : ndarray, dtype=SIZE_t
+            A mask on the samples. Indices of the samples in X and y we want to use,
+            where sample_indices[start:end] correspond to the samples in this node.
         start : SIZE_t
             The first sample to use in the mask
         end : SIZE_t
@@ -284,7 +284,7 @@ cdef class ClassificationCriterion(Criterion):
         """
         self.y = y
         self.sample_weight = sample_weight
-        self.samples = samples
+        self.sample_indices = sample_indices
         self.start = start
         self.end = end
         self.n_node_samples = end - start
@@ -301,7 +301,7 @@ cdef class ClassificationCriterion(Criterion):
             memset(&self.sum_total[k, 0], 0, self.n_classes[k] * sizeof(double))
 
         for p in range(start, end):
-            i = samples[p]
+            i = sample_indices[p]
 
             # w is originally set to be 1.0, meaning that if no sample weights
             # are given, the default weight of each sample is 1.0.
@@ -354,7 +354,7 @@ cdef class ClassificationCriterion(Criterion):
         return 0
 
     cdef int update(self, SIZE_t new_pos) nogil except -1:
-        """Updated statistics by moving samples[pos:new_pos] to the left child.
+        """Updated statistics by moving sample_indices[pos:new_pos] to the left child.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
@@ -362,13 +362,13 @@ cdef class ClassificationCriterion(Criterion):
         Parameters
         ----------
         new_pos : SIZE_t
-            The new ending position for which to move samples from the right
+            The new ending position for which to move sample_indices from the right
             child to the left child.
         """
         cdef SIZE_t pos = self.pos
         cdef SIZE_t end = self.end
 
-        cdef SIZE_t* samples = self.samples
+        cdef const SIZE_t[:] sample_indices = self.sample_indices
         cdef const DOUBLE_t[:] sample_weight = self.sample_weight
 
         cdef SIZE_t i
@@ -386,7 +386,7 @@ cdef class ClassificationCriterion(Criterion):
         # of computations, i.e. from pos to new_pos or from end to new_po.
         if (new_pos - pos) <= (end - new_pos):
             for p in range(pos, new_pos):
-                i = samples[p]
+                i = sample_indices[p]
 
                 if sample_weight is not None:
                     w = sample_weight[i]
@@ -400,7 +400,7 @@ cdef class ClassificationCriterion(Criterion):
             self.reverse_reset()
 
             for p in range(end - 1, new_pos - 1, -1):
-                i = samples[p]
+                i = sample_indices[p]
 
                 if sample_weight is not None:
                     w = sample_weight[i]
@@ -427,7 +427,7 @@ cdef class ClassificationCriterion(Criterion):
         pass
 
     cdef void node_value(self, double* dest) nogil:
-        """Compute the node value of samples[start:end] and save it into dest.
+        """Compute the node value of sample_indices[start:end] and save it into dest.
 
         Parameters
         ----------
@@ -461,7 +461,7 @@ cdef class Entropy(ClassificationCriterion):
         """Evaluate the impurity of the current node.
 
         Evaluate the cross-entropy criterion as impurity of the current node,
-        i.e. the impurity of samples[start:end]. The smaller the impurity the
+        i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
         better.
         """
         cdef double entropy = 0.0
@@ -482,8 +482,8 @@ cdef class Entropy(ClassificationCriterion):
                                 double* impurity_right) nogil:
         """Evaluate the impurity in children nodes.
 
-        i.e. the impurity of the left child (samples[start:pos]) and the
-        impurity the right child (samples[pos:end]).
+        i.e. the impurity of the left child (sample_indices[start:pos]) and the
+        impurity the right child (sample_indices[pos:end]).
 
         Parameters
         ----------
@@ -535,7 +535,7 @@ cdef class Gini(ClassificationCriterion):
         """Evaluate the impurity of the current node.
 
         Evaluate the Gini criterion as impurity of the current node,
-        i.e. the impurity of samples[start:end]. The smaller the impurity the
+        i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
         better.
         """
         cdef double gini = 0.0
@@ -560,8 +560,8 @@ cdef class Gini(ClassificationCriterion):
                                 double* impurity_right) nogil:
         """Evaluate the impurity in children nodes.
 
-        i.e. the impurity of the left child (samples[start:pos]) and the
-        impurity the right child (samples[pos:end]) using the Gini index.
+        i.e. the impurity of the left child (sample_indices[start:pos]) and the
+        impurity the right child (sample_indices[pos:end]) using the Gini index.
 
         Parameters
         ----------
@@ -623,7 +623,6 @@ cdef class RegressionCriterion(Criterion):
             The total number of samples to fit on
         """
         # Default values
-        self.samples = NULL
         self.start = 0
         self.pos = 0
         self.end = 0
@@ -649,19 +648,19 @@ cdef class RegressionCriterion(Criterion):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        SIZE_t* samples,
+        const SIZE_t[:] sample_indices,
         SIZE_t start,
         SIZE_t end,
     ) nogil except -1:
         """Initialize the criterion.
 
-        This initializes the criterion at node samples[start:end] and children
-        samples[start:start] and samples[start:end].
+        This initializes the criterion at node sample_indices[start:end] and children
+        sample_indices[start:start] and sample_indices[start:end].
         """
         # Initialize fields
         self.y = y
         self.sample_weight = sample_weight
-        self.samples = samples
+        self.sample_indices = sample_indices
         self.start = start
         self.end = end
         self.n_node_samples = end - start
@@ -678,7 +677,7 @@ cdef class RegressionCriterion(Criterion):
         memset(&self.sum_total[0], 0, self.n_outputs * sizeof(double))
 
         for p in range(start, end):
-            i = samples[p]
+            i = sample_indices[p]
 
             if sample_weight is not None:
                 w = sample_weight[i]
@@ -718,9 +717,9 @@ cdef class RegressionCriterion(Criterion):
         return 0
 
     cdef int update(self, SIZE_t new_pos) nogil except -1:
-        """Updated statistics by moving samples[pos:new_pos] to the left."""
+        """Updated statistics by moving sample_indices[pos:new_pos] to the left."""
         cdef const DOUBLE_t[:] sample_weight = self.sample_weight
-        cdef SIZE_t* samples = self.samples
+        cdef const SIZE_t[:] sample_indices = self.sample_indices
 
         cdef SIZE_t pos = self.pos
         cdef SIZE_t end = self.end
@@ -738,7 +737,7 @@ cdef class RegressionCriterion(Criterion):
         # of computations, i.e. from pos to new_pos or from end to new_pos.
         if (new_pos - pos) <= (end - new_pos):
             for p in range(pos, new_pos):
-                i = samples[p]
+                i = sample_indices[p]
 
                 if sample_weight is not None:
                     w = sample_weight[i]
@@ -751,7 +750,7 @@ cdef class RegressionCriterion(Criterion):
             self.reverse_reset()
 
             for p in range(end - 1, new_pos - 1, -1):
-                i = samples[p]
+                i = sample_indices[p]
 
                 if sample_weight is not None:
                     w = sample_weight[i]
@@ -777,7 +776,7 @@ cdef class RegressionCriterion(Criterion):
         pass
 
     cdef void node_value(self, double* dest) nogil:
-        """Compute the node value of samples[start:end] into dest."""
+        """Compute the node value of sample_indices[start:end] into dest."""
         cdef SIZE_t k
 
         for k in range(self.n_outputs):
@@ -794,7 +793,7 @@ cdef class MSE(RegressionCriterion):
         """Evaluate the impurity of the current node.
 
         Evaluate the MSE criterion as impurity of the current node,
-        i.e. the impurity of samples[start:end]. The smaller the impurity the
+        i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
         better.
         """
         cdef double impurity
@@ -841,11 +840,11 @@ cdef class MSE(RegressionCriterion):
                                 double* impurity_right) nogil:
         """Evaluate the impurity in children nodes.
 
-        i.e. the impurity of the left child (samples[start:pos]) and the
-        impurity the right child (samples[pos:end]).
+        i.e. the impurity of the left child (sample_indices[start:pos]) and the
+        impurity the right child (sample_indices[pos:end]).
         """
         cdef const DOUBLE_t[:] sample_weight = self.sample_weight
-        cdef SIZE_t* samples = self.samples
+        cdef const SIZE_t[:] sample_indices = self.sample_indices
         cdef SIZE_t pos = self.pos
         cdef SIZE_t start = self.start
 
@@ -860,7 +859,7 @@ cdef class MSE(RegressionCriterion):
         cdef DOUBLE_t w = 1.0
 
         for p in range(start, pos):
-            i = samples[p]
+            i = sample_indices[p]
 
             if sample_weight is not None:
                 w = sample_weight[i]
@@ -904,7 +903,6 @@ cdef class MAE(RegressionCriterion):
             The total number of samples to fit on
         """
         # Default values
-        self.samples = NULL
         self.start = 0
         self.pos = 0
         self.end = 0
@@ -930,14 +928,14 @@ cdef class MAE(RegressionCriterion):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        SIZE_t* samples,
+        const SIZE_t[:] sample_indices,
         SIZE_t start,
         SIZE_t end,
     ) nogil except -1:
         """Initialize the criterion.
 
-        This initializes the criterion at node samples[start:end] and children
-        samples[start:start] and samples[start:end].
+        This initializes the criterion at node sample_indices[start:end] and children
+        sample_indices[start:start] and sample_indices[start:end].
         """
         cdef SIZE_t i, p, k
         cdef DOUBLE_t w = 1.0
@@ -945,7 +943,7 @@ cdef class MAE(RegressionCriterion):
         # Initialize fields
         self.y = y
         self.sample_weight = sample_weight
-        self.samples = samples
+        self.sample_indices = sample_indices
         self.start = start
         self.end = end
         self.n_node_samples = end - start
@@ -963,7 +961,7 @@ cdef class MAE(RegressionCriterion):
             (<WeightedMedianCalculator> right_child[k]).reset()
 
         for p in range(start, end):
-            i = samples[p]
+            i = sample_indices[p]
 
             if sample_weight is not None:
                 w = sample_weight[i]
@@ -1043,13 +1041,13 @@ cdef class MAE(RegressionCriterion):
         return 0
 
     cdef int update(self, SIZE_t new_pos) nogil except -1:
-        """Updated statistics by moving samples[pos:new_pos] to the left.
+        """Updated statistics by moving sample_indices[pos:new_pos] to the left.
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
         """
         cdef const DOUBLE_t[:] sample_weight = self.sample_weight
-        cdef SIZE_t* samples = self.samples
+        cdef const SIZE_t[:] sample_indices = self.sample_indices
 
         cdef void** left_child = <void**> self.left_child.data
         cdef void** right_child = <void**> self.right_child.data
@@ -1066,7 +1064,7 @@ cdef class MAE(RegressionCriterion):
         # computations, i.e. from pos to new_pos or from end to new_pos.
         if (new_pos - pos) <= (end - new_pos):
             for p in range(pos, new_pos):
-                i = samples[p]
+                i = sample_indices[p]
 
                 if sample_weight is not None:
                     w = sample_weight[i]
@@ -1082,7 +1080,7 @@ cdef class MAE(RegressionCriterion):
             self.reverse_reset()
 
             for p in range(end - 1, new_pos - 1, -1):
-                i = samples[p]
+                i = sample_indices[p]
 
                 if sample_weight is not None:
                     w = sample_weight[i]
@@ -1100,7 +1098,7 @@ cdef class MAE(RegressionCriterion):
         return 0
 
     cdef void node_value(self, double* dest) nogil:
-        """Computes the node value of samples[start:end] into dest."""
+        """Computes the node value of sample_indices[start:end] into dest."""
         cdef SIZE_t k
         for k in range(self.n_outputs):
             dest[k] = <double> self.node_medians[k]
@@ -1109,18 +1107,18 @@ cdef class MAE(RegressionCriterion):
         """Evaluate the impurity of the current node.
 
         Evaluate the MAE criterion as impurity of the current node,
-        i.e. the impurity of samples[start:end]. The smaller the impurity the
+        i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
         better.
         """
         cdef const DOUBLE_t[:] sample_weight = self.sample_weight
-        cdef SIZE_t* samples = self.samples
+        cdef const SIZE_t[:] sample_indices = self.sample_indices
         cdef SIZE_t i, p, k
         cdef DOUBLE_t w = 1.0
         cdef DOUBLE_t impurity = 0.0
 
         for k in range(self.n_outputs):
             for p in range(self.start, self.end):
-                i = samples[p]
+                i = sample_indices[p]
 
                 if sample_weight is not None:
                     w = sample_weight[i]
@@ -1133,11 +1131,11 @@ cdef class MAE(RegressionCriterion):
                                 double* p_impurity_right) nogil:
         """Evaluate the impurity in children nodes.
 
-        i.e. the impurity of the left child (samples[start:pos]) and the
-        impurity the right child (samples[pos:end]).
+        i.e. the impurity of the left child (sample_indices[start:pos]) and the
+        impurity the right child (sample_indices[pos:end]).
         """
         cdef const DOUBLE_t[:] sample_weight = self.sample_weight
-        cdef SIZE_t* samples = self.samples
+        cdef const SIZE_t[:] sample_indices = self.sample_indices
 
         cdef SIZE_t start = self.start
         cdef SIZE_t pos = self.pos
@@ -1155,7 +1153,7 @@ cdef class MAE(RegressionCriterion):
         for k in range(self.n_outputs):
             median = (<WeightedMedianCalculator> left_child[k]).get_median()
             for p in range(start, pos):
-                i = samples[p]
+                i = sample_indices[p]
 
                 if sample_weight is not None:
                     w = sample_weight[i]
@@ -1167,7 +1165,7 @@ cdef class MAE(RegressionCriterion):
         for k in range(self.n_outputs):
             median = (<WeightedMedianCalculator> right_child[k]).get_median()
             for p in range(pos, end):
-                i = samples[p]
+                i = sample_indices[p]
 
                 if sample_weight is not None:
                     w = sample_weight[i]
@@ -1257,7 +1255,7 @@ cdef class Poisson(RegressionCriterion):
         """Evaluate the impurity of the current node.
 
         Evaluate the Poisson criterion as impurity of the current node,
-        i.e. the impurity of samples[start:end]. The smaller the impurity the
+        i.e. the impurity of sample_indices[start:end]. The smaller the impurity the
         better.
         """
         return self.poisson_loss(self.start, self.end, self.sum_total,
@@ -1313,8 +1311,8 @@ cdef class Poisson(RegressionCriterion):
                                 double* impurity_right) nogil:
         """Evaluate the impurity in children nodes.
 
-        i.e. the impurity of the left child (samples[start:pos]) and the
-        impurity of the right child (samples[pos:end]) for Poisson.
+        i.e. the impurity of the left child (sample_indices[start:pos]) and the
+        impurity of the right child (sample_indices[pos:end]) for Poisson.
         """
         cdef SIZE_t start = self.start
         cdef SIZE_t pos = self.pos
@@ -1335,10 +1333,12 @@ cdef class Poisson(RegressionCriterion):
         """
         cdef const DOUBLE_t[:, ::1] y = self.y
         cdef const DOUBLE_t[:] sample_weight = self.sample_weight
+        cdef const SIZE_t[:] sample_indices = self.sample_indices
 
         cdef DOUBLE_t y_mean = 0.
         cdef DOUBLE_t poisson_loss = 0.
         cdef DOUBLE_t w = 1.0
+        cdef SIZE_t i, k, p
         cdef SIZE_t n_outputs = self.n_outputs
 
         for k in range(n_outputs):
@@ -1353,7 +1353,7 @@ cdef class Poisson(RegressionCriterion):
             y_mean = y_sum[k] / weight_sum
 
             for p in range(start, end):
-                i = self.samples[p]
+                i = sample_indices[p]
 
                 if sample_weight is not None:
                     w = sample_weight[i]
