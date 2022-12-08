@@ -103,7 +103,6 @@ def make_prediction(dataset=None, binary=False):
 
 
 def test_classification_report_dictionary_output():
-
     # Test performance report with dictionary output
     iris = datasets.load_iris()
     y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
@@ -574,13 +573,6 @@ def test_confusion_matrix_normalize(normalize, cm_dtype, expected_results):
     cm = confusion_matrix(y_test, y_pred, normalize=normalize)
     assert_allclose(cm, expected_results)
     assert cm.dtype.kind == cm_dtype
-
-
-def test_confusion_matrix_normalize_wrong_option():
-    y_test = [0, 0, 0, 0, 1, 1, 1, 1]
-    y_pred = [0, 0, 0, 0, 0, 0, 0, 0]
-    with pytest.raises(ValueError, match="normalize must be one of"):
-        confusion_matrix(y_test, y_pred, normalize=True)
 
 
 def test_confusion_matrix_normalize_single_class():
@@ -1881,7 +1873,6 @@ def test_prf_warnings():
     # average of per-label scores
     f, w = precision_recall_fscore_support, UndefinedMetricWarning
     for average in [None, "weighted", "macro"]:
-
         msg = (
             "Precision and F-score are ill-defined and "
             "being set to 0.0 in labels with no predicted samples."
@@ -1981,7 +1972,6 @@ def test_prf_no_warnings_if_zero_division_set(zero_division):
     # average of per-label scores
     f = precision_recall_fscore_support
     for average in [None, "weighted", "macro"]:
-
         assert_no_warnings(
             f, [0, 1, 2], [1, 1, 2], average=average, zero_division=zero_division
         )
