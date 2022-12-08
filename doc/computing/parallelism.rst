@@ -299,6 +299,13 @@ When this environment variable is set to a non zero value, the `Cython`
 derivative, `boundscheck` is set to `True`. This is useful for finding
 segfaults.
 
+`SKLEARN_BUILD_ENABLE_DEBUG_SYMBOLS`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When this environment variable is set to a non zero value, the debug symbols
+will be included in the compiled C extensions. Only debug symbols for POSIX
+systems is configured.
+
 `SKLEARN_PAIRWISE_DIST_CHUNK_SIZE`
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
