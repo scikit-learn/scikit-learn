@@ -13,6 +13,7 @@ import numpy as np
 import scipy.sparse as sp
 import pytest
 
+from sklearn.utils.estimator_checks import check_param_validation
 from sklearn.utils._testing import (
     assert_array_equal,
     assert_array_almost_equal,
@@ -2414,3 +2415,9 @@ def test_search_cv_verbose_3(capsys, return_train_score):
     else:
         match = re.findall(r"score=[\d\.]+", captured)
     assert len(match) == 3
+
+
+@pytest.mark.parametrize("SearchCV", [GridSearchCV, RandomizedSearchCV])
+def test_search_cv_param_validation(SearchCV):
+    search_cv = SearchCV(Ridge(), {"alpha": [0.1, 0.01]})
+    check_param_validation(SearchCV.__name__, search_cv)
