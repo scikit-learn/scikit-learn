@@ -73,7 +73,7 @@ def train_wrap(
 
         problem = set_problem(
             x_data_bytes_ptr,
-            X.dtype == np.float64,
+            x_has_type_float64,
             (<cnp.int32_t>X.shape[0]),
             (<cnp.int32_t>X.shape[1]),
             (<cnp.int32_t>np.count_nonzero(X)),
