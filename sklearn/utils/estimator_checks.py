@@ -168,6 +168,9 @@ def _yield_classifier_checks(classifier):
     # test if predict_proba is a monotonic transformation of decision_function
     yield check_decision_proba_consistency
 
+    yield check_classifiers_list_bytes_targets
+    yield check_classifiers_array_bytes_targets
+
 
 @ignore_warnings(category=FutureWarning)
 def check_supervised_y_no_nan(name, estimator_orig):
@@ -2588,6 +2591,53 @@ def check_classifiers_multilabel_output_format_decision_function(name, classifie
         f"{name}.decision_function is expected to output a floating dtype."
         f" Got {y_pred.dtype} instead."
     )
+
+
+@ignore_warnings(category=FutureWarning)
+def check_classifiers_list_bytes_targets(name, classifier_orig):
+    classifier = clone(classifier_orig)
+    X, y = make_blobs(n_samples=50, centers=2, random_state=0)
+    X = StandardScaler().fit_transform(X)
+
+    if name in ["BernoulliNB", "MultinomialNB", "ComplementNB", "CategoricalNB"]:
+        X -= X.min()
+
+    X = _pairwise_estimator_convert_X(X, classifier)
+
+    classes_bytes = np.array([b"a", b"b"], dtype=object)
+    y = classes_bytes[y]
+    y_list = y.tolist()
+
+    classifier.fit(X, y_list)
+    y_pred = classifier.predict(X)
+
+    assert sorted(np.unique(y_pred).tolist()) == sorted(classes_bytes.tolist())
+    assert y_pred.shape == y.shape
+
+    classifier.score(X, y_list)
+
+
+@ignore_warnings(category=FutureWarning)
+def check_classifiers_array_bytes_targets(name, classifier_orig):
+    classifier = clone(classifier_orig)
+    X, y = make_blobs(n_samples=50, centers=2, random_state=0)
+    X = StandardScaler().fit_transform(X)
+
+    if name in ["BernoulliNB", "MultinomialNB", "ComplementNB", "CategoricalNB"]:
+        X -= X.min()
+
+    X = _pairwise_estimator_convert_X(X, classifier)
+
+    classes_bytes = np.array([b"a", b"b"], dtype=object)
+    y = classes_bytes[y].astype("S")
+
+    classifier.fit(X, y)
+    y_pred = classifier.predict(X)
+
+    assert sorted(np.unique(y_pred).tolist()) == sorted(classes_bytes.tolist())
+    assert y_pred.shape == y.shape
+
+    classifier.score(X, y)
 
 
 @ignore_warnings(category=FutureWarning)
