@@ -227,7 +227,7 @@ cdef class Criterion(BaseCriterion):
         """
         pass
 
-    cdef int pointer_init(
+    cdef int pointer_reset(
         self,
         const SIZE_t[:] sample_indices,
         SIZE_t start,
@@ -333,6 +333,9 @@ cdef class ClassificationCriterion(Criterion):
         cdef SIZE_t c
         cdef DOUBLE_t w = 1.0
 
+        return 0
+
+    cdef int pointer_reset():
         for k in range(self.n_outputs):
             memset(&self.sum_total[k, 0], 0, self.n_classes[k] * sizeof(double))
 
