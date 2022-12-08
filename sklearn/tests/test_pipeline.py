@@ -1651,6 +1651,7 @@ def test_feature_union_getitem_error(key):
 
 
 def test_pipeline_param_validation():
+    """Run the param validation for `Pipeline`."""
     model = Pipeline(
         [("scaler", StandardScaler()), ("classifier", LogisticRegression())]
     )
