@@ -100,10 +100,10 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.feature_extraction.img_to_graph",
     "sklearn.metrics.accuracy_score",
     "sklearn.metrics.auc",
+    "sklearn.metrics.confusion_matrix",
     "sklearn.metrics.mean_absolute_error",
     "sklearn.metrics.roc_curve",
     "sklearn.metrics.zero_one_loss",
-    "sklearn.metrics.confusion_matrix",
     "sklearn.model_selection.train_test_split",
     "sklearn.svm.l1_min_c",
 ]
