@@ -315,7 +315,7 @@ def load_csv_data(
         Description of the dataset (the content of `descr_file_name`).
         Only returned if `descr_file_name` is not None.
     """
-    with resources.open_text(data_module, data_file_name) as csv_file:
+    with resources.files(data_module).joinpath(data_file_name).open("r") as csv_file:
         data_file = csv.reader(csv_file)
         temp = next(data_file)
         n_samples = int(temp[0])
@@ -1132,12 +1132,12 @@ def load_linnerud(*, return_X_y=False, as_frame=False):
     target_filename = "linnerud_physiological.csv"
 
     # Read header and data
-    with resources.open_text(DATA_MODULE, data_filename) as f:
+    with resources.files(DATA_MODULE).joinpath(data_filename).open("r") as f:
         header_exercise = f.readline().split()
         f.seek(0)  # reset file obj
         data_exercise = np.loadtxt(f, skiprows=1)
 
-    with resources.open_text(DATA_MODULE, target_filename) as f:
+    with resources.files(DATA_MODULE).joinpath(target_filename).open("r") as f:
         header_physiological = f.readline().split()
         f.seek(0)  # reset file obj
         data_physiological = np.loadtxt(f, skiprows=1)
