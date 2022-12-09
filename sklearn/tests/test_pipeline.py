@@ -1658,3 +1658,32 @@ def test_feature_union_set_output():
     assert isinstance(X_trans, pd.DataFrame)
     assert_array_equal(X_trans.columns, union.get_feature_names_out())
     assert_array_equal(X_trans.index, X_test.index)
+
+
+def test_feature_union_getitem():
+    """Check FeatureUnion.__getitem__ returns expected results."""
+    scalar = StandardScaler()
+    pca = PCA()
+    union = FeatureUnion(
+        [
+            ("scalar", scalar),
+            ("pca", pca),
+            ("pass", "passthrough"),
+            ("drop_me", "drop"),
+        ]
+    )
+    assert union["scalar"] is scalar
+    assert union["pca"] is pca
+    assert union["pass"] == "passthrough"
+    assert union["drop_me"] == "drop"
+
+
+@pytest.mark.parametrize("key", [0, slice(0, 2)])
+def test_feature_union_getitem_error(key):
+    """Raise error when __getitem__ gets a non-string input."""
+
+    union = FeatureUnion([("scalar", StandardScaler()), ("pca", PCA())])
+
+    msg = "Only string keys are supported"
+    with pytest.raises(KeyError, match=msg):
+        union[key]

@@ -933,6 +933,14 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
         return cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "normalize": ["boolean"],
+        "sample_weight": ["array-like", None],
+    }
+)
 def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
     """Zero-one classification loss.
 
