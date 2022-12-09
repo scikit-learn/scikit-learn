@@ -279,8 +279,7 @@ Changelog
   :user:`Kshitij Mathur <Kshitij68>`.
 
 - |Enhancement| :class:`decomposition.DictionaryLearning` now accepts the parameter
-  `callback` and exposes the attribute `code_` which is the sparse code factor
-  extracted from the data. :pr:`24871` by :user:`Omar Salman <OmarManzoor>`
+  `callback`. :pr:`24871` by :user:`Omar Salman <OmarManzoor>`
 
 :mod:`sklearn.discriminant_analysis`
 ....................................
