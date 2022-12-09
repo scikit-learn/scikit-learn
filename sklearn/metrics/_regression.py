@@ -117,6 +117,8 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
 
     n_outputs = y_true.shape[1]
     allowed_multioutput_str = ("raw_values", "uniform_average", "variance_weighted")
+    # TODO: Remove the first if check when @check_params is implemented for all
+    # function calling _check_reg_targets.
     if isinstance(multioutput, str):
         if multioutput not in allowed_multioutput_str:
             raise ValueError(
@@ -790,6 +792,19 @@ def explained_variance_score(
     )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [
+            StrOptions({"raw_values", "uniform_average", "variance_weighted"}),
+            "array-like",
+            None,
+        ],
+        "normalize": ["boolean"],
+    }
+)
 def r2_score(
     y_true,
     y_pred,
