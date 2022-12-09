@@ -118,7 +118,7 @@ def _check_reg_targets(y_true, y_pred, multioutput, dtype="numeric"):
     n_outputs = y_true.shape[1]
     allowed_multioutput_str = ("raw_values", "uniform_average", "variance_weighted")
     # TODO: Remove the first if check when @check_params is implemented for all
-    # function calling _check_reg_targets.
+    # functions calling _check_reg_targets.
     if isinstance(multioutput, str):
         if multioutput not in allowed_multioutput_str:
             raise ValueError(
