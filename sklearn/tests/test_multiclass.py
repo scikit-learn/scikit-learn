@@ -11,6 +11,7 @@ from sklearn.utils._mocking import CheckingClassifier
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
+from sklearn.multiclass import _predict_binary
 from sklearn.utils.multiclass import check_classification_targets, type_of_target
 from sklearn.utils import (
     check_array,
@@ -19,6 +20,7 @@ from sklearn.utils import (
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
+from sklearn.metrics.pairwise import euclidean_distances
 
 from sklearn.svm import LinearSVC, SVC
 from sklearn.naive_bayes import MultinomialNB
@@ -702,6 +704,19 @@ def test_ecoc_fit_predict():
     ecoc = OutputCodeClassifier(MultinomialNB(), code_size=2, random_state=0)
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     assert len(ecoc.estimators_) == n_classes * 2
+
+
+def test_ecoc_predict_proba():
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), random_state=0)
+    ecoc.fit(iris.data, iris.target).predict(iris.data)
+    proba = ecoc.predict_proba(iris.data)
+    # Test that the scores sum to 1
+    assert_almost_equal(np.sum(proba, axis=1), np.ones(proba.shape[0]))
+
+    # Regression test for the new proba-based predict against the old one
+    preds = np.array([_predict_binary(e, iris_data) for e in ecoc.estimators_]).T
+    prediction = euclidean_distances(preds, ecoc.code_book_).argmin(axis=1)
+    assert prediction == proba.argmax(axis=1)
 
 
 def test_ecoc_gridsearch():
