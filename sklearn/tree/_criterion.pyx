@@ -229,7 +229,6 @@ cdef class Criterion(BaseCriterion):
 
     cdef int pointer_reset(
         self,
-        const SIZE_t[:] sample_indices,
         SIZE_t start,
         SIZE_t end
     ) nogil except -1:
@@ -327,25 +326,30 @@ cdef class ClassificationCriterion(Criterion):
         self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.0
 
+        return 0
+
+    cdef int pointer_reset(
+        self,
+        SIZE_t start,
+        SIZE_t end
+    ) nogil except -1:
+
         cdef SIZE_t i
         cdef SIZE_t p
         cdef SIZE_t k
         cdef SIZE_t c
         cdef DOUBLE_t w = 1.0
 
-        return 0
-
-    cdef int pointer_reset():
         for k in range(self.n_outputs):
             memset(&self.sum_total[k, 0], 0, self.n_classes[k] * sizeof(double))
 
         for p in range(start, end):
-            i = sample_indices[p]
+            i = self.sample_indices[p]
 
             # w is originally set to be 1.0, meaning that if no sample weights
             # are given, the default weight of each sample is 1.0.
-            if sample_weight is not None:
-                w = sample_weight[i]
+            if self.sample_weight is not None:
+                w = self.sample_weight[i]
 
             # Count weighted class frequency for each target
             for k in range(self.n_outputs):
