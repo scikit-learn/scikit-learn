@@ -1188,8 +1188,7 @@ def dict_learning(
         positive_dict=positive_dict,
         transform_max_iter=method_max_iter,
     )
-    estimator.fit(X)
-    code = estimator.transform(X)
+    code = estimator.fit_transform(X)
     if return_n_iter:
         return (
             code,
@@ -1760,6 +1759,26 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self.fit_transform(X)
+        return self
+
+    def fit_transform(self, X, y=None):
+        """Fit the model from data in X and return the transformed data.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
+
+        Returns
+        -------
+        V : ndarray of shape (n_samples, n_components)
+            Transformed data.
+        """
         self._validate_params()
 
         _check_positive_coding(method=self.fit_algorithm, positive=self.positive_code)
@@ -1768,6 +1787,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X)
+
         if self.n_components is None:
             n_components = X.shape[1]
         else:
@@ -1793,7 +1813,8 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         )
         self.components_ = U
         self.error_ = E
-        return self
+
+        return V
 
     @property
     def _n_features_out(self):

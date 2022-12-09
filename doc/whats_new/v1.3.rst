@@ -19,6 +19,11 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- |Enhancement| The `fit_transform` method of :class:`decomposition.DictionaryLearning`
+  is more efficient but may produce different results as in previous versions when
+  `transform_algorithm` is not the same as `fit_algorithm` and the number of iterations
+  is small. :pr:`24871` by :user:`Omar Salman <OmarManzoor>`.
+
 Changes impacting all modules
 -----------------------------
 
