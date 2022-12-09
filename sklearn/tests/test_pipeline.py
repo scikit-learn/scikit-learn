@@ -12,7 +12,6 @@ import numpy as np
 from scipy import sparse
 import joblib
 
-from sklearn.utils.estimator_checks import check_param_validation
 from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
@@ -1648,11 +1647,3 @@ def test_feature_union_getitem_error(key):
     msg = "Only string keys are supported"
     with pytest.raises(KeyError, match=msg):
         union[key]
-
-
-def test_pipeline_param_validation():
-    """Run the param validation for `Pipeline`."""
-    model = Pipeline(
-        [("scaler", StandardScaler()), ("classifier", LogisticRegression())]
-    )
-    check_param_validation("Pipeline", model)

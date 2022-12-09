@@ -28,7 +28,7 @@ from .utils._tags import _safe_tags
 from .utils.validation import check_memory
 from .utils.validation import check_is_fitted
 from .utils import check_pandas_support
-from .utils._param_validation import HasMethods
+from .utils._param_validation import HasMethods, Hidden
 from .utils._set_output import _safe_set_output, _get_output_config
 from .utils.fixes import delayed
 from .exceptions import NotFittedError
@@ -41,7 +41,7 @@ __all__ = ["Pipeline", "FeatureUnion", "make_pipeline", "make_union"]
 def _final_estimator_has(attr):
     """Check that final_estimator has `attr`.
 
-    Used together with `avaliable_if` in `Pipeline`."""
+    Used together with `available_if` in `Pipeline`."""
 
     def check(self):
         # raise original `AttributeError` if `attr` does not exist
@@ -145,7 +145,7 @@ class Pipeline(_BaseComposition):
     _required_parameters = ["steps"]
 
     _parameter_constraints: dict = {
-        "steps": "no_validation",  # validated in `_validate_steps`
+        "steps": [list, Hidden(tuple)],
         "memory": [None, str, HasMethods(["cache"])],
         "verbose": ["boolean"],
     }
@@ -314,8 +314,15 @@ class Pipeline(_BaseComposition):
 
     @property
     def _final_estimator(self):
-        estimator = self.steps[-1][1]
-        return "passthrough" if estimator is None else estimator
+        try:
+            estimator = self.steps[-1][1]
+            return "passthrough" if estimator is None else estimator
+        except (ValueError, AttributeError, TypeError):
+            # This condition happens when a call to a method is first calling
+            # `_available_if` and `fit` did not validate `steps` yet. We
+            # return `None` and an `InvalidParameterError` will be raised
+            # right after.
+            return None
 
     def _log_message(self, step_idx):
         if not self.verbose:
@@ -738,8 +745,12 @@ class Pipeline(_BaseComposition):
         return self.steps[-1][1].classes_
 
     def _more_tags(self):
-        # check if first estimator expects pairwise input
-        return {"pairwise": _safe_tags(self.steps[0][1], "pairwise")}
+        try:
+            return {"pairwise": _safe_tags(self.steps[0][1], "pairwise")}
+        except (ValueError, AttributeError, TypeError):
+            # This happens when the `steps` is not a list of (name, estimator)
+            # tuples and `fit` is not called yet to validate the steps.
+            return {}
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
