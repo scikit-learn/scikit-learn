@@ -1046,7 +1046,8 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         Y = np.array([_predict_binary(e, X) for e in self.estimators_]).T
         distance = euclidean_distances(Y, self.code_book_)
         # Inverse distance weighting:
-        proba = (1. / distance) / np.sum(1. / distance, axis=1)[:, np.newaxis]
+        eps = 1e-16
+        proba = (1. / (distance + eps)) / np.sum(1. / (distance + eps), axis=1)[:, np.newaxis]
         return proba
 
     def predict(self, X):
