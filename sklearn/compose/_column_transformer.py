@@ -421,7 +421,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             if not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not hasattr(
                 t, "transform"
             ):
-                # Used to validate the transformers in `the transformers` list
+                # Used to validate the transformers in the `transformers` list
                 raise TypeError(
                     "All estimators should implement fit and "
                     "transform, or can be 'drop' or 'passthrough' "
