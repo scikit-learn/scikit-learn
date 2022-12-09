@@ -802,7 +802,7 @@ def explained_variance_score(
             "array-like",
             None,
         ],
-        "normalize": ["boolean"],
+        "force_finite": ["boolean"],
     }
 )
 def r2_score(
