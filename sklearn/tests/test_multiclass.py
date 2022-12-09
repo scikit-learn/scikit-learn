@@ -714,7 +714,7 @@ def test_ecoc_predict_proba():
     assert_almost_equal(np.sum(proba, axis=1), np.ones(proba.shape[0]))
 
     # Regression test for the new proba-based predict against the old one
-    preds = np.array([_predict_binary(e, iris_data) for e in ecoc.estimators_]).T
+    preds = np.array([_predict_binary(e, iris.data) for e in ecoc.estimators_]).T
     prediction = euclidean_distances(preds, ecoc.code_book_).argmin(axis=1)
     assert prediction == proba.argmax(axis=1)
 
