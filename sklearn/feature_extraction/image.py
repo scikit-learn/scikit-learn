@@ -341,7 +341,7 @@ def _extract_patches(arr, patch_shape=8, extraction_step=1):
      { 
          "image": ["array-like"], 
          "patch_size": [tuple], 
-         "max_patches": [[Interval(Integral, left=1, right=None, closed="left") ,None]], 
+         "max_patches": [Interval(Integral, left=1, right=None, closed="left") ,None], 
          "random_state": ["random_state"]
      } 
 ) 
