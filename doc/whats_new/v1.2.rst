@@ -2,6 +2,31 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_2_1:
+
+Version 1.2.1
+=============
+
+**In Development**
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+Changelog
+---------
+
+:mod:`sklearn.utils`
+...................
+
+- |Fix| Restore :func:`utils.check_array`'s behaviour for pandas Series of type
+  boolean. The type is maintained, instead of converting to `float64.`
+  :pr:`25147` by `Tim Head`_.
+
 .. _changes_1_2:
 
 Version 1.2.0
