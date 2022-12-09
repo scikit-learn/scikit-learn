@@ -98,9 +98,7 @@ ax1.set_title("KNN without scaling")
 fit_and_plot_model(X_plot_scaled, y, clf, ax2)
 ax2.set_xlabel("scaled proline")
 ax2.set_ylabel("scaled hue")
-ax2.set_title("KNN with scaling")
-
-plt.show()
+_ = ax2.set_title("KNN with scaling")
 
 # %%
 # Here the desicion boundary shows that fitting scaled or non-scaled data lead
