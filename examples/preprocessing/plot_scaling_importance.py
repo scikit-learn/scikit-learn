@@ -94,7 +94,7 @@ fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(12, 6))
 fit_and_plot_model(X_plot, y, clf, ax1)
 ax1.set_xlabel("proline")
 ax1.set_ylabel("hue")
-ax1.set_title("KNN w/o scaling")
+ax1.set_title("KNN without scaling")
 
 fit_and_plot_model(X_plot_scaled, y, clf, ax2)
 ax2.set_xlabel("scaled proline")
