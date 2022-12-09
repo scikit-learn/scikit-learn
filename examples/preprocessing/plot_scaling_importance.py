@@ -181,7 +181,7 @@ plt.tight_layout()
 plt.show()
 
 # %%
-# Effect of rescaling on model's accuracy
+# Effect of rescaling on model's performance
 # =======================================
 #
 # Here we show prediction accuracies in scaled and unscaled data.
