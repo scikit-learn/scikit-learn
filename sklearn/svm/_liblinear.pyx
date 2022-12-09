@@ -33,28 +33,28 @@ def train_wrap(
     cdef model *model
     cdef char_const_ptr error_msg
     cdef int len_w
-    cdef bint x_has_type_float64 = X.dtype == np.float64
-    cdef char * x_data_bytes_ptr
-    cdef const cnp.float64_t[::1] x_data_64
-    cdef const cnp.float32_t[::1] x_data_32
-    cdef cnp.int32_t[::1] x_indices
-    cdef cnp.int32_t[::1] x_indptr
+    cdef bint X_has_type_float64 = X.dtype == np.float64
+    cdef char * X_data_bytes_ptr
+    cdef const cnp.float64_t[::1] X_data_64
+    cdef const cnp.float32_t[::1] X_data_32
+    cdef cnp.int32_t[::1] X_indices
+    cdef cnp.int32_t[::1] X_indptr
 
     if is_sparse:
-        x_indices = X.indices
-        x_indptr = X.indptr
-        if x_has_type_float64:
-            x_data_64 = X.data
-            x_data_bytes_ptr = <char *> &x_data_64[0]
+        X_indices = X.indices
+        X_indptr = X.indptr
+        if X_has_type_float64:
+            X_data_64 = X.data
+            X_data_bytes_ptr = <char *> &X_data_64[0]
         else:
-            x_data_32 = X.data
-            x_data_bytes_ptr = <char *> &x_data_32[0]
+            X_data_32 = X.data
+            X_data_bytes_ptr = <char *> &X_data_32[0]
 
         problem = csr_set_problem(
-            x_data_bytes_ptr,
-            x_has_type_float64,
-            <char *> &x_indices[0],
-            <char *> &x_indptr[0],
+            X_data_bytes_ptr,
+            X_has_type_float64,
+            <char *> &X_indices[0],
+            <char *> &X_indptr[0],
             (<cnp.int32_t>X.shape[0]),
             (<cnp.int32_t>X.shape[1]),
             (<cnp.int32_t>X.nnz),
@@ -63,17 +63,17 @@ def train_wrap(
             <char *> &Y[0]
         )
     else:
-        x_as_1d_array = X.reshape(-1)
-        if x_has_type_float64:
-            x_data_64 = x_as_1d_array
-            x_data_bytes_ptr = <char *> &x_data_64[0]
+        X_as_1d_array = X.reshape(-1)
+        if X_has_type_float64:
+            X_data_64 = X_as_1d_array
+            X_data_bytes_ptr = <char *> &X_data_64[0]
         else:
-            x_data_32 = x_as_1d_array
-            x_data_bytes_ptr = <char *> &x_data_32[0]
+            X_data_32 = X_as_1d_array
+            X_data_bytes_ptr = <char *> &X_data_32[0]
 
         problem = set_problem(
-            x_data_bytes_ptr,
-            x_has_type_float64,
+            X_data_bytes_ptr,
+            X_has_type_float64,
             (<cnp.int32_t>X.shape[0]),
             (<cnp.int32_t>X.shape[1]),
             (<cnp.int32_t>np.count_nonzero(X)),
