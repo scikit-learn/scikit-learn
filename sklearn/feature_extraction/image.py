@@ -340,7 +340,7 @@ def _extract_patches(arr, patch_shape=8, extraction_step=1):
 
 @validate_params(
     {
-        "image": ["array-like"],
+        "image": [np.ndarray],
         "patch_size": [tuple],
         "max_patches": [
             Interval(Real, left=0, right=1, closed="neither"),
