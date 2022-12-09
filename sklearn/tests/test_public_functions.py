@@ -13,13 +13,13 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.cluster.kmeans_plusplus",
     "sklearn.feature_extraction.grid_to_graph",
     "sklearn.feature_extraction.img_to_graph",
+    "sklearn.feature_extraction.image.extract_patches_2d",
     "sklearn.metrics.accuracy_score",
     "sklearn.metrics.auc",
     "sklearn.metrics.mean_absolute_error",
     "sklearn.metrics.zero_one_loss",
     "sklearn.model_selection.train_test_split",
     "sklearn.svm.l1_min_c",
-    "sklearn.feature_extraction.image.extract_patches_2d",
 ]
 
 
