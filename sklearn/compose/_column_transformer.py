@@ -218,7 +218,8 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         "transformers": [list],
         "remainder": [
             StrOptions({"drop", "passthrough"}),
-            HasMethods(["transform", "fit_transform"]),
+            HasMethods(["fit", "transform"]),
+            HasMethods(["fit_transform", "transform"]),
         ],
         "sparse_threshold": [Interval(Real, 0, 1, closed="both")],
         "n_jobs": [Integral, None],
