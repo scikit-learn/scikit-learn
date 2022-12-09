@@ -736,7 +736,7 @@ cdef class RegressionCriterion(Criterion):
         for p in range(start, end):
             i = self.sample_indices[p]
 
-            if sample_weight is not None:
+            if self.sample_weight is not None:
                 w = self.sample_weight[i]
 
             for k in range(self.n_outputs):
