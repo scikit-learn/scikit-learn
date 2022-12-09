@@ -96,6 +96,7 @@ def _check_function_param_validation(
 PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.cluster.estimate_bandwidth",
     "sklearn.cluster.kmeans_plusplus",
+    "sklearn.covariance.empirical_covariance",
     "sklearn.feature_extraction.grid_to_graph",
     "sklearn.feature_extraction.img_to_graph",
     "sklearn.metrics.accuracy_score",
@@ -105,7 +106,6 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.zero_one_loss",
     "sklearn.model_selection.train_test_split",
     "sklearn.svm.l1_min_c",
-    "sklearn.covariance.empirical_covariance",
 ]
 
 
