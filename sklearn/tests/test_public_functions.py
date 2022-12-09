@@ -96,6 +96,7 @@ def _check_function_param_validation(
 PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.cluster.estimate_bandwidth",
     "sklearn.cluster.kmeans_plusplus",
+    "sklearn.decomposition.dict_learning",
     "sklearn.feature_extraction.grid_to_graph",
     "sklearn.feature_extraction.img_to_graph",
     "sklearn.metrics.accuracy_score",

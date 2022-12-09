@@ -1039,21 +1039,7 @@ def dict_learning_online(
 @validate_params(
     {
         "X": ["array-like"],
-        "n_components": [Interval(Integral, 1, None, closed="left"), None],
-        "alpha": [Interval(Real, 0, None, closed="left")],
-        "max_iter": [Interval(Integral, 0, None, closed="left")],
-        "tol": [Interval(Real, 0, None, closed="left")],
-        "method": [StrOptions({"lars", "cd"})],
-        "n_jobs": [Integral, None],
-        "dict_init": [np.ndarray, None],
-        "code_init": [np.ndarray, None],
-        "callback": [callable, None],
-        "verbose": ["verbose"],
-        "random_state": ["random_state"],
         "return_n_iter": ["boolean"],
-        "positive_dict": ["boolean"],
-        "positive_code": ["boolean"],
-        "method_max_iter": [Interval(Integral, 0, None, closed="left")],
     }
 )
 def dict_learning(
@@ -1201,15 +1187,15 @@ def dict_learning(
         transform_max_iter=method_max_iter,
     )
     estimator.fit(X)
-
+    code = estimator.transform(X)
     if return_n_iter:
         return (
-            estimator.code_,
+            code,
             estimator.components_,
             estimator.error_,
             estimator.n_iter_,
         )
-    return estimator.code_, estimator.components_, estimator.error_
+    return code, estimator.components_, estimator.error_
 
 
 class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
@@ -1630,11 +1616,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     error_ : array
         vector of errors at each iteration
 
-    code_ : ndarray of shape (n_samples, n_components)
-        Sparse code factor extracted from the data.
-
-        .. versionadded:: 1.2
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -1810,7 +1791,6 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         )
         self.components_ = U
         self.error_ = E
-        self.code_ = V
         return self
 
     @property
