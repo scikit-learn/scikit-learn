@@ -1762,7 +1762,7 @@ class RandomizedSearchCV(BaseSearchCV):
     _parameter_constraints: dict = {
         **BaseSearchCV._parameter_constraints,
         "param_distributions": [dict, list],
-        "n_iter": [Interval(numbers.Integral, 1, None, closed="neither")],
+        "n_iter": [Interval(numbers.Integral, 1, None, closed="left")],
         "random_state": ["random_state"],
     }
 
