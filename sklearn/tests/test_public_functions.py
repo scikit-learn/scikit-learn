@@ -96,7 +96,6 @@ def _check_function_param_validation(
 PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.cluster.estimate_bandwidth",
     "sklearn.cluster.kmeans_plusplus",
-    "sklearn.decomposition.dict_learning",
     "sklearn.feature_extraction.grid_to_graph",
     "sklearn.feature_extraction.img_to_graph",
     "sklearn.metrics.accuracy_score",
@@ -125,6 +124,7 @@ def test_function_param_validation(func_module):
 
 PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.decomposition.non_negative_factorization", "sklearn.decomposition.NMF"),
+    ("sklearn.decomposition.dict_learning", "sklearn.decomposition.DictionaryLearning"),
 ]
 
 

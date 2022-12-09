@@ -1039,7 +1039,9 @@ def dict_learning_online(
 @validate_params(
     {
         "X": ["array-like"],
+        "method": [StrOptions({"lars", "cd"})],
         "return_n_iter": ["boolean"],
+        "method_max_iter": [Interval(Integral, 0, None, closed="left")],
     }
 )
 def dict_learning(

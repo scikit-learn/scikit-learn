@@ -36,6 +36,13 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Enhancement| :class:`decomposition.DictionaryLearning` now accepts the parameter
+  `callback` for consistency with the function :func:`decomposition.dict_learning`.
+  :pr:`24871` by :user:`Omar Salman <OmarManzoor>`.
+
 :mod:`sklearn.pipeline`
 .......................
 - |Feature| :class:`pipeline.FeatureUnion` can now use indexing notation (e.g.
