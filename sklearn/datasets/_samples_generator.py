@@ -6,6 +6,8 @@ Generate samples of synthetic data sets.
 #          G. Louppe, J. Nothman
 # License: BSD 3 clause
 
+
+from numbers import Integral
 import numbers
 import array
 import warnings
@@ -17,6 +19,8 @@ import scipy.sparse as sp
 
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
+
+from ..utils._param_validation import Interval, validate_params
 from ..utils import shuffle as util_shuffle
 from ..utils.random import sample_without_replacement
 
@@ -1241,6 +1245,22 @@ def make_low_rank_matrix(
 
 # TODO(1.3): Change argument `data_transposed` default from True to False.
 # TODO(1.3): Deprecate data_transposed, always return data not transposed.
+
+
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 0, None, closed="neither")],
+        "n_components": [Interval(Integral, 0, None, closed="neither")],
+        "n_features": [Interval(Integral, 0, None, closed="neither")],
+        "n_nonzero_coefs": [Interval(Integral, 0, None, closed="neither")],
+        "random_state": [
+            "random_state",
+            Interval(Integral, 0, None, closed="neither"),
+            None,
+        ],
+        "data_transposed": ["boolean"],
+    }
+)
 def make_sparse_coded_signal(
     n_samples,
     *,
