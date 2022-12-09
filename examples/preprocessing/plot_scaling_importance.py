@@ -43,7 +43,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
 X, y = load_wine(return_X_y=True, as_frame=True)
-scaler = StandardScaler()
+scaler = StandardScaler().set_output(transform="pandas")
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.30, random_state=42
@@ -68,8 +68,8 @@ from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.neighbors import KNeighborsClassifier
 
 
-X_plot = X[["proline", "hue"]].to_numpy()
-X_plot_scaled = StandardScaler().fit_transform(X_plot)
+X_plot = X[["proline", "hue"]]
+X_plot_scaled = scaler.fit_transform(X_plot)
 clf = KNeighborsClassifier(n_neighbors=20)
 
 
@@ -82,17 +82,15 @@ def fit_and_plot_model(X_plot, y, clf, ax):
         alpha=0.5,
         ax=ax,
     )
-    disp.ax_.scatter(X_plot[:, 0], X_plot[:, 1], c=y, s=20, edgecolor="k")
-    disp.ax_.set_xlim((X_plot[:, 0].min(), X_plot[:, 0].max()))
-    disp.ax_.set_ylim((X_plot[:, 1].min(), X_plot[:, 1].max()))
+    disp.ax_.scatter(X_plot["proline"], X_plot["hue"], c=y, s=20, edgecolor="k")
+    disp.ax_.set_xlim((X_plot["proline"].min(), X_plot["proline"].max()))
+    disp.ax_.set_ylim((X_plot["hue"].min(), X_plot["hue"].max()))
     return disp.ax_
 
 
 fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(12, 6))
 
 fit_and_plot_model(X_plot, y, clf, ax1)
-ax1.set_xlabel("proline")
-ax1.set_ylabel("hue")
 ax1.set_title("KNN without scaling")
 
 fit_and_plot_model(X_plot_scaled, y, clf, ax2)
@@ -119,7 +117,7 @@ _ = ax2.set_title("KNN with scaling")
 # respective scales, :class:`~sklearn.decomposition.PCA` would determine that
 # such feature dominates the direction of the principal components.
 #
-# We can inspect the first principal components on the full dataset:
+# We can inspect the first principal components using all the original features:
 
 from sklearn.decomposition import PCA
 
