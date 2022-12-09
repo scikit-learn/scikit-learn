@@ -326,6 +326,8 @@ cdef class ClassificationCriterion(Criterion):
         self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.0
 
+        self.pointer_reset(start, end)
+
         return 0
 
     cdef int pointer_reset(
@@ -713,6 +715,8 @@ cdef class RegressionCriterion(Criterion):
         self.weighted_n_node_samples = 0.
 
         self.sq_sum_total = 0.0
+
+        self.pointer_reset(start, end)
 
         return 0
 
