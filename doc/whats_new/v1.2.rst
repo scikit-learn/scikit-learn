@@ -17,7 +17,7 @@ Changelog
 
 - |Fix| Restore :func:`utils.check_array`'s behaviour for pandas Series of type
   boolean. The type is maintained, instead of converting to `float64.`
-  :pr:`25147` by `Tim Head`_.
+  :pr:`25147` by :user:`Tim Head <betatim>`.
 
 .. _changes_1_2:
 
