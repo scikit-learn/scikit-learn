@@ -142,7 +142,7 @@ first_pca_component
 #
 # We can visualize the distribution of the principal components in both cases:
 
-fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(10, 7))
+fig, (ax1, ax2) = plt.subplots(nrows=1, ncols=2, figsize=(10, 5))
 
 target_classes = range(0, 3)
 colors = ("blue", "red", "green")
