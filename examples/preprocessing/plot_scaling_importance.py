@@ -119,6 +119,7 @@ _ = ax2.set_title("KNN with scaling")
 #
 # We can inspect the first principal components using all the original features:
 
+import pandas as pd
 from sklearn.decomposition import PCA
 
 pca = PCA(n_components=2).fit(X_train)
@@ -126,15 +127,18 @@ scaled_pca = PCA(n_components=2).fit(scaled_X_train)
 X_train_transformed = pca.transform(X_train)
 X_train_std_transformed = scaled_pca.transform(scaled_X_train)
 
-print(f"\nPC 1 without scaling:\n{pca.components_[0]}")
-print(f"\nPC 1 with scaling:\n{scaled_pca.components_[0]}")
+first_pca_component = pd.DataFrame(
+    pca.components_[0], index=X.columns, columns=["without scaling"]
+)
+first_pca_component["with scaling"] = scaled_pca.components_[0]
+first_pca_component
 
 # %%
-# Indeed we find that the feature #13 (corresponding to the "proline" variable)
-# dominates the direction of the first principal component, being about two
-# orders of magnitude above the other features. This is contrasted when
-# observing the first principal component for the scaled version of the data,
-# where the orders of magnitude are roughly the same across all the features.
+# Indeed we find that the "proline" feature dominates the direction of the first
+# principal component, being about two orders of magnitude above the other
+# features. This is contrasted when observing the first principal component for
+# the scaled version of the data, where the orders of magnitude are roughly the
+# same across all the features.
 #
 # We can visualize the distribution of the principal components in both cases:
 
