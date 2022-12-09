@@ -181,6 +181,12 @@ plt.tight_layout()
 plt.show()
 
 # %%
+# From the plot above we observe that scaling the features before reducing the
+# dimensionality results in components with the same order of magnitude. In this
+# case it also improves the separability of the clases. Indeed, in the next
+# section we confirm that a better separability has a good repercussion on the
+# overall model's performance.
+#
 # Effect of rescaling on model's performance
 # ==========================================
 #
