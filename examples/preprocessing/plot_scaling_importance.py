@@ -8,11 +8,11 @@ be an important preprocessing step for many machine learning algorithms. It
 involves rescaling each feature such that it has a standard deviation equals to
 1 and a mean equals to 0.
 
-Many algorithms require features to be normalized, either to ease the
-convergence (such as the logistic regression) or because fitting scaled data
-leads to a completely different model than using non-scaled data (such as
-KNeighbors models). The latter is demoed on the first part of the present
-example.
+Even if tree based models are not affected by scaling, many algorithms require
+features to be normalized, either to ease the convergence (such as a
+non-penalized logistic regression) or because fitting scaled data leads to a
+completely different model than using non-scaled data (such as KNeighbors
+models). The latter is demoed on the first part of the present example.
 
 On the second part of the example we show how Principle Component Analysis (PCA)
 is impacted by normalization of features. To illustrate this, we compare the
@@ -182,7 +182,7 @@ plt.show()
 
 # %%
 # Effect of rescaling on model's performance
-# =======================================
+# ==========================================
 #
 # Here we show prediction accuracies in scaled and unscaled data.
 
