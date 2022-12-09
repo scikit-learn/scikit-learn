@@ -1754,7 +1754,7 @@ class LassoCV(RegressorMixin, LinearModelCV):
     however LassoCV might end up in the same local minimum. Lasso with
     GridSearchCV on the other hand will not necessarily end up in the same
     local minimum for those small `alphas`.
-    
+
     Read more in the :ref:`User Guide <lasso>`.
 
     Parameters
