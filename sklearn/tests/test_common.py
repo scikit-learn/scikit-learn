@@ -458,7 +458,9 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
 
 
 @pytest.mark.parametrize(
-    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
+    "estimator",
+    chain(_tested_estimators(), _generate_search_cv_instances()),
+    ids=_get_check_estimator_ids,
 )
 def test_check_param_validation(estimator):
     name = estimator.__class__.__name__
