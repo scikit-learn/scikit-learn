@@ -334,6 +334,8 @@ cdef class ClassificationCriterion(Criterion):
         SIZE_t end
     ) nogil except -1:
 
+        self.weighted_n_node_samples = 0.0
+
         cdef SIZE_t i
         cdef SIZE_t p
         cdef SIZE_t k
@@ -710,20 +712,32 @@ cdef class RegressionCriterion(Criterion):
         self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.
 
+        self.sq_sum_total = 0.0
+
+        return 0
+
+    cdef int pointer_reset(
+        self,
+        SIZE_t start,
+        SIZE_t end
+    ) nogil except -1:
+
+        self.sq_sum_total = 0.0
+
         cdef SIZE_t i
         cdef SIZE_t p
         cdef SIZE_t k
         cdef DOUBLE_t y_ik
         cdef DOUBLE_t w_y_ik
         cdef DOUBLE_t w = 1.0
-        self.sq_sum_total = 0.0
+
         memset(&self.sum_total[0], 0, self.n_outputs * sizeof(double))
 
         for p in range(start, end):
-            i = sample_indices[p]
+            i = self.sample_indices[p]
 
             if sample_weight is not None:
-                w = sample_weight[i]
+                w = self.sample_weight[i]
 
             for k in range(self.n_outputs):
                 y_ik = self.y[i, k]
@@ -735,6 +749,7 @@ cdef class RegressionCriterion(Criterion):
 
         # Reset to pos=start
         self.reset()
+
         return 0
 
     cdef int reset(self) nogil except -1:
