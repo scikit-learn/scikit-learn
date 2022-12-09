@@ -781,8 +781,9 @@ def check_array(
         # array is a pandas series
         pandas_requires_conversion = _pandas_dtype_needs_early_conversion(array.dtype)
         if isinstance(array.dtype, np.dtype):
-            dtype_orig = np.result_type(array.dtype)
+            dtype_orig = array.dtype
         else:
+            # Set to None to let array.astype work out the best dtype
             dtype_orig = None
 
     if dtype_numeric:

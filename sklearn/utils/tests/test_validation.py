@@ -1752,7 +1752,7 @@ def test_check_feature_names_in_pandas():
 
 
 def test_boolean_series_remains_boolean():
-    """Regression test for GH25145"""
+    """Regression test for gh-25145"""
     pd = importorskip("pandas")
     res = check_array(pd.Series([True, False]), ensure_2d=False)
     expected = np.array([True, False])
