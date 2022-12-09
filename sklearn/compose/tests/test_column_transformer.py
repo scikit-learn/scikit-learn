@@ -9,7 +9,6 @@ from scipy import sparse
 import pytest
 
 from numpy.testing import assert_allclose
-from sklearn.utils.estimator_checks import check_param_validation
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_almost_equal
@@ -2113,15 +2112,3 @@ def test_transformers_with_pandas_out_but_not_feature_names_out(
     ct.set_params(verbose_feature_names_out=False)
     X_trans_df1 = ct.fit_transform(X_df)
     assert_array_equal(X_trans_df1.columns, expected_non_verbose_names)
-
-
-def test_column_transformer_param_validation():
-    """Run the param validation check for `ColumnTransformer`."""
-    column_transformer = ColumnTransformer(
-        transformers=[
-            ("num", StandardScaler(), [0, 1]),
-            ("cat", OneHotEncoder(), [2, 3]),
-        ]
-    )
-
-    check_param_validation("ColumnTransformer", column_transformer)

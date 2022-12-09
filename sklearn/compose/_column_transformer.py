@@ -6,7 +6,7 @@ different columns.
 # Author: Andreas Mueller
 #         Joris Van den Bossche
 # License: BSD
-import numbers
+from numbers import Integral, Real
 from itertools import chain
 from collections import Counter
 
@@ -218,10 +218,10 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         "transformers": [list],
         "remainder": [
             StrOptions({"drop", "passthrough"}),
-            HasMethods(["fit", "transform"]),
+            HasMethods(["transform", "fit_transform"]),
         ],
-        "sparse_threshold": [Interval(numbers.Real, 0, 1, closed="both")],
-        "n_jobs": [numbers.Integral, None],
+        "sparse_threshold": [Interval(Real, 0, 1, closed="both")],
+        "n_jobs": [Integral, None],
         "transformer_weights": [dict, None],
         "verbose": ["verbose"],
         "verbose_feature_names_out": ["boolean"],
