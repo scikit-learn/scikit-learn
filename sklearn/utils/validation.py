@@ -780,9 +780,15 @@ def check_array(
     elif hasattr(array, "iloc") and hasattr(array, "dtype"):
         # array is a pandas series
         pandas_requires_conversion = _pandas_dtype_needs_early_conversion(array.dtype)
-        if pandas_requires_conversion:
-            # Set to None, to convert to a np.dtype that works with array.dtype
+        from pandas.api.types import is_extension_array_dtype, is_categorical_dtype
+
+        if (
+            pandas_requires_conversion and is_extension_array_dtype(array)
+        ) or is_categorical_dtype(array):
+            # Set to None, to let asarray() work out the best dtype
             dtype_orig = None
+        else:
+            dtype_orig = np.result_type(array.dtype)
 
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
