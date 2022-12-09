@@ -716,7 +716,7 @@ def test_ecoc_predict_proba():
     # Regression test for the new proba-based predict against the old one
     preds = np.array([_predict_binary(e, iris.data) for e in ecoc.estimators_]).T
     prediction = euclidean_distances(preds, ecoc.code_book_).argmin(axis=1)
-    assert prediction == proba.argmax(axis=1)
+    assert_array_equal(prediction, ecoc.predict(iris.data))
 
 
 def test_ecoc_gridsearch():
