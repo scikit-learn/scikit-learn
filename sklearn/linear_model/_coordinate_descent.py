@@ -1746,14 +1746,12 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
         (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
-    Notes
-    -----
-    In LassoCV we initialize the `coef` for the current `alpha` with the
-    `coef` of the previous `alpha`. This warmup has the advantage of speeding
-    up optimization, making LassoCV much faster. For small `alphas`
-    however LassoCV might end up in the same local minimum. Lasso with
-    GridSearchCV on the other hand will not necessarily end up in the same
-    local minimum for those small `alphas`.
+    In LassoCV we initialize the ``coef`` for the current ``alpha`` with
+    the ``coef`` of the previous ``alpha``. This warmup has the advantage
+    of speeding up optimization, making LassoCV much faster. For small
+    ``alphas`` however LassoCV might end up in the same local minimum.
+    Lasso with GridSearchCV on the other hand will not necessarily end up
+    in the same local minimum for those small ``alphas``.
 
     Read more in the :ref:`User Guide <lasso>`.
 
