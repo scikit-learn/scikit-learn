@@ -57,6 +57,12 @@ cdef class BaseCriterion:
     ) nogil
     cdef double proxy_impurity_improvement(self) nogil
 
+    cdef void pointer_reset(
+        self,
+        SIZE_t start,
+        SIZE_t end
+    ) nogil
+
 cdef class Criterion(BaseCriterion):
     """Abstract interface for supervised impurity criteria."""
 
@@ -68,12 +74,6 @@ cdef class Criterion(BaseCriterion):
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
         const SIZE_t[:] sample_indices,
-        SIZE_t start,
-        SIZE_t end
-    ) nogil except -1
-
-    cdef int pointer_reset(
-        self,
         SIZE_t start,
         SIZE_t end
     ) nogil except -1

@@ -180,6 +180,14 @@ cdef class BaseCriterion:
                                  - (self.weighted_n_left /
                                     self.weighted_n_node_samples * impurity_left)))
 
+    cdef void pointer_reset(
+        self,
+        SIZE_t start,
+        SIZE_t end
+    ) nogil:
+        pass
+
+
 cdef class Criterion(BaseCriterion):
     """Interface for impurity criteria.
 
@@ -227,12 +235,7 @@ cdef class Criterion(BaseCriterion):
         """
         pass
 
-    cdef int pointer_reset(
-        self,
-        SIZE_t start,
-        SIZE_t end
-    ) nogil except -1:
-        pass
+
 
 
 cdef class ClassificationCriterion(Criterion):
@@ -330,11 +333,11 @@ cdef class ClassificationCriterion(Criterion):
 
         return 0
 
-    cdef int pointer_reset(
+    cdef void pointer_reset(
         self,
         SIZE_t start,
         SIZE_t end
-    ) nogil except -1:
+    ) nogil:
 
         self.weighted_n_node_samples = 0.0
 
@@ -364,7 +367,6 @@ cdef class ClassificationCriterion(Criterion):
 
         # Reset to pos=start
         self.reset()
-        return 0
 
     cdef int reset(self) nogil except -1:
         """Reset the criterion at pos=start.
@@ -720,11 +722,11 @@ cdef class RegressionCriterion(Criterion):
 
         return 0
 
-    cdef int pointer_reset(
+    cdef void pointer_reset(
         self,
         SIZE_t start,
         SIZE_t end
-    ) nogil except -1:
+    ) nogil:
 
         self.sq_sum_total = 0.0
 
@@ -753,8 +755,6 @@ cdef class RegressionCriterion(Criterion):
 
         # Reset to pos=start
         self.reset()
-
-        return 0
 
     cdef int reset(self) nogil except -1:
         """Reset the criterion at pos=start."""
