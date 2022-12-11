@@ -69,7 +69,7 @@ from ._k_means_elkan import elkan_iter_chunked_sparse
         "n_local_trials": [Interval(Integral, 1, None, closed="left"), None],
     }
 )
-def kmeans_plusplus(
+def k_means(
     X, n_clusters, *, x_squared_norms=None, random_state=None, n_local_trials=None
 ):
     """Init n_clusters seeds according to k-means++.
