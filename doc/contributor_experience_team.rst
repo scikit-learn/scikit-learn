@@ -46,7 +46,7 @@
     <p>Albert Thomas</p>
     </div>
     <div>
-    <a href='https://github.com/Micky774'><img src='https://avatars.githubusercontent.com/u/34613774?v=4' class='avatar' /></a> <br />
-    <p>Meekail Zain</p>
+    <a href='https://github.com/betatim'><img src='https://avatars.githubusercontent.com/u/1448859?v=4' class='avatar' /></a> <br />
+    <p>Tim Head</p>
     </div>
     </div>

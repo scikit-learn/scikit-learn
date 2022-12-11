@@ -405,3 +405,32 @@ def test_get_feature_names_out_dataframe_with_string_data(
     assert isinstance(names, np.ndarray)
     assert names.dtype == object
     assert_array_equal(names, expected)
+
+
+def test_set_output_func():
+    """Check behavior of set_output with different settings."""
+    pd = pytest.importorskip("pandas")
+
+    X = pd.DataFrame({"a": [1, 2, 3], "b": [10, 20, 100]})
+
+    ft = FunctionTransformer(np.log, feature_names_out="one-to-one")
+
+    # no warning is raised when feature_names_out is defined
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        ft.set_output(transform="pandas")
+
+    X_trans = ft.fit_transform(X)
+    assert isinstance(X_trans, pd.DataFrame)
+    assert_array_equal(X_trans.columns, ["a", "b"])
+
+    # If feature_names_out is not defined, then a warning is raised in
+    # `set_output`
+    ft = FunctionTransformer(lambda x: 2 * x)
+    msg = "should return a DataFrame to follow the set_output API"
+    with pytest.warns(UserWarning, match=msg):
+        ft.set_output(transform="pandas")
+
+    X_trans = ft.fit_transform(X)
+    assert isinstance(X_trans, pd.DataFrame)
+    assert_array_equal(X_trans.columns, ["a", "b"])

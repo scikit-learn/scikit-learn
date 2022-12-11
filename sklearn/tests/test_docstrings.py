@@ -4,20 +4,16 @@ from typing import Optional
 
 import pytest
 
+# make it possible to discover experimental estimators when calling `all_estimators`
+from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.experimental import enable_halving_search_cv  # noqa
+
 from sklearn.utils.discovery import all_estimators
 from sklearn.utils.discovery import all_displays
 from sklearn.utils.discovery import all_functions
 
 
 numpydoc_validation = pytest.importorskip("numpydoc.validate")
-
-FUNCTION_DOCSTRING_IGNORE_LIST = [
-    "sklearn.utils.extmath.fast_logdet",
-    "sklearn.utils.extmath.randomized_svd",
-    "sklearn.utils.gen_batches",
-    "sklearn.utils.metaestimators.if_delegate_has_method",
-]
-FUNCTION_DOCSTRING_IGNORE_LIST = set(FUNCTION_DOCSTRING_IGNORE_LIST)
 
 
 def get_all_methods():
@@ -71,7 +67,13 @@ def filter_errors(errors, method, Klass=None):
 
         # Ignore PR02: Unknown parameters for properties. We sometimes use
         # properties for ducktyping, i.e. SGDClassifier.predict_proba
-        if code == "PR02" and Klass is not None and method is not None:
+        # Ignore GL08: Parsing of the method signature failed, possibly because this is
+        # a property. Properties are sometimes used for deprecated attributes and the
+        # attribute is already documented in the class docstring.
+        #
+        # All error codes:
+        # https://numpydoc.readthedocs.io/en/latest/validation.html#built-in-validation-checks
+        if code in ("PR02", "GL08") and Klass is not None and method is not None:
             method_obj = getattr(Klass, method)
             if isinstance(method_obj, property):
                 continue
@@ -145,11 +147,6 @@ def repr_errors(res, Klass=None, method: Optional[str] = None) -> str:
 @pytest.mark.parametrize("function_name", get_all_functions_names())
 def test_function_docstring(function_name, request):
     """Check function docstrings using numpydoc."""
-    if function_name in FUNCTION_DOCSTRING_IGNORE_LIST:
-        request.applymarker(
-            pytest.mark.xfail(run=False, reason="TODO pass numpydoc validation")
-        )
-
     res = numpydoc_validation.validate(function_name)
 
     res["errors"] = list(filter_errors(res["errors"], method="function"))

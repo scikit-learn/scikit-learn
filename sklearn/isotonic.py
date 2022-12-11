@@ -413,7 +413,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         return self.transform(T)
 
     # We implement get_feature_names_out here instead of using
-    # `_ClassNamePrefixFeaturesOutMixin`` because `input_features` are ignored.
+    # `ClassNamePrefixFeaturesOutMixin`` because `input_features` are ignored.
     # `input_features` are ignored because `IsotonicRegression` accepts 1d
     # arrays and the semantics of `feature_names_in_` are not clear for 1d arrays.
     def get_feature_names_out(self, input_features=None):

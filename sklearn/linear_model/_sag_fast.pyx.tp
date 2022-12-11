@@ -38,7 +38,6 @@ SAG and SAGA implementation
 WARNING: Do not edit .pyx file directly, it is generated from .pyx.tp
 """
 
-cimport numpy as cnp
 import numpy as np
 from libc.math cimport fabs, exp, log
 from libc.time cimport time, time_t
@@ -49,8 +48,6 @@ from ._sgd_fast cimport Log, SquaredLoss
 from ..utils._seq_dataset cimport SequentialDataset32, SequentialDataset64
 
 from libc.stdio cimport printf
-
-cnp.import_array()
 
 
 {{for name_suffix, c_type, np_type in dtypes}}
@@ -211,27 +208,29 @@ cdef inline {{c_type}} _soft_thresholding{{name_suffix}}({{c_type}} x, {{c_type}
 
 {{for name_suffix, c_type, np_type in dtypes}}
 
-def sag{{name_suffix}}(SequentialDataset{{name_suffix}} dataset,
-        cnp.ndarray[{{c_type}}, ndim=2, mode='c'] weights_array,
-        cnp.ndarray[{{c_type}}, ndim=1, mode='c'] intercept_array,
-        int n_samples,
-        int n_features,
-        int n_classes,
-        double tol,
-        int max_iter,
-        str loss_function,
-        double step_size,
-        double alpha,
-        double beta,
-        cnp.ndarray[{{c_type}}, ndim=2, mode='c'] sum_gradient_init,
-        cnp.ndarray[{{c_type}}, ndim=2, mode='c'] gradient_memory_init,
-        cnp.ndarray[bint, ndim=1, mode='c'] seen_init,
-        int num_seen,
-        bint fit_intercept,
-        cnp.ndarray[{{c_type}}, ndim=1, mode='c'] intercept_sum_gradient_init,
-        double intercept_decay,
-        bint saga,
-        bint verbose):
+def sag{{name_suffix}}(
+    SequentialDataset{{name_suffix}} dataset,
+    {{c_type}}[:, ::1] weights_array,
+    {{c_type}}[::1] intercept_array,
+    int n_samples,
+    int n_features,
+    int n_classes,
+    double tol,
+    int max_iter,
+    str loss_function,
+    double step_size,
+    double alpha,
+    double beta,
+    {{c_type}}[:, ::1] sum_gradient_init,
+    {{c_type}}[:, ::1] gradient_memory_init,
+    bint[::1] seen_init,
+    int num_seen,
+    bint fit_intercept,
+    {{c_type}}[::1] intercept_sum_gradient_init,
+    double intercept_decay,
+    bint saga,
+    bint verbose
+):
     """Stochastic Average Gradient (SAG) and SAGA solvers.
 
     Used in Ridge and LogisticRegression.
@@ -281,48 +280,31 @@ def sag{{name_suffix}}(SequentialDataset{{name_suffix}} dataset,
     # precomputation since the step size does not change in this implementation
     cdef {{c_type}} wscale_update = 1.0 - step_size * alpha
 
-    # vector of booleans indicating whether this sample has been seen
-    cdef bint* seen = <bint*> seen_init.data
-
     # helper for cumulative sum
     cdef {{c_type}} cum_sum
 
     # the pointer to the coef_ or weights
-    cdef {{c_type}}* weights = <{{c_type}} * >weights_array.data
-    # the pointer to the intercept_array
-    cdef {{c_type}}* intercept = <{{c_type}} * >intercept_array.data
-
-    # the pointer to the intercept_sum_gradient
-    cdef {{c_type}}* intercept_sum_gradient = \
-        <{{c_type}} * >intercept_sum_gradient_init.data
+    cdef {{c_type}}* weights = &weights_array[0, 0]
 
     # the sum of gradients for each feature
-    cdef {{c_type}}* sum_gradient = <{{c_type}}*> sum_gradient_init.data
+    cdef {{c_type}}* sum_gradient = &sum_gradient_init[0, 0]
+
     # the previously seen gradient for each sample
-    cdef {{c_type}}* gradient_memory = <{{c_type}}*> gradient_memory_init.data
+    cdef {{c_type}}* gradient_memory = &gradient_memory_init[0, 0]
 
     # the cumulative sums needed for JIT params
-    cdef cnp.ndarray[{{c_type}}, ndim=1] cumulative_sums_array = \
-        np.empty(n_samples, dtype={{np_type}}, order="c")
-    cdef {{c_type}}* cumulative_sums = <{{c_type}}*> cumulative_sums_array.data
+    cdef {{c_type}}[::1] cumulative_sums = np.empty(n_samples, dtype={{np_type}}, order="c")
 
     # the index for the last time this feature was updated
-    cdef cnp.ndarray[int, ndim=1] feature_hist_array = \
-        np.zeros(n_features, dtype=np.int32, order="c")
-    cdef int* feature_hist = <int*> feature_hist_array.data
+    cdef int[::1] feature_hist = np.zeros(n_features, dtype=np.int32, order="c")
 
     # the previous weights to use to compute stopping criteria
-    cdef cnp.ndarray[{{c_type}}, ndim=2] previous_weights_array = \
-        np.zeros((n_features, n_classes), dtype={{np_type}}, order="c")
-    cdef {{c_type}}* previous_weights = <{{c_type}}*> previous_weights_array.data
+    cdef {{c_type}}[:, ::1] previous_weights_array = np.zeros((n_features, n_classes), dtype={{np_type}}, order="c")
+    cdef {{c_type}}* previous_weights = &previous_weights_array[0, 0]
 
-    cdef cnp.ndarray[{{c_type}}, ndim=1] prediction_array = \
-        np.zeros(n_classes, dtype={{np_type}}, order="c")
-    cdef {{c_type}}* prediction = <{{c_type}}*> prediction_array.data
+    cdef {{c_type}}[::1] prediction = np.zeros(n_classes, dtype={{np_type}}, order="c")
 
-    cdef cnp.ndarray[{{c_type}}, ndim=1] gradient_array = \
-        np.zeros(n_classes, dtype={{np_type}}, order="c")
-    cdef {{c_type}}* gradient = <{{c_type}}*> gradient_array.data
+    cdef {{c_type}}[::1] gradient = np.zeros(n_classes, dtype={{np_type}}, order="c")
 
     # Intermediate variable that need declaration since cython cannot infer when templating
     cdef {{c_type}} val
@@ -340,8 +322,8 @@ def sag{{name_suffix}}(SequentialDataset{{name_suffix}} dataset,
     cumulative_sums[0] = 0.0
 
     # the multipliative scale needed for JIT params
-    cdef cnp.ndarray[{{c_type}}, ndim=1] cumulative_sums_prox_array
-    cdef {{c_type}}* cumulative_sums_prox
+    cdef {{c_type}}[::1] cumulative_sums_prox
+    cdef {{c_type}}* cumulative_sums_prox_ptr
 
     cdef bint prox = beta > 0 and saga
 
@@ -365,52 +347,63 @@ def sag{{name_suffix}}(SequentialDataset{{name_suffix}} dataset,
                          % loss_function)
 
     if prox:
-        cumulative_sums_prox_array = np.empty(n_samples,
-                                              dtype={{np_type}}, order="c")
-        cumulative_sums_prox = <{{c_type}}*> cumulative_sums_prox_array.data
+        cumulative_sums_prox = np.empty(n_samples, dtype={{np_type}}, order="c")
+        cumulative_sums_prox_ptr = &cumulative_sums_prox[0]
     else:
-        cumulative_sums_prox = NULL
+        cumulative_sums_prox = None
+        cumulative_sums_prox_ptr = NULL
 
     with nogil:
         start_time = time(NULL)
         for n_iter in range(max_iter):
             for sample_itr in range(n_samples):
                 # extract a random sample
-                sample_ind = dataset.random(&x_data_ptr, &x_ind_ptr, &xnnz,
-                                              &y, &sample_weight)
+                sample_ind = dataset.random(&x_data_ptr, &x_ind_ptr, &xnnz, &y, &sample_weight)
 
                 # cached index for gradient_memory
                 s_idx = sample_ind * n_classes
 
                 # update the number of samples seen and the seen array
-                if seen[sample_ind] == 0:
+                if seen_init[sample_ind] == 0:
                     num_seen += 1
-                    seen[sample_ind] = 1
+                    seen_init[sample_ind] = 1
 
                 # make the weight updates
                 if sample_itr > 0:
-                   status = lagged_update{{name_suffix}}(weights, wscale, xnnz,
-                                                  n_samples, n_classes,
-                                                  sample_itr,
-                                                  cumulative_sums,
-                                                  cumulative_sums_prox,
-                                                  feature_hist,
-                                                  prox,
-                                                  sum_gradient,
-                                                  x_ind_ptr,
-                                                  False,
-                                                  n_iter)
+                   status = lagged_update{{name_suffix}}(
+                       weights=weights,
+                       wscale=wscale,
+                       xnnz=xnnz,
+                       n_samples=n_samples,
+                       n_classes=n_classes,
+                       sample_itr=sample_itr,
+                       cumulative_sums=&cumulative_sums[0],
+                       cumulative_sums_prox=cumulative_sums_prox_ptr,
+                       feature_hist=&feature_hist[0],
+                       prox=prox,
+                       sum_gradient=sum_gradient,
+                       x_ind_ptr=x_ind_ptr,
+                       reset=False,
+                       n_iter=n_iter
+                   )
                    if status == -1:
                        break
 
                 # find the current prediction
-                predict_sample{{name_suffix}}(x_data_ptr, x_ind_ptr, xnnz, weights, wscale,
-                                       intercept, prediction, n_classes)
+                predict_sample{{name_suffix}}(
+                    x_data_ptr=x_data_ptr,
+                    x_ind_ptr=x_ind_ptr,
+                    xnnz=xnnz,
+                    w_data_ptr=weights,
+                    wscale=wscale,
+                    intercept=&intercept_array[0],
+                    prediction=&prediction[0],
+                    n_classes=n_classes
+                )
 
                 # compute the gradient for this sample, given the prediction
                 if multinomial:
-                    multiloss.dloss(prediction, y, n_classes, sample_weight,
-                                     gradient)
+                    multiloss.dloss(&prediction[0], y, n_classes, sample_weight, &gradient[0])
                 else:
                     gradient[0] = loss.dloss(prediction[0], y) * sample_weight
 
@@ -437,19 +430,19 @@ def sag{{name_suffix}}(SequentialDataset{{name_suffix}} dataset,
                     for class_ind in range(n_classes):
                         gradient_correction = (gradient[class_ind] -
                                                gradient_memory[s_idx + class_ind])
-                        intercept_sum_gradient[class_ind] += gradient_correction
+                        intercept_sum_gradient_init[class_ind] += gradient_correction
                         gradient_correction *= step_size * (1. - 1. / num_seen)
                         if saga:
-                            intercept[class_ind] -= \
-                                (step_size * intercept_sum_gradient[class_ind] /
+                            intercept_array[class_ind] -= \
+                                (step_size * intercept_sum_gradient_init[class_ind] /
                                  num_seen * intercept_decay) + gradient_correction
                         else:
-                            intercept[class_ind] -= \
-                                (step_size * intercept_sum_gradient[class_ind] /
+                            intercept_array[class_ind] -= \
+                                (step_size * intercept_sum_gradient_init[class_ind] /
                                  num_seen * intercept_decay)
 
                         # check to see that the intercept is not inf or NaN
-                        if not skl_isfinite{{name_suffix}}(intercept[class_ind]):
+                        if not skl_isfinite{{name_suffix}}(intercept_array[class_ind]):
                             status = -1
                             break
                     # Break from the n_samples outer loop if an error happened
@@ -479,11 +472,19 @@ def sag{{name_suffix}}(SequentialDataset{{name_suffix}} dataset,
                         with gil:
                             print("rescaling...")
                     status = scale_weights{{name_suffix}}(
-                        weights, &wscale, n_features, n_samples, n_classes,
-                        sample_itr, cumulative_sums,
-                        cumulative_sums_prox,
-                        feature_hist,
-                        prox, sum_gradient, n_iter)
+                        weights=weights,
+                        wscale=&wscale,
+                        n_features=n_features,
+                        n_samples=n_samples,
+                        n_classes=n_classes,
+                        sample_itr=sample_itr,
+                        cumulative_sums=&cumulative_sums[0],
+                        cumulative_sums_prox=cumulative_sums_prox_ptr,
+                        feature_hist=&feature_hist[0],
+                        prox=prox,
+                        sum_gradient=sum_gradient,
+                        n_iter=n_iter
+                    )
                     if status == -1:
                         break
 
@@ -494,13 +495,20 @@ def sag{{name_suffix}}(SequentialDataset{{name_suffix}} dataset,
 
             # we scale the weights every n_samples iterations and reset the
             # just-in-time update system for numerical stability.
-            status = scale_weights{{name_suffix}}(weights, &wscale, n_features,
-                                           n_samples,
-                                           n_classes, n_samples - 1,
-                                           cumulative_sums,
-                                           cumulative_sums_prox,
-                                           feature_hist,
-                                           prox, sum_gradient, n_iter)
+            status = scale_weights{{name_suffix}}(
+                weights=weights,
+                wscale=&wscale,
+                n_features=n_features,
+                n_samples=n_samples,
+                n_classes=n_classes,
+                sample_itr=n_samples - 1,
+                cumulative_sums=&cumulative_sums[0],
+                cumulative_sums_prox=cumulative_sums_prox_ptr,
+                feature_hist=&feature_hist[0],
+                prox=prox,
+                sum_gradient=sum_gradient,
+                n_iter=n_iter
+            )
 
             if status == -1:
                 break
@@ -509,9 +517,7 @@ def sag{{name_suffix}}(SequentialDataset{{name_suffix}} dataset,
             max_weight = 0.0
             for idx in range(n_features * n_classes):
                 max_weight = fmax{{name_suffix}}(max_weight, fabs(weights[idx]))
-                max_change = fmax{{name_suffix}}(max_change,
-                                  fabs(weights[idx] -
-                                       previous_weights[idx]))
+                max_change = fmax{{name_suffix}}(max_change, fabs(weights[idx] - previous_weights[idx]))
                 previous_weights[idx] = weights[idx]
             if ((max_weight != 0 and max_change / max_weight <= tol)
                 or max_weight == 0 and max_change == 0):
@@ -545,15 +551,20 @@ def sag{{name_suffix}}(SequentialDataset{{name_suffix}} dataset,
 
 {{for name_suffix, c_type, np_type in dtypes}}
 
-cdef int scale_weights{{name_suffix}}({{c_type}}* weights, {{c_type}}* wscale,
-                               int n_features,
-                               int n_samples, int n_classes, int sample_itr,
-                               {{c_type}}* cumulative_sums,
-                               {{c_type}}* cumulative_sums_prox,
-                               int* feature_hist,
-                               bint prox,
-                               {{c_type}}* sum_gradient,
-                               int n_iter) nogil:
+cdef int scale_weights{{name_suffix}}(
+    {{c_type}}* weights,
+    {{c_type}}* wscale,
+    int n_features,
+    int n_samples,
+    int n_classes,
+    int sample_itr,
+    {{c_type}}* cumulative_sums,
+    {{c_type}}* cumulative_sums_prox,
+    int* feature_hist,
+    bint prox,
+    {{c_type}}* sum_gradient,
+    int n_iter
+) nogil:
     """Scale the weights with wscale for numerical stability.
 
     wscale = (1 - step_size * alpha) ** (n_iter * n_samples + sample_itr)
@@ -564,16 +575,22 @@ cdef int scale_weights{{name_suffix}}({{c_type}}* weights, {{c_type}}* wscale,
     """
 
     cdef int status
-    status = lagged_update{{name_suffix}}(weights, wscale[0], n_features,
-                                   n_samples, n_classes, sample_itr + 1,
-                                   cumulative_sums,
-                                   cumulative_sums_prox,
-                                   feature_hist,
-                                   prox,
-                                   sum_gradient,
-                                   NULL,
-                                   True,
-                                   n_iter)
+    status = lagged_update{{name_suffix}}(
+        weights,
+        wscale[0],
+        n_features,
+        n_samples,
+        n_classes,
+        sample_itr + 1,
+        cumulative_sums,
+        cumulative_sums_prox,
+        feature_hist,
+        prox,
+        sum_gradient,
+        NULL,
+        True,
+        n_iter
+    )
     # if lagged update succeeded, reset wscale to 1.0
     if status == 0:
         wscale[0] = 1.0
@@ -584,16 +601,22 @@ cdef int scale_weights{{name_suffix}}({{c_type}}* weights, {{c_type}}* wscale,
 
 {{for name_suffix, c_type, np_type in dtypes}}
 
-cdef int lagged_update{{name_suffix}}({{c_type}}* weights, {{c_type}} wscale, int xnnz,
-                               int n_samples, int n_classes, int sample_itr,
-                               {{c_type}}* cumulative_sums,
-                               {{c_type}}* cumulative_sums_prox,
-                               int* feature_hist,
-                               bint prox,
-                               {{c_type}}* sum_gradient,
-                               int* x_ind_ptr,
-                               bint reset,
-                               int n_iter) nogil:
+cdef int lagged_update{{name_suffix}}(
+    {{c_type}}* weights,
+    {{c_type}} wscale,
+    int xnnz,
+    int n_samples,
+    int n_classes,
+    int sample_itr,
+    {{c_type}}* cumulative_sums,
+    {{c_type}}* cumulative_sums_prox,
+    int* feature_hist,
+    bint prox,
+    {{c_type}}* sum_gradient,
+    int* x_ind_ptr,
+    bint reset,
+    int n_iter
+) nogil:
     """Hard perform the JIT updates for non-zero features of present sample.
     The updates that awaits are kept in memory using cumulative_sums,
     cumulative_sums_prox, wscale and feature_hist. See original SAGA paper
@@ -675,10 +698,16 @@ cdef int lagged_update{{name_suffix}}({{c_type}}* weights, {{c_type}} wscale, in
 
 {{for name_suffix, c_type, np_type in dtypes}}
 
-cdef void predict_sample{{name_suffix}}({{c_type}}* x_data_ptr, int* x_ind_ptr, int xnnz,
-                                 {{c_type}}* w_data_ptr, {{c_type}} wscale,
-                                 {{c_type}}* intercept, {{c_type}}* prediction,
-                                 int n_classes) nogil:
+cdef void predict_sample{{name_suffix}}(
+    {{c_type}}* x_data_ptr,
+    int* x_ind_ptr,
+    int xnnz,
+    {{c_type}}* w_data_ptr,
+    {{c_type}} wscale,
+    {{c_type}}* intercept,
+    {{c_type}}* prediction,
+    int n_classes
+) nogil:
     """Compute the prediction given sparse sample x and dense weight w.
 
     Parameters
@@ -726,17 +755,17 @@ cdef void predict_sample{{name_suffix}}({{c_type}}* x_data_ptr, int* x_ind_ptr, 
 
 
 def _multinomial_grad_loss_all_samples(
-        SequentialDataset64 dataset,
-        cnp.ndarray[double, ndim=2, mode='c'] weights_array,
-        cnp.ndarray[double, ndim=1, mode='c'] intercept_array,
-        int n_samples, int n_features, int n_classes):
+    SequentialDataset64 dataset,
+    double[:, ::1] weights_array,
+    double[::1] intercept_array,
+    int n_samples,
+    int n_features,
+    int n_classes
+):
     """Compute multinomial gradient and loss across all samples.
 
     Used for testing purpose only.
     """
-    cdef double* weights = <double * >weights_array.data
-    cdef double* intercept = <double * >intercept_array.data
-
     cdef double *x_data_ptr = NULL
     cdef int *x_ind_ptr = NULL
     cdef int xnnz = -1
@@ -750,40 +779,47 @@ def _multinomial_grad_loss_all_samples(
 
     cdef MultinomialLogLoss64 multiloss = MultinomialLogLoss64()
 
-    cdef cnp.ndarray[double, ndim=2] sum_gradient_array = \
-        np.zeros((n_features, n_classes), dtype=np.double, order="c")
-    cdef double* sum_gradient = <double*> sum_gradient_array.data
+    cdef double[:, ::1] sum_gradient_array = np.zeros((n_features, n_classes), dtype=np.double, order="c")
+    cdef double* sum_gradient = &sum_gradient_array[0, 0]
 
-    cdef cnp.ndarray[double, ndim=1] prediction_array = \
-        np.zeros(n_classes, dtype=np.double, order="c")
-    cdef double* prediction = <double*> prediction_array.data
+    cdef double[::1] prediction = np.zeros(n_classes, dtype=np.double, order="c")
 
-    cdef cnp.ndarray[double, ndim=1] gradient_array = \
-        np.zeros(n_classes, dtype=np.double, order="c")
-    cdef double* gradient = <double*> gradient_array.data
+    cdef double[::1] gradient = np.zeros(n_classes, dtype=np.double, order="c")
 
     with nogil:
         for i in range(n_samples):
             # get next sample on the dataset
-            dataset.next(&x_data_ptr, &x_ind_ptr, &xnnz,
-                         &y, &sample_weight)
+            dataset.next(
+                &x_data_ptr,
+                &x_ind_ptr,
+                &xnnz,
+                &y,
+                &sample_weight
+            )
 
             # prediction of the multinomial classifier for the sample
-            predict_sample64(x_data_ptr, x_ind_ptr, xnnz, weights, wscale,
-                           intercept, prediction, n_classes)
+            predict_sample64(
+                x_data_ptr,
+                x_ind_ptr,
+                xnnz,
+                &weights_array[0, 0],
+                wscale,
+                &intercept_array[0],
+                &prediction[0],
+                n_classes
+            )
 
             # compute the gradient for this sample, given the prediction
-            multiloss.dloss(prediction, y, n_classes, sample_weight, gradient)
+            multiloss.dloss(&prediction[0], y, n_classes, sample_weight, &gradient[0])
 
             # compute the loss for this sample, given the prediction
-            sum_loss += multiloss._loss(prediction, y, n_classes, sample_weight)
+            sum_loss += multiloss._loss(&prediction[0], y, n_classes, sample_weight)
 
             # update the sum of the gradient
             for j in range(xnnz):
                 feature_ind = x_ind_ptr[j]
                 val = x_data_ptr[j]
                 for class_ind in range(n_classes):
-                    sum_gradient[feature_ind * n_classes + class_ind] += \
-                        gradient[class_ind] * val
+                    sum_gradient[feature_ind * n_classes + class_ind] += gradient[class_ind] * val
 
     return sum_loss, sum_gradient_array

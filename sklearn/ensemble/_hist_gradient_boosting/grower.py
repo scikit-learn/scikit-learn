@@ -264,28 +264,18 @@ class TreeGrower:
             has_missing_values = [has_missing_values] * X_binned.shape[1]
         has_missing_values = np.asarray(has_missing_values, dtype=np.uint8)
 
+        # `monotonic_cst` validation is done in _validate_monotonic_cst
+        # at the estimator level and therefore the following should not be
+        # needed when using the public API.
         if monotonic_cst is None:
-            self.with_monotonic_cst = False
             monotonic_cst = np.full(
                 shape=X_binned.shape[1],
                 fill_value=MonotonicConstraint.NO_CST,
                 dtype=np.int8,
             )
         else:
-            self.with_monotonic_cst = True
             monotonic_cst = np.asarray(monotonic_cst, dtype=np.int8)
-
-            if monotonic_cst.shape[0] != X_binned.shape[1]:
-                raise ValueError(
-                    "monotonic_cst has shape {} but the input data "
-                    "X has {} features.".format(
-                        monotonic_cst.shape[0], X_binned.shape[1]
-                    )
-                )
-            if np.any(monotonic_cst < -1) or np.any(monotonic_cst > 1):
-                raise ValueError(
-                    "monotonic_cst must be None or an array-like of -1, 0 or 1."
-                )
+        self.with_monotonic_cst = np.any(monotonic_cst != MonotonicConstraint.NO_CST)
 
         if is_categorical is None:
             is_categorical = np.zeros(shape=X_binned.shape[1], dtype=np.uint8)
@@ -415,10 +405,6 @@ class TreeGrower:
             self._finalize_leaf(self.root)
             return
 
-        self.root.histograms = self.histogram_builder.compute_histograms_brute(
-            self.root.sample_indices
-        )
-
         if self.interaction_cst is not None:
             self.root.interaction_cst_indices = range(len(self.interaction_cst))
             allowed_features = set().union(*self.interaction_cst)
@@ -426,7 +412,15 @@ class TreeGrower:
                 allowed_features, dtype=np.uint32, count=len(allowed_features)
             )
 
+        tic = time()
+        self.root.histograms = self.histogram_builder.compute_histograms_brute(
+            self.root.sample_indices, self.root.allowed_features
+        )
+        self.total_compute_hist_time += time() - tic
+
+        tic = time()
         self._compute_best_split_and_push(self.root)
+        self.total_find_split_time += time() - tic
 
     def _compute_best_split_and_push(self, node):
         """Compute the best possible split (SplitInfo) of a given node.
@@ -586,13 +580,16 @@ class TreeGrower:
             # We use the brute O(n_samples) method on the child that has the
             # smallest number of samples, and the subtraction trick O(n_bins)
             # on the other one.
+            # Note that both left and right child have the same allowed_features.
             tic = time()
             smallest_child.histograms = self.histogram_builder.compute_histograms_brute(
-                smallest_child.sample_indices
+                smallest_child.sample_indices, smallest_child.allowed_features
             )
             largest_child.histograms = (
                 self.histogram_builder.compute_histograms_subtraction(
-                    node.histograms, smallest_child.histograms
+                    node.histograms,
+                    smallest_child.histograms,
+                    smallest_child.allowed_features,
                 )
             )
             self.total_compute_hist_time += time() - tic

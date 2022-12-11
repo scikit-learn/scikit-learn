@@ -1981,10 +1981,10 @@ def test_random_search_bad_cv():
 @pytest.mark.parametrize(
     "SearchCV, specialized_params",
     [
-        (GridSearchCV, {"param_grid": {"max_depth": [2, 3]}}),
+        (GridSearchCV, {"param_grid": {"max_depth": [2, 3, 5, 8]}}),
         (
             RandomizedSearchCV,
-            {"param_distributions": {"max_depth": [2, 3]}, "n_iter": 2},
+            {"param_distributions": {"max_depth": [2, 3, 5, 8]}, "n_iter": 4},
         ),
     ],
 )
@@ -2024,6 +2024,13 @@ def test_searchcv_raise_warning_with_non_finite_score(
     assert len(warn_msg) == len(set_with_warning)
     for msg, dataset in zip(warn_msg, set_with_warning):
         assert f"One or more of the {dataset} scores are non-finite" in str(msg.message)
+
+    # all non-finite scores should be equally ranked last
+    last_rank = grid.cv_results_["rank_test_score"].max()
+    non_finite_mask = np.isnan(grid.cv_results_["mean_test_score"])
+    assert_array_equal(grid.cv_results_["rank_test_score"][non_finite_mask], last_rank)
+    # all finite scores should be better ranked than the non-finite scores
+    assert np.all(grid.cv_results_["rank_test_score"][~non_finite_mask] < last_rank)
 
 
 def test_callable_multimetric_confusion_matrix():
