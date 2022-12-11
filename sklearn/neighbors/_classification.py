@@ -295,6 +295,11 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
             if self.algorithm == "brute" and ArgKminLabels.is_usable_for(
                 X, self._fit_X, self.metric
             ):
+                metric = (
+                    "euclidean"
+                    if self.metric == "minkowski" and self.p == 2
+                    else self.metric
+                )
                 if self.outputs_2d_:
                     probabilities = []
                     for k in range(self._y.shape[1]):
@@ -305,7 +310,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                                 k=self.n_neighbors,
                                 weights=self.weights,
                                 labels=self._y[:, k],
-                                metric=self.metric,
+                                metric=metric,
                                 metric_kwargs=self.metric_params,
                             )
                         )
@@ -316,7 +321,7 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
                         k=self.n_neighbors,
                         weights=self.weights,
                         labels=self._y,
-                        metric=self.metric,
+                        metric=metric,
                         metric_kwargs=self.metric_params,
                     )
                 return probabilities
@@ -344,7 +349,9 @@ class KNeighborsClassifier(KNeighborsMixin, ClassifierMixin, NeighborsBase):
         probabilities = []
         for k, classes_k in enumerate(classes_):
             pred_labels = _y[:, k][neigh_ind]
-            proba_k = np.zeros((n_queries, classes_k.size))
+            proba_k = np.zeros(
+                (n_queries, classes_k.size),
+            )
 
             # a simple ':' index doesn't work right
             for i, idx in enumerate(pred_labels.T):  # loop is O(n_neighbors)
@@ -714,7 +721,7 @@ class RadiusNeighborsClassifier(RadiusNeighborsMixin, ClassifierMixin, Neighbors
             pred_labels[:] = [_y[ind, k] for ind in neigh_ind]
 
             proba_k = np.zeros((n_queries, classes_k.size))
-            proba_inl = np.zeros((len(inliers), classes_k.size))
+            proba_inl = np.zeros((len(inliers), classes_k.size), dtype=np.int64)
 
             # samples have different size of neighbors within the same radius
             if weights is None:
