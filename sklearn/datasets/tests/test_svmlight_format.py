@@ -11,7 +11,7 @@ from tempfile import NamedTemporaryFile
 import pytest
 
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal, assert_allclose
 from sklearn.utils._testing import fails_if_pypy
 
 import sklearn
@@ -87,6 +87,16 @@ def test_load_svmlight_file_fd():
             assert_array_almost_equal(y1, y2)
         finally:
             os.close(fd)
+
+
+def test_load_svmlight_pathlib():
+    # test loading from file descriptor
+    with resources.path(TEST_DATA_MODULE, datafile) as data_path:
+        X1, y1 = load_svmlight_file(str(data_path))
+        X2, y2 = load_svmlight_file(data_path)
+
+    assert_allclose(X1.data, X2.data)
+    assert_allclose(y1, y2)
 
 
 def test_load_svmlight_file_multilabel():

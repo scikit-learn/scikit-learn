@@ -21,6 +21,7 @@ from sklearn.utils._testing import (
     MinimalTransformer,
 )
 from sklearn.exceptions import NotFittedError
+from sklearn.model_selection import train_test_split
 from sklearn.utils.validation import check_is_fitted
 from sklearn.base import clone, is_classifier, BaseEstimator, TransformerMixin
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
@@ -335,8 +336,7 @@ def test_pipeline_raise_set_params_error():
     # expected error message for invalid inner parameter
     error_msg = re.escape(
         "Invalid parameter 'invalid_param' for estimator LinearRegression(). Valid"
-        " parameters are: ['copy_X', 'fit_intercept', 'n_jobs', 'normalize',"
-        " 'positive']."
+        " parameters are: ['copy_X', 'fit_intercept', 'n_jobs', 'positive']."
     )
     with pytest.raises(ValueError, match=error_msg):
         pipe.set_params(cls__invalid_param="nope")
@@ -522,6 +522,19 @@ def test_feature_union():
     # test that init accepts tuples
     fs = FeatureUnion((("svd", svd), ("select", select)))
     fs.fit(X, y)
+
+
+def test_feature_union_named_transformers():
+    """Check the behaviour of `named_transformers` attribute."""
+    transf = Transf()
+    noinvtransf = NoInvTransf()
+    fs = FeatureUnion([("transf", transf), ("noinvtransf", noinvtransf)])
+    assert fs.named_transformers["transf"] == transf
+    assert fs.named_transformers["noinvtransf"] == noinvtransf
+
+    # test named attribute
+    assert fs.named_transformers.transf == transf
+    assert fs.named_transformers.noinvtransf == noinvtransf
 
 
 def test_make_union():
@@ -1613,3 +1626,64 @@ def test_pipeline_get_feature_names_out_passes_names_through():
     feature_names_out = pipe.get_feature_names_out(input_names)
 
     assert_array_equal(feature_names_out, [f"my_prefix_{name}" for name in input_names])
+
+
+def test_pipeline_set_output_integration():
+    """Test pipeline's set_output with feature names."""
+    pytest.importorskip("pandas")
+
+    X, y = load_iris(as_frame=True, return_X_y=True)
+
+    pipe = make_pipeline(StandardScaler(), LogisticRegression())
+    pipe.set_output(transform="pandas")
+    pipe.fit(X, y)
+
+    feature_names_in_ = pipe[:-1].get_feature_names_out()
+    log_reg_feature_names = pipe[-1].feature_names_in_
+
+    assert_array_equal(feature_names_in_, log_reg_feature_names)
+
+
+def test_feature_union_set_output():
+    """Test feature union with set_output API."""
+    pd = pytest.importorskip("pandas")
+
+    X, _ = load_iris(as_frame=True, return_X_y=True)
+    X_train, X_test = train_test_split(X, random_state=0)
+    union = FeatureUnion([("scalar", StandardScaler()), ("pca", PCA())])
+    union.set_output(transform="pandas")
+    union.fit(X_train)
+
+    X_trans = union.transform(X_test)
+    assert isinstance(X_trans, pd.DataFrame)
+    assert_array_equal(X_trans.columns, union.get_feature_names_out())
+    assert_array_equal(X_trans.index, X_test.index)
+
+
+def test_feature_union_getitem():
+    """Check FeatureUnion.__getitem__ returns expected results."""
+    scalar = StandardScaler()
+    pca = PCA()
+    union = FeatureUnion(
+        [
+            ("scalar", scalar),
+            ("pca", pca),
+            ("pass", "passthrough"),
+            ("drop_me", "drop"),
+        ]
+    )
+    assert union["scalar"] is scalar
+    assert union["pca"] is pca
+    assert union["pass"] == "passthrough"
+    assert union["drop_me"] == "drop"
+
+
+@pytest.mark.parametrize("key", [0, slice(0, 2)])
+def test_feature_union_getitem_error(key):
+    """Raise error when __getitem__ gets a non-string input."""
+
+    union = FeatureUnion([("scalar", StandardScaler()), ("pca", PCA())])
+
+    msg = "Only string keys are supported"
+    with pytest.raises(KeyError, match=msg):
+        union[key]

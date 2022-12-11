@@ -1,0 +1,51 @@
+.. include:: _contributors.rst
+
+.. currentmodule:: sklearn
+
+.. _changes_1_3:
+
+Version 1.3.0
+=============
+
+**In Development**
+
+.. include:: changelog_legend.inc
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+Changes impacting all modules
+-----------------------------
+
+Changelog
+---------
+
+..
+    Entries should be grouped by module (in alphabetic order) and prefixed with
+    one of the labels: |MajorFeature|, |Feature|, |Efficiency|, |Enhancement|,
+    |Fix| or |API| (see whats_new.rst for descriptions).
+    Entries should be ordered by those labels (e.g. |Fix| after |Efficiency|).
+    Changes not specific to a module should be listed under *Multiple Modules*
+    or *Miscellaneous*.
+    Entries should end with:
+    :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
+    where 123456 is the *pull request* number, not the issue number.
+
+:mod:`sklearn.pipeline`
+.......................
+- |Feature| :class:`pipeline.FeatureUnion` can now use indexing notation (e.g.
+  `feature_union["scalar"]`) to access transformers by name. :pr:`25093` by
+  `Thomas Fan`_.
+
+Code and Documentation Contributors
+-----------------------------------
+
+Thanks to everyone who has contributed to the maintenance and improvement of
+the project since version 1.1, including:
+
+TODO: update at the time of the release.

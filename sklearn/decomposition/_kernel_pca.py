@@ -17,12 +17,12 @@ from ..utils.validation import (
 )
 from ..utils._param_validation import Interval, StrOptions
 from ..exceptions import NotFittedError
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
+from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
 
 
-class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Kernel Principal component analysis (KPCA) [1]_.
 
     Non-linear dimensionality reduction through the use of kernels (see

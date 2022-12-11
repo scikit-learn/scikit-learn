@@ -958,7 +958,7 @@ class GenericUnivariateSelect(_BaseFilter):
     mode : {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}, default='percentile'
         Feature selection mode.
 
-    param : float or int depending on the feature selection mode, default=1e-5
+    param : "all", float or int, default=1e-5
         Parameter of the corresponding mode.
 
     Attributes
@@ -1018,7 +1018,7 @@ class GenericUnivariateSelect(_BaseFilter):
     _parameter_constraints: dict = {
         **_BaseFilter._parameter_constraints,
         "mode": [StrOptions(set(_selection_modes.keys()))],
-        "param": [Interval(Real, 0, None, closed="left")],
+        "param": [Interval(Real, 0, None, closed="left"), StrOptions({"all"})],
     }
 
     def __init__(self, score_func=f_classif, *, mode="percentile", param=1e-5):

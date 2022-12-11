@@ -50,7 +50,7 @@ def plot_ellipses(ax, weights, means, covars):
         # eigenvector normalization
         eig_vals = 2 * np.sqrt(2) * np.sqrt(eig_vals)
         ell = mpl.patches.Ellipse(
-            means[n], eig_vals[0], eig_vals[1], 180 + angle, edgecolor="black"
+            means[n], eig_vals[0], eig_vals[1], angle=180 + angle, edgecolor="black"
         )
         ell.set_clip_box(ax.bbox)
         ell.set_alpha(weights[n])

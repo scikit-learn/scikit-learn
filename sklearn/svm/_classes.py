@@ -753,9 +753,9 @@ class SVC(BaseSVC):
     .. [1] `LIBSVM: A Library for Support Vector Machines
         <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
 
-    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
-        machines and comparison to regularizedlikelihood methods."
-        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+    .. [2] `Platt, John (1999). "Probabilistic Outputs for Support Vector
+        Machines and Comparisons to Regularized Likelihood Methods"
+        <https://citeseerx.ist.psu.edu/doc_view/pid/42e5ed832d4310ce4378c44d05570439df28a393>`_
 
     Examples
     --------
@@ -1017,9 +1017,9 @@ class NuSVC(BaseSVC):
     .. [1] `LIBSVM: A Library for Support Vector Machines
         <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
 
-    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
-        machines and comparison to regularizedlikelihood methods."
-        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+    .. [2] `Platt, John (1999). "Probabilistic Outputs for Support Vector
+        Machines and Comparisons to Regularized Likelihood Methods"
+        <https://citeseerx.ist.psu.edu/doc_view/pid/42e5ed832d4310ce4378c44d05570439df28a393>`_
 
     Examples
     --------
@@ -1233,9 +1233,9 @@ class SVR(RegressorMixin, BaseLibSVM):
     .. [1] `LIBSVM: A Library for Support Vector Machines
         <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
 
-    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
-        machines and comparison to regularizedlikelihood methods."
-        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+    .. [2] `Platt, John (1999). "Probabilistic Outputs for Support Vector
+        Machines and Comparisons to Regularized Likelihood Methods"
+        <https://citeseerx.ist.psu.edu/doc_view/pid/42e5ed832d4310ce4378c44d05570439df28a393>`_
 
     Examples
     --------
@@ -1442,9 +1442,9 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     .. [1] `LIBSVM: A Library for Support Vector Machines
         <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
 
-    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
-        machines and comparison to regularizedlikelihood methods."
-        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+    .. [2] `Platt, John (1999). "Probabilistic Outputs for Support Vector
+        Machines and Comparisons to Regularized Likelihood Methods"
+        <https://citeseerx.ist.psu.edu/doc_view/pid/42e5ed832d4310ce4378c44d05570439df28a393>`_
 
     Examples
     --------

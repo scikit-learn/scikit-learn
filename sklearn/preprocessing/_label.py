@@ -131,7 +131,7 @@ class LabelEncoder(TransformerMixin, BaseEstimator):
             Labels as normalized encodings.
         """
         check_is_fitted(self)
-        y = column_or_1d(y, warn=True)
+        y = column_or_1d(y, dtype=self.classes_.dtype, warn=True)
         # transform of empty array is empty array
         if _num_samples(y) == 0:
             return np.array([])
