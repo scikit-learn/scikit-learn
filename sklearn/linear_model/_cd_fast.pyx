@@ -92,11 +92,12 @@ cdef floating diff_abs_max(int n, floating* a, floating* b) nogil:
 
 
 def enet_coordinate_descent(
-    floating[::1] w,
+    # TODO: const-qualify fused typed memoryview when Cython 3 is used (#23147)
+    cnp.ndarray[floating, ndim=1, mode='c']  w,
     floating alpha,
     floating beta,
     floating[::1, :] X,
-    floating[::1] y,
+    cnp.ndarray[floating, ndim=1, mode='c'] y,
     unsigned int max_iter,
     floating tol,
     object rng,
@@ -274,15 +275,16 @@ def enet_coordinate_descent(
 
 
 def sparse_enet_coordinate_descent(
-    floating [::1] w,
+    # TODO: const-qualify fused typed memoryview when Cython 3 is used (#23147)
+    cnp.ndarray[floating, ndim=1, mode='c'] w,
     floating alpha,
     floating beta,
-    floating[::1] X_data, # TODO: Make const after release of Cython 3 (#23147)
+    cnp.ndarray[floating, ndim=1, mode='c'] X_data,
     const int[::1] X_indices,
     const int[::1] X_indptr,
-    floating[::1] y,
-    floating[::1] sample_weight,
-    floating[::1] X_mean,
+    cnp.ndarray[floating, ndim=1, mode='c'] y,
+    cnp.ndarray[floating, ndim=1, mode='c'] sample_weight,
+    cnp.ndarray[floating, ndim=1, mode='c'] X_mean,
     unsigned int max_iter,
     floating tol,
     object rng,
@@ -565,7 +567,8 @@ def sparse_enet_coordinate_descent(
 
 
 def enet_coordinate_descent_gram(
-    floating[::1] w,
+    # TODO: const-qualify fused typed memoryview when Cython 3 is used (#23147)
+    cnp.ndarray[floating, ndim=1, mode='c'] w,
     floating alpha,
     floating beta,
     cnp.ndarray[floating, ndim=2, mode='c'] Q,
@@ -736,10 +739,10 @@ def enet_coordinate_descent_gram(
 
 
 def enet_coordinate_descent_multi_task(
-    floating[::1, :] W,
+    # TODO: const-qualify fused typed memoryview when Cython 3 is used (#23147)
+    cnp.ndarray[floating, ndim=2, mode='fortran'] W,
     floating l1_reg,
     floating l2_reg,
-    # TODO: use const qualified fused-typed memoryview when Cython 3.0 is used.
     cnp.ndarray[floating, ndim=2, mode='fortran'] X,
     cnp.ndarray[floating, ndim=2, mode='fortran'] Y,
     unsigned int max_iter,
