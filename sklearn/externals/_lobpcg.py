@@ -1,4 +1,7 @@
 """
+scikit-learn copy of scipy/sparse/linalg/eigen/lobpcg/lobpcg.py v1.9
+to be deleted after scipy 1.4 becomes a dependency in scikit-lean
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 Locally Optimal Block Preconditioned Conjugate Gradient Method (LOBPCG).
 
 References
