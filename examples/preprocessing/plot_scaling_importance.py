@@ -243,3 +243,19 @@ print(f"{accuracy_score(y_test, y_pred_scaled):.2%}")
 # decrease of the performance after scaling the features: noisy features would
 # contribute more to the prediction after scaling and therefore scaling would
 # increase overfitting.
+#
+# Last but not least, we evaluate the effect of scaling on the mean log-loss:
+
+from sklearn.metrics import log_loss
+
+y_proba = unscaled_clf.predict_proba(X_test)
+y_proba_scaled = scaled_clf.predict_proba(X_test)
+
+print("Log-loss for the unscaled PCA")
+print(f"{log_loss(y_test, y_proba):.3}")
+print()
+print("Log-loss for the standardized data with PCA")
+print(f"{log_loss(y_test, y_proba_scaled):.3}")
+
+# %%
+# Indeed, we achieve a lower log-loss by means of the scaling step.
