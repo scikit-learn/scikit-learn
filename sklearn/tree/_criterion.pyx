@@ -185,6 +185,15 @@ cdef class BaseCriterion:
         SIZE_t start,
         SIZE_t end
     ) nogil:
+        """Placeholder for a method which will set sample pointers in the criterion.
+
+        Parameters
+        ----------
+        start : SIZE_t
+            The first sample to be used on this node
+        end : SIZE_t
+            The last sample used on this node
+        """
         pass
 
 
@@ -225,15 +234,8 @@ cdef class Criterion(BaseCriterion):
         sample_indices : ndarray, dtype=SIZE_t
             A mask on the samples. Indices of the samples in X and y we want to use,
             where sample_indices[start:end] correspond to the samples in this node.
-        start : SIZE_t
-            The first sample to be used on this node
-        end : SIZE_t
-            The last sample used on this node
-
         """
         pass
-
-
 
 
 cdef class ClassificationCriterion(Criterion):
@@ -294,9 +296,6 @@ cdef class ClassificationCriterion(Criterion):
     ) nogil except -1:
         """Initialize the criterion.
 
-        This initializes the criterion at node sample_indices[start:end] and children
-        sample_indices[start:start] and sample_indices[start:end].
-
         Returns -1 in case of failure to allocate memory (and raise MemoryError)
         or 0 otherwise.
 
@@ -311,10 +310,7 @@ cdef class ClassificationCriterion(Criterion):
         sample_indices : ndarray, dtype=SIZE_t
             A mask on the samples. Indices of the samples in X and y we want to use,
             where sample_indices[start:end] correspond to the samples in this node.
-        start : SIZE_t
-            The first sample to use in the mask
-        end : SIZE_t
-            The last sample to use in the mask
+
         """
         self.y = y
         self.sample_weight = sample_weight
@@ -328,7 +324,19 @@ cdef class ClassificationCriterion(Criterion):
         SIZE_t start,
         SIZE_t end
     ) nogil:
+        """Set sample pointers in the criterion.
 
+        This initializes the criterion at node sample_indices[start:end] and children
+        sample_indices[start:start] and sample_indices[start:end].
+
+        Parameters
+        ----------
+
+        start : SIZE_t
+            The first sample to use in the mask
+        end : SIZE_t
+            The last sample to use in the mask
+        """
         self.n_node_samples = end - start
         self.start = start
         self.end = end
@@ -693,11 +701,7 @@ cdef class RegressionCriterion(Criterion):
         double weighted_n_samples,
         const SIZE_t[:] sample_indices
     ) nogil except -1:
-        """Initialize the criterion.
-
-        This initializes the criterion at node sample_indices[start:end] and children
-        sample_indices[start:start] and sample_indices[start:end].
-        """
+        """Initialize the criterion."""
         # Initialize fields
         self.y = y
         self.sample_weight = sample_weight
@@ -711,7 +715,11 @@ cdef class RegressionCriterion(Criterion):
         SIZE_t start,
         SIZE_t end
     ) nogil:
+        """Set sample pointers in the criterion.
 
+        This initializes the criterion at node sample_indices[start:end] and children
+        sample_indices[start:start] and sample_indices[start:end].
+        """
         self.start = start
         self.end = end
 
@@ -982,12 +990,7 @@ cdef class MAE(RegressionCriterion):
         double weighted_n_samples,
         const SIZE_t[:] sample_indices
     ) nogil except -1:
-        """Initialize the criterion.
-
-        This initializes the criterion at node sample_indices[start:end] and children
-        sample_indices[start:start] and sample_indices[start:end].
-        """
-
+        """Initialize the criterion."""
         # Initialize fields
         self.y = y
         self.sample_weight = sample_weight
@@ -1001,7 +1004,11 @@ cdef class MAE(RegressionCriterion):
         SIZE_t start,
         SIZE_t end
     ) nogil:
+        """Set sample pointers in the criterion.
 
+        This initializes the criterion at node sample_indices[start:end] and children
+        sample_indices[start:start] and sample_indices[start:end].
+        """
         cdef SIZE_t i, p, k
         cdef DOUBLE_t w = 1.0
 
