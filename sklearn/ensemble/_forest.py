@@ -201,7 +201,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
     _parameter_constraints: dict = {
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
         "bootstrap": ["boolean"],
-        "oob_score": ["boolean"],
+        "oob_score": ["boolean", callable],
         "n_jobs": [Integral, None],
         "random_state": ["random_state"],
         "verbose": ["verbose"],
