@@ -40,6 +40,7 @@ Single and multi-output problems are both handled.
 # License: BSD 3 clause
 
 
+import inspect
 import numbers
 from warnings import catch_warnings, simplefilter, warn
 import threading
@@ -509,12 +510,12 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     "multiclass, multilabel-indicator."
                 )
 
-            if self.oob_score is True:
-                self._set_oob_score_and_attributes(X, y)
-            else:
+            if inspect.isfunction(self.oob_score):
                 self._set_oob_score_and_attributes(
                     X, y, scoring_function=self.oob_score
                 )
+            else:
+                self._set_oob_score_and_attributes(X, y)
 
         # Decapsulate classes_ attributes
         if hasattr(self, "classes_") and self.n_outputs_ == 1:
@@ -524,7 +525,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return self
 
     @abstractmethod
-    def _set_oob_score_and_attributes(self, X, y):
+    def _set_oob_score_and_attributes(self, X, y, scoring_function):
         """Compute and set the OOB score and attributes.
 
         Parameters
@@ -533,6 +534,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             The data matrix.
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
+        scoring_function : callable, default=accuracy or r2 score
+            Scoring function for OOB score. Default depends on whether
+            this is a regression or classification problem.
         """
 
     def _compute_oob_predictions(self, X, y):
@@ -750,6 +754,8 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             The data matrix.
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
+        scoring_function : callable, default=accuracy_score
+            Scoring function for OOB score. Defaults to accuracy_score.
         """
         self.oob_decision_function_ = super()._compute_oob_predictions(X, y)
         if self.oob_decision_function_.shape[-1] == 1:
@@ -1049,6 +1055,8 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             The data matrix.
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
+        scoring_function : callable, default=r2_score
+            Scoring function for OOB score. Defaults to r2_score.
         """
         self.oob_prediction_ = super()._compute_oob_predictions(X, y).squeeze(axis=1)
         if self.oob_prediction_.shape[-1] == 1:
@@ -1206,9 +1214,10 @@ class RandomForestClassifier(ForestClassifier):
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
 
-    oob_score : bool, default=False
+    oob_score : bool or callable, default=False
         Whether to use out-of-bag samples to estimate the generalization score.
-        Only available if bootstrap=True.
+        By default the accuracy score is used. Provide a callable to use a custom
+        scoring function. Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1571,9 +1580,10 @@ class RandomForestRegressor(ForestRegressor):
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
 
-    oob_score : bool, default=False
+    oob_score : bool or callable, default=False
         Whether to use out-of-bag samples to estimate the generalization score.
-        Only available if bootstrap=True.
+        By default the R2 score is used. Provide a callable to use a custom
+        scoring function. Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -1876,9 +1886,10 @@ class ExtraTreesClassifier(ForestClassifier):
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
 
-    oob_score : bool, default=False
+    oob_score : bool or callable, default=False
         Whether to use out-of-bag samples to estimate the generalization score.
-        Only available if bootstrap=True.
+        By default the accuracy score is used. Provide a callable to use a custom
+        scoring function. Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -2228,9 +2239,10 @@ class ExtraTreesRegressor(ForestRegressor):
         Whether bootstrap samples are used when building trees. If False, the
         whole dataset is used to build each tree.
 
-    oob_score : bool, default=False
+    oob_score : bool or callable, default=False
         Whether to use out-of-bag samples to estimate the generalization score.
-        Only available if bootstrap=True.
+        By default the R2 score is used. Provide a callable to use a custom
+        scoring function. Only available if bootstrap=True.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
