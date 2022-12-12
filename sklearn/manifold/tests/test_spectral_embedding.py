@@ -106,7 +106,6 @@ def test_sparse_graph_connected_component():
     ],
 )
 @pytest.mark.parametrize("dtype", [np.float32, np.float64])
-# @pytest.mark.parametrize("seed", range(100))
 def test_spectral_embedding_two_components(eigen_solver, dtype, seed=0):
     # Test spectral embedding with two components
     random_state = np.random.RandomState(seed)
