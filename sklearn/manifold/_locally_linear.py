@@ -20,6 +20,7 @@ from ..base import (
 from ..utils import check_random_state, check_array
 from ..utils._arpack import _init_arpack_v0
 from ..utils._param_validation import Interval, StrOptions
+from ..utils.fixes import _eigh
 from ..utils.extmath import stable_cumsum
 from ..utils.validation import check_is_fitted
 from ..utils.validation import FLOAT_DTYPES
@@ -189,7 +190,7 @@ def null_space(
     elif eigen_solver == "dense":
         if hasattr(M, "toarray"):
             M = M.toarray()
-        eigen_values, eigen_vectors = eigh(
+        eigen_values, eigen_vectors = _eigh(
             M, eigvals=(k_skip, k + k_skip - 1), overwrite_a=True
         )
         index = np.argsort(np.abs(eigen_values))

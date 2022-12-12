@@ -95,6 +95,15 @@ class loguniform(scipy.stats.reciprocal):
     """
 
 
+# TODO: remove when the minimum scipy version is >= 1.5
+def _eigh(*args, **kwargs):
+    """Wrapper for `scipy.linalg.eigh` that handles the deprecation of `eigvals`."""
+    if sp_version >= parse_version("1.5"):
+        subset_by_index = kwargs.pop("eigvals", None)
+        return scipy.linalg.eigh(*args, subset_by_index=subset_by_index, **kwargs)
+    return scipy.linalg.eigh(*args, **kwargs)
+
+
 # remove when https://github.com/joblib/joblib/issues/1071 is fixed
 def delayed(function):
     """Decorator used to capture the arguments of a function."""
