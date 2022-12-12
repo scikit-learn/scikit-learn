@@ -258,9 +258,9 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
         if not np.any(is_categorical):
             return None, None
 
-        # Compute the known categories in the training data. We need to do that
-        # here instead of in the BinMapper because in case of early stopping,
-        # the mapper only gets a fraction of the training data.
+        # Compute the known categories in the training data. We cannot do this
+        # in the BinMapper because it only gets a fraction of the training data
+        # when early stopping is enabled.
         known_categories = []
 
         for f_idx in range(n_features):
