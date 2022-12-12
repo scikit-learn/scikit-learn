@@ -12,7 +12,6 @@ import pickle
 import math
 from collections import defaultdict
 from functools import partial
-from inspect import isfunction
 import itertools
 from itertools import combinations
 from itertools import product
@@ -528,7 +527,7 @@ def test_forest_classifier_oob(
     assert not hasattr(classifier, "oob_decision_function_")
 
     classifier.fit(X_train, y_train)
-    if isfunction(oob_score):
+    if callable(oob_score):
         test_score = oob_score(y_test, classifier.predict(X_test))
     else:
         test_score = classifier.score(X_test, y_test)
@@ -588,7 +587,7 @@ def test_forest_regressor_oob(ForestRegressor, X, y, X_type, lower_bound_r2, oob
     assert not hasattr(regressor, "oob_prediction_")
 
     regressor.fit(X_train, y_train)
-    if isfunction(oob_score):
+    if callable(oob_score):
         test_score = oob_score(y_test, regressor.predict(X_test))
     else:
         test_score = regressor.score(X_test, y_test)

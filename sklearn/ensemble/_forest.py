@@ -40,7 +40,6 @@ Single and multi-output problems are both handled.
 # License: BSD 3 clause
 
 
-import inspect
 from numbers import Integral, Real
 from warnings import catch_warnings, simplefilter, warn
 import threading
@@ -509,7 +508,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
                     "multiclass, multilabel-indicator."
                 )
 
-            if inspect.isfunction(self.oob_score):
+            if callable(self.oob_score):
                 self._set_oob_score_and_attributes(
                     X, y, scoring_function=self.oob_score
                 )
