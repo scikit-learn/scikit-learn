@@ -625,7 +625,7 @@ def test_argkmin_factory_method_wrong_usages():
     message = (
         r"Some metric_kwargs have been passed \({'p': 3}\) but aren't usable for this"
         r" case \("
-        r"EuclideanArgKmin64."
+        r"euclidean."
     )
 
     with pytest.warns(UserWarning, match=message):

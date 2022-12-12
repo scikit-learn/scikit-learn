@@ -100,71 +100,6 @@ cdef class MiddleTermComputer{{name_suffix}}:
     the middle term, i.e. `- 2 X_c_i.Y_c_j^T`.
     """
 
-    @classmethod
-    def get_for(
-        cls,
-        X,
-        Y,
-        effective_n_threads,
-        chunks_n_threads,
-        dist_middle_terms_chunks_size,
-        n_features,
-        chunk_size,
-    ) -> MiddleTermComputer{{name_suffix}}:
-        """Return the DatasetsPair implementation for the given arguments.
-
-        Parameters
-        ----------
-        X : ndarray or CSR sparse matrix of shape (n_samples_X, n_features)
-            Input data.
-            If provided as a ndarray, it must be C-contiguous.
-
-        Y : ndarray or CSR sparse matrix of shape (n_samples_Y, n_features)
-            Input data.
-            If provided as a ndarray, it must be C-contiguous.
-
-        Returns
-        -------
-        middle_term_computer: MiddleTermComputer{{name_suffix}}
-            The suited MiddleTermComputer{{name_suffix}} implementation.
-        """
-        X_is_sparse = issparse(X)
-        Y_is_sparse = issparse(Y)
-
-        if not X_is_sparse and not Y_is_sparse:
-            return DenseDenseMiddleTermComputer{{name_suffix}}(
-                X,
-                Y,
-                effective_n_threads,
-                chunks_n_threads,
-                dist_middle_terms_chunks_size,
-                n_features,
-                chunk_size,
-            )
-        if X_is_sparse and Y_is_sparse:
-            return SparseSparseMiddleTermComputer{{name_suffix}}(
-                X,
-                Y,
-                effective_n_threads,
-                chunks_n_threads,
-                dist_middle_terms_chunks_size,
-                n_features,
-                chunk_size,
-            )
-
-        raise NotImplementedError(
-            "X and Y must be both CSR sparse matrices or both numpy arrays."
-        )
-
-
-    @classmethod
-    def unpack_csr_matrix(cls, X: csr_matrix):
-        """Ensure that the CSR matrix is indexed with SPARSE_INDEX_TYPE."""
-        X_data = np.asarray(X.data, dtype=DTYPE)
-        X_indices = np.asarray(X.indices, dtype=SPARSE_INDEX_TYPE)
-        X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
-        return X_data, X_indices, X_indptr
-
     def __init__(
         self,
         ITYPE_t effective_n_threads,
@@ -226,7 +161,7 @@ cdef class MiddleTermComputer{{name_suffix}}:
     ) nogil:
         return
 
-    cdef DTYPE_t * _compute_dist_middle_terms(
+    cdef void _compute_dist_middle_terms(
         self,
         ITYPE_t X_start,
         ITYPE_t X_end,
@@ -234,7 +169,7 @@ cdef class MiddleTermComputer{{name_suffix}}:
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
-        return NULL
+        return
 
 
 cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_suffix}}):
@@ -359,7 +294,7 @@ cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_
         return
 {{endif}}
 
-    cdef DTYPE_t * _compute_dist_middle_terms(
+    cdef void _compute_dist_middle_terms(
         self,
         ITYPE_t X_start,
         ITYPE_t X_end,
@@ -400,8 +335,6 @@ cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_
         # dist_middle_terms = `-2 * X[X_start:X_end] @ Y[Y_start:Y_end].T`
         _gemm(order, ta, tb, m, n, K, alpha, A, lda, B, ldb, beta, dist_middle_terms, ldc)
 
-        return dist_middle_terms
-
 
 cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_suffix}}):
     """Middle term of the Euclidean distance between two chunked CSR matrices.
@@ -417,8 +350,12 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
 
     def __init__(
         self,
-        X,
-        Y,
+        const DTYPE_t[:] X_data,
+        const SPARSE_INDEX_TYPE_t[:] X_indices,
+        const SPARSE_INDEX_TYPE_t[:] X_indptr,
+        const DTYPE_t[:] Y_data,
+        const SPARSE_INDEX_TYPE_t[:] Y_indices,
+        const SPARSE_INDEX_TYPE_t[:] Y_indptr,
         ITYPE_t effective_n_threads,
         ITYPE_t chunks_n_threads,
         ITYPE_t dist_middle_terms_chunks_size,
@@ -432,8 +369,8 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
             n_features,
             chunk_size,
         )
-        self.X_data, self.X_indices, self.X_indptr = self.unpack_csr_matrix(X)
-        self.Y_data, self.Y_indices, self.Y_indptr = self.unpack_csr_matrix(Y)
+        self.X_data, self.X_indices, self.X_indptr = X_data, X_indices, X_indptr
+        self.Y_data, self.Y_indices, self.Y_indptr = Y_data, Y_indices, Y_indptr
 
     cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
         self,
@@ -465,7 +402,7 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
             0.0,
         )
 
-    cdef DTYPE_t * _compute_dist_middle_terms(
+    cdef void _compute_dist_middle_terms(
         self,
         ITYPE_t X_start,
         ITYPE_t X_end,
@@ -491,8 +428,6 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
             Y_end,
             dist_middle_terms,
         )
-
-        return dist_middle_terms
 
 
 {{endfor}}

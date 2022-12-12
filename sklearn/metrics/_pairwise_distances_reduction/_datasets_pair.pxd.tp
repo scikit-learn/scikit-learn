@@ -19,6 +19,10 @@ from ...metrics._dist_metrics cimport DistanceMetric, DistanceMetric32
 
 {{for name_suffix, DistanceMetric, INPUT_DTYPE_t in implementation_specific_values}}
 
+from ._middle_term_computer cimport (
+    DenseDenseMiddleTermComputer{{name_suffix}},
+    SparseSparseMiddleTermComputer{{name_suffix}},
+)
 
 cdef class DatasetsPair{{name_suffix}}:
     cdef:
@@ -31,13 +35,65 @@ cdef class DatasetsPair{{name_suffix}}:
 
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil
 
-    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j) nogil
+    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j, ITYPE_t thread_num=*) nogil
+
+    cdef void _parallel_on_X_parallel_init(self, ITYPE_t thread_num) nogil
+
+    cdef void _parallel_on_X_init_chunk(
+        self,
+        ITYPE_t thread_num,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+    ) nogil
+
+    cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num,
+    ) nogil
+
+    cdef void _parallel_on_Y_init(self) nogil
+
+    cdef void _parallel_on_Y_parallel_init(
+        self,
+        ITYPE_t thread_num,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+    ) nogil
+
+    cdef void _parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t X_end,
+        ITYPE_t Y_start,
+        ITYPE_t Y_end,
+        ITYPE_t thread_num,
+    ) nogil
+
+    cdef bint need_to_compute_exact_dist(self) nogil
 
 
 cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
     cdef:
         const {{INPUT_DTYPE_t}}[:, ::1] X
         const {{INPUT_DTYPE_t}}[:, ::1] Y
+
+
+cdef class EuclideanDenseDenseDatasetsPair{{name_suffix}}(DenseDenseDatasetsPair{{name_suffix}}):
+    cdef:
+        ITYPE_t X_n_chunks
+        ITYPE_t Y_n_samples_chunk
+        ITYPE_t Y_n_samples_last_chunk
+
+        bint use_squared_distances
+
+        DenseDenseMiddleTermComputer{{name_suffix}} middle_term_computer
+
+        const DTYPE_t[::1] X_norm_squared
+        const DTYPE_t[::1] Y_norm_squared
 
 
 cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
@@ -49,6 +105,20 @@ cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         const {{INPUT_DTYPE_t}}[:] Y_data
         const SPARSE_INDEX_TYPE_t[:] Y_indices
         const SPARSE_INDEX_TYPE_t[:] Y_indptr
+
+
+cdef class EuclideanSparseSparseDatasetsPair{{name_suffix}}(SparseSparseDatasetsPair{{name_suffix}}):
+    cdef:
+        ITYPE_t X_n_chunks
+        ITYPE_t Y_n_samples_chunk
+        ITYPE_t Y_n_samples_last_chunk
+
+        bint use_squared_distances
+
+        SparseSparseMiddleTermComputer{{name_suffix}} middle_term_computer
+
+        const DTYPE_t[::1] X_norm_squared
+        const DTYPE_t[::1] Y_norm_squared
 
 
 cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):

@@ -26,6 +26,7 @@ from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
 import numpy as np
 
+import warnings
 from scipy.sparse import issparse
 from numbers import Integral
 from sklearn import get_config
@@ -131,7 +132,7 @@ cpdef DTYPE_t[::1] _sqeuclidean_row_norms{{name_suffix}}(
 ):
     if issparse(X):
         # TODO: remove this instruction which is a cast in the float32 case
-        # by moving squared row norms computations in MiddleTermComputer. 
+        # by moving squared row norms computations in MiddleTermComputer.
         X_data = np.asarray(X.data, dtype=DTYPE)
         X_indptr = np.asarray(X.indptr, dtype=SPARSE_INDEX_TYPE)
         return _sqeuclidean_row_norms64_sparse(X_data, X_indptr, num_threads)
@@ -151,9 +152,11 @@ cdef class BaseDistancesReduction{{name_suffix}}:
 
     def __init__(
         self,
-        DatasetsPair{{name_suffix}} datasets_pair,
+        X, Y,
         chunk_size=None,
         strategy=None,
+        metric="euclidean",
+        metric_kwargs=None,
      ):
         cdef:
             ITYPE_t X_n_full_chunks, Y_n_full_chunks
@@ -165,9 +168,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
 
         self.effective_n_threads = _openmp_effective_n_threads()
 
-        self.datasets_pair = datasets_pair
-
-        self.n_samples_X = datasets_pair.n_samples_X()
+        self.n_samples_X = X.shape[0]
         self.X_n_samples_chunk = min(self.n_samples_X, self.chunk_size)
         X_n_full_chunks = self.n_samples_X // self.X_n_samples_chunk
         X_n_samples_remainder = self.n_samples_X % self.X_n_samples_chunk
@@ -178,7 +179,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
         else:
             self.X_n_samples_last_chunk = self.X_n_samples_chunk
 
-        self.n_samples_Y = datasets_pair.n_samples_Y()
+        self.n_samples_Y = Y.shape[0]
         self.Y_n_samples_chunk = min(self.n_samples_Y, self.chunk_size)
         Y_n_full_chunks = self.n_samples_Y // self.Y_n_samples_chunk
         Y_n_samples_remainder = self.n_samples_Y % self.Y_n_samples_chunk
@@ -222,6 +223,52 @@ cdef class BaseDistancesReduction{{name_suffix}}:
             self.Y_n_chunks if self.execute_in_parallel_on_Y else self.X_n_chunks,
             self.effective_n_threads,
         )
+
+        if metric in ["euclidean", "sqeuclidean"]:
+
+            X_norm_squared = (
+                metric_kwargs.pop("X_norm_squared", None)
+                if metric_kwargs is not None
+                else None
+            )
+
+            Y_norm_squared = (
+                metric_kwargs.pop("Y_norm_squared", None)
+                if metric_kwargs is not None
+                else None
+            )
+
+            euclidean_kwargs = dict(
+                effective_n_threads=self.effective_n_threads,
+                chunks_n_threads=self.chunks_n_threads,
+                dist_middle_terms_chunks_size=(self.Y_n_samples_chunk * self.X_n_samples_chunk),
+                X_norm_squared=X_norm_squared,
+                Y_norm_squared=Y_norm_squared,
+                X_n_chunks=self.X_n_chunks,
+                Y_n_samples_chunk=self.Y_n_samples_chunk,
+                Y_n_samples_last_chunk=self.Y_n_samples_last_chunk,
+                chunk_size=self.chunk_size,
+            )
+
+            if isinstance(metric_kwargs, dict) and metric_kwargs.keys():
+                warnings.warn(
+                    f"Some metric_kwargs have been passed ({metric_kwargs}) but aren't "
+                    f"usable for this case (euclidean) and will be ignored.",
+                UserWarning,
+                stacklevel=3,
+            )
+            metric_kwargs = None
+
+        else:
+            euclidean_kwargs = None
+
+        self.datasets_pair = DatasetsPair{{name_suffix}}.get_for(
+            X, Y,
+            metric,
+            metric_kwargs,
+            euclidean_kwargs,
+        )
+
 
     @final
     cdef void _parallel_on_X(self) nogil:
