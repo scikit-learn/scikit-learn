@@ -190,24 +190,43 @@ plt.show()
 # Effect of rescaling on model's performance
 # ==========================================
 #
-# Here we show prediction accuracies in scaled and unscaled data.
+# First we show how the optimal regularization of a
+# class:`~sklearn.linear_model.LogisticRegressionCV` depends on the scaling or
+# non-scaling of the data:
 
-from sklearn.metrics import accuracy_score
+import numpy as np
 from sklearn.pipeline import make_pipeline
-from sklearn.linear_model import LogisticRegression
+from sklearn.linear_model import LogisticRegressionCV
 
-unscaled_clf = make_pipeline(pca, LogisticRegression())
+Cs = np.logspace(-5, 5, 20)
+
+unscaled_clf = make_pipeline(pca, LogisticRegressionCV(Cs=Cs))
 unscaled_clf.fit(X_train, y_train)
 y_pred = unscaled_clf.predict(X_test)
 
-scaled_clf = make_pipeline(scaler, pca, LogisticRegression())
+scaled_clf = make_pipeline(scaler, pca, LogisticRegressionCV(Cs=Cs))
 scaled_clf.fit(X_train, y_train)
 y_pred_scaled = scaled_clf.predict(X_test)
 
-print("Prediction accuracy for the normal test dataset with PCA")
+print("Optimal C for the unscaled PCA")
+print(unscaled_clf[-1].C_)
+print()
+print("Optimal C for the standardized data with PCA")
+print(scaled_clf[-1].C_)
+
+# %%
+# The need for regularization is higher (lower values of `C`) for the data
+# that was not scaled before applying PCA. From the plot we can confirm that
+# less separable clases are more propense to overfitting.
+#
+# We now evaluate the effect of scaling on the accuracy:
+
+from sklearn.metrics import accuracy_score
+
+print("Test accuracy for the unscaled PCA")
 print(f"{accuracy_score(y_test, y_pred):.2%}")
 print()
-print("Prediction accuracy for the standardized test dataset with PCA")
+print("Test accuracy for the standardized data with PCA")
 print(f"{accuracy_score(y_test, y_pred_scaled):.2%}")
 
 # %%
