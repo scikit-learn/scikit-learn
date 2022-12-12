@@ -1939,3 +1939,18 @@ def test_ordinal_set_output():
 
     assert_allclose(X_pandas.to_numpy(), X_default)
     assert_array_equal(ord_pandas.get_feature_names_out(), X_pandas.columns)
+
+
+def test_predefined_categories_dtype():
+    """Check that the categories_ dtype is `object` for string categories
+
+    Regression test for gh-25171.
+    """
+    categories = [["as", "mmas", "eas", "ras", "acs"], ["1", "2"]]
+
+    enc = OneHotEncoder(categories=categories)
+
+    enc.fit([["as", "1"]])
+
+    for cat in enc.categories_:
+        assert cat.dtype == object
