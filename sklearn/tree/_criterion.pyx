@@ -180,7 +180,7 @@ cdef class BaseCriterion:
                                  - (self.weighted_n_left /
                                     self.weighted_n_node_samples * impurity_left)))
 
-    cdef void pointer_reset(
+    cdef void set_sample_pointers(
         self,
         SIZE_t start,
         SIZE_t end
@@ -329,11 +329,11 @@ cdef class ClassificationCriterion(Criterion):
         self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.0
 
-        self.pointer_reset(start, end)
+        self.set_sample_pointers(start, end)
 
         return 0
 
-    cdef void pointer_reset(
+    cdef void set_sample_pointers(
         self,
         SIZE_t start,
         SIZE_t end
@@ -718,17 +718,18 @@ cdef class RegressionCriterion(Criterion):
 
         self.sq_sum_total = 0.0
 
-        self.pointer_reset(start, end)
+        self.set_sample_pointers(start, end)
 
         return 0
 
-    cdef void pointer_reset(
+    cdef void set_sample_pointers(
         self,
         SIZE_t start,
         SIZE_t end
     ) nogil:
 
         self.sq_sum_total = 0.0
+        
 
         cdef SIZE_t i
         cdef SIZE_t p

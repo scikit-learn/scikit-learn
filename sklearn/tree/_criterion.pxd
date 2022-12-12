@@ -57,7 +57,7 @@ cdef class BaseCriterion:
     ) nogil
     cdef double proxy_impurity_improvement(self) nogil
 
-    cdef void pointer_reset(
+    cdef void set_sample_pointers(
         self,
         SIZE_t start,
         SIZE_t end
