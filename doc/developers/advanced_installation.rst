@@ -28,6 +28,7 @@ Installing a nightly build is the quickest way to:
 
 You can install the nightly build of scikit-learn using the `scipy-wheels-nightly`
 index from the PyPI registry of `anaconda.org`:
+
 .. prompt:: bash $
 
   pip install --pre --extra-index https://pypi.anaconda.org/scipy-wheels-nightly/simple scikit-learn
