@@ -201,7 +201,7 @@ class KBinsDiscretizer(TransformerMixin, BaseEstimator):
             Contains weight values to be associated with each sample.
             Only possible when `strategy` is set to `"quantile"`.
 
-            .. versionadded:: 1.2
+            .. versionadded:: 1.3
 
         Returns
         -------

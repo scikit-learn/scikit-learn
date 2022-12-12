@@ -680,13 +680,6 @@ Changelog
   is now deprecated and will be removed in version 1.4. Use `sparse_output` instead.
   :pr:`24412` by :user:`Rushil Desai <rusdes>`.
 
-- |Enhancement| Added support for `sample_weight` in :class:`preprocessing.KBinsDiscretizer`.
-  This allows specifying the parameter `sample_weight` for each sample to be used while
-  fitting. The option is only available when `strategy` is set to `quantile`.
-  :pr:`24935` by :user:`Seladus <seladus>`,
-  :user:`Guillaume Lemaitre <glemaitre>`, and
-  :user:`Dea María Léon <deamarialeon>`.
-
 :mod:`sklearn.svm`
 ..................
 
