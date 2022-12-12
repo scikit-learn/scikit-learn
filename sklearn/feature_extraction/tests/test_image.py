@@ -356,6 +356,7 @@ def test_extract_patches_square():
     patches = _extract_patches(face, patch_shape=p)
     assert patches.shape == (expected_n_patches[0], expected_n_patches[1], p, p)
 
+
 def test_width_patch():
     # width and height of the patch should be less than the image
     x = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
@@ -364,8 +365,9 @@ def test_width_patch():
     with pytest.raises(ValueError):
         extract_patches_2d(x, (1, 4))
 
+
 def test_extract_patches_2d_max_patches_0():
     x = np.arange(9).reshape(3, 3)
-    patches = extract_patches_2d(x, (2, 2), max_patches = 0)
+    patches = extract_patches_2d(x, (2, 2), max_patches=0)
     expected_n_patches = 0
     assert expected_n_patches == patches.shape[0]
