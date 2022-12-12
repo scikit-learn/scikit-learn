@@ -97,6 +97,7 @@ def test_sparse_graph_connected_component():
         assert_array_equal(component_1, component_2)
 
 
+# TODO: the seed is fixed to 0 because the test is unstable in 32 bits
 @pytest.mark.parametrize(
     "eigen_solver",
     [
