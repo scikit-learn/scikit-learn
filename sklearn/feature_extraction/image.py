@@ -266,7 +266,7 @@ def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
     n_w = i_w - p_w + 1
     all_patches = n_h * n_w
 
-    if max_patches:
+    if max_patches is not None:
         if isinstance(max_patches, (Integral)) and max_patches < all_patches:
             return max_patches
         elif isinstance(max_patches, (Integral)) and max_patches >= all_patches:
@@ -419,7 +419,7 @@ def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None
     )
 
     n_patches = _compute_n_patches(i_h, i_w, p_h, p_w, max_patches)
-    if max_patches:
+    if max_patches is not None:
         rng = check_random_state(random_state)
         i_s = rng.randint(i_h - p_h + 1, size=n_patches)
         j_s = rng.randint(i_w - p_w + 1, size=n_patches)
