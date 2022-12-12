@@ -205,3 +205,10 @@ def _path(data_module, data_file_name):
         return resources.as_file(resources.files(data_module).joinpath(data_file_name))
     else:
         return resources.path(data_module, data_file_name)
+
+
+def _is_resource(data_module, data_file_name):
+    if sys.version_info >= (3, 9):
+        return resources.files(data_module).joinpath(data_file_name).is_file()
+    else:
+        return resources.is_resource(data_module, data_file_name)
