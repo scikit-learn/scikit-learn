@@ -3,11 +3,9 @@
 #          Denis Engemann <denis-alexander.engemann@inria.fr>
 #
 # License: BSD 3 clause
-
 import numpy as np
 from scipy import sparse
 from scipy import linalg
-from scipy import stats
 from scipy.sparse.linalg import eigsh
 from scipy.special import expit
 
@@ -20,6 +18,7 @@ from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import skip_if_32bit
+from sklearn.utils.fixes import _mode
 
 from sklearn.utils.extmath import density, _safe_accumulator_op
 from sklearn.utils.extmath import randomized_svd, _randomized_eigsh
@@ -50,6 +49,20 @@ def test_density():
         assert density(X_) == density(X)
 
 
+# TODO(1.4): Remove test
+def test_density_deprecated_kwargs():
+    """Check that future warning is raised when user enters keyword arguments."""
+    test_array = np.array([[1, 2, 3], [4, 5, 6]])
+    with pytest.warns(
+        FutureWarning,
+        match=(
+            "Additional keyword arguments are deprecated in version 1.2 and will be"
+            " removed in version 1.4."
+        ),
+    ):
+        density(test_array, a=1)
+
+
 def test_uniform_weights():
     # with uniform weights, results should be identical to stats.mode
     rng = np.random.RandomState(0)
@@ -57,7 +70,7 @@ def test_uniform_weights():
     weights = np.ones(x.shape)
 
     for axis in (None, 0, 1):
-        mode, score = stats.mode(x, axis)
+        mode, score = _mode(x, axis)
         mode2, score2 = weighted_mode(x, weights, axis=axis)
 
         assert_array_equal(mode, mode2)
@@ -568,6 +581,32 @@ def test_randomized_svd_sign_flip_with_transpose():
     assert not v_based
 
 
+@pytest.mark.parametrize("n", [50, 100, 300])
+@pytest.mark.parametrize("m", [50, 100, 300])
+@pytest.mark.parametrize("k", [10, 20, 50])
+@pytest.mark.parametrize("seed", range(5))
+def test_randomized_svd_lapack_driver(n, m, k, seed):
+    # Check that different SVD drivers provide consistent results
+
+    # Matrix being compressed
+    rng = np.random.RandomState(seed)
+    X = rng.rand(n, m)
+
+    # Number of components
+    u1, s1, vt1 = randomized_svd(X, k, svd_lapack_driver="gesdd", random_state=0)
+    u2, s2, vt2 = randomized_svd(X, k, svd_lapack_driver="gesvd", random_state=0)
+
+    # Check shape and contents
+    assert u1.shape == u2.shape
+    assert_allclose(u1, u2, atol=0, rtol=1e-3)
+
+    assert s1.shape == s2.shape
+    assert_allclose(s1, s2, atol=0, rtol=1e-3)
+
+    assert vt1.shape == vt2.shape
+    assert_allclose(vt1, vt2, atol=0, rtol=1e-3)
+
+
 def test_cartesian():
     # Check if cartesian product delivers the right results
 
@@ -596,6 +635,30 @@ def test_cartesian():
     # check single axis
     x = np.arange(3)
     assert_array_equal(x[:, np.newaxis], cartesian((x,)))
+
+
+@pytest.mark.parametrize(
+    "arrays, output_dtype",
+    [
+        (
+            [np.array([1, 2, 3], dtype=np.int32), np.array([4, 5], dtype=np.int64)],
+            np.dtype(np.int64),
+        ),
+        (
+            [np.array([1, 2, 3], dtype=np.int32), np.array([4, 5], dtype=np.float64)],
+            np.dtype(np.float64),
+        ),
+        (
+            [np.array([1, 2, 3], dtype=np.int32), np.array(["x", "y"], dtype=object)],
+            np.dtype(object),
+        ),
+    ],
+)
+def test_cartesian_mix_types(arrays, output_dtype):
+    """Check that the cartesian product works with mixed types."""
+    output = cartesian(arrays)
+
+    assert output.dtype == output_dtype
 
 
 def test_logistic_sigmoid():

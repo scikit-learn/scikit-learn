@@ -19,7 +19,6 @@ from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_linnerud
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_breast_cancer
-from sklearn.datasets import load_boston
 from sklearn.datasets import load_wine
 from sklearn.datasets._base import (
     load_csv_data,
@@ -27,7 +26,6 @@ from sklearn.datasets._base import (
 )
 from sklearn.preprocessing import scale
 from sklearn.utils import Bunch
-from sklearn.utils._testing import SkipTest
 from sklearn.datasets.tests.test_common import check_as_frame
 
 
@@ -245,7 +243,6 @@ def test_load_diabetes_raw():
     )
 
 
-@pytest.mark.filterwarnings("ignore:Function load_boston is deprecated")
 @pytest.mark.parametrize(
     "loader_func, data_shape, target_shape, n_target, has_descr, filenames",
     [
@@ -263,7 +260,6 @@ def test_load_diabetes_raw():
         (load_diabetes, (442, 10), (442,), None, True, []),
         (load_digits, (1797, 64), (1797,), 10, True, []),
         (partial(load_digits, n_class=9), (1617, 64), (1617,), 10, True, []),
-        (load_boston, (506, 13), (506,), None, True, ["filename"]),
     ],
 )
 def test_loader(loader_func, data_shape, target_shape, n_target, has_descr, filenames):
@@ -343,31 +339,13 @@ def test_bunch_dir():
     assert "data" in dir(data)
 
 
-# FIXME: to be removed in 1.2
-def test_load_boston_warning():
-    """Check that we raise the ethical warning when loading `load_boston`."""
-    warn_msg = "The Boston housing prices dataset has an ethical problem"
-    with pytest.warns(FutureWarning, match=warn_msg):
-        load_boston()
+def test_load_boston_error():
+    """Check that we raise the ethical warning when trying to import `load_boston`."""
+    msg = "The Boston housing prices dataset has an ethical problem"
+    with pytest.raises(ImportError, match=msg):
+        from sklearn.datasets import load_boston  # noqa
 
-
-@pytest.mark.filterwarnings("ignore:Function load_boston is deprecated")
-def test_load_boston_alternative():
-    pd = pytest.importorskip("pandas")
-    if os.environ.get("SKLEARN_SKIP_NETWORK_TESTS", "1") == "1":
-        raise SkipTest(
-            "This test requires an internet connection to fetch the dataset."
-        )
-
-    boston_sklearn = load_boston()
-
-    data_url = "http://lib.stat.cmu.edu/datasets/boston"
-    try:
-        raw_df = pd.read_csv(data_url, sep=r"\s+", skiprows=22, header=None)
-    except ConnectionError as e:
-        pytest.xfail(f"The dataset can't be downloaded. Got exception: {e}")
-    data = np.hstack([raw_df.values[::2, :], raw_df.values[1::2, :2]])
-    target = raw_df.values[1::2, 2]
-
-    np.testing.assert_allclose(data, boston_sklearn.data)
-    np.testing.assert_allclose(target, boston_sklearn.target)
+    # other non-existing function should raise the usual import error
+    msg = "cannot import name 'non_existing_function' from 'sklearn.datasets'"
+    with pytest.raises(ImportError, match=msg):
+        from sklearn.datasets import non_existing_function  # noqa

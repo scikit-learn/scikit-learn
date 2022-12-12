@@ -1,6 +1,7 @@
 """Tests for Incremental PCA."""
 import numpy as np
 import pytest
+import warnings
 
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
@@ -121,20 +122,20 @@ def test_incremental_pca_inverse():
 
 
 def test_incremental_pca_validation():
-    # Test that n_components is >=1 and <= n_features.
+    # Test that n_components is <= n_features.
     X = np.array([[0, 1, 0], [1, 0, 0]])
     n_samples, n_features = X.shape
-    for n_components in [-1, 0, 0.99, 4]:
-        with pytest.raises(
-            ValueError,
-            match=(
-                "n_components={} invalid"
-                " for n_features={}, need more rows than"
-                " columns for IncrementalPCA"
-                " processing".format(n_components, n_features)
-            ),
-        ):
-            IncrementalPCA(n_components, batch_size=10).fit(X)
+    n_components = 4
+    with pytest.raises(
+        ValueError,
+        match=(
+            "n_components={} invalid"
+            " for n_features={}, need more rows than"
+            " columns for IncrementalPCA"
+            " processing".format(n_components, n_features)
+        ),
+    ):
+        IncrementalPCA(n_components, batch_size=10).fit(X)
 
     # Tests that n_components is also <= n_samples.
     n_components = 3
@@ -147,6 +148,18 @@ def test_incremental_pca_validation():
         ),
     ):
         IncrementalPCA(n_components=n_components).partial_fit(X)
+
+
+def test_n_samples_equal_n_components():
+    # Ensures no warning is raised when n_samples==n_components
+    # Non-regression test for gh-19050
+    ipca = IncrementalPCA(n_components=5)
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        ipca.partial_fit(np.random.randn(5, 7))
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        ipca.fit(np.random.randn(5, 7))
 
 
 def test_n_components_none():

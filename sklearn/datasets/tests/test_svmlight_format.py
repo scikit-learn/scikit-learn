@@ -11,7 +11,7 @@ from tempfile import NamedTemporaryFile
 import pytest
 
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_array_almost_equal, assert_allclose
 from sklearn.utils._testing import fails_if_pypy
 
 import sklearn
@@ -87,6 +87,16 @@ def test_load_svmlight_file_fd():
             assert_array_almost_equal(y1, y2)
         finally:
             os.close(fd)
+
+
+def test_load_svmlight_pathlib():
+    # test loading from file descriptor
+    with resources.path(TEST_DATA_MODULE, datafile) as data_path:
+        X1, y1 = load_svmlight_file(str(data_path))
+        X2, y2 = load_svmlight_file(data_path)
+
+    assert_allclose(X1.data, X2.data)
+    assert_allclose(y1, y2)
 
 
 def test_load_svmlight_file_multilabel():
@@ -553,3 +563,28 @@ def test_load_offset_exhaustive_splits():
 def test_load_with_offsets_error():
     with pytest.raises(ValueError, match="n_features is required"):
         _load_svmlight_local_test_file(datafile, offset=3, length=3)
+
+
+def test_multilabel_y_explicit_zeros(tmp_path):
+    """
+    Ensure that if y contains explicit zeros (i.e. elements of y.data equal to
+    0) then those explicit zeros are not encoded.
+    """
+    save_path = str(tmp_path / "svm_explicit_zero")
+    rng = np.random.RandomState(42)
+    X = rng.randn(3, 5).astype(np.float64)
+    indptr = np.array([0, 2, 3, 6])
+    indices = np.array([0, 2, 2, 0, 1, 2])
+    # The first and last element are explicit zeros.
+    data = np.array([0, 1, 1, 1, 1, 0])
+    y = sp.csr_matrix((data, indices, indptr), shape=(3, 3))
+    # y as a dense array would look like
+    # [[0, 0, 1],
+    #  [0, 0, 1],
+    #  [1, 1, 0]]
+
+    dump_svmlight_file(X, y, save_path, multilabel=True)
+
+    _, y_load = load_svmlight_file(save_path, multilabel=True)
+    y_true = [(2.0,), (2.0,), (0.0, 1.0)]
+    assert y_load == y_true

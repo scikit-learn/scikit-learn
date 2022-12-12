@@ -35,13 +35,14 @@
 .. |PythonMinVersion| replace:: 3.8
 .. |NumPyMinVersion| replace:: 1.17.3
 .. |SciPyMinVersion| replace:: 1.3.2
-.. |JoblibMinVersion| replace:: 1.0.0
+.. |JoblibMinVersion| replace:: 1.1.1
 .. |ThreadpoolctlMinVersion| replace:: 2.0.0
-.. |MatplotlibMinVersion| replace:: 3.1.2
-.. |Scikit-ImageMinVersion| replace:: 0.14.5
+.. |MatplotlibMinVersion| replace:: 3.1.3
+.. |Scikit-ImageMinVersion| replace:: 0.16.2
 .. |PandasMinVersion| replace:: 1.0.5
 .. |SeabornMinVersion| replace:: 0.9.0
-.. |PytestMinVersion| replace:: 5.0.1
+.. |PytestMinVersion| replace:: 5.3.1
+.. |PlotlyMinVersion| replace:: 5.10.0
 
 .. image:: https://raw.githubusercontent.com/scikit-learn/scikit-learn/main/doc/logos/scikit-learn-logo.png
   :target: https://scikit-learn.org/
@@ -83,7 +84,7 @@ classes end with "Display") require Matplotlib (>= |MatplotlibMinVersion|).
 For running the examples Matplotlib >= |MatplotlibMinVersion| is required.
 A few examples require scikit-image >= |Scikit-ImageMinVersion|, a few examples
 require pandas >= |PandasMinVersion|, some examples require seaborn >=
-|SeabornMinVersion|.
+|SeabornMinVersion| and plotly >= |PlotlyMinVersion|.
 
 User installation
 ~~~~~~~~~~~~~~~~~
@@ -144,7 +145,7 @@ directory (you will need to have ``pytest`` >= |PyTestMinVersion| installed)::
 
     pytest sklearn
 
-See the web page https://scikit-learn.org/dev/developers/advanced_installation.html#testing
+See the web page https://scikit-learn.org/dev/developers/contributing.html#testing-and-improving-test-coverage
 for more information.
 
     Random number generation can be controlled during testing by setting
@@ -184,6 +185,7 @@ Communication
 
 - Mailing list: https://mail.python.org/mailman/listinfo/scikit-learn
 - Gitter: https://gitter.im/scikit-learn/scikit-learn
+- Logos & Branding: https://github.com/scikit-learn/scikit-learn/tree/main/doc/logos
 - Blog: https://blog.scikit-learn.org
 - Calendar: https://blog.scikit-learn.org/calendar/
 - Twitter: https://twitter.com/scikit_learn

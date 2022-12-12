@@ -283,7 +283,7 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
 .. note::
     :meth:`KernelPCA.inverse_transform` relies on a kernel ridge to learn the
     function mapping samples from the PCA basis into the original feature
-    space [Bakir2004]_. Thus, the reconstruction obtained with
+    space [Bakir2003]_. Thus, the reconstruction obtained with
     :meth:`KernelPCA.inverse_transform` is an approximation. See the example
     linked below for more details.
 
@@ -299,10 +299,10 @@ prediction (kernel dependency estimation). :class:`KernelPCA` supports both
        International conference on artificial neural networks.
        Springer, Berlin, Heidelberg, 1997.
 
-    .. [Bakir2004] Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
+    .. [Bakir2003] Bakır, Gökhan H., Jason Weston, and Bernhard Schölkopf.
        `"Learning to find pre-images."
-       <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.68.5164&rep=rep1&type=pdf>`_
-       Advances in neural information processing systems 16 (2004): 449-456.
+       <https://papers.nips.cc/paper/2003/file/ac1ad983e08ad3304a97e147f522747e-Paper.pdf>`_
+       Advances in neural information processing systems 16 (2003): 449-456.
 
 .. _kPCA_Solvers:
 
@@ -921,6 +921,29 @@ stored components::
     * :ref:`sphx_glr_auto_examples_applications_plot_topics_extraction_with_nmf_lda.py`
     * :ref:`sphx_glr_auto_examples_decomposition_plot_beta_divergence.py`
 
+.. _MiniBatchNMF:
+
+Mini-batch Non Negative Matrix Factorization
+--------------------------------------------
+
+:class:`MiniBatchNMF` [7]_ implements a faster, but less accurate version of the
+non negative matrix factorization (i.e. :class:`~sklearn.decomposition.NMF`),
+better suited for large datasets.
+
+By default, :class:`MiniBatchNMF` divides the data into mini-batches and
+optimizes the NMF model in an online manner by cycling over the mini-batches
+for the specified number of iterations. The ``batch_size`` parameter controls
+the size of the batches.
+
+In order to speed up the mini-batch algorithm it is also possible to scale
+past batches, giving them less importance than newer batches. This is done
+introducing a so-called forgetting factor controlled by the ``forget_factor``
+parameter.
+
+The estimator also implements ``partial_fit``, which updates ``H`` by iterating
+only once over a mini-batch. This can be used for online learning when the data
+is not readily available from the start, or when the data does not fit into memory.
+
 .. topic:: References:
 
     .. [1] `"Learning the parts of objects by non-negative matrix factorization"
@@ -928,23 +951,26 @@ stored components::
       D. Lee, S. Seung, 1999
 
     .. [2] `"Non-negative Matrix Factorization with Sparseness Constraints"
-      <http://www.jmlr.org/papers/volume5/hoyer04a/hoyer04a.pdf>`_
+      <https://www.jmlr.org/papers/volume5/hoyer04a/hoyer04a.pdf>`_
       P. Hoyer, 2004
 
     .. [4] `"SVD based initialization: A head start for nonnegative
       matrix factorization"
-      <http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf>`_
+      <https://www.boutsidis.org/Boutsidis_PRE_08.pdf>`_
       C. Boutsidis, E. Gallopoulos, 2008
 
     .. [5] `"Fast local algorithms for large scale nonnegative matrix and tensor
       factorizations."
-      <https://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.214.6398&rep=rep1&type=pdf>`_
+      <https://www.researchgate.net/profile/Anh-Huy-Phan/publication/220241471_Fast_Local_Algorithms_for_Large_Scale_Nonnegative_Matrix_and_Tensor_Factorizations>`_
       A. Cichocki, A. Phan, 2009
 
     .. [6] :arxiv:`"Algorithms for nonnegative matrix factorization with
            the beta-divergence" <1010.1763>`
            C. Fevotte, J. Idier, 2011
 
+    .. [7] :arxiv:`"Online algorithms for nonnegative matrix factorization with the
+       Itakura-Saito divergence" <1106.4198>`
+       A. Lefevre, F. Bach, C. Fevotte, 2011
 
 .. _LatentDirichletAllocation:
 
@@ -1043,7 +1069,7 @@ when data can be fetched sequentially.
 .. topic:: References:
 
     * `"Latent Dirichlet Allocation"
-      <http://www.jmlr.org/papers/volume3/blei03a/blei03a.pdf>`_
+      <https://www.jmlr.org/papers/volume3/blei03a/blei03a.pdf>`_
       D. Blei, A. Ng, M. Jordan, 2003
 
     * `"Online Learning for Latent Dirichlet Allocation”
@@ -1051,7 +1077,7 @@ when data can be fetched sequentially.
       M. Hoffman, D. Blei, F. Bach, 2010
 
     * `"Stochastic Variational Inference"
-      <http://www.columbia.edu/~jwp2128/Papers/HoffmanBleiWangPaisley2013.pdf>`_
+      <https://www.cs.columbia.edu/~blei/papers/HoffmanBleiWangPaisley2013.pdf>`_
       M. Hoffman, D. Blei, C. Wang, J. Paisley, 2013
 
     * `"The varimax criterion for analytic rotation in factor analysis"

@@ -9,7 +9,7 @@ if NOT "%PAPER%" == "" (
 	set ALLSPHINXOPTS=-D latex_paper_size=%PAPER% %ALLSPHINXOPTS%
 )
 
-if "%1" == "" goto help
+if "%1" == "" goto html-noplot
 
 if "%1" == "help" (
 	:help
@@ -42,6 +42,7 @@ if "%1" == "html" (
 )
 
 if "%1" == "html-noplot" (
+	:html-noplot
 	%SPHINXBUILD% -D plot_gallery=0 -b html %ALLSPHINXOPTS% %BUILDDIR%/html
 	echo.
 	echo.Build finished. The HTML pages are in %BUILDDIR%/html

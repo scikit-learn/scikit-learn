@@ -141,7 +141,7 @@ def lobpcg(
     retLambdaHistory=False,
     retResidualNormsHistory=False,
 ):
-    """Locally Optimal Block Preconditioned Conjugate Gradient Method (LOBPCG)
+    """Locally Optimal Block Preconditioned Conjugate Gradient Method (LOBPCG).
 
     LOBPCG is a preconditioned eigensolver for large symmetric positive
     definite (SPD) generalized eigenproblems.
@@ -161,7 +161,7 @@ def lobpcg(
         Preconditioner to `A`; by default ``M = Identity``.
         `M` should approximate the inverse of `A`.
     Y : ndarray, float32 or float64, optional
-        n-by-sizeY matrix of constraints (non-sparse), sizeY < n
+        An n-by-sizeY matrix of constraints (non-sparse), sizeY < n.
         The iterations will be performed in the B-orthogonal complement
         of the column-space of Y. Y must be full rank.
     tol : scalar, optional
@@ -181,7 +181,7 @@ def lobpcg(
     Returns
     -------
     w : ndarray
-        Array of ``k`` eigenvalues
+        Array of ``k`` eigenvalues.
     v : ndarray
         An array of ``k`` eigenvectors.  `v` has the same shape as `X`.
     lambdas : list of ndarray, optional
@@ -240,7 +240,6 @@ def lobpcg(
 
     Examples
     --------
-
     Solve ``A x = lambda x`` with constraints and preconditioning.
 
     >>> import numpy as np
@@ -293,7 +292,6 @@ def lobpcg(
 
     Note that the vectors passed in Y are the eigenvectors of the 3 smallest
     eigenvalues. The results returned are orthogonal to those.
-
     """
     blockVectorX = X
     blockVectorY = Y

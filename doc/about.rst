@@ -32,7 +32,7 @@ and maintenance:
 
 Please do not email the authors directly to ask for assistance or report issues.
 Instead, please see `What's the best way to ask questions about scikit-learn
-<http://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-get-help-on-scikit-learn-usage>`_
+<https://scikit-learn.org/stable/faq.html#what-s-the-best-way-to-get-help-on-scikit-learn-usage>`_
 in the FAQ.
 
 .. seealso::
@@ -83,7 +83,7 @@ If you use scikit-learn in a scientific publication, we would appreciate
 citations to the following paper:
 
   `Scikit-learn: Machine Learning in Python
-  <http://jmlr.csail.mit.edu/papers/v12/pedregosa11a.html>`_, Pedregosa
+  <https://jmlr.csail.mit.edu/papers/v12/pedregosa11a.html>`_, Pedregosa
   *et al.*, JMLR 12, pp. 2825-2830, 2011.
 
   Bibtex entry::
@@ -410,7 +410,7 @@ full-time. It also hosts coding sprints and other events.
    <div class="sk-sponsor-div-box">
 
 `Paris-Saclay Center for Data Science
-<https://www.datascience-paris-saclay.fr/>`_
+<http://www.datascience-paris-saclay.fr/>`_
 funded one year for a developer to work on the project full-time
 (2014-2015), 50% of the time of Guillaume Lemaitre (2016-2017) and 50% of the
 time of Joris van den Bossche (2017-2018).
@@ -423,7 +423,7 @@ time of Joris van den Bossche (2017-2018).
 .. image:: images/cds-logo.png
    :width: 100pt
    :align: center
-   :target: https://www.datascience-paris-saclay.fr/
+   :target: http://www.datascience-paris-saclay.fr/
 
 .. raw:: html
 
@@ -538,7 +538,7 @@ Hug to work full-time on scikit-learn in 2020.
 ......................
 
 The following students were sponsored by `Google
-<https://developers.google.com/open-source/>`_ to work on scikit-learn through
+<https://opensource.google/>`_ to work on scikit-learn through
 the `Google Summer of Code <https://en.wikipedia.org/wiki/Google_Summer_of_Code>`_
 program.
 
@@ -574,7 +574,7 @@ The 2013 International Paris Sprint was made possible thanks to the support of
 `Télécom Paristech <https://www.telecom-paristech.fr/>`_, `tinyclues
 <https://www.tinyclues.com/>`_, the `French Python Association
 <https://www.afpy.org/>`_ and the `Fonds de la Recherche Scientifique
-<https://www.frs-fnrs.be/-fnrs>`_.
+<https://www.frs-fnrs.be>`_.
 
 ..............
 
@@ -586,9 +586,15 @@ Donating to the project
 .......................
 
 If you are interested in donating to the project or to one of our code-sprints,
-you can use the *Paypal* button below or the `NumFOCUS Donations Page
-<https://www.numfocus.org/support-numfocus.html>`_ (if you use the latter,
-please indicate that you are donating for the scikit-learn project).
+please donate via the `NumFOCUS Donations Page
+<https://numfocus.org/donate-to-scikit-learn>`_.
+
+.. raw :: html
+
+   <div style="text-align: center;">
+   <a class="btn btn-warning btn-big sk-donate-btn mb-1" href="https://numfocus.org/donate-to-scikit-learn">Help us, <strong>donate!</strong></a>
+   </div>
+   </br>
 
 All donations will be handled by `NumFOCUS
 <https://numfocus.org/>`_, a non-profit-organization which is
@@ -602,13 +608,6 @@ The received donations for the scikit-learn project mostly will go towards
 covering travel-expenses for code sprints, as well as towards the organization
 budget of the project [#f1]_.
 
-.. raw :: html
-
-   </br></br>
-   <div style="text-align: center;">
-   <a class="btn btn-warning btn-big sk-donate-btn mb-1" href="https://numfocus.org/donate-to-scikit-learn">Help us, <strong>donate!</strong></a>
-   </div>
-   </br>
 
 .. rubric:: Notes
 

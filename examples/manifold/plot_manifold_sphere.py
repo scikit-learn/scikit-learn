@@ -30,17 +30,14 @@ that of representing a flat map of the Earth, as with
 # License: BSD 3 clause
 
 from time import time
-
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.ticker import NullFormatter
-
 from sklearn import manifold
 from sklearn.utils import check_random_state
 
-# Next line to silence pyflakes.
-Axes3D
+# Unused but required import for doing 3d projections with matplotlib < 3.2
+import mpl_toolkits.mplot3d  # noqa: F401
 
 # Variables for manifold learning.
 n_neighbors = 10
@@ -114,7 +111,7 @@ plt.axis("tight")
 
 # Perform Multi-dimensional scaling.
 t0 = time()
-mds = manifold.MDS(2, max_iter=100, n_init=1)
+mds = manifold.MDS(2, max_iter=100, n_init=1, normalized_stress="auto")
 trans_data = mds.fit_transform(sphere_data).T
 t1 = time()
 print("MDS: %.2g sec" % (t1 - t0))
@@ -142,7 +139,7 @@ plt.axis("tight")
 
 # Perform t-distributed stochastic neighbor embedding.
 t0 = time()
-tsne = manifold.TSNE(n_components=2, init="pca", random_state=0)
+tsne = manifold.TSNE(n_components=2, random_state=0)
 trans_data = tsne.fit_transform(sphere_data).T
 t1 = time()
 print("t-SNE: %.2g sec" % (t1 - t0))

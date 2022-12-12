@@ -11,6 +11,7 @@ from scipy import linalg
 from ._base import BaseMixture, _check_shape
 from ..utils import check_array
 from ..utils.extmath import row_norms
+from ..utils._param_validation import StrOptions
 
 
 ###############################################################################
@@ -492,13 +493,20 @@ class GaussianMixture(BaseMixture):
     n_init : int, default=1
         The number of initializations to perform. The best results are kept.
 
-    init_params : {'kmeans', 'random'}, default='kmeans'
+    init_params : {'kmeans', 'k-means++', 'random', 'random_from_data'}, \
+    default='kmeans'
         The method used to initialize the weights, the means and the
         precisions.
-        Must be one of::
+        String must be one of:
 
-            'kmeans' : responsibilities are initialized using kmeans.
-            'random' : responsibilities are initialized randomly.
+        - 'kmeans' : responsibilities are initialized using kmeans.
+        - 'k-means++' : use the k-means++ method to initialize.
+        - 'random' : responsibilities are initialized randomly.
+        - 'random_from_data' : initial means are randomly selected data points.
+
+        .. versionchanged:: v1.1
+            `init_params` now accepts 'random_from_data' and 'k-means++' as
+            initialization methods.
 
     weights_init : array-like of shape (n_components, ), default=None
         The user-provided initial weights.
@@ -629,6 +637,14 @@ class GaussianMixture(BaseMixture):
     array([1, 0])
     """
 
+    _parameter_constraints: dict = {
+        **BaseMixture._parameter_constraints,
+        "covariance_type": [StrOptions({"full", "tied", "diag", "spherical"})],
+        "weights_init": ["array-like", None],
+        "means_init": ["array-like", None],
+        "precisions_init": ["array-like", None],
+    }
+
     def __init__(
         self,
         n_components=1,
@@ -668,13 +684,6 @@ class GaussianMixture(BaseMixture):
     def _check_parameters(self, X):
         """Check the Gaussian mixture parameters are well defined."""
         _, n_features = X.shape
-        if self.covariance_type not in ["spherical", "tied", "diag", "full"]:
-            raise ValueError(
-                "Invalid value for 'covariance_type': %s "
-                "'covariance_type' should be in "
-                "['spherical', 'tied', 'diag', 'full']"
-                % self.covariance_type
-            )
 
         if self.weights_init is not None:
             self.weights_init = _check_weights(self.weights_init, self.n_components)
@@ -741,11 +750,10 @@ class GaussianMixture(BaseMixture):
             Logarithm of the posterior probabilities (or responsibilities) of
             the point of each sample in X.
         """
-        n_samples, _ = X.shape
         self.weights_, self.means_, self.covariances_ = _estimate_gaussian_parameters(
             X, np.exp(log_resp), self.reg_covar, self.covariance_type
         )
-        self.weights_ /= n_samples
+        self.weights_ /= self.weights_.sum()
         self.precisions_cholesky_ = _compute_precision_cholesky(
             self.covariances_, self.covariance_type
         )

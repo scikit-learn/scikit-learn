@@ -24,6 +24,7 @@ parser.add_argument("--subsample", type=int, default=None)
 parser.add_argument("--max-bins", type=int, default=255)
 parser.add_argument("--no-predict", action="store_true", default=False)
 parser.add_argument("--cache-loc", type=str, default="/tmp")
+parser.add_argument("--no-interactions", type=bool, default=False)
 args = parser.parse_args()
 
 HERE = os.path.dirname(__file__)
@@ -80,6 +81,7 @@ data = np.ascontiguousarray(df.values[:, 1:])
 data_train, data_test, target_train, target_test = train_test_split(
     data, target, test_size=0.2, random_state=0
 )
+n_classes = len(np.unique(target))
 
 if subsample is not None:
     data_train, target_train = data_train[:subsample], target_train[:subsample]
@@ -87,8 +89,13 @@ if subsample is not None:
 n_samples, n_features = data_train.shape
 print(f"Training set with {n_samples} records with {n_features} features.")
 
+if args.no_interactions:
+    interaction_cst = [[i] for i in range(n_features)]
+else:
+    interaction_cst = None
+
 est = HistGradientBoostingClassifier(
-    loss="binary_crossentropy",
+    loss="log_loss",
     learning_rate=lr,
     max_iter=n_trees,
     max_bins=max_bins,
@@ -96,21 +103,22 @@ est = HistGradientBoostingClassifier(
     early_stopping=False,
     random_state=0,
     verbose=1,
+    interaction_cst=interaction_cst,
 )
 fit(est, data_train, target_train, "sklearn")
 predict(est, data_test, target_test)
 
 if args.lightgbm:
-    est = get_equivalent_estimator(est, lib="lightgbm")
+    est = get_equivalent_estimator(est, lib="lightgbm", n_classes=n_classes)
     fit(est, data_train, target_train, "lightgbm")
     predict(est, data_test, target_test)
 
 if args.xgboost:
-    est = get_equivalent_estimator(est, lib="xgboost")
+    est = get_equivalent_estimator(est, lib="xgboost", n_classes=n_classes)
     fit(est, data_train, target_train, "xgboost")
     predict(est, data_test, target_test)
 
 if args.catboost:
-    est = get_equivalent_estimator(est, lib="catboost")
+    est = get_equivalent_estimator(est, lib="catboost", n_classes=n_classes)
     fit(est, data_train, target_train, "catboost")
     predict(est, data_test, target_test)

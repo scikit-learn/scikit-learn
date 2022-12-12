@@ -118,17 +118,8 @@ def pytest_collection_modifyitems(config, items):
             dataset_fetchers[name]()
 
     for item in items:
-        # FeatureHasher is not compatible with PyPy
-        if (
-            item.name.endswith(("_hash.FeatureHasher", "text.HashingVectorizer"))
-            and platform.python_implementation() == "PyPy"
-        ):
-            marker = pytest.mark.skip(
-                reason="FeatureHasher is not compatible with PyPy"
-            )
-            item.add_marker(marker)
         # Known failure on with GradientBoostingClassifier on ARM64
-        elif (
+        if (
             item.name.endswith("GradientBoostingClassifier")
             and platform.machine() == "aarch64"
         ):

@@ -114,7 +114,7 @@ class MockClassifier:
 
 
 class LinearSVCNoScore(LinearSVC):
-    """An LinearSVC classifier that has no score method."""
+    """A LinearSVC classifier that has no score method."""
 
     @property
     def score(self):
@@ -1427,10 +1427,10 @@ def test_grid_search_correct_score_results():
         for candidate_i, C in enumerate(Cs):
             clf.set_params(C=C)
             cv_scores = np.array(
-                list(
+                [
                     grid_search.cv_results_["split%d_test_score" % s][candidate_i]
                     for s in range(n_splits)
-                )
+                ]
             )
             for i, (train, test) in enumerate(cv.split(X, y)):
                 clf.fit(X[train], y[train])
@@ -1584,9 +1584,7 @@ def test_grid_search_failing_classifier():
     # that are expected to fail.
     def get_cand_scores(i):
         return np.array(
-            list(
-                gs.cv_results_["split%d_test_score" % s][i] for s in range(gs.n_splits_)
-            )
+            [gs.cv_results_["split%d_test_score" % s][i] for s in range(gs.n_splits_)]
         )
 
     assert all(
@@ -1717,7 +1715,7 @@ def test_stochastic_gradient_loss_param():
     # Make sure the predict_proba works when loss is specified
     # as one of the parameters in the param_grid.
     param_grid = {
-        "loss": ["log"],
+        "loss": ["log_loss"],
     }
     X = np.arange(24).reshape(6, -1)
     y = [0, 0, 0, 1, 1, 1]
@@ -1840,10 +1838,10 @@ def test_grid_search_cv_splits_consistency():
     for score_type in ("train", "test"):
         per_param_scores = {}
         for param_i in range(4):
-            per_param_scores[param_i] = list(
+            per_param_scores[param_i] = [
                 gs.cv_results_["split%d_%s_score" % (s, score_type)][param_i]
                 for s in range(5)
-            )
+            ]
 
         assert_array_almost_equal(per_param_scores[0], per_param_scores[1])
         assert_array_almost_equal(per_param_scores[2], per_param_scores[3])
@@ -1983,10 +1981,10 @@ def test_random_search_bad_cv():
 @pytest.mark.parametrize(
     "SearchCV, specialized_params",
     [
-        (GridSearchCV, {"param_grid": {"max_depth": [2, 3]}}),
+        (GridSearchCV, {"param_grid": {"max_depth": [2, 3, 5, 8]}}),
         (
             RandomizedSearchCV,
-            {"param_distributions": {"max_depth": [2, 3]}, "n_iter": 2},
+            {"param_distributions": {"max_depth": [2, 3, 5, 8]}, "n_iter": 4},
         ),
     ],
 )
@@ -2026,6 +2024,13 @@ def test_searchcv_raise_warning_with_non_finite_score(
     assert len(warn_msg) == len(set_with_warning)
     for msg, dataset in zip(warn_msg, set_with_warning):
         assert f"One or more of the {dataset} scores are non-finite" in str(msg.message)
+
+    # all non-finite scores should be equally ranked last
+    last_rank = grid.cv_results_["rank_test_score"].max()
+    non_finite_mask = np.isnan(grid.cv_results_["mean_test_score"])
+    assert_array_equal(grid.cv_results_["rank_test_score"][non_finite_mask], last_rank)
+    # all finite scores should be better ranked than the non-finite scores
+    assert np.all(grid.cv_results_["rank_test_score"][~non_finite_mask] < last_rank)
 
 
 def test_callable_multimetric_confusion_matrix():

@@ -732,10 +732,6 @@ dt.field-odd, dt.field-even {
   box-sizing: border-box;
 }
 
-dl.field-list > dt:after {
-  content: ":";
-}
-
 .classifier {
   font-style: italic;
 }
@@ -832,8 +828,12 @@ div.admonition {
   background-color: #eee;
 }
 
-div.admonition p, div.admonition dl, div.admonition dd,
-div.deprecated p, div.versionchanged p, div.versionadded p{
+div.admonition p:last-child,
+div.admonition dl:last-child,
+div.admonition dd:last-child,
+div.deprecated p:last-child,
+div.versionchanged p:last-child,
+div.versionadded p:last-child{
   margin-bottom: 0
 }
 
@@ -892,14 +892,6 @@ img.align-right, figure.align-right,
   clear: right;
   float: right;
   margin-left: 1em;
-}
-
-a.brackets::after, span.brackets > a::after {
-  content: "]";
-}
-
-a.brackets::before, span.brackets > a::before {
-    content: "[";
 }
 
 /* copybutton */

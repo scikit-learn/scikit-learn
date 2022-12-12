@@ -163,3 +163,10 @@ def threadpool_info():
 
 
 threadpool_info.__doc__ = threadpoolctl.threadpool_info.__doc__
+
+
+# TODO: Remove when SciPy 1.9 is the minimum supported version
+def _mode(a, axis=0):
+    if sp_version >= parse_version("1.9.0"):
+        return scipy.stats.mode(a, axis=axis, keepdims=True)
+    return scipy.stats.mode(a, axis=axis)
