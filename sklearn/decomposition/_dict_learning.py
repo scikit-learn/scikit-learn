@@ -1762,7 +1762,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.fit_transform(X)
         return self
 
-    def fit_transform(self, X, y=None, **fit_params):
+    def fit_transform(self, X, y=None):
         """Fit the model from data in X and return the transformed data.
 
         Parameters
