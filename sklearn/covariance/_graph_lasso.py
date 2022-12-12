@@ -136,7 +136,7 @@ def graphical_lasso(
         If verbose is True, the objective function and dual gap are
         printed at each iteration.
 
-    return_costs : bool, default=Flase
+    return_costs : bool, default=False
         If return_costs is True, the objective function and dual gap
         at each iteration are returned.
 
