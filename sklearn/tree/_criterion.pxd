@@ -73,9 +73,7 @@ cdef class Criterion(BaseCriterion):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        const SIZE_t[:] sample_indices,
-        SIZE_t start,
-        SIZE_t end
+        const SIZE_t[:] sample_indices
     ) nogil except -1
 
 cdef class ClassificationCriterion(Criterion):

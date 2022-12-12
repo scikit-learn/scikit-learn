@@ -214,7 +214,6 @@ cdef class Splitter(BaseSplitter):
         )
 
         self.criterion.set_sample_pointers(
-            self.samples,
             self.start,
             self.end
         )

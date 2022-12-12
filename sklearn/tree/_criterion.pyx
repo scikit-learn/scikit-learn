@@ -206,9 +206,7 @@ cdef class Criterion(BaseCriterion):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        const SIZE_t[:] sample_indices,
-        SIZE_t start,
-        SIZE_t end
+        const SIZE_t[:] sample_indices
     ) nogil except -1:
         """Placeholder for a method which will initialize the criterion.
 
@@ -292,9 +290,7 @@ cdef class ClassificationCriterion(Criterion):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        const SIZE_t[:] sample_indices,
-        SIZE_t start,
-        SIZE_t end
+        const SIZE_t[:] sample_indices
     ) nogil except -1:
         """Initialize the criterion.
 
@@ -323,13 +319,7 @@ cdef class ClassificationCriterion(Criterion):
         self.y = y
         self.sample_weight = sample_weight
         self.sample_indices = sample_indices
-        self.start = start
-        self.end = end
-        self.n_node_samples = end - start
         self.weighted_n_samples = weighted_n_samples
-        self.weighted_n_node_samples = 0.0
-
-        self.set_sample_pointers(start, end)
 
         return 0
 
@@ -338,6 +328,10 @@ cdef class ClassificationCriterion(Criterion):
         SIZE_t start,
         SIZE_t end
     ) nogil:
+
+        self.n_node_samples = end - start
+        self.start = start
+        self.end = end
 
         self.weighted_n_node_samples = 0.0
 
@@ -697,9 +691,7 @@ cdef class RegressionCriterion(Criterion):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        const SIZE_t[:] sample_indices,
-        SIZE_t start,
-        SIZE_t end,
+        const SIZE_t[:] sample_indices
     ) nogil except -1:
         """Initialize the criterion.
 
@@ -710,15 +702,7 @@ cdef class RegressionCriterion(Criterion):
         self.y = y
         self.sample_weight = sample_weight
         self.sample_indices = sample_indices
-        self.start = start
-        self.end = end
-        self.n_node_samples = end - start
         self.weighted_n_samples = weighted_n_samples
-        self.weighted_n_node_samples = 0.
-
-        self.sq_sum_total = 0.0
-
-        self.set_sample_pointers(start, end)
 
         return 0
 
@@ -728,8 +712,13 @@ cdef class RegressionCriterion(Criterion):
         SIZE_t end
     ) nogil:
 
+        self.start = start
+        self.end = end
+
+        self.n_node_samples = end - start
+
         self.sq_sum_total = 0.0
-        
+        self.weighted_n_node_samples = 0.
 
         cdef SIZE_t i
         cdef SIZE_t p
@@ -991,26 +980,35 @@ cdef class MAE(RegressionCriterion):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        const SIZE_t[:] sample_indices,
-        SIZE_t start,
-        SIZE_t end,
+        const SIZE_t[:] sample_indices
     ) nogil except -1:
         """Initialize the criterion.
 
         This initializes the criterion at node sample_indices[start:end] and children
         sample_indices[start:start] and sample_indices[start:end].
         """
-        cdef SIZE_t i, p, k
-        cdef DOUBLE_t w = 1.0
 
         # Initialize fields
         self.y = y
         self.sample_weight = sample_weight
         self.sample_indices = sample_indices
+        self.weighted_n_samples = weighted_n_samples
+
+        return 0
+
+    cdef void set_sample_pointers(
+        self,
+        SIZE_t start,
+        SIZE_t end
+    ) nogil:
+
+        cdef SIZE_t i, p, k
+        cdef DOUBLE_t w = 1.0
+
         self.start = start
         self.end = end
+
         self.n_node_samples = end - start
-        self.weighted_n_samples = weighted_n_samples
         self.weighted_n_node_samples = 0.
 
         cdef void** left_child
@@ -1024,10 +1022,10 @@ cdef class MAE(RegressionCriterion):
             (<WeightedMedianCalculator> right_child[k]).reset()
 
         for p in range(start, end):
-            i = sample_indices[p]
+            i = self.sample_indices[p]
 
-            if sample_weight is not None:
-                w = sample_weight[i]
+            if self.sample_weight is not None:
+                w = self.sample_weight[i]
 
             for k in range(self.n_outputs):
                 # push method ends up calling safe_realloc, hence `except -1`
@@ -1042,7 +1040,6 @@ cdef class MAE(RegressionCriterion):
 
         # Reset to pos=start
         self.reset()
-        return 0
 
     cdef int reset(self) nogil except -1:
         """Reset the criterion at pos=start.
