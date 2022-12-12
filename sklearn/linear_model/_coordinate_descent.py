@@ -1182,7 +1182,7 @@ class Lasso(ElasticNet):
     --------
     lars_path : Regularization path using LARS.
     lasso_path : Regularization path using Lasso.
-    LassoLars : Lasso Path along the regularization parameter usingLARS algorithm.
+    LassoLars : Lasso Path along the regularization parameter using LARS algorithm.
     LassoCV : Lasso alpha parameter by cross-validation.
     LassoLarsCV : Lasso least angle parameter algorithm by cross-validation.
     sklearn.decomposition.sparse_encode : Sparse coding array estimator.
