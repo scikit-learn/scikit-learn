@@ -675,3 +675,27 @@ def test_clone_keeps_output_config():
     ss_clone = clone(ss)
     config_clone = _get_output_config("transform", ss_clone)
     assert config == config_clone
+
+
+def test_parent_object_empty_instance_dict():
+    # Since Python 3.11, Python objects have a __getstate__ method by default
+    # that returns None if the instance dict is empty
+    class Empty:
+        pass
+
+    class Estimator(Empty, BaseEstimator):
+        pass
+
+    state = Estimator().__getstate__()
+    expected = {"_sklearn_version": sklearn.__version__}
+    assert state == expected
+
+
+def test_base_estimator_empty_instance_dict():
+    # Since Python 3.11, Python objects have a __getstate__ method by default
+    # that returns None if the instance dict is empty
+
+    # this should not raise
+    state = BaseEstimator().__getstate__()
+    expected = {"_sklearn_version": sklearn.__version__}
+    assert state == expected
