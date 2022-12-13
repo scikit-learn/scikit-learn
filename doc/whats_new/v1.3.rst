@@ -36,6 +36,11 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.ensemble`
+.......................
+- |Efficiency| :class:`ensemble.IsolationForest` predict time is now faster
+  :pr:`25186` by :user:`Felipe Breve Siola <fsiola>`.
+
 :mod:`sklearn.pipeline`
 .......................
 - |Feature| :class:`pipeline.FeatureUnion` can now use indexing notation (e.g.
