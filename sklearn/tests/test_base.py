@@ -693,7 +693,7 @@ def test_parent_object_empty_instance_dict():
 
 def test_base_estimator_empty_instance_dict():
     # Since Python 3.11, Python objects have a __getstate__ method by default
-    # that returns None if the instance dict is empty
+    # that returns None if the instance dict is empty. See #25188.
 
     # this should not raise
     state = BaseEstimator().__getstate__()
