@@ -29,7 +29,6 @@ setup_ccache() {
 
 pre_python_environment_install() {
     if [[ "$DISTRIB" == "ubuntu" ]]; then
-        sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
         sudo apt-get update
         sudo apt-get install python3-scipy python3-matplotlib \
              libatlas3-base libatlas-base-dev python3-virtualenv ccache
