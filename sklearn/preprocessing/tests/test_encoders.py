@@ -1346,7 +1346,7 @@ def test_one_hot_encoder_sparse_deprecated():
 
 # deliberately omit 'OS' as an invalid combo
 @pytest.mark.parametrize(
-    "input_dtype, category_dtype", ["OO", "OU", "UO", "UU", "US", "SO", "SU", "SS"]
+    "input_dtype, category_dtype", ["OO", "OU", "UO", "UU", "SO", "SU", "SS"]
 )
 @pytest.mark.parametrize("array_type", ["list", "array", "dataframe"])
 def test_encoders_string_categories(input_dtype, category_dtype, array_type):
