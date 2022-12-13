@@ -18,7 +18,7 @@ from sklearn.utils._testing import assert_allclose
 
 from sklearn.model_selection import ParameterGrid
 from sklearn.ensemble import IsolationForest
-from sklearn.ensemble._iforest import _average_path_length, _calculate_depths
+from sklearn.ensemble._iforest import _average_path_length
 from sklearn.model_selection import train_test_split
 from sklearn.datasets import load_diabetes, load_iris, make_classification
 from sklearn.utils import check_random_state
@@ -215,20 +215,6 @@ def test_iforest_average_path_length():
     # _average_path_length is increasing
     avg_path_length = _average_path_length(np.arange(5))
     assert_array_equal(avg_path_length, np.sort(avg_path_length))
-
-
-def test_iforest_calculate_depths(global_random_seed):
-    X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [7, 4], [-5, 9]]
-    clf = IsolationForest(random_state=global_random_seed, n_estimators=2)
-    clf.fit(X)
-    assert_allclose(
-        _calculate_depths(clf.estimators_[0].tree_),
-        [1.0, 2.0, 3.0, 4.0, 4.0, 3.0, 2.0, 3.0, 3.0],
-    )
-    assert_allclose(
-        _calculate_depths(clf.estimators_[1].tree_),
-        [1.0, 2.0, 3.0, 3.0, 4.0, 4.0, 2.0, 3.0, 3.0],
-    )
 
 
 def test_score_samples():
