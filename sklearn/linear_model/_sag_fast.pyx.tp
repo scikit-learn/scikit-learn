@@ -599,7 +599,7 @@ cdef int scale_weights{{name_suffix}}(
     """Scale the weights and reset wscale to 1.0 for numerical stability, and
     reset the just-in-time (JIT) update system.
 
-    (See `sag{{name_suffix}}`'s docstring about the JIT update system.)
+    See `sag{{name_suffix}}`'s docstring about the JIT update system.
 
     wscale = (1 - step_size * alpha) ** (n_iter * n_samples + sample_itr)
     can become very small, so we reset it every n_samples iterations to 1.0 for
@@ -653,7 +653,7 @@ cdef int lagged_update{{name_suffix}}(
 ) nogil:
     """Hard perform the JIT updates for non-zero features of present sample.
 
-    (See `sag{{name_suffix}}`'s docstring about the JIT update system.)
+    See `sag{{name_suffix}}`'s docstring about the JIT update system.
 
     The updates that awaits are kept in memory using cumulative_sums,
     cumulative_sums_prox, wscale and feature_hist. See original SAGA paper
