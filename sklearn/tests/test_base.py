@@ -679,7 +679,7 @@ def test_clone_keeps_output_config():
 
 def test_parent_object_empty_instance_dict():
     # Since Python 3.11, Python objects have a __getstate__ method by default
-    # that returns None if the instance dict is empty
+    # that returns None if the instance dict is empty. See #25188.
     class Empty:
         pass
 
