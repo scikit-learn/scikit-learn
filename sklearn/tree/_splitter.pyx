@@ -8,7 +8,10 @@
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Fares Hedayati <fares.hedayati@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
+#          Adam Li <adam2392@gmail.com>
+#          Jong Shin <jshinm@gmail.com>
 #
+
 # License: BSD 3 clause
 
 from ._criterion cimport Criterion

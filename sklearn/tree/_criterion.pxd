@@ -4,6 +4,8 @@
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
+#          Adam Li <adam2392@gmail.com>
+#          Jong Shin <jshinm@gmail.com>
 #
 # License: BSD 3 clause
 
