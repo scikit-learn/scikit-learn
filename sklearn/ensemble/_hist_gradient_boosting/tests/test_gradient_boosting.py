@@ -59,10 +59,6 @@ def _make_dumb_dataset(n_samples):
     "params, err_msg",
     [
         (
-            {"interaction_cst": "string"},
-            "",
-        ),
-        (
             {"interaction_cst": [0, 1]},
             "Interaction constraints must be a sequence of tuples or lists",
         ),
