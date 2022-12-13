@@ -97,7 +97,10 @@ def test_sparse_graph_connected_component():
         assert_array_equal(component_1, component_2)
 
 
-# TODO: the seed is fixed to 0 because the test is unstable in 32 bits
+# TODO: investigate why this test is seed-sensitive on 32-bit Python
+# runtimes. Is this revealing a numerical stability problem ? Or is it
+# expected from the test numerical design ? In the latter case the test
+# should be made less seed-sensitive instead.
 @pytest.mark.parametrize(
     "eigen_solver",
     [
