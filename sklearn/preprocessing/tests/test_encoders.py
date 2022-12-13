@@ -1952,5 +1952,8 @@ def test_predefined_categories_dtype():
 
     enc.fit([["as", "1"]])
 
-    for cat in enc.categories_:
+    assert len(categories) == len(enc.categories_)
+    for n, cat in enumerate(enc.categories_):
         assert cat.dtype == object
+        assert np.array_equal(categories[n], cat)
+

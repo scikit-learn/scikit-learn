@@ -98,6 +98,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     cats = result
             else:
                 if np.issubdtype(Xi.dtype, np.str_):
+                    # Always convert string categories to objects to avoid
+                    # unexpected string truncation for longer category labels
+                    # passed in the constructor.
                     Xi_dtype = object
                 else:
                     Xi_dtype = Xi.dtype
