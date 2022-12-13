@@ -348,8 +348,7 @@ cdef class ClassificationCriterion(Criterion):
         if n_missing == 0:
             return
 
-        for k in range(self.n_outputs):
-            memset(&self.sum_missing[k, 0], 0, self.n_classes[k] * sizeof(double))
+        memset(&self.sum_missing[0, 0], 0, self.max_n_classes * self.n_outputs * sizeof(double))
 
         self.weighted_n_missing = 0.0
 
