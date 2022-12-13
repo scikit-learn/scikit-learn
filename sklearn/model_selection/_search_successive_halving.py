@@ -73,7 +73,10 @@ class BaseSuccessiveHalving(BaseSearchCV):
         # overwrite `scoring` since multi-metrics are not supported
         "scoring": [StrOptions(set(get_scorer_names())), callable, None],
         "random_state": ["random_state"],
-        "max_resources": [Integral, StrOptions({"auto"})],
+        "max_resources": [
+            Interval(Integral, 0, None, closed="neither"),
+            StrOptions({"auto"}),
+        ],
         "resource": [str],
         "factor": [Interval(Real, 0, None, closed="neither")],
         "min_resources": [
