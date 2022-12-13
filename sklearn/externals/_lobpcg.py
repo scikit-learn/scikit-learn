@@ -19,7 +19,7 @@ References
 .. [3] A. V. Knyazev's C and MATLAB implementations:
        https://github.com/lobpcg/blopex
 """
-
+import inspect
 import warnings
 import numpy as np
 from scipy.linalg import (inv, eigh, cho_factor, cho_solve,
@@ -466,10 +466,16 @@ def lobpcg(
                     f"{e}\n")
 
         try:
+            if "subset_by_index" in inspect.signature(eigh).parameters:
+                # scipy >= 1.5
+                additional_params = {"subset_by_index": eigvals}
+            else:
+                # deprecated in scipy == 1.10
+                additional_params = {"eigvals": eigvals}
             vals, vecs = eigh(A,
                               B,
-                              subset_by_index=eigvals,
-                              check_finite=False)
+                              check_finite=False,
+                              **additional_params)
             if largest:
                 # Reverse order to be compatible with eigs() in 'LM' mode.
                 vals = vals[::-1]
