@@ -38,7 +38,7 @@ def fitted_clf():
     return LogisticRegression().fit(X, y)
 
 
-def test_input_data_dimension():
+def test_input_data_dimension(pyplot):
     """Check that we raise an error when `X` does not have exactly 2 features."""
     X, y = make_classification(n_samples=10, n_features=4, random_state=0)
 
