@@ -1177,7 +1177,12 @@ def column_or_1d(y, *, dtype=None, warn=False):
     """
     xp, _ = get_namespace(y)
     y = check_array(
-        y, ensure_2d=False, dtype=dtype, input_name="y", force_all_finite=False
+        y,
+        ensure_2d=False,
+        dtype=dtype,
+        input_name="y",
+        force_all_finite=False,
+        ensure_min_samples=0,
     )
 
     shape = y.shape
