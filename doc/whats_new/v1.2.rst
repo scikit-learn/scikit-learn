@@ -2,6 +2,23 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_2_1:
+
+Version 1.2.1
+=============
+
+**In Development**
+
+Changelog
+---------
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Restore :func:`utils.check_array`'s behaviour for pandas Series of type
+  boolean. The type is maintained, instead of converting to `float64.`
+  :pr:`25147` by :user:`Tim Head <betatim>`.
+
 .. _changes_1_2:
 
 Version 1.2.0
@@ -644,6 +661,16 @@ Changelog
 - |Enhancement| :class:`neighbors.LocalOutlierFactor` now preserves
   dtype for `numpy.float32` inputs.
   :pr:`22665` by :user:`Julien Jerphanion <jjerphan>`.
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| :class:`neural_network.MLPClassifier` and
+  :class:`neural_network.MLPRegressor` always expose the parameters `best_loss_`,
+  `validation_scores_`, and `best_validation_score_`. `best_loss_` is set to
+  `None` when `early_stopping=True`, while `validation_scores_` and
+  `best_validation_score_` are set to `None` when `early_stopping=False`.
+  :pr:`24683` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.pipeline`
 .......................
