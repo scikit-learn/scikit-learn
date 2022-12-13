@@ -276,8 +276,6 @@ class BaseEstimator:
             if state is None:
                 state = self.__dict__.copy()
         except AttributeError:
-            # TODO: Remove once Python < 3.11 is dropped, as there will never be
-            # an AttributeError
             state = self.__dict__.copy()
 
         if type(self).__module__.startswith("sklearn."):
