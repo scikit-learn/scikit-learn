@@ -699,3 +699,12 @@ def test_base_estimator_empty_instance_dict():
     state = BaseEstimator().__getstate__()
     expected = {"_sklearn_version": sklearn.__version__}
     assert state == expected
+
+
+def test_base_estimator_pickleable():
+    # Since Python 3.11, Python objects have a __getstate__ method by default
+    # that returns None if the instance dict is empty. See #25188.
+
+    # This would raise an error before the bugfix because BaseEstimator's
+    # __dict__ is empty
+    pickle.loads(pickle.dumps(BaseEstimator()))
