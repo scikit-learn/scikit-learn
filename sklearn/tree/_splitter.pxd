@@ -104,3 +104,4 @@ cdef class Splitter(BaseSplitter):
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight
     ) except -1
+    

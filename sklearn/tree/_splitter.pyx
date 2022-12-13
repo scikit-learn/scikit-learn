@@ -43,10 +43,17 @@ cdef inline void _init_split(SplitRecord* self, SIZE_t start_pos) nogil:
     self.improvement = -INFINITY
 
 cdef class BaseSplitter:
-    """Abstract splitter class.
+    """This is an abstract interface for splitters. 
 
-    Splitters are called by tree builders to find the best splits on both
-    sparse and dense data, one split at a time.
+    For example, a tree model could be either supervisedly, or unsupervisedly computing splits on samples of
+    covariates, labels, or both. Although scikit-learn currently only contains
+    supervised tree methods, this class enables 3rd party packages to leverage
+    scikit-learn's Cython code for splitting. 
+
+    A splitter is usually used in conjunction with a criterion class, which explicitly handles
+    computing the criteria, which we split on.
+
+    The downstream classes _must_ implement methods to compute the split in a node.
     """
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
@@ -139,7 +146,11 @@ cdef class BaseSplitter:
         return self.criterion.node_impurity()
 
 cdef class Splitter(BaseSplitter):
+    """Abstract splitter class.
 
+    Splitters are called by tree builders to find the best splits on both
+    sparse and dense data, one split at a time.
+    """
     cdef int init(
         self,
         object X,
