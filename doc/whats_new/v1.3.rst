@@ -43,6 +43,12 @@ Changelog
   no longer raise warnings when fitting data with feature names.
   :pr:`24873` by :user:`Tim Head <betatim>`.
 
+:mod:`sklearn.pipeline`
+.......................
+- |Feature| :class:`pipeline.FeatureUnion` can now use indexing notation (e.g.
+  `feature_union["scalar"]`) to access transformers by name. :pr:`25093` by
+  `Thomas Fan`_.
+
 Code and Documentation Contributors
 -----------------------------------
 
