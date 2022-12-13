@@ -2,13 +2,15 @@
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 # License: BSD 3 clause
 
+from collections import defaultdict
+
 import numbers
 import numpy as np
 from scipy.sparse import issparse
 from warnings import warn
 from numbers import Integral, Real
 
-from ..tree import ExtraTreeRegressor
+from ..tree import _tree, ExtraTreeRegressor
 from ..tree._tree import DTYPE as tree_dtype
 from ..utils import (
     check_random_state,
@@ -327,6 +329,18 @@ class IsolationForest(OutlierMixin, BaseBagging):
             check_input=False,
         )
 
+        self._average_path_length_max_samples = _average_path_length(
+            [self._max_samples]
+        )
+
+        self._average_path_length_per_tree = defaultdict()
+        self._decision_path_lenghts = defaultdict()
+        for tree in self.estimators_:
+            self._average_path_length_per_tree[tree] = _average_path_length(
+                tree.tree_.n_node_samples
+            )
+            self._decision_path_lenghts[tree] = _calculate_depths(tree.tree_)
+
         if self.contamination == "auto":
             # 0.5 plays a special role as described in the original paper.
             # we take the opposite as we consider the opposite of their score.
@@ -481,15 +495,14 @@ class IsolationForest(OutlierMixin, BaseBagging):
             X_subset = X[:, features] if subsample_features else X
 
             leaves_index = tree.apply(X_subset)
-            node_indicator = tree.decision_path(X_subset)
-            n_samples_leaf = tree.tree_.n_node_samples[leaves_index]
+            path_lengths = self._decision_path_lenghts[tree][leaves_index]
 
             depths += (
-                np.ravel(node_indicator.sum(axis=1))
-                + _average_path_length(n_samples_leaf)
+                path_lengths
+                + self._average_path_length_per_tree[tree][leaves_index]
                 - 1.0
             )
-        denominator = len(self.estimators_) * _average_path_length([self.max_samples_])
+        denominator = len(self.estimators_) * self._average_path_length_max_samples
         scores = 2 ** (
             # For a single training sample, denominator and depth are 0.
             # Therefore, we set the score manually to 1.
@@ -507,6 +520,26 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 ),
             }
         }
+
+
+def _calculate_depths(tree):
+    """
+    Calculates the depths of each node in a tree.
+    Parameters
+    ----------
+    tree : tree.Tree
+
+    Returns
+    -------
+    depths : ndarray of shape (tree.node_count,)
+
+    """
+    depths = np.zeros(tree.node_count)
+    for node_id in range(tree.node_count):
+        if tree.children_left[node_id] != _tree.TREE_LEAF:
+            depths[tree.children_left[node_id]] += 1 + depths[node_id]
+            depths[tree.children_right[node_id]] += 1 + depths[node_id]
+    return depths + 1
 
 
 def _average_path_length(n_samples_leaf):
