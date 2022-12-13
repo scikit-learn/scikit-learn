@@ -5,7 +5,6 @@ import warnings
 from pickle import loads
 from pickle import dumps
 from functools import partial
-from importlib import resources
 
 import pytest
 import numpy as np
@@ -26,6 +25,7 @@ from sklearn.datasets._base import (
 )
 from sklearn.preprocessing import scale
 from sklearn.utils import Bunch
+from sklearn.utils.fixes import _is_resource
 from sklearn.datasets.tests.test_common import check_as_frame
 
 
@@ -278,7 +278,7 @@ def test_loader(loader_func, data_shape, target_shape, n_target, has_descr, file
         assert "data_module" in bunch
         assert all(
             [
-                f in bunch and resources.is_resource(bunch["data_module"], bunch[f])
+                f in bunch and _is_resource(bunch["data_module"], bunch[f])
                 for f in filenames
             ]
         )
