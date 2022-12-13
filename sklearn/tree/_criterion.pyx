@@ -259,7 +259,9 @@ cdef class ClassificationCriterion(Criterion):
         self.sum_total = np.zeros((n_outputs, max_n_classes), dtype=np.float64)
         self.sum_left = np.zeros((n_outputs, max_n_classes), dtype=np.float64)
         self.sum_right = np.zeros((n_outputs, max_n_classes), dtype=np.float64)
-        self.sum_missing = np.zeros((n_outputs, max_n_classes), dtype=np.float64)
+
+        # sum_missing is initialized in init_missing if there are missing values
+        self.sum_missing = None
 
     def __reduce__(self):
         return (type(self),
@@ -348,7 +350,11 @@ cdef class ClassificationCriterion(Criterion):
         if n_missing == 0:
             return
 
-        memset(&self.sum_missing[0, 0], 0, self.max_n_classes * self.n_outputs * sizeof(double))
+        if self.sum_missing is None:
+            with gil:
+                self.sum_missing = np.zeros((self.n_outputs, self.max_n_classes), dtype=np.float64)
+        else:
+            memset(&self.sum_missing[0, 0], 0, self.max_n_classes * self.n_outputs * sizeof(double))
 
         self.weighted_n_missing = 0.0
 
@@ -715,7 +721,9 @@ cdef class RegressionCriterion(Criterion):
         self.sum_total = np.zeros(n_outputs, dtype=np.float64)
         self.sum_left = np.zeros(n_outputs, dtype=np.float64)
         self.sum_right = np.zeros(n_outputs, dtype=np.float64)
-        self.sum_missing = np.zeros(n_outputs, dtype=np.float64)
+
+        # sum_missing is initialized in init_missing if there are missing values
+        self.sum_missing = None
 
     def __reduce__(self):
         return (type(self), (self.n_outputs, self.n_samples), self.__getstate__())
@@ -784,7 +792,12 @@ cdef class RegressionCriterion(Criterion):
         if n_missing == 0:
             return
 
-        memset(&self.sum_missing[0], 0, self.n_outputs * sizeof(double))
+        if self.sum_missing is None:
+            with gil:
+                self.sum_missing = np.zeros(self.n_outputs, dtype=np.float64)
+        else:
+            memset(&self.sum_missing[0], 0, self.n_outputs * sizeof(double))
+
         self.weighted_n_missing = 0.0
 
         # The missing samples are assumed to be in self.sample_indices[-n_missing:]
