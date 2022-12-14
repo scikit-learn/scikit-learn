@@ -12,6 +12,9 @@ from sklearn.ensemble import GradientBoostingRegressor
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.linear_model import LinearRegression
 from sklearn.utils._testing import _convert_container
+from sklearn.compose import make_column_transformer
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.pipeline import make_pipeline
 
 from sklearn.inspection import PartialDependenceDisplay
 
@@ -500,7 +503,7 @@ def test_plot_partial_dependence_multioutput(pyplot, target):
     for i, pos in enumerate(positions):
         ax = disp.axes_[pos]
         assert ax.get_ylabel() == expected_label[i]
-        assert ax.get_xlabel() == "{}".format(i)
+        assert ax.get_xlabel() == f"x{i}"
 
 
 @pytest.mark.filterwarnings("ignore:A Bunch will be returned")
@@ -544,12 +547,12 @@ dummy_classification_data = make_classification(random_state=0)
         (
             dummy_classification_data,
             {"features": ["foobar"], "feature_names": None},
-            "Feature foobar not in feature_names",
+            "Feature 'foobar' not in feature_names",
         ),
         (
             dummy_classification_data,
             {"features": ["foobar"], "feature_names": ["abcd", "def"]},
-            "Feature foobar not in feature_names",
+            "Feature 'foobar' not in feature_names",
         ),
         (
             dummy_classification_data,
@@ -590,6 +593,21 @@ dummy_classification_data = make_classification(random_state=0)
             dummy_classification_data,
             {"features": [1], "subsample": 1.2},
             r"When a floating-point, subsample=1.2 should be in the \(0, 1\) range",
+        ),
+        (
+            dummy_classification_data,
+            {"features": [1, 2], "categorical_features": [1.0, 2.0]},
+            "Expected `categorical_features` to be an array-like of boolean,",
+        ),
+        (
+            dummy_classification_data,
+            {"features": [(1, 2)], "categorical_features": [2]},
+            "Two-way partial dependence plots are not supported for pairs",
+        ),
+        (
+            dummy_classification_data,
+            {"features": [1], "categorical_features": [1], "kind": "individual"},
+            "It is not possible to display individual effects",
         ),
         (
             dummy_classification_data,
@@ -645,6 +663,101 @@ def test_plot_partial_dependence_does_not_override_ylabel(
 
     assert axes[0].get_ylabel() == "Hello world"
     assert axes[1].get_ylabel() == "Partial dependence"
+
+
+@pytest.mark.parametrize(
+    "categorical_features, array_type",
+    [
+        (["col_A", "col_C"], "dataframe"),
+        ([0, 2], "array"),
+        ([True, False, True], "array"),
+    ],
+)
+def test_plot_partial_dependence_with_categorical(
+    pyplot, categorical_features, array_type
+):
+    X = [[1, 1, "A"], [2, 0, "C"], [3, 2, "B"]]
+    column_name = ["col_A", "col_B", "col_C"]
+    X = _convert_container(X, array_type, columns_name=column_name)
+    y = np.array([1.2, 0.5, 0.45]).T
+
+    preprocessor = make_column_transformer((OneHotEncoder(), categorical_features))
+    model = make_pipeline(preprocessor, LinearRegression())
+    model.fit(X, y)
+
+    # single feature
+    disp = PartialDependenceDisplay.from_estimator(
+        model,
+        X,
+        features=["col_C"],
+        feature_names=column_name,
+        categorical_features=categorical_features,
+    )
+
+    assert disp.figure_ is pyplot.gcf()
+    assert disp.bars_.shape == (1, 1)
+    assert disp.bars_[0][0] is not None
+    assert disp.lines_.shape == (1, 1)
+    assert disp.lines_[0][0] is None
+    assert disp.contours_.shape == (1, 1)
+    assert disp.contours_[0][0] is None
+    assert disp.deciles_vlines_.shape == (1, 1)
+    assert disp.deciles_vlines_[0][0] is None
+    assert disp.deciles_hlines_.shape == (1, 1)
+    assert disp.deciles_hlines_[0][0] is None
+    assert disp.axes_[0, 0].get_legend() is None
+
+    # interaction between two features
+    disp = PartialDependenceDisplay.from_estimator(
+        model,
+        X,
+        features=[("col_A", "col_C")],
+        feature_names=column_name,
+        categorical_features=categorical_features,
+    )
+
+    assert disp.figure_ is pyplot.gcf()
+    assert disp.bars_.shape == (1, 1)
+    assert disp.bars_[0][0] is None
+    assert disp.lines_.shape == (1, 1)
+    assert disp.lines_[0][0] is None
+    assert disp.contours_.shape == (1, 1)
+    assert disp.contours_[0][0] is None
+    assert disp.deciles_vlines_.shape == (1, 1)
+    assert disp.deciles_vlines_[0][0] is None
+    assert disp.deciles_hlines_.shape == (1, 1)
+    assert disp.deciles_hlines_[0][0] is None
+    assert disp.axes_[0, 0].get_legend() is None
+
+
+def test_plot_partial_dependence_legend(pyplot):
+    pd = pytest.importorskip("pandas")
+    X = pd.DataFrame(
+        {
+            "col_A": ["A", "B", "C"],
+            "col_B": [1, 0, 2],
+            "col_C": ["C", "B", "A"],
+        }
+    )
+    y = np.array([1.2, 0.5, 0.45]).T
+
+    categorical_features = ["col_A", "col_C"]
+    preprocessor = make_column_transformer((OneHotEncoder(), categorical_features))
+    model = make_pipeline(preprocessor, LinearRegression())
+    model.fit(X, y)
+
+    disp = PartialDependenceDisplay.from_estimator(
+        model,
+        X,
+        features=["col_B", "col_C"],
+        categorical_features=categorical_features,
+        kind=["both", "average"],
+    )
+
+    legend_text = disp.axes_[0, 0].get_legend().get_texts()
+    assert len(legend_text) == 1
+    assert legend_text[0].get_text() == "average"
+    assert disp.axes_[0, 1].get_legend() is None
 
 
 @pytest.mark.parametrize(
@@ -717,6 +830,41 @@ def test_partial_dependence_overwrite_labels(
             assert legend_text[0].get_text() == label
 
 
+@pytest.mark.parametrize(
+    "categorical_features, array_type",
+    [
+        (["col_A", "col_C"], "dataframe"),
+        ([0, 2], "array"),
+        ([True, False, True], "array"),
+    ],
+)
+def test_grid_resolution_with_categorical(pyplot, categorical_features, array_type):
+    """Check that we raise a ValueError when the grid_resolution is too small
+    respect to the number of categories in the categorical features targeted.
+    """
+    X = [["A", 1, "A"], ["B", 0, "C"], ["C", 2, "B"]]
+    column_name = ["col_A", "col_B", "col_C"]
+    X = _convert_container(X, array_type, columns_name=column_name)
+    y = np.array([1.2, 0.5, 0.45]).T
+
+    preprocessor = make_column_transformer((OneHotEncoder(), categorical_features))
+    model = make_pipeline(preprocessor, LinearRegression())
+    model.fit(X, y)
+
+    err_msg = (
+        "resolution of the computed grid is less than the minimum number of categories"
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        PartialDependenceDisplay.from_estimator(
+            model,
+            X,
+            features=["col_C"],
+            feature_names=column_name,
+            categorical_features=categorical_features,
+            grid_resolution=2,
+        )
+
+
 # TODO(1.3): remove
 def test_partial_dependence_display_deprecation(pyplot, clf_diabetes, diabetes):
     """Check that we raise the proper warning in the display."""
@@ -761,7 +909,7 @@ def test_partial_dependence_plot_limits_one_way(
         feature_names=diabetes.feature_names,
     )
 
-    range_pd = np.array([-1, 1])
+    range_pd = np.array([-1, 1], dtype=np.float64)
     for pd in disp.pd_results:
         if "average" in pd:
             pd["average"][...] = range_pd[1]
@@ -773,6 +921,9 @@ def test_partial_dependence_plot_limits_one_way(
     disp.plot(centered=centered)
     # check that we anchor to zero x-axis when centering
     y_lim = range_pd - range_pd[0] if centered else range_pd
+    padding = 0.05 * (y_lim[1] - y_lim[0])
+    y_lim[0] -= padding
+    y_lim[1] += padding
     for ax in disp.axes_.ravel():
         assert_allclose(ax.get_ylim(), y_lim)
 
@@ -791,16 +942,20 @@ def test_partial_dependence_plot_limits_two_way(
         feature_names=diabetes.feature_names,
     )
 
-    range_pd = np.array([-1, 1])
+    range_pd = np.array([-1, 1], dtype=np.float64)
     for pd in disp.pd_results:
         pd["average"][...] = range_pd[1]
         pd["average"][0, 0] = range_pd[0]
 
     disp.plot(centered=centered)
-    coutour = disp.contours_[0, 0]
+    contours = disp.contours_[0, 0]
     levels = range_pd - range_pd[0] if centered else range_pd
+
+    padding = 0.05 * (levels[1] - levels[0])
+    levels[0] -= padding
+    levels[1] += padding
     expect_levels = np.linspace(*levels, num=8)
-    assert_allclose(coutour.levels, expect_levels)
+    assert_allclose(contours.levels, expect_levels)
 
 
 def test_partial_dependence_kind_list(

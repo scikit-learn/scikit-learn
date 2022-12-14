@@ -651,8 +651,12 @@ def test_feature_names_in():
     df_mixed = pd.DataFrame(X_np, columns=["a", "b", 1, 2])
     trans = NoOpTransformer()
     msg = re.escape(
-        "Feature names only support names that are all strings. "
-        "Got feature names with dtypes: ['int', 'str']"
+        "Feature names are only supported if all input features have string names, "
+        "but your input has ['int', 'str'] as feature name / column name types. "
+        "If you want feature names to be stored and validated, you must convert "
+        "them all to strings, by using X.columns = X.columns.astype(str) for "
+        "example. Otherwise you can remove feature / column names from your input "
+        "data, or convert them all to a non-string data type."
     )
     with pytest.raises(TypeError, match=msg):
         trans.fit(df_mixed)
