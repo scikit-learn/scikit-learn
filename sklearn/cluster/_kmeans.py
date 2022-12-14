@@ -1525,7 +1525,7 @@ class KMeans(_BaseKMeans):
                     continue
 
             engine = engine_class(self)
-            if engine.accepts(X, y=y):
+            if engine.accepts(X, y=y, sample_weight=sample_weight):
                 self._engine_provider = provider
                 return engine
 
