@@ -103,10 +103,10 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         self.alternate_sign = alternate_sign
 
     def fit(self, X=None, y=None):
-        """No-op.
+        """Only validates estimator's parameters.
 
-        This method doesn't do anything. It exists purely for compatibility
-        with the scikit-learn transformer API.
+        This method allows to: (i) validate the estimator's parameters and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------
