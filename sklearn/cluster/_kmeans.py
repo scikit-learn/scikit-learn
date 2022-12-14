@@ -1178,7 +1178,7 @@ class KMeans(_BaseKMeans):
         an empirical probability distribution of the points' contribution to the
         overall inertia. This technique speeds up convergence. The algorithm
         implemented is "greedy k-means++". It differs from the vanilla k-means++
-        by making several trials at each sampling step and choosing the bestcentroid
+        by making several trials at each sampling step and choosing the best centroid
         among them.
 
         'random': choose `n_clusters` observations (rows) at random from data
