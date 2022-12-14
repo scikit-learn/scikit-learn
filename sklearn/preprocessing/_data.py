@@ -1910,8 +1910,9 @@ class Normalizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
 
     Notes
     -----
-    This estimator is stateless (besides constructor parameters), the
-    fit method does nothing but is useful when used in a pipeline.
+    This estimator is stateless and does not need to be fitted. However, we
+    advice to class :meth:`fit_transform` instead of only :meth:`transform` to
+    benefit from the parameters validation that only happens in :meth:`fit`.
 
     For a comparison of the different scalers, transformers, and normalizers,
     see :ref:`examples/preprocessing/plot_all_scaling.py
@@ -2086,10 +2087,11 @@ class Binarizer(OneToOneFeatureMixin, TransformerMixin, BaseEstimator):
     Notes
     -----
     If the input is a sparse matrix, only the non-zero values are subject
-    to update by the Binarizer class.
+    to update by the :class:`Binarizer` class.
 
-    This estimator is stateless (besides constructor parameters), the
-    fit method does nothing but is useful when used in a pipeline.
+    This estimator is stateless and does not need to be fitted. However, we
+    advice to class :meth:`fit_transform` instead of only :meth:`transform` to
+    benefit from the parameters validation that only happens in :meth:`fit`.
 
     Examples
     --------

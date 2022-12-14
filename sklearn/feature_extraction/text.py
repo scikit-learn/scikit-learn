@@ -724,6 +724,12 @@ class HashingVectorizer(
     TfidfVectorizer : Convert a collection of raw documents to a matrix of
         TF-IDF features.
 
+    Notes
+    -----
+    This estimator is stateless and does not need to be fitted. However, we
+    advice to class :meth:`fit_transform` instead of only :meth:`transform` to
+    benefit from the parameters validation that only happens in :meth:`fit`.
+
     Examples
     --------
     >>> from sklearn.feature_extraction.text import HashingVectorizer
