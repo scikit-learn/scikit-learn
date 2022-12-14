@@ -523,8 +523,9 @@ cdef class NeighborsHeap:
         self.indices = np.zeros((1, 1), dtype=ITYPE, order='C')
 
     def __init__(self, n_pts, n_nbrs):
-        self.distances = np.full((n_pts, n_nbrs), np.inf, dtype=DTYPE,
-                                     order='C')
+        self.distances = np.full(
+            (n_pts, n_nbrs), np.inf, dtype=DTYPE, order='C'
+        )
         self.indices = np.zeros((n_pts, n_nbrs), dtype=ITYPE, order='C')
 
     def get_arrays(self, sort=True):
