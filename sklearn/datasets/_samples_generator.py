@@ -6,7 +6,6 @@ Generate samples of synthetic data sets.
 #          G. Louppe, J. Nothman
 # License: BSD 3 clause
 
-
 from numbers import Integral
 import numbers
 import array
@@ -19,7 +18,6 @@ import scipy.sparse as sp
 
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
-
 from ..utils._param_validation import Interval, validate_params
 from ..utils import shuffle as util_shuffle
 from ..utils.random import sample_without_replacement
@@ -1253,11 +1251,7 @@ def make_low_rank_matrix(
         "n_components": [Interval(Integral, 0, None, closed="neither")],
         "n_features": [Interval(Integral, 0, None, closed="neither")],
         "n_nonzero_coefs": [Interval(Integral, 0, None, closed="neither")],
-        "random_state": [
-            "random_state",
-            Interval(Integral, 0, None, closed="neither"),
-            None,
-        ],
+        "random_state": ["random_state"],
         "data_transposed": ["boolean"],
     }
 )
@@ -1272,10 +1266,10 @@ def make_sparse_coded_signal(
 ):
     """Generate a signal as a sparse combination of dictionary elements.
 
-    Returns a matrix Y = DX, such that D is (n_features, n_components),
-    X is (n_components, n_samples) and each column of X has exactly
-    n_nonzero_coefs non-zero elements.
-
+    Returns a matrix `Y = DX`, such that `D` is of shape `(n_features, n_components)`,
+    `X` is of shape `(n_components, n_samples)` and each column of `X` has exactly
+    `n_nonzero_coefs` non-zero elements.
+    
     Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
