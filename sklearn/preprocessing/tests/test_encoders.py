@@ -1377,7 +1377,7 @@ def test_encoders_string_categories(input_dtype, category_dtype, array_type):
 
 
 def test_mixed_string_bytes_categoricals():
-    """Check that this mixture of predefined categries and X raises an error.
+    """Check that this mixture of predefined categories and X raises an error.
 
     Categories defined as bytes can not easily be compared to data that is
     a string.
