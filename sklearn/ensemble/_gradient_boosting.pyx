@@ -92,9 +92,9 @@ def _predict_regression_tree_stages_sparse(
 
     The function assumes that the ndarray that wraps ``X`` is csr_matrix.
     """
-    cdef DTYPE_t[::1] X_data = X.data
-    cdef INT32_t[::1] X_indices = X.indices
-    cdef INT32_t[::1] X_indptr = X.indptr
+    cdef const DTYPE_t[::1] X_data = X.data
+    cdef const INT32_t[::1] X_indices = X.indices
+    cdef const INT32_t[::1] X_indptr = X.indptr
 
     cdef SIZE_t n_samples = X.shape[0]
     cdef SIZE_t n_features = X.shape[1]
