@@ -1388,7 +1388,9 @@ def test_mixed_string_bytes_categoricals():
     categories = [np.array(["b", "a"], dtype="S")]
     ohe = OneHotEncoder(categories=categories, sparse_output=False)
 
-    with pytest.raises(ValueError, match="Found unknown categories"):
+    with pytest.raises(
+        ValueError, match="Found incompatible types between values and predefined"
+    ):
         ohe.fit(X)
 
 

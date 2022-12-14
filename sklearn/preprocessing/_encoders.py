@@ -106,6 +106,17 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     Xi_dtype = Xi.dtype
 
                 cats = np.array(self.categories[i], dtype=Xi_dtype)
+                if (
+                    cats.dtype == object
+                    and isinstance(cats[0], bytes)
+                    and Xi.dtype.kind != "S"
+                ):
+                    msg = (
+                        "Found incompatible types between values and predefined"
+                        " categories in column {0}.".format(i)
+                    )
+                    raise ValueError(msg)
+
                 if Xi.dtype.kind not in "OUS":
                     sorted_cats = np.sort(cats)
                     error_msg = (
