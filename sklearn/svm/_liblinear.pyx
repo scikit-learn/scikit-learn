@@ -16,17 +16,17 @@ cnp.import_array()
 
 def train_wrap(
     object X,
-    cnp.float64_t[::1] Y,
+    const cnp.float64_t[::1] Y,
     bint is_sparse,
     int solver_type,
     double eps,
     double bias,
     double C,
-    cnp.float64_t[:] class_weight,
+    const cnp.float64_t[:] class_weight,
     int max_iter,
     unsigned random_seed,
     double epsilon,
-    cnp.float64_t[::1] sample_weight
+    const cnp.float64_t[::1] sample_weight
 ):
     cdef parameter *param
     cdef problem *problem
