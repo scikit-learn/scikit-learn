@@ -96,12 +96,14 @@ class loguniform(scipy.stats.reciprocal):
 
 
 # TODO: remove when the minimum scipy version is >= 1.5
-def _eigh(*args, **kwargs):
-    """Wrapper for `scipy.linalg.eigh` that handles the deprecation of `eigvals`."""
-    if sp_version >= parse_version("1.5"):
-        subset_by_index = kwargs.pop("eigvals", None)
-        return scipy.linalg.eigh(*args, subset_by_index=subset_by_index, **kwargs)
-    return scipy.linalg.eigh(*args, **kwargs)
+if sp_version >= parse_version("1.5"):
+    from scipy.linalg import eigh  # noqa
+else:
+
+    def eigh(*args, **kwargs):
+        """Wrapper for `scipy.linalg.eigh` that handles the deprecation of `eigvals`."""
+        eigvals = kwargs.pop("subset_by_index", None)
+        return scipy.linalg.eigh(*args, eigvals=eigvals, **kwargs)
 
 
 # remove when https://github.com/joblib/joblib/issues/1071 is fixed
