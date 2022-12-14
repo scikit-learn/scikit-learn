@@ -1346,7 +1346,7 @@ def test_one_hot_encoder_sparse_deprecated():
 
 # deliberately omit 'OS' as an invalid combo
 @pytest.mark.parametrize(
-    "input_dtype, category_dtype", ["OO", "OU", "UO", "UU", "SO", "SU", "SS"]
+    "input_dtype, category_dtype", ["OO", "OU", "UO", "UU", "US", "SO", "SU", "SS"]
 )
 @pytest.mark.parametrize("array_type", ["list", "array", "dataframe"])
 def test_encoders_string_categories(input_dtype, category_dtype, array_type):
@@ -1374,6 +1374,22 @@ def test_encoders_string_categories(input_dtype, category_dtype, array_type):
 
     expected = np.array([[1], [1], [0], [1]])
     assert_array_equal(X_trans, expected)
+
+
+def test_mixed_string_bytes_categoricals():
+    """Check that this mixture of predefined categries and X raises an error.
+
+    Categories defined as bytes can not easily be compared to data that is
+    a string.
+    """
+    # data as unicode
+    X = np.array([["b"], ["a"]], dtype="U")
+    # predefined categories as bytes
+    categories = [np.array(["b", "a"], dtype="S")]
+    ohe = OneHotEncoder(categories=categories, sparse_output=False)
+
+    with pytest.raises(ValueError, match="Found unknown categories"):
+        ohe.fit(X)
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, None])
@@ -1956,4 +1972,3 @@ def test_predefined_categories_dtype():
     for n, cat in enumerate(enc.categories_):
         assert cat.dtype == object
         assert np.array_equal(categories[n], cat)
-
