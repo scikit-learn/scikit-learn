@@ -30,7 +30,6 @@ from ..utils.validation import (
     check_is_fitted,
     column_or_1d,
 )
-from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..utils.fixes import delayed
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
@@ -594,9 +593,7 @@ def enet_path(
                 w=coef_,
                 alpha=l1_reg,
                 beta=l2_reg,
-                X_data=ReadonlyArrayWrapper(
-                    X.data
-                ),  # TODO: Remove after release of Cython 3 (#23147)
+                X_data=X.data,
                 X_indices=X.indices,
                 X_indptr=X.indptr,
                 y=y,
