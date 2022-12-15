@@ -296,6 +296,17 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             interaction_only=self.interaction_only,
             include_bias=self.include_bias,
         )
+        if self.n_output_features_ > np.iinfo(np.intp).max:
+            msg = (
+                "The output that would result from the current configuration is too"
+                f" large to be indexed by {np.intp}. Please change some"
+                " or all of the following:\n- The number of features in the input,"
+                f" currently {n_features=}\n- The range of degrees to calculate,"
+                f" currently [{self._min_degree}, {self._max_degree}]\n- Whether to"
+                f" include only interaction terms, currently {self.interaction_only}\n-"
+                f" Whether to include a bias term, currently {self.include_bias}."
+            )
+            raise ValueError(msg)
         # We also record the number of output features for
         # _max_degree = 0
         self._n_out_full = self._num_combinations(

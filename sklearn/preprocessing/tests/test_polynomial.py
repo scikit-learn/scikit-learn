@@ -824,6 +824,9 @@ def test_csr_polynomial_expansion_index_overflow_non_regression():
         # output columns would overflow a C-long, hence checks that python-
         # longs are being used.
         int(np.sqrt(np.iinfo(np.int64).max) + 1),
+        # This case tests the second clause of the overflow check which
+        # takes into account the value of `n_features` itself.
+        int(np.sqrt(np.iinfo(np.int64).max)),
     ],
 )
 @pytest.mark.parametrize("interaction_only", [True, False])
@@ -877,7 +880,29 @@ def test_csr_polynomial_expansion_index_overflow_deg2(
     assert X_trans.nnz == expected_nnz
     assert X_trans[0, first_degree_idx] == pytest.approx(1.0)
     if not interaction_only:
+        assert pf.n_output_features_ == second_degree_idx + 1
         assert X_trans[0, second_degree_idx] == pytest.approx(1.0)
+
+
+@pytest.mark.parametrize("interaction_only", [True, False])
+@pytest.mark.parametrize("include_bias", [True, False])
+def test_csr_polynomial_expansion_too_large_to_index(interaction_only, include_bias):
+    n_features = np.iinfo(np.int64).max // 2
+    data = [1.0]
+    row = [0]
+    col = [n_features - 1]
+    X = sparse.csr_matrix((data, (row, col)))
+    pf = PolynomialFeatures(
+        interaction_only=interaction_only, include_bias=include_bias, degree=(2, 2)
+    )
+    msg = (
+        "The output that would result from the current configuration is too large to be"
+        " indexed"
+    )
+    with pytest.raises(ValueError, match=msg):
+        pf.fit(X)
+    with pytest.raises(ValueError, match=msg):
+        pf.fit_transform(X)
 
 
 def test_polynomial_features_behaviour_on_zero_degree():
