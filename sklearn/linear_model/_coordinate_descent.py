@@ -1746,13 +1746,6 @@ class LassoCV(RegressorMixin, LinearModelCV):
 
         (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
-    In LassoCV we initialize the ``coef`` for the current ``alpha`` with
-    the ``coef`` of the previous ``alpha``. This warmup has the advantage
-    of speeding up optimization, making LassoCV much faster. For small
-    ``alphas`` however LassoCV might end up in the same local minimum.
-    Lasso with GridSearchCV on the other hand will not necessarily end up
-    in the same local minimum for those small ``alphas``.
-
     Read more in the :ref:`User Guide <lasso>`.
 
     Parameters
@@ -1890,6 +1883,14 @@ class LassoCV(RegressorMixin, LinearModelCV):
      For an example, see
      :ref:`examples/linear_model/plot_lasso_model_selection.py
      <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
+
+    :class:`LassoCV` leads to different results than a hyperparameter
+    search using :class:`~sklearn.model_selection.GridSearchCV` with a
+    :class:`Lasso` model. In :class:`LassoCV`, a model for a given
+    penalty `alpha` is warm started using the coefficients of the
+    closest model (trained at the previous iteration) on the
+    regularization path. It tends to speed up the hyperparameter
+    search.
 
     Examples
     --------
