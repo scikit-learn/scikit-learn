@@ -37,8 +37,8 @@ def train_wrap(
     cdef char * X_data_bytes_ptr
     cdef const cnp.float64_t[::1] X_data_64
     cdef const cnp.float32_t[::1] X_data_32
-    cdef cnp.int32_t[::1] X_indices
-    cdef cnp.int32_t[::1] X_indptr
+    cdef const cnp.int32_t[::1] X_indices
+    cdef const cnp.int32_t[::1] X_indptr
 
     if is_sparse:
         X_indices = X.indices
