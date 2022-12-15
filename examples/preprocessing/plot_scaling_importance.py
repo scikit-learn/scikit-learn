@@ -3,15 +3,15 @@
 Importance of Feature Scaling
 =============================
 
-Feature scaling through standardization (also called Z-score normalization) can
+Feature scaling through standardization, also called Z-score normalization, can
 be an important preprocessing step for many machine learning algorithms. It
-involves rescaling each feature such that it has a standard deviation equals to
-1 and a mean equals to 0.
+involves rescaling each feature such that it has a standard deviation of
+1 and a mean of 0.
 
-Even if tree based models are not affected by scaling, many algorithms require
-features to be normalized, either to ease the convergence (such as a
-non-penalized logistic regression) or because fitting scaled data leads to a
-completely different model than using non-scaled data (such as KNeighbors
+Even if tree based models are (almost) not affected by scaling, many other algorithms require
+features to be normalized, often for different reasons: to ease the convergence (such as a
+non-penalized logistic regression), to create a
+completely different model fit compared to the fit with unscaled data (such as KNeighbors
 models). The latter is demoed on the first part of the present example.
 
 On the second part of the example we show how Principle Component Analysis (PCA)
@@ -59,9 +59,8 @@ scaled_X_train = scaler.fit_transform(X_train)
 # orders of magnitude.
 #
 # Keep in mind that using a subset of the features to train the model may likely
-# leave out predictive variables, resulting in a decision boundary that does not
-# represent the decisions nor the statistical performance of a model trained on
-# the full set of features.
+# leave out feature with high predictive impact, resulting in a decision boundary that is much
+# worse in comparison to a model trained on the full set of features.
 
 import matplotlib.pyplot as plt
 from sklearn.inspection import DecisionBoundaryDisplay
