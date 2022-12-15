@@ -40,8 +40,7 @@ with tempfile.TemporaryDirectory() as tmpdir:
         f.write(
             textwrap.dedent(
                 """
-            from distutils.core import setup
-            from distutils.extension import Extension
+            from setuptools import setup, Extension
             from Cython.Build import cythonize
             import numpy
 

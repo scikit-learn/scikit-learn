@@ -94,7 +94,7 @@ print("The mean squared error (MSE) on test set: {:.4f}".format(mse))
 
 test_score = np.zeros((params["n_estimators"],), dtype=np.float64)
 for i, y_pred in enumerate(reg.staged_predict(X_test)):
-    test_score[i] = reg.loss_(y_test, y_pred)
+    test_score[i] = mean_squared_error(y_test, y_pred)
 
 fig = plt.figure(figsize=(6, 6))
 plt.subplot(1, 1, 1)

@@ -126,7 +126,7 @@ following rules before submitting:
 -  If you are submitting an algorithm or feature request, please verify that
    the algorithm fulfills our
    `new algorithm requirements
-   <http://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
+   <https://scikit-learn.org/stable/faq.html#what-are-the-inclusion-criteria-for-new-algorithms>`_.
 
 -  If you are submitting a bug report, we strongly encourage you to follow the guidelines in
    :ref:`filing_bugs`.
@@ -546,11 +546,12 @@ message, the following actions are taken.
     [ci skip]              CI is skipped completely
     [cd build]             CD is run (wheels and source distribution are built)
     [cd build gh]          CD is run only for GitHub Actions
+    [cd build cirrus]      CD is run only for Cirrus CI
     [lint skip]            Azure pipeline skips linting
     [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc ...) development builds
     [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy...
-    [icc-build]            Build & test with the Intel C compiler (ICC)
     [pypy]                 Build & test with PyPy
+    [azure parallel]       Run Azure CI jobs in parallel
     [float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
@@ -713,7 +714,7 @@ Building the documentation requires installing some additional packages:
 
     pip install sphinx sphinx-gallery numpydoc matplotlib Pillow pandas \
                 scikit-image packaging seaborn sphinx-prompt \
-                sphinxext-opengraph
+                sphinxext-opengraph plotly
 
 To build the documentation, you need to be in the ``doc`` folder:
 

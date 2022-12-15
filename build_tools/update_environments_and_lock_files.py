@@ -36,6 +36,7 @@ from pathlib import Path
 import shlex
 import json
 import logging
+from importlib.metadata import version
 
 import click
 
@@ -71,7 +72,11 @@ common_dependencies = common_dependencies_without_coverage + [
 
 docstring_test_dependencies = ["sphinx", "numpydoc"]
 
-default_package_constraints = {}
+default_package_constraints = {
+    # XXX: pin pytest-xdist to workaround:
+    # https://github.com/pytest-dev/pytest-xdist/issues/840
+    "pytest-xdist": "2.5.0",
+}
 
 
 def remove_from(alist, to_remove):
@@ -169,7 +174,9 @@ conda_build_metadata_list = [
         "pip_dependencies": remove_from(common_dependencies, ["python", "blas"])
         + docstring_test_dependencies
         + ["lightgbm", "scikit-image"],
-        "package_constraints": {"python": "3.9"},
+        "package_constraints": {
+            "python": "3.9",
+        },
     },
     {
         "build_name": "pylatest_pip_scipy_dev",
@@ -223,7 +230,10 @@ conda_build_metadata_list = [
         "channel": "conda-forge",
         "conda_dependencies": remove_from(common_dependencies, ["pandas", "pyamg"])
         + ["wheel", "pip"],
-        "package_constraints": {"python": "3.8", "blas": "[build=mkl]"},
+        "package_constraints": {
+            "python": "3.8",
+            "blas": "[build=mkl]",
+        },
     },
     {
         "build_name": "doc_min_dependencies",
@@ -329,26 +339,6 @@ pip_build_metadata_list = [
         # osx-arm64 machines. This should not matter for pining versions with
         # pip-compile
         "python_version": "3.8.5",
-    },
-    {
-        "build_name": "py38_pip_openblas_32bit",
-        "folder": "build_tools/azure",
-        "pip_dependencies": [
-            "numpy",
-            "scipy",
-            "cython",
-            "joblib",
-            "threadpoolctl",
-            "pytest",
-            "pytest-xdist",
-            "pillow",
-            "pooch",
-            "wheel",
-        ],
-        # The Windows 32bit build use 3.8.10. No cross-compilation support for
-        # pip-compile, we are going to assume the pip lock file on a Linux
-        # 64bit machine gives appropriate versions
-        "python_version": "3.8.10",
     },
 ]
 
@@ -536,6 +526,20 @@ def write_all_pip_lock_files(build_metadata_list):
         write_pip_lock_file(build_metadata)
 
 
+def check_conda_lock_version():
+    # Check that the installed conda-lock version is consistent with _min_dependencies.
+    expected_conda_lock_version = execute_command(
+        [sys.executable, "sklearn/_min_dependencies.py", "conda-lock"]
+    ).strip()
+
+    installed_conda_lock_version = version("conda-lock")
+    if installed_conda_lock_version != expected_conda_lock_version:
+        raise RuntimeError(
+            f"Expected conda-lock version: {expected_conda_lock_version}, got:"
+            f" {installed_conda_lock_version}"
+        )
+
+
 @click.command()
 @click.option(
     "--select-build",
@@ -543,6 +547,7 @@ def write_all_pip_lock_files(build_metadata_list):
     help="Regex to restrict the builds we want to update environment and lock files",
 )
 def main(select_build):
+    check_conda_lock_version()
     filtered_conda_build_metadata_list = [
         each
         for each in conda_build_metadata_list

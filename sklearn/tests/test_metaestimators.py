@@ -9,7 +9,7 @@ from sklearn.base import BaseEstimator
 from sklearn.base import is_regressor
 from sklearn.datasets import make_classification
 from sklearn.utils import all_estimators
-from sklearn.utils.estimator_checks import _enforce_estimator_tags_x
+from sklearn.utils.estimator_checks import _enforce_estimator_tags_X
 from sklearn.utils.estimator_checks import _enforce_estimator_tags_y
 from sklearn.utils.validation import check_is_fitted
 from sklearn.utils._testing import set_random_state
@@ -289,7 +289,7 @@ def test_meta_estimators_delegate_data_validation(estimator):
         y = rng.randint(3, size=n_samples)
 
     # We convert to lists to make sure it works on array-like
-    X = _enforce_estimator_tags_x(estimator, X).tolist()
+    X = _enforce_estimator_tags_X(estimator, X).tolist()
     y = _enforce_estimator_tags_y(estimator, y).tolist()
 
     # Calling fit should not raise any data validation exception since X is a

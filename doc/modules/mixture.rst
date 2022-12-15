@@ -104,7 +104,7 @@ distribution). Note that using a :ref:`Variational Bayesian Gaussian mixture <bg
 avoids the specification of the number of components for a Gaussian mixture
 model.
 
-.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_selection_001.png
+.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_selection_002.png
    :target: ../auto_examples/mixture/plot_gmm_selection.html
    :align: center
    :scale: 50%

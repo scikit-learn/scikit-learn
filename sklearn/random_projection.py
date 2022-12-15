@@ -35,7 +35,7 @@ from scipy import linalg
 import scipy.sparse as sp
 
 from .base import BaseEstimator, TransformerMixin
-from .base import _ClassNamePrefixFeaturesOutMixin
+from .base import ClassNamePrefixFeaturesOutMixin
 
 from .utils import check_random_state
 from .utils._param_validation import Interval, StrOptions
@@ -101,9 +101,9 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
 
     .. [1] https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
 
-    .. [2] Sanjoy Dasgupta and Anupam Gupta, 1999,
+    .. [2] `Sanjoy Dasgupta and Anupam Gupta, 1999,
            "An elementary proof of the Johnson-Lindenstrauss Lemma."
-           http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.45.3654
+           <https://citeseerx.ist.psu.edu/doc_view/pid/95cd464d27c25c9c8690b378b894d337cdf021f9>`_
 
     Examples
     --------
@@ -292,7 +292,7 @@ def _sparse_random_matrix(n_components, n_features, density="auto", random_state
 
 
 class BaseRandomProjection(
-    TransformerMixin, BaseEstimator, _ClassNamePrefixFeaturesOutMixin, metaclass=ABCMeta
+    TransformerMixin, BaseEstimator, ClassNamePrefixFeaturesOutMixin, metaclass=ABCMeta
 ):
     """Base class for random projections.
 
@@ -419,7 +419,7 @@ class BaseRandomProjection(
     def _n_features_out(self):
         """Number of transformed output features.
 
-        Used by _ClassNamePrefixFeaturesOutMixin.get_feature_names_out.
+        Used by ClassNamePrefixFeaturesOutMixin.get_feature_names_out.
         """
         return self.n_components
 
