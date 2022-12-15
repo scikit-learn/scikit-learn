@@ -42,6 +42,12 @@ Changelog
   `feature_union["scalar"]`) to access transformers by name. :pr:`25093` by
   `Thomas Fan`_.
 
+:mod:`sklearn.preprocessing`
+............................
+- |Fix| The `categories_` attribute of :class:`preprocessing.OneHotEncoder` now
+  always contains an array of `object`s when using predefined categories that
+  are strings. :pr:`25174` by :user:`Tim Head <betatim>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
