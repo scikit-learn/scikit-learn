@@ -630,8 +630,9 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
     This estimator approximates a slightly different version of the additive
     chi squared kernel then ``metric.additive_chi2`` computes.
 
-    Using `fit_transform` is preferable over using `transform` to benefit
-    from parameters validation.
+    This estimator is stateless and does not need to be fitted. However, we
+    recommend to call :meth:`fit_transform` instead of :meth:`transform`, as
+    parameter validation is only performed in :meth:`fit`.
 
     References
     ----------
@@ -665,8 +666,9 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         self.sample_interval = sample_interval
 
     def fit(self, X, y=None):
-        """Since this estimator is stateless, this function
-        only performs parameters validation.
+        """Only validates estimator's parameters.
+        This method allows to: (i) validate the estimator's parameters and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------
@@ -687,6 +689,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         X = self._validate_data(X, accept_sparse="csr")
         check_non_negative(X, "X in AdditiveChi2Sampler.fit")
 
+        # TODO(1.5): remove the setting of _sample_interval from fit
         if self.sample_interval is None:
             # See figure 2 c) of "Efficient additive kernels via explicit feature maps"
             # <http://www.robots.ox.ac.uk/~vedaldi/assets/pubs/vedaldi11efficient.pdf>
@@ -737,12 +740,31 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         check_non_negative(X, "X in AdditiveChi2Sampler.transform")
         sparse = sp.issparse(X)
 
+        if self.sample_interval is None:
+            # See figure 2 c) of "Efficient additive kernels via explicit feature maps"
+            # <http://www.robots.ox.ac.uk/~vedaldi/assets/pubs/vedaldi11efficient.pdf>
+            # A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence,
+            # 2011
+            if self.sample_steps == 1:
+                sample_interval = 0.8
+            elif self.sample_steps == 2:
+                sample_interval = 0.5
+            elif self.sample_steps == 3:
+                sample_interval = 0.4
+            else:
+                raise ValueError(
+                    "If sample_steps is not in [1, 2, 3],"
+                    " you need to provide sample_interval"
+                )
+        else:
+            sample_interval = self.sample_interval
+
         # zeroth component
         # 1/cosh = sech
         # cosh(0) = 1.0
         if sparse:
-            return self._transform_sparse(X)
-        return self._transform_dense(X)
+            return self._transform_sparse(X, self.sample_steps, sample_interval)
+        return self._transform_dense(self.sample_steps, sample_interval)
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
@@ -771,20 +793,21 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
         return np.asarray(names_list, dtype=object)
 
-    def _transform_dense(self, X):
+    @staticmethod
+    def _transform_dense(X, sample_steps, sample_interval):
         non_zero = X != 0.0
         X_nz = X[non_zero]
 
         X_step = np.zeros_like(X)
-        X_step[non_zero] = np.sqrt(X_nz * self._sample_interval)
+        X_step[non_zero] = np.sqrt(X_nz * sample_interval)
 
         X_new = [X_step]
 
-        log_step_nz = self._sample_interval * np.log(X_nz)
-        step_nz = 2 * X_nz * self._sample_interval
+        log_step_nz = sample_interval * np.log(X_nz)
+        step_nz = 2 * X_nz * sample_interval
 
-        for j in range(1, self.sample_steps):
-            factor_nz = np.sqrt(step_nz / np.cosh(np.pi * j * self._sample_interval))
+        for j in range(1, sample_steps):
+            factor_nz = np.sqrt(step_nz / np.cosh(np.pi * j * sample_interval))
 
             X_step = np.zeros_like(X)
             X_step[non_zero] = factor_nz * np.cos(j * log_step_nz)
@@ -796,21 +819,22 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
         return np.hstack(X_new)
 
-    def _transform_sparse(self, X):
+    @staticmethod
+    def _transform_sparse(X, sample_steps, sample_interval):
         indices = X.indices.copy()
         indptr = X.indptr.copy()
 
-        data_step = np.sqrt(X.data * self._sample_interval)
+        data_step = np.sqrt(X.data * sample_interval)
         X_step = sp.csr_matrix(
             (data_step, indices, indptr), shape=X.shape, dtype=X.dtype, copy=False
         )
         X_new = [X_step]
 
-        log_step_nz = self._sample_interval * np.log(X.data)
-        step_nz = 2 * X.data * self._sample_interval
+        log_step_nz = sample_interval * np.log(X.data)
+        step_nz = 2 * X.data * sample_interval
 
-        for j in range(1, self.sample_steps):
-            factor_nz = np.sqrt(step_nz / np.cosh(np.pi * j * self._sample_interval))
+        for j in range(1, sample_steps):
+            factor_nz = np.sqrt(step_nz / np.cosh(np.pi * j * sample_interval))
 
             data_step = factor_nz * np.cos(j * log_step_nz)
             X_step = sp.csr_matrix(
