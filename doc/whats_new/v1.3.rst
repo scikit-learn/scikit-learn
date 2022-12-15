@@ -55,7 +55,6 @@ Changelog
   :pr:`24935` by :user:`Seladus <seladus>`, :user:`Guillaume Lemaitre <glemaitre>`, and
   :user:`Dea María Léon <deamarialeon>`.
 
-
 Code and Documentation Contributors
 -----------------------------------
 
