@@ -710,8 +710,7 @@ def test_ecoc_predict_proba():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0), random_state=0)
     ecoc.fit(iris.data, iris.target).predict(iris.data)
     proba = ecoc.predict_proba(iris.data)
-    # Test that the scores sum to 1
-    assert_almost_equal(np.sum(proba, axis=1), np.ones(proba.shape[0]))
+    assert_allclose(proba.sum(axis=1), 1)
 
     # Regression test for the new proba-based predict against the old one
     preds = np.array([_predict_binary(e, iris.data) for e in ecoc.estimators_]).T

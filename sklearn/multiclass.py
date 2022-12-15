@@ -1033,12 +1033,12 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
         Returns
         -------
-        T : (sparse) array-like of shape (n_samples, n_classes)
+        T : ndarray of shape (n_samples, n_classes) or (n_samples,)
             Returns the score of the sample for each class in the model,
             where classes are ordered as they are in `self.classes_`.
         """
