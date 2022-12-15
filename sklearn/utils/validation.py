@@ -780,8 +780,10 @@ def check_array(
     elif hasattr(array, "iloc") and hasattr(array, "dtype"):
         # array is a pandas series
         pandas_requires_conversion = _pandas_dtype_needs_early_conversion(array.dtype)
-        if pandas_requires_conversion:
-            # Set to None, to convert to a np.dtype that works with array.dtype
+        if isinstance(array.dtype, np.dtype):
+            dtype_orig = array.dtype
+        else:
+            # Set to None to let array.astype work out the best dtype
             dtype_orig = None
 
     if dtype_numeric:
