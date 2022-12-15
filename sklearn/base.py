@@ -278,6 +278,7 @@ class BaseEstimator:
                 # and `__dict__`) will return a state equal to `None`.
                 state = self.__dict__.copy()
         except AttributeError:
+            # Python < 3.11
             state = self.__dict__.copy()
 
         if type(self).__module__.startswith("sklearn."):
