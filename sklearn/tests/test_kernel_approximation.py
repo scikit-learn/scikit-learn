@@ -114,7 +114,7 @@ def test_additive_chi2_sampler():
     Y_neg[0, 0] = -1
     msg = "Negative values in data passed to"
     with pytest.raises(ValueError, match=msg):
-        transform.fit(X)
+        transform.fit(Y_neg)
 
     # test that the sample interval is set correctly
     sample_steps_available = [1, 2, 3]
@@ -141,7 +141,7 @@ def test_additive_chi2_sampler():
         "If sample_steps is not in [1, 2, 3], you need to provide sample_interval"
     )
     with pytest.raises(ValueError, match=msg):
-        transform.transform(X)
+        transform.fit(X)
 
     # test that the sample_interval is set correctly
     sample_interval = 0.3
