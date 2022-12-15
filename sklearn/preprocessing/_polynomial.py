@@ -19,7 +19,11 @@ from ..utils._param_validation import Interval, StrOptions
 from ..utils.stats import _weighted_percentile
 from ..utils.fixes import sp_version, parse_version
 
-from ._csr_polynomial_expansion import _csr_polynomial_expansion, _calc_expanded_nnz
+from ._csr_polynomial_expansion import (
+    _csr_polynomial_expansion,
+    _calc_expanded_nnz,
+    _calc_total_nnz,
+)
 
 
 __all__ = [
@@ -369,28 +373,22 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 to_stack.append(X)
 
             for deg in range(max(2, self._min_degree), self._max_degree + 1):
-                # Count how many nonzero elements the expanded matrix will contain.
-                total_nnz = sum(
-                    _calc_expanded_nnz(
-                        X.indptr[row_i + 1] - X.indptr[row_i],
-                        self.interaction_only,
-                        deg,
-                    )
-                    for row_i in range(X.indptr.shape[0] - 1)
+                total_nnz = _calc_total_nnz(X.indptr, self.interaction_only, deg)
+                expanded_col = _calc_expanded_nnz(
+                    n_features, self.interaction_only, deg
                 )
-                exanded_col = _calc_expanded_nnz(X.shape[1], self.interaction_only, deg)
 
-                if exanded_col == 0:
+                if expanded_col == 0:
                     break
-                assert exanded_col > 0
+                assert expanded_col > 0
 
                 # This only checks whether each block needs 64bit integers upon
                 # expansion. We prefer to keep 32bit integers where we can,
                 # since currently CSR construction downcasts when possible, so
-                # we'd prefer to avoid an unnecessary cast. The dtype may still
+                # we'n_features prefer to avoid an unnecessary cast. The dtype may still
                 # change in the concatenation process if needed.
                 # See: https://github.com/scipy/scipy/issues/16569
-                max_indices = exanded_col - 1
+                max_indices = expanded_col - 1
                 max_indptr = total_nnz
                 needs_int64 = max(max_indices, max_indptr) > max_int32
                 index_dtype = np.int64 if needs_int64 else np.int32
@@ -414,7 +412,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 to_stack.append(
                     sparse.csr_matrix(
                         (expanded_data, expanded_indices, expanded_indptr),
-                        shape=(X.indptr.shape[0] - 1, exanded_col),
+                        shape=(X.indptr.shape[0] - 1, expanded_col),
                         dtype=X.dtype,
                     )
                 )

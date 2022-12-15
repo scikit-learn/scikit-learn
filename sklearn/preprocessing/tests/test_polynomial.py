@@ -773,7 +773,7 @@ def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only):
 def test_csr_polynomial_expansion_index_overflow_non_regression():
     """Tests to ensure that sufficiently large input configurations get
     properly promoted to use `np.int64` for index and indptr representation
-    while preserving data integrity.
+    while preserving data integrity. Non-regression test for gh-16803.
     """
 
     def degree_2_calc(d, i, j, interaction_only):
