@@ -771,6 +771,11 @@ def test_polynomial_features_csr_X_dim_edges(deg, dim, interaction_only):
 
 
 def test_csr_polynomial_expansion_index_overflow_non_regression():
+    """Tests to ensure that sufficiently large input configurations get
+    properly promoted to use `np.int64` for index and indptr representation
+    while preserving data integrity.
+    """
+
     def degree_2_calc(d, i, j, interaction_only):
         if interaction_only:
             return d * i - (i**2 + 3 * i) // 2 - 1 + j
@@ -790,7 +795,7 @@ def test_csr_polynomial_expansion_index_overflow_non_regression():
     )
     pf = PolynomialFeatures(interaction_only=True, include_bias=False, degree=2)
     X_trans = pf.fit_transform(X)
-    n_index, m_index = X_trans.nonzero()
+    row_nonzero, col_nonzero = X_trans.nonzero()
     second_degree_idx = (
         degree_2_calc(n_features, n_features - 2, n_features - 1, True) + n_features
     )
@@ -798,50 +803,63 @@ def test_csr_polynomial_expansion_index_overflow_non_regression():
     assert X_trans.shape == (13, second_degree_idx + 1)
     assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int64
     assert_allclose(X_trans.data, [1, 2, 2, 3, 4, 12])
-    assert_array_equal(n_index, [11, 11, 11, 12, 12, 12])
-    assert_array_almost_equal(
-        m_index,
-        np.array(
-            [
-                n_features - 2,
-                n_features - 1,
-                second_degree_idx,
-                n_features - 2,
-                n_features - 1,
-                second_degree_idx,
-            ]
-        ),
+    assert_array_equal(row_nonzero, [11, 11, 11, 12, 12, 12])
+    assert_array_equal(
+        col_nonzero,
+        [
+            n_features - 2,
+            n_features - 1,
+            second_degree_idx,
+            n_features - 2,
+            n_features - 1,
+            second_degree_idx,
+        ],
     )
 
 
 @pytest.mark.parametrize(
-    "n_features",
+    "degree, n_features",
     [
         # Needs promotion to int64 when interaction_only=False
-        65535,
+        (2, 65535),
+        (3, 2344),
         # This guarantees that the intermediate operation when calculating
         # output columns would overflow a C-long, hence checks that python-
         # longs are being used.
-        int(np.sqrt(np.iinfo(np.int64).max) + 1),
+        (2, int(np.sqrt(np.iinfo(np.int64).max) + 1)),
+        (3, 65535),
         # This case tests the second clause of the overflow check which
         # takes into account the value of `n_features` itself.
-        int(np.sqrt(np.iinfo(np.int64).max)),
+        (2, int(np.sqrt(np.iinfo(np.int64).max))),
     ],
 )
 @pytest.mark.parametrize("interaction_only", [True, False])
 @pytest.mark.parametrize("include_bias", [True, False])
-def test_csr_polynomial_expansion_index_overflow_deg2(
-    n_features, interaction_only, include_bias
+def test_csr_polynomial_expansion_index_overflow(
+    degree, n_features, interaction_only, include_bias
 ):
+    """Tests known edge-cases to the dtype promotion strategy and custom
+    Cython code, including a current bug in the upstream
+    `scipy.sparse.hstack`.
+    """
     data = [1.0]
     row = [0]
     col = [n_features - 1]
-    first_degree_idx = n_features - 1 + int(include_bias)
-    second_degree_idx = int(n_features * (n_features + 1) // 2 + first_degree_idx)
+
+    # First degree index
+    target_indices = [
+        n_features - 1 + int(include_bias),
+    ]
+    # Second degree index
+    target_indices.append(int(n_features * (n_features + 1) // 2 + target_indices[0]))
+    # Third degree index
+    target_indices.append(
+        int(n_features * (n_features + 1) * (n_features + 2) // 6 + target_indices[1])
+    )
 
     X = sparse.csr_matrix((data, (row, col)))
     pf = PolynomialFeatures(
-        interaction_only=interaction_only, include_bias=include_bias, degree=2
+        interaction_only=interaction_only, include_bias=include_bias, degree=degree
     )
 
     # `scipy.sparse.hstack` breaks in scipy<1.9.2 when
@@ -855,6 +873,7 @@ def test_csr_polynomial_expansion_index_overflow_deg2(
         # can be represnented with `np.int32`. We test `n_features==65535`
         # since it is guaranteed to run into this bug.
         and n_features == 65535
+        and degree == 2
         and not interaction_only
     ):
         msg = r"In scipy versions `<1.9.2`, the function `scipy.sparse.hstack`"
@@ -872,15 +891,19 @@ def test_csr_polynomial_expansion_index_overflow_deg2(
         include_bias=pf.include_bias,
     )
     expected_dtype = np.int64 if num_combinations > np.iinfo(np.int32).max else np.int32
-    expected_nnz = 1 + int(not interaction_only) + int(include_bias)
+    higher_order_count = (degree - 1) * int(not interaction_only)
+    expected_nnz = 1 + higher_order_count + int(include_bias)
     assert X_trans.dtype == X.dtype
     assert X_trans.shape == (1, pf.n_output_features_)
     assert X_trans.indptr.dtype == X_trans.indices.dtype == expected_dtype
     assert X_trans.nnz == expected_nnz
-    assert X_trans[0, first_degree_idx] == pytest.approx(1.0)
-    if not interaction_only:
-        assert pf.n_output_features_ == second_degree_idx + 1
-        assert X_trans[0, second_degree_idx] == pytest.approx(1.0)
+    for idx in range(higher_order_count):
+        assert X_trans[0, target_indices[idx]] == pytest.approx(1.0)
+
+    offset = interaction_only * n_features
+    if degree == 3:
+        offset *= 1 + n_features
+    assert pf.n_output_features_ == target_indices[degree - 1] + 1 - offset
 
 
 @pytest.mark.parametrize("interaction_only", [True, False])

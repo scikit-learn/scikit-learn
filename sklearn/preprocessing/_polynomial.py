@@ -378,11 +378,11 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                     )
                     for row_i in range(X.indptr.shape[0] - 1)
                 )
-                expanded_d = _calc_expanded_nnz(X.shape[1], self.interaction_only, deg)
+                exanded_col = _calc_expanded_nnz(X.shape[1], self.interaction_only, deg)
 
-                if expanded_d == 0:
+                if exanded_col == 0:
                     break
-                assert expanded_d > 0
+                assert exanded_col > 0
 
                 # This only checks whether each block needs 64bit integers upon
                 # expansion. We prefer to keep 32bit integers where we can,
@@ -390,8 +390,8 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 # we'd prefer to avoid an unnecessary cast. The dtype may still
                 # change in the concatenation process if needed.
                 # See: https://github.com/scipy/scipy/issues/16569
-                max_indices = expanded_d - 1
-                max_indptr = total_nnz - 1
+                max_indices = exanded_col - 1
+                max_indptr = total_nnz
                 needs_int64 = max(max_indices, max_indptr) > max_int32
                 index_dtype = np.int64 if needs_int64 else np.int32
 
@@ -414,7 +414,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
                 to_stack.append(
                     sparse.csr_matrix(
                         (expanded_data, expanded_indices, expanded_indptr),
-                        shape=(X.indptr.shape[0] - 1, expanded_d),
+                        shape=(X.indptr.shape[0] - 1, exanded_col),
                         dtype=X.dtype,
                     )
                 )
