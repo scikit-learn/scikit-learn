@@ -42,6 +42,16 @@ Changelog
   `feature_union["scalar"]`) to access transformers by name. :pr:`25093` by
   `Thomas Fan`_.
 
+:mod:`sklearn.preprocessing`
+............................
+
+- |Enhancement| Added support for `sample_weight` in
+  :class:`preprocessing.KBinsDiscretizer`. This allows specifying the parameter
+  `sample_weight` for each sample to be used while fitting. The option is only
+  available when `strategy` is set to `quantile`.
+  :pr:`24935` by :user:`Seladus <seladus>`, :user:`Guillaume Lemaitre <glemaitre>`, and
+  :user:`Dea María Léon <deamarialeon>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
