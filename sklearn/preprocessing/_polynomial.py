@@ -397,7 +397,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
 
                 # Result of the expansion, modified in place by the
                 # `_csr_polynomial_expansion` routine.
-                expanded_data = np.ndarray(shape=total_nnz, dtype=X.data.dtype)
+                expanded_data = np.empty(shape=total_nnz, dtype=X.data.dtype)
                 expanded_indices = np.ndarray(shape=total_nnz, dtype=index_dtype)
                 expanded_indptr = np.ndarray(shape=X.indptr.shape[0], dtype=index_dtype)
                 _csr_polynomial_expansion(
@@ -424,9 +424,7 @@ class PolynomialFeatures(TransformerMixin, BaseEstimator):
             else:
                 # `scipy.sparse.hstack` breaks in scipy<1.9.2
                 # when `n_output_features_ > max_int32`
-                all_int32 = True
-                for mat in to_stack:
-                    all_int32 &= mat.indices.dtype == np.int32
+                all_int32 = all(mat.indices.dtype == np.int32 for mat in to_stack)
                 if (
                     sp_version < parse_version("1.9.2")
                     and self.n_output_features_ > max_int32

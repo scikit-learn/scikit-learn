@@ -787,7 +787,6 @@ def test_csr_polynomial_expansion_index_overflow_non_regression():
         (data, (row, col)),
         shape=(n_samples, n_features),
         dtype=dtype,
-        copy=False,
     )
     pf = PolynomialFeatures(interaction_only=True, include_bias=False, degree=2)
     X_trans = pf.fit_transform(X)
@@ -798,8 +797,8 @@ def test_csr_polynomial_expansion_index_overflow_non_regression():
     assert X_trans.dtype == dtype
     assert X_trans.shape == (13, second_degree_idx + 1)
     assert X_trans.indptr.dtype == X_trans.indices.dtype == np.int64
-    assert_array_almost_equal(X_trans.data, np.array([1, 2, 2, 3, 4, 12], dtype=dtype))
-    assert_array_almost_equal(n_index, np.array([11, 11, 11, 12, 12, 12]))
+    assert_allclose(X_trans.data, [1, 2, 2, 3, 4, 12])
+    assert_array_equal(n_index, [11, 11, 11, 12, 12, 12])
     assert_array_almost_equal(
         m_index,
         np.array(
