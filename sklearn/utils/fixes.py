@@ -97,10 +97,10 @@ class loguniform(scipy.stats.reciprocal):
 
 # TODO: remove when the minimum scipy version is >= 1.5
 if sp_version >= parse_version("1.5"):
-    from scipy.linalg import eigh  # noqa
+    from scipy.linalg import eigh as _eigh  # noqa
 else:
 
-    def eigh(*args, **kwargs):
+    def _eigh(*args, **kwargs):
         """Wrapper for `scipy.linalg.eigh` that handles the deprecation of `eigvals`."""
         eigvals = kwargs.pop("subset_by_index", None)
         return scipy.linalg.eigh(*args, eigvals=eigvals, **kwargs)
