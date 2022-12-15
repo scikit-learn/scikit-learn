@@ -727,8 +727,8 @@ class HashingVectorizer(
     Notes
     -----
     This estimator is stateless and does not need to be fitted. However, we
-    advice to class :meth:`fit_transform` instead of only :meth:`transform` to
-    benefit from the parameters validation that only happens in :meth:`fit`.
+    recommend to call :meth:`fit_transform` instead of :meth:`transform`, as
+    parameter validation is only performed in :meth:`fit`.
 
     Examples
     --------
