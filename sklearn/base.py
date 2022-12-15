@@ -271,6 +271,12 @@ class BaseEstimator:
         return repr_
 
     def __getstate__(self):
+        if hasattr(self, "__slots__"):
+            raise TypeError(
+                "You cannot use `__slots__` in objects inheriting from "
+                "`sklearn.base.BaseEstimator`"
+            )
+
         try:
             state = super().__getstate__()
             if state is None:

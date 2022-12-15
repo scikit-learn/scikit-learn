@@ -677,34 +677,47 @@ def test_clone_keeps_output_config():
     assert config == config_clone
 
 
-def test_parent_object_empty_instance_dict():
-    # Since Python 3.11, Python objects have a __getstate__ method by default
-    # that returns None if the instance dict is empty. See #25188.
-    class Empty:
-        pass
+class _Empty:
+    pass
 
-    class Estimator(Empty, BaseEstimator):
-        pass
 
-    state = Estimator().__getstate__()
+class EmptyEstimator(_Empty, BaseEstimator):
+    pass
+
+
+@pytest.mark.parametrize("estimator", [BaseEstimator(), EmptyEstimator()])
+def test_estimator_empty_instance_dict(estimator):
+    """Check that ``__getstate__`` returns an empty ``dict`` with an empty
+    instance.
+
+    Python 3.11+ changed behaviour by returning ``None`` instead of raising an
+    ``AttributeError``. Non-regression test for gh-25188.
+
+    """
+    state = estimator.__getstate__()
     expected = {"_sklearn_version": sklearn.__version__}
     assert state == expected
-
-
-def test_base_estimator_empty_instance_dict():
-    # Since Python 3.11, Python objects have a __getstate__ method by default
-    # that returns None if the instance dict is empty. See #25188.
 
     # this should not raise
-    state = BaseEstimator().__getstate__()
-    expected = {"_sklearn_version": sklearn.__version__}
-    assert state == expected
-
-
-def test_base_estimator_pickleable():
-    # Since Python 3.11, Python objects have a __getstate__ method by default
-    # that returns None if the instance dict is empty. See #25188.
-
-    # This would raise an error before the bugfix because BaseEstimator's
-    # __dict__ is empty
     pickle.loads(pickle.dumps(BaseEstimator()))
+
+
+def test_estimator_getstate_using_slots_error_message():
+    """Using a BaseEstimator with __slots__ is not supported"""
+
+    class WithSlots:
+        __slots__ = ("x",)
+
+    class Estimator(BaseEstimator, WithSlots):
+        pass
+
+    msg = (
+        "You cannot use `__slots__` in objects inheriting from "
+        "`sklearn.base.BaseEstimator`"
+    )
+
+    with pytest.raises(TypeError, match=msg):
+        Estimator().__getstate__()
+
+    with pytest.raises(TypeError, match=msg):
+        pickle.dumps(Estimator())
