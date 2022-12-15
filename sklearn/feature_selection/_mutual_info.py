@@ -9,7 +9,7 @@ from ..metrics.cluster import mutual_info_score
 from ..neighbors import NearestNeighbors, KDTree
 from ..preprocessing import scale
 from ..utils import check_random_state
-from ..utils.validation import check_array, check_X_y
+from ..utils.validation import check_array, check_X_y, _num_samples
 from ..utils.multiclass import check_classification_targets
 
 
@@ -134,6 +134,14 @@ def _compute_mi_cd(c, d, n_neighbors):
     k_all = k_all[mask]
     c = c[mask]
     radius = radius[mask]
+
+    # check if after masking instances are left
+    if _num_samples(c) == 0:
+        raise ValueError(
+            "Found array with 0 sample(s) after masking"
+            " points with unique labels. Ensure to have at least"
+            " two instances with the same label."
+        )
 
     kd = KDTree(c)
     m_all = kd.query_radius(c, radius, count_only=True, return_distance=False)
