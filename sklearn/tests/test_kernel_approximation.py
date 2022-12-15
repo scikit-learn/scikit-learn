@@ -114,7 +114,26 @@ def test_additive_chi2_sampler():
     Y_neg[0, 0] = -1
     msg = "Negative values in data passed to"
     with pytest.raises(ValueError, match=msg):
-        transform.transform(Y_neg)
+        transform.fit(X)
+
+    # test that the sample interval is set correctly
+    sample_steps_available = [1, 2, 3]
+    for sample_steps in sample_steps_available:
+
+        # test that the sample_interval is initialized correctly
+        transform = AdditiveChi2Sampler(sample_steps=sample_steps)
+        assert transform.sample_interval is None
+
+        # test that the sample_interval is changed in the fit method
+        transform.fit(X)
+        assert transform.sample_interval_ is not None
+
+    msg = re.escape(
+        "The ``sample_interval_`` attribute was deprecated in version 1.3 and "
+        "will be removed 1.5."
+    )
+    with pytest.warns(FutureWarning, match=msg):
+        transform.sample_interval_
 
     # test error on invalid sample_steps
     transform = AdditiveChi2Sampler(sample_steps=4)
@@ -128,6 +147,8 @@ def test_additive_chi2_sampler():
     sample_interval = 0.3
     transform = AdditiveChi2Sampler(sample_steps=4, sample_interval=sample_interval)
     assert transform.sample_interval == sample_interval
+    transform.fit(X)
+    assert transform.sample_interval_ == sample_interval
 
 
 def test_skewed_chi2_sampler():
