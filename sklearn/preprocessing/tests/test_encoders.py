@@ -1389,7 +1389,11 @@ def test_mixed_string_bytes_categoricals():
     ohe = OneHotEncoder(categories=categories, sparse_output=False)
 
     with pytest.raises(
-        ValueError, match="Found incompatible types between values and predefined"
+        ValueError,
+        match=(
+            "Found incompatible types ('bytes' vs 'str_') between values and predefined"
+            " categories in column 0."
+        ),
     ):
         ohe.fit(X)
 
