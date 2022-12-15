@@ -16,18 +16,18 @@ ctypedef cnp.int8_t FLAG_t
 cdef cnp.int64_t MAX_SAFE_INDEX_DEG2 = <cnp.int64_t> sqrt(LONG_MAX) - 4
 
 # This is a conservative upper bound for the maximum value before the
-# intermediate computation 3 * d**2 * d + d**3 blows out. We leverage the fact
+# intermediate computation 3 * d**2 * d + d**3 overflows. We leverage the fact
 # that i<=d.
 # Corresponds to 3 * d**2 * d + d**3 = maxint32
 cdef cnp.int64_t MAX_SAFE_INDEX_DEG3 = <cnp.int64_t> pow(LONG_MAX, 1/3)/4
 
 # This is the maximum value before the intermediate computation
-# d**2 + d blows out
+# d**2 + d overflows
 # Solution to d**2 + d = maxint32
 cdef cnp.int64_t MAX_SAFE_INDEX_CALC_DEG2 = <cnp.int64_t> sqrt(LONG_MAX)
 
 # This is the maximum value before the intermediate computation
-# d**3 + 3 * d**2 + 2*d blows out
+# d**3 + 3 * d**2 + 2*d overflows
 # Solution to d**3 + 3 * d**2 + 2*d = maxint32
 cdef cnp.int64_t MAX_SAFE_INDEX_CALC_DEG3 = 2097151
 
@@ -63,15 +63,6 @@ cdef inline cnp.int64_t _deg2_column(
         return d * i - (i**2 + i) / 2 + j
 
 def py_deg2_column(d, i, j, interaction_only):
-    """Compute the index of the column for a degree 2 expansion.
-
-    d is the dimensionality of the input data, i and j are the indices
-    for the columns involved in the expansion.
-
-    This function is defined in Python to use `PyLong`'s arbitrary
-    precision, and is called in Cython when C types' representability
-    range is too small.
-    """
     if interaction_only:
         return d * i - (i**2 + 3 * i) // 2 - 1 + j
     else:
@@ -102,15 +93,6 @@ cdef inline cnp.int64_t _deg3_column(
             - 3 * j**2 - 3 * j) / 6 + d * j + k
         )
 def py_deg3_column(d, i, j, k, interaction_only):
-    """Compute the index of the column for a degree 3 expansion.
-
-    d is the dimensionality of the input data, i, j and k are the indices
-    for the columns involved in the expansion.
-
-    This function is defined in Python to use `PyLong`'s arbitrary
-    precision, and is called in Cython when C types' representability
-    range is too small.
-    """
     if interaction_only:
         return (
             (3 * d**2 * i - 3 * d * i**2 + i**3
@@ -223,7 +205,7 @@ def _csr_polynomial_expansion(
                         if max(i, j) > MAX_SAFE_INDEX_DEG2 or i > LONG_MAX // d :
                             # In this case, the Cython implementation
                             # would result in an integer overflow.
-                            # Here, we use arbitrary precision.
+                            # Here, we take advantage of `PyLong` for arbitrary precision.
                             with gil:
                                 col = <INDEX_B_t> py_deg2_column(d, i, j, interaction_only)
                         else:
@@ -241,7 +223,7 @@ def _csr_polynomial_expansion(
                             if max(i, j, k) > MAX_SAFE_INDEX_DEG3 or i // 3 + 1 > LONG_MAX // d // d:
                                 # In this case, the Cython implementation
                                 # would result in an integer overflow.
-                                # Here, we use arbitrary precision.
+                                # Here, we take advantage of `PyLong` for arbitrary precision.
                                 with gil:
                                     col = <INDEX_B_t> py_deg3_column(d, i, j, k, interaction_only)
                             else:
