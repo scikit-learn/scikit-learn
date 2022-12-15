@@ -24,7 +24,7 @@ cdef class Criterion:
     cdef const DOUBLE_t[:, ::1] y        # Values of y
     cdef const DOUBLE_t[:] sample_weight # Sample weights
 
-    cdef SIZE_t* samples                 # Sample indices in X, y
+    cdef const SIZE_t[:] sample_indices  # Sample indices in X, y
     cdef SIZE_t start                    # samples[start:pos] are the samples in the left node
     cdef SIZE_t pos                      # samples[pos:end] are the samples in the right node
     cdef SIZE_t end
@@ -46,7 +46,7 @@ cdef class Criterion:
         const DOUBLE_t[:, ::1] y,
         const DOUBLE_t[:] sample_weight,
         double weighted_n_samples,
-        SIZE_t* samples,
+        const SIZE_t[:] sample_indices,
         SIZE_t start,
         SIZE_t end
     ) nogil except -1
