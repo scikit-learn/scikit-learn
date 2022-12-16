@@ -702,7 +702,7 @@ def test_estimator_empty_instance_dict(estimator):
 
 
 def test_estimator_getstate_using_slots_error_message():
-    """Using a BaseEstimator with __slots__ is not supported"""
+    """Using a `BaseEstimator` with `__slots__` is not supported."""
 
     class WithSlots:
         __slots__ = ("x",)
