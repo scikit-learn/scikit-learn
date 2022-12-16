@@ -187,9 +187,11 @@ cdef class BaseCriterion:
     ) nogil:
         """Abstract method which will set sample pointers in the criterion.
 
-The dataset array that we compute criteria on is assumed to consist of 'N' ordered samples or rows (i.e. sorted). Since we pass this by reference, we use sample pointers to move the start and end around to consider only a subset of data. 
+        The dataset array that we compute criteria on is assumed to consist of 'N' 
+        ordered samples or rows (i.e. sorted). Since we pass this by reference, we 
+        use sample pointers to move the start and end around to consider only a subset of data. 
 
-This function should also update relevant statistics that the class uses to compute the final criterion.
+        This function should also update relevant statistics that the class uses to compute the final criterion.
 
         Parameters
         ----------
@@ -314,7 +316,6 @@ cdef class ClassificationCriterion(Criterion):
         sample_indices : ndarray, dtype=SIZE_t
             A mask on the samples. Indices of the samples in X and y we want to use,
             where sample_indices[start:end] correspond to the samples in this node.
-
         """
         self.y = y
         self.sample_weight = sample_weight
@@ -328,19 +329,7 @@ cdef class ClassificationCriterion(Criterion):
         SIZE_t start,
         SIZE_t end
     ) nogil:
-        """Set sample pointers in the criterion.
-
-        This initializes the criterion at node sample_indices[start:end] and children
-        sample_indices[start:start] and sample_indices[start:end].
-
-        Parameters
-        ----------
-
-        start : SIZE_t
-            The first sample to use in the mask
-        end : SIZE_t
-            The last sample to use in the mask
-        """
+        """Set sample pointers in the criterion."""
         self.n_node_samples = end - start
         self.start = start
         self.end = end
@@ -719,11 +708,7 @@ cdef class RegressionCriterion(Criterion):
         SIZE_t start,
         SIZE_t end
     ) nogil:
-        """Set sample pointers in the criterion.
-
-        This initializes the criterion at node sample_indices[start:end] and children
-        sample_indices[start:start] and sample_indices[start:end].
-        """
+        """Set sample pointers in the criterion."""
         self.start = start
         self.end = end
 
@@ -1008,11 +993,7 @@ cdef class MAE(RegressionCriterion):
         SIZE_t start,
         SIZE_t end
     ) nogil:
-        """Set sample pointers in the criterion.
-
-        This initializes the criterion at node sample_indices[start:end] and children
-        sample_indices[start:start] and sample_indices[start:end].
-        """
+        """Set sample pointers in the criterion."""
         cdef SIZE_t i, p, k
         cdef DOUBLE_t w = 1.0
 
