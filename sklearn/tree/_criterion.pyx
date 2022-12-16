@@ -185,12 +185,16 @@ cdef class BaseCriterion:
         SIZE_t start,
         SIZE_t end
     ) nogil:
-        """Placeholder for a method which will set sample pointers in the criterion.
+        """Abstract method which will set sample pointers in the criterion.
+
+The dataset array that we compute criteria on is assumed to consist of 'N' ordered samples or rows (i.e. sorted). Since we pass this by reference, we use sample pointers to move the start and end around to consider only a subset of data. 
+
+This function should also update relevant statistics that the class uses to compute the final criterion.
 
         Parameters
         ----------
         start : SIZE_t
-            The first sample to be used on this node
+            The index of the first sample to be used on computation of criteria of the current node.
         end : SIZE_t
             The last sample used on this node
         """
