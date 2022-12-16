@@ -2389,3 +2389,4 @@ def test_splitter_serializable(Splitter):
 
     splitter_back = pickle.loads(splitter_serialize)
     assert splitter_back.max_features == max_features
+    assert isinstance(splitter_back, Splitter)
