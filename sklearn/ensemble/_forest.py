@@ -523,7 +523,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         return self
 
     @abstractmethod
-    def _set_oob_score_and_attributes(self, X, y, scoring_function):
+    def _set_oob_score_and_attributes(self, X, y, scoring_function=None):
         """Compute and set the OOB score and attributes.
 
         Parameters
@@ -532,9 +532,10 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             The data matrix.
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
-        scoring_function : callable, default=accuracy or r2 score
+        scoring_function : callable, default=None
             Scoring function for OOB score. Default depends on whether
-            this is a regression or classification problem.
+            this is a regression (R2 score) or classification problem
+            (accuracy score).
         """
 
     def _compute_oob_predictions(self, X, y):
@@ -734,7 +735,7 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             y_pred = np.rollaxis(y_pred, axis=0, start=3)
         return y_pred
 
-    def _set_oob_score_and_attributes(self, X, y, scoring_function=accuracy_score):
+    def _set_oob_score_and_attributes(self, X, y, scoring_function=None):
         """Compute and set the OOB score and attributes.
 
         Parameters
@@ -743,13 +744,17 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             The data matrix.
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
-        scoring_function : callable, default=accuracy_score
-            Scoring function for OOB score. Defaults to accuracy_score.
+        scoring_function : callable, default=None
+            Scoring function for OOB score. Defaults to `accuracy_score`.
         """
         self.oob_decision_function_ = super()._compute_oob_predictions(X, y)
         if self.oob_decision_function_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
             self.oob_decision_function_ = self.oob_decision_function_.squeeze(axis=-1)
+
+        if scoring_function is None:
+            scoring_function = accuracy_score
+
         self.oob_score_ = scoring_function(
             y, np.argmax(self.oob_decision_function_, axis=1)
         )
@@ -1037,7 +1042,7 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             y_pred = y_pred[:, np.newaxis, :]
         return y_pred
 
-    def _set_oob_score_and_attributes(self, X, y, scoring_function=r2_score):
+    def _set_oob_score_and_attributes(self, X, y, scoring_function=None):
         """Compute and set the OOB score and attributes.
 
         Parameters
@@ -1046,13 +1051,17 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             The data matrix.
         y : ndarray of shape (n_samples, n_outputs)
             The target matrix.
-        scoring_function : callable, default=r2_score
-            Scoring function for OOB score. Defaults to r2_score.
+        scoring_function : callable, default=None
+            Scoring function for OOB score. Defaults to `r2_score`.
         """
         self.oob_prediction_ = super()._compute_oob_predictions(X, y).squeeze(axis=1)
         if self.oob_prediction_.shape[-1] == 1:
             # drop the n_outputs axis if there is a single output
             self.oob_prediction_ = self.oob_prediction_.squeeze(axis=-1)
+
+        if scoring_function is None:
+            scoring_function = r2_score
+
         self.oob_score_ = scoring_function(y, self.oob_prediction_)
 
     def _compute_partial_dependence_recursion(self, grid, target_features):
