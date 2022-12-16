@@ -1038,6 +1038,30 @@ def test_get_feature_names_out(estimator):
     )
 
 
+def test_cd_work_on_joblib_memmapped_data():
+    # Non-regression test for:
+    # https://github.com/scikit-learn/scikit-learn/issues/25165
+    # The Cython implementation of coordinate descent must work
+    # on readonly data.
+
+    rng = np.random.RandomState(0)
+    # This dataset is sufficient large to be memmapped by joblib
+    # and thus becomes readonly even if it originally isn't.
+    X_train = rng.randn(5000, 3072)
+
+    dict_learner = DictionaryLearning(
+        n_components=56,
+        random_state=0,
+        n_jobs=2,
+        fit_algorithm="cd",
+        verbose=True,
+        max_iter=50,
+    )
+
+    # This must run and complete without error.
+    dict_learner.fit(X_train)
+
+
 # TODO(1.4) remove
 def test_minibatch_dictionary_learning_warns_and_ignore_n_iter():
     """Check that we always raise a warning when `n_iter` is set even if it is
