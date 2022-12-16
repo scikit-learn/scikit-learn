@@ -92,7 +92,6 @@ serialization methods, please refer to this
 `talk by Alex Gaynor
 <https://pyvideo.org/video/2566/pickles-are-for-delis-not-software>`_.
 
-
 Interoperable formats
 ---------------------
 
@@ -124,7 +123,6 @@ not help in production when performance is critical.
 To convert scikit-learn model to PMML you can use for example `sklearn2pmml
 <https://github.com/jpmml/sklearn2pmml>`_ distributed under the Affero GPLv3
 license.
-
 
 A more secure format: `skops`
 -----------------------------
