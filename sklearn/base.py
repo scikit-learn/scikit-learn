@@ -274,7 +274,7 @@ class BaseEstimator:
         if getattr(self, "__slots__", None):
             raise TypeError(
                 "You cannot use `__slots__` in objects inheriting from "
-                "`sklearn.base.BaseEstimator`"
+                "`sklearn.base.BaseEstimator`."
             )
 
         try:
