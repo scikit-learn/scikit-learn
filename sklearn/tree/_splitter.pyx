@@ -86,10 +86,20 @@ cdef class Splitter:
         self.random_state = random_state
 
     def __getstate__(self):
-        return {}
+        return {
+            "criterion": self.criterion,
+            "max_features": self.max_features,
+            "min_samples_leaf": self.min_samples_leaf,
+            "min_weight_leaf": self.min_weight_leaf,
+            "random_state": self.random_state,
+        }
 
     def __setstate__(self, d):
-        pass
+        self.criterion = d["criterion"]
+        self.max_features = d["max_features"]
+        self.min_samples_leaf = d["min_samples_leaf"]
+        self.min_weight_leaf = d["min_weight_leaf"]
+        self.random_state = d["random_state"]
 
     cdef int init(
         self,
@@ -240,13 +250,6 @@ cdef class BaseDenseSplitter(Splitter):
 
 cdef class BestSplitter(BaseDenseSplitter):
     """Splitter for finding the best split."""
-    def __reduce__(self):
-        return (BestSplitter, (self.criterion,
-                               self.max_features,
-                               self.min_samples_leaf,
-                               self.min_weight_leaf,
-                               self.random_state), self.__getstate__())
-
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
         """Find the best split on node samples[start:end]
@@ -553,13 +556,6 @@ cdef void heapsort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
 
 cdef class RandomSplitter(BaseDenseSplitter):
     """Splitter for finding the best random split."""
-    def __reduce__(self):
-        return (RandomSplitter, (self.criterion,
-                                 self.max_features,
-                                 self.min_samples_leaf,
-                                 self.min_weight_leaf,
-                                 self.random_state), self.__getstate__())
-
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
         """Find the best random split on node samples[start:end]
@@ -1057,14 +1053,6 @@ cdef inline void sparse_swap(SIZE_t[::1] index_to_samples, SIZE_t[::1] samples,
 
 cdef class BestSparseSplitter(BaseSparseSplitter):
     """Splitter for finding the best split, using the sparse data."""
-
-    def __reduce__(self):
-        return (BestSparseSplitter, (self.criterion,
-                                     self.max_features,
-                                     self.min_samples_leaf,
-                                     self.min_weight_leaf,
-                                     self.random_state), self.__getstate__())
-
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
         """Find the best split on node samples[start:end], using sparse features
@@ -1283,14 +1271,6 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
 
 cdef class RandomSparseSplitter(BaseSparseSplitter):
     """Splitter for finding a random split, using the sparse data."""
-
-    def __reduce__(self):
-        return (RandomSparseSplitter, (self.criterion,
-                                       self.max_features,
-                                       self.min_samples_leaf,
-                                       self.min_weight_leaf,
-                                       self.random_state), self.__getstate__())
-
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
         """Find a random split on node samples[start:end], using sparse features
