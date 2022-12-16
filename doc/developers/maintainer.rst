@@ -310,6 +310,8 @@ The following GitHub checklist might be helpful in a release PR::
     * [ ] upload the wheels and source tarball to PyPI
     * [ ] https://github.com/scikit-learn/scikit-learn/releases publish (except for RC)
     * [ ] announce on mailing list and on Twitter, and LinkedIn
+    * [ ] update symlink for stable in
+      https://github.com/scikit-learn/scikit-learn.github.io (only major/minor)
     * [ ] update SECURITY.md in main branch (except for RC)
 
 Merging Pull Requests
