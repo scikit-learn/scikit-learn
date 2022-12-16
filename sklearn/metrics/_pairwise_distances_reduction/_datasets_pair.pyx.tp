@@ -584,12 +584,12 @@ cdef class EuclideanSparseSparseDatasetsPair{{name_suffix}}(SparseSparseDatasets
 
         self.use_squared_distances = use_squared_distances
 
-        if (
-            euclidean_kwargs is not None
-            and euclidean_kwargs.get("Y_norm_squared")
-        ):
+        euclidean_kwargs = euclidean_kwargs or {}
+        Y_norm_squared = euclidean_kwargs.pop("Y_norm_squared", None)
+
+        if Y_norm_squared is not None:
             self.Y_norm_squared = check_array(
-                euclidean_kwargs.pop("Y_norm_squared"),
+                Y_norm_squared,
                 ensure_2d=False,
                 input_name="Y_norm_squared",
                 dtype=np.float64,
@@ -600,12 +600,11 @@ cdef class EuclideanSparseSparseDatasetsPair{{name_suffix}}(SparseSparseDatasets
                 effective_n_threads,
             )
 
-        if (
-            euclidean_kwargs is not None
-            and euclidean_kwargs.get("X_norm_squared")
-        ):
+        X_norm_squared = euclidean_kwargs.pop("X_norm_squared", None)
+
+        if X_norm_squared is not None:
             self.X_norm_squared = check_array(
-                euclidean_kwargs.pop("X_norm_squared"),
+                X_norm_squared,
                 ensure_2d=False,
                 input_name="X_norm_squared",
                 dtype=np.float64,
@@ -629,7 +628,7 @@ cdef class EuclideanSparseSparseDatasetsPair{{name_suffix}}(SparseSparseDatasets
             self.Y_indptr,
             n_features=X.shape[1],
             effective_n_threads=effective_n_threads,
-            **(euclidean_kwargs or {}),
+            **(euclidean_kwargs),
         )
 
     @final
