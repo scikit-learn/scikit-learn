@@ -49,9 +49,9 @@ cdef class Splitter:
     sparse and dense data, one split at a time.
     """
 
-    def __cinit__(self, Criterion criterion, SIZE_t max_features,
-                  SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state):
+    def __init__(self, Criterion criterion, SIZE_t max_features,
+                 SIZE_t min_samples_leaf, double min_weight_leaf,
+                 object random_state):
         """
         Parameters
         ----------
@@ -94,12 +94,12 @@ cdef class Splitter:
             "random_state": self.random_state,
         }
 
-    def __setstate__(self, d):
-        self.criterion = d["criterion"]
-        self.max_features = d["max_features"]
-        self.min_samples_leaf = d["min_samples_leaf"]
-        self.min_weight_leaf = d["min_weight_leaf"]
-        self.random_state = d["random_state"]
+    def __setstate__(self, state):
+        self.criterion = state["criterion"]
+        self.max_features = state["max_features"]
+        self.min_samples_leaf = state["min_samples_leaf"]
+        self.min_weight_leaf = state["min_weight_leaf"]
+        self.random_state = state["random_state"]
 
     cdef int init(
         self,
@@ -754,12 +754,6 @@ cdef class BaseSparseSplitter(Splitter):
 
     cdef SIZE_t[::1] index_to_samples
     cdef SIZE_t[::1] sorted_samples
-
-    def __cinit__(self, Criterion criterion, SIZE_t max_features,
-                  SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state):
-        # Parent __cinit__ is automatically called
-        self.n_total_samples = 0
 
     cdef int init(
         self,
