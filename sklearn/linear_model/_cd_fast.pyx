@@ -568,12 +568,12 @@ def sparse_enet_coordinate_descent(
 
 def enet_coordinate_descent_gram(
     # TODO: const-qualify fused typed memoryview when Cython 3 is used (#23147)
-    cnp.ndarray[floating, ndim=1, mode='c'] w,
+    floating[::1] w,
     floating alpha,
     floating beta,
-    cnp.ndarray[floating, ndim=2, mode='c'] Q,
-    cnp.ndarray[floating, ndim=1, mode='c'] q,
-    cnp.ndarray[floating, ndim=1] y,
+    floating[:, ::1] Q,
+    floating[::1] q,
+    floating[:] y,
     unsigned int max_iter,
     floating tol,
     object rng,
@@ -633,9 +633,9 @@ def enet_coordinate_descent_gram(
     cdef UINT32_t* rand_r_state = &rand_r_state_seed
 
     cdef floating y_norm2 = np.dot(y, y)
-    cdef floating* w_ptr = <floating*>&w[0]
+    cdef floating* w_ptr = &w[0]
     cdef floating* Q_ptr = &Q[0, 0]
-    cdef floating* q_ptr = <floating*>q.data
+    cdef floating* q_ptr = &q[0]
     cdef floating* H_ptr = &H[0]
     cdef floating* XtA_ptr = &XtA[0]
     tol = tol * y_norm2

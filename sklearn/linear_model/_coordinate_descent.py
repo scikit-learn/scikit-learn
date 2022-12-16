@@ -30,6 +30,7 @@ from ..utils.validation import (
     check_is_fitted,
     column_or_1d,
 )
+from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..utils.fixes import delayed
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
@@ -593,7 +594,9 @@ def enet_path(
                 w=coef_,
                 alpha=l1_reg,
                 beta=l2_reg,
-                X_data=X.data,
+                # TODO: remove ReadonlyArrayWrapper when const-qualify fused typed
+                # memoryviews are used (this necessiates Cython 3).
+                X_data=ReadonlyArrayWrapper(X.data),
                 X_indices=X.indices,
                 X_indptr=X.indptr,
                 y=y,
@@ -615,12 +618,14 @@ def enet_path(
             if check_input:
                 precompute = check_array(precompute, dtype=X.dtype.type, order="C")
             model = cd_fast.enet_coordinate_descent_gram(
-                coef_,
+                # TODO: remove ReadonlyArrayWrappers when const-qualify fused typed
+                # memoryviews are used (this necessiates Cython 3).
+                ReadonlyArrayWrapper(coef_),
                 l1_reg,
                 l2_reg,
-                precompute,
-                Xy,
-                y,
+                ReadonlyArrayWrapper(precompute),
+                ReadonlyArrayWrapper(Xy),
+                ReadonlyArrayWrapper(y),
                 max_iter,
                 tol,
                 rng,
