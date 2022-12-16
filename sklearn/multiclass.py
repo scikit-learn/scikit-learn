@@ -1031,7 +1031,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         return self
 
     def predict_proba(self, X):
-        """Return faux probability estimates.
+        """Return probability estimates.
 
         Estimates are based upon euclidean distance between the underlying
         estimators' predictions and the class code.
