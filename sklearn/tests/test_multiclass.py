@@ -711,6 +711,7 @@ def test_ecoc_predict_proba():
     assert_allclose(proba.sum(axis=1), 1)
     assert len(proba[0]) == len(ecoc.classes_)
 
+
 def test_ecoc_gridsearch():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0), random_state=0)
     Cs = [0.1, 0.5, 0.8]
