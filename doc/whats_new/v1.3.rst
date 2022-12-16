@@ -37,7 +37,7 @@ Changelog
     where 123456 is the *pull request* number, not the issue number.
 
 :mod:`sklearn.multiclass`
-.......................
+.........................
 - |Feature| :class:`multiclass.OutputCodeClassifier` supports `predict_proba()`
   method for the class probability estimates now. :pr:`25148` by :user:`<dx2-66>`
 
