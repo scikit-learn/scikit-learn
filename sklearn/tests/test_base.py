@@ -692,7 +692,6 @@ def test_estimator_empty_instance_dict(estimator):
 
     Python 3.11+ changed behaviour by returning ``None`` instead of raising an
     ``AttributeError``. Non-regression test for gh-25188.
-
     """
     state = estimator.__getstate__()
     expected = {"_sklearn_version": sklearn.__version__}
