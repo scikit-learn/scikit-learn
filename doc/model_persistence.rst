@@ -135,7 +135,7 @@ you can persist your models as explain in the `docs
 <https://skops.readthedocs.io/en/stable/persistence.html>`__ using
 :func:`skops.io.dump` and :func:`skops.io.dumps`::
 
-    >>> import skops.io as sio
+    >>> import skops.io as sio  # doctest:+SKIP
     >>> obj = sio.dumps(clf)
 
 And you can load them back using :func:`skops.io.load` and
@@ -144,12 +144,12 @@ trusted by you. You can get existing unknown types in a dumped object / file
 using :func:`skops.io.get_untrusted_types`, and after checking its contents,
 pass it to the load function::
 
-    >>> unknown_types = sio.get_untrusted_types(obj)
+    >>> unknown_types = sio.get_untrusted_types(obj)  # doctest:+SKIP
     >>> clf = sio.loads(obj, trusted=unknown_types)
 
 If you trust the source of the file / object, you can pass ``trusted=True``:
 
-    >>> clf = sio.loads(obj, trusted=True)
+    >>> clf = sio.loads(obj, trusted=True)  # doctest:+SKIP
 
 Please report issues and feature requests related to this format on the `skops
 issue tracker <https://github.com/skops-dev/skops/issues>`__.
