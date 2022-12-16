@@ -922,9 +922,3 @@ def test_ovo_consistent_binary_classification():
     ovo.fit(X, y)
 
     assert_array_equal(clf.predict(X), ovo.predict(X))
-
-
-def test_xxx():
-    X, y = iris.data, iris.target
-    model = OutputCodeClassifier(estimator=DecisionTreeClassifier(random_state=0))
-    model.fit(X, y).predict(X[:5])
