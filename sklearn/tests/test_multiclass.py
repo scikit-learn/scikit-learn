@@ -11,7 +11,6 @@ from sklearn.utils._mocking import CheckingClassifier
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
-from sklearn.multiclass import _predict_binary
 from sklearn.utils.multiclass import check_classification_targets, type_of_target
 from sklearn.utils import (
     check_array,
@@ -20,7 +19,6 @@ from sklearn.utils import (
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
-from sklearn.metrics.pairwise import euclidean_distances
 
 from sklearn.svm import LinearSVC, SVC
 from sklearn.naive_bayes import MultinomialNB
