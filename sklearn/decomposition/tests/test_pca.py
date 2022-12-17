@@ -73,7 +73,7 @@ def test_linear_operator_reversed_matmul():
 @pytest.mark.parametrize("n_components", [1, 2, 3, 10, SPARSE_MAX_COMPONENTS])
 @pytest.mark.parametrize("format", ["csr", "csc"])
 @pytest.mark.parametrize("svd_solver", PCA_SOLVERS)
-@pytest.mark.parametrize("rtol", [1e-07, 1e-06, 1e-05, 1e-04, 1e-03, 1e-02, 1e-01, 1e-00])
+@pytest.mark.parametrize("rtol", [1e-07])#, 1e-06, 1e-05, 1e-04, 1e-03, 1e-02, 1e-01, 1e-00])
 def test_pca_sparse(global_random_seed, rtol, svd_solver, format, n_components, density):
     if svd_solver in ["lobpcg", "arpack"] and n_components==SPARSE_MAX_COMPONENTS:
         pytest.skip("lobpcg and arpack don't support full solves")
