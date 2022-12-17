@@ -150,11 +150,11 @@ cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_
 
 cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_suffix}}):
     cdef:
-        const DTYPE_t[:] X_data
+        const {{INPUT_DTYPE_t}}[:] X_data
         const SPARSE_INDEX_TYPE_t[:] X_indices
         const SPARSE_INDEX_TYPE_t[:] X_indptr
 
-        const DTYPE_t[:] Y_data
+        const {{INPUT_DTYPE_t}}[:] Y_data
         const SPARSE_INDEX_TYPE_t[:] Y_indices
         const SPARSE_INDEX_TYPE_t[:] Y_indptr
 

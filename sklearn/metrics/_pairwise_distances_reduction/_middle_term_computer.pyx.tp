@@ -38,6 +38,9 @@ import numpy as np
 from scipy.sparse import issparse, csr_matrix
 from ...utils._typedefs import DTYPE, SPARSE_INDEX_TYPE
 
+
+{{for name_suffix, upcast_to_float64, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
+
 # TODO: If possible optimize this routine to efficiently treat cases where
 # `n_samples_X << n_samples_Y` met in practise when X_test consists of a
 # few samples, and thus when there's a single chunk of X whose number of
@@ -46,13 +49,13 @@ from ...utils._typedefs import DTYPE, SPARSE_INDEX_TYPE
 # TODO: compare this routine with the similar ones in SciPy, especially
 # `csr_matmat` which might implement a better algorithm.
 # See: https://github.com/scipy/scipy/blob/e58292e066ba2cb2f3d1e0563ca9314ff1f4f311/scipy/sparse/sparsetools/csr.h#L603-L669  # noqa
-cdef void _middle_term_sparse_sparse_64(
-    const DTYPE_t[:] X_data,
+cdef void _middle_term_sparse_sparse_{{name_suffix}}(
+    const {{INPUT_DTYPE_t}}[:] X_data,
     const SPARSE_INDEX_TYPE_t[:] X_indices,
     const SPARSE_INDEX_TYPE_t[:] X_indptr,
     ITYPE_t X_start,
     ITYPE_t X_end,
-    const DTYPE_t[:] Y_data,
+    const {{INPUT_DTYPE_t}}[:] Y_data,
     const SPARSE_INDEX_TYPE_t[:] Y_indices,
     const SPARSE_INDEX_TYPE_t[:] Y_indptr,
     ITYPE_t Y_start,
@@ -77,9 +80,6 @@ cdef void _middle_term_sparse_sparse_64(
                     Y_j_col_idx = Y_indices[Y_j_ptr]
                     if X_i_col_idx == Y_j_col_idx:
                         D[k] += -2 * X_data[X_i_ptr] * Y_data[Y_j_ptr]
-
-
-{{for name_suffix, upcast_to_float64, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
 
 
 cdef class MiddleTermComputer{{name_suffix}}:
@@ -350,10 +350,10 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
 
     def __init__(
         self,
-        const DTYPE_t[:] X_data,
+        const {{INPUT_DTYPE_t}}[:] X_data,
         const SPARSE_INDEX_TYPE_t[:] X_indices,
         const SPARSE_INDEX_TYPE_t[:] X_indptr,
-        const DTYPE_t[:] Y_data,
+        const {{INPUT_DTYPE_t}}[:] Y_data,
         const SPARSE_INDEX_TYPE_t[:] Y_indices,
         const SPARSE_INDEX_TYPE_t[:] Y_indptr,
         ITYPE_t effective_n_threads,
@@ -415,7 +415,7 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
                 self.dist_middle_terms_chunks[thread_num].data()
             )
 
-        _middle_term_sparse_sparse_64(
+        _middle_term_sparse_sparse_{{name_suffix}}(
             self.X_data,
             self.X_indices,
             self.X_indptr,
