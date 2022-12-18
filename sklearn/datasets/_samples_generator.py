@@ -18,7 +18,7 @@ import scipy.sparse as sp
 
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
-from ..utils._param_validation import Interval, validate_params
+from ..utils._param_validation import Interval, validate_params, Hidden, StrOptions
 from ..utils import shuffle as util_shuffle
 from ..utils.random import sample_without_replacement
 
@@ -1252,7 +1252,7 @@ def make_low_rank_matrix(
         "n_features": [Interval(Integral, 0, None, closed="neither")],
         "n_nonzero_coefs": [Interval(Integral, 0, None, closed="neither")],
         "random_state": ["random_state"],
-        "data_transposed": ["boolean"],
+        "data_transposed": ["boolean", Hidden(StrOptions({"warn"}))],
     }
 )
 def make_sparse_coded_signal(
@@ -1269,7 +1269,7 @@ def make_sparse_coded_signal(
     Returns a matrix `Y = DX`, such that `D` is of shape `(n_features, n_components)`,
     `X` is of shape `(n_components, n_samples)` and each column of `X` has exactly
     `n_nonzero_coefs` non-zero elements.
-    
+
     Read more in the :ref:`User Guide <sample_generators>`.
 
     Parameters
