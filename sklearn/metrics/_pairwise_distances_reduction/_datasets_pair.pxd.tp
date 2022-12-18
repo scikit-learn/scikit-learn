@@ -41,6 +41,7 @@ cdef class DatasetsPair{{name_suffix}}:
         ITYPE_t Y_start,
         ITYPE_t i,
         ITYPE_t j,
+        ITYPE_t n_Y,
         ITYPE_t thread_num=*
     ) nogil
 

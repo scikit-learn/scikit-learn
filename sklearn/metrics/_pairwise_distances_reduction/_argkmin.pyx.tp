@@ -145,8 +145,9 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
                     val=self.datasets_pair.surrogate_dist(
                         X_start,
                         Y_start,
-                        X_start + i,
-                        Y_start + j,
+                        i,
+                        j,
+                        n_samples_Y,
                         thread_num,
                     ),
                     val_idx=Y_start + j,

@@ -207,6 +207,7 @@ cdef class DatasetsPair{{name_suffix}}:
         ITYPE_t Y_start,
         ITYPE_t i,
         ITYPE_t j,
+        ITYPE_t n_Y,
         ITYPE_t thread_num=0
     ) nogil:
         return self.dist(i, j)
@@ -314,11 +315,12 @@ cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         ITYPE_t Y_start,
         ITYPE_t i,
         ITYPE_t j,
+        ITYPE_t n_Y,
         ITYPE_t thread_num=0,
     ) nogil:
         return self.distance_metric.rdist(
-            &self.X[i, 0],
-            &self.Y[j, 0],
+            &self.X[X_start+i, 0],
+            &self.Y[Y_start+j, 0],
             self.n_features,
         )
 
@@ -501,33 +503,20 @@ cdef class EuclideanDenseDenseDatasetsPair{{name_suffix}}(DenseDenseDatasetsPair
         ITYPE_t Y_start,
         ITYPE_t i,
         ITYPE_t j,
+        ITYPE_t n_Y,
         ITYPE_t thread_num=0,
     ) nogil:
         cdef:
-            # We need to find the chunk-relative index, i_c, j_c
-            # and also the total index i_t, j_t so that:
-            # i_t = X_start + i_c
-            # j_t = Y_start + j_c
-            ITYPE_t i_c = (i < X_start) * i + (i >= X_start) * (i - X_start)
-            ITYPE_t j_c = (j < Y_start) * j + (j >= Y_start) * (j - Y_start)
-
-            ITYPE_t i_t = X_start + i_c
-            ITYPE_t j_t = Y_start + j_c
-
             # Y_chunk_size is constant except for the last chunk that can be smaller.
-            ITYPE_t Y_chunk_size = (
-                (j_t <= self.Y_n_samples_fixed_size) * self.Y_n_samples_chunk
-                + (j_t > self.Y_n_samples_fixed_size) * self.Y_n_samples_last_chunk
-            )
             DTYPE_t dist_middle_term = (
-                self.middle_term_computer.dist_middle_terms_chunks[thread_num][i_c * Y_chunk_size + j_c]
+                self.middle_term_computer.dist_middle_terms_chunks[thread_num][i * n_Y + j]
             )
         # Catastrophic cancellation might cause -0. to be present,
         # e.g. when computing d(x_i, y_i) when X is Y.
         return max(0.,
-            self.X_norm_squared[i_t]
+            self.X_norm_squared[X_start + i]
             + dist_middle_term
-            + self.Y_norm_squared[j_t]
+            + self.Y_norm_squared[Y_start + j]
         )
 
     @final
@@ -575,8 +564,11 @@ cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         ITYPE_t Y_start,
         ITYPE_t i,
         ITYPE_t j,
+        ITYPE_t n_Y,
         ITYPE_t thread_num=0
     ) nogil:
+        i += X_start
+        j += Y_start
         return self.distance_metric.rdist_csr(
             x1_data=&self.X_data[0],
             x1_indices=self.X_indices,
@@ -785,33 +777,20 @@ cdef class EuclideanSparseSparseDatasetsPair{{name_suffix}}(SparseSparseDatasets
         ITYPE_t Y_start,
         ITYPE_t i,
         ITYPE_t j,
+        ITYPE_t n_Y,
         ITYPE_t thread_num=0,
     ) nogil:
         # Y_chunk_size is constant except for the last chunk that can be smaller.
         cdef:
-            # We need to find the chunk-relative index, i_c, j_c
-            # and also the total index i_t, j_t so that:
-            # i_t = X_start + i_c
-            # j_t = Y_start + j_c
-            ITYPE_t i_c = (i < X_start) * i + (i >= X_start) * (i - X_start)
-            ITYPE_t j_c = (j < Y_start) * j + (j >= Y_start) * (j - Y_start)
-
-            ITYPE_t i_t = X_start + i_c
-            ITYPE_t j_t = Y_start + j_c
-
-            ITYPE_t Y_chunk_size = (
-                (j_t <= self.Y_n_samples_fixed_size) * self.Y_n_samples_chunk
-                + (j_t > self.Y_n_samples_fixed_size) * self.Y_n_samples_last_chunk
-            )
             DTYPE_t dist_middle_term = (
-                self.middle_term_computer.dist_middle_terms_chunks[thread_num][i_c * Y_chunk_size + j_c]
+                self.middle_term_computer.dist_middle_terms_chunks[thread_num][i * n_Y + j]
             )
         # Catastrophic cancellation might cause -0. to be present,
         # e.g. when computing d(x_i, y_i) when X is Y.
         return max(0.,
-            self.X_norm_squared[i_t]
+            self.X_norm_squared[i + X_start]
             + dist_middle_term
-            + self.Y_norm_squared[j_t]
+            + self.Y_norm_squared[j + Y_start]
         )
 
     @final
@@ -892,8 +871,11 @@ cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         ITYPE_t Y_start,
         ITYPE_t i,
         ITYPE_t j,
+        ITYPE_t n_Y,
         ITYPE_t thread_num=0,
     ) nogil:
+        i += X_start
+        j += Y_start
         return self.distance_metric.rdist_csr(
             x1_data=&self.X_data[0],
             x1_indices=self.X_indices,
@@ -965,10 +947,11 @@ cdef class DenseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         ITYPE_t Y_start,
         ITYPE_t i,
         ITYPE_t j,
+        ITYPE_t n_Y,
         ITYPE_t thread_num=0,
     ) nogil:
         # Swapping arguments on the same interface
-        return self.datasets_pair.surrogate_dist(Y_start, X_start, j, i)
+        return self.datasets_pair.surrogate_dist(Y_start, X_start, j, i, n_Y)
 
     @final
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:

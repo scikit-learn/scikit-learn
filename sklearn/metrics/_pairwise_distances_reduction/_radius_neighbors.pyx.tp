@@ -148,10 +148,11 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
         cdef:
             ITYPE_t i, j
             DTYPE_t r_dist_i_j
+            ITYPE_t n_Y = Y_end - Y_start
 
         for i in range(X_start, X_end):
             for j in range(Y_start, Y_end):
-                r_dist_i_j = self.datasets_pair.surrogate_dist(X_start, Y_start, i, j, thread_num)
+                r_dist_i_j = self.datasets_pair.surrogate_dist(X_start, Y_start, i, j, n_Y, thread_num)
                 if r_dist_i_j <= self.r_radius:
                     deref(self.neigh_distances_chunks[thread_num])[i].push_back(r_dist_i_j)
                     deref(self.neigh_indices_chunks[thread_num])[i].push_back(j)
