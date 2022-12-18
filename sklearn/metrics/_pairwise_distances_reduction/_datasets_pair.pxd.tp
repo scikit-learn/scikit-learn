@@ -35,7 +35,14 @@ cdef class DatasetsPair{{name_suffix}}:
 
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil
 
-    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j, ITYPE_t thread_num=*) nogil
+    cdef DTYPE_t surrogate_dist(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t Y_start,
+        ITYPE_t i,
+        ITYPE_t j,
+        ITYPE_t thread_num=*
+    ) nogil
 
     cdef void _parallel_on_X_parallel_init(self, ITYPE_t thread_num) nogil
 
@@ -84,9 +91,10 @@ cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
 
 cdef class EuclideanDenseDenseDatasetsPair{{name_suffix}}(DenseDenseDatasetsPair{{name_suffix}}):
     cdef:
-        ITYPE_t X_n_chunks
+        ITYPE_t Y_n_chunks
         ITYPE_t Y_n_samples_chunk
         ITYPE_t Y_n_samples_last_chunk
+        ITYPE_t Y_n_samples_fixed_size
 
         bint use_squared_distances
 
@@ -109,9 +117,10 @@ cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
 
 cdef class EuclideanSparseSparseDatasetsPair{{name_suffix}}(SparseSparseDatasetsPair{{name_suffix}}):
     cdef:
-        ITYPE_t X_n_chunks
+        ITYPE_t Y_n_chunks
         ITYPE_t Y_n_samples_chunk
         ITYPE_t Y_n_samples_last_chunk
+        ITYPE_t Y_n_samples_fixed_size
 
         bint use_squared_distances
 

@@ -143,6 +143,8 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
                     indices=heaps_indices + i * self.k,
                     size=self.k,
                     val=self.datasets_pair.surrogate_dist(
+                        X_start,
+                        Y_start,
                         X_start + i,
                         Y_start + j,
                         thread_num,

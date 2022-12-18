@@ -202,7 +202,13 @@ cdef class DatasetsPair{{name_suffix}}:
         # TODO: add "with gil: raise" here when supporting Cython 3.0
         return -999
 
-    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j, ITYPE_t thread_num=0) nogil:
+    cdef DTYPE_t surrogate_dist(self,
+        ITYPE_t X_start,
+        ITYPE_t Y_start,
+        ITYPE_t i,
+        ITYPE_t j,
+        ITYPE_t thread_num=0
+    ) nogil:
         return self.dist(i, j)
 
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
@@ -302,8 +308,19 @@ cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         return self.Y.shape[0]
 
     @final
-    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j, ITYPE_t thread_num=0) nogil:
-        return self.distance_metric.rdist(&self.X[i, 0], &self.Y[j, 0], self.n_features)
+    cdef DTYPE_t surrogate_dist(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t Y_start,
+        ITYPE_t i,
+        ITYPE_t j,
+        ITYPE_t thread_num=0,
+    ) nogil:
+        return self.distance_metric.rdist(
+            &self.X[i, 0],
+            &self.Y[j, 0],
+            self.n_features,
+        )
 
     @final
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
@@ -319,7 +336,7 @@ cdef class EuclideanDenseDenseDatasetsPair{{name_suffix}}(DenseDenseDatasetsPair
         Y,
         {{DistanceMetric}} distance_metric,
         bint use_squared_distances,
-        ITYPE_t X_n_chunks,
+        ITYPE_t Y_n_chunks,
         ITYPE_t Y_n_samples_chunk,
         ITYPE_t Y_n_samples_last_chunk,
         ITYPE_t effective_n_threads,
@@ -328,9 +345,11 @@ cdef class EuclideanDenseDenseDatasetsPair{{name_suffix}}(DenseDenseDatasetsPair
         super().__init__(X, Y, distance_metric)
 
         # Used to compute the surrogate distance
-        self.X_n_chunks = X_n_chunks
+        self.Y_n_chunks = Y_n_chunks
         self.Y_n_samples_chunk = Y_n_samples_chunk
         self.Y_n_samples_last_chunk = Y_n_samples_last_chunk
+        # The number of samples belonging to the all-but-last chunks of fixed width.
+        self.Y_n_samples_fixed_size = (Y_n_chunks - 1) * Y_n_samples_chunk
 
         self.use_squared_distances = use_squared_distances
 
@@ -476,21 +495,39 @@ cdef class EuclideanDenseDenseDatasetsPair{{name_suffix}}(DenseDenseDatasetsPair
         )
 
     @final
-    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j, ITYPE_t thread_num=0) nogil:
+    cdef DTYPE_t surrogate_dist(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t Y_start,
+        ITYPE_t i,
+        ITYPE_t j,
+        ITYPE_t thread_num=0,
+    ) nogil:
         cdef:
+            # We need to find the chunk-relative index, i_c, j_c
+            # and also the total index i_t, j_t so that:
+            # i_t = X_start + i_c
+            # j_t = Y_start + j_c
+            ITYPE_t i_c = (i < X_start) * i + (i >= X_start) * (i - X_start)
+            ITYPE_t j_c = (j < Y_start) * j + (j >= Y_start) * (j - Y_start)
+
+            ITYPE_t i_t = X_start + i_c
+            ITYPE_t j_t = Y_start + j_c
+
+            # Y_chunk_size is constant except for the last chunk that can be smaller.
             ITYPE_t Y_chunk_size = (
-                (i < (self.X_n_chunks - 1)) * self.Y_n_samples_chunk
-                + (i == (self.X_n_chunks - 1)) * self.Y_n_samples_last_chunk
+                (j_t <= self.Y_n_samples_fixed_size) * self.Y_n_samples_chunk
+                + (j_t > self.Y_n_samples_fixed_size) * self.Y_n_samples_last_chunk
             )
             DTYPE_t dist_middle_term = (
-                self.middle_term_computer.dist_middle_terms_chunks[thread_num][i * Y_chunk_size + j]
+                self.middle_term_computer.dist_middle_terms_chunks[thread_num][i_c * Y_chunk_size + j_c]
             )
         # Catastrophic cancellation might cause -0. to be present,
         # e.g. when computing d(x_i, y_i) when X is Y.
         return max(0.,
-            self.X_norm_squared[i]
+            self.X_norm_squared[i_t]
             + dist_middle_term
-            + self.Y_norm_squared[j]
+            + self.Y_norm_squared[j_t]
         )
 
     @final
@@ -532,7 +569,14 @@ cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         return self.Y_indptr.shape[0] - 1
 
     @final
-    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j, ITYPE_t thread_num=0) nogil:
+    cdef DTYPE_t surrogate_dist(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t Y_start,
+        ITYPE_t i,
+        ITYPE_t j,
+        ITYPE_t thread_num=0
+    ) nogil:
         return self.distance_metric.rdist_csr(
             x1_data=&self.X_data[0],
             x1_indices=self.X_indices,
@@ -569,7 +613,7 @@ cdef class EuclideanSparseSparseDatasetsPair{{name_suffix}}(SparseSparseDatasets
         Y,
         {{DistanceMetric}} distance_metric,
         bint use_squared_distances,
-        ITYPE_t X_n_chunks,
+        ITYPE_t Y_n_chunks,
         ITYPE_t Y_n_samples_chunk,
         ITYPE_t Y_n_samples_last_chunk,
         ITYPE_t effective_n_threads
@@ -578,9 +622,11 @@ cdef class EuclideanSparseSparseDatasetsPair{{name_suffix}}(SparseSparseDatasets
         super().__init__(X, Y, distance_metric)
 
         # Used to compute the surrogate distance.
-        self.X_n_chunks = X_n_chunks
+        self.Y_n_chunks = Y_n_chunks
         self.Y_n_samples_chunk = Y_n_samples_chunk
         self.Y_n_samples_last_chunk = Y_n_samples_last_chunk
+        # The number of samples belonging to the all-but-last chunks of fixed width.
+        self.Y_n_samples_fixed_size = (Y_n_chunks - 1) * Y_n_samples_chunk
 
         self.use_squared_distances = use_squared_distances
 
@@ -733,22 +779,39 @@ cdef class EuclideanSparseSparseDatasetsPair{{name_suffix}}(SparseSparseDatasets
         )
 
     @final
-    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j, ITYPE_t thread_num=0) nogil:
+    cdef DTYPE_t surrogate_dist(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t Y_start,
+        ITYPE_t i,
+        ITYPE_t j,
+        ITYPE_t thread_num=0,
+    ) nogil:
         # Y_chunk_size is constant except for the last chunk that can be smaller.
         cdef:
+            # We need to find the chunk-relative index, i_c, j_c
+            # and also the total index i_t, j_t so that:
+            # i_t = X_start + i_c
+            # j_t = Y_start + j_c
+            ITYPE_t i_c = (i < X_start) * i + (i >= X_start) * (i - X_start)
+            ITYPE_t j_c = (j < Y_start) * j + (j >= Y_start) * (j - Y_start)
+
+            ITYPE_t i_t = X_start + i_c
+            ITYPE_t j_t = Y_start + j_c
+
             ITYPE_t Y_chunk_size = (
-                (i < (self.X_n_chunks - 1)) * self.Y_n_samples_chunk
-                + (i == (self.X_n_chunks - 1)) * self.Y_n_samples_last_chunk
+                (j_t <= self.Y_n_samples_fixed_size) * self.Y_n_samples_chunk
+                + (j_t > self.Y_n_samples_fixed_size) * self.Y_n_samples_last_chunk
             )
             DTYPE_t dist_middle_term = (
-                self.middle_term_computer.dist_middle_terms_chunks[thread_num][i * Y_chunk_size + j]
+                self.middle_term_computer.dist_middle_terms_chunks[thread_num][i_c * Y_chunk_size + j_c]
             )
         # Catastrophic cancellation might cause -0. to be present,
         # e.g. when computing d(x_i, y_i) when X is Y.
         return max(0.,
-            self.X_norm_squared[i]
+            self.X_norm_squared[i_t]
             + dist_middle_term
-            + self.Y_norm_squared[j]
+            + self.Y_norm_squared[j_t]
         )
 
     @final
@@ -824,7 +887,13 @@ cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         return self.n_Y
 
     @final
-    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j, ITYPE_t thread_num=0) nogil:
+    cdef DTYPE_t surrogate_dist(self,
+        ITYPE_t X_start,
+        ITYPE_t Y_start,
+        ITYPE_t i,
+        ITYPE_t j,
+        ITYPE_t thread_num=0,
+    ) nogil:
         return self.distance_metric.rdist_csr(
             x1_data=&self.X_data[0],
             x1_indices=self.X_indices,
@@ -890,9 +959,16 @@ cdef class DenseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         return self.datasets_pair.n_samples_X()
 
     @final
-    cdef DTYPE_t surrogate_dist(self, ITYPE_t i, ITYPE_t j, ITYPE_t thread_num=0) nogil:
+    cdef DTYPE_t surrogate_dist(
+        self,
+        ITYPE_t X_start,
+        ITYPE_t Y_start,
+        ITYPE_t i,
+        ITYPE_t j,
+        ITYPE_t thread_num=0,
+    ) nogil:
         # Swapping arguments on the same interface
-        return self.datasets_pair.surrogate_dist(j, i)
+        return self.datasets_pair.surrogate_dist(Y_start, X_start, j, i)
 
     @final
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:

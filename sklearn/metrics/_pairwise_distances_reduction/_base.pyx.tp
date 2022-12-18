@@ -244,7 +244,7 @@ cdef class BaseDistancesReduction{{name_suffix}}:
                 dist_middle_terms_chunks_size=(self.Y_n_samples_chunk * self.X_n_samples_chunk),
                 X_norm_squared=X_norm_squared,
                 Y_norm_squared=Y_norm_squared,
-                X_n_chunks=self.X_n_chunks,
+                Y_n_chunks=self.Y_n_chunks,
                 Y_n_samples_chunk=self.Y_n_samples_chunk,
                 Y_n_samples_last_chunk=self.Y_n_samples_last_chunk,
                 chunk_size=self.chunk_size,
