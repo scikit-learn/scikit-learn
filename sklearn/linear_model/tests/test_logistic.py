@@ -23,6 +23,7 @@ from sklearn.utils import shuffle
 from sklearn.linear_model import SGDClassifier
 from sklearn.preprocessing import scale
 from sklearn.utils._testing import skip_if_no_parallel
+from sklearn.svm import l1_min_c
 
 from sklearn.exceptions import ConvergenceWarning
 from sklearn.linear_model._logistic import (
@@ -1970,3 +1971,22 @@ def test_warning_on_penalty_string_none():
     )
     with pytest.warns(FutureWarning, match=warning_message):
         lr.fit(iris.data, target)
+
+
+def test_liblinear_not_stuck():
+    # Non-regression https://github.com/scikit-learn/scikit-learn/issues/18264
+    X = iris.data.copy()
+    y = iris.target.copy()
+    X = X[y != 2]
+    y = y[y != 2]
+    X_prep = StandardScaler().fit_transform(X)
+
+    C = l1_min_c(X, y, loss='log') * np.logspace(0, 10, 30)[1]
+    clf = LogisticRegression(penalty='l1', solver='liblinear', tol=1e-6,
+                             max_iter=int(1e2), intercept_scaling=10000.,
+                             random_state=0, C=C)
+
+    # test that the fit does not raise a ConvergenceWarning
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        clf.fit(X_prep, y)

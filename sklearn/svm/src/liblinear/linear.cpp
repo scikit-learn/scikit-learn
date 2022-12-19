@@ -1769,6 +1769,7 @@ static int solve_l1r_lr(
 	int max_num_linesearch = 20;
 	int active_size;
 	int QP_active_size;
+	int QP_no_change = 0;
 
 	double nu = 1e-12;
 	double inner_eps = 1;
@@ -1896,7 +1897,7 @@ static int solve_l1r_lr(
 		if(newton_iter == 0)
 			Gnorm1_init = Gnorm1_new;
 
-		if(Gnorm1_new <= eps*Gnorm1_init)
+		if(Gnorm1_new <= eps*Gnorm1_init || QP_no_change >= 10)
 			break;
 
 		iter = 0;
@@ -1905,6 +1906,9 @@ static int solve_l1r_lr(
 
 		for(int i=0; i<l; i++)
 			xTd[i] = 0;
+
+		// if no update in QP inner-loop ten times in a row, break outer-loop
+		QP_no_change++;
 
 		// optimize QP over wpd
 		while(iter < max_iter)
@@ -1955,9 +1959,6 @@ static int solve_l1r_lr(
 				else
 					violation = fabs(Gn);
 
-				QP_Gmax_new = max(QP_Gmax_new, violation);
-				QP_Gnorm1_new += violation;
-
 				// obtain solution of one-variable problem
 				if(Gp < H*wpd[j])
 					z = -Gp/H;
@@ -1969,6 +1970,10 @@ static int solve_l1r_lr(
 				if(fabs(z) < 1.0e-12)
 					continue;
 				z = min(max(z,-10.0),10.0);
+
+				QP_no_change = 0;
+				QP_Gmax_new = max(QP_Gmax_new, violation);
+				QP_Gnorm1_new += violation;
 
 				wpd[j] += z;
 
