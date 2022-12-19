@@ -718,7 +718,6 @@ def test_logistic_regression_sample_weights():
     sample_weight = y + 1
 
     for LR in [LogisticRegression, LogisticRegressionCV]:
-
         kw = {"random_state": 42, "fit_intercept": False, "multi_class": "ovr"}
         if LR is LogisticRegressionCV:
             kw.update({"Cs": 3, "cv": 3})
@@ -1859,7 +1858,6 @@ def test_scores_attribute_layout_elasticnet():
 
     for i, C in enumerate(Cs):
         for j, l1_ratio in enumerate(l1_ratios):
-
             lr = LogisticRegression(
                 penalty="elasticnet",
                 solver="saga",
@@ -1981,10 +1979,16 @@ def test_liblinear_not_stuck():
     y = y[y != 2]
     X_prep = StandardScaler().fit_transform(X)
 
-    C = l1_min_c(X, y, loss='log') * np.logspace(0, 10, 30)[1]
-    clf = LogisticRegression(penalty='l1', solver='liblinear', tol=1e-6,
-                             max_iter=int(1e2), intercept_scaling=10000.,
-                             random_state=0, C=C)
+    C = l1_min_c(X, y, loss="log") * np.logspace(0, 10, 30)[1]
+    clf = LogisticRegression(
+        penalty="l1",
+        solver="liblinear",
+        tol=1e-6,
+        max_iter=int(1e2),
+        intercept_scaling=10000.0,
+        random_state=0,
+        C=C,
+    )
 
     # test that the fit does not raise a ConvergenceWarning
     with warnings.catch_warnings():
