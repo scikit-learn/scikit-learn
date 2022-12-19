@@ -645,6 +645,7 @@ def pairwise_distances_argmin_min(
 
         .. note::
            `'kulsinski'` is deprecated from SciPy 1.8. Use `'kulczynski1'` instead.
+           Note that the two metrics are not identical.
 
     metric_kwargs : dict, default=None
         Keyword arguments to pass to specified metric function.
@@ -765,6 +766,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
 
         .. note::
            `'kulsinski'` is deprecated from SciPy 1.8. Use `'kulczynski1'` instead.
+           Note that the two metrics are not identical.
 
     metric_kwargs : dict, default=None
         Keyword arguments to pass to specified metric function.
@@ -1916,6 +1918,7 @@ def pairwise_distances(
 
     .. note::
         `'kulsinski'` is deprecated from SciPy 1.8. Use `'kulczynski1'` instead.
+        Note that the two metrics are not identical.
 
     Note that in the case of 'cityblock', 'cosine' and 'euclidean' (which are
     valid scipy.spatial.distance metrics), the scikit-learn implementation
