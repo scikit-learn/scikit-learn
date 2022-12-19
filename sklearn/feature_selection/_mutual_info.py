@@ -138,9 +138,9 @@ def _compute_mi_cd(c, d, n_neighbors):
     # check if after masking instances are left
     if _num_samples(c) == 0:
         raise ValueError(
-            "Found array with 0 sample(s) after masking"
-            " points with unique labels. Ensure to have at least"
-            " two instances with the same label."
+            "Found array with 0 samples after masking"
+            " points with unique labels. Ensure that at least"
+            " two instances share the same label."
         )
 
     kd = KDTree(c)
