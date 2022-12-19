@@ -236,3 +236,25 @@ def test_mutual_information_symmetry_classif_regression(correlated, global_rando
     )
 
     assert mi_classif == pytest.approx(mi_regression)
+
+
+def test_mutual_info_error_handling_for_unique_labels():
+    """Check that the correct ValueError is raised when calling `mutual_info_classif`
+    with only unique labels.
+    """
+
+    with pytest.raises(ValueError) as exc_info:
+        a = [[1, 0, 1], [0, 1, 1]]
+        b = [0, 1]
+
+        mutual_info_classif(a, b)
+
+    exception_raised = exc_info.value
+    exception_expected = (
+        "Found array with 0 samples after masking"
+        " points with unique labels. Ensure that at least"
+        " two instances share the same label."
+    )
+
+    # check if the exception is found
+    assert exception_raised != exception_expected
