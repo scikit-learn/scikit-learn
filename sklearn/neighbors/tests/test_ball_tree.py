@@ -5,6 +5,7 @@ import pytest
 from numpy.testing import assert_array_almost_equal
 from sklearn.neighbors._ball_tree import BallTree
 from sklearn.utils import check_random_state
+from sklearn.utils.fixes import parse_version, sp_version
 from sklearn.utils.validation import check_array
 from sklearn.utils._testing import _convert_container
 
@@ -30,7 +31,7 @@ BOOLEAN_METRICS = [
     "matching",
     "jaccard",
     "dice",
-    "kulsinski",
+    "kulsinski" if sp_version < parse_version("1.8") else "kulczynski1",
     "rogerstanimoto",
     "russellrao",
     "sokalmichener",

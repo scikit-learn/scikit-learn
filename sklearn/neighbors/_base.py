@@ -57,7 +57,7 @@ VALID_METRICS = dict(
                 "dice",
                 "hamming",
                 "jaccard",
-                "kulsinski",
+                "kulsinski" if sp_version < parse_version("1.8") else "kulczynski1",
                 "mahalanobis",
                 "matching",
                 "minkowski",

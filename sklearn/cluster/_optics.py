@@ -81,7 +81,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
           'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'kulczynski1',
           'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
           'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
           'yule']
@@ -89,6 +89,9 @@ class OPTICS(ClusterMixin, BaseEstimator):
         Sparse matrices are only supported by scikit-learn metrics.
         See the documentation for scipy.spatial.distance for details on these
         metrics.
+
+        .. note::
+           `'kulsinski'` is deprecated from SciPy 1.8. Use `'kulczynski1'` instead.
 
     p : float, default=2
         Parameter for the Minkowski metric from
@@ -465,13 +468,16 @@ def compute_optics_graph(
           'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'kulczynski1',
           'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
           'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
           'yule']
 
         See the documentation for scipy.spatial.distance for details on these
         metrics.
+
+        .. note::
+           `'kulsinski'` is deprecated from SciPy 1.8. Use `'kulczynski1'` instead.
 
     p : int, default=2
         Parameter for the Minkowski metric from
