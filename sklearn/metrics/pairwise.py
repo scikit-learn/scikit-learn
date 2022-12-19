@@ -129,7 +129,7 @@ def check_pairwise_arrays(
         This is particularly useful when passing non-numerical inputs and a custom
         metric.
 
-         .. versionadded:: 1.2
+         .. versionadded:: 1.2.1
 
     copy : bool, default=False
         Whether a forced copy will be triggered. If copy=False, a copy might
@@ -2004,7 +2004,7 @@ def pairwise_distances(
         This is particularly useful when passing non-numerical inputs and a custom
         metric.
 
-         .. versionadded:: 1.2
+         .. versionadded:: 1.2.1
 
     **kwds : optional keyword parameters
         Any further parameters are passed directly to the distance function.
