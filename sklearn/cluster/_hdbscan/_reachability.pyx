@@ -10,7 +10,6 @@ cimport numpy as cnp
 import numpy as np
 from scipy.sparse import issparse
 from cython cimport floating, integral
-from cython.parallel cimport prange
 from libc.math cimport isfinite, INFINITY
 
 cnp.import_array()
@@ -111,7 +110,9 @@ def _dense_mutual_reachability_graph(
     )
 
     with nogil:
-        for i in prange(n_samples):
+        # TODO: Update w/ prange with thread count based on
+        # _openmp_effective_n_threads
+        for i in range(n_samples):
             for j in range(n_samples):
                 mutual_reachibility_distance = max(
                     core_distances[i],
