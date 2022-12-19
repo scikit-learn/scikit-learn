@@ -106,6 +106,7 @@ METRIC_MAPPING{{name_suffix}} = {
     'jaccard': JaccardDistance{{name_suffix}},
     'dice': DiceDistance{{name_suffix}},
     'kulsinski': KulsinskiDistance{{name_suffix}},
+    'kulczynski1': KulsinskiDistance{{name_suffix}},
     'rogerstanimoto': RogersTanimotoDistance{{name_suffix}},
     'russellrao': RussellRaoDistance{{name_suffix}},
     'sokalmichener': SokalMichenerDistance{{name_suffix}},
@@ -214,6 +215,7 @@ cdef class DistanceMetric{{name_suffix}}:
     "matching"         MatchingDistance         NNEQ / N
     "dice"             DiceDistance             NNEQ / (NTT + NNZ)
     "kulsinski"        KulsinskiDistance        (NNEQ + N - NTT) / (NNEQ + N)
+    "kulczynski1"      KulsinskiDistance        (NNEQ + N - NTT) / (NNEQ + N)
     "rogerstanimoto"   RogersTanimotoDistance   2 * NNEQ / (N + NNEQ)
     "russellrao"       RussellRaoDistance       (N - NTT) / N
     "sokalmichener"    SokalMichenerDistance    2 * NNEQ / (N + NNEQ)
