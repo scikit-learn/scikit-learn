@@ -115,6 +115,10 @@ enhance the functionality of scikit-learn's estimators.
   Scikit-learn pipelines to `ONNX <https://onnx.ai/>`_ for interchange and
   prediction.
 
+` `skops.io <https://skops.readthedocs.io/en/stable/persistence.html>`__ A
+  persistence model more secure than pickle, which can be used instead of
+  pickle in most common cases.
+
 - `sklearn2pmml <https://github.com/jpmml/sklearn2pmml>`_
   Serialization of a wide variety of scikit-learn estimators and transformers
   into PMML with the help of `JPMML-SkLearn <https://github.com/jpmml/jpmml-sklearn>`_
