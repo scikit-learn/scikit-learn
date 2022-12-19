@@ -44,7 +44,7 @@ from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MultiOutputMixin
 from .base import MetaEstimatorMixin, is_regressor
 from .preprocessing import LabelBinarizer
-from .metrics._pairwise_distances_reduction import ArgKmin
+from .metrics.pairwise import pairwise_distances_argmin
 from .utils import check_random_state
 from .utils._param_validation import HasMethods, Interval
 from .utils._tags import _safe_tags
@@ -1039,16 +1039,9 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             Predicted multi-class targets.
         """
         check_is_fitted(self)
-        # ArgKmin only accept C-contiguous array. The aggregated predictions need to be
+        # ArgKmin only accepts C-contiguous array. The aggregated predictions need to be
         # transposed. We therefore create a F-contiguous array to avoid a copy and have
         # a C-contiguous array after the transpose operation.
         Y = np.array([_predict_binary(e, X) for e in self.estimators_], order="F").T
-        pred = ArgKmin.compute(
-            Y,
-            self.code_book_,
-            k=1,
-            metric="euclidean",
-            strategy="auto",
-            return_distance=False,
-        ).ravel()
+        pred = pairwise_distances_argmin(Y, self.code_book_, metric="euclidean")
         return self.classes_[pred]
