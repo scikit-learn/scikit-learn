@@ -790,6 +790,19 @@ def explained_variance_score(
     )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "multioutput": [
+            StrOptions({"raw_values", "uniform_average", "variance_weighted"}),
+            "array-like",
+            None,
+        ],
+        "force_finite": ["boolean"],
+    }
+)
 def r2_score(
     y_true,
     y_pred,
