@@ -79,22 +79,21 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
+        # Preserve X when X is a dataframe and the output is configured to
+        # be pandas.
         output_config_dense = _get_output_config("transform", estimator=self)["dense"]
-        if hasattr(X, "iloc") and output_config_dense == "pandas":
-            # Only perform input validation on feature names and n_features when the
-            # output is a dataframe, preserving the dataframe for _transform to mask
-            self._check_feature_names(X, reset=False)
-            self._check_n_features(X, reset=False)
-        else:
-            # note: we use _safe_tags instead of _get_tags because this is a
-            # public Mixin.
-            X = self._validate_data(
-                X,
-                dtype=None,
-                accept_sparse="csr",
-                force_all_finite=not _safe_tags(self, key="allow_nan"),
-                reset=False,
-            )
+        preserve_X = hasattr(X, "iloc") and output_config_dense == "pandas"
+
+        # note: we use _safe_tags instead of _get_tags because this is a
+        # public Mixin.
+        X = self._validate_data(
+            X,
+            dtype=None,
+            accept_sparse="csr",
+            force_all_finite=not _safe_tags(self, key="allow_nan"),
+            cast_to_ndarray=not preserve_X,
+            reset=False,
+        )
         return self._transform(X)
 
     def _transform(self, X):
