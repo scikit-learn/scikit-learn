@@ -33,6 +33,7 @@ from sklearn.preprocessing import scale
 from sklearn.pipeline import make_pipeline
 from sklearn.dummy import DummyClassifier
 from sklearn.base import BaseEstimator, ClassifierMixin, clone
+from sklearn.base import is_regressor
 from sklearn.exceptions import NotFittedError
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
@@ -65,7 +66,7 @@ iris = load_iris()
 
 
 @pytest.mark.parametrize(
-    "Estimator, method, data",
+    "estimator, method, data",
     [
         (GradientBoostingClassifier, "auto", binary_classification_data),
         (GradientBoostingClassifier, "auto", multiclass_classification_data),
@@ -84,14 +85,14 @@ iris = load_iris()
 @pytest.mark.parametrize("grid_resolution", (5, 10))
 @pytest.mark.parametrize("features", ([1], [1, 2]))
 @pytest.mark.parametrize("kind", ("average", "individual", "both"))
-def test_output_shape(Estimator, method, data, grid_resolution, features, kind):
+def test_output_shape(estimator, method, data, grid_resolution, features, kind):
     # Check that partial_dependence has consistent output shape for different
     # kinds of estimators:
     # - classifiers with binary and multiclass settings
     # - regressors
     # - multi-task regressors
 
-    est = Estimator()
+    est = estimator()
 
     # n_target corresponds to the number of classes (1 for binary classif) or
     # the number of tasks / outputs in multi task settings. It's equal to 1 for
@@ -275,7 +276,7 @@ def test_partial_dependence_helpers(est, method, target_feature):
 
     if method == "brute":
         pdp, predictions = _partial_dependence_brute(
-            est, grid, features, X, response_method="auto"
+            est, grid, features, X, response_method="auto", sample_weight=None
         )
     else:
         pdp = _partial_dependence_recursion(est, grid, features)
@@ -446,7 +447,7 @@ def test_partial_dependence_easy_target(est, power):
 
 
 @pytest.mark.parametrize(
-    "Estimator",
+    "estimator",
     (
         sklearn.tree.DecisionTreeClassifier,
         sklearn.tree.ExtraTreeClassifier,
@@ -456,14 +457,14 @@ def test_partial_dependence_easy_target(est, power):
         sklearn.ensemble.RandomForestClassifier,
     ),
 )
-def test_multiclass_multioutput(Estimator):
+def test_multiclass_multioutput(estimator):
     # Make sure error is raised for multiclass-multioutput classifiers
 
     # make multiclass-multioutput dataset
     X, y = make_classification(n_classes=3, n_clusters_per_class=1, random_state=0)
     y = np.array([y, y]).T
 
-    est = Estimator()
+    est = estimator()
     est.fit(X, y)
 
     with pytest.raises(
@@ -631,7 +632,7 @@ def test_warning_recursion_non_constant_init():
         partial_dependence(gbc, X, [0], method="recursion", kind="average")
 
 
-def test_partial_dependence_sample_weight():
+def test_partial_dependence_sample_weight_of_fitted_estimator():
     # Test near perfect correlation between partial dependence and diagonal
     # when sample weights emphasize y = x predictions
     # non-regression test for #13193
@@ -821,14 +822,14 @@ def test_partial_dependence_unfitted(estimator):
 
 
 @pytest.mark.parametrize(
-    "Estimator, data",
+    "estimator, data",
     [
         (LinearRegression, multioutput_regression_data),
         (LogisticRegression, binary_classification_data),
     ],
 )
-def test_kind_average_and_average_of_individual(Estimator, data):
-    est = Estimator()
+def test_kind_average_and_average_of_individual(estimator, data):
+    est = estimator()
     (X, y), n_targets = data
     est.fit(X, y)
 
@@ -836,3 +837,92 @@ def test_kind_average_and_average_of_individual(Estimator, data):
     pdp_ind = partial_dependence(est, X=X, features=[1, 2], kind="individual")
     avg_ind = np.mean(pdp_ind["individual"], axis=1)
     assert_allclose(avg_ind, pdp_avg["average"])
+
+
+@pytest.mark.parametrize(
+    "estimator, data",
+    [
+        (LinearRegression, multioutput_regression_data),
+        (LogisticRegression, binary_classification_data),
+    ],
+)
+def test_partial_dependence_kind_individual_ignores_sample_weight(estimator, data):
+    est = estimator()
+    (X, y), n_targets = data
+    sample_weight = [1] + [0]*(len(X)-1)
+    est.fit(X, y)
+
+    pdp_nsw = partial_dependence(est, X=X, features=[1, 2], kind="individual")
+    pdp_sw = partial_dependence(
+        est, X=X, features=[1, 2], kind="individual",
+        sample_weight=sample_weight
+        )
+    assert_allclose(pdp_nsw["individual"], pdp_sw["individual"])
+    assert_allclose(pdp_nsw["values"], pdp_sw["values"])
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        LinearRegression(),
+        LogisticRegression(),
+        RandomForestRegressor(),
+        GradientBoostingClassifier(),
+    ],
+)
+def test_partial_dependence_sample_weight_ind_equals_one(estimator):
+    X, y = iris.data, iris.target
+    preprocessor = make_column_transformer(
+        (StandardScaler(), [0, 2]), (RobustScaler(), [1, 3])
+    )
+    pipe = make_pipeline(preprocessor, estimator).fit(X, y)
+
+    for sample_weight_ind_equals_one in [0, 1, -1]:
+        sample_weight = np.zeros(len(X))
+        sample_weight[sample_weight_ind_equals_one] = 1
+        pdp_sw = partial_dependence(
+            pipe, X, [2, 3], kind='average', sample_weight=sample_weight,
+            grid_resolution=10)
+        pdp_ind = partial_dependence(
+            pipe, X, [2, 3], kind='individual', grid_resolution=10)
+        output_dim = 1 if is_regressor(pipe) else len(np.unique(y))
+        for i in range(output_dim):
+            assert_allclose(
+                pdp_ind['individual'][i][sample_weight_ind_equals_one],
+                pdp_sw['average'][i])
+
+
+@pytest.mark.parametrize(
+    "estimator, data",
+    [
+        (LinearRegression, multioutput_regression_data),
+        (LogisticRegression, binary_classification_data),
+    ],
+)
+def test_partial_dependece_equals_sample_weights_same_as_none(estimator, data):
+    est = estimator()
+    (X, y), n_targets = data
+    est.fit(X, y)
+    sample_weight = np.ones(len(X))
+
+    pdp_nsw = partial_dependence(est, X=X, features=[1, 2], kind="average")
+    pdp_sw = partial_dependence(
+        est, X=X, features=[1, 2], kind="average", sample_weight=sample_weight)
+    assert_allclose(pdp_nsw["average"], pdp_sw["average"])
+    pdp_sw2 = partial_dependence(
+        est, X=X, features=[1, 2], kind="average", sample_weight=2*sample_weight)
+    assert_allclose(pdp_nsw["average"], pdp_sw2["average"])
+
+
+def test_partial_dependence_sample_weight_size_error():
+    est = LogisticRegression()
+    (X, y), n_targets = binary_classification_data
+    sample_weight = np.ones(len(X))
+    est.fit(X, y)
+
+    with pytest.raises(
+        ValueError,
+        match="input variables with inconsistent numbers of samples"):
+            partial_dependence(
+                est, X, features=[0], sample_weight=sample_weight[1:],
+                grid_resolution=10)

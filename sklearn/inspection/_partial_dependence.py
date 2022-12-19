@@ -20,6 +20,7 @@ from ..utils import _safe_indexing
 from ..utils import _safe_assign
 from ..utils import _determine_key_type
 from ..utils import _get_column_indices
+from ..utils import column_or_1d, check_consistent_length
 from ..utils.validation import check_is_fitted
 from ..utils import Bunch
 from ..tree import DecisionTreeRegressor
@@ -126,7 +127,7 @@ def _partial_dependence_recursion(est, grid, features):
     return averaged_predictions
 
 
-def _partial_dependence_brute(est, grid, features, X, response_method):
+def _partial_dependence_brute(est, grid, features, X, response_method, sample_weight):
 
     predictions = []
     averaged_predictions = []
@@ -173,7 +174,7 @@ def _partial_dependence_brute(est, grid, features, X, response_method):
 
             predictions.append(pred)
             # average over samples
-            averaged_predictions.append(np.mean(pred, axis=0))
+            averaged_predictions.append(np.average(pred, axis=0, weights=sample_weight))
         except NotFittedError as e:
             raise ValueError("'estimator' parameter must be a fitted estimator") from e
 
@@ -224,6 +225,7 @@ def partial_dependence(
     grid_resolution=100,
     method="auto",
     kind="average",
+    sample_weight=None,
 ):
     """Partial dependence of ``features``.
 
@@ -341,10 +343,19 @@ def partial_dependence(
         See Returns below.
 
         Note that the fast `method='recursion'` option is only available for
-        `kind='average'`. Computing individual dependencies requires using the
-        slower `method='brute'` option.
+        `kind='average'` and `sample_weights=None`. Computing individual
+        dependencies and doing weighted averages requires using the slower
+        `method='brute'` option.
 
         .. versionadded:: 0.24
+
+        sample_weight : array-like of shape (n_samples,), default=None
+        Sample weights for doing weighted means when averaging the model output.
+        If None, then samples are equally weighted.
+
+        Note that `sample_weight` does not change the individual predictions.
+
+        .. versionadded:: 1.3
 
     Returns
     -------
@@ -355,14 +366,15 @@ def partial_dependence(
                 len(values[0]), len(values[1]), ...)
             The predictions for all the points in the grid for all
             samples in X. This is also known as Individual
-            Conditional Expectation (ICE)
+            Conditional Expectation (ICE).
+            Only available when ``kind='individual'`` or ``kind='both'``.
 
         average : ndarray of shape (n_outputs, len(values[0]), \
                 len(values[1]), ...)
             The predictions for all the points in the grid, averaged
             over all samples in X (or over the training data if
             ``method`` is 'recursion').
-            Only available when ``kind='both'``.
+            Only available when ``kind='average'`` or ``kind='both'``.
 
         values : seq of 1d ndarrays
             The values with which the grid has been created. The generated
@@ -397,7 +409,7 @@ def partial_dependence(
         raise ValueError("'estimator' must be a fitted regressor or classifier.")
 
     if is_classifier(estimator) and isinstance(estimator.classes_[0], np.ndarray):
-        raise ValueError("Multiclass-multioutput estimators are not supported")
+        raise ValueError("Multiclass-multioutput estimators are not supported.")
 
     # Use check_array only on lists and other non-array-likes / sparse. Do not
     # convert DataFrame into a NumPy array.
@@ -428,12 +440,22 @@ def partial_dependence(
     if kind != "average":
         if method == "recursion":
             raise ValueError(
-                "The 'recursion' method only applies when 'kind' is set to 'average'"
+                "The 'recursion' method only applies when 'kind' is set to "
+                "'average'."
             )
         method = "brute"
 
+    if method == "recursion":
+        if sample_weight is not None:
+            raise ValueError(
+                "The 'recursion' method can only be applied when sample_weight "
+                "is None."
+            )
+
     if method == "auto":
-        if isinstance(estimator, BaseGradientBoosting) and estimator.init is None:
+        if sample_weight is not None:
+            method = "brute"
+        elif isinstance(estimator, BaseGradientBoosting) and estimator.init is None:
             method = "recursion"
         elif isinstance(
             estimator,
@@ -476,6 +498,10 @@ def partial_dependence(
                 "With the 'recursion' method, the response_method must be "
                 "'decision_function'. Got {}.".format(response_method)
             )
+
+    if sample_weight is not None:
+        sample_weight = column_or_1d(sample_weight)
+        check_consistent_length(X, sample_weight)
 
     if _determine_key_type(features, accept_slice=False) == "int":
         # _get_column_indices() supports negative indexing. Here, we limit
@@ -529,7 +555,7 @@ def partial_dependence(
 
     if method == "brute":
         averaged_predictions, predictions = _partial_dependence_brute(
-            estimator, grid, features_indices, X, response_method
+            estimator, grid, features_indices, X, response_method, sample_weight
         )
 
         # reshape predictions to
