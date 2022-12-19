@@ -812,15 +812,6 @@ def test_column_transformer_special_strings():
     assert len(ct.transformers_) == 2
     assert ct.transformers_[-1][0] != "remainder"
 
-    # None itself / other string is not valid
-    for val in [None, "other"]:
-        ct = ColumnTransformer([("trans1", Trans(), [0]), ("trans2", None, [1])])
-        msg = "All estimators should implement"
-        with pytest.raises(TypeError, match=msg):
-            ct.fit_transform(X_array)
-        with pytest.raises(TypeError, match=msg):
-            ct.fit(X_array)
-
 
 def test_column_transformer_remainder():
     X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
@@ -864,15 +855,6 @@ def test_column_transformer_remainder():
     assert ct.transformers_[-1][0] == "remainder"
     assert ct.transformers_[-1][1] == "passthrough"
     assert_array_equal(ct.transformers_[-1][2], [1])
-
-    # error on invalid arg
-    ct = ColumnTransformer([("trans1", Trans(), [0])], remainder=1)
-    msg = "remainder keyword needs to be one of 'drop', 'passthrough', or estimator."
-    with pytest.raises(ValueError, match=msg):
-        ct.fit(X_array)
-
-    with pytest.raises(ValueError, match=msg):
-        ct.fit_transform(X_array)
 
     # check default for make_column_transformer
     ct = make_column_transformer((Trans(), [0]))
