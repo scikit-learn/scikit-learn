@@ -127,7 +127,7 @@ def check_pairwise_arrays(
         Whether to only check the length of the array.
         When `True`, `dtype` is ignored and the check for 2D array is not performed.
         This is particularly useful when passing non-numerical inputs and a custom
-        metric
+        metric.
 
          .. versionadded:: 1.2
 
@@ -198,8 +198,8 @@ def check_pairwise_arrays(
         )
     elif check_length_only and len(X) != len(Y):
         raise ValueError(
-            "Incompatible length for X and Y matrices: len(X) == %d while len(Y) == %d"
-            % (len(X), len(Y))
+            f"Incompatible length for X and Y matrices: len(X) == {len(X)} while len(Y)"
+            f" == {len(Y)}"
         )
     return X, Y
 
@@ -2002,7 +2002,7 @@ def pairwise_distances(
         Whether to only check the length of the array.
         When `True`, check for 2D array is not performed.
         This is particularly useful when passing non-numerical inputs and a custom
-        metric
+        metric.
 
          .. versionadded:: 1.2
 

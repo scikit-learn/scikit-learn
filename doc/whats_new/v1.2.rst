@@ -26,6 +26,15 @@ Changelog
   boolean. The type is maintained, instead of converting to `float64.`
   :pr:`25147` by :user:`Tim Head <betatim>`.
 
+:mod:`sklearn.metrics`
+......................
+
+- |Feature| :func:`metrics.pairwise_distances` accepts calculating pairwise distance
+  for arrays containing strings as well. This is supported only with custom functions
+  and the user is expected to pass `check_length_only=True` to be lenient
+  regarding the input validation.
+  :pr:`24674` by :user: `Venkatachalam N <venkyyuvy>` and :user:`Kshitij Mathur <Kshitij68>`.
+
 .. _changes_1_2:
 
 Version 1.2.0
@@ -538,12 +547,6 @@ Changelog
 
 :mod:`sklearn.metrics`
 ......................
-
-- |Feature| :func:`metrics.pairwise_distances` accepts calculating pairwise distance
-  for arrays containing strings as well. This is supported only with custom functions
-  and the user is expected to pass `check_length_only=True` to be lenient
-  regarding the input validation
-  :pr:`24674` by :user: `Venkatachalam N <venkyyuvy>` and :user:`Kshitij Mathur <Kshitij68>`.
 
 - |Feature| :func:`metrics.ConfusionMatrixDisplay.from_estimator`,
   :func:`metrics.ConfusionMatrixDisplay.from_predictions`, and
