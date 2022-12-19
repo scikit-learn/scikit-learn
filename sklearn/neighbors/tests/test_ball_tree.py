@@ -31,12 +31,15 @@ BOOLEAN_METRICS = [
     "matching",
     "jaccard",
     "dice",
-    "kulsinski" if sp_version < parse_version("1.8") else "kulczynski1",
     "rogerstanimoto",
     "russellrao",
     "sokalmichener",
     "sokalsneath",
 ]
+if sp_version >= parse_version("1.8"):
+    BOOLEAN_METRICS += ["kulczynski1"]
+if sp_version < parse_version("1.10"):
+    BOOLEAN_METRICS += ["kulsinski"]
 
 
 def brute_force_neighbors(X, Y, k, metric, **kwargs):
