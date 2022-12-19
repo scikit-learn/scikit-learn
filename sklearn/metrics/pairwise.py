@@ -1664,7 +1664,7 @@ _VALID_METRICS = [
 if sp_version >= parse_version("1.8"):
     # Introduced in SciPy 1.8
     _VALID_METRICS += ["kulczynski1"]
-if sp_version < parse_version("1.10"):
+if sp_version < parse_version("1.11"):
     # Deprecated in SciPy 1.8 and removed in SciPy 1.10
     _VALID_METRICS += ["kulsinski"]
 
@@ -2070,7 +2070,7 @@ PAIRWISE_BOOLEAN_FUNCTIONS = [
 if sp_version >= parse_version("1.8"):
     # Introduced in SciPy 1.8
     PAIRWISE_BOOLEAN_FUNCTIONS += ["kulczynski1"]
-if sp_version < parse_version("1.10"):
+if sp_version < parse_version("1.11"):
     # Deprecated in SciPy 1.8 and removed in SciPy 1.10
     PAIRWISE_BOOLEAN_FUNCTIONS += ["kulsinski"]
 

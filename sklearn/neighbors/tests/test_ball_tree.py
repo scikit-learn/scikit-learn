@@ -38,7 +38,7 @@ BOOLEAN_METRICS = [
 ]
 if sp_version >= parse_version("1.8"):
     BOOLEAN_METRICS += ["kulczynski1"]
-if sp_version < parse_version("1.10"):
+if sp_version < parse_version("1.11"):
     BOOLEAN_METRICS += ["kulsinski"]
 
 

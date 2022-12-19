@@ -68,7 +68,7 @@ BOOL_METRICS = [
 if sp_version >= parse_version("1.8"):
     # Introduced in SciPy 1.8
     BOOL_METRICS += ["kulczynski1"]
-if sp_version < parse_version("1.10"):
+if sp_version < parse_version("1.11"):
     # Deprecated in SciPy 1.8 and removed in SciPy 1.10
     BOOL_METRICS += ["kulsinski"]
 
