@@ -256,5 +256,5 @@ def test_mutual_info_error_handling_for_unique_labels():
         " two instances share the same label."
     )
 
-    # check if the exception is found
-    assert exception_raised != exception_expected
+    # check if the exception error has the correct value is found
+    assert exception_raised.args[0] == exception_expected
