@@ -73,9 +73,10 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
 
     Notes
     -----
-    This estimator is stateless and does not need to be fitted. However, we
-    recommend to call :meth:`fit_transform` instead of :meth:`transform`, as
-    parameter validation is only performed in :meth:`fit`.
+    This estimator is :term:`stateless` and does not need to be fitted.
+    However, we recommend to call :meth:`fit_transform` instead of
+    :meth:`transform`, as parameter validation is only performed in
+    :meth:`fit`.
 
     Examples
     --------
