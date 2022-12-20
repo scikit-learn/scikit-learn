@@ -43,7 +43,7 @@ import itertools
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MultiOutputMixin
 from .base import MetaEstimatorMixin, is_regressor
-from .preprocessing import LabelBinarizer
+from .preprocessing import LabelBinarizer, LabelEncoder
 from .metrics.pairwise import pairwise_distances_argmin
 from .utils import check_random_state
 from .utils._param_validation import HasMethods, Interval
@@ -898,7 +898,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     classes_ : ndarray of shape (n_classes,)
         Array containing labels.
 
-    code_book_ : ndarray of shape (n_classes, code_size), dtype=np.float64
+    code_book_ : ndarray of shape (n_classes, code_size), dtype=np.int64
         Binary array containing the code of each class.
 
     n_features_in_ : int
@@ -952,10 +952,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     """
 
     _parameter_constraints: dict = {
-        "estimator": [
-            HasMethods(["fit", "decision_function"]),
-            HasMethods(["fit", "predict_proba"]),
-        ],
+        "estimator": [HasMethods(["fit", "predict_proba"])],
         "code_size": [Interval(Real, 0.0, None, closed="neither")],
         "random_state": ["random_state"],
         "n_jobs": [Integral, None],
@@ -989,31 +986,39 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         random_state = check_random_state(self.random_state)
         check_classification_targets(y)
 
-        self.classes_ = np.unique(y)
-        n_classes = self.classes_.shape[0]
-        if n_classes == 0:
+        self._label_encoder = LabelEncoder().fit(y)
+        y_encoded = self._label_encoder.transform(y)
+        n_classes = len(self._label_encoder.classes_)
+
+        code_size = int(n_classes * self.code_size)
+        if code_size < 1:
             raise ValueError(
-                "OutputCodeClassifier can not be fit when no class is present."
+                f"code_size={self.code_size} is too small for the number of classes. "
+                f"code_size should be greater or equal to {1 / n_classes}."
             )
-        code_size_ = int(n_classes * self.code_size)
+        n_binary_values = 2**code_size
 
-        # FIXME: there are more elaborate methods than generating the codebook
-        # randomly.
-        self.code_book_ = random_state.uniform(size=(n_classes, code_size_))
-        self.code_book_[self.code_book_ > 0.5] = 1.0
+        replace = n_binary_values < n_classes
+        if replace:
+            # in extreme compression cases, we will have to sample with replacement
+            warnings.warn(
+                "The code book size is not big enough to encode all classes. Thus, "
+                "different classes will share the same code. Increase `code_size` if "
+                "this behaviour is not intended.",
+                UserWarning,
+            )
 
-        if hasattr(self.estimator, "decision_function"):
-            self.code_book_[self.code_book_ != 1] = -1.0
-        else:
-            self.code_book_[self.code_book_ != 1] = 0.0
-
-        classes_index = {c: i for i, c in enumerate(self.classes_)}
-
-        Y = np.array(
-            [self.code_book_[classes_index[y[i]]] for i in range(_num_samples(y))],
-            dtype=int,
+        self.code_book_ = np.array(
+            [
+                list(f"{int_code:b}".zfill(code_size))
+                for int_code in random_state.choice(
+                    n_binary_values, n_classes, replace=replace
+                )
+            ],
+            dtype=np.int64,
         )
 
+        Y = self.code_book_[y_encoded]
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
             delayed(_fit_binary)(self.estimator, X, Y[:, i]) for i in range(Y.shape[1])
         )
@@ -1043,9 +1048,20 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         # transposed. We therefore create a F-contiguous array to avoid a copy and have
         # a C-contiguous array after the transpose operation.
         Y = np.array(
-            [_predict_binary(e, X) for e in self.estimators_],
+            [e.predict_proba(X)[:, 1] for e in self.estimators_],
             order="F",
             dtype=np.float64,
         ).T
-        pred = pairwise_distances_argmin(Y, self.code_book_, metric="euclidean")
+        pred = pairwise_distances_argmin(
+            Y, self.code_book_.astype(Y.dtype), metric="cityblock"
+        )
         return self.classes_[pred]
+
+    @property
+    def classes_(self):
+        """Returns the classes label."""
+        if not hasattr(self, "_label_encoder"):
+            raise AttributeError(
+                f"{self.__class__.__name__} object has no attribute 'classes_'"
+            )
+        return self._label_encoder.classes_
