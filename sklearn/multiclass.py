@@ -1047,15 +1047,15 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         # ArgKmin only accepts C-contiguous array. The aggregated predictions need to be
         # transposed. We therefore create a F-contiguous array to avoid a copy and have
         # a C-contiguous array after the transpose operation.
-        Y = np.array(
+        Y_proba = np.array(
             [e.predict_proba(X)[:, 1] for e in self.estimators_],
             order="F",
             dtype=np.float64,
         ).T
-        pred = pairwise_distances_argmin(
-            Y, self.code_book_.astype(Y.dtype), metric="cityblock"
+        closest_codes = pairwise_distances_argmin(
+            Y_proba, self.code_book_.astype(Y_proba.dtype), metric="cityblock"
         )
-        return self.classes_[pred]
+        return self.classes_[closest_codes]
 
     @property
     def classes_(self):
