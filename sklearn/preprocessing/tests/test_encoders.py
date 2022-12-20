@@ -1388,7 +1388,7 @@ def test_mixed_string_bytes_categoricals():
     categories = [np.array(["b", "a"], dtype="S")]
     ohe = OneHotEncoder(categories=categories, sparse_output=False)
 
-    msg = (
+    msg = re.escape(
         "Found incompatible types ('bytes' vs 'str_') between values and predefined"
         " categories in column 0."
     )
