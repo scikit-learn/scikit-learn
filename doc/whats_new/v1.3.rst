@@ -36,6 +36,16 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.multiclass`
+.........................
+- |Fix| :class:`multiclass.OutputCodeClassifier` suffers from several bugs.
+  Now, the implementation follows the original paper more closely: (i) the
+  predictions generated rely on a probablity estimate of each binary
+  classifier, (ii) a distance computed between the predictions and the codes in
+  the codebook is the L1 distance, and (iii) the codebook is generated with
+  sampling without replacement whenever possible to avoid codes collisions.
+  :pr:`25217` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.pipeline`
 .......................
 - |Feature| :class:`pipeline.FeatureUnion` can now use indexing notation (e.g.
