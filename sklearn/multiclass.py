@@ -898,7 +898,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     classes_ : ndarray of shape (n_classes,)
         Array containing labels.
 
-    code_book_ : ndarray of shape (n_classes, code_size)
+    code_book_ : ndarray of shape (n_classes, code_size), dtype=np.float64
         Binary array containing the code of each class.
 
     n_features_in_ : int
@@ -972,7 +972,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
         y : array-like of shape (n_samples,)
@@ -1030,7 +1030,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
         Returns
