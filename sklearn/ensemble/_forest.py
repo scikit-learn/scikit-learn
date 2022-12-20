@@ -1217,8 +1217,9 @@ class RandomForestClassifier(ForestClassifier):
 
     oob_score : bool or callable, default=False
         Whether to use out-of-bag samples to estimate the generalization score.
-        By default the accuracy score is used. Provide a callable to use a custom
-        scoring function. Only available if bootstrap=True.
+        By default, :func:`~sklearn.metrics.accuracy_score` is used.
+        Provide a callable with signature `metric(y_true, y_pred)` to use a
+        custom metric. Only available if `bootstrap=True`.
 
     n_jobs : int, default=None
         The number of jobs to run in parallel. :meth:`fit`, :meth:`predict`,
@@ -2724,7 +2725,7 @@ class RandomTreesEmbedding(TransformerMixin, BaseForest):
         self.min_impurity_decrease = min_impurity_decrease
         self.sparse_output = sparse_output
 
-    def _set_oob_score_and_attributes(self, X, y):
+    def _set_oob_score_and_attributes(self, X, y, scoring_function=None):
         raise NotImplementedError("OOB score not supported by tree embedding")
 
     def fit(self, X, y=None, sample_weight=None):
