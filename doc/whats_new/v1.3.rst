@@ -19,6 +19,10 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- |Fix| The `categories_` attribute of :class:`preprocessing.OneHotEncoder` now
+  always contains an array of `object`s when using predefined categories that
+  are strings. :pr:`25174` by :user:`Tim Head <betatim>`.
+
 Changes impacting all modules
 -----------------------------
 
@@ -44,10 +48,6 @@ Changelog
 
 :mod:`sklearn.preprocessing`
 ............................
-- |Fix| The `categories_` attribute of :class:`preprocessing.OneHotEncoder` now
-  always contains an array of `object`s when using predefined categories that
-  are strings. :pr:`25174` by :user:`Tim Head <betatim>`.
-
 - |Enhancement| Added support for `sample_weight` in
   :class:`preprocessing.KBinsDiscretizer`. This allows specifying the parameter
   `sample_weight` for each sample to be used while fitting. The option is only
