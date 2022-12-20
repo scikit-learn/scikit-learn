@@ -112,9 +112,9 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                     and Xi.dtype.kind != "S"
                 ):
                     msg = (
-                        f"Found incompatible types ('{type(cats[0]).__name__}' vs"
-                        f" '{type(Xi[0]).__name__}') between values and predefined"
-                        f" categories in column {i}."
+                        f"In column {i}, the predefined categories have type 'bytes'"
+                        " which is incompatible with values of type"
+                        f" '{type(Xi[0]).__name__}'."
                     )
                     raise ValueError(msg)
 

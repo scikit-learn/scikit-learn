@@ -1389,8 +1389,8 @@ def test_mixed_string_bytes_categoricals():
     ohe = OneHotEncoder(categories=categories, sparse_output=False)
 
     msg = re.escape(
-        "Found incompatible types ('bytes' vs 'str_') between values and predefined"
-        " categories in column 0."
+        "In column 0, the predefined categories have type 'bytes' which is incompatible"
+        " with values of type 'str_'."
     )
 
     with pytest.raises(ValueError, match=msg):
