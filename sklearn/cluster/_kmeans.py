@@ -23,6 +23,7 @@ from ..base import (
     ClusterMixin,
     TransformerMixin,
     ClassNamePrefixFeaturesOutMixin,
+    EngineAwareMixin,
 )
 from ..metrics.pairwise import euclidean_distances
 from ..metrics.pairwise import _euclidean_distances
@@ -54,8 +55,6 @@ from ._k_means_elkan import init_bounds_dense
 from ._k_means_elkan import init_bounds_sparse
 from ._k_means_elkan import elkan_iter_chunked_dense
 from ._k_means_elkan import elkan_iter_chunked_sparse
-from .._config import get_config
-from .._engine import get_engine_classes
 
 
 ###############################################################################
@@ -1297,7 +1296,7 @@ class _BaseKMeans(
         }
 
 
-class KMeans(_BaseKMeans):
+class KMeans(_BaseKMeans, EngineAwareMixin):
     """K-Means clustering.
 
     Read more in the :ref:`User Guide <k_means>`.
@@ -1471,6 +1470,9 @@ class KMeans(_BaseKMeans):
         ],
     }
 
+    _engine_name = "kmeans"
+    _default_engine = KMeansCythonEngine
+
     def __init__(
         self,
         n_clusters=8,
@@ -1516,26 +1518,6 @@ class KMeans(_BaseKMeans):
             )
             self._algorithm = "lloyd"
 
-    def _get_engine(self, X, y=None, sample_weight=None, reset=False):
-        for provider, engine_class in get_engine_classes(
-            "kmeans", default=KMeansCythonEngine
-        ):
-            if hasattr(self, "_engine_provider") and not reset:
-                if self._engine_provider != provider:
-                    continue
-
-            engine = engine_class(self)
-            if engine.accepts(X, y=y, sample_weight=sample_weight):
-                self._engine_provider = provider
-                return engine
-
-        if hasattr(self, "_engine_provider"):
-            raise RuntimeError(
-                "Estimator was previously fitted with the"
-                f" {self._engine_provider} engine, but it is not available. Currently"
-                f" configured engines: {get_config()['engine_provider']}"
-            )
-
     def _warn_mkl_vcomp(self, n_active_threads):
         """Warn when vcomp and mkl are both present"""
         warnings.warn(
@@ -1571,6 +1553,8 @@ class KMeans(_BaseKMeans):
         self : object
             Fitted estimator.
         """
+        super().fit(X, y=y, sample_weight=sample_weight)
+        print("SDFSDSDFSDFSDF")
         self._validate_params()
         engine = self._get_engine(X, y, sample_weight, reset=True)
 

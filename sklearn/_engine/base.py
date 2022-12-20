@@ -112,3 +112,8 @@ def get_engine_classes(engine_name, default, verbose=False):
                 f"trying engine {engine_class.__module__}.{engine_class.__qualname__} ."
             )
         yield provider, engine_class
+
+
+from functools import wraps
+def convert_attributes(estimator):
+    @wraps(f)
