@@ -21,7 +21,8 @@ random sampling procedures.
 
 - |Fix| The `categories_` attribute of :class:`preprocessing.OneHotEncoder` now
   always contains an array of `object`s when using predefined categories that
-  are strings. :pr:`25174` by :user:`Tim Head <betatim>`.
+  are strings. Predefined categories encoded as bytes will no longer work
+  with `X` encoded as strings. :pr:`25174` by :user:`Tim Head <betatim>`.
 
 Changes impacting all modules
 -----------------------------
