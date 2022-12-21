@@ -983,6 +983,15 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self._validate_params()
         y = self._validate_data(X="no_validation", y=y)
 
+        # we postpone the validation of X to the `fit` of the underlying estimators but
+        # we need this check for the validation of `code_size`.
+        n_samples = _num_samples(X)
+        if n_samples < 1:
+            raise ValueError(
+                f"Found array {n_samples} (shape={X.shape}) while minimum of 1 is "
+                "required."
+            )
+
         random_state = check_random_state(self.random_state)
         check_classification_targets(y)
 
