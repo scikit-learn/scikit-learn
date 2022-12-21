@@ -12,6 +12,13 @@ Version 1.2.1
 Changelog
 ---------
 
+:mod:`sklearn.base`
+...................
+
+- |Fix| Fix a regression in `BaseEstimator.__getstate__` that would prevent
+  certain estimators to be pickled when using Python 3.11. :pr:`25188` by
+  :user:`Benjamin Bossan <BenjaminBossan>`.
+
 :mod:`sklearn.utils`
 ....................
 
