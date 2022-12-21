@@ -284,7 +284,7 @@ General Concepts
               >>> from sklearn.model_selection import GridSearchCV
               >>> from sklearn.linear_model import SGDClassifier
               >>> clf = GridSearchCV(SGDClassifier(),
-              ...                    param_grid={'loss': ['log', 'hinge']})
+              ...                    param_grid={'loss': ['log_loss', 'hinge']})
 
           This means that we can only check for duck-typed attributes after
           fitting, and that we must be careful to make :term:`meta-estimators`

@@ -4,7 +4,6 @@ set -e
 set -x
 
 PYTHON_VERSION=$1
-BITNESS=$2
 
 docker container run \
     --rm scikit-learn/minimal-windows \

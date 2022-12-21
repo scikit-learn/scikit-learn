@@ -242,6 +242,14 @@ def test_rbf_sampler_dtype_equivalence():
     assert_allclose(rbf32.random_weights_, rbf64.random_weights_)
 
 
+def test_rbf_sampler_gamma_scale():
+    """Check the inner value computed when `gamma='scale'`."""
+    X, y = [[0.0], [1.0]], [0, 1]
+    rbf = RBFSampler(gamma="scale")
+    rbf.fit(X, y)
+    assert rbf._gamma == pytest.approx(4)
+
+
 def test_skewed_chi2_sampler_fitted_attributes_dtype(global_dtype):
     """Check that the fitted attributes are stored accordingly to the
     data type of X."""
