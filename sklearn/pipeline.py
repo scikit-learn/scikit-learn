@@ -995,6 +995,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when
+        `X` has feature names that are all strings.
+
+        .. versionadded:: 1.3
+
     See Also
     --------
     make_union : Convenience function for simplified feature union
@@ -1182,6 +1188,7 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self : object
             FeatureUnion class instance.
         """
+        self._check_feature_names(X, reset=True)
         transformers = self._parallel_func(X, y, fit_params, _fit_one)
         if not transformers:
             # All transformers are None

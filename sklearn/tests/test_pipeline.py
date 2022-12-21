@@ -1647,3 +1647,24 @@ def test_feature_union_getitem_error(key):
     msg = "Only string keys are supported"
     with pytest.raises(KeyError, match=msg):
         union[key]
+
+
+def test_feature_union_feature_names_in_():
+    """Ensure feature union has `.feature_names_in_` attribute if input
+    is pandas.DataFrame.
+
+    Test for #24754"""
+    X, _ = load_iris(as_frame=True, return_X_y=True)
+    X_train, X_test = train_test_split(X, random_state=0)
+
+    # fit with pandas.DataFrame
+    union = FeatureUnion([("pass", "passthrough")])
+    union.fit(X_train)
+    assert hasattr(union, "feature_names_in_")
+    assert_array_equal(X_train.columns, union.feature_names_in_)
+
+    # fit with numpy array
+    X_array = X_train.to_numpy()
+    union = FeatureUnion([("pass", "passthrough")])
+    union.fit(X_array)
+    assert not hasattr(union, "feature_names_in_")
