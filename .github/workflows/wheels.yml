@@ -145,6 +145,7 @@ jobs:
           CIBW_TEST_COMMAND: bash {project}/build_tools/github/test_wheels.sh
           CIBW_TEST_COMMAND_WINDOWS: bash {project}/build_tools/github/test_windows_wheels.sh ${{ matrix.python }}
           CIBW_BUILD_VERBOSITY: 1
+          CONDA_HOME: /usr/local/miniconda
 
         run: bash build_tools/github/build_wheels.sh
 

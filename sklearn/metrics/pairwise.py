@@ -688,9 +688,12 @@ def pairwise_distances_argmin_min(
         values = values.flatten()
         indices = indices.flatten()
     else:
-        # TODO: once BaseDistanceReductionDispatcher supports distance metrics
-        # for boolean datasets, we won't need to fallback to
-        # pairwise_distances_chunked anymore.
+        # Joblib-based backend, which is used when user-defined callable
+        # are passed for metric.
+
+        # This won't be used in the future once PairwiseDistancesReductions support:
+        #   - DistanceMetrics which work on supposedly binary data
+        #   - CSR-dense and dense-CSR case if 'euclidean' in metric.
 
         # Turn off check for finiteness because this is costly and because arrays
         # have already been validated.
@@ -800,9 +803,12 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         )
         indices = indices.flatten()
     else:
-        # TODO: once BaseDistanceReductionDispatcher supports distance metrics
-        # for boolean datasets, we won't need to fallback to
-        # pairwise_distances_chunked anymore.
+        # Joblib-based backend, which is used when user-defined callable
+        # are passed for metric.
+
+        # This won't be used in the future once PairwiseDistancesReductions support:
+        #   - DistanceMetrics which work on supposedly binary data
+        #   - CSR-dense and dense-CSR case if 'euclidean' in metric.
 
         # Turn off check for finiteness because this is costly and because arrays
         # have already been validated.

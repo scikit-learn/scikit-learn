@@ -839,9 +839,13 @@ class KNeighborsMixin:
             )
 
         elif self._fit_method == "brute":
-            # TODO: should no longer be needed once ArgKmin
-            # is extended to accept sparse and/or float32 inputs.
+            # Joblib-based backend, which is used when user-defined callable
+            # are passed for metric.
 
+            # This won't be used in the future once PairwiseDistancesReductions
+            # support:
+            #   - DistanceMetrics which work on supposedly binary data
+            #   - CSR-dense and dense-CSR case if 'euclidean' in metric.
             reduce_func = partial(
                 self._kneighbors_reduce_func,
                 n_neighbors=n_neighbors,
@@ -1173,9 +1177,13 @@ class RadiusNeighborsMixin:
             )
 
         elif self._fit_method == "brute":
-            # TODO: should no longer be needed once we have Cython-optimized
-            # implementation for radius queries, with support for sparse and/or
-            # float32 inputs.
+            # Joblib-based backend, which is used when user-defined callable
+            # are passed for metric.
+
+            # This won't be used in the future once PairwiseDistancesReductions
+            # support:
+            #   - DistanceMetrics which work on supposedly binary data
+            #   - CSR-dense and dense-CSR case if 'euclidean' in metric.
 
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == "euclidean":
