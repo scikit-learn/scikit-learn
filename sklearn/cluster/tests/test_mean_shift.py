@@ -7,8 +7,6 @@ import numpy as np
 import warnings
 import pytest
 
-from scipy import sparse
-
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_allclose
 
@@ -74,14 +72,6 @@ def test_mean_shift(
     assert n_clusters_mean_shift == expected
     assert labels_mean_shift_unique[0] == first_cluster_label
     assert cluster_centers.dtype == global_dtype
-
-
-def test_estimate_bandwidth_with_sparse_matrix():
-    # Test estimate_bandwidth with sparse matrix
-    X = sparse.lil_matrix((1000, 1000))
-    msg = "A sparse matrix was passed, but dense data is required."
-    with pytest.raises(TypeError, match=msg):
-        estimate_bandwidth(X)
 
 
 def test_parallel(global_dtype):
