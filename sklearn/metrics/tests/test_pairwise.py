@@ -197,22 +197,25 @@ def test_pairwise_distances(global_dtype):
     with pytest.raises(ValueError):
         pairwise_distances(X, Y, metric="blah")
 
+
+
+def test_pairwise_custom_metric_multithread_and_loky():
     # Test using custom metrics, serial and parallel
-    def customMetric(x0, x1):
-        return np.abs(x0-x1)
-    x = np.arange(0, 100, .1)
-    x = np.expand_dims(x, 1)
-    expDistFromFirstPoint = x[:,0]
+    def custom_metric(x0, x1):
+        return np.abs(x0 - x1).sum()
+
+    rng = np.random.RandomState(0)
+    X = rng.randn(10, 4)
+
     n_jobs = 2
     # default parallel approach, preferring multithread
-    Dpar_mlthrd = pairwise_distances(x, metric=customMetric, n_jobs=n_jobs)
-    # parallel with multiprocesses
-    with parallel_backend('loky', n_jobs=n_jobs):
-        Dpar_mltprcs = pairwise_distances(x, metric=customMetric, n_jobs=n_jobs)
-    Dser = pairwise_distances(x, metric=customMetric)
-    assert_allclose(expDistFromFirstPoint, Dser[:,0])
-    assert_allclose(expDistFromFirstPoint, Dpar_mlthrd[:,0])
-    assert_allclose(expDistFromFirstPoint, Dpar_mltprcs[:,0])
+    dist_multithread = pairwise_distances(X, metric=custom_metric, n_jobs=n_jobs)
+    # parallel with loky
+    with parallel_backend("loky", n_jobs=n_jobs):
+        dist_loky = pairwise_distances(X, metric=custom_metric, n_jobs=n_jobs)
+    dist_serial = pairwise_distances(X, metric=custom_metric)
+    assert_allclose(dist_multithread, dist_serial)
+    assert_allclose(dist_loky, dist_serial)
 
 
 

@@ -1556,12 +1556,7 @@ def distance_metrics():
     return PAIRWISE_DISTANCE_FUNCTIONS
 
 
-def _dist_wrapper_mltprc(dist_func, slice_, *args, **kwargs):
-    """Computing a slice of distance matrix."""
-    return dist_func(*args, **kwargs)
-
-
-def _dist_wrapper_mlthrd(dist_func, dist_matrix, slice_, *args, **kwargs):
+def _dist_wrapper(dist_func, dist_matrix, slice_, *args, **kwargs):
     """Write in-place to a slice of a distance matrix."""
     dist_matrix[:, slice_] = dist_func(*args, **kwargs)
 
@@ -1581,24 +1576,21 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
     active_backend, _ = get_active_backend(prefer="threads")
     uses_threads = getattr(active_backend, 'uses_threads', False)
 
+    ret = np.empty((X.shape[0], Y.shape[0]), dtype=dtype, order="F")
     if uses_threads:
         # adopting a faster write-in-place approach
-        fd = delayed(_dist_wrapper_mlthrd)
-        ret = np.empty((X.shape[0], Y.shape[0]), dtype=dtype, order="F")
+        fd = delayed(_dist_wrapper)
         Parallel(backend="threading", n_jobs=n_jobs)(
             fd(func, ret, s, X, Y[s], **kwds)
             for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
         )
     else:
         # each process returns its chunk of data
-        fd = delayed(_dist_wrapper_mltprc)
-        ret = np.empty((X.shape[0], Y.shape[0]), dtype=dtype, order="F")
-        distchunks = Parallel(n_jobs=n_jobs)(
-            fd(func, s, X, Y[s], **kwds) for s in gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs))
-        )
-        for slice_, chunk in zip(gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs)), distchunks):
+        fd = delayed(func)
+        even_slices = list(gen_even_slices(_num_samples(Y), effective_n_jobs(n_jobs)))
+        distchunks = Parallel(n_jobs=n_jobs)(fd(X, Y[s], **kwds) for s in even_slices)
+        for slice_, chunk in zip(even_slices, distchunks):
             ret[:, slice_] = chunk
-
 
     if (X is Y or Y is None) and func is euclidean_distances:
         # zeroing diagonal for euclidean norm.
