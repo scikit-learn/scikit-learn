@@ -994,6 +994,7 @@ class _UnstableArchMixin:
 
 class EngineAwareMixin:
     """Mixin for estimators that use a pluggable engine to do the work"""
+
     def _get_engine(self, X, y=None, sample_weight=None, reset=False):
         for provider, engine_class in get_engine_classes(
             self._engine_name,
@@ -1006,6 +1007,7 @@ class EngineAwareMixin:
             engine = engine_class(self)
             if engine.accepts(X, y=y):
                 self._engine_provider = provider
+                self._engine_class = engine_class
                 return engine
 
         if hasattr(self, "_engine_provider"):
@@ -1014,10 +1016,6 @@ class EngineAwareMixin:
                 f" {self._engine_provider} engine, but it is not available. Currently"
                 f" configured engines: {get_config()['engine_provider']}"
             )
-
-    def fit(self, X, y=None, sample_weight=None):
-        print("engine fitting")
-        return super().fit(X, y=y, sample_weight=sample_weight)
 
 
 def is_classifier(estimator):

@@ -2,6 +2,10 @@ import re
 from collections import namedtuple
 import pytest
 
+import numpy as np
+import numpy.array_api
+
+from sklearn._engine import convert_attributes
 from sklearn._engine import list_engine_provider_names
 from sklearn._engine import get_engine_classes
 from sklearn._engine.base import _parse_entry_point
@@ -136,3 +140,27 @@ def test_get_engine_class():
     next(engine_classes)
     with pytest.raises(ImportError, match=re.escape("sklearn.provider1")):
         next(engine_classes)
+
+
+@pytest.mark.parametrize(
+    "attribute_types,converted", [("sklearn_types", True), ("engine_types", False)]
+)
+def test_attribute_conversion(attribute_types, converted):
+    class Engine:
+        def convert_to_numpy(name, value):
+            return np.asarray(value)
+
+    class Estimator:
+        _engine_class = Engine
+
+        @convert_attributes
+        def fit(self, X):
+            self.x = np.array_api.asarray(X)
+
+    X = np.array([1, 2, 3])
+    est = Estimator()
+    with config_context(engine_attributes=attribute_types):
+        print("requested:", attribute_types)
+        est.fit(X)
+
+    assert isinstance(est.x, np.ndarray) == converted

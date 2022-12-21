@@ -25,6 +25,7 @@ from ..base import (
     ClassNamePrefixFeaturesOutMixin,
     EngineAwareMixin,
 )
+from .._engine import convert_attributes
 from ..metrics.pairwise import euclidean_distances
 from ..metrics.pairwise import _euclidean_distances
 from ..utils.extmath import row_norms, stable_cumsum
@@ -273,6 +274,16 @@ class KMeansCythonEngine:
 
     TODO: see URL for more details.
     """
+
+    @staticmethod
+    def convert_to_numpy(name, value):
+        """Convert estimator attributes to numpy arrays
+
+        Works for normal numpy arrays and 'array API' arrays.
+        """
+        # XXX Maybe a bit useless as it should never get called, but it
+        # does demonstrate the API
+        return np.asarray(value)
 
     def __init__(self, estimator):
         self.estimator = estimator
@@ -1527,6 +1538,7 @@ class KMeans(_BaseKMeans, EngineAwareMixin):
             f" variable OMP_NUM_THREADS={n_active_threads}."
         )
 
+    @convert_attributes
     def fit(self, X, y=None, sample_weight=None):
         """Compute k-means clustering.
 
@@ -1553,8 +1565,6 @@ class KMeans(_BaseKMeans, EngineAwareMixin):
         self : object
             Fitted estimator.
         """
-        super().fit(X, y=y, sample_weight=sample_weight)
-        print("SDFSDSDFSDFSDF")
         self._validate_params()
         engine = self._get_engine(X, y, sample_weight, reset=True)
 
