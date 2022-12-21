@@ -272,11 +272,10 @@ def test_lof_error():
     inequality_str = "n_neighbors < n_samples_fit"
     with pytest.raises(ValueError, match=msg.format(inequality_str)):
         clf.kneighbors(n_neighbors=2)
-    
+
     inequality_str = "n_neighbors <= n_samples_fit"
     with pytest.raises(ValueError, match=msg.format(inequality_str)):
         clf.kneighbors(X, n_neighbors=2)
-
 
 
 @pytest.mark.parametrize("algorithm", ["auto", "ball_tree", "kd_tree", "brute"])
