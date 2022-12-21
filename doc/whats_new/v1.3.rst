@@ -44,7 +44,6 @@ Changelog
 
 :mod:`sklearn.preprocessing`
 ............................
-
 - |Enhancement| Added support for `sample_weight` in
   :class:`preprocessing.KBinsDiscretizer`. This allows specifying the parameter
   `sample_weight` for each sample to be used while fitting. The option is only
@@ -54,11 +53,10 @@ Changelog
 
 :mod:`sklearn.metrics`
 ......................
-
 - |Enhancement| :func:`pairwise.pairwise_distances` now enables the use of parallel 
   backends different from multithread (e.g. loki or multiprocess), allowing for a 
   parallel computation of distance matrices for python-written metric functions.
-  :pr:`#24903` by :user:`menta78`.
+  :pr:`24903` by :user:`Lorenzo Mentaschi <menta78>`.
 
 Code and Documentation Contributors
 -----------------------------------
