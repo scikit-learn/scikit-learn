@@ -1580,7 +1580,7 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
 
     # preferring a threading backend to prevent data communication overhead
     active_backend, _ = get_active_backend(prefer="threads")
-    uses_threads = getattr(active_backend, 'uses_threads', False)
+    uses_threads = getattr(active_backend, "uses_threads", False)
 
     ret = np.empty((X.shape[0], Y.shape[0]), dtype=dtype, order="F")
     if uses_threads:

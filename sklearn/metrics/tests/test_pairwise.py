@@ -198,7 +198,6 @@ def test_pairwise_distances(global_dtype):
         pairwise_distances(X, Y, metric="blah")
 
 
-
 def test_pairwise_custom_metric_multithread_and_loky():
     # Test using custom metrics, serial and parallel
     def custom_metric(x0, x1):
@@ -216,7 +215,6 @@ def test_pairwise_custom_metric_multithread_and_loky():
     dist_serial = pairwise_distances(X, metric=custom_metric)
     assert_allclose(dist_multithread, dist_serial)
     assert_allclose(dist_loky, dist_serial)
-
 
 
 # TODO(1.4): Remove test when `sum_over_features` parameter is removed
