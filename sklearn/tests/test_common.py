@@ -14,7 +14,7 @@ import pkgutil
 from inspect import isgenerator, signature
 from itertools import product, chain
 from functools import partial
-
+from sklearn.exceptions import NotFittedError
 import pytest
 import numpy as np
 
@@ -82,6 +82,49 @@ from sklearn.utils.estimator_checks import (
     check_set_output_transform_pandas,
     check_global_ouptut_transform_pandas,
 )
+
+CLASS_NOT_FITTED_ERROR_IGNORE_LIST = [
+    "sklearn.kernel_approximation.AdditiveChi2Sampler",
+    "sklearn.preprocessing._data.Binarizer",
+    "sklearn.feature_extraction._dict_vectorizer.DictVectorizer",
+    "sklearn.pipeline.FeatureUnion",
+    "sklearn.preprocessing._function_transformer.FunctionTransformer",
+    "sklearn.random_projection.GaussianRandomProjection",
+    "sklearn.feature_selection._univariate_selection.GenericUnivariateSelect",
+    "sklearn.isotonic.IsotonicRegression",
+    "sklearn.impute._iterative.IterativeImputer",
+    "sklearn.preprocessing._discretization.KBinsDiscretizer",
+    "sklearn.impute._knn.KNNImputer",
+    "sklearn.preprocessing._data.MaxAbsScaler",
+    "sklearn.preprocessing._data.MinMaxScaler",
+    "sklearn.impute._base.MissingIndicator",
+    "sklearn.preprocessing._data.Normalizer",
+    "sklearn.preprocessing._encoders.OrdinalEncoder",
+    "sklearn.pipeline.Pipeline",
+    "sklearn.preprocessing._data.PowerTransformer",
+    "sklearn.preprocessing._data.QuantileTransformer",
+    "sklearn.feature_selection._rfe.RFE",
+    "sklearn.feature_selection._rfe.RFECV",
+    "sklearn.preprocessing._data.RobustScaler",
+    "sklearn.feature_selection._univariate_selection.SelectFdr",
+    "sklearn.feature_selection._univariate_selection.SelectFpr",
+    "sklearn.feature_selection._from_model.SelectFromModel",
+    "sklearn.feature_selection._univariate_selection.SelectFwe",
+    "sklearn.feature_selection._univariate_selection.SelectKBest",
+    "sklearn.feature_selection._univariate_selection.SelectPercentile",
+    "sklearn.feature_selection._sequential.SequentialFeatureSelector",
+    "sklearn.impute._base.SimpleImputer",
+    "sklearn.random_projection.SparseRandomProjection",
+    "sklearn.preprocessing._polynomial.SplineTransformer",
+    "sklearn.ensemble._stacking.StackingClassifier",
+    "sklearn.ensemble._stacking.StackingRegressor",
+    "sklearn.preprocessing._data.StandardScaler",
+    "sklearn.feature_extraction.text.TfidfTransformer",
+    "sklearn.feature_selection._variance_threshold.VarianceThreshold",
+    "sklearn.ensemble._voting.VotingClassifier",
+    "sklearn.ensemble._voting.VotingRegressor",
+]
+CLASS_NOT_FITTED_ERROR_IGNORE_LIST = set(CLASS_NOT_FITTED_ERROR_IGNORE_LIST)
 
 
 def test_all_estimator_no_base_class():
@@ -585,3 +628,45 @@ def test_global_output_transform_pandas(estimator):
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
         check_global_ouptut_transform_pandas(estimator.__class__.__name__, estimator)
+
+
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        estimator[1]
+        for estimator in all_estimators()
+        if hasattr(estimator[1], "get_feature_names_out")
+    ],
+)
+def test_uniform_error_message(estimator, request):
+    estimator_path = estimator.__module__ + "." + estimator.__name__
+    if estimator_path in CLASS_NOT_FITTED_ERROR_IGNORE_LIST:
+        request.applymarker(
+            pytest.mark.xfail(run=False, reason="TODO Ensure NotFittedError is raised")
+        )
+
+    class MockClass:
+        def fit():
+            pass
+
+    required_arguments = {}
+    # We assume that if this attribute is not present, then there are no
+    # required params
+    if hasattr(estimator, "_required_parameters"):
+        required_params = estimator._required_parameters
+        for required_param in required_params:
+            required_param_value = "mock"
+            # We assume that if this attribute is not present, then there are
+            # no constraints
+            if hasattr(estimator, "_parameter_constraints"):
+                constraint = estimator._parameter_constraints[required_param][0]
+                if constraint == list:
+                    required_param_value = list()
+                elif constraint.__class__ == sklearn.utils._param_validation.HasMethods:
+                    required_param_value = MockClass()
+                else:
+                    raise ValueError("Unknown constraint not considered")
+            required_arguments[required_param] = required_param_value
+
+    with pytest.raises(NotFittedError):
+        estimator(**required_arguments).get_feature_names_out()
