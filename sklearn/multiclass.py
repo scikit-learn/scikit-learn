@@ -1128,7 +1128,8 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         def _get_predictions(estimator, X, predict_method, center=False):
             y_pred = getattr(estimator, predict_method)(X)
             if predict_method == "predict_proba":
-                y_pred = y_pred[:, 1] if center else y_pred[:, 1] - 0.5
+                # centering is probability is required when using the loss decoding
+                y_pred = y_pred[:, 1] - 0.5 if center else y_pred[:, 1]
             return y_pred
 
         if self.decoding in ("cityblock", "hamming"):

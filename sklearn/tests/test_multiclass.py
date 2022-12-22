@@ -41,7 +41,7 @@ from sklearn.impute import SimpleImputer
 from sklearn import svm
 from sklearn.exceptions import NotFittedError
 from sklearn import datasets
-from sklearn.datasets import load_breast_cancer, make_classification
+from sklearn.datasets import load_breast_cancer, load_digits, make_classification
 
 msg = "The default value for `force_alpha` will change"
 pytestmark = pytest.mark.filterwarnings(f"ignore:{msg}:FutureWarning")
@@ -821,6 +821,34 @@ def test_ecoc_requested_prediction_method():
         OutputCodeClassifier(
             LinearRegression(), code_size=2.0, decoding="loss", random_state=0
         ).fit(X, y)
+
+
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"decoding": "cityblock"},
+        {"decoding": "hamming"},
+        {"decoding": "loss", "loss": "exponential"},
+    ],
+    ids=["cityblock", "hamming", "loss"],
+)
+def test_ecoc_outperform_multiclass(params, global_random_seed):
+    """Check that the ECOC strategy significantly outperforms a single tree on
+    the digits dataset. This would be inline with the results reported in [1]_.
+
+    [1] Dietterich, T. G., & Bakiri, G. (1994).
+    Solving multiclass learning problems via error-correcting output codes.
+    Journal of artificial intelligence research, 2, 263-286.
+    """
+    X, y = load_digits(return_X_y=True)
+
+    single_tree = DecisionTreeClassifier(random_state=global_random_seed)
+    ecoc = OutputCodeClassifier(single_tree, **params, random_state=0)
+
+    cv_results_single_tree = cross_val_score(single_tree, X, y, cv=5)
+    cv_results_ecoc = cross_val_score(ecoc, X, y, cv=5)
+
+    assert cv_results_ecoc.mean() > cv_results_single_tree.mean()
 
 
 def test_pairwise_indices():
