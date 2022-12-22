@@ -273,7 +273,7 @@ Below is an example of multiclass learning using OvO::
 OutputCodeClassifier
 --------------------
 
-Error-Correcting Output Code-based strategies are fairly different from
+Error-Correcting Output Code-based strategies [D1995]_ are fairly different from
 one-vs-the-rest and one-vs-one. With these strategies, each class is
 represented in a Euclidean space, where each dimension can only be 0 or 1.
 Another way to put it is that each class is represented by a binary code (an
@@ -281,22 +281,34 @@ array of 0 and 1). The matrix which keeps track of the location/code of each
 class is called the code book. The code size is the dimensionality of the
 aforementioned space. Intuitively, each class should be represented by a code
 as unique as possible and a good code book should be designed to optimize
-classification accuracy. In this implementation, we simply use a
-randomly-generated code book as advocated in [3]_ although more elaborate
-methods may be added in the future.
+classification accuracy. Therefore, this classifier relies on two main steps:
+(i) an encoding strategy to map the class labels to the a binary code and (ii)
+a decoding strategy to map the binary classifier predicitons to the original
+class labels.
 
-At fitting time, one binary classifier per bit in the code book is fitted.
-At prediction time, the classifiers are used to project new points in the
-class space and the class closest to the points is chosen.
+In :class:`~sklearn.multiclass.OutputCodeClassifier`, the encoding strategy is
+simply a randomly-generated code book as advocated in [J1998]_ although more
+elaborate methods may be added in the future.
 
-In :class:`~sklearn.multiclass.OutputCodeClassifier`, the ``code_size``
+We provide several decoding strategies to output a class label from the binary
+classifier predictions. The strategy `"hamming"` and `"cityblock"` compute the
+Hamming distance [D1995]_ and the Manhattan distance [A2000]_, respectively,
+between the binary classifier predictions and codes in the code book. For the
+Hamming distance, the hard predictions (output of `predict`) are used while
+probability estimates (output of `predict_proba`) are used for the Manhattan
+distance. The strategy `"loss"` allows soft decoding and has been shown to
+outperform the previous two strategies in [A2000]_. The choice of loss is
+usually in line with the loss minimize by the estimator (cf. [A2000]_ for more
+details).
+
+In :class:`~sklearn.multiclass.OutputCodeClassifier`, the `code_size`
 attribute allows the user to control the number of classifiers which will be
 used. It is a percentage of the total number of classes.
 
-A number between 0 and 1 will require fewer classifiers than
-one-vs-the-rest. In theory, ``log2(n_classes) / n_classes`` is sufficient to
-represent each class unambiguously. However, in practice, it may not lead to
-good accuracy since ``log2(n_classes)`` is much smaller than `n_classes`.
+A number between 0 and 1 will require fewer classifiers than one-vs-the-rest.
+However, `log2(n_classes) / n_classes` is the minimum required code size to
+represent each class unambiguously. A code size smaller than this will result
+in an error.
 
 A number greater than 1 will require more classifiers than
 one-vs-the-rest. In this case, some classifiers will in theory correct for
@@ -312,31 +324,36 @@ Below is an example of multiclass learning using Output-Codes::
   >>> from sklearn.svm import LinearSVC
   >>> X, y = datasets.load_iris(return_X_y=True)
   >>> clf = OutputCodeClassifier(LinearSVC(random_state=0),
+  ...                            decoding="loss", loss="hinge",
   ...                            code_size=2, random_state=0)
   >>> clf.fit(X, y).predict(X)
-  array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-         0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1,
-         1, 2, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1,
-         1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
-         2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 1, 2, 2, 2,
-         2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
+  array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0,
+         0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0,
+          0, 1, 1, 1, 2, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 2, 0, 0, 0, 1,
+          0, 1, 1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
+          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2,
+          2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
+
+This way of encoding multiclass problem has been shown to outputperform
+one-vs-rest strategy [D1995]_.
 
 .. topic:: References:
 
-    * "Solving multiclass learning problems via error-correcting output codes",
-      Dietterich T., Bakiri G.,
-      Journal of Artificial Intelligence Research 2,
-      1995.
+    .. [D1995] "Solving multiclass learning problems via error-correcting output codes",
+       Dietterich T., Bakiri G.,
+       Journal of Artificial Intelligence Research 2,
+       1995.
 
-    .. [3] "The error coding method and PICTs",
-        James G., Hastie T.,
-        Journal of Computational and Graphical statistics 7,
-        1998.
+    .. [J1998] "The error coding method and PICTs",
+       James G., Hastie T.,
+       Journal of Computational and Graphical statistics 7,
+       1998.
 
-    * "The Elements of Statistical Learning",
-      Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
-      2008.
+    .. [A2000] "Reducing multiclass to binary: A unifying approach for margin classifiers."
+       Allwein E. L., Schapire R. E., and Singer Y.,
+       Journal of machine learning research 1
+       2000.
 
 .. _multilabel_classification:
 
