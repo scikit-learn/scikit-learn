@@ -41,6 +41,10 @@ Changelog
 - |Feature| :class:`pipeline.FeatureUnion` can now use indexing notation (e.g.
   `feature_union["scalar"]`) to access transformers by name. :pr:`25093` by
   `Thomas Fan`_.
+- |Feature| :class:`pipeline.FeatureUnion` can now access the
+  `feature_names_in_` attribute if the value seen during `.fit` was a `pandas
+  .DataFrame`.
+  :pr:`25220` by :user:`Ian Thompson <ianiat11>`.
 
 :mod:`sklearn.preprocessing`
 ............................
