@@ -259,23 +259,31 @@ def test_sparse():
 
 
 def test_lof_error():
-    X = [[0, 1, 2, 3]]
-    clf = neighbors.LocalOutlierFactor(contamination="auto", n_neighbors=2)
-    inequality_str = "n_neighbors < n_samples_fit"
-    msg = "Expected {}, but "
-    "n_neighbors = 1, n_samples_fit = 1, "
-    "n_samples = 1"
-    for method in ["fit", "fit_predict"]:
-        with pytest.raises(ValueError, match=msg.format(inequality_str)):
-            getattr(clf, method)(X)
+    X = np.ones((7, 7))
 
-    inequality_str = "n_neighbors < n_samples_fit"
-    with pytest.raises(ValueError, match=msg.format(inequality_str)):
-        clf.kneighbors(n_neighbors=2)
+    msg = (
+        "Expected n_neighbors < n_samples_fit, but n_neighbors = 1, "
+        "n_samples_fit = 1, n_samples = 1"
+    )
+    with pytest.raises(ValueError, match=msg):
+        clf = neighbors.LocalOutlierFactor(n_neighbors=1).fit(X[:1])
+    clf = neighbors.LocalOutlierFactor(n_neighbors=2).fit(X[:2])
 
-    inequality_str = "n_neighbors <= n_samples_fit"
-    with pytest.raises(ValueError, match=msg.format(inequality_str)):
-        clf.kneighbors(X, n_neighbors=2)
+    msg = (
+        "Expected n_neighbors < n_samples_fit, but n_neighbors = 2, "
+        "n_samples_fit = 2, n_samples = 2"
+    )
+    with pytest.raises(ValueError, match=msg):
+        clf.kneighbors(None, n_neighbors=2)
+    clf.kneighbors(None, n_neighbors=1)
+
+    msg = (
+        "Expected n_neighbors <= n_samples_fit, but n_neighbors = 3, "
+        "n_samples_fit = 2, n_samples = 7"
+    )
+    with pytest.raises(ValueError, match=msg):
+        clf.kneighbors(X, n_neighbors=3)
+    clf.kneighbors(X, n_neighbors=2)
 
 
 @pytest.mark.parametrize("algorithm", ["auto", "ball_tree", "kd_tree", "brute"])
