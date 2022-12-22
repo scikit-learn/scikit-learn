@@ -116,31 +116,28 @@ def test_additive_chi2_sampler():
     with pytest.raises(ValueError, match=msg):
         transformer.fit(Y_neg)
 
-    # test that the sample interval is set correctly
-    sample_intervals = [0.8, 0.5, 0.4]
-    for sample_interval in sample_intervals:
-        # test that the sample_interval is initialized correctly
-        transformer = AdditiveChi2Sampler(sample_interval=sample_interval)
-        transformer.fit(X)
-        assert transformer.sample_interval == sample_interval
 
-    # test error on invalid sample_steps
-    transformer = AdditiveChi2Sampler(sample_steps=4)
-    msg = re.escape(
-        "If sample_steps is not in [1, 2, 3], you need to provide sample_interval"
+@pytest.mark.parametrize("method", ["fit", "fit_transform"])
+@pytest.mark.parametrize("sample_steps", range(1, 4))
+def test_additive_chi2_sampler_sample_steps(method, sample_steps):
+    """Check that the input sample step doesn't raise an error
+    and that sample interval doesn't not change after fit.
+    """
+    transformer = AdditiveChi2Sampler(sample_steps=sample_steps)
+    getattr(transformer, method)(X)
+
+    sample_interval = 0.5
+    transformer = AdditiveChi2Sampler(
+        sample_steps=sample_steps,
+        sample_interval=sample_interval,
     )
-    with pytest.raises(ValueError, match=msg):
-        transformer.fit(X)
-
-    # test that the sample_interval is set correctly
-    sample_interval = 0.3
-    transformer = AdditiveChi2Sampler(sample_steps=4, sample_interval=sample_interval)
-    transformer.fit(X)
-    assert transformer.sample_interval == sample_interval
+    getattr(transformer, method)(X)
+    transformer.sample_interval == sample_interval
 
 
 # TODO(1.5): remove
 def test_additive_chi2_sampler_future_warnings():
+    """Check that we raise a FutureWarning when accessing to `sample_interval_`."""
     transformer = AdditiveChi2Sampler()
     transformer.fit(X)
     msg = re.escape(
@@ -149,6 +146,17 @@ def test_additive_chi2_sampler_future_warnings():
     )
     with pytest.warns(FutureWarning, match=msg):
         assert transformer.sample_interval_ is not None
+
+
+@pytest.mark.parametrize("method", ["fit", "fit_transform"])
+def test_additive_chi2_sampler_wrong_sample_steps(method):
+    """Check that we raise a ValueError on invalid sample_steps"""
+    transformer = AdditiveChi2Sampler(sample_steps=4)
+    msg = re.escape(
+        "If sample_steps is not in [1, 2, 3], you need to provide sample_interval"
+    )
+    with pytest.raises(ValueError, match=msg):
+        getattr(transformer, method)(X)
 
 
 def test_skewed_chi2_sampler():

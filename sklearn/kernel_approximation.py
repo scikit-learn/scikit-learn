@@ -740,24 +740,29 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         check_non_negative(X, "X in AdditiveChi2Sampler.transform")
         sparse = sp.issparse(X)
 
-        if self.sample_interval is None:
-            # See figure 2 c) of "Efficient additive kernels via explicit feature maps"
-            # <http://www.robots.ox.ac.uk/~vedaldi/assets/pubs/vedaldi11efficient.pdf>
-            # A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence,
-            # 2011
-            if self.sample_steps == 1:
-                sample_interval = 0.8
-            elif self.sample_steps == 2:
-                sample_interval = 0.5
-            elif self.sample_steps == 3:
-                sample_interval = 0.4
-            else:
-                raise ValueError(
-                    "If sample_steps is not in [1, 2, 3],"
-                    " you need to provide sample_interval"
-                )
+        if getattr(self, "_sample_interval"):
+            # TODO(1.5): remove this branch
+            sample_interval = self._sample_interval
+
         else:
-            sample_interval = self.sample_interval
+            if self.sample_interval is None:
+                # See figure 2 c) of "Efficient additive kernels via explicit feature maps" # noqa
+                # <http://www.robots.ox.ac.uk/~vedaldi/assets/pubs/vedaldi11efficient.pdf>
+                # A. Vedaldi and A. Zisserman, Pattern Analysis and Machine Intelligence, # noqa
+                # 2011
+                if self.sample_steps == 1:
+                    sample_interval = 0.8
+                elif self.sample_steps == 2:
+                    sample_interval = 0.5
+                elif self.sample_steps == 3:
+                    sample_interval = 0.4
+                else:
+                    raise ValueError(
+                        "If sample_steps is not in [1, 2, 3],"
+                        " you need to provide sample_interval"
+                    )
+            else:
+                sample_interval = self.sample_interval
 
         # zeroth component
         # 1/cosh = sech
