@@ -18,14 +18,19 @@ All classifiers in scikit-learn implement multiclass classification; you
 only need to use this module if you want to experiment with custom multiclass
 strategies.
 
-The one-vs-the-rest meta-classifier also implements a `predict_proba` method,
-so long as such a method is implemented by the base classifier. This method
-returns probabilities of class membership in both the single label and
-multilabel case.  Note that in the multilabel case, probabilities are the
+The one-vs-the-rest and error correcting output codes meta-classifiers also
+implement a `predict_proba` method, returning the probabilities of class
+membership.
+For one-vs-the-rest classifier, it requires such a method to be
+implemented by the base classifier and supports both the single label and
+multilabel case. Note that in the multilabel case, probabilities are the
 marginal probability that a given sample falls in the given class. As such, in
 the multilabel case the sum of these probabilities over all possible labels
 for a given sample *will not* sum to unity, as they do in the single label
 case.
+Error correcting output codes classifier only supports single label multiclass
+target. Its `predict_proba` method imposes no additional requirements on the
+base estimator.
 """
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
@@ -1025,6 +1030,31 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         return self
 
+    def predict_proba(self, X):
+        """Return probability estimates.
+
+        Estimates are based upon euclidean distance between the underlying
+        estimators' predictions and the class code.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Data.
+
+        Returns
+        -------
+        T : ndarray of shape (n_samples, n_classes)
+            Returns the score of the sample for each class in the model,
+            where classes are ordered as they are in `self.classes_`.
+        """
+        check_is_fitted(self)
+        Y = np.array([_predict_binary(e, X) for e in self.estimators_]).T
+        dist = euclidean_distances(Y, self.code_book_)
+        # Inverse distance weighting:
+        eps = np.finfo(dist.dtype).eps
+        proba = (1.0 / (dist + eps)) / np.sum(1.0 / (dist + eps), axis=1, keepdims=True)
+        return proba
+
     def predict(self, X):
         """Predict multi-class targets using underlying estimators.
 
@@ -1038,7 +1068,5 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         y : ndarray of shape (n_samples,)
             Predicted multi-class targets.
         """
-        check_is_fitted(self)
-        Y = np.array([_predict_binary(e, X) for e in self.estimators_]).T
-        pred = euclidean_distances(Y, self.code_book_).argmin(axis=1)
+        pred = self.predict_proba(X).argmax(axis=1)
         return self.classes_[pred]

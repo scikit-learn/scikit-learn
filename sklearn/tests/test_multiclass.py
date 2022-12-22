@@ -704,6 +704,14 @@ def test_ecoc_fit_predict():
     assert len(ecoc.estimators_) == n_classes * 2
 
 
+def test_ecoc_predict_proba():
+    ecoc = OutputCodeClassifier(LinearSVC(random_state=0), random_state=0)
+    ecoc.fit(iris.data, iris.target).predict(iris.data)
+    proba = ecoc.predict_proba(iris.data)
+    assert_allclose(proba.sum(axis=1), 1)
+    assert len(proba[0]) == len(ecoc.classes_)
+
+
 def test_ecoc_gridsearch():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0), random_state=0)
     Cs = [0.1, 0.5, 0.8]
