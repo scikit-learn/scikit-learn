@@ -121,7 +121,7 @@ def test_additive_chi2_sampler():
 @pytest.mark.parametrize("sample_steps", range(1, 4))
 def test_additive_chi2_sampler_sample_steps(method, sample_steps):
     """Check that the input sample step doesn't raise an error
-    and that sample interval doesn't not change after fit.
+    and that sample interval doesn't change after fit.
     """
     transformer = AdditiveChi2Sampler(sample_steps=sample_steps)
     getattr(transformer, method)(X)
