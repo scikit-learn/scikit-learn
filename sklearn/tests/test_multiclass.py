@@ -852,6 +852,43 @@ def test_ecoc_outperform_multiclass(params, global_random_seed):
     assert cv_results_ecoc.mean() > cv_results_single_tree.mean()
 
 
+# We limit the number of iterations to speed up the test
+@pytest.mark.filterwarnings("ignore: Liblinear failed to converge")
+@pytest.mark.parametrize(
+    "params",
+    [
+        {"decoding": "loss", "loss": "linear"},
+        {"decoding": "loss", "loss": "exponential"},
+        {"decoding": "loss", "loss": "hinge"},
+        {"decoding": "loss", "loss": "logistic"},
+        {"decoding": "loss", "loss": "square"},
+    ],
+    ids=["linear", "exponential", "hinge", "logistic", "square"],
+)
+def test_ecoc_loss_outperform_hamming(params, global_random_seed):
+    """Check that the ECOC loss strategy significantly outperforms the Hamming approach.
+    Even if the loss is not chosing according to the estimator, it will anyway be better
+    than the Hamming approach. It is inline with the results reported in [1]_.
+
+    [1] Allwein, E. L., Schapire, R. E., & Singer, Y. (2000).
+    Reducing multiclass to binary: A unifying approach for margin classifiers.
+    Journal of machine learning research, 1(Dec), 113-141.
+    """
+    X, y = load_digits(return_X_y=True)
+
+    svc = LinearSVC(max_iter=10, random_state=global_random_seed)
+    ecoc_hamming = OutputCodeClassifier(
+        svc, decoding="hamming", random_state=global_random_seed
+    )
+    ecoc_loss = OutputCodeClassifier(svc, **params, random_state=global_random_seed)
+
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=global_random_seed)
+    cv_results_hamming = cross_val_score(ecoc_hamming, X, y, cv=cv)
+    cv_results_loss = cross_val_score(ecoc_loss, X, y, cv=cv)
+
+    assert cv_results_loss.mean() > cv_results_hamming.mean()
+
+
 def test_pairwise_indices():
     clf_precomputed = svm.SVC(kernel="precomputed")
     X, y = iris.data, iris.target
