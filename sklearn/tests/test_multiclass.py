@@ -10,6 +10,7 @@ from re import escape
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._mocking import CheckingClassifier
+from sklearn.multiclass import _ConstantPredictor
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
@@ -791,7 +792,9 @@ def test_ecoc_fit():
     assert_array_equal(ecoc.classes_, np.sort(classes))
 
     for estimator in ecoc.estimators_:
-        # the inner estimator should be fitted on a binary problem
+        # all estimators but _ConstantPredictor should be fit on a binary problem
+        if isinstance(estimator, _ConstantPredictor):
+            continue
         assert_array_equal(estimator.classes_, [0, 1])
     assert len(ecoc.estimators_) == ecoc.code_book_.shape[1]
 
