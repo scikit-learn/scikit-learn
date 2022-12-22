@@ -1004,7 +1004,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         ],
         "code_size": [Interval(Real, 0.0, None, closed="neither")],
         "decoding": [StrOptions({"cityblock", "hamming", "loss"})],
-        "loss": [StrOptions({DECODING_LOSSES.keys()}), callable],
+        "loss": [StrOptions(set(DECODING_LOSSES.keys())), callable],
         "random_state": ["random_state"],
         "n_jobs": [Integral, None],
     }
@@ -1059,7 +1059,16 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         ):
             raise ValueError(
                 "The estimator does not have a `predict_proba` method. "
-                "Thus, the decoding_method='cityblock' is not supported."
+                "Thus, the 'cityblock' decoding strategy is not supported."
+            )
+        elif self.decoding == "loss" and not (
+            hasattr(self.estimator, "predict_proba")
+            or hasattr(self.estimator, "decision_function")
+        ):
+            raise ValueError(
+                "The estimator does not have either a `predict_proba` or "
+                "`decision_function` method. Thus, the 'loss' decoding strategy is "
+                "not supported."
             )
 
         random_state = check_random_state(self.random_state)
@@ -1124,23 +1133,21 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """
         check_is_fitted(self)
 
+        def _get_predictions(estimator, X, predict_method, center=False):
+            y_pred = getattr(estimator, predict_method)(X)
+            if predict_method == "predict_proba":
+                y_pred = y_pred[:, 1] if center else y_pred[:, 1] - 0.5
+            return y_pred
+
         if self.decoding in ("cityblock", "hamming"):
             predict_method = (
                 "predict_proba" if self.decoding == "cityblock" else "predict"
             )
-
-            def _predict_xxx(estimator, predict_method, X):
-                y_pred = getattr(estimator, predict_method)(X)
-                if y_pred.ndim > 1:
-                    # predictions from `predict_proba`
-                    return y_pred[:, 1]
-                return y_pred
-
             # ArgKmin only accepts C-contiguous array. The aggregated
             # predictions need to be transposed. We therefore create a
             # F-contiguous array to avoid a copy and have a C-contiguous array
             # after the transpose operation.
-            y_pred = [_predict_xxx(e, predict_method, X) for e in self.estimators_]
+            y_pred = [_get_predictions(e, X, predict_method) for e in self.estimators_]
             y_pred = np.array(y_pred, order="F", dtype=np.float64).T
 
             closest_codes = pairwise_distances_argmin(
@@ -1153,16 +1160,21 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             else:
                 loss = DECODING_LOSSES[self.loss]
 
-            def _predict_yyy(estimator, X):
-                if hasattr(estimator, "decision_function"):
-                    return estimator.decision_function(X)
-                return estimator.predict_proba(X)[:, 1] - 0.5
+            if hasattr(self.estimators_[0], "decision_function"):
+                predict_method = "decision_function"
+            else:
+                predict_method = "predict_proba"
 
             Y_pred = np.array(
-                [_predict_yyy(e, X) for e in self.estimators_], dtype=np.float64
-            )
-            codebook = self.code_book_ * 2 - 1
-            predictions_losses = np.array([loss(Y_pred, code) for code in codebook])
+                [
+                    _get_predictions(e, X, predict_method, center=True)
+                    for e in self.estimators_
+                ],
+                dtype=np.float64,
+            ).T
+            codebook = self.code_book_ * 2 - 1  # convert to {-1, 1} matrix
+            predictions_losses = np.array([loss(Y_pred * code) for code in codebook])
+            print(predictions_losses.shape)
             return self.classes_[np.argmin(predictions_losses, axis=0)]
 
     @property

@@ -688,12 +688,10 @@ def test_ovo_float_y():
         ovo.fit(X, y)
 
 
-@pytest.mark.parametrize("decoding_method", ["cityblock", "hamming"])
-def test_ecoc_gridsearch(decoding_method):
+@pytest.mark.parametrize("decoding", ["cityblock", "hamming", "loss"])
+def test_ecoc_gridsearch(decoding):
     ecoc = OutputCodeClassifier(
-        DecisionTreeClassifier(random_state=0),
-        decoding_method=decoding_method,
-        random_state=0,
+        DecisionTreeClassifier(random_state=0), decoding=decoding, random_state=0
     )
     max_depth = [2, 3, 5]
     cv = GridSearchCV(ecoc, {"estimator__max_depth": max_depth})
@@ -809,17 +807,28 @@ def test_ecoc_fit():
     assert len(ecoc.estimators_) == ecoc.code_book_.shape[1]
 
 
-def test_ecoc_cityblock_requires_predict_proba():
-    """Check that we raise an error if the decoding method is 'cityblock' and the
-    estimator does not support `predict_proba`."""
+def test_ecoc_requested_prediction_method():
+    """"""
     X, y = make_classification(
         n_samples=50, n_classes=4, n_clusters_per_class=1, random_state=0
     )
 
-    err_msg = "The estimator does not have a `predict_proba` method."
+    err_msg = (
+        "The estimator does not have a `predict_proba` method. Thus, the 'cityblock' "
+        "decoding strategy is not supported."
+    )
     with pytest.raises(ValueError, match=err_msg):
         OutputCodeClassifier(
-            LinearSVC(), code_size=2.0, random_state=0, decoding_method="cityblock"
+            LinearSVC(), code_size=2.0, random_state=0, decoding="cityblock"
+        ).fit(X, y)
+
+    err_msg = (
+        "The estimator does not have either a `predict_proba` or `decision_function` "
+        "method. Thus, the 'loss' decoding strategy is not supported."
+    )
+    with pytest.raises(ValueError, match=err_msg):
+        OutputCodeClassifier(
+            LinearRegression(), code_size=2.0, decoding="loss", random_state=0
         ).fit(X, y)
 
 
