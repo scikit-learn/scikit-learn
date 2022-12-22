@@ -36,6 +36,13 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.ensemble`
+.......................
+- |Feature| Compute a custom out-of-bag score by passing a callable to
+  :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`.
+  :pr:`25177` by :user:`Tim Head <betatim>`.
+
 :mod:`sklearn.multiclass`
 .........................
 - |Fix| :class:`multiclass.OutputCodeClassifier` suffers from several bugs.
