@@ -1174,7 +1174,6 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             ).T
             codebook = self.code_book_ * 2 - 1  # convert to {-1, 1} matrix
             predictions_losses = np.array([loss(Y_pred * code) for code in codebook])
-            print(predictions_losses.shape)
             return self.classes_[np.argmin(predictions_losses, axis=0)]
 
     @property
