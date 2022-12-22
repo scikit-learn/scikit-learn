@@ -55,8 +55,9 @@ Changelog
   `Thomas Fan`_.
 - |Feature| :class:`pipeline.FeatureUnion` can now access the
   `feature_names_in_` attribute if the `X` value seen during `.fit` has a
-  `columns` attribute and all columns are strings.
-  :pr:`25220` by :user:`Ian Thompson <ianiat11>`.
+  `columns` attribute and all columns are strings. e.g. when `X` is a
+  `pandas.DataFrame`
+  :pr:`25220` by :user:`Ian Thompson <it176131>`.
 
 :mod:`sklearn.preprocessing`
 ............................
