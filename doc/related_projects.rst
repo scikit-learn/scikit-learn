@@ -360,6 +360,8 @@ and promote community efforts.
   (`source <https://github.com/mehrdad-dev/scikit-learn>`__)
 - `Spanish translation <https://qu4nt.github.io/sklearn-doc-es/>`_
   (`source <https://github.com/qu4nt/sklearn-doc-es>`__)
+- `Korean translation <https://panda5176.github.io/scikit-learn-korean/>`_
+  (`source <https://github.com/panda5176/scikit-learn-korean>`__)
 
 
 .. rubric:: Footnotes
