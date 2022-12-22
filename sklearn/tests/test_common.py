@@ -640,13 +640,9 @@ def test_global_output_transform_pandas(estimator):
 )
 def test_uniform_error_message(estimator, request):
     estimator_path = estimator.__module__ + "." + estimator.__name__
-    if estimator_path in CLASS_NOT_FITTED_ERROR_IGNORE_LIST:
-        request.applymarker(
-            pytest.mark.xfail(run=False, reason="TODO Ensure NotFittedError is raised")
-        )
 
     class MockClass:
-        def fit():
+        def fit(self):
             pass
 
     required_arguments = {}
@@ -664,9 +660,11 @@ def test_uniform_error_message(estimator, request):
                     required_param_value = list()
                 elif constraint.__class__ == sklearn.utils._param_validation.HasMethods:
                     required_param_value = MockClass()
-                else:
-                    raise ValueError("Unknown constraint not considered")
             required_arguments[required_param] = required_param_value
 
+    if estimator_path in CLASS_NOT_FITTED_ERROR_IGNORE_LIST:
+        request.applymarker(
+            pytest.mark.xfail(run=False, reason="TODO Ensure NotFittedError is raised")
+        )
     with pytest.raises(NotFittedError):
         estimator(**required_arguments).get_feature_names_out()
