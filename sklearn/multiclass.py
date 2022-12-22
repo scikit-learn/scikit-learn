@@ -903,7 +903,8 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     ----------
     estimator : estimator object
         An estimator object implementing :term:`fit` and one of
-        :term:`decision_function` or :term:`predict_proba`.
+        :term:`predict`, :term:`decision_function` or :term:`predict_proba`,
+        depending of the `decoding` strategy.
 
     code_size : float, default=1.5
         Percentage of the number of classes to be used to create the code book.
@@ -913,13 +914,28 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
     decoding : {"cityblock", "hamming", "loss"}, default="hamming"
         The method used to decode the predictions of the binary classifiers.
-        TODO: add details about the methods and link to the documentation.
+        The choices are:
+
+        - `"hamming"`: known as "hard" decoding since it compute the Hamming
+          distance between the hard predictions of the binary classifiers and
+          the codes from the code books.
+        - `"cityblock"`: similar to `"hamming"` strategy but uses the
+          probability estimates (output of :term:`predict_proba`) of the binary
+          classifiers instead of the hard predictions. Cityblock distance is
+          also known as Manhattan distance or L1 distance.
+        - `"loss"`: uses the loss function to compute the distance between the
+          the binary classifier predictions and the codes from the code book.
+          The predictions are either the probability estimates (output of
+          :term:`predict_proba`) or a confidence score (output of
+          :term:`decision_function`). The loss function used is controlled by
+          the `loss` parameter.
 
     loss : {"exponential", "hinge", "linear", "logistic", "square"} or callable, \
             default="linear"
         When `decoding="loss"`, it corresponds to the loss function used to
-        compute the distance between the predicted code and the true code.
-        TODO: add details about the methods and link to the documentation.
+        compute the distance between the predicted code and the true code. It
+        is usually wise to use a loss function that is used to train the
+        binary classifiers (see [3]_ for more details).
 
     random_state : int, RandomState instance, default=None
         The generator used to initialize the codebook.
