@@ -808,14 +808,14 @@ class KNeighborsMixin:
         n_samples_fit = self.n_samples_fit_
         if n_neighbors > n_samples_fit:
             if query_is_train:
-                n_neighbors -= 1
+                n_neighbors -= 1  # ok to modify inplace because an error is raised
                 inequality_str = "n_neighbors < n_samples_fit"
             else:
                 inequality_str = "n_neighbors <= n_samples_fit"
             raise ValueError(
                 f"Expected {inequality_str}, but "
                 f"n_neighbors = {n_neighbors}, n_samples_fit = {n_samples_fit}, "
-                f"n_samples = {X.shape[0]}"
+                f"n_samples = {X.shape[0]}"  # include n_samples to comply with common tests
             )
 
         n_jobs = effective_n_jobs(self.n_jobs)

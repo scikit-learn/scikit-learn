@@ -26,8 +26,8 @@ Changelog
   boolean. The type is maintained, instead of converting to `float64.`
   :pr:`25147` by :user:`Tim Head <betatim>`.
 
-:mod: `sklearn.neighbors`
-.........................
+:mod:`sklearn.neighbors`
+........................
 
 - |Fix| Improve error message for :class:`neighbors.LocalOutlierFactor`
   when it is invoked with `n_samples = n_neighbors`.
