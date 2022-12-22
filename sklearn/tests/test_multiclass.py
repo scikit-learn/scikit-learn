@@ -757,20 +757,9 @@ def test_ecoc_codebook():
     unique_codes = np.unique(ecoc.code_book_, axis=0)
     assert unique_codes.shape == ecoc.code_book_.shape
 
-    # check the case that we compress by limiting the number of columns
-    code_size = 0.25
-    warn_msg = "The code book size is not big enough to encode all classes"
-    with pytest.warns(UserWarning, match=warn_msg):
-        ecoc = OutputCodeClassifier(
-            DecisionTreeClassifier(random_state=0), code_size=code_size, random_state=0
-        ).fit(X, y)
-    assert ecoc.code_book_.shape == (n_classes, int(n_classes * code_size))
-    unique_codes = np.unique(ecoc.code_book_, axis=0)
-    assert unique_codes.shape[0] < ecoc.code_book_.shape[0]
-
     # error when the code size is too small
     code_size = 0.1
-    err_msg = "is too small for the number of classes"
+    err_msg = "The code book size is not big enough to encode all classes."
     with pytest.raises(ValueError, match=err_msg):
         OutputCodeClassifier(
             DecisionTreeClassifier(random_state=0), code_size=code_size, random_state=0
@@ -808,7 +797,9 @@ def test_ecoc_fit():
 
 
 def test_ecoc_requested_prediction_method():
-    """"""
+    """Check that we raise an appropriate error message when the estimator does not
+    implement the requested prediction method.
+    """
     X, y = make_classification(
         n_samples=50, n_classes=4, n_clusters_per_class=1, random_state=0
     )

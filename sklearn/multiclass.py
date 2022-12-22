@@ -853,7 +853,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
 def _exponential_loss_decoding(y):
     """Exponential loss (AdaBoost) decoding function."""
-    return np.exp(-2 * y).sum(axis=1)
+    return np.exp(-y).sum(axis=1)
 
 
 def _hinge_loss_deconding(y):
@@ -911,7 +911,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         one-vs-the-rest. A number greater than 1 will require more classifiers
         than one-vs-the-rest.
 
-    decoding : {"cityblock", "hamming", "loss"}, default="loss"
+    decoding : {"cityblock", "hamming", "loss"}, default="hamming"
         The method used to decode the predictions of the binary classifiers.
         TODO: add details about the methods and link to the documentation.
 
@@ -1014,7 +1014,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         estimator,
         *,
         code_size=1.5,
-        decoding="cityblock",
+        decoding="hamming",
         loss="linear",
         random_state=None,
         n_jobs=None,
@@ -1077,30 +1077,22 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self._label_encoder = LabelEncoder().fit(y)
         y_encoded = self._label_encoder.transform(y)
         n_classes = len(self._label_encoder.classes_)
-
         code_size = int(n_classes * self.code_size)
-        if code_size < 1:
-            raise ValueError(
-                f"code_size={self.code_size} is too small for the number of classes. "
-                f"code_size should be greater or equal to {1 / n_classes}."
-            )
         n_binary_values = 2**code_size
 
-        replace = n_binary_values < n_classes
-        if replace:
-            # in extreme compression cases, we will have to sample with replacement
-            warnings.warn(
+        if n_binary_values < n_classes:
+            raise ValueError(
                 "The code book size is not big enough to encode all classes. Thus, "
-                "different classes will share the same code. Increase `code_size` if "
-                "this behaviour is not intended.",
-                UserWarning,
+                "different classes will share the same code. Increase `code_size`. The "
+                "minimum value for `code_size` is"
+                f" {np.log2(n_classes) / n_classes:.2f}",
             )
 
         self.code_book_ = np.array(
             [
                 list(f"{int_code:b}".zfill(code_size))
                 for int_code in random_state.choice(
-                    n_binary_values, n_classes, replace=replace
+                    n_binary_values, n_classes, replace=False
                 )
             ],
             dtype=np.int64,
