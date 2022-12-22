@@ -41,13 +41,11 @@ cdef void _middle_term_sparse_sparse_64(
 cdef class MiddleTermComputer{{name_suffix}}:
     cdef:
         ITYPE_t effective_n_threads
-        ITYPE_t chunks_n_threads
-        ITYPE_t dist_middle_terms_chunks_size
         ITYPE_t n_features
         ITYPE_t chunk_size
 
         # Buffers for the `-2 * X_c @ Y_c.T` term computed via GEMM
-        vector[vector[DTYPE_t]] dist_middle_terms_chunks
+        # vector[vector[DTYPE_t]] dist_middle_terms_chunks
 
     cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
         self,
@@ -92,6 +90,7 @@ cdef class MiddleTermComputer{{name_suffix}}:
         ITYPE_t Y_start,
         ITYPE_t Y_end,
         ITYPE_t thread_num,
+        DTYPE_t *dist_middle_term,
     ) nogil
 
 
@@ -145,6 +144,7 @@ cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_
         ITYPE_t Y_start,
         ITYPE_t Y_end,
         ITYPE_t thread_num,
+        DTYPE_t *dist_middle_term,
     ) nogil
 
 
@@ -183,6 +183,7 @@ cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{nam
         ITYPE_t Y_start,
         ITYPE_t Y_end,
         ITYPE_t thread_num,
+        DTYPE_t *dist_middle_term,
     ) nogil
 
 

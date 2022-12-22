@@ -15,10 +15,19 @@ implementation_specific_values = [
 import numpy as np
 cimport numpy as cnp
 
+from libcpp.vector cimport vector
+
 from cython cimport final
 
 from ...utils._typedefs cimport DTYPE_t, ITYPE_t
 from ...metrics._dist_metrics cimport DistanceMetric
+
+# TODO: change for `libcpp.algorithm.fill` once Cython 3 is used
+# Introduction in Cython:
+#
+# https://github.com/cython/cython/blob/05059e2a9b89bf6738a7750b905057e5b1e3fe2e/Cython/Includes/libcpp/algorithm.pxd#L50 #noqa
+cdef extern from "<algorithm>" namespace "std" nogil:
+    void fill[Iter, T](Iter first, Iter last, const T& value) except + #noqa
 
 from scipy.sparse import issparse, csr_matrix
 from ...utils import check_array
@@ -342,6 +351,8 @@ cdef class EuclideanDenseDenseDatasetsPair{{name_suffix}}(DenseDenseDatasetsPair
         ITYPE_t Y_n_samples_chunk,
         ITYPE_t Y_n_samples_last_chunk,
         ITYPE_t effective_n_threads,
+        ITYPE_t dist_middle_terms_chunks_size,
+        ITYPE_t chunks_n_threads,
         **euclidean_kwargs,
     ):
         super().__init__(X, Y, distance_metric)
@@ -350,10 +361,16 @@ cdef class EuclideanDenseDenseDatasetsPair{{name_suffix}}(DenseDenseDatasetsPair
         self.Y_n_chunks = Y_n_chunks
         self.Y_n_samples_chunk = Y_n_samples_chunk
         self.Y_n_samples_last_chunk = Y_n_samples_last_chunk
+
+        self.chunks_n_threads = chunks_n_threads
+
         # The number of samples belonging to the all-but-last chunks of fixed width.
         self.Y_n_samples_fixed_size = (Y_n_chunks - 1) * Y_n_samples_chunk
 
         self.use_squared_distances = use_squared_distances
+
+        self.dist_middle_terms_chunks = vector[vector[DTYPE_t]](effective_n_threads)
+        self.dist_middle_terms_chunks_size = dist_middle_terms_chunks_size
 
         Y_norm_squared = (euclidean_kwargs or {}).pop("Y_norm_squared")
         if Y_norm_squared is not None:
@@ -403,7 +420,8 @@ cdef class EuclideanDenseDenseDatasetsPair{{name_suffix}}(DenseDenseDatasetsPair
         DatasetsPair{{name_suffix}}._parallel_on_X_parallel_init(
             self, thread_num
         )
-        self.middle_term_computer._parallel_on_X_parallel_init(thread_num)
+        self.dist_middle_terms_chunks[thread_num].resize(self.dist_middle_terms_chunks_size)
+        #self.middle_term_computer._parallel_on_X_parallel_init(thread_num)
 
     @final
     cdef void _parallel_on_X_init_chunk(
@@ -446,11 +464,16 @@ cdef class EuclideanDenseDenseDatasetsPair{{name_suffix}}(DenseDenseDatasetsPair
             Y_start,
             Y_end,
             thread_num,
+            self.dist_middle_terms_chunks[thread_num].data(),
         )
 
     @final
     cdef void _parallel_on_Y_init(self) nogil:
         DatasetsPair{{name_suffix}}._parallel_on_Y_init(self)
+        for thread_num in range(self.chunks_n_threads):
+            self.dist_middle_terms_chunks[thread_num].resize(
+                self.dist_middle_terms_chunks_size
+            )
         self.middle_term_computer._parallel_on_Y_init()
 
     @final
@@ -494,6 +517,7 @@ cdef class EuclideanDenseDenseDatasetsPair{{name_suffix}}(DenseDenseDatasetsPair
             Y_start,
             Y_end,
             thread_num,
+            self.dist_middle_terms_chunks[thread_num].data(),
         )
 
     @final
@@ -506,16 +530,16 @@ cdef class EuclideanDenseDenseDatasetsPair{{name_suffix}}(DenseDenseDatasetsPair
         ITYPE_t n_Y,
         ITYPE_t thread_num=0,
     ) nogil:
-        cdef:
-            # Y_chunk_size is constant except for the last chunk that can be smaller.
-            DTYPE_t dist_middle_term = (
-                self.middle_term_computer.dist_middle_terms_chunks[thread_num][i * n_Y + j]
-            )
+        #cdef:
+        #    # Y_chunk_size is constant except for the last chunk that can be smaller.
+        #    DTYPE_t dist_middle_term = (
+        #        self.middle_term_computer.dist_middle_terms_chunks[thread_num][i * n_Y + j]
+        #    )
         # Catastrophic cancellation might cause -0. to be present,
         # e.g. when computing d(x_i, y_i) when X is Y.
         return max(0.,
             self.X_norm_squared[X_start + i]
-            + dist_middle_term
+            + self.dist_middle_terms_chunks[thread_num][i * n_Y + j]
             + self.Y_norm_squared[Y_start + j]
         )
 
@@ -608,7 +632,9 @@ cdef class EuclideanSparseSparseDatasetsPair{{name_suffix}}(SparseSparseDatasets
         ITYPE_t Y_n_chunks,
         ITYPE_t Y_n_samples_chunk,
         ITYPE_t Y_n_samples_last_chunk,
-        ITYPE_t effective_n_threads
+        ITYPE_t effective_n_threads,
+        ITYPE_t dist_middle_terms_chunks_size,
+        ITYPE_t chunks_n_threads,
         **euclidean_kwargs,
     ):
         super().__init__(X, Y, distance_metric)
@@ -617,10 +643,16 @@ cdef class EuclideanSparseSparseDatasetsPair{{name_suffix}}(SparseSparseDatasets
         self.Y_n_chunks = Y_n_chunks
         self.Y_n_samples_chunk = Y_n_samples_chunk
         self.Y_n_samples_last_chunk = Y_n_samples_last_chunk
+
+        self.chunks_n_threads = chunks_n_threads
+
         # The number of samples belonging to the all-but-last chunks of fixed width.
         self.Y_n_samples_fixed_size = (Y_n_chunks - 1) * Y_n_samples_chunk
 
         self.use_squared_distances = use_squared_distances
+
+        self.dist_middle_terms_chunks = vector[vector[DTYPE_t]](effective_n_threads)
+        self.dist_middle_terms_chunks_size = dist_middle_terms_chunks_size
 
         euclidean_kwargs = euclidean_kwargs or {}
         Y_norm_squared = euclidean_kwargs.pop("Y_norm_squared", None)
@@ -677,7 +709,8 @@ cdef class EuclideanSparseSparseDatasetsPair{{name_suffix}}(SparseSparseDatasets
         DatasetsPair{{name_suffix}}._parallel_on_X_parallel_init(
             self, thread_num
         )
-        self.middle_term_computer._parallel_on_X_parallel_init(thread_num)
+        #self.middle_term_computer._parallel_on_X_parallel_init(thread_num)
+        self.dist_middle_terms_chunks[thread_num].resize(self.dist_middle_terms_chunks_size)
 
     @final
     cdef void _parallel_on_X_init_chunk(
@@ -707,6 +740,11 @@ cdef class EuclideanSparseSparseDatasetsPair{{name_suffix}}(SparseSparseDatasets
         DatasetsPair{{name_suffix}}._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
             self, X_start, X_end, Y_start, Y_end, thread_num
         )
+        fill(
+            self.dist_middle_terms_chunks[thread_num].begin(),
+            self.dist_middle_terms_chunks[thread_num].end(),
+            0.0,
+        )
         self.middle_term_computer._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
             X_start,
             X_end,
@@ -720,11 +758,16 @@ cdef class EuclideanSparseSparseDatasetsPair{{name_suffix}}(SparseSparseDatasets
             Y_start,
             Y_end,
             thread_num,
+            self.dist_middle_terms_chunks[thread_num].data(),
         )
 
     @final
     cdef void _parallel_on_Y_init(self) nogil:
         DatasetsPair{{name_suffix}}._parallel_on_Y_init(self)
+        for thread_num in range(self.chunks_n_threads):
+            self.dist_middle_terms_chunks[thread_num].resize(
+                self.dist_middle_terms_chunks_size
+            )
         self.middle_term_computer._parallel_on_Y_init()
 
     @final
@@ -755,6 +798,11 @@ cdef class EuclideanSparseSparseDatasetsPair{{name_suffix}}(SparseSparseDatasets
         DatasetsPair{{name_suffix}}._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
             self, X_start, X_end, Y_start, Y_end, thread_num
         )
+        fill(
+            self.dist_middle_terms_chunks[thread_num].begin(),
+            self.dist_middle_terms_chunks[thread_num].end(),
+            0.0,
+        )
         self.middle_term_computer._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
             X_start,
             X_end,
@@ -768,6 +816,7 @@ cdef class EuclideanSparseSparseDatasetsPair{{name_suffix}}(SparseSparseDatasets
             Y_start,
             Y_end,
             thread_num,
+            self.dist_middle_terms_chunks[thread_num].data(),
         )
 
     @final
@@ -781,15 +830,15 @@ cdef class EuclideanSparseSparseDatasetsPair{{name_suffix}}(SparseSparseDatasets
         ITYPE_t thread_num=0,
     ) nogil:
         # Y_chunk_size is constant except for the last chunk that can be smaller.
-        cdef:
-            DTYPE_t dist_middle_term = (
-                self.middle_term_computer.dist_middle_terms_chunks[thread_num][i * n_Y + j]
-            )
+        # cdef:
+        #    DTYPE_t dist_middle_term = (
+        #        self.middle_term_computer.dist_middle_terms_chunks[thread_num][i * n_Y + j]
+        #    )
         # Catastrophic cancellation might cause -0. to be present,
         # e.g. when computing d(x_i, y_i) when X is Y.
         return max(0.,
             self.X_norm_squared[i + X_start]
-            + dist_middle_term
+            + self.dist_middle_terms_chunks[thread_num][i * n_Y + j]
             + self.Y_norm_squared[j + Y_start]
         )
 

@@ -13,6 +13,7 @@ implementation_specific_values = [
 
 }}
 cimport numpy as cnp
+from libcpp.vector cimport vector
 
 from ...utils._typedefs cimport DTYPE_t, ITYPE_t, SPARSE_INDEX_TYPE_t
 from ...metrics._dist_metrics cimport DistanceMetric, DistanceMetric32
@@ -97,7 +98,12 @@ cdef class EuclideanDenseDenseDatasetsPair{{name_suffix}}(DenseDenseDatasetsPair
         ITYPE_t Y_n_samples_last_chunk
         ITYPE_t Y_n_samples_fixed_size
 
+        ITYPE_t chunks_n_threads
+
         bint use_squared_distances
+
+        vector[vector[DTYPE_t]] dist_middle_terms_chunks
+        ITYPE_t dist_middle_terms_chunks_size
 
         DenseDenseMiddleTermComputer{{name_suffix}} middle_term_computer
 
@@ -123,7 +129,12 @@ cdef class EuclideanSparseSparseDatasetsPair{{name_suffix}}(SparseSparseDatasets
         ITYPE_t Y_n_samples_last_chunk
         ITYPE_t Y_n_samples_fixed_size
 
+        ITYPE_t chunks_n_threads
+
         bint use_squared_distances
+
+        vector[vector[DTYPE_t]] dist_middle_terms_chunks
+        ITYPE_t dist_middle_terms_chunks_size
 
         SparseSparseMiddleTermComputer{{name_suffix}} middle_term_computer
 
