@@ -889,6 +889,36 @@ def test_ecoc_loss_outperform_hamming(params, global_random_seed):
     assert cv_results_loss.mean() > cv_results_hamming.mean()
 
 
+def test_ecoc_large_code_size():
+    """Check that we can request a large number of code size.
+
+    A large number of columns should not be an issue with a low number of classes.
+    The matrix will only be sparse. However, if the internal implementation does not
+    rely on generator, generating the radom codebook could result in a memory error
+    because all the potential integer between 0 and 2 ** `n_requested_columns` will
+    be stored in memory. A generator will only store the current integer.
+    """
+    X, y = make_classification(
+        n_samples=100,
+        n_features=30,
+        n_classes=10,
+        n_informative=20,
+        n_clusters_per_class=1,
+        random_state=0,
+    )
+
+    # code_size=5 will results in 100 columns in the codebook and code will be sampled
+    # from 0 to 2 ** 5 - 1
+    ecoc = OutputCodeClassifier(
+        DecisionTreeClassifier(max_depth=2, random_state=0),
+        code_size=5,
+        random_state=0,
+    ).fit(X, y)
+    assert ecoc.code_book_.shape == (10, 50)
+    y_pred = ecoc.predict(X)
+    assert y_pred.shape == y.shape
+
+
 def test_pairwise_indices():
     clf_precomputed = svm.SVC(kernel="precomputed")
     X, y = iris.data, iris.target

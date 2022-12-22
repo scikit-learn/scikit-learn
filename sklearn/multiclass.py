@@ -35,6 +35,7 @@ case.
 
 import array
 from numbers import Integral, Real
+import random
 import numpy as np
 import warnings
 import scipy.sparse as sp
@@ -1104,12 +1105,15 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                 f" {np.log2(n_classes) / n_classes:.2f}",
             )
 
+        # TODO: when supporting random generator from NumPy (i.e.
+        # `np.random.default_rng()`), the following can use `random_state.choice`
+        # instead of the `random` Python build-in module.
+        random_state_seed = random_state.get_state()[1][0]
+        local_rng = random.Random(int(random_state_seed))
         self.code_book_ = np.array(
             [
                 list(f"{int_code:b}".zfill(code_size))
-                for int_code in random_state.choice(
-                    n_binary_values, n_classes, replace=False
-                )
+                for int_code in local_rng.sample(range(n_binary_values), k=n_classes)
             ],
             dtype=np.int64,
         )
