@@ -288,7 +288,7 @@ cdef class BestSplitter(BaseDenseSplitter):
         cdef SIZE_t p
         cdef SIZE_t i
         cdef SIZE_t current_end
-        cdef SIZE_t n_missing
+        cdef SIZE_t n_missing = 0
         cdef SIZE_t n_searches
         cdef SIZE_t end_non_missing
         cdef SIZE_t n_left, n_right
@@ -363,9 +363,8 @@ cdef class BestSplitter(BaseDenseSplitter):
                         current_end -= 1
                         continue
 
-                    # X[samples[current_end]] is a non-missing value
+                    # X[samples[current_end], current.feature] is a non-missing value
                     if isnan(self.X[samples[i], current.feature]):
-                        # If X[samples[i]] is missing, swap samples[i] and samples[current_end]
                         samples[i], samples[current_end] = samples[current_end], samples[i]
                         n_missing += 1
                         current_end -= 1
@@ -373,8 +372,7 @@ cdef class BestSplitter(BaseDenseSplitter):
                     Xf[i] = self.X[samples[i], current.feature]
                     i += 1
             else:
-                # Reduces the number of computations for the case where there are
-                # no missing values
+                # Reduces the number of operations when there are no missing values
                 for i in range(start, end):
                     Xf[i] = self.X[samples[i], current.feature]
 
@@ -515,13 +513,14 @@ cdef class BestSplitter(BaseDenseSplitter):
             # Split non-missing values according to the threshold
             # If best_split_on_edge then all non-missing values are already in the
             # correct position.
-            i, current_end = start, end - n_missing - 1
-            while i < current_end and not best_split_on_edge:
-                if self.X[samples[i], best.feature] <= best.threshold:
-                    i += 1
-                else:
-                    samples[i], samples[current_end] = samples[current_end], samples[i]
-                    current_end -= 1
+            if not best_split_on_edge:
+                i, current_end = start, end - n_missing - 1
+                while i < current_end:
+                    if self.X[samples[i], best.feature] <= best.threshold:
+                        i += 1
+                    else:
+                        samples[i], samples[current_end] = samples[current_end], samples[i]
+                        current_end -= 1
 
             self.criterion.init_missing(n_missing)
             self.criterion.missing_go_to_left = best.missing_go_to_left

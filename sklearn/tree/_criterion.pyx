@@ -786,7 +786,7 @@ cdef class RegressionCriterion(Criterion):
         self.sample_indices[-n_missing:]
         """
         cdef SIZE_t i, p, k
-        cdef DOUBLE_t w
+        cdef DOUBLE_t w = 0.0
 
         self.n_missing = n_missing
         if n_missing == 0:

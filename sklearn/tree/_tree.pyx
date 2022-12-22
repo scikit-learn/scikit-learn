@@ -811,7 +811,7 @@ cdef class Tree:
         # Extract input
         cdef const DTYPE_t[:, :] X_ndarray = X
         cdef SIZE_t n_samples = X.shape[0]
-        cdef DTYPE_t tmp
+        cdef DTYPE_t X_i_node_feature
 
         # Initialize output
         cdef cnp.ndarray[SIZE_t] out = np.zeros((n_samples,), dtype=np.intp)
@@ -826,14 +826,14 @@ cdef class Tree:
                 node = self.nodes
                 # While node not a leaf
                 while node.left_child != _TREE_LEAF:
-                    tmp = X_ndarray[i, node.feature]
+                    X_i_node_feature = X_ndarray[i, node.feature]
                     # ... and node.right_child != _TREE_LEAF:
-                    if isnan(tmp):
+                    if isnan(X_i_node_feature):
                         if node.missing_go_to_left:
                             node = &self.nodes[node.left_child]
                         else:
                             node = &self.nodes[node.right_child]
-                    elif tmp <= node.threshold:
+                    elif X_i_node_feature <= node.threshold:
                         node = &self.nodes[node.left_child]
                     else:
                         node = &self.nodes[node.right_child]
