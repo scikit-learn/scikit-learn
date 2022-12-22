@@ -995,7 +995,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
             isinstance(self.splitter, str)
             and self.splitter == "best"
             and isinstance(self.criterion, str)
-            and self.criterion not in {"mae", "absolute_error"}
+            and self.criterion != "absolute_error"
         )
         return {"multilabel": True, "allow_nan": allow_nan}
 
@@ -1312,7 +1312,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
             isinstance(self.splitter, str)
             and self.splitter == "best"
             and isinstance(self.criterion, str)
-            and self.criterion not in {"mae", "absolute_error"}
+            and self.criterion != "absolute_error"
         )
         return {"allow_nan": allow_nan}
 
