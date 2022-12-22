@@ -907,7 +907,7 @@ def test_ecoc_large_code_size():
         random_state=0,
     )
 
-    # code_size=5 will results in 100 columns in the codebook and code will be sampled
+    # code_size=5 will results in 50 columns in the codebook and code will be sampled
     # from 0 to 2 ** 5 - 1
     ecoc = OutputCodeClassifier(
         DecisionTreeClassifier(max_depth=2, random_state=0),
