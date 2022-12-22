@@ -688,13 +688,20 @@ def test_ovo_float_y():
         ovo.fit(X, y)
 
 
-def test_ecoc_gridsearch():
-    ecoc = OutputCodeClassifier(DecisionTreeClassifier(random_state=0), random_state=0)
+@pytest.mark.parametrize("decoding_method", ["cityblock", "hamming"])
+def test_ecoc_gridsearch(decoding_method):
+    ecoc = OutputCodeClassifier(
+        DecisionTreeClassifier(random_state=0),
+        decoding_method=decoding_method,
+        random_state=0,
+    )
     max_depth = [2, 3, 5]
     cv = GridSearchCV(ecoc, {"estimator__max_depth": max_depth})
     cv.fit(iris.data, iris.target)
     best_max_depth = cv.best_estimator_.estimators_[0].max_depth
     assert best_max_depth in max_depth
+    y_pred = cv.predict(iris.data)
+    assert y_pred.shape == iris.target.shape
 
 
 def test_ecoc_delegate_sparse_base_estimator():
@@ -800,6 +807,20 @@ def test_ecoc_fit():
         # the inner estimator should be fitted on a binary problem
         assert_array_equal(estimator.classes_, [0, 1])
     assert len(ecoc.estimators_) == ecoc.code_book_.shape[1]
+
+
+def test_ecoc_cityblock_requires_predict_proba():
+    """Check that we raise an error if the decoding method is 'cityblock' and the
+    estimator does not support `predict_proba`."""
+    X, y = make_classification(
+        n_samples=50, n_classes=4, n_clusters_per_class=1, random_state=0
+    )
+
+    err_msg = "The estimator does not have a `predict_proba` method."
+    with pytest.raises(ValueError, match=err_msg):
+        OutputCodeClassifier(
+            LinearSVC(), code_size=2.0, random_state=0, decoding_method="cityblock"
+        ).fit(X, y)
 
 
 def test_pairwise_indices():

@@ -46,7 +46,7 @@ from .base import MetaEstimatorMixin, is_regressor
 from .preprocessing import LabelBinarizer, LabelEncoder
 from .metrics.pairwise import pairwise_distances_argmin
 from .utils import check_random_state
-from .utils._param_validation import HasMethods, Interval
+from .utils._param_validation import HasMethods, Interval, StrOptions
 from .utils._tags import _safe_tags
 from .utils.validation import _num_samples
 from .utils.validation import check_is_fitted
@@ -851,6 +851,40 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         return {"pairwise": _safe_tags(self.estimator, key="pairwise")}
 
 
+def _exponential_loss_decoding(y):
+    """Exponential loss (AdaBoost) decoding function."""
+    return np.exp(-2 * y).sum(axis=1)
+
+
+def _hinge_loss_deconding(y):
+    """Hinge loss (SVM) decoding function."""
+    return np.maximum(0, 1 - y).sum(axis=1)
+
+
+def _linear_loss_decoding(y):
+    """Linear loss decoding function."""
+    return -y.sum(axis=1)
+
+
+def _logistic_loss_decoding(y):
+    """Logistic loss (logistic regression) decoding function."""
+    return np.logaddexp(0, -2 * y).sum(axis=1)
+
+
+def _square_loss_decoding(y):
+    """Square loss decoding function."""
+    return ((1 - y) ** 2).sum(axis=1)
+
+
+DECODING_LOSSES = {
+    "exponential": _exponential_loss_decoding,
+    "hinge": _hinge_loss_deconding,
+    "linear": _linear_loss_decoding,
+    "logistic": _logistic_loss_decoding,
+    "square": _square_loss_decoding,
+}
+
+
 class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     """(Error-Correcting) Output-Code multiclass strategy.
 
@@ -876,6 +910,16 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         A number between 0 and 1 will require fewer classifiers than
         one-vs-the-rest. A number greater than 1 will require more classifiers
         than one-vs-the-rest.
+
+    decoding : {"cityblock", "hamming", "loss"}, default="loss"
+        The method used to decode the predictions of the binary classifiers.
+        TODO: add details about the methods and link to the documentation.
+
+    loss : {"exponential", "hinge", "linear", "logistic", "square"} or callable, \
+            default="linear"
+        When `decoding="loss"`, it corresponds to the loss function used to
+        compute the distance between the predicted code and the true code.
+        TODO: add details about the methods and link to the documentation.
 
     random_state : int, RandomState instance, default=None
         The generator used to initialize the codebook.
@@ -932,9 +976,10 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
        Journal of Computational and Graphical statistics 7,
        1998.
 
-    .. [3] "The Elements of Statistical Learning",
-       Hastie T., Tibshirani R., Friedman J., page 606 (second-edition)
-       2008.
+    .. [3] "Reducing multiclass to binary: A unifying approach for margin classifiers."
+       Allwein, Erin L., Robert E. Schapire, and Yoram Singer.
+       Journal of machine learning research 1
+       Dec (2000): 113-141.
 
     Examples
     --------
@@ -952,15 +997,32 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     """
 
     _parameter_constraints: dict = {
-        "estimator": [HasMethods(["fit", "predict_proba"])],
+        "estimator": [
+            HasMethods(["fit", "predict"]),
+            HasMethods(["fit", "predict_proba"]),
+            HasMethods(["fit", "decision_function"]),
+        ],
         "code_size": [Interval(Real, 0.0, None, closed="neither")],
+        "decoding": [StrOptions({"cityblock", "hamming", "loss"})],
+        "loss": [StrOptions({DECODING_LOSSES.keys()}), callable],
         "random_state": ["random_state"],
         "n_jobs": [Integral, None],
     }
 
-    def __init__(self, estimator, *, code_size=1.5, random_state=None, n_jobs=None):
+    def __init__(
+        self,
+        estimator,
+        *,
+        code_size=1.5,
+        decoding="cityblock",
+        loss="linear",
+        random_state=None,
+        n_jobs=None,
+    ):
         self.estimator = estimator
         self.code_size = code_size
+        self.decoding = decoding
+        self.loss = loss
         self.random_state = random_state
         self.n_jobs = n_jobs
 
@@ -990,6 +1052,14 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             raise ValueError(
                 f"Found array {n_samples} (shape={X.shape}) while minimum of 1 is "
                 "required."
+            )
+
+        if self.decoding == "cityblock" and not hasattr(
+            self.estimator, "predict_proba"
+        ):
+            raise ValueError(
+                "The estimator does not have a `predict_proba` method. "
+                "Thus, the decoding_method='cityblock' is not supported."
             )
 
         random_state = check_random_state(self.random_state)
@@ -1053,16 +1123,47 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             Predicted multi-class targets.
         """
         check_is_fitted(self)
-        # ArgKmin only accepts C-contiguous array. The aggregated predictions need to be
-        # transposed. We therefore create a F-contiguous array to avoid a copy and have
-        # a C-contiguous array after the transpose operation.
-        Y_proba = [e.predict_proba(X)[:, 1] for e in self.estimators_]
-        Y_proba = np.array(Y_proba, order="F", dtype=np.float64).T
 
-        closest_codes = pairwise_distances_argmin(
-            Y_proba, self.code_book_.astype(Y_proba.dtype), metric="cityblock"
-        )
-        return self.classes_[closest_codes]
+        if self.decoding in ("cityblock", "hamming"):
+            predict_method = (
+                "predict_proba" if self.decoding == "cityblock" else "predict"
+            )
+
+            def _predict_xxx(estimator, predict_method, X):
+                y_pred = getattr(estimator, predict_method)(X)
+                if y_pred.ndim > 1:
+                    # predictions from `predict_proba`
+                    return y_pred[:, 1]
+                return y_pred
+
+            # ArgKmin only accepts C-contiguous array. The aggregated
+            # predictions need to be transposed. We therefore create a
+            # F-contiguous array to avoid a copy and have a C-contiguous array
+            # after the transpose operation.
+            y_pred = [_predict_xxx(e, predict_method, X) for e in self.estimators_]
+            y_pred = np.array(y_pred, order="F", dtype=np.float64).T
+
+            closest_codes = pairwise_distances_argmin(
+                y_pred, self.code_book_.astype(y_pred.dtype), metric=self.decoding
+            )
+            return self.classes_[closest_codes]
+        else:  # self.decoding == "loss"
+            if callable(self.loss):
+                loss = self.loss
+            else:
+                loss = DECODING_LOSSES[self.loss]
+
+            def _predict_yyy(estimator, X):
+                if hasattr(estimator, "decision_function"):
+                    return estimator.decision_function(X)
+                return estimator.predict_proba(X)[:, 1] - 0.5
+
+            Y_pred = np.array(
+                [_predict_yyy(e, X) for e in self.estimators_], dtype=np.float64
+            )
+            codebook = self.code_book_ * 2 - 1
+            predictions_losses = np.array([loss(Y_pred, code) for code in codebook])
+            return self.classes_[np.argmin(predictions_losses, axis=0)]
 
     @property
     def classes_(self):
