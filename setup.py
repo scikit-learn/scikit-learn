@@ -102,6 +102,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.neighbors._ball_tree",
     "sklearn.neighbors._kd_tree",
     "sklearn.neighbors._partition_nodes",
+    "sklearn.neighbors._quad_tree",
     "sklearn.tree._splitter",
     "sklearn.tree._utils",
     "sklearn.utils._cython_blas",
