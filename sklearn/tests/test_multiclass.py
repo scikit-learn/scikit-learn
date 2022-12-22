@@ -35,7 +35,7 @@ from sklearn.linear_model import (
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.model_selection import GridSearchCV, cross_val_score
+from sklearn.model_selection import GridSearchCV, StratifiedKFold, cross_val_score
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.impute import SimpleImputer
 from sklearn import svm
@@ -845,8 +845,9 @@ def test_ecoc_outperform_multiclass(params, global_random_seed):
     single_tree = DecisionTreeClassifier(random_state=global_random_seed)
     ecoc = OutputCodeClassifier(single_tree, **params, random_state=0)
 
-    cv_results_single_tree = cross_val_score(single_tree, X, y, cv=5)
-    cv_results_ecoc = cross_val_score(ecoc, X, y, cv=5)
+    cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=global_random_seed)
+    cv_results_single_tree = cross_val_score(single_tree, X, y, cv=cv)
+    cv_results_ecoc = cross_val_score(ecoc, X, y, cv=cv)
 
     assert cv_results_ecoc.mean() > cv_results_single_tree.mean()
 
