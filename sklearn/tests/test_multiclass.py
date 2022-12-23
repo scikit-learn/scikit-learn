@@ -910,14 +910,14 @@ def test_ecoc_large_code_size():
         random_state=0,
     )
 
-    # code_size=5 will results in 50 columns in the codebook and code will be sampled
-    # from 0 to 2 ** 5 - 1
+    # code_size=3 will results in 30 columns in the codebook and code will be sampled
+    # from 0 to 2 ** 30 - 1
     ecoc = OutputCodeClassifier(
         DecisionTreeClassifier(max_depth=2, random_state=0),
-        code_size=5,
+        code_size=3,
         random_state=0,
     ).fit(X, y)
-    assert ecoc.code_book_.shape == (10, 50)
+    assert ecoc.code_book_.shape == (10, 30)
     y_pred = ecoc.predict(X)
     assert y_pred.shape == y.shape
 
