@@ -448,6 +448,12 @@ cdef class EuclideanDenseDenseDatasetsPair{{name_suffix}}(DenseDenseDatasetsPair
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
+        cdef:
+            ITYPE_t i, j, k, l
+            ITYPE_t n_X = X_end - X_start
+            ITYPE_t n_Y = Y_end - Y_start
+            DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num].data()
+
         DatasetsPair{{name_suffix}}._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
             self, X_start, X_end, Y_start, Y_end, thread_num
         )
@@ -464,8 +470,19 @@ cdef class EuclideanDenseDenseDatasetsPair{{name_suffix}}(DenseDenseDatasetsPair
             Y_start,
             Y_end,
             thread_num,
-            self.dist_middle_terms_chunks[thread_num].data(),
+            dist_middle_terms,
         )
+        for i in range(n_X):
+            k = i * n_Y
+            for j in range(n_Y):
+                l = k + j
+                # Catastrophic cancellation might cause -0. to be present,
+                # e.g. when computing d(x_i, y_i) when X is Y.
+                dist_middle_terms[l] = max(0,
+                    dist_middle_terms[l]
+                    + self.X_norm_squared[X_start + i]
+                    + self.Y_norm_squared[Y_start + j]
+                )
 
     @final
     cdef void _parallel_on_Y_init(self) nogil:
@@ -501,6 +518,11 @@ cdef class EuclideanDenseDenseDatasetsPair{{name_suffix}}(DenseDenseDatasetsPair
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
+        cdef:
+            ITYPE_t i, j, k, l
+            ITYPE_t n_X = X_end - X_start
+            ITYPE_t n_Y = Y_end - Y_start
+            DTYPE_t *dist_middle_terms = self.dist_middle_terms_chunks[thread_num].data()
         DatasetsPair{{name_suffix}}._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
             self, X_start, X_end, Y_start, Y_end, thread_num
         )
@@ -517,8 +539,19 @@ cdef class EuclideanDenseDenseDatasetsPair{{name_suffix}}(DenseDenseDatasetsPair
             Y_start,
             Y_end,
             thread_num,
-            self.dist_middle_terms_chunks[thread_num].data(),
+            dist_middle_terms,
         )
+        for i in range(n_X):
+            k = i * n_Y
+            for j in range(n_Y):
+                l = k + j
+                # Catastrophic cancellation might cause -0. to be present,
+                # e.g. when computing d(x_i, y_i) when X is Y.
+                dist_middle_terms[l] = max(0,
+                    dist_middle_terms[l]
+                    + self.X_norm_squared[X_start + i]
+                    + self.Y_norm_squared[Y_start + j]
+                )
 
     @final
     cdef DTYPE_t surrogate_dist(
@@ -530,18 +563,7 @@ cdef class EuclideanDenseDenseDatasetsPair{{name_suffix}}(DenseDenseDatasetsPair
         ITYPE_t n_Y,
         ITYPE_t thread_num=0,
     ) nogil:
-        #cdef:
-        #    # Y_chunk_size is constant except for the last chunk that can be smaller.
-        #    DTYPE_t dist_middle_term = (
-        #        self.middle_term_computer.dist_middle_terms_chunks[thread_num][i * n_Y + j]
-        #    )
-        # Catastrophic cancellation might cause -0. to be present,
-        # e.g. when computing d(x_i, y_i) when X is Y.
-        return max(0.,
-            self.X_norm_squared[X_start + i]
-            + self.dist_middle_terms_chunks[thread_num][i * n_Y + j]
-            + self.Y_norm_squared[Y_start + j]
-        )
+        return self.dist_middle_terms_chunks[thread_num][i * n_Y + j]
 
     @final
     cdef bint need_to_compute_exact_dist(self) nogil:
