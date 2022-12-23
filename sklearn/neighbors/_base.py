@@ -815,7 +815,7 @@ class KNeighborsMixin:
             raise ValueError(
                 f"Expected {inequality_str}, but "
                 f"n_neighbors = {n_neighbors}, n_samples_fit = {n_samples_fit}, "
-                f"n_samples = {X.shape[0]}"  # include n_samples to comply with common tests
+                f"n_samples = {X.shape[0]}"  # include n_samples for common tests
             )
 
         n_jobs = effective_n_jobs(self.n_jobs)
