@@ -16,9 +16,15 @@ from ._gaussian_mixture import _compute_precision_cholesky
 from ._gaussian_mixture import _estimate_gaussian_parameters
 from ._gaussian_mixture import _estimate_log_gaussian_prob
 from ..utils import check_array
+from ..utils._param_validation import validate_params
 from ..utils._param_validation import Interval, StrOptions
 
 
+@validate_params(
+    {
+        "dirichlet_concentration": ["array-like"]
+    }
+)
 def _log_dirichlet_norm(dirichlet_concentration):
     """Compute the log of the Dirichlet distribution normalization term.
 
@@ -37,6 +43,13 @@ def _log_dirichlet_norm(dirichlet_concentration):
     )
 
 
+@validate_params(
+    {
+        "degrees_of_freedom": ["array-like"],
+        "log_det_precisions_chol": ["array-like"],
+        "n_features": ["no_validation"]
+    }
+)
 def _log_wishart_norm(degrees_of_freedom, log_det_precisions_chol, n_features):
     """Compute the log of the Wishart distribution normalization term.
 
