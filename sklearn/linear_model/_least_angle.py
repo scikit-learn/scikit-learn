@@ -56,23 +56,23 @@ def lars_path(
 
     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
-    in the case of method='lars', the objective function is only known in
-    the form of an implicit equation (see discussion in [1])
+    in the case of method='lar', the objective function is only known in
+    the form of an implicit equation (see discussion in [1]).
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
     Parameters
     ----------
     X : None or array-like of shape (n_samples, n_features)
-        Input data. Note that if X is None then the Gram matrix must be
-        specified, i.e., cannot be None or False.
+        Input data. Note that if X is ``None`` then the Gram matrix must be
+        specified, i.e., cannot be ``None`` or ``False``.
 
     y : None or array-like of shape (n_samples,)
         Input targets.
 
     Xy : array-like of shape (n_samples,) or (n_samples, n_targets), \
             default=None
-        Xy = np.dot(X.T, y) that can be precomputed. It is useful
+        ``Xy = np.dot(X.T, y)`` that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
     Gram : None, 'auto', array-like of shape (n_features, n_features), \
@@ -86,7 +86,7 @@ def lars_path(
 
     alpha_min : float, default=0
         Minimum correlation along the path. It corresponds to the
-        regularization parameter alpha parameter in the Lasso.
+        regularization parameter ``alpha`` in the Lasso.
 
     method : {'lar', 'lasso'}, default='lar'
         Specifies the returned model. Select ``'lar'`` for Least Angle
@@ -109,26 +109,26 @@ def lars_path(
         Controls output verbosity.
 
     return_path : bool, default=True
-        If ``return_path==True`` returns the entire path, else returns only the
-        last point of the path.
+        If ``True``, the entire path is returned. If ``False``, only the last point
+        of the path is returned.
 
     return_n_iter : bool, default=False
         Whether to return the number of iterations.
 
     positive : bool, default=False
-        Restrict coefficients to be >= 0.
+        Restrict coefficients to be ``>= 0``.
         This option is only allowed with method 'lasso'. Note that the model
         coefficients will not converge to the ordinary-least-squares solution
         for small values of alpha. Only coefficients up to the smallest alpha
         value (``alphas_[alphas_ > 0.].min()`` when fit_path=True) reached by
         the stepwise Lars-Lasso algorithm are typically in congruence with the
-        solution of the coordinate descent lasso_path function.
+        solution of the coordinate descent ``lasso_path`` function.
 
     Returns
     -------
     alphas : array-like of shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
-        ``n_alphas`` is either ``max_iter``, ``n_features`` or the
+        ``n_alphas`` is either ``max_iter``, ``n_features``, or the
         number of nodes in the path with ``alpha >= alpha_min``, whichever
         is smaller.
 
