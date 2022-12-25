@@ -26,7 +26,7 @@ the lower the better.
 #          Ohad Michel <ohadmich@gmail.com>
 # License: BSD 3 clause
 
-import numbers
+from numbers import Real
 import warnings
 
 import numpy as np
@@ -42,7 +42,11 @@ from ..utils.validation import (
     _check_sample_weight,
 )
 from ..utils.stats import _weighted_percentile
-from ..utils._param_validation import validate_params, StrOptions
+from ..utils._param_validation import (
+    Interval,
+    StrOptions,
+    validate_params,
+)
 
 
 __ALL__ = [
@@ -1022,6 +1026,14 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
     return np.average(dev, weights=sample_weight)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "power": [Interval(Real, None, None, closed="neither")],
+    }
+)
 def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     """Mean Tweedie deviance regression loss.
 
@@ -1084,7 +1096,7 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     p = check_scalar(
         power,
         name="power",
-        target_type=numbers.Real,
+        target_type=Real,
     )
 
     message = f"Mean Tweedie deviance error with power={p} can only be used on "

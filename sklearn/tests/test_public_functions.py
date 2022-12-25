@@ -102,6 +102,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.accuracy_score",
     "sklearn.metrics.auc",
     "sklearn.metrics.mean_absolute_error",
+    "sklearn.metrics.mean_tweedie_deviance",
     "sklearn.metrics.r2_score",
     "sklearn.metrics.roc_curve",
     "sklearn.metrics.zero_one_loss",
