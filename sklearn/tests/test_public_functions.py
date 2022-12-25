@@ -101,6 +101,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.feature_extraction.img_to_graph",
     "sklearn.metrics.accuracy_score",
     "sklearn.metrics.auc",
+    "sklearn.metrics.cohen_kappa_score",
     "sklearn.metrics.mean_absolute_error",
     "sklearn.metrics.r2_score",
     "sklearn.metrics.roc_curve",

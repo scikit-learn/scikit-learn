@@ -40,6 +40,7 @@ from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
 from ..utils.sparsefuncs import count_nonzero
+from ..utils._param_validation import StrOptions
 from ..utils._param_validation import validate_params
 from ..exceptions import UndefinedMetricWarning
 
@@ -595,6 +596,15 @@ def multilabel_confusion_matrix(
     return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
+@validate_params(
+    {
+        "y1": ["array-like"],
+        "y2": ["array-like"],
+        "labels": ["array-like", None],
+        "weights": [StrOptions({"linear", "quadratic"}), None],
+        "sample_weight": ["array-like", None],
+    }
+)
 def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     r"""Compute Cohen's kappa: a statistic that measures inter-annotator agreement.
 
@@ -667,8 +677,6 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
             w_mat = np.abs(w_mat - w_mat.T)
         else:
             w_mat = (w_mat - w_mat.T) ** 2
-    else:
-        raise ValueError("Unknown kappa weighting type.")
 
     k = np.sum(w_mat * confusion) / np.sum(w_mat * expected)
     return 1 - k
