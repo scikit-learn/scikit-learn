@@ -11,7 +11,9 @@ at which the fix is no longer needed.
 # License: BSD 3 clause
 
 from functools import update_wrapper
+from importlib import resources
 import functools
+import sys
 
 import sklearn
 import numpy as np
@@ -93,6 +95,17 @@ class loguniform(scipy.stats.reciprocal):
     """
 
 
+# TODO: remove when the minimum scipy version is >= 1.5
+if sp_version >= parse_version("1.5"):
+    from scipy.linalg import eigh as _eigh  # noqa
+else:
+
+    def _eigh(*args, **kwargs):
+        """Wrapper for `scipy.linalg.eigh` that handles the deprecation of `eigvals`."""
+        eigvals = kwargs.pop("subset_by_index", None)
+        return scipy.linalg.eigh(*args, eigvals=eigvals, **kwargs)
+
+
 # remove when https://github.com/joblib/joblib/issues/1071 is fixed
 def delayed(function):
     """Decorator used to capture the arguments of a function."""
@@ -170,3 +183,43 @@ def _mode(a, axis=0):
     if sp_version >= parse_version("1.9.0"):
         return scipy.stats.mode(a, axis=axis, keepdims=True)
     return scipy.stats.mode(a, axis=axis)
+
+
+###############################################################################
+# Backport of Python 3.9's importlib.resources
+# TODO: Remove when Python 3.9 is the minimum supported version
+
+
+def _open_text(data_module, data_file_name):
+    if sys.version_info >= (3, 9):
+        return resources.files(data_module).joinpath(data_file_name).open("r")
+    else:
+        return resources.open_text(data_module, data_file_name)
+
+
+def _open_binary(data_module, data_file_name):
+    if sys.version_info >= (3, 9):
+        return resources.files(data_module).joinpath(data_file_name).open("rb")
+    else:
+        return resources.open_binary(data_module, data_file_name)
+
+
+def _read_text(descr_module, descr_file_name):
+    if sys.version_info >= (3, 9):
+        return resources.files(descr_module).joinpath(descr_file_name).read_text()
+    else:
+        return resources.read_text(descr_module, descr_file_name)
+
+
+def _path(data_module, data_file_name):
+    if sys.version_info >= (3, 9):
+        return resources.as_file(resources.files(data_module).joinpath(data_file_name))
+    else:
+        return resources.path(data_module, data_file_name)
+
+
+def _is_resource(data_module, data_file_name):
+    if sys.version_info >= (3, 9):
+        return resources.files(data_module).joinpath(data_file_name).is_file()
+    else:
+        return resources.is_resource(data_module, data_file_name)
