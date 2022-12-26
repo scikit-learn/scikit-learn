@@ -1031,7 +1031,7 @@ def _mean_tweedie_deviance(y_true, y_pred, sample_weight, power):
         "y_true": ["array-like"],
         "y_pred": ["array-like"],
         "sample_weight": ["array-like", None],
-        "power": [Interval(Real, None, None, closed="neither")],
+        "power": [Interval(numbers.Real, None, None, closed="neither")],
     }
 )
 def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
