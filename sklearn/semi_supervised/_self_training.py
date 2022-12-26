@@ -144,7 +144,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     _estimator_type = "classifier"
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         # We don't require `predic_proba` here to allow passing a meta-estimator
         # that only exposes `predict_proba` after fitting.
         "base_estimator": [HasMethods(["fit"])],

@@ -283,7 +283,7 @@ print(
 # while MSE is the loss minimized
 # :class:`~sklearn.linear_model.LinearRegression`.
 #
-# We can make a similar evaluation but looking a the test error obtained by
+# We can make a similar evaluation but looking at the test error obtained by
 # cross-validation.
 from sklearn.model_selection import cross_validate
 

@@ -203,8 +203,11 @@ class OneVsRestClassifier(
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing :term:`fit` and one of
-        :term:`decision_function` or :term:`predict_proba`.
+        A regressor or a classifier that implements :term:`fit`.
+        When a classifier is passed, :term:`decision_function` will be used
+        in priority and it will fallback to :term:`predict_proba` if it is not
+        available.
+        When a regressor is passed, :term:`predict` is used.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation: the `n_classes`
@@ -258,8 +261,10 @@ class OneVsRestClassifier(
 
     See Also
     --------
-    MultiOutputClassifier : Alternate way of extending an estimator for
-        multilabel classification.
+    OneVsOneClassifier : One-vs-one multiclass strategy.
+    OutputCodeClassifier : (Error-Correcting) Output-Code multiclass strategy.
+    sklearn.multioutput.MultiOutputClassifier : Alternate way of extending an
+        estimator for multilabel classification.
     sklearn.preprocessing.MultiLabelBinarizer : Transform iterable of iterables
         to binary indicator matrix.
 
@@ -282,6 +287,12 @@ class OneVsRestClassifier(
     array([2, 0, 1])
     """
 
+    _parameter_constraints = {
+        "estimator": [HasMethods(["fit"])],
+        "n_jobs": [Integral, None],
+        "verbose": ["verbose"],
+    }
+
     def __init__(self, estimator, *, n_jobs=None, verbose=0):
         self.estimator = estimator
         self.n_jobs = n_jobs
@@ -292,10 +303,10 @@ class OneVsRestClassifier(
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
-        y : (sparse) array-like of shape (n_samples,) or (n_samples, n_classes)
+        y : {array-like, sparse matrix} of shape (n_samples,) or (n_samples, n_classes)
             Multi-class targets. An indicator matrix turns on multilabel
             classification.
 
@@ -304,6 +315,8 @@ class OneVsRestClassifier(
         self : object
             Instance of fitted estimator.
         """
+        self._validate_params()
+
         # A sparse LabelBinarizer, with sparse_output=True, has been shown to
         # outperform or match a dense label binarizer in all cases and has also
         # resulted in less or equal memory consumption in the fit_ovr function
@@ -345,10 +358,10 @@ class OneVsRestClassifier(
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
-        y : (sparse) array-like of shape (n_samples,) or (n_samples, n_classes)
+        y : {array-like, sparse matrix} of shape (n_samples,) or (n_samples, n_classes)
             Multi-class targets. An indicator matrix turns on multilabel
             classification.
 
@@ -365,6 +378,8 @@ class OneVsRestClassifier(
             Instance of partially fitted estimator.
         """
         if _check_partial_fit_first_call(self, classes):
+            self._validate_params()
+
             if not hasattr(self.estimator, "partial_fit"):
                 raise ValueError(
                     ("Base estimator {0}, doesn't have partial_fit method").format(
@@ -406,12 +421,12 @@ class OneVsRestClassifier(
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
         Returns
         -------
-        y : (sparse) array-like of shape (n_samples,) or (n_samples, n_classes)
+        y : {array-like, sparse matrix} of shape (n_samples,) or (n_samples, n_classes)
             Predicted multi-class targets.
         """
         check_is_fitted(self)
@@ -455,12 +470,12 @@ class OneVsRestClassifier(
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Input data.
 
         Returns
         -------
-        T : (sparse) array-like of shape (n_samples, n_classes)
+        T : array-like of shape (n_samples, n_classes)
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in `self.classes_`.
         """
@@ -573,8 +588,11 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     Parameters
     ----------
     estimator : estimator object
-        An estimator object implementing :term:`fit` and one of
-        :term:`decision_function` or :term:`predict_proba`.
+        A regressor or a classifier that implements :term:`fit`.
+        When a classifier is passed, :term:`decision_function` will be used
+        in priority and it will fallback to :term:`predict_proba` if it is not
+        available.
+        When a regressor is passed, :term:`predict` is used.
 
     n_jobs : int, default=None
         The number of jobs to use for the computation: the `n_classes * (
@@ -613,6 +631,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     See Also
     --------
     OneVsRestClassifier : One-vs-all multiclass strategy.
+    OutputCodeClassifier : (Error-Correcting) Output-Code multiclass strategy.
 
     Examples
     --------
@@ -629,6 +648,11 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     array([2, 1, 0, 2, 0, 2, 0, 1, 1, 1])
     """
 
+    _parameter_constraints: dict = {
+        "estimator": [HasMethods(["fit"])],
+        "n_jobs": [Integral, None],
+    }
+
     def __init__(self, estimator, *, n_jobs=None):
         self.estimator = estimator
         self.n_jobs = n_jobs
@@ -638,7 +662,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
         y : array-like of shape (n_samples,)
@@ -649,6 +673,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         self : object
             The fitted underlying estimator.
         """
+        self._validate_params()
         # We need to validate the data because we do a safe_indexing later.
         X, y = self._validate_data(
             X, y, accept_sparse=["csr", "csc"], force_all_finite=False
@@ -692,7 +717,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix) of shape (n_samples, n_features)
             Data.
 
         y : array-like of shape (n_samples,)
@@ -712,6 +737,8 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         """
         first_call = _check_partial_fit_first_call(self, classes)
         if first_call:
+            self._validate_params()
+
             self.estimators_ = [
                 clone(self.estimator)
                 for _ in range(self.n_classes_ * (self.n_classes_ - 1) // 2)
@@ -756,7 +783,7 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
         Returns
@@ -927,7 +954,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     array([1])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "estimator": [
             HasMethods(["fit", "decision_function"]),
             HasMethods(["fit", "predict_proba"]),
@@ -948,7 +975,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
         y : array-like of shape (n_samples,)
@@ -1006,7 +1033,7 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
 
         Parameters
         ----------
-        X : (sparse) array-like of shape (n_samples, n_features)
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
             Data.
 
         Returns

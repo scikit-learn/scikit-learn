@@ -15,7 +15,7 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
 
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
+from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..exceptions import ConvergenceWarning
 from ..utils import check_array, as_float_array, check_random_state
 from ..utils.validation import check_is_fitted
@@ -337,7 +337,7 @@ def fastica(
     return returned_values
 
 
-class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """FastICA: a fast algorithm for Independent Component Analysis.
 
     The implementation is based on [1]_.
@@ -475,7 +475,7 @@ class FastICA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator)
     (1797, 7)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "n_components": [Interval(Integral, 1, None, closed="left"), None],
         "algorithm": [StrOptions({"parallel", "deflation"})],
         "whiten": [

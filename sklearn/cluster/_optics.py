@@ -10,12 +10,16 @@ Authors: Shane Grigsby <refuge@rocktalus.com>
 License: BSD 3 clause
 """
 
+from numbers import Integral, Real
+
 import warnings
 import numpy as np
 
 from ..exceptions import DataConversionWarning
 from ..metrics.pairwise import PAIRWISE_BOOLEAN_FUNCTIONS
+from ..metrics.pairwise import _VALID_METRICS
 from ..utils import gen_batches, get_chunk_n_rows
+from ..utils._param_validation import Interval, HasMethods, StrOptions
 from ..utils.validation import check_memory
 from ..neighbors import NearestNeighbors
 from ..base import BaseEstimator, ClusterMixin
@@ -86,7 +90,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-    p : int, default=2
+    p : float, default=2
         Parameter for the Minkowski metric from
         :class:`~sklearn.metrics.pairwise_distances`. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
@@ -223,6 +227,30 @@ class OPTICS(ClusterMixin, BaseEstimator):
     array([0, 0, 0, 1, 1, 1])
     """
 
+    _parameter_constraints: dict = {
+        "min_samples": [
+            Interval(Integral, 2, None, closed="left"),
+            Interval(Real, 0, 1, closed="both"),
+        ],
+        "max_eps": [Interval(Real, 0, None, closed="both")],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "p": [Interval(Real, 1, None, closed="left")],
+        "metric_params": [dict, None],
+        "cluster_method": [StrOptions({"dbscan", "xi"})],
+        "eps": [Interval(Real, 0, None, closed="both"), None],
+        "xi": [Interval(Real, 0, 1, closed="both")],
+        "predecessor_correction": ["boolean"],
+        "min_cluster_size": [
+            Interval(Integral, 2, None, closed="left"),
+            Interval(Real, 0, 1, closed="right"),
+            None,
+        ],
+        "algorithm": [StrOptions({"auto", "brute", "ball_tree", "kd_tree"})],
+        "leaf_size": [Interval(Integral, 1, None, closed="left")],
+        "memory": [str, HasMethods("cache"), None],
+        "n_jobs": [Integral, None],
+    }
+
     def __init__(
         self,
         *,
@@ -279,6 +307,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
+        self._validate_params()
+
         dtype = bool if self.metric in PAIRWISE_BOOLEAN_FUNCTIONS else float
         if dtype == bool and X.dtype != bool:
             msg = (
@@ -296,12 +326,6 @@ class OPTICS(ClusterMixin, BaseEstimator):
                 # own neighbor
                 X.setdiag(X.diagonal())
         memory = check_memory(self.memory)
-
-        if self.cluster_method not in ["dbscan", "xi"]:
-            raise ValueError(
-                "cluster_method should be one of 'dbscan' or 'xi' but is %s"
-                % self.cluster_method
-            )
 
         (
             self.ordering_,
@@ -355,12 +379,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
 
 
 def _validate_size(size, n_samples, param_name):
-    if size <= 0 or (size != int(size) and size > 1):
-        raise ValueError(
-            "%s must be a positive integer or a float between 0 and 1. Got %r"
-            % (param_name, size)
-        )
-    elif size > n_samples:
+    if size > n_samples:
         raise ValueError(
             "%s must be no greater than the number of samples (%d). Got %d"
             % (param_name, n_samples, size)

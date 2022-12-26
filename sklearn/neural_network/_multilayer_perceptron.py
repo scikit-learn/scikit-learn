@@ -36,7 +36,7 @@ from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.optimize import _check_optimize_result
 from ..utils.metaestimators import available_if
-from ..utils._param_validation import StrOptions, Interval
+from ..utils._param_validation import StrOptions, Options, Interval
 
 
 _STOCHASTIC_SOLVERS = ["sgd", "adam"]
@@ -56,7 +56,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
     .. versionadded:: 0.18
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "hidden_layer_sizes": [
             "array-like",
             Interval(Integral, 1, None, closed="left"),
@@ -84,9 +84,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         "beta_1": [Interval(Real, 0, 1, closed="left")],
         "beta_2": [Interval(Real, 0, 1, closed="left")],
         "epsilon": [Interval(Real, 0, None, closed="neither")],
-        # TODO update when ScalarOptions available
-        # [Interval(Integral, 1, None, closed="left"), ScalarOptions({np.inf})]
-        "n_iter_no_change": [Interval(Real, 0, None, closed="right")],
+        "n_iter_no_change": [
+            Interval(Integral, 1, None, closed="left"),
+            Options(Real, {np.inf}),
+        ],
         "max_fun": [Interval(Integral, 1, None, closed="left")],
     }
 
@@ -390,8 +391,11 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             if self.early_stopping:
                 self.validation_scores_ = []
                 self.best_validation_score_ = -np.inf
+                self.best_loss_ = None
             else:
                 self.best_loss_ = np.inf
+                self.validation_scores_ = None
+                self.best_validation_score_ = None
 
     def _init_coef(self, fan_in, fan_out, dtype):
         # Use the initialization method recommended by
@@ -685,6 +689,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             # restore best weights
             self.coefs_ = self._best_coefs
             self.intercepts_ = self._best_intercepts
+            self.validation_scores_ = self.validation_scores_
 
     def _update_no_improvement_count(self, early_stopping, X_val, y_val):
         if early_stopping:
@@ -918,11 +923,23 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     loss_ : float
         The current loss computed with the loss function.
 
-    best_loss_ : float
+    best_loss_ : float or None
         The minimum loss reached by the solver throughout fitting.
+        If `early_stopping=True`, this attribute is set ot `None`. Refer to
+        the `best_validation_score_` fitted attribute instead.
 
     loss_curve_ : list of shape (`n_iter_`,)
         The ith element in the list represents the loss at the ith iteration.
+
+    validation_scores_ : list of shape (`n_iter_`,) or None
+        The score at each iteration on a held-out validation set. The score
+        reported is the accuracy score. Only available if `early_stopping=True`,
+        otherwise the attribute is set to `None`.
+
+    best_validation_score_ : float or None
+        The best validation score (i.e. accuracy score) that triggered the
+        early stopping. Only available if `early_stopping=True`, otherwise the
+        attribute is set to `None`.
 
     t_ : int
         The number of training samples seen by the solver during fitting.
@@ -1387,10 +1404,22 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     best_loss_ : float
         The minimum loss reached by the solver throughout fitting.
+        If `early_stopping=True`, this attribute is set ot `None`. Refer to
+        the `best_validation_score_` fitted attribute instead.
 
     loss_curve_ : list of shape (`n_iter_`,)
         Loss value evaluated at the end of each training step.
         The ith element in the list represents the loss at the ith iteration.
+
+    validation_scores_ : list of shape (`n_iter_`,) or None
+        The score at each iteration on a held-out validation set. The score
+        reported is the R2 score. Only available if `early_stopping=True`,
+        otherwise the attribute is set to `None`.
+
+    best_validation_score_ : float or None
+        The best validation score (i.e. R2 score) that triggered the
+        early stopping. Only available if `early_stopping=True`, otherwise the
+        attribute is set to `None`.
 
     t_ : int
         The number of training samples seen by the solver during fitting.

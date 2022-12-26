@@ -21,7 +21,6 @@ import pytest
 
 from sklearn import config_context
 
-from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_equal
@@ -58,66 +57,74 @@ from sklearn.preprocessing import normalize
 from sklearn.exceptions import DataConversionWarning
 
 
-def test_pairwise_distances():
+def test_pairwise_distances(global_dtype):
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
 
     # Euclidean distance should be equivalent to calling the function.
-    X = rng.random_sample((5, 4))
+    X = rng.random_sample((5, 4)).astype(global_dtype, copy=False)
     S = pairwise_distances(X, metric="euclidean")
     S2 = euclidean_distances(X)
-    assert_array_almost_equal(S, S2)
+    assert_allclose(S, S2)
+    assert S.dtype == S2.dtype == global_dtype
 
     # Euclidean distance, with Y != X.
-    Y = rng.random_sample((2, 4))
+    Y = rng.random_sample((2, 4)).astype(global_dtype, copy=False)
     S = pairwise_distances(X, Y, metric="euclidean")
     S2 = euclidean_distances(X, Y)
-    assert_array_almost_equal(S, S2)
+    assert_allclose(S, S2)
+    assert S.dtype == S2.dtype == global_dtype
+
     # Check to ensure NaNs work with pairwise_distances.
-    X_masked = rng.random_sample((5, 4))
-    Y_masked = rng.random_sample((2, 4))
+    X_masked = rng.random_sample((5, 4)).astype(global_dtype, copy=False)
+    Y_masked = rng.random_sample((2, 4)).astype(global_dtype, copy=False)
     X_masked[0, 0] = np.nan
     Y_masked[0, 0] = np.nan
     S_masked = pairwise_distances(X_masked, Y_masked, metric="nan_euclidean")
     S2_masked = nan_euclidean_distances(X_masked, Y_masked)
-    assert_array_almost_equal(S_masked, S2_masked)
+    assert_allclose(S_masked, S2_masked)
+    assert S_masked.dtype == S2_masked.dtype == global_dtype
+
     # Test with tuples as X and Y
     X_tuples = tuple([tuple([v for v in row]) for row in X])
     Y_tuples = tuple([tuple([v for v in row]) for row in Y])
     S2 = pairwise_distances(X_tuples, Y_tuples, metric="euclidean")
-    assert_array_almost_equal(S, S2)
+    assert_allclose(S, S2)
+    assert S.dtype == S2.dtype == global_dtype
 
     # Test haversine distance
     # The data should be valid latitude and longitude
-    X = rng.random_sample((5, 2))
+    # haversine converts to float64 currently so we don't check dtypes.
+    X = rng.random_sample((5, 2)).astype(global_dtype, copy=False)
     X[:, 0] = (X[:, 0] - 0.5) * 2 * np.pi / 2
     X[:, 1] = (X[:, 1] - 0.5) * 2 * np.pi
     S = pairwise_distances(X, metric="haversine")
     S2 = haversine_distances(X)
-    assert_array_almost_equal(S, S2)
+    assert_allclose(S, S2)
 
     # Test haversine distance, with Y != X
-    Y = rng.random_sample((2, 2))
+    Y = rng.random_sample((2, 2)).astype(global_dtype, copy=False)
     Y[:, 0] = (Y[:, 0] - 0.5) * 2 * np.pi / 2
     Y[:, 1] = (Y[:, 1] - 0.5) * 2 * np.pi
     S = pairwise_distances(X, Y, metric="haversine")
     S2 = haversine_distances(X, Y)
-    assert_array_almost_equal(S, S2)
+    assert_allclose(S, S2)
 
     # "cityblock" uses scikit-learn metric, cityblock (function) is
     # scipy.spatial.
+    # The metric functions from scipy converts to float64 so we don't check the dtypes.
     S = pairwise_distances(X, metric="cityblock")
     S2 = pairwise_distances(X, metric=cityblock)
     assert S.shape[0] == S.shape[1]
     assert S.shape[0] == X.shape[0]
-    assert_array_almost_equal(S, S2)
+    assert_allclose(S, S2)
 
     # The manhattan metric should be equivalent to cityblock.
     S = pairwise_distances(X, Y, metric="manhattan")
     S2 = pairwise_distances(X, Y, metric=cityblock)
     assert S.shape[0] == X.shape[0]
     assert S.shape[1] == Y.shape[0]
-    assert_array_almost_equal(S, S2)
+    assert_allclose(S, S2)
 
     # Test cosine as a string metric versus cosine callable
     # The string "cosine" uses sklearn.metric,
@@ -126,35 +133,57 @@ def test_pairwise_distances():
     S2 = pairwise_distances(X, Y, metric=cosine)
     assert S.shape[0] == X.shape[0]
     assert S.shape[1] == Y.shape[0]
-    assert_array_almost_equal(S, S2)
+    assert_allclose(S, S2)
 
     # Test with sparse X and Y,
     # currently only supported for Euclidean, L1 and cosine.
     X_sparse = csr_matrix(X)
     Y_sparse = csr_matrix(Y)
+
     S = pairwise_distances(X_sparse, Y_sparse, metric="euclidean")
     S2 = euclidean_distances(X_sparse, Y_sparse)
-    assert_array_almost_equal(S, S2)
+    assert_allclose(S, S2)
+    assert S.dtype == S2.dtype == global_dtype
+
     S = pairwise_distances(X_sparse, Y_sparse, metric="cosine")
     S2 = cosine_distances(X_sparse, Y_sparse)
-    assert_array_almost_equal(S, S2)
+    assert_allclose(S, S2)
+    assert S.dtype == S2.dtype == global_dtype
+
     S = pairwise_distances(X_sparse, Y_sparse.tocsc(), metric="manhattan")
     S2 = manhattan_distances(X_sparse.tobsr(), Y_sparse.tocoo())
-    assert_array_almost_equal(S, S2)
+    assert_allclose(S, S2)
+    if global_dtype == np.float64:
+        assert S.dtype == S2.dtype == global_dtype
+    else:
+        # TODO Fix manhattan_distances to preserve dtype.
+        # currently pairwise_distances uses manhattan_distances but converts the result
+        # back to the input dtype
+        with pytest.raises(AssertionError):
+            assert S.dtype == S2.dtype == global_dtype
+
     S2 = manhattan_distances(X, Y)
-    assert_array_almost_equal(S, S2)
+    assert_allclose(S, S2)
+    if global_dtype == np.float64:
+        assert S.dtype == S2.dtype == global_dtype
+    else:
+        # TODO Fix manhattan_distances to preserve dtype.
+        # currently pairwise_distances uses manhattan_distances but converts the result
+        # back to the input dtype
+        with pytest.raises(AssertionError):
+            assert S.dtype == S2.dtype == global_dtype
 
     # Test with scipy.spatial.distance metric, with a kwd
     kwds = {"p": 2.0}
     S = pairwise_distances(X, Y, metric="minkowski", **kwds)
     S2 = pairwise_distances(X, Y, metric=minkowski, **kwds)
-    assert_array_almost_equal(S, S2)
+    assert_allclose(S, S2)
 
     # same with Y = None
     kwds = {"p": 2.0}
     S = pairwise_distances(X, metric="minkowski", **kwds)
     S2 = pairwise_distances(X, metric=minkowski, **kwds)
-    assert_array_almost_equal(S, S2)
+    assert_allclose(S, S2)
 
     # Test that scipy distance metrics throw an error if sparse matrix given
     with pytest.raises(TypeError):
@@ -165,6 +194,23 @@ def test_pairwise_distances():
     # Test that a value error is raised if the metric is unknown
     with pytest.raises(ValueError):
         pairwise_distances(X, Y, metric="blah")
+
+
+# TODO(1.4): Remove test when `sum_over_features` parameter is removed
+@pytest.mark.parametrize("sum_over_features", [True, False])
+def test_manhattan_distances_deprecated_sum_over_features(sum_over_features):
+    # Check that future warning is raised when user
+    # enters `sum_over_features` argument.
+    X = [[1, 2], [3, 4]]
+    Y = [[1, 2], [0, 3]]
+    with pytest.warns(
+        FutureWarning,
+        match=(
+            "`sum_over_features` is deprecated in version 1.2 and will be"
+            " removed in version 1.4."
+        ),
+    ):
+        manhattan_distances(X, Y, sum_over_features=sum_over_features)
 
 
 @pytest.mark.parametrize("metric", PAIRWISE_BOOLEAN_FUNCTIONS)
@@ -291,7 +337,7 @@ def callable_rbf_kernel(x, y, **kwds):
         (pairwise_kernels, callable_rbf_kernel, {"gamma": 0.1}),
     ],
 )
-@pytest.mark.parametrize("dtype", [np.float64, int])
+@pytest.mark.parametrize("dtype", [np.float64, np.float32, int])
 def test_pairwise_parallel(func, metric, kwds, dtype):
     rng = np.random.RandomState(0)
     X = np.array(5 * rng.random_sample((5, 4)), dtype=dtype)
@@ -328,16 +374,16 @@ def test_pairwise_kernels(metric):
     # Test with Y=None
     K1 = pairwise_kernels(X, metric=metric)
     K2 = function(X)
-    assert_array_almost_equal(K1, K2)
+    assert_allclose(K1, K2)
     # Test with Y=Y
     K1 = pairwise_kernels(X, Y=Y, metric=metric)
     K2 = function(X, Y=Y)
-    assert_array_almost_equal(K1, K2)
+    assert_allclose(K1, K2)
     # Test with tuples as X and Y
     X_tuples = tuple([tuple([v for v in row]) for row in X])
     Y_tuples = tuple([tuple([v for v in row]) for row in Y])
     K2 = pairwise_kernels(X_tuples, Y_tuples, metric=metric)
-    assert_array_almost_equal(K1, K2)
+    assert_allclose(K1, K2)
 
     # Test with sparse X and Y
     X_sparse = csr_matrix(X)
@@ -348,7 +394,7 @@ def test_pairwise_kernels(metric):
             pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
         return
     K1 = pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
-    assert_array_almost_equal(K1, K2)
+    assert_allclose(K1, K2)
 
 
 def test_pairwise_kernels_callable():
@@ -362,12 +408,12 @@ def test_pairwise_kernels_callable():
     kwds = {"gamma": 0.1}
     K1 = pairwise_kernels(X, Y=Y, metric=metric, **kwds)
     K2 = rbf_kernel(X, Y=Y, **kwds)
-    assert_array_almost_equal(K1, K2)
+    assert_allclose(K1, K2)
 
     # callable function, X=Y
     K1 = pairwise_kernels(X, Y=X, metric=metric, **kwds)
     K2 = rbf_kernel(X, Y=X, **kwds)
-    assert_array_almost_equal(K1, K2)
+    assert_allclose(K1, K2)
 
 
 def test_pairwise_kernels_filter_param():
@@ -377,7 +423,7 @@ def test_pairwise_kernels_filter_param():
     K = rbf_kernel(X, Y, gamma=0.1)
     params = {"gamma": 0.1, "blabla": ":)"}
     K2 = pairwise_kernels(X, Y, metric="rbf", filter_params=True, **params)
-    assert_array_almost_equal(K, K2)
+    assert_allclose(K, K2)
 
     with pytest.raises(TypeError):
         pairwise_kernels(X, Y, metric="rbf", **params)
@@ -394,29 +440,29 @@ def test_paired_distances(metric, func):
 
     S = paired_distances(X, Y, metric=metric)
     S2 = func(X, Y)
-    assert_array_almost_equal(S, S2)
+    assert_allclose(S, S2)
     S3 = func(csr_matrix(X), csr_matrix(Y))
-    assert_array_almost_equal(S, S3)
+    assert_allclose(S, S3)
     if metric in PAIRWISE_DISTANCE_FUNCTIONS:
         # Check the pairwise_distances implementation
         # gives the same value
         distances = PAIRWISE_DISTANCE_FUNCTIONS[metric](X, Y)
         distances = np.diag(distances)
-        assert_array_almost_equal(distances, S)
+        assert_allclose(distances, S)
 
 
-def test_paired_distances_callable():
-    # Test the pairwise_distance helper function
+def test_paired_distances_callable(global_dtype):
+    # Test the paired_distance helper function
     # with the callable implementation
     rng = np.random.RandomState(0)
     # Euclidean distance should be equivalent to calling the function.
-    X = rng.random_sample((5, 4))
+    X = rng.random_sample((5, 4)).astype(global_dtype, copy=False)
     # Euclidean distance, with Y != X.
-    Y = rng.random_sample((5, 4))
+    Y = rng.random_sample((5, 4)).astype(global_dtype, copy=False)
 
     S = paired_distances(X, Y, metric="manhattan")
     S2 = paired_distances(X, Y, metric=lambda x, y: np.abs(x - y).sum(axis=0))
-    assert_array_almost_equal(S, S2)
+    assert_allclose(S, S2)
 
     # Test that a value error is raised when the lengths of X and Y should not
     # differ
@@ -425,14 +471,13 @@ def test_paired_distances_callable():
         paired_distances(X, Y)
 
 
-@pytest.mark.parametrize("dtype", (np.float32, np.float64))
-def test_pairwise_distances_argmin_min(dtype):
+def test_pairwise_distances_argmin_min(global_dtype):
     # Check pairwise minimum distances computation for any metric
-    X = np.asarray([[0], [1]], dtype=dtype)
-    Y = np.asarray([[-2], [3]], dtype=dtype)
+    X = np.asarray([[0], [1]], dtype=global_dtype)
+    Y = np.asarray([[-2], [3]], dtype=global_dtype)
 
     Xsp = dok_matrix(X)
-    Ysp = csr_matrix(Y, dtype=np.float32)
+    Ysp = csr_matrix(Y, dtype=global_dtype)
 
     expected_idx = [0, 1]
     expected_vals = [2, 2]
@@ -441,13 +486,15 @@ def test_pairwise_distances_argmin_min(dtype):
     # euclidean metric
     idx, vals = pairwise_distances_argmin_min(X, Y, metric="euclidean")
     idx2 = pairwise_distances_argmin(X, Y, metric="euclidean")
-    assert_array_almost_equal(idx, expected_idx)
-    assert_array_almost_equal(idx2, expected_idx)
-    assert_array_almost_equal(vals, expected_vals)
+    assert_allclose(idx, expected_idx)
+    assert_allclose(idx2, expected_idx)
+    assert_allclose(vals, expected_vals)
     # sparse matrix case
     idxsp, valssp = pairwise_distances_argmin_min(Xsp, Ysp, metric="euclidean")
-    assert_array_almost_equal(idxsp, expected_idx)
-    assert_array_almost_equal(valssp, expected_vals)
+    idxsp2 = pairwise_distances_argmin(Xsp, Ysp, metric="euclidean")
+    assert_allclose(idxsp, expected_idx)
+    assert_allclose(idxsp2, expected_idx)
+    assert_allclose(valssp, expected_vals)
     # We don't want np.matrix here
     assert type(idxsp) == np.ndarray
     assert type(valssp) == np.ndarray
@@ -462,38 +509,40 @@ def test_pairwise_distances_argmin_min(dtype):
         X, Y, metric="euclidean", metric_kwargs={"squared": True}
     )
 
-    assert_array_almost_equal(vals, expected_vals_sq)
-    assert_array_almost_equal(vals2, expected_vals_sq)
+    assert_allclose(vals, expected_vals_sq)
+    assert_allclose(vals2, expected_vals_sq)
 
-    assert_array_almost_equal(idx, expected_idx)
-    assert_array_almost_equal(idx2, expected_idx)
-    assert_array_almost_equal(idx3, expected_idx)
-    assert_array_almost_equal(idx4, expected_idx)
+    assert_allclose(idx, expected_idx)
+    assert_allclose(idx2, expected_idx)
+    assert_allclose(idx3, expected_idx)
+    assert_allclose(idx4, expected_idx)
 
     # Non-euclidean scikit-learn metric
     idx, vals = pairwise_distances_argmin_min(X, Y, metric="manhattan")
     idx2 = pairwise_distances_argmin(X, Y, metric="manhattan")
-    assert_array_almost_equal(idx, expected_idx)
-    assert_array_almost_equal(idx2, expected_idx)
-    assert_array_almost_equal(vals, expected_vals)
+    assert_allclose(idx, expected_idx)
+    assert_allclose(idx2, expected_idx)
+    assert_allclose(vals, expected_vals)
     # sparse matrix case
     idxsp, valssp = pairwise_distances_argmin_min(Xsp, Ysp, metric="manhattan")
-    assert_array_almost_equal(idxsp, expected_idx)
-    assert_array_almost_equal(valssp, expected_vals)
+    idxsp2 = pairwise_distances_argmin(Xsp, Ysp, metric="manhattan")
+    assert_allclose(idxsp, expected_idx)
+    assert_allclose(idxsp2, expected_idx)
+    assert_allclose(valssp, expected_vals)
 
     # Non-euclidean Scipy distance (callable)
     idx, vals = pairwise_distances_argmin_min(
         X, Y, metric=minkowski, metric_kwargs={"p": 2}
     )
-    assert_array_almost_equal(idx, expected_idx)
-    assert_array_almost_equal(vals, expected_vals)
+    assert_allclose(idx, expected_idx)
+    assert_allclose(vals, expected_vals)
 
     # Non-euclidean Scipy distance (string)
     idx, vals = pairwise_distances_argmin_min(
         X, Y, metric="minkowski", metric_kwargs={"p": 2}
     )
-    assert_array_almost_equal(idx, expected_idx)
-    assert_array_almost_equal(vals, expected_vals)
+    assert_allclose(idx, expected_idx)
+    assert_allclose(vals, expected_vals)
 
     # Compare with naive implementation
     rng = np.random.RandomState(0)
@@ -507,8 +556,8 @@ def test_pairwise_distances_argmin_min(dtype):
     dist_chunked_ind, dist_chunked_val = pairwise_distances_argmin_min(
         X, Y, axis=0, metric="manhattan"
     )
-    np.testing.assert_almost_equal(dist_orig_ind, dist_chunked_ind, decimal=7)
-    np.testing.assert_almost_equal(dist_orig_val, dist_chunked_val, decimal=7)
+    assert_allclose(dist_orig_ind, dist_chunked_ind, rtol=1e-7)
+    assert_allclose(dist_orig_val, dist_chunked_val, rtol=1e-7)
 
     # Changing the axis and permuting datasets must give the same results
     argmin_0, dist_0 = pairwise_distances_argmin_min(X, Y, axis=0)
@@ -547,9 +596,9 @@ def _reduce_func(dist, start):
     return dist[:, :100]
 
 
-def test_pairwise_distances_chunked_reduce():
+def test_pairwise_distances_chunked_reduce(global_dtype):
     rng = np.random.RandomState(0)
-    X = rng.random_sample((400, 4))
+    X = rng.random_sample((400, 4)).astype(global_dtype, copy=False)
     # Reduced Euclidean distance
     S = pairwise_distances(X)[:, :100]
     S_chunks = pairwise_distances_chunked(
@@ -558,14 +607,16 @@ def test_pairwise_distances_chunked_reduce():
     assert isinstance(S_chunks, GeneratorType)
     S_chunks = list(S_chunks)
     assert len(S_chunks) > 1
+    assert S_chunks[0].dtype == X.dtype
+
     # atol is for diagonal where S is explicitly zeroed on the diagonal
     assert_allclose(np.vstack(S_chunks), S, atol=1e-7)
 
 
-def test_pairwise_distances_chunked_reduce_none():
+def test_pairwise_distances_chunked_reduce_none(global_dtype):
     # check that the reduce func is allowed to return None
     rng = np.random.RandomState(0)
-    X = rng.random_sample((10, 4))
+    X = rng.random_sample((10, 4)).astype(global_dtype, copy=False)
     S_chunks = pairwise_distances_chunked(
         X, None, reduce_func=lambda dist, start: None, working_memory=2**-16
     )
@@ -624,8 +675,10 @@ def test_pairwise_distances_chunked_reduce_valid(good_reduce):
         ),
     ],
 )
-def test_pairwise_distances_chunked_reduce_invalid(bad_reduce, err_type, message):
-    X = np.arange(10).reshape(-1, 1)
+def test_pairwise_distances_chunked_reduce_invalid(
+    global_dtype, bad_reduce, err_type, message
+):
+    X = np.arange(10).reshape(-1, 1).astype(global_dtype, copy=False)
     S_chunks = pairwise_distances_chunked(
         X, None, reduce_func=bad_reduce, working_memory=64
     )
@@ -646,32 +699,32 @@ def check_pairwise_distances_chunked(X, Y, working_memory, metric="euclidean"):
 
     blockwise_distances = np.vstack(blockwise_distances)
     S = pairwise_distances(X, Y, metric=metric)
-    assert_array_almost_equal(blockwise_distances, S)
+    assert_allclose(blockwise_distances, S, atol=1e-7)
 
 
 @pytest.mark.parametrize("metric", ("euclidean", "l2", "sqeuclidean"))
-def test_pairwise_distances_chunked_diagonal(metric):
+def test_pairwise_distances_chunked_diagonal(metric, global_dtype):
     rng = np.random.RandomState(0)
-    X = rng.normal(size=(1000, 10), scale=1e10)
+    X = rng.normal(size=(1000, 10), scale=1e10).astype(global_dtype, copy=False)
     chunks = list(pairwise_distances_chunked(X, working_memory=1, metric=metric))
     assert len(chunks) > 1
-    assert_array_almost_equal(np.diag(np.vstack(chunks)), 0, decimal=10)
+    assert_allclose(np.diag(np.vstack(chunks)), 0, rtol=1e-10)
 
 
 @pytest.mark.parametrize("metric", ("euclidean", "l2", "sqeuclidean"))
-def test_parallel_pairwise_distances_diagonal(metric):
+def test_parallel_pairwise_distances_diagonal(metric, global_dtype):
     rng = np.random.RandomState(0)
-    X = rng.normal(size=(1000, 10), scale=1e10)
+    X = rng.normal(size=(1000, 10), scale=1e10).astype(global_dtype, copy=False)
     distances = pairwise_distances(X, metric=metric, n_jobs=2)
     assert_allclose(np.diag(distances), 0, atol=1e-10)
 
 
 @ignore_warnings
-def test_pairwise_distances_chunked():
+def test_pairwise_distances_chunked(global_dtype):
     # Test the pairwise_distance helper function.
     rng = np.random.RandomState(0)
     # Euclidean distance should be equivalent to calling the function.
-    X = rng.random_sample((200, 4))
+    X = rng.random_sample((200, 4)).astype(global_dtype, copy=False)
     check_pairwise_distances_chunked(X, None, working_memory=1, metric="euclidean")
     # Test small amounts of memory
     for power in range(-16, 0):
@@ -683,7 +736,7 @@ def test_pairwise_distances_chunked():
         X.tolist(), None, working_memory=1, metric="euclidean"
     )
     # Euclidean distance, with Y != X.
-    Y = rng.random_sample((100, 4))
+    Y = rng.random_sample((100, 4)).astype(global_dtype, copy=False)
     check_pairwise_distances_chunked(X, Y, working_memory=1, metric="euclidean")
     check_pairwise_distances_chunked(
         X.tolist(), Y.tolist(), working_memory=1, metric="euclidean"
@@ -720,16 +773,15 @@ def test_euclidean_distances_known_result(x_array_constr, y_array_constr):
     assert_allclose(D, [[1.0, 2.0]])
 
 
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize(
     "y_array_constr", [np.array, csr_matrix], ids=["dense", "sparse"]
 )
-def test_euclidean_distances_with_norms(dtype, y_array_constr):
+def test_euclidean_distances_with_norms(global_dtype, y_array_constr):
     # check that we still get the right answers with {X,Y}_norm_squared
     # and that we get a wrong answer with wrong {X,Y}_norm_squared
     rng = np.random.RandomState(0)
-    X = rng.random_sample((10, 10)).astype(dtype, copy=False)
-    Y = rng.random_sample((20, 10)).astype(dtype, copy=False)
+    X = rng.random_sample((10, 10)).astype(global_dtype, copy=False)
+    Y = rng.random_sample((20, 10)).astype(global_dtype, copy=False)
 
     # norms will only be used if their dtype is float64
     X_norm_sq = (X.astype(np.float64) ** 2).sum(axis=1).reshape(1, -1)
@@ -790,20 +842,19 @@ def test_euclidean_distances_norm_shapes():
         euclidean_distances(X, Y, Y_norm_squared=Y_norm_squared[:5])
 
 
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize(
     "x_array_constr", [np.array, csr_matrix], ids=["dense", "sparse"]
 )
 @pytest.mark.parametrize(
     "y_array_constr", [np.array, csr_matrix], ids=["dense", "sparse"]
 )
-def test_euclidean_distances(dtype, x_array_constr, y_array_constr):
+def test_euclidean_distances(global_dtype, x_array_constr, y_array_constr):
     # check that euclidean distances gives same result as scipy cdist
     # when X and Y != X are provided
     rng = np.random.RandomState(0)
-    X = rng.random_sample((100, 10)).astype(dtype, copy=False)
+    X = rng.random_sample((100, 10)).astype(global_dtype, copy=False)
     X[X < 0.8] = 0
-    Y = rng.random_sample((10, 10)).astype(dtype, copy=False)
+    Y = rng.random_sample((10, 10)).astype(global_dtype, copy=False)
     Y[Y < 0.8] = 0
 
     expected = cdist(X, Y)
@@ -815,18 +866,17 @@ def test_euclidean_distances(dtype, x_array_constr, y_array_constr):
     # the default rtol=1e-7 is too close to the float32 precision
     # and fails due to rounding errors.
     assert_allclose(distances, expected, rtol=1e-6)
-    assert distances.dtype == dtype
+    assert distances.dtype == global_dtype
 
 
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize(
     "x_array_constr", [np.array, csr_matrix], ids=["dense", "sparse"]
 )
-def test_euclidean_distances_sym(dtype, x_array_constr):
+def test_euclidean_distances_sym(global_dtype, x_array_constr):
     # check that euclidean distances gives same result as scipy pdist
     # when only X is provided
     rng = np.random.RandomState(0)
-    X = rng.random_sample((100, 10)).astype(dtype, copy=False)
+    X = rng.random_sample((100, 10)).astype(global_dtype, copy=False)
     X[X < 0.8] = 0
 
     expected = squareform(pdist(X))
@@ -837,7 +887,7 @@ def test_euclidean_distances_sym(dtype, x_array_constr):
     # the default rtol=1e-7 is too close to the float32 precision
     # and fails due to rounding errors.
     assert_allclose(distances, expected, rtol=1e-6)
-    assert distances.dtype == dtype
+    assert distances.dtype == global_dtype
 
 
 @pytest.mark.parametrize("batch_size", [None, 5, 7, 101])
@@ -1061,12 +1111,12 @@ def test_cosine_distances():
     x = np.abs(rng.rand(910))
     XA = np.vstack([x, x])
     D = cosine_distances(XA)
-    assert_array_almost_equal(D, [[0.0, 0.0], [0.0, 0.0]])
+    assert_allclose(D, [[0.0, 0.0], [0.0, 0.0]], atol=1e-10)
     # check that all elements are in [0, 2]
     assert np.all(D >= 0.0)
     assert np.all(D <= 2.0)
     # check that diagonal elements are equal to 0
-    assert_array_almost_equal(D[np.diag_indices_from(D)], [0.0, 0.0])
+    assert_allclose(D[np.diag_indices_from(D)], [0.0, 0.0])
 
     XB = np.vstack([x, -x])
     D2 = cosine_distances(XB)
@@ -1074,13 +1124,13 @@ def test_cosine_distances():
     assert np.all(D2 >= 0.0)
     assert np.all(D2 <= 2.0)
     # check that diagonal elements are equal to 0 and non diagonal to 2
-    assert_array_almost_equal(D2, [[0.0, 2.0], [2.0, 0.0]])
+    assert_allclose(D2, [[0.0, 2.0], [2.0, 0.0]])
 
     # check large random matrix
     X = np.abs(rng.rand(1000, 5000))
     D = cosine_distances(X)
     # check that diagonal elements are equal to 0
-    assert_array_almost_equal(D[np.diag_indices_from(D)], [0.0] * D.shape[0])
+    assert_allclose(D[np.diag_indices_from(D)], [0.0] * D.shape[0])
     assert np.all(D >= 0.0)
     assert np.all(D <= 2.0)
 
@@ -1101,7 +1151,7 @@ def test_haversine_distances():
     Y = rng.random_sample((10, 2))
     D1 = np.array([[slow_haversine_distances(x, y) for y in Y] for x in X])
     D2 = haversine_distances(X, Y)
-    assert_array_almost_equal(D1, D2)
+    assert_allclose(D1, D2)
     # Test haversine distance does not accept X where n_feature != 2
     X = rng.random_sample((10, 3))
     err_msg = "Haversine distance only valid in 2 dimensions"
@@ -1117,7 +1167,7 @@ def test_paired_euclidean_distances():
     X = [[0], [0]]
     Y = [[1], [2]]
     D = paired_euclidean_distances(X, Y)
-    assert_array_almost_equal(D, [1.0, 2.0])
+    assert_allclose(D, [1.0, 2.0])
 
 
 def test_paired_manhattan_distances():
@@ -1125,7 +1175,7 @@ def test_paired_manhattan_distances():
     X = [[0], [0]]
     Y = [[1], [2]]
     D = paired_manhattan_distances(X, Y)
-    assert_array_almost_equal(D, [1.0, 2.0])
+    assert_allclose(D, [1.0, 2.0])
 
 
 def test_chi_square_kernel():
@@ -1204,7 +1254,7 @@ def test_kernel_symmetry(kernel):
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     K = kernel(X, X)
-    assert_array_almost_equal(K, K.T, 15)
+    assert_allclose(K, K.T, 15)
 
 
 @pytest.mark.parametrize(
@@ -1224,7 +1274,7 @@ def test_kernel_sparse(kernel):
     X_sparse = csr_matrix(X)
     K = kernel(X, X)
     K2 = kernel(X_sparse, X_sparse)
-    assert_array_almost_equal(K, K2)
+    assert_allclose(K, K2)
 
 
 def test_linear_kernel():
@@ -1232,7 +1282,7 @@ def test_linear_kernel():
     X = rng.random_sample((5, 4))
     K = linear_kernel(X, X)
     # the diagonal elements of a linear kernel are their squared norm
-    assert_array_almost_equal(K.flat[::6], [linalg.norm(x) ** 2 for x in X])
+    assert_allclose(K.flat[::6], [linalg.norm(x) ** 2 for x in X])
 
 
 def test_rbf_kernel():
@@ -1240,7 +1290,7 @@ def test_rbf_kernel():
     X = rng.random_sample((5, 4))
     K = rbf_kernel(X, X)
     # the diagonal elements of a rbf kernel are 1
-    assert_array_almost_equal(K.flat[::6], np.ones(5))
+    assert_allclose(K.flat[::6], np.ones(5))
 
 
 def test_laplacian_kernel():
@@ -1248,7 +1298,7 @@ def test_laplacian_kernel():
     X = rng.random_sample((5, 4))
     K = laplacian_kernel(X, X)
     # the diagonal elements of a laplacian kernel are 1
-    assert_array_almost_equal(np.diag(K), np.ones(5))
+    assert_allclose(np.diag(K), np.ones(5))
 
     # off-diagonal elements are < 1 but > 0:
     assert np.all(K > 0)
@@ -1272,11 +1322,11 @@ def test_pairwise_similarity_sparse_output(metric, pairwise_func):
     # should be dense, and equal to K1
     K2 = pairwise_func(X, Y, dense_output=True)
     assert not issparse(K2)
-    assert_array_almost_equal(K1.todense(), K2)
+    assert_allclose(K1.toarray(), K2)
 
-    # show the kernel output equal to the sparse.todense()
+    # show the kernel output equal to the sparse.toarray()
     K3 = pairwise_kernels(X, Y=Y, metric=metric)
-    assert_array_almost_equal(K1.todense(), K3)
+    assert_allclose(K1.toarray(), K3)
 
 
 def test_cosine_similarity():
@@ -1296,7 +1346,7 @@ def test_cosine_similarity():
         if Y_ is not None:
             Y_ = normalize(Y_)
         K2 = pairwise_kernels(X_, Y=Y_, metric="linear")
-        assert_array_almost_equal(K1, K2)
+        assert_allclose(K1, K2)
 
 
 def test_check_dense_matrices():
@@ -1469,9 +1519,8 @@ def test_pairwise_distances_data_derived_params_error(metric):
         "euclidean",
     ],
 )
-@pytest.mark.parametrize("dtype", [np.float32, np.float64])
 @pytest.mark.parametrize("y_is_x", [True, False], ids=["Y is X", "Y is not X"])
-def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
+def test_numeric_pairwise_distances_datatypes(metric, global_dtype, y_is_x):
     # Check that pairwise distances gives the same result as pdist and cdist
     # regardless of input datatype when using any scipy metric for comparing
     # numeric vectors
@@ -1482,14 +1531,14 @@ def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
 
     rng = np.random.RandomState(0)
 
-    X = rng.random_sample((5, 4)).astype(dtype)
+    X = rng.random_sample((5, 4)).astype(global_dtype, copy=False)
 
     params = {}
     if y_is_x:
         Y = X
         expected_dist = squareform(pdist(X, metric=metric))
     else:
-        Y = rng.random_sample((5, 4)).astype(dtype)
+        Y = rng.random_sample((5, 4)).astype(global_dtype, copy=False)
         expected_dist = cdist(X, Y, metric=metric)
         # precompute parameters for seuclidean & mahalanobis when x is not y
         if metric == "seuclidean":
@@ -1499,7 +1548,4 @@ def test_numeric_pairwise_distances_datatypes(metric, dtype, y_is_x):
 
     dist = pairwise_distances(X, Y, metric=metric, **params)
 
-    # the default rtol=1e-7 is too close to the float32 precision
-    # and fails due to rounding errors
-    rtol = 1e-5 if dtype is np.float32 else 1e-7
-    assert_allclose(dist, expected_dist, rtol=rtol)
+    assert_allclose(dist, expected_dist)

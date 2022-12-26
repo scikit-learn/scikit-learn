@@ -32,8 +32,7 @@ cdef class KDTree(BinaryTree):
 cdef int allocate_data(BinaryTree tree, ITYPE_t n_nodes,
                        ITYPE_t n_features) except -1:
     """Allocate arrays needed for the KD Tree"""
-    tree.node_bounds_arr = np.zeros((2, n_nodes, n_features), dtype=DTYPE)
-    tree.node_bounds = tree.node_bounds_arr
+    tree.node_bounds = np.zeros((2, n_nodes, n_features), dtype=DTYPE)
     return 0
 
 
@@ -119,7 +118,7 @@ cdef DTYPE_t max_rdist(BinaryTree tree,
     """Compute the maximum reduced-distance between a point and a node"""
     cdef ITYPE_t n_features = tree.data.shape[1]
 
-    cdef DTYPE_t d, d_lo, d_hi, rdist=0.0
+    cdef DTYPE_t d_lo, d_hi, rdist=0.0
     cdef ITYPE_t j
 
     if tree.dist_metric.p == INF:
@@ -186,7 +185,6 @@ cdef inline DTYPE_t min_rdist_dual(BinaryTree tree1, ITYPE_t i_node1,
     cdef ITYPE_t n_features = tree1.data.shape[1]
 
     cdef DTYPE_t d, d1, d2, rdist=0.0
-    cdef DTYPE_t zero = 0.0
     cdef ITYPE_t j
 
     if tree1.dist_metric.p == INF:
@@ -224,8 +222,7 @@ cdef inline DTYPE_t max_rdist_dual(BinaryTree tree1, ITYPE_t i_node1,
     """Compute the maximum reduced distance between two nodes"""
     cdef ITYPE_t n_features = tree1.data.shape[1]
 
-    cdef DTYPE_t d, d1, d2, rdist=0.0
-    cdef DTYPE_t zero = 0.0
+    cdef DTYPE_t d1, d2, rdist=0.0
     cdef ITYPE_t j
 
     if tree1.dist_metric.p == INF:

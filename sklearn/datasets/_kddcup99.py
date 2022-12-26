@@ -81,6 +81,7 @@ def fetch_kddcup99(
     data_home : str, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
+
         .. versionadded:: 0.19
 
     shuffle : bool, default=False

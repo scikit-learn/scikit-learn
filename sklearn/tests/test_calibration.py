@@ -23,7 +23,6 @@ from sklearn.model_selection import KFold, cross_val_predict
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.ensemble import (
     RandomForestClassifier,
-    RandomForestRegressor,
     VotingClassifier,
 )
 from sklearn.linear_model import LogisticRegression, LinearRegression
@@ -115,28 +114,6 @@ def test_calibration(data, method, ensemble):
             assert brier_score_loss(y_test, prob_pos_clf) > brier_score_loss(
                 (y_test + 1) % 2, prob_pos_cal_clf_relabeled
             )
-
-
-@pytest.mark.parametrize("ensemble", [True, False])
-def test_calibration_bad_method(data, ensemble):
-    # Check only "isotonic" and "sigmoid" are accepted as methods
-    X, y = data
-    clf = LinearSVC()
-    clf_invalid_method = CalibratedClassifierCV(clf, method="foo", ensemble=ensemble)
-    with pytest.raises(ValueError):
-        clf_invalid_method.fit(X, y)
-
-
-@pytest.mark.parametrize("ensemble", [True, False])
-def test_calibration_regressor(data, ensemble):
-    # `base-estimator` should provide either decision_function or
-    # predict_proba (most regressors, for instance, should fail)
-    X, y = data
-    clf_base_regressor = CalibratedClassifierCV(
-        RandomForestRegressor(), ensemble=ensemble
-    )
-    with pytest.raises(RuntimeError):
-        clf_base_regressor.fit(X, y)
 
 
 def test_calibration_default_estimator(data):

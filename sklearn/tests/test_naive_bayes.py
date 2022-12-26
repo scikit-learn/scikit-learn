@@ -64,15 +64,6 @@ def test_gnb():
         GaussianNB().partial_fit(X, y, classes=[0, 1])
 
 
-# TODO remove in 1.2 once sigma_ attribute is removed (GH #18842)
-def test_gnb_var():
-    clf = GaussianNB()
-    clf.fit(X, y)
-
-    with pytest.warns(FutureWarning, match="Attribute `sigma_` was deprecated"):
-        assert_array_equal(clf.sigma_, clf.var_)
-
-
 def test_gnb_prior():
     # Test whether class priors are properly set.
     clf = GaussianNB().fit(X, y)
@@ -910,19 +901,6 @@ def test_check_accuracy_on_digits():
 
     scores = cross_val_score(GaussianNB(), X_3v8, y_3v8, cv=10)
     assert scores.mean() > 0.86
-
-
-# FIXME: remove in 1.2
-@pytest.mark.parametrize("Estimator", DISCRETE_NAIVE_BAYES_CLASSES)
-def test_n_features_deprecation(Estimator):
-    # Check that we raise the proper deprecation warning if accessing
-    # `n_features_`.
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    est = Estimator().fit(X, y)
-
-    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
-        est.n_features_
 
 
 # TODO(1.4): Remove
