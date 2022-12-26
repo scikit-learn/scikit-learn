@@ -40,8 +40,7 @@ from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
 from ..utils.sparsefuncs import count_nonzero
-from ..utils._param_validation import StrOptions
-from ..utils._param_validation import validate_params
+from ..utils._param_validation import StrOptions, validate_params
 from ..exceptions import UndefinedMetricWarning
 
 from ._base import _check_pos_label_consistency
