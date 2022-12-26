@@ -26,7 +26,7 @@ the lower the better.
 #          Ohad Michel <ohadmich@gmail.com>
 # License: BSD 3 clause
 
-from numbers import Real
+import numbers
 import warnings
 
 import numpy as np
