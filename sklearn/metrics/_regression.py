@@ -1096,7 +1096,7 @@ def mean_tweedie_deviance(y_true, y_pred, *, sample_weight=None, power=0):
     p = check_scalar(
         power,
         name="power",
-        target_type=Real,
+        target_type=numbers.Real,
     )
 
     message = f"Mean Tweedie deviance error with power={p} can only be used on "
