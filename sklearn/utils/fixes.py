@@ -14,6 +14,7 @@ from functools import update_wrapper
 from importlib import resources
 import functools
 import sys
+import threading
 
 import sklearn
 import numpy as np
@@ -107,22 +108,25 @@ else:
 
 
 # remove when https://github.com/joblib/joblib/issues/1071 is fixed
-def delayed(function):
+def delayed(func, thread_id=threading.get_ident()):
     """Decorator used to capture the arguments of a function."""
 
-    @functools.wraps(function)
-    def delayed_function(*args, **kwargs):
-        return _FuncWrapper(function), args, kwargs
+    def decorate(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            return _FuncWrapper(func, thread_id=thread_id), args, kwargs
 
-    return delayed_function
+        return wrapper
+
+    return decorate(func)
 
 
 class _FuncWrapper:
     """ "Load the global configuration before calling the function."""
 
-    def __init__(self, function):
+    def __init__(self, function, thread_id=None):
         self.function = function
-        self.config = get_config()
+        self.config = get_config(thread_id=thread_id)
         update_wrapper(self, self.function)
 
     def __call__(self, *args, **kwargs):

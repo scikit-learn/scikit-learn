@@ -4,7 +4,7 @@ import os
 from contextlib import contextmanager as contextmanager
 import threading
 
-_global_config = {
+_global_config_default = {
     "assume_finite": bool(os.environ.get("SKLEARN_ASSUME_FINITE", False)),
     "working_memory": int(os.environ.get("SKLEARN_WORKING_MEMORY", 1024)),
     "print_changed_only": True,
@@ -17,18 +17,30 @@ _global_config = {
     "transform_output": "default",
 }
 _threadlocal = threading.local()
+_thread_config = {}
 
 
 def _get_threadlocal_config():
-    """Get a threadlocal **mutable** configuration. If the configuration
-    does not exist, copy the default global configuration."""
+    """Get a threadlocal **mutable** configuration.
+
+    If the configuration does not exist, copy the default global configuration.
+    The configuration is also registered to in a global dictionary where the
+    key is the thread id.
+    """
     if not hasattr(_threadlocal, "global_config"):
-        _threadlocal.global_config = _global_config.copy()
+        _threadlocal.global_config = _global_config_default.copy()
+        _thread_config[threading.get_ident()] = _threadlocal.global_config
     return _threadlocal.global_config
 
 
-def get_config():
+def get_config(thread_id=None):
     """Retrieve current values for configuration set by :func:`set_config`.
+
+    Parameters
+    ----------
+    thread_id : int, default=None
+        The thread id from which to retrieve the configuration. If `None`,
+        the current thread id is used.
 
     Returns
     -------
@@ -42,7 +54,10 @@ def get_config():
     """
     # Return a copy of the threadlocal configuration so that users will
     # not be able to modify the configuration with the returned dict.
-    return _get_threadlocal_config().copy()
+    if thread_id is None:
+        return _get_threadlocal_config().copy()
+    _get_threadlocal_config()
+    return _thread_config[thread_id].copy()
 
 
 def set_config(
