@@ -944,7 +944,7 @@ def test_partial_dependence_sample_weight_with_recursion():
     est.fit(X, y, sample_weight=sample_weight)
 
     with pytest.raises(ValueError, match="'recursion' method can only be applied when"):
-    
+
         partial_dependence(
             est, X, features=[0], method="recursion", sample_weight=sample_weight
         )
