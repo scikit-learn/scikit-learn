@@ -482,6 +482,7 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
         _tested_estimators(),
         _generate_pipeline(),
         _generate_column_transformer_instances(),
+        _generate_search_cv_instances(),
     ),
     ids=_get_check_estimator_ids,
 )
