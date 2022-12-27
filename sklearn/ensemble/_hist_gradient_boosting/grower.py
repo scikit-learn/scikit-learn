@@ -405,18 +405,18 @@ class TreeGrower:
             self._finalize_leaf(self.root)
             return
 
-        tic = time()
-        self.root.histograms = self.histogram_builder.compute_histograms_brute(
-            self.root.sample_indices
-        )
-        self.total_compute_hist_time += time() - tic
-
         if self.interaction_cst is not None:
             self.root.interaction_cst_indices = range(len(self.interaction_cst))
             allowed_features = set().union(*self.interaction_cst)
             self.root.allowed_features = np.fromiter(
                 allowed_features, dtype=np.uint32, count=len(allowed_features)
             )
+
+        tic = time()
+        self.root.histograms = self.histogram_builder.compute_histograms_brute(
+            self.root.sample_indices, self.root.allowed_features
+        )
+        self.total_compute_hist_time += time() - tic
 
         tic = time()
         self._compute_best_split_and_push(self.root)
@@ -580,13 +580,16 @@ class TreeGrower:
             # We use the brute O(n_samples) method on the child that has the
             # smallest number of samples, and the subtraction trick O(n_bins)
             # on the other one.
+            # Note that both left and right child have the same allowed_features.
             tic = time()
             smallest_child.histograms = self.histogram_builder.compute_histograms_brute(
-                smallest_child.sample_indices
+                smallest_child.sample_indices, smallest_child.allowed_features
             )
             largest_child.histograms = (
                 self.histogram_builder.compute_histograms_subtraction(
-                    node.histograms, smallest_child.histograms
+                    node.histograms,
+                    smallest_child.histograms,
+                    smallest_child.allowed_features,
                 )
             )
             self.total_compute_hist_time += time() - tic

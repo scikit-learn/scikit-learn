@@ -445,7 +445,7 @@ fold cross validation should be preferred to LOO.
  * T. Hastie, R. Tibshirani, J. Friedman,  `The Elements of Statistical Learning
    <https://web.stanford.edu/~hastie/ElemStatLearn/>`_, Springer 2009
  * L. Breiman, P. Spector `Submodel selection and evaluation in regression: The X-random case
-   <http://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992;
+   <https://digitalassets.lib.berkeley.edu/sdtr/ucb/text/197.pdf>`_, International Statistical Review 1992;
  * R. Kohavi, `A Study of Cross-Validation and Bootstrap for Accuracy Estimation and Model Selection
    <https://www.ijcai.org/Proceedings/95-2/Papers/016.pdf>`_, Intl. Jnt. Conf. AI
  * R. Bharat Rao, G. Fung, R. Rosales, `On the Dangers of Cross-Validation. An Experimental Evaluation
