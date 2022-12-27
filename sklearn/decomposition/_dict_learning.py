@@ -226,8 +226,8 @@ def _sparse_encode(
     {
         "X": ["array-like"],
         "dictionary": ["array-like"],
-        "gram": [np.ndarray, None],
-        "cov": [np.ndarray, None],
+        "gram": ["array-like", None],
+        "cov": ["array-like", None],
         "algorithm": [
             StrOptions({"lasso_lars", "lasso_cd", "lars", "omp", "threshold"})
         ],
@@ -271,18 +271,18 @@ def sparse_encode(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Data matrix.
 
-    dictionary : ndarray of shape (n_components, n_features)
+    dictionary : array-like of shape (n_components, n_features)
         The dictionary matrix against which to solve the sparse coding of
         the data. Some of the algorithms assume normalized rows for meaningful
         output.
 
-    gram : ndarray of shape (n_components, n_components), default=None
+    gram : array-like of shape (n_components, n_components), default=None
         Precomputed Gram matrix, `dictionary * dictionary'`.
 
-    cov : ndarray of shape (n_components, n_samples), default=None
+    cov : array-like of shape (n_components, n_samples), default=None
         Precomputed covariance, `dictionary' * X`.
 
     algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}, \
