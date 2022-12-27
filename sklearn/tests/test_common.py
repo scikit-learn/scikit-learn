@@ -49,6 +49,7 @@ import sklearn
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.experimental import enable_halving_search_cv  # noqa
 
+from sklearn.compose import ColumnTransformer
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, OneHotEncoder
 from sklearn.linear_model._base import LinearClassifierMixin
@@ -58,7 +59,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import HalvingGridSearchCV
 from sklearn.model_selection import HalvingRandomSearchCV
-from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import make_pipeline, Pipeline
 
 from sklearn.utils import IS_PYPY
 from sklearn.utils._tags import _DEFAULT_TAGS, _safe_tags
@@ -273,6 +274,24 @@ def test_class_support_removed():
         parametrize_with_checks([LogisticRegression])
 
 
+def _generate_column_transformer_instances():
+    yield ColumnTransformer(
+        transformers=[
+            ("trans1", StandardScaler(), [0, 1]),
+        ]
+    )
+
+
+def _generate_pipeline():
+    for final_estimator in [Ridge(), LogisticRegression()]:
+        yield Pipeline(
+            steps=[
+                ("scaler", StandardScaler()),
+                ("final_estimator", final_estimator),
+            ]
+        )
+
+
 def _generate_search_cv_instances():
     for SearchCV, (Estimator, param_grid) in product(
         [
@@ -458,7 +477,13 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
 
 
 @pytest.mark.parametrize(
-    "estimator", _tested_estimators(), ids=_get_check_estimator_ids
+    "estimator",
+    chain(
+        _tested_estimators(),
+        _generate_pipeline(),
+        _generate_column_transformer_instances(),
+    ),
+    ids=_get_check_estimator_ids,
 )
 def test_check_param_validation(estimator):
     name = estimator.__class__.__name__

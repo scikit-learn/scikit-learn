@@ -1749,3 +1749,13 @@ def test_check_feature_names_in_pandas():
 
     with pytest.raises(ValueError, match="input_features is not equal to"):
         est.get_feature_names_out(["x1", "x2", "x3"])
+
+
+def test_boolean_series_remains_boolean():
+    """Regression test for gh-25145"""
+    pd = importorskip("pandas")
+    res = check_array(pd.Series([True, False]), ensure_2d=False)
+    expected = np.array([True, False])
+
+    assert res.dtype == expected.dtype
+    assert_array_equal(res, expected)
