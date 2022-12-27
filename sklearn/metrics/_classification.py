@@ -2756,6 +2756,7 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     y_true_unique = np.unique(labels if labels is not None else y_true)
 
     if y_true_unique.size > 2:
+
         if pred_decision.ndim <= 1:
             raise ValueError(
                 "The shape of pred_decision cannot be 1d array"
