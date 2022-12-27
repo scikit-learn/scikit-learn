@@ -137,6 +137,23 @@ def test_column_transformer():
     assert len(both.transformers_) == 1
 
 
+def test_column_transformer_tuple_transformers_parameter():
+    X_array = np.array([[0, 1, 2], [2, 4, 6]]).T
+
+    transformers = [("trans1", Trans(), [0]), ("trans2", Trans(), [1])]
+
+    ct_with_list = ColumnTransformer(transformers)
+    ct_with_tuple = ColumnTransformer(tuple(transformers))
+
+    assert_array_equal(
+        ct_with_list.fit_transform(X_array), ct_with_tuple.fit_transform(X_array)
+    )
+    assert_array_equal(
+        ct_with_list.fit(X_array).transform(X_array),
+        ct_with_tuple.fit(X_array).transform(X_array),
+    )
+
+
 def test_column_transformer_dataframe():
     pd = pytest.importorskip("pandas")
 
