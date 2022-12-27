@@ -526,12 +526,7 @@ class LedoitWolf(EmpiricalCovariance):
 
 
 # OAS estimator
-@validate_params(
-    {
-        "X": ["array-like"],
-        "assume_centered": ["boolean"],
-    }
-)
+@validate_params({"X": ["array-like"]})
 def oas(X, *, assume_centered=False):
     """Estimate covariance with the Oracle Approximating Shrinkage algorithm.
 
