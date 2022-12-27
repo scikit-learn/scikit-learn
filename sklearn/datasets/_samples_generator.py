@@ -1244,12 +1244,13 @@ def make_low_rank_matrix(
 # TODO(1.3): Change argument `data_transposed` default from True to False.
 # TODO(1.3): Deprecate data_transposed, always return data not transposed.
 
+
 @validate_params(
     {
-        "n_samples": [Interval(Integral, 0, None, closed="neither")],
-        "n_components": [Interval(Integral, 0, None, closed="neither")],
-        "n_features": [Interval(Integral, 0, None, closed="neither")],
-        "n_nonzero_coefs": [Interval(Integral, 0, None, closed="neither")],
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left")],
         "random_state": ["random_state"],
         "data_transposed": ["boolean", Hidden(StrOptions({"warn"}))],
     }
