@@ -25,8 +25,8 @@ def _get_threadlocal_config():
     """Get a threadlocal **mutable** configuration.
 
     If the configuration does not exist, copy the default global configuration.
-    The configuration is also registered to in a global dictionary where the
-    key is the thread id.
+    The configuration is also registered to a global dictionary where the keys
+    are weak references to the thread objects.
     """
     if not hasattr(_threadlocal, "global_config"):
         _threadlocal.global_config = _global_config_default.copy()
@@ -39,9 +39,9 @@ def get_config(thread=None):
 
     Parameters
     ----------
-    thread_id : int, default=None
-        The thread id from which to retrieve the configuration. If `None`,
-        the current thread id is used.
+    thread : Thread, default=None
+        The thread for which to retrieve the configuration. If None, the
+        configuration of the current thread is returned.
 
     Returns
     -------
@@ -55,9 +55,9 @@ def get_config(thread=None):
     """
     # Return a copy of the threadlocal configuration so that users will
     # not be able to modify the configuration with the returned dict.
+    threadlocal_config = _get_threadlocal_config()
     if thread is None:
-        return _get_threadlocal_config().copy()
-    _get_threadlocal_config()  # register the config to the thread if does not exist
+        return threadlocal_config.copy()
     return _thread_config[thread].copy()
 
 
