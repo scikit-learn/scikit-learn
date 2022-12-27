@@ -275,13 +275,11 @@ def affinity_propagation(
     Brendan J. Frey and Delbert Dueck, "Clustering by Passing Messages
     Between Data Points", Science Feb. 2007
     """
-    S = as_float_array(S, copy=copy)
-
     estimator = AffinityPropagation(
         damping=damping,
         max_iter=max_iter,
         convergence_iter=convergence_iter,
-        copy=False,
+        copy=copy,
         preference=preference,
         affinity="precomputed",
         verbose=verbose,
