@@ -104,6 +104,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.accuracy_score",
     "sklearn.metrics.auc",
     "sklearn.metrics.cohen_kappa_score",
+    "sklearn.metrics.confusion_matrix",
     "sklearn.metrics.mean_absolute_error",
     "sklearn.metrics.r2_score",
     "sklearn.metrics.roc_curve",
