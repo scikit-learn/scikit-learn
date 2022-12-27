@@ -349,7 +349,7 @@ def partial_dependence(
 
         .. versionadded:: 0.24
 
-        sample_weight : array-like of shape (n_samples,), default=None
+    sample_weight : array-like of shape (n_samples,), default=None
         Sample weights for doing weighted means when averaging the model output.
         If None, then samples are equally weighted.
 
@@ -440,16 +440,14 @@ def partial_dependence(
     if kind != "average":
         if method == "recursion":
             raise ValueError(
-                "The 'recursion' method only applies when 'kind' is set to "
-                "'average'."
+                "The 'recursion' method only applies when 'kind' is set to 'average'."
             )
         method = "brute"
 
     if method == "recursion":
         if sample_weight is not None:
             raise ValueError(
-                "The 'recursion' method can only be applied when sample_weight "
-                "is None."
+                "The 'recursion' method can only be applied when sample_weight is None."
             )
 
     if method == "auto":

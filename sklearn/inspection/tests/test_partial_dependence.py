@@ -849,14 +849,13 @@ def test_kind_average_and_average_of_individual(estimator, data):
 def test_partial_dependence_kind_individual_ignores_sample_weight(estimator, data):
     est = estimator()
     (X, y), n_targets = data
-    sample_weight = [1] + [0]*(len(X)-1)
+    sample_weight = [1] + [0] * (len(X) - 1)
     est.fit(X, y)
 
     pdp_nsw = partial_dependence(est, X=X, features=[1, 2], kind="individual")
     pdp_sw = partial_dependence(
-        est, X=X, features=[1, 2], kind="individual",
-        sample_weight=sample_weight
-        )
+        est, X=X, features=[1, 2], kind="individual", sample_weight=sample_weight
+    )
     assert_allclose(pdp_nsw["individual"], pdp_sw["individual"])
     assert_allclose(pdp_nsw["values"], pdp_sw["values"])
 
@@ -881,15 +880,22 @@ def test_partial_dependence_sample_weight_ind_equals_one(estimator):
         sample_weight = np.zeros(len(X))
         sample_weight[sample_weight_ind_equals_one] = 1
         pdp_sw = partial_dependence(
-            pipe, X, [2, 3], kind='average', sample_weight=sample_weight,
-            grid_resolution=10)
+            pipe,
+            X,
+            [2, 3],
+            kind='average',
+            sample_weight=sample_weight,
+            grid_resolution=10,
+        )
         pdp_ind = partial_dependence(
-            pipe, X, [2, 3], kind='individual', grid_resolution=10)
+            pipe, X, [2, 3], kind='individual', grid_resolution=10
+        )
         output_dim = 1 if is_regressor(pipe) else len(np.unique(y))
         for i in range(output_dim):
             assert_allclose(
                 pdp_ind['individual'][i][sample_weight_ind_equals_one],
-                pdp_sw['average'][i])
+                pdp_sw['average'][i],
+            )
 
 
 @pytest.mark.parametrize(
@@ -907,10 +913,12 @@ def test_partial_dependece_equals_sample_weights_same_as_none(estimator, data):
 
     pdp_nsw = partial_dependence(est, X=X, features=[1, 2], kind="average")
     pdp_sw = partial_dependence(
-        est, X=X, features=[1, 2], kind="average", sample_weight=sample_weight)
+        est, X=X, features=[1, 2], kind="average", sample_weight=sample_weight
+    )
     assert_allclose(pdp_nsw["average"], pdp_sw["average"])
     pdp_sw2 = partial_dependence(
-        est, X=X, features=[1, 2], kind="average", sample_weight=2*sample_weight)
+        est, X=X, features=[1, 2], kind="average", sample_weight=2 * sample_weight
+    )
     assert_allclose(pdp_nsw["average"], pdp_sw2["average"])
 
 
@@ -921,8 +929,23 @@ def test_partial_dependence_sample_weight_size_error():
     est.fit(X, y)
 
     with pytest.raises(
-        ValueError,
-        match="input variables with inconsistent numbers of samples"):
-            partial_dependence(
-                est, X, features=[0], sample_weight=sample_weight[1:],
-                grid_resolution=10)
+        ValueError, match="input variables with inconsistent numbers of samples"
+    ):
+    
+        partial_dependence(
+            est, X, features=[0], sample_weight=sample_weight[1:], grid_resolution=10
+        )
+
+def test_partial_dependence_sample_weight_with_recursion():
+    est = RandomForestRegressor()
+    (X, y), n_targets = regression_data
+    sample_weight = np.ones(len(X))
+    est.fit(X, y, sample_weight=sample_weight)
+
+    with pytest.raises(
+        ValueError, match="'recursion' method can only be applied when"
+    ):
+    
+        partial_dependence(
+            est, X, features=[0], method='recursion', sample_weight=sample_weight
+        )
