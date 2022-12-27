@@ -883,18 +883,18 @@ def test_partial_dependence_sample_weight_ind_equals_one(estimator):
             pipe,
             X,
             [2, 3],
-            kind='average',
+            kind="average",
             sample_weight=sample_weight,
             grid_resolution=10,
         )
         pdp_ind = partial_dependence(
-            pipe, X, [2, 3], kind='individual', grid_resolution=10
+            pipe, X, [2, 3], kind="individual", grid_resolution=10
         )
         output_dim = 1 if is_regressor(pipe) else len(np.unique(y))
         for i in range(output_dim):
             assert_allclose(
-                pdp_ind['individual'][i][sample_weight_ind_equals_one],
-                pdp_sw['average'][i],
+                pdp_ind["individual"][i][sample_weight_ind_equals_one],
+                pdp_sw["average"][i],
             )
 
 
@@ -931,10 +931,11 @@ def test_partial_dependence_sample_weight_size_error():
     with pytest.raises(
         ValueError, match="input variables with inconsistent numbers of samples"
     ):
-    
+
         partial_dependence(
             est, X, features=[0], sample_weight=sample_weight[1:], grid_resolution=10
         )
+
 
 def test_partial_dependence_sample_weight_with_recursion():
     est = RandomForestRegressor()
@@ -942,10 +943,8 @@ def test_partial_dependence_sample_weight_with_recursion():
     sample_weight = np.ones(len(X))
     est.fit(X, y, sample_weight=sample_weight)
 
-    with pytest.raises(
-        ValueError, match="'recursion' method can only be applied when"
-    ):
+    with pytest.raises(ValueError, match="'recursion' method can only be applied when"):
     
         partial_dependence(
-            est, X, features=[0], method='recursion', sample_weight=sample_weight
+            est, X, features=[0], method="recursion", sample_weight=sample_weight
         )
