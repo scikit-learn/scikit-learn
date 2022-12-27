@@ -624,10 +624,10 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
 
     Parameters
     ----------
-    y1 : array of shape (n_samples,)
+    y1 : array-like of shape (n_samples,)
         Labels assigned by the first annotator.
 
-    y2 : array of shape (n_samples,)
+    y2 : array-like of shape (n_samples,)
         Labels assigned by the second annotator. The kappa statistic is
         symmetric, so swapping ``y1`` and ``y2`` doesn't change the value.
 
@@ -669,7 +669,7 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     if weights is None:
         w_mat = np.ones([n_classes, n_classes], dtype=int)
         w_mat.flat[:: n_classes + 1] = 0
-    elif weights in ("linear", "quadratic"):
+    else:  # "linear" or "quadratic"
         w_mat = np.zeros([n_classes, n_classes], dtype=int)
         w_mat += np.arange(n_classes)
         if weights == "linear":
