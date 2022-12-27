@@ -4,15 +4,18 @@
 # License: BSD 3 clause
 
 import math
+import threading
 
 import numpy as np
 import pytest
 import scipy.stats
 
+from joblib import Parallel
+
+import sklearn
 from sklearn.utils._testing import assert_array_equal
 
-from sklearn.utils.fixes import _object_dtype_isnan
-from sklearn.utils.fixes import loguniform
+from sklearn.utils.fixes import _object_dtype_isnan, delayed, loguniform
 
 
 @pytest.mark.parametrize("dtype, val", ([object, 1], [object, "a"], [float, 1]))
@@ -46,3 +49,37 @@ def test_loguniform(low, high, base):
     assert loguniform(base**low, base**high).rvs(random_state=0) == loguniform(
         base**low, base**high
     ).rvs(random_state=0)
+
+
+def test_delayed_fetching_right_config():
+    """Check that `delayed` function fetches the right config associated to
+    the main thread.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/25239
+    """
+
+    def get_working_memory():
+        return sklearn.get_config()["working_memory"]
+
+    n_iter = 10
+
+    # by default, we register the main thread and we should retrieve the
+    # parameters defined within the context manager
+    with sklearn.config_context(working_memory=123):
+        results = Parallel(n_jobs=2, pre_dispatch=4)(
+            delayed(get_working_memory)() for _ in range(n_iter)
+        )
+
+    assert results == [123] * n_iter
+
+    # simulate that we refer to another thread
+    local_thread = threading.Thread(target=sklearn.get_config)
+    local_thread.start()
+    local_thread.join()
+    with sklearn.config_context(working_memory=123):
+        results = Parallel(n_jobs=2, pre_dispatch=4)(
+            delayed(get_working_memory, thread=local_thread)() for _ in range(n_iter)
+        )
+
+    assert results == [get_working_memory()] * n_iter
