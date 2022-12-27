@@ -77,12 +77,12 @@ class BaseSuccessiveHalving(BaseSearchCV):
             Interval(Integral, 0, None, closed="neither"),
             StrOptions({"auto"}),
         ],
-        "resource": [str],
-        "factor": [Interval(Real, 0, None, closed="neither")],
         "min_resources": [
             Interval(Integral, 0, None, closed="neither"),
             StrOptions({"exhaust", "smallest"}),
         ],
+        "resource": [str],
+        "factor": [Interval(Real, 0, None, closed="neither")],
         "aggressive_elimination": ["boolean"],
     }
     _parameter_constraints.pop("pre_dispatch")  # not used in this class
