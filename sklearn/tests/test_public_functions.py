@@ -98,6 +98,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.cluster.kmeans_plusplus",
     "sklearn.covariance.empirical_covariance",
     "sklearn.datasets.make_sparse_coded_signal",
+    "sklearn.decomposition.sparse_encode",
     "sklearn.feature_extraction.grid_to_graph",
     "sklearn.feature_extraction.img_to_graph",
     "sklearn.metrics.accuracy_score",
