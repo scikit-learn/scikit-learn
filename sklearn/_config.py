@@ -3,6 +3,7 @@
 import os
 from contextlib import contextmanager as contextmanager
 import threading
+import weakref
 
 _global_config_default = {
     "assume_finite": bool(os.environ.get("SKLEARN_ASSUME_FINITE", False)),
@@ -17,7 +18,7 @@ _global_config_default = {
     "transform_output": "default",
 }
 _threadlocal = threading.local()
-_thread_config = {}
+_thread_config = weakref.WeakKeyDictionary()  # type: ignore
 
 
 def _get_threadlocal_config():
@@ -29,11 +30,11 @@ def _get_threadlocal_config():
     """
     if not hasattr(_threadlocal, "global_config"):
         _threadlocal.global_config = _global_config_default.copy()
-        _thread_config[threading.get_ident()] = _threadlocal.global_config
+        _thread_config[threading.current_thread()] = _threadlocal.global_config
     return _threadlocal.global_config
 
 
-def get_config(thread_id=None):
+def get_config(thread=None):
     """Retrieve current values for configuration set by :func:`set_config`.
 
     Parameters
@@ -54,10 +55,10 @@ def get_config(thread_id=None):
     """
     # Return a copy of the threadlocal configuration so that users will
     # not be able to modify the configuration with the returned dict.
-    if thread_id is None:
+    if thread is None:
         return _get_threadlocal_config().copy()
-    _get_threadlocal_config()
-    return _thread_config[thread_id].copy()
+    _get_threadlocal_config()  # register the config to the thread if does not exist
+    return _thread_config[thread].copy()
 
 
 def set_config(

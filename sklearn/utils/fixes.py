@@ -108,13 +108,13 @@ else:
 
 
 # remove when https://github.com/joblib/joblib/issues/1071 is fixed
-def delayed(func, thread_id=threading.get_ident()):
+def delayed(func, thread=threading.current_thread()):
     """Decorator used to capture the arguments of a function."""
 
     def decorate(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            return _FuncWrapper(func, thread_id=thread_id), args, kwargs
+            return _FuncWrapper(func, thread=thread), args, kwargs
 
         return wrapper
 
@@ -124,9 +124,9 @@ def delayed(func, thread_id=threading.get_ident()):
 class _FuncWrapper:
     """ "Load the global configuration before calling the function."""
 
-    def __init__(self, function, thread_id=None):
+    def __init__(self, function, thread):
         self.function = function
-        self.config = get_config(thread_id=thread_id)
+        self.config = get_config(thread=thread)
         update_wrapper(self, self.function)
 
     def __call__(self, *args, **kwargs):
