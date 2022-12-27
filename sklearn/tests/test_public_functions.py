@@ -131,6 +131,7 @@ def test_function_param_validation(func_module):
 
 PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.decomposition.non_negative_factorization", "sklearn.decomposition.NMF"),
+    ("sklearn.covariance.ledoit_wolf", "sklearn.covariance.LedoitWolf"),
 ]
 
 

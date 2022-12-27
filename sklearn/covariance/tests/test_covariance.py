@@ -7,6 +7,7 @@
 import numpy as np
 import pytest
 
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
@@ -23,6 +24,7 @@ from sklearn.covariance import (
     OAS,
     oas,
 )
+from sklearn.covariance._shrunk_covariance import _ledoit_wolf
 
 X, _ = datasets.load_diabetes(return_X_y=True)
 X_1d = X[:, 0]
@@ -158,6 +160,9 @@ def test_ledoit_wolf():
     assert_almost_equal(lw.shrinkage_, shrinkage_, 4)
     assert_almost_equal(lw.shrinkage_, ledoit_wolf_shrinkage(X))
     assert_almost_equal(lw.shrinkage_, ledoit_wolf(X)[1])
+    assert_almost_equal(
+        lw.shrinkage_, _ledoit_wolf(X=X, assume_centered=False, block_size=10000)[1]
+    )
     assert_almost_equal(lw.score(X), score_, 4)
     # compare shrunk covariance obtained from data and from MLE estimate
     lw_cov_from_mle, lw_shrinkage_from_mle = ledoit_wolf(X)
@@ -172,6 +177,10 @@ def test_ledoit_wolf():
     X_1d = X[:, 0].reshape((-1, 1))
     lw = LedoitWolf()
     lw.fit(X_1d)
+    assert_allclose(
+        X_1d.var(ddof=0),
+        _ledoit_wolf(X=X_1d, assume_centered=False, block_size=10000)[0],
+    )
     lw_cov_from_mle, lw_shrinkage_from_mle = ledoit_wolf(X_1d)
     assert_array_almost_equal(lw_cov_from_mle, lw.covariance_, 4)
     assert_almost_equal(lw_shrinkage_from_mle, lw.shrinkage_)
