@@ -32,12 +32,17 @@ from sklearn.linear_model import (
     SGDClassifier,
 )
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
+from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import GridSearchCV, cross_val_score
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.impute import SimpleImputer
 from sklearn import svm
 from sklearn.exceptions import NotFittedError
 from sklearn import datasets
+from sklearn.datasets import load_breast_cancer
+
+msg = "The default value for `force_alpha` will change"
+pytestmark = pytest.mark.filterwarnings(f"ignore:{msg}:FutureWarning")
 
 iris = datasets.load_iris()
 rng = np.random.RandomState(0)
@@ -718,11 +723,6 @@ def test_ecoc_float_y():
     with pytest.raises(ValueError, match=msg):
         ovo.fit(X, y)
 
-    ovo = OutputCodeClassifier(LinearSVC(), code_size=-1)
-    msg = "code_size should be greater than 0, got -1"
-    with pytest.raises(ValueError, match=msg):
-        ovo.fit(X, y)
-
 
 def test_ecoc_delegate_sparse_base_estimator():
     # Non-regression test for
@@ -906,3 +906,19 @@ def test_constant_int_target(make_y):
     expected = np.zeros((X.shape[0], 2))
     expected[:, 0] = 1
     assert_allclose(y_pred, expected)
+
+
+def test_ovo_consistent_binary_classification():
+    """Check that ovo is consistent with binary classifier.
+
+    Non-regression test for #13617.
+    """
+    X, y = load_breast_cancer(return_X_y=True)
+
+    clf = KNeighborsClassifier(n_neighbors=8, weights="distance")
+    ovo = OneVsOneClassifier(clf)
+
+    clf.fit(X, y)
+    ovo.fit(X, y)
+
+    assert_array_equal(clf.predict(X), ovo.predict(X))

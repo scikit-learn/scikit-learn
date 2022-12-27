@@ -23,12 +23,12 @@ extends clustering by inducing a classifier from the cluster labels.
 # Authors: Chirag Nagpal
 #          Christos Aridas
 
-import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.base import BaseEstimator, clone
 from sklearn.cluster import AgglomerativeClustering
 from sklearn.datasets import make_blobs
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.inspection import DecisionBoundaryDisplay
 from sklearn.utils.metaestimators import available_if
 from sklearn.utils.validation import check_is_fitted
 
@@ -116,19 +116,14 @@ inductive_learner = InductiveClusterer(clusterer, classifier).fit(X)
 probable_clusters = inductive_learner.predict(X_new)
 
 
-plt.subplot(133)
+ax = plt.subplot(133)
 plot_scatter(X, cluster_labels)
 plot_scatter(X_new, probable_clusters)
 
 # Plotting decision regions
-x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
-y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.1), np.arange(y_min, y_max, 0.1))
-
-Z = inductive_learner.predict(np.c_[xx.ravel(), yy.ravel()])
-Z = Z.reshape(xx.shape)
-
-plt.contourf(xx, yy, Z, alpha=0.4)
+DecisionBoundaryDisplay.from_estimator(
+    inductive_learner, X, response_method="predict", alpha=0.4, ax=ax
+)
 plt.title("Classify unknown instances")
 
 plt.show()

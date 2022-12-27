@@ -128,7 +128,7 @@ by quite a bit as only the non zero valued features impact the dot product
 and thus the model predictions. Hence if you have 100 non zeros in 1e6
 dimensional space, you only need 100 multiply and add operation instead of 1e6.
 
-Calculation over a dense representation, however, may leverage highly optimised
+Calculation over a dense representation, however, may leverage highly optimized
 vector operations and multithreading in BLAS, and tends to result in fewer CPU
 cache misses. So the sparsity should typically be quite high (10% non-zeros
 max, to be checked depending on the hardware) for the sparse input
@@ -278,11 +278,9 @@ BLAS implementation and lead to orders of magnitude speedup over a
 non-optimized BLAS.
 
 You can display the BLAS / LAPACK implementation used by your NumPy / SciPy /
-scikit-learn install with the following commands::
+scikit-learn install with the following command::
 
-    from numpy.distutils.system_info import get_info
-    print(get_info('blas_opt'))
-    print(get_info('lapack_opt'))
+    python -c "import sklearn; sklearn.show_versions()"
 
 Optimized BLAS / LAPACK implementations include:
  - Atlas (need hardware specific tuning by rebuilding on the target machine)
@@ -290,9 +288,9 @@ Optimized BLAS / LAPACK implementations include:
  - MKL
  - Apple Accelerate and vecLib frameworks (OSX only)
 
-More information can be found on the `Scipy install page <https://docs.scipy.org/doc/numpy/user/install.html>`_
+More information can be found on the `NumPy install page <https://numpy.org/install/>`_
 and in this
-`blog post <http://danielnouri.org/notes/2012/12/19/libblas-and-liblapack-issues-and-speed,-with-scipy-and-ubuntu/>`_
+`blog post <https://danielnouri.org/notes/2012/12/19/libblas-and-liblapack-issues-and-speed,-with-scipy-and-ubuntu/>`_
 from Daniel Nouri which has some nice step by step install instructions for
 Debian / Ubuntu.
 

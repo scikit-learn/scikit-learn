@@ -14,7 +14,6 @@ from os.path import join, exists, isdir
 import logging
 
 import numpy as np
-import joblib
 from joblib import Memory
 
 from ._base import (
@@ -24,7 +23,6 @@ from ._base import (
     load_descr,
 )
 from ..utils import Bunch
-from ..utils.fixes import parse_version
 
 logger = logging.getLogger(__name__)
 
@@ -118,8 +116,15 @@ def _check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 
 def _load_imgs(file_paths, slice_, color, resize):
     """Internally used to load images"""
-    # import PIL only when needed
-    from ..externals._pilutil import imread, imresize
+    try:
+        from PIL import Image
+    except ImportError:
+        raise ImportError(
+            "The Python Imaging Library (PIL) is required to load data "
+            "from jpeg files. Please refer to "
+            "https://pillow.readthedocs.io/en/stable/installation.html "
+            "for installing PIL."
+        )
 
     # compute the portion of the images to load to respect the slice_ parameter
     # given by the caller
@@ -153,17 +158,21 @@ def _load_imgs(file_paths, slice_, color, resize):
 
         # Checks if jpeg reading worked. Refer to issue #3594 for more
         # details.
-        img = imread(file_path)
-        if img.ndim == 0:
+        pil_img = Image.open(file_path)
+        pil_img = pil_img.crop(
+            (w_slice.start, h_slice.start, w_slice.stop, h_slice.stop)
+        )
+        if resize is not None:
+            pil_img = pil_img.resize((w, h))
+        face = np.asarray(pil_img, dtype=np.float32)
+
+        if face.ndim == 0:
             raise RuntimeError(
                 "Failed to read the image file %s, "
                 "Please make sure that libjpeg is installed" % file_path
             )
 
-        face = np.asarray(img[slice_], dtype=np.float32)
         face /= 255.0  # scale uint8 coded colors to the [0.0, 1.0] floats
-        if resize is not None:
-            face = imresize(face, resize)
         if not color:
             # average the color channels to compute a gray levels
             # representation
@@ -256,8 +265,9 @@ def fetch_lfw_people(
     funneled : bool, default=True
         Download and use the funneled variant of the dataset.
 
-    resize : float, default=0.5
-        Ratio used to resize the each face picture.
+    resize : float or None, default=0.5
+        Ratio used to resize the each face picture. If `None`, no resizing is
+        performed.
 
     min_faces_per_person : int, default=None
         The extracted dataset will only retain pictures of people that have at
@@ -271,7 +281,7 @@ def fetch_lfw_people(
     slice_ : tuple of slice, default=(slice(70, 195), slice(78, 172))
         Provide a custom 2D slice (height, width) to extract the
         'interesting' part of the jpeg files and avoid use statistical
-        correlation from the background
+        correlation from the background.
 
     download_if_missing : bool, default=True
         If False, raise a IOError if the data is not locally available
@@ -301,13 +311,19 @@ def fetch_lfw_people(
         target : numpy array of shape (13233,)
             Labels associated to each face image.
             Those labels range from 0-5748 and correspond to the person IDs.
+        target_names : numpy array of shape (5749,)
+            Names of all persons in the dataset.
+            Position in array corresponds to the person ID in the target array.
         DESCR : str
             Description of the Labeled Faces in the Wild (LFW) dataset.
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarray. The first containing a 2D array of
+        shape (n_samples, n_features) with each row representing one
+        sample and each column representing the features. The second
+        ndarray of shape (n_samples,) containing the target samples.
 
         .. versionadded:: 0.20
-
     """
     lfw_home, data_folder_path = _check_fetch_lfw(
         data_home=data_home, funneled=funneled, download_if_missing=download_if_missing
@@ -316,11 +332,7 @@ def fetch_lfw_people(
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    if parse_version(joblib.__version__) < parse_version("0.12"):
-        # Deal with change of API in joblib
-        m = Memory(cachedir=lfw_home, compress=6, verbose=0)
-    else:
-        m = Memory(location=lfw_home, compress=6, verbose=0)
+    m = Memory(location=lfw_home, compress=6, verbose=0)
     load_func = m.cache(_fetch_lfw_people)
 
     # load and memoize the pairs as np arrays
@@ -461,7 +473,7 @@ def fetch_lfw_pairs(
     slice_ : tuple of slice, default=(slice(70, 195), slice(78, 172))
         Provide a custom 2D slice (height, width) to extract the
         'interesting' part of the jpeg files and avoid use statistical
-        correlation from the background
+        correlation from the background.
 
     download_if_missing : bool, default=True
         If False, raise a IOError if the data is not locally available
@@ -486,9 +498,11 @@ def fetch_lfw_pairs(
         target : numpy array of shape (2200,). Shape depends on ``subset``.
             Labels associated to each pair of images.
             The two label values being different persons or the same person.
+        target_names : numpy array of shape (2,)
+            Explains the target values of the target array.
+            0 corresponds to "Different person", 1 corresponds to "same person".
         DESCR : str
             Description of the Labeled Faces in the Wild (LFW) dataset.
-
     """
     lfw_home, data_folder_path = _check_fetch_lfw(
         data_home=data_home, funneled=funneled, download_if_missing=download_if_missing
@@ -497,11 +511,7 @@ def fetch_lfw_pairs(
 
     # wrap the loader in a memoizing function that will return memmaped data
     # arrays for optimal memory usage
-    if parse_version(joblib.__version__) < parse_version("0.12"):
-        # Deal with change of API in joblib
-        m = Memory(cachedir=lfw_home, compress=6, verbose=0)
-    else:
-        m = Memory(location=lfw_home, compress=6, verbose=0)
+    m = Memory(location=lfw_home, compress=6, verbose=0)
     load_func = m.cache(_fetch_lfw_pairs)
 
     # select the right metadata file according to the requested subset

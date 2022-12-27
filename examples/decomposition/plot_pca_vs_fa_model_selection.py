@@ -29,17 +29,13 @@ by Thomas P. Minka is also compared.
 #          Denis A. Engemann
 # License: BSD 3 clause
 
-import numpy as np
-import matplotlib.pyplot as plt
-from scipy import linalg
-
-from sklearn.decomposition import PCA, FactorAnalysis
-from sklearn.covariance import ShrunkCovariance, LedoitWolf
-from sklearn.model_selection import cross_val_score
-from sklearn.model_selection import GridSearchCV
-
-# #############################################################################
+# %%
 # Create the data
+# ---------------
+
+import numpy as np
+
+from scipy import linalg
 
 n_samples, n_features, rank = 500, 25, 5
 sigma = 1.0
@@ -54,8 +50,16 @@ X_homo = X + sigma * rng.randn(n_samples, n_features)
 sigmas = sigma * rng.rand(n_features) + sigma / 2.0
 X_hetero = X + rng.randn(n_samples, n_features) * sigmas
 
-# #############################################################################
+# %%
 # Fit the models
+# --------------
+
+import matplotlib.pyplot as plt
+
+from sklearn.decomposition import PCA, FactorAnalysis
+from sklearn.covariance import ShrunkCovariance, LedoitWolf
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import GridSearchCV
 
 n_components = np.arange(0, n_features, 5)  # options for n_components
 

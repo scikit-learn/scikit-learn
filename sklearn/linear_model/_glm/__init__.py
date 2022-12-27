@@ -1,14 +1,14 @@
 # License: BSD 3 clause
 
 from .glm import (
-    GeneralizedLinearRegressor,
+    _GeneralizedLinearRegressor,
     PoissonRegressor,
     GammaRegressor,
     TweedieRegressor,
 )
 
 __all__ = [
-    "GeneralizedLinearRegressor",
+    "_GeneralizedLinearRegressor",
     "PoissonRegressor",
     "GammaRegressor",
     "TweedieRegressor",

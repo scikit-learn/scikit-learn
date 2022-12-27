@@ -1,7 +1,7 @@
 """
 Sequential feature selection
 """
-import numbers
+from numbers import Integral, Real
 
 import numpy as np
 
@@ -9,9 +9,11 @@ import warnings
 
 from ._base import SelectorMixin
 from ..base import BaseEstimator, MetaEstimatorMixin, clone
+from ..utils._param_validation import HasMethods, Hidden, Interval, StrOptions
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
 from ..model_selection import cross_val_score
+from ..metrics import get_scorer_names
 
 
 class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator):
@@ -62,13 +64,12 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     direction : {'forward', 'backward'}, default='forward'
         Whether to perform forward selection or backward selection.
 
-    scoring : str, callable, list/tuple or dict, default=None
+    scoring : str or callable, default=None
         A single str (see :ref:`scoring_parameter`) or a callable
         (see :ref:`scoring`) to evaluate the predictions on the test set.
 
-        NOTE that when using custom scorers, each scorer should return a single
-        value. Metric functions returning a list/array of values can be wrapped
-        into multiple scorers that return one value each.
+        NOTE that when using a custom scorer, it should return a single
+        value.
 
         If None, the estimator's score method is used.
 
@@ -144,6 +145,21 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     (150, 3)
     """
 
+    _parameter_constraints: dict = {
+        "estimator": [HasMethods(["fit"])],
+        "n_features_to_select": [
+            StrOptions({"auto", "warn"}, deprecated={"warn"}),
+            Interval(Real, 0, 1, closed="right"),
+            Interval(Integral, 0, None, closed="neither"),
+            Hidden(None),
+        ],
+        "tol": [None, Interval(Real, 0, None, closed="neither")],
+        "direction": [StrOptions({"forward", "backward"})],
+        "scoring": [None, StrOptions(set(get_scorer_names())), callable],
+        "cv": ["cv_object"],
+        "n_jobs": [None, Integral],
+    }
+
     def __init__(
         self,
         estimator,
@@ -182,9 +198,11 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
+
         # FIXME: to be removed in 1.3
         if self.n_features_to_select in ("warn", None):
-            # for backwards compability
+            # for backwards compatibility
             warnings.warn(
                 "Leaving `n_features_to_select` to "
                 "None is deprecated in 1.0 and will become 'auto' "
@@ -225,22 +243,12 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
                 self.n_features_to_select_ = n_features - 1
             else:
                 self.n_features_to_select_ = n_features // 2
-        elif isinstance(self.n_features_to_select, numbers.Integral):
+        elif isinstance(self.n_features_to_select, Integral):
             if not 0 < self.n_features_to_select < n_features:
                 raise ValueError(error_msg)
             self.n_features_to_select_ = self.n_features_to_select
-        elif isinstance(self.n_features_to_select, numbers.Real):
-            if not 0 < self.n_features_to_select <= 1:
-                raise ValueError(error_msg)
+        elif isinstance(self.n_features_to_select, Real):
             self.n_features_to_select_ = int(n_features * self.n_features_to_select)
-        else:
-            raise ValueError(error_msg)
-
-        if self.direction not in ("forward", "backward"):
-            raise ValueError(
-                "direction must be either 'forward' or 'backward'. "
-                f"Got {self.direction}."
-            )
 
         cloned_estimator = clone(self.estimator)
 
@@ -306,5 +314,4 @@ class SequentialFeatureSelector(SelectorMixin, MetaEstimatorMixin, BaseEstimator
     def _more_tags(self):
         return {
             "allow_nan": _safe_tags(self.estimator, key="allow_nan"),
-            "requires_y": True,
         }

@@ -43,7 +43,7 @@ confidence ellipsoids for multivariate models, and compute the
 Bayesian Information Criterion to assess the number of clusters in the
 data. A :meth:`GaussianMixture.fit` method is provided that learns a Gaussian
 Mixture Model from train data. Given test data, it can assign to each
-sample the Gaussian it mostly probably belong to using
+sample the Gaussian it mostly probably belongs to using
 the :meth:`GaussianMixture.predict` method.
 
 ..
@@ -104,7 +104,7 @@ distribution). Note that using a :ref:`Variational Bayesian Gaussian mixture <bg
 avoids the specification of the number of components for a Gaussian mixture
 model.
 
-.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_selection_001.png
+.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_selection_002.png
    :target: ../auto_examples/mixture/plot_gmm_selection.html
    :align: center
    :scale: 50%
@@ -120,7 +120,7 @@ Estimation algorithm Expectation-maximization
 -----------------------------------------------
 
 The main difficulty in learning Gaussian mixture models from unlabeled
-data is that it is one usually doesn't know which points came from
+data is that one usually doesn't know which points came from
 which latent component (if one has access to this information it gets
 very easy to fit a separate Gaussian distribution to each set of
 points). `Expectation-maximization
@@ -135,6 +135,43 @@ parameters to maximize the likelihood of the data given those
 assignments. Repeating this process is guaranteed to always converge
 to a local optimum.
 
+Choice of the Initialization Method
+-----------------------------------
+
+There is a choice of four initialization methods (as well as inputting user defined
+initial means) to generate the initial centers for the model components:
+
+k-means (default)
+  This applies a traditional k-means clustering algorithm.
+  This can be computationally expensive compared to other initialization methods.
+
+k-means++
+  This uses the initialization method of k-means clustering: k-means++.
+  This will pick the first center at random from the data. Subsequent centers will be
+  chosen from a weighted distribution of the data favouring points further away from
+  existing centers. k-means++ is the default initialization for k-means so will be
+  quicker than running a full k-means but can still take a significant amount of
+  time for large data sets with many components.
+
+random_from_data
+  This will pick random data points from the input data as the initial
+  centers. This is a very fast method of initialization but can produce non-convergent
+  results if the chosen points are too close to each other.
+
+random
+  Centers are chosen as a small perturbation away from the mean of all data.
+  This method is simple but can lead to the model taking longer to converge.
+
+.. figure:: ../auto_examples/mixture/images/sphx_glr_plot_gmm_init_001.png
+   :target: ../auto_examples/mixture/plot_gmm_init.html
+   :align: center
+   :scale: 50%
+
+.. topic:: Examples:
+
+    * See :ref:`sphx_glr_auto_examples_mixture_plot_gmm_init.py` for an example of
+      using different initializations in Gaussian Mixture.
+
 .. _bgmm:
 
 Variational Bayesian Gaussian Mixture
@@ -142,7 +179,7 @@ Variational Bayesian Gaussian Mixture
 
 The :class:`BayesianGaussianMixture` object implements a variant of the
 Gaussian mixture model with variational inference algorithms. The API is
-similar as the one defined by :class:`GaussianMixture`.
+similar to the one defined by :class:`GaussianMixture`.
 
 .. _variational_inference:
 
@@ -162,13 +199,13 @@ expectation-maximization solutions but introduces some subtle biases
 to the model. Inference is often notably slower, but not usually as
 much so as to render usage unpractical.
 
-Due to its Bayesian nature, the variational algorithm needs more hyper-
-parameters than expectation-maximization, the most important of these being the
+Due to its Bayesian nature, the variational algorithm needs more hyperparameters
+than expectation-maximization, the most important of these being the
 concentration parameter ``weight_concentration_prior``. Specifying a low value
-for the concentration prior will make the model put most of the weight on few
-components set the remaining components weights very close to zero. High values
-of the concentration prior will allow a larger number of components to be active
-in the mixture.
+for the concentration prior will make the model put most of the weight on a few
+components and set the remaining components' weights very close to zero. High
+values of the concentration prior will allow a larger number of components to
+be active in the mixture.
 
 The parameters implementation of the :class:`BayesianGaussianMixture` class
 proposes two types of prior for the weights distribution: a finite mixture model
@@ -276,7 +313,7 @@ Pros
 Cons
 .....
 
-:Speed: the extra parametrization necessary for variational inference make
+:Speed: the extra parametrization necessary for variational inference makes
    inference slower, although not by much.
 
 :Hyperparameters: this algorithm needs an extra hyperparameter
@@ -312,7 +349,7 @@ group of the mixture. At the end, to represent the infinite mixture, we
 associate the last remaining piece of the stick to the proportion of points
 that don't fall into all the other groups. The length of each piece is a random
 variable with probability proportional to the concentration parameter. Smaller
-value of the concentration will divide the unit-length into larger pieces of
+values of the concentration will divide the unit-length into larger pieces of
 the stick (defining more concentrated distribution). Larger concentration
 values will create smaller pieces of the stick (increasing the number of
 components with non zero weights).

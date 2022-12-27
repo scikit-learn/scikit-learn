@@ -8,11 +8,11 @@ integers, and values float.
 from libcpp.map cimport map as cpp_map
 
 # Import the C-level symbols of numpy
-cimport numpy as np
+cimport numpy as cnp
 
-ctypedef np.float64_t DTYPE_t
+ctypedef cnp.float64_t DTYPE_t
 
-ctypedef np.intp_t ITYPE_t
+ctypedef cnp.intp_t ITYPE_t
 
 ###############################################################################
 # An object to be used in Python

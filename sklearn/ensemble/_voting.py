@@ -14,8 +14,8 @@ This module contains:
 # License: BSD 3 clause
 
 from abc import abstractmethod
+from numbers import Integral
 
-import numbers
 import numpy as np
 
 from joblib import Parallel
@@ -28,11 +28,12 @@ from ._base import _fit_single_estimator
 from ._base import _BaseHeterogeneousEnsemble
 from ..preprocessing import LabelEncoder
 from ..utils import Bunch
-from ..utils import check_scalar
 from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
+from ..utils.validation import _check_feature_names_in
 from ..utils.multiclass import check_classification_targets
 from ..utils.validation import column_or_1d
+from ..utils._param_validation import StrOptions
 from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
 from ..utils.fixes import delayed
@@ -44,6 +45,13 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
+
+    _parameter_constraints: dict = {
+        "estimators": [list],
+        "weights": ["array-like", None],
+        "n_jobs": [None, Integral],
+        "verbose": ["verbose"],
+    }
 
     def _log_message(self, name, idx, total):
         if not self.verbose:
@@ -65,13 +73,6 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     def fit(self, X, y, sample_weight=None):
         """Get common fit operations."""
         names, clfs = self._validate_estimators()
-
-        check_scalar(
-            self.verbose,
-            name="verbose",
-            target_type=(numbers.Integral, np.bool_),
-            min_val=0,
-        )
 
         if self.weights is not None and len(self.weights) != len(self.estimators):
             raise ValueError(
@@ -231,6 +232,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimators expose such an attribute when fit.
+
         .. versionadded:: 1.0
 
     See Also
@@ -285,6 +287,12 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     (6, 6)
     """
 
+    _parameter_constraints: dict = {
+        **_BaseVoting._parameter_constraints,
+        "voting": [StrOptions({"hard", "soft"})],
+        "flatten_transform": ["boolean"],
+    }
+
     def __init__(
         self,
         estimators,
@@ -326,21 +334,11 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         check_classification_targets(y)
         if isinstance(y, np.ndarray) and len(y.shape) > 1 and y.shape[1] > 1:
             raise NotImplementedError(
                 "Multilabel and multi-output classification is not supported."
-            )
-
-        check_scalar(
-            self.flatten_transform,
-            name="flatten_transform",
-            target_type=(numbers.Integral, np.bool_),
-        )
-
-        if self.voting not in ("soft", "hard"):
-            raise ValueError(
-                f"Voting must be 'soft' or 'hard'; got (voting={self.voting!r})"
             )
 
         self.le_ = LabelEncoder().fit(y)
@@ -422,9 +420,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
         -------
         probabilities_or_labels
             If `voting='soft'` and `flatten_transform=True`:
-                returns ndarray of shape (n_classifiers, n_samples *
-                n_classes), being class probabilities calculated by each
-                classifier.
+                returns ndarray of shape (n_samples, n_classifiers * n_classes),
+                being class probabilities calculated by each classifier.
             If `voting='soft' and `flatten_transform=False`:
                 ndarray of shape (n_classifiers, n_samples, n_classes)
             If `voting='hard'`:
@@ -441,6 +438,42 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
 
         else:
             return self._predict(X)
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        if self.voting == "soft" and not self.flatten_transform:
+            raise ValueError(
+                "get_feature_names_out is not supported when `voting='soft'` and "
+                "`flatten_transform=False`"
+            )
+
+        _check_feature_names_in(self, input_features, generate_names=False)
+        class_name = self.__class__.__name__.lower()
+
+        active_names = [name for name, est in self.estimators if est != "drop"]
+
+        if self.voting == "hard":
+            return np.asarray(
+                [f"{class_name}_{name}" for name in active_names], dtype=object
+            )
+
+        # voting == "soft"
+        n_classes = len(self.classes_)
+        names_out = [
+            f"{class_name}_{name}{i}" for name in active_names for i in range(n_classes)
+        ]
+        return np.asarray(names_out, dtype=object)
 
 
 class VotingRegressor(RegressorMixin, _BaseVoting):
@@ -502,6 +535,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimators expose such an attribute when fit.
+
         .. versionadded:: 1.0
 
     See Also
@@ -561,6 +595,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         self : object
             Fitted estimator.
         """
+        self._validate_params()
         y = column_or_1d(y, warn=True)
         return super().fit(X, y, sample_weight)
 
@@ -598,3 +633,23 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
         """
         check_is_fitted(self)
         return self._predict(X)
+
+    def get_feature_names_out(self, input_features=None):
+        """Get output feature names for transformation.
+
+        Parameters
+        ----------
+        input_features : array-like of str or None, default=None
+            Not used, present here for API consistency by convention.
+
+        Returns
+        -------
+        feature_names_out : ndarray of str objects
+            Transformed feature names.
+        """
+        _check_feature_names_in(self, input_features, generate_names=False)
+        class_name = self.__class__.__name__.lower()
+        return np.asarray(
+            [f"{class_name}_{name}" for name, est in self.estimators if est != "drop"],
+            dtype=object,
+        )

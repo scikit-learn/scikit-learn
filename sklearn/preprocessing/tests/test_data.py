@@ -345,9 +345,9 @@ def test_standard_scaler_numerical_stability():
     x = np.full(8, np.log(1e-5), dtype=np.float64)
     # This does not raise a warning as the number of samples is too low
     # to trigger the problem in recent numpy
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         scale(x)
-    assert not [w.message for w in record]
     assert_array_almost_equal(scale(x), np.zeros(8))
 
     # with 2 more samples, the std computation run into numerical issues:
@@ -358,9 +358,9 @@ def test_standard_scaler_numerical_stability():
     assert_array_almost_equal(x_scaled, np.zeros(10))
 
     x = np.full(10, 1e-100, dtype=np.float64)
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
         x_small_scaled = scale(x)
-    assert not [w.message for w in record]
     assert_array_almost_equal(x_small_scaled, np.zeros(10))
 
     # Large values can cause (often recoverable) numerical stability issues:
@@ -1235,12 +1235,6 @@ def test_quantile_transform_check_error():
     )
     X_neg = sparse.csc_matrix(X_neg)
 
-    err_msg = "Invalid value for 'n_quantiles': 0."
-    with pytest.raises(ValueError, match=err_msg):
-        QuantileTransformer(n_quantiles=0).fit(X)
-    err_msg = "Invalid value for 'subsample': 0."
-    with pytest.raises(ValueError, match=err_msg):
-        QuantileTransformer(subsample=0).fit(X)
     err_msg = (
         "The number of quantiles cannot be greater than "
         "the number of samples used. Got 1000 quantiles "
@@ -1267,32 +1261,7 @@ def test_quantile_transform_check_error():
     with pytest.raises(ValueError, match=err_msg):
         transformer.inverse_transform(X_bad_feat)
 
-    transformer = QuantileTransformer(n_quantiles=10, output_distribution="rnd")
-    # check that an error is raised at fit time
-    err_msg = (
-        "'output_distribution' has to be either 'normal' or "
-        "'uniform'. Got 'rnd' instead."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        transformer.fit(X)
-    # check that an error is raised at transform time
-    transformer.output_distribution = "uniform"
-    transformer.fit(X)
-    X_tran = transformer.transform(X)
-    transformer.output_distribution = "rnd"
-    err_msg = (
-        "'output_distribution' has to be either 'normal' or 'uniform'."
-        " Got 'rnd' instead."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        transformer.transform(X)
-    # check that an error is raised at inverse_transform time
-    err_msg = (
-        "'output_distribution' has to be either 'normal' or 'uniform'."
-        " Got 'rnd' instead."
-    )
-    with pytest.raises(ValueError, match=err_msg):
-        transformer.inverse_transform(X_tran)
+    transformer = QuantileTransformer(n_quantiles=10).fit(X)
     # check that an error is raised if input is scalar
     with pytest.raises(ValueError, match="Expected 2D array, got scalar array instead"):
         transformer.transform(10)
@@ -1374,7 +1343,7 @@ def test_quantile_transform_dense_toy():
     transformer = QuantileTransformer(n_quantiles=5)
     transformer.fit(X)
 
-    # using the a uniform output, each entry of X should be map between 0 and 1
+    # using a uniform output, each entry of X should be map between 0 and 1
     # and equally spaced
     X_trans = transformer.fit_transform(X)
     X_expected = np.tile(np.linspace(0, 1, num=5), (3, 1)).T
@@ -2426,16 +2395,6 @@ def test_power_transformer_shape_exception(method):
         pt.inverse_transform(X[:, 0:1])
 
 
-def test_power_transformer_method_exception():
-    pt = PowerTransformer(method="monty-python")
-    X = np.abs(X_2d)
-
-    # An exception should be raised if PowerTransformer.method isn't valid
-    bad_method_message = "'method' must be one of"
-    with pytest.raises(ValueError, match=bad_method_message):
-        pt.fit(X)
-
-
 def test_power_transformer_lambda_zero():
     pt = PowerTransformer(method="box-cox", standardize=False)
     X = np.abs(X_2d)[:, 0:1]
@@ -2631,6 +2590,30 @@ def test_standard_scaler_raise_error_for_1d_input():
     err_msg = "Expected 2D array, got 1D array instead"
     with pytest.raises(ValueError, match=err_msg):
         scaler.inverse_transform(X_2d[:, 0])
+
+
+def test_power_transformer_significantly_non_gaussian():
+    """Check that significantly non-Gaussian data before transforms correctly.
+
+    For some explored lambdas, the transformed data may be constant and will
+    be rejected. Non-regression test for
+    https://github.com/scikit-learn/scikit-learn/issues/14959
+    """
+
+    X_non_gaussian = 1e6 * np.array(
+        [0.6, 2.0, 3.0, 4.0] * 4 + [11, 12, 12, 16, 17, 20, 85, 90], dtype=np.float64
+    ).reshape(-1, 1)
+    pt = PowerTransformer()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", RuntimeWarning)
+        X_trans = pt.fit_transform(X_non_gaussian)
+
+    assert not np.any(np.isnan(X_trans))
+    assert X_trans.mean() == pytest.approx(0.0)
+    assert X_trans.std() == pytest.approx(1.0)
+    assert X_trans.min() > -2
+    assert X_trans.max() < 2
 
 
 @pytest.mark.parametrize(

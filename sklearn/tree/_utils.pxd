@@ -8,16 +8,15 @@
 
 # See _utils.pyx for details.
 
-import numpy as np
-cimport numpy as np
+cimport numpy as cnp
 from ._tree cimport Node
 from ..neighbors._quad_tree cimport Cell
 
-ctypedef np.npy_float32 DTYPE_t          # Type of X
-ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
-ctypedef np.npy_intp SIZE_t              # Type for indices and counters
-ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
-ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+ctypedef cnp.npy_float32 DTYPE_t          # Type of X
+ctypedef cnp.npy_float64 DOUBLE_t         # Type of y, sample_weight
+ctypedef cnp.npy_intp SIZE_t              # Type for indices and counters
+ctypedef cnp.npy_int32 INT32_t            # Signed 32 bit integer
+ctypedef cnp.npy_uint32 UINT32_t          # Unsigned 32 bit integer
 
 
 cdef enum:
@@ -43,13 +42,11 @@ ctypedef fused realloc_ptr:
     (Node*)
     (Cell*)
     (Node**)
-    (StackRecord*)
-    (PriorityHeapRecord*)
 
 cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) nogil except *
 
 
-cdef np.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size)
+cdef cnp.ndarray sizet_ptr_to_ndarray(SIZE_t* data, SIZE_t size)
 
 
 cdef SIZE_t rand_int(SIZE_t low, SIZE_t high,
@@ -61,63 +58,6 @@ cdef double rand_uniform(double low, double high,
 
 
 cdef double log(double x) nogil
-
-# =============================================================================
-# Stack data structure
-# =============================================================================
-
-# A record on the stack for depth-first tree growing
-cdef struct StackRecord:
-    SIZE_t start
-    SIZE_t end
-    SIZE_t depth
-    SIZE_t parent
-    bint is_left
-    double impurity
-    SIZE_t n_constant_features
-
-cdef class Stack:
-    cdef SIZE_t capacity
-    cdef SIZE_t top
-    cdef StackRecord* stack_
-
-    cdef bint is_empty(self) nogil
-    cdef int push(self, SIZE_t start, SIZE_t end, SIZE_t depth, SIZE_t parent,
-                  bint is_left, double impurity,
-                  SIZE_t n_constant_features) nogil except -1
-    cdef int pop(self, StackRecord* res) nogil
-
-
-# =============================================================================
-# PriorityHeap data structure
-# =============================================================================
-
-# A record on the frontier for best-first tree growing
-cdef struct PriorityHeapRecord:
-    SIZE_t node_id
-    SIZE_t start
-    SIZE_t end
-    SIZE_t pos
-    SIZE_t depth
-    bint is_leaf
-    double impurity
-    double impurity_left
-    double impurity_right
-    double improvement
-
-cdef class PriorityHeap:
-    cdef SIZE_t capacity
-    cdef SIZE_t heap_ptr
-    cdef PriorityHeapRecord* heap_
-
-    cdef bint is_empty(self) nogil
-    cdef void heapify_up(self, PriorityHeapRecord* heap, SIZE_t pos) nogil
-    cdef void heapify_down(self, PriorityHeapRecord* heap, SIZE_t pos, SIZE_t heap_length) nogil
-    cdef int push(self, SIZE_t node_id, SIZE_t start, SIZE_t end, SIZE_t pos,
-                  SIZE_t depth, bint is_leaf, double improvement,
-                  double impurity, double impurity_left,
-                  double impurity_right) nogil except -1
-    cdef int pop(self, PriorityHeapRecord* res) nogil
 
 # =============================================================================
 # WeightedPQueue data structure

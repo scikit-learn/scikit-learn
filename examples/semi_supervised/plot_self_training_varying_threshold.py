@@ -57,7 +57,7 @@ scores = np.empty((x_values.shape[0], n_splits))
 amount_labeled = np.empty((x_values.shape[0], n_splits))
 amount_iterations = np.empty((x_values.shape[0], n_splits))
 
-for (i, threshold) in enumerate(x_values):
+for i, threshold in enumerate(x_values):
     self_training_clf = SelfTrainingClassifier(base_classifier, threshold=threshold)
 
     # We need manual cross validation so that we don't treat -1 as a separate

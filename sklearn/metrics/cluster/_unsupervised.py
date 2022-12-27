@@ -255,8 +255,8 @@ def calinski_harabasz_score(X, labels):
 
     It is also known as the Variance Ratio Criterion.
 
-    The score is defined as ratio between the within-cluster dispersion and
-    the between-cluster dispersion.
+    The score is defined as ratio of the sum of between-cluster dispersion and
+    of within-cluster dispersion.
 
     Read more in the :ref:`User Guide <calinski_harabasz_index>`.
 

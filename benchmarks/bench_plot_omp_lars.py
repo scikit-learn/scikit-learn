@@ -46,6 +46,7 @@ def compute_bench(samples_range, features_range):
                 "n_features": n_samples,
                 "n_nonzero_coefs": n_informative,
                 "random_state": 0,
+                "data_transposed": True,
             }
             print("n_samples: %d" % n_samples)
             print("n_features: %d" % n_features)

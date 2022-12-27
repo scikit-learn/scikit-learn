@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 """
@@ -9,16 +8,17 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 #
 # License: BSD 3 clause
 
-import numpy as np
-import numbers
 import warnings
+from numbers import Integral, Real
+
+import numpy as np
 from scipy import sparse
 
-from ..utils import check_scalar
+from ..metrics.pairwise import _VALID_METRICS
 from ..base import BaseEstimator, ClusterMixin
 from ..utils.validation import _check_sample_weight
+from ..utils._param_validation import Interval, StrOptions
 from ..neighbors import NearestNeighbors
-
 from ._dbscan_inner import dbscan_inner
 
 
@@ -139,13 +139,15 @@ def dbscan(
 
     References
     ----------
-    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, "A Density-Based
-    Algorithm for Discovering Clusters in Large Spatial Databases with Noise".
+    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, `"A Density-Based
+    Algorithm for Discovering Clusters in Large Spatial Databases with Noise"
+    <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_.
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
     and Data Mining, Portland, OR, AAAI Press, pp. 226-231. 1996
 
     Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
-    DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
+    :doi:`"DBSCAN revisited, revisited: why and how you should (still) use DBSCAN."
+    <10.1145/3068335>`
     ACM Transactions on Database Systems (TODS), 42(3), 19.
     """
 
@@ -191,7 +193,7 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         the options allowed by :func:`sklearn.metrics.pairwise_distances` for
         its metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
-        must be square. X may be a :term:`Glossary <sparse graph>`, in which
+        must be square. X may be a :term:`sparse graph`, in which
         case only "nonzero" elements may be considered neighbors for DBSCAN.
 
         .. versionadded:: 0.17
@@ -277,13 +279,15 @@ class DBSCAN(ClusterMixin, BaseEstimator):
 
     References
     ----------
-    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, "A Density-Based
-    Algorithm for Discovering Clusters in Large Spatial Databases with Noise".
+    Ester, M., H. P. Kriegel, J. Sander, and X. Xu, `"A Density-Based
+    Algorithm for Discovering Clusters in Large Spatial Databases with Noise"
+    <https://www.aaai.org/Papers/KDD/1996/KDD96-037.pdf>`_.
     In: Proceedings of the 2nd International Conference on Knowledge Discovery
     and Data Mining, Portland, OR, AAAI Press, pp. 226-231. 1996
 
     Schubert, E., Sander, J., Ester, M., Kriegel, H. P., & Xu, X. (2017).
-    DBSCAN revisited, revisited: why and how you should (still) use DBSCAN.
+    :doi:`"DBSCAN revisited, revisited: why and how you should (still) use DBSCAN."
+    <10.1145/3068335>`
     ACM Transactions on Database Systems (TODS), 42(3), 19.
 
     Examples
@@ -298,6 +302,20 @@ class DBSCAN(ClusterMixin, BaseEstimator):
     >>> clustering
     DBSCAN(eps=3, min_samples=2)
     """
+
+    _parameter_constraints: dict = {
+        "eps": [Interval(Real, 0.0, None, closed="neither")],
+        "min_samples": [Interval(Integral, 1, None, closed="left")],
+        "metric": [
+            StrOptions(set(_VALID_METRICS) | {"precomputed"}),
+            callable,
+        ],
+        "metric_params": [dict, None],
+        "algorithm": [StrOptions({"auto", "ball_tree", "kd_tree", "brute"})],
+        "leaf_size": [Interval(Integral, 1, None, closed="left")],
+        "p": [Interval(Real, 0.0, None, closed="left"), None],
+        "n_jobs": [Integral, None],
+    }
 
     def __init__(
         self,
@@ -345,6 +363,8 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         self : object
             Returns a fitted instance of self.
         """
+        self._validate_params()
+
         X = self._validate_data(X, accept_sparse="csr")
 
         if sample_weight is not None:
@@ -359,39 +379,6 @@ class DBSCAN(ClusterMixin, BaseEstimator):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", sparse.SparseEfficiencyWarning)
                 X.setdiag(X.diagonal())  # XXX: modifies X's internals in-place
-
-        # Validating the scalar parameters.
-        check_scalar(
-            self.eps,
-            "eps",
-            target_type=numbers.Real,
-            min_val=0.0,
-            include_boundaries="neither",
-        )
-        check_scalar(
-            self.min_samples,
-            "min_samples",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
-        check_scalar(
-            self.leaf_size,
-            "leaf_size",
-            target_type=numbers.Integral,
-            min_val=1,
-            include_boundaries="left",
-        )
-        if self.p is not None:
-            check_scalar(
-                self.p,
-                "p",
-                target_type=numbers.Real,
-                min_val=0.0,
-                include_boundaries="left",
-            )
-        if self.n_jobs is not None:
-            check_scalar(self.n_jobs, "n_jobs", target_type=numbers.Integral)
 
         neighbors_model = NearestNeighbors(
             radius=self.eps,
@@ -458,3 +445,6 @@ class DBSCAN(ClusterMixin, BaseEstimator):
         """
         self.fit(X, sample_weight=sample_weight)
         return self.labels_
+
+    def _more_tags(self):
+        return {"pairwise": self.metric == "precomputed"}
