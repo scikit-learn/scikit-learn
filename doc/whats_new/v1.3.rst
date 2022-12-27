@@ -49,7 +49,7 @@ Changelog
   :pr:`25177` by :user:`Tim Head <betatim>`.
 
 :mod:`sklearn.inspection`
-.......................
+.........................
 - |Enhancement| Added support for `sample_weight` in
   :func:`inspection.partial_dependence`. This allows for weighted averaging when
   aggregating for each value of the grid we are making the inspection on. The
