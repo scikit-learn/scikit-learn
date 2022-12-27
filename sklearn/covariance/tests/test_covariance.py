@@ -7,7 +7,7 @@
 import numpy as np
 import pytest
 
-from numpy.testing import assert_allclose
+from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
@@ -145,7 +145,7 @@ def test_ledoit_wolf():
     lw_cov_from_mle, lw_shrinkage_from_mle = ledoit_wolf(X_1d, assume_centered=True)
     assert_array_almost_equal(lw_cov_from_mle, lw.covariance_, 4)
     assert_almost_equal(lw_shrinkage_from_mle, lw.shrinkage_)
-    assert_array_almost_equal((X_1d**2).mean(), lw.covariance_, 4)
+    assert_array_almost_equal((X_1d**2).sum() / n_samples, lw.covariance_, 4)
 
     # test shrinkage coeff on a simple data set (without saving precision)
     lw = LedoitWolf(store_precision=False, assume_centered=True)
@@ -160,8 +160,8 @@ def test_ledoit_wolf():
     assert_almost_equal(lw.shrinkage_, shrinkage_, 4)
     assert_almost_equal(lw.shrinkage_, ledoit_wolf_shrinkage(X))
     assert_almost_equal(lw.shrinkage_, ledoit_wolf(X)[1])
-    assert lw.shrinkage_ == pytest.approx(
-        _ledoit_wolf(X=X, assume_centered=False, block_size=10000)[1]
+    assert_almost_equal(
+        lw.shrinkage_, _ledoit_wolf(X=X, assume_centered=False, block_size=10000)[1]
     )
     assert_almost_equal(lw.score(X), score_, 4)
     # compare shrunk covariance obtained from data and from MLE estimate
@@ -185,6 +185,17 @@ def test_ledoit_wolf():
     assert_array_almost_equal(lw_cov_from_mle, lw.covariance_, 4)
     assert_almost_equal(lw_shrinkage_from_mle, lw.shrinkage_)
     assert_array_almost_equal(empirical_covariance(X_1d), lw.covariance_, 4)
+
+    # test with one sample
+    # warning should be raised when using only 1 sample
+    X_1sample = np.arange(5).reshape(1, 5)
+    lw = LedoitWolf()
+
+    warn_msg = "Only one sample available. You may want to reshape your data array"
+    with pytest.warns(UserWarning, match=warn_msg):
+        lw.fit(X_1sample)
+
+    assert_array_almost_equal(lw.covariance_, np.zeros(shape=(5, 5), dtype=np.float64))
 
     # test shrinkage coeff on a simple data set (without saving precision)
     lw = LedoitWolf(store_precision=False)

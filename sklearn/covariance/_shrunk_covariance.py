@@ -310,13 +310,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     return shrinkage
 
 
-@validate_params(
-    {
-        "X": ["array-like"],
-        "assume_centered": ["boolean"],
-        "block_size": [Interval(Integral, 1, None, closed="left")],
-    }
-)
+@validate_params({"X": ["array-like"]})
 def ledoit_wolf(X, *, assume_centered=False, block_size=1000):
     """Estimate the shrunk Ledoit-Wolf covariance matrix.
 
