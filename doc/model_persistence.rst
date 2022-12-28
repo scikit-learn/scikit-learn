@@ -55,6 +55,9 @@ with::
    available `here
    <https://joblib.readthedocs.io/en/latest/persistence.html>`_.
 
+Note that you can access to the attribute `__sklearn_pickle_version__` to check the
+version of scikit-learn used to pickle the model.
+
 .. _persistence_limitations:
 
 Security & maintainability limitations
