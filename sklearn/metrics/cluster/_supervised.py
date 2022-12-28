@@ -25,6 +25,7 @@ from scipy import sparse as sp
 from ._expected_mutual_info_fast import expected_mutual_information
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
+from ...utils._param_validation import validate_params
 
 
 def check_clusterings(labels_true, labels_pred):
@@ -729,6 +730,13 @@ def v_measure_score(labels_true, labels_pred, *, beta=1.0):
     return homogeneity_completeness_v_measure(labels_true, labels_pred, beta=beta)[2]
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like", None],
+        "labels_pred": ["array-like", None],
+        "contingency": [np.ndarray, "sparse matrix", None],
+    }
+)
 def mutual_info_score(labels_true, labels_pred, *, contingency=None):
     """Mutual Information between two clusterings.
 
@@ -800,11 +808,9 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
         # For an array
         nzx, nzy = np.nonzero(contingency)
         nz_val = contingency[nzx, nzy]
-    elif sp.issparse(contingency):
+    else:
         # For a sparse matrix
         nzx, nzy, nz_val = sp.find(contingency)
-    else:
-        raise ValueError("Unsupported type for 'contingency': %s" % type(contingency))
 
     contingency_sum = contingency.sum()
     pi = np.ravel(contingency.sum(axis=1))
