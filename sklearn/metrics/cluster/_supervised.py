@@ -765,11 +765,11 @@ def mutual_info_score(labels_true, labels_pred, *, contingency=None):
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,), dtype=integral
         A clustering of the data into disjoint subsets, called :math:`U` in
         the above formula.
 
-    labels_pred : int array-like of shape (n_samples,)
+    labels_pred : array-like of shape (n_samples,), dtype=integral
         A clustering of the data into disjoint subsets, called :math:`V` in
         the above formula.
 
