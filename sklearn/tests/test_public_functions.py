@@ -101,6 +101,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.decomposition.sparse_encode",
     "sklearn.feature_extraction.grid_to_graph",
     "sklearn.feature_extraction.img_to_graph",
+    "sklearn.feature_extraction.image.extract_patches_2d",
     "sklearn.metrics.accuracy_score",
     "sklearn.metrics.auc",
     "sklearn.metrics.cohen_kappa_score",
