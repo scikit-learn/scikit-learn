@@ -64,9 +64,7 @@ from sklearn.metrics import make_scorer
 from sklearn.metrics import roc_auc_score
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import r2_score
-from sklearn.metrics import mean_squared_error
 from sklearn.metrics.pairwise import euclidean_distances
-from sklearn.metrics.tests.test_score_objects import CLF_SCORERS
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.linear_model import Ridge, SGDClassifier, LinearRegression
@@ -281,9 +279,9 @@ def test_grid_search_score_method():
 
     search_no_scoring = GridSearchCV(clf, grid, scoring=None).fit(X, y)
     search_accuracy = GridSearchCV(clf, grid, scoring="accuracy").fit(X, y)
-    search_no_score_method_auc = GridSearchCV(LinearSVCNoScore(), grid, scoring="roc_auc").fit(
-        X, y
-    )
+    search_no_score_method_auc = GridSearchCV(
+        LinearSVCNoScore(), grid, scoring="roc_auc"
+    ).fit(X, y)
     search_auc = GridSearchCV(clf, grid, scoring="roc_auc").fit(X, y)
 
     # Check warning only occurs in situation where behavior changed:
@@ -399,7 +397,9 @@ def test_no_refit():
                 getattr(grid_search, fn_name)(X)
 
     # Test that an invalid refit param raises appropriate error messages
-    error_msg = "For multi-metric scoring, the parameter refit must be set to a scorer key"
+    error_msg = (
+        "For multi-metric scoring, the parameter refit must be set to a scorer key"
+    )
     for refit in ["", 5, True, "recall", "accuracy"]:
         with pytest.raises(ValueError, match=error_msg):
             GridSearchCV(
@@ -742,24 +742,14 @@ def test_refit_callable_multi_metric():
 )
 @pytest.mark.parametrize(
     "scoring",
-    [
-        "roc_auc",
-        "accuracy",
-        "recall",
-        "precision",
-        "f1",
-        "neg_log_loss",
-        "neg_brier_score",
-        "neg_root_mean_squared_error",
-        "normalized_mutual_info_score",
-    ],
+    ["roc_auc", "accuracy", "recall", "precision", "f1", "neg_log_loss"],
 )
-@pytest.mark.parametrize(
-    "rule,threshold",
+@pytest.mark.parametrize(  # iterate over extra liberal thresholds
+    "rule, threshold",
     [
-        ("se", {"sigma": [1, 2, 3]}),
-        ("ranksum", {"alpha": [0.01, 0.05]}),
-        ("percentile", {"eta": [0.95, 0.99]}),
+        pytest.param("se", {"sigma": 3}),
+        pytest.param("ranksum", {"alpha": 0.05}),
+        pytest.param("percentile", {"eta": 0.95}),
     ],
 )
 @pytest.mark.parametrize(
@@ -768,13 +758,15 @@ def test_refit_callable_multi_metric():
 )
 def test_refit_callable_razors(param, scoring, rule, threshold, search_cv):
     """
-    A function tests `refit=callable` interface where `callable` is `razors`
-    Return the index of the most parsimonious highest-performing model.
+    A function tests `refit=callable` interface where the callable is the `simplify`
+    method of the `Razors` refit class that returnsthe most parsimonious,
+    highest-performing model.
     """
 
     X, y = make_classification(n_samples=350, n_features=16, random_state=42)
 
-    # Instantiate a pipeline with parameter grid representing different levels of complexity
+    # Instantiate a pipeline with parameter grid representing different levels of
+    # complexity
     if param == "rf__n_estimators":
         from sklearn.ensemble import RandomForestClassifier
 
@@ -805,14 +797,15 @@ def test_refit_callable_razors(param, scoring, rule, threshold, search_cv):
         else:
             raise NotImplementedError(f"{param} not recognized.")
 
-    # Instantiate a refitted grid search object using `razors`
+    scoring = make_scorer(scoring, greater_is_better=True)
+
+    # Instantiate a refitted grid search object using `Razors`
     grid_simplified = search_cv(
         pipe,
         param_grid,
         scoring=scoring,
         refit=Razors.simplify(
             param=param,
-            scoring=scoring,
             rule=rule,
             **threshold,
         ),
@@ -825,13 +818,16 @@ def test_refit_callable_razors(param, scoring, rule, threshold, search_cv):
     # If the cv results were not all NaN, then we can test the refit callable
     if not np.isnan(grid.fit(X, y).cv_results_["split0_test_score"]).all():
         grid_simplified.fit(X, y)
-        best_score_ = grid_simplified.cv_results_["mean_test_score"][grid_simplified.best_index_]
+        best_score_ = grid_simplified.cv_results_["mean_test_score"][
+            grid_simplified.best_index_
+        ]
 
-        # Ensure that if the `razors` refit callable chose a lower scoring model, that it was a simpler model.
+        # Ensure that if the `razors` refit callable chose a lower scoring model, that
+        # it was because it was a simpler model.
         if abs(grid.best_score_) > abs(best_score_):
             assert (
                 getattr(grid, "best_params_")[param]
-                > getattr(grid_simplified, "best_params_")[param]
+                >= getattr(grid_simplified, "best_params_")[param]
             )
 
 
@@ -966,7 +962,9 @@ def test_gridsearch_no_predict():
 def test_param_sampler():
     # test basic properties of param sampler
     param_distributions = {"kernel": ["rbf", "linear"], "C": uniform(0, 1)}
-    sampler = ParameterSampler(param_distributions=param_distributions, n_iter=10, random_state=0)
+    sampler = ParameterSampler(
+        param_distributions=param_distributions, n_iter=10, random_state=0
+    )
     samples = [x for x in sampler]
     assert len(samples) == 10
     for sample in samples:
@@ -975,11 +973,15 @@ def test_param_sampler():
 
     # test that repeated calls yield identical parameters
     param_distributions = {"C": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
-    sampler = ParameterSampler(param_distributions=param_distributions, n_iter=3, random_state=0)
+    sampler = ParameterSampler(
+        param_distributions=param_distributions, n_iter=3, random_state=0
+    )
     assert [x for x in sampler] == [x for x in sampler]
 
     param_distributions = {"C": uniform(0, 1)}
-    sampler = ParameterSampler(param_distributions=param_distributions, n_iter=10, random_state=0)
+    sampler = ParameterSampler(
+        param_distributions=param_distributions, n_iter=10, random_state=0
+    )
     assert [x for x in sampler] == [x for x in sampler]
 
 
@@ -990,7 +992,9 @@ def check_cv_results_array_types(search, param_keys, score_keys):
     assert all(cv_results[key].dtype == object for key in param_keys)
     assert not any(isinstance(cv_results[key], np.ma.MaskedArray) for key in score_keys)
     assert all(
-        cv_results[key].dtype == np.float64 for key in score_keys if not key.startswith("rank")
+        cv_results[key].dtype == np.float64
+        for key in score_keys
+        if not key.startswith("rank")
     )
 
     scorer_keys = search.scorer_.keys() if search.multimetric_ else ["score"]
@@ -1001,7 +1005,9 @@ def check_cv_results_array_types(search, param_keys, score_keys):
 
 def check_cv_results_keys(cv_results, param_keys, score_keys, n_cand):
     # Test the search.cv_results_ contains all the required results
-    assert_array_equal(sorted(cv_results.keys()), sorted(param_keys + score_keys + ("params",)))
+    assert_array_equal(
+        sorted(cv_results.keys()), sorted(param_keys + score_keys + ("params",))
+    )
     assert all(cv_results[key].shape == (n_cand,) for key in param_keys + score_keys)
 
 
@@ -1046,14 +1052,18 @@ def test_grid_search_cv_results():
     )
     n_candidates = n_grid_points
 
-    search = GridSearchCV(SVC(), cv=n_splits, param_grid=params, return_train_score=True)
+    search = GridSearchCV(
+        SVC(), cv=n_splits, param_grid=params, return_train_score=True
+    )
     search.fit(X, y)
     cv_results = search.cv_results_
     # Check if score and timing are reasonable
     assert all(cv_results["rank_test_score"] >= 1)
     assert (all(cv_results[k] >= 0) for k in score_keys if k != "rank_test_score")
     assert (
-        all(cv_results[k] <= 1) for k in score_keys if "time" not in k and k != "rank_test_score"
+        all(cv_results[k] <= 1)
+        for k in score_keys
+        if "time" not in k and k != "rank_test_score"
     )
     # Check cv_results structure
     check_cv_results_array_types(search, param_keys, score_keys)
@@ -1176,13 +1186,19 @@ def test_search_default_iid(SearchCV, specialized_params):
     search.fit(X, y)
 
     test_cv_scores = np.array(
-        [search.cv_results_["split%d_test_score" % s][0] for s in range(search.n_splits_)]
+        [
+            search.cv_results_["split%d_test_score" % s][0]
+            for s in range(search.n_splits_)
+        ]
     )
     test_mean = search.cv_results_["mean_test_score"][0]
     test_std = search.cv_results_["std_test_score"][0]
 
     train_cv_scores = np.array(
-        [search.cv_results_["split%d_train_score" % s][0] for s in range(search.n_splits_)]
+        [
+            search.cv_results_["split%d_train_score" % s][0]
+            for s in range(search.n_splits_)
+        ]
     )
     train_mean = search.cv_results_["mean_train_score"][0]
     train_std = search.cv_results_["std_train_score"][0]
@@ -1267,7 +1283,9 @@ def test_random_search_cv_results_multimetric():
             random_searches.append(random_search)
 
         compare_cv_results_multimetric_with_single(*random_searches)
-        compare_refit_methods_when_refit_with_acc(random_searches[0], random_searches[1], refit)
+        compare_refit_methods_when_refit_with_acc(
+            random_searches[0], random_searches[1], refit
+        )
 
 
 def compare_cv_results_multimetric_with_single(search_multi, search_acc, search_rec):
@@ -1319,7 +1337,9 @@ def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
 
     X, y = make_blobs(n_samples=100, n_features=4, random_state=42)
     for method in ("predict", "predict_proba", "predict_log_proba"):
-        assert_almost_equal(getattr(search_multi, method)(X), getattr(search_acc, method)(X))
+        assert_almost_equal(
+            getattr(search_multi, method)(X), getattr(search_acc, method)(X)
+        )
     assert_almost_equal(search_multi.score(X, y), search_acc.score(X, y))
     for key in ("best_index_", "best_score_", "best_params_"):
         assert getattr(search_multi, key) == getattr(search_acc, key)
@@ -1332,7 +1352,9 @@ def compare_refit_methods_when_refit_with_acc(search_multi, search_acc, refit):
             estimator=DecisionTreeClassifier(),
             param_distributions={"max_depth": [5, 10]},
         ),
-        GridSearchCV(estimator=DecisionTreeClassifier(), param_grid={"max_depth": [5, 10]}),
+        GridSearchCV(
+            estimator=DecisionTreeClassifier(), param_grid={"max_depth": [5, 10]}
+        ),
     ],
 )
 def test_search_cv_score_samples_error(search_cv):
@@ -1390,7 +1412,9 @@ def test_search_cv_score_samples_method(search_cv):
 
     # Verify that the stand alone estimator yields the same results
     # as the ones obtained with *SearchCV
-    assert_allclose(search_cv.score_samples(X), search_cv.best_estimator_.score_samples(X))
+    assert_allclose(
+        search_cv.score_samples(X), search_cv.best_estimator_.score_samples(X)
+    )
 
 
 def test_search_cv_results_rank_tie_breaking():
@@ -1411,9 +1435,15 @@ def test_search_cv_results_rank_tie_breaking():
         # Check tie breaking strategy -
         # Check that there is a tie in the mean scores between
         # candidates 1 and 2 alone
-        assert_almost_equal(cv_results["mean_test_score"][0], cv_results["mean_test_score"][1])
-        assert_almost_equal(cv_results["mean_train_score"][0], cv_results["mean_train_score"][1])
-        assert not np.allclose(cv_results["mean_test_score"][1], cv_results["mean_test_score"][2])
+        assert_almost_equal(
+            cv_results["mean_test_score"][0], cv_results["mean_test_score"][1]
+        )
+        assert_almost_equal(
+            cv_results["mean_train_score"][0], cv_results["mean_train_score"][1]
+        )
+        assert not np.allclose(
+            cv_results["mean_test_score"][1], cv_results["mean_test_score"][2]
+        )
         assert not np.allclose(
             cv_results["mean_train_score"][1], cv_results["mean_train_score"][2]
         )
@@ -1522,10 +1552,14 @@ def test_pickle():
     grid_search_pickled = pickle.loads(pickle.dumps(grid_search))
     assert_array_almost_equal(grid_search.predict(X), grid_search_pickled.predict(X))
 
-    random_search = RandomizedSearchCV(clf, {"foo_param": [1, 2, 3]}, refit=True, n_iter=3, cv=3)
+    random_search = RandomizedSearchCV(
+        clf, {"foo_param": [1, 2, 3]}, refit=True, n_iter=3, cv=3
+    )
     random_search.fit(X, y)
     random_search_pickled = pickle.loads(pickle.dumps(random_search))
-    assert_array_almost_equal(random_search.predict(X), random_search_pickled.predict(X))
+    assert_array_almost_equal(
+        random_search.predict(X), random_search_pickled.predict(X)
+    )
 
 
 def test_grid_search_with_multioutput_data():
@@ -1651,13 +1685,16 @@ def test_grid_search_failing_classifier():
     # Ensure that grid scores were set to zero as required for those fits
     # that are expected to fail.
     def get_cand_scores(i):
-        return np.array([gs.cv_results_["split%d_test_score" % s][i] for s in range(gs.n_splits_)])
+        return np.array(
+            [gs.cv_results_["split%d_test_score" % s][i] for s in range(gs.n_splits_)]
+        )
 
     assert all(
         (
             np.all(get_cand_scores(cand_i) == 0.0)
             for cand_i in range(n_candidates)
-            if gs.cv_results_["param_parameter"][cand_i] == FailingClassifier.FAILING_PARAMETER
+            if gs.cv_results_["param_parameter"][cand_i]
+            == FailingClassifier.FAILING_PARAMETER
         )
     )
 
@@ -1681,7 +1718,8 @@ def test_grid_search_failing_classifier():
     assert all(
         np.all(np.isnan(get_cand_scores(cand_i)))
         for cand_i in range(n_candidates)
-        if gs.cv_results_["param_parameter"][cand_i] == FailingClassifier.FAILING_PARAMETER
+        if gs.cv_results_["param_parameter"][cand_i]
+        == FailingClassifier.FAILING_PARAMETER
     )
 
     ranks = gs.cv_results_["rank_test_score"]
@@ -1783,7 +1821,9 @@ def test_stochastic_gradient_loss_param():
     }
     X = np.arange(24).reshape(6, -1)
     y = [0, 0, 0, 1, 1, 1]
-    clf = GridSearchCV(estimator=SGDClassifier(loss="hinge"), param_grid=param_grid, cv=3)
+    clf = GridSearchCV(
+        estimator=SGDClassifier(loss="hinge"), param_grid=param_grid, cv=3
+    )
 
     # When the estimator is not fitted, `predict_proba` is not available as the
     # loss is 'hinge'.
@@ -1797,7 +1837,9 @@ def test_stochastic_gradient_loss_param():
     param_grid = {
         "loss": ["hinge"],
     }
-    clf = GridSearchCV(estimator=SGDClassifier(loss="hinge"), param_grid=param_grid, cv=3)
+    clf = GridSearchCV(
+        estimator=SGDClassifier(loss="hinge"), param_grid=param_grid, cv=3
+    )
     assert not hasattr(clf, "predict_proba")
     clf.fit(X, y)
     assert not hasattr(clf, "predict_proba")
@@ -1867,7 +1909,9 @@ def test_grid_search_cv_splits_consistency():
 
     # Check if generators are supported as cv and
     # that the splits are consistent
-    np.testing.assert_equal(_pop_time_keys(gs3.cv_results_), _pop_time_keys(gs4.cv_results_))
+    np.testing.assert_equal(
+        _pop_time_keys(gs3.cv_results_), _pop_time_keys(gs4.cv_results_)
+    )
 
     # OneTimeSplitter is a non-re-entrant cv where split can be called only
     # once if ``cv.split`` is called once per param setting in GridSearchCV.fit
@@ -1897,7 +1941,8 @@ def test_grid_search_cv_splits_consistency():
         per_param_scores = {}
         for param_i in range(4):
             per_param_scores[param_i] = [
-                gs.cv_results_["split%d_%s_score" % (s, score_type)][param_i] for s in range(5)
+                gs.cv_results_["split%d_%s_score" % (s, score_type)][param_i]
+                for s in range(5)
             ]
 
         assert_array_almost_equal(per_param_scores[0], per_param_scores[1])
@@ -1922,7 +1967,9 @@ def test_custom_run_search():
                 # XXX: results['params'] is a list :|
                 results[k] = np.asanyarray(results[k])
                 if results[k].dtype.kind == "O":
-                    assert_array_equal(exp_results[k], results[k], err_msg="Checking " + k)
+                    assert_array_equal(
+                        exp_results[k], results[k], err_msg="Checking " + k
+                    )
                 else:
                     assert_allclose(exp_results[k], results[k], err_msg="Checking " + k)
 
@@ -1954,9 +2001,12 @@ def test_custom_run_search():
         if (
             attr[0].islower()
             and attr[-1:] == "_"
-            and attr not in {"cv_results_", "best_estimator_", "refit_time_", "classes_"}
+            and attr
+            not in {"cv_results_", "best_estimator_", "refit_time_", "classes_"}
         ):
-            assert getattr(gscv, attr) == getattr(mycv, attr), "Attribute %s not equal" % attr
+            assert getattr(gscv, attr) == getattr(mycv, attr), (
+                "Attribute %s not equal" % attr
+            )
 
 
 def test__custom_fit_no_run_search():
@@ -1995,7 +2045,10 @@ def test_empty_cv_iterator_error():
     # assert that this raises an error
     with pytest.raises(
         ValueError,
-        match="No fits were performed. Was the CV iterator empty\\? Were there no candidates\\?",
+        match=(
+            "No fits were performed. Was the CV iterator empty\\? Were there no"
+            " candidates\\?"
+        ),
     ):
         ridge.fit(X[:train_size], y[:train_size])
 
@@ -2115,8 +2168,12 @@ def test_callable_multimetric_same_as_list_of_strings():
 
     X, y = make_classification(n_samples=40, n_features=4, random_state=42)
     est = LinearSVC(random_state=42)
-    search_callable = GridSearchCV(est, {"C": [0.1, 1]}, scoring=custom_scorer, refit="recall")
-    search_str = GridSearchCV(est, {"C": [0.1, 1]}, scoring=["recall", "accuracy"], refit="recall")
+    search_callable = GridSearchCV(
+        est, {"C": [0.1, 1]}, scoring=custom_scorer, refit="recall"
+    )
+    search_str = GridSearchCV(
+        est, {"C": [0.1, 1]}, scoring=["recall", "accuracy"], refit="recall"
+    )
 
     search_callable.fit(X, y)
     search_str.fit(X, y)
@@ -2134,9 +2191,13 @@ def test_callable_single_metric_same_as_single_string():
 
     X, y = make_classification(n_samples=40, n_features=4, random_state=42)
     est = LinearSVC(random_state=42)
-    search_callable = GridSearchCV(est, {"C": [0.1, 1]}, scoring=custom_scorer, refit=True)
+    search_callable = GridSearchCV(
+        est, {"C": [0.1, 1]}, scoring=custom_scorer, refit=True
+    )
     search_str = GridSearchCV(est, {"C": [0.1, 1]}, scoring="recall", refit="recall")
-    search_list_str = GridSearchCV(est, {"C": [0.1, 1]}, scoring=["recall"], refit="recall")
+    search_list_str = GridSearchCV(
+        est, {"C": [0.1, 1]}, scoring=["recall"], refit="recall"
+    )
     search_callable.fit(X, y)
     search_str.fit(X, y)
     search_list_str.fit(X, y)
@@ -2218,7 +2279,8 @@ def test_callable_multimetric_clf_all_fits_fail():
 
     individual_fit_error_message = "ValueError: Failing classifier failed as required"
     error_message = re.compile(
-        f"All the 15 fits failed.+your model is misconfigured.+{individual_fit_error_message}",
+        "All the 15 fits failed.+your model is"
+        f" misconfigured.+{individual_fit_error_message}",
         flags=re.DOTALL,
     )
 
@@ -2409,7 +2471,9 @@ def test_search_cv_using_minimal_compatible_estimator(SearchCV, Predictor):
     rng = np.random.RandomState(0)
     X, y = rng.randn(25, 2), np.array([0] * 5 + [1] * 20)
 
-    model = Pipeline([("transformer", MinimalTransformer()), ("predictor", Predictor())])
+    model = Pipeline(
+        [("transformer", MinimalTransformer()), ("predictor", Predictor())]
+    )
 
     params = {
         "transformer__param": [1, 10],

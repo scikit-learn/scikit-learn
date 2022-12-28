@@ -41,9 +41,15 @@ from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.metaestimators import available_if
 from ..utils.fixes import delayed
 from ..metrics._scorer import _check_multimetric_scoring
-from ..metrics import check_scoring, get_scorer_names
+from ..metrics import check_scoring
 
-__all__ = ["GridSearchCV", "ParameterGrid", "ParameterSampler", "RandomizedSearchCV", "Razors"]
+__all__ = [
+    "GridSearchCV",
+    "ParameterGrid",
+    "ParameterSampler",
+    "RandomizedSearchCV",
+    "Razors",
+]
 
 
 class ParameterGrid:
@@ -112,7 +118,9 @@ class ParameterGrid:
                         f"Parameter array for {key!r} should be one-dimensional, got:"
                         f" {value!r} with shape {value.shape}"
                     )
-                if isinstance(value, str) or not isinstance(value, (np.ndarray, Sequence)):
+                if isinstance(value, str) or not isinstance(
+                    value, (np.ndarray, Sequence)
+                ):
                     raise TypeError(
                         f"Parameter grid for parameter {key!r} needs to be a list or a"
                         f" numpy array, but got {value!r} (of type "
@@ -151,7 +159,9 @@ class ParameterGrid:
         """Number of points on the grid."""
         # Product function that can handle iterables (np.product can't).
         product = partial(reduce, operator.mul)
-        return sum(product(len(v) for v in p.values()) if p else 1 for p in self.param_grid)
+        return sum(
+            product(len(v) for v in p.values()) if p else 1 for p in self.param_grid
+        )
 
     def __getitem__(self, ind):
         """Get the parameters that would be ``ind``th in iteration
@@ -266,9 +276,13 @@ class ParameterSampler:
 
         for dist in param_distributions:
             if not isinstance(dist, dict):
-                raise TypeError("Parameter distribution is not a dict ({!r})".format(dist))
+                raise TypeError(
+                    "Parameter distribution is not a dict ({!r})".format(dist)
+                )
             for key in dist:
-                if not isinstance(dist[key], Iterable) and not hasattr(dist[key], "rvs"):
+                if not isinstance(dist[key], Iterable) and not hasattr(
+                    dist[key], "rvs"
+                ):
                     raise TypeError(
                         f"Parameter grid for parameter {key!r} is not iterable "
                         f"or a distribution (value={dist[key]})"
@@ -279,7 +293,8 @@ class ParameterSampler:
 
     def _is_all_lists(self):
         return all(
-            all(not hasattr(v, "rvs") for v in dist.values()) for dist in self.param_distributions
+            all(not hasattr(v, "rvs") for v in dist.values())
+            for dist in self.param_distributions
         )
 
     def __iter__(self):
@@ -395,7 +410,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # allows cross-validation to see 'precomputed' metrics
         return {
             "pairwise": _safe_tags(self.estimator, "pairwise"),
-            "_xfail_checks": {"check_supervised_y_2d": "DataConversionWarning not caught"},
+            "_xfail_checks": {
+                "check_supervised_y_2d": "DataConversionWarning not caught"
+            },
         }
 
     def score(self, X, y=None):
@@ -425,7 +442,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         if self.scorer_ is None:
             raise ValueError(
-                "No score function explicitly defined, and the estimator doesn't provide one %s"
+                "No score function explicitly defined, and the estimator doesn't"
+                " provide one %s"
                 % self.best_estimator_
             )
         if isinstance(self.scorer_, dict):
@@ -611,7 +629,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             check_is_fitted(self)
         except NotFittedError as nfe:
             raise AttributeError(
-                "{} object has no n_features_in_ attribute.".format(self.__class__.__name__)
+                "{} object has no n_features_in_ attribute.".format(
+                    self.__class__.__name__
+                )
             ) from nfe
 
         return self.best_estimator_.n_features_in_
@@ -698,7 +718,11 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
         valid_refit_dict = isinstance(self.refit, str) and self.refit in scores
 
-        if self.refit is not False and not valid_refit_dict and not callable(self.refit):
+        if (
+            self.refit is not False
+            and not valid_refit_dict
+            and not callable(self.refit)
+        ):
             raise ValueError(multimetric_refit_msg)
 
     @staticmethod
@@ -794,9 +818,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
                 if self.verbose > 0:
                     print(
-                        "Fitting {0} folds for each of {1} candidates, totalling {2} fits".format(
-                            n_splits, n_candidates, n_candidates * n_splits
-                        )
+                        "Fitting {0} folds for each of {1} candidates, totalling {2}"
+                        " fits".format(n_splits, n_candidates, n_candidates * n_splits)
                     )
 
                 out = parallel(
@@ -868,17 +891,23 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         # best_score_ iff refit is one of the scorer names
         # In single metric evaluation, refit_metric is "score"
         if self.refit or not self.multimetric_:
-            self.best_index_ = self._select_best_index(self.refit, refit_metric, results)
+            self.best_index_ = self._select_best_index(
+                self.refit, refit_metric, results
+            )
             if not callable(self.refit):
                 # With a non-custom callable, we can select the best score
                 # based on the best index
-                self.best_score_ = results[f"mean_test_{refit_metric}"][self.best_index_]
+                self.best_score_ = results[f"mean_test_{refit_metric}"][
+                    self.best_index_
+                ]
             self.best_params_ = results["params"][self.best_index_]
 
         if self.refit:
             # we clone again after setting params in case some
             # of the params are estimators as well.
-            self.best_estimator_ = clone(clone(base_estimator).set_params(**self.best_params_))
+            self.best_estimator_ = clone(
+                clone(base_estimator).set_params(**self.best_params_)
+            )
             refit_start_time = time.time()
             if y is not None:
                 self.best_estimator_.fit(X, y, **fit_params)
@@ -921,7 +950,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
             array_means = np.average(array, axis=1, weights=weights)
             results["mean_%s" % key_name] = array_means
 
-            if key_name.startswith(("train_", "test_")) and np.any(~np.isfinite(array_means)):
+            if key_name.startswith(("train_", "test_")) and np.any(
+                ~np.isfinite(array_means)
+            ):
                 warnings.warn(
                     f"One or more of the {key_name.split('_')[0]} scores "
                     f"are non-finite: {array_means}",
@@ -930,7 +961,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
             # Weighted std is not directly available in numpy
             array_stds = np.sqrt(
-                np.average((array - array_means[:, np.newaxis]) ** 2, axis=1, weights=weights)
+                np.average(
+                    (array - array_means[:, np.newaxis]) ** 2, axis=1, weights=weights
+                )
             )
             results["std_%s" % key_name] = array_stds
 
@@ -944,7 +977,9 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                 else:
                     min_array_means = np.nanmin(array_means) - 1
                     array_means = np.nan_to_num(array_means, nan=min_array_means)
-                    rank_result = rankdata(-array_means, method="min").astype(np.int32, copy=False)
+                    rank_result = rankdata(-array_means, method="min").astype(
+                        np.int32, copy=False
+                    )
                 results["rank_%s" % key_name] = rank_result
 
         _store("fit_time", out["fit_time"])
@@ -1735,33 +1770,35 @@ class RandomizedSearchCV(BaseSearchCV):
     def _run_search(self, evaluate_candidates):
         """Search n_iter candidates from param_distributions"""
         evaluate_candidates(
-            ParameterSampler(self.param_distributions, self.n_iter, random_state=self.random_state)
+            ParameterSampler(
+                self.param_distributions, self.n_iter, random_state=self.random_state
+            )
         )
 
 
 class Razors:
     """
-    Razors is a callable refit option for `GridSearchCV` or `RandomSearchCV`,
+    Razors is a callable refit option for `GridSearchCV` and `RandomSearchCV`,
     whose aim is to balance model complexity and cross-validated score in the
-    spirit of the "one standard error" rule of Breiman et al. (1984), which showed
-    that the tuning hyperparameter associated with the best performing model may be
-    prone to overfit. To help mitigate this risk, we can instead instruct
-    gridsearch to refit the highest performing 'parsimonious' model, as defined
-    using simple statistical rules (e.g. standard error (`sigma`),
-    percentile (`eta`), or significance level (`alpha`)) to compare
-    distributions of model performance across folds. Importantly, this
-    strategy assumes that the grid of multiple cross-validated models
-    can be principly ordered from simplest to most complex with respect to some
-    target hyperparameter of interest. To use the razors suite, supply
-    the `simplify` function partial of the `Razors` class as a callable
-    directly to the `refit` argument of `GridSearchCV`.
+    spirit of Occam's Razor, and more specifically the "one standard error" rule of
+    Breiman et al. (1984), which showed that the tuning hyperparameter associated with
+    the best performing model may be prone to overfit. To help mitigate this risk, one
+    can buffer the tuning process by refitting the highest performing model that is
+    also the most 'parsimonious', where parsimony and complexity are user-defined by
+    virtue of hyperparameter selection. The threshold at which model complexity is
+    ultimately deemed "significant" is also configurable relative to any of a
+    variety of supported statistical rules (e.g. standard error (`sigma`), percentile
+    (`eta`), or significance level (`alpha`)) that involve comparing distributions
+    of model performance across folds. Importantly, this strategy assumes that the grid
+    of multiple cross-validated models can be principly ordered from simplest to most
+    complex by the user with respect to some target hyperparameter of interest.
+    To use the razors suite, supply the `simplify` function partial of the `Razors`
+    class as a callable directly to the `refit` argument of `GridSearchCV`.
 
     Attributes
     ----------
     cv_results : dict of numpy(masked) ndarrays
         See attribute cv_results_ of `GridSearchCV`.
-    scoring : str
-        Refit scoring metric.
     param : str
         Parameter whose complexity will be optimized.
     rule : str
@@ -1784,11 +1821,10 @@ class Razors:
     ------
     `ValueError`
         - If `rule` is not one of 'se', 'percentile', or 'ranksum'.
-        - If `rule`=='se' and `sigma` is not a non-null integer, or if `rule`=='percentile' and
-        `eta` is not a non-null float, or if `rule`=='ranksum' and `alpha` is not a non-null float.
+        - If `rule`=='se' and `sigma` is not a non-null integer, or if
+        `rule`=='percentile' and `eta` is not a non-null float, or if `rule`=='ranksum'
+        and `alpha` is not a non-null float.
         - If no valid grid columns remain within the boundaries of the specified razor
-    `NotImplementedError`
-        - If the specified `scoring` metric is not supported by scikit-learn.
     `KeyError`
         - If the specified `param` is not a valid hyperparameter of the estimator.
 
@@ -1814,9 +1850,7 @@ class Razors:
     __slots__ = (
         "cv_results",
         "param",
-        "scoring",
         "rule",
-        "_greater_is_better",
         "_sigma",
         "_eta",
         "_alpha",
@@ -1826,27 +1860,23 @@ class Razors:
         self,
         cv_results_,
         param,
-        scoring,
         rule,
         sigma=1,
         eta=0.95,
         alpha=0.01,
     ):
-        import sklearn.metrics
-
         self.cv_results = cv_results_
         self.param = param
-        self.scoring = scoring
         self.rule = rule
-
-        # Set _score metrics to True and _error metrics to False
-        self._greater_is_better = self._check_scorer()
         self._sigma = sigma
         self._eta = eta
         self._alpha = alpha
 
     @property
     def _n_folds(self):
+        # Extract number of folds from cv_results. Note that we cannot get this from
+        # the `n_splits_` attribute of the `cv` object because it is not exposed to the
+        # refit callable.
         return len(
             list(
                 set(
@@ -1860,20 +1890,13 @@ class Razors:
         )
 
     @property
-    def _scoring_dict(self):
-        _scoring_funcs = get_scorer_names()
-        # Set non-negative scoring metrics to True and negative scoring metrics to False
-        return dict(
-            zip(
-                _scoring_funcs,
-                [not met.startswith("neg_") for met in _scoring_funcs],
-            )
-        )
-
-    @property
     def _splits(self):
         # Extract subgrid corresponding to the scoring metric of interest
-        return [i for i in list(self.cv_results.keys()) if "test" in i and i.startswith("split")]
+        return [
+            i
+            for i in list(self.cv_results.keys())
+            if "test" in i and i.startswith("split")
+        ]
 
     @property
     def _score_grid(self):
@@ -1889,26 +1912,6 @@ class Razors:
     def _best_score_idx(self):
         # Return index of the highest performing model
         return np.nanargmax(self._cv_means)
-
-    def _check_scorer(self):
-        """
-        Check whether the target refit scorer is negated. If so, adjust
-        `_greater_is_better` accordingly.
-        """
-
-        if (
-            self.scoring not in self._scoring_dict.keys()
-            and f"{self.scoring}_score" not in self._scoring_dict.keys()
-        ):
-            if self.scoring.startswith("neg_"):
-                self._greater_is_better = True
-            else:
-                raise NotImplementedError(f"Scoring metric {self.scoring} not recognized.")
-        else:
-            self._greater_is_better = [
-                value for key, value in self._scoring_dict.items() if self.scoring in key
-            ][0]
-        return self._greater_is_better
 
     def _best_low_complexity(self):
         """
@@ -1934,19 +1937,22 @@ class Razors:
         if self.rule.lower() == "se":
             if not self._sigma or type(self._sigma) != int:
                 raise ValueError(
-                    "For `se` rule, the tolerance (i.e. `_sigma`) parameter cannot be null."
+                    "For `se` rule, the tolerance (i.e. `_sigma`) parameter must be an "
+                    " integer and cannot be null."
                 )
             l_cutoff, h_cutoff = self.call_standard_error()
         elif self.rule.lower() == "percentile":
             if not self._eta or type(self._eta) != float:
                 raise ValueError(
-                    "For `percentile` rule, the tolerance (i.e. `_eta`) parameter cannot be null."
+                    "For `percentile` rule, the tolerance (i.e. `_eta`) parameter must "
+                    " be a float and cannot be null."
                 )
             l_cutoff, h_cutoff = self.call_percentile()
         elif self.rule.lower() == "ranksum" or type(self._alpha) != float:
             if not self._alpha:
                 raise ValueError(
-                    "For `ranksum` rule, the alpha-level (i.e. `_alpha`) parameter cannot be null."
+                    "For `ranksum` rule, the alpha-level (i.e. `_alpha`) parameter must"
+                    " be a float and cannot be null."
                 )
             l_cutoff, h_cutoff = self.call_rank_sum_test()
         else:
@@ -1964,15 +1970,18 @@ class Razors:
                 f" {self._cv_means}\nhyperparam: {hyperparam}\n"
             )
             raise ValueError(
-                "No valid grid columns remain within the boundaries of the specified razor"
+                "No valid grid columns remain within the boundaries of the specified"
+                " razor"
             )
 
         highest_surviving_rank = np.nanmin(
-            self.cv_results[f"rank_test_score"][self.cv_results[f"param_{hyperparam}"].mask]
+            self.cv_results["rank_test_score"][
+                self.cv_results[f"param_{hyperparam}"].mask
+            ]
         )
 
         return np.flatnonzero(
-            np.isin(self.cv_results[f"rank_test_score"], highest_surviving_rank)
+            np.isin(self.cv_results["rank_test_score"], highest_surviving_rank)
         )[0]
 
     def call_standard_error(self):
@@ -1985,8 +1994,14 @@ class Razors:
         cv_se = np.array(np.nanstd(self._score_grid, axis=1) / np.sqrt(self._n_folds))
 
         # Determine confidence interval
-        h_cutoff = self._cv_means[self._best_score_idx] + self._sigma * cv_se[self._best_score_idx]
-        l_cutoff = self._cv_means[self._best_score_idx] - self._sigma * cv_se[self._best_score_idx]
+        h_cutoff = (
+            self._cv_means[self._best_score_idx]
+            + self._sigma * cv_se[self._best_score_idx]
+        )
+        l_cutoff = (
+            self._cv_means[self._best_score_idx]
+            - self._sigma * cv_se[self._best_score_idx]
+        )
 
         return l_cutoff, h_cutoff
 
@@ -2004,32 +2019,31 @@ class Razors:
         # columns against the best average score column
         tests = [
             pair
-            for pair in list(itertools.combinations(range(self._score_grid.shape[0]), 2))
+            for pair in list(
+                itertools.combinations(range(self._score_grid.shape[0]), 2)
+            )
             if self._best_score_idx in pair
         ]
 
-        p_dict = {}
-        for i, test in enumerate(tests):
-            p_dict[i] = wilcoxon(self._score_grid[test[0], :], self._score_grid[test[1], :])[1]
-
-        # Sort and prune away significant tests
-        p_dict = {
-            k: v for k, v in sorted(p_dict.items(), key=lambda item: item[1]) if v > self._alpha
-        }
-
-        # Flatten list of tuples, remove best score index, and take the
-        # lowest and highest remaining bounds
-        tests = [
-            j
-            for j in list(set(list(sum([tests[i] for i in list(p_dict.keys())], ()))))
-            if j != self._best_score_idx
+        pvals = [
+            wilcoxon(
+                self._score_grid[pair[0]],
+                self._score_grid[pair[1]],
+                alternative="two-sided",
+                zero_method="zsplit",  # Fallback condition in the case of ties
+            )[1]
+            for pair in tests
         ]
 
-        out = self._cv_means[self.cv_results[f"rank_test_score"][tests] - 1]
+        # Determine the highest performing model that is not significantly
+        # different from the best average score column
+        best_rank_sum_idx = np.flatnonzero(np.isin(tests, tests[np.argmin(pvals)]))[0]
 
-        print(np.nanmin(out))
-        print(np.nanmax(out))
-        return np.nanmin(out), np.nanmax(out)
+        # Determine bounds of the percentile interval
+        h_cutoff = np.nanmax(self._score_grid[best_rank_sum_idx])
+        l_cutoff = np.nanmin(self._score_grid[best_rank_sum_idx])
+
+        return l_cutoff, h_cutoff
 
     def call_percentile(self):
         """
@@ -2050,16 +2064,14 @@ class Razors:
         return l_cutoff, h_cutoff
 
     @staticmethod
-    def simplify(param, scoring, rule="se", sigma=1, eta=0.68, alpha=0.01):
+    def simplify(param, rule="se", sigma=1, eta=0.68, alpha=0.01):
         """
-        Callable to be run as `refit` argument of `GridsearchCV`.
+        Callable to be run as `refit` argument of `GridsearchCV` or `RandomSearchCV`.
 
         Parameters
         ----------
         param : str
             Parameter with the largest influence on model complexity.
-        scoring : str
-            Refit scoring metric.
         sigma : int
             Number of standard errors tolerance in the case that a standard
             error threshold is used to filter outlying scores across folds.
@@ -2075,11 +2087,10 @@ class Razors:
         """
         from functools import partial
 
-        def razor_pass(cv_results_, param, scoring, rule, sigma, alpha, eta):
+        def razor_pass(cv_results_, param, rule, sigma, alpha, eta):
             rcv = Razors(
                 cv_results_,
                 param,
-                scoring,
                 rule=rule,
                 sigma=sigma,
                 alpha=alpha,
@@ -2090,7 +2101,6 @@ class Razors:
         return partial(
             razor_pass,
             param=param,
-            scoring=scoring,
             rule=rule,
             sigma=sigma,
             alpha=alpha,
