@@ -10,7 +10,7 @@ import numpy as np
 from scipy import sparse
 
 from ..base import BaseEstimator, TransformerMixin, OneToOneFeatureMixin
-from ..utils import check_array, is_scalar_nan
+from ..utils import check_array, is_scalar_nan, _safe_indexing
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
 from ..utils._param_validation import Interval, StrOptions, Hidden
@@ -58,20 +58,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         X_columns = []
 
         for i in range(n_features):
-            Xi = self._get_feature(X, feature_idx=i)
+            Xi = _safe_indexing(X, indices=i, axis=1)
             Xi = check_array(
                 Xi, ensure_2d=False, dtype=None, force_all_finite=needs_validation
             )
             X_columns.append(Xi)
 
         return X_columns, n_samples, n_features
-
-    def _get_feature(self, X, feature_idx):
-        if hasattr(X, "iloc"):
-            # pandas dataframes
-            return X.iloc[:, feature_idx]
-        # numpy arrays, sparse arrays
-        return X[:, feature_idx]
 
     def _fit(
         self, X, handle_unknown="error", force_all_finite=True, return_counts=False
@@ -104,7 +97,27 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 else:
                     cats = result
             else:
-                cats = np.array(self.categories[i], dtype=Xi.dtype)
+                if np.issubdtype(Xi.dtype, np.str_):
+                    # Always convert string categories to objects to avoid
+                    # unexpected string truncation for longer category labels
+                    # passed in the constructor.
+                    Xi_dtype = object
+                else:
+                    Xi_dtype = Xi.dtype
+
+                cats = np.array(self.categories[i], dtype=Xi_dtype)
+                if (
+                    cats.dtype == object
+                    and isinstance(cats[0], bytes)
+                    and Xi.dtype.kind != "S"
+                ):
+                    msg = (
+                        f"In column {i}, the predefined categories have type 'bytes'"
+                        " which is incompatible with values of type"
+                        f" '{type(Xi[0]).__name__}'."
+                    )
+                    raise ValueError(msg)
+
                 if Xi.dtype.kind not in "OUS":
                     sorted_cats = np.sort(cats)
                     error_msg = (
