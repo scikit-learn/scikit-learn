@@ -2070,11 +2070,27 @@ class Razors:
 
         # Determine the highest performing model that is not significantly
         # different from the best average score column
-        best_rank_sum_idx = np.flatnonzero(np.isin(tests, tests[np.argmin(pvals)]))[0]
+        h_cutoff = np.nanmax(
+            self._cv_means[
+                [
+                    pair[0]
+                    for pair in tests
+                    if pair[0] != self._best_score_idx
+                    and pvals[tests.index(pair)] > self._alpha
+                ]
+            ]
+        )
 
-        # Determine bounds of the percentile interval
-        h_cutoff = np.nanmax(self._score_grid[best_rank_sum_idx])
-        l_cutoff = np.nanmin(self._score_grid[best_rank_sum_idx])
+        l_cutoff = np.nanmin(
+            self._cv_means[
+                [
+                    pair[0]
+                    for pair in tests
+                    if pair[0] != self._best_score_idx
+                    and pvals[tests.index(pair)] > self._alpha
+                ]
+            ]
+        )
 
         return l_cutoff, h_cutoff
 
