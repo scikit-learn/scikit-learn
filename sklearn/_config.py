@@ -1,9 +1,11 @@
 """Global configuration state and functions for management
 """
 import os
-from contextlib import contextmanager as contextmanager
 import threading
-import weakref
+
+from contextlib import contextmanager as contextmanager
+from typing import Dict
+from weakref import WeakKeyDictionary
 
 _global_config_default = {
     "assume_finite": bool(os.environ.get("SKLEARN_ASSUME_FINITE", False)),
@@ -18,7 +20,7 @@ _global_config_default = {
     "transform_output": "default",
 }
 _threadlocal = threading.local()
-_thread_config = weakref.WeakKeyDictionary()  # type: ignore
+_thread_config = WeakKeyDictionary()  # type: WeakKeyDictionary[threading.Thread, Dict]
 
 
 def _get_threadlocal_config():
