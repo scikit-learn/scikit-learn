@@ -80,6 +80,7 @@ from sklearn.utils.estimator_checks import (
     check_set_output_transform,
     check_set_output_transform_pandas,
     check_global_ouptut_transform_pandas,
+    check_get_feature_names_out_error,
 )
 
 
@@ -436,6 +437,63 @@ def test_transformers_get_feature_names_out(transformer):
         check_transformer_get_feature_names_out_pandas(
             transformer.__class__.__name__, transformer
         )
+
+
+ESTIMATORS_WITH_GET_FEATURE_NAMES_OUT = [
+    est for est in _tested_estimators() if hasattr(est, "get_feature_names_out")
+]
+
+WHITELISTED_FAILING_ESTIMATORS = [
+    "AdditiveChi2Sampler",
+    "Binarizer",
+    "DictVectorizer",
+    "GaussianRandomProjection",
+    "GenericUnivariateSelect",
+    "IterativeImputer",
+    "IsotonicRegression",
+    "KBinsDiscretizer",
+    "KNNImputer",
+    "MaxAbsScaler",
+    "MinMaxScaler",
+    "MissingIndicator",
+    "Normalizer",
+    "OrdinalEncoder",
+    "PowerTransformer",
+    "QuantileTransformer",
+    "RFE",
+    "RFECV",
+    "RobustScaler",
+    "SelectFdr",
+    "SelectFpr",
+    "SelectFromModel",
+    "SelectFwe",
+    "SelectKBest",
+    "SelectPercentile",
+    "SequentialFeatureSelector",
+    "SimpleImputer",
+    "SparseRandomProjection",
+    "SplineTransformer",
+    "StackingClassifier",
+    "StackingRegressor",
+    "StandardScaler",
+    "TfidfTransformer",
+    "VarianceThreshold",
+    "VotingClassifier",
+    "VotingRegressor",
+]
+
+
+@pytest.mark.parametrize(
+    "estimator", ESTIMATORS_WITH_GET_FEATURE_NAMES_OUT, ids=_get_check_estimator_ids
+)
+def test_estimators_get_feature_names_out_error(estimator):
+    estimator_name = estimator.__class__.__name__
+    if estimator_name in WHITELISTED_FAILING_ESTIMATORS:
+        return pytest.xfail(
+            reason=f"{estimator_name} is not failing with a consistent NotFittedError"
+        )
+    _set_checking_parameters(estimator)
+    check_get_feature_names_out_error(estimator_name, estimator)
 
 
 @pytest.mark.parametrize(
