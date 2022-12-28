@@ -512,9 +512,7 @@ def test_estimators_get_feature_names_out_error(estimator):
             reason=f"{estimator_name} is not failing with a consistent NotFittedError"
         )
     _set_checking_parameters(estimator)
-
-    with ignore_warnings(category=(FutureWarning)):
-        check_get_feature_names_out_error(estimator_name, estimator)
+    check_get_feature_names_out_error(estimator_name, estimator)
 
 
 @pytest.mark.parametrize(

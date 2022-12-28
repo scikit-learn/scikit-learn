@@ -2590,7 +2590,7 @@ def check_classifiers_multilabel_output_format_decision_function(name, classifie
     )
 
 
-@ignore_warnings
+@ignore_warnings(category=FutureWarning)
 def check_get_feature_names_out_error(name, estimator_orig):
     """Check the error raised by get_feature_names_out when called before fit.
 
