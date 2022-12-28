@@ -117,7 +117,7 @@ def test_additive_chi2_sampler():
         transformer.fit(Y_neg)
 
 
-@pytest.mark.parametrize("method", ["fit", "fit_transform"])
+@pytest.mark.parametrize("method", ["fit", "fit_transform", "transform"])
 @pytest.mark.parametrize("sample_steps", range(1, 4))
 def test_additive_chi2_sampler_sample_steps(method, sample_steps):
     """Check that the input sample step doesn't raise an error
@@ -148,7 +148,7 @@ def test_additive_chi2_sampler_future_warnings():
         assert transformer.sample_interval_ is not None
 
 
-@pytest.mark.parametrize("method", ["fit", "fit_transform"])
+@pytest.mark.parametrize("method", ["fit", "fit_transform", "transform"])
 def test_additive_chi2_sampler_wrong_sample_steps(method):
     """Check that we raise a ValueError on invalid sample_steps"""
     transformer = AdditiveChi2Sampler(sample_steps=4)
