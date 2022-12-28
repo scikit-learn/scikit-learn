@@ -680,7 +680,7 @@ def test_base_estimator_pickle_version(monkeypatch):
     assert not hasattr(original_estimator, "__sklearn_pickle_version__")
 
     # Loading pickle with newer version will raise a warning
-    new_version = "1.1.0"
+    new_version = "1.3.0"
     monkeypatch.setattr(sklearn.base, "__version__", new_version)
     message = pickle_error_message.format(
         estimator="MyEstimator",
