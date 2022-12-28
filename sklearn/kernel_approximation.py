@@ -667,6 +667,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
 
     def fit(self, X, y=None):
         """Only validates estimator's parameters.
+
         This method allows to: (i) validate the estimator's parameters and
         (ii) be consistent with the scikit-learn transformer API.
 
