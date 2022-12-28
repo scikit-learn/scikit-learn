@@ -32,6 +32,12 @@ random sampling procedures.
 Changes impacting all modules
 -----------------------------
 
+- |Enhancement| All scikit-learn estimators now save the scikit-learn version
+  with which they have been pickled into a private attribute,
+  `__sklearn_pickle_version__`. This allows access to this information without
+  having to parse the warning message.
+  :pr:`22094` by :user:`Gawein Le Goff <Edern76>`.
+
 Changelog
 ---------
 
