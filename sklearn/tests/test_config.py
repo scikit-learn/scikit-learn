@@ -165,13 +165,3 @@ def test_get_config_thread_dependent():
     assert thread_specific_config["assume_finite"] is True
     main_thread_config = get_config()
     assert main_thread_config["assume_finite"] is False
-
-    # check that we have 2 threads registered in the thread config dictionary
-    from sklearn._config import _thread_config
-
-    assert len(_thread_config) == 2
-
-    # delete the thread and check that the dictionary does keep a reference to it
-    # since we use a weakref dictionary
-    del thread
-    assert len(_thread_config) == 1
