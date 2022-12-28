@@ -135,6 +135,7 @@ PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.cluster.affinity_propagation", "sklearn.cluster.AffinityPropagation"),
     ("sklearn.covariance.ledoit_wolf", "sklearn.covariance.LedoitWolf"),
     ("sklearn.covariance.oas", "sklearn.covariance.OAS"),
+    ("sklearn.decomposition.fastica", "sklearn.decomposition.FastICA"),
 ]
 
 
