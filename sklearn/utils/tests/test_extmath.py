@@ -18,7 +18,7 @@ from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import skip_if_32bit
-from sklearn.utils.fixes import _mode
+from sklearn.utils.fixes import _mode, _eigh
 
 from sklearn.utils.extmath import density, _safe_accumulator_op
 from sklearn.utils.extmath import randomized_svd, _randomized_eigsh
@@ -233,8 +233,8 @@ def test_randomized_eigsh_compared_to_others(k):
     )
 
     # with LAPACK
-    eigvals_lapack, eigvecs_lapack = linalg.eigh(
-        X, eigvals=(n_features - k, n_features - 1)
+    eigvals_lapack, eigvecs_lapack = _eigh(
+        X, subset_by_index=(n_features - k, n_features - 1)
     )
     indices = eigvals_lapack.argsort()[::-1]
     eigvals_lapack = eigvals_lapack[indices]
