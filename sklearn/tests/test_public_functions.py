@@ -94,6 +94,7 @@ def _check_function_param_validation(
 
 
 PARAM_VALIDATION_FUNCTION_LIST = [
+    "sklearn.cluster.cluster_optics_dbscan",
     "sklearn.cluster.estimate_bandwidth",
     "sklearn.cluster.kmeans_plusplus",
     "sklearn.covariance.empirical_covariance",
