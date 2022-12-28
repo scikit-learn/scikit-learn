@@ -423,6 +423,22 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
     return core_distances
 
 
+@validate_params(
+    {
+        "X": [np.ndarray],
+        "min_samples": [
+            Interval(Integral, 1, None, closed="left"),
+            Interval(Real, 0, 1, closed="both")
+        ],
+        "max_eps": [Interval(Real, 0, None, closed="both")],
+        "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
+        "p": [Interval(Real, 1, None, closed="left")],
+        "metric_params": [dict, None],
+        "algorithm": [StrOptions({"auto", "brute", "ball_tree", "kd_tree"})],
+        "leaf_size": [Interval(Integral, 1, None, closed="left")],
+        "n_jobs": [Integral, None],
+    }
+)
 def compute_optics_graph(
     X, *, min_samples, max_eps, metric, p, metric_params, algorithm, leaf_size, n_jobs
 ):
