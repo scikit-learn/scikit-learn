@@ -224,8 +224,7 @@ def _csc_mean_variance_axis0(cnp.ndarray[floating, ndim=1, mode="c"] X_data,
                              unsigned long long n_features,
                              cnp.ndarray[integral, ndim=1] X_indices,
                              cnp.ndarray[integral, ndim=1] X_indptr,
-                             cnp.ndarray[floating, ndim=1] weights,
-):
+                             cnp.ndarray[floating, ndim=1] weights):
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef:
