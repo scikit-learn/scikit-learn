@@ -11,11 +11,6 @@ Evaluating a predictive linear model involves :ref:`cross-validation
   cross-validation framework.
 """
 
-print(__doc__)
-import sklearn
-
-sklearn.set_config(display="diagram")
-
 # Authors: Guillaume Lemaitre <g.lemaitre58@gmail.com>
 # License: BSD 3 clause
 
@@ -46,18 +41,18 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_
 # tuning on another dataset does not ensure an optimal parameter value for the
 # current dataset.
 #
-# Here, we use the class :class:`~sklearn.linear_model.RidgeCV` that can tune
-# `alpha` by internal leave-one-out cross-validation when calling `fit`.
-#
-# We also add a preprocessing stage to :ref:`standardize
-# <preprocessing_scaler>` the data such that the regularization strength is
-# applied homogeneously on each coefficient.
+# Here, we define a machine learning pipeline `model` made of a preprocessing
+# stage to :ref:`standardize <preprocessing_scaler>` the data such that the
+# regularization strength is applied homogeneously on each coefficient; followed
+# by a :class:`~sklearn.linear_model.RidgeCV` that will perform an internal
+# leave-one-out cross-validation to select the best parameter `alpha`.
+
 import numpy as np
 from sklearn.linear_model import RidgeCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-alphas = np.logspace(-1, 2.5, num=50)
+alphas = np.logspace(-1, 2.5, num=50) # candidates for the parameter `alpha`
 model = Pipeline(
     [
         ("scaler", StandardScaler()),
@@ -66,16 +61,11 @@ model = Pipeline(
 )
 
 # %%
-# `model` is a machine learning pipeline made of the preprocessing stage
-# followed by a ridge regressor that will perform an internal cross-validation
-# at `fit` to select the best parameter `alpha`. The candidates for the
-# parameter `alpha` are given by the variable `alphas`.
-#
 # Cross-validation framework
 # --------------------------
 #
-# Before putting such a predictive model into production, one needs to evaluate
-# the performance of the model to have an idea of what to expect in production.
+# Before applying such a predictive model on new data, as is often done in production, it is a good practice and
+# generally advisable to perform an unbiased evaluation of the performance of the model.
 #
 # Cross-validation should be used to make this analysis. First, it allows us to
 # quantify the variance of the model performance. A large variance of the score
@@ -162,15 +152,18 @@ plt.ylabel("Density")
 _ = plt.title("Distribution of alpha parameter \nduring cross-validation")
 
 # %%
-# We see that the regularization parameter, `alpha`, values are centered and
-# condensed around 40. This is a good sign and means that most of the models
-# tuned within the cross-validation had similar `alpha` values.
+# We see that, even if there are several values far beyond `alpha=40`, most of
+# the models tuned within the cross-validation had a regularization parameter
+# around this value. This is a good sign that this choice is stable across
+# folds.
 #
-# However, not only hyperparameter such as `alpha` should be studied. The model
-# parameter coming out of the fitting process should analyzed. In our case, we
-# used a linear model. These models are parametrized and rely on two
-# parameters: `coef_` and `intercept_`. Therefore, we should analyze the
-# variance of these parameters as well.
+# **Further inspection of linear models**
+#
+# Not only the hyperparameters such as `alpha` should be studied. If a model has
+# coefficients coming out of the fitting process, they should be analyzed as
+# well. In our case, we used a linear model. These models are parametrized and
+# rely on two parameters: `coef_` and `intercept_`. Therefore, we should analyze
+# the variance of these parameters as well.
 #
 # For the sake of simplicity, we are going to solely look at the `coef_`.
 import pandas as pd
@@ -185,7 +178,7 @@ coefficients
 import seaborn as sns
 
 plt.figure(figsize=(9, 7))
-sns.stripplot(data=coefficients, orient="h", color="k", alpha=0.5)
+sns.stripplot(data=coefficients, orient="h", palette="dark:k", alpha=0.5)
 sns.boxplot(data=coefficients, orient="h")
 plt.axvline(x=0, color=".5")
 plt.title("Coefficient values our model")
@@ -200,7 +193,7 @@ _ = plt.subplots_adjust(left=0.3)
 # samples had been smaller, if the model had not been properly regularized or
 # if we had strongly dependent features in the data.
 #
-# PFinalizing the predictive model
+# Finalizing the predictive model
 # --------------------------------
 #
 # In the above analysis, we saw that the internally tuned value of `alpha`
