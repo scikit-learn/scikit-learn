@@ -31,11 +31,11 @@ def test_imports_strategies():
     bad_imports = """
     import pytest
 
-    with pytest.raises(ImportError):
+    with pytest.raises(ImportError, match='HalvingGridSearchCV is experimental'):
         from sklearn.model_selection import HalvingGridSearchCV
 
     import sklearn.experimental
-    with pytest.raises(ImportError):
-        from sklearn.model_selection import HalvingGridSearchCV
+    with pytest.raises(ImportError, match='HalvingRandomSearchCV is experimental'):
+        from sklearn.model_selection import HalvingRandomSearchCV
     """
     assert_run_python_script(textwrap.dedent(bad_imports))

@@ -4,27 +4,26 @@
 
 from cpython cimport Py_INCREF, PyObject, PyTypeObject
 
-from libc.stdlib cimport malloc, free
+from libc.stdlib cimport free
 from libc.string cimport memcpy
 from libc.stdio cimport printf
 from libc.stdint cimport SIZE_MAX
 
-from ..tree._utils cimport safe_realloc, sizet_ptr_to_ndarray
-from ..utils import check_array
+from ..tree._utils cimport safe_realloc
 
 import numpy as np
-cimport numpy as np
-np.import_array()
+cimport numpy as cnp
+cnp.import_array()
 
 cdef extern from "math.h":
     float fabsf(float x) nogil
 
 cdef extern from "numpy/arrayobject.h":
-    object PyArray_NewFromDescr(PyTypeObject* subtype, np.dtype descr,
-                                int nd, np.npy_intp* dims,
-                                np.npy_intp* strides,
+    object PyArray_NewFromDescr(PyTypeObject* subtype, cnp.dtype descr,
+                                int nd, cnp.npy_intp* dims,
+                                cnp.npy_intp* strides,
                                 void* data, int flags, object obj)
-    int PyArray_SetBaseObject(np.ndarray arr, PyObject* obj)
+    int PyArray_SetBaseObject(cnp.ndarray arr, PyObject* obj)
 
 # Build the corresponding numpy dtype for Cell.
 # This works by casting `dummy` to an array of Cell of length 1, which numpy
@@ -116,7 +115,6 @@ cdef class _QuadTree:
                           SIZE_t cell_id=0) nogil except -1:
         """Insert a point in the QuadTree."""
         cdef int ax
-        cdef DTYPE_t n_frac
         cdef SIZE_t selected_child
         cdef Cell* cell = &self.cells[cell_id]
         cdef SIZE_t n_point = cell.cumulative_size
@@ -527,30 +525,30 @@ cdef class _QuadTree:
         if self._resize_c(self.capacity) != 0:
             raise MemoryError("resizing tree to %d" % self.capacity)
 
-        cells = memcpy(self.cells, (<np.ndarray> cell_ndarray).data,
+        cells = memcpy(self.cells, (<cnp.ndarray> cell_ndarray).data,
                        self.capacity * sizeof(Cell))
 
 
     # Array manipulation methods, to convert it to numpy or to resize
     # self.cells array
 
-    cdef np.ndarray _get_cell_ndarray(self):
+    cdef cnp.ndarray _get_cell_ndarray(self):
         """Wraps nodes as a NumPy struct array.
 
         The array keeps a reference to this Tree, which manages the underlying
         memory. Individual fields are publicly accessible as properties of the
         Tree.
         """
-        cdef np.npy_intp shape[1]
-        shape[0] = <np.npy_intp> self.cell_count
-        cdef np.npy_intp strides[1]
+        cdef cnp.npy_intp shape[1]
+        shape[0] = <cnp.npy_intp> self.cell_count
+        cdef cnp.npy_intp strides[1]
         strides[0] = sizeof(Cell)
-        cdef np.ndarray arr
+        cdef cnp.ndarray arr
         Py_INCREF(CELL_DTYPE)
         arr = PyArray_NewFromDescr(<PyTypeObject *> np.ndarray,
                                    CELL_DTYPE, 1, shape,
                                    strides, <void*> self.cells,
-                                   np.NPY_DEFAULT, None)
+                                   cnp.NPY_DEFAULT, None)
         Py_INCREF(self)
         if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
             raise ValueError("Can't initialize array!")

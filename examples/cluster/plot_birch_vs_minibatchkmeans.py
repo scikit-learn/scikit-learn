@@ -62,7 +62,6 @@ final_step = ["without global clustering", "with global clustering"]
 for ind, (birch_model, info) in enumerate(zip(birch_models, final_step)):
     t = time()
     birch_model.fit(X)
-    time_ = time() - t
     print("BIRCH %s as the final step took %0.2f seconds" % (info, (time() - t)))
 
     # Plot result

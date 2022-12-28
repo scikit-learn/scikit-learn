@@ -4,11 +4,15 @@ import pytest
 
 from scipy import linalg
 
+from sklearn.base import clone
+from sklearn._config import config_context
 from sklearn.utils import check_random_state
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_almost_equal
+from sklearn.utils._array_api import _convert_to_numpy
+from sklearn.utils._testing import _convert_container
 
 from sklearn.datasets import make_blobs
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
@@ -99,21 +103,8 @@ def test_lda_predict():
         # LDA shouldn't be able to separate those
         assert np.any(y_pred3 != y3), "solver %s" % solver
 
-    # Test invalid shrinkages
-    clf = LinearDiscriminantAnalysis(solver="lsqr", shrinkage=-0.2231)
-    with pytest.raises(ValueError):
-        clf.fit(X, y)
-
-    clf = LinearDiscriminantAnalysis(solver="eigen", shrinkage="dummy")
-    with pytest.raises(ValueError):
-        clf.fit(X, y)
-
     clf = LinearDiscriminantAnalysis(solver="svd", shrinkage="auto")
     with pytest.raises(NotImplementedError):
-        clf.fit(X, y)
-
-    clf = LinearDiscriminantAnalysis(solver="lsqr", shrinkage=np.array([1, 2]))
-    with pytest.raises(TypeError, match="shrinkage must be a float or a string"):
         clf.fit(X, y)
 
     clf = LinearDiscriminantAnalysis(
@@ -129,11 +120,6 @@ def test_lda_predict():
     ):
         clf.fit(X, y)
 
-    # Test unknown solver
-    clf = LinearDiscriminantAnalysis(solver="dummy")
-    with pytest.raises(ValueError):
-        clf.fit(X, y)
-
     # test bad solver with covariance_estimator
     clf = LinearDiscriminantAnalysis(solver="svd", covariance_estimator=LedoitWolf())
     with pytest.raises(
@@ -143,11 +129,9 @@ def test_lda_predict():
 
     # test bad covariance estimator
     clf = LinearDiscriminantAnalysis(
-        solver="lsqr", covariance_estimator=KMeans(n_clusters=2)
+        solver="lsqr", covariance_estimator=KMeans(n_clusters=2, n_init="auto")
     )
-    with pytest.raises(
-        ValueError, match="KMeans does not have a covariance_ attribute"
-    ):
+    with pytest.raises(ValueError):
         clf.fit(X, y)
 
 
@@ -572,6 +556,30 @@ def test_qda_priors():
     assert n_pos2 > n_pos
 
 
+@pytest.mark.parametrize("priors_type", ["list", "tuple", "array"])
+def test_qda_prior_type(priors_type):
+    """Check that priors accept array-like."""
+    priors = [0.5, 0.5]
+    clf = QuadraticDiscriminantAnalysis(
+        priors=_convert_container([0.5, 0.5], priors_type)
+    ).fit(X6, y6)
+    assert isinstance(clf.priors_, np.ndarray)
+    assert_array_equal(clf.priors_, priors)
+
+
+def test_qda_prior_copy():
+    """Check that altering `priors` without `fit` doesn't change `priors_`"""
+    priors = np.array([0.5, 0.5])
+    qda = QuadraticDiscriminantAnalysis(priors=priors).fit(X, y)
+
+    # we expect the following
+    assert_array_equal(qda.priors_, qda.priors)
+
+    # altering `priors` without `fit` should not change `priors_`
+    priors[0] = 0.2
+    assert qda.priors_[0] != qda.priors[0]
+
+
 def test_qda_store_covariance():
     # The default is to not set the covariances_ attribute
     clf = QuadraticDiscriminantAnalysis().fit(X6, y6)
@@ -638,7 +646,7 @@ def test_covariance():
     assert_almost_equal(c_s, c_s.T)
 
 
-@pytest.mark.parametrize("solver", ["svd, lsqr", "eigen"])
+@pytest.mark.parametrize("solver", ["svd", "lsqr", "eigen"])
 def test_raises_value_error_on_same_number_of_classes_and_samples(solver):
     """
     Tests that if the number of samples equals the number
@@ -666,3 +674,60 @@ def test_get_feature_names_out():
         dtype=object,
     )
     assert_array_equal(names_out, expected_names_out)
+
+
+@pytest.mark.parametrize("array_namespace", ["numpy.array_api", "cupy.array_api"])
+def test_lda_array_api(array_namespace):
+    """Check that the array_api Array gives the same results as ndarrays."""
+    xp = pytest.importorskip(array_namespace)
+
+    X_xp = xp.asarray(X)
+    y_xp = xp.asarray(y3)
+
+    lda = LinearDiscriminantAnalysis()
+    lda.fit(X, y3)
+
+    array_attributes = {
+        key: value for key, value in vars(lda).items() if isinstance(value, np.ndarray)
+    }
+
+    lda_xp = clone(lda)
+    with config_context(array_api_dispatch=True):
+        lda_xp.fit(X_xp, y_xp)
+
+    # Fitted-attributes which are arrays must have the same
+    # namespace than the one of the training data.
+    for key, attribute in array_attributes.items():
+        lda_xp_param = getattr(lda_xp, key)
+        assert hasattr(lda_xp_param, "__array_namespace__")
+
+        lda_xp_param_np = _convert_to_numpy(lda_xp_param, xp=xp)
+        assert_allclose(
+            attribute, lda_xp_param_np, err_msg=f"{key} not the same", atol=1e-3
+        )
+
+    # Check predictions are the same
+    methods = (
+        "decision_function",
+        "predict",
+        "predict_log_proba",
+        "predict_proba",
+        "transform",
+    )
+
+    for method in methods:
+        result = getattr(lda, method)(X)
+        with config_context(array_api_dispatch=True):
+            result_xp = getattr(lda_xp, method)(X_xp)
+        assert hasattr(
+            result_xp, "__array_namespace__"
+        ), f"{method} did not output an array_namespace"
+
+        result_xp_np = _convert_to_numpy(result_xp, xp=xp)
+
+        assert_allclose(
+            result,
+            result_xp_np,
+            err_msg=f"{method} did not the return the same result",
+            atol=1e-6,
+        )

@@ -16,10 +16,11 @@ point. This makes feature selection by the Lasso more stable.
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD 3 clause
 
-import matplotlib.pyplot as plt
-import numpy as np
+# %%
+# Generate data
+# -------------
 
-from sklearn.linear_model import MultiTaskLasso, Lasso
+import numpy as np
 
 rng = np.random.RandomState(42)
 
@@ -34,11 +35,21 @@ for k in range(n_relevant_features):
 X = rng.randn(n_samples, n_features)
 Y = np.dot(X, coef.T) + rng.randn(n_samples, n_tasks)
 
+# %%
+# Fit models
+# ----------
+
+from sklearn.linear_model import MultiTaskLasso, Lasso
+
 coef_lasso_ = np.array([Lasso(alpha=0.5).fit(X, y).coef_ for y in Y.T])
 coef_multi_task_lasso_ = MultiTaskLasso(alpha=1.0).fit(X, Y).coef_
 
-# #############################################################################
+# %%
 # Plot support and time series
+# ----------------------------
+
+import matplotlib.pyplot as plt
+
 fig = plt.figure(figsize=(8, 5))
 plt.subplot(1, 2, 1)
 plt.spy(coef_lasso_)

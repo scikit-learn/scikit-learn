@@ -28,15 +28,17 @@ The main theoretical result behind the efficiency of random projection is the
 
 import warnings
 from abc import ABCMeta, abstractmethod
+from numbers import Integral, Real
 
 import numpy as np
 from scipy import linalg
 import scipy.sparse as sp
 
 from .base import BaseEstimator, TransformerMixin
-from .base import _ClassNamePrefixFeaturesOutMixin
+from .base import ClassNamePrefixFeaturesOutMixin
 
 from .utils import check_random_state
+from .utils._param_validation import Interval, StrOptions
 from .utils.extmath import safe_sparse_dot
 from .utils.random import sample_without_replacement
 from .utils.validation import check_array, check_is_fitted
@@ -94,6 +96,15 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
         The minimal number of components to guarantee with good probability
         an eps-embedding with n_samples.
 
+    References
+    ----------
+
+    .. [1] https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
+
+    .. [2] `Sanjoy Dasgupta and Anupam Gupta, 1999,
+           "An elementary proof of the Johnson-Lindenstrauss Lemma."
+           <https://citeseerx.ist.psu.edu/doc_view/pid/95cd464d27c25c9c8690b378b894d337cdf021f9>`_
+
     Examples
     --------
     >>> from sklearn.random_projection import johnson_lindenstrauss_min_dim
@@ -105,16 +116,6 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
 
     >>> johnson_lindenstrauss_min_dim([1e4, 1e5, 1e6], eps=0.1)
     array([ 7894,  9868, 11841])
-
-    References
-    ----------
-
-    .. [1] https://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
-
-    .. [2] Sanjoy Dasgupta and Anupam Gupta, 1999,
-           "An elementary proof of the Johnson-Lindenstrauss Lemma."
-           http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.45.3654
-
     """
     eps = np.asarray(eps)
     n_samples = np.asarray(n_samples)
@@ -250,7 +251,7 @@ def _sparse_random_matrix(n_components, n_features, density="auto", random_state
            https://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
     .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
-           http://www.cs.ucsc.edu/~optas/papers/jl.pdf
+           https://cgi.di.uoa.gr/~optas/papers/jl.pdf
 
     """
     _check_input_size(n_components, n_features)
@@ -291,13 +292,23 @@ def _sparse_random_matrix(n_components, n_features, density="auto", random_state
 
 
 class BaseRandomProjection(
-    TransformerMixin, BaseEstimator, _ClassNamePrefixFeaturesOutMixin, metaclass=ABCMeta
+    TransformerMixin, BaseEstimator, ClassNamePrefixFeaturesOutMixin, metaclass=ABCMeta
 ):
     """Base class for random projections.
 
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
+
+    _parameter_constraints: dict = {
+        "n_components": [
+            Interval(Integral, 1, None, closed="left"),
+            StrOptions({"auto"}),
+        ],
+        "eps": [Interval(Real, 0, None, closed="neither")],
+        "compute_inverse_components": ["boolean"],
+        "random_state": ["random_state"],
+    }
 
     @abstractmethod
     def __init__(
@@ -357,6 +368,7 @@ class BaseRandomProjection(
         self : object
             BaseRandomProjection class instance.
         """
+        self._validate_params()
         X = self._validate_data(
             X, accept_sparse=["csr", "csc"], dtype=[np.float64, np.float32]
         )
@@ -382,12 +394,7 @@ class BaseRandomProjection(
                     % (self.eps, n_samples, self.n_components_, n_features)
                 )
         else:
-            if self.n_components <= 0:
-                raise ValueError(
-                    "n_components must be greater than 0, got %s" % self.n_components
-                )
-
-            elif self.n_components > n_features:
+            if self.n_components > n_features:
                 warnings.warn(
                     "The number of components is higher than the number of"
                     " features: n_features < n_components (%s < %s)."
@@ -412,7 +419,7 @@ class BaseRandomProjection(
     def _n_features_out(self):
         """Number of transformed output features.
 
-        Used by _ClassNamePrefixFeaturesOutMixin.get_feature_names_out.
+        Used by ClassNamePrefixFeaturesOutMixin.get_feature_names_out.
         """
         return self.n_components
 
@@ -710,7 +717,7 @@ class SparseRandomProjection(BaseRandomProjection):
            https://web.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
     .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
-           https://users.soe.ucsc.edu/~optas/papers/jl.pdf
+           https://cgi.di.uoa.gr/~optas/papers/jl.pdf
 
     Examples
     --------
@@ -726,6 +733,12 @@ class SparseRandomProjection(BaseRandomProjection):
     >>> np.mean(transformer.components_ != 0)
     0.0182...
     """
+
+    _parameter_constraints: dict = {
+        **BaseRandomProjection._parameter_constraints,
+        "density": [Interval(Real, 0.0, 1.0, closed="right"), StrOptions({"auto"})],
+        "dense_output": ["boolean"],
+    }
 
     def __init__(
         self,
