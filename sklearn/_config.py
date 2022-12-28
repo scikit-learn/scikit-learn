@@ -4,7 +4,7 @@ import os
 import threading
 
 from contextlib import contextmanager as contextmanager
-from typing import Dict
+from typing import Dict  # noqa
 from weakref import WeakKeyDictionary
 
 _global_config_default = {
