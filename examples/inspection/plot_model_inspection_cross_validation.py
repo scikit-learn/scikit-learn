@@ -64,8 +64,9 @@ model = Pipeline(
 # Cross-validation framework
 # --------------------------
 #
-# Before applying such a predictive model on new data, as is often done in production, it is a good practice and
-# generally advisable to perform an unbiased evaluation of the performance of the model.
+# Before applying such a predictive model on new data, as is often done in
+# production, it is a good practice and generally advisable to perform an
+# unbiased evaluation of the performance of the model.
 #
 # Cross-validation should be used to make this analysis. First, it allows us to
 # quantify the variance of the model performance. A large variance of the score
