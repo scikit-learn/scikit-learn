@@ -2068,29 +2068,18 @@ class Razors:
             for pair in tests
         ]
 
-        # Determine the highest performing model that is not significantly
-        # different from the best average score column
-        h_cutoff = np.nanmax(
-            self._cv_means[
-                [
-                    pair[0]
-                    for pair in tests
-                    if pair[0] != self._best_score_idx
-                    and pvals[tests.index(pair)] > self._alpha
-                ]
-            ]
-        )
+        # Return the models that are not significantly different from the best average
+        # score column, else return the best model.
+        surviving_ranks = [
+            pair[0] for pair in tests if pvals[tests.index(pair)] > self._alpha
+        ]
+        if len(surviving_ranks) == 0:
+            surviving_ranks = [self._best_score_idx]
+            print("All models are significantly different from the best average score.")
 
-        l_cutoff = np.nanmin(
-            self._cv_means[
-                [
-                    pair[0]
-                    for pair in tests
-                    if pair[0] != self._best_score_idx
-                    and pvals[tests.index(pair)] > self._alpha
-                ]
-            ]
-        )
+        h_cutoff = np.nanmax(self._cv_means[surviving_ranks])
+
+        l_cutoff = np.nanmin(self._cv_means[surviving_ranks])
 
         return l_cutoff, h_cutoff
 
