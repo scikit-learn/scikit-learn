@@ -651,10 +651,10 @@ def _set_reach_dist(
 
 @validate_params(
     {
-        "reachability": [None, np.ndarray],
-        "core_distances": [None, np.ndarray],
-        "ordering": [None, np.ndarray],
-        "eps": [Interval(Real, 0, None, closed="neither")],
+        "reachability": [np.ndarray],
+        "core_distances": [np.ndarray],
+        "ordering": [np.ndarray],
+        "eps": [Interval(Real, 0, None, closed="both")],
     }
 )
 def cluster_optics_dbscan(*, reachability, core_distances, ordering, eps):
