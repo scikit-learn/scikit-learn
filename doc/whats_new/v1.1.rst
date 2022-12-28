@@ -656,10 +656,6 @@ Changelog
 :mod:`sklearn.ensemble`
 .......................
 
-- |Feature| Added additional option `loss="gamma"` to
-  :class:`ensemble.HistGradientBoostingRegressor` for modelling skewed
-  distributed, positive valued targets.
-  :pr:`22409` by :user:`Christian Lorentzen <lorentzenchr>`.
 - |MajorFeature| Added additional option `loss="quantile"` to
   :class:`ensemble.HistGradientBoostingRegressor` for modelling quantiles.
   The quantile level can be specified with the new parameter `quantile`.

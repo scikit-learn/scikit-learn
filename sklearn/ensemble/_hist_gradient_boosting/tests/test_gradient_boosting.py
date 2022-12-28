@@ -290,16 +290,16 @@ def test_gamma():
     for model in (gbdt_gamma, gbdt_mse, dummy):
         model.fit(X_train, y_train)
 
-    for sample, X, y in [("train", X_train, y_train), ("test", X_test, y_test)]:
-        score_gbdt_gamma = mean_gamma_deviance(y, gbdt_gamma.predict(X))
+    for X, y in [(X_train, y_train), (X_test, y_test)]:
+        loss_gbdt_gamma = mean_gamma_deviance(y, gbdt_gamma.predict(X))
         # We restrict the squared error HGBT to predict at least the minimum seen y at
         # train time to make it strict positive.
-        score_gbdt_mse = mean_gamma_deviance(
+        loss_gbdt_mse = mean_gamma_deviance(
             y, np.maximum(np.min(y_train), gbdt_mse.predict(X))
         )
-        score_dummy = mean_gamma_deviance(y, dummy.predict(X))
-        assert score_gbdt_gamma < score_dummy
-        assert score_gbdt_gamma < score_gbdt_mse
+        loss_dummy = mean_gamma_deviance(y, dummy.predict(X))
+        assert loss_gbdt_gamma < loss_dummy
+        assert loss_gbdt_gamma < loss_gbdt_mse
 
 
 @pytest.mark.parametrize("quantile", [0.2, 0.5, 0.8])

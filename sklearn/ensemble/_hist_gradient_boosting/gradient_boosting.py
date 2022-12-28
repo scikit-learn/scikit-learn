@@ -1220,7 +1220,10 @@ class HistGradientBoostingRegressor(RegressorMixin, BaseHistGradientBoosting):
            Added option 'poisson'.
 
         .. versionchanged:: 1.1
-           Added options 'gamma' and 'quantile'.
+           Added option 'quantile'.
+
+        .. versionchanged:: 1.3
+           Added option 'gamma'.
 
     quantile : float, default=None
         If loss is "quantile", this parameter specifies which quantile to be estimated

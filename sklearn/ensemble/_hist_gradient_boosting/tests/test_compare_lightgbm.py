@@ -89,19 +89,19 @@ def test_same_predictions_regression(
     pred_lightgbm = est_lightgbm.predict(X_train)
     pred_sklearn = est_sklearn.predict(X_train)
     if loss in ("gamma", "poisson"):
-        # more than 65% of the predictions are close up to the 2rd decimal
+        # More than 65% of the predictions must be close up to the 2nd decimal.
         assert (
             np.mean(np.isclose(pred_lightgbm, pred_sklearn, rtol=1e-2, atol=1e-2))
             > 0.65
         )
     else:
-        # less than 1% of the predictions are different up to the 3rd decimal
+        # Less than 1% of the predictions may deviate more than 1e-3 in relative terms.
         assert np.mean(np.isclose(pred_lightgbm, pred_sklearn, rtol=1e-3)) > 1 - 0.01
 
-    if max_leaf_nodes < 10 and n_samples >= 1000 and loss not in ("poisson", "gamma"):
+    if max_leaf_nodes < 10 and n_samples >= 1000 and loss in ("squared_error"):
         pred_lightgbm = est_lightgbm.predict(X_test)
         pred_sklearn = est_sklearn.predict(X_test)
-        # less than 1% of the predictions are different up to the 4th decimal
+        # Less than 1% of the predictions may deviate more than 1e-4 in relative terms.
         assert np.mean(np.isclose(pred_lightgbm, pred_sklearn, rtol=1e-4)) > 1 - 0.01
 
 
