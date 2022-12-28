@@ -36,7 +36,7 @@ def test_same_predictions_regression(
     #   is not exactly the same. To avoid this issue we only compare the
     #   predictions on the test set when the number of samples is large enough
     #   and max_leaf_nodes is low enough.
-    # - To ignore  discrepancies caused by small differences in the binning
+    # - To ignore discrepancies caused by small differences in the binning
     #   strategy, data is pre-binned if n_samples > 255.
     # - We don't check the absolute_error loss here. This is because
     #   LightGBM's computation of the median (used for the initial value of
@@ -46,8 +46,9 @@ def test_same_predictions_regression(
     #   the predictions. These differences are much smaller with more
     #   iterations.
     pytest.importorskip("lightgbm")
-    if loss == "gamma":
-        pytest.skip("LightGBM with gamma loss has larger deviation.")
+    pytest.skipif(
+        loss == "gamma", reason="LightGBM with gamma loss has larger deviation."
+    )
 
     rng = np.random.RandomState(seed=seed)
     max_iter = 1
