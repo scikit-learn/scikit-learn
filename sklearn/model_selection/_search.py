@@ -36,11 +36,12 @@ from ..exceptions import NotFittedError
 from joblib import Parallel
 from ..utils import check_random_state
 from ..utils.random import sample_without_replacement
+from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils._tags import _safe_tags
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.metaestimators import available_if
 from ..utils.fixes import delayed
-from ..metrics._scorer import _check_multimetric_scoring
+from ..metrics._scorer import _check_multimetric_scoring, get_scorer_names
 from ..metrics import check_scoring
 
 __all__ = [
@@ -377,6 +378,25 @@ def _estimator_has(attr):
 
 class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
     """Abstract base class for hyper parameter search with cross-validation."""
+
+    _parameter_constraints: dict = {
+        "estimator": [HasMethods(["fit"])],
+        "scoring": [
+            StrOptions(set(get_scorer_names())),
+            callable,
+            list,
+            tuple,
+            dict,
+            None,
+        ],
+        "n_jobs": [numbers.Integral, None],
+        "refit": ["boolean", str, callable],
+        "cv": ["cv_object"],
+        "verbose": ["verbose"],
+        "pre_dispatch": [numbers.Integral, str],
+        "error_score": [StrOptions({"raise"}), numbers.Real],
+        "return_train_score": ["boolean"],
+    }
 
     @abstractmethod
     def __init__(
@@ -773,6 +793,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             Instance of fitted estimator.
         """
+        self._validate_params()
         estimator = self.estimator
         refit_metric = "score"
 
@@ -1360,6 +1381,11 @@ class GridSearchCV(BaseSearchCV):
 
     _required_parameters = ["estimator", "param_grid"]
 
+    _parameter_constraints: dict = {
+        **BaseSearchCV._parameter_constraints,
+        "param_grid": [dict, list],
+    }
+
     def __init__(
         self,
         estimator,
@@ -1735,6 +1761,13 @@ class RandomizedSearchCV(BaseSearchCV):
     """
 
     _required_parameters = ["estimator", "param_distributions"]
+
+    _parameter_constraints: dict = {
+        **BaseSearchCV._parameter_constraints,
+        "param_distributions": [dict, list],
+        "n_iter": [Interval(numbers.Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+    }
 
     def __init__(
         self,

@@ -400,7 +400,7 @@ def test_no_refit():
     error_msg = (
         "For multi-metric scoring, the parameter refit must be set to a scorer key"
     )
-    for refit in ["", 5, True, "recall", "accuracy"]:
+    for refit in [True, "recall", "accuracy"]:
         with pytest.raises(ValueError, match=error_msg):
             GridSearchCV(
                 clf, {}, refit=refit, scoring={"acc": "accuracy", "prec": "precision"}
