@@ -1654,6 +1654,8 @@ def test_feature_union_feature_names_in_():
     `columns` attribute.
 
     Test for #24754"""
+    pytest.importorskip("pandas")
+
     X, _ = load_iris(as_frame=True, return_X_y=True)
     X_train, X_test = train_test_split(X, random_state=0)
 
