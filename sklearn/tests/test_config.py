@@ -1,4 +1,5 @@
 import time
+import threading
 from concurrent.futures import ThreadPoolExecutor
 
 from joblib import Parallel
@@ -120,15 +121,15 @@ def test_config_threadsafe_joblib(backend):
     should be the same as the value passed to the function. In other words,
     it is not influenced by the other job setting assume_finite to True.
     """
-    assume_finites = [False, True]
-    sleep_durations = [0.1, 0.2]
+    assume_finites = [False, True, False, True]
+    sleep_durations = [0.1, 0.2, 0.1, 0.2]
 
-    items = Parallel(backend=backend, n_jobs=2)(
+    items = Parallel(backend=backend, n_jobs=2, pre_dispatch=2)(
         delayed(set_assume_finite)(assume_finite, sleep_dur)
         for assume_finite, sleep_dur in zip(assume_finites, sleep_durations)
     )
 
-    assert items == [False, True]
+    assert items == [False, True, False, True]
 
 
 def test_config_threadsafe():
@@ -136,8 +137,8 @@ def test_config_threadsafe():
     between threads. Same test as `test_config_threadsafe_joblib` but with
     `ThreadPoolExecutor`."""
 
-    assume_finites = [False, True]
-    sleep_durations = [0.1, 0.2]
+    assume_finites = [False, True, False, True]
+    sleep_durations = [0.1, 0.2, 0.1, 0.2]
 
     with ThreadPoolExecutor(max_workers=2) as e:
         items = [
@@ -145,4 +146,32 @@ def test_config_threadsafe():
             for output in e.map(set_assume_finite, assume_finites, sleep_durations)
         ]
 
-    assert items == [False, True]
+    assert items == [False, True, False, True]
+
+
+def test_get_config_thread_dependent():
+    """Check that we can retrieve the config file from a specific thread."""
+
+    def set_definitive_assume_finite(assume_finite, sleep_duration):
+        set_config(assume_finite=assume_finite)
+        time.sleep(sleep_duration)
+        return get_config()["assume_finite"]
+
+    thread = threading.Thread(target=set_definitive_assume_finite, args=(True, 0.1))
+    thread.start()
+    thread.join()
+
+    thread_specific_config = get_config(thread=thread)
+    assert thread_specific_config["assume_finite"] is True
+    main_thread_config = get_config()
+    assert main_thread_config["assume_finite"] is False
+
+    # check that we have 2 threads registered in the thread config dictionary
+    from sklearn._config import _thread_config
+
+    assert len(_thread_config) == 2
+
+    # delete the thread and check that the dictionary does keep a reference to it
+    # since we use a weakref dictionary
+    del thread
+    assert len(_thread_config) == 1
