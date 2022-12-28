@@ -58,7 +58,7 @@ def _calculate_permutation_scores(
         if hasattr(X_permuted, "iloc"):
             col = X_permuted.iloc[shuffling_idx, col_idx]
             col.index = X_permuted.index
-            X_permuted.iloc[:, col_idx] = col
+            X_permuted[X_permuted.columns[col_idx]] = col
         else:
             X_permuted[:, col_idx] = X_permuted[shuffling_idx, col_idx]
         scores.append(_weights_scorer(scorer, estimator, X_permuted, y, sample_weight))

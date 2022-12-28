@@ -79,13 +79,6 @@ def test_iforest_error():
     """Test that it gives proper exception on deficient input."""
     X = iris.data
 
-    # Test max_samples
-    with pytest.raises(ValueError):
-        IsolationForest(max_samples=-1).fit(X)
-    with pytest.raises(ValueError):
-        IsolationForest(max_samples=0.0).fit(X)
-    with pytest.raises(ValueError):
-        IsolationForest(max_samples=2.0).fit(X)
     # The dataset has less than 256 samples, explicitly setting
     # max_samples > n_samples should result in a warning. If not set
     # explicitly there should be no warning
@@ -98,11 +91,6 @@ def test_iforest_error():
     with warnings.catch_warnings():
         warnings.simplefilter("error", UserWarning)
         IsolationForest(max_samples=np.int64(2)).fit(X)
-
-    with pytest.raises(ValueError):
-        IsolationForest(max_samples="foobar").fit(X)
-    with pytest.raises(ValueError):
-        IsolationForest(max_samples=1.5).fit(X)
 
     # test X_test n_features match X_train one:
     with pytest.raises(ValueError):
@@ -328,18 +316,6 @@ def test_iforest_with_uniform_data():
     assert all(iforest.predict(np.ones((100, 10))) == 1)
 
 
-# FIXME: remove in 1.2
-def test_n_features_deprecation():
-    # Check that we raise the proper deprecation warning if accessing
-    # `n_features_`.
-    X = np.array([[1, 2], [3, 4]])
-    y = np.array([1, 0])
-    est = IsolationForest().fit(X, y)
-
-    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
-        est.n_features_
-
-
 def test_iforest_with_n_jobs_does_not_segfault():
     """Check that Isolation Forest does not segfault with n_jobs=2
 
@@ -348,3 +324,18 @@ def test_iforest_with_n_jobs_does_not_segfault():
     X, _ = make_classification(n_samples=85_000, n_features=100, random_state=0)
     X = csc_matrix(X)
     IsolationForest(n_estimators=10, max_samples=256, n_jobs=2).fit(X)
+
+
+# TODO(1.4): remove in 1.4
+def test_base_estimator_property_deprecated():
+    X = np.array([[1, 2], [3, 4]])
+    y = np.array([1, 0])
+    model = IsolationForest()
+    model.fit(X, y)
+
+    warn_msg = (
+        "Attribute `base_estimator_` was deprecated in version 1.2 and "
+        "will be removed in 1.4. Use `estimator_` instead."
+    )
+    with pytest.warns(FutureWarning, match=warn_msg):
+        model.base_estimator_

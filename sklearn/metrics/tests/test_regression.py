@@ -300,12 +300,6 @@ def test_regression_metrics_at_limits():
     with pytest.raises(ValueError, match=msg):
         d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
 
-    power = 0.5
-    with pytest.raises(ValueError, match="is only defined for power<=0 and power>=1"):
-        mean_tweedie_deviance([0.0], [0.0], power=power)
-    with pytest.raises(ValueError, match="is only defined for power<=0 and power>=1"):
-        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
-
 
 def test__check_reg_targets():
     # All of length 3
@@ -613,3 +607,15 @@ def test_dummy_quantile_parameter_tuning():
         ).fit(X, y)
 
         assert grid_search.best_params_["quantile"] == pytest.approx(alpha)
+
+
+def test_pinball_loss_relation_with_mae():
+    # Test that mean_pinball loss with alpha=0.5 if half of mean absolute error
+    rng = np.random.RandomState(714)
+    n = 100
+    y_true = rng.normal(size=n)
+    y_pred = y_true.copy() + rng.uniform(n)
+    assert (
+        mean_absolute_error(y_true, y_pred)
+        == mean_pinball_loss(y_true, y_pred, alpha=0.5) * 2
+    )

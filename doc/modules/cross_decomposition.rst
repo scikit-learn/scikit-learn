@@ -185,7 +185,7 @@ targets is greater than the number of samples.
 
    .. [1] `A survey of Partial Least Squares (PLS) methods, with emphasis on
       the two-block case
-      <https://www.stat.washington.edu/research/reports/2000/tr371.pdf>`_
+      <https://stat.uw.edu/sites/default/files/files/reports/2000/tr371.pdf>`_
       JA Wegelin
 
 .. topic:: Examples:

@@ -63,6 +63,3 @@ doc-noplot: inplace
 code-analysis:
 	flake8 sklearn | grep -v __init__ | grep -v external
 	pylint -E -i y sklearn/ -d E1103,E0611,E1101
-
-flake8-diff:
-	git diff upstream/main -u -- "*.py" | flake8 --diff
