@@ -201,14 +201,6 @@ Changelog
 - |Fix| :func:`utils.class_weight.compute_sample_weight` now works with sparse `y`.
   :pr:`23115` by :user:`kernc <kernc>`.
 
-:mod:`sklearn.model_selection`
-..............................
-
-- |Fix| :func:`model_selection.cross_validate` with multimetric scoring in
-  case of some failing scorers the non-failing scorers now returning proper
-  scores instead of `error_score` values.
-  :pr:`23101` by :user:`András Simon <simonandras>` and `Thomas Fan`_.
-
 .. _changes_1_1:
 
 Version 1.1.0
