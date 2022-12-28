@@ -49,6 +49,7 @@ import sklearn
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.experimental import enable_halving_search_cv  # noqa
 
+from sklearn.compose import ColumnTransformer
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler, MinMaxScaler, OneHotEncoder
 from sklearn.linear_model._base import LinearClassifierMixin
@@ -80,6 +81,7 @@ from sklearn.utils.estimator_checks import (
     check_set_output_transform,
     check_set_output_transform_pandas,
     check_global_ouptut_transform_pandas,
+    check_get_feature_names_out_error,
 )
 
 
@@ -273,6 +275,14 @@ def test_class_support_removed():
         parametrize_with_checks([LogisticRegression])
 
 
+def _generate_column_transformer_instances():
+    yield ColumnTransformer(
+        transformers=[
+            ("trans1", StandardScaler(), [0, 1]),
+        ]
+    )
+
+
 def _generate_pipeline():
     for final_estimator in [Ridge(), LogisticRegression()]:
         yield Pipeline(
@@ -448,6 +458,63 @@ def test_transformers_get_feature_names_out(transformer):
         )
 
 
+ESTIMATORS_WITH_GET_FEATURE_NAMES_OUT = [
+    est for est in _tested_estimators() if hasattr(est, "get_feature_names_out")
+]
+
+WHITELISTED_FAILING_ESTIMATORS = [
+    "AdditiveChi2Sampler",
+    "Binarizer",
+    "DictVectorizer",
+    "GaussianRandomProjection",
+    "GenericUnivariateSelect",
+    "IterativeImputer",
+    "IsotonicRegression",
+    "KBinsDiscretizer",
+    "KNNImputer",
+    "MaxAbsScaler",
+    "MinMaxScaler",
+    "MissingIndicator",
+    "Normalizer",
+    "OrdinalEncoder",
+    "PowerTransformer",
+    "QuantileTransformer",
+    "RFE",
+    "RFECV",
+    "RobustScaler",
+    "SelectFdr",
+    "SelectFpr",
+    "SelectFromModel",
+    "SelectFwe",
+    "SelectKBest",
+    "SelectPercentile",
+    "SequentialFeatureSelector",
+    "SimpleImputer",
+    "SparseRandomProjection",
+    "SplineTransformer",
+    "StackingClassifier",
+    "StackingRegressor",
+    "StandardScaler",
+    "TfidfTransformer",
+    "VarianceThreshold",
+    "VotingClassifier",
+    "VotingRegressor",
+]
+
+
+@pytest.mark.parametrize(
+    "estimator", ESTIMATORS_WITH_GET_FEATURE_NAMES_OUT, ids=_get_check_estimator_ids
+)
+def test_estimators_get_feature_names_out_error(estimator):
+    estimator_name = estimator.__class__.__name__
+    if estimator_name in WHITELISTED_FAILING_ESTIMATORS:
+        return pytest.xfail(
+            reason=f"{estimator_name} is not failing with a consistent NotFittedError"
+        )
+    _set_checking_parameters(estimator)
+    check_get_feature_names_out_error(estimator_name, estimator)
+
+
 @pytest.mark.parametrize(
     "Estimator",
     [est for name, est in all_estimators()],
@@ -469,7 +536,12 @@ def test_estimators_do_not_raise_errors_in_init_or_set_params(Estimator):
 
 @pytest.mark.parametrize(
     "estimator",
-    chain(_tested_estimators(), _generate_pipeline()),
+    chain(
+        _tested_estimators(),
+        _generate_pipeline(),
+        _generate_column_transformer_instances(),
+        _generate_search_cv_instances(),
+    ),
     ids=_get_check_estimator_ids,
 )
 def test_check_param_validation(estimator):
