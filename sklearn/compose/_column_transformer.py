@@ -21,7 +21,7 @@ from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils import _safe_indexing
 from ..utils import _get_column_indices
-from ..utils._param_validation import HasMethods, Interval, StrOptions
+from ..utils._param_validation import HasMethods, Interval, StrOptions, Hidden
 from ..utils._set_output import _get_output_config, _safe_set_output
 from ..utils import check_pandas_support
 from ..utils.metaestimators import _BaseComposition
@@ -215,7 +215,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     _required_parameters = ["transformers"]
 
     _parameter_constraints: dict = {
-        "transformers": [list],
+        "transformers": [list, Hidden(tuple)],
         "remainder": [
             StrOptions({"drop", "passthrough"}),
             HasMethods(["fit", "transform"]),

@@ -19,6 +19,11 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- |Fix| The `categories_` attribute of :class:`preprocessing.OneHotEncoder` now
+  always contains an array of `object`s when using predefined categories that
+  are strings. Predefined categories encoded as bytes will no longer work
+  with `X` encoded as strings. :pr:`25174` by :user:`Tim Head <betatim>`.
+
 Changes impacting all modules
 -----------------------------
 
@@ -36,6 +41,13 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.ensemble`
+.......................
+- |Feature| Compute a custom out-of-bag score by passing a callable to
+  :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`.
+  :pr:`25177` by :user:`Tim Head <betatim>`.
+
 :mod:`sklearn.pipeline`
 .......................
 - |Feature| :class:`pipeline.FeatureUnion` can now use indexing notation (e.g.
@@ -44,7 +56,6 @@ Changelog
 
 :mod:`sklearn.preprocessing`
 ............................
-
 - |Enhancement| Added support for `sample_weight` in
   :class:`preprocessing.KBinsDiscretizer`. This allows specifying the parameter
   `sample_weight` for each sample to be used while fitting. The option is only
