@@ -2594,6 +2594,22 @@ def check_classifiers_multilabel_output_format_decision_function(name, classifie
 
 
 @ignore_warnings(category=FutureWarning)
+def check_get_feature_names_out_error(name, estimator_orig):
+    """Check the error raised by get_feature_names_out when called before fit.
+
+    Unfitted estimators with get_feature_names_out should raise a NotFittedError.
+    """
+
+    estimator = clone(estimator_orig)
+    err_msg = (
+        f"Estimator {name} should have raised a NotFitted error when fit is called"
+        " before get_feature_names_out"
+    )
+    with raises(NotFittedError, err_msg=err_msg):
+        estimator.get_feature_names_out()
+
+
+@ignore_warnings(category=FutureWarning)
 def check_estimators_fit_returns_self(name, estimator_orig, readonly_memmap=False):
     """Check if self is returned when calling fit."""
     X, y = make_blobs(random_state=0, n_samples=21)

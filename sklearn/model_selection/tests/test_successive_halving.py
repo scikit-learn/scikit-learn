@@ -402,7 +402,6 @@ def test_random_search_discrete_distributions(
 @pytest.mark.parametrize(
     "params, expected_error_message",
     [
-        ({"scoring": {"accuracy", "accuracy"}}, "Multimetric scoring is not supported"),
         (
             {"resource": "not_a_parameter"},
             "Cannot use resource=not_a_parameter which is not supported",
@@ -411,12 +410,6 @@ def test_random_search_discrete_distributions(
             {"resource": "a", "max_resources": 100},
             "Cannot use parameter a as the resource since it is part of",
         ),
-        ({"max_resources": "not_auto"}, "max_resources must be either"),
-        ({"max_resources": 100.5}, "max_resources must be either"),
-        ({"max_resources": -10}, "max_resources must be either"),
-        ({"min_resources": "bad str"}, "min_resources must be either"),
-        ({"min_resources": 0.5}, "min_resources must be either"),
-        ({"min_resources": -10}, "min_resources must be either"),
         (
             {"max_resources": "auto", "resource": "b"},
             "resource can only be 'n_samples' when max_resources='auto'",
@@ -427,7 +420,6 @@ def test_random_search_discrete_distributions(
         ),
         ({"cv": KFold(shuffle=True)}, "must yield consistent folds"),
         ({"cv": ShuffleSplit()}, "must yield consistent folds"),
-        ({"refit": "whatever"}, "refit is expected to be a boolean"),
     ],
 )
 def test_input_errors(Est, params, expected_error_message):
@@ -448,8 +440,6 @@ def test_input_errors(Est, params, expected_error_message):
             {"n_candidates": "exhaust", "min_resources": "exhaust"},
             "cannot be both set to 'exhaust'",
         ),
-        ({"n_candidates": "bad"}, "either 'exhaust' or a positive integer"),
-        ({"n_candidates": 0}, "either 'exhaust' or a positive integer"),
     ],
 )
 def test_input_errors_randomized(params, expected_error_message):
