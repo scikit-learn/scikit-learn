@@ -428,7 +428,7 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
         "X": [np.ndarray],
         "min_samples": [
             Interval(Integral, 1, None, closed="left"),
-            Interval(Real, 0, 1, closed="both")
+            Interval(Real, 0, 1, closed="both"),
         ],
         "max_eps": [Interval(Real, 0, None, closed="both")],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
