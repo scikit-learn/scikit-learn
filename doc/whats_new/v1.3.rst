@@ -48,6 +48,12 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`.
   :pr:`25177` by :user:`Tim Head <betatim>`.
 
+:mod:`sklearn.naive_bayes`
+..........................
+- |Feature| Add :class:`naive_bayes.ColumnwiseNB`, a meta-estimator that allows
+  existing naive Bayes classifiers to be combined and applied to different columns
+  of `X`. :pr:`22574` by :user:`Andrey Melnik <avm19>`.
+
 :mod:`sklearn.pipeline`
 .......................
 - |Feature| :class:`pipeline.FeatureUnion` can now use indexing notation (e.g.
