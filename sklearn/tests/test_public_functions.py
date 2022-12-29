@@ -110,6 +110,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.confusion_matrix",
     "sklearn.metrics.mean_absolute_error",
     "sklearn.metrics.mean_tweedie_deviance",
+    "sklearn.metrics.multilabel_confusion_matrix",
     "sklearn.metrics.mutual_info_score",
     "sklearn.metrics.r2_score",
     "sklearn.metrics.roc_curve",
@@ -134,11 +135,12 @@ def test_function_param_validation(func_module):
 
 
 PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
-    ("sklearn.decomposition.non_negative_factorization", "sklearn.decomposition.NMF"),
     ("sklearn.cluster.affinity_propagation", "sklearn.cluster.AffinityPropagation"),
     ("sklearn.covariance.ledoit_wolf", "sklearn.covariance.LedoitWolf"),
     ("sklearn.covariance.oas", "sklearn.covariance.OAS"),
+    ("sklearn.decomposition.dict_learning", "sklearn.decomposition.DictionaryLearning"),
     ("sklearn.decomposition.fastica", "sklearn.decomposition.FastICA"),
+    ("sklearn.decomposition.non_negative_factorization", "sklearn.decomposition.NMF"),
 ]
 
 
