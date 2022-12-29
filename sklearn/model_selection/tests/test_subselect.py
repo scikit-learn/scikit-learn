@@ -107,10 +107,10 @@ def test_subselector():
     "search_cv",
     [GridSearchCV, RandomizedSearchCV],
 )
-def test_refit_callable_razors(param, scoring, rule, search_cv):
+def test_refit_callable_constrain(param, scoring, rule, search_cv):
     """
     A function tests `refit=callable` interface where the callable is the `simplify`
-    method of the `Razors` refit class that returnsthe most parsimonious,
+    method of the `Refitter` refit class that returnsthe most parsimonious,
     highest-performing model.
     """
 
