@@ -316,29 +316,29 @@ class NotInvariantSampleOrder(BaseEstimator):
 
 
 class OneClassSampleErrorClassifier(BaseBadClassifier):
+    """Classifier allowing to trigger different behaviors when `sample_weight` reduces
+    the number of classes to 1."""
+
     def __init__(self, raise_when_single_class=False):
         self.raise_when_single_class = raise_when_single_class
 
     def fit(self, X, y, sample_weight=None):
-        # Convert data
         X, y = check_X_y(
             X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
         )
 
         self.has_single_class_ = False
-        cls, y = np.unique(y, return_inverse=True)
-        nb_cls = cls.shape[0]
-        if nb_cls < 2:
-            if self.raise_when_single_class:
-                self.has_single_class_ = True
-                raise ValueError("normal class error")
+        self.classes_, y = np.unique(y, return_inverse=True)
+        n_classes_ = self.classes_.shape[0]
+        if n_classes_ < 2 and self.raise_when_single_class:
+            self.has_single_class_ = True
+            raise ValueError("normal class error")
 
         # find the number of class after trimming
         if sample_weight is not None:
-            nb_cls = cls.shape[0]
             if isinstance(sample_weight, np.ndarray) and len(sample_weight) > 0:
-                nb_cls = np.count_nonzero(np.bincount(y, sample_weight))
-            if nb_cls < 2:
+                n_classes_ = np.count_nonzero(np.bincount(y, sample_weight))
+            if n_classes_ < 2:
                 self.has_single_class_ = True
                 raise ValueError("Nonsensical Error")
 

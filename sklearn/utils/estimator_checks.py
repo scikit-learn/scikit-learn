@@ -2118,49 +2118,41 @@ def check_classifiers_one_label(name, classifier_orig):
         assert_array_equal(classifier.predict(X_test), y, err_msg=error_string_predict)
 
 
-@ignore_warnings(category=(DeprecationWarning, FutureWarning))
+@ignore_warnings(category=FutureWarning)
 def check_classifiers_one_label_sample_weights(name, classifier_orig):
-    # check that classifiers accepting sample_weight fit or
-    # throws an ValueError with explicit message if
-    # the problem is reduce to one class.
+    """Check that classifiers accepting sample_weight fit or throws a ValueError with
+    an explicit message if the problem is reduced to one class.
+    """
     error_fit = (
-        f"{name} failed when fitted on one label after sample_weight "
-        "trimming. Error message is not explicit, it should have "
-        "'class'."
+        f"{name} failed when fitted on one label after sample_weight trimming. Error "
+        "message is not explicit, it should have 'class'."
     )
     error_predict = f"{name} prediction results should only output the remaining class."
     rnd = np.random.RandomState(0)
-    # X should be square for test on SVC with precomputed kernel.
+    # X should be square for test on SVC with precomputed kernel
     X_train = rnd.uniform(size=(10, 10))
     X_test = rnd.uniform(size=(10, 10))
     y = np.arange(10) % 2
-    # keep only one class
-    sample_weight = y
+    sample_weight = y.copy()  # select a single class
     classifier = clone(classifier_orig)
-    # Test that fit won't raise an unexpected exception
+
     if has_fit_parameter(classifier, "sample_weight"):
-        with raises(
-            [ValueError, AssertionError],
-            match=[r"\bclass(es)?\b", error_predict],
-            may_pass=True,
-            err_msg=error_fit,
-        ) as cm:
-            classifier.fit(X_train, y, sample_weight=sample_weight)
-            if cm.raised_and_matched:
-                # ValueError was raised with proper error message
-                return
-            # Test that predict won't raise an unexpected exception
-            assert_array_equal(
-                classifier.predict(X_test), np.ones(10), err_msg=error_predict
-            )
+        match = [r"\bclass(es)?\b", error_predict]
+        err_type, err_msg = (AssertionError, ValueError), error_fit
     else:
-        with raises(
-            [ValueError, TypeError], match=r"\bsample_weight\b", may_pass=True
-        ) as cm:
-            classifier.fit(X_train, y, sample_weight=sample_weight)
-            if cm.raised_and_matched:
-                # TypeError was raised with proper error message
-                return
+        match = r"\bsample_weight\b"
+        err_type, err_msg = (TypeError, ValueError), None
+
+    with raises(err_type, match=match, may_pass=True, err_msg=err_msg) as cm:
+        classifier.fit(X_train, y, sample_weight=sample_weight)
+        if cm.raised_and_matched:
+            # raise the proper error type with the proper error message
+            return
+        # for estimators that do not fail, they should be able to predict the only
+        # class remaining during fit
+        assert_array_equal(
+            classifier.predict(X_test), np.ones(10), err_msg=error_predict
+        )
 
 
 @ignore_warnings  # Warnings are raised by decision function
