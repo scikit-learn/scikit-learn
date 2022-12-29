@@ -44,12 +44,7 @@ from ..utils.fixes import delayed
 from ..metrics._scorer import _check_multimetric_scoring, get_scorer_names
 from ..metrics import check_scoring
 
-__all__ = [
-    "GridSearchCV",
-    "ParameterGrid",
-    "ParameterSampler",
-    "RandomizedSearchCV",
-]
+__all__ = ["GridSearchCV", "ParameterGrid", "ParameterSampler", "RandomizedSearchCV"]
 
 
 class ParameterGrid:
@@ -411,6 +406,7 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         error_score=np.nan,
         return_train_score=True,
     ):
+
         self.scoring = scoring
         self.estimator = estimator
         self.n_jobs = n_jobs
@@ -461,8 +457,8 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         check_is_fitted(self)
         if self.scorer_ is None:
             raise ValueError(
-                "No score function explicitly defined, and the estimator doesn't"
-                " provide one %s"
+                "No score function explicitly defined, "
+                "and the estimator doesn't provide one %s"
                 % self.best_estimator_
             )
         if isinstance(self.scorer_, dict):
@@ -838,8 +834,10 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
 
                 if self.verbose > 0:
                     print(
-                        "Fitting {0} folds for each of {1} candidates, totalling {2}"
-                        " fits".format(n_splits, n_candidates, n_candidates * n_splits)
+                        "Fitting {0} folds for each of {1} candidates,"
+                        " totalling {2} fits".format(
+                            n_splits, n_candidates, n_candidates * n_splits
+                        )
                     )
 
                 out = parallel(

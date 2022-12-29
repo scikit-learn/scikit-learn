@@ -149,6 +149,7 @@ def test_validate_parameter_input(klass, input, error_type, error_message):
 
 
 def test_parameter_grid():
+
     # Test basic properties of ParameterGrid.
     params1 = {"foo": [1, 2, 3]}
     grid1 = ParameterGrid(params1)
@@ -1943,8 +1944,9 @@ def test_empty_cv_iterator_error():
     with pytest.raises(
         ValueError,
         match=(
-            "No fits were performed. Was the CV iterator empty\\? Were there no"
-            " candidates\\?"
+            "No fits were performed. "
+            "Was the CV iterator empty\\? "
+            "Were there no candidates\\?"
         ),
     ):
         ridge.fit(X[:train_size], y[:train_size])
@@ -2176,8 +2178,8 @@ def test_callable_multimetric_clf_all_fits_fail():
 
     individual_fit_error_message = "ValueError: Failing classifier failed as required"
     error_message = re.compile(
-        "All the 15 fits failed.+your model is"
-        f" misconfigured.+{individual_fit_error_message}",
+        "All the 15 fits failed.+your model is misconfigured.+"
+        f"{individual_fit_error_message}",
         flags=re.DOTALL,
     )
 
