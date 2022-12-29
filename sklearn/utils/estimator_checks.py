@@ -671,6 +671,9 @@ def _set_checking_parameters(estimator):
         # NMF
         if name == "NMF":
             estimator.set_params(max_iter=500)
+        # DictionaryLearning
+        if name == "DictionaryLearning":
+            estimator.set_params(max_iter=200, transform_algorithm="lasso_lars")
         # MiniBatchNMF
         if estimator.__class__.__name__ == "MiniBatchNMF":
             estimator.set_params(max_iter=20, fresh_restarts=True)
@@ -2588,6 +2591,22 @@ def check_classifiers_multilabel_output_format_decision_function(name, classifie
         f"{name}.decision_function is expected to output a floating dtype."
         f" Got {y_pred.dtype} instead."
     )
+
+
+@ignore_warnings(category=FutureWarning)
+def check_get_feature_names_out_error(name, estimator_orig):
+    """Check the error raised by get_feature_names_out when called before fit.
+
+    Unfitted estimators with get_feature_names_out should raise a NotFittedError.
+    """
+
+    estimator = clone(estimator_orig)
+    err_msg = (
+        f"Estimator {name} should have raised a NotFitted error when fit is called"
+        " before get_feature_names_out"
+    )
+    with raises(NotFittedError, err_msg=err_msg):
+        estimator.get_feature_names_out()
 
 
 @ignore_warnings(category=FutureWarning)
