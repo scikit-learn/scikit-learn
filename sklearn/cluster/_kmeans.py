@@ -1048,9 +1048,9 @@ class _BaseKMeans(
             The weights for each observation in X. If None, all observations
             are assigned equal weight.
 
-            .. deprecated:: 1.21
-           ``sample_weight`` was deprecated in version 1.21 and will be removed
-           in 1.23.
+            .. deprecated:: 1.3
+           ``sample_weight`` was deprecated in version 1.3 and will be removed
+           in 1.5.
 
         Returns
         -------
@@ -1062,8 +1062,8 @@ class _BaseKMeans(
         X = self._check_test_data(X)
         if sample_weight != "deprecated":
             warnings.warn(
-                "'sample_weight' was deprecated in version 1.21 and "
-                "will be removed in 1.23.",
+                "'sample_weight' was deprecated in version 1.3 and "
+                "will be removed in 1.5.",
                 FutureWarning
             )
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
