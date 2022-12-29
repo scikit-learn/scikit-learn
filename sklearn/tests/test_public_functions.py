@@ -85,7 +85,7 @@ def _check_function_param_validation(
 
         for constraint in constraints:
             try:
-                bad_value = generate_invalid_param_val(constraint)
+                bad_value = generate_invalid_param_val(constraint, constraints)
             except NotImplementedError:
                 continue
 
@@ -95,6 +95,7 @@ def _check_function_param_validation(
 
 PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.cluster.cluster_optics_dbscan",
+    "sklearn.cluster.compute_optics_graph",
     "sklearn.cluster.estimate_bandwidth",
     "sklearn.cluster.kmeans_plusplus",
     "sklearn.covariance.empirical_covariance",
@@ -109,6 +110,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.confusion_matrix",
     "sklearn.metrics.mean_absolute_error",
     "sklearn.metrics.mean_tweedie_deviance",
+    "sklearn.metrics.multilabel_confusion_matrix",
     "sklearn.metrics.mutual_info_score",
     "sklearn.metrics.r2_score",
     "sklearn.metrics.roc_curve",
