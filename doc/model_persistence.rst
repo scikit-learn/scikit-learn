@@ -55,6 +55,9 @@ with::
    available `here
    <https://joblib.readthedocs.io/en/latest/persistence.html>`_.
 
+Note that you can access to the attribute `__sklearn_pickle_version__` to check the
+version of scikit-learn used to pickle the model.
+
 .. _persistence_limitations:
 
 Security & maintainability limitations
@@ -92,6 +95,37 @@ serialization methods, please refer to this
 `talk by Alex Gaynor
 <https://pyvideo.org/video/2566/pickles-are-for-delis-not-software>`_.
 
+
+A more secure format: `skops`
+.............................
+
+`skops <https://skops.readthedocs.io/en/stable/>`__ provides a more secure
+format via the :mod:`skops.io` module. It avoids using :mod:`pickle` and only
+loads files which have types and references to functions which are trusted
+either by default or by the user. The API is very similar to ``pickle``, and
+you can persist your models as explain in the `docs
+<https://skops.readthedocs.io/en/stable/persistence.html>`__ using
+:func:`skops.io.dump` and :func:`skops.io.dumps`::
+
+    import skops.io as sio
+    obj = sio.dumps(clf)
+
+And you can load them back using :func:`skops.io.load` and
+:func:`skops.io.loads`. However, you need to specify the types which are
+trusted by you. You can get existing unknown types in a dumped object / file
+using :func:`skops.io.get_untrusted_types`, and after checking its contents,
+pass it to the load function::
+
+    unknown_types = sio.get_untrusted_types(obj)
+    clf = sio.loads(obj, trusted=unknown_types)
+
+If you trust the source of the file / object, you can pass ``trusted=True``::
+
+    clf = sio.loads(obj, trusted=True)
+
+Please report issues and feature requests related to this format on the `skops
+issue tracker <https://github.com/skops-dev/skops/issues>`__.
+
 Interoperable formats
 ---------------------
 
@@ -99,7 +133,7 @@ For reproducibility and quality control needs, when different architectures
 and environments should be taken into account, exporting the model in
 `Open Neural Network
 Exchange <https://onnx.ai/>`_ format or `Predictive Model Markup Language
-(PMML) <http://dmg.org/pmml/v4-4-1/GeneralStructure.html>`_ format
+(PMML) <https://dmg.org/pmml/v4-4-1/GeneralStructure.html>`_ format
 might be a better approach than using `pickle` alone.
 These are helpful where you may want to use your model for prediction in a
 different environment from where the model was trained.

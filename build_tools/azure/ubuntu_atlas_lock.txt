@@ -4,27 +4,27 @@
 #
 #    pip-compile --output-file=build_tools/azure/ubuntu_atlas_lock.txt build_tools/azure/ubuntu_atlas_requirements.txt
 #
-attrs==21.4.0
+attrs==22.1.0
     # via pytest
-cython==0.29.30
+cython==0.29.32
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
+exceptiongroup==1.0.4
+    # via pytest
 execnet==1.9.0
     # via pytest-xdist
 iniconfig==1.1.1
     # via pytest
-joblib==1.0.0
+joblib==1.1.1
     # via -r build_tools/azure/ubuntu_atlas_requirements.txt
 packaging==21.3
     # via pytest
 pluggy==1.0.0
     # via pytest
 py==1.11.0
-    # via
-    #   pytest
-    #   pytest-forked
+    # via pytest-forked
 pyparsing==3.0.9
     # via packaging
-pytest==7.1.2
+pytest==7.2.0
     # via
     #   -r build_tools/azure/ubuntu_atlas_requirements.txt
     #   pytest-forked

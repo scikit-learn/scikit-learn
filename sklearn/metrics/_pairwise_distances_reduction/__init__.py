@@ -32,7 +32,7 @@
 #
 #    Dispatchers are meant to be used in the Python code. Under the hood, a
 #    dispatcher must only define the logic to choose at runtime to the correct
-#    dtype-specialized :class:`BaseDistanceReductionDispatcher` implementation based
+#    dtype-specialized :class:`BaseDistancesReductionDispatcher` implementation based
 #    on the dtype of X and of Y.
 #
 #
@@ -46,7 +46,7 @@
 #
 #
 #                               (base dispatcher)
-#                         BaseDistanceReductionDispatcher
+#                         BaseDistancesReductionDispatcher
 #                                       ∆
 #                                       |
 #                                       |
@@ -56,8 +56,8 @@
 #            ArgKmin                                     RadiusNeighbors
 #               |                                              |
 #               |                                              |
-#               |                (64bit implem.)               |
-#               |           BaseDistanceReducer{32,64}         |
+#               |              (float{32,64} implem.)          |
+#               |           BaseDistancesReduction{32,64}      |
 #               |                       ∆                      |
 #               |                       |                      |
 #               |                       |                      |
@@ -74,9 +74,9 @@
 #               x     |                                   |    x
 #        EuclideanArgKmin{32,64}               EuclideanRadiusNeighbors{32,64}
 #
-#    For instance :class:`ArgKmin`, dispatches to both :class:`ArgKmin64`
-#    and :class:`ArgKmin32` if X and Y are both dense NumPy arrays with a `float64`
-#    or `float32` dtype respectively.
+#    For instance :class:`ArgKmin` dispatches to:
+#      - :class:`ArgKmin64` if X and Y are two `float64` array-likes
+#      - :class:`ArgKmin32` if X and Y are two `float32` array-likes
 #
 #    In addition, if the metric parameter is set to "euclidean" or "sqeuclidean",
 #    then `ArgKmin{32,64}` further dispatches to `EuclideanArgKmin{32,64}`. For
@@ -87,14 +87,14 @@
 
 
 from ._dispatcher import (
-    BaseDistanceReductionDispatcher,
+    BaseDistancesReductionDispatcher,
     ArgKmin,
     RadiusNeighbors,
     sqeuclidean_row_norms,
 )
 
 __all__ = [
-    "BaseDistanceReductionDispatcher",
+    "BaseDistancesReductionDispatcher",
     "ArgKmin",
     "RadiusNeighbors",
     "sqeuclidean_row_norms",

@@ -96,14 +96,13 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     Attributes
     ----------
     n_features_in_ : int
-        Number of features seen during :term:`fit`. Defined only when
-        `validate=True`.
+        Number of features seen during :term:`fit`.
 
         .. versionadded:: 0.24
 
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
-        Names of features seen during :term:`fit`. Defined only when `validate=True`
-        and `X` has feature names that are all strings.
+        Names of features seen during :term:`fit`. Defined only when `X` has feature
+        names that are all strings.
 
         .. versionadded:: 1.0
 
@@ -162,6 +161,12 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
     def _check_input(self, X, *, reset):
         if self.validate:
             return self._validate_data(X, accept_sparse=self.accept_sparse, reset=reset)
+        elif reset:
+            # Set feature_names_in_ and n_features_in_ even if validate=False
+            # We run this only when reset==True to store the attributes but not
+            # validate them, because validate=False
+            self._check_n_features(X, reset=reset)
+            self._check_feature_names(X, reset=reset)
         return X
 
     def _check_inverse_transform(self, X):
@@ -276,15 +281,6 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         if hasattr(self, "n_features_in_") or input_features is not None:
             input_features = _check_feature_names_in(self, input_features)
         if self.feature_names_out == "one-to-one":
-            if input_features is None:
-                raise ValueError(
-                    "When 'feature_names_out' is 'one-to-one', either "
-                    "'input_features' must be passed, or 'feature_names_in_' "
-                    "and/or 'n_features_in_' must be defined. If you set "
-                    "'validate' to 'True', then they will be defined "
-                    "automatically when 'fit' is called. Alternatively, you "
-                    "can set them in 'func'."
-                )
             names_out = input_features
         elif callable(self.feature_names_out):
             names_out = self.feature_names_out(self, input_features)
@@ -310,3 +306,34 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
 
     def _more_tags(self):
         return {"no_validation": not self.validate, "stateless": True}
+
+    def set_output(self, *, transform=None):
+        """Set output container.
+
+        See :ref:`sphx_glr_auto_examples_miscellaneous_plot_set_output.py`
+        for an example on how to use the API.
+
+        Parameters
+        ----------
+        transform : {"default", "pandas"}, default=None
+            Configure output of `transform` and `fit_transform`.
+
+            - `"default"`: Default output format of a transformer
+            - `"pandas"`: DataFrame output
+            - `None`: Transform configuration is unchanged
+
+        Returns
+        -------
+        self : estimator instance
+            Estimator instance.
+        """
+        if hasattr(super(), "set_output"):
+            return super().set_output(transform=transform)
+
+        if transform == "pandas" and self.feature_names_out is None:
+            warnings.warn(
+                'With transform="pandas", `func` should return a DataFrame to follow'
+                " the set_output API."
+            )
+
+        return self

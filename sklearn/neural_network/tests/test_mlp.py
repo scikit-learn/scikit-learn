@@ -331,10 +331,6 @@ def test_lbfgs_regression_maxfun(X, y):
             mlp.fit(X, y)
             assert max_fun >= mlp.n_iter_
 
-    mlp.max_fun = -1
-    with pytest.raises(ValueError):
-        mlp.fit(X, y)
-
 
 def test_learning_rate_warmstart():
     # Tests that warm_start reuse past solutions.
@@ -672,19 +668,35 @@ def test_verbose_sgd():
     assert "Iteration" in output.getvalue()
 
 
-def test_early_stopping():
+@pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
+def test_early_stopping(MLPEstimator):
     X = X_digits_binary[:100]
     y = y_digits_binary[:100]
     tol = 0.2
-    clf = MLPClassifier(tol=tol, max_iter=3000, solver="sgd", early_stopping=True)
-    clf.fit(X, y)
-    assert clf.max_iter > clf.n_iter_
+    mlp_estimator = MLPEstimator(
+        tol=tol, max_iter=3000, solver="sgd", early_stopping=True
+    )
+    mlp_estimator.fit(X, y)
+    assert mlp_estimator.max_iter > mlp_estimator.n_iter_
 
-    valid_scores = clf.validation_scores_
-    best_valid_score = clf.best_validation_score_
+    assert mlp_estimator.best_loss_ is None
+    assert isinstance(mlp_estimator.validation_scores_, list)
+
+    valid_scores = mlp_estimator.validation_scores_
+    best_valid_score = mlp_estimator.best_validation_score_
     assert max(valid_scores) == best_valid_score
     assert best_valid_score + tol > valid_scores[-2]
     assert best_valid_score + tol > valid_scores[-1]
+
+    # check that the attributes `validation_scores_` and `best_validation_score_`
+    # are set to None when `early_stopping=False`
+    mlp_estimator = MLPEstimator(
+        tol=tol, max_iter=3000, solver="sgd", early_stopping=False
+    )
+    mlp_estimator.fit(X, y)
+    assert mlp_estimator.validation_scores_ is None
+    assert mlp_estimator.best_validation_score_ is None
+    assert mlp_estimator.best_loss_ is not None
 
 
 def test_adaptive_learning_rate():
@@ -880,3 +892,16 @@ def test_mlp_loading_from_joblib_partial_fit(tmp_path):
     # finetuned model learned the new target
     predicted_value = load_estimator.predict(fine_tune_features)
     assert_allclose(predicted_value, fine_tune_target, rtol=1e-4)
+
+
+@pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
+def test_mlp_warm_start_with_early_stopping(MLPEstimator):
+    """Check that early stopping works with warm start."""
+    mlp = MLPEstimator(
+        max_iter=10, random_state=0, warm_start=True, early_stopping=True
+    )
+    mlp.fit(X_iris, y_iris)
+    n_validation_scores = len(mlp.validation_scores_)
+    mlp.set_params(max_iter=20)
+    mlp.fit(X_iris, y_iris)
+    assert len(mlp.validation_scores_) > n_validation_scores

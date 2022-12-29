@@ -460,13 +460,6 @@ def test_one_class():
 
 
 def test_callback(capsys):
-    X = iris_data
-    y = iris_target
-
-    nca = NeighborhoodComponentsAnalysis(callback="my_cb")
-    with pytest.raises(ValueError):
-        nca.fit(X, y)
-
     max_iter = 10
 
     def my_cb(transformation, n_iter):

@@ -29,8 +29,8 @@ from ..model_selection import check_cv
 from ..preprocessing import LabelEncoder
 
 from ..utils import Bunch
+from ..utils.multiclass import check_classification_targets, type_of_target
 from ..utils.metaestimators import available_if
-from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
 from ..utils.fixes import delayed
@@ -101,23 +101,38 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         This helper is in charge of ensuring the predictions are 2D arrays and
         it will drop one of the probability column when using probabilities
         in the binary case. Indeed, the p(y|c=0) = 1 - p(y|c=1)
+
+        When `y` type is `"multilabel-indicator"`` and the method used is
+        `predict_proba`, `preds` can be either a `ndarray` of shape
+        `(n_samples, n_class)` or for some estimators a list of `ndarray`.
+        This function will drop one of the probability column in this situation as well.
         """
         X_meta = []
         for est_idx, preds in enumerate(predictions):
-            # case where the estimator returned a 1D array
-            if preds.ndim == 1:
+            if isinstance(preds, list):
+                # `preds` is here a list of `n_targets` 2D ndarrays of
+                # `n_classes` columns. The k-th column contains the
+                # probabilities of the samples belonging the k-th class.
+                #
+                # Since those probabilities must sum to one for each sample,
+                # we can work with probabilities of `n_classes - 1` classes.
+                # Hence we drop the first column.
+                for pred in preds:
+                    X_meta.append(pred[:, 1:])
+            elif preds.ndim == 1:
+                # Some estimator return a 1D array for predictions
+                # which must be 2-dimensional arrays.
                 X_meta.append(preds.reshape(-1, 1))
+            elif (
+                self.stack_method_[est_idx] == "predict_proba"
+                and len(self.classes_) == 2
+            ):
+                # Remove the first column when using probabilities in
+                # binary classification because both features `preds` are perfectly
+                # collinear.
+                X_meta.append(preds[:, 1:])
             else:
-                if (
-                    self.stack_method_[est_idx] == "predict_proba"
-                    and len(self.classes_) == 2
-                ):
-                    # Remove the first column when using probabilities in
-                    # binary classification because both features are perfectly
-                    # collinear.
-                    X_meta.append(preds[:, 1:])
-                else:
-                    X_meta.append(preds)
+                X_meta.append(preds)
 
         self._n_feature_outs = [pred.shape[1] for pred in X_meta]
         if self.passthrough:
@@ -356,7 +371,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         check_is_fitted(self)
         return self.final_estimator_.predict(self.transform(X), **predict_params)
 
-    def _sk_visual_block_(self, final_estimator):
+    def _sk_visual_block_with_final_estimator(self, final_estimator):
         names, estimators = zip(*self.estimators)
         parallel = _VisualBlock("parallel", estimators, names=names, dash_wrapped=False)
 
@@ -390,6 +405,10 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
         Base estimators which will be stacked together. Each element of the
         list is defined as a tuple of string (i.e. name) and an estimator
         instance. An estimator can be set to 'drop' using `set_params`.
+
+        The type of estimator is generally expected to be a classifier.
+        However, one can pass a regressor for some use case (e.g. ordinal
+        regression).
 
     final_estimator : estimator, default=None
         A classifier which will be used to combine the base estimators.
@@ -460,7 +479,8 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
 
     Attributes
     ----------
-    classes_ : ndarray of shape (n_classes,)
+    classes_ : ndarray of shape (n_classes,) or list of ndarray if `y` \
+        is of type `"multilabel-indicator"`.
         Class labels.
 
     estimators_ : list of estimators
@@ -481,6 +501,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimators expose such an attribute when fit.
+
         .. versionadded:: 1.0
 
     final_estimator_ : estimator
@@ -500,6 +521,12 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     The first column predicted by each estimator will be dropped in the case
     of a binary classification problem. Indeed, both feature will be perfectly
     collinear.
+
+    In some cases (e.g. ordinal regression), one can pass regressors as the
+    first layer of the :class:`StackingClassifier`. However, note that `y` will
+    be internally encoded in a numerically increasing order or lexicographic
+    order. If this ordering is not adequate, one should manually numerically
+    encode the classes in the desired order.
 
     References
     ----------
@@ -569,6 +596,29 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
                 )
             )
 
+    def _validate_estimators(self):
+        """Overload the method of `_BaseHeterogeneousEnsemble` to be more
+        lenient towards the type of `estimators`.
+
+        Regressors can be accepted for some cases such as ordinal regression.
+        """
+        if len(self.estimators) == 0:
+            raise ValueError(
+                "Invalid 'estimators' attribute, 'estimators' should be a "
+                "non-empty list of (string, estimator) tuples."
+            )
+        names, estimators = zip(*self.estimators)
+        self._validate_names(names)
+
+        has_estimator = any(est != "drop" for est in estimators)
+        if not has_estimator:
+            raise ValueError(
+                "All estimators are dropped. At least one is required "
+                "to be an estimator."
+            )
+
+        return names, estimators
+
     def fit(self, X, y, sample_weight=None):
         """Fit the estimators.
 
@@ -579,7 +629,10 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             `n_features` is the number of features.
 
         y : array-like of shape (n_samples,)
-            Target values.
+            Target values. Note that `y` will be internally encoded in
+            numerically increasing order or lexicographic order. If the order
+            matter (e.g. for ordinal regression), one should numerically encode
+            the target `y` before calling :term:`fit`.
 
         sample_weight : array-like of shape (n_samples,), default=None
             Sample weights. If None, then samples are equally weighted.
@@ -592,9 +645,20 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             Returns a fitted instance of estimator.
         """
         check_classification_targets(y)
-        self._le = LabelEncoder().fit(y)
-        self.classes_ = self._le.classes_
-        return super().fit(X, self._le.transform(y), sample_weight)
+        if type_of_target(y) == "multilabel-indicator":
+            self._label_encoder = [LabelEncoder().fit(yk) for yk in y.T]
+            self.classes_ = [le.classes_ for le in self._label_encoder]
+            y_encoded = np.array(
+                [
+                    self._label_encoder[target_idx].transform(target)
+                    for target_idx, target in enumerate(y.T)
+                ]
+            ).T
+        else:
+            self._label_encoder = LabelEncoder().fit(y)
+            self.classes_ = self._label_encoder.classes_
+            y_encoded = self._label_encoder.transform(y)
+        return super().fit(X, y_encoded, sample_weight)
 
     @available_if(_estimator_has("predict"))
     def predict(self, X, **predict_params):
@@ -618,7 +682,17 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             Predicted targets.
         """
         y_pred = super().predict(X, **predict_params)
-        return self._le.inverse_transform(y_pred)
+        if isinstance(self._label_encoder, list):
+            # Handle the multilabel-indicator case
+            y_pred = np.array(
+                [
+                    self._label_encoder[target_idx].inverse_transform(target)
+                    for target_idx, target in enumerate(y_pred.T)
+                ]
+            ).T
+        else:
+            y_pred = self._label_encoder.inverse_transform(y_pred)
+        return y_pred
 
     @available_if(_estimator_has("predict_proba"))
     def predict_proba(self, X):
@@ -637,7 +711,12 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             The class probabilities of the input samples.
         """
         check_is_fitted(self)
-        return self.final_estimator_.predict_proba(self.transform(X))
+        y_pred = self.final_estimator_.predict_proba(self.transform(X))
+
+        if isinstance(self._label_encoder, list):
+            # Handle the multilabel-indicator cases
+            y_pred = np.array([preds[:, 0] for preds in y_pred]).T
+        return y_pred
 
     @available_if(_estimator_has("decision_function"))
     def decision_function(self, X):
@@ -682,7 +761,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
             final_estimator = LogisticRegression()
         else:
             final_estimator = self.final_estimator
-        return super()._sk_visual_block_(final_estimator)
+        return super()._sk_visual_block_with_final_estimator(final_estimator)
 
 
 class StackingRegressor(RegressorMixin, _BaseStacking):
@@ -782,6 +861,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimators expose such an attribute when fit.
+
         .. versionadded:: 1.0
 
     final_estimator_ : estimator
@@ -901,4 +981,4 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
             final_estimator = RidgeCV()
         else:
             final_estimator = self.final_estimator
-        return super()._sk_visual_block_(final_estimator)
+        return super()._sk_visual_block_with_final_estimator(final_estimator)

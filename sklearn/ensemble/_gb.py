@@ -139,9 +139,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         **DecisionTreeRegressor._parameter_constraints,
         "learning_rate": [Interval(Real, 0.0, None, closed="left")],
         "n_estimators": [Interval(Integral, 1, None, closed="left")],
-        "criterion": [
-            StrOptions({"friedman_mse", "squared_error", "mse"}, deprecated={"mse"})
-        ],
+        "criterion": [StrOptions({"friedman_mse", "squared_error"})],
         "subsample": [Interval(Real, 0.0, 1.0, closed="right")],
         "verbose": ["verbose"],
         "warm_start": ["boolean"],
@@ -277,22 +275,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         return raw_predictions
 
     def _check_params(self):
-        # TODO(1.2): Remove
-        if self.loss == "ls":
-            warnings.warn(
-                "The loss 'ls' was deprecated in v1.0 and "
-                "will be removed in version 1.2. Use 'squared_error'"
-                " which is equivalent.",
-                FutureWarning,
-            )
-        elif self.loss == "lad":
-            warnings.warn(
-                "The loss 'lad' was deprecated in v1.0 and "
-                "will be removed in version 1.2. Use "
-                "'absolute_error' which is equivalent.",
-                FutureWarning,
-            )
-
         # TODO(1.3): Remove
         if self.loss == "deviance":
             warnings.warn(
@@ -435,15 +417,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         self : object
             Fitted estimator.
         """
-        if self.criterion == "mse":
-            # TODO(1.2): Remove. By then it should raise an error.
-            warnings.warn(
-                "Criterion 'mse' was deprecated in v1.0 and will be "
-                "removed in version 1.2. Use `criterion='squared_error'` "
-                "which is equivalent.",
-                FutureWarning,
-            )
-
         self._validate_params()
 
         if not self.warm_start:
@@ -515,8 +488,11 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                     try:
                         self.init_.fit(X, y, sample_weight=sample_weight)
                     except TypeError as e:
-                        # regular estimator without SW support
-                        raise ValueError(msg) from e
+                        if "unexpected keyword argument 'sample_weight'" in str(e):
+                            # regular estimator without SW support
+                            raise ValueError(msg) from e
+                        else:  # regular estimator whose input checking failed
+                            raise
                     except ValueError as e:
                         if (
                             "pass parameters to specific steps of "
@@ -862,16 +838,6 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
 
         return leaves
 
-    # TODO(1.2): Remove
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `n_features_` was deprecated in version 1.0 and will be "
-        "removed in 1.2. Use `n_features_in_` instead."
-    )
-    @property
-    def n_features_(self):
-        return self.n_features_in_
-
     # TODO(1.3): Remove
     # mypy error: Decorated property not supported
     @deprecated(  # type: ignore
@@ -928,8 +894,7 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         and an increase in bias.
         Values must be in the range `(0.0, 1.0]`.
 
-    criterion : {'friedman_mse', 'squared_error', 'mse'}, \
-            default='friedman_mse'
+    criterion : {'friedman_mse', 'squared_error'}, default='friedman_mse'
         The function to measure the quality of a split. Supported criteria are
         'friedman_mse' for the mean squared error with improvement score by
         Friedman, 'squared_error' for mean squared error. The default value of
@@ -937,10 +902,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
         approximation in some cases.
 
         .. versionadded:: 0.18
-
-        .. deprecated:: 1.0
-            Criterion 'mse' was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion='squared_error'` which is equivalent.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
@@ -1137,13 +1098,6 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     classes_ : ndarray of shape (n_classes,)
         The classes labels.
-
-    n_features_ : int
-        The number of data features.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1484,14 +1438,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         combination of the two. 'quantile' allows quantile regression (use
         `alpha` to specify the quantile).
 
-        .. deprecated:: 1.0
-            The loss 'ls' was deprecated in v1.0 and will be removed in
-            version 1.2. Use `loss='squared_error'` which is equivalent.
-
-        .. deprecated:: 1.0
-            The loss 'lad' was deprecated in v1.0 and will be removed in
-            version 1.2. Use `loss='absolute_error'` which is equivalent.
-
     learning_rate : float, default=0.1
         Learning rate shrinks the contribution of each tree by `learning_rate`.
         There is a trade-off between learning_rate and n_estimators.
@@ -1511,8 +1457,7 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         and an increase in bias.
         Values must be in the range `(0.0, 1.0]`.
 
-    criterion : {'friedman_mse', 'squared_error', 'mse'}, \
-            default='friedman_mse'
+    criterion : {'friedman_mse', 'squared_error'}, default='friedman_mse'
         The function to measure the quality of a split. Supported criteria are
         "friedman_mse" for the mean squared error with improvement score by
         Friedman, "squared_error" for mean squared error. The default value of
@@ -1520,10 +1465,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         approximation in some cases.
 
         .. versionadded:: 0.18
-
-        .. deprecated:: 1.0
-            Criterion 'mse' was deprecated in v1.0 and will be removed in
-            version 1.2. Use `criterion='squared_error'` which is equivalent.
 
     min_samples_split : int or float, default=2
         The minimum number of samples required to split an internal node:
@@ -1720,13 +1661,6 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
         ``n_iter_no_change`` is specified). Otherwise it is set to
         ``n_estimators``.
 
-    n_features_ : int
-        The number of data features.
-
-        .. deprecated:: 1.0
-            Attribute `n_features_` was deprecated in version 1.0 and will be
-            removed in 1.2. Use `n_features_in_` instead.
-
     n_features_in_ : int
         Number of features seen during :term:`fit`.
 
@@ -1784,15 +1718,9 @@ class GradientBoostingRegressor(RegressorMixin, BaseGradientBoosting):
     0.4...
     """
 
-    # TODO(1.2): remove "ls" and "lad"
     _parameter_constraints: dict = {
         **BaseGradientBoosting._parameter_constraints,
-        "loss": [
-            StrOptions(
-                {"squared_error", "ls", "absolute_error", "lad", "huber", "quantile"},
-                deprecated={"ls", "lad"},
-            )
-        ],
+        "loss": [StrOptions({"squared_error", "absolute_error", "huber", "quantile"})],
         "init": [StrOptions({"zero"}), None, HasMethods(["fit", "predict"])],
         "alpha": [Interval(Real, 0.0, 1.0, closed="neither")],
     }

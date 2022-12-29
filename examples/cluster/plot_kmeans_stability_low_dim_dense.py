@@ -74,13 +74,13 @@ plots = []
 legends = []
 
 cases = [
-    (KMeans, "k-means++", {}),
-    (KMeans, "random", {}),
-    (MiniBatchKMeans, "k-means++", {"max_no_improvement": 3}),
-    (MiniBatchKMeans, "random", {"max_no_improvement": 3, "init_size": 500}),
+    (KMeans, "k-means++", {}, "^-"),
+    (KMeans, "random", {}, "o-"),
+    (MiniBatchKMeans, "k-means++", {"max_no_improvement": 3}, "x-"),
+    (MiniBatchKMeans, "random", {"max_no_improvement": 3, "init_size": 500}, "d-"),
 ]
 
-for factory, init, params in cases:
+for factory, init, params, format in cases:
     print("Evaluation of %s with %s init" % (factory.__name__, init))
     inertia = np.empty((len(n_init_range), n_runs))
 
@@ -95,7 +95,9 @@ for factory, init, params in cases:
                 **params,
             ).fit(X)
             inertia[i, run_id] = km.inertia_
-    p = plt.errorbar(n_init_range, inertia.mean(axis=1), inertia.std(axis=1))
+    p = plt.errorbar(
+        n_init_range, inertia.mean(axis=1), inertia.std(axis=1), fmt=format
+    )
     plots.append(p[0])
     legends.append("%s with %s init" % (factory.__name__, init))
 
@@ -115,7 +117,7 @@ plt.figure()
 for k in range(n_clusters):
     my_members = km.labels_ == k
     color = cm.nipy_spectral(float(k) / n_clusters, 1)
-    plt.plot(X[my_members, 0], X[my_members, 1], "o", marker=".", c=color)
+    plt.plot(X[my_members, 0], X[my_members, 1], ".", c=color)
     cluster_center = km.cluster_centers_[k]
     plt.plot(
         cluster_center[0],

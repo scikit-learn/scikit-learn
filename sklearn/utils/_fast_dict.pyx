@@ -5,11 +5,8 @@ integers, and values float.
 # Author: Gael Varoquaux
 # License: BSD
 
-cimport cython
-
 # C++
-from cython.operator cimport dereference as deref, preincrement as inc, \
-    predecrement as dec
+from cython.operator cimport dereference as deref, preincrement as inc
 from libcpp.utility cimport pair
 from libcpp.map cimport map as cpp_map
 
@@ -139,7 +136,7 @@ cdef class IntFloatDict:
 def argmin(IntFloatDict d):
     cdef cpp_map[ITYPE_t, DTYPE_t].iterator it = d.my_map.begin()
     cdef cpp_map[ITYPE_t, DTYPE_t].iterator end = d.my_map.end()
-    cdef ITYPE_t min_key
+    cdef ITYPE_t min_key = -1
     cdef DTYPE_t min_value = np.inf
     while it != end:
         if deref(it).second < min_value:

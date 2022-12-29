@@ -1,9 +1,5 @@
 # Author: Nicolas Hug
 
-cimport cython
-
-import numpy as np
-from numpy.math cimport INFINITY
 from cython.parallel import prange
 from libc.math cimport isnan
 

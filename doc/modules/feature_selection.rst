@@ -87,7 +87,7 @@ These objects take as input a scoring function that returns univariate scores
 and p-values (or only scores for :class:`SelectKBest` and
 :class:`SelectPercentile`):
 
- * For regression: :func:`f_regression`, :func:`mutual_info_regression`
+ * For regression: :func:`r_regression`, :func:`f_regression`, :func:`mutual_info_regression`
 
  * For classification: :func:`chi2`, :func:`f_classif`, :func:`mutual_info_classif`
 
@@ -305,7 +305,7 @@ fit and requires no iterations.
 
    .. [sfs] Ferri et al, `Comparative study of techniques for
       large-scale feature selection
-      <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.24.4369&rep=rep1&type=pdf>`_.
+      <https://citeseerx.ist.psu.edu/doc_view/pid/5fedabbb3957bbb442802e012d829ee0629a01b6>`_.
 
 Feature selection as part of a pipeline
 =======================================
