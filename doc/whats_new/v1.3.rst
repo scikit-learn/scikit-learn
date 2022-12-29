@@ -62,7 +62,8 @@ Changelog
   :pr:`24321` by :user:`Sven Stehle <svenstehle>` and
   :user:`Thibault Sejourne <thibsej>`.
 
-- |Fix| Fixed the convergence criterion that should take the absolute
+- |Fix| Fixed the convergence criterion in
+  :class:`decomposition.FactorAnalysis` that should take the absolute
   difference of the log likelihood between iterations instead of the difference
   only. In addition, the "eps" value used to obtain numerically stable results
   was changed to adapt to the input dtype using `np.finfo(X.dtype).eps` instead
