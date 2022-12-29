@@ -53,9 +53,7 @@ def _oas(X, *, assume_centered=False):
 
     n_samples, n_features = X.shape
 
-    if not assume_centered:
-        X = X - X.mean(axis=0)
-    emp_cov = empirical_covariance(X, assume_centered=True)
+    emp_cov = empirical_covariance(X, assume_centered=assume_centered)
     mu = np.trace(emp_cov)
 
     # formula from Chen et al.'s **implementation**
