@@ -85,7 +85,7 @@ def _check_function_param_validation(
 
         for constraint in constraints:
             try:
-                bad_value = generate_invalid_param_val(constraint)
+                bad_value = generate_invalid_param_val(constraint, constraints)
             except NotImplementedError:
                 continue
 

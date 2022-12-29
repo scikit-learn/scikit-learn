@@ -425,14 +425,14 @@ def _compute_core_distances_(X, neighbors, min_samples, working_memory):
 
 @validate_params(
     {
-        "X": [np.ndarray],
+        "X": [np.ndarray, "sparse matrix"],
         "min_samples": [
-            Interval(Integral, 1, None, closed="left"),
+            Interval(Integral, 2, None, closed="left"),
             Interval(Real, 0, 1, closed="both"),
         ],
         "max_eps": [Interval(Real, 0, None, closed="both")],
         "metric": [StrOptions(set(_VALID_METRICS) | {"precomputed"}), callable],
-        "p": [Interval(Real, 1, None, closed="left")],
+        "p": [Interval(Real, 0, None, closed="right"), None],
         "metric_params": [dict, None],
         "algorithm": [StrOptions({"auto", "brute", "ball_tree", "kd_tree"})],
         "leaf_size": [Interval(Integral, 1, None, closed="left")],
@@ -448,7 +448,7 @@ def compute_optics_graph(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features), or \
+    X : {ndarray, sparse matrix} of shape (n_samples, n_features), or \
             (n_samples, n_samples) if metric='precomputed'
         A feature array, or array of distances between samples if
         metric='precomputed'.
