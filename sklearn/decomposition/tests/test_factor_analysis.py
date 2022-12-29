@@ -186,4 +186,4 @@ def test_factor_analysis_numeric_consistency_float32_float64(method):
     # The tolerances are quite high to make the test pass. The algorithm being
     # an iterative SVD, the numerical errors are accumulated and we cannot get
     # a closer result between 32 and 64 bits.
-    assert_allclose(X_trans_32, X_trans_64, rtol=1e-1, atol=1e-0)
+    assert_allclose(X_trans_32, X_trans_64, rtol=1e-3)
