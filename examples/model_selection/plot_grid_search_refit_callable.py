@@ -16,12 +16,14 @@ score.
 
 Based on the Diabetes dataset and a Gradient Boosted Regressor, the second figure
 shows the trade-off between cross-validated score and the number of tree estimators,
-when using a 1 standard-error rule to optimize model selection with
-`RandomizedSearchCV`. In this case, the balanced case is when n_estimators=100 and
-R2=0.38, which falls into the range within 1 standard error of the best R2 score. This
-example then closes with a brief exploratory analysis showing that the balanced case
-lends to less test-set deviance when compared to that of the "unrazored",
-highest-scoring case.
+when using a signed rank sum rule with an alpha-level of 0.01 to optimize model
+selection with `RandomizedSearchCV`. In this case, the balanced case is when
+n_estimators=100 and R2=0.38, which is "not significantly different" from the best R2
+score, but is nevertheless a more parsimonious model.
+
+As an exploratory analysis that follows from the second example, we can observe that
+the balanced case lends to less test-set deviance when compared to that of the more
+complex highest-scoring case.
 
 [1] Hastie, T., Tibshirani, R.,, Friedman, J. (2001). Model Assessment and
 Selection. The Elements of Statistical Learning (pp. 219-260). New York,
@@ -36,7 +38,12 @@ import matplotlib.pyplot as plt
 
 from sklearn import datasets
 from sklearn.decomposition import PCA
-from sklearn.model_selection import GridSearchCV, RandomizedSearchCV, Razors
+from sklearn.model_selection import GridSearchCV, RandomizedSearchCV
+from sklearn.model_selection._subselect import (
+    by_standard_error,
+    by_signed_rank,
+    constrain,
+)
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 from sklearn.ensemble import GradientBoostingRegressor
@@ -60,7 +67,7 @@ grid = GridSearchCV(
     n_jobs=-1,
     param_grid=param_grid,
     scoring="accuracy",
-    refit=Razors.simplify(param="reduce_dim__n_components", rule="se", sigma=1),
+    refit=constrain("reduce_dim__n_components", by_standard_error(sigma=1)),
 )
 
 grid.fit(X, y)
@@ -98,7 +105,7 @@ print(
 )
 
 
-# 1-SE rule - Diabetes dataset - RandomizedSearchCV - GradientBoostingRegressor -
+# Signed Rank - Diabetes dataset - RandomizedSearchCV - GradientBoostingRegressor -
 # Regression
 X, y = datasets.load_diabetes(return_X_y=True)
 
@@ -121,10 +128,10 @@ reg = GradientBoostingRegressor(
 grid = RandomizedSearchCV(
     reg,
     params,
-    cv=5,
+    cv=10,
     n_jobs=-1,
     scoring="r2",
-    refit=Razors.simplify(param="n_estimators", rule="se", sigma=1),
+    refit=constrain("n_estimators", by_signed_rank(alpha=0.01)),
 )
 grid.fit(X_train, y_train)
 

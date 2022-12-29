@@ -32,6 +32,13 @@ from ._search import RandomizedSearchCV
 from ._search import ParameterGrid
 from ._search import ParameterSampler
 
+from ._subselect import Refitter
+from ._subselect import by_standard_error
+from ._subselect import by_percentile_rank
+from ._subselect import by_signed_rank
+from ._subselect import constrain
+from ._subselect import by_fixed_window
+
 from ._plot import LearningCurveDisplay
 
 if typing.TYPE_CHECKING:
@@ -74,6 +81,12 @@ __all__ = [
     "permutation_test_score",
     "train_test_split",
     "validation_curve",
+    "Refitter",
+    "by_standard_error",
+    "by_percentile_rank",
+    "by_signed_rank",
+    "constrain",
+    "by_fixed_window",
 ]
 
 

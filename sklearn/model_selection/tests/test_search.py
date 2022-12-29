@@ -46,7 +46,6 @@ from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import ParameterGrid
 from sklearn.model_selection import ParameterSampler
 from sklearn.model_selection._search import BaseSearchCV
-from sklearn.model_selection._search import Razors
 
 from sklearn.model_selection._validation import FitFailedWarning
 
@@ -727,108 +726,6 @@ def test_refit_callable_multi_metric():
     assert clf.best_index_ == 0
     # Ensure `best_score_` is disabled when using `refit=callable`
     assert not hasattr(clf, "best_score_")
-
-
-@ignore_warnings
-@pytest.mark.parametrize(
-    "param",
-    [
-        "reduce_dim__n_components",
-        "knn__n_neighbors",
-        "poly__degree",
-        "rf__n_estimators",
-        "mlp__hidden_layer_sizes",
-    ],
-)
-@pytest.mark.parametrize(
-    "scoring",
-    ["roc_auc", "accuracy", "recall", "precision", "f1", "neg_log_loss"],
-)
-@pytest.mark.parametrize(  # iterate over extra liberal thresholds
-    "rule, threshold",
-    [
-        pytest.param("se", {"sigma": 3}),
-        pytest.param("ranksum", {"alpha": 0.05}),
-        pytest.param("percentile", {"eta": 0.95}),
-    ],
-)
-@pytest.mark.parametrize(
-    "search_cv",
-    [GridSearchCV, RandomizedSearchCV],
-)
-def test_refit_callable_razors(param, scoring, rule, threshold, search_cv):
-    """
-    A function tests `refit=callable` interface where the callable is the `simplify`
-    method of the `Razors` refit class that returnsthe most parsimonious,
-    highest-performing model.
-    """
-
-    X, y = make_classification(n_samples=350, n_features=16, random_state=42)
-
-    # Instantiate a pipeline with parameter grid representing different levels of
-    # complexity
-    if param == "rf__n_estimators":
-        from sklearn.ensemble import RandomForestClassifier
-
-        clf = RandomForestClassifier(max_depth=5)
-        param_grid = {"rf__n_estimators": [10, 50, 100]}
-        pipe = Pipeline([("rf", clf)])
-    elif param == "mlp__hidden_layer_sizes":
-        from sklearn.neural_network import MLPClassifier
-
-        clf = MLPClassifier(alpha=1, max_iter=1000)
-        param_grid = {"mlp__hidden_layer_sizes": [(10,), (40,), (80,)]}
-        pipe = Pipeline([("mlp", clf)])
-    else:
-        clf = LinearSVC(random_state=42)
-        if param == "poly__degree":
-            from sklearn.preprocessing import PolynomialFeatures
-
-            param_grid = {"poly__degree": [2, 4, 6]}
-            pipe = Pipeline([("poly", PolynomialFeatures()), ("classify", clf)])
-        elif param == "reduce_dim__n_components":
-            from sklearn.decomposition import PCA
-
-            param_grid = {"reduce_dim__n_components": [4, 8, 12]}
-            pipe = Pipeline([("reduce_dim", PCA(random_state=42)), ("classify", clf)])
-        elif param == "knn__n_neighbors":
-            param_grid = {"knn__n_neighbors": [1, 3, 9]}
-            pipe = Pipeline([("knn", KNeighborsClassifier())])
-        else:
-            raise NotImplementedError(f"{param} not recognized.")
-
-    scoring = make_scorer(scoring, greater_is_better=True)
-
-    # Instantiate a refitted grid search object using `Razors`
-    grid_simplified = search_cv(
-        pipe,
-        param_grid,
-        scoring=scoring,
-        refit=Razors.simplify(
-            param=param,
-            rule=rule,
-            **threshold,
-        ),
-    )
-
-    # Instantiate a non-refitted grid search object for comparison
-    grid = search_cv(pipe, param_grid, scoring=scoring, n_jobs=-1)
-    grid.fit(X, y)
-
-    # If the cv results were not all NaN, then we can test the refit callable
-    if not np.isnan(grid.fit(X, y).cv_results_["split0_test_score"]).all():
-        grid_simplified.fit(X, y)
-        best_score_ = grid_simplified.cv_results_["mean_test_score"][
-            grid_simplified.best_index_
-        ]
-
-        # Ensure that if the `razors` refit callable chose a lower scoring model, that
-        # it was because it was a simpler model.
-        if abs(grid.best_score_) > abs(best_score_):
-            assert (
-                getattr(grid, "best_params_")[param]
-                >= getattr(grid_simplified, "best_params_")[param]
-            )
 
 
 def test_gridsearch_nd():
