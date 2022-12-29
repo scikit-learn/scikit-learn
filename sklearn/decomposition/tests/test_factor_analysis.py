@@ -120,18 +120,15 @@ n_features = 5
 
 
 @pytest.mark.parametrize(
-    "data_type, expected_type, noise_variance_init",
+    "data_type, expected_type",
     [
-        (np.float32, np.float32, None),
-        (np.float64, np.float64, None),
-        (np.int32, np.float64, None),
-        (np.int64, np.float64, None),
-        (np.float32, np.float32, np.ones(n_features)),
-        (np.float64, np.float64, np.ones(n_features)),
-        (np.int32, np.float64, np.ones(n_features)),
-        (np.int64, np.float64, np.ones(n_features)),
+        (np.float32, np.float32),
+        (np.float64, np.float64),
+        (np.int32, np.float64),
+        (np.int64, np.float64),
     ],
 )
+@pytest.mark.parametrize("noise_variance_init", [None, np.ones(n_features)])
 def test_factor_analysis_dtype_match(data_type, expected_type, noise_variance_init):
     rng = np.random.RandomState(0)  # use global_random_seed for this?
     n_samples, n_features, n_components = 20, 5, 3
