@@ -16,7 +16,7 @@ __all__ = [
     "by_percentile_rank",
     "by_signed_rank",
     "constrain",
-    "_wrap_election",
+    "_wrap_refit",
 ]
 
 
@@ -284,7 +284,7 @@ class Refitter(BaseEstimator, TransformerMixin):
         return self._apply_thresh(param, self.l_cutoff, self.h_cutoff)
 
 
-def _wrap_election(cv_results_: Dict, param: str, selector: Callable) -> int:
+def _wrap_refit(cv_results_: Dict, param: str, selector: Callable) -> int:
     """A wrapper for `Refitter` that returns the best index for a given parameter
     under the constraints imposed by a model selection callable.
 
@@ -321,4 +321,4 @@ def constrain(param: str, selector: Callable) -> Callable:
         Function that returns the lower and upper bounds of the razor.
 
     """
-    return partial(_wrap_election, param=param, selector=selector)
+    return partial(_wrap_refit, param=param, selector=selector)
