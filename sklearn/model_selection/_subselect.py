@@ -8,7 +8,6 @@ from functools import partial
 import numpy as np
 
 from typing import Callable, Tuple, Dict, Optional
-from ..base import BaseEstimator, TransformerMixin
 
 __all__ = [
     "Refitter",
@@ -199,7 +198,7 @@ class by_fixed_window:
         return l_cutoff, h_cutoff
 
 
-class Refitter(BaseEstimator, TransformerMixin):
+class Refitter:
     """`Refitter` is an interface that generates any of a variety of tuning refit
     callables for use with `GridSearchCV` and `RandomSearchCV`. A refit callable can be
     used to select a best-performing model from among a constrained subset of models.
