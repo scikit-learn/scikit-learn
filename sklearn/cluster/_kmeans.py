@@ -1064,7 +1064,7 @@ class _BaseKMeans(
             warnings.warn(
                 "'sample_weight' was deprecated in version 1.3 and "
                 "will be removed in 1.5.",
-                FutureWarning
+                FutureWarning,
             )
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         else:
