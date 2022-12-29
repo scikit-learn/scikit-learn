@@ -94,6 +94,7 @@ def _check_function_param_validation(
 
 
 PARAM_VALIDATION_FUNCTION_LIST = [
+    "sklearn.cluster.cluster_optics_dbscan",
     "sklearn.cluster.estimate_bandwidth",
     "sklearn.cluster.kmeans_plusplus",
     "sklearn.covariance.empirical_covariance",
@@ -132,11 +133,12 @@ def test_function_param_validation(func_module):
 
 
 PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
-    ("sklearn.decomposition.non_negative_factorization", "sklearn.decomposition.NMF"),
     ("sklearn.cluster.affinity_propagation", "sklearn.cluster.AffinityPropagation"),
     ("sklearn.covariance.ledoit_wolf", "sklearn.covariance.LedoitWolf"),
     ("sklearn.covariance.oas", "sklearn.covariance.OAS"),
+    ("sklearn.decomposition.dict_learning", "sklearn.decomposition.DictionaryLearning"),
     ("sklearn.decomposition.fastica", "sklearn.decomposition.FastICA"),
+    ("sklearn.decomposition.non_negative_factorization", "sklearn.decomposition.NMF"),
 ]
 
 

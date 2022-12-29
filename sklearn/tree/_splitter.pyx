@@ -1436,10 +1436,6 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
 
             if current_proxy_improvement > best_proxy_improvement:
                 best_proxy_improvement = current_proxy_improvement
-                self.criterion.children_impurity(&current.impurity_left,
-                                                 &current.impurity_right)
-                current.improvement = self.criterion.impurity_improvement(
-                    impurity, current.impurity_left, current.impurity_right)
                 best = current
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]
