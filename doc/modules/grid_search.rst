@@ -590,17 +590,16 @@ Sub-selecting models from grid search
 -------------------------------------
 
 The ``refit`` parameter can be used in conjunction with :func:`_subselect.constrain` to
-further constrain model selection based on various user-defined constraints. Typically,
-though not necessarily, such constraints will be relative to a hyperparameter of
-interest with some known influence on model complexity (e.g. ``n_estimators`` for a
-random forest). The initial motivation for applying a complexity constraint
-specifically stems from an insight made by Breiman et al. (1984), who showed that the
-tuning hyperparameter associated with the best performing model may be especially prone
-to overfitting. One potential remedy for this is to balance model performance with
-complexity using the popular "One Standard Error Rule" (1-SE), which is a heuristic for
-sub-selecting the most parsimonious model, from among a selection of top-performing
-candidates, whose cross-validated performance is not more than 1 SE worse than the best
-CV performance.
+further constrain model selection based on various user-defined criteria and/or a
+hyperparameter of interest with some known influence on model complexity (
+e.g. ``n_estimators`` for a random forest). The initial motivation for applying a
+complexity constraint specifically stems from an insight made by Breiman et al. (1984),
+who showed that the tuning hyperparameter associated with the best performing model may
+be especially prone to overfitting. One potential remedy for this is to balance model
+performance with complexity using the popular "One Standard Error Rule" (1-SE), which
+is a heuristic for sub-selecting the most parsimonious model, from among a selection of
+top-performing candidates, whose cross-validated performance is not more than 1 SE
+worse than the best CV performance.
 
 See :ref:`sphx_glr_auto_examples_model_selection_plot_refit_callable.py`
 for an example that implements the 1-SE rule with GridSearchCV using
