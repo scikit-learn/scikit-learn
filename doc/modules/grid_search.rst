@@ -586,27 +586,53 @@ multimetric scoring.
 
 .. _refit_constraints:
 
-Refitting the best estimator with constraints on parameters
------------------------------------------------------------
+Sub-selecting models from grid search
+-------------------------------------
 
 The ``refit`` parameter can be used in conjunction with :func:`_subselect.constrain` to
-constrain model performance relative to a hyperparameter of interest. Typically,
-albeit not necessarily, the hyperparameter of interest will have some known influence
-on model complexity (e.g. ``n_estimators`` for a random forest). The original
-motivation for applying a complexity constraint in particular stems from an insight
-made by Breiman et al. (1984), who showed that the tuning hyperparameter associated
-with the best performing model may be prone to overfit. As demonstrated in
-:ref:`sphx_glr_auto_examples_model_selection_plot_refit_callable.py`, a popular
-remedy for this phenomenon is to refit the simplest estimator whose performance is
-within 1 Standard Error of the highest-performing model. In practice, this goal
-of balancing cross-validated score with model complexity might be achieved, for
-instance, by setting ``refit=constrain('n_estimators', by_standard_error(1))``.
-Beyond :class:`by_standard_error`, other subselection callables have been made
-available to the user, including :class:`_subselect.by_percentile_rank`,
-:class:`_subselect.by_signed_rank`, and :class:`_subselect.by_fixed_window`.
-These callable classes follow an identical API structure and usage patterns
-that makes it easy to implement other custom subselection strategies of the user's
-choosing.
+further constrain model selection based on various user-defined constraints. Typically,
+though not necessarily, such constraints will be relative to a hyperparameter of
+interest with some known influence on model complexity (e.g. ``n_estimators`` for a
+random forest). The initial motivation for applying a complexity constraint
+specifically stems from an insight made by Breiman et al. (1984), who showed that the
+tuning hyperparameter associated with the best performing model may be especially prone
+to overfitting. One potential remedy for this is to balance model performance with
+complexity using the popular "One Standard Error Rule" (1-SE), which is a heuristic for
+sub-selecting the most parsimonious model, from among a selection of top-performing
+candidates, whose cross-validated performance is not more than 1 SE worse than the best
+CV performance.
+
+See :ref:`sphx_glr_auto_examples_model_selection_plot_refit_callable.py`
+for an example that implements the 1-SE rule with GridSearchCV using
+:func:`_subselect.constrain` as a refit callable.
+
+Recent simulation studies using the Boston Housing Prices data (large N,
+small p) and Bardet–Biedl data (large p, small n) in the context of Lasso regression
+have garnered empirical support the use of 1-SE. Although 1-SE constrained CV has been
+shown to alleviate the over-selection tendency of Lasso while outperforming regular CV
+in sparse variable selection, a standard error criterion may be too rigid (or lenient)
+in some cases. Accordingly, the user may wish to implement a variation on 1-SE or a
+different sub-selection strategy altogether. Beyond :class:`by_standard_error`, for
+instance, a curated set of other  subselection callables are also available to the
+user, including:
+
+:class:`_subselect.by_percentile_rank`,
+:class:`_subselect.by_signed_rank`, and
+:class:`_subselect. by_fixed_window`.
+
+These callable classes follow a common API structure and usage patterns, thereby
+allowing users to customize refit subselection strategies for different use-cases.
+
+.. topic:: References:
+
+ * Breiman, Leo, Jerome Friedman, Richard Olshen, and Charles Stone. 1984.
+    "Classification and Regression Trees." :doi:`10.1080/01621459.1984.10477025`
+ * Chen, Yuchen, and Yuhong Yang. 2021. "The One Standard Error Rule for Model
+    Selection: Does It Work?" Stats 4, no. 4: 868-892.
+    :doi:`https://doi.org/10.3390/stats404005`
+ * Hastie, Trevor, Robert Tibshirani, and Jerome Friedman. 2009. The Elements of
+    Statistical Learning: Data Mining, Inference, and Prediction. New York:
+    Springer Series in Statistics. :doi:`10.1007/978-0-387-84858-7`
 
 .. _composite_grid_search:
 

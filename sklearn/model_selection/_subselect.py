@@ -1,13 +1,14 @@
 """
-The :mod:`sklearn.model_selection.subselect` includes utilities for refitting a
-`GridSearchCV` or `RandomSearchCV` instance using custom strategies.
+The :mod:`sklearn.model_selection.subselect` includes utilities for generating custom
+refit callable objects for subselecting models from a `GridSearchCV` or
+`RandomSearchCV` instances.
 """
-
+import warnings
 from functools import partial
+from typing import Callable, Tuple, Dict, Optional
 
 import numpy as np
 
-from typing import Callable, Tuple, Dict, Optional
 
 __all__ = [
     "Refitter",
@@ -43,6 +44,11 @@ class by_standard_error:
         best_score_idx: int,
         n_folds: int,
     ) -> Tuple[float, float]:
+        """
+        Returns a window of model performance whereby differences in model performance
+        are within a specified number standard errors (`sigma`) of the best performing
+        model.
+        """
         # Estimate the standard error across folds for each column of the grid
         cv_se = np.array(np.nanstd(score_grid, axis=1) / np.sqrt(n_folds))
 
@@ -76,6 +82,10 @@ class by_percentile_rank:
         best_score_idx: int,
         n_folds: int,
     ) -> Tuple[float, float]:
+        """
+        Returns a window of model performance whereby differences in model performance
+        are within a specified percentile (`eta`) of the best performing model.
+        """
         # Estimate the indicated percentile, and its inverse, across folds for
         # each column of the grid
         perc_cutoff = np.nanpercentile(
@@ -161,9 +171,10 @@ class by_signed_rank:
 
         if len(surviving_ranks) == 0:
             surviving_ranks = [best_score_idx]
-            print(
+            warnings.warn(
                 "The average performance of all cross-validated models is "
-                "significantly different from that of the best-performing model."
+                "significantly different from that of the best-performing model.",
+                UserWarning,
             )
 
         h_cutoff = np.nanmax(cv_means[surviving_ranks])
@@ -195,6 +206,7 @@ class by_fixed_window:
             l_cutoff = np.nanmin(cv_means)
         if h_cutoff is None:
             h_cutoff = np.nanmax(cv_means)
+
         return l_cutoff, h_cutoff
 
 
@@ -315,6 +327,13 @@ class Refitter:
 
     def _get_splits(self):
         # Extract subgrid corresponding to the scoring metric of interest
+        fitted_key_strings = "\t".join(list(self.cv_results_.keys()))
+        if not all(s in fitted_key_strings for s in ["split", "params", "mean_test"]):
+            raise TypeError(
+                "cv_results_ must be a dict of fitted GridSearchCV or RandomSearchCV"
+                " objects."
+            )
+
         _splits = [
             i
             for i in list(self.cv_results_.keys())
@@ -405,6 +424,29 @@ class Refitter:
         )
 
     def fit(self, selector: Callable) -> Tuple[float, float]:
+        """Fit the refitter using the specified selector callable
+
+        Parameters
+        ----------
+        selector : callable
+            A callable that consumes GridSearchCV or RandomSearchCV results and
+            returns a tuple of floats representing the lower and upper bounds of a
+            target model performance window.
+
+        Returns
+        -------
+        l_cutoff : float
+            The lower bound of the target model performance window.
+        h_cutoff : float
+            The upper bound of the target model performance window.
+
+        """
+        if not callable(selector):
+            raise TypeError(
+                "selector must be a callable initialized with `score_grid`, `cv_means`,"
+                " `best_score_idx`, and `n_folds` arguments."
+            )
+
         fit_params = {
             "score_grid": self._score_grid,
             "cv_means": self._cv_means,
@@ -416,6 +458,33 @@ class Refitter:
         return self.l_cutoff, self.h_cutoff
 
     def transform(self, param: str) -> int:
+        """Re-evaluate the best-performing model under the fitted constraints with
+        respect to a specified hyperparameter of interest.
+
+        Parameters
+        ----------
+        param : str
+            The name of the hyperparameter of interest. Note that this must be the
+            name of the hyperparameter as it appears in the `cv_results_` dictionary
+            of the `GridSearchCV` or `RandomSearchCV` object.
+
+        Returns
+        -------
+        int
+            The index of the best-performing model under the fitted constraints with
+            respect to the specified hyperparameter of interest.
+
+        Raises
+        ------
+        `ValueError`
+            If the refitter has not been fitted before calling the `transform` method.
+
+        """
+        if not hasattr(self, "l_cutoff") or not hasattr(self, "h_cutoff"):
+            raise ValueError(
+                "Refitter must be fitted before calling `transform` method."
+            )
+
         best_index_ = self._apply_thresh(param, self.l_cutoff, self.h_cutoff)
         print(f"Original best index: {self._best_score_idx}")
         print(f"Refitted best index: {best_index_}")
@@ -478,5 +547,7 @@ def constrain(param: str, selector: Callable) -> Callable:
     Callable
 
     """
+
+    # avoid returning a closure in a return statement to avoid pickling issues
     best_index_callable = partial(_wrap_refit, param=param, selector=selector)
     return best_index_callable
