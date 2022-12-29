@@ -34,9 +34,7 @@ from .utils.validation import check_is_fitted, check_non_negative
 from .utils.validation import _check_sample_weight
 from .utils.validation import column_or_1d
 from .utils.metaestimators import _BaseComposition
-from .utils import _safe_indexing, _get_column_indices
-from .utils import _print_elapsed_time
-from .utils import Bunch
+from .utils import _safe_indexing, _get_column_indices, _print_elapsed_time, Bunch
 from .utils.fixes import delayed
 from .utils._estimator_html_repr import _VisualBlock
 from .compose._column_transformer import _is_empty_column_selection
@@ -1570,8 +1568,7 @@ def _jll_one(estimator, X):
 
 
 class ColumnwiseNB(_BaseNB, _BaseComposition):
-    """
-    Column-wise Naive Bayes meta-estimator.
+    """Column-wise Naive Bayes meta-estimator.
 
     This estimator combines various naive Bayes estimators by applying them
     to different column subsets of the input and joining their predictions
@@ -1598,7 +1595,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
             takes :term:`X` of shape (n_samples, n_features) and returns a
             numpy array of shape (n_samples, n_classes) containing joint
             log-probabilities, ``log P(x,y)`` for each sample point and class.
-        columns :  str, array-like of str, int, array-like of int, \
+        columns : str, array-like of str, int, array-like of int, \
                 array-like of bool, slice or callable
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
@@ -1629,12 +1626,12 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     Attributes
     ----------
     estimators_ : list of tuples
-        List of ``(name, fitted_nb_estimator, columns)`` tuples, which follow
-        the order of `nb_estimators`. Here, ``fitted_nb_estimator`` is a fitted naive
-        Bayes estimator, except when ``columns`` presents an empty selection of
-        columns, in which case it is the original unfitted ``nb_estimator``. If
-        the original specification of ``columns`` in ``nb_estimators`` was a
-        callable, then ``columns`` is converted to a list of column indices.
+        List of `(name, fitted_estimator, columns)` tuples, which follow
+        the order of `estimators`. Here, `fitted_estimator` is a fitted naive
+        Bayes estimator, except when `columns` presents an empty selection of
+        columns, in which case it is the original unfitted `nb_estimator`. If
+        the original specification of `columns` in `estimators` was a
+        callable, then `columns` is converted to a list of column indices.
 
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Read-only attribute to access any subestimator by given name.
