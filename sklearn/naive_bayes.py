@@ -1575,6 +1575,10 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     according to the naive Bayes assumption. This is useful when features are
     heterogeneous and follow different kinds of distributions.
 
+    Read more in the :ref:`User Guide <columnwise_naive_bayes>`.
+
+    .. versionadded:: 1.3
+
     Parameters
     ----------
     nb_estimators : list of tuples
