@@ -15,6 +15,7 @@ __all__ = [
     "by_standard_error",
     "by_percentile_rank",
     "by_signed_rank",
+    "by_fixed_window",
     "constrain",
     "_wrap_refit",
 ]

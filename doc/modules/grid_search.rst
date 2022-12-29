@@ -584,6 +584,30 @@ for an example usage.
 :class:`HalvingRandomSearchCV` and :class:`HalvingGridSearchCV` do not support
 multimetric scoring.
 
+.. _refit_constraints:
+
+Refitting the best estimator with constraints on parameters
+-----------------------------------------------------------
+
+The ``refit`` parameter can be used in conjunction with :func:`_subselect.constrain` to
+constrain model performance relative to a hyperparameter of interest. Typically,
+albeit not necessarily, the hyperparameter of interest will have some known influence
+on model complexity (e.g. ``n_estimators`` for a random forest). The original
+motivation for applying a complexity constraint in particular stems from an insight
+made by Breiman et al. (1984), who showed that the tuning hyperparameter associated
+with the best performing model may be prone to overfit. As demonstrated in
+:ref:`sphx_glr_auto_examples_model_selection_plot_refit_callable.py`, a popular
+remedy for this phenomenon is to refit the simplest estimator whose performance is
+within 1 Standard Error of the highest-performing model. In practice, this goal
+of balancing cross-validated score with model complexity might be achieved, for
+instance, by setting ``refit=constrain('n_estimators', by_standard_error(1))``.
+Beyond :class:`by_standard_error`, other subselection callables have been made
+available to the user, including :class:`_subselect.by_percentile_rank`,
+:class:`_subselect.by_signed_rank`, and :class:`_subselect.by_fixed_window`.
+These callable classes follow an identical API structure and usage patterns
+that makes it easy to implement other custom subselection strategies of the user's
+choosing.
+
 .. _composite_grid_search:
 
 Composite estimators and parameter spaces
