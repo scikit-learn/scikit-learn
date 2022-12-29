@@ -243,7 +243,6 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
 
         loglike = []
         old_ll = -np.inf
-        SMALL = 1e-12
 
         # we'll modify svd outputs to return unexplained variance
         # to allow for unified computation of loglikelihood
@@ -269,9 +268,9 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
                 )
                 return s, Vt, squared_norm(X) - squared_norm(s)
 
+        FLOAT_EPS = np.finfo(X.dtype).eps  # used for numerical stability
         for i in range(self.max_iter):
-            # SMALL helps numerics
-            sqrt_psi = np.sqrt(psi) + SMALL
+            sqrt_psi = np.sqrt(psi) + FLOAT_EPS
             s, Vt, unexp_var = my_svd(X / (sqrt_psi * nsqrt))
             s **= 2
             # Use 'maximum' here to avoid sqrt problems.
@@ -284,11 +283,11 @@ class FactorAnalysis(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEsti
             ll += unexp_var + np.sum(np.log(psi))
             ll *= -n_samples / 2.0
             loglike.append(ll)
-            if (ll - old_ll) < self.tol:
+            if np.abs(ll - old_ll) < self.tol:
                 break
             old_ll = ll
 
-            psi = np.maximum(var - np.sum(W**2, axis=0), SMALL)
+            psi = np.maximum(var - np.sum(W**2, axis=0), FLOAT_EPS)
         else:
             warnings.warn(
                 "FactorAnalysis did not converge."
