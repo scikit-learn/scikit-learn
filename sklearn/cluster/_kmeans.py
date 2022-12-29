@@ -1049,8 +1049,8 @@ class _BaseKMeans(
             are assigned equal weight.
 
             .. deprecated:: 1.3
-           ``sample_weight`` was deprecated in version 1.3 and will be removed
-           in 1.5.
+               The parameter `sample_weight` is deprecated in version 1.3
+               and will be removed in 1.5.
 
         Returns
         -------
