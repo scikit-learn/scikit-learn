@@ -16,7 +16,6 @@ from sklearn.model_selection import (
 )
 
 from sklearn.svm import LinearSVC, SVC
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import make_scorer
 from sklearn.pipeline import Pipeline
 
@@ -85,7 +84,6 @@ def test_subselector():
     "param",
     [
         "reduce_dim__n_components",
-        "knn__n_neighbors",
         "poly__degree",
     ],
 )
@@ -129,9 +127,6 @@ def test_refit_callable_constrain(param, scoring, rule, search_cv):
 
         param_grid = {"reduce_dim__n_components": [4, 8, 12]}
         pipe = Pipeline([("reduce_dim", PCA(random_state=42)), ("classify", clf)])
-    elif param == "knn__n_neighbors":
-        param_grid = {"knn__n_neighbors": [1, 3, 9]}
-        pipe = Pipeline([("knn", KNeighborsClassifier())])
     else:
         raise NotImplementedError(f"{param} not recognized.")
 
@@ -142,7 +137,7 @@ def test_refit_callable_constrain(param, scoring, rule, search_cv):
         pipe,
         param_grid,
         scoring=scoring,
-        refit=constrain("reduce_dim__n_components", rule),
+        refit=constrain(param, rule),
     )
 
     # Instantiate a non-refitted grid search object for comparison

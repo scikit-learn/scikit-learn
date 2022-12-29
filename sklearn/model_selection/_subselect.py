@@ -473,5 +473,10 @@ def constrain(param: str, selector: Callable) -> Callable:
         Function that returns the lower and upper bounds of an acceptable performance
         window.
 
+    Returns
+    -------
+    Callable
+
     """
-    return partial(_wrap_refit, param=param, selector=selector)
+    best_index_callable = partial(_wrap_refit, param=param, selector=selector)
+    return best_index_callable
