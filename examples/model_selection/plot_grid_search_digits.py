@@ -85,6 +85,7 @@ def print_dataframe(filtered_cv_results):
             f" recall: {mean_recall:0.3f} (±{std_recall:0.03f}),"
             f" for {params}"
         )
+    print()
 
 
 def refit_strategy(cv_results):
@@ -109,7 +110,7 @@ def refit_strategy(cv_results):
     precision_threshold = 0.98
 
     cv_results_ = pd.DataFrame(cv_results)
-    print(f"\nModels with a precision higher than {precision_threshold}:")
+    print("All grid-search results:")
     print_dataframe(cv_results_)
 
     # Filter-out all results below the threshold
@@ -164,9 +165,12 @@ def refit_strategy(cv_results):
 
 
 # %%
-# Once we defined our strategy to select the best model, we define the values of
-# the hyper-parameters and create the
-# grid-search instance. Subsequently, we can check the best parameters found.
+#
+# Tuning hyper-parameters
+# -----------------------
+#
+# Once we defined our strategy to select the best model, we define the values
+# of the hyper-parameters and create the grid-search instance:
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import SVC
 
@@ -178,23 +182,25 @@ tuned_parameters = [
 grid_search = GridSearchCV(
     SVC(), tuned_parameters, scoring=scores, refit=refit_strategy
 )
-
-# %%
-# Tuning hyper-parameters
-# -----------------------
-
 grid_search.fit(X_train, y_train)
-print(f"\nThe best set of parameters found are:\n{grid_search.best_params_}")
 
 # %%
-# Finally, we evaluate the fine-tuned model on the left-out evaluation set.
+#
+# The parameters selected by the grid-search with our custom strategy are:
+grid_search.best_params_
+
+# %%
+#
+# Finally, we evaluate the fine-tuned model on the left-out evaluation set: the
+# `grid_search` object **has automatically been refit** on the full training
+# set with the parameters selected by our custom refit strategy.
+#
+# We can use the classification report to compute standard classification
+# metrics on the left-out set:
 from sklearn.metrics import classification_report
 
 y_pred = grid_search.predict(X_test)
-print(
-    "\nOur selected model has the following performance on the "
-    f"testing set:\n\n {classification_report(y_test, y_pred)}"
-)
+print(classification_report(y_test, y_pred))
 
 # %%
 # .. note::

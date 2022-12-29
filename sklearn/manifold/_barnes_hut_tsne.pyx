@@ -8,7 +8,7 @@
 import numpy as np
 cimport numpy as cnp
 from libc.stdio cimport printf
-from libc.math cimport sqrt, log
+from libc.math cimport log
 from libc.stdlib cimport malloc, free
 from cython.parallel cimport prange, parallel
 

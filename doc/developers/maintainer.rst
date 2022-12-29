@@ -290,6 +290,8 @@ Making a release
        git commit -m "Update stable to point to 0.999"
        git push origin main
 
+10. Update ``SECURITY.md`` to reflect the latest supported version.
+
 .. _release_checklist:
 
 Release checklist
@@ -299,7 +301,7 @@ The following GitHub checklist might be helpful in a release PR::
 
     * [ ] update news and what's new date in release branch
     * [ ] update news and what's new date and sklearn dev0 version in main branch
-    * [ ] check that the for the release wheels can be built successfully
+    * [ ] check that the wheels for the release can be built successfully
     * [ ] merge the PR with `[cd build]` commit message to upload wheels to the staging repo
     * [ ] upload the wheels and source tarball to https://test.pypi.org
     * [ ] create tag on the main github repo
@@ -308,6 +310,9 @@ The following GitHub checklist might be helpful in a release PR::
     * [ ] upload the wheels and source tarball to PyPI
     * [ ] https://github.com/scikit-learn/scikit-learn/releases publish (except for RC)
     * [ ] announce on mailing list and on Twitter, and LinkedIn
+    * [ ] update symlink for stable in
+      https://github.com/scikit-learn/scikit-learn.github.io (only major/minor)
+    * [ ] update SECURITY.md in main branch (except for RC)
 
 Merging Pull Requests
 ---------------------
@@ -330,7 +335,7 @@ Before merging,
 The scikit-learn.org web site
 -----------------------------
 
-The scikit-learn web site (http://scikit-learn.org) is hosted at GitHub,
+The scikit-learn web site (https://scikit-learn.org) is hosted at GitHub,
 but should rarely be updated manually by pushing to the
 https://github.com/scikit-learn/scikit-learn.github.io repository. Most
 updates can be made by pushing to master (for /dev) or a release branch

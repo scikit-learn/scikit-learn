@@ -128,52 +128,6 @@ def test_gaussian_mixture_attributes():
     rng = np.random.RandomState(0)
     X = rng.rand(10, 2)
 
-    n_components_bad = 0
-    gmm = GaussianMixture(n_components=n_components_bad)
-    msg = f"n_components == {n_components_bad}, must be >= 1."
-    with pytest.raises(ValueError, match=msg):
-        gmm.fit(X)
-
-    # covariance_type should be in [spherical, diag, tied, full]
-    covariance_type_bad = "bad_covariance_type"
-    gmm = GaussianMixture(covariance_type=covariance_type_bad)
-    msg = re.escape(
-        f"Invalid value for 'covariance_type': {covariance_type_bad} 'covariance_type'"
-        + " should be in ['spherical', 'tied', 'diag', 'full']"
-    )
-    with pytest.raises(ValueError, match=msg):
-        gmm.fit(X)
-
-    tol_bad = -1
-    gmm = GaussianMixture(tol=tol_bad)
-    msg = f"tol == {tol_bad}, must be >= 0."
-    with pytest.raises(ValueError, match=msg):
-        gmm.fit(X)
-
-    reg_covar_bad = -1
-    gmm = GaussianMixture(reg_covar=reg_covar_bad)
-    msg = f"reg_covar == {reg_covar_bad}, must be >= 0."
-    with pytest.raises(ValueError, match=msg):
-        gmm.fit(X)
-
-    max_iter_bad = -1
-    gmm = GaussianMixture(max_iter=max_iter_bad)
-    msg = f"max_iter == {max_iter_bad}, must be >= 0."
-    with pytest.raises(ValueError, match=msg):
-        gmm.fit(X)
-
-    n_init_bad = 0
-    gmm = GaussianMixture(n_init=n_init_bad)
-    msg = f"n_init == {n_init_bad}, must be >= 1."
-    with pytest.raises(ValueError, match=msg):
-        gmm.fit(X)
-
-    init_params_bad = "bad_method"
-    gmm = GaussianMixture(init_params=init_params_bad)
-    msg = f"Unimplemented initialization method '{init_params_bad}'"
-    with pytest.raises(ValueError, match=msg):
-        gmm.fit(X)
-
     # test good parameters
     n_components, tol, n_init, max_iter, reg_covar = 2, 1e-4, 3, 30, 1e-1
     covariance_type, init_params = "full", "random"

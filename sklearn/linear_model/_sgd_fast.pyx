@@ -7,10 +7,9 @@
 
 
 import numpy as np
-import sys
 from time import time
 
-from libc.math cimport exp, log, sqrt, pow, fabs
+from libc.math cimport exp, log, pow, fabs
 cimport numpy as cnp
 from numpy.math cimport INFINITY
 cdef extern from "_sgd_fast_helpers.h":
@@ -361,19 +360,19 @@ cdef class SquaredEpsilonInsensitive(Regression):
         return SquaredEpsilonInsensitive, (self.epsilon,)
 
 
-def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
+def _plain_sgd(const double[::1] weights,
                double intercept,
-               cnp.ndarray[double, ndim=1, mode='c'] average_weights,
+               const double[::1] average_weights,
                double average_intercept,
                LossFunction loss,
                int penalty_type,
                double alpha, double C,
                double l1_ratio,
                SequentialDataset dataset,
-               cnp.ndarray[unsigned char, ndim=1, mode='c'] validation_mask,
+               const unsigned char[::1] validation_mask,
                bint early_stopping, validation_score_cb,
                int n_iter_no_change,
-               int max_iter, double tol, int fit_intercept,
+               unsigned int max_iter, double tol, int fit_intercept,
                int verbose, bint shuffle, cnp.uint32_t seed,
                double weight_pos, double weight_neg,
                int learning_rate, double eta0,
@@ -480,10 +479,8 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
     cdef Py_ssize_t n_features = weights.shape[0]
 
     cdef WeightVector w = WeightVector(weights, average_weights)
-    cdef double* w_ptr = &weights[0]
     cdef double *x_data_ptr = NULL
     cdef int *x_ind_ptr = NULL
-    cdef double* ps_ptr = NULL
 
     # helper variables
     cdef int no_improvement_count = 0
@@ -501,24 +498,22 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
     cdef double sample_weight
     cdef double class_weight = 1.0
     cdef unsigned int count = 0
+    cdef unsigned int train_count = n_samples - np.sum(validation_mask)
     cdef unsigned int epoch = 0
     cdef unsigned int i = 0
     cdef int is_hinge = isinstance(loss, Hinge)
     cdef double optimal_init = 0.0
     cdef double dloss = 0.0
     cdef double MAX_DLOSS = 1e12
-    cdef double max_change = 0.0
-    cdef double max_weight = 0.0
 
     cdef long long sample_index
-    cdef unsigned char [:] validation_mask_view = validation_mask
 
     # q vector is only used for L1 regularization
-    cdef cnp.ndarray[double, ndim = 1, mode = "c"] q = None
+    cdef double[::1] q = None
     cdef double * q_data_ptr = NULL
     if penalty_type == L1 or penalty_type == ELASTICNET:
         q = np.zeros((n_features,), dtype=np.float64, order="c")
-        q_data_ptr = <double * > q.data
+        q_data_ptr = &q[0]
     cdef double u = 0.0
 
     if penalty_type == L2:
@@ -549,7 +544,7 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
                              &y, &sample_weight)
 
                 sample_index = dataset.index_data_ptr[dataset.current_index]
-                if validation_mask_view[sample_index]:
+                if validation_mask[sample_index]:
                     # do not learn on the validation set
                     continue
 
@@ -632,20 +627,20 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
                     print("Norm: %.2f, NNZs: %d, Bias: %.6f, T: %d, "
                           "Avg. loss: %f"
                           % (w.norm(), weights.nonzero()[0].shape[0],
-                             intercept, count, sumloss / n_samples))
+                             intercept, count, sumloss / train_count))
                     print("Total training time: %.2f seconds."
                           % (time() - t_start))
 
             # floating-point under-/overflow check.
             if (not skl_isfinite(intercept)
-                or any_nonfinite(<double *>weights.data, n_features)):
+                or any_nonfinite(&weights[0], n_features)):
                 infinity = True
                 break
 
             # evaluate the score on the validation set
             if early_stopping:
                 with gil:
-                    score = validation_score_cb(weights, intercept)
+                    score = validation_score_cb(weights.base, intercept)
                 if tol > -INFINITY and score < best_score + tol:
                     no_improvement_count += 1
                 else:
@@ -654,7 +649,7 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
                     best_score = score
             # or evaluate the loss on the training set
             else:
-                if tol > -INFINITY and sumloss > best_loss - tol * n_samples:
+                if tol > -INFINITY and sumloss > best_loss - tol * train_count:
                     no_improvement_count += 1
                 else:
                     no_improvement_count = 0
@@ -680,10 +675,16 @@ def _plain_sgd(cnp.ndarray[double, ndim=1, mode='c'] weights,
 
     w.reset_wscale()
 
-    return weights, intercept, average_weights, average_intercept, epoch + 1
+    return (
+        weights.base,
+        intercept,
+        None if average_weights is None else average_weights.base,
+        average_intercept,
+        epoch + 1
+    )
 
 
-cdef bint any_nonfinite(double *w, int n) nogil:
+cdef bint any_nonfinite(const double *w, int n) nogil:
     for i in range(n):
         if not skl_isfinite(w[i]):
             return True

@@ -6,6 +6,7 @@ Generate samples of synthetic data sets.
 #          G. Louppe, J. Nothman
 # License: BSD 3 clause
 
+from numbers import Integral
 import numbers
 import array
 import warnings
@@ -17,6 +18,7 @@ import scipy.sparse as sp
 
 from ..preprocessing import MultiLabelBinarizer
 from ..utils import check_array, check_random_state
+from ..utils._param_validation import Interval, validate_params, Hidden, StrOptions
 from ..utils import shuffle as util_shuffle
 from ..utils.random import sample_without_replacement
 
@@ -1241,6 +1243,18 @@ def make_low_rank_matrix(
 
 # TODO(1.3): Change argument `data_transposed` default from True to False.
 # TODO(1.3): Deprecate data_transposed, always return data not transposed.
+
+
+@validate_params(
+    {
+        "n_samples": [Interval(Integral, 1, None, closed="left")],
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "n_features": [Interval(Integral, 1, None, closed="left")],
+        "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left")],
+        "random_state": ["random_state"],
+        "data_transposed": ["boolean", Hidden(StrOptions({"warn"}))],
+    }
+)
 def make_sparse_coded_signal(
     n_samples,
     *,
@@ -1252,9 +1266,9 @@ def make_sparse_coded_signal(
 ):
     """Generate a signal as a sparse combination of dictionary elements.
 
-    Returns a matrix Y = DX, such that D is (n_features, n_components),
-    X is (n_components, n_samples) and each column of X has exactly
-    n_nonzero_coefs non-zero elements.
+    Returns a matrix `Y = DX`, such that `D` is of shape `(n_features, n_components)`,
+    `X` is of shape `(n_components, n_samples)` and each column of `X` has exactly
+    `n_nonzero_coefs` non-zero elements.
 
     Read more in the :ref:`User Guide <sample_generators>`.
 
@@ -1405,7 +1419,7 @@ def make_spd_matrix(n_dim, *, random_state=None):
 
     See Also
     --------
-    make_sparse_spd_matrix
+    make_sparse_spd_matrix: Generate a sparse symmetric definite positive matrix.
     """
     generator = check_random_state(random_state)
 
@@ -1637,7 +1651,7 @@ def make_gaussian_quantiles(
         The number of features for each sample.
 
     n_classes : int, default=3
-        The number of classes
+        The number of classes.
 
     shuffle : bool, default=True
         Shuffle the samples.
@@ -1662,7 +1676,6 @@ def make_gaussian_quantiles(
     References
     ----------
     .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
-
     """
     if n_samples < n_classes:
         raise ValueError("n_samples must be at least n_classes")

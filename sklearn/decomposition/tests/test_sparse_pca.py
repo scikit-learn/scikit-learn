@@ -289,6 +289,13 @@ def test_spca_n_iter_deprecation():
     assert model.n_iter_ <= max_iter
 
 
+def test_pca_n_features_deprecation():
+    X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
+    pca = PCA(n_components=2).fit(X)
+    with pytest.warns(FutureWarning, match="`n_features_` was deprecated"):
+        pca.n_features_
+
+
 def test_spca_early_stopping(global_random_seed):
     """Check that `tol` and `max_no_improvement` act as early stopping."""
     rng = np.random.RandomState(global_random_seed)
@@ -313,6 +320,32 @@ def test_spca_early_stopping(global_random_seed):
         max_iter=100, tol=1e-6, max_no_improvement=100, random_state=global_random_seed
     ).fit(X)
     assert model_early_stopped.n_iter_ < model_not_early_stopped.n_iter_
+
+
+def test_equivalence_components_pca_spca(global_random_seed):
+    """Check the equivalence of the components found by PCA and SparsePCA.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/23932
+    """
+    rng = np.random.RandomState(global_random_seed)
+    X = rng.randn(50, 4)
+
+    n_components = 2
+    pca = PCA(
+        n_components=n_components,
+        svd_solver="randomized",
+        random_state=0,
+    ).fit(X)
+    spca = SparsePCA(
+        n_components=n_components,
+        method="lars",
+        ridge_alpha=0,
+        alpha=0,
+        random_state=0,
+    ).fit(X)
+
+    assert_allclose(pca.components_, spca.components_)
 
 
 def test_sparse_pca_inverse_transform():

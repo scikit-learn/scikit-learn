@@ -4,6 +4,7 @@ Test the fastica algorithm.
 import itertools
 import pytest
 import warnings
+import os
 
 import numpy as np
 from scipy import stats
@@ -75,6 +76,18 @@ def test_fastica_return_dtypes(global_dtype):
 )
 @pytest.mark.parametrize("add_noise", [True, False])
 def test_fastica_simple(add_noise, global_random_seed, global_dtype):
+    if (
+        global_random_seed == 20
+        and global_dtype == np.float32
+        and not add_noise
+        and os.getenv("DISTRIB") == "ubuntu"
+    ):
+        pytest.xfail(
+            "FastICA instability with Ubuntu Atlas build with float32 "
+            "global_dtype. For more details, see "
+            "https://github.com/scikit-learn/scikit-learn/issues/24131#issuecomment-1208091119"  # noqa
+        )
+
     # Test the FastICA algorithm on very simple data.
     rng = np.random.RandomState(global_random_seed)
     n_samples = 1000
@@ -157,7 +170,9 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
     assert sources.shape == (1000, 2)
 
     assert_allclose(sources_fun, sources)
-    assert_allclose(sources, ica.transform(m.T))
+    # the debian 32 bit build with global dtype float32 needs an atol to pass
+    atol = 1e-7 if global_dtype == np.float32 else 0
+    assert_allclose(sources, ica.transform(m.T), atol=atol)
 
     assert ica.mixing_.shape == (2, 2)
 
@@ -453,7 +468,7 @@ def test_fastica_output_shape(whiten, return_X_mean, return_n_iter):
 
 @pytest.mark.parametrize("add_noise", [True, False])
 def test_fastica_simple_different_solvers(add_noise, global_random_seed):
-    """Test FastICA is consistent between whiten_solvers when `sign_flip=True`."""
+    """Test FastICA is consistent between whiten_solvers."""
     rng = np.random.RandomState(global_random_seed)
     n_samples = 1000
     # Generate two sources:
@@ -475,9 +490,7 @@ def test_fastica_simple_different_solvers(add_noise, global_random_seed):
 
     outs = {}
     for solver in ("svd", "eigh"):
-        ica = FastICA(
-            random_state=0, whiten="unit-variance", whiten_solver=solver, sign_flip=True
-        )
+        ica = FastICA(random_state=0, whiten="unit-variance", whiten_solver=solver)
         sources = ica.fit_transform(m.T)
         outs[solver] = sources
         assert ica.components_.shape == (2, 2)
