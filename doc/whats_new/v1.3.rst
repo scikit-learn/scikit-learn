@@ -52,6 +52,13 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.cluster`
+......................
+
+- |API| The `sample_weight` parameter in `predict` method is now deprecated for
+  :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans` and will be removed in v1.5.
+  :pr:`25251` by :user:`Gleb Levitski <glevv>`.
+
 :mod:`sklearn.decomposition`
 ............................
 - |Enhancement| :class:`decomposition.DictionaryLearning` now accepts the parameter
