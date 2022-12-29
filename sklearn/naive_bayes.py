@@ -1659,6 +1659,9 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier.
 
+    n_features_in_ : int
+        Number of features seen during :term:`fit`.
+
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if `X` has
         feature names that are all strings.
