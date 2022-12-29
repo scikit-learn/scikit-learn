@@ -565,7 +565,6 @@ def oas(X, *, assume_centered=False):
     The formula we used to implement the OAS is slightly modified compared
     to the one given in the article. See :class:`OAS` for more details.
     """
-
     estimator = OAS(
         assume_centered=assume_centered,
     ).fit(X)
