@@ -68,7 +68,8 @@ def _oas(X, *, assume_centered=False):
     # trace(S**2) + trace(S)**2) / ((n + 1) (trace(S**2) - trace(S)**2 / p), 1
     # )
     # where n and p are n_samples and n_features, respectively (cf. Eq. 23 in [1]).
-    # The factor 2 / p is omitted since it does not value of the estimator for large p.
+    # The factor 2 / p is omitted since it does not impact the value of the estimator
+    # for large p.
     trace_squared_emp_cov = trace_emp_cov**2
     trace_emp_cov_squared = np.trace(emp_cov**2)
     num = trace_emp_cov_squared + trace_squared_emp_cov
