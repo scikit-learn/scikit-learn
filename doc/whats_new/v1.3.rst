@@ -79,6 +79,12 @@ Changelog
   scores instead of `error_score` values.
   :pr:`23101` by :user:`András Simon <simonandras>` and `Thomas Fan`_.
 
+:mod:`sklearn.naive_bayes`
+..........................
+- |Fix| :class:`naive_bayes.GaussianNB` does not raise anymore a `ZeroDivisionError`
+  when the provided `sample_weight` reduces the problem to a single class in `fit`.
+  :pr:`24140` by :user:`Jonathan Ohayon <Johayon>` and :user:`Chiara Marmo <cmarmo>`.
+
 :mod:`sklearn.pipeline`
 .......................
 - |Feature| :class:`pipeline.FeatureUnion` can now use indexing notation (e.g.
