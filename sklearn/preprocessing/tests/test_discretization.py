@@ -40,7 +40,7 @@ X = [[-2, 1.5, -4, -1], [-1, 2.5, -3, -0.5], [0, 3.5, -2, 0.5], [1, 4.5, -1, 2]]
         (
             "kmeans",
             [[0, 0, 0, 0], [1, 1, 1, 0], [1, 1, 1, 1], [2, 2, 2, 2]],
-            [1, 0, 2, 1],
+            [1, 0, 3, 1],
         ),
         (
             "kmeans",
@@ -67,7 +67,7 @@ def test_kbinsdiscretizer_wrong_strategy_with_weights(strategy):
     sample_weight = np.ones(shape=(len(X)))
     est = KBinsDiscretizer(n_bins=3, strategy=strategy)
     err_msg = (
-        "`sample_weight` was provided but it can only be used with strategy='quantile'."
+        "`sample_weight` was provided but it cannot be used with strategy='uniform'."
     )
     with pytest.raises(ValueError, match=err_msg):
         est.fit(X, sample_weight=sample_weight)
@@ -143,7 +143,7 @@ def test_invalid_n_bins_array():
         (
             "kmeans",
             [[0, 0, 0, 0], [0, 1, 1, 0], [1, 1, 1, 1], [1, 2, 2, 2]],
-            [1, 0, 2, 1],
+            [1, 0, 3, 1],
         ),
     ],
 )
