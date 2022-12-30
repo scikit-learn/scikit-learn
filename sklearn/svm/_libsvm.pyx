@@ -748,7 +748,7 @@ def cross_validation(
     kernel='rbf',
     int degree=3,
     double gamma=0.1,
-    double coef0=0.,
+    double coef0=0.0,
     double tol=1e-3,
     double C=1.0,
     double nu=0.5,
