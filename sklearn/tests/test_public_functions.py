@@ -117,6 +117,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.zero_one_loss",
     "sklearn.model_selection.train_test_split",
     "sklearn.svm.l1_min_c",
+    "sklearn.metrics.mean_squared_error",
 ]
 
 
