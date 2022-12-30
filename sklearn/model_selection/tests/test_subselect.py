@@ -101,7 +101,7 @@ def test_subselector():
         by_standard_error(sigma=1),
         by_signed_rank(alpha=0.01),
         by_percentile_rank(eta=0.68),
-        by_fixed_window(lowerlimit=0.9, upperlimit=0.95),
+        by_fixed_window(min_cut=0.9, max_cut=0.95),
         pytest.mark.xfail("Not_a_rule"),
     ],
 )

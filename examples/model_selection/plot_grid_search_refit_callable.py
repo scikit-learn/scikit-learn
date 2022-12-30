@@ -67,7 +67,7 @@ grid = GridSearchCV(
     n_jobs=-1,
     param_grid=param_grid,
     scoring="accuracy",
-    refit=constrain("reduce_dim__n_components", by_standard_error(sigma=1)),
+    refit=constrain(by_standard_error(sigma=1), "reduce_dim__n_components"),
 )
 
 grid.fit(X, y)
@@ -129,7 +129,7 @@ grid = RandomizedSearchCV(
     cv=10,
     n_jobs=-1,
     scoring="r2",
-    refit=constrain("n_estimators", by_signed_rank(alpha=0.05)),
+    refit=constrain(by_signed_rank(alpha=0.05), "n_estimators"),
 )
 grid.fit(X_train, y_train)
 

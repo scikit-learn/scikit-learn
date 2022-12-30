@@ -192,18 +192,18 @@ class by_fixed_window:
 
     Attributes
     ----------
-    lowerlimit : float
+    min_cut : float
         The lower bound of the window. Default is `None`, which is the lowest score.
-    upperlimit : float
+    max_cut : float
         The upper bound of the window. Default is `None`, which is the highest score.
 
     """
 
     def __init__(
-        self, lowerlimit: Optional[float] = None, upperlimit: Optional[float] = None
+        self, min_cut: Optional[float] = None, max_cut: Optional[float] = None
     ):
-        self.lowerlimit = lowerlimit
-        self.upperlimit = upperlimit
+        self.min_cut = min_cut
+        self.max_cut = max_cut
 
     def __call__(
         self,
@@ -214,10 +214,10 @@ class by_fixed_window:
         n_folds: int,
     ) -> Tuple[Optional[float], Optional[float]]:
         """
-        Returns a window of model performance whereby the lowerlimit and upperlimit of
+        Returns a window of model performance whereby the min_cut and max_cut of
         performance are user-specified float values.
         """
-        return self.lowerlimit, self.upperlimit
+        return self.min_cut, self.max_cut
 
 
 class Refitter:
@@ -441,11 +441,43 @@ class Refitter:
         `TypeError`
             If the selector is not a callable.
 
+        Notes
+        -----
+        The following keyword arguments will be automatically exposed to the selector
+        by `Refitter`:
+
+        - best_score_idx : int
+            The index of the highest performing model.
+        - lowest_score_idx : int
+            The index of the lowest performing model.
+        - n_folds : int
+            The number of cross-validation folds.
+        - cv_means : array-like
+            The mean performance of each model across the cross-validation folds. For
+            example:
+
+            ```
+            array([0.63887341, 0.57323584, 0.50254565, 0.43688487, 0.37791086])
+            ```
+
+        - score_grid : array-like
+            The performance of each model across the cross-validation folds. For
+            example:
+
+            ```
+            array([[0.63888889, 0.58333333, 0.65181058, 0.66016713, 0.66016713],
+                [0.53055556, 0.51111111, 0.57660167, 0.6183844 , 0.62952646],
+                [0.47777778, 0.45277778, 0.46518106, 0.54874652, 0.56824513],
+                [0.4       , 0.39166667, 0.41504178, 0.46518106, 0.51253482],
+                [0.31666667, 0.33333333, 0.37047354, 0.40668524, 0.46239554]])
+            ```
+
         """
         if not callable(selector):
             raise TypeError(
-                "selector must be a callable initialized with `score_grid`, `cv_means`,"
-                " `best_score_idx`, `lowest_score_idx`, and `n_folds` arguments."
+                f"`selector` {selector} must be a callable but is {type(selector)}. See"
+                " `Notes` section of the :class:`~sklearn.model_selection.Refitter:fit`"
+                " API documentation for more details."
             )
 
         fit_params = {
@@ -578,7 +610,7 @@ def constrain(selector: Callable, param: Optional[str]) -> Callable:
     (random_state=42, C=0.01))])
     >>> param_grid = {"reduce_dim__n_components": [6, 8, 10, 12, 14]}
     >>> search = GridSearchCV(pipe, param_grid=param_grid, scoring="accuracy",
-    refit=constrain("reduce_dim__n_components", by_standard_error(sigma=1)))
+    refit=constrain(by_standard_error(sigma=1), "reduce_dim__n_components"))
     >>> search.fit(X, y)
     >>> search.best_params_
 
