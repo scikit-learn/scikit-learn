@@ -107,6 +107,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.auc",
     "sklearn.metrics.cohen_kappa_score",
     "sklearn.metrics.confusion_matrix",
+    "sklearn.metrics.det_curve"
     "sklearn.metrics.mean_absolute_error",
     "sklearn.metrics.mean_tweedie_deviance",
     "sklearn.metrics.multilabel_confusion_matrix",
