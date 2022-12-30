@@ -243,8 +243,8 @@ def average_precision_score(
     {
         "y_true": ["array-like"],
         "y_score": ["array-like"],
-        "pos_label": ["array-like", None],
-        "sample_weight": [Interval(Integral, 1, None, closed="left"), None],
+        "pos_label": [Interval(Integral, str, None, closed="left"), None],
+        "sample_weight": ["array-like", None],
     }
 )
 def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
