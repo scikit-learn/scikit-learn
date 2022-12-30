@@ -160,9 +160,9 @@ def test_factor_analysis_preserving_dtypes(
 
 
 @pytest.mark.parametrize("method", ["lapack", "randomized"])
-def test_factor_analysis_numeric_consistency_float32_float64(method, global_random_seed):
+def test_factor_analysis_numeric_consistency_float32_float64(method):
     """Check that `FactorAnalysis` is consistent with float32 and float64."""
-    rng = np.random.RandomState(global_random_seed)
+    rng = np.random.RandomState(0)
     n_samples, n_features, n_components = 20, 5, 3
 
     W = rng.randn(n_components, n_features)
@@ -174,10 +174,10 @@ def test_factor_analysis_numeric_consistency_float32_float64(method, global_rand
 
     tol = 1e-2
     fa_32 = FactorAnalysis(
-        n_components=n_components, svd_method=method, tol=tol, random_state=global_random_seed
+        n_components=n_components, svd_method=method, tol=tol, random_state=0
     ).fit(X_32)
     fa_64 = FactorAnalysis(
-        n_components=n_components, svd_method=method, tol=tol, random_state=global_random_seed
+        n_components=n_components, svd_method=method, tol=tol, random_state=0
     ).fit(X_64)
 
     X_trans_64 = fa_64.transform(X_64)
