@@ -67,7 +67,7 @@ def fit(
     int probability=0,
     double cache_size=100.,
     int max_iter=-1,
-    int random_seed=0
+    int random_seed=0,
 ):
     """
     Train the model using libsvm (low-level method)
@@ -175,8 +175,9 @@ def fit(
     else:
         assert (
             sample_weight.shape[0] == X.shape[0],
-            "sample_weight and X have incompatible shapes: " +
-            "sample_weight has %s samples while X has %s" % (sample_weight.shape[0], X.shape[0])
+            f"sample_weight and X have incompatible shapes: "
+            f"sample_weight has {sample_weight.shape[0]} samples while "
+            f"X has {X.shape[0]}"
         )
 
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
@@ -185,12 +186,14 @@ def fit(
         <char*> &X[0, 0],
         <char*> &Y[0],
         <char*> &sample_weight[0],
-        <cnp.npy_intp*>X.shape,
+        <cnp.npy_intp*> X.shape,
         kernel_index,
     )
     if problem.x == NULL:
         raise MemoryError("Seems we've run out of memory")
-    cdef cnp.int32_t[::1] class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
+    cdef cnp.int32_t[::1] class_weight_label = np.arange(
+        class_weight.shape[0], dtype=np.int32
+    )
     set_parameter(
         &param,
         svm_type,
@@ -236,24 +239,16 @@ def fit(
     )
 
     cdef cnp.float64_t[:, ::1] sv_coef = np.empty((n_class-1, SV_len), dtype=np.float64)
-    copy_sv_coef (
-        <char*> &sv_coef[0, 0] if sv_coef.size > 0 else NULL,
-        model
-    )
+    copy_sv_coef(<char*> &sv_coef[0, 0] if sv_coef.size > 0 else NULL, model)
 
     # the intercept is just model.rho but with sign changed
-    cdef cnp.float64_t[::1] intercept = np.empty(int((n_class*(n_class-1))/2), dtype=np.float64)
-    copy_intercept (
-        <char*> &intercept[0],
-        model,
-        <cnp.npy_intp*> intercept.shape
+    cdef cnp.float64_t[::1] intercept = np.empty(
+        int((n_class*(n_class-1))/2), dtype=np.float64
     )
+    copy_intercept(<char*> &intercept[0], model, <cnp.npy_intp*> intercept.shape)
 
-    cdef cnp.int32_t[::1] support = np.empty (SV_len, dtype=np.int32)
-    copy_support (
-        <char*> &support[0] if support.size > 0 else NULL,
-        model
-    )
+    cdef cnp.int32_t[::1] support = np.empty(SV_len, dtype=np.int32)
+    copy_support(<char*> &support[0] if support.size > 0 else NULL, model)
 
     # copy model.SV
     cdef cnp.float64_t[:, ::1] support_vectors
@@ -265,16 +260,13 @@ def fit(
         copy_SV(
             <char*> &support_vectors[0, 0] if support_vectors.size > 0 else NULL,
             model,
-            <cnp.npy_intp*> support_vectors.shape
+            <cnp.npy_intp*> support_vectors.shape,
         )
 
     cdef cnp.int32_t[::1] n_class_SV
     if svm_type == 0 or svm_type == 1:
         n_class_SV = np.empty(n_class, dtype=np.int32)
-        copy_nSV(
-            <char*> &n_class_SV[0] if n_class_SV.size > 0 else NULL,
-            model
-        )
+        copy_nSV(<char*> &n_class_SV[0] if n_class_SV.size > 0 else NULL, model)
     else:
         # OneClass and SVR are considered to have 2 classes
         n_class_SV = np.array([SV_len, SV_len], dtype=np.int32)
@@ -285,19 +277,11 @@ def fit(
         if svm_type < 2: # SVC and NuSVC
             probA = np.empty(int(n_class*(n_class-1)/2), dtype=np.float64)
             probB = np.empty(int(n_class*(n_class-1)/2), dtype=np.float64)
-            copy_probB(
-                <char*> &probB[0],
-                model,
-                <cnp.npy_intp*> probB.shape
-            )
+            copy_probB(<char*> &probB[0], model, <cnp.npy_intp*> probB.shape)
         else:
             probA = np.empty(1, dtype=np.float64)
             probB = np.empty(0, dtype=np.float64)
-        copy_probA(
-            <char*> &probA[0],
-            model,
-            <cnp.npy_intp*> probA.shape
-        )
+        copy_probA(<char*> &probA[0], model, <cnp.npy_intp*> probA.shape)
     else:
         probA = np.empty(0, dtype=np.float64)
         probB = np.empty(0, dtype=np.float64)
@@ -329,7 +313,7 @@ cdef void set_predict_params(
     int probability,
     int nr_weight,
     char *weight_label,
-    char *weight
+    char *weight,
 ) except *:
     """Fill param with prediction time-only parameters."""
 
@@ -362,7 +346,7 @@ cdef void set_predict_params(
         weight_label,
         weight,
         max_iter,
-        random_seed
+        random_seed,
     )
 
 
@@ -379,10 +363,10 @@ def predict(
     kernel='rbf',
     int degree=3,
     double gamma=0.1,
-    double coef0=0.,
+    double coef0=0.0,
     const cnp.float64_t[::1] class_weight=np.empty(0),
     const cnp.float64_t[::1] sample_weight=np.empty(0),
-    double cache_size=100.
+    double cache_size=100.0,
 ):
     """
     Predict target values of X given a model (low-level method)
@@ -438,7 +422,9 @@ def predict(
     cdef svm_model *model
     cdef int rv
 
-    cdef cnp.int32_t[::1] class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
+    cdef cnp.int32_t[::1] class_weight_label = np.arange(
+        class_weight.shape[0], dtype=np.int32
+    )
 
     set_predict_params(
         &param,
@@ -501,10 +487,10 @@ def predict_proba(
     kernel='rbf',
     int degree=3,
     double gamma=0.1,
-    double coef0=0.,
+    double coef0=0.0,
     cnp.float64_t[::1] class_weight=np.empty(0),
     cnp.float64_t[::1] sample_weight=np.empty(0),
-    double cache_size=100.
+    double cache_size=100.0,
 ):
     """
     Predict probabilities
@@ -568,7 +554,9 @@ def predict_proba(
     cdef cnp.float64_t[:, ::1] dec_values
     cdef svm_parameter param
     cdef svm_model *model
-    cdef cnp.int32_t[::1] class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
+    cdef cnp.int32_t[::1] class_weight_label = np.arange(
+        class_weight.shape[0], dtype=np.int32
+    )
     cdef int rv
 
     set_predict_params(
@@ -580,7 +568,7 @@ def predict_proba(
         coef0,
         cache_size,
         1,
-        <int>class_weight.shape[0],
+        <int> class_weight.shape[0],
         <char*> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
         <char*> &class_weight[0] if class_weight.size > 0 else NULL,
     )
@@ -610,7 +598,7 @@ def predict_proba(
                 model,
                 <cnp.npy_intp*> X.shape,
                 <char*> &dec_values[0, 0],
-                &blas_functions
+                &blas_functions,
             )
         if rv < 0:
             raise MemoryError("We've run out of memory")
@@ -633,10 +621,10 @@ def decision_function(
     kernel='rbf',
     int degree=3,
     double gamma=0.1,
-    double coef0=0.,
+    double coef0=0.0,
     const cnp.float64_t[::1] class_weight=np.empty(0),
     const cnp.float64_t[::1] sample_weight=np.empty(0),
-    double cache_size=100.
+    double cache_size=100.0,
 ):
     """
     Predict margin (libsvm name for this is predict_values)
@@ -695,7 +683,9 @@ def decision_function(
     cdef svm_model *model
     cdef cnp.npy_intp n_class
 
-    cdef cnp.int32_t[::1] class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
+    cdef cnp.int32_t[::1] class_weight_label = np.arange(
+        class_weight.shape[0], dtype=np.int32
+    )
 
     cdef int rv
 
@@ -758,22 +748,22 @@ def cross_validation(
     const cnp.float64_t[:, ::1] X,
     const cnp.float64_t[::1] Y,
     int n_fold,
-    svm_type=0,
+    int svm_type=0,
     kernel='rbf',
     int degree=3,
     double gamma=0.1,
     double coef0=0.,
     double tol=1e-3,
-    double C=1.,
+    double C=1.0,
     double nu=0.5,
     double epsilon=0.1,
     cnp.float64_t[::1] class_weight=np.empty(0),
     cnp.float64_t[::1] sample_weight=np.empty(0),
     int shrinking=0,
     int probability=0,
-    double cache_size=100.,
+    double cache_size=100.0,
     int max_iter=-1,
-    int random_seed=0
+    int random_seed=0,
 ):
     """
     Binding of the cross-validation routine (low-level routine)
@@ -865,8 +855,8 @@ def cross_validation(
     else:
         assert (
             sample_weight.shape[0] == X.shape[0],
-            "sample_weight and X have incompatible shapes: " +
-            "sample_weight has %s samples while X has %s" % (sample_weight.shape[0], X.shape[0])
+            f"sample_weight and X have incompatible shapes: sample_weight has "
+            f"{sample_weight.shape[0]} samples while X has {X.shape[0]}"
         )
 
     if X.shape[0] < n_fold:
@@ -880,11 +870,13 @@ def cross_validation(
         <char*> &Y[0],
         <char*> &sample_weight[0] if sample_weight.size > 0 else NULL,
         <cnp.npy_intp*> X.shape,
-        kernel_index
+        kernel_index,
     )
     if problem.x == NULL:
         raise MemoryError("Seems we've run out of memory")
-    cdef cnp.int32_t[::1] class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
+    cdef cnp.int32_t[::1] class_weight_label = np.arange(
+        class_weight.shape[0], dtype=np.int32
+    )
 
     # set parameters
     set_parameter(
@@ -905,7 +897,7 @@ def cross_validation(
         <char*> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
         <char*> &class_weight[0] if class_weight.size > 0 else NULL,
         max_iter,
-        random_seed
+        random_seed,
     )
 
     error_msg = svm_check_parameter(&problem, &param);
@@ -923,7 +915,7 @@ def cross_validation(
                 &param,
                 n_fold,
                 <double *> &target[0],
-                &blas_functions
+                &blas_functions,
             )
     finally:
         free(problem.x)
