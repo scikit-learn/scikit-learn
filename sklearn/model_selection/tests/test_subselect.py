@@ -67,7 +67,7 @@ def test_subselector():
     assert ss._best_score_idx == 0
 
     # Test that the _apply_thresh method returns the correct index
-    assert ss._apply_thresh("C", 0.93, 0.96) == 1
+    assert ss._apply_thresh(0.93, 0.96, "C") == 1
 
     # Test that the fit method returns the correct scores
     assert ss.fit(by_standard_error(sigma=1)) == (
@@ -82,7 +82,7 @@ def test_subselector():
 @ignore_warnings
 @pytest.mark.parametrize(
     "param",
-    ["reduce_dim__n_components", "poly__degree"],
+    ["reduce_dim__n_components", "poly__degree", None],
 )
 @pytest.mark.parametrize(
     "scoring",
@@ -101,7 +101,7 @@ def test_subselector():
         by_standard_error(sigma=1),
         by_signed_rank(alpha=0.01),
         by_percentile_rank(eta=0.68),
-        by_fixed_window(lower_bound=0.9, upper_bound=0.95),
+        by_fixed_window(lowerlimit=0.9, upperlimit=0.95),
         pytest.mark.xfail("Not_a_rule"),
     ],
 )
@@ -132,7 +132,8 @@ def test_refit_callable_constrain(param, scoring, rule, search_cv):
         param_grid = {"reduce_dim__n_components": [4, 8, 12]}
         pipe = Pipeline([("reduce_dim", PCA(random_state=42)), ("classify", clf)])
     else:
-        raise NotImplementedError(f"{param} not recognized.")
+        param_grid = {"classify__C": [0.1, 1]}
+        pipe = Pipeline([("classify", SVC(random_state=42))])
 
     scoring = make_scorer(scoring, greater_is_better=True)
 
@@ -141,7 +142,7 @@ def test_refit_callable_constrain(param, scoring, rule, search_cv):
         pipe,
         param_grid,
         scoring=scoring,
-        refit=constrain(param, rule),
+        refit=constrain(rule, param),
     )
 
     # Instantiate a non-refitted grid search object for comparison
@@ -154,11 +155,13 @@ def test_refit_callable_constrain(param, scoring, rule, search_cv):
         simplified_best_score_ = grid_simplified.cv_results_["mean_test_score"][
             grid_simplified.best_index_
         ]
+        assert abs(grid.best_score_) >= abs(simplified_best_score_)
 
         # Ensure that if the refit callable subselected a lower scoring model,
         # it was because it was only because it was a simpler model.
         if abs(grid.best_score_) > abs(simplified_best_score_):
-            assert (
-                getattr(grid, "best_params_")[param]
-                >= getattr(grid_simplified, "best_params_")[param]
-            )
+            if param:
+                assert (
+                    getattr(grid, "best_params_")[param]
+                    >= getattr(grid_simplified, "best_params_")[param]
+                )

@@ -607,13 +607,13 @@ for an example that implements the 1-SE rule with GridSearchCV using
 
 Recent simulation studies using the Boston Housing Prices data (large N,
 small p, see :func:`datasets.load_boston`) in the context of Lasso regression
-have garnered empirical support the use of 1-SE. Although 1-SE constrained CV has been
-shown to alleviate the over-selection tendency of Lasso while outperforming regular CV
-in sparse variable selection, a standard error criterion may be too rigid (or lenient)
-in some cases. Accordingly, the user may wish to implement a variation on 1-SE or a
-different sub-selection strategy altogether. Beyond :class:`by_standard_error`, for
-instance, a curated set of other  subselection callables are also available to the
-user, including:
+have garnered stronger empirical support around the use of 1-SE. Although 1-SE
+constrained CV has been shown to alleviate the over-selection tendency of Lasso while
+outperforming regular CV in sparse variable selection, a standard error criterion may
+be too rigid (or lenient) in some cases. Accordingly, the user may wish to implement a
+variation on 1-SE or a different sub-selection strategy altogether, which Scikit-Learn
+also supports.Beyond :class:`by_standard_error`, for instance, a curated set of other
+subselection callables are also available to the user, including:
 
 :class:`_subselect.by_percentile_rank`,
 :class:`_subselect.by_signed_rank`, and
