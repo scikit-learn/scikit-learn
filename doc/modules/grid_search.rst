@@ -617,7 +617,7 @@ subselection callables are also available to the user, including:
 
 :class:`_subselect.by_percentile_rank`,
 :class:`_subselect.by_signed_rank`, and
-:class:`_subselect. by_fixed_window`.
+:class:`_subselect.by_fixed_window`.
 
 These callable classes follow a common API structure and usage patterns, thereby
 allowing users to customize refit subselection strategies for different use-cases.
