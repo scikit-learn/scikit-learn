@@ -137,7 +137,7 @@ def test_refit_callable_constrain(param, scoring, rule, search_cv):
 
     scoring = make_scorer(scoring, greater_is_better=True)
 
-    # Instantiate a refitted grid search object using `ModelElection`
+    # Instantiate a refitted grid search object
     grid_simplified = search_cv(
         pipe,
         param_grid,
