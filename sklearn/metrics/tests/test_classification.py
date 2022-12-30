@@ -576,13 +576,6 @@ def test_confusion_matrix_normalize(normalize, cm_dtype, expected_results):
     assert cm.dtype.kind == cm_dtype
 
 
-def test_confusion_matrix_normalize_wrong_option():
-    y_test = [0, 0, 0, 0, 1, 1, 1, 1]
-    y_pred = [0, 0, 0, 0, 0, 0, 0, 0]
-    with pytest.raises(ValueError, match="normalize must be one of"):
-        confusion_matrix(y_test, y_pred, normalize=True)
-
-
 def test_confusion_matrix_normalize_single_class():
     y_test = [0, 0, 0, 0, 1, 1, 1, 1]
     y_pred = [0, 0, 0, 0, 0, 0, 0, 0]

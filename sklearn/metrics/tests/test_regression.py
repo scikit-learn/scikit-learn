@@ -300,12 +300,6 @@ def test_regression_metrics_at_limits():
     with pytest.raises(ValueError, match=msg):
         d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
 
-    power = 0.5
-    with pytest.raises(ValueError, match="is only defined for power<=0 and power>=1"):
-        mean_tweedie_deviance([0.0], [0.0], power=power)
-    with pytest.raises(ValueError, match="is only defined for power<=0 and power>=1"):
-        d2_tweedie_score([0.0] * 2, [0.0] * 2, power=power)
-
 
 def test__check_reg_targets():
     # All of length 3
