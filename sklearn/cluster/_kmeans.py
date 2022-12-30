@@ -1068,7 +1068,7 @@ class _BaseKMeans(
             )
             sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         else:
-            sample_weight = None
+            sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
 
         labels = _labels_inertia_threadpool_limit(
             X,
