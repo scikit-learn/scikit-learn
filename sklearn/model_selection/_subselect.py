@@ -277,14 +277,21 @@ class Refitter:
     >>> from sklearn.datasets import load_digits
     >>> from sklearn.model_selection import GridSearchCV
     >>> from sklearn.decomposition import PCA
-    >>> from sklearn.svm import SVC
+    >>> from sklearn.svm import LinearSVC
     >>> from sklearn.pipeline import Pipeline
     >>> from sklearn.model_selection import by_standard_error
     >>> X, y = load_digits(return_X_y=True)
-    >>> pipe = Pipeline([("reduce_dim", PCA(random_state=42)), ("classify", SVC
-    (random_state=42, C=0.01))])
+    >>> pipe = Pipeline([
+    >>>      ("reduce_dim", PCA(random_state=42)),
+    >>>      ("classify", LinearSVC(random_state=42, C=0.01)),
+    >>> ])
     >>> param_grid = {"reduce_dim__n_components": [6, 8, 10, 12, 14]}
-    >>> search = GridSearchCV(pipe, param_grid=param_grid, scoring="accuracy")
+    >>> search = GridSearchCV(
+    >>>     pipe,
+    >>>     param_grid=param_grid,
+    >>>     scoring="accuracy",
+    >>>     refit=constrain(by_standard_error(sigma=1), "reduce_dim__n_components"),
+    >>> )
     >>> search.fit(X, y)
     >>> ss = Refitter(search.cv_results_)
     >>> ss.fit(by_standard_error(sigma=1))
@@ -602,15 +609,21 @@ def constrain(selector: Callable, param: Optional[str]) -> Callable:
     >>> from sklearn.datasets import load_digits
     >>> from sklearn.model_selection import GridSearchCV
     >>> from sklearn.decomposition import PCA
-    >>> from sklearn.svm import SVC
+    >>> from sklearn.svm import LinearSVC
     >>> from sklearn.pipeline import Pipeline
     >>> from sklearn.model_selection import constrain, by_standard_error
     >>> X, y = load_digits(return_X_y=True)
-    >>> pipe = Pipeline([("reduce_dim", PCA(random_state=42)), ("classify", SVC
-    (random_state=42, C=0.01))])
+    >>> pipe = Pipeline([
+    >>>      ("reduce_dim", PCA(random_state=42)),
+    >>>      ("classify", LinearSVC(random_state=42, C=0.01)),
+    >>> ])
     >>> param_grid = {"reduce_dim__n_components": [6, 8, 10, 12, 14]}
-    >>> search = GridSearchCV(pipe, param_grid=param_grid, scoring="accuracy",
-    refit=constrain(by_standard_error(sigma=1), "reduce_dim__n_components"))
+    >>> search = GridSearchCV(
+    >>>     pipe,
+    >>>     param_grid=param_grid,
+    >>>     scoring="accuracy",
+    >>>     refit=constrain(by_standard_error(sigma=1), "reduce_dim__n_components"),
+    >>> )
     >>> search.fit(X, y)
     >>> search.best_params_
 
