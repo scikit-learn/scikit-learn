@@ -77,6 +77,10 @@ Changelog
 - |Feature| Add :class:`naive_bayes.ColumnwiseNB`, a meta-estimator that allows
   existing naive Bayes classifiers to be combined and applied to different columns
   of `X`. :pr:`22574` by :user:`Andrey Melnik <avm19>`.
+  
+- |Fix| :class:`naive_bayes.GaussianNB` does not raise anymore a `ZeroDivisionError`
+  when the provided `sample_weight` reduces the problem to a single class in `fit`.
+  :pr:`24140` by :user:`Jonathan Ohayon <Johayon>` and :user:`Chiara Marmo <cmarmo>`.
 
 :mod:`sklearn.pipeline`
 .......................
