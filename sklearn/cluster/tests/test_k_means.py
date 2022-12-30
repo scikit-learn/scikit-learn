@@ -232,7 +232,7 @@ def test_predict_sample_weight_deprecation_warning(Estimator):
     kmeans = Estimator()
     kmeans.fit(X, sample_weight=sample_weight)
     warn_msg = (
-        "'sample_weight' was deprecated in version 1.3 and will be removed in 1.5.",
+        "'sample_weight' was deprecated in version 1.3 and will be removed in 1.5."
     )
     with pytest.warns(FutureWarning, match=warn_msg):
         kmeans.predict(X, sample_weight=sample_weight)
