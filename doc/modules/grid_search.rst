@@ -601,7 +601,7 @@ is a heuristic for sub-selecting the most parsimonious model, from among a selec
 top-performing candidates, whose cross-validated performance is not more than 1 SE
 worse than the best CV performance.
 
-See :ref:`sphx_glr_auto_examples_model_selection_plot_refit_callable.py`
+See :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
 for an example that implements the 1-SE rule with GridSearchCV using
 :func:`_subselect.constrain` as a refit callable.
 
