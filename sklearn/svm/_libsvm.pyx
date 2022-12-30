@@ -56,9 +56,9 @@ def fit(
     kernel='rbf',
     int degree=3,
     double gamma=0.1,
-    double coef0=0.,
+    double coef0=0.0,
     double tol=1e-3,
-    double C=1.,
+    double C=1.0,
     double nu=0.5,
     double epsilon=0.1,
     const cnp.float64_t[::1] class_weight=np.empty(0),
@@ -175,9 +175,8 @@ def fit(
     else:
         assert (
             sample_weight.shape[0] == X.shape[0],
-            f"sample_weight and X have incompatible shapes: "
-            f"sample_weight has {sample_weight.shape[0]} samples while "
-            f"X has {X.shape[0]}"
+            f"sample_weight and X have incompatible shapes: sample_weight has "
+            f"{sample_weight.shape[0]} samples while X has {X.shape[0]}"
         )
 
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
@@ -212,7 +211,7 @@ def fit(
         <char*> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
         <char*> &class_weight[0] if class_weight.size > 0 else NULL,
         max_iter,
-        random_seed
+        random_seed,
     )
 
     error_msg = svm_check_parameter(&problem, &param)
@@ -233,10 +232,7 @@ def fit(
     n_class = get_nr(model)
 
     cdef int[::1] n_iter = np.empty(max(1, n_class * (n_class - 1) // 2), dtype=np.intc)
-    copy_n_iter(
-        <char*> &n_iter[0],
-        model
-    )
+    copy_n_iter(<char*> &n_iter[0], model)
 
     cdef cnp.float64_t[:, ::1] sv_coef = np.empty((n_class-1, SV_len), dtype=np.float64)
     copy_sv_coef(<char*> &sv_coef[0, 0] if sv_coef.size > 0 else NULL, model)
@@ -318,12 +314,12 @@ cdef void set_predict_params(
     """Fill param with prediction time-only parameters."""
 
     # training-time only parameters
-    cdef double C = .0
-    cdef double epsilon = .1
+    cdef double C = 0.0
+    cdef double epsilon = 0.1
     cdef int max_iter = 0
-    cdef double nu = .5
+    cdef double nu = 0.5
     cdef int shrinking = 0
-    cdef double tol = .1
+    cdef double tol = 0.1
     cdef int random_seed = -1
 
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
