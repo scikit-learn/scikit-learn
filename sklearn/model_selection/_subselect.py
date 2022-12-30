@@ -5,7 +5,7 @@ refit callable objects for subselecting models from a `GridSearchCV` or
 """
 import warnings
 from functools import partial
-from typing import Callable, Tuple, Dict, Optional
+from typing import Callable, Tuple, Dict, Optional, Union, List
 
 import numpy as np
 
@@ -56,7 +56,6 @@ class by_standard_error:
         # Determine confidence interval
         max_cut = cv_means[best_score_idx] + self.sigma * cv_se[best_score_idx]
         min_cut = cv_means[best_score_idx] - self.sigma * cv_se[best_score_idx]
-
         return min_cut, max_cut
 
 
@@ -97,7 +96,6 @@ class by_percentile_rank:
         # Determine bounds of the percentile interval
         max_cut = perc_cutoff[0, best_score_idx]
         min_cut = perc_cutoff[1, best_score_idx]
-
         return min_cut, max_cut
 
 
@@ -182,7 +180,6 @@ class by_signed_rank:
 
         max_cut = np.nanmax(cv_means[surviving_ranks])
         min_cut = np.nanmin(cv_means[surviving_ranks])
-
         return min_cut, max_cut
 
 
@@ -212,7 +209,7 @@ class by_fixed_window:
         best_score_idx: int,
         lowest_score_idx: int,
         n_folds: int,
-    ) -> Tuple[Optional[float], Optional[float]]:
+    ) -> Tuple[Union[float, None], Union[float, None]]:
         """
         Returns a window of model performance whereby the min_cut and max_cut of
         performance are user-specified float values.
@@ -279,7 +276,7 @@ class Refitter:
     >>> from sklearn.decomposition import PCA
     >>> from sklearn.svm import LinearSVC
     >>> from sklearn.pipeline import Pipeline
-    >>> from sklearn.model_selection import by_standard_error
+    >>> from sklearn.model_selection import constrain, by_standard_error
     >>> X, y = load_digits(return_X_y=True)
     >>> pipe = Pipeline([
     >>>      ("reduce_dim", PCA(random_state=42)),
@@ -290,11 +287,10 @@ class Refitter:
     >>>     pipe,
     >>>     param_grid=param_grid,
     >>>     scoring="accuracy",
-    >>>     refit=constrain(by_standard_error(sigma=1), "reduce_dim__n_components"),
     >>> )
     >>> search.fit(X, y)
     >>> ss = Refitter(search.cv_results_)
-    >>> ss.fit(by_standard_error(sigma=1))
+    >>> ss.fit(by_standard_error(sigma=1)
     >>> refitted_index = ss.transform("reduce_dim__n_components")
     >>> refitted_index
 
@@ -305,7 +301,9 @@ class Refitter:
         self.cv_results_constrained_ = cv_results_.copy()
         self.scoring = scoring
 
-    def _get_splits(self):
+    def _get_splits(self) -> List[str]:
+        """Extracts the CV split keys corresponding to the scoring metric of
+        interest."""
         # Extract subgrid corresponding to the scoring metric of interest
         fitted_key_strings = "\t".join(list(self.cv_results_constrained_.keys()))
         if not all(s in fitted_key_strings for s in ["split", "params", "mean_test"]):
@@ -426,7 +424,7 @@ class Refitter:
             )
         )
 
-    def fit(self, selector: Callable) -> Tuple[float, float]:
+    def fit(self, selector: Callable) -> Tuple[Union[float, None], Union[float, None]]:
         """Fit the refitter using the specified selector callable
 
         Parameters
