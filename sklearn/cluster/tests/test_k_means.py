@@ -225,6 +225,33 @@ def test_algorithm_auto_full_deprecation_warning(algorithm):
         assert kmeans._algorithm == "lloyd"
 
 
+def test_predict_sample_weight_deprecation_warning(algorithm):
+    X = np.random.rand(100, 2)
+    sample_weight = np.random.uniform(size=100)
+    # test for kmeans
+    kmeans = KMeans()
+    kmeans.fit(X, sample_weight=sample_weight)
+    with pytest.warns(
+        FutureWarning,
+        match=(
+            "'sample_weight' was deprecated in version 1.3 and "
+            "will be removed in 1.5.",
+        ),
+    ):
+        kmeans.predict(X, sample_weight=sample_weight)
+    # test for batch kmeans
+    kmeans = MiniBatchKMeans()
+    kmeans.fit(X, sample_weight=sample_weight)
+    with pytest.warns(
+        FutureWarning,
+        match=(
+            "'sample_weight' was deprecated in version 1.3 and "
+            "will be removed in 1.5.",
+        ),
+    ):
+        kmeans.predict(X, sample_weight=sample_weight)
+
+
 def test_minibatch_update_consistency(global_random_seed):
     # Check that dense and sparse minibatch update give the same results
     rng = np.random.RandomState(global_random_seed)
