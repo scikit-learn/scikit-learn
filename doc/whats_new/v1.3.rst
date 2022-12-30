@@ -72,6 +72,10 @@ Changelog
   scores instead of `error_score` values.
   :pr:`23101` by :user:`András Simon <simonandras>` and `Thomas Fan`_.
 
+- |MajorFeature| A new module, :class:`model_selection._subselect`, has been added
+  which includes utilities for generating custom refit callable objects for subselecting models from a `GridSearchCV` or `RandomSearchCV` instances.
+  :pr:`22573` by :user:`Derek Pisner <dPys>` and :user:`Joel Nothman <jnothman>`.
+
 :mod:`sklearn.naive_bayes`
 ..........................
 - |Fix| :class:`naive_bayes.GaussianNB` does not raise anymore a `ZeroDivisionError`

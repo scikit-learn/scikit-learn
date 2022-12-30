@@ -606,7 +606,7 @@ for an example that implements the 1-SE rule with GridSearchCV using
 :func:`_subselect.constrain` as a refit callable.
 
 Recent simulation studies using the Boston Housing Prices data (large N,
-small p) and Bardet–Biedl data (large p, small n) in the context of Lasso regression
+small p, see :func:`datasets.load_boston`) in the context of Lasso regression
 have garnered empirical support the use of 1-SE. Although 1-SE constrained CV has been
 shown to alleviate the over-selection tendency of Lasso while outperforming regular CV
 in sparse variable selection, a standard error criterion may be too rigid (or lenient)

@@ -82,16 +82,20 @@ def test_subselector():
 @ignore_warnings
 @pytest.mark.parametrize(
     "param",
-    [
-        "reduce_dim__n_components",
-        "poly__degree",
-    ],
+    ["reduce_dim__n_components", "poly__degree"],
 )
 @pytest.mark.parametrize(
     "scoring",
-    ["roc_auc", "neg_log_loss"],
+    [
+        "roc_auc",
+        "neg_log_loss",
+        "mean_squared_error",
+        "score",
+        ["roc_auc", "accuracy"],
+        pytest.mark.xfail("Not_a_scoring_metric"),
+    ],
 )
-@pytest.mark.parametrize(  # iterate over extra liberal thresholds
+@pytest.mark.parametrize(
     "rule",
     [
         by_standard_error(sigma=1),
@@ -147,13 +151,13 @@ def test_refit_callable_constrain(param, scoring, rule, search_cv):
     # If the cv results were not all NaN, then we can test the refit callable
     if not np.isnan(grid.fit(X, y).cv_results_["split0_test_score"]).all():
         grid_simplified.fit(X, y)
-        best_score_ = grid_simplified.cv_results_["mean_test_score"][
+        simplified_best_score_ = grid_simplified.cv_results_["mean_test_score"][
             grid_simplified.best_index_
         ]
 
-        # Ensure that if the `razors` refit callable chose a lower scoring model, that
-        # it was because it was a simpler model.
-        if abs(grid.best_score_) > abs(best_score_):
+        # Ensure that if the refit callable subselected a lower scoring model,
+        # it was because it was only because it was a simpler model.
+        if abs(grid.best_score_) > abs(simplified_best_score_):
             assert (
                 getattr(grid, "best_params_")[param]
                 >= getattr(grid_simplified, "best_params_")[param]

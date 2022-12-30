@@ -306,10 +306,12 @@ class Refitter:
     >>> from sklearn.decomposition import PCA
     >>> from sklearn.svm import SVC
     >>> from sklearn.pipeline import Pipeline
-    >>> from sklearn.model_selection import constrain, by_standard_error
+    >>> from sklearn.model_selection import by_standard_error
     >>> X, y = load_digits(return_X_y=True)
-    >>> pipe = Pipeline([("reduce_dim", PCA(random_state=42)), ("classify", LinearSVC
-    (random_state=42, C=0.01))])
+    >>> pipe = Pipeline([
+            ("reduce_dim", PCA(random_state=42)),
+            ("classify", SVC(random_state=42, C=0.01))
+        ])
     >>> param_grid = {"reduce_dim__n_components": [6, 8, 10, 12, 14]}
     >>> search = GridSearchCV(pipe, param_grid=param_grid, scoring="accuracy")
     >>> search.fit(X, y)
@@ -317,7 +319,6 @@ class Refitter:
     >>> ss.fit(by_standard_error(sigma=1))
     >>> refitted_index = ss.transform("reduce_dim__n_components")
     >>> refitted_index
-    3
 
     """
 
@@ -545,6 +546,25 @@ def constrain(param: str, selector: Callable) -> Callable:
     Returns
     -------
     Callable
+
+    Examples
+    --------
+    >>> from sklearn.datasets import load_digits
+    >>> from sklearn.model_selection import GridSearchCV
+    >>> from sklearn.decomposition import PCA
+    >>> from sklearn.svm import SVC
+    >>> from sklearn.pipeline import Pipeline
+    >>> from sklearn.model_selection import constrain, by_standard_error
+    >>> X, y = load_digits(return_X_y=True)
+    >>> pipe = Pipeline([
+            ("reduce_dim", PCA(random_state=42)),
+            ("classify", SVC(random_state=42, C=0.01))
+        ])
+    >>> param_grid = {"reduce_dim__n_components": [6, 8, 10, 12, 14]}
+    >>> search = GridSearchCV(pipe, param_grid=param_grid, scoring="accuracy",
+    refit=constrain("reduce_dim__n_components", by_standard_error(sigma=1)))
+    >>> search.fit(X, y)
+    >>> search.best_params_
 
     """
 
