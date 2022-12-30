@@ -1652,7 +1652,7 @@ These changes mostly affect library developers.
 - Add ``check_methods_subset_invariance`` to
   :func:`~utils.estimator_checks.check_estimator`, which checks that
   estimator methods are invariant if applied to a data subset.
-  :issue:`10428` by :user:` Ohayon <Johayon>`
+  :issue:`10428` by :user:`Jonathan Ohayon <Johayon>`
 
 - Add tests in :func:`utils.estimator_checks.check_estimator` to check that an
   estimator can handle read-only memmap input data. :issue:`10663` by
