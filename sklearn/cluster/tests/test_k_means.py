@@ -225,21 +225,11 @@ def test_algorithm_auto_full_deprecation_warning(algorithm):
         assert kmeans._algorithm == "lloyd"
 
 
-def test_predict_sample_weight_deprecation_warning(algorithm):
+@pytest.mark.parametrize("Estimator", [KMeans, MiniBatchKMeans])
+def test_predict_sample_weight_deprecation_warning(Estimator):
     X = np.random.rand(100, 2)
     sample_weight = np.random.uniform(size=100)
-    # test for kmeans
-    kmeans = KMeans()
-    kmeans.fit(X, sample_weight=sample_weight)
-    with pytest.warns(
-        FutureWarning,
-        match=(
-            "'sample_weight' was deprecated in version 1.3 and will be removed in 1.5.",
-        ),
-    ):
-        kmeans.predict(X, sample_weight=sample_weight)
-    # test for batch kmeans
-    kmeans = MiniBatchKMeans()
+    kmeans = Estimator()
     kmeans.fit(X, sample_weight=sample_weight)
     with pytest.warns(
         FutureWarning,
