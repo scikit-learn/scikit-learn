@@ -109,6 +109,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.cohen_kappa_score",
     "sklearn.metrics.confusion_matrix",
     "sklearn.metrics.mean_absolute_error",
+    "sklearn.metrics.mean_squared_error",
     "sklearn.metrics.mean_tweedie_deviance",
     "sklearn.metrics.multilabel_confusion_matrix",
     "sklearn.metrics.mutual_info_score",
