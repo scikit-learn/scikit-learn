@@ -741,7 +741,7 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         check_non_negative(X, "X in AdditiveChi2Sampler.transform")
         sparse = sp.issparse(X)
 
-        if getattr(self, "_sample_interval", None):
+        if hasattr(self, "_sample_interval"):
             # TODO(1.5): remove this branch
             sample_interval = self._sample_interval
 

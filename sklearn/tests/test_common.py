@@ -586,3 +586,28 @@ def test_global_output_transform_pandas(estimator):
     _set_checking_parameters(estimator)
     with ignore_warnings(category=(FutureWarning)):
         check_global_ouptut_transform_pandas(estimator.__class__.__name__, estimator)
+
+
+STATELESS_ESTIMATORS = [
+    est for est in _tested_estimators() if _safe_tags(est, key="stateless")
+]
+
+
+@pytest.mark.parametrize(
+    "estimator", STATELESS_ESTIMATORS, ids=_get_check_estimator_ids
+)
+def test_no_fitted_error_stateless_estimator(estimator):
+    """
+    Check that using transform or predict without prior fitting
+    doesn't raise a NotFittedError.
+    """
+    X, _ = make_blobs(n_samples=80, n_features=4, random_state=0)
+    X = X[X > 0].reshape(-1, 1)
+
+    if hasattr(estimator, "transform"):
+        # Does not raise
+        estimator.transform(X)
+
+    if hasattr(estimator, "predict"):
+        # Does not raise
+        estimator.predict(X)
