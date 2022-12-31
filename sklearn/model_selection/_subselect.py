@@ -58,6 +58,9 @@ class by_standard_error:
         min_cut = cv_means[best_score_idx] - self.sigma * cv_se[best_score_idx]
         return min_cut, max_cut
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}(sigma={self.sigma})"
+
 
 class by_percentile_rank:
     """A callable class that returns a window of model performance that falls within
@@ -97,6 +100,9 @@ class by_percentile_rank:
         max_cut = perc_cutoff[0, best_score_idx]
         min_cut = perc_cutoff[1, best_score_idx]
         return min_cut, max_cut
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}(eta={self.eta})"
 
 
 class by_signed_rank:
@@ -182,6 +188,12 @@ class by_signed_rank:
         min_cut = np.nanmin(cv_means[surviving_ranks])
         return min_cut, max_cut
 
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}(alpha={self.alpha},"
+            f" alternative={self.alternative}, zero_method={self.zero_method})"
+        )
+
 
 class by_fixed_window:
     """A callable class that returns a fixed window of model performance based on
@@ -215,6 +227,11 @@ class by_fixed_window:
         performance are user-specified float values.
         """
         return self.min_cut, self.max_cut
+
+    def __repr__(self):
+        return (
+            f"{self.__class__.__name__}(min_cut={self.min_cut}, max_cut={self.max_cut})"
+        )
 
 
 class Refitter:
@@ -289,10 +306,19 @@ class Refitter:
     ...     scoring="accuracy",
     ... )
     >>> search.fit(X, y)
+    GridSearchCV(estimator=Pipeline(steps=[('reduce_dim', PCA(random_state=42)),
+                                           ('classify',
+                                            LinearSVC(C=0.01, random_state=42))]),
+                 param_grid={'reduce_dim__n_components': [6, 8, 10, 12, 14]},
+                 scoring='accuracy')
     >>> ss = Refitter(search.cv_results_)
     >>> ss.fit(by_standard_error(sigma=1))
     (0.884825465639171, 0.9148526525904792)
     >>> refitted_index = ss.transform("reduce_dim__n_components")
+    Original best index: 4
+    Refitted best index: 3
+    Refitted best params: {'reduce_dim__n_components': 12}
+    Refitted best score: 0.8926121943670691
     >>> refitted_index
     3
 
@@ -402,7 +428,7 @@ class Refitter:
 
         if np.sum(performance_mask) == 0:
             print(
-                f"\nLow: {min_cut}\nHigh: {max_cut}\nMeans across folds:"
+                f"\nMin: {min_cut}\nMax: {max_cut}\nMeans across folds:"
                 f" {self._cv_means}\n"
             )
             raise ValueError(
@@ -580,7 +606,7 @@ def _wrap_refit(
     """
     ss = Refitter(cv_results_, scoring=scoring)
     [min_cut, max_cut] = ss.fit(selector)
-    print(f"Low: {min_cut}\nHigh: {max_cut}\n")
+    print(f"Min: {min_cut}\nMax: {max_cut}\n")
     return ss.transform(param)
 
 
@@ -624,7 +650,19 @@ def constrain(selector: Callable, param: Optional[str]) -> Callable:
     ...     scoring="accuracy",
     ...     refit=constrain(by_standard_error(sigma=1), "reduce_dim__n_components"),
     ... )
-    >>> search.fit(X, y)
+    >>> search.fit(X, y) # doctest: +ELLIPSIS
+    Min: 0.884825465639171
+    Max: 0.9148526525904792
+    <BLANKLINE>
+    Original best index: 4
+    Refitted best index: 3
+    Refitted best params: {'reduce_dim__n_components': 12}
+    Refitted best score: 0.8926121943670691
+    GridSearchCV(estimator=Pipeline(steps=[('reduce_dim', PCA(random_state=42)),
+                                           ('classify',
+                                            LinearSVC(C=0.01, random_state=42))]),
+                 param_grid={'reduce_dim__n_components': [6, 8, 10, 12, 14]},
+                 refit=functools.partial(<function _wrap_refit at ...
     >>> search.best_params_
     {'reduce_dim__n_components': 12}
 
