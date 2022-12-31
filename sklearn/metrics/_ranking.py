@@ -34,7 +34,7 @@ from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
-from ..utils._param_validation import Interval, validate_params
+from ..utils._param_validation import validate_params
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..utils._encode import _encode, _unique
@@ -243,7 +243,7 @@ def average_precision_score(
     {
         "y_true": ["array-like"],
         "y_score": ["array-like"],
-        "pos_label": [Interval(Integral, str, None, closed="left"), None],
+        "pos_label": [Integral, str, None],
         "sample_weight": ["array-like", None],
     }
 )
