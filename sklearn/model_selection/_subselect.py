@@ -293,10 +293,6 @@ class Refitter:
     >>> ss.fit(by_standard_error(sigma=1))
     (0.884825465639171, 0.9148526525904792)
     >>> refitted_index = ss.transform("reduce_dim__n_components")
-    Original best index: 4
-    Refitted best index: 3
-    Refitted best params: {'reduce_dim__n_components': 12}
-    Refitted best score: 0.8926121943670691
     >>> refitted_index
     3
 
@@ -629,8 +625,6 @@ def constrain(selector: Callable, param: Optional[str]) -> Callable:
     ...     refit=constrain(by_standard_error(sigma=1), "reduce_dim__n_components"),
     ... )
     >>> search.fit(X, y)
-    Low: 0.884825465639171
-    High: 0.9148526525904792
     >>> search.best_params_
     {'reduce_dim__n_components': 12}
 
