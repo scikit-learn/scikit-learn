@@ -631,19 +631,6 @@ def constrain(selector: Callable, param: Optional[str]) -> Callable:
     >>> search.fit(X, y)
     Low: 0.884825465639171
     High: 0.9148526525904792
-
-    Original best index: 4
-    Refitted best index: 3
-    Refitted best params: {'reduce_dim__n_components': 12}
-    Refitted best score: 0.8926121943670691
-    GridSearchCV(estimator=Pipeline(steps=[('reduce_dim', PCA(random_state=42)),
-                                        ('classify',
-                                            LinearSVC(C=0.01, random_state=42))]),
-                param_grid={'reduce_dim__n_components': [6, 8, 10, 12, 14]},
-                refit=functools.partial(<function _wrap_refit at 0x13ed1d480>,
-                param='reduce_dim__n_components', selector=<sklearn.model_selection.
-                _subselect.by_standard_error object at 0x101780250>),
-                scoring='accuracy')
     >>> search.best_params_
     {'reduce_dim__n_components': 12}
 
