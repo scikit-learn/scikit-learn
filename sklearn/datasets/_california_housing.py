@@ -37,10 +37,13 @@ from ._base import _pkl_filepath
 from ._base import RemoteFileMetadata
 from ._base import load_descr
 from ..utils import Bunch
+from ..utils._param_validation import validate_params
 
 
 # The original data can be found at:
 # https://www.dcc.fc.up.pt/~ltorgo/Regression/cal_housing.tgz
+
+
 ARCHIVE = RemoteFileMetadata(
     filename="cal_housing.tgz",
     url="https://ndownloader.figshare.com/files/5976036",
@@ -50,6 +53,14 @@ ARCHIVE = RemoteFileMetadata(
 logger = logging.getLogger(__name__)
 
 
+@validate_params(
+    {
+        "data_home": [str, None],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+        "as_frame": ["boolean"],
+    }
+)
 def fetch_california_housing(
     *, data_home=None, download_if_missing=True, return_X_y=False, as_frame=False
 ):
