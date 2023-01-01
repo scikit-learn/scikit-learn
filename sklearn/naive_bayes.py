@@ -1802,18 +1802,6 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         self._columns = all_columns
         self._estimator_to_input_indices = estimator_to_input_indices
 
-    @property
-    def named_estimators_(self):
-        """Access the fitted naive Bayes subestimators by name.
-
-        Read-only attribute to access any estimators by given name.
-        Keys are estimators names and values are the fitted estimator
-        objects.
-        """
-        # Almost a verbatim copy of ColumnTransformer.named_transformers_
-        # Use Bunch object to improve autocomplete
-        return Bunch(**{name: e for name, e, _ in self.estimators_})
-
     def _iter(self, *, fitted=False, replace_strings=False):
         """Generate ``(name, nb_estimator, columns)`` tuples.
 
@@ -1917,6 +1905,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
                 updated_nb_estimator = nb_estimator
             estimators_.append((name, updated_nb_estimator, cols))
         self.estimators_ = estimators_
+        self.named_estimators_ = Bunch(**{name: e for name, e, _ in estimators_})
 
     def fit(self, X, y, sample_weight=None):
         """Fit the naive Bayes meta-estimator.
