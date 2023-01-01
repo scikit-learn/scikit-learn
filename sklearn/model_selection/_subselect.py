@@ -45,11 +45,6 @@ class by_standard_error:
         lowest_score_idx: int,
         n_folds: int,
     ) -> Tuple[float, float]:
-        """
-        Returns a window of model performance whereby differences in model performance
-        are within a specified number standard errors (`sigma`) of the best performing
-        model.
-        """
         # Estimate the standard error across folds for each column of the grid
         cv_se = np.array(np.nanstd(score_grid, axis=1) / np.sqrt(n_folds))
 
@@ -86,10 +81,6 @@ class by_percentile_rank:
         lowest_score_idx: int,
         n_folds: int,
     ) -> Tuple[float, float]:
-        """
-        Returns a window of model performance whereby differences in model performance
-        are within a specified percentile (`eta`) of the best performing model.
-        """
         # Estimate the indicated percentile, and its inverse, across folds for
         # each column of the grid
         perc_cutoff = np.nanpercentile(
@@ -144,12 +135,6 @@ class by_signed_rank:
         lowest_score_idx: int,
         n_folds: int,
     ) -> Tuple[float, float]:
-        """
-        Returns a window of model performance whereby the non-parametric paired
-        difference in model performance is insignificant, based on a given `alpha`
-        level of significance.
-        """
-
         import itertools
         from scipy.stats import wilcoxon
 
@@ -196,8 +181,8 @@ class by_signed_rank:
 
 
 class by_fixed_window:
-    """A callable class that returns a fixed window of model performance based on
-    user-specified bounds.
+    """A callable class that returns a window of model performance whereby the min_cut
+    and max_cut of performance are user-specified float values.
 
     Attributes
     ----------
@@ -222,10 +207,6 @@ class by_fixed_window:
         lowest_score_idx: int,
         n_folds: int,
     ) -> Tuple[Union[float, None], Union[float, None]]:
-        """
-        Returns a window of model performance whereby the min_cut and max_cut of
-        performance are user-specified float values.
-        """
         return self.min_cut, self.max_cut
 
     def __repr__(self):
@@ -611,8 +592,7 @@ def _wrap_refit(
 
 
 def constrain(selector: Callable, param: Optional[str]) -> Callable:
-    """
-    Callable API for the `Refitter` class to be run as `refit` argument of
+    """Callable API for the `Refitter` class to be run as `refit` argument of
     `GridsearchCV` or `RandomSearchCV`.
 
     Parameters
@@ -629,6 +609,8 @@ def constrain(selector: Callable, param: Optional[str]) -> Callable:
     Returns
     -------
     Callable
+        A callable that returns the index of the best model under the performance
+        constraints imposed by the selector strategy.
 
     Examples
     --------
@@ -653,7 +635,7 @@ def constrain(selector: Callable, param: Optional[str]) -> Callable:
     >>> search.fit(X, y) # doctest: +ELLIPSIS
     Min: 0.884825465639171
     Max: 0.9148526525904792
-    <BLANKLINE>
+    ...
     Original best index: 4
     Refitted best index: 3
     Refitted best params: {'reduce_dim__n_components': 12}
@@ -667,7 +649,6 @@ def constrain(selector: Callable, param: Optional[str]) -> Callable:
     {'reduce_dim__n_components': 12}
 
     """
-
     # avoid returning a closure in a return statement to avoid pickling issues
     best_index_callable = partial(_wrap_refit, param=param, selector=selector)
     return best_index_callable
