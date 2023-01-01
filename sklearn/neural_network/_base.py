@@ -241,7 +241,7 @@ def binary_log_loss(y_true, y_prob, sample_weight=None):
     eps = np.finfo(y_prob.dtype).eps
     y_prob = np.clip(y_prob, eps, 1 - eps)
 
-    loss = -(xlogy(y_true, y_prob) + xlogy(1 - y_true, 1 - y_prob)).sum(aixs=-1)
+    loss = -(xlogy(y_true, y_prob) + xlogy(1 - y_true, 1 - y_prob)).sum(axis=-1)
 
     if sample_weight is not None:
         loss = loss * sample_weight
