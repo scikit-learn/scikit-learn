@@ -743,7 +743,7 @@ def _wrap_refit(
     """
     ss = Refitter(cv_results_, scoring=scoring)
     [min_cut, max_cut] = ss.fit(selector)
-    print(f"Min: {min_cut}\nMax: {max_cut}\n")
+    print(f"Min: {min_cut}\nMax: {max_cut}")
     return ss.transform(param)
 
 
@@ -791,7 +791,6 @@ def constrain(selector: Callable, param: Optional[str]) -> Callable:
     >>> search.fit(X, y) # doctest: +ELLIPSIS
     Min: 0.884825465639171
     Max: 0.9148526525904792
-    ...
     Original best index: 4
     Refitted best index: 3
     Refitted best params: {'reduce_dim__n_components': 12}
