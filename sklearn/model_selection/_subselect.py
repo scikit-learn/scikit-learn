@@ -35,6 +35,17 @@ class by_standard_error:
     """
 
     def __init__(self, sigma: int = 1):
+        """Constructs all the attributes necessary for initializing a
+        `by_standard_error` callable object.
+
+        Parameters
+        ----------
+        sigma : int
+            Number of standard errors tolerance in the case that a standard error
+            threshold is used to filter outlying scores across folds. Required if
+            `rule`=='se'. Default is 1.
+
+        """
         self.sigma = sigma
 
     def __call__(
@@ -45,6 +56,32 @@ class by_standard_error:
         lowest_score_idx: int,
         n_folds: int,
     ) -> Tuple[float, float]:
+        """Returns a window of model performance that falls within `sigma`
+        standard errors of the highest performing model.
+
+        Parameters
+        ----------
+        score_grid : np.ndarray
+            A 2D array of model performance scores across folds and hyperparameter
+            settings.
+        cv_means : np.ndarray
+            A 1D array of the average model performance across folds for each
+            hyperparameter setting.
+        best_score_idx : int
+            The index of the highest performing hyperparameter setting.
+        lowest_score_idx : int
+            The index of the lowest performing hyperparameter setting.
+        n_folds : int
+            The number of folds used in the cross-validation.
+
+        Returns
+        -------
+        min_cut : float
+            The lower bound of the window of model performance.
+        max_cut : float
+            The upper bound of the window of model performance.
+
+        """
         # Estimate the standard error across folds for each column of the grid
         cv_se = np.array(np.nanstd(score_grid, axis=1) / np.sqrt(n_folds))
 
@@ -53,7 +90,7 @@ class by_standard_error:
         min_cut = cv_means[best_score_idx] - self.sigma * cv_se[best_score_idx]
         return min_cut, max_cut
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}(sigma={self.sigma})"
 
 
@@ -71,6 +108,17 @@ class by_percentile_rank:
     """
 
     def __init__(self, eta: float = 0.68):
+        """Constructs all the attributes necessary for initializing a
+        `by_percentile_rank` callable object.
+
+        Parameters
+        ----------
+        eta : float
+            Percentile tolerance in the case that a percentile threshold
+            is used to filter outlier scores across folds. Required if
+            `rule`=='percentile'. Default is 0.68.
+
+        """
         self.eta = eta
 
     def __call__(
@@ -81,6 +129,32 @@ class by_percentile_rank:
         lowest_score_idx: int,
         n_folds: int,
     ) -> Tuple[float, float]:
+        """Returns a window of model performance that falls within `eta`
+        percentile of the highest performing model.
+
+        Parameters
+        ----------
+        score_grid : np.ndarray
+            A 2D array of model performance scores across folds and hyperparameter
+            settings.
+        cv_means : np.ndarray
+            A 1D array of the average model performance across folds for each
+            hyperparameter setting.
+        best_score_idx : int
+            The index of the highest performing hyperparameter setting.
+        lowest_score_idx : int
+            The index of the lowest performing hyperparameter setting.
+        n_folds : int
+            The number of folds used in the cross-validation.
+
+        Returns
+        -------
+        min_cut : float
+            The lower bound of the window of model performance.
+        max_cut : float
+            The upper bound of the window of model performance.
+
+        """
         # Estimate the indicated percentile, and its inverse, across folds for
         # each column of the grid
         perc_cutoff = np.nanpercentile(
@@ -92,7 +166,7 @@ class by_percentile_rank:
         min_cut = perc_cutoff[1, best_score_idx]
         return min_cut, max_cut
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{self.__class__.__name__}(eta={self.eta})"
 
 
@@ -123,6 +197,24 @@ class by_signed_rank:
         alternative: str = "two-sided",
         zero_method: str = "zsplit",
     ):
+        """Constructs all the attributes necessary for initializing a
+        `by_signed_rank` callable object.
+
+        Parameters
+        ----------
+        alpha : float
+            An alpha significance level in the case that wilcoxon rank sum
+            hypothesis testing is used to filter outlying scores across folds.
+            Required if `rule`=='ranksum'. Default is 0.05.
+        alternative : str
+            The alternative hypothesis to test against. Must be one of 'two-sided',
+            'less', or 'greater'. Default is 'two-sided'. See `scipy.stats.wilcoxon` for
+            more details.
+        zero_method : str
+            The method used to handle zero scores. Must be one of 'pratt', 'wilcox',
+            'zsplit'. Default is 'zsplit'. See `scipy.stats.wilcoxon` for more details.
+
+        """
         self.alpha = alpha
         self.alternative = alternative
         self.zero_method = zero_method
@@ -135,6 +227,32 @@ class by_signed_rank:
         lowest_score_idx: int,
         n_folds: int,
     ) -> Tuple[float, float]:
+        """Returns a window of model performance that is not significantly different
+        from the highest performing model, based on a signed Wilcoxon rank sum test.
+
+        Parameters
+        ----------
+        score_grid : np.ndarray
+            A 2D array of model performance scores across folds and hyperparameter
+            settings.
+        cv_means : np.ndarray
+            A 1D array of the average model performance across folds for each
+            hyperparameter setting.
+        best_score_idx : int
+            The index of the highest performing hyperparameter setting.
+        lowest_score_idx : int
+            The index of the lowest performing hyperparameter setting.
+        n_folds : int
+            The number of folds used in the cross-validation.
+
+        Returns
+        -------
+        min_cut : float
+            The lower bound of the window of model performance.
+        max_cut : float
+            The upper bound of the window of model performance.
+
+        """
         import itertools
         from scipy.stats import wilcoxon
 
@@ -173,7 +291,7 @@ class by_signed_rank:
         min_cut = np.nanmin(cv_means[surviving_ranks])
         return min_cut, max_cut
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}(alpha={self.alpha},"
             f" alternative={self.alternative}, zero_method={self.zero_method})"
@@ -196,6 +314,18 @@ class by_fixed_window:
     def __init__(
         self, min_cut: Optional[float] = None, max_cut: Optional[float] = None
     ):
+        """Constructs all the attributes necessary for initializing a
+        `by_fixed_window` callable object.
+
+        Parameters
+        ----------
+        min_cut : float
+            The lower bound of the window. Default is `None`, which is the lowest score.
+        max_cut : float
+            The upper bound of the window. Default is `None`, which is the highest
+            score.
+
+        """
         self.min_cut = min_cut
         self.max_cut = max_cut
 
@@ -207,9 +337,35 @@ class by_fixed_window:
         lowest_score_idx: int,
         n_folds: int,
     ) -> Tuple[Union[float, None], Union[float, None]]:
+        """Returns a window of model performance that based on user-specified
+        min_cut and max_cut values.
+
+        Parameters
+        ----------
+        score_grid : np.ndarray
+            A 2D array of model performance scores across folds and hyperparameter
+            settings.
+        cv_means : np.ndarray
+            A 1D array of the average model performance across folds for each
+            hyperparameter setting.
+        best_score_idx : int
+            The index of the highest performing hyperparameter setting.
+        lowest_score_idx : int
+            The index of the lowest performing hyperparameter setting.
+        n_folds : int
+            The number of folds used in the cross-validation.
+
+        Returns
+        -------
+        min_cut : float
+            The lower bound of the window of model performance.
+        max_cut : float
+            The upper bound of the window of model performance.
+
+        """
         return self.min_cut, self.max_cut
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}(min_cut={self.min_cut}, max_cut={self.max_cut})"
         )
