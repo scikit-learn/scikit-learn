@@ -1655,9 +1655,6 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         Number of samples encountered for each class during fitting. This
         value is weighted by the sample weight when provided.
 
-    n_classes_ : int
-        The number of classes known to the naive Bayes classifier, `n_classes`.
-
     classes_ : ndarray of shape (n_classes,)
         Class labels known to the classifier.
 
@@ -1895,7 +1892,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         else:  # check the provided prior
             priors = np.asarray(self.priors)
         # Check the prior in any case.
-        if len(priors) != self.n_classes_:
+        if len(priors) != len(self.classes_):
             raise ValueError("Number of priors must match number of classes.")
         if not np.isclose(priors.sum(), 1.0):
             raise ValueError("The sum of the priors should be 1.")
@@ -1969,7 +1966,6 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
             for i, c in enumerate(self.classes_):
                 counts[i] = (weights * (column_or_1d(y) == c)).sum()
             self.class_count_ = counts
-        self.n_classes_ = len(self.classes_)
 
         estimators = list(self._iter(fitted=False, replace_strings=True))
         fitted_estimators = Parallel(n_jobs=self.n_jobs)(
@@ -2049,7 +2045,6 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
                 counts[i] = (weights * (column_or_1d(y) == c)).sum()
 
         if first_call:
-            self.n_classes_ = len(self.classes_)
             self.class_count_ = counts
         else:
             self.class_count_ += counts
