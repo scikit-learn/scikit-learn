@@ -1722,7 +1722,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     def _log_message(self, name, idx, total):
         if not self.verbose:
             return None
-        return "(%d of %d) Processing %s" % (idx, total, name)
+        return f"({idx} of {total}) Processing {name}"
 
     def __init__(self, nb_estimators, *, priors=None, n_jobs=None, verbose=False):
         self.nb_estimators = nb_estimators
