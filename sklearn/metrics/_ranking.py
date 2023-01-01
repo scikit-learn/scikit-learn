@@ -21,7 +21,7 @@ the lower the better.
 
 import warnings
 from functools import partial
-from numbers import Real
+from numbers import Real, Integral
 
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
@@ -239,6 +239,14 @@ def average_precision_score(
     )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "pos_label": [Integral, str, None],
+        "sample_weight": ["array-like", None],
+    }
+)
 def det_curve(y_true, y_score, pos_label=None, sample_weight=None):
     """Compute error rates for different probability thresholds.
 
