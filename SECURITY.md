@@ -17,4 +17,4 @@ in order to prepare a dedicated bugfix release as timely as possible (depending
 on the complexity of the fix).
 
 In addition to sending the report by email, you can also report security
-vulnerabilities to [tidelift](https://tidelift.com/security).
+vulnerabilities to [tidelift](https://tidelift.com/security)
