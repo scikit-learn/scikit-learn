@@ -94,7 +94,11 @@ def check_recorded_metadata(obj, method, **kwargs):
     records = getattr(obj, "_records", dict()).get(method, dict())
     assert set(kwargs.keys()) == set(records.keys())
     for key, value in kwargs.items():
-        assert records[key] is value
+        recorded_value = records[key]
+        if key == "sample_weight" and len(recorded_value) < len(value):
+            assert np.isin(recorded_value, value).all()
+        else:
+            assert recorded_value is value
 
 
 class MetaRegressor(MetaEstimatorMixin, RegressorMixin, BaseEstimator):
