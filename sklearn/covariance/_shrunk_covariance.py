@@ -109,14 +109,14 @@ def _oas(X, *, assume_centered=False):
     prefer_skip_nested_validation=True,
 )
 def shrunk_covariance(emp_cov, shrinkage=0.1):
-    """Calculate a covariance matrix shrunk on the diagonal.
+    """Calculate covariance matrices shrunk on the diagonal.
 
     Read more in the :ref:`User Guide <shrunk_covariance>`.
 
     Parameters
     ----------
-    emp_cov : array-like of shape (n_features, n_features)
-        Covariance matrix to be shrunk.
+    emp_cov : array-like of shape (..., n_features, n_features)
+        Covariance matrices to be shrunk, at least 2D ndarray.
 
     shrinkage : float, default=0.1
         Coefficient in the convex combination used for the computation
@@ -124,8 +124,8 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
 
     Returns
     -------
-    shrunk_cov : ndarray of shape (n_features, n_features)
-        Shrunk covariance.
+    shrunk_cov : ndarray of shape (..., n_features, n_features)
+        Shrunk covariance matrices.
 
     Notes
     -----
@@ -137,10 +137,14 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
     """
     emp_cov = check_array(emp_cov)
     n_features = emp_cov.shape[0]
+    if not 0 <= shrinkage <= 1:
+        raise ValueError('shrinkage must be in [0, 1] (Got %d)' % shrinkage)
 
-    mu = np.trace(emp_cov) / n_features
     shrunk_cov = (1.0 - shrinkage) * emp_cov
-    shrunk_cov.flat[:: n_features + 1] += shrinkage * mu
+    mu = np.trace(emp_cov, axis1=-2, axis2=-1) / n_features
+    while mu.ndim != emp_cov.ndim:
+        mu = mu[..., np.newaxis]
+    shrunk_cov += shrinkage * mu * np.eye(n_features)
 
     return shrunk_cov
 
