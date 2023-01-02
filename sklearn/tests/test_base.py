@@ -376,7 +376,7 @@ def test_pickle_version_warning_is_not_raised_with_matching_version():
 
 class TreeBadVersion(DecisionTreeClassifier):
     def __getstate__(self):
-        return dict(self.__dict__.items(), _sklearn_version="something")
+        return dict(self.__dict__.items(), __sklearn_pickle_version__="something")
 
 
 pickle_error_message = (
@@ -384,7 +384,10 @@ pickle_error_message = (
     "version {old_version} when using version "
     "{current_version}. This might "
     "lead to breaking code or invalid results. "
-    "Use at your own risk."
+    "Use at your own risk. "
+    "For more info please refer to:\n"
+    "https://scikit-learn.org/stable/model_persistence.html"
+    "#security-maintainability-limitations"
 )
 
 
@@ -397,7 +400,7 @@ def test_pickle_version_warning_is_issued_upon_different_version():
         old_version="something",
         current_version=sklearn.__version__,
     )
-    with pytest.warns(UserWarning, match=message):
+    with pytest.warns(UserWarning, match=re.escape(message)):
         pickle.loads(tree_pickle_other)
 
 
@@ -419,7 +422,7 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
         current_version=sklearn.__version__,
     )
     # check we got the warning about using pre-0.18 pickle
-    with pytest.warns(UserWarning, match=message):
+    with pytest.warns(UserWarning, match=re.escape(message)):
         pickle.loads(tree_pickle_noversion)
 
 
@@ -651,8 +654,12 @@ def test_feature_names_in():
     df_mixed = pd.DataFrame(X_np, columns=["a", "b", 1, 2])
     trans = NoOpTransformer()
     msg = re.escape(
-        "Feature names only support names that are all strings. "
-        "Got feature names with dtypes: ['int', 'str']"
+        "Feature names are only supported if all input features have string names, "
+        "but your input has ['int', 'str'] as feature name / column name types. "
+        "If you want feature names to be stored and validated, you must convert "
+        "them all to strings, by using X.columns = X.columns.astype(str) for "
+        "example. Otherwise you can remove feature / column names from your input "
+        "data, or convert them all to a non-string data type."
     )
     with pytest.raises(TypeError, match=msg):
         trans.fit(df_mixed)
@@ -660,6 +667,29 @@ def test_feature_names_in():
     # transform on feature names that are mixed also raises:
     with pytest.raises(TypeError, match=msg):
         trans.transform(df_mixed)
+
+
+def test_base_estimator_pickle_version(monkeypatch):
+    """Check the version is embedded when pickled and checked when unpickled."""
+    old_version = "0.21.3"
+    monkeypatch.setattr(sklearn.base, "__version__", old_version)
+    original_estimator = MyEstimator()
+    old_pickle = pickle.dumps(original_estimator)
+    loaded_estimator = pickle.loads(old_pickle)
+    assert loaded_estimator.__sklearn_pickle_version__ == old_version
+    assert not hasattr(original_estimator, "__sklearn_pickle_version__")
+
+    # Loading pickle with newer version will raise a warning
+    new_version = "1.3.0"
+    monkeypatch.setattr(sklearn.base, "__version__", new_version)
+    message = pickle_error_message.format(
+        estimator="MyEstimator",
+        old_version=old_version,
+        current_version=new_version,
+    )
+    with pytest.warns(UserWarning, match=re.escape(message)):
+        reloaded_estimator = pickle.loads(old_pickle)
+        assert reloaded_estimator.__sklearn_pickle_version__ == old_version
 
 
 def test_clone_keeps_output_config():
@@ -671,3 +701,48 @@ def test_clone_keeps_output_config():
     ss_clone = clone(ss)
     config_clone = _get_output_config("transform", ss_clone)
     assert config == config_clone
+
+
+class _Empty:
+    pass
+
+
+class EmptyEstimator(_Empty, BaseEstimator):
+    pass
+
+
+@pytest.mark.parametrize("estimator", [BaseEstimator(), EmptyEstimator()])
+def test_estimator_empty_instance_dict(estimator):
+    """Check that ``__getstate__`` returns an empty ``dict`` with an empty
+    instance.
+
+    Python 3.11+ changed behaviour by returning ``None`` instead of raising an
+    ``AttributeError``. Non-regression test for gh-25188.
+    """
+    state = estimator.__getstate__()
+    expected = {"__sklearn_pickle_version__": sklearn.__version__}
+    assert state == expected
+
+    # this should not raise
+    pickle.loads(pickle.dumps(BaseEstimator()))
+
+
+def test_estimator_getstate_using_slots_error_message():
+    """Using a `BaseEstimator` with `__slots__` is not supported."""
+
+    class WithSlots:
+        __slots__ = ("x",)
+
+    class Estimator(BaseEstimator, WithSlots):
+        pass
+
+    msg = (
+        "You cannot use `__slots__` in objects inheriting from "
+        "`sklearn.base.BaseEstimator`"
+    )
+
+    with pytest.raises(TypeError, match=msg):
+        Estimator().__getstate__()
+
+    with pytest.raises(TypeError, match=msg):
+        pickle.dumps(Estimator())

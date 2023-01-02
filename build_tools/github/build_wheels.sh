@@ -4,14 +4,18 @@ set -e
 set -x
 
 # OpenMP is not present on macOS by default
-if [[ "$RUNNER_OS" == "macOS" ]]; then
+if [[ $(uname) == "Darwin" ]]; then
     # Make sure to use a libomp version binary compatible with the oldest
     # supported version of the macos SDK as libomp will be vendored into the
     # scikit-learn wheels for macos.
 
     if [[ "$CIBW_BUILD" == *-macosx_arm64 ]]; then
-        # arm64 builds must cross compile because CI is on x64
-        export PYTHON_CROSSENV=1
+        if [[ $(uname -m) == "x86_64" ]]; then
+            # arm64 builds must cross compile because the CI instance is x86
+            # This turns off the computation of the test program in
+            # sklearn/_build_utils/pre_build_helpers.py
+            export PYTHON_CROSSENV=1
+        fi
         # SciPy requires 12.0 on arm to prevent kernel panics
         # https://github.com/scipy/scipy/issues/14688
         # We use the same deployment target to match SciPy.
@@ -23,7 +27,7 @@ if [[ "$RUNNER_OS" == "macOS" ]]; then
     fi
 
     sudo conda create -n build $OPENMP_URL
-    PREFIX="/usr/local/miniconda/envs/build"
+    PREFIX="$CONDA_HOME/envs/build"
 
     export CC=/usr/bin/clang
     export CXX=/usr/bin/clang++
@@ -31,11 +35,6 @@ if [[ "$RUNNER_OS" == "macOS" ]]; then
     export CFLAGS="$CFLAGS -I$PREFIX/include"
     export CXXFLAGS="$CXXFLAGS -I$PREFIX/include"
     export LDFLAGS="$LDFLAGS -Wl,-rpath,$PREFIX/lib -L$PREFIX/lib -lomp"
-    # Disable the use of setuptools's vendored copy distutils when invoking setuptools
-    # See: https://setuptools.pypa.io/en/latest/deprecated/distutils-legacy.html
-    # TODO: remove the definition of this environment variable when no
-    # reference to distutils exist in the code-base for building scikit-learn.
-    export SETUPTOOLS_USE_DISTUTILS=stdlib
 fi
 
 # The version of the built dependencies are specified

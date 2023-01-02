@@ -30,6 +30,7 @@ from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
 from ..utils.metadata_routing import RequestType
 from ..utils.metadata_routing import _MetadataRequester
+from ..utils._param_validation import validate_params, Interval
 
 __all__ = [
     "BaseCrossValidator",
@@ -2492,6 +2493,23 @@ def check_cv(cv=5, y=None, *, classifier=False):
     return cv  # New style cv objects are passed without any modification
 
 
+@validate_params(
+    {
+        "test_size": [
+            Interval(numbers.Real, 0, 1, closed="neither"),
+            Interval(numbers.Integral, 1, None, closed="left"),
+            None,
+        ],
+        "train_size": [
+            Interval(numbers.Real, 0, 1, closed="neither"),
+            Interval(numbers.Integral, 1, None, closed="left"),
+            None,
+        ],
+        "random_state": ["random_state"],
+        "shuffle": ["boolean"],
+        "stratify": ["array-like", None],
+    }
+)
 def train_test_split(
     *arrays,
     test_size=None,

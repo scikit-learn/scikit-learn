@@ -851,7 +851,7 @@ def _pre_fit(
         Xy = None  # cannot use Xy if precompute is not Gram
 
     if hasattr(precompute, "__array__") and Xy is None:
-        common_dtype = np.find_common_type([X.dtype, y.dtype], [])
+        common_dtype = np.result_type(X.dtype, y.dtype)
         if y.ndim == 1:
             # Xy is 1d, make sure it is contiguous.
             Xy = np.empty(shape=n_features, dtype=common_dtype, order="C")
