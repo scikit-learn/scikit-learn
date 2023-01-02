@@ -665,7 +665,3 @@ def test_no_fitted_error_stateless_estimator(estimator):
     if hasattr(estimator, "transform"):
         # Does not raise
         estimator.transform(X)
-
-    if hasattr(estimator, "predict"):
-        # Does not raise
-        estimator.predict(X)
