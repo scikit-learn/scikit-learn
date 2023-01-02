@@ -739,7 +739,10 @@ def _log_reg_scoring_path(
             scores.append(log_reg.score(X_test, y_test))
         else:
             score_params = score_params or {}
-            scores.append(scoring(log_reg, X_test, y_test, **score_params))
+            _score_params = score_params.copy()
+            if "sample_weight" in _score_params:
+                _score_params["sample_weight"] = _score_params["sample_weight"][test]
+            scores.append(scoring(log_reg, X_test, y_test, **_score_params))
 
     return coefs, Cs, np.array(scores), n_iter
 
