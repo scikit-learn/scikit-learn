@@ -97,7 +97,7 @@ def check_recorded_metadata(obj, method, **kwargs):
         recorded_value = records[key]
         if (
             key == "sample_weight"
-            and recorded_value
+            and recorded_value is not None
             and len(recorded_value) < len(value)
         ):
             assert np.isin(recorded_value, value).all()
