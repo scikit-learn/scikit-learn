@@ -1,7 +1,6 @@
 """
 The :mod:`sklearn.model_selection.subselect` includes utilities for generating custom
-refit callable objects for subselecting models from a `GridSearchCV` or
-`RandomSearchCV` instances.
+refit callable objects for subselecting models from `SearchCV` objects.
 """
 import warnings
 from functools import partial
@@ -22,8 +21,11 @@ __all__ = [
 
 
 class by_standard_error:
-    """A callable class that returns a window of model performance that falls within
-    `sigma` standard errors of the highest performing model.
+    """Slices a window of model performance based on standard error.
+
+    Standard error is estimated based on a user-supplied number of standard errors,
+    sigma. The resulting window of model performance represents the range of scores
+    that fall within the indicated margin of error of the best performing model.
 
     Attributes
     ----------
@@ -31,12 +33,10 @@ class by_standard_error:
         Number of standard errors tolerance in the case that a standard error
         threshold is used to filter outlying scores across folds. Required if
         `rule`=='se'. Default is 1.
-
     """
 
     def __init__(self, sigma: int = 1):
-        """Constructs all the attributes necessary for initializing a
-        `by_standard_error` callable object.
+        """Initializes a `by_standard_error` callable object.
 
         Parameters
         ----------
@@ -44,7 +44,6 @@ class by_standard_error:
             Number of standard errors tolerance in the case that a standard error
             threshold is used to filter outlying scores across folds. Required if
             `rule`=='se'. Default is 1.
-
         """
         self.sigma = sigma
 
@@ -56,8 +55,7 @@ class by_standard_error:
         lowest_score_idx: int,
         n_folds: int,
     ) -> Tuple[float, float]:
-        """Returns a window of model performance that falls within `sigma`
-        standard errors of the highest performing model.
+        """Returns a window of model performance based on standard error.
 
         Parameters
         ----------
@@ -80,7 +78,6 @@ class by_standard_error:
             The lower bound of the window of model performance.
         max_cut : float
             The upper bound of the window of model performance.
-
         """
         # Estimate the standard error across folds for each column of the grid
         cv_se = np.array(np.nanstd(score_grid, axis=1) / np.sqrt(n_folds))
@@ -95,8 +92,11 @@ class by_standard_error:
 
 
 class by_percentile_rank:
-    """A callable class that returns a window of model performance that falls within
-    `eta` percentile of the highest performing model.
+    """Slices a window of model performance based on percentile rank.
+
+    Percentile rank is estimated based on a user-supplied percentile threshold, eta.
+    The resulting window of model performance represents the range of scores that fall
+    within the indicated percentile range of the best performing model.
 
     Attributes
     ----------
@@ -104,12 +104,10 @@ class by_percentile_rank:
         Percentile tolerance in the case that a percentile threshold
         is used to filter outlier scores across folds. Required if
         `rule`=='percentile'. Default is 0.68.
-
     """
 
     def __init__(self, eta: float = 0.68):
-        """Constructs all the attributes necessary for initializing a
-        `by_percentile_rank` callable object.
+        """Initializes a `by_percentile_rank` callable object.
 
         Parameters
         ----------
@@ -117,7 +115,6 @@ class by_percentile_rank:
             Percentile tolerance in the case that a percentile threshold
             is used to filter outlier scores across folds. Required if
             `rule`=='percentile'. Default is 0.68.
-
         """
         self.eta = eta
 
@@ -129,8 +126,7 @@ class by_percentile_rank:
         lowest_score_idx: int,
         n_folds: int,
     ) -> Tuple[float, float]:
-        """Returns a window of model performance that falls within `eta`
-        percentile of the highest performing model.
+        """Returns a window of model performance based on percentile rank.
 
         Parameters
         ----------
@@ -153,7 +149,6 @@ class by_percentile_rank:
             The lower bound of the window of model performance.
         max_cut : float
             The upper bound of the window of model performance.
-
         """
         # Estimate the indicated percentile, and its inverse, across folds for
         # each column of the grid
@@ -171,9 +166,11 @@ class by_percentile_rank:
 
 
 class by_signed_rank:
-    """A callable class that returns a window of model performance that is not
-    significantly different from the highest performing model, based on a signed
-    Wilcoxon rank sum test.
+    """Slices a window of model performance based on signed rank sum.
+
+    Signed rank sum is estimated based on a Wilcoxon rank sum test at a user-supplied
+    alpha-level. The resulting window of model performance represents the range of
+    scores that are not statistically different from the highest performing model.
 
     Attributes
     ----------
@@ -188,7 +185,6 @@ class by_signed_rank:
     zero_method : str
         The method used to handle zero scores. Must be one of 'pratt', 'wilcox',
         'zsplit'. Default is 'zsplit'. See `scipy.stats.wilcoxon` for more details.
-
     """
 
     def __init__(
@@ -197,8 +193,7 @@ class by_signed_rank:
         alternative: str = "two-sided",
         zero_method: str = "zsplit",
     ):
-        """Constructs all the attributes necessary for initializing a
-        `by_signed_rank` callable object.
+        """Initializes a `by_signed_rank` callable object.
 
         Parameters
         ----------
@@ -213,7 +208,6 @@ class by_signed_rank:
         zero_method : str
             The method used to handle zero scores. Must be one of 'pratt', 'wilcox',
             'zsplit'. Default is 'zsplit'. See `scipy.stats.wilcoxon` for more details.
-
         """
         self.alpha = alpha
         self.alternative = alternative
@@ -227,8 +221,7 @@ class by_signed_rank:
         lowest_score_idx: int,
         n_folds: int,
     ) -> Tuple[float, float]:
-        """Returns a window of model performance that is not significantly different
-        from the highest performing model, based on a signed Wilcoxon rank sum test.
+        """Returns a window of model performance based on signed rank sum.
 
         Parameters
         ----------
@@ -251,7 +244,6 @@ class by_signed_rank:
             The lower bound of the window of model performance.
         max_cut : float
             The upper bound of the window of model performance.
-
         """
         import itertools
         from scipy.stats import wilcoxon
@@ -299,8 +291,7 @@ class by_signed_rank:
 
 
 class by_fixed_window:
-    """A callable class that returns a window of model performance whereby the min_cut
-    and max_cut of performance are user-specified float values.
+    """Slices a window of model performance based on arbitrary min/max cuts.
 
     Attributes
     ----------
@@ -308,14 +299,12 @@ class by_fixed_window:
         The lower bound of the window. Default is `None`, which is the lowest score.
     max_cut : float
         The upper bound of the window. Default is `None`, which is the highest score.
-
     """
 
     def __init__(
         self, min_cut: Optional[float] = None, max_cut: Optional[float] = None
     ):
-        """Constructs all the attributes necessary for initializing a
-        `by_fixed_window` callable object.
+        """Initializes a `by_fixed_window` callable object.
 
         Parameters
         ----------
@@ -324,7 +313,6 @@ class by_fixed_window:
         max_cut : float
             The upper bound of the window. Default is `None`, which is the highest
             score.
-
         """
         self.min_cut = min_cut
         self.max_cut = max_cut
@@ -337,8 +325,7 @@ class by_fixed_window:
         lowest_score_idx: int,
         n_folds: int,
     ) -> Tuple[Union[float, None], Union[float, None]]:
-        """Returns a window of model performance that based on user-specified
-        min_cut and max_cut values.
+        """Returns a window of performance based on min_cut and max_cut values.
 
         Parameters
         ----------
@@ -361,7 +348,6 @@ class by_fixed_window:
             The lower bound of the window of model performance.
         max_cut : float
             The upper bound of the window of model performance.
-
         """
         return self.min_cut, self.max_cut
 
@@ -372,14 +358,15 @@ class by_fixed_window:
 
 
 class Refitter:
-    """`Refitter` is an interface that generates any of a variety of tuning refit
-    callables for use with `GridSearchCV` and `RandomSearchCV`. A refit callable can be
-    used to select a best-performing model from among a constrained subset of models.
-    This can be useful for instance the case that the user wishes to identify
-    best-performing models above or below a particular threshold. It can also be useful
-    for selecting alternative models whose performance is not meaningfully different
-    from the best-performing model, but whose simplicity may be more preferable (e.g.
-    to prevent overfitting).
+    """Generates refit callables for subselecting models with a `SearchCV` object.
+
+    Model subselection can be useful for instance in the case that the user wishes to
+    identify best-performing models above or below a particular threshold. It can also
+    be useful for selecting alternative models whose performance is not meaningfully
+    different from the best-performing model, but whose simplicity may be more
+    preferable (e.g. to prevent overfitting). Typically but not always, the user will
+    supply a specific hyperparameter to use as the basis for constraining the model
+    subselection.
 
     Attributes
     ----------
@@ -458,17 +445,26 @@ class Refitter:
     Refitted best score: 0.8926121943670691
     >>> refitted_index
     3
-
     """
 
     def __init__(self, cv_results_: Dict, scoring: str = "score"):
+        """Initializes the `Refitter` object.
+
+        Parameters
+        ----------
+        cv_results_ : Dict
+            The `cv_results_` attribute of a `GridSearchCV` or `RandomSearchCV` object.
+        scoring : str
+            The scoring metric used to select the best model. Default is "score", and
+            only needs to be changed in the case of multiple scoring metrics or a
+            custom scoring function.
+        """
         self.cv_results_ = cv_results_
         self.cv_results_constrained_ = cv_results_.copy()
         self.scoring = scoring
 
     def _get_splits(self) -> List[str]:
-        """Extracts the CV split keys corresponding to the scoring metric of
-        interest."""
+        """Extracts CV splits corresponding to the specified `scoring` metric."""
         # Extract subgrid corresponding to the scoring metric of interest
         fitted_key_strings = "\t".join(list(self.cv_results_constrained_.keys()))
         if not all(s in fitted_key_strings for s in ["split", "params", "mean_test"]):
@@ -532,9 +528,19 @@ class Refitter:
         max_cut: Optional[float],
         param: Optional[str] = None,
     ) -> int:
-        """Apply a performance threshold to the grid. If a parameter is specified,
-        then the threshold is applied to the performance specific to that parameter.
-        Otherwise, the threshold is applied to the overall performance."""
+        """Apply a performance threshold to the grid.
+
+        If a parameter is specified, then the threshold is applied to the performance
+        specific to that parameter. Otherwise, the threshold is applied to the overall
+        performance.
+
+        Parameters
+        ----------
+        min_cut : float
+            The minimum performance threshold.
+        max_cut : float
+            The maximum performance threshold.
+        """
 
         if param:
             if not any(
@@ -590,7 +596,7 @@ class Refitter:
         )
 
     def fit(self, selector: Callable) -> Tuple[Union[float, None], Union[float, None]]:
-        """Fit the refitter using the specified selector callable
+        """Fit the refitter using the specified selector callable.
 
         Parameters
         ----------
@@ -641,7 +647,6 @@ class Refitter:
                 [0.4       , 0.39166667, 0.41504178, 0.46518106, 0.51253482],
                 [0.31666667, 0.33333333, 0.37047354, 0.40668524, 0.46239554]])
             ```
-
         """
         if not callable(selector):
             raise TypeError(
@@ -662,7 +667,7 @@ class Refitter:
         return self.min_cut, self.max_cut
 
     def transform(self, param: Optional[str]) -> int:
-        """Re-evaluate the best-performing model under the fitted constraints.
+        """Subselects the best-performing model under the fitted constraints.
 
         Parameters
         ----------
@@ -688,7 +693,6 @@ class Refitter:
         ------
         `ValueError`
             If the refitter has not been fitted before calling the `transform` method.
-
         """
         if not hasattr(self, "min_cut") or not hasattr(self, "max_cut"):
             raise ValueError(
@@ -712,9 +716,10 @@ class Refitter:
 def _wrap_refit(
     cv_results_: Dict, selector: Callable, param: Optional[str], scoring: str = "score"
 ) -> int:
-    """A wrapper for `Refitter` that returns the best index for a given parameter
-    under the constraints imposed by a model selection callable. This function is used
-    by `constrain` and should not be called directly.
+    """A wrapper function for the `Refitter` class.
+
+    Should not be called directly. See the :class:`~sklearn.model_selection.Refitter`
+    API documentation for more details.
 
     Parameters
     ----------
@@ -738,7 +743,6 @@ def _wrap_refit(
     int
         The index of the best model under the performance constraints imposed by the
         selector strategy.
-
     """
     ss = Refitter(cv_results_, scoring=scoring)
     [min_cut, max_cut] = ss.fit(selector)
@@ -747,8 +751,9 @@ def _wrap_refit(
 
 
 def constrain(selector: Callable, param: Optional[str]) -> Callable:
-    """Callable API for the `Refitter` class to be run as `refit` argument of
-    `GridsearchCV` or `RandomSearchCV`.
+    """Callable returning the best index with constraints imposed by a `selector` class.
+
+    Intended to be used as the `refit` parameter in `GridSearchCV` or `RandomSearchCV`.
 
     Parameters
     ----------
@@ -787,7 +792,7 @@ def constrain(selector: Callable, param: Optional[str]) -> Callable:
     ...     scoring="accuracy",
     ...     refit=constrain(by_standard_error(sigma=1), "reduce_dim__n_components"),
     ... )
-    >>> search.fit(X, y) # doctest: +ELLIPSIS
+    >>> search.fit(X, y)
     Min: 0.884825465639171
     Max: 0.9148526525904792
     Original best index: 4
@@ -801,7 +806,6 @@ def constrain(selector: Callable, param: Optional[str]) -> Callable:
                  refit=functools.partial(<function _wrap_refit at ...
     >>> search.best_params_
     {'reduce_dim__n_components': 12}
-
     """
     # avoid returning a closure in a return statement to avoid pickling issues
     best_index_callable = partial(_wrap_refit, param=param, selector=selector)

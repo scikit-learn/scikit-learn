@@ -406,7 +406,6 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
         error_score=np.nan,
         return_train_score=True,
     ):
-
         self.scoring = scoring
         self.estimator = estimator
         self.n_jobs = n_jobs
