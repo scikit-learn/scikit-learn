@@ -45,4 +45,8 @@
     <a href='https://github.com/albertcthomas'><img src='https://avatars.githubusercontent.com/u/15966638?v=4' class='avatar' /></a> <br />
     <p>Albert Thomas</p>
     </div>
+    <div>
+    <a href='https://github.com/betatim'><img src='https://avatars.githubusercontent.com/u/1448859?v=4' class='avatar' /></a> <br />
+    <p>Tim Head</p>
+    </div>
     </div>

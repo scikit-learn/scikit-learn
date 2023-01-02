@@ -29,7 +29,6 @@ setup_ccache() {
 
 pre_python_environment_install() {
     if [[ "$DISTRIB" == "ubuntu" ]]; then
-        sudo add-apt-repository --remove ppa:ubuntu-toolchain-r/test
         sudo apt-get update
         sudo apt-get install python3-scipy python3-matplotlib \
              libatlas3-base libatlas-base-dev python3-virtualenv ccache
@@ -58,15 +57,6 @@ pre_python_environment_install() {
         ./configure && make -j 2
         export PYTHON_NOGIL_PATH="${PYTHON_NOGIL_CLONE_PATH}/python"
         cd $OLDPWD
-
-    elif [[ "$BUILD_WITH_ICC" == "true" ]]; then
-        wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-        sudo apt-key add GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-        rm GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-        sudo add-apt-repository "deb https://apt.repos.intel.com/oneapi all main"
-        sudo apt-get update
-        sudo apt-get install intel-oneapi-compiler-dpcpp-cpp-and-cpp-classic
-        source /opt/intel/oneapi/setvars.sh
 
     fi
 }
@@ -120,13 +110,6 @@ scikit_learn_install() {
         # FIXME: temporary fix to link against system libraries on linux
         # https://github.com/scikit-learn/scikit-learn/issues/20640
         export LDFLAGS="$LDFLAGS -Wl,--sysroot=/"
-    fi
-
-    if [[ "$BUILD_WITH_ICC" == "true" ]]; then
-        # The "build_clib" command is implicitly used to build "libsvm-skl".
-        # To compile with a different compiler, we also need to specify the
-        # compiler for this command
-        python setup.py build_ext --compiler=intelem -i build_clib --compiler=intelem
     fi
 
     # TODO use a specific variable for this rather than using a particular build ...

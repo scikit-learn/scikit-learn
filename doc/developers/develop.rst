@@ -670,7 +670,10 @@ when defining a custom subclass::
             ...
 
 The default value for `auto_wrap_output_keys` is `("transform",)`, which automatically
-wraps `fit_transform` and `transform`.
+wraps `fit_transform` and `transform`. The `TransformerMixin` uses the
+`__init_subclass__` mechanism to consume `auto_wrap_output_keys` and pass all other
+keyword arguments to it's super class. Super classes' `__init_subclass__` should
+**not** depend on `auto_wrap_output_keys`.
 
 For transformers that return multiple arrays in `transform`, auto wrapping will
 only wrap the first array and not alter the other arrays.
