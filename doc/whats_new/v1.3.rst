@@ -55,8 +55,9 @@ Changelog
 :mod:`sklearn.cluster`
 ......................
 
-- |API| The `sample_weight` parameter in `predict` method is now deprecated for
-  :class:`cluster.KMeans` and :class:`cluster.MiniBatchKMeans` and will be removed in v1.5.
+- |API| The `sample_weight` parameter in `predict` for
+  :meth:`cluster.KMeans.predict` and :meth:`cluster.MiniBatchKMeans.predict`
+  is now deprecated and will be removed in v1.5.
   :pr:`25251` by :user:`Gleb Levitski <glevv>`.
 
 :mod:`sklearn.decomposition`
