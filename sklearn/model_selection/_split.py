@@ -2456,13 +2456,7 @@ def check_cv(cv=5, y=None, *, classifier=False):
         else:
             return KFold(cv)
 
-    if not hasattr(cv, "split") or isinstance(cv, str):
-        if not isinstance(cv, Iterable) or isinstance(cv, str):
-            raise ValueError(
-                "Expected cv as an integer, cross-validation "
-                "object (from sklearn.model_selection) "
-                "or an iterable. Got %s." % cv
-            )
+    if not hasattr(cv, "split"):
         return _CVIterableWrapper(cv)
 
     return cv  # New style cv objects are passed without any modification
