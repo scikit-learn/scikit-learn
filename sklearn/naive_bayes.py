@@ -1548,6 +1548,9 @@ def _fit_one(estimator, X, y, message_clsname="", message=None, **fit_params):
 
     See :func:`sklearn.pipeline._fit_one`.
     """
+    # The dummy parameter is needed in _fit_partial to factorise fit/fit_partial
+    if fit_params["classes"] is None:
+        fit_params.pop("classes")
     with _print_elapsed_time(message_clsname, message):
         return estimator.fit(X, y, **fit_params)
 
@@ -1907,6 +1910,63 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         self.estimators_ = estimators_
         self.named_estimators_ = Bunch(**{name: e for name, e, _ in estimators_})
 
+    def _partial_fit(self, X, y, partial=False, classes=None, sample_weight=None):
+        """
+        partial : bool, default=False
+            True for partial_fit, False for fit.
+        """
+        first_call = not hasattr(self, "classes_")
+        if first_call:  # in fit() or the first call of partial_fit()
+            self._validate_params()
+            self._check_feature_names(X, reset=True)
+            self._check_n_features(X, reset=True)
+            self._validate_estimators(check_partial=partial)
+            self._validate_column_callables(X)
+        else:
+            self._check_feature_names(X, reset=False)
+            self._check_n_features(X, reset=False)
+
+        y_ = column_or_1d(y)
+
+        if sample_weight is not None:
+            weights = _check_sample_weight(sample_weight, X=y_, copy=True)
+
+        if not partial:
+            self.classes_, counts = np.unique(y_, return_counts=True)
+        else:
+            _check_partial_fit_first_call(self, classes)
+
+        if sample_weight is not None:
+            counts = np.zeros(len(self.classes_))
+            for i, c in enumerate(self.classes_):
+                counts[i] = (weights * (y_ == c)).sum()
+        elif partial:
+            counts = np.zeros(len(self.classes_))
+            for i, c in enumerate(self.classes_):
+                counts[i] = (y_ == c).sum()
+
+        if not first_call:
+            self.class_count_ += counts
+        else:
+            self.class_count_ = counts
+
+        estimators = list(self._iter(fitted=not first_call, replace_strings=True))
+        fitted_estimators = Parallel(n_jobs=self.n_jobs)(
+            delayed(_partial_fit_one if partial else _fit_one)(
+                estimator=clone(nb_estimator) if first_call else nb_estimator,
+                X=_safe_indexing(X, cols, axis=1),
+                y=y,
+                message_clsname="ColumnwiseNB",
+                message=self._log_message(name, idx, len(estimators)),
+                classes=classes,
+                sample_weight=sample_weight,
+            )
+            for idx, (name, nb_estimator, cols) in enumerate(estimators, 1)
+        )
+        self._update_fitted_estimators(fitted_estimators)
+        self._update_class_prior()
+        return self
+
     def fit(self, X, y, sample_weight=None):
         """Fit the naive Bayes meta-estimator.
 
@@ -1929,48 +1989,9 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         self : object
             Returns the instance itself.
         """
-        self._validate_params()
-        self._check_feature_names(X, reset=True)
-        # TODO: Consider overriding BaseEstimator._check_feature_names
-        # Currently, when X has all str feature names, all features are
-        # registered in self.feature_names_in no matter if they are used or not.
-        self._check_n_features(X, reset=True)
-        self._validate_estimators()
-        self._validate_column_callables(X)
-        # Consistency checks for X, y are delegated to subestimators
-
-        # Subestimators get original sample_weight. This is for class counts:
-        if sample_weight is not None:
-            weights = _check_sample_weight(sample_weight, X=y, copy=True)
-
-        # We would use sklearn.utils.multiclass.class_distribution, but it does
-        # not return class_count, which we want as well.
-        if sample_weight is None:
-            self.classes_, self.class_count_ = np.unique(
-                column_or_1d(y), return_counts=True
-            )
-        else:
-            self.classes_ = np.unique(column_or_1d(y))
-            counts = np.zeros(len(self.classes_))
-            for i, c in enumerate(self.classes_):
-                counts[i] = (weights * (column_or_1d(y) == c)).sum()
-            self.class_count_ = counts
-
-        estimators = list(self._iter(fitted=False, replace_strings=True))
-        fitted_estimators = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_one)(
-                estimator=clone(nb_estimator),
-                X=_safe_indexing(X, cols, axis=1),
-                y=y,
-                message_clsname="ColumnwiseNB",
-                message=self._log_message(name, idx, len(estimators)),
-                sample_weight=sample_weight,
-            )
-            for idx, (name, nb_estimator, cols) in enumerate(estimators, 1)
+        return self._partial_fit(
+            X, y, partial=False, classes=None, sample_weight=sample_weight
         )
-        self._update_fitted_estimators(fitted_estimators)
-        self._update_class_prior()
-        return self
 
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Fit incrementally the naive Bayes meta-estimator on a batch of samples.
@@ -2002,58 +2023,9 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         self : object
             Returns the instance itself.
         """
-        first_call = not hasattr(self, "classes_")
-        if first_call:
-            self._validate_params()
-            self._check_feature_names(X, reset=True)
-            self._check_n_features(X, reset=True)
-            self._validate_estimators(check_partial=True)
-            self._validate_column_callables(X)
-        else:
-            self._check_feature_names(X, reset=False)
-            self._check_n_features(X, reset=False)
-        # Consistency checks for X, y are delegated to subestimators
-
-        # Subestimators get original sample_weight. This is for class counts:
-        if sample_weight is not None:
-            weights = _check_sample_weight(sample_weight, X=y, copy=True)
-
-        # Subestimators should've checked classes. We set classes_ for counts
-        # and so that first_call becomes False at next partial_fit call.
-        _check_partial_fit_first_call(self, classes)
-
-        # We don't use sklearn.utils.multiclass.class_distribution, because it
-        # neither returns class_count, nor is suitable for partial_fit.
-        if sample_weight is None:
-            counts = np.zeros(len(self.classes_))
-            for i, c in enumerate(self.classes_):
-                counts[i] = (column_or_1d(y) == c).sum()
-        else:
-            counts = np.zeros(len(self.classes_))
-            for i, c in enumerate(self.classes_):
-                counts[i] = (weights * (column_or_1d(y) == c)).sum()
-
-        if first_call:
-            self.class_count_ = counts
-        else:
-            self.class_count_ += counts
-
-        estimators = list(self._iter(fitted=not first_call, replace_strings=True))
-        fitted_estimators = Parallel(n_jobs=self.n_jobs)(
-            delayed(_partial_fit_one)(
-                estimator=clone(nb_estimator) if first_call else nb_estimator,
-                X=_safe_indexing(X, cols, axis=1),
-                y=y,
-                message_clsname="ColumnwiseNB",
-                message=self._log_message(name, idx, len(estimators)),
-                classes=classes,
-                sample_weight=sample_weight,
-            )
-            for idx, (name, nb_estimator, cols) in enumerate(estimators, 1)
+        return self._partial_fit(
+            X, y, partial=True, classes=classes, sample_weight=sample_weight
         )
-        self._update_fitted_estimators(fitted_estimators)
-        self._update_class_prior()
-        return self
 
     @property
     def _estimators(self):
