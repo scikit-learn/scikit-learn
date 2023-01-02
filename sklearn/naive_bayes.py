@@ -1937,18 +1937,18 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
             _check_partial_fit_first_call(self, classes)
 
         if sample_weight is not None:
-            counts = np.zeros(len(self.classes_))
+            counts = np.zeros(len(self.classes_), dtype=np.float64)
             for i, c in enumerate(self.classes_):
                 counts[i] = (weights * (y_ == c)).sum()
         elif partial:
-            counts = np.zeros(len(self.classes_))
+            counts = np.zeros(len(self.classes_), dtype=np.float64)
             for i, c in enumerate(self.classes_):
                 counts[i] = (y_ == c).sum()
 
         if not first_call:
             self.class_count_ += counts
         else:
-            self.class_count_ = counts
+            self.class_count_ = counts.astype(np.float64, copy=False)
 
         estimators = list(self._iter(fitted=not first_call, replace_strings=True))
         fitted_estimators = Parallel(n_jobs=self.n_jobs)(
