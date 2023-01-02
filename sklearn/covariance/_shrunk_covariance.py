@@ -73,6 +73,12 @@ def _oas(X, *, assume_centered=False):
 # ShrunkCovariance estimator
 
 
+@validate_params(
+    {
+        "emp_cov": ["array-like"],
+        "shrinkage": [Interval(Real, 0, 1, closed="both")],
+    }
+)
 def shrunk_covariance(emp_cov, shrinkage=0.1):
     """Calculate a covariance matrix shrunk on the diagonal.
 
