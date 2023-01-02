@@ -709,7 +709,7 @@ def test_sample_weight_not_none_and_base_estimator_supports_it_directly(estimato
     X, y = iris.data, iris.target
     sample_weight = np.ones_like(y)
 
-    base_estimator = _weighted(CheckingClassifier(expected_sample_weight=False))
+    base_estimator = _weighted(CheckingClassifier(expected_sample_weight=True))
     estimator = estimator_cls(base_estimator)
 
     # there are no warnings and no errors
@@ -772,6 +772,9 @@ def test_sample_weight_supported_and_used_and_base_estimator_is_metaestimator(
     num_samples = len(y)
     sample_weight = np.ones_like(y)
 
+    max_samples = 55  # some value which is < num_samples
+    assert max_samples < num_samples
+
     from sklearn.base import MetaEstimatorMixin
     from sklearn.utils.metadata_routing import (
         MetadataRouter,
@@ -785,7 +788,7 @@ def test_sample_weight_supported_and_used_and_base_estimator_is_metaestimator(
 
         def check(self, X, y, **fit_params):
             assert "sample_weight" not in fit_params
-            assert len(y) == 0.5 * num_samples  # check that indexing was used
+            assert len(y) == max_samples  # check that indexing was used
 
         def fit(self, X, y, **fit_params):
             self.check(X, y, **fit_params)
@@ -827,7 +830,7 @@ def test_sample_weight_supported_and_used_and_base_estimator_is_metaestimator(
 
     class BaseEstimatorWithoutSW(BaseEstimator):
         def fit(self, X, y):
-            assert len(y) == 0.5 * num_samples  # check that indexing was used
+            assert len(y) == max_samples  # check that indexing was used
             return self
 
         def predict(self, X):
@@ -851,7 +854,7 @@ def test_sample_weight_supported_and_used_and_base_estimator_is_metaestimator(
         base_base_estimator = BaseEstimatorWithoutSW()
         base_estimator = MetaEstimatorWithoutSW(base_base_estimator)
 
-    estimator = estimator_cls(base_estimator, max_samples=0.5)
+    estimator = estimator_cls(base_estimator, max_samples=max_samples)
 
     if use_sw and not base_estimator_supports_sw:
         # this case is covered by metadata routing, not specific to bagging
