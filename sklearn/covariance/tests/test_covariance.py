@@ -82,6 +82,20 @@ def test_covariance():
 
 
 def test_shrunk_covariance():
+    # Test shrunk_covariance on a simple 2x2 matrix
+    n_features = 2
+    cov = np.ones((n_features, n_features))
+    cov_shrunk = shrunk_covariance(cov, 0.5)
+    cov_target = np.array([[1, 0.5], [0.5, 1]])
+    assert_array_equal(cov_shrunk, cov_target)
+
+    # Test shrunk_covariance on a 3d array, repeating the previous matrix
+    n_matrices = 3
+    covs = np.repeat(cov[np.newaxis, ...], n_matrices, axis=0)
+    covs_shrunk = shrunk_covariance(covs, 0.5)
+    covs_target = np.repeat(cov_target[np.newaxis, ...], n_matrices, axis=0)
+    assert_array_equal(covs_shrunk, covs_target)
+
     # Tests ShrunkCovariance module on a simple dataset.
     # compare shrunk covariance obtained from data and from MLE estimate
     cov = ShrunkCovariance(shrinkage=0.5)
