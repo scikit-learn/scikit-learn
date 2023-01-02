@@ -662,8 +662,7 @@ class Refitter:
         return self.min_cut, self.max_cut
 
     def transform(self, param: Optional[str]) -> int:
-        """Re-evaluate the best-performing model under the fitted constraints with
-        respect to a specified hyperparameter of interest.
+        """Re-evaluate the best-performing model under the fitted constraints.
 
         Parameters
         ----------
