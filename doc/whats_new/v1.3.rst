@@ -67,6 +67,12 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`.
   :pr:`25177` by :user:`Tim Head <betatim>`.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| :class:`feature_extraction.FeatureHasher` raises an informative error
+  when the input is a list of strings. :pr:`25094` by `Thomas Fan`_.
+
 :mod:`sklearn.model_selection`
 ..............................
 - |Fix| :func:`model_selection.cross_validate` with multimetric scoring in
