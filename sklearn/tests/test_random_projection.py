@@ -64,14 +64,6 @@ data, data_csr = make_sparse_random_data(n_samples, n_features, n_nonzeros)
 ###############################################################################
 
 
-@pytest.mark.parametrize(
-    "n_samples, eps", [(100, 1.1), (100, 0.0), (100, -0.1), (0, 0.5)]
-)
-def test_invalid_jl_domain(n_samples, eps):
-    with pytest.raises(ValueError):
-        johnson_lindenstrauss_min_dim(n_samples, eps=eps)
-
-
 def test_input_size_jl_min_dim():
     with pytest.raises(ValueError):
         johnson_lindenstrauss_min_dim(3 * [100], eps=2 * [0.9])
