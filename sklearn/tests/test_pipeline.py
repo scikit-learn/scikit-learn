@@ -1653,7 +1653,8 @@ def test_feature_union_feature_names_in_():
     """Ensure feature union has `.feature_names_in_` attribute if `X` has a
     `columns` attribute.
 
-    Test for #24754"""
+    Test for #24754.
+    """
     pytest.importorskip("pandas")
 
     X, _ = load_iris(as_frame=True, return_X_y=True)
