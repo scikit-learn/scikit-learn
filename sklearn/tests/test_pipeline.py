@@ -1658,25 +1658,24 @@ def test_feature_union_feature_names_in_():
     pytest.importorskip("pandas")
 
     X, _ = load_iris(as_frame=True, return_X_y=True)
-    X_train, X_test = train_test_split(X, random_state=0)
 
     # FeatureUnion should have the feature_names_in_ attribute if the
     # first transformer also has it
     scaler = StandardScaler()
-    scaler.fit(X_train)
+    scaler.fit(X)
     union = FeatureUnion([("scale", scaler)])
     assert hasattr(union, "feature_names_in_")
-    assert_array_equal(X_train.columns, union.feature_names_in_)
+    assert_array_equal(X.columns, union.feature_names_in_)
     assert_array_equal(scaler.feature_names_in_, union.feature_names_in_)
 
     # fit with pandas.DataFrame
     union = FeatureUnion([("pass", "passthrough")])
-    union.fit(X_train)
+    union.fit(X)
     assert hasattr(union, "feature_names_in_")
-    assert_array_equal(X_train.columns, union.feature_names_in_)
+    assert_array_equal(X.columns, union.feature_names_in_)
 
     # fit with numpy array
-    X_array = X_train.to_numpy()
+    X_array = X.to_numpy()
     union = FeatureUnion([("pass", "passthrough")])
     union.fit(X_array)
     assert not hasattr(union, "feature_names_in_")
