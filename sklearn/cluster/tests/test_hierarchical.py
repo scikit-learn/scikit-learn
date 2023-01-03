@@ -50,9 +50,9 @@ from sklearn.utils._testing import assert_array_equal
 from sklearn.datasets import make_moons, make_circles
 
 
-def test_linkage_misc():
+def test_linkage_misc(global_random_seed):
     # Misc tests on linkage
-    rng = np.random.RandomState(42)
+    rng = np.random.RandomState(global_random_seed)
     X = rng.normal(size=(5, 5))
 
     with pytest.raises(ValueError):
@@ -280,9 +280,9 @@ def test_agglomerative_clustering_memory_mapped():
     AgglomerativeClustering(metric="euclidean", linkage="single").fit(Xmm)
 
 
-def test_ward_agglomeration():
+def test_ward_agglomeration(global_random_seed):
     # Check that we obtain the correct solution in a simplistic case
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     mask = np.ones([10, 10], dtype=bool)
     X = rng.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
@@ -468,13 +468,13 @@ def test_connectivity_propagation():
     ward.fit(X)
 
 
-def test_ward_tree_children_order():
+def test_ward_tree_children_order(global_random_seed):
     # Check that children are ordered in the same way for both structured and
     # unstructured versions of ward_tree.
 
     # test on five random datasets
     n, p = 10, 5
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
 
     connectivity = np.ones((n, n))
     for i in range(5):
@@ -764,8 +764,8 @@ def test_agglomerative_clustering_with_distance_threshold(linkage):
         assert np.array_equiv(clusters_produced, clusters_at_threshold)
 
 
-def test_small_distance_threshold():
-    rng = np.random.RandomState(0)
+def test_small_distance_threshold(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 10
     X = rng.randint(-300, 300, size=(n_samples, 3))
     # this should result in all data in their own clusters, given that
@@ -781,8 +781,8 @@ def test_small_distance_threshold():
     assert clustering.n_clusters_ == n_samples
 
 
-def test_cluster_distances_with_distance_threshold():
-    rng = np.random.RandomState(0)
+def test_cluster_distances_with_distance_threshold(global_random_seed):
+    rng = np.random.RandomState(global_random_seed)
     n_samples = 100
     X = rng.randint(-10, 10, size=(n_samples, 3))
     # check the distances within the clusters and with other clusters
