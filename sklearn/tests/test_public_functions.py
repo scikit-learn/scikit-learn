@@ -99,6 +99,8 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.cluster.estimate_bandwidth",
     "sklearn.cluster.kmeans_plusplus",
     "sklearn.covariance.empirical_covariance",
+    "sklearn.covariance.shrunk_covariance",
+    "sklearn.datasets.fetch_california_housing",
     "sklearn.datasets.make_sparse_coded_signal",
     "sklearn.decomposition.sparse_encode",
     "sklearn.feature_extraction.grid_to_graph",
