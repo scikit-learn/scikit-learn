@@ -232,7 +232,7 @@ def test_function_transformer_support_all_nummerical_dataframes_check_inverse_Tr
 
 
 def test_function_transformer_with_dataframe_and_check_inverse_True():
-    """Raise error is raised when check_inverse=True.
+    """Check error is raised when check_inverse=True.
 
     Non-regresion test for gh-25261.
     """
