@@ -777,6 +777,15 @@ def check_array(
         if all(isinstance(dtype_iter, np.dtype) for dtype_iter in dtypes_orig):
             dtype_orig = np.result_type(*dtypes_orig)
 
+    elif hasattr(array, "iloc") and hasattr(array, "dtype"):
+        # array is a pandas series
+        pandas_requires_conversion = _pandas_dtype_needs_early_conversion(array.dtype)
+        if isinstance(array.dtype, np.dtype):
+            dtype_orig = array.dtype
+        else:
+            # Set to None to let array.astype work out the best dtype
+            dtype_orig = None
+
     if dtype_numeric:
         if dtype_orig is not None and dtype_orig.kind == "O":
             # if input is object, convert to float.
@@ -1167,7 +1176,15 @@ def column_or_1d(y, *, dtype=None, warn=False):
         If `y` is not a 1D array or a 2D array with a single row or column.
     """
     xp, _ = get_namespace(y)
-    y = xp.asarray(y, dtype=dtype)
+    y = check_array(
+        y,
+        ensure_2d=False,
+        dtype=dtype,
+        input_name="y",
+        force_all_finite=False,
+        ensure_min_samples=0,
+    )
+
     shape = y.shape
     if len(shape) == 1:
         return _asarray_with_order(xp.reshape(y, -1), order="C", xp=xp)
@@ -1884,8 +1901,12 @@ def _get_feature_names(X):
     # mixed type of string and non-string is not supported
     if len(types) > 1 and "str" in types:
         raise TypeError(
-            "Feature names only support names that are all strings. "
-            f"Got feature names with dtypes: {types}."
+            "Feature names are only supported if all input features have string names, "
+            f"but your input has {types} as feature name / column name types. "
+            "If you want feature names to be stored and validated, you must convert "
+            "them all to strings, by using X.columns = X.columns.astype(str) for "
+            "example. Otherwise you can remove feature / column names from your input "
+            "data, or convert them all to a non-string data type."
         )
 
     # Only feature names of all strings are supported

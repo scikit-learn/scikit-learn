@@ -383,7 +383,14 @@ def _safe_assign(X, values, *, row_indexer=None, column_indexer=None):
     )
 
     if hasattr(X, "iloc"):  # pandas dataframe
-        X.iloc[row_indexer, column_indexer] = values
+        with warnings.catch_warnings():
+            # pandas >= 1.5 raises a warning when using iloc to set values in a column
+            # that does not have the same type as the column being set. It happens
+            # for instance when setting a categorical column with a string.
+            # In the future the behavior won't change and the warning should disappear.
+            # TODO(1.3): check if the warning is still raised or remove the filter.
+            warnings.simplefilter("ignore", FutureWarning)
+            X.iloc[row_indexer, column_indexer] = values
     else:  # numpy array or sparse matrix
         X[row_indexer, column_indexer] = values
 
