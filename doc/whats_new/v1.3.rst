@@ -91,6 +91,7 @@ Changelog
 - |Feature| :class:`pipeline.FeatureUnion` can now use indexing notation (e.g.
   `feature_union["scalar"]`) to access transformers by name. :pr:`25093` by
   `Thomas Fan`_.
+
 - |Feature| :class:`pipeline.FeatureUnion` can now access the
   `feature_names_in_` attribute if the `X` value seen during `.fit` has a
   `columns` attribute and all columns are strings. e.g. when `X` is a
