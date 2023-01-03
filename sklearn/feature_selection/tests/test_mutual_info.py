@@ -243,18 +243,12 @@ def test_mutual_info_error_handling_for_unique_labels():
     with only unique labels.
     """
 
-    with pytest.raises(ValueError) as exc_info:
-        a = [[1, 0, 1], [0, 1, 1]]
-        b = [0, 1]
-
-        mutual_info_classif(a, b)
-
-    exception_raised = exc_info.value
-    exception_expected = (
+    a = [[1, 0, 1], [0, 1, 1]]
+    b = [0, 1]
+    err_msg = (
         "Found array with 0 samples after masking"
         " points with unique labels. Ensure that at least"
         " two instances share the same label."
     )
-
-    # check if the exception error has the correct value is found
-    assert exception_raised.args[0] == exception_expected
+    with pytest.raises(ValueError, match=err_msg):
+        mutual_info_classif(a, b)

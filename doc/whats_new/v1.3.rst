@@ -95,8 +95,9 @@ Changelog
   :pr:`24935` by :user:`Seladus <seladus>`, :user:`Guillaume Lemaitre <glemaitre>`, and
   :user:`Dea María Léon <deamarialeon>`.
 
-- |Enhancement| Imporve error handling in :func:`feature_selection.mutual_info_classif` now
-  checks if instances are left after masking of unique labels. :pr:`25192` by :user:`makoeppel`.
+- |Enhancement| Improve error handling in :func:`feature_selection.mutual_info_classif`
+  that now checks if instances are left after masking of unique labels.
+  :pr:`25192` by :user:`makoeppel`.
 
 Code and Documentation Contributors
 -----------------------------------

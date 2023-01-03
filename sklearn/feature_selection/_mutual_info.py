@@ -135,7 +135,6 @@ def _compute_mi_cd(c, d, n_neighbors):
     c = c[mask]
     radius = radius[mask]
 
-    # check if after masking instances are left
     if _num_samples(c) == 0:
         raise ValueError(
             "Found array with 0 samples after masking"
