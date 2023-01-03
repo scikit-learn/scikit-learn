@@ -31,7 +31,7 @@ Changelog
 ............................
 
 - |Fix| :meth:`preprocessing.FunctionTransformer.inverse_transform` correctly
-  supports DataFrames that all all numerical when `check_inverse=True`.
+  supports DataFrames that are all numerical when `check_inverse=True`.
   :pr:`25274` by `Thomas Fan`_.
 
 :mod:`sklearn.utils`
