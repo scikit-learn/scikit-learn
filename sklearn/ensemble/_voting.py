@@ -232,6 +232,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimators expose such an attribute when fit.
+
         .. versionadded:: 1.0
 
     See Also
@@ -534,6 +535,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimators expose such an attribute when fit.
+
         .. versionadded:: 1.0
 
     See Also
