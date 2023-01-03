@@ -37,14 +37,8 @@ def _get_thread_config(thread=None):
     return _thread_config[thread]
 
 
-def get_config(thread=None):
+def get_config():
     """Retrieve current values for configuration set by :func:`set_config`.
-
-    Parameters
-    ----------
-    thread : Thread, default=None
-        The thread for which to retrieve the configuration. If None, the
-        configuration of the current thread is returned.
 
     Returns
     -------
@@ -58,7 +52,7 @@ def get_config(thread=None):
     """
     # Return a copy of the configuration so that users will not be able to
     # modify the configuration with the returned dict.
-    return _get_thread_config(thread=thread).copy()
+    return _get_thread_config().copy()
 
 
 def set_config(

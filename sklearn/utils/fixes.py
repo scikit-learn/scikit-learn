@@ -21,7 +21,7 @@ import numpy as np
 import scipy
 import scipy.stats
 import threadpoolctl
-from .._config import config_context, get_config
+from .._config import config_context, _get_thread_config
 from ..externals._packaging.version import parse as parse_version
 
 
@@ -131,7 +131,7 @@ class _FuncWrapper:
 
     def __init__(self, function, thread):
         self.function = function
-        self.config = get_config(thread=thread)
+        self.config = _get_thread_config(thread=thread)
         update_wrapper(self, self.function)
 
     def __call__(self, *args, **kwargs):

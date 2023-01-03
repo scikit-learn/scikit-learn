@@ -5,6 +5,8 @@ from concurrent.futures import ThreadPoolExecutor
 from joblib import Parallel
 import pytest
 
+from sklearn._config import _get_thread_config
+
 from sklearn import get_config, set_config, config_context
 from sklearn.utils.fixes import delayed
 
@@ -149,19 +151,19 @@ def test_config_threadsafe():
     assert items == [False, True, False, True]
 
 
-def test_get_config_thread_dependent():
+def test_get_thread_config():
     """Check that we can retrieve the config file from a specific thread."""
 
     def set_definitive_assume_finite(assume_finite, sleep_duration):
         set_config(assume_finite=assume_finite)
         time.sleep(sleep_duration)
-        return get_config()["assume_finite"]
+        return _get_thread_config()["assume_finite"]
 
     thread = threading.Thread(target=set_definitive_assume_finite, args=(True, 0.1))
     thread.start()
     thread.join()
 
-    thread_specific_config = get_config(thread=thread)
+    thread_specific_config = _get_thread_config(thread=thread)
     assert thread_specific_config["assume_finite"] is True
-    main_thread_config = get_config()
+    main_thread_config = _get_thread_config()
     assert main_thread_config["assume_finite"] is False
