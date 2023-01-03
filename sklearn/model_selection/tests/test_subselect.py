@@ -135,7 +135,6 @@ def test_refitter_errors(grid_search_simulated):
     [
         "reduce_dim__n_components",
         None,
-        pytest.mark.xfail("Not_a_param"),
     ],
 )
 @pytest.mark.parametrize(
@@ -198,7 +197,7 @@ def test_constrain(param, scoring, rule, search_cv):
     grid.fit(X, y)
 
     # If the cv results were not all NaN, then we can test the refit callable
-    if not np.isnan(grid.fit(X, y).cv_results_["split0_test_score"]).all():
+    if not np.isnan(grid.fit(X, y).cv_results_["mean_test_score"]).all():
         grid_simplified.fit(X, y)
         simplified_best_score_ = grid_simplified.cv_results_["mean_test_score"][
             grid_simplified.best_index_
@@ -206,8 +205,16 @@ def test_constrain(param, scoring, rule, search_cv):
         # Ensure that if the refit callable subselected a lower scoring model,
         # it was because it was only because it was a simpler model.
         if abs(grid.best_score_) > abs(simplified_best_score_):
+            assert grid.best_index_ != grid_simplified.best_index_
             if param:
                 assert grid.best_params_[param] > grid_simplified.best_params_[param]
+        elif grid.best_score_ == grid_simplified.best_score_:  # pragma: no cover
+            assert grid.best_index_ == grid_simplified.best_index_
+            assert grid.best_params_ == grid_simplified.best_params_
+        else:
+            assert grid.best_index_ != grid_simplified.best_index_
+            assert grid.best_params_ != grid_simplified.best_params_
+            assert grid.best_score_ < grid_simplified.best_score_
 
 
 def test_by_standard_error(generate_fit_params):
