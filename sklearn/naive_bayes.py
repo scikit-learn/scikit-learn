@@ -1613,7 +1613,8 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
             otherwise a 2d array will be passed to the transformer.
             A callable is passed the input data `X` and can return any of the
             above. To select multiple columns by name or dtype, you can use
-            :obj:`~sklearn.compose.make_column_selector`.
+            :obj:`~sklearn.compose.make_column_selector`. The callable is evaluated
+            on the first batch, but not on subsequent calls of `partial_fit`.
 
     priors : array-like of shape (n_classes,) or str, default=None
         Prior probabilities of classes. If unspecified, the priors are
