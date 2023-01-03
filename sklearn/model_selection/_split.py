@@ -2402,13 +2402,9 @@ class _CVIterableWrapper(BaseCrossValidator):
             yield train, test
 
 
-@validate_params(
-    {
-        "cv": ["cv_object"],
-        "y": ["array-like", None],
-        "classifier": ["boolean"],
-    }
-)
+@validate_params({
+    "cv": ["cv_object"], "y": ["array-like", None], "classifier": ["boolean"]
+})
 def check_cv(cv=5, y=None, *, classifier=False):
     """Input checker utility for building a cross-validator.
 
