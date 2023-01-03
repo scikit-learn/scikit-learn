@@ -19,21 +19,22 @@ _global_config_default = {
     "array_api_dispatch": False,
     "transform_output": "default",
 }
-_threadlocal = threading.local()
 _thread_config = WeakKeyDictionary()  # type: WeakKeyDictionary[threading.Thread, Dict]
 
 
-def _get_threadlocal_config():
-    """Get a threadlocal **mutable** configuration.
+def _get_thread_config(thread=None):
+    """Get a thread **mutable** configuration.
 
     If the configuration does not exist, copy the default global configuration.
     The configuration is also registered to a global dictionary where the keys
     are weak references to the thread objects.
     """
-    if not hasattr(_threadlocal, "global_config"):
-        _threadlocal.global_config = _global_config_default.copy()
-        _thread_config[threading.current_thread()] = _threadlocal.global_config
-    return _threadlocal.global_config
+    if thread is None:
+        thread = threading.current_thread()
+
+    if thread not in _thread_config:
+        _thread_config[thread] = _global_config_default.copy()
+    return _thread_config[thread]
 
 
 def get_config(thread=None):
@@ -55,12 +56,9 @@ def get_config(thread=None):
     config_context : Context manager for global scikit-learn configuration.
     set_config : Set global scikit-learn configuration.
     """
-    # Return a copy of the threadlocal configuration so that users will
-    # not be able to modify the configuration with the returned dict.
-    threadlocal_config = _get_threadlocal_config()
-    if thread is None:
-        return threadlocal_config.copy()
-    return _thread_config[thread].copy()
+    # Return a copy of the configuration so that users will not be able to
+    # modify the configuration with the returned dict.
+    return _get_thread_config(thread=thread).copy()
 
 
 def set_config(
@@ -157,7 +155,7 @@ def set_config(
     config_context : Context manager for global scikit-learn configuration.
     get_config : Retrieve current values of the global configuration.
     """
-    local_config = _get_threadlocal_config()
+    local_config = _get_thread_config()
 
     if assume_finite is not None:
         local_config["assume_finite"] = assume_finite
