@@ -19,6 +19,16 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- |Enhancement| The `fit_transform` method of :class:`decomposition.DictionaryLearning`
+  is more efficient but may produce different results as in previous versions when
+  `transform_algorithm` is not the same as `fit_algorithm` and the number of iterations
+  is small. :pr:`24871` by :user:`Omar Salman <OmarManzoor>`.
+
+- |Fix| The `categories_` attribute of :class:`preprocessing.OneHotEncoder` now
+  always contains an array of `object`s when using predefined categories that
+  are strings. Predefined categories encoded as bytes will no longer work
+  with `X` encoded as strings. :pr:`25174` by :user:`Tim Head <betatim>`.
+
 Changes impacting all modules
 -----------------------------
 
@@ -36,6 +46,40 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.cluster`
+......................
+
+- |API| The `sample_weight` parameter in `predict` for
+  :meth:`cluster.KMeans.predict` and :meth:`cluster.MiniBatchKMeans.predict`
+  is now deprecated and will be removed in v1.5.
+  :pr:`25251` by :user:`Gleb Levitski <glevv>`.
+
+:mod:`sklearn.decomposition`
+............................
+- |Enhancement| :class:`decomposition.DictionaryLearning` now accepts the parameter
+  `callback` for consistency with the function :func:`decomposition.dict_learning`.
+  :pr:`24871` by :user:`Omar Salman <OmarManzoor>`.
+
+:mod:`sklearn.ensemble`
+.......................
+- |Feature| Compute a custom out-of-bag score by passing a callable to
+  :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
+  :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`.
+  :pr:`25177` by :user:`Tim Head <betatim>`.
+
+:mod:`sklearn.model_selection`
+..............................
+- |Fix| :func:`model_selection.cross_validate` with multimetric scoring in
+  case of some failing scorers the non-failing scorers now returns proper
+  scores instead of `error_score` values.
+  :pr:`23101` by :user:`András Simon <simonandras>` and `Thomas Fan`_.
+
+:mod:`sklearn.naive_bayes`
+..........................
+- |Fix| :class:`naive_bayes.GaussianNB` does not raise anymore a `ZeroDivisionError`
+  when the provided `sample_weight` reduces the problem to a single class in `fit`.
+  :pr:`24140` by :user:`Jonathan Ohayon <Johayon>` and :user:`Chiara Marmo <cmarmo>`.
+
 :mod:`sklearn.pipeline`
 .......................
 - |Feature| :class:`pipeline.FeatureUnion` can now use indexing notation (e.g.
@@ -44,7 +88,6 @@ Changelog
 
 :mod:`sklearn.preprocessing`
 ............................
-
 - |Enhancement| Added support for `sample_weight` in
   :class:`preprocessing.KBinsDiscretizer`. This allows specifying the parameter
   `sample_weight` for each sample to be used while fitting. The option is only
