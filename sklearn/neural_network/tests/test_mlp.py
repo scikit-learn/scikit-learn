@@ -896,14 +896,17 @@ def test_mlp_loading_from_joblib_partial_fit(tmp_path):
 
 @pytest.mark.parametrize("Estimator", [MLPClassifier, MLPRegressor])
 def test_preserve_feature_names(Estimator):
-    # Non-regression test for #24846
+    """Check that feature names are preserved when early stopping is enabled.
 
+    Feature names are required for consistency checks during scoring.
+
+    Non-regression test for gh-24846
+    """
     pd = pytest.importorskip("pandas")
+    rng = np.random.RandomState(0)
 
-    X = pd.DataFrame(
-        data=[[i, i] for i in range(10)], columns=["colname_a", "colname_b"]
-    )
-    y = pd.Series(data=[1] * 10, name="colname_y")
+    X = pd.DataFrame(data=rng.randn(10, 2), columns=["colname_a", "colname_b"])
+    y = pd.Series(data=np.full(10, 1), name="colname_y")
 
     model = Estimator(early_stopping=True, validation_fraction=0.2)
 

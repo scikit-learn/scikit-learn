@@ -1154,6 +1154,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         return self._predict(X)
 
     def _predict(self, X, check_input=True):
+        """Private predict method with optional input validation"""
         y_pred = self._forward_pass_fast(X, check_input=check_input)
 
         if self.n_outputs_ == 1:
@@ -1162,6 +1163,8 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         return self._label_binarizer.inverse_transform(y_pred)
 
     def _score(self, X, y):
+        """Private score method without input validation"""
+        # Input validation would remove feature names, so we disable it
         return accuracy_score(y, self._predict(X, check_input=False))
 
     @available_if(lambda est: est._check_solver())
@@ -1588,12 +1591,15 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         return self._predict(X)
 
     def _predict(self, X, check_input=True):
+        """Private predict method with optional input validation"""
         y_pred = self._forward_pass_fast(X, check_input=check_input)
         if y_pred.shape[1] == 1:
             return y_pred.ravel()
         return y_pred
 
     def _score(self, X, y):
+        """Private score method without input validation"""
+        # Input validation would remove feature names, so we disable it
         y_pred = self._predict(X, check_input=False)
         return r2_score(y, y_pred)
 
