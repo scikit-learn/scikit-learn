@@ -40,7 +40,7 @@ from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
 from ..utils.sparsefuncs import count_nonzero
-from ..utils._param_validation import validate_params
+from ..utils._param_validation import StrOptions, validate_params
 from ..exceptions import UndefinedMetricWarning
 
 from ._base import _check_pos_label_consistency
@@ -229,6 +229,15 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "labels": ["array-like", None],
+        "sample_weight": ["array-like", None],
+        "normalize": [StrOptions({"true", "pred", "all"}), None],
+    }
+)
 def confusion_matrix(
     y_true, y_pred, *, labels=None, sample_weight=None, normalize=None
 ):
@@ -337,9 +346,6 @@ def confusion_matrix(
 
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    if normalize not in ["true", "pred", "all", None]:
-        raise ValueError("normalize must be one of {'true', 'pred', 'all', None}")
-
     n_labels = labels.size
     # If labels are not consecutive integers starting from zero, then
     # y_true and y_pred must be converted into index form
@@ -386,6 +392,15 @@ def confusion_matrix(
     return cm
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "sample_weight": ["array-like", None],
+        "labels": ["array-like", None],
+        "samplewise": ["boolean"],
+    }
+)
 def multilabel_confusion_matrix(
     y_true, y_pred, *, sample_weight=None, labels=None, samplewise=False
 ):
@@ -595,6 +610,15 @@ def multilabel_confusion_matrix(
     return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
+@validate_params(
+    {
+        "y1": ["array-like"],
+        "y2": ["array-like"],
+        "labels": ["array-like", None],
+        "weights": [StrOptions({"linear", "quadratic"}), None],
+        "sample_weight": ["array-like", None],
+    }
+)
 def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     r"""Compute Cohen's kappa: a statistic that measures inter-annotator agreement.
 
@@ -615,10 +639,10 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
 
     Parameters
     ----------
-    y1 : array of shape (n_samples,)
+    y1 : array-like of shape (n_samples,)
         Labels assigned by the first annotator.
 
-    y2 : array of shape (n_samples,)
+    y2 : array-like of shape (n_samples,)
         Labels assigned by the second annotator. The kappa statistic is
         symmetric, so swapping ``y1`` and ``y2`` doesn't change the value.
 
@@ -660,15 +684,13 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     if weights is None:
         w_mat = np.ones([n_classes, n_classes], dtype=int)
         w_mat.flat[:: n_classes + 1] = 0
-    elif weights == "linear" or weights == "quadratic":
+    else:  # "linear" or "quadratic"
         w_mat = np.zeros([n_classes, n_classes], dtype=int)
         w_mat += np.arange(n_classes)
         if weights == "linear":
             w_mat = np.abs(w_mat - w_mat.T)
         else:
             w_mat = (w_mat - w_mat.T) ** 2
-    else:
-        raise ValueError("Unknown kappa weighting type.")
 
     k = np.sum(w_mat * confusion) / np.sum(w_mat * expected)
     return 1 - k
