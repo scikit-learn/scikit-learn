@@ -54,7 +54,7 @@ __all__ = [
 @validate_params(
     {
         "n_samples": ["array-like", Interval(Integral, 1, None, closed="left")],
-        "eps": [np.ndarray, Interval(Real, 0, 1, closed="neither")],
+        "eps": ["array-like", Interval(Real, 0, 1, closed="neither")],
     }
 )
 def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
@@ -90,9 +90,9 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
         Number of samples that should be an integer greater than 0. If an array
         is given, it will compute a safe number of components array-wise.
 
-    eps : float or ndarray of shape (n_components,), dtype=float, \
+    eps : float or array-like of shape (n_components,), dtype=float, \
             default=0.1
-        Maximum distortion rate in the range (0,1 ) as defined by the
+        Maximum distortion rate in the range (0, 1) as defined by the
         Johnson-Lindenstrauss lemma. If an array is given, it will compute a
         safe number of components array-wise.
 
