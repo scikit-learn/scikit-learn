@@ -9,7 +9,10 @@ from sklearn.feature_selection._base import SelectorMixin
 
 
 class StepSelector(SelectorMixin, BaseEstimator):
-    """Retain every `step` features (beginning with 0)"""
+    """Retain every `step` features (beginning with 0).
+
+    If `step < 1`, then no features are selected.
+    """
 
     def __init__(self, step=2):
         self.step = step
