@@ -117,9 +117,14 @@ class IterativeImputer(_BaseImputer):
         Which strategy to use to initialize the missing values. Same as the
         `strategy` parameter in :class:`~sklearn.impute.SimpleImputer`.
 
-    fill_value : float, default=None
-        The value used to replace missing values if initial_strategy=='constant'.
-        Same as the `fill_value` parameter in :class:`~sklearn.impute.SimpleImputer`.
+    fill_value : str or numerical value, default=None
+        When `strategy="constant"`, `fill_value` is used to replace all
+        occurrences of missing_values. For string or object data types,
+        `fill_value` must be a string.
+        If `None`, `fill_value` will be 0 when imputing numerical
+        data and "missing_value" for strings or object data types.
+
+        .. versionadded:: 1.3
 
     imputation_order : {'ascending', 'descending', 'roman', 'arabic', \
             'random'}, default='ascending'
