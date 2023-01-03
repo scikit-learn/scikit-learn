@@ -213,7 +213,7 @@ def test_constrain(param, scoring, rule, search_cv):
 def test_by_standard_error(generate_fit_params):
     # Test that the by_standard_error function returns the correct rule
     assert pytest.approx(
-        by_standard_error(sigma=1.5).__call__(**generate_fit_params), rel=1e-2
+        by_standard_error(sigma=1).__call__(**generate_fit_params), rel=1e-2
     ) == (0.9243126424613448, 0.9923540242053219)
 
     # Test that the by_standard_error function raises a ValueError
