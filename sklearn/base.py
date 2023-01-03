@@ -271,19 +271,38 @@ class BaseEstimator:
         return repr_
 
     def __getstate__(self):
+        if getattr(self, "__slots__", None):
+            raise TypeError(
+                "You cannot use `__slots__` in objects inheriting from "
+                "`sklearn.base.BaseEstimator`."
+            )
+
         try:
             state = super().__getstate__()
+            if state is None:
+                # For Python 3.11+, empty instance (no `__slots__`,
+                # and `__dict__`) will return a state equal to `None`.
+                state = self.__dict__.copy()
         except AttributeError:
+            # Python < 3.11
             state = self.__dict__.copy()
 
         if type(self).__module__.startswith("sklearn."):
-            return dict(state.items(), _sklearn_version=__version__)
+            return dict(
+                state.items(),
+                __sklearn_pickle_version__=__version__,
+            )
         else:
             return state
 
     def __setstate__(self, state):
         if type(self).__module__.startswith("sklearn."):
+            # Before 1.3, `_sklearn_version` was used to store the sklearn version
+            # when the estimator was pickled
             pickle_version = state.pop("_sklearn_version", "pre-0.18")
+            pickle_version = state.setdefault(
+                "__sklearn_pickle_version__", pickle_version
+            )
             if pickle_version != __version__:
                 warnings.warn(
                     "Trying to unpickle estimator {0} from version {1} when "
