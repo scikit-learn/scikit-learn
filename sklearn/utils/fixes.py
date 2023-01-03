@@ -108,8 +108,13 @@ else:
 
 
 # remove when https://github.com/joblib/joblib/issues/1071 is fixed
-def delayed(func, thread=threading.current_thread()):
+def delayed(func):
     """Decorator used to capture the arguments of a function."""
+    return _delayed(func)
+
+
+def _delayed(func, thread=threading.current_thread()):
+    """Private function to expose the thread argument."""
 
     def decorate(func):
         @functools.wraps(func)

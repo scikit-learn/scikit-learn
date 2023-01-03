@@ -15,7 +15,7 @@ from joblib import Parallel
 import sklearn
 from sklearn.utils._testing import assert_array_equal
 
-from sklearn.utils.fixes import _object_dtype_isnan, delayed, loguniform
+from sklearn.utils.fixes import _delayed, _object_dtype_isnan, loguniform
 
 
 @pytest.mark.parametrize("dtype, val", ([object, 1], [object, "a"], [float, 1]))
@@ -52,7 +52,7 @@ def test_loguniform(low, high, base):
 
 
 def test_delayed_fetching_right_config():
-    """Check that `delayed` function fetches the right config associated to
+    """Check that `_delayed` function fetches the right config associated to
     the main thread.
 
     Non-regression test for:
@@ -68,7 +68,7 @@ def test_delayed_fetching_right_config():
     # parameters defined within the context manager
     with sklearn.config_context(working_memory=123):
         results = Parallel(n_jobs=2, pre_dispatch=4)(
-            delayed(get_working_memory)() for _ in range(n_iter)
+            _delayed(get_working_memory)() for _ in range(n_iter)
         )
 
     assert results == [123] * n_iter
@@ -79,7 +79,7 @@ def test_delayed_fetching_right_config():
     local_thread.join()
     with sklearn.config_context(working_memory=123):
         results = Parallel(n_jobs=2, pre_dispatch=4)(
-            delayed(get_working_memory, thread=local_thread)() for _ in range(n_iter)
+            _delayed(get_working_memory, thread=local_thread)() for _ in range(n_iter)
         )
 
     assert results == [get_working_memory()] * n_iter
