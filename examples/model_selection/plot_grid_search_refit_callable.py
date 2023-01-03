@@ -67,7 +67,7 @@ grid = GridSearchCV(
     n_jobs=-1,
     param_grid=param_grid,
     scoring="accuracy",
-    refit=constrain(by_standard_error(sigma=1), "reduce_dim__n_components"),
+    refit=constrain(by_standard_error(sigma=1)),
 )
 
 grid.fit(X, y)
@@ -129,7 +129,7 @@ grid = RandomizedSearchCV(
     cv=10,
     n_jobs=-1,
     scoring="r2",
-    refit=constrain(by_signed_rank(alpha=0.05), "n_estimators"),
+    refit=constrain(by_signed_rank(alpha=0.05)),
 )
 grid.fit(X_train, y_train)
 
@@ -170,13 +170,13 @@ plt.legend(loc="upper left")
 
 best_index_ = np.where(grid.cv_results_["mean_test_score"] == lower)[0][0]
 
-# Show the effect on train-test deviance of using `Razors.simplify`
+# Show the effect on train-test deviance of using model subselection.
 best_estimator_refitted = grid.estimator
 best_estimator_refitted.n_estimators = params["n_estimators"][best_index_]
 best_estimator_refitted.fit(X_train, y_train)
 
-# Compute test set deviance for razored and non-razored models
-# razored model
+# Compute test set deviance for subselected and non-subselected models
+# subselected model
 test_score = np.zeros((params["n_estimators"][best_index_],), dtype=np.float64)
 for i, y_pred in enumerate(best_estimator_refitted.staged_predict(X_test)):
     test_score[i] = mean_squared_error(y_test, y_pred)
@@ -204,7 +204,7 @@ fig.tight_layout()
 best_estimator = grid.best_estimator_
 best_estimator.fit(X_train, y_train)
 
-# unrazored model
+# non-subselected model
 test_score = np.zeros((best_estimator.n_estimators,), dtype=np.float64)
 for i, y_pred in enumerate(best_estimator.staged_predict(X_test)):
     test_score[i] = mean_squared_error(y_test, y_pred)
