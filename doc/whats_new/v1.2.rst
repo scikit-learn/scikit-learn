@@ -19,6 +19,14 @@ Changelog
   certain estimators to be pickled when using Python 3.11. :pr:`25188` by
   :user:`Benjamin Bossan <BenjaminBossan>`.
 
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Fix a regression in :class:`linear_model.SGDClassifier` and
+  :class:`linear_model.SGDRegressor` that makes them unusable with the
+  `verbose` parameter set to a value greater than 0.
+  :pr:`25250` by :user:`Jérémie Du Boisberranger <jeremiedbb>`.
+
 :mod:`sklearn.utils`
 ....................
 
