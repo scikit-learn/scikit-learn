@@ -39,7 +39,7 @@ class by_standard_error:
         If sigma is not a positive integer.
     """
 
-    def __init__(self, sigma: int = 1):
+    def __init__(self, sigma: int = 1):  # noqa: D107
         self.sigma = sigma
         if not isinstance(self.sigma, int) or self.sigma < 1:
             raise ValueError("sigma must be a positive integer.")
@@ -107,7 +107,7 @@ class by_percentile_rank:
         If eta is not a float between 0 and 1.
     """
 
-    def __init__(self, eta: float = 0.68):
+    def __init__(self, eta: float = 0.68):  # noqa: D107
         self.eta = eta
         if not isinstance(self.eta, float) or self.eta < 0 or self.eta > 1:
             raise ValueError("eta must be a float between 0 and 1.")
@@ -191,7 +191,7 @@ class by_signed_rank:
         alpha: float = 0.01,
         alternative: str = "two-sided",
         zero_method: str = "zsplit",
-    ):
+    ):  # noqa: D107
         self.alpha = alpha
         if not isinstance(self.alpha, float) or self.alpha < 0 or self.alpha > 1:
             raise ValueError("alpha must be a float between 0 and 1.")
@@ -301,7 +301,7 @@ class by_fixed_window:
 
     def __init__(
         self, min_cut: Optional[float] = None, max_cut: Optional[float] = None
-    ):
+    ):  # noqa: D107
         self.min_cut = min_cut
         self.max_cut = max_cut
         if self.min_cut is not None and self.max_cut is not None:
