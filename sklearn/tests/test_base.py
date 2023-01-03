@@ -376,7 +376,7 @@ def test_pickle_version_warning_is_not_raised_with_matching_version():
 
 class TreeBadVersion(DecisionTreeClassifier):
     def __getstate__(self):
-        return dict(self.__dict__.items(), __sklearn_pickle_version__="something")
+        return dict(self.__dict__.items(), __sklearn_version__="something")
 
 
 pickle_error_message = (
@@ -676,8 +676,8 @@ def test_base_estimator_pickle_version(monkeypatch):
     original_estimator = MyEstimator()
     old_pickle = pickle.dumps(original_estimator)
     loaded_estimator = pickle.loads(old_pickle)
-    assert loaded_estimator.__sklearn_pickle_version__ == old_version
-    assert not hasattr(original_estimator, "__sklearn_pickle_version__")
+    assert loaded_estimator.__sklearn_version__ == old_version
+    assert not hasattr(original_estimator, "__sklearn_version__")
 
     # Loading pickle with newer version will raise a warning
     new_version = "1.3.0"
@@ -689,7 +689,7 @@ def test_base_estimator_pickle_version(monkeypatch):
     )
     with pytest.warns(UserWarning, match=re.escape(message)):
         reloaded_estimator = pickle.loads(old_pickle)
-        assert reloaded_estimator.__sklearn_pickle_version__ == old_version
+        assert reloaded_estimator.__sklearn_version__ == old_version
 
 
 def test_clone_keeps_output_config():
@@ -720,7 +720,7 @@ def test_estimator_empty_instance_dict(estimator):
     ``AttributeError``. Non-regression test for gh-25188.
     """
     state = estimator.__getstate__()
-    expected = {"__sklearn_pickle_version__": sklearn.__version__}
+    expected = {"__sklearn_version__": sklearn.__version__}
     assert state == expected
 
     # this should not raise

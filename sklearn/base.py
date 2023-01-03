@@ -119,6 +119,12 @@ class BaseEstimator:
     arguments (no ``*args`` or ``**kwargs``).
     """
 
+    def __new__(cls, *args, **kwargs):
+        est = super().__new__(cls)
+        if cls.__module__.startswith("sklearn."):
+            est.__sklearn_version__ = __version__
+        return est
+
     @classmethod
     def _get_param_names(cls):
         """Get parameter names for the estimator"""
@@ -287,22 +293,16 @@ class BaseEstimator:
             # Python < 3.11
             state = self.__dict__.copy()
 
-        if type(self).__module__.startswith("sklearn."):
-            return dict(
-                state.items(),
-                __sklearn_pickle_version__=__version__,
-            )
-        else:
-            return state
+        return state
 
     def __setstate__(self, state):
         if type(self).__module__.startswith("sklearn."):
             # Before 1.3, `_sklearn_version` was used to store the sklearn version
             # when the estimator was pickled
-            pickle_version = state.pop("_sklearn_version", "pre-0.18")
-            pickle_version = state.setdefault(
-                "__sklearn_pickle_version__", pickle_version
-            )
+            if "_sklearn_version" in state:
+                pickle_version = state.pop("_sklearn_version")
+            else:
+                pickle_version = state["__sklearn_version__"]
             if pickle_version != __version__:
                 warnings.warn(
                     "Trying to unpickle estimator {0} from version {1} when "
