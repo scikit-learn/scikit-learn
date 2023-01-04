@@ -1273,7 +1273,7 @@ def test_cwnb_estimators_support_fit():
     with pytest.raises(TypeError, match=msg):
         clf1.fit(X, y)
 
-    delattr(notNB, 'predict_joint_log_proba')
+    delattr(notNB, "predict_joint_log_proba")
     clf1 = ColumnwiseNB(nb_estimators=[["g1", notNB(), [1]], ["g2", GaussianNB(), [0]]])
     msg = "Estimators must be .aive Bayes estimators implementing *"
     with pytest.raises(TypeError, match=msg):
