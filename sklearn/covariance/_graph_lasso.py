@@ -17,6 +17,7 @@ from joblib import Parallel
 
 from . import empirical_covariance, EmpiricalCovariance, log_likelihood
 
+from .._config import get_config
 from ..exceptions import ConvergenceWarning
 from ..utils.validation import (
     _is_arraylike_not_scalar,
@@ -891,8 +892,9 @@ class GraphicalLassoCV(BaseGraphicalLasso):
                 # NOTE: Warm-restarting graphical_lasso_path has been tried,
                 # and this did not allow to gain anything
                 # (same execution time with or without).
+                config = get_config()
                 this_path = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                    delayed(graphical_lasso_path)(
+                    delayed(graphical_lasso_path, config=config)(
                         X[train],
                         alphas=alphas,
                         X_test=X[test],

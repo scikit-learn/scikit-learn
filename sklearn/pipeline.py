@@ -16,6 +16,7 @@ import numpy as np
 from scipy import sparse
 from joblib import Parallel
 
+from ._config import get_config
 from .base import clone, TransformerMixin
 from .preprocessing import FunctionTransformer
 from .utils._estimator_html_repr import _VisualBlock
@@ -1233,8 +1234,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
         self._validate_transformer_weights()
         transformers = list(self._iter())
 
+        config = get_config()
         return Parallel(n_jobs=self.n_jobs)(
-            delayed(func)(
+            delayed(func, config=config)(
                 transformer,
                 X,
                 y,
@@ -1261,8 +1263,9 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
             The `hstack` of results of transformers. `sum_n_components` is the
             sum of `n_components` (output dimension) over transformers.
         """
+        config = get_config()
         Xs = Parallel(n_jobs=self.n_jobs)(
-            delayed(_transform_one)(trans, X, None, weight)
+            delayed(_transform_one, config=config)(trans, X, None, weight)
             for name, trans, weight in self._iter()
         )
         if not Xs:

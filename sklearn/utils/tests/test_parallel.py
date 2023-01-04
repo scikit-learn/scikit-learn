@@ -17,8 +17,9 @@ def test_configuration_passes_through_to_joblib(n_jobs, backend):
     # Tests that the global global configuration is passed to joblib jobs
 
     with config_context(working_memory=123):
-        results = Parallel(n_jobs=n_jobs, backend=backend)(
-            delayed(get_working_memory)() for _ in range(2)
+        config = get_config()
+        results = Parallel(n_jobs=n_jobs, backend=backend, pre_dispatch=1)(
+            delayed(get_working_memory, config=config)() for _ in range(10)
         )
 
-    assert_array_equal(results, [123] * 2)
+    assert_array_equal(results, [123] * 10)

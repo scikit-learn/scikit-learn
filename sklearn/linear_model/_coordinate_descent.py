@@ -16,6 +16,7 @@ import numpy as np
 from scipy import sparse
 from joblib import Parallel, effective_n_jobs
 
+from .._config import get_config
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
 from ._base import _preprocess_data
@@ -1650,8 +1651,9 @@ class LinearModelCV(MultiOutputMixin, LinearModel, ABC):
 
         # We do a double for loop folded in one, in order to be able to
         # iterate in parallel on l1_ratio and folds
+        config = get_config()
         jobs = (
-            delayed(_path_residuals)(
+            delayed(_path_residuals, config=config)(
                 X,
                 y,
                 sample_weight,

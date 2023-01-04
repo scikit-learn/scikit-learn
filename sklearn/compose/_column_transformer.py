@@ -14,6 +14,7 @@ import numpy as np
 from scipy import sparse
 from joblib import Parallel
 
+from .._config import get_config
 from ..base import clone, TransformerMixin
 from ..utils._estimator_html_repr import _VisualBlock
 from ..pipeline import _fit_transform_one, _transform_one, _name_estimators
@@ -661,8 +662,9 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
             )
         )
         try:
+            config = get_config()
             return Parallel(n_jobs=self.n_jobs)(
-                delayed(func)(
+                delayed(func, config=config)(
                     transformer=clone(trans) if not fitted else trans,
                     X=_safe_indexing(X, column, axis=1),
                     y=y,

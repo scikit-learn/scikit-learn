@@ -18,6 +18,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 from joblib import Parallel, effective_n_jobs
 
 from ._base import LinearModel
+from .._config import get_config
 from ..base import RegressorMixin
 from ..utils import check_random_state
 from ..utils._param_validation import Interval
@@ -437,8 +438,9 @@ class TheilSenRegressor(RegressorMixin, LinearModel):
 
         n_jobs = effective_n_jobs(self.n_jobs)
         index_list = np.array_split(indices, n_jobs)
+        config = get_config()
         weights = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-            delayed(_lstsq)(X, y, index_list[job], self.fit_intercept)
+            delayed(_lstsq, config=config)(X, y, index_list[job], self.fit_intercept)
             for job in range(n_jobs)
         )
         weights = np.vstack(weights)

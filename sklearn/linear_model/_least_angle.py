@@ -20,6 +20,7 @@ from joblib import Parallel
 
 from ._base import LinearModel, LinearRegression
 from ._base import _deprecate_normalize, _preprocess_data
+from .._config import get_config
 from ..base import RegressorMixin, MultiOutputMixin
 
 # mypy error: Module 'sklearn.utils' has no attribute 'arrayfuncs'
@@ -1733,8 +1734,9 @@ class LarsCV(Lars):
             )
             Gram = "auto"
 
+        config = get_config()
         cv_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-            delayed(_lars_path_residues)(
+            delayed(_lars_path_residues, config=config)(
                 X[train],
                 y[train],
                 X[test],

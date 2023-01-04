@@ -28,6 +28,7 @@ from scipy.special import expit
 from joblib import Parallel
 from numbers import Integral
 
+from .._config import get_config
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin, MultiOutputMixin
 from ..preprocessing._data import _is_constant_feature
 from ..utils import check_array
@@ -670,8 +671,10 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 self.coef_ = optimize.nnls(X, y)[0]
             else:
                 # scipy.optimize.nnls cannot handle y with shape (M, K)
+                config = get_config()
                 outs = Parallel(n_jobs=n_jobs_)(
-                    delayed(optimize.nnls)(X, y[:, j]) for j in range(y.shape[1])
+                    delayed(optimize.nnls, config=config)(X, y[:, j])
+                    for j in range(y.shape[1])
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])
         elif sp.issparse(X):
@@ -691,8 +694,9 @@ class LinearRegression(MultiOutputMixin, RegressorMixin, LinearModel):
                 self.coef_ = lsqr(X_centered, y)[0]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
+                config = get_config()
                 outs = Parallel(n_jobs=n_jobs_)(
-                    delayed(lsqr)(X_centered, y[:, j].ravel())
+                    delayed(lsqr, config=config)(X_centered, y[:, j].ravel())
                     for j in range(y.shape[1])
                 )
                 self.coef_ = np.vstack([out[0] for out in outs])

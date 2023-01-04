@@ -20,6 +20,7 @@ import numpy as np
 
 from joblib import Parallel
 
+from .._config import get_config
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
@@ -80,8 +81,9 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
                 f" {len(self.weights)} weights, {len(self.estimators)} estimators"
             )
 
+        config = get_config()
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_single_estimator)(
+            delayed(_fit_single_estimator, config=config)(
                 clone(clf),
                 X,
                 y,

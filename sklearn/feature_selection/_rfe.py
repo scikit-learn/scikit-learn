@@ -10,7 +10,7 @@ import numpy as np
 from numbers import Integral, Real
 from joblib import Parallel, effective_n_jobs
 
-
+from .._config import get_config
 from ..utils.metaestimators import available_if
 from ..utils.metaestimators import _safe_split
 from ..utils._param_validation import HasMethods, Interval
@@ -719,8 +719,9 @@ class RFECV(RFE):
         if effective_n_jobs(self.n_jobs) == 1:
             parallel, func = list, _rfe_single_fit
         else:
+            config = get_config()
             parallel = Parallel(n_jobs=self.n_jobs)
-            func = delayed(_rfe_single_fit)
+            func = delayed(_rfe_single_fit, config=config)
 
         scores = parallel(
             func(rfe, self.estimator, X, y, train, test, scorer)

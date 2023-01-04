@@ -20,6 +20,7 @@ from joblib import Parallel, effective_n_jobs
 
 from sklearn.metrics import get_scorer_names
 
+from .._config import get_config
 from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ._linear_loss import LinearModelLoss
 from ._sag import sag_solver
@@ -1265,7 +1266,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         if warm_start_coef is None:
             warm_start_coef = [None] * n_classes
 
-        path_func = delayed(_logistic_regression_path)
+        config = get_config()
+        path_func = delayed(_logistic_regression_path, config=config)
 
         # The SAG solver releases the GIL so it's more efficient to use
         # threads for this solver.
@@ -1857,7 +1859,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
             )
             class_weight = dict(enumerate(class_weight))
 
-        path_func = delayed(_log_reg_scoring_path)
+        config = get_config()
+        path_func = delayed(_log_reg_scoring_path, config=config)
 
         # The SAG solver releases the GIL so it's more efficient to use
         # threads for this solver.

@@ -15,6 +15,7 @@ import numpy as np
 from scipy import linalg
 from joblib import Parallel, effective_n_jobs
 
+from .._config import get_config
 from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils import deprecated
@@ -409,8 +410,9 @@ def sparse_encode(
     code = np.empty((n_samples, n_components))
     slices = list(gen_even_slices(n_samples, effective_n_jobs(n_jobs)))
 
+    config = get_config()
     code_views = Parallel(n_jobs=n_jobs, verbose=verbose)(
-        delayed(_sparse_encode)(
+        delayed(_sparse_encode, config=config)(
             X[this_slice],
             dictionary,
             gram,

@@ -20,6 +20,7 @@ from scipy.special import expit
 from scipy.special import xlogy
 from scipy.optimize import fmin_bfgs
 
+from ._config import get_config
 from .base import (
     BaseEstimator,
     ClassifierMixin,
@@ -392,9 +393,10 @@ class CalibratedClassifierCV(ClassifierMixin, MetaEstimatorMixin, BaseEstimator)
             cv = check_cv(self.cv, y, classifier=True)
 
             if self.ensemble:
+                config = get_config()
                 parallel = Parallel(n_jobs=self.n_jobs)
                 self.calibrated_classifiers_ = parallel(
-                    delayed(_fit_classifier_calibrator_pair)(
+                    delayed(_fit_classifier_calibrator_pair, config=config)(
                         clone(estimator),
                         X,
                         y,

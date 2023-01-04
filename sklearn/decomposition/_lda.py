@@ -17,6 +17,7 @@ import scipy.sparse as sp
 from scipy.special import gammaln, logsumexp
 from joblib import Parallel, effective_n_jobs
 
+from .._config import get_config
 from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..utils import check_random_state, gen_batches, gen_even_slices
 from ..utils.validation import check_non_negative
@@ -457,8 +458,9 @@ class LatentDirichletAllocation(
         n_jobs = effective_n_jobs(self.n_jobs)
         if parallel is None:
             parallel = Parallel(n_jobs=n_jobs, verbose=max(0, self.verbose - 1))
+        config = get_config()
         results = parallel(
-            delayed(_update_doc_distribution)(
+            delayed(_update_doc_distribution, config=config)(
                 X[idx_slice, :],
                 self.exp_dirichlet_component_,
                 self.doc_topic_prior_,

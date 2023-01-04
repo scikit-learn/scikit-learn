@@ -50,6 +50,7 @@ from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
 from joblib import Parallel
 
+from .._config import get_config
 from ..base import is_classifier
 from ..base import ClassifierMixin, MultiOutputMixin, RegressorMixin, TransformerMixin
 
@@ -263,11 +264,11 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             return the index of the leaf x ends up in.
         """
         X = self._validate_X_predict(X)
-        results = Parallel(
-            n_jobs=self.n_jobs,
-            verbose=self.verbose,
-            prefer="threads",
-        )(delayed(tree.apply)(X, check_input=False) for tree in self.estimators_)
+        config = get_config()
+        results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, prefer="threads",)(
+            delayed(tree.apply, config=config)(X, check_input=False)
+            for tree in self.estimators_
+        )
 
         return np.array(results).T
 
@@ -296,12 +297,13 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             gives the indicator value for the i-th estimator.
         """
         X = self._validate_X_predict(X)
+        config = get_config()
         indicators = Parallel(
             n_jobs=self.n_jobs,
             verbose=self.verbose,
             prefer="threads",
         )(
-            delayed(tree.decision_path)(X, check_input=False)
+            delayed(tree.decision_path, config=config)(X, check_input=False)
             for tree in self.estimators_
         )
 
@@ -471,12 +473,13 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
             # that case. However, for joblib 0.12+ we respect any
             # parallel_backend contexts set at a higher level,
             # since correctness does not rely on using threads.
+            config = get_config()
             trees = Parallel(
                 n_jobs=self.n_jobs,
                 verbose=self.verbose,
                 prefer="threads",
             )(
-                delayed(_parallel_build_trees)(
+                delayed(_parallel_build_trees, config=config)(
                     t,
                     self.bootstrap,
                     X,
@@ -638,8 +641,9 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """
         check_is_fitted(self)
 
+        config = get_config()
         all_importances = Parallel(n_jobs=self.n_jobs, prefer="threads")(
-            delayed(getattr)(tree, "feature_importances_")
+            delayed(getattr, config=config)(tree, "feature_importances_")
             for tree in self.estimators_
             if tree.tree_.node_count > 1
         )
@@ -886,9 +890,12 @@ class ForestClassifier(ClassifierMixin, BaseForest, metaclass=ABCMeta):
             np.zeros((X.shape[0], j), dtype=np.float64)
             for j in np.atleast_1d(self.n_classes_)
         ]
+        config = get_config()
         lock = threading.Lock()
         Parallel(n_jobs=n_jobs, verbose=self.verbose, require="sharedmem")(
-            delayed(_accumulate_prediction)(e.predict_proba, X, all_proba, lock)
+            delayed(_accumulate_prediction, config=config)(
+                e.predict_proba, X, all_proba, lock
+            )
             for e in self.estimators_
         )
 
@@ -1007,9 +1014,10 @@ class ForestRegressor(RegressorMixin, BaseForest, metaclass=ABCMeta):
             y_hat = np.zeros((X.shape[0]), dtype=np.float64)
 
         # Parallel loop
+        config = get_config()
         lock = threading.Lock()
         Parallel(n_jobs=n_jobs, verbose=self.verbose, require="sharedmem")(
-            delayed(_accumulate_prediction)(e.predict, X, [y_hat], lock)
+            delayed(_accumulate_prediction, config=config)(e.predict, X, [y_hat], lock)
             for e in self.estimators_
         )
 

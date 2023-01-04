@@ -15,6 +15,7 @@ from functools import partial
 from joblib import Parallel
 
 from ._base import BaseEnsemble, _partition_estimators
+from .._config import get_config
 from ..base import ClassifierMixin, RegressorMixin
 from ..metrics import r2_score, accuracy_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
@@ -471,10 +472,11 @@ class BaseBagging(BaseEnsemble, metaclass=ABCMeta):
         seeds = random_state.randint(MAX_INT, size=n_more_estimators)
         self._seeds = seeds
 
+        config = get_config()
         all_results = Parallel(
             n_jobs=n_jobs, verbose=self.verbose, **self._parallel_args()
         )(
-            delayed(_parallel_build_estimators)(
+            delayed(_parallel_build_estimators, config=config)(
                 n_estimators[i],
                 self,
                 X,
@@ -864,10 +866,11 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         # Parallel loop
         n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
+        config = get_config()
         all_proba = Parallel(
             n_jobs=n_jobs, verbose=self.verbose, **self._parallel_args()
         )(
-            delayed(_parallel_predict_proba)(
+            delayed(_parallel_predict_proba, config=config)(
                 self.estimators_[starts[i] : starts[i + 1]],
                 self.estimators_features_[starts[i] : starts[i + 1]],
                 X,
@@ -914,8 +917,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
             # Parallel loop
             n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
+            config = get_config()
             all_log_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-                delayed(_parallel_predict_log_proba)(
+                delayed(_parallel_predict_log_proba, config=config)(
                     self.estimators_[starts[i] : starts[i + 1]],
                     self.estimators_features_[starts[i] : starts[i + 1]],
                     X,
@@ -969,8 +973,9 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         # Parallel loop
         n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
+        config = get_config()
         all_decisions = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-            delayed(_parallel_decision_function)(
+            delayed(_parallel_decision_function, config=config)(
                 self.estimators_[starts[i] : starts[i + 1]],
                 self.estimators_features_[starts[i] : starts[i + 1]],
                 X,
@@ -1218,8 +1223,9 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         # Parallel loop
         n_jobs, _, starts = _partition_estimators(self.n_estimators, self.n_jobs)
 
+        config = get_config()
         all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
-            delayed(_parallel_predict_regression)(
+            delayed(_parallel_predict_regression, config=config)(
                 self.estimators_[starts[i] : starts[i + 1]],
                 self.estimators_features_[starts[i] : starts[i + 1]],
                 X,

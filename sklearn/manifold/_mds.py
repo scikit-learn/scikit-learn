@@ -12,6 +12,7 @@ from joblib import Parallel, effective_n_jobs
 
 import warnings
 
+from .._config import get_config
 from ..base import BaseEstimator
 from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
@@ -342,8 +343,9 @@ def smacof(
                 best_iter = n_iter_
     else:
         seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
+        config = get_config()
         results = Parallel(n_jobs=n_jobs, verbose=max(verbose - 1, 0))(
-            delayed(_smacof_single)(
+            delayed(_smacof_single, config=config)(
                 dissimilarities,
                 metric=metric,
                 n_components=n_components,

@@ -11,6 +11,7 @@ import numpy as np
 from joblib import Parallel
 import scipy.sparse as sparse
 
+from .._config import get_config
 from ..base import clone
 from ..base import ClassifierMixin, RegressorMixin, TransformerMixin
 from ..base import is_classifier, is_regressor
@@ -207,8 +208,11 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             # Fit the base estimators on the whole training data. Those
             # base estimators will be used in transform, predict, and
             # predict_proba. They are exposed publicly.
+            config = get_config()
             self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-                delayed(_fit_single_estimator)(clone(est), X, y, sample_weight)
+                delayed(_fit_single_estimator, config=config)(
+                    clone(est), X, y, sample_weight
+                )
                 for est in all_estimators
                 if est != "drop"
             )
@@ -247,11 +251,12 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
             if hasattr(cv, "random_state") and cv.random_state is None:
                 cv.random_state = np.random.RandomState()
 
+            config = get_config()
             fit_params = (
                 {"sample_weight": sample_weight} if sample_weight is not None else None
             )
             predictions = Parallel(n_jobs=self.n_jobs)(
-                delayed(cross_val_predict)(
+                delayed(cross_val_predict, config=config)(
                     clone(est),
                     X,
                     y,

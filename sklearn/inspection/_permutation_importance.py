@@ -3,6 +3,7 @@ import numbers
 import numpy as np
 from joblib import Parallel
 
+from .._config import get_config
 from ..ensemble._bagging import _generate_indices
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
@@ -256,8 +257,9 @@ def permutation_importance(
 
     baseline_score = _weights_scorer(scorer, estimator, X, y, sample_weight)
 
+    config = get_config()
     scores = Parallel(n_jobs=n_jobs)(
-        delayed(_calculate_permutation_scores)(
+        delayed(_calculate_permutation_scores, config=config)(
             estimator,
             X,
             y,

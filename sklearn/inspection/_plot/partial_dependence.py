@@ -8,6 +8,7 @@ from scipy import sparse
 from scipy.stats.mstats import mquantiles
 from joblib import Parallel
 
+from ..._config import get_config
 from .. import partial_dependence
 from .._pd_utils import _check_feature_names, _get_feature_index
 from ...base import is_regressor
@@ -702,8 +703,9 @@ class PartialDependenceDisplay:
                 )
 
         # compute predictions and/or averaged predictions
+        config = get_config()
         pd_results = Parallel(n_jobs=n_jobs, verbose=verbose)(
-            delayed(partial_dependence)(
+            delayed(partial_dependence, config=config)(
                 estimator,
                 X,
                 fxs,

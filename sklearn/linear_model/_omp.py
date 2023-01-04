@@ -15,6 +15,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 from joblib import Parallel
 
 from ._base import LinearModel, _pre_fit, _deprecate_normalize
+from .._config import get_config
 from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import as_float_array, check_array
 from ..utils.fixes import delayed
@@ -1064,8 +1065,9 @@ class OrthogonalMatchingPursuitCV(RegressorMixin, LinearModel):
             if not self.max_iter
             else self.max_iter
         )
+        config = get_config()
         cv_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-            delayed(_omp_path_residues)(
+            delayed(_omp_path_residues, config=config)(
                 X[train],
                 y[train],
                 X[test],

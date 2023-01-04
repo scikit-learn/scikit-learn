@@ -17,7 +17,7 @@ from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 from joblib import Parallel, effective_n_jobs
 
-from .. import config_context
+from .. import config_context, get_config
 from ..utils.validation import _num_samples
 from ..utils.validation import check_non_negative
 from ..utils import check_array
@@ -1579,7 +1579,8 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
         return func(X, Y, **kwds)
 
     # enforce a threading backend to prevent data communication overhead
-    fd = delayed(_dist_wrapper)
+    config = get_config()
+    fd = delayed(_dist_wrapper, config=config)
     ret = np.empty((X.shape[0], Y.shape[0]), dtype=dtype, order="F")
     Parallel(backend="threading", n_jobs=n_jobs)(
         fd(func, ret, s, X, Y[s], **kwds)

@@ -20,6 +20,8 @@ import scipy.sparse as sp
 from joblib import Parallel
 
 from abc import ABCMeta, abstractmethod
+
+from ._config import get_config
 from .base import BaseEstimator, clone, MetaEstimatorMixin
 from .base import RegressorMixin, ClassifierMixin, is_classifier
 from .model_selection import cross_val_predict
@@ -145,8 +147,9 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         ):
             raise ValueError("Underlying estimator does not support sample weights.")
 
+        config = get_config()
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_partial_fit_estimator)(
+            delayed(_partial_fit_estimator, config=config)(
                 self.estimators_[i] if not first_time else self.estimator,
                 X,
                 y[:, i],
@@ -214,8 +217,9 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
 
         fit_params_validated = _check_fit_params(X, fit_params)
 
+        config = get_config()
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_estimator)(
+            delayed(_fit_estimator, config=config)(
                 self.estimator, X, y[:, i], sample_weight, **fit_params_validated
             )
             for i in range(y.shape[1])
@@ -246,8 +250,9 @@ class _MultiOutputEstimator(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta
         if not hasattr(self.estimators_[0], "predict"):
             raise ValueError("The base estimator should implement a predict method")
 
+        config = get_config()
         y = Parallel(n_jobs=self.n_jobs)(
-            delayed(e.predict)(X) for e in self.estimators_
+            delayed(e.predict, config=config)(X) for e in self.estimators_
         )
 
         return np.asarray(y).T

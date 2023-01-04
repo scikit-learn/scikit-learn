@@ -40,6 +40,7 @@ import warnings
 import scipy.sparse as sp
 import itertools
 
+from ._config import get_config
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MultiOutputMixin
 from .base import MetaEstimatorMixin, is_regressor
@@ -329,8 +330,9 @@ class OneVsRestClassifier(
         # In cases where individual estimators are very fast to train setting
         # n_jobs > 1 in can results in slower performance due to the overhead
         # of spawning threads.  See joblib issue #112.
+        config = get_config()
         self.estimators_ = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-            delayed(_fit_binary)(
+            delayed(_fit_binary, config=config)(
                 self.estimator,
                 X,
                 column,
@@ -406,8 +408,9 @@ class OneVsRestClassifier(
         Y = Y.tocsc()
         columns = (col.toarray().ravel() for col in Y.T)
 
+        config = get_config()
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_partial_fit_binary)(estimator, X, column)
+            delayed(_partial_fit_binary, config=config)(estimator, X, column)
             for estimator, column in zip(self.estimators_, columns)
         )
 
@@ -686,11 +689,12 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
                 "OneVsOneClassifier can not be fit when only one class is present."
             )
         n_classes = self.classes_.shape[0]
+        config = get_config()
         estimators_indices = list(
             zip(
                 *(
                     Parallel(n_jobs=self.n_jobs)(
-                        delayed(_fit_ovo_binary)(
+                        delayed(_fit_ovo_binary, config=config)(
                             self.estimator, X, y, self.classes_[i], self.classes_[j]
                         )
                         for i in range(n_classes)
@@ -760,8 +764,9 @@ class OneVsOneClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         )
         check_classification_targets(y)
         combinations = itertools.combinations(range(self.n_classes_), 2)
+        config = get_config()
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_partial_fit_ovo_binary)(
+            delayed(_partial_fit_ovo_binary, config=config)(
                 estimator, X, y, self.classes_[i], self.classes_[j]
             )
             for estimator, (i, j) in zip(self.estimators_, (combinations))
@@ -1017,8 +1022,10 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             dtype=int,
         )
 
+        config = get_config()
         self.estimators_ = Parallel(n_jobs=self.n_jobs)(
-            delayed(_fit_binary)(self.estimator, X, Y[:, i]) for i in range(Y.shape[1])
+            delayed(_fit_binary, config=config)(self.estimator, X, Y[:, i])
+            for i in range(Y.shape[1])
         )
 
         if hasattr(self.estimators_[0], "n_features_in_"):

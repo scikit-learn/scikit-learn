@@ -14,6 +14,7 @@ from numbers import Integral, Real
 
 from joblib import Parallel
 
+from .._config import get_config
 from ..base import clone, is_classifier
 from ._base import LinearClassifierMixin, SparseCoefMixin
 from ._base import make_dataset
@@ -759,10 +760,11 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         # to non-deterministic behavior
         random_state = check_random_state(self.random_state)
         seeds = random_state.randint(MAX_INT, size=len(self.classes_))
+        config = get_config()
         result = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose, require="sharedmem"
         )(
-            delayed(fit_binary)(
+            delayed(fit_binary, config=config)(
                 self,
                 i,
                 X,

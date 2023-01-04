@@ -23,6 +23,7 @@ import numpy as np
 import scipy.sparse as sp
 from joblib import Parallel, logger
 
+from .._config import get_config
 from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils.validation import _check_fit_params
@@ -262,9 +263,10 @@ def cross_validate(
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
+    config = get_config()
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
     results = parallel(
-        delayed(_fit_and_score)(
+        delayed(_fit_and_score, config=config)(
             clone(estimator),
             X,
             y,
@@ -983,8 +985,9 @@ def cross_val_predict(
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     parallel = Parallel(n_jobs=n_jobs, verbose=verbose, pre_dispatch=pre_dispatch)
+    config = get_config()
     predictions = parallel(
-        delayed(_fit_and_predict)(
+        delayed(_fit_and_predict, config=config)(
             clone(estimator), X, y, train, test, verbose, fit_params, method
         )
         for train, test in splits
@@ -1322,8 +1325,9 @@ def permutation_test_score(
     score = _permutation_test_score(
         clone(estimator), X, y, groups, cv, scorer, fit_params=fit_params
     )
+    config = get_config()
     permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
-        delayed(_permutation_test_score)(
+        delayed(_permutation_test_score, config=config)(
             clone(estimator),
             X,
             _shuffle(y, groups, random_state),
@@ -1570,8 +1574,9 @@ def learning_curve(
 
     if exploit_incremental_learning:
         classes = np.unique(y) if is_classifier(estimator) else None
+        config = get_config()
         out = parallel(
-            delayed(_incremental_fit_estimator)(
+            delayed(_incremental_fit_estimator, config=config)(
                 clone(estimator),
                 X,
                 y,
@@ -1594,8 +1599,9 @@ def learning_curve(
             for n_train_samples in train_sizes_abs:
                 train_test_proportions.append((train[:n_train_samples], test))
 
+        config = get_config()
         results = parallel(
-            delayed(_fit_and_score)(
+            delayed(_fit_and_score, config=config)(
                 clone(estimator),
                 X,
                 y,
@@ -1873,8 +1879,9 @@ def validation_curve(
     scorer = check_scoring(estimator, scoring=scoring)
 
     parallel = Parallel(n_jobs=n_jobs, pre_dispatch=pre_dispatch, verbose=verbose)
+    config = get_config()
     results = parallel(
-        delayed(_fit_and_score)(
+        delayed(_fit_and_score, config=config)(
             clone(estimator),
             X,
             y,

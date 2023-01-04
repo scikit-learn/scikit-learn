@@ -20,6 +20,7 @@ from joblib import Parallel, effective_n_jobs
 
 from ._ball_tree import BallTree
 from ._kd_tree import KDTree
+from .._config import get_config
 from ..base import BaseEstimator, MultiOutputMixin
 from ..base import is_classifier
 from ..metrics import pairwise_distances_chunked
@@ -876,8 +877,9 @@ class KNeighborsMixin:
                     "or set algorithm='brute'"
                     % self._fit_method
                 )
+            config = get_config()
             chunked_results = Parallel(n_jobs, prefer="threads")(
-                delayed(_tree_query_parallel_helper)(
+                delayed(_tree_query_parallel_helper, config=config)(
                     self._tree, X[s], n_neighbors, return_distance
                 )
                 for s in gen_even_slices(X.shape[0], n_jobs)
@@ -1233,7 +1235,8 @@ class RadiusNeighborsMixin:
                 )
 
             n_jobs = effective_n_jobs(self.n_jobs)
-            delayed_query = delayed(_tree_query_radius_parallel_helper)
+            config = get_config()
+            delayed_query = delayed(_tree_query_radius_parallel_helper, config=config)
             chunked_results = Parallel(n_jobs, prefer="threads")(
                 delayed_query(
                     self._tree, X[s], radius, return_distance, sort_results=sort_results
