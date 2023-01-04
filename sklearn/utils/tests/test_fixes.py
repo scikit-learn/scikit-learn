@@ -4,15 +4,17 @@
 # License: BSD 3 clause
 
 import math
+import time
 
 import numpy as np
 import pytest
 import scipy.stats
+from joblib import Parallel
 
+from sklearn.exceptions import ConfigPropagationWarning
 from sklearn.utils._testing import assert_array_equal
 
-from sklearn.utils.fixes import _object_dtype_isnan
-from sklearn.utils.fixes import loguniform
+from sklearn.utils.fixes import _object_dtype_isnan, delayed, loguniform
 
 
 @pytest.mark.parametrize("dtype, val", ([object, 1], [object, "a"], [float, 1]))
@@ -46,3 +48,24 @@ def test_loguniform(low, high, base):
     assert loguniform(base**low, base**high).rvs(random_state=0) == loguniform(
         base**low, base**high
     ).rvs(random_state=0)
+
+
+def _sleep(duration):
+    time.sleep(duration)
+
+
+def test_delayed_warning_config():
+    """Check that we raise an informing warning when the user does not pass
+    the configuration to be used within the threads executing the tasks.
+    """
+
+    n_tasks = 10
+    warning_msg = (
+        "scikit-learn 1.3 and above will require a config parameter to be passed"
+    )
+    with pytest.warns(ConfigPropagationWarning, match=warning_msg) as record:
+        Parallel(n_jobs=2, pre_dispatch=1)(
+            delayed(_sleep)(1e-5) for _ in range(n_tasks)
+        )
+
+    assert len(record) == n_tasks

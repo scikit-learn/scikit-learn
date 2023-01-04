@@ -114,10 +114,10 @@ def delayed(function, config=None):
 
     if config is None:
         warnings.warn(
-            "scikit-learn 1.3 will require a config parameter to be passed "
+            "scikit-learn 1.3 and above will require a config parameter to be passed "
             "to delayed. Please update your code to pass a config parameter "
             "that calls `sklearn.get_config()` just before the `joblib.Parallel` "
-            "call so as to capture the configuration of the thread triggering"
+            "call so as to capture the configuration of the thread triggering "
             "the parallel call.",
             stacklevel=2,
             category=ConfigPropagationWarning,
