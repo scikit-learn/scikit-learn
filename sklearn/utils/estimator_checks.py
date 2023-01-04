@@ -1558,15 +1558,14 @@ def check_transformers_unfitted(name, transformer):
 
 @ignore_warnings(category=FutureWarning)
 def check_transformers_unfitted_stateless(name, transformer):
-    """Check that using transform or predict without prior fitting
-    doesn't raise a NotFittedError.
+    """Check that using transform without prior fitting
+    doesn't raise a NotFittedError for stateless transformers.
     """
     rng = np.random.RandomState(0)
     X = rng.uniform(size=(20, 5))
     X = _enforce_estimator_tags_X(transformer, X)
 
     transformer = clone(transformer)
-    # Should not raise
     X_trans = transformer.transform(X)
 
     assert X_trans.shape[0] == X.shape[0]
