@@ -97,7 +97,27 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 else:
                     cats = result
             else:
-                cats = np.array(self.categories[i], dtype=Xi.dtype)
+                if np.issubdtype(Xi.dtype, np.str_):
+                    # Always convert string categories to objects to avoid
+                    # unexpected string truncation for longer category labels
+                    # passed in the constructor.
+                    Xi_dtype = object
+                else:
+                    Xi_dtype = Xi.dtype
+
+                cats = np.array(self.categories[i], dtype=Xi_dtype)
+                if (
+                    cats.dtype == object
+                    and isinstance(cats[0], bytes)
+                    and Xi.dtype.kind != "S"
+                ):
+                    msg = (
+                        f"In column {i}, the predefined categories have type 'bytes'"
+                        " which is incompatible with values of type"
+                        f" '{type(Xi[0]).__name__}'."
+                    )
+                    raise ValueError(msg)
+
                 if Xi.dtype.kind not in "OUS":
                     sorted_cats = np.sort(cats)
                     error_msg = (

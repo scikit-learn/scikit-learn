@@ -883,6 +883,14 @@ def generate_valid_param(constraint):
         return None
 
     if isinstance(constraint, _InstancesOf):
+        if constraint.type is np.ndarray:
+            # special case for ndarray since it can't be instantiated without arguments
+            return np.array([1, 2, 3])
+
+        if constraint.type in (Integral, Real):
+            # special case for Integral and Real since they are abstract classes
+            return 1
+
         return constraint.type()
 
     if isinstance(constraint, _Booleans):

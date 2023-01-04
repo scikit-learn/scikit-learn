@@ -91,6 +91,13 @@ cdef class Splitter:
     def __setstate__(self, d):
         pass
 
+    def __reduce__(self):
+        return (type(self), (self.criterion,
+                             self.max_features,
+                             self.min_samples_leaf,
+                             self.min_weight_leaf,
+                             self.random_state), self.__getstate__())
+
     cdef int init(
         self,
         object X,
@@ -240,13 +247,6 @@ cdef class BaseDenseSplitter(Splitter):
 
 cdef class BestSplitter(BaseDenseSplitter):
     """Splitter for finding the best split."""
-    def __reduce__(self):
-        return (BestSplitter, (self.criterion,
-                               self.max_features,
-                               self.min_samples_leaf,
-                               self.min_weight_leaf,
-                               self.random_state), self.__getstate__())
-
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
         """Find the best split on node samples[start:end]
@@ -553,13 +553,6 @@ cdef void heapsort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
 
 cdef class RandomSplitter(BaseDenseSplitter):
     """Splitter for finding the best random split."""
-    def __reduce__(self):
-        return (RandomSplitter, (self.criterion,
-                                 self.max_features,
-                                 self.min_samples_leaf,
-                                 self.min_weight_leaf,
-                                 self.random_state), self.__getstate__())
-
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
         """Find the best random split on node samples[start:end]
@@ -1057,14 +1050,6 @@ cdef inline void sparse_swap(SIZE_t[::1] index_to_samples, SIZE_t[::1] samples,
 
 cdef class BestSparseSplitter(BaseSparseSplitter):
     """Splitter for finding the best split, using the sparse data."""
-
-    def __reduce__(self):
-        return (BestSparseSplitter, (self.criterion,
-                                     self.max_features,
-                                     self.min_samples_leaf,
-                                     self.min_weight_leaf,
-                                     self.random_state), self.__getstate__())
-
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
         """Find the best split on node samples[start:end], using sparse features
@@ -1283,14 +1268,6 @@ cdef class BestSparseSplitter(BaseSparseSplitter):
 
 cdef class RandomSparseSplitter(BaseSparseSplitter):
     """Splitter for finding a random split, using the sparse data."""
-
-    def __reduce__(self):
-        return (RandomSparseSplitter, (self.criterion,
-                                       self.max_features,
-                                       self.min_samples_leaf,
-                                       self.min_weight_leaf,
-                                       self.random_state), self.__getstate__())
-
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
         """Find a random split on node samples[start:end], using sparse features
@@ -1459,10 +1436,6 @@ cdef class RandomSparseSplitter(BaseSparseSplitter):
 
             if current_proxy_improvement > best_proxy_improvement:
                 best_proxy_improvement = current_proxy_improvement
-                self.criterion.children_impurity(&current.impurity_left,
-                                                 &current.impurity_right)
-                current.improvement = self.criterion.impurity_improvement(
-                    impurity, current.impurity_left, current.impurity_right)
                 best = current
 
         # Reorganize into samples[start:best.pos] + samples[best.pos:end]

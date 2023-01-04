@@ -894,6 +894,27 @@ def test_mlp_loading_from_joblib_partial_fit(tmp_path):
     assert_allclose(predicted_value, fine_tune_target, rtol=1e-4)
 
 
+@pytest.mark.parametrize("Estimator", [MLPClassifier, MLPRegressor])
+def test_preserve_feature_names(Estimator):
+    """Check that feature names are preserved when early stopping is enabled.
+
+    Feature names are required for consistency checks during scoring.
+
+    Non-regression test for gh-24846
+    """
+    pd = pytest.importorskip("pandas")
+    rng = np.random.RandomState(0)
+
+    X = pd.DataFrame(data=rng.randn(10, 2), columns=["colname_a", "colname_b"])
+    y = pd.Series(data=np.full(10, 1), name="colname_y")
+
+    model = Estimator(early_stopping=True, validation_fraction=0.2)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        model.fit(X, y)
+
+
 @pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
 def test_mlp_warm_start_with_early_stopping(MLPEstimator):
     """Check that early stopping works with warm start."""
