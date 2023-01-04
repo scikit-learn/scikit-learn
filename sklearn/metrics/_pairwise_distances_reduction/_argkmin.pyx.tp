@@ -10,12 +10,10 @@ from ...utils._sorting cimport simultaneous_sort
 from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 
 import numpy as np
-import warnings
 
 from numbers import Integral
-from scipy.sparse import issparse
 # TODO: reintroduce _in_unstable... warning
-from ...utils import check_scalar, _in_unstable_openblas_configuration
+from ...utils import check_scalar
 from ...utils.fixes import threadpool_limits
 from ...utils._typedefs import ITYPE, DTYPE
 
@@ -334,6 +332,5 @@ cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
             return np.asarray(self.argkmin_distances), np.asarray(self.argkmin_indices)
 
         return np.asarray(self.argkmin_indices)
-
 
 {{endfor}}

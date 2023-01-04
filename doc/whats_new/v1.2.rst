@@ -2,6 +2,45 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_2_1:
+
+Version 1.2.1
+=============
+
+**In Development**
+
+Changelog
+---------
+
+:mod:`sklearn.base`
+...................
+
+- |Fix| Fix a regression in `BaseEstimator.__getstate__` that would prevent
+  certain estimators to be pickled when using Python 3.11. :pr:`25188` by
+  :user:`Benjamin Bossan <BenjaminBossan>`.
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Fix a regression in :class:`linear_model.SGDClassifier` and
+  :class:`linear_model.SGDRegressor` that makes them unusable with the
+  `verbose` parameter set to a value greater than 0.
+  :pr:`25250` by :user:`Jérémie Du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :meth:`preprocessing.FunctionTransformer.inverse_transform` correctly
+  supports DataFrames that are all numerical when `check_inverse=True`.
+  :pr:`25274` by `Thomas Fan`_.
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Restore :func:`utils.check_array`'s behaviour for pandas Series of type
+  boolean. The type is maintained, instead of converting to `float64.`
+  :pr:`25147` by :user:`Tim Head <betatim>`.
+
 .. _changes_1_2:
 
 Version 1.2.0
@@ -644,6 +683,16 @@ Changelog
 - |Enhancement| :class:`neighbors.LocalOutlierFactor` now preserves
   dtype for `numpy.float32` inputs.
   :pr:`22665` by :user:`Julien Jerphanion <jjerphan>`.
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| :class:`neural_network.MLPClassifier` and
+  :class:`neural_network.MLPRegressor` always expose the parameters `best_loss_`,
+  `validation_scores_`, and `best_validation_score_`. `best_loss_` is set to
+  `None` when `early_stopping=True`, while `validation_scores_` and
+  `best_validation_score_` are set to `None` when `early_stopping=False`.
+  :pr:`24683` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.pipeline`
 .......................

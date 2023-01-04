@@ -11,6 +11,7 @@ Testing for the forest module (sklearn.ensemble.forest).
 import pickle
 import math
 from collections import defaultdict
+from functools import partial
 import itertools
 from itertools import combinations
 from itertools import product
@@ -45,6 +46,7 @@ from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomTreesEmbedding
+from sklearn.metrics import explained_variance_score, f1_score
 from sklearn.model_selection import train_test_split
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVC
@@ -502,7 +504,10 @@ def test_unfitted_feature_importances(name):
         ),
     ],
 )
-def test_forest_classifier_oob(ForestClassifier, X, y, X_type, lower_bound_accuracy):
+@pytest.mark.parametrize("oob_score", [True, partial(f1_score, average="micro")])
+def test_forest_classifier_oob(
+    ForestClassifier, X, y, X_type, lower_bound_accuracy, oob_score
+):
     """Check that OOB score is close to score on a test set."""
     X = _convert_container(X, constructor_name=X_type)
     X_train, X_test, y_train, y_test = train_test_split(
@@ -514,7 +519,7 @@ def test_forest_classifier_oob(ForestClassifier, X, y, X_type, lower_bound_accur
     classifier = ForestClassifier(
         n_estimators=40,
         bootstrap=True,
-        oob_score=True,
+        oob_score=oob_score,
         random_state=0,
     )
 
@@ -522,10 +527,13 @@ def test_forest_classifier_oob(ForestClassifier, X, y, X_type, lower_bound_accur
     assert not hasattr(classifier, "oob_decision_function_")
 
     classifier.fit(X_train, y_train)
-    test_score = classifier.score(X_test, y_test)
+    if callable(oob_score):
+        test_score = oob_score(y_test, classifier.predict(X_test))
+    else:
+        test_score = classifier.score(X_test, y_test)
+        assert classifier.oob_score_ >= lower_bound_accuracy
 
     assert abs(test_score - classifier.oob_score_) <= 0.1
-    assert classifier.oob_score_ >= lower_bound_accuracy
 
     assert hasattr(classifier, "oob_score_")
     assert not hasattr(classifier, "oob_prediction_")
@@ -557,7 +565,8 @@ def test_forest_classifier_oob(ForestClassifier, X, y, X_type, lower_bound_accur
         ),
     ],
 )
-def test_forest_regressor_oob(ForestRegressor, X, y, X_type, lower_bound_r2):
+@pytest.mark.parametrize("oob_score", [True, explained_variance_score])
+def test_forest_regressor_oob(ForestRegressor, X, y, X_type, lower_bound_r2, oob_score):
     """Check that forest-based regressor provide an OOB score close to the
     score on a test set."""
     X = _convert_container(X, constructor_name=X_type)
@@ -570,7 +579,7 @@ def test_forest_regressor_oob(ForestRegressor, X, y, X_type, lower_bound_r2):
     regressor = ForestRegressor(
         n_estimators=50,
         bootstrap=True,
-        oob_score=True,
+        oob_score=oob_score,
         random_state=0,
     )
 
@@ -578,10 +587,13 @@ def test_forest_regressor_oob(ForestRegressor, X, y, X_type, lower_bound_r2):
     assert not hasattr(regressor, "oob_prediction_")
 
     regressor.fit(X_train, y_train)
-    test_score = regressor.score(X_test, y_test)
+    if callable(oob_score):
+        test_score = oob_score(y_test, regressor.predict(X_test))
+    else:
+        test_score = regressor.score(X_test, y_test)
+        assert regressor.oob_score_ >= lower_bound_r2
 
     assert abs(test_score - regressor.oob_score_) <= 0.1
-    assert regressor.oob_score_ >= lower_bound_r2
 
     assert hasattr(regressor, "oob_score_")
     assert hasattr(regressor, "oob_prediction_")

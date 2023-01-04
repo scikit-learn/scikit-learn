@@ -1,6 +1,5 @@
 cimport numpy as cnp
 import numpy as np
-import warnings
 
 from libcpp.memory cimport shared_ptr, make_shared
 from libcpp.vector cimport vector
@@ -13,9 +12,8 @@ from ...utils._typedefs cimport ITYPE_t, DTYPE_t
 from ...utils._vector_sentinel cimport vector_to_nd_array
 
 from numbers import Real
-from scipy.sparse import issparse
 # TODO: reintroduce _in_unstable... warnings
-from ...utils import check_scalar, _in_unstable_openblas_configuration
+from ...utils import check_scalar
 from ...utils.fixes import threadpool_limits
 
 cnp.import_array()
@@ -110,6 +108,8 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
             X, Y,
             chunk_size=chunk_size,
             strategy=strategy,
+            metric=metric,
+            metric_kwargs=metric_kwargs,
         )
 
         self.radius = check_scalar(radius, "radius", Real, min_val=0)
@@ -323,7 +323,6 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}})
                     )
 
         return
-
     cdef void compute_exact_distances(self) nogil:
         """Convert rank-preserving distances to pairwise distances in parallel."""
         cdef:

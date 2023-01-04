@@ -1346,7 +1346,7 @@ def test_one_hot_encoder_sparse_deprecated():
 
 # deliberately omit 'OS' as an invalid combo
 @pytest.mark.parametrize(
-    "input_dtype, category_dtype", ["OO", "OU", "UO", "UU", "US", "SO", "SU", "SS"]
+    "input_dtype, category_dtype", ["OO", "OU", "UO", "UU", "SO", "SU", "SS"]
 )
 @pytest.mark.parametrize("array_type", ["list", "array", "dataframe"])
 def test_encoders_string_categories(input_dtype, category_dtype, array_type):
@@ -1374,6 +1374,27 @@ def test_encoders_string_categories(input_dtype, category_dtype, array_type):
 
     expected = np.array([[1], [1], [0], [1]])
     assert_array_equal(X_trans, expected)
+
+
+def test_mixed_string_bytes_categoricals():
+    """Check that this mixture of predefined categories and X raises an error.
+
+    Categories defined as bytes can not easily be compared to data that is
+    a string.
+    """
+    # data as unicode
+    X = np.array([["b"], ["a"]], dtype="U")
+    # predefined categories as bytes
+    categories = [np.array(["b", "a"], dtype="S")]
+    ohe = OneHotEncoder(categories=categories, sparse_output=False)
+
+    msg = re.escape(
+        "In column 0, the predefined categories have type 'bytes' which is incompatible"
+        " with values of type 'str_'."
+    )
+
+    with pytest.raises(ValueError, match=msg):
+        ohe.fit(X)
 
 
 @pytest.mark.parametrize("missing_value", [np.nan, None])
@@ -1939,3 +1960,20 @@ def test_ordinal_set_output():
 
     assert_allclose(X_pandas.to_numpy(), X_default)
     assert_array_equal(ord_pandas.get_feature_names_out(), X_pandas.columns)
+
+
+def test_predefined_categories_dtype():
+    """Check that the categories_ dtype is `object` for string categories
+
+    Regression test for gh-25171.
+    """
+    categories = [["as", "mmas", "eas", "ras", "acs"], ["1", "2"]]
+
+    enc = OneHotEncoder(categories=categories)
+
+    enc.fit([["as", "1"]])
+
+    assert len(categories) == len(enc.categories_)
+    for n, cat in enumerate(enc.categories_):
+        assert cat.dtype == object
+        assert_array_equal(categories[n], cat)

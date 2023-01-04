@@ -14,6 +14,7 @@ implementation_specific_values = [
 }}
 import numpy as np
 cimport numpy as cnp
+import warnings
 
 from libcpp.vector cimport vector
 
@@ -108,13 +109,16 @@ cdef class DatasetsPair{{name_suffix}}:
         datasets_pair: DatasetsPair{{name_suffix}}
             The suited DatasetsPair{{name_suffix}} implementation.
         """
-        # Y_norm_squared might be propagated down to DatasetsPairs
-        # via metrics_kwargs when the Euclidean specialisations
-        # can't be used. To prevent Y_norm_squared to be passed
-        # down to DistanceMetrics (whose constructors would raise
-        # a RuntimeError), we pop it here.
-        if metric_kwargs is not None:
-            metric_kwargs.pop("Y_norm_squared", None)
+        if (
+            isinstance(metric_kwargs, dict) and
+            (metric_kwargs.keys() - {"X_norm_squared", "Y_norm_squared"})
+        ):
+            warnings.warn(
+                f"Some metric_kwargs have been passed ({metric_kwargs}) but aren't "
+                f"usable for this case (EuclideanRadiusNeighbors64) and will be ignored.",
+                UserWarning,
+                stacklevel=3,
+            )
         cdef:
             {{DistanceMetric}} distance_metric = {{DistanceMetric}}.get_metric(
                 metric,
