@@ -53,7 +53,7 @@ __all__ = [
 
 @validate_params(
     {
-        "n_samples": ["array-like", Interval(Integral, 1, None, closed="left")],
+        "n_samples": ["array-like", Interval(Real, 1, None, closed="left")],
         "eps": ["array-like", Interval(Real, 0, 1, closed="neither")],
     }
 )
