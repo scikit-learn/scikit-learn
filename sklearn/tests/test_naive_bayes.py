@@ -1283,8 +1283,8 @@ def test_cwnb_estimators_support_partial_fit():
             pass
 
     clf1 = ColumnwiseNB(nb_estimators=[["g1", notNB(), [1]], ["g2", GaussianNB(), [0]]])
-    msg = "Estimators must be .aive Bayes estimators implementing *"
-    with pytest.raises(TypeError, match=msg):
+    msg = "This 'ColumnwiseNB' has no attribute 'partial_fit'*"
+    with pytest.raises(AttributeError, match=msg):
         clf1.partial_fit(X, y)
 
 

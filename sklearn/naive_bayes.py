@@ -33,7 +33,7 @@ from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative
 from .utils.validation import _check_sample_weight
 from .utils.validation import column_or_1d
-from .utils.metaestimators import _BaseComposition
+from .utils.metaestimators import _BaseComposition, available_if
 from .utils import _safe_indexing, _get_column_indices, _print_elapsed_time, Bunch
 from .utils.fixes import delayed
 from .utils._estimator_html_repr import _VisualBlock
@@ -1543,6 +1543,27 @@ class CategoricalNB(_BaseDiscreteNB):
         return total_ll
 
 
+def _nb_estimators_have(attr):
+    """Check if all self.nb_estimators or self.nb_estimators_ have attr.
+
+    Used together with `available_if` in `ColumnwiseNB`."""
+
+    # This function is used with `_available_if` before validation.
+    # The try statement suppresses errors caused by incorrect specification of
+    # self.nb_estimators. Informative errors are raised at validation elsewhere.
+    def chk(obj):
+        try:
+            if hasattr(obj, "nb_estimators_"):
+                out = all(hasattr(triplet[1], attr) for triplet in obj.nb_estimators_)
+            else:
+                out = all(hasattr(triplet[1], attr) for triplet in obj.nb_estimators)
+        except (TypeError, IndexError, AttributeError):
+            return False
+        return out
+
+    return chk
+
+
 def _fit_one(estimator, X, y, message_clsname="", message=None, **fit_params):
     """Call ``estimator.fit`` and print elapsed time message.
 
@@ -1994,6 +2015,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
             X, y, partial=False, classes=None, sample_weight=sample_weight
         )
 
+    @available_if(_nb_estimators_have("partial_fit"))
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Fit incrementally the naive Bayes meta-estimator on a batch of samples.
 
