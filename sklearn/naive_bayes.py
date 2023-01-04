@@ -36,6 +36,7 @@ from .utils.validation import column_or_1d
 from .utils.metaestimators import _BaseComposition, available_if
 from .utils import _safe_indexing, _get_column_indices, _print_elapsed_time, Bunch
 from .utils.fixes import delayed
+from .utils._encode import _unique
 from .utils._estimator_html_repr import _VisualBlock
 from .compose._column_transformer import _is_empty_column_selection
 
@@ -1951,7 +1952,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
             weights = _check_sample_weight(sample_weight, X=y_, copy=True)
 
         if not partial:
-            self.classes_, counts = np.unique(y_, return_counts=True)
+            self.classes_, counts = _unique(y_, return_counts=True)
         else:
             _check_partial_fit_first_call(self, classes)
 
