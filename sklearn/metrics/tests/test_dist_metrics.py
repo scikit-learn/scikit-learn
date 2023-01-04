@@ -131,6 +131,9 @@ def test_cdist(metric_param_grid, X, Y):
     "X_bool, Y_bool", [(X_bool, Y_bool), (X_bool_mmap, Y_bool_mmap)]
 )
 def test_cdist_bool_metric(metric, X_bool, Y_bool):
+    if metric == "kulsinski" and sp_version >= parse_version("1.11.0.dev"):
+        pytest.skip("Kulsinski has been removed in SciPy 1.11.")
+
     D_scipy_cdist = cdist(X_bool, Y_bool, metric)
 
     dm = DistanceMetric.get_metric(metric)
@@ -251,6 +254,9 @@ def test_distance_metrics_dtype_consistency(metric_param_grid):
 @pytest.mark.parametrize("metric", BOOL_METRICS)
 @pytest.mark.parametrize("X_bool", [X_bool, X_bool_mmap])
 def test_pdist_bool_metrics(metric, X_bool):
+    if metric == "kulsinski" and sp_version >= parse_version("1.11.0.dev"):
+        pytest.skip("Kulsinski has been removed in SciPy 1.11.")
+
     D_scipy_pdist = cdist(X_bool, X_bool, metric)
     dm = DistanceMetric.get_metric(metric)
     D_sklearn = dm.pairwise(X_bool)
@@ -293,6 +299,9 @@ def test_pickle(writable_kwargs, metric_param_grid, X):
 @pytest.mark.parametrize("metric", BOOL_METRICS)
 @pytest.mark.parametrize("X_bool", [X_bool, X_bool_mmap])
 def test_pickle_bool_metrics(metric, X_bool):
+    if metric == "kulsinski" and sp_version >= parse_version("1.11"):
+        pytest.skip("Kulsinski has been removed in SciPy 1.11.")
+
     dm = DistanceMetric.get_metric(metric)
     D1 = dm.pairwise(X_bool)
     dm2 = pickle.loads(pickle.dumps(dm))

@@ -2069,7 +2069,7 @@ PAIRWISE_BOOLEAN_FUNCTIONS = [
     "jaccard",
     # Kulsinski has been deprecated in SciPy 1.8 and removed in SciPy 1.11.
     # TODO: remove this line once only scipy>=1.11 is supported.
-    *(["kulsinski"] if sp_version < parse_version("1.11") else ()),
+    *(["kulsinski"] if sp_version < parse_version("1.11.0.dev") else ()),
     "matching",
     "rogerstanimoto",
     "russellrao",
