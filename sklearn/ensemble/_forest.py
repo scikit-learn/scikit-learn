@@ -265,7 +265,7 @@ class BaseForest(MultiOutputMixin, BaseEnsemble, metaclass=ABCMeta):
         """
         X = self._validate_X_predict(X)
         config = get_config()
-        results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, prefer="threads",)(
+        results = Parallel(n_jobs=self.n_jobs, verbose=self.verbose, prefer="threads")(
             delayed(tree.apply, config=config)(X, check_input=False)
             for tree in self.estimators_
         )
