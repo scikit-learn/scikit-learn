@@ -112,16 +112,21 @@ else:
 def delayed(function, config=None):
     """Decorator used to capture the arguments of a function."""
 
+    warn_msg = """scikit-learn 1.3 and above will require a config parameter to be
+        passed to delayed. Please update your code to pass a config parameter
+        that calls `sklearn.get_config()` just before the `joblib.Parallel`
+        call so as to capture the configuration of the thread triggering
+        the parallel call. The coding pattern will be:
+
+        >>> config = sklearn.get_config()
+        >>> Parallel(n_jobs=2, ...)(
+        ...     delayed(func, config=config)(**common_args, **task_args)
+        ...     for task_args in all_tasks
+        ... )
+        """
+
     if config is None:
-        warnings.warn(
-            "scikit-learn 1.3 and above will require a config parameter to be passed "
-            "to delayed. Please update your code to pass a config parameter "
-            "that calls `sklearn.get_config()` just before the `joblib.Parallel` "
-            "call so as to capture the configuration of the thread triggering "
-            "the parallel call.",
-            stacklevel=2,
-            category=ConfigPropagationWarning,
-        )
+        warnings.warn(warn_msg, stacklevel=2, category=ConfigPropagationWarning)
         config = {}
 
     @functools.wraps(function)

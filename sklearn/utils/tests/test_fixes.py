@@ -63,15 +63,13 @@ def test_delayed_warning_config():
     """
 
     n_tasks = 10
-    warning_msg = (
-        "scikit-learn 1.3 and above will require a config parameter to be passed"
-    )
-    with pytest.warns(ConfigPropagationWarning, match=warning_msg) as record:
+    warning_msg = "scikit-learn 1.3 and above will require a config parameter to be"
+    with pytest.warns(ConfigPropagationWarning, match=warning_msg) as records:
         Parallel(n_jobs=2, pre_dispatch=1)(
             delayed(time.sleep)(0) for _ in range(n_tasks)
         )
 
-    assert len(record) == n_tasks
+    assert len(records) == n_tasks
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
