@@ -12,9 +12,11 @@ Version 1.2.1
 Changes impacting all modules
 -----------------------------
 
-- |Fix| Fix a bug that was ignoring the global configuration in estimators using
-  `n_jobs > 1`. This bug was triggered for the tasks not dispatched by the main
-  thread in `joblib` since :func:`sklearn.get_config` uses thread local configuration.
+- |Fix| Fix a bug where the current configuration was ignored in estimators using
+  `n_jobs > 1`. This bug was triggered for tasks dispatched by the ancillary
+  thread of `joblib` as :func:`sklearn.get_config` used to access an empty thread
+  local configuration instead of the configuration visible from the thread where
+  `delayed` was first called.
   :pr:`25242` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changelog
