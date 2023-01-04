@@ -1095,7 +1095,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     oob_score_ : float
         The last value of the loss (= deviance) on the out-of-bag samples. It is
-        the same as ``oob_scores_[-1]``. Only available if ``subsample < 1.0``.
+        the same as `oob_scores_[-1]`. Only available if `subsample < 1.0`.
+
+        .. versionadded:: 1.3
 
     train_score_ : ndarray of shape (n_estimators,)
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
