@@ -72,7 +72,7 @@ def test_delayed_warning_config():
     )
     with pytest.warns(ConfigPropagationWarning, match=warning_msg) as record:
         Parallel(n_jobs=2, pre_dispatch=1)(
-            delayed(_sleep)(1e-5) for _ in range(n_tasks)
+            delayed(time.sleep)(0) for _ in range(n_tasks)
         )
 
     assert len(record) == n_tasks

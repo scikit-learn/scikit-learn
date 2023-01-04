@@ -17,7 +17,7 @@ Changes impacting all modules
   `n_jobs > 1`. This bug was triggered for tasks dispatched by the ancillary
   thread of `joblib` as :func:`sklearn.get_config` used to access an empty thread
   local configuration instead of the configuration visible from the thread where
-  `delayed` was first called.
+  `joblib.Parallel` was first called.
   :pr:`25290` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changelog
