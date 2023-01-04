@@ -1221,6 +1221,13 @@ def test_cwnb_estimators_nonempty_list():
     with pytest.raises(ValueError, match=msg):
         clf.fit(X1, y1)
 
+    # Subestimators spec: error on non-tuple
+    clf = ColumnwiseNB(
+        nb_estimators=GaussianNB(),
+    )
+    msg = "A list of naive Bayes estimators must be provided*"
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X1, y1)
 
 def test_cwnb_estimators_support_jll():
     # Subestimators spec: error when some don't support predict_joint_log_proba

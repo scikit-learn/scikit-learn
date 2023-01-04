@@ -1780,12 +1780,13 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     def _validate_estimators(self, check_partial=False):
         # Check if estimators have fit/partial_fit and joint log prob methods
         # Validate estimator names via _BaseComposition._validate_names(self, names)
-        if not self.nb_estimators:
+        try:
+            names, estimators, _ = zip(*self.nb_estimators)
+        except (TypeError, AttributeError, ValueError) as exc:
             raise ValueError(
                 "A list of naive Bayes estimators must be provided "
                 "in the form [(name, nb_estimator, columns), ... ]."
-            )
-        names, estimators, _ = zip(*self.nb_estimators)
+            ) from exc
         for e in estimators:
             if (not check_partial) and (
                 not (hasattr(e, "fit") and hasattr(e, "predict_joint_log_proba"))
