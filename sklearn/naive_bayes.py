@@ -1795,11 +1795,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
                     "Estimators must be naive Bayes estimators implementing "
                     "`fit` and `predict_joint_log_proba` methods."
                 )
-            if check_partial and (
-                not (
-                    hasattr(e, "partial_fit") and hasattr(e, "predict_joint_log_proba")
-                )
-            ):
+            if check_partial and not hasattr(e, "predict_joint_log_proba"):
                 raise TypeError(
                     "Estimators must be Naive Bayes estimators implementing "
                     "`partial_fit` and `predict_joint_log_proba` methods."

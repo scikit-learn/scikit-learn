@@ -1229,6 +1229,7 @@ def test_cwnb_estimators_nonempty_list():
     with pytest.raises(ValueError, match=msg):
         clf.fit(X1, y1)
 
+
 def test_cwnb_estimators_support_jll():
     # Subestimators spec: error when some don't support predict_joint_log_proba
     class notNB(BaseEstimator):
@@ -1267,6 +1268,12 @@ def test_cwnb_estimators_support_fit():
         def predict(self, X):
             pass
 
+    clf1 = ColumnwiseNB(nb_estimators=[["g1", notNB(), [1]], ["g2", GaussianNB(), [0]]])
+    msg = "Estimators must be .aive Bayes estimators implementing *"
+    with pytest.raises(TypeError, match=msg):
+        clf1.fit(X, y)
+
+    delattr(notNB, 'predict_joint_log_proba')
     clf1 = ColumnwiseNB(nb_estimators=[["g1", notNB(), [1]], ["g2", GaussianNB(), [0]]])
     msg = "Estimators must be .aive Bayes estimators implementing *"
     with pytest.raises(TypeError, match=msg):
