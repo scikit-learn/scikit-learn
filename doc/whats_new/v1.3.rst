@@ -19,6 +19,11 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- |Enhancement| :meth:`multiclass.OutputCodeClassifier.predict` now uses a more
+  efficient pairwise distance reduction. As a consequence, the tie-breaking
+  strategy is different and thus the predicted labels may be different.
+  :pr:`25196` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 - |Enhancement| The `fit_transform` method of :class:`decomposition.DictionaryLearning`
   is more efficient but may produce different results as in previous versions when
   `transform_algorithm` is not the same as `fit_algorithm` and the number of iterations
@@ -31,12 +36,6 @@ random sampling procedures.
 
 Changes impacting all modules
 -----------------------------
-
-- |Enhancement| All scikit-learn estimators now save the scikit-learn version
-  with which they have been pickled into a private attribute,
-  `__sklearn_pickle_version__`. This allows access to this information without
-  having to parse the warning message.
-  :pr:`22094` by :user:`Gawein Le Goff <Edern76>`.
 
 Changelog
 ---------
@@ -73,6 +72,12 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`.
   :pr:`25177` by :user:`Tim Head <betatim>`.
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| :class:`feature_extraction.FeatureHasher` raises an informative error
+  when the input is a list of strings. :pr:`25094` by `Thomas Fan`_.
+
 :mod:`sklearn.model_selection`
 ..............................
 - |Fix| :func:`model_selection.cross_validate` with multimetric scoring in
@@ -86,6 +91,12 @@ Changelog
   when the provided `sample_weight` reduces the problem to a single class in `fit`.
   :pr:`24140` by :user:`Jonathan Ohayon <Johayon>` and :user:`Chiara Marmo <cmarmo>`.
 
+:mod:`sklearn.neural_network`
+.............................
+- |Fix| :class:`neural_network.MLPClassifier` and :class:`neural_network.MLPRegressor`
+  no longer raise warnings when fitting data with feature names.
+  :pr:`24873` by :user:`Tim Head <betatim>`.
+
 :mod:`sklearn.pipeline`
 .......................
 - |Feature| :class:`pipeline.FeatureUnion` can now use indexing notation (e.g.
@@ -97,9 +108,9 @@ Changelog
 - |Enhancement| Added support for `sample_weight` in
   :class:`preprocessing.KBinsDiscretizer`. This allows specifying the parameter
   `sample_weight` for each sample to be used while fitting. The option is only
-  available when `strategy` is set to `quantile`.
+  available when `strategy` is set to `quantile` and `kmeans`.
   :pr:`24935` by :user:`Seladus <seladus>`, :user:`Guillaume Lemaitre <glemaitre>`, and
-  :user:`Dea María Léon <deamarialeon>`.
+  :user:`Dea María Léon <deamarialeon>`, :pr:`25257` by :user:`Gleb Levitski <glevv>`.
 
 - |Fix| Make :class:`AdditiveChi2Sampler` stateless.
   The `sample_interval_` attribute is deprecated and will be removed in 1.5.
