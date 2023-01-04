@@ -3,7 +3,7 @@
 import os
 import threading
 
-from contextlib import contextmanager as contextmanager
+from contextlib import contextmanager
 from typing import Dict  # noqa
 from weakref import WeakKeyDictionary
 

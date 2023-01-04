@@ -152,14 +152,9 @@ def test_config_threadsafe():
 
 
 def test_get_thread_config():
-    """Check that we can retrieve the config file from a specific thread."""
+    """Check that we can retrieve the config from a specific thread."""
 
-    def set_definitive_assume_finite(assume_finite, sleep_duration):
-        set_config(assume_finite=assume_finite)
-        time.sleep(sleep_duration)
-        return _get_thread_config()["assume_finite"]
-
-    thread = threading.Thread(target=set_definitive_assume_finite, args=(True, 0.1))
+    thread = threading.Thread(target=set_config, kwargs={"assume_finite": True})
     thread.start()
     thread.join()
 
