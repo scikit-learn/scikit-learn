@@ -2068,8 +2068,6 @@ PAIRWISE_BOOLEAN_FUNCTIONS = [
     "dice",
     "jaccard",
     # Kulsinski has been deprecated in SciPy 1.8 and removed in SciPy 1.11.
-    # If it is not included in this list, it will not be supported via
-    # scipy.spatial.distance but it will via sklearn.metrics.DistanceMetric.
     # TODO: remove this line once only scipy>=1.11 is supported.
     *(["kulsinski"] if sp_version < parse_version("1.11") else ()),
     "matching",
