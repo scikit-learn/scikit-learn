@@ -13,19 +13,12 @@ Changes impacting all modules
 -----------------------------
 
 - |Fix| Fix a bug that was ignoring the global configuration in estimators using
-  `n_jobs > 1`. This bug was triggered for the tasks not dispatch by the main
+  `n_jobs > 1`. This bug was triggered for the tasks not dispatched by the main
   thread in `joblib` since :func:`sklearn.get_config` uses thread local configuration.
   :pr:`25242` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changelog
 ---------
-
-:mod:`sklearn`
-..............
-
-- |Enhancement| :func:`sklearn.get_config` takes a parameter `thread` allowing to
-  retrieve the local configuration of this specific `thread`.
-  :pr:`25242` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.base`
 ...................
