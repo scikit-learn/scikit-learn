@@ -175,6 +175,12 @@ class _SetOutputMixin:
     `auto_wrap_output_keys` is the default value.
     """
 
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        transform_output = get_config()["transform_output"]
+        if transform_output != "default":
+            self.set_output(transform=transform_output)
+
     def __init_subclass__(cls, auto_wrap_output_keys=("transform",), **kwargs):
         super().__init_subclass__(**kwargs)
 

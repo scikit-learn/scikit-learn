@@ -174,6 +174,12 @@ def test__get_output_config():
         config = _get_output_config("transform", est)
         assert config["dense"] == "default"
 
+    with config_context(transform_output="pandas"):
+        est = EstimatorWithSetOutput()
+    config = _get_output_config("transform", est)
+    assert config["dense"] == "pandas"
+
+    est = EstimatorWithSetOutput()
     est.set_output(transform="pandas")
     config = _get_output_config("transform", est)
     assert config["dense"] == "pandas"
