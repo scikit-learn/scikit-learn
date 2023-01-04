@@ -1661,7 +1661,7 @@ _VALID_METRICS = [
 # but to `sklearn.metrics.DistanceMetric`.
 _SCIPY_DEPRECATED_METRICS = (
     # Kulsinski has been deprecated in SciPy 1.8 and removed in SciPy 1.11.
-    *(["kulsinski"] if sp_version >= parse_version("1.11") else ()),
+    *(["kulsinski"] if sp_version >= parse_version("1.8") else ()),
 )
 
 _NAN_METRICS = ["nan_euclidean"]
