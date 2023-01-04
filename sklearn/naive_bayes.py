@@ -1622,16 +1622,16 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         nb_estimator : estimator
             The estimator must support :term:`fit` or :term:`partial_fit`,
             depending on how the meta-estimator is fitted. In addition, the
-            estimator must support ``predict_joint_log_proba`` method, which
+            estimator must support `predict_joint_log_proba` method, which
             takes :term:`X` of shape (n_samples, n_features) and returns a
             numpy array of shape (n_samples, n_classes) containing joint
-            log-probabilities, ``log P(x,y)`` for each sample point and class.
+            log-probabilities, `log P(x,y)` for each sample point and class.
         columns : str, array-like of str, int, array-like of int, \
                 array-like of bool, slice or callable
             Indexes the data on its second axis. Integers are interpreted as
             positional columns, while strings can reference DataFrame columns
             by name.  A scalar string or int should be used where
-            ``nb_estimator`` expects X to be a 1d array-like (vector),
+            `nb_estimator` expects X to be a 1d array-like (vector),
             otherwise a 2d array will be passed to the transformer.
             A callable is passed the input data `X` and can return any of the
             above. To select multiple columns by name or dtype, you can use
@@ -1647,8 +1647,8 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
 
     n_jobs : int, default=None
         Number of jobs to run in parallel.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
     verbose : bool, default=False
@@ -1668,7 +1668,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     named_estimators_ : :class:`~sklearn.utils.Bunch`
         Read-only attribute to access any subestimator by given name.
         Keys are estimator names and values are the fitted estimators, except
-        when a subestimator does not require fitting (i.e., when ``columns`` is
+        when a subestimator does not require fitting (i.e., when `columns` is
         an empty set of indices).
 
     class_prior_ : ndarray of shape (n_classes,)
@@ -1703,19 +1703,19 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     Notes
     -----
     ColumnwiseNB combines multiple naive Bayes estimators by expressing the
-    overall joint probability ``P(x,y)`` through ``P(x_i,y)``, the joint
+    overall joint probability `P(x,y)` through `P(x_i,y)`, the joint
     probabilities of the subestimators::
 
-        ``Log P(x,y) = Log P(x_1,y) + ... + Log P(x_N,y) - (N - 1) Log P(y)``,
+        Log P(x,y) = Log P(x_1,y) + ... + Log P(x_N,y) - (N - 1) Log P(y),
 
-    where ``N`` denotes ``n_estimators``, the number of estimators.
+    where `N` denotes `n_estimators`, the number of estimators.
     It is implicitly assumed that the class log priors are finite and agree
     between the estimators and the subestimator::
 
-        ``- inf < Log P(y) = Log P(y|1) = ... = Log P(y|N)``.
+        - inf < Log P(y) = Log P(y|1) = ... = Log P(y|N).
 
     The meta-estimators does not check if this condition holds. Meaningless
-    results, including ``NaN``, may be produced by ColumnwiseNB if the class
+    results, including `NaN`, may be produced by ColumnwiseNB if the class
     priors differ or contain a zero probability.
 
     Examples
@@ -1768,7 +1768,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         return X
 
     def _joint_log_likelihood(self, X):
-        """Calculate the meta-estimator's joint log-probability ``log P(x,y)``."""
+        """Calculate the meta-estimator's joint log-probability `log P(x,y)`."""
         estimators = self._iter(fitted=True, replace_strings=True)
         all_jlls = Parallel(n_jobs=self.n_jobs)(
             delayed(_jll_one)(estimator=nb_estimator, X=_safe_indexing(X, cols, axis=1))
@@ -1826,7 +1826,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         self._estimator_to_input_indices = estimator_to_input_indices
 
     def _iter(self, *, fitted=False, replace_strings=False):
-        """Generate ``(name, nb_estimator, columns)`` tuples.
+        """Generate `(name, nb_estimator, columns)` tuples.
 
         This is a private method, similar to ColumnTransformer._iter.
         Must not be called before _validate_column_callables.
@@ -1848,7 +1848,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         Yields
         ------
         tuple
-            of the form ``(name, nb_estimator, columns)``.
+            of the form `(name, nb_estimator, columns)`.
 
         Notes
         -----
@@ -1990,7 +1990,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     def fit(self, X, y, sample_weight=None):
         """Fit the naive Bayes meta-estimator.
 
-        Calls `fit` of each subestimator ``nb_estimator``.  Only a corresponding
+        Calls `fit` of each subestimator `nb_estimator`.  Only a corresponding
         subset of columns of `X` is passed to each subestimator; `sample_weight`
         and `y` are passed to the subestimators as they are.
 
@@ -2097,7 +2097,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
     def set_params(self, **kwargs):
         """Set the parameters of this estimator.
 
-        Valid parameter keys can be listed with ``get_params()``. Note that you
+        Valid parameter keys can be listed with `get_params()`. Note that you
         can directly set the parameters of the estimators contained in
         `estimators` of `ColumnwiseNB`.
 
