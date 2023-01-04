@@ -1091,7 +1091,9 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
 
     oob_scores_ : ndarray of shape (n_estimators,)
         The full history of the loss (= deviance) values on the out-of-bag
-        samples. Only available if ``subsample < 1.0``.
+        samples. Only available if `subsample < 1.0`.
+
+        .. versionadded:: 1.3
 
     oob_score_ : float
         The last value of the loss (= deviance) on the out-of-bag samples. It is
