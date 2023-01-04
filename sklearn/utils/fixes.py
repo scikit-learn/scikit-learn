@@ -14,13 +14,15 @@ from functools import update_wrapper
 from importlib import resources
 import functools
 import sys
+import warnings
 
 import sklearn
 import numpy as np
 import scipy
 import scipy.stats
 import threadpoolctl
-from .._config import config_context, get_config
+from .._config import config_context
+from ..exceptions import ConfigPropagationWarning
 from ..externals._packaging.version import parse as parse_version
 
 
@@ -107,12 +109,24 @@ else:
 
 
 # remove when https://github.com/joblib/joblib/issues/1071 is fixed
-def delayed(function):
+def delayed(function, config=None):
     """Decorator used to capture the arguments of a function."""
+
+    if config is None:
+        warnings.warn(
+            "scikit-learn 1.3 will require a config parameter to be passed "
+            "to delayed. Please update your code to pass a config parameter "
+            "that calls `sklearn.get_config()` just before the `joblib.Parallel` "
+            "call so as to capture the configuration of the thread triggering"
+            "the parallel call.",
+            stacklevel=2,
+            category=ConfigPropagationWarning,
+        )
+        config = {}
 
     @functools.wraps(function)
     def delayed_function(*args, **kwargs):
-        return _FuncWrapper(function), args, kwargs
+        return _FuncWrapper(function, config), args, kwargs
 
     return delayed_function
 
@@ -120,9 +134,9 @@ def delayed(function):
 class _FuncWrapper:
     """ "Load the global configuration before calling the function."""
 
-    def __init__(self, function):
+    def __init__(self, function, config):
         self.function = function
-        self.config = get_config()
+        self.config = config
         update_wrapper(self, self.function)
 
     def __call__(self, *args, **kwargs):

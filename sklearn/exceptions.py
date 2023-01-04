@@ -5,6 +5,7 @@ classes used across scikit-learn.
 
 __all__ = [
     "NotFittedError",
+    "ConfigPropagationWarning",
     "ConvergenceWarning",
     "DataConversionWarning",
     "DataDimensionalityWarning",
@@ -35,6 +36,13 @@ class NotFittedError(ValueError, AttributeError):
 
     .. versionchanged:: 0.18
        Moved from sklearn.utils.validation.
+    """
+
+
+class ConfigPropagationWarning(UserWarning):
+    """Notify about lack of config propagation to the child processes.
+
+    .. versionadded:: 1.3
     """
 
 

@@ -24,6 +24,7 @@ import numpy as np
 from numpy.ma import MaskedArray
 from scipy.stats import rankdata
 
+from .._config import get_config
 from ..base import BaseEstimator, is_classifier, clone
 from ..base import MetaEstimatorMixin
 from ._split import check_cv
@@ -840,8 +841,12 @@ class BaseSearchCV(MetaEstimatorMixin, BaseEstimator, metaclass=ABCMeta):
                         )
                     )
 
+                # Capture the config of the current thread here instead of inside the
+                # generator expression. The generator expression can be consumed by
+                # an auxiliary thread in joblib.
+                config = get_config()
                 out = parallel(
-                    delayed(_fit_and_score)(
+                    delayed(_fit_and_score, config=config)(
                         clone(base_estimator),
                         X,
                         y,
