@@ -1,14 +1,14 @@
+import threading
+
 import pytest
 from joblib import Parallel
 
-from numpy.testing import assert_array_equal
-
-from sklearn._config import config_context, get_config
+import sklearn
 from sklearn.utils.fixes import delayed
 
 
 def get_working_memory():
-    return get_config()["working_memory"]
+    return sklearn.get_config()["working_memory"]
 
 
 @pytest.mark.parametrize("n_jobs", [1, 2])
@@ -16,10 +16,19 @@ def get_working_memory():
 def test_configuration_passes_through_to_joblib(n_jobs, backend):
     # Tests that the global global configuration is passed to joblib jobs
 
-    with config_context(working_memory=123):
-        config = get_config()
-        results = Parallel(n_jobs=n_jobs, backend=backend, pre_dispatch=1)(
-            delayed(get_working_memory, config=config)() for _ in range(10)
-        )
+    n_iter, results = 10, []
 
-    assert_array_equal(results, [123] * 10)
+    def parallel_inspect_config():
+        with sklearn.config_context(working_memory=123):
+            config = sklearn.get_config()
+            results.extend(
+                Parallel(n_jobs=n_jobs, pre_dispatch=2 * n_jobs, backend=backend)(
+                    delayed(get_working_memory, config=config)() for _ in range(n_iter)
+                )
+            )
+
+    other_thread = threading.Thread(target=parallel_inspect_config)
+    other_thread.start()
+    other_thread.join()
+
+    assert results == [123] * n_iter

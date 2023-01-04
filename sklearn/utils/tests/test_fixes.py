@@ -57,10 +57,6 @@ def test_loguniform(low, high, base):
     ).rvs(random_state=0)
 
 
-def _sleep(duration):
-    time.sleep(duration)
-
-
 def test_delayed_warning_config():
     """Check that we raise an informing warning when the user does not pass
     the configuration to be used within the threads executing the tasks.
@@ -72,7 +68,7 @@ def test_delayed_warning_config():
     )
     with pytest.warns(ConfigPropagationWarning, match=warning_msg) as record:
         Parallel(n_jobs=2, pre_dispatch=1)(
-            delayed(_sleep)(1e-5) for _ in range(n_tasks)
+            delayed(time.sleep)(0) for _ in range(n_tasks)
         )
 
     assert len(record) == n_tasks
