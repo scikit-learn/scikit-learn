@@ -409,7 +409,13 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         n_samples_fit = self.nbrs_.n_samples_fit_
         n_queries = distances.shape[0]
-        G_X = np.zeros((n_queries, n_samples_fit))
+
+        if hasattr(X, "dtype") and X.dtype == np.float32:
+            dtype = np.float32
+        else:
+            dtype = np.float64
+
+        G_X = np.zeros((n_queries, n_samples_fit), dtype)
         for i in range(n_queries):
             G_X[i] = np.min(self.dist_matrix_[indices[i]] + distances[i][:, None], 0)
 
