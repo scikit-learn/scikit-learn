@@ -16,7 +16,9 @@ from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 from joblib import Parallel, effective_n_jobs
+from sklearn.metrics._dist_metrics import METRIC_MAPPING, DistanceMetric32
 
+from . import DistanceMetric
 from .. import config_context
 from ..utils.validation import _num_samples
 from ..utils.validation import check_non_negative
@@ -1655,6 +1657,13 @@ _VALID_METRICS = [
     "haversine",
 ]
 
+# Metrics included in this list, it will not be resolved to `scipy.spatial.distance`
+# but to `sklearn.metrics.DistanceMetric`.
+_SCIPY_DEPRECATED_METRICS = (
+    # Kulsinski has been deprecated in SciPy 1.8 and removed in SciPy 1.11.
+    *(["kulsinski"] if sp_version >= parse_version("1.11") else ()),
+)
+
 _NAN_METRICS = ["nan_euclidean"]
 
 
@@ -2010,11 +2019,26 @@ def pairwise_distances(
         return X
     elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
         func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
+    elif (
+        # To preserve the previous resolution, this fallback must only have precedence
+        # over `scipy.spatial.distance` when metrics are deprecated by SciPy.
+        metric in _SCIPY_DEPRECATED_METRICS
+        and metric in METRIC_MAPPING.keys()
+        and (Y is None or X.dtype == Y.dtype)
+    ):
+        DistanceMetricClass = (
+            DistanceMetric if X.dtype == np.float64 else DistanceMetric32
+        )
+        distance_metric = DistanceMetricClass.get_metric(metric, **kwds)
+
+        def func(X, Y, *args, **kwargs):
+            return distance_metric.pairwise(X, Y)
+
     elif callable(metric):
         func = partial(
             _pairwise_callable, metric=metric, force_all_finite=force_all_finite, **kwds
         )
-    else:
+    else:  # Fallback on `scipy.spatial.distance.{cdist,pdist}`
         if issparse(X) or issparse(Y):
             raise TypeError("scipy distance metrics do not support sparse matrices.")
 
@@ -2043,7 +2067,11 @@ def pairwise_distances(
 PAIRWISE_BOOLEAN_FUNCTIONS = [
     "dice",
     "jaccard",
-    "kulsinski",
+    # Kulsinski has been deprecated in SciPy 1.8 and removed in SciPy 1.11.
+    # If it is not included in this list, it will not be supported via
+    # scipy.spatial.distance but it will via sklearn.metrics.DistanceMetric.
+    # TODO: remove this line once only scipy>=1.11 is supported.
+    *(["kulsinski"] if sp_version < parse_version("1.11") else ()),
     "matching",
     "rogerstanimoto",
     "russellrao",
