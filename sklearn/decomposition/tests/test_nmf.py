@@ -1,7 +1,6 @@
 import re
 import sys
 from io import StringIO
-from functools import partial
 
 import numpy as np
 import scipy.sparse as sp
