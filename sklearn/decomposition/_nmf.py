@@ -391,7 +391,7 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6, random_state=None):
     if not sp.issparse(X) and np.any(np.isnan(X)):
         raise ValueError(
             "NMF initializations with NNDSVD are not available "
-            "with missing values (np.nan)."
+            "with missing values (NaN)."
         )
 
     # NNDSVD initialization
@@ -1242,7 +1242,7 @@ def non_negative_factorization(
         X,
         accept_sparse=("csr", "csc"),
         dtype=[np.float64, np.float32],
-        force_all_finite=not est._more_tags()["allow_nan"],
+        force_all_finite=False,
     )
 
     with config_context(assume_finite=True):
@@ -1718,7 +1718,7 @@ class NMF(_BaseNMF):
             X,
             accept_sparse=("csr", "csc"),
             dtype=[np.float64, np.float32],
-            force_all_finite=not self._more_tags()["allow_nan"],
+            force_all_finite=False,
         )
 
         with config_context(assume_finite=True):
@@ -1850,7 +1850,7 @@ class NMF(_BaseNMF):
             accept_sparse=("csr", "csc"),
             dtype=[np.float64, np.float32],
             reset=False,
-            force_all_finite=not self._more_tags()["allow_nan"],
+            force_all_finite=not self._more_tags()['allow_nan'],
         )
 
         with config_context(assume_finite=True):
@@ -2310,7 +2310,7 @@ class MiniBatchNMF(_BaseNMF):
             X,
             accept_sparse=("csr", "csc"),
             dtype=[np.float64, np.float32],
-            force_all_finite=not self._more_tags()["allow_nan"],
+            force_all_finite=False,
         )
 
         with config_context(assume_finite=True):
@@ -2442,7 +2442,7 @@ class MiniBatchNMF(_BaseNMF):
             accept_sparse=("csr", "csc"),
             dtype=[np.float64, np.float32],
             reset=False,
-            force_all_finite=not self._more_tags()["allow_nan"],
+            force_all_finite=not self._more_tags()['allow_nan'],
         )
 
         # transform in a numpy masked array if X contains missing (NaN) values

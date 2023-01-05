@@ -774,18 +774,19 @@ def test_nmf_with_nan():
     H_nan[rng.randint(2, size=(n_components, n_features)) > 0] = np.nan
 
     model.set_params(init="custom")
-    with pytest.raises(ValueError, match="NaN values in data"):
+    with pytest.raises(ValueError, match="NaN values in data passed to NMF"):
         model.fit_transform(X_nan, None, W_nan, H)
-    with pytest.raises(ValueError, match="NaN values in data"):
+    with pytest.raises(ValueError, match="NaN values in data passed to NMF"):
         model.fit_transform(X_nan, None, W, H_nan)
 
     model.components_ = H_nan
-    with pytest.raises(ValueError, match="NaN values in data"):
+    with pytest.raises(ValueError, match="NaN values in data passed to NMF"):
         model.transform(X_nan)
 
 
 @pytest.mark.parametrize("solver", ("cd", "mu"))
-def test_nmf_decreasing(solver):
+@pytest.mark.parametrize("with_nans", (False, True))
+def test_nmf_decreasing(solver, with_nans):
     # test that the objective function is decreasing at each iteration
     n_samples = 20
     n_features = 15
@@ -794,54 +795,52 @@ def test_nmf_decreasing(solver):
     l1_ratio = 0.5
     tol = 0.0
 
+    if with_nans and solver != "mu":
+        return  # not implemented
+
     # initialization
     rng = np.random.mtrand.RandomState(42)
-    X_full = rng.randn(n_samples, n_features)
-    np.abs(X_full, X_full)
-    W0, H0 = nmf._initialize_nmf(X_full, n_components, init="random", random_state=42)
-    # add missing values
-    X_nan = X_full.copy()
-    X_nan[rng.randint(2, size=(n_samples, n_features)) > 0] = np.nan
+    X = rng.randn(n_samples, n_features)
+    np.abs(X, X)
+    W0, H0 = nmf._initialize_nmf(X, n_components, init="random", random_state=42)
+    if with_nans:
+        X[rng.randint(2, size=(n_samples, n_features)) > 0] = np.nan
 
-    for X in [X_full, X_nan]:
-        for beta_loss in (-1.2, 0, 0.2, 1.0, 2.0, 2.5):
-            if solver != "mu" and beta_loss != 2:
-                # not implemented
-                continue
-            if X is X_nan and solver != "mu":
-                # not implemented
-                continue
-            W, H = W0.copy(), H0.copy()
-            previous_loss = None
-            for _ in range(30):
-                # one more iteration starting from the previous results
-                W, H, _ = non_negative_factorization(
-                    X,
-                    W,
-                    H,
-                    beta_loss=beta_loss,
-                    init="custom",
-                    n_components=n_components,
-                    max_iter=1,
-                    alpha_W=alpha,
-                    solver=solver,
-                    tol=tol,
-                    l1_ratio=l1_ratio,
-                    verbose=0,
-                    random_state=0,
-                    update_H=True,
-                )
+    for beta_loss in (-1.2, 0, 0.2, 1.0, 2.0, 2.5):
+        if solver != "mu" and beta_loss != 2:
+            # not implemented
+            continue
+        W, H = W0.copy(), H0.copy()
+        previous_loss = None
+        for _ in range(30):
+            # one more iteration starting from the previous results
+            W, H, _ = non_negative_factorization(
+                X,
+                W,
+                H,
+                beta_loss=beta_loss,
+                init="custom",
+                n_components=n_components,
+                max_iter=1,
+                alpha_W=alpha,
+                solver=solver,
+                tol=tol,
+                l1_ratio=l1_ratio,
+                verbose=0,
+                random_state=0,
+                update_H=True,
+            )
 
-                loss = (
-                    nmf._beta_divergence(X, W, H, beta_loss)
-                    + alpha * l1_ratio * n_features * W.sum()
-                    + alpha * l1_ratio * n_samples * H.sum()
-                    + alpha * (1 - l1_ratio) * n_features * (W**2).sum()
-                    + alpha * (1 - l1_ratio) * n_samples * (H**2).sum()
-                )
-                if previous_loss is not None:
-                    assert previous_loss > loss
-                previous_loss = loss
+            loss = (
+                nmf._beta_divergence(X, W, H, beta_loss)
+                + alpha * l1_ratio * n_features * W.sum()
+                + alpha * l1_ratio * n_samples * H.sum()
+                + alpha * (1 - l1_ratio) * n_features * (W**2).sum()
+                + alpha * (1 - l1_ratio) * n_samples * (H**2).sum()
+            )
+            if previous_loss is not None:
+                assert previous_loss > loss
+            previous_loss = loss
 
 
 def test_nmf_check_missing_values():
