@@ -1,32 +1,17 @@
-# taken from https://github.com/llimllib/pymag-trees/blob/master/buchheim.py
-# with slight modifications
-
-#            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
-#                    Version 2, December 2004
-#
-# Copyright (C) 2004 Sam Hocevar <sam@hocevar.net>
-#
-# Everyone is permitted to copy and distribute verbatim or modified
-# copies of this license document, and changing it is allowed as long
-# as the name is changed.
-#
-#            DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
-#   TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
-
-#  0. You just DO WHAT THE FUCK YOU WANT TO.
-
+# Authors: William Mill (bill@billmill.org)
+# License: BSD 3 clause
 
 import numpy as np
 
 
 class DrawTree:
     def __init__(self, tree, parent=None, depth=0, number=1):
-        self.x = -1.
+        self.x = -1.0
         self.y = depth
         self.tree = tree
-        self.children = [DrawTree(c, self, depth + 1, i + 1)
-                         for i, c
-                         in enumerate(tree.children)]
+        self.children = [
+            DrawTree(c, self, depth + 1, i + 1) for i, c in enumerate(tree.children)
+        ]
         self.parent = parent
         self.thread = None
         self.mod = 0
@@ -53,10 +38,10 @@ class DrawTree:
         return n
 
     def get_lmost_sibling(self):
-        if not self._lmost_sibling and self.parent and self != \
-                self.parent.children[0]:
+        if not self._lmost_sibling and self.parent and self != self.parent.children[0]:
             self._lmost_sibling = self.parent.children[0]
         return self._lmost_sibling
+
     lmost_sibling = property(get_lmost_sibling)
 
     def __str__(self):
@@ -66,7 +51,7 @@ class DrawTree:
         return self.__str__()
 
     def max_extents(self):
-        extents = [c.max_extents() for c in self. children]
+        extents = [c.max_extents() for c in self.children]
         extents.append((self.x, self.y))
         return np.max(extents, axis=0)
 
@@ -85,12 +70,12 @@ def third_walk(tree, n):
         third_walk(c, n)
 
 
-def first_walk(v, distance=1.):
+def first_walk(v, distance=1.0):
     if len(v.children) == 0:
         if v.lmost_sibling:
             v.x = v.lbrother().x + distance
         else:
-            v.x = 0.
+            v.x = 0.0
     else:
         default_ancestor = v.children[0]
         for w in v.children:
@@ -173,7 +158,7 @@ def ancestor(vil, v, default_ancestor):
     # the relevant text is at the bottom of page 7 of
     # "Improving Walker's Algorithm to Run in Linear Time" by Buchheim et al,
     # (2002)
-    # http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.16.8757&rep=rep1&type=pdf
+    # https://citeseerx.ist.psu.edu/doc_view/pid/1f41c3c2a4880dc49238e46d555f16d28da2940d
     if vil.ancestor in v.parent.children:
         return vil.ancestor
     else:

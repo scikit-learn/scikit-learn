@@ -14,7 +14,7 @@ use incomplete datasets is to discard entire rows and/or columns containing
 missing values. However, this comes at the price of losing data which may be
 valuable (even though incomplete). A better strategy is to impute the missing
 values, i.e., to infer them from the known part of the data. See the
-:ref:`glossary` entry on imputation.
+glossary entry on :term:`imputation`.
 
 
 Univariate vs. Multivariate Imputation
@@ -45,10 +45,10 @@ that contain the missing values::
     >>> import numpy as np
     >>> from sklearn.impute import SimpleImputer
     >>> imp = SimpleImputer(missing_values=np.nan, strategy='mean')
-    >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])       # doctest: +NORMALIZE_WHITESPACE
-    SimpleImputer(copy=True, fill_value=None, missing_values=nan, strategy='mean', verbose=0)
+    >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])
+    SimpleImputer()
     >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
-    >>> print(imp.transform(X))           # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
+    >>> print(imp.transform(X))
     [[4.          2.        ]
      [6.          3.666...]
      [7.          6.        ]]
@@ -58,10 +58,10 @@ The :class:`SimpleImputer` class also supports sparse matrices::
     >>> import scipy.sparse as sp
     >>> X = sp.csc_matrix([[1, 2], [0, -1], [8, 4]])
     >>> imp = SimpleImputer(missing_values=-1, strategy='mean')
-    >>> imp.fit(X)                  # doctest: +NORMALIZE_WHITESPACE
-    SimpleImputer(copy=True, fill_value=None, missing_values=-1, strategy='mean', verbose=0)
+    >>> imp.fit(X)
+    SimpleImputer(missing_values=-1)
     >>> X_test = sp.csc_matrix([[-1, 2], [6, -1], [7, 6]])
-    >>> print(imp.transform(X_test).toarray())      # doctest: +NORMALIZE_WHITESPACE
+    >>> print(imp.transform(X_test).toarray())
     [[3. 2.]
      [6. 3.]
      [7. 6.]]
@@ -81,7 +81,7 @@ string values or pandas categoricals when using the ``'most_frequent'`` or
     ...                    ["b", "y"]], dtype="category")
     ...
     >>> imp = SimpleImputer(strategy="most_frequent")
-    >>> print(imp.fit_transform(df))      # doctest: +NORMALIZE_WHITESPACE
+    >>> print(imp.fit_transform(df))
     [['a' 'x']
      ['a' 'y']
      ['a' 'y']
@@ -103,14 +103,23 @@ of ``y``.  This is done for each feature in an iterative fashion, and then is
 repeated for ``max_iter`` imputation rounds. The results of the final
 imputation round are returned.
 
+.. note::
+
+   This estimator is still **experimental** for now: default parameters or
+   details of behaviour might change without any deprecation cycle. Resolving
+   the following issues would help stabilize :class:`IterativeImputer`:
+   convergence criteria (:issue:`14338`), default estimators (:issue:`13286`),
+   and use of random state (:issue:`15611`). To use it, you need to explicitly
+   import ``enable_iterative_imputer``.
+
+::
+
     >>> import numpy as np
+    >>> from sklearn.experimental import enable_iterative_imputer
     >>> from sklearn.impute import IterativeImputer
     >>> imp = IterativeImputer(max_iter=10, random_state=0)
-    >>> imp.fit([[1, 2], [3, 6], [4, 8], [np.nan, 3], [7, np.nan]])  # doctest: +NORMALIZE_WHITESPACE
-    IterativeImputer(estimator=None, imputation_order='ascending',
-                     initial_strategy='mean', max_iter=10, max_value=None,
-                     min_value=None, missing_values=nan, n_nearest_features=None,
-                     random_state=0, sample_posterior=False, tol=0.001, verbose=0)
+    >>> imp.fit([[1, 2], [3, 6], [4, 8], [np.nan, 3], [7, np.nan]])
+    IterativeImputer(random_state=0)
     >>> X_test = [[np.nan, 2], [6, np.nan], [np.nan, 6]]
     >>> # the model learns that the second feature is double the first
     >>> print(np.round(imp.transform(X_test)))
@@ -131,7 +140,7 @@ out to be a particular instance of different sequential imputation algorithms
 that can all be implemented with :class:`IterativeImputer` by passing in
 different regressors to be used for predicting missing feature values. In the
 case of missForest, this regressor is a Random Forest.
-See :ref:`sphx_glr_auto_examples_plot_iterative_imputer_variants_comparison.py`.
+See :ref:`sphx_glr_auto_examples_impute_plot_iterative_imputer_variants_comparison.py`.
 
 
 .. _multiple_imputation:
@@ -165,7 +174,7 @@ not allowed to change the number of samples. Therefore multiple imputations
 cannot be achieved by a single call to ``transform``.
 
 References
-==========
+----------
 
 .. [1] Stef van Buuren, Karin Groothuis-Oudshoorn (2011). "mice: Multivariate
    Imputation by Chained Equations in R". Journal of Statistical Software 45:
@@ -173,6 +182,76 @@ References
 
 .. [2] Roderick J A Little and Donald B Rubin (1986). "Statistical Analysis
    with Missing Data". John Wiley & Sons, Inc., New York, NY, USA.
+
+.. _knnimpute:
+
+Nearest neighbors imputation
+============================
+
+The :class:`KNNImputer` class provides imputation for filling in missing values
+using the k-Nearest Neighbors approach. By default, a euclidean distance metric
+that supports missing values, :func:`~sklearn.metrics.nan_euclidean_distances`,
+is used to find the nearest neighbors. Each missing feature is imputed using
+values from ``n_neighbors`` nearest neighbors that have a value for the
+feature. The feature of the neighbors are averaged uniformly or weighted by
+distance to each neighbor. If a sample has more than one feature missing, then
+the neighbors for that sample can be different depending on the particular
+feature being imputed. When the number of available neighbors is less than
+`n_neighbors` and there are no defined distances to the training set, the
+training set average for that feature is used during imputation. If there is at
+least one neighbor with a defined distance, the weighted or unweighted average
+of the remaining neighbors will be used during imputation. If a feature is
+always missing in training, it is removed during `transform`. For more
+information on the methodology, see ref. [OL2001]_.
+
+The following snippet demonstrates how to replace missing values,
+encoded as ``np.nan``, using the mean feature value of the two nearest
+neighbors of samples with missing values::
+
+    >>> import numpy as np
+    >>> from sklearn.impute import KNNImputer
+    >>> nan = np.nan
+    >>> X = [[1, 2, nan], [3, 4, 3], [nan, 6, 5], [8, 8, 7]]
+    >>> imputer = KNNImputer(n_neighbors=2, weights="uniform")
+    >>> imputer.fit_transform(X)
+    array([[1. , 2. , 4. ],
+           [3. , 4. , 3. ],
+           [5.5, 6. , 5. ],
+           [8. , 8. , 7. ]])
+
+.. topic:: References
+
+  .. [OL2001] Olga Troyanskaya, Michael Cantor, Gavin Sherlock, Pat Brown,
+      Trevor Hastie, Robert Tibshirani, David Botstein and Russ B. Altman,
+      Missing value estimation methods for DNA microarrays, BIOINFORMATICS
+      Vol. 17 no. 6, 2001 Pages 520-525.
+
+Keeping the number of features constants
+========================================
+
+By default, the scikit-learn imputers will drop fully empty features, i.e.
+columns containing only missing values. For instance::
+
+  >>> imputer = SimpleImputer()
+  >>> X = np.array([[np.nan, 1], [np.nan, 2], [np.nan, 3]])
+  >>> imputer.fit_transform(X)
+  array([[1.],
+         [2.],
+         [3.]])
+
+The first feature in `X` containing only `np.nan` was dropped after the
+imputation. While this feature will not help in predictive setting, dropping
+the columns will change the shape of `X` which could be problematic when using
+imputers in a more complex machine-learning pipeline. The parameter
+`keep_empty_features` offers the option to keep the empty features by imputing
+with a constant values. In most of the cases, this constant value is zero::
+
+  >>> imputer.set_params(keep_empty_features=True)
+  SimpleImputer(keep_empty_features=True)
+  >>> imputer.fit_transform(X)
+  array([[0., 1.],
+         [0., 2.],
+         [0., 3.]])
 
 .. _missing_indicator:
 
@@ -183,7 +262,11 @@ The :class:`MissingIndicator` transformer is useful to transform a dataset into
 corresponding binary matrix indicating the presence of missing values in the
 dataset. This transformation is useful in conjunction with imputation. When
 using imputation, preserving the information about which values had been
-missing can be informative.
+missing can be informative. Note that both the :class:`SimpleImputer` and
+:class:`IterativeImputer` have the boolean parameter ``add_indicator``
+(``False`` by default) which when set to ``True`` provides a convenient way of
+stacking the output of the :class:`MissingIndicator` transformer with the
+output of the imputer.
 
 ``NaN`` is usually used as the placeholder for missing values. However, it
 enforces the data type to be float. The parameter ``missing_values`` allows to
@@ -208,9 +291,9 @@ mask of the features containing missing values at ``fit`` time::
   >>> indicator.features_
   array([0, 1, 3])
 
-The ``features`` parameter can be set to ``'all'`` to returned all features
+The ``features`` parameter can be set to ``'all'`` to return all features
 whether or not they contain missing values::
-    
+
   >>> indicator = MissingIndicator(missing_values=-1, features="all")
   >>> mask_all = indicator.fit_transform(X)
   >>> mask_all
@@ -231,14 +314,14 @@ some missing values to it.
   >>> from sklearn.pipeline import FeatureUnion, make_pipeline
   >>> from sklearn.tree import DecisionTreeClassifier
   >>> X, y = load_iris(return_X_y=True)
-  >>> mask = np.random.randint(0, 2, size=X.shape).astype(np.bool)
+  >>> mask = np.random.randint(0, 2, size=X.shape).astype(bool)
   >>> X[mask] = np.nan
   >>> X_train, X_test, y_train, _ = train_test_split(X, y, test_size=100,
   ...                                                random_state=0)
 
 Now we create a :class:`FeatureUnion`. All features will be imputed using
 :class:`SimpleImputer`, in order to enable classifiers to work with this data.
-Additionally, it adds the the indicator variables from
+Additionally, it adds the indicator variables from
 :class:`MissingIndicator`.
 
   >>> transformer = FeatureUnion(
@@ -260,3 +343,11 @@ wrap this in a :class:`Pipeline` with a classifier (e.g., a
   >>> results.shape
   (100,)
 
+Estimators that handle NaN values
+=================================
+
+Some estimators are designed to handle NaN values without preprocessing.
+Below is the list of these estimators, classified by type
+(cluster, regressor, classifier, transform):
+
+.. allow_nan_estimators::

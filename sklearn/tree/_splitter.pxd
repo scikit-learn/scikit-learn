@@ -9,16 +9,13 @@
 
 # See _splitter.pyx for details.
 
-import numpy as np
-cimport numpy as np
-
 from ._criterion cimport Criterion
 
-ctypedef np.npy_float32 DTYPE_t          # Type of X
-ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
-ctypedef np.npy_intp SIZE_t              # Type for indices and counters
-ctypedef np.npy_int32 INT32_t            # Signed 32 bit integer
-ctypedef np.npy_uint32 UINT32_t          # Unsigned 32 bit integer
+from ._tree cimport DTYPE_t          # Type of X
+from ._tree cimport DOUBLE_t         # Type of y, sample_weight
+from ._tree cimport SIZE_t           # Type for indices and counters
+from ._tree cimport INT32_t          # Signed 32 bit integer
+from ._tree cimport UINT32_t         # Unsigned 32 bit integer
 
 cdef struct SplitRecord:
     # Data to track sample split
@@ -46,23 +43,19 @@ cdef class Splitter:
     cdef object random_state             # Random state
     cdef UINT32_t rand_r_state           # sklearn_rand_r random number state
 
-    cdef SIZE_t* samples                 # Sample indices in X, y
+    cdef SIZE_t[::1] samples             # Sample indices in X, y
     cdef SIZE_t n_samples                # X.shape[0]
     cdef double weighted_n_samples       # Weighted number of samples
-    cdef SIZE_t* features                # Feature indices in X
-    cdef SIZE_t* constant_features       # Constant features indices
+    cdef SIZE_t[::1] features            # Feature indices in X
+    cdef SIZE_t[::1] constant_features   # Constant features indices
     cdef SIZE_t n_features               # X.shape[1]
-    cdef DTYPE_t* feature_values         # temp. array holding feature values
+    cdef DTYPE_t[::1] feature_values     # temp. array holding feature values
 
     cdef SIZE_t start                    # Start position for the current node
     cdef SIZE_t end                      # End position for the current node
 
-    cdef bint presort                    # Whether to use presorting, only
-                                         # allowed on dense data
-
-    cdef DOUBLE_t* y
-    cdef SIZE_t y_stride
-    cdef DOUBLE_t* sample_weight
+    cdef const DOUBLE_t[:, ::1] y
+    cdef const DOUBLE_t[:] sample_weight
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
@@ -81,17 +74,26 @@ cdef class Splitter:
     # This allows optimization with depth-based tree building.
 
     # Methods
-    cdef int init(self, object X, np.ndarray y,
-                  DOUBLE_t* sample_weight,
-                  np.ndarray X_idx_sorted=*) except -1
+    cdef int init(
+        self,
+        object X,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight
+    ) except -1
 
-    cdef int node_reset(self, SIZE_t start, SIZE_t end,
-                        double* weighted_n_node_samples) nogil except -1
+    cdef int node_reset(
+        self,
+        SIZE_t start,
+        SIZE_t end,
+        double* weighted_n_node_samples
+    ) nogil except -1
 
-    cdef int node_split(self,
-                        double impurity,   # Impurity of the node
-                        SplitRecord* split,
-                        SIZE_t* n_constant_features) nogil except -1
+    cdef int node_split(
+        self,
+        double impurity,   # Impurity of the node
+        SplitRecord* split,
+        SIZE_t* n_constant_features
+    ) nogil except -1
 
     cdef void node_value(self, double* dest) nogil
 

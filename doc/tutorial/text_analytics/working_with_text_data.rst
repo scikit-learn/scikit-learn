@@ -34,7 +34,7 @@ The source of this tutorial can be found within your scikit-learn folder::
     scikit-learn/doc/tutorial/text_analytics/
 
 The source can also be found `on Github
-<https://github.com/scikit-learn/scikit-learn/tree/master/doc/tutorial/text_analytics>`_.
+<https://github.com/scikit-learn/scikit-learn/tree/main/doc/tutorial/text_analytics>`_.
 
 The tutorial folder should contain the following sub-folders:
 
@@ -48,21 +48,26 @@ The tutorial folder should contain the following sub-folders:
 
 
 You can already copy the skeletons into a new folder somewhere
-on your hard-drive named ``sklearn_tut_workspace`` where you
+on your hard-drive named ``sklearn_tut_workspace``, where you
 will edit your own files for the exercises while keeping
-the original skeletons intact::
+the original skeletons intact:
 
-    % cp -r skeletons work_directory/sklearn_tut_workspace
+.. prompt:: bash $
+
+  cp -r skeletons work_directory/sklearn_tut_workspace
+
 
 Machine learning algorithms need data. Go to each ``$TUTORIAL_HOME/data``
 sub-folder and run the ``fetch_data.py`` script from there (after
 having read them first).
 
-For instance::
+For instance:
 
-    % cd $TUTORIAL_HOME/data/languages
-    % less fetch_data.py
-    % python fetch_data.py
+.. prompt:: bash $
+
+  cd $TUTORIAL_HOME/data/languages
+  less fetch_data.py
+  python fetch_data.py
 
 
 Loading the 20 newsgroups dataset
@@ -87,7 +92,7 @@ manually from the website and use the :func:`sklearn.datasets.load_files`
 function by pointing it to the ``20news-bydate-train`` sub-folder of the
 uncompressed archive folder.
 
-In order to get faster execution times for this first example we will
+In order to get faster execution times for this first example, we will
 work on a partial dataset with only 4 categories out of the 20 available
 in the dataset::
 
@@ -131,7 +136,7 @@ document in the training set. In this case the category is the name of the
 newsgroup which also happens to be the name of the folder holding the
 individual documents.
 
-For speed and space efficiency reasons ``scikit-learn`` loads the
+For speed and space efficiency reasons, ``scikit-learn`` loads the
 target attribute as an array of integers that corresponds to the
 index of the category name in the ``target_names`` list. The category
 integer id of each sample is stored in the ``target`` attribute::
@@ -287,7 +292,7 @@ Now that we have our features, we can train a classifier to try to predict
 the category of a post. Let's start with a :ref:`naïve Bayes <naive_bayes>`
 classifier, which
 provides a nice baseline for this task. ``scikit-learn`` includes several
-variants of this classifier; the one most suitable for word counts is the
+variants of this classifier, and the one most suitable for word counts is the
 multinomial variant::
 
   >>> from sklearn.naive_bayes import MultinomialNB
@@ -330,7 +335,7 @@ The names ``vect``, ``tfidf`` and ``clf`` (classifier) are arbitrary.
 We will use them to perform grid search for suitable hyperparameters below.
 We can now train the model with a single command::
 
-  >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+  >>> text_clf.fit(twenty_train.data, twenty_train.target)
   Pipeline(...)
 
 
@@ -344,7 +349,7 @@ Evaluating the predictive accuracy of the model is equally easy::
   ...     categories=categories, shuffle=True, random_state=42)
   >>> docs_test = twenty_test.data
   >>> predicted = text_clf.predict(docs_test)
-  >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
+  >>> np.mean(predicted == twenty_test.target)
   0.8348...
 
 We achieved 83.5% accuracy. Let's see if we can do better with a
@@ -363,11 +368,11 @@ classifier object into our pipeline::
   ...                           max_iter=5, tol=None)),
   ... ])
 
-  >>> text_clf.fit(twenty_train.data, twenty_train.target)  # doctest: +ELLIPSIS
+  >>> text_clf.fit(twenty_train.data, twenty_train.target)
   Pipeline(...)
   >>> predicted = text_clf.predict(docs_test)
-  >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
-  0.9127...
+  >>> np.mean(predicted == twenty_test.target)
+  0.9101...
 
 We achieved 91.3% accuracy using the SVM. ``scikit-learn`` provides further
 utilities for more detailed performance analysis of the results::
@@ -375,25 +380,23 @@ utilities for more detailed performance analysis of the results::
   >>> from sklearn import metrics
   >>> print(metrics.classification_report(twenty_test.target, predicted,
   ...     target_names=twenty_test.target_names))
-  ...                                         # doctest: +NORMALIZE_WHITESPACE
                           precision    recall  f1-score   support
   <BLANKLINE>
-             alt.atheism       0.95      0.81      0.87       319
-           comp.graphics       0.88      0.97      0.92       389
-                 sci.med       0.94      0.90      0.92       396
+             alt.atheism       0.95      0.80      0.87       319
+           comp.graphics       0.87      0.98      0.92       389
+                 sci.med       0.94      0.89      0.91       396
   soc.religion.christian       0.90      0.95      0.93       398
   <BLANKLINE>
                 accuracy                           0.91      1502
-               macro avg       0.92      0.91      0.91      1502
-            weighted avg       0.92      0.91      0.91      1502
+               macro avg       0.91      0.91      0.91      1502
+            weighted avg       0.91      0.91      0.91      1502
   <BLANKLINE>
 
   >>> metrics.confusion_matrix(twenty_test.target, predicted)
-  array([[258,  11,  15,  35],
-         [  4, 379,   3,   3],
-         [  5,  33, 355,   3],
-         [  5,  10,   4, 379]])
-
+  array([[256,  11,  16,  36],
+         [  4, 380,   3,   2],
+         [  5,  35, 353,   3],
+         [  5,  11,   4, 378]])
 
 As expected the confusion matrix shows that posts from the newsgroups
 on atheism and Christianity are more often confused for one another than
@@ -447,7 +450,7 @@ parameter combinations in parallel with the ``n_jobs`` parameter. If we give
 this parameter a value of ``-1``, grid search will detect how many cores
 are installed and use them all::
 
-  >>> gs_clf = GridSearchCV(text_clf, parameters, cv=5, iid=False, n_jobs=-1)
+  >>> gs_clf = GridSearchCV(text_clf, parameters, cv=5, n_jobs=-1)
 
 The grid search instance behaves like a normal ``scikit-learn``
 model. Let's perform the search on a smaller subset of the training data
@@ -464,14 +467,14 @@ that we can use to ``predict``::
 The object's ``best_score_`` and ``best_params_`` attributes store the best
 mean score and the parameters setting corresponding to that score::
 
-  >>> gs_clf.best_score_                                  # doctest: +ELLIPSIS
+  >>> gs_clf.best_score_
   0.9...
   >>> for param_name in sorted(parameters.keys()):
   ...     print("%s: %r" % (param_name, gs_clf.best_params_[param_name]))
   ...
   clf__alpha: 0.001
   tfidf__use_idf: True
-  vect__ngram_range: (1, 2)
+  vect__ngram_range: (1, 1)
 
 A more detailed summary of the search is available at ``gs_clf.cv_results_``.
 
@@ -489,9 +492,12 @@ Exercises
 ~~~~~~~~~
 
 To do the exercises, copy the content of the 'skeletons' folder as
-a new folder named 'workspace'::
+a new folder named 'workspace':
 
-  % cp -r skeletons workspace
+.. prompt:: bash $
+
+  cp -r skeletons workspace
+
 
 You can then edit the content of the workspace without fear of losing
 the original exercise instructions.

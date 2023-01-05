@@ -77,8 +77,8 @@ Loading an example dataset
 `scikit-learn` comes with a few standard datasets, for instance the
 `iris <https://en.wikipedia.org/wiki/Iris_flower_data_set>`_ and `digits
 <https://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_
-datasets for classification and the `boston house prices dataset
-<https://archive.ics.uci.edu/ml/machine-learning-databases/housing/>`_ for regression.
+datasets for classification and the `diabetes dataset
+<https://www4.stat.ncsu.edu/~boos/var.select/diabetes.html>`_ for regression.
 
 In the following, we start a Python interpreter from our shell and then
 load the ``iris`` and ``digits`` datasets.  Our notational convention is that
@@ -93,14 +93,14 @@ interpreter prompt::
 A dataset is a dictionary-like object that holds all the data and some
 metadata about the data. This data is stored in the ``.data`` member,
 which is a ``n_samples, n_features`` array. In the case of supervised
-problem, one or more response variables are stored in the ``.target`` member. More
+problems, one or more response variables are stored in the ``.target`` member. More
 details on the different datasets can be found in the :ref:`dedicated
 section <datasets>`.
 
 For instance, in the case of the digits dataset, ``digits.data`` gives
 access to the features that can be used to classify the digits samples::
 
-  >>> print(digits.data)  # doctest: +NORMALIZE_WHITESPACE
+  >>> print(digits.data)
   [[ 0.   0.   5. ...   0.   0.   0.]
    [ 0.   0.   0. ...  10.   0.   0.]
    [ 0.   0.   0. ...  16.   9.   0.]
@@ -123,7 +123,7 @@ learn::
     digits, each original sample is an image of shape ``(8, 8)`` and can be
     accessed using::
 
-      >>> digits.images[0]  # doctest: +NORMALIZE_WHITESPACE
+      >>> digits.images[0]
       array([[  0.,   0.,   5.,  13.,   9.,   1.,   0.,   0.],
              [  0.,   0.,  13.,  15.,  10.,  15.,   5.,   0.],
              [  0.,   3.,  15.,   2.,   0.,  11.,   8.,   0.],
@@ -179,14 +179,11 @@ image, which we'll reserve for our predicting. We select the training set with
 the ``[:-1]`` Python syntax, which produces a new array that contains all but
 the last item from ``digits.data``::
 
-  >>> clf.fit(digits.data[:-1], digits.target[:-1])  # doctest: +NORMALIZE_WHITESPACE
-  SVC(C=100.0, cache_size=200, class_weight=None, coef0=0.0,
-    decision_function_shape='ovr', degree=3, gamma=0.001, kernel='rbf',
-    max_iter=-1, probability=False, random_state=None, shrinking=True,
-    tol=0.001, verbose=False)
+  >>> clf.fit(digits.data[:-1], digits.target[:-1])
+  SVC(C=100.0, gamma=0.001)
 
 Now you can *predict* new values. In this case, you'll predict using the last
-image from ``digits.data``. By predicting, you'll determine the image from the 
+image from ``digits.data``. By predicting, you'll determine the image from the
 training set that best matches the last image.
 
 
@@ -207,56 +204,6 @@ A complete example of this classification problem is available as an
 example that you can run and study:
 :ref:`sphx_glr_auto_examples_classification_plot_digits_classification.py`.
 
-
-Model persistence
------------------
-
-It is possible to save a model in scikit-learn by using Python's built-in
-persistence model, `pickle <https://docs.python.org/2/library/pickle.html>`_::
-
-  >>> from sklearn import svm
-  >>> from sklearn import datasets
-  >>> clf = svm.SVC(gamma='scale')
-  >>> iris = datasets.load_iris()
-  >>> X, y = iris.data, iris.target
-  >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-    decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-    max_iter=-1, probability=False, random_state=None, shrinking=True,
-    tol=0.001, verbose=False)
-
-  >>> import pickle
-  >>> s = pickle.dumps(clf)
-  >>> clf2 = pickle.loads(s)
-  >>> clf2.predict(X[0:1])
-  array([0])
-  >>> y[0]
-  0
-
-In the specific case of scikit-learn, it may be more interesting to use
-joblib's replacement for pickle (``joblib.dump`` & ``joblib.load``),
-which is more efficient on big data but it can only pickle to the disk
-and not to a string::
-
-  >>> from joblib import dump, load
-  >>> dump(clf, 'filename.joblib') # doctest: +SKIP
-
-Later, you can reload the pickled model (possibly in another Python process)
-with::
-
-  >>> clf = load('filename.joblib') # doctest:+SKIP
-
-.. note::
-
-    ``joblib.dump`` and ``joblib.load`` functions also accept file-like object
-    instead of filenames. More information on data persistence with Joblib is
-    available `here <https://joblib.readthedocs.io/en/latest/persistence.html>`_.
-
-Note that pickle has some security and maintainability issues. Please refer to
-section :ref:`model_persistence` for more detailed information about model
-persistence with scikit-learn.
-
-
 Conventions
 -----------
 
@@ -266,10 +213,11 @@ predictive.  These are described in more detail in the :ref:`glossary`.
 Type casting
 ~~~~~~~~~~~~
 
-Unless otherwise specified, input will be cast to ``float64``::
+Where possible, input of type ``float32`` will maintain its data type. Otherwise
+input will be cast to ``float64``::
 
   >>> import numpy as np
-  >>> from sklearn import random_projection
+  >>> from sklearn import kernel_approximation
 
   >>> rng = np.random.RandomState(0)
   >>> X = rng.rand(10, 2000)
@@ -277,13 +225,25 @@ Unless otherwise specified, input will be cast to ``float64``::
   >>> X.dtype
   dtype('float32')
 
-  >>> transformer = random_projection.GaussianRandomProjection()
+  >>> transformer = kernel_approximation.RBFSampler()
   >>> X_new = transformer.fit_transform(X)
   >>> X_new.dtype
-  dtype('float64')
+  dtype('float32')
 
-In this example, ``X`` is ``float32``, which is cast to ``float64`` by
-``fit_transform(X)``.
+In this example, ``X`` is ``float32``, and is unchanged by ``fit_transform(X)``.
+
+Using `float32`-typed training (or testing) data is often more
+efficient than using the usual ``float64`` ``dtype``: it allows to
+reduce the memory usage and sometimes also reduces processing time
+by leveraging the vector instructions of the CPU. However it can
+sometimes lead to numerical stability problems causing the algorithm
+to be more sensitive to the scale of the values and :ref:`require
+adequate preprocessing<preprocessing_scaler>`.
+
+Keep in mind however that not all scikit-learn estimators attempt to
+work in `float32` mode. For instance, some transformers will always
+cast there input to `float64` and return `float64` transformed
+values as a result.
 
 Regression targets are cast to ``float64`` and classification targets are
 maintained::
@@ -291,23 +251,17 @@ maintained::
     >>> from sklearn import datasets
     >>> from sklearn.svm import SVC
     >>> iris = datasets.load_iris()
-    >>> clf = SVC(gamma='scale')
-    >>> clf.fit(iris.data, iris.target)  # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-      decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-      max_iter=-1, probability=False, random_state=None, shrinking=True,
-      tol=0.001, verbose=False)
+    >>> clf = SVC()
+    >>> clf.fit(iris.data, iris.target)
+    SVC()
 
     >>> list(clf.predict(iris.data[:3]))
     [0, 0, 0]
 
-    >>> clf.fit(iris.data, iris.target_names[iris.target])  # doctest: +NORMALIZE_WHITESPACE
-    SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-      decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-      max_iter=-1, probability=False, random_state=None, shrinking=True,
-      tol=0.001, verbose=False)
+    >>> clf.fit(iris.data, iris.target_names[iris.target])
+    SVC()
 
-    >>> list(clf.predict(iris.data[:3]))  # doctest: +NORMALIZE_WHITESPACE
+    >>> list(clf.predict(iris.data[:3]))
     ['setosa', 'setosa', 'setosa']
 
 Here, the first ``predict()`` returns an integer array, since ``iris.target``
@@ -322,29 +276,20 @@ via the :term:`set_params()<set_params>` method. Calling ``fit()`` more than
 once will overwrite what was learned by any previous ``fit()``::
 
   >>> import numpy as np
+  >>> from sklearn.datasets import load_iris
   >>> from sklearn.svm import SVC
-
-  >>> rng = np.random.RandomState(0)
-  >>> X = rng.rand(100, 10)
-  >>> y = rng.binomial(1, 0.5, 100)
-  >>> X_test = rng.rand(5, 10)
+  >>> X, y = load_iris(return_X_y=True)
 
   >>> clf = SVC()
-  >>> clf.set_params(kernel='linear').fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-    decision_function_shape='ovr', degree=3, gamma='auto_deprecated',
-    kernel='linear', max_iter=-1, probability=False, random_state=None,
-    shrinking=True, tol=0.001, verbose=False)
-  >>> clf.predict(X_test)
-  array([1, 0, 1, 1, 0])
+  >>> clf.set_params(kernel='linear').fit(X, y)
+  SVC(kernel='linear')
+  >>> clf.predict(X[:5])
+  array([0, 0, 0, 0, 0])
 
-  >>> clf.set_params(kernel='rbf', gamma='scale').fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
-  SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0,
-    decision_function_shape='ovr', degree=3, gamma='scale', kernel='rbf',
-    max_iter=-1, probability=False, random_state=None, shrinking=True,
-    tol=0.001, verbose=False)
-  >>> clf.predict(X_test)
-  array([1, 0, 1, 1, 0])
+  >>> clf.set_params(kernel='rbf').fit(X, y)
+  SVC()
+  >>> clf.predict(X[:5])
+  array([0, 0, 0, 0, 0])
 
 Here, the default kernel ``rbf`` is first changed to ``linear`` via
 :func:`SVC.set_params()<sklearn.svm.SVC.set_params>` after the estimator has
@@ -365,8 +310,7 @@ the target data fit upon::
     >>> X = [[1, 2], [2, 4], [4, 5], [3, 2], [3, 1]]
     >>> y = [0, 0, 1, 1, 2]
 
-    >>> classif = OneVsRestClassifier(estimator=SVC(gamma='scale',
-    ...                                             random_state=0))
+    >>> classif = OneVsRestClassifier(estimator=SVC(random_state=0))
     >>> classif.fit(X, y).predict(X)
     array([0, 0, 1, 1, 2])
 

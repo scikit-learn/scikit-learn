@@ -1,6 +1,12 @@
 #include <stdlib.h>
 #include <numpy/arrayobject.h>
 #include "svm.h"
+#include "_svm_cython_blas_helpers.h"
+
+
+#ifndef MAX
+    #define MAX(x, y) (((x) > (y)) ? (x) : (y))
+#endif
 
 
 /*
@@ -122,6 +128,9 @@ struct svm_csr_model *csr_set_model(struct svm_parameter *param, int nr_class,
     if ((model->rho = malloc( m * sizeof(double))) == NULL)
         goto rho_error;
 
+    // This is only allocated in dynamic memory while training.
+    model->n_iter = NULL;
+
     /* in the case of precomputed kernels we do not use
        dense_to_precomputed because we don't want the leading 0. As
        indices start at 1 (not at 0) this will work */
@@ -242,11 +251,11 @@ npy_intp get_nonzero_SV (struct svm_csr_model *model) {
 
 
 /*
- * Predict using a model, where data is expected to be enconded into a csr matrix.
+ * Predict using a model, where data is expected to be encoded into a csr matrix.
  */
 int csr_copy_predict (npy_intp *data_size, char *data, npy_intp *index_size,
 		char *index, npy_intp *intptr_size, char *intptr, struct svm_csr_model *model,
-		char *dec_values) {
+		char *dec_values, BlasFunctions *blas_functions) {
     double *t = (double *) dec_values;
     struct svm_csr_node **predict_nodes;
     npy_intp i;
@@ -257,7 +266,7 @@ int csr_copy_predict (npy_intp *data_size, char *data, npy_intp *index_size,
     if (predict_nodes == NULL)
         return -1;
     for(i=0; i < intptr_size[0] - 1; ++i) {
-        *t = svm_csr_predict(model, predict_nodes[i]);
+        *t = svm_csr_predict(model, predict_nodes[i], blas_functions);
         free(predict_nodes[i]);
         ++t;
     }
@@ -267,7 +276,7 @@ int csr_copy_predict (npy_intp *data_size, char *data, npy_intp *index_size,
 
 int csr_copy_predict_values (npy_intp *data_size, char *data, npy_intp *index_size,
                 char *index, npy_intp *intptr_size, char *intptr, struct svm_csr_model *model,
-                char *dec_values, int nr_class) {
+                char *dec_values, int nr_class, BlasFunctions *blas_functions) {
     struct svm_csr_node **predict_nodes;
     npy_intp i;
 
@@ -278,7 +287,8 @@ int csr_copy_predict_values (npy_intp *data_size, char *data, npy_intp *index_si
         return -1;
     for(i=0; i < intptr_size[0] - 1; ++i) {
         svm_csr_predict_values(model, predict_nodes[i],
-                               ((double *) dec_values) + i*nr_class);
+                               ((double *) dec_values) + i*nr_class,
+			       blas_functions);
         free(predict_nodes[i]);
     }
     free(predict_nodes);
@@ -288,7 +298,7 @@ int csr_copy_predict_values (npy_intp *data_size, char *data, npy_intp *index_si
 
 int csr_copy_predict_proba (npy_intp *data_size, char *data, npy_intp *index_size,
 		char *index, npy_intp *intptr_size, char *intptr, struct svm_csr_model *model,
-		char *dec_values) {
+		char *dec_values, BlasFunctions *blas_functions) {
 
     struct svm_csr_node **predict_nodes;
     npy_intp i;
@@ -301,7 +311,7 @@ int csr_copy_predict_proba (npy_intp *data_size, char *data, npy_intp *index_siz
         return -1;
     for(i=0; i < intptr_size[0] - 1; ++i) {
         svm_csr_predict_probability(
-		model, predict_nodes[i], ((double *) dec_values) + i*m);
+		model, predict_nodes[i], ((double *) dec_values) + i*m, blas_functions);
         free(predict_nodes[i]);
     }
     free(predict_nodes);
@@ -345,6 +355,15 @@ void copy_sv_coef(char *data, struct svm_csr_model *model)
         memcpy(temp, model->sv_coef[i], sizeof(double) * model->l);
         temp += model->l;
     }
+}
+
+/*
+ * Get the number of iterations run in optimization
+ */
+void copy_n_iter(char *data, struct svm_csr_model *model)
+{
+    const int n_models = MAX(1, model->nr_class * (model->nr_class-1) / 2);
+    memcpy(data, model->n_iter, n_models * sizeof(int));
 }
 
 /*
@@ -401,6 +420,7 @@ int free_problem(struct svm_csr_problem *problem)
 int free_model(struct svm_csr_model *model)
 {
     /* like svm_free_and_destroy_model, but does not free sv_coef[i] */
+    /* We don't free n_iter, since we did not create them in set_model. */
     if (model == NULL) return -1;
     free(model->SV);
     free(model->sv_coef);

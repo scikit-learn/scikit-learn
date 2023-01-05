@@ -1,0 +1,33 @@
+name: "Check Manifest"
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  check-manifest:
+    # Don't run on forks
+    if: github.repository == 'scikit-learn/scikit-learn'
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        # scipy and cython are required to build sdist
+        run: |
+          python -m pip install --upgrade pip
+          pip install check-manifest scipy cython
+      - run: |
+          check-manifest -v
+
+  update-tracker:
+    uses: ./.github/workflows/update_tracking_issue.yml
+    if: ${{ always() }}
+    needs: [check-manifest]
+    with:
+      job_status: ${{ needs.check-manifest.result }}
+    secrets:
+      BOT_GITHUB_TOKEN: ${{ secrets.BOT_GITHUB_TOKEN }}

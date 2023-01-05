@@ -1,4 +1,4 @@
-﻿.. _feature_extraction:
+.. _feature_extraction:
 
 ==================
 Feature extraction
@@ -33,7 +33,7 @@ need not be stored) and storing feature names in addition to values.
 :class:`DictVectorizer` implements what is called one-of-K or "one-hot"
 coding for categorical (aka nominal, discrete) features. Categorical
 features are "attribute-value" pairs where the value is restricted
-to a list of discrete of possibilities without ordering (e.g. topic
+to a list of discrete possibilities without ordering (e.g. topic
 identifiers, types of objects, tags, names...).
 
 In the following, "city" is a categorical attribute while "temperature"
@@ -53,8 +53,28 @@ is a traditional numerical feature::
          [ 0.,  1.,  0., 12.],
          [ 0.,  0.,  1., 18.]])
 
-  >>> vec.get_feature_names()
-  ['city=Dubai', 'city=London', 'city=San Francisco', 'temperature']
+  >>> vec.get_feature_names_out()
+  array(['city=Dubai', 'city=London', 'city=San Francisco', 'temperature'], ...)
+
+:class:`DictVectorizer` accepts multiple string values for one
+feature, like, e.g., multiple categories for a movie.
+
+Assume a database classifies each movie using some categories (not mandatories)
+and its year of release.
+
+    >>> movie_entry = [{'category': ['thriller', 'drama'], 'year': 2003},
+    ...                {'category': ['animation', 'family'], 'year': 2011},
+    ...                {'year': 1974}]
+    >>> vec.fit_transform(movie_entry).toarray()
+    array([[0.000e+00, 1.000e+00, 0.000e+00, 1.000e+00, 2.003e+03],
+           [1.000e+00, 0.000e+00, 1.000e+00, 0.000e+00, 2.011e+03],
+           [0.000e+00, 0.000e+00, 0.000e+00, 0.000e+00, 1.974e+03]])
+    >>> vec.get_feature_names_out()
+    array(['category=animation', 'category=drama', 'category=family',
+           'category=thriller', 'year'], ...)
+    >>> vec.transform({'category': ['thriller'],
+    ...                'unseen_feature': '3'}).toarray()
+    array([[0., 0., 0., 1., 0.]])
 
 :class:`DictVectorizer` is also a useful representation transformation
 for training sequence classifiers in Natural Language Processing models
@@ -81,17 +101,18 @@ such a window of features extracted around the word 'sat' in the sentence
 
 This description can be vectorized into a sparse two-dimensional matrix
 suitable for feeding into a classifier (maybe after being piped into a
-:class:`text.TfidfTransformer` for normalization)::
+:class:`~text.TfidfTransformer` for normalization)::
 
   >>> vec = DictVectorizer()
   >>> pos_vectorized = vec.fit_transform(pos_window)
-  >>> pos_vectorized                # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
+  >>> pos_vectorized
   <1x6 sparse matrix of type '<... 'numpy.float64'>'
       with 6 stored elements in Compressed Sparse ... format>
   >>> pos_vectorized.toarray()
   array([[1., 1., 1., 1., 1., 1.]])
-  >>> vec.get_feature_names()
-  ['pos+1=PP', 'pos-1=NN', 'pos-2=DT', 'word+1=on', 'word-1=cat', 'word-2=the']
+  >>> vec.get_feature_names_out()
+  array(['pos+1=PP', 'pos-1=NN', 'pos-2=DT', 'word+1=on', 'word-1=cat',
+         'word-2=the'], ...)
 
 As you can imagine, if one extracts such a context around each individual
 word of a corpus of documents the resulting matrix will be very wide
@@ -129,8 +150,8 @@ and the expected mean of any output feature's value is zero. This mechanism
 is enabled by default with ``alternate_sign=True`` and is particularly useful
 for small hash table sizes (``n_features < 10000``). For large hash table
 sizes, it can be disabled, to allow the output to be passed to estimators like
-:class:`sklearn.naive_bayes.MultinomialNB` or
-:class:`sklearn.feature_selection.chi2`
+:class:`~sklearn.naive_bayes.MultinomialNB` or
+:class:`~sklearn.feature_selection.chi2`
 feature selectors that expect non-negative inputs.
 
 :class:`FeatureHasher` accepts either mappings
@@ -148,7 +169,7 @@ The output from :class:`FeatureHasher` is always a ``scipy.sparse`` matrix
 in the CSR format.
 
 Feature hashing can be employed in document classification,
-but unlike :class:`text.CountVectorizer`,
+but unlike :class:`~text.CountVectorizer`,
 :class:`FeatureHasher` does not do word
 splitting or any other preprocessing except Unicode-to-UTF-8 encoding;
 see :ref:`hashing_vectorizer`, below, for a combined tokenizer/hasher.
@@ -289,13 +310,8 @@ reasonable (please see  the :ref:`reference documentation
 <text_feature_extraction_ref>` for the details)::
 
   >>> vectorizer = CountVectorizer()
-  >>> vectorizer                     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  CountVectorizer(analyzer=...'word', binary=False, decode_error=...'strict',
-          dtype=<... 'numpy.int64'>, encoding=...'utf-8', input=...'content',
-          lowercase=True, max_df=1.0, max_features=None, min_df=1,
-          ngram_range=(1, 1), preprocessor=None, stop_words=None,
-          strip_accents=None, token_pattern=...'(?u)\\b\\w\\w+\\b',
-          tokenizer=None, vocabulary=None)
+  >>> vectorizer
+  CountVectorizer()
 
 Let's use it to tokenize and count the word occurrences of a minimalistic
 corpus of text documents::
@@ -307,7 +323,7 @@ corpus of text documents::
   ...     'Is this the first document?',
   ... ]
   >>> X = vectorizer.fit_transform(corpus)
-  >>> X                              # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  >>> X
   <4x9 sparse matrix of type '<... 'numpy.int64'>'
       with 19 stored elements in Compressed Sparse ... format>
 
@@ -324,12 +340,11 @@ Each term found by the analyzer during the fit is assigned a unique
 integer index corresponding to a column in the resulting matrix. This
 interpretation of the columns can be retrieved as follows::
 
-  >>> vectorizer.get_feature_names() == (
-  ...     ['and', 'document', 'first', 'is', 'one',
-  ...      'second', 'the', 'third', 'this'])
-  True
+  >>> vectorizer.get_feature_names_out()
+  array(['and', 'document', 'first', 'is', 'one', 'second', 'the',
+         'third', 'this'], ...)
 
-  >>> X.toarray()           # doctest: +ELLIPSIS
+  >>> X.toarray()
   array([[0, 1, 1, 1, 0, 0, 1, 0, 1],
          [0, 1, 0, 1, 0, 2, 1, 0, 1],
          [1, 0, 0, 0, 1, 0, 1, 1, 0],
@@ -345,7 +360,6 @@ Hence words that were not seen in the training corpus will be completely
 ignored in future calls to the transform method::
 
   >>> vectorizer.transform(['Something completely new.']).toarray()
-  ...                           # doctest: +ELLIPSIS
   array([[0, 0, 0, 0, 0, 0, 0, 0, 0]]...)
 
 Note that in the previous corpus, the first and the last documents have
@@ -366,7 +380,6 @@ can now resolve ambiguities encoded in local positioning patterns::
 
   >>> X_2 = bigram_vectorizer.fit_transform(corpus).toarray()
   >>> X_2
-  ...                           # doctest: +ELLIPSIS
   array([[0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 0],
          [0, 0, 1, 0, 0, 1, 1, 0, 0, 2, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0],
          [1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 0],
@@ -377,7 +390,7 @@ In particular the interrogative form "Is this" is only present in the
 last document::
 
   >>> feature_index = bigram_vectorizer.vocabulary_.get('is this')
-  >>> X_2[:, feature_index]     # doctest: +ELLIPSIS
+  >>> X_2[:, feature_index]
   array([0, 0, 0, 1]...)
 
 .. _stop_words:
@@ -391,8 +404,9 @@ removed to avoid them being construed as signal for prediction.  Sometimes,
 however, similar words are useful for prediction, such as in classifying
 writing style or personality.
 
-There are several known issues in our provided 'english' stop word list. See
-[NQY18]_.
+There are several known issues in our provided 'english' stop word list. It
+does not aim to be a general, 'one-size-fits-all' solution as some tasks
+may require a more custom solution. See [NQY18]_ for more details.
 
 Please take care in choosing a stop word list.
 Popular stop word lists may include words that are highly informative to
@@ -470,9 +484,8 @@ class::
 
   >>> from sklearn.feature_extraction.text import TfidfTransformer
   >>> transformer = TfidfTransformer(smooth_idf=False)
-  >>> transformer   # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  TfidfTransformer(norm=...'l2', smooth_idf=False, sublinear_tf=False,
-                   use_idf=True)
+  >>> transformer
+  TfidfTransformer(smooth_idf=False)
 
 Again please see the :ref:`reference documentation
 <text_feature_extraction_ref>` for the details on all the parameters.
@@ -490,11 +503,11 @@ content of the documents::
   ...           [3, 0, 2]]
   ...
   >>> tfidf = transformer.fit_transform(counts)
-  >>> tfidf                         # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
+  >>> tfidf
   <6x3 sparse matrix of type '<... 'numpy.float64'>'
       with 9 stored elements in Compressed Sparse ... format>
 
-  >>> tfidf.toarray()                        # doctest: +ELLIPSIS
+  >>> tfidf.toarray()
   array([[0.81940995, 0.        , 0.57320793],
          [1.        , 0.        , 0.        ],
          [1.        , 0.        , 0.        ],
@@ -566,7 +579,7 @@ The weights of each
 feature computed by the ``fit`` method call are stored in a model
 attribute::
 
-  >>> transformer.idf_                       # doctest: +ELLIPSIS
+  >>> transformer.idf_
   array([1. ..., 2.25..., 1.84...])
 
 
@@ -579,7 +592,6 @@ class called :class:`TfidfVectorizer` that combines all the options of
   >>> from sklearn.feature_extraction.text import TfidfVectorizer
   >>> vectorizer = TfidfVectorizer()
   >>> vectorizer.fit_transform(corpus)
-  ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <4x9 sparse matrix of type '<... 'numpy.float64'>'
       with 19 stored elements in Compressed Sparse ... format>
 
@@ -595,7 +607,7 @@ As usual the best way to adjust the feature extraction parameters
 is to use a cross-validated grid search, for instance by pipelining the
 feature extractor with a classifier:
 
- * :ref:`sphx_glr_auto_examples_model_selection_grid_search_text_feature_extraction.py`
+ * :ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_text_feature_extraction.py`
 
 
 Decoding text files
@@ -729,9 +741,8 @@ decide better::
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(2, 2))
   >>> counts = ngram_vectorizer.fit_transform(['words', 'wprds'])
-  >>> ngram_vectorizer.get_feature_names() == (
-  ...     [' w', 'ds', 'or', 'pr', 'rd', 's ', 'wo', 'wp'])
-  True
+  >>> ngram_vectorizer.get_feature_names_out()
+  array([' w', 'ds', 'or', 'pr', 'rd', 's ', 'wo', 'wp'], ...)
   >>> counts.toarray().astype(int)
   array([[1, 1, 1, 0, 1, 1, 1, 0],
          [1, 1, 0, 1, 1, 1, 0, 1]])
@@ -743,21 +754,17 @@ span across words::
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(5, 5))
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
-  ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <1x4 sparse matrix of type '<... 'numpy.int64'>'
      with 4 stored elements in Compressed Sparse ... format>
-  >>> ngram_vectorizer.get_feature_names() == (
-  ...     [' fox ', ' jump', 'jumpy', 'umpy '])
-  True
+  >>> ngram_vectorizer.get_feature_names_out()
+  array([' fox ', ' jump', 'jumpy', 'umpy '], ...)
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char', ngram_range=(5, 5))
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
-  ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <1x5 sparse matrix of type '<... 'numpy.int64'>'
       with 5 stored elements in Compressed Sparse ... format>
-  >>> ngram_vectorizer.get_feature_names() == (
-  ...     ['jumpy', 'mpy f', 'py fo', 'umpy ', 'y fox'])
-  True
+  >>> ngram_vectorizer.get_feature_names_out()
+  array(['jumpy', 'mpy f', 'py fo', 'umpy ', 'y fox'], ...)
 
 The word boundaries-aware variant ``char_wb`` is especially interesting
 for languages that use white-spaces for word separation as it generates
@@ -810,7 +817,7 @@ datasets**:
 
 It is possible to overcome those limitations by combining the "hashing trick"
 (:ref:`Feature_hashing`) implemented by the
-:class:`sklearn.feature_extraction.FeatureHasher` class and the text
+:class:`~sklearn.feature_extraction.FeatureHasher` class and the text
 preprocessing and tokenization features of the :class:`CountVectorizer`.
 
 This combination is implementing in :class:`HashingVectorizer`,
@@ -821,7 +828,6 @@ meaning that you don't have to call ``fit`` on it::
   >>> from sklearn.feature_extraction.text import HashingVectorizer
   >>> hv = HashingVectorizer(n_features=10)
   >>> hv.transform(corpus)
-  ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <4x10 sparse matrix of type '<... 'numpy.float64'>'
       with 16 stored elements in Compressed Sparse ... format>
 
@@ -846,7 +852,6 @@ Let's try again with the default setting::
 
   >>> hv = HashingVectorizer()
   >>> hv.transform(corpus)
-  ...                               # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
   <4x1048576 sparse matrix of type '<... 'numpy.float64'>'
       with 19 stored elements in Compressed Sparse ... format>
 
@@ -937,7 +942,7 @@ Some tips and tricks:
 
         >>> from nltk import word_tokenize          # doctest: +SKIP
         >>> from nltk.stem import WordNetLemmatizer # doctest: +SKIP
-        >>> class LemmaTokenizer(object):
+        >>> class LemmaTokenizer:
         ...     def __init__(self):
         ...         self.wnl = WordNetLemmatizer()
         ...     def __call__(self, doc):
@@ -965,7 +970,7 @@ Some tips and tricks:
         ...         tokenize = super().build_tokenizer()
         ...         return lambda doc: list(to_british(tokenize(doc)))
         ...
-        >>> print(CustomVectorizer().build_analyzer()(u"color colour")) # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+        >>> print(CustomVectorizer().build_analyzer()(u"color colour"))
         [...'color', ...'color']
 
     for other styles of preprocessing; examples include stemming, lemmatization,
@@ -990,7 +995,7 @@ Patch extraction
 The :func:`extract_patches_2d` function extracts patches from an image stored
 as a two-dimensional array, or three-dimensional with color information along
 the third axis. For rebuilding an image from all its patches, use
-:func:`reconstruct_from_patches_2d`. For example let use generate a 4x4 pixel
+:func:`reconstruct_from_patches_2d`. For example let us generate a 4x4 pixel
 picture with 3 color channels (e.g. in RGB format)::
 
     >>> import numpy as np
@@ -1031,7 +1036,7 @@ The :class:`PatchExtractor` class works in the same way as
 implemented as an estimator, so it can be used in pipelines. See::
 
     >>> five_images = np.arange(5 * 4 * 4 * 3).reshape(5, 4, 4, 3)
-    >>> patches = image.PatchExtractor((2, 2)).transform(five_images)
+    >>> patches = image.PatchExtractor(patch_size=(2, 2)).transform(five_images)
     >>> patches.shape
     (45, 2, 2, 3)
 
