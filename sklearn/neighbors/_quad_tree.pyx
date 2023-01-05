@@ -68,11 +68,13 @@ cdef class _QuadTree:
 
     property cumulative_size:
         def __get__(self):
-            return self._get_cell_ndarray()['cumulative_size'][:self.cell_count]
+            cdef Cell[:] cell_mem_view = self._get_cell_ndarray()
+            return cell_mem_view.base['cumulative_size'][:self.cell_count]
 
     property leafs:
         def __get__(self):
-            return self._get_cell_ndarray()['is_leaf'][:self.cell_count]
+            cdef Cell[:] cell_mem_view = self._get_cell_ndarray()
+            return cell_mem_view.base['is_leaf'][:self.cell_count]
 
     def build_tree(self, X):
         """Build a tree from an array of points X."""
@@ -500,7 +502,7 @@ cdef class _QuadTree:
         d["cell_count"] = self.cell_count
         d["capacity"] = self.capacity
         d["n_points"] = self.n_points
-        d["cells"] = self._get_cell_ndarray()
+        d["cells"] = self._get_cell_ndarray().base
         return d
 
     def __setstate__(self, d):
@@ -525,14 +527,18 @@ cdef class _QuadTree:
         if self._resize_c(self.capacity) != 0:
             raise MemoryError("resizing tree to %d" % self.capacity)
 
-        cells = memcpy(self.cells, (<cnp.ndarray> cell_ndarray).data,
-                       self.capacity * sizeof(Cell))
+        cdef Cell[:] cell_mem_view = cell_ndarray
+        cells = memcpy(
+            pto=self.cells,
+            pfrom=&cell_mem_view[0],
+            size=self.capacity * sizeof(Cell),
+        )
 
 
     # Array manipulation methods, to convert it to numpy or to resize
     # self.cells array
 
-    cdef cnp.ndarray _get_cell_ndarray(self):
+    cdef Cell[:] _get_cell_ndarray(self):
         """Wraps nodes as a NumPy struct array.
 
         The array keeps a reference to this Tree, which manages the underlying
@@ -543,14 +549,20 @@ cdef class _QuadTree:
         shape[0] = <cnp.npy_intp> self.cell_count
         cdef cnp.npy_intp strides[1]
         strides[0] = sizeof(Cell)
-        cdef cnp.ndarray arr
+        cdef Cell[:] arr
         Py_INCREF(CELL_DTYPE)
-        arr = PyArray_NewFromDescr(<PyTypeObject *> np.ndarray,
-                                   CELL_DTYPE, 1, shape,
-                                   strides, <void*> self.cells,
-                                   cnp.NPY_DEFAULT, None)
+        arr = PyArray_NewFromDescr(
+            subtype=<PyTypeObject *> np.ndarray,
+            descr=CELL_DTYPE,
+            nd=1,
+            dims=shape,
+            strides=strides,
+            data=<void*> self.cells,
+            flags=cnp.NPY_ARRAY_DEFAULT,
+            obj=None,
+        )
         Py_INCREF(self)
-        if PyArray_SetBaseObject(arr, <PyObject*> self) < 0:
+        if PyArray_SetBaseObject(arr.base, <PyObject*> self) < 0:
             raise ValueError("Can't initialize array!")
         return arr
 
