@@ -34,6 +34,10 @@ Changelog
   supports DataFrames that are all numerical when `check_inverse=True`.
   :pr:`25274` by `Thomas Fan`_.
 
+- |Fix| :meth:`preprocessing.SplineTransformer.get_feature_names_out` correctly
+  returns feature names when `extrapolations="periodic"`. :pr:`xxxxx` by
+  `Thomas Fan`_.
+
 :mod:`sklearn.utils`
 ....................
 

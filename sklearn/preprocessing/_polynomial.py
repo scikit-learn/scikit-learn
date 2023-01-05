@@ -674,6 +674,9 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
             Transformed feature names.
         """
         n_splines = self.bsplines_[0].c.shape[0]
+        if self.extrapolation == "periodic":
+            n_splines -= self.degree
+
         input_features = _check_feature_names_in(self, input_features)
         feature_names = []
         for i in range(self.n_features_in_):
