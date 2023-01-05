@@ -220,7 +220,7 @@ cdef class DistanceMetric{{name_suffix}}:
     "matching"         MatchingDistance         NNEQ / N
     "dice"             DiceDistance             NNEQ / (NTT + NNZ)
     "kulsinski"        KulsinskiDistance        (NNEQ + N - NTT) / (NNEQ + N)
-    "kulczynski1"      Kulczynski1Distance        (NNEQ + N - NTT) / (NNEQ + N)
+    "kulczynski1"      Kulczynski1Distance        NTT / NNEQ
     "rogerstanimoto"   RogersTanimotoDistance   2 * NNEQ / (N + NNEQ)
     "russellrao"       RussellRaoDistance       (N - NTT) / N
     "sokalmichener"    SokalMichenerDistance    2 * NNEQ / (N + NNEQ)
