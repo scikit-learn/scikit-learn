@@ -135,12 +135,6 @@ class InconsistentVersionWarning(UserWarning):
 
     Parameters
     ----------
-    message : str
-        Message of the form
-        `estimator_name|current_sklearn_version|original_sklearn_version`
-
-    Attributes
-    ----------
     estimator_name : str
         Estimator name.
 
@@ -151,11 +145,12 @@ class InconsistentVersionWarning(UserWarning):
         Original scikit-learn version.
     """
 
-    def __init__(self, message):
-        message_split = message.split("|", 3)
-        self.estimator_name = message_split[0]
-        self.current_sklearn_version = message_split[1]
-        self.original_sklearn_version = message_split[2]
+    def __init__(
+        self, *, estimator_name, current_sklearn_version, original_sklearn_version
+    ):
+        self.estimator_name = estimator_name
+        self.current_sklearn_version = current_sklearn_version
+        self.original_sklearn_version = original_sklearn_version
 
     def __str__(self):
         return (

@@ -298,8 +298,11 @@ class BaseEstimator:
             pickle_version = state.pop("_sklearn_version", "pre-0.18")
             if pickle_version != __version__:
                 warnings.warn(
-                    f"{self.__class__.__name__}|{__version__}|{pickle_version}",
-                    InconsistentVersionWarning,
+                    InconsistentVersionWarning(
+                        estimator_name=self.__class__.__name__,
+                        current_sklearn_version=__version__,
+                        original_sklearn_version=pickle_version,
+                    ),
                 )
         try:
             super().__setstate__(state)
