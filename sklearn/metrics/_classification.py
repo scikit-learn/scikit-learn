@@ -2617,7 +2617,16 @@ def log_loss(
     y_pred = check_array(
         y_pred, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
     )
-    eps = np.finfo(y_pred.dtype).eps if eps == "auto" else eps
+    if eps == "auto":
+        eps = np.finfo(y_pred.dtype).eps
+    else:
+        # TODO: Remove user defined eps in 1.4
+        warnings.warn(
+            "Setting the eps parameter is deprecated and will "
+            "be removed in 1.4. Instead eps will always have"
+            "a default value of `np.finfo(y_pred.dtype).eps`.",
+            FutureWarning,
+        )
 
     check_consistent_length(y_pred, y_true, sample_weight)
     lb = LabelBinarizer()
@@ -2680,7 +2689,14 @@ def log_loss(
 
     # Renormalize
     y_pred_sum = y_pred.sum(axis=1)
-    y_pred = y_pred / y_pred_sum[:, np.newaxis]
+    if (y_pred_sum != 1).any():
+        warnings.warn(
+            "The y_pred values are not normalized. Starting from 1.3 this"
+            "would result in an error.",
+            UserWarning,
+        )
+        y_pred = y_pred / y_pred_sum[:, np.newaxis]
+
     loss = -xlogy(transformed_labels, y_pred).sum(axis=1)
 
     return _weighted_sum(loss, sample_weight, normalize)
