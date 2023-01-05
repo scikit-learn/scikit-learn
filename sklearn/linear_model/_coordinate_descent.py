@@ -30,7 +30,6 @@ from ..utils.validation import (
     check_is_fitted,
     column_or_1d,
 )
-from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..utils.fixes import delayed
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
@@ -594,9 +593,7 @@ def enet_path(
                 w=coef_,
                 alpha=l1_reg,
                 beta=l2_reg,
-                # TODO: remove ReadonlyArrayWrapper when const-qualify fused typed
-                # memoryviews are used (this necessiates Cython 3).
-                X_data=ReadonlyArrayWrapper(X.data),
+                X_data=X.data,
                 X_indices=X.indices,
                 X_indptr=X.indptr,
                 y=y,
@@ -618,14 +615,12 @@ def enet_path(
             if check_input:
                 precompute = check_array(precompute, dtype=X.dtype.type, order="C")
             model = cd_fast.enet_coordinate_descent_gram(
-                # TODO: remove ReadonlyArrayWrappers when const-qualify fused typed
-                # memoryviews are used (this necessiates Cython 3).
-                ReadonlyArrayWrapper(coef_),
+                coef_,
                 l1_reg,
                 l2_reg,
-                ReadonlyArrayWrapper(precompute),
-                ReadonlyArrayWrapper(Xy),
-                ReadonlyArrayWrapper(y),
+                precompute,
+                Xy,
+                y,
                 max_iter,
                 tol,
                 rng,
@@ -1885,6 +1880,14 @@ class LassoCV(RegressorMixin, LinearModelCV):
      For an example, see
      :ref:`examples/linear_model/plot_lasso_model_selection.py
      <sphx_glr_auto_examples_linear_model_plot_lasso_model_selection.py>`.
+
+    :class:`LassoCV` leads to different results than a hyperparameter
+    search using :class:`~sklearn.model_selection.GridSearchCV` with a
+    :class:`Lasso` model. In :class:`LassoCV`, a model for a given
+    penalty `alpha` is warm started using the coefficients of the
+    closest model (trained at the previous iteration) on the
+    regularization path. It tends to speed up the hyperparameter
+    search.
 
     Examples
     --------

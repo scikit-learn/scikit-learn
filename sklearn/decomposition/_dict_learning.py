@@ -174,6 +174,8 @@ def _sparse_encode(
         )
 
         if init is not None:
+            if not init.flags["WRITEABLE"]:
+                init = np.array(init)
             clf.coef_ = init
 
         clf.fit(dictionary.T, X.T, check_input=check_input)

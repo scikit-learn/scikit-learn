@@ -5,6 +5,10 @@ import numpy as np
 from functools import partial
 import itertools
 
+from joblib import Parallel
+
+import sklearn
+
 from sklearn.base import clone
 
 from sklearn.exceptions import ConvergenceWarning
@@ -1038,24 +1042,23 @@ def test_get_feature_names_out(estimator):
     )
 
 
-def test_cd_work_on_joblib_memmapped_data():
-    # Non-regression test for:
-    # https://github.com/scikit-learn/scikit-learn/issues/25165
-    # The Cython implementation of coordinate descent must work
-    # on readonly data.
+def test_cd_work_on_joblib_memmapped_data(monkeypatch):
+    monkeypatch.setattr(
+        sklearn.decomposition._dict_learning,
+        "Parallel",
+        partial(Parallel, max_nbytes=1000),
+    )
 
     rng = np.random.RandomState(0)
-    # This dataset is sufficient large to be memmapped by joblib
-    # and thus becomes readonly even if it originally isn't.
-    X_train = rng.randn(5000, 3072)
+    X_train = rng.randn(100, 10)
 
     dict_learner = DictionaryLearning(
-        n_components=56,
+        n_components=5,
         random_state=0,
         n_jobs=2,
         fit_algorithm="cd",
-        verbose=True,
         max_iter=50,
+        verbose=True,
     )
 
     # This must run and complete without error.
