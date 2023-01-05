@@ -72,6 +72,13 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`.
   :pr:`25177` by :user:`Tim Head <betatim>`.
 
+:mod:`sklearn.exception`
+........................
+- |Feature| Added :class:`exception.InconsistentVersionWarning` which is raised
+  when a scikit-learn estimator is unpickled with a scikit-learn version that is
+  inconsistent with the sckit-learn verion the estimator was pickled with.
+  :pr:`xxxxx` by `Thomas Fan`_.
+
 :mod:`sklearn.feature_extraction`
 .................................
 

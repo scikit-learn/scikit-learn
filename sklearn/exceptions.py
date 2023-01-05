@@ -128,3 +128,43 @@ class PositiveSpectrumWarning(UserWarning):
 
     .. versionadded:: 0.22
     """
+
+
+class InconsistentVersionWarning(UserWarning):
+    """Warning estimator is unpickled with a inconsistent scikit-learn version.
+
+    Parameters
+    ----------
+    message : str
+        Message of the form
+        `estimator_name|current_sklearn_version|original_sklearn_version`
+
+    Attributes
+    ----------
+    estimator_name : str
+        Estimator name.
+
+    current_sklearn_version : str
+        Current scikit-learn version.
+
+    original_sklearn_version : str
+        Original scikit-learn version.
+    """
+
+    def __init__(self, message):
+        message_split = message.split("|", 3)
+        self.estimator_name = message_split[0]
+        self.current_sklearn_version = message_split[1]
+        self.original_sklearn_version = message_split[2]
+
+    def __str__(self):
+        return (
+            f"Trying to unpickle estimator {self.estimator_name} from version"
+            f" {self.original_sklearn_version} when "
+            f"using version {self.current_sklearn_version}. This might lead to breaking"
+            " code or "
+            "invalid results. Use at your own risk. "
+            "For more info please refer to:\n"
+            "https://scikit-learn.org/stable/model_persistence.html"
+            "#security-maintainability-limitations"
+        )
