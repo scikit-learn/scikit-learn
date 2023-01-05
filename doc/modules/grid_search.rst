@@ -586,49 +586,38 @@ multimetric scoring.
 
 .. _refit_constraints:
 
-Model Subselection
-------------------
+Model Refitting
+---------------
 
-Following GridSearchCV or RandomizedSearchCV, the best estimator can be refit based on
-addition criteria. There are two ways of achieving this. The first is post-hoc -- by
-fitting a :class:`model_selection.Refitter` instance on the ``cv_results_`` output of
-the search. The second is by setting the ``refit`` parameter to a callable function
-:func:`model_selection.constrain` before running the search. Using either of these
-strategies to perform model subselection, the user is able to specify any of a variety
-of custom constraints on best estimator as determined by the search.
+Model refitting is the process of contraining (i.e. subselecting) the best model from
+among a group of top-performing candidates based on additional criteria, such as model
+complexity. This can be useful to avoid overfitting, as models with the highest
+performance may also be more prone to overfitting (Breiman et al., 1984).
 
-For instance, one common constraint to impose is to select the model that best balances
-performance with complexity. This might involve choosing a model with, say, the fewest
-PCA components (i.e. the _simplest_) whose score is within some meaningful range of the
-highest performing model. See
-:ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`
-for an example that implements the 1-SE rule with GridSearchCV using
-:func:`model_selection.constrain` as a refit callable..
+Scikit-Learn provides two ways of performing model refitting. The first is *post hoc*
+-- by fitting a :class:`model_selection.Refitter` instance to the ``cv_results_``
+attribute of a fitted ``GridSearchCV`` or ``RandomizedSearchCV``. The second is *a
+priori* -- by setting the ``refit`` parameter in a ``GridSearchCV`` or
+``RandomizedSearchCV`` instance, to a callable function :func:`model_selection.
+constrain` before running the search.
 
-The initial motivation for applying such a complexity constraint stems from an insight
-made by Breiman et al. (1984), who showed that the tuning hyperparameter associated
-with the best performing model may be especially prone to overfitting. One potential
-remedy for this is to balance model performance with complexity using the popular "One
-Standard Error Rule" (1-SE), which is a heuristic for sub-selecting the most
-parsimonious model, from among a selection of top-performing candidates, whose
-cross-validated performance is not more than 1 SE worse than the best CV performance.
+In the case of refitting a ``GridSearchCV`` or ``RandomizedSearchCV`` with the simplest
+best-performing model, for example, one common constraint to use is the "One Standard
+Error Rule" (1-SE) (see :class:`model_selection.by_standard_error`). 1-SE is a
+heuristic for subselecting the most parsimonious model whose cross-validated
+performance is not more than 1 standard error worse than the best CV performance
+(Chen & Yang, 2021). Although it is easy to demonstrate the value of 1-SE (e.g. see
+:ref:`sphx_glr_auto_examples_model_selection_plot_grid_search_refit_callable.py`),
+the criteria may be too rigid or lenient in some contexts. In these cases,
+:class:`model_selection.Refitter` also supports other default subselection strategies,
+including:
 
-Recent simulation studies using the Boston Housing Prices data (large N,
-small p, see :func:`datasets.load_boston`) in the context of Lasso regression
-have garnered stronger empirical support around the use of 1-SE. Although 1-SE
-constrained CV has been shown to alleviate the over-selection tendency of Lasso while
-outperforming regular CV in sparse variable selection, a standard error criterion may
-be too rigid (or lenient) in some cases. Accordingly, the user may wish to implement a
-variation on 1-SE or a different sub-selection strategy altogether, which Scikit-Learn
-also supports.Beyond :class:`by_standard_error`, for instance, a curated set of other
-subselection callables are also available to the user, including:
+    :class:`model_selection.by_percentile_rank`
+    :class:`model_selection.by_signed_rank`
+    :class:`model_selection.by_fixed_window`
 
-:class:`_subselect.by_percentile_rank`,
-:class:`_subselect.by_signed_rank`, and
-:class:`_subselect.by_fixed_window`.
-
-These callable classes follow a common API structure and usage patterns, thereby
-allowing users to customize refit subselection strategies for different use-cases.
+These callable constraints follow a common class structure, enabling users to easily
+customize their own subselection strategies as well.
 
 .. topic:: References:
 
