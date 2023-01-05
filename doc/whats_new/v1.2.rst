@@ -20,7 +20,7 @@ Changelog
   :user:`Benjamin Bossan <BenjaminBossan>`.
 
 - |Fix| Inheriting from :class:`base.TransformerMixin` will only wrap the `transform`
-  method if the class defines `transform` itself. :pr:`xxxxx` by `Thomas Fan`_.
+  method if the class defines `transform` itself. :pr:`25295` by `Thomas Fan`_.
 
 :mod:`sklearn.linear_model`
 ...........................
