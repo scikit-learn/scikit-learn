@@ -20,68 +20,143 @@ cdef extern from "svm.h":
     cdef struct svm_csr_model
     cdef struct svm_parameter
     cdef struct svm_csr_problem
-    char *svm_csr_check_parameter(svm_csr_problem *, svm_parameter *)
-    svm_csr_model *svm_csr_train(svm_csr_problem *, svm_parameter *, int *, BlasFunctions *) nogil
+    char *svm_csr_check_parameter(svm_csr_problem *prob, svm_parameter *param)
+    svm_csr_model *svm_csr_train(
+        svm_csr_problem *prob, svm_parameter *param, int *status, BlasFunctions *blas_functions
+    ) nogil
     void svm_csr_free_and_destroy_model(svm_csr_model** model_ptr_ptr)
 
 cdef extern from "libsvm_sparse_helper.c":
     # this file contains methods for accessing libsvm 'hidden' fields
-    svm_csr_problem * csr_set_problem (char *, cnp.npy_intp *,
-         char *, cnp.npy_intp *, char *, char *, char *, int )
-    svm_csr_model *csr_set_model(svm_parameter *param, int nr_class,
-                            char *SV_data, cnp.npy_intp *SV_indices_dims,
-                            char *SV_indices, cnp.npy_intp *SV_intptr_dims,
-                            char *SV_intptr,
-                            char *sv_coef, char *rho, char *nSV,
-                            char *probA, char *probB)
-    svm_parameter *set_parameter (int , int , int , double, double ,
-                                  double , double , double , double,
-                                  double, int, int, int, char *, char *, int,
-                                  int)
-    void copy_sv_coef   (char *, svm_csr_model *)
-    void copy_n_iter  (char *, svm_csr_model *)
-    void copy_support   (char *, svm_csr_model *)
-    void copy_intercept (char *, svm_csr_model *, cnp.npy_intp *)
-    int copy_predict (char *, svm_csr_model *, cnp.npy_intp *, char *, BlasFunctions *)
-    int csr_copy_predict_values (cnp.npy_intp *data_size, char *data, cnp.npy_intp *index_size,
-        	char *index, cnp.npy_intp *intptr_size, char *size,
-                svm_csr_model *model, char *dec_values, int nr_class, BlasFunctions *)
-    int csr_copy_predict (cnp.npy_intp *data_size, char *data, cnp.npy_intp *index_size,
-        	char *index, cnp.npy_intp *intptr_size, char *size,
-                svm_csr_model *model, char *dec_values, BlasFunctions *) nogil
-    int csr_copy_predict_proba (cnp.npy_intp *data_size, char *data, cnp.npy_intp *index_size,
-        	char *index, cnp.npy_intp *intptr_size, char *size,
-                svm_csr_model *model, char *dec_values, BlasFunctions *) nogil
+    svm_csr_problem *csr_set_problem(
+        char *values,
+        cnp.npy_intp *n_indices,
+        char *indices,
+        cnp.npy_intp *n_indptr,
+        char *indptr,
+        char *Y,
+        char *sample_weight,
+        int kernel_type,
+    )
+    svm_csr_model *csr_set_model(
+        svm_parameter *param,
+        int nr_class,
+        char *SV_data,
+        cnp.npy_intp *SV_indices_dims,
+        char *SV_indices,
+        cnp.npy_intp *SV_intptr_dims,
+        char *SV_intptr,
+        char *sv_coef,
+        char *rho,
+        char *nSV,
+        char *probA,
+        char *probB,
+    )
+    svm_parameter *set_parameter(
+        int svm_type,
+        int kernel_type,
+        int degree,
+        double gamma,
+        double coef0,
+        double nu,
+        double cache_size,
+        double C,
+        double eps,
+        double p,
+        int shrinking,
+        int probability,
+        int nr_weight,
+        char *weight_label,
+        char *weight,
+        int max_iter,
+        int random_seed,
+    )
+    void copy_sv_coef(char *data, svm_csr_model *model)
+    void copy_n_iter(char *data, svm_csr_model *model)
+    void copy_support(char *data, svm_csr_model *model)
+    void copy_intercept(char *data, svm_csr_model *model, cnp.npy_intp *dims)
+    int copy_predict(char *, svm_csr_model *, cnp.npy_intp *, char *, BlasFunctions *)
+    int csr_copy_predict_values(
+        cnp.npy_intp *data_size,
+        char *data,
+        cnp.npy_intp *index_size,
+        char *index,
+        cnp.npy_intp *intptr_size,
+        char *size,
+        svm_csr_model *model,
+        char *dec_values,
+        int nr_class,
+        BlasFunctions *blas_functions,
+    )
+    int csr_copy_predict(
+        cnp.npy_intp *data_size,
+        char *data,
+        cnp.npy_intp *index_size,
+        char *index,
+        cnp.npy_intp *intptr_size,
+        char *size,
+        svm_csr_model *model,
+        char *dec_values,
+        BlasFunctions *blas_functions,
+    ) nogil
+    int csr_copy_predict_proba(
+        cnp.npy_intp *data_size,
+        char *data,
+        cnp.npy_intp *index_size,
+        char *index,
+        cnp.npy_intp *intptr_size,
+        char *size,
+        svm_csr_model *model,
+        char *dec_values,
+        BlasFunctions *blas_functions,
+    ) nogil
 
-    int  copy_predict_values(char *, svm_csr_model *, cnp.npy_intp *, char *, int, BlasFunctions *)
-    int  csr_copy_SV (char *values, cnp.npy_intp *n_indices,
-        	char *indices, cnp.npy_intp *n_indptr, char *indptr,
-                svm_csr_model *model, int n_features)
-    cnp.npy_intp get_nonzero_SV ( svm_csr_model *)
-    void copy_nSV     (char *, svm_csr_model *)
-    void copy_probA   (char *, svm_csr_model *, cnp.npy_intp *)
-    void copy_probB   (char *, svm_csr_model *, cnp.npy_intp *)
-    cnp.npy_intp  get_l  (svm_csr_model *)
-    cnp.npy_intp  get_nr (svm_csr_model *)
-    int  free_problem   (svm_csr_problem *)
-    int  free_model     (svm_csr_model *)
-    int  free_param     (svm_parameter *)
+    int copy_predict_values(char *, svm_csr_model *, cnp.npy_intp *, char *, int, BlasFunctions *)
+    int csr_copy_SV (
+        char *values,
+        cnp.npy_intp *n_indices,
+        char *indices,
+        cnp.npy_intp *n_indptr,
+        char *indptr,
+        svm_csr_model *model,
+        int n_features
+    )
+    cnp.npy_intp get_nonzero_SV(svm_csr_model *model)
+    void copy_nSV(char *data, svm_csr_model *model)
+    void copy_probA(char *data, svm_csr_model *model, cnp.npy_intp *dims)
+    void copy_probB(char *data, svm_csr_model *model, cnp.npy_intp *dims)
+    cnp.npy_intp get_l(svm_csr_model *model)
+    cnp.npy_intp get_nr(svm_csr_model *model)
+    int free_problem(svm_csr_problem *problem)
+    int free_model(svm_csr_model *model)
+    int free_param(svm_parameter *param)
     int free_model_SV(svm_csr_model *model)
-    void set_verbosity(int)
+    void set_verbosity(int verbosity_flag)
 
 
-def libsvm_sparse_train (int n_features,
-                         cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] values,
-                         cnp.ndarray[cnp.int32_t,   ndim=1, mode='c'] indices,
-                         cnp.ndarray[cnp.int32_t,   ndim=1, mode='c'] indptr,
-                         cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] Y,
-                         int svm_type, int kernel_type, int degree, double gamma,
-                         double coef0, double eps, double C,
-                         cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] class_weight,
-                         cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] sample_weight,
-                         double nu, double cache_size, double p, int
-                         shrinking, int probability, int max_iter,
-                         int random_seed):
+def libsvm_sparse_train(
+    int n_features,
+    const cnp.float64_t[::1] values,
+    const cnp.int32_t[::1] indices,
+    const cnp.int32_t[::1] indptr,
+    const cnp.float64_t[::1] Y,
+    int svm_type,
+    int kernel_type,
+    int degree,
+    double gamma,
+    double coef0,
+    double eps,
+    double C,
+    const cnp.float64_t[::1] class_weight,
+    const cnp.float64_t[::1] sample_weight,
+    double nu,
+    double cache_size,
+    double p,
+    int shrinking,
+    int probability,
+    int max_iter,
+    int random_seed,
+):
     """
     Wrap svm_train from libsvm using a scipy.sparse.csr matrix
 
@@ -113,34 +188,55 @@ def libsvm_sparse_train (int n_features,
     if len(sample_weight) == 0:
         sample_weight = np.ones(Y.shape[0], dtype=np.float64)
     else:
-        assert sample_weight.shape[0] == indptr.shape[0] - 1, \
-               "sample_weight and X have incompatible shapes: " + \
-               "sample_weight has %s samples while X has %s" % \
-               (sample_weight.shape[0], indptr.shape[0] - 1)
-
+        assert (
+            sample_weight.shape[0] == indptr.shape[0] - 1,
+            f"sample_weight and X have incompatible shapes: "
+            f"sample_weight has {sample_weight.shape[0]} samples "
+            f"while X has {indptr.shape[0] - 1}"
+        )
     # we should never end up here with a precomputed kernel matrix,
     # as this is always dense.
     assert(kernel_type != 4)
 
     # set libsvm problem
-    problem = csr_set_problem(values.data, indices.shape, indices.data,
-                              indptr.shape, indptr.data, Y.data,
-                              sample_weight.data, kernel_type)
+    problem = csr_set_problem(
+        values=<char *> &values[0],
+        n_indices=<cnp.npy_intp *> indices.shape,
+        indices=<char *> &indices[0],
+        n_indptr=<cnp.npy_intp *> indptr.shape,
+        indptr=<char *> &indptr[0],
+        Y=<char *> &Y[0],
+        sample_weight=<char *> &sample_weight[0],
+        kernel_type=kernel_type,
+    )
 
-    cdef cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] \
-        class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
+    cdef cnp.int32_t[::1] class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
 
     # set parameters
-    param = set_parameter(svm_type, kernel_type, degree, gamma, coef0,
-                          nu, cache_size, C, eps, p, shrinking,
-                          probability, <int> class_weight.shape[0],
-                          class_weight_label.data, class_weight.data, max_iter,
-                          random_seed)
+    param = set_parameter(
+        svm_type=svm_type,
+        kernel_type=kernel_type,
+        degree=degree,
+        gamma=gamma,
+        coef0=coef0,
+        nu=nu,
+        cache_size=cache_size,
+        C=C,
+        eps=eps,
+        p=p,
+        shrinking=shrinking,
+        probability=probability,
+        nr_weight=<int> class_weight.shape[0],
+        weight_label=<char *> &class_weight_label[0],
+        weight=<char *> &class_weight[0],
+        max_iter=max_iter,
+        random_seed=random_seed,
+    )
 
     # check parameters
-    if (param == NULL or problem == NULL):
+    if param == NULL or problem == NULL:
         raise MemoryError("Seems we've run out of memory")
-    error_msg = svm_csr_check_parameter(problem, param);
+    error_msg = svm_csr_check_parameter(prob=problem, param=param);
     if error_msg:
         free_problem(problem)
         free_param(param)
@@ -150,93 +246,116 @@ def libsvm_sparse_train (int n_features,
     # call svm_train, this does the real work
     cdef int fit_status = 0
     with nogil:
-        model = svm_csr_train(problem, param, &fit_status, &blas_functions)
+        model = svm_csr_train(
+            prob=problem,
+            param=param,
+            status=&fit_status,
+            blas_functions=&blas_functions,
+        )
 
     cdef cnp.npy_intp SV_len = get_l(model)
     cdef cnp.npy_intp n_class = get_nr(model)
 
-    cdef cnp.ndarray[int, ndim=1, mode='c'] n_iter
-    n_iter = np.empty(max(1, n_class * (n_class - 1) // 2), dtype=np.intc)
-    copy_n_iter(n_iter.data, model)
+    cdef int[::1] n_iter = np.empty(max(1, n_class * (n_class - 1) // 2), dtype=np.intc)
+    copy_n_iter(data=<char *> &n_iter[0], model=model)
 
     # copy model.sv_coef
     # we create a new array instead of resizing, otherwise
     # it would not erase previous information
-    cdef cnp.ndarray sv_coef_data
-    sv_coef_data = np.empty((n_class-1)*SV_len, dtype=np.float64)
-    copy_sv_coef (sv_coef_data.data, model)
+    cdef cnp.float64_t[::1] sv_coef_data = np.empty((n_class-1)*SV_len, dtype=np.float64)
+    copy_sv_coef(data=<char *> &sv_coef_data[0], model=model)
 
-    cdef cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] support
-    support = np.empty(SV_len, dtype=np.int32)
-    copy_support(support.data, model)
+    cdef cnp.int32_t[::1] support = np.empty(SV_len, dtype=np.int32)
+    copy_support(data=<char *> &support[0], model=model)
 
     # copy model.rho into the intercept
     # the intercept is just model.rho but with sign changed
-    cdef cnp.ndarray intercept
-    intercept = np.empty(n_class*(n_class-1)//2, dtype=np.float64)
-    copy_intercept (intercept.data, model, intercept.shape)
+    cdef cnp.float64_t[::1] intercept = np.empty(n_class*(n_class-1)//2, dtype=np.float64)
+    copy_intercept(data=<char *> &intercept[0], model=model, dims=<cnp.npy_intp *> intercept.shape)
 
     # copy model.SV
     # we erase any previous information in SV
     # TODO: custom kernel
-    cdef cnp.npy_intp nonzero_SV
-    nonzero_SV = get_nonzero_SV (model)
+    cdef cnp.npy_intp nonzero_SV = get_nonzero_SV(model=model)
 
-    cdef cnp.ndarray SV_data, SV_indices, SV_indptr
-    SV_data = np.empty(nonzero_SV, dtype=np.float64)
-    SV_indices = np.empty(nonzero_SV, dtype=np.int32)
-    SV_indptr = np.empty(<cnp.npy_intp>SV_len + 1, dtype=np.int32)
-    csr_copy_SV(SV_data.data, SV_indices.shape, SV_indices.data,
-                SV_indptr.shape, SV_indptr.data, model, n_features)
+    cdef cnp.float64_t[::1] SV_data = np.empty(nonzero_SV, dtype=np.float64)
+    cdef cnp.int32_t[::1] SV_indices = np.empty(nonzero_SV, dtype=np.int32)
+    cdef cnp.int32_t[::1] SV_indptr = np.empty(<cnp.npy_intp> SV_len + 1, dtype=np.int32)
+    csr_copy_SV(
+        values=<char *> &SV_data[0],
+        n_indices=<cnp.npy_intp *> SV_indices.shape,
+        indices=<char *> &SV_indices[0],
+        n_indptr=<cnp.npy_intp *> SV_indptr.shape,
+        indptr=<char *> &SV_indptr[0],
+        model=model,
+        n_features=n_features,
+    )
     support_vectors_ = sparse.csr_matrix(
-	(SV_data, SV_indices, SV_indptr), (SV_len, n_features))
+        (SV_data, SV_indices, SV_indptr), (SV_len, n_features)
+    )
 
     # copy model.nSV
     # TODO: do only in classification
-    cdef cnp.ndarray n_class_SV
-    n_class_SV = np.empty(n_class, dtype=np.int32)
-    copy_nSV(n_class_SV.data, model)
+    cdef cnp.int32_t[::1] n_class_SV = np.empty(n_class, dtype=np.int32)
+    copy_nSV(data=<char *> &n_class_SV[0], model=model)
 
     # # copy probabilities
-    cdef cnp.ndarray probA, probB
+    cdef cnp.float64_t[::1] probA, probB
     if probability != 0:
         if svm_type < 2: # SVC and NuSVC
             probA = np.empty(n_class*(n_class-1)//2, dtype=np.float64)
             probB = np.empty(n_class*(n_class-1)//2, dtype=np.float64)
-            copy_probB(probB.data, model, probB.shape)
+            copy_probB(data=<char *> &probB[0], model=model, dims=<cnp.npy_intp *> probB.shape)
         else:
             probA = np.empty(1, dtype=np.float64)
             probB = np.empty(0, dtype=np.float64)
-        copy_probA(probA.data, model, probA.shape)
+        copy_probA(data=<char *> &probA[0], model=model, dims=<cnp.npy_intp *> probA.shape)
     else:
         probA = np.empty(0, dtype=np.float64)
         probB = np.empty(0, dtype=np.float64)
 
-    svm_csr_free_and_destroy_model (&model)
+    svm_csr_free_and_destroy_model(model_ptr_ptr=&model)
     free_problem(problem)
     free_param(param)
 
-    return (support, support_vectors_, sv_coef_data, intercept, n_class_SV,
-            probA, probB, fit_status, n_iter)
+    return (
+        support.base,
+        support_vectors_,
+        sv_coef_data.base,
+        intercept.base,
+        n_class_SV.base,
+        probA.base,
+        probB.base,
+        fit_status,
+        n_iter.base,
+    )
 
 
-def libsvm_sparse_predict (cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] T_data,
-                           cnp.ndarray[cnp.int32_t,   ndim=1, mode='c'] T_indices,
-                           cnp.ndarray[cnp.int32_t,   ndim=1, mode='c'] T_indptr,
-                           cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] SV_data,
-                           cnp.ndarray[cnp.int32_t,   ndim=1, mode='c'] SV_indices,
-                           cnp.ndarray[cnp.int32_t,   ndim=1, mode='c'] SV_indptr,
-                           cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] sv_coef,
-                           cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
-                           intercept, int svm_type, int kernel_type, int
-                           degree, double gamma, double coef0, double
-                           eps, double C,
-                           cnp.ndarray[cnp.float64_t, ndim=1] class_weight,
-                           double nu, double p, int
-                           shrinking, int probability,
-                           cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] nSV,
-                           cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] probA,
-                           cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] probB):
+def libsvm_sparse_predict(
+    const cnp.float64_t[::1] T_data,
+    const cnp.int32_t[::1] T_indices,
+    const cnp.int32_t[::1] T_indptr,
+    const cnp.float64_t[::1] SV_data,
+    const cnp.int32_t[::1] SV_indices,
+    cnp.int32_t[::1] SV_indptr,
+    cnp.float64_t[::1] sv_coef,
+    cnp.float64_t[::1] intercept,
+    int svm_type,
+    int kernel_type,
+    int degree,
+    double gamma,
+    double coef0,
+    double eps,
+    double C,
+    const cnp.float64_t[:] class_weight,
+    double nu,
+    double p,
+    int shrinking,
+    int probability,
+    const cnp.int32_t[::1] nSV,
+    const cnp.float64_t[::1] probA,
+    const cnp.float64_t[::1] probB,
+):
     """
     Predict values T given a model.
 
@@ -259,147 +378,231 @@ def libsvm_sparse_predict (cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] T_data,
     dec_values : array
         predicted values.
     """
-    cdef cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] dec_values
+    cdef cnp.float64_t[::1] dec_values = np.empty(T_indptr.shape[0] - 1)
     cdef svm_parameter *param
     cdef svm_csr_model *model
-    cdef cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] \
-        class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
+    cdef cnp.int32_t[::1] class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
     cdef int rv
-    param = set_parameter(svm_type, kernel_type, degree, gamma,
-                          coef0, nu,
-                          100., # cache size has no effect on predict
-                          C, eps, p, shrinking,
-                          probability, <int> class_weight.shape[0], class_weight_label.data,
-                          class_weight.data, -1,
-                          -1) # random seed has no effect on predict either
+    param = set_parameter(
+        svm_type=svm_type,
+        kernel_type=kernel_type,
+        degree=degree,
+        gamma=gamma,
+        coef0=coef0,
+        nu=nu,
+        cache_size=100.0, # cache size has no effect on predict
+        C=C,
+        eps=eps,
+        p=p,
+        shrinking=shrinking,
+        probability=probability,
+        nr_weight=<int> class_weight.shape[0],
+        weight_label=<char *> &class_weight_label[0],
+        weight=<char *> &class_weight[0],
+        max_iter=-1,
+        random_seed=-1, # random seed has no effect on predict either
+    )
 
-    model = csr_set_model(param, <int> nSV.shape[0], SV_data.data,
-                          SV_indices.shape, SV_indices.data,
-                          SV_indptr.shape, SV_indptr.data,
-                          sv_coef.data, intercept.data,
-                          nSV.data, probA.data, probB.data)
+    model = csr_set_model(
+        param=param,
+        nr_class=<int> nSV.shape[0],
+        SV_data=<char *> &SV_data[0],
+        SV_indices_dims=<cnp.npy_intp *>SV_indices.shape,
+        SV_indices=<char *> &SV_indices[0],
+        SV_intptr_dims=<cnp.npy_intp *> SV_indptr.shape,
+        SV_intptr=<char *> &SV_indptr[0],
+        sv_coef=<char *> &sv_coef[0],
+        rho=<char *> &intercept[0],
+        nSV=<char *> &nSV[0],
+        probA=<char *> &probA[0],
+        probB=<char *> &probB[0],
+    )
     #TODO: use check_model
-    dec_values = np.empty(T_indptr.shape[0]-1)
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
     with nogil:
-        rv = csr_copy_predict(T_data.shape, T_data.data,
-                              T_indices.shape, T_indices.data,
-                              T_indptr.shape, T_indptr.data,
-                              model, dec_values.data,
-                              &blas_functions)
+        rv = csr_copy_predict(
+            data_size=<cnp.npy_intp *> T_data.shape,
+            data=<char *> &T_data[0],
+            index_size=<cnp.npy_intp *> T_indices.shape,
+            index=<char *> &T_indices[0],
+            intptr_size=<cnp.npy_intp *> T_indptr.shape,
+            size=<char *> &T_indptr[0],
+            model=model,
+            dec_values=<char *> &dec_values[0],
+            blas_functions=&blas_functions,
+        )
     if rv < 0:
         raise MemoryError("We've run out of memory")
     # free model and param
     free_model_SV(model)
     free_model(model)
     free_param(param)
-    return dec_values
+    return dec_values.base
 
 
 def libsvm_sparse_predict_proba(
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] T_data,
-    cnp.ndarray[cnp.int32_t,   ndim=1, mode='c'] T_indices,
-    cnp.ndarray[cnp.int32_t,   ndim=1, mode='c'] T_indptr,
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] SV_data,
-    cnp.ndarray[cnp.int32_t,   ndim=1, mode='c'] SV_indices,
-    cnp.ndarray[cnp.int32_t,   ndim=1, mode='c'] SV_indptr,
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] sv_coef,
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
-    intercept, int svm_type, int kernel_type, int
-    degree, double gamma, double coef0, double
-    eps, double C,
-    cnp.ndarray[cnp.float64_t, ndim=1] class_weight,
-    double nu, double p, int shrinking, int probability,
-    cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] nSV,
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] probA,
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] probB):
+    const cnp.float64_t[::1] T_data,
+    const cnp.int32_t[::1] T_indices,
+    const cnp.int32_t[::1] T_indptr,
+    const cnp.float64_t[::1] SV_data,
+    const cnp.int32_t[::1] SV_indices,
+    const cnp.int32_t[::1] SV_indptr,
+    const cnp.float64_t[::1] sv_coef,
+    const cnp.float64_t[::1] intercept,
+    int svm_type,
+    int kernel_type,
+    int degree,
+    double gamma,
+    double coef0,
+    double eps,
+    double C,
+    const cnp.float64_t[:] class_weight,
+    double nu,
+    double p,
+    int shrinking,
+    int probability,
+    const cnp.int32_t[::1] nSV,
+    const cnp.float64_t[::1] probA,
+    const cnp.float64_t[::1] probB,
+):
     """
     Predict values T given a model.
     """
-    cdef cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] dec_values
     cdef svm_parameter *param
     cdef svm_csr_model *model
-    cdef cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] \
-        class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
-    param = set_parameter(svm_type, kernel_type, degree, gamma,
-                          coef0, nu,
-                          100., # cache size has no effect on predict
-                          C, eps, p, shrinking,
-                          probability, <int> class_weight.shape[0], class_weight_label.data,
-                          class_weight.data, -1,
-                          -1) # random seed has no effect on predict either
+    cdef cnp.int32_t[::1] class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
+    param = set_parameter(
+        svm_type=svm_type,
+        kernel_type=kernel_type,
+        degree=degree,
+        gamma=gamma,
+        coef0=coef0,
+        nu=nu,
+        cache_size=100.0, # cache size has no effect on predict
+        C=C,
+        eps=eps,
+        p=p,
+        shrinking=shrinking,
+        probability=probability,
+        nr_weight=<int> class_weight.shape[0],
+        weight_label=<char *> &class_weight_label[0],
+        weight=<char *> &class_weight[0],
+        max_iter=-1,
+        random_seed=-1, # random seed has no effect on predict either
+    )
 
-    model = csr_set_model(param, <int> nSV.shape[0], SV_data.data,
-                          SV_indices.shape, SV_indices.data,
-                          SV_indptr.shape, SV_indptr.data,
-                          sv_coef.data, intercept.data,
-                          nSV.data, probA.data, probB.data)
+    model = csr_set_model(
+        param=param,
+        nr_class=<int> nSV.shape[0],
+        SV_data=<char *> &SV_data[0],
+        SV_indices_dims=<cnp.npy_intp *> SV_indices.shape,
+        SV_indices=<char *> &SV_indices[0],
+        SV_intptr_dims=<cnp.npy_intp *> SV_indptr.shape,
+        SV_intptr=<char *> &SV_indptr[0],
+        sv_coef=<char *> &sv_coef[0],
+        rho=<char *> &intercept[0],
+        nSV=<char *> &nSV[0],
+        probA=<char *> &probA[0],
+        probB=<char *> &probB[0],
+    )
     #TODO: use check_model
     cdef cnp.npy_intp n_class = get_nr(model)
     cdef int rv
-    dec_values = np.empty((T_indptr.shape[0]-1, n_class), dtype=np.float64)
+    cdef cnp.float64_t[:, ::1] dec_values = np.empty((T_indptr.shape[0] - 1, n_class), dtype=np.float64)
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
     with nogil:
-        rv = csr_copy_predict_proba(T_data.shape, T_data.data,
-                                    T_indices.shape, T_indices.data,
-                                    T_indptr.shape, T_indptr.data,
-                                    model, dec_values.data,
-                                    &blas_functions)
+        rv = csr_copy_predict_proba(
+            data_size=<cnp.npy_intp *> T_data.shape,
+            data=<char *> &T_data[0],
+            index_size=<cnp.npy_intp *> T_indices.shape,
+            index=<char *> &T_indices[0],
+            intptr_size=<cnp.npy_intp *> T_indptr.shape,
+            size=<char *> &T_indptr[0],
+            model=model,
+            dec_values=<char *> &dec_values[0, 0],
+            blas_functions=&blas_functions,
+        )
     if rv < 0:
         raise MemoryError("We've run out of memory")
     # free model and param
     free_model_SV(model)
     free_model(model)
     free_param(param)
-    return dec_values
-
-
+    return dec_values.base
 
 
 def libsvm_sparse_decision_function(
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] T_data,
-    cnp.ndarray[cnp.int32_t,   ndim=1, mode='c'] T_indices,
-    cnp.ndarray[cnp.int32_t,   ndim=1, mode='c'] T_indptr,
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] SV_data,
-    cnp.ndarray[cnp.int32_t,   ndim=1, mode='c'] SV_indices,
-    cnp.ndarray[cnp.int32_t,   ndim=1, mode='c'] SV_indptr,
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] sv_coef,
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c']
-    intercept, int svm_type, int kernel_type, int
-    degree, double gamma, double coef0, double
-    eps, double C,
-    cnp.ndarray[cnp.float64_t, ndim=1] class_weight,
-    double nu, double p, int shrinking, int probability,
-    cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] nSV,
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] probA,
-    cnp.ndarray[cnp.float64_t, ndim=1, mode='c'] probB):
+    const cnp.float64_t[::1] T_data,
+    const cnp.int32_t[::1] T_indices,
+    const cnp.int32_t[::1] T_indptr,
+    const cnp.float64_t[::1] SV_data,
+    const cnp.int32_t[::1] SV_indices,
+    const cnp.int32_t[::1] SV_indptr,
+    const cnp.float64_t[::1] sv_coef,
+    const cnp.float64_t[::1] intercept,
+    int svm_type,
+    int kernel_type,
+    int degree,
+    double gamma,
+    double coef0,
+    double eps,
+    double C,
+    const cnp.float64_t[:] class_weight,
+    double nu,
+    double p,
+    int shrinking,
+    int probability,
+    const cnp.int32_t[::1] nSV,
+    const cnp.float64_t[::1] probA,
+    const cnp.float64_t[::1] probB,
+):
     """
     Predict margin (libsvm name for this is predict_values)
 
     We have to reconstruct model and parameters to make sure we stay
     in sync with the python object.
     """
-    cdef cnp.ndarray[cnp.float64_t, ndim=2, mode='c'] dec_values
     cdef svm_parameter *param
     cdef cnp.npy_intp n_class
 
     cdef svm_csr_model *model
-    cdef cnp.ndarray[cnp.int32_t, ndim=1, mode='c'] \
-        class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
-    param = set_parameter(svm_type, kernel_type, degree, gamma,
-                          coef0, nu,
-                          100., # cache size has no effect on predict
-                          C, eps, p, shrinking,
-                          probability, <int> class_weight.shape[0],
-                          class_weight_label.data, class_weight.data, -1, -1)
+    cdef cnp.int32_t[::1] class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
+    param = set_parameter(
+        svm_type=svm_type,
+        kernel_type=kernel_type,
+        degree=degree,
+        gamma=gamma,
+        coef0=coef0,
+        nu=nu,
+        cache_size=100.0, # cache size has no effect on predict
+        C=C,
+        eps=eps,
+        p=p,
+        shrinking=shrinking,
+        probability=probability,
+        nr_weight=<int> class_weight.shape[0],
+        weight_label=<char *> &class_weight_label[0],
+        weight=<char *> &class_weight[0],
+        max_iter=-1,
+        random_seed=-1,
+    )
 
-    model = csr_set_model(param, <int> nSV.shape[0], SV_data.data,
-                          SV_indices.shape, SV_indices.data,
-                          SV_indptr.shape, SV_indptr.data,
-                          sv_coef.data, intercept.data,
-                          nSV.data, probA.data, probB.data)
+    model = csr_set_model(
+        param=param,
+        nr_class=<int> nSV.shape[0],
+        SV_data=<char *> &SV_data[0],
+        SV_indices_dims=<cnp.npy_intp *> SV_indices.shape,
+        SV_indices=<char *> &SV_indices[0],
+        SV_intptr_dims=<cnp.npy_intp *> SV_indptr.shape,
+        SV_intptr=<char *> &SV_indptr[0],
+        sv_coef=<char *> &sv_coef[0],
+        rho=<char *> &intercept[0],
+        nSV=<char *> &nSV[0],
+        probA=<char *> &probA[0],
+        probB=<char *> &probB[0],
+    )
 
     if svm_type > 1:
         n_class = 1
@@ -407,21 +610,28 @@ def libsvm_sparse_decision_function(
         n_class = get_nr(model)
         n_class = n_class * (n_class - 1) // 2
 
-    dec_values = np.empty((T_indptr.shape[0] - 1, n_class), dtype=np.float64)
+    cdef cnp.float64_t[:, ::1] dec_values = np.empty((T_indptr.shape[0] - 1, n_class), dtype=np.float64)
     cdef BlasFunctions blas_functions
     blas_functions.dot = _dot[double]
-    if csr_copy_predict_values(T_data.shape, T_data.data,
-                        T_indices.shape, T_indices.data,
-                        T_indptr.shape, T_indptr.data,
-                        model, dec_values.data, n_class,
-                        &blas_functions) < 0:
+    if csr_copy_predict_values(
+        data_size=<cnp.npy_intp *> T_data.shape,
+        data=<char *> &T_data[0],
+        index_size=<cnp.npy_intp *> T_indices.shape,
+        index=<char *> &T_indices[0],
+        intptr_size=<cnp.npy_intp *> T_indptr.shape,
+        size=<char *> &T_indptr[0],
+        model=model,
+        dec_values=<char *> &dec_values[0, 0],
+        nr_class=n_class,
+        blas_functions=&blas_functions,
+    ) < 0:
         raise MemoryError("We've run out of memory")
     # free model and param
     free_model_SV(model)
     free_model(model)
     free_param(param)
 
-    return dec_values
+    return dec_values.base
 
 
 def set_verbosity_wrap(int verbosity):
