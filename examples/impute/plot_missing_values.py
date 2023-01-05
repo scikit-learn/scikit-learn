@@ -44,20 +44,8 @@ missing values imputed using different techniques.
 
 import numpy as np
 
-
+from sklearn.datasets import fetch_california_housing
 from sklearn.datasets import load_diabetes
-from sklearn.datasets import load_boston
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.pipeline import make_pipeline, make_union
-from sklearn.impute import SimpleImputer, IterativeImputer, MissingIndicator
-from sklearn.model_selection import cross_val_score
-
-print(__doc__)
-
-rng = np.random.RandomState(0)
-
-N_SPLITS = 5
-REGRESSOR = RandomForestRegressor(random_state=0, n_estimators=100)
 
 
 rng = np.random.RandomState(42)
