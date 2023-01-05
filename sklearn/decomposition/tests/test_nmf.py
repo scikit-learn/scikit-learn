@@ -21,6 +21,7 @@ from sklearn.utils._testing import ignore_warnings
 from sklearn.utils.extmath import squared_norm
 from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
+from sklearn.impute import SimpleImputer
 
 
 @pytest.mark.parametrize(
@@ -861,43 +862,54 @@ def test_nmf_check_missing_values():
 
 @ignore_warnings(category=ConvergenceWarning)
 def test_nmf_imputation():
-    # Test that we can use NMF to impute missing values in X
+    # Test that we can use NMF to impute missing values in low-rank X
     n_samples = 20
     n_features = 10
     n_components = 3
     missing_rate = 0.1
 
-    # initialization
+    params = dict(
+        W=None,
+        H=None,
+        init="random",
+        max_iter=200,
+        tol=1e-3,
+        n_components=n_components,
+        solver="mu",
+        random_state=0,
+    )
+
+    # create a ground truth low-rank matrix X_original
     rng = np.random.mtrand.RandomState(42)
-    W0 = rng.randn(n_samples, n_components)
-    H0 = rng.randn(n_components, n_features)
-    np.abs(W0, W0)
-    np.abs(H0, H0)
-    X0 = np.dot(W0, H0)
-    X = X0.copy()
+    W = rng.randn(n_samples, n_components)
+    H = rng.randn(n_components, n_features)
+    np.abs(W, W)
+    np.abs(H, H)
+    X_original = np.dot(W, H)
+    X_original /= X_original.max()
 
     # add missing values
-    X[rng.rand(n_samples, n_features) < missing_rate] = np.nan
+    X_nan = X_original.copy()
+    mask = rng.rand(n_samples, n_features) < missing_rate
+    X_nan[mask] = np.nan
+    X_imputed = SimpleImputer().fit_transform(X_nan)
 
-    for beta_loss in (
-        0,
-        1,
-        2,
-    ):
-        W, H, _ = non_negative_factorization(
-            X=X,
-            W=None,
-            H=None,
-            beta_loss=beta_loss,
-            init="random",
-            max_iter=200,
-            tol=1e-3,
-            n_components=n_components,
-            solver="mu",
-            random_state=0,
+    for beta_loss in (0, 1, 2):
+        # test that the NMF imputed values are close to the original values
+        W, H, _ = non_negative_factorization(X=X_nan, beta_loss=beta_loss, **params)
+        loss_nmf = nmf._beta_divergence(X_original, W, H, beta_loss)
+        assert_almost_equal(X_original, np.dot(W, H), decimal=1)
+
+        # test that the NMF imputation is better than SimpleImputer
+        loss_imputer = nmf._beta_divergence(
+            X_original, X_imputed, np.eye(n_features), beta_loss
         )
+        assert loss_imputer > loss_nmf
 
-        assert_almost_equal(X0, np.dot(W, H), decimal=1)
+        # test that the NMF imputation is better than SimpleImputer+NMF
+        W, H, _ = non_negative_factorization(X=X_imputed, beta_loss=beta_loss, **params)
+        loss_imputer_nmf = nmf._beta_divergence(X_original, W, H, beta_loss)
+        assert loss_imputer_nmf > loss_nmf
 
 
 def test_nmf_underflow():
