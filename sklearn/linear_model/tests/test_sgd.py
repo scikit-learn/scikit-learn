@@ -2162,3 +2162,9 @@ def test_sgd_error_on_zero_validation_weight():
     )
     with pytest.raises(ValueError, match=error_message):
         clf.fit(X, Y, sample_weight=sample_weight)
+
+
+@pytest.mark.parametrize("Estimator", [SGDClassifier, SGDRegressor])
+def test_sgd_verbose(Estimator):
+    """non-regression test for gh #25249"""
+    Estimator(verbose=1).fit(X, Y)
