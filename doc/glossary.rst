@@ -751,11 +751,11 @@ General Concepts
     stateless
         An estimator is stateless if it does not store any information that is
         obtained during :term:`fit`. This information can be either parameters
-        :term:`learned` during :term:`fit` or statistics computed from the
+        learned during :term:`fit` or statistics computed from the
         training data. An estimator is stateless if it has no :term:`attributes`
-        apart from ones set in :term:`__init__`. Calling :term:`fit` for these
+        apart from ones set in `__init__`. Calling :term:`fit` for these
         estimators will only validate the public :term:`attributes` passed
-        in :term:`__init__`.
+        in `__init__`.
 
     supervised
     supervised learning
