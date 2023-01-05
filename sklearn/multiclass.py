@@ -44,7 +44,7 @@ from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MultiOutputMixin
 from .base import MetaEstimatorMixin, is_regressor
 from .preprocessing import LabelBinarizer
-from .metrics.pairwise import euclidean_distances
+from .metrics.pairwise import pairwise_distances_argmin
 from .utils import check_random_state
 from .utils._param_validation import HasMethods, Interval
 from .utils._tags import _safe_tags
@@ -863,8 +863,8 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
     classifiers are used to project new points in the class space and the class
     closest to the points is chosen. The main advantage of these strategies is
     that the number of classifiers used can be controlled by the user, either
-    for compressing the model (0 < code_size < 1) or for making the model more
-    robust to errors (code_size > 1). See the documentation for more details.
+    for compressing the model (0 < `code_size` < 1) or for making the model more
+    robust to errors (`code_size` > 1). See the documentation for more details.
 
     Read more in the :ref:`User Guide <ecoc>`.
 
@@ -1003,12 +1003,12 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
         # FIXME: there are more elaborate methods than generating the codebook
         # randomly.
         self.code_book_ = random_state.uniform(size=(n_classes, code_size_))
-        self.code_book_[self.code_book_ > 0.5] = 1
+        self.code_book_[self.code_book_ > 0.5] = 1.0
 
         if hasattr(self.estimator, "decision_function"):
-            self.code_book_[self.code_book_ != 1] = -1
+            self.code_book_[self.code_book_ != 1] = -1.0
         else:
-            self.code_book_[self.code_book_ != 1] = 0
+            self.code_book_[self.code_book_ != 1] = 0.0
 
         classes_index = {c: i for i, c in enumerate(self.classes_)}
 
@@ -1042,6 +1042,13 @@ class OutputCodeClassifier(MetaEstimatorMixin, ClassifierMixin, BaseEstimator):
             Predicted multi-class targets.
         """
         check_is_fitted(self)
-        Y = np.array([_predict_binary(e, X) for e in self.estimators_]).T
-        pred = euclidean_distances(Y, self.code_book_).argmin(axis=1)
+        # ArgKmin only accepts C-contiguous array. The aggregated predictions need to be
+        # transposed. We therefore create a F-contiguous array to avoid a copy and have
+        # a C-contiguous array after the transpose operation.
+        Y = np.array(
+            [_predict_binary(e, X) for e in self.estimators_],
+            order="F",
+            dtype=np.float64,
+        ).T
+        pred = pairwise_distances_argmin(Y, self.code_book_, metric="euclidean")
         return self.classes_[pred]
