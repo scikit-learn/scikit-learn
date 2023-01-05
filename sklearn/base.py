@@ -889,6 +889,7 @@ class OneToOneFeatureMixin:
         feature_names_out : ndarray of str objects
             Same as input features.
         """
+        check_is_fitted(self, "n_features_in_")
         return _check_feature_names_in(self, input_features)
 
 
