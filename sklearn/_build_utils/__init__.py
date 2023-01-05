@@ -40,6 +40,7 @@ def cythonize_extensions(extension):
     """Check that a recent Cython is available and cythonize extensions"""
     _check_cython_version()
     from Cython.Build import cythonize
+    import Cython
 
     # Fast fail before cythonization if compiler fails compiling basic test
     # code even without OpenMP
@@ -70,21 +71,25 @@ def cythonize_extensions(extension):
         os.environ.get("SKLEARN_ENABLE_DEBUG_CYTHON_DIRECTIVES", "0") != "0"
     )
 
+    compiler_directives = {
+        "language_level": 3,
+        "boundscheck": cython_enable_debug_directives,
+        "wraparound": False,
+        "initializedcheck": False,
+        "nonecheck": False,
+        "cdivision": True,
+    }
+
+    if not Cython.__version__.startswith("0."):
+        compiler_directives["legacy_implicit_noexcept"] = True
+
     return cythonize(
         extension,
         nthreads=n_jobs,
         compile_time_env={
             "SKLEARN_OPENMP_PARALLELISM_ENABLED": sklearn._OPENMP_SUPPORTED
         },
-        compiler_directives={
-            "language_level": 3,
-            "boundscheck": cython_enable_debug_directives,
-            "wraparound": False,
-            "initializedcheck": False,
-            "nonecheck": False,
-            "cdivision": True,
-            "legacy_implicit_noexcept": True,
-        },
+        compiler_directives=compiler_directives,
     )
 
 
