@@ -164,7 +164,7 @@ class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
-        check_is_fitted(self, "n_features_in_")
+        check_is_fitted(self)
         input_features = _check_feature_names_in(self, input_features)
         return input_features[self.get_support()]
 
