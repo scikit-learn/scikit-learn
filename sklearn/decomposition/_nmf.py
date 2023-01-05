@@ -1242,7 +1242,7 @@ def non_negative_factorization(
         X,
         accept_sparse=("csr", "csc"),
         dtype=[np.float64, np.float32],
-        force_all_finite=False,
+        force_all_finite=not est._more_tags()["allow_nan"],
     )
 
     with config_context(assume_finite=True):
@@ -1718,7 +1718,7 @@ class NMF(_BaseNMF):
             X,
             accept_sparse=("csr", "csc"),
             dtype=[np.float64, np.float32],
-            force_all_finite=False,
+            force_all_finite=not self._more_tags()["allow_nan"],
         )
 
         with config_context(assume_finite=True):
@@ -1850,7 +1850,7 @@ class NMF(_BaseNMF):
             accept_sparse=("csr", "csc"),
             dtype=[np.float64, np.float32],
             reset=False,
-            force_all_finite=False,
+            force_all_finite=not self._more_tags()["allow_nan"],
         )
 
         with config_context(assume_finite=True):
@@ -1859,7 +1859,12 @@ class NMF(_BaseNMF):
         return W
 
     def _more_tags(self):
-        return {"allow_nan": self.solver == "mu"}
+        return {
+            "allow_nan": (
+                self.solver == "mu"
+                and self.init not in [None, "nndsvd", "nndsvda", "nndsvdar"]
+            )
+        }
 
 
 class MiniBatchNMF(_BaseNMF):
@@ -2305,7 +2310,7 @@ class MiniBatchNMF(_BaseNMF):
             X,
             accept_sparse=("csr", "csc"),
             dtype=[np.float64, np.float32],
-            force_all_finite=False,
+            force_all_finite=not self._more_tags()["allow_nan"],
         )
 
         with config_context(assume_finite=True):
@@ -2367,12 +2372,6 @@ class MiniBatchNMF(_BaseNMF):
                 "to X, or use a positive beta_loss."
             )
 
-        # transform in a numpy masked array if X contains missing (NaN) values
-        if not sp.issparse(X):
-            X_mask = np.isnan(X)
-            if np.any(X_mask):
-                X = np.ma.masked_array(X, mask=X_mask)
-
         n_samples = X.shape[0]
 
         # initialize or check W and H
@@ -2387,6 +2386,12 @@ class MiniBatchNMF(_BaseNMF):
         self._ewa_cost = None
         self._ewa_cost_min = None
         self._no_improvement = 0
+
+        # transform in a numpy masked array if X contains missing (NaN) values
+        if not sp.issparse(X):
+            X_mask = np.isnan(X)
+            if np.any(X_mask):
+                X = np.ma.masked_array(X, mask=X_mask)
 
         batches = gen_batches(n_samples, self._batch_size)
         batches = itertools.cycle(batches)
@@ -2437,7 +2442,7 @@ class MiniBatchNMF(_BaseNMF):
             accept_sparse=("csr", "csc"),
             dtype=[np.float64, np.float32],
             reset=False,
-            force_all_finite=False,
+            force_all_finite=not self._more_tags()["allow_nan"],
         )
 
         # transform in a numpy masked array if X contains missing (NaN) values
@@ -2513,4 +2518,4 @@ class MiniBatchNMF(_BaseNMF):
         return self
 
     def _more_tags(self):
-        return {"allow_nan": True}
+        return {"allow_nan": self.init not in [None, "nndsvd", "nndsvda", "nndsvdar"]}

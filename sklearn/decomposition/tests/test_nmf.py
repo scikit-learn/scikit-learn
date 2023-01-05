@@ -847,23 +847,18 @@ def test_nmf_decreasing(solver):
 def test_nmf_check_missing_values():
     # Test that different configurations throw appropriate errors
     X = [[2, 0], [np.nan, 2]]
-    nnmf = non_negative_factorization
-    X_csr = sp.csr_matrix(X)
 
     match = "initializations with NNDSVD are not available with missing values"
-    nnmf = partial(non_negative_factorization, init="nndsvdar", solver="mu")
     with pytest.raises(ValueError, match=match):
-        nnmf(X)
+        non_negative_factorization(X, init="nndsvdar", solver="mu")
 
-    nnmf = partial(non_negative_factorization, init="random", solver="cd")
     match = "NMF solver 'cd' cannot handle missing values"
     with pytest.raises(ValueError, match=match):
-        nnmf(X)
+        non_negative_factorization(X, init="random", solver="cd")
 
-    nnmf = partial(non_negative_factorization, init="random", solver="mu")
     match = "NMF with missing values is not implemented for sparse matrices"
     with pytest.raises(ValueError, match=match):
-        nnmf(X_csr)
+        non_negative_factorization(sp.csr_matrix(X), init="random", solver="mu")
 
 
 @ignore_warnings(category=ConvergenceWarning)
