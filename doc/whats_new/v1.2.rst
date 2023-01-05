@@ -35,7 +35,7 @@ Changelog
   :pr:`25274` by `Thomas Fan`_.
 
 - |Fix| :meth:`preprocessing.SplineTransformer.get_feature_names_out` correctly
-  returns feature names when `extrapolations="periodic"`. :pr:`xxxxx` by
+  returns feature names when `extrapolations="periodic"`. :pr:`25296` by
   `Thomas Fan`_.
 
 :mod:`sklearn.utils`
