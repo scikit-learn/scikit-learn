@@ -68,7 +68,7 @@ cdef class _QuadTree:
 
     # Point insertion methods
     cdef int insert_point(self, DTYPE_t[3] point, SIZE_t point_index,
-                          SIZE_t cell_id=*) nogil except -1
+                          SIZE_t cell_id=*) except -1 nogil
     cdef SIZE_t _insert_point_in_new_child(self, DTYPE_t[3] point, Cell* cell,
                                            SIZE_t point_index, SIZE_t size=*
                                            ) nogil
@@ -87,10 +87,10 @@ cdef class _QuadTree:
 
     # Private methods
     cdef int _check_point_in_cell(self, DTYPE_t[3] point, Cell* cell
-                                  ) nogil except -1
+                                  ) except -1 nogil
 
     # Private array manipulation to manage the ``cells`` array
-    cdef int _resize(self, SIZE_t capacity) nogil except -1
-    cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
-    cdef int _get_cell(self, DTYPE_t[3] point, SIZE_t cell_id=*) nogil except -1
+    cdef int _resize(self, SIZE_t capacity) except -1 nogil
+    cdef int _resize_c(self, SIZE_t capacity=*) except -1 nogil
+    cdef int _get_cell(self, DTYPE_t[3] point, SIZE_t cell_id=*) except -1 nogil
     cdef cnp.ndarray _get_cell_ndarray(self)

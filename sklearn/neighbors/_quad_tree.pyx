@@ -52,7 +52,7 @@ cdef class _QuadTree:
         # Parameters of the tree
         self.n_dimensions = n_dimensions
         self.verbose = verbose
-        self.n_cells_per_cell = 2 ** self.n_dimensions
+        self.n_cells_per_cell = 2 ** int(self.n_dimensions)
 
         # Inner structures
         self.max_depth = 0
@@ -112,7 +112,7 @@ cdef class _QuadTree:
         self._resize(capacity=self.cell_count)
 
     cdef int insert_point(self, DTYPE_t[3] point, SIZE_t point_index,
-                          SIZE_t cell_id=0) nogil except -1:
+                          SIZE_t cell_id=0) except -1 nogil:
         """Insert a point in the QuadTree."""
         cdef int ax
         cdef SIZE_t selected_child
@@ -300,7 +300,7 @@ cdef class _QuadTree:
         self.cell_count += 1
 
     cdef int _check_point_in_cell(self, DTYPE_t[3] point, Cell* cell
-                                  ) nogil except -1:
+                                  ) except -1 nogil:
         """Check that the given point is in the cell boundaries."""
 
         if self.verbose >= 50:
@@ -459,7 +459,7 @@ cdef class _QuadTree:
         return self._get_cell(query_pt, 0)
 
     cdef int _get_cell(self, DTYPE_t[3] point, SIZE_t cell_id=0
-                       ) nogil except -1:
+                       ) except -1 nogil:
         """guts of get_cell.
 
         Return the id of the cell containing the query point or raise ValueError
@@ -554,7 +554,7 @@ cdef class _QuadTree:
             raise ValueError("Can't initialize array!")
         return arr
 
-    cdef int _resize(self, SIZE_t capacity) nogil except -1:
+    cdef int _resize(self, SIZE_t capacity) except -1 nogil:
         """Resize all inner arrays to `capacity`, if `capacity` == -1, then
            double the size of the inner arrays.
 
@@ -566,7 +566,7 @@ cdef class _QuadTree:
             with gil:
                 raise MemoryError()
 
-    cdef int _resize_c(self, SIZE_t capacity=SIZE_MAX) nogil except -1:
+    cdef int _resize_c(self, SIZE_t capacity=SIZE_MAX) except -1 nogil:
         """Guts of _resize
 
         Returns -1 in case of failure to allocate memory (and raise MemoryError)

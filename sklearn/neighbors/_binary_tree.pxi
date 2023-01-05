@@ -538,7 +538,7 @@ cdef class NeighborsHeap:
             self._sort()
         return self.distances.base, self.indices.base
 
-    cdef inline DTYPE_t largest(self, ITYPE_t row) nogil except -1:
+    cdef inline DTYPE_t largest(self, ITYPE_t row) except -1 nogil:
         """Return the largest distance in the given row"""
         return self.distances[row, 0]
 
@@ -546,7 +546,7 @@ cdef class NeighborsHeap:
         return self._push(row, val, i_val)
 
     cdef int _push(self, ITYPE_t row, DTYPE_t val,
-                   ITYPE_t i_val) nogil except -1:
+                   ITYPE_t i_val) except -1 nogil:
         """push (val, i_val) into the given row"""
         return heap_push(
             values=&self.distances[row, 0],
@@ -846,7 +846,7 @@ cdef class BinaryTree:
         # with numbers of points between leaf_size and 2 * leaf_size
         self.n_levels = int(
             np.log2(fmax(1, (n_samples - 1) / self.leaf_size)) + 1)
-        self.n_nodes = (2 ** self.n_levels) - 1
+        self.n_nodes = (2 ** int(self.n_levels)) - 1
 
         # allocate arrays for storage
         self.idx_array = np.arange(n_samples, dtype=ITYPE)
@@ -980,7 +980,7 @@ cdef class BinaryTree:
         )
 
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
-                             ITYPE_t size) nogil except -1:
+                             ITYPE_t size) except -1 nogil:
         """Compute the distance between arrays x1 and x2"""
         self.n_calls += 1
         if self.euclidean:
@@ -989,7 +989,7 @@ cdef class BinaryTree:
             return self.dist_metric.dist(x1, x2, size)
 
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
-                              ITYPE_t size) nogil except -1:
+                              ITYPE_t size) except -1 nogil:
         """Compute the reduced distance between arrays x1 and x2.
 
         The reduced distance, defined for some metrics, is a quantity which
@@ -1574,7 +1574,7 @@ cdef class BinaryTree:
     cdef int _query_single_depthfirst(self, ITYPE_t i_node,
                                       DTYPE_t* pt, ITYPE_t i_pt,
                                       NeighborsHeap heap,
-                                      DTYPE_t reduced_dist_LB) nogil except -1:
+                                      DTYPE_t reduced_dist_LB) except -1 nogil:
         """Recursive Single-tree k-neighbors query, depth-first approach"""
         cdef NodeData_t node_info = self.node_data[i_node]
 

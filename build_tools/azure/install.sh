@@ -84,7 +84,7 @@ python_environment_install_and_activate() {
         dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
         pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas scipy
         echo "Installing Cython from latest sources"
-        pip install https://github.com/cython/cython/archive/refs/heads/master.zip
+        pip install https://github.com/cython/cython/archive/master.zip
         echo "Installing joblib from latest sources"
         pip install https://github.com/joblib/joblib/archive/master.zip
         echo "Installing pillow from latest sources"

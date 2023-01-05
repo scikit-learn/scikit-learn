@@ -83,6 +83,7 @@ def cythonize_extensions(extension):
             "initializedcheck": False,
             "nonecheck": False,
             "cdivision": True,
+            "legacy_implicit_noexcept": True,
         },
     )
 
