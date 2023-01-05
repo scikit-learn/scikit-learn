@@ -126,6 +126,15 @@ def johnson_lindenstrauss_min_dim(n_samples, *, eps=0.1):
     eps = np.asarray(eps)
     n_samples = np.asarray(n_samples)
 
+    if np.any(eps <= 0.0) or np.any(eps >= 1):
+        raise ValueError("The JL bound is defined for eps in ]0, 1[, got %r" % eps)
+
+    if np.any(n_samples <= 0):
+        raise ValueError(
+            "The JL bound is defined for n_samples greater than zero, got %r"
+            % n_samples
+        )
+
     denominator = (eps**2 / 2) - (eps**3 / 3)
     return (4 * np.log(n_samples) / denominator).astype(np.int64)
 
