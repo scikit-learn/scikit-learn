@@ -1850,7 +1850,7 @@ class NMF(_BaseNMF):
             accept_sparse=("csr", "csc"),
             dtype=[np.float64, np.float32],
             reset=False,
-            force_all_finite=not self._more_tags()['allow_nan'],
+            force_all_finite=not self._more_tags()["allow_nan"],
         )
 
         with config_context(assume_finite=True):
@@ -2442,7 +2442,7 @@ class MiniBatchNMF(_BaseNMF):
             accept_sparse=("csr", "csc"),
             dtype=[np.float64, np.float32],
             reset=False,
-            force_all_finite=not self._more_tags()['allow_nan'],
+            force_all_finite=not self._more_tags()["allow_nan"],
         )
 
         # transform in a numpy masked array if X contains missing (NaN) values
