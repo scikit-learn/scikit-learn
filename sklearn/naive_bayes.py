@@ -1613,19 +1613,15 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         estimators to be combined into a single naive Bayes meta-estimator.
 
         name : str
-            Name of the naive Bayes estimator. Like in
-            :class:`~sklearn.pipeline.Pipeline`,
-            :class:`~sklearn.pipeline.FeatureUnion`,
-            and :class:`~sklearn.compose.ColumnTransformer`, this allows the
-            subestimator and its parameters to be set using :term:`set_params`
-            and searched in grid search.
+            Name of the naive Bayes estimator, by which the subestimator and
+            its parameters can be set using :term:`set_params` and searched in
+            grid search.
         nb_estimator : estimator
             The estimator must support :term:`fit` or :term:`partial_fit`,
             depending on how the meta-estimator is fitted. In addition, the
             estimator must support `predict_joint_log_proba` method, which
-            takes :term:`X` of shape (n_samples, n_features) and returns a
-            numpy array of shape (n_samples, n_classes) containing joint
-            log-probabilities, `log P(x,y)` for each sample point and class.
+            returns a numpy array of shape (n_samples, n_classes) containing
+            joint log-probabilities, `log P(x,y)` for each sample point and class.
         columns : str, array-like of str, int, array-like of int, \
                 array-like of bool, slice or callable
             Indexes the data on its second axis. Integers are interpreted as
@@ -1643,10 +1639,11 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         calculated as relative frequencies of classes in the training data.
         If str, the priors are taken from the estimator with the given name.
         If array-like, the same priors might have to be specified manually in
-        each sub-estimator, in order to ensure consistent predictions.
+        each subestimator, in order to ensure consistent predictions.
 
     n_jobs : int, default=None
-        Number of jobs to run in parallel.
+        Number of jobs to run in parallel. Appropriate fit or predict methods
+        of subestimators are invoked in parallel.
         `None` means 1 unless in a :obj:`joblib.parallel_backend` context.
         `-1` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
@@ -1779,8 +1776,6 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         return np.sum(all_jlls, axis=0) - (n_estimators - 1) * log_prior
 
     def _validate_estimators(self, check_partial=False):
-        # Check if estimators have fit/partial_fit and joint log prob methods
-        # Validate estimator names via _BaseComposition._validate_names(self, names)
         try:
             names, estimators, _ = zip(*self.nb_estimators)
         except (TypeError, AttributeError, ValueError) as exc:
@@ -1809,12 +1804,6 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
 
         Empty-set columns do not enjoy any special treatment.
         """
-        # Almost a verbatim copy of ColumnTransformer._validate_column_callables().
-        # Consider refactoring in the future.
-        # Unlike ColumnTransformer, this estimator does not need to output a
-        # dataframe or validate a the remainder, so _estimator_to_input_indices
-        # is not really needed, but retained for consistency with
-        # ColumnTransformer code.
         all_columns = []
         estimator_to_input_indices = {}
         for name, _, columns in self.nb_estimators:
@@ -2055,7 +2044,6 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         This is for the implementation of get_params via BaseComposition._get_params,
         which expects lists of tuples of len 2.
         """
-        # Implemented in the image and likeness of ColumnTranformer._transformers
         try:
             return [(name, e) for name, e, _ in self.nb_estimators]
         except (TypeError, ValueError):
@@ -2066,8 +2054,6 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
 
     @_estimators.setter
     def _estimators(self, value):
-        # Implemented in the image and likeness of ColumnTranformer._transformers
-        # TODO: Is renaming or changing the order legal? Swap `name` and `_`?
         self.nb_estimators = [
             (name, e, col)
             for ((name, e), (_, _, col)) in zip(value, self.nb_estimators)
@@ -2077,7 +2063,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         """Get parameters for this estimator.
 
         Returns the parameters listed in the constructor as well as the
-        subestimators contained within the `estimators` of the `ColumnwiseNB`
+        subestimators contained within the `nb_estimators` of the `ColumnwiseNB`
         instance.
 
         Parameters
@@ -2091,7 +2077,6 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         params : dict
             Parameter names mapped to their values.
         """
-        # Implemented in the image and likeness of ColumnTranformer.get_params
         return self._get_params("_estimators", deep=deep)
 
     def set_params(self, **kwargs):
@@ -2099,7 +2084,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
 
         Valid parameter keys can be listed with `get_params()`. Note that you
         can directly set the parameters of the estimators contained in
-        `estimators` of `ColumnwiseNB`.
+        `nb_estimators` of `ColumnwiseNB`.
 
         Parameters
         ----------
@@ -2111,7 +2096,6 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         self : ColumnwiseNB
             This estimator.
         """
-        # Implemented in the image and likeness of ColumnTranformer.set_params
         self._set_params("_estimators", **kwargs)
         return self
 
