@@ -77,7 +77,7 @@ Changelog
 - |Feature| Added :class:`exception.InconsistentVersionWarning` which is raised
   when a scikit-learn estimator is unpickled with a scikit-learn version that is
   inconsistent with the sckit-learn verion the estimator was pickled with.
-  :pr:`xxxxx` by `Thomas Fan`_.
+  :pr:`25297` by `Thomas Fan`_.
 
 :mod:`sklearn.feature_extraction`
 .................................
