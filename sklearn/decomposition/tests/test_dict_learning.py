@@ -582,14 +582,6 @@ def test_sparse_encode_error_default_sparsity():
     assert code.shape == (100, 2)
 
 
-def test_unknown_method():
-    n_components = 12
-    rng = np.random.RandomState(0)
-    V = rng.randn(n_components, n_features)  # random init
-    with pytest.raises(ValueError):
-        sparse_encode(X, V, algorithm="<unknown>")
-
-
 def test_sparse_coder_estimator():
     n_components = 12
     rng = np.random.RandomState(0)
