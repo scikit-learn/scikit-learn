@@ -296,7 +296,7 @@ def test_n_components_greater_n_features(Estimator):
     ["Estimator", "solver"],
     [[NMF, {"solver": "cd"}], [NMF, {"solver": "mu"}], [MiniBatchNMF, {}]],
 )
-@pytest.mark.parametrize("init", ('random', 'nndsvdar'))
+@pytest.mark.parametrize("init", ("random", "nndsvdar"))
 @pytest.mark.parametrize("alpha_W", (0.0, 1.0))
 @pytest.mark.parametrize("alpha_H", (0.0, 1.0, "same"))
 def test_nmf_sparse_input(Estimator, solver, init, alpha_W, alpha_H):
@@ -442,7 +442,7 @@ def _beta_divergence_dense(X, W, H, beta):
         div = X_nonzero / WH_Xnonzero
         res = np.sum(div) - X[~mask_nan].size - np.sum(np.log(div))
     else:
-        res = (X_nonzero ** beta).sum()
+        res = (X_nonzero**beta).sum()
         res += (beta - 1) * (WH[~mask_nan] ** beta).sum()
         res -= beta * (X_nonzero * (WH_Xnonzero ** (beta - 1))).sum()
         res /= beta * (beta - 1)
@@ -469,7 +469,7 @@ def test_beta_divergence():
     rng = np.random.mtrand.RandomState(42)
     X = rng.randn(n_samples, n_features)
     np.clip(X, 0, None, out=X)
-    W, H = nmf._initialize_nmf(X, n_components, init='random', random_state=42)
+    W, H = nmf._initialize_nmf(X, n_components, init="random", random_state=42)
 
     # with dense X
     _compare_beta_divergence_with_ref(X, W, H)
@@ -496,7 +496,7 @@ def test_beta_divergence_nan():
     W[0, 0] = 0
     H[1, 0] = 0
 
-    for beta_loss in (1., 2.):
+    for beta_loss in (1.0, 2.0):
         X[0, 0] = np.nan
         loss_0 = nmf._beta_divergence(X, W, H, beta_loss)
         X[0, 0] = 0
@@ -515,7 +515,7 @@ def test_special_dot_X():
 
     # create masked array and sparse matrix
     mask = rng.randint(2, size=(n_samples, n_features)) > 0
-    X[mask] = 0.
+    X[mask] = 0.0
     X_sparse = sp.csr_matrix(X)
     X_masked = np.ma.masked_array(X, mask=mask)
 
@@ -761,8 +761,9 @@ def test_nmf_with_nan():
     # add missing values
     X_nan[rng.randint(2, size=(n_samples, n_features)) > 0] = np.nan
 
-    model = nmf.NMF(n_components=n_components, beta_loss=2.0,
-                    max_iter=1, solver='mu', init='random')
+    model = nmf.NMF(
+        n_components=n_components, beta_loss=2.0, max_iter=1, solver="mu", init="random"
+    )
     model.fit(X_nan)
     # test than the transform also accept NaN in X
     W = model.transform(X_nan)
@@ -772,7 +773,7 @@ def test_nmf_with_nan():
     W_nan[rng.randint(2, size=(n_samples, n_components)) > 0] = np.nan
     H_nan[rng.randint(2, size=(n_components, n_features)) > 0] = np.nan
 
-    model.set_params(init='custom')
+    model.set_params(init="custom")
     with pytest.raises(ValueError, match="NaN values in data"):
         model.fit_transform(X_nan, None, W_nan, H)
     with pytest.raises(ValueError, match="NaN values in data"):
@@ -797,8 +798,7 @@ def test_nmf_decreasing(solver):
     rng = np.random.mtrand.RandomState(42)
     X_full = rng.randn(n_samples, n_features)
     np.abs(X_full, X_full)
-    W0, H0 = nmf._initialize_nmf(X_full, n_components, init='random',
-                                 random_state=42)
+    W0, H0 = nmf._initialize_nmf(X_full, n_components, init="random", random_state=42)
     # add missing values
     X_nan = X_full.copy()
     X_nan[rng.randint(2, size=(n_samples, n_features)) > 0] = np.nan
@@ -808,7 +808,7 @@ def test_nmf_decreasing(solver):
             if solver != "mu" and beta_loss != 2:
                 # not implemented
                 continue
-            if X is X_nan and solver != 'mu':
+            if X is X_nan and solver != "mu":
                 # not implemented
                 continue
             W, H = W0.copy(), H0.copy()
@@ -851,16 +851,16 @@ def test_nmf_check_missing_values():
     X_csr = sp.csr_matrix(X)
 
     match = "initializations with NNDSVD are not available with missing values"
-    nnmf = partial(non_negative_factorization, init='nndsvdar', solver='mu')
+    nnmf = partial(non_negative_factorization, init="nndsvdar", solver="mu")
     with pytest.raises(ValueError, match=match):
         nnmf(X)
 
-    nnmf = partial(non_negative_factorization, init='random', solver='cd')
+    nnmf = partial(non_negative_factorization, init="random", solver="cd")
     match = "NMF solver 'cd' cannot handle missing values"
     with pytest.raises(ValueError, match=match):
         nnmf(X)
 
-    nnmf = partial(non_negative_factorization, init='random', solver='mu')
+    nnmf = partial(non_negative_factorization, init="random", solver="mu")
     match = "NMF with missing values is not implemented for sparse matrices"
     with pytest.raises(ValueError, match=match):
         nnmf(X_csr)
@@ -886,11 +886,23 @@ def test_nmf_imputation():
     # add missing values
     X[rng.rand(n_samples, n_features) < missing_rate] = np.nan
 
-    for beta_loss in (0, 1, 2,):
+    for beta_loss in (
+        0,
+        1,
+        2,
+    ):
         W, H, _ = non_negative_factorization(
-            X=X, W=None, H=None, beta_loss=beta_loss, init='random',
-            max_iter=200, tol=1e-3,
-            n_components=n_components, solver='mu', random_state=0)
+            X=X,
+            W=None,
+            H=None,
+            beta_loss=beta_loss,
+            init="random",
+            max_iter=200,
+            tol=1e-3,
+            n_components=n_components,
+            solver="mu",
+            random_state=0,
+        )
 
         assert_almost_equal(X0, np.dot(W, H), decimal=1)
 
@@ -968,16 +980,21 @@ def test_nmf_custom_init_dtype_error(Estimator):
 
 
 @pytest.mark.parametrize("beta_loss", [-0.5, 0, 0.5, 1, 1.5, 2, 2.5])
-def test_nmf_minibatchnmf_equivalence(beta_loss):
+@pytest.mark.parametrize("with_nans", [False, True])
+def test_nmf_minibatchnmf_equivalence(beta_loss, with_nans):
     # Test that MiniBatchNMF is equivalent to NMF when batch_size = n_samples and
     # forget_factor 0.0 (stopping criterion put aside)
     rng = np.random.mtrand.RandomState(42)
     X = np.abs(rng.randn(48, 5))
 
+    if with_nans:
+        X[rng.rand(*X.shape) < 0.5] = np.nan
+
     nmf = NMF(
         n_components=5,
         beta_loss=beta_loss,
         solver="mu",
+        init="random",
         random_state=0,
         tol=0,
     )
@@ -985,6 +1002,7 @@ def test_nmf_minibatchnmf_equivalence(beta_loss):
         n_components=5,
         beta_loss=beta_loss,
         random_state=0,
+        init="random",
         tol=0,
         max_no_improvement=None,
         batch_size=X.shape[0],

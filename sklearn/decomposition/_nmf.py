@@ -75,8 +75,7 @@ def _check_init(A, shape, whom):
 
 
 def _safe_squared_norm(X):
-    """Squared Euclidean or Frobenius norm of X, safe for numpy masked arrays.
-    """
+    """Squared Euclidean or Frobenius norm of X, safe for numpy masked arrays."""
     X = _safe_ravel(X)
     if isinstance(X, np.ma.masked_array):
         return float(np.ma.dot(X, X))
@@ -85,8 +84,7 @@ def _safe_squared_norm(X):
 
 
 def _safe_ravel(X):
-    """Guarantee that we preserve masked array in ravel.
-    """
+    """Guarantee that we preserve masked array in ravel."""
     if isinstance(X, np.ma.masked_array):
         return np.ma.ravel(X)
     else:
@@ -94,8 +92,7 @@ def _safe_ravel(X):
 
 
 def _safe_mean(X):
-    """Compute the arithmetic mean of an array, safe for sparse and NaN values
-    """
+    """Compute the arithmetic mean of an array, safe for sparse and NaN values"""
     if sp.issparse(X):
         return X.mean()
     else:
@@ -140,8 +137,10 @@ def _beta_divergence(X, W, H, beta, square_root=False):
 
     # compute the mask of missing data
     if sp.issparse(X) and np.any(np.isnan(X.data)):
-        raise ValueError("X contains np.nan values, and NMF with missing "
-                         "values is not implemented for sparse matrices.")
+        raise ValueError(
+            "X contains np.nan values, and NMF with missing "
+            "values is not implemented for sparse matrices."
+        )
     elif isinstance(X, np.ma.masked_array):
         X_mask = X.mask
     elif not sp.issparse(X):
@@ -227,7 +226,7 @@ def _beta_divergence(X, W, H, beta, square_root=False):
                 sum_WH_beta += np.sum(np.dot(W, H[:, i]) ** beta)
 
         else:
-            sum_WH_beta = (WH ** beta).sum()
+            sum_WH_beta = (WH**beta).sum()
 
         sum_X_WH = np.dot(X_data, WH_data ** (beta - 1))
         res = (X_data**beta).sum() - beta * sum_X_WH
@@ -390,8 +389,10 @@ def _initialize_nmf(X, n_components, init=None, eps=1e-6, random_state=None):
         return W, H
 
     if not sp.issparse(X) and np.any(np.isnan(X)):
-        raise ValueError("NMF initializations with NNDSVD are not available "
-                         "with missing values (np.nan).")
+        raise ValueError(
+            "NMF initializations with NNDSVD are not available "
+            "with missing values (np.nan)."
+        )
 
     # NNDSVD initialization
     U, S, V = randomized_svd(X, n_components, random_state=random_state)
@@ -661,7 +662,7 @@ def _multiplicative_update_w(
 
         if beta_loss == 1:
             # to work around spurious warnings coming out of masked arrays
-            with np.errstate(invalid='ignore'):
+            with np.errstate(invalid="ignore"):
                 np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
         elif beta_loss == 0:
             # speeds up computation time
@@ -686,7 +687,7 @@ def _multiplicative_update_w(
                     H_sum = H_sum[np.newaxis, :]
                 else:
                     H_sum = np.dot(~X_mask, H.T)
-                H_sum[H_sum == 0] = 1.
+                H_sum[H_sum == 0] = 1.0
                 denominator = H_sum
             else:
                 denominator = H_sum.copy()
@@ -758,12 +759,11 @@ def _multiplicative_update_h(
 
         # to avoid division by zero
         if beta_loss - 2.0 < 0:
-            WH_safe_X_data[
-                np.logical_and(WH_safe_X_data == 0, ~X_mask)] = EPSILON
+            WH_safe_X_data[np.logical_and(WH_safe_X_data == 0, ~X_mask)] = EPSILON
 
         if beta_loss == 1:
             # to work around spurious warnings coming out of masked arrays
-            with np.errstate(invalid='ignore'):
+            with np.errstate(invalid="ignore"):
                 np.divide(X_data, WH_safe_X_data, out=WH_safe_X_data)
         elif beta_loss == 0:
             # speeds up computation time
@@ -787,7 +787,7 @@ def _multiplicative_update_h(
                 W_sum = W_sum[:, np.newaxis]
             else:
                 W_sum = np.dot(W.T, ~X_mask)
-            W_sum[W_sum == 0] = 1.
+            W_sum[W_sum == 0] = 1.0
             denominator = W_sum
 
         # beta_loss not in (1, 2)
@@ -1234,8 +1234,12 @@ def non_negative_factorization(
     )
     est._validate_params()
 
-    X = check_array(X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32],
-                    force_all_finite=False)
+    X = check_array(
+        X,
+        accept_sparse=("csr", "csc"),
+        dtype=[np.float64, np.float32],
+        force_all_finite=False,
+    )
 
     with config_context(assume_finite=True):
         W, H, n_iter = est._fit_transform(X, W=W, H=H, update_H=update_H)
@@ -1652,21 +1656,27 @@ class NMF(_BaseNMF):
             )
         if self.solver == "mu" and self.init == "nndsvd":
             warnings.warn(
-                "The multiplicative update ('mu') solver cannot update "
-                "zeros present in the initialization, and so leads to "
-                "poorer results when used jointly with init='nndsvd'. "
-                "You may try init='nndsvda' or init='nndsvdar' instead.",
+                (
+                    "The multiplicative update ('mu') solver cannot update "
+                    "zeros present in the initialization, and so leads to "
+                    "poorer results when used jointly with init='nndsvd'. "
+                    "You may try init='nndsvda' or init='nndsvdar' instead."
+                ),
                 UserWarning,
             )
 
         if sp.issparse(X) and np.any(np.isnan(X.data)):
-            raise ValueError("X contains NaN values, and NMF with missing "
-                            "values is not implemented for sparse matrices.")
+            raise ValueError(
+                "X contains NaN values, and NMF with missing "
+                "values is not implemented for sparse matrices."
+            )
 
-        if not sp.issparse(X) and np.any(np.isnan(X)) and self.solver != 'mu':
-            raise ValueError("NMF solver '%s' cannot handle missing values. "
-                            "Use 'mu' solver or remove NaN from the input X."
-                            % self.solver)
+        if not sp.issparse(X) and np.any(np.isnan(X)) and self.solver != "mu":
+            raise ValueError(
+                "NMF solver '%s' cannot handle missing values. "
+                "Use 'mu' solver or remove NaN from the input X."
+                % self.solver
+            )
 
         return self
 
@@ -1698,8 +1708,10 @@ class NMF(_BaseNMF):
         self._validate_params()
 
         X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32],
-            force_all_finite=False
+            X,
+            accept_sparse=("csr", "csc"),
+            dtype=[np.float64, np.float32],
+            force_all_finite=False,
         )
 
         with config_context(assume_finite=True):
@@ -1827,8 +1839,11 @@ class NMF(_BaseNMF):
         """
         check_is_fitted(self)
         X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32], reset=False,
-            force_all_finite=False
+            X,
+            accept_sparse=("csr", "csc"),
+            dtype=[np.float64, np.float32],
+            reset=False,
+            force_all_finite=False,
         )
 
         with config_context(assume_finite=True):
@@ -2067,7 +2082,6 @@ class MiniBatchNMF(_BaseNMF):
         random_state=None,
         verbose=0,
     ):
-
         super().__init__(
             n_components=n_components,
             init=init,
@@ -2277,7 +2291,10 @@ class MiniBatchNMF(_BaseNMF):
         self._validate_params()
 
         X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32],
+            X,
+            accept_sparse=("csr", "csc"),
+            dtype=[np.float64, np.float32],
+            force_all_finite=False,
         )
 
         with config_context(assume_finite=True):
@@ -2329,7 +2346,7 @@ class MiniBatchNMF(_BaseNMF):
         n_steps : int
             Number of mini-batches processed.
         """
-        check_non_negative(X, "MiniBatchNMF (input X)")
+        check_non_negative(X, "MiniBatchNMF (input X)", accept_nan=True)
         self._check_params(X)
 
         if X.min() == 0 and self._beta_loss <= 0:
@@ -2338,6 +2355,12 @@ class MiniBatchNMF(_BaseNMF):
                 "the solver may diverge. Please add small values "
                 "to X, or use a positive beta_loss."
             )
+
+        # transform in a numpy masked array if X contains missing (NaN) values
+        if not sp.issparse(X):
+            X_mask = np.isnan(X)
+            if np.any(X_mask):
+                X = np.ma.masked_array(X, mask=X_mask)
 
         n_samples = X.shape[0]
 
@@ -2360,7 +2383,6 @@ class MiniBatchNMF(_BaseNMF):
         n_steps = self.max_iter * n_steps_per_iter
 
         for i, batch in zip(range(n_steps), batches):
-
             batch_cost = self._minibatch_step(X[batch], W[batch], H, update_H)
 
             if update_H and self._minibatch_convergence(
@@ -2378,8 +2400,10 @@ class MiniBatchNMF(_BaseNMF):
 
         if n_iter == self.max_iter and self.tol > 0:
             warnings.warn(
-                f"Maximum number of iterations {self.max_iter} reached. "
-                "Increase it to improve convergence.",
+                (
+                    f"Maximum number of iterations {self.max_iter} reached. "
+                    "Increase it to improve convergence."
+                ),
                 ConvergenceWarning,
             )
 
@@ -2400,8 +2424,18 @@ class MiniBatchNMF(_BaseNMF):
         """
         check_is_fitted(self)
         X = self._validate_data(
-            X, accept_sparse=("csr", "csc"), dtype=[np.float64, np.float32], reset=False
+            X,
+            accept_sparse=("csr", "csc"),
+            dtype=[np.float64, np.float32],
+            reset=False,
+            force_all_finite=False,
         )
+
+        # transform in a numpy masked array if X contains missing (NaN) values
+        if not sp.issparse(X):
+            X_mask = np.isnan(X)
+            if np.any(X_mask):
+                X = np.ma.masked_array(X, mask=X_mask)
 
         W = self._solve_W(X, self.components_, self._transform_max_iter)
 
