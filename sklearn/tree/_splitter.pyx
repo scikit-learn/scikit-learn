@@ -371,7 +371,7 @@ cdef inline int node_split_best(
 
     # Reorganize into samples[start:best.pos] + samples[best.pos:end]
     if best.pos < end:
-        data_splitter.parition_samples_best(best.pos, best.threshold, best.feature)
+        data_splitter.partition_samples_final(best.pos, best.threshold, best.feature)
         criterion.reset()
         criterion.update(best.pos)
         criterion.children_impurity(&best.impurity_left,
@@ -619,7 +619,7 @@ cdef inline int node_split_random(
             current.threshold = min_feature_value
 
         # Partition
-        current.pos = data_splitter.parition_samples(current.threshold)
+        current.pos = data_splitter.partition_samples(current.threshold)
 
         # Reject if min_samples_leaf is not guaranteed
         if (((current.pos - start) < min_samples_leaf) or
@@ -644,7 +644,7 @@ cdef inline int node_split_random(
     # Reorganize into samples[start:best.pos] + samples[best.pos:end]
     if best.pos < end:
         if current.feature != best.feature:
-            data_splitter.parition_samples_best(best.pos, best.threshold, best.feature)
+            data_splitter.partition_samples_final(best.pos, best.threshold, best.feature)
 
         criterion.reset()
         criterion.update(best.pos)
@@ -750,7 +750,7 @@ cdef class DenseSplitter:
         # (p >= end) or (X[p, current.feature] > X[p - 1, current.feature])
         p_prev[0] = p[0] - 1
 
-    cdef inline SIZE_t parition_samples(self, double current_threshold) nogil:
+    cdef inline SIZE_t partition_samples(self, double current_threshold) nogil:
         """Parition samples in the random splitter."""
         cdef:
             SIZE_t p = self.start
@@ -769,13 +769,13 @@ cdef class DenseSplitter:
 
         return partition_end
 
-    cdef inline void parition_samples_best(
+    cdef inline void partition_samples_final(
         self,
         SIZE_t best_pos,
         double best_threshold,
         SIZE_t best_feature,
     ) nogil:
-        """Parition samples for the best split."""
+        """Partition samples for the best split."""
         cdef:
             SIZE_t p = self.start
             SIZE_t partition_end = self.end
@@ -939,11 +939,11 @@ cdef class SparseSplitter:
         p_prev[0] = p[0]
         p[0] = p_next
 
-    cdef inline SIZE_t parition_samples(self, double current_threshold) nogil:
+    cdef inline SIZE_t partition_samples(self, double current_threshold) nogil:
         """Parition samples in the random splitter."""
         return self._partition(current_threshold, self.start_positive)
 
-    cdef inline void parition_samples_best(
+    cdef inline void partition_samples_final(
         self,
         SIZE_t best_pos,
         double best_threshold,
