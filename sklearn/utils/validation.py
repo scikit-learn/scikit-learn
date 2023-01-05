@@ -1401,7 +1401,7 @@ def check_non_negative(X, whom, accept_nan=False):
     whom : str
         Who passed X to this function.
 
-    accept_nan : boolean
+    accept_nan : bool, default=False
         If True, NaN values are accepted in X.
     """
     xp, _ = get_namespace(X)
