@@ -1946,7 +1946,9 @@ def test_multinomial_identifiability_on_iris(fit_intercept):
         multi_class="multinomial",
         fit_intercept=fit_intercept,
     )
-    clf.fit(scale(iris.data), target)
+    # Scaling X to ease convergence.
+    X_scaled = scale(iris.data)
+    clf.fit(X_scaled, target)
 
     # axis=0 is sum over classes
     assert_allclose(clf.coef_.sum(axis=0), 0, atol=1e-10)
