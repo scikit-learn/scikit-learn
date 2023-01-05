@@ -407,7 +407,7 @@ to be the mean of the samples within its neighborhood:
 
 .. math::
 
-    m(x_i)  = \frac{1}{|N(x_i)|} \sum_{x_j \in N(x_i)}x_j - x
+    m(x)  = \frac{1}{|N(x)|} \sum_{x_j \in N(x)}x_j - x
 
 The algorithm automatically sets the number of clusters, instead of relying on a
 parameter ``bandwidth``, which dictates the size of the region to search through.
