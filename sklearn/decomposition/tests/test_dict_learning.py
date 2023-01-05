@@ -1046,11 +1046,11 @@ def test_cd_work_on_joblib_memmapped_data(monkeypatch):
     monkeypatch.setattr(
         sklearn.decomposition._dict_learning,
         "Parallel",
-        partial(Parallel, max_nbytes=1000),
+        partial(Parallel, max_nbytes=100),
     )
 
     rng = np.random.RandomState(0)
-    X_train = rng.randn(100, 10)
+    X_train = rng.randn(10, 10)
 
     dict_learner = DictionaryLearning(
         n_components=5,
