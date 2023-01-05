@@ -20,7 +20,7 @@ from ..utils._random cimport our_rand_r
 # Helper functions
 # =============================================================================
 
-cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) except * nogil:
+cdef realloc_ptr safe_realloc(realloc_ptr* p, size_t nelems) nogil except *:
     # sizeof(realloc_ptr[0]) would be more like idiomatic C, but causes Cython
     # 0.20.1 to crash.
     cdef size_t nbytes = nelems * sizeof(p[0][0])
@@ -102,7 +102,7 @@ cdef class WeightedPQueue:
     def __dealloc__(self):
         free(self.array_)
 
-    cdef int reset(self) except -1 nogil:
+    cdef int reset(self) nogil except -1:
         """Reset the WeightedPQueue to its state at construction
 
         Return -1 in case of failure to allocate memory (and raise MemoryError)
@@ -119,7 +119,7 @@ cdef class WeightedPQueue:
     cdef SIZE_t size(self) nogil:
         return self.array_ptr
 
-    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) except -1 nogil:
+    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except -1:
         """Push record on the array.
 
         Return -1 in case of failure to allocate memory (and raise MemoryError)
@@ -277,7 +277,7 @@ cdef class WeightedMedianCalculator:
         WeightedMedianCalculator"""
         return self.samples.size()
 
-    cdef int reset(self) except -1 nogil:
+    cdef int reset(self) nogil except -1:
         """Reset the WeightedMedianCalculator to its state at construction
 
         Return -1 in case of failure to allocate memory (and raise MemoryError)
@@ -291,7 +291,7 @@ cdef class WeightedMedianCalculator:
         self.sum_w_0_k = 0
         return 0
 
-    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) except -1 nogil:
+    cdef int push(self, DOUBLE_t data, DOUBLE_t weight) nogil except -1:
         """Push a value and its associated weight to the WeightedMedianCalculator
 
         Return -1 in case of failure to allocate memory (and raise MemoryError)
