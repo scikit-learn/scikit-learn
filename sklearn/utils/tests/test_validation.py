@@ -1054,7 +1054,7 @@ def test_check_array_memmap(copy):
     ],
 )
 def test_check_non_negative(retype):
-    A = np.array([[1., 1, 0, 0], [1, 1, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
+    A = np.array([[1.0, 1, 0, 0], [1, 1, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]])
     X = retype(A)
     check_non_negative(X, "")
     X = retype([[0, 0], [0, 0]])
