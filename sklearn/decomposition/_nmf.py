@@ -1070,6 +1070,7 @@ def non_negative_factorization(
     The generic norm :math:`||X - WH||_{loss}^2` may represent
     the Frobenius norm or another supported beta-divergence loss.
     The choice between options is controlled by the `beta_loss` parameter.
+    If `X` contains NaN values, the loss is summed over the non-NaN elements.
 
     The regularization terms are scaled by `n_features` for `W` and by `n_samples` for
     `H` to keep their impact balanced with respect to one another and to the data fit
@@ -1130,9 +1131,12 @@ def non_negative_factorization(
     solver : {'cd', 'mu'}, default='cd'
         Numerical solver to use:
 
-        - 'cd' is a Coordinate Descent solver that uses Fast Hierarchical
-          Alternating Least Squares (Fast HALS).
-        - 'mu' is a Multiplicative Update solver.
+        - 'cd' is a Coordinate Descent solver. It is often faster than the 'mu'
+            solver, but it only supports the 'frobenius' beta loss function, and
+            it does not support data with NaN values.
+        - 'mu' is a Multiplicative Update solver. It supports all beta loss
+            functions and data with NaN values, but it can be slower than the
+            'cd' solver.
 
         .. versionadded:: 0.17
            Coordinate Descent solver.
@@ -1433,6 +1437,7 @@ class NMF(_BaseNMF):
     The generic norm :math:`||X - WH||_{loss}` may represent
     the Frobenius norm or another supported beta-divergence loss.
     The choice between options is controlled by the `beta_loss` parameter.
+    If `X` contains NaN values, the loss is summed over the non-NaN elements.
 
     The regularization terms are scaled by `n_features` for `W` and by `n_samples` for
     `H` to keep their impact balanced with respect to one another and to the data fit
@@ -1482,8 +1487,12 @@ class NMF(_BaseNMF):
     solver : {'cd', 'mu'}, default='cd'
         Numerical solver to use:
 
-        - 'cd' is a Coordinate Descent solver.
-        - 'mu' is a Multiplicative Update solver.
+        - 'cd' is a Coordinate Descent solver. It is often faster than the 'mu'
+            solver, but it only supports the 'frobenius' beta loss function, and
+            it does not support data with NaN values.
+        - 'mu' is a Multiplicative Update solver. It supports all beta loss
+            functions and data with NaN values, but it can be slower than the
+            'cd' solver.
 
         .. versionadded:: 0.17
            Coordinate Descent solver.
@@ -1849,6 +1858,9 @@ class NMF(_BaseNMF):
 
         return W
 
+    def _more_tags(self):
+        return {"allow_nan": self.solver == "mu"}
+
 
 class MiniBatchNMF(_BaseNMF):
     """Mini-Batch Non-Negative Matrix Factorization (NMF).
@@ -1883,6 +1895,7 @@ class MiniBatchNMF(_BaseNMF):
     The generic norm :math:`||X - WH||_{loss}^2` may represent
     the Frobenius norm or another supported beta-divergence loss.
     The choice between options is controlled by the `beta_loss` parameter.
+    If `X` contains NaN values, the loss is summed over the non-NaN elements.
 
     The objective function is minimized with an alternating minimization of `W`
     and `H`.
@@ -2498,3 +2511,6 @@ class MiniBatchNMF(_BaseNMF):
         self.n_steps_ += 1
 
         return self
+
+    def _more_tags(self):
+        return {"allow_nan": True}
