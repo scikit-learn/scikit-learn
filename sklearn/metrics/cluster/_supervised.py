@@ -96,7 +96,7 @@ def _generalized_average(U, V, average_method):
     {
         "labels_true": ["array-like", None],
         "labels_pred": ["array-like", None],
-        "eps": [Interval(Real, 0, None, closed="both"), None],
+        "eps": [Interval(Real, 0, None, closed="left"), None],
         "sparse": ["boolean"],
         "dtype": "no_validation",  # delegate the validation to SciPy
     }
