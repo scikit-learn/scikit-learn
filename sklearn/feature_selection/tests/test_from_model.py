@@ -489,8 +489,8 @@ def test_prefit_get_feature_names_out():
 
     name = type(model).__name__
     err_msg = (
-        "This {} instance is not fitted yet. Call 'fit' with "
-        "appropriate arguments before using this estimator.".format(name)
+        f"This {name} instance is not fitted yet. Call 'fit' with "
+        "appropriate arguments before using this estimator."
     )
     with pytest.raises(NotFittedError, match=err_msg):
         model.get_feature_names_out()

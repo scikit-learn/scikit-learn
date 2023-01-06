@@ -18,8 +18,7 @@ from ..utils import (
     safe_sqr,
 )
 from ..utils._tags import _safe_tags
-from ..utils.validation import _check_feature_names_in
-from ..utils.validation import check_is_fitted
+from ..utils.validation import _check_feature_names_in, check_is_fitted
 
 
 class SelectorMixin(TransformerMixin, metaclass=ABCMeta):
