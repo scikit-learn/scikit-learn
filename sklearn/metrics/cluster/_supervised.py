@@ -98,7 +98,7 @@ def _generalized_average(U, V, average_method):
         "labels_pred": ["array-like", None],
         "eps": [Interval(Real, 0, None, closed="both"), None],
         "sparse": ["boolean"],
-        "dtype": "no_validation",
+        "dtype": "no_validation",  # delegate the validation to SciPy
     }
 )
 def contingency_matrix(
