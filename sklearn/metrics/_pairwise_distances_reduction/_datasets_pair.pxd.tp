@@ -43,7 +43,7 @@ cdef class DatasetsPair{{name_suffix}}:
         ITYPE_t i,
         ITYPE_t j,
         ITYPE_t n_Y,
-        ITYPE_t thread_num=*
+        ITYPE_t thread_num,
     ) nogil
 
     cdef void _parallel_on_X_parallel_init(self, ITYPE_t thread_num) nogil

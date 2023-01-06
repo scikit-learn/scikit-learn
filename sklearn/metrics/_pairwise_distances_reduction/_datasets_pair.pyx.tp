@@ -1026,7 +1026,7 @@ cdef class DenseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         ITYPE_t thread_num,
     ) nogil:
         # Swapping arguments on the same interface
-        return self.datasets_pair.surrogate_dist(Y_start, X_start, j, i, n_Y)
+        return self.datasets_pair.surrogate_dist(Y_start, X_start, j, i, n_Y, thread_num)
 
     @final
     cdef DTYPE_t dist(self, ITYPE_t i, ITYPE_t j) nogil:
