@@ -136,7 +136,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         self._validate_params()
         # If X is sparse and the metric is "manhattan", store it in a csc
         # format is easier to calculate the median.
-        if self.metric == "manhattan":
+        if self.metric == "manhattan" or self.metric == "cosine":
             X, y = self._validate_data(X, y, accept_sparse=["csc"])
         else:
             X, y = self._validate_data(X, y, accept_sparse=["csr", "csc"])
@@ -168,7 +168,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
                 center_mask = np.where(center_mask)[0]
 
             # XXX: Update other averaging methods according to the metrics.
-            if self.metric == "manhattan":
+            if self.metric == "manhattan" or self.metric == "cosine":
                 # NumPy does not calculate median of sparse matrices.
                 if not is_X_sparse:
                     self.centroids_[cur_class] = np.median(X[center_mask], axis=0)
