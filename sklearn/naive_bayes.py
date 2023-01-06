@@ -32,7 +32,7 @@ from .utils.extmath import safe_sparse_dot
 from .utils.multiclass import _check_partial_fit_first_call
 from .utils.validation import check_is_fitted, check_non_negative
 from .utils.validation import _check_sample_weight
-from .utils.validation import column_or_1d
+from .utils.validation import column_or_1d, check_array
 from .utils.metaestimators import _BaseComposition, available_if
 from .utils import _safe_indexing, _get_column_indices, _print_elapsed_time, Bunch
 from .utils.fixes import delayed
@@ -1544,6 +1544,16 @@ class CategoricalNB(_BaseDiscreteNB):
         return total_ll
 
 
+def _select_half_first(X):
+    """Column selector that selects the first half of columns"""
+    return list(range((X.shape[1] + 1) // 2))
+
+
+def _select_half_second(X):
+    """Column selector that selects the second half of columns"""
+    return list(range((X.shape[1] + 1) // 2, X.shape[1]))
+
+
 def _nb_estimators_have(attr):
     """Check if all self.nb_estimators or self.nb_estimators_ have attr.
 
@@ -1755,14 +1765,22 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
 
     def _check_X(self, X):
         """Validate X, used only in predict* methods."""
-        # The meta-estimator checks for feature names only. Other checks
-        # and conversion to numpy array are performed by subestimators.
-        # It is important that X is not modified by the meta-estimator, and X's
-        # columns are passed to an estimator as they are. Note that estimators
-        # may modify (a copy of) X. E.g., BernoulliNB._check_X binarises the
-        # input.
+        # Defer conversion and validation of a pandas DataFrame to subestimators,
+        # in order to allow column indexing by str or int (if DataFrame).
+        # Convert other kinds here to allow column indexing by int (otherwise).
+        # Note that subestimators may modify (a copy of) X. For example,
+        # BernoulliNB._check_X binarises the input.
+        X = self._check_array_if_not_pandas(X)
         self._check_feature_names(X, reset=False)
+        self._check_n_features(X, reset=False)
         return X
+
+    def _check_array_if_not_pandas(self, array):
+        """Convert to ndarray, unless a pandas DataFrame"""
+        if hasattr(array, "dtypes") and hasattr(array.dtypes, "__array__"):
+            return array
+        else:
+            return check_array(array)
 
     def _joint_log_likelihood(self, X):
         """Calculate the meta-estimator's joint log-probability `log P(x,y)`."""
@@ -1924,6 +1942,7 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         partial : bool, default=False
             True for partial_fit, False for fit.
         """
+        X = self._check_array_if_not_pandas(X)
         first_call = not hasattr(self, "classes_")
         if first_call:  # in fit() or the first call of partial_fit()
             self._validate_params()

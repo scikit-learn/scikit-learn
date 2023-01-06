@@ -1065,12 +1065,18 @@ def test_cwnb_union_permutation():
     clf1.fit(X2[:, [0, 1, 2, 3, 4]], y2)  # (0, 1, 2, 3, 4) -> (1, 2, 0, 3, 4)
     clf2.fit(X2[:, [2, 0, 1, 3, 4]], y2)  # (0, 1, 2, 3, 4) <- (2, 0, 1, 3, 4)
     assert_array_almost_equal(
-        clf1.predict_proba(X2), clf2.predict_proba(X2[:, [2, 0, 1, 3, 4]]), 8
+        clf1.predict_proba(X2[:, [0, 1, 2, 3, 4]]),
+        clf2.predict_proba(X2[:, [2, 0, 1, 3, 4]]),
+        8,
     )
     assert_array_almost_equal(
-        clf1.predict_log_proba(X2), clf2.predict_log_proba(X2[:, [2, 0, 1, 3, 4]]), 8
+        clf1.predict_log_proba(X2[:, [0, 1, 2, 3, 4]]),
+        clf2.predict_log_proba(X2[:, [2, 0, 1, 3, 4]]),
+        8,
     )
-    assert_array_almost_equal(clf1.predict(X2), clf2.predict(X2[:, [2, 0, 1, 3, 4]]), 8)
+    assert_array_almost_equal(
+        clf1.predict(X2[:, [0, 1, 2, 3, 4]]), clf2.predict(X2[:, [2, 0, 1, 3, 4]]), 8
+    )
 
 
 def test_cwnb_estimators_pandas():
