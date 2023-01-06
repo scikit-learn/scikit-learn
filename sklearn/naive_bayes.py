@@ -1998,6 +1998,8 @@ class ColumnwiseNB(_BaseNB, _BaseComposition):
         self : object
             Returns the instance itself.
         """
+        if hasattr(self, "classes_"):
+            delattr(self, "classes_")
         return self._partial_fit(
             X, y, partial=False, classes=None, sample_weight=sample_weight
         )

@@ -1598,6 +1598,26 @@ def test_cwnb_partial_fit():
         assert_array_equal(getattr(clf1, attr_name), getattr(clf1, attr_name))
 
 
+def test_cwnb_fit_refits():
+    # fit: re-fits the estimator de novo when called on a fitted estimator
+    clf1 = ColumnwiseNB(
+        nb_estimators=[("b1", BernoulliNB(), [1]), ("m1", MultinomialNB(), [0, 2, 3])]
+    )
+    clf2 = ColumnwiseNB(
+        nb_estimators=[("b1", BernoulliNB(), [1]), ("m1", MultinomialNB(), [0, 2, 3])]
+    )
+    clf1.fit(X2, y2)
+    clf2.partial_fit(X2[:4], y2[:4], classes=np.unique(y2))
+    clf2.fit(X2, y2)
+    assert_array_almost_equal(
+        clf1.predict_joint_log_proba(X2), clf2.predict_joint_log_proba(X2), 8
+    )
+    assert_array_almost_equal(clf1.predict_log_proba(X2), clf2.predict_log_proba(X2), 8)
+    assert_array_equal(clf1.predict(X2), clf2.predict(X2))
+    for attr_name in ("class_count_", "class_prior_", "classes_"):
+        assert_array_equal(getattr(clf1, attr_name), getattr(clf1, attr_name))
+
+
 def test_cwnb_partial_fit_classes():
     # partial_fit: error when classes are not provided at the first call
     clf1 = ColumnwiseNB(
