@@ -34,7 +34,7 @@ from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
-from ..utils._param_validation import validate_params
+from ..utils._param_validation import validate_params, StrOptions
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..utils._encode import _encode, _unique
@@ -112,6 +112,15 @@ def auc(x, y):
     return area
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "average": [StrOptions({"micro", "samples", "weighted", "macro"})],
+        "pos_label": [Integral, str, 1],
+        "sample_weight": ["array-like", None],
+    }
+)
 def average_precision_score(
     y_true, y_score, *, average="macro", pos_label=1, sample_weight=None
 ):
