@@ -142,6 +142,17 @@ def test_manhattan_metric():
     assert_array_equal(dense_centroid, [[-1, -1], [1, 1]])
 
 
+def test_cosine_metric():
+    # Test the cosine metric.
+
+    clf = NearestCentroid(metric="cosine")
+    clf.fit(X, y)
+    dense_centroid = clf.centroids_
+    clf.fit(X_csr, y)
+    assert_array_equal(clf.centroids_, dense_centroid)
+    assert_array_equal(dense_centroid, [[-1, -1], [1, 1]])
+
+
 def test_features_zero_var():
     # Test that features with 0 variance throw error
 
