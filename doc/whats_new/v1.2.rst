@@ -19,6 +19,14 @@ Changelog
   certain estimators to be pickled when using Python 3.11. :pr:`25188` by
   :user:`Benjamin Bossan <BenjaminBossan>`.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Fix| Fix an inconsistency in :func:`datasets.fetch_openml` between liac-arff
+  and pandas parser when a leading space is introduced after the delimiter.
+  The ARFF specs requires to ignore the leading space.
+  :pr:`25312` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.linear_model`
 ...........................
 
