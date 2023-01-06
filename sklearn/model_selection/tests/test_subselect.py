@@ -223,6 +223,8 @@ def test_by_standard_error(generate_fit_params):
         by_standard_error(sigma=1).__call__(**generate_fit_params), rel=1e-2
     ) == (0.9243126424613448, 0.9923540242053219)
 
+    assert by_standard_error(sigma=1).__repr__() == "by_standard_error(sigma=1)"
+
     # Test that the by_standard_error function raises a ValueError
     with pytest.raises(ValueError):
         by_standard_error(sigma=-1)
@@ -234,9 +236,41 @@ def test_by_signed_rank(generate_fit_params):
         by_signed_rank(alpha=0.01).__call__(**generate_fit_params), rel=1e-2
     ) == (0.9583333333333334, 0.9583333333333334)
 
-    # Test that the by_signed_rank function raises a ValueError
+    assert (
+        by_signed_rank(alpha=0.01).__repr__()
+        == "by_signed_rank(alpha=0.01, alternative=two-sided, zero_method=zsplit)"
+    )
+
+    # Test that the by_signed_rank function raises a ValueError if alpha is not
+    # between 0 and 1
     with pytest.raises(ValueError):
         by_signed_rank(alpha=-1)
+
+    # Test that the by_signed_rank function raises a ValueError if the number of
+    # folds is less than 3
+    with pytest.raises(ValueError):
+        generate_mod_fit_params = generate_fit_params.copy()
+        generate_mod_fit_params.update({"n_folds": 2})
+        by_signed_rank(alpha=0.01)(**generate_mod_fit_params)
+
+    # The average performance of all cross-validated models is significantly different
+    # from that of the best-performing model
+
+    # Select rows 0, 1, and 5 from the score grid
+    score_grid = generate_fit_params["score_grid"][[0, 1, 5]]
+    cv_means = np.mean(score_grid, axis=1)
+    best_score_idx = 0
+    lowest_score_idx = 2
+    n_folds = 3
+
+    with pytest.warns(UserWarning):
+        assert by_signed_rank(alpha=0.5)(
+            score_grid=score_grid,
+            cv_means=cv_means,
+            best_score_idx=best_score_idx,
+            lowest_score_idx=lowest_score_idx,
+            n_folds=n_folds,
+        )
 
 
 def test_by_percentile_rank(generate_fit_params):
@@ -244,6 +278,8 @@ def test_by_percentile_rank(generate_fit_params):
     assert pytest.approx(
         by_percentile_rank(eta=0.68).__call__(**generate_fit_params), rel=1e-2
     ) == (0.955, 1.0)
+
+    assert by_percentile_rank(eta=0.68).__repr__() == "by_percentile_rank(eta=0.68)"
 
     # Test that the by_percentile_rank function raises a ValueError
     with pytest.raises(ValueError):
@@ -255,6 +291,17 @@ def test_by_fixed_window(generate_fit_params):
     assert by_fixed_window(min_cut=0.80, max_cut=0.91).__call__(
         **generate_fit_params
     ) == (0.8, 0.91)
+
+    # No min_cut
+    assert by_fixed_window(max_cut=0.91).__call__(**generate_fit_params) == (None, 0.91)
+
+    # No max_cut
+    assert by_fixed_window(min_cut=0.80).__call__(**generate_fit_params) == (0.8, None)
+
+    assert (
+        by_fixed_window(min_cut=0.80, max_cut=0.91).__repr__()
+        == "by_fixed_window(min_cut=0.8, max_cut=0.91)"
+    )
 
     # Test that the by_fixed_window function raises a ValueError
     with pytest.raises(ValueError):

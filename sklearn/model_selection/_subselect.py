@@ -264,7 +264,7 @@ class by_signed_rank:
             best_score_idx
         ]
 
-        if len(surviving_ranks) == 0:
+        if len(surviving_ranks) == 1:
             surviving_ranks = [best_score_idx]
             warnings.warn(
                 "The average performance of all cross-validated models is "
