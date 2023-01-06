@@ -2115,3 +2115,22 @@ def test_label_ranking_avg_precision_score_should_allow_csr_matrix_for_y_true_in
     y_score = np.array([[0.5, 0.9, 0.6], [0, 0, 1]])
     result = label_ranking_average_precision_score(y_true, y_score)
     assert result == pytest.approx(2 / 3)
+
+
+@pytest.mark.parametrize(
+    "metric", [average_precision_score, det_curve, precision_recall_curve, roc_curve]
+)
+@pytest.mark.parametrize(
+    "classes", [(False, True), (0, 1), (0.0, 1.0), ("zero", "one")]
+)
+def test_ranking_metric_pos_label_types(metric, classes):
+    """Check that the metric works with different types of `pos_label`.
+
+    We can expect `pos_label` to be a bool, an integer, a float, a string.
+    No error should be raised for those types.
+    """
+    rng = np.random.RandomState(42)
+    n_samples, pos_label = 10, classes[-1]
+    y_true = rng.choice(classes, size=n_samples, replace=True)
+    y_proba = rng.rand(n_samples)
+    metric(y_true, y_proba, pos_label=pos_label)
