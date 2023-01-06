@@ -141,6 +141,7 @@ def _yield_classifier_checks(classifier):
     yield check_classifier_data_not_an_array
     # test classifiers trained on a single label always return this label
     yield check_classifiers_one_label
+    yield check_classifiers_one_label_sample_weights
     yield check_classifiers_classes
     yield check_estimators_partial_fit_n_features
     if tags["multioutput"]:
@@ -671,6 +672,9 @@ def _set_checking_parameters(estimator):
         # NMF
         if name == "NMF":
             estimator.set_params(max_iter=500)
+        # DictionaryLearning
+        if name == "DictionaryLearning":
+            estimator.set_params(max_iter=200, transform_algorithm="lasso_lars")
         # MiniBatchNMF
         if estimator.__class__.__name__ == "MiniBatchNMF":
             estimator.set_params(max_iter=20, fresh_restarts=True)
@@ -2114,6 +2118,43 @@ def check_classifiers_one_label(name, classifier_orig):
         assert_array_equal(classifier.predict(X_test), y, err_msg=error_string_predict)
 
 
+@ignore_warnings(category=FutureWarning)
+def check_classifiers_one_label_sample_weights(name, classifier_orig):
+    """Check that classifiers accepting sample_weight fit or throws a ValueError with
+    an explicit message if the problem is reduced to one class.
+    """
+    error_fit = (
+        f"{name} failed when fitted on one label after sample_weight trimming. Error "
+        "message is not explicit, it should have 'class'."
+    )
+    error_predict = f"{name} prediction results should only output the remaining class."
+    rnd = np.random.RandomState(0)
+    # X should be square for test on SVC with precomputed kernel
+    X_train = rnd.uniform(size=(10, 10))
+    X_test = rnd.uniform(size=(10, 10))
+    y = np.arange(10) % 2
+    sample_weight = y.copy()  # select a single class
+    classifier = clone(classifier_orig)
+
+    if has_fit_parameter(classifier, "sample_weight"):
+        match = [r"\bclass(es)?\b", error_predict]
+        err_type, err_msg = (AssertionError, ValueError), error_fit
+    else:
+        match = r"\bsample_weight\b"
+        err_type, err_msg = (TypeError, ValueError), None
+
+    with raises(err_type, match=match, may_pass=True, err_msg=err_msg) as cm:
+        classifier.fit(X_train, y, sample_weight=sample_weight)
+        if cm.raised_and_matched:
+            # raise the proper error type with the proper error message
+            return
+        # for estimators that do not fail, they should be able to predict the only
+        # class remaining during fit
+        assert_array_equal(
+            classifier.predict(X_test), np.ones(10), err_msg=error_predict
+        )
+
+
 @ignore_warnings  # Warnings are raised by decision function
 def check_classifiers_train(
     name, classifier_orig, readonly_memmap=False, X_dtype="float64"
@@ -2591,6 +2632,22 @@ def check_classifiers_multilabel_output_format_decision_function(name, classifie
 
 
 @ignore_warnings(category=FutureWarning)
+def check_get_feature_names_out_error(name, estimator_orig):
+    """Check the error raised by get_feature_names_out when called before fit.
+
+    Unfitted estimators with get_feature_names_out should raise a NotFittedError.
+    """
+
+    estimator = clone(estimator_orig)
+    err_msg = (
+        f"Estimator {name} should have raised a NotFitted error when fit is called"
+        " before get_feature_names_out"
+    )
+    with raises(NotFittedError, err_msg=err_msg):
+        estimator.get_feature_names_out()
+
+
+@ignore_warnings(category=FutureWarning)
 def check_estimators_fit_returns_self(name, estimator_orig, readonly_memmap=False):
     """Check if self is returned when calling fit."""
     X, y = make_blobs(random_state=0, n_samples=21)
@@ -2703,7 +2760,11 @@ def check_classifiers_predictions(X, y, name, classifier_orig):
                     "decision_function does not match "
                     "classifier for %r: expected '%s', got '%s'"
                 )
-                % (classifier, ", ".join(map(str, y_exp)), ", ".join(map(str, y_pred))),
+                % (
+                    classifier,
+                    ", ".join(map(str, y_exp)),
+                    ", ".join(map(str, y_pred)),
+                ),
             )
 
     # training set performance
