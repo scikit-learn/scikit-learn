@@ -93,6 +93,12 @@ def test_refitter_methods(grid_search_simulated):
 
     assert ss._apply_thresh(0.93, 0.96) == 1
 
+    # Omit min_thresh
+    assert ss._apply_thresh(None, 0.99) == 5
+
+    # Omit max_thresh
+    assert ss._apply_thresh(0.80, None) == 1
+
     # Test that the fit method returns the correct scores
     assert ss.fit(by_standard_error(sigma=1)) == (
         0.9243126424613448,
@@ -198,23 +204,25 @@ def test_constrain(param, scoring, rule, search_cv):
 
     # If the cv results were not all NaN, then we can test the refit callable
     if not np.isnan(grid.fit(X, y).cv_results_["mean_test_score"]).all():
-        grid_simplified.fit(X, y)
+        grid_simplified.fit(X, y)  # pragma: no cover
         simplified_best_score_ = grid_simplified.cv_results_["mean_test_score"][
             grid_simplified.best_index_
-        ]
+        ]  # pragma: no cover
         # Ensure that if the refit callable subselected a lower scoring model,
         # it was because it was only because it was a simpler model.
-        if abs(grid.best_score_) > abs(simplified_best_score_):
-            assert grid.best_index_ != grid_simplified.best_index_
+        if abs(grid.best_score_) > abs(simplified_best_score_):  # pragma: no cover
+            assert grid.best_index_ != grid_simplified.best_index_  # pragma: no cover
             if param:
-                assert grid.best_params_[param] > grid_simplified.best_params_[param]
+                assert (
+                    grid.best_params_[param] > grid_simplified.best_params_[param]
+                )  # pragma: no cover
         elif grid.best_score_ == grid_simplified.best_score_:  # pragma: no cover
             assert grid.best_index_ == grid_simplified.best_index_
             assert grid.best_params_ == grid_simplified.best_params_
-        else:
-            assert grid.best_index_ != grid_simplified.best_index_
-            assert grid.best_params_ != grid_simplified.best_params_
-            assert grid.best_score_ < grid_simplified.best_score_
+        else:  # pragma: no cover
+            assert grid.best_index_ != grid_simplified.best_index_  # pragma: no cover
+            assert grid.best_params_ != grid_simplified.best_params_  # pragma: no cover
+            assert grid.best_score_ < grid_simplified.best_score_  # pragma: no cover
 
 
 def test_by_standard_error(generate_fit_params):
