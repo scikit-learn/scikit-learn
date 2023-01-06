@@ -116,8 +116,8 @@ def auc(x, y):
     {
         "y_true": ["array-like"],
         "y_score": ["array-like"],
-        "average": [StrOptions({"micro", "samples", "weighted", "macro"})],
-        "pos_label": [Integral, str, 1],
+        "average": [StrOptions({"micro", "samples", "weighted", "macro"}), None],
+        "pos_label": [Real, str, "boolean"],
         "sample_weight": ["array-like", None],
     }
 )
@@ -146,10 +146,10 @@ def average_precision_score(
 
     Parameters
     ----------
-    y_true : ndarray of shape (n_samples,) or (n_samples, n_classes)
+    y_true : array-like of shape (n_samples,) or (n_samples, n_classes)
         True binary labels or binary label indicators.
 
-    y_score : ndarray of shape (n_samples,) or (n_samples, n_classes)
+    y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by :term:`decision_function` on some classifiers).
