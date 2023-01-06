@@ -885,7 +885,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
               and 'saga' are faster for large ones;
             - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
               'lbfgs' handle multinomial loss;
-            - 'liblinear' and is limited to one-versus-rest schemes.
+            - 'liblinear' is limited to one-versus-rest schemes.
             - 'newton-cholesky' is a good choice for `n_samples` >> `n_features`,
               especially with one-hot encoded categorical features with rare
               categories. Note that it is limited to binary classification and the
