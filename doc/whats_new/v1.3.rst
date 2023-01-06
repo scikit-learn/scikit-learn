@@ -41,31 +41,31 @@ Changes impacting all modules
   raises a `NotFittedError` if the instance is not fitted. This ensures the error is
   consistent in all estimators with the `get_feature_names_out` method.
 
+  - :class:`feature_extraction.text.TfidfTransformer`
+  - :class:`feature_selection.GenericUnivariateSelect`
+  - :class:`feature_selection.RFE`
+  - :class:`feature_selection.RFECV`
+  - :class:`feature_selection.SelectFdr`
+  - :class:`feature_selection.SelectFpr`
+  - :class:`feature_selection.SelectFromModel`
+  - :class:`feature_selection.SelectFwe`
+  - :class:`feature_selection.SelectKBest`
+  - :class:`feature_selection.SelectPercentile`
+  - :class:`feature_selection.SequentialFeatureSelector`
+  - :class:`feature_selection.VarianceThreshold`
   - :class:`kernel_approximation.AdditiveChi2Sampler`
-  - :class:`sklearn.preprocessing.Binarizer`
-  - :class:`sklearn.preprocessing.MaxAbsScaler`
-  - :class:`sklearn.preprocessing.MinMaxScaler`
-  - :class:`sklearn.preprocessing.Normalizer`
-  - :class:`sklearn.preprocessing.OrdinalEncoder`
-  - :class:`sklearn.preprocessing.PowerTransformer`
-  - :class:`sklearn.preprocessing.QuantileTransformer`
-  - :class:`sklearn.preprocessing.RobustScaler`
-  - :class:`sklearn.preprocessing.StandardScaler`
-  - :class:`sklearn.feature_extraction.text.TfidfTransformer`
-  - :class:`sklearn.random_projection.GaussianRandomProjection`
-  - :class:`sklearn.random_projection.SparseRandomProjection`
-  - :class:`sklearn.feature_selection.GenericUnivariateSelect`
-  - :class:`sklearn.feature_selection.RFE`
-  - :class:`sklearn.feature_selection.RFECV`
-  - :class:`sklearn.feature_selection.SelectFdr`
-  - :class:`sklearn.feature_selection.SelectFpr`
-  - :class:`sklearn.feature_selection.SelectFromModel`
-  - :class:`sklearn.feature_selection.SelectFwe`
-  - :class:`sklearn.feature_selection.SelectKBest`
-  - :class:`sklearn.feature_selection.SelectPercentile`
-  - :class:`sklearn.feature_selection.SequentialFeatureSelector`
-  - :class:`sklearn.feature_selection.VarianceThreshold`
-
+  - :class:`preprocessing.Binarizer`
+  - :class:`preprocessing.MaxAbsScaler`
+  - :class:`preprocessing.MinMaxScaler`
+  - :class:`preprocessing.Normalizer`
+  - :class:`preprocessing.OrdinalEncoder`
+  - :class:`preprocessing.PowerTransformer`
+  - :class:`preprocessing.QuantileTransformer`
+  - :class:`preprocessing.RobustScaler`
+  - :class:`preprocessing.StandardScaler`
+  - :class:`random_projection.GaussianRandomProjection`
+  - :class:`random_projection.SparseRandomProjection`
+  
   The `NotFittedError` displays an informative message asking to fit the instance
   with the appropriate arguments.
 
