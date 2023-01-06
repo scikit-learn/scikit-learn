@@ -115,17 +115,23 @@ def get_engine_classes(engine_name, default, verbose=False):
 
 
 def convert_attributes(method):
+    """Convert estimator attributes after calling the decorated method
+
+    The attributes of an estimator can be stored in "engine native" types
+    (default) or "scikit-learn native" types. Decorate methods, like `fit`
+    that set attributes.
+    """
+
     @wraps(method)
     def wrapper(self, *args, **kwargs):
         r = method(self, *args, **kwargs)
         convert_attributes = get_config()["engine_attributes"]
-        print("found:", convert_attributes)
-        print("config", get_config())
+
         if convert_attributes == "sklearn_types":
             engine = self._engine_class
             for name, attribute in vars(self).items():
-                print(name, hasattr(attribute, "__array_namespace__"))
-                if hasattr(attribute, "__array_namespace__"):
+                # Using __dlpack__ as signal for "not a basic Python type"
+                if hasattr(attribute, "__dlpack__"):
                     converted = engine.convert_to_numpy(name, attribute)
                     setattr(self, name, converted)
 

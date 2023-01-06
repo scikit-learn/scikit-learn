@@ -277,9 +277,20 @@ class KMeansCythonEngine:
 
     @staticmethod
     def convert_to_numpy(name, value):
-        """Convert estimator attributes to numpy arrays
+        """Convert estimator attributes to Numpy arrays
 
-        Works for normal numpy arrays and 'array API' arrays.
+        Parameters
+        ----------
+        name : str
+            Name of the attribute being converted.
+
+        value
+            Value of the attribute being converted.
+
+        Returns
+        --------
+        converted : ndarray
+            Attribute value converted to a ndarray
         """
         # XXX Maybe a bit useless as it should never get called, but it
         # does demonstrate the API

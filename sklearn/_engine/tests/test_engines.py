@@ -146,7 +146,13 @@ def test_get_engine_class():
     "attribute_types,converted", [("sklearn_types", True), ("engine_types", False)]
 )
 def test_attribute_conversion(attribute_types, converted):
+    """Test attribute conversion logic
+
+    The estimator uses Numpy Array API arrays as its native type.
+    """
+
     class Engine:
+        @staticmethod
         def convert_to_numpy(name, value):
             return np.asarray(value)
 
@@ -160,7 +166,6 @@ def test_attribute_conversion(attribute_types, converted):
     X = np.array([1, 2, 3])
     est = Estimator()
     with config_context(engine_attributes=attribute_types):
-        print("requested:", attribute_types)
         est.fit(X)
 
     assert isinstance(est.x, np.ndarray) == converted
