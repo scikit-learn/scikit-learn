@@ -44,8 +44,8 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         The centroids for the samples corresponding to each class is
         the point from which the sum of the distances (according to the metric)
         of all samples that belong to that particular class are minimized.
-        If the `"manhattan"` metric is provided, this centroid is the median
-        and for all other metrics, the centroid is now set to be the mean.
+        If the `"manhattan"` or `"cosine"` metric is provided, this centroid is the
+        median and for all other metrics, the centroid is now set to be the mean.
 
         .. versionchanged:: 0.19
             `metric='precomputed'` was deprecated and now raises an error
@@ -134,7 +134,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             Fitted estimator.
         """
         self._validate_params()
-        # If X is sparse and the metric is "manhattan", store it in a csc
+        # If X is sparse and the metric is "manhattan" or "cosine", store it in a csc
         # format is easier to calculate the median.
         if self.metric == "manhattan" or self.metric == "cosine":
             X, y = self._validate_data(X, y, accept_sparse=["csc"])
