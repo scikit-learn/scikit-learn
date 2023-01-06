@@ -221,7 +221,7 @@ cdef class DatasetsPair{{name_suffix}}:
         ITYPE_t i,
         ITYPE_t j,
         ITYPE_t n_Y,
-        ITYPE_t thread_num=0
+        ITYPE_t thread_num,
     ) nogil:
         return self.dist(i, j)
 
@@ -329,7 +329,7 @@ cdef class DenseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         ITYPE_t i,
         ITYPE_t j,
         ITYPE_t n_Y,
-        ITYPE_t thread_num=0,
+        ITYPE_t thread_num,
     ) nogil:
         return self.distance_metric.rdist(
             &self.X[X_start+i, 0],
@@ -558,14 +558,14 @@ cdef class EuclideanDenseDenseDatasetsPair{{name_suffix}}(DenseDenseDatasetsPair
                 )
 
     @final
-    cdef DTYPE_t surrogate_dist(
+    cdef inline DTYPE_t surrogate_dist(
         self,
         ITYPE_t X_start,
         ITYPE_t Y_start,
         ITYPE_t i,
         ITYPE_t j,
         ITYPE_t n_Y,
-        ITYPE_t thread_num=0,
+        ITYPE_t thread_num,
     ) nogil:
         return self.dist_middle_terms_chunks[thread_num][i * n_Y + j]
 
@@ -615,7 +615,7 @@ cdef class SparseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         ITYPE_t i,
         ITYPE_t j,
         ITYPE_t n_Y,
-        ITYPE_t thread_num=0
+        ITYPE_t thread_num
     ) nogil:
         i += X_start
         j += Y_start
@@ -853,7 +853,7 @@ cdef class EuclideanSparseSparseDatasetsPair{{name_suffix}}(SparseSparseDatasets
         ITYPE_t i,
         ITYPE_t j,
         ITYPE_t n_Y,
-        ITYPE_t thread_num=0,
+        ITYPE_t thread_num,
     ) nogil:
         # Y_chunk_size is constant except for the last chunk that can be smaller.
         # cdef:
@@ -947,7 +947,7 @@ cdef class SparseDenseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         ITYPE_t i,
         ITYPE_t j,
         ITYPE_t n_Y,
-        ITYPE_t thread_num=0,
+        ITYPE_t thread_num,
     ) nogil:
         i += X_start
         j += Y_start
@@ -1023,7 +1023,7 @@ cdef class DenseSparseDatasetsPair{{name_suffix}}(DatasetsPair{{name_suffix}}):
         ITYPE_t i,
         ITYPE_t j,
         ITYPE_t n_Y,
-        ITYPE_t thread_num=0,
+        ITYPE_t thread_num,
     ) nogil:
         # Swapping arguments on the same interface
         return self.datasets_pair.surrogate_dist(Y_start, X_start, j, i, n_Y)

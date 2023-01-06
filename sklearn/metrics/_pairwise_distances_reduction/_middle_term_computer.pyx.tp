@@ -167,6 +167,7 @@ cdef class MiddleTermComputer{{name_suffix}}:
         return
 
 
+@final
 cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_suffix}}):
     """Computes the middle term of the Euclidean distance between two chunked dense matrices
     X_c and Y_c.
@@ -328,6 +329,7 @@ cdef class DenseDenseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_
         _gemm(order, ta, tb, m, n, K, alpha, A, lda, B, ldb, beta, dist_middle_terms, ldc)
 
 
+@final
 cdef class SparseSparseMiddleTermComputer{{name_suffix}}(MiddleTermComputer{{name_suffix}}):
     """Middle term of the Euclidean distance between two chunked CSR matrices.
 
