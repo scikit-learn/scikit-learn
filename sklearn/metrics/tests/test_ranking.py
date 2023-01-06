@@ -2133,4 +2133,11 @@ def test_ranking_metric_pos_label_types(metric, classes):
     n_samples, pos_label = 10, classes[-1]
     y_true = rng.choice(classes, size=n_samples, replace=True)
     y_proba = rng.rand(n_samples)
-    metric(y_true, y_proba, pos_label=pos_label)
+    result = metric(y_true, y_proba, pos_label=pos_label)
+    if isinstance(result, float):
+        assert not np.isnan(result)
+    else:
+        metric_1, metric_2, thresholds = result
+        assert not np.isnan(metric_1).any()
+        assert not np.isnan(metric_2).any()
+        assert not np.isnan(thresholds).any()

@@ -732,7 +732,7 @@ def jaccard_score(
         labels are column indices. By default, all labels in ``y_true`` and
         ``y_pred`` are used in sorted order.
 
-    pos_label : str or int, default=1
+    pos_label : int, float, bool or str, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -1083,7 +1083,7 @@ def f1_score(
         .. versionchanged:: 0.17
            Parameter `labels` improved for multiclass problem.
 
-    pos_label : str or int, default=1
+    pos_label : int, float, bool or str, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -1231,7 +1231,7 @@ def fbeta_score(
         .. versionchanged:: 0.17
            Parameter `labels` improved for multiclass problem.
 
-    pos_label : str or int, default=1
+    pos_label : int, float, bool or str, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -1491,7 +1491,7 @@ def precision_recall_fscore_support(
         labels are column indices. By default, all labels in ``y_true`` and
         ``y_pred`` are used in sorted order.
 
-    pos_label : str or int, default=1
+    pos_label : int, float, bool or str, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -1893,7 +1893,7 @@ def precision_score(
         .. versionchanged:: 0.17
            Parameter `labels` improved for multiclass problem.
 
-    pos_label : str or int, default=1
+    pos_label : int, float, bool or str, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -2034,7 +2034,7 @@ def recall_score(
         .. versionchanged:: 0.17
            Parameter `labels` improved for multiclass problem.
 
-    pos_label : str or int, default=1
+    pos_label : int, float, bool or str, default=1
         The class to report if ``average='binary'`` and the data is binary.
         If the data are multiclass or multilabel, this will be ignored;
         setting ``labels=[pos_label]`` and ``average != 'binary'`` will report
@@ -2864,7 +2864,7 @@ def brier_score_loss(y_true, y_prob, *, sample_weight=None, pos_label=None):
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    pos_label : int or str, default=None
+    pos_label : int, float, bool or str, default=None
         Label of the positive class. `pos_label` will be inferred in the
         following manner:
 
