@@ -24,6 +24,7 @@ from sklearn.datasets import make_regression, make_multilabel_classification
 from sklearn.exceptions import ConvergenceWarning
 from io import StringIO
 from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 from sklearn.neural_network import MLPRegressor
 from sklearn.preprocessing import LabelBinarizer
@@ -926,3 +927,53 @@ def test_mlp_warm_start_with_early_stopping(MLPEstimator):
     mlp.set_params(max_iter=20)
     mlp.fit(X_iris, y_iris)
     assert len(mlp.validation_scores_) > n_validation_scores
+
+
+@pytest.mark.parametrize("weighted_class", [i for i in range(3)])
+def test_mlp_classifier_with_sample_and_class_weights(weighted_class):
+    # test sample and class weights:
+    # check that at least threshold % of samples (from chosen class)
+    # have higher score vs. training without sample or class weights
+    #
+    # test uses the digits dataset, and chooses parametrically class
+    # to apply weights for (classes set to digits 0,1 and 2 though
+    # all classes 0-9 should pass this test with threshold=0.15)
+
+    weighted_class = weighted_class
+    standard_weight = 1.0
+    high_weight = 5.0
+    threshold = 0.15
+    split_size = 0.5
+
+    # data preprocess
+    X, y = load_digits(return_X_y=True)
+    X = X / X.max()
+    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=split_size, random_state=0)
+
+    class_weight = [{0: standard_weight} for _ in range(np.max(y)+1)]
+    class_weight[weighted_class] = {0: high_weight}
+
+    sample_weight = np.ones((y_train.shape[0])) * standard_weight
+    sample_weight[y_train == weighted_class] = high_weight
+
+    test_samples = X_test[y_test == weighted_class]
+
+    base_clf = MLPClassifier(random_state=0)
+    base_clf.fit(X_train, y_train)
+    score = base_clf.predict_proba(test_samples)[:, weighted_class]
+
+    # test class weights
+    clf = MLPClassifier(class_weight=class_weight, random_state=1)
+    clf.fit(X_train, y_train)
+    weighted_score = clf.predict_proba(test_samples)[:, weighted_class]
+
+    samples_with_greater_score = (weighted_score > score).sum() / weighted_score.shape[0]
+    assert samples_with_greater_score > threshold
+
+    # test sample weight
+    clf = MLPClassifier(random_state=2)
+    clf.fit(X_train, y_train, sample_weight=sample_weight)
+    weighted_score = clf.predict_proba(test_samples)[:, weighted_class]
+
+    samples_with_greater_score = (weighted_score > score).sum() / weighted_score.shape[0]
+    assert samples_with_greater_score > threshold
