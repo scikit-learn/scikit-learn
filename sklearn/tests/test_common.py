@@ -483,8 +483,6 @@ WHITELISTED_FAILING_ESTIMATORS = [
     "SimpleImputer",
     "SparseRandomProjection",
     "SplineTransformer",
-    "StackingClassifier",
-    "StackingRegressor",
     "VarianceThreshold",
     "VotingClassifier",
     "VotingRegressor",
