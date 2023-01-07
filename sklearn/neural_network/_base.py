@@ -166,7 +166,8 @@ def squared_loss(y_true, y_pred, sample_weight=None):
     y_pred : array-like or label indicator matrix
         Predicted values, as returned by a regression estimator.
 
-    sample_weight: array-like of shape (n_samples,) sample weights.
+    sample_weight: array-like of shape (n_samples,)
+        sample weights.
 
     Returns
     -------
@@ -193,7 +194,8 @@ def log_loss(y_true, y_prob, sample_weight=None):
         Predicted probabilities, as returned by a classifier's
         predict_proba method.
 
-    sample_weight: array-like of shape (n_samples,) sample weights.
+    sample_weight: array-like of shape (n_samples,)
+        sample weights.
 
     Returns
     -------
@@ -231,7 +233,8 @@ def binary_log_loss(y_true, y_prob, sample_weight=None):
         Predicted probabilities, as returned by a classifier's
         predict_proba method.
 
-    sample_weight: array-like of shape (n_samples,) sample weights.
+    sample_weight: array-like of shape (n_samples,)
+        sample weights.
 
     Returns
     -------
