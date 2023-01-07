@@ -931,13 +931,14 @@ def test_mlp_warm_start_with_early_stopping(MLPEstimator):
 
 @pytest.mark.parametrize("weighted_class", [i for i in range(3)])
 def test_mlp_classifier_with_sample_and_class_weights(weighted_class):
-    # test sample and class weights:
-    # check that at least threshold % of samples (from chosen class)
-    # have higher score vs. training without sample or class weights
-    #
-    # test uses the digits dataset, and chooses parametrically class
-    # to apply weights for (classes set to digits 0,1 and 2 though
-    # all classes 0-9 should pass this test with threshold=0.15)
+    """test sample and class weights:
+    check that at least threshold % of samples (from chosen class)
+    have higher score vs. training without sample or class weights
+
+    test uses the digits dataset, and chooses parametrically class
+    to apply weights for (classes set to digits 0,1 and 2 though
+    all classes 0-9 should pass this test with threshold=0.15)
+    """
 
     weighted_class = weighted_class
     standard_weight = 1.0
@@ -965,15 +966,18 @@ def test_mlp_classifier_with_sample_and_class_weights(weighted_class):
     # test class weights
     clf = MLPClassifier(class_weight=class_weight, random_state=1)
     clf.fit(X_train, y_train)
-    weighted_score = clf.predict_proba(test_samples)[:, weighted_class]
+    class_weighted_score = clf.predict_proba(test_samples)[:, weighted_class]
 
-    samples_with_greater_score = (weighted_score > score).sum() / weighted_score.shape[0]
+    samples_with_greater_score = (class_weighted_score > score).sum() / class_weighted_score.shape[0]
     assert samples_with_greater_score > threshold
 
     # test sample weight
-    clf = MLPClassifier(random_state=2)
+    clf = MLPClassifier(random_state=1)
     clf.fit(X_train, y_train, sample_weight=sample_weight)
-    weighted_score = clf.predict_proba(test_samples)[:, weighted_class]
+    sample_weighted_score = clf.predict_proba(test_samples)[:, weighted_class]
 
-    samples_with_greater_score = (weighted_score > score).sum() / weighted_score.shape[0]
+    samples_with_greater_score = (sample_weighted_score > score).sum() / sample_weighted_score.shape[0]
     assert samples_with_greater_score > threshold
+
+    # Test that class_weight and sample_weight have the same effect
+    assert (class_weighted_score != sample_weighted_score).sum() == 0
