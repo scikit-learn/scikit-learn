@@ -1544,14 +1544,26 @@ class CategoricalNB(_BaseDiscreteNB):
         return total_ll
 
 
-def _select_half_first(X):
-    """Column selector that selects the first half of columns"""
-    return list(range((X.shape[1] + 1) // 2))
+class _select_half:
+    """Column selector that selects the first half of columns
 
+    Used for testing purposes only.
+    """
 
-def _select_half_second(X):
-    """Column selector that selects the second half of columns"""
-    return list(range((X.shape[1] + 1) // 2, X.shape[1]))
+    def __init__(self, half="first"):
+        self.half = half
+
+    def __repr__(self):
+        # Only required when using pytest-xdist to get an id not associated
+        # with the memory location. See:
+        # https://github.com/scikit-learn/scikit-learn/pull/18811#issuecomment-727226988
+        return f'_select_half("{str(self.half)}")'
+
+    def __call__(self, X):
+        if self.half == "first":
+            return list(range((X.shape[1] + 1) // 2))
+        else:
+            return list(range((X.shape[1] + 1) // 2, X.shape[1]))
 
 
 def _nb_estimators_have(attr):

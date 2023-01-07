@@ -34,7 +34,7 @@ from ..linear_model import LogisticRegression
 from ..linear_model import RANSACRegressor
 from ..linear_model import Ridge
 from ..linear_model import SGDRegressor
-from ..naive_bayes import GaussianNB, _select_half_first, _select_half_second
+from ..naive_bayes import GaussianNB, _select_half
 
 from ..base import (
     clone,
@@ -425,8 +425,8 @@ def _construct_instance(Estimator):
             # ColumnwiseNB (naive Bayes meta-classifier)
             estimator = Estimator(
                 nb_estimators=[
-                    ("gnb1", GaussianNB(var_smoothing=1e-13), _select_half_first),
-                    ("gnb2", GaussianNB(), _select_half_second),
+                    ("gnb1", GaussianNB(var_smoothing=1e-13), _select_half("first")),
+                    ("gnb2", GaussianNB(), _select_half("second")),
                 ]
             )
         else:
