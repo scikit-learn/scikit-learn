@@ -590,7 +590,7 @@ def test_oob_improvement(GradientBoostingEstimator):
     assert clf.oob_improvement_.shape[0] == 100
     # hard-coded regression test - change if modification in OOB computation
     assert_array_almost_equal(
-        clf.oob_improvement_[:5], np.array([0.19, 0.15, 0.12, -0.12, -0.11]), decimal=2
+        clf.oob_improvement_[:5], np.array([0.19, 0.15, 0.12, -0.11, 0.11]), decimal=2
     )
 
 
@@ -803,6 +803,24 @@ def test_warm_start_clear(Cls):
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
+def test_warm_start_clear_oob(Cls):
+    # Test if fit clears state.
+    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
+    est = Cls(n_estimators=100, max_depth=1, subsample=0.5, random_state=1)
+    est.fit(X, y)
+
+    est_2 = Cls(
+        n_estimators=100, max_depth=1, subsample=0.5, warm_start=True, random_state=1
+    )
+    est_2.fit(X, y)  # inits state
+    est_2.set_params(warm_start=False)
+    est_2.fit(X, y)  # clears old state and equals est
+
+    assert id(est_2.oob_scores_) != id(est.oob_scores_)
+    assert_array_almost_equal(est_2.predict(X), est.predict(X))
+
+
+@pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
 def test_warm_start_smaller_n_estimators(Cls):
     # Test if warm start with smaller n_estimators raises error
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
@@ -837,8 +855,11 @@ def test_warm_start_oob_switch(Cls):
     est.fit(X, y)
 
     assert_array_equal(est.oob_improvement_[:100], np.zeros(100))
+    assert_array_equal(est.oob_scores_[:100], np.zeros(100))
+
     # the last 10 are not zeros
     assert_array_equal(est.oob_improvement_[-10:] == 0.0, np.zeros(10, dtype=bool))
+    assert_array_equal(est.oob_scores_[-10:] == 0.0, np.zeros(10, dtype=bool))
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
@@ -856,6 +877,7 @@ def test_warm_start_oob(Cls):
     est_ws.fit(X, y)
 
     assert_array_almost_equal(est_ws.oob_improvement_[:100], est.oob_improvement_[:100])
+    assert_array_almost_equal(est_ws.oob_scores_[:100], est.oob_scores_[:100])
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
@@ -890,6 +912,9 @@ def test_warm_start_sparse(Cls):
 
         assert_array_almost_equal(
             est_dense.oob_improvement_[:100], est_sparse.oob_improvement_[:100]
+        )
+        assert_array_almost_equal(
+            est_dense.oob_scores_[:100], est_sparse.oob_scores_[:100]
         )
         assert_array_almost_equal(y_pred_dense, y_pred_sparse)
 

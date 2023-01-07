@@ -336,7 +336,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if self.subsample < 1.0:
             self.oob_improvement_ = np.zeros((self.n_estimators), dtype=np.float64)
             self.oob_scores_ = np.zeros((self.n_estimators), dtype=np.float64)
-            self.oob_score_ = np.zeros((1), dtype=np.float64)
+            self.oob_score_ = np.float64(0.0)
 
     def _clear_state(self):
         """Clear the state of the gradient boosting model."""
@@ -563,7 +563,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             if hasattr(self, "oob_improvement_"):
                 self.oob_improvement_ = self.oob_improvement_[:n_stages]
                 self.oob_scores_ = self.oob_scores_[:n_stages]
-
+                self.oob_score_ = self.oob_scores_[-1]
         self.n_estimators_ = n_stages
         return self
 
@@ -613,12 +613,12 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # subsampling
             if do_oob:
                 sample_mask = _random_sample_mask(n_samples, n_inbag, random_state)
-                # OOB score before adding this stage
-                old_oob_score = loss_(
-                    y[~sample_mask],
-                    raw_predictions[~sample_mask],
-                    sample_weight[~sample_mask],
-                )
+                if i == 0:
+                    initial_loss = loss_(
+                        y[~sample_mask],
+                        raw_predictions[~sample_mask],
+                        sample_weight[~sample_mask],
+                    )
 
             # fit next stage of trees
             raw_predictions = self._fit_stage(
@@ -640,15 +640,13 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                     raw_predictions[sample_mask],
                     sample_weight[sample_mask],
                 )
-                self.oob_improvement_[i] = old_oob_score - loss_(
+                self.oob_scores_[i] = loss_(
                     y[~sample_mask],
                     raw_predictions[~sample_mask],
                     sample_weight[~sample_mask],
                 )
-                if i == 0:
-                    self.oob_scores_[i] = old_oob_score
-                else:
-                    self.oob_scores_[i] = old_oob_score - self.oob_improvement_[i]
+                previous_loss = initial_loss if i == 0 else self.oob_scores_[i - 1]
+                self.oob_improvement_[i] = previous_loss - self.oob_scores_[i]
                 self.oob_oob_score_ = self.oob_scores_[-1]
             else:
                 # no need to fancy index w/ no subsampling
