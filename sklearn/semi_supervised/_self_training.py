@@ -36,6 +36,8 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     The classifier will continue iterating until either max_iter is reached, or
     no pseudo-labels were added to the training set in the previous iteration.
 
+    See glossary entry for :term:`metaestimators`.
+
     Read more in the :ref:`User Guide <self_training>`.
 
     Parameters
