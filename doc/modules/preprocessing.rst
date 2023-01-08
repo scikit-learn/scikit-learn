@@ -837,14 +837,14 @@ Target Regressor Encoder
 
 .. currentmodule:: sklearn.preprocessing
 
-The :class:`TargetRegressorEncoder` uses target
-statistics conditioned on the categorical feature for encoding [PAR]_ [MIC]_.
-This encoding scheme is useful with categorical features with high cardinality,
-where one hot encoding would inflate the feature space making it more expensive
-for a downstream model to process. A classical example of high cardinality
-categories are location based such as zip code or region. The
-:class:`TargetRegressorEncoder` implementation mixes
-the global target mean with the target mean conditioned on the category:
+The :class:`TargetRegressorEncoder` uses target mean conditioned on the
+categorical feature for encoding the categories [PAR]_ [MIC]_. This encoding
+scheme is useful with categorical features with high cardinality, where one hot
+encoding would inflate the feature space making it more expensive for a
+downstream model to process. A classical example of high cardinality categories
+are location based such as zip code or region. The
+:class:`TargetRegressorEncoder` implementation mixes the global target mean with
+the target mean conditioned on the category:
 
 .. math::
     E_c = \dfrac{\sum_{X_i = c}y_i + s\mu_y}{|X_c| + s}
