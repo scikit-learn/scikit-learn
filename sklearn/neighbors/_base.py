@@ -453,11 +453,11 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self._get_tags()["requires_y"]:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
                 X, y = self._validate_data(
-                    X, 
-                    y, 
-                    force_all_finite=force_all_finite, 
+                    X,
+                    y,
+                    force_all_finite=force_all_finite,
                     accept_sparse="csr",
-                    multi_output=True, 
+                    multi_output=True,
                     order="C",
                 )
 
@@ -816,7 +816,8 @@ class KNeighborsMixin:
                     X,
                     force_all_finite=force_all_finite,
                     accept_sparse="csr",
-                    reset=False, order="C"
+                    reset=False,
+                    order="C",
                 )
 
         n_samples_fit = self.n_samples_fit_
@@ -1165,7 +1166,7 @@ class RadiusNeighborsMixin:
                     accept_sparse="csr",
                     force_all_finite=force_all_finite,
                     reset=False,
-                    order="C"
+                    order="C",
                 )
 
         if radius is None:

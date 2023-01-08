@@ -2264,12 +2264,7 @@ def test_regressor_predict_on_arraylikes():
 def test_nan_euclidean_support():
     # Test input containing NaN.
 
-    X = [
-        [0, 1],
-        [1, np.nan],
-        [2, 3],
-        [3, 5]
-    ]
+    X = [[0, 1], [1, np.nan], [2, 3], [3, 5]]
     y = [0, 0, 1, 1]
 
     model = neighbors.NearestCentroid(metric="nan_euclidean")
