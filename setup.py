@@ -353,6 +353,7 @@ extension_config = {
     ],
     "preprocessing": [
         {"sources": ["_csr_polynomial_expansion.pyx"], "include_np": True},
+        {"sources": ["_target_encoder_fast.pyx"], "include_np": True},
     ],
     "neighbors": [
         {"sources": ["_ball_tree.pyx"], "include_np": True},

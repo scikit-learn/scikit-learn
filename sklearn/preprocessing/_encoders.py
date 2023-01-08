@@ -157,7 +157,7 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
             X, force_all_finite=force_all_finite
         )
 
-        X_int = np.zeros((n_samples, n_features), dtype=int)
+        X_int = np.zeros((n_samples, n_features), dtype=np.int64)
         X_mask = np.ones((n_samples, n_features), dtype=bool)
 
         columns_with_unknown = []
