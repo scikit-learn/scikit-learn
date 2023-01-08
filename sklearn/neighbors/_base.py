@@ -449,10 +449,12 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 )
 
     def _fit(self, X, y=None):
+        force_all_finite = "allow-nan" if self.metric == "nan_euclidean" else True
         if self._get_tags()["requires_y"]:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
                 X, y = self._validate_data(
-                    X, y, accept_sparse="csr", multi_output=True, order="C"
+                    X, y, force_all_finite=force_all_finite, accept_sparse="csr",
+                    multi_output=True, order="C"
                 )
 
             if is_classifier(self):
@@ -488,7 +490,10 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         else:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
-                X = self._validate_data(X, accept_sparse="csr", order="C")
+                X = self._validate_data(
+                    X, force_all_finite=force_all_finite,
+                    accept_sparse="csr", order="C"
+                    )
 
         self._check_algorithm_metric()
         if self.metric_params is None:
@@ -793,6 +798,7 @@ class KNeighborsMixin:
                 % type(n_neighbors)
             )
 
+        force_all_finite = "allow-nan" if self.metric == "nan_euclidean" else True
         query_is_train = X is None
         if query_is_train:
             X = self._fit_X
@@ -803,7 +809,10 @@ class KNeighborsMixin:
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
             else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
+                X = self._validate_data(
+                    X, force_all_finite=force_all_finite,
+                    accept_sparse="csr", reset=False, order="C"
+                    )
 
         n_samples_fit = self.n_samples_fit_
         if n_neighbors > n_samples_fit:
@@ -1138,6 +1147,7 @@ class RadiusNeighborsMixin:
         if sort_results and not return_distance:
             raise ValueError("return_distance must be True if sort_results is True.")
 
+        force_all_finite = "allow-nan" if self.metric == "nan_euclidean" else True
         query_is_train = X is None
         if query_is_train:
             X = self._fit_X
@@ -1145,7 +1155,10 @@ class RadiusNeighborsMixin:
             if self.metric == "precomputed":
                 X = _check_precomputed(X)
             else:
-                X = self._validate_data(X, accept_sparse="csr", reset=False, order="C")
+                X = self._validate_data(
+                    X, accept_sparse="csr", force_all_finite=force_all_finite,
+                    reset=False, order="C"
+                    )
 
         if radius is None:
             radius = self.radius

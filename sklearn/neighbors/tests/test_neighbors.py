@@ -2259,3 +2259,37 @@ def test_regressor_predict_on_arraylikes():
     est = KNeighborsRegressor(n_neighbors=1, algorithm="brute", weights=_weights)
     est.fit(X, y)
     assert_allclose(est.predict([[0, 2.5]]), [6])
+
+
+def test_nan_euclidean_support():
+    # Test input containing NaN.
+
+    X = [[0, 1], [1, np.nan], [2, 3,], [3, 5]]
+    y = [0, 0, 1, 1]
+
+    model = neighbors.NearestCentroid(metric='nan_euclidean')
+    model.fit(X, y).predict(X)
+
+    model = neighbors.KNeighborsTransformer(metric='nan_euclidean', n_neighbors=2)
+    model.fit_transform(X).toarray()
+
+    model = neighbors.RadiusNeighborsTransformer(metric='nan_euclidean', radius=1.5)
+    model.fit_transform(X).toarray()
+
+    model = neighbors.LocalOutlierFactor(metric='nan_euclidean', n_neighbors=1)
+    model.fit_predict(X)
+
+    model = neighbors.RadiusNeighborsClassifier(metric='nan_euclidean')
+    model.fit(X, y).predict(X)
+
+    model = neighbors.RadiusNeighborsRegressor(metric='nan_euclidean')
+    model.fit(X, y).predict(X)
+
+    model = neighbors.NearestNeighbors(metric='nan_euclidean', n_neighbors=2)
+    model.fit(X, y).radius_neighbors(X)
+
+    model = neighbors.KNeighborsRegressor(metric='nan_euclidean', n_neighbors=2)
+    model.fit(X, y).predict(X)
+
+    model = neighbors.KNeighborsClassifier(metric='nan_euclidean', n_neighbors=2)
+    model.fit(X, y).predict(X)
