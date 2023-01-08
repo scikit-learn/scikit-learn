@@ -453,8 +453,12 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         if self._get_tags()["requires_y"]:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
                 X, y = self._validate_data(
-                    X, y, force_all_finite=force_all_finite, accept_sparse="csr",
-                    multi_output=True, order="C"
+                    X, 
+                    y, 
+                    force_all_finite=force_all_finite, 
+                    accept_sparse="csr",
+                    multi_output=True, 
+                    order="C",
                 )
 
             if is_classifier(self):
@@ -491,9 +495,8 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         else:
             if not isinstance(X, (KDTree, BallTree, NeighborsBase)):
                 X = self._validate_data(
-                    X, force_all_finite=force_all_finite,
-                    accept_sparse="csr", order="C"
-                    )
+                    X, force_all_finite=force_all_finite, accept_sparse="csr", order="C"
+                )
 
         self._check_algorithm_metric()
         if self.metric_params is None:
@@ -810,9 +813,11 @@ class KNeighborsMixin:
                 X = _check_precomputed(X)
             else:
                 X = self._validate_data(
-                    X, force_all_finite=force_all_finite,
-                    accept_sparse="csr", reset=False, order="C"
-                    )
+                    X,
+                    force_all_finite=force_all_finite,
+                    accept_sparse="csr",
+                    reset=False, order="C"
+                )
 
         n_samples_fit = self.n_samples_fit_
         if n_neighbors > n_samples_fit:
@@ -1156,9 +1161,12 @@ class RadiusNeighborsMixin:
                 X = _check_precomputed(X)
             else:
                 X = self._validate_data(
-                    X, accept_sparse="csr", force_all_finite=force_all_finite,
-                    reset=False, order="C"
-                    )
+                    X,
+                    accept_sparse="csr",
+                    force_all_finite=force_all_finite,
+                    reset=False,
+                    order="C"
+                )
 
         if radius is None:
             radius = self.radius

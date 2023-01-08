@@ -142,7 +142,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
             force_all_finite = "allow-nan" if self.metric == "nan_euclidean" else True
             X, y = self._validate_data(
                 X, y, force_all_finite=force_all_finite, accept_sparse=["csr", "csc"]
-                )
+            )
         is_X_sparse = sp.issparse(X)
         if is_X_sparse and self.shrink_threshold:
             raise ValueError("threshold shrinking not supported for sparse input")
@@ -237,7 +237,7 @@ class NearestCentroid(ClassifierMixin, BaseEstimator):
         force_all_finite = "allow-nan" if self.metric == "nan_euclidean" else True
         X = self._validate_data(
             X, force_all_finite=force_all_finite, accept_sparse="csr", reset=False
-            )
+        )
         return self.classes_[
             pairwise_distances_argmin(X, self.centroids_, metric=self.metric)
         ]
