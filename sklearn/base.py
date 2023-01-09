@@ -38,7 +38,7 @@ def clone(estimator, *, safe=True):
     without actually copying attached data. It returns a new estimator
     with the same parameters that has not been fitted on any data.
 
-    .. versionchanged:: 1.2
+    .. versionchanged:: 1.3
         Delegates to `estimator.__sklearn_clone__` if the method exists.
 
     Parameters

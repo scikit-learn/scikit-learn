@@ -425,6 +425,26 @@ Objects that do not provide this method will be deep-copied
 (using the Python standard function ``copy.deepcopy``)
 if ``safe=False`` is passed to ``clone``.
 
+Estimators can customize the behavior of :func:`base.clone` by defining a
+`__sklearn_clone__` method. For example, a frozen meta-estimator transformer
+can be defined as follows::
+
+    class FrozenTransformer(BaseEstimator):
+        def __init__(self, fitted_transformer):
+            self.fitted_transformer = fitted_transformer
+
+        def __getattr__(self, name):
+            return getattr(self.fitted_transformer, name)
+
+        def __sklearn_clone__(self):
+            return self
+
+        def fit(self, *args, **kwargs):
+            return self
+
+        def fit_transform(self, *args, **kwargs):
+            return self.fitted_transformer.transform(*args, **kwargs)
+
 Pipeline compatibility
 ----------------------
 For an estimator to be usable together with ``pipeline.Pipeline`` in any but the

@@ -12,7 +12,6 @@ import sklearn
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_no_warnings
 from sklearn.utils._testing import ignore_warnings
-from sklearn.utils.metaestimators import available_if
 
 from sklearn.base import BaseEstimator, clone, is_classifier
 from sklearn.svm import SVC
@@ -368,11 +367,11 @@ def test_clone_protocol():
     """Checks that clone works with `__sklearn_clone__` protocol."""
 
     class FrozenEstimator(BaseEstimator):
-        def __init__(self, estimator):
-            self.estimator = estimator
+        def __init__(self, fitted_estimator):
+            self.fitted_estimator = fitted_estimator
 
         def __getattr__(self, name):
-            return getattr(self.estimator, name)
+            return getattr(self.fitted_estimator, name)
 
         def __sklearn_clone__(self):
             return self
@@ -380,9 +379,8 @@ def test_clone_protocol():
         def fit(self, *args, **kwargs):
             return self
 
-        @available_if(lambda self: hasattr(self.estimator, "transform"))
         def fit_transform(self, *args, **kwargs):
-            return self.estimator.transform(*args, **kwargs)
+            return self.fitted_estimator.transform(*args, **kwargs)
 
     X = np.array([[-1, -1], [-2, -1], [-3, -2]])
     pca = PCA().fit(X)
