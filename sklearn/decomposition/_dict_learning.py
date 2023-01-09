@@ -19,6 +19,7 @@ from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMi
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
 from ..utils import deprecated
 from ..utils._param_validation import Hidden, Interval, StrOptions
+from ..utils._param_validation import validate_params
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
 from ..utils.fixes import delayed
@@ -221,6 +222,26 @@ def _sparse_encode(
     return new_code
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "dictionary": ["array-like"],
+        "gram": ["array-like", None],
+        "cov": ["array-like", None],
+        "algorithm": [
+            StrOptions({"lasso_lars", "lasso_cd", "lars", "omp", "threshold"})
+        ],
+        "n_nonzero_coefs": [Interval(Integral, 1, None, closed="left"), None],
+        "alpha": [Interval(Real, 0, None, closed="left"), None],
+        "copy_cov": ["boolean"],
+        "init": ["array-like", None],
+        "max_iter": [Interval(Integral, 0, None, closed="left")],
+        "n_jobs": [Integral, None],
+        "check_input": ["boolean"],
+        "verbose": ["verbose"],
+        "positive": ["boolean"],
+    }
+)
 # XXX : could be moved to the linear_model module
 def sparse_encode(
     X,
@@ -250,18 +271,18 @@ def sparse_encode(
 
     Parameters
     ----------
-    X : ndarray of shape (n_samples, n_features)
+    X : array-like of shape (n_samples, n_features)
         Data matrix.
 
-    dictionary : ndarray of shape (n_components, n_features)
+    dictionary : array-like of shape (n_components, n_features)
         The dictionary matrix against which to solve the sparse coding of
         the data. Some of the algorithms assume normalized rows for meaningful
         output.
 
-    gram : ndarray of shape (n_components, n_components), default=None
+    gram : array-like of shape (n_components, n_components), default=None
         Precomputed Gram matrix, `dictionary * dictionary'`.
 
-    cov : ndarray of shape (n_components, n_samples), default=None
+    cov : array-like of shape (n_components, n_samples), default=None
         Precomputed covariance, `dictionary' * X`.
 
     algorithm : {'lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'}, \
@@ -490,146 +511,27 @@ def _update_dict(
         print(f"{n_unused} unused atoms resampled.")
 
 
-def dict_learning(
+def _dict_learning(
     X,
     n_components,
     *,
     alpha,
-    max_iter=100,
-    tol=1e-8,
-    method="lars",
-    n_jobs=None,
-    dict_init=None,
-    code_init=None,
-    callback=None,
-    verbose=False,
-    random_state=None,
-    return_n_iter=False,
-    positive_dict=False,
-    positive_code=False,
-    method_max_iter=1000,
+    max_iter,
+    tol,
+    method,
+    n_jobs,
+    dict_init,
+    code_init,
+    callback,
+    verbose,
+    random_state,
+    return_n_iter,
+    positive_dict,
+    positive_code,
+    method_max_iter,
 ):
-    """Solve a dictionary learning matrix factorization problem.
-
-    Finds the best dictionary and the corresponding sparse code for
-    approximating the data matrix X by solving::
-
-        (U^*, V^*) = argmin 0.5 || X - U V ||_Fro^2 + alpha * || U ||_1,1
-                     (U,V)
-                    with || V_k ||_2 = 1 for all  0 <= k < n_components
-
-    where V is the dictionary and U is the sparse code. ||.||_Fro stands for
-    the Frobenius norm and ||.||_1,1 stands for the entry-wise matrix norm
-    which is the sum of the absolute values of all the entries in the matrix.
-
-    Read more in the :ref:`User Guide <DictionaryLearning>`.
-
-    Parameters
-    ----------
-    X : ndarray of shape (n_samples, n_features)
-        Data matrix.
-
-    n_components : int
-        Number of dictionary atoms to extract.
-
-    alpha : int
-        Sparsity controlling parameter.
-
-    max_iter : int, default=100
-        Maximum number of iterations to perform.
-
-    tol : float, default=1e-8
-        Tolerance for the stopping condition.
-
-    method : {'lars', 'cd'}, default='lars'
-        The method used:
-
-        * `'lars'`: uses the least angle regression method to solve the lasso
-           problem (`linear_model.lars_path`);
-        * `'cd'`: uses the coordinate descent method to compute the
-          Lasso solution (`linear_model.Lasso`). Lars will be faster if
-          the estimated components are sparse.
-
-    n_jobs : int, default=None
-        Number of parallel jobs to run.
-        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
-        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
-        for more details.
-
-    dict_init : ndarray of shape (n_components, n_features), default=None
-        Initial value for the dictionary for warm restart scenarios. Only used
-        if `code_init` and `dict_init` are not None.
-
-    code_init : ndarray of shape (n_samples, n_components), default=None
-        Initial value for the sparse code for warm restart scenarios. Only used
-        if `code_init` and `dict_init` are not None.
-
-    callback : callable, default=None
-        Callable that gets invoked every five iterations.
-
-    verbose : bool, default=False
-        To control the verbosity of the procedure.
-
-    random_state : int, RandomState instance or None, default=None
-        Used for randomly initializing the dictionary. Pass an int for
-        reproducible results across multiple function calls.
-        See :term:`Glossary <random_state>`.
-
-    return_n_iter : bool, default=False
-        Whether or not to return the number of iterations.
-
-    positive_dict : bool, default=False
-        Whether to enforce positivity when finding the dictionary.
-
-        .. versionadded:: 0.20
-
-    positive_code : bool, default=False
-        Whether to enforce positivity when finding the code.
-
-        .. versionadded:: 0.20
-
-    method_max_iter : int, default=1000
-        Maximum number of iterations to perform.
-
-        .. versionadded:: 0.22
-
-    Returns
-    -------
-    code : ndarray of shape (n_samples, n_components)
-        The sparse code factor in the matrix factorization.
-
-    dictionary : ndarray of shape (n_components, n_features),
-        The dictionary factor in the matrix factorization.
-
-    errors : array
-        Vector of errors at each iteration.
-
-    n_iter : int
-        Number of iterations run. Returned only if `return_n_iter` is
-        set to True.
-
-    See Also
-    --------
-    dict_learning_online : Solve a dictionary learning matrix factorization
-        problem online.
-    DictionaryLearning : Find a dictionary that sparsely encodes data.
-    MiniBatchDictionaryLearning : A faster, less accurate version
-        of the dictionary learning algorithm.
-    SparsePCA : Sparse Principal Components Analysis.
-    MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
-    """
-    if method not in ("lars", "cd"):
-        raise ValueError("Coding method %r not supported as a fit algorithm." % method)
-
-    _check_positive_coding(method, positive_code)
-
-    method = "lasso_" + method
-
+    """Main dictionary learning algorithm"""
     t0 = time.time()
-    # Avoid integer division problems
-    alpha = float(alpha)
-    random_state = check_random_state(random_state)
-
     # Init the code and the dictionary with SVD of Y
     if code_init is not None and dict_init is not None:
         code = np.array(code_init, order="F")
@@ -1155,6 +1057,169 @@ def dict_learning_online(
         return dictionary
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "method": [StrOptions({"lars", "cd"})],
+        "return_n_iter": ["boolean"],
+        "method_max_iter": [Interval(Integral, 0, None, closed="left")],
+    }
+)
+def dict_learning(
+    X,
+    n_components,
+    *,
+    alpha,
+    max_iter=100,
+    tol=1e-8,
+    method="lars",
+    n_jobs=None,
+    dict_init=None,
+    code_init=None,
+    callback=None,
+    verbose=False,
+    random_state=None,
+    return_n_iter=False,
+    positive_dict=False,
+    positive_code=False,
+    method_max_iter=1000,
+):
+    """Solve a dictionary learning matrix factorization problem.
+
+    Finds the best dictionary and the corresponding sparse code for
+    approximating the data matrix X by solving::
+
+        (U^*, V^*) = argmin 0.5 || X - U V ||_Fro^2 + alpha * || U ||_1,1
+                     (U,V)
+                    with || V_k ||_2 = 1 for all  0 <= k < n_components
+
+    where V is the dictionary and U is the sparse code. ||.||_Fro stands for
+    the Frobenius norm and ||.||_1,1 stands for the entry-wise matrix norm
+    which is the sum of the absolute values of all the entries in the matrix.
+
+    Read more in the :ref:`User Guide <DictionaryLearning>`.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples, n_features)
+        Data matrix.
+
+    n_components : int
+        Number of dictionary atoms to extract.
+
+    alpha : int or float
+        Sparsity controlling parameter.
+
+    max_iter : int, default=100
+        Maximum number of iterations to perform.
+
+    tol : float, default=1e-8
+        Tolerance for the stopping condition.
+
+    method : {'lars', 'cd'}, default='lars'
+        The method used:
+
+        * `'lars'`: uses the least angle regression method to solve the lasso
+           problem (`linear_model.lars_path`);
+        * `'cd'`: uses the coordinate descent method to compute the
+          Lasso solution (`linear_model.Lasso`). Lars will be faster if
+          the estimated components are sparse.
+
+    n_jobs : int, default=None
+        Number of parallel jobs to run.
+        ``None`` means 1 unless in a :obj:`joblib.parallel_backend` context.
+        ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
+        for more details.
+
+    dict_init : ndarray of shape (n_components, n_features), default=None
+        Initial value for the dictionary for warm restart scenarios. Only used
+        if `code_init` and `dict_init` are not None.
+
+    code_init : ndarray of shape (n_samples, n_components), default=None
+        Initial value for the sparse code for warm restart scenarios. Only used
+        if `code_init` and `dict_init` are not None.
+
+    callback : callable, default=None
+        Callable that gets invoked every five iterations.
+
+    verbose : bool, default=False
+        To control the verbosity of the procedure.
+
+    random_state : int, RandomState instance or None, default=None
+        Used for randomly initializing the dictionary. Pass an int for
+        reproducible results across multiple function calls.
+        See :term:`Glossary <random_state>`.
+
+    return_n_iter : bool, default=False
+        Whether or not to return the number of iterations.
+
+    positive_dict : bool, default=False
+        Whether to enforce positivity when finding the dictionary.
+
+        .. versionadded:: 0.20
+
+    positive_code : bool, default=False
+        Whether to enforce positivity when finding the code.
+
+        .. versionadded:: 0.20
+
+    method_max_iter : int, default=1000
+        Maximum number of iterations to perform.
+
+        .. versionadded:: 0.22
+
+    Returns
+    -------
+    code : ndarray of shape (n_samples, n_components)
+        The sparse code factor in the matrix factorization.
+
+    dictionary : ndarray of shape (n_components, n_features),
+        The dictionary factor in the matrix factorization.
+
+    errors : array
+        Vector of errors at each iteration.
+
+    n_iter : int
+        Number of iterations run. Returned only if `return_n_iter` is
+        set to True.
+
+    See Also
+    --------
+    dict_learning_online : Solve a dictionary learning matrix factorization
+        problem online.
+    DictionaryLearning : Find a dictionary that sparsely encodes data.
+    MiniBatchDictionaryLearning : A faster, less accurate version
+        of the dictionary learning algorithm.
+    SparsePCA : Sparse Principal Components Analysis.
+    MiniBatchSparsePCA : Mini-batch Sparse Principal Components Analysis.
+    """
+    estimator = DictionaryLearning(
+        n_components=n_components,
+        alpha=alpha,
+        max_iter=max_iter,
+        tol=tol,
+        fit_algorithm=method,
+        n_jobs=n_jobs,
+        dict_init=dict_init,
+        callback=callback,
+        code_init=code_init,
+        verbose=verbose,
+        random_state=random_state,
+        positive_code=positive_code,
+        positive_dict=positive_dict,
+        transform_max_iter=method_max_iter,
+    )
+    code = estimator.fit_transform(X)
+    if return_n_iter:
+        return (
+            code,
+            estimator.components_,
+            estimator.error_,
+            estimator.n_iter_,
+        )
+    return code, estimator.components_, estimator.error_
+
+
 class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
     """Base class from SparseCoder and DictionaryLearning algorithms."""
 
@@ -1529,6 +1594,11 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         Initial values for the dictionary, for warm restart. Only used if
         `code_init` and `dict_init` are not None.
 
+    callback : callable, default=None
+        Callable that gets invoked every five iterations.
+
+        .. versionadded:: 1.3
+
     verbose : bool, default=False
         To control the verbosity of the procedure.
 
@@ -1610,7 +1680,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
     ...     n_components=15, transform_algorithm='lasso_lars', transform_alpha=0.1,
     ...     random_state=42,
     ... )
-    >>> X_transformed = dict_learner.fit_transform(X)
+    >>> X_transformed = dict_learner.fit(X).transform(X)
 
     We can check the level of sparsity of `X_transformed`:
 
@@ -1640,6 +1710,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         "n_jobs": [Integral, None],
         "code_init": [np.ndarray, None],
         "dict_init": [np.ndarray, None],
+        "callback": [callable, None],
         "verbose": ["verbose"],
         "split_sign": ["boolean"],
         "random_state": ["random_state"],
@@ -1662,6 +1733,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         n_jobs=None,
         code_init=None,
         dict_init=None,
+        callback=None,
         verbose=False,
         split_sign=False,
         random_state=None,
@@ -1686,6 +1758,7 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self.fit_algorithm = fit_algorithm
         self.code_init = code_init
         self.dict_init = dict_init
+        self.callback = callback
         self.verbose = verbose
         self.random_state = random_state
         self.positive_dict = positive_dict
@@ -1707,26 +1780,52 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self : object
             Returns the instance itself.
         """
+        self.fit_transform(X)
+        return self
+
+    def fit_transform(self, X, y=None):
+        """Fit the model from data in X and return the transformed data.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training vector, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+
+        y : Ignored
+            Not used, present for API consistency by convention.
+
+        Returns
+        -------
+        V : ndarray of shape (n_samples, n_components)
+            Transformed data.
+        """
         self._validate_params()
+
+        _check_positive_coding(method=self.fit_algorithm, positive=self.positive_code)
+
+        method = "lasso_" + self.fit_algorithm
 
         random_state = check_random_state(self.random_state)
         X = self._validate_data(X)
+
         if self.n_components is None:
             n_components = X.shape[1]
         else:
             n_components = self.n_components
 
-        V, U, E, self.n_iter_ = dict_learning(
+        V, U, E, self.n_iter_ = _dict_learning(
             X,
             n_components,
             alpha=self.alpha,
             tol=self.tol,
             max_iter=self.max_iter,
-            method=self.fit_algorithm,
+            method=method,
             method_max_iter=self.transform_max_iter,
             n_jobs=self.n_jobs,
             code_init=self.code_init,
             dict_init=self.dict_init,
+            callback=self.callback,
             verbose=self.verbose,
             random_state=random_state,
             return_n_iter=True,
@@ -1735,7 +1834,8 @@ class DictionaryLearning(_BaseSparseCoding, BaseEstimator):
         )
         self.components_ = U
         self.error_ = E
-        return self
+
+        return V
 
     @property
     def _n_features_out(self):
