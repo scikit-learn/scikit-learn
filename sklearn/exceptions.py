@@ -131,7 +131,7 @@ class PositiveSpectrumWarning(UserWarning):
 
 
 class InconsistentVersionWarning(UserWarning):
-    """Warning estimator is unpickled with a inconsistent scikit-learn version.
+    """Warning raised when an estimator is unpickled with a inconsistent version.
 
     Parameters
     ----------
