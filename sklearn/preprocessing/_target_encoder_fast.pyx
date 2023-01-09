@@ -5,8 +5,12 @@ import numpy as np
 
 cnp.import_array()
 
+ctypedef fused INT_DTYPE:
+    cnp.int64_t
+    cnp.int32_t
+
 def _fit_encoding_fast(
-    cnp.int64_t[:, :] X_int,
+    INT_DTYPE[:, ::1] X_int,
     cnp.float64_t[:] y,
     cnp.int64_t[::1] n_categories,
     double smooth,
