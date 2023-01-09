@@ -707,17 +707,21 @@ The :func:`hamming_loss` computes the average Hamming loss or `Hamming
 distance <https://en.wikipedia.org/wiki/Hamming_distance>`_ between two sets
 of samples.
 
-If :math:`\hat{y}_j` is the predicted value for the :math:`j`-th label of
-a given sample, :math:`y_j` is the corresponding true value, and
-:math:`n_\text{labels}` is the number of classes or labels, then the
-Hamming loss :math:`L_{Hamming}` between two samples is defined as:
+If :math:`\hat{y}_{i,j}` is the predicted value for the :math:`j`-th label of a
+given sample :math:`i`, :math:`y_{i,j}` is the corresponding true value,
+:math:`n_\text{samples}` is the number of samples and :math:`n_\text{labels}`
+is the number of labels, then the Hamming loss :math:`L_{Hamming}` is defined
+as:
 
 .. math::
 
-   L_{Hamming}(y, \hat{y}) = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} 1(\hat{y}_j \not= y_j)
+   L_{Hamming}(y, \hat{y}) = \frac{1}{n_\text{samples} * n_\text{labels}} \sum_{i=0}^{n_\text{samples}-1} \sum_{j=0}^{n_\text{labels} - 1} 1(\hat{y}_{i,j} \not= y_{i,j})
 
 where :math:`1(x)` is the `indicator function
-<https://en.wikipedia.org/wiki/Indicator_function>`_. ::
+<https://en.wikipedia.org/wiki/Indicator_function>`_.
+
+The equation above does not hold true in the case of multiclass classification.
+Please refer to the note below for more information. ::
 
   >>> from sklearn.metrics import hamming_loss
   >>> y_pred = [1, 2, 3, 4]
@@ -826,7 +830,7 @@ precision-recall curve as follows.
      2008.
   .. [Everingham2010] M. Everingham, L. Van Gool, C.K.I. Williams, J. Winn, A. Zisserman,
      `The Pascal Visual Object Classes (VOC) Challenge
-     <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.157.5766&rep=rep1&type=pdf>`_,
+     <https://citeseerx.ist.psu.edu/doc_view/pid/b6bebfd529b233f00cb854b7d8070319600cf59d>`_,
      IJCV 2010.
   .. [Davis2006] J. Davis, M. Goadrich, `The Relationship Between Precision-Recall and ROC Curves
      <https://www.biostat.wisc.edu/~page/rocpr.pdf>`_,
@@ -991,17 +995,16 @@ The :func:`jaccard_score` function computes the average of `Jaccard similarity
 coefficients <https://en.wikipedia.org/wiki/Jaccard_index>`_, also called the
 Jaccard index, between pairs of label sets.
 
-The Jaccard similarity coefficient of the :math:`i`-th samples,
-with a ground truth label set :math:`y_i` and predicted label set
-:math:`\hat{y}_i`, is defined as
+The Jaccard similarity coefficient with a ground truth label set :math:`y` and
+predicted label set :math:`\hat{y}`, is defined as
 
 .. math::
 
-    J(y_i, \hat{y}_i) = \frac{|y_i \cap \hat{y}_i|}{|y_i \cup \hat{y}_i|}.
+    J(y, \hat{y}) = \frac{|y \cap \hat{y}|}{|y \cup \hat{y}|}.
 
-:func:`jaccard_score` works like :func:`precision_recall_fscore_support` as a
-naively set-wise measure applying natively to binary targets, and extended to
-apply to multilabel and multiclass through the use of `average` (see
+The :func:`jaccard_score` (like :func:`precision_recall_fscore_support`) applies
+natively to binary targets. By computing it set-wise it can be extended to apply
+to multilabel and multiclass through the use of `average` (see
 :ref:`above <average>`).
 
 In the binary case::
@@ -1052,29 +1055,35 @@ the model and the data using
 that considers only prediction errors. (Hinge
 loss is used in maximal margin classifiers such as support vector machines.)
 
-If the labels are encoded with +1 and -1,  :math:`y`: is the true
-value, and :math:`w` is the predicted decisions as output by
-``decision_function``, then the hinge loss is defined as:
+If the true label :math:`y_i` of a binary classification task is encoded as
+:math:`y_i=\left\{-1, +1\right\}` for every sample :math:`i`; and :math:`w_i`
+is the corresponding predicted decision (an array of shape (`n_samples`,) as
+output by the `decision_function` method), then the hinge loss is defined as:
 
 .. math::
 
-  L_\text{Hinge}(y, w) = \max\left\{1 - wy, 0\right\} = \left|1 - wy\right|_+
+  L_\text{Hinge}(y, w) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} \max\left\{1 - w_i y_i, 0\right\}
 
 If there are more than two labels, :func:`hinge_loss` uses a multiclass variant
 due to Crammer & Singer.
-`Here <http://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_ is
+`Here <https://jmlr.csail.mit.edu/papers/volume2/crammer01a/crammer01a.pdf>`_ is
 the paper describing it.
 
-If :math:`y_w` is the predicted decision for true label and :math:`y_t` is the
-maximum of the predicted decisions for all other labels, where predicted
-decisions are output by decision function, then multiclass hinge loss is defined
-by:
+In this case the predicted decision is an array of shape (`n_samples`,
+`n_labels`). If :math:`w_{i, y_i}` is the predicted decision for the true label
+:math:`y_i` of the :math:`i`-th sample; and
+:math:`\hat{w}_{i, y_i} = \max\left\{w_{i, y_j}~|~y_j \ne y_i \right\}`
+is the maximum of the
+predicted decisions for all the other labels, then the multi-class hinge loss
+is defined by:
 
 .. math::
 
-  L_\text{Hinge}(y_w, y_t) = \max\left\{1 + y_t - y_w, 0\right\}
+  L_\text{Hinge}(y, w) = \frac{1}{n_\text{samples}}
+  \sum_{i=0}^{n_\text{samples}-1} \max\left\{1 + \hat{w}_{i, y_i}
+  - w_{i, y_i}, 0\right\}
 
-Here a small example demonstrating the use of the :func:`hinge_loss` function
+Here is a small example demonstrating the use of the :func:`hinge_loss` function
 with a svm classifier in a binary class problem::
 
   >>> from sklearn import svm
@@ -1342,10 +1351,10 @@ Quoting Wikipedia :
   positive rate), at various threshold settings. TPR is also known as
   sensitivity, and FPR is one minus the specificity or true negative rate."
 
-This function requires the true binary
-value and the target scores, which can either be probability estimates of the
-positive class, confidence values, or binary decisions.
-Here is a small example of how to use the :func:`roc_curve` function::
+This function requires the true binary value and the target scores, which can
+either be probability estimates of the positive class, confidence values, or
+binary decisions. Here is a small example of how to use the :func:`roc_curve`
+function::
 
     >>> import numpy as np
     >>> from sklearn.metrics import roc_curve
@@ -1359,22 +1368,26 @@ Here is a small example of how to use the :func:`roc_curve` function::
     >>> thresholds
     array([1.8 , 0.8 , 0.4 , 0.35, 0.1 ])
 
-This figure shows an example of such an ROC curve:
+Compared to metrics such as the subset accuracy, the Hamming loss, or the
+F1 score, ROC doesn't require optimizing a threshold for each label.
+
+The :func:`roc_auc_score` function, denoted by ROC-AUC or AUROC, computes the
+area under the ROC curve. By doing so, the curve information is summarized in
+one number.
+
+The following figure shows the ROC curve and ROC-AUC score for a classifier
+aimed to distinguish the virginica flower from the rest of the species in the
+:ref:`iris_dataset`:
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_001.png
    :target: ../auto_examples/model_selection/plot_roc.html
    :scale: 75
    :align: center
 
-The :func:`roc_auc_score` function computes the area under the receiver
-operating characteristic (ROC) curve, which is also denoted by
-AUC or AUROC.  By computing the
-area under the roc curve, the curve information is summarized in one number.
+
+
 For more information see the `Wikipedia article on AUC
 <https://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_the_curve>`_.
-
-Compared to metrics such as the subset accuracy, the Hamming loss, or the
-F1 score, ROC doesn't require optimizing a threshold for each label.
 
 .. _roc_auc_binary:
 
@@ -1455,13 +1468,16 @@ as described in [FC2009]_.
 **One-vs-rest Algorithm**: Computes the AUC of each class against the rest
 [PD2000]_. The algorithm is functionally the same as the multilabel case. To
 enable this algorithm set the keyword argument ``multiclass`` to ``'ovr'``.
-Like OvO, OvR supports two types of averaging: ``'macro'`` [F2006]_ and
-``'weighted'`` [F2001]_.
+Additionally to ``'macro'`` [F2006]_ and ``'weighted'`` [F2001]_ averaging, OvR
+supports ``'micro'`` averaging.
 
 In applications where a high false positive rate is not tolerable the parameter
 ``max_fpr`` of :func:`roc_auc_score` can be used to summarize the ROC curve up
 to the given limit.
 
+The following figure shows the micro-averaged ROC curve and its corresponding
+ROC-AUC score for a classifier aimed to distinguish the the different species in
+the :ref:`iris_dataset`:
 
 .. image:: ../auto_examples/model_selection/images/sphx_glr_plot_roc_002.png
    :target: ../auto_examples/model_selection/plot_roc.html
@@ -1531,7 +1547,7 @@ And the decision values do not require such processing.
        Pattern Recognition Letters, 27(8), pp. 861-874.
 
     .. [F2001] Fawcett, T., 2001. `Using rule sets to maximize
-       ROC performance <http://ieeexplore.ieee.org/document/989510/>`_
+       ROC performance <https://ieeexplore.ieee.org/document/989510/>`_
        In Data Mining, 2001.
        Proceedings IEEE International Conference, pp. 131-138.
 
@@ -1645,10 +1661,11 @@ then the 0-1 loss :math:`L_{0-1}` is defined as:
 
 .. math::
 
-   L_{0-1}(y_i, \hat{y}_i) = 1(\hat{y}_i \not= y_i)
+   L_{0-1}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i \not= y_i)
 
 where :math:`1(x)` is the `indicator function
-<https://en.wikipedia.org/wiki/Indicator_function>`_.
+<https://en.wikipedia.org/wiki/Indicator_function>`_. The zero one
+loss can also be computed as :math:`zero-one loss = 1 - accuracy`.
 
 
   >>> from sklearn.metrics import zero_one_loss
@@ -2694,6 +2711,80 @@ Here are some usage examples of the :func:`d2_absolute_error_score` function::
   >>> d2_absolute_error_score(y_true, y_pred)
   0.0
 
+.. _visualization_regression_evaluation:
+
+Visual evaluation of regression models
+--------------------------------------
+
+Among methods to assess the quality of regression models, scikit-learn provides
+the :class:`~sklearn.metrics.PredictionErrorDisplay` class. It allows to
+visually inspect the prediction errors of a model in two different manners.
+
+.. image:: ../auto_examples/model_selection/images/sphx_glr_plot_cv_predict_001.png
+   :target: ../auto_examples/model_selection/plot_cv_predict.html
+   :scale: 75
+   :align: center
+
+The plot on the left shows the actual values vs predicted values. For a
+noise-free regression task aiming to predict the (conditional) expectation of
+`y`, a perfect regression model would display data points on the diagonal
+defined by predicted equal to actual values. The further away from this optimal
+line, the larger the error of the model. In a more realistic setting with
+irreducible noise, that is, when not all the variations of `y` can be explained
+by features in `X`, then the best model would lead to a cloud of points densely
+arranged around the diagonal.
+
+Note that the above only holds when the predicted values is the expected value
+of `y` given `X`. This is typically the case for regression models that
+minimize the mean squared error objective function or more generally the
+:ref:`mean Tweedie deviance <mean_tweedie_deviance>` for any value of its
+"power" parameter.
+
+When plotting the predictions of an estimator that predicts a quantile
+of `y` given `X`, e.g. :class:`~sklearn.linear_model.QuantileRegressor`
+or any other model minimizing the :ref:`pinball loss <pinball_loss>`, a
+fraction of the points are either expected to lie above or below the diagonal
+depending on the estimated quantile level.
+
+All in all, while intuitive to read, this plot does not really inform us on
+what to do to obtain a better model.
+
+The right-hand side plot shows the residuals (i.e. the difference between the
+actual and the predicted values) vs. the predicted values.
+
+This plot makes it easier to visualize if the residuals follow and
+`homoscedastic or heteroschedastic
+<https://en.wikipedia.org/wiki/Homoscedasticity_and_heteroscedasticity>`_
+distribution.
+
+In particular, if the true distribution of `y|X` is Poisson or Gamma
+distributed, it is expected that the variance of the residuals of the optimal
+model would grow with the predicted value of `E[y|X]` (either linearly for
+Poisson or quadratically for Gamma).
+
+When fitting a linear least squares regression model (see
+:class:`~sklearn.linear_mnodel.LinearRegression` and
+:class:`~sklearn.linear_mnodel.Ridge`), we can use this plot to check
+if some of the `model assumptions
+<https://en.wikipedia.org/wiki/Ordinary_least_squares#Assumptions>`_
+are met, in particular that the residuals should be uncorrelated, their
+expected value should be null and that their variance should be constant
+(homoschedasticity).
+
+If this is not the case, and in particular if the residuals plot show some
+banana-shaped structure, this is a hint that the model is likely mis-specified
+and that non-linear feature engineering or switching to a non-linear regression
+model might be useful.
+
+Refer to the example below to see a model evaluation that makes use of this
+display.
+
+.. topic:: Example:
+
+  * See :ref:`sphx_glr_auto_examples_compose_plot_transformed_target.py` for
+    an example on how to use :class:`~sklearn.metrics.PredictionErrorDisplay`
+    to visualize the prediction quality improvement of a regression model
+    obtained by transforming the target before learning.
 
 .. _clustering_metrics:
 

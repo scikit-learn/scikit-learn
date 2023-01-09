@@ -78,7 +78,7 @@ preprocessor = ColumnTransformer(
         ("num", numeric_transformer, numeric_features),
         (
             "cat",
-            OneHotEncoder(handle_unknown="ignore", sparse=False),
+            OneHotEncoder(handle_unknown="ignore", sparse_output=False),
             categorical_features,
         ),
     ],
@@ -113,7 +113,7 @@ import numpy as np
 X = np.array(
     [["dog"] * 5 + ["cat"] * 20 + ["rabbit"] * 10 + ["snake"] * 3], dtype=object
 ).T
-enc = OneHotEncoder(min_frequency=6, sparse=False).fit(X)
+enc = OneHotEncoder(min_frequency=6, sparse_output=False).fit(X)
 enc.infrequent_categories_
 
 # %%
@@ -211,7 +211,7 @@ import matplotlib.pyplot as plt
 
 X, _ = make_blobs(n_samples=1000, centers=2, random_state=0)
 
-km = KMeans(n_clusters=5, random_state=0).fit(X)
+km = KMeans(n_clusters=5, random_state=0, n_init="auto").fit(X)
 bisect_km = BisectingKMeans(n_clusters=5, random_state=0).fit(X)
 
 fig, ax = plt.subplots(1, 2, figsize=(10, 5))

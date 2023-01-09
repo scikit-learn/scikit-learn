@@ -160,7 +160,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             for f, v in x.items():
                 if isinstance(v, str):
                     feature_name = "%s%s%s" % (f, self.separator, v)
-                    v = 1
                 elif isinstance(v, Number) or (v is None):
                     feature_name = f
                 elif isinstance(v, Mapping):

@@ -1,39 +1,25 @@
-{{py:
-
-implementation_specific_values = [
-    # Values are the following ones:
-    #
-    #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
-    #
-    # We also use the float64 dtype and C-type names as defined in
-    # `sklearn.utils._typedefs` to maintain consistency.
-    #
-    ('64', 'DTYPE_t', 'DTYPE'),
-    ('32', 'cnp.float32_t', 'np.float32')
-]
-
-}}
 cimport numpy as cnp
 
 from cython cimport final
 
-from ...utils._typedefs cimport ITYPE_t, DTYPE_t
+from ...utils._typedefs cimport ITYPE_t, DTYPE_t, SPARSE_INDEX_TYPE_t
 
 cnp.import_array()
 
-{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
+{{for name_suffix, INPUT_DTYPE_t in [('64', 'DTYPE_t'), ('32', 'cnp.float32_t')]}}
 
 from ._datasets_pair cimport DatasetsPair{{name_suffix}}
 
+
 cpdef DTYPE_t[::1] _sqeuclidean_row_norms{{name_suffix}}(
-    const {{INPUT_DTYPE_t}}[:, ::1] X,
+    X,
     ITYPE_t num_threads,
 )
 
-cdef class BaseDistanceReducer{{name_suffix}}:
+cdef class BaseDistancesReduction{{name_suffix}}:
     """
-    Base {{name_suffix}}bit implementation template of the pairwise-distances reduction
-    backend.
+    Base float{{name_suffix}} implementation template of the pairwise-distances
+    reduction backends.
 
     Implementations inherit from this template and may override the several
     defined hooks as needed in order to easily extend functionality with

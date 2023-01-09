@@ -1,18 +1,3 @@
-{{py:
-
-implementation_specific_values = [
-    # Values are the following ones:
-    #
-    #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
-    #
-    # We also use the float64 dtype and C-type names as defined in
-    # `sklearn.utils._typedefs` to maintain consistency.
-    #
-    ('64', 'DTYPE_t', 'DTYPE'),
-    ('32', 'cnp.float32_t', 'np.float32')
-]
-
-}}
 cimport numpy as cnp
 
 from libcpp.memory cimport shared_ptr
@@ -41,16 +26,13 @@ cdef cnp.ndarray[object, ndim=1] coerce_vectors_to_nd_arrays(
 )
 
 #####################
-{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
+{{for name_suffix in ['64', '32']}}
 
-from ._base cimport BaseDistanceReducer{{name_suffix}}
-from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
+from ._base cimport BaseDistancesReduction{{name_suffix}}
+from ._middle_term_computer cimport MiddleTermComputer{{name_suffix}}
 
-cdef class RadiusNeighbors{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
-    """
-    {{name_suffix}}bit implementation of BaseDistanceReducer{{name_suffix}} for the
-    `RadiusNeighbors` reduction.
-    """
+cdef class RadiusNeighbors{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
+    """float{{name_suffix}} implementation of the RadiusNeighbors."""
 
     cdef:
         DTYPE_t radius
@@ -97,9 +79,9 @@ cdef class RadiusNeighbors{{name_suffix}}(BaseDistanceReducer{{name_suffix}}):
 
 
 cdef class EuclideanRadiusNeighbors{{name_suffix}}(RadiusNeighbors{{name_suffix}}):
-    """EuclideanDistance-specialized {{name_suffix}}bit implementation for RadiusNeighbors{{name_suffix}}."""
+    """EuclideanDistance-specialisation of RadiusNeighbors{{name_suffix}}."""
     cdef:
-        GEMMTermComputer{{name_suffix}} gemm_term_computer
+        MiddleTermComputer{{name_suffix}} middle_term_computer
         const DTYPE_t[::1] X_norm_squared
         const DTYPE_t[::1] Y_norm_squared
 

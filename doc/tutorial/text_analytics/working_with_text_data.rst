@@ -48,7 +48,7 @@ The tutorial folder should contain the following sub-folders:
 
 
 You can already copy the skeletons into a new folder somewhere
-on your hard-drive named ``sklearn_tut_workspace`` where you
+on your hard-drive named ``sklearn_tut_workspace``, where you
 will edit your own files for the exercises while keeping
 the original skeletons intact:
 
@@ -92,7 +92,7 @@ manually from the website and use the :func:`sklearn.datasets.load_files`
 function by pointing it to the ``20news-bydate-train`` sub-folder of the
 uncompressed archive folder.
 
-In order to get faster execution times for this first example we will
+In order to get faster execution times for this first example, we will
 work on a partial dataset with only 4 categories out of the 20 available
 in the dataset::
 
@@ -136,7 +136,7 @@ document in the training set. In this case the category is the name of the
 newsgroup which also happens to be the name of the folder holding the
 individual documents.
 
-For speed and space efficiency reasons ``scikit-learn`` loads the
+For speed and space efficiency reasons, ``scikit-learn`` loads the
 target attribute as an array of integers that corresponds to the
 index of the category name in the ``target_names`` list. The category
 integer id of each sample is stored in the ``target`` attribute::
@@ -292,7 +292,7 @@ Now that we have our features, we can train a classifier to try to predict
 the category of a post. Let's start with a :ref:`naïve Bayes <naive_bayes>`
 classifier, which
 provides a nice baseline for this task. ``scikit-learn`` includes several
-variants of this classifier; the one most suitable for word counts is the
+variants of this classifier, and the one most suitable for word counts is the
 multinomial variant::
 
   >>> from sklearn.naive_bayes import MultinomialNB
