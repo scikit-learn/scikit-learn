@@ -463,7 +463,6 @@ ESTIMATORS_WITH_GET_FEATURE_NAMES_OUT = [
 ]
 
 WHITELISTED_FAILING_ESTIMATORS = [
-    "AdditiveChi2Sampler",
     "DictVectorizer",
     "GaussianRandomProjection",
     "GenericUnivariateSelect",
