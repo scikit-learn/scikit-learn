@@ -1530,7 +1530,10 @@ def test_iterative_imputer_constant_fill_value():
 
     fill_value = 100
     imputer = IterativeImputer(
-        missing_values=-1, initial_strategy="constant", fill_value=fill_value, max_iter=0
+        missing_values=-1,
+        initial_strategy="constant",
+        fill_value=fill_value,
+        max_iter=0,
     )
     imputer.fit_transform(X)
     assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)
