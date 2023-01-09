@@ -1938,14 +1938,18 @@ def assert_is_subtree(tree, subtree):
 
 @pytest.mark.parametrize("name", ALL_TREES)
 @pytest.mark.parametrize("splitter", ["best", "random"])
-@pytest.mark.parametrize("X_format", ["dense", "csr"])
+@pytest.mark.parametrize("X_format", ["dense", "csr", "csc"])
 def test_apply_path_readonly_all_trees(name, splitter, X_format):
     dataset = DATASETS["clf_small"]
     X_small = dataset["X"].astype(tree._tree.DTYPE, copy=False)
     if X_format == "dense":
         X_readonly = create_memmap_backed_data(X_small)
     else:
-        X_readonly = dataset["X_sparse"]
+        X_readonly = dataset["X_sparse"]  # CSR
+        if X_format == "csc":
+            # Cheap CSR to CSC conversion
+            X_readonly = X_readonly.tocsc()
+
         X_readonly.data = np.array(X_readonly.data, dtype=tree._tree.DTYPE)
         (
             X_readonly.data,
