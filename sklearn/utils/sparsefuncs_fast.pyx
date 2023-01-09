@@ -106,9 +106,9 @@ def _csr_mean_variance_axis0(cnp.ndarray[floating, ndim=1, mode="c"] X_data,
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef:
-        cnp.npy_intp i
-        unsigned long long row_ind
-        integral col_ind
+        cnp.intp_t row_ind
+        unsigned long long feature_idx
+        integral i, col_ind
         cnp.float64_t diff
         # means[j] contains the mean of feature j
         cnp.ndarray[cnp.float64_t, ndim=1] means = np.zeros(n_features)
@@ -142,8 +142,8 @@ def _csr_mean_variance_axis0(cnp.ndarray[floating, ndim=1, mode="c"] X_data,
                 # number of non nan elements of X[:, col_ind]
                 counts[col_ind] -= 1
 
-    for i in range(n_features):
-        means[i] /= sum_weights[i]
+    for feature_idx in range(n_features):
+        means[feature_idx] /= sum_weights[feature_idx]
 
     for row_ind in range(len(X_indptr) - 1):
         for i in range(X_indptr[row_ind], X_indptr[row_ind + 1]):
@@ -156,15 +156,22 @@ def _csr_mean_variance_axis0(cnp.ndarray[floating, ndim=1, mode="c"] X_data,
                 correction[col_ind] += diff * weights[row_ind]
                 variances[col_ind] += diff * diff * weights[row_ind]
 
-    for i in range(n_features):
-        if counts[i] != counts_nz[i]:
-            correction[i] -= (sum_weights[i] - sum_weights_nz[i]) * means[i]
-        correction[i] = correction[i]**2 / sum_weights[i]
-        if counts[i] != counts_nz[i]:
+    for feature_idx in range(n_features):
+        if counts[feature_idx] != counts_nz[feature_idx]:
+            correction[feature_idx] -= (
+                sum_weights[feature_idx] - sum_weights_nz[feature_idx]
+            ) * means[feature_idx]
+        correction[feature_idx] = correction[feature_idx]**2 / sum_weights[feature_idx]
+        if counts[feature_idx] != counts_nz[feature_idx]:
             # only compute it when it's guaranteed to be non-zero to avoid
             # catastrophic cancellation.
-            variances[i] += (sum_weights[i] - sum_weights_nz[i]) * means[i]**2
-        variances[i] = (variances[i] - correction[i]) / sum_weights[i]
+            variances[feature_idx] += (
+                sum_weights[feature_idx] - sum_weights_nz[feature_idx]
+            ) * means[feature_idx]**2
+        variances[feature_idx] = (
+            (variances[feature_idx] - correction[feature_idx]) /
+            sum_weights[feature_idx]
+        )
 
     if floating is float:
         return (np.array(means, dtype=np.float32),
@@ -228,9 +235,8 @@ def _csc_mean_variance_axis0(cnp.ndarray[floating, ndim=1, mode="c"] X_data,
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef:
-        cnp.npy_intp i
-        unsigned long long col_ind
-        integral row_ind
+        integral i, row_ind
+        unsigned long long feature_idx, col_ind
         cnp.float64_t diff
         # means[j] contains the mean of feature j
         cnp.ndarray[cnp.float64_t, ndim=1] means = np.zeros(n_features)
@@ -264,8 +270,8 @@ def _csc_mean_variance_axis0(cnp.ndarray[floating, ndim=1, mode="c"] X_data,
                 # number of non nan elements of X[:, col_ind]
                 counts[col_ind] -= 1
 
-    for i in range(n_features):
-        means[i] /= sum_weights[i]
+    for feature_idx in range(n_features):
+        means[feature_idx] /= sum_weights[feature_idx]
 
     for col_ind in range(n_features):
         for i in range(X_indptr[col_ind], X_indptr[col_ind + 1]):
@@ -278,15 +284,21 @@ def _csc_mean_variance_axis0(cnp.ndarray[floating, ndim=1, mode="c"] X_data,
                 correction[col_ind] += diff * weights[row_ind]
                 variances[col_ind] += diff * diff * weights[row_ind]
 
-    for i in range(n_features):
-        if counts[i] != counts_nz[i]:
-            correction[i] -= (sum_weights[i] - sum_weights_nz[i]) * means[i]
-        correction[i] = correction[i]**2 / sum_weights[i]
-        if counts[i] != counts_nz[i]:
+    for feature_idx in range(n_features):
+        if counts[feature_idx] != counts_nz[feature_idx]:
+            correction[feature_idx] -= (
+                sum_weights[feature_idx] - sum_weights_nz[feature_idx]
+            ) * means[feature_idx]
+        correction[feature_idx] = correction[feature_idx]**2 / sum_weights[feature_idx]
+        if counts[feature_idx] != counts_nz[feature_idx]:
             # only compute it when it's guaranteed to be non-zero to avoid
             # catastrophic cancellation.
-            variances[i] += (sum_weights[i] - sum_weights_nz[i]) * means[i]**2
-        variances[i] = (variances[i] - correction[i]) / sum_weights[i]
+            variances[feature_idx] += (
+                sum_weights[feature_idx] - sum_weights_nz[feature_idx]
+            ) * means[feature_idx]**2
+        variances[feature_idx] = (
+            (variances[feature_idx] - correction[feature_idx])
+        ) / sum_weights[feature_idx]
 
     if floating is float:
         return (np.array(means, dtype=np.float32),
@@ -383,13 +395,12 @@ def _incr_mean_variance_axis0(cnp.ndarray[floating, ndim=1] X_data,
     # Implement the function here since variables using fused types
     # cannot be declared directly and can only be passed as function arguments
     cdef:
-        cnp.npy_intp i
+        unsigned long long i
 
-    # last = stats until now
-    # new = the current increment
-    # updated = the aggregated stats
-    # when arrays, they are indexed by i per-feature
-    cdef:
+        # last = stats until now
+        # new = the current increment
+        # updated = the aggregated stats
+        # when arrays, they are indexed by i per-feature
         cnp.ndarray[floating, ndim=1] new_mean
         cnp.ndarray[floating, ndim=1] new_var
         cnp.ndarray[floating, ndim=1] updated_mean
@@ -469,15 +480,17 @@ def _inplace_csr_row_normalize_l1(cnp.ndarray[floating, ndim=1] X_data,
                                   shape,
                                   cnp.ndarray[integral, ndim=1] X_indices,
                                   cnp.ndarray[integral, ndim=1] X_indptr):
-    cdef unsigned long long n_samples = shape[0]
-    cdef unsigned long long n_features = shape[1]
+    cdef:
+        unsigned long long n_samples = shape[0]
+        unsigned long long n_features = shape[1]
 
-    # the column indices for row i are stored in:
-    #    indices[indptr[i]:indices[i+1]]
-    # and their corresponding values are stored in:
-    #    data[indptr[i]:indptr[i+1]]
-    cdef cnp.npy_intp i, j
-    cdef double sum_
+        # the column indices for row i are stored in:
+        #    indices[indptr[i]:indices[i+1]]
+        # and their corresponding values are stored in:
+        #    data[indptr[i]:indptr[i+1]]
+        unsigned long long i
+        integral j
+        double sum_
 
     for i in range(n_samples):
         sum_ = 0.0
@@ -503,11 +516,12 @@ def _inplace_csr_row_normalize_l2(cnp.ndarray[floating, ndim=1] X_data,
                                   shape,
                                   cnp.ndarray[integral, ndim=1] X_indices,
                                   cnp.ndarray[integral, ndim=1] X_indptr):
-    cdef integral n_samples = shape[0]
-    cdef integral n_features = shape[1]
-
-    cdef cnp.npy_intp i, j
-    cdef double sum_
+    cdef:
+        unsigned long long n_samples = shape[0]
+        unsigned long long n_features = shape[1]
+        unsigned long long i
+        integral j
+        double sum_
 
     for i in range(n_samples):
         sum_ = 0.0
