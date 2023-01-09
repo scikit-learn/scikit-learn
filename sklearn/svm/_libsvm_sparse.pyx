@@ -227,8 +227,8 @@ def libsvm_sparse_train(
         shrinking=shrinking,
         probability=probability,
         nr_weight=<int> class_weight.shape[0],
-        weight_label=<char *> &class_weight_label[0],
-        weight=<char *> &class_weight[0],
+        weight_label=<char *> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
+        weight=<char *> &class_weight[0] if class_weight.size > 0 else NULL,
         max_iter=max_iter,
         random_seed=random_seed,
     )
@@ -290,9 +290,7 @@ def libsvm_sparse_train(
         model=model,
         n_features=n_features,
     )
-    support_vectors_ = sparse.csr_matrix(
-        (SV_data, SV_indices, SV_indptr), (SV_len, n_features)
-    )
+    support_vectors_ = sparse.csr_matrix((SV_data, SV_indices, SV_indptr), (SV_len, n_features))
 
     # copy model.nSV
     # TODO: do only in classification
@@ -397,8 +395,8 @@ def libsvm_sparse_predict(
         shrinking=shrinking,
         probability=probability,
         nr_weight=<int> class_weight.shape[0],
-        weight_label=<char *> &class_weight_label[0],
-        weight=<char *> &class_weight[0],
+        weight_label=<char *> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
+        weight=<char *> &class_weight[0] if class_weight.size > 0 else NULL,
         max_iter=-1,
         random_seed=-1, # random seed has no effect on predict either
     )
@@ -486,8 +484,8 @@ def libsvm_sparse_predict_proba(
         shrinking=shrinking,
         probability=probability,
         nr_weight=<int> class_weight.shape[0],
-        weight_label=<char *> &class_weight_label[0],
-        weight=<char *> &class_weight[0],
+        weight_label=<char *> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
+        weight=<char *> &class_weight[0] if class_weight.size > 0 else NULL,
         max_iter=-1,
         random_seed=-1, # random seed has no effect on predict either
     )
@@ -583,8 +581,8 @@ def libsvm_sparse_decision_function(
         shrinking=shrinking,
         probability=probability,
         nr_weight=<int> class_weight.shape[0],
-        weight_label=<char *> &class_weight_label[0],
-        weight=<char *> &class_weight[0],
+        weight_label=<char *> &class_weight_label[0] if class_weight_label.size > 0 else NULL,
+        weight=<char *> &class_weight[0] if class_weight.size > 0 else NULL,
         max_iter=-1,
         random_seed=-1,
     )
