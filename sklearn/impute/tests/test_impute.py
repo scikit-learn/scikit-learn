@@ -1528,14 +1528,12 @@ def test_iterative_imputer_constant_fill_value():
     """Check that we propagate properly the parameter `fill_value`."""
     X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])
 
-    X_true = np.array([[0, 2, 3, 0], [4, 0, 5, 0], [6, 7, 0, 0], [8, 9, 0, 0]])
-
+    fill_value = 100
     imputer = IterativeImputer(
-        missing_values=-1, initial_strategy="constant", fill_value=0, max_iter=0
+        missing_values=-1, initial_strategy="constant", fill_value=100, max_iter=0
     )
-    X_trans = imputer.fit_transform(X)
-
-    assert_array_equal(X_trans, X_true)
+    imputer.fit_transform(X)
+    assert_array_equal(imputer.initial_imputer_.statistics_, fill_value)
 
 
 @pytest.mark.parametrize("keep_empty_features", [True, False])
