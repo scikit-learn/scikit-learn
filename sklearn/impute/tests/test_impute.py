@@ -1525,7 +1525,7 @@ def test_iterative_imputer_keep_empty_features(initial_strategy):
 
 
 def test_iterative_imputer_constant_fill_value():
-    # Test initial imputation using the constant strategy.
+    """Check that we propagate properly the parameter `fill_value`."""
     X = np.array([[-1, 2, 3, -1], [4, -1, 5, -1], [6, 7, -1, -1], [8, 9, 0, -1]])
 
     X_true = np.array([[0, 2, 3, 0], [4, 0, 5, 0], [6, 7, 0, 0], [8, 9, 0, 0]])
