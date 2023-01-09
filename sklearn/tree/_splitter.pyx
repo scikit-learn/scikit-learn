@@ -598,7 +598,9 @@ cdef inline int node_split_random(
         current.feature = features[f_j]
 
         # Find min, max
-        data_splitter.find_min_max(current.feature, &min_feature_value, &max_feature_value)
+        data_splitter.find_min_max(
+            current.feature, &min_feature_value, &max_feature_value
+        )
 
         if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
             features[f_j], features[n_total_constants] = features[n_total_constants], current.feature
@@ -644,7 +646,9 @@ cdef inline int node_split_random(
     # Reorganize into samples[start:best.pos] + samples[best.pos:end]
     if best.pos < end:
         if current.feature != best.feature:
-            data_splitter.partition_samples_final(best.pos, best.threshold, best.feature)
+            data_splitter.partition_samples_final(
+                best.pos, best.threshold, best.feature
+            )
 
         criterion.reset()
         criterion.update(best.pos)
@@ -670,6 +674,10 @@ cdef inline int node_split_random(
 
 @final
 cdef class DenseSplitter:
+    """Splitter specialized for dense data.
+    
+    Note that this splitter is agnostic to the splitting strategy (best vs. random).
+    """
     cdef:
         const DTYPE_t[:, :] X
         cdef SIZE_t[::1] samples
@@ -692,7 +700,9 @@ cdef class DenseSplitter:
         self.start = start
         self.end = end
 
-    cdef inline void sort_samples_and_feature_values(self, SIZE_t current_feature) nogil:
+    cdef inline void sort_samples_and_feature_values(
+        self, SIZE_t current_feature
+    ) nogil:
         """Simultaneously sort based on the feature value."""
         cdef:
             SIZE_t i
@@ -751,7 +761,7 @@ cdef class DenseSplitter:
         p_prev[0] = p[0] - 1
 
     cdef inline SIZE_t partition_samples(self, double current_threshold) nogil:
-        """Parition samples in the random splitter."""
+        """Partition samples in the random splitter."""
         cdef:
             SIZE_t p = self.start
             SIZE_t partition_end = self.end
@@ -791,7 +801,10 @@ cdef class DenseSplitter:
 
 @final
 cdef class SparseSplitter:
-    # The sparse splitter works only with csc sparse matrix format
+    """Splitter specialized for sparse CSC data.
+    
+    Note that this splitter is agnostic to the splitting strategy (best vs. random).
+    """
     cdef SIZE_t[::1] samples
     cdef DTYPE_t[::1] feature_values
     cdef SIZE_t start
@@ -845,7 +858,9 @@ cdef class SparseSplitter:
         self.end = end
         self.is_samples_sorted = 0
 
-    cdef inline void sort_samples_and_feature_values(self, SIZE_t current_feature) nogil:
+    cdef inline void sort_samples_and_feature_values(
+        self, SIZE_t current_feature
+    ) nogil:
         """Simultaneously sort based on the feature value."""
         cdef:
             DTYPE_t[::1] Xf = self.feature_values
@@ -940,7 +955,7 @@ cdef class SparseSplitter:
         p[0] = p_next
 
     cdef inline SIZE_t partition_samples(self, double current_threshold) nogil:
-        """Parition samples in the random splitter."""
+        """Partition samples in the random splitter."""
         return self._partition(current_threshold, self.start_positive)
 
     cdef inline void partition_samples_final(
@@ -1189,7 +1204,7 @@ cdef inline void sparse_swap(SIZE_t[::1] index_to_samples, SIZE_t[::1] samples,
 
 
 cdef class BestSplitter(Splitter):
-    """Splitter for finding the best dense split."""
+    """Splitter for finding the best split on dense data."""
     cdef DenseSplitter data_splitter
     cdef int init(
         self,
@@ -1203,7 +1218,13 @@ cdef class BestSplitter(Splitter):
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
         return node_split_best(
-            self, self.data_splitter, self.criterion, impurity, split, n_constant_features)
+            self,
+            self.data_splitter,
+            self.criterion,
+            impurity,
+            split,
+            n_constant_features,
+        )
 
 cdef class BestSparseSplitter(Splitter):
     """Splitter for finding the best split, using the sparse data."""
@@ -1215,15 +1236,23 @@ cdef class BestSparseSplitter(Splitter):
         const DOUBLE_t[:] sample_weight
     ) except -1:
         Splitter.init(self, X, y, sample_weight)
-        self.data_splitter = SparseSplitter(X, self.samples, self.n_samples, self.feature_values)
+        self.data_splitter = SparseSplitter(
+            X, self.samples, self.n_samples, self.feature_values
+        )
 
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
         return node_split_best(
-            self, self.data_splitter, self.criterion, impurity, split, n_constant_features)
+            self,
+            self.data_splitter,
+            self.criterion,
+            impurity,
+            split,
+            n_constant_features,
+        )
 
 cdef class RandomSplitter(Splitter):
-    """Splitter for finding the best random split."""
+    """Splitter for finding the best random split on dense data."""
     cdef DenseSplitter data_splitter
     cdef int init(
         self,
@@ -1237,10 +1266,16 @@ cdef class RandomSplitter(Splitter):
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
         return node_split_random(
-            self, self.data_splitter, self.criterion, impurity, split, n_constant_features)
+            self,
+            self.data_splitter,
+            self.criterion,
+            impurity,
+            split,
+            n_constant_features,
+        )
 
 cdef class RandomSparseSplitter(Splitter):
-    """Splitter for finding a random split, using the sparse data."""
+    """Splitter for finding the best random split, using the sparse data."""
     cdef SparseSplitter data_splitter
     cdef int init(
         self,
@@ -1249,9 +1284,17 @@ cdef class RandomSparseSplitter(Splitter):
         const DOUBLE_t[:] sample_weight
     ) except -1:
         Splitter.init(self, X, y, sample_weight)
-        self.data_splitter = SparseSplitter(X, self.samples, self.n_samples, self.feature_values)
+        self.data_splitter = SparseSplitter(
+            X, self.samples, self.n_samples, self.feature_values
+        )
 
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
         return node_split_random(
-            self, self.data_splitter, self.criterion, impurity, split, n_constant_features)
+            self,
+            self.data_splitter,
+            self.criterion,
+            impurity,
+            split,
+            n_constant_features,
+        )
