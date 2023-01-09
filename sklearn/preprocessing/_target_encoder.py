@@ -210,5 +210,5 @@ class TargetRegressorEncoder(OneToOneFeatureMixin, _BaseEncoder):
     def _transform_X_int(self, X_out, X_int, X_invalid, indicies, encodings, y_mean):
         """Transform X_int using encodings."""
         for f_idx, encoding in enumerate(encodings):
-            X_out[indicies, f_idx] = np.take(encoding, X_int[indicies, f_idx])
+            X_out[indicies, f_idx] = encoding[X_int[indicies, f_idx]]
             X_out[X_invalid[:, f_idx], f_idx] = y_mean

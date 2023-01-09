@@ -62,9 +62,7 @@ def test_regression(categories, unknown_value, seed, smooth):
             current_cnt = y_subset.shape[0] + smooth
             cur_encodings[c] = current_sum / current_cnt
 
-        expected_X_fit_transform[test_idx, 0] = np.take(
-            cur_encodings, indices=X_int[test_idx, 0]
-        )
+        expected_X_fit_transform[test_idx, 0] = cur_encodings[X_int[test_idx, 0]]
 
     target_encoder = TargetRegressorEncoder(
         smooth=smooth, categories=categories, cv=kfold
@@ -206,9 +204,9 @@ def test_regression_multiple_features_quick(to_pandas, smooth):
                 current_cnt = y_subset.shape[0] + smooth
                 current_encoding[c] = current_sum / current_cnt
 
-            expected_X_fit_transform[test_idx, f_idx] = np.take(
-                current_encoding, indices=X_int[test_idx, f_idx]
-            )
+            expected_X_fit_transform[test_idx, f_idx] = current_encoding[
+                X_int[test_idx, f_idx]
+            ]
 
     # manually compute encoding for transform
     expected_encodings = []
