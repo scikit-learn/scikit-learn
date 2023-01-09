@@ -176,10 +176,10 @@ def test_agglomerative_clustering_distances(
         assert not hasattr(clustering, "distances_")
 
 
-def test_agglomerative_clustering():
+def test_agglomerative_clustering(global_random_seed):
     # Check that we obtain the correct number of clusters with
     # agglomerative clustering.
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     mask = np.ones([10, 10], dtype=bool)
     n_samples = 100
     X = rng.randn(n_samples, 50)
