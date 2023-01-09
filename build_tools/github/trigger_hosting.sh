@@ -31,10 +31,29 @@ else
      BRANCH=$HEAD_BRANCH
 fi
 
-curl --request POST \
+# Circle CI REST API might return HTTP response with 202 status code
+# even when the POST requests fail.
+CIRCLE_CI_RESPONSE=$(curl --request POST \
      --url https://circleci.com/api/v2/project/gh/$GITHUB_REPOSITORY/pipeline \
      --header "Circle-Token: $CIRCLE_CI_TOKEN" \
      --header "content-type: application/json" \
      --header "x-attribution-actor-id: github_actions" \
      --header "x-attribution-login: github_actions" \
-     --data \{\"branch\":\"$BRANCH\",\"parameters\":\{\"GITHUB_RUN_URL\":\"$GITHUB_RUN_URL\"\}\}
+     --data \{\"branch\":\"$BRANCH\",\"parameters\":\{\"GITHUB_RUN_URL\":\"$GITHUB_RUN_URL\"\}\})
+
+echo CIRCLE_CI_RESPONSE
+
+CIRCLE_CI_RESPONSE_MESSAGE=$(cat $CIRCLE_CI_RESPONSE | jq ".message")
+
+if [[ "$CIRCLE_CI_RESPONSE_MESSAGE" =~ .*"Not Found".* ]]; then
+  echo "The endpoint has not been found on Circle CI REST API. Please check the request correctness."
+  exit 1
+fi
+
+if [[ "$CIRCLE_CI_RESPONSE_MESSAGE" =~ .*"Permission denied".* ]]; then
+  echo "Circle CI is blocking the start of the pipeline."
+  echp "Please check for correct registration of tokens on Circle CI on: https://app.circleci.com/settings/user/tokens"
+  echo "See: https://support.circleci.com/hc/en-us/articles/360050351292-How-to-Trigger-a-Workflow-via-CircleCI-API-v2"
+  # "Permission Denied" exit code.
+  exit 13
+fi
