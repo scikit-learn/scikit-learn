@@ -394,6 +394,7 @@ cdef inline int node_split_best(
     n_constant_features[0] = n_total_constants
     return 0
 
+
 # Sort n-element arrays pointed to by Xf and samples, simultaneously,
 # by the values in Xf. Algorithm: Introsort (Musser, SP&E, 1997).
 cdef inline void sort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
@@ -672,10 +673,11 @@ cdef inline int node_split_random(
     n_constant_features[0] = n_total_constants
     return 0
 
+
 @final
 cdef class DenseSplitter:
     """Splitter specialized for dense data.
-    
+
     Note that this splitter is agnostic to the splitting strategy (best vs. random).
     """
     cdef:
@@ -703,7 +705,7 @@ cdef class DenseSplitter:
     cdef inline void sort_samples_and_feature_values(
         self, SIZE_t current_feature
     ) nogil:
-        """Simultaneously sort based on the feature value."""
+        """Simultaneously sort based on the feature_values."""
         cdef:
             SIZE_t i
             DTYPE_t[::1] Xf = self.feature_values
@@ -724,7 +726,7 @@ cdef class DenseSplitter:
         DTYPE_t* min_feature_value_out,
         DTYPE_t* max_feature_value_out,
     ) nogil:
-        """Compute the next p for the dense splitter."""
+        """Find the minimum and maximum value for current_feature."""
         cdef:
             SIZE_t p
             DTYPE_t current_feature_value
@@ -749,7 +751,7 @@ cdef class DenseSplitter:
         max_feature_value_out[0] = max_feature_value
 
     cdef inline void next_p(self, SIZE_t* p_prev, SIZE_t* p) nogil:
-        """Find min and max feature value for the random splitter."""
+        """Compute the next p_prev and p for iteratiing over feature values."""
         cdef DTYPE_t[::1] Xf = self.feature_values
 
         while p[0] + 1 < self.end and Xf[p[0] + 1] <= Xf[p[0]] + FEATURE_THRESHOLD:
@@ -761,7 +763,7 @@ cdef class DenseSplitter:
         p_prev[0] = p[0] - 1
 
     cdef inline SIZE_t partition_samples(self, double current_threshold) nogil:
-        """Partition samples in the random splitter."""
+        """Partition samples for feature_values at the current_threshold."""
         cdef:
             SIZE_t p = self.start
             SIZE_t partition_end = self.end
@@ -785,7 +787,7 @@ cdef class DenseSplitter:
         double best_threshold,
         SIZE_t best_feature,
     ) nogil:
-        """Partition samples for the best split."""
+        """Partition samples for X at the best_threshold and best_feature."""
         cdef:
             SIZE_t p = self.start
             SIZE_t partition_end = self.end
@@ -802,7 +804,7 @@ cdef class DenseSplitter:
 @final
 cdef class SparseSplitter:
     """Splitter specialized for sparse CSC data.
-    
+
     Note that this splitter is agnostic to the splitting strategy (best vs. random).
     """
     cdef SIZE_t[::1] samples
@@ -861,7 +863,7 @@ cdef class SparseSplitter:
     cdef inline void sort_samples_and_feature_values(
         self, SIZE_t current_feature
     ) nogil:
-        """Simultaneously sort based on the feature value."""
+        """Simultaneously sort based on the feature_values."""
         cdef:
             DTYPE_t[::1] Xf = self.feature_values
             SIZE_t[::1] index_to_samples = self.index_to_samples
@@ -895,7 +897,7 @@ cdef class SparseSplitter:
         DTYPE_t* min_feature_value_out,
         DTYPE_t* max_feature_value_out,
     ) nogil:
-        """Find min and max feature value for the random splitter."""
+        """Find the minimum and maximum value for current_feature."""
         cdef:
             SIZE_t p
             DTYPE_t current_feature_value, min_feature_value, max_feature_value
@@ -933,7 +935,7 @@ cdef class SparseSplitter:
         max_feature_value_out[0] = max_feature_value
 
     cdef inline void next_p(self, SIZE_t* p_prev, SIZE_t* p) nogil:
-        """Compute the next p for the dense splitter."""
+        """Compute the next p_prev and p for iteratiing over feature values."""
         cdef:
             SIZE_t p_next
             DTYPE_t[::1] Xf = self.feature_values
@@ -955,7 +957,7 @@ cdef class SparseSplitter:
         p[0] = p_next
 
     cdef inline SIZE_t partition_samples(self, double current_threshold) nogil:
-        """Partition samples in the random splitter."""
+        """Partition samples for feature_values at the current_threshold."""
         return self._partition(current_threshold, self.start_positive)
 
     cdef inline void partition_samples_final(
@@ -964,7 +966,7 @@ cdef class SparseSplitter:
         double best_threshold,
         SIZE_t best_feature,
     ) nogil:
-        """Parition samples for the best split."""
+        """Partition samples for X at the best_threshold and best_feature."""
         self.extract_nnz(best_feature)
         self._partition(best_threshold, best_pos)
 
