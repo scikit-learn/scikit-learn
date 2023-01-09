@@ -262,15 +262,15 @@ def libsvm_sparse_train(
     # copy model.sv_coef
     # we create a new array instead of resizing, otherwise
     # it would not erase previous information
-    cdef cnp.float64_t[::1] sv_coef_data = np.empty((n_class-1)*SV_len, dtype=np.float64)
-    copy_sv_coef(data=<char *> &sv_coef_data[0], model=model)
+    cdef cnp.float64_t[::1] sv_coef_data = np.empty((n_class - 1) * SV_len, dtype=np.float64)
+    copy_sv_coef(data=<char *> &sv_coef_data[0] if sv_coef_data.size > 0 else NULL, model=model)
 
     cdef cnp.int32_t[::1] support = np.empty(SV_len, dtype=np.int32)
-    copy_support(data=<char *> &support[0], model=model)
+    copy_support(data=<char *> &support[0] if support.size > 0 else NULL, model=model)
 
     # copy model.rho into the intercept
     # the intercept is just model.rho but with sign changed
-    cdef cnp.float64_t[::1] intercept = np.empty(n_class*(n_class-1)//2, dtype=np.float64)
+    cdef cnp.float64_t[::1] intercept = np.empty(n_class * (n_class - 1) // 2, dtype=np.float64)
     copy_intercept(data=<char *> &intercept[0], model=model, dims=<cnp.npy_intp *> intercept.shape)
 
     # copy model.SV
@@ -282,11 +282,11 @@ def libsvm_sparse_train(
     cdef cnp.int32_t[::1] SV_indices = np.empty(nonzero_SV, dtype=np.int32)
     cdef cnp.int32_t[::1] SV_indptr = np.empty(<cnp.npy_intp> SV_len + 1, dtype=np.int32)
     csr_copy_SV(
-        values=<char *> &SV_data[0],
+        values=<char *> &SV_data[0] if SV_data.size > 0 else NULL,
         n_indices=<cnp.npy_intp *> SV_indices.shape,
-        indices=<char *> &SV_indices[0],
+        indices=<char *> &SV_indices[0] if SV_indices.size > 0 else NULL,
         n_indptr=<cnp.npy_intp *> SV_indptr.shape,
-        indptr=<char *> &SV_indptr[0],
+        indptr=<char *> &SV_indptr[0] if SV_indptr.size > 0 else NULL,
         model=model,
         n_features=n_features,
     )
@@ -301,8 +301,8 @@ def libsvm_sparse_train(
     cdef cnp.float64_t[::1] probA, probB
     if probability != 0:
         if svm_type < 2: # SVC and NuSVC
-            probA = np.empty(n_class*(n_class-1)//2, dtype=np.float64)
-            probB = np.empty(n_class*(n_class-1)//2, dtype=np.float64)
+            probA = np.empty(n_class * (n_class - 1) // 2, dtype=np.float64)
+            probB = np.empty(n_class * (n_class - 1) // 2, dtype=np.float64)
             copy_probB(data=<char *> &probB[0], model=model, dims=<cnp.npy_intp *> probB.shape)
         else:
             probA = np.empty(1, dtype=np.float64)
@@ -404,16 +404,16 @@ def libsvm_sparse_predict(
     model = csr_set_model(
         param=param,
         nr_class=<int> nSV.shape[0],
-        SV_data=<char *> &SV_data[0],
+        SV_data=<char *> &SV_data[0] if SV_data.size > 0 else NULL,
         SV_indices_dims=<cnp.npy_intp *>SV_indices.shape,
-        SV_indices=<char *> &SV_indices[0],
+        SV_indices=<char *> &SV_indices[0] if SV_indices.size > 0 else NULL,
         SV_intptr_dims=<cnp.npy_intp *> SV_indptr.shape,
-        SV_intptr=<char *> &SV_indptr[0],
-        sv_coef=<char *> &sv_coef[0],
+        SV_intptr=<char *> &SV_indptr[0] if SV_indptr.size > 0 else NULL,
+        sv_coef=<char *> &sv_coef[0] if sv_coef.size > 0 else NULL,
         rho=<char *> &intercept[0],
         nSV=<char *> &nSV[0],
-        probA=<char *> &probA[0],
-        probB=<char *> &probB[0],
+        probA=<char *> &probA[0] if probA.size > 0 else NULL,
+        probB=<char *> &probB[0] if probB.size > 0 else NULL,
     )
     #TODO: use check_model
     cdef BlasFunctions blas_functions
@@ -493,16 +493,16 @@ def libsvm_sparse_predict_proba(
     model = csr_set_model(
         param=param,
         nr_class=<int> nSV.shape[0],
-        SV_data=<char *> &SV_data[0],
+        SV_data=<char *> &SV_data[0] if SV_data.size > 0 else NULL,
         SV_indices_dims=<cnp.npy_intp *> SV_indices.shape,
-        SV_indices=<char *> &SV_indices[0],
+        SV_indices=<char *> &SV_indices[0] if SV_indices.size > 0 else NULL,
         SV_intptr_dims=<cnp.npy_intp *> SV_indptr.shape,
-        SV_intptr=<char *> &SV_indptr[0],
-        sv_coef=<char *> &sv_coef[0],
+        SV_intptr=<char *> &SV_indptr[0] if SV_indptr.size > 0 else NULL,
+        sv_coef=<char *> &sv_coef[0] if sv_coef.size > 0 else NULL,
         rho=<char *> &intercept[0],
         nSV=<char *> &nSV[0],
-        probA=<char *> &probA[0],
-        probB=<char *> &probB[0],
+        probA=<char *> &probA[0] if probA.size > 0 else NULL,
+        probB=<char *> &probB[0] if probB.size > 0 else NULL,
     )
     #TODO: use check_model
     cdef cnp.npy_intp n_class = get_nr(model)
@@ -590,16 +590,16 @@ def libsvm_sparse_decision_function(
     model = csr_set_model(
         param=param,
         nr_class=<int> nSV.shape[0],
-        SV_data=<char *> &SV_data[0],
+        SV_data=<char *> &SV_data[0] if SV_data.size > 0 else NULL,
         SV_indices_dims=<cnp.npy_intp *> SV_indices.shape,
-        SV_indices=<char *> &SV_indices[0],
+        SV_indices=<char *> &SV_indices[0] if SV_indices.size > 0 else NULL,
         SV_intptr_dims=<cnp.npy_intp *> SV_indptr.shape,
-        SV_intptr=<char *> &SV_indptr[0],
-        sv_coef=<char *> &sv_coef[0],
+        SV_intptr=<char *> &SV_indptr[0] if SV_indptr.size > 0 else NULL,
+        sv_coef=<char *> &sv_coef[0] if sv_coef.size > 0 else NULL,
         rho=<char *> &intercept[0],
         nSV=<char *> &nSV[0],
-        probA=<char *> &probA[0],
-        probB=<char *> &probB[0],
+        probA=<char *> &probA[0] if probA.size > 0 else NULL,
+        probB=<char *> &probB[0] if probB.size > 0 else NULL,
     )
 
     if svm_type > 1:
