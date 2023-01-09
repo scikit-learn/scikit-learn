@@ -65,7 +65,6 @@ Changes impacting all modules
   - :class:`preprocessing.StandardScaler`
   - :class:`random_projection.GaussianRandomProjection`
   - :class:`random_projection.SparseRandomProjection`
-  
   The `NotFittedError` displays an informative message asking to fit the instance
   with the appropriate arguments.
 
