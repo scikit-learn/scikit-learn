@@ -31,8 +31,8 @@ else
      BRANCH=$HEAD_BRANCH
 fi
 
-# Circle CI REST API might return HTTP response with 202 status code
-# even when the POST requests fail.
+# Circle CI REST API return HTTP response with 202 status code even when the POST requests fail.
+# Hence we add some handling so that errors are reported on GitHub.
 CIRCLE_CI_RESPONSE=$(curl --request POST \
      --url https://circleci.com/api/v2/project/gh/$GITHUB_REPOSITORY/pipeline \
      --header "Circle-Token: $CIRCLE_CI_TOKEN" \
