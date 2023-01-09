@@ -82,6 +82,15 @@ class TargetRegressorEncoder(OneToOneFeatureMixin, _BaseEncoder):
     --------
     OrdinalEncoder : Performs an ordinal (integer) encoding of the categorical features.
     OneHotEncoder : Performs a one-hot encoding of categorical features.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import TargetRegressorEncoder
+    >>> X = np.array([["dog"] * 20 + ["cat"] * 30 + ["snake"] * 40], dtype=object).T
+    >>> y = [10] * 5 + [40] * 15 + [20] * 5 + [11] * 25 + [20] * 10 + [40] * 30
+    >>> enc = TargetRegressorEncoder(smooth=5.0)
+    >>> X_trans = enc.fit_transform(X, y)
     """
 
     _parameter_constraints: dict = {
