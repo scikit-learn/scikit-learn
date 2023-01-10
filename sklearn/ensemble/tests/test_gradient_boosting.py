@@ -814,6 +814,7 @@ def test_warm_start_state_oob_scores(GradientBoosting):
     estimator.fit(X, y)
     oob_scores, oob_score = estimator.oob_scores_, estimator.oob_score_
     assert len(oob_scores) == n_estimators
+    assert oob_scores[-1] == oob_score
 
     n_more_estimators = 200
     estimator.set_params(n_estimators=n_more_estimators).fit(X, y)

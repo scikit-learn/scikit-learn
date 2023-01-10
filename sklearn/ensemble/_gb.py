@@ -376,11 +376,13 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                     self.oob_improvement_, total_n_estimators
                 )
                 self.oob_scores_ = np.resize(self.oob_scores_, total_n_estimators)
+                self.oob_score_ = self.oob_scores_[-1]
             else:
                 self.oob_improvement_ = np.zeros(
                     (total_n_estimators,), dtype=np.float64
                 )
                 self.oob_scores_ = np.zeros((total_n_estimators,), dtype=np.float64)
+                self.oob_score_ = self.oob_scores_[-1]
 
     def _is_initialized(self):
         return len(getattr(self, "estimators_", [])) > 0
@@ -564,6 +566,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 self.oob_improvement_ = self.oob_improvement_[:n_stages]
             if hasattr(self, "oob_scores_"):
                 self.oob_scores_ = self.oob_scores_[:n_stages]
+            if hasattr(self, "oob_score_"):
                 self.oob_score_ = self.oob_scores_[-1]
         self.n_estimators_ = n_stages
         return self
@@ -648,7 +651,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                 )
                 previous_loss = initial_loss if i == 0 else self.oob_scores_[i - 1]
                 self.oob_improvement_[i] = previous_loss - self.oob_scores_[i]
-                self.oob_oob_score_ = self.oob_scores_[-1]
+                self.oob_score_ = self.oob_scores_[-1]
             else:
                 # no need to fancy index w/ no subsampling
                 self.train_score_[i] = loss_(y, raw_predictions, sample_weight)
