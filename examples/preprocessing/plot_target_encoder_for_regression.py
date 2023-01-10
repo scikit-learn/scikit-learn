@@ -5,10 +5,11 @@ Target Encoder for Regression
 
 .. currentmodule:: sklearn.preprocessing
 
-The :class:`TargetEncoder` uses target statistics conditioned on
-the categorical features for encoding. In this example, we will compare
+The :class:`TargetEncoder` uses the value of the target to encode each
+categorical feature. In this example, we will compare
+three different approaches for handling categorical features:
 :class:`TargetEncoder`, :class:`OrdinalEncoder`, and dropping the
-category on a wine review dataset.
+category.
 """
 
 # %%
@@ -25,8 +26,9 @@ df.head()
 
 # %%
 # For this example, we use the following subset of numerical and categorical
-# features in the data. The categorical features have a cardinality ranging
-# from 18 to 14810:
+# features in the data. Then, we split the dataset into a training and test set.
+from sklearn.model_selection import train_test_split
+
 numerical_features = ["price"]
 categorical_features = [
     "country",
@@ -39,11 +41,6 @@ categorical_features = [
 
 X = df[numerical_features + categorical_features]
 y = df["points"]
-X.nunique().sort_values(ascending=False)
-
-# %%
-# We split the dataset into a training and test set:
-from sklearn.model_selection import train_test_split
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
@@ -54,7 +51,7 @@ print(f"Samples in training set: {len(X_train)}\nSamples in test set: {len(X_tes
 # =======================================================
 # Dropping the categorical features
 # ---------------------------------
-# As a basline, we construct a pipeline where the categorical features are
+# As a baseline, we construct a pipeline where the categorical features are
 # dropped.
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
@@ -67,19 +64,21 @@ prep = ColumnTransformer(
     ]
 )
 
-reg_drop_cats = Pipeline(
+without_categories_pipe = Pipeline(
     [("prep", prep), ("hist", HistGradientBoostingRegressor(random_state=0))]
 )
-reg_drop_cats
+without_categories_pipe
 
 # %%
 # Here we train and use the root mean squared error to evalute the baseline
 # model:
 from sklearn.metrics import mean_squared_error
 
-reg_drop_cats.fit(X_train, y_train)
-reg_drop_cats_rmse = mean_squared_error(y_test, reg_drop_cats.predict(X_test))
-print(f"RMSE for dropping categorical features: {reg_drop_cats_rmse:.4}")
+without_categories_pipe.fit(X_train, y_train)
+without_categories_rsme = mean_squared_error(
+    y_test, without_categories_pipe.predict(X_test)
+)
+print(f"RMSE for dropping categorical features: {without_categories_rsme:.4}")
 
 # %%
 # Using the OrdinalEncoder
@@ -88,34 +87,37 @@ print(f"RMSE for dropping categorical features: {reg_drop_cats_rmse:.4}")
 # with `'sk_missing'` before passing it to the :class:`OrdinalEncoder`.
 from sklearn.preprocessing import OrdinalEncoder
 
-cat_prep = OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)
+categorical_preprocessor = OrdinalEncoder(
+    handle_unknown="use_encoded_value", unknown_value=-1
+)
 
 # %%
 # We modify the original pipeline to use the ordinal categorical preprocessing:
-reg_ordinal = reg_drop_cats.set_params(prep__cat=cat_prep)
-reg_ordinal
+ordinal_pipe = without_categories_pipe.set_params(prep__cat=categorical_preprocessor)
+ordinal_pipe
 
 # %%
-# When we include the categorical features through ordinal encoding the RMSE
-# improves:
-reg_ordinal.fit(X_train, y_train)
-reg_ordinal_rmse = mean_squared_error(
-    y_test, reg_ordinal.predict(X_test), squared=False
+# When we include the categorical features through ordinal encoding the
+# root mean squared error improves:
+ordinal_pipe.fit(X_train, y_train)
+ordinal_pipe_rmse = mean_squared_error(
+    y_test, ordinal_pipe.predict(X_test), squared=False
 )
-print(f"RMSE with ordinal encoding: {reg_ordinal_rmse:.4}")
+print(f"RMSE with ordinal encoding: {ordinal_pipe_rmse:.4}")
 
 # %%
 # Using the TargetEncoder
 # --------------------------------
-# Finally, we replace the ordinal encoder with the
-# :class:`TargetEncoder`:
+# Finally, we replace the ordinal encoder with the :class:`TargetEncoder`:
 from sklearn.preprocessing import TargetEncoder
 
-reg_target = reg_ordinal.set_params(prep__cat=TargetEncoder())
-reg_target
+target_pipe = ordinal_pipe.set_params(prep__cat=TargetEncoder())
+target_pipe
 
 # %%
-# The :class:`TargetEncoder` further improves the RMSE:
-reg_target.fit(X_train, y_train)
-reg_target_rmse = mean_squared_error(y_test, reg_target.predict(X_test), squared=False)
-print(f"RMSE with target encoding: {reg_target_rmse:.4}")
+# The :class:`TargetEncoder` further improves the root mean squared error:
+target_pipe.fit(X_train, y_train)
+target_pipe_rmse = mean_squared_error(
+    y_test, target_pipe.predict(X_test), squared=False
+)
+print(f"RMSE with target encoding: {target_pipe_rmse:.4}")

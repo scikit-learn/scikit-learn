@@ -837,7 +837,7 @@ Target Regressor Encoder
 
 .. currentmodule:: sklearn.preprocessing
 
-The :class:`TargetEncoder` uses target mean conditioned on the
+The :class:`TargetEncoder` uses target statistics groupby the
 categorical feature for encoding the categories [PAR]_ [MIC]_. This encoding
 scheme is useful with categorical features with high cardinality, where one hot
 encoding would inflate the feature space making it more expensive for a
@@ -852,7 +852,8 @@ the target mean conditioned on the category:
 where :math:`E_c` is the encoding for category :math:`c`, :math:`X_i` is the
 category at :math:`i`, :math:`y_i` is the target at :math:`i`, :math:`s` is a
 smoothing parameter, and :math:`X_c` is the set of data points with category
-:math:`c`.
+:math:`c`. For binary classification targets, the target is binarized
+and then the mean is computed.
 
 :class:`TargetEncoder` uses a cross validation scheme in
 :meth:`~TargetEncoder.fit_transform` to prevent leaking the target
