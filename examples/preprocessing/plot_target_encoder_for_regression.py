@@ -1,6 +1,6 @@
 """
 =============================
-Target Encoder for Regressors
+Target Encoder for Regression
 =============================
 
 .. currentmodule:: sklearn.preprocessing

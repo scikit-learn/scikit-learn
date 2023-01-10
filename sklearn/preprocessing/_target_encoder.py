@@ -11,13 +11,13 @@ from ..utils._param_validation import Interval, StrOptions
 
 
 class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
-    """Target Encoder for Regression Targets.
+    """Target Encoder for regression and binary classification targets.
 
     Each category is encoded based on its effect on the target variable. The encoding
     scheme mixes the global target mean with the target mean conditioned on the
     category.
 
-    Read more in the :ref:`User Guide <target_regressor_encoder>`.
+    Read more in the :ref:`User Guide <target_encoder>`.
 
     .. note::
         :class:`TargetEncoder` uses a cross validation scheme in

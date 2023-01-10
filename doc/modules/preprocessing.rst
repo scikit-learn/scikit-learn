@@ -830,7 +830,7 @@ lexicon order.
    >>> enc.infrequent_categories_
    [array(['b', 'c'], dtype=object)]
 
-.. _target_regressor_encoder:
+.. _target_encoder:
 
 Target Regressor Encoder
 ------------------------
@@ -864,7 +864,7 @@ This means that `fit().transform()` does not equal `fit_transform()`.
 
 .. topic:: Examples:
 
-  * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_regressor_encoder.py`
+  * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder_for_regression.py`
 
 .. topic:: References
 
