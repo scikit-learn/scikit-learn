@@ -62,6 +62,7 @@ from sklearn import datasets
 from sklearn.utils import compute_sample_weight
 from sklearn.tree._classes import DENSE_SPLITTERS, SPARSE_SPLITTERS
 
+CLF_CRITERIONS = ("gini", "log_loss")
 REG_CRITERIONS = ("squared_error", "absolute_error", "friedman_mse", "poisson")
 
 CLF_TREES = {
@@ -329,7 +330,7 @@ def test_imbalanced_criterions(name, Tree, criterion):
 
 
 @pytest.mark.parametrize("name, Tree", CLF_TREES.items())
-@pytest.mark.parametrize("criterion", ["gini", "entropy"])
+@pytest.mark.parametrize("criterion", CLF_CRITERIONS)
 def test_iris(name, Tree, criterion):
     # Check consistency on dataset iris.
     check_classification(name, Tree, criterion, iris.data, iris.target)
@@ -1507,7 +1508,7 @@ def test_sparse_parameters(tree_type, dataset):
 @pytest.mark.parametrize(
     "tree_type, criterion",
     chain(
-        product(CLF_TREES, ["gini", "entropy"]),
+        product(CLF_TREES, CLF_CRITERIONS),
         product(REG_TREES, REG_CRITERIONS),
     ),
 )
@@ -1875,7 +1876,7 @@ def test_empty_leaf_infinite_threshold():
         assert len(empty_leaf) == 0
 
 
-@pytest.mark.parametrize("criterion", ["gini", "entropy", "hellinger"])
+@pytest.mark.parametrize("criterion", CLF_CRITERIONS + ["hellinger"])
 @pytest.mark.parametrize(
     "dataset", sorted(set(DATASETS.keys()) - {"reg_small", "diabetes"})
 )
