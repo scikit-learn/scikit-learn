@@ -80,7 +80,12 @@ def cythonize_extensions(extension):
         "cdivision": True,
     }
 
-    if not Cython.__version__.startswith("0."):
+    # TODO: once Cython 3 is released and we require Cython>=3 we should get
+    # rid of the legacy_implicit_noexcept directive. This should mostly consist
+    # in ensuring nogil is at the end of function signature, e.g. replace
+    # "nogil except -1" by "except -1 nogil". See
+    # https://github.com/cython/cython/issues/5088 for more details
+    if parse(Cython.__version__) > parse("3.0.0a11"):
         compiler_directives["legacy_implicit_noexcept"] = True
 
     return cythonize(
