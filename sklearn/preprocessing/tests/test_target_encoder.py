@@ -19,8 +19,8 @@ from sklearn.model_selection import KFold
 @pytest.mark.parametrize("seed", range(2))
 @pytest.mark.parametrize("smooth", [5.0, 10.0])
 @pytest.mark.parametrize("target_type", ["binary", "continuous"])
-def test_regression(categories, unknown_value, seed, smooth, target_type):
-    """Check regression encoding."""
+def test_encoding(categories, unknown_value, seed, smooth, target_type):
+    """Check encoding for binary and continuous targets."""
 
     X_int = np.array([[0] * 20 + [1] * 30 + [2] * 40], dtype=np.int64).T
     n_categories = 3
@@ -114,7 +114,7 @@ def test_regression(categories, unknown_value, seed, smooth, target_type):
         ),
     ],
 )
-def test_regression_custom_categories(X, categories):
+def test_custom_categories(X, categories):
     """custom categoires with unknown categories that are not in training data."""
     rng = np.random.RandomState(42)
     y = rng.uniform(low=-10, high=20, size=X.shape[0])
@@ -141,7 +141,7 @@ def test_regression_custom_categories(X, categories):
         (["cat", "dog", "bear"], "Target type was inferred to be 'multiclass'"),
     ],
 )
-def test_regression_errors(y, msg):
+def test_errors(y, msg):
     """Check invalidate input."""
     X = np.asarray([[1, 0, 1]]).T
 
@@ -150,7 +150,7 @@ def test_regression_errors(y, msg):
         enc.fit_transform(X, y)
 
 
-def test_regression_feature_names_out_set_output():
+def test_feature_names_out_set_output():
     """Check TargetEncoder works with set_output."""
     pd = pytest.importorskip("pandas")
 
