@@ -1489,7 +1489,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     This implementation works with data represented as dense and sparse numpy
     arrays of floating point values.
-
+    
     References
     ----------
     Hinton, Geoffrey E. "Connectionist learning procedures."
@@ -1518,6 +1518,24 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
     array([-0.9..., -7.1...])
     >>> regr.score(X_test, y_test)
     0.4...
+
+    MLPRegressor as an autoencoder 
+    --------
+    MLPRegressor can function as an autoencoder by passing X as input and target (i.e. X == y). 
+    >>> from sklearn.neural_network import MLPRegressor
+    >>> autoencoder = MLPRegressor(hidden_layer_sizes = (n_encoder1, n_encoder2, n_latent, n_decoder2, n_decoder1), 
+    ...            activation = 'tanh', 
+    ...            solver = 'adam', 
+    ...            learning_rate_init = 0.0001, 
+    ...            max_iter = 20, 
+    ...            tol = 0.0000001, 
+    ...            verbose = True)
+    >>> autoencoder.fit(X, X)
+    >>> X_auto = autoencoder.predict(X)
+
+    The autoencoder is a neural network that is trained to attempt to copy its input to its output.
+    The network consists of two parts: an encoder and a decoder that produce a reconstruction.
+    The encoder and decoder are simple MLP models and they use "tanh" for a nonlinear activation function.
     """
 
     def __init__(
