@@ -111,7 +111,7 @@ print(f"RMSE with ordinal encoding: {ordinal_pipe_rmse:.4}")
 # Finally, we replace the ordinal encoder with the :class:`TargetEncoder`:
 from sklearn.preprocessing import TargetEncoder
 
-target_pipe = ordinal_pipe.set_params(prep__cat=TargetEncoder())
+target_pipe = ordinal_pipe.set_params(prep__cat=TargetEncoder(target_type="continuous"))
 target_pipe
 
 # %%

@@ -42,6 +42,14 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         The used categories can be found in the ``categories_`` attribute.
 
+    target_type : {"auto", "continuous", "binary"}, default="auto"
+        Type of target
+
+        - `"auto"` : Type of target is inferred with
+          :func:`~sklearn.utils.multiclass.type_of_target`
+        - `"continuous"` : Continious target
+        - `"binary"` : Binary target
+
     smooth : float, default=30.0
         The amount of mixing the categorical encoding with the global target mean. A
         larger `smooth` value will put more weight on the global target mean.
@@ -200,14 +208,17 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         check_consistent_length(X, y)
         self._fit(X, handle_unknown="ignore", force_all_finite="allow-nan")
 
-        accepted_target_types = ("binary", "continuous")
-        inferred_type_of_target = type_of_target(y, input_name="y")
-        if inferred_type_of_target not in accepted_target_types:
-            raise ValueError(
-                f"Target type was inferred to be {inferred_type_of_target!r}. Only"
-                f" {accepted_target_types} are supported."
-            )
-        self.target_type_ = inferred_type_of_target
+        if self.target_type == "auto":
+            accepted_target_types = ("binary", "continuous")
+            inferred_type_of_target = type_of_target(y, input_name="y")
+            if inferred_type_of_target not in accepted_target_types:
+                raise ValueError(
+                    f"Target type was inferred to be {inferred_type_of_target!r}. Only"
+                    f" {accepted_target_types} are supported."
+                )
+            self.target_type_ = inferred_type_of_target
+        else:
+            self.target_type_ = self.target_type
 
         if self.target_type_ == "binary":
             y = LabelEncoder().fit_transform(y)

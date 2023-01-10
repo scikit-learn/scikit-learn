@@ -150,6 +150,22 @@ def test_errors(y, msg):
         enc.fit_transform(X, y)
 
 
+def test_use_regression_target():
+    """Custom target_type to avoid inferring the target type."""
+    X = np.asarray([[0, 1, 0, 1, 0, 1]]).T
+    # type_of_target would be 'multiclass'
+    y = np.asarray([1.0, 2.0, 3.0, 2.0, 3.0, 4.0])
+
+    enc = TargetEncoder()
+    msg = "Target type was inferred to be 'multiclass'"
+    with pytest.raises(ValueError, match=msg):
+        enc.fit_transform(X, y)
+
+    enc = TargetEncoder(target_type="continuous")
+    enc.fit_transform(X, y)
+    assert enc.target_type_ == "continuous"
+
+
 def test_feature_names_out_set_output():
     """Check TargetEncoder works with set_output."""
     pd = pytest.importorskip("pandas")
