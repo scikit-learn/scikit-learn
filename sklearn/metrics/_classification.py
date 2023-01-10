@@ -2689,10 +2689,10 @@ def log_loss(
 
     # Renormalize
     y_pred_sum = y_pred.sum(axis=1)
-    if (y_pred_sum != 1).any():
+    if not np.isclose(y_pred_sum, 1, rtol=1e-15, atol=5 * eps).all():
         warnings.warn(
-            "The y_pred values are not normalized. Starting from 1.3 this"
-            "would result in an error.",
+            "The y_pred values do not sum to one. Starting from 1.3 this"
+            "will result in an error.",
             UserWarning,
         )
         y_pred = y_pred / y_pred_sum[:, np.newaxis]
