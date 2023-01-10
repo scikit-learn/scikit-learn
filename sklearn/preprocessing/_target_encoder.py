@@ -222,8 +222,10 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         if self.target_type_ == "binary":
             y = LabelEncoder().fit_transform(y)
+        else:  # continuous
+            y = _check_y(y, y_numeric=True, estimator=self)
 
-        y = _check_y(y, y_numeric=True, estimator=self).astype(np.float64, copy=False)
+        y = y.astype(np.float64, copy=False)
 
         self.encoding_mean_ = np.mean(y)
 
@@ -231,7 +233,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             X, handle_unknown="ignore", force_all_finite="allow-nan"
         )
         n_categories = np.fromiter(
-            (len(cat) for cat in self.categories_),
+            (len(category_for_feature) for category_for_feature in self.categories_),
             dtype=np.int64,
             count=len(self.categories_),
         )
@@ -240,8 +242,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         )
         return X_int, X_mask, y, n_categories
 
-    def _transform_X_int(self, X_out, X_int, X_invalid, indicies, encodings, y_mean):
+    def _transform_X_int(self, X_out, X_int, X_invalid, indices, encodings, y_mean):
         """Transform X_int using encodings."""
         for f_idx, encoding in enumerate(encodings):
-            X_out[indicies, f_idx] = encoding[X_int[indicies, f_idx]]
+            X_out[indices, f_idx] = encoding[X_int[indices, f_idx]]
             X_out[X_invalid[:, f_idx], f_idx] = y_mean
