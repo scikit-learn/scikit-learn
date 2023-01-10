@@ -121,7 +121,10 @@ target_pipe = ordinal_pipe.set_params(prep__cat=TargetEncoder(target_type="conti
 target_pipe
 
 # %%
-# The :class:`TargetEncoder` further improves the model when evaluted with the test set.
+# When the model is evalute on the test set, we see that the
+# :class:`TargetEncoder` further improves the predictive performance of the
+# model. The target encoding provides more information about the target, which
+# the regression model at the end of the pipeline can take advantage of.
 target_pipe.fit(X_train, y_train)
 target_pipe_rmse = mean_squared_error(
     y_test, target_pipe.predict(X_test), squared=False
