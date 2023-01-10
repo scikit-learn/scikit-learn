@@ -2442,6 +2442,10 @@ def classification_report(
         return report
 
 
+@validate_params({"y_true": ["array-like","sparse matrix"],
+"y_pred":["array-like","sparse matrix"],
+"sample_weight": ["array-like",None],
+})
 def hamming_loss(y_true, y_pred, *, sample_weight=None):
     """Compute the average Hamming loss.
 
