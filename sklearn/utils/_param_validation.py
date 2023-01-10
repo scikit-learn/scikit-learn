@@ -1,10 +1,13 @@
 from abc import ABC
 from abc import abstractmethod
+from collections.abc import Iterable
 import functools
+import math
 from inspect import signature
 from numbers import Integral
 from numbers import Real
 import operator
+import re
 import warnings
 
 import numpy as np
@@ -12,6 +15,14 @@ from scipy.sparse import issparse
 from scipy.sparse import csr_matrix
 
 from .validation import _is_arraylike_not_scalar
+
+
+class InvalidParameterError(ValueError, TypeError):
+    """Custom exception to be raised when the parameter of a class/method/function
+    does not have a valid type or value.
+    """
+
+    # Inherits from ValueError and TypeError to keep backward compatibility.
 
 
 def validate_parameter_constraints(parameter_constraints, params, caller_name):
@@ -32,9 +43,14 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
         - callable
         - None, meaning that None is a valid value for the parameter
         - any type, meaning that any instance of this type is valid
+        - an Options object, representing a set of elements of a given type
         - a StrOptions object, representing a set of strings
         - the string "boolean"
         - the string "verbose"
+        - the string "cv_object"
+        - the string "missing_values"
+        - a HasMethods object, representing method(s) an object must have
+        - a Hidden object, representing a constraint not meant to be exposed to the user
 
     params : dict
         A dictionary `param_name: param_value`. The parameters to validate against the
@@ -43,13 +59,13 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
     caller_name : str
         The name of the estimator or function or method that called this function.
     """
-    if params.keys() != parameter_constraints.keys():
-        raise ValueError(
-            f"The parameter constraints {list(parameter_constraints.keys())} do not "
-            f"match the parameters to validate {list(params.keys())}."
-        )
-
     for param_name, param_val in params.items():
+        # We allow parameters to not have a constraint so that third party estimators
+        # can inherit from sklearn estimators without having to necessarily use the
+        # validation tools.
+        if param_name not in parameter_constraints:
+            continue
+
         constraints = parameter_constraints[param_name]
 
         if constraints == "no_validation":
@@ -78,7 +94,7 @@ def validate_parameter_constraints(parameter_constraints, params, caller_name):
                     f" {constraints[-1]}"
                 )
 
-            raise ValueError(
+            raise InvalidParameterError(
                 f"The {param_name!r} parameter of {caller_name} must be"
                 f" {constraints_str}. Got {param_val!r} instead."
             )
@@ -109,12 +125,16 @@ def make_constraint(constraint):
         return _NoneConstraint()
     if isinstance(constraint, type):
         return _InstancesOf(constraint)
-    if isinstance(constraint, (Interval, StrOptions)):
+    if isinstance(constraint, (Interval, StrOptions, Options, HasMethods)):
         return constraint
     if isinstance(constraint, str) and constraint == "boolean":
         return _Booleans()
     if isinstance(constraint, str) and constraint == "verbose":
         return _VerboseHelper()
+    if isinstance(constraint, str) and constraint == "missing_values":
+        return _MissingValues()
+    if isinstance(constraint, str) and constraint == "cv_object":
+        return _CVObjects()
     if isinstance(constraint, Hidden):
         constraint = make_constraint(constraint.constraint)
         constraint.hidden = True
@@ -167,11 +187,37 @@ def validate_params(parameter_constraints):
             validate_parameter_constraints(
                 parameter_constraints, params, caller_name=func.__qualname__
             )
-            return func(*args, **kwargs)
+
+            try:
+                return func(*args, **kwargs)
+            except InvalidParameterError as e:
+                # When the function is just a wrapper around an estimator, we allow
+                # the function to delegate validation to the estimator, but we replace
+                # the name of the estimator by the name of the function in the error
+                # message to avoid confusion.
+                msg = re.sub(
+                    r"parameter of \w+ must be",
+                    f"parameter of {func.__qualname__} must be",
+                    str(e),
+                )
+                raise InvalidParameterError(msg) from e
 
         return wrapper
 
     return decorator
+
+
+def _type_name(t):
+    """Convert type into human readable string."""
+    module = t.__module__
+    qualname = t.__qualname__
+    if module == "builtins":
+        return qualname
+    elif t == Real:
+        return "float"
+    elif t == Integral:
+        return "int"
+    return f"{module}.{qualname}"
 
 
 class _Constraint(ABC):
@@ -213,23 +259,11 @@ class _InstancesOf(_Constraint):
         super().__init__()
         self.type = type
 
-    def _type_name(self, t):
-        """Convert type into human readable string."""
-        module = t.__module__
-        qualname = t.__qualname__
-        if module == "builtins":
-            return qualname
-        elif t == Real:
-            return "float"
-        elif t == Integral:
-            return "int"
-        return f"{module}.{qualname}"
-
     def is_satisfied_by(self, val):
         return isinstance(val, self.type)
 
     def __str__(self):
-        return f"an instance of {self._type_name(self.type)!r}"
+        return f"an instance of {_type_name(self.type)!r}"
 
 
 class _NoneConstraint(_Constraint):
@@ -242,21 +276,49 @@ class _NoneConstraint(_Constraint):
         return "None"
 
 
-class StrOptions(_Constraint):
-    """Constraint representing a set of strings.
+class _NanConstraint(_Constraint):
+    """Constraint representing the indicator `np.nan`."""
+
+    def is_satisfied_by(self, val):
+        return isinstance(val, Real) and math.isnan(val)
+
+    def __str__(self):
+        return "numpy.nan"
+
+
+class _PandasNAConstraint(_Constraint):
+    """Constraint representing the indicator `pd.NA`."""
+
+    def is_satisfied_by(self, val):
+        try:
+            import pandas as pd
+
+            return isinstance(val, type(pd.NA)) and pd.isna(val)
+        except ImportError:
+            return False
+
+    def __str__(self):
+        return "pandas.NA"
+
+
+class Options(_Constraint):
+    """Constraint representing a finite set of instances of a given type.
 
     Parameters
     ----------
-    options : set of str
-        The set of valid strings.
+    type : type
 
-    deprecated : set of str or None, default=None
-        A subset of the `options` to mark as deprecated in the repr of the constraint.
+    options : set
+        The set of valid scalars.
+
+    deprecated : set or None, default=None
+        A subset of the `options` to mark as deprecated in the string
+        representation of the constraint.
     """
 
-    @validate_params({"options": [set], "deprecated": [set, None]})
-    def __init__(self, options, deprecated=None):
+    def __init__(self, type, options, *, deprecated=None):
         super().__init__()
+        self.type = type
         self.options = options
         self.deprecated = deprecated or set()
 
@@ -264,7 +326,7 @@ class StrOptions(_Constraint):
             raise ValueError("The deprecated options must be a subset of the options.")
 
     def is_satisfied_by(self, val):
-        return isinstance(val, str) and val in self.options
+        return isinstance(val, self.type) and val in self.options
 
     def _mark_if_deprecated(self, option):
         """Add a deprecated mark to an option if needed."""
@@ -277,7 +339,24 @@ class StrOptions(_Constraint):
         options_str = (
             f"{', '.join([self._mark_if_deprecated(o) for o in self.options])}"
         )
-        return f"a str among {{{options_str}}}"
+        return f"a {_type_name(self.type)} among {{{options_str}}}"
+
+
+class StrOptions(Options):
+    """Constraint representing a finite set of strings.
+
+    Parameters
+    ----------
+    options : set of str
+        The set of valid strings.
+
+    deprecated : set of str or None, default=None
+        A subset of the `options` to mark as deprecated in the string
+        representation of the constraint.
+    """
+
+    def __init__(self, options, *, deprecated=None):
+        super().__init__(type=str, options=options, deprecated=deprecated)
 
 
 class Interval(_Constraint):
@@ -499,6 +578,116 @@ class _VerboseHelper(_Constraint):
         )
 
 
+class _MissingValues(_Constraint):
+    """Helper constraint for the `missing_values` parameters.
+
+    Convenience for
+    [
+        Integral,
+        Interval(Real, None, None, closed="both"),
+        str,
+        None,
+        _NanConstraint(),
+        _PandasNAConstraint(),
+    ]
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._constraints = [
+            _InstancesOf(Integral),
+            # we use an interval of Real to ignore np.nan that has its own constraint
+            Interval(Real, None, None, closed="both"),
+            _InstancesOf(str),
+            _NoneConstraint(),
+            _NanConstraint(),
+            _PandasNAConstraint(),
+        ]
+
+    def is_satisfied_by(self, val):
+        return any(c.is_satisfied_by(val) for c in self._constraints)
+
+    def __str__(self):
+        return (
+            f"{', '.join([str(c) for c in self._constraints[:-1]])} or"
+            f" {self._constraints[-1]}"
+        )
+
+
+class HasMethods(_Constraint):
+    """Constraint representing objects that expose specific methods.
+
+    It is useful for parameters following a protocol and where we don't want to impose
+    an affiliation to a specific module or class.
+
+    Parameters
+    ----------
+    methods : str or list of str
+        The method(s) that the object is expected to expose.
+    """
+
+    @validate_params({"methods": [str, list]})
+    def __init__(self, methods):
+        super().__init__()
+        if isinstance(methods, str):
+            methods = [methods]
+        self.methods = methods
+
+    def is_satisfied_by(self, val):
+        return all(callable(getattr(val, method, None)) for method in self.methods)
+
+    def __str__(self):
+        if len(self.methods) == 1:
+            methods = f"{self.methods[0]!r}"
+        else:
+            methods = (
+                f"{', '.join([repr(m) for m in self.methods[:-1]])} and"
+                f" {self.methods[-1]!r}"
+            )
+        return f"an object implementing {methods}"
+
+
+class _IterablesNotString(_Constraint):
+    """Constraint representing iterables that are not strings."""
+
+    def is_satisfied_by(self, val):
+        return isinstance(val, Iterable) and not isinstance(val, str)
+
+    def __str__(self):
+        return "an iterable"
+
+
+class _CVObjects(_Constraint):
+    """Constraint representing cv objects.
+
+    Convenient class for
+    [
+        Interval(Integral, 2, None, closed="left"),
+        HasMethods(["split", "get_n_splits"]),
+        _IterablesNotString(),
+        None,
+    ]
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._constraints = [
+            Interval(Integral, 2, None, closed="left"),
+            HasMethods(["split", "get_n_splits"]),
+            _IterablesNotString(),
+            _NoneConstraint(),
+        ]
+
+    def is_satisfied_by(self, val):
+        return any(c.is_satisfied_by(val) for c in self._constraints)
+
+    def __str__(self):
+        return (
+            f"{', '.join([str(c) for c in self._constraints[:-1]])} or"
+            f" {self._constraints[-1]}"
+        )
+
+
 class Hidden:
     """Class encapsulating a constraint not meant to be exposed to the user.
 
@@ -536,8 +725,20 @@ def generate_invalid_param_val(constraint, constraints=None):
     if isinstance(constraint, StrOptions):
         return f"not {' or '.join(constraint.options)}"
 
+    if isinstance(constraint, _MissingValues):
+        return np.array([1, 2, 3])
+
     if isinstance(constraint, _VerboseHelper):
         return -1
+
+    if isinstance(constraint, HasMethods):
+        return type("HasNotMethods", (), {})()
+
+    if isinstance(constraint, _IterablesNotString):
+        return "a string"
+
+    if isinstance(constraint, _CVObjects):
+        return "not a cv object"
 
     if not isinstance(constraint, Interval):
         raise NotImplementedError
@@ -682,6 +883,14 @@ def generate_valid_param(constraint):
         return None
 
     if isinstance(constraint, _InstancesOf):
+        if constraint.type is np.ndarray:
+            # special case for ndarray since it can't be instantiated without arguments
+            return np.array([1, 2, 3])
+
+        if constraint.type in (Integral, Real):
+            # special case for Integral and Real since they are abstract classes
+            return 1
+
         return constraint.type()
 
     if isinstance(constraint, _Booleans):
@@ -690,7 +899,21 @@ def generate_valid_param(constraint):
     if isinstance(constraint, _VerboseHelper):
         return 1
 
-    if isinstance(constraint, StrOptions):
+    if isinstance(constraint, _MissingValues):
+        return np.nan
+
+    if isinstance(constraint, HasMethods):
+        return type(
+            "ValidHasMethods", (), {m: lambda self: None for m in constraint.methods}
+        )()
+
+    if isinstance(constraint, _IterablesNotString):
+        return [1, 2, 3]
+
+    if isinstance(constraint, _CVObjects):
+        return 5
+
+    if isinstance(constraint, Options):  # includes StrOptions
         for option in constraint.options:
             return option
 

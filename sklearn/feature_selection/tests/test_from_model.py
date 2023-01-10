@@ -14,7 +14,14 @@ from sklearn import datasets
 from sklearn.cross_decomposition import CCA, PLSCanonical, PLSRegression
 from sklearn.datasets import make_friedman1
 from sklearn.exceptions import NotFittedError
-from sklearn.linear_model import LogisticRegression, SGDClassifier, Lasso
+from sklearn.linear_model import (
+    LogisticRegression,
+    SGDClassifier,
+    Lasso,
+    LassoCV,
+    ElasticNet,
+    ElasticNetCV,
+)
 from sklearn.svm import LinearSVC
 from sklearn.feature_selection import SelectFromModel
 from sklearn.ensemble import RandomForestClassifier, HistGradientBoostingClassifier
@@ -66,7 +73,6 @@ def test_input_estimator_unchanged():
 @pytest.mark.parametrize(
     "max_features, err_type, err_msg",
     [
-        (-1, ValueError, "max_features =="),
         (
             data.shape[1] + 1,
             ValueError,
@@ -75,17 +81,17 @@ def test_input_estimator_unchanged():
         (
             lambda X: 1.5,
             TypeError,
-            "max_features(X) must be an instance of int, not float.",
+            "max_features must be an instance of int, not float.",
         ),
         (
-            "gobbledigook",
-            TypeError,
-            "'max_features' must be either an int or a callable",
+            lambda X: data.shape[1] + 1,
+            ValueError,
+            "max_features ==",
         ),
         (
-            "all",
-            TypeError,
-            "'max_features' must be either an int or a callable",
+            lambda X: -1,
+            ValueError,
+            "max_features ==",
         ),
     ],
 )
@@ -318,7 +324,16 @@ def test_sample_weight():
     assert np.all(weighted_mask == reweighted_mask)
 
 
-def test_coef_default_threshold():
+@pytest.mark.parametrize(
+    "estimator",
+    [
+        Lasso(alpha=0.1, random_state=42),
+        LassoCV(random_state=42),
+        ElasticNet(l1_ratio=1, random_state=42),
+        ElasticNetCV(l1_ratio=[1], random_state=42),
+    ],
+)
+def test_coef_default_threshold(estimator):
     X, y = datasets.make_classification(
         n_samples=100,
         n_features=10,
@@ -330,7 +345,7 @@ def test_coef_default_threshold():
     )
 
     # For the Lasso and related models, the threshold defaults to 1e-5
-    transformer = SelectFromModel(estimator=Lasso(alpha=0.1, random_state=42))
+    transformer = SelectFromModel(estimator=estimator)
     transformer.fit(X, y)
     X_new = transformer.transform(X)
     mask = np.abs(transformer.estimator_.coef_) > 1e-5
@@ -613,8 +628,7 @@ def test_estimator_does_not_support_feature_names():
     "error, err_msg, max_features",
     (
         [ValueError, "max_features == 10, must be <= 4", 10],
-        [TypeError, "'max_features' must be either an int or a callable", "a"],
-        [ValueError, r"max_features\(X\) == 5, must be <= 4", lambda x: x.shape[1] + 1],
+        [ValueError, "max_features == 5, must be <= 4", lambda x: x.shape[1] + 1],
     ),
 )
 def test_partial_fit_validate_max_features(error, err_msg, max_features):

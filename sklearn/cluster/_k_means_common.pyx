@@ -141,7 +141,6 @@ cpdef floating _inertia_sparse(
         int[::1] X_indptr = X.indptr
 
         int n_samples = X.shape[0]
-        int n_features = X.shape[1]
         int i, j
 
         floating sq_dist = 0.0
@@ -222,8 +221,6 @@ cpdef void _relocate_empty_clusters_sparse(
 
     cdef:
         int n_samples = X_indptr.shape[0] - 1
-        int n_features = centers_old.shape[1]
-        floating x
         int i, j, k
 
         floating[::1] distances = np.zeros(n_samples, dtype=X_data.base.dtype)

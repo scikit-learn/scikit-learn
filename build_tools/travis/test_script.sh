@@ -33,7 +33,7 @@ if [[ $TRAVIS_CPU_ARCH == arm64 ]]; then
 fi
 
 if [[ -n $CHECK_WARNINGS ]]; then
-    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning"
+    TEST_CMD="$TEST_CMD -Werror::DeprecationWarning -Werror::FutureWarning -Werror::numpy.VisibleDeprecationWarning"
 fi
 
 $TEST_CMD sklearn

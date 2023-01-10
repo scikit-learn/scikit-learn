@@ -122,20 +122,20 @@ def test_incremental_pca_inverse():
 
 
 def test_incremental_pca_validation():
-    # Test that n_components is >=1 and <= n_features.
+    # Test that n_components is <= n_features.
     X = np.array([[0, 1, 0], [1, 0, 0]])
     n_samples, n_features = X.shape
-    for n_components in [-1, 0, 0.99, 4]:
-        with pytest.raises(
-            ValueError,
-            match=(
-                "n_components={} invalid"
-                " for n_features={}, need more rows than"
-                " columns for IncrementalPCA"
-                " processing".format(n_components, n_features)
-            ),
-        ):
-            IncrementalPCA(n_components, batch_size=10).fit(X)
+    n_components = 4
+    with pytest.raises(
+        ValueError,
+        match=(
+            "n_components={} invalid"
+            " for n_features={}, need more rows than"
+            " columns for IncrementalPCA"
+            " processing".format(n_components, n_features)
+        ),
+    ):
+        IncrementalPCA(n_components, batch_size=10).fit(X)
 
     # Tests that n_components is also <= n_samples.
     n_components = 3

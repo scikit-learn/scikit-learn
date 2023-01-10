@@ -15,3 +15,14 @@ cdef enum:
 ctypedef cnp.intp_t ITYPE_t  # WARNING: should match ITYPE in typedefs.pyx
 ctypedef cnp.int32_t INT32TYPE_t  # WARNING: should match INT32TYPE in typedefs.pyx
 ctypedef cnp.int64_t INT64TYPE_t  # WARNING: should match INT32TYPE in typedefs.pyx
+
+# scipy matrices indices dtype (namely for indptr and indices arrays)
+#
+#   Note that indices might need to be represented as cnp.int64_t.
+#   Currently, we use Cython classes which do not handle fused types
+#   so we hardcode this type to cnp.int32_t, supporting all but edge
+#   cases.
+#
+# TODO: support cnp.int64_t for this case
+# See: https://github.com/scikit-learn/scikit-learn/issues/23653
+ctypedef cnp.int32_t SPARSE_INDEX_TYPE_t

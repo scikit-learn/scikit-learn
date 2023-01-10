@@ -34,7 +34,6 @@ from sklearn.utils._testing import (
     assert_array_equal,
     assert_array_almost_equal,
     assert_allclose,
-    fails_if_pypy,
 )
 
 
@@ -70,8 +69,6 @@ for metric in PAIRWISE_KERNEL_FUNCTIONS:
     kernels.append(PairwiseKernel(gamma=1.0, metric=metric))
 
 
-# Numerical precisions errors in PyPy
-@fails_if_pypy
 @pytest.mark.parametrize("kernel", kernels)
 def test_kernel_gradient(kernel):
     # Compare analytic and numeric gradient of kernels.
