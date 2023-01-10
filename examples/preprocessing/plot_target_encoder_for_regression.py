@@ -76,13 +76,13 @@ without_categories_pipe = Pipeline(
 without_categories_pipe
 
 # %%
-# Here we train and use the root mean squared error to evalute the baseline
-# model:
+# Here we train and evaluated on the test set to get a baseline metric when
+# the categories are dropped:
 from sklearn.metrics import mean_squared_error
 
 without_categories_pipe.fit(X_train, y_train)
 without_categories_rsme = mean_squared_error(
-    y_test, without_categories_pipe.predict(X_test)
+    y_test, without_categories_pipe.predict(X_test), squared=False
 )
 print(f"RMSE for dropping categorical features: {without_categories_rsme:.4}")
 
@@ -103,8 +103,8 @@ ordinal_pipe = without_categories_pipe.set_params(prep__cat=categorical_preproce
 ordinal_pipe
 
 # %%
-# When we include the categorical features through ordinal encoding the
-# root mean squared error improves:
+# When we include the categorical features through ordinal encoding the model improves
+# when evaluated with the test set:
 ordinal_pipe.fit(X_train, y_train)
 ordinal_pipe_rmse = mean_squared_error(
     y_test, ordinal_pipe.predict(X_test), squared=False
@@ -121,7 +121,7 @@ target_pipe = ordinal_pipe.set_params(prep__cat=TargetEncoder(target_type="conti
 target_pipe
 
 # %%
-# The :class:`TargetEncoder` further improves the root mean squared error:
+# The :class:`TargetEncoder` further improves the model when evaluted with the test set.
 target_pipe.fit(X_train, y_train)
 target_pipe_rmse = mean_squared_error(
     y_test, target_pipe.predict(X_test), squared=False
