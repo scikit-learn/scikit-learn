@@ -117,6 +117,13 @@ Changelog
   when the provided `sample_weight` reduces the problem to a single class in `fit`.
   :pr:`24140` by :user:`Jonathan Ohayon <Johayon>` and :user:`Chiara Marmo <cmarmo>`.
 
+:mod:`sklearn.neighbors`
+........................
+
+- |Fix| :class:`neighbors.NearestNeighbors` and other similar neighbors searches
+  now work with `metric="nan_euclidean"` as expected.
+  :pr:`25330` by :user:`Carlo Lemos <vitaliset>`.
+
 :mod:`sklearn.neural_network`
 .............................
 
