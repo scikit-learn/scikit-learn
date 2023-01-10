@@ -2695,8 +2695,7 @@ def log_loss(
             "will result in an error.",
             UserWarning,
         )
-        y_pred = y_pred / y_pred_sum[:, np.newaxis]
-
+    y_pred = y_pred / y_pred_sum[:, np.newaxis]
     loss = -xlogy(transformed_labels, y_pred).sum(axis=1)
 
     return _weighted_sum(loss, sample_weight, normalize)
