@@ -1437,7 +1437,7 @@ details.
    preprocessing.RobustScaler
    preprocessing.SplineTransformer
    preprocessing.StandardScaler
-   preprocessing.TargetRegressorEncoder
+   preprocessing.TargetEncoder
 
 .. autosummary::
    :toctree: generated/

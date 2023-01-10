@@ -837,13 +837,13 @@ Target Regressor Encoder
 
 .. currentmodule:: sklearn.preprocessing
 
-The :class:`TargetRegressorEncoder` uses target mean conditioned on the
+The :class:`TargetEncoder` uses target mean conditioned on the
 categorical feature for encoding the categories [PAR]_ [MIC]_. This encoding
 scheme is useful with categorical features with high cardinality, where one hot
 encoding would inflate the feature space making it more expensive for a
 downstream model to process. A classical example of high cardinality categories
 are location based such as zip code or region. The
-:class:`TargetRegressorEncoder` implementation mixes the global target mean with
+:class:`TargetEncoder` implementation mixes the global target mean with
 the target mean conditioned on the category:
 
 .. math::
@@ -854,12 +854,12 @@ category at :math:`i`, :math:`y_i` is the target at :math:`i`, :math:`s` is a
 smoothing parameter, and :math:`X_c` is the set of data points with category
 :math:`c`.
 
-:class:`TargetRegressorEncoder` uses a cross validation scheme in
-:meth:`~TargetRegressorEncoder.fit_transform` to prevent leaking the target
-during training. In :meth:`~TargetRegressorEncoder.fit_transform`, Categorical
+:class:`TargetEncoder` uses a cross validation scheme in
+:meth:`~TargetEncoder.fit_transform` to prevent leaking the target
+during training. In :meth:`~TargetEncoder.fit_transform`, Categorical
 encodings are obtained from one split and used to encoding the other split.
 Afterwards, a final categorical encoding is obtained from all the training data,
-which is used to encode data during :meth:`~TargetRegressorEncoder.transform`.
+which is used to encode data during :meth:`~TargetEncoder.transform`.
 This means that `fit().transform()` does not equal `fit_transform()`.
 
 .. topic:: Examples:

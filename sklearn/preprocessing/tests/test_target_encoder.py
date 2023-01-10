@@ -3,7 +3,7 @@ from numpy.testing import assert_allclose
 from numpy.testing import assert_array_equal
 import pytest
 
-from sklearn.preprocessing import TargetRegressorEncoder
+from sklearn.preprocessing import TargetEncoder, LabelEncoder
 from sklearn.model_selection import KFold
 
 
@@ -18,7 +18,8 @@ from sklearn.model_selection import KFold
 )
 @pytest.mark.parametrize("seed", range(2))
 @pytest.mark.parametrize("smooth", [5.0, 10.0])
-def test_regression(categories, unknown_value, seed, smooth):
+@pytest.mark.parametrize("type_of_target", ["binary-str", "continuous"])
+def test_regression(categories, unknown_value, seed, smooth, type_of_target):
     """Check regression encoding."""
 
     X_int = np.array([[0] * 20 + [1] * 30 + [2] * 40], dtype=np.int64).T
@@ -31,15 +32,22 @@ def test_regression(categories, unknown_value, seed, smooth):
         X_input = categories[0][X_int]
 
     rng = np.random.RandomState(seed)
-    y = rng.uniform(low=-10, high=20, size=n_samples)
+
+    if type_of_target == "binary-str":
+        y_num = rng.randint(low=0, high=2, size=n_samples)
+        target_names = np.asarray(["cat", "dog"], dtype=object)
+        y_input = target_names[y_num]
+    else:  # type_of_target == continuous
+        y_num = rng.uniform(low=-10, high=20, size=n_samples)
+        y_input = y_num
 
     # compute encodings for all data to validate `transform`
-    y_mean = np.mean(y)
+    y_mean = np.mean(y_num)
     smooth_sum = smooth * y_mean
 
-    expected_encoding_0 = (np.sum(y[:20]) + smooth_sum) / (20.0 + smooth)
-    expected_encoding_1 = (np.sum(y[20:50]) + smooth_sum) / (30.0 + smooth)
-    expected_encoding_2 = (np.sum(y[50:]) + smooth_sum) / (40.0 + smooth)
+    expected_encoding_0 = (np.sum(y_num[:20]) + smooth_sum) / (20.0 + smooth)
+    expected_encoding_1 = (np.sum(y_num[20:50]) + smooth_sum) / (30.0 + smooth)
+    expected_encoding_2 = (np.sum(y_num[50:]) + smooth_sum) / (40.0 + smooth)
     expected_encodings = np.asarray(
         [expected_encoding_0, expected_encoding_1, expected_encoding_2]
     )
@@ -47,14 +55,15 @@ def test_regression(categories, unknown_value, seed, smooth):
     shuffled_idx = rng.permutation(n_samples)
     X_int = X_int[shuffled_idx]
     X_input = X_input[shuffled_idx]
-    y = y[shuffled_idx]
+    y_input = y_input[shuffled_idx]
+    y_num = y_num[shuffled_idx]
 
     # Get encodings for cv splits to validate `fit_transform`
     expected_X_fit_transform = np.empty_like(X_int, dtype=np.float64)
     kfold = KFold(n_splits=3)
     for train_idx, test_idx in kfold.split(X_input):
         cur_encodings = np.zeros(n_categories, dtype=np.float64)
-        X_, y_ = X_int[train_idx, :], y[train_idx]
+        X_, y_ = X_int[train_idx, :], y_num[train_idx]
         y_train_mean = np.mean(y_)
         for c in range(n_categories):
             y_subset = y_[X_[:, 0] == c]
@@ -64,11 +73,9 @@ def test_regression(categories, unknown_value, seed, smooth):
 
         expected_X_fit_transform[test_idx, 0] = cur_encodings[X_int[test_idx, 0]]
 
-    target_encoder = TargetRegressorEncoder(
-        smooth=smooth, categories=categories, cv=kfold
-    )
+    target_encoder = TargetEncoder(smooth=smooth, categories=categories, cv=kfold)
 
-    X_fit_transform = target_encoder.fit_transform(X_input, y)
+    X_fit_transform = target_encoder.fit_transform(X_input, y_input)
     assert_allclose(X_fit_transform, expected_X_fit_transform)
     assert len(target_encoder.encodings_) == 1
     assert_allclose(target_encoder.encodings_[0], expected_encodings)
@@ -109,7 +116,7 @@ def test_regression_custom_categories(X, categories):
     """custom categoires with unknown categories that are not in training data."""
     rng = np.random.RandomState(42)
     y = rng.uniform(low=-10, high=20, size=X.shape[0])
-    enc = TargetRegressorEncoder(categories=categories).fit(X, y)
+    enc = TargetEncoder(categories=categories).fit(X, y)
 
     # The last element is unknown and encoded as the mean
     y_mean = y.mean()
@@ -125,30 +132,31 @@ def test_regression_custom_categories(X, categories):
     "y, msg",
     [
         ([1, 2, 0, 1], "Found input variables with inconsistent"),
-        (np.asarray([[1, 2, 0], [1, 2, 3]]).T, "y should be a 1d array"),
-        (["cat", "dog", "bear"], "could not convert string to float"),
+        (
+            np.asarray([[1, 2, 0], [1, 2, 3]]).T,
+            "Target type was inferred to be 'multiclass-multioutput'",
+        ),
+        (["cat", "dog", "bear"], "Target type was inferred to be 'multiclass'"),
     ],
 )
 def test_regression_errors(y, msg):
     """Check invalidate input."""
     X = np.asarray([[1, 0, 1]]).T
 
-    enc = TargetRegressorEncoder()
+    enc = TargetEncoder()
     with pytest.raises(ValueError, match=msg):
         enc.fit_transform(X, y)
 
 
 def test_regression_feature_names_out_set_output():
-    """Check TargetRegressorEncoder works with set_output."""
+    """Check TargetEncoder works with set_output."""
     pd = pytest.importorskip("pandas")
 
     X_df = pd.DataFrame({"A": ["a", "b"] * 10, "B": [1, 2] * 10})
     y = [1, 2] * 10
 
-    enc_default = TargetRegressorEncoder(cv=2, smooth=3.0).set_output(
-        transform="default"
-    )
-    enc_pandas = TargetRegressorEncoder(cv=2, smooth=3.0).set_output(transform="pandas")
+    enc_default = TargetEncoder(cv=2, smooth=3.0).set_output(transform="default")
+    enc_pandas = TargetEncoder(cv=2, smooth=3.0).set_output(transform="pandas")
 
     X_default = enc_default.fit_transform(X_df, y)
     X_pandas = enc_pandas.fit_transform(X_df, y)
@@ -159,13 +167,22 @@ def test_regression_feature_names_out_set_output():
 
 @pytest.mark.parametrize("to_pandas", [True, False])
 @pytest.mark.parametrize("smooth", [1.0, 2.0])
-def test_regression_multiple_features_quick(to_pandas, smooth):
-    """Check regression encoder with multiple features."""
+@pytest.mark.parametrize("type_of_target", ["binary-ints", "binary-str", "continuous"])
+def test_multiple_features_quick(to_pandas, smooth, type_of_target):
+    """Check target encoder with multiple features."""
     X_int = np.array(
         [[1, 1], [0, 1], [1, 1], [2, 1], [1, 0], [0, 1], [1, 0], [0, 0]], dtype=np.int64
     )
-    y = np.array([3, 5, 2, 3, 4, 5, 10, 7])
-    y_mean = np.mean(y)
+    if type_of_target == "binary-str":
+        y_input = np.array(["a", "b", "a", "a", "b", "b", "a", "b"])
+        y_num = LabelEncoder().fit_transform(y_input)
+    elif type_of_target == "binary-ints":
+        y_input = np.array([3, 4, 3, 3, 3, 4, 4, 4])
+        y_num = LabelEncoder().fit_transform(y_input)
+    else:
+        y_input = np.array([3.0, 5.1, 2.4, 3.5, 4.1, 5.5, 10.3, 7.3])
+        y_num = y_input
+    y_mean = np.mean(y_num)
     categories = [[0, 1, 2], [0, 1]]
 
     X_test = np.array(
@@ -196,7 +213,7 @@ def test_regression_multiple_features_quick(to_pandas, smooth):
         for train_idx, test_idx in cv_splits:
             n_cats = len(cats)
             current_encoding = np.zeros(n_cats, dtype=np.float64)
-            X_, y_ = X_int[train_idx, :], y[train_idx]
+            X_, y_ = X_int[train_idx, :], y_num[train_idx]
             y_train_mean = np.mean(y_)
             for c in range(n_cats):
                 y_subset = y_[X_[:, f_idx] == c]
@@ -214,7 +231,7 @@ def test_regression_multiple_features_quick(to_pandas, smooth):
         n_cats = len(cats)
         current_encoding = np.zeros(n_cats, dtype=np.float64)
         for c in range(n_cats):
-            y_subset = y[X_int[:, f_idx] == c]
+            y_subset = y_num[X_int[:, f_idx] == c]
             current_sum = np.sum(y_subset) + smooth * y_mean
             current_cnt = y_subset.shape[0] + smooth
             current_encoding[c] = current_sum / current_cnt
@@ -229,8 +246,8 @@ def test_regression_multiple_features_quick(to_pandas, smooth):
         dtype=np.float64,
     )
 
-    enc = TargetRegressorEncoder(smooth=smooth, cv=cv_splits)
-    X_fit_transform = enc.fit_transform(X_input, y)
+    enc = TargetEncoder(smooth=smooth, cv=cv_splits)
+    X_fit_transform = enc.fit_transform(X_input, y_input)
     assert_allclose(X_fit_transform, expected_X_fit_transform)
 
     assert len(enc.encodings_) == 2

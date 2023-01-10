@@ -133,7 +133,7 @@ Changelog
 
 :mod:`sklearn.preprocessing`
 ............................
-- |MajorFeature| Introduces :class:`preprocessing.TargetRegressorEncoder` which uses
+- |MajorFeature| Introduces :class:`preprocessing.TargetEncoder` which uses
   the target mean conditions on the categorices to encode the categories.
   :pr:`25334` by `Thomas Fan`_.
 

@@ -6,10 +6,11 @@ from ._encoders import _BaseEncoder
 from ..base import OneToOneFeatureMixin
 from ._target_encoder_fast import _fit_encoding_fast
 from ..utils.validation import _check_y, check_consistent_length
+from ..utils.multiclass import type_of_target
 from ..utils._param_validation import Interval, StrOptions
 
 
-class TargetRegressorEncoder(OneToOneFeatureMixin, _BaseEncoder):
+class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     """Target Encoder for Regression Targets.
 
     Each category is encoded based on its effect on the target variable. The encoding
@@ -19,7 +20,7 @@ class TargetRegressorEncoder(OneToOneFeatureMixin, _BaseEncoder):
     Read more in the :ref:`User Guide <target_regressor_encoder>`.
 
     .. note::
-        :class:`TargetRegressorEncoder` uses a cross validation scheme in
+        :class:`TargetEncoder` uses a cross validation scheme in
         :meth:`fit_transform` to prevent leaking the target during training. In
         :meth:`fit_transform`, categorical encodings are obtained from one split and
         used to encoding the other split. Afterwards, a final categorical encoding is
@@ -68,6 +69,9 @@ class TargetRegressorEncoder(OneToOneFeatureMixin, _BaseEncoder):
         (in order of the features in X and corresponding with the output
         of :meth:`transform`).
 
+    target_type_ : str
+        Type of target.
+
     encoding_mean_ : float
         The overall mean of the target.
 
@@ -86,26 +90,28 @@ class TargetRegressorEncoder(OneToOneFeatureMixin, _BaseEncoder):
     Examples
     --------
     >>> import numpy as np
-    >>> from sklearn.preprocessing import TargetRegressorEncoder
+    >>> from sklearn.preprocessing import TargetEncoder
     >>> X = np.array([["dog"] * 20 + ["cat"] * 30 + ["snake"] * 40], dtype=object).T
     >>> y = [10] * 5 + [40] * 15 + [20] * 5 + [11] * 25 + [20] * 10 + [40] * 30
-    >>> enc = TargetRegressorEncoder(smooth=5.0)
+    >>> enc = TargetEncoder(smooth=5.0)
     >>> X_trans = enc.fit_transform(X, y)
     """
 
     _parameter_constraints: dict = {
         "categories": [StrOptions({"auto"}), list],
+        "target_type": [StrOptions({"auto", "continuous", "binary"})],
         "smooth": [Interval(Real, 1, None, closed="left")],
         "cv": ["cv_object"],
     }
 
-    def __init__(self, categories="auto", smooth=30.0, cv=5):
+    def __init__(self, categories="auto", target_type="auto", smooth=30.0, cv=5):
         self.categories = categories
         self.smooth = smooth
+        self.target_type = target_type
         self.cv = cv
 
     def fit(self, X, y):
-        """Fit the :class:`TargetRegressorEncoder` to X.
+        """Fit the :class:`TargetEncoder` to X.
 
         Parameters
         ----------
@@ -124,10 +130,10 @@ class TargetRegressorEncoder(OneToOneFeatureMixin, _BaseEncoder):
         return self
 
     def fit_transform(self, X, y):
-        """Fit :class:`TargetRegressorEncoder` and transform X with the target encoding.
+        """Fit :class:`TargetEncoder` and transform X with the target encoding.
 
         .. note::
-            :class:`TargetRegressorEncoder` uses a cross validation scheme in
+            :class:`TargetEncoder` uses a cross validation scheme in
             :meth:`fit_transform` to prevent leaking the target during training. In
             :meth:`fit_transform`, categorical encodings are obtained from one split and
             used to encoding the other split. Afterwards, a final categorical encoding
@@ -148,7 +154,7 @@ class TargetRegressorEncoder(OneToOneFeatureMixin, _BaseEncoder):
         X_trans : ndarray of shape (n_samples, n_features)
             Transformed input.
         """
-        from ..model_selection._split import check_cv  # avoid circular input
+        from ..model_selection._split import check_cv  # avoid circular import
 
         X_int, X_mask, y, n_categories = self._fit_encodings_all(X, y)
         cv = check_cv(self.cv)
@@ -188,10 +194,26 @@ class TargetRegressorEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     def _fit_encodings_all(self, X, y):
         """Fit a target encoding with all the data."""
+        from ..preprocessing import LabelEncoder  # avoid circular import
+
         self._validate_params()
         check_consistent_length(X, y)
         self._fit(X, handle_unknown="ignore", force_all_finite="allow-nan")
+
+        accepted_target_types = ("binary", "continuous")
+        inferred_type_of_target = type_of_target(y, input_name="y")
+        if inferred_type_of_target not in accepted_target_types:
+            raise ValueError(
+                f"Target type was inferred to be {inferred_type_of_target!r}. Only"
+                f" {accepted_target_types} are supported."
+            )
+        self.target_type_ = inferred_type_of_target
+
+        if self.target_type_ == "binary":
+            y = LabelEncoder().fit_transform(y)
+
         y = _check_y(y, y_numeric=True, estimator=self).astype(np.float64, copy=False)
+
         self.encoding_mean_ = np.mean(y)
 
         X_int, X_mask = self._transform(

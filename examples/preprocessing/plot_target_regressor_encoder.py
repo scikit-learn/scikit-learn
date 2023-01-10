@@ -5,9 +5,9 @@ Target Encoder for Regressors
 
 .. currentmodule:: sklearn.preprocessing
 
-The :class:`TargetRegressorEncoder` uses target statistics conditioned on
+The :class:`TargetEncoder` uses target statistics conditioned on
 the categorical features for encoding. In this example, we will compare
-:class:`TargetRegressorEncoder`, :class:`OrdinalEncoder`, and dropping the
+:class:`TargetEncoder`, :class:`OrdinalEncoder`, and dropping the
 category on a wine review dataset.
 """
 
@@ -105,17 +105,17 @@ reg_ordinal_rmse = mean_squared_error(
 print(f"RMSE with ordinal encoding: {reg_ordinal_rmse:.4}")
 
 # %%
-# Using the TargetRegressorEncoder
+# Using the TargetEncoder
 # --------------------------------
 # Finally, we replace the ordinal encoder with the
-# :class:`TargetRegressorEncoder`:
-from sklearn.preprocessing import TargetRegressorEncoder
+# :class:`TargetEncoder`:
+from sklearn.preprocessing import TargetEncoder
 
-reg_target = reg_ordinal.set_params(prep__cat=TargetRegressorEncoder())
+reg_target = reg_ordinal.set_params(prep__cat=TargetEncoder())
 reg_target
 
 # %%
-# The :class:`TargetRegressorEncoder` further improves the RMSE:
+# The :class:`TargetEncoder` further improves the RMSE:
 reg_target.fit(X_train, y_train)
 reg_target_rmse = mean_squared_error(y_test, reg_target.predict(X_test), squared=False)
 print(f"RMSE with target encoding: {reg_target_rmse:.4}")
