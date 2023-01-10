@@ -15,8 +15,9 @@ Demand dataset.
 # -----------------------------------------
 #
 # We start by loading the data from the OpenML repository.
-import sklearn
 from sklearn.datasets import fetch_openml
+import warnings
+warnings.filterwarnings("ignore")
 
 bike_sharing = fetch_openml("Bike_Sharing_Demand", version=2, as_frame=True)
 df = bike_sharing.frame
