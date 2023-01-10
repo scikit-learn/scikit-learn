@@ -582,9 +582,7 @@ def test_mem_layout():
 def test_oob_improvement(GradientBoostingEstimator):
     # Test if oob improvement has correct shape and regression test.
     clf = GradientBoostingEstimator(
-        n_estimators=100,
-        random_state=1,
-        subsample=0.5,
+        n_estimators=100, random_state=1, subsample=0.5
     )
     clf.fit(X, y)
     assert clf.oob_improvement_.shape[0] == 100
@@ -599,9 +597,7 @@ def test_oob_scores(GradientBoostingEstimator):
     # Test if oob scores has correct shape and regression test.
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     clf = GradientBoostingEstimator(
-        n_estimators=100,
-        random_state=1,
-        subsample=0.5,
+        n_estimators=100, random_state=1, subsample=0.5
     )
     clf.fit(X, y)
     assert clf.oob_scores_.shape[0] == 100
@@ -617,7 +613,8 @@ def test_oob_scores(GradientBoostingEstimator):
 
 
 @pytest.mark.parametrize("GradientBoostingEstimator", GRADIENT_BOOSTING_ESTIMATORS)
-def test_oob_scores_raise(GradientBoostingEstimator):
+def test_no_available_oob_with_full_sample(GradientBoostingEstimator):
+    """Check that not OOB scores attribute are available with `subsamples=1.0`."""
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     clf = GradientBoostingEstimator(
         n_estimators=100,
@@ -625,8 +622,8 @@ def test_oob_scores_raise(GradientBoostingEstimator):
         subsample=1.0,
     )
     clf.fit(X, y)
-    with pytest.raises(AttributeError):
-        clf.oob_scores_
+    assert not hasattr(clf, "oob_scores_")
+    assert not hasattr(clf, "oob_score_")
 
 
 @pytest.mark.parametrize("GradientBoostingEstimator", GRADIENT_BOOSTING_ESTIMATORS)
@@ -802,22 +799,32 @@ def test_warm_start_clear(Cls):
     assert_array_almost_equal(est_2.predict(X), est.predict(X))
 
 
-@pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
-def test_warm_start_clear_oob(Cls):
-    # Test if fit clears state.
+@pytest.mark.parametrize("GradientBoosting", GRADIENT_BOOSTING_ESTIMATORS)
+def test_warm_start_state_oob_scores(GradientBoosting):
+    """Check that the states of the OOB scores when used with `warm_start`."""
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    est = Cls(n_estimators=100, max_depth=1, subsample=0.5, random_state=1)
-    est.fit(X, y)
-
-    est_2 = Cls(
-        n_estimators=100, max_depth=1, subsample=0.5, warm_start=True, random_state=1
+    n_estimators = 100
+    estimator = GradientBoosting(
+        n_estimators=n_estimators,
+        max_depth=1,
+        subsample=0.5,
+        warm_start=True,
+        random_state=1,
     )
-    est_2.fit(X, y)  # inits state
-    est_2.set_params(warm_start=False)
-    est_2.fit(X, y)  # clears old state and equals est
+    estimator.fit(X, y)
+    oob_scores, oob_score = estimator.oob_scores_, estimator.oob_score_
+    assert len(oob_scores) == n_estimators
 
-    assert id(est_2.oob_scores_) != id(est.oob_scores_)
-    assert_array_almost_equal(est_2.predict(X), est.predict(X))
+    n_more_estimators = 200
+    estimator.set_params(n_estimators=n_more_estimators).fit(X, y)
+    assert len(estimator.oob_scores_) == n_more_estimators
+    assert_allclose(estimator.oob_scores_[:n_estimators], oob_scores)
+
+    estimator.set_params(n_estimators=n_estimators, warm_start=False).fit(X, y)
+    assert estimator.oob_scores_ is not oob_scores
+    assert estimator.oob_score_ is not oob_score
+    assert_allclose(estimator.oob_scores_, oob_scores)
+    assert estimator.oob_score_ == pytest.approx(oob_score)
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)

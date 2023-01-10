@@ -336,7 +336,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if self.subsample < 1.0:
             self.oob_improvement_ = np.zeros((self.n_estimators), dtype=np.float64)
             self.oob_scores_ = np.zeros((self.n_estimators), dtype=np.float64)
-            self.oob_score_ = np.float64(0.0)
+            self.oob_score_ = 0.0
 
     def _clear_state(self):
         """Clear the state of the gradient boosting model."""
@@ -614,7 +614,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             # subsampling
             if do_oob:
                 sample_mask = _random_sample_mask(n_samples, n_inbag, random_state)
-                if i == 0:
+                if i == 0:  # store the initial loss to compute the OOB score
                     initial_loss = loss_(
                         y[~sample_mask],
                         raw_predictions[~sample_mask],
