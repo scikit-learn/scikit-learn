@@ -75,14 +75,14 @@ X_large, y_large = datasets.make_classification(
 )
 
 # Imbalanced classification sample used for testing imbalanced criteria
-imbl_minority_class_ratio = 0.05
+IMBL_MINORITY_CLASS_RATIO = 0.05
 X_large_imbl, y_large_imbl = datasets.make_classification(
     n_samples=500,
     n_features=10,
     n_informative=3,
     n_redundant=0,
     n_repeated=0,
-    weights=[imbl_minority_class_ratio],
+    weights=[IMBL_MINORITY_CLASS_RATIO],
     shuffle=False,
     random_state=42,
 )
@@ -185,9 +185,9 @@ def check_imbalanced_criterion(name, criterion):
     # score is a mean of minority class predict_proba
     score = clf.predict_proba(X_large_imbl)[:, 1].mean()
 
-    assert score > imbl_minority_class_ratio, (
+    assert score > IMBL_MINORITY_CLASS_RATIO, (
         f"Failed with imbalanced criterion {criterion}, score = {score}, minority class"
-        f" ratio = {imbl_minority_class_ratio}"
+        f" ratio = {IMBL_MINORITY_CLASS_RATIO}"
     )
 
 
