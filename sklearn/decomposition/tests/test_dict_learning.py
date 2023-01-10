@@ -1039,3 +1039,28 @@ def test_minibatch_dictionary_learning_warns_and_ignore_n_iter():
     with pytest.warns(FutureWarning, match=warn_msg):
         model = MiniBatchDictionaryLearning(batch_size=256, n_iter=2, max_iter=2).fit(X)
     assert model.n_iter_ == 2
+
+
+def test_minibatch_dict_learning_missing_equivalent():
+    dl = MiniBatchDictionaryLearning(n_components=4, batch_size=3, max_iter=1, allow_nan=False, max_no_improvement=None, tol=0, random_state=0)
+    dl_with_missing = MiniBatchDictionaryLearning(n_components=4, batch_size=3, max_iter=1, allow_nan=True, max_no_improvement=None, tol=0, random_state=0)
+
+    dl.fit(X)
+    dl_with_missing.fit(X)
+
+    #assert_allclose(dl.components_, dl_with_missing.components_)
+    
+    Xr = dl.transform(X) @ dl.components_
+    Xr_with_missing = dl_with_missing.transform(X) @ dl_with_missing.components_
+
+    print(0.5 * ((X - Xr)**2).sum() + dl.alpha * np.sum(np.abs(dl.transform(X))))
+    print(0.5 * ((X - Xr_with_missing)**2).sum() + dl_with_missing.alpha * np.sum(np.abs(dl_with_missing.transform(X))))
+    print(((X - Xr)**2).sum())
+    print(((X - Xr_with_missing)**2).sum())
+    print(X)
+
+    print(Xr)
+
+    print(Xr_with_missing)
+
+    assert_allclose(Xr, Xr_with_missing)
