@@ -1233,7 +1233,7 @@ cdef class BestSplitter(Splitter):
             n_constant_features,
         )
 
-cdef class BestSparsePartitioner(Splitter):
+cdef class BestSparseSplitter(Splitter):
     """Splitter for finding the best split, using the sparse data."""
     cdef SparsePartitioner partitioner
     cdef int init(
@@ -1281,7 +1281,7 @@ cdef class RandomSplitter(Splitter):
             n_constant_features,
         )
 
-cdef class RandomSparsePartitioner(Splitter):
+cdef class RandomSparseSplitter(Splitter):
     """Splitter for finding the best random split, using the sparse data."""
     cdef SparsePartitioner partitioner
     cdef int init(
