@@ -183,9 +183,11 @@ def libsvm_sparse_train (int n_features,
     cdef cnp.npy_intp nonzero_SV
     nonzero_SV = get_nonzero_SV (model)
 
-    cdef cnp.float64_t[::1] SV_data = np.empty(nonzero_SV, dtype=np.float64)
-    cdef cnp.int32_t[::1] SV_indices = np.empty(nonzero_SV, dtype=np.int32)
-    cdef cnp.int32_t[::1] SV_indptr = np.empty(<cnp.npy_intp> SV_len + 1, dtype=np.int32)
+    cdef cnp.float64_t[::1] SV_data
+    cdef cnp.int32_t[::1] SV_indices, SV_indptr
+    SV_data = np.empty(nonzero_SV, dtype=np.float64)
+    SV_indices = np.empty(nonzero_SV, dtype=np.int32)
+    SV_indptr = np.empty(<cnp.npy_intp> SV_len + 1, dtype=np.int32)
     csr_copy_SV(<char *> &SV_data[0] if SV_data.size > 0 else NULL, <cnp.npy_intp *> SV_indices.shape,
                 <char *> &SV_indices[0] if SV_indices.size > 0 else NULL, <cnp.npy_intp *> SV_indptr.shape,
                 <char *> &SV_indptr[0] if SV_indptr.size > 0 else NULL, model, n_features)
