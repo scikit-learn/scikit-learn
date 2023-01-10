@@ -18,8 +18,8 @@ from sklearn.model_selection import KFold
 )
 @pytest.mark.parametrize("seed", range(2))
 @pytest.mark.parametrize("smooth", [5.0, 10.0])
-@pytest.mark.parametrize("type_of_target", ["binary-str", "continuous"])
-def test_regression(categories, unknown_value, seed, smooth, type_of_target):
+@pytest.mark.parametrize("target_type", ["binary", "continuous"])
+def test_regression(categories, unknown_value, seed, smooth, target_type):
     """Check regression encoding."""
 
     X_int = np.array([[0] * 20 + [1] * 30 + [2] * 40], dtype=np.int64).T
@@ -33,11 +33,11 @@ def test_regression(categories, unknown_value, seed, smooth, type_of_target):
 
     rng = np.random.RandomState(seed)
 
-    if type_of_target == "binary-str":
+    if target_type == "binary":
         y_num = rng.randint(low=0, high=2, size=n_samples)
         target_names = np.asarray(["cat", "dog"], dtype=object)
         y_input = target_names[y_num]
-    else:  # type_of_target == continuous
+    else:  # target_type == continuous
         y_num = rng.uniform(low=-10, high=20, size=n_samples)
         y_input = y_num
 
@@ -76,6 +76,8 @@ def test_regression(categories, unknown_value, seed, smooth, type_of_target):
     target_encoder = TargetEncoder(smooth=smooth, categories=categories, cv=kfold)
 
     X_fit_transform = target_encoder.fit_transform(X_input, y_input)
+
+    assert target_encoder.target_type_ == target_type
     assert_allclose(X_fit_transform, expected_X_fit_transform)
     assert len(target_encoder.encodings_) == 1
     assert_allclose(target_encoder.encodings_[0], expected_encodings)
@@ -167,16 +169,16 @@ def test_regression_feature_names_out_set_output():
 
 @pytest.mark.parametrize("to_pandas", [True, False])
 @pytest.mark.parametrize("smooth", [1.0, 2.0])
-@pytest.mark.parametrize("type_of_target", ["binary-ints", "binary-str", "continuous"])
-def test_multiple_features_quick(to_pandas, smooth, type_of_target):
+@pytest.mark.parametrize("target_type", ["binary-ints", "binary-str", "continuous"])
+def test_multiple_features_quick(to_pandas, smooth, target_type):
     """Check target encoder with multiple features."""
     X_int = np.array(
         [[1, 1], [0, 1], [1, 1], [2, 1], [1, 0], [0, 1], [1, 0], [0, 0]], dtype=np.int64
     )
-    if type_of_target == "binary-str":
+    if target_type == "binary-str":
         y_input = np.array(["a", "b", "a", "a", "b", "b", "a", "b"])
         y_num = LabelEncoder().fit_transform(y_input)
-    elif type_of_target == "binary-ints":
+    elif target_type == "binary-ints":
         y_input = np.array([3, 4, 3, 3, 3, 4, 4, 4])
         y_num = LabelEncoder().fit_transform(y_input)
     else:
