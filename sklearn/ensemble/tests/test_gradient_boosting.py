@@ -244,7 +244,9 @@ def test_feature_importances(GradientBoosting, X, y):
 
 def test_probability_log(global_random_seed):
     # Predict probabilities.
-    estimator = GradientBoostingClassifier(n_estimators=100, random_state=global_random_seed)
+    estimator = GradientBoostingClassifier(
+        n_estimators=100, random_state=global_random_seed
+    )
 
     with pytest.raises(ValueError):
         estimator.predict_proba(T)
@@ -283,7 +285,9 @@ def test_check_inputs_predict_stages():
     score = np.zeros((y.shape)).reshape(-1, 1)
     err_msg = "When X is a sparse matrix, a CSR format is expected"
     with pytest.raises(ValueError, match=err_msg):
-        predict_stages(estimator.estimators_, x_sparse_csc, estimator.learning_rate, score)
+        predict_stages(
+            estimator.estimators_, x_sparse_csc, estimator.learning_rate, score
+        )
     x_fortran = np.asfortranarray(x)
     with pytest.raises(ValueError, match="X should be C-ordered np.ndarray"):
         predict_stages(estimator.estimators_, x_fortran, estimator.learning_rate, score)
@@ -478,7 +482,9 @@ def test_degenerate_targets():
     estimator = GradientBoostingRegressor(n_estimators=100, random_state=1)
     estimator.fit(X, np.ones(len(X)))
     estimator.predict([rng.rand(2)])
-    assert_array_equal(np.ones((1,), dtype=np.float64), estimator.predict([rng.rand(2)]))
+    assert_array_equal(
+        np.ones((1,), dtype=np.float64), estimator.predict([rng.rand(2)])
+    )
 
 
 def test_quantile_loss(global_random_seed):
@@ -588,7 +594,9 @@ def test_oob_improvement(GradientBoostingEstimator):
     assert estimator.oob_improvement_.shape[0] == 100
     # hard-coded regression test - change if modification in OOB computation
     assert_array_almost_equal(
-        estimator.oob_improvement_[:5], np.array([0.19, 0.15, 0.12, -0.11, 0.11]), decimal=2
+        estimator.oob_improvement_[:5],
+        np.array([0.19, 0.15, 0.12, -0.11, 0.11]),
+        decimal=2,
     )
 
 
@@ -601,6 +609,7 @@ def test_oob_scores(GradientBoostingEstimator):
     )
     estimator.fit(X, y)
     assert estimator.oob_scores_.shape[0] == 100
+    assert estimator.oob_scores_[-1] == estimator.oob_score_
 
     estimator = GradientBoostingEstimator(
         n_estimators=100,
@@ -610,6 +619,7 @@ def test_oob_scores(GradientBoostingEstimator):
     )
     estimator.fit(X, y)
     assert estimator.oob_scores_.shape[0] < 100
+    assert estimator.oob_scores_[-1] == estimator.oob_score_
 
 
 @pytest.mark.parametrize("GradientBoostingEstimator", GRADIENT_BOOSTING_ESTIMATORS)
@@ -649,6 +659,7 @@ def test_oob_multilcass_iris():
     assert score > 0.9
     assert estimator.oob_improvement_.shape[0] == estimator.n_estimators
     assert estimator.oob_scores_.shape[0] == estimator.n_estimators
+    assert estimator.oob_scores_[-1] == estimator.oob_score_
 
     estimator = GradientBoostingClassifier(
         n_estimators=100,
@@ -661,6 +672,7 @@ def test_oob_multilcass_iris():
     score = estimator.score(iris.data, iris.target)
     assert estimator.oob_improvement_.shape[0] < estimator.n_estimators
     assert estimator.oob_scores_.shape[0] < estimator.n_estimators
+    assert estimator.oob_scores_[-1] == estimator.oob_score_
 
     # hard-coded regression test - change if modification in OOB computation
     # FIXME: the following snippet does not yield the same results on 32 bits
@@ -826,6 +838,7 @@ def test_warm_start_state_oob_scores(GradientBoosting):
     assert estimator.oob_score_ is not oob_score
     assert_allclose(estimator.oob_scores_, oob_scores)
     assert estimator.oob_score_ == pytest.approx(oob_score)
+    assert oob_scores[-1] == oob_score
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
@@ -864,10 +877,12 @@ def test_warm_start_oob_switch(Cls):
 
     assert_array_equal(est.oob_improvement_[:100], np.zeros(100))
     assert_array_equal(est.oob_scores_[:100], np.zeros(100))
+    assert est.oob_scores_[-1] == est.oob_score_
 
     # the last 10 are not zeros
     assert_array_equal(est.oob_improvement_[-10:] == 0.0, np.zeros(10, dtype=bool))
     assert_array_equal(est.oob_scores_[-10:] == 0.0, np.zeros(10, dtype=bool))
+    assert est.oob_scores_[-1] == est.oob_score_
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
@@ -886,6 +901,8 @@ def test_warm_start_oob(Cls):
 
     assert_array_almost_equal(est_ws.oob_improvement_[:100], est.oob_improvement_[:100])
     assert_array_almost_equal(est_ws.oob_scores_[:100], est.oob_scores_[:100])
+    assert est.oob_scores_[-1] == est.oob_score_
+    assert est_ws.oob_scores_[-1] == est_ws.oob_score_
 
 
 @pytest.mark.parametrize("Cls", GRADIENT_BOOSTING_ESTIMATORS)
@@ -921,9 +938,11 @@ def test_warm_start_sparse(Cls):
         assert_array_almost_equal(
             est_dense.oob_improvement_[:100], est_sparse.oob_improvement_[:100]
         )
+        assert est_dense.oob_scores_[-1] == est_dense.oob_score_
         assert_array_almost_equal(
             est_dense.oob_scores_[:100], est_sparse.oob_scores_[:100]
         )
+        assert est_sparse.oob_scores_[-1] == est_sparse.oob_score_
         assert_array_almost_equal(y_pred_dense, y_pred_sparse)
 
 
@@ -967,6 +986,7 @@ def test_monitor_early_stopping(Cls):
     assert est.train_score_.shape[0] == 10
     assert est.oob_improvement_.shape[0] == 10
     assert est.oob_scores_.shape[0] == 10
+    assert est.oob_scores_[-1] == est.oob_score_
 
     # try refit
     est.set_params(n_estimators=30)
@@ -976,6 +996,7 @@ def test_monitor_early_stopping(Cls):
     assert est.train_score_.shape[0] == 30
     assert est.oob_improvement_.shape[0] == 30
     assert est.oob_scores_.shape[0] == 30
+    assert est.oob_scores_[-1] == est.oob_score_
 
     est = Cls(
         n_estimators=20, max_depth=1, random_state=1, subsample=0.5, warm_start=True
@@ -986,6 +1007,7 @@ def test_monitor_early_stopping(Cls):
     assert est.train_score_.shape[0] == 10
     assert est.oob_improvement_.shape[0] == 10
     assert est.oob_scores_.shape[0] == 10
+    assert est.oob_scores_[-1] == est.oob_score_
 
     # try refit
     est.set_params(n_estimators=30, warm_start=False)
@@ -995,6 +1017,7 @@ def test_monitor_early_stopping(Cls):
     assert est.estimators_.shape[0] == 30
     assert est.oob_improvement_.shape[0] == 30
     assert est.oob_scores_.shape[0] == 30
+    assert est.oob_scores_[-1] == est.oob_score_
 
 
 def test_complete_classification():
