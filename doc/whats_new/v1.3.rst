@@ -37,25 +37,27 @@ random sampling procedures.
 Changes impacting all modules
 -----------------------------
 
-- |Enhancement| The `get_feature_names_out` method of the following classes now 
-  raises a `NotFittedError` if the instance is not fitted. This ensures the error is 
+- |Enhancement| The `get_feature_names_out` method of the following classes now
+  raises a `NotFittedError` if the instance is not fitted. This ensures the error is
   consistent in all estimators with the `get_feature_names_out` method.
 
-  - :class:`sklearn.preprocessing.Binarizer`
-  - :class:`sklearn.preprocessing.MaxAbsScaler`
-  - :class:`sklearn.preprocessing.MinMaxScaler`
-  - :class:`sklearn.preprocessing.Normalizer`
-  - :class:`sklearn.preprocessing.OrdinalEncoder`
-  - :class:`sklearn.preprocessing.PowerTransformer`
-  - :class:`sklearn.preprocessing.QuantileTransformer`
-  - :class:`sklearn.preprocessing.RobustScaler`
-  - :class:`sklearn.preprocessing.StandardScaler`
-  - :class:`sklearn.feature_extraction.text.TfidfTransformer`
+  - :class:`kernel_approximation.AdditiveChi2Sampler`
+  - :class:`preprocessing.Binarizer`
+  - :class:`preprocessing.MaxAbsScaler`
+  - :class:`preprocessing.MinMaxScaler`
+  - :class:`preprocessing.Normalizer`
+  - :class:`preprocessing.OrdinalEncoder`
+  - :class:`preprocessing.PowerTransformer`
+  - :class:`preprocessing.QuantileTransformer`
+  - :class:`preprocessing.RobustScaler`
+  - :class:`preprocessing.StandardScaler`
+  - :class:`feature_extraction.text.TfidfTransformer`
 
-  The `NotFittedError` displays an informative message asking to fit the instance 
+  The `NotFittedError` displays an informative message asking to fit the instance
   with the appropriate arguments.
 
-  :pr:`25294` by :user:`John Pangas <jpangas>`.
+  :pr:`25294` by :user:`John Pangas <jpangas>` and :pr:`25291` by
+  :user:`Rahil Parikh <rprkh>`.
 
 Changelog
 ---------
@@ -81,12 +83,14 @@ Changelog
 
 :mod:`sklearn.decomposition`
 ............................
+
 - |Enhancement| :class:`decomposition.DictionaryLearning` now accepts the parameter
   `callback` for consistency with the function :func:`decomposition.dict_learning`.
   :pr:`24871` by :user:`Omar Salman <OmarManzoor>`.
 
 :mod:`sklearn.ensemble`
 .......................
+
 - |Feature| Compute a custom out-of-bag score by passing a callable to
   :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`.
@@ -100,6 +104,7 @@ Changelog
 
 :mod:`sklearn.model_selection`
 ..............................
+
 - |Fix| :func:`model_selection.cross_validate` with multimetric scoring in
   case of some failing scorers the non-failing scorers now returns proper
   scores instead of `error_score` values.
@@ -107,18 +112,21 @@ Changelog
 
 :mod:`sklearn.naive_bayes`
 ..........................
+
 - |Fix| :class:`naive_bayes.GaussianNB` does not raise anymore a `ZeroDivisionError`
   when the provided `sample_weight` reduces the problem to a single class in `fit`.
   :pr:`24140` by :user:`Jonathan Ohayon <Johayon>` and :user:`Chiara Marmo <cmarmo>`.
 
 :mod:`sklearn.neural_network`
 .............................
+
 - |Fix| :class:`neural_network.MLPClassifier` and :class:`neural_network.MLPRegressor`
   no longer raise warnings when fitting data with feature names.
   :pr:`24873` by :user:`Tim Head <betatim>`.
 
 :mod:`sklearn.pipeline`
 .......................
+
 - |Feature| :class:`pipeline.FeatureUnion` can now use indexing notation (e.g.
   `feature_union["scalar"]`) to access transformers by name. :pr:`25093` by
   `Thomas Fan`_.
@@ -136,6 +144,6 @@ Code and Documentation Contributors
 -----------------------------------
 
 Thanks to everyone who has contributed to the maintenance and improvement of
-the project since version 1.1, including:
+the project since version 1.2, including:
 
 TODO: update at the time of the release.

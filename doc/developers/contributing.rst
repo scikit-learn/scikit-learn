@@ -1412,7 +1412,7 @@ Reading the existing code base
 ==============================
 
 Reading and digesting an existing code base is always a difficult exercise
-that takes time and experience to main. Even though we try to write simple
+that takes time and experience to master. Even though we try to write simple
 code in general, understanding the code can seem overwhelming at first,
 given the sheer size of the project. Here is a list of tips that may help
 make this task easier and faster (in no particular order).
