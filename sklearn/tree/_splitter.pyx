@@ -221,6 +221,11 @@ cdef class Splitter:
 
         return self.criterion.node_impurity()
 
+# Introduce a fused-class to make it possible to share the split implementation
+# between the dense and sparse cases in the node_split_best and node_split_random
+# functions. The alternative would have been to use inheritance-based polymorphism
+# but it would have resulted in a ~10% overall tree fitting performance
+# degradation caused by the overhead frequent virtual method lookups. 
 ctypedef fused DataSplitterFused:
     DenseSplitter
     SparseSplitter
