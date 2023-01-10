@@ -99,8 +99,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     --------
     >>> import numpy as np
     >>> from sklearn.preprocessing import TargetEncoder
-    >>> X = np.array([["dog"] * 20 + ["cat"] * 30 + ["snake"] * 40], dtype=object).T
-    >>> y = [10] * 5 + [40] * 15 + [20] * 5 + [11] * 25 + [20] * 10 + [40] * 30
+    >>> X = np.array([["dog"] * 20 + ["cat"] * 30 + ["snake"] * 38], dtype=object).T
+    >>> y = [10.3] * 5 + [40.1] * 15 + [20.4] * 5 + [11.1] * 25 + [21.2] * 8 + [49] * 30
     >>> enc = TargetEncoder(smooth=5.0)
     >>> X_trans = enc.fit_transform(X, y)
     """

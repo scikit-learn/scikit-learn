@@ -26,8 +26,8 @@ df.head()
 
 # %%
 # For this example, we use the following subset of numerical and categorical
-# features in the data. Then, we split the dataset into a training and test set.
-from sklearn.model_selection import train_test_split
+# features in the data. The target are continuous values from 80 to 100:
+import numpy as np
 
 numerical_features = ["price"]
 categorical_features = [
@@ -41,6 +41,12 @@ categorical_features = [
 
 X = df[numerical_features + categorical_features]
 y = df["points"]
+
+np.sort(y.unique())
+
+# %%
+# Then, we split the dataset into a training and test set.
+from sklearn.model_selection import train_test_split
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=42)
 
