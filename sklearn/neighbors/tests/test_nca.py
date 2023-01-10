@@ -17,6 +17,7 @@ from sklearn.utils import check_random_state
 from sklearn.datasets import load_iris, make_classification, make_blobs
 from sklearn.neighbors import NeighborhoodComponentsAnalysis
 from sklearn.metrics import pairwise_distances
+from sklearn.preprocessing import LabelEncoder
 
 
 rng = check_random_state(0)
@@ -69,7 +70,8 @@ def test_toy_example_collapse_points():
             # Initialize a fake NCA and variables needed to compute the loss:
             self.fake_nca = NeighborhoodComponentsAnalysis()
             self.fake_nca.n_iter_ = np.inf
-            self.X, y, _ = self.fake_nca._validate_params(X, y)
+            self.X, y = self.fake_nca._validate_data(X, y, ensure_min_samples=2)
+            y = LabelEncoder().fit_transform(y)
             self.same_class_mask = y[:, np.newaxis] == y[np.newaxis, :]
 
         def callback(self, transformation, n_iter):
@@ -119,27 +121,6 @@ def test_params_validation():
     NCA = NeighborhoodComponentsAnalysis
     rng = np.random.RandomState(42)
 
-    # TypeError
-    with pytest.raises(TypeError):
-        NCA(max_iter="21").fit(X, y)
-    with pytest.raises(TypeError):
-        NCA(verbose="true").fit(X, y)
-    with pytest.raises(TypeError):
-        NCA(tol="1").fit(X, y)
-    with pytest.raises(TypeError):
-        NCA(n_components="invalid").fit(X, y)
-    with pytest.raises(TypeError):
-        NCA(warm_start=1).fit(X, y)
-
-    # ValueError
-    msg = (
-        r"`init` must be 'auto', 'pca', 'lda', 'identity', 'random' or a "
-        r"numpy array of shape (n_components, n_features)."
-    )
-    with pytest.raises(ValueError, match=re.escape(msg)):
-        NCA(init=1).fit(X, y)
-    with pytest.raises(ValueError, match="max_iter == -1, must be >= 1."):
-        NCA(max_iter=-1).fit(X, y)
     init = rng.rand(5, 3)
     msg = (
         f"The output dimensionality ({init.shape[0]}) "
@@ -479,13 +460,6 @@ def test_one_class():
 
 
 def test_callback(capsys):
-    X = iris_data
-    y = iris_target
-
-    nca = NeighborhoodComponentsAnalysis(callback="my_cb")
-    with pytest.raises(ValueError):
-        nca.fit(X, y)
-
     max_iter = 10
 
     def my_cb(transformation, n_iter):
@@ -513,7 +487,8 @@ def test_expected_transformation_shape():
             # function:
             self.fake_nca = NeighborhoodComponentsAnalysis()
             self.fake_nca.n_iter_ = np.inf
-            self.X, y, _ = self.fake_nca._validate_params(X, y)
+            self.X, y = self.fake_nca._validate_data(X, y, ensure_min_samples=2)
+            y = LabelEncoder().fit_transform(y)
             self.same_class_mask = y[:, np.newaxis] == y[np.newaxis, :]
 
         def callback(self, transformation, n_iter):

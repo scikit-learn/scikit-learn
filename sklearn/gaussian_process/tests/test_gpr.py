@@ -14,7 +14,11 @@ from scipy.optimize import approx_fprime
 import pytest
 
 from sklearn.gaussian_process import GaussianProcessRegressor
-from sklearn.gaussian_process.kernels import RBF, ConstantKernel as C, WhiteKernel
+from sklearn.gaussian_process.kernels import (
+    RBF,
+    ConstantKernel as C,
+    WhiteKernel,
+)
 from sklearn.gaussian_process.kernels import DotProduct, ExpSineSquared
 from sklearn.gaussian_process.tests._mini_sequence_kernel import MiniSeqKernel
 from sklearn.exceptions import ConvergenceWarning
@@ -767,3 +771,30 @@ def test_sample_y_shapes(normalize_y, n_targets):
 
     y_samples = model.sample_y(X_test, n_samples=n_samples_y_test)
     assert y_samples.shape == y_test_shape
+
+
+class CustomKernel(C):
+    """
+    A custom kernel that has a diag method that returns the first column of the
+    input matrix X. This is a helper for the test to check that the input
+    matrix X is not mutated.
+    """
+
+    def diag(self, X):
+        return X[:, 0]
+
+
+def test_gpr_predict_input_not_modified():
+    """
+    Check that the input X is not modified by the predict method of the
+    GaussianProcessRegressor when setting return_std=True.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/24340
+    """
+    gpr = GaussianProcessRegressor(kernel=CustomKernel()).fit(X, y)
+
+    X2_copy = np.copy(X2)
+    _, _ = gpr.predict(X2, return_std=True)
+
+    assert_allclose(X2, X2_copy)

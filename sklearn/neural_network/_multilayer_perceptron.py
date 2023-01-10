@@ -23,6 +23,7 @@ from ..base import (
 from ..base import is_classifier
 from ._base import ACTIVATIONS, DERIVATIVES, LOSS_FUNCTIONS
 from ._stochastic_optimizers import SGDOptimizer, AdamOptimizer
+from ..metrics import accuracy_score, r2_score
 from ..model_selection import train_test_split
 from ..preprocessing import LabelBinarizer
 from ..utils import gen_batches, check_random_state
@@ -36,7 +37,7 @@ from ..utils.multiclass import _check_partial_fit_first_call, unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.optimize import _check_optimize_result
 from ..utils.metaestimators import available_if
-from ..utils._param_validation import StrOptions, Interval
+from ..utils._param_validation import StrOptions, Options, Interval
 
 
 _STOCHASTIC_SOLVERS = ["sgd", "adam"]
@@ -56,7 +57,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
     .. versionadded:: 0.18
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "hidden_layer_sizes": [
             "array-like",
             Interval(Integral, 1, None, closed="left"),
@@ -84,9 +85,10 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         "beta_1": [Interval(Real, 0, 1, closed="left")],
         "beta_2": [Interval(Real, 0, 1, closed="left")],
         "epsilon": [Interval(Real, 0, None, closed="neither")],
-        # TODO update when ScalarOptions available
-        # [Interval(Integral, 1, None, closed="left"), ScalarOptions({np.inf})]
-        "n_iter_no_change": [Interval(Real, 0, None, closed="right")],
+        "n_iter_no_change": [
+            Interval(Integral, 1, None, closed="left"),
+            Options(Real, {np.inf}),
+        ],
         "max_fun": [Interval(Integral, 1, None, closed="left")],
     }
 
@@ -177,7 +179,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         return activations
 
-    def _forward_pass_fast(self, X):
+    def _forward_pass_fast(self, X, check_input=True):
         """Predict using the trained model
 
         This is the same as _forward_pass but does not record the activations
@@ -188,12 +190,16 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         X : {array-like, sparse matrix} of shape (n_samples, n_features)
             The input data.
 
+        check_input : bool, default=True
+            Perform input data validation or not.
+
         Returns
         -------
         y_pred : ndarray of shape (n_samples,) or (n_samples, n_outputs)
             The decision function of the samples for each class in the model.
         """
-        X = self._validate_data(X, accept_sparse=["csr", "csc"], reset=False)
+        if check_input:
+            X = self._validate_data(X, accept_sparse=["csr", "csc"], reset=False)
 
         # Initialize first layer
         activation = X
@@ -390,8 +396,11 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             if self.early_stopping:
                 self.validation_scores_ = []
                 self.best_validation_score_ = -np.inf
+                self.best_loss_ = None
             else:
                 self.best_loss_ = np.inf
+                self.validation_scores_ = None
+                self.best_validation_score_ = None
 
     def _init_coef(self, fan_in, fan_out, dtype):
         # Use the initialization method recommended by
@@ -685,11 +694,12 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             # restore best weights
             self.coefs_ = self._best_coefs
             self.intercepts_ = self._best_intercepts
+            self.validation_scores_ = self.validation_scores_
 
     def _update_no_improvement_count(self, early_stopping, X_val, y_val):
         if early_stopping:
             # compute validation score, use that for stopping
-            self.validation_scores_.append(self.score(X_val, y_val))
+            self.validation_scores_.append(self._score(X_val, y_val))
 
             if self.verbose:
                 print("Validation score: %f" % self.validation_scores_[-1])
@@ -918,11 +928,23 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     loss_ : float
         The current loss computed with the loss function.
 
-    best_loss_ : float
+    best_loss_ : float or None
         The minimum loss reached by the solver throughout fitting.
+        If `early_stopping=True`, this attribute is set ot `None`. Refer to
+        the `best_validation_score_` fitted attribute instead.
 
     loss_curve_ : list of shape (`n_iter_`,)
         The ith element in the list represents the loss at the ith iteration.
+
+    validation_scores_ : list of shape (`n_iter_`,) or None
+        The score at each iteration on a held-out validation set. The score
+        reported is the accuracy score. Only available if `early_stopping=True`,
+        otherwise the attribute is set to `None`.
+
+    best_validation_score_ : float or None
+        The best validation score (i.e. accuracy score) that triggered the
+        early stopping. Only available if `early_stopping=True`, otherwise the
+        attribute is set to `None`.
 
     t_ : int
         The number of training samples seen by the solver during fitting.
@@ -1129,12 +1151,21 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             The predicted classes.
         """
         check_is_fitted(self)
-        y_pred = self._forward_pass_fast(X)
+        return self._predict(X)
+
+    def _predict(self, X, check_input=True):
+        """Private predict method with optional input validation"""
+        y_pred = self._forward_pass_fast(X, check_input=check_input)
 
         if self.n_outputs_ == 1:
             y_pred = y_pred.ravel()
 
         return self._label_binarizer.inverse_transform(y_pred)
+
+    def _score(self, X, y):
+        """Private score method without input validation"""
+        # Input validation would remove feature names, so we disable it
+        return accuracy_score(y, self._predict(X, check_input=False))
 
     @available_if(lambda est: est._check_solver())
     def partial_fit(self, X, y, classes=None):
@@ -1387,10 +1418,22 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
 
     best_loss_ : float
         The minimum loss reached by the solver throughout fitting.
+        If `early_stopping=True`, this attribute is set ot `None`. Refer to
+        the `best_validation_score_` fitted attribute instead.
 
     loss_curve_ : list of shape (`n_iter_`,)
         Loss value evaluated at the end of each training step.
         The ith element in the list represents the loss at the ith iteration.
+
+    validation_scores_ : list of shape (`n_iter_`,) or None
+        The score at each iteration on a held-out validation set. The score
+        reported is the R2 score. Only available if `early_stopping=True`,
+        otherwise the attribute is set to `None`.
+
+    best_validation_score_ : float or None
+        The best validation score (i.e. R2 score) that triggered the
+        early stopping. Only available if `early_stopping=True`, otherwise the
+        attribute is set to `None`.
 
     t_ : int
         The number of training samples seen by the solver during fitting.
@@ -1545,10 +1588,20 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             The predicted values.
         """
         check_is_fitted(self)
-        y_pred = self._forward_pass_fast(X)
+        return self._predict(X)
+
+    def _predict(self, X, check_input=True):
+        """Private predict method with optional input validation"""
+        y_pred = self._forward_pass_fast(X, check_input=check_input)
         if y_pred.shape[1] == 1:
             return y_pred.ravel()
         return y_pred
+
+    def _score(self, X, y):
+        """Private score method without input validation"""
+        # Input validation would remove feature names, so we disable it
+        y_pred = self._predict(X, check_input=False)
+        return r2_score(y, y_pred)
 
     def _validate_input(self, X, y, incremental, reset):
         X, y = self._validate_data(

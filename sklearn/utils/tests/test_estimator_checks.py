@@ -5,12 +5,13 @@
 import unittest
 import sys
 import warnings
+from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
 import joblib
 
-from sklearn.base import BaseEstimator, ClassifierMixin
+from sklearn.base import BaseEstimator, ClassifierMixin, OutlierMixin
 from sklearn.datasets import make_multilabel_classification
 from sklearn.utils import deprecated
 from sklearn.utils._testing import (
@@ -35,6 +36,8 @@ from sklearn.utils.validation import check_array
 from sklearn.utils import all_estimators
 from sklearn.exceptions import SkipTestWarning
 from sklearn.utils.metaestimators import available_if
+from sklearn.utils.estimator_checks import check_decision_proba_consistency
+from sklearn.utils._param_validation import Interval, StrOptions
 
 from sklearn.utils.estimator_checks import (
     _NotAnArray,
@@ -53,6 +56,7 @@ from sklearn.utils.estimator_checks import (
     check_regressor_data_not_an_array,
     check_requires_y_none,
     check_outlier_corruption,
+    check_outlier_contamination,
     set_random_state,
     check_fit_check_is_fitted,
     check_methods_sample_order_invariance,
@@ -311,6 +315,43 @@ class NotInvariantSampleOrder(BaseEstimator):
         return X[:, 0]
 
 
+class OneClassSampleErrorClassifier(BaseBadClassifier):
+    """Classifier allowing to trigger different behaviors when `sample_weight` reduces
+    the number of classes to 1."""
+
+    def __init__(self, raise_when_single_class=False):
+        self.raise_when_single_class = raise_when_single_class
+
+    def fit(self, X, y, sample_weight=None):
+        X, y = check_X_y(
+            X, y, accept_sparse=("csr", "csc"), multi_output=True, y_numeric=True
+        )
+
+        self.has_single_class_ = False
+        self.classes_, y = np.unique(y, return_inverse=True)
+        n_classes_ = self.classes_.shape[0]
+        if n_classes_ < 2 and self.raise_when_single_class:
+            self.has_single_class_ = True
+            raise ValueError("normal class error")
+
+        # find the number of class after trimming
+        if sample_weight is not None:
+            if isinstance(sample_weight, np.ndarray) and len(sample_weight) > 0:
+                n_classes_ = np.count_nonzero(np.bincount(y, sample_weight))
+            if n_classes_ < 2:
+                self.has_single_class_ = True
+                raise ValueError("Nonsensical Error")
+
+        return self
+
+    def predict(self, X):
+        check_is_fitted(self)
+        X = check_array(X)
+        if self.has_single_class_:
+            return np.zeros(X.shape[0])
+        return np.ones(X.shape[0])
+
+
 class LargeSparseNotSupportedClassifier(BaseEstimator):
     def fit(self, X, y):
         X, y = self._validate_data(
@@ -397,6 +438,17 @@ class EstimatorMissingDefaultTags(BaseEstimator):
         tags = super()._get_tags().copy()
         del tags["allow_nan"]
         return tags
+
+
+class RequiresPositiveXRegressor(LinearRegression):
+    def fit(self, X, y):
+        X, y = self._validate_data(X, y, multi_output=True)
+        if (X < 0).any():
+            raise ValueError("negative X values not supported!")
+        return super().fit(X, y)
+
+    def _more_tags(self):
+        return {"requires_positive_X": True}
 
 
 class RequiresPositiveYRegressor(LinearRegression):
@@ -547,6 +599,16 @@ def test_check_estimator():
     with raises(AssertionError, match=msg):
         check_estimator(NoSparseClassifier())
 
+    # check for classifiers reducing to less than two classes via sample weights
+    name = OneClassSampleErrorClassifier.__name__
+    msg = (
+        f"{name} failed when fitted on one label after sample_weight "
+        "trimming. Error message is not explicit, it should have "
+        "'class'."
+    )
+    with raises(AssertionError, match=msg):
+        check_estimator(OneClassSampleErrorClassifier())
+
     # Large indices test on bad estimator
     msg = (
         "Estimator LargeSparseNotSupportedClassifier doesn't seem to "
@@ -570,6 +632,7 @@ def test_check_estimator():
 
     # doesn't error on binary_only tagged estimator
     check_estimator(TaggedBinaryClassifier())
+    check_estimator(RequiresPositiveXRegressor())
 
     # Check regressor with requires_positive_y estimator tag
     msg = "negative y values not supported!"
@@ -1086,3 +1149,67 @@ def test_non_deterministic_estimator_skip_tests():
         all_tests = list(_yield_all_checks(Estimator()))
         assert check_methods_sample_order_invariance not in all_tests
         assert check_methods_subset_invariance not in all_tests
+
+
+def test_check_outlier_contamination():
+    """Check the test for the contamination parameter in the outlier detectors."""
+
+    # Without any parameter constraints, the estimator will early exit the test by
+    # returning None.
+    class OutlierDetectorWithoutConstraint(OutlierMixin, BaseEstimator):
+        """Outlier detector without parameter validation."""
+
+        def __init__(self, contamination=0.1):
+            self.contamination = contamination
+
+        def fit(self, X, y=None, sample_weight=None):
+            return self  # pragma: no cover
+
+        def predict(self, X, y=None):
+            return np.ones(X.shape[0])
+
+    detector = OutlierDetectorWithoutConstraint()
+    assert check_outlier_contamination(detector.__class__.__name__, detector) is None
+
+    # Now, we check that with the parameter constraints, the test should only be valid
+    # if an Interval constraint with bound in [0, 1] is provided.
+    class OutlierDetectorWithConstraint(OutlierDetectorWithoutConstraint):
+        _parameter_constraints = {"contamination": [StrOptions({"auto"})]}
+
+    detector = OutlierDetectorWithConstraint()
+    err_msg = "contamination constraints should contain a Real Interval constraint."
+    with raises(AssertionError, match=err_msg):
+        check_outlier_contamination(detector.__class__.__name__, detector)
+
+    # Add a correct interval constraint and check that the test passes.
+    OutlierDetectorWithConstraint._parameter_constraints["contamination"] = [
+        Interval(Real, 0, 0.5, closed="right")
+    ]
+    detector = OutlierDetectorWithConstraint()
+    check_outlier_contamination(detector.__class__.__name__, detector)
+
+    incorrect_intervals = [
+        Interval(Integral, 0, 1, closed="right"),  # not an integral interval
+        Interval(Real, -1, 1, closed="right"),  # lower bound is negative
+        Interval(Real, 0, 2, closed="right"),  # upper bound is greater than 1
+        Interval(Real, 0, 0.5, closed="left"),  # lower bound include 0
+    ]
+
+    err_msg = r"contamination constraint should be an interval in \(0, 0.5\]"
+    for interval in incorrect_intervals:
+        OutlierDetectorWithConstraint._parameter_constraints["contamination"] = [
+            interval
+        ]
+        detector = OutlierDetectorWithConstraint()
+        with raises(AssertionError, match=err_msg):
+            check_outlier_contamination(detector.__class__.__name__, detector)
+
+
+def test_decision_proba_tie_ranking():
+    """Check that in case with some probabilities ties, we relax the
+    ranking comparison with the decision function.
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/24025
+    """
+    estimator = SGDClassifier(loss="log_loss")
+    check_decision_proba_consistency("SGDClassifier", estimator)

@@ -143,50 +143,36 @@ def test_fit_intercept():
 
 def test_error_on_wrong_normalize():
     normalize = "wrong"
-    default = True
     error_msg = "Leave 'normalize' to its default"
     with pytest.raises(ValueError, match=error_msg):
-        _deprecate_normalize(normalize, default, "estimator")
+        _deprecate_normalize(normalize, "estimator")
 
 
+# TODO(1.4): remove
 @pytest.mark.parametrize("normalize", [True, False, "deprecated"])
-@pytest.mark.parametrize("default", [True, False])
-# FIXME update test in 1.2 for new versions
-def test_deprecate_normalize(normalize, default):
+def test_deprecate_normalize(normalize):
     # test all possible case of the normalize parameter deprecation
-    if not default:
-        if normalize == "deprecated":
-            # no warning
-            output = default
-            expected = None
-            warning_msg = []
+    if normalize == "deprecated":
+        # no warning
+        output = False
+        expected = None
+        warning_msg = []
+    else:
+        output = normalize
+        expected = FutureWarning
+        warning_msg = ["1.4"]
+        if not normalize:
+            warning_msg.append("default value")
         else:
-            output = normalize
-            expected = FutureWarning
-            warning_msg = ["1.2"]
-            if not normalize:
-                warning_msg.append("default value")
-            else:
-                warning_msg.append("StandardScaler(")
-    elif default:
-        if normalize == "deprecated":
-            # warning to pass False and use StandardScaler
-            output = default
-            expected = FutureWarning
-            warning_msg = ["False", "1.2", "StandardScaler("]
-        else:
-            # no warning
-            output = normalize
-            expected = None
-            warning_msg = []
+            warning_msg.append("StandardScaler(")
 
     if expected is None:
         with warnings.catch_warnings():
             warnings.simplefilter("error", FutureWarning)
-            _normalize = _deprecate_normalize(normalize, default, "estimator")
+            _normalize = _deprecate_normalize(normalize, "estimator")
     else:
         with pytest.warns(expected) as record:
-            _normalize = _deprecate_normalize(normalize, default, "estimator")
+            _normalize = _deprecate_normalize(normalize, "estimator")
         assert all([warning in str(record[0].message) for warning in warning_msg])
     assert _normalize == output
 
@@ -206,11 +192,8 @@ def test_linear_regression_sparse(global_random_seed):
     assert_array_almost_equal(ols.predict(X) - y.ravel(), 0)
 
 
-# FIXME: 'normalize' to be removed in 1.2 in LinearRegression
-@pytest.mark.filterwarnings("ignore:'normalize' was deprecated")
-@pytest.mark.parametrize("normalize", [True, False])
 @pytest.mark.parametrize("fit_intercept", [True, False])
-def test_linear_regression_sparse_equal_dense(normalize, fit_intercept):
+def test_linear_regression_sparse_equal_dense(fit_intercept):
     # Test that linear regression agrees between sparse and dense
     rng = np.random.RandomState(0)
     n_samples = 200
@@ -219,7 +202,7 @@ def test_linear_regression_sparse_equal_dense(normalize, fit_intercept):
     X[X < 0.1] = 0.0
     Xcsr = sparse.csr_matrix(X)
     y = rng.rand(n_samples)
-    params = dict(normalize=normalize, fit_intercept=fit_intercept)
+    params = dict(fit_intercept=fit_intercept)
     clf_dense = LinearRegression(**params)
     clf_sparse = LinearRegression(**params)
     clf_dense.fit(X, y)

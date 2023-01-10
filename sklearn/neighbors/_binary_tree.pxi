@@ -166,6 +166,7 @@ from ..utils._typedefs import DTYPE, ITYPE
 from ..utils._heap cimport heap_push
 from ..utils._sorting cimport simultaneous_sort as _simultaneous_sort
 
+# TODO: use cnp.PyArray_ENABLEFLAGS when Cython>=3.0 is used.
 cdef extern from "numpy/arrayobject.h":
     void PyArray_ENABLEFLAGS(cnp.ndarray arr, int flags)
 
@@ -511,24 +512,21 @@ cdef class NeighborsHeap:
     n_nbrs : int
         the size of each heap.
     """
-    cdef cnp.ndarray distances_arr
-    cdef cnp.ndarray indices_arr
-
     cdef DTYPE_t[:, ::1] distances
     cdef ITYPE_t[:, ::1] indices
 
     def __cinit__(self):
-        self.distances_arr = np.zeros((1, 1), dtype=DTYPE, order='C')
-        self.indices_arr = np.zeros((1, 1), dtype=ITYPE, order='C')
-        self.distances = self.distances_arr
-        self.indices = self.indices_arr
+        # One-element arrays are used as placeholders to prevent
+        # any problem due to potential access to those attributes
+        # (e.g. assigning to NULL or a to value in another segment).
+        self.distances = np.zeros((1, 1), dtype=DTYPE, order='C')
+        self.indices = np.zeros((1, 1), dtype=ITYPE, order='C')
 
     def __init__(self, n_pts, n_nbrs):
-        self.distances_arr = np.full((n_pts, n_nbrs), np.inf, dtype=DTYPE,
-                                     order='C')
-        self.indices_arr = np.zeros((n_pts, n_nbrs), dtype=ITYPE, order='C')
-        self.distances = self.distances_arr
-        self.indices = self.indices_arr
+        self.distances = np.full(
+            (n_pts, n_nbrs), np.inf, dtype=DTYPE, order='C'
+        )
+        self.indices = np.zeros((n_pts, n_nbrs), dtype=ITYPE, order='C')
 
     def get_arrays(self, sort=True):
         """Get the arrays of distances and indices within the heap.
@@ -538,7 +536,7 @@ cdef class NeighborsHeap:
         """
         if sort:
             self._sort()
-        return self.distances_arr, self.indices_arr
+        return self.distances.base, self.indices.base
 
     cdef inline DTYPE_t largest(self, ITYPE_t row) nogil except -1:
         """Return the largest distance in the given row"""
@@ -550,21 +548,23 @@ cdef class NeighborsHeap:
     cdef int _push(self, ITYPE_t row, DTYPE_t val,
                    ITYPE_t i_val) nogil except -1:
         """push (val, i_val) into the given row"""
-        cdef:
-            ITYPE_t size = self.distances.shape[1]
-            DTYPE_t* dist_arr = &self.distances[row, 0]
-            ITYPE_t* ind_arr = &self.indices[row, 0]
-        return heap_push(dist_arr, ind_arr, size, val, i_val)
+        return heap_push(
+            values=&self.distances[row, 0],
+            indices=&self.indices[row, 0],
+            size=self.distances.shape[1],
+            val=val,
+            val_idx=i_val,
+        )
 
     cdef int _sort(self) except -1:
         """simultaneously sort the distances and indices"""
-        cdef DTYPE_t[:, ::1] distances = self.distances
-        cdef ITYPE_t[:, ::1] indices = self.indices
         cdef ITYPE_t row
-        for row in range(distances.shape[0]):
-            _simultaneous_sort(&distances[row, 0],
-                               &indices[row, 0],
-                               distances.shape[1])
+        for row in range(self.distances.shape[0]):
+            _simultaneous_sort(
+                dist=&self.distances[row, 0],
+                idx=&self.indices[row, 0],
+                size=self.distances.shape[1],
+            )
         return 0
 
 #------------------------------------------------------------
@@ -643,30 +643,32 @@ cdef class NodeHeap:
 
         heap[i].val < min(heap[2 * i + 1].val, heap[2 * i + 2].val)
     """
-    cdef cnp.ndarray data_arr
-    cdef NodeHeapData_t[::1] data
+    cdef NodeHeapData_t[:] data
     cdef ITYPE_t n
 
     def __cinit__(self):
-        self.data_arr = np.zeros(1, dtype=NodeHeapData, order='C')
-        self.data = self.data_arr
+        # A one-elements array is used as a placeholder to prevent
+        # any problem due to potential access to this attribute
+        # (e.g. assigning to NULL or a to value in another segment).
+        self.data = np.zeros(1, dtype=NodeHeapData, order='C')
 
     def __init__(self, size_guess=100):
         size_guess = max(size_guess, 1)  # need space for at least one item
-        self.data_arr = np.zeros(size_guess, dtype=NodeHeapData, order='C')
-        self.data = self.data_arr
+        self.data = np.zeros(size_guess, dtype=NodeHeapData, order='C')
         self.n = size_guess
         self.clear()
 
     cdef int resize(self, ITYPE_t new_size) except -1:
         """Resize the heap to be either larger or smaller"""
-        cdef NodeHeapData_t *data_ptr
-        cdef NodeHeapData_t *new_data_ptr
-        cdef ITYPE_t i
-        cdef ITYPE_t size = self.data.shape[0]
-        cdef cnp.ndarray new_data_arr = np.zeros(new_size,
-                                                dtype=NodeHeapData)
-        cdef NodeHeapData_t[::1] new_data = new_data_arr
+        cdef:
+            NodeHeapData_t *data_ptr
+            NodeHeapData_t *new_data_ptr
+            ITYPE_t i
+            ITYPE_t size = self.data.shape[0]
+            NodeHeapData_t[:] new_data = np.zeros(
+                new_size,
+                dtype=NodeHeapData,
+            )
 
         if size > 0 and new_size > 0:
             data_ptr = &self.data[0]
@@ -678,7 +680,6 @@ cdef class NodeHeap:
             self.n = new_size
 
         self.data = new_data
-        self.data_arr = new_data_arr
         return 0
 
     cdef int push(self, NodeHeapData_t data) except -1:
@@ -769,19 +770,10 @@ VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
 # Binary Tree class
 cdef class BinaryTree:
 
-    cdef cnp.ndarray data_arr
-    cdef cnp.ndarray sample_weight_arr
-    cdef cnp.ndarray idx_array_arr
-    cdef cnp.ndarray node_data_arr
-    cdef cnp.ndarray node_bounds_arr
-
     cdef readonly const DTYPE_t[:, ::1] data
     cdef readonly const DTYPE_t[::1] sample_weight
     cdef public DTYPE_t sum_weight
 
-    # Even if those memoryviews attributes are const-qualified,
-    # they get modified via their numpy counterpart.
-    # For instance, `node_data` gets modified via `node_data_arr`.
     cdef public const ITYPE_t[::1] idx_array
     cdef public const NodeData_t[::1] node_data
     cdef public const DTYPE_t[:, :, ::1] node_bounds
@@ -803,18 +795,15 @@ cdef class BinaryTree:
 
     # Use cinit to initialize all arrays to empty: this will prevent memory
     # errors and seg-faults in rare cases where __init__ is not called
+    # A one-elements array is used as a placeholder to prevent
+    # any problem due to potential access to this attribute
+    # (e.g. assigning to NULL or a to value in another segment).
     def __cinit__(self):
-        self.data_arr = np.empty((1, 1), dtype=DTYPE, order='C')
-        self.sample_weight_arr = np.empty(1, dtype=DTYPE, order='C')
-        self.idx_array_arr = np.empty(1, dtype=ITYPE, order='C')
-        self.node_data_arr = np.empty(1, dtype=NodeData, order='C')
-        self.node_bounds_arr = np.empty((1, 1, 1), dtype=DTYPE)
-
-        self.data = self.data_arr
-        self.sample_weight = self.sample_weight_arr
-        self.idx_array = self.idx_array_arr
-        self.node_data = self.node_data_arr
-        self.node_bounds = self.node_bounds_arr
+        self.data = np.empty((1, 1), dtype=DTYPE, order='C')
+        self.sample_weight = np.empty(1, dtype=DTYPE, order='C')
+        self.idx_array = np.empty(1, dtype=ITYPE, order='C')
+        self.node_data = np.empty(1, dtype=NodeData, order='C')
+        self.node_bounds = np.empty((1, 1, 1), dtype=DTYPE)
 
         self.leaf_size = 0
         self.n_levels = 0
@@ -830,12 +819,12 @@ cdef class BinaryTree:
     def __init__(self, data,
                  leaf_size=40, metric='minkowski', sample_weight=None, **kwargs):
         # validate data
-        self.data_arr = check_array(data, dtype=DTYPE, order='C')
-        if self.data_arr.size == 0:
+        self.data = check_array(data, dtype=DTYPE, order='C')
+        if self.data.size == 0:
             raise ValueError("X is an empty array")
 
-        n_samples = self.data_arr.shape[0]
-        n_features = self.data_arr.shape[1]
+        n_samples = self.data.shape[0]
+        n_features = self.data.shape[1]
 
         if leaf_size < 1:
             raise ValueError("leaf_size must be greater than or equal to 1")
@@ -850,7 +839,7 @@ cdef class BinaryTree:
             raise ValueError('metric {metric} is not valid for '
                              '{BinaryTree}'.format(metric=metric,
                                                    **DOC_DICT))
-        self.dist_metric._validate_data(self.data_arr)
+        self.dist_metric._validate_data(self.data)
 
         # determine number of levels in the tree, and from this
         # the number of nodes in the tree.  This results in leaf nodes
@@ -860,16 +849,15 @@ cdef class BinaryTree:
         self.n_nodes = (2 ** self.n_levels) - 1
 
         # allocate arrays for storage
-        self.idx_array_arr = np.arange(n_samples, dtype=ITYPE)
-        self.node_data_arr = np.zeros(self.n_nodes, dtype=NodeData)
+        self.idx_array = np.arange(n_samples, dtype=ITYPE)
+        self.node_data = np.zeros(self.n_nodes, dtype=NodeData)
 
         self._update_sample_weight(n_samples, sample_weight)
-        self._update_memviews()
 
         # Allocate tree-specific data
         allocate_data(self, self.n_nodes, n_features)
         self._recursive_build(
-            node_data=self.node_data_arr,
+            node_data=self.node_data.base,
             i_node=0,
             idx_start=0,
             idx_end=n_samples
@@ -877,20 +865,12 @@ cdef class BinaryTree:
 
     def _update_sample_weight(self, n_samples, sample_weight):
         if sample_weight is not None:
-            self.sample_weight_arr = np.asarray(
+            self.sample_weight = np.asarray(
                 sample_weight, dtype=DTYPE, order='C')
-            self.sample_weight = self.sample_weight_arr
             self.sum_weight = np.sum(self.sample_weight)
         else:
             self.sample_weight = None
-            self.sample_weight_arr = np.empty(1, dtype=DTYPE, order='C')
             self.sum_weight = <DTYPE_t> n_samples
-
-    def _update_memviews(self):
-        self.data = self.data_arr
-        self.idx_array = self.idx_array_arr
-        self.node_data = self.node_data_arr
-        self.node_bounds = self.node_bounds_arr
 
 
     def __reduce__(self):
@@ -905,15 +885,15 @@ cdef class BinaryTree:
         """
         if self.sample_weight is not None:
             # pass the numpy array
-            sample_weight_arr = self.sample_weight_arr
+            sample_weight = self.sample_weight.base
         else:
             # pass None to avoid confusion with the empty place holder
             # of size 1 from __cinit__
-            sample_weight_arr = None
-        return (self.data_arr,
-                self.idx_array_arr,
-                self.node_data_arr,
-                self.node_bounds_arr,
+            sample_weight = None
+        return (self.data.base,
+                self.idx_array.base,
+                self.node_data.base,
+                self.node_bounds.base,
                 int(self.leaf_size),
                 int(self.n_levels),
                 int(self.n_nodes),
@@ -922,16 +902,16 @@ cdef class BinaryTree:
                 int(self.n_splits),
                 int(self.n_calls),
                 self.dist_metric,
-                sample_weight_arr)
+                sample_weight)
 
     def __setstate__(self, state):
         """
         set state for pickling
         """
-        self.data_arr = state[0]
-        self.idx_array_arr = state[1]
-        self.node_data_arr = state[2]
-        self.node_bounds_arr = state[3]
+        self.data = state[0]
+        self.idx_array = state[1]
+        self.node_data = state[2]
+        self.node_bounds = state[3]
         self.leaf_size = state[4]
         self.n_levels = state[5]
         self.n_nodes = state[6]
@@ -940,13 +920,12 @@ cdef class BinaryTree:
         self.n_splits = state[9]
         self.n_calls = state[10]
         self.dist_metric = state[11]
-        sample_weight_arr = state[12]
+        sample_weight = state[12]
 
         self.euclidean = (self.dist_metric.__class__.__name__
                           == 'EuclideanDistance')
-        n_samples = self.data_arr.shape[0]
-        self._update_sample_weight(n_samples, sample_weight_arr)
-        self._update_memviews()
+        n_samples = self.data.shape[0]
+        self._update_sample_weight(n_samples, sample_weight)
 
     def get_tree_stats(self):
         """
@@ -993,8 +972,12 @@ cdef class BinaryTree:
         arrays: tuple of array
             Arrays for storing tree data, index, node data and node bounds.
         """
-        return (self.data_arr, self.idx_array_arr,
-                self.node_data_arr, self.node_bounds_arr)
+        return (
+            self.data.base,
+            self.idx_array.base,
+            self.node_data.base,
+            self.node_bounds.base,
+        )
 
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) nogil except -1:
@@ -1340,14 +1323,14 @@ cdef class BinaryTree:
                     # make a new numpy array that wraps the existing data
                     indices_npy[i] = cnp.PyArray_SimpleNewFromData(1, &counts[i], cnp.NPY_INTP, indices[i])
                     # make sure the data will be freed when the numpy array is garbage collected
-                    PyArray_ENABLEFLAGS(indices_npy[i], cnp.NPY_OWNDATA)
+                    PyArray_ENABLEFLAGS(indices_npy[i], cnp.NPY_ARRAY_OWNDATA)
                     # make sure the data is not freed twice
                     indices[i] = NULL
 
                     # make a new numpy array that wraps the existing data
                     distances_npy[i] = cnp.PyArray_SimpleNewFromData(1, &counts[i], cnp.NPY_DOUBLE, distances[i])
                     # make sure the data will be freed when the numpy array is garbage collected
-                    PyArray_ENABLEFLAGS(distances_npy[i], cnp.NPY_OWNDATA)
+                    PyArray_ENABLEFLAGS(distances_npy[i], cnp.NPY_ARRAY_OWNDATA)
                     # make sure the data is not freed twice
                     distances[i] = NULL
 
@@ -1360,7 +1343,7 @@ cdef class BinaryTree:
                     # make a new numpy array that wraps the existing data
                     indices_npy[i] = cnp.PyArray_SimpleNewFromData(1, &counts[i], cnp.NPY_INTP, indices[i])
                     # make sure the data will be freed when the numpy array is garbage collected
-                    PyArray_ENABLEFLAGS(indices_npy[i], cnp.NPY_OWNDATA)
+                    PyArray_ENABLEFLAGS(indices_npy[i], cnp.NPY_ARRAY_OWNDATA)
                     # make sure the data is not freed twice
                     indices[i] = NULL
 

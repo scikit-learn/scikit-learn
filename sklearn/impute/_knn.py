@@ -10,7 +10,6 @@ from ..utils.validation import FLOAT_DTYPES
 from ..metrics import pairwise_distances_chunked
 from ..metrics.pairwise import _NAN_METRICS
 from ..neighbors._base import _get_weights
-from ..neighbors._base import _check_weights
 from ..utils import is_scalar_nan
 from ..utils._mask import _get_mask
 from ..utils.validation import check_is_fitted
@@ -73,6 +72,13 @@ class KNNImputer(_BaseImputer):
         missing indicator even if there are missing values at transform/test
         time.
 
+    keep_empty_features : bool, default=False
+        If True, features that consist exclusively of missing values when
+        `fit` is called are returned in results when `transform` is called.
+        The imputed value is always `0`.
+
+        .. versionadded:: 1.2
+
     Attributes
     ----------
     indicator_ : :class:`~sklearn.impute.MissingIndicator`
@@ -92,10 +98,10 @@ class KNNImputer(_BaseImputer):
 
     See Also
     --------
-    SimpleImputer : Imputation transformer for completing missing values
+    SimpleImputer : Univariate imputer for completing missing values
         with simple strategies.
-    IterativeImputer : Multivariate imputer that estimates each feature
-        from all the others.
+    IterativeImputer : Multivariate imputer that estimates values to impute for
+        each feature with missing values from all the others.
 
     References
     ----------
@@ -117,8 +123,8 @@ class KNNImputer(_BaseImputer):
            [8. , 8. , 7. ]])
     """
 
-    _parameter_constraints = {
-        **_BaseImputer._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **_BaseImputer._parameter_constraints,
         "n_neighbors": [Interval(Integral, 1, None, closed="left")],
         "weights": [StrOptions({"uniform", "distance"}), callable, Hidden(None)],
         "metric": [StrOptions(set(_NAN_METRICS)), callable],
@@ -134,8 +140,13 @@ class KNNImputer(_BaseImputer):
         metric="nan_euclidean",
         copy=True,
         add_indicator=False,
+        keep_empty_features=False,
     ):
-        super().__init__(missing_values=missing_values, add_indicator=add_indicator)
+        super().__init__(
+            missing_values=missing_values,
+            add_indicator=add_indicator,
+            keep_empty_features=keep_empty_features,
+        )
         self.n_neighbors = n_neighbors
         self.weights = weights
         self.metric = metric
@@ -220,7 +231,6 @@ class KNNImputer(_BaseImputer):
             copy=self.copy,
         )
 
-        _check_weights(self.weights)
         self._fit_X = X
         self._mask_fit_X = _get_mask(self._fit_X, self.missing_values)
         self._valid_mask = ~np.all(self._mask_fit_X, axis=0)
@@ -267,8 +277,12 @@ class KNNImputer(_BaseImputer):
         # Removes columns where the training data is all nan
         if not np.any(mask):
             # No missing values in X
-            # Remove columns where the training data is all nan
-            return X[:, valid_mask]
+            if self.keep_empty_features:
+                Xc = X
+                Xc[:, ~valid_mask] = 0
+            else:
+                Xc = X[:, valid_mask]
+            return Xc
 
         row_missing_idx = np.flatnonzero(mask.any(axis=1))
 
@@ -344,7 +358,13 @@ class KNNImputer(_BaseImputer):
             # process_chunk modifies X in place. No return value.
             pass
 
-        return super()._concatenate_indicator(X[:, valid_mask], X_indicator)
+        if self.keep_empty_features:
+            Xc = X
+            Xc[:, ~valid_mask] = 0
+        else:
+            Xc = X[:, valid_mask]
+
+        return super()._concatenate_indicator(Xc, X_indicator)
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.

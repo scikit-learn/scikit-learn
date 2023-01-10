@@ -81,6 +81,7 @@ def fetch_kddcup99(
     data_home : str, default=None
         Specify another download and cache folder for the datasets. By default
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
+
         .. versionadded:: 0.19
 
     shuffle : bool, default=False
@@ -133,6 +134,10 @@ def fetch_kddcup99(
             The names of the target columns
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarray. The first containing a 2D array of
+        shape (n_samples, n_features) with each row representing one
+        sample and each column representing the features. The second
+        ndarray of shape (n_samples,) containing the target samples.
 
         .. versionadded:: 0.20
     """
@@ -225,7 +230,6 @@ def fetch_kddcup99(
 
 
 def _fetch_brute_kddcup99(data_home=None, download_if_missing=True, percent10=True):
-
     """Load the kddcup99 dataset, downloading it if necessary.
 
     Parameters

@@ -80,7 +80,7 @@ class _ValidationScoreCallback:
 class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
     """Base class for SGD classification and regression."""
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "fit_intercept": ["boolean"],
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "tol": [Interval(Real, 0, None, closed="left"), None],
@@ -160,14 +160,6 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
         self._get_penalty_type(self.penalty)
         self._get_learning_rate_type(self.learning_rate)
 
-        # TODO(1.2): remove "squared_loss"
-        if self.loss == "squared_loss":
-            warnings.warn(
-                "The loss 'squared_loss' was deprecated in v1.0 and will be "
-                "removed in version 1.2. Use `loss='squared_error'` which is "
-                "equivalent.",
-                FutureWarning,
-            )
         # TODO(1.3): remove "log"
         if self.loss == "log":
             warnings.warn(
@@ -258,13 +250,17 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
                 self._standard_intercept.shape, dtype=np.float64, order="C"
             )
 
-    def _make_validation_split(self, y):
+    def _make_validation_split(self, y, sample_mask):
         """Split the dataset between training set and validation set.
 
         Parameters
         ----------
         y : ndarray of shape (n_samples, )
             Target values.
+
+        sample_mask : ndarray of shape (n_samples, )
+            A boolean array indicating whether each sample should be included
+            for validation set.
 
         Returns
         -------
@@ -285,6 +281,13 @@ class BaseSGD(SparseCoefMixin, BaseEstimator, metaclass=ABCMeta):
             test_size=self.validation_fraction, random_state=self.random_state
         )
         idx_train, idx_val = next(cv.split(np.zeros(shape=(y.shape[0], 1)), y))
+
+        if not np.any(sample_mask[idx_val]):
+            raise ValueError(
+                "The sample weights for validation set are all zero, consider using a"
+                " different random state."
+            )
+
         if idx_train.shape[0] == 0 or idx_val.shape[0] == 0:
             raise ValueError(
                 "Splitting %d samples into a train set and a validation set "
@@ -430,7 +433,7 @@ def fit_binary(
     learning_rate_type = est._get_learning_rate_type(learning_rate)
 
     if validation_mask is None:
-        validation_mask = est._make_validation_split(y_i)
+        validation_mask = est._make_validation_split(y_i, sample_mask=sample_weight > 0)
     classes = np.array([-1, 1], dtype=y_i.dtype)
     validation_score_cb = est._make_validation_score_cb(
         validation_mask, X, y_i, sample_weight, classes=classes
@@ -485,7 +488,6 @@ def fit_binary(
 
 class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
 
-    # TODO(1.2): Remove "squared_loss"
     # TODO(1.3): Remove "log""
     loss_functions = {
         "hinge": (Hinge, 1.0),
@@ -495,20 +497,14 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         "log": (Log,),
         "modified_huber": (ModifiedHuber,),
         "squared_error": (SquaredLoss,),
-        "squared_loss": (SquaredLoss,),
         "huber": (Huber, DEFAULT_EPSILON),
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
         "squared_epsilon_insensitive": (SquaredEpsilonInsensitive, DEFAULT_EPSILON),
     }
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseSGD._parameter_constraints,
-        "loss": [
-            StrOptions(
-                set(loss_functions),
-                deprecated={"squared_loss", "log"},
-            )
-        ],
+        "loss": [StrOptions(set(loss_functions), deprecated={"log"})],
         "early_stopping": ["boolean"],
         "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
@@ -755,7 +751,7 @@ class BaseSGDClassifier(LinearClassifierMixin, BaseSGD, metaclass=ABCMeta):
         """
         # Precompute the validation split using the multiclass labels
         # to ensure proper balancing of the classes.
-        validation_mask = self._make_validation_split(y)
+        validation_mask = self._make_validation_split(y, sample_mask=sample_weight > 0)
 
         # Use joblib to fit OvA in parallel.
         # Pick the random seed for each job outside of fit_binary to avoid
@@ -956,19 +952,15 @@ class SGDClassifier(BaseSGDClassifier):
         More details about the losses formulas can be found in the
         :ref:`User Guide <sgd_mathematical_formulation>`.
 
-        .. deprecated:: 1.0
-            The loss 'squared_loss' was deprecated in v1.0 and will be removed
-            in version 1.2. Use `loss='squared_error'` which is equivalent.
-
         .. deprecated:: 1.1
             The loss 'log' was deprecated in v1.1 and will be removed
             in version 1.3. Use `loss='log_loss'` which is equivalent.
 
-    penalty : {'l2', 'l1', 'elasticnet'}, default='l2'
+    penalty : {'l2', 'l1', 'elasticnet', None}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
         'elasticnet' might bring sparsity to the model (feature selection)
-        not achievable with 'l2'.
+        not achievable with 'l2'. No penalty is added when set to `None`.
 
     alpha : float, default=0.0001
         Constant that multiplies the regularization term. The higher the
@@ -1138,7 +1130,7 @@ class SGDClassifier(BaseSGDClassifier):
 
     t_ : int
         Number of weight updates performed during training.
-        Same as ``(n_iter_ * n_samples)``.
+        Same as ``(n_iter_ * n_samples + 1)``.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1177,7 +1169,7 @@ class SGDClassifier(BaseSGDClassifier):
     [1]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseSGDClassifier._parameter_constraints,
         "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
@@ -1368,23 +1360,16 @@ class SGDClassifier(BaseSGDClassifier):
 
 class BaseSGDRegressor(RegressorMixin, BaseSGD):
 
-    # TODO: Remove squared_loss in v1.2
     loss_functions = {
         "squared_error": (SquaredLoss,),
-        "squared_loss": (SquaredLoss,),
         "huber": (Huber, DEFAULT_EPSILON),
         "epsilon_insensitive": (EpsilonInsensitive, DEFAULT_EPSILON),
         "squared_epsilon_insensitive": (SquaredEpsilonInsensitive, DEFAULT_EPSILON),
     }
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseSGD._parameter_constraints,
-        "loss": [
-            StrOptions(
-                set(loss_functions),
-                deprecated={"squared_loss"},
-            )
-        ],
+        "loss": [StrOptions(set(loss_functions))],
         "early_stopping": ["boolean"],
         "validation_fraction": [Interval(Real, 0, 1, closed="neither")],
         "n_iter_no_change": [Interval(Integral, 1, None, closed="left")],
@@ -1656,7 +1641,7 @@ class BaseSGDRegressor(RegressorMixin, BaseSGD):
         if not hasattr(self, "t_"):
             self.t_ = 1.0
 
-        validation_mask = self._make_validation_split(y)
+        validation_mask = self._make_validation_split(y, sample_mask=sample_weight > 0)
         validation_score_cb = self._make_validation_score_cb(
             validation_mask, X, y, sample_weight
         )
@@ -1769,15 +1754,11 @@ class SGDRegressor(BaseSGDRegressor):
         More details about the losses formulas can be found in the
         :ref:`User Guide <sgd_mathematical_formulation>`.
 
-        .. deprecated:: 1.0
-            The loss 'squared_loss' was deprecated in v1.0 and will be removed
-            in version 1.2. Use `loss='squared_error'` which is equivalent.
-
-    penalty : {'l2', 'l1', 'elasticnet'}, default='l2'
+    penalty : {'l2', 'l1', 'elasticnet', None}, default='l2'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
         which is the standard regularizer for linear SVM models. 'l1' and
         'elasticnet' might bring sparsity to the model (feature selection)
-        not achievable with 'l2'.
+        not achievable with 'l2'. No penalty is added when set to `None`.
 
     alpha : float, default=0.0001
         Constant that multiplies the regularization term. The higher the
@@ -1912,7 +1893,7 @@ class SGDRegressor(BaseSGDRegressor):
 
     t_ : int
         Number of weight updates performed during training.
-        Same as ``(n_iter_ * n_samples)``.
+        Same as ``(n_iter_ * n_samples + 1)``.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -1953,7 +1934,7 @@ class SGDRegressor(BaseSGDRegressor):
                     ('sgdregressor', SGDRegressor())])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseSGDRegressor._parameter_constraints,
         "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
         "alpha": [Interval(Real, 0, None, closed="left")],
@@ -2123,7 +2104,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     t_ : int
         Number of weight updates performed during training.
-        Same as ``(n_iter_ * n_samples)``.
+        Same as ``(n_iter_ * n_samples + 1)``.
 
     loss_function_ : concrete ``LossFunction``
 
@@ -2164,7 +2145,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
 
     loss_functions = {"hinge": (Hinge, 1.0)}
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseSGD._parameter_constraints,
         "nu": [Interval(Real, 0.0, 1.0, closed="right")],
         "learning_rate": [
@@ -2190,13 +2171,10 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         warm_start=False,
         average=False,
     ):
-
-        alpha = nu / 2
         self.nu = nu
         super(SGDOneClassSVM, self).__init__(
             loss="hinge",
             penalty="l2",
-            alpha=alpha,
             C=1.0,
             l1_ratio=0,
             fit_intercept=fit_intercept,
@@ -2233,7 +2211,7 @@ class SGDOneClassSVM(BaseSGD, OutlierMixin):
         # validation_mask and validation_score_cb will be set to values
         # associated to early_stopping=False in _make_validation_split and
         # _make_validation_score_cb respectively.
-        validation_mask = self._make_validation_split(y)
+        validation_mask = self._make_validation_split(y, sample_mask=sample_weight > 0)
         validation_score_cb = self._make_validation_score_cb(
             validation_mask, X, y, sample_weight
         )

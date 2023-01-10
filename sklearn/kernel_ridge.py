@@ -131,7 +131,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
     KernelRidge(alpha=1.0)
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "alpha": [Interval(Real, 0, None, closed="left"), "array-like"],
         "kernel": [
             StrOptions(set(PAIRWISE_KERNEL_FUNCTIONS.keys()) | {"precomputed"}),
@@ -139,7 +139,7 @@ class KernelRidge(MultiOutputMixin, RegressorMixin, BaseEstimator):
         ],
         "gamma": [Interval(Real, 0, None, closed="left"), None],
         "degree": [Interval(Integral, 0, None, closed="left")],
-        "coef0": [Interval(Real, 0, None, closed="left")],
+        "coef0": [Interval(Real, None, None, closed="neither")],
         "kernel_params": [dict, None],
     }
 

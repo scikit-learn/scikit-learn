@@ -5,7 +5,6 @@ Small collection of auxiliary functions that operate on arrays
 
 cimport numpy as cnp
 import  numpy as np
-cimport cython
 from cython cimport floating
 from libc.math cimport fabs
 from libc.float cimport DBL_MAX, FLT_MAX
