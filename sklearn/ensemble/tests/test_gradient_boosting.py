@@ -806,7 +806,9 @@ def test_warm_start_clear(Cls):
 
 @pytest.mark.parametrize("GradientBoosting", GRADIENT_BOOSTING_ESTIMATORS)
 def test_warm_start_state_oob_scores(GradientBoosting):
-    """Check that the states of the OOB scores when used with `warm_start`."""
+    """
+    Check that the states of the OOB scores are cleared when used with `warm_start`.
+    """
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     n_estimators = 100
     estimator = GradientBoosting(
@@ -870,11 +872,11 @@ def test_warm_start_oob_switch(Cls):
 
     assert_array_equal(est.oob_improvement_[:100], np.zeros(100))
     assert_array_equal(est.oob_scores_[:100], np.zeros(100))
-    assert est.oob_scores_[-1] == pytest.approx(est.oob_score_)
 
     # the last 10 are not zeros
-    assert_array_equal(est.oob_improvement_[-10:] == 0.0, np.zeros(10, dtype=bool))
-    assert_array_equal(est.oob_scores_[-10:] == 0.0, np.zeros(10, dtype=bool))
+    assert est.oob_improvement_[-10:].all() != 0.0
+    assert est.oob_scores_[-10:].all() != 0.0
+
     assert est.oob_scores_[-1] == pytest.approx(est.oob_score_)
 
 
