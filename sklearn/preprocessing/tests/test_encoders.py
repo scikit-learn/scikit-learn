@@ -193,24 +193,22 @@ def test_one_hot_encoder_feature_names_unicode():
     assert_array_equal(["n👍me_c❤t1", "n👍me_dat2"], feature_names)
 
 
-# TODO: Remove in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
-@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
-def test_one_hot_encoder_custom_feature_name_combiner(get_names):
-    name_combiner = lambda feature, category: feature + "_" + repr(category)
+def test_one_hot_encoder_custom_feature_name_combiner():
+    """Check the behaviour of `feature_name_combiner` as a callable."""
+
+    def name_combiner(feature, category):
+        return feature + "_" + repr(category)
+
     enc = OneHotEncoder(feature_name_combiner=name_combiner)
     X = np.array([["None", None]], dtype=object).T
     enc.fit(X)
-    feature_names = getattr(enc, get_names)()
+    feature_names = enc.get_feature_names_out()
     assert_array_equal(["x0_'None'", "x0_None"], feature_names)
-    feature_names = getattr(enc, get_names)(input_features=["a"])
+    feature_names = enc.get_feature_names_out(input_features=["a"])
     assert_array_equal(["a_'None'", "a_None"], feature_names)
 
 
-# TODO: Remove pytest.parametrize in 1.2 when get_feature_names is removed.
-@pytest.mark.filterwarnings("ignore::FutureWarning:sklearn")
-@pytest.mark.parametrize("get_names", ["get_feature_names", "get_feature_names_out"])
-def test_one_hot_encoder_invalid_feature_name_combiner(get_names):
+def test_one_hot_encoder_invalid_feature_name_combiner():
     enc = OneHotEncoder(feature_name_combiner="invalid_preset")
     X = np.array([[1, 2]], dtype=object).T
     with pytest.raises(
