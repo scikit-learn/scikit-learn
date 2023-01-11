@@ -62,21 +62,21 @@ iris.target = iris.target[perm]
 @pytest.mark.parametrize("loss", ("log_loss", "exponential"))
 def test_classification_toy(loss, global_random_seed):
     # Check classification on a toy dataset.
-    estimator = GradientBoostingClassifier(
+    clf = GradientBoostingClassifier(
         loss=loss, n_estimators=10, random_state=global_random_seed
     )
 
     with pytest.raises(ValueError):
-        estimator.predict(T)
+        clf.predict(T)
 
-    estimator.fit(X, y)
-    assert_array_equal(estimator.predict(T), true_result)
-    assert 10 == len(estimator.estimators_)
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+    assert 10 == len(clf.estimators_)
 
-    log_loss_decrease = estimator.train_score_[:-1] - estimator.train_score_[1:]
+    log_loss_decrease = clf.train_score_[:-1] - clf.train_score_[1:]
     assert np.any(log_loss_decrease >= 0.0)
 
-    leaves = estimator.apply(X)
+    leaves = clf.apply(X)
     assert leaves.shape == (6, 10, 1)
 
 
@@ -168,17 +168,17 @@ def test_iris(subsample, sample_weight, global_random_seed):
     if sample_weight == 1:
         sample_weight = np.ones(len(iris.target))
     # Check consistency on dataset iris.
-    estimator = GradientBoostingClassifier(
+    clf = GradientBoostingClassifier(
         n_estimators=100,
         loss="log_loss",
         random_state=global_random_seed,
         subsample=subsample,
     )
-    estimator.fit(iris.data, iris.target, sample_weight=sample_weight)
-    score = estimator.score(iris.data, iris.target)
+    clf.fit(iris.data, iris.target, sample_weight=sample_weight)
+    score = clf.score(iris.data, iris.target)
     assert score > 0.9
 
-    leaves = estimator.apply(iris.data)
+    leaves = clf.apply(iris.data)
     assert leaves.shape == (150, 100, 3)
 
 
@@ -200,9 +200,9 @@ def test_regression_synthetic(global_random_seed):
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
 
-    estimator = GradientBoostingRegressor(**regression_params)
-    estimator.fit(X_train, y_train)
-    mse = mean_squared_error(y_test, estimator.predict(X_test))
+    clf = GradientBoostingRegressor(**regression_params)
+    clf.fit(X_train, y_train)
+    mse = mean_squared_error(y_test, clf.predict(X_test))
     assert mse < 6.5
 
     # Friedman2
@@ -210,9 +210,9 @@ def test_regression_synthetic(global_random_seed):
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
 
-    estimator = GradientBoostingRegressor(**regression_params)
-    estimator.fit(X_train, y_train)
-    mse = mean_squared_error(y_test, estimator.predict(X_test))
+    clf = GradientBoostingRegressor(**regression_params)
+    clf.fit(X_train, y_train)
+    mse = mean_squared_error(y_test, clf.predict(X_test))
     assert mse < 2500.0
 
     # Friedman3
@@ -220,9 +220,9 @@ def test_regression_synthetic(global_random_seed):
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
 
-    estimator = GradientBoostingRegressor(**regression_params)
-    estimator.fit(X_train, y_train)
-    mse = mean_squared_error(y_test, estimator.predict(X_test))
+    clf = GradientBoostingRegressor(**regression_params)
+    clf.fit(X_train, y_train)
+    mse = mean_squared_error(y_test, clf.predict(X_test))
     assert mse < 0.025
 
 
@@ -244,35 +244,33 @@ def test_feature_importances(GradientBoosting, X, y):
 
 def test_probability_log(global_random_seed):
     # Predict probabilities.
-    estimator = GradientBoostingClassifier(
-        n_estimators=100, random_state=global_random_seed
-    )
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=global_random_seed)
 
     with pytest.raises(ValueError):
-        estimator.predict_proba(T)
+        clf.predict_proba(T)
 
-    estimator.fit(X, y)
-    assert_array_equal(estimator.predict(T), true_result)
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
 
     # check if probabilities are in [0, 1].
-    y_proba = estimator.predict_proba(T)
+    y_proba = clf.predict_proba(T)
     assert np.all(y_proba >= 0.0)
     assert np.all(y_proba <= 1.0)
 
     # derive predictions from probabilities
-    y_pred = estimator.classes_.take(y_proba.argmax(axis=1), axis=0)
+    y_pred = clf.classes_.take(y_proba.argmax(axis=1), axis=0)
     assert_array_equal(y_pred, true_result)
 
 
 def test_single_class_with_sample_weight():
     sample_weight = [0, 0, 0, 1, 1, 1]
-    estimator = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
     msg = (
         "y contains 1 class after sample_weight trimmed classes with "
         "zero weights, while a minimum of 2 classes are required."
     )
     with pytest.raises(ValueError, match=msg):
-        estimator.fit(X, y, sample_weight=sample_weight)
+        clf.fit(X, y, sample_weight=sample_weight)
 
 
 def test_check_inputs_predict_stages():
@@ -280,17 +278,15 @@ def test_check_inputs_predict_stages():
     # supported
     x, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     x_sparse_csc = csc_matrix(x)
-    estimator = GradientBoostingClassifier(n_estimators=100, random_state=1)
-    estimator.fit(x, y)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf.fit(x, y)
     score = np.zeros((y.shape)).reshape(-1, 1)
     err_msg = "When X is a sparse matrix, a CSR format is expected"
     with pytest.raises(ValueError, match=err_msg):
-        predict_stages(
-            estimator.estimators_, x_sparse_csc, estimator.learning_rate, score
-        )
+        predict_stages(clf.estimators_, x_sparse_csc, clf.learning_rate, score)
     x_fortran = np.asfortranarray(x)
     with pytest.raises(ValueError, match="X should be C-ordered np.ndarray"):
-        predict_stages(estimator.estimators_, x_fortran, estimator.learning_rate, score)
+        predict_stages(clf.estimators_, x_fortran, clf.learning_rate, score)
 
 
 def test_max_feature_regression(global_random_seed):
@@ -390,16 +386,16 @@ def test_staged_predict():
     X, y = datasets.make_friedman1(n_samples=1200, random_state=1, noise=1.0)
     X_train, y_train = X[:200], y[:200]
     X_test = X[200:]
-    estimator = GradientBoostingRegressor()
+    clf = GradientBoostingRegressor()
     # test raise ValueError if not fitted
     with pytest.raises(ValueError):
-        np.fromiter(estimator.staged_predict(X_test), dtype=np.float64)
+        np.fromiter(clf.staged_predict(X_test), dtype=np.float64)
 
-    estimator.fit(X_train, y_train)
-    y_pred = estimator.predict(X_test)
+    clf.fit(X_train, y_train)
+    y_pred = clf.predict(X_test)
 
     # test if prediction for last stage equals ``predict``
-    for y in estimator.staged_predict(X_test):
+    for y in clf.staged_predict(X_test):
         assert y.shape == y_pred.shape
 
     assert_array_almost_equal(y_pred, y)
@@ -411,25 +407,25 @@ def test_staged_predict_proba():
     X, y = datasets.make_hastie_10_2(n_samples=1200, random_state=1)
     X_train, y_train = X[:200], y[:200]
     X_test, y_test = X[200:], y[200:]
-    estimator = GradientBoostingClassifier(n_estimators=20)
+    clf = GradientBoostingClassifier(n_estimators=20)
     # test raise NotFittedError if not
     with pytest.raises(NotFittedError):
-        np.fromiter(estimator.staged_predict_proba(X_test), dtype=np.float64)
+        np.fromiter(clf.staged_predict_proba(X_test), dtype=np.float64)
 
-    estimator.fit(X_train, y_train)
+    clf.fit(X_train, y_train)
 
     # test if prediction for last stage equals ``predict``
-    for y_pred in estimator.staged_predict(X_test):
+    for y_pred in clf.staged_predict(X_test):
         assert y_test.shape == y_pred.shape
 
-    assert_array_equal(estimator.predict(X_test), y_pred)
+    assert_array_equal(clf.predict(X_test), y_pred)
 
     # test if prediction for last stage equals ``predict_proba``
-    for staged_proba in estimator.staged_predict_proba(X_test):
+    for staged_proba in clf.staged_predict_proba(X_test):
         assert y_test.shape[0] == staged_proba.shape[0]
         assert 2 == staged_proba.shape[1]
 
-    assert_array_almost_equal(estimator.predict_proba(X_test), staged_proba)
+    assert_array_almost_equal(clf.predict_proba(X_test), staged_proba)
 
 
 @pytest.mark.parametrize("Estimator", GRADIENT_BOOSTING_ESTIMATORS)
@@ -453,43 +449,41 @@ def test_staged_functions_defensive(Estimator, global_random_seed):
 
 def test_serialization():
     # Check model serialization.
-    estimator = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
 
-    estimator.fit(X, y)
-    assert_array_equal(estimator.predict(T), true_result)
-    assert 100 == len(estimator.estimators_)
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+    assert 100 == len(clf.estimators_)
 
     try:
         import cPickle as pickle
     except ImportError:
         import pickle
 
-    serialized_estimator = pickle.dumps(estimator, protocol=pickle.HIGHEST_PROTOCOL)
-    estimator = None
-    estimator = pickle.loads(serialized_estimator)
-    assert_array_equal(estimator.predict(T), true_result)
-    assert 100 == len(estimator.estimators_)
+    serialized_estimator = pickle.dumps(clf, protocol=pickle.HIGHEST_PROTOCOL)
+    clf = None
+    clf = pickle.loads(serialized_estimator)
+    assert_array_equal(clf.predict(T), true_result)
+    assert 100 == len(clf.estimators_)
 
 
 def test_degenerate_targets():
     # Check if we can fit even though all targets are equal.
-    estimator = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
 
     # classifier should raise exception
     with pytest.raises(ValueError):
-        estimator.fit(X, np.ones(len(X)))
+        clf.fit(X, np.ones(len(X)))
 
-    estimator = GradientBoostingRegressor(n_estimators=100, random_state=1)
-    estimator.fit(X, np.ones(len(X)))
-    estimator.predict([rng.rand(2)])
-    assert_array_equal(
-        np.ones((1,), dtype=np.float64), estimator.predict([rng.rand(2)])
-    )
+    clf = GradientBoostingRegressor(n_estimators=100, random_state=1)
+    clf.fit(X, np.ones(len(X)))
+    clf.predict([rng.rand(2)])
+    assert_array_equal(np.ones((1,), dtype=np.float64), clf.predict([rng.rand(2)]))
 
 
 def test_quantile_loss(global_random_seed):
     # Check if quantile loss with alpha=0.5 equals absolute_error.
-    estimator_quantile = GradientBoostingRegressor(
+    clf_quantile = GradientBoostingRegressor(
         n_estimators=100,
         loss="quantile",
         max_depth=4,
@@ -497,46 +491,46 @@ def test_quantile_loss(global_random_seed):
         random_state=global_random_seed,
     )
 
-    estimator_quantile.fit(X_reg, y_reg)
-    y_quantile = estimator_quantile.predict(X_reg)
+    clf_quantile.fit(X_reg, y_reg)
+    y_quantile = clf_quantile.predict(X_reg)
 
-    estimator_ae = GradientBoostingRegressor(
+    clf_ae = GradientBoostingRegressor(
         n_estimators=100,
         loss="absolute_error",
         max_depth=4,
         random_state=global_random_seed,
     )
 
-    estimator_ae.fit(X_reg, y_reg)
-    y_ae = estimator_ae.predict(X_reg)
+    clf_ae.fit(X_reg, y_reg)
+    y_ae = clf_ae.predict(X_reg)
     assert_allclose(y_quantile, y_ae)
 
 
 def test_symbol_labels():
     # Test with non-integer class labels.
-    estimator = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
 
     symbol_y = tosequence(map(str, y))
 
-    estimator.fit(X, symbol_y)
-    assert_array_equal(estimator.predict(T), tosequence(map(str, true_result)))
-    assert 100 == len(estimator.estimators_)
+    clf.fit(X, symbol_y)
+    assert_array_equal(clf.predict(T), tosequence(map(str, true_result)))
+    assert 100 == len(clf.estimators_)
 
 
 def test_float_class_labels():
     # Test with float class labels.
-    estimator = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
 
     float_y = np.asarray(y, dtype=np.float32)
 
-    estimator.fit(X, float_y)
-    assert_array_equal(estimator.predict(T), np.asarray(true_result, dtype=np.float32))
-    assert 100 == len(estimator.estimators_)
+    clf.fit(X, float_y)
+    assert_array_equal(clf.predict(T), np.asarray(true_result, dtype=np.float32))
+    assert 100 == len(clf.estimators_)
 
 
 def test_shape_y():
     # Test with float class labels.
-    estimator = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
 
     y_ = np.asarray(y, dtype=np.int32)
     y_ = y_[:, np.newaxis]
@@ -550,38 +544,38 @@ def test_shape_y():
         "example using ravel()."
     )
     with pytest.warns(DataConversionWarning, match=warn_msg):
-        estimator.fit(X, y_)
-    assert_array_equal(estimator.predict(T), true_result)
-    assert 100 == len(estimator.estimators_)
+        clf.fit(X, y_)
+    assert_array_equal(clf.predict(T), true_result)
+    assert 100 == len(clf.estimators_)
 
 
 def test_mem_layout():
     # Test with different memory layouts of X and y
     X_ = np.asfortranarray(X)
-    estimator = GradientBoostingClassifier(n_estimators=100, random_state=1)
-    estimator.fit(X_, y)
-    assert_array_equal(estimator.predict(T), true_result)
-    assert 100 == len(estimator.estimators_)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf.fit(X_, y)
+    assert_array_equal(clf.predict(T), true_result)
+    assert 100 == len(clf.estimators_)
 
     X_ = np.ascontiguousarray(X)
-    estimator = GradientBoostingClassifier(n_estimators=100, random_state=1)
-    estimator.fit(X_, y)
-    assert_array_equal(estimator.predict(T), true_result)
-    assert 100 == len(estimator.estimators_)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf.fit(X_, y)
+    assert_array_equal(clf.predict(T), true_result)
+    assert 100 == len(clf.estimators_)
 
     y_ = np.asarray(y, dtype=np.int32)
     y_ = np.ascontiguousarray(y_)
-    estimator = GradientBoostingClassifier(n_estimators=100, random_state=1)
-    estimator.fit(X, y_)
-    assert_array_equal(estimator.predict(T), true_result)
-    assert 100 == len(estimator.estimators_)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf.fit(X, y_)
+    assert_array_equal(clf.predict(T), true_result)
+    assert 100 == len(clf.estimators_)
 
     y_ = np.asarray(y, dtype=np.int32)
     y_ = np.asfortranarray(y_)
-    estimator = GradientBoostingClassifier(n_estimators=100, random_state=1)
-    estimator.fit(X, y_)
-    assert_array_equal(estimator.predict(T), true_result)
-    assert 100 == len(estimator.estimators_)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
+    clf.fit(X, y_)
+    assert_array_equal(clf.predict(T), true_result)
+    assert 100 == len(clf.estimators_)
 
 
 @pytest.mark.parametrize("GradientBoostingEstimator", GRADIENT_BOOSTING_ESTIMATORS)
