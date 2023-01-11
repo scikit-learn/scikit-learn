@@ -2081,6 +2081,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
     >>> np.mean(X_transformed == 0)
     0.39...
 
+    >>> 1 < 2
+    False
+
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
     the original signal:
