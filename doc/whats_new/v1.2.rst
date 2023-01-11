@@ -17,7 +17,7 @@ Changes impacting all modules
   thread of `joblib` as :func:`sklearn.get_config` used to access an empty thread
   local configuration instead of the configuration visible from the thread where
   `joblib.Parallel` was first called.
-  :pr:`25290` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`25363` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changelog
 ---------
