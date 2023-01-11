@@ -17,7 +17,6 @@ from joblib import Parallel, effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
-from ..utils import deprecated
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils._param_validation import validate_params
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
@@ -2353,7 +2352,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             print("[dict_learning]")
 
         # Inner stats
-        self._A = np.zeros((self._n_components, self._n_components), dtype=X_train.dtype)
+        self._A = np.zeros(
+            (self._n_components, self._n_components), dtype=X_train.dtype
+        )
         self._B = np.zeros((n_features, self._n_components), dtype=X_train.dtype)
 
         if self.max_iter is not None:
