@@ -815,8 +815,10 @@ def _compute_class_weight_dictionary(y):
 
 
 def test_logistic_regression_class_weights():
+    # Scale data to avoid convergence warnings with the lbfgs solver
+    X_iris = scale(iris.data)
     # Multinomial case: remove 90% of class 0
-    X = iris.data[45:, :]
+    X = X_iris[45:, :]
     y = iris.target[45:]
     solvers = ("lbfgs", "newton-cg")
     class_weight_dict = _compute_class_weight_dictionary(y)
@@ -833,7 +835,7 @@ def test_logistic_regression_class_weights():
         assert_array_almost_equal(clf1.coef_, clf2.coef_, decimal=4)
 
     # Binary case: remove 90% of class 0 and 100% of class 2
-    X = iris.data[45:100, :]
+    X = X_iris[45:100, :]
     y = iris.target[45:100]
     class_weight_dict = _compute_class_weight_dictionary(y)
 
