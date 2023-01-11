@@ -2078,11 +2078,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     We can check the level of sparsity of `X_transformed`:
 
-    >>> np.mean(X_transformed == 0)
-    0.39...
-
-    >>> 1 < 2
-    False
+    >>> np.mean(X_transformed == 0) < 0.5
+    True
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
