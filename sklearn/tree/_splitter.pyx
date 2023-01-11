@@ -15,6 +15,7 @@ from ._criterion cimport Criterion
 
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
+from cython cimport final
 
 import numpy as np
 
@@ -31,7 +32,7 @@ cdef double INFINITY = np.inf
 cdef DTYPE_t FEATURE_THRESHOLD = 1e-7
 
 # Constant to switch between algorithm non zero value extract algorithm
-# in SparseSplitter
+# in SparsePartitioner
 cdef DTYPE_t EXTRACT_NNZ_SWITCH = 0.1
 
 cdef inline void _init_split(SplitRecord* self, SIZE_t start_pos) nogil:
@@ -220,221 +221,183 @@ cdef class Splitter:
 
         return self.criterion.node_impurity()
 
+# Introduce a fused-class to make it possible to share the split implementation
+# between the dense and sparse cases in the node_split_best and node_split_random
+# functions. The alternative would have been to use inheritance-based polymorphism
+# but it would have resulted in a ~10% overall tree fitting performance
+# degradation caused by the overhead frequent virtual method lookups.
+ctypedef fused Partitioner:
+    DensePartitioner
+    SparsePartitioner
 
-cdef class BaseDenseSplitter(Splitter):
-    cdef const DTYPE_t[:, :] X
+cdef inline int node_split_best(
+    Splitter splitter,
+    Partitioner partitioner,
+    Criterion criterion,
+    double impurity,
+    SplitRecord* split,
+    SIZE_t* n_constant_features,
+) nogil except -1:
+    """Find the best split on node samples[start:end]
 
-    cdef SIZE_t n_total_samples
+    Returns -1 in case of failure to allocate memory (and raise MemoryError)
+    or 0 otherwise.
+    """
+    # Find the best split
+    cdef SIZE_t start = splitter.start
+    cdef SIZE_t end = splitter.end
 
-    cdef int init(
-        self,
-        object X,
-        const DOUBLE_t[:, ::1] y,
-        const DOUBLE_t[:] sample_weight
-    ) except -1:
-        """Initialize the splitter
+    cdef SIZE_t[::1] features = splitter.features
+    cdef SIZE_t[::1] constant_features = splitter.constant_features
+    cdef SIZE_t n_features = splitter.n_features
 
-        Returns -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-        """
+    cdef DTYPE_t[::1] Xf = splitter.feature_values
+    cdef SIZE_t max_features = splitter.max_features
+    cdef SIZE_t min_samples_leaf = splitter.min_samples_leaf
+    cdef double min_weight_leaf = splitter.min_weight_leaf
+    cdef UINT32_t* random_state = &splitter.rand_r_state
 
-        # Call parent init
-        Splitter.init(self, X, y, sample_weight)
+    cdef SplitRecord best, current
+    cdef double current_proxy_improvement = -INFINITY
+    cdef double best_proxy_improvement = -INFINITY
 
-        self.X = X
-        return 0
+    cdef SIZE_t f_i = n_features
+    cdef SIZE_t f_j
+    cdef SIZE_t p
+    cdef SIZE_t p_prev
 
+    cdef SIZE_t n_visited_features = 0
+    # Number of features discovered to be constant during the split search
+    cdef SIZE_t n_found_constants = 0
+    # Number of features known to be constant and drawn without replacement
+    cdef SIZE_t n_drawn_constants = 0
+    cdef SIZE_t n_known_constants = n_constant_features[0]
+    # n_total_constants = n_known_constants + n_found_constants
+    cdef SIZE_t n_total_constants = n_known_constants
 
-cdef class BestSplitter(BaseDenseSplitter):
-    """Splitter for finding the best split."""
-    cdef int node_split(self, double impurity, SplitRecord* split,
-                        SIZE_t* n_constant_features) nogil except -1:
-        """Find the best split on node samples[start:end]
+    _init_split(&best, end)
 
-        Returns -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-        """
-        # Find the best split
-        cdef SIZE_t[::1] samples = self.samples
-        cdef SIZE_t start = self.start
-        cdef SIZE_t end = self.end
+    partitioner.init_node_split(start, end)
 
-        cdef SIZE_t[::1] features = self.features
-        cdef SIZE_t[::1] constant_features = self.constant_features
-        cdef SIZE_t n_features = self.n_features
+    # Sample up to max_features without replacement using a
+    # Fisher-Yates-based algorithm (using the local variables `f_i` and
+    # `f_j` to compute a permutation of the `features` array).
+    #
+    # Skip the CPU intensive evaluation of the impurity criterion for
+    # features that were already detected as constant (hence not suitable
+    # for good splitting) by ancestor nodes and save the information on
+    # newly discovered constant features to spare computation on descendant
+    # nodes.
+    while (f_i > n_total_constants and  # Stop early if remaining features
+                                        # are constant
+            (n_visited_features < max_features or
+             # At least one drawn features must be non constant
+             n_visited_features <= n_found_constants + n_drawn_constants)):
 
-        cdef DTYPE_t[::1] Xf = self.feature_values
-        cdef SIZE_t max_features = self.max_features
-        cdef SIZE_t min_samples_leaf = self.min_samples_leaf
-        cdef double min_weight_leaf = self.min_weight_leaf
-        cdef UINT32_t* random_state = &self.rand_r_state
+        n_visited_features += 1
 
-        cdef SplitRecord best, current
-        cdef double current_proxy_improvement = -INFINITY
-        cdef double best_proxy_improvement = -INFINITY
+        # Loop invariant: elements of features in
+        # - [:n_drawn_constant[ holds drawn and known constant features;
+        # - [n_drawn_constant:n_known_constant[ holds known constant
+        #   features that haven't been drawn yet;
+        # - [n_known_constant:n_total_constant[ holds newly found constant
+        #   features;
+        # - [n_total_constant:f_i[ holds features that haven't been drawn
+        #   yet and aren't constant apriori.
+        # - [f_i:n_features[ holds features that have been drawn
+        #   and aren't constant.
 
-        cdef SIZE_t f_i = n_features
-        cdef SIZE_t f_j
-        cdef SIZE_t p
-        cdef SIZE_t i
+        # Draw a feature at random
+        f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
+                       random_state)
 
-        cdef SIZE_t n_visited_features = 0
-        # Number of features discovered to be constant during the split search
-        cdef SIZE_t n_found_constants = 0
-        # Number of features known to be constant and drawn without replacement
-        cdef SIZE_t n_drawn_constants = 0
-        cdef SIZE_t n_known_constants = n_constant_features[0]
-        # n_total_constants = n_known_constants + n_found_constants
-        cdef SIZE_t n_total_constants = n_known_constants
-        cdef SIZE_t partition_end
+        if f_j < n_known_constants:
+            # f_j in the interval [n_drawn_constants, n_known_constants[
+            features[n_drawn_constants], features[f_j] = features[f_j], features[n_drawn_constants]
 
-        _init_split(&best, end)
+            n_drawn_constants += 1
+            continue
 
-        # Sample up to max_features without replacement using a
-        # Fisher-Yates-based algorithm (using the local variables `f_i` and
-        # `f_j` to compute a permutation of the `features` array).
-        #
-        # Skip the CPU intensive evaluation of the impurity criterion for
-        # features that were already detected as constant (hence not suitable
-        # for good splitting) by ancestor nodes and save the information on
-        # newly discovered constant features to spare computation on descendant
-        # nodes.
-        while (f_i > n_total_constants and  # Stop early if remaining features
-                                            # are constant
-                (n_visited_features < max_features or
-                 # At least one drawn features must be non constant
-                 n_visited_features <= n_found_constants + n_drawn_constants)):
+        # f_j in the interval [n_known_constants, f_i - n_found_constants[
+        f_j += n_found_constants
+        # f_j in the interval [n_total_constants, f_i[
+        current.feature = features[f_j]
+        partitioner.sort_samples_and_feature_values(current.feature)
 
-            n_visited_features += 1
+        if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
+            features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
 
-            # Loop invariant: elements of features in
-            # - [:n_drawn_constant[ holds drawn and known constant features;
-            # - [n_drawn_constant:n_known_constant[ holds known constant
-            #   features that haven't been drawn yet;
-            # - [n_known_constant:n_total_constant[ holds newly found constant
-            #   features;
-            # - [n_total_constant:f_i[ holds features that haven't been drawn
-            #   yet and aren't constant apriori.
-            # - [f_i:n_features[ holds features that have been drawn
-            #   and aren't constant.
+            n_found_constants += 1
+            n_total_constants += 1
+            continue
 
-            # Draw a feature at random
-            f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
-                           random_state)
+        f_i -= 1
+        features[f_i], features[f_j] = features[f_j], features[f_i]
 
-            if f_j < n_known_constants:
-                # f_j in the interval [n_drawn_constants, n_known_constants[
-                features[n_drawn_constants], features[f_j] = features[f_j], features[n_drawn_constants]
+        # Evaluate all splits
+        criterion.reset()
+        p = start
 
-                n_drawn_constants += 1
+        while p < end:
+            partitioner.next_p(&p_prev, &p)
+
+            if p >= end:
                 continue
 
-            # f_j in the interval [n_known_constants, f_i - n_found_constants[
-            f_j += n_found_constants
-            # f_j in the interval [n_total_constants, f_i[
-            current.feature = features[f_j]
+            current.pos = p
 
-            # Sort samples along that feature; by
-            # copying the values into an array and
-            # sorting the array in a manner which utilizes the cache more
-            # effectively.
-            for i in range(start, end):
-                Xf[i] = self.X[samples[i], current.feature]
-
-            sort(&Xf[start], &samples[start], end - start)
-
-            if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
-                features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
-
-                n_found_constants += 1
-                n_total_constants += 1
+            # Reject if min_samples_leaf is not guaranteed
+            if (((current.pos - start) < min_samples_leaf) or
+                    ((end - current.pos) < min_samples_leaf)):
                 continue
 
-            f_i -= 1
-            features[f_i], features[f_j] = features[f_j], features[f_i]
+            criterion.update(current.pos)
 
-            # Evaluate all splits
-            self.criterion.reset()
-            p = start
+            # Reject if min_weight_leaf is not satisfied
+            if ((criterion.weighted_n_left < min_weight_leaf) or
+                    (criterion.weighted_n_right < min_weight_leaf)):
+                continue
 
-            while p < end:
-                while p + 1 < end and Xf[p + 1] <= Xf[p] + FEATURE_THRESHOLD:
-                    p += 1
+            current_proxy_improvement = criterion.proxy_impurity_improvement()
 
-                # (p + 1 >= end) or (X[samples[p + 1], current.feature] >
-                #                    X[samples[p], current.feature])
-                p += 1
-                # (p >= end) or (X[samples[p], current.feature] >
-                #                X[samples[p - 1], current.feature])
+            if current_proxy_improvement > best_proxy_improvement:
+                best_proxy_improvement = current_proxy_improvement
+                # sum of halves is used to avoid infinite value
+                current.threshold = Xf[p_prev] / 2.0 + Xf[p] / 2.0
 
-                if p >= end:
-                    continue
+                if (
+                    current.threshold == Xf[p] or
+                    current.threshold == INFINITY or
+                    current.threshold == -INFINITY
+                ):
+                    current.threshold = Xf[p_prev]
 
-                current.pos = p
+                best = current  # copy
 
-                # Reject if min_samples_leaf is not guaranteed
-                if (((current.pos - start) < min_samples_leaf) or
-                        ((end - current.pos) < min_samples_leaf)):
-                    continue
+    # Reorganize into samples[start:best.pos] + samples[best.pos:end]
+    if best.pos < end:
+        partitioner.partition_samples_final(best.pos, best.threshold, best.feature)
+        criterion.reset()
+        criterion.update(best.pos)
+        criterion.children_impurity(&best.impurity_left,
+                                    &best.impurity_right)
+        best.improvement = criterion.impurity_improvement(
+            impurity, best.impurity_left, best.impurity_right)
 
-                self.criterion.update(current.pos)
+    # Respect invariant for constant features: the original order of
+    # element in features[:n_known_constants] must be preserved for sibling
+    # and child nodes
+    memcpy(&features[0], &constant_features[0], sizeof(SIZE_t) * n_known_constants)
 
-                # Reject if min_weight_leaf is not satisfied
-                if ((self.criterion.weighted_n_left < min_weight_leaf) or
-                        (self.criterion.weighted_n_right < min_weight_leaf)):
-                    continue
+    # Copy newly found constant features
+    memcpy(&constant_features[n_known_constants],
+           &features[n_known_constants],
+           sizeof(SIZE_t) * n_found_constants)
 
-                current_proxy_improvement = self.criterion.proxy_impurity_improvement()
-
-                if current_proxy_improvement > best_proxy_improvement:
-                    best_proxy_improvement = current_proxy_improvement
-                    # sum of halves is used to avoid infinite value
-                    current.threshold = Xf[p - 1] / 2.0 + Xf[p] / 2.0
-
-                    if (
-                        current.threshold == Xf[p] or
-                        current.threshold == INFINITY or
-                        current.threshold == -INFINITY
-                    ):
-                        current.threshold = Xf[p - 1]
-
-                    best = current  # copy
-
-        # Reorganize into samples[start:best.pos] + samples[best.pos:end]
-        if best.pos < end:
-            partition_end = end
-            p = start
-
-            while p < partition_end:
-                if self.X[samples[p], best.feature] <= best.threshold:
-                    p += 1
-
-                else:
-                    partition_end -= 1
-
-                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
-
-            self.criterion.reset()
-            self.criterion.update(best.pos)
-            self.criterion.children_impurity(&best.impurity_left,
-                                             &best.impurity_right)
-            best.improvement = self.criterion.impurity_improvement(
-                impurity, best.impurity_left, best.impurity_right)
-
-        # Respect invariant for constant features: the original order of
-        # element in features[:n_known_constants] must be preserved for sibling
-        # and child nodes
-        memcpy(&features[0], &constant_features[0], sizeof(SIZE_t) * n_known_constants)
-
-        # Copy newly found constant features
-        memcpy(&constant_features[n_known_constants],
-               &features[n_known_constants],
-               sizeof(SIZE_t) * n_found_constants)
-
-        # Return values
-        split[0] = best
-        n_constant_features[0] = n_total_constants
-        return 0
+    # Return values
+    split[0] = best
+    n_constant_features[0] = n_total_constants
+    return 0
 
 
 # Sort n-element arrays pointed to by Xf and samples, simultaneously,
@@ -550,199 +513,310 @@ cdef void heapsort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
         sift_down(Xf, samples, 0, end)
         end = end - 1
 
+cdef inline int node_split_random(
+    Splitter splitter,
+    Partitioner partitioner,
+    Criterion criterion,
+    double impurity,
+    SplitRecord* split,
+    SIZE_t* n_constant_features
+) nogil except -1:
+    """Find the best random split on node samples[start:end]
 
-cdef class RandomSplitter(BaseDenseSplitter):
-    """Splitter for finding the best random split."""
-    cdef int node_split(self, double impurity, SplitRecord* split,
-                        SIZE_t* n_constant_features) nogil except -1:
-        """Find the best random split on node samples[start:end]
+    Returns -1 in case of failure to allocate memory (and raise MemoryError)
+    or 0 otherwise.
+    """
+    # Draw random splits and pick the best
+    cdef SIZE_t start = splitter.start
+    cdef SIZE_t end = splitter.end
 
-        Returns -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-        """
-        # Draw random splits and pick the best
-        cdef SIZE_t[::1] samples = self.samples
-        cdef SIZE_t start = self.start
-        cdef SIZE_t end = self.end
+    cdef SIZE_t[::1] features = splitter.features
+    cdef SIZE_t[::1] constant_features = splitter.constant_features
+    cdef SIZE_t n_features = splitter.n_features
 
-        cdef SIZE_t[::1] features = self.features
-        cdef SIZE_t[::1] constant_features = self.constant_features
-        cdef SIZE_t n_features = self.n_features
+    cdef SIZE_t max_features = splitter.max_features
+    cdef SIZE_t min_samples_leaf = splitter.min_samples_leaf
+    cdef double min_weight_leaf = splitter.min_weight_leaf
+    cdef UINT32_t* random_state = &splitter.rand_r_state
 
+    cdef SplitRecord best, current
+    cdef double current_proxy_improvement = - INFINITY
+    cdef double best_proxy_improvement = - INFINITY
+
+    cdef SIZE_t f_i = n_features
+    cdef SIZE_t f_j
+    # Number of features discovered to be constant during the split search
+    cdef SIZE_t n_found_constants = 0
+    # Number of features known to be constant and drawn without replacement
+    cdef SIZE_t n_drawn_constants = 0
+    cdef SIZE_t n_known_constants = n_constant_features[0]
+    # n_total_constants = n_known_constants + n_found_constants
+    cdef SIZE_t n_total_constants = n_known_constants
+    cdef SIZE_t n_visited_features = 0
+    cdef DTYPE_t min_feature_value
+    cdef DTYPE_t max_feature_value
+
+    _init_split(&best, end)
+
+    partitioner.init_node_split(start, end)
+
+    # Sample up to max_features without replacement using a
+    # Fisher-Yates-based algorithm (using the local variables `f_i` and
+    # `f_j` to compute a permutation of the `features` array).
+    #
+    # Skip the CPU intensive evaluation of the impurity criterion for
+    # features that were already detected as constant (hence not suitable
+    # for good splitting) by ancestor nodes and save the information on
+    # newly discovered constant features to spare computation on descendant
+    # nodes.
+    while (f_i > n_total_constants and  # Stop early if remaining features
+                                        # are constant
+            (n_visited_features < max_features or
+             # At least one drawn features must be non constant
+             n_visited_features <= n_found_constants + n_drawn_constants)):
+        n_visited_features += 1
+
+        # Loop invariant: elements of features in
+        # - [:n_drawn_constant[ holds drawn and known constant features;
+        # - [n_drawn_constant:n_known_constant[ holds known constant
+        #   features that haven't been drawn yet;
+        # - [n_known_constant:n_total_constant[ holds newly found constant
+        #   features;
+        # - [n_total_constant:f_i[ holds features that haven't been drawn
+        #   yet and aren't constant apriori.
+        # - [f_i:n_features[ holds features that have been drawn
+        #   and aren't constant.
+
+        # Draw a feature at random
+        f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
+                       random_state)
+
+        if f_j < n_known_constants:
+            # f_j in the interval [n_drawn_constants, n_known_constants[
+            features[n_drawn_constants], features[f_j] = features[f_j], features[n_drawn_constants]
+            n_drawn_constants += 1
+            continue
+
+        # f_j in the interval [n_known_constants, f_i - n_found_constants[
+        f_j += n_found_constants
+        # f_j in the interval [n_total_constants, f_i[
+
+        current.feature = features[f_j]
+
+        # Find min, max
+        partitioner.find_min_max(
+            current.feature, &min_feature_value, &max_feature_value
+        )
+
+        if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
+            features[f_j], features[n_total_constants] = features[n_total_constants], current.feature
+
+            n_found_constants += 1
+            n_total_constants += 1
+            continue
+
+        f_i -= 1
+        features[f_i], features[f_j] = features[f_j], features[f_i]
+
+        # Draw a random threshold
+        current.threshold = rand_uniform(min_feature_value,
+                                         max_feature_value,
+                                         random_state)
+
+        if current.threshold == max_feature_value:
+            current.threshold = min_feature_value
+
+        # Partition
+        current.pos = partitioner.partition_samples(current.threshold)
+
+        # Reject if min_samples_leaf is not guaranteed
+        if (((current.pos - start) < min_samples_leaf) or
+                ((end - current.pos) < min_samples_leaf)):
+            continue
+
+        # Evaluate split
+        criterion.reset()
+        criterion.update(current.pos)
+
+        # Reject if min_weight_leaf is not satisfied
+        if ((criterion.weighted_n_left < min_weight_leaf) or
+                (criterion.weighted_n_right < min_weight_leaf)):
+            continue
+
+        current_proxy_improvement = criterion.proxy_impurity_improvement()
+
+        if current_proxy_improvement > best_proxy_improvement:
+            best_proxy_improvement = current_proxy_improvement
+            best = current  # copy
+
+    # Reorganize into samples[start:best.pos] + samples[best.pos:end]
+    if best.pos < end:
+        if current.feature != best.feature:
+            partitioner.partition_samples_final(
+                best.pos, best.threshold, best.feature
+            )
+
+        criterion.reset()
+        criterion.update(best.pos)
+        criterion.children_impurity(&best.impurity_left,
+                                    &best.impurity_right)
+        best.improvement = criterion.impurity_improvement(
+            impurity, best.impurity_left, best.impurity_right)
+
+    # Respect invariant for constant features: the original order of
+    # element in features[:n_known_constants] must be preserved for sibling
+    # and child nodes
+    memcpy(&features[0], &constant_features[0], sizeof(SIZE_t) * n_known_constants)
+
+    # Copy newly found constant features
+    memcpy(&constant_features[n_known_constants],
+           &features[n_known_constants],
+           sizeof(SIZE_t) * n_found_constants)
+
+    # Return values
+    split[0] = best
+    n_constant_features[0] = n_total_constants
+    return 0
+
+
+@final
+cdef class DensePartitioner:
+    """Partitioner specialized for dense data.
+
+    Note that this partitioner is agnostic to the splitting strategy (best vs. random).
+    """
+    cdef:
+        const DTYPE_t[:, :] X
+        cdef SIZE_t[::1] samples
+        cdef DTYPE_t[::1] feature_values
+        cdef SIZE_t start
+        cdef SIZE_t end
+
+    def __init__(
+        self,
+        const DTYPE_t[:, :] X,
+        SIZE_t[::1] samples,
+        DTYPE_t[::1] feature_values,
+    ):
+        self.X = X
+        self.samples = samples
+        self.feature_values = feature_values
+
+    cdef inline void init_node_split(self, SIZE_t start, SIZE_t end) nogil:
+        """Initialize splitter at the beginning of node_split."""
+        self.start = start
+        self.end = end
+
+    cdef inline void sort_samples_and_feature_values(
+        self, SIZE_t current_feature
+    ) nogil:
+        """Simultaneously sort based on the feature_values."""
+        cdef:
+            SIZE_t i
+            DTYPE_t[::1] Xf = self.feature_values
+            const DTYPE_t[:, :] X = self.X
+            SIZE_t[::1] samples = self.samples
+
+        # Sort samples along that feature; by
+        # copying the values into an array and
+        # sorting the array in a manner which utilizes the cache more
+        # effectively.
+        for i in range(self.start, self.end):
+            Xf[i] = X[samples[i], current_feature]
+        sort(&Xf[self.start], &samples[self.start], self.end - self.start)
+
+    cdef inline void find_min_max(
+        self,
+        SIZE_t current_feature,
+        DTYPE_t* min_feature_value_out,
+        DTYPE_t* max_feature_value_out,
+    ) nogil:
+        """Find the minimum and maximum value for current_feature."""
+        cdef:
+            SIZE_t p
+            DTYPE_t current_feature_value
+            const DTYPE_t[:, :] X = self.X
+            SIZE_t[::1] samples = self.samples
+            DTYPE_t min_feature_value = X[samples[self.start], current_feature]
+            DTYPE_t max_feature_value = min_feature_value
+            DTYPE_t[::1] Xf = self.feature_values
+
+        Xf[self.start] = min_feature_value
+
+        for p in range(self.start + 1, self.end):
+            current_feature_value = X[samples[p], current_feature]
+            Xf[p] = current_feature_value
+
+            if current_feature_value < min_feature_value:
+                min_feature_value = current_feature_value
+            elif current_feature_value > max_feature_value:
+                max_feature_value = current_feature_value
+
+        min_feature_value_out[0] = min_feature_value
+        max_feature_value_out[0] = max_feature_value
+
+    cdef inline void next_p(self, SIZE_t* p_prev, SIZE_t* p) nogil:
+        """Compute the next p_prev and p for iteratiing over feature values."""
         cdef DTYPE_t[::1] Xf = self.feature_values
-        cdef SIZE_t max_features = self.max_features
-        cdef SIZE_t min_samples_leaf = self.min_samples_leaf
-        cdef double min_weight_leaf = self.min_weight_leaf
-        cdef UINT32_t* random_state = &self.rand_r_state
 
-        cdef SplitRecord best, current
-        cdef double current_proxy_improvement = - INFINITY
-        cdef double best_proxy_improvement = - INFINITY
+        while p[0] + 1 < self.end and Xf[p[0] + 1] <= Xf[p[0]] + FEATURE_THRESHOLD:
+            p[0] += 1
 
-        cdef SIZE_t f_i = n_features
-        cdef SIZE_t f_j
-        cdef SIZE_t p
-        cdef SIZE_t partition_end
-        # Number of features discovered to be constant during the split search
-        cdef SIZE_t n_found_constants = 0
-        # Number of features known to be constant and drawn without replacement
-        cdef SIZE_t n_drawn_constants = 0
-        cdef SIZE_t n_known_constants = n_constant_features[0]
-        # n_total_constants = n_known_constants + n_found_constants
-        cdef SIZE_t n_total_constants = n_known_constants
-        cdef SIZE_t n_visited_features = 0
-        cdef DTYPE_t min_feature_value
-        cdef DTYPE_t max_feature_value
-        cdef DTYPE_t current_feature_value
+        # (p + 1 >= end) or (Xf[p + 1] > X[p])
+        p[0] += 1
+        # (p >= end) or (X[p, current.feature] > X[p - 1, current.feature])
+        p_prev[0] = p[0] - 1
 
-        _init_split(&best, end)
+    cdef inline SIZE_t partition_samples(self, double current_threshold) nogil:
+        """Partition samples for feature_values at the current_threshold."""
+        cdef:
+            SIZE_t p = self.start
+            SIZE_t partition_end = self.end
+            SIZE_t[::1] samples = self.samples
+            DTYPE_t[::1] Xf = self.feature_values
 
-        # Sample up to max_features without replacement using a
-        # Fisher-Yates-based algorithm (using the local variables `f_i` and
-        # `f_j` to compute a permutation of the `features` array).
-        #
-        # Skip the CPU intensive evaluation of the impurity criterion for
-        # features that were already detected as constant (hence not suitable
-        # for good splitting) by ancestor nodes and save the information on
-        # newly discovered constant features to spare computation on descendant
-        # nodes.
-        while (f_i > n_total_constants and  # Stop early if remaining features
-                                            # are constant
-                (n_visited_features < max_features or
-                 # At least one drawn features must be non constant
-                 n_visited_features <= n_found_constants + n_drawn_constants)):
-            n_visited_features += 1
+        while p < partition_end:
+            if Xf[p] <= current_threshold:
+                p += 1
+            else:
+                partition_end -= 1
 
-            # Loop invariant: elements of features in
-            # - [:n_drawn_constant[ holds drawn and known constant features;
-            # - [n_drawn_constant:n_known_constant[ holds known constant
-            #   features that haven't been drawn yet;
-            # - [n_known_constant:n_total_constant[ holds newly found constant
-            #   features;
-            # - [n_total_constant:f_i[ holds features that haven't been drawn
-            #   yet and aren't constant apriori.
-            # - [f_i:n_features[ holds features that have been drawn
-            #   and aren't constant.
+                Xf[p], Xf[partition_end] = Xf[partition_end], Xf[p]
+                samples[p], samples[partition_end] = samples[partition_end], samples[p]
 
-            # Draw a feature at random
-            f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
-                           random_state)
+        return partition_end
 
-            if f_j < n_known_constants:
-                # f_j in the interval [n_drawn_constants, n_known_constants[
-                features[n_drawn_constants], features[f_j] = features[f_j], features[n_drawn_constants]
-                n_drawn_constants += 1
-                continue
+    cdef inline void partition_samples_final(
+        self,
+        SIZE_t best_pos,
+        double best_threshold,
+        SIZE_t best_feature,
+    ) nogil:
+        """Partition samples for X at the best_threshold and best_feature."""
+        cdef:
+            SIZE_t p = self.start
+            SIZE_t partition_end = self.end
+            SIZE_t[::1] samples = self.samples
+            const DTYPE_t[:, :] X = self.X
 
-            # f_j in the interval [n_known_constants, f_i - n_found_constants[
-            f_j += n_found_constants
-            # f_j in the interval [n_total_constants, f_i[
+        while p < partition_end:
+            if X[samples[p], best_feature] <= best_threshold:
+                p += 1
+            else:
+                partition_end -= 1
+                samples[p], samples[partition_end] = samples[partition_end], samples[p]
 
-            current.feature = features[f_j]
+@final
+cdef class SparsePartitioner:
+    """Partitioner specialized for sparse CSC data.
 
-            # Find min, max
-            min_feature_value = self.X[samples[start], current.feature]
-            max_feature_value = min_feature_value
-            Xf[start] = min_feature_value
+    Note that this partitioner is agnostic to the splitting strategy (best vs. random).
+    """
+    cdef SIZE_t[::1] samples
+    cdef DTYPE_t[::1] feature_values
+    cdef SIZE_t start
+    cdef SIZE_t end
 
-            for p in range(start + 1, end):
-                current_feature_value = self.X[samples[p], current.feature]
-                Xf[p] = current_feature_value
-
-                if current_feature_value < min_feature_value:
-                    min_feature_value = current_feature_value
-                elif current_feature_value > max_feature_value:
-                    max_feature_value = current_feature_value
-
-            if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
-                features[f_j], features[n_total_constants] = features[n_total_constants], current.feature
-
-                n_found_constants += 1
-                n_total_constants += 1
-                continue
-
-            f_i -= 1
-            features[f_i], features[f_j] = features[f_j], features[f_i]
-
-            # Draw a random threshold
-            current.threshold = rand_uniform(min_feature_value,
-                                             max_feature_value,
-                                             random_state)
-
-            if current.threshold == max_feature_value:
-                current.threshold = min_feature_value
-
-            # Partition
-            p, partition_end = start, end
-            while p < partition_end:
-                if Xf[p] <= current.threshold:
-                    p += 1
-                else:
-                    partition_end -= 1
-
-                    Xf[p], Xf[partition_end] = Xf[partition_end], Xf[p]
-                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
-
-            current.pos = partition_end
-
-            # Reject if min_samples_leaf is not guaranteed
-            if (((current.pos - start) < min_samples_leaf) or
-                    ((end - current.pos) < min_samples_leaf)):
-                continue
-
-            # Evaluate split
-            self.criterion.reset()
-            self.criterion.update(current.pos)
-
-            # Reject if min_weight_leaf is not satisfied
-            if ((self.criterion.weighted_n_left < min_weight_leaf) or
-                    (self.criterion.weighted_n_right < min_weight_leaf)):
-                continue
-
-            current_proxy_improvement = self.criterion.proxy_impurity_improvement()
-
-            if current_proxy_improvement > best_proxy_improvement:
-                best_proxy_improvement = current_proxy_improvement
-                best = current  # copy
-
-        # Reorganize into samples[start:best.pos] + samples[best.pos:end]
-        if best.pos < end:
-            if current.feature != best.feature:
-                p, partition_end = start, end
-
-                while p < partition_end:
-                    if self.X[samples[p], best.feature] <= best.threshold:
-                        p += 1
-                    else:
-                        partition_end -= 1
-
-                        samples[p], samples[partition_end] = samples[partition_end], samples[p]
-
-            self.criterion.reset()
-            self.criterion.update(best.pos)
-            self.criterion.children_impurity(&best.impurity_left,
-                                             &best.impurity_right)
-            best.improvement = self.criterion.impurity_improvement(
-                impurity, best.impurity_left, best.impurity_right)
-
-        # Respect invariant for constant features: the original order of
-        # element in features[:n_known_constants] must be preserved for sibling
-        # and child nodes
-        memcpy(&features[0], &constant_features[0], sizeof(SIZE_t) * n_known_constants)
-
-        # Copy newly found constant features
-        memcpy(&constant_features[n_known_constants],
-               &features[n_known_constants],
-               sizeof(SIZE_t) * n_found_constants)
-
-        # Return values
-        split[0] = best
-        n_constant_features[0] = n_total_constants
-        return 0
-
-
-cdef class BaseSparseSplitter(Splitter):
-    # The sparse splitter works only with csc sparse matrix format
     cdef DTYPE_t[::1] X_data
     cdef INT32_t[::1] X_indices
     cdef INT32_t[::1] X_indptr
@@ -752,31 +826,22 @@ cdef class BaseSparseSplitter(Splitter):
     cdef SIZE_t[::1] index_to_samples
     cdef SIZE_t[::1] sorted_samples
 
-    def __cinit__(self, Criterion criterion, SIZE_t max_features,
-                  SIZE_t min_samples_leaf, double min_weight_leaf,
-                  object random_state):
-        # Parent __cinit__ is automatically called
-        self.n_total_samples = 0
+    cdef SIZE_t start_positive
+    cdef SIZE_t end_negative
+    cdef bint is_samples_sorted
 
-    cdef int init(
+    def __init__(
         self,
         object X,
-        const DOUBLE_t[:, ::1] y,
-        const DOUBLE_t[:] sample_weight
-    ) except -1:
-        """Initialize the splitter
-
-        Returns -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-        """
-        # Call parent init
-        Splitter.init(self, X, y, sample_weight)
-
+        SIZE_t[::1] samples,
+        SIZE_t n_samples,
+        DTYPE_t[::1] feature_values,
+    ):
         if not isinstance(X, csc_matrix):
             raise ValueError("X should be in csc format")
 
-        cdef SIZE_t[::1] samples = self.samples
-        cdef SIZE_t n_samples = self.n_samples
+        self.samples = samples
+        self.feature_values = feature_values
 
         # Initialize X
         cdef SIZE_t n_total_samples = X.shape[0]
@@ -793,25 +858,136 @@ cdef class BaseSparseSplitter(Splitter):
         cdef SIZE_t p
         for p in range(n_samples):
             self.index_to_samples[samples[p]] = p
-        return 0
 
-    cdef inline SIZE_t _partition(self, double threshold,
-                                  SIZE_t end_negative, SIZE_t start_positive,
-                                  SIZE_t zero_pos) nogil:
+    cdef inline void init_node_split(self, SIZE_t start, SIZE_t end) nogil:
+        """Initialize splitter at the beginning of node_split."""
+        self.start = start
+        self.end = end
+        self.is_samples_sorted = 0
+
+    cdef inline void sort_samples_and_feature_values(
+        self, SIZE_t current_feature
+    ) nogil:
+        """Simultaneously sort based on the feature_values."""
+        cdef:
+            DTYPE_t[::1] Xf = self.feature_values
+            SIZE_t[::1] index_to_samples = self.index_to_samples
+            SIZE_t[::1] samples = self.samples
+
+        self.extract_nnz(current_feature)
+        # Sort the positive and negative parts of `Xf`
+        sort(&Xf[self.start], &samples[self.start], self.end_negative - self.start)
+        if self.start_positive < self.end:
+            sort(&Xf[self.start_positive], &samples[self.start_positive],
+                    self.end - self.start_positive)
+
+        # Update index_to_samples to take into account the sort
+        for p in range(self.start, self.end_negative):
+            index_to_samples[samples[p]] = p
+        for p in range(self.start_positive, self.end):
+            index_to_samples[samples[p]] = p
+
+        # Add one or two zeros in Xf, if there is any
+        if self.end_negative < self.start_positive:
+            self.start_positive -= 1
+            Xf[self.start_positive] = 0.
+
+            if self.end_negative != self.start_positive:
+                Xf[self.end_negative] = 0.
+                self.end_negative += 1
+
+    cdef inline void find_min_max(
+        self,
+        SIZE_t current_feature,
+        DTYPE_t* min_feature_value_out,
+        DTYPE_t* max_feature_value_out,
+    ) nogil:
+        """Find the minimum and maximum value for current_feature."""
+        cdef:
+            SIZE_t p
+            DTYPE_t current_feature_value, min_feature_value, max_feature_value
+            DTYPE_t[::1] Xf = self.feature_values
+
+        self.extract_nnz(current_feature)
+
+        if self.end_negative != self.start_positive:
+            # There is a zero
+            min_feature_value = 0
+            max_feature_value = 0
+        else:
+            min_feature_value = Xf[self.start]
+            max_feature_value = min_feature_value
+
+        # Find min, max in Xf[start:end_negative]
+        for p in range(self.start, self.end_negative):
+            current_feature_value = Xf[p]
+
+            if current_feature_value < min_feature_value:
+                min_feature_value = current_feature_value
+            elif current_feature_value > max_feature_value:
+                max_feature_value = current_feature_value
+
+        # Update min, max given Xf[start_positive:end]
+        for p in range(self.start_positive, self.end):
+            current_feature_value = Xf[p]
+
+            if current_feature_value < min_feature_value:
+                min_feature_value = current_feature_value
+            elif current_feature_value > max_feature_value:
+                max_feature_value = current_feature_value
+
+        min_feature_value_out[0] = min_feature_value
+        max_feature_value_out[0] = max_feature_value
+
+    cdef inline void next_p(self, SIZE_t* p_prev, SIZE_t* p) nogil:
+        """Compute the next p_prev and p for iteratiing over feature values."""
+        cdef:
+            SIZE_t p_next
+            DTYPE_t[::1] Xf = self.feature_values
+
+        if p[0] + 1 != self.end_negative:
+            p_next = p[0] + 1
+        else:
+            p_next = self.start_positive
+
+        while (p_next < self.end and
+                Xf[p_next] <= Xf[p[0]] + FEATURE_THRESHOLD):
+            p[0] = p_next
+            if p[0] + 1 != self.end_negative:
+                p_next = p[0] + 1
+            else:
+                p_next = self.start_positive
+
+        p_prev[0] = p[0]
+        p[0] = p_next
+
+    cdef inline SIZE_t partition_samples(self, double current_threshold) nogil:
+        """Partition samples for feature_values at the current_threshold."""
+        return self._partition(current_threshold, self.start_positive)
+
+    cdef inline void partition_samples_final(
+        self,
+        SIZE_t best_pos,
+        double best_threshold,
+        SIZE_t best_feature,
+    ) nogil:
+        """Partition samples for X at the best_threshold and best_feature."""
+        self.extract_nnz(best_feature)
+        self._partition(best_threshold, best_pos)
+
+    cdef inline SIZE_t _partition(self, double threshold, SIZE_t zero_pos) nogil:
         """Partition samples[start:end] based on threshold."""
-
-        cdef SIZE_t p
-        cdef SIZE_t partition_end
-
-        cdef DTYPE_t[::1] Xf = self.feature_values
-        cdef SIZE_t[::1] samples = self.samples
-        cdef SIZE_t[::1] index_to_samples = self.index_to_samples
+        cdef:
+            SIZE_t p, partition_end
+            SIZE_t[::1] index_to_samples = self.index_to_samples
+            DTYPE_t[::1] Xf = self.feature_values
+            SIZE_t[::1] samples = self.samples
 
         if threshold < 0.:
             p = self.start
-            partition_end = end_negative
+            partition_end = self.end_negative
         elif threshold > 0.:
-            p = start_positive
+            p = self.start_positive
             partition_end = self.end
         else:
             # Data are already split
@@ -829,9 +1005,7 @@ cdef class BaseSparseSplitter(Splitter):
 
         return partition_end
 
-    cdef inline void extract_nnz(self, SIZE_t feature,
-                                 SIZE_t* end_negative, SIZE_t* start_positive,
-                                 bint* is_samples_sorted) nogil:
+    cdef inline void extract_nnz(self, SIZE_t feature) nogil:
         """Extract and partition values for a given feature.
 
         The extracted values are partitioned between negative values
@@ -848,25 +1022,13 @@ cdef class BaseSparseSplitter(Splitter):
         ----------
         feature : SIZE_t,
             Index of the feature we want to extract non zero value.
-
-
-        end_negative, start_positive : SIZE_t*, SIZE_t*,
-            Return extracted non zero values in self.samples[start:end] where
-            negative values are in self.feature_values[start:end_negative[0]]
-            and positive values are in
-            self.feature_values[start_positive[0]:end].
-
-        is_samples_sorted : bint*,
-            If is_samples_sorted, then self.sorted_samples[start:end] will be
-            the sorted version of self.samples[start:end].
-
         """
+        cdef SIZE_t[::1] samples = self.samples
+        cdef DTYPE_t[::1] feature_values = self.feature_values
         cdef SIZE_t indptr_start = self.X_indptr[feature],
         cdef SIZE_t indptr_end = self.X_indptr[feature + 1]
         cdef SIZE_t n_indices = <SIZE_t>(indptr_end - indptr_start)
         cdef SIZE_t n_samples = self.end - self.start
-        cdef SIZE_t[::1] samples = self.samples
-        cdef DTYPE_t[::1] feature_values = self.feature_values
         cdef SIZE_t[::1] index_to_samples = self.index_to_samples
         cdef SIZE_t[::1] sorted_samples = self.sorted_samples
         cdef INT32_t[::1] X_indices = self.X_indices
@@ -877,15 +1039,15 @@ cdef class BaseSparseSplitter(Splitter):
         # O(n_samples * log(n_indices)) is the running time of binary
         # search and O(n_indices) is the running time of index_to_samples
         # approach.
-        if ((1 - is_samples_sorted[0]) * n_samples * log(n_samples) +
+        if ((1 - self.is_samples_sorted) * n_samples * log(n_samples) +
                 n_samples * log(n_indices) < EXTRACT_NNZ_SWITCH * n_indices):
             extract_nnz_binary_search(X_indices, X_data,
                                       indptr_start, indptr_end,
                                       samples, self.start, self.end,
                                       index_to_samples,
                                       feature_values,
-                                      end_negative, start_positive,
-                                      sorted_samples, is_samples_sorted)
+                                      &self.end_negative, &self.start_positive,
+                                      sorted_samples, &self.is_samples_sorted)
 
         # Using an index to samples  technique to extract non zero values
         # index_to_samples is a mapping from X_indices to samples
@@ -895,7 +1057,7 @@ cdef class BaseSparseSplitter(Splitter):
                                          samples, self.start, self.end,
                                          index_to_samples,
                                          feature_values,
-                                         end_negative, start_positive)
+                                         &self.end_negative, &self.start_positive)
 
 
 cdef int compare_SIZE_t(const void* a, const void* b) nogil:
@@ -1048,423 +1210,98 @@ cdef inline void sparse_swap(SIZE_t[::1] index_to_samples, SIZE_t[::1] samples,
     index_to_samples[samples[pos_2]] = pos_2
 
 
-cdef class BestSparseSplitter(BaseSparseSplitter):
+cdef class BestSplitter(Splitter):
+    """Splitter for finding the best split on dense data."""
+    cdef DensePartitioner partitioner
+    cdef int init(
+        self,
+        object X,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight
+    ) except -1:
+        Splitter.init(self, X, y, sample_weight)
+        self.partitioner = DensePartitioner(X, self.samples, self.feature_values)
+
+    cdef int node_split(self, double impurity, SplitRecord* split,
+                        SIZE_t* n_constant_features) nogil except -1:
+        return node_split_best(
+            self,
+            self.partitioner,
+            self.criterion,
+            impurity,
+            split,
+            n_constant_features,
+        )
+
+cdef class BestSparseSplitter(Splitter):
     """Splitter for finding the best split, using the sparse data."""
+    cdef SparsePartitioner partitioner
+    cdef int init(
+        self,
+        object X,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight
+    ) except -1:
+        Splitter.init(self, X, y, sample_weight)
+        self.partitioner = SparsePartitioner(
+            X, self.samples, self.n_samples, self.feature_values
+        )
+
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
-        """Find the best split on node samples[start:end], using sparse features
+        return node_split_best(
+            self,
+            self.partitioner,
+            self.criterion,
+            impurity,
+            split,
+            n_constant_features,
+        )
 
-        Returns -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-        """
-        # Find the best split
-        cdef SIZE_t[::1] samples = self.samples
-        cdef SIZE_t start = self.start
-        cdef SIZE_t end = self.end
+cdef class RandomSplitter(Splitter):
+    """Splitter for finding the best random split on dense data."""
+    cdef DensePartitioner partitioner
+    cdef int init(
+        self,
+        object X,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight
+    ) except -1:
+        Splitter.init(self, X, y, sample_weight)
+        self.partitioner = DensePartitioner(X, self.samples, self.feature_values)
 
-        cdef SIZE_t[::1] features = self.features
-        cdef SIZE_t[::1] constant_features = self.constant_features
-        cdef SIZE_t n_features = self.n_features
-
-        cdef DTYPE_t[::1] Xf = self.feature_values
-        cdef SIZE_t[::1] index_to_samples = self.index_to_samples
-        cdef SIZE_t max_features = self.max_features
-        cdef SIZE_t min_samples_leaf = self.min_samples_leaf
-        cdef double min_weight_leaf = self.min_weight_leaf
-        cdef UINT32_t* random_state = &self.rand_r_state
-
-        cdef SplitRecord best, current
-        _init_split(&best, end)
-        cdef double current_proxy_improvement = - INFINITY
-        cdef double best_proxy_improvement = - INFINITY
-
-        cdef SIZE_t f_i = n_features
-        cdef SIZE_t f_j, p
-        cdef SIZE_t n_visited_features = 0
-        # Number of features discovered to be constant during the split search
-        cdef SIZE_t n_found_constants = 0
-        # Number of features known to be constant and drawn without replacement
-        cdef SIZE_t n_drawn_constants = 0
-        cdef SIZE_t n_known_constants = n_constant_features[0]
-        # n_total_constants = n_known_constants + n_found_constants
-        cdef SIZE_t n_total_constants = n_known_constants
-
-        cdef SIZE_t p_next
-        cdef SIZE_t p_prev
-        cdef bint is_samples_sorted = 0  # indicate is sorted_samples is
-                                         # inititialized
-
-        # We assume implicitly that end_positive = end and
-        # start_negative = start
-        cdef SIZE_t start_positive
-        cdef SIZE_t end_negative
-
-        # Sample up to max_features without replacement using a
-        # Fisher-Yates-based algorithm (using the local variables `f_i` and
-        # `f_j` to compute a permutation of the `features` array).
-        #
-        # Skip the CPU intensive evaluation of the impurity criterion for
-        # features that were already detected as constant (hence not suitable
-        # for good splitting) by ancestor nodes and save the information on
-        # newly discovered constant features to spare computation on descendant
-        # nodes.
-        while (f_i > n_total_constants and  # Stop early if remaining features
-                                            # are constant
-                (n_visited_features < max_features or
-                 # At least one drawn features must be non constant
-                 n_visited_features <= n_found_constants + n_drawn_constants)):
-
-            n_visited_features += 1
-
-            # Loop invariant: elements of features in
-            # - [:n_drawn_constant[ holds drawn and known constant features;
-            # - [n_drawn_constant:n_known_constant[ holds known constant
-            #   features that haven't been drawn yet;
-            # - [n_known_constant:n_total_constant[ holds newly found constant
-            #   features;
-            # - [n_total_constant:f_i[ holds features that haven't been drawn
-            #   yet and aren't constant apriori.
-            # - [f_i:n_features[ holds features that have been drawn
-            #   and aren't constant.
-
-            # Draw a feature at random
-            f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
-                           random_state)
-
-            if f_j < n_known_constants:
-                # f_j in the interval [n_drawn_constants, n_known_constants[
-                features[f_j], features[n_drawn_constants] = features[n_drawn_constants], features[f_j]
-
-                n_drawn_constants += 1
-                continue
-
-            # f_j in the interval [n_known_constants, f_i - n_found_constants[
-            f_j += n_found_constants
-            # f_j in the interval [n_total_constants, f_i[
-
-            current.feature = features[f_j]
-            self.extract_nnz(current.feature, &end_negative, &start_positive,
-                             &is_samples_sorted)
-            # Sort the positive and negative parts of `Xf`
-            sort(&Xf[start], &samples[start], end_negative - start)
-            if start_positive < end:
-                sort(&Xf[start_positive], &samples[start_positive],
-                     end - start_positive)
-
-            # Update index_to_samples to take into account the sort
-            for p in range(start, end_negative):
-                index_to_samples[samples[p]] = p
-            for p in range(start_positive, end):
-                index_to_samples[samples[p]] = p
-
-            # Add one or two zeros in Xf, if there is any
-            if end_negative < start_positive:
-                start_positive -= 1
-                Xf[start_positive] = 0.
-
-                if end_negative != start_positive:
-                    Xf[end_negative] = 0.
-                    end_negative += 1
-
-            if Xf[end - 1] <= Xf[start] + FEATURE_THRESHOLD:
-                features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
-
-                n_found_constants += 1
-                n_total_constants += 1
-                continue
-
-            f_i -= 1
-            features[f_i], features[f_j] = features[f_j], features[f_i]
-
-            # Evaluate all splits
-            self.criterion.reset()
-            p = start
-
-            while p < end:
-                if p + 1 != end_negative:
-                    p_next = p + 1
-                else:
-                    p_next = start_positive
-
-                while (p_next < end and
-                        Xf[p_next] <= Xf[p] + FEATURE_THRESHOLD):
-                    p = p_next
-                    if p + 1 != end_negative:
-                        p_next = p + 1
-                    else:
-                        p_next = start_positive
-
-
-                # (p_next >= end) or (X[samples[p_next], current.feature] >
-                #                     X[samples[p], current.feature])
-                p_prev = p
-                p = p_next
-                # (p >= end) or (X[samples[p], current.feature] >
-                #                X[samples[p_prev], current.feature])
-
-                if p >= end:
-                    continue
-
-                current.pos = p
-
-                # Reject if min_samples_leaf is not guaranteed
-                if (((current.pos - start) < min_samples_leaf) or
-                        ((end - current.pos) < min_samples_leaf)):
-                    continue
-
-                self.criterion.update(current.pos)
-
-                # Reject if min_weight_leaf is not satisfied
-                if ((self.criterion.weighted_n_left < min_weight_leaf) or
-                        (self.criterion.weighted_n_right < min_weight_leaf)):
-                    continue
-
-                current_proxy_improvement = self.criterion.proxy_impurity_improvement()
-
-                if current_proxy_improvement > best_proxy_improvement:
-                    best_proxy_improvement = current_proxy_improvement
-                    # sum of halves used to avoid infinite values
-                    current.threshold = Xf[p_prev] / 2.0 + Xf[p] / 2.0
-
-                    if (
-                        current.threshold == Xf[p] or
-                        current.threshold == INFINITY or
-                        current.threshold == -INFINITY
-                    ):
-                        current.threshold = Xf[p_prev]
-
-                    best = current
-
-        # Reorganize into samples[start:best.pos] + samples[best.pos:end]
-        if best.pos < end:
-            self.extract_nnz(best.feature, &end_negative, &start_positive,
-                             &is_samples_sorted)
-
-            self._partition(best.threshold, end_negative, start_positive,
-                            best.pos)
-
-            self.criterion.reset()
-            self.criterion.update(best.pos)
-            self.criterion.children_impurity(&best.impurity_left,
-                                             &best.impurity_right)
-            best.improvement = self.criterion.impurity_improvement(
-                impurity, best.impurity_left, best.impurity_right)
-
-        # Respect invariant for constant features: the original order of
-        # element in features[:n_known_constants] must be preserved for sibling
-        # and child nodes
-        memcpy(&features[0], &constant_features[0], sizeof(SIZE_t) * n_known_constants)
-
-        # Copy newly found constant features
-        memcpy(&constant_features[n_known_constants],
-               &features[n_known_constants],
-               sizeof(SIZE_t) * n_found_constants)
-
-        # Return values
-        split[0] = best
-        n_constant_features[0] = n_total_constants
-        return 0
-
-
-cdef class RandomSparseSplitter(BaseSparseSplitter):
-    """Splitter for finding a random split, using the sparse data."""
     cdef int node_split(self, double impurity, SplitRecord* split,
                         SIZE_t* n_constant_features) nogil except -1:
-        """Find a random split on node samples[start:end], using sparse features
+        return node_split_random(
+            self,
+            self.partitioner,
+            self.criterion,
+            impurity,
+            split,
+            n_constant_features,
+        )
 
-        Returns -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-        """
-        # Find the best split
-        cdef SIZE_t start = self.start
-        cdef SIZE_t end = self.end
+cdef class RandomSparseSplitter(Splitter):
+    """Splitter for finding the best random split, using the sparse data."""
+    cdef SparsePartitioner partitioner
+    cdef int init(
+        self,
+        object X,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight
+    ) except -1:
+        Splitter.init(self, X, y, sample_weight)
+        self.partitioner = SparsePartitioner(
+            X, self.samples, self.n_samples, self.feature_values
+        )
 
-        cdef SIZE_t[::1] features = self.features
-        cdef SIZE_t[::1] constant_features = self.constant_features
-        cdef SIZE_t n_features = self.n_features
-
-        cdef DTYPE_t[::1] Xf = self.feature_values
-        cdef SIZE_t max_features = self.max_features
-        cdef SIZE_t min_samples_leaf = self.min_samples_leaf
-        cdef double min_weight_leaf = self.min_weight_leaf
-        cdef UINT32_t* random_state = &self.rand_r_state
-
-        cdef SplitRecord best, current
-        _init_split(&best, end)
-        cdef double current_proxy_improvement = - INFINITY
-        cdef double best_proxy_improvement = - INFINITY
-
-        cdef DTYPE_t current_feature_value
-
-        cdef SIZE_t f_i = n_features
-        cdef SIZE_t f_j, p
-        cdef SIZE_t n_visited_features = 0
-        # Number of features discovered to be constant during the split search
-        cdef SIZE_t n_found_constants = 0
-        # Number of features known to be constant and drawn without replacement
-        cdef SIZE_t n_drawn_constants = 0
-        cdef SIZE_t n_known_constants = n_constant_features[0]
-        # n_total_constants = n_known_constants + n_found_constants
-        cdef SIZE_t n_total_constants = n_known_constants
-
-        cdef DTYPE_t min_feature_value
-        cdef DTYPE_t max_feature_value
-
-        cdef bint is_samples_sorted = 0  # indicate that sorted_samples is
-                                         # inititialized
-
-        # We assume implicitly that end_positive = end and
-        # start_negative = start
-        cdef SIZE_t start_positive
-        cdef SIZE_t end_negative
-
-        # Sample up to max_features without replacement using a
-        # Fisher-Yates-based algorithm (using the local variables `f_i` and
-        # `f_j` to compute a permutation of the `features` array).
-        #
-        # Skip the CPU intensive evaluation of the impurity criterion for
-        # features that were already detected as constant (hence not suitable
-        # for good splitting) by ancestor nodes and save the information on
-        # newly discovered constant features to spare computation on descendant
-        # nodes.
-        while (f_i > n_total_constants and  # Stop early if remaining features
-                                            # are constant
-                (n_visited_features < max_features or
-                 # At least one drawn features must be non constant
-                 n_visited_features <= n_found_constants + n_drawn_constants)):
-
-            n_visited_features += 1
-
-            # Loop invariant: elements of features in
-            # - [:n_drawn_constant[ holds drawn and known constant features;
-            # - [n_drawn_constant:n_known_constant[ holds known constant
-            #   features that haven't been drawn yet;
-            # - [n_known_constant:n_total_constant[ holds newly found constant
-            #   features;
-            # - [n_total_constant:f_i[ holds features that haven't been drawn
-            #   yet and aren't constant apriori.
-            # - [f_i:n_features[ holds features that have been drawn
-            #   and aren't constant.
-
-            # Draw a feature at random
-            f_j = rand_int(n_drawn_constants, f_i - n_found_constants,
-                           random_state)
-
-            if f_j < n_known_constants:
-                # f_j in the interval [n_drawn_constants, n_known_constants[
-                features[f_j], features[n_drawn_constants] = features[n_drawn_constants], features[f_j]
-
-                n_drawn_constants += 1
-                continue
-
-            # f_j in the interval [n_known_constants, f_i - n_found_constants[
-            f_j += n_found_constants
-            # f_j in the interval [n_total_constants, f_i[
-
-            current.feature = features[f_j]
-
-            self.extract_nnz(current.feature,
-                             &end_negative, &start_positive,
-                             &is_samples_sorted)
-
-            if end_negative != start_positive:
-                # There is a zero
-                min_feature_value = 0
-                max_feature_value = 0
-            else:
-                min_feature_value = Xf[start]
-                max_feature_value = min_feature_value
-
-            # Find min, max in Xf[start:end_negative]
-            for p in range(start, end_negative):
-                current_feature_value = Xf[p]
-
-                if current_feature_value < min_feature_value:
-                    min_feature_value = current_feature_value
-                elif current_feature_value > max_feature_value:
-                    max_feature_value = current_feature_value
-
-            # Update min, max given Xf[start_positive:end]
-            for p in range(start_positive, end):
-                current_feature_value = Xf[p]
-
-                if current_feature_value < min_feature_value:
-                    min_feature_value = current_feature_value
-                elif current_feature_value > max_feature_value:
-                    max_feature_value = current_feature_value
-
-            if max_feature_value <= min_feature_value + FEATURE_THRESHOLD:
-                features[f_j] = features[n_total_constants]
-                features[n_total_constants] = current.feature
-
-                n_found_constants += 1
-                n_total_constants += 1
-                continue
-
-            f_i -= 1
-            features[f_i], features[f_j] = features[f_j], features[f_i]
-
-            # Draw a random threshold
-            current.threshold = rand_uniform(min_feature_value,
-                                             max_feature_value,
-                                             random_state)
-
-            if current.threshold == max_feature_value:
-                current.threshold = min_feature_value
-
-            # Partition
-            current.pos = self._partition(current.threshold,
-                                          end_negative,
-                                          start_positive,
-                                          start_positive)
-
-            # Reject if min_samples_leaf is not guaranteed
-            if (((current.pos - start) < min_samples_leaf) or
-                    ((end - current.pos) < min_samples_leaf)):
-                continue
-
-            # Evaluate split
-            self.criterion.reset()
-            self.criterion.update(current.pos)
-
-            # Reject if min_weight_leaf is not satisfied
-            if ((self.criterion.weighted_n_left < min_weight_leaf) or
-                    (self.criterion.weighted_n_right < min_weight_leaf)):
-                continue
-
-            current_proxy_improvement = self.criterion.proxy_impurity_improvement()
-
-            if current_proxy_improvement > best_proxy_improvement:
-                best_proxy_improvement = current_proxy_improvement
-                best = current
-
-        # Reorganize into samples[start:best.pos] + samples[best.pos:end]
-        if best.pos < end:
-            if current.feature != best.feature:
-                self.extract_nnz(best.feature, &end_negative, &start_positive,
-                                 &is_samples_sorted)
-
-                self._partition(best.threshold, end_negative, start_positive,
-                                best.pos)
-
-            self.criterion.reset()
-            self.criterion.update(best.pos)
-            self.criterion.children_impurity(&best.impurity_left,
-                                             &best.impurity_right)
-            best.improvement = self.criterion.impurity_improvement(
-                impurity, best.impurity_left, best.impurity_right)
-
-        # Respect invariant for constant features: the original order of
-        # element in features[:n_known_constants] must be preserved for sibling
-        # and child nodes
-        memcpy(&features[0], &constant_features[0], sizeof(SIZE_t) * n_known_constants)
-
-        # Copy newly found constant features
-        memcpy(&constant_features[n_known_constants],
-               &features[n_known_constants],
-               sizeof(SIZE_t) * n_found_constants)
-
-        # Return values
-        split[0] = best
-        n_constant_features[0] = n_total_constants
-        return 0
+    cdef int node_split(self, double impurity, SplitRecord* split,
+                        SIZE_t* n_constant_features) nogil except -1:
+        return node_split_random(
+            self,
+            self.partitioner,
+            self.criterion,
+            impurity,
+            split,
+            n_constant_features,
+        )
