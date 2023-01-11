@@ -336,7 +336,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
         if self.subsample < 1.0:
             self.oob_improvement_ = np.zeros((self.n_estimators), dtype=np.float64)
             self.oob_scores_ = np.zeros((self.n_estimators), dtype=np.float64)
-            self.oob_score_ = 0.0
+            self.oob_score_ = np.nan
 
     def _clear_state(self):
         """Clear the state of the gradient boosting model."""
