@@ -116,7 +116,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         :meth:`sample_y` before :meth:`fit`). This parameter is ignored once
         :meth:`fit` has been called.
 
-        .. versionadded:: 1.2
+        .. versionadded:: 1.3
 
     random_state : int, RandomState instance or None, default=None
         Determines random number generation used to initialize the centers.
@@ -189,6 +189,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
         "n_restarts_optimizer": [Interval(Integral, 0, None, closed="left")],
         "normalize_y": ["boolean"],
         "copy_X_train": ["boolean"],
+        "n_targets": [Interval(Integral, 1, None, closed="left"), None],
         "random_state": ["random_state"],
     }
 
