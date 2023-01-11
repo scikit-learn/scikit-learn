@@ -52,7 +52,7 @@ cdef class _QuadTree:
         # Parameters of the tree
         self.n_dimensions = n_dimensions
         self.verbose = verbose
-        self.n_cells_per_cell = 2 ** self.n_dimensions
+        self.n_cells_per_cell = <int> (2 ** self.n_dimensions)
 
         # Inner structures
         self.max_depth = 0
