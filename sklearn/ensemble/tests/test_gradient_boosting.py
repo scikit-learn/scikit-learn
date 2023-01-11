@@ -460,9 +460,9 @@ def test_serialization():
     except ImportError:
         import pickle
 
-    serialized_estimator = pickle.dumps(clf, protocol=pickle.HIGHEST_PROTOCOL)
+    serialized_clf = pickle.dumps(clf, protocol=pickle.HIGHEST_PROTOCOL)
     clf = None
-    clf = pickle.loads(serialized_estimator)
+    clf = pickle.loads(serialized_clf)
     assert_array_equal(clf.predict(T), true_result)
     assert 100 == len(clf.estimators_)
 
@@ -683,10 +683,10 @@ def test_verbose_output():
 
     old_stdout = sys.stdout
     sys.stdout = StringIO()
-    estimator = GradientBoostingClassifier(
+    clf = GradientBoostingClassifier(
         n_estimators=100, random_state=1, verbose=1, subsample=0.8
     )
-    estimator.fit(X, y)
+    clf.fit(X, y)
     verbose_output = sys.stdout
     sys.stdout = old_stdout
 
@@ -714,8 +714,8 @@ def test_more_verbose_output():
 
     old_stdout = sys.stdout
     sys.stdout = StringIO()
-    estimator = GradientBoostingClassifier(n_estimators=100, random_state=1, verbose=2)
-    estimator.fit(X, y)
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1, verbose=2)
+    clf.fit(X, y)
     verbose_output = sys.stdout
     sys.stdout = old_stdout
 
