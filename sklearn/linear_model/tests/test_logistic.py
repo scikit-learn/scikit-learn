@@ -249,8 +249,10 @@ def test_multinomial_binary(solver):
 def test_multinomial_binary_probabilities():
     # Test multinomial LR gives expected probabilities based on the
     # decision function, for a binary problem.
-    X, y = make_classification()
-    clf = LogisticRegression(multi_class="multinomial", solver="saga", tol=1e-3)
+    X, y = make_classification(random_state=42)
+    clf = LogisticRegression(
+        multi_class="multinomial", solver="saga", tol=1e-3, random_state=42
+    )
     clf.fit(X, y)
 
     decision = clf.decision_function(X)
