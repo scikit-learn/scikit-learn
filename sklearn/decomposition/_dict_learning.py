@@ -2247,9 +2247,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         A, B = self._inner_stats
         A *= beta
-        A += code.T @ code
+        A += code.T @ code / batch_size
         B *= beta
-        B += X.T @ code
+        B += X.T @ code / batch_size
 
     def _minibatch_step(self, X, dictionary, random_state, step):
         """Perform the update on the dictionary for one minibatch."""
