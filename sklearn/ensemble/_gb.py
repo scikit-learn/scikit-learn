@@ -346,7 +346,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             del self.train_score_
         if hasattr(self, "oob_improvement_"):
             del self.oob_improvement_
-        if hasattr(self, "oob_scores_ "):
+        if hasattr(self, "oob_scores_"):
             del self.oob_scores_
         if hasattr(self, "oob_score_"):
             del self.oob_score_
@@ -376,13 +376,13 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                     self.oob_improvement_, total_n_estimators
                 )
                 self.oob_scores_ = np.resize(self.oob_scores_, total_n_estimators)
-                self.oob_score_ = self.oob_scores_[-1]
+                self.oob_score_ = np.nan
             else:
                 self.oob_improvement_ = np.zeros(
                     (total_n_estimators,), dtype=np.float64
                 )
                 self.oob_scores_ = np.zeros((total_n_estimators,), dtype=np.float64)
-                self.oob_score_ = self.oob_scores_[-1]
+                self.oob_score_ = np.nan
 
     def _is_initialized(self):
         return len(getattr(self, "estimators_", [])) > 0
@@ -563,10 +563,9 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             self.estimators_ = self.estimators_[:n_stages]
             self.train_score_ = self.train_score_[:n_stages]
             if hasattr(self, "oob_improvement_"):
+                # OOB scores were computed
                 self.oob_improvement_ = self.oob_improvement_[:n_stages]
-            if hasattr(self, "oob_scores_"):
                 self.oob_scores_ = self.oob_scores_[:n_stages]
-            if hasattr(self, "oob_score_"):
                 self.oob_score_ = self.oob_scores_[-1]
         self.n_estimators_ = n_stages
         return self
