@@ -874,8 +874,8 @@ def test_warm_start_oob_switch(Cls):
     assert_array_equal(est.oob_scores_[:100], np.zeros(100))
 
     # the last 10 are not zeros
-    assert est.oob_improvement_[-10:].all() != 0.0
-    assert est.oob_scores_[-10:].all() != 0.0
+    assert (est.oob_improvement_[-10:] != 0.0).all()
+    assert (est.oob_scores_[-10:] != 0.0).all()
 
     assert est.oob_scores_[-1] == pytest.approx(est.oob_score_)
 
