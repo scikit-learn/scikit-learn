@@ -96,6 +96,11 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`.
   :pr:`25177` by :user:`Tim Head <betatim>`.
 
+- |Fix| :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor` :class:`ensemble.ExtraTreesClassifier`
+  and :class:`ensemble.ExtraTreesRegressor` now support sparse readonly datasets.
+  :pr:`25341` by :user:`Julien Jerphanion <jjerphan>`
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -139,6 +144,14 @@ Changelog
   available when `strategy` is set to `quantile` and `kmeans`.
   :pr:`24935` by :user:`Seladus <seladus>`, :user:`Guillaume Lemaitre <glemaitre>`, and
   :user:`Dea María Léon <deamarialeon>`, :pr:`25257` by :user:`Gleb Levitski <glevv>`.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`
+  :class:`tree.ExtraTreeClassifier` and :class:`tree.ExtraTreeRegressor`
+  now support sparse readonly datasets.
+  :pr:`25341` by :user:`Julien Jerphanion <jjerphan>`
 
 Code and Documentation Contributors
 -----------------------------------
