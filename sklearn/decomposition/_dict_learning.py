@@ -530,14 +530,10 @@ def _update_dict(
 
     n_unused = 0
 
-    AD = A @ dictionary
-    A_update = code.T @ code
-
     for k in range(n_components):
-        if A[k, k] + A_update[k, k] > 1e-6:
+        if A[k, k] > 1e-6:
             # 1e-6 is arbitrary but consistent with the spams implementation
-            #dictionary[k] += (B[:, k] - A[k] @ dictionary) / A[k, k]
-            dictionary[k] += (B[:, k] - (AD[k] + A_update[k] @ dictionary)) / (A[k, k] + A_update[k, k])
+            dictionary[k] += (B[:, k] - A[k] @ dictionary) / A[k, k]
         else:
             # kth atom is almost never used -> sample a new one from the data
             newd = Y[random_state.choice(n_samples)]
@@ -555,7 +551,6 @@ def _update_dict(
 
         # Projection on the constraint set ||V_k|| <= 1
         dictionary[k] /= max(linalg.norm(dictionary[k]), 1)
-        print("k", k, dictionary[k])
 
     if verbose and n_unused > 0:
         print(f"{n_unused} unused atoms resampled.")
@@ -2311,9 +2306,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         A, B = self._inner_stats
         A *= beta
-        #A += code.T @ code
+        A += code.T @ code / batch_size
         B *= beta
-        B += X.T @ code
+        B += X.T @ code / batch_size
 
     def _update_inner_stats_with_missing(self, X, observed_mask, code, batch_size, step):
         """Update the inner stats inplace."""
@@ -2325,12 +2320,10 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         # Bij <- beta * Bij + X_obs_i . code_j^T
         self._B *= beta
-        #self._B += np.einsum('ri,rj->ij', X, code) / batch_size
-        self._B += X.T @ code
+        self._B += X.T @ code / batch_size
         # Cij <- beta * Cij + mask_j * code_i²
         self._C *= beta
-        #self._C += np.einsum('ri,rj->ij', code ** 2, observed_mask) / batch_size
-        self._C += code.T ** 2 @ observed_mask
+        self._C += code.T ** 2 @ observed_mask / batch_size
         # e_ij <- beta * e_ij
         self._e *= beta
 
@@ -2372,11 +2365,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             positive=self.positive_dict,
         )
 
-        A += code.T @ code
-        self._As.append(A.copy())
-        self._Bs.append(B.copy())
-        self._es.append(A @ dictionary)
-
         return batch_cost
 
     def _minibatch_step_with_missing(self, X, observed_mask, dictionary, random_state, step):
@@ -2402,46 +2390,58 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         # Update dictionary
         self._update_dict_with_missing(
-            X,
-            observed_mask,
             dictionary,
+            X,
             code,
+            observed_mask,
+            random_state=random_state,
         )
 
         # e_ij <- e_ij + mask_j * code_i * (code @ dict)_j
         Xr_observed = np.multiply(code @ dictionary, observed_mask)
-        ###self._e += np.einsum('ri,rj->ij', code, Xr_observed) / batch_size
-        self._e += code.T @ Xr_observed
+        self._e += code.T @ Xr_observed / batch_size
 
-        self._Cs.append(self._C.copy())
-        self._Bs.append(self._B.copy())
-        self._es.append(self._e.copy())
-
-    def _update_dict_with_missing(self, X, observed_mask, dictionary, code):
-        #e_temp = self._e.copy()
+    def _update_dict_with_missing(
+        self,
+        dictionary,
+        X,
+        code,
+        observed_mask,
+        random_state,
+    ):
+        batch_size = X.shape[0]
+        n_unused = 0
 
         for k in range(self._n_components):
-            Xr_observed = np.multiply(code @ dictionary, observed_mask)
+            if self._C[k].max() > 1e-6:
+                Xr_observed = np.multiply(code @ dictionary, observed_mask)
+                e_tmp = self._e[k] + code[:,k] @ Xr_observed / batch_size
 
-            ###e_temp[k] += np.mean(Xr_observed * code[:, k].reshape(-1, 1), axis=0)
-            #e_temp[k] += code[:, k] @ Xr_observed
-            #self._e[k] += code[:, k] @ Xr_observed / Xr.shape[0]
+                np.divide(
+                    self._B[:, k] - e_tmp + self._C[k] * dictionary[k],
+                    self._C[k],
+                    out=dictionary[k]
+                )
+            else:
+                # kth atom is almost never used -> sample a new one from the data
+                newd = X[random_state.choice(batch_size)]
 
-            # solve for uk: ck * uk = bk - ek + ck * dk
-            # then dk <- uk
-            #np.divide(
-            #    self._B[:, k] - e_temp[k] + np.multiply(self._C[k], dictionary[k]), self._C[k],
-            #    where=(self._C[k] != 0), out=dictionary[k]
-            #)
-            #np.divide(
-            #    self._B[:, k] - self._e[k] + np.multiply(self._C[k], dictionary[k]), self._C[k],
-            #    where=(self._C[k] != 0), out=dictionary[k]
-            #)
-            dictionary[k] += (self._B[:, k] - self._e[k] - code[:,k] @ Xr_observed) / self._C[k]
+                # add small noise to avoid making the sparse coding ill conditioned
+                noise_level = 0.01 * (newd.std() or 1)  # avoid 0 std
+                noise = random_state.normal(0, noise_level, size=len(newd))
+
+                dictionary[k] = newd + noise
+                code[:, k] = 0
+                n_unused += 1
+
+            if self.positive_dict:
+                np.clip(dictionary[k], 0, None, out=dictionary[k])
 
             # Projection on the constraint set ||V_k|| <= 1
             dictionary[k] /= max(linalg.norm(dictionary[k]), 1)
-            print("k", k, dictionary[k])
+
+        if self.verbose and n_unused > 0:
+            print(f"{n_unused} unused atoms resampled.")
 
     def _check_convergence(
         self, X, batch_cost, new_dict, old_dict, n_samples, step, n_steps
@@ -2614,9 +2614,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             np.zeros((self._n_components, self._n_components), dtype=X.dtype),  # A
             np.zeros((n_features, self._n_components), dtype=X.dtype),  # B
         )
-        self._As = []
-        self._Bs = []
-        self._es = []
 
         if self.max_iter is not None:
 
@@ -2684,9 +2681,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self._C = np.zeros((self._n_components, n_features), dtype=X.dtype)
         self._B = np.zeros((n_features, self._n_components), dtype=X.dtype)
         self._e = np.zeros((self._n_components, n_features), dtype=X.dtype)
-        self._Cs = []
-        self._Bs = []
-        self._es = []
 
         batches = gen_batches(n_samples, self._batch_size)
         batches = itertools.cycle(batches)
