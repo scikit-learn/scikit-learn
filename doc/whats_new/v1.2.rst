@@ -9,6 +9,16 @@ Version 1.2.1
 
 **In Development**
 
+Changes impacting all modules
+-----------------------------
+
+- |Fix| Fix a bug where the current configuration was ignored in estimators using
+  `n_jobs > 1`. This bug was triggered for tasks dispatched by the auxillary
+  thread of `joblib` as :func:`sklearn.get_config` used to access an empty thread
+  local configuration instead of the configuration visible from the thread where
+  `joblib.Parallel` was first called.
+  :pr:`25290` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Changelog
 ---------
 
