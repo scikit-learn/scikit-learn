@@ -1065,7 +1065,7 @@ def test_zero_estimator_reg(global_random_seed):
     assert mse_gbdt < mse_baseline
 
 
-def test_zero_estimator_estimator(global_random_seed):
+def test_zero_estimator_clf(global_random_seed):
     # Test if init='zero' works for classification.
     X = iris.data
     y = np.array(iris.target)
@@ -1077,7 +1077,7 @@ def test_zero_estimator_estimator(global_random_seed):
 
     assert est.score(X, y) > 0.96
 
-    # binary estimator
+    # binary clf
     mask = y != 0
     y[mask] = 1
     y[~mask] = 0
@@ -1119,34 +1119,34 @@ def test_min_impurity_decrease(GBEstimator):
 def test_warm_start_wo_nestimators_change():
     # Test if warm_start does nothing if n_estimators is not changed.
     # Regression test for #3513.
-    estimator = GradientBoostingClassifier(n_estimators=10, warm_start=True)
-    estimator.fit([[0, 1], [2, 3]], [0, 1])
-    assert estimator.estimators_.shape[0] == 10
-    estimator.fit([[0, 1], [2, 3]], [0, 1])
-    assert estimator.estimators_.shape[0] == 10
+    clf = GradientBoostingClassifier(n_estimators=10, warm_start=True)
+    clf.fit([[0, 1], [2, 3]], [0, 1])
+    assert clf.estimators_.shape[0] == 10
+    clf.fit([[0, 1], [2, 3]], [0, 1])
+    assert clf.estimators_.shape[0] == 10
 
 
 def test_probability_exponential(global_random_seed):
     # Predict probabilities.
-    estimator = GradientBoostingClassifier(
+    clf = GradientBoostingClassifier(
         loss="exponential", n_estimators=100, random_state=global_random_seed
     )
 
     with pytest.raises(ValueError):
-        estimator.predict_proba(T)
+        clf.predict_proba(T)
 
-    estimator.fit(X, y)
-    assert_array_equal(estimator.predict(T), true_result)
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
 
     # check if probabilities are in [0, 1].
-    y_proba = estimator.predict_proba(T)
+    y_proba = clf.predict_proba(T)
     assert np.all(y_proba >= 0.0)
     assert np.all(y_proba <= 1.0)
-    score = estimator.decision_function(T).ravel()
+    score = clf.decision_function(T).ravel()
     assert_allclose(y_proba[:, 1], expit(2 * score))
 
     # derive predictions from probabilities
-    y_pred = estimator.classes_.take(y_proba.argmax(axis=1), axis=0)
+    y_pred = clf.classes_.take(y_proba.argmax(axis=1), axis=0)
     assert_array_equal(y_pred, true_result)
 
 
@@ -1161,7 +1161,7 @@ def test_non_uniform_weights_toy_edge_case_reg():
         assert gb.predict([[1, 0]])[0] > 0.5
 
 
-def test_non_uniform_weights_toy_edge_case_estimator():
+def test_non_uniform_weights_toy_edge_case_clf():
     X = [[1, 0], [1, 0], [1, 0], [0, 1]]
     y = [0, 0, 1, 0]
     # ignore the first 2 training samples by setting their weight to 0
