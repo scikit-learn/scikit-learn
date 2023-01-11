@@ -170,9 +170,11 @@ conda_build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
-        "conda_dependencies": ["python", "ccache"],
+        # sphinx in conda_dependencies as a temporary work-around for
+        # https://github.com/conda-incubator/conda-lock/issues/309
+        "conda_dependencies": ["python", "ccache", "sphinx"],
         "pip_dependencies": remove_from(common_dependencies, ["python", "blas"])
-        + docstring_test_dependencies
+        + remove_from(docstring_test_dependencies, ["sphinx"])
         + ["lightgbm", "scikit-image"],
         "package_constraints": {
             "python": "3.9",
@@ -183,7 +185,9 @@ conda_build_metadata_list = [
         "folder": "build_tools/azure",
         "platform": "linux-64",
         "channel": "defaults",
-        "conda_dependencies": ["python", "ccache"],
+        # sphinx in conda_dependencies as a temporary work-around for
+        # https://github.com/conda-incubator/conda-lock/issues/309
+        "conda_dependencies": ["python", "ccache", "sphinx"],
         "pip_dependencies": remove_from(
             common_dependencies,
             [
@@ -203,7 +207,7 @@ conda_build_metadata_list = [
             ],
         )
         + ["pooch"]
-        + docstring_test_dependencies
+        + remove_from(docstring_test_dependencies, ["sphinx"])
         # python-dateutil is a dependency of pandas and pandas is removed from
         # the environment.yml. Adding python-dateutil so it is pinned
         + ["python-dateutil"],
