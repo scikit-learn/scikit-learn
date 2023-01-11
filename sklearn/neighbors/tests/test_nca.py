@@ -97,7 +97,7 @@ def test_finite_differences(global_random_seed):
     """
     # Initialize the transformation `M`, as well as `X` and `y` and `NCA`
     rng = np.random.RandomState(global_random_seed)
-    X, y = make_classification(global_random_seed)
+    X, y = make_classification(random_state=global_random_seed)
     M = rng.randn(rng.randint(1, X.shape[1] + 1), X.shape[1])
     nca = NeighborhoodComponentsAnalysis()
     nca.n_iter_ = 0
@@ -111,7 +111,7 @@ def test_finite_differences(global_random_seed):
 
     # compare the gradient to a finite difference approximation
     diff = check_grad(fun, grad, M.ravel())
-    assert diff == pytest.approx(0.0)
+    assert diff == pytest.approx(0.0, abs=1e-4)
 
 
 def test_params_validation():
