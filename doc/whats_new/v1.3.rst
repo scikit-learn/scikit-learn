@@ -140,6 +140,13 @@ Changelog
   :pr:`24935` by :user:`Seladus <seladus>`, :user:`Guillaume Lemaitre <glemaitre>`, and
   :user:`Dea María Léon <deamarialeon>`, :pr:`25257` by :user:`Gleb Levitski <glevv>`.
 
+:mod:`sklearn.metrics`
+......................
+- |Enhancement| :func:`pairwise.pairwise_distances` now enables the use of parallel 
+  backends different from multithread (e.g. loki or multiprocess), allowing for a 
+  parallel computation of distance matrices for python-written metric functions.
+  :pr:`24903` by :user:`Lorenzo Mentaschi <menta78>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
