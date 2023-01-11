@@ -19,6 +19,9 @@ Changelog
   certain estimators to be pickled when using Python 3.11. :pr:`25188` by
   :user:`Benjamin Bossan <BenjaminBossan>`.
 
+- |Fix| Inheriting from :class:`base.TransformerMixin` will only wrap the `transform`
+  method if the class defines `transform` itself. :pr:`25295` by `Thomas Fan`_.
+
 :mod:`sklearn.linear_model`
 ...........................
 
