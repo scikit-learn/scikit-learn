@@ -277,7 +277,7 @@ def euclidean_distances(
 
     See Also
     --------
-    paired_distances : Distances betweens pairs of elements of X and Y.
+    paired_distances : Distances between pairs of elements of X and Y.
 
     Notes
     -----

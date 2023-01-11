@@ -1060,7 +1060,7 @@ class _BaseKMeans(
         check_is_fitted(self)
 
         X = self._check_test_data(X)
-        if sample_weight != "deprecated":
+        if not (isinstance(sample_weight, str) and sample_weight == "deprecated"):
             warnings.warn(
                 "'sample_weight' was deprecated in version 1.3 and "
                 "will be removed in 1.5.",
