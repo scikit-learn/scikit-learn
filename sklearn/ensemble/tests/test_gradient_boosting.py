@@ -616,22 +616,21 @@ def test_oob_scores(GradientBoostingEstimator):
     assert estimator.oob_scores_[-1] == pytest.approx(estimator.oob_score_)
 
 
-@pytest.mark.parametrize("GradientBoostingEstimator", GRADIENT_BOOSTING_ESTIMATORS)
-def test_no_available_oob_with_full_sample(GradientBoostingEstimator):
-    """Check that not OOB scores attribute are available with `subsamples=1.0`."""
-    X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
-    estimator = GradientBoostingEstimator(
-        n_estimators=100,
-        random_state=1,
-        subsample=1.0,
-    )
-    estimator.fit(X, y)
-    assert not hasattr(estimator, "oob_scores_")
-    assert not hasattr(estimator, "oob_score_")
-
-
-@pytest.mark.parametrize("GradientBoostingEstimator", GRADIENT_BOOSTING_ESTIMATORS)
-def test_oob_improvement_raise(GradientBoostingEstimator):
+@pytest.mark.parametrize(
+    "GradientBoostingEstimator, oob_attribute",
+    [
+        (GradientBoostingClassifier, "oob_improvement_"),
+        (GradientBoostingClassifier, "oob_scores_"),
+        (GradientBoostingClassifier, "oob_score_"),
+        (GradientBoostingRegressor, "oob_improvement_"),
+        (GradientBoostingRegressor, "oob_scores_"),
+        (GradientBoostingRegressor, "oob_score_"),
+    ],
+)
+def test_oob_attributes_error(GradientBoostingEstimator, oob_attribute):
+    """
+    Check that we raise an AttributeError when the OOB statistics were not computed.
+    """
     X, y = datasets.make_hastie_10_2(n_samples=100, random_state=1)
     estimator = GradientBoostingEstimator(
         n_estimators=100,
@@ -640,7 +639,7 @@ def test_oob_improvement_raise(GradientBoostingEstimator):
     )
     estimator.fit(X, y)
     with pytest.raises(AttributeError):
-        estimator.oob_improvement_
+        estimator.oob_attribute
 
 
 def test_oob_multilcass_iris():
