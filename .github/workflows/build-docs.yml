@@ -22,14 +22,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           # needed by build_doc.sh to compute the list of changed doc files:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Setup Python
-        uses: actions/setup-python@v2
 
       - name: Build documentation
         run: bash build_tools/github/build_doc.sh
@@ -37,10 +34,13 @@ jobs:
           OMP_NUM_THREADS: 2
           MKL_NUM_THREADS: 2
           CONDA_ENV_NAME: testenv
+          # Sphinx race condition in doc-min-dependencies is causing job to stall
+          # Here we run the job serially
+          SPHINX_NUMJOBS: 1
           LOCK_FILE: build_tools/github/doc_min_dependencies_linux-64_conda.lock
 
       - name: Upload documentation
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: doc-min-dependencies
           path: doc/_build/html/stable
@@ -54,14 +54,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout scikit-learn
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
         with:
           # needed by build_doc.sh to compute the list of changed doc files:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Setup Python
-        uses: actions/setup-python@v2
 
       - name: Build documentation
         run: bash build_tools/github/build_doc.sh
@@ -72,7 +69,7 @@ jobs:
           LOCK_FILE: build_tools/github/doc_linux-64_conda.lock
 
       - name: Upload documentation
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: doc
           path: doc/_build/html/stable

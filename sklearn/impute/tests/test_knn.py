@@ -68,10 +68,6 @@ def test_knn_imputer_default_with_invalid_input(na):
     with pytest.raises(ValueError, match="Input X contains (infinity|NaN)"):
         imputer.transform(X)
 
-    # negative n_neighbors
-    with pytest.raises(ValueError, match="Expected n_neighbors > 0"):
-        KNNImputer(missing_values=na, n_neighbors=0).fit(X_fit)
-
     # Test with missing_values=0 when NaN present
     imputer = KNNImputer(missing_values=0, n_neighbors=2, weights="uniform")
     X = np.array(
@@ -92,12 +88,6 @@ def test_knn_imputer_default_with_invalid_input(na):
             [np.nan, 2],
         ]
     )
-
-    # Test with a metric type without NaN support
-    imputer = KNNImputer(metric="euclidean")
-    bad_metric_msg = "The selected metric does not support NaN values"
-    with pytest.raises(ValueError, match=bad_metric_msg):
-        imputer.fit(X)
 
 
 @pytest.mark.parametrize("na", [np.nan, -1])

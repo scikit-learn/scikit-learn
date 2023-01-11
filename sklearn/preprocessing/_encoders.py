@@ -9,13 +9,11 @@ import warnings
 import numpy as np
 from scipy import sparse
 
-from ..base import BaseEstimator, TransformerMixin, _OneToOneFeatureMixin
-from ..utils import check_array, is_scalar_nan
-from ..utils.deprecation import deprecated
+from ..base import BaseEstimator, TransformerMixin, OneToOneFeatureMixin
+from ..utils import check_array, is_scalar_nan, _safe_indexing
 from ..utils.validation import check_is_fitted
 from ..utils.validation import _check_feature_names_in
-from ..utils._param_validation import Interval
-from ..utils._param_validation import StrOptions
+from ..utils._param_validation import Interval, StrOptions, Hidden
 from ..utils._mask import _get_mask
 
 from ..utils._encode import _encode, _check_unknown, _unique, _get_counts
@@ -60,20 +58,13 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
         X_columns = []
 
         for i in range(n_features):
-            Xi = self._get_feature(X, feature_idx=i)
+            Xi = _safe_indexing(X, indices=i, axis=1)
             Xi = check_array(
                 Xi, ensure_2d=False, dtype=None, force_all_finite=needs_validation
             )
             X_columns.append(Xi)
 
         return X_columns, n_samples, n_features
-
-    def _get_feature(self, X, feature_idx):
-        if hasattr(X, "iloc"):
-            # pandas dataframes
-            return X.iloc[:, feature_idx]
-        # numpy arrays, sparse arrays
-        return X[:, feature_idx]
 
     def _fit(
         self, X, handle_unknown="error", force_all_finite=True, return_counts=False
@@ -106,7 +97,27 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 else:
                     cats = result
             else:
-                cats = np.array(self.categories[i], dtype=Xi.dtype)
+                if np.issubdtype(Xi.dtype, np.str_):
+                    # Always convert string categories to objects to avoid
+                    # unexpected string truncation for longer category labels
+                    # passed in the constructor.
+                    Xi_dtype = object
+                else:
+                    Xi_dtype = Xi.dtype
+
+                cats = np.array(self.categories[i], dtype=Xi_dtype)
+                if (
+                    cats.dtype == object
+                    and isinstance(cats[0], bytes)
+                    and Xi.dtype.kind != "S"
+                ):
+                    msg = (
+                        f"In column {i}, the predefined categories have type 'bytes'"
+                        " which is incompatible with values of type"
+                        f" '{type(Xi[0]).__name__}'."
+                    )
+                    raise ValueError(msg)
+
                 if Xi.dtype.kind not in "OUS":
                     sorted_cats = np.sort(cats)
                     error_msg = (
@@ -209,7 +220,7 @@ class OneHotEncoder(_BaseEncoder):
     strings, denoting the values taken on by categorical (discrete) features.
     The features are encoded using a one-hot (aka 'one-of-K' or 'dummy')
     encoding scheme. This creates a binary column for each category and
-    returns a sparse matrix or dense array (depending on the ``sparse``
+    returns a sparse matrix or dense array (depending on the ``sparse_output``
     parameter)
 
     By default, the encoder derives the categories based on the unique values
@@ -270,6 +281,16 @@ class OneHotEncoder(_BaseEncoder):
 
     sparse : bool, default=True
         Will return sparse matrix if set True else will return an array.
+
+        .. deprecated:: 1.2
+           `sparse` is deprecated in 1.2 and will be removed in 1.4. Use
+           `sparse_output` instead.
+
+    sparse_output : bool, default=True
+        Will return sparse matrix if set True else will return an array.
+
+        .. versionadded:: 1.2
+           `sparse` was renamed to `sparse_output`
 
     dtype : number type, default=float
         Desired dtype of output.
@@ -342,7 +363,7 @@ class OneHotEncoder(_BaseEncoder):
         (if any).
 
     drop_idx_ : array of shape (n_features,)
-        - ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category
+        - ``drop_idx_[i]`` is the index in ``categories_[i]`` of the category
           to be dropped for each feature.
         - ``drop_idx_[i] = None`` if no category is to be dropped from the
           feature with index ``i``, e.g. when `drop='if_binary'` and the
@@ -452,7 +473,7 @@ class OneHotEncoder(_BaseEncoder):
 
     >>> import numpy as np
     >>> X = np.array([["a"] * 5 + ["b"] * 20 + ["c"] * 10 + ["d"] * 3], dtype=object).T
-    >>> ohe = OneHotEncoder(max_categories=3, sparse=False).fit(X)
+    >>> ohe = OneHotEncoder(max_categories=3, sparse_output=False).fit(X)
     >>> ohe.infrequent_categories_
     [array(['a', 'd'], dtype=object)]
     >>> ohe.transform([["a"], ["b"]])
@@ -460,7 +481,7 @@ class OneHotEncoder(_BaseEncoder):
            [1., 0., 0.]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "categories": [StrOptions({"auto"}), list],
         "drop": [StrOptions({"first", "if_binary"}), "array-like", None],
         "dtype": "no_validation",  # validation delegated to numpy
@@ -471,7 +492,8 @@ class OneHotEncoder(_BaseEncoder):
             Interval(Real, 0, 1, closed="neither"),
             None,
         ],
-        "sparse": ["boolean"],
+        "sparse": [Hidden(StrOptions({"deprecated"})), "boolean"],  # deprecated
+        "sparse_output": ["boolean"],
         "feature_name_combiner": [StrOptions({"concat"}), callable],
     }
 
@@ -480,7 +502,8 @@ class OneHotEncoder(_BaseEncoder):
         *,
         categories="auto",
         drop=None,
-        sparse=True,
+        sparse="deprecated",
+        sparse_output=True,
         dtype=np.float64,
         handle_unknown="error",
         min_frequency=None,
@@ -488,7 +511,9 @@ class OneHotEncoder(_BaseEncoder):
         feature_name_combiner="concat",
     ):
         self.categories = categories
+        # TODO(1.4): Remove self.sparse
         self.sparse = sparse
+        self.sparse_output = sparse_output
         self.dtype = dtype
         self.handle_unknown = handle_unknown
         self.drop = drop
@@ -828,6 +853,16 @@ class OneHotEncoder(_BaseEncoder):
             Fitted encoder.
         """
         self._validate_params()
+
+        if self.sparse != "deprecated":
+            warnings.warn(
+                "`sparse` was renamed to `sparse_output` in version 1.2 and "
+                "will be removed in 1.4. `sparse_output` is ignored unless you "
+                "leave `sparse` to its default value.",
+                FutureWarning,
+            )
+            self.sparse_output = self.sparse
+
         self._check_infrequent_enabled()
 
         fit_results = self._fit(
@@ -860,7 +895,7 @@ class OneHotEncoder(_BaseEncoder):
         -------
         X_out : {ndarray, sparse matrix} of shape \
                 (n_samples, n_encoded_features)
-            Transformed input. If `sparse=True`, a sparse matrix will be
+            Transformed input. If `sparse_output=True`, a sparse matrix will be
             returned.
         """
         check_is_fitted(self)
@@ -909,7 +944,7 @@ class OneHotEncoder(_BaseEncoder):
             shape=(n_samples, feature_indices[-1]),
             dtype=self.dtype,
         )
-        if not self.sparse:
+        if not self.sparse_output:
             return out.toarray()
         else:
             return out
@@ -958,7 +993,7 @@ class OneHotEncoder(_BaseEncoder):
         ]
 
         # create resulting array of appropriate dtype
-        dt = np.find_common_type([cat.dtype for cat in transformed_features], [])
+        dt = np.result_type(*[cat.dtype for cat in transformed_features])
         X_tr = np.empty((n_samples, n_features), dtype=dt)
 
         j = 0
@@ -1028,47 +1063,6 @@ class OneHotEncoder(_BaseEncoder):
 
         return X_tr
 
-    @deprecated(
-        "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. Please use get_feature_names_out instead."
-    )
-    def get_feature_names(self, input_features=None):
-        """Return feature names for output features.
-
-        For a given input feature, if there is an infrequent category, the most
-        'infrequent_sklearn' will be used as a feature name.
-
-        Parameters
-        ----------
-        input_features : list of str of shape (n_features,)
-            String names for input features if available. By default,
-            "x0", "x1", ... "xn_features" is used.
-
-        Returns
-        -------
-        output_feature_names : ndarray of shape (n_output_features,)
-            Array of feature names.
-        """
-        check_is_fitted(self)
-        cats = [
-            self._compute_transformed_categories(i)
-            for i, _ in enumerate(self.categories_)
-        ]
-        if input_features is None:
-            input_features = ["x%d" % i for i in range(len(cats))]
-        elif len(input_features) != len(cats):
-            raise ValueError(
-                "input_features should have length equal to number of "
-                "features ({}), got {}".format(len(cats), len(input_features))
-            )
-
-        name_combiner = self._check_get_feature_name_combiner()
-        feature_names = []
-        for i in range(len(cats)):
-            names = [name_combiner(input_features[i], t) for t in cats[i]]
-            feature_names.extend(names)
-        return np.asarray(feature_names, dtype=object)
-
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
 
@@ -1117,7 +1111,7 @@ class OneHotEncoder(_BaseEncoder):
             )
 
 
-class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
+class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     """
     Encode categorical features as an integer array.
 
@@ -1193,6 +1187,13 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
     LabelEncoder : Encodes target labels with values between 0 and
         ``n_classes-1``.
 
+    Notes
+    -----
+    With a high proportion of `nan` values, inferring categories becomes slow with
+    Python versions before 3.10. The handling of `nan` values was improved
+    from Python 3.10 onwards, (c.f.
+    `bpo-43475 <https://github.com/python/cpython/issues/87641>`_).
+
     Examples
     --------
     Given a dataset with two features, we let the encoder find the unique
@@ -1231,7 +1232,7 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
            [ 0., -1.]])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "categories": [StrOptions({"auto"}), list],
         "dtype": "no_validation",  # validation delegated to numpy
         "encoded_missing_value": [Integral, type(np.nan)],
@@ -1408,25 +1409,29 @@ class OrdinalEncoder(_OneToOneFeatureMixin, _BaseEncoder):
             raise ValueError(msg.format(n_features, X.shape[1]))
 
         # create resulting array of appropriate dtype
-        dt = np.find_common_type([cat.dtype for cat in self.categories_], [])
+        dt = np.result_type(*[cat.dtype for cat in self.categories_])
         X_tr = np.empty((n_samples, n_features), dtype=dt)
 
         found_unknown = {}
 
         for i in range(n_features):
-            labels = X[:, i].astype("int64", copy=False)
+            labels = X[:, i]
 
             # replace values of X[:, i] that were nan with actual indices
             if i in self._missing_indices:
-                X_i_mask = _get_mask(X[:, i], self.encoded_missing_value)
+                X_i_mask = _get_mask(labels, self.encoded_missing_value)
                 labels[X_i_mask] = self._missing_indices[i]
 
             if self.handle_unknown == "use_encoded_value":
-                unknown_labels = labels == self.unknown_value
-                X_tr[:, i] = self.categories_[i][np.where(unknown_labels, 0, labels)]
+                unknown_labels = _get_mask(labels, self.unknown_value)
+
+                known_labels = ~unknown_labels
+                X_tr[known_labels, i] = self.categories_[i][
+                    labels[known_labels].astype("int64", copy=False)
+                ]
                 found_unknown[i] = unknown_labels
             else:
-                X_tr[:, i] = self.categories_[i][labels]
+                X_tr[:, i] = self.categories_[i][labels.astype("int64", copy=False)]
 
         # insert None values for unknown values
         if found_unknown:

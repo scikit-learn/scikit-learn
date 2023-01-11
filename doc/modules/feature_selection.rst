@@ -87,7 +87,7 @@ These objects take as input a scoring function that returns univariate scores
 and p-values (or only scores for :class:`SelectKBest` and
 :class:`SelectPercentile`):
 
- * For regression: :func:`f_regression`, :func:`mutual_info_regression`
+ * For regression: :func:`r_regression`, :func:`f_regression`, :func:`mutual_info_regression`
 
  * For classification: :func:`chi2`, :func:`f_classif`, :func:`mutual_info_classif`
 
@@ -196,9 +196,7 @@ alpha parameter, the fewer features selected.
 
 .. topic:: Examples:
 
-    * :ref:`sphx_glr_auto_examples_text_plot_document_classification_20newsgroups.py`: Comparison
-      of different algorithms for document classification including L1-based
-      feature selection.
+    * :ref:`sphx_glr_auto_examples_linear_model_plot_lasso_dense_vs_sparse_data.py`.
 
 .. _compressive_sensing:
 
@@ -307,7 +305,7 @@ fit and requires no iterations.
 
    .. [sfs] Ferri et al, `Comparative study of techniques for
       large-scale feature selection
-      <http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.24.4369&rep=rep1&type=pdf>`_.
+      <https://citeseerx.ist.psu.edu/doc_view/pid/5fedabbb3957bbb442802e012d829ee0629a01b6>`_.
 
 Feature selection as part of a pipeline
 =======================================

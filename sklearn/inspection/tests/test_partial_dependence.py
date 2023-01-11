@@ -136,8 +136,9 @@ def test_grid_from_X():
     # the unique values instead of the percentiles)
     percentiles = (0.05, 0.95)
     grid_resolution = 100
+    is_categorical = [False, False]
     X = np.asarray([[1, 2], [3, 4]])
-    grid, axes = _grid_from_X(X, percentiles, grid_resolution)
+    grid, axes = _grid_from_X(X, percentiles, is_categorical, grid_resolution)
     assert_array_equal(grid, [[1, 2], [1, 4], [3, 2], [3, 4]])
     assert_array_equal(axes, X.T)
 
@@ -148,7 +149,9 @@ def test_grid_from_X():
 
     # n_unique_values > grid_resolution
     X = rng.normal(size=(20, 2))
-    grid, axes = _grid_from_X(X, percentiles, grid_resolution=grid_resolution)
+    grid, axes = _grid_from_X(
+        X, percentiles, is_categorical, grid_resolution=grid_resolution
+    )
     assert grid.shape == (grid_resolution * grid_resolution, X.shape[1])
     assert np.asarray(axes).shape == (2, grid_resolution)
 
@@ -156,11 +159,64 @@ def test_grid_from_X():
     n_unique_values = 12
     X[n_unique_values - 1 :, 0] = 12345
     rng.shuffle(X)  # just to make sure the order is irrelevant
-    grid, axes = _grid_from_X(X, percentiles, grid_resolution=grid_resolution)
+    grid, axes = _grid_from_X(
+        X, percentiles, is_categorical, grid_resolution=grid_resolution
+    )
     assert grid.shape == (n_unique_values * grid_resolution, X.shape[1])
     # axes is a list of arrays of different shapes
     assert axes[0].shape == (n_unique_values,)
     assert axes[1].shape == (grid_resolution,)
+
+
+@pytest.mark.parametrize(
+    "grid_resolution",
+    [
+        2,  # since n_categories > 2, we should not use quantiles resampling
+        100,
+    ],
+)
+def test_grid_from_X_with_categorical(grid_resolution):
+    """Check that `_grid_from_X` always sample from categories and does not
+    depend from the percentiles.
+    """
+    pd = pytest.importorskip("pandas")
+    percentiles = (0.05, 0.95)
+    is_categorical = [True]
+    X = pd.DataFrame({"cat_feature": ["A", "B", "C", "A", "B", "D", "E"]})
+    grid, axes = _grid_from_X(
+        X, percentiles, is_categorical, grid_resolution=grid_resolution
+    )
+    assert grid.shape == (5, X.shape[1])
+    assert axes[0].shape == (5,)
+
+
+@pytest.mark.parametrize("grid_resolution", [3, 100])
+def test_grid_from_X_heterogeneous_type(grid_resolution):
+    """Check that `_grid_from_X` always sample from categories and does not
+    depend from the percentiles.
+    """
+    pd = pytest.importorskip("pandas")
+    percentiles = (0.05, 0.95)
+    is_categorical = [True, False]
+    X = pd.DataFrame(
+        {
+            "cat": ["A", "B", "C", "A", "B", "D", "E", "A", "B", "D"],
+            "num": [1, 1, 1, 2, 5, 6, 6, 6, 6, 8],
+        }
+    )
+    nunique = X.nunique()
+
+    grid, axes = _grid_from_X(
+        X, percentiles, is_categorical, grid_resolution=grid_resolution
+    )
+    if grid_resolution == 3:
+        assert grid.shape == (15, 2)
+        assert axes[0].shape[0] == nunique["num"]
+        assert axes[1].shape[0] == grid_resolution
+    else:
+        assert grid.shape == (25, 2)
+        assert axes[0].shape[0] == nunique["cat"]
+        assert axes[1].shape[0] == nunique["cat"]
 
 
 @pytest.mark.parametrize(
@@ -177,8 +233,9 @@ def test_grid_from_X():
 )
 def test_grid_from_X_error(grid_resolution, percentiles, err_msg):
     X = np.asarray([[1, 2], [3, 4]])
+    is_categorical = [False]
     with pytest.raises(ValueError, match=err_msg):
-        _grid_from_X(X, grid_resolution=grid_resolution, percentiles=percentiles)
+        _grid_from_X(X, percentiles, is_categorical, grid_resolution)
 
 
 @pytest.mark.parametrize("target_feature", range(5))

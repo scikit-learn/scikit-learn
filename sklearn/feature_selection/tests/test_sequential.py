@@ -13,28 +13,17 @@ from sklearn.model_selection import cross_val_score
 from sklearn.cluster import KMeans
 
 
-@pytest.mark.parametrize("n_features_to_select", (0, 5, 0.0, -1, 1.1))
-def test_bad_n_features_to_select(n_features_to_select):
-    X, y = make_regression(n_features=5)
-    sfs = SequentialFeatureSelector(
-        LinearRegression(), n_features_to_select=n_features_to_select
-    )
-    with pytest.raises(ValueError, match="must be either 'auto'"):
-        sfs.fit(X, y)
-
-
-def test_bad_direction():
-    X, y = make_regression(n_features=5)
-    sfs = SequentialFeatureSelector(
-        LinearRegression(), n_features_to_select="auto", direction="bad"
-    )
-    with pytest.raises(ValueError, match="must be either 'forward' or"):
+def test_bad_n_features_to_select():
+    n_features = 5
+    X, y = make_regression(n_features=n_features)
+    sfs = SequentialFeatureSelector(LinearRegression(), n_features_to_select=n_features)
+    with pytest.raises(ValueError, match="n_features_to_select must be either"):
         sfs.fit(X, y)
 
 
 @pytest.mark.filterwarnings("ignore:Leaving `n_features_to_select` to ")
 @pytest.mark.parametrize("direction", ("forward", "backward"))
-@pytest.mark.parametrize("n_features_to_select", (1, 5, 9, "auto", None))
+@pytest.mark.parametrize("n_features_to_select", (1, 5, 9, "auto"))
 def test_n_features_to_select(direction, n_features_to_select):
     # Make sure n_features_to_select is respected
 
@@ -144,7 +133,6 @@ def test_n_features_to_select_stopping_criterion(direction):
         assert (removed_cv_score - sfs_cv_score) <= tol
 
 
-# TODO: Remove test for n_features_to_select=None in 1.3
 @pytest.mark.filterwarnings("ignore:Leaving `n_features_to_select` to ")
 @pytest.mark.parametrize("direction", ("forward", "backward"))
 @pytest.mark.parametrize(
@@ -153,7 +141,6 @@ def test_n_features_to_select_stopping_criterion(direction):
         (0.1, 1),
         (1.0, 10),
         (0.5, 5),
-        (None, 5),
     ),
 )
 def test_n_features_to_select_float(direction, n_features_to_select, expected):
@@ -198,16 +185,14 @@ def test_sanity(seed, direction, n_features_to_select, expected_selected_feature
     assert_array_equal(sfs.get_support(indices=True), expected_selected_features)
 
 
-# TODO: Remove test for n_features_to_select=None in 1.3
 @pytest.mark.filterwarnings("ignore:Leaving `n_features_to_select` to ")
-@pytest.mark.parametrize("n_features_to_select", ["auto", None])
-def test_sparse_support(n_features_to_select):
+def test_sparse_support():
     # Make sure sparse data is supported
 
     X, y = make_regression(n_features=10)
     X = scipy.sparse.csr_matrix(X)
     sfs = SequentialFeatureSelector(
-        LinearRegression(), n_features_to_select=n_features_to_select, cv=2
+        LinearRegression(), n_features_to_select="auto", cv=2
     )
     sfs.fit(X, y)
     sfs.transform(X)

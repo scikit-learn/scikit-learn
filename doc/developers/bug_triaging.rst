@@ -40,7 +40,7 @@ The following actions are typically useful:
 
    Overall, it is useful to stay positive and assume good will. `The
    following article
-   <http://gael-varoquaux.info/programming/technical-discussions-are-hard-a-few-tips.html>`_
+   <https://gael-varoquaux.info/programming/technical-discussions-are-hard-a-few-tips.html>`_
    explores how to lead online discussions in the context of open source.
 
 Working on PRs to help review
@@ -101,7 +101,7 @@ The following workflow [1]_ is a good way to approach issue triaging:
 
 #. Thank the reporter for opening an issue
 
-   The issue tracker is many people’s first interaction with the
+   The issue tracker is many people's first interaction with the
    scikit-learn project itself, beyond just using the library. As such,
    we want it to be a welcoming, pleasant experience.
 

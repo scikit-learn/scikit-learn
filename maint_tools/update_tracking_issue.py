@@ -14,6 +14,7 @@ github account that does **not** have commit access to the public repo.
 from pathlib import Path
 import sys
 import argparse
+from datetime import datetime, timezone
 
 import defusedxml.ElementTree as ET
 from github import Github
@@ -56,6 +57,8 @@ if args.junit_file is None and args.tests_passed is None:
 
 gh = Github(args.bot_github_token)
 issue_repo = gh.get_repo(args.issue_repo)
+dt_now = datetime.now(tz=timezone.utc)
+date_str = dt_now.strftime("%b %d, %Y")
 title = f"⚠️ CI failed on {args.ci_name} ⚠️"
 
 
@@ -85,13 +88,13 @@ def create_or_update_issue(body=""):
 
     if issue is None:
         # Create new issue
-        header = f"**CI failed on {link}**"
+        header = f"**CI failed on {link}** ({date_str})"
         issue = issue_repo.create_issue(title=title, body=f"{header}\n{body}")
         print(f"Created issue in {args.issue_repo}#{issue.number}")
         sys.exit()
     else:
         # Update existing issue
-        header = f"**CI is still failing on {link}**"
+        header = f"**CI is still failing on {link}** ({date_str})"
         issue.edit(body=f"{header}\n{body}")
         print(f"Commented on issue: {args.issue_repo}#{issue.number}")
         sys.exit()
@@ -101,18 +104,20 @@ def close_issue_if_opened():
     print("Test has no failures!")
     issue = get_issue()
     if issue is not None:
-        # Comment only if the "## CI is no longer failing" comment does not exist
-        comment_exists = any(
-            c.body.startswith("## CI is no longer failing")
-            for c in issue.get_comments()
+        header_str = "## CI is no longer failing!"
+        comment_str = (
+            f"{header_str} ✅\n\n[Successful run]({args.link_to_ci_run}) on {date_str}"
         )
-        if not comment_exists:
-            comment = (
-                "## CI is no longer failing! ✅\n\n[Successful"
-                f" run]({args.link_to_ci_run})"
-            )
-            print(f"Commented on issue #{issue.number}")
-            issue.create_comment(body=comment)
+
+        print(f"Commented on issue #{issue.number}")
+        # New comment if "## CI is no longer failing!" comment does not exist
+        # If it does exist update the original comment which includes the new date
+        for comment in issue.get_comments():
+            if comment.body.startswith(header_str):
+                comment.edit(body=comment_str)
+                break
+        else:  # no break
+            issue.create_comment(body=comment_str)
 
         if args.auto_close.lower() == "true":
             print(f"Closing issue #{issue.number}")

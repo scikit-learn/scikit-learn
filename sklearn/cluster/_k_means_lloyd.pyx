@@ -24,7 +24,6 @@ from ._k_means_common cimport _average_centers, _center_shift
 def lloyd_iter_chunked_dense(
         floating[:, ::1] X,                # IN READ-ONLY
         floating[::1] sample_weight,       # IN READ-ONLY
-        floating[::1] x_squared_norms,     # IN
         floating[:, ::1] centers_old,      # IN
         floating[:, ::1] centers_new,      # OUT
         floating[::1] weight_in_clusters,  # OUT
@@ -45,23 +44,19 @@ def lloyd_iter_chunked_dense(
     sample_weight : ndarray of shape (n_samples,), dtype=floating
         The weights for each observation in X.
 
-    x_squared_norms : ndarray of shape (n_samples,), dtype=floating
-        Squared L2 norm of X.
-
     centers_old : ndarray of shape (n_clusters, n_features), dtype=floating
         Centers before previous iteration, placeholder for the centers after
         previous iteration.
 
     centers_new : ndarray of shape (n_clusters, n_features), dtype=floating
         Centers after previous iteration, placeholder for the new centers
-        computed during this iteration.
-
-    centers_squared_norms : ndarray of shape (n_clusters,), dtype=floating
-        Squared L2 norm of the centers.
+        computed during this iteration. `centers_new` can be `None` if
+        `update_centers` is False.
 
     weight_in_clusters : ndarray of shape (n_clusters,), dtype=floating
         Placeholder for the sums of the weights of every observation assigned
-        to each center.
+        to each center. `weight_in_clusters` can be `None` if `update_centers`
+        is False.
 
     labels : ndarray of shape (n_samples,), dtype=int
         labels assignment.
@@ -82,7 +77,7 @@ def lloyd_iter_chunked_dense(
     cdef:
         int n_samples = X.shape[0]
         int n_features = X.shape[1]
-        int n_clusters = centers_new.shape[0]
+        int n_clusters = centers_old.shape[0]
 
         # hard-coded number of samples per chunk. Appeared to be close to
         # optimal in all situations.
@@ -130,7 +125,6 @@ def lloyd_iter_chunked_dense(
             _update_chunk_dense(
                 X[start: end],
                 sample_weight[start: end],
-                x_squared_norms[start: end],
                 centers_old,
                 centers_squared_norms,
                 labels[start: end],
@@ -169,7 +163,6 @@ def lloyd_iter_chunked_dense(
 cdef void _update_chunk_dense(
         floating[:, ::1] X,                   # IN READ-ONLY
         floating[::1] sample_weight,          # IN READ-ONLY
-        floating[::1] x_squared_norms,        # IN
         floating[:, ::1] centers_old,         # IN
         floating[::1] centers_squared_norms,  # IN
         int[::1] labels,                      # OUT
@@ -223,7 +216,6 @@ cdef void _update_chunk_dense(
 def lloyd_iter_chunked_sparse(
         X,                                 # IN
         floating[::1] sample_weight,       # IN
-        floating[::1] x_squared_norms,     # IN
         floating[:, ::1] centers_old,      # IN
         floating[:, ::1] centers_new,      # OUT
         floating[::1] weight_in_clusters,  # OUT
@@ -244,23 +236,19 @@ def lloyd_iter_chunked_sparse(
     sample_weight : ndarray of shape (n_samples,), dtype=floating
         The weights for each observation in X.
 
-    x_squared_norms : ndarray of shape (n_samples,), dtype=floating
-        Squared L2 norm of X.
-
     centers_old : ndarray of shape (n_clusters, n_features), dtype=floating
         Centers before previous iteration, placeholder for the centers after
         previous iteration.
 
     centers_new : ndarray of shape (n_clusters, n_features), dtype=floating
         Centers after previous iteration, placeholder for the new centers
-        computed during this iteration.
-
-    centers_squared_norms : ndarray of shape (n_clusters,), dtype=floating
-        Squared L2 norm of the centers.
+        computed during this iteration. `centers_new` can be `None` if
+        `update_centers` is False.
 
     weight_in_clusters : ndarray of shape (n_clusters,), dtype=floating
         Placeholder for the sums of the weights of every observation assigned
-        to each center.
+        to each center. `weight_in_clusters` can be `None` if `update_centers`
+        is False.
 
     labels : ndarray of shape (n_samples,), dtype=int
         labels assignment.
@@ -282,7 +270,7 @@ def lloyd_iter_chunked_sparse(
     cdef:
         int n_samples = X.shape[0]
         int n_features = X.shape[1]
-        int n_clusters = centers_new.shape[0]
+        int n_clusters = centers_old.shape[0]
 
         # Choose same as for dense. Does not have the same impact since with
         # sparse data the pairwise distances matrix is not precomputed.
@@ -336,7 +324,6 @@ def lloyd_iter_chunked_sparse(
                 X_indices[X_indptr[start]: X_indptr[end]],
                 X_indptr[start: end+1],
                 sample_weight[start: end],
-                x_squared_norms[start: end],
                 centers_old,
                 centers_squared_norms,
                 labels[start: end],
@@ -376,7 +363,6 @@ cdef void _update_chunk_sparse(
         int[::1] X_indices,                   # IN
         int[::1] X_indptr,                    # IN
         floating[::1] sample_weight,          # IN
-        floating[::1] x_squared_norms,        # IN
         floating[:, ::1] centers_old,         # IN
         floating[::1] centers_squared_norms,  # IN
         int[::1] labels,                      # OUT
