@@ -352,7 +352,7 @@ class OneHotEncoder(_BaseEncoder):
         `feature + "_" + str(category)`.E.g. feature X with values 1, 6, 7 create
         feature names `X_1, X_6, X_7`.
 
-        .. versionadded:: 1.2
+        .. versionadded:: 1.3
 
     Attributes
     ----------
@@ -404,7 +404,7 @@ class OneHotEncoder(_BaseEncoder):
         string. This is used to create feature names to be returned by
         :meth:`get_feature_names_out`.
 
-        .. versionadded:: 1.2
+        .. versionadded:: 1.3
 
     See Also
     --------
@@ -1101,14 +1101,14 @@ class OneHotEncoder(_BaseEncoder):
     def _check_get_feature_name_combiner(self):
         if self.feature_name_combiner == "concat":
             return lambda feature, category: feature + "_" + str(category)
-        elif callable(self.feature_name_combiner):
-            assert isinstance(self.feature_name_combiner("feature", "category"), str)
+        else:  # callable
+            dry_run_combiner = self.feature_name_combiner("feature", "category")
+            if not isinstance(dry_run_combiner, str):
+                raise TypeError(
+                    "When `feature_name_combiner` is a callable, it should return a "
+                    f"Python string. Got {type(dry_run_combiner)} instead."
+                )
             return self.feature_name_combiner
-        else:
-            raise ValueError(
-                "feature_name_combiner has to be either 'concat' or callable,"
-                f" got {self.feature_name_combiner}"
-            )
 
 
 class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):

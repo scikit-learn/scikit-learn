@@ -207,18 +207,16 @@ def test_one_hot_encoder_custom_feature_name_combiner():
     feature_names = enc.get_feature_names_out(input_features=["a"])
     assert_array_equal(["a_'None'", "a_None"], feature_names)
 
+    def wrong_combiner(feature, category):
+        # we should be returning a Python string
+        return 0
 
-def test_one_hot_encoder_invalid_feature_name_combiner():
-    enc = OneHotEncoder(feature_name_combiner="invalid_preset")
-    X = np.array([[1, 2]], dtype=object).T
-    with pytest.raises(
-        ValueError,
-        match=(
-            "The 'feature_name_combiner' parameter of OneHotEncoder must be a str among"
-            " {'concat'} or a callable.*"
-        ),
-    ):
-        enc.fit(X)
+    enc = OneHotEncoder(feature_name_combiner=wrong_combiner).fit(X)
+    err_msg = (
+        "When `feature_name_combiner` is a callable, it should return a Python string."
+    )
+    with pytest.raises(TypeError, match=err_msg):
+        enc.get_feature_names_out()
 
 
 def test_one_hot_encoder_set_params():
