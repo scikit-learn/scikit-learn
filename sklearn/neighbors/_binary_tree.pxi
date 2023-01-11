@@ -857,7 +857,7 @@ cdef class BinaryTree:
         # with numbers of points between leaf_size and 2 * leaf_size
         self.n_levels = int(
             np.log2(fmax(1, (n_samples - 1) / self.leaf_size)) + 1)
-        self.n_nodes = (2 ** self.n_levels) - 1
+        self.n_nodes = <int> (2 ** self.n_levels) - 1
 
         # allocate arrays for storage
         self.idx_array_arr = np.arange(n_samples, dtype=ITYPE)
