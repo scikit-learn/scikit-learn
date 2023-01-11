@@ -35,6 +35,7 @@ from ..utils import check_array
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import _is_arraylike_not_scalar
+from ..utils._array_api import get_namespace
 from ..utils._param_validation import Hidden
 from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
@@ -380,9 +381,6 @@ class KMeansCythonEngine:
             n_threads=self._n_threads,
             verbose=self.estimator.verbose,
         )
-
-    def get_nb_distinct_clusters(self, best_labels):
-        return len(set(best_labels))
 
     def prepare_prediction(self, X, sample_weight):
         X = self.estimator._check_test_data(X)
@@ -1612,7 +1610,8 @@ class KMeans(_BaseKMeans):
 
         engine.unshift_centers(X, best_centers)
 
-        distinct_clusters = engine.get_nb_distinct_clusters(best_labels)
+        xp, _ = get_namespace(best_labels)
+        distinct_clusters = xp.unique_values(best_labels).shape[0]
         if distinct_clusters < self.n_clusters:
             warnings.warn(
                 "Number of distinct clusters ({}) found smaller than "
