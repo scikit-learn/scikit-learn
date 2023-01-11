@@ -1,4 +1,5 @@
-cimport cython
+from cython cimport floating
+
 cimport numpy as cnp
 import numpy as np
 
@@ -8,8 +9,8 @@ from libc.math cimport exp, fabs, log
 from numpy.math cimport EULER
 
 
-def mean_change(cnp.ndarray[ndim=1, dtype=cnp.float64_t] arr_1,
-                cnp.ndarray[ndim=1, dtype=cnp.float64_t] arr_2):
+def mean_change(cnp.ndarray[ndim=1, dtype=floating] arr_1,
+                cnp.ndarray[ndim=1, dtype=floating] arr_2):
     """Calculate the mean difference between two arrays.
 
     Equivalent to np.abs(arr_1 - arr2).mean().
@@ -27,9 +28,9 @@ def mean_change(cnp.ndarray[ndim=1, dtype=cnp.float64_t] arr_1,
     return total / size
 
 
-def _dirichlet_expectation_1d(cnp.ndarray[ndim=1, dtype=cnp.float64_t] doc_topic,
-                              double doc_topic_prior,
-                              cnp.ndarray[ndim=1, dtype=cnp.float64_t] out):
+def _dirichlet_expectation_1d(cnp.ndarray[ndim=1, dtype=floating] doc_topic,
+                              floating doc_topic_prior,
+                              cnp.ndarray[ndim=1, dtype=floating] out):
     """Dirichlet expectation for a single sample:
         exp(E[log(theta)]) for theta ~ Dir(doc_topic)
     after adding doc_topic_prior to doc_topic, in-place.
@@ -39,7 +40,7 @@ def _dirichlet_expectation_1d(cnp.ndarray[ndim=1, dtype=cnp.float64_t] doc_topic
         out[:] = np.exp(psi(doc_topic) - psi(np.sum(doc_topic)))
     """
 
-    cdef cnp.float64_t dt, psi_total, total
+    cdef floating dt, psi_total, total
     cdef cnp.npy_intp i, size
 
     size = doc_topic.shape[0]
@@ -55,7 +56,7 @@ def _dirichlet_expectation_1d(cnp.ndarray[ndim=1, dtype=cnp.float64_t] doc_topic
         out[i] = exp(psi(doc_topic[i]) - psi_total)
 
 
-def _dirichlet_expectation_2d(cnp.ndarray[ndim=2, dtype=cnp.float64_t] arr):
+def _dirichlet_expectation_2d(cnp.ndarray[ndim=2, dtype=floating] arr):
     """Dirichlet expectation for multiple samples:
     E[log(theta)] for theta ~ Dir(arr).
 
@@ -64,8 +65,8 @@ def _dirichlet_expectation_2d(cnp.ndarray[ndim=2, dtype=cnp.float64_t] arr):
     Note that unlike _dirichlet_expectation_1d, this function doesn't compute
     the exp and doesn't add in the prior.
     """
-    cdef cnp.float64_t row_total, psi_row_total
-    cdef cnp.ndarray[ndim=2, dtype=cnp.float64_t] d_exp
+    cdef floating row_total, psi_row_total
+    cdef cnp.ndarray[ndim=2, dtype=floating] d_exp
     cdef cnp.npy_intp i, j, n_rows, n_cols
 
     n_rows = arr.shape[0]
@@ -88,12 +89,12 @@ def _dirichlet_expectation_2d(cnp.ndarray[ndim=2, dtype=cnp.float64_t] arr):
 #
 # After: J. Bernardo (1976). Algorithm AS 103: Psi (Digamma) Function.
 # https://www.uv.es/~bernardo/1976AppStatist.pdf
-cdef double psi(double x) nogil:
+cdef floating psi(floating x) nogil:
     if x <= 1e-6:
         # psi(x) = -EULER - 1/x + O(x)
         return -EULER - 1. / x
 
-    cdef double r, result = 0
+    cdef floating r, result = 0
 
     # psi(x + 1) = psi(x) + 1/x
     while x < 6:

@@ -12,6 +12,20 @@ then
           -H "Authorization: token $GITHUB_TOKEN" \
           https://api.github.com/repos/$REPO_NAME/commits/$COMMIT_SHA/pulls 2>/dev/null \
           | jq '.[0].number')
+
+     if [[ "$PULL_REQUEST_NUMBER" == "null" ]]; then
+          # The pull request is on the main (default) branch of the fork. The above API
+          # call is unable to get the PR number associated with the commit:
+          # https://docs.github.com/en/rest/commits/commits#list-pull-requests-associated-with-a-commit
+          # We fallback to the search API here. The search API is not used everytime
+          # because it has a lower rate limit.
+          PULL_REQUEST_NUMBER=$(curl \
+               -H "Accept: application/vnd.github+json" \
+               -H "Authorization: token $GITHUB_TOKEN" \
+               "https://api.github.com/search/issues?q=$COMMIT_SHA+repo:$GITHUB_REPOSITORY" 2>/dev/null \
+               | jq '.items[0].number')
+     fi
+
      BRANCH=pull/$PULL_REQUEST_NUMBER/head
 else
      BRANCH=$HEAD_BRANCH

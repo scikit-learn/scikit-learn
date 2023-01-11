@@ -70,7 +70,6 @@ class deprecated:
         cls.__init__ = wrapped
 
         wrapped.__name__ = "__init__"
-        wrapped.__doc__ = self._update_doc(init.__doc__)
         wrapped.deprecated_original = init
 
         return cls
@@ -87,7 +86,6 @@ class deprecated:
             warnings.warn(msg, category=FutureWarning)
             return fun(*args, **kwargs)
 
-        wrapped.__doc__ = self._update_doc(wrapped.__doc__)
         # Add a reference to the wrapped function so that we can introspect
         # on function arguments in Python 2 (already works in Python 3)
         wrapped.__wrapped__ = fun
@@ -103,17 +101,7 @@ class deprecated:
             warnings.warn(msg, category=FutureWarning)
             return prop.fget(*args, **kwargs)
 
-        wrapped.__doc__ = self._update_doc(wrapped.__doc__)
-
         return wrapped
-
-    def _update_doc(self, olddoc):
-        newdoc = "DEPRECATED"
-        if self.extra:
-            newdoc = "%s: %s" % (newdoc, self.extra)
-        if olddoc:
-            newdoc = "%s\n\n    %s" % (newdoc, olddoc)
-        return newdoc
 
 
 def _is_deprecated(func):

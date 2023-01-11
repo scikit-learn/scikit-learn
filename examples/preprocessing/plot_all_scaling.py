@@ -324,7 +324,7 @@ make_plot(3)
 #
 # Unlike the previous scalers, the centering and scaling statistics of
 # :class:`~sklearn.preprocessing.RobustScaler`
-# is based on percentiles and are therefore not influenced by a few
+# are based on percentiles and are therefore not influenced by a small
 # number of very large marginal outliers. Consequently, the resulting range of
 # the transformed feature values is larger than for the previous scalers and,
 # more importantly, are approximately similar: for both features most of the
