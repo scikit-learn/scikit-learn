@@ -1319,8 +1319,7 @@ class SGDClassifier(BaseSGDClassifier):
             raise NotImplementedError(
                 "predict_(log_)proba only supported when"
                 " loss='log_loss' or loss='modified_huber' "
-                "(%r given)"
-                % self.loss
+                "(%r given)" % self.loss
             )
 
     @available_if(_check_proba)

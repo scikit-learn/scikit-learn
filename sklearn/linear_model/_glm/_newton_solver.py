@@ -495,8 +495,7 @@ class NewtonCholeskySolver(NewtonSolver):
                 "Further options are to use another solver or to avoid such situation "
                 "in the first place. Possible remedies are removing collinear features"
                 " of X or increasing the penalization strengths.\n"
-                "The original Linear Algebra message was:\n"
-                + str(e),
+                "The original Linear Algebra message was:\n" + str(e),
                 scipy.linalg.LinAlgWarning,
             )
             # Possible causes:

@@ -1016,7 +1016,7 @@ def test_euclidean_distance(dtype, squared, global_random_seed):
     )
     a_dense = a_sparse.toarray().reshape(-1)
     b = rng.randn(100).astype(dtype, copy=False)
-    b_squared_norm = (b**2).sum()
+    b_squared_norm = (b ** 2).sum()
 
     expected = ((a_dense - b) ** 2).sum()
     expected = expected if squared else np.sqrt(expected)

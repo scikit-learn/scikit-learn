@@ -185,7 +185,7 @@ def n_nonzero_columns(X):
 from sklearn.feature_extraction import FeatureHasher
 
 t0 = time()
-hasher = FeatureHasher(n_features=2**18)
+hasher = FeatureHasher(n_features=2 ** 18)
 X = hasher.transform(token_freqs(d) for d in raw_data)
 duration = time() - t0
 dict_count_vectorizers["vectorizer"].append(
@@ -208,7 +208,7 @@ print(f"Found {n_nonzero_columns(X)} unique tokens")
 # majority of them is inactive.
 
 t0 = time()
-hasher = FeatureHasher(n_features=2**22)
+hasher = FeatureHasher(n_features=2 ** 22)
 X = hasher.transform(token_freqs(d) for d in raw_data)
 duration = time() - t0
 
@@ -227,7 +227,7 @@ print(f"Found {n_nonzero_columns(X)} unique tokens")
 # passing a dictionary with an implied frequency of 1 for each feature name.
 
 t0 = time()
-hasher = FeatureHasher(n_features=2**18, input_type="string")
+hasher = FeatureHasher(n_features=2 ** 18, input_type="string")
 X = hasher.transform(tokenize(d) for d in raw_data)
 duration = time() - t0
 dict_count_vectorizers["vectorizer"].append(
@@ -306,7 +306,7 @@ print(f"Found {len(vectorizer.get_feature_names_out())} unique terms")
 from sklearn.feature_extraction.text import HashingVectorizer
 
 t0 = time()
-vectorizer = HashingVectorizer(n_features=2**18)
+vectorizer = HashingVectorizer(n_features=2 ** 18)
 vectorizer.fit_transform(raw_data)
 duration = time() - t0
 dict_count_vectorizers["vectorizer"].append(vectorizer.__class__.__name__)

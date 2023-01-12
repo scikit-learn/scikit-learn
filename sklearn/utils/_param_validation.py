@@ -505,7 +505,7 @@ class _RandomStates(_Constraint):
     def __init__(self):
         super().__init__()
         self._constraints = [
-            Interval(Integral, 0, 2**32 - 1, closed="both"),
+            Interval(Integral, 0, 2 ** 32 - 1, closed="both"),
             _InstancesOf(np.random.RandomState),
             _NoneConstraint(),
         ]

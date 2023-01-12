@@ -190,11 +190,15 @@ class QuantileRegressor(LinearModel, RegressorMixin, BaseEstimator):
                 FutureWarning,
             )
             solver = "interior-point"
-        elif self.solver in (
-            "highs-ds",
-            "highs-ipm",
-            "highs",
-        ) and sp_version < parse_version("1.6.0"):
+        elif (
+            self.solver
+            in (
+                "highs-ds",
+                "highs-ipm",
+                "highs",
+            )
+            and sp_version < parse_version("1.6.0")
+        ):
             raise ValueError(
                 f"Solver {self.solver} is only available "
                 f"with scipy>=1.6.0, got {sp_version}"

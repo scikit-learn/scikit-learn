@@ -1339,7 +1339,7 @@ def test_class_weights():
     assert_allclose(clf.decision_function(X), clf_class_weighted.decision_function(X))
 
     # Check that sample_weight and class_weight are multiplicative
-    clf.fit(X, y, sample_weight=sample_weight**2)
+    clf.fit(X, y, sample_weight=sample_weight ** 2)
     clf_class_weighted.fit(X, y, sample_weight=sample_weight)
     assert_allclose(clf.decision_function(X), clf_class_weighted.decision_function(X))
 

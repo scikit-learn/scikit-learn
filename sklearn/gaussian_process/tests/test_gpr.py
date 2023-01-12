@@ -54,7 +54,7 @@ non_fixed_kernels = [kernel for kernel in kernels if kernel != fixed_kernel]
 
 @pytest.mark.parametrize("kernel", kernels)
 def test_gpr_interpolation(kernel):
-    if sys.maxsize <= 2**32:
+    if sys.maxsize <= 2 ** 32:
         pytest.xfail("This test may fail on 32 bit Python")
 
     # Test the interpolating property for different kernels.
@@ -82,7 +82,7 @@ def test_gpr_interpolation_structured():
 
 @pytest.mark.parametrize("kernel", non_fixed_kernels)
 def test_lml_improving(kernel):
-    if sys.maxsize <= 2**32:
+    if sys.maxsize <= 2 ** 32:
         pytest.xfail("This test may fail on 32 bit Python")
 
     # Test that hyperparameter-tuning improves log-marginal likelihood.
@@ -195,7 +195,7 @@ def test_no_optimizer():
 @pytest.mark.parametrize("kernel", kernels)
 @pytest.mark.parametrize("target", [y, np.ones(X.shape[0], dtype=np.float64)])
 def test_predict_cov_vs_std(kernel, target):
-    if sys.maxsize <= 2**32:
+    if sys.maxsize <= 2 ** 32:
         pytest.xfail("This test may fail on 32 bit Python")
 
     # Test that predicted std.-dev. is consistent with cov's diagonal.
@@ -280,7 +280,7 @@ def test_y_normalization(kernel):
     assert_almost_equal(y_pred_std, y_pred_std_norm)
 
     _, y_cov = gpr.predict(X2, return_cov=True)
-    y_cov = y_cov * y_std**2
+    y_cov = y_cov * y_std ** 2
     _, y_cov_norm = gpr_norm.predict(X2, return_cov=True)
 
     assert_almost_equal(y_cov, y_cov_norm)
@@ -491,8 +491,7 @@ def test_warning_bounds():
 
         assert issubclass(record[0].category, ConvergenceWarning)
         assert (
-            record[0].message.args[0]
-            == "The optimal value found for "
+            record[0].message.args[0] == "The optimal value found for "
             "dimension 0 of parameter "
             "k1__noise_level is close to the "
             "specified upper bound 0.001. "
@@ -502,8 +501,7 @@ def test_warning_bounds():
 
         assert issubclass(record[1].category, ConvergenceWarning)
         assert (
-            record[1].message.args[0]
-            == "The optimal value found for "
+            record[1].message.args[0] == "The optimal value found for "
             "dimension 0 of parameter "
             "k2__length_scale is close to the "
             "specified lower bound 1000.0. "
@@ -523,8 +521,7 @@ def test_warning_bounds():
 
         assert issubclass(record[0].category, ConvergenceWarning)
         assert (
-            record[0].message.args[0]
-            == "The optimal value found for "
+            record[0].message.args[0] == "The optimal value found for "
             "dimension 0 of parameter "
             "length_scale is close to the "
             "specified lower bound 10.0. "
@@ -534,8 +531,7 @@ def test_warning_bounds():
 
         assert issubclass(record[1].category, ConvergenceWarning)
         assert (
-            record[1].message.args[0]
-            == "The optimal value found for "
+            record[1].message.args[0] == "The optimal value found for "
             "dimension 1 of parameter "
             "length_scale is close to the "
             "specified lower bound 10.0. "
@@ -548,7 +544,7 @@ def test_bound_check_fixed_hyperparameter():
     # Regression test for issue #17943
     # Check that having a hyperparameter with fixed bounds doesn't cause an
     # error
-    k1 = 50.0**2 * RBF(length_scale=50.0)  # long term smooth rising trend
+    k1 = 50.0 ** 2 * RBF(length_scale=50.0)  # long term smooth rising trend
     k2 = ExpSineSquared(
         length_scale=1.0, periodicity=1.0, periodicity_bounds="fixed"
     )  # seasonal component

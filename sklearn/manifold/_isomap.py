@@ -299,7 +299,7 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                 self.nbrs_._fit_X.dtype, copy=False
             )
 
-        G = self.dist_matrix_**2
+        G = self.dist_matrix_ ** 2
         G *= -0.5
 
         self.embedding_ = self.kernel_pca_.fit_transform(G)
@@ -325,10 +325,10 @@ class Isomap(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         ``K(D) = -0.5 * (I - 1/n_samples) * D^2 * (I - 1/n_samples)``
         """
-        G = -0.5 * self.dist_matrix_**2
+        G = -0.5 * self.dist_matrix_ ** 2
         G_center = KernelCenterer().fit_transform(G)
         evals = self.kernel_pca_.eigenvalues_
-        return np.sqrt(np.sum(G_center**2) - np.sum(evals**2)) / G.shape[0]
+        return np.sqrt(np.sum(G_center ** 2) - np.sum(evals ** 2)) / G.shape[0]
 
     def fit(self, X, y=None):
         """Compute the embedding vectors for data X.

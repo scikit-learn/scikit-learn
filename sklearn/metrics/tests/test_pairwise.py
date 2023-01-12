@@ -602,7 +602,7 @@ def test_pairwise_distances_chunked_reduce(global_dtype):
     # Reduced Euclidean distance
     S = pairwise_distances(X)[:, :100]
     S_chunks = pairwise_distances_chunked(
-        X, None, reduce_func=_reduce_func, working_memory=2**-16
+        X, None, reduce_func=_reduce_func, working_memory=2 ** -16
     )
     assert isinstance(S_chunks, GeneratorType)
     S_chunks = list(S_chunks)
@@ -618,7 +618,7 @@ def test_pairwise_distances_chunked_reduce_none(global_dtype):
     rng = np.random.RandomState(0)
     X = rng.random_sample((10, 4)).astype(global_dtype, copy=False)
     S_chunks = pairwise_distances_chunked(
-        X, None, reduce_func=lambda dist, start: None, working_memory=2**-16
+        X, None, reduce_func=lambda dist, start: None, working_memory=2 ** -16
     )
     assert isinstance(S_chunks, GeneratorType)
     S_chunks = list(S_chunks)
@@ -691,11 +691,11 @@ def check_pairwise_distances_chunked(X, Y, working_memory, metric="euclidean"):
     assert isinstance(gen, GeneratorType)
     blockwise_distances = list(gen)
     Y = X if Y is None else Y
-    min_block_mib = len(Y) * 8 * 2**-20
+    min_block_mib = len(Y) * 8 * 2 ** -20
 
     for block in blockwise_distances:
         memory_used = block.nbytes
-        assert memory_used <= max(working_memory, min_block_mib) * 2**20
+        assert memory_used <= max(working_memory, min_block_mib) * 2 ** 20
 
     blockwise_distances = np.vstack(blockwise_distances)
     S = pairwise_distances(X, Y, metric=metric)
@@ -729,7 +729,7 @@ def test_pairwise_distances_chunked(global_dtype):
     # Test small amounts of memory
     for power in range(-16, 0):
         check_pairwise_distances_chunked(
-            X, None, working_memory=2**power, metric="euclidean"
+            X, None, working_memory=2 ** power, metric="euclidean"
         )
     # X as list
     check_pairwise_distances_chunked(
@@ -752,7 +752,7 @@ def test_pairwise_distances_chunked(global_dtype):
 
     # Test precomputed returns all at once
     D = pairwise_distances(X)
-    gen = pairwise_distances_chunked(D, working_memory=2**-16, metric="precomputed")
+    gen = pairwise_distances_chunked(D, working_memory=2 ** -16, metric="precomputed")
     assert isinstance(gen, GeneratorType)
     assert next(gen) is D
     with pytest.raises(StopIteration):
@@ -814,8 +814,8 @@ def test_euclidean_distances_norm_shapes():
     X = rng.random_sample((10, 10))
     Y = rng.random_sample((20, 10))
 
-    X_norm_squared = (X**2).sum(axis=1)
-    Y_norm_squared = (Y**2).sum(axis=1)
+    X_norm_squared = (X ** 2).sum(axis=1)
+    Y_norm_squared = (Y ** 2).sum(axis=1)
 
     D1 = euclidean_distances(
         X, Y, X_norm_squared=X_norm_squared, Y_norm_squared=Y_norm_squared
@@ -1009,7 +1009,7 @@ def test_nan_euclidean_distances_2x2(X, X_diag, missing_value):
     assert_allclose(exp_dist, dist)
 
     dist_sq = nan_euclidean_distances(X, squared=True, missing_values=missing_value)
-    assert_allclose(exp_dist**2, dist_sq)
+    assert_allclose(exp_dist ** 2, dist_sq)
 
     dist_two = nan_euclidean_distances(X, X, missing_values=missing_value)
     assert_allclose(exp_dist, dist_two)

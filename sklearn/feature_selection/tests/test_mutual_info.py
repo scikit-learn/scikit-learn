@@ -37,8 +37,8 @@ def test_compute_mi_cc(global_dtype):
     corr = 0.5
     cov = np.array(
         [
-            [sigma_1**2, corr * sigma_1 * sigma_2],
-            [corr * sigma_1 * sigma_2, sigma_2**2],
+            [sigma_1 ** 2, corr * sigma_1 * sigma_2],
+            [corr * sigma_1 * sigma_2, sigma_2 ** 2],
         ]
     )
 

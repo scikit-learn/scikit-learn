@@ -90,7 +90,7 @@ def test_isomap_reconstruction_error(
     else:
         G = neighbors.radius_neighbors_graph(X, radius, mode="distance").toarray()
     centerer = preprocessing.KernelCenterer()
-    K = centerer.fit_transform(-0.5 * G**2)
+    K = centerer.fit_transform(-0.5 * G ** 2)
 
     clf = manifold.Isomap(
         n_neighbors=n_neighbors,
@@ -109,7 +109,7 @@ def test_isomap_reconstruction_error(
             clf.embedding_, radius, mode="distance"
         )
     G_iso = G_iso.toarray()
-    K_iso = centerer.fit_transform(-0.5 * G_iso**2)
+    K_iso = centerer.fit_transform(-0.5 * G_iso ** 2)
 
     # make sure error agrees
     reconstruction_error = np.linalg.norm(K - K_iso) / n_pts
@@ -199,7 +199,7 @@ def test_pipeline_with_nearest_neighbors_transformer(global_dtype):
         ("manhattan", 1, False),
         ("minkowski", 1, False),
         ("minkowski", 2, True),
-        (lambda x1, x2: np.sqrt(np.sum(x1**2 + x2**2)), 2, False),
+        (lambda x1, x2: np.sqrt(np.sum(x1 ** 2 + x2 ** 2)), 2, False),
     ],
 )
 def test_different_metric(global_dtype, metric, p, is_euclidean):
