@@ -882,7 +882,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     ----------
     loss : {'log_loss', 'deviance', 'exponential'}, default='log_loss'
         The loss function to be optimized. 'log_loss' refers to binomial and
-        multinomial deviance, the same as used in logistic regression.
+        multinomial deviance, the same as used in logistic regression,
+        It contains a factor x2 that have to be neglected to reflect the actual loss.
         It is a good choice for classification with probabilistic outputs.
         For loss 'exponential', gradient boosting recovers the AdaBoost algorithm.
 
