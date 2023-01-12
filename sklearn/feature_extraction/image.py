@@ -445,8 +445,13 @@ def extract_patches_2d(image, patch_size, *, max_patches=None, random_state=None
         return patches.reshape((n_patches, p_h, p_w))
     else:
         return patches
-
-
+@validate_params(
+    {
+        "patches" : [np.ndarray],
+        "image_size" : [tuple, list] 
+        
+    }
+)
 def reconstruct_from_patches_2d(patches, image_size):
     """Reconstruct the image from all of its patches.
 
