@@ -19,7 +19,7 @@ incremental approaches.
 
 """
 
-# Authors: Kyle Kastner
+# Authors: Kyle Kastner, Douglas Blank
 # License: BSD 3 clause
 
 import numpy as np
@@ -33,15 +33,27 @@ X = iris.data
 y = iris.target
 
 n_components = 2
-ipca = IncrementalPCA(n_components=n_components, batch_size=10)
-X_ipca = ipca.fit_transform(X)
+X_ipca = IncrementalPCA(n_components=n_components)
+
+# Process the dataset in batches:
+batch = []
+for index in range(len(X)):
+    row = X[index]
+    batch.append(row)
+    if len(batch) == 10:
+        X_ipca.partial_fit(batch)
+        batch = []
+if len(batch) > 0:
+    X_ipca.partial_fit(batch)
+
+X_ipca_transformed = X_ipca.transform(X)
 
 pca = PCA(n_components=n_components)
 X_pca = pca.fit_transform(X)
 
 colors = ["navy", "turquoise", "darkorange"]
 
-for X_transformed, title in [(X_ipca, "Incremental PCA"), (X_pca, "PCA")]:
+for X_transformed, title in [(X_ipca_transformed, "Incremental PCA"), (X_pca, "PCA")]:
     plt.figure(figsize=(8, 8))
     for color, i, target_name in zip(colors, [0, 1, 2], iris.target_names):
         plt.scatter(
@@ -53,7 +65,7 @@ for X_transformed, title in [(X_ipca, "Incremental PCA"), (X_pca, "PCA")]:
         )
 
     if "Incremental" in title:
-        err = np.abs(np.abs(X_pca) - np.abs(X_ipca)).mean()
+        err = np.abs(np.abs(X_pca) - np.abs(X_ipca_transformed)).mean()
         plt.title(title + " of iris dataset\nMean absolute unsigned error %.6f" % err)
     else:
         plt.title(title + " of iris dataset")
