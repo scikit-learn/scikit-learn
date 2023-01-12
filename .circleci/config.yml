@@ -68,11 +68,3 @@ workflows:
       - deploy:
           requires:
             - doc
-
-  linux-arm64:
-    when:
-      equal: [ "none", << pipeline.parameters.GITHUB_RUN_URL >> ]
-    # Prevent double execution of this job: on push
-    # by default and when triggered by the workflow
-    jobs:
-      - linux-arm64
