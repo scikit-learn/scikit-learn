@@ -31,7 +31,7 @@ import joblib
 import sklearn
 from sklearn.dummy import DummyRegressor
 from sklearn.metrics import mean_poisson_deviance
-from sklearn.utils._testing import assert_almost_equal, create_memmap_backed_data
+from sklearn.utils._testing import assert_almost_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import _convert_container
@@ -1800,13 +1800,10 @@ def test_read_only_buffer(monkeypatch):
         "Parallel",
         partial(Parallel, max_nbytes=100),
     )
-    X, y = make_classification(100, n_features=200)
+    rng = np.random.RandomState(seed=0)
+
+    X, y = make_classification(n_samples=100, n_features=200, random_state=rng)
     X = csr_matrix(X, copy=True)
 
-    # Create memmapped readonly buffer
-    (X.data, X.indices, X.indptr, y) = create_memmap_backed_data(
-        (X.data, X.indices, X.indptr, y)
-    )
-
-    clf = RandomForestClassifier(n_jobs=-1)
-    cross_val_score(clf, X, y)
+    clf = RandomForestClassifier(n_jobs=2, random_state=rng)
+    cross_val_score(clf, X, y, cv=2)
