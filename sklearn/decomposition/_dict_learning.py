@@ -2270,7 +2270,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         if hasattr(self, "_A"):
             # Aij <- beta * Aij + code[:, i] @ code[:, j] / n
-            print(self._A.shape, code.shape)
             self._A *= beta
             self._A += code.T @ code / batch_size
         if hasattr(self, "_B"):
@@ -2287,8 +2286,6 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     def _minibatch_step(self, X, dictionary, *, observed_mask=None, step):
         """Perform the update on the dictionary for one minibatch."""
-        batch_size = X.shape[0]
-
         # Compute code for this batch
         code = sparse_encode(
             X,
@@ -2329,7 +2326,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         if hasattr(self, "_e"):
             # eij <- eij + code[:, i] @ (code @ dict * mask)[:, j]
             Xr_observed = np.multiply(code @ dictionary, observed_mask)
-            self._e += code.T @ Xr_observed / batch_size
+            self._e += code.T @ Xr_observed / X.shape[0]
 
         return batch_cost
 

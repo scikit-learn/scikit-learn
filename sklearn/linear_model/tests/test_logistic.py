@@ -246,12 +246,15 @@ def test_multinomial_binary(solver):
     assert np.mean(pred == target) > 0.9
 
 
-def test_multinomial_binary_probabilities():
+def test_multinomial_binary_probabilities(global_random_seed):
     # Test multinomial LR gives expected probabilities based on the
     # decision function, for a binary problem.
-    X, y = make_classification(random_state=42)
+    X, y = make_classification(random_state=global_random_seed)
     clf = LogisticRegression(
-        multi_class="multinomial", solver="saga", tol=1e-3, random_state=42
+        multi_class="multinomial",
+        solver="saga",
+        tol=1e-3,
+        random_state=global_random_seed,
     )
     clf.fit(X, y)
 
