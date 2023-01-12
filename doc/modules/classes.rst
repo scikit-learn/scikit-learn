@@ -444,6 +444,7 @@ Samples generator
    exceptions.DataDimensionalityWarning
    exceptions.EfficiencyWarning
    exceptions.FitFailedWarning
+   exceptions.InconsistentVersionWarning
    exceptions.NotFittedError
    exceptions.UndefinedMetricWarning
 

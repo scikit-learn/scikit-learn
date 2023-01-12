@@ -22,6 +22,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn import datasets
+from sklearn.exceptions import InconsistentVersionWarning
 
 from sklearn.base import TransformerMixin
 from sklearn.utils._mocking import MockDataFrame
@@ -376,7 +377,7 @@ def test_pickle_version_warning_is_not_raised_with_matching_version():
 
 class TreeBadVersion(DecisionTreeClassifier):
     def __getstate__(self):
-        return dict(self.__dict__.items(), __sklearn_pickle_version__="something")
+        return dict(self.__dict__.items(), _sklearn_version="something")
 
 
 pickle_error_message = (
@@ -384,10 +385,7 @@ pickle_error_message = (
     "version {old_version} when using version "
     "{current_version}. This might "
     "lead to breaking code or invalid results. "
-    "Use at your own risk. "
-    "For more info please refer to:\n"
-    "https://scikit-learn.org/stable/model_persistence.html"
-    "#security-maintainability-limitations"
+    "Use at your own risk."
 )
 
 
@@ -400,8 +398,14 @@ def test_pickle_version_warning_is_issued_upon_different_version():
         old_version="something",
         current_version=sklearn.__version__,
     )
-    with pytest.warns(UserWarning, match=re.escape(message)):
+    with pytest.warns(UserWarning, match=message) as warning_record:
         pickle.loads(tree_pickle_other)
+
+    message = warning_record.list[0].message
+    assert isinstance(message, InconsistentVersionWarning)
+    assert message.estimator_name == "TreeBadVersion"
+    assert message.original_sklearn_version == "something"
+    assert message.current_sklearn_version == sklearn.__version__
 
 
 class TreeNoVersion(DecisionTreeClassifier):
@@ -422,7 +426,7 @@ def test_pickle_version_warning_is_issued_when_no_version_info_in_pickle():
         current_version=sklearn.__version__,
     )
     # check we got the warning about using pre-0.18 pickle
-    with pytest.warns(UserWarning, match=re.escape(message)):
+    with pytest.warns(UserWarning, match=message):
         pickle.loads(tree_pickle_noversion)
 
 
@@ -669,29 +673,6 @@ def test_feature_names_in():
         trans.transform(df_mixed)
 
 
-def test_base_estimator_pickle_version(monkeypatch):
-    """Check the version is embedded when pickled and checked when unpickled."""
-    old_version = "0.21.3"
-    monkeypatch.setattr(sklearn.base, "__version__", old_version)
-    original_estimator = MyEstimator()
-    old_pickle = pickle.dumps(original_estimator)
-    loaded_estimator = pickle.loads(old_pickle)
-    assert loaded_estimator.__sklearn_pickle_version__ == old_version
-    assert not hasattr(original_estimator, "__sklearn_pickle_version__")
-
-    # Loading pickle with newer version will raise a warning
-    new_version = "1.3.0"
-    monkeypatch.setattr(sklearn.base, "__version__", new_version)
-    message = pickle_error_message.format(
-        estimator="MyEstimator",
-        old_version=old_version,
-        current_version=new_version,
-    )
-    with pytest.warns(UserWarning, match=re.escape(message)):
-        reloaded_estimator = pickle.loads(old_pickle)
-        assert reloaded_estimator.__sklearn_pickle_version__ == old_version
-
-
 def test_clone_keeps_output_config():
     """Check that clone keeps the set_output config."""
 
@@ -720,7 +701,7 @@ def test_estimator_empty_instance_dict(estimator):
     ``AttributeError``. Non-regression test for gh-25188.
     """
     state = estimator.__getstate__()
-    expected = {"__sklearn_pickle_version__": sklearn.__version__}
+    expected = {"_sklearn_version": sklearn.__version__}
     assert state == expected
 
     # this should not raise
