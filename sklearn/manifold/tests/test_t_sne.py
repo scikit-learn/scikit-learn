@@ -1195,7 +1195,7 @@ def test_tsne_perplexity_validation(perplexity):
 
 
 def test_tsne_works_with_pandas_output():
-    """Make sure that TSNE works when the output is set to "pandas"
+    """Make sure that TSNE works when the output is set to "pandas".
 
     Non-regression test for gh-25365.
     """

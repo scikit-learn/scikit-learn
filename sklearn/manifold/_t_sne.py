@@ -990,7 +990,7 @@ class TSNE(BaseEstimator):
                 svd_solver="randomized",
                 random_state=random_state,
             )
-            # Alays output a numpy array, no matter what is configured globally
+            # Always output a numpy array, no matter what is configured globally
             pca.set_output(transform="default")
             X_embedded = pca.fit_transform(X).astype(np.float32, copy=False)
             # PCA is rescaled so that PC1 has standard deviation 1e-4 which is
