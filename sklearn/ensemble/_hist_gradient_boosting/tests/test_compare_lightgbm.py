@@ -11,7 +11,17 @@ from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estima
 
 
 @pytest.mark.parametrize("seed", range(5))
-@pytest.mark.parametrize("loss", ["squared_error", "poisson", "gamma"])
+@pytest.mark.parametrize(
+    "loss",
+    [
+        "squared_error",
+        "poisson",
+        pytest.param(
+            "gamma",
+            marks=pytest.skip("LightGBM with gamma loss has larger deviation."),
+        ),
+    ],
+)
 @pytest.mark.parametrize("min_samples_leaf", (1, 20))
 @pytest.mark.parametrize(
     "n_samples, max_leaf_nodes",
@@ -46,9 +56,6 @@ def test_same_predictions_regression(
     #   the predictions. These differences are much smaller with more
     #   iterations.
     pytest.importorskip("lightgbm")
-    pytest.skipif(
-        loss == "gamma", reason="LightGBM with gamma loss has larger deviation."
-    )
 
     rng = np.random.RandomState(seed=seed)
     max_iter = 1
