@@ -96,6 +96,17 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`.
   :pr:`25177` by :user:`Tim Head <betatim>`.
 
+- |Feature| :class:`ensemble.GradientBoostingClassifier` now exposes
+  out-of-bag scores via the `oob_scores_` or `oob_score_` attributes.
+  :pr:`24882` by :user:`Ashwin Mathur <awinml>`.
+
+:mod:`sklearn.exception`
+........................
+- |Feature| Added :class:`exception.InconsistentVersionWarning` which is raised
+  when a scikit-learn estimator is unpickled with a scikit-learn version that is
+  inconsistent with the sckit-learn verion the estimator was pickled with.
+  :pr:`25297` by `Thomas Fan`_.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -133,6 +144,13 @@ Changelog
 
 :mod:`sklearn.preprocessing`
 ............................
+
+- |Enhancement| Adds a `feature_name_combiner` parameter to
+  :class:`preprocessing.OneHotEncoder`. This specifies a custom callable to create
+  feature names to be returned by :meth:`get_feature_names_out`.
+  The callable combines input arguments `(input_feature, category)` to a string.
+  :pr:`22506` by :user:`Mario Kostelac <mariokostelac>`.
+
 - |Enhancement| Added support for `sample_weight` in
   :class:`preprocessing.KBinsDiscretizer`. This allows specifying the parameter
   `sample_weight` for each sample to be used while fitting. The option is only
