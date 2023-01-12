@@ -537,18 +537,22 @@ Log Loss or Entropy:
 
 **HellingerDistance**
 
-Hellinger distance is implemented for the binary case only and a single label.
+Hellinger distance is implemented for the binary case and a single label only.
+
+The score is calculated per split, not per population:
 
 .. math::
 
     H(Q_m) = \sqrt{\left(\sqrt{\frac{N_{m,+}^{left}}{N_{m,+}}}-\sqrt{\frac{N_{m,-}^{left}}{N_{m,-}}}\right)^2+\left(\sqrt{\frac{N_{m,+}^{right}}{N_{m,+}}}-\sqrt{\frac{N_{m,-}^{right}}{N_{m,-}}}\right)^2 }
 
-where :math:`N_{m,+}` and :math:`N_{m,-}` are the number of positive and
-negative samples for the :math:`m` node respectively; :math:`N_{m,+}^{left}` and
-:math:`N_{m,+}^{right}` are the number of positive samples for each of the
-:math:`m` node splits. Similarly, :math:`N_{m,-}^{left}` and
-:math:`N_{m,-}^{right}` are the number of negative samples for each of the
-:math:`m` node splits.
+- number of positive and negative samples for the :math:`m` node respectively
+    :math:`N_{m,+}` and :math:`N_{m,-}`
+- number of positive samples for each of the :math:`m` node splits
+    :math:`N_{m,+}^{left}` and :math:`N_{m,+}^{right}`
+- number of negative samples for each of the :math:`m` node splits
+    :math:`N_{m,-}^{left}` and :math:`N_{m,-}^{right}`
+
+
 
 .. topic:: References:
 
