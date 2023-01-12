@@ -54,8 +54,8 @@ jobs:
               bash build_tools/circle/push_doc.sh doc/_build/html/stable
             fi
 
-  # This noop job is required for the pipeline to exist, such that the
-  # documentation related jobs can be trigger.
+  # This noop job is required for the pipeline to exist, so that the
+  # documentation related jobs can be triggered.
   noop:
     docker:
       - image: cimg/python:3.8.12
