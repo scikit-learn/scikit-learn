@@ -54,6 +54,14 @@ jobs:
               bash build_tools/circle/push_doc.sh doc/_build/html/stable
             fi
 
+  # This noop job is required for the pipeline to exist, such that the
+  # documentation related jobs can be trigger.
+  noop:
+    docker:
+      - image: cimg/python:3.8.12
+    steps:
+      - run: echo "noop job"
+
 workflows:
   version: 2
 
@@ -68,3 +76,11 @@ workflows:
       - deploy:
           requires:
             - doc
+
+  noop:
+    when:
+      equal: [ "none", << pipeline.parameters.GITHUB_RUN_URL >> ]
+    # Prevent double execution of this job: on push
+    # by default and when triggered by the workflow
+    jobs:
+      - noop
