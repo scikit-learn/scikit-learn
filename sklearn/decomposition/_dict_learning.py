@@ -247,6 +247,7 @@ def sparse_encode(
     X,
     dictionary,
     *,
+    observed_mask=None,
     gram=None,
     cov=None,
     algorithm="lasso_lars",
@@ -359,6 +360,36 @@ def sparse_encode(
     SparseCoder : Find a sparse representation of data from a fixed precomputed
         dictionary.
     """
+    if observed_mask is not None:
+        n_samples = X.shape[0]
+        n_components = dictionary.shape[0]
+        code = np.empty((n_samples, n_components), dtype=X.dtype)
+
+        for i in range(n_samples):
+            x_masked = X[i][observed_mask[i]].reshape(1, -1)
+            dict_masked = dictionary[:, observed_mask[i]]
+            print(x_masked.shape)
+            print(dict_masked.shape)
+            # dictionary_masked = np.multiply(dictionary, observed_mask[i])
+            code[i] = sparse_encode(
+                x_masked,
+                dict_masked,
+                gram=gram,
+                cov=cov,
+                algorithm=algorithm,
+                n_nonzero_coefs=n_nonzero_coefs,
+                alpha=alpha,
+                copy_cov=copy_cov,
+                init=init,
+                max_iter=max_iter,
+                n_jobs=n_jobs,
+                check_input=check_input,
+                verbose=verbose,
+                positive=positive,
+            )
+
+        return code
+
     if check_input:
         if algorithm == "lasso_cd":
             dictionary = check_array(
@@ -431,56 +462,12 @@ def sparse_encode(
     return code
 
 
-def sparse_encode_with_missing(
-    X,
-    dictionary,
-    observed_mask,
-    *,
-    gram=None,
-    cov=None,
-    algorithm="lasso_lars",
-    n_nonzero_coefs=None,
-    alpha=None,
-    copy_cov=True,
-    init=None,
-    max_iter=1000,
-    n_jobs=None,
-    check_input=True,
-    verbose=0,
-    positive=False,
-):
-    n_samples = X.shape[0]
-    n_components = dictionary.shape[0]
-    code = np.zeros((n_samples, n_components), dtype=X.dtype)
-
-    for i in range(n_samples):
-        dictionary_masked = np.multiply(dictionary, observed_mask[i])
-        code[i] = sparse_encode(
-            X[[i]],
-            dictionary_masked, 
-            gram=gram,
-            cov=cov,
-            algorithm=algorithm,
-            n_nonzero_coefs=n_nonzero_coefs,
-            alpha=alpha,
-            copy_cov=copy_cov,
-            init=init,
-            max_iter=max_iter,
-            n_jobs=n_jobs,
-            check_input=check_input,
-            verbose=verbose,
-            positive=positive,
-        )
-
-    return code
-
-
 def _update_dict(
     dictionary,
     Y,
     code,
-    A=None,
-    B=None,
+    observed_mask=None,
+    inner_stats=None,
     verbose=False,
     random_state=None,
     positive=False,
@@ -498,13 +485,20 @@ def _update_dict(
     code : ndarray of shape (n_samples, n_components)
         Sparse coding of the data against which to optimize the dictionary.
 
-    A : ndarray of shape (n_components, n_components), default=None
-        Together with `B`, sufficient stats of the online model to update the
-        dictionary.
+    observed_mask : ndarray of shape (n_samples, n_features), default=None
+        Mask of missing values in the data matrix. 1 if the value is observed,
+        0 if missing. Left to None if missing values are not allowed.
 
-    B : ndarray of shape (n_features, n_components), default=None
-        Together with `A`, sufficient stats of the online model to update the
-        dictionary.
+    inner_stats: tuple of ndarrays, default=None
+        Sufficient statsistics of the online model to update the dictionary.
+
+        - If missing values are not handled, inner_stats is a tuple of 2 ndarrays:
+            - A: ndarray of shape (n_components, n_components)
+            - B: ndarray of shape (n_features, n_components)
+        - If missing values are handled, inner_stats is a tuple of 3 ndarrays:
+            - C: ndarray of shape (n_components, n_features)
+            - B: ndarray of shape (n_features, n_components)
+            - e: ndarray of shape (n_components, n_features)
 
     verbose: bool, default=False
         Degree of output the procedure will print.
@@ -522,17 +516,30 @@ def _update_dict(
     n_samples, n_components = code.shape
     random_state = check_random_state(random_state)
 
-    if A is None:
+    if inner_stats is None:
         A = code.T @ code
-    if B is None:
         B = Y.T @ code
+    elif len(inner_stats) == 2:
+        A, B = inner_stats
+    elif len(inner_stats) == 3:
+        C, B, e = inner_stats
 
     n_unused = 0
 
     for k in range(n_components):
-        if A[k, k] > 1e-6:
+        if observed_mask is None and A[k, k] > 1e-6:
             # 1e-6 is arbitrary but consistent with the spams implementation
             dictionary[k] += (B[:, k] - A[k] @ dictionary) / A[k, k]
+        elif observed_mask is not None and C[k].max() > 1e-6:
+            Xr_observed = np.multiply(code @ dictionary, observed_mask)
+            e_tmp = e[k] + code[:, k] @ Xr_observed / n_samples
+
+            np.divide(
+                B[:, k] - e_tmp + C[k] * dictionary[k],
+                C[k],
+                where=C[k] > 0,
+                out=dictionary[k],
+            )
         else:
             # kth atom is almost never used -> sample a new one from the data
             newd = Y[random_state.choice(n_samples)]
@@ -1047,8 +1054,7 @@ def dict_learning_online(
             dictionary,
             this_X,
             this_code,
-            A,
-            B,
+            inner_stats=(A, B),
             verbose=verbose,
             random_state=random_state,
             positive=positive_dict,
@@ -1291,20 +1297,23 @@ class _BaseSparseCoding(ClassNamePrefixFeaturesOutMixin, TransformerMixin):
         else:
             transform_alpha = self.transform_alpha
 
-        sparse_encode_params = {
-            "algorithm": self.transform_algorithm,
-            "n_nonzero_coefs": self.transform_n_nonzero_coefs,
-            "alpha": transform_alpha,
-            "max_iter": self.transform_max_iter,
-            "n_jobs": self.n_jobs,
-            "positive": self.positive_code,
-        }
-        if not self.allow_nan:
-            code = sparse_encode(X, dictionary, **sparse_encode_params)
-        else:
+        if self.allow_nan:
             observed_mask = np.logical_not(_get_mask(X, np.nan))
             X = np.nan_to_num(X, nan=0.0, copy=True)
-            code = sparse_encode_with_missing(X, dictionary, observed_mask, **sparse_encode_params)
+        else:
+            observed_mask = None
+
+        code = sparse_encode(
+            X,
+            dictionary,
+            observed_mask=observed_mask,
+            algorithm=self.transform_algorithm,
+            n_nonzero_coefs=self.transform_n_nonzero_coefs,
+            alpha=transform_alpha,
+            max_iter=self.transform_max_iter,
+            n_jobs=self.n_jobs,
+            positive=self.positive_code,
+        )
 
         if self.split_sign:
             # feature vector is split into a positive and negative side
@@ -2239,38 +2248,44 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         return dictionary
 
-    def _update_inner_stats(self, X, code, batch_size, step):
+    def _initialize_inner_stats(self, n_components, n_features, dtype):
+        """Initialize the inner stats."""
+        if not self.allow_nan:
+            self._A = np.zeros((n_components, n_components), dtype=dtype)
+            self._B = np.zeros((n_features, n_components), dtype=dtype)
+        else:
+            self._C = np.zeros((n_components, n_features), dtype=dtype)
+            self._B = np.zeros((n_features, n_components), dtype=dtype)
+            self._e = np.zeros((n_components, n_features), dtype=dtype)
+
+    def _update_inner_stats(self, X, code, *, observed_mask=None, step):
         """Update the inner stats inplace."""
+        batch_size = X.shape[0]
+
         if step < batch_size - 1:
             theta = (step + 1) * batch_size
         else:
             theta = batch_size**2 + step + 1 - batch_size
         beta = (theta + 1 - batch_size) / (theta + 1)
 
-        A, B = self._inner_stats
-        self._A *= beta
-        self._A += code.T @ code / batch_size
-        self._B *= beta
-        self._B += X.T @ code / batch_size
+        if hasattr(self, "_A"):
+            # Aij <- beta * Aij + code[:, i] @ code[:, j] / n
+            print(self._A.shape, code.shape)
+            self._A *= beta
+            self._A += code.T @ code / batch_size
+        if hasattr(self, "_B"):
+            # Bij <- beta * Bij + X[:, i] @ code[:, j] / n
+            self._B *= beta
+            self._B += X.T @ code / batch_size
+        if hasattr(self, "_C"):
+            # Cij <- beta * Cij + mask[:, j] * code[:, i]² / n
+            self._C *= beta
+            self._C += code.T**2 @ observed_mask / batch_size
+        if hasattr(self, "_e"):
+            # eij <- beta * eij
+            self._e *= beta
 
-    def _update_inner_stats_with_missing(self, X, observed_mask, code, batch_size, step):
-        """Update the inner stats inplace."""
-        if step < batch_size - 1:
-            theta = (step + 1) * batch_size
-        else:
-            theta = batch_size**2 + step + 1 - batch_size
-        beta = (theta + 1 - batch_size) / (theta + 1)
-
-        # Bij <- beta * Bij + X_obs_i . code_j^T
-        self._B *= beta
-        self._B += X.T @ code / batch_size
-        # Cij <- beta * Cij + mask_j * code_i²
-        self._C *= beta
-        self._C += code.T ** 2 @ observed_mask / batch_size
-        # e_ij <- beta * e_ij
-        self._e *= beta
-
-    def _minibatch_step(self, X, dictionary, random_state, step):
+    def _minibatch_step(self, X, dictionary, *, observed_mask=None, step):
         """Perform the update on the dictionary for one minibatch."""
         batch_size = X.shape[0]
 
@@ -2278,6 +2293,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         code = sparse_encode(
             X,
             dictionary,
+            observed_mask=observed_mask,
             algorithm=self._fit_algorithm,
             alpha=self.alpha,
             n_jobs=self.n_jobs,
@@ -2287,103 +2303,35 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             verbose=self.verbose,
         )
 
-        batch_cost = (
-            0.5 * ((X - code @ dictionary) ** 2).sum()
-            + self.alpha * np.sum(np.abs(code))
-        ) / batch_size
+        batch_cost, *_ = self._objective_function(
+            X, code, dictionary, observed_mask=observed_mask, normalize=True
+        )
 
         # Update inner stats
-        self._update_inner_stats(X, code, batch_size, step)
+        self._update_inner_stats(X, code, observed_mask=observed_mask, step=step)
 
         # Update dictionary
+        inner_stats = (
+            (self._C, self._B, self._e) if self.allow_nan else (self._A, self._B)
+        )
         _update_dict(
             dictionary,
             X,
             code,
-            self._A,
-            self._B,
+            observed_mask=observed_mask,
+            inner_stats=inner_stats,
             verbose=self.verbose,
-            random_state=random_state,
+            random_state=self._random_state,
             positive=self.positive_dict,
         )
 
+        # final update of inner stats
+        if hasattr(self, "_e"):
+            # eij <- eij + code[:, i] @ (code @ dict * mask)[:, j]
+            Xr_observed = np.multiply(code @ dictionary, observed_mask)
+            self._e += code.T @ Xr_observed / batch_size
+
         return batch_cost
-
-    def _minibatch_step_with_missing(self, X, observed_mask, dictionary, random_state, step):
-        """Perform the update on the dictionary for one minibatch."""
-        batch_size = X.shape[0]
-
-        # Compute code for this batch
-        code = sparse_encode_with_missing(
-            X,
-            dictionary,
-            observed_mask,
-            algorithm=self._fit_algorithm,
-            alpha=self.alpha,
-            n_jobs=self.n_jobs,
-            check_input=False,
-            positive=self.positive_code,
-            max_iter=self.transform_max_iter,
-            verbose=self.verbose,
-        )
-
-        # Update inner stats
-        self._update_inner_stats_with_missing(X, observed_mask, code, batch_size, step)
-
-        # Update dictionary
-        self._update_dict_with_missing(
-            dictionary,
-            X,
-            code,
-            observed_mask,
-            random_state=random_state,
-        )
-
-        # e_ij <- e_ij + mask_j * code_i * (code @ dict)_j
-        Xr_observed = np.multiply(code @ dictionary, observed_mask)
-        self._e += code.T @ Xr_observed / batch_size
-
-    def _update_dict_with_missing(
-        self,
-        dictionary,
-        X,
-        code,
-        observed_mask,
-        random_state,
-    ):
-        batch_size = X.shape[0]
-        n_unused = 0
-
-        for k in range(self._n_components):
-            if self._C[k].max() > 1e-6:
-                Xr_observed = np.multiply(code @ dictionary, observed_mask)
-                e_tmp = self._e[k] + code[:,k] @ Xr_observed / batch_size
-
-                np.divide(
-                    self._B[:, k] - e_tmp + self._C[k] * dictionary[k],
-                    self._C[k],
-                    out=dictionary[k]
-                )
-            else:
-                # kth atom is almost never used -> sample a new one from the data
-                newd = X[random_state.choice(batch_size)]
-
-                # add small noise to avoid making the sparse coding ill conditioned
-                noise_level = 0.01 * (newd.std() or 1)  # avoid 0 std
-                noise = random_state.normal(0, noise_level, size=len(newd))
-
-                dictionary[k] = newd + noise
-                code[:, k] = 0
-                n_unused += 1
-
-            if self.positive_dict:
-                np.clip(dictionary[k], 0, None, out=dictionary[k])
-
-            # Projection on the constraint set ||V_k|| <= 1
-            dictionary[k] /= max(linalg.norm(dictionary[k]), 1)
-
-        if self.verbose and n_unused > 0:
-            print(f"{n_unused} unused atoms resampled.")
 
     def _check_convergence(
         self, X, batch_cost, new_dict, old_dict, n_samples, step, n_steps
@@ -2495,7 +2443,11 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         self._validate_params()
 
         X = self._validate_data(
-            X, dtype=[np.float64, np.float32], order="C", copy=False, force_all_finite=not self.allow_nan,
+            X,
+            dtype=[np.float64, np.float32],
+            order="C",
+            copy=False,
+            force_all_finite=not self.allow_nan,
         )
 
         self._check_params(X)
@@ -2531,7 +2483,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             self._fit_with_missing(X_train, observed_mask, dictionary)
         else:
             self._fit(X_train, dictionary)
-        
+
         self.components_ = dictionary
 
         return self
@@ -2544,8 +2496,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         old_dict = dictionary.copy()
 
         # Inner stats
-        self._A = np.zeros((self._n_components, self._n_components), dtype=X.dtype)
-        self._B = np.zeros((n_features, self._n_components), dtype=X.dtype)
+        self._initialize_inner_stats(self._n_components, n_features, X.dtype)
 
         if self.max_iter is not None:
 
@@ -2564,9 +2515,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             for i, batch in zip(range(n_steps), batches):
                 X_batch = X[batch]
 
-                batch_cost = self._minibatch_step(
-                    X_batch, dictionary, self._random_state, i
-                )
+                batch_cost = self._minibatch_step(X_batch, dictionary, step=i)
 
                 if self._check_convergence(
                     X_batch, batch_cost, dictionary, old_dict, n_samples, i, n_steps
@@ -2590,7 +2539,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             batches = itertools.cycle(batches)
 
             for i, batch in zip(range(n_iter), batches):
-                self._minibatch_step(X[batch], dictionary, self._random_state, i)
+                self._minibatch_step(X[batch], dictionary, step=i)
 
                 trigger_verbose = self.verbose and i % ceil(100.0 / self.verbose) == 0
                 if self.verbose > 10 or trigger_verbose:
@@ -2610,9 +2559,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         old_dict = dictionary.copy()
 
         # Inner stats
-        self._C = np.zeros((self._n_components, n_features), dtype=X.dtype)
-        self._B = np.zeros((n_features, self._n_components), dtype=X.dtype)
-        self._e = np.zeros((self._n_components, n_features), dtype=X.dtype)
+        self._initialize_inner_stats(self._n_components, n_features, X.dtype)
 
         batches = gen_batches(n_samples, self._batch_size)
         batches = itertools.cycle(batches)
@@ -2625,13 +2572,11 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             X_batch = X[batch]
             observed_mask_batch = observed_mask[batch]
 
-            self._minibatch_step_with_missing(
-                X_batch, observed_mask_batch, dictionary, self._random_state, i
+            self._minibatch_step(
+                X_batch, dictionary, observed_mask=observed_mask_batch, step=i
             )
 
-            if self._check_convergence_with_missing(
-                dictionary, old_dict, i, n_steps
-            ):
+            if self._check_convergence_with_missing(dictionary, old_dict, i, n_steps):
                 break
 
             # XXX callback param added for backward compat in #18975 but a common
@@ -2670,6 +2615,13 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
             X, dtype=[np.float64, np.float32], order="C", reset=not has_components
         )
 
+        if self.allow_nan:
+            observed_mask = np.logical_not(_get_mask(X, np.nan))
+            # Set entries to zero where values are missing
+            X = np.nan_to_num(X, nan=0.0, copy=True)
+        else:
+            observed_mask = None
+
         if not has_components:
             # This instance has not been fitted yet (fit or partial_fit)
             self._check_params(X)
@@ -2679,17 +2631,68 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
             self.n_steps_ = 0
 
-            self._A = np.zeros((self._n_components, self._n_components), dtype=X.dtype)
-            self._B = np.zeros((X.shape[1], self._n_components), dtype=X.dtype)
+            self._initialize_inner_stats(self._n_components, X.shape[1], X.dtype)
         else:
             dictionary = self.components_
 
-        self._minibatch_step(X, dictionary, self._random_state, self.n_steps_)
+        self._minibatch_step(
+            X, dictionary, observed_mask=observed_mask, step=self.n_steps_
+        )
 
         self.components_ = dictionary
         self.n_steps_ += 1
 
         return self
+
+    def _objective_function(
+        self, X, code, dictionary, observed_mask=None, normalize=False
+    ):
+        Xr = code @ dictionary
+
+        if observed_mask is not None:
+            data_fit = 0.5 * np.sum((X - Xr) ** 2, where=observed_mask)
+        else:
+            data_fit = 0.5 * np.sum((X - Xr) ** 2)
+
+        penalization = self.alpha * np.sum(np.abs(code))
+
+        if normalize:
+            data_fit /= X.shape[0]
+            penalization /= X.shape[0]
+
+        return data_fit + penalization, data_fit, penalization
+
+    def objective_function(self, X, y=None, *, normalize=False):
+        """Compute the objective function.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            The data matrix.
+
+        normalize : bool, default=False
+            If True, return the per-sample objective function.
+
+        Returns
+        -------
+        objective : float
+            The value of the objective function.
+
+        data_fit : float
+            The value of the data fit term.
+
+        penalization : float
+            The value of the penalization term.
+        """
+        code = self.transform(X)
+        dictionary = self.components_
+
+        if self.allow_nan:
+            observed_mask = np.logical_not(_get_mask(X, np.nan))
+        else:
+            observed_mask = None
+
+        return self._objective_function(X, code, dictionary, observed_mask, normalize)
 
     @property
     def _n_features_out(self):

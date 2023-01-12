@@ -469,7 +469,12 @@ def test_dict_learning_online_initialization(allow_nan):
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)
     dico = MiniBatchDictionaryLearning(
-        n_components, batch_size=4, max_iter=0, dict_init=V, random_state=0, allow_nan=allow_nan
+        n_components,
+        batch_size=4,
+        max_iter=0,
+        dict_init=V,
+        random_state=0,
+        allow_nan=allow_nan,
     ).fit(X)
     assert_array_equal(dico.components_, V)
 
@@ -712,7 +717,7 @@ def test_update_dict():
     A = np.dot(code.T, code)
     B = np.dot(X.T, code)
     newd_online = dictionary.copy()
-    _update_dict(newd_online, X, code, A, B)
+    _update_dict(newd_online, X, code, inner_stats=(A, B))
 
     assert_allclose(newd_batch, newd_online)
 
@@ -1016,7 +1021,18 @@ def test_minibatch_dict_learning_missing_equivalent():
     dl_with_missing = MiniBatchDictionaryLearning(allow_nan=True, **params).fit(X)
 
     assert_allclose(dl.components_, dl_with_missing.components_)
-    
+
+    Xr = dl.transform(X) @ dl.components_
+    Xr_with_missing = dl_with_missing.transform(X) @ dl_with_missing.components_
+
+    assert_allclose(Xr, Xr_with_missing)
+
+    # same with partial_fit
+    dl = clone(dl).partial_fit(X[:5])
+    dl_with_missing = clone(dl_with_missing).partial_fit(X[:5])
+
+    assert_allclose(dl.components_, dl_with_missing.components_)
+
     Xr = dl.transform(X) @ dl.components_
     Xr_with_missing = dl_with_missing.transform(X) @ dl_with_missing.components_
 
