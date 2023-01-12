@@ -14,6 +14,7 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import linalg
 from joblib import Parallel
+from ..utils._param_validation import Interval, HasMethods, StrOptions, validate_params
 
 from . import empirical_covariance, EmpiricalCovariance, log_likelihood
 
@@ -78,6 +79,21 @@ def alpha_max(emp_cov):
     return np.max(np.abs(A))
 
 
+@validate_params(
+    {
+        "emp_cov": [np.ndarray],
+        "alpha": [Interval(Real, 0, None, closed="left"), None],
+        "cov_init":  ["array-like"],
+        "mode":   [StrOptions( {"lars", "cd"} )],
+        "tol":  [Interval(Real, 0, None, closed="left"), None],
+        "enet_tol":  [Interval(Real, 0, None, closed="left"), None],
+        "max_iter":  [Interval(Integral, 0, None, closed="left"), None],
+        "verbose": ["boolean"],
+        "return_costs": ["boolean"],
+        "eps":  [Interval(Real, 0, None, closed="left"), None],
+        "return_n_iter": ["boolean"]
+    }
+)
 # The g-lasso algorithm
 def graphical_lasso(
     emp_cov,
