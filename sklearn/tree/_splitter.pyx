@@ -817,8 +817,6 @@ cdef class SparsePartitioner:
     cdef SIZE_t start
     cdef SIZE_t end
 
-cdef class BaseSparseSplitter(Splitter):
-    # The sparse splitter works only with csc sparse matrix format
     cdef const DTYPE_t[::1] X_data
     cdef const INT32_t[::1] X_indices
     cdef const INT32_t[::1] X_indptr
