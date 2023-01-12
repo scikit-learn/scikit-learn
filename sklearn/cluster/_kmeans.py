@@ -35,7 +35,6 @@ from ..utils import check_array
 from ..utils import check_random_state
 from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils.validation import _is_arraylike_not_scalar
-from ..utils._array_api import get_namespace
 from ..utils._param_validation import Hidden
 from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
@@ -370,6 +369,10 @@ class KMeansCythonEngine:
 
     def is_same_clustering(self, labels, best_labels, n_clusters):
         return _is_same_clustering(labels, best_labels, n_clusters)
+
+    def count_distinct_clusters(self, centers):
+        """Count the number of unique centers"""
+        return len(set(centers))
 
     def kmeans_single(self, X, sample_weight, centers_init):
         return self.kmeans_single_func(
@@ -1610,8 +1613,8 @@ class KMeans(_BaseKMeans):
 
         engine.unshift_centers(X, best_centers)
 
-        xp, _ = get_namespace(best_labels)
-        distinct_clusters = xp.unique_values(best_labels).shape[0]
+        distinct_clusters = engine.count_distinct_clusters(best_labels)
+
         if distinct_clusters < self.n_clusters:
             warnings.warn(
                 "Number of distinct clusters ({}) found smaller than "
