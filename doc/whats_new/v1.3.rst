@@ -43,6 +43,8 @@ Changes impacting all modules
 
   - :class:`kernel_approximation.AdditiveChi2Sampler`
   - :class:`preprocessing.Binarizer`
+  - :class:`impute.IterativeImputer`
+  - :class:`impute.KNNImputer`
   - :class:`preprocessing.MaxAbsScaler`
   - :class:`preprocessing.MinMaxScaler`
   - :class:`preprocessing.Normalizer`
@@ -50,13 +52,14 @@ Changes impacting all modules
   - :class:`preprocessing.PowerTransformer`
   - :class:`preprocessing.QuantileTransformer`
   - :class:`preprocessing.RobustScaler`
+  - :class:`impute.SimpleImputer`
   - :class:`preprocessing.StandardScaler`
   - :class:`feature_extraction.text.TfidfTransformer`
 
   The `NotFittedError` displays an informative message asking to fit the instance
   with the appropriate arguments.
 
-  :pr:`25294` by :user:`John Pangas <jpangas>` and :pr:`25291` by
+  :pr:`25294` by :user:`John Pangas <jpangas>` and :pr:`25291`, :pr:`xxxxx` by
   :user:`Rahil Parikh <rprkh>`.
 
 Changelog
