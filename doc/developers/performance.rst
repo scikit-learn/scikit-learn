@@ -345,7 +345,7 @@ Since scikit-learn can be built without OpenMP, it's necessary to protect each
 direct call to OpenMP.
 
 There are some helpers in
-[sklearn/utils/_openmp_helpers.pyx](https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/utils/_openmp_helpers.pyx)
+`sklearn/utils/_openmp_helpers.pyx <https://github.com/scikit-learn/scikit-learn/blob/main/sklearn/utils/_openmp_helpers.pyx>`_
 that you can reuse for the main useful functionalities and already have the
 necessary protection to be built without OpenMP.
 
