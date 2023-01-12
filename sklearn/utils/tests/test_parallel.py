@@ -37,7 +37,7 @@ def test_parallel_delayed_warnings():
     """Informative warnings should be raised when mixing sklearn and joblib API"""
     # We should issue a warning when one wants to use sklearn.utils.fixes.Parallel
     # with joblib.delayed. The config will not be propagated to the workers.
-    warn_msg = "Use `sklearn.utils.fixes.delayed` to correctly propagate"
+    warn_msg = "Use `sklearn.utils.parallel.delayed` to correctly propagate"
     with pytest.warns(UserWarning, match=warn_msg) as records:
         Parallel()(joblib.delayed(time.sleep)(0) for _ in range(10))
     assert len(records) == 10
@@ -45,8 +45,8 @@ def test_parallel_delayed_warnings():
     # We should issue a warning if one wants to use sklearn.utils.fixes.delayed with
     # joblib.Parallel
     warn_msg = (
-        "`sklearn.utils.fixes.delayed` should be used with "
-        "`sklearn.utils.fixes.Parallel` to make it possible to propagate"
+        "`sklearn.utils.parallel.delayed` should be used with "
+        "`sklearn.utils.parallel.Parallel` to make it possible to propagate"
     )
     with pytest.warns(UserWarning, match=warn_msg) as records:
         joblib.Parallel()(delayed(time.sleep)(0) for _ in range(10))

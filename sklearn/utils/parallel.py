@@ -15,10 +15,10 @@ def _with_config(delayed_func, config):
         return delayed_func.with_config(config)
     else:
         warnings.warn(
-            "You are using `sklearn.utils.fixes.Parallel` that intend to attach a "
+            "You are using `sklearn.utils.parallel.Parallel` that intend to attach a "
             "configuration to a delayed function. However, the function used for "
             "delaying the function does not expose `with_config`. Use "
-            "`sklearn.utils.fixes.delayed` to correctly propagate the scikit-learn "
+            "`sklearn.utils.parallel.delayed` to correctly propagate the scikit-learn "
             "configuration to the joblib workers.",
             UserWarning,
         )
@@ -93,8 +93,8 @@ class _FuncWrapper:
         config = getattr(self, "config", None)
         if config is None:
             warnings.warn(
-                "`sklearn.utils.fixes.delayed` should be used with "
-                "`sklearn.utils.fixes.Parallel` to make it possible to propagate "
+                "`sklearn.utils.parallel.delayed` should be used with "
+                "`sklearn.utils.parallel.Parallel` to make it possible to propagate "
                 "the scikit-learn configuration of the current thread to the "
                 "joblib workers.",
                 UserWarning,

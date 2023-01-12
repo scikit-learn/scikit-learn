@@ -18,6 +18,8 @@ import numpy as np
 import scipy
 import scipy.stats
 import threadpoolctl
+
+from .deprecation import deprecated
 from ..externals._packaging.version import parse as parse_version
 
 
@@ -149,6 +151,16 @@ def threadpool_info():
 
 
 threadpool_info.__doc__ = threadpoolctl.threadpool_info.__doc__
+
+
+@deprecated(
+    "The function `delayed` has been moved from `sklearn.utils.fixes` to "
+    "`sklearn.utils.parallel`. This import path will be removed in 1.5."
+)
+def delayed(function):
+    from sklearn.utils.parallel import delayed
+
+    return delayed(function)
 
 
 # TODO: Remove when SciPy 1.9 is the minimum supported version
