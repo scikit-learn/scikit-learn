@@ -54,6 +54,10 @@ Changelog
   boolean. The type is maintained, instead of converting to `float64.`
   :pr:`25147` by :user:`Tim Head <betatim>`.
 
+- |API| :func:`utils.fixes.delayed` is deprecated in 1.2.1 and will be removed
+  in 1.5. Instead, import :func:`utils.parallel.delayed`.
+  :pr:`25363` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 .. _changes_1_2:
 
 Version 1.2.0
