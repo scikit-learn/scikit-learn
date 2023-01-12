@@ -45,13 +45,6 @@ Changelog
   supports DataFrames that are all numerical when `check_inverse=True`.
   :pr:`25274` by `Thomas Fan`_.
 
-:mod:`sklearn.utils`
-....................
-
-- |Fix| Restore :func:`utils.check_array`'s behaviour for pandas Series of type
-  boolean. The type is maintained, instead of converting to `float64.`
-  :pr:`25147` by :user:`Tim Head <betatim>`.
-
 :mod:`sklearn.tree`
 ...................
 
@@ -59,6 +52,13 @@ Changelog
   :class:`tree.ExtraTreeClassifier` and :class:`tree.ExtraTreeRegressor`
   now support sparse readonly datasets.
   :pr:`25341` by :user:`Julien Jerphanion <jjerphan>`
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Restore :func:`utils.check_array`'s behaviour for pandas Series of type
+  boolean. The type is maintained, instead of converting to `float64.`
+  :pr:`25147` by :user:`Tim Head <betatim>`.
 
 .. _changes_1_2:
 
