@@ -923,6 +923,7 @@ def export_text(
     decision_tree,
     *,
     feature_names=None,
+    class_names=None,
     max_depth=10,
     spacing=3,
     decimals=2,
@@ -942,6 +943,10 @@ def export_text(
     feature_names : list of str, default=None
         A list of length n_features containing the feature names.
         If None generic names will be used ("feature_0", "feature_1", ...).
+
+    class_names : list of arguments, default=None
+        Names of each of the target classes in ascending numerical order.
+        Only relevant for classification and not supported for multi-output.
 
     max_depth : int, default=10
         Only the first max_depth levels of the tree are exported.
@@ -986,7 +991,10 @@ def export_text(
     check_is_fitted(decision_tree)
     tree_ = decision_tree.tree_
     if is_classifier(decision_tree):
-        class_names = decision_tree.classes_
+        if class_names is not None and len(class_names) == len(decision_tree.classes_):
+            class_names = class_names
+        else:
+            class_names = decision_tree.classes_
     right_child_fmt = "{} {} <= {}\n"
     left_child_fmt = "{} {} >  {}\n"
     truncation_fmt = "{} {}\n"
