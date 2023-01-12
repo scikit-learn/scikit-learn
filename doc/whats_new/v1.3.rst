@@ -911,6 +911,13 @@ Miscellaneous
   `WindowsError`.
   :pr:`26466` by :user:`Dimitri Papadopoulos ORfanos <DimitriPapadopoulos>`.
 
+:mod:`sklearn.covariance`
+.........................
+
+- |Enhancement| Added parameter checking for `shrinkage` in
+  :func:`covariance.shrunk_covariance`. Added ndarray processing.
+  :pr:`25275` by :user:`Quentin Barthélemy <qbarthelemy>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
