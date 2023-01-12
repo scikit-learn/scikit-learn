@@ -60,7 +60,10 @@ jobs:
     docker:
       - image: cimg/python:3.8.12
     steps:
-      - run: echo "noop job"
+    - run: |
+        echo "This is no-op job for the pipeline to exist, so that it triggers "
+        echo "Circle CI jobs pushing the artifacts of the documentation built "
+        echo "via GitHub actions."
 
 workflows:
   version: 2
