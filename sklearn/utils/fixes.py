@@ -114,19 +114,19 @@ def _with_config(delayed_func, config):
         return delayed_func.with_config(config)
     else:
         warnings.warn(
-            "You are using `sklearn.utils.fixes.Parallel` that intend to attached a "
+            "You are using `sklearn.utils.fixes.Parallel` that intend to attach a "
             "configuration to a delayed function. However, the function used for "
             "delaying the function does not expose `with_config`. Use "
-            "`sklearn.utils.fixes.delayed` for this purpose. A default configuration "
-            "is used instead.",
+            "`sklearn.utils.fixes.delayed` to correctly propagate the scikit-learn "
+            "configuration to the joblib workers.",
             UserWarning,
         )
         return delayed_func
 
 
 class Parallel(joblib.Parallel):
-    # A `Parallel` tweaked class that allows attaching a configuration to each task
-    # to be run in parallel.
+    # A tweaked `Parallel` subclass that attaches the configuration of the current
+    # thread to each task to be run in parallel.
 
     def __call__(self, iterable):
         # Capture the thread-local scikit-learn configuration at the time
@@ -167,12 +167,13 @@ class _FuncWrapper:
         config = getattr(self, "config", None)
         if config is None:
             warnings.warn(
-                "You are using `sklearn.utils.fixes.delayed` without using "
-                "`sklearn.utils.fixes.Parallel`. A default configuration is used "
-                "instead of propagating the user defined configuration.",
+                "`sklearn.utils.fixes.delayed` should be used with "
+                "`sklearn.utils.fixes.Parallel` to make it possible to propagate "
+                "the scikit-learn configuration of the current thread to the "
+                "joblib workers.",
                 UserWarning,
             )
-            config = get_config()
+            config = {}
         with config_context(**config):
             return self.function(*args, **kwargs)
 

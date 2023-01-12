@@ -61,9 +61,7 @@ def get_working_memory():
 
 
 def test_parallel_delayed_warnings():
-    """Check that we raise warnings with non-desirable mixed of joblib/sklearn
-    Parallel/delayed calls.
-    """
+    """Informative warnings should be raised when mixing sklearn and joblib API"""
     # We should issue a warning when one wants to use sklearn.utils.fixes.Parallel
     # with joblib.delayed. The config will not be propagated to the workers.
     warn_msg = "Use `sklearn.utils.fixes.delayed` for this purpose"
