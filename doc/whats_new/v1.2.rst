@@ -30,6 +30,13 @@ Changelog
   `verbose` parameter set to a value greater than 0.
   :pr:`25250` by :user:`Jérémie Du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.manifold`
+...........................
+
+- |Fix| :class:`manifold.TSNE` now works correctly when output type is
+  set to pandas :pr:`25370` by :user:`Tim Head <betatim>`.
+
+
 :mod:`sklearn.preprocessing`
 ............................
 
