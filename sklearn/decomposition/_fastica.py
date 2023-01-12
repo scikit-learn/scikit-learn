@@ -155,11 +155,20 @@ def _cube(x, fun_args):
 
 
 @validate_params(
-    {
+    { 
         "X": ["array-like"],
-        "return_X_mean": ["boolean"],
-        "compute_sources": ["boolean"],
-        "return_n_iter": ["boolean"],
+        "n_components": [Interval(Integral, 1, None), None],
+        "algorithm":[StrOptions({'parallel', 'deflation'})],
+        "whiten":["boolean"],
+        "fun":[StrOptions({'logcosh', 'exp', 'cube'})],
+        "fun_args": [dict, None],
+        "max_iter": [Interval(Integral, 1, None)],
+        "tol": [Interval(Real, 0.0, None,), None],
+        "w_init": ["ndarray"],
+        "random_state":[Interval(Integral, 1, None), None],
+        "return_X_mean":["boolean"],
+        "compute_sources":["boolean"],
+        "return_n_iter":["boolean"],
     }
 )
 def fastica(

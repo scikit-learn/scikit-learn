@@ -103,6 +103,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.datasets.fetch_california_housing",
     "sklearn.datasets.make_sparse_coded_signal",
     "sklearn.decomposition.sparse_encode",
+    "sklearn.decomposition.fastica",
     "sklearn.feature_extraction.grid_to_graph",
     "sklearn.feature_extraction.img_to_graph",
     "sklearn.feature_extraction.image.extract_patches_2d",
