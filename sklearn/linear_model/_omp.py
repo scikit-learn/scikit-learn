@@ -16,7 +16,7 @@ from scipy.linalg.lapack import get_lapack_funcs
 from ._base import LinearModel, _pre_fit, _deprecate_normalize
 from ..base import RegressorMixin, MultiOutputMixin
 from ..utils import as_float_array, check_array
-from ..utils.fixes import delayed, Parallel
+from ..utils.parallel import delayed, Parallel
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..model_selection import check_cv
 

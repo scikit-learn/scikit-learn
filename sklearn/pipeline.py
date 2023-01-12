@@ -30,7 +30,7 @@ from .utils.validation import check_is_fitted
 from .utils import check_pandas_support
 from .utils._param_validation import HasMethods, Hidden
 from .utils._set_output import _safe_set_output, _get_output_config
-from .utils.fixes import delayed
+from .utils.parallel import delayed
 from .exceptions import NotFittedError
 
 from .utils.metaestimators import _BaseComposition

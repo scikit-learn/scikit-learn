@@ -30,7 +30,7 @@ from .utils.validation import (
     has_fit_parameter,
     _check_fit_params,
 )
-from .utils.fixes import delayed, Parallel
+from .utils.parallel import delayed, Parallel
 from .utils._param_validation import HasMethods, StrOptions
 
 __all__ = [

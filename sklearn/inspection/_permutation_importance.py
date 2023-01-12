@@ -9,7 +9,7 @@ from ..model_selection._validation import _aggregate_score_dicts
 from ..utils import Bunch, _safe_indexing
 from ..utils import check_random_state
 from ..utils import check_array
-from ..utils.fixes import delayed, Parallel
+from ..utils.parallel import delayed, Parallel
 
 
 def _weights_scorer(scorer, estimator, X, y, sample_weight):

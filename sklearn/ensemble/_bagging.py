@@ -23,7 +23,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.random import sample_without_replacement
 from ..utils._param_validation import Interval, HasMethods, StrOptions
 from ..utils.validation import has_fit_parameter, check_is_fitted, _check_sample_weight
-from ..utils.fixes import delayed, Parallel
+from ..utils.parallel import delayed, Parallel
 
 
 __all__ = ["BaggingClassifier", "BaggingRegressor"]

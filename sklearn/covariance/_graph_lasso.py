@@ -22,7 +22,7 @@ from ..utils.validation import (
     check_random_state,
     check_scalar,
 )
-from ..utils.fixes import delayed, Parallel
+from ..utils.parallel import delayed, Parallel
 from ..utils._param_validation import Interval, StrOptions
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'

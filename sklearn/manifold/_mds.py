@@ -17,7 +17,7 @@ from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_array, check_symmetric
 from ..isotonic import IsotonicRegression
 from ..utils._param_validation import Interval, StrOptions, Hidden
-from ..utils.fixes import delayed, Parallel
+from ..utils.parallel import delayed, Parallel
 
 
 def _smacof_single(

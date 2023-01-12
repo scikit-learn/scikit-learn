@@ -37,8 +37,8 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
 from ..utils._param_validation import Interval, StrOptions
-from ..utils.fixes import delayed, sp_version, Parallel
-from ..utils.fixes import parse_version
+from ..utils.parallel import delayed, Parallel
+from ..utils.fixes import parse_version, sp_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
 
 VALID_METRICS = dict(

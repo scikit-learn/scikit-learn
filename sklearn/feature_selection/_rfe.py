@@ -16,7 +16,7 @@ from ..utils.metaestimators import _safe_split
 from ..utils._param_validation import HasMethods, Interval
 from ..utils._tags import _safe_tags
 from ..utils.validation import check_is_fitted
-from ..utils.fixes import delayed, Parallel
+from ..utils.parallel import delayed, Parallel
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
