@@ -96,6 +96,10 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`.
   :pr:`25177` by :user:`Tim Head <betatim>`.
 
+- |Feature| :class:`ensemble.GradientBoostingClassifier` now exposes
+  out-of-bag scores via the `oob_scores_` or `oob_score_` attributes.
+  :pr:`24882` by :user:`Ashwin Mathur <awinml>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
