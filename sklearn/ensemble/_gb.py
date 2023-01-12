@@ -497,8 +497,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
                         if (
                             "pass parameters to specific steps of "
                             "your pipeline using the "
-                            "stepname__parameter"
-                            in str(e)
+                            "stepname__parameter" in str(e)
                         ):  # pipeline
                             raise ValueError(msg) from e
                         else:  # regular estimator whose input checking failed
@@ -784,8 +783,7 @@ class BaseGradientBoosting(BaseEnsemble, metaclass=ABCMeta):
             warnings.warn(
                 "Using recursion method with a non-constant init predictor "
                 "will lead to incorrect partial dependence values. "
-                "Got init=%s."
-                % self.init,
+                "Got init=%s." % self.init,
                 UserWarning,
             )
         grid = np.asarray(grid, dtype=DTYPE, order="C")
@@ -868,8 +866,8 @@ class GradientBoostingClassifier(ClassifierMixin, BaseGradientBoosting):
     loss : {'log_loss', 'deviance', 'exponential'}, default='log_loss'
         The loss function to be optimized. 'log_loss' refers to binomial and
         multinomial deviance, the same as used in logistic regression.
-         It contains a factor x2 that have to be neglected and only the half-loss 
-         should be taken in consideration
+        It contains a factor x2 that have to be neglected and only the half-loss
+        should be taken in consideration.
         It is a good choice for classification with probabilistic outputs.
         For loss 'exponential', gradient boosting recovers the AdaBoost algorithm.
 
