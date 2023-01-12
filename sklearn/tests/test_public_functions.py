@@ -98,6 +98,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.cluster.compute_optics_graph",
     "sklearn.cluster.estimate_bandwidth",
     "sklearn.cluster.kmeans_plusplus",
+    "sklearn.cluster.spectral"
     "sklearn.covariance.empirical_covariance",
     "sklearn.covariance.shrunk_covariance",
     "sklearn.datasets.fetch_california_housing",

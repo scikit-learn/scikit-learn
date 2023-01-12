@@ -21,6 +21,8 @@ from ..metrics.pairwise import pairwise_kernels, KERNEL_PARAMS
 from ..neighbors import kneighbors_graph, NearestNeighbors
 from ..manifold import spectral_embedding
 from ._kmeans import k_means
+from ..utils._param_validation import Hidden, Interval, StrOptions, validate_params
+
 
 
 def cluster_qr(vectors):
@@ -191,6 +193,20 @@ def discretize(
     return labels
 
 
+
+@validate_params(
+    { 
+        "affinity": ["array-like", "sparse matrix"],
+        "n_clusters": [Interval(Integral, 1, None), None],
+        "n_components": [Interval(Integral, 1, None), None],
+        "eigen_solver":[StrOptions({'arpack', 'lobpcg', 'amg', None})],
+        "random_state":[Interval(Integral, 1, None), None],
+        "n_init": [Interval(Integral, 1, None), None],
+        "eigen_tol": [Interval(Real, 0.0, None,), None],
+        "assign_labels":[StrOptions({'kmeans', 'discretize', 'cluster_qr'})],
+        "verbose": ["boolean"],
+    }
+)
 def spectral_clustering(
     affinity,
     *,
