@@ -37,27 +37,6 @@ jobs:
           root: doc/_build/html
           paths: .
 
-  linux-arm64:
-    machine:
-      image: ubuntu-2004:202101-01
-    resource_class: arm.medium
-    environment:
-      - OMP_NUM_THREADS: 2
-      - OPENBLAS_NUM_THREADS: 2
-      - CONDA_ENV_NAME: testenv
-      - LOCK_FILE: build_tools/circle/py39_conda_forge_linux-aarch64_conda.lock
-    steps:
-      - checkout
-      - run: ./build_tools/circle/checkout_merge_commit.sh
-      - restore_cache:
-          key: linux-arm64-{{ .Branch }}
-      - run: ./build_tools/circle/build_test_arm.sh
-      - save_cache:
-          key: linux-arm64-{{ .Branch }}
-          paths:
-            - ~/.cache/ccache
-            - ~/.cache/pip
-            - ~/scikit_learn_data
   deploy:
     docker:
       - image: cimg/python:3.8.12
