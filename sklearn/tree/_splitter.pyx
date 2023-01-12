@@ -748,9 +748,9 @@ cdef class RandomSplitter(BaseDenseSplitter):
 
 cdef class BaseSparseSplitter(Splitter):
     # The sparse splitter works only with csc sparse matrix format
-    cdef DTYPE_t[::1] X_data
-    cdef INT32_t[::1] X_indices
-    cdef INT32_t[::1] X_indptr
+    cdef const DTYPE_t[::1] X_data
+    cdef const INT32_t[::1] X_indices
+    cdef const INT32_t[::1] X_indptr
 
     cdef SIZE_t n_total_samples
 
@@ -874,8 +874,8 @@ cdef class BaseSparseSplitter(Splitter):
         cdef DTYPE_t[::1] feature_values = self.feature_values
         cdef SIZE_t[::1] index_to_samples = self.index_to_samples
         cdef SIZE_t[::1] sorted_samples = self.sorted_samples
-        cdef INT32_t[::1] X_indices = self.X_indices
-        cdef DTYPE_t[::1] X_data = self.X_data
+        cdef const INT32_t[::1] X_indices = self.X_indices
+        cdef const DTYPE_t[::1] X_data = self.X_data
 
         # Use binary search if n_samples * log(n_indices) <
         # n_indices and index_to_samples approach otherwise.
@@ -908,7 +908,7 @@ cdef int compare_SIZE_t(const void* a, const void* b) nogil:
     return <int>((<SIZE_t*>a)[0] - (<SIZE_t*>b)[0])
 
 
-cdef inline void binary_search(INT32_t[::1] sorted_array,
+cdef inline void binary_search(const INT32_t[::1] sorted_array,
                                INT32_t start, INT32_t end,
                                SIZE_t value, SIZE_t* index,
                                INT32_t* new_start) nogil:
@@ -933,8 +933,8 @@ cdef inline void binary_search(INT32_t[::1] sorted_array,
     new_start[0] = start
 
 
-cdef inline void extract_nnz_index_to_samples(INT32_t[::1] X_indices,
-                                              DTYPE_t[::1] X_data,
+cdef inline void extract_nnz_index_to_samples(const INT32_t[::1] X_indices,
+                                              const DTYPE_t[::1] X_data,
                                               INT32_t indptr_start,
                                               INT32_t indptr_end,
                                               SIZE_t[::1] samples,
@@ -973,8 +973,8 @@ cdef inline void extract_nnz_index_to_samples(INT32_t[::1] X_indices,
     start_positive[0] = start_positive_
 
 
-cdef inline void extract_nnz_binary_search(INT32_t[::1] X_indices,
-                                           DTYPE_t[::1] X_data,
+cdef inline void extract_nnz_binary_search(const INT32_t[::1] X_indices,
+                                           const DTYPE_t[::1] X_data,
                                            INT32_t indptr_start,
                                            INT32_t indptr_end,
                                            SIZE_t[::1] samples,

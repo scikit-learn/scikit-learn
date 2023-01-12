@@ -17,6 +17,7 @@ from itertools import product
 from typing import Dict, Any
 
 import numpy as np
+from joblib import Parallel
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
 from scipy.sparse import coo_matrix
@@ -26,6 +27,7 @@ import pytest
 
 import joblib
 
+import sklearn
 from sklearn.dummy import DummyRegressor
 from sklearn.metrics import mean_poisson_deviance
 from sklearn.utils._testing import assert_almost_equal
@@ -45,7 +47,12 @@ from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomTreesEmbedding
+<<<<<<< HEAD
 from sklearn.model_selection import train_test_split
+=======
+from sklearn.metrics import explained_variance_score, f1_score
+from sklearn.model_selection import train_test_split, cross_val_score
+>>>>>>> c3fca81536 (FIX Support read-only sparse datasets for `Tree`-based estimators (#25341))
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVC
 from sklearn.utils.validation import check_random_state
@@ -1774,3 +1781,22 @@ def test_base_estimator_property_deprecated(name):
     )
     with pytest.warns(FutureWarning, match=warn_msg):
         model.base_estimator_
+
+
+def test_read_only_buffer(monkeypatch):
+    """RandomForestClassifier must work on readonly sparse data.
+
+    Non-regression test for: https://github.com/scikit-learn/scikit-learn/issues/25333
+    """
+    monkeypatch.setattr(
+        sklearn.ensemble._forest,
+        "Parallel",
+        partial(Parallel, max_nbytes=100),
+    )
+    rng = np.random.RandomState(seed=0)
+
+    X, y = make_classification(n_samples=100, n_features=200, random_state=rng)
+    X = csr_matrix(X, copy=True)
+
+    clf = RandomForestClassifier(n_jobs=2, random_state=rng)
+    cross_val_score(clf, X, y, cv=2)
