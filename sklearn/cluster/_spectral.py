@@ -190,48 +190,6 @@ def discretize(
     return labels
 
 
-def _spectral_clustering(
-    affinity,
-    *,
-    n_clusters,
-    n_components,
-    eigen_solver,
-    random_state,
-    n_init,
-    eigen_tol,
-    assign_labels,
-    verbose,
-):
-    """Spectral clustering algorithm that does not validate input parameters."""
-    # We now obtain the real valued solution matrix to the
-    # relaxed Ncut problem, solving the eigenvalue problem
-    # L_sym x = lambda x  and recovering u = D^-1/2 x.
-    # The first eigenvector is constant only for fully connected graphs
-    # and should be kept for spectral clustering (drop_first = False)
-    # See spectral_embedding documentation.
-    maps = spectral_embedding(
-        affinity,
-        n_components=n_components,
-        eigen_solver=eigen_solver,
-        random_state=random_state,
-        eigen_tol=eigen_tol,
-        drop_first=False,
-    )
-    if verbose:
-        print(f"Computing label assignment using {assign_labels}")
-
-    if assign_labels == "kmeans":
-        _, labels, _ = k_means(
-            maps, n_clusters, random_state=random_state, n_init=n_init, verbose=verbose
-        )
-    elif assign_labels == "cluster_qr":
-        labels = cluster_qr(maps)
-    else:
-        labels = discretize(maps, random_state=random_state)
-
-    return labels
-
-
 def spectral_clustering(
     affinity,
     *,
@@ -761,17 +719,36 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
         n_components = (
             self.n_clusters if self.n_components is None else self.n_components
         )
-        self.labels_ = _spectral_clustering(
+        # We now obtain the real valued solution matrix to the
+        # relaxed Ncut problem, solving the eigenvalue problem
+        # L_sym x = lambda x  and recovering u = D^-1/2 x.
+        # The first eigenvector is constant only for fully connected graphs
+        # and should be kept for spectral clustering (drop_first = False)
+        # See spectral_embedding documentation.
+        maps = spectral_embedding(
             self.affinity_matrix_,
-            n_clusters=self.n_clusters,
             n_components=n_components,
             eigen_solver=self.eigen_solver,
             random_state=random_state,
-            n_init=self.n_init,
             eigen_tol=self.eigen_tol,
-            assign_labels=self.assign_labels,
-            verbose=self.verbose,
+            drop_first=False,
         )
+        if self.verbose:
+            print(f"Computing label assignment using {self.assign_labels}")
+
+        if self.assign_labels == "kmeans":
+            _, self.labels_, _ = k_means(
+                maps,
+                self.n_clusters,
+                random_state=random_state,
+                n_init=self.n_init,
+                verbose=self.verbose,
+            )
+        elif self.assign_labels == "cluster_qr":
+            self.labels_ = cluster_qr(maps)
+        else:
+            self.labels_ = discretize(maps, random_state=random_state)
+
         return self
 
     def fit_predict(self, X, y=None):
