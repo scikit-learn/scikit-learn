@@ -924,7 +924,7 @@ def export_text(
     decision_tree,
     *,
     feature_names=None,
-    class_names=None,
+    class_names="numeric",
     max_depth=10,
     spacing=3,
     decimals=2,
