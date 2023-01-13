@@ -4247,6 +4247,8 @@ def _output_from_fit_transform(transformer, name, X, df, y):
         data_fit,
         data_transform,
     ) in cases:
+        if not all(hasattr(transformer, meth) for meth in ["fit", "transform"]):
+            continue
         transformer.fit(data_fit, y)
         if name in CROSS_DECOMPOSITION:
             X_trans, _ = transformer.transform(data_transform, y)
@@ -4260,6 +4262,8 @@ def _output_from_fit_transform(transformer, name, X, df, y):
         ("fit_transform/array", X),
     ]
     for case, data in cases:
+        if not hasattr(transformer, "fit_transform"):
+            continue
         if name in CROSS_DECOMPOSITION:
             X_trans, _ = transformer.fit_transform(data, y)
         else:
