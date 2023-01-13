@@ -178,7 +178,7 @@ def _single_linkage_tree(
 @validate_params(
     {
         "X": ["array-like"],
-        "connectivity": ["sparse matrix", None],
+        "connectivity": ["array-like", "sparse matrix", None],
         "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
         "return_distance": ["boolean"],
     }
