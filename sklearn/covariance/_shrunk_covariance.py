@@ -135,7 +135,7 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
 
     where `mu = trace(cov) / n_features`.
     """
-    emp_cov = check_array(emp_cov)
+    emp_cov = check_array(emp_cov, allow_nd=True)
     n_features = emp_cov.shape[-1]
     if not 0 <= shrinkage <= 1:
         raise ValueError("shrinkage must be in [0, 1] (Got %d)" % shrinkage)
