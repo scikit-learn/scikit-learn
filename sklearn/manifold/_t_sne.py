@@ -566,7 +566,7 @@ class TSNE(BaseEstimator):
         is used in other manifold learning algorithms. Larger datasets
         usually require a larger perplexity. Consider selecting a value
         between 5 and 50. Different values can result in significantly
-        different results. The perplexity must be less that the number
+        different results. The perplexity must be less than the number
         of samples.
 
     early_exaggeration : float, default=12.0
