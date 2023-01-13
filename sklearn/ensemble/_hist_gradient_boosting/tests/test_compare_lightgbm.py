@@ -18,7 +18,7 @@ from sklearn.ensemble._hist_gradient_boosting.utils import get_equivalent_estima
         "poisson",
         pytest.param(
             "gamma",
-            marks=pytest.skip("LightGBM with gamma loss has larger deviation."),
+            marks=pytest.mark.skip("LightGBM with gamma loss has larger deviation."),
         ),
     ],
 )
