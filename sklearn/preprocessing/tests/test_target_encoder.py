@@ -7,6 +7,35 @@ from sklearn.preprocessing import TargetEncoder, LabelEncoder
 from sklearn.model_selection import KFold
 
 
+def _encode_target(X_int, y_int, n_categories, smooth):
+    cur_encodings = np.zeros(n_categories, dtype=np.float64)
+    y_mean = np.mean(y_int)
+
+    if smooth == "auto":
+        y_variance = np.var(y_int)
+        for c in range(n_categories):
+            y_subset = y_int[X_int == c]
+            n_i = y_subset.shape[0]
+
+            if n_i == 0:
+                cur_encodings[c] = y_mean
+                continue
+
+            y_subset_variance = np.var(y_subset)
+            m = y_subset_variance / y_variance
+            lambda_ = n_i / (n_i + m)
+
+            cur_encodings[c] = lambda_ * np.mean(y_subset) + (1 - lambda_) * y_mean
+        return cur_encodings
+    else:  # float
+        for c in range(n_categories):
+            y_subset = y_int[X_int == c]
+            current_sum = np.sum(y_subset) + y_mean * smooth
+            current_cnt = y_subset.shape[0] + smooth
+            cur_encodings[c] = current_sum / current_cnt
+        return cur_encodings
+
+
 @pytest.mark.parametrize(
     "categories, unknown_value",
     [
@@ -17,7 +46,7 @@ from sklearn.model_selection import KFold
     ],
 )
 @pytest.mark.parametrize("seed", range(2))
-@pytest.mark.parametrize("smooth", [5.0, 10.0])
+@pytest.mark.parametrize("smooth", [5.0, "auto"])
 @pytest.mark.parametrize("target_type", ["binary", "continuous"])
 def test_encoding(categories, unknown_value, seed, smooth, target_type):
     """Check encoding for binary and continuous targets."""
@@ -34,43 +63,29 @@ def test_encoding(categories, unknown_value, seed, smooth, target_type):
     rng = np.random.RandomState(seed)
 
     if target_type == "binary":
-        y_num = rng.randint(low=0, high=2, size=n_samples)
+        y_int = rng.randint(low=0, high=2, size=n_samples)
         target_names = np.asarray(["cat", "dog"], dtype=object)
-        y_input = target_names[y_num]
+        y_input = target_names[y_int]
     else:  # target_type == continuous
-        y_num = rng.uniform(low=-10, high=20, size=n_samples)
-        y_input = y_num
+        y_int = rng.uniform(low=-10, high=20, size=n_samples)
+        y_input = y_int
 
     # compute encodings for all data to validate `transform`
-    y_mean = np.mean(y_num)
-    smooth_sum = smooth * y_mean
-
-    expected_encoding_0 = (np.sum(y_num[:20]) + smooth_sum) / (20.0 + smooth)
-    expected_encoding_1 = (np.sum(y_num[20:50]) + smooth_sum) / (30.0 + smooth)
-    expected_encoding_2 = (np.sum(y_num[50:]) + smooth_sum) / (40.0 + smooth)
-    expected_encodings = np.asarray(
-        [expected_encoding_0, expected_encoding_1, expected_encoding_2]
-    )
+    y_mean = np.mean(y_int)
+    expected_encodings = _encode_target(X_int[:, 0], y_int, n_categories, smooth)
 
     shuffled_idx = rng.permutation(n_samples)
     X_int = X_int[shuffled_idx]
     X_input = X_input[shuffled_idx]
     y_input = y_input[shuffled_idx]
-    y_num = y_num[shuffled_idx]
+    y_int = y_int[shuffled_idx]
 
     # Get encodings for cv splits to validate `fit_transform`
     expected_X_fit_transform = np.empty_like(X_int, dtype=np.float64)
     kfold = KFold(n_splits=3)
     for train_idx, test_idx in kfold.split(X_input):
-        cur_encodings = np.zeros(n_categories, dtype=np.float64)
-        X_, y_ = X_int[train_idx, :], y_num[train_idx]
-        y_train_mean = np.mean(y_)
-        for c in range(n_categories):
-            y_subset = y_[X_[:, 0] == c]
-            current_sum = np.sum(y_subset) + y_train_mean * smooth
-            current_cnt = y_subset.shape[0] + smooth
-            cur_encodings[c] = current_sum / current_cnt
-
+        X_, y_ = X_int[train_idx, 0], y_int[train_idx]
+        cur_encodings = _encode_target(X_, y_, n_categories, smooth)
         expected_X_fit_transform[test_idx, 0] = cur_encodings[X_int[test_idx, 0]]
 
     target_encoder = TargetEncoder(smooth=smooth, categories=categories, cv=kfold)
@@ -114,11 +129,12 @@ def test_encoding(categories, unknown_value, seed, smooth, target_type):
         ),
     ],
 )
-def test_custom_categories(X, categories):
+@pytest.mark.parametrize("smooth", [4.0, "auto"])
+def test_custom_categories(X, categories, smooth):
     """custom categoires with unknown categories that are not in training data."""
     rng = np.random.RandomState(42)
     y = rng.uniform(low=-10, high=20, size=X.shape[0])
-    enc = TargetEncoder(categories=categories).fit(X, y)
+    enc = TargetEncoder(categories=categories, smooth=smooth).fit(X, y)
 
     # The last element is unknown and encoded as the mean
     y_mean = y.mean()
@@ -184,7 +200,7 @@ def test_feature_names_out_set_output():
 
 
 @pytest.mark.parametrize("to_pandas", [True, False])
-@pytest.mark.parametrize("smooth", [1.0, 2.0])
+@pytest.mark.parametrize("smooth", [1.0, "auto"])
 @pytest.mark.parametrize("target_type", ["binary-ints", "binary-str", "continuous"])
 def test_multiple_features_quick(to_pandas, smooth, target_type):
     """Check target encoder with multiple features."""
@@ -193,14 +209,14 @@ def test_multiple_features_quick(to_pandas, smooth, target_type):
     )
     if target_type == "binary-str":
         y_input = np.array(["a", "b", "a", "a", "b", "b", "a", "b"])
-        y_num = LabelEncoder().fit_transform(y_input)
+        y_int = LabelEncoder().fit_transform(y_input)
     elif target_type == "binary-ints":
         y_input = np.array([3, 4, 3, 3, 3, 4, 4, 4])
-        y_num = LabelEncoder().fit_transform(y_input)
+        y_int = LabelEncoder().fit_transform(y_input)
     else:
-        y_input = np.array([3.0, 5.1, 2.4, 3.5, 4.1, 5.5, 10.3, 7.3])
-        y_num = y_input
-    y_mean = np.mean(y_num)
+        y_input = np.array([3.0, 5.1, 2.4, 3.5, 4.1, 5.5, 10.3, 7.3], dtype=np.float32)
+        y_int = y_input
+    y_mean = np.mean(y_int)
     categories = [[0, 1, 2], [0, 1]]
 
     X_test = np.array(
@@ -229,16 +245,8 @@ def test_multiple_features_quick(to_pandas, smooth, target_type):
     expected_X_fit_transform = np.empty_like(X_int, dtype=np.float64)
     for f_idx, cats in enumerate(categories):
         for train_idx, test_idx in cv_splits:
-            n_cats = len(cats)
-            current_encoding = np.zeros(n_cats, dtype=np.float64)
-            X_, y_ = X_int[train_idx, :], y_num[train_idx]
-            y_train_mean = np.mean(y_)
-            for c in range(n_cats):
-                y_subset = y_[X_[:, f_idx] == c]
-                current_sum = np.sum(y_subset) + smooth * y_train_mean
-                current_cnt = y_subset.shape[0] + smooth
-                current_encoding[c] = current_sum / current_cnt
-
+            X_, y_ = X_int[train_idx, f_idx], y_int[train_idx]
+            current_encoding = _encode_target(X_, y_, len(cats), smooth)
             expected_X_fit_transform[test_idx, f_idx] = current_encoding[
                 X_int[test_idx, f_idx]
             ]
@@ -246,13 +254,7 @@ def test_multiple_features_quick(to_pandas, smooth, target_type):
     # manually compute encoding for transform
     expected_encodings = []
     for f_idx, cats in enumerate(categories):
-        n_cats = len(cats)
-        current_encoding = np.zeros(n_cats, dtype=np.float64)
-        for c in range(n_cats):
-            y_subset = y_num[X_int[:, f_idx] == c]
-            current_sum = np.sum(y_subset) + smooth * y_mean
-            current_cnt = y_subset.shape[0] + smooth
-            current_encoding[c] = current_sum / current_cnt
+        current_encoding = _encode_target(X_int[:, f_idx], y_int, len(cats), smooth)
         expected_encodings.append(current_encoding)
 
     expected_X_test_transform = np.array(
@@ -274,3 +276,29 @@ def test_multiple_features_quick(to_pandas, smooth, target_type):
 
     X_test_transform = enc.transform(X_test)
     assert_allclose(X_test_transform, expected_X_test_transform)
+
+
+@pytest.mark.parametrize(
+    "y",
+    [
+        np.array([3.4] * 20),
+        np.array([0] * 20),
+    ],
+    ids=["continuous", "binary"],
+)
+@pytest.mark.parametrize("smooth", ["auto", 4])
+def test_constant_target_and_feature(y, smooth):
+    """Check edge case where feature and target is constant."""
+    X = np.array([[1] * 20]).T
+    n_samples = X.shape[0]
+    y_mean = np.mean(y)
+
+    enc = TargetEncoder(cv=2, smooth=smooth)
+    X_trans = enc.fit_transform(X, y)
+    assert_allclose(X_trans, np.repeat([[y_mean]], n_samples, axis=0))
+    assert enc.encodings_[0][0] == pytest.approx(y_mean)
+    assert enc.encoding_mean_ == pytest.approx(y_mean)
+
+    X_test = np.array([[1], [0]])
+    X_test_trans = enc.transform(X_test)
+    assert_allclose(X_test_trans, np.repeat([[y_mean]], 2, axis=0))

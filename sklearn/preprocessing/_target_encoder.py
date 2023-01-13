@@ -5,6 +5,7 @@ from numbers import Real
 from ._encoders import _BaseEncoder
 from ..base import OneToOneFeatureMixin
 from ._target_encoder_fast import _fit_encoding_fast
+from ._target_encoder_fast import _fit_encoding_fast_auto_smooth
 from ..utils.validation import _check_y, check_consistent_length
 from ..utils.multiclass import type_of_target
 from ..utils._param_validation import Interval, StrOptions
@@ -50,9 +51,10 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         - `"continuous"` : Continious target
         - `"binary"` : Binary target
 
-    smooth : float, default=30.0
+    smooth : "auto" or float, default="auto"
         The amount of mixing the categorical encoding with the global target mean. A
         larger `smooth` value will put more weight on the global target mean.
+        If `"auto"`, then `smooth` is estimated using an empirical bayes estimate.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy used in
@@ -108,11 +110,11 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     _parameter_constraints: dict = {
         "categories": [StrOptions({"auto"}), list],
         "target_type": [StrOptions({"auto", "continuous", "binary"})],
-        "smooth": [Interval(Real, 1, None, closed="left")],
+        "smooth": [StrOptions({"auto"}), Interval(Real, 1, None, closed="left")],
         "cv": ["cv_object"],
     }
 
-    def __init__(self, categories="auto", target_type="auto", smooth=30.0, cv=5):
+    def __init__(self, categories="auto", target_type="auto", smooth="auto", cv=5):
         self.categories = categories
         self.smooth = smooth
         self.target_type = target_type
@@ -172,9 +174,16 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         for train_idx, test_idx in cv.split(X, y):
             X_train, y_train = X_int[train_idx, :], y[train_idx]
             y_mean = np.mean(y_train)
-            encodings = _fit_encoding_fast(
-                X_train, y_train, n_categories, self.smooth, y_mean
-            )
+
+            if self.smooth == "auto":
+                y_variance = np.var(y_train)
+                encodings = _fit_encoding_fast_auto_smooth(
+                    X_train, y_train, n_categories, y_mean, y_variance
+                )
+            else:
+                encodings = _fit_encoding_fast(
+                    X_train, y_train, n_categories, self.smooth, y_mean
+                )
             self._transform_X_int(X_out, X_int, X_invalid, test_idx, encodings, y_mean)
         return X_out
 
@@ -225,8 +234,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         else:  # continuous
             y = _check_y(y, y_numeric=True, estimator=self)
 
-        y = y.astype(np.float64, copy=False)
-
         self.encoding_mean_ = np.mean(y)
 
         X_int, X_mask = self._transform(
@@ -237,9 +244,16 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
             dtype=np.int64,
             count=len(self.categories_),
         )
-        self.encodings_ = _fit_encoding_fast(
-            X_int, y, n_categories, self.smooth, self.encoding_mean_
-        )
+        if self.smooth == "auto":
+            y_variance = np.var(y)
+            self.encodings_ = _fit_encoding_fast_auto_smooth(
+                X_int, y, n_categories, self.encoding_mean_, y_variance
+            )
+        else:
+            self.encodings_ = _fit_encoding_fast(
+                X_int, y, n_categories, self.smooth, self.encoding_mean_
+            )
+
         return X_int, X_mask, y, n_categories
 
     def _transform_X_int(self, X_out, X_int, X_invalid, indices, encodings, y_mean):
