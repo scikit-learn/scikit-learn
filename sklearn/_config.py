@@ -138,7 +138,9 @@ def set_config(
     engine_attributes : str, default=None
         Enable conversion of estimator attributes to scikit-learn native
         types by setting to "sklearn_types". By default attributes are
-        stored using engine native types.
+        stored using engine native types. This avoids additional conversions
+        and memory transfers between host and device when calling `predict`/
+        `transform` after `fit` of an engine-aware estimator.
 
         See the :ref:`User Guide <engine>` for more details.
 

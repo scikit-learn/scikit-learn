@@ -276,8 +276,15 @@ class KMeansCythonEngine:
     """
 
     @staticmethod
-    def convert_to_numpy(name, value):
-        """Convert estimator attributes to Numpy arrays
+    def convert_to_sklearn_types(name, value):
+        """Convert estimator attributes to scikit-learn types.
+
+        Users can configure whether estimator attributes should be stored
+        using engine native types or scikit-learn types. This function is
+        used to convert attributes from engine to scikit-learn native types.
+
+        Scikit-learn native types are ndarrays and basic Python types. There
+        is no need to convert these.
 
         Parameters
         ----------
@@ -289,12 +296,12 @@ class KMeansCythonEngine:
 
         Returns
         --------
-        converted : ndarray
-            Attribute value converted to a ndarray
+        converted
+            Attribute value converted to a scikit-learn native type.
         """
         # XXX Maybe a bit useless as it should never get called, but it
         # does demonstrate the API
-        return np.asarray(value)
+        return value
 
     def __init__(self, estimator):
         self.estimator = estimator

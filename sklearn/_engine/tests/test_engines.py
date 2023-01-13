@@ -3,7 +3,6 @@ from collections import namedtuple
 import pytest
 
 import numpy as np
-import numpy.array_api
 
 from sklearn._engine import convert_attributes
 from sklearn._engine import list_engine_provider_names
@@ -150,10 +149,11 @@ def test_attribute_conversion(attribute_types, converted):
 
     The estimator uses Numpy Array API arrays as its native type.
     """
+    np_array_api = pytest.importorskip("numpy.array_api")
 
     class Engine:
         @staticmethod
-        def convert_to_numpy(name, value):
+        def convert_to_sklearn_types(name, value):
             return np.asarray(value)
 
     class Estimator:
@@ -161,11 +161,11 @@ def test_attribute_conversion(attribute_types, converted):
 
         @convert_attributes
         def fit(self, X):
-            self.x = np.array_api.asarray(X)
+            self.X_ = np_array_api.asarray(X)
 
     X = np.array([1, 2, 3])
     est = Estimator()
     with config_context(engine_attributes=attribute_types):
         est.fit(X)
 
-    assert isinstance(est.x, np.ndarray) == converted
+    assert isinstance(est.X_, np.ndarray) == converted
