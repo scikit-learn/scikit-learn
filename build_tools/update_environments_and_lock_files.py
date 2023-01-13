@@ -299,7 +299,7 @@ conda_build_metadata_list = [
     },
     {
         "build_name": "py39_conda_forge",
-        "folder": "build_tools/circle",
+        "folder": "build_tools/cirrus",
         "platform": "linux-aarch64",
         "channel": "conda-forge",
         "conda_dependencies": remove_from(
