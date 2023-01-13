@@ -4207,9 +4207,14 @@ def check_set_output_transform(name, transformer_orig):
     def fit_transform(est):
         return est.fit_transform(X, y)
 
-    transform_methods = [fit_then_transform, fit_transform]
-    for transform_method in transform_methods:
+    transform_methods = {
+        "transform": fit_then_transform,
+        "fit_transform": fit_transform,
+    }
+    for name, transform_method in transform_methods.items():
         transformer = clone(transformer)
+        if not hasattr(transformer, name):
+            continue
         X_trans_no_setting = transform_method(transformer)
 
         # Auto wrapping only wraps the first array
