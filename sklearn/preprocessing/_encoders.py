@@ -392,6 +392,7 @@ class OneHotEncoder(_BaseEncoder):
     --------
     OrdinalEncoder : Performs an ordinal (integer)
       encoding of the categorical features.
+    TargetEncoder : Encodes categorical features using the target.
     sklearn.feature_extraction.DictVectorizer : Performs a one-hot encoding of
       dictionary items (also handles string-valued features).
     sklearn.feature_extraction.FeatureHasher : Performs an approximate one-hot
@@ -1141,6 +1142,7 @@ class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):
     See Also
     --------
     OneHotEncoder : Performs a one-hot encoding of categorical features.
+    TargetEncoder : Encodes categorical features using the target.
     LabelEncoder : Encodes target labels with values between 0 and
         ``n_classes-1``.
 

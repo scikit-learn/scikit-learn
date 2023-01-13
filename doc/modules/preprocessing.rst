@@ -883,7 +883,7 @@ where :math:`L_i` is the set of observations of size :math:`n_i` for which
 
 .. topic:: Examples:
 
-  * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder_for_regression.py`
+  * :ref:`sphx_glr_auto_examples_preprocessing_plot_target_encoder.py`
 
 .. topic:: References
 
