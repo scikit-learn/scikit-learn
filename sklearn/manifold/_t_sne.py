@@ -1145,5 +1145,10 @@ class TSNE(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self.fit_transform(X)
         return self
 
+    @property
+    def _n_features_out(self):
+        """Number of transformed output features."""
+        return self.embedding_.shape[1]
+
     def _more_tags(self):
         return {"pairwise": self.metric == "precomputed"}
