@@ -837,31 +837,46 @@ Target Regressor Encoder
 
 .. currentmodule:: sklearn.preprocessing
 
-The :class:`TargetEncoder` uses target statistics groupby the
+The :class:`TargetEncoder` uses target mean groupby the
 categorical feature for encoding the categories [PAR]_ [MIC]_. This encoding
 scheme is useful with categorical features with high cardinality, where one hot
 encoding would inflate the feature space making it more expensive for a
 downstream model to process. A classical example of high cardinality categories
-are location based such as zip code or region. The
-:class:`TargetEncoder` implementation mixes the global target mean with
-the target mean conditioned on the category:
+are location based such as zip code or region. For the binary classification
+target, the target encoding is given by:
 
 .. math::
-    E_c = \dfrac{\sum_{X_i = c}y_i + s\mu_y}{|X_c| + s}
+    S_i = \lambda_i\frac{n_{iY}}{n_i} + (1 - \lambda_i)\frac{n_Y}{n}
 
-where :math:`E_c` is the encoding for category :math:`c`, :math:`X_i` is the
-category at :math:`i`, :math:`y_i` is the target at :math:`i`, :math:`s` is a
-smoothing parameter, and :math:`X_c` is the set of data points with category
-:math:`c`. For binary classification targets, the target is binarized
-and then the mean is computed.
+where :math:`S_i` is the encoding for category :math:`i`, :math:`n_{iY}` is
+the number of observations with :math:`Y=1` with category :math:`i`,
+:math:`n_i` is the , :math:`n_Y` is the number of observations with :math:`Y=1`,
+:math:`n` is the number of observations, and :math:`\lambda_i` is a shrinkage
+factor. The shrinkage factor is given by:
 
-:class:`TargetEncoder` uses a cross validation scheme in
-:meth:`~TargetEncoder.fit_transform` to prevent leaking the target
-during training. In :meth:`~TargetEncoder.fit_transform`, Categorical
-encodings are obtained from one split and used to encoding the other split.
-Afterwards, a final categorical encoding is obtained from all the training data,
-which is used to encode data during :meth:`~TargetEncoder.transform`.
-This means that `fit().transform()` does not equal `fit_transform()`.
+.. math::
+    \lambda_i = \frac{n_i}{m + n_i}
+
+where :math:`m` is a smoothing factor, which is controled with the `smooth`
+parameter in :class:`TargetEncoder`. Large smoothing factors will put more
+weight on the global mean.
+
+For continuous targets, the formulation is similar to binary classification:
+
+.. math::
+    S_i = \lambda_i\frac{\sum_{k\in L_i}Y_k}{n_i} + (1 - \lambda_i)\frac{\sum_{k=1}^{n}Y_k}{n}
+
+where :math:`L_i` is the set of observations of size :math:`n_i` for which
+:math:`X=X_i`.
+
+.. note::
+  :class:`TargetEncoder` uses a cross validation scheme in
+  :meth:`~TargetEncoder.fit_transform` to prevent leaking the target
+  during training. In :meth:`~TargetEncoder.fit_transform`, Categorical
+  encodings are obtained from one split and used to encoding the other split.
+  Afterwards, a final categorical encoding is obtained from all the training data,
+  which is used to encode data during :meth:`~TargetEncoder.transform`.
+  This means that `fit().transform()` does not equal `fit_transform()`.
 
 .. topic:: Examples:
 

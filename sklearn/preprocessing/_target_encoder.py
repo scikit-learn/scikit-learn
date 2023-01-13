@@ -14,8 +14,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     """Target Encoder for regression and binary classification targets.
 
     Each category is encoded based on its effect on the target variable. The encoding
-    scheme mixes the global target mean with the target mean conditioned on the
-    category.
+    scheme mixes the global target mean with the target mean grouped by the
+    categories.
 
     Read more in the :ref:`User Guide <target_encoder>`.
 
