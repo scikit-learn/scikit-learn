@@ -10,6 +10,7 @@ from cython cimport floating
 
 cnp.import_array()
 
+
 def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
     cdef:
         Py_ssize_t n = y.shape[0], i, k
