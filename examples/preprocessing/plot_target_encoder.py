@@ -1,15 +1,14 @@
 """
-==============
-Target Encoder
-==============
+============================================
+Comparing Target Encoder with Other Encoders
+============================================
 
 .. currentmodule:: sklearn.preprocessing
 
 The :class:`TargetEncoder` uses the value of the target to encode each
-categorical feature. In this example, we will compare
-three different approaches for handling categorical features:
-:class:`TargetEncoder`, :class:`OrdinalEncoder`, and dropping the
-category.
+categorical feature. In this example, we will compare three different approaches
+for handling categorical features: :class:`TargetEncoder`,
+:class:`OrdinalEncoder`, and dropping the category.
 """
 
 # %%

@@ -832,18 +832,18 @@ lexicon order.
 
 .. _target_encoder:
 
-Target Regressor Encoder
-------------------------
+Target Encoder
+--------------
 
 .. currentmodule:: sklearn.preprocessing
 
-The :class:`TargetEncoder` uses target mean groupby the
-categorical feature for encoding the categories [PAR]_ [MIC]_. This encoding
-scheme is useful with categorical features with high cardinality, where one hot
-encoding would inflate the feature space making it more expensive for a
-downstream model to process. A classical example of high cardinality categories
-are location based such as zip code or region. For the binary classification
-target, the target encoding is given by:
+The :class:`TargetEncoder` uses target mean groupby the categorical feature for
+encoding unordered categoires, i.e. nominal categories [PAR]_ [MIC]_.
+This encoding scheme is useful with categorical features with high cardinality,
+where one hot encoding would inflate the feature space making it more expensive
+for a downstream model to process. A classical example of high cardinality
+categories are location based such as zip code or region. For the binary
+classification target, the target encoding is given by:
 
 .. math::
     S_i = \lambda_i\frac{n_{iY}}{n_i} + (1 - \lambda_i)\frac{n_y}{n}
