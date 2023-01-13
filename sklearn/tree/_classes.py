@@ -601,12 +601,11 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
     Parameters
     ----------
     criterion : {"gini", "entropy", "log_loss", "hellinger"}, default="gini"
-        The function to measure the quality of a split,
-            see :ref:`tree_mathematical_formulation`.
-        Supported criteria are
+        The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity
         "log_loss" and "entropy" both for the Shannon information gain
         "hellinger" for the Hellinger distance
+        Note: This parameter is tree-specific, see :ref:`tree_mathematical_formulation`
 
     splitter : {"best", "random"}, default="best"
         The strategy used to choose the split at each node. Supported
@@ -1304,12 +1303,11 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     Parameters
     ----------
     criterion : {"gini", "entropy", "log_loss", "hellinger"}, default="gini"
-        The function to measure the quality of a split,
-            see :ref:`tree_mathematical_formulation`.
-        Supported criteria are
+        The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity
         "log_loss" and "entropy" both for the Shannon information gain
         "hellinger" for the Hellinger distance
+        Note: This parameter is tree-specific, see :ref:`tree_mathematical_formulation`
 
     splitter : {"random", "best"}, default="random"
         The strategy used to choose the split at each node. Supported
