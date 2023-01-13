@@ -201,7 +201,7 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
     X : array-like of shape (n_samples, n_features)
         Feature matrix representing `n_samples` samples to be clustered.
 
-    connectivity : sparse matrix, default=None
+    connectivity : {array-like, sparse matrix}, default=None
         Connectivity matrix. Defines for each sample the neighboring samples
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
