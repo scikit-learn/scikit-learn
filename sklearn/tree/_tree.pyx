@@ -155,7 +155,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         cdef int init_capacity
 
         if tree.max_depth <= 10:
-            init_capacity = (2 ** (tree.max_depth + 1)) - 1
+            init_capacity = <int> (2 ** (tree.max_depth + 1)) - 1
         else:
             init_capacity = 2047
 

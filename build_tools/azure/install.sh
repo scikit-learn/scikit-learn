@@ -83,11 +83,11 @@ python_environment_install_and_activate() {
         echo "Installing development dependency wheels"
         dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
         pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas scipy
-        echo "Installing Cython from PyPI enabling pre-releases"
-        pip install --pre cython
-        echo "Installing joblib master"
+        echo "Installing Cython from latest sources"
+        pip install https://github.com/cython/cython/archive/master.zip
+        echo "Installing joblib from latest sources"
         pip install https://github.com/joblib/joblib/archive/master.zip
-        echo "Installing pillow master"
+        echo "Installing pillow from latest sources"
         pip install https://github.com/python-pillow/Pillow/archive/main.zip
     fi
 }
