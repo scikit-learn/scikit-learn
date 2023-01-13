@@ -24,7 +24,13 @@ def _fit_encoding_fast(
     double smooth,
     double y_mean,
 ):
-    """Fit a target encoding on X_int and y."""
+    """Fit a target encoding on X_int and y.
+
+    This implementation uses Equation 7 from [1] to compute the encoding.
+
+    [1]: Micci-Barreca, Daniele. "A preprocessing scheme for high-cardinality
+         categorical attributes in classification and prediction problems"
+    """
     cdef:
         list encodings = []
         cnp.int64_t i, j, n_cats
@@ -65,7 +71,13 @@ def _fit_encoding_fast_auto_smooth(
     double y_mean,
     double y_variance,
 ):
-    """Fit a target encoding on X_int and y with auto smoothing."""
+    """Fit a target encoding on X_int and y with auto smoothing.
+
+    This implementation uses Equation 6 from [1] to compute `lambda`.
+
+    [1]: Micci-Barreca, Daniele. "A preprocessing scheme for high-cardinality
+         categorical attributes in classification and prediction problems"
+    """
     cdef:
         list encodings = []
         cnp.int64_t i, j, n_cats
