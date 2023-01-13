@@ -111,6 +111,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.cohen_kappa_score",
     "sklearn.metrics.confusion_matrix",
     "sklearn.metrics.det_curve",
+    "sklearn.metrics.hamming_loss",
     "sklearn.metrics.mean_absolute_error",
     "sklearn.metrics.mean_squared_error",
     "sklearn.metrics.mean_tweedie_deviance",
@@ -122,7 +123,6 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.model_selection.train_test_split",
     "sklearn.random_projection.johnson_lindenstrauss_min_dim",
     "sklearn.svm.l1_min_c",
-    "sklearn.metrics.hamming_loss",
 ]
 
 
