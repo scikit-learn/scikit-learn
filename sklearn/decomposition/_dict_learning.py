@@ -174,6 +174,11 @@ def _sparse_encode(
         )
 
         if init is not None:
+            # In some workflows using coordinate descent algorithms:
+            #  - users might provide NumPy arrays with read-only buffers
+            #  - `joblib` might memmap arrays making their buffer read-only
+            # TODO: move this handling (which is currently too broad)
+            # closer to the actual private function which need buffers to be writable.
             if not init.flags["WRITEABLE"]:
                 init = np.array(init)
             clf.coef_ = init
