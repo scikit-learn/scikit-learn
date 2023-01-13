@@ -109,6 +109,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.feature_extraction.image.extract_patches_2d",
     "sklearn.metrics.accuracy_score",
     "sklearn.metrics.auc",
+    "sklearn.metrics.average_precision_score",
     "sklearn.metrics.balanced_accuracy_score",
     "sklearn.metrics.cluster.contingency_matrix",
     "sklearn.metrics.cohen_kappa_score",
