@@ -2161,10 +2161,10 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
 
     Parameters
     ----------
-    y_true : 1d array-like
+    y_true : array-like of shape (n_samples,)
         Ground truth (correct) target values.
 
-    y_pred : 1d array-like
+    y_pred : array-like of shape (n_samples,)
         Estimated targets as returned by a classifier.
 
     sample_weight : array-like of shape (n_samples,), default=None
