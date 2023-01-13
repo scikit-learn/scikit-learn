@@ -24,7 +24,7 @@ def get_commit_message():
     # message to attempt to obfuscate the injection of arbitrary commands in
     # the Azure pipeline.
     #
-    # This can be a problem if the PR reviewers to not pay close enough
+    # This can be a problem if the PR reviewers do not pay close enough
     # attention to the full commit message prior to clicking the merge button
     # and as a result make the inject code run in a protected branch with
     # elevated access to CI secrets. On a protected branch, Azure
