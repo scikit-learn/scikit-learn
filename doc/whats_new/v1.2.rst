@@ -19,6 +19,17 @@ Changelog
   certain estimators to be pickled when using Python 3.11. :pr:`25188` by
   :user:`Benjamin Bossan <BenjaminBossan>`.
 
+- |Fix| Inheriting from :class:`base.TransformerMixin` will only wrap the `transform`
+  method if the class defines `transform` itself. :pr:`25295` by `Thomas Fan`_.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor` :class:`ensemble.ExtraTreesClassifier`
+  and :class:`ensemble.ExtraTreesRegressor` now support sparse readonly datasets.
+  :pr:`25341` by :user:`Julien Jerphanion <jjerphan>`
+
 :mod:`sklearn.linear_model`
 ...........................
 
@@ -33,6 +44,14 @@ Changelog
 - |Fix| :meth:`preprocessing.FunctionTransformer.inverse_transform` correctly
   supports DataFrames that are all numerical when `check_inverse=True`.
   :pr:`25274` by `Thomas Fan`_.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`
+  :class:`tree.ExtraTreeClassifier` and :class:`tree.ExtraTreeRegressor`
+  now support sparse readonly datasets.
+  :pr:`25341` by :user:`Julien Jerphanion <jjerphan>`
 
 :mod:`sklearn.utils`
 ....................
