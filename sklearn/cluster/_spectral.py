@@ -139,7 +139,6 @@ def discretize(
     # If there is an exception we try to randomize and rerun SVD again
     # do this max_svd_restarts times.
     while (svd_restarts < max_svd_restarts) and not has_converged:
-
         # Initialize first column of rotation matrix with a row of the
         # eigenvectors
         rotation = np.zeros((n_components, n_components))
@@ -188,6 +187,47 @@ def discretize(
 
     if not has_converged:
         raise LinAlgError("SVD did not converge")
+    return labels
+
+
+def _spectral_clustering(
+    affinity,
+    *,
+    n_clusters,
+    n_components,
+    eigen_solver,
+    random_state,
+    n_init,
+    eigen_tol,
+    assign_labels,
+    verbose,
+):
+    # We now obtain the real valued solution matrix to the
+    # relaxed Ncut problem, solving the eigenvalue problem
+    # L_sym x = lambda x  and recovering u = D^-1/2 x.
+    # The first eigenvector is constant only for fully connected graphs
+    # and should be kept for spectral clustering (drop_first = False)
+    # See spectral_embedding documentation.
+    maps = spectral_embedding(
+        affinity,
+        n_components=n_components,
+        eigen_solver=eigen_solver,
+        random_state=random_state,
+        eigen_tol=eigen_tol,
+        drop_first=False,
+    )
+    if verbose:
+        print(f"Computing label assignment using {assign_labels}")
+
+    if assign_labels == "kmeans":
+        _, labels, _ = k_means(
+            maps, n_clusters, random_state=random_state, n_init=n_init, verbose=verbose
+        )
+    elif assign_labels == "cluster_qr":
+        labels = cluster_qr(maps)
+    else:
+        labels = discretize(maps, random_state=random_state)
+
     return labels
 
 
@@ -345,50 +385,20 @@ def spectral_clustering(
            David Zhuzhunashvili, Andrew Knyazev
            <10.1109/HPEC.2017.8091045>`
     """
-    if assign_labels not in ("kmeans", "discretize", "cluster_qr"):
-        raise ValueError(
-            "The 'assign_labels' parameter should be "
-            "'kmeans' or 'discretize', or 'cluster_qr', "
-            f"but {assign_labels!r} was given"
-        )
-    if isinstance(affinity, np.matrix):
-        raise TypeError(
-            "spectral_clustering does not support passing in affinity as an "
-            "np.matrix. Please convert to a numpy array with np.asarray. For "
-            "more information see: "
-            "https://numpy.org/doc/stable/reference/generated/numpy.matrix.html",  # noqa
-        )
 
-    random_state = check_random_state(random_state)
-    n_components = n_clusters if n_components is None else n_components
-
-    # We now obtain the real valued solution matrix to the
-    # relaxed Ncut problem, solving the eigenvalue problem
-    # L_sym x = lambda x  and recovering u = D^-1/2 x.
-    # The first eigenvector is constant only for fully connected graphs
-    # and should be kept for spectral clustering (drop_first = False)
-    # See spectral_embedding documentation.
-    maps = spectral_embedding(
-        affinity,
+    clusterer = SpectralClustering(
+        n_clusters=n_clusters,
         n_components=n_components,
         eigen_solver=eigen_solver,
         random_state=random_state,
+        n_init=n_init,
+        affinity="precomputed",
         eigen_tol=eigen_tol,
-        drop_first=False,
-    )
-    if verbose:
-        print(f"Computing label assignment using {assign_labels}")
+        assign_labels=assign_labels,
+        verbose=verbose,
+    ).fit(affinity)
 
-    if assign_labels == "kmeans":
-        _, labels, _ = k_means(
-            maps, n_clusters, random_state=random_state, n_init=n_init, verbose=verbose
-        )
-    elif assign_labels == "cluster_qr":
-        labels = cluster_qr(maps)
-    else:
-        labels = discretize(maps, random_state=random_state)
-
-    return labels
+    return clusterer.labels_
 
 
 class SpectralClustering(ClusterMixin, BaseEstimator):
@@ -747,10 +757,13 @@ class SpectralClustering(ClusterMixin, BaseEstimator):
             )
 
         random_state = check_random_state(self.random_state)
-        self.labels_ = spectral_clustering(
+        n_components = (
+            self.n_clusters if self.n_components is None else self.n_components
+        )
+        self.labels_ = _spectral_clustering(
             self.affinity_matrix_,
             n_clusters=self.n_clusters,
-            n_components=self.n_components,
+            n_components=n_components,
             eigen_solver=self.eigen_solver,
             random_state=random_state,
             n_init=self.n_init,
