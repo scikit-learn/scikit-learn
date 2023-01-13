@@ -15,6 +15,7 @@ from io import StringIO
 from numbers import Integral
 
 import numpy as np
+import warnings
 
 from ..utils.validation import check_is_fitted
 from ..base import is_classifier
@@ -944,9 +945,22 @@ def export_text(
         A list of length n_features containing the feature names.
         If None generic names will be used ("feature_0", "feature_1", ...).
 
-    class_names : list of arguments, default=None
+    class_names : "numeric", list or None, default="numeric"
         Names of each of the target classes in ascending numerical order.
         Only relevant for classification and not supported for multi-output.
+
+        - if `None`, the class names are delegated to `decision_tree.classes_`;
+        - if `"numeric"`, the class names are generic names representing numerical
+          numbers (e.g. `["0", "1", ...]`);
+        - if a list, the number of items should be the same as in
+          `decition_tree.classes_` and will be used.
+
+        .. versionadded:: 1.3
+           `class_names` was added in version 1.3.
+
+        .. deprecated:: 1.3
+           The `"numeric"` option is deprecated and will be replaced by `None`. Thus,
+           `decision_tree.classes_` will be used by default.
 
     max_depth : int, default=10
         Only the first max_depth levels of the tree are exported.
@@ -991,8 +1005,21 @@ def export_text(
     check_is_fitted(decision_tree)
     tree_ = decision_tree.tree_
     if is_classifier(decision_tree):
-        if class_names is not None and len(class_names) == len(decision_tree.classes_):
-            class_names = class_names
+        if class_names == "numeric":
+            warnings.warn(
+                "The option `class_names='numeric'` is deprecated in 1.3 and will be"
+                " removed in 1.5. Set `class_names=None`, the classes as seen by"
+                " `decision_tree` during `fit` will be used instead.",
+                FutureWarning,
+            )
+        elif class_names is not None and len(class_names) != len(
+            decision_tree.classes_
+        ):
+            raise ValueError(
+                "When `class_names` is not None, it should be a list containing as"
+                f" many items as `decision_tree.classes_`. Got {len(class_names)} while"
+                f" the tree was fitted with {len(decision_tree.classes_)} classes."
+            )
         else:
             class_names = decision_tree.classes_
     right_child_fmt = "{} {} <= {}\n"
@@ -1050,7 +1077,13 @@ def export_text(
             value = tree_.value[node][0]
         else:
             value = tree_.value[node].T[0]
-        class_name = np.argmax(value)
+
+        if class_names == "numeric":
+            class_name = np.argmax(value)
+        elif class_names is None:
+            class_name = decision_tree.classes_[np.argmax(value)]
+        else:
+            class_name = class_names[np.argmax(value)]
 
         if tree_.n_classes[0] != 1 and tree_.n_outputs == 1:
             class_name = class_names[class_name]
