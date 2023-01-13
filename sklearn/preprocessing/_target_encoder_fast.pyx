@@ -1,4 +1,6 @@
 cimport cython
+from libc.math cimport pow
+from libc.string cimport memset
 
 cimport numpy as cnp
 import numpy as np
@@ -20,27 +22,31 @@ def _fit_encoding_fast(
     cdef:
         list encodings = []
         cnp.int64_t i, j, n_cats
+        INT_DTYPE X_int_tmp
         int n_samples = X_int.shape[0]
+        int n_features = X_int.shape[1]
         double smooth_sum = smooth * y_mean
         cnp.int64_t max_cats = np.max(n_categories)
-        double[::1] current_sum = np.empty(max_cats, dtype=np.float64)
-        double[::1] current_cnt = np.empty(max_cats, dtype=np.float64)
+        double[::1] sums = np.empty(max_cats, dtype=np.float64)
+        double[::1] counts = np.empty(max_cats, dtype=np.float64)
 
-    for i in range(n_categories.shape[0]):
-        n_cats = n_categories[i]
-        current_encoding = np.empty(shape=n_cats, dtype=np.float64)
+    for j in range(n_features):
+        n_cats = n_categories[j]
 
-        for j in range(n_cats):
-            current_sum[j] = smooth_sum
-            current_cnt[j] = smooth
+        for i in range(n_cats):
+            sums[i] = smooth_sum
+            counts[i] = smooth
 
-        for j in range(n_samples):
-            if X_int[j, i] == -1:
+        for i in range(n_samples):
+            X_int_tmp = X_int[i, j]
+            # -1 are unknown categories, which are not counted
+            if X_int_tmp == -1:
                 continue
-            current_sum[X_int[j, i]] += y[j]
-            current_cnt[X_int[j, i]] += 1.0
+            sums[X_int_tmp] += y[i]
+            counts[X_int_tmp] += 1.0
 
-        for j in range(n_cats):
-            current_encoding[j] = current_sum[j] / current_cnt[j]
+        current_encoding = np.empty(shape=n_cats, dtype=np.float64)
+        for i in range(n_cats):
+            current_encoding[i] = sums[i] / counts[i]
         encodings.append(current_encoding)
     return encodings
