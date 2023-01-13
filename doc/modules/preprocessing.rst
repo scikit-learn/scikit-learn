@@ -857,7 +857,7 @@ factor. The shrinkage factor is given by:
 .. math::
     \lambda_i = \frac{n_i}{m + n_i}
 
-where :math:`m` is a smoothing factor, which is controled with the `smooth`
+where :math:`m` is a smoothing factor, which is controlled with the `smooth`
 parameter in :class:`TargetEncoder`. Large smoothing factors will put more
 weight on the global mean. When `smooth="auto"`, the smoothing factor is computed
 an empirical bayes estimate: :math:`m=\sigma_c^2/\tau^2`, where :math:`\sigma_i^2`
@@ -875,7 +875,7 @@ where :math:`L_i` is the set of observations of size :math:`n_i` for which
 .. note::
   :class:`TargetEncoder` uses a cross validation scheme in
   :meth:`~TargetEncoder.fit_transform` to prevent leaking the target
-  during training. In :meth:`~TargetEncoder.fit_transform`, Categorical
+  during training. In :meth:`~TargetEncoder.fit_transform`, categorical
   encodings are obtained from one split and used to encoding the other split.
   Afterwards, a final categorical encoding is obtained from all the training data,
   which is used to encode data during :meth:`~TargetEncoder.transform`.
