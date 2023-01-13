@@ -535,8 +535,6 @@ Log Loss or Entropy:
 
       \mathrm{LL}(D, T) = \sum_{m \in T} \frac{n_m}{n} H(Q_m)
 
-.. _hellinger_distance_mathematical_formulation:
-
 **HellingerDistance**
 
 Hellinger distance is implemented for the binary case and a single label only.
@@ -547,12 +545,13 @@ The score is calculated per split, not per population:
 
     H(Q_m) = \sqrt{\left(\sqrt{\frac{N_{m,+}^{left}}{N_{m,+}}}-\sqrt{\frac{N_{m,-}^{left}}{N_{m,-}}}\right)^2+\left(\sqrt{\frac{N_{m,+}^{right}}{N_{m,+}}}-\sqrt{\frac{N_{m,-}^{right}}{N_{m,-}}}\right)^2 }
 
-- number of positive and negative samples for the :math:`m` node respectively
-    :math:`N_{m,+}` and :math:`N_{m,-}`
-- number of positive samples for each of the :math:`m` node splits
-    :math:`N_{m,+}^{left}` and :math:`N_{m,+}^{right}`
-- number of negative samples for each of the :math:`m` node splits
-    :math:`N_{m,-}^{left}` and :math:`N_{m,-}^{right}`
+where:
+	 - :math:`N_{m,+}` is the number of positive samples for the :math:`m` node
+	 - :math:`N_{m,-}` is the number of negative samples for the :math:`m` node
+	 - :math:`N_{m,+}^{left}` and :math:`N_{m,+}^{right}` are the numbers of positive
+	   samples respectively at the left and the right of the :math:`m` node split
+	 - :math:`N_{m,-}^{left}` and :math:`N_{m,-}^{right}` are the numbers of negative
+	   samples respectively at the left and the right of the :math:`m` node split
 
 
 
