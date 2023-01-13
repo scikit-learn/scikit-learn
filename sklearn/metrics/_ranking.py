@@ -146,10 +146,10 @@ def average_precision_score(
 
     Parameters
     ----------
-    y_true : ndarray of shape (n_samples,) or (n_samples, n_classes)
+    y_true : array-like of shape (n_samples,) or (n_samples, n_classes)
         True binary labels or binary label indicators.
 
-    y_score : ndarray of shape (n_samples,) or (n_samples, n_classes)
+    y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by :term:`decision_function` on some classifiers).
@@ -173,7 +173,7 @@ def average_precision_score(
 
         Will be ignored when ``y_true`` is binary.
 
-    pos_label : int or str, default=1
+    pos_label : int, float, bool or str, default=1
         The label of the positive class. Only applied to binary ``y_true``.
         For multilabel-indicator ``y_true``, ``pos_label`` is fixed to 1.
 
