@@ -202,6 +202,7 @@ def _spectral_clustering(
     assign_labels,
     verbose,
 ):
+    """Spectral clustering algorithm that does not validate input parameters."""
     # We now obtain the real valued solution matrix to the
     # relaxed Ncut problem, solving the eigenvalue problem
     # L_sym x = lambda x  and recovering u = D^-1/2 x.
