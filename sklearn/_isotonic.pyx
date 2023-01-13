@@ -9,7 +9,6 @@ cimport numpy as cnp
 from cython cimport floating
 
 cnp.import_array()
-cimport openmp
 
 def _inplace_contiguous_isotonic_regression(floating[::1] y, floating[::1] w):
     cdef:
