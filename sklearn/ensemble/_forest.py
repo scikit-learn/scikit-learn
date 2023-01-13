@@ -1124,12 +1124,12 @@ class RandomForestClassifier(ForestClassifier):
            in 0.22.
 
     criterion : {"gini", "entropy", "log_loss", "hellinger"}, default="gini"
-        The function to measure the quality of a split. Supported criteria are
+        The function to measure the quality of a split,
+            see :ref:`tree_mathematical_formulation`.
+        Supported criteria are
         "gini" for the Gini impurity
-        "log_loss" and "entropy" both for the Shannon information gain,
-            see :ref:`tree_mathematical_formulation`
-        "hellinger" for the Hellinger distance,
-            see :ref:`hellinger_distance_mathematical_formulation`
+        "log_loss" and "entropy" both for the Shannon information gain
+        "hellinger" for the Hellinger distance
         Note: This parameter is tree-specific.
 
     max_depth : int, default=None
@@ -1826,12 +1826,12 @@ class ExtraTreesClassifier(ForestClassifier):
            in 0.22.
 
     criterion : {"gini", "entropy", "log_loss", "hellinger"}, default="gini"
-        The function to measure the quality of a split. Supported criteria are
+        The function to measure the quality of a split,
+            see :ref:`tree_mathematical_formulation`.
+        Supported criteria are
         "gini" for the Gini impurity
-        "log_loss" and "entropy" both for the Shannon information gain,
-            see :ref:`tree_mathematical_formulation`
-        "hellinger" for the Hellinger distance,
-            see :ref:`hellinger_distance_mathematical_formulation`
+        "log_loss" and "entropy" both for the Shannon information gain
+        "hellinger" for the Hellinger distance
         Note: This parameter is tree-specific.
 
     max_depth : int, default=None
