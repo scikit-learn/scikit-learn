@@ -15,8 +15,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     """Target Encoder for regression and classification targets.
 
     Each category is encoded based on its effect on the target. The encoding
-    scheme mixes the global target mean with the target mean grouped by the
-    categories.
+    scheme mixes the global target mean with the target mean conditioned on
+    the value of the category.
 
     Read more in the :ref:`User Guide <target_encoder>`.
 
@@ -121,7 +121,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self.cv = cv
 
     def fit(self, X, y):
-        """Fit the :class:`TargetEncoder` to X.
+        """Fit the :class:`TargetEncoder` to X and y.
 
         Parameters
         ----------

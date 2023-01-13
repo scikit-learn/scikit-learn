@@ -59,18 +59,18 @@ print(f"Samples in training set: {len(X_train)}\nSamples in test set: {len(X_tes
 # As a baseline, we construct a pipeline where the categorical features are
 # dropped.
 from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
+from sklearn.pipeline import make_pipeline
 from sklearn.ensemble import HistGradientBoostingRegressor
 
-prep = ColumnTransformer(
+preprocessor = ColumnTransformer(
     [
         ("num", "passthrough", numerical_features),
         ("cat", "drop", categorical_features),
     ]
 )
 
-without_categories_pipe = Pipeline(
-    [("prep", prep), ("hist", HistGradientBoostingRegressor(random_state=0))]
+without_categories_pipe = make_pipeline(
+    preprocessor, HistGradientBoostingRegressor(random_state=0)
 )
 without_categories_pipe
 
@@ -88,17 +88,23 @@ print(f"RMSE for dropping categorical features: {without_categories_rsme:.4}")
 # %%
 # Using the OrdinalEncoder
 # ------------------------
-# Since the categorical features have missing values, we impute the feature
-# with `'sk_missing'` before passing it to the :class:`OrdinalEncoder`.
+# We create a pipeline using the ordinal categorical preprocessor:
 from sklearn.preprocessing import OrdinalEncoder
 
-categorical_preprocessor = OrdinalEncoder(
-    handle_unknown="use_encoded_value", unknown_value=-1
+ordinal_preprocessor = ColumnTransformer(
+    [
+        ("num", "passthrough", numerical_features),
+        (
+            "cat",
+            OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1),
+            categorical_features,
+        ),
+    ]
 )
 
-# %%
-# We modify the original pipeline to use the ordinal categorical preprocessing:
-ordinal_pipe = without_categories_pipe.set_params(prep__cat=categorical_preprocessor)
+ordinal_pipe = make_pipeline(
+    ordinal_preprocessor, HistGradientBoostingRegressor(random_state=0)
+)
 ordinal_pipe
 
 # %%
@@ -112,12 +118,24 @@ print(f"RMSE with ordinal encoding: {ordinal_pipe_rmse:.4}")
 
 # %%
 # Using the TargetEncoder
-# --------------------------------
-# Finally, we replace the ordinal encoder with the :class:`TargetEncoder`:
+# -----------------------
+# Finally, we create a pipeline with the :class:`TargetEncoder`:
 from sklearn.preprocessing import TargetEncoder
 
-target_pipe = ordinal_pipe.set_params(prep__cat=TargetEncoder(target_type="continuous"))
-target_pipe
+target_preprocessor = ColumnTransformer(
+    [
+        ("num", "passthrough", numerical_features),
+        (
+            "cat",
+            TargetEncoder(target_type="continuous"),
+            categorical_features,
+        ),
+    ]
+)
+
+target_pipe = make_pipeline(
+    target_preprocessor, HistGradientBoostingRegressor(random_state=0)
+)
 
 # %%
 # When the model is evalute on the test set, we see that the
@@ -129,3 +147,26 @@ target_pipe_rmse = mean_squared_error(
     y_test, target_pipe.predict(X_test), squared=False
 )
 print(f"RMSE with target encoding: {target_pipe_rmse:.4}")
+
+# %%
+from sklearn.preprocessing import OneHotEncoder
+
+ohe_preprocessor = ColumnTransformer(
+    [
+        ("num", "passthrough", numerical_features),
+        (
+            "cat",
+            OneHotEncoder(
+                handle_unknown="ignore", max_categories=50, sparse_output=False
+            ),
+            categorical_features,
+        ),
+    ]
+)
+
+ohe_pipe = make_pipeline(
+    ohe_preprocessor, HistGradientBoostingRegressor(random_state=0)
+)
+ohe_pipe.fit(X_train, y_train)
+ohe_pipe_rmse = mean_squared_error(y_test, ohe_pipe.predict(X_test), squared=False)
+print(f"RMSE with OHE encoding: {ohe_pipe_rmse:.4}")
