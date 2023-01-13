@@ -22,6 +22,14 @@ Changelog
 - |Fix| Inheriting from :class:`base.TransformerMixin` will only wrap the `transform`
   method if the class defines `transform` itself. :pr:`25295` by `Thomas Fan`_.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| :class:`decomposition.DictionaryLearning` better supports readonly NumPy
+  arrays. In particular, it better supports large datasets which are memory-mapped
+  when it is used with coordinate descent algorithms (i.e. when `fit_algorithm='cd'`).
+  :pr:`25172` by :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
