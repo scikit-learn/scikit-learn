@@ -21,6 +21,14 @@ jobs:
       - name: Trigger hosting jobs
         run: bash build_tools/github/trigger_hosting.sh
         env:
+          # Note: the CIRCLE_CI_TOKEN needs to be a user token instead of a
+          # project-wide token created using:
+          #
+          # https://support.circleci.com/hc/en-us/articles/360050351292-How-to-Trigger-a-Workflow-via-CircleCI-API-v2
+          #
+          # At the time of writing, secrets.CIRCLE_CI_TOKEN is valued with a
+          # token created using the ogrisel circleci account using:
+          # https://app.circleci.com/settings/user/tokens
           CIRCLE_CI_TOKEN: ${{ secrets.CIRCLE_CI_TOKEN }}
           EVENT: ${{ github.event.workflow_run.event }}
           RUN_ID: ${{ github.event.workflow_run.id }}
