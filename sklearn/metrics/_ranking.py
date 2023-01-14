@@ -34,7 +34,7 @@ from ..utils import column_or_1d, check_array
 from ..utils.multiclass import type_of_target
 from ..utils.extmath import stable_cumsum
 from ..utils.sparsefuncs import count_nonzero
-from ..utils._param_validation import validate_params
+from ..utils._param_validation import validate_params, StrOptions
 from ..exceptions import UndefinedMetricWarning
 from ..preprocessing import label_binarize
 from ..utils._encode import _encode, _unique
@@ -112,6 +112,15 @@ def auc(x, y):
     return area
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_score": ["array-like"],
+        "average": [StrOptions({"micro", "samples", "weighted", "macro"}), None],
+        "pos_label": [Real, str, "boolean"],
+        "sample_weight": ["array-like", None],
+    }
+)
 def average_precision_score(
     y_true, y_score, *, average="macro", pos_label=1, sample_weight=None
 ):
@@ -137,10 +146,10 @@ def average_precision_score(
 
     Parameters
     ----------
-    y_true : ndarray of shape (n_samples,) or (n_samples, n_classes)
+    y_true : array-like of shape (n_samples,) or (n_samples, n_classes)
         True binary labels or binary label indicators.
 
-    y_score : ndarray of shape (n_samples,) or (n_samples, n_classes)
+    y_score : array-like of shape (n_samples,) or (n_samples, n_classes)
         Target scores, can either be probability estimates of the positive
         class, confidence values, or non-thresholded measure of decisions
         (as returned by :term:`decision_function` on some classifiers).
@@ -164,7 +173,7 @@ def average_precision_score(
 
         Will be ignored when ``y_true`` is binary.
 
-    pos_label : int or str, default=1
+    pos_label : int, float, bool or str, default=1
         The label of the positive class. Only applied to binary ``y_true``.
         For multilabel-indicator ``y_true``, ``pos_label`` is fixed to 1.
 
