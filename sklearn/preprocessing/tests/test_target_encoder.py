@@ -172,10 +172,8 @@ def test_use_regression_target():
 
     # XXX: When multiclass is supported, then the following `y`
     # is considered a multiclass problem and `TargetEncoder` will not error.
-
     # type_of_target would be 'multiclass'
     y = np.array([1.0, 2.0, 3.0, 2.0, 3.0, 4.0])
-
     enc = TargetEncoder()
     msg = "Target type was inferred to be 'multiclass'"
     with pytest.raises(ValueError, match=msg):
