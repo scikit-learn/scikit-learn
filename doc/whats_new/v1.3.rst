@@ -41,6 +41,8 @@ Changes impacting all modules
   raises a `NotFittedError` if the instance is not fitted. This ensures the error is
   consistent in all estimators with the `get_feature_names_out` method.
 
+  - :class:`ensemble.VotingClassifier`
+  - :class:`ensemble.VotingRegressor`
   - :class:`kernel_approximation.AdditiveChi2Sampler`
   - :class:`preprocessing.Binarizer`
   - :class:`preprocessing.MaxAbsScaler`
@@ -56,7 +58,7 @@ Changes impacting all modules
   The `NotFittedError` displays an informative message asking to fit the instance
   with the appropriate arguments.
 
-  :pr:`25294` by :user:`John Pangas <jpangas>` and :pr:`25291` by
+  :pr:`25294` by :user:`John Pangas <jpangas>` and :pr:`25291`, :pr:`xxxxx` by
   :user:`Rahil Parikh <rprkh>`.
 
 Changelog

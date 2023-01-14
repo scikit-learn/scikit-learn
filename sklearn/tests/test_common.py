@@ -486,8 +486,6 @@ WHITELISTED_FAILING_ESTIMATORS = [
     "StackingClassifier",
     "StackingRegressor",
     "VarianceThreshold",
-    "VotingClassifier",
-    "VotingRegressor",
 ]
 
 
