@@ -72,6 +72,13 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
     DictVectorizer : Vectorizes string-valued features using a hash table.
     sklearn.preprocessing.OneHotEncoder : Handles nominal/categorical features.
 
+    Notes
+    -----
+    This estimator is :term:`stateless` and does not need to be fitted.
+    However, we recommend to call :meth:`fit_transform` instead of
+    :meth:`transform`, as parameter validation is only performed in
+    :meth:`fit`.
+
     Examples
     --------
     >>> from sklearn.feature_extraction import FeatureHasher
@@ -115,10 +122,10 @@ class FeatureHasher(TransformerMixin, BaseEstimator):
         self.alternate_sign = alternate_sign
 
     def fit(self, X=None, y=None):
-        """No-op.
+        """Only validates estimator's parameters.
 
-        This method doesn't do anything. It exists purely for compatibility
-        with the scikit-learn transformer API.
+        This method allows to: (i) validate the estimator's parameters and
+        (ii) be consistent with the scikit-learn transformer API.
 
         Parameters
         ----------

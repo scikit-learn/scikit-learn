@@ -83,11 +83,11 @@ python_environment_install_and_activate() {
         echo "Installing development dependency wheels"
         dev_anaconda_url=https://pypi.anaconda.org/scipy-wheels-nightly/simple
         pip install --pre --upgrade --timeout=60 --extra-index $dev_anaconda_url numpy pandas scipy
-        echo "Installing Cython from PyPI enabling pre-releases"
-        pip install --pre cython
-        echo "Installing joblib master"
+        echo "Installing Cython from latest sources"
+        pip install https://github.com/cython/cython/archive/master.zip
+        echo "Installing joblib from latest sources"
         pip install https://github.com/joblib/joblib/archive/master.zip
-        echo "Installing pillow master"
+        echo "Installing pillow from latest sources"
         pip install https://github.com/python-pillow/Pillow/archive/main.zip
     fi
 }
@@ -104,6 +104,12 @@ scikit_learn_install() {
         # Without openmp, we use the system clang. Here we use /usr/bin/ar
         # instead because llvm-ar errors
         export AR=/usr/bin/ar
+        # Make sure omp.h is not present in the conda environment, so that
+        # using an unprotected "cimport openmp" will make this build fail. At
+        # the time of writing (2023-01-13), on OSX, blas (mkl or openblas)
+        # brings in openmp so that you end up having the omp.h include inside
+        # the conda environment.
+        find $CONDA_PREFIX -name omp.h -delete -print
     fi
 
     if [[ "$UNAMESTR" == "Linux" ]]; then
