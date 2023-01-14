@@ -117,7 +117,10 @@ def _fit_encoding_fast_auto_smooth(
 
         current_encoding = np.empty(shape=n_cats, dtype=np.float64)
         for i in range(n_cats):
-            lambda_ = y_variance * counts[i] / (y_variance * counts[i] + sum_of_squared_diffs[i] / counts[i])
+            lambda_ = (
+                y_variance * counts[i] /
+                (y_variance * counts[i] + sum_of_squared_diffs[i] / counts[i])
+            )
             if isnan(lambda_):
                 current_encoding[i] = y_mean
             else:
