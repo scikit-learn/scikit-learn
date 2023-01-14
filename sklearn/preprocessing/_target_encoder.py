@@ -48,11 +48,11 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         - `"auto"` : Type of target is inferred with
           :func:`~sklearn.utils.multiclass.type_of_target`
-        - `"continuous"` : Continious target
+        - `"continuous"` : Continuous target
         - `"binary"` : Binary target
 
     smooth : "auto" or float, default="auto"
-        The amount of mixing the categorical encoding with the global target mean. A
+        The amount of mixing of the categorical encoding with the global target mean. A
         larger `smooth` value will put more weight on the global target mean.
         If `"auto"`, then `smooth` is estimated using an empirical bayes estimate.
 

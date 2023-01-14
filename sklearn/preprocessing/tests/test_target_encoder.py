@@ -64,15 +64,11 @@ def test_encoding(categories, unknown_value, seed, smooth, target_type):
 
     if target_type == "binary":
         y_int = rng.randint(low=0, high=2, size=n_samples)
-        target_names = np.asarray(["cat", "dog"], dtype=object)
+        target_names = np.array(["cat", "dog"], dtype=object)
         y_input = target_names[y_int]
     else:  # target_type == continuous
         y_int = rng.uniform(low=-10, high=20, size=n_samples)
         y_input = y_int
-
-    # compute encodings for all data to validate `transform`
-    y_mean = np.mean(y_int)
-    expected_encodings = _encode_target(X_int[:, 0], y_int, n_categories, smooth)
 
     shuffled_idx = rng.permutation(n_samples)
     X_int = X_int[shuffled_idx]
@@ -95,12 +91,16 @@ def test_encoding(categories, unknown_value, seed, smooth, target_type):
     assert target_encoder.target_type_ == target_type
     assert_allclose(X_fit_transform, expected_X_fit_transform)
     assert len(target_encoder.encodings_) == 1
+
+    # compute encodings for all data to validate `transform`
+    y_mean = np.mean(y_int)
+    expected_encodings = _encode_target(X_int[:, 0], y_int, n_categories, smooth)
     assert_allclose(target_encoder.encodings_[0], expected_encodings)
     assert target_encoder.encoding_mean_ == pytest.approx(y_mean)
 
     X_test = np.array([[0, 1, 2]], dtype=np.int64).T
     expected_X_test_transform = np.concatenate(
-        (expected_encodings, np.asarray([y_mean]))
+        (expected_encodings, np.array([y_mean]))
     ).reshape(-1, 1)
 
     if isinstance(categories, str) and categories == "auto":
@@ -131,7 +131,7 @@ def test_encoding(categories, unknown_value, seed, smooth, target_type):
 )
 @pytest.mark.parametrize("smooth", [4.0, "auto"])
 def test_custom_categories(X, categories, smooth):
-    """custom categoires with unknown categories that are not in training data."""
+    """Custom categories with unknown categories that are not in training data."""
     rng = np.random.RandomState(42)
     y = rng.uniform(low=-10, high=20, size=X.shape[0])
     enc = TargetEncoder(categories=categories, smooth=smooth).fit(X, y)
@@ -151,7 +151,7 @@ def test_custom_categories(X, categories, smooth):
     [
         ([1, 2, 0, 1], "Found input variables with inconsistent"),
         (
-            np.asarray([[1, 2, 0], [1, 2, 3]]).T,
+            np.array([[1, 2, 0], [1, 2, 3]]).T,
             "Target type was inferred to be 'multiclass-multioutput'",
         ),
         (["cat", "dog", "bear"], "Target type was inferred to be 'multiclass'"),
@@ -159,7 +159,7 @@ def test_custom_categories(X, categories, smooth):
 )
 def test_errors(y, msg):
     """Check invalidate input."""
-    X = np.asarray([[1, 0, 1]]).T
+    X = np.array([[1, 0, 1]]).T
 
     enc = TargetEncoder()
     with pytest.raises(ValueError, match=msg):
@@ -168,9 +168,13 @@ def test_errors(y, msg):
 
 def test_use_regression_target():
     """Custom target_type to avoid inferring the target type."""
-    X = np.asarray([[0, 1, 0, 1, 0, 1]]).T
+    X = np.array([[0, 1, 0, 1, 0, 1]]).T
+
+    # XXX: When multiclass is supported, then the following `y`
+    # is considered a multiclass problem and `TargetEncoder` will not error.
+
     # type_of_target would be 'multiclass'
-    y = np.asarray([1.0, 2.0, 3.0, 2.0, 3.0, 4.0])
+    y = np.array([1.0, 2.0, 3.0, 2.0, 3.0, 4.0])
 
     enc = TargetEncoder()
     msg = "Target type was inferred to be 'multiclass'"
@@ -196,6 +200,7 @@ def test_feature_names_out_set_output():
     X_pandas = enc_pandas.fit_transform(X_df, y)
 
     assert_allclose(X_pandas.to_numpy(), X_default)
+    assert_array_equal(enc_pandas.get_feature_names_out(), ["A", "B"])
     assert_array_equal(enc_pandas.get_feature_names_out(), X_pandas.columns)
 
 
@@ -230,11 +235,12 @@ def test_multiple_features_quick(to_pandas, smooth, target_type):
 
     if to_pandas:
         pd = pytest.importorskip("pandas")
-        # convert second feature to a object
+        # convert second feature to an object
         X_obj = np.array(["cat", "dog"], dtype=object)[X_int[:, 1]]
         X_input = pd.DataFrame(
             {"feat0": X_int[:, 0], "feat1": X_obj}, columns=["feat0", "feat1"]
         )
+        # "snake" is unknown
         X_test = pd.DataFrame({"feat0": X_test[:, 0], "feat1": ["dog", "cat", "snake"]})
     else:
         X_input = X_int
@@ -279,19 +285,19 @@ def test_multiple_features_quick(to_pandas, smooth, target_type):
 
 
 @pytest.mark.parametrize(
-    "y",
+    "y, y_mean",
     [
-        np.array([3.4] * 20),
-        np.array([0] * 20),
+        (np.array([3.4] * 20), 3.4),
+        (np.array([0] * 20), 0),
+        (np.array(["a"] * 20, dtype=object), 0),
     ],
-    ids=["continuous", "binary"],
+    ids=["continuous", "binary", "binary-string"],
 )
 @pytest.mark.parametrize("smooth", ["auto", 4])
-def test_constant_target_and_feature(y, smooth):
+def test_constant_target_and_feature(y, y_mean, smooth):
     """Check edge case where feature and target is constant."""
     X = np.array([[1] * 20]).T
     n_samples = X.shape[0]
-    y_mean = np.mean(y)
 
     enc = TargetEncoder(cv=2, smooth=smooth)
     X_trans = enc.fit_transform(X, y)
