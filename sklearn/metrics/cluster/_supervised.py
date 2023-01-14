@@ -18,6 +18,7 @@ better.
 
 import warnings
 from math import log
+from numbers import Real
 
 import numpy as np
 from scipy import sparse as sp
@@ -26,6 +27,7 @@ from ._expected_mutual_info_fast import expected_mutual_information
 from ...utils.multiclass import type_of_target
 from ...utils.validation import check_array, check_consistent_length
 from ...utils._param_validation import validate_params
+from ...utils._param_validation import Interval
 
 
 def check_clusterings(labels_true, labels_pred):
@@ -90,6 +92,15 @@ def _generalized_average(U, V, average_method):
         )
 
 
+@validate_params(
+    {
+        "labels_true": ["array-like", None],
+        "labels_pred": ["array-like", None],
+        "eps": [Interval(Real, 0, None, closed="left"), None],
+        "sparse": ["boolean"],
+        "dtype": "no_validation",  # delegate the validation to SciPy
+    }
+)
 def contingency_matrix(
     labels_true, labels_pred, *, eps=None, sparse=False, dtype=np.int64
 ):
@@ -97,7 +108,7 @@ def contingency_matrix(
 
     Parameters
     ----------
-    labels_true : int array, shape = [n_samples]
+    labels_true : array-like of shape (n_samples,)
         Ground truth class labels to be used as a reference.
 
     labels_pred : array-like of shape (n_samples,)

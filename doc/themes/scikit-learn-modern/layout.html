@@ -21,8 +21,8 @@
   {% endblock %}
   <link rel="canonical" href="http://scikit-learn.org/stable/{{pagename}}.html" />
 
-  {% if favicon %}
-  <link rel="shortcut icon" href="{{ pathto('_static/' + favicon, 1) }}"/>
+  {% if favicon_url %}
+  <link rel="shortcut icon" href="{{ favicon_url|e }}"/>
   {% endif %}
 
   <link rel="stylesheet" href="{{ pathto('_static/css/vendor/bootstrap.min.css', 1) }}" type="text/css" />
