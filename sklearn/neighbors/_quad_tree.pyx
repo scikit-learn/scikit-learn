@@ -587,7 +587,7 @@ cdef class _QuadTree:
         if capacity == self.capacity and self.cells != NULL:
             return 0
 
-        if capacity == SIZE_MAX:
+        if <size_t> capacity == SIZE_MAX:
             if self.capacity == 0:
                 capacity = 9  # default initial value to min
             else:
