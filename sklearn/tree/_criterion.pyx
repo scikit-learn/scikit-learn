@@ -691,10 +691,11 @@ cdef class HellingerDistance(ClassificationCriterion):
             weight_k2_left = sqrt(sum_left[1] / sum_k2)
             weight_k2_right = sqrt(sum_right[1] / sum_k2)
 
-        # assigning only first impurity because only single label is supported
-        # hellinger distance score is, the higher, the better
-        # split decision is, the lower, the better
-        # thus adding '1 - score' in order to adapt hellinger distance score to split mechanism
+        # Assigning only first impurity because only single label is supported
+        #
+        # The higher Hellinger distance, the better, whilst for split decision,
+        # the lower the score, the better. Thus, we compose the Hellinger distance
+        # with 'x ↦ 1 - x' in order to adapt it for the split decision.
         impurity_left[0]  = 1 - pow((weight_k1_left - weight_k2_left), 2)
         impurity_right[0] = 1 - pow((weight_k1_right - weight_k2_right), 2)
 
