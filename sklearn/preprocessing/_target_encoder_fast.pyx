@@ -87,7 +87,7 @@ def _fit_encoding_fast_auto_smooth(
         cnp.int64_t max_cats = np.max(n_categories)
         double[::1] means = np.empty(max_cats, dtype=np.float64)
         double[::1] counts = np.empty(max_cats, dtype=np.float64)
-        double[::1] sum_of_squared_residuals = np.empty(max_cats, dtype=np.float64)
+        double[::1] sum_of_squared_diffs = np.empty(max_cats, dtype=np.float64)
         double lambda_
 
     for j in range(n_features):
@@ -96,26 +96,28 @@ def _fit_encoding_fast_auto_smooth(
         for i in range(n_cats):
             means[i] = 0.0
             counts[i] = 0.0
-            sum_of_squared_residuals[i] = 0.0
+            sum_of_squared_diffs[i] = 0.0
 
         # first pass to compute the mean
         for i in range(n_samples):
             X_int_tmp = X_int[i, j]
+
+            # -1 are unknown categories, which are not counted
             if X_int_tmp == -1:
                 continue
             counts[X_int_tmp] += 1.0
             means[X_int_tmp] += (y[i] - means[X_int_tmp]) / counts[X_int_tmp]
 
-        # second pass to compute the sum of squared residuals
+        # second pass to compute the sum of squared differences
         for i in range(n_samples):
             X_int_tmp = X_int[i, j]
             if X_int_tmp == -1:
                 continue
-            sum_of_squared_residuals[X_int_tmp] += pow(y[i] - means[X_int_tmp], 2.0)
+            sum_of_squared_diffs[X_int_tmp] += pow(y[i] - means[X_int_tmp], 2.0)
 
         current_encoding = np.empty(shape=n_cats, dtype=np.float64)
         for i in range(n_cats):
-            lambda_ = y_variance * counts[i] / (y_variance * counts[i] + sum_of_squared_residuals[i] / counts[i])
+            lambda_ = y_variance * counts[i] / (y_variance * counts[i] + sum_of_squared_diffs[i] / counts[i])
             if isnan(lambda_):
                 current_encoding[i] = y_mean
             else:
