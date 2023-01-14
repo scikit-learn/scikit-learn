@@ -41,6 +41,9 @@ Changes impacting all modules
   raises a `NotFittedError` if the instance is not fitted. This ensures the error is
   consistent in all estimators with the `get_feature_names_out` method.
 
+  - :class:`ensemble.StackingClassifier`
+  - :class:`ensemble.StackingRegressor`
+  - :class:`feature_extraction.text.TfidfTransformer`
   - :class:`kernel_approximation.AdditiveChi2Sampler`
   - :class:`preprocessing.Binarizer`
   - :class:`preprocessing.MaxAbsScaler`
@@ -50,10 +53,7 @@ Changes impacting all modules
   - :class:`preprocessing.PowerTransformer`
   - :class:`preprocessing.QuantileTransformer`
   - :class:`preprocessing.RobustScaler`
-  - :class:`ensemble.StackingClassifier`
-  - :class:`ensemble.StackingRegressor`
   - :class:`preprocessing.StandardScaler`
-  - :class:`feature_extraction.text.TfidfTransformer`
 
   The `NotFittedError` displays an informative message asking to fit the instance
   with the appropriate arguments.
