@@ -170,9 +170,9 @@ def _chisquare(f_obs, f_exp):
 def chi2(X, y):
     """Compute chi-squared stats between each non-negative feature and class.
 
-    This score can be used to select the n_features features with the
+    This score can be used to select the `n_features` features with the
     highest values for the test chi-squared statistic from X, which must
-    contain only non-negative features such as booleans or frequencies
+    contain only **non-negative features** such as booleans or frequencies
     (e.g., term counts in document classification), relative to the classes.
 
     Recall that the chi-square test measures dependence between stochastic

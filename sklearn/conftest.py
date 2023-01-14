@@ -132,8 +132,6 @@ def pytest_collection_modifyitems(config, items):
             )
             item.add_marker(marker)
 
-    # numpy changed the str/repr formatting of numpy arrays in 1.14. We want to
-    # run doctests only for numpy >= 1.14.
     skip_doctests = False
     try:
         import matplotlib  # noqa
@@ -141,18 +139,15 @@ def pytest_collection_modifyitems(config, items):
         skip_doctests = True
         reason = "matplotlib is required to run the doctests"
 
-    try:
-        if _IS_32BIT:
-            reason = "doctest are only run when the default numpy int is 64 bits."
-            skip_doctests = True
-        elif sys.platform.startswith("win32"):
-            reason = (
-                "doctests are not run for Windows because numpy arrays "
-                "repr is inconsistent across platforms."
-            )
-            skip_doctests = True
-    except ImportError:
-        pass
+    if _IS_32BIT:
+        reason = "doctest are only run when the default numpy int is 64 bits."
+        skip_doctests = True
+    elif sys.platform.startswith("win32"):
+        reason = (
+            "doctests are not run for Windows because numpy arrays "
+            "repr is inconsistent across platforms."
+        )
+        skip_doctests = True
 
     # Normally doctest has the entire module's scope. Here we set globs to an empty dict
     # to remove the module's scope:
