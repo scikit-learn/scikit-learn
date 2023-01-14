@@ -22,6 +22,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn import datasets
+from sklearn.exceptions import InconsistentVersionWarning
 
 from sklearn.base import TransformerMixin
 from sklearn.utils._mocking import MockDataFrame
@@ -397,8 +398,14 @@ def test_pickle_version_warning_is_issued_upon_different_version():
         old_version="something",
         current_version=sklearn.__version__,
     )
-    with pytest.warns(UserWarning, match=message):
+    with pytest.warns(UserWarning, match=message) as warning_record:
         pickle.loads(tree_pickle_other)
+
+    message = warning_record.list[0].message
+    assert isinstance(message, InconsistentVersionWarning)
+    assert message.estimator_name == "TreeBadVersion"
+    assert message.original_sklearn_version == "something"
+    assert message.current_sklearn_version == sklearn.__version__
 
 
 class TreeNoVersion(DecisionTreeClassifier):

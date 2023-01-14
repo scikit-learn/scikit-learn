@@ -653,38 +653,9 @@ def test_sparse_coder_n_features_in():
     assert sc.n_features_in_ == d.shape[1]
 
 
-@pytest.mark.parametrize("attr", ["iter_offset_", "inner_stats_", "random_state_"])
-def test_minibatch_dict_learning_deprecated_attributes(attr):
-    # check that we raise a deprecation warning when accessing the deprecated
-    # attributes of MiniBatchDictionaryLearning
-    # FIXME: remove in 1.3
-    depr_msg = (
-        f"The attribute `{attr}` is deprecated in 1.1 and will be removed in 1.3."
-    )
-    est = MiniBatchDictionaryLearning(
-        n_components=2, batch_size=4, max_iter=1, random_state=0
-    )
-    est.fit(X)
-
-    with pytest.warns(FutureWarning, match=depr_msg):
-        getattr(est, attr)
-
-
-def test_minibatch_dict_learning_partial_fit_iter_offset_deprecated():
-    # check the deprecation warning of iter_offset in partial_fit
-    # FIXME: remove in 1.3
-    depr_msg = (
-        "'iter_offset' is deprecated in version 1.1 and will be removed in version 1.3"
-    )
-    est = MiniBatchDictionaryLearning(n_components=2, batch_size=4, random_state=0)
-
-    with pytest.warns(FutureWarning, match=depr_msg):
-        est.partial_fit(X, iter_offset=0)
-
-
 def test_minibatch_dict_learning_n_iter_deprecated():
     # check the deprecation warning of n_iter
-    # FIXME: remove in 1.3
+    # TODO(1.4) remove
     depr_msg = (
         "'n_iter' is deprecated in version 1.1 and will be removed in version 1.4"
     )
@@ -709,26 +680,15 @@ def test_minibatch_dict_learning_n_iter_deprecated():
 def test_dict_learning_online_deprecated_args(arg, val):
     # check the deprecation warning for the deprecated args of
     # dict_learning_online
-    # FIXME: remove in 1.3
+    # TODO(1.4) remove
     depr_msg = (
-        f"'{arg}' is deprecated in version 1.1 and will be removed in version 1.3."
+        f"'{arg}' is deprecated in version 1.1 and will be removed in version 1.4."
     )
 
     with pytest.warns(FutureWarning, match=depr_msg):
         dict_learning_online(
             X, n_components=2, batch_size=4, random_state=0, **{arg: val}
         )
-
-
-def test_batch_size_default_value_future_warning():
-    # Check that a FutureWarning is raised if batch_size is left to its default value.
-    # FIXME: remove in 1.3
-    msg = "The default value of batch_size will change"
-    with pytest.warns(FutureWarning, match=msg):
-        dict_learning_online(X, n_components=2, random_state=0)
-
-    with pytest.warns(FutureWarning, match=msg):
-        MiniBatchDictionaryLearning(n_components=2, random_state=0).fit(X)
 
 
 def test_update_dict():
@@ -754,7 +714,7 @@ def test_update_dict():
     assert_allclose(newd_batch, newd_online)
 
 
-# FIXME: remove in 1.3
+# TODO(1.4) remove
 def test_dict_learning_online_n_iter_deprecated():
     # Check that an error is raised when a deprecated argument is set when max_iter
     # is also set.
@@ -879,8 +839,8 @@ def test_minibatch_dictionary_learning_dtype_match(
 
     assert dict_learner.components_.dtype == expected_type
     assert dict_learner.transform(X.astype(data_type)).dtype == expected_type
-    assert dict_learner._inner_stats[0].dtype == expected_type
-    assert dict_learner._inner_stats[1].dtype == expected_type
+    assert dict_learner._A.dtype == expected_type
+    assert dict_learner._B.dtype == expected_type
 
 
 @pytest.mark.parametrize("method", ("lars", "cd"))
