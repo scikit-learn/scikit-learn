@@ -43,6 +43,8 @@ Changes impacting all modules
 
   - :class:`ensemble.StackingClassifier`
   - :class:`ensemble.StackingRegressor`
+  - :class:`ensemble.VotingClassifier`
+  - :class:`ensemble.VotingRegressor`
   - :class:`feature_extraction.text.TfidfTransformer`
   - :class:`kernel_approximation.AdditiveChi2Sampler`
   - :class:`preprocessing.Binarizer`

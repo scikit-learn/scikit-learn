@@ -484,8 +484,6 @@ WHITELISTED_FAILING_ESTIMATORS = [
     "SparseRandomProjection",
     "SplineTransformer",
     "VarianceThreshold",
-    "VotingClassifier",
-    "VotingRegressor",
 ]
 
 
