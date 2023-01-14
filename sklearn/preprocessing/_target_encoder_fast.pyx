@@ -26,7 +26,8 @@ def _fit_encoding_fast(
 ):
     """Fit a target encoding on X_int and y.
 
-    This implementation uses Equation 7 from [1] to compute the encoding.
+    This implementation uses Eq 7 from [1] to compute the encoding.
+    As stated in the paper, Eq 7 is the same as Eq 3.
 
     [1]: Micci-Barreca, Daniele. "A preprocessing scheme for high-cardinality
          categorical attributes in classification and prediction problems"
@@ -73,7 +74,7 @@ def _fit_encoding_fast_auto_smooth(
 ):
     """Fit a target encoding on X_int and y with auto smoothing.
 
-    This implementation uses Equation 6 from [1] to compute `lambda`.
+    This implementation uses Eq 5 and 6 from [1].
 
     [1]: Micci-Barreca, Daniele. "A preprocessing scheme for high-cardinality
          categorical attributes in classification and prediction problems"
