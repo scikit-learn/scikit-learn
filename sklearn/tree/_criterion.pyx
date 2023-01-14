@@ -693,8 +693,6 @@ cdef class HellingerDistance(ClassificationCriterion):
             weight_k2_left = sqrt(sum_left[1] / sum_k2)
             weight_k2_right = sqrt(sum_right[1] / sum_k2)
 
-        # Assigning only first impurity because only single label is supported
-        #
         # The higher Hellinger distance, the better, whilst for split decision,
         # the lower the score, the better. Thus, we compose the Hellinger distance
         # with 'x ↦ 1 - x' in order to adapt it for the split decision.
