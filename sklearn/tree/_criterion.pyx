@@ -682,6 +682,8 @@ cdef class HellingerDistance(ClassificationCriterion):
             double weight_k2_left = 0.0
             double weight_k1_right = 0.0
             double weight_k2_right = 0.0
+            double hellinger_distance_left = 0.0
+            double hellinger_distance_right = 0.0
 
         # in case any of the classes sum is 0 it means that
         # the classes are perfectly separated and no additional split is required
@@ -696,8 +698,11 @@ cdef class HellingerDistance(ClassificationCriterion):
         # The higher Hellinger distance, the better, whilst for split decision,
         # the lower the score, the better. Thus, we compose the Hellinger distance
         # with 'x ↦ 1 - x' in order to adapt it for the split decision.
-        impurity_left[0]  = 1 - pow((weight_k1_left - weight_k2_left), 2)
-        impurity_right[0] = 1 - pow((weight_k1_right - weight_k2_right), 2)
+        hellinger_distance_left = pow((weight_k1_left - weight_k2_left), 2)
+        hellinger_distance_right = pow((weight_k1_right - weight_k2_right), 2)
+        
+        impurity_left[0] = 1 - hellinger_distance_left
+        impurity_right[0] = 1 - hellinger_distance_right
 
 
 cdef class RegressionCriterion(Criterion):
