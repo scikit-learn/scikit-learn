@@ -617,17 +617,17 @@ cdef class HellingerDistance(ClassificationCriterion):
 
 	then let
 
-        count_k1 = (\sqrt{\frac{N_{left_0}}{N_{parent_0}}}-\sqrt{\frac{N_{left_1}}{N_{parent_1}}})^2
+        weight_k1 = (\sqrt{\frac{N_{left_0}}{N_{parent_0}}}-\sqrt{\frac{N_{left_1}}{N_{parent_1}}})^2
 
     be the partial hellinger distance score for the k1 node.
 
-        count_k2 = (\sqrt{\frac{N_{right_0}}{N_{parent_0}}}-\sqrt{\frac{N_{right_1}}{N_{parent_1}}})^2
+        weight_k2 = (\sqrt{\frac{N_{right_0}}{N_{parent_0}}}-\sqrt{\frac{N_{right_1}}{N_{parent_1}}})^2
 
     be the partial hellinger distance score for the k2 node.
 
     Hellinger distance score is then defined as:
 
-        hellinger_distance = \sqrt{count_k1+count_k2}
+        hellinger_distance = \sqrt{weight_k1+weight_k2}
 
     Note: hellinger distance range is [0, \sqrt{2}]
 
@@ -678,25 +678,25 @@ cdef class HellingerDistance(ClassificationCriterion):
             double sum_k2 = sum_left[1] + sum_right[1]
 
             # hellinger distance score calculation helpers
-            double count_k1_left = 0.0
-            double count_k2_left = 0.0
-            double count_k1_right = 0.0
-            double count_k2_right = 0.0
+            double weight_k1_left = 0.0
+            double weight_k2_left = 0.0
+            double weight_k1_right = 0.0
+            double weight_k2_right = 0.0
 
         # in case any of the classes sum is 0 it means that
         # the classes are perfectly separated and no additional split is required
         if  sum_k1 > 0 and sum_k2 > 0:
-            count_k1_left = sqrt(sum_left[0] / sum_k1)
-            count_k1_right = sqrt(sum_right[0] / sum_k1)
-            count_k2_left = sqrt(sum_left[1] / sum_k2)
-            count_k2_right = sqrt(sum_right[1] / sum_k2)
+            weight_k1_left = sqrt(sum_left[0] / sum_k1)
+            weight_k1_right = sqrt(sum_right[0] / sum_k1)
+            weight_k2_left = sqrt(sum_left[1] / sum_k2)
+            weight_k2_right = sqrt(sum_right[1] / sum_k2)
 
         # assigning only first impurity because only single label is supported
         # hellinger distance score is, the higher, the better
         # split decision is, the lower, the better
         # thus adding '1 - score' in order to adapt hellinger distance score to split mechanism
-        impurity_left[0]  = 1 - pow((count_k1_left - count_k2_left), 2)
-        impurity_right[0] = 1 - pow((count_k1_right - count_k2_right), 2)
+        impurity_left[0]  = 1 - pow((weight_k1_left - weight_k2_left), 2)
+        impurity_right[0] = 1 - pow((weight_k1_right - weight_k2_right), 2)
 
 
 cdef class RegressionCriterion(Criterion):
