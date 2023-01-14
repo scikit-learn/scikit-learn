@@ -615,7 +615,7 @@ cdef class HellingerDistance(ClassificationCriterion):
         - parent_0 represents observations of class 0 in node k
         - parent_1 represents observations of class 1 in node k
 
-	then let
+    then let
 
         weight_k1 = (\sqrt{\frac{N_{left_0}}{N_{parent_0}}}-\sqrt{\frac{N_{left_1}}{N_{parent_1}}})^2
 
@@ -700,7 +700,7 @@ cdef class HellingerDistance(ClassificationCriterion):
         # with 'x ↦ 1 - x' in order to adapt it for the split decision.
         hellinger_distance_left = pow((weight_k1_left - weight_k2_left), 2)
         hellinger_distance_right = pow((weight_k1_right - weight_k2_right), 2)
-        
+
         impurity_left[0] = 1 - hellinger_distance_left
         impurity_right[0] = 1 - hellinger_distance_right
 
