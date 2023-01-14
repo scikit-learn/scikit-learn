@@ -41,7 +41,7 @@ from ...utils._typedefs import DTYPE, SPARSE_INDEX_TYPE
 # TODO: If possible optimize this routine to efficiently treat cases where
 # `n_samples_X << n_samples_Y` met in practise when X_test consists of a
 # few samples, and thus when there's a single chunk of X whose number of
-# samples is less that the default chunk size.
+# samples is less than the default chunk size.
 
 # TODO: compare this routine with the similar ones in SciPy, especially
 # `csr_matmat` which might implement a better algorithm.
