@@ -626,7 +626,7 @@ def _plain_sgd(const double[::1] weights,
                 with gil:
                     print("Norm: %.2f, NNZs: %d, Bias: %.6f, T: %d, "
                           "Avg. loss: %f"
-                          % (w.norm(), weights.nonzero()[0].shape[0],
+                          % (w.norm(), np.nonzero(weights)[0].shape[0],
                              intercept, count, sumloss / train_count))
                     print("Total training time: %.2f seconds."
                           % (time() - t_start))
