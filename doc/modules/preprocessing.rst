@@ -874,12 +874,12 @@ where :math:`L_i` is the set of observations of size :math:`n_i` for which
 
 .. note::
   :class:`TargetEncoder` uses a cross validation scheme in
-  :meth:`~TargetEncoder.fit_transform` to prevent leaking the target
-  during training. In :meth:`~TargetEncoder.fit_transform`, categorical
-  encodings are obtained from one split and used to encoding the other split.
-  Afterwards, a final categorical encoding is obtained from all the training data,
-  which is used to encode data during :meth:`~TargetEncoder.transform`.
-  This means that `fit().transform()` does not equal `fit_transform()`.
+  :meth:`~TargetEncoder.fit_transform` to prevent leaking the target during training.
+  In :meth:`~TargetEncoder.fit_transform`, the data is split according to the `cv`
+  parameter. Categorical encodings are learned from split and used to encode the other
+  split. Afterwards, a final categorical encoding is learned from all the data, which
+  is then used to encode data during :meth:`~TargetEncoder.transform`. This means that
+  `fit(X, y).transform(X)` does not equal `fit_transform(X, y)`.
 
 .. topic:: Examples:
 
