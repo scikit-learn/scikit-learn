@@ -604,11 +604,18 @@ cdef class HellingerDistance(ClassificationCriterion):
     r"""Hellinger distance criterion.
 
     This handles cases where the target is a classification taking values 0 and 1.
-    If k represents a node before split, k1 and k2 represent the children nodes after split,
-    left_0 represents observations of class 0 in node k1, right_0 represents observations of class 0 in node k2,
-    left_1 represents observations of class 1 in node k1, right_1 represents observations of class 1 in node k2,
-    parent_0 represents observations of class 0 in node k, parent_1 represents observations of class 1 in node k,
-    then let
+
+    Let:
+        - k represents a node before split
+        - k1 and k2 represent the children nodes after split
+        - left_0 represents observations of class 0 in node k1
+        - right_0 represents observations of class 0 in node k2
+        - left_1 represents observations of class 1 in node k1
+        - right_1 represents observations of class 1 in node k2
+        - parent_0 represents observations of class 0 in node k
+        - parent_1 represents observations of class 1 in node k
+
+	then let
 
         count_k1 = (\sqrt{\frac{N_{left_0}}{N_{parent_0}}}-\sqrt{\frac{N_{left_1}}{N_{parent_1}}})^2
 
@@ -621,6 +628,9 @@ cdef class HellingerDistance(ClassificationCriterion):
     Hellinger distance score is then defined as:
 
         hellinger_distance = \sqrt{count_k1+count_k2}
+
+    Note: hellinger distance range is [0, \sqrt{2}]
+
     """
     cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node.
