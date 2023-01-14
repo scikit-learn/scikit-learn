@@ -184,7 +184,7 @@ def libsvm_sparse_train (int n_features,
     # it would not erase previous information
     cdef cnp.float64_t[::1] sv_coef_data
     sv_coef_data = np.empty((n_class-1)*SV_len, dtype=np.float64)
-    copy_sv_coef (<char *> &sv_coef_data[0], model)
+    copy_sv_coef (<char *> &sv_coef_data[0] if sv_coef_data.size > 1 else NULL, model)
 
     cdef cnp.int32_t[::1] support
     support = np.empty(SV_len, dtype=np.int32)
