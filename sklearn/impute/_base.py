@@ -1053,6 +1053,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        check_is_fitted(self, "n_features_in_")
         input_features = _check_feature_names_in(self, input_features)
         prefix = self.__class__.__name__.lower()
         return np.asarray(
