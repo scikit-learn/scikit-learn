@@ -61,7 +61,7 @@ Changes impacting all modules
   with the appropriate arguments.
 
   :pr:`25294` by :user:`John Pangas <jpangas>` and :pr:`25291` by
-  :user:`Rahil Parikh <rprkh>` and :pr:`25294` by :user:`Alex Buzenet <albuzenet>`.
+  :user:`Rahil Parikh <rprkh>` and :pr:`25402` by :user:`Alex Buzenet <albuzenet>`.
 
 Changelog
 ---------
