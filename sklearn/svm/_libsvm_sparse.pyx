@@ -376,7 +376,8 @@ def libsvm_sparse_predict_proba(
     double nu, double p, int shrinking, int probability,
     const cnp.int32_t[::1] nSV,
     const cnp.float64_t[::1] probA,
-    const cnp.float64_t[::1] probB):
+    const cnp.float64_t[::1] probB,
+):
     """
     Predict values T given a model.
     """
@@ -464,7 +465,8 @@ def libsvm_sparse_decision_function(
     double nu, double p, int shrinking, int probability,
     const cnp.int32_t[::1] nSV,
     const cnp.float64_t[::1] probA,
-    const cnp.float64_t[::1] probB):
+    const cnp.float64_t[::1] probB,
+):
     """
     Predict margin (libsvm name for this is predict_values)
 
