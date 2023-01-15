@@ -1,10 +1,7 @@
 """ test the label propagation module """
-import itertools
-
 import numpy as np
 import pytest
 import warnings
-import scipy.sparse as sp
 
 from scipy.sparse import issparse
 from sklearn.semi_supervised import _label_propagation as label_propagation
@@ -35,6 +32,7 @@ ESTIMATORS = [
 ]
 
 CONSTRUCTOR_TYPES = ("array", "sparse_csr", "sparse_csc")
+
 
 @pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
 def test_fit_transduction(global_dtype, Estimator, parameters):
