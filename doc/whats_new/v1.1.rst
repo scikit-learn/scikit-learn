@@ -340,11 +340,6 @@ Changelog
   error message when setting invalid hyper-parameters with `set_params`.
   :pr:`21542` by :user:`Olivier Grisel <ogrisel>`.
 
-:mod:`sklearn.semi_supervised`
-..............................
-
-- |Enhancement| :meth:`BaseLabelPropagation.fit` now accepts sparse matrices.
-  :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
 - |Enhancement| Removes random unique identifiers in the HTML representation.
   With this change, jupyter notebooks are reproducible as long as the cells are
   run in the same order. :pr:`23098` by `Thomas Fan`_.
