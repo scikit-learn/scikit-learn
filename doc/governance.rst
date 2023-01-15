@@ -36,7 +36,7 @@ crucial to improve the communication in the project and limit the crowding
 of the issue tracker.
 
 Similarly to what has been decided in the `python project
-<https://devguide.python.org/triaging/#becoming-a-member-of-the-python-triage-team>`_,
+<https://devguide.python.org/triage/triage-team/#becoming-a-member-of-the-python-triage-team>`_,
 any contributor may become a member of the scikit-learn contributor experience team,
 after showing some continuity in participating to scikit-learn
 development (with pull requests and reviews).
@@ -113,8 +113,8 @@ with the TC duties are expected to resign.
 The Technical Committee of scikit-learn consists of :user:`Thomas Fan
 <thomasjpfan>`, :user:`Alexandre Gramfort <agramfort>`, :user:`Olivier Grisel
 <ogrisel>`, :user:`Adrin Jalali <adrinjalali>`, :user:`Andreas Müller
-<amueller>`, :user:`Joel Nothman <jnothman>`, :user:`Gaël Varoquaux
-<GaelVaroquaux>` and :user:`Roman Yurchak <rth>`.
+<amueller>`, :user:`Joel Nothman <jnothman>` and :user:`Gaël Varoquaux
+<GaelVaroquaux>`.
 
 Decision Making Process
 =======================

@@ -10,8 +10,6 @@ The module contains:
     * Several algorithms to sample integers without replacement.
     * Fast rand_r alternative based on xor shifts
 """
-cimport cython
-
 import numpy as np
 cimport numpy as cnp
 cnp.import_array()

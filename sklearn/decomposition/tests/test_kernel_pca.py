@@ -516,24 +516,6 @@ def test_32_64_decomposition_shape():
     assert kpca.fit_transform(X).shape == kpca.fit_transform(X.astype(np.float32)).shape
 
 
-# TODO: Remove in 1.2
-def test_kernel_pca_lambdas_deprecated():
-    kp = KernelPCA()
-    kp.eigenvalues_ = None
-    msg = r"Attribute `lambdas_` was deprecated in version 1\.0"
-    with pytest.warns(FutureWarning, match=msg):
-        kp.lambdas_
-
-
-# TODO: Remove in 1.2
-def test_kernel_pca_alphas_deprecated():
-    kp = KernelPCA(kernel="precomputed")
-    kp.eigenvectors_ = None
-    msg = r"Attribute `alphas_` was deprecated in version 1\.0"
-    with pytest.warns(FutureWarning, match=msg):
-        kp.alphas_
-
-
 def test_kernel_pca_feature_names_out():
     """Check feature names out for KernelPCA."""
     X, *_ = make_blobs(n_samples=100, n_features=4, random_state=0)

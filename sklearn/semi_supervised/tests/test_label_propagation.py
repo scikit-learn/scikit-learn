@@ -34,6 +34,7 @@ ESTIMATORS = [
     ),
 ]
 
+CONSTRUCTOR_TYPES = ("array", "sparse_csr", "sparse_csc")
 
 @pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
 def test_fit_transduction(global_dtype, Estimator, parameters):
@@ -123,15 +124,6 @@ def test_label_propagation_closed_form(global_dtype):
     expected /= expected.sum(axis=1)[:, np.newaxis]
 
     assert_allclose(expected, clf.label_distributions_, atol=1e-4)
-
-
-@pytest.mark.parametrize("alpha", [-0.1, 0, 1, 1.1, None])
-def test_valid_alpha(global_dtype, alpha):
-    n_classes = 2
-    X, y = make_classification(n_classes=n_classes, n_samples=200, random_state=0)
-    X = X.astype(global_dtype)
-    with pytest.raises(ValueError):
-        label_propagation.LabelSpreading(alpha=alpha).fit(X, y)
 
 
 @pytest.mark.parametrize("constructor_type", CONSTRUCTOR_TYPES)

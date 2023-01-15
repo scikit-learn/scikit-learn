@@ -28,7 +28,7 @@ def _estimator_has(attr):
 class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     """Self-training classifier.
 
-    This class allows a given supervised classifier to function as a
+    This :term:`metaestimator` allows a given supervised classifier to function as a
     semi-supervised classifier, allowing it to learn from unlabeled data. It
     does this by iteratively predicting pseudo-labels for the unlabeled data
     and adding them to the training set.
@@ -144,7 +144,7 @@ class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
 
     _estimator_type = "classifier"
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         # We don't require `predic_proba` here to allow passing a meta-estimator
         # that only exposes `predict_proba` after fitting.
         "base_estimator": [HasMethods(["fit"])],

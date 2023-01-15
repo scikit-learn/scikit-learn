@@ -127,7 +127,7 @@ class KernelDensity(BaseEstimator):
     array([-1.52955942, -1.51462041, -1.60244657])
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "bandwidth": [
             Interval(Real, 0, None, closed="neither"),
             StrOptions({"scott", "silverman"}),

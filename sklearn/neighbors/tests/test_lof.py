@@ -5,16 +5,18 @@
 from math import sqrt
 
 import numpy as np
+from scipy.sparse import csr_matrix
+
 from sklearn import neighbors
 import re
 import pytest
-from numpy.testing import assert_array_equal
 
 from sklearn import metrics
 from sklearn.metrics import roc_auc_score
 
 from sklearn.utils import check_random_state
-from sklearn.utils._testing import assert_array_almost_equal
+from sklearn.utils._testing import assert_allclose
+from sklearn.utils._testing import assert_array_equal
 from sklearn.utils.estimator_checks import check_outlier_corruption
 from sklearn.utils.estimator_checks import parametrize_with_checks
 
@@ -30,9 +32,12 @@ iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 
 
-def test_lof():
+def test_lof(global_dtype):
     # Toy sample (the last two samples are outliers):
-    X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [5, 3], [-4, 2]]
+    X = np.asarray(
+        [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [5, 3], [-4, 2]],
+        dtype=global_dtype,
+    )
 
     # Test LocalOutlierFactor:
     clf = neighbors.LocalOutlierFactor(n_neighbors=5)
@@ -44,18 +49,21 @@ def test_lof():
 
     # Assert predict() works:
     clf = neighbors.LocalOutlierFactor(contamination=0.25, n_neighbors=5).fit(X)
-    assert_array_equal(clf._predict(), 6 * [1] + 2 * [-1])
-    assert_array_equal(clf.fit_predict(X), 6 * [1] + 2 * [-1])
+    expected_predictions = 6 * [1] + 2 * [-1]
+    assert_array_equal(clf._predict(), expected_predictions)
+    assert_array_equal(clf.fit_predict(X), expected_predictions)
 
 
-def test_lof_performance():
+def test_lof_performance(global_dtype):
     # Generate train/test data
     rng = check_random_state(2)
-    X = 0.3 * rng.randn(120, 2)
+    X = 0.3 * rng.randn(120, 2).astype(global_dtype, copy=False)
     X_train = X[:100]
 
     # Generate some abnormal novel observations
-    X_outliers = rng.uniform(low=-4, high=4, size=(20, 2))
+    X_outliers = rng.uniform(low=-4, high=4, size=(20, 2)).astype(
+        global_dtype, copy=False
+    )
     X_test = np.r_[X[100:], X_outliers]
     y_test = np.array([0] * 20 + [1] * 20)
 
@@ -69,9 +77,9 @@ def test_lof_performance():
     assert roc_auc_score(y_test, y_pred) > 0.99
 
 
-def test_lof_values():
+def test_lof_values(global_dtype):
     # toy samples:
-    X_train = [[1, 1], [1, 2], [2, 1]]
+    X_train = np.asarray([[1, 1], [1, 2], [2, 1]], dtype=global_dtype)
     clf1 = neighbors.LocalOutlierFactor(
         n_neighbors=2, contamination=0.1, novelty=True
     ).fit(X_train)
@@ -79,22 +87,22 @@ def test_lof_values():
     s_0 = 2.0 * sqrt(2.0) / (1.0 + sqrt(2.0))
     s_1 = (1.0 + sqrt(2)) * (1.0 / (4.0 * sqrt(2.0)) + 1.0 / (2.0 + 2.0 * sqrt(2)))
     # check predict()
-    assert_array_almost_equal(-clf1.negative_outlier_factor_, [s_0, s_1, s_1])
-    assert_array_almost_equal(-clf2.negative_outlier_factor_, [s_0, s_1, s_1])
+    assert_allclose(-clf1.negative_outlier_factor_, [s_0, s_1, s_1])
+    assert_allclose(-clf2.negative_outlier_factor_, [s_0, s_1, s_1])
     # check predict(one sample not in train)
-    assert_array_almost_equal(-clf1.score_samples([[2.0, 2.0]]), [s_0])
-    assert_array_almost_equal(-clf2.score_samples([[2.0, 2.0]]), [s_0])
+    assert_allclose(-clf1.score_samples([[2.0, 2.0]]), [s_0])
+    assert_allclose(-clf2.score_samples([[2.0, 2.0]]), [s_0])
     # check predict(one sample already in train)
-    assert_array_almost_equal(-clf1.score_samples([[1.0, 1.0]]), [s_1])
-    assert_array_almost_equal(-clf2.score_samples([[1.0, 1.0]]), [s_1])
+    assert_allclose(-clf1.score_samples([[1.0, 1.0]]), [s_1])
+    assert_allclose(-clf2.score_samples([[1.0, 1.0]]), [s_1])
 
 
-def test_lof_precomputed(random_state=42):
+def test_lof_precomputed(global_dtype, random_state=42):
     """Tests LOF with a distance matrix."""
     # Note: smaller samples may result in spurious test success
     rng = np.random.RandomState(random_state)
-    X = rng.random_sample((10, 4))
-    Y = rng.random_sample((3, 4))
+    X = rng.random_sample((10, 4)).astype(global_dtype, copy=False)
+    Y = rng.random_sample((3, 4)).astype(global_dtype, copy=False)
     DXX = metrics.pairwise_distances(X, metric="euclidean")
     DYX = metrics.pairwise_distances(Y, X, metric="euclidean")
     # As a feature matrix (n_samples by n_features)
@@ -111,8 +119,8 @@ def test_lof_precomputed(random_state=42):
     pred_D_X = lof_D._predict()
     pred_D_Y = lof_D.predict(DYX)
 
-    assert_array_almost_equal(pred_X_X, pred_D_X)
-    assert_array_almost_equal(pred_X_Y, pred_D_Y)
+    assert_allclose(pred_X_X, pred_D_X)
+    assert_allclose(pred_X_Y, pred_D_Y)
 
 
 def test_n_neighbors_attribute():
@@ -127,23 +135,29 @@ def test_n_neighbors_attribute():
     assert clf.n_neighbors_ == X.shape[0] - 1
 
 
-def test_score_samples():
-    X_train = [[1, 1], [1, 2], [2, 1]]
+def test_score_samples(global_dtype):
+    X_train = np.asarray([[1, 1], [1, 2], [2, 1]], dtype=global_dtype)
+    X_test = np.asarray([[2.0, 2.0]], dtype=global_dtype)
     clf1 = neighbors.LocalOutlierFactor(
         n_neighbors=2, contamination=0.1, novelty=True
     ).fit(X_train)
     clf2 = neighbors.LocalOutlierFactor(n_neighbors=2, novelty=True).fit(X_train)
-    assert_array_equal(
-        clf1.score_samples([[2.0, 2.0]]),
-        clf1.decision_function([[2.0, 2.0]]) + clf1.offset_,
+
+    clf1_scores = clf1.score_samples(X_test)
+    clf1_decisions = clf1.decision_function(X_test)
+
+    clf2_scores = clf2.score_samples(X_test)
+    clf2_decisions = clf2.decision_function(X_test)
+
+    assert_allclose(
+        clf1_scores,
+        clf1_decisions + clf1.offset_,
     )
-    assert_array_equal(
-        clf2.score_samples([[2.0, 2.0]]),
-        clf2.decision_function([[2.0, 2.0]]) + clf2.offset_,
+    assert_allclose(
+        clf2_scores,
+        clf2_decisions + clf2.offset_,
     )
-    assert_array_equal(
-        clf1.score_samples([[2.0, 2.0]]), clf2.score_samples([[2.0, 2.0]])
-    )
+    assert_allclose(clf1_scores, clf2_scores)
 
 
 def test_novelty_errors():
@@ -165,10 +179,10 @@ def test_novelty_errors():
         getattr(clf, "fit_predict")
 
 
-def test_novelty_training_scores():
+def test_novelty_training_scores(global_dtype):
     # check that the scores of the training samples are still accessible
     # when novelty=True through the negative_outlier_factor_ attribute
-    X = iris.data
+    X = iris.data.astype(global_dtype)
 
     # fit with novelty=False
     clf_1 = neighbors.LocalOutlierFactor()
@@ -180,7 +194,7 @@ def test_novelty_training_scores():
     clf_2.fit(X)
     scores_2 = clf_2.negative_outlier_factor_
 
-    assert_array_almost_equal(scores_1, scores_2)
+    assert_allclose(scores_1, scores_2)
 
 
 def test_hasattr_prediction():
@@ -226,3 +240,72 @@ def test_predicted_outlier_number(expected_outliers):
     if num_outliers != expected_outliers:
         y_dec = clf.negative_outlier_factor_
         check_outlier_corruption(num_outliers, expected_outliers, y_dec)
+
+
+def test_sparse():
+    # LocalOutlierFactor must support CSR inputs
+    # TODO: compare results on dense and sparse data as proposed in:
+    # https://github.com/scikit-learn/scikit-learn/pull/23585#discussion_r968388186
+    X = csr_matrix(iris.data)
+
+    lof = neighbors.LocalOutlierFactor(novelty=True)
+    lof.fit(X)
+    lof.predict(X)
+    lof.score_samples(X)
+    lof.decision_function(X)
+
+    lof = neighbors.LocalOutlierFactor(novelty=False)
+    lof.fit_predict(X)
+
+
+@pytest.mark.parametrize("algorithm", ["auto", "ball_tree", "kd_tree", "brute"])
+@pytest.mark.parametrize("novelty", [True, False])
+@pytest.mark.parametrize("contamination", [0.5, "auto"])
+def test_lof_input_dtype_preservation(global_dtype, algorithm, contamination, novelty):
+    """Check that the fitted attributes are stored using the data type of X."""
+    X = iris.data.astype(global_dtype, copy=False)
+
+    iso = neighbors.LocalOutlierFactor(
+        n_neighbors=5, algorithm=algorithm, contamination=contamination, novelty=novelty
+    )
+    iso.fit(X)
+
+    assert iso.negative_outlier_factor_.dtype == global_dtype
+
+    for method in ("score_samples", "decision_function"):
+        if hasattr(iso, method):
+            y_pred = getattr(iso, method)(X)
+            assert y_pred.dtype == global_dtype
+
+
+@pytest.mark.parametrize("algorithm", ["auto", "ball_tree", "kd_tree", "brute"])
+@pytest.mark.parametrize("novelty", [True, False])
+@pytest.mark.parametrize("contamination", [0.5, "auto"])
+def test_lof_dtype_equivalence(algorithm, novelty, contamination):
+    """Check the equivalence of the results with 32 and 64 bits input."""
+
+    inliers = iris.data[:50]  # setosa iris are really distinct from others
+    outliers = iris.data[-5:]  # virginica will be considered as outliers
+    # lower the precision of the input data to check that we have an equivalence when
+    # making the computation in 32 and 64 bits.
+    X = np.concatenate([inliers, outliers], axis=0).astype(np.float32)
+
+    lof_32 = neighbors.LocalOutlierFactor(
+        algorithm=algorithm, novelty=novelty, contamination=contamination
+    )
+    X_32 = X.astype(np.float32, copy=True)
+    lof_32.fit(X_32)
+
+    lof_64 = neighbors.LocalOutlierFactor(
+        algorithm=algorithm, novelty=novelty, contamination=contamination
+    )
+    X_64 = X.astype(np.float64, copy=True)
+    lof_64.fit(X_64)
+
+    assert_allclose(lof_32.negative_outlier_factor_, lof_64.negative_outlier_factor_)
+
+    for method in ("score_samples", "decision_function", "predict", "fit_predict"):
+        if hasattr(lof_32, method):
+            y_pred_32 = getattr(lof_32, method)(X_32)
+            y_pred_64 = getattr(lof_64, method)(X_64)
+            assert_allclose(y_pred_32, y_pred_64, atol=0.0002)

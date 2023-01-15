@@ -46,7 +46,7 @@ class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):
     instead.
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         "estimators": [list],
         "weights": ["array-like", None],
         "n_jobs": [None, Integral],
@@ -232,6 +232,7 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimators expose such an attribute when fit.
+
         .. versionadded:: 1.0
 
     See Also
@@ -286,8 +287,8 @@ class VotingClassifier(ClassifierMixin, _BaseVoting):
     (6, 6)
     """
 
-    _parameter_constraints = {
-        **_BaseVoting._parameter_constraints,  # type: ignore
+    _parameter_constraints: dict = {
+        **_BaseVoting._parameter_constraints,
         "voting": [StrOptions({"hard", "soft"})],
         "flatten_transform": ["boolean"],
     }
@@ -534,6 +535,7 @@ class VotingRegressor(RegressorMixin, _BaseVoting):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimators expose such an attribute when fit.
+
         .. versionadded:: 1.0
 
     See Also

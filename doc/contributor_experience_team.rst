@@ -10,8 +10,16 @@
     <p>Juan Carlos Alfaro Jiménez</p>
     </div>
     <div>
+    <a href='https://github.com/ArturoAmorQ'><img src='https://avatars.githubusercontent.com/u/86408019?v=4' class='avatar' /></a> <br />
+    <p>Arturo Amor</p>
+    </div>
+    <div>
     <a href='https://github.com/lucyleeow'><img src='https://avatars.githubusercontent.com/u/23182829?v=4' class='avatar' /></a> <br />
     <p>Lucy Liu</p>
+    </div>
+    <div>
+    <a href='https://github.com/MaxwellLZH'><img src='https://avatars.githubusercontent.com/u/16646940?v=4' class='avatar' /></a> <br />
+    <p>Maxwell Liu</p>
     </div>
     <div>
     <a href='https://github.com/jmloyola'><img src='https://avatars.githubusercontent.com/u/2133361?v=4' class='avatar' /></a> <br />
@@ -38,7 +46,7 @@
     <p>Albert Thomas</p>
     </div>
     <div>
-    <a href='https://github.com/Micky774'><img src='https://avatars.githubusercontent.com/u/34613774?v=4' class='avatar' /></a> <br />
-    <p>Meekail Zain</p>
+    <a href='https://github.com/betatim'><img src='https://avatars.githubusercontent.com/u/1448859?v=4' class='avatar' /></a> <br />
+    <p>Tim Head</p>
     </div>
     </div>

@@ -1,19 +1,3 @@
-{{py:
-
-implementation_specific_values = [
-    # Values are the following ones:
-    #
-    #       name_suffix, INPUT_DTYPE_t, INPUT_DTYPE
-    #
-    # We also use the float64 dtype and C-type names as defined in
-    # `sklearn.utils._typedefs` to maintain consistency.
-    #
-    ('64', 'DTYPE_t', 'DTYPE'),
-    ('32', 'cnp.float32_t', 'np.float32')
-]
-
-}}
-
 cimport numpy as cnp
 
 from libc.stdlib cimport free, malloc
@@ -37,23 +21,20 @@ from ...utils._typedefs import ITYPE, DTYPE
 
 cnp.import_array()
 
-{{for name_suffix, INPUT_DTYPE_t, INPUT_DTYPE in implementation_specific_values}}
+{{for name_suffix in ['64', '32']}}
 
 from ._base cimport (
-    PairwiseDistancesReduction{{name_suffix}},
+    BaseDistancesReduction{{name_suffix}},
     _sqeuclidean_row_norms{{name_suffix}},
 )
 
-from ._datasets_pair cimport (
-    DatasetsPair{{name_suffix}},
-    DenseDenseDatasetsPair{{name_suffix}},
-)
+from ._datasets_pair cimport DatasetsPair{{name_suffix}}
 
-from ._gemm_term_computer cimport GEMMTermComputer{{name_suffix}}
+from ._middle_term_computer cimport MiddleTermComputer{{name_suffix}}
 
 
-cdef class PairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistancesReduction{{name_suffix}}):
-    """{{name_suffix}}bit implementation of PairwiseDistancesArgKmin."""
+cdef class ArgKmin{{name_suffix}}(BaseDistancesReduction{{name_suffix}}):
+    """float{{name_suffix}} implementation of the ArgKmin."""
 
     @classmethod
     def compute(
@@ -71,7 +52,7 @@ cdef class PairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistancesReduction{{n
 
         This classmethod is responsible for introspecting the arguments
         values to dispatch to the most appropriate implementation of
-        :class:`PairwiseDistancesArgKmin{{name_suffix}}`.
+        :class:`ArgKmin{{name_suffix}}`.
 
         This allows decoupling the API entirely from the implementation details
         whilst maintaining RAII: all temporarily allocated datastructures necessary
@@ -82,15 +63,19 @@ cdef class PairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistancesReduction{{n
         """
         if (
             metric in ("euclidean", "sqeuclidean")
-            and not issparse(X)
-            and not issparse(Y)
+            and not (issparse(X) ^ issparse(Y))  # "^" is the XOR operator
         ):
-            # Specialized implementation with improved arithmetic intensity
-            # and vector instructions (SIMD) by processing several vectors
-            # at time to leverage a call to the BLAS GEMM routine as explained
-            # in more details in the docstring.
+            # Specialized implementation of ArgKmin for the Euclidean distance
+            # for the dense-dense and sparse-sparse cases.
+            # This implementation computes the distances by chunk using
+            # a decomposition of the Squared Euclidean distance.
+            # This specialisation has an improved arithmetic intensity for both
+            # the dense and sparse settings, allowing in most case speed-ups of
+            # several orders of magnitude compared to the generic ArgKmin
+            # implementation.
+            # For more information see MiddleTermComputer.
             use_squared_distances = metric == "sqeuclidean"
-            pda = FastEuclideanPairwiseDistancesArgKmin{{name_suffix}}(
+            pda = EuclideanArgKmin{{name_suffix}}(
                 X=X, Y=Y, k=k,
                 use_squared_distances=use_squared_distances,
                 chunk_size=chunk_size,
@@ -98,9 +83,9 @@ cdef class PairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistancesReduction{{n
                 metric_kwargs=metric_kwargs,
             )
         else:
-             # Fall back on a generic implementation that handles most scipy
-             # metrics by computing the distances between 2 vectors at a time.
-            pda = PairwiseDistancesArgKmin{{name_suffix}}(
+            # Fall back on a generic implementation that handles most scipy
+            # metrics by computing the distances between 2 vectors at a time.
+            pda = ArgKmin{{name_suffix}}(
                 datasets_pair=DatasetsPair{{name_suffix}}.get_for(X, Y, metric, metric_kwargs),
                 k=k,
                 chunk_size=chunk_size,
@@ -147,8 +132,7 @@ cdef class PairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistancesReduction{{n
             sizeof(ITYPE_t *) * self.chunks_n_threads
         )
 
-        # Main heaps which will be returned as results by
-        # `PairwiseDistancesArgKmin{{name_suffix}}.compute`.
+        # Main heaps which will be returned as results by `ArgKmin{{name_suffix}}.compute`.
         self.argkmin_indices = np.full((self.n_samples_X, self.k), 0, dtype=ITYPE)
         self.argkmin_distances = np.full((self.n_samples_X, self.k), DBL_MAX, dtype=DTYPE)
 
@@ -179,11 +163,11 @@ cdef class PairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistancesReduction{{n
         for i in range(n_samples_X):
             for j in range(n_samples_Y):
                 heap_push(
-                    heaps_r_distances + i * self.k,
-                    heaps_indices + i * self.k,
-                    self.k,
-                    self.datasets_pair.surrogate_dist(X_start + i, Y_start + j),
-                    Y_start + j,
+                    values=heaps_r_distances + i * self.k,
+                    indices=heaps_indices + i * self.k,
+                    size=self.k,
+                    val=self.datasets_pair.surrogate_dist(X_start + i, Y_start + j),
+                    val_idx=Y_start + j,
                 )
 
     cdef void _parallel_on_X_init_chunk(
@@ -205,7 +189,7 @@ cdef class PairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistancesReduction{{n
         ITYPE_t X_end,
     ) nogil:
         cdef:
-            ITYPE_t idx, jdx
+            ITYPE_t idx
 
         # Sorting the main heaps portion associated to `X[X_start:X_end]`
         # in ascending order w.r.t the distances.
@@ -272,11 +256,11 @@ cdef class PairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistancesReduction{{n
                 for thread_num in range(self.chunks_n_threads):
                     for jdx in range(self.k):
                         heap_push(
-                            &self.argkmin_distances[X_start + idx, 0],
-                            &self.argkmin_indices[X_start + idx, 0],
-                            self.k,
-                            self.heaps_r_distances_chunks[thread_num][idx * self.k + jdx],
-                            self.heaps_indices_chunks[thread_num][idx * self.k + jdx],
+                            values=&self.argkmin_distances[X_start + idx, 0],
+                            indices=&self.argkmin_indices[X_start + idx, 0],
+                            size=self.k,
+                            val=self.heaps_r_distances_chunks[thread_num][idx * self.k + jdx],
+                            val_idx=self.heaps_indices_chunks[thread_num][idx * self.k + jdx],
                         )
 
     cdef void _parallel_on_Y_finalize(
@@ -304,13 +288,12 @@ cdef class PairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistancesReduction{{n
     cdef void compute_exact_distances(self) nogil:
         cdef:
             ITYPE_t i, j
-            ITYPE_t[:, ::1] Y_indices = self.argkmin_indices
             DTYPE_t[:, ::1] distances = self.argkmin_distances
         for i in prange(self.n_samples_X, schedule='static', nogil=True,
                         num_threads=self.effective_n_threads):
             for j in range(self.k):
                 distances[i, j] = self.datasets_pair.distance_metric._rdist_to_dist(
-                    # Guard against eventual -0., causing nan production.
+                    # Guard against potential -0., causing nan production.
                     max(distances[i, j], 0.)
                 )
 
@@ -322,19 +305,18 @@ cdef class PairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistancesReduction{{n
 
             # Values are returned identically to the way `KNeighborsMixin.kneighbors`
             # returns values. This is counter-intuitive but this allows not using
-            # complex adaptations where
-            # `PairwiseDistancesArgKmin{{name_suffix}}.compute` is called.
+            # complex adaptations where `ArgKmin.compute` is called.
             return np.asarray(self.argkmin_distances), np.asarray(self.argkmin_indices)
 
         return np.asarray(self.argkmin_indices)
 
 
-cdef class FastEuclideanPairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistancesArgKmin{{name_suffix}}):
-    """EuclideanDistance-specialized {{name_suffix}} bit implementation for PairwiseDistancesArgKmin."""
+cdef class EuclideanArgKmin{{name_suffix}}(ArgKmin{{name_suffix}}):
+    """EuclideanDistance-specialisation of ArgKmin{{name_suffix}}."""
 
     @classmethod
     def is_usable_for(cls, X, Y, metric) -> bool:
-        return (PairwiseDistancesArgKmin{{name_suffix}}.is_usable_for(X, Y, metric) and
+        return (ArgKmin{{name_suffix}}.is_usable_for(X, Y, metric) and
                 not _in_unstable_openblas_configuration())
 
     def __init__(
@@ -348,13 +330,12 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistance
         metric_kwargs=None,
     ):
         if (
-            metric_kwargs is not None and
-            len(metric_kwargs) > 0 and
-            "Y_norm_squared" not in metric_kwargs
+            isinstance(metric_kwargs, dict) and
+            (metric_kwargs.keys() - {"X_norm_squared", "Y_norm_squared"})
         ):
             warnings.warn(
                 f"Some metric_kwargs have been passed ({metric_kwargs}) but aren't "
-                f"usable for this case (FastEuclideanPairwiseDistancesArgKmin) and will be ignored.",
+                f"usable for this case (EuclideanArgKmin64) and will be ignored.",
                 UserWarning,
                 stacklevel=3,
             )
@@ -366,21 +347,16 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistance
             strategy=strategy,
             k=k,
         )
-        # X and Y are checked by the DatasetsPair{{name_suffix}} implemented
-        # as a DenseDenseDatasetsPair{{name_suffix}}
         cdef:
-            DenseDenseDatasetsPair{{name_suffix}} datasets_pair = (
-            <DenseDenseDatasetsPair{{name_suffix}}> self.datasets_pair
-        )
             ITYPE_t dist_middle_terms_chunks_size = self.Y_n_samples_chunk * self.X_n_samples_chunk
 
-        self.gemm_term_computer = GEMMTermComputer{{name_suffix}}(
-            datasets_pair.X,
-            datasets_pair.Y,
+        self.middle_term_computer = MiddleTermComputer{{name_suffix}}.get_for(
+            X,
+            Y,
             self.effective_n_threads,
             self.chunks_n_threads,
             dist_middle_terms_chunks_size,
-            n_features=datasets_pair.X.shape[1],
+            n_features=X.shape[1],
             chunk_size=self.chunk_size,
         )
 
@@ -389,31 +365,45 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistance
                 metric_kwargs.pop("Y_norm_squared"),
                 ensure_2d=False,
                 input_name="Y_norm_squared",
-                dtype=np.float64
+                dtype=np.float64,
             )
         else:
-            self.Y_norm_squared = _sqeuclidean_row_norms{{name_suffix}}(datasets_pair.Y, self.effective_n_threads)
+            self.Y_norm_squared = _sqeuclidean_row_norms{{name_suffix}}(
+                Y,
+                self.effective_n_threads,
+            )
 
-        # Do not recompute norms if datasets are identical.
-        self.X_norm_squared = (
-            self.Y_norm_squared if X is Y else
-            _sqeuclidean_row_norms{{name_suffix}}(datasets_pair.X, self.effective_n_threads)
-        )
+        if metric_kwargs is not None and "X_norm_squared" in metric_kwargs:
+            self.X_norm_squared = check_array(
+                metric_kwargs.pop("X_norm_squared"),
+                ensure_2d=False,
+                input_name="X_norm_squared",
+                dtype=np.float64,
+            )
+        else:
+            # Do not recompute norms if datasets are identical.
+            self.X_norm_squared = (
+                self.Y_norm_squared if X is Y else
+                _sqeuclidean_row_norms{{name_suffix}}(
+                    X,
+                    self.effective_n_threads,
+                )
+            )
+
         self.use_squared_distances = use_squared_distances
 
     @final
     cdef void compute_exact_distances(self) nogil:
         if not self.use_squared_distances:
-            PairwiseDistancesArgKmin{{name_suffix}}.compute_exact_distances(self)
+            ArgKmin{{name_suffix}}.compute_exact_distances(self)
 
     @final
     cdef void _parallel_on_X_parallel_init(
         self,
         ITYPE_t thread_num,
     ) nogil:
-        PairwiseDistancesArgKmin{{name_suffix}}._parallel_on_X_parallel_init(self, thread_num)
-        self.gemm_term_computer._parallel_on_X_parallel_init(thread_num)
-
+        ArgKmin{{name_suffix}}._parallel_on_X_parallel_init(self, thread_num)
+        self.middle_term_computer._parallel_on_X_parallel_init(thread_num)
 
     @final
     cdef void _parallel_on_X_init_chunk(
@@ -422,9 +412,8 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistance
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
-        PairwiseDistancesArgKmin{{name_suffix}}._parallel_on_X_init_chunk(self, thread_num, X_start, X_end)
-        self.gemm_term_computer._parallel_on_X_init_chunk(thread_num, X_start, X_end)
-
+        ArgKmin{{name_suffix}}._parallel_on_X_init_chunk(self, thread_num, X_start, X_end)
+        self.middle_term_computer._parallel_on_X_init_chunk(thread_num, X_start, X_end)
 
     @final
     cdef void _parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
@@ -435,25 +424,22 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistance
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
-        PairwiseDistancesArgKmin{{name_suffix}}._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
+        ArgKmin{{name_suffix}}._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
             self,
             X_start, X_end,
             Y_start, Y_end,
             thread_num,
         )
-        self.gemm_term_computer._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
+        self.middle_term_computer._parallel_on_X_pre_compute_and_reduce_distances_on_chunks(
             X_start, X_end, Y_start, Y_end, thread_num,
         )
-
 
     @final
     cdef void _parallel_on_Y_init(
         self,
     ) nogil:
-        cdef ITYPE_t thread_num
-        PairwiseDistancesArgKmin{{name_suffix}}._parallel_on_Y_init(self)
-        self.gemm_term_computer._parallel_on_Y_init()
-
+        ArgKmin{{name_suffix}}._parallel_on_Y_init(self)
+        self.middle_term_computer._parallel_on_Y_init()
 
     @final
     cdef void _parallel_on_Y_parallel_init(
@@ -462,9 +448,8 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistance
         ITYPE_t X_start,
         ITYPE_t X_end,
     ) nogil:
-        PairwiseDistancesArgKmin{{name_suffix}}._parallel_on_Y_parallel_init(self, thread_num, X_start, X_end)
-        self.gemm_term_computer._parallel_on_Y_parallel_init(thread_num, X_start, X_end)
-
+        ArgKmin{{name_suffix}}._parallel_on_Y_parallel_init(self, thread_num, X_start, X_end)
+        self.middle_term_computer._parallel_on_Y_parallel_init(thread_num, X_start, X_end)
 
     @final
     cdef void _parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
@@ -475,16 +460,15 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistance
         ITYPE_t Y_end,
         ITYPE_t thread_num,
     ) nogil:
-        PairwiseDistancesArgKmin{{name_suffix}}._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
+        ArgKmin{{name_suffix}}._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
             self,
             X_start, X_end,
             Y_start, Y_end,
             thread_num,
         )
-        self.gemm_term_computer._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
+        self.middle_term_computer._parallel_on_Y_pre_compute_and_reduce_distances_on_chunks(
             X_start, X_end, Y_start, Y_end, thread_num
         )
-
 
     @final
     cdef void _compute_and_reduce_distances_on_chunks(
@@ -497,34 +481,35 @@ cdef class FastEuclideanPairwiseDistancesArgKmin{{name_suffix}}(PairwiseDistance
     ) nogil:
         cdef:
             ITYPE_t i, j
-            DTYPE_t squared_dist_i_j
+            DTYPE_t sqeuclidean_dist_i_j
             ITYPE_t n_X = X_end - X_start
             ITYPE_t n_Y = Y_end - Y_start
-            DTYPE_t * dist_middle_terms = self.gemm_term_computer._compute_distances_on_chunks(
+            DTYPE_t * dist_middle_terms = self.middle_term_computer._compute_dist_middle_terms(
                 X_start, X_end, Y_start, Y_end, thread_num
             )
             DTYPE_t * heaps_r_distances = self.heaps_r_distances_chunks[thread_num]
             ITYPE_t * heaps_indices = self.heaps_indices_chunks[thread_num]
 
-
         # Pushing the distance and their associated indices on heaps
         # which keep tracks of the argkmin.
         for i in range(n_X):
             for j in range(n_Y):
+                sqeuclidean_dist_i_j = (
+                    self.X_norm_squared[i + X_start] +
+                    dist_middle_terms[i * n_Y + j] +
+                    self.Y_norm_squared[j + Y_start]
+                )
+
+                # Catastrophic cancellation might cause -0. to be present,
+                # e.g. when computing d(x_i, y_i) when X is Y.
+                sqeuclidean_dist_i_j = max(0., sqeuclidean_dist_i_j)
+
                 heap_push(
-                    heaps_r_distances + i * self.k,
-                    heaps_indices + i * self.k,
-                    self.k,
-                    # Using the squared euclidean distance as the rank-preserving distance:
-                    #
-                    #             ||X_c_i||² - 2 X_c_i.Y_c_j^T + ||Y_c_j||²
-                    #
-                    (
-                        self.X_norm_squared[i + X_start] +
-                        dist_middle_terms[i * n_Y + j] +
-                        self.Y_norm_squared[j + Y_start]
-                    ),
-                    j + Y_start,
+                    values=heaps_r_distances + i * self.k,
+                    indices=heaps_indices + i * self.k,
+                    size=self.k,
+                    val=sqeuclidean_dist_i_j,
+                    val_idx=j + Y_start,
                 )
 
 {{endfor}}

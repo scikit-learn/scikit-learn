@@ -174,7 +174,7 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
     [1]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseSGDClassifier._parameter_constraints,
         "loss": [StrOptions({"hinge", "squared_hinge"})],
         "C": [Interval(Real, 0, None, closed="right")],
@@ -459,7 +459,7 @@ class PassiveAggressiveRegressor(BaseSGDRegressor):
     [-0.02306214]
     """
 
-    _parameter_constraints = {
+    _parameter_constraints: dict = {
         **BaseSGDRegressor._parameter_constraints,
         "loss": [StrOptions({"epsilon_insensitive", "squared_epsilon_insensitive"})],
         "C": [Interval(Real, 0, None, closed="right")],
