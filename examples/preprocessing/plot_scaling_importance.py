@@ -168,7 +168,7 @@ for target_class, color, marker in zip(target_classes, colors, markers):
         marker=marker,
     )
 
-ax1.set_title("Training dataset after PCA")
+ax1.set_title("Unscaled training dataset after PCA")
 ax2.set_title("Standardized training dataset after PCA")
 
 for ax in (ax1, ax2):
@@ -203,30 +203,38 @@ Cs = np.logspace(-5, 5, 20)
 
 unscaled_clf = make_pipeline(pca, LogisticRegressionCV(Cs=Cs))
 unscaled_clf.fit(X_train, y_train)
-y_pred = unscaled_clf.predict(X_test)
 
 scaled_clf = make_pipeline(scaler, pca, LogisticRegressionCV(Cs=Cs))
 scaled_clf.fit(X_train, y_train)
-y_pred_scaled = scaled_clf.predict(X_test)
 
 print(f"Optimal C for the unscaled PCA: {unscaled_clf[-1].C_[0]:.4f}")
 print()
 print(f"Optimal C for the standardized data with PCA: {scaled_clf[-1].C_[0]:.2f}")
 
 # %%
-# The need for regularization is higher (lower values of `C`) for the data
-# that was not scaled before applying PCA. From the plot we can confirm that
-# less separable clases are more propense to overfitting.
-#
-# We now evaluate the effect of scaling on the accuracy:
+# The need for regularization is higher (lower values of `C`) for the data that
+# was not scaled before applying PCA. We now evaluate the effect of scaling on
+# the accuracy and the mean log-loss of the optimal models:
 
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import log_loss
+
+y_pred = unscaled_clf.predict(X_test)
+y_pred_scaled = scaled_clf.predict(X_test)
+y_proba = unscaled_clf.predict_proba(X_test)
+y_proba_scaled = scaled_clf.predict_proba(X_test)
 
 print("Test accuracy for the unscaled PCA")
 print(f"{accuracy_score(y_test, y_pred):.2%}")
 print()
 print("Test accuracy for the standardized data with PCA")
 print(f"{accuracy_score(y_test, y_pred_scaled):.2%}")
+print()
+print("Log-loss for the unscaled PCA")
+print(f"{log_loss(y_test, y_proba):.3}")
+print()
+print("Log-loss for the standardized data with PCA")
+print(f"{log_loss(y_test, y_proba_scaled):.3}")
 
 # %%
 # A clear difference in prediction accuracies is observed when the data is
@@ -243,18 +251,5 @@ print(f"{accuracy_score(y_test, y_pred_scaled):.2%}")
 # contribute more to the prediction after scaling and therefore scaling would
 # increase overfitting.
 #
-# Last but not least, we evaluate the effect of scaling on the mean log-loss:
-
-from sklearn.metrics import log_loss
-
-y_proba = unscaled_clf.predict_proba(X_test)
-y_proba_scaled = scaled_clf.predict_proba(X_test)
-
-print("Log-loss for the unscaled PCA")
-print(f"{log_loss(y_test, y_proba):.3}")
-print()
-print("Log-loss for the standardized data with PCA")
-print(f"{log_loss(y_test, y_proba_scaled):.3}")
-
-# %%
-# Indeed, we achieve a lower log-loss by means of the scaling step.
+# Last but not least, we observe that one achieves a lower log-loss by means of
+# the scaling step.
