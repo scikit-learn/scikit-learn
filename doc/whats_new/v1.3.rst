@@ -34,6 +34,12 @@ random sampling procedures.
   are strings. Predefined categories encoded as bytes will no longer work
   with `X` encoded as strings. :pr:`25174` by :user:`Tim Head <betatim>`.
 
+- |Fix| NaN values are now ignored to estimate quantiles in
+  :func:`inspection.partial_dependence`. The implementation used to estimate quantiles
+  changed from :func:`scipy.stats.mstats.mquantiles` to :func:`numpy.nanpercentile`
+  inducing a change of the grid used to compute the partial dependence.
+  :pr:`25407` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Changes impacting all modules
 -----------------------------
 
@@ -112,6 +118,17 @@ Changelog
 
 - |Fix| :class:`feature_extraction.FeatureHasher` raises an informative error
   when the input is a list of strings. :pr:`25094` by `Thomas Fan`_.
+
+:mod:`sklearn.inspection`
+.........................
+
+- |Fix| NaN values are now ignored to estimate quantiles in
+  :func:`inspection.partial_dependence`. They were previously used biasing the
+  computation of empirical quantiles and potentially the partial dependence.
+  The implementation used to estimate quantiles changed from
+  :func:`scipy.stats.mstats.mquantiles` to :func:`numpy.nanpercentile` inducing
+  a change of the grid used to compute the partial dependence.
+  :pr:`25407` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
 ..............................
