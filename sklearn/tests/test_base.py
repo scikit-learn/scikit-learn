@@ -22,6 +22,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.tree import DecisionTreeRegressor
 from sklearn import datasets
+from sklearn.exceptions import InconsistentVersionWarning
 
 from sklearn.base import TransformerMixin
 from sklearn.utils._mocking import MockDataFrame
@@ -397,8 +398,14 @@ def test_pickle_version_warning_is_issued_upon_different_version():
         old_version="something",
         current_version=sklearn.__version__,
     )
-    with pytest.warns(UserWarning, match=message):
+    with pytest.warns(UserWarning, match=message) as warning_record:
         pickle.loads(tree_pickle_other)
+
+    message = warning_record.list[0].message
+    assert isinstance(message, InconsistentVersionWarning)
+    assert message.estimator_name == "TreeBadVersion"
+    assert message.original_sklearn_version == "something"
+    assert message.current_sklearn_version == sklearn.__version__
 
 
 class TreeNoVersion(DecisionTreeClassifier):
@@ -675,3 +682,48 @@ def test_clone_keeps_output_config():
     ss_clone = clone(ss)
     config_clone = _get_output_config("transform", ss_clone)
     assert config == config_clone
+
+
+class _Empty:
+    pass
+
+
+class EmptyEstimator(_Empty, BaseEstimator):
+    pass
+
+
+@pytest.mark.parametrize("estimator", [BaseEstimator(), EmptyEstimator()])
+def test_estimator_empty_instance_dict(estimator):
+    """Check that ``__getstate__`` returns an empty ``dict`` with an empty
+    instance.
+
+    Python 3.11+ changed behaviour by returning ``None`` instead of raising an
+    ``AttributeError``. Non-regression test for gh-25188.
+    """
+    state = estimator.__getstate__()
+    expected = {"_sklearn_version": sklearn.__version__}
+    assert state == expected
+
+    # this should not raise
+    pickle.loads(pickle.dumps(BaseEstimator()))
+
+
+def test_estimator_getstate_using_slots_error_message():
+    """Using a `BaseEstimator` with `__slots__` is not supported."""
+
+    class WithSlots:
+        __slots__ = ("x",)
+
+    class Estimator(BaseEstimator, WithSlots):
+        pass
+
+    msg = (
+        "You cannot use `__slots__` in objects inheriting from "
+        "`sklearn.base.BaseEstimator`"
+    )
+
+    with pytest.raises(TypeError, match=msg):
+        Estimator().__getstate__()
+
+    with pytest.raises(TypeError, match=msg):
+        pickle.dumps(Estimator())

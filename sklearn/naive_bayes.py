@@ -318,6 +318,8 @@ class GaussianNB(_BaseNB):
         # Compute (potentially weighted) mean and variance of new datapoints
         if sample_weight is not None:
             n_new = float(sample_weight.sum())
+            if np.isclose(n_new, 0.0):
+                return mu, var
             new_mu = np.average(X, axis=0, weights=sample_weight)
             new_var = np.average((X - new_mu) ** 2, axis=0, weights=sample_weight)
         else:

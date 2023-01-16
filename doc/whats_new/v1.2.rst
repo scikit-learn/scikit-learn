@@ -2,6 +2,79 @@
 
 .. currentmodule:: sklearn
 
+.. _changes_1_2_1:
+
+Version 1.2.1
+=============
+
+**In Development**
+
+Changelog
+---------
+
+:mod:`sklearn.base`
+...................
+
+- |Fix| Fix a regression in `BaseEstimator.__getstate__` that would prevent
+  certain estimators to be pickled when using Python 3.11. :pr:`25188` by
+  :user:`Benjamin Bossan <BenjaminBossan>`.
+
+- |Fix| Inheriting from :class:`base.TransformerMixin` will only wrap the `transform`
+  method if the class defines `transform` itself. :pr:`25295` by `Thomas Fan`_.
+
+:mod:`sklearn.datasets`
+.......................
+
+- |Fix| Fix an inconsistency in :func:`datasets.fetch_openml` between liac-arff
+  and pandas parser when a leading space is introduced after the delimiter.
+  The ARFF specs requires to ignore the leading space.
+  :pr:`25312` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+:mod:`sklearn.ensemble`
+.......................
+
+- |Fix| :class:`ensemble.RandomForestClassifier`,
+  :class:`ensemble.RandomForestRegressor` :class:`ensemble.ExtraTreesClassifier`
+  and :class:`ensemble.ExtraTreesRegressor` now support sparse readonly datasets.
+  :pr:`25341` by :user:`Julien Jerphanion <jjerphan>`
+
+:mod:`sklearn.linear_model`
+...........................
+
+- |Fix| Fix a regression in :class:`linear_model.SGDClassifier` and
+  :class:`linear_model.SGDRegressor` that makes them unusable with the
+  `verbose` parameter set to a value greater than 0.
+  :pr:`25250` by :user:`Jérémie Du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| :class:`manifold.TSNE` now works correctly when output type is
+  set to pandas :pr:`25370` by :user:`Tim Head <betatim>`.
+
+
+:mod:`sklearn.preprocessing`
+............................
+
+- |Fix| :meth:`preprocessing.FunctionTransformer.inverse_transform` correctly
+  supports DataFrames that are all numerical when `check_inverse=True`.
+  :pr:`25274` by `Thomas Fan`_.
+
+:mod:`sklearn.tree`
+...................
+
+- |Fix| :class:`tree.DecisionTreeClassifier`, :class:`tree.DecisionTreeRegressor`
+  :class:`tree.ExtraTreeClassifier` and :class:`tree.ExtraTreeRegressor`
+  now support sparse readonly datasets.
+  :pr:`25341` by :user:`Julien Jerphanion <jjerphan>`
+
+:mod:`sklearn.utils`
+....................
+
+- |Fix| Restore :func:`utils.check_array`'s behaviour for pandas Series of type
+  boolean. The type is maintained, instead of converting to `float64.`
+  :pr:`25147` by :user:`Tim Head <betatim>`.
+
 .. _changes_1_2:
 
 Version 1.2.0

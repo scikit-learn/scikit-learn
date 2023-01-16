@@ -23,7 +23,13 @@ from ..metrics._dist_metrics import METRIC_MAPPING
 from ..utils import check_array
 from ..utils._fast_dict import IntFloatDict
 from ..utils.graph import _fix_connected_components
-from ..utils._param_validation import Hidden, Interval, StrOptions, HasMethods
+from ..utils._param_validation import (
+    Hidden,
+    Interval,
+    StrOptions,
+    HasMethods,
+    validate_params,
+)
 from ..utils.validation import check_memory
 
 # mypy error: Module 'sklearn.cluster' has no attribute '_hierarchical_fast'
@@ -169,6 +175,14 @@ def _single_linkage_tree(
 # Hierarchical tree building functions
 
 
+@validate_params(
+    {
+        "X": ["array-like"],
+        "connectivity": ["array-like", "sparse matrix", None],
+        "n_clusters": [Interval(Integral, 1, None, closed="left"), None],
+        "return_distance": ["boolean"],
+    }
+)
 def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
     """Ward clustering based on a Feature matrix.
 
@@ -187,7 +201,7 @@ def ward_tree(X, *, connectivity=None, n_clusters=None, return_distance=False):
     X : array-like of shape (n_samples, n_features)
         Feature matrix representing `n_samples` samples to be clustered.
 
-    connectivity : sparse matrix, default=None
+    connectivity : {array-like, sparse matrix}, default=None
         Connectivity matrix. Defines for each sample the neighboring samples
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
