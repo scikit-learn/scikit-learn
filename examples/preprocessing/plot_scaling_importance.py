@@ -209,11 +209,9 @@ scaled_clf = make_pipeline(scaler, pca, LogisticRegressionCV(Cs=Cs))
 scaled_clf.fit(X_train, y_train)
 y_pred_scaled = scaled_clf.predict(X_test)
 
-print("Optimal C for the unscaled PCA")
-print(unscaled_clf[-1].C_)
+print(f"Optimal C for the unscaled PCA: {unscaled_clf[-1].C_[0]:.4f}")
 print()
-print("Optimal C for the standardized data with PCA")
-print(scaled_clf[-1].C_)
+print(f"Optimal C for the standardized data with PCA: {scaled_clf[-1].C_[0]:.2f}")
 
 # %%
 # The need for regularization is higher (lower values of `C`) for the data
