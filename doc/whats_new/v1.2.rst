@@ -22,6 +22,14 @@ Changelog
 - |Fix| Inheriting from :class:`base.TransformerMixin` will only wrap the `transform`
   method if the class defines `transform` itself. :pr:`25295` by `Thomas Fan`_.
 
+:mod:`sklearn.datasets`
+.......................
+
+- |Fix| Fix an inconsistency in :func:`datasets.fetch_openml` between liac-arff
+  and pandas parser when a leading space is introduced after the delimiter.
+  The ARFF specs requires to ignore the leading space.
+  :pr:`25312` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 :mod:`sklearn.decomposition`
 ............................
 
@@ -45,6 +53,13 @@ Changelog
   :class:`linear_model.SGDRegressor` that makes them unusable with the
   `verbose` parameter set to a value greater than 0.
   :pr:`25250` by :user:`Jérémie Du Boisberranger <jeremiedbb>`.
+
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| :class:`manifold.TSNE` now works correctly when output type is
+  set to pandas :pr:`25370` by :user:`Tim Head <betatim>`.
+
 
 :mod:`sklearn.preprocessing`
 ............................
