@@ -137,6 +137,12 @@ def convert_attributes(method):
                 converted = engine.convert_to_sklearn_types(name, attribute)
                 setattr(self, name, converted)
 
+            # No matter which engine was used to fit, after the attribute
+            # conversion to the sklearn native types the default engine
+            # is used.
+            self._engine_class = self._default_engine
+            self._engine_provider = "default"
+
         return r
 
     return wrapper
