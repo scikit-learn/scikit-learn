@@ -104,6 +104,11 @@ def test_gnb_sample_weight():
     assert_array_almost_equal(clf_dupl.theta_, clf_sw.theta_)
     assert_array_almost_equal(clf_dupl.var_, clf_sw.var_)
 
+    # non-regression test for gh-24140 where a division by zero was
+    # occurring when a single class was present
+    sample_weight = (y == 1).astype(np.float64)
+    clf = GaussianNB().fit(X, y, sample_weight=sample_weight)
+
 
 def test_gnb_neg_priors():
     """Test whether an error is raised in case of negative priors"""
