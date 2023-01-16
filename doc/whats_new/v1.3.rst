@@ -19,8 +19,45 @@ parameters, may produce different models from the previous version. This often
 occurs due to changes in the modelling logic (bug fixes or enhancements), or in
 random sampling procedures.
 
+- |Enhancement| :meth:`multiclass.OutputCodeClassifier.predict` now uses a more
+  efficient pairwise distance reduction. As a consequence, the tie-breaking
+  strategy is different and thus the predicted labels may be different.
+  :pr:`25196` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+- |Enhancement| The `fit_transform` method of :class:`decomposition.DictionaryLearning`
+  is more efficient but may produce different results as in previous versions when
+  `transform_algorithm` is not the same as `fit_algorithm` and the number of iterations
+  is small. :pr:`24871` by :user:`Omar Salman <OmarManzoor>`.
+
+- |Fix| The `categories_` attribute of :class:`preprocessing.OneHotEncoder` now
+  always contains an array of `object`s when using predefined categories that
+  are strings. Predefined categories encoded as bytes will no longer work
+  with `X` encoded as strings. :pr:`25174` by :user:`Tim Head <betatim>`.
+
 Changes impacting all modules
 -----------------------------
+
+- |Enhancement| The `get_feature_names_out` method of the following classes now
+  raises a `NotFittedError` if the instance is not fitted. This ensures the error is
+  consistent in all estimators with the `get_feature_names_out` method.
+
+  - :class:`kernel_approximation.AdditiveChi2Sampler`
+  - :class:`preprocessing.Binarizer`
+  - :class:`preprocessing.MaxAbsScaler`
+  - :class:`preprocessing.MinMaxScaler`
+  - :class:`preprocessing.Normalizer`
+  - :class:`preprocessing.OrdinalEncoder`
+  - :class:`preprocessing.PowerTransformer`
+  - :class:`preprocessing.QuantileTransformer`
+  - :class:`preprocessing.RobustScaler`
+  - :class:`preprocessing.StandardScaler`
+  - :class:`feature_extraction.text.TfidfTransformer`
+
+  The `NotFittedError` displays an informative message asking to fit the instance
+  with the appropriate arguments.
+
+  :pr:`25294` by :user:`John Pangas <jpangas>` and :pr:`25291` by
+  :user:`Rahil Parikh <rprkh>`.
 
 Changelog
 ---------
@@ -36,15 +73,57 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.cluster`
+......................
+
+- |API| The `sample_weight` parameter in `predict` for
+  :meth:`cluster.KMeans.predict` and :meth:`cluster.MiniBatchKMeans.predict`
+  is now deprecated and will be removed in v1.5.
+  :pr:`25251` by :user:`Gleb Levitski <glevv>`.
+
+:mod:`sklearn.decomposition`
+............................
+
+- |Enhancement| :class:`decomposition.DictionaryLearning` now accepts the parameter
+  `callback` for consistency with the function :func:`decomposition.dict_learning`.
+  :pr:`24871` by :user:`Omar Salman <OmarManzoor>`.
+
 :mod:`sklearn.ensemble`
 .......................
+
 - |Feature| Compute a custom out-of-bag score by passing a callable to
   :class:`ensemble.RandomForestClassifier`, :class:`ensemble.RandomForestRegressor`,
   :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`.
   :pr:`25177` by :user:`Tim Head <betatim>`.
 
+- |Feature| :class:`ensemble.GradientBoostingClassifier` now exposes
+  out-of-bag scores via the `oob_scores_` or `oob_score_` attributes.
+  :pr:`24882` by :user:`Ashwin Mathur <awinml>`.
+
+:mod:`sklearn.exception`
+........................
+- |Feature| Added :class:`exception.InconsistentVersionWarning` which is raised
+  when a scikit-learn estimator is unpickled with a scikit-learn version that is
+  inconsistent with the sckit-learn verion the estimator was pickled with.
+  :pr:`25297` by `Thomas Fan`_.
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| :class:`feature_extraction.FeatureHasher` raises an informative error
+  when the input is a list of strings. :pr:`25094` by `Thomas Fan`_.
+
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| :func:`model_selection.cross_validate` with multimetric scoring in
+  case of some failing scorers the non-failing scorers now returns proper
+  scores instead of `error_score` values.
+  :pr:`23101` by :user:`András Simon <simonandras>` and `Thomas Fan`_.
+
 :mod:`sklearn.multiclass`
 .........................
+
 - |Fix| :class:`multiclass.OutputCodeClassifier` suffers from several bugs.
   Now, the implementation follows the original paper more closely: (i) the
   predictions generated rely on a probablity estimate of each binary
@@ -53,26 +132,53 @@ Changelog
   sampling without replacement whenever possible to avoid codes collisions.
   :pr:`25217` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.naive_bayes`
+..........................
+
+- |Fix| :class:`naive_bayes.GaussianNB` does not raise anymore a `ZeroDivisionError`
+  when the provided `sample_weight` reduces the problem to a single class in `fit`.
+  :pr:`24140` by :user:`Jonathan Ohayon <Johayon>` and :user:`Chiara Marmo <cmarmo>`.
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| :class:`neural_network.MLPClassifier` and :class:`neural_network.MLPRegressor`
+  no longer raise warnings when fitting data with feature names.
+  :pr:`24873` by :user:`Tim Head <betatim>`.
+
 :mod:`sklearn.pipeline`
 .......................
+
 - |Feature| :class:`pipeline.FeatureUnion` can now use indexing notation (e.g.
   `feature_union["scalar"]`) to access transformers by name. :pr:`25093` by
   `Thomas Fan`_.
 
+- |Feature| :class:`pipeline.FeatureUnion` can now access the
+  `feature_names_in_` attribute if the `X` value seen during `.fit` has a
+  `columns` attribute and all columns are strings. e.g. when `X` is a
+  `pandas.DataFrame`
+  :pr:`25220` by :user:`Ian Thompson <it176131>`.
+
 :mod:`sklearn.preprocessing`
 ............................
+
+- |Enhancement| Adds a `feature_name_combiner` parameter to
+  :class:`preprocessing.OneHotEncoder`. This specifies a custom callable to create
+  feature names to be returned by :meth:`get_feature_names_out`.
+  The callable combines input arguments `(input_feature, category)` to a string.
+  :pr:`22506` by :user:`Mario Kostelac <mariokostelac>`.
 
 - |Enhancement| Added support for `sample_weight` in
   :class:`preprocessing.KBinsDiscretizer`. This allows specifying the parameter
   `sample_weight` for each sample to be used while fitting. The option is only
-  available when `strategy` is set to `quantile`.
+  available when `strategy` is set to `quantile` and `kmeans`.
   :pr:`24935` by :user:`Seladus <seladus>`, :user:`Guillaume Lemaitre <glemaitre>`, and
-  :user:`Dea María Léon <deamarialeon>`.
+  :user:`Dea María Léon <deamarialeon>`, :pr:`25257` by :user:`Gleb Levitski <glevv>`.
 
 Code and Documentation Contributors
 -----------------------------------
 
 Thanks to everyone who has contributed to the maintenance and improvement of
-the project since version 1.1, including:
+the project since version 1.2, including:
 
 TODO: update at the time of the release.

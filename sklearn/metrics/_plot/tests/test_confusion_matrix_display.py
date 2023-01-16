@@ -54,27 +54,6 @@ def test_confusion_matrix_display_validation(pyplot):
 
 
 @pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
-def test_confusion_matrix_display_invalid_option(pyplot, constructor_name):
-    """Check the error raise if an invalid parameter value is passed."""
-    X, y = make_classification(
-        n_samples=100, n_informative=5, n_classes=5, random_state=0
-    )
-    classifier = SVC().fit(X, y)
-    y_pred = classifier.predict(X)
-
-    # safe guard for the binary if/else construction
-    assert constructor_name in ("from_estimator", "from_predictions")
-    extra_params = {"normalize": "invalid"}
-
-    err_msg = r"normalize must be one of \{'true', 'pred', 'all', None\}"
-    with pytest.raises(ValueError, match=err_msg):
-        if constructor_name == "from_estimator":
-            ConfusionMatrixDisplay.from_estimator(classifier, X, y, **extra_params)
-        else:
-            ConfusionMatrixDisplay.from_predictions(y, y_pred, **extra_params)
-
-
-@pytest.mark.parametrize("constructor_name", ["from_estimator", "from_predictions"])
 @pytest.mark.parametrize("with_labels", [True, False])
 @pytest.mark.parametrize("with_display_labels", [True, False])
 def test_confusion_matrix_display_custom_labels(
