@@ -389,6 +389,10 @@ def partial_dependence(
     PartialDependenceDisplay.from_estimator : Plot Partial Dependence.
     PartialDependenceDisplay : Partial Dependence visualization.
 
+    Notes
+    -----
+    NaNs values in the `X` matrix are ignored when computing the partial dependence.
+
     Examples
     --------
     >>> X = [[0, 0, 2], [1, 0, 0]]

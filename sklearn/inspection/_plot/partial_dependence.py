@@ -510,6 +510,10 @@ class PartialDependenceDisplay:
         --------
         partial_dependence : Compute Partial Dependence values.
 
+        Notes
+        -----
+        NaNs values in the `X` matrix are ignored when computing the partial dependence.
+
         Examples
         --------
         >>> import matplotlib.pyplot as plt
