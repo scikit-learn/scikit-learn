@@ -14,7 +14,6 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
 )
-from sklearn.utils._testing import _convert_container
 
 ESTIMATORS = [
     (label_propagation.LabelPropagation, {"kernel": "rbf"}),
@@ -30,8 +29,6 @@ ESTIMATORS = [
         {"kernel": lambda x, y: rbf_kernel(x, y, gamma=20)},
     ),
 ]
-
-CONSTRUCTOR_TYPES = ("array", "sparse_csr", "sparse_csc")
 
 
 @pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
@@ -124,10 +121,9 @@ def test_label_propagation_closed_form(global_dtype):
     assert_allclose(expected, clf.label_distributions_, atol=1e-4)
 
 
-@pytest.mark.parametrize("constructor_type", CONSTRUCTOR_TYPES)
-def test_convergence_speed(constructor_type):
+def test_convergence_speed():
     # This is a non-regression test for #5774
-    X = _convert_container([[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]], constructor_type)
+    X = np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]])
     y = np.array([0, 1, -1])
     mdl = label_propagation.LabelSpreading(kernel="rbf", max_iter=5000)
     mdl.fit(X, y)
