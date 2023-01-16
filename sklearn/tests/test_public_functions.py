@@ -117,6 +117,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.det_curve",
     "sklearn.metrics.mean_absolute_error",
     "sklearn.metrics.mean_squared_error",
+    "sklearn.metrics.median_absolute_error",
     "sklearn.metrics.mean_tweedie_deviance",
     "sklearn.metrics.multilabel_confusion_matrix",
     "sklearn.metrics.mutual_info_score",

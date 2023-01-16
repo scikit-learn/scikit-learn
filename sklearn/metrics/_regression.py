@@ -553,6 +553,14 @@ def mean_squared_log_error(
     )
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "multioutput": [StrOptions({"raw_values", "uniform_average"}), "array-like"],
+        "sample_weight": ["array-like", None],
+    }
+)
 def median_absolute_error(
     y_true, y_pred, *, multioutput="uniform_average", sample_weight=None
 ):
