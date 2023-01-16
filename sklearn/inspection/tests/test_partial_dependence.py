@@ -854,8 +854,9 @@ def test_grid_from_X_missing_values_numerical_features():
     X[::5] = np.nan
 
     grid, axes = _grid_from_X(X, percentiles, is_categorical, grid_resolution)
-    assert np.isnan(grid).all()
-    assert np.isnan(axes).all()
+    assert not all([is_scalar_nan(elt) for elt in grid.ravel()])
+    for axis in axes:
+        assert not all([is_scalar_nan(elt) for elt in axis])
 
     # check that quantiles computed are not impacted by the presence of missing values
     mask_missing_values = np.ones_like(X, dtype=bool)
