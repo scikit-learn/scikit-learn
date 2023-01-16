@@ -222,7 +222,7 @@ def test_grid_from_X_heterogeneous_type(grid_resolution):
 @pytest.mark.parametrize(
     "grid_resolution, percentiles, err_msg",
     [
-        (2, (0, 0.0001), "percentiles are too close"),
+        (2, (0, 1e-6), "percentiles are too close"),
         (100, (1, 2, 3, 4), "'percentiles' must be a sequence of 2 elements"),
         (100, 12345, "'percentiles' must be a sequence of 2 elements"),
         (100, (-1, 0.95), r"'percentiles' values must be in \[0, 1\]"),
