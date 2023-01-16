@@ -332,12 +332,12 @@ class IsolationForest(OutlierMixin, BaseBagging):
         )
 
         self._average_path_length_per_tree = []
-        self._decision_path_lenghts = []
+        self._decision_path_lengths = []
         for tree in self.estimators_:
             self._average_path_length_per_tree += [
                 _average_path_length(tree.tree_.n_node_samples)
             ]
-            self._decision_path_lenghts += [_compute_depths(tree.tree_)]
+            self._decision_path_lengths += [_compute_depths(tree.tree_)]
 
         if self.contamination == "auto":
             # 0.5 plays a special role as described in the original paper.
@@ -495,7 +495,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             X_subset = X[:, features] if subsample_features else X
 
             leaves_index = tree.apply(X_subset)
-            path_lengths = self._decision_path_lenghts[tree_idx][leaves_index]
+            path_lengths = self._decision_path_lengths[tree_idx][leaves_index]
 
             depths += (
                 path_lengths
