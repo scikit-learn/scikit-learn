@@ -1,4 +1,5 @@
 """ test the label propagation module """
+
 import numpy as np
 import pytest
 import warnings
