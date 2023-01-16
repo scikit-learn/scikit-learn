@@ -36,7 +36,7 @@ from sklearn.base import BaseEstimator, ClassifierMixin, clone
 from sklearn.exceptions import NotFittedError
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_equal
-from sklearn.utils import _IS_32BIT
+from sklearn.utils import _IS_32BIT, is_scalar_nan
 from sklearn.utils.validation import check_random_state
 from sklearn.tree.tests.test_tree import assert_is_subtree
 
@@ -836,3 +836,54 @@ def test_kind_average_and_average_of_individual(Estimator, data):
     pdp_ind = partial_dependence(est, X=X, features=[1, 2], kind="individual")
     avg_ind = np.mean(pdp_ind["individual"], axis=1)
     assert_allclose(avg_ind, pdp_avg["average"])
+
+
+def test_grid_from_X_missing_values_numerical_features():
+    """Check the behavior when X contains missing values with numerical features.
+
+    When generating the grid, we should ignore the missing values to avoid introducing
+    a bias in the partial dependence computation. Therefore, we make sure that there is
+    no missing values in the grid.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/25401
+    """
+    rng = np.random.RandomState(0)
+    percentiles, grid_resolution, is_categorical = (0.05, 0.95), 5, [False, False]
+    X = rng.randn(100, 2)
+    X[::5] = np.nan
+
+    grid, axes = _grid_from_X(X, percentiles, is_categorical, grid_resolution)
+    assert np.isnan(grid).all()
+    assert np.isnan(axes).all()
+
+    # check that quantiles computed are not impacted by the presence of missing values
+    mask_missing_values = np.ones_like(X, dtype=bool)
+    mask_missing_values[::5] = False
+    X_without_nan = X[mask_missing_values].reshape(-1, 2)
+
+    grid_without_nan, axes_without_nan = _grid_from_X(
+        X_without_nan, percentiles, is_categorical, grid_resolution
+    )
+    assert_allclose(grid, grid_without_nan)
+    assert_allclose(axes, axes_without_nan)
+
+
+def test_grid_from_X_missing_values_categorical_features():
+    """Check the behavior when X contains missing values with categorical features.
+
+    By default, we should ignore the missing values to be aligned with the numerical
+    behaviour.
+
+    Non-regression test for:
+    https://github.com/scikit-learn/scikit-learn/issues/25401
+    """
+    rng = np.random.RandomState(0)
+    percentiles, grid_resolution, is_categorical = (0.05, 0.95), 5, [False, False]
+    categories = np.array(["A", "B", "C", np.nan], dtype=object)
+    X = rng.choice(categories, size=(100, 2))
+
+    grid, axes = _grid_from_X(X, percentiles, is_categorical, grid_resolution)
+    assert not all([is_scalar_nan(elt) for elt in grid.ravel()])
+    for axis in axes:
+        assert not all([is_scalar_nan(elt) for elt in axis])

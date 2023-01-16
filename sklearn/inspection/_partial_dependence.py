@@ -9,17 +9,18 @@ from collections.abc import Iterable
 
 import numpy as np
 from scipy import sparse
-from scipy.stats.mstats import mquantiles
 
 from ._pd_utils import _check_feature_names, _get_feature_index
 from ..base import is_classifier, is_regressor
 from ..utils.extmath import cartesian
 from ..utils import check_array
 from ..utils import check_matplotlib_support  # noqa
+from ..utils import is_scalar_nan
 from ..utils import _safe_indexing
 from ..utils import _safe_assign
 from ..utils import _determine_key_type
 from ..utils import _get_column_indices
+from ..utils._encode import _unique
 from ..utils.validation import check_is_fitted
 from ..utils import Bunch
 from ..tree import DecisionTreeRegressor
@@ -88,7 +89,11 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
 
     values = []
     for feature, is_cat in enumerate(is_categorical):
-        uniques = np.unique(_safe_indexing(X, feature, axis=1))
+        uniques = _unique(_safe_indexing(X, feature, axis=1))
+        uniques = np.array(
+            [value for value in uniques if not is_scalar_nan(value)],
+            dtype=uniques.dtype,
+        )
         if is_cat or uniques.shape[0] < grid_resolution:
             # Use the unique values either because:
             # - feature has low resolution use unique values
@@ -96,8 +101,11 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
             axis = uniques
         else:
             # create axis based on percentiles and grid resolution
-            emp_percentiles = mquantiles(
-                _safe_indexing(X, feature, axis=1), prob=percentiles, axis=0
+            # emp_percentiles = mquantiles(
+            #     _safe_indexing(X, feature, axis=1), prob=percentiles, axis=0
+            # )
+            emp_percentiles = np.nanquantile(
+                _safe_indexing(X, feature, axis=1), q=percentiles, axis=0
             )
             if np.allclose(emp_percentiles[0], emp_percentiles[1]):
                 raise ValueError(
