@@ -105,6 +105,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.neighbors._quad_tree",
     "sklearn.svm._liblinear",
     "sklearn.svm._libsvm",
+    "sklearn.svm._libsvm_sparse",
     "sklearn.tree._splitter",
     "sklearn.tree._utils",
     "sklearn.utils._cython_blas",
