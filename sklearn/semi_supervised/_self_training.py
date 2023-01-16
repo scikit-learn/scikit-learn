@@ -28,7 +28,7 @@ def _estimator_has(attr):
 class SelfTrainingClassifier(MetaEstimatorMixin, BaseEstimator):
     """Self-training classifier.
 
-    This class allows a given supervised classifier to function as a
+    This :term:`metaestimator` allows a given supervised classifier to function as a
     semi-supervised classifier, allowing it to learn from unlabeled data. It
     does this by iteratively predicting pseudo-labels for the unlabeled data
     and adding them to the training set.
