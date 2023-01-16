@@ -385,7 +385,7 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
-        check_is_fitted(self, "n_features_in_")
+        check_is_fitted(self, "feature_names_")
         if any(not isinstance(name, str) for name in self.feature_names_):
             feature_names = [str(name) for name in self.feature_names_]
         else:
