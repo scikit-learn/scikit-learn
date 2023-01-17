@@ -370,9 +370,9 @@ class KMeansCythonEngine:
     def is_same_clustering(self, labels, best_labels, n_clusters):
         return _is_same_clustering(labels, best_labels, n_clusters)
 
-    def count_distinct_clusters(self, centers):
+    def count_distinct_clusters(self, cluster_labels):
         """Count the number of unique centers"""
-        return len(set(centers))
+        return len(set(cluster_labels))
 
     def kmeans_single(self, X, sample_weight, centers_init):
         return self.kmeans_single_func(
