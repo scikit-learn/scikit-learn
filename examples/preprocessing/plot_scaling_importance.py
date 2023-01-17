@@ -3,8 +3,8 @@
 Importance of Feature Scaling
 =============================
 
-Feature scaling through standardization, also called Z-score normalization,
-is an important preprocessing step for many machine learning algorithms. It
+Feature scaling through standardization, also called Z-score normalization, is
+an important preprocessing step for many machine learning algorithms. It
 involves rescaling each feature such that it has a standard deviation of 1 and a
 mean of 0.
 
@@ -55,9 +55,9 @@ scaled_X_train = scaler.fit_transform(X_train)
 # Effect of rescaling on a k-neighbors models
 # ===========================================
 #
-# For the sake of visualizing the decision boundary of a :class:`~sklearn.neighbors.KNeighborsClassifier`, in
-# this section we select a subset of 2 features that have values with different
-# orders of magnitude.
+# For the sake of visualizing the decision boundary of a
+# :class:`~sklearn.neighbors.KNeighborsClassifier`, in this section we select a
+# subset of 2 features that have values with different orders of magnitude.
 #
 # Keep in mind that using a subset of the features to train the model may likely
 # leave out feature with high predictive impact, resulting in a decision
@@ -101,11 +101,11 @@ _ = ax2.set_title("KNN with scaling")
 
 # %%
 # Here the desicion boundary shows that fitting scaled or non-scaled data lead
-# to completely different models. The reason is that the variable
-# "proline" has values which vary between 0 and 1,000; whereas the variable
-# "hue" varies between 1 and 10. Because of this, distances between samples are
-# mostly impacted by differences in values of "proline", while values of the
-# "hue" will be comparatively ignored. If one uses
+# to completely different models. The reason is that the variable "proline" has
+# values which vary between 0 and 1,000; whereas the variable "hue" varies
+# between 1 and 10. Because of this, distances between samples are mostly
+# impacted by differences in values of "proline", while values of the "hue" will
+# be comparatively ignored. If one uses
 # :class:`~sklearn.preprocessing.StandardScaler` to normalize this database,
 # both scaled values lay approximately between -3 and 3 and the neighbors
 # structure will be impacted more or less equivalently by both variables.
@@ -113,10 +113,11 @@ _ = ax2.set_title("KNN with scaling")
 # Effect of rescaling on a PCA dimensional reduction
 # ==================================================
 #
-# Dimensional reduction using :class:`~sklearn.decomposition.PCA` consists of finding the features that maximize
-# the variance. If one feature varies more than the others only because of their
-# respective scales, :class:`~sklearn.decomposition.PCA` would determine that
-# such feature dominates the direction of the principal components.
+# Dimensional reduction using :class:`~sklearn.decomposition.PCA` consists of
+# finding the features that maximize the variance. If one feature varies more
+# than the others only because of their respective scales,
+# :class:`~sklearn.decomposition.PCA` would determine that such feature
+# dominates the direction of the principal components.
 #
 # We can inspect the first principal components using all the original features:
 
@@ -238,10 +239,10 @@ print(f"{log_loss(y_test, y_proba_scaled):.3}")
 
 # %%
 # A clear difference in prediction accuracies is observed when the data is
-# scaled before :class:`~sklearn.decomposition.PCA`, as it vastly outperforms the unscaled version. This
-# corresponds to the intuition obtained from the plot in the previous section,
-# where the components become linearly separable when scaling before using
-# :class:`~sklearn.decomposition.PCA`.
+# scaled before :class:`~sklearn.decomposition.PCA`, as it vastly outperforms
+# the unscaled version. This corresponds to the intuition obtained from the plot
+# in the previous section, where the components become linearly separable when
+# scaling before using :class:`~sklearn.decomposition.PCA`.
 #
 # Notice that in this case the models with scaled features perform better than
 # the models with non-scaled features because all the variables are expected to
