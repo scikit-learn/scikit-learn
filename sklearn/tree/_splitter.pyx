@@ -882,12 +882,11 @@ cdef class DensePartitioner:
 
     cdef inline void next_p(self, SIZE_t* p_prev, SIZE_t* p) nogil:
         """Compute the next p_prev and p for iteratiing over feature values."""
-        cdef DTYPE_t[::1] Xf = self.feature_values
+        cdef:
+            DTYPE_t[::1] Xf = self.feature_values
+            SIZE_t end_non_missing = self.end - self.n_missing
 
-        while (
-            p[0] + 1 < self.end - self.n_missing and
-            Xf[p[0] + 1] <= Xf[p[0]] + FEATURE_THRESHOLD
-        ):
+        while p[0] + 1 < end_non_missing and Xf[p[0] + 1] <= Xf[p[0]] + FEATURE_THRESHOLD:
             p[0] += 1
 
         # (p + 1 >= end) or (Xf[p + 1] > X[p])
