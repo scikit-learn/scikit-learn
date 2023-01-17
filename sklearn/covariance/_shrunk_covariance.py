@@ -137,14 +137,10 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
     """
     emp_cov = check_array(emp_cov, allow_nd=True)
     n_features = emp_cov.shape[-1]
-    if not 0 <= shrinkage <= 1:
-        raise ValueError("shrinkage must be in [0, 1] (Got %d)" % shrinkage)
 
     shrunk_cov = (1.0 - shrinkage) * emp_cov
     mu = np.trace(emp_cov, axis1=-2, axis2=-1) / n_features
-    mu = np.extend_dims(
-        mu, axis=tuple(range(mu.dim, emp_cov.ndim))
-    )
+    mu = np.expand_dims(mu, axis=tuple(range(mu.ndim, emp_cov.ndim)))
     shrunk_cov += shrinkage * mu * np.eye(n_features)
 
     return shrunk_cov
