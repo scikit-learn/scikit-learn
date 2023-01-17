@@ -755,6 +755,24 @@ cdef inline int node_split_random(
     return 0
 
 
+cdef inline unsigned char[::1] _any_isnan_axis0(const DTYPE_t[:, :] X):
+    """Same as np.any(np.isnan(X), axis=0)"""
+    cdef:
+        int i, j
+        int n_samples = X.shape[0]
+        int n_features = X.shape[1]
+        unsigned char[::1] isnan_out = np.zeros(X.shape[1], dtype=np.bool_)
+
+    with nogil:
+        for i in range(n_samples):
+            for j in range(n_features):
+                if isnan_out[j]:
+                    continue
+                if isnan(X[i, j]):
+                    isnan_out[j] = True
+                    break
+    return isnan_out
+
 @final
 cdef class DensePartitioner:
     """Partitioner specialized for dense data.
@@ -779,9 +797,7 @@ cdef class DensePartitioner:
         self.X = X
         self.samples = samples
         self.feature_values = feature_values
-
-        # TODO: Use Cython to accerlate and reduce memory usage
-        self.has_missings = np.any(np.isnan(X), axis=0)
+        self.has_missings = _any_isnan_axis0(X)
 
     cdef inline void init_node_split(self, SIZE_t start, SIZE_t end) nogil:
         """Initialize splitter at the beginning of node_split."""
