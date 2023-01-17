@@ -168,6 +168,15 @@ Changelog
   :pr:`24935` by :user:`Seladus <seladus>`, :user:`Guillaume Lemaitre <glemaitre>`, and
   :user:`Dea María Léon <deamarialeon>`, :pr:`25257` by :user:`Gleb Levitski <glevv>`.
 
+:mod:`sklearn.tree`
+...................
+
+- |MajorFeature| :class:`tree.DecisionTreeRegressor` and
+  :class:`tree.DecisionTreeClassifier` supports missing values when
+  `splitter='best'` and criterion is `gini`, `entropy`, or `log_loss`,
+  for classification or `squared_error`, `friedman_mse`, or `poisson`
+  for regression. :pr:`23595` by `Thomas Fan`_.
+
 Code and Documentation Contributors
 -----------------------------------
 
