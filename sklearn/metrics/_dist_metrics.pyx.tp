@@ -2315,7 +2315,6 @@ cdef class KulsinskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
 
         return (n_neq - n_tt + size) * 1.0 / (n_neq + size)
 
-
 #------------------------------------------------------------
 # Rogers-Tanimoto Distance (boolean)
 #  D(x, y) = 2 * n_neq / (n + n_neq)

@@ -755,7 +755,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
           'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'kulczynski1',
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
           'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
           'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
           'yule']
@@ -763,9 +763,8 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-        .. note::
-           `'kulsinski'` is deprecated from SciPy 1.8. Use `'kulczynski1'` instead.
-           Note that the two metrics are not identical.
+        .. deprecated::
+           `'kulsinski'` is deprecated from SciPy 1.8.
 
     metric_kwargs : dict, default=None
         Keyword arguments to pass to specified metric function.
@@ -1911,8 +1910,8 @@ def pairwise_distances(
       ['nan_euclidean'] but it does not yet support sparse matrices.
 
     - From scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-      'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
-      'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
+      'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis',
+      'minkowski', 'rogerstanimoto', 'russellrao', 'seuclidean',
       'sokalmichener', 'sokalsneath', 'sqeuclidean', 'yule']
       See the documentation for scipy.spatial.distance for details on these
       metrics. These metrics do not support sparse matrix inputs.
