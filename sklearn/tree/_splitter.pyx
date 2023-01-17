@@ -335,11 +335,8 @@ cdef inline int node_split_best(
         f_j += n_found_constants
         # f_j in the interval [n_total_constants, f_i[
         current.feature = features[f_j]
-        n_missing = partitioner.sort_samples_and_feature_values(current.feature)
-        with gil:
-            print("n_missing", n_missing)
-            print("start", start)
-            print("end", end)
+        partitioner.sort_samples_and_feature_values(current.feature)
+        n_missing = partitioner.n_missing
 
         end_non_missing = end - n_missing
         if (
@@ -777,10 +774,10 @@ cdef class DensePartitioner:
         const DTYPE_t[:, :] X
         cdef SIZE_t[::1] samples
         cdef DTYPE_t[::1] feature_values
-        cdef unsigned char[::1] has_missings
         cdef SIZE_t start
         cdef SIZE_t end
         cdef SIZE_t n_missing
+        cdef unsigned char[::1] has_missings
 
     def __init__(
         self,
@@ -801,7 +798,7 @@ cdef class DensePartitioner:
         self.end = end
         self.n_missing = 0
 
-    cdef inline SIZE_t sort_samples_and_feature_values(
+    cdef inline void sort_samples_and_feature_values(
         self, SIZE_t current_feature
     ) nogil:
         """Simultaneously sort based on the feature_values.
@@ -844,9 +841,7 @@ cdef class DensePartitioner:
                 Xf[i] = X[samples[i], current_feature]
 
         sort(&Xf[self.start], &samples[self.start], self.end - self.start - n_missing)
-
         self.n_missing = n_missing
-        return n_missing
 
     cdef inline void find_min_max(
         self,
@@ -965,6 +960,7 @@ cdef class SparsePartitioner:
     cdef DTYPE_t[::1] feature_values
     cdef SIZE_t start
     cdef SIZE_t end
+    cdef SIZE_t n_missing
     cdef unsigned char[::1] has_missings
 
     cdef const DTYPE_t[::1] X_data
@@ -1017,8 +1013,9 @@ cdef class SparsePartitioner:
         self.start = start
         self.end = end
         self.is_samples_sorted = 0
+        self.n_missing = 0
 
-    cdef inline SIZE_t sort_samples_and_feature_values(
+    cdef inline void sort_samples_and_feature_values(
         self, SIZE_t current_feature
     ) nogil:
         """Simultaneously sort based on the feature_values."""
@@ -1049,9 +1046,9 @@ cdef class SparsePartitioner:
                 Xf[self.end_negative] = 0.
                 self.end_negative += 1
 
-        # XXX: When sparse supports missing values, this should return the
+        # XXX: When sparse supports missing values, this should be set to the
         # number of missing values for current_feature
-        return 0
+        self.n_missing = 0
 
     cdef inline void find_min_max(
         self,
