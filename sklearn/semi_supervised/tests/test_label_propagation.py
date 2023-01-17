@@ -15,6 +15,9 @@ from sklearn.utils._testing import (
     assert_allclose,
     assert_array_equal,
 )
+from sklearn.utils._testing import _convert_container
+
+CONSTRUCTOR_TYPES = ("array", "sparse_csr", "sparse_csc")
 
 ESTIMATORS = [
     (label_propagation.LabelPropagation, {"kernel": "rbf"}),
@@ -122,9 +125,23 @@ def test_label_propagation_closed_form(global_dtype):
     assert_allclose(expected, clf.label_distributions_, atol=1e-4)
 
 
-def test_convergence_speed():
+@pytest.mark.parametrize("accepted_sparse_type", ["sparse_csr", "sparse_csc"])
+@pytest.mark.parametrize("dtype", [np.int32, np.int64])
+def test_input_types(accepted_sparse_type, dtype):
+    # This is non-regression test for #19664
+    X = _convert_container([[1.0, 0.0], [0.0, 2.0], [1.0, 3.0]], accepted_sparse_type)
+    X.indices = X.indices.astype(dtype, copy=False)
+    X.indptr = X.indptr.astype(dtype, copy=False)
+    y = np.array([0, 1, -1])
+    mdl = label_propagation.LabelSpreading(kernel="rbf", max_iter=5000)
+    mdl.fit(X, y)
+    assert_array_equal(mdl.predict([[0.5, 2.5]]), np.array([1]))
+
+
+@pytest.mark.parametrize("constructor_type", CONSTRUCTOR_TYPES)
+def test_convergence_speed(constructor_type):
     # This is a non-regression test for #5774
-    X = np.array([[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]])
+    X = _convert_container([[1.0, 0.0], [0.0, 1.0], [1.0, 2.5]], constructor_type)
     y = np.array([0, 1, -1])
     mdl = label_propagation.LabelSpreading(kernel="rbf", max_iter=5000)
     mdl.fit(X, y)
