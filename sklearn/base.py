@@ -19,6 +19,7 @@ from .utils._set_output import _SetOutputMixin
 from .utils._tags import (
     _DEFAULT_TAGS,
 )
+from .exceptions import InconsistentVersionWarning
 from .utils.validation import check_X_y
 from .utils.validation import check_array
 from .utils.validation import _check_y
@@ -271,9 +272,20 @@ class BaseEstimator:
         return repr_
 
     def __getstate__(self):
+        if getattr(self, "__slots__", None):
+            raise TypeError(
+                "You cannot use `__slots__` in objects inheriting from "
+                "`sklearn.base.BaseEstimator`."
+            )
+
         try:
             state = super().__getstate__()
+            if state is None:
+                # For Python 3.11+, empty instance (no `__slots__`,
+                # and `__dict__`) will return a state equal to `None`.
+                state = self.__dict__.copy()
         except AttributeError:
+            # Python < 3.11
             state = self.__dict__.copy()
 
         if type(self).__module__.startswith("sklearn."):
@@ -286,15 +298,11 @@ class BaseEstimator:
             pickle_version = state.pop("_sklearn_version", "pre-0.18")
             if pickle_version != __version__:
                 warnings.warn(
-                    "Trying to unpickle estimator {0} from version {1} when "
-                    "using version {2}. This might lead to breaking code or "
-                    "invalid results. Use at your own risk. "
-                    "For more info please refer to:\n"
-                    "https://scikit-learn.org/stable/model_persistence.html"
-                    "#security-maintainability-limitations".format(
-                        self.__class__.__name__, pickle_version, __version__
+                    InconsistentVersionWarning(
+                        estimator_name=self.__class__.__name__,
+                        current_sklearn_version=__version__,
+                        original_sklearn_version=pickle_version,
                     ),
-                    UserWarning,
                 )
         try:
             super().__setstate__(state)
@@ -878,6 +886,7 @@ class OneToOneFeatureMixin:
         feature_names_out : ndarray of str objects
             Same as input features.
         """
+        check_is_fitted(self, "n_features_in_")
         return _check_feature_names_in(self, input_features)
 
 

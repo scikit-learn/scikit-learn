@@ -26,7 +26,11 @@ from sklearn.preprocessing import StandardScaler, MaxAbsScaler
 
 class DelegatorData:
     def __init__(
-        self, name, construct, skip_methods=(), fit_args=make_classification()
+        self,
+        name,
+        construct,
+        skip_methods=(),
+        fit_args=make_classification(random_state=0),
     ):
         self.name = name
         self.construct = construct
