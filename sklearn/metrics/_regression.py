@@ -1296,6 +1296,18 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
     return 1 - numerator / denominator
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "alpha": [Interval(Real, 0, None, closed="left")],
+        "multioutput": [
+            StrOptions({"raw_values", "uniform_average", "variance_weighted"}),
+            "array-like",
+        ],
+    }
+)
 def d2_pinball_score(
     y_true, y_pred, *, sample_weight=None, alpha=0.5, multioutput="uniform_average"
 ):
@@ -1327,8 +1339,8 @@ def d2_pinball_score(
         for which the pinball deviance and also D2 are optimal.
         The default `alpha=0.5` is equivalent to `d2_absolute_error_score`.
 
-    multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
-            (n_outputs,), default='uniform_average'
+    multioutput : {'raw_values', 'uniform_average', 'variance_weighted'} or array-like \
+            of shape (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average scores.
 
