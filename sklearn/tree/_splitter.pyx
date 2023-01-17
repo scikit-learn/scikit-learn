@@ -448,11 +448,11 @@ cdef inline int node_split_best(
         best.improvement = criterion.impurity_improvement(
             impurity, best.impurity_left, best.impurity_right)
 
-        # The partitinoer paritions the data such that the missing values are in
+        # The partitioner paritions the data such that the missing values are in
         # samples[-n_missing:] for the criterion to consume. If the missing values
         # are going to the right node, then the missing values are already in the
         # correct position. If the missing values go left, then we move the missing
-        # values to samples[best.pos:n_missing] and update `best.pos`.
+        # values to samples[best.pos:best.pos+n_missing] and update `best.pos`.
         if best.n_missing > 0 and best.missing_go_to_left:
             for p in range(best.n_missing):
                 i = best.pos + p

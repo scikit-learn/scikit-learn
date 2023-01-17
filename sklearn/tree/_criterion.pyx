@@ -351,6 +351,7 @@ cdef class ClassificationCriterion(Criterion):
             return
 
         if self.sum_missing is None:
+            # `sum_missing` is only set once when there are missing values.
             with gil:
                 self.sum_missing = np.zeros((self.n_outputs, self.max_n_classes), dtype=np.float64)
         else:
@@ -378,14 +379,15 @@ cdef class ClassificationCriterion(Criterion):
         double* weighted_n_2,
         bint put_missing_in_1,
     ) nogil:
-        """Move sums to bins depending on put_missing_in_1.
+        """Distrubute sum_missing, sum_total, and sum_missing into sum_1 and sum_2.
 
-        If put_missing_in_1 is False, then sum_1 is zero and sum_2 is sum_total.
-        If put_missing_in_1 is True, then sum_1 is sum_missing and sum_2 is
-        sum_total - sum_missing.
+        If there are missing values and:
+        - put_missing_in_1 is False, then sum_1 is zero and sum_2 is sum_total.
+        - put_missing_in_1 is True, then sum_1 is sum_missing and sum_2 is
+          sum_total - sum_missing.
         """
         cdef SIZE_t k, c
-        if put_missing_in_1:
+        if self.n_missing != 0 and put_missing_in_1:
             for k in range(self.n_outputs):
                 memcpy(&sum_1[k, 0], &self.sum_missing[k, 0], self.n_classes[k] * sizeof(double))
             for k in range(self.n_outputs):
@@ -414,7 +416,7 @@ cdef class ClassificationCriterion(Criterion):
             self.sum_right,
             &self.weighted_n_left,
             &self.weighted_n_right,
-            self.n_missing != 0 and self.missing_go_to_left,
+            self.missing_go_to_left,
         )
         return 0
 
@@ -430,7 +432,7 @@ cdef class ClassificationCriterion(Criterion):
             self.sum_left,
             &self.weighted_n_right,
             &self.weighted_n_left,
-            self.n_missing != 0 and not self.missing_go_to_left
+            not self.missing_go_to_left
         )
         return 0
 
