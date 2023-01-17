@@ -985,6 +985,8 @@ class BaggingClassifier(ClassifierMixin, BaseBagging):
         return decisions
 
     def _more_tags(self):
+        # XXX: This is required to get common test to pass because it delegates
+        # check_array to the underlying estimator.
         if self.estimator is None:
             estimator = DecisionTreeClassifier()
         else:
@@ -1274,6 +1276,8 @@ class BaggingRegressor(RegressorMixin, BaseBagging):
         self.oob_score_ = r2_score(y, predictions)
 
     def _more_tags(self):
+        # XXX: This is required to get common test to pass because it delegates
+        # check_array to the underlying estimator.
         if self.estimator is None:
             estimator = DecisionTreeRegressor()
         else:
