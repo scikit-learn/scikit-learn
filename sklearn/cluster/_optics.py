@@ -90,7 +90,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-        .. deprecated::
+        .. note::
            `'kulsinski'` is deprecated from SciPy 1.9 and will removed in SciPy 1.11.
 
     p : float, default=2
@@ -492,7 +492,7 @@ def compute_optics_graph(
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-        .. deprecated::
+        .. note::
            `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
     p : int, default=2

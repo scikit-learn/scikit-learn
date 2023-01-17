@@ -643,7 +643,7 @@ def pairwise_distances_argmin_min(
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-        .. deprecated::
+        .. note::
            `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
     metric_kwargs : dict, default=None
@@ -763,7 +763,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-        .. deprecated::
+        .. note::
            `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
     metric_kwargs : dict, default=None
@@ -1916,7 +1916,7 @@ def pairwise_distances(
       See the documentation for scipy.spatial.distance for details on these
       metrics. These metrics do not support sparse matrix inputs.
 
-    .. deprecated::
+    .. note::
         `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
     Note that in the case of 'cityblock', 'cosine' and 'euclidean' (which are
