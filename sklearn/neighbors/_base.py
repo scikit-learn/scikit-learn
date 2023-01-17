@@ -62,7 +62,7 @@ SCIPY_METRICS = [
     "yule",
 ]
 if sp_version < parse_version("1.11"):
-    # Deprecated in SciPy 1.8 and removed in SciPy 1.10
+    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     SCIPY_METRICS += ["kulsinski"]
 
 VALID_METRICS = dict(

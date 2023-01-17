@@ -644,7 +644,7 @@ def pairwise_distances_argmin_min(
         metrics.
 
         .. deprecated::
-           `'kulsinski'` is deprecated from SciPy 1.8.
+           `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
     metric_kwargs : dict, default=None
         Keyword arguments to pass to specified metric function.
@@ -764,7 +764,7 @@ def pairwise_distances_argmin(X, Y, *, axis=1, metric="euclidean", metric_kwargs
         metrics.
 
         .. deprecated::
-           `'kulsinski'` is deprecated from SciPy 1.8.
+           `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
     metric_kwargs : dict, default=None
         Keyword arguments to pass to specified metric function.
@@ -1660,7 +1660,7 @@ _VALID_METRICS = [
     "haversine",
 ]
 if sp_version < parse_version("1.11"):
-    # Deprecated in SciPy 1.8 and removed in SciPy 1.10
+    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     _VALID_METRICS += ["kulsinski"]
 
 _NAN_METRICS = ["nan_euclidean"]
@@ -1916,8 +1916,8 @@ def pairwise_distances(
       See the documentation for scipy.spatial.distance for details on these
       metrics. These metrics do not support sparse matrix inputs.
 
-    .. note::
-        `'kulsinski'` is deprecated from SciPy 1.8.
+    .. deprecated::
+        `'kulsinski'` is deprecated from SciPy 1.9 and will be removed in SciPy 1.11.
 
     Note that in the case of 'cityblock', 'cosine' and 'euclidean' (which are
     valid scipy.spatial.distance metrics), the scikit-learn implementation
@@ -2062,7 +2062,7 @@ PAIRWISE_BOOLEAN_FUNCTIONS = [
     "yule",
 ]
 if sp_version < parse_version("1.11"):
-    # Deprecated in SciPy 1.8 and removed in SciPy 1.10
+    # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     PAIRWISE_BOOLEAN_FUNCTIONS += ["kulsinski"]
 
 # Helper functions - distance
