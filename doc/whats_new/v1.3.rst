@@ -111,6 +111,12 @@ Changelog
   inconsistent with the sckit-learn verion the estimator was pickled with.
   :pr:`25297` by `Thomas Fan`_.
 
+:mod:`sklearn.impute`
+.....................
+
+- |Enhancement| Added the parameter `fill_value` to :class:`impute.IterativeImputer`.
+  :pr:`25232` by :user:`Thijs van Weezel <ValueInvestorThijs>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
