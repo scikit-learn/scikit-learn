@@ -269,16 +269,7 @@ def _logistic_regression_path(
     solver = _check_solver(solver, penalty, dual)
 
     # Preprocessing.
-    if check_input:
-        X = check_array(
-            X,
-            accept_sparse="csr",
-            dtype=np.float64,
-            accept_large_sparse=solver not in ["liblinear", "sag", "saga"],
-        )
-        y = check_array(y, ensure_2d=False, dtype=None)
-        check_consistent_length(X, y)
-    n_samples, n_features = X.shape
+   
 
     classes = np.unique(y)
     random_state = check_random_state(random_state)
