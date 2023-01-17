@@ -42,6 +42,12 @@ Changes impacting all modules
   consistent in all estimators with the `get_feature_names_out` method.
 
   - :class:`impute.MissingIndicator`
+  - :class:`ensemble.StackingClassifier`
+  - :class:`ensemble.StackingRegressor`
+  - :class:`ensemble.VotingClassifier`
+  - :class:`ensemble.VotingRegressor`
+  - :class:`feature_extraction.DictVectorizer`
+  - :class:`feature_extraction.text.TfidfTransformer`
   - :class:`kernel_approximation.AdditiveChi2Sampler`
   - :class:`preprocessing.Binarizer`
   - :class:`preprocessing.KBinsDiscretizer`
@@ -54,14 +60,13 @@ Changes impacting all modules
   - :class:`preprocessing.RobustScaler`
   - :class:`preprocessing.SplineTransformer`
   - :class:`preprocessing.StandardScaler`
-  - :class:`feature_extraction.DictVectorizer`
-  - :class:`feature_extraction.text.TfidfTransformer`
 
   The `NotFittedError` displays an informative message asking to fit the instance
   with the appropriate arguments.
 
-  :pr:`25294` by :user:`John Pangas <jpangas>` and :pr:`25291` by
   :user:`Rahil Parikh <rprkh>` and :pr:`25402` by :user:`Alex Buzenet <albuzenet>`.
+  :pr:`25294` by :user:`John Pangas <jpangas>` and :pr:`25291`, :pr:`25324`
+  by :user:`Rahil Parikh <rprkh>` and :pr:`25402` by :user:`Alex Buzenet <albuzenet>`.
 
 Changelog
 ---------
