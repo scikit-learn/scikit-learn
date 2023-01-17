@@ -431,11 +431,9 @@ cdef inline int node_split_best(
 
                 if current_proxy_improvement > best_proxy_improvement:
                     best_proxy_improvement = current_proxy_improvement
-
                     current.threshold = INFINITY
                     current.missing_go_to_left = 0
                     current.pos = end - n_missing
-
                     best = current  # copy
 
     best_split_on_missing = best.pos == (end - best.n_missing)
@@ -455,10 +453,12 @@ cdef inline int node_split_best(
         best.improvement = criterion.impurity_improvement(
             impurity, best.impurity_left, best.impurity_right)
 
+        # The partitinoer paritions the data such that the missing values are in
+        # samples[-n_missing:] for the criterion to consume. If the missing values
+        # are going to the right node, then the missing values are already in the
+        # correct position. If the missing values go left, then we move the missing
+        # values to samples[best.pos:n_missing] and update `best.pos`.
         if best.n_missing > 0 and best.missing_go_to_left:
-            # Move missing values from the end to the left
-            # If missing values are going to the right, then they are
-            # already in the correct position
             for p in range(best.n_missing):
                 i = best.pos + p
                 current_end = end - 1 - p
