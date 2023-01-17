@@ -1004,17 +1004,24 @@ class EngineAwareMixin:
         again.
         """
         if hasattr(self, "_engine_provider") and not reset:
-            return self._engine_class(self)
+            return self._engine_class(self), {
+                "X": X,
+                "y": y,
+                "sample_weight": sample_weight,
+            }
 
         for provider, engine_class in get_engine_classes(
             self._engine_name,
             default=self._default_engine,
         ):
             engine = engine_class(self)
-            if engine.accepts(X, y=y, sample_weight=sample_weight):
+            accepted, validated_inputs = engine.validate(
+                X, y=y, sample_weight=sample_weight
+            )
+            if accepted:
                 self._engine_provider = provider
                 self._engine_class = engine_class
-                return engine
+                return engine, validated_inputs
 
 
 def is_classifier(estimator):

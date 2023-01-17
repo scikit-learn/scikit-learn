@@ -306,9 +306,18 @@ class KMeansCythonEngine:
     def __init__(self, estimator):
         self.estimator = estimator
 
-    def accepts(self, X, y=None, sample_weight=None):
-        # The default engine accepts everything
-        return True
+    def validate(self, X, y=None, sample_weight=None):
+        """Validate input and hyper-parameters.
+
+        Determine if the engine can handle the hyper-parameter of the estimator
+        as well as the input data. Input data may be converted and then validated,
+
+        Return the acceptance decision and a dictionary containing the input data.
+
+        Should fail as quickly as possible.
+        """
+        # The default engine accepts everything and does not convert inputs
+        return True, {"X": X, "y": y, "sample_weight": sample_weight}
 
     def prepare_fit(self, X, y=None, sample_weight=None):
         estimator = self.estimator
@@ -1584,14 +1593,16 @@ class KMeans(_BaseKMeans, EngineAwareMixin):
             Fitted estimator.
         """
         self._validate_params()
-        engine = self._get_engine(X, y, sample_weight, reset=True)
+        engine, validated_inputs = self._get_engine(X, y, sample_weight, reset=True)
 
+        X = validated_inputs["X"]
+        y = validated_inputs["y"]
+        sample_weight = validated_inputs["sample_weight"]
         X, y, sample_weight = engine.prepare_fit(
             X,
             y=y,
             sample_weight=sample_weight,
         )
-        self._check_params_vs_input(X)
 
         best_inertia, best_labels = None, None
 
@@ -1663,7 +1674,10 @@ class KMeans(_BaseKMeans, EngineAwareMixin):
             Index of the cluster each sample belongs to.
         """
         check_is_fitted(self)
-        engine = self._get_engine(X)
+        engine, validated_inputs = self._get_engine(X, sample_weight=sample_weight)
+        X = validated_inputs["X"]
+        y = validated_inputs["y"]
+        sample_weight = validated_inputs["sample_weight"]
         X, sample_weight = engine.prepare_prediction(X, sample_weight)
         return engine.get_labels(X, sample_weight)
 
@@ -1690,8 +1704,8 @@ class KMeans(_BaseKMeans, EngineAwareMixin):
             X transformed in the new space.
         """
         self.fit(X, sample_weight=sample_weight)
-        engine = self._get_engine(X, y=y, sample_weight=sample_weight)
-        return self._transform(X, engine)
+        engine, validated_inputs = self._get_engine(X, y=y, sample_weight=sample_weight)
+        return self._transform(validated_inputs["X"], engine)
 
     def transform(self, X):
         """Transform X to a cluster-distance space.
@@ -1711,8 +1725,8 @@ class KMeans(_BaseKMeans, EngineAwareMixin):
             X transformed in the new space.
         """
         check_is_fitted(self)
-        engine = self._get_engine(X)
-        X = engine.prepare_transform(X)
+        engine, validated_inputs = self._get_engine(X)
+        X = engine.prepare_transform(validated_inputs["X"])
         return self._transform(X, engine)
 
     def _transform(self, X, engine):
@@ -1740,7 +1754,9 @@ class KMeans(_BaseKMeans, EngineAwareMixin):
             Opposite of the value of X on the K-means objective.
         """
         check_is_fitted(self)
-        engine = self._get_engine(X, y=y, sample_weight=sample_weight)
+        engine, validated_inputs = self._get_engine(X, y=y, sample_weight=sample_weight)
+        X = validated_inputs["X"]
+        sample_weight = validated_inputs["sample_weight"]
 
         X, sample_weight = engine.prepare_prediction(X, sample_weight)
 
