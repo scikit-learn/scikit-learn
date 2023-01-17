@@ -89,15 +89,15 @@ def test_toy_example_collapse_points():
     assert abs(loss_storer.loss + 1) < 1e-10
 
 
-def test_finite_differences():
+def test_finite_differences(global_random_seed):
     """Test gradient of loss function
 
     Assert that the gradient is almost equal to its finite differences
     approximation.
     """
     # Initialize the transformation `M`, as well as `X` and `y` and `NCA`
-    rng = np.random.RandomState(42)
-    X, y = make_classification()
+    rng = np.random.RandomState(global_random_seed)
+    X, y = make_classification(random_state=global_random_seed)
     M = rng.randn(rng.randint(1, X.shape[1] + 1), X.shape[1])
     nca = NeighborhoodComponentsAnalysis()
     nca.n_iter_ = 0
@@ -109,9 +109,9 @@ def test_finite_differences():
     def grad(M):
         return nca._loss_grad_lbfgs(M, X, mask)[1]
 
-    # compute relative error
-    rel_diff = check_grad(fun, grad, M.ravel()) / np.linalg.norm(grad(M))
-    np.testing.assert_almost_equal(rel_diff, 0.0, decimal=5)
+    # compare the gradient to a finite difference approximation
+    diff = check_grad(fun, grad, M.ravel())
+    assert diff == pytest.approx(0.0, abs=1e-4)
 
 
 def test_params_validation():

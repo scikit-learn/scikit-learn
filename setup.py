@@ -78,6 +78,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.cluster._k_means_minibatch",
     "sklearn.datasets._svmlight_format_fast",
     "sklearn.decomposition._cdnmf_fast",
+    "sklearn.ensemble._gradient_boosting",
     "sklearn.ensemble._hist_gradient_boosting._gradient_boosting",
     "sklearn.ensemble._hist_gradient_boosting.histogram",
     "sklearn.ensemble._hist_gradient_boosting.splitting",
@@ -87,8 +88,10 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.ensemble._hist_gradient_boosting.common",
     "sklearn.ensemble._hist_gradient_boosting.utils",
     "sklearn.feature_extraction._hashing_fast",
+    "sklearn.linear_model._sag_fast",
     "sklearn.linear_model._sgd_fast",
     "sklearn.manifold._barnes_hut_tsne",
+    "sklearn.manifold._utils",
     "sklearn.metrics.cluster._expected_mutual_info_fast",
     "sklearn.metrics._pairwise_distances_reduction._datasets_pair",
     "sklearn.metrics._pairwise_distances_reduction._middle_term_computer",
@@ -96,7 +99,13 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.metrics._pairwise_distances_reduction._argkmin",
     "sklearn.metrics._pairwise_distances_reduction._radius_neighbors",
     "sklearn.metrics._pairwise_fast",
+    "sklearn.neighbors._ball_tree",
+    "sklearn.neighbors._kd_tree",
     "sklearn.neighbors._partition_nodes",
+    "sklearn.neighbors._quad_tree",
+    "sklearn.svm._liblinear",
+    "sklearn.svm._libsvm",
+    "sklearn.svm._libsvm_sparse",
     "sklearn.tree._splitter",
     "sklearn.tree._utils",
     "sklearn.utils._cython_blas",
@@ -413,10 +422,15 @@ extension_config = {
         },
     ],
     "tree": [
-        {"sources": ["_tree.pyx"], "language": "c++", "include_np": True},
-        {"sources": ["_splitter.pyx"], "include_np": True},
-        {"sources": ["_criterion.pyx"], "include_np": True},
-        {"sources": ["_utils.pyx"], "include_np": True},
+        {
+            "sources": ["_tree.pyx"],
+            "language": "c++",
+            "include_np": True,
+            "optimization_level": "O3",
+        },
+        {"sources": ["_splitter.pyx"], "include_np": True, "optimization_level": "O3"},
+        {"sources": ["_criterion.pyx"], "include_np": True, "optimization_level": "O3"},
+        {"sources": ["_utils.pyx"], "include_np": True, "optimization_level": "O3"},
     ],
     "utils": [
         {"sources": ["sparsefuncs_fast.pyx"], "include_np": True},
@@ -498,8 +512,23 @@ def configure_extension_modules():
 
     is_pypy = platform.python_implementation() == "PyPy"
     np_include = numpy.get_include()
-    default_libraries = ["m"] if os.name == "posix" else []
-    default_extra_compile_args = ["-O3"]
+    default_optimization_level = "O2"
+
+    if os.name == "posix":
+        default_libraries = ["m"]
+    else:
+        default_libraries = []
+
+    default_extra_compile_args = []
+    build_with_debug_symbols = (
+        os.environ.get("SKLEARN_BUILD_ENABLE_DEBUG_SYMBOLS", "0") != "0"
+    )
+    if os.name == "posix":
+        if build_with_debug_symbols:
+            default_extra_compile_args.append("-g")
+        else:
+            # Setting -g0 will strip symbols, reducing the binary size of extensions
+            default_extra_compile_args.append("-g0")
 
     cython_exts = []
     for submodule, extensions in extension_config.items():
@@ -553,6 +582,14 @@ def configure_extension_modules():
             extra_compile_args = (
                 extension.get("extra_compile_args", []) + default_extra_compile_args
             )
+            optimization_level = extension.get(
+                "optimization_level", default_optimization_level
+            )
+            if os.name == "posix":
+                extra_compile_args.append(f"-{optimization_level}")
+            else:
+                extra_compile_args.append(f"/{optimization_level}")
+
             libraries_ext = extension.get("libraries", []) + default_libraries
 
             new_ext = Extension(
@@ -609,9 +646,8 @@ def setup_package():
         cmdclass=cmdclass,
         python_requires=python_requires,
         install_requires=min_deps.tag_to_packages["install"],
-        package_data={"": ["*.pxd"]},
+        package_data={"": ["*.csv", "*.gz", "*.txt", "*.pxd", "*.rst", "*.jpg"]},
         zip_safe=False,  # the package can run out of an .egg file
-        include_package_data=True,
         extras_require={
             key: min_deps.tag_to_packages[key]
             for key in ["examples", "docs", "tests", "benchmark"]
