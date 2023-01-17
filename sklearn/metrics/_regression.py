@@ -571,10 +571,10 @@ def median_absolute_error(
 
     Parameters
     ----------
-    y_true : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_true : array-like of shape = (n_samples,) or (n_samples, n_outputs)
         Ground truth (correct) target values.
 
-    y_pred : array-like of shape = (n_samples) or (n_samples, n_outputs)
+    y_pred : array-like of shape = (n_samples,) or (n_samples, n_outputs)
         Estimated target values.
 
     multioutput : {'raw_values', 'uniform_average'} or array-like of shape \
