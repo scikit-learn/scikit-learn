@@ -512,7 +512,7 @@ class PartialDependenceDisplay:
 
         Notes
         -----
-    NaN values in `X` are ignored when computing the partial dependence.
+        NaN values in `X` are ignored when computing the partial dependence.
 
         Examples
         --------

@@ -126,12 +126,10 @@ Changelog
 :mod:`sklearn.inspection`
 .........................
 
-- |Fix| NaN values are now ignored to estimate quantiles in
-  :func:`inspection.partial_dependence`. They were previously used biasing the
-  computation of empirical quantiles and potentially the partial dependence.
-  The implementation used to estimate quantiles changed from
-  :func:`scipy.stats.mstats.mquantiles` to :func:`numpy.nanpercentile` inducing
-  a change of the grid used to compute the partial dependence.
+- |Fix| NaN values are now ignored when estimating quantiles in
+  :func:`inspection.partial_dependence`. The implementation used to estimate quantiles
+  changed from :func:`scipy.stats.mstats.mquantiles` to :func:`numpy.nanpercentile`
+  leading a change of the grid used to compute the partial dependence.
   :pr:`25407` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.model_selection`
