@@ -324,6 +324,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        check_is_fitted(self, "n_features_in_")
         input_features = _check_feature_names_in(
             self, input_features, generate_names=self.passthrough
         )
