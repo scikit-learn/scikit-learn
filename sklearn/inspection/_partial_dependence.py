@@ -102,7 +102,12 @@ def _grid_from_X(X, percentiles, is_categorical, grid_resolution):
         else:
             # create axis based on percentiles and grid resolution
             # call `check_array` to force numeric dtype
-            X_col = check_array(_safe_indexing(X, feature, axis=1))
+            X_col = check_array(
+                _safe_indexing(X, feature, axis=1),
+                ensure_2d=False,
+                dtype="numeric",
+                force_all_finite="allow-nan",
+            )
             emp_percentiles = np.nanquantile(X_col, q=percentiles, axis=0)
             if np.allclose(emp_percentiles[0], emp_percentiles[1]):
                 raise ValueError(
