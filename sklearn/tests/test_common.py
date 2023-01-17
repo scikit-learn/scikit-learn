@@ -471,10 +471,6 @@ WHITELISTED_FAILING_ESTIMATORS = [
     "MissingIndicator",
     "SimpleImputer",
     "SplineTransformer",
-    "StackingClassifier",
-    "StackingRegressor",
-    "VotingClassifier",
-    "VotingRegressor",
 ]
 
 
