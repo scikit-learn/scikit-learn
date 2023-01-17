@@ -115,7 +115,7 @@ Changelog
 ........................
 - |Fix| Remove support for `"KulsinskiDistance"` in :class:`neighbors.BallTree`. This
   metric is not a proper metric and cannot be supported by the BallTree.
-  :pr:`25212` by :user:`Guillaume Lemaitre <glemaitre>`.
+  :pr:`25417` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 :mod:`sklearn.neural_network`
 .............................
