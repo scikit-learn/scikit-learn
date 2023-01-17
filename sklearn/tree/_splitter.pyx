@@ -415,22 +415,18 @@ cdef inline int node_split_best(
 
                     best = current  # copy
 
-            # Search case when there are missing values and all missing values goes
-            # to the right node
-            if n_missing > 0 and not missing_go_to_left:
-                n_left = end - start - n_missing
-                n_right = n_missing
+    # Search case when there are missing values and all missing values goes
+    # to the right node
+    if n_missing > 0:
+        n_left = end - start - n_missing
+        n_right = n_missing
 
-                if n_left < min_samples_leaf or n_right < min_samples_leaf:
-                    continue
+        if not (n_left < min_samples_leaf or n_right < min_samples_leaf):
+            criterion.missing_go_to_left = 0
+            criterion.reverse_reset()
 
-                criterion.missing_go_to_left = 0
-                criterion.reverse_reset()
-
-                if ((criterion.weighted_n_left < min_weight_leaf) or
-                        (criterion.weighted_n_right < min_weight_leaf)):
-                    continue
-
+            if not ((criterion.weighted_n_left < min_weight_leaf) or
+                    (criterion.weighted_n_right < min_weight_leaf)):
                 current_proxy_improvement = criterion.proxy_impurity_improvement()
 
                 if current_proxy_improvement > best_proxy_improvement:
