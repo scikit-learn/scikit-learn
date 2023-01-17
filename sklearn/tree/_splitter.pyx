@@ -443,8 +443,8 @@ cdef inline int node_split_best(
 
         criterion.reset()
         criterion.update(best.pos)
-
-        criterion.children_impurity(&best.impurity_left, &best.impurity_right)
+        criterion.children_impurity(&best.impurity_left,
+                                    &best.impurity_right)
         best.improvement = criterion.impurity_improvement(
             impurity, best.impurity_left, best.impurity_right)
 
@@ -467,8 +467,8 @@ cdef inline int node_split_best(
 
     # Copy newly found constant features
     memcpy(&constant_features[n_known_constants],
-            &features[n_known_constants],
-            sizeof(SIZE_t) * n_found_constants)
+           &features[n_known_constants],
+           sizeof(SIZE_t) * n_found_constants)
 
     # Return values
     split[0] = best
@@ -919,7 +919,7 @@ cdef class DensePartitioner:
         SIZE_t best_pos,
         double best_threshold,
         SIZE_t best_feature,
-        SIZE_t n_missing,
+        SIZE_t best_n_missing,
     ) nogil:
         """Partition samples for X at the best_threshold and best_feature."""
         cdef:
@@ -928,12 +928,12 @@ cdef class DensePartitioner:
             SIZE_t p, partition_end
             SIZE_t[::1] samples = self.samples
             const DTYPE_t[:, :] X = self.X
-            SIZE_t end_non_missing = self.end - n_missing
+            SIZE_t end_non_missing = self.end - best_n_missing
 
         # Move missing values to the end
-        if n_missing != 0:
+        if best_n_missing != 0:
             p, partition_end = start, end - 1
-            while p < partition_end and p < n_missing:
+            while p < partition_end and p < best_n_missing:
                 # Finds the lowest partition_end that is not missing
                 if isnan(X[samples[partition_end], best_feature]):
                     p += 1
