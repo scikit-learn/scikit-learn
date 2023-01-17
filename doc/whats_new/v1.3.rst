@@ -41,6 +41,11 @@ Changes impacting all modules
   raises a `NotFittedError` if the instance is not fitted. This ensures the error is
   consistent in all estimators with the `get_feature_names_out` method.
 
+  - :class:`ensemble.StackingClassifier`
+  - :class:`ensemble.StackingRegressor`
+  - :class:`ensemble.VotingClassifier`
+  - :class:`ensemble.VotingRegressor`
+  - :class:`feature_extraction.text.TfidfTransformer`
   - :class:`kernel_approximation.AdditiveChi2Sampler`
   - :class:`preprocessing.Binarizer`
   - :class:`preprocessing.MaxAbsScaler`
@@ -51,13 +56,12 @@ Changes impacting all modules
   - :class:`preprocessing.QuantileTransformer`
   - :class:`preprocessing.RobustScaler`
   - :class:`preprocessing.StandardScaler`
-  - :class:`feature_extraction.text.TfidfTransformer`
 
   The `NotFittedError` displays an informative message asking to fit the instance
   with the appropriate arguments.
 
-  :pr:`25294` by :user:`John Pangas <jpangas>` and :pr:`25291` by
-  :user:`Rahil Parikh <rprkh>`.
+  :pr:`25294` by :user:`John Pangas <jpangas>` and :pr:`25291`, :pr:`25324`
+  by :user:`Rahil Parikh <rprkh>`.
 
 Changelog
 ---------
@@ -141,6 +145,12 @@ Changelog
 - |Feature| :class:`pipeline.FeatureUnion` can now use indexing notation (e.g.
   `feature_union["scalar"]`) to access transformers by name. :pr:`25093` by
   `Thomas Fan`_.
+
+- |Feature| :class:`pipeline.FeatureUnion` can now access the
+  `feature_names_in_` attribute if the `X` value seen during `.fit` has a
+  `columns` attribute and all columns are strings. e.g. when `X` is a
+  `pandas.DataFrame`
+  :pr:`25220` by :user:`Ian Thompson <it176131>`.
 
 :mod:`sklearn.preprocessing`
 ............................
