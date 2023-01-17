@@ -14,8 +14,6 @@ compared with the ground-truth.
 # ---------------------------------------------------
 
 import numpy as np
-import matplotlib.pyplot as plt
-
 from sklearn.metrics import r2_score
 
 np.random.seed(42)
@@ -44,9 +42,9 @@ X_test, y_test = X[n_samples // 2 :], y[n_samples // 2 :]
 from sklearn.linear_model import Lasso
 
 alpha = 0.1
-lasso = Lasso(alpha=alpha)
+lasso = Lasso(alpha=alpha).fit(X_train, y_train)
 
-y_pred_lasso = lasso.fit(X_train, y_train).predict(X_test)
+y_pred_lasso = lasso.predict(X_test)
 r2_score_lasso = r2_score(y_test, y_pred_lasso)
 print(lasso)
 print("r^2 on test data : %f" % r2_score_lasso)
@@ -57,9 +55,9 @@ print("r^2 on test data : %f" % r2_score_lasso)
 
 from sklearn.linear_model import ElasticNet
 
-enet = ElasticNet(alpha=alpha, l1_ratio=0.7)
+enet = ElasticNet(alpha=alpha, l1_ratio=0.7).fit(X_train, y_train)
 
-y_pred_enet = enet.fit(X_train, y_train).predict(X_test)
+y_pred_enet = enet.predict(X_test)
 r2_score_enet = r2_score(y_test, y_pred_enet)
 print(enet)
 print("r^2 on test data : %f" % r2_score_enet)
@@ -69,29 +67,30 @@ print("r^2 on test data : %f" % r2_score_enet)
 # Plot
 # ---------------------------------------------------
 
-m, s, _ = plt.stem(
-    np.where(enet.coef_)[0],
-    enet.coef_[enet.coef_ != 0],
-    markerfmt="x",
-    label="Elastic net coefficients",
-)
-plt.setp([m, s], color="#2ca02c")
-m, s, _ = plt.stem(
-    np.where(lasso.coef_)[0],
-    lasso.coef_[lasso.coef_ != 0],
-    markerfmt="x",
-    label="Lasso coefficients",
-)
-plt.setp([m, s], color="#ff7f0e")
-plt.stem(
-    np.where(coef)[0],
-    coef[coef != 0],
-    label="true coefficients",
-    markerfmt="bx",
+import matplotlib.pyplot as plt
+import seaborn as sns
+import pandas as pd
+from matplotlib.colors import SymLogNorm
+
+df = pd.DataFrame(
+    {
+        "True weights": coef,
+        "Lasso": lasso.coef_,
+        "ElasticNet": enet.coef_,
+    }
 )
 
-plt.legend(loc="best")
-plt.title(
-    "Lasso $R^2$: %.3f, Elastic Net $R^2$: %.3f" % (r2_score_lasso, r2_score_enet)
+plt.figure(figsize=(10, 6))
+ax = sns.heatmap(
+    df.T,
+    norm=SymLogNorm(linthresh=10e-4, vmin=-80, vmax=80),
+    cbar_kws={"label": "coefficients' values"},
+    cmap="seismic_r",
 )
-plt.show()
+plt.ylabel("linear model")
+plt.xlabel("coefficients")
+plt.title(
+    f"Models' coefficients\nLasso $R^2$: {r2_score_lasso:.3f}, "
+    f"ElasticNet $R^2$: {r2_score_enet:.3f}"
+)
+plt.tight_layout()
