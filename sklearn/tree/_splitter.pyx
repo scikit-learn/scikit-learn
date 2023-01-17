@@ -926,17 +926,10 @@ cdef class DensePartitioner:
             SIZE_t p, partition_end
             SIZE_t[::1] samples = self.samples
             const DTYPE_t[:, :] X = self.X
-            bint split_on_missing = self.end == best_pos
+            SIZE_t end_non_missing = self.end - n_missing
 
-        if n_missing == 0:
-            p, partition_end = start, end
-            while p < partition_end:
-                if X[samples[p], best_feature] <= best_threshold:
-                    p += 1
-                else:
-                    partition_end -= 1
-                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
-        else:
+        # Move missing values to the end
+        if n_missing != 0:
             p, partition_end = start, end - 1
             while p < partition_end and p < n_missing:
                 # Finds the lowest partition_end that is not missing
@@ -953,17 +946,14 @@ cdef class DensePartitioner:
                     partition_end -= 1
                 p += 1
 
-            # Split non-missing values according to the threshold
-            # If split_on_missing, then all non-missing values are already in the
-            # correct position.
-            if not split_on_missing:
-                p, partition_end = start, end - n_missing - 1
-                while p < partition_end:
-                    if X[samples[p], best_feature] <= best_threshold:
-                        p += 1
-                    else:
-                        samples[p], samples[partition_end] = samples[partition_end], samples[p]
-                        partition_end -= 1
+        if best_threshold != INFINITY:
+            p, partition_end = start, end_non_missing
+            while p < partition_end:
+                if X[samples[p], best_feature] <= best_threshold:
+                    p += 1
+                else:
+                    partition_end -= 1
+                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
 
 @final
 cdef class SparsePartitioner:
