@@ -65,9 +65,6 @@ BOOL_METRICS = [
     "sokalmichener",
     "sokalsneath",
 ]
-if sp_version >= parse_version("1.8"):
-    # Introduced in SciPy 1.8
-    BOOL_METRICS += ["kulczynski1"]
 if sp_version < parse_version("1.11"):
     # Deprecated in SciPy 1.8 and removed in SciPy 1.10
     BOOL_METRICS += ["kulsinski"]
@@ -111,7 +108,6 @@ METRIC_MAPPING{{name_suffix}} = {
     'jaccard': JaccardDistance{{name_suffix}},
     'dice': DiceDistance{{name_suffix}},
     'kulsinski': KulsinskiDistance{{name_suffix}},
-    'kulczynski1': Kulczynski1Distance{{name_suffix}},
     'rogerstanimoto': RogersTanimotoDistance{{name_suffix}},
     'russellrao': RussellRaoDistance{{name_suffix}},
     'sokalmichener': SokalMichenerDistance{{name_suffix}},
@@ -220,7 +216,6 @@ cdef class DistanceMetric{{name_suffix}}:
     "matching"         MatchingDistance         NNEQ / N
     "dice"             DiceDistance             NNEQ / (NTT + NNZ)
     "kulsinski"        KulsinskiDistance        (NNEQ + N - NTT) / (NNEQ + N)
-    "kulczynski1"      Kulczynski1Distance        (NNEQ + N - NTT) / (NNEQ + N)
     "rogerstanimoto"   RogersTanimotoDistance   2 * NNEQ / (N + NNEQ)
     "russellrao"       RussellRaoDistance       (N - NTT) / N
     "sokalmichener"    SokalMichenerDistance    2 * NNEQ / (N + NNEQ)
@@ -2319,101 +2314,6 @@ cdef class KulsinskiDistance{{name_suffix}}(DistanceMetric{{name_suffix}}):
                 i1 = i1 + 1
 
         return (n_neq - n_tt + size) * 1.0 / (n_neq + size)
-
-
-#------------------------------------------------------------
-# Kulczynski Distance (boolean)
-#  D(x, y) = c_11 / (c_01 + c_10)
-cdef class Kulczynski1Distance{{name_suffix}}(DistanceMetric{{name_suffix}}):
-    r"""Kulsinski Distance
-
-    Kulczynski Distance is a dissimilarity measure for boolean-valued
-    vectors. All nonzero entries will be treated as True, zero entries will
-    be treated as False.
-
-        D(x, y) = c_11 / (c_01 + c_10)
-
-    """
-    cdef inline DTYPE_t dist(
-        self,
-        const {{INPUT_DTYPE_t}}* x1,
-        const {{INPUT_DTYPE_t}}* x2,
-        ITYPE_t size,
-    ) nogil except -1:
-        cdef int tf1, tf2, c_11 = 0, c_01 = 0, c_10 = 0
-        cdef cnp.intp_t j
-        for j in range(size):
-            tf1 = x1[j] != 0
-            tf2 = x2[j] != 0
-            if tf1 == 0 and tf2 == 0:
-                continue
-            elif tf1 == tf2:
-                c_11 += (tf1 and tf2)
-            elif tf1 == 0:
-                c_01 += tf2
-            else:
-                c_10 += tf1
-        return <double> c_11 / <double> (c_01 + c_10)
-
-    cdef inline DTYPE_t dist_csr(
-        self,
-        const {{INPUT_DTYPE_t}}* x1_data,
-        const SPARSE_INDEX_TYPE_t[:] x1_indices,
-        const {{INPUT_DTYPE_t}}* x2_data,
-        const SPARSE_INDEX_TYPE_t[:] x2_indices,
-        const SPARSE_INDEX_TYPE_t x1_start,
-        const SPARSE_INDEX_TYPE_t x1_end,
-        const SPARSE_INDEX_TYPE_t x2_start,
-        const SPARSE_INDEX_TYPE_t x2_end,
-        const ITYPE_t size,
-    ) nogil except -1:
-
-        cdef:
-            cnp.npy_intp ix1, ix2
-            cnp.npy_intp i1 = x1_start
-            cnp.npy_intp i2 = x2_start
-
-            ITYPE_t tf1, tf2, c_11 = 0, c_01 = 0, c_10 = 0
-
-        while i1 < x1_end and i2 < x2_end:
-            ix1 = x1_indices[i1]
-            ix2 = x2_indices[i2]
-
-            tf1 = x1_data[i1] != 0
-            tf2 = x2_data[i2] != 0
-
-            if ix1 == ix2:
-                if tf1 == 0 and tf2 == 0:
-                    pass
-                elif tf1 == tf2:
-                    c_11 += (tf1 and tf2)
-                elif tf1 == 0:
-                    c_01 += tf2
-                else:
-                    c_10 += tf1
-                i1 += 1
-                i2 += 1
-            elif ix1 < ix2:
-                # non-zero value in x1 but not in x2
-                c_10 += tf1
-                i1 += 1
-            else:
-                # non-zero value in x2 but not in x1
-                c_01 += tf2
-                i2 += 1
-
-        if i1 == x1_end:
-            while i2 < x2_end:
-                tf2 = x2_data[i2] != 0
-                c_01 += tf2
-                i2 += 1
-        else:
-            while i1 < x1_end:
-                tf1 = x1_data[i1] != 0
-                c_10 += tf1
-                i1 += 1
-
-        return <double> c_11 / <double> (c_10 + c_01)
 
 
 #------------------------------------------------------------

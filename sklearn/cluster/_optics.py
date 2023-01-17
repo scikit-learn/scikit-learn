@@ -81,7 +81,7 @@ class OPTICS(ClusterMixin, BaseEstimator):
           'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'kulczynski1',
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
           'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
           'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
           'yule']
@@ -90,9 +90,8 @@ class OPTICS(ClusterMixin, BaseEstimator):
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-        .. note::
-           `'kulsinski'` is deprecated from SciPy 1.8. Use `'kulczynski1'` instead.
-           Note that the two metrics are not identical.
+        .. deprecated::
+           `'kulsinski'` is deprecated from SciPy 1.8.
 
     p : float, default=2
         Parameter for the Minkowski metric from
@@ -485,7 +484,7 @@ def compute_optics_graph(
           'manhattan']
 
         - from scipy.spatial.distance: ['braycurtis', 'canberra', 'chebyshev',
-          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski', 'kulczynski1',
+          'correlation', 'dice', 'hamming', 'jaccard', 'kulsinski',
           'mahalanobis', 'minkowski', 'rogerstanimoto', 'russellrao',
           'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
           'yule']
@@ -493,9 +492,8 @@ def compute_optics_graph(
         See the documentation for scipy.spatial.distance for details on these
         metrics.
 
-        .. note::
-           `'kulsinski'` is deprecated from SciPy 1.8. Use `'kulczynski1'` instead.
-           Note that the two metrics are not identical.
+        .. deprecated::
+           `'kulsinski'` is deprecated from SciPy 1.8.
 
     p : int, default=2
         Parameter for the Minkowski metric from

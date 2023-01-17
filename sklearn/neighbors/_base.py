@@ -41,36 +41,36 @@ from ..utils.fixes import delayed, sp_version
 from ..utils.fixes import parse_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
 
+SCIPY_METRICS = [
+    "braycurtis",
+    "canberra",
+    "chebyshev",
+    "correlation",
+    "cosine",
+    "dice",
+    "hamming",
+    "jaccard",
+    "mahalanobis",
+    "matching",
+    "minkowski",
+    "rogerstanimoto",
+    "russellrao",
+    "seuclidean",
+    "sokalmichener",
+    "sokalsneath",
+    "sqeuclidean",
+    "yule",
+]
+if sp_version < parse_version("1.11"):
+    # Deprecated in SciPy 1.8 and removed in SciPy 1.10
+    SCIPY_METRICS += ["kulsinski"]
+
 VALID_METRICS = dict(
     ball_tree=BallTree.valid_metrics,
     kd_tree=KDTree.valid_metrics,
     # The following list comes from the
     # sklearn.metrics.pairwise doc string
-    brute=sorted(
-        set(PAIRWISE_DISTANCE_FUNCTIONS).union(
-            [
-                "braycurtis",
-                "canberra",
-                "chebyshev",
-                "correlation",
-                "cosine",
-                "dice",
-                "hamming",
-                "jaccard",
-                "kulsinski" if sp_version < parse_version("1.8") else "kulczynski1",
-                "mahalanobis",
-                "matching",
-                "minkowski",
-                "rogerstanimoto",
-                "russellrao",
-                "seuclidean",
-                "sokalmichener",
-                "sokalsneath",
-                "sqeuclidean",
-                "yule",
-            ]
-        )
-    ),
+    brute=sorted(set(PAIRWISE_DISTANCE_FUNCTIONS).union(SCIPY_METRICS)),
 )
 
 # TODO: Remove filterwarnings in 1.3 when wminkowski is removed
