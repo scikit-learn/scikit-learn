@@ -256,8 +256,6 @@ cdef inline int node_split_best(
     cdef SIZE_t n_left, n_right
     cdef bint missing_go_to_left
 
-    cdef bint best_split_on_missing = False
-
     cdef SIZE_t[::1] samples = splitter.samples
     cdef SIZE_t[::1] features = splitter.features
     cdef SIZE_t[::1] constant_features = splitter.constant_features
@@ -340,7 +338,7 @@ cdef inline int node_split_best(
 
         end_non_missing = end - n_missing
         if (
-            n_missing == (end - start) or  # all values are missing
+            end_non_missing == start or  # all values are missing
             Xf[end_non_missing - 1] <= Xf[start] + FEATURE_THRESHOLD
         ):
             features[f_j], features[n_total_constants] = features[n_total_constants], features[f_j]
@@ -415,8 +413,8 @@ cdef inline int node_split_best(
 
                     best = current  # copy
 
-    # Search case when there are missing values and all missing values goes
-    # to the right node
+    # Evalaute when there are missing values and all missing values goes
+    # to the right node and non-missing values goes to the left node.
     if n_missing > 0:
         n_left = end - start - n_missing
         n_right = n_missing
@@ -434,20 +432,17 @@ cdef inline int node_split_best(
                     current.threshold = INFINITY
                     current.missing_go_to_left = 0
                     current.pos = end - n_missing
+
                     best = current  # copy
 
-    best_split_on_missing = best.pos == (end - best.n_missing)
     # Reorganize into samples[start:best.pos] + samples[best.pos:end]
-    if best.pos < end or best_split_on_missing:
+    if best.pos <= end :
         partitioner.partition_samples_final(best.pos, best.threshold, best.feature, best.n_missing)
         criterion.init_missing(best.n_missing)
         criterion.missing_go_to_left = best.missing_go_to_left
 
-        if best_split_on_missing:
-            criterion.reverse_reset()
-        else:
-            criterion.reset()
-            criterion.update(best.pos)
+        criterion.reset()
+        criterion.update(best.pos)
 
         criterion.children_impurity(&best.impurity_left, &best.impurity_right)
         best.improvement = criterion.impurity_improvement(
