@@ -393,7 +393,7 @@ def partial_dependence(
 
     Notes
     -----
-    NaNs values in the `X` matrix are ignored when computing the partial dependence.
+    NaN values in `X` are ignored when computing the partial dependence.
 
     Examples
     --------
