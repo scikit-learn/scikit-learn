@@ -370,6 +370,10 @@ class KMeansCythonEngine:
     def is_same_clustering(self, labels, best_labels, n_clusters):
         return _is_same_clustering(labels, best_labels, n_clusters)
 
+    def count_distinct_clusters(self, cluster_labels):
+        """Count the number of unique centers"""
+        return len(set(cluster_labels))
+
     def kmeans_single(self, X, sample_weight, centers_init):
         return self.kmeans_single_func(
             X,
@@ -380,9 +384,6 @@ class KMeansCythonEngine:
             n_threads=self._n_threads,
             verbose=self.estimator.verbose,
         )
-
-    def get_nb_distinct_clusters(self, best_labels):
-        return len(set(best_labels))
 
     def prepare_prediction(self, X, sample_weight):
         X = self.estimator._check_test_data(X)
@@ -1612,7 +1613,8 @@ class KMeans(_BaseKMeans):
 
         engine.unshift_centers(X, best_centers)
 
-        distinct_clusters = engine.get_nb_distinct_clusters(best_labels)
+        distinct_clusters = engine.count_distinct_clusters(best_labels)
+
         if distinct_clusters < self.n_clusters:
             warnings.warn(
                 "Number of distinct clusters ({}) found smaller than "
