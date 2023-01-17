@@ -98,6 +98,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.cluster.compute_optics_graph",
     "sklearn.cluster.estimate_bandwidth",
     "sklearn.cluster.kmeans_plusplus",
+    "sklearn.cluster.ward_tree",
     "sklearn.covariance.empirical_covariance",
     "sklearn.covariance.shrunk_covariance",
     "sklearn.datasets.fetch_california_housing",
@@ -108,6 +109,9 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.feature_extraction.image.extract_patches_2d",
     "sklearn.metrics.accuracy_score",
     "sklearn.metrics.auc",
+    "sklearn.metrics.average_precision_score",
+    "sklearn.metrics.balanced_accuracy_score",
+    "sklearn.metrics.cluster.contingency_matrix",
     "sklearn.metrics.cohen_kappa_score",
     "sklearn.metrics.confusion_matrix",
     "sklearn.metrics.det_curve",
@@ -120,6 +124,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.roc_curve",
     "sklearn.metrics.zero_one_loss",
     "sklearn.model_selection.train_test_split",
+    "sklearn.random_projection.johnson_lindenstrauss_min_dim",
     "sklearn.svm.l1_min_c",
 ]
 

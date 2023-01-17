@@ -463,7 +463,6 @@ ESTIMATORS_WITH_GET_FEATURE_NAMES_OUT = [
 ]
 
 WHITELISTED_FAILING_ESTIMATORS = [
-    "AdditiveChi2Sampler",
     "DictVectorizer",
     "GaussianRandomProjection",
     "GenericUnivariateSelect",
@@ -484,11 +483,7 @@ WHITELISTED_FAILING_ESTIMATORS = [
     "SimpleImputer",
     "SparseRandomProjection",
     "SplineTransformer",
-    "StackingClassifier",
-    "StackingRegressor",
     "VarianceThreshold",
-    "VotingClassifier",
-    "VotingRegressor",
 ]
 
 

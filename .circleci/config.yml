@@ -37,27 +37,6 @@ jobs:
           root: doc/_build/html
           paths: .
 
-  linux-arm64:
-    machine:
-      image: ubuntu-2004:202101-01
-    resource_class: arm.medium
-    environment:
-      - OMP_NUM_THREADS: 2
-      - OPENBLAS_NUM_THREADS: 2
-      - CONDA_ENV_NAME: testenv
-      - LOCK_FILE: build_tools/circle/py39_conda_forge_linux-aarch64_conda.lock
-    steps:
-      - checkout
-      - run: ./build_tools/circle/checkout_merge_commit.sh
-      - restore_cache:
-          key: linux-arm64-{{ .Branch }}
-      - run: ./build_tools/circle/build_test_arm.sh
-      - save_cache:
-          key: linux-arm64-{{ .Branch }}
-          paths:
-            - ~/.cache/ccache
-            - ~/.cache/pip
-            - ~/scikit_learn_data
   deploy:
     docker:
       - image: cimg/python:3.8.12
@@ -75,6 +54,17 @@ jobs:
               bash build_tools/circle/push_doc.sh doc/_build/html/stable
             fi
 
+  # This noop job is required for the pipeline to exist, so that the
+  # documentation related jobs can be triggered.
+  noop:
+    docker:
+      - image: cimg/python:3.8.12
+    steps:
+    - run: |
+        echo "This is no-op job for the pipeline to exist, so that it triggers "
+        echo "Circle CI jobs pushing the artifacts of the documentation built "
+        echo "via GitHub actions."
+
 workflows:
   version: 2
 
@@ -90,10 +80,10 @@ workflows:
           requires:
             - doc
 
-  linux-arm64:
+  noop:
     when:
       equal: [ "none", << pipeline.parameters.GITHUB_RUN_URL >> ]
     # Prevent double execution of this job: on push
     # by default and when triggered by the workflow
     jobs:
-      - linux-arm64
+      - noop

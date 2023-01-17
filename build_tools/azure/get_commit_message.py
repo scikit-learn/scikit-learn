@@ -19,6 +19,19 @@ def get_commit_message():
     else:
         commit_message = build_source_version_message
 
+    # Sanitize the commit message to avoid introducing a vulnerability: a PR
+    # submitter could include the "##vso" special marker in their commit
+    # message to attempt to obfuscate the injection of arbitrary commands in
+    # the Azure pipeline.
+    #
+    # This can be a problem if the PR reviewers do not pay close enough
+    # attention to the full commit message prior to clicking the merge button
+    # and as a result make the inject code run in a protected branch with
+    # elevated access to CI secrets. On a protected branch, Azure
+    # already sanitizes `BUILD_SOURCEVERSIONMESSAGE`, but the message
+    # will still be sanitized here out of precaution.
+    commit_message = commit_message.replace("##vso", "..vso")
+
     return commit_message
 
 
