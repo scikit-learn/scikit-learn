@@ -768,9 +768,8 @@ class AdditiveChi2Sampler(TransformerMixin, BaseEstimator):
         # zeroth component
         # 1/cosh = sech
         # cosh(0) = 1.0
-        if sparse:
-            return self._transform_sparse(X, self.sample_steps, sample_interval)
-        return self._transform_dense(X, self.sample_steps, sample_interval)
+        transf = self._transform_sparse if sparse else self._transform_dense
+        return transf(X, self.sample_steps, sample_interval)
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.
