@@ -142,8 +142,9 @@ def shrunk_covariance(emp_cov, shrinkage=0.1):
 
     shrunk_cov = (1.0 - shrinkage) * emp_cov
     mu = np.trace(emp_cov, axis1=-2, axis2=-1) / n_features
-    while mu.ndim != emp_cov.ndim:
-        mu = mu[..., np.newaxis]
+    mu = np.extend_dims(
+        mu, axis=tuple(range(mu.dim, emp_cov.ndim))
+    )
     shrunk_cov += shrinkage * mu * np.eye(n_features)
 
     return shrunk_cov
