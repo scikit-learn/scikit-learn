@@ -2411,8 +2411,8 @@ def test_splitter_serializable(Splitter):
 @pytest.mark.parametrize("criterion", ["squared_error", "friedman_mse"])
 def test_missing_values_on_equal_nodes_no_missing(criterion):
     """Check missing values goes to correct node during predictions"""
-    X = np.asarray([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
-    y = np.asarray([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
+    X = np.array([[0, 1, 2, 3, 8, 9, 11, 12, 15]]).T
+    y = np.array([0.1, 0.2, 0.3, 0.2, 1.4, 1.4, 1.5, 1.6, 2.6])
 
     dtc = DecisionTreeRegressor(random_state=42, max_depth=1, criterion=criterion)
     dtc.fit(X, y)
@@ -2437,13 +2437,13 @@ def test_missing_values_on_equal_nodes_no_missing(criterion):
 @pytest.mark.parametrize("criterion", ["entropy", "gini"])
 def test_missing_values_best_splitter_three_classes(criterion):
     """Missing values uniquely defines a class in three classes."""
-    X = np.asarray([[np.nan] * 4 + [0, 1, 2, 3, 8, 9, 11, 12]]).T
-    y = np.asarray([0] * 4 + [1] * 4 + [2] * 4)
+    X = np.array([[np.nan] * 4 + [0, 1, 2, 3, 8, 9, 11, 12]]).T
+    y = np.array([0] * 4 + [1] * 4 + [2] * 4)
 
     dtc = DecisionTreeClassifier(random_state=42, max_depth=2, criterion=criterion)
     dtc.fit(X, y)
 
-    X_test = np.asarray([[np.nan, 3, 12]]).T
+    X_test = np.array([[np.nan, 3, 12]]).T
     y_nan_pred = dtc.predict(X_test)
     assert_array_equal(y_nan_pred, [0, 1, 2])
 
@@ -2451,38 +2451,38 @@ def test_missing_values_best_splitter_three_classes(criterion):
 @pytest.mark.parametrize("criterion", ["entropy", "gini"])
 def test_missing_values_best_splitter_to_left(criterion):
     """Missing value uniquely defines class."""
-    X = np.asarray([[np.nan] * 4 + [0, 1, 2, 3, 4, 5]]).T
-    y = np.asarray([0] * 4 + [1] * 6)
+    X = np.array([[np.nan] * 4 + [0, 1, 2, 3, 4, 5]]).T
+    y = np.array([0] * 4 + [1] * 6)
 
     dtc = DecisionTreeClassifier(random_state=42, max_depth=2, criterion=criterion)
     dtc.fit(X, y)
 
-    y_pred = dtc.predict(np.asarray([[np.nan, 4, np.nan]]).T)
+    y_pred = dtc.predict(np.array([[np.nan, 4, np.nan]]).T)
     assert_array_equal(y_pred, [0, 1, 0])
 
 
 @pytest.mark.parametrize("criterion", ["entropy", "gini"])
 def test_missing_values_best_splitter_to_right(criterion):
     """Missing value shares a class with non-missing values."""
-    X = np.asarray([[np.nan] * 4 + [0, 1, 2, 3, 4, 5]]).T
-    y = np.asarray([1] * 4 + [0] * 4 + [1] * 2)
+    X = np.array([[np.nan] * 4 + [0, 1, 2, 3, 4, 5]]).T
+    y = np.array([1] * 4 + [0] * 4 + [1] * 2)
 
     dtc = DecisionTreeClassifier(random_state=42, max_depth=2, criterion=criterion)
     dtc.fit(X, y)
 
-    y_pred = dtc.predict(np.asarray([[np.nan, 1.2, 4.8]]).T)
+    y_pred = dtc.predict(np.array([[np.nan, 1.2, 4.8]]).T)
     assert_array_equal(y_pred, [1, 0, 1])
 
 
 @pytest.mark.parametrize("criterion", ["entropy", "gini"])
 def test_missing_values_missing_both_classes_has_nan(criterion):
     """Check behavior of missing value when there is one missing value in each class."""
-    X = np.asarray([[1, 2, 3, 5, np.nan, 10, 20, 30, 60, np.nan]]).T
-    y = np.asarray([0] * 5 + [1] * 5)
+    X = np.array([[1, 2, 3, 5, np.nan, 10, 20, 30, 60, np.nan]]).T
+    y = np.array([0] * 5 + [1] * 5)
 
     dtc = DecisionTreeClassifier(random_state=42, max_depth=1, criterion=criterion)
     dtc.fit(X, y)
-    X_test = np.asarray([[np.nan, 2.3, 34.2]]).T
+    X_test = np.array([[np.nan, 2.3, 34.2]]).T
     y_pred = dtc.predict(X_test)
 
     # Missing value goes right because the implementation searches right first
@@ -2500,8 +2500,8 @@ def test_missing_values_missing_both_classes_has_nan(criterion):
 def test_missing_value_errors(is_sparse, tree):
     """Check unsupported configurations for missing values."""
 
-    X = np.asarray([[1, 2, 3, 5, np.nan, 10, 20, 30, 60, np.nan]]).T
-    y = np.asarray([0] * 5 + [1] * 5)
+    X = np.array([[1, 2, 3, 5, np.nan, 10, 20, 30, 60, np.nan]]).T
+    y = np.array([0] * 5 + [1] * 5)
 
     if is_sparse:
         X = csr_matrix(X)
