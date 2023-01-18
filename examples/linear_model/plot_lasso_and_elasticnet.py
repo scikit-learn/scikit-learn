@@ -14,6 +14,7 @@ compared with the ground-truth.
 # ---------------------------------------------------
 
 from sklearn.datasets import make_regression
+from sklearn.model_selection import train_test_split
 
 X, y, true_weights = make_regression(
     n_samples=500,
@@ -26,9 +27,9 @@ X, y, true_weights = make_regression(
 )
 
 # Split data in train set and test set
-n_samples = X.shape[0]
-X_train, y_train = X[: n_samples // 2], y[: n_samples // 2]
-X_test, y_test = X[n_samples // 2 :], y[n_samples // 2 :]
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.5, random_state=42
+)
 
 # %%
 # Lasso
