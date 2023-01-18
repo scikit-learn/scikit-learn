@@ -995,6 +995,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         .. versionadded:: 0.24
 
+    feature_names_in_ : ndarray of shape (`n_features_in_`,)
+        Names of features seen during :term:`fit`. Defined only when
+        `X` has feature names that are all strings.
+
+        .. versionadded:: 1.3
+
     See Also
     --------
     make_union : Convenience function for simplified feature union
@@ -1296,6 +1302,12 @@ class FeatureUnion(TransformerMixin, _BaseComposition):
 
         # X is passed to all transformers so we just delegate to the first one
         return self.transformer_list[0][1].n_features_in_
+
+    @property
+    def feature_names_in_(self):
+        """Names of features seen during :term:`fit`."""
+        # X is passed to all transformers -- delegate to the first one
+        return self.transformer_list[0][1].feature_names_in_
 
     def __sklearn_is_fitted__(self):
         # Delegate whether feature union was fitted

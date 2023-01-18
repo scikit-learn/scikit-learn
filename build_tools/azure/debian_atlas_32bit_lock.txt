@@ -22,5 +22,5 @@ pytest==5.3.1
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
 threadpoolctl==2.2.0
     # via -r build_tools/azure/debian_atlas_32bit_requirements.txt
-wcwidth==0.2.5
+wcwidth==0.2.6
     # via pytest
