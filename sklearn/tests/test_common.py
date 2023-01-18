@@ -466,7 +466,6 @@ WHITELISTED_FAILING_ESTIMATORS = [
     "DictVectorizer",
     "GaussianRandomProjection",
     "GenericUnivariateSelect",
-    "IsotonicRegression",
     "KBinsDiscretizer",
     "MissingIndicator",
     "RFE",

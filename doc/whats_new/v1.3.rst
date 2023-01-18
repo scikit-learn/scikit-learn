@@ -46,6 +46,7 @@ Changes impacting all modules
   - :class:`impute.IterativeImputer`
   - :class:`impute.KNNImputer`
   - :class:`impute.SimpleImputer`
+  - :class:`isotonic.IsotonicRegression`
   - :class:`preprocessing.Binarizer`
   - :class:`preprocessing.MaxAbsScaler`
   - :class:`preprocessing.MinMaxScaler`
