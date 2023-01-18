@@ -255,6 +255,7 @@ class BaseLabelPropagation(ClassifierMixin, BaseEstimator, metaclass=ABCMeta):
         self : object
             Returns the instance itself.
         """
+        self._validate_params()
         X, y = self._validate_data(
             X,
             y,

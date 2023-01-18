@@ -169,7 +169,7 @@ Changelog
   :user:`Dea María Léon <deamarialeon>`, :pr:`25257` by :user:`Gleb Levitski <glevv>`.
 
 :mod:`sklearn.semi_supervised`
-............................
+..............................
 
 - |Enhancement| :meth:`BaseLabelPropagation.fit` now accepts sparse matrices.
   :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
