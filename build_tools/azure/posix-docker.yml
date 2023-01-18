@@ -22,7 +22,6 @@ jobs:
     SKLEARN_SKIP_NETWORK_TESTS: '1'
     PYTEST_XDIST_VERSION: 'latest'
     COVERAGE: 'false'
-    TEST_DOCSTRINGS: 'false'
     # Set in azure-pipelines.yml
     DISTRIB: ''
     DOCKER_CONTAINER: ''

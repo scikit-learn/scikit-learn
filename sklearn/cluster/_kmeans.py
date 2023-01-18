@@ -1172,7 +1172,7 @@ class _BaseKMeans(
         """
         return self.fit(X, sample_weight=sample_weight).labels_
 
-    def predict(self, X, sample_weight=None):
+    def predict(self, X, sample_weight="deprecated"):
         """Predict the closest cluster each sample in X belongs to.
 
         In the vector quantization literature, `cluster_centers_` is called
@@ -1188,6 +1188,10 @@ class _BaseKMeans(
             The weights for each observation in X. If None, all observations
             are assigned equal weight.
 
+            .. deprecated:: 1.3
+               The parameter `sample_weight` is deprecated in version 1.3
+               and will be removed in 1.5.
+
         Returns
         -------
         labels : ndarray of shape (n_samples,)
@@ -1196,7 +1200,15 @@ class _BaseKMeans(
         check_is_fitted(self)
 
         X = self._check_test_data(X)
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        if not (isinstance(sample_weight, str) and sample_weight == "deprecated"):
+            warnings.warn(
+                "'sample_weight' was deprecated in version 1.3 and "
+                "will be removed in 1.5.",
+                FutureWarning,
+            )
+            sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        else:
+            sample_weight = _check_sample_weight(None, X, dtype=X.dtype)
 
         labels = _labels_inertia_threadpool_limit(
             X,
@@ -1318,7 +1330,7 @@ class KMeans(_BaseKMeans):
         an empirical probability distribution of the points' contribution to the
         overall inertia. This technique speeds up convergence. The algorithm
         implemented is "greedy k-means++". It differs from the vanilla k-means++
-        by making several trials at each sampling step and choosing the bestcentroid
+        by making several trials at each sampling step and choosing the best centroid
         among them.
 
         'random': choose `n_clusters` observations (rows) at random from data

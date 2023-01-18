@@ -551,6 +551,7 @@ message, the following actions are taken.
     [scipy-dev]            Build & test with our dependencies (numpy, scipy, etc ...) development builds
     [nogil]                Build & test with the nogil experimental branches of CPython, Cython, NumPy, SciPy...
     [pypy]                 Build & test with PyPy
+    [azure parallel]       Run Azure CI jobs in parallel
     [float32]              Run float32 tests by setting `SKLEARN_RUN_FLOAT32_TESTS=1`. See :ref:`environment_variable` for more details
     [doc skip]             Docs are not built
     [doc quick]            Docs built, but excludes example gallery plots
@@ -1411,7 +1412,7 @@ Reading the existing code base
 ==============================
 
 Reading and digesting an existing code base is always a difficult exercise
-that takes time and experience to main. Even though we try to write simple
+that takes time and experience to master. Even though we try to write simple
 code in general, understanding the code can seem overwhelming at first,
 given the sheer size of the project. Here is a list of tips that may help
 make this task easier and faster (in no particular order).
