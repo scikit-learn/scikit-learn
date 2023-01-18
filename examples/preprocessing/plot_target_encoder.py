@@ -11,6 +11,15 @@ for handling categorical features: :class:`TargetEncoder`,
 :class:`OrdinalEncoder`, :class:`OneHotEncoder` and dropping the category.
 For more information about the :class:`TargetEncoder` see the
 :ref:`User Guide <target_encoder>`.
+
+.. note::
+  :class:`TargetEncoder` uses a cross validation scheme in
+  :meth:`~TargetEncoder.fit_transform` to prevent leaking the target during training.
+  In :meth:`~TargetEncoder.fit_transform`, the data is split according to the `cv`
+  parameter. Categorical encodings are learned from split and used to encode the other
+  split. Afterwards, a final categorical encoding is learned from all the data, which
+  is then used to encode data during :meth:`~TargetEncoder.transform`. This means that
+  `fit(X, y).transform(X)` does not equal `fit_transform(X, y)`.
 """
 
 # %%
@@ -37,9 +46,10 @@ categorical_features = [
     "variety",
     "winery",
 ]
+target_name = "points"
 
 X = df[numerical_features + categorical_features]
-y = df["points"]
+y = df[target_name]
 
 y.hist()
 
@@ -54,7 +64,7 @@ print(f"Samples in training set: {len(X_train)}\nSamples in test set: {len(X_tes
 # %%
 # Training and Evaluating Pipelines with Different Encoders
 # =========================================================
-# In this section, we will evalute pipelines with
+# In this section, we will evaluate pipelines with
 # :class:`~sklearn.ensemble.HistGradientBoostingRegressor` with different encoding
 # strategies. First, we list out the encoders we will be using to preprocess
 # the categorical features:
@@ -74,7 +84,7 @@ categorical_preprocessors = [
 ]
 
 # %%
-# Next, we create and fit the pipelines to the training data and evalute them on the
+# Next, we create and fit the pipelines to the training data and evaluate them on the
 # test set:
 from sklearn.pipeline import make_pipeline
 from sklearn.ensemble import HistGradientBoostingRegressor
@@ -91,15 +101,20 @@ for name, categorical_preprocessor in categorical_preprocessors:
     pipe = make_pipeline(preprocessor, HistGradientBoostingRegressor(random_state=0))
     pipe.fit(X_train, y_train)
 
-    rmse = mean_squared_error(y_test, pipe.predict(X_test), squared=False)
+    y_pred = pipe.predict(X_test)
+    rmse = mean_squared_error(y_test, y_pred, squared=False)
     results.append({"preprocessor": name, "root mean squared error": rmse})
 
 # %%
-# Finally, we display the results for all the encoders. When evaluting the
+# Finally, we display the results for all the encoders. When evaluating the
 # predictive performance on the test set, dropping the categories perform the
 # worst and the target encoder performs the best. The target encoding provides
 # more information about the target, which the gradient boosted model at the end
-# of the pipeline can take advantage of.
+# of the pipeline can take advantage of. In this example, we evaluate with a single
+# test split to reduce the runtime. We recommend using cross-validation to check
+# the significance of the improvement.
 import pandas as pd
 
-pd.DataFrame(results).sort_values("root mean squared error")
+pd.DataFrame(results).sort_values("root mean squared error", ascending=False).set_index(
+    "preprocessor"
+).plot(kind="barh")

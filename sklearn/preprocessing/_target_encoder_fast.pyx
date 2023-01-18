@@ -34,33 +34,33 @@ def _fit_encoding_fast(
     """
     cdef:
         list encodings = []
-        cnp.int64_t i, j, n_cats
+        cnp.int64_t sample_idx, feat_idx, cat_idx, n_cats
         INT_DTYPE X_int_tmp
         int n_samples = X_int.shape[0]
         int n_features = X_int.shape[1]
         double smooth_sum = smooth * y_mean
-        cnp.int64_t max_cats = np.max(n_categories)
-        double[::1] sums = np.empty(max_cats, dtype=np.float64)
-        double[::1] counts = np.empty(max_cats, dtype=np.float64)
+        cnp.int64_t max_n_cats = np.max(n_categories)
+        double[::1] sums = np.empty(max_n_cats, dtype=np.float64)
+        double[::1] counts = np.empty(max_n_cats, dtype=np.float64)
 
-    for j in range(n_features):
-        n_cats = n_categories[j]
+    for feat_idx in range(n_features):
+        n_cats = n_categories[feat_idx]
 
-        for i in range(n_cats):
-            sums[i] = smooth_sum
-            counts[i] = smooth
+        for cat_idx in range(n_cats):
+            sums[cat_idx] = smooth_sum
+            counts[cat_idx] = smooth
 
-        for i in range(n_samples):
-            X_int_tmp = X_int[i, j]
+        for sample_idx in range(n_samples):
+            X_int_tmp = X_int[sample_idx, feat_idx]
             # -1 are unknown categories, which are not counted
             if X_int_tmp == -1:
                 continue
-            sums[X_int_tmp] += y[i]
+            sums[X_int_tmp] += y[sample_idx]
             counts[X_int_tmp] += 1.0
 
         current_encoding = np.empty(shape=n_cats, dtype=np.float64)
-        for i in range(n_cats):
-            current_encoding[i] = sums[i] / counts[i]
+        for cat_idx in range(n_cats):
+            current_encoding[cat_idx] = sums[cat_idx] / counts[cat_idx]
         encodings.append(current_encoding)
     return encodings
 
@@ -81,50 +81,56 @@ def _fit_encoding_fast_auto_smooth(
     """
     cdef:
         list encodings = []
-        cnp.int64_t i, j, n_cats
+        cnp.int64_t sample_idx, feat_idx, cat_idx, n_cats
         INT_DTYPE X_int_tmp
         int n_samples = X_int.shape[0]
         int n_features = X_int.shape[1]
-        cnp.int64_t max_cats = np.max(n_categories)
-        double[::1] means = np.empty(max_cats, dtype=np.float64)
-        double[::1] counts = np.empty(max_cats, dtype=np.float64)
-        double[::1] sum_of_squared_diffs = np.empty(max_cats, dtype=np.float64)
+        cnp.int64_t max_n_cats = np.max(n_categories)
+        double[::1] means = np.empty(max_n_cats, dtype=np.float64)
+        double[::1] counts = np.empty(max_n_cats, dtype=np.float64)
+        double[::1] sum_of_squared_diffs = np.empty(max_n_cats, dtype=np.float64)
         double lambda_
 
-    for j in range(n_features):
-        n_cats = n_categories[j]
+    for feat_idx in range(n_features):
+        n_cats = n_categories[feat_idx]
 
-        for i in range(n_cats):
-            means[i] = 0.0
-            counts[i] = 0.0
-            sum_of_squared_diffs[i] = 0.0
+        for cat_idx in range(n_cats):
+            means[cat_idx] = 0.0
+            counts[cat_idx] = 0.0
+            sum_of_squared_diffs[cat_idx] = 0.0
 
         # first pass to compute the mean
-        for i in range(n_samples):
-            X_int_tmp = X_int[i, j]
+        for sample_idx in range(n_samples):
+            X_int_tmp = X_int[sample_idx, feat_idx]
 
             # -1 are unknown categories, which are not counted
             if X_int_tmp == -1:
                 continue
             counts[X_int_tmp] += 1.0
-            means[X_int_tmp] += (y[i] - means[X_int_tmp]) / counts[X_int_tmp]
+            means[X_int_tmp] += y[sample_idx]
+
+        for cat_idx in range(n_cats):
+            means[cat_idx] /= counts[cat_idx]
 
         # second pass to compute the sum of squared differences
-        for i in range(n_samples):
-            X_int_tmp = X_int[i, j]
+        for sample_idx in range(n_samples):
+            X_int_tmp = X_int[sample_idx, feat_idx]
             if X_int_tmp == -1:
                 continue
-            sum_of_squared_diffs[X_int_tmp] += pow(y[i] - means[X_int_tmp], 2.0)
+            sum_of_squared_diffs[X_int_tmp] += pow(y[sample_idx] - means[X_int_tmp], 2.0)
 
         current_encoding = np.empty(shape=n_cats, dtype=np.float64)
-        for i in range(n_cats):
+        for cat_idx in range(n_cats):
             lambda_ = (
-                y_variance * counts[i] /
-                (y_variance * counts[i] + sum_of_squared_diffs[i] / counts[i])
+                y_variance * counts[cat_idx] /
+                (y_variance * counts[cat_idx] + sum_of_squared_diffs[cat_idx] / counts[cat_idx])
             )
             if isnan(lambda_):
-                current_encoding[i] = y_mean
+                # A nan can happen when:
+                # 1. counts[cat_idx] == 0
+                # 2. y_variance == 0 and sum_of_squared_diffs[cat_idx] == 0
+                current_encoding[cat_idx] = y_mean
             else:
-                current_encoding[i] = lambda_ * means[i] + (1 - lambda_) * y_mean
+                current_encoding[cat_idx] = lambda_ * means[cat_idx] + (1 - lambda_) * y_mean
         encodings.append(current_encoding)
     return encodings

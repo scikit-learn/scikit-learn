@@ -106,6 +106,7 @@ USE_NEWEST_NUMPY_C_API = (
     "sklearn.svm._liblinear",
     "sklearn.svm._libsvm",
     "sklearn.svm._libsvm_sparse",
+    "sklearn.preprocessing._target_encoder_fast",
     "sklearn.tree._splitter",
     "sklearn.tree._utils",
     "sklearn.utils._cython_blas",

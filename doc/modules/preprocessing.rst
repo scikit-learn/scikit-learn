@@ -837,13 +837,13 @@ Target Encoder
 
 .. currentmodule:: sklearn.preprocessing
 
-The :class:`TargetEncoder` uses target mean groupby the categorical feature for
-encoding unordered categoires, i.e. nominal categories [PAR]_ [MIC]_.
-This encoding scheme is useful with categorical features with high cardinality,
-where one hot encoding would inflate the feature space making it more expensive
-for a downstream model to process. A classical example of high cardinality
-categories are location based such as zip code or region. For the binary
-classification target, the target encoding is given by:
+The :class:`TargetEncoder` uses the target mean conditioned on the categorical
+feature for encoding unordered categories, i.e. nominal categories [PAR]_
+[MIC]_. This encoding scheme is useful with categorical features with high
+cardinality, where one-hot encoding would inflate the feature space making it
+more expensive for a downstream model to process. A classical example of high
+cardinality categories are location based such as zip code or region. For the
+binary classification target, the target encoding is given by:
 
 .. math::
     S_i = \lambda_i\frac{n_{iY}}{n_i} + (1 - \lambda_i)\frac{n_y}{n}
@@ -859,18 +859,18 @@ factor. The shrinkage factor is given by:
 
 where :math:`m` is a smoothing factor, which is controlled with the `smooth`
 parameter in :class:`TargetEncoder`. Large smoothing factors will put more
-weight on the global mean. When `smooth="auto"`, the smoothing factor is computed
-an empirical bayes estimate: :math:`m=\sigma_c^2/\tau^2`, where :math:`\sigma_i^2`
-is the variance of `y` with category :math:`i` and :math:`\tau^2` is the global
-variance of `y`.
+weight on the global mean. When `smooth="auto"`, the smoothing factor is
+computed as an empirical bayes estimate: :math:`m=\sigma_c^2/\tau^2`, where
+:math:`\sigma_i^2` is the variance of `y` with category :math:`i` and
+:math:`\tau^2` is the global variance of `y`.
 
 For continuous targets, the formulation is similar to binary classification:
 
 .. math::
     S_i = \lambda_i\frac{\sum_{k\in L_i}y_k}{n_i} + (1 - \lambda_i)\frac{\sum_{k=1}^{n}y_k}{n}
 
-where :math:`L_i` is the set of observations of size :math:`n_i` for which
-:math:`X=X_i`.
+where :math:`L_i` is the set of observations for which :math:`X=X_i` and
+:math:`n_i` is the cardinality of :math:`L_i`.
 
 .. note::
   :class:`TargetEncoder` uses a cross validation scheme in

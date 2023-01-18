@@ -16,7 +16,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     Each category is encoded based on its effect on the target. The encoding
     scheme mixes the global target mean with the target mean conditioned on
-    the value of the category.
+    the value of the category. [MIC]_
 
     Read more in the :ref:`User Guide <target_encoder>`.
 
@@ -33,15 +33,15 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     Parameters
     ----------
-    categories : 'auto' or a list of array-like, default='auto'
+    categories : "auto" or a list of array-like, default="auto"
         Categories (unique values) per feature:
 
-        - 'auto' : Determine categories automatically from the training data.
-        - list : ``categories[i]`` holds the categories expected in the ith column. The
+        - `"auto"` : Determine categories automatically from the training data.
+        - list : `categories[i]` holds the categories expected in the i-th column. The
           passed categories should not mix strings and numeric values within a single
           feature, and should be sorted in case of numeric values.
 
-        The used categories can be found in the ``categories_`` attribute.
+        The used categories is stored in the `categories_` fitted attribute.
 
     target_type : {"auto", "continuous", "binary"}, default="auto"
         Type of target
@@ -60,7 +60,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         Determines the cross-validation splitting strategy used in
         :meth:`fit_transform`. Possible inputs for cv are:
 
-        - None, to use the default 5-fold cross validation,
+        - `None`, to use the default 5-fold cross validation,
         - integer, to specify the number of folds in a `(Stratified)KFold`,
         - :term:`CV splitter`,
         - An iterable yielding (train, test) splits as arrays of indices.
@@ -76,14 +76,15 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
     categories_ : list of shape (n_features,) of ndarray
         The categories of each feature determined during fitting
-        (in order of the features in X and corresponding with the output
+        (in order of the features in `X` and corresponding with the output
         of :meth:`transform`).
 
     target_type_ : str
         Type of target.
 
     encoding_mean_ : float
-        The overall mean of the target.
+        The overall mean of the target. This value is only used in :meth:`transform`
+        to encode categories.
 
     n_features_in_ : int
         Number of features seen during :term:`fit`.
@@ -105,6 +106,12 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     >>> y = [10.3] * 5 + [40.1] * 15 + [20.4] * 5 + [11.1] * 25 + [21.2] * 8 + [49] * 30
     >>> enc = TargetEncoder(smooth=5.0)
     >>> X_trans = enc.fit_transform(X, y)
+
+    References
+    ----------
+    .. [MIC] :doi:`Micci-Barreca, Daniele. "A preprocessing scheme for high-cardinality
+        categorical attributes in classification and prediction problems"
+        SIGKDD Explor. Newsl. 3, 1 (July 2001), 27–32. <10.1145/507533.507538>`
     """
 
     _parameter_constraints: dict = {
