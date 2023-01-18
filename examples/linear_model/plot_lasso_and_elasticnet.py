@@ -154,13 +154,17 @@ plt.tight_layout()
 # Conclusions
 # -----------
 #
-# Lasso is known to recover sparse data very well but does not perform well with
-# highly correlated features.
+# :class:`~sklearn.linear_model.Lasso` is known to recover sparse data very well
+# but does not perform well with highly correlated features.
 #
-# ARD is better when handling gaussian noise, which translates in a slightly
-# better score than Lasso, but is still unable to handle correlated features and
-# requires a large amount of time due to fitting a prior.
+# :class:`~sklearn.linear_model.ARDRegression` is better when handling gaussian
+# noise, which translates in a slightly better score than Lasso, but is still
+# unable to handle correlated features and requires a large amount of time due
+# to fitting a prior.
 #
-# ElasticNet does not have a problem with correlated features but is unable to
-# recover the true generating process of sparse data as good as Lasso. In this
-# case, this is the model with the best score and lowest fitting time.
+# :class:`~sklearn.linear_model.ElasticNet` does not have a problem with
+# correlated features but is unable to recover the true generating process of
+# sparse data as good as Lasso. In this case, this is the model with the best
+# score and lowest fitting time. In the absence of correlations, an
+# :class:`~sklearn.linear_model.ElasticNetCV` would find an optimal `l1_ratio =
+# 1`, i.e. the optimal model would be a :class:`~sklearn.linear_model.Lasso`.
