@@ -94,6 +94,11 @@ enhance the functionality of scikit-learn's estimators.
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes model visualization
   utilities.
 
+- `sklearn-evaluation <https://github.com/ploomber/sklearn-evaluation>`_ 
+  Machine learning model evaluation made easy: plots, tables, HTML reports,
+  experiment tracking and Jupyter notebook analysis. Visual analysis, model
+  selection, evaluation and diagnostics.
+
 - `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
   custom matplotlib visualizers for scikit-learn estimators to support visual feature
   analysis, model selection, evaluation, and diagnostics.
