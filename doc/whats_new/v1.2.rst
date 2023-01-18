@@ -38,9 +38,9 @@ Changelog
 :mod:`sklearn.decomposition`
 ............................
 
-- |Fix| Fixed a bug in :class:`MiniBatchDictionaryLearning` where the online updates
-  of the sufficient statistics where not correct when calling `partial_fit` on batches
-  of different sizes.
+- |Fix| Fixed a bug in :class:`decomposition.MiniBatchDictionaryLearning` where the
+  online updates of the sufficient statistics where not correct when calling
+  `partial_fit` on batches of different sizes.
   :pr:`25354` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
 :mod:`sklearn.linear_model`
