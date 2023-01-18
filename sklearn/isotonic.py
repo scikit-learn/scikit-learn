@@ -429,7 +429,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             An ndarray with one string i.e. ["isotonicregression0"].
         """
-        check_is_fitted(self, "n_features_in_")
+        check_is_fitted(self, "f_")
         class_name = self.__class__.__name__.lower()
         return np.asarray([f"{class_name}0"], dtype=object)
 
