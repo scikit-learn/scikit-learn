@@ -61,9 +61,6 @@ from sklearn.exceptions import NotFittedError, PositiveSpectrumWarning
 from sklearn.utils._testing import TempMemmap
 
 
-# TODO: Remove np.matrix usage in 1.2
-@pytest.mark.filterwarnings("ignore:np.matrix usage is deprecated in 1.0:FutureWarning")
-@pytest.mark.filterwarnings("ignore:the matrix subclass:PendingDeprecationWarning")
 def test_as_float_array():
     # Test function for as_float_array
     X = np.ones((3, 10), dtype=np.int32)
@@ -97,7 +94,6 @@ def test_as_float_array():
 
     # Test the copy parameter with some matrices
     matrices = [
-        np.matrix(np.arange(5)),
         sp.csc_matrix(np.arange(5)).toarray(),
         _sparse_random_matrix(10, 10, density=0.10).toarray(),
     ]
@@ -115,15 +111,11 @@ def test_as_float_array_nan(X):
     assert_allclose_dense_sparse(X_converted, X)
 
 
-# TODO: Remove np.matrix usage in 1.2
-@pytest.mark.filterwarnings("ignore:np.matrix usage is deprecated in 1.0:FutureWarning")
-@pytest.mark.filterwarnings("ignore:the matrix subclass:PendingDeprecationWarning")
 def test_np_matrix():
     # Confirm that input validation code does not return np.matrix
     X = np.arange(12).reshape(3, 4)
 
     assert not isinstance(as_float_array(X), np.matrix)
-    assert not isinstance(as_float_array(np.matrix(X)), np.matrix)
     assert not isinstance(as_float_array(sp.csc_matrix(X)), np.matrix)
 
 
@@ -453,6 +445,27 @@ def test_check_array_pandas_na_support(pd_dtype, dtype, expected_dtype):
     msg = "Input contains NaN"
     with pytest.raises(ValueError, match=msg):
         check_array(X, force_all_finite=True)
+
+
+def test_check_array_panadas_na_support_series():
+    """Check check_array is correct with pd.NA in a series."""
+    pd = pytest.importorskip("pandas")
+
+    X_int64 = pd.Series([1, 2, pd.NA], dtype="Int64")
+
+    msg = "Input contains NaN"
+    with pytest.raises(ValueError, match=msg):
+        check_array(X_int64, force_all_finite=True, ensure_2d=False)
+
+    X_out = check_array(X_int64, force_all_finite=False, ensure_2d=False)
+    assert_allclose(X_out, [1, 2, np.nan])
+    assert X_out.dtype == np.float64
+
+    X_out = check_array(
+        X_int64, force_all_finite=False, ensure_2d=False, dtype=np.float32
+    )
+    assert_allclose(X_out, [1, 2, np.nan])
+    assert X_out.dtype == np.float32
 
 
 def test_check_array_pandas_dtype_casting():
@@ -1557,7 +1570,7 @@ def test_check_pandas_sparse_invalid(ntype1, ntype2):
         ("int8", "byte", np.integer),
         ("short", "int16", np.integer),
         ("intc", "int32", np.integer),
-        ("int0", "long", np.integer),
+        ("intp", "long", np.integer),
         ("int", "long", np.integer),
         ("int64", "longlong", np.integer),
         ("int_", "intp", np.integer),
@@ -1633,20 +1646,6 @@ def test_num_features_errors_scalars(X):
         _num_features(X)
 
 
-# TODO: Remove in 1.2
-@pytest.mark.filterwarnings("ignore:the matrix subclass:PendingDeprecationWarning")
-def test_check_array_deprecated_matrix():
-    """Test that matrix support is deprecated in 1.0."""
-
-    X = np.matrix(np.arange(5))
-    msg = (
-        "np.matrix usage is deprecated in 1.0 and will raise a TypeError "
-        "in 1.2. Please convert to a numpy array with np.asarray."
-    )
-    with pytest.warns(FutureWarning, match=msg):
-        check_array(X)
-
-
 @pytest.mark.parametrize(
     "names",
     [list(range(2)), range(2), None, [["a", "b"], ["c", "d"]]],
@@ -1683,7 +1682,6 @@ def test_get_feature_names_numpy():
     assert names is None
 
 
-# TODO: Convert to a error in 1.2
 @pytest.mark.parametrize(
     "names, dtypes",
     [
@@ -1692,18 +1690,21 @@ def test_get_feature_names_numpy():
     ],
     ids=["int-str", "list-str"],
 )
-def test_get_feature_names_invalid_dtypes_warns(names, dtypes):
-    """Get feature names warns when the feature names have mixed dtypes"""
+def test_get_feature_names_invalid_dtypes(names, dtypes):
+    """Get feature names errors when the feature names have mixed dtypes"""
     pd = pytest.importorskip("pandas")
     X = pd.DataFrame([[1, 2], [4, 5], [5, 6]], columns=names)
 
     msg = re.escape(
-        "Feature names only support names that are all strings. "
-        f"Got feature names with dtypes: {dtypes}. An error will be raised"
+        "Feature names are only supported if all input features have string names, "
+        f"but your input has {dtypes} as feature name / column name types. "
+        "If you want feature names to be stored and validated, you must convert "
+        "them all to strings, by using X.columns = X.columns.astype(str) for "
+        "example. Otherwise you can remove feature / column names from your input "
+        "data, or convert them all to a non-string data type."
     )
-    with pytest.warns(FutureWarning, match=msg):
+    with pytest.raises(TypeError, match=msg):
         names = _get_feature_names(X)
-    assert names is None
 
 
 class PassthroughTransformer(BaseEstimator):
@@ -1748,3 +1749,13 @@ def test_check_feature_names_in_pandas():
 
     with pytest.raises(ValueError, match="input_features is not equal to"):
         est.get_feature_names_out(["x1", "x2", "x3"])
+
+
+def test_boolean_series_remains_boolean():
+    """Regression test for gh-25145"""
+    pd = importorskip("pandas")
+    res = check_array(pd.Series([True, False]), ensure_2d=False)
+    expected = np.array([True, False])
+
+    assert res.dtype == expected.dtype
+    assert_array_equal(res, expected)

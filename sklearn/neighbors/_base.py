@@ -382,7 +382,7 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         "radius": [Interval(Real, 0, None, closed="both"), None],
         "algorithm": [StrOptions({"auto", "ball_tree", "kd_tree", "brute"})],
         "leaf_size": [Interval(Integral, 1, None, closed="left")],
-        "p": [Interval(Real, 1, None, closed="both"), None],
+        "p": [Interval(Real, 0, None, closed="right"), None],
         "metric": [StrOptions(set(itertools.chain(*VALID_METRICS.values()))), callable],
         "metric_params": [dict, None],
         "n_jobs": [Integral, None],
@@ -447,12 +447,6 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     SyntaxWarning,
                     stacklevel=3,
                 )
-            effective_p = self.metric_params["p"]
-        else:
-            effective_p = self.p
-
-        if self.metric in ["wminkowski", "minkowski"] and effective_p < 1:
-            raise ValueError("p must be greater or equal to one for minkowski metric")
 
     def _fit(self, X, y=None):
         if self._get_tags()["requires_y"]:
@@ -596,6 +590,12 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                 self._fit_method = "brute"
             else:
                 if (
+                    # TODO(1.3): remove "wminkowski"
+                    self.effective_metric_ in ("wminkowski", "minkowski")
+                    and self.effective_metric_params_["p"] < 1
+                ):
+                    self._fit_method = "brute"
+                elif (
                     self.effective_metric_ == "minkowski"
                     and self.effective_metric_params_.get("w") is not None
                 ):
@@ -618,6 +618,29 @@ class NeighborsBase(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
                     self._fit_method = "ball_tree"
                 else:
                     self._fit_method = "brute"
+
+        if (
+            # TODO(1.3): remove "wminkowski"
+            self.effective_metric_ in ("wminkowski", "minkowski")
+            and self.effective_metric_params_["p"] < 1
+        ):
+            # For 0 < p < 1 Minkowski distances aren't valid distance
+            # metric as they do not satisfy triangular inequality:
+            # they are semi-metrics.
+            # algorithm="kd_tree" and algorithm="ball_tree" can't be used because
+            # KDTree and BallTree require a proper distance metric to work properly.
+            # However, the brute-force algorithm supports semi-metrics.
+            if self._fit_method == "brute":
+                warnings.warn(
+                    "Mind that for 0 < p < 1, Minkowski metrics are not distance"
+                    " metrics. Continuing the execution with `algorithm='brute'`."
+                )
+            else:  # self._fit_method in ("kd_tree", "ball_tree")
+                raise ValueError(
+                    f'algorithm="{self._fit_method}" does not support 0 < p < 1 for '
+                    "the Minkowski metric. To resolve this problem either "
+                    'set p >= 1 or algorithm="brute".'
+                )
 
         if self._fit_method == "ball_tree":
             self._tree = BallTree(
@@ -713,9 +736,8 @@ class KNeighborsMixin:
 
         Parameters
         ----------
-        X : array-like, shape (n_queries, n_features), \
-            or (n_queries, n_indexed) if metric == 'precomputed', \
-                default=None
+        X : {array-like, sparse matrix}, shape (n_queries, n_features), \
+            or (n_queries, n_indexed) if metric == 'precomputed', default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
@@ -817,9 +839,13 @@ class KNeighborsMixin:
             )
 
         elif self._fit_method == "brute":
-            # TODO: should no longer be needed once ArgKmin
-            # is extended to accept sparse and/or float32 inputs.
+            # Joblib-based backend, which is used when user-defined callable
+            # are passed for metric.
 
+            # This won't be used in the future once PairwiseDistancesReductions
+            # support:
+            #   - DistanceMetrics which work on supposedly binary data
+            #   - CSR-dense and dense-CSR case if 'euclidean' in metric.
             reduce_func = partial(
                 self._kneighbors_reduce_func,
                 n_neighbors=n_neighbors,
@@ -901,9 +927,8 @@ class KNeighborsMixin:
 
         Parameters
         ----------
-        X : array-like of shape (n_queries, n_features), \
-                or (n_queries, n_indexed) if metric == 'precomputed', \
-                default=None
+        X : {array-like, sparse matrix} of shape (n_queries, n_features), \
+            or (n_queries, n_indexed) if metric == 'precomputed', default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
@@ -1046,7 +1071,7 @@ class RadiusNeighborsMixin:
 
         Parameters
         ----------
-        X : array-like of (n_samples, n_features), default=None
+        X : {array-like, sparse matrix} of (n_samples, n_features), default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.
@@ -1152,9 +1177,13 @@ class RadiusNeighborsMixin:
             )
 
         elif self._fit_method == "brute":
-            # TODO: should no longer be needed once we have Cython-optimized
-            # implementation for radius queries, with support for sparse and/or
-            # float32 inputs.
+            # Joblib-based backend, which is used when user-defined callable
+            # are passed for metric.
+
+            # This won't be used in the future once PairwiseDistancesReductions
+            # support:
+            #   - DistanceMetrics which work on supposedly binary data
+            #   - CSR-dense and dense-CSR case if 'euclidean' in metric.
 
             # for efficiency, use squared euclidean distances
             if self.effective_metric_ == "euclidean":
@@ -1251,7 +1280,7 @@ class RadiusNeighborsMixin:
 
         Parameters
         ----------
-        X : array-like of shape (n_samples, n_features), default=None
+        X : {array-like, sparse matrix} of shape (n_samples, n_features), default=None
             The query point or points.
             If not provided, neighbors of each indexed point are returned.
             In this case, the query point is not considered its own neighbor.

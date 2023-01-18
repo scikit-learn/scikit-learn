@@ -18,7 +18,7 @@ from sklearn.utils._testing import assert_allclose_dense_sparse
 from sklearn.utils._testing import assert_array_equal
 from sklearn.utils._testing import assert_array_almost_equal
 from sklearn.utils._testing import skip_if_32bit
-from sklearn.utils.fixes import _mode
+from sklearn.utils.fixes import _mode, _eigh
 
 from sklearn.utils.extmath import density, _safe_accumulator_op
 from sklearn.utils.extmath import randomized_svd, _randomized_eigsh
@@ -47,6 +47,20 @@ def test_density():
 
     for X_ in (X_csr, X_csc, X_coo, X_lil):
         assert density(X_) == density(X)
+
+
+# TODO(1.4): Remove test
+def test_density_deprecated_kwargs():
+    """Check that future warning is raised when user enters keyword arguments."""
+    test_array = np.array([[1, 2, 3], [4, 5, 6]])
+    with pytest.warns(
+        FutureWarning,
+        match=(
+            "Additional keyword arguments are deprecated in version 1.2 and will be"
+            " removed in version 1.4."
+        ),
+    ):
+        density(test_array, a=1)
 
 
 def test_uniform_weights():
@@ -219,8 +233,8 @@ def test_randomized_eigsh_compared_to_others(k):
     )
 
     # with LAPACK
-    eigvals_lapack, eigvecs_lapack = linalg.eigh(
-        X, eigvals=(n_features - k, n_features - 1)
+    eigvals_lapack, eigvecs_lapack = _eigh(
+        X, subset_by_index=(n_features - k, n_features - 1)
     )
     indices = eigvals_lapack.argsort()[::-1]
     eigvals_lapack = eigvals_lapack[indices]
@@ -621,6 +635,30 @@ def test_cartesian():
     # check single axis
     x = np.arange(3)
     assert_array_equal(x[:, np.newaxis], cartesian((x,)))
+
+
+@pytest.mark.parametrize(
+    "arrays, output_dtype",
+    [
+        (
+            [np.array([1, 2, 3], dtype=np.int32), np.array([4, 5], dtype=np.int64)],
+            np.dtype(np.int64),
+        ),
+        (
+            [np.array([1, 2, 3], dtype=np.int32), np.array([4, 5], dtype=np.float64)],
+            np.dtype(np.float64),
+        ),
+        (
+            [np.array([1, 2, 3], dtype=np.int32), np.array(["x", "y"], dtype=object)],
+            np.dtype(object),
+        ),
+    ],
+)
+def test_cartesian_mix_types(arrays, output_dtype):
+    """Check that the cartesian product works with mixed types."""
+    output = cartesian(arrays)
+
+    assert output.dtype == output_dtype
 
 
 def test_logistic_sigmoid():

@@ -165,7 +165,7 @@ cdef void _ger(BLAS_Order order, int m, int n, floating alpha, floating *x,
             dger(&m, &n, &alpha, x, &incx, y, &incy, A, &lda)
 
 
-cpdef _ger_memview(floating alpha, floating[::1] x, floating[::] y,
+cpdef _ger_memview(floating alpha, floating[::1] x, floating[::1] y,
                    floating[:, :] A):
     cdef:
         int m = A.shape[0]

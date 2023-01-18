@@ -435,7 +435,7 @@ class GaussianProcessRegressor(MultiOutputMixin, RegressorMixin, BaseEstimator):
                 # Compute variance of predictive distribution
                 # Use einsum to avoid explicitly forming the large matrix
                 # V^T @ V just to extract its diagonal afterward.
-                y_var = self.kernel_.diag(X)
+                y_var = self.kernel_.diag(X).copy()
                 y_var -= np.einsum("ij,ji->i", V.T, V)
 
                 # Check if any of the variances is negative because of

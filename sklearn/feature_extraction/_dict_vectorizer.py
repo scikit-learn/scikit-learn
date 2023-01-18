@@ -11,16 +11,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import check_array, tosequence
-from ..utils.deprecation import deprecated
-
-
-def _tosequence(X):
-    """Turn X into a sequence or ndarray, avoiding a copy if possible."""
-    if isinstance(X, Mapping):  # single sample
-        return [X]
-    else:
-        return tosequence(X)
+from ..utils import check_array
 
 
 class DictVectorizer(TransformerMixin, BaseEstimator):
@@ -169,7 +160,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             for f, v in x.items():
                 if isinstance(v, str):
                     feature_name = "%s%s%s" % (f, self.separator, v)
-                    v = 1
                 elif isinstance(v, Number) or (v is None):
                     feature_name = f
                 elif isinstance(v, Mapping):
@@ -380,23 +370,6 @@ class DictVectorizer(TransformerMixin, BaseEstimator):
             Feature vectors; always 2-d.
         """
         return self._transform(X, fitting=False)
-
-    @deprecated(
-        "get_feature_names is deprecated in 1.0 and will be removed "
-        "in 1.2. Please use get_feature_names_out instead."
-    )
-    def get_feature_names(self):
-        """Return a list of feature names, ordered by their indices.
-
-        If one-of-K coding is applied to categorical features, this will
-        include the constructed feature names but not the original ones.
-
-        Returns
-        -------
-        feature_names_ : list of length (n_features,)
-           List containing the feature names (e.g., "f=ham" and "f=spam").
-        """
-        return self.feature_names_
 
     def get_feature_names_out(self, input_features=None):
         """Get output feature names for transformation.

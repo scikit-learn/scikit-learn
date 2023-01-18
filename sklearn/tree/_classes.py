@@ -415,7 +415,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         check_input : bool, default=True
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you're doing.
 
         Returns
         -------
@@ -464,7 +464,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         check_input : bool, default=True
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you're doing.
 
         Returns
         -------
@@ -492,7 +492,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         check_input : bool, default=True
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you're doing.
 
         Returns
         -------
@@ -878,7 +878,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         check_input : bool, default=True
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you're doing.
 
         Returns
         -------
@@ -909,7 +909,7 @@ class DecisionTreeClassifier(ClassifierMixin, BaseDecisionTree):
 
         check_input : bool, default=True
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you're doing.
 
         Returns
         -------
@@ -1236,7 +1236,7 @@ class DecisionTreeRegressor(RegressorMixin, BaseDecisionTree):
 
         check_input : bool, default=True
             Allow to bypass several input checking.
-            Don't use this parameter unless you know what you do.
+            Don't use this parameter unless you know what you're doing.
 
         Returns
         -------
