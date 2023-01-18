@@ -119,6 +119,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.mean_absolute_error",
     "sklearn.metrics.mean_squared_error",
     "sklearn.metrics.mean_tweedie_deviance",
+    "sklearn.metrics.median_absolute_error",
     "sklearn.metrics.multilabel_confusion_matrix",
     "sklearn.metrics.mutual_info_score",
     "sklearn.metrics.r2_score",
