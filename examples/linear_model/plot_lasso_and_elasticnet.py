@@ -50,6 +50,18 @@ r2_score_lasso = r2_score(y_test, y_pred_lasso)
 print("r^2 on test data : %f" % r2_score_lasso)
 
 # %%
+# ARD
+# ---------------------------------------------------
+
+from sklearn.linear_model import ARDRegression
+
+ard = ARDRegression().fit(X_train, y_train)
+
+y_pred_ard = ard.predict(X_test)
+r2_score_ard = r2_score(y_test, y_pred_ard)
+print("r^2 on test data : %f" % r2_score_ard)
+
+# %%
 # ElasticNet
 # ---------------------------------------------------
 
@@ -61,7 +73,6 @@ y_pred_enet = enet.predict(X_test)
 r2_score_enet = r2_score(y_test, y_pred_enet)
 
 print("r^2 on test data : %f" % r2_score_enet)
-
 
 # %%
 # Plot
@@ -76,6 +87,7 @@ df = pd.DataFrame(
     {
         "True weights": true_weights,
         "Lasso": lasso.coef_,
+        "ARDRegression": ard.coef_,
         "ElasticNet": enet.coef_,
     }
 )
@@ -91,6 +103,7 @@ plt.ylabel("linear model")
 plt.xlabel("coefficients")
 plt.title(
     f"Models' coefficients\nLasso $R^2$: {r2_score_lasso:.3f}, "
+    f"ARD $R^2$: {r2_score_ard:.3f}, "
     f"ElasticNet $R^2$: {r2_score_enet:.3f}"
 )
 plt.tight_layout()
