@@ -83,9 +83,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         transformed and combined in the output, and the non-specified
         columns are dropped. (default of ``'drop'``).
         By specifying ``remainder='passthrough'``, all remaining columns that
-        were not specified in `transformers` will be automatically passed
-        through. This subset of columns is concatenated with the output of
-        the transformers.
+        were not specified in `transformers`, but present in the data passed
+        to `fit` will be automatically passed through. This subset of columns
+        is concatenated with the output of the transformers. For dataframes,
+        extra columns not seen during `fit` will be excluded from the output
+        of `transform`.
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
         estimator must support :term:`fit` and :term:`transform`.
