@@ -41,6 +41,11 @@ Changes impacting all modules
   raises a `NotFittedError` if the instance is not fitted. This ensures the error is
   consistent in all estimators with the `get_feature_names_out` method.
 
+  - :class:`ensemble.StackingClassifier`
+  - :class:`ensemble.StackingRegressor`
+  - :class:`ensemble.VotingClassifier`
+  - :class:`ensemble.VotingRegressor`
+  - :class:`feature_extraction.text.TfidfTransformer`
   - :class:`kernel_approximation.AdditiveChi2Sampler`
   - :class:`preprocessing.Binarizer`
   - :class:`preprocessing.MaxAbsScaler`
@@ -51,13 +56,12 @@ Changes impacting all modules
   - :class:`preprocessing.QuantileTransformer`
   - :class:`preprocessing.RobustScaler`
   - :class:`preprocessing.StandardScaler`
-  - :class:`feature_extraction.text.TfidfTransformer`
 
   The `NotFittedError` displays an informative message asking to fit the instance
   with the appropriate arguments.
 
-  :pr:`25294` by :user:`John Pangas <jpangas>` and :pr:`25291` by
-  :user:`Rahil Parikh <rprkh>`.
+  :pr:`25294` by :user:`John Pangas <jpangas>` and :pr:`25291`, :pr:`25324`
+  by :user:`Rahil Parikh <rprkh>`.
 
 Changelog
 ---------
@@ -96,6 +100,23 @@ Changelog
   :class:`ensemble.ExtraTreesClassifier` and :class:`ensemble.ExtraTreesRegressor`.
   :pr:`25177` by :user:`Tim Head <betatim>`.
 
+- |Feature| :class:`ensemble.GradientBoostingClassifier` now exposes
+  out-of-bag scores via the `oob_scores_` or `oob_score_` attributes.
+  :pr:`24882` by :user:`Ashwin Mathur <awinml>`.
+
+:mod:`sklearn.exception`
+........................
+- |Feature| Added :class:`exception.InconsistentVersionWarning` which is raised
+  when a scikit-learn estimator is unpickled with a scikit-learn version that is
+  inconsistent with the sckit-learn verion the estimator was pickled with.
+  :pr:`25297` by `Thomas Fan`_.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Enhancement| Added the parameter `fill_value` to :class:`impute.IterativeImputer`.
+  :pr:`25232` by :user:`Thijs van Weezel <ValueInvestorThijs>`.
+
 :mod:`sklearn.feature_extraction`
 .................................
 
@@ -131,8 +152,21 @@ Changelog
   `feature_union["scalar"]`) to access transformers by name. :pr:`25093` by
   `Thomas Fan`_.
 
+- |Feature| :class:`pipeline.FeatureUnion` can now access the
+  `feature_names_in_` attribute if the `X` value seen during `.fit` has a
+  `columns` attribute and all columns are strings. e.g. when `X` is a
+  `pandas.DataFrame`
+  :pr:`25220` by :user:`Ian Thompson <it176131>`.
+
 :mod:`sklearn.preprocessing`
 ............................
+
+- |Enhancement| Adds a `feature_name_combiner` parameter to
+  :class:`preprocessing.OneHotEncoder`. This specifies a custom callable to create
+  feature names to be returned by :meth:`get_feature_names_out`.
+  The callable combines input arguments `(input_feature, category)` to a string.
+  :pr:`22506` by :user:`Mario Kostelac <mariokostelac>`.
+
 - |Enhancement| Added support for `sample_weight` in
   :class:`preprocessing.KBinsDiscretizer`. This allows specifying the parameter
   `sample_weight` for each sample to be used while fitting. The option is only

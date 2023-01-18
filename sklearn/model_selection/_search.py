@@ -1444,7 +1444,7 @@ class RandomizedSearchCV(BaseSearchCV):
     Parameters
     ----------
     estimator : estimator object
-        A object of that type is instantiated for each grid point.
+        An object of that type is instantiated for each grid point.
         This is assumed to implement the scikit-learn estimator interface.
         Either estimator needs to provide a ``score`` function,
         or ``scoring`` must be passed.
