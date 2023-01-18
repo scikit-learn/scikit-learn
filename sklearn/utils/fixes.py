@@ -163,10 +163,16 @@ def delayed(function):
     return delayed(function)
 
 
-# TODO: Remove when SciPy 1.9 is the minimum supported version
+# TODO: Remove when SciPy 1.11 is the minimum supported version
 def _mode(a, axis=0):
     if sp_version >= parse_version("1.9.0"):
-        return scipy.stats.mode(a, axis=axis, keepdims=True)
+        mode = scipy.stats.mode(a, axis=axis, keepdims=True)
+        if sp_version >= parse_version("1.10.999"):
+            # scipy.stats.mode has changed returned array shape with axis=None
+            # and keepdims=True, see https://github.com/scipy/scipy/pull/17561
+            if axis is None:
+                mode = np.ravel(mode)
+        return mode
     return scipy.stats.mode(a, axis=axis)
 
 
