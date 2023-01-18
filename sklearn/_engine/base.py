@@ -130,11 +130,11 @@ def convert_attributes(method):
 
         if convert_attributes == "sklearn_types":
             engine = self._engine_class
-            for name, attribute in vars(self).items():
+            for name, value in vars(self).items():
                 # All attributes are passed to the engine, which can
                 # either convert the value (engine specific types) or
                 # return it as is (native Python types)
-                converted = engine.convert_to_sklearn_types(name, attribute)
+                converted = engine.convert_to_sklearn_types(name, value)
                 setattr(self, name, converted)
 
             # No matter which engine was used to fit, after the attribute
