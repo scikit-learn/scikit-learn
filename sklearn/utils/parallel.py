@@ -62,6 +62,9 @@ Parallel.__doc__ = (
     ensures that the active configuration (thread-local) of scikit-learn
     is propagated to the parallel workers for the duration of the execution
     of the parallel tasks.
+
+    .. versionadded:: 1.3
+       `Parallel` was added in scikit-learn 1.3.
 """
 )
 
@@ -76,6 +79,10 @@ def delayed(function):
     thread, prior to dispatching the first task. The captured configuration is
     then propagated and enabled for the duration of the execution of the
     delayed function in the joblib workers.
+
+    .. versionchanged:: 1.3
+       `delayed` was moved from `sklearn.utils.fixes` to `sklearn.utils.parallel`
+       in scikit-learn 1.3.
 
     Parameters
     ----------
