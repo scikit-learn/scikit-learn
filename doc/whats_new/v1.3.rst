@@ -42,10 +42,6 @@ Changes impacting all modules
   consistent in all estimators with the `get_feature_names_out` method.
 
   - :class:`impute.MissingIndicator`
-  - :class:`ensemble.StackingClassifier`
-  - :class:`ensemble.StackingRegressor`
-  - :class:`ensemble.VotingClassifier`
-  - :class:`ensemble.VotingRegressor`
   - :class:`feature_extraction.DictVectorizer`
   - :class:`feature_extraction.text.TfidfTransformer`
   - :class:`kernel_approximation.AdditiveChi2Sampler`
