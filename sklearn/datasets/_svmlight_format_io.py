@@ -512,6 +512,12 @@ def dump_svmlight_file(
             raise ValueError(
                 "expected query_id of shape (n_samples,), got %r" % (query_id.shape,)
             )
+    else:
+        # NOTE: query_id is passed to Cython functions using fuse type.
+        # Yet as of Cython>=3.0, memory views can't be None otherwise the runtime
+        # would not known which concrete implementation to dispatch the Python call to.
+        # TODO: simplify interfaces and implementations in _svmlight_format_fast.pyx.
+        query_id = np.array([], dtype=np.int32)
 
     one_based = not zero_based
 
