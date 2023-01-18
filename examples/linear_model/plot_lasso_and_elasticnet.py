@@ -3,15 +3,27 @@
 Lasso and Elastic Net for Sparse Signals
 ========================================
 
-Estimates Lasso and Elastic-Net regression models on a manually generated
-sparse signal corrupted with an additive noise. Estimated coefficients are
-compared with the ground-truth.
+The present example compares three l1-based regression models on a manually
+generated sparse signal corrupted with an additive gaussian noise:
+
+ - a :ref:`lasso`;
+ - an :ref:`automatic_relevance_determination`;
+ - an :ref:`elastic_net`.
+
+We compute the :math:`R^2` score and the fitting time of the models. The
+estimated coefficients of each model are compared with the ground-truth.
 
 """
 
 # %%
-# Data Generation
-# ---------------------------------------------------
+# Generate synthetic dataset
+# --------------------------
+#
+# We generate a dataset where the number of samples is lower than the total
+# number of features. Here `X` and `y` are linearly linked: 100 of the features
+# of `X` will be used to generate `y`. Some correlations between the informative
+# features are added by means of the `effective_rank` parameter. The other
+# features are not useful at predicting `y`. Finally, gaussian noise is added.
 
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
@@ -33,50 +45,80 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 # %%
 # Lasso
-# ---------------------------------------------------
+# -----
+#
+# In this example we demo a :class:`~sklearn.linear_model.Lasso` with a fix
+# value of the regularization parameter `alpha`. To select the optimal value for
+# `alpha` we used a :class:`~sklearn.linear_model.LassoCV`. This is not shown
+# here to keep the example simple.
 
 from sklearn.linear_model import Lasso
 from sklearn.metrics import r2_score
+from time import time
 
 common_params = {
     "alpha": 0.00002,
     "max_iter": 10_000,
 }
+t0 = time()
 lasso = Lasso(**common_params).fit(X_train, y_train)
+print(f"Lasso fit done in {(time() - t0):.3f}s")
 
 y_pred_lasso = lasso.predict(X_test)
 r2_score_lasso = r2_score(y_test, y_pred_lasso)
-
-print("r^2 on test data : %f" % r2_score_lasso)
+print(f"Lasso r^2 on test data : {r2_score_lasso:.3f}")
 
 # %%
 # ARD
-# ---------------------------------------------------
+# ---
+#
+# An ARD regression is the bayesian version of the Lasso. It can produce
+# interval estimates for all of the parameters, including the error variance, if
+# required.
 
 from sklearn.linear_model import ARDRegression
 
+t0 = time()
 ard = ARDRegression().fit(X_train, y_train)
+print(f"ARD fit done in {(time() - t0):.3f}s")
 
 y_pred_ard = ard.predict(X_test)
 r2_score_ard = r2_score(y_test, y_pred_ard)
-print("r^2 on test data : %f" % r2_score_ard)
+print(f"ARD r^2 on test data : {r2_score_ard:.3f}")
 
 # %%
 # ElasticNet
-# ---------------------------------------------------
+# ----------
+#
+# Additionally to the l1-penalty, the class
+# :class:`~sklearn.linear_model.ElasticNet` introduces a l2-penalty by means of
+# the parameter `l1_ratio`.  For `l1_ratio = 0` the penalty is l2 and the model
+# is equivalent to a :class:`~sklearn.linear_model.RidgeRegression`. For
+# `l1_ratio = 1` it is an l1 penalty and the model is equivalent to a
+# :class:`~sklearn.linear_model.Lasso`.  For `0 < l1_ratio < 1`, the penalty is
+# a combination of l1 and l2.
+#
+# Similarly to the Lasso model, here we train the model with fix values for
+# `alpha` and `l1_ratio`. To select their optimal value we used an
+# :class:`~sklearn.linear_model.ElasticNetCV`, not shown here to keep the
+# example simple.
 
 from sklearn.linear_model import ElasticNet
 
+t0 = time()
 enet = ElasticNet(l1_ratio=0.8, **common_params).fit(X_train, y_train)
+print(f"ElasticNet fit done in {(time() - t0):.3f}s")
 
 y_pred_enet = enet.predict(X_test)
 r2_score_enet = r2_score(y_test, y_pred_enet)
-
-print("r^2 on test data : %f" % r2_score_enet)
+print(f"ElasticNet r^2 on test data : {r2_score_enet:.3f}")
 
 # %%
-# Plot
-# ---------------------------------------------------
+# Plot results
+# ------------
+#
+# In this section we use a heatmap to visualize the sparsity of the true
+# and estimated coefficients of the respective linear models.
 
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -107,3 +149,18 @@ plt.title(
     f"ElasticNet $R^2$: {r2_score_enet:.3f}"
 )
 plt.tight_layout()
+
+# %%
+# Conclusions
+# -----------
+#
+# Lasso is known to recover sparse data very well but does not perform well with
+# highly correlated features.
+#
+# ARD is better when handling gaussian noise, which translates in a slightly
+# better score than Lasso, but is still unable to handle correlated features and
+# requires a large amount of time due to fitting a prior.
+#
+# ElasticNet does not have a problem with correlated features but is unable to
+# recover the true generating process of sparse data as good as Lasso. In this
+# case, this is the model with the best score and lowest fitting time.
