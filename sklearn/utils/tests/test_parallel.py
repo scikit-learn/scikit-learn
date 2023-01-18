@@ -56,6 +56,7 @@ def test_parallel_delayed_warnings():
 @pytest.mark.parametrize("n_jobs", [1, 2])
 def test_dispatch_config_parallel(n_jobs):
     """Check that we properly dispatch the configuration in parallel processing.
+
     Non-regression test for:
     https://github.com/scikit-learn/scikit-learn/issues/25239
     """
