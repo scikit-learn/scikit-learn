@@ -479,11 +479,7 @@ WHITELISTED_FAILING_ESTIMATORS = [
     "SequentialFeatureSelector",
     "SparseRandomProjection",
     "SplineTransformer",
-    "StackingClassifier",
-    "StackingRegressor",
     "VarianceThreshold",
-    "VotingClassifier",
-    "VotingRegressor",
 ]
 
 
