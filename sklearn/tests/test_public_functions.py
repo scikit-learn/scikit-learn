@@ -120,6 +120,7 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.metrics.mean_tweedie_deviance",
     "sklearn.metrics.multilabel_confusion_matrix",
     "sklearn.metrics.mutual_info_score",
+    "sklearn.metrics.pairwise.additive_chi2_kernel",
     "sklearn.metrics.r2_score",
     "sklearn.metrics.roc_curve",
     "sklearn.metrics.zero_one_loss",
