@@ -13,22 +13,17 @@ compared with the ground-truth.
 # Data Generation
 # ---------------------------------------------------
 
-import numpy as np
-from sklearn.metrics import r2_score
+from sklearn.datasets import make_regression
 
-np.random.seed(42)
-
-n_samples, n_features = 50, 100
-X = np.random.randn(n_samples, n_features)
-
-# Decreasing coef w. alternated signs for visualization
-idx = np.arange(n_features)
-coef = (-1) ** idx * np.exp(-idx / 10)
-coef[10:] = 0  # sparsify coef
-y = np.dot(X, coef)
-
-# Add noise
-y += 0.01 * np.random.normal(size=n_samples)
+X, y, true_weights = make_regression(
+    n_samples=500,
+    n_features=1000,
+    n_informative=100,
+    effective_rank=15,
+    noise=1,
+    coef=True,
+    random_state=42,
+)
 
 # Split data in train set and test set
 n_samples = X.shape[0]
@@ -40,13 +35,17 @@ X_test, y_test = X[n_samples // 2 :], y[n_samples // 2 :]
 # ---------------------------------------------------
 
 from sklearn.linear_model import Lasso
+from sklearn.metrics import r2_score
 
-alpha = 0.1
-lasso = Lasso(alpha=alpha).fit(X_train, y_train)
+common_params = {
+    "alpha": 0.00002,
+    "max_iter": 10_000,
+}
+lasso = Lasso(**common_params).fit(X_train, y_train)
 
 y_pred_lasso = lasso.predict(X_test)
 r2_score_lasso = r2_score(y_test, y_pred_lasso)
-print(lasso)
+
 print("r^2 on test data : %f" % r2_score_lasso)
 
 # %%
@@ -55,11 +54,11 @@ print("r^2 on test data : %f" % r2_score_lasso)
 
 from sklearn.linear_model import ElasticNet
 
-enet = ElasticNet(alpha=alpha, l1_ratio=0.7).fit(X_train, y_train)
+enet = ElasticNet(l1_ratio=0.8, **common_params).fit(X_train, y_train)
 
 y_pred_enet = enet.predict(X_test)
 r2_score_enet = r2_score(y_test, y_pred_enet)
-print(enet)
+
 print("r^2 on test data : %f" % r2_score_enet)
 
 
@@ -74,7 +73,7 @@ from matplotlib.colors import SymLogNorm
 
 df = pd.DataFrame(
     {
-        "True weights": coef,
+        "True weights": true_weights,
         "Lasso": lasso.coef_,
         "ElasticNet": enet.coef_,
     }
