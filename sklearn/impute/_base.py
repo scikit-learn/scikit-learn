@@ -936,6 +936,9 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         # in the Imputer calling MissingIndicator
         if not self._precomputed:
             X = self._validate_input(X, in_fit=True)
+        else:
+            # only create `n_features_in_` in the precomputed case
+            self._check_n_features(X, reset=True)
 
         self._n_features = X.shape[1]
 

@@ -465,9 +465,6 @@ ESTIMATORS_WITH_GET_FEATURE_NAMES_OUT = [
 WHITELISTED_FAILING_ESTIMATORS = [
     "GaussianRandomProjection",
     "GenericUnivariateSelect",
-    "IterativeImputer",
-    "IsotonicRegression",
-    "KNNImputer",
     "RFE",
     "RFECV",
     "SelectFdr",
@@ -477,7 +474,6 @@ WHITELISTED_FAILING_ESTIMATORS = [
     "SelectKBest",
     "SelectPercentile",
     "SequentialFeatureSelector",
-    "SimpleImputer",
     "SparseRandomProjection",
     "VarianceThreshold",
 ]
