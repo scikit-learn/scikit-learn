@@ -41,12 +41,12 @@ Changes impacting all modules
   raises a `NotFittedError` if the instance is not fitted. This ensures the error is
   consistent in all estimators with the `get_feature_names_out` method.
 
-  - :class:`ensemble.StackingClassifier`
-  - :class:`ensemble.StackingRegressor`
-  - :class:`ensemble.VotingClassifier`
-  - :class:`ensemble.VotingRegressor`
   - :class:`feature_extraction.text.TfidfTransformer`
   - :class:`kernel_approximation.AdditiveChi2Sampler`
+  - :class:`impute.IterativeImputer`
+  - :class:`impute.KNNImputer`
+  - :class:`impute.SimpleImputer`
+  - :class:`isotonic.IsotonicRegression`
   - :class:`preprocessing.Binarizer`
   - :class:`preprocessing.MaxAbsScaler`
   - :class:`preprocessing.MinMaxScaler`
@@ -60,8 +60,8 @@ Changes impacting all modules
   The `NotFittedError` displays an informative message asking to fit the instance
   with the appropriate arguments.
 
-  :pr:`25294` by :user:`John Pangas <jpangas>` and :pr:`25291`, :pr:`25324`
-  by :user:`Rahil Parikh <rprkh>`.
+  :pr:`25294` by :user:`John Pangas <jpangas>` and :pr:`25291`, :pr:`25367` by
+  :user:`Rahil Parikh <rprkh>`.
 
 Changelog
 ---------
@@ -110,6 +110,12 @@ Changelog
   when a scikit-learn estimator is unpickled with a scikit-learn version that is
   inconsistent with the sckit-learn verion the estimator was pickled with.
   :pr:`25297` by `Thomas Fan`_.
+
+:mod:`sklearn.impute`
+.....................
+
+- |Enhancement| Added the parameter `fill_value` to :class:`impute.IterativeImputer`.
+  :pr:`25232` by :user:`Thijs van Weezel <ValueInvestorThijs>`.
 
 :mod:`sklearn.feature_extraction`
 .................................
