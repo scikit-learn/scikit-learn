@@ -54,13 +54,16 @@ class Parallel(joblib.Parallel):
         return super().__call__(iterable_with_config)
 
 
-Parallel.__doc__ = joblib.Parallel.__doc__ + """\
+Parallel.__doc__ = (
+    joblib.Parallel.__doc__
+    + """\
 
     Note that this scikit-learn specific subclass of joblib.Parallel
     ensures that the active configuration (thread-local) of scikit-learn
     is propagated to the parallel workers for the duration of the execution
     of the parallel tasks.
 """
+)
 
 
 # remove when https://github.com/joblib/joblib/issues/1071 is fixed
@@ -73,7 +76,7 @@ def delayed(function):
     thread, prior to dispatching the first task. The captured configuration is
     then propagated and enabled for the duration of the execution of the
     delayed function in the joblib workers.
- 
+
     Parameters
     ----------
     function : callable
