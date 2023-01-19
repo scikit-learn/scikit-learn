@@ -31,7 +31,7 @@ else
      BRANCH=$HEAD_BRANCH
 fi
 
-# Circle CI REST API return HTTP response with 202 status code even when the POST requests fail.
+# Circle CI REST API returns HTTP responses with 20x status code even when the POST requests fail.
 # Hence we add some handling so that errors are reported on GitHub.
 # For details see: https://circleci.com/docs/api/v2/index.html#operation/triggerPipeline
 CIRCLE_CI_RESPONSE=$(curl --request POST \
@@ -42,9 +42,8 @@ CIRCLE_CI_RESPONSE=$(curl --request POST \
      --header "x-attribution-login: github_actions" \
      --data \{\"branch\":\"$BRANCH\",\"parameters\":\{\"GITHUB_RUN_URL\":\"$GITHUB_RUN_URL\"\}\})
 
-echo $CIRCLE_CI_RESPONSE
 
-CIRCLE_CI_RESPONSE_MESSAGE=$(cat $CIRCLE_CI_RESPONSE | jq ".message")
+CIRCLE_CI_RESPONSE_MESSAGE=$(echo $CIRCLE_CI_RESPONSE | jq ".message")
 
 if [[ "$CIRCLE_CI_RESPONSE_MESSAGE" == "null" ]]; then
   exit 0  # No message means there was no error.
