@@ -143,6 +143,29 @@ def test_asarray_with_order_ignored():
     assert not X_new_np.flags["F_CONTIGUOUS"]
 
 
+def test_asarray_with_order_override():
+    xp = pytest.importorskip("numpy.array_api")
+    xp_ = _AdjustableNameAPITestWrapper(xp, "wrapped.array_api")
+    X = xp.asarray([1.2, 3.4, 5.1])
+
+    def _asarray_fn(array, copy, dtype):
+        return numpy.asarray(array, copy, dtype, order="F")
+
+    X_new_asarray_fn = _asarray_with_order(X, xp=xp_, _asarray_fn=_asarray_fn)
+    assert X_new_asarray_fn.flags["F_CONTIGUOUS"]
+
+
+def test_asarray_with_order_error_on_override():
+    xp = pytest.importorskip("numpy.array_api")
+    X = xp.asarray([1.2, 3.4, 5.1])
+
+    def _asarray_fn(array, copy, dtype):
+        return numpy.asarray(array, copy, dtype, order="F")
+
+    with pytest.raises(ValueError, match="_asarray_fn is only supported for"):
+        _asarray_with_order(X, xp=numpy, _asarray_fn=_asarray_fn)
+
+
 def test_convert_to_numpy_error():
     """Test convert to numpy errors for unsupported namespaces."""
     xp = pytest.importorskip("numpy.array_api")

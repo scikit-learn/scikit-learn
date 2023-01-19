@@ -641,6 +641,7 @@ def check_array(
     ensure_min_features=1,
     estimator=None,
     input_name="",
+    _asarray_fn=None,
 ):
 
     """Input validation on an array, list, sparse matrix or similar.
@@ -727,6 +728,17 @@ def check_array(
         documentation.
 
         .. versionadded:: 1.1.0
+
+    _asarray_fn : callable or None, default=None
+        If not None, this callable will be used in place of calls to
+        `np.asarray` and `xp.asarray` (where `xp` can be any array namespace
+        implementing the Array API) when the data is converted to an array
+        object. Its signature must  conform to the Array API specification for
+        `asarray`. This parameter can be used along with array libraries that
+        implement a superset of the Array API specifications and need some of
+        the extra arguments for input conversion (such as `order`).
+
+        .. versionadded:: 1.3.0
 
     Returns
     -------
@@ -865,7 +877,9 @@ def check_array(
                     # Conversion float -> int should not contain NaN or
                     # inf (numpy#14412). We cannot use casting='safe' because
                     # then conversion float -> int would be disallowed.
-                    array = _asarray_with_order(array, order=order, xp=xp)
+                    array = _asarray_with_order(
+                        array, order=order, _asarray_fn=_asarray_fn, xp=xp
+                    )
                     if array.dtype.kind == "f":
                         _assert_all_finite(
                             array,
@@ -948,12 +962,14 @@ def check_array(
             # only make a copy if `array` and `array_orig` may share memory`
             if np.may_share_memory(array, array_orig):
                 array = _asarray_with_order(
-                    array, dtype=dtype, order=order, copy=True, xp=xp
+                    array, dtype=dtype, order=order, copy=True, _asarray_fn=_asarray_fn,
+                    xp=xp
                 )
         else:
             # always make a copy for non-numpy arrays
             array = _asarray_with_order(
-                array, dtype=dtype, order=order, copy=True, xp=xp
+                array, dtype=dtype, order=order, copy=True, _asarray_fn=_asarray_fn,
+                xp=xp
             )
 
     return array
