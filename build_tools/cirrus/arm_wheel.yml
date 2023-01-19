@@ -16,10 +16,7 @@ macos_arm64_wheel_task:
     CONDA_HOME: $HOME/mambaforge
   matrix:
     - env:
-        # cibuildwheel can not test on Python 3.8 even on a Apple Silicon machine.
-        # For details see: https://github.com/pypa/cibuildwheel/pull/1169
         CIBW_BUILD: cp38-macosx_arm64
-        CIBW_TEST_SKIP: "*"
     - env:
         CIBW_BUILD: cp39-macosx_arm64
     - env:
