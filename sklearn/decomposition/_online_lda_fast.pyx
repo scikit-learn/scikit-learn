@@ -12,7 +12,7 @@ from numpy.math cimport EULER
 #  where applicable
 
 
-def mean_change(floating[:] arr_1, floating[:] arr_2):
+def mean_change(const floating[:] arr_1, const floating[:] arr_2):
     """Calculate the mean difference between two arrays.
 
     Equivalent to np.abs(arr_1 - arr2).mean().
@@ -60,7 +60,7 @@ def _dirichlet_expectation_1d(
         out[i] = exp(psi(doc_topic[i]) - psi_total)
 
 
-def _dirichlet_expectation_2d(floating[:, :] arr):
+def _dirichlet_expectation_2d(const floating[:, :] arr):
     """Dirichlet expectation for multiple samples:
     E[log(theta)] for theta ~ Dir(arr).
 
@@ -111,4 +111,4 @@ cdef floating psi(floating x) nogil:
     result += log(x) - .5 * r
     r = r * r
     result -= r * ((1./12.) - r * ((1./120.) - r * (1./252.)))
-    return result;
+    return result
