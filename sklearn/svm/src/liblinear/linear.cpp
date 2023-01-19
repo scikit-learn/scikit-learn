@@ -1897,8 +1897,12 @@ static int solve_l1r_lr(
 		if(newton_iter == 0)
 			Gnorm1_init = Gnorm1_new;
 
+		// Break outer-loop if the accumulated violation is small.
+		// Also break if no update in QP inner-loop ten times in a row.
 		if(Gnorm1_new <= eps*Gnorm1_init || QP_no_change >= 10)
 			break;
+
+		QP_no_change++;
 
 		iter = 0;
 		QP_Gmax_old = INF;
@@ -1906,9 +1910,6 @@ static int solve_l1r_lr(
 
 		for(int i=0; i<l; i++)
 			xTd[i] = 0;
-
-		// if no update in QP inner-loop ten times in a row, break outer-loop
-		QP_no_change++;
 
 		// optimize QP over wpd
 		while(iter < max_iter)
