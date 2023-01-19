@@ -44,7 +44,9 @@ X, y, true_weights = make_regression(
     random_state=42,
 )
 
-# Split data in train set and test set
+# %%
+# We split data in train set and test set for simplicity. In practice one should
+# use cross-validation to estimate the variance of the test score.
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.5, random_state=42
 )
