@@ -73,8 +73,8 @@ r2_score_lasso = r2_score(y_test, y_pred_lasso)
 print(f"Lasso r^2 on test data : {r2_score_lasso:.3f}")
 
 # %%
-# ARD
-# ---
+# Automatic Relevance Determination (ARD)
+# ---------------------------------------
 #
 # An ARD regression is the bayesian version of the Lasso. It can produce
 # interval estimates for all of the parameters, including the error variance, if
