@@ -30,6 +30,12 @@ random sampling procedures.
 - |Fix| Support `pandas.Int64` dtyped `y` for classifiers and regressors.
   :pr:`25089` by :user:`Tim Head <betatim>`.
 
+Changes impacting all modules
+-----------------------------
+
+- |Fix| Remove spurious warnings for estimators internally using neighbors search methods.
+  :pr:`25129` by :user:`Julien Jerphanion <jjerphan>`.
+
 Changelog
 ---------
 
