@@ -129,6 +129,22 @@ Changelog
 - |Fix| :class:`feature_extraction.FeatureHasher` raises an informative error
   when the input is a list of strings. :pr:`25094` by `Thomas Fan`_.
 
+:mod:`sklearn.metrics`
+.................................
+
+- |Feature| Adds `zero_division=np.nan` to multiple classification
+  metrics: :func:`precision_score`, :func:`recall_score`, :func:`f1_score`,
+  :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
+  :func:`classification_report`. When `zero_division=np.nan` and
+  there is a zero division, the metric is undefined and is excluded from averaging.
+  When not used for averages, the value returned is `np.nan`.
+  :pr:`23183` by :user:`Marc Torrellas Socastro <marctorsoc>`.
+
+- |Fix| Fixed :func:`classification_report` so that empty input will return `np.nan`
+  for `average="weighted avg"`. Previously, "macro avg" and `weighted avg` would return
+  `f1-score=np.nan` and `f1-score=0.0`, being both inconsistent.
+  :pr:`23183` by :user:`Marc Torrellas Socastro <marctorsoc>`.
+
 :mod:`sklearn.model_selection`
 ..............................
 
