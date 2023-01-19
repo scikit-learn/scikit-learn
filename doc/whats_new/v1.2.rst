@@ -51,6 +51,11 @@ Changelog
   `partial_fit` on batches of different sizes.
   :pr:`25354` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
 
+- |Fix| :class:`decomposition.DictionaryLearning` better supports readonly NumPy
+  arrays. In particular, it better supports large datasets which are memory-mapped
+  when it is used with coordinate descent algorithms (i.e. when `fit_algorithm='cd'`).
+  :pr:`25172` by :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -80,6 +85,10 @@ Changelog
 - |Fix| :meth:`preprocessing.FunctionTransformer.inverse_transform` correctly
   supports DataFrames that are all numerical when `check_inverse=True`.
   :pr:`25274` by `Thomas Fan`_.
+
+- |Fix| :meth:`preprocessing.SplineTransformer.get_feature_names_out` correctly
+  returns feature names when `extrapolations="periodic"`. :pr:`25296` by
+  `Thomas Fan`_.
 
 :mod:`sklearn.tree`
 ...................

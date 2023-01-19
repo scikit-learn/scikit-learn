@@ -76,6 +76,25 @@ def test_spline_transformer_feature_names():
     )
 
 
+@pytest.mark.parametrize(
+    "extrapolation",
+    ["constant", "linear", "continue", "periodic"],
+)
+@pytest.mark.parametrize("degree", [2, 3])
+def test_split_transform_feature_names_extrapolation_degree(extrapolation, degree):
+    """Test feature names are correct for different extrapolations and degree.
+
+    Non-regression test for gh-25292.
+    """
+    X = np.arange(20).reshape(10, 2)
+    splt = SplineTransformer(degree=degree, extrapolation=extrapolation).fit(X)
+    feature_names = splt.get_feature_names_out(["a", "b"])
+    assert len(feature_names) == splt.n_features_out_
+
+    X_trans = splt.transform(X)
+    assert X_trans.shape[1] == len(feature_names)
+
+
 @pytest.mark.parametrize("degree", range(1, 5))
 @pytest.mark.parametrize("n_knots", range(3, 5))
 @pytest.mark.parametrize("knots", ["uniform", "quantile"])
