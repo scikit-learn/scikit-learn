@@ -4,8 +4,8 @@ Species distribution modeling
 =============================
 
 Modeling species' geographic distributions is an important
-problem in conservation biology. In this example we
-model the geographic distribution of two south american
+problem in conservation biology. In this example, we
+model the geographic distribution of two South American
 mammals given past observations and 14 environmental
 variables. Since we have only positive examples (there are
 no unsuccessful observations), we cast this problem as a

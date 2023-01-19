@@ -8,6 +8,7 @@
 # License: BSD 3 clause
 
 import time
+from numbers import Integral, Real
 
 import numpy as np
 import scipy.sparse as sp
@@ -15,15 +16,16 @@ from scipy.special import expit  # logistic function
 
 from ..base import BaseEstimator
 from ..base import TransformerMixin
-from ..base import _ClassNamePrefixFeaturesOutMixin
+from ..base import ClassNamePrefixFeaturesOutMixin
 from ..utils import check_random_state
 from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
 from ..utils.extmath import log_logistic
 from ..utils.validation import check_is_fitted
+from ..utils._param_validation import Interval
 
 
-class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class BernoulliRBM(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Bernoulli Restricted Boltzmann Machine (RBM).
 
     A Restricted Boltzmann Machine with binary visible units and
@@ -125,6 +127,15 @@ class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
     >>> model.fit(X)
     BernoulliRBM(n_components=2)
     """
+
+    _parameter_constraints: dict = {
+        "n_components": [Interval(Integral, 1, None, closed="left")],
+        "learning_rate": [Interval(Real, 0, None, closed="neither")],
+        "batch_size": [Interval(Integral, 1, None, closed="left")],
+        "n_iter": [Interval(Integral, 0, None, closed="left")],
+        "verbose": ["verbose"],
+        "random_state": ["random_state"],
+    }
 
     def __init__(
         self,
@@ -274,6 +285,9 @@ class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         self : BernoulliRBM
             The fitted model.
         """
+
+        self._validate_params()
+
         first_pass = not hasattr(self, "components_")
         X = self._validate_data(
             X, accept_sparse="csr", dtype=np.float64, reset=first_pass
@@ -382,6 +396,9 @@ class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
         self : BernoulliRBM
             The fitted model.
         """
+
+        self._validate_params()
+
         X = self._validate_data(X, accept_sparse="csr", dtype=(np.float64, np.float32))
         n_samples = X.shape[0]
         rng = check_random_state(self.random_state)
@@ -430,5 +447,6 @@ class BernoulliRBM(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstim
                 "check_methods_sample_order_invariance": (
                     "fails for the score_samples method"
                 ),
-            }
+            },
+            "preserves_dtype": [np.float64, np.float32],
         }

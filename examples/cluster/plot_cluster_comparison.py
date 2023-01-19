@@ -151,7 +151,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
     # Create cluster objects
     # ============
     ms = cluster.MeanShift(bandwidth=bandwidth, bin_seeding=True)
-    two_means = cluster.MiniBatchKMeans(n_clusters=params["n_clusters"])
+    two_means = cluster.MiniBatchKMeans(n_clusters=params["n_clusters"], n_init="auto")
     ward = cluster.AgglomerativeClustering(
         n_clusters=params["n_clusters"], linkage="ward", connectivity=connectivity
     )
@@ -171,7 +171,7 @@ for i_dataset, (dataset, algo_params) in enumerate(datasets):
     )
     average_linkage = cluster.AgglomerativeClustering(
         linkage="average",
-        affinity="cityblock",
+        metric="cityblock",
         n_clusters=params["n_clusters"],
         connectivity=connectivity,
     )
