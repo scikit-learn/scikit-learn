@@ -127,15 +127,15 @@ def test_label_propagation_closed_form(global_dtype):
 
 @pytest.mark.parametrize("accepted_sparse_type", ["sparse_csr", "sparse_csc"])
 @pytest.mark.parametrize("index_dtype", [np.int32, np.int64])
-def test_input_types(accepted_sparse_type, index_dtype):
+@pytest.mark.parametrize("Estimator, parameters", ESTIMATORS)
+def test_sparse_input_types(accepted_sparse_type, index_dtype, Estimator, parameters):
     # This is non-regression test for #17085
     X = _convert_container([[1.0, 0.0], [0.0, 2.0], [1.0, 3.0]], accepted_sparse_type)
     X.indices = X.indices.astype(index_dtype, copy=False)
     X.indptr = X.indptr.astype(index_dtype, copy=False)
-    y = np.array([0, 1, -1])
-    mdl = label_propagation.LabelSpreading(kernel="rbf", max_iter=5000)
-    mdl.fit(X, y)
-    assert_array_equal(mdl.predict([[0.5, 2.5]]), np.array([1]))
+    labels = [0, 1, -1]
+    clf = Estimator(**parameters).fit(X, labels)
+    assert_array_equal(clf.predict([[0.5, 2.5]]), np.array([1]))
 
 
 @pytest.mark.parametrize("constructor_type", CONSTRUCTOR_TYPES)
