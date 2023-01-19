@@ -27,18 +27,17 @@ def csr_row_norms(X):
     """Squared L2 norm of each row in CSR matrix X."""
     if X.dtype not in [np.float32, np.float64]:
         X = X.astype(np.float64)
-    return np.asarray(_csr_row_norms(X.data, X.indices, X.indptr))
+    return _csr_row_norms(X.data, X.indices, X.indptr).base
 
 
 def _csr_row_norms(
-    floating[::1] X_data,
-    integral[::1] X_indices,
-    integral[::1] X_indptr,
+    const floating[::1] X_data,
+    const integral[::1] X_indices,
+    const integral[::1] X_indptr,
 ):
     cdef:
         integral n_samples = X_indptr.shape[0] - 1
-        integral i
-        integral j
+        integral i, j
         floating sum_
 
     dtype = np.float32 if floating is float else np.float64
