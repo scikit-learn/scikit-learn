@@ -40,6 +40,7 @@ from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 from ..utils.validation import _num_samples
 from ..utils.sparsefuncs import count_nonzero
+from ..utils._param_validation import StrOptions, validate_params
 from ..exceptions import UndefinedMetricWarning
 
 from ._base import _check_pos_label_consistency
@@ -176,6 +177,14 @@ def _nan_average(scores, weights):
         return np.average(scores)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "normalize": ["boolean"],
+        "sample_weight": ["array-like", None],
+    }
+)
 def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     """Accuracy classification score.
 
@@ -254,6 +263,15 @@ def accuracy_score(y_true, y_pred, *, normalize=True, sample_weight=None):
     return _weighted_sum(score, sample_weight, normalize)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "labels": ["array-like", None],
+        "sample_weight": ["array-like", None],
+        "normalize": [StrOptions({"true", "pred", "all"}), None],
+    }
+)
 def confusion_matrix(
     y_true, y_pred, *, labels=None, sample_weight=None, normalize=None
 ):
@@ -362,9 +380,6 @@ def confusion_matrix(
 
     check_consistent_length(y_true, y_pred, sample_weight)
 
-    if normalize not in ["true", "pred", "all", None]:
-        raise ValueError("normalize must be one of {'true', 'pred', 'all', None}")
-
     n_labels = labels.size
     # If labels are not consecutive integers starting from zero, then
     # y_true and y_pred must be converted into index form
@@ -411,6 +426,15 @@ def confusion_matrix(
     return cm
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "sample_weight": ["array-like", None],
+        "labels": ["array-like", None],
+        "samplewise": ["boolean"],
+    }
+)
 def multilabel_confusion_matrix(
     y_true, y_pred, *, sample_weight=None, labels=None, samplewise=False
 ):
@@ -620,6 +644,15 @@ def multilabel_confusion_matrix(
     return np.array([tn, fp, fn, tp]).T.reshape(-1, 2, 2)
 
 
+@validate_params(
+    {
+        "y1": ["array-like"],
+        "y2": ["array-like"],
+        "labels": ["array-like", None],
+        "weights": [StrOptions({"linear", "quadratic"}), None],
+        "sample_weight": ["array-like", None],
+    }
+)
 def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     r"""Compute Cohen's kappa: a statistic that measures inter-annotator agreement.
 
@@ -640,10 +673,10 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
 
     Parameters
     ----------
-    y1 : array of shape (n_samples,)
+    y1 : array-like of shape (n_samples,)
         Labels assigned by the first annotator.
 
-    y2 : array of shape (n_samples,)
+    y2 : array-like of shape (n_samples,)
         Labels assigned by the second annotator. The kappa statistic is
         symmetric, so swapping ``y1`` and ``y2`` doesn't change the value.
 
@@ -685,15 +718,13 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     if weights is None:
         w_mat = np.ones([n_classes, n_classes], dtype=int)
         w_mat.flat[:: n_classes + 1] = 0
-    elif weights == "linear" or weights == "quadratic":
+    else:  # "linear" or "quadratic"
         w_mat = np.zeros([n_classes, n_classes], dtype=int)
         w_mat += np.arange(n_classes)
         if weights == "linear":
             w_mat = np.abs(w_mat - w_mat.T)
         else:
             w_mat = (w_mat - w_mat.T) ** 2
-    else:
-        raise ValueError("Unknown kappa weighting type.")
 
     k = np.sum(w_mat * confusion) / np.sum(w_mat * expected)
     return 1 - k
@@ -766,13 +797,10 @@ def jaccard_score(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", 0.0, 1.0, np.nan, default="warn"
+    zero_division : "warn", {0.0, 1.0}, default="warn"
         Sets the value to return when there is a zero division, i.e. when there
-        there are no negative values in predictions and labels.
-
-        Notes:
-        - If set to "warn", this acts like 0, but a warning is also raised.
-        - If set to np.nan, such values will be excluded from the average.
+        there are no negative values in predictions and labels. If set to
+        "warn", this acts like 0, but a warning is also raised.
 
     Returns
     -------
@@ -792,7 +820,7 @@ def jaccard_score(
     :func:`jaccard_score` may be a poor metric if there are no
     positives for some samples or classes. Jaccard is undefined if there are
     no true or predicted labels, and our implementation will return a score
-    of 0 with a warning. This behaviour can be modified with `zero_division`.
+    of 0 with a warning.
 
     References
     ----------
@@ -806,14 +834,6 @@ def jaccard_score(
     >>> y_true = np.array([[0, 1, 1],
     ...                    [1, 1, 0]])
     >>> y_pred = np.array([[1, 1, 1],
-    ...                    [1, 0, 0]])
-    >>> y_true_with_empty = np.array(
-    ...                   [[0, 1, 1],
-    ...                    [0, 0, 0],
-    ...                    [1, 1, 0]])
-    >>> y_pred_with_empty = np.array(
-    ...                   [[1, 1, 1],
-    ...                    [0, 0, 0],
     ...                    [1, 0, 0]])
 
     In the binary case:
@@ -837,19 +857,10 @@ def jaccard_score(
 
     In the multiclass case:
 
-    >>> y_true = [0, 1, 2, 2]
     >>> y_pred = [0, 2, 1, 2]
+    >>> y_true = [0, 1, 2, 2]
     >>> jaccard_score(y_true, y_pred, average=None)
     array([1. , 0. , 0.33...])
-
-    Finally, see how zero_division works:
-
-    >>> jaccard_score([0, 0, 0], [0, 0, 0])
-    0...
-    >>> jaccard_score([0, 0, 0], [0, 0, 0], zero_division=1)
-    1...
-    >>> jaccard_score([0, 0, 0], [0, 0, 0], zero_division=np.nan)
-    nan...
     """
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
     samplewise = average == "samples"
@@ -887,7 +898,7 @@ def jaccard_score(
         weights = sample_weight
     else:
         weights = None
-    return _nan_average(jaccard, weights=weights)
+    return np.average(jaccard, weights=weights)
 
 
 def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
@@ -978,6 +989,14 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
         return cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "normalize": ["boolean"],
+        "sample_weight": ["array-like", None],
+    }
+)
 def zero_one_loss(y_true, y_pred, *, normalize=True, sample_weight=None):
     """Zero-one classification loss.
 
@@ -1132,13 +1151,10 @@ def f1_score(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", 0, 1 or np.nan, default="warn"
+    zero_division : "warn", 0 or 1, default="warn"
         Sets the value to return when there is a zero division, i.e. when all
-        predictions and labels are negative.
-
-        Notes:
-        - If set to "warn", this acts like 0, but a warning is also raised.
-        - If set to np.nan, such values will be excluded from the average.
+        predictions and labels are negative. If set to "warn", this acts as 0,
+        but warnings are also raised.
 
     Returns
     -------
@@ -1161,8 +1177,7 @@ def f1_score(
     When ``true positive + false negative == 0``, recall is undefined.
     In such cases, by default the metric will be set to 0, as will f-score,
     and ``UndefinedMetricWarning`` will be raised. This behavior can be
-    modified with ``zero_division``. Note that if `zero_division` is np.nan,
-    scores being np.nan will be ignored for averaging.
+    modified with ``zero_division``.
 
     References
     ----------
@@ -1171,7 +1186,6 @@ def f1_score(
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.metrics import f1_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
@@ -1183,17 +1197,10 @@ def f1_score(
     0.26...
     >>> f1_score(y_true, y_pred, average=None)
     array([0.8, 0. , 0. ])
-
-    >>> # binary classification
-    >>> y_true_empty = [0, 0, 0, 0, 0, 0]
-    >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
-    >>> f1_score(y_true_empty, y_pred_empty)
-    0.0...
-    >>> f1_score(y_true_empty, y_pred_empty, zero_division=1)
+    >>> y_true = [0, 0, 0, 0, 0, 0]
+    >>> y_pred = [0, 0, 0, 0, 0, 0]
+    >>> f1_score(y_true, y_pred, zero_division=1)
     1.0...
-    >>> f1_score(y_true_empty, y_pred_empty, zero_division=np.nan)
-    nan...
-
     >>> # multilabel classification
     >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
     >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
@@ -1292,13 +1299,10 @@ def fbeta_score(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", 0, 1 or np.nan, default="warn"
+    zero_division : "warn", 0 or 1, default="warn"
         Sets the value to return when there is a zero division, i.e. when all
-        predictions and labels are negative.
-
-        Notes:
-        - If set to "warn", this acts like 0, but a warning is also raised.
-        - If set to np.nan, such values will be excluded from the average.
+        predictions and labels are negative. If set to "warn", this acts as 0,
+        but warnings are also raised.
 
     Returns
     -------
@@ -1331,7 +1335,6 @@ def fbeta_score(
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.metrics import fbeta_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
@@ -1343,10 +1346,6 @@ def fbeta_score(
     0.23...
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
     array([0.71..., 0.        , 0.        ])
-    >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
-    >>> fbeta_score(y_true, y_pred_empty,
-    ...             average="macro", zero_division=np.nan, beta=0.5)
-    0.38...
     """
 
     _, _, f, _ = precision_recall_fscore_support(
@@ -1369,7 +1368,7 @@ def _prf_divide(
     """Performs division and handles divide-by-zero.
 
     On zero-division, sets the corresponding result elements equal to
-    0, 1 or np.nan (according to ``zero_division``). Plus, if
+    0 or 1 (according to ``zero_division``). Plus, if
     ``zero_division != "warn"`` raises a warning.
 
     The metric, modifier and average arguments are used only for determining
@@ -1383,12 +1382,11 @@ def _prf_divide(
     if not np.any(mask):
         return result
 
-    # set those with 0 denominator to `zero_division`, and 0 when "warn"
-    zero_division_value = _check_zero_division(zero_division)
-    result[mask] = zero_division_value
+    # if ``zero_division=1``, set those with denominator == 0 equal to 1
+    result[mask] = 0.0 if zero_division in ["warn", 0] else 1.0
 
-    # we assume the user will be removing warnings if zero_division is set
-    # to something different than "warn". If we are computing only f-score
+    # the user will be removing warnings if zero_division is set to something
+    # different than its default value. If we are computing only f-score
     # the warning will be raised only if precision and recall are ill-defined
     if zero_division != "warn" or metric not in warn_for:
         return result
@@ -1564,15 +1562,13 @@ def precision_recall_fscore_support(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", 0, 1 or np.nan, default="warn"
+    zero_division : "warn", 0 or 1, default="warn"
         Sets the value to return when there is a zero division:
            - recall: when there are no positive labels
            - precision: when there are no positive predictions
            - f-score: both
 
-        Notes:
-        - If set to "warn", this acts like 0, but a warning is also raised.
-        - If set to np.nan, such values will be excluded from the average.
+        If set to "warn", this acts as 0, but warnings are also raised.
 
     Returns
     -------
@@ -1635,11 +1631,9 @@ def precision_recall_fscore_support(
      array([0., 0., 1.]), array([0. , 0. , 0.8]),
      array([2, 2, 2]))
     """
-    zero_division_value = _check_zero_division(zero_division)
-
-    if beta < 0 or np.isnan(beta):
-        raise ValueError("beta should be >=0 (np.inf is ok) in the F-beta score")
-
+    _check_zero_division(zero_division)
+    if beta < 0:
+        raise ValueError("beta should be >=0 in the F-beta score")
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
 
     # Calculate tp_sum, pred_sum, true_sum ###
@@ -1678,22 +1672,37 @@ def precision_recall_fscore_support(
         if (pred_sum[true_sum == 0] == 0).any():
             _warn_prf(average, "true nor predicted", "F-score is", len(true_sum))
 
+    # if tp == 0 F will be 1 only if all predictions are zero, all labels are
+    # zero, and zero_division=1. In all other case, 0
     if np.isposinf(beta):
         f_score = recall
-    elif beta == 0:
-        f_score = precision
     else:
-        # set to zero_division_value if denom 0
-        # OR if BOTH precision and recall are ill-defined
         denom = beta2 * precision + recall
-        mask = (denom == 0.0) | ((pred_sum + true_sum) == 0)
-        denom[mask] = 1  # avoid division by 0
+
+        denom[denom == 0.0] = 1  # avoid division by 0
         f_score = (1 + beta2) * precision * recall / denom
-        f_score[mask] = zero_division_value
 
     # Average the results
     if average == "weighted":
         weights = true_sum
+        if weights.sum() == 0:
+            zero_division_value = np.float64(1.0)
+            if zero_division in ["warn", 0]:
+                zero_division_value = np.float64(0.0)
+            # precision is zero_division if there are no positive predictions
+            # recall is zero_division if there are no positive labels
+            # fscore is zero_division if all labels AND predictions are
+            # negative
+            if pred_sum.sum() == 0:
+                return (
+                    zero_division_value,
+                    zero_division_value,
+                    zero_division_value,
+                    None,
+                )
+            else:
+                return (np.float64(0.0), zero_division_value, np.float64(0.0), None)
+
     elif average == "samples":
         weights = sample_weight
     else:
@@ -1701,9 +1710,9 @@ def precision_recall_fscore_support(
 
     if average is not None:
         assert average != "binary" or len(precision) == 1
-        precision = _nan_average(precision, weights=weights)
-        recall = _nan_average(recall, weights=weights)
-        f_score = _nan_average(f_score, weights=weights)
+        precision = np.average(precision, weights=weights)
+        recall = np.average(recall, weights=weights)
+        f_score = np.average(f_score, weights=weights)
         true_sum = None  # return no support
 
     return precision, recall, f_score, true_sum
@@ -1952,12 +1961,9 @@ def precision_score(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", 0 or 1 or np.nan, default="warn"
-        Sets the value to return when there is a zero division.
-
-        Notes:
-        - If set to "warn", this acts like 0, but a warning is also raised.
-        - If set to np.nan, such values will be excluded from the average.
+    zero_division : "warn", 0 or 1, default="warn"
+        Sets the value to return when there is a zero division. If set to
+        "warn", this acts as 0, but warnings are also raised.
 
     Returns
     -------
@@ -1987,7 +1993,6 @@ def precision_score(
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.metrics import precision_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
@@ -2004,9 +2009,6 @@ def precision_score(
     array([0.33..., 0.        , 0.        ])
     >>> precision_score(y_true, y_pred, average=None, zero_division=1)
     array([0.33..., 1.        , 1.        ])
-    >>> precision_score(y_true, y_pred, average=None, zero_division=np.nan)
-    array([0.33...,        nan,        nan])
-
     >>> # multilabel classification
     >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
     >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
@@ -2101,12 +2103,9 @@ def recall_score(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", 0, 1 or np.nan, default="warn"
-        Sets the value to return when there is a zero division.
-
-        Notes:
-        - If set to "warn", this acts like 0, but a warning is also raised.
-        - If set to np.nan, such values will be excluded from the average.
+    zero_division : "warn", 0 or 1, default="warn"
+        Sets the value to return when there is a zero division. If set to
+        "warn", this acts as 0, but warnings are also raised.
 
     Returns
     -------
@@ -2138,7 +2137,6 @@ def recall_score(
 
     Examples
     --------
-    >>> import numpy as np
     >>> from sklearn.metrics import recall_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
@@ -2155,9 +2153,6 @@ def recall_score(
     array([0.5, 0. , 0. ])
     >>> recall_score(y_true, y_pred, average=None, zero_division=1)
     array([0.5, 1. , 1. ])
-    >>> recall_score(y_true, y_pred, average=None, zero_division=np.nan)
-    array([0.5, nan, nan])
-
     >>> # multilabel classification
     >>> y_true = [[0, 0, 0], [1, 1, 1], [0, 1, 1]]
     >>> y_pred = [[0, 0, 0], [1, 1, 1], [1, 1, 0]]
@@ -2177,6 +2172,14 @@ def recall_score(
     return r
 
 
+@validate_params(
+    {
+        "y_true": ["array-like"],
+        "y_pred": ["array-like"],
+        "sample_weight": ["array-like", None],
+        "adjusted": ["boolean"],
+    }
+)
 def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=False):
     """Compute the balanced accuracy.
 
@@ -2192,10 +2195,10 @@ def balanced_accuracy_score(y_true, y_pred, *, sample_weight=None, adjusted=Fals
 
     Parameters
     ----------
-    y_true : 1d array-like
+    y_true : array-like of shape (n_samples,)
         Ground truth (correct) target values.
 
-    y_pred : 1d array-like
+    y_pred : array-like of shape (n_samples,)
         Estimated targets as returned by a classifier.
 
     sample_weight : array-like of shape (n_samples,), default=None
@@ -2303,7 +2306,7 @@ def classification_report(
 
         .. versionadded:: 0.20
 
-    zero_division : "warn", 0, 1 or np.nan, default="warn"
+    zero_division : "warn", 0 or 1, default="warn"
         Sets the value to return when there is a zero division. If set to
         "warn", this acts as 0, but warnings are also raised.
 
@@ -2426,7 +2429,7 @@ def classification_report(
     if output_dict:
         report_dict = {label[0]: label[1:] for label in rows}
         for label, scores in report_dict.items():
-            report_dict[label] = dict(zip(headers, map(float, scores)))
+            report_dict[label] = dict(zip(headers, [i.item() for i in scores]))
     else:
         longest_last_line_heading = "weighted avg"
         name_width = max(len(cn) for cn in target_names)
@@ -2458,7 +2461,7 @@ def classification_report(
         avg = [avg_p, avg_r, avg_f1, np.sum(s)]
 
         if output_dict:
-            report_dict[line_heading] = dict(zip(headers, map(float, avg)))
+            report_dict[line_heading] = dict(zip(headers, [i.item() for i in avg]))
         else:
             if line_heading == "accuracy":
                 row_fmt_accuracy = (
@@ -2481,6 +2484,13 @@ def classification_report(
         return report
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "sample_weight": ["array-like", None],
+    }
+)
 def hamming_loss(y_true, y_pred, *, sample_weight=None):
     """Compute the average Hamming loss.
 
@@ -2576,7 +2586,7 @@ def hamming_loss(y_true, y_pred, *, sample_weight=None):
 
 
 def log_loss(
-    y_true, y_pred, *, eps=1e-15, normalize=True, sample_weight=None, labels=None
+    y_true, y_pred, *, eps="auto", normalize=True, sample_weight=None, labels=None
 ):
     r"""Log loss, aka logistic loss or cross-entropy loss.
 
@@ -2607,9 +2617,16 @@ def log_loss(
         ordered alphabetically, as done by
         :class:`preprocessing.LabelBinarizer`.
 
-    eps : float, default=1e-15
+    eps : float or "auto", default="auto"
         Log loss is undefined for p=0 or p=1, so probabilities are
-        clipped to max(eps, min(1 - eps, p)).
+        clipped to `max(eps, min(1 - eps, p))`. The default will depend on the
+        data type of `y_pred` and is set to `np.finfo(y_pred.dtype).eps`.
+
+        .. versionadded:: 1.2
+
+        .. versionchanged:: 1.2
+           The default value changed from `1e-15` to `"auto"` that is
+           equivalent to `np.finfo(y_pred.dtype).eps`.
 
     normalize : bool, default=True
         If true, return the mean loss per sample.
@@ -2646,9 +2663,12 @@ def log_loss(
     ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
     0.21616...
     """
-    y_pred = check_array(y_pred, ensure_2d=False)
-    check_consistent_length(y_pred, y_true, sample_weight)
+    y_pred = check_array(
+        y_pred, ensure_2d=False, dtype=[np.float64, np.float32, np.float16]
+    )
+    eps = np.finfo(y_pred.dtype).eps if eps == "auto" else eps
 
+    check_consistent_length(y_pred, y_true, sample_weight)
     lb = LabelBinarizer()
 
     if labels is not None:
@@ -2801,7 +2821,6 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     y_true_unique = np.unique(labels if labels is not None else y_true)
 
     if y_true_unique.size > 2:
-
         if pred_decision.ndim <= 1:
             raise ValueError(
                 "The shape of pred_decision cannot be 1d array"

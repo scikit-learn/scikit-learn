@@ -66,6 +66,7 @@ X.head()
 # Our target for prediction: the wage.
 # Wages are described as floating-point number in dollars per hour.
 
+# %%
 y = survey.target.values.ravel()
 survey.target.head()
 
@@ -168,30 +169,31 @@ model.fit(X_train, y_train)
 # for example, the median absolute error of the model.
 
 from sklearn.metrics import median_absolute_error
+from sklearn.metrics import PredictionErrorDisplay
 
-y_pred = model.predict(X_train)
-
-mae = median_absolute_error(y_train, y_pred)
-string_score = f"MAE on training set: {mae:.2f} $/hour"
+mae_train = median_absolute_error(y_train, model.predict(X_train))
 y_pred = model.predict(X_test)
-mae = median_absolute_error(y_test, y_pred)
-string_score += f"\nMAE on testing set: {mae:.2f} $/hour"
+mae_test = median_absolute_error(y_test, y_pred)
+scores = {
+    "MedAE on training set": f"{mae_train:.2f} $/hour",
+    "MedAE on testing set": f"{mae_test:.2f} $/hour",
+}
 
 # %%
-fig, ax = plt.subplots(figsize=(5, 5))
-plt.scatter(y_test, y_pred)
-ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
-plt.text(3, 20, string_score)
-plt.title("Ridge model, small regularization")
-plt.ylabel("Model predictions")
-plt.xlabel("Truths")
-plt.xlim([0, 27])
-_ = plt.ylim([0, 27])
+_, ax = plt.subplots(figsize=(5, 5))
+display = PredictionErrorDisplay.from_predictions(
+    y_test, y_pred, kind="actual_vs_predicted", ax=ax, scatter_kwargs={"alpha": 0.5}
+)
+ax.set_title("Ridge model, small regularization")
+for name, score in scores.items():
+    ax.plot([], [], " ", label=f"{name}: {score}")
+ax.legend(loc="upper left")
+plt.tight_layout()
 
 # %%
 # The model learnt is far from being a good model making accurate predictions:
 # this is obvious when looking at the plot above, where good predictions
-# should lie on the red line.
+# should lie on the black dashed line.
 #
 # In the following section, we will interpret the coefficients of the model.
 # While we do so, we should keep in mind that any conclusion we draw is
@@ -330,7 +332,7 @@ coefs = pd.DataFrame(
 
 # %%
 plt.figure(figsize=(9, 7))
-sns.stripplot(data=coefs, orient="h", color="k", alpha=0.5)
+sns.stripplot(data=coefs, orient="h", palette="dark:k", alpha=0.5)
 sns.boxplot(data=coefs, orient="h", color="cyan", saturation=0.5, whis=10)
 plt.axvline(x=0, color=".5")
 plt.xlabel("Coefficient importance")
@@ -389,7 +391,7 @@ coefs = pd.DataFrame(
 
 # %%
 plt.figure(figsize=(9, 7))
-sns.stripplot(data=coefs, orient="h", color="k", alpha=0.5)
+sns.stripplot(data=coefs, orient="h", palette="dark:k", alpha=0.5)
 sns.boxplot(data=coefs, orient="h", color="cyan", saturation=0.5)
 plt.axvline(x=0, color=".5")
 plt.title("Coefficient importance and its variability")
@@ -437,25 +439,23 @@ model.fit(X_train, y_train)
 # model using, for example, the median absolute error of the model and the R
 # squared coefficient.
 
-y_pred = model.predict(X_train)
-mae = median_absolute_error(y_train, y_pred)
-string_score = f"MAE on training set: {mae:.2f} $/hour"
+mae_train = median_absolute_error(y_train, model.predict(X_train))
 y_pred = model.predict(X_test)
-mae = median_absolute_error(y_test, y_pred)
-string_score += f"\nMAE on testing set: {mae:.2f} $/hour"
+mae_test = median_absolute_error(y_test, y_pred)
+scores = {
+    "MedAE on training set": f"{mae_train:.2f} $/hour",
+    "MedAE on testing set": f"{mae_test:.2f} $/hour",
+}
 
-# %%
-fig, ax = plt.subplots(figsize=(6, 6))
-plt.scatter(y_test, y_pred)
-ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
-
-plt.text(3, 20, string_score)
-
-plt.title("Ridge model, small regularization, normalized variables")
-plt.ylabel("Model predictions")
-plt.xlabel("Truths")
-plt.xlim([0, 27])
-_ = plt.ylim([0, 27])
+_, ax = plt.subplots(figsize=(5, 5))
+display = PredictionErrorDisplay.from_predictions(
+    y_test, y_pred, kind="actual_vs_predicted", ax=ax, scatter_kwargs={"alpha": 0.5}
+)
+ax.set_title("Ridge model, small regularization")
+for name, score in scores.items():
+    ax.plot([], [], " ", label=f"{name}: {score}")
+ax.legend(loc="upper left")
+plt.tight_layout()
 
 # %%
 # For the coefficient analysis, scaling is not needed this time because it
@@ -492,7 +492,7 @@ coefs = pd.DataFrame(
 
 # %%
 plt.figure(figsize=(9, 7))
-sns.stripplot(data=coefs, orient="h", color="k", alpha=0.5)
+sns.stripplot(data=coefs, orient="h", palette="dark:k", alpha=0.5)
 sns.boxplot(data=coefs, orient="h", color="cyan", saturation=0.5, whis=10)
 plt.axvline(x=0, color=".5")
 plt.title("Coefficient variability")
@@ -533,26 +533,23 @@ model[-1].regressor_.alpha_
 
 # %%
 # Then we check the quality of the predictions.
-
-y_pred = model.predict(X_train)
-mae = median_absolute_error(y_train, y_pred)
-string_score = f"MAE on training set: {mae:.2f} $/hour"
+mae_train = median_absolute_error(y_train, model.predict(X_train))
 y_pred = model.predict(X_test)
-mae = median_absolute_error(y_test, y_pred)
-string_score += f"\nMAE on testing set: {mae:.2f} $/hour"
+mae_test = median_absolute_error(y_test, y_pred)
+scores = {
+    "MedAE on training set": f"{mae_train:.2f} $/hour",
+    "MedAE on testing set": f"{mae_test:.2f} $/hour",
+}
 
-# %%
-fig, ax = plt.subplots(figsize=(6, 6))
-plt.scatter(y_test, y_pred)
-ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
-
-plt.text(3, 20, string_score)
-
-plt.title("Ridge model, optimum regularization, normalized variables")
-plt.ylabel("Model predictions")
-plt.xlabel("Truths")
-plt.xlim([0, 27])
-_ = plt.ylim([0, 27])
+_, ax = plt.subplots(figsize=(5, 5))
+display = PredictionErrorDisplay.from_predictions(
+    y_test, y_pred, kind="actual_vs_predicted", ax=ax, scatter_kwargs={"alpha": 0.5}
+)
+ax.set_title("Ridge model, optimum regularization")
+for name, score in scores.items():
+    ax.plot([], [], " ", label=f"{name}: {score}")
+ax.legend(loc="upper left")
+plt.tight_layout()
 
 # %%
 # The ability to reproduce the data of the regularized model is similar to
@@ -640,25 +637,23 @@ model[-1].regressor_.alpha_
 # %%
 # Then we check the quality of the predictions.
 
-y_pred = model.predict(X_train)
-mae = median_absolute_error(y_train, y_pred)
-string_score = f"MAE on training set: {mae:.2f} $/hour"
+mae_train = median_absolute_error(y_train, model.predict(X_train))
 y_pred = model.predict(X_test)
-mae = median_absolute_error(y_test, y_pred)
-string_score += f"\nMAE on testing set: {mae:.2f} $/hour"
+mae_test = median_absolute_error(y_test, y_pred)
+scores = {
+    "MedAE on training set": f"{mae_train:.2f} $/hour",
+    "MedAE on testing set": f"{mae_test:.2f} $/hour",
+}
 
-# %%
-fig, ax = plt.subplots(figsize=(6, 6))
-plt.scatter(y_test, y_pred)
-ax.plot([0, 1], [0, 1], transform=ax.transAxes, ls="--", c="red")
-
-plt.text(3, 20, string_score)
-
-plt.title("Lasso model, regularization, normalized variables")
-plt.ylabel("Model predictions")
-plt.xlabel("Truths")
-plt.xlim([0, 27])
-_ = plt.ylim([0, 27])
+_, ax = plt.subplots(figsize=(6, 6))
+display = PredictionErrorDisplay.from_predictions(
+    y_test, y_pred, kind="actual_vs_predicted", ax=ax, scatter_kwargs={"alpha": 0.5}
+)
+ax.set_title("Lasso model, optimum regularization")
+for name, score in scores.items():
+    ax.plot([], [], " ", label=f"{name}: {score}")
+ax.legend(loc="upper left")
+plt.tight_layout()
 
 # %%
 # For our dataset, again the model is not very predictive.
@@ -699,7 +694,7 @@ coefs = pd.DataFrame(
 
 # %%
 plt.figure(figsize=(9, 7))
-sns.stripplot(data=coefs, orient="h", color="k", alpha=0.5)
+sns.stripplot(data=coefs, orient="h", palette="dark:k", alpha=0.5)
 sns.boxplot(data=coefs, orient="h", color="cyan", saturation=0.5, whis=100)
 plt.axvline(x=0, color=".5")
 plt.title("Coefficient variability")
@@ -708,6 +703,43 @@ plt.subplots_adjust(left=0.3)
 # %%
 # We observe that the AGE and EXPERIENCE coefficients are varying a lot
 # depending of the fold.
+#
+# Wrong causal interpretation
+# ---------------------------
+#
+# Policy makers might want to know the effect of education on wage to assess
+# whether or not a certain policy designed to entice people to pursue more
+# education would make economic sense. While Machine Learning models are great
+# for measuring statistical associations, they are generally unable to infer
+# causal effects.
+#
+# It might be tempting to look at the coefficient of education on wage from our
+# last model (or any model for that matter) and conclude that it captures the
+# true effect of a change in the standardized education variable on wages.
+#
+# Unfortunately there are likely unobserved confounding variables that either
+# inflate or deflate that coefficient. A confounding variable is a variable that
+# causes both EDUCATION and WAGE. One example of such variable is ability.
+# Presumably, more able people are more likely to pursue education while at the
+# same time being more likely to earn a higher hourly wage at any level of
+# education. In this case, ability induces a positive `Omitted Variable Bias
+# <https://en.wikipedia.org/wiki/Omitted-variable_bias>`_ (OVB) on the EDUCATION
+# coefficient, thereby exaggerating the effect of education on wages.
+#
+# See the :ref:`sphx_glr_auto_examples_inspection_plot_causal_interpretation.py`
+# for a simulated case of ability OVB.
+#
+# Warning: data and model quality
+# -------------------------------
+#
+# Keep in mind that the outcome `y` and features `X` are the product
+# of a data generating process that is hidden from us. Machine
+# learning models are trained to approximate the unobserved
+# mathematical function that links `X` to `y` from sample data. As a
+# result, any interpretation made about a model may not necessarily
+# generalize to the true data generating process. This is especially
+# true when the model is of bad quality or when the sample data is
+# not representative of the population.
 #
 # Lessons learned
 # ---------------
@@ -724,3 +756,7 @@ plt.subplots_adjust(left=0.3)
 #   coefficients could significantly vary from one another.
 # * Inspecting coefficients across the folds of a cross-validation loop
 #   gives an idea of their stability.
+# * Coefficients are unlikely to have any causal meaning. They tend
+#   to be biased by unobserved confounders.
+# * Inspection tools may not necessarily provide insights on the true
+#   data generating process.

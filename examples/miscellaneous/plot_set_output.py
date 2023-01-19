@@ -22,7 +22,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, random_sta
 X_train.head()
 
 # %%
-# To configure an estimator such as :class:`preprocessing.StandardScalar` to return
+# To configure an estimator such as :class:`preprocessing.StandardScaler` to return
 # DataFrames, call `set_output`. This feature requires pandas to be installed.
 
 from sklearn.preprocessing import StandardScaler
@@ -60,7 +60,7 @@ clf.fit(X_train, y_train)
 
 # %%
 # Each transformer in the pipeline is configured to return DataFrames. This
-# means that the final logistic regression step contain the feature names.
+# means that the final logistic regression step contains the feature names of the input.
 clf[-1].feature_names_in_
 
 # %%
@@ -75,7 +75,7 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y)
 
 # %%
 # The `set_output` API can be configured globally by using :func:`set_config` and
-# setting the `transform_output` to `"pandas"`.
+# setting `transform_output` to `"pandas"`.
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.impute import SimpleImputer
@@ -84,9 +84,10 @@ from sklearn import set_config
 set_config(transform_output="pandas")
 
 num_pipe = make_pipeline(SimpleImputer(), StandardScaler())
+num_cols = ["age", "fare"]
 ct = ColumnTransformer(
     (
-        ("numerical", num_pipe, ["age", "fare"]),
+        ("numerical", num_pipe, num_cols),
         (
             "categorical",
             OneHotEncoder(
@@ -109,3 +110,29 @@ import pandas as pd
 log_reg = clf[-1]
 coef = pd.Series(log_reg.coef_.ravel(), index=log_reg.feature_names_in_)
 _ = coef.sort_values().plot.barh()
+
+# %%
+# This resets `transform_output` to its default value to avoid impacting other
+# examples when generating the scikit-learn documentation
+set_config(transform_output="default")
+
+# %%
+# When configuring the output type with :func:`config_context` the
+# configuration at the time when `transform` or `fit_transform` are
+# called is what counts. Setting these only when you construct or fit
+# the transformer has no effect.
+from sklearn import config_context
+
+scaler = StandardScaler()
+scaler.fit(X_train[num_cols])
+
+# %%
+with config_context(transform_output="pandas"):
+    # the output of transform will be a Pandas DataFrame
+    X_test_scaled = scaler.transform(X_test[num_cols])
+X_test_scaled.head()
+
+# %%
+# outside of the context manager, the output will be a NumPy array
+X_test_scaled = scaler.transform(X_test[num_cols])
+X_test_scaled[:5]

@@ -199,3 +199,64 @@ def test_auto_wrap_output_keys_errors_with_incorrect_input():
 
         class BadEstimator(_SetOutputMixin, auto_wrap_output_keys="bad_parameter"):
             pass
+
+
+class AnotherMixin:
+    def __init_subclass__(cls, custom_parameter, **kwargs):
+        super().__init_subclass__(**kwargs)
+        cls.custom_parameter = custom_parameter
+
+
+def test_set_output_mixin_custom_mixin():
+    """Check that multiple init_subclasses passes parameters up."""
+
+    class BothMixinEstimator(_SetOutputMixin, AnotherMixin, custom_parameter=123):
+        def transform(self, X, y=None):
+            return X
+
+        def get_feature_names_out(self, input_features=None):
+            return input_features
+
+    est = BothMixinEstimator()
+    assert est.custom_parameter == 123
+    assert hasattr(est, "set_output")
+
+
+def test__wrap_in_pandas_container_column_errors():
+    """If a callable `columns` errors, it has the same semantics as columns=None."""
+    pd = pytest.importorskip("pandas")
+
+    def get_columns():
+        raise ValueError("No feature names defined")
+
+    X_df = pd.DataFrame({"feat1": [1, 2, 3], "feat2": [3, 4, 5]})
+
+    X_wrapped = _wrap_in_pandas_container(X_df, columns=get_columns)
+    assert_array_equal(X_wrapped.columns, X_df.columns)
+
+    X_np = np.asarray([[1, 3], [2, 4], [3, 5]])
+    X_wrapped = _wrap_in_pandas_container(X_np, columns=get_columns)
+    assert_array_equal(X_wrapped.columns, range(X_np.shape[1]))
+
+
+def test_set_output_mro():
+    """Check that multi-inheritance resolves to the correct class method.
+
+    Non-regression test gh-25293.
+    """
+
+    class Base(_SetOutputMixin):
+        def transform(self, X):
+            return "Base"  # noqa
+
+    class A(Base):
+        pass
+
+    class B(Base):
+        def transform(self, X):
+            return "B"
+
+    class C(A, B):
+        pass
+
+    assert C().transform(None) == "B"

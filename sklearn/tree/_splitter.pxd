@@ -55,7 +55,7 @@ cdef class Splitter:
     cdef SIZE_t end                      # End position for the current node
 
     cdef const DOUBLE_t[:, ::1] y
-    cdef DOUBLE_t* sample_weight
+    cdef const DOUBLE_t[:] sample_weight
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
@@ -74,16 +74,26 @@ cdef class Splitter:
     # This allows optimization with depth-based tree building.
 
     # Methods
-    cdef int init(self, object X, const DOUBLE_t[:, ::1] y,
-                  DOUBLE_t* sample_weight) except -1
+    cdef int init(
+        self,
+        object X,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight
+    ) except -1
 
-    cdef int node_reset(self, SIZE_t start, SIZE_t end,
-                        double* weighted_n_node_samples) nogil except -1
+    cdef int node_reset(
+        self,
+        SIZE_t start,
+        SIZE_t end,
+        double* weighted_n_node_samples
+    ) nogil except -1
 
-    cdef int node_split(self,
-                        double impurity,   # Impurity of the node
-                        SplitRecord* split,
-                        SIZE_t* n_constant_features) nogil except -1
+    cdef int node_split(
+        self,
+        double impurity,   # Impurity of the node
+        SplitRecord* split,
+        SIZE_t* n_constant_features
+    ) nogil except -1
 
     cdef void node_value(self, double* dest) nogil
 

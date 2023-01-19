@@ -196,6 +196,23 @@ def test_pairwise_distances(global_dtype):
         pairwise_distances(X, Y, metric="blah")
 
 
+# TODO(1.4): Remove test when `sum_over_features` parameter is removed
+@pytest.mark.parametrize("sum_over_features", [True, False])
+def test_manhattan_distances_deprecated_sum_over_features(sum_over_features):
+    # Check that future warning is raised when user
+    # enters `sum_over_features` argument.
+    X = [[1, 2], [3, 4]]
+    Y = [[1, 2], [0, 3]]
+    with pytest.warns(
+        FutureWarning,
+        match=(
+            "`sum_over_features` is deprecated in version 1.2 and will be"
+            " removed in version 1.4."
+        ),
+    ):
+        manhattan_distances(X, Y, sum_over_features=sum_over_features)
+
+
 @pytest.mark.parametrize("metric", PAIRWISE_BOOLEAN_FUNCTIONS)
 def test_pairwise_boolean_distance(metric):
     # test that we convert to boolean arrays for boolean distances

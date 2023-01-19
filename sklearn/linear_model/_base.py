@@ -76,15 +76,6 @@ def _deprecate_normalize(normalize, estimator_name):
 
     Notes
     -----
-    This function should be updated in 1.2 depending on the value of
-    `normalize`:
-    - True, warning: `normalize` was deprecated in 1.2 and will be removed in
-      1.4. Suggest to use pipeline instead.
-    - False, `normalize` was deprecated in 1.2 and it will be removed in 1.4.
-      Leave normalize to its default value.
-    - `deprecated` - this should only be possible with default == False as from
-      1.2 `normalize` in all the linear models should be either removed or the
-      default should be set to False.
     This function should be completely removed in 1.4.
     """
 
@@ -860,7 +851,7 @@ def _pre_fit(
         Xy = None  # cannot use Xy if precompute is not Gram
 
     if hasattr(precompute, "__array__") and Xy is None:
-        common_dtype = np.find_common_type([X.dtype, y.dtype], [])
+        common_dtype = np.result_type(X.dtype, y.dtype)
         if y.ndim == 1:
             # Xy is 1d, make sure it is contiguous.
             Xy = np.empty(shape=n_features, dtype=common_dtype, order="C")

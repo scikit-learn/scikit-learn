@@ -174,7 +174,13 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         idx_selected = slice(None, None, max(1, X.shape[0] // 100))
         X_round_trip = self.inverse_transform(self.transform(X[idx_selected]))
 
-        if not np.issubdtype(X.dtype, np.number):
+        if hasattr(X, "dtype"):
+            dtypes = [X.dtype]
+        elif hasattr(X, "dtypes"):
+            # Dataframes can have multiple dtypes
+            dtypes = X.dtypes
+
+        if not all(np.issubdtype(d, np.number) for d in dtypes):
             raise ValueError(
                 "'check_inverse' is only supported when all the elements in `X` is"
                 " numerical."
@@ -316,12 +322,11 @@ class FunctionTransformer(TransformerMixin, BaseEstimator):
         Parameters
         ----------
         transform : {"default", "pandas"}, default=None
-            Configure output of the following estimator's methods:
+            Configure output of `transform` and `fit_transform`.
 
-            - `"transform"`
-            - `"fit_transform"`
-
-            If `None`, this operation is a no-op.
+            - `"default"`: Default output format of a transformer
+            - `"pandas"`: DataFrame output
+            - `None`: Transform configuration is unchanged
 
         Returns
         -------
