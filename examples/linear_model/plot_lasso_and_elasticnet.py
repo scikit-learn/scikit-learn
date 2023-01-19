@@ -56,9 +56,10 @@ X_train, X_test, y_train, y_test = train_test_split(
 # -----
 #
 # In this example we demo a :class:`~sklearn.linear_model.Lasso` with a fix
-# value of the regularization parameter `alpha`. To select the optimal value for
-# `alpha` we used a :class:`~sklearn.linear_model.LassoCV`. This is not shown
-# here to keep the example simple.
+# value of the regularization parameter `alpha`. In practice, the optimal
+# parameter `alpha` should be selected using cross-validation by using
+# :class:`~sklearn.linear_model.LassoCV`. To keep the example simple and fast to
+# execute, we directly set the optimal value for alpha here.
 from sklearn.linear_model import Lasso
 from sklearn.metrics import r2_score
 from time import time
@@ -94,16 +95,17 @@ print(f"ARD r^2 on test data : {r2_score_ard:.3f}")
 # ElasticNet
 # ----------
 #
-# Additionally to the l1-penalty, the class
-# :class:`~sklearn.linear_model.ElasticNet` introduces a l2-penalty by means of
-# the parameter `l1_ratio`.  For `l1_ratio = 0` the penalty is l2 and the model
-# is equivalent to a :class:`~sklearn.linear_model.RidgeRegression`. For
-# `l1_ratio = 1` it is an l1 penalty and the model is equivalent to a
-# :class:`~sklearn.linear_model.Lasso`.  For `0 < l1_ratio < 1`, the penalty is
-# a combination of l1 and l2.
+# :class:`~sklearn.linear_model.ElasticNet` is a middle ground between
+# :class:`~sklearn.linear_model.Lasso` and :class:`~sklearn.linear_model.Ridge`,
+# as it combines a l1 and a l2-penalty. The ammount of regularization is
+# controlled by the two hyperparameters `l1_ratio` and `alpha`. For `l1_ratio =
+# 0` the penalty is pure l2 and the model is equivalent to a
+# :class:`~sklearn.linear_model.Ridge`. Similarly, `l1_ratio = 1` is a pure l1
+# penalty and the model is equivalent to a :class:`~sklearn.linear_model.Lasso`.
+# For `0 < l1_ratio < 1`, the penalty is a combination of l1 and l2.
 #
-# Similarly to the Lasso model, here we train the model with fix values for
-# `alpha` and `l1_ratio`. To select their optimal value we used an
+# As done before, we train the model with fix values for `alpha` and `l1_ratio`.
+# To select their optimal value we used an
 # :class:`~sklearn.linear_model.ElasticNetCV`, not shown here to keep the
 # example simple.
 
@@ -158,19 +160,21 @@ plt.tight_layout()
 # Conclusions
 # -----------
 #
-# :class:`~sklearn.linear_model.Lasso` is known to recover sparse data very well
-# but does not perform well with highly correlated features. Indeed, if several
-# correlated features contribute to the target, :class:`~sklearn.linear_model.Lasso`
-# will end-up selecting a single one.
+# :class:`~sklearn.linear_model.Lasso` is known to recover sparse data
+# effectively but does not perform well with highly correlated features. Indeed,
+# if several correlated features contribute to the target,
+# :class:`~sklearn.linear_model.Lasso` would end up selecting a single one of
+# them.
 #
 # :class:`~sklearn.linear_model.ARDRegression` is better when handling gaussian
 # noise, which translates in a slightly better score than Lasso, but is still
 # unable to handle correlated features and requires a large amount of time due
 # to fitting a prior.
 #
-# :class:`~sklearn.linear_model.ElasticNet` does not have a problem with
-# correlated features but is unable to recover the true generating process of
-# sparse data as good as Lasso. In this case, this is the model with the best
-# score and lowest fitting time. In the absence of correlations, an
-# :class:`~sklearn.linear_model.ElasticNetCV` would find an optimal `l1_ratio =
-# 1`, i.e. the optimal model would be a :class:`~sklearn.linear_model.Lasso`.
+# :class:`~sklearn.linear_model.ElasticNet` introduces some sparsity on the
+# coefficients and shrinks their values to zero. Thus, if there are correlated
+# features that contribute to the target, the model would still be able to
+# reduce their weights without setting them exactly to zero. In this case,
+# :class:`~sklearn.linear_model.ElasticNet` yields the model with the best
+# score. In the case of sparse yet non-correlated features, a
+# :class:`~sklearn.linear_model.Lasso` model would be more suitable.
