@@ -920,7 +920,7 @@ class ClassNamePrefixFeaturesOutMixin:
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
-        check_is_fitted(self, ["_n_features_out", "n_features_in_"])
+        check_is_fitted(self, "_n_features_out")
         return _generate_get_feature_names_out(
             self, self._n_features_out, input_features=input_features
         )
