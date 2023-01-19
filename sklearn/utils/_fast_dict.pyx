@@ -136,7 +136,7 @@ cdef class IntFloatDict:
 def argmin(IntFloatDict d):
     cdef cpp_map[ITYPE_t, DTYPE_t].iterator it = d.my_map.begin()
     cdef cpp_map[ITYPE_t, DTYPE_t].iterator end = d.my_map.end()
-    cdef ITYPE_t min_key
+    cdef ITYPE_t min_key = -1
     cdef DTYPE_t min_value = np.inf
     while it != end:
         if deref(it).second < min_value:

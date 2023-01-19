@@ -10,20 +10,20 @@ from scipy import linalg
 from scipy.sparse.linalg import eigsh
 
 from ..utils._arpack import _init_arpack_v0
+from ..utils.fixes import _eigh
 from ..utils.extmath import svd_flip, _randomized_eigsh
 from ..utils.validation import (
     check_is_fitted,
     _check_psd_eigenvalues,
 )
 from ..utils._param_validation import Interval, StrOptions
-from ..utils.deprecation import deprecated
 from ..exceptions import NotFittedError
-from ..base import BaseEstimator, TransformerMixin, _ClassNamePrefixFeaturesOutMixin
+from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..preprocessing import KernelCenterer
 from ..metrics.pairwise import pairwise_kernels
 
 
-class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
+class KernelPCA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
     """Kernel Principal component analysis (KPCA) [1]_.
 
     Non-linear dimensionality reduction through the use of kernels (see
@@ -155,23 +155,9 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         If `n_components` and `remove_zero_eig` are not set,
         then all values are stored.
 
-    lambdas_ : ndarray of shape (n_components,)
-        Same as `eigenvalues_` but this attribute is deprecated.
-
-        .. deprecated:: 1.0
-           `lambdas_` was renamed to `eigenvalues_` in version 1.0 and will be
-           removed in 1.2.
-
     eigenvectors_ : ndarray of shape (n_samples, n_components)
         Eigenvectors of the centered kernel matrix. If `n_components` and
         `remove_zero_eig` are not set, then all components are stored.
-
-    alphas_ : ndarray of shape (n_samples, n_components)
-        Same as `eigenvectors_` but this attribute is deprecated.
-
-        .. deprecated:: 1.0
-           `alphas_` was renamed to `eigenvectors_` in version 1.0 and will be
-           removed in 1.2.
 
     dual_coef_ : ndarray of shape (n_samples, n_features)
         Inverse transform matrix. Only available when
@@ -310,25 +296,6 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
         self.n_jobs = n_jobs
         self.copy_X = copy_X
 
-    # TODO: Remove in 1.2
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `lambdas_` was deprecated in version 1.0 and will be "
-        "removed in 1.2. Use `eigenvalues_` instead."
-    )
-    @property
-    def lambdas_(self):
-        return self.eigenvalues_
-
-    # mypy error: Decorated property not supported
-    @deprecated(  # type: ignore
-        "Attribute `alphas_` was deprecated in version 1.0 and will be "
-        "removed in 1.2. Use `eigenvectors_` instead."
-    )
-    @property
-    def alphas_(self):
-        return self.eigenvectors_
-
     def _get_kernel(self, X, Y=None):
         if callable(self.kernel):
             params = self.kernel_params or {}
@@ -359,9 +326,9 @@ class KernelPCA(_ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimato
             eigen_solver = self.eigen_solver
 
         if eigen_solver == "dense":
-            # Note: eigvals specifies the indices of smallest/largest to return
-            self.eigenvalues_, self.eigenvectors_ = linalg.eigh(
-                K, eigvals=(K.shape[0] - n_components, K.shape[0] - 1)
+            # Note: subset_by_index specifies the indices of smallest/largest to return
+            self.eigenvalues_, self.eigenvectors_ = _eigh(
+                K, subset_by_index=(K.shape[0] - n_components, K.shape[0] - 1)
             )
         elif eigen_solver == "arpack":
             v0 = _init_arpack_v0(K.shape[0], self.random_state)

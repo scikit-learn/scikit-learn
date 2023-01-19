@@ -170,9 +170,9 @@ def _chisquare(f_obs, f_exp):
 def chi2(X, y):
     """Compute chi-squared stats between each non-negative feature and class.
 
-    This score can be used to select the n_features features with the
+    This score can be used to select the `n_features` features with the
     highest values for the test chi-squared statistic from X, which must
-    contain only non-negative features such as booleans or frequencies
+    contain only **non-negative features** such as booleans or frequencies
     (e.g., term counts in document classification), relative to the classes.
 
     Recall that the chi-square test measures dependence between stochastic
@@ -815,7 +815,7 @@ class SelectFdr(_BaseFilter):
     mutual_info_classif : Mutual information for a discrete target.
     chi2 : Chi-squared stats of non-negative features for classification tasks.
     f_regression : F-value between label/feature for regression tasks.
-    mutual_info_regression : Mutual information for a contnuous target.
+    mutual_info_regression : Mutual information for a continuous target.
     SelectPercentile : Select features based on percentile of the highest
         scores.
     SelectKBest : Select features based on the k highest scores.
@@ -958,7 +958,7 @@ class GenericUnivariateSelect(_BaseFilter):
     mode : {'percentile', 'k_best', 'fpr', 'fdr', 'fwe'}, default='percentile'
         Feature selection mode.
 
-    param : float or int depending on the feature selection mode, default=1e-5
+    param : "all", float or int, default=1e-5
         Parameter of the corresponding mode.
 
     Attributes
@@ -1018,7 +1018,7 @@ class GenericUnivariateSelect(_BaseFilter):
     _parameter_constraints: dict = {
         **_BaseFilter._parameter_constraints,
         "mode": [StrOptions(set(_selection_modes.keys()))],
-        "param": [Interval(Real, 0, None, closed="left")],
+        "param": [Interval(Real, 0, None, closed="left"), StrOptions({"all"})],
     }
 
     def __init__(self, score_func=f_classif, *, mode="percentile", param=1e-5):

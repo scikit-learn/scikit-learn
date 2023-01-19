@@ -1,5 +1,4 @@
 from numbers import Integral, Real
-import warnings
 
 import numpy as np
 
@@ -560,7 +559,8 @@ class SVC(BaseSVC):
     beyond tens of thousands of samples. For large datasets
     consider using :class:`~sklearn.svm.LinearSVC` or
     :class:`~sklearn.linear_model.SGDClassifier` instead, possibly after a
-    :class:`~sklearn.kernel_approximation.Nystroem` transformer.
+    :class:`~sklearn.kernel_approximation.Nystroem` transformer or
+    other :ref:`kernel_approximation`.
 
     The multiclass support is handled according to a one-vs-one scheme.
 
@@ -754,9 +754,9 @@ class SVC(BaseSVC):
     .. [1] `LIBSVM: A Library for Support Vector Machines
         <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
 
-    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
-        machines and comparison to regularizedlikelihood methods."
-        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+    .. [2] `Platt, John (1999). "Probabilistic Outputs for Support Vector
+        Machines and Comparisons to Regularized Likelihood Methods"
+        <https://citeseerx.ist.psu.edu/doc_view/pid/42e5ed832d4310ce4378c44d05570439df28a393>`_
 
     Examples
     --------
@@ -1018,9 +1018,9 @@ class NuSVC(BaseSVC):
     .. [1] `LIBSVM: A Library for Support Vector Machines
         <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
 
-    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
-        machines and comparison to regularizedlikelihood methods."
-        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+    .. [2] `Platt, John (1999). "Probabilistic Outputs for Support Vector
+        Machines and Comparisons to Regularized Likelihood Methods"
+        <https://citeseerx.ist.psu.edu/doc_view/pid/42e5ed832d4310ce4378c44d05570439df28a393>`_
 
     Examples
     --------
@@ -1094,6 +1094,9 @@ class NuSVC(BaseSVC):
                 "check_sample_weights_invariance": (
                     "zero sample_weight is not equivalent to removing samples"
                 ),
+                "check_classifiers_one_label_sample_weights": (
+                    "specified nu is infeasible for the fit."
+                ),
             }
         }
 
@@ -1108,7 +1111,8 @@ class SVR(RegressorMixin, BaseLibSVM):
     to scale to datasets with more than a couple of 10000 samples. For large
     datasets consider using :class:`~sklearn.svm.LinearSVR` or
     :class:`~sklearn.linear_model.SGDRegressor` instead, possibly after a
-    :class:`~sklearn.kernel_approximation.Nystroem` transformer.
+    :class:`~sklearn.kernel_approximation.Nystroem` transformer or
+    other :ref:`kernel_approximation`.
 
     Read more in the :ref:`User Guide <svm_regression>`.
 
@@ -1234,9 +1238,9 @@ class SVR(RegressorMixin, BaseLibSVM):
     .. [1] `LIBSVM: A Library for Support Vector Machines
         <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
 
-    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
-        machines and comparison to regularizedlikelihood methods."
-        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+    .. [2] `Platt, John (1999). "Probabilistic Outputs for Support Vector
+        Machines and Comparisons to Regularized Likelihood Methods"
+        <https://citeseerx.ist.psu.edu/doc_view/pid/42e5ed832d4310ce4378c44d05570439df28a393>`_
 
     Examples
     --------
@@ -1443,9 +1447,9 @@ class NuSVR(RegressorMixin, BaseLibSVM):
     .. [1] `LIBSVM: A Library for Support Vector Machines
         <http://www.csie.ntu.edu.tw/~cjlin/papers/libsvm.pdf>`_
 
-    .. [2] `Platt, John (1999). "Probabilistic outputs for support vector
-        machines and comparison to regularizedlikelihood methods."
-        <http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.41.1639>`_
+    .. [2] `Platt, John (1999). "Probabilistic Outputs for Support Vector
+        Machines and Comparisons to Regularized Likelihood Methods"
+        <https://citeseerx.ist.psu.edu/doc_view/pid/42e5ed832d4310ce4378c44d05570439df28a393>`_
 
     Examples
     --------
@@ -1710,7 +1714,7 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
     def class_weight_(self):
         return np.empty(0)
 
-    def fit(self, X, y=None, sample_weight=None, **params):
+    def fit(self, X, y=None, sample_weight=None):
         """Detect the soft boundary of the set of samples X.
 
         Parameters
@@ -1726,14 +1730,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
             Per-sample weights. Rescale C per sample. Higher weights
             force the classifier to put more emphasis on these points.
 
-        **params : dict
-            Additional fit parameters.
-
-            .. deprecated:: 1.0
-                The `fit` method will not longer accept extra keyword
-                parameters in 1.2. These keyword parameters were
-                already discarded.
-
         Returns
         -------
         self : object
@@ -1743,15 +1739,6 @@ class OneClassSVM(OutlierMixin, BaseLibSVM):
         -----
         If X is not a C-ordered contiguous array it is copied.
         """
-        # TODO: Remove in v1.2
-        if len(params) > 0:
-            warnings.warn(
-                "Passing additional keyword parameters has no effect and is "
-                "deprecated in 1.0. An error will be raised from 1.2 and "
-                "beyond. The ignored keyword parameter(s) are: "
-                f"{params.keys()}.",
-                FutureWarning,
-            )
         super().fit(X, np.ones(_num_samples(X)), sample_weight=sample_weight)
         self.offset_ = -self._intercept_
         return self

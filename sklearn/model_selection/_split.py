@@ -28,6 +28,7 @@ from ..utils import _approximate_mode
 from ..utils.validation import _num_samples, column_or_1d
 from ..utils.validation import check_array
 from ..utils.multiclass import type_of_target
+from ..utils._param_validation import validate_params, Interval
 
 __all__ = [
     "BaseCrossValidator",
@@ -139,15 +140,16 @@ class LeaveOneOut(BaseCrossValidator):
     2
     >>> print(loo)
     LeaveOneOut()
-    >>> for train_index, test_index in loo.split(X):
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
-    ...     X_train, X_test = X[train_index], X[test_index]
-    ...     y_train, y_test = y[train_index], y[test_index]
-    ...     print(X_train, X_test, y_train, y_test)
-    TRAIN: [1] TEST: [0]
-    [[3 4]] [[1 2]] [2] [1]
-    TRAIN: [0] TEST: [1]
-    [[1 2]] [[3 4]] [1] [2]
+    >>> for i, (train_index, test_index) in enumerate(loo.split(X)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"  Test:  index={test_index}")
+    Fold 0:
+      Train: index=[1]
+      Test:  index=[0]
+    Fold 1:
+      Train: index=[0]
+      Test:  index=[1]
 
     See Also
     --------
@@ -223,16 +225,28 @@ class LeavePOut(BaseCrossValidator):
     6
     >>> print(lpo)
     LeavePOut(p=2)
-    >>> for train_index, test_index in lpo.split(X):
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
-    ...     X_train, X_test = X[train_index], X[test_index]
-    ...     y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [2 3] TEST: [0 1]
-    TRAIN: [1 3] TEST: [0 2]
-    TRAIN: [1 2] TEST: [0 3]
-    TRAIN: [0 3] TEST: [1 2]
-    TRAIN: [0 2] TEST: [1 3]
-    TRAIN: [0 1] TEST: [2 3]
+    >>> for i, (train_index, test_index) in enumerate(lpo.split(X)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"  Test:  index={test_index}")
+    Fold 0:
+      Train: index=[2 3]
+      Test:  index=[0 1]
+    Fold 1:
+      Train: index=[1 3]
+      Test:  index=[0 2]
+    Fold 2:
+      Train: index=[1 2]
+      Test:  index=[0 3]
+    Fold 3:
+      Train: index=[0 3]
+      Test:  index=[1 2]
+    Fold 4:
+      Train: index=[0 2]
+      Test:  index=[1 3]
+    Fold 5:
+      Train: index=[0 1]
+      Test:  index=[2 3]
     """
 
     def __init__(self, p):
@@ -402,12 +416,16 @@ class KFold(_BaseKFold):
     2
     >>> print(kf)
     KFold(n_splits=2, random_state=None, shuffle=False)
-    >>> for train_index, test_index in kf.split(X):
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
-    ...     X_train, X_test = X[train_index], X[test_index]
-    ...     y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [2 3] TEST: [0 1]
-    TRAIN: [0 1] TEST: [2 3]
+    >>> for i, (train_index, test_index) in enumerate(kf.split(X)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"  Test:  index={test_index}")
+    Fold 0:
+      Train: index=[2 3]
+      Test:  index=[0 1]
+    Fold 1:
+      Train: index=[0 1]
+      Test:  index=[2 3]
 
     Notes
     -----
@@ -476,28 +494,24 @@ class GroupKFold(_BaseKFold):
     --------
     >>> import numpy as np
     >>> from sklearn.model_selection import GroupKFold
-    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8]])
-    >>> y = np.array([1, 2, 3, 4])
-    >>> groups = np.array([0, 0, 2, 2])
+    >>> X = np.array([[1, 2], [3, 4], [5, 6], [7, 8], [9, 10], [11, 12]])
+    >>> y = np.array([1, 2, 3, 4, 5, 6])
+    >>> groups = np.array([0, 0, 2, 2, 3, 3])
     >>> group_kfold = GroupKFold(n_splits=2)
     >>> group_kfold.get_n_splits(X, y, groups)
     2
     >>> print(group_kfold)
     GroupKFold(n_splits=2)
-    >>> for train_index, test_index in group_kfold.split(X, y, groups):
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
-    ...     X_train, X_test = X[train_index], X[test_index]
-    ...     y_train, y_test = y[train_index], y[test_index]
-    ...     print(X_train, X_test, y_train, y_test)
-    ...
-    TRAIN: [0 1] TEST: [2 3]
-    [[1 2]
-     [3 4]] [[5 6]
-     [7 8]] [1 2] [3 4]
-    TRAIN: [2 3] TEST: [0 1]
-    [[5 6]
-     [7 8]] [[1 2]
-     [3 4]] [3 4] [1 2]
+    >>> for i, (train_index, test_index) in enumerate(group_kfold.split(X, y, groups)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}, group={groups[train_index]}")
+    ...     print(f"  Test:  index={test_index}, group={groups[test_index]}")
+    Fold 0:
+      Train: index=[2 3], group=[2 2]
+      Test:  index=[0 1 4 5], group=[0 0 3 3]
+    Fold 1:
+      Train: index=[0 1 4 5], group=[0 0 3 3]
+      Test:  index=[2 3], group=[2 2]
 
     See Also
     --------
@@ -618,12 +632,16 @@ class StratifiedKFold(_BaseKFold):
     2
     >>> print(skf)
     StratifiedKFold(n_splits=2, random_state=None, shuffle=False)
-    >>> for train_index, test_index in skf.split(X, y):
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
-    ...     X_train, X_test = X[train_index], X[test_index]
-    ...     y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [1 3] TEST: [0 2]
-    TRAIN: [0 2] TEST: [1 3]
+    >>> for i, (train_index, test_index) in enumerate(skf.split(X, y)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"  Test:  index={test_index}")
+    Fold 0:
+      Train: index=[1 3]
+      Test:  index=[0 2]
+    Fold 1:
+      Train: index=[0 2]
+      Test:  index=[1 3]
 
     Notes
     -----
@@ -800,24 +818,32 @@ class StratifiedGroupKFold(_BaseKFold):
     >>> X = np.ones((17, 2))
     >>> y = np.array([0, 0, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     >>> groups = np.array([1, 1, 2, 2, 3, 3, 3, 4, 5, 5, 5, 5, 6, 6, 7, 8, 8])
-    >>> cv = StratifiedGroupKFold(n_splits=3)
-    >>> for train_idxs, test_idxs in cv.split(X, y, groups):
-    ...     print("TRAIN:", groups[train_idxs])
-    ...     print("      ", y[train_idxs])
-    ...     print(" TEST:", groups[test_idxs])
-    ...     print("      ", y[test_idxs])
-    TRAIN: [1 1 2 2 4 5 5 5 5 8 8]
-           [0 0 1 1 1 0 0 0 0 0 0]
-     TEST: [3 3 3 6 6 7]
-           [1 1 1 0 0 0]
-    TRAIN: [3 3 3 4 5 5 5 5 6 6 7]
-           [1 1 1 1 0 0 0 0 0 0 0]
-     TEST: [1 1 2 2 8 8]
-           [0 0 1 1 0 0]
-    TRAIN: [1 1 2 2 3 3 3 6 6 7 8 8]
-           [0 0 1 1 1 1 1 0 0 0 0 0]
-     TEST: [4 5 5 5 5]
-           [1 0 0 0 0]
+    >>> sgkf = StratifiedGroupKFold(n_splits=3)
+    >>> sgkf.get_n_splits(X, y)
+    3
+    >>> print(sgkf)
+    StratifiedGroupKFold(n_splits=3, random_state=None, shuffle=False)
+    >>> for i, (train_index, test_index) in enumerate(sgkf.split(X, y, groups)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"         group={groups[train_index]}")
+    ...     print(f"  Test:  index={test_index}")
+    ...     print(f"         group={groups[test_index]}")
+    Fold 0:
+      Train: index=[ 0  1  2  3  7  8  9 10 11 15 16]
+             group=[1 1 2 2 4 5 5 5 5 8 8]
+      Test:  index=[ 4  5  6 12 13 14]
+             group=[3 3 3 6 6 7]
+    Fold 1:
+      Train: index=[ 4  5  6  7  8  9 10 11 12 13 14]
+             group=[3 3 3 4 5 5 5 5 6 6 7]
+      Test:  index=[ 0  1  2  3 15 16]
+             group=[1 1 2 2 8 8]
+    Fold 2:
+      Train: index=[ 0  1  2  3  4  5  6 12 13 14 15 16]
+             group=[1 1 2 2 3 3 3 6 6 7 8 8]
+      Test:  index=[ 7  8  9 10 11]
+             group=[4 5 5 5 5]
 
     Notes
     -----
@@ -1001,35 +1027,57 @@ class TimeSeriesSplit(_BaseKFold):
     >>> tscv = TimeSeriesSplit()
     >>> print(tscv)
     TimeSeriesSplit(gap=0, max_train_size=None, n_splits=5, test_size=None)
-    >>> for train_index, test_index in tscv.split(X):
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
-    ...     X_train, X_test = X[train_index], X[test_index]
-    ...     y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [0] TEST: [1]
-    TRAIN: [0 1] TEST: [2]
-    TRAIN: [0 1 2] TEST: [3]
-    TRAIN: [0 1 2 3] TEST: [4]
-    TRAIN: [0 1 2 3 4] TEST: [5]
+    >>> for i, (train_index, test_index) in enumerate(tscv.split(X)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"  Test:  index={test_index}")
+    Fold 0:
+      Train: index=[0]
+      Test:  index=[1]
+    Fold 1:
+      Train: index=[0 1]
+      Test:  index=[2]
+    Fold 2:
+      Train: index=[0 1 2]
+      Test:  index=[3]
+    Fold 3:
+      Train: index=[0 1 2 3]
+      Test:  index=[4]
+    Fold 4:
+      Train: index=[0 1 2 3 4]
+      Test:  index=[5]
     >>> # Fix test_size to 2 with 12 samples
     >>> X = np.random.randn(12, 2)
     >>> y = np.random.randint(0, 2, 12)
     >>> tscv = TimeSeriesSplit(n_splits=3, test_size=2)
-    >>> for train_index, test_index in tscv.split(X):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [0 1 2 3 4 5] TEST: [6 7]
-    TRAIN: [0 1 2 3 4 5 6 7] TEST: [8 9]
-    TRAIN: [0 1 2 3 4 5 6 7 8 9] TEST: [10 11]
+    >>> for i, (train_index, test_index) in enumerate(tscv.split(X)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"  Test:  index={test_index}")
+    Fold 0:
+      Train: index=[0 1 2 3 4 5]
+      Test:  index=[6 7]
+    Fold 1:
+      Train: index=[0 1 2 3 4 5 6 7]
+      Test:  index=[8 9]
+    Fold 2:
+      Train: index=[0 1 2 3 4 5 6 7 8 9]
+      Test:  index=[10 11]
     >>> # Add in a 2 period gap
     >>> tscv = TimeSeriesSplit(n_splits=3, test_size=2, gap=2)
-    >>> for train_index, test_index in tscv.split(X):
-    ...    print("TRAIN:", train_index, "TEST:", test_index)
-    ...    X_train, X_test = X[train_index], X[test_index]
-    ...    y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [0 1 2 3] TEST: [6 7]
-    TRAIN: [0 1 2 3 4 5] TEST: [8 9]
-    TRAIN: [0 1 2 3 4 5 6 7] TEST: [10 11]
+    >>> for i, (train_index, test_index) in enumerate(tscv.split(X)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"  Test:  index={test_index}")
+    Fold 0:
+      Train: index=[0 1 2 3]
+      Test:  index=[6 7]
+    Fold 1:
+      Train: index=[0 1 2 3 4 5]
+      Test:  index=[8 9]
+    Fold 2:
+      Train: index=[0 1 2 3 4 5 6 7]
+      Test:  index=[10 11]
 
     Notes
     -----
@@ -1139,19 +1187,16 @@ class LeaveOneGroupOut(BaseCrossValidator):
     2
     >>> print(logo)
     LeaveOneGroupOut()
-    >>> for train_index, test_index in logo.split(X, y, groups):
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
-    ...     X_train, X_test = X[train_index], X[test_index]
-    ...     y_train, y_test = y[train_index], y[test_index]
-    ...     print(X_train, X_test, y_train, y_test)
-    TRAIN: [2 3] TEST: [0 1]
-    [[5 6]
-     [7 8]] [[1 2]
-     [3 4]] [1 2] [1 2]
-    TRAIN: [0 1] TEST: [2 3]
-    [[1 2]
-     [3 4]] [[5 6]
-     [7 8]] [1 2] [1 2]
+    >>> for i, (train_index, test_index) in enumerate(logo.split(X, y, groups)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}, group={groups[train_index]}")
+    ...     print(f"  Test:  index={test_index}, group={groups[test_index]}")
+    Fold 0:
+      Train: index=[2 3], group=[2 2]
+      Test:  index=[0 1], group=[1 1]
+    Fold 1:
+      Train: index=[0 1], group=[1 1]
+      Test:  index=[2 3], group=[2 2]
 
     See also
     --------
@@ -1264,20 +1309,19 @@ class LeavePGroupsOut(BaseCrossValidator):
     3
     >>> print(lpgo)
     LeavePGroupsOut(n_groups=2)
-    >>> for train_index, test_index in lpgo.split(X, y, groups):
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
-    ...     X_train, X_test = X[train_index], X[test_index]
-    ...     y_train, y_test = y[train_index], y[test_index]
-    ...     print(X_train, X_test, y_train, y_test)
-    TRAIN: [2] TEST: [0 1]
-    [[5 6]] [[1 2]
-     [3 4]] [1] [1 2]
-    TRAIN: [1] TEST: [0 2]
-    [[3 4]] [[1 2]
-     [5 6]] [2] [1 1]
-    TRAIN: [0] TEST: [1 2]
-    [[1 2]] [[3 4]
-     [5 6]] [1] [2 1]
+    >>> for i, (train_index, test_index) in enumerate(lpgo.split(X, y, groups)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}, group={groups[train_index]}")
+    ...     print(f"  Test:  index={test_index}, group={groups[test_index]}")
+    Fold 0:
+      Train: index=[2], group=[3]
+      Test:  index=[0 1], group=[1 2]
+    Fold 1:
+      Train: index=[1], group=[2]
+      Test:  index=[0 2], group=[1 3]
+    Fold 2:
+      Train: index=[0], group=[1]
+      Test:  index=[1 2], group=[2 3]
 
     See Also
     --------
@@ -1490,15 +1534,27 @@ class RepeatedKFold(_RepeatedSplits):
     >>> X = np.array([[1, 2], [3, 4], [1, 2], [3, 4]])
     >>> y = np.array([0, 0, 1, 1])
     >>> rkf = RepeatedKFold(n_splits=2, n_repeats=2, random_state=2652124)
-    >>> for train_index, test_index in rkf.split(X):
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
-    ...     X_train, X_test = X[train_index], X[test_index]
-    ...     y_train, y_test = y[train_index], y[test_index]
+    >>> rkf.get_n_splits(X, y)
+    4
+    >>> print(rkf)
+    RepeatedKFold(n_repeats=2, n_splits=2, random_state=2652124)
+    >>> for i, (train_index, test_index) in enumerate(rkf.split(X)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"  Test:  index={test_index}")
     ...
-    TRAIN: [0 1] TEST: [2 3]
-    TRAIN: [2 3] TEST: [0 1]
-    TRAIN: [1 2] TEST: [0 3]
-    TRAIN: [0 3] TEST: [1 2]
+    Fold 0:
+      Train: index=[0 1]
+      Test:  index=[2 3]
+    Fold 1:
+      Train: index=[2 3]
+      Test:  index=[0 1]
+    Fold 2:
+      Train: index=[1 2]
+      Test:  index=[0 3]
+    Fold 3:
+      Train: index=[0 3]
+      Test:  index=[1 2]
 
     Notes
     -----
@@ -1546,15 +1602,27 @@ class RepeatedStratifiedKFold(_RepeatedSplits):
     >>> y = np.array([0, 0, 1, 1])
     >>> rskf = RepeatedStratifiedKFold(n_splits=2, n_repeats=2,
     ...     random_state=36851234)
-    >>> for train_index, test_index in rskf.split(X, y):
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
-    ...     X_train, X_test = X[train_index], X[test_index]
-    ...     y_train, y_test = y[train_index], y[test_index]
+    >>> rskf.get_n_splits(X, y)
+    4
+    >>> print(rskf)
+    RepeatedStratifiedKFold(n_repeats=2, n_splits=2, random_state=36851234)
+    >>> for i, (train_index, test_index) in enumerate(rskf.split(X, y)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"  Test:  index={test_index}")
     ...
-    TRAIN: [1 2] TEST: [0 3]
-    TRAIN: [0 3] TEST: [1 2]
-    TRAIN: [1 3] TEST: [0 2]
-    TRAIN: [0 2] TEST: [1 3]
+    Fold 0:
+      Train: index=[1 2]
+      Test:  index=[0 3]
+    Fold 1:
+      Train: index=[0 3]
+      Test:  index=[1 2]
+    Fold 2:
+      Train: index=[1 3]
+      Test:  index=[0 2]
+    Fold 3:
+      Train: index=[0 2]
+      Test:  index=[1 3]
 
     Notes
     -----
@@ -1696,22 +1764,47 @@ class ShuffleSplit(BaseShuffleSplit):
     5
     >>> print(rs)
     ShuffleSplit(n_splits=5, random_state=0, test_size=0.25, train_size=None)
-    >>> for train_index, test_index in rs.split(X):
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
-    TRAIN: [1 3 0 4] TEST: [5 2]
-    TRAIN: [4 0 2 5] TEST: [1 3]
-    TRAIN: [1 2 4 0] TEST: [3 5]
-    TRAIN: [3 4 1 0] TEST: [5 2]
-    TRAIN: [3 5 1 0] TEST: [2 4]
+    >>> for i, (train_index, test_index) in enumerate(rs.split(X)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"  Test:  index={test_index}")
+    Fold 0:
+      Train: index=[1 3 0 4]
+      Test:  index=[5 2]
+    Fold 1:
+      Train: index=[4 0 2 5]
+      Test:  index=[1 3]
+    Fold 2:
+      Train: index=[1 2 4 0]
+      Test:  index=[3 5]
+    Fold 3:
+      Train: index=[3 4 1 0]
+      Test:  index=[5 2]
+    Fold 4:
+      Train: index=[3 5 1 0]
+      Test:  index=[2 4]
+    >>> # Specify train and test size
     >>> rs = ShuffleSplit(n_splits=5, train_size=0.5, test_size=.25,
     ...                   random_state=0)
-    >>> for train_index, test_index in rs.split(X):
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
-    TRAIN: [1 3 0] TEST: [5 2]
-    TRAIN: [4 0 2] TEST: [1 3]
-    TRAIN: [1 2 4] TEST: [3 5]
-    TRAIN: [3 4 1] TEST: [5 2]
-    TRAIN: [3 5 1] TEST: [2 4]
+    >>> for i, (train_index, test_index) in enumerate(rs.split(X)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"  Test:  index={test_index}")
+    Fold 0:
+      Train: index=[1 3 0]
+      Test:  index=[5 2]
+    Fold 1:
+      Train: index=[4 0 2]
+      Test:  index=[1 3]
+    Fold 2:
+      Train: index=[1 2 4]
+      Test:  index=[3 5]
+    Fold 3:
+      Train: index=[3 4 1]
+      Test:  index=[5 2]
+    Fold 4:
+      Train: index=[3 5 1]
+      Test:  index=[2 4]
     """
 
     def __init__(
@@ -1804,10 +1897,18 @@ class GroupShuffleSplit(ShuffleSplit):
     >>> gss = GroupShuffleSplit(n_splits=2, train_size=.7, random_state=42)
     >>> gss.get_n_splits()
     2
-    >>> for train_idx, test_idx in gss.split(X, y, groups):
-    ...     print("TRAIN:", train_idx, "TEST:", test_idx)
-    TRAIN: [2 3 4 5 6 7] TEST: [0 1]
-    TRAIN: [0 1 5 6 7] TEST: [2 3 4]
+    >>> print(gss)
+    GroupShuffleSplit(n_splits=2, random_state=42, test_size=None, train_size=0.7)
+    >>> for i, (train_index, test_index) in enumerate(gss.split(X, y, groups)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}, group={groups[train_index]}")
+    ...     print(f"  Test:  index={test_index}, group={groups[test_index]}")
+    Fold 0:
+      Train: index=[2 3 4 5 6 7], group=[2 2 2 3 3 3]
+      Test:  index=[0 1], group=[1 1]
+    Fold 1:
+      Train: index=[0 1 5 6 7], group=[1 1 3 3 3]
+      Test:  index=[2 3 4], group=[2 2 2]
 
     See Also
     --------
@@ -1923,15 +2024,25 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
     5
     >>> print(sss)
     StratifiedShuffleSplit(n_splits=5, random_state=0, ...)
-    >>> for train_index, test_index in sss.split(X, y):
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
-    ...     X_train, X_test = X[train_index], X[test_index]
-    ...     y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [5 2 3] TEST: [4 1 0]
-    TRAIN: [5 1 4] TEST: [0 2 3]
-    TRAIN: [5 0 2] TEST: [4 3 1]
-    TRAIN: [4 1 0] TEST: [2 3 5]
-    TRAIN: [0 5 1] TEST: [3 4 2]
+    >>> for i, (train_index, test_index) in enumerate(sss.split(X, y)):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"  Test:  index={test_index}")
+    Fold 0:
+      Train: index=[5 2 3]
+      Test:  index=[4 1 0]
+    Fold 1:
+      Train: index=[5 1 4]
+      Test:  index=[0 2 3]
+    Fold 2:
+      Train: index=[5 0 2]
+      Test:  index=[4 3 1]
+    Fold 3:
+      Train: index=[4 1 0]
+      Test:  index=[2 3 5]
+    Fold 4:
+      Train: index=[0 5 1]
+      Test:  index=[3 4 2]
     """
 
     def __init__(
@@ -2162,12 +2273,16 @@ class PredefinedSplit(BaseCrossValidator):
     2
     >>> print(ps)
     PredefinedSplit(test_fold=array([ 0,  1, -1,  1]))
-    >>> for train_index, test_index in ps.split():
-    ...     print("TRAIN:", train_index, "TEST:", test_index)
-    ...     X_train, X_test = X[train_index], X[test_index]
-    ...     y_train, y_test = y[train_index], y[test_index]
-    TRAIN: [1 2 3] TEST: [0]
-    TRAIN: [0 2] TEST: [1 3]
+    >>> for i, (train_index, test_index) in enumerate(ps.split()):
+    ...     print(f"Fold {i}:")
+    ...     print(f"  Train: index={train_index}")
+    ...     print(f"  Test:  index={test_index}")
+    Fold 0:
+      Train: index=[1 2 3]
+      Test:  index=[0]
+    Fold 1:
+      Train: index=[0 2]
+      Test:  index=[1 3]
     """
 
     def __init__(self, test_fold):
@@ -2346,6 +2461,23 @@ def check_cv(cv=5, y=None, *, classifier=False):
     return cv  # New style cv objects are passed without any modification
 
 
+@validate_params(
+    {
+        "test_size": [
+            Interval(numbers.Real, 0, 1, closed="neither"),
+            Interval(numbers.Integral, 1, None, closed="left"),
+            None,
+        ],
+        "train_size": [
+            Interval(numbers.Real, 0, 1, closed="neither"),
+            Interval(numbers.Integral, 1, None, closed="left"),
+            None,
+        ],
+        "random_state": ["random_state"],
+        "shuffle": ["boolean"],
+        "stratify": ["array-like", None],
+    }
+)
 def train_test_split(
     *arrays,
     test_size=None,
@@ -2356,10 +2488,10 @@ def train_test_split(
 ):
     """Split arrays or matrices into random train and test subsets.
 
-    Quick utility that wraps input validation and
-    ``next(ShuffleSplit().split(X, y))`` and application to input data
-    into a single call for splitting (and optionally subsampling) data in a
-    oneliner.
+    Quick utility that wraps input validation,
+    ``next(ShuffleSplit().split(X, y))``, and application to input data
+    into a single call for splitting (and optionally subsampling) data into a
+    one-liner.
 
     Read more in the :ref:`User Guide <cross_validation>`.
 

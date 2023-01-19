@@ -34,6 +34,8 @@ Base classes
    base.DensityMixin
    base.RegressorMixin
    base.TransformerMixin
+   base.OneToOneFeatureMixin
+   base.ClassNamePrefixFeaturesOutMixin
    feature_selection.SelectorMixin
 
 Functions
@@ -191,6 +193,7 @@ details.
    covariance.empirical_covariance
    covariance.graphical_lasso
    covariance.ledoit_wolf
+   covariance.ledoit_wolf_shrinkage
    covariance.oas
    covariance.shrunk_covariance
 
@@ -250,7 +253,6 @@ Loaders
    datasets.fetch_rcv1
    datasets.fetch_species_distributions
    datasets.get_data_home
-   datasets.load_boston
    datasets.load_breast_cancer
    datasets.load_diabetes
    datasets.load_digits
@@ -442,6 +444,7 @@ Samples generator
    exceptions.DataDimensionalityWarning
    exceptions.EfficiencyWarning
    exceptions.FitFailedWarning
+   exceptions.InconsistentVersionWarning
    exceptions.NotFittedError
    exceptions.UndefinedMetricWarning
 
@@ -661,12 +664,6 @@ Plotting
 
    inspection.DecisionBoundaryDisplay
    inspection.PartialDependenceDisplay
-
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   inspection.plot_partial_dependence
 
 .. _isotonic_ref:
 
@@ -1126,20 +1123,12 @@ See the :ref:`visualizations` section of the user guide for further details.
 
 .. autosummary::
    :toctree: generated/
-   :template: function.rst
-
-   metrics.plot_confusion_matrix
-   metrics.plot_det_curve
-   metrics.plot_precision_recall_curve
-   metrics.plot_roc_curve
-
-.. autosummary::
-   :toctree: generated/
    :template: class.rst
 
    metrics.ConfusionMatrixDisplay
    metrics.DetCurveDisplay
    metrics.PrecisionRecallDisplay
+   metrics.PredictionErrorDisplay
    metrics.RocCurveDisplay
    calibration.CalibrationDisplay
 
@@ -1246,6 +1235,17 @@ Model validation
    model_selection.learning_curve
    model_selection.permutation_test_score
    model_selection.validation_curve
+
+Visualization
+-------------
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   model_selection.LearningCurveDisplay
 
 .. _multiclass_ref:
 
@@ -1651,7 +1651,16 @@ Plotting
    utils.validation.check_symmetric
    utils.validation.column_or_1d
    utils.validation.has_fit_parameter
-   utils.all_estimators
+
+Specific utilities to list scikit-learn components:
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   utils.discovery.all_estimators
+   utils.discovery.all_displays
+   utils.discovery.all_functions
 
 Utilities from joblib:
 

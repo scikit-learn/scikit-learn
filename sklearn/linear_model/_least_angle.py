@@ -50,34 +50,34 @@ def lars_path(
     return_n_iter=False,
     positive=False,
 ):
-    """Compute Least Angle Regression or Lasso path using LARS algorithm [1].
+    """Compute Least Angle Regression or Lasso path using the LARS algorithm [1].
 
     The optimization objective for the case method='lasso' is::
 
     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
-    in the case of method='lars', the objective function is only known in
-    the form of an implicit equation (see discussion in [1])
+    in the case of method='lar', the objective function is only known in
+    the form of an implicit equation (see discussion in [1]).
 
     Read more in the :ref:`User Guide <least_angle_regression>`.
 
     Parameters
     ----------
     X : None or array-like of shape (n_samples, n_features)
-        Input data. Note that if X is None then the Gram matrix must be
-        specified, i.e., cannot be None or False.
+        Input data. Note that if X is `None` then the Gram matrix must be
+        specified, i.e., cannot be `None` or `False`.
 
     y : None or array-like of shape (n_samples,)
         Input targets.
 
     Xy : array-like of shape (n_samples,) or (n_samples, n_targets), \
             default=None
-        Xy = np.dot(X.T, y) that can be precomputed. It is useful
+        `Xy = np.dot(X.T, y)` that can be precomputed. It is useful
         only when the Gram matrix is precomputed.
 
     Gram : None, 'auto', array-like of shape (n_features, n_features), \
             default=None
-        Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
+        Precomputed Gram matrix (X' * X), if `'auto'`, the Gram
         matrix is precomputed from the given X, if there are more samples
         than features.
 
@@ -86,30 +86,30 @@ def lars_path(
 
     alpha_min : float, default=0
         Minimum correlation along the path. It corresponds to the
-        regularization parameter alpha parameter in the Lasso.
+        regularization parameter `alpha` in the Lasso.
 
     method : {'lar', 'lasso'}, default='lar'
-        Specifies the returned model. Select ``'lar'`` for Least Angle
-        Regression, ``'lasso'`` for the Lasso.
+        Specifies the returned model. Select `'lar'` for Least Angle
+        Regression, `'lasso'` for the Lasso.
 
     copy_X : bool, default=True
-        If ``False``, ``X`` is overwritten.
+        If `False`, `X` is overwritten.
 
     eps : float, default=np.finfo(float).eps
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems. Unlike the ``tol`` parameter in some iterative
+        systems. Unlike the `tol` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
     copy_Gram : bool, default=True
-        If ``False``, ``Gram`` is overwritten.
+        If `False`, `Gram` is overwritten.
 
     verbose : int, default=0
         Controls output verbosity.
 
     return_path : bool, default=True
-        If ``return_path==True`` returns the entire path, else returns only the
+        If `True`, returns the entire path, else returns only the
         last point of the path.
 
     return_n_iter : bool, default=False
@@ -120,16 +120,16 @@ def lars_path(
         This option is only allowed with method 'lasso'. Note that the model
         coefficients will not converge to the ordinary-least-squares solution
         for small values of alpha. Only coefficients up to the smallest alpha
-        value (``alphas_[alphas_ > 0.].min()`` when fit_path=True) reached by
+        value (`alphas_[alphas_ > 0.].min()` when fit_path=True) reached by
         the stepwise Lars-Lasso algorithm are typically in congruence with the
-        solution of the coordinate descent lasso_path function.
+        solution of the coordinate descent `lasso_path` function.
 
     Returns
     -------
     alphas : array-like of shape (n_alphas + 1,)
         Maximum of covariances (in absolute value) at each iteration.
-        ``n_alphas`` is either ``max_iter``, ``n_features`` or the
-        number of nodes in the path with ``alpha >= alpha_min``, whichever
+        `n_alphas` is either `max_iter`, `n_features`, or the
+        number of nodes in the path with `alpha >= alpha_min`, whichever
         is smaller.
 
     active : array-like of shape (n_alphas,)
@@ -859,7 +859,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     verbose : bool or int, default=False
         Sets the verbosity amount.
 
-    normalize : bool, default=True
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -867,9 +867,11 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
+        .. versionchanged:: 1.2
+           default changed from True to False in 1.2.
+
+        .. deprecated:: 1.2
+            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
 
     precompute : bool, 'auto' or array-like , default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -959,9 +961,9 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> reg = linear_model.Lars(n_nonzero_coefs=1, normalize=False)
+    >>> reg = linear_model.Lars(n_nonzero_coefs=1)
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1.1111, 0, -1.1111])
-    Lars(n_nonzero_coefs=1, normalize=False)
+    Lars(n_nonzero_coefs=1)
     >>> print(reg.coef_)
     [ 0. -1.11...]
     """
@@ -1124,7 +1126,7 @@ class Lars(MultiOutputMixin, RegressorMixin, LinearModel):
         X, y = self._validate_data(X, y, y_numeric=True, multi_output=True)
 
         _normalize = _deprecate_normalize(
-            self.normalize, default=True, estimator_name=self.__class__.__name__
+            self.normalize, estimator_name=self.__class__.__name__
         )
 
         alpha = getattr(self, "alpha", 0.0)
@@ -1181,7 +1183,7 @@ class LassoLars(Lars):
     verbose : bool or int, default=False
         Sets the verbosity amount.
 
-    normalize : bool, default=True
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1189,9 +1191,11 @@ class LassoLars(Lars):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
+        .. versionchanged:: 1.2
+           default changed from True to False in 1.2.
+
+        .. deprecated:: 1.2
+            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
 
     precompute : bool, 'auto' or array-like, default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -1299,9 +1303,9 @@ class LassoLars(Lars):
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> reg = linear_model.LassoLars(alpha=0.01, normalize=False)
+    >>> reg = linear_model.LassoLars(alpha=0.01)
     >>> reg.fit([[-1, 1], [0, 0], [1, 1]], [-1, 0, -1])
-    LassoLars(alpha=0.01, normalize=False)
+    LassoLars(alpha=0.01)
     >>> print(reg.coef_)
     [ 0.         -0.955...]
     """
@@ -1366,7 +1370,7 @@ def _lars_path_residues(
     method="lars",
     verbose=False,
     fit_intercept=True,
-    normalize=True,
+    normalize=False,
     max_iter=500,
     eps=np.finfo(float).eps,
     positive=False,
@@ -1416,7 +1420,7 @@ def _lars_path_residues(
         'lasso' for expected small values of alpha in the doc of LassoLarsCV
         and LassoLarsIC.
 
-    normalize : bool, default=True
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1424,9 +1428,11 @@ def _lars_path_residues(
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
+        .. versionchanged:: 1.2
+           default changed from True to False in 1.2.
+
+        .. deprecated:: 1.2
+            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
 
     max_iter : int, default=500
         Maximum number of iterations to perform.
@@ -1512,7 +1518,7 @@ class LarsCV(Lars):
     max_iter : int, default=500
         Maximum number of iterations to perform.
 
-    normalize : bool, default=True
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1520,9 +1526,11 @@ class LarsCV(Lars):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
+        .. versionchanged:: 1.2
+           default changed from True to False in 1.2.
+
+        .. deprecated:: 1.2
+            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
 
     precompute : bool, 'auto' or array-like , default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -1632,7 +1640,7 @@ class LarsCV(Lars):
     >>> from sklearn.linear_model import LarsCV
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(n_samples=200, noise=4.0, random_state=0)
-    >>> reg = LarsCV(cv=5, normalize=False).fit(X, y)
+    >>> reg = LarsCV(cv=5).fit(X, y)
     >>> reg.score(X, y)
     0.9996...
     >>> reg.alpha_
@@ -1705,7 +1713,7 @@ class LarsCV(Lars):
         self._validate_params()
 
         _normalize = _deprecate_normalize(
-            self.normalize, default=True, estimator_name=self.__class__.__name__
+            self.normalize, estimator_name=self.__class__.__name__
         )
 
         X, y = self._validate_data(X, y, y_numeric=True)
@@ -1815,7 +1823,7 @@ class LassoLarsCV(LarsCV):
     max_iter : int, default=500
         Maximum number of iterations to perform.
 
-    normalize : bool, default=True
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -1823,9 +1831,11 @@ class LassoLarsCV(LarsCV):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
+        .. versionchanged:: 1.2
+           default changed from True to False in 1.2.
+
+        .. deprecated:: 1.2
+            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
 
     precompute : bool or 'auto' , default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -1957,7 +1967,7 @@ class LassoLarsCV(LarsCV):
     >>> from sklearn.linear_model import LassoLarsCV
     >>> from sklearn.datasets import make_regression
     >>> X, y = make_regression(noise=4.0, random_state=0)
-    >>> reg = LassoLarsCV(cv=5, normalize=False).fit(X, y)
+    >>> reg = LassoLarsCV(cv=5).fit(X, y)
     >>> reg.score(X, y)
     0.9993...
     >>> reg.alpha_
@@ -2031,7 +2041,7 @@ class LassoLarsIC(LassoLars):
     verbose : bool or int, default=False
         Sets the verbosity amount.
 
-    normalize : bool, default=True
+    normalize : bool, default=False
         This parameter is ignored when ``fit_intercept`` is set to False.
         If True, the regressors X will be normalized before regression by
         subtracting the mean and dividing by the l2-norm.
@@ -2039,9 +2049,11 @@ class LassoLarsIC(LassoLars):
         :class:`~sklearn.preprocessing.StandardScaler` before calling ``fit``
         on an estimator with ``normalize=False``.
 
-        .. deprecated:: 1.0
-            ``normalize`` was deprecated in version 1.0. It will default
-            to False in 1.2 and be removed in 1.4.
+        .. versionchanged:: 1.2
+           default changed from True to False in 1.2.
+
+        .. deprecated:: 1.2
+            ``normalize`` was deprecated in version 1.2 and will be removed in 1.4.
 
     precompute : bool, 'auto' or array-like, default='auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -2160,11 +2172,11 @@ class LassoLarsIC(LassoLars):
     Examples
     --------
     >>> from sklearn import linear_model
-    >>> reg = linear_model.LassoLarsIC(criterion='bic', normalize=False)
+    >>> reg = linear_model.LassoLarsIC(criterion='bic')
     >>> X = [[-2, 2], [-1, 1], [0, 0], [1, 1], [2, 2]]
     >>> y = [-2.2222, -1.1111, 0, -1.1111, -2.2222]
     >>> reg.fit(X, y)
-    LassoLarsIC(criterion='bic', normalize=False)
+    LassoLarsIC(criterion='bic')
     >>> print(reg.coef_)
     [ 0.  -1.11...]
     """
@@ -2231,7 +2243,7 @@ class LassoLarsIC(LassoLars):
         self._validate_params()
 
         _normalize = _deprecate_normalize(
-            self.normalize, default=True, estimator_name=self.__class__.__name__
+            self.normalize, estimator_name=self.__class__.__name__
         )
 
         if copy_X is None:

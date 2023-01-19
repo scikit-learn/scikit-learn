@@ -268,7 +268,7 @@ The overall complexity of MLLE is
 .. topic:: References:
 
    * `"MLLE: Modified Locally Linear Embedding Using Multiple Weights"
-     <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.70.382>`_
+     <https://citeseerx.ist.psu.edu/doc_view/pid/0b060fdbd92cbcc66b383bcaa9ba5e5e624d7ee3>`_
      Zhang, Z. & Wang, J.
 
 
@@ -642,7 +642,7 @@ the internal structure of the data.
 .. topic:: References:
 
   * `"Visualizing High-Dimensional Data Using t-SNE"
-    <http://jmlr.org/papers/v9/vandermaaten08a.html>`_
+    <https://jmlr.org/papers/v9/vandermaaten08a.html>`_
     van der Maaten, L.J.P.; Hinton, G. Journal of Machine Learning Research
     (2008)
 
