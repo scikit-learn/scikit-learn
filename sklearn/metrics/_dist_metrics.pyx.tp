@@ -42,7 +42,7 @@ from ..utils._typedefs cimport DTYPE_t, ITYPE_t, DTYPECODE
 from ..utils._typedefs import DTYPE, ITYPE
 from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
 from ..utils import check_array
-from ..utils.fixes import parse_version, sp_version
+from ..utils.fixes import parse_version, sp_base_version
 
 cdef inline double fmax(double a, double b) nogil:
     return max(a, b)
@@ -65,7 +65,7 @@ BOOL_METRICS = [
     "sokalmichener",
     "sokalsneath",
 ]
-if sp_version < parse_version("1.11"):
+if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     BOOL_METRICS += ["kulsinski"]
 

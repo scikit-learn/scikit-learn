@@ -28,7 +28,7 @@ from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..utils._mask import _get_mask
 from ..utils.fixes import delayed
-from ..utils.fixes import sp_version, parse_version
+from ..utils.fixes import sp_base_version, sp_version, parse_version
 
 from ._pairwise_distances_reduction import ArgKmin
 from ._pairwise_fast import _chi2_kernel_fast, _sparse_manhattan
@@ -1659,7 +1659,7 @@ _VALID_METRICS = [
     "nan_euclidean",
     "haversine",
 ]
-if sp_version < parse_version("1.11"):
+if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     _VALID_METRICS += ["kulsinski"]
 
@@ -2061,7 +2061,7 @@ PAIRWISE_BOOLEAN_FUNCTIONS = [
     "sokalsneath",
     "yule",
 ]
-if sp_version < parse_version("1.11"):
+if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     PAIRWISE_BOOLEAN_FUNCTIONS += ["kulsinski"]
 

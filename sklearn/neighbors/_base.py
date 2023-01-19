@@ -37,7 +37,7 @@ from ..utils.multiclass import check_classification_targets
 from ..utils.validation import check_is_fitted
 from ..utils.validation import check_non_negative
 from ..utils._param_validation import Interval, StrOptions
-from ..utils.fixes import delayed, sp_version
+from ..utils.fixes import delayed, sp_base_version, sp_version
 from ..utils.fixes import parse_version
 from ..exceptions import DataConversionWarning, EfficiencyWarning
 
@@ -61,7 +61,7 @@ SCIPY_METRICS = [
     "sqeuclidean",
     "yule",
 ]
-if sp_version < parse_version("1.11"):
+if sp_base_version < parse_version("1.11"):
     # Deprecated in SciPy 1.9 and removed in SciPy 1.11
     SCIPY_METRICS += ["kulsinski"]
 
