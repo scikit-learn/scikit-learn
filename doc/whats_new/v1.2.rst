@@ -64,6 +64,12 @@ Changelog
   and :class:`ensemble.ExtraTreesRegressor` now support sparse readonly datasets.
   :pr:`25341` by :user:`Julien Jerphanion <jjerphan>`
 
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| :class:`feature_extraction.FeatureHasher` raises an informative error
+  when the input is a list of strings. :pr:`25094` by `Thomas Fan`_.
+
 :mod:`sklearn.linear_model`
 ...........................
 
