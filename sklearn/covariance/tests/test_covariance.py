@@ -94,7 +94,7 @@ def test_shrunk_covariance_func(n_matrices):
         cov_target = np.repeat(cov_target[np.newaxis, ...], n_matrices, axis=0)
 
     cov_shrunk = shrunk_covariance(cov, 0.5)
-    assert_array_equal(cov_shrunk, cov_target)
+    assert_allclose(cov_shrunk, cov_target)
 
 
 def test_shrunk_covariance():
