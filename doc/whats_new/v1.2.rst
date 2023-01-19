@@ -84,6 +84,14 @@ Changelog
 - |Fix| :class:`manifold.TSNE` now works correctly when output type is
   set to pandas :pr:`25370` by :user:`Tim Head <betatim>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| :func:`model_selection.cross_validate` with multimetric scoring in
+  case of some failing scorers the non-failing scorers now returns proper
+  scores instead of `error_score` values.
+  :pr:`23101` by :user:`András Simon <simonandras>` and `Thomas Fan`_.
+
 :mod:`sklearn.neural_network`
 .............................
 

@@ -117,14 +117,6 @@ Changelog
 - |Enhancement| Added the parameter `fill_value` to :class:`impute.IterativeImputer`.
   :pr:`25232` by :user:`Thijs van Weezel <ValueInvestorThijs>`.
 
-:mod:`sklearn.model_selection`
-..............................
-
-- |Fix| :func:`model_selection.cross_validate` with multimetric scoring in
-  case of some failing scorers the non-failing scorers now returns proper
-  scores instead of `error_score` values.
-  :pr:`23101` by :user:`András Simon <simonandras>` and `Thomas Fan`_.
-
 :mod:`sklearn.naive_bayes`
 ..........................
 
