@@ -400,6 +400,18 @@ def test_calibration_curve():
     with pytest.raises(ValueError):
         calibration_curve(y_true2, y_pred2, strategy="percentile")
 
+    # Check that custom bins can be given and that strategy is ignored
+    y_true = np.array([0, 0, 0, 1, 1, 1])
+    y_pred = np.array([0.0, 0.1, 0.2, 0.8, 0.9, 1.0])
+    bins = np.linspace(0, 1, 3)
+    prob_true, prob_pred = calibration_curve(
+        y_true, y_pred, n_bins=bins, strategy="quantile"
+    )
+    assert len(prob_true) == len(prob_pred)
+    assert len(prob_true) == 2
+    assert_almost_equal(prob_true, [0, 1])
+    assert_almost_equal(prob_pred, [0.1, 0.9])
+
 
 # TODO(1.3): Remove this test.
 def test_calibration_curve_with_unnormalized_proba():
@@ -684,8 +696,8 @@ def test_calibration_display_compute(pyplot, iris_data_binary, n_bins, strategy)
     assert isinstance(viz.ax_, mpl.axes.Axes)
     assert isinstance(viz.figure_, mpl.figure.Figure)
 
-    assert viz.ax_.get_xlabel() == "Mean predicted probability (Positive class: 1)"
-    assert viz.ax_.get_ylabel() == "Fraction of positives (Positive class: 1)"
+    assert viz.ax_.get_xlabel() == "Mean predicted confidence (Class 1)"
+    assert viz.ax_.get_ylabel() == "Fraction of positives (Class 1)"
 
     expected_legend_labels = ["LogisticRegression", "Perfectly calibrated"]
     legend_labels = viz.ax_.get_legend().get_texts()
@@ -715,8 +727,12 @@ def test_calibration_display_default_labels(pyplot, name, expected_label):
     prob_true = np.array([0, 1, 1, 0])
     prob_pred = np.array([0.2, 0.8, 0.8, 0.4])
     y_prob = np.array([])
+    bins = np.array([])
+    bins_hist = np.array([])
 
-    viz = CalibrationDisplay(prob_true, prob_pred, y_prob, estimator_name=name)
+    viz = CalibrationDisplay(
+        prob_true, prob_pred, y_prob, bins, bins_hist, estimator_name=name
+    )
     viz.plot()
 
     expected_legend_labels = [] if name is None else [name]
@@ -733,9 +749,13 @@ def test_calibration_display_label_class_plot(pyplot):
     prob_true = np.array([0, 1, 1, 0])
     prob_pred = np.array([0.2, 0.8, 0.8, 0.4])
     y_prob = np.array([])
+    bins = np.array([])
+    bins_hist = np.array([])
 
     name = "name one"
-    viz = CalibrationDisplay(prob_true, prob_pred, y_prob, estimator_name=name)
+    viz = CalibrationDisplay(
+        prob_true, prob_pred, y_prob, bins, bins_hist, estimator_name=name
+    )
     assert viz.estimator_name == name
     name = "name two"
     viz.plot(name=name)
@@ -851,12 +871,9 @@ def test_calibration_display_pos_label(
 
     assert (
         viz.ax_.get_xlabel()
-        == f"Mean predicted probability (Positive class: {expected_pos_label})"
+        == f"Mean predicted confidence (Class {expected_pos_label})"
     )
-    assert (
-        viz.ax_.get_ylabel()
-        == f"Fraction of positives (Positive class: {expected_pos_label})"
-    )
+    assert viz.ax_.get_ylabel() == f"Fraction of positives (Class {expected_pos_label})"
 
     expected_legend_labels = [lr.__class__.__name__, "Perfectly calibrated"]
     legend_labels = viz.ax_.get_legend().get_texts()

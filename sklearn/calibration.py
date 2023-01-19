@@ -11,10 +11,12 @@ from numbers import Integral
 import warnings
 from inspect import signature
 from functools import partial
+import numbers
 
 from math import log
 import numpy as np
 from joblib import Parallel
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from scipy.special import expit
 from scipy.special import xlogy
@@ -907,6 +909,60 @@ class _SigmoidCalibration(RegressorMixin, BaseEstimator):
         return expit(-(self.a_ * T + self.b_))
 
 
+def bins_from_strategy(n_bins, strategy, y_prob=None):
+    """Define the bin edges based on the strategy.
+
+    If `n_bins` is already an `array-like`, it is used as-is by
+    converting it to a `ndarray`.
+
+    Parameters
+    ----------
+    n_bins : int or array-like
+        Define the discretization applied to `y_prob`, ranging in [0, 1].
+
+        - if an integer is provided, the discretization depends on the
+            `strategy` parameter with n_bins as the number of bins.
+        - if an array-like is provided, the `strategy` parameter is overlooked
+            and the array is used as bin edges directly.
+
+    strategy : {'uniform', 'quantile'}
+        Strategy used to define the widths of the bins.
+
+        uniform
+            The bins have identical widths.
+        quantile
+            The bins have the same number of samples and depend on `y_prob`.
+
+        Ignored if `n_bins` is an array-like containing the bin edges.
+
+    y_prob : array-like of shape (n_samples,), default=None
+        Probabilities of the positive class. Used when `strategy='quantile'`.
+
+    Returns
+    -------
+    bins : ndarray
+        The bin edges. If `n_bins` is an integer, `bins` is of shape (n_bins+1,).
+        If `n_bins` is an array-like, `bins` has same shape as `n_bins`.
+    """
+    if isinstance(n_bins, numbers.Real):
+        if strategy == "quantile":
+            # Determine bin edges by distribution of data
+            quantiles = np.linspace(0, 1, n_bins + 1)
+            bins = np.percentile(y_prob, quantiles * 100)
+        elif strategy == "uniform":
+            bins = np.linspace(0.0, 1.0, n_bins + 1)
+        else:
+            raise ValueError(
+                "Invalid entry to 'strategy' input. Strategy "
+                "must be either 'quantile' or 'uniform'."
+            )
+
+    else:  # array-like
+        bins = np.asarray(n_bins)
+
+    return bins
+
+
 def calibration_curve(
     y_true,
     y_prob,
@@ -949,11 +1005,18 @@ def calibration_curve(
             recommended that a proper probability is used (i.e. a classifier's
             `predict_proba` positive class).
 
-    n_bins : int, default=5
-        Number of bins to discretize the [0, 1] interval. A bigger number
-        requires more data. Bins with no samples (i.e. without
-        corresponding values in `y_prob`) will not be returned, thus the
-        returned arrays may have less than `n_bins` values.
+    n_bins : int or array-like, default=5
+        Define the discretization applied to `y_prob`, ranging in [0, 1].
+
+        - if an integer is provided, the discretization depends on the
+            `strategy` parameter with n_bins as the number of bins.
+        - if an array-like is provided, the `strategy` parameter is overlooked
+            and the array is used as bin edges directly.
+
+        A bigger requested number of bins require more data. Bins with no
+        samples (i.e. without corresponding values in `y_prob`) will not be
+        returned, thus the returned arrays may have less than `n_bins` values
+        (or `len(n_bins)` if `n_bins` is an array-like).
 
     strategy : {'uniform', 'quantile'}, default='uniform'
         Strategy used to define the widths of the bins.
@@ -962,6 +1025,8 @@ def calibration_curve(
             The bins have identical widths.
         quantile
             The bins have the same number of samples and depend on `y_prob`.
+
+        Ignored if `n_bins` is an array-like containing the bin edges.
 
     Returns
     -------
@@ -1019,16 +1084,7 @@ def calibration_curve(
         )
     y_true = y_true == pos_label
 
-    if strategy == "quantile":  # Determine bin edges by distribution of data
-        quantiles = np.linspace(0, 1, n_bins + 1)
-        bins = np.percentile(y_prob, quantiles * 100)
-    elif strategy == "uniform":
-        bins = np.linspace(0.0, 1.0, n_bins + 1)
-    else:
-        raise ValueError(
-            "Invalid entry to 'strategy' input. Strategy "
-            "must be either 'quantile' or 'uniform'."
-        )
+    bins = bins_from_strategy(n_bins, strategy, y_prob)
 
     binids = np.searchsorted(bins[1:-1], y_prob)
 
@@ -1068,6 +1124,12 @@ class CalibrationDisplay:
     y_prob : ndarray of shape (n_samples,)
         Probability estimates for the positive class, for each sample.
 
+    bins : ndarray of shape (n_bins+1,)
+        The bin edges used to build the calibration curve.
+
+    bins_hist : ndarray of shape (n_bins+1,)
+        The bin edges used to build the histogram.
+
     estimator_name : str, default=None
         Name of estimator. If None, the estimator name is not shown.
 
@@ -1085,6 +1147,9 @@ class CalibrationDisplay:
 
     ax_ : matplotlib Axes
         Axes with calibration curve.
+
+    ax_hist_ : matplotlib Axes
+        Axes with histogram.
 
     figure_ : matplotlib Figure
         Figure containing the curve.
@@ -1118,15 +1183,35 @@ class CalibrationDisplay:
     """
 
     def __init__(
-        self, prob_true, prob_pred, y_prob, *, estimator_name=None, pos_label=None
+        self,
+        prob_true,
+        prob_pred,
+        y_prob,
+        bins,
+        bins_hist,
+        *,
+        estimator_name=None,
+        pos_label=None,
     ):
         self.prob_true = prob_true
         self.prob_pred = prob_pred
         self.y_prob = y_prob
+        self.bins = bins
+        self.bins_hist = bins_hist
         self.estimator_name = estimator_name
         self.pos_label = pos_label
 
-    def plot(self, *, ax=None, name=None, ref_line=True, **kwargs):
+    def plot(
+        self,
+        *,
+        ax=None,
+        ax_hist=None,
+        name=None,
+        ref_line=True,
+        grid="uniform",
+        bin_label=False,
+        **kwargs,
+    ):
         """Plot visualization.
 
         Extra keyword arguments will be passed to
@@ -1134,9 +1219,13 @@ class CalibrationDisplay:
 
         Parameters
         ----------
-        ax : Matplotlib Axes, default=None
-            Axes object to plot on. If `None`, a new figure and axes is
-            created.
+        ax : matplotlib axes, default=None
+            Axes object to plot on the calibration curve. If `None`, a new
+            figure and axes is created.
+
+        ax_hist : matplotlib axes, default=None
+            Axes object to plot on the histogram. If `None`, a new axis is
+            created from ax.
 
         name : str, default=None
             Name for labeling curve. If `None`, use `estimator_name` if
@@ -1145,6 +1234,16 @@ class CalibrationDisplay:
         ref_line : bool, default=True
             If `True`, plots a reference line representing a perfectly
             calibrated classifier.
+
+        grid : {'uniform', 'bins', None}, default: 'uniform'
+            The bins to plot.
+
+            - `'uniform'`: Plot uniform bins.
+            - `'bins'`: Plot the bins used to build the calibration curve.
+            - None: Do not plot the bins.
+
+        bin_label : bool
+            If `True`, plots the ratios on top of the histogram bars.
 
         **kwargs : dict
             Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
@@ -1162,28 +1261,78 @@ class CalibrationDisplay:
 
         name = self.estimator_name if name is None else name
         info_pos_label = (
-            f"(Positive class: {self.pos_label})" if self.pos_label is not None else ""
+            f"(Class {self.pos_label})" if self.pos_label is not None else ""
         )
 
-        line_kwargs = {}
+        line_kwargs = {"marker": "o"}
         if name is not None:
             line_kwargs["label"] = name
         line_kwargs.update(**kwargs)
 
+        # Plot calibration curve
         ref_line_label = "Perfectly calibrated"
         existing_ref_line = ref_line_label in ax.get_legend_handles_labels()[1]
         if ref_line and not existing_ref_line:
-            ax.plot([0, 1], [0, 1], "k:", label=ref_line_label)
-        self.line_ = ax.plot(self.prob_pred, self.prob_true, "s-", **line_kwargs)[0]
+            ax.plot([0, 1], [0, 1], "k--", label=ref_line_label, lw=1)
+        self.line_ = ax.plot(self.prob_pred, self.prob_true, **line_kwargs)[0]
+        color = self.line_.get_color()
+
+        # Plot histogram
+        if ax_hist is None:
+            divider = make_axes_locatable(ax)
+            ax_hist = divider.append_axes("top", size="10%", pad=0.0)
+
+            ax_hist.set_xlim(ax.get_xlim())
+            ax_hist.get_xaxis().set_visible(False)
+            ax_hist.get_yaxis().set_visible(False)
+            ax_hist.spines["right"].set_visible(False)
+            ax_hist.spines["top"].set_visible(False)
+            ax_hist.spines["left"].set_visible(False)
+
+        ax_hist.set(xlabel="Mean predicted confidence", ylabel="Count")
+
+        if len(self.bins_hist) > 0:
+            hist = ax_hist.hist(
+                self.y_prob,
+                bins=self.bins_hist,
+                label=name,
+                density=False,
+                histtype="bar",
+                color=color,
+            )
+
+            if bin_label:
+                bar_container = hist[2]
+                labels = bar_container.datavalues / np.sum(bar_container.datavalues)
+                labels = ["{:.0f}".format(100 * v) for v in labels]
+                ax_hist.bar_label(
+                    bar_container, labels=labels, label_type="edge", color=color
+                )
+
+        # Plot bins if required
+        if grid == "uniform":
+            bins = self.bins_hist  # Histogram bins are always uniform
+        elif grid == "bins":
+            bins = self.bins  # Can be uniform, quantile or custom
+        elif grid is None:
+            bins = []  # No bin to plot
+        else:
+            raise ValueError(
+                "Invalid entry to 'grid' input. Must be either "
+                "'uniform', 'bins' or None."
+            )
+        for x in bins:
+            ax.axvline(x, lw=0.5, ls="--", color="grey", zorder=-1)
 
         # We always have to show the legend for at least the reference line
         ax.legend(loc="lower right")
-
-        xlabel = f"Mean predicted probability {info_pos_label}"
+        ax.set_aspect("equal")
+        xlabel = f"Mean predicted confidence {info_pos_label}"
         ylabel = f"Fraction of positives {info_pos_label}"
         ax.set(xlabel=xlabel, ylabel=ylabel)
 
         self.ax_ = ax
+        self.ax_hist_ = ax_hist
         self.figure_ = ax.figure
         return self
 
@@ -1200,6 +1349,9 @@ class CalibrationDisplay:
         name=None,
         ref_line=True,
         ax=None,
+        ax_hist=None,
+        grid="uniform",
+        bin_label=False,
         **kwargs,
     ):
         """Plot calibration curve using a binary classifier and data.
@@ -1230,10 +1382,18 @@ class CalibrationDisplay:
         y : array-like of shape (n_samples,)
             Binary target values.
 
-        n_bins : int, default=5
-            Number of bins to discretize the [0, 1] interval into when
-            calculating the calibration curve. A bigger number requires more
-            data.
+        n_bins : int or array-like, default=5
+            Define the discretization applied to `y_prob`, ranging in [0, 1].
+
+            - if an integer is provided, the discretization depends on the
+                `strategy` parameter with n_bins as the number of bins.
+            - if an array-like is provided, the `strategy` parameter is
+                overlooked and the array is used as bin edges directly.
+
+            A bigger requested number of bins require more data. Bins with no
+            samples (i.e. without corresponding values in `y_prob`) will not be
+            returned, thus the returned arrays may have less than `n_bins`
+            values (or `len(n_bins)` if `n_bins` is an array-like).
 
         strategy : {'uniform', 'quantile'}, default='uniform'
             Strategy used to define the widths of the bins.
@@ -1258,8 +1418,22 @@ class CalibrationDisplay:
             calibrated classifier.
 
         ax : matplotlib axes, default=None
-            Axes object to plot on. If `None`, a new figure and axes is
-            created.
+            Axes object to plot on the calibration curve. If `None`, a new
+            figure and axes is created.
+
+        ax_hist : matplotlib axes, default=None
+            Axes object to plot on the histogram. If `None`, a new axis is
+            created from ax.
+
+        grid : {'uniform', 'bins', None}, default: 'uniform'
+            The bins to plot.
+
+            - `'uniform'`: Plot uniform bins.
+            - `'bins'`: Plot the bins used to build the calibration curve.
+            - None: Do not plot the bins.
+
+        bin_label : bool
+            If `True`, plots the ratios on top of the histogram bars.
 
         **kwargs : dict
             Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
@@ -1310,8 +1484,149 @@ class CalibrationDisplay:
             name=name,
             ref_line=ref_line,
             ax=ax,
+            ax_hist=ax_hist,
+            grid=grid,
+            bin_label=bin_label,
             **kwargs,
         )
+
+    @classmethod
+    def from_estimators(
+        cls,
+        estimators,
+        X,
+        y,
+        *,
+        n_bins=5,
+        strategy="uniform",
+        pos_label=None,
+        names=None,
+        ref_line=True,
+        ax=None,
+        grid=True,
+        **kwargs,
+    ):
+        """Plot calibration curve using a binary classifier and data.
+
+        A calibration curve, also known as a reliability diagram, uses inputs
+        from a binary classifier and plots the average predicted probability
+        for each bin against the fraction of positive classes, on the
+        y-axis.
+
+        Extra keyword arguments will be passed to
+        :func:`matplotlib.pyplot.plot`.
+
+        Read more about calibration in the :ref:`User Guide <calibration>` and
+        more about the scikit-learn visualization API in :ref:`visualizations`.
+
+        .. versionadded:: 1.0
+
+        Parameters
+        ----------
+        estimators : list of estimator instances
+            List of fitted classifiers or fitted
+            :class:`~sklearn.pipeline.Pipeline` in which the last estimator is
+            a classifier. Classifiers must have a :term:`predict_proba` method.
+
+        X : {array-like, sparse matrix} of shape (n_samples, n_features)
+            Input values.
+
+        y : array-like of shape (n_samples,)
+            Binary target values.
+
+        n_bins : int, default=5
+            Number of bins to discretize the [0, 1] interval into when
+            calculating the calibration curve. A bigger number requires more
+            data.
+
+        strategy : {'uniform', 'quantile'}, default='uniform'
+            Strategy used to define the widths of the bins.
+
+            - `'uniform'`: The bins have identical widths.
+            - `'quantile'`: The bins have the same number of samples and depend
+              on predicted probabilities.
+
+        pos_label : str or int, default=None
+            The positive class when computing the calibration curve.
+            By default, `estimators.classes_[1]` is considered as the
+            positive class.
+
+            .. versionadded:: 1.1
+
+        names : list of str, default=None
+            Names for labeling curves. If `None`, estimator names are used.
+
+        ref_line : bool, default=True
+            If `True`, plots a reference line representing a perfectly
+            calibrated classifier.
+
+        ax : matplotlib axes, default=None
+            Axes object to plot on. If `None`, a new figure and axes is
+            created.
+
+        grid : bool, default=True
+            If `True`, plots the uniform bins.
+
+        **kwargs : dict
+            Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
+            Values associated to each keyword must be a list of same length as
+            `estimators`.
+
+        Returns
+        -------
+        display : :class:`~sklearn.calibration.CalibrationDisplay`.
+            Object that stores computed values.
+
+        See Also
+        --------
+        CalibrationDisplay.from_predictions : Plot calibration curve using true
+            and predicted labels.
+
+        Examples
+        --------
+        >>> import matplotlib.pyplot as plt
+        >>> from sklearn.datasets import make_classification
+        >>> from sklearn.model_selection import train_test_split
+        >>> from sklearn.linear_model import LogisticRegression
+        >>> from sklearn.calibration import CalibrationDisplay
+        >>> X, y = make_classification(random_state=0)
+        >>> X_train, X_test, y_train, y_test = train_test_split(
+        ...     X, y, random_state=0)
+        >>> clf = LogisticRegression(random_state=0)
+        >>> clf.fit(X_train, y_train)
+        LogisticRegression(random_state=0)
+        >>> disp = CalibrationDisplay.from_estimator(clf, X_test, y_test)
+        >>> plt.show()
+        """
+        ax_hist = None
+        displays = []
+
+        # Turn kwargs of lists into list of kwargs
+        kwargs = [
+            {k: v_list[i] for k, v_list in kwargs.items()}
+            for i in range(len(estimators))
+        ]
+
+        for i, (estimator, name) in enumerate(zip(estimators, names)):
+            display = CalibrationDisplay.from_estimator(
+                estimator=estimator,
+                X=X,
+                y=y,
+                n_bins=n_bins,
+                strategy=strategy,
+                pos_label=pos_label,
+                name=name,
+                ref_line=ref_line,
+                ax=ax,
+                ax_hist=ax_hist,
+                grid="uniform" if grid and (i == 0) else None,
+                bin_label=False,
+                **kwargs[i],
+            )
+            ax_hist = display.ax_hist_
+            displays.append(display)
+
+        return displays
 
     @classmethod
     def from_predictions(
@@ -1325,6 +1640,9 @@ class CalibrationDisplay:
         name=None,
         ref_line=True,
         ax=None,
+        ax_hist=None,
+        grid="uniform",
+        bin_label=False,
         **kwargs,
     ):
         """Plot calibration curve using true labels and predicted probabilities.
@@ -1377,8 +1695,22 @@ class CalibrationDisplay:
             calibrated classifier.
 
         ax : matplotlib axes, default=None
-            Axes object to plot on. If `None`, a new figure and axes is
-            created.
+            Axes object to plot on the calibration curve. If `None`, a new
+            figure and axes is created.
+
+        ax_hist : matplotlib axes, default=None
+            Axes object to plot on the histogram. If `None`, a new axis is
+            created from ax.
+
+        grid : {'uniform', 'bins', None}, default: 'uniform'
+            The bins to plot.
+
+            - `'uniform'`: Plot uniform bins.
+            - `'bins'`: Plot the bins used to build the calibration curve.
+            - None: Do not plot the bins.
+
+        bin_label : bool
+            If `True`, plots the ratios on top of the histogram bars.
 
         **kwargs : dict
             Keyword arguments to be passed to :func:`matplotlib.pyplot.plot`.
@@ -1413,8 +1745,16 @@ class CalibrationDisplay:
         method_name = f"{cls.__name__}.from_estimator"
         check_matplotlib_support(method_name)
 
+        bins = bins_from_strategy(n_bins, strategy, y_prob)
+
+        # Compute and store uniform bins for the histogram (always uniform)
+        if strategy == "uniform":
+            bins_hist = bins
+        else:
+            bins_hist = bins_from_strategy(n_bins, strategy="uniform")
+
         prob_true, prob_pred = calibration_curve(
-            y_true, y_prob, n_bins=n_bins, strategy=strategy, pos_label=pos_label
+            y_true, y_prob, n_bins=bins, pos_label=pos_label
         )
         name = "Classifier" if name is None else name
         pos_label = _check_pos_label_consistency(pos_label, y_true)
@@ -1423,7 +1763,16 @@ class CalibrationDisplay:
             prob_true=prob_true,
             prob_pred=prob_pred,
             y_prob=y_prob,
+            bins=bins,
+            bins_hist=bins_hist,
             estimator_name=name,
             pos_label=pos_label,
         )
-        return disp.plot(ax=ax, ref_line=ref_line, **kwargs)
+        return disp.plot(
+            ax=ax,
+            ax_hist=ax_hist,
+            ref_line=ref_line,
+            grid=grid,
+            bin_label=bin_label,
+            **kwargs,
+        )

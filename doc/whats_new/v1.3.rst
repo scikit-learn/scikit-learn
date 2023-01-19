@@ -77,6 +77,13 @@ Changelog
     :pr:`123456` by :user:`Joe Bloggs <joeongithub>`.
     where 123456 is the *pull request* number, not the issue number.
 
+:mod:`sklearn.calibration`
+..........................
+
+- |Enhancement| :class:`CalibrationDisplay` now enables plotting an histogram
+  on the predicted confidences and plotting the bin edges in the background.
+  :pr:`23748` by :user:`Alexandre Perez-Lebel <aperezlebel>`.
+
 :mod:`sklearn.cluster`
 ......................
 
