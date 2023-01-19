@@ -170,7 +170,7 @@ It suffers from various drawbacks:
   k-means clustering can alleviate this problem and speed up the
   computations.
 
-.. image:: ../auto_examples/cluster/images/sphx_glr_plot_kmeans_assumptions_001.png
+.. image:: ../auto_examples/cluster/images/sphx_glr_plot_kmeans_assumptions_002.png
    :target: ../auto_examples/cluster/plot_kmeans_assumptions.html
    :align: center
    :scale: 50
@@ -532,7 +532,7 @@ below.
 .. topic:: References:
 
  * `"Multiclass spectral clustering"
-   <https://www1.icsi.berkeley.edu/~stellayu/publication/doc/2003kwayICCV.pdf>`_
+   <https://people.eecs.berkeley.edu/~jordan/courses/281B-spring04/readings/yu-shi.pdf>`_
    Stella X. Yu, Jianbo Shi, 2003
 
  * :doi:`"Simple, direct, and efficient multi-way spectral clustering"<10.1093/imaiai/iay008>`
@@ -1479,7 +1479,7 @@ more broadly common names.
  .. [VEB2010] Vinh, Epps, and Bailey, (2010). "Information Theoretic Measures for
    Clusterings Comparison: Variants, Properties, Normalization and
    Correction for Chance". JMLR
-   <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
+   <https://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>
 
  .. [YAT2016] Yang, Algesheimer, and Tessone, (2016). "A comparative analysis of
    community

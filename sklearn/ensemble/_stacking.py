@@ -324,6 +324,7 @@ class _BaseStacking(TransformerMixin, _BaseHeterogeneousEnsemble, metaclass=ABCM
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        check_is_fitted(self, "n_features_in_")
         input_features = _check_feature_names_in(
             self, input_features, generate_names=self.passthrough
         )
@@ -501,6 +502,7 @@ class StackingClassifier(ClassifierMixin, _BaseStacking):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimators expose such an attribute when fit.
+
         .. versionadded:: 1.0
 
     final_estimator_ : estimator
@@ -860,6 +862,7 @@ class StackingRegressor(RegressorMixin, _BaseStacking):
     feature_names_in_ : ndarray of shape (`n_features_in_`,)
         Names of features seen during :term:`fit`. Only defined if the
         underlying estimators expose such an attribute when fit.
+
         .. versionadded:: 1.0
 
     final_estimator_ : estimator

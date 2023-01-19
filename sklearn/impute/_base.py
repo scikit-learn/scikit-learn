@@ -176,9 +176,10 @@ class SimpleImputer(_BaseImputer):
            strategy="constant" for fixed value imputation.
 
     fill_value : str or numerical value, default=None
-        When strategy == "constant", fill_value is used to replace all
-        occurrences of missing_values.
-        If left to the default, fill_value will be 0 when imputing numerical
+        When strategy == "constant", `fill_value` is used to replace all
+        occurrences of missing_values. For string or object data types,
+        `fill_value` must be a string.
+        If `None`, `fill_value` will be 0 when imputing numerical
         data and "missing_value" for strings or object data types.
 
     verbose : int, default=0
@@ -708,6 +709,7 @@ class SimpleImputer(_BaseImputer):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        check_is_fitted(self, "n_features_in_")
         input_features = _check_feature_names_in(self, input_features)
         non_missing_mask = np.logical_not(_get_mask(self.statistics_, np.nan))
         names = input_features[non_missing_mask]
