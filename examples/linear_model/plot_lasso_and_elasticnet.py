@@ -24,6 +24,10 @@ estimated coefficients of each model are compared with the ground-truth.
 # of `X` will be used to generate `y`. Some correlations between the informative
 # features are added by means of the `effective_rank` parameter. The other
 # features are not useful at predicting `y`. Finally, gaussian noise is added.
+#
+# Such sparse, noisy and correlated features can be obtained, for instance, from
+# sensor nodes monitoring some environmental variables, as they typically register
+# similar values depending on their positions (spatial correlations).
 
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
