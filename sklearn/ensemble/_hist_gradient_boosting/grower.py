@@ -15,6 +15,7 @@ from .splitting import Splitter
 from .histogram import HistogramBuilder
 from .predictor import TreePredictor
 from .utils import sum_parallel
+from ...utils.validation import _check_sample_weight
 from .common import PREDICTOR_RECORD_DTYPE
 from .common import X_BITSET_INNER_DTYPE
 from .common import Y_DTYPE
@@ -98,6 +99,7 @@ class TreeNode:
         self.depth = depth
         self.sample_indices = sample_indices
         self.n_samples = sample_indices.shape[0]
+        self.weighted_n_node_samples = sample_indices.shape[0]
         self.sum_gradients = sum_gradients
         self.sum_hessians = sum_hessians
         self.value = value
@@ -149,6 +151,8 @@ class TreeGrower:
     hessians : ndarray of shape (n_samples,)
         The hessians of each training sample. Those are the hessians of the
         loss w.r.t the predictions, evaluated at iteration ``i - 1``.
+    sample_weight : array-like of shape (n_samples,), default=None
+        Weights of training data.
     max_leaf_nodes : int, default=None
         The maximum number of leaves for each tree. If None, there is no
         maximum limit.
@@ -158,6 +162,8 @@ class TreeGrower:
         Depth isn't constrained by default.
     min_samples_leaf : int, default=20
         The minimum number of samples per leaf.
+    min_weight_leaf: float, default=0.
+        The minimum weight of input samples required for a node to be a leaf.
     min_gain_to_split : float, default=0.
         The minimum gain needed to split a node. Splits with lower gain will
         be ignored.
@@ -227,9 +233,11 @@ class TreeGrower:
         X_binned,
         gradients,
         hessians,
+        sample_weight=None,
         max_leaf_nodes=None,
         max_depth=None,
         min_samples_leaf=20,
+        min_weight_leaf=0.0,
         min_gain_to_split=0.0,
         n_bins=256,
         n_bins_non_missing=None,
@@ -263,6 +271,8 @@ class TreeGrower:
         if isinstance(has_missing_values, bool):
             has_missing_values = [has_missing_values] * X_binned.shape[1]
         has_missing_values = np.asarray(has_missing_values, dtype=np.uint8)
+
+        sample_weight = _check_sample_weight(sample_weight, X_binned, dtype=np.float64)
 
         # `monotonic_cst` validation is done in _validate_monotonic_cst
         # at the estimator level and therefore the following should not be
@@ -310,6 +320,7 @@ class TreeGrower:
         )
         self.n_bins_non_missing = n_bins_non_missing
         self.missing_values_bin_idx = missing_values_bin_idx
+        self.sample_weight = sample_weight
         self.max_leaf_nodes = max_leaf_nodes
         self.has_missing_values = has_missing_values
         self.monotonic_cst = monotonic_cst
@@ -319,6 +330,7 @@ class TreeGrower:
         self.n_features = X_binned.shape[1]
         self.max_depth = max_depth
         self.min_samples_leaf = min_samples_leaf
+        self.min_weight_leaf = min_weight_leaf
         self.X_binned = X_binned
         self.min_gain_to_split = min_gain_to_split
         self.shrinkage = shrinkage
@@ -394,10 +406,17 @@ class TreeGrower:
             value=0,
         )
 
+        self.root.weighted_n_node_samples = self.sample_weight[
+            self.root.sample_indices
+        ].sum()
+
         self.root.partition_start = 0
         self.root.partition_stop = n_samples
 
-        if self.root.n_samples < 2 * self.min_samples_leaf:
+        if (
+            self.root.n_samples < self.min_samples_leaf * 2
+            or self.root.weighted_n_node_samples < self.min_weight_leaf * 2
+        ):
             # Do not even bother computing any splitting statistics.
             self._finalize_leaf(self.root)
             return
@@ -490,6 +509,13 @@ class TreeGrower:
         node.right_child = right_child_node
         node.left_child = left_child_node
 
+        left_child_node.weighted_n_node_samples = self.sample_weight[
+            sample_indices_left
+        ].sum()
+        right_child_node.weighted_n_node_samples = self.sample_weight[
+            sample_indices_right
+        ].sum()
+
         # set start and stop indices
         left_child_node.partition_start = node.partition_start
         left_child_node.partition_stop = node.partition_start + right_child_pos
@@ -531,9 +557,15 @@ class TreeGrower:
             self._finalize_leaf(right_child_node)
             return left_child_node, right_child_node
 
-        if left_child_node.n_samples < self.min_samples_leaf * 2:
+        if (
+            left_child_node.n_samples < self.min_samples_leaf * 2
+            or left_child_node.weighted_n_node_samples < self.min_weight_leaf * 2
+        ):
             self._finalize_leaf(left_child_node)
-        if right_child_node.n_samples < self.min_samples_leaf * 2:
+        if (
+            right_child_node.n_samples < self.min_samples_leaf * 2
+            or right_child_node.weighted_n_node_samples < self.min_weight_leaf * 2
+        ):
             self._finalize_leaf(right_child_node)
 
         if self.with_monotonic_cst:
@@ -718,7 +750,7 @@ def _fill_predictor_arrays(
 ):
     """Helper used in make_predictor to set the TreePredictor fields."""
     node = predictor_nodes[next_free_node_idx]
-    node["count"] = grower_node.n_samples
+    node["weighted_n_node_samples"] = grower_node.weighted_n_node_samples
     node["depth"] = grower_node.depth
     if grower_node.split_info is not None:
         node["gain"] = grower_node.split_info.gain

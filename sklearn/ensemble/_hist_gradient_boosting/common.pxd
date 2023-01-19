@@ -22,7 +22,7 @@ cdef packed struct node_struct:
     # Equivalent struct to PREDICTOR_RECORD_DTYPE to use in memory views. It
     # needs to be packed since by default numpy dtypes aren't aligned
     Y_DTYPE_C value
-    unsigned int count
+    Y_DTYPE_C weighted_n_node_samples
     unsigned int feature_idx
     X_DTYPE_C num_threshold
     unsigned char missing_go_to_left

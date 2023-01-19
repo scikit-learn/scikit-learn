@@ -236,8 +236,8 @@ def _compute_partial_dependence(
                     # push left child
                     node_idx_stack[stack_size] = current_node.left
                     left_sample_frac = (
-                        <Y_DTYPE_C> nodes[current_node.left].count /
-                        current_node.count)
+                        <Y_DTYPE_C> nodes[current_node.left].weighted_n_node_samples /
+                        current_node.weighted_n_node_samples)
                     current_weight = weight_stack[stack_size]
                     weight_stack[stack_size] = current_weight * left_sample_frac
                     stack_size += 1
