@@ -21,7 +21,7 @@ from ..preprocessing import FunctionTransformer
 from ..utils import Bunch
 from ..utils import _safe_indexing
 from ..utils import _get_column_indices
-from ..utils._param_validation import HasMethods, Interval, StrOptions
+from ..utils._param_validation import HasMethods, Interval, StrOptions, Hidden
 from ..utils._set_output import _get_output_config, _safe_set_output
 from ..utils import check_pandas_support
 from ..utils.metaestimators import _BaseComposition
@@ -83,9 +83,11 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
         transformed and combined in the output, and the non-specified
         columns are dropped. (default of ``'drop'``).
         By specifying ``remainder='passthrough'``, all remaining columns that
-        were not specified in `transformers` will be automatically passed
-        through. This subset of columns is concatenated with the output of
-        the transformers.
+        were not specified in `transformers`, but present in the data passed
+        to `fit` will be automatically passed through. This subset of columns
+        is concatenated with the output of the transformers. For dataframes,
+        extra columns not seen during `fit` will be excluded from the output
+        of `transform`.
         By setting ``remainder`` to be an estimator, the remaining
         non-specified columns will use the ``remainder`` estimator. The
         estimator must support :term:`fit` and :term:`transform`.
@@ -215,7 +217,7 @@ class ColumnTransformer(TransformerMixin, _BaseComposition):
     _required_parameters = ["transformers"]
 
     _parameter_constraints: dict = {
-        "transformers": [list],
+        "transformers": [list, Hidden(tuple)],
         "remainder": [
             StrOptions({"drop", "passthrough"}),
             HasMethods(["fit", "transform"]),
