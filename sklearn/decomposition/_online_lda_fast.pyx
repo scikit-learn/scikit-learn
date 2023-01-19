@@ -8,9 +8,6 @@ cnp.import_array()
 from libc.math cimport exp, fabs, log
 from numpy.math cimport EULER
 
-# TODO: use const memory views for fused type "floating" with Cython 3.0,
-#  where applicable
-
 
 def mean_change(const floating[:] arr_1, const floating[:] arr_2):
     """Calculate the mean difference between two arrays.
