@@ -12,7 +12,6 @@ generated sparse signal corrupted with an additive gaussian noise:
 
 We compute the :math:`R^2` score and the fitting time of the models. The
 estimated coefficients of each model are compared with the ground-truth.
-
 """
 
 # %%
@@ -28,7 +27,6 @@ estimated coefficients of each model are compared with the ground-truth.
 # Such sparse, noisy and correlated features can be obtained, for instance, from
 # sensor nodes monitoring some environmental variables, as they typically register
 # similar values depending on their positions (spatial correlations).
-
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
 
@@ -55,15 +53,11 @@ X_train, X_test, y_train, y_test = train_test_split(
 # value of the regularization parameter `alpha`. To select the optimal value for
 # `alpha` we used a :class:`~sklearn.linear_model.LassoCV`. This is not shown
 # here to keep the example simple.
-
 from sklearn.linear_model import Lasso
 from sklearn.metrics import r2_score
 from time import time
 
-common_params = {
-    "alpha": 0.00002,
-    "max_iter": 10_000,
-}
+common_params = {"alpha": 0.00002, "max_iter": 10_000}
 t0 = time()
 lasso = Lasso(**common_params).fit(X_train, y_train)
 print(f"Lasso fit done in {(time() - t0):.3f}s")
@@ -159,7 +153,9 @@ plt.tight_layout()
 # -----------
 #
 # :class:`~sklearn.linear_model.Lasso` is known to recover sparse data very well
-# but does not perform well with highly correlated features.
+# but does not perform well with highly correlated features. Indeed, if several
+# correlated features contribute to the target, :class:`~sklearn.linear_model.Lasso`
+# will end-up selecting a single one.
 #
 # :class:`~sklearn.linear_model.ARDRegression` is better when handling gaussian
 # noise, which translates in a slightly better score than Lasso, but is still
