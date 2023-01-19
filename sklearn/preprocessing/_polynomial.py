@@ -673,7 +673,8 @@ class SplineTransformer(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
-        n_splines = self.bsplines_[0].c.shape[0]
+        n_splines = self.bsplines_[0].c.shape[1]
+
         input_features = _check_feature_names_in(self, input_features)
         feature_names = []
         for i in range(self.n_features_in_):
