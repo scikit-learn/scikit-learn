@@ -34,7 +34,7 @@ estimated coefficients of each model are compared with the ground-truth.
 from sklearn.datasets import make_regression
 from sklearn.model_selection import train_test_split
 
-X, y, true_weights = make_regression(
+X, y, true_coef = make_regression(
     n_samples=500,
     n_features=1000,
     n_informative=100,
@@ -131,7 +131,7 @@ from matplotlib.colors import SymLogNorm
 
 df = pd.DataFrame(
     {
-        "True weights": true_weights,
+        "True coefficients": true_coef,
         "Lasso": lasso.coef_,
         "ARDRegression": ard.coef_,
         "ElasticNet": enet.coef_,
