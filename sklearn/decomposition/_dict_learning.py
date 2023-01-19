@@ -1985,8 +1985,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     We can check the level of sparsity of `X_transformed`:
 
-    >>> np.mean(X_transformed == 0)
-    0.38...
+    >>> np.mean(X_transformed == 0) < 0.5
+    True
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -1994,7 +1994,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.059...
+    0.057...
     """
 
     _parameter_constraints: dict = {
@@ -2154,9 +2154,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
         A, B = self._inner_stats
         A *= beta
-        A += code.T @ code
+        A += code.T @ code / batch_size
         B *= beta
-        B += X.T @ code
+        B += X.T @ code / batch_size
 
     def _minibatch_step(self, X, dictionary, random_state, step):
         """Perform the update on the dictionary for one minibatch."""
