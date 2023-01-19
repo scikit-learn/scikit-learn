@@ -137,8 +137,7 @@ first_pca_component.plot.bar(
     title="Weights of the first principal component", figsize=(6, 8)
 )
 
-plt.tight_layout()
-plt.show()
+_ = plt.tight_layout()
 
 # %%
 # Indeed we find that the "proline" feature dominates the direction of the first
@@ -183,8 +182,7 @@ for ax in (ax1, ax2):
     ax.legend(loc="upper right")
     ax.grid()
 
-plt.tight_layout()
-plt.show()
+_ = plt.tight_layout()
 
 # %%
 # From the plot above we observe that scaling the features before reducing the
