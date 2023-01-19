@@ -19,10 +19,14 @@ estimated coefficients of each model are compared with the ground-truth.
 # --------------------------
 #
 # We generate a dataset where the number of samples is lower than the total
-# number of features. Here `X` and `y` are linearly linked: 100 of the features
-# of `X` will be used to generate `y`. Some correlations between the informative
-# features are added by means of the `effective_rank` parameter. The other
-# features are not useful at predicting `y`. Finally, gaussian noise is added.
+# number of features. This leads to a singular matrix that cannot be dealt with
+# an :ref:`ordinary_least_squares` as it requires some regularization.
+#
+# Here `X` and `y` are linearly linked. Only 100 out of the 1_000 features in
+# `X` will be used to generate `y` while the rest are not useful at predicting
+# `y`, resulting in a sparse feature space. Some correlations between the
+# informative features are added by means of the `effective_rank` parameter.
+# Finally, gaussian noise is added.
 #
 # Such sparse, noisy and correlated features can be obtained, for instance, from
 # sensor nodes monitoring some environmental variables, as they typically register
