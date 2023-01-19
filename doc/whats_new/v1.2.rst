@@ -27,6 +27,9 @@ random sampling procedures.
   are strings. Predefined categories encoded as bytes will no longer work
   with `X` encoded as strings. :pr:`25174` by :user:`Tim Head <betatim>`.
 
+- |Fix| Support `pandas.Int64` dtyped `y` for classifiers and regressors.
+  :pr:`25089` by :user:`Tim Head <betatim>`.
+
 Changelog
 ---------
 
