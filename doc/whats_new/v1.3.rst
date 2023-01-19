@@ -138,13 +138,6 @@ Changelog
   when the provided `sample_weight` reduces the problem to a single class in `fit`.
   :pr:`24140` by :user:`Jonathan Ohayon <Johayon>` and :user:`Chiara Marmo <cmarmo>`.
 
-:mod:`sklearn.neural_network`
-.............................
-
-- |Fix| :class:`neural_network.MLPClassifier` and :class:`neural_network.MLPRegressor`
-  no longer raise warnings when fitting data with feature names.
-  :pr:`24873` by :user:`Tim Head <betatim>`.
-
 :mod:`sklearn.pipeline`
 .......................
 

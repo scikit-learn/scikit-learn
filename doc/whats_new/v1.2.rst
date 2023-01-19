@@ -78,6 +78,12 @@ Changelog
 - |Fix| :class:`manifold.TSNE` now works correctly when output type is
   set to pandas :pr:`25370` by :user:`Tim Head <betatim>`.
 
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| :class:`neural_network.MLPClassifier` and :class:`neural_network.MLPRegressor`
+  no longer raise warnings when fitting data with feature names.
+  :pr:`24873` by :user:`Tim Head <betatim>`.
 
 :mod:`sklearn.preprocessing`
 ............................
