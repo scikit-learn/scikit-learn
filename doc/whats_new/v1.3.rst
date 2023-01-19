@@ -178,6 +178,18 @@ Changelog
   :pr:`24935` by :user:`Seladus <seladus>`, :user:`Guillaume Lemaitre <glemaitre>`, and
   :user:`Dea María Léon <deamarialeon>`, :pr:`25257` by :user:`Gleb Levitski <glevv>`.
 
+- |Fix| :class:`AdditiveChi2Sampler` is now stateless.
+  The `sample_interval_` attribute is deprecated and will be removed in 1.5.
+  :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
+
+:mod:`sklearn.utils`
+....................
+
+- |API| :func:`estimator_checks.check_transformers_unfitted_stateless` has been
+  introduced to ensure stateless transformers don't raise `NotFittedError`
+  during `transform` with no prior call to `fit` or `fit_transform`.
+  :pr:`25190` by :user:`Vincent Maladière <Vincent-Maladiere>`.
+
 Code and Documentation Contributors
 -----------------------------------
 
