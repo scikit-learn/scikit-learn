@@ -25,8 +25,17 @@ def _with_config(delayed_func, config):
 
 
 class Parallel(joblib.Parallel):
-    # A tweaked `Parallel` subclass that attaches the configuration of the current
-    # thread to each task to be run in parallel.
+    """Tweak of :class:`joblib.Parallel` that propagates the scikit-learn configuration.
+
+    This subclass of :class:`joblib.Parallel` ensures that the active configuration
+    (thread-local) of scikit-learn is propagated to the parallel workers for the
+    duration of the execution of the parallel tasks.
+
+    The API does not change and you can refer to :class:`joblib.Parallel`
+    documentation for more details.
+
+    .. versionadded:: 1.3
+    """
 
     def __call__(self, iterable):
         """Dispatch the tasks and return the results.
@@ -52,21 +61,6 @@ class Parallel(joblib.Parallel):
             for delayed_func, args, kwargs in iterable
         )
         return super().__call__(iterable_with_config)
-
-
-Parallel.__doc__ = (
-    joblib.Parallel.__doc__
-    + """\
-
-    Note that this scikit-learn specific subclass of joblib.Parallel
-    ensures that the active configuration (thread-local) of scikit-learn
-    is propagated to the parallel workers for the duration of the execution
-    of the parallel tasks.
-
-    .. versionadded:: 1.3
-       `Parallel` was added in scikit-learn 1.3.
-"""
-)
 
 
 # remove when https://github.com/joblib/joblib/issues/1071 is fixed
