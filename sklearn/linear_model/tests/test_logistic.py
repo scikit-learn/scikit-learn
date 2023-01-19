@@ -1979,12 +1979,12 @@ def test_liblinear_not_stuck():
     y = y[y != 2]
     X_prep = StandardScaler().fit_transform(X)
 
-    C = l1_min_c(X, y, loss="log") * np.logspace(0, 10, 30)[1]
+    C = l1_min_c(X, y, loss="log") * 10 ** (10 / 29)
     clf = LogisticRegression(
         penalty="l1",
         solver="liblinear",
         tol=1e-6,
-        max_iter=int(1e2),
+        max_iter=100,
         intercept_scaling=10000.0,
         random_state=0,
         C=C,
@@ -1992,5 +1992,5 @@ def test_liblinear_not_stuck():
 
     # test that the fit does not raise a ConvergenceWarning
     with warnings.catch_warnings():
-        warnings.simplefilter("error")
+        warnings.simplefilter("error", ConvergenceWarning)
         clf.fit(X_prep, y)
