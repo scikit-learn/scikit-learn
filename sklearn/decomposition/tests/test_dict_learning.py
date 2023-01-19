@@ -448,29 +448,37 @@ def test_dict_learning_online_verbosity():
     assert dico.components_.shape == (n_components, n_features)
 
 
-def test_dict_learning_online_estimator_shapes():
+@pytest.mark.parametrize("allow_nan", [True, False])
+def test_dict_learning_online_estimator_shapes(allow_nan):
     n_components = 5
     dico = MiniBatchDictionaryLearning(
-        n_components, batch_size=4, max_iter=5, random_state=0
+        n_components, batch_size=4, max_iter=5, random_state=0, allow_nan=allow_nan
     )
     dico.fit(X)
     assert dico.components_.shape == (n_components, n_features)
 
 
-def test_dict_learning_online_overcomplete():
+@pytest.mark.parametrize("allow_nan", [True, False])
+def test_dict_learning_online_overcomplete(allow_nan):
     n_components = 12
     dico = MiniBatchDictionaryLearning(
-        n_components, batch_size=4, max_iter=5, random_state=0
+        n_components, batch_size=4, max_iter=5, random_state=0, allow_nan=allow_nan
     ).fit(X)
     assert dico.components_.shape == (n_components, n_features)
 
 
-def test_dict_learning_online_initialization():
+@pytest.mark.parametrize("allow_nan", [True, False])
+def test_dict_learning_online_initialization(allow_nan):
     n_components = 12
     rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)
     dico = MiniBatchDictionaryLearning(
-        n_components, batch_size=4, max_iter=0, dict_init=V, random_state=0
+        n_components,
+        batch_size=4,
+        max_iter=0,
+        dict_init=V,
+        random_state=0,
+        allow_nan=allow_nan,
     ).fit(X)
     assert_array_equal(dico.components_, V)
 
@@ -713,7 +721,7 @@ def test_update_dict():
     A = np.dot(code.T, code)
     B = np.dot(X.T, code)
     newd_online = dictionary.copy()
-    _update_dict(newd_online, X, code, A, B)
+    _update_dict(newd_online, X, code, inner_stats=(A, B))
 
     assert_allclose(newd_batch, newd_online)
 
@@ -1026,3 +1034,33 @@ def test_minibatch_dictionary_learning_warns_and_ignore_n_iter():
     with pytest.warns(FutureWarning, match=warn_msg):
         model = MiniBatchDictionaryLearning(batch_size=256, n_iter=2, max_iter=2).fit(X)
     assert model.n_iter_ == 2
+
+
+def test_minibatch_dict_learning_missing_equivalent():
+    """Check that in the fully observable case, using the nan-friendly version is
+    equivalent to the base version.
+
+    This is only true for the first step, due to a small difference in the online update
+    of the sufficient statistics.
+    """
+    params = {"n_components": 4, "batch_size": 10, "max_iter": 1, "random_state": 0}
+    dl = MiniBatchDictionaryLearning(allow_nan=False, **params).fit(X)
+    dl_with_missing = MiniBatchDictionaryLearning(allow_nan=True, **params).fit(X)
+
+    assert_allclose(dl.components_, dl_with_missing.components_)
+
+    Xr = dl.transform(X) @ dl.components_
+    Xr_with_missing = dl_with_missing.transform(X) @ dl_with_missing.components_
+
+    assert_allclose(Xr, Xr_with_missing)
+
+    # same with partial_fit
+    dl = clone(dl).partial_fit(X[:5])
+    dl_with_missing = clone(dl_with_missing).partial_fit(X[:5])
+
+    assert_allclose(dl.components_, dl_with_missing.components_)
+
+    Xr = dl.transform(X) @ dl.components_
+    Xr_with_missing = dl_with_missing.transform(X) @ dl_with_missing.components_
+
+    assert_allclose(Xr, Xr_with_missing)
