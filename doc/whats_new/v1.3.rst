@@ -189,7 +189,8 @@ Changelog
 :mod:`sklearn.semi_supervised`
 ..............................
 
-- |Enhancement| :meth:`BaseLabelPropagation.fit` now accepts sparse matrices.
+- |Enhancement| :meth:`LabelSpreading.fit` and :meth:`LabelPropagation.fit` now
+  accepts sparse metrics.
   :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
 
 Code and Documentation Contributors
