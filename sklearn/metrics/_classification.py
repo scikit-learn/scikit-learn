@@ -52,11 +52,9 @@ def _check_zero_division(zero_division):
     elif isinstance(zero_division, (int, float)) and zero_division in [0, 1]:
         return np.float64(zero_division)
     elif np.isnan(zero_division):
-        return np.float64(np.nan)
+        return np.nan
     raise ValueError(
-        'Got zero_division={0}. Must be one of ["warn", 0, 1, np.nan]'.format(
-            zero_division
-        )
+        f'Got zero_division={zero_division}. Must be one of ["warn", 0, 1, np.nan]'
     )
 
 
@@ -151,7 +149,7 @@ def _nan_average(scores, weights):
     """
     Wrapper to combine np.average and np.nanmean, so np.nan values are ignored
     from the average and weights can be passed. Note that when possible,
-    we degenerate to the prime methods.
+    we delegate to the prime methods.
     """
 
     if len(scores) == 0:
@@ -164,7 +162,7 @@ def _nan_average(scores, weights):
     if weights is None:
         return np.nanmean(scores)
 
-    weights = np.asarray(weights)
+    weights = np.array(weights, copy=False)
     scores, weights = scores[~mask], weights[~mask]
     try:
         return np.average(scores, weights=weights)
@@ -793,13 +791,13 @@ def jaccard_score(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", 0.0, 1.0, np.nan, default="warn"
+    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division, i.e. when there
         there are no negative values in predictions and labels.
 
         Notes:
         - If set to "warn", this acts like 0, but a warning is also raised.
-        - If set to np.nan, such values will be excluded from the average.
+        - If set to `np.nan`, such values will be excluded from the average.
 
     Returns
     -------
@@ -819,7 +817,8 @@ def jaccard_score(
     :func:`jaccard_score` may be a poor metric if there are no
     positives for some samples or classes. Jaccard is undefined if there are
     no true or predicted labels, and our implementation will return a score
-    of 0 with a warning. This behaviour can be modified with `zero_division`.
+    of 0 with a warning. This behaviour can be modified by setting the
+    parameter `zero_division`.
 
     References
     ----------
@@ -869,7 +868,8 @@ def jaccard_score(
     >>> jaccard_score(y_true, y_pred, average=None)
     array([1. , 0. , 0.33...])
 
-    Finally, see how zero_division works:
+    Finally, you can use `zero_division` to set the output
+    when the metric is undefined:
 
     >>> jaccard_score([0, 0, 0], [0, 0, 0])
     0...
@@ -946,12 +946,12 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None, zero_division="warn
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", 0, 1 or np.nan, default="warn"
+    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division
 
         Notes:
         - If set to "warn", this acts like 0, but a warning is also raised.
-        - If set to np.nan, such values will be excluded from the average.
+        - If set to `np.nan`, such values will be excluded from the average.
 
         .. versionadded:: 0.18
 
@@ -989,6 +989,8 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None, zero_division="warn
     >>> import numpy as np
     >>> y_true = [1, 1, 1, 1]
     >>> y_pred = [1, 1, 1, 1]
+    >>> matthews_corrcoef(y_true, y_pred)
+    0.0...
     >>> matthews_corrcoef(y_true, y_pred, zero_division=1.0)
     1.0...
     >>> matthews_corrcoef(y_true, y_pred, zero_division=np.nan)
@@ -1020,8 +1022,7 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None, zero_division="warn
                 "control this behaviour."
             )
             warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
-            return 0.0
-        return zero_division
+        return _check_zero_division(zero_division)
     else:
         return cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 
@@ -1188,13 +1189,13 @@ def f1_score(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", 0, 1 or np.nan, default="warn"
+    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division, i.e. when all
         predictions and labels are negative.
 
         Notes:
         - If set to "warn", this acts like 0, but a warning is also raised.
-        - If set to np.nan, such values will be excluded from the average.
+        - If set to `np.nan`, such values will be excluded from the average.
 
     Returns
     -------
@@ -1245,7 +1246,7 @@ def f1_score(
     >>> y_pred_empty = [0, 0, 0, 0, 0, 0]
     >>> f1_score(y_true_empty, y_pred_empty)
     0.0...
-    >>> f1_score(y_true_empty, y_pred_empty, zero_division=1)
+    >>> f1_score(y_true_empty, y_pred_empty, zero_division=1.0)
     1.0...
     >>> f1_score(y_true_empty, y_pred_empty, zero_division=np.nan)
     nan...
@@ -1348,13 +1349,13 @@ def fbeta_score(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", 0, 1 or np.nan, default="warn"
+    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division, i.e. when all
         predictions and labels are negative.
 
         Notes:
         - If set to "warn", this acts like 0, but a warning is also raised.
-        - If set to np.nan, such values will be excluded from the average.
+        - If set to `np.nan`, such values will be excluded from the average.
 
     Returns
     -------
@@ -1620,7 +1621,7 @@ def precision_recall_fscore_support(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", 0, 1 or np.nan, default="warn"
+    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division:
            - recall: when there are no positive labels
            - precision: when there are no positive predictions
@@ -1628,7 +1629,7 @@ def precision_recall_fscore_support(
 
         Notes:
         - If set to "warn", this acts like 0, but a warning is also raised.
-        - If set to np.nan, such values will be excluded from the average.
+        - If set to `np.nan`, such values will be excluded from the average.
 
     Returns
     -------
@@ -1694,7 +1695,9 @@ def precision_recall_fscore_support(
     zero_division_value = _check_zero_division(zero_division)
 
     if beta < 0 or np.isnan(beta):
-        raise ValueError("beta should be >=0 (np.inf is ok) in the F-beta score")
+        raise ValueError(
+            f"beta should be >=0 in the F-beta score. Got {beta!r} instead."
+        )
 
     labels = _check_set_wise_labels(y_true, y_pred, average, labels, pos_label)
 
@@ -2013,7 +2016,7 @@ def precision_score(
 
         Notes:
         - If set to "warn", this acts like 0, but a warning is also raised.
-        - If set to np.nan, such values will be excluded from the average.
+        - If set to `np.nan`, such values will be excluded from the average.
 
     Returns
     -------
@@ -2157,12 +2160,12 @@ def recall_score(
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
-    zero_division : "warn", 0, 1 or np.nan, default="warn"
+    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division.
 
         Notes:
         - If set to "warn", this acts like 0, but a warning is also raised.
-        - If set to np.nan, such values will be excluded from the average.
+        - If set to `np.nan`, such values will be excluded from the average.
 
     Returns
     -------
@@ -2367,7 +2370,7 @@ def classification_report(
 
         .. versionadded:: 0.20
 
-    zero_division : "warn", 0, 1 or np.nan, default="warn"
+    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
         Sets the value to return when there is a zero division. If set to
         "warn", this acts as 0, but warnings are also raised.
 
@@ -2490,7 +2493,7 @@ def classification_report(
     if output_dict:
         report_dict = {label[0]: label[1:] for label in rows}
         for label, scores in report_dict.items():
-            report_dict[label] = dict(zip(headers, map(float, scores)))
+            report_dict[label] = dict(zip(headers, [float(i) for i in scores]))
     else:
         longest_last_line_heading = "weighted avg"
         name_width = max(len(cn) for cn in target_names)
@@ -2522,7 +2525,7 @@ def classification_report(
         avg = [avg_p, avg_r, avg_f1, np.sum(s)]
 
         if output_dict:
-            report_dict[line_heading] = dict(zip(headers, map(float, avg)))
+            report_dict[line_heading] = dict(zip(headers, [float(i) for i in avg]))
         else:
             if line_heading == "accuracy":
                 row_fmt_accuracy = (
