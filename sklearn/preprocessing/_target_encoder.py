@@ -44,10 +44,10 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         The used categories is stored in the `categories_` fitted attribute.
 
     target_type : {"auto", "continuous", "binary"}, default="auto"
-        Type of target
+        Type of target.
 
         - `"auto"` : Type of target is inferred with
-          :func:`~sklearn.utils.multiclass.type_of_target`
+          :func:`~sklearn.utils.multiclass.type_of_target`.
         - `"continuous"` : Continuous target
         - `"binary"` : Binary target
 
@@ -263,7 +263,8 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
 
         return X_int, X_mask, y, n_categories
 
-    def _transform_X_int(self, X_out, X_int, X_invalid, indices, encodings, y_mean):
+    @staticmethod
+    def _transform_X_int(X_out, X_int, X_invalid, indices, encodings, y_mean):
         """Transform X_int using encodings."""
         for f_idx, encoding in enumerate(encodings):
             X_out[indices, f_idx] = encoding[X_int[indices, f_idx]]
