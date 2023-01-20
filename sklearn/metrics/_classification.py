@@ -2450,6 +2450,13 @@ def classification_report(
         return report
 
 
+@validate_params(
+    {
+        "y_true": ["array-like", "sparse matrix"],
+        "y_pred": ["array-like", "sparse matrix"],
+        "sample_weight": ["array-like", None],
+    }
+)
 def hamming_loss(y_true, y_pred, *, sample_weight=None):
     """Compute the average Hamming loss.
 
@@ -2780,7 +2787,6 @@ def hinge_loss(y_true, pred_decision, *, labels=None, sample_weight=None):
     y_true_unique = np.unique(labels if labels is not None else y_true)
 
     if y_true_unique.size > 2:
-
         if pred_decision.ndim <= 1:
             raise ValueError(
                 "The shape of pred_decision cannot be 1d array"
