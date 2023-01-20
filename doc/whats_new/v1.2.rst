@@ -9,6 +9,19 @@ Version 1.2.1
 
 **In Development**
 
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- |Fix| The fitted components in :class:`MiniBatchDictionaryLearning` might differ. The
+  online updates of the sufficient statistics now properly take the sizes of the batches
+  into account.
+  :pr:`25354` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
 Changelog
 ---------
 
@@ -30,6 +43,19 @@ Changelog
   The ARFF specs requires to ignore the leading space.
   :pr:`25312` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :class:`decomposition.MiniBatchDictionaryLearning` where the
+  online updates of the sufficient statistics where not correct when calling
+  `partial_fit` on batches of different sizes.
+  :pr:`25354` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| :class:`decomposition.DictionaryLearning` better supports readonly NumPy
+  arrays. In particular, it better supports large datasets which are memory-mapped
+  when it is used with coordinate descent algorithms (i.e. when `fit_algorithm='cd'`).
+  :pr:`25172` by :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -46,12 +72,23 @@ Changelog
   `verbose` parameter set to a value greater than 0.
   :pr:`25250` by :user:`Jérémie Du Boisberranger <jeremiedbb>`.
 
+:mod:`sklearn.manifold`
+.......................
+
+- |Fix| :class:`manifold.TSNE` now works correctly when output type is
+  set to pandas :pr:`25370` by :user:`Tim Head <betatim>`.
+
+
 :mod:`sklearn.preprocessing`
 ............................
 
 - |Fix| :meth:`preprocessing.FunctionTransformer.inverse_transform` correctly
   supports DataFrames that are all numerical when `check_inverse=True`.
   :pr:`25274` by `Thomas Fan`_.
+
+- |Fix| :meth:`preprocessing.SplineTransformer.get_feature_names_out` correctly
+  returns feature names when `extrapolations="periodic"`. :pr:`25296` by
+  `Thomas Fan`_.
 
 :mod:`sklearn.tree`
 ...................
