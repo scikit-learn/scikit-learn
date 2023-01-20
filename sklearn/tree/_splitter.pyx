@@ -254,7 +254,7 @@ ctypedef fused Partitioner:
 cdef inline int node_split_best(
     Splitter splitter,
     Partitioner partitioner,
-    Criterion criterion,
+    BaseCriterion criterion,
     double impurity,
     SplitRecord* split,
     SIZE_t* n_constant_features,
@@ -537,7 +537,7 @@ cdef void heapsort(DTYPE_t* Xf, SIZE_t* samples, SIZE_t n) nogil:
 cdef inline int node_split_random(
     Splitter splitter,
     Partitioner partitioner,
-    Criterion criterion,
+    BaseCriterion criterion,
     double impurity,
     SplitRecord* split,
     SIZE_t* n_constant_features
