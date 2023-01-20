@@ -1056,6 +1056,28 @@ cdef class Tree:
 
         return out
 
+    cpdef compute_node_depths(self):
+        """Compute the depth of each node in a tree.
+
+        Returns
+        -------
+        depths : ndarray of shape (self.node_count,), dtype=np.int64
+            The depth of each node in the tree.
+
+        """
+        cdef cnp.int64_t[::1] depths = np.empty(self.node_count, dtype=np.int64)
+        cdef cnp.npy_intp node_id
+        cdef cnp.int64_t depth
+
+        # init root node
+        depths[0] = 1
+        for node_id in range(self.node_count):
+            if self.children_left[node_id] != _TREE_LEAF:
+                depth = depths[node_id] + 1
+                depths[self.children_left[node_id]] = depth
+                depths[self.children_right[node_id]] = depth
+
+        return depths.base
 
     cpdef compute_feature_importances(self, normalize=True):
         """Computes the importance of each feature (aka variable)."""

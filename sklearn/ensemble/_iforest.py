@@ -8,7 +8,7 @@ from scipy.sparse import issparse
 from warnings import warn
 from numbers import Integral, Real
 
-from ..tree import _tree, ExtraTreeRegressor
+from ..tree import ExtraTreeRegressor
 from ..tree._tree import DTYPE as tree_dtype
 from ..utils import (
     check_random_state,
@@ -331,13 +331,15 @@ class IsolationForest(OutlierMixin, BaseBagging):
             [self._max_samples]
         )
 
-        self._average_path_length_per_tree = []
-        self._decision_path_lengths = []
-        for tree in self.estimators_:
-            self._average_path_length_per_tree += [
-                _average_path_length(tree.tree_.n_node_samples)
+        self._average_path_length_per_tree, self._decision_path_lengths = zip(
+            *[
+                (
+                    _average_path_length(tree.tree_.n_node_samples),
+                    tree.compute_node_depths(),
+                )
+                for tree in self.estimators_
             ]
-            self._decision_path_lengths += [_compute_depths(tree.tree_)]
+        )
 
         if self.contamination == "auto":
             # 0.5 plays a special role as described in the original paper.
@@ -495,10 +497,9 @@ class IsolationForest(OutlierMixin, BaseBagging):
             X_subset = X[:, features] if subsample_features else X
 
             leaves_index = tree.apply(X_subset)
-            path_lengths = self._decision_path_lengths[tree_idx][leaves_index]
 
             depths += (
-                path_lengths
+                self._decision_path_lengths[tree_idx][leaves_index]
                 + self._average_path_length_per_tree[tree_idx][leaves_index]
                 - 1.0
             )
@@ -520,25 +521,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 ),
             }
         }
-
-
-def _compute_depths(tree):
-    """Compute the depths of each node in a tree.
-    Parameters
-    ----------
-    tree : tree.Tree
-
-    Returns
-    -------
-    depths : ndarray of shape (tree.node_count,)
-
-    """
-    depths = np.zeros(tree.node_count)
-    for node_id in range(tree.node_count):
-        if tree.children_left[node_id] != _tree.TREE_LEAF:
-            depths[tree.children_left[node_id]] += 1 + depths[node_id]
-            depths[tree.children_right[node_id]] += 1 + depths[node_id]
-    return depths + 1
 
 
 def _average_path_length(n_samples_leaf):
