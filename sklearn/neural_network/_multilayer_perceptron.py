@@ -687,7 +687,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                         % self.max_iter,
                         ConvergenceWarning,
                     )
-                    return
+                    break
         except KeyboardInterrupt:
             warnings.warn("Training interrupted by user.")
 
