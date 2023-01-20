@@ -120,7 +120,6 @@ Changelog
   conjunction with the newly introduced :func:`utils.parallel.Parallel`
   to ensure proper propagation of the scikit-learn configuration to
   the workers.
-  propagation 
   :pr:`25363` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 .. _changes_1_2:
