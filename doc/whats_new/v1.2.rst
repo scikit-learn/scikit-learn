@@ -27,11 +27,11 @@ random sampling procedures.
   are strings. Predefined categories encoded as bytes will no longer work
   with `X` encoded as strings. :pr:`25174` by :user:`Tim Head <betatim>`.
 
-- |Fix| Support `pandas.Int64` dtyped `y` for classifiers and regressors.
-  :pr:`25089` by :user:`Tim Head <betatim>`.
-
 Changes impacting all modules
 -----------------------------
+
+- |Fix| Support `pandas.Int64` dtyped `y` for classifiers and regressors.
+  :pr:`25089` by :user:`Tim Head <betatim>`.
 
 - |Fix| Remove spurious warnings for estimators internally using neighbors search methods.
   :pr:`25129` by :user:`Julien Jerphanion <jjerphan>`.
