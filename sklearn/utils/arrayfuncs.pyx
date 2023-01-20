@@ -12,7 +12,7 @@ from libc.float cimport DBL_MAX, FLT_MAX
 from ._cython_blas cimport _copy, _rotg, _rot
 
 
-def min_pos(floating[:] X):
+def min_pos(const floating[:] X):
     """Find the minimum value of an array over positive values
 
     Returns the maximum representable value of the input dtype if none of the
