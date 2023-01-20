@@ -116,7 +116,11 @@ Changelog
   :pr:`25147` by :user:`Tim Head <betatim>`.
 
 - |API| :func:`utils.fixes.delayed` is deprecated in 1.2.1 and will be removed
-  in 1.5. Instead, import :func:`utils.parallel.delayed`.
+  in 1.5. Instead, import :func:`utils.parallel.delayed` and use it in
+  conjunction with the newly introduced :func:`utils.parallel.Parallel`
+  to ensure proper propagation of the scikit-learn configuration to
+  the workers.
+  propagation 
   :pr:`25363` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 .. _changes_1_2:
