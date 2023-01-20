@@ -35,7 +35,7 @@
     </div>
     <div>
     <a href='https://github.com/MaxwellLZH'><img src='https://avatars.githubusercontent.com/u/16646940?v=4' class='avatar' /></a> <br />
-    <p>Maxwell</p>
+    <p>Maxwell Liu</p>
     </div>
     <div>
     <a href='https://github.com/norbusan'><img src='https://avatars.githubusercontent.com/u/1735589?v=4' class='avatar' /></a> <br />
