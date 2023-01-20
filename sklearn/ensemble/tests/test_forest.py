@@ -17,15 +17,14 @@ from itertools import product
 from typing import Dict, Any
 
 import numpy as np
-from joblib import Parallel
 from scipy.sparse import csr_matrix
 from scipy.sparse import csc_matrix
 from scipy.sparse import coo_matrix
 from scipy.special import comb
 
-import pytest
-
 import joblib
+
+import pytest
 
 import sklearn
 from sklearn.dummy import DummyRegressor
@@ -55,6 +54,7 @@ from sklearn.model_selection import train_test_split, cross_val_score
 >>>>>>> c3fca81536 (FIX Support read-only sparse datasets for `Tree`-based estimators (#25341))
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVC
+from sklearn.utils.parallel import Parallel
 from sklearn.utils.validation import check_random_state
 
 from sklearn.metrics import mean_squared_error
