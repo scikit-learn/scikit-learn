@@ -9,6 +9,16 @@ Version 1.2.1
 
 **In Development**
 
+Changes impacting all modules
+-----------------------------
+
+- |Fix| Fix a bug where the current configuration was ignored in estimators using
+  `n_jobs > 1`. This bug was triggered for tasks dispatched by the auxillary
+  thread of `joblib` as :func:`sklearn.get_config` used to access an empty thread
+  local configuration instead of the configuration visible from the thread where
+  `joblib.Parallel` was first called.
+  :pr:`25363` by :user:`Guillaume Lemaitre <glemaitre>`.
+
 Changed models
 --------------
 
@@ -138,6 +148,13 @@ Changelog
 - |Fix| Restore :func:`utils.check_array`'s behaviour for pandas Series of type
   boolean. The type is maintained, instead of converting to `float64.`
   :pr:`25147` by :user:`Tim Head <betatim>`.
+
+- |API| :func:`utils.fixes.delayed` is deprecated in 1.2.1 and will be removed
+  in 1.5. Instead, import :func:`utils.parallel.delayed` and use it in
+  conjunction with the newly introduced :func:`utils.parallel.Parallel`
+  to ensure proper propagation of the scikit-learn configuration to
+  the workers.
+  :pr:`25363` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 .. _changes_1_2:
 
