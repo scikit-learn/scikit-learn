@@ -19,6 +19,16 @@ This example will provide some hints in interpreting coefficient in linear
 models, pointing at problems that arise when either the linear model is not
 appropriate to describe the dataset, or when features are correlated.
 
+.. note::
+
+    Keep in mind that the features `X` and the outcome `y` are in general the
+    result of a data generating process that is unknown to us. Machine learning
+    models are trained to approximate the unobserved mathematical function that
+    links `X` to `y` from sample data. As a result, any interpretation made
+    about a model may not necessarily generalize to the true data generating
+    process. This is especially true when the model is of bad quality or when
+    the sample data is not representative of the population.
+
 We will use data from the `"Current Population Survey"
 <https://www.openml.org/d/534>`_ from 1985 to predict
 wage as a function of various features such as experience, age, or education.
@@ -728,18 +738,6 @@ plt.subplots_adjust(left=0.3)
 #
 # See the :ref:`sphx_glr_auto_examples_inspection_plot_causal_interpretation.py`
 # for a simulated case of ability OVB.
-#
-# Warning: data and model quality
-# -------------------------------
-#
-# Keep in mind that the outcome `y` and features `X` are the product
-# of a data generating process that is hidden from us. Machine
-# learning models are trained to approximate the unobserved
-# mathematical function that links `X` to `y` from sample data. As a
-# result, any interpretation made about a model may not necessarily
-# generalize to the true data generating process. This is especially
-# true when the model is of bad quality or when the sample data is
-# not representative of the population.
 #
 # Lessons learned
 # ---------------
