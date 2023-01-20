@@ -43,6 +43,7 @@ pre_python_environment_install() {
         # need compilers
         apt-get -yq update
         apt-get -yq install build-essential
+    fi
 
 }
 
