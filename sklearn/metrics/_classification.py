@@ -917,7 +917,7 @@ def jaccard_score(
     return _nan_average(jaccard, weights=weights)
 
 
-def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
+def matthews_corrcoef(y_true, y_pred, *, sample_weight=None, zero_division="warn"):
     """Compute the Matthews correlation coefficient (MCC).
 
     The Matthews correlation coefficient is used in machine learning as a
@@ -930,7 +930,7 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     is also known as the phi coefficient. [source: Wikipedia]
 
     Binary and multiclass labels are supported.  Only in the binary case does
-    this relate to information about true and false positives and negatives.
+    relate to information about true and false positives and negatives.
     See references below.
 
     Read more in the :ref:`User Guide <matthews_corrcoef>`.
@@ -945,6 +945,13 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
 
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
+
+    zero_division : "warn", 0, 1 or np.nan, default="warn"
+        Sets the value to return when there is a zero division
+
+        Notes:
+        - If set to "warn", this acts like 0, but a warning is also raised.
+        - If set to np.nan, such values will be excluded from the average.
 
         .. versionadded:: 0.18
 
@@ -979,6 +986,13 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     >>> y_pred = [+1, -1, +1, +1]
     >>> matthews_corrcoef(y_true, y_pred)
     -0.33...
+    >>> import numpy as np
+    >>> y_true = [1, 1, 1, 1]
+    >>> y_pred = [1, 1, 1, 1]
+    >>> matthews_corrcoef(y_true, y_pred, zero_division=1.0)
+    1.0...
+    >>> matthews_corrcoef(y_true, y_pred, zero_division=np.nan)
+    nan...
     """
     y_type, y_true, y_pred = _check_targets(y_true, y_pred)
     check_consistent_length(y_true, y_pred, sample_weight)
@@ -1000,7 +1014,14 @@ def matthews_corrcoef(y_true, y_pred, *, sample_weight=None):
     cov_ytyt = n_samples**2 - np.dot(t_sum, t_sum)
 
     if cov_ypyp * cov_ytyt == 0:
-        return 0.0
+        if zero_division == "warn":
+            msg = (
+                "MCC is ill-defined and being set to 0.0. Use `zero_division` to "
+                "control this behaviour."
+            )
+            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+            return 0.0
+        return zero_division
     else:
         return cov_ytyp / np.sqrt(cov_ytyt * cov_ypyp)
 

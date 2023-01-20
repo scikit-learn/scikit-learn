@@ -725,9 +725,30 @@ def test_cohen_kappa():
     )
 
 
-def test_matthews_corrcoef_nan():
-    assert matthews_corrcoef([0], [1]) == 0.0
-    assert matthews_corrcoef([0, 0], [0, 1]) == 0.0
+@pytest.mark.parametrize(
+    "zero_division",
+    ["warn", 0, 1, np.nan],
+)
+def test_matthews_corrcoef_nan(zero_division):
+
+    zero_division_output = 0.0 if zero_division == "warn" else zero_division
+
+    for y_true, y_pred in (
+        ([0], [1]),
+        ([0, 0], [1, 1]),
+        ([], []),
+    ):
+        with warnings.catch_warnings(record=True) as record:
+            mcc = matthews_corrcoef(y_true, y_pred, zero_division=zero_division)
+            if zero_division == "warn":
+                assert len(record) == 1
+            else:
+                assert not record
+
+        if np.isnan(zero_division_output):
+            assert np.isnan(mcc)
+        else:
+            assert mcc == zero_division_output
 
 
 def test_matthews_corrcoef_against_numpy_corrcoef():

@@ -132,10 +132,15 @@ Changelog
 :mod:`sklearn.metrics`
 .................................
 
+- |Feature| Adds `zero_division` to :func:`matthews_corrcoef`.
+  When there is a zero division, the metric is undefined and this value is returned.
+  :pr:`23183` by :user:`Marc Torrellas Socastro <marctorsoc>`.
+
 - |Feature| Adds `zero_division=np.nan` to multiple classification
   metrics: :func:`precision_score`, :func:`recall_score`, :func:`f1_score`,
   :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
-  :func:`classification_report`. When `zero_division=np.nan` and
+  :func:`classification_report`, :func:`matthews_corrcoef`.
+  When `zero_division=np.nan` and
   there is a zero division, the metric is undefined and is excluded from averaging.
   When not used for averages, the value returned is `np.nan`.
   :pr:`23183` by :user:`Marc Torrellas Socastro <marctorsoc>`.
