@@ -11,6 +11,7 @@ from sklearn._engine.base import _parse_entry_point
 from sklearn._engine.base import _get_engine_classes
 from sklearn._engine.base import EngineSpec
 from sklearn._config import config_context
+from sklearn.base import EngineAwareMixin
 
 
 class FakeDefaultEngine:
@@ -169,3 +170,52 @@ def test_attribute_conversion(attribute_types, converted):
         est.fit(X)
 
     assert isinstance(est.X_, np.ndarray) == converted
+
+
+def test_engine_selection():
+    """Check that the correct engine is selected"""
+
+    class DefaultEngine:
+        def __init__(self, estimator):
+            self.estimator = estimator
+
+        def accepts(self, X, y=None, sample_weight=None):
+            return True
+
+    class NeverAcceptsEngine:
+        def __init__(self, estimator):
+            self.estimator = estimator
+
+        def accepts(self, X, y=None, sample_weight=None):
+            return False
+
+    class AlwaysAcceptsEngine:
+        def __init__(self, estimator):
+            self.estimator = estimator
+
+        def accepts(self, X, y=None, sample_weight=None):
+            return True
+
+    class Estimator(EngineAwareMixin):
+        _engine_name = "test-engine"
+        _default_engine = DefaultEngine
+
+        def resolve_engine(self, X, y):
+            # Test that `_get_engine` works properly
+            engine = self._get_engine(X, y, reset=True)
+            return engine
+
+    with config_context(engine_provider=(NeverAcceptsEngine)):
+        est = Estimator()
+        engine = est.resolve_engine([[1, 2], [3, 4]], [0, 1])
+        assert isinstance(engine, DefaultEngine)
+
+    with config_context(engine_provider=(AlwaysAcceptsEngine)):
+        est = Estimator()
+        engine = est.resolve_engine([[1, 2], [3, 4]], [0, 1])
+        assert isinstance(engine, AlwaysAcceptsEngine)
+
+    with config_context(engine_provider=(NeverAcceptsEngine, AlwaysAcceptsEngine)):
+        est = Estimator()
+        engine = est.resolve_engine([[1, 2], [3, 4]], [0, 1])
+        assert isinstance(engine, AlwaysAcceptsEngine)

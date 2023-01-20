@@ -1,6 +1,8 @@
+from functools import lru_cache, wraps
 from importlib.metadata import entry_points
 from importlib import import_module
-from functools import lru_cache, wraps
+import inspect
+
 import warnings
 
 from sklearn._config import get_config
@@ -82,6 +84,10 @@ def _get_engine_classes(engine_name, provider_names, engine_specs, default):
         specs_by_provider.setdefault(spec.provider_name, spec)
 
     for provider_name in provider_names:
+        if inspect.isclass(provider_name):
+            # The provider name is actually a ready-to-go engine
+            yield provider_name.__name__, provider_name
+
         spec = specs_by_provider.get(provider_name)
         if spec is not None:
             yield spec.provider_name, spec.get_engine_class()
@@ -91,16 +97,22 @@ def _get_engine_classes(engine_name, provider_names, engine_specs, default):
 
 def get_engine_classes(engine_name, default, verbose=False):
     provider_names = get_config()["engine_provider"]
+    # Single provider name was passed in
     if isinstance(provider_names, str):
         provider_names = (provider_names,)
-    elif not isinstance(provider_names, tuple):
-        # Make sure the provider names are a tuple to make it possible for the
-        # lru cache to hash them.
-        provider_names = tuple(provider_names)
+    # Single provider class was passed in
+    elif inspect.isclass(provider_names):
+        provider_names = (provider_names,)
+
     if not provider_names:
         yield "default", default
         return
-    engine_specs = _parse_entry_points(provider_names=provider_names)
+
+    engine_specs = _parse_entry_points(
+        provider_names=tuple(
+            [name for name in provider_names if not inspect.isclass(name)]
+        )
+    )
     for provider, engine_class in _get_engine_classes(
         engine_name=engine_name,
         provider_names=provider_names,
