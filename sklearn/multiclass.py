@@ -56,9 +56,7 @@ from .utils.multiclass import (
     _ovr_decision_function,
 )
 from .utils.metaestimators import _safe_split, available_if
-from .utils.fixes import delayed
-
-from joblib import Parallel
+from .utils.parallel import delayed, Parallel
 
 __all__ = [
     "OneVsRestClassifier",
