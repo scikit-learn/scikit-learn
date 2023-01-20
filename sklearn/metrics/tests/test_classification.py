@@ -725,30 +725,39 @@ def test_cohen_kappa():
     )
 
 
+@pytest.mark.parametrize("zero_division", [0, 1, np.nan])
 @pytest.mark.parametrize(
-    "zero_division",
-    ["warn", 0, 1, np.nan],
-)
-def test_matthews_corrcoef_nan(zero_division):
-
-    zero_division_output = 0.0 if zero_division == "warn" else zero_division
-
-    for y_true, y_pred in (
+    "y_true, y_pred",
+    [
         ([0], [1]),
         ([0, 0], [1, 1]),
         ([], []),
-    ):
-        with warnings.catch_warnings(record=True) as record:
-            mcc = matthews_corrcoef(y_true, y_pred, zero_division=zero_division)
-            if zero_division == "warn":
-                assert len(record) == 1
-            else:
-                assert not record
+    ]
+)
+def test_matthews_corrcoef_nan(zero_division, y_true, y_pred):
+    with warnings.catch_warnings(record=True) as record:
+        mcc = matthews_corrcoef(y_true, y_pred, zero_division=zero_division)
+        assert not record
 
-        if np.isnan(zero_division_output):
-            assert np.isnan(mcc)
-        else:
-            assert mcc == zero_division_output
+    if np.isnan(zero_division):
+        assert np.isnan(mcc)
+    else:
+        assert mcc == zero_division
+
+
+@pytest.mark.parametrize(
+    "y_true, y_pred",
+    [
+        ([0], [1]),
+        ([0, 0], [1, 1]),
+        ([], []),
+    ]
+)
+def test_matthews_corrcoef_nan_warn(y_true, y_pred):
+    with warnings.catch_warnings(record=True) as record:
+        mcc = matthews_corrcoef(y_true, y_pred, zero_division="warn")
+        assert len(record) == 1
+        assert mcc == 0.0
 
 
 def test_matthews_corrcoef_against_numpy_corrcoef():
