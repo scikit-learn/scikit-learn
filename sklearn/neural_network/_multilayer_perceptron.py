@@ -440,7 +440,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             not self.warm_start and not incremental
         )
 
-        X, y = self._validate_input(X, y, incremental, reset=first_pass)
+        X, y, sample_weight = self._validate_input(X, y, incremental, reset=first_pass, sample_weight=sample_weight)
 
         n_samples, n_features = X.shape
 
@@ -448,8 +448,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if y.ndim == 1:
             y = y.reshape((-1, 1))
 
-        # Handle sample/class weights
-        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        # Handle class weights
         if isinstance(self, MLPClassifier) and self.class_weight is not None:
             sample_weight = (sample_weight * compute_sample_weight(self.class_weight, y))
 
@@ -1123,7 +1122,7 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             max_fun=max_fun,
         )
 
-    def _validate_input(self, X, y, incremental, reset):
+    def _validate_input(self, X, y, incremental, reset, sample_weight=None):
         X, y = self._validate_data(
             X,
             y,
@@ -1175,7 +1174,16 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         # This downcast to bool is to prevent upcasting when working with
         # float32 data
         y = self._label_binarizer.transform(y).astype(bool)
-        return X, y
+
+        # check sample weight
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        nonzero_indices = np.nonzero(sample_weight)[0]
+        if nonzero_indices.shape[0] < sample_weight.shape[0]:  # filter out zero-weighted samples
+            X = X[nonzero_indices]
+            y = y[nonzero_indices]
+            sample_weight = sample_weight[nonzero_indices]
+
+        return X, y, sample_weight
 
     def predict(self, X):
         """Predict using the multi-layer perceptron classifier.
@@ -1648,7 +1656,7 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         y_pred = self._predict(X, check_input=False)
         return r2_score(y, y_pred)
 
-    def _validate_input(self, X, y, incremental, reset):
+    def _validate_input(self, X, y, incremental, reset, sample_weight=None):
         X, y = self._validate_data(
             X,
             y,
@@ -1660,7 +1668,16 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         )
         if y.ndim == 2 and y.shape[1] == 1:
             y = column_or_1d(y, warn=True)
-        return X, y
+
+        # check sample weight
+        sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
+        nonzero_indices = np.nonzero(sample_weight)[0]
+        if nonzero_indices.shape[0] < sample_weight.shape[0]:  # filter out zero-weighted samples
+            X = X[nonzero_indices]
+            y = y[nonzero_indices]
+            sample_weight = sample_weight[nonzero_indices]
+
+        return X, y, sample_weight
 
     @available_if(lambda est: est._check_solver)
     def partial_fit(self, X, y):
