@@ -11,7 +11,7 @@
 
 # See _splitter.pyx for details.
 
-from ._criterion cimport Criterion
+from ._criterion cimport BaseCriterion
 
 from ._tree cimport DTYPE_t          # Type of X
 from ._tree cimport DOUBLE_t         # Type of y, sample_weight
