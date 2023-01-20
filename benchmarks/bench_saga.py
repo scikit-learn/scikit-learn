@@ -7,8 +7,7 @@ import json
 import time
 import os
 
-from joblib import Parallel
-from sklearn.utils.fixes import delayed
+from sklearn.utils.parallel import delayed, Parallel
 import matplotlib.pyplot as plt
 import numpy as np
 
