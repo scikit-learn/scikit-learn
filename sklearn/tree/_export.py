@@ -1012,14 +1012,17 @@ def export_text(
                 " `decision_tree` during `fit` will be used instead.",
                 FutureWarning,
             )
-        elif class_names is not None and len(class_names) != len(
-            decision_tree.classes_
-        ):
-            raise ValueError(
-                "When `class_names` is not None, it should be a list containing as"
-                f" many items as `decision_tree.classes_`. Got {len(class_names)} while"
-                f" the tree was fitted with {len(decision_tree.classes_)} classes."
-            )
+            class_names = range(decision_tree.n_classes_)
+        elif class_names is not None:
+            if len(class_names) != len(decision_tree.classes_):
+                raise ValueError(
+                    "When `class_names` is not None, it should be a list containing as"
+                    " many items as `decision_tree.classes_`. Got"
+                    f" {len(class_names)} while the tree was fitted with"
+                    f" {len(decision_tree.classes_)} classes."
+                )
+            else:
+                class_names = class_names
         else:
             class_names = decision_tree.classes_
     right_child_fmt = "{} {} <= {}\n"
@@ -1078,12 +1081,7 @@ def export_text(
         else:
             value = tree_.value[node].T[0]
 
-        if class_names == "numeric":
-            class_name = np.argmax(value)
-        elif class_names is None:
-            class_name = decision_tree.classes_[np.argmax(value)]
-        else:
-            class_name = class_names[np.argmax(value)]
+        class_name = np.argmax(value)
 
         if tree_.n_classes[0] != 1 and tree_.n_outputs == 1:
             class_name = class_names[class_name]

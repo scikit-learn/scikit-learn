@@ -347,6 +347,18 @@ def test_precision():
                 assert len(search(r"\.\d+", finding.group()).group()) == precision + 1
 
 
+def test_export_text_warnings():
+    clf = DecisionTreeClassifier(max_depth=2, random_state=0)
+    clf.fit(X, y)
+    warn_msg = (
+        "The option `class_names='numeric'` is deprecated in 1.3 and will be"
+        " removed in 1.5. Set `class_names=None`, the classes as seen by"
+        " `decision_tree` during `fit` will be used instead."
+    )
+    with pytest.warns(FutureWarning, match=warn_msg):
+        export_text(clf, class_names="numeric")
+
+
 def test_export_text_errors():
     clf = DecisionTreeClassifier(max_depth=2, random_state=0)
     clf.fit(X, y)
@@ -385,11 +397,21 @@ def test_export_text():
     """
     ).lstrip()
 
-    assert export_text(clf) == expected_report
+    assert export_text(clf, class_names=None) == expected_report
     # testing that leaves at level 1 are not truncated
-    assert export_text(clf, max_depth=0) == expected_report
+    assert export_text(clf, class_names=None, max_depth=0) == expected_report
     # testing that the rest of the tree is truncated
-    assert export_text(clf, max_depth=10) == expected_report
+    assert export_text(clf, class_names=None, max_depth=10) == expected_report
+
+    expected_report = dedent(
+        """
+    |--- feature_1 <= 0.00
+    |   |--- class: 0
+    |--- feature_1 >  0.00
+    |   |--- class: 1
+    """
+    ).lstrip()
+    assert export_text(clf, class_names="numeric") == expected_report
 
     expected_report = dedent(
         """
@@ -399,7 +421,9 @@ def test_export_text():
     |   |--- class: 1
     """
     ).lstrip()
-    assert export_text(clf, feature_names=["a", "b"]) == expected_report
+    assert (
+        export_text(clf, feature_names=["a", "b"], class_names=None) == expected_report
+    )
 
     expected_report = dedent(
         """
@@ -429,7 +453,7 @@ def test_export_text():
     |   |--- weights: [0.00, 3.00] class: 1
     """
     ).lstrip()
-    assert export_text(clf, show_weights=True) == expected_report
+    assert export_text(clf, class_names=None, show_weights=True) == expected_report
 
     expected_report = dedent(
         """
@@ -439,7 +463,7 @@ def test_export_text():
     | |- class: 1
     """
     ).lstrip()
-    assert export_text(clf, spacing=1) == expected_report
+    assert export_text(clf, class_names=None, spacing=1) == expected_report
 
     X_l = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1], [-1, 1]]
     y_l = [-1, -1, -1, 1, 1, 1, 2]
@@ -453,7 +477,7 @@ def test_export_text():
     |   |--- truncated branch of depth 2
     """
     ).lstrip()
-    assert export_text(clf, max_depth=0) == expected_report
+    assert export_text(clf, class_names=None, max_depth=0) == expected_report
 
     X_mo = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
     y_mo = [[-1, -1], [-1, -1], [-1, -1], [1, 1], [1, 1], [1, 1]]
@@ -469,8 +493,11 @@ def test_export_text():
     |   |--- value: [1.0, 1.0]
     """
     ).lstrip()
-    assert export_text(reg, decimals=1) == expected_report
-    assert export_text(reg, decimals=1, show_weights=True) == expected_report
+    assert export_text(reg, class_names=None, decimals=1) == expected_report
+    assert (
+        export_text(reg, class_names=None, decimals=1, show_weights=True)
+        == expected_report
+    )
 
     X_single = [[-2], [-1], [-1], [1], [1], [2]]
     reg = DecisionTreeRegressor(max_depth=2, random_state=0)
@@ -484,9 +511,18 @@ def test_export_text():
     |   |--- value: [1.0, 1.0]
     """
     ).lstrip()
-    assert export_text(reg, decimals=1, feature_names=["first"]) == expected_report
     assert (
-        export_text(reg, decimals=1, show_weights=True, feature_names=["first"])
+        export_text(reg, decimals=1, feature_names=["first"], class_names=None)
+        == expected_report
+    )
+    assert (
+        export_text(
+            reg,
+            decimals=1,
+            show_weights=True,
+            feature_names=["first"],
+            class_names=None,
+        )
         == expected_report
     )
 
