@@ -329,6 +329,7 @@ def check_importances(name, criterion, dtype, tolerance):
     # Check with parallel
     importances = est.feature_importances_
     est.set_params(n_jobs=2)
+    est.fit(X, y)
     importances_parallel = est.feature_importances_
     assert_array_almost_equal(importances, importances_parallel)
 
