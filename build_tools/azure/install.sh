@@ -77,9 +77,9 @@ python_environment_install_and_activate() {
         pip install https://github.com/python-pillow/Pillow/archive/main.zip
 
     elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        echo "deb-src http://archive.ubuntu.com/ubuntu/ focal main" | sudo tee -a /etc/apt/sources.list
-        sudo apt-get -yq update
-        sudo apt-get install -yq ccache
+        echo "deb-src http://archive.ubuntu.com/ubuntu/ focal main" | tee -a /etc/apt/sources.list
+        apt-get -yq update
+        apt-get install -yq ccache
 
     fi
 }
