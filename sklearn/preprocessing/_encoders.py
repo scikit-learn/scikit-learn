@@ -97,7 +97,27 @@ class _BaseEncoder(TransformerMixin, BaseEstimator):
                 else:
                     cats = result
             else:
-                cats = np.array(self.categories[i], dtype=Xi.dtype)
+                if np.issubdtype(Xi.dtype, np.str_):
+                    # Always convert string categories to objects to avoid
+                    # unexpected string truncation for longer category labels
+                    # passed in the constructor.
+                    Xi_dtype = object
+                else:
+                    Xi_dtype = Xi.dtype
+
+                cats = np.array(self.categories[i], dtype=Xi_dtype)
+                if (
+                    cats.dtype == object
+                    and isinstance(cats[0], bytes)
+                    and Xi.dtype.kind != "S"
+                ):
+                    msg = (
+                        f"In column {i}, the predefined categories have type 'bytes'"
+                        " which is incompatible with values of type"
+                        f" '{type(Xi[0]).__name__}'."
+                    )
+                    raise ValueError(msg)
+
                 if Xi.dtype.kind not in "OUS":
                     sorted_cats = np.sort(cats)
                     error_msg = (
@@ -323,6 +343,17 @@ class OneHotEncoder(_BaseEncoder):
         .. versionadded:: 1.1
             Read more in the :ref:`User Guide <one_hot_encoder_infrequent_categories>`.
 
+    feature_name_combiner : "concat" or callable, default="concat"
+        Callable with signature `def callable(input_feature, category)` that returns a
+        string. This is used to create feature names to be returned by
+        :meth:`get_feature_names_out`.
+
+        `"concat"` concatenates encoded feature name and category with
+        `feature + "_" + str(category)`.E.g. feature X with values 1, 6, 7 create
+        feature names `X_1, X_6, X_7`.
+
+        .. versionadded:: 1.3
+
     Attributes
     ----------
     categories_ : list of arrays
@@ -367,6 +398,13 @@ class OneHotEncoder(_BaseEncoder):
         has feature names that are all strings.
 
         .. versionadded:: 1.0
+
+    feature_name_combiner : callable or None
+        Callable with signature `def callable(input_feature, category)` that returns a
+        string. This is used to create feature names to be returned by
+        :meth:`get_feature_names_out`.
+
+        .. versionadded:: 1.3
 
     See Also
     --------
@@ -422,6 +460,15 @@ class OneHotEncoder(_BaseEncoder):
     array([[0., 1., 0., 0.],
            [1., 0., 1., 0.]])
 
+    One can change the way feature names are created.
+
+    >>> def custom_combiner(feature, category):
+    ...     return str(feature) + "_" + type(category).__name__ + "_" + str(category)
+    >>> custom_fnames_enc = OneHotEncoder(feature_name_combiner=custom_combiner).fit(X)
+    >>> custom_fnames_enc.get_feature_names_out()
+    array(['x0_str_Female', 'x0_str_Male', 'x1_int_1', 'x1_int_2', 'x1_int_3'],
+          dtype=object)
+
     Infrequent categories are enabled by setting `max_categories` or `min_frequency`.
 
     >>> import numpy as np
@@ -447,6 +494,7 @@ class OneHotEncoder(_BaseEncoder):
         ],
         "sparse": [Hidden(StrOptions({"deprecated"})), "boolean"],  # deprecated
         "sparse_output": ["boolean"],
+        "feature_name_combiner": [StrOptions({"concat"}), callable],
     }
 
     def __init__(
@@ -460,6 +508,7 @@ class OneHotEncoder(_BaseEncoder):
         handle_unknown="error",
         min_frequency=None,
         max_categories=None,
+        feature_name_combiner="concat",
     ):
         self.categories = categories
         # TODO(1.4): Remove self.sparse
@@ -470,6 +519,7 @@ class OneHotEncoder(_BaseEncoder):
         self.drop = drop
         self.min_frequency = min_frequency
         self.max_categories = max_categories
+        self.feature_name_combiner = feature_name_combiner
 
     @property
     def infrequent_categories_(self):
@@ -1040,12 +1090,25 @@ class OneHotEncoder(_BaseEncoder):
             for i, _ in enumerate(self.categories_)
         ]
 
+        name_combiner = self._check_get_feature_name_combiner()
         feature_names = []
         for i in range(len(cats)):
-            names = [input_features[i] + "_" + str(t) for t in cats[i]]
+            names = [name_combiner(input_features[i], t) for t in cats[i]]
             feature_names.extend(names)
 
         return np.array(feature_names, dtype=object)
+
+    def _check_get_feature_name_combiner(self):
+        if self.feature_name_combiner == "concat":
+            return lambda feature, category: feature + "_" + str(category)
+        else:  # callable
+            dry_run_combiner = self.feature_name_combiner("feature", "category")
+            if not isinstance(dry_run_combiner, str):
+                raise TypeError(
+                    "When `feature_name_combiner` is a callable, it should return a "
+                    f"Python string. Got {type(dry_run_combiner)} instead."
+                )
+            return self.feature_name_combiner
 
 
 class OrdinalEncoder(OneToOneFeatureMixin, _BaseEncoder):

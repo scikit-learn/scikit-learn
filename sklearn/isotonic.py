@@ -12,7 +12,7 @@ import math
 
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import check_array, check_consistent_length
-from .utils.validation import _check_sample_weight
+from .utils.validation import _check_sample_weight, check_is_fitted
 from .utils._param_validation import Interval, StrOptions
 from ._isotonic import _inplace_contiguous_isotonic_regression, _make_unique
 
@@ -429,6 +429,7 @@ class IsotonicRegression(RegressorMixin, TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             An ndarray with one string i.e. ["isotonicregression0"].
         """
+        check_is_fitted(self, "f_")
         class_name = self.__class__.__name__.lower()
         return np.asarray([f"{class_name}0"], dtype=object)
 
