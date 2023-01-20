@@ -13,7 +13,7 @@ from math import ceil
 
 import numpy as np
 from scipy import linalg
-from joblib import Parallel, effective_n_jobs
+from joblib import effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
@@ -21,7 +21,7 @@ from ..utils import deprecated
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 

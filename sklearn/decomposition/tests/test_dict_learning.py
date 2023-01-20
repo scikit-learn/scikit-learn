@@ -5,8 +5,6 @@ import numpy as np
 from functools import partial
 import itertools
 
-from joblib import Parallel
-
 import sklearn
 
 from sklearn.base import clone
@@ -14,6 +12,7 @@ from sklearn.base import clone
 from sklearn.exceptions import ConvergenceWarning
 
 from sklearn.utils import check_array
+from sklearn.utils.parallel import Parallel
 
 from sklearn.utils._testing import assert_allclose
 from sklearn.utils._testing import assert_array_almost_equal

@@ -8,7 +8,6 @@ from copy import deepcopy
 from numbers import Integral
 
 import numpy as np
-from joblib import Parallel
 import scipy.sparse as sparse
 
 from ..base import clone
@@ -33,7 +32,7 @@ from ..utils.multiclass import check_classification_targets, type_of_target
 from ..utils.metaestimators import available_if
 from ..utils.validation import check_is_fitted
 from ..utils.validation import column_or_1d
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 from ..utils._param_validation import HasMethods, StrOptions
 from ..utils.validation import _check_feature_names_in
 

@@ -18,8 +18,6 @@ from numbers import Integral
 
 import numpy as np
 
-from joblib import Parallel
-
 from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..base import TransformerMixin
@@ -36,7 +34,7 @@ from ..utils.validation import column_or_1d
 from ..utils._param_validation import StrOptions
 from ..exceptions import NotFittedError
 from ..utils._estimator_html_repr import _VisualBlock
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 
 
 class _BaseVoting(TransformerMixin, _BaseHeterogeneousEnsemble):

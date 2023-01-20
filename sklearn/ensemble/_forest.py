@@ -48,7 +48,6 @@ from abc import ABCMeta, abstractmethod
 import numpy as np
 from scipy.sparse import issparse
 from scipy.sparse import hstack as sparse_hstack
-from joblib import Parallel
 
 from ..base import is_classifier
 from ..base import ClassifierMixin, MultiOutputMixin, RegressorMixin, TransformerMixin
@@ -66,7 +65,7 @@ from ..tree._tree import DTYPE, DOUBLE
 from ..utils import check_random_state, compute_sample_weight
 from ..exceptions import DataConversionWarning
 from ._base import BaseEnsemble, _partition_estimators
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 from ..utils.multiclass import check_classification_targets, type_of_target
 from ..utils.validation import (
     check_is_fitted,
