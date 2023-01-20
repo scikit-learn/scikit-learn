@@ -94,6 +94,11 @@ enhance the functionality of scikit-learn's estimators.
 - `mlxtend <https://github.com/rasbt/mlxtend>`_ Includes model visualization
   utilities.
 
+- `sklearn-evaluation <https://github.com/ploomber/sklearn-evaluation>`_ 
+  Machine learning model evaluation made easy: plots, tables, HTML reports,
+  experiment tracking and Jupyter notebook analysis. Visual analysis, model
+  selection, evaluation and diagnostics.
+
 - `yellowbrick <https://github.com/DistrictDataLabs/yellowbrick>`_ A suite of
   custom matplotlib visualizers for scikit-learn estimators to support visual feature
   analysis, model selection, evaluation, and diagnostics.
@@ -114,6 +119,10 @@ enhance the functionality of scikit-learn's estimators.
 - `sklearn-onnx <https://github.com/onnx/sklearn-onnx>`_ Serialization of many
   Scikit-learn pipelines to `ONNX <https://onnx.ai/>`_ for interchange and
   prediction.
+
+` `skops.io <https://skops.readthedocs.io/en/stable/persistence.html>`__ A
+  persistence model more secure than pickle, which can be used instead of
+  pickle in most common cases.
 
 - `sklearn2pmml <https://github.com/jpmml/sklearn2pmml>`_
   Serialization of a wide variety of scikit-learn estimators and transformers
@@ -356,6 +365,8 @@ and promote community efforts.
   (`source <https://github.com/mehrdad-dev/scikit-learn>`__)
 - `Spanish translation <https://qu4nt.github.io/sklearn-doc-es/>`_
   (`source <https://github.com/qu4nt/sklearn-doc-es>`__)
+- `Korean translation <https://panda5176.github.io/scikit-learn-korean/>`_
+  (`source <https://github.com/panda5176/scikit-learn-korean>`__)
 
 
 .. rubric:: Footnotes

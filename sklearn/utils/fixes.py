@@ -95,6 +95,17 @@ class loguniform(scipy.stats.reciprocal):
     """
 
 
+# TODO: remove when the minimum scipy version is >= 1.5
+if sp_version >= parse_version("1.5"):
+    from scipy.linalg import eigh as _eigh  # noqa
+else:
+
+    def _eigh(*args, **kwargs):
+        """Wrapper for `scipy.linalg.eigh` that handles the deprecation of `eigvals`."""
+        eigvals = kwargs.pop("subset_by_index", None)
+        return scipy.linalg.eigh(*args, eigvals=eigvals, **kwargs)
+
+
 # remove when https://github.com/joblib/joblib/issues/1071 is fixed
 def delayed(function):
     """Decorator used to capture the arguments of a function."""
@@ -167,10 +178,16 @@ def threadpool_info():
 threadpool_info.__doc__ = threadpoolctl.threadpool_info.__doc__
 
 
-# TODO: Remove when SciPy 1.9 is the minimum supported version
+# TODO: Remove when SciPy 1.11 is the minimum supported version
 def _mode(a, axis=0):
     if sp_version >= parse_version("1.9.0"):
-        return scipy.stats.mode(a, axis=axis, keepdims=True)
+        mode = scipy.stats.mode(a, axis=axis, keepdims=True)
+        if sp_version >= parse_version("1.10.999"):
+            # scipy.stats.mode has changed returned array shape with axis=None
+            # and keepdims=True, see https://github.com/scipy/scipy/pull/17561
+            if axis is None:
+                mode = np.ravel(mode)
+        return mode
     return scipy.stats.mode(a, axis=axis)
 
 
