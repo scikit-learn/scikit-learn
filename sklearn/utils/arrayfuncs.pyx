@@ -5,7 +5,6 @@ Small collection of auxiliary functions that operate on arrays
 
 cimport numpy as cnp
 import numpy as np
-from numpy cimport ndarray
 from cython cimport floating
 from libc.math cimport fabs
 from libc.float cimport DBL_MAX, FLT_MAX
@@ -13,16 +12,16 @@ from libc.float cimport DBL_MAX, FLT_MAX
 from ._cython_blas cimport _copy, _rotg, _rot
 
 
-def min_pos(floating[:] X):
+def min_pos(const floating[:] X):
     """Find the minimum value of an array over positive values
 
     Returns the maximum representable value of the input dtype if none of the
     values are positive.
     """
-    if X.dtype == np.float32:
-        return _min_pos[float](<float *> X.data, X.size)
-    elif X.dtype == np.float64:
-        return _min_pos[double](<double *> X.data, X.size)
+    if X.base.dtype == np.float32:
+        return _min_pos[float](<float *> &X[0], X.size)
+    elif X.base.dtype == np.float64:
+        return _min_pos[double](<double *> &X[0], X.size)
     else:
         raise ValueError('Unsupported dtype for array X')
 
