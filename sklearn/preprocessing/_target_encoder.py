@@ -143,6 +143,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         self : object
             Fitted encoder.
         """
+        self._validate_params()
         self._fit_encodings_all(X, y)
         return self
 
@@ -173,6 +174,7 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         """
         from ..model_selection._split import check_cv  # avoid circular import
 
+        self._validate_params()
         X_int, X_mask, y, n_categories = self._fit_encodings_all(X, y)
         cv = check_cv(self.cv)
         X_out = np.empty_like(X_int, dtype=np.float64)
@@ -220,7 +222,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
         """Fit a target encoding with all the data."""
         from ..preprocessing import LabelEncoder  # avoid circular import
 
-        self._validate_params()
         check_consistent_length(X, y)
         self._fit(X, handle_unknown="ignore", force_all_finite="allow-nan")
 
