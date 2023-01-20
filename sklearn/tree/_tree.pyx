@@ -187,7 +187,6 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
         # memory address containing the split node
         # Note: the pointer allows us to modularly define different split records
         cdef SplitRecord split
-        cdef SplitRecord* split_ptr = <SplitRecord *>malloc(splitter.pointer_size())
 
         cdef double impurity = INFINITY
         cdef SIZE_t n_constant_features
@@ -238,11 +237,11 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                 is_leaf = is_leaf or impurity <= EPSILON
 
                 if not is_leaf:
-                    splitter.node_split(impurity, split_ptr, &n_constant_features)
+                    splitter.node_split(impurity, split, &n_constant_features)
 
                     # assign local copy of SplitRecord to assign
                     # pos, improvement, and impurity scores
-                    split = deref(split_ptr)
+                    # split = deref(split_ptr)
 
                     # If EPSILON=0 in the below comparison, float precision
                     # issues stop splitting, producing trees that are
@@ -251,7 +250,7 @@ cdef class DepthFirstTreeBuilder(TreeBuilder):
                                (split.improvement + EPSILON <
                                 min_impurity_decrease))
 
-                node_id = tree._add_node(parent, is_left, is_leaf, split_ptr,
+                node_id = tree._add_node(parent, is_left, is_leaf, split,
                                           impurity, n_node_samples,
                                           weighted_n_node_samples)
                 if node_id == SIZE_MAX:

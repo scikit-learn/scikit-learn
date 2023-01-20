@@ -4,14 +4,12 @@
 #          Joel Nothman <joel.nothman@gmail.com>
 #          Arnaud Joly <arnaud.v.joly@gmail.com>
 #          Jacob Schreiber <jmschreiber91@gmail.com>
-#          Adam Li <adam2392@gmail.com>
-#          Jong Shin <jshinm@gmail.com>
 #
 # License: BSD 3 clause
 
 # See _splitter.pyx for details.
 
-from ._criterion cimport BaseCriterion
+from ._criterion cimport Criterion
 
 from ._tree cimport DTYPE_t          # Type of X
 from ._tree cimport DOUBLE_t         # Type of y, sample_weight
@@ -30,16 +28,14 @@ cdef struct SplitRecord:
     double impurity_left   # Impurity of the left split.
     double impurity_right  # Impurity of the right split.
 
-cdef class BaseSplitter:
-    """Abstract interface for splitter."""
-
+cdef class Splitter:
     # The splitter searches in the input space for a feature and a threshold
     # to split the samples samples[start:end].
     #
     # The impurity computations are delegated to a criterion object.
 
     # Internal structures
-    cdef public BaseCriterion criterion  # Impurity criterion
+    cdef public Criterion criterion      # Impurity criterion
     cdef public SIZE_t max_features      # Number of features to test
     cdef public SIZE_t min_samples_leaf  # Min samples in a leaf
     cdef public double min_weight_leaf   # Minimum weight in a leaf
@@ -58,6 +54,7 @@ cdef class BaseSplitter:
     cdef SIZE_t start                    # Start position for the current node
     cdef SIZE_t end                      # End position for the current node
 
+    cdef const DOUBLE_t[:, ::1] y
     cdef const DOUBLE_t[:] sample_weight
 
     # The samples vector `samples` is maintained by the Splitter object such
@@ -77,6 +74,13 @@ cdef class BaseSplitter:
     # This allows optimization with depth-based tree building.
 
     # Methods
+    cdef int init(
+        self,
+        object X,
+        const DOUBLE_t[:, ::1] y,
+        const DOUBLE_t[:] sample_weight
+    ) except -1
+
     cdef int node_reset(
         self,
         SIZE_t start,
@@ -95,15 +99,4 @@ cdef class BaseSplitter:
 
     cdef double node_impurity(self) nogil
 
-cdef class Splitter(BaseSplitter):
-    """Abstract interface for supervised splitter."""
-
-    cdef const DOUBLE_t[:, ::1] y
-
-    cdef int init(
-        self,
-        object X,
-        const DOUBLE_t[:, ::1] y,
-        const DOUBLE_t[:] sample_weight
-    ) except -1
-    
+    cdef int pointer_size(self) nogil

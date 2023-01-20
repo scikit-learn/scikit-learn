@@ -48,6 +48,7 @@ cdef class BaseTree:
     # Generic Methods: These are generic methods used by any tree.
     cdef int _resize(self, SIZE_t capacity) nogil except -1
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
+    cdef int node_size(self) nogil
     cdef SIZE_t _add_node(
         self,
         SIZE_t parent,
