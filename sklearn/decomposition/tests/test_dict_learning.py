@@ -5,6 +5,10 @@ import numpy as np
 from functools import partial
 import itertools
 
+from joblib import Parallel
+
+import sklearn
+
 from sklearn.base import clone
 
 from sklearn.exceptions import ConvergenceWarning
@@ -988,6 +992,29 @@ def test_get_feature_names_out(estimator):
         feature_names_out,
         [f"{estimator_name}{i}" for i in range(n_components)],
     )
+
+
+def test_cd_work_on_joblib_memmapped_data(monkeypatch):
+    monkeypatch.setattr(
+        sklearn.decomposition._dict_learning,
+        "Parallel",
+        partial(Parallel, max_nbytes=100),
+    )
+
+    rng = np.random.RandomState(0)
+    X_train = rng.randn(10, 10)
+
+    dict_learner = DictionaryLearning(
+        n_components=5,
+        random_state=0,
+        n_jobs=2,
+        fit_algorithm="cd",
+        max_iter=50,
+        verbose=True,
+    )
+
+    # This must run and complete without error.
+    dict_learner.fit(X_train)
 
 
 # TODO(1.4) remove

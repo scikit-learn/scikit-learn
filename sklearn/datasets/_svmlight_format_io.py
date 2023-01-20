@@ -506,7 +506,13 @@ def dump_svmlight_file(
         if hasattr(X, "sort_indices"):
             X.sort_indices()
 
-    if query_id is not None:
+    if query_id is None:
+        # NOTE: query_id is passed to Cython functions using a fused type on query_id.
+        # Yet as of Cython>=3.0, memory views can't be None otherwise the runtime
+        # would not known which concrete implementation to dispatch the Python call to.
+        # TODO: simplify interfaces and implementations in _svmlight_format_fast.pyx.
+        query_id = np.array([], dtype=np.int32)
+    else:
         query_id = np.asarray(query_id)
         if query_id.shape[0] != y.shape[0]:
             raise ValueError(
