@@ -9,6 +9,43 @@ Version 1.2.1
 
 **In Development**
 
+Changes impacting all modules
+-----------------------------
+
+- |Fix| Fix a bug where the current configuration was ignored in estimators using
+  `n_jobs > 1`. This bug was triggered for tasks dispatched by the auxillary
+  thread of `joblib` as :func:`sklearn.get_config` used to access an empty thread
+  local configuration instead of the configuration visible from the thread where
+  `joblib.Parallel` was first called.
+  :pr:`25363` by :user:`Guillaume Lemaitre <glemaitre>`.
+
+Changed models
+--------------
+
+The following estimators and functions, when fit with the same data and
+parameters, may produce different models from the previous version. This often
+occurs due to changes in the modelling logic (bug fixes or enhancements), or in
+random sampling procedures.
+
+- |Fix| The fitted components in :class:`MiniBatchDictionaryLearning` might differ. The
+  online updates of the sufficient statistics now properly take the sizes of the batches
+  into account.
+  :pr:`25354` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| The `categories_` attribute of :class:`preprocessing.OneHotEncoder` now
+  always contains an array of `object`s when using predefined categories that
+  are strings. Predefined categories encoded as bytes will no longer work
+  with `X` encoded as strings. :pr:`25174` by :user:`Tim Head <betatim>`.
+
+Changes impacting all modules
+-----------------------------
+
+- |Fix| Support `pandas.Int64` dtyped `y` for classifiers and regressors.
+  :pr:`25089` by :user:`Tim Head <betatim>`.
+
+- |Fix| Remove spurious warnings for estimators internally using neighbors search methods.
+  :pr:`25129` by :user:`Julien Jerphanion <jjerphan>`.
+
 Changelog
 ---------
 
@@ -30,6 +67,19 @@ Changelog
   The ARFF specs requires to ignore the leading space.
   :pr:`25312` by :user:`Guillaume Lemaitre <glemaitre>`.
 
+:mod:`sklearn.decomposition`
+............................
+
+- |Fix| Fixed a bug in :class:`decomposition.MiniBatchDictionaryLearning` where the
+  online updates of the sufficient statistics where not correct when calling
+  `partial_fit` on batches of different sizes.
+  :pr:`25354` by :user:`Jérémie du Boisberranger <jeremiedbb>`.
+
+- |Fix| :class:`decomposition.DictionaryLearning` better supports readonly NumPy
+  arrays. In particular, it better supports large datasets which are memory-mapped
+  when it is used with coordinate descent algorithms (i.e. when `fit_algorithm='cd'`).
+  :pr:`25172` by :user:`Julien Jerphanion <jjerphan>`.
+
 :mod:`sklearn.ensemble`
 .......................
 
@@ -37,6 +87,12 @@ Changelog
   :class:`ensemble.RandomForestRegressor` :class:`ensemble.ExtraTreesClassifier`
   and :class:`ensemble.ExtraTreesRegressor` now support sparse readonly datasets.
   :pr:`25341` by :user:`Julien Jerphanion <jjerphan>`
+
+:mod:`sklearn.feature_extraction`
+.................................
+
+- |Fix| :class:`feature_extraction.FeatureHasher` raises an informative error
+  when the input is a list of strings. :pr:`25094` by `Thomas Fan`_.
 
 :mod:`sklearn.linear_model`
 ...........................
@@ -52,6 +108,20 @@ Changelog
 - |Fix| :class:`manifold.TSNE` now works correctly when output type is
   set to pandas :pr:`25370` by :user:`Tim Head <betatim>`.
 
+:mod:`sklearn.model_selection`
+..............................
+
+- |Fix| :func:`model_selection.cross_validate` with multimetric scoring in
+  case of some failing scorers the non-failing scorers now returns proper
+  scores instead of `error_score` values.
+  :pr:`23101` by :user:`András Simon <simonandras>` and `Thomas Fan`_.
+
+:mod:`sklearn.neural_network`
+.............................
+
+- |Fix| :class:`neural_network.MLPClassifier` and :class:`neural_network.MLPRegressor`
+  no longer raise warnings when fitting data with feature names.
+  :pr:`24873` by :user:`Tim Head <betatim>`.
 
 :mod:`sklearn.preprocessing`
 ............................
@@ -59,6 +129,10 @@ Changelog
 - |Fix| :meth:`preprocessing.FunctionTransformer.inverse_transform` correctly
   supports DataFrames that are all numerical when `check_inverse=True`.
   :pr:`25274` by `Thomas Fan`_.
+
+- |Fix| :meth:`preprocessing.SplineTransformer.get_feature_names_out` correctly
+  returns feature names when `extrapolations="periodic"`. :pr:`25296` by
+  `Thomas Fan`_.
 
 :mod:`sklearn.tree`
 ...................
@@ -74,6 +148,13 @@ Changelog
 - |Fix| Restore :func:`utils.check_array`'s behaviour for pandas Series of type
   boolean. The type is maintained, instead of converting to `float64.`
   :pr:`25147` by :user:`Tim Head <betatim>`.
+
+- |API| :func:`utils.fixes.delayed` is deprecated in 1.2.1 and will be removed
+  in 1.5. Instead, import :func:`utils.parallel.delayed` and use it in
+  conjunction with the newly introduced :func:`utils.parallel.Parallel`
+  to ensure proper propagation of the scikit-learn configuration to
+  the workers.
+  :pr:`25363` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 .. _changes_1_2:
 
