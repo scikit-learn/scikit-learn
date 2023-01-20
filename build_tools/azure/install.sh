@@ -44,21 +44,6 @@ pre_python_environment_install() {
         apt-get -yq update
         apt-get -yq install build-essential
 
-    elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        echo "deb-src http://archive.ubuntu.com/ubuntu/ focal main" | sudo tee -a /etc/apt/sources.list
-        sudo apt-get -yq update
-        sudo apt-get install -yq ccache
-        sudo apt-get build-dep -yq python3 python3-dev
-        setup_ccache  # speed-up the build of CPython itself
-        # build Python nogil
-        PYTHON_NOGIL_CLONE_PATH=../nogil
-        git clone --depth 1 https://github.com/colesbury/nogil $PYTHON_NOGIL_CLONE_PATH
-        cd $PYTHON_NOGIL_CLONE_PATH
-        ./configure && make -j 2
-        export PYTHON_NOGIL_PATH="${PYTHON_NOGIL_CLONE_PATH}/python"
-        cd $OLDPWD
-
-    fi
 }
 
 python_environment_install_and_activate() {
@@ -74,7 +59,7 @@ python_environment_install_and_activate() {
         pip install -r "${LOCK_FILE}"
 
     elif [[ "$DISTRIB" == "pip-nogil" ]]; then
-        ${PYTHON_NOGIL_PATH} -m venv $VIRTUALENV
+        python -m venv $VIRTUALENV
         source $VIRTUALENV/bin/activate
         pip install -r "${LOCK_FILE}"
     fi
