@@ -374,12 +374,6 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
             # TODO: remove when PDP supports sample weights
             self._fitted_with_sw = True
 
-        # Set min_weight_leaf from min_weight_fraction_leaf
-        if sample_weight is None:
-            min_weight_leaf = self.min_weight_fraction_leaf * n_samples
-        else:
-            min_weight_leaf = self.min_weight_fraction_leaf * np.sum(sample_weight)
-
         sample_weight = self._finalize_sample_weight(sample_weight, y)
 
         rng = check_random_state(self.random_state)
@@ -395,6 +389,12 @@ class BaseHistGradientBoosting(BaseEstimator, ABC):
 
         # used for validation in predict
         n_samples, self._n_features = X.shape
+
+        # Set min_weight_leaf from min_weight_fraction_leaf
+        if sample_weight is None:
+            min_weight_leaf = self.min_weight_fraction_leaf * n_samples
+        else:
+            min_weight_leaf = self.min_weight_fraction_leaf * np.sum(sample_weight)
 
         self.is_categorical_, known_categories = self._check_categories(X)
 
