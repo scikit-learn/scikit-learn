@@ -1303,7 +1303,7 @@ def d2_tweedie_score(y_true, y_pred, *, sample_weight=None, power=0):
         "sample_weight": ["array-like", None],
         "alpha": [Interval(Real, 0, 1, closed="both")],
         "multioutput": [
-            StrOptions({"raw_values", "uniform_average", "variance_weighted"}),
+            StrOptions({"raw_values", "uniform_average"}),
             "array-like",
         ],
     }
