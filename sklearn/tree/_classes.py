@@ -483,7 +483,7 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
 
         Returns
         -------
-        depths : ndarray of shape (self.tree_.node_count,), dtype=np.int64
+        depths : ndarray of shape ``(self.tree_.node_count,)``, dtype=np.int64
             The depth of each node in the tree.
 
         """
