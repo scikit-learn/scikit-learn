@@ -15,7 +15,7 @@ import numpy as np
 from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
-from joblib import Parallel, effective_n_jobs
+from joblib import effective_n_jobs
 
 from .. import config_context
 from ..utils.validation import _num_samples
@@ -27,7 +27,7 @@ from ..utils import is_scalar_nan
 from ..utils.extmath import row_norms, safe_sparse_dot
 from ..preprocessing import normalize
 from ..utils._mask import _get_mask
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 from ..utils.fixes import sp_version, parse_version
 
 from ._pairwise_distances_reduction import ArgKmin
