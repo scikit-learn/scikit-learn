@@ -1339,7 +1339,7 @@ def d2_pinball_score(
         for which the pinball deviance and also D2 are optimal.
         The default `alpha=0.5` is equivalent to `d2_absolute_error_score`.
 
-    multioutput : {'raw_values', 'uniform_average', 'variance_weighted'} or array-like \
+    multioutput : {'raw_values', 'uniform_average'} or array-like \
             of shape (n_outputs,), default='uniform_average'
         Defines aggregating of multiple output values.
         Array-like value defines weights used to average scores.
