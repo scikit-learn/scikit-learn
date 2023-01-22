@@ -546,12 +546,12 @@ The score is calculated per split, not per population:
     H(Q_m) = \sqrt{\left(\sqrt{\frac{N_{m,+}^{left}}{N_{m,+}}}-\sqrt{\frac{N_{m,-}^{left}}{N_{m,-}}}\right)^2+\left(\sqrt{\frac{N_{m,+}^{right}}{N_{m,+}}}-\sqrt{\frac{N_{m,-}^{right}}{N_{m,-}}}\right)^2 }
 
 where:
-	 - :math:`N_{m,+}` is the number of positive samples for the :math:`m` node
-	 - :math:`N_{m,-}` is the number of negative samples for the :math:`m` node
-	 - :math:`N_{m,+}^{left}` and :math:`N_{m,+}^{right}` are the numbers of positive
-	   samples respectively at the left and the right of the :math:`m` node split
-	 - :math:`N_{m,-}^{left}` and :math:`N_{m,-}^{right}` are the numbers of negative
-	   samples respectively at the left and the right of the :math:`m` node split
+     - :math:`N_{m,+}` is the number of positive samples for the :math:`m` node
+     - :math:`N_{m,-}` is the number of negative samples for the :math:`m` node
+     - :math:`N_{m,+}^{left}` and :math:`N_{m,+}^{right}` are the numbers of positive
+       samples respectively at the left and the right of the :math:`m` node split
+     - :math:`N_{m,-}^{left}` and :math:`N_{m,-}^{right}` are the numbers of negative
+       samples respectively at the left and the right of the :math:`m` node split
 
 
 
