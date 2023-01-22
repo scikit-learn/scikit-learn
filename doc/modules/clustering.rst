@@ -399,11 +399,12 @@ is updated according to the following equation:
 
     x^{t+1} = x^t + m(x^t)
 
-Where :math:`N(x)` is the neighborhood of samples within a given distance
-around :math:`x` and :math:`m` is the *mean shift* vector that is computed for each
+Where :math:`m` is the *mean shift* vector that is computed for each
 centroid that points towards a region of the maximum increase in the density of points.
-This is computed using the following equation, effectively updating a centroid
-to be the mean of the samples within its neighborhood:
+To compute :math:`m` we define :math:`N(x)` as the neighborhood of samples within
+a given distance around :math:`x`. Then :math:`m` is computed using the following
+equation, effectively updating a centroid to be the mean of the samples within
+its neighborhood:
 
 .. math::
 
