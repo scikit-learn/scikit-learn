@@ -392,6 +392,8 @@ for centroids to be the mean of the points within a given region. These
 candidates are then filtered in a post-processing stage to eliminate
 near-duplicates to form the final set of centroids.
 
+The position of centroid candidates is iteratively adjusted using a technique called hill 
+climbing, which finds local maxima of the estimated probability density. 
 Given a candidate centroid :math:`x` for iteration :math:`t`, the candidate
 is updated according to the following equation:
 
