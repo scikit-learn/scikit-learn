@@ -397,7 +397,7 @@ is updated according to the following equation:
 
 .. math::
 
-    x^{t+1} = x^t + m(x^t)
+    x^{t+1} = x^t + m * (x^t)
 
 Where :math:`m` is the *mean shift* vector that is computed for each
 centroid that points towards a region of the maximum increase in the density of points.
