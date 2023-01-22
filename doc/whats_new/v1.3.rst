@@ -235,6 +235,16 @@ Changelog
   accepts sparse metrics.
   :pr:`19664` by :user:`Kaushik Amar Das <cozek>`.
 
+:mod:`sklearn.neural_network`
+.............................
+- |Feature| :class:`neural_network.MLPClassifier` can now use `class_weight`.
+  :pr:`25326` by :user:`Zach Shu <zshu115x>`, :pr:`11723` by :user:`Dor Cohen <dorcoh>`
+
+- |Enhancement| Add support for `sample_weight` in
+  :class:`neural_network.MLPClassifier` and :class:`neural_network.MLPCRegressor`.
+  This allows specifying the parameter `sample_weight` for each sample to be used while fitting.
+  :pr:`25326` by :user:`Zach Shu <zshu115x>`, :pr:`11723` by :user:`Dor Cohen <dorcoh>`
+
 Code and Documentation Contributors
 -----------------------------------
 
