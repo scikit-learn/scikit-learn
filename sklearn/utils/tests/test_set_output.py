@@ -237,3 +237,26 @@ def test__wrap_in_pandas_container_column_errors():
     X_np = np.asarray([[1, 3], [2, 4], [3, 5]])
     X_wrapped = _wrap_in_pandas_container(X_np, columns=get_columns)
     assert_array_equal(X_wrapped.columns, range(X_np.shape[1]))
+
+
+def test_set_output_mro():
+    """Check that multi-inheritance resolves to the correct class method.
+
+    Non-regression test gh-25293.
+    """
+
+    class Base(_SetOutputMixin):
+        def transform(self, X):
+            return "Base"  # noqa
+
+    class A(Base):
+        pass
+
+    class B(Base):
+        def transform(self, X):
+            return "B"
+
+    class C(A, B):
+        pass
+
+    assert C().transform(None) == "B"

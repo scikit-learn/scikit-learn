@@ -463,14 +463,10 @@ ESTIMATORS_WITH_GET_FEATURE_NAMES_OUT = [
 ]
 
 WHITELISTED_FAILING_ESTIMATORS = [
-    "AdditiveChi2Sampler",
     "DictVectorizer",
     "GaussianRandomProjection",
     "GenericUnivariateSelect",
-    "IterativeImputer",
-    "IsotonicRegression",
     "KBinsDiscretizer",
-    "KNNImputer",
     "MissingIndicator",
     "RFE",
     "RFECV",
@@ -481,14 +477,9 @@ WHITELISTED_FAILING_ESTIMATORS = [
     "SelectKBest",
     "SelectPercentile",
     "SequentialFeatureSelector",
-    "SimpleImputer",
     "SparseRandomProjection",
     "SplineTransformer",
-    "StackingClassifier",
-    "StackingRegressor",
     "VarianceThreshold",
-    "VotingClassifier",
-    "VotingRegressor",
 ]
 
 

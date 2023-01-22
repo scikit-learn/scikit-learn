@@ -14,7 +14,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy import sparse
-from joblib import Parallel, effective_n_jobs
+from joblib import effective_n_jobs
 
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
@@ -30,8 +30,7 @@ from ..utils.validation import (
     check_is_fitted,
     column_or_1d,
 )
-from ..utils._readonly_array_wrapper import ReadonlyArrayWrapper
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from . import _cd_fast as cd_fast  # type: ignore
@@ -594,9 +593,7 @@ def enet_path(
                 w=coef_,
                 alpha=l1_reg,
                 beta=l2_reg,
-                X_data=ReadonlyArrayWrapper(
-                    X.data
-                ),  # TODO: Remove after release of Cython 3 (#23147)
+                X_data=X.data,
                 X_indices=X.indices,
                 X_indptr=X.indptr,
                 y=y,
