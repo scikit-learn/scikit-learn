@@ -629,7 +629,7 @@ cdef class HellingerDistance(ClassificationCriterion):
 
         hellinger_distance = \sqrt{weight_k1+weight_k2}
 
-    Note: hellinger distance range is [0, \sqrt{2}]
+    Note: the Hellinger distance range is [0, \sqrt{2}]
 
     """
     cdef double node_impurity(self) nogil:
