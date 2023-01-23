@@ -432,14 +432,13 @@ class IsolationForest(OutlierMixin, BaseBagging):
         check_is_fitted(self)
 
         # Check data
-        X = self._validate_data(X, accept_sparse="csr", reset=False)
+        X = self._validate_data(X, accept_sparse="csr", dtype=np.float32, reset=False)
 
         # Take the opposite of the scores as bigger is better (here less
         # abnormal)
         return -self._compute_chunked_score_samples(X)
 
     def _compute_chunked_score_samples(self, X):
-
         n_samples = _num_samples(X)
 
         if self._max_features == X.shape[1]:
@@ -494,7 +493,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
         ):
             X_subset = X[:, features] if subsample_features else X
 
-            leaves_index = tree.apply(X_subset)
+            leaves_index = tree.apply(X_subset, check_input=False)
 
             depths += (
                 self._decision_path_lengths[tree_idx][leaves_index]
