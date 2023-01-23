@@ -41,7 +41,15 @@ LogisticRegression = partial(LogisticRegressionDefault, random_state=0)
 LogisticRegressionCV = partial(LogisticRegressionCVDefault, random_state=0)
 
 
-SOLVERS = ("lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga")
+SOLVERS = (
+    "lbfgs",
+    "liblinear",
+    "newton-cg",
+    "newton-cholesky",
+    "newton-lsmr",
+    "sag",
+    "saga",
+)
 X = [[-1, 0], [0, 1], [1, 1]]
 X_sp = sparse.csr_matrix(X)
 Y1 = [0, 1, 1]
@@ -154,6 +162,9 @@ def test_predict_3_classes():
         LogisticRegression(
             C=len(iris.data), solver="newton-cholesky", multi_class="ovr"
         ),
+        LogisticRegression(
+            C=len(iris.data), solver="newton-lsmr", multi_class="multinomial"
+        ),
     ],
 )
 def test_predict_iris(clf):
@@ -196,12 +207,12 @@ def test_check_solver_option(LR):
             lr.fit(X, y)
 
     # all solvers except 'liblinear' and 'saga'
-    for solver in ["lbfgs", "newton-cg", "newton-cholesky", "sag"]:
+    for solver in set(SOLVERS) - set(["liblinear", "saga"]):
         msg = "Solver %s supports only 'l2' or 'none' penalties," % solver
         lr = LR(solver=solver, penalty="l1", multi_class="ovr")
         with pytest.raises(ValueError, match=msg):
             lr.fit(X, y)
-    for solver in ["lbfgs", "newton-cg", "newton-cholesky", "sag", "saga"]:
+    for solver in set(SOLVERS) - set(["liblinear"]):
         msg = "Solver %s supports only dual=False, got dual=True" % solver
         lr = LR(solver=solver, dual=True, multi_class="ovr")
         with pytest.raises(ValueError, match=msg):
@@ -374,7 +385,7 @@ def test_consistency_path():
             )
 
     # test for fit_intercept=True
-    for solver in ("lbfgs", "newton-cg", "newton-cholesky", "liblinear", "sag", "saga"):
+    for solver in set(SOLVERS) - set(["liblinear"]):
         Cs = [1e3]
         coefs, Cs, _ = f(_logistic_regression_path)(
             X,
@@ -722,6 +733,8 @@ def test_logistic_regressioncv_class_weights(weight, class_weight):
         clf = LogisticRegressionCV(solver=solver, **params)
         if solver in ("sag", "saga"):
             clf.set_params(tol=1e-5, max_iter=10000, random_state=0)
+        elif solver == "newton-lsmr":
+            clf.set_params(tol=1e-5)
         clf.fit(X, y)
         assert_allclose(clf.coef_, clf_lbfgs.coef_, rtol=1e-3)
 
@@ -748,7 +761,7 @@ def test_logistic_regression_sample_weights():
             assert_allclose(clf_sw_none.coef_, clf_sw_ones.coef_, rtol=1e-4)
 
         # Test that sample weights work the same with the lbfgs,
-        # newton-cg, newton-cholesky and 'sag' solvers
+        # newton-cg, newton-cholesky, newton-lsmr and sag solvers
         clf_sw_lbfgs = LR(**kw)
         clf_sw_lbfgs.fit(X, y, sample_weight=sample_weight)
         for solver in set(SOLVERS) - set(("lbfgs", "saga")):
@@ -1280,7 +1293,7 @@ def test_saga_vs_liblinear():
 
 @pytest.mark.parametrize("multi_class", ["ovr", "multinomial"])
 @pytest.mark.parametrize(
-    "solver", ["liblinear", "newton-cg", "newton-cholesky", "saga"]
+    "solver", ["liblinear", "newton-cg", "newton-cholesky", "newton-lsmr", "saga"]
 )
 @pytest.mark.parametrize("fit_intercept", [False, True])
 def test_dtype_match(solver, multi_class, fit_intercept):

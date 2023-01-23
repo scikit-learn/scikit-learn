@@ -23,7 +23,7 @@ from sklearn.metrics import get_scorer_names
 from ._base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ._linear_loss import LinearModelLoss
 from ._sag import sag_solver
-from ._glm.glm import NewtonCholeskySolver
+from ._glm.glm import NEWTON_SOLVER
 from .._loss.loss import HalfBinomialLoss, HalfMultinomialLoss
 from ..preprocessing import LabelEncoder, LabelBinarizer
 from ..svm._base import _fit_liblinear
@@ -156,11 +156,11 @@ def _logistic_regression_path(
         where ``g_i`` is the i-th component of the gradient.
 
     verbose : int, default=0
-        For the liblinear and lbfgs solvers set verbose to any positive
-        number for verbosity.
+        For most solver, except for 'newton-cg', set verbose to any positive number
+        for verbosity.
 
-    solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'}, \
-            default='lbfgs'
+    solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'newton-lsmr', \
+            'sag', 'saga'}, default='lbfgs'
         Numerical solver to use.
 
     coef : array-like of shape (n_features,), default=None
@@ -295,7 +295,7 @@ def _logistic_regression_path(
     # Otherwise set them to 1 for all examples
     sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype, copy=True)
 
-    if solver == "newton-cholesky":
+    if solver in ["newton-cholesky", "newton-lsmr"]:
         # IMPORTANT NOTE: Rescaling of sample_weight:
         # Same as in _GeneralizedLinearRegressor.fit().
         # We want to minimize
@@ -326,7 +326,7 @@ def _logistic_regression_path(
         w0 = np.zeros(n_features + int(fit_intercept), dtype=X.dtype)
         mask = y == pos_class
         y_bin = np.ones(y.shape, dtype=X.dtype)
-        if solver in ["lbfgs", "newton-cg", "newton-cholesky"]:
+        if solver in ["lbfgs", "newton-cg", "newton-cholesky", "newton-lsmr"]:
             # HalfBinomialLoss, used for those solvers, represents y in [0, 1] instead
             # of in [-1, 1].
             mask_classes = np.array([0, 1])
@@ -343,9 +343,9 @@ def _logistic_regression_path(
             sample_weight *= class_weight_[le.fit_transform(y_bin)]
 
     else:
-        if solver in ["sag", "saga", "lbfgs", "newton-cg"]:
-            # SAG, lbfgs and newton-cg multinomial solvers need LabelEncoder,
-            # not LabelBinarizer, i.e. y as a 1d-array of integers.
+        if solver in ["sag", "saga", "lbfgs", "newton-cg", "newton-lsmr"]:
+            # SAG, lbfgs, newton-cg and newton-lsmr multinomial solvers need
+            # LabelEncoder, not LabelBinarizer, i.e. y as a 1d-array of integers.
             # LabelEncoder also saves memory compared to LabelBinarizer, especially
             # when n_classes is large.
             le = LabelEncoder()
@@ -401,17 +401,18 @@ def _logistic_regression_path(
                 w0[:, : coef.shape[1]] = coef
 
     if multi_class == "multinomial":
+        target = Y_multi
+        if solver in ["lbfgs", "newton-cg", "newton-lsmr"]:
+            loss = LinearModelLoss(
+                base_loss=HalfMultinomialLoss(n_classes=classes.size),
+                fit_intercept=fit_intercept,
+            )
         if solver in ["lbfgs", "newton-cg"]:
             # scipy.optimize.minimize and newton-cg accept only ravelled parameters,
             # i.e. 1d-arrays. LinearModelLoss expects classes to be contiguous and
             # reconstructs the 2d-array via w0.reshape((n_classes, -1), order="F").
             # As w0 is F-contiguous, ravel(order="F") also avoids a copy.
             w0 = w0.ravel(order="F")
-            loss = LinearModelLoss(
-                base_loss=HalfMultinomialLoss(n_classes=classes.size),
-                fit_intercept=fit_intercept,
-            )
-        target = Y_multi
         if solver in "lbfgs":
             func = loss.loss_gradient
         elif solver == "newton-cg":
@@ -433,7 +434,7 @@ def _logistic_regression_path(
             func = loss.loss
             grad = loss.gradient
             hess = loss.gradient_hessian_product  # hess = [gradient, hessp]
-        elif solver == "newton-cholesky":
+        elif solver in ("newton-cholesky", "newton-lsmr"):
             loss = LinearModelLoss(
                 base_loss=HalfBinomialLoss(), fit_intercept=fit_intercept
             )
@@ -468,11 +469,11 @@ def _logistic_regression_path(
             w0, n_iter_i = _newton_cg(
                 hess, func, grad, w0, args=args, maxiter=max_iter, tol=tol
             )
-        elif solver == "newton-cholesky":
+        elif solver in ("newton-cholesky", "newton-lsmr"):
             # The division by sw_sum is a consequence of the rescaling of
             # sample_weight, see comment above.
             l2_reg_strength = 1.0 / C / sw_sum
-            sol = NewtonCholeskySolver(
+            sol = NEWTON_SOLVER[solver](
                 coef=w0,
                 linear_loss=loss,
                 l2_reg_strength=l2_reg_strength,
@@ -640,11 +641,11 @@ def _log_reg_scoring_path(
         through the fit method) if sample_weight is specified.
 
     verbose : int, default=0
-        For the liblinear and lbfgs solvers set verbose to any positive
-        number for verbosity.
+        For most solver, except for 'newton-cg', set verbose to any positive number
+        for verbosity.
 
-    solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'}, \
-            default='lbfgs'
+    solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'newton-lsmr', \
+            'sag', 'saga'}, default='lbfgs'
         Decides which solver to use.
 
     penalty : {'l1', 'l2', 'elasticnet'}, default='l2'
@@ -875,16 +876,16 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         Used when ``solver`` == 'sag', 'saga' or 'liblinear' to shuffle the
         data. See :term:`Glossary <random_state>` for details.
 
-    solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'}, \
-            default='lbfgs'
+    solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'newton-lsmr', \
+            'sag', 'saga'}, default='lbfgs'
 
         Algorithm to use in the optimization problem. Default is 'lbfgs'.
         To choose a solver, you might want to consider the following aspects:
 
             - For small datasets, 'liblinear' is a good choice, whereas 'sag'
-              and 'saga' are faster for large ones;
-            - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
-              'lbfgs' handle multinomial loss;
+              and 'saga' are faster for large ones.
+            - For multiclass problems, only 'newton-cg', 'newton-lsmr', 'sag', 'saga'
+              and 'lbfgs' handle multinomial loss.
             - 'liblinear' is limited to one-versus-rest schemes.
             - 'newton-cholesky' is a good choice for `n_samples` >> `n_features`,
               especially with one-hot encoded categorical features with rare
@@ -901,6 +902,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
            - 'liblinear'       -   ['l1', 'l2']
            - 'newton-cg'       -   ['l2', None]
            - 'newton-cholesky' -   ['l2', None]
+           - 'newton-lsmr'     -   ['l2', None]
            - 'sag'             -   ['l2', None]
            - 'saga'            -   ['elasticnet', 'l1', 'l2', None]
 
@@ -923,6 +925,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             The default solver changed from 'liblinear' to 'lbfgs' in 0.22.
         .. versionadded:: 1.2
            newton-cholesky solver.
+        .. versionadded:: 1.3
+           newton-lsmr solver.
 
     max_iter : int, default=100
         Maximum number of iterations taken for the solvers to converge.
@@ -941,8 +945,8 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
             Default changed from 'ovr' to 'auto' in 0.22.
 
     verbose : int, default=0
-        For the liblinear and lbfgs solvers set verbose to any positive
-        number for verbosity.
+        For most solver, except for 'newton-cg', set verbose to any positive number
+        for verbosity.
 
     warm_start : bool, default=False
         When set to True, reuse the solution of the previous call to fit as
@@ -1080,7 +1084,15 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         "random_state": ["random_state"],
         "solver": [
             StrOptions(
-                {"lbfgs", "liblinear", "newton-cg", "newton-cholesky", "sag", "saga"}
+                {
+                    "lbfgs",
+                    "liblinear",
+                    "newton-cg",
+                    "newton-cholesky",
+                    "newton-lsmr",
+                    "sag",
+                    "saga",
+                }
             )
         ],
         "max_iter": [Interval(Integral, 0, None, closed="left")],
@@ -1278,7 +1290,7 @@ class LogisticRegression(LinearClassifierMixin, SparseCoefMixin, BaseEstimator):
         # and multinomial multiclass classification and use joblib only for the
         # one-vs-rest multiclass case.
         if (
-            solver in ["lbfgs", "newton-cg", "newton-cholesky"]
+            solver in ["lbfgs", "newton-cg", "newton-cholesky", "newton-lsmr"]
             and len(classes_) == 1
             and effective_n_jobs(self.n_jobs) == 1
         ):
@@ -1467,16 +1479,16 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         that can be used, look at :mod:`sklearn.metrics`. The
         default scoring option used is 'accuracy'.
 
-    solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'sag', 'saga'}, \
-            default='lbfgs'
+    solver : {'lbfgs', 'liblinear', 'newton-cg', 'newton-cholesky', 'newton-lsmr', \
+            'sag', 'saga'}, default='lbfgs'
 
         Algorithm to use in the optimization problem. Default is 'lbfgs'.
         To choose a solver, you might want to consider the following aspects:
 
             - For small datasets, 'liblinear' is a good choice, whereas 'sag'
-              and 'saga' are faster for large ones;
-            - For multiclass problems, only 'newton-cg', 'sag', 'saga' and
-              'lbfgs' handle multinomial loss;
+              and 'saga' are faster for large ones.
+            - For multiclass problems, only 'newton-cg', 'newton-lsmr', 'sag', 'saga'
+              and 'lbfgs' handle multinomial loss.
             - 'liblinear' might be slower in :class:`LogisticRegressionCV`
               because it does not handle warm-starting. 'liblinear' is
               limited to one-versus-rest schemes.
@@ -1495,6 +1507,7 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            - 'liblinear'       -   ['l1', 'l2']
            - 'newton-cg'       -   ['l2']
            - 'newton-cholesky' -   ['l2']
+           - 'newton-lsmr'     -   ['l2']
            - 'sag'             -   ['l2']
            - 'saga'            -   ['elasticnet', 'l1', 'l2']
 
@@ -1509,6 +1522,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
            SAGA solver.
         .. versionadded:: 1.2
            newton-cholesky solver.
+        .. versionadded:: 1.3
+            newton-lsmr solver
 
     tol : float, default=1e-4
         Tolerance for stopping criteria.
@@ -1537,8 +1552,8 @@ class LogisticRegressionCV(LogisticRegression, LinearClassifierMixin, BaseEstima
         for more details.
 
     verbose : int, default=0
-        For the 'liblinear', 'sag' and 'lbfgs' solvers set verbose to any
-        positive number for verbosity.
+        For most solver, except for 'newton-cg', set verbose to any positive number
+        for verbosity.
 
     refit : bool, default=True
         If set to True, the scores are averaged across all folds, and the
