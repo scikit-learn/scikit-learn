@@ -126,7 +126,7 @@ main!) with all the desired changes:
 
 .. prompt:: bash $
 
-	git rebase -i upstream/0.99.2
+    git rebase -i upstream/0.99.X
 
 Copy the :ref:`release_checklist` templates in the description of the Pull
 Request to track progress.
