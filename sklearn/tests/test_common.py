@@ -463,14 +463,6 @@ ESTIMATORS_WITH_GET_FEATURE_NAMES_OUT = [
 ]
 
 WHITELISTED_FAILING_ESTIMATORS = [
-    "DictVectorizer",
-    "IterativeImputer",
-    "IsotonicRegression",
-    "KBinsDiscretizer",
-    "KNNImputer",
-    "MissingIndicator",
-    "SimpleImputer",
-    "SplineTransformer",
 ]
 
 
