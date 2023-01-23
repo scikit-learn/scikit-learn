@@ -257,10 +257,10 @@ def fastica(
         Algorithm to use for whitening.
 
         - "pca" (Principal Component Analysis) enables pre-ICA
-        dimensionality reduction.
+          dimensionality reduction.
 
         - "zca" (Zero-Phase Component Analysis) yields whitened data
-        which is as close as possible to the original data.
+          which is as close as possible to the original data.
 
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
@@ -431,10 +431,10 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         Algorithm to use for whitening.
 
         - "pca" (Principal Component Analysis) enables pre-ICA
-        dimensionality reduction.
+          dimensionality reduction.
 
         - "zca" (Zero-Phase Component Analysis) yields whitened data
-        which is as close as possible to the original data.
+          which is as close as possible to the original data.
 
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
