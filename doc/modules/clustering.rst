@@ -410,14 +410,14 @@ its neighborhood:
 
 .. math::
 
-    m(x)  = \frac{1}{|N(x)|} \sum_{x_j \in N(x)}x_j - x
+    m(x) = \frac{1}{|N(x)|} \sum_{x_j \in N(x)}x_j - x
 
 In general, the equation for :math:`m` depends on a kernel used for density estimation. 
 The generic formula is:
 
 .. math::
 
-    m(x)  = \frac{\sum_{x_j \in N(x)}K(x_j - x)x_j}{\sum_{x_j \in N(x)}K(x_j - x)} - x
+    m(x) = \frac{\sum_{x_j \in N(x)}K(x_j - x)x_j}{\sum_{x_j \in N(x)}K(x_j - x)} - x
 
 In our implementation, :math:`K(x)` is equal to 1 if :math:`x` is small enough and is 
 equal to 0 otherwise. Effectively :math:`K(y - x)` indicates whether :math:`y` is in
