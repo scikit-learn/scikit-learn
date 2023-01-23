@@ -113,12 +113,6 @@ Changelog
   inconsistent with the sckit-learn verion the estimator was pickled with.
   :pr:`25297` by `Thomas Fan`_.
 
-:mod:`sklearn.feature_extraction`
-.................................
-
-- |Fix| :class:`feature_extraction.FeatureHasher` raises an informative error
-  when the input is a list of strings. :pr:`25094` by `Thomas Fan`_.
-
 :mod:`sklearn.impute`
 .....................
 
@@ -131,14 +125,6 @@ Changelog
 - |Fix| Improves the convergence criterion of
   :class:`linear_model.LogisticRegression(penalty="l1", solver="liblinear")`.
   :pr:`25214` by `Tom Dupre la Tour`_.
-
-:mod:`sklearn.model_selection`
-..............................
-
-- |Fix| :func:`model_selection.cross_validate` with multimetric scoring in
-  case of some failing scorers the non-failing scorers now returns proper
-  scores instead of `error_score` values.
-  :pr:`23101` by :user:`András Simon <simonandras>` and `Thomas Fan`_.
 
 :mod:`sklearn.naive_bayes`
 ..........................
