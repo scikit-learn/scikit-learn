@@ -463,11 +463,8 @@ ESTIMATORS_WITH_GET_FEATURE_NAMES_OUT = [
 ]
 
 WHITELISTED_FAILING_ESTIMATORS = [
-    "DictVectorizer",
     "GaussianRandomProjection",
     "GenericUnivariateSelect",
-    "KBinsDiscretizer",
-    "MissingIndicator",
     "RFE",
     "RFECV",
     "SelectFdr",
@@ -478,7 +475,6 @@ WHITELISTED_FAILING_ESTIMATORS = [
     "SelectPercentile",
     "SequentialFeatureSelector",
     "SparseRandomProjection",
-    "SplineTransformer",
     "VarianceThreshold",
 ]
 
