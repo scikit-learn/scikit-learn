@@ -70,8 +70,8 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
     Used internally by FastICA.
     """
 
-    n_components = w_init.shape[0]
-    W = np.zeros((n_components, n_components), dtype=X.dtype)
+    n_components, n_features = w_init.shape
+    W = np.zeros((n_components, n_features), dtype=X.dtype)
     n_iter = []
 
     # j is the index of the extracted component
@@ -174,6 +174,7 @@ def fastica(
     tol=1e-04,
     w_init=None,
     whiten_solver="svd",
+    whiten_alg="pca",
     random_state=None,
     return_X_mean=False,
     compute_sources=True,
@@ -252,6 +253,15 @@ def fastica(
 
         .. versionadded:: 1.2
 
+    whiten_alg : {"zca", "pca"}, default="pca"
+        Algorithm to use for whitening.
+
+        - "pca" (Principal Component Analysis) enables pre-ICA
+        dimensionality reduction.
+
+        - "zca" (Zero-Phase Component Analysis) yields whitened data
+        which is as close as possible to the original data.
+
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
         normal distribution. Pass an int, for reproducible results
@@ -325,6 +335,7 @@ def fastica(
         tol=tol,
         w_init=w_init,
         whiten_solver=whiten_solver,
+        whiten_alg=whiten_alg,
         random_state=random_state,
     )
     est._validate_params()
@@ -416,6 +427,15 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         .. versionadded:: 1.2
 
+    whiten_alg : {"zca", "pca"}, default="pca"
+        Algorithm to use for whitening.
+
+        - "pca" (Principal Component Analysis) enables pre-ICA
+        dimensionality reduction.
+
+        - "zca" (Zero-Phase Component Analysis) yields whitened data
+        which is as close as possible to the original data.
+
     random_state : int, RandomState instance or None, default=None
         Used to initialize ``w_init`` when not specified, with a
         normal distribution. Pass an int, for reproducible results
@@ -498,6 +518,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         "tol": [Interval(Real, 0.0, None, closed="left")],
         "w_init": ["array-like", None],
         "whiten_solver": [StrOptions({"eigh", "svd"})],
+        "whiten_alg": [StrOptions({"pca", "zca"})],
         "random_state": ["random_state"],
     }
 
@@ -513,6 +534,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         tol=1e-4,
         w_init=None,
         whiten_solver="svd",
+        whiten_alg="pca",
         random_state=None,
     ):
         super().__init__()
@@ -525,6 +547,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         self.tol = tol
         self.w_init = w_init
         self.whiten_solver = whiten_solver
+        self.whiten_alg = whiten_alg
         self.random_state = random_state
 
     def _fit_transform(self, X, compute_sources=False):
@@ -587,16 +610,13 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
         n_features, n_samples = XT.shape
         n_components = self.n_components
-        if not self._whiten and n_components is not None:
-            n_components = None
-            warnings.warn("Ignoring n_components with whiten=False.")
 
         if n_components is None:
             n_components = min(n_samples, n_features)
         if n_components > min(n_samples, n_features):
             n_components = min(n_samples, n_features)
             warnings.warn(
-                "n_components is too large: it will be set to %s" % n_components
+                "n_components is too large: it will be set to %s" % self.n_components
             )
 
         if self._whiten:
@@ -607,7 +627,9 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             # Whitening and preprocessing by PCA
             if self.whiten_solver == "eigh":
                 # Faster when num_samples >> n_features
-                d, u = linalg.eigh(XT.dot(X))
+                d, u = linalg.eigh(
+                    np.matmul(XT, X) / (n_samples - 1)
+                )  # unbiased covariance matrix
                 sort_indices = np.argsort(d)[::-1]
                 eps = np.finfo(d.dtype).eps
                 degenerate_idx = d < eps
@@ -621,17 +643,28 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                 np.sqrt(d, out=d)
                 d, u = d[sort_indices], u[:, sort_indices]
             elif self.whiten_solver == "svd":
-                u, d = linalg.svd(XT, full_matrices=False, check_finite=False)[:2]
+                u, d = linalg.svd(
+                    XT / np.sqrt(n_samples - 1), full_matrices=False, check_finite=False
+                )[:2]
 
             # Give consistent eigenvectors for both svd solvers
             u *= np.sign(u[0])
 
-            K = (u / d).T[:n_components]  # see (6.33) p.140
-            del u, d
-            X1 = np.dot(K, XT)
-            # see (13.6) p.267 Here X1 is white and data
-            # in X has been projected onto a subspace by PCA
-            X1 *= np.sqrt(n_samples)
+            if self.whiten_alg == "pca":
+                # Reduce dimensionality
+                u, d = u[:, :n_components], d[:n_components]
+                n_features = n_components
+
+                K = (u / d).T  # see (6.33) p.140
+                del u, d
+                X1 = np.dot(K, XT)
+                # see (13.6) p.267 Here X1 is white and data
+                # in X has been projected onto a subspace by PCA
+            elif self.whiten_alg == "zca":
+                K = np.matmul(np.matmul(u, np.diag(1.0 / d)), u.T)
+                del u, d
+                X1 = np.dot(K, XT)
+
         else:
             # X must be casted to floats to avoid typing issues with numpy
             # 2.0 and the line below
@@ -640,15 +673,15 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
         w_init = self.w_init
         if w_init is None:
             w_init = np.asarray(
-                random_state.normal(size=(n_components, n_components)), dtype=X1.dtype
+                random_state.normal(size=(n_components, n_features)), dtype=X1.dtype
             )
 
         else:
             w_init = np.asarray(w_init)
-            if w_init.shape != (n_components, n_components):
+            if w_init.shape != (n_components, n_features):
                 raise ValueError(
                     "w_init has invalid shape -- should be %(shape)s"
-                    % {"shape": (n_components, n_components)}
+                    % {"shape": (n_components, n_features)}
                 )
 
         kwargs = {
