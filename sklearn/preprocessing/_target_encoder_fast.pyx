@@ -87,7 +87,7 @@ def _fit_encoding_fast_auto_smooth(
         int n_features = X_int.shape[1]
         cnp.int64_t max_n_cats = np.max(n_categories)
         double[::1] means = np.empty(max_n_cats, dtype=np.float64)
-        double[::1] counts = np.empty(max_n_cats, dtype=np.float64)
+        cnp.int64_t[::1] counts = np.empty(max_n_cats, dtype=np.int64)
         double[::1] sum_of_squared_diffs = np.empty(max_n_cats, dtype=np.float64)
         double lambda_
 
@@ -96,7 +96,7 @@ def _fit_encoding_fast_auto_smooth(
 
         for cat_idx in range(n_cats):
             means[cat_idx] = 0.0
-            counts[cat_idx] = 0.0
+            counts[cat_idx] = 0
             sum_of_squared_diffs[cat_idx] = 0.0
 
         # first pass to compute the mean
@@ -106,7 +106,7 @@ def _fit_encoding_fast_auto_smooth(
             # -1 are unknown categories, which are not counted
             if X_int_tmp == -1:
                 continue
-            counts[X_int_tmp] += 1.0
+            counts[X_int_tmp] += 1
             means[X_int_tmp] += y[sample_idx]
 
         for cat_idx in range(n_cats):
