@@ -106,6 +106,12 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     OrdinalEncoder : Performs an ordinal (integer) encoding of the categorical features.
     OneHotEncoder : Performs a one-hot encoding of categorical features.
 
+    References
+    ----------
+    .. [MIC] :doi:`Micci-Barreca, Daniele. "A preprocessing scheme for high-cardinality
+       categorical attributes in classification and prediction problems"
+       SIGKDD Explor. Newsl. 3, 1 (July 2001), 27–32. <10.1145/507533.507538>`
+
     Examples
     --------
     >>> import numpy as np
@@ -114,12 +120,6 @@ class TargetEncoder(OneToOneFeatureMixin, _BaseEncoder):
     >>> y = [10.3] * 5 + [40.1] * 15 + [20.4] * 5 + [11.1] * 25 + [21.2] * 8 + [49] * 30
     >>> enc = TargetEncoder(smooth=5.0)
     >>> X_trans = enc.fit_transform(X, y)
-
-    References
-    ----------
-    .. [MIC] :doi:`Micci-Barreca, Daniele. "A preprocessing scheme for high-cardinality
-       categorical attributes in classification and prediction problems"
-       SIGKDD Explor. Newsl. 3, 1 (July 2001), 27–32. <10.1145/507533.507538>`
     """
 
     _parameter_constraints: dict = {
