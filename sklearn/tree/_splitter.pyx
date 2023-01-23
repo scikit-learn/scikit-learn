@@ -270,6 +270,7 @@ cdef inline int node_split_best(
     cdef SIZE_t end = splitter.end
     cdef SIZE_t end_non_missing
     cdef SIZE_t n_missing
+    cdef bint has_missing
     cdef SIZE_t n_searches
     cdef SIZE_t n_left, n_right
     cdef bint missing_go_to_left
@@ -370,12 +371,13 @@ cdef inline int node_split_best(
 
         # Evaluate all splits
         criterion.init_missing(n_missing)
+        has_missing = n_missing != 0
 
         # If there are missing values, then we search twice.
         # The first search will have all the missing values going to the right node.
         # The second search will have all the misisng values going to the left node.
         # If there are no missing values, then we search only once.
-        n_searches = 1 if n_missing == 0 else 2
+        n_searches = 2 if has_missing else 1
 
         for i in range(n_searches):
             missing_go_to_left = i == 1
@@ -433,7 +435,7 @@ cdef inline int node_split_best(
 
     # Evalaute when there are missing values and all missing values goes
     # to the right node and non-missing values goes to the left node.
-    if n_missing > 0:
+    if has_missing:
         n_left = end - start - n_missing
         n_right = n_missing
 
