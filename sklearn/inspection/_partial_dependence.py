@@ -367,22 +367,24 @@ def partial_dependence(
         values : seq of 1d ndarrays
             The values with which the grid has been created.
 
-            .. deprecated:: 1.1
-                The key `values` has been deprecated in 1.1 and will be removed
-                in 1.3 in favor of `pdp_values`. See `pdp_values` for details
+            .. deprecated:: 1.3
+                The key `values` has been deprecated in 1.3 and will be removed
+                in 1.5 in favor of `pdp_values`. See `pdp_values` for details
                 about the `values` attribute.
 
         pdp_values : seq of 1d ndarrays
             The values with which the grid has been created. The generated
             grid is a cartesian product of the arrays in ``values``.
-            ``len(values) == len(features)``. The size of each array
-            ``values[j]`` is either ``grid_resolution``, or the number of
+            ``len(pdp_values) == len(features)``. The size of each array
+            ``pdp_values[j]`` is either ``grid_resolution``, or the number of
             unique values in ``X[:, j]``, whichever is smaller.
+
+            .. versionadded:: 1.3
 
         ``n_outputs`` corresponds to the number of classes in a multi-class
         setting, or to the number of tasks for multi-output regression.
         For classical regression and binary classification ``n_outputs==1``.
-        ``n_values_feature_j`` corresponds to the size ``values[j]``.
+        ``n_values_feature_j`` corresponds to the size ``pdp_values[j]``.
 
     See Also
     --------
