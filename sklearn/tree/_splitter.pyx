@@ -268,7 +268,7 @@ cdef inline int node_split_best(
     # Find the best split
     cdef SIZE_t start = splitter.start
     cdef SIZE_t end = splitter.end
-    cdef SIZE_t end_non_missing
+    cdef SIZE_t end_non_missing, end_non_missing_inner
     cdef SIZE_t n_missing
     cdef bint has_missing
     cdef SIZE_t n_searches
@@ -386,10 +386,16 @@ cdef inline int node_split_best(
 
             p = start
 
+            end_non_missing_inner = end_non_missing
+            if has_missing and not missing_go_to_left:
+                # Evalaute when there are missing values and all missing values goes
+                # to the right node and non-missing values goes to the left node.
+                end_non_missing_inner += 1
+
             while p < end_non_missing:
                 partitioner.next_p(&p_prev, &p)
 
-                if p >= end_non_missing:
+                if p >= end_non_missing_inner:
                     continue
 
                 if missing_go_to_left:
@@ -415,43 +421,26 @@ cdef inline int node_split_best(
 
                 if current_proxy_improvement > best_proxy_improvement:
                     best_proxy_improvement = current_proxy_improvement
-                    # sum of halves is used to avoid infinite value
-                    current.threshold = Xf[p_prev] / 2.0 + Xf[p] / 2.0
+                    if p < end_non_missing:
+                        # sum of halves is used to avoid infinite value
+                        current.threshold = Xf[p_prev] / 2.0 + Xf[p] / 2.0
 
-                    if (
-                        current.threshold == Xf[p] or
-                        current.threshold == INFINITY or
-                        current.threshold == -INFINITY
-                    ):
-                        current.threshold = Xf[p_prev]
+                        if (
+                            current.threshold == Xf[p] or
+                            current.threshold == INFINITY or
+                            current.threshold == -INFINITY
+                        ):
+                            current.threshold = Xf[p_prev]
+                    else:
+                        # if p >= end_non_missing, then we are evaluating the case
+                        # where the missing values go right and non-missing values go left
+                        current.threshold = INFINITY
 
                     current.n_missing = n_missing
                     if n_missing == 0:
                         current.missing_go_to_left = n_left > n_right
                     else:
                         current.missing_go_to_left = missing_go_to_left
-
-                    best = current  # copy
-
-    # Evalaute when there are missing values and all missing values goes
-    # to the right node and non-missing values goes to the left node.
-    if has_missing:
-        n_left = end - start - n_missing
-        n_right = n_missing
-
-        if not (n_left < min_samples_leaf or n_right < min_samples_leaf):
-            criterion.missing_go_to_left = 0
-            criterion.reverse_reset()
-
-            if not ((criterion.weighted_n_left < min_weight_leaf) or
-                    (criterion.weighted_n_right < min_weight_leaf)):
-                current_proxy_improvement = criterion.proxy_impurity_improvement()
-
-                if current_proxy_improvement > best_proxy_improvement:
-                    best_proxy_improvement = current_proxy_improvement
-                    current.threshold = INFINITY
-                    current.missing_go_to_left = 0
-                    current.pos = end - n_missing
 
                     best = current  # copy
 
