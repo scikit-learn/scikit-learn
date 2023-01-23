@@ -12,6 +12,7 @@ import pickle
 import math
 from collections import defaultdict
 import itertools
+from functools import partial
 from itertools import combinations
 from itertools import product
 from typing import Dict, Any
@@ -46,12 +47,7 @@ from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.ensemble import RandomTreesEmbedding
-<<<<<<< HEAD
-from sklearn.model_selection import train_test_split
-=======
-from sklearn.metrics import explained_variance_score, f1_score
 from sklearn.model_selection import train_test_split, cross_val_score
->>>>>>> c3fca81536 (FIX Support read-only sparse datasets for `Tree`-based estimators (#25341))
 from sklearn.model_selection import GridSearchCV
 from sklearn.svm import LinearSVC
 from sklearn.utils.parallel import Parallel
