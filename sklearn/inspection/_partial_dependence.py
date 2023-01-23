@@ -560,8 +560,8 @@ def partial_dependence(
     pdp_results = Bunch()
 
     msg = (
-        "Key: 'values', is deprecated in 1.1 and will be "
-        "removed in 1.3. Please use 'pdp_values' instead"
+        "Key: 'values', is deprecated in 1.1 and will be removed in 1.3. "
+        "Please use 'pdp_values' instead."
     )
     pdp_results._set_deprecated(
         values, new_key="pdp_values", deprecated_key="values", warning_message=msg
