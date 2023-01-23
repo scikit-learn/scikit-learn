@@ -14,7 +14,7 @@ from numbers import Integral, Real
 
 import numpy as np
 from scipy import sparse
-from joblib import Parallel, effective_n_jobs
+from joblib import effective_n_jobs
 
 from ._base import LinearModel, _pre_fit
 from ..base import RegressorMixin, MultiOutputMixin
@@ -30,7 +30,7 @@ from ..utils.validation import (
     check_is_fitted,
     column_or_1d,
 )
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 
 # mypy error: Module 'sklearn.linear_model' has no attribute '_cd_fast'
 from . import _cd_fast as cd_fast  # type: ignore
