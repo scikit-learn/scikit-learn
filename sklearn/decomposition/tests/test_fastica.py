@@ -181,17 +181,6 @@ def test_fastica_simple(add_noise, global_random_seed, global_dtype):
         ica.fit(m.T)
 
 
-def test_fastica_nowhiten():
-    m = [[0, 1], [1, 0]]
-
-    # test for issue #697
-    ica = FastICA(n_components=1, whiten=False, random_state=0)
-    warn_msg = "Ignoring n_components with whiten=False."
-    with pytest.warns(UserWarning, match=warn_msg):
-        ica.fit(m)
-    assert hasattr(ica, "mixing_")
-
-
 def test_fastica_convergence_fail():
     # Test the FastICA algorithm on very simple data
     # (see test_non_square_fastica).
@@ -326,7 +315,7 @@ def test_fit_transform(global_random_seed, global_dtype):
         ("arbitrary-variance", 10, (10, 10)),
         ("unit-variance", 5, (10, 5)),
         ("unit-variance", 10, (10, 10)),
-        (False, 5, (10, 10)),
+        (False, 5, (10, 5)),
         (False, 10, (10, 10)),
     ],
 )
