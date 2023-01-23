@@ -331,7 +331,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
             *[
                 (
                     _average_path_length(tree.tree_.n_node_samples),
-                    tree.compute_node_depths(),
+                    tree.tree_.compute_node_depths(),
                 )
                 for tree in self.estimators_
             ]

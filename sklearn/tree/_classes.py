@@ -478,18 +478,6 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
         X = self._validate_X_predict(X, check_input)
         return self.tree_.apply(X)
 
-    def compute_node_depths(self):
-        """Compute the depth of each node in a tree.
-
-        .. versionadded:: 1.3.0
-
-        Returns
-        -------
-        depths : ndarray of shape ``(self.tree_.node_count,)``
-            The depth of each node in the tree.
-        """
-        return self.tree_.compute_node_depths()
-
     def decision_path(self, X, check_input=True):
         """Return the decision path in the tree.
 
