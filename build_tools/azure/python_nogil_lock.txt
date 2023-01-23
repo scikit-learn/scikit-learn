@@ -27,7 +27,7 @@ kiwisolver==1.4.4
     # via matplotlib
 matplotlib==3.6.2
     # via -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
-numpy==1.22.3
+numpy==1.24.0
     # via
     #   -r /scikit-learn/build_tools/azure/python_nogil_requirements.txt
     #   contourpy
