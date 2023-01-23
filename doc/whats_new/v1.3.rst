@@ -122,8 +122,9 @@ Changelog
 :mod:`sklearn.linear_model`
 ...........................
 
-- |Fix| Improves the convergence criterion of
-  :class:`linear_model.LogisticRegression(penalty="l1", solver="liblinear")`.
+- |Fix| Use a more robust criterion to detect convergence of
+  :class:`linear_model.LogisticRegression(penalty="l1", solver="liblinear")`
+  on linearly separable problems.
   :pr:`25214` by `Tom Dupre la Tour`_.
 
 :mod:`sklearn.naive_bayes`
