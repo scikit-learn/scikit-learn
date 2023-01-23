@@ -726,38 +726,47 @@ def test_cohen_kappa():
 
 
 @pytest.mark.parametrize("zero_division", [0, 1, np.nan])
-@pytest.mark.parametrize(
-    "y_true, y_pred",
-    [
-        ([0], [1]),
-        ([0, 0], [1, 1]),
-        ([], []),
-    ],
-)
-def test_matthews_corrcoef_nan(zero_division, y_true, y_pred):
-    with warnings.catch_warnings(record=True) as record:
-        mcc = matthews_corrcoef(y_true, y_pred, zero_division=zero_division)
-        assert not record
+@pytest.mark.parametrize("y_true, y_pred", [([0], [0]), ([], [])])
+@pytest.mark.parametrize("metric", [
+    jaccard_score,
+    matthews_corrcoef,
+    f1_score,
+    partial(fbeta_score, beta=1),
+    precision_score,
+    recall_score,
+    cohen_kappa_score,
+])
+def test_zero_division_nan_no_warning(metric, y_true, y_pred, zero_division):
+    """Check the behaviour of `zero_division` when setting to 0, 1 or np.nan.
+    No warnings should be raised.
+    """
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        result = metric(y_true, y_pred, zero_division=zero_division)
 
     if np.isnan(zero_division):
-        assert np.isnan(mcc)
+        assert np.isnan(result)
     else:
-        assert mcc == zero_division
+        assert result == zero_division
 
 
-@pytest.mark.parametrize(
-    "y_true, y_pred",
-    [
-        ([0], [1]),
-        ([0, 0], [1, 1]),
-        ([], []),
-    ],
-)
-def test_matthews_corrcoef_nan_warn(y_true, y_pred):
-    with warnings.catch_warnings(record=True) as record:
-        mcc = matthews_corrcoef(y_true, y_pred, zero_division="warn")
-        assert len(record) == 1
-        assert mcc == 0.0
+@pytest.mark.parametrize("y_true, y_pred", [([0], [0]), ([], [])])
+@pytest.mark.parametrize("metric", [
+    jaccard_score,
+    matthews_corrcoef,
+    f1_score,
+    partial(fbeta_score, beta=1),
+    precision_score,
+    recall_score,
+    cohen_kappa_score,
+])
+def test_zero_division_nan_warning(metric, y_true, y_pred):
+    """Check the behaviour of `zero_division` when setting to "warn".
+    A `UndefinedMetricWarning` should be raised.
+    """
+    with pytest.warns(UndefinedMetricWarning):
+        result = metric(y_true, y_pred, zero_division="warn")
+    assert result == 0.0
 
 
 def test_matthews_corrcoef_against_numpy_corrcoef():
@@ -1712,17 +1721,19 @@ def test_precision_recall_f1_score_multilabel_2():
 
 
 @ignore_warnings
-@pytest.mark.parametrize("zero_division", ["warn", 0, 1, np.nan])
-def test_precision_recall_f1_score_with_an_empty_prediction(zero_division):
+@pytest.mark.parametrize(
+    "zero_division, zero_division_expected",
+    [("warn", 0), (0, 0), (1, 1), (np.nan, np.nan)]
+)
+def test_precision_recall_f1_score_with_an_empty_prediction(
+        zero_division, zero_division_expected
+):
     y_true = np.array([[0, 1, 0, 0], [1, 0, 0, 0], [0, 1, 1, 0]])
     y_pred = np.array([[0, 0, 0, 0], [0, 0, 0, 1], [0, 1, 1, 0]])
 
     # true_pos = [ 0.  1.  1.  0.]
     # false_pos = [ 0.  0.  0.  1.]
     # false_neg = [ 1.  1.  0.  0.]
-    zero_division_expected = zero_division
-    if zero_division == "warn":
-        zero_division_expected = 0
 
     p, r, f, s = precision_recall_fscore_support(
         y_true, y_pred, average=None, zero_division=zero_division

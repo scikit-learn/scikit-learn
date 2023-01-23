@@ -125,9 +125,9 @@ Changelog
   when the input is a list of strings. :pr:`25094` by `Thomas Fan`_.
 
 :mod:`sklearn.metrics`
-.................................
+......................
 
-- |Feature| Adds `zero_division` to :func:`matthews_corrcoef`.
+- |Feature| Adds `zero_division` to :func:`matthews_corrcoef` and :func:`cohen_kappa_score`.
   When there is a zero division, the metric is undefined and this value is returned.
   :pr:`23183` by :user:`Marc Torrellas Socastro <marctorsoc>`.
 

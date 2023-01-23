@@ -647,7 +647,7 @@ def multilabel_confusion_matrix(
         "sample_weight": ["array-like", None],
     }
 )
-def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
+def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None, zero_division="warn"):
     r"""Compute Cohen's kappa: a statistic that measures inter-annotator agreement.
 
     This function computes Cohen's kappa [1]_, a score that expresses the level
@@ -686,6 +686,14 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
     sample_weight : array-like of shape (n_samples,), default=None
         Sample weights.
 
+    zero_division : {"warn", 0.0, 1.0, np.nan}, default="warn"
+        Sets the value to return when there is a zero division, e.g. when
+        `y1=y2={np.ones, np.zeros}`.
+
+        Notes:
+        - If set to "warn", this acts like 0, but a warning is also raised.
+        - If set to `np.nan`, such values will be excluded from the average.
+
     Returns
     -------
     kappa : float
@@ -719,6 +727,15 @@ def cohen_kappa_score(y1, y2, *, labels=None, weights=None, sample_weight=None):
             w_mat = np.abs(w_mat - w_mat.T)
         else:
             w_mat = (w_mat - w_mat.T) ** 2
+
+    if np.sum(w_mat * expected) == 0:
+        if zero_division == "warn":
+            msg = (
+                "Kappa is ill-defined and being set to 0.0. Use `zero_division` "
+                "to control this behaviour."
+            )
+            warnings.warn(msg, UndefinedMetricWarning, stacklevel=2)
+        return _check_zero_division(zero_division)
 
     k = np.sum(w_mat * confusion) / np.sum(w_mat * expected)
     return 1 - k
