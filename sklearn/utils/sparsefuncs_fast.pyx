@@ -42,14 +42,12 @@ def _csr_row_norms(
 
     dtype = np.float32 if floating is float else np.float64
 
-    cdef floating[::1] norms = np.empty(n_samples, dtype=dtype)
+    cdef floating[::1] norms = np.zeros(n_samples, dtype=dtype)
 
     with nogil:
         for i in range(n_samples):
-            sum_ = 0.0
             for j in range(X_indptr[i], X_indptr[i + 1]):
-                sum_ += X_data[j] * X_data[j]
-            norms[i] = sum_
+                norms[i] += X_data[j] * X_data[j]
 
     return norms
 
