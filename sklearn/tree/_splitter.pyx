@@ -225,6 +225,24 @@ cdef class Splitter:
 
         return self.criterion.node_impurity()
 
+cdef inline void shift_missing_values_to_left_if_required(
+    SplitRecord* best,
+    SIZE_t[::1] samples,
+    SIZE_t end,
+) nogil:
+    cdef SIZE_t i, p, current_end
+    # The partitioner paritions the data such that the missing values are in
+    # samples[-n_missing:] for the criterion to consume. If the missing values
+    # are going to the right node, then the missing values are already in the
+    # correct position. If the missing values go left, then we move the missing
+    # values to samples[best.pos:best.pos+n_missing] and update `best.pos`.
+    if best.n_missing > 0 and best.missing_go_to_left:
+        for p in range(best.n_missing):
+            i = best.pos + p
+            current_end = end - 1 - p
+            samples[i], samples[current_end] = samples[current_end], samples[i]
+        best.pos += best.n_missing
+
 # Introduce a fused-class to make it possible to share the split implementation
 # between the dense and sparse cases in the node_split_best and node_split_random
 # functions. The alternative would have been to use inheritance-based polymorphism
@@ -275,7 +293,7 @@ cdef inline int node_split_best(
     cdef SIZE_t f_j
     cdef SIZE_t p
     cdef SIZE_t p_prev
-    cdef SIZE_t i, current_end
+    cdef SIZE_t i
 
     cdef SIZE_t n_visited_features = 0
     # Number of features discovered to be constant during the split search
@@ -448,17 +466,7 @@ cdef inline int node_split_best(
         best.improvement = criterion.impurity_improvement(
             impurity, best.impurity_left, best.impurity_right)
 
-        # The partitioner paritions the data such that the missing values are in
-        # samples[-n_missing:] for the criterion to consume. If the missing values
-        # are going to the right node, then the missing values are already in the
-        # correct position. If the missing values go left, then we move the missing
-        # values to samples[best.pos:best.pos+n_missing] and update `best.pos`.
-        if best.n_missing > 0 and best.missing_go_to_left:
-            for p in range(best.n_missing):
-                i = best.pos + p
-                current_end = end - 1 - p
-                samples[i], samples[current_end] = samples[current_end], samples[i]
-            best.pos += best.n_missing
+        shift_missing_values_to_left_if_required(&best, samples, end)
 
     # Respect invariant for constant features: the original order of
     # element in features[:n_known_constants] must be preserved for sibling
