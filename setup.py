@@ -287,7 +287,7 @@ extension_config = {
         {"sources": ["_cdnmf_fast.pyx"], "include_np": True},
     ],
     "ensemble": [
-        {"sources": ["_gradient_boosting.pyx"], "include_np": True},
+        {"sources": ["_gradient_boosting.pyx"], "language": "c++", "include_np": True},
     ],
     "ensemble._hist_gradient_boosting": [
         {"sources": ["_gradient_boosting.pyx"], "include_np": True},
@@ -360,7 +360,7 @@ extension_config = {
         {"sources": ["_ball_tree.pyx"], "include_np": True},
         {"sources": ["_kd_tree.pyx"], "include_np": True},
         {"sources": ["_partition_nodes.pyx"], "language": "c++", "include_np": True},
-        {"sources": ["_quad_tree.pyx"], "include_np": True},
+        {"sources": ["_quad_tree.pyx"], "language": "c++", "include_np": True},
     ],
     "svm": [
         {
@@ -428,9 +428,9 @@ extension_config = {
             "include_np": True,
             "optimization_level": "O3",
         },
-        {"sources": ["_splitter.pyx"], "include_np": True, "optimization_level": "O3"},
-        {"sources": ["_criterion.pyx"], "include_np": True, "optimization_level": "O3"},
-        {"sources": ["_utils.pyx"], "include_np": True, "optimization_level": "O3"},
+        {"sources": ["_splitter.pyx"], "language": "c++", "include_np": True, "optimization_level": "O3"},
+        {"sources": ["_criterion.pyx"], "language": "c++", "include_np": True, "optimization_level": "O3"},
+        {"sources": ["_utils.pyx"], "language": "c++", "include_np": True, "optimization_level": "O3"},
     ],
     "utils": [
         {"sources": ["sparsefuncs_fast.pyx"], "include_np": True},

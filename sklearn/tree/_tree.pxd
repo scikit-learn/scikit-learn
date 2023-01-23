@@ -12,6 +12,7 @@
 
 import numpy as np
 cimport numpy as cnp
+from libcpp.vector cimport vector
 
 ctypedef cnp.npy_float32 DTYPE_t          # Type of X
 ctypedef cnp.npy_float64 DOUBLE_t         # Type of y, sample_weight
@@ -48,7 +49,6 @@ cdef class BaseTree:
     # Generic Methods: These are generic methods used by any tree.
     cdef int _resize(self, SIZE_t capacity) nogil except -1
     cdef int _resize_c(self, SIZE_t capacity=*) nogil except -1
-    cdef int node_size(self) nogil
     cdef SIZE_t _add_node(
         self,
         SIZE_t parent,

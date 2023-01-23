@@ -38,6 +38,27 @@ cdef class QuantileTree(Tree):
             self.leaf_samples[self.node_count].push_back(y[s_idx])
         return 1
 
+    cpdef cnp.ndarray transform(self, object X):
+        """Return an array of output values from the leaves X falls into.
+        
+        Parameters
+        ----------
+        X : cnp.ndarray of shape (n_samples, n_features)
+            The input data array that we want to transform each sample.
+        
+        Returns
+        -------
+        out : cnp.ndarray of shape (n_samples, n_leaf_samples)
+            For each sample, based on the leaf that it falls in, return the stored
+            leaf node samples from the training dataset.
+        """
+        # get the indices of the X leaves - array of shape (n_samples, n_classes)
+        X_leaves = self.apply(X)
+
+        # extract array of values in leaves
+        out = _extract_values(X)
+        return out
+
     cpdef cnp.ndarray predict(self, object X, double quantiles=0.5):
         """Predict target for X is now using quantiles."""
         # get the indices of the X leaves - array of shape (n_samples, n_classes)

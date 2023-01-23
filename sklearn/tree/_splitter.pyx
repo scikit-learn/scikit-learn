@@ -149,6 +149,14 @@ cdef class BaseSplitter:
 
         return self.criterion.node_impurity()
 
+    cdef int pointer_size(self) nogil:
+        """Size of the pointer for split records.
+        
+        Overriding this function allows one to use different subclasses of
+        `SplitRecord`.
+        """
+        return sizeof(SplitRecord)
+
 cdef class Splitter(BaseSplitter):
     """Abstract splitter class.
 
