@@ -9,16 +9,6 @@ Version 1.2.1
 
 **January 2023**
 
-Changes impacting all modules
------------------------------
-
-- |Fix| Fix a bug where the current configuration was ignored in estimators using
-  `n_jobs > 1`. This bug was triggered for tasks dispatched by the auxillary
-  thread of `joblib` as :func:`sklearn.get_config` used to access an empty thread
-  local configuration instead of the configuration visible from the thread where
-  `joblib.Parallel` was first called.
-  :pr:`25363` by :user:`Guillaume Lemaitre <glemaitre>`.
-
 Changed models
 --------------
 
@@ -45,6 +35,13 @@ Changes impacting all modules
 
 - |Fix| Remove spurious warnings for estimators internally using neighbors search methods.
   :pr:`25129` by :user:`Julien Jerphanion <jjerphan>`.
+
+- |Fix| Fix a bug where the current configuration was ignored in estimators using
+  `n_jobs > 1`. This bug was triggered for tasks dispatched by the auxillary
+  thread of `joblib` as :func:`sklearn.get_config` used to access an empty thread
+  local configuration instead of the configuration visible from the thread where
+  `joblib.Parallel` was first called.
+  :pr:`25363` by :user:`Guillaume Lemaitre <glemaitre>`.
 
 Changelog
 ---------
