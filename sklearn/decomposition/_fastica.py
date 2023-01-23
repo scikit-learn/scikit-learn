@@ -627,9 +627,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
             # Whitening and preprocessing by PCA
             if self.whiten_solver == "eigh":
                 # Faster when num_samples >> n_features
-                d, u = linalg.eigh(
-                    np.matmul(XT, X) / (n_samples - 1)
-                )  # unbiased covariance matrix
+                d, u = linalg.eigh(np.matmul(XT, X))
                 sort_indices = np.argsort(d)[::-1]
                 eps = np.finfo(d.dtype).eps
                 degenerate_idx = d < eps
@@ -643,9 +641,7 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
                 np.sqrt(d, out=d)
                 d, u = d[sort_indices], u[:, sort_indices]
             elif self.whiten_solver == "svd":
-                u, d = linalg.svd(
-                    XT / np.sqrt(n_samples - 1), full_matrices=False, check_finite=False
-                )[:2]
+                u, d = linalg.svd(XT, full_matrices=False, check_finite=False)[:2]
 
             # Give consistent eigenvectors for both svd solvers
             u *= np.sign(u[0])
@@ -657,13 +653,13 @@ class FastICA(ClassNamePrefixFeaturesOutMixin, TransformerMixin, BaseEstimator):
 
                 K = (u / d).T  # see (6.33) p.140
                 del u, d
-                X1 = np.dot(K, XT)
+                X1 = np.dot(K, XT) * np.sqrt(n_samples)
                 # see (13.6) p.267 Here X1 is white and data
                 # in X has been projected onto a subspace by PCA
             elif self.whiten_alg == "zca":
                 K = np.matmul(np.matmul(u, np.diag(1.0 / d)), u.T)
                 del u, d
-                X1 = np.dot(K, XT)
+                X1 = np.dot(K, XT) * np.sqrt(n_samples)
 
         else:
             # X must be casted to floats to avoid typing issues with numpy
