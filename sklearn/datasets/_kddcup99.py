@@ -45,7 +45,19 @@ ARCHIVE_10_PERCENT = RemoteFileMetadata(
 
 logger = logging.getLogger(__name__)
 
-
+ @validate_params( 
+     { 
+         "subset": [StrOptions({"SA", "SF", "http","smtp"}),None],
+         "data_home":[str, None],
+         "shuffle":["boolean"],
+         "random_state":["random_state"],
+         "percent10":["boolean"],
+         "download_if_missing":["boolean"],
+         "return_X_y":["boolean"],
+         "as_frame":["boolean"],
+         
+     }     
+ )
 def fetch_kddcup99(
     *,
     subset=None,
