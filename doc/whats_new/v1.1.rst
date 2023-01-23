@@ -548,13 +548,6 @@ Changelog
   features is large.
   :pr:`21109` by :user:`Smile <x-shadow-man>`.
 
-- |Fix| :class:`decomposition.FastICA` now validates input parameters in `fit` instead of `__init__`.
-  :pr:`21432` by :user:`Hannah Bohle <hhnnhh>` and :user:`Maren Westermann <marenwestermann>`.
-
-- |Fix| :class:`decomposition.FactorAnalysis` now validates input parameters
-  in `fit` instead of `__init__`.
-  :pr:`21713` by :user:`Haya <HayaAlmutairi>` and
-  :user:`Krum Arnaudov <krumeto>`.
 - |Enhancement| The :class:`decomposition.MiniBatchDictionaryLearning` and
   :func:`decomposition.dict_learning_online` have been refactored and now have a
   stopping criterion based on a small change of the dictionary or objective function,
