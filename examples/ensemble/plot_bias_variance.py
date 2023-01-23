@@ -12,7 +12,8 @@ the regression problem, the bias term measures the average amount by which the
 predictions of the estimator differ from the predictions of the best possible
 estimator for the problem (i.e., the Bayes model). The variance term measures
 the variability of the predictions of the estimator when fit over different
-instances LS of the problem. Finally, the noise measures the irreducible part
+random instances of the same problem. Each problem instance is noted "LS", for
+"Learning Sample", in the following. Finally, the noise measures the irreducible part
 of the error which is due the variability in the data.
 
 The upper left figure illustrates the predictions (in dark red) of a single
@@ -94,7 +95,7 @@ n_estimators = len(estimators)
 def f(x):
     x = x.ravel()
 
-    return np.exp(-(x ** 2)) + 1.5 * np.exp(-((x - 2) ** 2))
+    return np.exp(-(x**2)) + 1.5 * np.exp(-((x - 2) ** 2))
 
 
 def generate(n_samples, noise, n_repeat=1):

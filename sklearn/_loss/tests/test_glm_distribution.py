@@ -1,6 +1,8 @@
 # Authors: Christian Lorentzen <lorentzen.ch@gmail.com>
 #
 # License: BSD 3 clause
+#
+# TODO(1.3): remove file
 import numpy as np
 from numpy.testing import (
     assert_allclose,
@@ -99,9 +101,9 @@ def test_deviance_zero(family, chk_values):
     ],
     ids=lambda x: x.__class__.__name__,
 )
-def test_deviance_derivative(family):
+def test_deviance_derivative(family, global_random_seed):
     """Test deviance derivative for different families."""
-    rng = np.random.RandomState(0)
+    rng = np.random.RandomState(global_random_seed)
     y_true = rng.rand(10)
     # make data positive
     y_true += np.abs(y_true.min()) + 1e-2
@@ -113,12 +115,9 @@ def test_deviance_derivative(family):
     dev_derivative = family.deviance_derivative(y_true, y_pred)
     assert dev_derivative.shape == y_pred.shape
 
-    err = (
-        check_grad(
-            lambda y_pred: family.deviance(y_true, y_pred),
-            lambda y_pred: family.deviance_derivative(y_true, y_pred),
-            y_pred,
-        )
-        / np.linalg.norm(dev_derivative)
-    )
-    assert abs(err) < 1e-6
+    err = check_grad(
+        lambda y_pred: family.deviance(y_true, y_pred),
+        lambda y_pred: family.deviance_derivative(y_true, y_pred),
+        y_pred,
+    ) / np.linalg.norm(dev_derivative)
+    assert abs(err) < 3e-6

@@ -22,6 +22,7 @@ from subprocess import TimeoutExpired
 import re
 import contextlib
 from collections.abc import Iterable
+from collections.abc import Sequence
 
 import scipy as sp
 from functools import wraps
@@ -34,11 +35,11 @@ from unittest import TestCase
 
 # WindowsError only exist on Windows
 try:
-    WindowsError
+    WindowsError  # type: ignore
 except NameError:
     WindowsError = None
 
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose as np_assert_allclose
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_approx_equal
 from numpy.testing import assert_array_equal
@@ -48,13 +49,18 @@ import numpy as np
 import joblib
 
 import sklearn
-from sklearn.utils import IS_PYPY, _IS_32BIT, deprecated
+from sklearn.utils import (
+    IS_PYPY,
+    _IS_32BIT,
+    _in_unstable_openblas_configuration,
+)
 from sklearn.utils.multiclass import check_classification_targets
 from sklearn.utils.validation import (
     check_array,
     check_is_fitted,
     check_X_y,
 )
+from sklearn.utils.fixes import threadpool_info
 
 
 __all__ = [
@@ -80,137 +86,6 @@ assert_raises_regex = _dummy.assertRaisesRegex
 # assert_raises_regex but lets keep the backward compat in scikit-learn with
 # the old name for now
 assert_raises_regexp = assert_raises_regex
-
-
-# TODO: Remove in 1.2
-@deprecated(  # type: ignore
-    "`assert_warns` is deprecated in 1.0 and will be removed in 1.2."
-    "Use `pytest.warns` instead."
-)
-def assert_warns(warning_class, func, *args, **kw):
-    """Test that a certain warning occurs.
-
-    .. deprecated:: 1.0
-        `assert_warns` is deprecated in 1.0 and will be removed in 1.2.
-        Use `pytest.warns` instead.
-
-    Parameters
-    ----------
-    warning_class : the warning class
-        The class to test for, e.g. UserWarning.
-
-    func : callable
-        Callable object to trigger warnings.
-
-    *args : the positional arguments to `func`.
-
-    **kw : the keyword arguments to `func`
-
-    Returns
-    -------
-    result : the return value of `func`
-
-    """
-    with warnings.catch_warnings(record=True) as w:
-        # Cause all warnings to always be triggered.
-        warnings.simplefilter("always")
-        # Trigger a warning.
-        result = func(*args, **kw)
-        if hasattr(np, "FutureWarning"):
-            # Filter out numpy-specific warnings in numpy >= 1.9
-            w = [e for e in w if e.category is not np.VisibleDeprecationWarning]
-
-        # Verify some things
-        if not len(w) > 0:
-            raise AssertionError("No warning raised when calling %s" % func.__name__)
-
-        found = any(warning.category is warning_class for warning in w)
-        if not found:
-            raise AssertionError(
-                "%s did not give warning: %s( is %s)"
-                % (func.__name__, warning_class, w)
-            )
-    return result
-
-
-# TODO: Remove in 1.2
-@deprecated(  # type: ignore
-    "`assert_warns_message` is deprecated in 1.0 and will be removed in 1.2."
-    "Use `pytest.warns` instead."
-)
-def assert_warns_message(warning_class, message, func, *args, **kw):
-    # very important to avoid uncontrolled state propagation
-    """Test that a certain warning occurs and with a certain message.
-
-    .. deprecated:: 1.0
-        `assert_warns_message` is deprecated in 1.0 and will be removed in 1.2.
-        Use `pytest.warns` instead.
-
-    Parameters
-    ----------
-    warning_class : the warning class
-        The class to test for, e.g. UserWarning.
-
-    message : str or callable
-        The message or a substring of the message to test for. If callable,
-        it takes a string as the argument and will trigger an AssertionError
-        if the callable returns `False`.
-
-    func : callable
-        Callable object to trigger warnings.
-
-    *args : the positional arguments to `func`.
-
-    **kw : the keyword arguments to `func`.
-
-    Returns
-    -------
-    result : the return value of `func`
-
-    """
-    with warnings.catch_warnings(record=True) as w:
-        # Cause all warnings to always be triggered.
-        warnings.simplefilter("always")
-        if hasattr(np, "FutureWarning"):
-            # Let's not catch the numpy internal DeprecationWarnings
-            warnings.simplefilter("ignore", np.VisibleDeprecationWarning)
-        # Trigger a warning.
-        result = func(*args, **kw)
-        # Verify some things
-        if not len(w) > 0:
-            raise AssertionError("No warning raised when calling %s" % func.__name__)
-
-        found = [issubclass(warning.category, warning_class) for warning in w]
-        if not any(found):
-            raise AssertionError(
-                "No warning raised for %s with class %s"
-                % (func.__name__, warning_class)
-            )
-
-        message_found = False
-        # Checks the message of all warnings belong to warning_class
-        for index in [i for i, x in enumerate(found) if x]:
-            # substring will match, the entire message with typo won't
-            msg = w[index].message  # For Python 3 compatibility
-            msg = str(msg.args[0] if hasattr(msg, "args") else msg)
-            if callable(message):  # add support for certain tests
-                check_in_message = message
-            else:
-
-                def check_in_message(msg):
-                    return message in msg
-
-            if check_in_message(msg):
-                message_found = True
-                break
-
-        if not message_found:
-            raise AssertionError(
-                "Did not receive the message you expected ('%s') for <%s>, got: '%s'"
-                % (message, func.__name__, msg)
-            )
-
-    return result
 
 
 # To remove when we support numpy 1.7
@@ -382,6 +257,79 @@ def assert_raise_message(exceptions, message, function, *args, **kwargs):
         raise AssertionError("%s not raised by %s" % (names, function.__name__))
 
 
+def assert_allclose(
+    actual, desired, rtol=None, atol=0.0, equal_nan=True, err_msg="", verbose=True
+):
+    """dtype-aware variant of numpy.testing.assert_allclose
+
+    This variant introspects the least precise floating point dtype
+    in the input argument and automatically sets the relative tolerance
+    parameter to 1e-4 float32 and use 1e-7 otherwise (typically float64
+    in scikit-learn).
+
+    `atol` is always left to 0. by default. It should be adjusted manually
+    to an assertion-specific value in case there are null values expected
+    in `desired`.
+
+    The aggregate tolerance is `atol + rtol * abs(desired)`.
+
+    Parameters
+    ----------
+    actual : array_like
+        Array obtained.
+    desired : array_like
+        Array desired.
+    rtol : float, optional, default=None
+        Relative tolerance.
+        If None, it is set based on the provided arrays' dtypes.
+    atol : float, optional, default=0.
+        Absolute tolerance.
+    equal_nan : bool, optional, default=True
+        If True, NaNs will compare equal.
+    err_msg : str, optional, default=''
+        The error message to be printed in case of failure.
+    verbose : bool, optional, default=True
+        If True, the conflicting values are appended to the error message.
+
+    Raises
+    ------
+    AssertionError
+        If actual and desired are not equal up to specified precision.
+
+    See Also
+    --------
+    numpy.testing.assert_allclose
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.utils._testing import assert_allclose
+    >>> x = [1e-5, 1e-3, 1e-1]
+    >>> y = np.arccos(np.cos(x))
+    >>> assert_allclose(x, y, rtol=1e-5, atol=0)
+    >>> a = np.full(shape=10, fill_value=1e-5, dtype=np.float32)
+    >>> assert_allclose(a, 1e-5)
+    """
+    dtypes = []
+
+    actual, desired = np.asanyarray(actual), np.asanyarray(desired)
+    dtypes = [actual.dtype, desired.dtype]
+
+    if rtol is None:
+        rtols = [1e-4 if dtype == np.float32 else 1e-7 for dtype in dtypes]
+        rtol = max(rtols)
+
+    np_assert_allclose(
+        actual,
+        desired,
+        rtol=rtol,
+        atol=atol,
+        equal_nan=equal_nan,
+        err_msg=err_msg,
+        verbose=verbose,
+    )
+
+
 def assert_allclose_dense_sparse(x, y, rtol=1e-07, atol=1e-9, err_msg=""):
     """Assert allclose for sparse and dense data.
 
@@ -448,6 +396,10 @@ try:
         os.environ.get("TRAVIS") == "true", reason="skip on travis"
     )
     fails_if_pypy = pytest.mark.xfail(IS_PYPY, reason="not compatible with PyPy")
+    fails_if_unstable_openblas = pytest.mark.xfail(
+        _in_unstable_openblas_configuration(),
+        reason="OpenBLAS is unstable for this configuration",
+    )
     skip_if_no_parallel = pytest.mark.skipif(
         not joblib.parallel.mp, reason="joblib is in serial mode"
     )
@@ -520,6 +472,38 @@ class TempMemmap:
         _delete_folder(self.temp_folder)
 
 
+def _create_memmap_backed_array(array, filename, mmap_mode):
+    # https://numpy.org/doc/stable/reference/generated/numpy.memmap.html
+    fp = np.memmap(filename, dtype=array.dtype, mode="w+", shape=array.shape)
+    fp[:] = array[:]  # write array to memmap array
+    fp.flush()
+    memmap_backed_array = np.memmap(
+        filename, dtype=array.dtype, mode=mmap_mode, shape=array.shape
+    )
+    return memmap_backed_array
+
+
+def _create_aligned_memmap_backed_arrays(data, mmap_mode, folder):
+    if isinstance(data, np.ndarray):
+        filename = op.join(folder, "data.dat")
+        return _create_memmap_backed_array(data, filename, mmap_mode)
+
+    if isinstance(data, Sequence) and all(
+        isinstance(each, np.ndarray) for each in data
+    ):
+        return [
+            _create_memmap_backed_array(
+                array, op.join(folder, f"data{index}.dat"), mmap_mode
+            )
+            for index, array in enumerate(data)
+        ]
+
+    raise ValueError(
+        "When creating aligned memmap-backed arrays, input must be a single array or a"
+        " sequence of arrays"
+    )
+
+
 def create_memmap_backed_data(data, mmap_mode="r", return_folder=False, aligned=False):
     """
     Parameters
@@ -534,18 +518,23 @@ def create_memmap_backed_data(data, mmap_mode="r", return_folder=False, aligned=
     """
     temp_folder = tempfile.mkdtemp(prefix="sklearn_testing_")
     atexit.register(functools.partial(_delete_folder, temp_folder, warn=True))
+    # OpenBLAS is known to segfault with unaligned data on the Prescott
+    # architecture so force aligned=True on Prescott. For more details, see:
+    # https://github.com/scipy/scipy/issues/14886
+    has_prescott_openblas = any(
+        True
+        for info in threadpool_info()
+        if info["internal_api"] == "openblas"
+        # Prudently assume Prescott might be the architecture if it is unknown.
+        and info.get("architecture", "prescott").lower() == "prescott"
+    )
+    if has_prescott_openblas:
+        aligned = True
+
     if aligned:
-        if isinstance(data, np.ndarray) and data.flags.aligned:
-            # https://numpy.org/doc/stable/reference/generated/numpy.memmap.html
-            filename = op.join(temp_folder, "data.dat")
-            fp = np.memmap(filename, dtype=data.dtype, mode="w+", shape=data.shape)
-            fp[:] = data[:]  # write data to memmap array
-            fp.flush()
-            memmap_backed_data = np.memmap(
-                filename, dtype=data.dtype, mode=mmap_mode, shape=data.shape
-            )
-        else:
-            raise ValueError("If aligned=True, input must be a single numpy array.")
+        memmap_backed_data = _create_aligned_memmap_backed_arrays(
+            data, mmap_mode, temp_folder
+        )
     else:
         filename = op.join(temp_folder, "data.pkl")
         joblib.dump(data, filename)
@@ -655,14 +644,25 @@ def check_docstring_parameters(func, doc=None, ignore=None):
 
     # Analyze function's docstring
     if doc is None:
-        with warnings.catch_warnings(record=True) as w:
+        records = []
+        with warnings.catch_warnings(record=True):
+            warnings.simplefilter("error", UserWarning)
             try:
                 doc = docscrape.FunctionDoc(func)
+            except UserWarning as exp:
+                if "potentially wrong underline length" in str(exp):
+                    # Catch warning raised as of numpydoc 1.2 when
+                    # the underline length for a section of a docstring
+                    # is not consistent.
+                    message = str(exp).split("\n")[:3]
+                    incorrect += [f"In function: {func_name}"] + message
+                    return incorrect
+                records.append(str(exp))
             except Exception as exp:
                 incorrect += [func_name + " parsing error: " + str(exp)]
                 return incorrect
-        if len(w):
-            raise RuntimeError("Error for %s:\n%s" % (func_name, w[0]))
+        if len(records):
+            raise RuntimeError("Error for %s:\n%s" % (func_name, records[0]))
 
     param_docs = []
     for name, type_definition, param_doc in doc["Parameters"]:

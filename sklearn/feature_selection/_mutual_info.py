@@ -9,7 +9,6 @@ from ..metrics.cluster import mutual_info_score
 from ..neighbors import NearestNeighbors, KDTree
 from ..preprocessing import scale
 from ..utils import check_random_state
-from ..utils.fixes import _astype_copy_false
 from ..utils.validation import check_array, check_X_y
 from ..utils.multiclass import check_classification_targets
 
@@ -138,13 +137,13 @@ def _compute_mi_cd(c, d, n_neighbors):
 
     kd = KDTree(c)
     m_all = kd.query_radius(c, radius, count_only=True, return_distance=False)
-    m_all = np.array(m_all) - 1.0
+    m_all = np.array(m_all)
 
     mi = (
         digamma(n_samples)
         + np.mean(digamma(k_all))
         - np.mean(digamma(label_counts))
-        - np.mean(digamma(m_all + 1))
+        - np.mean(digamma(m_all))
     )
 
     return max(0, mi)
@@ -281,21 +280,26 @@ def _estimate_mi(
         if copy:
             X = X.copy()
 
-        if not discrete_target:
-            X[:, continuous_mask] = scale(
-                X[:, continuous_mask], with_mean=False, copy=False
-            )
+        X[:, continuous_mask] = scale(
+            X[:, continuous_mask], with_mean=False, copy=False
+        )
 
         # Add small noise to continuous features as advised in Kraskov et. al.
-        X = X.astype(float, **_astype_copy_false(X))
+        X = X.astype(np.float64, copy=False)
         means = np.maximum(1, np.mean(np.abs(X[:, continuous_mask]), axis=0))
         X[:, continuous_mask] += (
-            1e-10 * means * rng.randn(n_samples, np.sum(continuous_mask))
+            1e-10
+            * means
+            * rng.standard_normal(size=(n_samples, np.sum(continuous_mask)))
         )
 
     if not discrete_target:
         y = scale(y, with_mean=False)
-        y += 1e-10 * np.maximum(1, np.mean(np.abs(y))) * rng.randn(n_samples)
+        y += (
+            1e-10
+            * np.maximum(1, np.mean(np.abs(y)))
+            * rng.standard_normal(size=n_samples)
+        )
 
     mi = [
         _compute_mi(x, y, discrete_feature, discrete_target, n_neighbors)

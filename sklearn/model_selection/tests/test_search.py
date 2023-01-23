@@ -114,7 +114,7 @@ class MockClassifier:
 
 
 class LinearSVCNoScore(LinearSVC):
-    """An LinearSVC classifier that has no score method."""
+    """A LinearSVC classifier that has no score method."""
 
     @property
     def score(self):
@@ -133,12 +133,13 @@ def assert_grid_iter_equals_getitem(grid):
 @pytest.mark.parametrize(
     "input, error_type, error_message",
     [
-        (0, TypeError, r"Parameter .* is not a dict or a list \(0\)"),
+        (0, TypeError, r"Parameter .* a dict or a list, got: 0 of type int"),
         ([{"foo": [0]}, 0], TypeError, r"Parameter .* is not a dict \(0\)"),
         (
             {"foo": 0},
             TypeError,
-            "Parameter.* value is not iterable .*" r"\(key='foo', value=0\)",
+            r"Parameter (grid|distribution) for parameter 'foo' (is not|needs to be) "
+            r"(a list or a numpy array|iterable or a distribution).*",
         ),
     ],
 )
@@ -399,7 +400,7 @@ def test_no_refit():
     error_msg = (
         "For multi-metric scoring, the parameter refit must be set to a scorer key"
     )
-    for refit in ["", 5, True, "recall", "accuracy"]:
+    for refit in [True, "recall", "accuracy"]:
         with pytest.raises(ValueError, match=error_msg):
             GridSearchCV(
                 clf, {}, refit=refit, scoring={"acc": "accuracy", "prec": "precision"}
@@ -440,40 +441,43 @@ def test_grid_search_when_param_grid_includes_range():
 
 
 def test_grid_search_bad_param_grid():
+    X, y = make_classification(n_samples=10, n_features=5, random_state=0)
     param_dict = {"C": 1}
     clf = SVC(gamma="auto")
     error_msg = re.escape(
-        "Parameter grid for parameter (C) needs to"
-        " be a list or numpy array, but got (<class 'int'>)."
-        " Single values need to be wrapped in a list"
-        " with one element."
+        "Parameter grid for parameter 'C' needs to be a list or "
+        "a numpy array, but got 1 (of type int) instead. Single "
+        "values need to be wrapped in a list with one element."
     )
-    with pytest.raises(ValueError, match=error_msg):
-        GridSearchCV(clf, param_dict)
+    search = GridSearchCV(clf, param_dict)
+    with pytest.raises(TypeError, match=error_msg):
+        search.fit(X, y)
 
     param_dict = {"C": []}
     clf = SVC()
     error_msg = re.escape(
-        "Parameter values for parameter (C) need to be a non-empty sequence."
+        "Parameter grid for parameter 'C' need to be a non-empty sequence, got: []"
     )
+    search = GridSearchCV(clf, param_dict)
     with pytest.raises(ValueError, match=error_msg):
-        GridSearchCV(clf, param_dict)
+        search.fit(X, y)
 
     param_dict = {"C": "1,2,3"}
     clf = SVC(gamma="auto")
     error_msg = re.escape(
-        "Parameter grid for parameter (C) needs to"
-        " be a list or numpy array, but got (<class 'str'>)."
-        " Single values need to be wrapped in a list"
-        " with one element."
+        "Parameter grid for parameter 'C' needs to be a list or a numpy array, "
+        "but got '1,2,3' (of type str) instead. Single values need to be "
+        "wrapped in a list with one element."
     )
-    with pytest.raises(ValueError, match=error_msg):
-        GridSearchCV(clf, param_dict)
+    search = GridSearchCV(clf, param_dict)
+    with pytest.raises(TypeError, match=error_msg):
+        search.fit(X, y)
 
     param_dict = {"C": np.ones((3, 2))}
     clf = SVC()
+    search = GridSearchCV(clf, param_dict)
     with pytest.raises(ValueError):
-        GridSearchCV(clf, param_dict)
+        search.fit(X, y)
 
 
 def test_grid_search_sparse():
@@ -1423,10 +1427,10 @@ def test_grid_search_correct_score_results():
         for candidate_i, C in enumerate(Cs):
             clf.set_params(C=C)
             cv_scores = np.array(
-                list(
+                [
                     grid_search.cv_results_["split%d_test_score" % s][candidate_i]
                     for s in range(n_splits)
-                )
+                ]
             )
             for i, (train, test) in enumerate(cv.split(X, y)):
                 clf.fit(X[train], y[train])
@@ -1580,9 +1584,7 @@ def test_grid_search_failing_classifier():
     # that are expected to fail.
     def get_cand_scores(i):
         return np.array(
-            list(
-                gs.cv_results_["split%d_test_score" % s][i] for s in range(gs.n_splits_)
-            )
+            [gs.cv_results_["split%d_test_score" % s][i] for s in range(gs.n_splits_)]
         )
 
     assert all(
@@ -1713,7 +1715,7 @@ def test_stochastic_gradient_loss_param():
     # Make sure the predict_proba works when loss is specified
     # as one of the parameters in the param_grid.
     param_grid = {
-        "loss": ["log"],
+        "loss": ["log_loss"],
     }
     X = np.arange(24).reshape(6, -1)
     y = [0, 0, 0, 1, 1, 1]
@@ -1836,10 +1838,10 @@ def test_grid_search_cv_splits_consistency():
     for score_type in ("train", "test"):
         per_param_scores = {}
         for param_i in range(4):
-            per_param_scores[param_i] = list(
+            per_param_scores[param_i] = [
                 gs.cv_results_["split%d_%s_score" % (s, score_type)][param_i]
                 for s in range(5)
-            )
+            ]
 
         assert_array_almost_equal(per_param_scores[0], per_param_scores[1])
         assert_array_almost_equal(per_param_scores[2], per_param_scores[3])
@@ -1979,10 +1981,10 @@ def test_random_search_bad_cv():
 @pytest.mark.parametrize(
     "SearchCV, specialized_params",
     [
-        (GridSearchCV, {"param_grid": {"max_depth": [2, 3]}}),
+        (GridSearchCV, {"param_grid": {"max_depth": [2, 3, 5, 8]}}),
         (
             RandomizedSearchCV,
-            {"param_distributions": {"max_depth": [2, 3]}, "n_iter": 2},
+            {"param_distributions": {"max_depth": [2, 3, 5, 8]}, "n_iter": 4},
         ),
     ],
 )
@@ -2022,6 +2024,13 @@ def test_searchcv_raise_warning_with_non_finite_score(
     assert len(warn_msg) == len(set_with_warning)
     for msg, dataset in zip(warn_msg, set_with_warning):
         assert f"One or more of the {dataset} scores are non-finite" in str(msg.message)
+
+    # all non-finite scores should be equally ranked last
+    last_rank = grid.cv_results_["rank_test_score"].max()
+    non_finite_mask = np.isnan(grid.cv_results_["mean_test_score"])
+    assert_array_equal(grid.cv_results_["rank_test_score"][non_finite_mask], last_rank)
+    # all finite scores should be better ranked than the non-finite scores
+    assert np.all(grid.cv_results_["rank_test_score"][~non_finite_mask] < last_rank)
 
 
 def test_callable_multimetric_confusion_matrix():
@@ -2215,23 +2224,29 @@ def test_search_cv_pairwise_property_delegated_to_base_estimator(pairwise):
     assert pairwise == cv._get_tags()["pairwise"], attr_message
 
 
-# TODO: Remove in 1.1
-@ignore_warnings(category=FutureWarning)
 def test_search_cv__pairwise_property_delegated_to_base_estimator():
     """
-    Test implementation of BaseSearchCV has the _pairwise property
-    which matches the _pairwise property of its estimator.
-    This test make sure _pairwise is delegated to the base estimator.
+    Test implementation of BaseSearchCV has the pairwise property
+    which matches the pairwise tag of its estimator.
+    This test make sure pairwise tag is delegated to the base estimator.
 
     Non-regression test for issue #13920.
     """
-    est = BaseEstimator()
+
+    class EstimatorPairwise(BaseEstimator):
+        def __init__(self, pairwise=True):
+            self.pairwise = pairwise
+
+        def _more_tags(self):
+            return {"pairwise": self.pairwise}
+
+    est = EstimatorPairwise()
     attr_message = "BaseSearchCV _pairwise property must match estimator"
 
     for _pairwise_setting in [True, False]:
-        setattr(est, "_pairwise", _pairwise_setting)
+        est.set_params(pairwise=_pairwise_setting)
         cv = GridSearchCV(est, {"n_neighbors": [10]})
-        assert _pairwise_setting == cv._pairwise, attr_message
+        assert _pairwise_setting == cv._get_tags()["pairwise"], attr_message
 
 
 def test_search_cv_pairwise_property_equivalence_of_precomputed():

@@ -27,13 +27,13 @@ from sklearn.ensemble import RandomForestClassifier
 
 rng = np.random.RandomState(0)
 
-X, y = datasets.make_classification(n_samples=700, random_state=rng)
+X, y = datasets.make_classification(n_samples=400, n_features=12, random_state=rng)
 
 clf = RandomForestClassifier(n_estimators=20, random_state=rng)
 
 param_dist = {
     "max_depth": [3, None],
-    "max_features": randint(1, 11),
+    "max_features": randint(1, 6),
     "min_samples_split": randint(2, 11),
     "bootstrap": [True, False],
     "criterion": ["gini", "entropy"],

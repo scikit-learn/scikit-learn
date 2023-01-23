@@ -401,33 +401,11 @@ to be able to estimate a series of target functions (f1,f2,f3...,fn)
 that are trained on a single X predictor matrix to predict a series
 of responses (y1,y2,y3...,yn).
 
-Below is an example of multilabel classification:
-
-    >>> from sklearn.datasets import make_classification
-    >>> from sklearn.multioutput import MultiOutputClassifier
-    >>> from sklearn.ensemble import RandomForestClassifier
-    >>> from sklearn.utils import shuffle
-    >>> import numpy as np
-    >>> X, y1 = make_classification(n_samples=10, n_features=100, n_informative=30, n_classes=3, random_state=1)
-    >>> y2 = shuffle(y1, random_state=1)
-    >>> y3 = shuffle(y1, random_state=2)
-    >>> Y = np.vstack((y1, y2, y3)).T
-    >>> n_samples, n_features = X.shape # 10,100
-    >>> n_outputs = Y.shape[1] # 3
-    >>> n_classes = 3
-    >>> forest = RandomForestClassifier(random_state=1)
-    >>> multi_target_forest = MultiOutputClassifier(forest, n_jobs=-1)
-    >>> multi_target_forest.fit(X, Y).predict(X)
-    array([[2, 2, 0],
-           [1, 2, 1],
-           [2, 1, 0],
-           [0, 0, 2],
-           [0, 2, 1],
-           [0, 0, 2],
-           [1, 1, 0],
-           [1, 1, 1],
-           [0, 0, 2],
-           [2, 0, 0]])
+You can find a usage example for
+:class:`~sklearn.multioutput.MultiOutputClassifier`
+as part of the section on :ref:`multiclass_multioutput_classification`
+since it is a generalization of multilabel classification to
+multiclass outputs instead of binary outputs.
 
 .. _classifierchain:
 
@@ -486,7 +464,37 @@ Note that all classifiers handling multiclass-multioutput (also known as
 multitask classification) tasks, support the multilabel classification task
 as a special case. Multitask classification is similar to the multioutput
 classification task with different model formulations. For more information,
-see the relevant estimator documentation.
+see the relevant estimator documentat
+
+Below is an example of multiclass-multioutput classification:
+
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.multioutput import MultiOutputClassifier
+    >>> from sklearn.ensemble import RandomForestClassifier
+    >>> from sklearn.utils import shuffle
+    >>> import numpy as np
+    >>> X, y1 = make_classification(n_samples=10, n_features=100,
+    ...                             n_informative=30, n_classes=3,
+    ...                             random_state=1)
+    >>> y2 = shuffle(y1, random_state=1)
+    >>> y3 = shuffle(y1, random_state=2)
+    >>> Y = np.vstack((y1, y2, y3)).T
+    >>> n_samples, n_features = X.shape # 10,100
+    >>> n_outputs = Y.shape[1] # 3
+    >>> n_classes = 3
+    >>> forest = RandomForestClassifier(random_state=1)
+    >>> multi_target_forest = MultiOutputClassifier(forest, n_jobs=2)
+    >>> multi_target_forest.fit(X, Y).predict(X)
+    array([[2, 2, 0],
+           [1, 2, 1],
+           [2, 1, 0],
+           [0, 0, 2],
+           [0, 2, 1],
+           [0, 0, 2],
+           [1, 1, 0],
+           [1, 1, 1],
+           [0, 0, 2],
+           [2, 0, 0]])
 
 .. warning::
     At present, no metric in :mod:`sklearn.metrics`

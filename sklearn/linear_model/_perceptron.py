@@ -1,7 +1,9 @@
 # Author: Mathieu Blondel
 # License: BSD 3 clause
+from numbers import Real
 
 from ._stochastic_gradient import BaseSGDClassifier
+from ..utils._param_validation import StrOptions, Interval
 
 
 class Perceptron(BaseSGDClassifier):
@@ -37,7 +39,7 @@ class Perceptron(BaseSGDClassifier):
 
         .. versionadded:: 0.19
 
-    tol : float, default=1e-3
+    tol : float or None, default=1e-3
         The stopping criterion. If it is not None, the iterations will stop
         when (loss > previous_loss - tol).
 
@@ -59,7 +61,7 @@ class Perceptron(BaseSGDClassifier):
         ``-1`` means using all processors. See :term:`Glossary <n_jobs>`
         for more details.
 
-    random_state : int, RandomState instance, default=None
+    random_state : int, RandomState instance or None, default=0
         Used to shuffle the training data, when ``shuffle`` is set to
         ``True``. Pass an int for reproducible output across multiple
         function calls.
@@ -134,7 +136,7 @@ class Perceptron(BaseSGDClassifier):
 
     t_ : int
         Number of weight updates performed during training.
-        Same as ``(n_iter_ * n_samples)``.
+        Same as ``(n_iter_ * n_samples + 1)``.
 
     See Also
     --------
@@ -163,6 +165,18 @@ class Perceptron(BaseSGDClassifier):
     >>> clf.score(X, y)
     0.939...
     """
+
+    _parameter_constraints: dict = {**BaseSGDClassifier._parameter_constraints}
+    _parameter_constraints.pop("loss")
+    _parameter_constraints.pop("average")
+    _parameter_constraints.update(
+        {
+            "penalty": [StrOptions({"l2", "l1", "elasticnet"}), None],
+            "alpha": [Interval(Real, 0, None, closed="left")],
+            "l1_ratio": [Interval(Real, 0, 1, closed="both")],
+            "eta0": [Interval(Real, 0, None, closed="left")],
+        }
+    )
 
     def __init__(
         self,

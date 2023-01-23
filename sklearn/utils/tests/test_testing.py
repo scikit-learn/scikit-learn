@@ -1,6 +1,5 @@
 import warnings
 import unittest
-import sys
 import os
 import atexit
 
@@ -15,7 +14,6 @@ from sklearn.utils.metaestimators import available_if, if_delegate_has_method
 from sklearn.utils._readonly_array_wrapper import _test_sum
 from sklearn.utils._testing import (
     assert_raises,
-    assert_warns,
     assert_no_warnings,
     set_random_state,
     assert_raise_message,
@@ -28,6 +26,7 @@ from sklearn.utils._testing import (
     _delete_folder,
     _convert_container,
     raises,
+    assert_allclose,
 )
 
 from sklearn.tree import DecisionTreeClassifier
@@ -222,44 +221,9 @@ class TestWarns(unittest.TestCase):
             warnings.warn("yo")
             return 3
 
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", UserWarning)
-            filters_orig = warnings.filters[:]
-
-            # TODO: remove in 1.2
-            with pytest.warns(FutureWarning):
-                assert assert_warns(UserWarning, f) == 3
-
-            # test that assert_warns doesn't have side effects on warnings
-            # filters
-            assert warnings.filters == filters_orig
         with pytest.raises(AssertionError):
             assert_no_warnings(f)
         assert assert_no_warnings(lambda x: x, 1) == 1
-
-    # TODO: remove in 1.2
-    @ignore_warnings(category=FutureWarning)
-    def test_warn_wrong_warning(self):
-        def f():
-            warnings.warn("yo", FutureWarning)
-
-        failed = False
-        filters = sys.modules["warnings"].filters[:]
-        try:
-            try:
-                # Should raise an AssertionError
-
-                # assert_warns has a special handling of "FutureWarning" that
-                # pytest.warns does not have
-                assert_warns(UserWarning, f)
-                failed = True
-            except AssertionError:
-                pass
-        finally:
-            sys.modules["warnings"].filters = filters
-
-        if failed:
-            raise AssertionError("wrong warning caught by assert_warn")
 
 
 # Tests for docstrings:
@@ -370,7 +334,7 @@ def f_check_param_definition(a, b, c, d, e):
     b:
         Parameter b
     c :
-        Parameter c
+        This is parsed correctly in numpydoc 1.2
     d:int
         Parameter d
     e
@@ -387,7 +351,7 @@ class Klass:
         """Function f
 
         Parameter
-        ----------
+        ---------
         a : int
             Parameter a
         b : float
@@ -516,6 +480,7 @@ class MockMetaEstimatorDeprecatedDelegation:
         """Incorrect docstring but should not be tested"""
 
 
+@pytest.mark.filterwarnings("ignore:if_delegate_has_method was deprecated")
 @pytest.mark.parametrize(
     "mock_meta",
     [
@@ -525,7 +490,9 @@ class MockMetaEstimatorDeprecatedDelegation:
 )
 def test_check_docstring_parameters(mock_meta):
     pytest.importorskip(
-        "numpydoc", reason="numpydoc is required to test the docstrings"
+        "numpydoc",
+        reason="numpydoc is required to test the docstrings",
+        minversion="1.2.0",
     )
 
     incorrect = check_docstring_parameters(f_ok)
@@ -546,8 +513,6 @@ def test_check_docstring_parameters(mock_meta):
         "was no space between the param name and colon ('a: int')",
         "sklearn.utils.tests.test_testing.f_check_param_definition There "
         "was no space between the param name and colon ('b:')",
-        "sklearn.utils.tests.test_testing.f_check_param_definition "
-        "Parameter 'c :' has an empty type spec. Remove the colon",
         "sklearn.utils.tests.test_testing.f_check_param_definition There "
         "was no space between the param name and colon ('d:int')",
     ]
@@ -602,20 +567,16 @@ def test_check_docstring_parameters(mock_meta):
             "In function: "
             + f"sklearn.utils.tests.test_testing.{mock_meta_name}."
             + "predict_proba",
-            "Parameters in function docstring have less items w.r.t. function"
-            " signature, first missing item: X",
-            "Full diff:",
-            "- ['X']",
-            "+ []",
+            "potentially wrong underline length... ",
+            "Parameters ",
+            "--------- in ",
         ],
         [
             "In function: "
             + f"sklearn.utils.tests.test_testing.{mock_meta_name}.score",
-            "Parameters in function docstring have less items w.r.t. function"
-            " signature, first missing item: X",
-            "Full diff:",
-            "- ['X']",
-            "+ []",
+            "potentially wrong underline length... ",
+            "Parameters ",
+            "--------- in ",
         ],
         [
             "In function: " + f"sklearn.utils.tests.test_testing.{mock_meta_name}.fit",
@@ -704,21 +665,24 @@ def test_create_memmap_backed_data(monkeypatch, aligned):
     assert registration_counter.nb_calls == 3
 
     input_list = [input_array, input_array + 1, input_array + 2]
-    if aligned:
-        with pytest.raises(
-            ValueError, match="If aligned=True, input must be a single numpy array."
-        ):
-            create_memmap_backed_data(input_list, aligned=True)
-    else:
-        mmap_data_list = create_memmap_backed_data(input_list, aligned=False)
-        for input_array, data in zip(input_list, mmap_data_list):
-            check_memmap(input_array, data)
-        assert registration_counter.nb_calls == 4
+    mmap_data_list = create_memmap_backed_data(input_list, aligned=aligned)
+    for input_array, data in zip(input_list, mmap_data_list):
+        check_memmap(input_array, data)
+    assert registration_counter.nb_calls == 4
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "When creating aligned memmap-backed arrays, input must be a single array"
+            " or a sequence of arrays"
+        ),
+    ):
+        create_memmap_backed_data([input_array, "not-an-array"], aligned=True)
 
 
 @pytest.mark.parametrize("dtype", [np.float32, np.float64, np.int32, np.int64])
 def test_memmap_on_contiguous_data(dtype):
-    """Test memory mapped array on contigous memoryview."""
+    """Test memory mapped array on contiguous memoryview."""
     x = np.arange(10).astype(dtype)
     assert x.flags["C_CONTIGUOUS"]
     assert x.flags["ALIGNED"]
@@ -858,3 +822,21 @@ def test_raises():
     with pytest.raises(AssertionError):
         with raises((TypeError, ValueError)):
             pass
+
+
+def test_float32_aware_assert_allclose():
+    # The relative tolerance for float32 inputs is 1e-4
+    assert_allclose(np.array([1.0 + 2e-5], dtype=np.float32), 1.0)
+    with pytest.raises(AssertionError):
+        assert_allclose(np.array([1.0 + 2e-4], dtype=np.float32), 1.0)
+
+    # The relative tolerance for other inputs is left to 1e-7 as in
+    # the original numpy version.
+    assert_allclose(np.array([1.0 + 2e-8], dtype=np.float64), 1.0)
+    with pytest.raises(AssertionError):
+        assert_allclose(np.array([1.0 + 2e-7], dtype=np.float64), 1.0)
+
+    # atol is left to 0.0 by default, even for float32
+    with pytest.raises(AssertionError):
+        assert_allclose(np.array([1e-5], dtype=np.float32), 0.0)
+    assert_allclose(np.array([1e-5], dtype=np.float32), 0.0, atol=2e-5)

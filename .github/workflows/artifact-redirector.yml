@@ -1,0 +1,16 @@
+name: CircleCI artifacts redirector
+on: [status]
+jobs:
+  circleci_artifacts_redirector_job:
+    runs-on: ubuntu-latest
+    # For testing this action on a fork, remove the "github.repository =="" condition.
+    if: "github.repository == 'scikit-learn/scikit-learn' && github.event.context == 'ci/circleci: doc'"
+    name: Run CircleCI artifacts redirector
+    steps:
+      - name: GitHub Action step
+        uses: larsoner/circleci-artifacts-redirector-action@master
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          artifact-path: 0/doc/_changed.html
+          circleci-jobs: doc
+          job-title: Check the rendered docs here!

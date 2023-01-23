@@ -133,7 +133,7 @@ Linear model: from regression to sparsity
 .. topic:: Diabetes dataset
 
     The diabetes dataset consists of 10 physiological variables (age,
-    sex, weight, blood pressure) measure on 442 patients, and an
+    sex, weight, blood pressure) measured on 442 patients, and an
     indication of disease progression after one year::
 
         >>> diabetes_X, diabetes_y = datasets.load_diabetes(return_X_y=True)
@@ -180,13 +180,13 @@ Linear models: :math:`y = X\beta + \epsilon`
 
     >>> # The mean square error
     >>> np.mean((regr.predict(diabetes_X_test) - diabetes_y_test)**2)
-    2004.56760268...
+    2004.5...
 
     >>> # Explained variance score: 1 is perfect prediction
     >>> # and 0 means that there is no linear relationship
     >>> # between X and y.
     >>> regr.score(diabetes_X_test, diabetes_y_test)
-    0.5850753022690...
+    0.585...
 
 
 .. _shrinkage:
@@ -253,8 +253,7 @@ diabetes dataset rather than our synthetic data::
     ...            .fit(diabetes_X_train, diabetes_y_train)
     ...            .score(diabetes_X_test, diabetes_y_test)
     ...        for alpha in alphas])
-    [0.5851110683883..., 0.5852073015444..., 0.5854677540698...,
-     0.5855512036503..., 0.5830717085554..., 0.57058999437...]
+    [0.585..., 0.585..., 0.5854..., 0.5855..., 0.583..., 0.570...]
 
 
 .. note::
@@ -310,7 +309,7 @@ informative features and set non-informative ones, like feature 2 to 0. Ridge
 regression will decrease their contribution, but not set them to zero. Another
 penalization approach, called :ref:`lasso` (least absolute shrinkage and
 selection operator), can set some coefficients to zero. Such methods are
-called **sparse method** and sparsity can be seen as an
+called **sparse methods** and sparsity can be seen as an
 application of Occam's razor: *prefer simpler models*.
 
 ::
@@ -325,8 +324,8 @@ application of Occam's razor: *prefer simpler models*.
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
     Lasso(alpha=0.025118864315095794)
     >>> print(regr.coef_)
-    [   0.         -212.437...  517.194...  313.779... -160.830...
-       -0.         -187.195...   69.382...  508.660...   71.842...]
+    [   0.         -212.4...   517.2...  313.7... -160.8...
+       -0.         -187.1...   69.3...  508.6...   71.8... ]
 
 .. topic:: **Different algorithms for the same problem**
 

@@ -37,6 +37,7 @@ from ._base import _pkl_filepath
 from ._base import RemoteFileMetadata
 from ._base import load_descr
 from ..utils import Bunch
+from ..utils._param_validation import validate_params
 
 
 # The original data can be found at:
@@ -50,6 +51,14 @@ ARCHIVE = RemoteFileMetadata(
 logger = logging.getLogger(__name__)
 
 
+@validate_params(
+    {
+        "data_home": [str, None],
+        "download_if_missing": ["boolean"],
+        "return_X_y": ["boolean"],
+        "as_frame": ["boolean"],
+    }
+)
 def fetch_california_housing(
     *, data_home=None, download_if_missing=True, return_X_y=False, as_frame=False
 ):
@@ -74,8 +83,7 @@ def fetch_california_housing(
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-
-    return_X_y : bool, default=False.
+    return_X_y : bool, default=False
         If True, returns ``(data.data, data.target)`` instead of a Bunch
         object.
 
@@ -111,6 +119,10 @@ def fetch_california_housing(
             .. versionadded:: 0.23
 
     (data, target) : tuple if ``return_X_y`` is True
+        A tuple of two ndarray. The first containing a 2D array of
+        shape (n_samples, n_features) with each row representing one
+        sample and each column representing the features. The second
+        ndarray of shape (n_samples,) containing the target samples.
 
         .. versionadded:: 0.20
 

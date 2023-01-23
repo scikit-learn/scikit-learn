@@ -331,10 +331,6 @@ def test_lbfgs_regression_maxfun(X, y):
             mlp.fit(X, y)
             assert max_fun >= mlp.n_iter_
 
-    mlp.max_fun = -1
-    with pytest.raises(ValueError):
-        mlp.fit(X, y)
-
 
 def test_learning_rate_warmstart():
     # Tests that warm_start reuse past solutions.
@@ -506,39 +502,22 @@ def test_partial_fit_errors():
     assert not hasattr(MLPClassifier(solver="lbfgs"), "partial_fit")
 
 
-@pytest.mark.parametrize(
-    "args",
-    [
-        {"hidden_layer_sizes": -1},
-        {"max_iter": -1},
-        {"shuffle": "true"},
-        {"alpha": -1},
-        {"learning_rate_init": -1},
-        {"momentum": 2},
-        {"momentum": -0.5},
-        {"nesterovs_momentum": "invalid"},
-        {"early_stopping": "invalid"},
-        {"validation_fraction": 1},
-        {"validation_fraction": -0.5},
-        {"beta_1": 1},
-        {"beta_1": -0.5},
-        {"beta_2": 1},
-        {"beta_2": -0.5},
-        {"epsilon": -0.5},
-        {"n_iter_no_change": -1},
-        {"solver": "hadoken"},
-        {"learning_rate": "converge"},
-        {"activation": "cloak"},
-    ],
-)
-def test_params_errors(args):
-    # Test that invalid parameters raise value error
-    X = [[3, 2], [1, 6]]
-    y = [1, 0]
-    clf = MLPClassifier
+def test_nonfinite_params():
+    # Check that MLPRegressor throws ValueError when dealing with non-finite
+    # parameter values
+    rng = np.random.RandomState(0)
+    n_samples = 10
+    fmax = np.finfo(np.float64).max
+    X = fmax * rng.uniform(size=(n_samples, 2))
+    y = rng.standard_normal(size=n_samples)
 
-    with pytest.raises(ValueError):
-        clf(**args).fit(X, y)
+    clf = MLPRegressor()
+    msg = (
+        "Solver produced non-finite parameter weights. The input data may contain large"
+        " values and need to be preprocessed."
+    )
+    with pytest.raises(ValueError, match=msg):
+        clf.fit(X, y)
 
 
 def test_predict_proba_binary():
@@ -689,19 +668,35 @@ def test_verbose_sgd():
     assert "Iteration" in output.getvalue()
 
 
-def test_early_stopping():
+@pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
+def test_early_stopping(MLPEstimator):
     X = X_digits_binary[:100]
     y = y_digits_binary[:100]
     tol = 0.2
-    clf = MLPClassifier(tol=tol, max_iter=3000, solver="sgd", early_stopping=True)
-    clf.fit(X, y)
-    assert clf.max_iter > clf.n_iter_
+    mlp_estimator = MLPEstimator(
+        tol=tol, max_iter=3000, solver="sgd", early_stopping=True
+    )
+    mlp_estimator.fit(X, y)
+    assert mlp_estimator.max_iter > mlp_estimator.n_iter_
 
-    valid_scores = clf.validation_scores_
-    best_valid_score = clf.best_validation_score_
+    assert mlp_estimator.best_loss_ is None
+    assert isinstance(mlp_estimator.validation_scores_, list)
+
+    valid_scores = mlp_estimator.validation_scores_
+    best_valid_score = mlp_estimator.best_validation_score_
     assert max(valid_scores) == best_valid_score
     assert best_valid_score + tol > valid_scores[-2]
     assert best_valid_score + tol > valid_scores[-1]
+
+    # check that the attributes `validation_scores_` and `best_validation_score_`
+    # are set to None when `early_stopping=False`
+    mlp_estimator = MLPEstimator(
+        tol=tol, max_iter=3000, solver="sgd", early_stopping=False
+    )
+    mlp_estimator.fit(X, y)
+    assert mlp_estimator.validation_scores_ is None
+    assert mlp_estimator.best_validation_score_ is None
+    assert mlp_estimator.best_loss_ is not None
 
 
 def test_adaptive_learning_rate():
@@ -897,3 +892,37 @@ def test_mlp_loading_from_joblib_partial_fit(tmp_path):
     # finetuned model learned the new target
     predicted_value = load_estimator.predict(fine_tune_features)
     assert_allclose(predicted_value, fine_tune_target, rtol=1e-4)
+
+
+@pytest.mark.parametrize("Estimator", [MLPClassifier, MLPRegressor])
+def test_preserve_feature_names(Estimator):
+    """Check that feature names are preserved when early stopping is enabled.
+
+    Feature names are required for consistency checks during scoring.
+
+    Non-regression test for gh-24846
+    """
+    pd = pytest.importorskip("pandas")
+    rng = np.random.RandomState(0)
+
+    X = pd.DataFrame(data=rng.randn(10, 2), columns=["colname_a", "colname_b"])
+    y = pd.Series(data=np.full(10, 1), name="colname_y")
+
+    model = Estimator(early_stopping=True, validation_fraction=0.2)
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("error", UserWarning)
+        model.fit(X, y)
+
+
+@pytest.mark.parametrize("MLPEstimator", [MLPClassifier, MLPRegressor])
+def test_mlp_warm_start_with_early_stopping(MLPEstimator):
+    """Check that early stopping works with warm start."""
+    mlp = MLPEstimator(
+        max_iter=10, random_state=0, warm_start=True, early_stopping=True
+    )
+    mlp.fit(X_iris, y_iris)
+    n_validation_scores = len(mlp.validation_scores_)
+    mlp.set_params(max_iter=20)
+    mlp.fit(X_iris, y_iris)
+    assert len(mlp.validation_scores_) > n_validation_scores

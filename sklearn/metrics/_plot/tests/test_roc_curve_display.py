@@ -6,7 +6,7 @@ from numpy.testing import assert_allclose
 from sklearn.compose import make_column_transformer
 from sklearn.datasets import load_iris
 
-from sklearn.datasets import load_breast_cancer, make_classification
+from sklearn.datasets import load_breast_cancer
 from sklearn.exceptions import NotFittedError
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_curve
@@ -18,7 +18,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils import shuffle
 
 
-from sklearn.metrics import RocCurveDisplay, plot_roc_curve
+from sklearn.metrics import RocCurveDisplay
 
 
 @pytest.fixture(scope="module")
@@ -207,7 +207,7 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
     assert classifier.classes_.tolist() == ["cancer", "not cancer"]
 
     y_pred = getattr(classifier, response_method)(X_test)
-    # we select the correcponding probability columns or reverse the decision
+    # we select the corresponding probability columns or reverse the decision
     # function otherwise
     y_pred_cancer = -1 * y_pred if y_pred.ndim == 1 else y_pred[:, 0]
     y_pred_not_cancer = y_pred if y_pred.ndim == 1 else y_pred[:, 1]
@@ -249,15 +249,3 @@ def test_plot_roc_curve_pos_label(pyplot, response_method, constructor_name):
 
     assert display.roc_auc == pytest.approx(roc_auc_limit)
     assert np.trapz(display.tpr, display.fpr) == pytest.approx(roc_auc_limit)
-
-
-# FIXME: Remove in 1.2
-def test_plot_precision_recall_curve_deprecation(pyplot):
-    """Check that we raise a FutureWarning when calling
-    `plot_roc_curve`."""
-
-    X, y = make_classification(random_state=0)
-    clf = LogisticRegression().fit(X, y)
-    deprecation_warning = "Function plot_roc_curve is deprecated"
-    with pytest.warns(FutureWarning, match=deprecation_warning):
-        plot_roc_curve(clf, X, y)

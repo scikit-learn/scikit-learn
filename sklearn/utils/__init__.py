@@ -1,10 +1,6 @@
 """
 The :mod:`sklearn.utils` module includes various utilities.
 """
-import pkgutil
-import inspect
-from importlib import import_module
-from operator import itemgetter
 from collections.abc import Sequence
 from contextlib import contextmanager
 from itertools import compress
@@ -14,7 +10,6 @@ import numbers
 import platform
 import struct
 import timeit
-from pathlib import Path
 from contextlib import suppress
 
 import warnings
@@ -26,7 +21,8 @@ from .class_weight import compute_class_weight, compute_sample_weight
 from . import _joblib
 from ..exceptions import DataConversionWarning
 from .deprecation import deprecated
-from .fixes import np_version, parse_version
+from .discovery import all_estimators
+from .fixes import parse_version, threadpool_info
 from ._estimator_html_repr import estimator_html_repr
 from .validation import (
     as_float_array,
@@ -39,8 +35,10 @@ from .validation import (
     indexable,
     check_symmetric,
     check_scalar,
+    _is_arraylike_not_scalar,
 )
 from .. import get_config
+from ._bunch import Bunch
 
 
 # Do not deprecate parallel_backend and register_parallel_backend as they are
@@ -75,76 +73,44 @@ __all__ = [
     "all_estimators",
     "DataConversionWarning",
     "estimator_html_repr",
+    "Bunch",
 ]
 
 IS_PYPY = platform.python_implementation() == "PyPy"
 _IS_32BIT = 8 * struct.calcsize("P") == 32
 
 
-class Bunch(dict):
-    """Container object exposing keys as attributes.
+def _in_unstable_openblas_configuration():
+    """Return True if in an unstable configuration for OpenBLAS"""
 
-    Bunch objects are sometimes used as an output for functions and methods.
-    They extend dictionaries by enabling values to be accessed by key,
-    `bunch["value_key"]`, or by an attribute, `bunch.value_key`.
+    # Import libraries which might load OpenBLAS.
+    import numpy  # noqa
+    import scipy  # noqa
 
-    Examples
-    --------
-    >>> from sklearn.utils import Bunch
-    >>> b = Bunch(a=1, b=2)
-    >>> b['b']
-    2
-    >>> b.b
-    2
-    >>> b.a = 3
-    >>> b['a']
-    3
-    >>> b.c = 6
-    >>> b['c']
-    6
-    """
+    modules_info = threadpool_info()
 
-    def __init__(self, **kwargs):
-        super().__init__(kwargs)
+    open_blas_used = any(info["internal_api"] == "openblas" for info in modules_info)
+    if not open_blas_used:
+        return False
 
-        # Map from deprecated key to warning message
-        self.__dict__["_deprecated_key_to_warnings"] = {}
-
-    def __getitem__(self, key):
-        if key in self.__dict__["_deprecated_key_to_warnings"]:
-            warnings.warn(
-                self._deprecated_key_to_warnings[key],
-                FutureWarning,
-            )
-        return super().__getitem__(key)
-
-    def _set_deprecated(self, value, *, new_key, deprecated_key, warning_message):
-        """Set key in dictionary to be deprecated with its warning message."""
-        self.__dict__["_deprecated_key_to_warnings"][deprecated_key] = warning_message
-        self[new_key] = self[deprecated_key] = value
-
-    def __setattr__(self, key, value):
-        self[key] = value
-
-    def __dir__(self):
-        return self.keys()
-
-    def __getattr__(self, key):
-        try:
-            return self[key]
-        except KeyError:
-            raise AttributeError(key)
-
-    def __setstate__(self, state):
-        # Bunch pickles generated with scikit-learn 0.16.* have an non
-        # empty __dict__. This causes a surprising behaviour when
-        # loading these pickles scikit-learn 0.17: reading bunch.key
-        # uses __dict__ but assigning to bunch.key use __setattr__ and
-        # only changes bunch['key']. More details can be found at:
-        # https://github.com/scikit-learn/scikit-learn/issues/6196.
-        # Overriding __setstate__ to be a noop has the effect of
-        # ignoring the pickled __dict__
-        pass
+    # OpenBLAS 0.3.16 fixed unstability for arm64, see:
+    # https://github.com/xianyi/OpenBLAS/blob/1b6db3dbba672b4f8af935bd43a1ff6cff4d20b7/Changelog.txt#L56-L58 # noqa
+    openblas_arm64_stable_version = parse_version("0.3.16")
+    for info in modules_info:
+        if info["internal_api"] != "openblas":
+            continue
+        openblas_version = info.get("version")
+        openblas_architecture = info.get("architecture")
+        if openblas_version is None or openblas_architecture is None:
+            # Cannot be sure that OpenBLAS is good enough. Assume unstable:
+            return True
+        if (
+            openblas_architecture == "neoversen1"
+            and parse_version(openblas_version) < openblas_arm64_stable_version
+        ):
+            # See discussions in https://github.com/numpy/numpy/issues/19411
+            return True
+    return False
 
 
 def safe_mask(X, mask):
@@ -160,7 +126,8 @@ def safe_mask(X, mask):
 
     Returns
     -------
-        mask
+    mask : ndarray
+        Array that is safe to use on X.
     """
     mask = np.asarray(mask)
     if np.issubdtype(mask.dtype, np.signedinteger):
@@ -173,7 +140,8 @@ def safe_mask(X, mask):
 
 
 def axis0_safe_slice(X, mask, len_mask):
-    """
+    """Return a mask which is safer to use on X than safe_mask.
+
     This mask is safer than safe_mask since it returns an
     empty array, when a sparse matrix is sliced with a boolean mask
     with all False, instead of raising an unhelpful error in older
@@ -200,7 +168,8 @@ def axis0_safe_slice(X, mask, len_mask):
 
     Returns
     -------
-        mask
+    mask : ndarray
+        Array that is safe to use on X.
     """
     if len_mask != 0:
         return X[safe_mask(X, mask), :]
@@ -209,11 +178,8 @@ def axis0_safe_slice(X, mask, len_mask):
 
 def _array_indexing(array, key, key_dtype, axis):
     """Index an array or scipy.sparse consistently across NumPy version."""
-    if np_version < parse_version("1.12") or issparse(array):
-        # FIXME: Remove the check for NumPy when using >= 1.12
-        # check if we have an boolean array-likes to make the proper indexing
-        if key_dtype == "bool":
-            key = np.asarray(key)
+    if issparse(array) and key_dtype == "bool":
+        key = np.asarray(key)
     if isinstance(key, tuple):
         key = list(key)
     return array[key] if axis == 0 else array[:, key]
@@ -221,13 +187,8 @@ def _array_indexing(array, key, key_dtype, axis):
 
 def _pandas_indexing(X, key, key_dtype, axis):
     """Index a pandas dataframe or a series."""
-    if hasattr(key, "shape"):
-        # Work-around for indexing with read-only key in pandas
-        # FIXME: solved in pandas 0.25
+    if _is_arraylike_not_scalar(key):
         key = np.asarray(key)
-        key = key if key.flags.writeable else key.copy()
-    elif isinstance(key, tuple):
-        key = list(key)
 
     if key_dtype == "int" and not (isinstance(key, slice) or np.isscalar(key)):
         # using take() instead of iloc[] ensures the return value is a "proper"
@@ -397,6 +358,43 @@ def _safe_indexing(X, indices, *, axis=0):
         return _list_indexing(X, indices, indices_dtype)
 
 
+def _safe_assign(X, values, *, row_indexer=None, column_indexer=None):
+    """Safe assignment to a numpy array, sparse matrix, or pandas dataframe.
+
+    Parameters
+    ----------
+    X : {ndarray, sparse-matrix, dataframe}
+        Array to be modified. It is expected to be 2-dimensional.
+
+    values : ndarray
+        The values to be assigned to `X`.
+
+    row_indexer : array-like, dtype={int, bool}, default=None
+        A 1-dimensional array to select the rows of interest. If `None`, all
+        rows are selected.
+
+    column_indexer : array-like, dtype={int, bool}, default=None
+        A 1-dimensional array to select the columns of interest. If `None`, all
+        columns are selected.
+    """
+    row_indexer = slice(None, None, None) if row_indexer is None else row_indexer
+    column_indexer = (
+        slice(None, None, None) if column_indexer is None else column_indexer
+    )
+
+    if hasattr(X, "iloc"):  # pandas dataframe
+        with warnings.catch_warnings():
+            # pandas >= 1.5 raises a warning when using iloc to set values in a column
+            # that does not have the same type as the column being set. It happens
+            # for instance when setting a categorical column with a string.
+            # In the future the behavior won't change and the warning should disappear.
+            # TODO(1.3): check if the warning is still raised or remove the filter.
+            warnings.simplefilter("ignore", FutureWarning)
+            X.iloc[row_indexer, column_indexer] = values
+    else:  # numpy array or sparse matrix
+        X[row_indexer, column_indexer] = values
+
+
 def _get_column_indices(X, key):
     """Get feature column indices for input data X and key.
 
@@ -440,7 +438,7 @@ def _get_column_indices(X, key):
                 stop = all_columns.get_loc(stop) + 1
             else:
                 stop = n_columns + 1
-            return list(range(n_columns)[slice(start, stop)])
+            return list(islice(range(n_columns), start, stop))
         else:
             columns = list(key)
 
@@ -507,6 +505,10 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
         Sequence of resampled copies of the collections. The original arrays
         are not impacted.
 
+    See Also
+    --------
+    shuffle : Shuffle arrays or sparse matrices in a consistent way.
+
     Examples
     --------
     It is possible to mix sparse and dense arrays in the same run::
@@ -546,10 +548,6 @@ def resample(*arrays, replace=True, n_samples=None, random_state=None, stratify=
       >>> resample(y, n_samples=5, replace=False, stratify=y,
       ...          random_state=0)
       [1, 1, 1, 0, 1]
-
-    See Also
-    --------
-    shuffle
     """
     max_n_samples = n_samples
     random_state = check_random_state(random_state)
@@ -645,6 +643,10 @@ def shuffle(*arrays, random_state=None, n_samples=None):
         Sequence of shuffled copies of the collections. The original arrays
         are not impacted.
 
+    See Also
+    --------
+    resample : Resample arrays or sparse matrices in a consistent way.
+
     Examples
     --------
     It is possible to mix sparse and dense arrays in the same run::
@@ -677,10 +679,6 @@ def shuffle(*arrays, random_state=None, n_samples=None):
 
       >>> shuffle(y, n_samples=2, random_state=0)
       array([0, 1])
-
-    See Also
-    --------
-    resample
     """
     return resample(
         *arrays, replace=False, n_samples=n_samples, random_state=random_state
@@ -701,6 +699,7 @@ def safe_sqr(X, *, copy=True):
     Returns
     -------
     X ** 2 : element wise square
+         Return the element-wise square of the input.
     """
     X = check_array(X, accept_sparse=["csr", "csc", "coo"], ensure_2d=False)
     if issparse(X):
@@ -709,7 +708,7 @@ def safe_sqr(X, *, copy=True):
         X.data **= 2
     else:
         if copy:
-            X = X ** 2
+            X = X**2
         else:
             X **= 2
     return X
@@ -727,22 +726,23 @@ def _chunk_generator(gen, chunksize):
 
 
 def gen_batches(n, batch_size, *, min_batch_size=0):
-    """Generator to create slices containing batch_size elements, from 0 to n.
+    """Generator to create slices containing `batch_size` elements from 0 to `n`.
 
-    The last slice may contain less than batch_size elements, when batch_size
-    does not divide n.
+    The last slice may contain less than `batch_size` elements, when
+    `batch_size` does not divide `n`.
 
     Parameters
     ----------
     n : int
+        Size of the sequence.
     batch_size : int
-        Number of element in each batch.
+        Number of elements in each batch.
     min_batch_size : int, default=0
-        Minimum batch size to produce.
+        Minimum number of elements in each batch.
 
     Yields
     ------
-    slice of batch_size elements
+    slice of `batch_size` elements
 
     See Also
     --------
@@ -780,21 +780,25 @@ def gen_batches(n, batch_size, *, min_batch_size=0):
 
 
 def gen_even_slices(n, n_packs, *, n_samples=None):
-    """Generator to create n_packs slices going up to n.
+    """Generator to create `n_packs` evenly spaced slices going up to `n`.
+
+    If `n_packs` does not divide `n`, except for the first `n % n_packs`
+    slices, remaining slices may contain fewer elements.
 
     Parameters
     ----------
     n : int
+        Size of the sequence.
     n_packs : int
         Number of slices to generate.
     n_samples : int, default=None
-        Number of samples. Pass n_samples when the slices are to be used for
+        Number of samples. Pass `n_samples` when the slices are to be used for
         sparse matrix indexing; slicing off-the-end raises an exception, while
         it works for NumPy arrays.
 
     Yields
     ------
-    slice
+    `slice` representing a set of indices from 0 to n.
 
     See Also
     --------
@@ -834,6 +838,14 @@ def tosequence(x):
     Parameters
     ----------
     x : iterable
+        The iterable to be converted.
+
+    Returns
+    -------
+    x : Sequence
+        If `x` is a NumPy array, it returns it as a `ndarray`. If `x`
+        is a `Sequence`, `x` is returned as-is. If `x` is from any other
+        type, `x` is returned casted as a list.
     """
     if isinstance(x, np.ndarray):
         return np.asarray(x)
@@ -964,7 +976,7 @@ def _print_elapsed_time(source, message=None):
 
 
 def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
-    """Calculates how many rows can be processed within working_memory.
+    """Calculate how many rows can be processed within `working_memory`.
 
     Parameters
     ----------
@@ -974,30 +986,31 @@ def get_chunk_n_rows(row_bytes, *, max_n_rows=None, working_memory=None):
     max_n_rows : int, default=None
         The maximum return value.
     working_memory : int or float, default=None
-        The number of rows to fit inside this number of MiB will be returned.
-        When None (default), the value of
+        The number of rows to fit inside this number of MiB will be
+        returned. When None (default), the value of
         ``sklearn.get_config()['working_memory']`` is used.
 
     Returns
     -------
-    int or the value of n_samples
+    int
+        The number of rows which can be processed within `working_memory`.
 
     Warns
     -----
-    Issues a UserWarning if ``row_bytes`` exceeds ``working_memory`` MiB.
+    Issues a UserWarning if `row_bytes exceeds `working_memory` MiB.
     """
 
     if working_memory is None:
         working_memory = get_config()["working_memory"]
 
-    chunk_n_rows = int(working_memory * (2 ** 20) // row_bytes)
+    chunk_n_rows = int(working_memory * (2**20) // row_bytes)
     if max_n_rows is not None:
         chunk_n_rows = min(chunk_n_rows, max_n_rows)
     if chunk_n_rows < 1:
         warnings.warn(
             "Could not adhere to working_memory config. "
             "Currently %.0fMiB, %.0fMiB required."
-            % (working_memory, np.ceil(row_bytes * 2 ** -20))
+            % (working_memory, np.ceil(row_bytes * 2**-20))
         )
         chunk_n_rows = 1
     return chunk_n_rows
@@ -1028,7 +1041,7 @@ def _is_pandas_na(x):
 
 
 def is_scalar_nan(x):
-    """Tests if x is NaN.
+    """Test if x is NaN.
 
     This function is meant to overcome the issue that np.isnan does not allow
     non-numerical types as input, and that np.nan is not float('nan').
@@ -1036,10 +1049,12 @@ def is_scalar_nan(x):
     Parameters
     ----------
     x : any type
+        Any scalar value.
 
     Returns
     -------
-    boolean
+    bool
+        Returns true if x is NaN, and false otherwise.
 
     Examples
     --------
@@ -1170,122 +1185,3 @@ def check_pandas_support(caller_name):
         return pandas
     except ImportError as e:
         raise ImportError("{} requires pandas.".format(caller_name)) from e
-
-
-def all_estimators(type_filter=None):
-    """Get a list of all estimators from sklearn.
-
-    This function crawls the module and gets all classes that inherit
-    from BaseEstimator. Classes that are defined in test-modules are not
-    included.
-
-    Parameters
-    ----------
-    type_filter : {"classifier", "regressor", "cluster", "transformer"} \
-            or list of such str, default=None
-        Which kind of estimators should be returned. If None, no filter is
-        applied and all estimators are returned.  Possible values are
-        'classifier', 'regressor', 'cluster' and 'transformer' to get
-        estimators only of these specific types, or a list of these to
-        get the estimators that fit at least one of the types.
-
-    Returns
-    -------
-    estimators : list of tuples
-        List of (name, class), where ``name`` is the class name as string
-        and ``class`` is the actual type of the class.
-    """
-    # lazy import to avoid circular imports from sklearn.base
-    from ._testing import ignore_warnings
-    from ..base import (
-        BaseEstimator,
-        ClassifierMixin,
-        RegressorMixin,
-        TransformerMixin,
-        ClusterMixin,
-    )
-
-    def is_abstract(c):
-        if not (hasattr(c, "__abstractmethods__")):
-            return False
-        if not len(c.__abstractmethods__):
-            return False
-        return True
-
-    all_classes = []
-    modules_to_ignore = {
-        "tests",
-        "externals",
-        "setup",
-        "conftest",
-        "enable_hist_gradient_boosting",
-    }
-    root = str(Path(__file__).parent.parent)  # sklearn package
-    # Ignore deprecation warnings triggered at import time and from walking
-    # packages
-    with ignore_warnings(category=FutureWarning):
-        for importer, modname, ispkg in pkgutil.walk_packages(
-            path=[root], prefix="sklearn."
-        ):
-            mod_parts = modname.split(".")
-            if any(part in modules_to_ignore for part in mod_parts) or "._" in modname:
-                continue
-            module = import_module(modname)
-            classes = inspect.getmembers(module, inspect.isclass)
-            classes = [
-                (name, est_cls) for name, est_cls in classes if not name.startswith("_")
-            ]
-
-            # TODO: Remove when FeatureHasher is implemented in PYPY
-            # Skips FeatureHasher for PYPY
-            if IS_PYPY and "feature_extraction" in modname:
-                classes = [
-                    (name, est_cls)
-                    for name, est_cls in classes
-                    if name == "FeatureHasher"
-                ]
-
-            all_classes.extend(classes)
-
-    all_classes = set(all_classes)
-
-    estimators = [
-        c
-        for c in all_classes
-        if (issubclass(c[1], BaseEstimator) and c[0] != "BaseEstimator")
-    ]
-    # get rid of abstract base classes
-    estimators = [c for c in estimators if not is_abstract(c[1])]
-
-    if type_filter is not None:
-        if not isinstance(type_filter, list):
-            type_filter = [type_filter]
-        else:
-            type_filter = list(type_filter)  # copy
-        filtered_estimators = []
-        filters = {
-            "classifier": ClassifierMixin,
-            "regressor": RegressorMixin,
-            "transformer": TransformerMixin,
-            "cluster": ClusterMixin,
-        }
-        for name, mixin in filters.items():
-            if name in type_filter:
-                type_filter.remove(name)
-                filtered_estimators.extend(
-                    [est for est in estimators if issubclass(est[1], mixin)]
-                )
-        estimators = filtered_estimators
-        if type_filter:
-            raise ValueError(
-                "Parameter type_filter must be 'classifier', "
-                "'regressor', 'transformer', 'cluster' or "
-                "None, got"
-                " %s."
-                % repr(type_filter)
-            )
-
-    # drop duplicates, sort for reproducibility
-    # itemgetter is used to ensure the sort does not extend to the 2nd item of
-    # the tuple
-    return sorted(set(estimators), key=itemgetter(0))

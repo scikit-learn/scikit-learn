@@ -918,7 +918,7 @@ Changelog
 
 - |Fix| :class:`model_selection.GridSearchCV` and
   `model_selection.RandomizedSearchCV` now supports the
-  :term:`_pairwise` property, which prevents an error during cross-validation
+  `_pairwise` property, which prevents an error during cross-validation
   for estimators with pairwise inputs (such as
   :class:`neighbors.KNeighborsClassifier` when :term:`metric` is set to
   'precomputed').

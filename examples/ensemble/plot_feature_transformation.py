@@ -25,10 +25,6 @@ high-dimensional categorical embedding of the data.
 #
 # License: BSD 3 clause
 
-from sklearn import set_config
-
-set_config(display="diagram")
-
 # %%
 # First, we will create a large dataset and split it into three sets:
 #
@@ -43,7 +39,7 @@ set_config(display="diagram")
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
 
-X, y = make_classification(n_samples=80000, random_state=10)
+X, y = make_classification(n_samples=80_000, random_state=10)
 
 X_full_train, X_test, y_full_train, y_test = train_test_split(
     X, y, test_size=0.5, random_state=10
@@ -76,6 +72,11 @@ gradient_boosting = GradientBoostingClassifier(
 _ = gradient_boosting.fit(X_train_ensemble, y_train_ensemble)
 
 # %%
+# Notice that :class:`~sklearn.ensemble.HistGradientBoostingClassifier` is much
+# faster than :class:`~sklearn.ensemble.GradientBoostingClassifier` starting
+# with intermediate datasets (`n_samples >= 10_000`), which is not the case of
+# the present example.
+#
 # The :class:`~sklearn.ensemble.RandomTreesEmbedding` is an unsupervised method
 # and thus does not required to be trained independently.
 

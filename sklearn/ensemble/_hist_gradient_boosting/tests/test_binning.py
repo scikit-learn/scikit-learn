@@ -424,16 +424,16 @@ def test_make_known_categories_bitsets():
     # first categorical feature: [2, 4, 10, 240]
     f_idx = 1
     mapped_f_idx = f_idx_map[f_idx]
-    expected_cat_bitset[mapped_f_idx, 0] = 2 ** 2 + 2 ** 4 + 2 ** 10
+    expected_cat_bitset[mapped_f_idx, 0] = 2**2 + 2**4 + 2**10
     # 240 = 32**7 + 16, therefore the 16th bit of the 7th array is 1.
-    expected_cat_bitset[mapped_f_idx, 7] = 2 ** 16
+    expected_cat_bitset[mapped_f_idx, 7] = 2**16
 
     # second categorical feature [30, 70, 180]
     f_idx = 2
     mapped_f_idx = f_idx_map[f_idx]
-    expected_cat_bitset[mapped_f_idx, 0] = 2 ** 30
-    expected_cat_bitset[mapped_f_idx, 2] = 2 ** 6
-    expected_cat_bitset[mapped_f_idx, 5] = 2 ** 20
+    expected_cat_bitset[mapped_f_idx, 0] = 2**30
+    expected_cat_bitset[mapped_f_idx, 2] = 2**6
+    expected_cat_bitset[mapped_f_idx, 5] = 2**20
 
     assert_allclose(expected_cat_bitset, known_cat_bitsets)
 

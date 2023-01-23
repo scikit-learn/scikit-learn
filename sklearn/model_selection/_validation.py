@@ -14,19 +14,20 @@ functions to validate the model.
 import warnings
 import numbers
 import time
+from functools import partial
 from traceback import format_exc
 from contextlib import suppress
 from collections import Counter
 
 import numpy as np
 import scipy.sparse as sp
-from joblib import Parallel, logger
+from joblib import logger
 
 from ..base import is_classifier, clone
 from ..utils import indexable, check_random_state, _safe_indexing
 from ..utils.validation import _check_fit_params
 from ..utils.validation import _num_samples
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 from ..utils.metaestimators import _safe_split
 from ..metrics import check_scoring
 from ..metrics._scorer import _check_multimetric_scoring, _MultimetricScorer
@@ -73,8 +74,7 @@ def cross_validate(
     X : array-like of shape (n_samples, n_features)
         The data to fit. Can be for example a list, or an array.
 
-    y : array-like of shape (n_samples,) or (n_samples, n_outputs), \
-            default=None
+    y : array-like of shape (n_samples,) or (n_samples, n_outputs), default=None
         The target variable to try to predict in the case of
         supervised learning.
 
@@ -112,7 +112,7 @@ def cross_validate(
 
         For int/None inputs, if the estimator is a classifier and ``y`` is
         either binary or multiclass, :class:`StratifiedKFold` is used. In all
-        other cases, :class:`.Fold` is used. These splitters are instantiated
+        other cases, :class:`KFold` is used. These splitters are instantiated
         with `shuffle=False` so the splits will be the same across calls.
 
         Refer :ref:`User Guide <cross_validation>` for the various
@@ -208,6 +208,16 @@ def cross_validate(
                 This is available only if ``return_estimator`` parameter
                 is set to ``True``.
 
+    See Also
+    --------
+    cross_val_score : Run cross-validation for single metric evaluation.
+
+    cross_val_predict : Get predictions from each split of cross-validation for
+        diagnostic purposes.
+
+    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
+        loss function.
+
     Examples
     --------
     >>> from sklearn import datasets, linear_model
@@ -226,7 +236,7 @@ def cross_validate(
     >>> sorted(cv_results.keys())
     ['fit_time', 'score_time', 'test_score']
     >>> cv_results['test_score']
-    array([0.33150734, 0.08022311, 0.03531764])
+    array([0.3315057 , 0.08022103, 0.03531816])
 
     Multiple metric evaluation using ``cross_validate``
     (please refer the ``scoring`` parameter doc for more information)
@@ -237,18 +247,7 @@ def cross_validate(
     >>> print(scores['test_neg_mean_squared_error'])
     [-3635.5... -3573.3... -6114.7...]
     >>> print(scores['train_r2'])
-    [0.28010158 0.39088426 0.22784852]
-
-    See Also
-    ---------
-    cross_val_score : Run cross-validation for single metric evaluation.
-
-    cross_val_predict : Get predictions from each split of cross-validation for
-        diagnostic purposes.
-
-    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
-        loss function.
-
+    [0.28009951 0.3908844  0.22784907]
     """
     X, y, groups = indexable(X, y, groups)
 
@@ -361,7 +360,7 @@ def _warn_or_raise_about_fit_failures(results, error_score):
         if num_failed_fits == num_fits:
             all_fits_failed_message = (
                 f"\nAll the {num_fits} fits failed.\n"
-                "It is is very likely that your model is misconfigured.\n"
+                "It is very likely that your model is misconfigured.\n"
                 "You can try to debug the error by setting error_score='raise'.\n\n"
                 f"Below are more details about the failures:\n{fit_errors_summary}"
             )
@@ -488,6 +487,17 @@ def cross_val_score(
     scores : ndarray of float of shape=(len(list(cv)),)
         Array of scores of the estimator for each run of the cross validation.
 
+    See Also
+    --------
+    cross_validate : To run cross-validation on multiple metrics and also to
+        return train scores, fit times and score times.
+
+    cross_val_predict : Get predictions from each split of cross-validation for
+        diagnostic purposes.
+
+    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
+        loss function.
+
     Examples
     --------
     >>> from sklearn import datasets, linear_model
@@ -497,18 +507,7 @@ def cross_val_score(
     >>> y = diabetes.target[:150]
     >>> lasso = linear_model.Lasso()
     >>> print(cross_val_score(lasso, X, y, cv=3))
-    [0.33150734 0.08022311 0.03531764]
-
-    See Also
-    ---------
-    cross_validate : To run cross-validation on multiple metrics and also to
-        return train scores, fit times and score times.
-
-    cross_val_predict : Get predictions from each split of cross-validation for
-        diagnostic purposes.
-
-    sklearn.metrics.make_scorer : Make a scorer from a performance metric or
-        loss function.
+    [0.3315057  0.08022103 0.03531816]
     """
     # To ensure multimetric format is not supported
     scorer = check_scoring(estimator, scoring=scoring)
@@ -759,7 +758,7 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
     """
     if isinstance(scorer, dict):
         # will cache method calls if needed. scorer() returns a dict
-        scorer = _MultimetricScorer(**scorer)
+        scorer = _MultimetricScorer(scorers=scorer, raise_exc=(error_score == "raise"))
 
     try:
         if y_test is None:
@@ -767,19 +766,37 @@ def _score(estimator, X_test, y_test, scorer, error_score="raise"):
         else:
             scores = scorer(estimator, X_test, y_test)
     except Exception:
-        if error_score == "raise":
+        if isinstance(scorer, _MultimetricScorer):
+            # If `_MultimetricScorer` raises exception, the `error_score`
+            # parameter is equal to "raise".
             raise
         else:
-            if isinstance(scorer, _MultimetricScorer):
-                scores = {name: error_score for name in scorer._scorers}
+            if error_score == "raise":
+                raise
             else:
                 scores = error_score
-            warnings.warn(
-                "Scoring failed. The score on this train-test partition for "
-                f"these parameters will be set to {error_score}. Details: \n"
-                f"{format_exc()}",
-                UserWarning,
-            )
+                warnings.warn(
+                    "Scoring failed. The score on this train-test partition for "
+                    f"these parameters will be set to {error_score}. Details: \n"
+                    f"{format_exc()}",
+                    UserWarning,
+                )
+
+    # Check non-raised error messages in `_MultimetricScorer`
+    if isinstance(scorer, _MultimetricScorer):
+        exception_messages = [
+            (name, str_e) for name, str_e in scores.items() if isinstance(str_e, str)
+        ]
+        if exception_messages:
+            # error_score != "raise"
+            for name, str_e in exception_messages:
+                scores[name] = error_score
+                warnings.warn(
+                    "Scoring failed. The score on this train-test partition for "
+                    f"these parameters will be set to {error_score}. Details: \n"
+                    f"{str_e}",
+                    UserWarning,
+                )
 
     error_msg = "scoring must return a number, got %s (%s) instead. (scorer=%s)"
     if isinstance(scores, dict):
@@ -1181,7 +1198,7 @@ def permutation_test_score(
     scoring=None,
     fit_params=None,
 ):
-    """Evaluate the significance of a cross-validated score with permutations
+    """Evaluate the significance of a cross-validated score with permutations.
 
     Permutes targets to generate 'randomized data' and compute the empirical
     p-value against the null hypothesis that features and targets are
@@ -1218,12 +1235,6 @@ def permutation_test_score(
         also passed on to the ``split`` method of the cross-validator. The
         cross-validator uses them for grouping the samples  while splitting
         the dataset into train/test set.
-
-    scoring : str or callable, default=None
-        A single str (see :ref:`scoring_parameter`) or a callable
-        (see :ref:`scoring`) to evaluate the predictions on the test set.
-
-        If `None` the estimator's score method is used.
 
     cv : int, cross-validation generator or an iterable, default=None
         Determines the cross-validation splitting strategy.
@@ -1262,6 +1273,12 @@ def permutation_test_score(
     verbose : int, default=0
         The verbosity level.
 
+    scoring : str or callable, default=None
+        A single str (see :ref:`scoring_parameter`) or a callable
+        (see :ref:`scoring`) to evaluate the predictions on the test set.
+
+        If `None` the estimator's score method is used.
+
     fit_params : dict, default=None
         Parameters to pass to the fit method of the estimator.
 
@@ -1293,7 +1310,6 @@ def permutation_test_score(
         Performance
         <http://www.jmlr.org/papers/volume11/ojala10a/ojala10a.pdf>`_. The
         Journal of Machine Learning Research (2010) vol. 11
-
     """
     X, y, groups = indexable(X, y, groups)
 
@@ -1498,10 +1514,31 @@ def learning_curve(
         Times spent for scoring in seconds. Only present if ``return_times``
         is True.
 
-    Notes
-    -----
-    See :ref:`examples/model_selection/plot_learning_curve.py
-    <sphx_glr_auto_examples_model_selection_plot_learning_curve.py>`
+    Examples
+    --------
+    >>> from sklearn.datasets import make_classification
+    >>> from sklearn.tree import DecisionTreeClassifier
+    >>> from sklearn.model_selection import learning_curve
+    >>> X, y = make_classification(n_samples=100, n_features=10, random_state=42)
+    >>> tree = DecisionTreeClassifier(max_depth=4, random_state=42)
+    >>> train_size_abs, train_scores, test_scores = learning_curve(
+    ...     tree, X, y, train_sizes=[0.3, 0.6, 0.9]
+    ... )
+    >>> for train_size, cv_train_scores, cv_test_scores in zip(
+    ...     train_size_abs, train_scores, test_scores
+    ... ):
+    ...     print(f"{train_size} samples were used to train the model")
+    ...     print(f"The average train accuracy is {cv_train_scores.mean():.2f}")
+    ...     print(f"The average test accuracy is {cv_test_scores.mean():.2f}")
+    24 samples were used to train the model
+    The average train accuracy is 1.00
+    The average test accuracy is 0.85
+    48 samples were used to train the model
+    The average train accuracy is 1.00
+    The average test accuracy is 0.90
+    72 samples were used to train the model
+    The average train accuracy is 1.00
+    The average test accuracy is 0.93
     """
     if exploit_incremental_learning and not hasattr(estimator, "partial_fit"):
         raise ValueError(
@@ -1679,6 +1716,11 @@ def _incremental_fit_estimator(
     partitions = zip(train_sizes, np.split(train, train_sizes)[:-1])
     if fit_params is None:
         fit_params = {}
+    if classes is None:
+        partial_fit_func = partial(estimator.partial_fit, **fit_params)
+    else:
+        partial_fit_func = partial(estimator.partial_fit, classes=classes, **fit_params)
+
     for n_train_samples, partial_train in partitions:
         train_subset = train[:n_train_samples]
         X_train, y_train = _safe_split(estimator, X, y, train_subset)
@@ -1686,11 +1728,9 @@ def _incremental_fit_estimator(
         X_test, y_test = _safe_split(estimator, X, y, test, train_subset)
         start_fit = time.time()
         if y_partial_train is None:
-            estimator.partial_fit(X_partial_train, classes=classes, **fit_params)
+            partial_fit_func(X_partial_train)
         else:
-            estimator.partial_fit(
-                X_partial_train, y_partial_train, classes=classes, **fit_params
-            )
+            partial_fit_func(X_partial_train, y_partial_train)
         fit_time = time.time() - start_fit
         fit_times.append(fit_time)
 
@@ -1803,17 +1843,17 @@ def validation_curve(
     verbose : int, default=0
         Controls the verbosity: the higher, the more messages.
 
-    fit_params : dict, default=None
-        Parameters to pass to the fit method of the estimator.
-
-        .. versionadded:: 0.24
-
     error_score : 'raise' or numeric, default=np.nan
         Value to assign to the score if an error occurs in estimator fitting.
         If set to 'raise', the error is raised.
         If a numeric value is given, FitFailedWarning is raised.
 
         .. versionadded:: 0.20
+
+    fit_params : dict, default=None
+        Parameters to pass to the fit method of the estimator.
+
+        .. versionadded:: 0.24
 
     Returns
     -------
@@ -1826,7 +1866,6 @@ def validation_curve(
     Notes
     -----
     See :ref:`sphx_glr_auto_examples_model_selection_plot_validation_curve.py`
-
     """
     X, y, groups = indexable(X, y, groups)
 

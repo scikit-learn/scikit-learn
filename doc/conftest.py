@@ -107,9 +107,17 @@ def skip_if_matplotlib_not_installed(fname):
         raise SkipTest(f"Skipping doctests for {basename}, matplotlib not installed")
 
 
+def skip_if_cupy_not_installed(fname):
+    try:
+        import cupy  # noqa
+    except ImportError:
+        basename = os.path.basename(fname)
+        raise SkipTest(f"Skipping doctests for {basename}, cupy not installed")
+
+
 def pytest_runtest_setup(item):
     fname = item.fspath.strpath
-    # normalise filename to use forward slashes on Windows for easier handling
+    # normalize filename to use forward slashes on Windows for easier handling
     # later
     fname = fname.replace(os.sep, "/")
 
@@ -126,8 +134,6 @@ def pytest_runtest_setup(item):
         setup_working_with_text_data()
     elif fname.endswith("modules/compose.rst") or is_index:
         setup_compose()
-    elif IS_PYPY and fname.endswith("modules/feature_extraction.rst"):
-        raise SkipTest("FeatureHasher is not compatible with PyPy")
     elif fname.endswith("datasets/loading_other_datasets.rst"):
         setup_loading_other_datasets()
     elif fname.endswith("modules/impute.rst"):
@@ -148,6 +154,9 @@ def pytest_runtest_setup(item):
     for each in rst_files_requiring_matplotlib:
         if fname.endswith(each):
             skip_if_matplotlib_not_installed(fname)
+
+    if fname.endswith("array_api.rst"):
+        skip_if_cupy_not_installed(fname)
 
 
 def pytest_configure(config):

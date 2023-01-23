@@ -93,7 +93,7 @@ interpreter prompt::
 A dataset is a dictionary-like object that holds all the data and some
 metadata about the data. This data is stored in the ``.data`` member,
 which is a ``n_samples, n_features`` array. In the case of supervised
-problem, one or more response variables are stored in the ``.target`` member. More
+problems, one or more response variables are stored in the ``.target`` member. More
 details on the different datasets can be found in the :ref:`dedicated
 section <datasets>`.
 
@@ -183,7 +183,7 @@ the last item from ``digits.data``::
   SVC(C=100.0, gamma=0.001)
 
 Now you can *predict* new values. In this case, you'll predict using the last
-image from ``digits.data``. By predicting, you'll determine the image from the 
+image from ``digits.data``. By predicting, you'll determine the image from the
 training set that best matches the last image.
 
 
@@ -213,10 +213,11 @@ predictive.  These are described in more detail in the :ref:`glossary`.
 Type casting
 ~~~~~~~~~~~~
 
-Unless otherwise specified, input will be cast to ``float64``::
+Where possible, input of type ``float32`` will maintain its data type. Otherwise
+input will be cast to ``float64``::
 
   >>> import numpy as np
-  >>> from sklearn import random_projection
+  >>> from sklearn import kernel_approximation
 
   >>> rng = np.random.RandomState(0)
   >>> X = rng.rand(10, 2000)
@@ -224,13 +225,25 @@ Unless otherwise specified, input will be cast to ``float64``::
   >>> X.dtype
   dtype('float32')
 
-  >>> transformer = random_projection.GaussianRandomProjection()
+  >>> transformer = kernel_approximation.RBFSampler()
   >>> X_new = transformer.fit_transform(X)
   >>> X_new.dtype
-  dtype('float64')
+  dtype('float32')
 
-In this example, ``X`` is ``float32``, which is cast to ``float64`` by
-``fit_transform(X)``.
+In this example, ``X`` is ``float32``, and is unchanged by ``fit_transform(X)``.
+
+Using `float32`-typed training (or testing) data is often more
+efficient than using the usual ``float64`` ``dtype``: it allows to
+reduce the memory usage and sometimes also reduces processing time
+by leveraging the vector instructions of the CPU. However it can
+sometimes lead to numerical stability problems causing the algorithm
+to be more sensitive to the scale of the values and :ref:`require
+adequate preprocessing<preprocessing_scaler>`.
+
+Keep in mind however that not all scikit-learn estimators attempt to
+work in `float32` mode. For instance, some transformers will always
+cast there input to `float64` and return `float64` transformed
+values as a result.
 
 Regression targets are cast to ``float64`` and classification targets are
 maintained::
