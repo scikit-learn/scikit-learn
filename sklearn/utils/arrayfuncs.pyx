@@ -12,6 +12,9 @@ from libc.float cimport DBL_MAX, FLT_MAX
 from ._cython_blas cimport _copy, _rotg, _rot
 
 
+cnp.import_array()
+
+
 def min_pos(const floating[:] X):
     """Find the minimum value of an array over positive values
 
