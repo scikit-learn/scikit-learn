@@ -1003,8 +1003,7 @@ def export_text(
                     f" {len(class_names)} while the tree was fitted with"
                     f" {len(decision_tree.classes_)} classes."
                 )
-            else:
-                class_names = class_names
+            class_names = class_names
         else:
             class_names = decision_tree.classes_
     right_child_fmt = "{} {} <= {}\n"
