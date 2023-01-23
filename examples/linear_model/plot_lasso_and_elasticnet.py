@@ -3,15 +3,22 @@
 Lasso and Elastic Net for Sparse Signals
 ========================================
 
-The present example compares three l1-based regression models on a manually
-generated sparse signal corrupted with an additive gaussian noise:
+The present example compares three l1-based regression models on a synthetic
+signal obtained from sparse and correlated features that are further corrupted
+with additive gaussian noise:
 
  - a :ref:`lasso`;
  - an :ref:`automatic_relevance_determination`;
  - an :ref:`elastic_net`.
 
-We compute the :math:`R^2` score and the fitting time of the models. The
-estimated coefficients of each model are compared with the ground-truth.
+It is known that the Lasso estimates turn to be close to the model selection
+estimates when the data dimensions grow, given that the irrelevant variables are
+not too correlated with the relevant ones. In the presence of correlated
+features, Lasso itself cannot select the correct sparsity pattern [1]_.
+
+Here we compare the performance of the three models in terms of the :math:`R^2`
+score, the fitting time and the sparsity of the estimated coefficients when
+compared with the ground-truth.
 """
 
 # %%
@@ -172,9 +179,18 @@ plt.tight_layout()
 # to fitting a prior.
 #
 # :class:`~sklearn.linear_model.ElasticNet` introduces some sparsity on the
-# coefficients and shrinks their values to zero. Thus, if there are correlated
-# features that contribute to the target, the model would still be able to
-# reduce their weights without setting them exactly to zero. In this case,
-# :class:`~sklearn.linear_model.ElasticNet` yields the model with the best
-# score. In the case of sparse yet non-correlated features, a
+# coefficients and shrinks their values to zero. Thus, in the presence of
+# correlated features that contribute to the target, the model is still be able
+# to reduce their weights without setting them exactly to zero. This results in
+# a less sparse model than a pure l1-penalty.
+#
+# In this case, :class:`~sklearn.linear_model.ElasticNet` yields the model with
+# the best score. In the case of sparse yet non-correlated features, a
 # :class:`~sklearn.linear_model.Lasso` model would be more suitable.
+#
+# References
+# ----------
+#
+#   .. [1] :doi:`"Lasso-type recovery of sparse representations for
+#    high-dimensional data" N. Meinshausen, B. Yu - The Annals of Statistics
+#    2009, Vol. 37, No. 1, 246–270 <10.1214/07-AOS582>`
