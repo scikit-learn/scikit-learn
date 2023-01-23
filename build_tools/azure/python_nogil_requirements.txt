@@ -6,7 +6,9 @@
 # the latest cython will be picked up from PyPI, rather than the one from the
 # python-nogil index
 matplotlib
-numpy
+# XXX temporary pin for numpy see
+# https://github.com/scikit-learn/scikit-learn/pull/25437 for more details
+numpy==1.22.3
 scipy
 cython
 joblib

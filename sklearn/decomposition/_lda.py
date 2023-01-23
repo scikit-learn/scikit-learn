@@ -15,13 +15,13 @@ from numbers import Integral, Real
 import numpy as np
 import scipy.sparse as sp
 from scipy.special import gammaln, logsumexp
-from joblib import Parallel, effective_n_jobs
+from joblib import effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..utils import check_random_state, gen_batches, gen_even_slices
 from ..utils.validation import check_non_negative
 from ..utils.validation import check_is_fitted
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 from ..utils._param_validation import Interval, StrOptions
 
 from ._online_lda_fast import (
