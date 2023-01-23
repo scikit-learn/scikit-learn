@@ -70,7 +70,7 @@ jobs:
         # Here we make sure, that they are still run on a regular basis.
         SKLEARN_SKIP_NETWORK_TESTS: '0'
 
-- template: build_tools/azure/posix.yml
+- template: build_tools/azure/posix-docker.yml
   # Experimental CPython branch without the Global Interpreter Lock:
   # https://github.com/colesbury/nogil/
   #
@@ -101,6 +101,7 @@ jobs:
       )
     matrix:
       pylatest_pip_nogil:
+        DOCKER_CONTAINER: 'nogil/python'
         DISTRIB: 'pip-nogil'
         LOCK_FILE: './build_tools/azure/python_nogil_lock.txt'
         COVERAGE: 'false'
