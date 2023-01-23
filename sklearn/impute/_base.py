@@ -937,6 +937,9 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         # in the Imputer calling MissingIndicator
         if not self._precomputed:
             X = self._validate_input(X, in_fit=True)
+        else:
+            # only create `n_features_in_` in the precomputed case
+            self._check_n_features(X, reset=True)
 
         self._n_features = X.shape[1]
 
@@ -1054,6 +1057,7 @@ class MissingIndicator(TransformerMixin, BaseEstimator):
         feature_names_out : ndarray of str objects
             Transformed feature names.
         """
+        check_is_fitted(self, "n_features_in_")
         input_features = _check_feature_names_in(self, input_features)
         prefix = self.__class__.__name__.lower()
         return np.asarray(
