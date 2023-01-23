@@ -327,10 +327,6 @@ class IsolationForest(OutlierMixin, BaseBagging):
             check_input=False,
         )
 
-        self._average_path_length_max_samples = _average_path_length(
-            [self._max_samples]
-        )
-
         self._average_path_length_per_tree, self._decision_path_lengths = zip(
             *[
                 (
@@ -491,6 +487,8 @@ class IsolationForest(OutlierMixin, BaseBagging):
 
         depths = np.zeros(n_samples, order="f")
 
+        average_path_length_max_samples = _average_path_length([self._max_samples])
+
         for tree_idx, (tree, features) in enumerate(
             zip(self.estimators_, self.estimators_features_)
         ):
@@ -503,7 +501,7 @@ class IsolationForest(OutlierMixin, BaseBagging):
                 + self._average_path_length_per_tree[tree_idx][leaves_index]
                 - 1.0
             )
-        denominator = len(self.estimators_) * self._average_path_length_max_samples
+        denominator = len(self.estimators_) * average_path_length_max_samples
         scores = 2 ** (
             # For a single training sample, denominator and depth are 0.
             # Therefore, we set the score manually to 1.
