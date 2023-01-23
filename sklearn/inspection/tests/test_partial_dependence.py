@@ -1,6 +1,7 @@
 """
 Testing for the partial dependence module.
 """
+import warnings
 
 import numpy as np
 import pytest
@@ -838,7 +839,7 @@ def test_kind_average_and_average_of_individual(Estimator, data):
     assert_allclose(avg_ind, pdp_avg["average"])
 
 
-# TODO(1.3): Remove when bunch values is deprecated in 1.3
+# TODO(1.5): Remove when bunch values is deprecated in 1.5
 def test_partial_dependence_bunch_values_deprecated():
     """Test that deprecation warning is raised when values is accessed."""
 
@@ -853,14 +854,13 @@ def test_partial_dependence_bunch_values_deprecated():
         "removed in 1.3. Please use 'pdp_values' instead"
     )
 
-    # Does not warn for "pdp_values"
-    with pytest.warns(None) as record:
+    with warnings.catch_warnings():
+        # Does not raise warnings with "pdp_values"
+        warnings.simplefilter("error")
         pdp_values = pdp_avg["pdp_values"]
 
-    assert not [str(rec.message) for rec in record]
-
-    # Warns for "values"
     with pytest.warns(FutureWarning, match=msg):
+        # Warns for "values"
         values = pdp_avg["values"]
 
     # "values" and "pdp_values" are the same object
