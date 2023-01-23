@@ -481,9 +481,11 @@ class BaseDecisionTree(MultiOutputMixin, BaseEstimator, metaclass=ABCMeta):
     def compute_node_depths(self):
         """Compute the depth of each node in a tree.
 
+        .. versionadded:: 1.3.0
+
         Returns
         -------
-        depths : ndarray of shape ``(self.tree_.node_count,)``, dtype=np.int64
+        depths : ndarray of shape ``(self.tree_.node_count,)``
             The depth of each node in the tree.
 
         """
