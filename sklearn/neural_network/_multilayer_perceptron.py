@@ -607,7 +607,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             batch_size = np.clip(self.batch_size, 1, n_samples)
 
         try:
-            for it in range(self.max_iter):
+            max_iter_remaining = self.max_iter - self.n_iter_
+            for it in range(max_iter_remaining):
                 if self.shuffle:
                     # Only shuffle the sample indices instead of X and y to
                     # reduce the memory footprint. These indices will be used
@@ -687,7 +688,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                         % self.max_iter,
                         ConvergenceWarning,
                     )
-                    break
         except KeyboardInterrupt:
             warnings.warn("Training interrupted by user.")
 
