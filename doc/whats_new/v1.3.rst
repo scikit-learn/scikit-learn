@@ -237,7 +237,8 @@ Changelog
 
 :mod:`sklearn.neural_network`
 .............................
-- |Feature| :class:`neural_network.MLPClassifier` can now use `class_weight`.
+- |Enhancement| Add support for `class_weight` in :class:`neural_network.MLPClassifier`.
+  This allows specifying the parameter `class_weight` for each class while fitting.
   :pr:`25326` by :user:`Zach Shu <zshu115x>`, :pr:`11723` by :user:`Dor Cohen <dorcoh>`
 
 - |Enhancement| Add support for `sample_weight` in

@@ -75,7 +75,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         "max_iter": [Interval(Integral, 1, None, closed="left")],
         "shuffle": ["boolean"],
         "random_state": ["random_state"],
-        "class_weight": [dict, list, StrOptions({"balanced"}), None],
         "tol": [Interval(Real, 0, None, closed="left")],
         "verbose": ["verbose"],
         "warm_start": ["boolean"],
@@ -107,7 +106,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         max_iter,
         loss,
         shuffle,
-        class_weight,
         random_state,
         tol,
         verbose,
@@ -133,7 +131,6 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         self.loss = loss
         self.hidden_layer_sizes = hidden_layer_sizes
         self.shuffle = shuffle
-        self.class_weight = class_weight
         self.random_state = random_state
         self.tol = tol
         self.verbose = verbose
@@ -425,7 +422,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         intercept_init = intercept_init.astype(dtype, copy=False)
         return coef_init, intercept_init
 
-    def _fit(self, X, y, incremental=False, sample_weight=None):
+    def _fit(self, X, y, incremental=False, sample_weight=None, class_weight=None):
         # Make sure self.hidden_layer_sizes is a list
         hidden_layer_sizes = self.hidden_layer_sizes
         if not hasattr(hidden_layer_sizes, "__iter__"):
@@ -448,9 +445,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         if y.ndim == 1:
             y = y.reshape((-1, 1))
 
-        # Handle class weights
-        if isinstance(self, MLPClassifier) and self.class_weight is not None:
-            sample_weight = (sample_weight * compute_sample_weight(self.class_weight, y))
+        # Handle class weights, and it only applies to MLPClassifier
+        if isinstance(self, MLPClassifier) and class_weight is not None:
+            sample_weight = (sample_weight * compute_sample_weight(class_weight, y))
 
         self.n_outputs_ = y.shape[1]
 
@@ -741,7 +738,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             if self.loss_curve_[-1] < self.best_loss_:
                 self.best_loss_ = self.loss_curve_[-1]
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, class_weight=None):
         """Fit the model to data matrix X and target(s) y.
 
         Parameters
@@ -756,6 +753,24 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         sample_weight : array-like of shape (n_samples,)
             The sample weights
 
+        class_weight: dict, list of dicts, "balanced", or None
+            Weights associated with classes in the form ``{class_label: weight}``.
+            If not given, all classes are supposed to have weight one. For
+            multi-output problems, a list of dicts can be provided in the same
+            order as the columns of y.
+
+            Note that for multioutput (including multilabel) weights should be
+            defined for each class of every column in its own dict. For example,
+            for four-class multilabel classification weights should be
+            [{0: 1, 1: 1}, {0: 1, 1: 5}, {0: 1, 1: 1}, {0: 1, 1: 1}] instead of
+            [{1:1}, {2:5}, {3:1}, {4:1}].
+
+            The "balanced" mode uses the values of y to automatically adjust
+            weights inversely proportional to class frequencies in the input data:
+            ``n_samples / (n_classes * np.bincount(y))``.
+
+            For multi-output, the weights of each column of y will be multiplied.
+
         Returns
         -------
         self : object
@@ -763,7 +778,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         """
         self._validate_params()
 
-        return self._fit(X, y, incremental=False, sample_weight=sample_weight)
+        return self._fit(X, y, incremental=False, sample_weight=sample_weight, class_weight=class_weight)
 
     def _check_solver(self):
         if self.solver not in _STOCHASTIC_SOLVERS:
@@ -866,24 +881,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
     shuffle : bool, default=True
         Whether to shuffle samples in each iteration. Only used when
         solver='sgd' or 'adam'.
-
-    class_weight: dict, list of dicts, "balanced", or None
-        Weights associated with classes in the form ``{class_label: weight}``.
-        If not given, all classes are supposed to have weight one. For
-        multi-output problems, a list of dicts can be provided in the same
-        order as the columns of y.
-
-        Note that for multioutput (including multilabel) weights should be
-        defined for each class of every column in its own dict. For example,
-        for four-class multilabel classification weights should be
-        [{0: 1, 1: 1}, {0: 1, 1: 5}, {0: 1, 1: 1}, {0: 1, 1: 1}] instead of
-        [{1:1}, {2:5}, {3:1}, {4:1}].
-
-        The "balanced" mode uses the values of y to automatically adjust
-        weights inversely proportional to class frequencies in the input data:
-        ``n_samples / (n_classes * np.bincount(y))``.
-
-        For multi-output, the weights of each column of y will be multiplied.
 
     random_state : int, RandomState instance, default=None
         Determines random number generation for weights and bias
@@ -1079,7 +1076,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         power_t=0.5,
         max_iter=200,
         shuffle=True,
-        class_weight=None,
         random_state=None,
         tol=1e-4,
         verbose=False,
@@ -1106,7 +1102,6 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             max_iter=max_iter,
             loss="log_loss",
             shuffle=shuffle,
-            class_weight=class_weight,
             random_state=random_state,
             tol=tol,
             verbose=verbose,
@@ -1611,7 +1606,6 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
             max_iter=max_iter,
             loss="squared_error",
             shuffle=shuffle,
-            class_weight=None,
             random_state=random_state,
             tol=tol,
             verbose=verbose,

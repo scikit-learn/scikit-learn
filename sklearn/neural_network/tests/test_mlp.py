@@ -964,8 +964,8 @@ def test_mlp_classifier_with_sample_and_class_weights(weighted_class):
     score = base_clf.predict_proba(test_samples)[:, weighted_class]
 
     # test class weights
-    clf = MLPClassifier(class_weight=class_weight, random_state=1)
-    clf.fit(X_train, y_train)
+    clf = MLPClassifier(random_state=1)
+    clf.fit(X_train, y_train, class_weight=class_weight)
     class_weighted_score = clf.predict_proba(test_samples)[:, weighted_class]
 
     samples_with_greater_score = (class_weighted_score > score).sum() / class_weighted_score.shape[0]
