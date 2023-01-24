@@ -231,7 +231,15 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         intercept_grads[layer] = np.mean(deltas[layer], 0)
 
     def _loss_grad_lbfgs(
-        self, packed_coef_inter, X, y, activations, deltas, coef_grads, intercept_grads, sample_weight=None
+        self,
+        packed_coef_inter,
+        X,
+        y,
+        activations,
+        deltas,
+        coef_grads,
+        intercept_grads,
+        sample_weight=None,
     ):
         """Compute the MLP loss function and its corresponding derivatives
         with respect to the different parameters given in the initialization.
@@ -280,7 +288,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         grad = _pack(coef_grads, intercept_grads)
         return loss, grad
 
-    def _backprop(self, X, y, activations, deltas, coef_grads, intercept_grads, sample_weight=None):
+    def _backprop(
+        self, X, y, activations, deltas, coef_grads, intercept_grads, sample_weight=None
+    ):
         """Compute the MLP loss function and its corresponding derivatives
         with respect to each parameter: weights and bias vectors.
 
@@ -437,7 +447,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
             not self.warm_start and not incremental
         )
 
-        X, y, sample_weight = self._validate_input(X, y, incremental, reset=first_pass, sample_weight=sample_weight)
+        X, y, sample_weight = self._validate_input(
+            X, y, incremental, reset=first_pass, sample_weight=sample_weight
+        )
 
         n_samples, n_features = X.shape
 
@@ -447,7 +459,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
 
         # Handle class weights, and it only applies to MLPClassifier
         if isinstance(self, MLPClassifier) and class_weight is not None:
-            sample_weight = (sample_weight * compute_sample_weight(class_weight, y))
+            sample_weight *= compute_sample_weight(class_weight, y)
 
         self.n_outputs_ = y.shape[1]
 
@@ -484,13 +496,20 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                 intercept_grads,
                 layer_units,
                 incremental,
-                sample_weight
+                sample_weight,
             )
 
         # Run the LBFGS solver
         elif self.solver == "lbfgs":
             self._fit_lbfgs(
-                X, y, activations, deltas, coef_grads, intercept_grads, layer_units, sample_weight
+                X,
+                y,
+                activations,
+                deltas,
+                coef_grads,
+                intercept_grads,
+                layer_units,
+                sample_weight,
             )
 
         # validate parameter weights
@@ -504,7 +523,15 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         return self
 
     def _fit_lbfgs(
-        self, X, y, activations, deltas, coef_grads, intercept_grads, layer_units, sample_weight
+        self,
+        X,
+        y,
+        activations,
+        deltas,
+        coef_grads,
+        intercept_grads,
+        layer_units,
+        sample_weight,
     ):
         # Store meta information for the parameters
         self._coef_indptr = []
@@ -544,7 +571,15 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                 "iprint": iprint,
                 "gtol": self.tol,
             },
-            args=(X, y, activations, deltas, coef_grads, intercept_grads, sample_weight),
+            args=(
+                X,
+                y,
+                activations,
+                deltas,
+                coef_grads,
+                intercept_grads,
+                sample_weight,
+            ),
         )
         self.n_iter_ = _check_optimize_result("lbfgs", opt_res, self.max_iter)
         self.loss_ = opt_res.fun
@@ -560,9 +595,8 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         intercept_grads,
         layer_units,
         incremental,
-        sample_weight
+        sample_weight,
     ):
-
         params = self.coefs_ + self.intercepts_
         if not incremental or not hasattr(self, "_optimizer"):
             if self.solver == "sgd":
@@ -643,7 +677,7 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                         deltas,
                         coef_grads,
                         intercept_grads,
-                        sample_weight_batch
+                        sample_weight_batch,
                     )
                     accumulated_loss += batch_loss * (
                         batch_slice.stop - batch_slice.start
@@ -778,7 +812,13 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
         """
         self._validate_params()
 
-        return self._fit(X, y, incremental=False, sample_weight=sample_weight, class_weight=class_weight)
+        return self._fit(
+            X,
+            y,
+            incremental=False,
+            sample_weight=sample_weight,
+            class_weight=class_weight,
+        )
 
     def _check_solver(self):
         if self.solver not in _STOCHASTIC_SOLVERS:
@@ -788,6 +828,9 @@ class BaseMultilayerPerceptron(BaseEstimator, metaclass=ABCMeta):
                 % self.solver
             )
         return True
+
+    def _validate_input(self, X, y, incremental, reset, sample_weight):
+        raise NotImplementedError("Subclass must implement _validate_input().")
 
 
 class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
@@ -1173,7 +1216,9 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
         # check sample weight
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         nonzero_indices = np.nonzero(sample_weight)[0]
-        if nonzero_indices.shape[0] < sample_weight.shape[0]:  # filter out zero-weighted samples
+        if (
+            nonzero_indices.shape[0] < sample_weight.shape[0]
+        ):  # filter out zero-weighted samples
             X = X[nonzero_indices]
             y = y[nonzero_indices]
             sample_weight = sample_weight[nonzero_indices]
@@ -1666,7 +1711,9 @@ class MLPRegressor(RegressorMixin, BaseMultilayerPerceptron):
         # check sample weight
         sample_weight = _check_sample_weight(sample_weight, X, dtype=X.dtype)
         nonzero_indices = np.nonzero(sample_weight)[0]
-        if nonzero_indices.shape[0] < sample_weight.shape[0]:  # filter out zero-weighted samples
+        if (
+            nonzero_indices.shape[0] < sample_weight.shape[0]
+        ):  # filter out zero-weighted samples
             X = X[nonzero_indices]
             y = y[nonzero_indices]
             sample_weight = sample_weight[nonzero_indices]

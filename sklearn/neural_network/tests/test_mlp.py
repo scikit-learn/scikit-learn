@@ -949,9 +949,11 @@ def test_mlp_classifier_with_sample_and_class_weights(weighted_class):
     # data preprocess
     X, y = load_digits(return_X_y=True)
     X = X / X.max()
-    X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=split_size, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=split_size, random_state=0
+    )
 
-    class_weight = [{0: standard_weight} for _ in range(np.max(y)+1)]
+    class_weight = [{0: standard_weight} for _ in range(np.max(y) + 1)]
     class_weight[weighted_class] = {0: high_weight}
 
     sample_weight = np.ones((y_train.shape[0])) * standard_weight
@@ -968,7 +970,9 @@ def test_mlp_classifier_with_sample_and_class_weights(weighted_class):
     clf.fit(X_train, y_train, class_weight=class_weight)
     class_weighted_score = clf.predict_proba(test_samples)[:, weighted_class]
 
-    samples_with_greater_score = (class_weighted_score > score).sum() / class_weighted_score.shape[0]
+    samples_with_greater_score = (
+        class_weighted_score > score
+    ).sum() / class_weighted_score.shape[0]
     assert samples_with_greater_score > threshold
 
     # test sample weight
@@ -976,7 +980,9 @@ def test_mlp_classifier_with_sample_and_class_weights(weighted_class):
     clf.fit(X_train, y_train, sample_weight=sample_weight)
     sample_weighted_score = clf.predict_proba(test_samples)[:, weighted_class]
 
-    samples_with_greater_score = (sample_weighted_score > score).sum() / sample_weighted_score.shape[0]
+    samples_with_greater_score = (
+        sample_weighted_score > score
+    ).sum() / sample_weighted_score.shape[0]
     assert samples_with_greater_score > threshold
 
     # Test that class_weight and sample_weight have the same effect
