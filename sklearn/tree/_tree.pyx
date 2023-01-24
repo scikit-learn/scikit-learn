@@ -1059,13 +1059,12 @@ cdef class Tree:
     cpdef compute_node_depths(self):
         """Compute the depth of each node in a tree.
 
-    .. versionadded:: 1.3
+        .. versionadded:: 1.3
 
         Returns
         -------
         depths : ndarray of shape (self.node_count,), dtype=np.int64
             The depth of each node in the tree.
-
         """
         cdef:
             cnp.int64_t[::1] depths = np.empty(self.node_count, dtype=np.int64)
