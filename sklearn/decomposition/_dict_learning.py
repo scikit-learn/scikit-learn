@@ -636,37 +636,6 @@ def _check_warn_deprecated(param, name, default, additional_message=None):
     else:
         return default
 
-@validate_params(
-    {
-        "X": ["array-like"],
-        "n_compenents": [Interval(Integral, 0, None, closed="left"), None],
-        "alpha": [Interval(Real, 1, None, closed="left"), None],
-        "n_iter": [Interval(Integral, 0, None, closed="left"), None],
-        "max_iter": [Interval(Integral, 0, None, closed="left"), None],
-        "return_code" : ["boolean"],
-        "dict_innit" : [np.ndarray, None],
-        "callable" : [callable, None],
-        "batch_size" : [Interval(Integral, 1, None, closed="left")],
-        "verbose" : ["boolean"],
-        "shuffle" : ["boolean"],
-        "n_jobs" : [Interval(Integral, 0, None, closed="left"), None],
-        "method" : [
-            StrOptions( {"lars", "cd"} )
-        ],
-        "iter_offset" : [Interval(Integral, 0, None, closed="left"), None],
-        "random_state" : ["random_state"],
-        "return_inner_state" : ["boolean"],
-        "inner_state" : [tuple, None],
-        "return_n_iter" : ["boolean"],
-        "positive_dict" : ["boolean"],
-        "positive_code" : ["boolean"],
-        "method_max_iter": [Interval(Integral, 0, None, closed="left"), None],
-        "tol" :  [Interval(Real, 1, None, closed="left"), None],
-        "max_no_improvement": [Interval(Integral, 1, None, closed="left"), None],
-        
-    }
-)
-
 
 def dict_learning_online(
     X,
