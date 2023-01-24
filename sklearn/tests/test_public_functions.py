@@ -98,13 +98,11 @@ PARAM_VALIDATION_FUNCTION_LIST = [
     "sklearn.cluster.compute_optics_graph",
     "sklearn.cluster.estimate_bandwidth",
     "sklearn.cluster.kmeans_plusplus",
-    "sklearn.cluster.spectral"
     "sklearn.covariance.empirical_covariance",
     "sklearn.covariance.shrunk_covariance",
     "sklearn.datasets.fetch_california_housing",
     "sklearn.datasets.make_sparse_coded_signal",
     "sklearn.decomposition.sparse_encode",
-    "sklearn.decomposition.fastica",
     "sklearn.feature_extraction.grid_to_graph",
     "sklearn.feature_extraction.img_to_graph",
     "sklearn.feature_extraction.image.extract_patches_2d",
@@ -142,6 +140,7 @@ def test_function_param_validation(func_module):
 
 PARAM_VALIDATION_CLASS_WRAPPER_LIST = [
     ("sklearn.cluster.affinity_propagation", "sklearn.cluster.AffinityPropagation"),
+    ("sklearn.cluster.spectral_clustering", "sklearn.cluster.SpectralClustering"),
     ("sklearn.covariance.ledoit_wolf", "sklearn.covariance.LedoitWolf"),
     ("sklearn.covariance.oas", "sklearn.covariance.OAS"),
     ("sklearn.decomposition.dict_learning", "sklearn.decomposition.DictionaryLearning"),
