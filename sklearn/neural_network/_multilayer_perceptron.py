@@ -1313,7 +1313,13 @@ class MLPClassifier(ClassifierMixin, BaseMultilayerPerceptron):
             else:
                 self._label_binarizer.fit(classes)
 
-        return self._fit(X, y, incremental=True, sample_weight=sample_weight, class_weight=class_weight)
+        return self._fit(
+            X,
+            y,
+            incremental=True,
+            sample_weight=sample_weight,
+            class_weight=class_weight,
+        )
 
     def predict_log_proba(self, X):
         """Return the log of probability estimates.
