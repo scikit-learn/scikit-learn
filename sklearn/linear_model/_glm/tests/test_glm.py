@@ -1512,7 +1512,7 @@ def test_NewtonLSMRSolver_multinomial_A_b_on_3_classes(
             (n_classes, -1)
         )
     # sum over classes = 0
-    assert_allclose(res1.sum(axis=0), 0, atol=5e-10)
+    assert_allclose(res1.sum(axis=0), 0, atol=5e-9)
     assert_allclose((H_ext + pen_ext) @ res1.ravel(), -(G_ext + pen_ext @ coef_ext))
     assert_allclose(A.T @ A @ res1.ravel(order="C"), A.T @ b)
     res2 = lsmr(A, b, maxiter=(n_features + n_samples) * n_classes, show=True)

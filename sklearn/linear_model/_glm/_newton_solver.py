@@ -918,6 +918,8 @@ class NewtonLSMRSolver(NewtonSolver):
             conda,
             normx,
         ) = result
+        if self.coef.dtype == np.float32:
+            self.coef_newton = self.coef_newton.astype(np.float32)
         if not self.linear_loss.base_loss.is_multiclass:
             self.gradient_times_newton = self.gradient @ self.coef_newton
         else:
