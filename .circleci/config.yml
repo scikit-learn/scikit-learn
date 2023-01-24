@@ -74,6 +74,19 @@ jobs:
           root: doc/_build/html
           paths: .
 
+  lint:
+    docker:
+      - image: cimg/python:3.8.12
+    steps:
+      - checkout
+      - run: ./build_tools/circle/checkout_merge_commit.sh
+      - run:
+          name: dependencies
+          command: pip install flake8
+      - run:
+          name: linting
+          command: ./build_tools/azure/linting.sh
+
   deploy:
     docker:
       - image: cimg/python:3.8.12
@@ -95,8 +108,13 @@ workflows:
   version: 2
   build-doc-and-deploy:
     jobs:
-      - doc
-      - doc-min-dependencies
+      - lint
+      - doc:
+          requires:
+            - lint
+      - doc-min-dependencies:
+          requires:
+            - lint
       - deploy:
           requires:
             - doc
