@@ -4,7 +4,6 @@ jobs:
   doc-min-dependencies:
     docker:
       - image: cimg/python:3.8.12
-    resource_class: large
     environment:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2
@@ -39,7 +38,6 @@ jobs:
   doc:
     docker:
       - image: cimg/python:3.8.12
-    resource_class: large
     environment:
       - OMP_NUM_THREADS: 2
       - MKL_NUM_THREADS: 2

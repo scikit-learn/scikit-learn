@@ -195,6 +195,9 @@ then
     python build_tools/circle/list_versions.py > doc/versions.rst
 fi
 
+# Avoid CI job getting killed because it uses too much memory
+export SPHINX_NUMJOBS=3
+
 # The pipefail is requested to propagate exit code
 set -o pipefail && cd doc && make $make_args 2>&1 | tee ~/log.txt
 
