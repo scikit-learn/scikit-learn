@@ -727,7 +727,7 @@ class Multinomial_LDL_Decomposition:
 
     def __init__(self, *, proba, proba_sum_to_1=True):
         self.p = proba
-        self.q = 1 - np.cumsum(self.p, axis=1)
+        self.q = 1 - np.cumsum(self.p, axis=1)  # contiguity of p
         self.proba_sum_to_1 = proba_sum_to_1
         if self.p.dtype == np.float32:
             eps = 2 * np.finfo(np.float32).resolution
@@ -745,10 +745,13 @@ class Multinomial_LDL_Decomposition:
             self.q[self.q <= eps] = 0.0
             self.p[self.p <= eps] = 0.0
         d = self.p * self.q
+        # From now on, self.q is always used in the denominator. We handle q == 0 by
+        # setting q to 1 whenever q == 0 such that a division of q is a no-op in this
+        # case.
+        self.q[self.q == 0] = 1
         if self.proba_sum_to_1:
             # If q_{i - 1} = 0, then also q_i = 0.
-            mask = self.q[:, 1:-1] == 0
-            d[:, 1:-1] /= self.q[:, :-2] + mask  # d[:, -1] = 0 anyway
+            d[:, 1:-1] /= self.q[:, :-2]  # d[:, -1] = 0 anyway.
         else:
             d[:, 1:] /= self.q[:, :-1]
         self.sqrt_d = np.sqrt(d)
@@ -785,11 +788,7 @@ class Multinomial_LDL_Decomposition:
         for i in range(0, n_classes - 1):  # row i
             # L_ij = -p_i / q_j, we need transpose L'
             for j in range(i + 1, n_classes):  # column j
-                if self.proba_sum_to_1:
-                    mask = self.q[:, i] == 0
-                    x[:, i] -= self.p[:, j] / (self.q[:, i] + mask) * x[:, j]
-                else:
-                    x[:, i] -= self.p[:, j] / self.q[:, i] * x[:, j]
+                x[:, i] -= self.p[:, j] / self.q[:, i] * x[:, j]
         x *= self.sqrt_d
         return x
 
@@ -825,12 +824,7 @@ class Multinomial_LDL_Decomposition:
         for i in range(n_classes - 1, 0, -1):  # row i
             # L_ij = -p_i / q_j
             for j in range(0, i):  # column j
-                if self.proba_sum_to_1:
-                    term = self.p[:, i] * x[:, j]
-                    mask = term == 0
-                    x[:, i] -= term / (self.q[:, j] + mask)
-                else:
-                    x[:, i] -= self.p[:, i] / self.q[:, j] * x[:, j]
+                x[:, i] -= self.p[:, i] / self.q[:, j] * x[:, j]
         return x
 
     def inverse_L_sqrt_D_matmul(self, x):
@@ -861,12 +855,7 @@ class Multinomial_LDL_Decomposition:
         n_classes = self.p.shape[1]
         for i in range(n_classes - 1, 0, -1):  # row i
             if i > 0:
-                if self.proba_sum_to_1:
-                    # 0 / something = 0
-                    mask = self.p[:, i] == 0
-                    fj = self.p[:, i] / (self.q[:, i - 1] + mask)
-                else:
-                    fj = self.p[:, i] / self.q[:, i - 1]
+                fj = self.p[:, i] / self.q[:, i - 1]
             else:
                 fj = self.p[:, i]
             for j in range(0, i):  # column j
