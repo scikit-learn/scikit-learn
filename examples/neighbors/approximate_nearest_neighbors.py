@@ -65,11 +65,16 @@ except ImportError:
     print("The package 'nmslib' is required to run this example.")
     sys.exit()
 
+try:
+    from pynndescent import PyNNDescentTransformer
+except ImportError:
+    print("The package 'pynndescent' is required to run this example.")
+    sys.exit()
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.ticker import NullFormatter
 from scipy.sparse import csr_matrix
-from pynndescent import PyNNDescentTransformer
 
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.neighbors import KNeighborsTransformer
