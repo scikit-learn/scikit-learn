@@ -14,7 +14,7 @@
 
 # License: BSD 3 clause
 
-from ._criterion cimport Criterion
+from ._criterion cimport BaseCriterion
 
 from libc.stdlib cimport qsort
 from libc.string cimport memcpy
@@ -55,10 +55,65 @@ cdef class BaseSplitter:
     scikit-learn's Cython code for splitting. 
 
     A splitter is usually used in conjunction with a criterion class, which explicitly handles
-    computing the criteria, which we split on.
+    computing the criteria, which we split on. The setting of that criterion class is handled
+    by downstream classes.
 
     The downstream classes _must_ implement methods to compute the split in a node.
     """
+
+    def __getstate__(self):
+        return {}
+
+    def __setstate__(self, d):
+        pass
+
+    cdef int node_reset(self, SIZE_t start, SIZE_t end,
+                        double* weighted_n_node_samples) nogil except -1:
+        """Reset splitter on node samples[start:end].
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+
+        Parameters
+        ----------
+        start : SIZE_t
+            The index of the first sample to consider
+        end : SIZE_t
+            The index of the last sample to consider
+        weighted_n_node_samples : ndarray, dtype=double pointer
+            The total weight of those samples
+        """
+        pass
+
+    cdef int node_split(self, double impurity, SplitRecord* split,
+                        SIZE_t* n_constant_features) nogil except -1:
+        """Find the best split on node samples[start:end].
+
+        This is a placeholder method. The majority of computation will be done
+        here.
+
+        It should return -1 upon errors.
+        """
+        pass
+
+    cdef void node_value(self, double* dest) nogil:
+        """Copy the value of node samples[start:end] into dest."""
+        pass
+
+    cdef double node_impurity(self) nogil:
+        """Return the impurity of the current node."""
+        pass
+
+    cdef int pointer_size(self) nogil:
+        """Size of the pointer for split records.
+        
+        Overriding this function allows one to use different subclasses of
+        `SplitRecord`.
+        """
+        return sizeof(SplitRecord)
+
+cdef class Splitter(BaseSplitter):
+    """Abstract interface for supervised splitters."""
 
     def __cinit__(self, Criterion criterion, SIZE_t max_features,
                   SIZE_t min_samples_leaf, double min_weight_leaf,
@@ -85,7 +140,6 @@ cdef class BaseSplitter:
         random_state : object
             The user inputted random state to be used for pseudo-randomness
         """
-
         self.criterion = criterion
 
         self.n_samples = 0
@@ -96,73 +150,7 @@ cdef class BaseSplitter:
         self.min_weight_leaf = min_weight_leaf
         self.random_state = random_state
 
-    def __getstate__(self):
-        return {}
 
-    def __setstate__(self, d):
-        pass
-
-    cdef int node_reset(self, SIZE_t start, SIZE_t end,
-                        double* weighted_n_node_samples) nogil except -1:
-        """Reset splitter on node samples[start:end].
-
-        Returns -1 in case of failure to allocate memory (and raise MemoryError)
-        or 0 otherwise.
-
-        Parameters
-        ----------
-        start : SIZE_t
-            The index of the first sample to consider
-        end : SIZE_t
-            The index of the last sample to consider
-        weighted_n_node_samples : ndarray, dtype=double pointer
-            The total weight of those samples
-        """
-
-        self.start = start
-        self.end = end
-
-        self.criterion.set_sample_pointers(start, end)
-
-        weighted_n_node_samples[0] = self.criterion.weighted_n_node_samples
-        return 0
-
-    cdef int node_split(self, double impurity, SplitRecord* split,
-                        SIZE_t* n_constant_features) nogil except -1:
-        """Find the best split on node samples[start:end].
-
-        This is a placeholder method. The majority of computation will be done
-        here.
-
-        It should return -1 upon errors.
-        """
-
-        pass
-
-    cdef void node_value(self, double* dest) nogil:
-        """Copy the value of node samples[start:end] into dest."""
-
-        self.criterion.node_value(dest)
-
-    cdef double node_impurity(self) nogil:
-        """Return the impurity of the current node."""
-
-        return self.criterion.node_impurity()
-
-    cdef int pointer_size(self) nogil:
-        """Size of the pointer for split records.
-        
-        Overriding this function allows one to use different subclasses of
-        `SplitRecord`.
-        """
-        return sizeof(SplitRecord)
-
-cdef class Splitter(BaseSplitter):
-    """Abstract splitter class.
-
-    Splitters are called by tree builders to find the best splits on both
-    sparse and dense data, one split at a time.
-    """
     def __reduce__(self):
         return (type(self), (self.criterion,
                              self.max_features,
@@ -249,6 +237,41 @@ cdef class Splitter(BaseSplitter):
         )
 
         return 0
+
+    cdef int node_reset(self, SIZE_t start, SIZE_t end,
+                        double* weighted_n_node_samples) nogil except -1:
+        """Reset splitter on node samples[start:end].
+
+        Returns -1 in case of failure to allocate memory (and raise MemoryError)
+        or 0 otherwise.
+
+        Parameters
+        ----------
+        start : SIZE_t
+            The index of the first sample to consider
+        end : SIZE_t
+            The index of the last sample to consider
+        weighted_n_node_samples : ndarray, dtype=double pointer
+            The total weight of those samples
+        """
+
+        self.start = start
+        self.end = end
+
+        self.criterion.set_sample_pointers(start, end)
+
+        weighted_n_node_samples[0] = self.criterion.weighted_n_node_samples
+        return 0
+
+    cdef void node_value(self, double* dest) nogil:
+        """Copy the value of node samples[start:end] into dest."""
+
+        self.criterion.node_value(dest)
+
+    cdef double node_impurity(self) nogil:
+        """Return the impurity of the current node."""
+
+        return self.criterion.node_impurity()
 
 # Introduce a fused-class to make it possible to share the split implementation
 # between the dense and sparse cases in the node_split_best and node_split_random

@@ -11,7 +11,7 @@
 
 # See _splitter.pyx for details.
 
-from ._criterion cimport BaseCriterion
+from ._criterion cimport BaseCriterion, Criterion
 
 from ._tree cimport DTYPE_t          # Type of X
 from ._tree cimport DOUBLE_t         # Type of y, sample_weight
@@ -39,7 +39,6 @@ cdef class BaseSplitter:
     # The impurity computations are delegated to a criterion object.
 
     # Internal structures
-    cdef public BaseCriterion criterion  # Impurity criterion
     cdef public SIZE_t max_features      # Number of features to test
     cdef public SIZE_t min_samples_leaf  # Min samples in a leaf
     cdef public double min_weight_leaf   # Minimum weight in a leaf
@@ -83,25 +82,20 @@ cdef class BaseSplitter:
         SIZE_t end,
         double* weighted_n_node_samples
     ) nogil except -1
-
     cdef int node_split(
         self,
         double impurity,   # Impurity of the node
         SplitRecord* split,
         SIZE_t* n_constant_features
     ) nogil except -1
-
     cdef void node_value(self, double* dest) nogil
-
     cdef double node_impurity(self) nogil
-
     cdef int pointer_size(self) nogil
-    
+
 cdef class Splitter(BaseSplitter):
-    """Abstract interface for supervised splitter."""
-
+    cdef public Criterion criterion      # Impurity criterion
     cdef const DOUBLE_t[:, ::1] y
-
+    
     cdef int init(
         self,
         object X,
