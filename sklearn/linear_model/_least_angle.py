@@ -16,7 +16,6 @@ from numbers import Integral, Real
 import numpy as np
 from scipy import linalg, interpolate
 from scipy.linalg.lapack import get_lapack_funcs
-from joblib import Parallel
 
 from ._base import LinearModel, LinearRegression
 from ._base import _deprecate_normalize, _preprocess_data
@@ -28,7 +27,7 @@ from ..utils import check_random_state
 from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..model_selection import check_cv
 from ..exceptions import ConvergenceWarning
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 
 SOLVE_TRIANGULAR_ARGS = {"check_finite": False}
 

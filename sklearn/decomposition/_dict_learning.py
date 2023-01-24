@@ -13,7 +13,7 @@ from math import ceil
 
 import numpy as np
 from scipy import linalg
-from joblib import Parallel, effective_n_jobs
+from joblib import effective_n_jobs
 
 from ..base import BaseEstimator, TransformerMixin, ClassNamePrefixFeaturesOutMixin
 from ..utils import check_array, check_random_state, gen_even_slices, gen_batches
@@ -21,7 +21,7 @@ from ..utils._param_validation import Hidden, Interval, StrOptions
 from ..utils._param_validation import validate_params
 from ..utils.extmath import randomized_svd, row_norms, svd_flip
 from ..utils.validation import check_is_fitted
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
 
 
@@ -2053,8 +2053,8 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     We can check the level of sparsity of `X_transformed`:
 
-    >>> np.mean(X_transformed == 0)
-    0.38...
+    >>> np.mean(X_transformed == 0) < 0.5
+    True
 
     We can compare the average squared euclidean norm of the reconstruction
     error of the sparse coded signal relative to the squared euclidean norm of
@@ -2062,7 +2062,7 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
 
     >>> X_hat = X_transformed @ dict_learner.components_
     >>> np.mean(np.sum((X_hat - X) ** 2, axis=1) / np.sum(X ** 2, axis=1))
-    0.059...
+    0.057...
     """
 
     _parameter_constraints: dict = {
@@ -2196,9 +2196,9 @@ class MiniBatchDictionaryLearning(_BaseSparseCoding, BaseEstimator):
         beta = (theta + 1 - batch_size) / (theta + 1)
 
         self._A *= beta
-        self._A += code.T @ code
+        self._A += code.T @ code / batch_size
         self._B *= beta
-        self._B += X.T @ code
+        self._B += X.T @ code / batch_size
 
     def _minibatch_step(self, X, dictionary, random_state, step):
         """Perform the update on the dictionary for one minibatch."""

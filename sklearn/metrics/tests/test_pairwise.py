@@ -2,7 +2,6 @@ import warnings
 from types import GeneratorType
 
 import numpy as np
-from joblib import Parallel
 from numpy import linalg
 
 from scipy.sparse import dok_matrix, csr_matrix, issparse
@@ -16,7 +15,8 @@ except ImportError:
     # should be used instead.
     from scipy.spatial.distance import minkowski as wminkowski
 
-from sklearn.utils.fixes import sp_version, parse_version, delayed
+from sklearn.utils.fixes import sp_version, parse_version
+from sklearn.utils.parallel import delayed, Parallel
 
 import pytest
 

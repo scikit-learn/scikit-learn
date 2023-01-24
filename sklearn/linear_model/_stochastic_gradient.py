@@ -12,8 +12,6 @@ import warnings
 from abc import ABCMeta, abstractmethod
 from numbers import Integral, Real
 
-from joblib import Parallel
-
 from ..base import clone, is_classifier
 from ._base import LinearClassifierMixin, SparseCoefMixin
 from ._base import make_dataset
@@ -26,7 +24,7 @@ from ..utils.validation import check_is_fitted, _check_sample_weight
 from ..utils._param_validation import Interval
 from ..utils._param_validation import StrOptions
 from ..utils._param_validation import Hidden
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 from ..exceptions import ConvergenceWarning
 from ..model_selection import StratifiedShuffleSplit, ShuffleSplit
 
@@ -964,9 +962,8 @@ class SGDClassifier(BaseSGDClassifier):
 
     alpha : float, default=0.0001
         Constant that multiplies the regularization term. The higher the
-        value, the stronger the regularization.
-        Also used to compute the learning rate when set to `learning_rate` is
-        set to 'optimal'.
+        value, the stronger the regularization. Also used to compute the
+        learning rate when `learning_rate` is set to 'optimal'.
         Values must be in the range `[0.0, inf)`.
 
     l1_ratio : float, default=0.15
