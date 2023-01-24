@@ -46,6 +46,7 @@ def _generate_hypercube(samples, dimensions, rng):
         "n_informative": [Interval(Integral, 1, None, closed="left")],
         "n_redundant": [Interval(Integral, 0, None, closed="left")],
         "n_repeated": [Interval(Integral, 0, None, closed="left")],
+        "n_classes": [Interval(Integral, 1, None, closed="left")],
         "n_clusters_per_class": [Interval(Integral, 1, None, closed="left")],
         "weights": ["array-like", None],
         "flip_y": [Interval(Real, 0, 1, closed="both")],
