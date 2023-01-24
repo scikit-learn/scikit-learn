@@ -33,14 +33,13 @@ from ._validation import _insert_error_scores
 from ._validation import _normalize_score_results
 from ._validation import _warn_or_raise_about_fit_failures
 from ..exceptions import NotFittedError
-from joblib import Parallel
 from ..utils import check_random_state
 from ..utils.random import sample_without_replacement
 from ..utils._param_validation import HasMethods, Interval, StrOptions
 from ..utils._tags import _safe_tags
 from ..utils.validation import indexable, check_is_fitted, _check_fit_params
 from ..utils.metaestimators import available_if
-from ..utils.fixes import delayed
+from ..utils.parallel import delayed, Parallel
 from ..metrics._scorer import _check_multimetric_scoring, get_scorer_names
 from ..metrics import check_scoring
 
